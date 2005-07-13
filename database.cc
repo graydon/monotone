@@ -1564,6 +1564,17 @@ database::delete_branch_named(cert_value const & branch)
           encoded().c_str());
 }
 
+/// Deletes all certs referring to a particular tag. 
+void
+database::delete_tag_named(cert_value const & tag)
+{
+  base64<cert_value> encoded;
+  encode_base64(tag, encoded);
+  L(F("Deleting all references to tag %s\n") % tag);
+  execute("DELETE FROM revision_certs WHERE name='tag' AND value ='%s'",
+          encoded().c_str());
+}
+
 // crypto key management
 
 void 

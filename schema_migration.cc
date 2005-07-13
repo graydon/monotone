@@ -14,6 +14,7 @@
 
 #include <sqlite3.h>
 
+#include "sanity.hh"
 #include "schema_migration.hh"
 #include "cryptopp/filters.h"
 #include "cryptopp/sha.h"
@@ -185,10 +186,16 @@ migrator
   void migrate(sqlite3 *sql, string target_id)
   {
     string init;
-    calculate_schema_id(sql, init);
 
     if (sql == NULL)
       throw runtime_error("NULL sqlite object given to migrate");
+
+    calculate_schema_id(sql, init);
+    if (target_id == init)
+      {
+        P(F("nothing to migrate; schema %s is up-to-date\n") % init);
+        return;
+      }
 
     if (sqlite3_create_function(sql, "sha1", -1, SQLITE_UTF8, NULL,
             &sqlite_sha1_fn, NULL, NULL))

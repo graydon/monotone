@@ -310,6 +310,8 @@ public:
   
   void delete_branch_named(cert_value const & branch);
 
+  void delete_tag_named(cert_value const & tag);
+
   // crypto key / cert operations
 
   void get_key_ids(std::string const & pattern,

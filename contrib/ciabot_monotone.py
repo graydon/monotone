@@ -27,8 +27,10 @@
 
 class config:
     def project_for_branch(self, branchname):
-        # Customize this if you are watching multiple different projects.
-        # Return None if changes to the given branch are uninteresting.
+        # Customize this to return your project name(s).  If changes to the
+        # given branch are uninteresting -- i.e., changes to them should be
+        # ignored entirely -- then return the python constant None (which is
+        # distinct from the string "None", a valid but poor project name!).
         #if branchname.startswith("net.venge.monotone-viz"):
         #    return "monotone-viz"
         #elif branchname.startswith("net.venge.monotone.contrib.monotree"):

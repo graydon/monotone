@@ -1,0 +1,21 @@
+AT_SETUP([ls tags with ambiguous tags])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+R1=`BASE_REVISION`
+
+SET_FILE(testfile, [foo foo
+])
+COMMIT(testbranch)
+R2=`BASE_REVISION`
+
+AT_CHECK(MONOTONE tag $R1 ambig_tag, [], [ignore], [ignore])
+AT_CHECK(MONOTONE tag $R2 ambig_tag, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE ls tags, [], [stdout], [ignore])
+AT_CHECK(grep -q $R1 stdout)
+AT_CHECK(grep -q $R2 stdout)
+
+AT_CLEANUP

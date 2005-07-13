@@ -1623,20 +1623,23 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
 
-  std::map<cert_value, revision<cert> > sorted_certs;
+  std::set< pair<cert_value, pair<revision_id, rsa_keypair_id> > > sorted_vals;
 
-  for (size_t i = 0; i < certs.size(); ++i)
+  for (vector< revision<cert> >::const_iterator i = certs.begin();
+       i != certs.end(); ++i)
     {
       cert_value name;
-      decode_base64(idx(certs, i).inner().value, name);
-      sorted_certs.insert(std::make_pair(name, idx(certs, i)));
+      cert c = i->inner();
+      decode_base64(c.value, name);
+      sorted_vals.insert(std::make_pair(name, std::make_pair(c.ident, c.key)));
     }
-  for (std::map<cert_value, revision<cert> >::const_iterator i = sorted_certs.begin();
-       i != sorted_certs.end(); ++i)
+  for (std::set<std::pair<cert_value, std::pair<revision_id, 
+         rsa_keypair_id> > >::const_iterator i = sorted_vals.begin();
+       i != sorted_vals.end(); ++i)
     {
       cout << i->first << " " 
-           << i->second.inner().ident  << " "
-           << i->second.inner().key  << endl;
+           << i->second.first  << " "
+           << i->second.second  << endl;
     }
 }
 
@@ -2129,6 +2132,7 @@ CMD(db, "database",
     "execute\n"
     "kill_rev_locally ID\n"
     "kill_branch_locally BRANCH\n"
+    "kill_tag_locally TAG\n"
     "check\n"
     "changesetify\n"
     "rebuild\n"
@@ -2169,6 +2173,8 @@ CMD(db, "database",
         app.db.clear_epoch(cert_value(idx(args, 1)()));
       else if (idx(args, 0)() == "kill_branch_locally")
         app.db.delete_branch_named(cert_value(idx(args, 1)()));
+      else if (idx(args, 0)() == "kill_tag_locally")
+        app.db.delete_tag_named(cert_value(idx(args, 1)()));
       else
         throw usage(name);
     }
@@ -2989,9 +2995,10 @@ CMD(update, "working copy", "",
 
       // we have the following
       //
-      // old --- working
-      //   \         \ 
-      //  chosen --- merged
+      // old --> working
+      //   |         | 
+      //   V         V
+      //  chosen --> merged
       //
       // - old is the revision specified in MT/revision
       // - working is based on old and includes the working copy's changes

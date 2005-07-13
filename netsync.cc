@@ -3634,7 +3634,8 @@ session::rebuild_merkle_trees(app_state & app,
 
   set<revision_id> revision_ids;
   set<rsa_keypair_id> inserted_keys;
-
+  
+  set< hexenc<id> > bad_branch_certs;
   {
     // get all matching branch names
     vector< revision<cert> > certs;
@@ -3648,76 +3649,79 @@ session::rebuild_merkle_trees(app_state & app,
             insert_with_parents(revision_id(idx(certs, i).inner().ident),
                                 revision_ids, app);
           }
+        else
+          bad_branch_certs.insert(idx(certs, i).inner().ident);
       }
+  }
     
-    // FIXME: we should probably include epochs for all branches mentioned in
-    // any included branch cert, rather than just for branches included by the
-    // branch mask
+  {
+    map<cert_value, epoch_data> epochs;
+    app.db.get_epochs(epochs);
+    
+    epoch_data epoch_zero(std::string(constants::epochlen, '0'));
+    for (std::set<utf8>::const_iterator i = branchnames.begin();
+         i != branchnames.end(); ++i)
+      {
+        cert_value branch((*i)());
+        std::map<cert_value, epoch_data>::const_iterator j;
+        j = epochs.find(branch);
+        // set to zero any epoch which is not yet set    
+        if (j == epochs.end())
+          {
+            L(F("setting epoch on %s to zero\n") % branch);
+            epochs.insert(std::make_pair(branch, epoch_zero));
+            app.db.set_epoch(branch, epoch_zero);
+          }
+        // then insert all epochs into merkle tree
+        j = epochs.find(branch);
+        I(j != epochs.end());
+        epoch_id eid;
+        epoch_hash_code(j->first, j->second, eid);
+        id raw_hash;
+        decode_hexenc(eid.inner(), raw_hash);
+        insert_into_merkle_tree(*etab, epoch_item, true, raw_hash(), 0);
+      }
+  }
+  
+  typedef std::vector< std::pair<hexenc<id>,
+    std::pair<revision_id, rsa_keypair_id> > > cert_idx;
+  
+  cert_idx idx;
+  app.db.get_revision_cert_index(idx);
+  
+  // insert all certs and keys reachable via these revisions,
+  // except for branch certs that don't match the masks (since the other
+  // side will just discard them anyway)
+  for (cert_idx::const_iterator i = idx.begin(); i != idx.end(); ++i)
     {
-      map<cert_value, epoch_data> epochs;
-      app.db.get_epochs(epochs);
-
-      epoch_data epoch_zero(std::string(constants::epochlen, '0'));
-      for (std::set<utf8>::const_iterator i = branchnames.begin();
-           i != branchnames.end(); ++i)
+      hexenc<id> const & hash = i->first;
+      revision_id const & ident = i->second.first;
+      rsa_keypair_id const & key = i->second.second;
+      
+      if (revision_ids.find(ident) == revision_ids.end())
+        continue;
+      if (bad_branch_certs.find(hash) != bad_branch_certs.end())
+        continue;
+      
+      id raw_hash;
+      decode_hexenc(hash, raw_hash);
+      insert_into_merkle_tree(*ctab, cert_item, true, raw_hash(), 0);
+      ++certs_ticker;
+      if (inserted_keys.find(key) == inserted_keys.end())
         {
-          cert_value branch((*i)());
-          std::map<cert_value, epoch_data>::const_iterator j;
-          j = epochs.find(branch);
-          // set to zero any epoch which is not yet set    
-          if (j == epochs.end())
+          if (app.db.public_key_exists(key))
             {
-              L(F("setting epoch on %s to zero\n") % branch);
-              epochs.insert(std::make_pair(branch, epoch_zero));
-              app.db.set_epoch(branch, epoch_zero);
+              base64<rsa_pub_key> pub_encoded;
+              app.db.get_key(key, pub_encoded);
+              hexenc<id> keyhash;
+              key_hash_code(key, pub_encoded, keyhash);
+              decode_hexenc(keyhash, raw_hash);
+              insert_into_merkle_tree(*ktab, key_item, true, raw_hash(), 0);
+              ++keys_ticker;
             }
-          // then insert all epochs into merkle tree
-          j = epochs.find(branch);
-          I(j != epochs.end());
-          epoch_id eid;
-          epoch_hash_code(j->first, j->second, eid);
-          id raw_hash;
-          decode_hexenc(eid.inner(), raw_hash);
-          insert_into_merkle_tree(*etab, epoch_item, true, raw_hash(), 0);
+          inserted_keys.insert(key);
         }
     }
-
-    typedef std::vector< std::pair<hexenc<id>,
-      std::pair<revision_id, rsa_keypair_id> > > cert_idx;
-
-    cert_idx idx;
-    app.db.get_revision_cert_index(idx);
-
-    // insert all certs and keys reachable via these revisions
-    for (cert_idx::const_iterator i = idx.begin(); i != idx.end(); ++i)
-      {
-        hexenc<id> const & hash = i->first;
-        revision_id const & ident = i->second.first;
-        rsa_keypair_id const & key = i->second.second;
-
-        if (revision_ids.find(ident) == revision_ids.end())
-          continue;
-        
-        id raw_hash;
-        decode_hexenc(hash, raw_hash);
-        insert_into_merkle_tree(*ctab, cert_item, true, raw_hash(), 0);
-        ++certs_ticker;
-        if (inserted_keys.find(key) == inserted_keys.end())
-          {
-            if (app.db.public_key_exists(key))
-              {
-                base64<rsa_pub_key> pub_encoded;
-                app.db.get_key(key, pub_encoded);
-                hexenc<id> keyhash;
-                key_hash_code(key, pub_encoded, keyhash);
-                decode_hexenc(keyhash, raw_hash);
-                insert_into_merkle_tree(*ktab, key_item, true, raw_hash(), 0);
-                ++keys_ticker;
-              }
-            inserted_keys.insert(key);
-          }
-      }
-  }  
 
   recalculate_merkle_codes(*etab, get_root_prefix().val, 0);
   recalculate_merkle_codes(*ktab, get_root_prefix().val, 0);
