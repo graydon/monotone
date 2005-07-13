@@ -10,9 +10,9 @@ AT_DATA(test.manifest, [73c0eabf76cc611c33d821d203a52670b8f6265a  t/libasm/Chang
 411cfd008f4a72e433b48d6421733b6a792ca3b7  t/libelf-po/POTFILES.in
 ])
 
-AT_DATA(test.tags, [initial f137764bdcf393ecb68b44ed2accd3e574681fcb tester@test.net
-portable-branch-base d57a26278cb758d02ee64d1c633008bfedc4cefd tester@test.net
-portable-branch-fork-20050601T0139 d57a26278cb758d02ee64d1c633008bfedc4cefd tester@test.net
+AT_DATA(test.tags, [initial f5e868d2572c2ae5b50fd93bc8d0cb827e416e50 tester@test.net
+portable-branch-base 1455aa956c2b095d476e803b8b3d85d8e8509bf7 tester@test.net
+portable-branch-fork-20050601T0139 1455aa956c2b095d476e803b8b3d85d8e8509bf7 tester@test.net
 ])
 
 AT_DATA(e.tar.gz.enc, [H4sIAEJyw0IAA+1YbW/bOBLOV+tXEOiHSw+xqhdKTuq9g4u03SuQbIumub1vAS3R

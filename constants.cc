@@ -32,7 +32,7 @@ namespace constants
 
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
-  size_t const cvs_window = 3600 * 3; 
+  time_t const cvs_window = 60 * 5; 
 
   // number of bytes in a password buffer. further bytes will be dropped.
   size_t const maxpasswd = 0xfff;
