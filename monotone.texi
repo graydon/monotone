@@ -4425,6 +4425,19 @@ revisions in this branch, the branch certificates will reappear when
 you sync, unless the owners of those databases also delete those
 certificates locally.
 
+@item monotone db kill_tag_locally @var{tag}
+
+This command ``kills'' a tag by deleting all tag certs with that tag
+name. You should consider carefully whether you want to use it, because
+it can irrevocably delete important information. It does not modify or
+delete any revisions, or any of the other certificates on tagged
+revisions; it simply removes all tag certificates with the given name.
+As with @command{db kill_rev_locally}, it only deletes the information
+from your local database; if there are other databases that you sync
+with which have this tag, the tag certificates will reappear when you
+sync, unless the owners of those databases also delete those
+certificates locally.
+
 @item monotone db execute @var{sql-statement}
 
 This is a debugging command which executes @var{sql-statement} against
