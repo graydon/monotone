@@ -1,3 +1,25 @@
+2005-07-11  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Add Jordan.
+	* commands.cc (ls_tags): Do not uniquify tags.
+	* constants.{cc,hh} (cvs_window): Change to time_t, tighten to 5 minutes.
+	* rcs_import.cc (window): Remove.
+	(note_type): Remove dead code.
+	(is_sbr): Add test for synthetic branch roots.
+	(cvs_commit::is_synthetic_branch_root): New test.
+	(process_branch): Skip synthetic branch roots, push new branch
+	before picking branch to mark, rather than after.
+	(cvs_history::index_branchpoint_symbols): Handle vendor branches.
+	(cvs_history::push_branch): Do not duplicate root on private branches.
+	(import_branch): Fix up cluster inference.
+	(cluster_consumer::consume_cluster): New invariant.
+	* tests/t_cvsimport_drepper2.at: Modify to reflect fixes.
+
+2005-07-11  Jordan Breeding  <jordan.breeding@mac.com>
+
+	* commands.cc (db): New subcommand "kill_tag_locally"
+	* database.{cc,hh} (delete_tag_named): New function.
+
 2005-07-12  Nathaniel Smith  <njs@pobox.com>
 
 	* schema_migration.cc (migrator::migrate): When there is nothing
@@ -341,7 +363,7 @@
 	added --no-merges option provides a means to disable the merge
 	entries).
 
-2005-06-26  Matthew Gregan  <kinetik@orcon.net.
+2005-06-26  Matthew Gregan  <kinetik@orcon.net>
 
 	* tests/t_automate_stdio.at, tests/t_cvsimport_drepper.at,
 	tests/t_selector_later_earlier.at: Further canonicalisation of
