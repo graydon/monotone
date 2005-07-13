@@ -62,6 +62,7 @@ contributing authors, including:
   Brian Campbell <brian.p.campbell@dartmouth.edu>
   Ethan Blanton <elb@elitists.net>
   Eric Anderson <anderse-monotone@cello.hpl.hp.com>
+  Jordan Breeding <jordan.breeding@mac.com>
   Kaushik Veeraraghavan <kaushikv@gmail.com>
 
 supporting files:
@@ -214,7 +215,7 @@ X Consortium public license, nowadays called the "X.Net, Inc. License".
 It's reproduced in popt/COPYING.
 
 
-The file contrib/colorize is a copy of a perl script written by C√©dric
+The file contrib/colorize is a copy of a perl script written by CÅ√Å©dric
 Bouvier, which is released under the GNU GPL.
 
 
