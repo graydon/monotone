@@ -92,7 +92,9 @@ cvs_branch
   vector<cvs_commit> lineage;  
 
   cvs_branch()
-    : last_branchpoint(0),
+    : has_a_branchpoint(false),
+      has_a_commit(false),
+      last_branchpoint(0),
       first_commit(0)
   {
   }      
