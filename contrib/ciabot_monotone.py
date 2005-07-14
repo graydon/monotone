@@ -99,6 +99,9 @@ class Monotone:
     def db_init(self):
         self._run_monotone(["db", "init"])
 
+    def db_migrate(self):
+        self._run_monotone(["db", "migrate"])
+
     def ensure_db_exists(self):
         if not os.path.exists(self.db):
             self.db_init()
@@ -263,6 +266,7 @@ def main(progname, args):
         c = config()
         m = Monotone(c.monotone_exec, os.path.join(state_dir, "database.db"))
         m.ensure_db_exists()
+        m.db_migrate()
         for server, collection in c.watch_list:
             m.pull(server, collection)
         lf = LeafFile(os.path.join(state_dir, "leaves"))
