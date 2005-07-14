@@ -1,3 +1,7 @@
+2005-07-13  graydon hoare  <graydon@pobox.com>
+
+	* rcs_import.cc (cvs_branch::cvs_branch): Initialize bools to false.
+
 2005-07-12  Nathaniel Smith  <njs@pobox.com>
 
 	* netsync.cc (rebuild_merkle_trees): Reduce memory usage a bit,
