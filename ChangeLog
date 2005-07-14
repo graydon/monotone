@@ -1,3 +1,14 @@
+2005-07-13  Derek Scherger  <derek@echologic.com>
+
+	* ChangeLog: merge fixup
+
+2005-07-13  Derek Scherger  <derek@echologic.com>
+
+	* database.cc (debug): delete stale comment
+	(delete_branch_named):
+	(delete_tag_named): 
+	(clear): replace vprintf stuff with query parameters
+
 2005-07-13  Nathaniel Smith  <njs@pobox.com>
 
 	* contrib/ciabot_monotone.py (main): Optimistically run 'db
@@ -5297,6 +5308,10 @@
 	* ui.cc (fatal): Likewise.
 
 	* tests/t_vcheck.at: New priority "todo", tweak descriptive text.
+
+2005-01-23  Derek Scherger  <derek@echologic.com>
+
+	* database.{cc,hh}: convert queries to use prepared statements
 
 2005-01-22  Nathaniel Smith  <njs@codesourcery.com>
 
