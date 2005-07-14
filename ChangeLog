@@ -2,7 +2,6 @@
 
 	* rcs_import.cc (cvs_branch::cvs_branch): Initialize bools to false.
 
-2005-07-12  Nathaniel Smith  <njs@pobox.com>
 2005-07-13  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Database): Document kill_tag_locally.
