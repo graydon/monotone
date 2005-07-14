@@ -287,6 +287,7 @@ EXTRA_DIST = $(man1_MANS) \
              $(wildcard $(srcdir)/popt/test?.c) popt/testit.sh \
              sqlite/keywordhash.h \
              contrib/README \
+             contrib/monoprof.sh \
              contrib/monotone-notify.pl \
              contrib/monotone-import.pl \
              contrib/ciabot_monotone.py \
