@@ -363,8 +363,6 @@ void
 database::debug(string const & sql, ostream & out)
 {
   results res;
-  // "%s" construction prevents interpretation of %-signs in the query string
-  // as formatting commands.
   fetch(res, any_cols, any_rows, sql.c_str());
   out << "'" << sql << "' -> " << res.size() << " rows\n" << endl;
   for (size_t i = 0; i < res.size(); ++i)
@@ -1558,9 +1556,9 @@ database::delete_branch_named(cert_value const & branch)
   base64<cert_value> encoded;
   encode_base64(branch, encoded);
   L(F("Deleting all references to branch %s\n") % branch);
-  execute("DELETE FROM revision_certs WHERE name='branch' AND value ='%s'",
+  execute("DELETE FROM revision_certs WHERE name='branch' AND value =?",
           encoded().c_str());
-  execute("DELETE FROM branch_epochs WHERE branch='%s'",
+  execute("DELETE FROM branch_epochs WHERE branch=?",
           encoded().c_str());
 }
 
@@ -1571,7 +1569,7 @@ database::delete_tag_named(cert_value const & tag)
   base64<cert_value> encoded;
   encode_base64(tag, encoded);
   L(F("Deleting all references to tag %s\n") % tag);
-  execute("DELETE FROM revision_certs WHERE name='tag' AND value ='%s'",
+  execute("DELETE FROM revision_certs WHERE name='tag' AND value =?",
           encoded().c_str());
 }
 
@@ -2228,9 +2226,11 @@ database::complete(string const & partial,
   results res;
   completions.clear();
 
+  string pattern = partial + "*";
+
   fetch(res, 2, any_rows,
-        "SELECT hash, id FROM public_keys WHERE hash GLOB '%q*'",
-        partial.c_str());
+        "SELECT hash, id FROM public_keys WHERE hash GLOB ?",
+        pattern.c_str());
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  
@@ -2238,8 +2238,8 @@ database::complete(string const & partial,
   res.clear();
 
   fetch(res, 2, any_rows,
-        "SELECT hash, id FROM private_keys WHERE hash GLOB '%q*'",
-        partial.c_str());
+        "SELECT hash, id FROM private_keys WHERE hash GLOB ?",
+        pattern.c_str());
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  

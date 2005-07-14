@@ -1,3 +1,10 @@
+2005-07-13  Derek Scherger  <derek@echologic.com>
+
+	* database.cc (debug): delete stale comment
+	(delete_branch_named):
+	(delete_tag_named): 
+	(clear): replace vprintf stuff with query parameters
+
 2005-07-13  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Database): Document kill_tag_locally.
