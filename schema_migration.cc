@@ -194,11 +194,6 @@ migrator
       throw runtime_error("NULL sqlite object given to migrate");
 
     calculate_schema_id(sql, init);
-    if (target_id == init)
-      {
-        P(F("nothing to migrate; schema %s is up-to-date\n") % init);
-        return;
-      }
 
     if (sqlite3_create_function(sql, "sha1", -1, SQLITE_UTF8, NULL,
             &sqlite_sha1_fn, NULL, NULL))
@@ -262,6 +257,17 @@ migrator
           {
             throw runtime_error("failure on COMMIT");
           }
+
+        if (sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
+          throw runtime_error("error vacuuming after migration");
+      }
+    else
+      {
+        // We really want 'db migrate' on an up-to-date schema to be a no-op
+        // (no vacuum or anything, even), so that automated scripts can fire
+        // one off optimistically and not have to worry about getting their
+        // administrators to do it by hand.
+        P(F("no migration performed; database schema already up-to-date at %s\n") % init);
       }
   }
 };
@@ -784,8 +790,4 @@ migrate_monotone_schema(sqlite3 *sql)
   // tests/t_migrate_schema.at for details.
 
   m.migrate(sql, "1509fd75019aebef5ac3da3a5edf1312393b70e9");
-  
-  if (sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
-    throw runtime_error("error vacuuming after migration");
-
 }

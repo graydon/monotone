@@ -1,5 +1,11 @@
 2005-07-13  Nathaniel Smith  <njs@pobox.com>
 
+	* schema_migration.cc (migrate_monotone_schema)
+	(migrator::migrate): Move the "nothing happened" check, and don't
+	vacuum unless a migration occurred.
+
+2005-07-13  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_restricted_diff_unchanged.at: New test.
 	* testsuite.at: Add it.
 
