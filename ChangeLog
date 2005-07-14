@@ -1,3 +1,8 @@
+2005-07-14  Nathaniel Smith  <njs@pobox.com>
+
+	* database.hh: Pre-declare sqlite3_stmt, instead of including
+	sqlite3.h.
+
 2005-07-13  Derek Scherger  <derek@echologic.com>
 
 	* ChangeLog: merge fixup

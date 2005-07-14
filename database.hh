@@ -7,6 +7,7 @@
 // see the file COPYING for details
 
 struct sqlite3;
+struct sqlite3_stmt;
 struct cert;
 
 #include <vector>
@@ -15,8 +16,6 @@ struct cert;
 #include <string>
 
 #include <boost/filesystem/path.hpp>
-
-#include <sqlite3.h>
 
 #include "selectors.hh"
 #include "manifest.hh"
