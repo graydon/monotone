@@ -2849,8 +2849,6 @@ session::process_delta_cmd(netcmd_item_type type,
 
   // it's ok if we received something we didn't ask for; it might
   // be a spontaneous transmission from refinement
-  // FIXME: what does the above comment mean?  note_item_arrived does require
-  // that the item passed to it have been requested...
   note_item_arrived(type, ident);
 
   switch (type)

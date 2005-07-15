@@ -1,5 +1,9 @@
 2005-07-14  Nathaniel Smith  <njs@pobox.com>
 
+	* netsync.cc (process_delta_cmd): Remove meaningless comment.
+
+2005-07-14  Nathaniel Smith  <njs@pobox.com>
+
 	* database.hh: Pre-declare sqlite3_stmt, instead of including
 	sqlite3.h.
 
