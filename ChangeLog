@@ -1,5 +1,10 @@
 2005-07-14  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc (get_revision_cert_index): "reserve" and "resize"
+	are different.
+
+2005-07-14  Nathaniel Smith  <njs@pobox.com>
+
 	* netsync.cc (process_delta_cmd): Remove meaningless comment.
 
 2005-07-14  Nathaniel Smith  <njs@pobox.com>

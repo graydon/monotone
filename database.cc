@@ -1983,7 +1983,7 @@ void database::get_revision_cert_index(std::vector< std::pair<hexenc<id>,
         "FROM 'revision_certs'");
 
   idx.clear();
-  idx.resize(res.size());
+  idx.reserve(res.size());
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {
       idx.push_back(std::make_pair(hexenc<id>((*i)[0]), 
