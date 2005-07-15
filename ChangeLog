@@ -1,3 +1,8 @@
+2005-07-15  Matt Johnston  <matt@ucc.asn.au>
+
+  * netsync.cc (rebuild_merkle_trees): bad_branch_certs is a set of cert
+  hashes, not of revision idents.
+
 2005-07-14  Nathaniel Smith  <njs@pobox.com>
 
 	* netsync.cc (process_delta_cmd): Remove meaningless comment.
