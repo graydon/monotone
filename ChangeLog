@@ -12,6 +12,13 @@
 	* database.hh: Pre-declare sqlite3_stmt, instead of including
 	sqlite3.h.
 
+2005-07-14  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (lca,lcad,try_one_merge): call describe_revision for
+	logging common ancestors
+	(propagate): log final merged line after propagate completes
+	to indicate that it actually worked and to be consistent with merge
+
 2005-07-13  Derek Scherger  <derek@echologic.com>
 
 	* ChangeLog: merge fixup
