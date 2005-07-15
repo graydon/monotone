@@ -2760,7 +2760,7 @@ CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor", OPT_NONE)
   complete(app, idx(args, 1)(), right);
 
   if (find_least_common_ancestor(left, right, anc, app))
-    std::cout << anc << std::endl;
+    std::cout << describe_revision(app, anc) << std::endl;
   else
     std::cout << "no common ancestor found" << std::endl;
 }
@@ -2778,7 +2778,7 @@ CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator",
   complete(app, idx(args, 1)(), right);
 
   if (find_common_ancestor_for_merge(left, right, anc, app))
-    std::cout << anc << std::endl;
+    std::cout << describe_revision(app, anc) << std::endl;
   else
     std::cout << "no common ancestor/dominator found" << std::endl;
 }
@@ -3101,7 +3101,7 @@ try_one_merge(revision_id const & left_id,
     }
   else if (find_common_ancestor_for_merge(left_id, right_id, anc_id, app))
     {     
-      P(F("common ancestor %s found\n") % anc_id); 
+      P(F("common ancestor %s found\n") % describe_revision(app, anc_id)); 
       P(F("trying 3-way merge\n"));
       
       app.db.get_revision(anc_id, anc_rev);
@@ -3292,6 +3292,7 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
       cert_revision_changelog(merged, log, app, dbw);
 
       guard.commit();      
+      P(F("[merged] %s\n") % merged);
     }
 }
 
