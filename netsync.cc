@@ -731,7 +731,12 @@ session::note_item_arrived(netcmd_item_type ty, id const & ident)
     {
     case cert_item:
       if (cert_in_ticker.get() != NULL)
-        ++(*cert_in_ticker);
+        {
+          ++(*cert_in_ticker);
+          hexenc<id> h;
+          encode_hexenc(ident, h);
+          L(F("ticked for cert %s") % h);
+        }
       break;
     case revision_item:
       if (revision_in_ticker.get() != NULL)
@@ -1176,20 +1181,27 @@ session::analyze_ancestry_graph()
           {
             cert_value name;
             decode_base64(j->value, name);
+            hexenc<id> hash;
+            cert_hash_code(*j, hash);
             if (ok_branches.find(name()) != ok_branches.end())
-              keeping.push_back(*j);
+              {
+                L(F("kept branch cert '%s'") % hash);
+                keeping.push_back(*j);
+              }
             else if (bad_branches.find(name()) != bad_branches.end())
-              ;
+                L(F("discarded branch cert '%s'") % hash);
             else
               {
                 if (our_matcher(name()))
                   {
+                    L(F("kept branch cert '%s'") % hash);
                     ok_branches.insert(name());
                     keeping.push_back(*j);
                   }
                 else
                   {
                     bad_branches.insert(name());
+                    L(F("discarded branch cert '%s'") % hash);
                     W(F("Dropping branch certs for unwanted branch %s")
                       % name);
                   }
@@ -3701,10 +3713,18 @@ session::rebuild_merkle_trees(app_state & app,
       revision_id const & ident = i->second.first;
       rsa_keypair_id const & key = i->second.second;
       
+      L(F("considering cert '%s'") % hash);
       if (revision_ids.find(ident) == revision_ids.end())
-        continue;
+        {
+          L(F("it's not on a good revision ('%s')")% ident.inner()());
+          continue;
+        }
       if (bad_branch_certs.find(hash) != bad_branch_certs.end())
-        continue;
+        {
+          L(F("it's a bad branch cert"));
+          continue;
+        }
+      L(F("including cert '%s'") % hash);
       
       id raw_hash;
       decode_hexenc(hash, raw_hash);
