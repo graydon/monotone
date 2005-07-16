@@ -1,3 +1,39 @@
+????????????????????????????
+
+        0.21 release.  bug fixes, performance improvements, and ui
+        improvements.
+
+        - fixes a number of major performance bugs in 0.20's netsync
+          implementation.  special thanks to Matt Johnston
+          <matt@ucc.asn.au>.
+        - fixes a number of major bugs in 0.20's (rewritten)
+          cvs_import command.
+        - configury kluges to work around g++ 4.0/boost 1.32
+          incompatibilities.  special thanks to Christof Petig
+          <christof@petig-baender.de>, Matthew Gregan
+          <kinetik@orcon.net.nz>, Jordan Breeding
+          <jordan.breeding@mac.com>.
+        - new netsync options:
+          - "--exclude": branches are included if
+            they match any of the given globs, unless they match any
+            of the given --exclude globs.  special thanks to Timothy
+            Brownawell <tbrownaw@gmail.com>.
+          - "--set-default": makes it easy to change default
+            server/branches.
+        - b: and t: selectors now match exactly, instead of matching
+          as substrings.  globbing is supported for inexact matching.
+          special thanks to Brian Downing <bdowning@lavos.net>, Jordan
+          Breeding <jordan.breeding@mac.com>.
+        - use sqlite3 prepared statements.  special thanks to Derek
+          Scherger <derek@echologic.com>.
+        - 'db migrate' is now a complete no-op if there is no
+          migration to do; automated scripts can now call it
+          optimistically and cheaply to guarantee up-to-dateness.
+        - new command 'db kill_tag_locally'.  special thanks to Jordan
+          Breeding <jordan.breeding@mac.com>.
+        - new hash correctness tests.  special thanks to Kaushik
+          Veeraraghavan <kaushikv@gmail.com>.
+
 Tue Jul  5 23:57:10 PDT 2005
 
         0.20 release.  features, ui improvements, performance

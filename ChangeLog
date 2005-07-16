@@ -1,5 +1,9 @@
 2005-07-16  Nathaniel Smith  <njs@pobox.com>
 
+	* NEWS: Update for 0.21.
+
+2005-07-16  Nathaniel Smith  <njs@pobox.com>
+
 	* database.cc (assert_sqlite3_ok): Remove dead function.
 	
 2005-07-16  Nathaniel Smith  <njs@pobox.com>
