@@ -1,5 +1,9 @@
 2005-07-16  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc (assert_sqlite3_ok): Remove dead function.
+	
+2005-07-16  Nathaniel Smith  <njs@pobox.com>
+
 	* app_state.cc (require_working_copy): Oops, make it compile.
 
 2005-07-16  Nathaniel Smith  <njs@pobox.com>
