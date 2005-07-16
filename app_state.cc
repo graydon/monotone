@@ -86,9 +86,11 @@ app_state::allow_working_copy()
 }
 
 void 
-app_state::require_working_copy()
+app_state::require_working_copy(std::string const & explanation)
 {
-  N(found_working_copy, F("working copy directory required but not found"));
+  N(found_working_copy,
+    F("working copy directory required but not found%s%s")
+    % (explanation ? "\n" : "") % explanation);
   write_options();
 }
 

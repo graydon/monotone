@@ -3601,7 +3601,7 @@ CMD(log, "informative", "[FILE]",
   file_path file;
 
   if (app.revision_selectors.size() == 0)
-    app.require_working_copy();
+    app.require_working_copy("try passing a --revision to start at");
 
   if (args.size() > 1)
     throw usage(name);

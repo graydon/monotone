@@ -1,5 +1,12 @@
 2005-07-16  Nathaniel Smith  <njs@pobox.com>
 
+	* app_state.{cc,hh} (require_working_copy): Take an optional
+	argument to give more details about why a working copy was
+	required.
+	* commands.cc (log): Give said details.
+
+2005-07-16  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.texi (CVS Phrasebook): Include 'log'.
 
 2005-07-16  Nathaniel Smith  <njs@pobox.com>

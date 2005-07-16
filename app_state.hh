@@ -52,7 +52,7 @@ public:
   fs::path pidfile;
 
   void allow_working_copy();
-  void require_working_copy();
+  void require_working_copy(std::string const & explanation = "");
   void create_working_copy(std::string const & dir);
 
   file_path prefix(utf8 const & path);
