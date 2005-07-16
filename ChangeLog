@@ -11,6 +11,23 @@
 
 2005-07-16  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.texi (Selectors): Document use of globs.
+	* tests/t_selector_globbing.at: New test.
+	* testsuite.at: Add it.
+	
+2005-07-16  Jordan Breeding  <jordan.breeding@mac.com>
+
+	* database.cc (selector_to_certname): Make 't:' selector match
+	exactly by default as well.
+
+2005-06-25  Brian Downing <bdowning@lavos.net>
+
+	* database.cc (selector_to_certname, complete): Makes 'b:'
+	selector be interpreted as a glob instead of as a partial string
+	match.
+	
+2005-07-16  Nathaniel Smith  <njs@pobox.com>
+
 	* netsync.cc: Revert accidentally committed changes.
 
 2005-07-16  Nathaniel Smith  <njs@pobox.com>
