@@ -3253,6 +3253,27 @@ before you drop it. Dropping a file merely removes its entry in the
 manifest of the current revision.
 
 
+@heading Viewing History
+
+@multitable @columnfractions .4 .4
+@item
+@smallexample
+@group
+$ cvs log [file]
+@end group
+@end smallexample
+@tab
+@smallexample
+@group
+$ monotone log [file]
+@end group
+@end smallexample
+@end multitable
+
+Unlike CVS log, monotone log can also be used without a working
+directory; but in this case you must pass a @option{--revision} argument
+to tell monotone where to start displaying the log from.
+
 @heading Importing a New Project
 
 @multitable @columnfractions .4 .4
