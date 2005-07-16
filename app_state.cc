@@ -90,7 +90,7 @@ app_state::require_working_copy(std::string const & explanation)
 {
   N(found_working_copy,
     F("working copy directory required but not found%s%s")
-    % (explanation ? "\n" : "") % explanation);
+    % (explanation.empty() ? "" : "\n") % explanation);
   write_options();
 }
 

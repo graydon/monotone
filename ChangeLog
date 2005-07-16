@@ -1,5 +1,9 @@
 2005-07-16  Nathaniel Smith  <njs@pobox.com>
 
+	* app_state.cc (require_working_copy): Oops, make it compile.
+
+2005-07-16  Nathaniel Smith  <njs@pobox.com>
+
 	* app_state.{cc,hh} (require_working_copy): Take an optional
 	argument to give more details about why a working copy was
 	required.
