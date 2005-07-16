@@ -1,5 +1,9 @@
 2005-07-16  Nathaniel Smith  <njs@pobox.com>
 
+	* netsync.cc: Revert accidentally committed changes.
+
+2005-07-16  Nathaniel Smith  <njs@pobox.com>
+
 	* ChangeLog: Fix formatting.
 
 2005-07-15  Matt Johnston  <matt@ucc.asn.au>
