@@ -15,7 +15,7 @@
 	if (G(L)->nblocks >= G(L)->GCthreshold) luaC_collectgarbage(L); }
 
 
-void luaC_separateudata (lua_State *L);
+size_t luaC_separateudata (lua_State *L);
 void luaC_callGCTM (lua_State *L);
 void luaC_sweep (lua_State *L, int all);
 void luaC_collectgarbage (lua_State *L);
