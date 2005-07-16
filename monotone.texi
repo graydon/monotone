@@ -2277,7 +2277,7 @@ of selectors follows.
 @heading Selectors in detail
 
 A selector is a combination of a selector type, which is a single
-ASCII character, followed by a @code{:} character and a selector
+xoASCII character, followed by a @code{:} character and a selector
 string. All selectors strings except for selector type @code{c}
 are just values. The value is matched against identifiers or certs,
 depending on its type, in an attempt to match a single revision.
@@ -2290,13 +2290,14 @@ Uses selector type @code{c}.  The selector string has the syntax
 @var{name} or @var{name}@code{=}@var{value}.  The former syntax will
 select any revision that has a cert with that name, regardless of
 value; the latter will match any revision that has a cert with that
-name and value.  Values to match for can have wildcards.
+name and value.  Values to match for can have shell wildcards.
 @item Author selection
 Uses selector type @code{a}. For example, @code{a:graydon} matches
-@code{author} certs where the cert value begins with @code{graydon}.
+@code{author} certs where the cert value contains @code{graydon}.
 @item Branch selection
-Uses selector type @code{b}. For example, @code{b:net.venge} matches
-@code{branch} certs where the cert value begins with @code{net.venge}.
+Uses selector type @code{b}. For example, @code{b:net.venge.monotone} matches
+@code{branch} certs where the cert value is @code{net.venge.monotone}.
+Values to match for can have shell wildcards.
 @item Date selection
 Uses selector type @code{d}. For example, @code{d:2004-04} matches
 @code{date} certs where the cert value begins with
@@ -2317,9 +2318,9 @@ syntax (see below)
 Uses selector type @code{i}. For example, @code{i:0f3a} matches
 revision IDs which begin with @code{0f3a}.
 @item Tag selection
-Uses selector type @code{t}. For example, @code{t:monotone-0.11}
-matches @code{tag} certs where the cert value begins with
-@code{monotone-0.11}.
+Uses selector type @code{t}. For example, @code{t:monotone-0.11} matches
+@code{tag} certs where the cert value begins with @code{monotone-0.11}.
+Values to match for can have shell wildcards.
 @end table
 
 Further selector types may be added in the future. 

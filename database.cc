@@ -2248,14 +2248,18 @@ database::complete(string const & partial,
 using selectors::selector_type;
 
 static void selector_to_certname(selector_type ty,
-                                 string & s)
+                                 string & s,
+                                 string & prefix,
+                                 string & suffix)
 {
+  prefix = suffix = "*";
   switch (ty)
     {
     case selectors::sel_author:
       s = author_cert_name;
       break;
     case selectors::sel_branch:
+      prefix = suffix = "";
       s = branch_cert_name;
       break;
     case selectors::sel_date:
@@ -2264,6 +2268,7 @@ static void selector_to_certname(selector_type ty,
       s = date_cert_name;
       break;
     case selectors::sel_tag:
+      prefix = suffix = "";
       s = tag_cert_name;
       break;
     case selectors::sel_ident:
@@ -2348,7 +2353,9 @@ void database::complete(selector_type ty,
           else
             {
               string certname;
-              selector_to_certname(i->first, certname);
+              string prefix;
+              string suffix;
+              selector_to_certname(i->first, certname, prefix, suffix);
               lim += (F("SELECT id FROM revision_certs WHERE name='%s' AND ") % certname).str();
               switch (i->first)
                 {
@@ -2359,7 +2366,8 @@ void database::complete(selector_type ty,
                   lim += (F("unbase64(value) > X'%s'") % encode_hexenc(i->second)).str();
                   break;
                 default:
-                  lim += (F("unbase64(value) glob '*%s*'") % i->second).str();
+                  lim += (F("unbase64(value) glob '%s%s%s'")
+                          % prefix % i->second % suffix).str();
                   break;
                 }
             }
@@ -2378,6 +2386,8 @@ void database::complete(selector_type ty,
     }
   else 
     {
+      string prefix = "*";
+      string suffix = "*";
       query = "SELECT value FROM revision_certs WHERE";
       if (ty == selectors::sel_unknown)
         {               
@@ -2390,12 +2400,13 @@ void database::complete(selector_type ty,
       else
         {
           string certname;
-          selector_to_certname(ty, certname);
+          selector_to_certname(ty, certname, prefix, suffix);
           query += 
             (F(" (name='%s')") % certname).str();
         }
         
-      query += (F(" AND (unbase64(value) GLOB '*%s*')") % partial).str();
+      query += (F(" AND (unbase64(value) GLOB '%s%s%s')")
+                % prefix % partial % suffix).str();
       query += (F(" AND (id IN %s)") % lim).str();
     }
 
