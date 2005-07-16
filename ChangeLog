@@ -1,6 +1,8 @@
 2005-07-17  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* lua/*: Import Lua 5.0.2 from upstream.
+	* lua/*: Fix up CVS $Id$ tags, which appear to have been trashed
+	since monotone existed in CVS.
 
 2005-07-16  Nathaniel Smith  <njs@pobox.com>
 
