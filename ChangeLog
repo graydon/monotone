@@ -1,3 +1,7 @@
+2005-07-16  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Mention need for 'db migrate'.
+
 2005-07-17  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* lua/*: Import Lua 5.0.2 from upstream.

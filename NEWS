@@ -34,6 +34,10 @@
         - new hash correctness tests.  special thanks to Kaushik
           Veeraraghavan <kaushikv@gmail.com>.
 
+                - upgrading from 0.20: you must run 'monotone db
+                  migrate' against each of your databases once, to add
+                  new sql indexes.
+
 Tue Jul  5 23:57:10 PDT 2005
 
         0.20 release.  features, ui improvements, performance
