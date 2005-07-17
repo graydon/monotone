@@ -1,5 +1,10 @@
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/t_diff_external.at: New test.
+	* testsuite.at: Add it.
+
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.texi (Restrictions): diff -r -r does accept
 	restrictions now.
 	(CVS Phrasebook): Clarify diff section.
