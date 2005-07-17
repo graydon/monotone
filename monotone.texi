@@ -5849,6 +5849,12 @@ If an extra arguments are given via @option{--diff-args}, the string
 will be passed in as @var{diff_args}.  Otherwise @var{diff_args} will
 be nil.
 
+The default implementation of this hook calls the program @code{diff},
+and if @option{--diff-args} were not passed, takes default arguments
+from the lua variable @code{external_diff_default_args}.  You can
+override this variable in your configuration file, without overriding
+the whole hook.
+
 @end ftable
 
 @page

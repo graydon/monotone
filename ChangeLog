@@ -1,3 +1,10 @@
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (external_diff_default_args): New variable.
+	(external_diff): Use it as a default, and use user-provided
+	diff_args otherwise.
+	* monotone.texi (Hooks): Document this.
+
 2005-07-16  Vladimir Vukicevic  <vladimirv@gmail.com>
 
 	* lua.{cc,hh} (hook_external_diff): New hook.

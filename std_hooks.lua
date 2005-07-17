@@ -611,12 +611,15 @@ function use_inodeprints()
    return false
 end
 
+external_diff_default_args = "-u"
+
 -- default external diff, works for gnu diff
 function external_diff(file_path, data_old, data_new, is_binary, diff_args, rev_old, rev_new)
    local old_file = write_to_temporary_file(data_old);
    local new_file = write_to_temporary_file(data_new);
 
-   execute("diff", "-upNU8", "--label", file_path .. "\told", old_file, "--label", file_path .. "\tnew", new_file);
+   if diff_args == nil then diff_args = external_diff_default_args end
+   execute("diff", diff_args, "--label", file_path .. "\told", old_file, "--label", file_path .. "\tnew", new_file);
 
    os.remove (old_file);
    os.remove (new_file);
