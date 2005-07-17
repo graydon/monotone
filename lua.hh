@@ -99,6 +99,7 @@ public:
                           data const & data_old,
                           data const & data_new,
                           bool is_binary,
+                          bool diff_args_provided,
                           std::string const & diff_args,
                           std::string const & oldrev,
                           std::string const & newrev);

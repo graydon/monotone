@@ -2566,6 +2566,7 @@ do_external_diff(change_set::delta_map const & deltas,
                                  data_old,
                                  data_new,
                                  is_binary,
+                                 app.diff_args_provided,
                                  app.diff_args(),
                                  delta_entry_src(i).inner()(),
                                  delta_entry_dst(i).inner()());

@@ -51,6 +51,7 @@ public:
   long last;
   fs::path pidfile;
   diff_type diff_format;
+  bool diff_args_provided;
   utf8 diff_args;
 
   void allow_working_copy();

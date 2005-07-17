@@ -1,5 +1,13 @@
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 
+	* app_state.{cc,hh}: Record whether --diff-args was passed, not
+	just a string value.
+	* lua.{cc,hh} (hook_external_diff): Take a diff_args_provided
+	variable.
+	* commands.cc (do_external_diff): Pass it.
+
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
 	* std_hooks.lua (external_diff_default_args): New variable.
 	(external_diff): Use it as a default, and use user-provided
 	diff_args otherwise.
