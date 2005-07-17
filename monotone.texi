@@ -2425,12 +2425,6 @@ Commands which support restrictions also support the
 number of directories to descend. For example, @var{n}=0 disables
 recursion, @var{n}=1 means descend at most one directory, and so on.
 
-One variant of the @command{diff} command takes two @option{--revision}
-options and does not operate on a working copy, but instead compares two
-arbitrary database revisions. In this form the @command{diff} command
-does not currently support a restriction or optional @var{pathname...}
-arguments. This may be changed in the future.
-
 The @command{update} command does not allow for updates to a
 restricted set of files, which may be slightly different than other
 version control systems. Partial updates don't really make sense in
@@ -3166,13 +3160,13 @@ $ monotone diff
 @item
 @smallexample
 @group
-$ cvs diff -r 1.2 -r 1.4
+$ cvs diff -r 1.2 -r 1.4 myfile
 @end group
 @end smallexample
 @tab
 @smallexample
 @group
-$ monotone diff -r 3e7db -r 278df
+$ monotone diff -r 3e7db -r 278df myfile
 @end group
 @end smallexample
 @end multitable
@@ -3183,8 +3177,8 @@ differences between your working copy and its base revision, whereas
 @command{diff} accompanied by two revision numbers prints the
 difference between those two revisions. The major difference between
 CVS and monotone here is that monotone's revision numbers are
-@emph{revision IDs}, so the @command{diff} command prints the
-difference between the two entire trees.
+@emph{revision IDs}, rather than file IDs.  If one leaves off the file
+argument, then diff can print the difference between two entire trees.
 
 @heading Showing Working Copy Status
 
@@ -3862,7 +3856,9 @@ $ mt complete revision 01f
 @end group
 @end smallexample
 
-@item monotone diff 
+@item monotone diff
+@item monotone diff --context
+@item monotone diff --external [--diff-args=@var{argstring}]
 @itemx monotone diff @var{pathname...}
 @itemx monotone diff --revision=@var{id}
 @itemx monotone diff --revision=@var{id} @var{pathname...}
@@ -3895,6 +3891,23 @@ From within a subdirectory of the working copy the @command{diff}
 command will, by default, include @emph{all changes} in the working
 copy.  Specifying only the pathname "." will restrict @command{diff}
 to files changed within the current subdirectory of the working copy.
+
+The output format of @command{diff} is controlled by the options
+@option{--unified}, @option{--context}, and @option{--external}.
+@option{--unified} requests the ``unified diff'' format, the default
+(analogous to running the program @code{diff -u}).  @option{--context}
+request the ``context diff'' format (analogous to running the program
+@code{diff -c}).  Both of these formats are generated directly by
+monotone, using its built-in diff algorithm.
+
+Sometimes, you may want more flexibility in output formats; for these
+cases, you can use @option{--external}, which causes monotone to invoke
+an external program to generate the actual output.  By default, the
+external program is @code{diff}, and you can use the option
+@option{--diff-args} to pass additional arguments controlling
+formatting.  The actual invocation of @code{diff}, default arguments
+passed to it, and so on, are controlled by the hook
+@code{external_diff}; see @ref{Hooks} for more details.
 
 @item monotone list certs @var{id}
 

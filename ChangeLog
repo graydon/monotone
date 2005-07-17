@@ -1,5 +1,13 @@
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.texi (Restrictions): diff -r -r does accept
+	restrictions now.
+	(CVS Phrasebook): Clarify diff section.
+	(Informative): Document diff [--unified|--context|--external],
+	--diff-args.
+
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
 	* app_state.{cc,hh}: Record whether --diff-args was passed, not
 	just a string value.
 	* lua.{cc,hh} (hook_external_diff): Take a diff_args_provided
