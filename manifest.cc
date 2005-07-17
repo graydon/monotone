@@ -179,7 +179,6 @@ build_restricted_manifest_map(path_set const & paths,
             }
 
           // ...ah, well, no good fingerprint, just check directly.
-          // ...ah, well, no good fingerprint, just check directly.
           file_id ident;
           if (ident_existing_file(*i, ident, app.lua))
             {
