@@ -13,29 +13,37 @@
           <christof@petig-baender.de>, Matthew Gregan
           <kinetik@orcon.net.nz>, Jordan Breeding
           <jordan.breeding@mac.com>.
-        - new netsync options:
-          - "--exclude": branches are included if
+        - ui enhancements:
+          - new netsync option "--exclude": branches are included if
             they match any of the given globs, unless they match any
             of the given --exclude globs.  special thanks to Timothy
             Brownawell <tbrownaw@gmail.com>.
-          - "--set-default": makes it easy to change default
-            server/branches.
-        - b: and t: selectors now match exactly, instead of matching
-          as substrings.  globbing is supported for inexact matching.
-          special thanks to Brian Downing <bdowning@lavos.net>, Jordan
-          Breeding <jordan.breeding@mac.com>.
-        - use sqlite3 prepared statements.  special thanks to Derek
-          Scherger <derek@echologic.com>.
+          - new netsync option client "--set-default": makes it easy
+            to change default server/branches.
+          - "diff" now takes options "--context" and "--external", to
+            output context diffs and to invoke an external diff
+            program for full control over output formatting.  new
+            option "--diff-args" pass arguments to external diff
+            program; new hook "external_diff" allows further
+            configuration.  special thanks to Vladimir Vukicevic
+            <vladimirv@gmail.com>.
+          - b: and t: selectors now match exactly, instead of matching
+            as substrings.  globbing is supported for inexact
+            matching.  special thanks to Brian Downing
+            <bdowning@lavos.net>, Jordan Breeding
+            <jordan.breeding@mac.com>.
+          - new command 'db kill_tag_locally'.  special thanks to Jordan
+            Breeding <jordan.breeding@mac.com>.
+        - now uses sqlite3 prepared statements.  special thanks to
+          Derek Scherger <derek@echologic.com>.
         - 'db migrate' is now a complete no-op if there is no
           migration to do; automated scripts can now call it
           optimistically and cheaply to guarantee up-to-dateness.
-        - new command 'db kill_tag_locally'.  special thanks to Jordan
-          Breeding <jordan.breeding@mac.com>.
         - new hash correctness tests.  special thanks to Kaushik
           Veeraraghavan <kaushikv@gmail.com>.
 
                 - upgrading from 0.20: you must run 'monotone db
-                  migrate' against each of your databases once, to add
+                  migrate' once against each of your databases, to add
                   new sql indexes.
 
 Tue Jul  5 23:57:10 PDT 2005

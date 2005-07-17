@@ -1,5 +1,11 @@
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 
+	* NEWS: Add diff changes, more tweaking.
+	* UPGRADE: Update for 0.21.
+	* AUTHORS: Add Vladimir Vukicevic.
+
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_diff_external.at: New test.
 	* testsuite.at: Add it.
 
