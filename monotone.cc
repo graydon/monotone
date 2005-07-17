@@ -59,6 +59,10 @@ struct poptOption coptions[] =
     {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, "skip merges when printing logs", NULL},
     {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, "use the current arguments as the future default", NULL},
     {"exclude", 0, POPT_ARG_STRING, &argstr, OPT_EXCLUDE, "leave out branches matching a pattern", NULL},
+    {"unified", 0, POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, "Use unified diff format", NULL},
+    {"context", 0, POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, "Use context diff format", NULL},
+    {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, "Use external diff hook for generating diffs", NULL},
+    {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, "Argument to pass external diff hook", NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -405,6 +409,22 @@ cpp_main(int argc, char ** argv)
 
             case OPT_ARGFILE:
               my_poptStuffArgFile(ctx(), utf8(string(argstr)));
+              break;
+
+            case OPT_UNIFIED_DIFF:
+              app.set_diff_format(unified_diff);
+              break;
+
+            case OPT_CONTEXT_DIFF:
+              app.set_diff_format(context_diff);
+              break;
+
+            case OPT_EXTERNAL_DIFF:
+              app.set_diff_format(external_diff);
+              break;
+              
+            case OPT_EXTERNAL_DIFF_ARGS:
+              app.set_diff_args(utf8(string(argstr)));
               break;
 
             case OPT_HELP:

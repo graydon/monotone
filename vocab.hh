@@ -144,4 +144,13 @@ extern template class revision<cert>;
 extern template class manifest<cert>;
 #endif
 
+// diff type
+enum diff_type
+{
+  unified_diff,
+  context_diff,
+  external_diff
+};
+
+
 #endif // __VOCAB_HH__

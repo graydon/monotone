@@ -50,6 +50,8 @@ public:
   long depth;
   long last;
   fs::path pidfile;
+  diff_type diff_format;
+  utf8 diff_args;
 
   void allow_working_copy();
   void require_working_copy(std::string const & explanation = "");
@@ -82,6 +84,8 @@ public:
   void set_pidfile(utf8 const & pidfile);
   void add_revision(utf8 const & selector);
   void add_exclude(utf8 const & exclude_pattern);
+  void set_diff_format(diff_type dtype);
+  void set_diff_args(utf8 const & args);
 
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);

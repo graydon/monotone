@@ -95,6 +95,14 @@ public:
                                  file_path const & b,
                                  file_path & res);
 
+  bool hook_external_diff(file_path const & path,
+                          data const & data_old,
+                          data const & data_new,
+                          bool is_binary,
+                          std::string const & diff_args,
+                          std::string const & oldrev,
+                          std::string const & newrev);
+
   // working copy hooks
   bool hook_use_inodeprints();
 

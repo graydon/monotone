@@ -1,3 +1,22 @@
+2005-07-16  Vladimir Vukicevic  <vladimirv@gmail.com>
+
+	* lua.{cc,hh} (hook_external_diff): New hook.
+	* std_hooks.lua (external_diff): Add default definition.
+	* monotone.texi (Hooks): Document external_diff hook.
+	* app_state.{cc,hh}, options.hh, monotone.cc: Add --context,
+	--external, --unified, --diff-args options.
+	* commands.cc (do_external_diff): New function.
+	(dump_diffs): Put a == line between each file's diffs.
+	Pass file_ids of pre- and post-states to make_diff.
+	(diff): Take new options.
+	(cdiff): Remove.
+	* diff_patch.{cc,hh} (make_diff): Print file ids in diff file
+	headers.
+	(unidiff_append_test): Update.
+	(enum diff_type): Move to...
+	* vocab.hh: ...here.
+	* tests/t_restrictions.at, tests/t_crlf.at: Update.
+
 2005-07-16  Nathaniel Smith  <njs@pobox.com>
 
 	* manifest.cc (build_restricted_manifest_map): Remove doubled

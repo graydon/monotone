@@ -2527,6 +2527,50 @@ CMD(commit, "working copy", "[PATH]...",
 
 ALIAS(ci, commit);
 
+static void
+do_external_diff(change_set::delta_map const & deltas,
+                 app_state & app,
+                 bool new_is_archived)
+{
+  for (change_set::delta_map::const_iterator i = deltas.begin();
+       i != deltas.end(); ++i)
+    {
+      data data_old;
+      data data_new;
+
+      if (!null_id(delta_entry_src(i)))
+        {
+          file_data f_old;
+          app.db.get_file_version(delta_entry_src(i), f_old);
+          data_old = f_old.inner();
+        }
+
+      if (new_is_archived)
+        {
+          file_data f_new;
+          app.db.get_file_version(delta_entry_dst(i), f_new);
+          data_new = f_new.inner();
+        }
+      else
+        {
+          read_localized_data(delta_entry_path(i),
+                              data_new, app.lua);
+        }
+
+      bool is_binary = false;
+      if (guess_binary(data_old()) ||
+          guess_binary(data_new()))
+        is_binary = true;
+
+      app.lua.hook_external_diff(delta_entry_path(i),
+                                 data_old,
+                                 data_new,
+                                 is_binary,
+                                 app.diff_args(),
+                                 delta_entry_src(i).inner()(),
+                                 delta_entry_dst(i).inner()());
+    }
+}
 
 static void 
 dump_diffs(change_set::delta_map const & deltas,
@@ -2562,8 +2606,9 @@ dump_diffs(change_set::delta_map const & deltas,
               split_into_lines(unpacked(), lines);
               if (! lines.empty())
                 {
-                  cout << (F("--- %s\n") % delta_entry_path(i))
-                       << (F("+++ %s\n") % delta_entry_path(i))
+                  cout << "===============================================\n";
+                  cout << (F("--- %s\t%s\n") % delta_entry_path(i) % delta_entry_src(i))
+                       << (F("+++ %s\t%s\n") % delta_entry_path(i) % delta_entry_dst(i))
                        << (F("@@ -0,0 +1,%d @@\n") % lines.size());
                   for (vector<string>::const_iterator j = lines.begin();
                        j != lines.end(); ++j)
@@ -2603,6 +2648,8 @@ dump_diffs(change_set::delta_map const & deltas,
               split_into_lines(data_new(), new_lines);
               make_diff(delta_entry_path(i)(), 
                         delta_entry_path(i)(), 
+                        delta_entry_src(i),
+                        delta_entry_dst(i),
                         old_lines, new_lines,
                         cout, type);
             }
@@ -2610,14 +2657,19 @@ dump_diffs(change_set::delta_map const & deltas,
     }
 }
 
-void do_diff(const string & name, 
-             app_state & app, 
-             vector<utf8> const & args, 
-             diff_type type)
+CMD(diff, "informative", "[PATH]...", 
+    "show current diffs on stdout.\n"
+    "If one revision is given, the diff between the working directory and\n"
+    "that revision is shown.  If two revisions are given, the diff between\n"
+    "them is given.  If no format is specified, unified is used by default.",
+    OPT_BRANCH_NAME % OPT_REVISION % OPT_DEPTH %
+    OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
+    OPT_EXTERNAL_DIFF_ARGS)
 {
   revision_set r_old, r_new;
   manifest_map m_new;
   bool new_is_archived;
+  diff_type type = app.diff_format;
 
   change_set composite;
 
@@ -2726,27 +2778,10 @@ void do_diff(const string & name,
     }
   cout << "# " << endl;
 
-  dump_diffs(composite.deltas, app, new_is_archived, type);
-}
-
-CMD(cdiff, "informative", "[PATH]...", 
-    "show current context diffs on stdout.\n"
-    "If one revision is given, the diff between the working directory and\n"
-    "that revision is shown.  If two revisions are given, the diff between\n"
-    "them is given.",
-    OPT_BRANCH_NAME % OPT_REVISION % OPT_DEPTH)
-{
-  do_diff(name, app, args, context_diff);
-}
-
-CMD(diff, "informative", "[PATH]...", 
-    "show current unified diffs on stdout.\n"
-    "If one revision is given, the diff between the working directory and\n"
-    "that revision is shown.  If two revisions are given, the diff between\n"
-    "them is given.",
-    OPT_BRANCH_NAME % OPT_REVISION % OPT_DEPTH)
-{
-  do_diff(name, app, args, unified_diff);
+  if (type == external_diff) {
+    do_external_diff(composite.deltas, app, new_is_archived);
+  } else
+    dump_diffs(composite.deltas, app, new_is_archived, type);
 }
 
 CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor", OPT_NONE)

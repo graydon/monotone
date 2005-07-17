@@ -1079,6 +1079,8 @@ void cxtdiff_hunk_writer::advance_to(size_t newpos)
 
 void make_diff(string const & filename1,
                string const & filename2,
+               file_id const & id1,
+               file_id const & id2,
                vector<string> const & lines1,
                vector<string> const & lines2,
                ostream & ost,
@@ -1110,8 +1112,9 @@ void make_diff(string const & filename1,
     {
       case unified_diff:
       {
-        ost << "--- " << filename1 << endl;
-        ost << "+++ " << filename2 << endl;
+        ost << "===============================================" << endl;
+        ost << "--- " << filename1 << "\t" << id1 << endl;
+        ost << "+++ " << filename2 << "\t" << id2 << endl;
 
         unidiff_hunk_writer hunks(lines1, lines2, 3, ost);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
@@ -1119,12 +1122,19 @@ void make_diff(string const & filename1,
       }
       case context_diff:
       {
-        ost << "*** " << filename1 << endl;
-        ost << "--- " << filename2 << endl;
+        ost << "===============================================" << endl;
+        ost << "*** " << filename1 << "\t" << id1 << endl;
+        ost << "--- " << filename2 << "\t" << id2 << endl;
 
         cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
         break;
+      }
+      default:
+      {
+        // should never reach this; the external_diff type is not
+        // handled by this function.
+        I(false);
       }
     }
 }
@@ -1195,8 +1205,9 @@ static void unidiff_append_test()
              + "}\n"
              + "\n");
   
-  string ud(string("--- hello.c\n")
-            + "+++ hello.c\n"
+  string ud(string("===============================================\n")
+            + "--- hello.c\t0123456789abcdef0123456789abcdef01234567\n"
+            + "+++ hello.c\tabcdef0123456789abcdef0123456789abcdef01\n"
             + "@@ -9,3 +9,9 @@\n"
             + " {\n"
             + "         say_hello();\n"
@@ -1212,7 +1223,11 @@ static void unidiff_append_test()
   split_into_lines(src, src_lines);
   split_into_lines(dst, dst_lines);
   stringstream sst;
-  make_diff("hello.c", "hello.c", src_lines, dst_lines, sst, unified_diff);
+  make_diff("hello.c", "hello.c",
+            file_id(id("0123456789abcdef0123456789abcdef01234567")),
+            file_id(id("abcdef0123456789abcdef0123456789abcdef01")),
+            src_lines, dst_lines, sst, unified_diff);
+  cout << sst.str() << std::endl;
   BOOST_CHECK(sst.str() == ud);
 }
 

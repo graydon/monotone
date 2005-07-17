@@ -1023,6 +1023,40 @@ lua_hooks::hook_resolve_dir_conflict(file_path const & anc,
   return ok;  
 }
 
+bool
+lua_hooks::hook_external_diff(file_path const & path,
+                              data const & data_old,
+                              data const & data_new,
+                              bool is_binary,
+                              std::string const & diff_args,
+                              std::string const & oldrev,
+                              std::string const & newrev)
+{
+  Lua ll(st);
+
+  ll
+    .func("external_diff")
+    .push_str(path());
+
+  if (oldrev.length() != 0)
+    ll.push_str(data_old());
+  else
+    ll.push_nil();
+
+  ll.push_str(data_new());
+
+  ll.push_bool(is_binary);
+
+  if (diff_args.length() != 0)
+    ll.push_str(diff_args);
+  else
+    ll.push_nil();
+
+  ll.push_str(oldrev);
+  ll.push_str(newrev);
+
+  return ll.call(7,0).ok();
+}
 
 bool
 lua_hooks::hook_use_inodeprints()

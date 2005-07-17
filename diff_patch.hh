@@ -19,15 +19,10 @@ struct conflict {};
 // this file is to contain some stripped down, in-process implementations
 // of GNU-diffutils-like things (diff, diff3, maybe patch..)
 
-
-enum diff_type
-{
-  unified_diff,
-  context_diff
-};
-
 void make_diff(std::string const & filename1,
                std::string const & filename2,
+               file_id const & id1,
+               file_id const & id2,
                std::vector<std::string> const & lines1,
                std::vector<std::string> const & lines2,
                std::ostream & ost,

@@ -5835,6 +5835,20 @@ attr_init_functions["manual_merge"] =
 The @code{binary_file} function is also defined as a lua hook. See
 @ref{Default hooks}. 
 
+@item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary},
+                     @var{diff_args}, @var{old_rev}, @var{new_rev})
+
+Called for each file when @command{diff} is given the
+@option{--external} command.  @var{file_path} is the pathname of the
+file that is being diffed.  @var{old_data} and @var{new_data} are the
+data contents of the old and the new file.  If the data is binary,
+@var{is_binary} will be true, otherwise false.  @var{old_rev} and
+@var{new_rev} are the revision IDs of the old and new data.
+
+If an extra arguments are given via @option{--diff-args}, the string
+will be passed in as @var{diff_args}.  Otherwise @var{diff_args} will
+be nil.
+
 @end ftable
 
 @page
