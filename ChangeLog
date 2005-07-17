@@ -1,5 +1,11 @@
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 
+	* configure.ac, win32/monotone.iss, monotone.spec:
+	* debian/changelog: Bump version numbers to 0.21.
+	* NEWS: Commit to a timestamp.
+
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Add diff changes, more tweaking.
 	* UPGRADE: Update for 0.21.
 	* AUTHORS: Add Vladimir Vukicevic.
