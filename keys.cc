@@ -120,6 +120,7 @@ get_passphrase(lua_hooks & lua,
           else
             break;
         }
+      N(strlen(pass1) != 0, F("no passphrase given"));
 
       try 
         {

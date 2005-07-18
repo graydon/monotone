@@ -1,3 +1,8 @@
+2005-07-18  Nathaniel Smith  <njs@pobox.com>
+
+	* keys.cc (get_passphrase): Do still error out if they keep typing
+	empty passphrases.
+
 2005-07-18  Richard Levitte  <richard@levitte.org>
 
 	* database.cc: Move the inclusion of stdarg.h...
