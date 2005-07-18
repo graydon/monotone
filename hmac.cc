@@ -1,7 +1,6 @@
-#include <string.h>
+#include <string>
 
-#include "cryptopp/hmac.h"
-#include "cryptopp/sha.h"
+#include "botan/botan.h"
 
 #include "sanity.hh"
 #include "hmac.hh"
@@ -9,16 +8,17 @@
 #include "constants.hh"
 
 chained_hmac::chained_hmac(netsync_session_key const & session_key) :
-  key(session_key)
+  hmac_length(constants::sha1_digest_length), 
+  key(reinterpret_cast<Botan::byte const *>(session_key().data()), session_key().size())
 {
-  I(hmac_length == CryptoPP::SHA::DIGESTSIZE);
-  memset(chain_val, 0, sizeof(chain_val));
+  chain_val.assign(hmac_length, 0x00);
 }
 
 void
 chained_hmac::set_key(netsync_session_key const & session_key)
 {
-  key = session_key;
+  key = Botan::SymmetricKey(reinterpret_cast<Botan::byte const *>(session_key().data()),
+                            session_key().size());
 }
 
 std::string
@@ -30,15 +30,15 @@ chained_hmac::process(std::string const & str, size_t pos, size_t n)
 
   I(pos + n <= str.size());
 
-  CryptoPP::HMAC<CryptoPP::SHA> 
-      hmac(reinterpret_cast<const byte *>(key().data()), 
-        constants::netsync_session_key_length_in_bytes);
-  hmac.Update(reinterpret_cast<const byte *>(chain_val), 
-              sizeof(chain_val));
-  hmac.Update(reinterpret_cast<const byte *>(str.data() + pos),
-              n);
-  hmac.Final(reinterpret_cast<byte *>(chain_val));
-  
-  std::string out(chain_val, sizeof(chain_val));
-  return out;
+  Botan::Pipe p(new Botan::MAC_Filter("HMAC(SHA-1)", key,
+                                      constants::sha1_digest_length));
+  p.start_msg();
+  p.write(chain_val);
+  p.write(reinterpret_cast<Botan::byte const *>(str.data() + pos), n);
+  p.end_msg();
+
+  chain_val = p.read_all_as_string();
+  I(chain_val.size() == constants::sha1_digest_length);
+
+  return chain_val;
 }

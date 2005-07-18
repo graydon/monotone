@@ -3,10 +3,9 @@
 
 #include <string>
 
-#include "cryptopp/hmac.h"
-#include "cryptopp/sha.h"
-
+#include "botan/botan.h"
 #include "vocab.hh"
+#include "constants.hh"
 
 struct chained_hmac
 {
@@ -16,11 +15,11 @@ struct chained_hmac
     std::string process(std::string const & str, size_t pos = 0, 
         size_t n = std::string::npos);
 
-    static size_t const hmac_length = CryptoPP::SHA::DIGESTSIZE;
+    size_t const hmac_length;
 
   private:
-    netsync_session_key key;
-    char chain_val[hmac_length];
+    Botan::SymmetricKey key;
+    std::string chain_val;
 };
 
 

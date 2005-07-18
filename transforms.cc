@@ -16,12 +16,9 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/tokenizer.hpp>
 
-#include "cryptopp/filters.h"
-#include "cryptopp/files.h"
-#include "cryptopp/sha.h"
-#include "cryptopp/hex.h"
-#include "cryptopp/base64.h"
-#include "cryptopp/gzip.h"
+#include "botan/botan.h"
+#include "botan/gzip.h"
+#include "botan/sha160.h"
 
 #include "idna/idna.h"
 #include "idna/stringprep.h"
@@ -67,20 +64,19 @@ using namespace std;
 template<typename XFM> string xform(string const & in)
 {
   string out;
-  out.reserve(in.size() * 2);
-  CryptoPP::StringSource 
-    str(in, true, 
-        new XFM(new CryptoPP::StringSink(out)));
+  Botan::Pipe pipe(new XFM());
+  pipe.process_msg(in);
+  out = pipe.read_all_as_string();
   return out;
 }
 
 // specialize it
-template string xform<CryptoPP::Base64Encoder>(string const &);
-template string xform<CryptoPP::Base64Decoder>(string const &);
-template string xform<CryptoPP::HexEncoder>(string const &);
-template string xform<CryptoPP::HexDecoder>(string const &);
-template string xform<CryptoPP::Gzip>(string const &);
-template string xform<CryptoPP::Gunzip>(string const &);
+template string xform<Botan::Base64_Encoder>(string const &);
+template string xform<Botan::Base64_Decoder>(string const &);
+template string xform<Botan::Hex_Encoder>(string const &);
+template string xform<Botan::Hex_Decoder>(string const &);
+template string xform<Botan::Gzip_Compression>(string const &);
+template string xform<Botan::Gzip_Decompression>(string const &);
 
 // for use in hexenc encoding
 
@@ -163,11 +159,9 @@ void pack(T const & in, base64< gzip<T> > & out)
   string tmp;
   tmp.reserve(in().size()); // FIXME: do some benchmarking and make this a constant::
 
-  CryptoPP::StringSource 
-    str(in(), true, 
-        new CryptoPP::Gzip(
-          new CryptoPP::Base64Encoder(
-            new CryptoPP::StringSink(tmp))));
+  Botan::Pipe pipe(new Botan::Gzip_Compression(), new Botan::Base64_Encoder);
+  pipe.process_msg(in());
+  tmp = pipe.read_all_as_string();
   out = tmp;
 }
 
@@ -177,11 +171,9 @@ void unpack(base64< gzip<T> > const & in, T & out)
   string tmp;
   tmp.reserve(in().size()); // FIXME: do some benchmarking and make this a constant::
 
-  CryptoPP::StringSource 
-    str(in(), true, 
-        new CryptoPP::Base64Decoder(
-          new CryptoPP::Gunzip(
-            new CryptoPP::StringSink(tmp))));
+  Botan::Pipe pipe(new Botan::Base64_Decoder(), new Botan::Gzip_Decompression());
+  pipe.process_msg(in());
+  tmp = pipe.read_all_as_string();
 
   out = tmp;
 }
@@ -230,13 +222,10 @@ void
 calculate_ident(data const & dat,
                 hexenc<id> & ident)
 {
-  CryptoPP::SHA hash;
-  hash.Update(reinterpret_cast<byte const *>(dat().c_str()), 
-              static_cast<unsigned int>(dat().size()));
-  char digest[CryptoPP::SHA::DIGESTSIZE];
-  hash.Final(reinterpret_cast<byte *>(digest));
-  string out(digest, CryptoPP::SHA::DIGESTSIZE);
-  id ident_decoded(out);
+  Botan::Pipe p(new Botan::Hash_Filter("SHA-1"));
+  p.process_msg(dat());
+
+  id ident_decoded(p.read_all_as_string());
   encode_hexenc(ident_decoded, ident);  
 }
 
@@ -264,7 +253,6 @@ void
 calculate_ident(manifest_map const & m,
                 manifest_id & ident)
 {
-  CryptoPP::SHA hash;
   size_t sz = 0;
   static size_t bufsz = 0;
   static char *buf = NULL;
@@ -298,13 +286,10 @@ calculate_ident(manifest_map const & m,
       *c++ = '\n'; 
     }
   
-  hash.Update(reinterpret_cast<byte const *>(buf), 
-              static_cast<unsigned int>(sz));
+  Botan::Pipe p(new Botan::Hash_Filter("SHA-1"));
+  p.process_msg(reinterpret_cast<Botan::byte const*>(buf), sz);
 
-  char digest[CryptoPP::SHA::DIGESTSIZE];
-  hash.Final(reinterpret_cast<byte *>(digest));
-  string out(digest, CryptoPP::SHA::DIGESTSIZE);
-  id ident_decoded(out);
+  id ident_decoded(p.read_all_as_string());
   hexenc<id> raw_ident;
   encode_hexenc(ident_decoded, raw_ident);  
   ident = manifest_id(raw_ident);    
@@ -364,17 +349,13 @@ calculate_ident(file_path const & file,
       // no conversions necessary, use streaming form
       // still have to localize the filename
       fs::path localized_file = localized(file);
-      // crypto++'s FileSource will simply treat directories as empty files,
-      // so we'd better check ourselves.
+      // Best to be safe and check it isn't a dir.
       I(fs::exists(localized_file) && !fs::is_directory(localized_file));
-      CryptoPP::SHA hash;
-      unsigned int const sz = 2 * CryptoPP::SHA::DIGESTSIZE;
-      char buffer[sz];
-      CryptoPP::FileSource f(localized_file.native_file_string().c_str(),
-                             true, new CryptoPP::HashFilter
-                             (hash, new CryptoPP::HexEncoder
-                              (new CryptoPP::ArraySink(reinterpret_cast<byte *>(buffer), sz))));
-      ident = lowercase(string(buffer, sz));
+      Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
+      Botan::DataSource_Stream infile(localized_file.native_file_string());
+      p.process_msg(infile);
+
+      ident = lowercase(p.read_all_as_string());
     }
 }
 
@@ -513,8 +494,8 @@ trim_ws(string const & s)
 string 
 canonical_base64(string const & s)
 {
-  return xform<CryptoPP::Base64Encoder>
-    (xform<CryptoPP::Base64Decoder>(s));
+  return xform<Botan::Base64_Encoder>
+    (xform<Botan::Base64_Decoder>(s));
 }
 
 

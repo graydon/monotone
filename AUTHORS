@@ -75,15 +75,6 @@ is assigned to the public domain. You can find the original code at
 http://www.sqlite.org.
 
 
-Wei Dai <weidai@eskimo.com> wrote many of the files in cryptopp/*,
-though possibly not all of them; the files themselves were assigned to
-the public domain, and Wei Dai retains copyright only over the
-collective work of the crypto++ library from whence they were
-copied. I make no claim to be representing the crypto++ collective
-work here; I am merely using several public domain files from it. You
-can find the original code at http://www.cryptopp.com.
-
-
 The files in idna/* are copies of the core portion of the "GNU libidn"
 library. Copyright (C) 2002, 2003 Simon Josefsson. They are licensed
 under the GNU LGPL version 2.1. The original sources for libidn can be
@@ -205,6 +196,38 @@ files in boost/ related to circular buffers:
 // Permission to modify the code and to distribute modified code is granted,
 // provided the above notices are retained, and a notice that the code was
 // modified is included with the above copyright notice.
+
+---
+
+Jack Lloyd <lloyd@randombit.net> wrote the majority of the Botan
+library, with contributions as noted in botan/thanks.txt
+The library is distributed under a BSD-like license:
+
+---
+
+Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+
+Redistribution and use in source and binary forms, for any use, with or without
+modification, is permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions, and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions, and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, ARE DISCLAIMED.
+
+IN NO EVENT SHALL THE AUTHOR(S) OR CONTRIBUTOR(S) BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ---
 

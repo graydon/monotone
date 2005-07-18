@@ -1682,7 +1682,6 @@ database::install_functions(app_state * app)
                            SQLITE_UTF8, NULL,
                            &sqlite3_unbase64_fn, 
                            NULL, NULL) == 0);
-
   I(sqlite3_create_function(sql(), "unpack", -1, 
                            SQLITE_UTF8, NULL,
                            &sqlite3_unpack_fn, 

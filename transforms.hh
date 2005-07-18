@@ -18,32 +18,32 @@
 // transforms.cc for the implementations (most of which are delegations to
 // crypto++ and librsync)
 
-namespace CryptoPP {
-  class Base64Encoder;
-  class Base64Decoder;
-  class HexEncoder;
-  class HexDecoder;
-  class Gzip;
-  class Gunzip;
+namespace Botan {
+  class Base64_Encoder;
+  class Base64_Decoder;
+  class Hex_Encoder;
+  class Hex_Decoder;
+  class Gzip_Compression;
+  class Gzip_Decompression;
 }
 
 template<typename XFM> std::string xform(std::string const &);
-extern template std::string xform<CryptoPP::Base64Encoder>(std::string const &);
-extern template std::string xform<CryptoPP::Base64Decoder>(std::string const &);
-extern template std::string xform<CryptoPP::HexEncoder>(std::string const &);
-extern template std::string xform<CryptoPP::HexDecoder>(std::string const &);
-extern template std::string xform<CryptoPP::Gzip>(std::string const &);
-extern template std::string xform<CryptoPP::Gunzip>(std::string const &);
+extern template std::string xform<Botan::Base64_Encoder>(std::string const &);
+extern template std::string xform<Botan::Base64_Decoder>(std::string const &);
+extern template std::string xform<Botan::Hex_Encoder>(std::string const &);
+extern template std::string xform<Botan::Hex_Decoder>(std::string const &);
+extern template std::string xform<Botan::Gzip_Compression>(std::string const &);
+extern template std::string xform<Botan::Gzip_Decompression>(std::string const &);
 
 // base64 encoding
 
 template <typename T>
 void encode_base64(T const & in, base64<T> & out)
-{ out = xform<CryptoPP::Base64Encoder>(in()); }
+{ out = xform<Botan::Base64_Encoder>(in()); }
 
 template <typename T>
 void decode_base64(base64<T> const & in, T & out)
-{ out = xform<CryptoPP::Base64Decoder>(in()); }
+{ out = xform<Botan::Base64_Decoder>(in()); }
 
 
 // hex encoding
@@ -67,16 +67,16 @@ void encode_hexenc(T const & in, hexenc<T> & out)
 
 template <typename T>
 void encode_gzip(T const & in, gzip<T> & out)
-{ out = xform<CryptoPP::Gzip>(in()); }
+{ out = xform<Botan::Gzip_Compression>(in()); }
 
 template <typename T>
 void decode_gzip(gzip<T> const & in, T & out)
-{ out = xform<CryptoPP::Gunzip>(in()); }
+{ out = xform<Botan::Gzip_Decompression>(in()); }
 
 // string variant for netsync
 template <typename T>
 void encode_gzip(std::string const & in, gzip<T> & out)
-{ out = xform<CryptoPP::Gzip>(in); }
+{ out = xform<Botan::Gzip_Compression>(in); }
 
 // both at once (this is relatively common)
 
