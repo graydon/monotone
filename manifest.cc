@@ -27,7 +27,6 @@
 // and i/o functions on them. a manifest specifies exactly which versions
 // of each file reside at which path location in a given tree.
 
-using namespace boost;
 using namespace std;
 
 // building manifest_maps
