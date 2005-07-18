@@ -1,6 +1,6 @@
 /*************************************************
 * SHA-160 Header File                            *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_SHA_160_H__
@@ -27,14 +27,10 @@ class SHA_160 : public MDx_HashFunction
       void hash(const byte[]);
       void copy_out(byte[]);
 
-      static void F1(u32bit, u32bit&, u32bit, u32bit, u32bit&, u32bit);
-      static void F2(u32bit, u32bit&, u32bit, u32bit, u32bit&, u32bit);
-      static void F3(u32bit, u32bit&, u32bit, u32bit, u32bit&, u32bit);
-      static void F4(u32bit, u32bit&, u32bit, u32bit, u32bit&, u32bit);
-      SecureBuffer<u32bit, 80> W;
       SecureBuffer<u32bit, 5> digest;
    };
 
 }
 
 #endif
+

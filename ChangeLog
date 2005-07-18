@@ -1,3 +1,8 @@
+2005-07-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/sha160.{cpp,h}: new faster sha160 implementation from Jack Lloyd
+	and Kaushik Veeraraghavan.
+
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac, win32/monotone.iss, monotone.spec:
@@ -279,6 +284,16 @@
 
 	* interner.hh: make slightly faster
 
+2005-07-11  Matt Johnston  <matt@ucc.asn.au>
+
+	* hmac.cc: <string> not <string.h>
+
+2005-07-11  Matt Johnston  <matt@ucc.asn.au>
+
+	* keys.cc (encrypt_rsa): fix typo
+	* hmac.{cc,hh}: store key as SymmetricKey, pass correctly to
+	MAC_Filter
+
 2005-07-10  Nathaniel Smith  <njs@pobox.com>
 
 	* ChangeLog, configure.ac: Re-remove mysteriously revived
@@ -339,6 +354,16 @@
 	* monotone.texi (Generating Keys): Make it a little clearer that
 	we aren't necessarily recommending people store their passphrase
 	in plaintext.
+
+2005-07-08  Matt Johnston  <matt@ucc.asn.au>
+
+	* propagate mainline to botan branch
+
+	* constants.{cc,hh}: add sha1_digest_length as botan
+	doesn't provide a convenient definition.
+	* hmac.{cc,hh}: convert to use botan
+	* keys.cc (encrypt_rsa, decrypt_rsa): use botan
+	* transforms.{cc,hh}: use botan
 
 2005-07-08  Matt Johnston  <matt@ucc.asn.au>
 
