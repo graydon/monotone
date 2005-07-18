@@ -2003,6 +2003,8 @@ session::process_auth_cmd(protocol_role their_role,
       W(F("bad client signature\n"));         
     }  
   return false;
+}
+
 bool 
 session::process_confirm_cmd(string const & signature)
 {

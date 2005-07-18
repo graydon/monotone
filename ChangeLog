@@ -1,5 +1,10 @@
 2005-07-18  Matt Johnston  <matt@ucc.asn.au>
 
+	* netsync.cc: merge fixup
+	* botan/pipe_rw.cpp (read_all_as_string): make it smarter and faster
+
+2005-07-18  Matt Johnston  <matt@ucc.asn.au>
+
 	* botan/sha160.{cpp,h}: new faster sha160 implementation from Jack Lloyd
 	and Kaushik Veeraraghavan.
 
