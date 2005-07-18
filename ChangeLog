@@ -1,5 +1,10 @@
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 
+	* constants.cc (legal_key_name_bytes): Allow + and _ to appear in
+	key names.
+
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
 	* ui.{cc,hh} (tick_write_dot::write_ticks): Start a new line when
 	too many dots have been written.
 	* netsync.cc (process_refine_cmd): Add comment noting a possible
