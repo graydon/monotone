@@ -1,3 +1,17 @@
+2005-07-18  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (received_items): New instance variable.
+	(session::session): Initialize it.
+	(note_item_arrived): Maintain it.
+	(item_request_outstanding): Rename it to...
+	(item_already_received): ...this, and have it check both
+	outstanding and fulfilled requests.
+	(queue_send_data_cmd, queue_send_delta_cmd): Call it via new
+	name.
+	
+	Hopefully this will eliminate cases where "revs in" is larger than
+	"revs written".
+	
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 
 	* constants.cc (legal_key_name_bytes): Allow + and _ to appear in
