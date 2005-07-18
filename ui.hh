@@ -60,6 +60,7 @@ public:
   void clear_line();
 private:
   std::map<std::string,size_t> last_ticks;
+  int chars_on_line;
 };
 
 struct tick_write_nothing : virtual public tick_writer

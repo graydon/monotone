@@ -186,6 +186,7 @@ tick_write_dot::~tick_write_dot()
 
 void tick_write_dot::write_ticks()
 {
+  static const string tickline_prefix = "monotone: ";
   string tickline1, tickline2;
   bool first_tick = true;
 
@@ -197,7 +198,8 @@ void tick_write_dot::write_ticks()
   else
     {
       tickline1 = "monotone: ticks: ";
-      tickline2 = "\nmonotone: ";
+      tickline2 = "\n" + tickline_prefix;
+      chars_on_line = tickline_prefix.size();
     }
 
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
@@ -220,6 +222,12 @@ void tick_write_dot::write_ticks()
           || ((i->second->ticks / i->second->mod)
               > (old->second / i->second->mod)))
         {
+          chars_on_line += i->second->shortname.size();
+          if (chars_on_line > 72)
+            {
+              chars_on_line = tickline_prefix.size() + i->second->shortname.size();
+              tickline2 += "\n" + tickline_prefix;
+            }
           tickline2 += i->second->shortname;
 
           if (old == last_ticks.end())

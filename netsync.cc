@@ -2326,6 +2326,9 @@ session::process_refine_cmd(merkle_node const & their_node)
                     load_merkle_node(their_node.type, our_node->level + 1,
                                      subprefix, our_subtree);
                     I(our_node->type == our_subtree->type);
+                    // FIXME: it would be more efficient here, to instead of
+                    // sending our subtree, just send the data for everything
+                    // in the subtree.
                     queue_refine_cmd(*our_subtree);
                   }
                   break;
@@ -2425,6 +2428,10 @@ session::process_refine_cmd(merkle_node const & their_node)
                     merkle_ptr our_subtree;
                     load_merkle_node(our_node->type, our_node->level + 1,
                                      subprefix, our_subtree);
+                    // FIXME: it would be more efficient here, to instead of
+                    // sending our subtree, just send the data for everything
+                    // in the subtree (except, possibly, the item they already
+                    // have).
                     queue_refine_cmd(*our_subtree);
                   }
                   break;
@@ -2485,6 +2492,9 @@ session::process_refine_cmd(merkle_node const & their_node)
                     merkle_ptr our_subtree;
                     load_merkle_node(our_node->type, our_node->level + 1,
                                      subprefix, our_subtree);
+                    // FIXME: it would be more efficient here, to instead of
+                    // sending our subtree, just send the data for everything
+                    // in the subtree (except, possibly, the dead thing).
                     queue_refine_cmd(*our_subtree);
                   }
                   break;

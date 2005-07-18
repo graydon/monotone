@@ -1,5 +1,12 @@
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 
+	* ui.{cc,hh} (tick_write_dot::write_ticks): Start a new line when
+	too many dots have been written.
+	* netsync.cc (process_refine_cmd): Add comment noting a possible
+	optimization regarding subtree refinement.
+
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
 	* configure.ac, win32/monotone.iss, monotone.spec:
 	* debian/changelog: Bump version numbers to 0.21.
 	* NEWS: Commit to a timestamp.
