@@ -273,6 +273,7 @@ session
 
   map<netcmd_item_type, done_marker> done_refinements;
   map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
+  map<netcmd_item_type, boost::shared_ptr< set<id> > > received_items;
   map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestry;
   map<revision_id, map<cert_name, vector<cert> > > received_certs;
   set< pair<id, id> > reverse_delta_requests;
@@ -313,7 +314,7 @@ session
   bool all_requested_revisions_received();
 
   void note_item_requested(netcmd_item_type ty, id const & i);
-  bool item_request_outstanding(netcmd_item_type ty, id const & i);
+  bool item_already_requested(netcmd_item_type ty, id const & i);
   void note_item_arrived(netcmd_item_type ty, id const & i);
 
   void maybe_note_epochs_finished();
@@ -522,6 +523,13 @@ session::session(protocol_role role,
   requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
+
+  received_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
+  received_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
+  received_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
+  received_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
+  received_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
+  received_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
 }
 
 session::~session()
@@ -726,6 +734,11 @@ session::note_item_arrived(netcmd_item_type ty, id const & ident)
     i = requested_items.find(ty);
   I(i != requested_items.end());
   i->second->erase(ident);
+  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
+    j = received_items.find(ty);
+  I(j != received_items.end());
+  j->second->insert(ident);
+  
 
   switch (ty)
     {
@@ -744,12 +757,18 @@ session::note_item_arrived(netcmd_item_type ty, id const & ident)
 }
 
 bool 
-session::item_request_outstanding(netcmd_item_type ty, id const & ident)
+session::item_already_requested(netcmd_item_type ty, id const & ident)
 {
-  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
-    i = requested_items.find(ty);
+  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator i;
+  i = requested_items.find(ty);
   I(i != requested_items.end());
-  return i->second->find(ident) != i->second->end();
+  if (i->second->find(ident) != i->second->end())
+    return true;
+  i = received_items.find(ty);
+  I(i != received_items.end());
+  if (i->second->find(ident) != i->second->end())
+    return true;
+  return false;
 }
 
 
@@ -1490,7 +1509,7 @@ session::queue_send_data_cmd(netcmd_item_type type,
       return;
     }
 
-  if (item_request_outstanding(type, item))
+  if (item_already_requested(type, item))
     {
       L(F("not queueing request for %s '%s' as we already requested it\n") 
         % typestr % hid);
@@ -1526,7 +1545,7 @@ session::queue_send_delta_cmd(netcmd_item_type type,
       return;
     }
 
-  if (item_request_outstanding(type, ident))
+  if (item_already_requested(type, ident))
     {
       L(F("not queueing request for %s delta '%s' -> '%s' as we already requested the target\n") 
         % typestr % base_hid % ident_hid);
@@ -2326,6 +2345,9 @@ session::process_refine_cmd(merkle_node const & their_node)
                     load_merkle_node(their_node.type, our_node->level + 1,
                                      subprefix, our_subtree);
                     I(our_node->type == our_subtree->type);
+                    // FIXME: it would be more efficient here, to instead of
+                    // sending our subtree, just send the data for everything
+                    // in the subtree.
                     queue_refine_cmd(*our_subtree);
                   }
                   break;
@@ -2425,6 +2447,10 @@ session::process_refine_cmd(merkle_node const & their_node)
                     merkle_ptr our_subtree;
                     load_merkle_node(our_node->type, our_node->level + 1,
                                      subprefix, our_subtree);
+                    // FIXME: it would be more efficient here, to instead of
+                    // sending our subtree, just send the data for everything
+                    // in the subtree (except, possibly, the item they already
+                    // have).
                     queue_refine_cmd(*our_subtree);
                   }
                   break;
@@ -2485,6 +2511,9 @@ session::process_refine_cmd(merkle_node const & their_node)
                     merkle_ptr our_subtree;
                     load_merkle_node(our_node->type, our_node->level + 1,
                                      subprefix, our_subtree);
+                    // FIXME: it would be more efficient here, to instead of
+                    // sending our subtree, just send the data for everything
+                    // in the subtree (except, possibly, the dead thing).
                     queue_refine_cmd(*our_subtree);
                   }
                   break;

@@ -1,3 +1,37 @@
+2005-07-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* keys.cc (get_passphrase): don't bomb out if they type an empty passphrase.
+
+2005-07-18  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* work.cc, manifest.cc: Remove 'using namespace boost'.
+
+2005-07-18  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (received_items): New instance variable.
+	(session::session): Initialize it.
+	(note_item_arrived): Maintain it.
+	(item_request_outstanding): Rename it to...
+	(item_already_received): ...this, and have it check both
+	outstanding and fulfilled requests.
+	(queue_send_data_cmd, queue_send_delta_cmd): Call it via new
+	name.
+	
+	Hopefully this will eliminate cases where "revs in" is larger than
+	"revs written".
+	
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
+	* constants.cc (legal_key_name_bytes): Allow + and _ to appear in
+	key names.
+
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
+	* ui.{cc,hh} (tick_write_dot::write_ticks): Start a new line when
+	too many dots have been written.
+	* netsync.cc (process_refine_cmd): Add comment noting a possible
+	optimization regarding subtree refinement.
+
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac, win32/monotone.iss, monotone.spec:

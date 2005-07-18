@@ -101,6 +101,9 @@ namespace constants
   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   "0123456789"   
   "-"
+  // other non-shell, non-selector metacharacters allowed in (unquoted) local
+  // parts by RFC2821/RFC2822.  The full list is !#$%&'*+-/=?^_`|{}~.
+  "+_."
   // label and component separators
   ".@"
   ;
