@@ -10,6 +10,8 @@ struct sqlite3;
 struct sqlite3_stmt;
 struct cert;
 
+#include <stdarg.h>
+
 #include <vector>
 #include <set>
 #include <map>
