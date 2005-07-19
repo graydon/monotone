@@ -150,7 +150,9 @@ netcmd::read(string & inbuf, chained_hmac & hmac)
                                         "netcmd HMAC");
   inbuf.erase(0, pos);
   if (cmd_digest != digest)
-    throw bad_decode(F("bad HMAC %s vs. %s") % encode_hexenc(cmd_digest)
+    throw bad_decode(F("bad HMAC checksum (got %s, wanted %s)\n"
+                       "this suggests data was corrupted in transit\n")
+                     % encode_hexenc(cmd_digest)
                      % encode_hexenc(digest));
   payload.erase(0, payload_pos);
 
