@@ -260,6 +260,10 @@ migrator
       }
     else
       {
+        // if we didn't do anything, make sure that it's because we were
+        // already up to date.
+        E(init == target_id,
+          F("database schema %s is unknown; cannot perform migration") % init);
         // We really want 'db migrate' on an up-to-date schema to be a no-op
         // (no vacuum or anything, even), so that automated scripts can fire
         // one off optimistically and not have to worry about getting their

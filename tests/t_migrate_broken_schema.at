@@ -1,0 +1,10 @@
+AT_SETUP([db migrate on bad schema])
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE db migrate, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE db execute 'CREATE TABLE foo (bar primary key, baz not null)', [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE db migrate, [1], [ignore], [ignore])
+
+AT_CLEANUP

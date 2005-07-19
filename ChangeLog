@@ -1,3 +1,13 @@
+2005-07-19  Nathaniel Smith  <njs@pobox.com>
+
+	* schema_migration.cc (migrator::migrate): Add a check for schemas
+	that are just... wrong.
+	* tests/t_migrate_broken_schema.at: New test.
+
+2005-07-19  Nathaniel Smith  <njs@pobox.com>
+
+	* netcmd.cc (read): Make the bad HMAC error message clearer.
+
 2005-07-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_diff_external.at: Canonicalise output for Win32.
