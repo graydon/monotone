@@ -3642,7 +3642,7 @@ session::rebuild_merkle_trees(app_state & app,
   P(F("rebuilding merkle trees ...\n"));
   for (set<utf8>::const_iterator i = branchnames.begin();
       i != branchnames.end(); ++i)
-    P(F("including branch %s") % *i);
+    L(F("including branch %s") % *i);
 
   boost::shared_ptr<merkle_table> ctab = make_root_node(*this, cert_item);
   boost::shared_ptr<merkle_table> ktab = make_root_node(*this, key_item);

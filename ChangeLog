@@ -1,3 +1,9 @@
+2005-07-20  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (rebuild_merkle_trees): Make 'including branch'
+	message L() instead of P(); it's nice information, but too much to
+	be useful with large databases.
+
 2005-07-20  Marcel van der Boom  <marcel@hsdev.com>
 
 	* database.{cc,hh} (get_branches): New method.
