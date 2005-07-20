@@ -2131,7 +2131,7 @@ CMD(db, "database",
     "migrate\n"
     "execute\n"
     "kill_rev_locally ID\n"
-    "kill_branch_locally BRANCH\n"
+    "kill_branch_certs_locally BRANCH\n"
     "kill_tag_locally TAG\n"
     "check\n"
     "changesetify\n"
@@ -2171,7 +2171,7 @@ CMD(db, "database",
         kill_rev_locally(app,idx(args, 1)());
       else if (idx(args, 0)() == "clear_epoch")
         app.db.clear_epoch(cert_value(idx(args, 1)()));
-      else if (idx(args, 0)() == "kill_branch_locally")
+      else if (idx(args, 0)() == "kill_branch_certs_locally")
         app.db.delete_branch_named(cert_value(idx(args, 1)()));
       else if (idx(args, 0)() == "kill_tag_locally")
         app.db.delete_tag_named(cert_value(idx(args, 1)()));

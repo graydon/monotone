@@ -1,3 +1,12 @@
+2005-07-20  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (db): Rename kill_branch_locally to
+	kill_branch_certs_locally.
+	* tests/t_db_kill_branch_locally.at: Rename to...
+	* tests/t_db_kill_branch_certs_locally.at: ...this.  Update.
+	* testsuite.at: Update.
+	* monotone.texi (Database): Update.
+
 2005-07-19  Nathaniel Smith  <njs@pobox.com>
 
 	* schema_migration.cc (migrator::migrate): Add a check for schemas

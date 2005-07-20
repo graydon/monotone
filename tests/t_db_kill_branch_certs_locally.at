@@ -1,7 +1,7 @@
-AT_SETUP([db kill_branch_locally command])
+AT_SETUP([db kill_branch_certs_locally command])
 MONOTONE_SETUP
 
-# This tests the db kill_branch_locally command
+# This tests the db kill_branch_certs_locally command
 
 # Prepare a db with a couple of branches
 ADD_FILE(foo, [file named foo
@@ -14,7 +14,7 @@ AT_CHECK(grep -q good stdout)
 AT_CHECK(grep -q bad stdout)
 
 # Now we delete the branch, and make sure it's gone
-AT_CHECK(MONOTONE db kill_branch_locally bad, [], ignore, ignore)
+AT_CHECK(MONOTONE db kill_branch_certs_locally bad, [], ignore, ignore)
 AT_CHECK(MONOTONE ls branches, [], stdout, ignore)
 AT_CHECK(grep -q good stdout)
 AT_CHECK(grep -q bad stdout, [1])

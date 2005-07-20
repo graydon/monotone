@@ -4445,7 +4445,7 @@ you do, after all, need to retrieve the data in @var{id}, then
 work you can extract @var{id}'s data.
 @end itemize
 
-@item monotone db kill_branch_locally @var{branch}
+@item monotone db kill_branch_certs_locally @var{branch}
 
 This command ``kills'' a branch by deleting all branch certs with that
 branch name. You should consider carefully whether you want to use it,
