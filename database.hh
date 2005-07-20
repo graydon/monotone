@@ -427,6 +427,9 @@ public:
 
   void clear_var(var_key const & key);
 
+  // branches
+  void get_branches(std::vector<std::string> & names);
+  
   // completion stuff
 
   void complete(std::string const & partial,

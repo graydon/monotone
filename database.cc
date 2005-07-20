@@ -2412,6 +2412,24 @@ database::clear_var(var_key const & key)
           key.first().c_str(), name_encoded().c_str());
 }
 
+// branches
+
+void
+database::get_branches(vector<string> & names)
+{
+    results res;
+    string query="SELECT DISTINCT value FROM revision_certs WHERE name= ?";
+    string cert_name="branch";
+    fetch(res,one_col,any_rows,query.c_str(),cert_name.c_str());
+    for (size_t i = 0; i < res.size(); ++i)
+      {
+        base64<data> row_encoded(res[i][0]);
+        data name;
+        decode_base64(row_encoded, name);
+        names.push_back(name());
+      }
+}
+
 // transaction guards
 
 transaction_guard::transaction_guard(database & d) : committed(false), db(d) 

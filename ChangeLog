@@ -1,3 +1,11 @@
+2005-07-20  Marcel van der Boom  <marcel@hsdev.com>
+
+	* database.{cc,hh} (get_branches): New method.
+	* commands.cc (ls_branches): Use it.
+	* netsync.cc (get_branches): Likewise.
+	* tests/t_ls_branches.at: New test.
+	* testsuite.at: Add it.
+	
 2005-07-20  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (db): Rename kill_branch_locally to

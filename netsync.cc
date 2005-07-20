@@ -1704,16 +1704,8 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
 void
 get_branches(app_state & app, vector<string> & names)
 {
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(branch_cert_name, certs);
-  for (size_t i = 0; i < certs.size(); ++i)
-    {
-      cert_value name;
-      decode_base64(idx(certs, i).inner().value, name);
-      names.push_back(name());
-    }
+  app.db.get_branches(names);
   sort(names.begin(), names.end());
-  names.erase(std::unique(names.begin(), names.end()), names.end());
   if (!names.size())
     W(F("No branches found."));
 }

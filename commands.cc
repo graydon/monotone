@@ -1573,22 +1573,13 @@ CMD(heads, "tree", "", "show unmerged head revisions of branch",
 static void 
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(branch_cert_name, certs);
-
   vector<string> names;
-  for (size_t i = 0; i < certs.size(); ++i)
-    {
-      cert_value name;
-      decode_base64(idx(certs, i).inner().value, name);
-      if (!app.lua.hook_ignore_branch(name()))
-        names.push_back(name());
-    }
+  app.db.get_branches(names);
 
   sort(names.begin(), names.end());
-  names.erase(std::unique(names.begin(), names.end()), names.end());
   for (size_t i = 0; i < names.size(); ++i)
-    cout << idx(names, i) << endl;
+    if (!app.lua.hook_ignore_branch(idx(names, i)))
+      cout << idx(names, i) << endl;
 }
 
 static void 
