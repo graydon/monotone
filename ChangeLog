@@ -1,3 +1,7 @@
+2005-07-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-import.pl: Now uses the given tag.
+
 2005-07-20  Marcel van der Boom  <marcel@hsdev.com>
 
 	* database.{cc,hh} (get_branches): New method.
