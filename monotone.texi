@@ -1467,33 +1467,11 @@ monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
 
-Monotone did a number of things when committing the new
-revision. First, we can see from the output that monotone generated a
-manifest of the tree Jim committed. The manifest is stored inside the
-database, but Jim can print it out if he wants to see the exact state
-of all the files referenced by the revision he committed:
-
-@smallexample
-@group
-$ monotone cat manifest
-3b12b2d0b31439bd50976633db1895cff8b19da0  include/jb.h
-2650ffc660dd00a08b659b883b65a060cac7e560  src/apple.c
-e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f  src/banana.c
-@end group
-@end smallexample
-
-The column on the left contains cryptographic hashes of the files
-listed in the column on the right. Such a hash is also called the
-``file ID'' of the file. The file ID identifies the state of each file
-stored in Jim's tree. The manifest is just a plain text file,
-identical to the output from the popular @command{sha1sum} unix
-command.
-
-When monotone committed Jim's revision, it also erased the
-@file{MT/work} file, and wrote a new file called @file{MT/revision},
-which contains the working copy's new base revision ID. Jim can use
-this revision ID in the future, as an argument to the
-@command{checkout} command, if he wishes to return to this revision:
+When monotone committed Jim's revision, erased the @file{MT/work} file,
+and wrote a new file called @file{MT/revision}, which contains the
+working copy's new base revision ID. Jim can use this revision ID in the
+future, as an argument to the @command{checkout} command, if he wishes
+to return to this revision:
 
 @smallexample
 @group
@@ -1502,7 +1480,7 @@ $ cat MT/revision
 @end group
 @end smallexample
 
-Finally, monotone also generated a number of certificates, attached to
+Monotone also generated a number of certificates, attached to
 the new revision. These certs store metadata about the commit. Jim can
 ask monotone for a list of certs on this revision.
 
