@@ -1,3 +1,7 @@
+2005-07-22  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Committing Work): Remove discussion of manifests.
+
 2005-07-20  Nathaniel Smith  <njs@pobox.com>
 
 	* netsync.cc (rebuild_merkle_trees): Make 'including branch'
