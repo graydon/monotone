@@ -1,3 +1,10 @@
+2005-07-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* database_check.cc: check that revisions and manifests
+	are normalised to the same for that they would be written as.
+	* tests/t_database_check_normalized.at: a test for it.
+	* testsuite.at: add it.
+
 2005-07-21  Richard Levitte  <richard@levitte.org>
 
 	* contrib/monotone-import.pl: Now uses the given tag.

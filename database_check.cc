@@ -13,6 +13,7 @@
 #include "revision.hh"
 #include "ui.hh"
 #include "vocab.hh"
+#include "transforms.hh"
 
 // the database has roughly the following structure
 //
@@ -56,7 +57,11 @@ struct checked_manifest {
   size_t revision_refs; // number of revision references to this manifest
   size_t missing_files; // number of missing files referenced by this manifest
 
-  checked_manifest(): found(false), revision_refs(0), missing_files(0) {}
+  bool normalized;      // write_manifest_map( read_manifest_map(dat) ) == dat
+
+  checked_manifest(): 
+    found(false), revision_refs(0), 
+    missing_files(0), normalized(false) {}
 };
 
 // the number of times a revision is referenced (revision_refs)
@@ -79,6 +84,8 @@ struct checked_revision {
   
   size_t cert_refs;            // number of references to this revision by revision certs;
 
+  bool normalized;             // write_revision_set( read_revision_set(dat) ) == dat
+
   std::string history_error;
 
   std::set<revision_id> parents;
@@ -88,7 +95,7 @@ struct checked_revision {
     found(false),
     revision_refs(0), ancestry_parent_refs(0), ancestry_child_refs(0), 
     missing_manifests(0), missing_revisions(0), incomplete_manifests(0), 
-    cert_refs(0) {}
+    cert_refs(0), normalized(false) {}
 };
 
 static void
@@ -137,6 +144,14 @@ check_manifests(app_state & app,
       manifest_map man;
       read_manifest_map(data, man);
 
+      // normalisation check
+      manifest_id norm_ident;
+      manifest_data norm_data;
+      write_manifest_map(man, norm_data);
+      calculate_ident(norm_data, norm_ident);
+      if (norm_ident == *i)
+          checked_manifests[*i].normalized = true;
+
       for (manifest_map::const_iterator entry = man.begin(); entry != man.end();
            ++entry)
         {
@@ -174,6 +189,14 @@ check_revisions(app_state & app,
 
       revision_set rev;
       read_revision_set(data, rev);
+
+      // normalisation check
+      revision_id norm_ident;
+      revision_data norm_data;
+      write_revision_set(rev, norm_data);
+      calculate_ident(norm_data, norm_ident);
+      if (norm_ident == *i)
+          checked_revisions[*i].normalized = true;
 
       checked_manifests[rev.new_manifest].revision_refs++;
 
@@ -382,7 +405,8 @@ static void
 report_manifests(std::map<manifest_id, checked_manifest> const & checked_manifests, 
                  size_t & missing_manifests, 
                  size_t & unreferenced_manifests,
-                 size_t & incomplete_manifests)
+                 size_t & incomplete_manifests,
+                 size_t & non_normalized_manifests)
 {
   for (std::map<manifest_id, checked_manifest>::const_iterator 
          i = checked_manifests.begin(); i != checked_manifests.end(); ++i)
@@ -408,6 +432,13 @@ report_manifests(std::map<manifest_id, checked_manifest> const & checked_manifes
           P(F("manifest %s incomplete (%d missing files)\n") 
             % i->first % manifest.missing_files);
         }
+
+      if (!manifest.normalized)
+        {
+          non_normalized_manifests++;
+          P(F("manifest %s is not in normalized form\n")
+            % i->first);
+        }
     }
 }
 
@@ -417,7 +448,8 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
                  size_t & incomplete_revisions,
                  size_t & mismatched_parents,
                  size_t & mismatched_children,
-                 size_t & bad_history)
+                 size_t & bad_history,
+                 size_t & non_normalized_revisions)
 {
   for (std::map<revision_id, checked_revision>::const_iterator 
          i = checked_revisions.begin(); i != checked_revisions.end(); ++i)
@@ -476,6 +508,13 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
           P(F("revision %s has bad history (%s)\n")
             % i->first
             % revision.history_error); 
+        }
+
+      if (!revision.normalized)
+        {
+          non_normalized_revisions++;
+          P(F("revision %s is not in normalized form\n")
+            % i->first);
         }
     }
 }
@@ -587,12 +626,14 @@ check_db(app_state & app)
   size_t missing_manifests = 0;
   size_t unreferenced_manifests = 0;
   size_t incomplete_manifests = 0;
+  size_t non_normalized_manifests = 0;
 
   size_t missing_revisions = 0;
   size_t incomplete_revisions = 0;
   size_t mismatched_parents = 0;
   size_t mismatched_children = 0;
   size_t bad_history = 0;
+  size_t non_normalized_revisions = 0;
   
   size_t missing_keys = 0;
 
@@ -613,12 +654,14 @@ check_db(app_state & app)
   report_files(checked_files, missing_files, unreferenced_files);
 
   report_manifests(checked_manifests, 
-                   missing_manifests, unreferenced_manifests, incomplete_manifests);
+                   missing_manifests, unreferenced_manifests, 
+                   incomplete_manifests,
+                   non_normalized_manifests);
 
   report_revisions(checked_revisions,
                    missing_revisions, incomplete_revisions, 
                    mismatched_parents, mismatched_children,
-                   bad_history);
+                   bad_history, non_normalized_revisions);
 
   report_keys(checked_keys, missing_keys);
 
@@ -637,6 +680,8 @@ check_db(app_state & app)
     W(F("%d unreferenced manifests\n") % unreferenced_manifests);
   if (incomplete_manifests > 0)
     W(F("%d incomplete manifests\n") % incomplete_manifests);
+  if (non_normalized_manifests > 0)
+    W(F("%d manifests not in normalized form\n") % non_normalized_manifests);
 
   if (missing_revisions > 0)
     W(F("%d missing revisions\n") % missing_revisions);
@@ -648,6 +693,8 @@ check_db(app_state & app)
     W(F("%d mismatched children\n") % mismatched_children);
   if (bad_history > 0)
     W(F("%d revisions with bad history\n") % bad_history);
+  if (non_normalized_revisions > 0)
+    W(F("%d revisions not in normalized form\n") % non_normalized_revisions);
 
   if (missing_keys > 0)
     W(F("%d missing keys\n") % missing_keys);
@@ -663,7 +710,9 @@ check_db(app_state & app)
 
   size_t total = missing_files + unreferenced_files +
     missing_manifests + unreferenced_manifests + incomplete_manifests +
+    non_normalized_manifests +
     missing_revisions + incomplete_revisions + 
+    non_normalized_revisions +
     mismatched_parents + mismatched_children +
     bad_history +
     missing_certs + mismatched_certs +
@@ -673,7 +722,9 @@ check_db(app_state & app)
   // serious errors; odd, but nothing will break.
   size_t serious = missing_files + 
     missing_manifests + incomplete_manifests +
+    non_normalized_manifests +
     missing_revisions + incomplete_revisions + 
+    non_normalized_revisions +
     mismatched_parents + mismatched_children +
     bad_history +
     missing_certs +
