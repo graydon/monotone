@@ -3604,6 +3604,9 @@ CMD(annotate, "informative", "PATH",
   else 
     complete(app, idx(app.revision_selectors, 0)(), rid);
 
+  N(!null_id(rid), F("no revision for file '%s' in database") % file);
+  N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
+
   L(F("annotate file file_path '%s'\n") % file);
 
   // find the version of the file requested

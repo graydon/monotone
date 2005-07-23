@@ -1,5 +1,7 @@
 2005-07-23  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* commands.cc (CMD(annotate)): Check for a valid revision before
+	trying to fetch it from the database.
 	* lua/lundump.[ch], lua/ldump.c: Rename VERSION and VERSION0 to
 	LUA_DUMP_VERSION and LUA_DUMP_VERSION0 to avoid clashes with
 	VERSION from config.h.
