@@ -1,5 +1,10 @@
 2005-07-24  Nathaniel Smith  <njs@pobox.com>
 
+	* constants.{cc,hh} (default_terminal_width): New constant.
+	* ui.cc (guess_terminal_width): Use it.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
 	* diff_patch.cc (unidiff_append_test): Fix typo.
 
 2005-07-24  Nathaniel Smith  <njs@pobox.com>

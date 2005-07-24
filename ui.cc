@@ -13,6 +13,7 @@
 #include "sanity.hh"
 #include "ui.hh"
 #include "transforms.hh"
+#include "constants.hh"
 
 #include <iostream>
 #include <iomanip>
@@ -362,7 +363,7 @@ guess_terminal_width()
 {
   unsigned int w = terminal_width();
   if (!w)
-    w = 72;
+    w = constants::default_terminal_width;
   return w;
 }
 
