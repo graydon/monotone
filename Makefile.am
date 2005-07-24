@@ -40,7 +40,7 @@ MOST_SOURCES =								\
          selectors.cc selectors.hh					\
          annotate.cc annotate.hh					\
          restrictions.cc restrictions.hh				\
-         hmac.cc hmac.hh                  \
+         hmac.cc hmac.hh                                                \
          globish.cc globish.hh                                          \
                                                                         \
 	 cleanup.hh unit_tests.hh interner.hh				\

@@ -48,6 +48,7 @@ sanity::dump_buffer()
       if (out)
         {
           copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
+          copy(gasp_dump.begin(), gasp_dump.end(), ostream_iterator<char>(out));
           ui.inform(string("wrote debugging log to ") + filename + "\n");
         }
       else
@@ -209,6 +210,7 @@ sanity::invariant_failure(string const & expr,
     format("%s:%d: invariant '%s' violated\n") 
     % file % line % expr;
   log(fmt, file.c_str(), line);
+  gasp();
   throw logic_error(fmt.str());
 }
 
@@ -223,5 +225,36 @@ sanity::index_failure(string const & vec_expr,
     format("%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n")
     % file % line % idx_expr % idx % vec_expr % sz;
   log(fmt, file.c_str(), line);
+  gasp();
   throw logic_error(fmt.str());
+}
+
+// Last gasp dumps
+
+void
+sanity::gasp()
+{
+  L(F("saving current work set: %i items") % musings.size());
+  std::ostringstream out(gasp_dump);
+  out << F("Current work set: %i items\n") % musings.size();
+  for (std::vector<MusingI const *>::const_iterator
+         i = musings.begin(); i != musings.end(); ++i)
+    (*i)->gasp(out);
+  L(F("finished saving work set"));
+  if (debug)
+    {
+      ui.inform("contents of work set:");
+      ui.inform(gasp_dump);
+    }
+}
+
+MusingI::MusingI()
+{
+  global_sanity.musings.push_back(this);
+}
+
+MusingI::~MusingI()
+{
+  I(global_sanity.musings.back() == this);
+  global_sanity.musings.pop_back();
 }

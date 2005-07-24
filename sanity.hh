@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <iosfwd>
 
 #include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
@@ -37,6 +38,8 @@ struct informative_failure {
   std::string what;
 };
 
+class MusingI;
+
 struct sanity {
   sanity();
   ~sanity();
@@ -52,6 +55,8 @@ struct sanity {
   bool relaxed;
   boost::circular_buffer<char> logbuf;
   std::string filename;
+  std::string gasp_dump;
+  std::vector<MusingI const *> musings;
 
   void log(boost::format const & fmt, 
            char const * file, int line);
@@ -70,6 +75,7 @@ struct sanity {
                      unsigned long sz, 
                      unsigned long idx,
                      std::string const & file, int line) NORETURN;
+  void gasp();
 };
 
 typedef std::runtime_error oops;
@@ -190,6 +196,43 @@ inline T const & checked_index(std::vector<T, QA(T)> const & v,
 
 
 #define idx(v, i) checked_index((v), (i), #v, #i, __FILE__, __LINE__)
+
+
+
+// Last gasp dumps
+
+class MusingI
+{
+public:
+  MusingI();
+  virtual ~MusingI();
+  virtual void gasp(std::ostream & out) const = 0;
+};
+
+template <typename T>
+class Musing : public MusingI
+{
+public:
+  Musing(T const & obj, char const * name, char const * file, int line, char const * func)
+    : obj(obj), name(name), file(file), line(line), func(func) {}
+  virtual void gasp(std::ostream & out) const;
+private:
+  T const & obj;
+  char const * name;
+  char const * file;
+  int line;
+  char const * func;
+};
+
+template <typename T> void
+Musing<T>::gasp(std::ostream & out) const
+{
+  out << F("----------------- begin '%s' (in %s, at %s:%d) -----------------\n") % name % func % file % line;
+  dump(obj, out);
+  out << F("------------------- end '%s' (in %s, at %s:%d) -----------------\n") % name % func % file % line;
+}
+
+#define M(obj) Musing(obj, #obj, __FILE__, __LINE__, __PRETTY_FUNCTION__);
 
 
 

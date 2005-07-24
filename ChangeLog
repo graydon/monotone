@@ -1,3 +1,11 @@
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.{hh,cc} (sanity, dump_buffer, invariant_failure)
+	(index_failure,	MusingI, Musing, M): Implement macro M(), for
+	'musing', which marks data that monotone was musing over when an
+	invariant tripped.
+	* Makefile.am (MOST_SOURCES): Fix spacing.
+
 2005-07-23  Nathaniel Smith  <njs@pobox.com>
 
 	* ui.{hh,cc} (guess_terminal_width): New function.
