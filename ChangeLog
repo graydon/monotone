@@ -1,5 +1,13 @@
 2005-07-24  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.cc (log, progress, warning): Append '\n' to strings when
+	necessary.
+	(gasp): Save string properly.
+	(M): Apply black magic.  Now works correctly.
+	(dump): Write newline.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
 	* sanity.hh (dump): Add a default 'dump' implementation for all
 	<<able objects.
 

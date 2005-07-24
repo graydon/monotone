@@ -227,17 +227,27 @@ private:
 template <typename T> void
 Musing<T>::gasp(std::ostream & out) const
 {
-  out << F("----------------- begin '%s' (in %s, at %s:%d) -----------------\n") % name % func % file % line;
+  out << F("----- begin '%s' (in %s, at %s:%d)\n") % name % func % file % line;
   dump(obj, out);
-  out << F("------------------- end '%s' (in %s, at %s:%d) -----------------\n") % name % func % file % line;
+  out << F("-----   end '%s' (in %s, at %s:%d)\n") % name % func % file % line;
 }
 
-#define M(obj) Musing(obj, #obj, __FILE__, __LINE__, __PRETTY_FUNCTION__);
+// Yes, this is insane.  No, it doesn't work if you do something more sane.
+// ## explicitly skips macro argument expansion on the things passed to it.
+// Therefore, if we simply did foo ## __LINE__, we would get foo__LINE__ in
+// the output.  In fact, even if we did real_M(obj, __LINE__), we would get
+// foo__LINE__ in the output.  (## substitutes arguments, but does not expand
+// them.)  However, while fake_M does nothing directly, it doesn't pass its
+// line argument to ##; therefore, its line argument is fully expanded before
+// being passed to real_M.
+#define real_M(obj, line) Musing<typeof(obj)> this_is_a_musing_fnord_object_ ## line (obj, #obj, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define fake_M(obj, line) real_M(obj, line)
+#define M(obj) fake_M(obj, __LINE__)
 
 template <typename T> void
 dump(T const & obj, std::ostream & out)
 {
-  out << obj;
+  out << obj << "\n";
 }
 
 #endif // __SANITY_HH__

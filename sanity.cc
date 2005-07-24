@@ -12,6 +12,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include <boost/lexical_cast.hpp>
 
@@ -119,6 +120,8 @@ sanity::log(format const & fmt,
         str.at(str.size() - 1) = '\n';
     }
   copy(str.begin(), str.end(), back_inserter(logbuf));
+  if (str[str.size() - 1] != '\n')
+    logbuf.push_back('\n');
   if (debug)
     ui.inform(str);
 }
@@ -147,6 +150,8 @@ sanity::progress(format const & fmt,
         str.at(str.size() - 1) = '\n';
     }
   copy(str.begin(), str.end(), back_inserter(logbuf));
+  if (str[str.size() - 1] != '\n')
+    logbuf.push_back('\n');
   if (! quiet)
     ui.inform(str);
 }
@@ -176,6 +181,8 @@ sanity::warning(format const & fmt,
     }
   string str2 = "warning: " + str;
   copy(str2.begin(), str2.end(), back_inserter(logbuf));
+  if (str[str.size() - 1] != '\n')
+    logbuf.push_back('\n');
   if (! quiet)
     ui.warn(str);
 }
@@ -235,11 +242,12 @@ void
 sanity::gasp()
 {
   L(F("saving current work set: %i items") % musings.size());
-  std::ostringstream out(gasp_dump);
+  std::ostringstream out;
   out << F("Current work set: %i items\n") % musings.size();
   for (std::vector<MusingI const *>::const_iterator
          i = musings.begin(); i != musings.end(); ++i)
     (*i)->gasp(out);
+  gasp_dump = out.str();
   L(F("finished saving work set"));
   if (debug)
     {
