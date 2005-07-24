@@ -270,3 +270,10 @@ MusingI::~MusingI()
   I(global_sanity.musings.back() == this);
   global_sanity.musings.pop_back();
 }
+
+void
+dump(std::string const & obj, std::string & out)
+{
+  out = obj;
+}
+

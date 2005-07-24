@@ -9,7 +9,6 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <sstream>
 
 #include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
@@ -246,12 +245,6 @@ Musing<T>::gasp(std::string & out) const
 #define fake_M(obj, line) real_M(obj, line)
 #define M(obj) fake_M(obj, __LINE__)
 
-template <typename T> void
-dump(T const & obj, std::ostream & out)
-{
-  std::ostringstream out_s;
-  out_s << obj << "\n";
-  out = out_s.str();
-}
+void dump(std::string const & obj, std::string & out);
 
 #endif // __SANITY_HH__

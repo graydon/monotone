@@ -24,6 +24,9 @@ template <typename INNER>                              \
 std::ostream & operator<<(std::ostream &,              \
                           enc<INNER> const &);         \
                                                        \
+template <typename INNER>                              \
+void dump(enc<INNER> const &, std::string &);          \
+                                                       \
 template<typename INNER>                               \
 class enc {                                            \
   INNER i;                                             \
@@ -54,6 +57,9 @@ class dec;                                             \
 template <typename INNER>                              \
 std::ostream & operator<<(std::ostream &,              \
                           dec<INNER> const &);         \
+                                                       \
+template <typename INNER>                              \
+void dump(dec<INNER> const &, std::string &);          \
                                                        \
 template<typename INNER>                               \
 class dec {                                            \
@@ -95,7 +101,8 @@ public:                                                \
   friend std::ostream & operator<<(std::ostream &,     \
                                    ty const &);        \
 };                                                     \
-std::ostream & operator<<(std::ostream &, ty const &);
+std::ostream & operator<<(std::ostream &, ty const &); \
+void dump(ty const &, std::string &);
 
 #define ATOMIC_NOVERIFY(ty)                            \
 ATOMIC(ty)                                             \

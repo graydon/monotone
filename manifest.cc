@@ -271,4 +271,10 @@ write_manifest_map(manifest_map const & man,
   dat = sstr.str();
 }
 
-
+void
+dump(manifest_map const & man, std::string & out)
+{
+  data dat;
+  write_manifest_map(man, dat);
+  out = dat();
+}

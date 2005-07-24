@@ -269,7 +269,10 @@ ty const & ty::operator=(ty const & other)   \
                                              \
 ostream & operator<<(ostream & o,            \
                      ty const & a)           \
-{ return (o << a.s); }
+{ return (o << a.s); }                       \
+                                             \
+void dump(ty const & obj, std::string & out) \
+{ out = obj(); }
 
 #define ATOMIC_NOVERIFY(ty) ATOMIC(ty)
 
@@ -298,7 +301,11 @@ enc<INNER>::operator=(enc<INNER> const & other)          \
                                                          \
 template <typename INNER>                                \
 ostream & operator<<(ostream & o, enc<INNER> const & e)  \
-{ return (o << e.i); }
+{ return (o << e.i); }                                   \
+                                                         \
+template <typename INNER>                                \
+void dump(enc<INNER> const & obj, std::string & out)     \
+{ out = obj(); }
 
 
 #define DECORATE(dec)                                    \
@@ -320,8 +327,11 @@ dec<INNER>::operator=(dec<INNER> const & other)          \
                                                          \
 template <typename INNER>                                \
 ostream & operator<<(ostream & o, dec<INNER> const & d)  \
-{ return (o << d.i); }
-
+{ return (o << d.i); }                                   \
+                                                         \
+template <typename INNER>                                \
+void dump(dec<INNER> const & obj, std::string & out)     \
+{ dump(obj.inner(), out); }
 
 #define EXTERN 
 

@@ -1,5 +1,14 @@
 2005-07-24  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.{hh,cc} (dump): Remove templated version, add std::string
+	version.
+	* vocab.{hh,cc} (dump): Add ATOMIC/DECORATE/ENCODING dumpers.
+	* change_set.{hh,cc} (dump): Add change_set dumper.
+	* manifest.{hh,cc} (dump): Add manifest_map dumper.
+	* revision.cc (check_sane_history): Add some M()s.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
 	* sanity.hh (class Musing, gasp, dump): Actually, take a
 	std::string instead of a std::ostream; fits our idioms better.
 

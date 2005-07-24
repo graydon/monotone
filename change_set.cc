@@ -2898,6 +2898,14 @@ write_path_rearrangement(change_set::path_rearrangement const & re,
   dat = data(oss.str());  
 }
 
+void
+dump(change_set const & cs, std::string & out)
+{
+  data tmp;
+  write_change_set(cs, tmp);
+  out = tmp();
+}
+
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 #include "sanity.hh"
