@@ -1203,7 +1203,7 @@ static void unidiff_append_test()
              + "}\n"
              + "\n");
   
-  string ud(string("--- hello.c\t0123456789abcdef0123456789abcdef01234567\n"
+  string ud(string("--- hello.c\t0123456789abcdef0123456789abcdef01234567\n")
             + "+++ hello.c\tabcdef0123456789abcdef0123456789abcdef01\n"
             + "@@ -9,3 +9,9 @@\n"
             + " {\n"
