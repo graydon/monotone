@@ -229,14 +229,14 @@ static void LoadHeader (LoadState* S)
  lua_Number x,tx=TEST_NUMBER;
  LoadSignature(S);
  version=LoadByte(S);
- if (version>VERSION)
+ if (version>LUA_DUMP_VERSION)
   luaG_runerror(S->L,"%s too new: "
 	"read version %d.%d; expected at most %d.%d",
-	S->name,V(version),V(VERSION));
- if (version<VERSION0)				/* check last major change */
+	S->name,V(version),V(LUA_DUMP_VERSION));
+ if (version<LUA_DUMP_VERSION0)				/* check last major change */
   luaG_runerror(S->L,"%s too old: "
 	"read version %d.%d; expected at least %d.%d",
-	S->name,V(version),V(VERSION0));
+	S->name,V(version),V(LUA_DUMP_VERSION0));
  S->swap=(luaU_endianness()!=LoadByte(S));	/* need to swap bytes? */
  TESTSIZE(sizeof(int),"int");
  TESTSIZE(sizeof(size_t), "size_t");

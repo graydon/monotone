@@ -8,6 +8,14 @@
 	* diff_patch.cc (make_diff): Don't print === lines.
 	(unidiff_append_test): Adjust accordingly.
 
+2005-07-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (CMD(annotate)): Check for a valid revision before
+	trying to fetch it from the database.
+	* lua/lundump.[ch], lua/ldump.c: Rename VERSION and VERSION0 to
+	LUA_DUMP_VERSION and LUA_DUMP_VERSION0 to avoid clashes with
+	VERSION from config.h.
+
 2005-07-22  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Committing Work): Remove discussion of manifests.
