@@ -1,0 +1,9 @@
+AT_SETUP([annotate with no revs])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+
+AT_CHECK(MONOTONE annotate testfile, [1], [ignore], [ignore])
+
+AT_CLEANUP
