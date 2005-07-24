@@ -1,5 +1,10 @@
 2005-07-24  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.hh (dump): Add a default 'dump' implementation for all
+	<<able objects.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_annotate_no_rev.at: New test.
 	* testsuite.at: Add it.
 	

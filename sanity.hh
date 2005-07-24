@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <iosfwd>
+#include <iostream>
 
 #include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
@@ -234,6 +234,10 @@ Musing<T>::gasp(std::ostream & out) const
 
 #define M(obj) Musing(obj, #obj, __FILE__, __LINE__, __PRETTY_FUNCTION__);
 
-
+template <typename T> void
+dump(T const & obj, std::ostream & out)
+{
+  out << obj;
+}
 
 #endif // __SANITY_HH__
