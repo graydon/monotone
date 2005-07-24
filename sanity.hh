@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <iostream>
+#include <sstream>
 
 #include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
@@ -206,7 +206,7 @@ class MusingI
 public:
   MusingI();
   virtual ~MusingI();
-  virtual void gasp(std::ostream & out) const = 0;
+  virtual void gasp(std::string & out) const = 0;
 };
 
 template <typename T>
@@ -215,7 +215,7 @@ class Musing : public MusingI
 public:
   Musing(T const & obj, char const * name, char const * file, int line, char const * func)
     : obj(obj), name(name), file(file), line(line), func(func) {}
-  virtual void gasp(std::ostream & out) const;
+  virtual void gasp(std::string & out) const;
 private:
   T const & obj;
   char const * name;
@@ -225,11 +225,13 @@ private:
 };
 
 template <typename T> void
-Musing<T>::gasp(std::ostream & out) const
+Musing<T>::gasp(std::string & out) const
 {
-  out << F("----- begin '%s' (in %s, at %s:%d)\n") % name % func % file % line;
-  dump(obj, out);
-  out << F("-----   end '%s' (in %s, at %s:%d)\n") % name % func % file % line;
+  out = (F("----- begin '%s' (in %s, at %s:%d)\n") % name % func % file % line).str();
+  std::string tmp;
+  dump(obj, tmp);
+  out += tmp;
+  out += (F("-----   end '%s' (in %s, at %s:%d)\n") % name % func % file % line).str();
 }
 
 // Yes, this is insane.  No, it doesn't work if you do something more sane.
@@ -247,7 +249,9 @@ Musing<T>::gasp(std::ostream & out) const
 template <typename T> void
 dump(T const & obj, std::ostream & out)
 {
-  out << obj << "\n";
+  std::ostringstream out_s;
+  out_s << obj << "\n";
+  out = out_s.str();
 }
 
 #endif // __SANITY_HH__

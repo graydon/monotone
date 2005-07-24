@@ -246,7 +246,11 @@ sanity::gasp()
   out << F("Current work set: %i items\n") % musings.size();
   for (std::vector<MusingI const *>::const_iterator
          i = musings.begin(); i != musings.end(); ++i)
-    (*i)->gasp(out);
+    {
+      std::string tmp;
+      (*i)->gasp(tmp);
+      out << tmp;
+    }
   gasp_dump = out.str();
   L(F("finished saving work set"));
   if (debug)

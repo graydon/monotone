@@ -1,5 +1,10 @@
 2005-07-24  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.hh (class Musing, gasp, dump): Actually, take a
+	std::string instead of a std::ostream; fits our idioms better.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
 	* sanity.cc (log, progress, warning): Append '\n' to strings when
 	necessary.
 	(gasp): Save string properly.
