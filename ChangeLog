@@ -1,5 +1,10 @@
 2005-07-24  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.hh (dump): Add a default 'dump' implementation for all
+	<<able objects.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
 	* constants.{cc,hh} (default_terminal_width): New constant.
 	* ui.cc (guess_terminal_width): Use it.
 
