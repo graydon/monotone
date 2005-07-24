@@ -55,6 +55,7 @@ struct sanity {
   boost::circular_buffer<char> logbuf;
   std::string filename;
   std::string gasp_dump;
+  bool already_dumping;
   std::vector<MusingI const *> musings;
 
   void log(boost::format const & fmt, 

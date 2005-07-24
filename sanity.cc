@@ -30,7 +30,7 @@ using boost::format;
 sanity global_sanity;
 
 sanity::sanity() : 
-  debug(false), quiet(false), relaxed(false), logbuf(0xffff)
+  debug(false), quiet(false), relaxed(false), logbuf(0xffff), already_dumping(false)
 {
   std::string flavour;
   get_system_flavour(flavour);
@@ -241,6 +241,12 @@ sanity::index_failure(string const & vec_expr,
 void
 sanity::gasp()
 {
+  if (already_dumping)
+    {
+      L(F("ignoring request to give last gasp; already in process of dumping\n"));
+      return;
+    }
+  already_dumping = true;
   L(F("saving current work set: %i items") % musings.size());
   std::ostringstream out;
   out << F("Current work set: %i items\n") % musings.size();
