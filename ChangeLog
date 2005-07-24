@@ -1,5 +1,11 @@
 2005-07-24  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.cc (gasp): Make more robust against new errors triggered
+	during error unwind.  (write_change_set in particular likes to
+	blow up when handling in invalid change_set.)
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
 	* change_set.cc (merge_change_sets, check_sane)
 	(concatenate_change_sets, invert_change_set): Add M()s.
 
