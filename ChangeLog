@@ -1,5 +1,10 @@
 2005-07-24  Nathaniel Smith  <njs@pobox.com>
 
+	* change_set.cc (merge_change_sets, check_sane)
+	(concatenate_change_sets, invert_change_set): Add M()s.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
 	* sanity.{hh,cc} (dump): Remove templated version, add std::string
 	version.
 	* vocab.{hh,cc} (dump): Add ATOMIC/DECORATE/ENCODING dumpers.

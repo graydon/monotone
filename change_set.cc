@@ -474,6 +474,7 @@ change_set::check_sane() const
 {
   // FIXME: extend this as you manage to think of more invariants
   // which are cheap enough to check at this level.
+  M(*this);
 
   rearrangement.check_sane(this->deltas);
 
@@ -1489,6 +1490,9 @@ concatenate_change_sets(change_set const & a,
                         change_set const & b,
                         change_set & concatenated)
 {
+  M(a);
+  M(b);
+  M(concatenated);
   a.check_sane();
   b.check_sane();
 
@@ -2193,6 +2197,10 @@ merge_change_sets(change_set const & a,
                   merge_provider & merger,
                   app_state & app)
 {
+  M(a);
+  M(b);
+  M(a_merged);
+  M(b_merged);
   a.check_sane();
   b.check_sane();
 
@@ -2262,6 +2270,9 @@ invert_change_set(change_set const & a2b,
                   manifest_map const & a_map,
                   change_set & b2a)
 {
+  M(a2b);
+  M(a_map);
+  M(b2a);
   a2b.check_sane();
   tid_source ts;
   path_analysis a2b_analysis, b2a_analysis;
