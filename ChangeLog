@@ -1,3 +1,13 @@
+2005-07-23  Nathaniel Smith  <njs@pobox.com>
+
+	* ui.{hh,cc} (guess_terminal_width): New function.
+	(tick_write_dot::chars_on_line): Make unsigned to quiet gcc warning.
+	(tick_write_dot::write_ticks): Use guess_terminal_width.
+	* commands.cc (dump_diffs): Take full responsibility for printing
+	=== lines, and use guess_terminal_width.
+	* diff_patch.cc (make_diff): Don't print === lines.
+	(unidiff_append_test): Adjust accordingly.
+
 2005-07-22  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Committing Work): Remove discussion of manifests.

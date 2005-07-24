@@ -2570,10 +2570,11 @@ dump_diffs(change_set::delta_map const & deltas,
            bool new_is_archived,
            diff_type type)
 {
-  
+  std::string patch_sep = std::string(guess_terminal_width(), '=');
   for (change_set::delta_map::const_iterator i = deltas.begin();
        i != deltas.end(); ++i)
     {
+      cout << patch_sep << "\n";
       if (null_id(delta_entry_src(i)))
         {
           data unpacked;
@@ -2598,7 +2599,6 @@ dump_diffs(change_set::delta_map const & deltas,
               split_into_lines(unpacked(), lines);
               if (! lines.empty())
                 {
-                  cout << "===============================================\n";
                   cout << (F("--- %s\t%s\n") % delta_entry_path(i) % delta_entry_src(i))
                        << (F("+++ %s\t%s\n") % delta_entry_path(i) % delta_entry_dst(i))
                        << (F("@@ -0,0 +1,%d @@\n") % lines.size());

@@ -223,7 +223,7 @@ void tick_write_dot::write_ticks()
               > (old->second / i->second->mod)))
         {
           chars_on_line += i->second->shortname.size();
-          if (chars_on_line > 72)
+          if (chars_on_line > guess_terminal_width())
             {
               chars_on_line = tickline_prefix.size() + i->second->shortname.size();
               tickline2 += "\n" + tickline_prefix;
@@ -356,3 +356,13 @@ user_interface::inform(string const & line)
   clog << sanitize(prefixedLine) << endl;
   clog.flush();
 }
+
+unsigned int
+guess_terminal_width()
+{
+  unsigned int w = terminal_width();
+  if (!w)
+    w = 72;
+  return w;
+}
+
