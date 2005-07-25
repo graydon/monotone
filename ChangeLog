@@ -1,3 +1,10 @@
+2005-07-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am, configure.ac: Remove BUNDLED_{LUA,SQLITE} tests and
+	clarify the comment for popt.  Using external versions of these
+	tools didn't work anyway, so there's no point giving the
+	impression that it might.
+
 2005-07-24  Nathaniel Smith  <njs@pobox.com>
 
 	* sanity.cc (gasp): Handle the possibility of multiple valid calls
