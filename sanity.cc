@@ -277,6 +277,7 @@ sanity::gasp()
       ui.inform("contents of work set:");
       ui.inform(gasp_dump);
     }
+  already_dumping = false;
 }
 
 MusingI::MusingI()

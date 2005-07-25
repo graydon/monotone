@@ -1,5 +1,11 @@
 2005-07-24  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.cc (gasp): Handle the possibility of multiple valid calls
+	to gasp(), 'db check' can trigger multiple invariants without
+	dying.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
 	* sanity.{hh,cc} (sanity::already_dumping, gasp): Don't let gasp
 	be called recursively, in case a dump triggers an invariant.
 
