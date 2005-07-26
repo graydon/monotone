@@ -19,10 +19,11 @@ SOMEREV=`BASE_REVISION`
 AT_CHECK(cp $_ROOT_DIR/test_hooks.lua test_key_hooks.lua, [], [ignore], [ignore])
 AT_CHECK(echo "function get_priv_key(keyid)" >> test_key_hooks.lua, [], [ignore], [ignore])
 AT_CHECK(echo 'return @<:@@<:@ ' >> test_key_hooks.lua, [], [ignore], [ignore])
-AT_CHECK(grep -v '\@<:@' privkey >> test_key_hooks.lua, [], [ignore], [ignore])
+AT_CHECK([sed -e '/^\@<:@pubkey/,/^\@<:@end\@:>@$/d' -e '/^\@<:@/d' privkey >> test_key_hooks.lua], [], [ignore], [ignore])
 AT_CHECK(echo '	@:>@@:>@ end' >> test_key_hooks.lua, [], [ignore], [ignore])
 
 AT_CHECK(RCMONOTONE db execute "delete from private_keys", [], [ignore], [ignore])
+AT_CHECK(RCMONOTONE db execute "delete from public_keys", [], [ignore], [ignore])
 
 AT_CHECK(RCMONOTONE comment $SOMEREV boing)
 
