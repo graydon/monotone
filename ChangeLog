@@ -1,5 +1,10 @@
 2005-07-26  Richard Levitte  <richard@levitte.org>
 
+	* revision.cc (check_sane_history): Convert tabs to the
+	appropriate amount of spaces.
+
+2005-07-26  Richard Levitte  <richard@levitte.org>
+
 	* sanity.hh, revision.cc (check_sane_history),
 	change_set.cc (concatenate_change_sets, merge_change_sets,
 	invert_change_set): Because boost currently uses the symbol M, we
