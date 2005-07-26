@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 #ifndef __SANITY_HH__
 #define __SANITY_HH__
 
@@ -244,7 +245,7 @@ Musing<T>::gasp(std::string & out) const
 // being passed to real_M.
 #define real_M(obj, line) Musing<typeof(obj)> this_is_a_musing_fnord_object_ ## line (obj, #obj, __FILE__, __LINE__, __PRETTY_FUNCTION__)
 #define fake_M(obj, line) real_M(obj, line)
-#define M(obj) fake_M(obj, __LINE__)
+#define MM(obj) fake_M(obj, __LINE__)
 
 void dump(std::string const & obj, std::string & out);
 

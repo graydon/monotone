@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -176,14 +177,14 @@ check_sane_history(revision_id const & child_id,
                                           *current_to_child_changes_p,
                                           *old_to_child_changes_p);
                 }
-              M(*old_to_child_changes_p);
+	      MM(*old_to_child_changes_p);
 
               // we have the change_set; now, is it one we've seen before?
               if (changesets.find(old_id) != changesets.end())
                 {
                   // If it is, then make sure the paths agree on the
                   // changeset.
-                  M(*changesets.find(old_id)->second);
+		  MM(*changesets.find(old_id)->second);
                   I(*changesets.find(old_id)->second == *old_to_child_changes_p);
                 }
               else
@@ -199,8 +200,8 @@ check_sane_history(revision_id const & child_id,
                   if (!null_id(old_id))
                     app.db.get_manifest(m_old_id, purported_m_child);
                   apply_change_set(*old_to_child_changes_p, purported_m_child);
-                  M(purported_m_child);
-                  M(m_child);
+		  MM(purported_m_child);
+		  MM(m_child);
                   I(purported_m_child == m_child);
                 }
             }

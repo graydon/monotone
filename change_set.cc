@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -474,7 +475,7 @@ change_set::check_sane() const
 {
   // FIXME: extend this as you manage to think of more invariants
   // which are cheap enough to check at this level.
-  M(*this);
+  MM(*this);
 
   rearrangement.check_sane(this->deltas);
 
@@ -1490,9 +1491,9 @@ concatenate_change_sets(change_set const & a,
                         change_set const & b,
                         change_set & concatenated)
 {
-  M(a);
-  M(b);
-  M(concatenated);
+  MM(a);
+  MM(b);
+  MM(concatenated);
   a.check_sane();
   b.check_sane();
 
@@ -2197,10 +2198,10 @@ merge_change_sets(change_set const & a,
                   merge_provider & merger,
                   app_state & app)
 {
-  M(a);
-  M(b);
-  M(a_merged);
-  M(b_merged);
+  MM(a);
+  MM(b);
+  MM(a_merged);
+  MM(b_merged);
   a.check_sane();
   b.check_sane();
 
@@ -2270,9 +2271,9 @@ invert_change_set(change_set const & a2b,
                   manifest_map const & a_map,
                   change_set & b2a)
 {
-  M(a2b);
-  M(a_map);
-  M(b2a);
+  MM(a2b);
+  MM(a_map);
+  MM(b2a);
   a2b.check_sane();
   tid_source ts;
   path_analysis a2b_analysis, b2a_analysis;
