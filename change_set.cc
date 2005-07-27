@@ -308,6 +308,14 @@ dump(path_analysis const & analysis, std::string & out)
   out += tmp;
 }
 
+void
+dump(state_renumbering const & r, std::string & out)
+{
+  for (state_renumbering::const_iterator i = r.begin();
+       i != r.end(); ++i)
+    out += (F("%d -> %d\n") % i->first % i->second).str();
+}
+
 // structure dumping 
 /*
 
@@ -1925,6 +1933,7 @@ merge_disjoint_analyses(path_analysis const & a,
   
   path_analysis a_tmp(a), b_tmp(b);
   state_renumbering renumbering;
+  MM(renumbering);
 
   ensure_tids_disjoint(a_tmp, b_tmp);
 

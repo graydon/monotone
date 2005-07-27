@@ -1,5 +1,10 @@
 2005-07-26  Nathaniel Smith  <njs@pobox.com>
 
+	* change_set.cc (dump): Add state_renumbering dumper.
+	(merge_disjoint_analyses): Add MM().
+
+2005-07-26  Nathaniel Smith  <njs@pobox.com>
+
 	* change_set.cc (dump): Add path_analysis dumper.
 	(merge_change_sets): Add more MM()s.
 
