@@ -295,6 +295,19 @@ dump(path_state const & st, std::string & out)
     }
 }
 
+void
+dump(path_analysis const & analysis, std::string & out)
+{
+  out = "pre-state:\n";
+  std::string tmp;
+  dump(analysis.first, tmp);
+  out += tmp;
+  out += "post-state:\n";
+  tmp.clear();
+  dump(analysis.second, tmp);
+  out += tmp;
+}
+
 // structure dumping 
 /*
 
@@ -2231,6 +2244,12 @@ merge_change_sets(change_set const & a,
     a_analysis, b_analysis, 
     a_renumbered, b_renumbered, 
     a_merged_analysis, b_merged_analysis;
+  MM(a_analysis);
+  MM(b_analysis);
+  MM(a_renumbered);
+  MM(b_renumbered);
+  MM(a_merged_analysis);
+  MM(b_merged_analysis);
 
   analyze_rearrangement(a.rearrangement, a_analysis, ts);
   analyze_rearrangement(b.rearrangement, b_analysis, ts);

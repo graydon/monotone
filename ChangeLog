@@ -1,5 +1,10 @@
 2005-07-26  Nathaniel Smith  <njs@pobox.com>
 
+	* change_set.cc (dump): Add path_analysis dumper.
+	(merge_change_sets): Add more MM()s.
+
+2005-07-26  Nathaniel Smith  <njs@pobox.com>
+
 	* change_set.cc (dump): Add path_state dumper.
 	(sanity_check_path_state): Add MM().
 
