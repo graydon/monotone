@@ -1,3 +1,10 @@
+2005-07-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_merge_add_del.at: 'drop' does not take a branch (test
+	now fails in expected place).
+	* tests/t_merge_add_rename_add.at: New test.
+	* testsuite.at: Add it.
+
 2005-07-26  Richard Levitte  <richard@levitte.org>
 
 	* revision.cc (check_sane_history): Convert tabs to the
