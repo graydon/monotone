@@ -2940,8 +2940,6 @@ CMD(update, "working copy", "",
   if (app.revision_selectors.size() > 1)
     throw usage(name);
 
-  if (!app.branch_name().empty())
-    app.make_branch_sticky();
   app.require_working_copy();
 
   calculate_unrestricted_revision(app, r_working, m_old, m_working);
@@ -3067,6 +3065,10 @@ CMD(update, "working copy", "",
   // nb: we write out r_chosen, not r_new, because the revision-on-disk
   // is the basis of the working copy, not the working copy itself.
   put_revision_id(r_chosen_id);
+  if (!app.branch_name().empty())
+    {
+      app.make_branch_sticky();
+    }
   P(F("updated to base revision %s\n") % r_chosen_id);
 
   put_path_rearrangement(remaining.rearrangement);
