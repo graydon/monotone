@@ -1,3 +1,10 @@
+2005-07-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_merge_add_del.at: 'drop' does not take a branch (test
+	now fails in expected place).
+	* tests/t_merge_add_rename_add.at: New test.
+	* testsuite.at: Add it.
+
 2005-07-27  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc: ALIAS(mv, rename).  ALIAS(rm, drop).

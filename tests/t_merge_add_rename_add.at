@@ -1,0 +1,48 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([merging <add a, rename a b> with <add b>])
+
+# This test is a bug report.
+AT_XFAIL_IF(true)
+
+MONOTONE_SETUP
+
+#              A
+#            /   \
+#           B     C
+#            \   /
+#              D
+#
+# A is the common ancestor, containing 'add foo'.  B contains 'rename foo
+# bar'.  C contains 'add bar'.  D is the final state after a merge--we
+# currently don't have a definition for what this final state is.
+
+AT_DATA(foo, [extra blah blah foo
+])
+AT_DATA(bar, [extra blah blah bar
+])
+
+# produce state A
+AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.main commit --message 'state A - add foo', [], [ignore], [ignore])
+A_REVISION_SHA=`BASE_REVISION`
+
+# produce state B
+AT_CHECK(MONOTONE rename foo bar, [], [ignore], [ignore])
+AT_CHECK(mv foo bar, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.main commit --message 'state B - rename foo bar', [], [ignore], [ignore])
+B_REVISION_SHA=`BASE_REVISION`
+
+# produce state C
+REVERT_TO($A_REVISION_SHA)
+AT_CHECK(MONOTONE add bar, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=branch.main commit --message 'state C - add bar', [], [ignore], [ignore])
+C_REVISION_SHA=`BASE_REVISION`
+
+# merge heads to make D
+AT_CHECK(MONOTONE --branch=branch.main merge, [], [ignore], [ignore])
+
+# XXX: once the final state has a real definition inside monotone, we need
+# to add checks here to ensure that state has been reached.
+
+AT_CLEANUP
