@@ -8,6 +8,7 @@ URL: http://www.venge.net/monotone
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 BuildRequires: boost-devel >= 1.32.0
+Requires: boost >= 1.32.0
 
 %description
 monotone is a free, distributed version control system. It provides
