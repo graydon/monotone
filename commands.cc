@@ -1108,6 +1108,7 @@ CMD(drop, "working copy", "PATH...", "drop files from working copy", OPT_NONE)
   update_any_attrs(app);
 }
 
+ALIAS(rm, drop);
 
 CMD(rename, "working copy", "SRC DST", "rename entries in the working copy",
     OPT_NONE)
@@ -1130,6 +1131,7 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy",
   update_any_attrs(app);
 }
 
+ALIAS(mv, rename)
 
 // fload and fmerge are simple commands for debugging the line
 // merger. fcommit is a helper for making single-file commits to monotone

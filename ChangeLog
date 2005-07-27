@@ -1,3 +1,7 @@
+2005-07-27  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc: ALIAS(mv, rename).  ALIAS(rm, drop).
+
 2005-07-26  Nathaniel Smith  <njs@pobox.com>
 
 	* change_set.cc (dump): Add state_renumbering dumper.
