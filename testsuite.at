@@ -215,7 +215,6 @@ AT_CHECK(mv  MT MT.old)
 m4_case([$2],
         [], [AT_CHECK(MONOTONE checkout --revision=$1 ., [], [ignore])],
         [AT_CHECK(MONOTONE --branch=$2 checkout --revision=$1 ., [], [ignore])])
-AT_CHECK(mv MT.old/options MT)
 PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA = $1)
 ])
@@ -679,3 +678,4 @@ m4_include(tests/t_ls_branches.at)
 m4_include(tests/t_database_check_normalized.at)
 m4_include(tests/t_annotate_no_rev.at)
 m4_include(tests/t_merge_add_rename_add.at)
+m4_include(tests/t_update_branch.at)

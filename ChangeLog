@@ -7,6 +7,17 @@
 
 2005-07-27  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/t_update_branch.at: New test.
+	* testsuite.at: Add it.
+	(REVERT_TO): Do not preserve MT/options file (can setup invalid
+	branch).
+	* app_state.cc (make_branch_sticky): Call write_options when
+	already have a working copy.
+	* commands.cc (update): Call make_branch_sticky at appropriate
+	time.
+
+2005-07-27  Nathaniel Smith  <njs@pobox.com>
+	
 	* commands.cc: ALIAS(mv, rename).  ALIAS(rm, drop).
 
 2005-07-26  Nathaniel Smith  <njs@pobox.com>
