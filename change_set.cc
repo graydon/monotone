@@ -277,6 +277,24 @@ path_state_item(path_state::const_iterator i)
 
 
 
+void
+dump(path_state const & st, std::string & out)
+{
+  for (path_state::const_iterator i = st.begin();
+       i != st.end(); ++i)
+    {
+      std::vector<path_component> tmp_v;
+      tmp_v.push_back(path_item_name(path_state_item(i)));
+      file_path tmp_fp;
+      compose_path(tmp_v, tmp_fp);
+      out += (F("tid %d: parent %d, type %s, name %s\n")
+              % path_state_tid(i) 
+              % path_item_parent(path_state_item(i))
+              % (path_item_type(path_state_item(i)) == ptype_directory ? "dir" : "file")
+              % tmp_fp).str();
+    }
+}
+
 // structure dumping 
 /*
 
@@ -609,6 +627,7 @@ confirm_unique_entries_in_directories(path_state const & ps)
 static void
 sanity_check_path_state(path_state const & ps)
 {
+  MM(ps);
   confirm_proper_tree(ps);
   confirm_unique_entries_in_directories(ps);
 }

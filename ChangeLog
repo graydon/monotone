@@ -1,3 +1,8 @@
+2005-07-26  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (dump): Add path_state dumper.
+	(sanity_check_path_state): Add MM().
+
 2005-07-26  Richard Levitte  <richard@levitte.org>
 
 	* revision.cc (check_sane_history): Convert tabs to the
