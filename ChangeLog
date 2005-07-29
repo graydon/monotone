@@ -5,6 +5,17 @@
 	* commands.cc (update): Clarify error message in this case.
 	* tests/t_update_branch.at: Update accordingly.
 
+2005-07-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.spec: Require boost >= 1.32.
+
+2005-07-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_merge_add_del.at: 'drop' does not take a branch (test
+	now fails in expected place).
+	* tests/t_merge_add_rename_add.at: New test.
+	* testsuite.at: Add it.
+
 2005-07-27  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/t_update_branch.at: New test.
