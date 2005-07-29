@@ -162,6 +162,8 @@ checked_globish_to_regex_test()
   // we're very conservative about metacharacters, and quote all
   // non-alphanumerics, hence the backslash
   BOOST_CHECK(pat == "\\,");
+  checked_globish_to_regex("\\.\\+\\$\\^\\(\\)", pat);
+  BOOST_CHECK(pat == "\\.\\+\\$\\^()");
 
   BOOST_CHECK_THROW(checked_globish_to_regex("foo\\", pat), informative_failure);
   BOOST_CHECK_THROW(checked_globish_to_regex("{foo", pat), informative_failure);

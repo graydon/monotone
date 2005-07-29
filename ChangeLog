@@ -1,3 +1,8 @@
+2005-07-29  Nathaniel Smith  <njs@pobox.com>
+
+	* globish.cc (checked_globish_to_regex_test): Add another test for
+	quoted characters.
+
 2005-07-28  Nathaniel Smith  <njs@pobox.com>
 
 	* update.cc (calculate_update_set): Only include current rev in
