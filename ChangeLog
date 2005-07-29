@@ -1,5 +1,10 @@
 2005-07-29  Nathaniel Smith  <njs@pobox.com>
 
+	* globish.cc (matcher::operator()): Log what's happening.
+	(checked_globish_to_regex_test): Fix previously added test.
+
+2005-07-29  Nathaniel Smith  <njs@pobox.com>
+
 	* globish.cc (checked_globish_to_regex_test): Add another test for
 	quoted characters.
 
