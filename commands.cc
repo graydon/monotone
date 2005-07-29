@@ -2954,8 +2954,10 @@ CMD(update, "working copy", "",
     {
       set<revision_id> candidates;
       pick_update_candidates(r_old_id, app, candidates);
-      N(candidates.size() != 0,
-        F("no candidates remain after selection"));
+      N(!candidates.empty(),
+        F("your request matches no descendents of the current revision\n"
+          "in fact, it doesn't even match the current revision\n"
+          "maybe you want --revision=<rev on other branch>"));
       if (candidates.size() != 1)
         {
           P(F("multiple update candidates:\n"));

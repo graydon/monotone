@@ -10,7 +10,10 @@ SET_FILE(testfile, [other other
 ])
 COMMIT(otherbranch)
 
-AT_CHECK(MONOTONE update -b testbranch, [], [ignore], [ignore])
+# This update should fail (because not only does it have no update
+# candidate, but it's currently at an off-branch revision); and should
+# not update the MT/options
+AT_CHECK(MONOTONE update -b testbranch, [1], [ignore], [ignore])
 AT_CHECK(grep -q otherbranch MT/options, [])
 AT_CHECK(grep -q testbranch MT/options, [1])
 

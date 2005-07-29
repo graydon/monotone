@@ -1,3 +1,10 @@
+2005-07-28  Nathaniel Smith  <njs@pobox.com>
+
+	* update.cc (calculate_update_set): Only include current rev in
+	update set if it is an acceptable candidate.
+	* commands.cc (update): Clarify error message in this case.
+	* tests/t_update_branch.at: Update accordingly.
+
 2005-07-27  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/t_update_branch.at: New test.
