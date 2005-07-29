@@ -115,9 +115,11 @@ calculate_update_set(revision_id const & base,
   get_test_results_for_revision(base, base_results, app);
 
   candidates.clear();
-  // we insert 'base' into the candidate set, because the way we signal 'no
-  // update necessary' is to return a set containing just it.
-  candidates.insert(base);
+  // we possibly insert base into the candidate set as well; returning a set
+  // containing just it means that we are up to date; returning an empty set
+  // means that there is no acceptable update.
+  if (acceptable_descendent(branch, base, base_results, base, app))
+    candidates.insert(base);
 
   // keep a visited set to avoid repeating work
   set<revision_id> visited;

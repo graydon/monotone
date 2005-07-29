@@ -1108,6 +1108,7 @@ CMD(drop, "working copy", "PATH...", "drop files from working copy", OPT_NONE)
   update_any_attrs(app);
 }
 
+ALIAS(rm, drop);
 
 CMD(rename, "working copy", "SRC DST", "rename entries in the working copy",
     OPT_NONE)
@@ -1130,6 +1131,7 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy",
   update_any_attrs(app);
 }
 
+ALIAS(mv, rename)
 
 // fload and fmerge are simple commands for debugging the line
 // merger. fcommit is a helper for making single-file commits to monotone
@@ -1573,22 +1575,13 @@ CMD(heads, "tree", "", "show unmerged head revisions of branch",
 static void 
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(branch_cert_name, certs);
-
   vector<string> names;
-  for (size_t i = 0; i < certs.size(); ++i)
-    {
-      cert_value name;
-      decode_base64(idx(certs, i).inner().value, name);
-      if (!app.lua.hook_ignore_branch(name()))
-        names.push_back(name());
-    }
+  app.db.get_branches(names);
 
   sort(names.begin(), names.end());
-  names.erase(std::unique(names.begin(), names.end()), names.end());
   for (size_t i = 0; i < names.size(); ++i)
-    cout << idx(names, i) << endl;
+    if (!app.lua.hook_ignore_branch(idx(names, i)))
+      cout << idx(names, i) << endl;
 }
 
 static void 
@@ -1942,13 +1935,16 @@ CMD(privkey, "packet i/o", "ID", "write private key packet to stdout",
     throw usage(name);
 
   rsa_keypair_id ident(idx(args, 0)());
-  N(app.db.private_key_exists(ident),
-    F("private key '%s' does not exist in database") % idx(args, 0)());
+  N(app.db.private_key_exists(ident) && app.db.private_key_exists(ident),
+    F("public and private key '%s' do not exist in database") % idx(args, 0)());
 
   packet_writer pw(cout);
-  base64< arc4<rsa_priv_key> > key;
-  app.db.get_key(ident, key);
-  pw.consume_private_key(ident, key);
+  base64< arc4<rsa_priv_key> > privkey;
+  base64< rsa_pub_key > pubkey;
+  app.db.get_key(ident, privkey);
+  app.db.get_key(ident, pubkey);
+  pw.consume_public_key(ident, pubkey);
+  pw.consume_private_key(ident, privkey);
 }
 
 
@@ -2131,7 +2127,7 @@ CMD(db, "database",
     "migrate\n"
     "execute\n"
     "kill_rev_locally ID\n"
-    "kill_branch_locally BRANCH\n"
+    "kill_branch_certs_locally BRANCH\n"
     "kill_tag_locally TAG\n"
     "check\n"
     "changesetify\n"
@@ -2171,7 +2167,7 @@ CMD(db, "database",
         kill_rev_locally(app,idx(args, 1)());
       else if (idx(args, 0)() == "clear_epoch")
         app.db.clear_epoch(cert_value(idx(args, 1)()));
-      else if (idx(args, 0)() == "kill_branch_locally")
+      else if (idx(args, 0)() == "kill_branch_certs_locally")
         app.db.delete_branch_named(cert_value(idx(args, 1)()));
       else if (idx(args, 0)() == "kill_tag_locally")
         app.db.delete_tag_named(cert_value(idx(args, 1)()));
@@ -2579,10 +2575,11 @@ dump_diffs(change_set::delta_map const & deltas,
            bool new_is_archived,
            diff_type type)
 {
-  
+  std::string patch_sep = std::string(guess_terminal_width(), '=');
   for (change_set::delta_map::const_iterator i = deltas.begin();
        i != deltas.end(); ++i)
     {
+      cout << patch_sep << "\n";
       if (null_id(delta_entry_src(i)))
         {
           data unpacked;
@@ -2607,7 +2604,6 @@ dump_diffs(change_set::delta_map const & deltas,
               split_into_lines(unpacked(), lines);
               if (! lines.empty())
                 {
-                  cout << "===============================================\n";
                   cout << (F("--- %s\t%s\n") % delta_entry_path(i) % delta_entry_src(i))
                        << (F("+++ %s\t%s\n") % delta_entry_path(i) % delta_entry_dst(i))
                        << (F("@@ -0,0 +1,%d @@\n") % lines.size());
@@ -2944,8 +2940,6 @@ CMD(update, "working copy", "",
   if (app.revision_selectors.size() > 1)
     throw usage(name);
 
-  if (!app.branch_name().empty())
-    app.make_branch_sticky();
   app.require_working_copy();
 
   calculate_unrestricted_revision(app, r_working, m_old, m_working);
@@ -2960,8 +2954,10 @@ CMD(update, "working copy", "",
     {
       set<revision_id> candidates;
       pick_update_candidates(r_old_id, app, candidates);
-      N(candidates.size() != 0,
-        F("no candidates remain after selection"));
+      N(!candidates.empty(),
+        F("your request matches no descendents of the current revision\n"
+          "in fact, it doesn't even match the current revision\n"
+          "maybe you want --revision=<rev on other branch>"));
       if (candidates.size() != 1)
         {
           P(F("multiple update candidates:\n"));
@@ -3071,6 +3067,10 @@ CMD(update, "working copy", "",
   // nb: we write out r_chosen, not r_new, because the revision-on-disk
   // is the basis of the working copy, not the working copy itself.
   put_revision_id(r_chosen_id);
+  if (!app.branch_name().empty())
+    {
+      app.make_branch_sticky();
+    }
   P(F("updated to base revision %s\n") % r_chosen_id);
 
   put_path_rearrangement(remaining.rearrangement);
@@ -3612,6 +3612,9 @@ CMD(annotate, "informative", "PATH",
     get_revision_id(rid);
   else 
     complete(app, idx(app.revision_selectors, 0)(), rid);
+
+  N(!null_id(rid), F("no revision for file '%s' in database") % file);
+  N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
 
   L(F("annotate file file_path '%s'\n") % file);
 

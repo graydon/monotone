@@ -44,6 +44,8 @@ namespace constants
   // truncated.
   size_t const db_log_line_sz = 70;
 
+  size_t const default_terminal_width = 72;
+
   // size in bytes of the database xdelta version reconstruction cache.
   // the value of 7 MB was determined as the optimal point after timing
   // various values with a pull of the monotone repository - it could
@@ -101,6 +103,9 @@ namespace constants
   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   "0123456789"   
   "-"
+  // other non-shell, non-selector metacharacters allowed in (unquoted) local
+  // parts by RFC2821/RFC2822.  The full list is !#$%&'*+-/=?^_`|{}~.
+  "+_."
   // label and component separators
   ".@"
   ;

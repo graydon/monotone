@@ -60,6 +60,7 @@ public:
   void clear_line();
 private:
   std::map<std::string,size_t> last_ticks;
+  unsigned int chars_on_line;
 };
 
 struct tick_write_nothing : virtual public tick_writer
@@ -102,5 +103,8 @@ private:
 
 extern struct user_interface ui;
 
+// like platform.hh's "terminal_width", but always returns a sensible value
+// (even if there is no terminal)
+unsigned int guess_terminal_width();
 
 #endif // __UI_HH__

@@ -12,6 +12,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include <boost/lexical_cast.hpp>
 
@@ -29,7 +30,7 @@ using boost::format;
 sanity global_sanity;
 
 sanity::sanity() : 
-  debug(false), quiet(false), relaxed(false), logbuf(0xffff)
+  debug(false), quiet(false), relaxed(false), logbuf(0xffff), already_dumping(false)
 {
   std::string flavour;
   get_system_flavour(flavour);
@@ -48,6 +49,7 @@ sanity::dump_buffer()
       if (out)
         {
           copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
+          copy(gasp_dump.begin(), gasp_dump.end(), ostream_iterator<char>(out));
           ui.inform(string("wrote debugging log to ") + filename + "\n");
         }
       else
@@ -118,6 +120,8 @@ sanity::log(format const & fmt,
         str.at(str.size() - 1) = '\n';
     }
   copy(str.begin(), str.end(), back_inserter(logbuf));
+  if (str[str.size() - 1] != '\n')
+    logbuf.push_back('\n');
   if (debug)
     ui.inform(str);
 }
@@ -146,6 +150,8 @@ sanity::progress(format const & fmt,
         str.at(str.size() - 1) = '\n';
     }
   copy(str.begin(), str.end(), back_inserter(logbuf));
+  if (str[str.size() - 1] != '\n')
+    logbuf.push_back('\n');
   if (! quiet)
     ui.inform(str);
 }
@@ -175,6 +181,8 @@ sanity::warning(format const & fmt,
     }
   string str2 = "warning: " + str;
   copy(str2.begin(), str2.end(), back_inserter(logbuf));
+  if (str[str.size() - 1] != '\n')
+    logbuf.push_back('\n');
   if (! quiet)
     ui.warn(str);
 }
@@ -209,6 +217,7 @@ sanity::invariant_failure(string const & expr,
     format("%s:%d: invariant '%s' violated\n") 
     % file % line % expr;
   log(fmt, file.c_str(), line);
+  gasp();
   throw logic_error(fmt.str());
 }
 
@@ -223,5 +232,72 @@ sanity::index_failure(string const & vec_expr,
     format("%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n")
     % file % line % idx_expr % idx % vec_expr % sz;
   log(fmt, file.c_str(), line);
+  gasp();
   throw logic_error(fmt.str());
 }
+
+// Last gasp dumps
+
+void
+sanity::gasp()
+{
+  if (already_dumping)
+    {
+      L(F("ignoring request to give last gasp; already in process of dumping\n"));
+      return;
+    }
+  already_dumping = true;
+  L(F("saving current work set: %i items") % musings.size());
+  std::ostringstream out;
+  out << F("Current work set: %i items\n") % musings.size();
+  for (std::vector<MusingI const *>::const_iterator
+         i = musings.begin(); i != musings.end(); ++i)
+    {
+      try
+        {
+          std::string tmp;
+          (*i)->gasp(tmp);
+          out << tmp;
+        }
+      catch (logic_error)
+        {
+          out << "<caught logic_error>\n";
+          L(F("ignoring error trigged by saving work set to debug log"));
+        }
+      catch (informative_failure)
+        {
+          out << "<caught informative_failure>\n";
+          L(F("ignoring error trigged by saving work set to debug log"));
+        }
+    }
+  gasp_dump = out.str();
+  L(F("finished saving work set"));
+  if (debug)
+    {
+      ui.inform("contents of work set:");
+      ui.inform(gasp_dump);
+    }
+  already_dumping = false;
+}
+
+MusingI::MusingI()
+{
+  if (!global_sanity.already_dumping)
+    global_sanity.musings.push_back(this);
+}
+
+MusingI::~MusingI()
+{
+  if (!global_sanity.already_dumping)
+    {
+      I(global_sanity.musings.back() == this);
+      global_sanity.musings.pop_back();
+    }
+}
+
+void
+dump(std::string const & obj, std::string & out)
+{
+  out = obj;
+}
+

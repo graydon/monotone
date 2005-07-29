@@ -11,7 +11,6 @@
 #include <sstream>
 #include <vector>
 
-#include <stdarg.h>
 #include <string.h>
 
 #include <boost/shared_ptr.hpp>
@@ -2410,6 +2409,24 @@ database::clear_var(var_key const & key)
   encode_base64(key.second, name_encoded);
   execute("DELETE FROM db_vars WHERE domain = ? AND name = ?",
           key.first().c_str(), name_encoded().c_str());
+}
+
+// branches
+
+void
+database::get_branches(vector<string> & names)
+{
+    results res;
+    string query="SELECT DISTINCT value FROM revision_certs WHERE name= ?";
+    string cert_name="branch";
+    fetch(res,one_col,any_rows,query.c_str(),cert_name.c_str());
+    for (size_t i = 0; i < res.size(); ++i)
+      {
+        base64<data> row_encoded(res[i][0]);
+        data name;
+        decode_base64(row_encoded, name);
+        names.push_back(name());
+      }
 }
 
 // transaction guards

@@ -1,12 +1,277 @@
+2005-07-29  Nathaniel Smith  <njs@pobox.com>
+
+	* globish.cc (matcher::operator()): Log what's happening.
+	(checked_globish_to_regex_test): Fix previously added test.
+
+2005-07-29  Nathaniel Smith  <njs@pobox.com>
+
+	* globish.cc (checked_globish_to_regex_test): Add another test for
+	quoted characters.
+
+2005-07-28  Nathaniel Smith  <njs@pobox.com>
+
+	* update.cc (calculate_update_set): Only include current rev in
+	update set if it is an acceptable candidate.
+	* commands.cc (update): Clarify error message in this case.
+	* tests/t_update_branch.at: Update accordingly.
+
+2005-07-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.spec: Require boost >= 1.32.
+
+2005-07-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_merge_add_del.at: 'drop' does not take a branch (test
+	now fails in expected place).
+	* tests/t_merge_add_rename_add.at: New test.
+	* testsuite.at: Add it.
+
+2005-07-27  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_update_branch.at: New test.
+	* testsuite.at: Add it.
+	(REVERT_TO): Do not preserve MT/options file (can setup invalid
+	branch).
+	* app_state.cc (make_branch_sticky): Call write_options when
+	already have a working copy.
+	* commands.cc (update): Call make_branch_sticky at appropriate
+	time.
+
+2005-07-27  Nathaniel Smith  <njs@pobox.com>
+	
+	* commands.cc: ALIAS(mv, rename).  ALIAS(rm, drop).
+
+2005-07-26  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (dump): Add state_renumbering dumper.
+	(merge_disjoint_analyses): Add MM().
+
+2005-07-26  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (dump): Add path_analysis dumper.
+	(merge_change_sets): Add more MM()s.
+
+2005-07-26  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (dump): Add path_state dumper.
+	(sanity_check_path_state): Add MM().
+
+2005-07-26  Richard Levitte  <richard@levitte.org>
+
+	* revision.cc (check_sane_history): Convert tabs to the
+	appropriate amount of spaces.
+
+2005-07-26  Richard Levitte  <richard@levitte.org>
+
+	* sanity.hh, revision.cc (check_sane_history),
+	change_set.cc (concatenate_change_sets, merge_change_sets,
+	invert_change_set): Because boost currently uses the symbol M, we
+	have a clash.  Therefore, let's rename M to MM, for now.
+
+2005-07-26  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (CMD(privkey)): Change so both the public and
+	private key are printed.
+
+	* tests/t_dropkey_2.at, tests/t_lua_privkey.at: Adapt to the new
+	private key format.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.cc (MusingI, ~MusingI): No-op when already in the middle
+	of dumping.
+
+2005-07-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am, configure.ac: Remove BUNDLED_{LUA,SQLITE} tests and
+	clarify the comment for popt.  Using external versions of these
+	tools didn't work anyway, so there's no point giving the
+	impression that it might.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.cc (gasp): Handle the possibility of multiple valid calls
+	to gasp(), 'db check' can trigger multiple invariants without
+	dying.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.{hh,cc} (sanity::already_dumping, gasp): Don't let gasp
+	be called recursively, in case a dump triggers an invariant.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.cc (gasp): Make more robust against new errors triggered
+	during error unwind.  (write_change_set in particular likes to
+	blow up when handling in invalid change_set.)
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (merge_change_sets, check_sane)
+	(concatenate_change_sets, invert_change_set): Add M()s.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.{hh,cc} (dump): Remove templated version, add std::string
+	version.
+	* vocab.{hh,cc} (dump): Add ATOMIC/DECORATE/ENCODING dumpers.
+	* change_set.{hh,cc} (dump): Add change_set dumper.
+	* manifest.{hh,cc} (dump): Add manifest_map dumper.
+	* revision.cc (check_sane_history): Add some M()s.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.hh (class Musing, gasp, dump): Actually, take a
+	std::string instead of a std::ostream; fits our idioms better.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.cc (log, progress, warning): Append '\n' to strings when
+	necessary.
+	(gasp): Save string properly.
+	(M): Apply black magic.  Now works correctly.
+	(dump): Write newline.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.hh (dump): Add a default 'dump' implementation for all
+	<<able objects.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* constants.{cc,hh} (default_terminal_width): New constant.
+	* ui.cc (guess_terminal_width): Use it.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* diff_patch.cc (unidiff_append_test): Fix typo.
+
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_annotate_no_rev.at: New test.
+	* testsuite.at: Add it.
+	
+2005-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.{hh,cc} (sanity, dump_buffer, invariant_failure)
+	(index_failure,	MusingI, Musing, M): Implement macro M(), for
+	'musing', which marks data that monotone was musing over when an
+	invariant tripped.
+	* Makefile.am (MOST_SOURCES): Fix spacing.
+
+2005-07-23  Nathaniel Smith  <njs@pobox.com>
+
+	* ui.{hh,cc} (guess_terminal_width): New function.
+	(tick_write_dot::chars_on_line): Make unsigned to quiet gcc warning.
+	(tick_write_dot::write_ticks): Use guess_terminal_width.
+	* commands.cc (dump_diffs): Take full responsibility for printing
+	=== lines, and use guess_terminal_width.
+	* diff_patch.cc (make_diff): Don't print === lines.
+	(unidiff_append_test): Adjust accordingly.
+
+2005-07-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (CMD(annotate)): Check for a valid revision before
+	trying to fetch it from the database.
+	* lua/lundump.[ch], lua/ldump.c: Rename VERSION and VERSION0 to
+	LUA_DUMP_VERSION and LUA_DUMP_VERSION0 to avoid clashes with
+	VERSION from config.h.
+
+2005-07-22  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Committing Work): Remove discussion of manifests.
+
+2005-07-20  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (rebuild_merkle_trees): Make 'including branch'
+	message L() instead of P(); it's nice information, but too much to
+	be useful with large databases.
+
+2005-07-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* database_check.cc: check that revisions and manifests
+	are normalised to the same for that they would be written as.
+	* tests/t_database_check_normalized.at: a test for it.
+	* testsuite.at: add it.
+
+2005-07-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-import.pl: Now uses the given tag.
+
+2005-07-20  Marcel van der Boom  <marcel@hsdev.com>
+
+	* database.{cc,hh} (get_branches): New method.
+	* commands.cc (ls_branches): Use it.
+	* netsync.cc (get_branches): Likewise.
+	* tests/t_ls_branches.at: New test.
+	* testsuite.at: Add it.
+	
+2005-07-20  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (db): Rename kill_branch_locally to
+	kill_branch_certs_locally.
+	* tests/t_db_kill_branch_locally.at: Rename to...
+	* tests/t_db_kill_branch_certs_locally.at: ...this.  Update.
+	* testsuite.at: Update.
+	* monotone.texi (Database): Update.
+
+2005-07-19  Nathaniel Smith  <njs@pobox.com>
+
+	* schema_migration.cc (migrator::migrate): Add a check for schemas
+	that are just... wrong.
+	* tests/t_migrate_broken_schema.at: New test.
+
+2005-07-19  Nathaniel Smith  <njs@pobox.com>
+
+	* netcmd.cc (read): Make the bad HMAC error message clearer.
+
+2005-07-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_diff_external.at: Canonicalise output for Win32.
+
+2005-07-18  Nathaniel Smith  <njs@pobox.com>
+
+	* keys.cc (get_passphrase): Do still error out if they keep typing
+	empty passphrases.
+
+2005-07-18  Richard Levitte  <richard@levitte.org>
+
+	* database.cc: Move the inclusion of stdarg.h...
+	* database.hh: ... here.
+
 2005-07-18  Matt Johnston  <matt@ucc.asn.au>
 
-	* netsync.cc: merge fixup
-	* botan/pipe_rw.cpp (read_all_as_string): make it smarter and faster
+	* keys.cc (get_passphrase): don't bomb out if they type an empty passphrase.
 
-2005-07-18  Matt Johnston  <matt@ucc.asn.au>
+2005-07-18  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
-	* botan/sha160.{cpp,h}: new faster sha160 implementation from Jack Lloyd
-	and Kaushik Veeraraghavan.
+	* work.cc, manifest.cc: Remove 'using namespace boost'.
+
+2005-07-18  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (received_items): New instance variable.
+	(session::session): Initialize it.
+	(note_item_arrived): Maintain it.
+	(item_request_outstanding): Rename it to...
+	(item_already_received): ...this, and have it check both
+	outstanding and fulfilled requests.
+	(queue_send_data_cmd, queue_send_delta_cmd): Call it via new
+	name.
+	
+	Hopefully this will eliminate cases where "revs in" is larger than
+	"revs written".
+	
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
+	* constants.cc (legal_key_name_bytes): Allow + and _ to appear in
+	key names.
+
+2005-07-17  Nathaniel Smith  <njs@pobox.com>
+
+	* ui.{cc,hh} (tick_write_dot::write_ticks): Start a new line when
+	too many dots have been written.
+	* netsync.cc (process_refine_cmd): Add comment noting a possible
+	optimization regarding subtree refinement.
 
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 
@@ -19,6 +284,16 @@
 	* NEWS: Add diff changes, more tweaking.
 	* UPGRADE: Update for 0.21.
 	* AUTHORS: Add Vladimir Vukicevic.
+
+2005-07-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* netsync.cc: merge fixup
+	* botan/pipe_rw.cpp (read_all_as_string): make it smarter and faster
+
+2005-07-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/sha160.{cpp,h}: new faster sha160 implementation from Jack Lloyd
+	and Kaushik Veeraraghavan.
 
 2005-07-17  Nathaniel Smith  <njs@pobox.com>
 

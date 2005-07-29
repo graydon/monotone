@@ -40,7 +40,7 @@ MOST_SOURCES =								\
          selectors.cc selectors.hh					\
          annotate.cc annotate.hh					\
          restrictions.cc restrictions.hh				\
-         hmac.cc hmac.hh                  \
+         hmac.cc hmac.hh                                                \
          globish.cc globish.hh                                          \
                                                                         \
 	 cleanup.hh unit_tests.hh interner.hh				\
@@ -196,19 +196,15 @@ monotone_CPPFLAGS =
 unit_tests_LDFLAGS = 
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS
 
+lib3rdparty_a_SOURCES += $(LUA_SOURCES)
+monotone_CPPFLAGS += -I$(top_srcdir)/lua
+unit_tests_CPPFLAGS += -I$(top_srcdir)/lua
+
+lib3rdparty_a_SOURCES += $(SQLITE_SOURCES)
+monotone_CPPFLAGS += -I$(top_srcdir)/sqlite
+unit_tests_CPPFLAGS += -I$(top_srcdir)/sqlite
+
 # conditionals from configury
-
-if BUNDLED_LUA
-  lib3rdparty_a_SOURCES += $(LUA_SOURCES)
-  monotone_CPPFLAGS += -I$(top_srcdir)/lua
-  unit_tests_CPPFLAGS += -I$(top_srcdir)/lua
-endif
-
-if BUNDLED_SQLITE
-  lib3rdparty_a_SOURCES += $(SQLITE_SOURCES)
-  monotone_CPPFLAGS += -I$(top_srcdir)/sqlite
-  unit_tests_CPPFLAGS += -I$(top_srcdir)/sqlite
-endif
 
 if STATIC_BOOST
   BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem$(BOOST_SUFFIX).a \

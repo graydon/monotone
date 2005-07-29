@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -276,6 +277,45 @@ path_state_item(path_state::const_iterator i)
 
 
 
+void
+dump(path_state const & st, std::string & out)
+{
+  for (path_state::const_iterator i = st.begin();
+       i != st.end(); ++i)
+    {
+      std::vector<path_component> tmp_v;
+      tmp_v.push_back(path_item_name(path_state_item(i)));
+      file_path tmp_fp;
+      compose_path(tmp_v, tmp_fp);
+      out += (F("tid %d: parent %d, type %s, name %s\n")
+              % path_state_tid(i) 
+              % path_item_parent(path_state_item(i))
+              % (path_item_type(path_state_item(i)) == ptype_directory ? "dir" : "file")
+              % tmp_fp).str();
+    }
+}
+
+void
+dump(path_analysis const & analysis, std::string & out)
+{
+  out = "pre-state:\n";
+  std::string tmp;
+  dump(analysis.first, tmp);
+  out += tmp;
+  out += "post-state:\n";
+  tmp.clear();
+  dump(analysis.second, tmp);
+  out += tmp;
+}
+
+void
+dump(state_renumbering const & r, std::string & out)
+{
+  for (state_renumbering::const_iterator i = r.begin();
+       i != r.end(); ++i)
+    out += (F("%d -> %d\n") % i->first % i->second).str();
+}
+
 // structure dumping 
 /*
 
@@ -474,6 +514,7 @@ change_set::check_sane() const
 {
   // FIXME: extend this as you manage to think of more invariants
   // which are cheap enough to check at this level.
+  MM(*this);
 
   rearrangement.check_sane(this->deltas);
 
@@ -607,6 +648,7 @@ confirm_unique_entries_in_directories(path_state const & ps)
 static void
 sanity_check_path_state(path_state const & ps)
 {
+  MM(ps);
   confirm_proper_tree(ps);
   confirm_unique_entries_in_directories(ps);
 }
@@ -1489,6 +1531,9 @@ concatenate_change_sets(change_set const & a,
                         change_set const & b,
                         change_set & concatenated)
 {
+  MM(a);
+  MM(b);
+  MM(concatenated);
   a.check_sane();
   b.check_sane();
 
@@ -1888,6 +1933,7 @@ merge_disjoint_analyses(path_analysis const & a,
   
   path_analysis a_tmp(a), b_tmp(b);
   state_renumbering renumbering;
+  MM(renumbering);
 
   ensure_tids_disjoint(a_tmp, b_tmp);
 
@@ -2193,6 +2239,10 @@ merge_change_sets(change_set const & a,
                   merge_provider & merger,
                   app_state & app)
 {
+  MM(a);
+  MM(b);
+  MM(a_merged);
+  MM(b_merged);
   a.check_sane();
   b.check_sane();
 
@@ -2203,6 +2253,12 @@ merge_change_sets(change_set const & a,
     a_analysis, b_analysis, 
     a_renumbered, b_renumbered, 
     a_merged_analysis, b_merged_analysis;
+  MM(a_analysis);
+  MM(b_analysis);
+  MM(a_renumbered);
+  MM(b_renumbered);
+  MM(a_merged_analysis);
+  MM(b_merged_analysis);
 
   analyze_rearrangement(a.rearrangement, a_analysis, ts);
   analyze_rearrangement(b.rearrangement, b_analysis, ts);
@@ -2262,6 +2318,9 @@ invert_change_set(change_set const & a2b,
                   manifest_map const & a_map,
                   change_set & b2a)
 {
+  MM(a2b);
+  MM(a_map);
+  MM(b2a);
   a2b.check_sane();
   tid_source ts;
   path_analysis a2b_analysis, b2a_analysis;
@@ -2896,6 +2955,14 @@ write_path_rearrangement(change_set::path_rearrangement const & re,
   basic_io::printer pr(oss);
   print_path_rearrangement(pr, re);
   dat = data(oss.str());  
+}
+
+void
+dump(change_set const & cs, std::string & out)
+{
+  data tmp;
+  write_change_set(cs, tmp);
+  out = tmp();
 }
 
 #ifdef BUILD_UNIT_TESTS

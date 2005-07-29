@@ -135,7 +135,15 @@ globish_matcher::operator()(std::string const & s)
 {
   // regex_match may throw a std::runtime_error, if the regex turns out to be
   // really pathological
-  return boost::regex_match(s, r_inc) && !boost::regex_match(s, r_exc);
+  bool inc_match = boost::regex_match(s, r_inc);
+  bool exc_match = boost::regex_match(s, r_exc);
+  bool result = inc_match && !exc_match;
+  L(F("matching '%s' against '%s' excluding '%s': %s, %s: %s\n")
+    % s % r_inc % r_exc
+    % (inc_match ? "included" : "not included")
+    % (exc_match ? "excluded" : "not excluded")
+    % (result ? "matches" : "does not match"));
+  return result;
 }
 
 #ifdef BUILD_UNIT_TESTS
@@ -162,6 +170,8 @@ checked_globish_to_regex_test()
   // we're very conservative about metacharacters, and quote all
   // non-alphanumerics, hence the backslash
   BOOST_CHECK(pat == "\\,");
+  checked_globish_to_regex("\\.\\+\\$\\^\\(\\)", pat);
+  BOOST_CHECK(pat == "\\.\\+\\$\\^\\(\\)");
 
   BOOST_CHECK_THROW(checked_globish_to_regex("foo\\", pat), informative_failure);
   BOOST_CHECK_THROW(checked_globish_to_regex("{foo", pat), informative_failure);

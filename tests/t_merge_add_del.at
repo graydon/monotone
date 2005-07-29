@@ -56,7 +56,7 @@ AT_CHECK(MONOTONE --branch=branch.fork merge, [], [ignore], [ignore])
 
 # produce state E
 REVERT_TO($C_REVISION_SHA,branch.main)
-AT_CHECK(MONOTONE --branch=branch.main drop bar, [], [ignore], [ignore])
+AT_CHECK(MONOTONE drop bar, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=branch.main commit --message 'state E - drop bar', [], [ignore], [ignore])
 E_REVISION_SHA=`BASE_REVISION`
 

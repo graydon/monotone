@@ -16,7 +16,6 @@
 
 // working copy / book-keeping file code
 
-using namespace boost;
 using namespace std;
 
 // attribute map file

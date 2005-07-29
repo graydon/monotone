@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 #ifndef __SANITY_HH__
 #define __SANITY_HH__
 
@@ -37,6 +38,8 @@ struct informative_failure {
   std::string what;
 };
 
+class MusingI;
+
 struct sanity {
   sanity();
   ~sanity();
@@ -52,6 +55,9 @@ struct sanity {
   bool relaxed;
   boost::circular_buffer<char> logbuf;
   std::string filename;
+  std::string gasp_dump;
+  bool already_dumping;
+  std::vector<MusingI const *> musings;
 
   void log(boost::format const & fmt, 
            char const * file, int line);
@@ -70,6 +76,7 @@ struct sanity {
                      unsigned long sz, 
                      unsigned long idx,
                      std::string const & file, int line) NORETURN;
+  void gasp();
 };
 
 typedef std::runtime_error oops;
@@ -192,5 +199,54 @@ inline T const & checked_index(std::vector<T, QA(T)> const & v,
 #define idx(v, i) checked_index((v), (i), #v, #i, __FILE__, __LINE__)
 
 
+
+// Last gasp dumps
+
+class MusingI
+{
+public:
+  MusingI();
+  virtual ~MusingI();
+  virtual void gasp(std::string & out) const = 0;
+};
+
+template <typename T>
+class Musing : public MusingI
+{
+public:
+  Musing(T const & obj, char const * name, char const * file, int line, char const * func)
+    : obj(obj), name(name), file(file), line(line), func(func) {}
+  virtual void gasp(std::string & out) const;
+private:
+  T const & obj;
+  char const * name;
+  char const * file;
+  int line;
+  char const * func;
+};
+
+template <typename T> void
+Musing<T>::gasp(std::string & out) const
+{
+  out = (F("----- begin '%s' (in %s, at %s:%d)\n") % name % func % file % line).str();
+  std::string tmp;
+  dump(obj, tmp);
+  out += tmp;
+  out += (F("-----   end '%s' (in %s, at %s:%d)\n") % name % func % file % line).str();
+}
+
+// Yes, this is insane.  No, it doesn't work if you do something more sane.
+// ## explicitly skips macro argument expansion on the things passed to it.
+// Therefore, if we simply did foo ## __LINE__, we would get foo__LINE__ in
+// the output.  In fact, even if we did real_M(obj, __LINE__), we would get
+// foo__LINE__ in the output.  (## substitutes arguments, but does not expand
+// them.)  However, while fake_M does nothing directly, it doesn't pass its
+// line argument to ##; therefore, its line argument is fully expanded before
+// being passed to real_M.
+#define real_M(obj, line) Musing<typeof(obj)> this_is_a_musing_fnord_object_ ## line (obj, #obj, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define fake_M(obj, line) real_M(obj, line)
+#define MM(obj) fake_M(obj, __LINE__)
+
+void dump(std::string const & obj, std::string & out);
 
 #endif // __SANITY_HH__

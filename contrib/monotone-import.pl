@@ -190,10 +190,14 @@ map {
 } @new_files;
 
 ######################################################################
-# Commit and tell the user what he can do with the import.
+# Commit and tag.
 #
 my_system("monotone commit --message=\"$user_message\"");
+my_system("monotone tag \`cat MT/revision\` \"$user_tag\"");
 
+######################################################################
+# Tell the user what he can do with the import.
+#
 print "********** IMPORTANT NOTICE **********\n";
 print "If you want the changes that come with the import to appear in\n";
 print "another branch (like your development branch), do the following\n";

@@ -99,4 +99,6 @@ void write_manifest_map(manifest_map const & man,
 void write_manifest_map(manifest_map const & man, 
                         data & dat);
 
+void dump(manifest_map const & man, std::string & out);
+
 #endif // __MANIFEST_HH__

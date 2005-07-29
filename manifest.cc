@@ -27,7 +27,6 @@
 // and i/o functions on them. a manifest specifies exactly which versions
 // of each file reside at which path location in a given tree.
 
-using namespace boost;
 using namespace std;
 
 // building manifest_maps
@@ -272,4 +271,10 @@ write_manifest_map(manifest_map const & man,
   dat = sstr.str();
 }
 
-
+void
+dump(manifest_map const & man, std::string & out)
+{
+  data dat;
+  write_manifest_map(man, dat);
+  out = dat();
+}

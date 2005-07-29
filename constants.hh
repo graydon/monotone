@@ -52,6 +52,9 @@ namespace constants
   // truncated.
   extern size_t const log_line_sz;
 
+  // assumed width of the terminal, when we can't query for it directly
+  extern size_t const default_terminal_width;
+
   // all the ASCII characters (bytes) which are legal in a packet
   extern char const * const legal_packet_bytes;
 

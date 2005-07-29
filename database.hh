@@ -10,6 +10,8 @@ struct sqlite3;
 struct sqlite3_stmt;
 struct cert;
 
+#include <stdarg.h>
+
 #include <vector>
 #include <set>
 #include <map>
@@ -425,6 +427,9 @@ public:
 
   void clear_var(var_key const & key);
 
+  // branches
+  void get_branches(std::vector<std::string> & names);
+  
   // completion stuff
 
   void complete(std::string const & partial,
