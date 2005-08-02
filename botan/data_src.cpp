@@ -151,7 +151,7 @@ std::string DataSource_Stream::id() const
 *************************************************/
 DataSource_Stream::DataSource_Stream(const std::string& file) : fsname(file)
    {
-   source = new std::ifstream(fsname.c_str());
+   source = new std::ifstream(fsname.c_str(), std::ios::binary);
    if(!source->good())
       throw Stream_IO_Error("DataSource_Stream: Failure opening " + fsname);
    total_read = 0;

@@ -1,5 +1,10 @@
 2005-08-03  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* botan/data_src.cpp (DataSource_Stream::DataSourceStream): Open
+	fstream as binary file.
+
+2005-08-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* win32/inodeprint.cc: Botan changes.  Also, hash individual
 	FileTime structure members rather than the entire structure.
 	* keys.cc: Add explicit 'using' for Botan::byte.
