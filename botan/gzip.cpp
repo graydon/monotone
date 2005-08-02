@@ -143,7 +143,7 @@ void Gzip_Compression::write(const byte input[], u32bit length)
       zlib->stream.avail_out = buffer.size();
       int rc = deflate(&(zlib->stream), Z_NO_FLUSH);
       if (rc != Z_OK && rc != Z_STREAM_END)
-         throw Exception("Internal error in Gzip_Compression deflate.")
+         throw Exception("Internal error in Gzip_Compression deflate.");
       send(buffer.begin(), buffer.size() - zlib->stream.avail_out);
       }
    }
@@ -163,7 +163,7 @@ void Gzip_Compression::end_msg()
       zlib->stream.avail_out = buffer.size();
       rc = deflate(&(zlib->stream), Z_FINISH);
       if (rc != Z_OK && rc != Z_STREAM_END)
-         throw Exception("Internal error in Gzip_Compression finishing deflate.")
+         throw Exception("Internal error in Gzip_Compression finishing deflate.");
       send(buffer.begin(), buffer.size() - zlib->stream.avail_out);
       }
 
