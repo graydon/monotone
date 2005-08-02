@@ -1,3 +1,12 @@
+2005-08-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/inodeprint.cc: Botan changes.  Also, hash individual
+	FileTime structure members rather than the entire structure.
+	* keys.cc: Add explicit 'using' for Botan::byte.
+	* botan/es_win32.{cpp,h}: Add missing files.
+	* Makefile.am: Enable entropy collection via CryptoAPI and Win32
+	API.
+
 2005-08-02  Matt Johnston  <matt@ucc.asn.au>
 
 	* botan/gzip.cpp: forgot to commit some semicolons

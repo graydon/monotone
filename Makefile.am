@@ -225,8 +225,8 @@ if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
   monotone_LDADD += -lws2_32 -lintl -liconv -liphlpapi
   unit_tests_LDADD += -lws2_32 -lintl -liconv -liphlpapi
-  lib3rdparty_a_CPPFLAGS += -DWIN32
-  lib3rdparty_a_SOURCES += botan/es_capi.cpp
+  lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
+  lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
 else
   libplatform_a_SOURCES += $(UNIX_PLATFORM_SOURCES)
 endif

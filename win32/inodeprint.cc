@@ -6,7 +6,8 @@
 #include <sys/stat.h>
 #include <windows.h>
 
-#include "cryptopp/sha.h"
+#include "botan/botan.h"
+#include "botan/sha160.h"
 
 #include "platform.hh"
 #include "transforms.hh"
@@ -15,12 +16,12 @@
 namespace
 {
   template <typename T> void
-  inline add_hash(CryptoPP::SHA & hash, T obj)
+  inline add_hash(Botan::SHA_160 & hash, T obj)
   {
       size_t size = sizeof(obj);
-      hash.Update(reinterpret_cast<byte const *>(&size),
+      hash.update(reinterpret_cast<Botan::byte const *>(&size),
                   sizeof(size));
-      hash.Update(reinterpret_cast<byte const *>(&obj),
+      hash.update(reinterpret_cast<Botan::byte const *>(&obj),
                   sizeof(obj));
   }
 };
@@ -31,7 +32,7 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
   if (_stati64(localized_as_string(file).c_str(), &st) < 0)
     return false;
 
-  CryptoPP::SHA hash;
+  Botan::SHA_160 hash;
 
   add_hash(hash, st.st_mode);
   add_hash(hash, st.st_dev);
@@ -48,15 +49,17 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
       return false;
     }
 
-  add_hash(hash, create);
-  add_hash(hash, write);
+  add_hash(hash, create.dwLowDateTime);
+  add_hash(hash, create.dwHighDateTime);
+  add_hash(hash, write.dwLowDateTime);
+  add_hash(hash, write.dwHighDateTime);
 
   if (CloseHandle(filehandle) == 0)
     return false;
 
-  char digest[CryptoPP::SHA::DIGESTSIZE];
-  hash.Final(reinterpret_cast<byte *>(digest));
-  std::string out(digest, CryptoPP::SHA::DIGESTSIZE);
+  char digest[hash.OUTPUT_LENGTH];
+  hash.final(reinterpret_cast<Botan::byte *>(digest));
+  std::string out(digest, hash.OUTPUT_LENGTH);
   inodeprint ip_raw(out);
   encode_hexenc(ip_raw, ip);
   return true;

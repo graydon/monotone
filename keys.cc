@@ -33,6 +33,7 @@ using namespace std;
 
 using boost::shared_ptr;
 using boost::shared_dynamic_cast;
+using Botan::byte;
 
 static void 
 do_arc4(SecureVector<byte> & phrase,
