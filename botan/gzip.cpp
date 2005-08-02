@@ -88,7 +88,30 @@ Gzip_Compression::Gzip_Compression(u32bit l) :
    level((l >= 9) ? 9 : l), buffer(DEFAULT_BUFFERSIZE),
    pipe(new Hash_Filter("CRC32")), count( 0 )
    {
-   zlib = 0;
+
+   zlib = new Zlib_Stream;
+   // window_bits == -15 relies on an undocumented feature of zlib, which
+   // supresses the zlib header on the message. We need that since gzip doesn't
+   // use this header.  The feature been confirmed to exist in 1.1.4, which
+   // everyone should be using due to security fixes. In later versions this
+   // feature is documented, along with the ability to do proper gzip output
+   // (that would be a nicer way to do things, but will have to wait until 1.2
+   // becomes more widespread).
+   // The other settings are the defaults that deflateInit() gives
+   if(deflateInit2(&(zlib->stream), level, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY) != Z_OK)
+      {
+      delete zlib; zlib = 0;
+      throw Exception("Gzip_Compression: Memory allocation error");
+      }
+   }
+
+/*************************************************
+* Gzip_Compression Destructor                    *
+*************************************************/
+Gzip_Compression::~Gzip_Compression()
+   {
+   deflateEnd(&(zlib->stream));
+   delete zlib; zlib = 0;
    }
 
 /*************************************************
@@ -97,17 +120,6 @@ Gzip_Compression::Gzip_Compression(u32bit l) :
 void Gzip_Compression::start_msg()
    {
    clear();
-   zlib = new Zlib_Stream;
-   // window_bits == -15 relies on an undocumented feature of zlib, which
-   // supresses the zlib header on the message. We need that since gzip doesn't
-   // use this header.  The feature been confirmed to exist in 1.1.4, which
-   // everyone should be using due to security fixes. In later versions this
-   // feature is documented, along with the ability to do proper gzip output
-   // (which would be a nicer way to do things, but will have to wait until 1.2
-   // becomes more widespread).
-   // The other settings are the defaults which deflateInit() gives
-   if(deflateInit2(&(zlib->stream), level, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY) != Z_OK)
-      throw Exception("Gzip_Compression: Memory allocation error");
    put_header();
    pipe.start_msg();
    count = 0;
@@ -129,7 +141,9 @@ void Gzip_Compression::write(const byte input[], u32bit length)
       {
       zlib->stream.next_out = (Bytef*)buffer.begin();
       zlib->stream.avail_out = buffer.size();
-      deflate(&(zlib->stream), Z_NO_FLUSH);
+      int rc = deflate(&(zlib->stream), Z_NO_FLUSH);
+      if (rc != Z_OK && rc != Z_STREAM_END)
+         throw Exception("Internal error in Gzip_Compression deflate.")
       send(buffer.begin(), buffer.size() - zlib->stream.avail_out);
       }
    }
@@ -148,31 +162,14 @@ void Gzip_Compression::end_msg()
       zlib->stream.next_out = (Bytef*)buffer.begin();
       zlib->stream.avail_out = buffer.size();
       rc = deflate(&(zlib->stream), Z_FINISH);
+      if (rc != Z_OK && rc != Z_STREAM_END)
+         throw Exception("Internal error in Gzip_Compression finishing deflate.")
       send(buffer.begin(), buffer.size() - zlib->stream.avail_out);
       }
 
    pipe.end_msg();
    put_footer();
-
    clear();
-   }
-
-/*************************************************
-* Flush the Gzip Compressor                      *
-*************************************************/
-void Gzip_Compression::flush()
-   {
-   zlib->stream.next_in = 0;
-   zlib->stream.avail_in = 0;
-
-   while(true)
-      {
-      zlib->stream.next_out = (Bytef*)buffer.begin();
-      zlib->stream.avail_out = buffer.size();
-      deflate(&(zlib->stream), Z_FULL_FLUSH);
-      send(buffer.begin(), buffer.size() - zlib->stream.avail_out);
-      if(zlib->stream.avail_out == buffer.size()) break;
-      }
    }
 
 /*************************************************
@@ -180,14 +177,7 @@ void Gzip_Compression::flush()
 *************************************************/
 void Gzip_Compression::clear()
    {
-   if(zlib)
-      {
-      deflateEnd(&(zlib->stream));
-      delete zlib;
-      zlib = 0;
-      }
-
-   buffer.clear();
+   deflateReset(&(zlib->stream));
    }
 
 /*************************************************
@@ -195,7 +185,7 @@ void Gzip_Compression::clear()
 *************************************************/
 void Gzip_Compression::put_header()
    {
-      send(GZIP::GZIP_HEADER, sizeof(GZIP::GZIP_HEADER));
+   send(GZIP::GZIP_HEADER, sizeof(GZIP::GZIP_HEADER));
    }
 
 /*************************************************
@@ -203,36 +193,52 @@ void Gzip_Compression::put_header()
 *************************************************/
 void Gzip_Compression::put_footer()
    {
+   // 4 byte CRC32, and 4 byte length field
+   SecureVector<byte> buf(4);
+   SecureVector<byte> tmpbuf(4);
 
-      // 4 byte CRC32, and 4 byte length field
-      SecureVector<byte> buf(4);
-      SecureVector<byte> tmpbuf(4);
+   pipe.read(tmpbuf.begin(), tmpbuf.size());
 
-      pipe.read(tmpbuf.begin(), tmpbuf.size());
+   // CRC32 is the reverse order to what gzip expects.
+   for (int i = 0; i < 4; i++)
+      buf[3-i] = tmpbuf[i];
 
-     // CRC32 is the reverse order to what gzip expects.
-     for (int i = 0; i < 4; i++)
-        buf[3-i] = tmpbuf[i];
+   send(buf.begin(), buf.size());
 
-      send(buf.begin(), buf.size());
+   // Length - LSB first
+   for (int i = 0; i < 4; i++)
+      buf[3-i] = get_byte(i, count);
 
-     // Length - LSB first
-     for (int i = 0; i < 4; i++)
-        buf[3-i] = get_byte(i, count);
-
-      send(buf.begin(), buf.size());
+   send(buf.begin(), buf.size());
    }
 
 /*************************************************
 * Gzip_Decompression Constructor                 *
 *************************************************/
 Gzip_Decompression::Gzip_Decompression() : buffer(DEFAULT_BUFFERSIZE),
-   pipe(new Hash_Filter("CRC32")), footer(0)
+   no_writes(true), pipe(new Hash_Filter("CRC32")), footer(0)
    {
-   zlib = 0;
-   no_writes = true;
    if (DEFAULT_BUFFERSIZE < sizeof(GZIP::GZIP_HEADER))
       throw Exception("DEFAULT_BUFFERSIZE is too small");
+
+   zlib = new Zlib_Stream;
+
+   // window_bits == -15 is raw zlib (no header) - see comment
+   // above about deflateInit2
+   if(inflateInit2(&(zlib->stream), -15) != Z_OK)
+      {
+      delete zlib; zlib = 0;
+      throw Exception("Gzip_Decompression: Memory allocation error");
+      }
+   }
+
+/*************************************************
+* Gzip_Decompression Destructor                  *
+*************************************************/
+Gzip_Decompression::~Gzip_Decompression()
+   {
+      inflateEnd(&(zlib->stream));
+      delete zlib; zlib = 0;
    }
 
 /*************************************************
@@ -240,12 +246,9 @@ Gzip_Decompression::Gzip_Decompression() : buffer(DEFAULT_BUFFERSIZE),
 *************************************************/
 void Gzip_Decompression::start_msg()
    {
-   clear();
-   zlib = new Zlib_Stream;
-   // window_bits == -15 is raw zlib (no header) - see comment
-   // above for deflateInit2
-   if(inflateInit2(&(zlib->stream), -15) != Z_OK)
-      throw Exception("Gzip_Decompression: Memory allocation error");
+   if (!no_writes)
+      throw Exception("Gzip_Decompression: start_msg after already writing");
+
    pipe.start_msg();
    datacount = 0;
    pos = 0;
@@ -300,7 +303,6 @@ void Gzip_Decompression::write(const byte input[], u32bit length)
       int rc = inflate(&(zlib->stream), Z_SYNC_FLUSH);
       if(rc != Z_OK && rc != Z_STREAM_END)
          {
-         clear();
          if(rc == Z_DATA_ERROR)
             throw Decoding_Error("Gzip_Decompression: Data integrity error");
          if(rc == Z_NEED_DICT)
@@ -341,7 +343,7 @@ u32bit Gzip_Decompression::eat_footer(const byte input[], u32bit length)
       if (footer.size() == GZIP::FOOTER_LENGTH)
          {
          check_footer();
-         start_msg();
+         clear();
          }
 
          return eat_len;
@@ -352,8 +354,6 @@ u32bit Gzip_Decompression::eat_footer(const byte input[], u32bit length)
 *************************************************/
 void Gzip_Decompression::check_footer()
    {
-   if(no_writes) return;
-
    if (footer.size() != GZIP::FOOTER_LENGTH)
       throw Exception("Gzip_Decompression: Error finalizing decompression");
 
@@ -388,7 +388,7 @@ void Gzip_Decompression::end_msg()
    {
 
    // All messages should end with a footer, and when a footer is successfully
-   // read, start_msg() will be called.
+   // read, clear() will reset no_writes
    if(no_writes) return;
 
    throw Exception("Gzip_Decompression: didn't find footer");
@@ -401,15 +401,8 @@ void Gzip_Decompression::end_msg()
 void Gzip_Decompression::clear()
    {
    no_writes = true;
+   inflateReset(&(zlib->stream));
 
-   if(zlib)
-      {
-      inflateEnd(&(zlib->stream));
-      delete zlib;
-      zlib = 0;
-      }
-
-   buffer.clear();
    footer.clear();
    pos = 0;
    datacount = 0;

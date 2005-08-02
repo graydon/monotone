@@ -39,10 +39,8 @@ class Gzip_Compression : public Filter
       void start_msg();
       void end_msg();
 
-      void flush();
-
       Gzip_Compression(u32bit = 6);
-      ~Gzip_Compression() { clear(); }
+      ~Gzip_Compression();
    private:
       void clear();
       void put_header();
@@ -65,7 +63,7 @@ class Gzip_Decompression : public Filter
       void end_msg();
 
       Gzip_Decompression();
-      ~Gzip_Decompression() { clear(); }
+      ~Gzip_Decompression();
    private:
       u32bit eat_footer(const byte input[], u32bit length);
       void check_footer();

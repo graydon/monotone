@@ -1,3 +1,7 @@
+2005-08-02  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/gzip.{cpp,h}: rearranged the code to be clearer.
+
 2005-07-29  Nathaniel Smith  <njs@pobox.com>
 
 	* globish.cc (matcher::operator()): Log what's happening.
