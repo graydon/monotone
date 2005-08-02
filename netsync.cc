@@ -1706,8 +1706,6 @@ get_branches(app_state & app, vector<string> & names)
 {
   app.db.get_branches(names);
   sort(names.begin(), names.end());
-  if (!names.size())
-    W(F("No branches found."));
 }
 
 static const var_domain known_servers_domain = var_domain("known-servers");
