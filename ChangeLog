@@ -2,6 +2,11 @@
 
 	* botan/gzip.{cpp,h}: rearranged the code to be clearer.
 
+2005-08-01  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (get_branches): Remove warning when there are no
+	branches.
+
 2005-07-29  Nathaniel Smith  <njs@pobox.com>
 
 	* globish.cc (matcher::operator()): Log what's happening.
