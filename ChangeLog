@@ -1,3 +1,9 @@
+2005-08-03  Matthew A. Nicholson  <matt@matt-land.com>
+
+	* std_hooks.lua (get_preferred_merge2_command)
+	(get_preferred_merge3_command): Provide more information on how to
+	use vim as merge tool.
+
 2005-08-03  graydon hoare  <graydon@pobox.com>
 
 	* unix/process.cc (make_executable): Fix race, set user/group/other.
