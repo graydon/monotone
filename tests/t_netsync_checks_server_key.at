@@ -30,10 +30,19 @@ RUN_NETSYNC(pull, testbranch)
 
 # Then again with a different key; should fail.
 NETSYNC_SERVE_START(--key=foo@bar testbranch)
-NETSYNC_CLIENT_RUN(pull, testbranch, 1)
-NETSYNC_SERVE_STOP
 
+NETSYNC_CLIENT_RUN(pull, testbranch, 1)
 # It shouldn't have absorbed the key, either.
 AT_CHECK(MONOTONE2 pubkey foo@bar, [1], [stdout], [ignore])
+
+# But if we then clear the client's known_hosts entry, it should be fine
+AT_CHECK(MONOTONE2 unset known-servers NETSYNC_ADDRESS, [], [ignore], [ignore])
+
+# Now it should succeed
+NETSYNC_CLIENT_RUN(pull, testbranch)
+# And have absorbed the key
+AT_CHECK(MONOTONE2 pubkey foo@bar, [], [stdout], [ignore])
+
+NETSYNC_SERVE_STOP
 
 AT_CLEANUP

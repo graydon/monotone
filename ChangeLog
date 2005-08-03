@@ -1,3 +1,12 @@
+2005-08-03  Nathaniel Smith  <njs@pobox.com>
+
+	* testsuite.at (NETSYNC_ADDRESS): New macro.
+	(NETSYNC_SERVE_N_START, NETSYNC_SERVE_START)
+	(NETSYNC_CLIENT_N_RUN): Use it.
+	
+	* tests/t_netsync_checks_server_key.at: Make sure can unset the
+	known-servers entry.
+
 2005-08-03  Matthew A. Nicholson  <matt@matt-land.com>
 
 	* std_hooks.lua (get_preferred_merge2_command)
