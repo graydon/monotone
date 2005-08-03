@@ -1,3 +1,7 @@
+2005-08-03  graydon hoare  <graydon@pobox.com>
+
+	* unix/process.cc (make_executable): Fix race, set user/group/other.
+
 2005-08-03  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* botan/data_src.cpp (DataSource_Stream::DataSourceStream): Open
