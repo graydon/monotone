@@ -1,5 +1,9 @@
 2005-08-04  Nathaniel Smith  <njs@pobox.com>
 
+	* netsync.cc (rebuild_merkle_trees): Typo.
+
+2005-08-04  Nathaniel Smith  <njs@pobox.com>
+
 	* netsync.cc (rebuild_merkle_trees): Tweak message ("rebuilding
 	merkle trees" does not mean anything to J. Random User...)
 
