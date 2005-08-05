@@ -198,7 +198,11 @@ build_restricted_manifest_map(path_set const & paths,
     }
 
   N(missing_files == 0, 
-    F("%d missing files\n") % missing_files);
+    F("%d missing files\n"
+      "to restore consistency, on each missing file run either\n"
+      "'monotone drop FILE' to remove it permanently, or\n"
+      "'monotone revert FILE' to restore it\n")
+    % missing_files);
 
 }
 
