@@ -3623,7 +3623,7 @@ void
 session::rebuild_merkle_trees(app_state & app,
                               set<utf8> const & branchnames)
 {
-  P(F("rebuilding merkle trees ...\n"));
+  P(F("calculating synchronization set ...\n"));
   for (set<utf8>::const_iterator i = branchnames.begin();
       i != branchnames.end(); ++i)
     L(F("including branch %s") % *i);
