@@ -1,0 +1,34 @@
+AT_SETUP([MT/* handled correctly in aborted commit])
+MONOTONE_SETUP
+
+# MT/* means MT/revision and MT/work
+
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+
+ADD_FILE(otherfile, [stuff stuff
+])
+
+AT_DATA(MT/log, [message message
+])
+
+AT_CHECK(cp MT/log good_log)
+AT_CHECK(cp MT/revision good_revision)
+AT_CHECK(cp MT/work good_work)
+
+AT_DATA(bad_edit_comment.lua, [function edit_comment(basetext, user_log_message)
+    return ""
+end
+])
+
+AT_CHECK(MONOTONE commit --rcfile=bad_edit_comment.lua, [1], [ignore], [ignore])
+
+# Since this commit was canceled due to a problem with the log
+# message, the old log message have been preserved
+AT_CHECK(cmp MT/log good_log)
+
+AT_CHECK(cmp MT/revision good_revision)
+AT_CHECK(cmp MT/work good_work)
+
+AT_CLEANUP

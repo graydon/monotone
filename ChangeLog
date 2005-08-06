@@ -1,3 +1,10 @@
+2005-08-05  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (commit): Write out the log message to MT/log
+	_after_ making sure it's non-empty.
+	* tests/t_commit_cancelled.at: New test.
+	* testsuite.at: Add it.
+	
 2005-08-04  Nathaniel Smith  <njs@pobox.com>
 
 	* netsync.cc (rebuild_merkle_trees): Typo.
