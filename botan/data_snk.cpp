@@ -32,7 +32,7 @@ DataSink_Stream::DataSink_Stream(std::ostream& stream) : fsname("std::ostream")
 *************************************************/
 DataSink_Stream::DataSink_Stream(const std::string& file) : fsname(file)
    {
-   sink = new std::ofstream(fsname.c_str());
+   sink = new std::ofstream(fsname.c_str(), std::ios::binary);
    if(!sink->good())
       throw Stream_IO_Error("DataSink_Stream: Failure opening " + fsname);
    owns = true;

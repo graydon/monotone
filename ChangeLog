@@ -1,3 +1,9 @@
+2005-08-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* botan/{data_snk,es_file}.cpp: Open fstreams in binary mode.
+	These changes, plus the same change for data_src.cpp and
+	es_ftw.cpp, have been sent upstream.
+
 2005-08-05  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (commit): Write out the log message to MT/log
