@@ -1,5 +1,10 @@
 2005-08-07  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (pull): Clarify what the "doing anonymous pull"
+	message means and what you might do about it.
+
+2005-08-07  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.texi (Network Service, Hooks): Document
 	get_netsync_read_permitted as getting a nil value on anonymous
 	connects.

@@ -2073,7 +2073,7 @@ CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   if (app.signing_key() == "")
-    W(F("doing anonymous pull\n"));
+    P(F("doing anonymous pull; use -kKEYNAME if you need authentication\n"));
   
   run_netsync_protocol(client_voice, sink_role, addr,
                        include_pattern, exclude_pattern, app);  
