@@ -64,7 +64,8 @@ public:
   // network hooks
   bool hook_get_netsync_read_permitted(std::string const & branch, 
                                        rsa_keypair_id const & identity);
-  bool hook_get_netsync_anonymous_read_permitted(std::string const & branch);
+  // anonymous no-key version
+  bool hook_get_netsync_read_permitted(std::string const & branch);
   bool hook_get_netsync_write_permitted(rsa_keypair_id const & identity);
 
   // local repo hooks

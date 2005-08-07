@@ -1845,7 +1845,7 @@ session::process_anonymous_cmd(protocol_role role,
       i != branchnames.end(); i++)
     {
       if (their_matcher(*i))
-        if (our_matcher(*i) && app.lua.hook_get_netsync_anonymous_read_permitted(*i))
+        if (our_matcher(*i) && app.lua.hook_get_netsync_read_permitted(*i))
           ok_branches.insert(utf8(*i));
         else
           {

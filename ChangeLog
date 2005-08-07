@@ -1,3 +1,14 @@
+2005-08-07  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Network Service, Hooks): Document
+	get_netsync_read_permitted as getting a nil value on anonymous
+	connects.
+	* lua.{cc.hh} (hook_get_netsync_anonymous_read_permitted):
+	Remove. Replace with 1-argument version of
+	hook_get_netsync_write_permitted.
+	* netsync.cc (process_anonymous_cmd): Update.
+	* tests/t_netsync_permissions.at: Likewise.
+
 2005-08-07  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* botan/{data_snk,es_file}.cpp: Open fstreams in binary mode.

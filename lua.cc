@@ -1089,15 +1089,17 @@ lua_hooks::hook_get_netsync_read_permitted(std::string const & branch,
   return exec_ok && permitted;
 }
 
+// Anonymous no-key version
 bool 
-lua_hooks::hook_get_netsync_anonymous_read_permitted(std::string const & branch)
+lua_hooks::hook_get_netsync_read_permitted(std::string const & branch)
 {
   bool permitted = false, exec_ok = false;
 
   exec_ok = Lua(st)
-    .func("get_netsync_anonymous_read_permitted")
+    .func("get_netsync_read_permitted")
     .push_str(branch)
-    .call(1,1)
+    .push_nil()
+    .call(2,1)
     .extract_bool(permitted)
     .ok();
 

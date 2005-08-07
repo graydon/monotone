@@ -21,10 +21,6 @@ end
 function get_netsync_write_permitted(identity)
         return true
 end
-
-function get_netsync_anonymous_read_permitted(pattern)
-        return true
-end
 ])
 
 AT_CHECK(cp test.db clean.db)
@@ -108,10 +104,6 @@ end
 
 function get_netsync_write_permitted(identity)
         if (identity == "tester@test.net") then return true end
-        return false
-end
-
-function get_netsync_anonymous_read_permitted(pattern)
         return false
 end
 ])

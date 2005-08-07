@@ -1625,10 +1625,6 @@ function get_netsync_write_permitted (identity)
   if (identity == "beth@@juicebot.co.jp") then return true end
   return false
 end
-
-function get_netsync_anonymous_read_permitted (branch)
-  return false
-end
 ^D
 @end group
 @end smallexample
@@ -3712,9 +3708,8 @@ option when connecting to the server and branch pattern that you want to
 make the new default.
 
 In the server, different permissions can be applied to each branch; see
-the hooks @code{get_netsync_read_permitted},
-@code{get_netsync_write_permitted}, and
-@code{get_netsync_anonymous_read_permitted} (see @ref{Hook Reference}).
+the hooks @code{get_netsync_read_permitted} and
+@code{get_netsync_write_permitted} (see @ref{Hook Reference}).
 
 If a @option{--pid-file} option is specified, the command
 @command{serve} will create the specified file and record the process
@@ -5514,6 +5509,9 @@ manifests, and files associated with @var{branch}; otherwise @code{false}.
 This hook has no default definition, therefore the default behavior is
 to deny all reads.
 
+If a client connects anonymously, this hook will be called with a
+@var{identity} of @code{nil}.
+
 Note that the @var{identity} value is a key ID (such as
 ``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}
 key fingerprint (hash) in your database. Monotone will not permit two
@@ -5521,20 +5519,16 @@ keys in your database to have the same ID. Make sure you confirm the
 key fingerprints of each key in your database, as key ID strings are
 ``convenience names'', not security tokens.
 
-@item get_netsync_anonymous_read_permitted (@var{branch})
-
-This hook has identical semantics to @code{get_netsync_read_permitted}
-except that it is called when a connecting client requests anonymous
-read access. There is no corresponding anonymous write
-access hook. This hook has no default definition, therefore the
-default behavior is to deny all anonymous reads.
-
 @item get_netsync_write_permitted (@var{identity})
 
 Returns @code{true} if a peer authenticated as key @var{identity} should
 be allowed to write into your database certs, revisions, manifests, and
 files; otherwise @code{false}.  This hook has no default definition,
 therefore the default behavior is to deny all writes.
+
+If a client connects anonymously, it will be unconditionally denied
+write access; this hook will @emph{not} be called with a @var{identity}
+of @code{nil}.
 
 Note that the @var{identity} value is a key ID (such as
 ``@code{graydon@@pobox.com}'') but will correspond to a @emph{unique}
