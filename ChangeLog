@@ -1,3 +1,16 @@
+2005-08-08  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (BOTAN_SOURCES): Add botan headers.
+	* po/monotone.pot: Regenerate.
+
+2005-08-07  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (rebuild_merkle_trees, insert_with_parents): Make a
+	ticker for added revisions, since traversing the tree to pull in
+	ancestors causes a noticeable pause before the cert/key tickers
+	start up.
+	(insert_with_parents): Also simplify logic.
+
 2005-08-07  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (pull): Clarify what the "doing anonymous pull"

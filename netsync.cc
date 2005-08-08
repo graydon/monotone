@@ -3591,29 +3591,24 @@ make_root_node(session & sess,
 }
 
 void
-insert_with_parents(revision_id rev, set<revision_id> & col, app_state & app)
+insert_with_parents(revision_id rev, set<revision_id> & col, app_state & app, ticker & revisions_ticker)
 {
-  if (col.find(rev) != col.end())
-    return;
-  col.insert(rev);
   vector<revision_id> frontier;
   frontier.push_back(rev);
   while (!frontier.empty())
     {
       revision_id rid = frontier.back();
       frontier.pop_back();
-      if (!null_id(rid))
+      if (!null_id(rid) && col.find(rid) == col.end())
         {
+          ++revisions_ticker;
           col.insert(rid);
           std::set<revision_id> parents;
           app.db.get_revision_parents(rid, parents);
           for (std::set<revision_id>::const_iterator i = parents.begin();
                i != parents.end(); ++i)
             {
-              if (col.find(*i) == col.end())
-                {
-                  frontier.push_back(*i);
-                }
+              frontier.push_back(*i);
             }
         }
     }
@@ -3623,7 +3618,7 @@ void
 session::rebuild_merkle_trees(app_state & app,
                               set<utf8> const & branchnames)
 {
-  P(F("calculating synchronization set...\n"));
+  P(F("finding items to be synchronized:\n"));
   for (set<utf8>::const_iterator i = branchnames.begin();
       i != branchnames.end(); ++i)
     L(F("including branch %s") % *i);
@@ -3632,6 +3627,7 @@ session::rebuild_merkle_trees(app_state & app,
   boost::shared_ptr<merkle_table> ktab = make_root_node(*this, key_item);
   boost::shared_ptr<merkle_table> etab = make_root_node(*this, epoch_item);
 
+  ticker revisions_ticker("revisions", "r", 64);
   ticker certs_ticker("certs", "c", 256);
   ticker keys_ticker("keys", "k", 1);
 
@@ -3651,7 +3647,7 @@ session::rebuild_merkle_trees(app_state & app,
         if (branchnames.find(name()) != branchnames.end())
           {
             insert_with_parents(revision_id(idx(certs, i).inner().ident),
-                                revision_ids, app);
+                                revision_ids, app, revisions_ticker);
           }
         else
           {
