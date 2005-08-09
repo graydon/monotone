@@ -1,5 +1,10 @@
 2005-08-08  Nathaniel Smith  <njs@pobox.com>
 
+	* UPGRADE: Fix title.
+	* NEWS: Add --lca.
+
+2005-08-08  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (merge, propagate): Take --lca.
 	* options.hh: Add OPT_LCA.
 	* monotone.cc (coptions, cpp_main): Support it it.
