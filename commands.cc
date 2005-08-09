@@ -3199,7 +3199,7 @@ try_one_merge(revision_id const & left_id,
 
 
 CMD(merge, "tree", "", "merge unmerged heads of branch",
-    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
+    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR % OPT_LCA)
 {
   set<revision_id> heads;
 
@@ -3249,7 +3249,7 @@ CMD(merge, "tree", "", "merge unmerged heads of branch",
 
 CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
     "merge from one branch to another asymmetrically",
-    OPT_DATE % OPT_AUTHOR)
+    OPT_DATE % OPT_AUTHOR % OPT_LCA)
 {
   //   this is a special merge operator, but very useful for people maintaining
   //   "slightly disparate but related" trees. it does a one-way merge; less

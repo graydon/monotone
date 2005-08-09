@@ -502,6 +502,11 @@ find_common_ancestor_for_merge(revision_id const & left,
                                revision_id & anc,
                                app_state & app)
 {
+  // Temporary workaround until we figure out how to clean up the whole
+  // ancestor selection mess:
+  if (app.use_lca)
+    return find_least_common_ancestor(left, right, anc, app);
+
   interner<ctx> intern;
   std::map< ctx, shared_bitmap > 
     parents, ancestors, dominators;

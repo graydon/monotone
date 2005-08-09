@@ -1,5 +1,17 @@
 2005-08-08  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (merge, propagate): Take --lca.
+	* options.hh: Add OPT_LCA.
+	* monotone.cc (coptions, cpp_main): Support it it.
+	* app_state.{hh,cc} (app_state::usa_lca): New variable.
+	* revision.cc (find_common_ancestor_for_merge): Use LCA if user
+	passed --lca.
+	* tests/t_merge_lca.at: New test.
+	* testsuite.at: Add it.
+	* monotone.texi (Tree): Document --lca.
+	
+2005-08-08  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: First-pass for 0.22 release.
 	* UPGRADE: Likewise.
 

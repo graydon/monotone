@@ -3388,7 +3388,8 @@ not be the newest revisions, in terms of time, but synchronization of
 computer clocks is not reliable, so monotone usually ignores time.
 
 
-@item monotone merge --branch=@var{branchname}
+@item monotone merge [--branch=@var{branchname}]
+@item monotone merge --lca [--branch=@var{branchname}]
 This command merges the ``heads'' of @var{branchname}, if there are
 multiple heads, and commits the results to the database, marking the
 resulting merged revision as a member of @var{branchname}. The merged
@@ -3400,8 +3401,17 @@ graph and these 3 revisions are provided to the built-in 3-way merge
 algorithm. The process then repeats for each additional head, using
 the result of each previous merge as an input to the next.
 
+The @option{--lca} option is provided as a temporary workaround for some
+inherent problems with 3-way merging; if you encounter a huge number of
+spurious conflicts, or get an invariant failure, then you may wish to
+try using @option{--lca}.  Using it @emph{can}, in certain
+circumstances, cause some edits that should be conflicts to merge
+cleanly instead, which is why it is not the default; but these cases are
+rare, and until we can find something better than 3-way merging to use,
+you may find this option more convenient than @command{explicit_merge}
 
 @item monotone propagate @var{sourcebranch} @var{destbranch}
+@item monotone propagate --lca @var{sourcebranch} @var{destbranch}
 This command takes a unique head from @var{sourcebranch} and merges it
 with a unique head of @var{destbranch}, using the least common
 ancestor of the two heads for a 3-way merge. The resulting revision is
@@ -3417,6 +3427,14 @@ maintenance branches for stable software releases, trivial bug fix
 branches, public contribution branches, or branches devoted to the
 development of a single module within a larger project.
 
+The @option{--lca} option is provided as a temporary workaround for some
+inherent problems with 3-way merging; if you encounter a huge number of
+spurious conflicts, or get an invariant failure, then you may wish to
+try using @option{--lca}.  Using it @emph{can}, in certain
+circumstances, cause some edits that should be conflicts to merge
+cleanly instead, which is why it is not the default; but these cases are
+rare, and until we can find something better than 3-way merging to use,
+you may find this option more convenient than @command{explicit_merge}
 
 @item monotone explicit_merge @var{id} @var{id} @var{destbranch}
 @itemx monotone explicit_merge @var{id} @var{id} @var{ancestor} @var{destbranch}

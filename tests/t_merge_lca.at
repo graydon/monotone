@@ -1,0 +1,51 @@
+AT_SETUP([merge --lca])
+MONOTONE_SETUP
+
+# --lca is a temporary workaround for 3-way merge suckiness.  So this
+# test should go away eventually.
+
+#    A
+#   / \
+#  B   C
+#  |\ /|
+#  D X |
+#  |/ \|
+#  E   F
+
+ADD_FILE(testfile, [foo bar
+])
+COMMIT(testbranch)
+A=`BASE_REVISION`
+
+ADD_FILE(otherfile1, [blah blah
+])
+COMMIT(testbranch)
+B=`BASE_REVISION`
+
+REVERT_TO($A)
+
+SET_FILE(testfile, [new stuff
+])
+COMMIT(testbranch)
+C=`BASE_REVISION`
+
+AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+F=`BASE_REVISION`
+
+REVERT_TO($B)
+
+ADD_FILE(otherfile2, [blah blah
+])
+COMMIT(testbranch)
+D=`BASE_REVISION`
+
+AT_CHECK(MONOTONE explicit_merge $D $C testbranch, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+E=`BASE_REVISION`
+
+AT_CHECK(MONOTONE merge --lca, [], [ignore], [stderr])
+AT_CHECK(grep -q $A stderr, [1])
+AT_CHECK(grep -q $B stderr || grep -q $C stderr, [])
+
+AT_CLEANUP

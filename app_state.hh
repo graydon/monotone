@@ -57,6 +57,7 @@ public:
   diff_type diff_format;
   bool diff_args_provided;
   utf8 diff_args;
+  bool use_lca;
 
 
 
