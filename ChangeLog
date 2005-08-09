@@ -3,6 +3,11 @@
 	* contrib/monotone.el: a couple of fixes spotted by the compiler
 	* Changelog, contrib/colorize: utf8ize
 
+2005-08-09  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Put a time in.
+	* po/monotone.pot: Regenerate.
+	
 2005-08-08  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac, monotone.spec, debian/changelog:
