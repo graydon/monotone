@@ -199,7 +199,6 @@ With arg 0 use the default variable `vc-prefix-map'.
 With t use `monotone-vc-prefix-map'.
 This permits quick switches between the classic vc and monotone keymaps."
   (interactive "P")
-  (message "Arg: %s" arg)
   (define-key ctl-x-map "v"
     (let ((current (lookup-key ctl-x-map "v")))
       (if (and (not (eq arg 0))
@@ -685,7 +684,7 @@ the buffer if not global."
   (let ((cmds (list "log"))
         (depth monotone-log-depth))
     (when (and (numberp depth) (< 0 depth))
-      (setq cmds (append cmds (list (format "--last=%d" last)))))
+      (setq cmds (append cmds (list (format "--last=%d" depth)))))
     (monotone-cmd-buf arg cmds)
     (rename-buffer "*monotone log*" t)))
 ;; (monotone-vc-print-log)
@@ -700,9 +699,9 @@ the buffer if not global."
     (diff-mode)
     (rename-buffer
      (format "*monotone diff %s*"
-             (case what
-               ('file (monotone-extract-MT-path name))
-               (t what))) t)))
+             (cond
+	      ((eq what 'file) (monotone-extract-MT-path name))
+	      (t what))) t)))
 
 (defun monotone-vc-register ()
   "Register this file with monotone for the next commit."
@@ -776,26 +775,26 @@ Grab the ids you want from the buffer and then yank back when needed."
         (kill-buffer name))
       (rename-buffer name))))
 
-(defun monotone-cat-id-pd (what default)
+(defun monotone-cat-id-pd (what id default)
   "A helper function."
   (monotone-cat-id what (or id (monotone-id-at-point-prompt what default))))
 
 (defun monotone-cat-fileid (&optional id)
   "Display the file with ID."
   (interactive)
-  (monotone-cat-id-pd 'file monotone-last-fileid)
+  (monotone-cat-id-pd 'file id monotone-last-fileid)
   (setq monotone-last-fileid monotone-last-id))
 
 (defun monotone-cat-manifestid (&optional id)
   "Display the manifest with ID."
   (interactive)
-  (monotone-cat-id-pd 'manifest monotone-last-manifestid)
+  (monotone-cat-id-pd 'manifest id monotone-last-manifestid)
   (setq monotone-last-revisionid monotone-last-id))
 
 (defun monotone-cat-revisionid (&optional id)
   "Display the revision with ID."
   (interactive)
-  (monotone-cat-id-pd 'revision monotone-last-revisionid)
+  (monotone-cat-id-pd 'revision id monotone-last-revisionid)
   (setq monotone-last-revisionid monotone-last-id))
 
 ;;;;;;;;;;
