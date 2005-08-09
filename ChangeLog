@@ -1,5 +1,10 @@
 2005-08-08  Nathaniel Smith  <njs@pobox.com>
 
+	* NEWS: First-pass for 0.22 release.
+	* UPGRADE: Likewise.
+
+2005-08-08  Nathaniel Smith  <njs@pobox.com>
+
 	* Makefile.am (BOTAN_SOURCES): Add botan headers.
 	* po/monotone.pot: Regenerate.
 

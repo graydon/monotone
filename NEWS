@@ -1,3 +1,21 @@
+????????????????????????????
+
+        0.22 release.  bug fixes, ui improvements, new crypto library.
+
+        - switch from crypto++ to botan as underlying crypto library.
+          this should not cause any user-visible changes; let us know
+          if it does.  special thanks to Matt Johnston
+          <matt@ucc.asn.au>, Kaushik Veeraraghavan
+          <kaushikv@gmail.com>, Matthew Gregan
+          <kinetik@orcon.net.nz>.
+        - incompatible change to netsync permission hooks: the
+          get_netsync_anonymous_read_permitted hook has been removed;
+          instead, get_netsync_read_permitted will be called with a
+          key name of nil.  server administrators should update/review
+          their configuration
+        - many small improvements to error messages, fixes of minor
+          annoyances, etc.
+
 Sun Jul 17 16:48:26 PDT 2005
 
         0.21 release.  bug fixes, performance improvements, and ui
