@@ -1,3 +1,44 @@
+monotone (0.22-1) unstable; urgency=low
+
+  * Rebuild in clean environment (pdebuild) for upload to debian
+    archive.
+
+ -- Tomas Fasth <tomfa@debian.org>  Tue,  9 Aug 2005 16:12:08 +0000
+
+monotone (0.22-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- nathaniel smith <njs@pobox.com>  Mon,  8 Aug 2005 20:18:54 -0700
+
+monotone (0.21-3) unstable; urgency=low
+
+  * Recompile due to transition to gcc 4.0 in unstable (sid).
+  * Closes: #319149: ftbfs [sparc]
+    'boost::re_detail::c_traits_base::&lt;anonymous enum&gt;' is/uses
+    anonymous type
+  * Closes: #321539: uninstallable due to missing libboost packages
+
+ -- Tomas Fasth <tomfa@debian.org>  Sat,  6 Aug 2005 11:16:31 +0000
+
+monotone (0.21-2) unstable; urgency=low
+
+  * Added debian/README.Debian and debian/TODO.Debian.
+
+ -- Tomas Fasth <tomfa@debian.org>  Fri, 29 Jul 2005 13:44:35 +0000
+
+monotone (0.21-1) unstable; urgency=low
+
+  * Rebuild in clean environment (pdebuild) for upload to debian archive.
+
+ -- Tomas Fasth <tomfa@debian.org>  Tue, 19 Jul 2005 16:42:22 +0000
+
+monotone (0.21-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- nathaniel smith <njs@pobox.com>  Sun, 17 Jul 2005 15:44:29 -0700
+
 monotone (0.20-1) unstable; urgency=low
 
   * Rebuild in clean environment (pdebuild) for upload to debian archive.
