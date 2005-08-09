@@ -3,6 +3,11 @@
 	* commands.cc (update): Fix helpful error message to suggest
 	_current_ commandline syntax.
 
+2005-08-09  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* contrib/monotone.el: a couple of fixes spotted by the compiler
+	* Changelog, contrib/colorize: utf8ize
+
 2005-08-09  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Put a time in.
@@ -6295,7 +6300,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech MiÃkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

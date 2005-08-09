@@ -5,7 +5,7 @@ our $VERSION = 0.5;
 
 # $Id: colorize,v 1.5 2004/07/19 14:50:38 cbouvi Exp $
 #
-#  Copyright (C) 2004 Cédric Bouvier
+#  Copyright (C) 2004 CÃ©dric Bouvier
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms of the GNU General Public License as published by the Free
@@ -178,7 +178,7 @@ Prints help message and exits.
 
 =end
 
-=head2 Note for Microsoft® Windows® users
+=head2 Note for MicrosoftÂ® WindowsÂ® users
 
 The "Dos Prompt" (F<cmd.exe>) does not support the ANSI terminal escape
 sequence. This program thus requires the module C<Win32::Console::ANSI> if it
@@ -190,8 +190,8 @@ perlre(1), L<Term::ANSIColor>, L<Win32::Console::ANSI>
 
 =head1 AUTHOR
 
-Copyright © 2004
+Copyright Â© 2004
 
-Cédric Bouvier <cbouvi@cpan.org>
+CÃ©dric Bouvier <cbouvi@cpan.org>
 
 =cut
