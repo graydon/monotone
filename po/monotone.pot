@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: monotone-devel@nongnu.org\n"
-"POT-Creation-Date: 2005-08-08 14:23-0700\n"
+"POT-Creation-Date: 2005-08-08 20:24-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,139 +16,139 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: app_state.cc:57
+#: app_state.cc:58
 #, c-format
 msgid "initializing from directory %s\n"
 msgstr ""
 
-#: app_state.cc:58
+#: app_state.cc:59
 #, c-format
 msgid "found working copy directory %s\n"
 msgstr ""
 
-#: app_state.cc:60
+#: app_state.cc:61
 #, c-format
 msgid "cannot change to directory to %s\n"
 msgstr ""
 
-#: app_state.cc:68
+#: app_state.cc:69
 #, c-format
 msgid "branch name is '%s'\n"
 msgstr ""
 
-#: app_state.cc:74
+#: app_state.cc:75
 #, c-format
 msgid "relative directory is '%s'\n"
 msgstr ""
 
-#: app_state.cc:81
+#: app_state.cc:82
 #, c-format
 msgid "setting dump path to %s\n"
 msgstr ""
 
-#: app_state.cc:92
+#: app_state.cc:93
 #, c-format
 msgid "working copy directory required but not found%s%s"
 msgstr ""
 
-#: app_state.cc:100
+#: app_state.cc:101
 msgid "invalid directory ''"
 msgstr ""
 
-#: app_state.cc:104
+#: app_state.cc:105
 #, c-format
 msgid "cannot change to initial directory %s\n"
 msgstr ""
 
-#: app_state.cc:108
+#: app_state.cc:109
 #, c-format
 msgid "create working copy in %s\n"
 msgstr ""
 
-#: app_state.cc:119
+#: app_state.cc:120
 #, c-format
 msgid "could not create directory: %s: %s\n"
 msgstr ""
 
-#: app_state.cc:124
+#: app_state.cc:125
 #, c-format
 msgid "cannot change to new directory %s\n"
 msgstr ""
 
-#: app_state.cc:133
+#: app_state.cc:134
 #, c-format
 msgid "monotone book-keeping directory '%s' already exists in '%s'\n"
 msgstr ""
 
-#: app_state.cc:136
+#: app_state.cc:137
 #, c-format
 msgid "creating book-keeping directory '%s' for working copy in '%s'\n"
 msgstr ""
 
-#: app_state.cc:158
+#: app_state.cc:159
 #, c-format
 msgid "'%s' prefixed to '%s'\n"
 msgstr ""
 
-#: app_state.cc:177
+#: app_state.cc:178
 #, c-format
 msgid "'%s' ignored by restricted path set\n"
 msgstr ""
 
-#: app_state.cc:182
+#: app_state.cc:183
 #, c-format
 msgid "unknown path '%s'\n"
 msgstr ""
 
-#: app_state.cc:184
+#: app_state.cc:185
 #, c-format
 msgid "'%s' added to restricted path set\n"
 msgstr ""
 
-#: app_state.cc:225
+#: app_state.cc:226
 #, c-format
 msgid "checking restricted path set for '%s'\n"
 msgstr ""
 
-#: app_state.cc:232
+#: app_state.cc:233
 #, c-format
 msgid "path '%s' found in restricted path set; '%s' included\n"
 msgstr ""
 
-#: app_state.cc:238
+#: app_state.cc:239
 #, c-format
 msgid "path '%s' not found in restricted path set; '%s' excluded\n"
 msgstr ""
 
-#: app_state.cc:297
+#: app_state.cc:298
 #, c-format
 msgid "search root '%s' does not exist\n"
 msgstr ""
 
-#: app_state.cc:299
+#: app_state.cc:300
 #, c-format
 msgid "search root '%s' is not a directory\n"
 msgstr ""
 
-#: app_state.cc:300
+#: app_state.cc:301
 #, c-format
 msgid "set search root to %s\n"
 msgstr ""
 
-#: app_state.cc:331
+#: app_state.cc:332
 msgid "negative depth not allowed\n"
 msgstr ""
 
-#: app_state.cc:339
+#: app_state.cc:340
 msgid "negative or zero last not allowed\n"
 msgstr ""
 
-#: app_state.cc:448
+#: app_state.cc:449
 #, c-format
 msgid "Failed to read options file %s"
 msgstr ""
 
-#: app_state.cc:465
+#: app_state.cc:466
 #, c-format
 msgid "Failed to write options file %s"
 msgstr ""
@@ -237,7 +237,7 @@ msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
 msgstr ""
 
-#: cert.cc:507 rcs_import.cc:1234 revision.cc:1581 revision.cc:1613
+#: cert.cc:507 rcs_import.cc:1234 revision.cc:1586 revision.cc:1618
 msgid "no unique private key for cert construction"
 msgstr ""
 
@@ -2049,42 +2049,42 @@ msgstr ""
 msgid "mismatched node hash value %s, expected %s"
 msgstr ""
 
-#: monotone.cc:196
+#: monotone.cc:197
 #, c-format
 msgid "problem parsing arguments from file %s: %s"
 msgstr ""
 
-#: monotone.cc:205
+#: monotone.cc:206
 #, c-format
 msgid "weird error when stuffing arguments read from %s: %s\n"
 msgstr ""
 
-#: monotone.cc:256
+#: monotone.cc:257
 #, c-format
 msgid "command line: %s\n"
 msgstr ""
 
-#: monotone.cc:259
+#: monotone.cc:260
 #, c-format
 msgid "set locale: LC_CTYPE=%s, LC_MESSAGES=%s\n"
 msgstr ""
 
-#: monotone.cc:447
+#: monotone.cc:452
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
 msgstr ""
 
-#: monotone.cc:486
+#: monotone.cc:491
 #, c-format
 msgid "monotone %s doesn't use the option %s"
 msgstr ""
 
-#: monotone.cc:508
+#: monotone.cc:513
 #, c-format
 msgid "Removed 'hidden' from option # %d\n"
 msgstr ""
 
-#: monotone.cc:514 monotone.cc:525
+#: monotone.cc:519 monotone.cc:530
 #, c-format
 msgid "Added 'hidden' to option # %d\n"
 msgstr ""
@@ -3189,7 +3189,7 @@ msgid "got some OOB data on fd %d (peer %s), disconnecting\n"
 msgstr ""
 
 #: netsync.cc:3621
-msgid "finding items to be synchronized:\n"
+msgid "finding items to synchronize:\n"
 msgstr ""
 
 #: netsync.cc:3624
@@ -3740,205 +3740,205 @@ msgstr ""
 msgid "found %d intersecting nodes\n"
 msgstr ""
 
-#: revision.cc:522
+#: revision.cc:527
 #, c-format
 msgid "searching for common ancestor, left=%s right=%s\n"
 msgstr ""
 
-#: revision.cc:527
+#: revision.cc:532
 #, c-format
 msgid "common ancestor scan [par=%d,anc=%d,dom=%d]\n"
 msgstr ""
 
-#: revision.cc:532
+#: revision.cc:537
 #, c-format
 msgid "found node %d, ancestor of left %s and dominating right %s\n"
 msgstr ""
 
-#: revision.cc:539
+#: revision.cc:544
 #, c-format
 msgid "found node %d, ancestor of right %s and dominating left %s\n"
 msgstr ""
 
-#: revision.cc:576
+#: revision.cc:581
 #, c-format
 msgid "searching for least common ancestor, left=%s right=%s\n"
 msgstr ""
 
-#: revision.cc:580
+#: revision.cc:585
 #, c-format
 msgid "least common ancestor scan [par=%d,anc=%d]\n"
 msgstr ""
 
-#: revision.cc:585
+#: revision.cc:590
 #, c-format
 msgid "found node %d, ancestor of left %s and right %s\n"
 msgstr ""
 
-#: revision.cc:639
+#: revision.cc:644
 #, c-format
 msgid "checking whether %s is an ancestor of %s\n"
 msgstr ""
 
-#: revision.cc:751
+#: revision.cc:756
 #, c-format
 msgid "new root: %s\n"
 msgstr ""
 
-#: revision.cc:766
+#: revision.cc:771
 #, c-format
 msgid "new leaf: %s\n"
 msgstr ""
 
-#: revision.cc:908
+#: revision.cc:913
 #, c-format
 msgid "exploring changesets from parents of %s, seeking towards %s\n"
 msgstr ""
 
-#: revision.cc:921
+#: revision.cc:926
 #, c-format
 msgid "considering parent %s of %s\n"
 msgstr ""
 
-#: revision.cc:947
+#: revision.cc:952
 #, c-format
 msgid "revision %s is relevant, composing with edge to %s\n"
 msgstr ""
 
-#: revision.cc:954
+#: revision.cc:959
 #, c-format
 msgid "parent %s of %s is not relevant\n"
 msgstr ""
 
-#: revision.cc:990
+#: revision.cc:995
 #, c-format
 msgid "adding parents of %s to subgraph\n"
 msgstr ""
 
-#: revision.cc:1000
+#: revision.cc:1005
 #, c-format
 msgid "found parent %s of %s\n"
 msgstr ""
 
-#: revision.cc:1004
+#: revision.cc:1009
 #, c-format
 msgid "adding parent %s to next frontier\n"
 msgstr ""
 
-#: revision.cc:1019
+#: revision.cc:1024
 #, c-format
 msgid "calculating composite changeset between %s and %s\n"
 msgstr ""
 
-#: revision.cc:1037
+#: revision.cc:1042
 #, c-format
 msgid "calculating changeset from %s to %s\n"
 msgstr ""
 
-#: revision.cc:1041
+#: revision.cc:1046
 #, c-format
 msgid "no common ancestor for %s and %s\n"
 msgstr ""
 
-#: revision.cc:1042
+#: revision.cc:1047
 #, c-format
 msgid "common ancestor is %s\n"
 msgstr ""
 
-#: revision.cc:1073
+#: revision.cc:1078
 #, c-format
 msgid "analyzing manifest changes from '%s' -> '%s'\n"
 msgstr ""
 
-#: revision.cc:1086
+#: revision.cc:1091
 #, c-format
 msgid "splitting ancestry for file %s\n"
 msgstr ""
 
-#: revision.cc:1153
+#: revision.cc:1158
 #, c-format
 msgid "noting ancestry from child %d -> parent %d\n"
 msgstr ""
 
-#: revision.cc:1186
+#: revision.cc:1191
 #, c-format
 msgid "setting epoch for %s to %s\n"
 msgstr ""
 
-#: revision.cc:1242
+#: revision.cc:1247
 msgid "scanning for nodes with 3+ parents\n"
 msgstr ""
 
-#: revision.cc:1283
+#: revision.cc:1288
 #, c-format
 msgid "optimizing out redundant edge %i -> %i\n"
 msgstr ""
 
-#: revision.cc:1310
+#: revision.cc:1315
 #, c-format
 msgid "rebuilding %d nodes\n"
 msgstr ""
 
-#: revision.cc:1347
+#: revision.cc:1352
 #, c-format
 msgid "node %d = manifest %s\n"
 msgstr ""
 
-#: revision.cc:1358
+#: revision.cc:1363
 #, c-format
 msgid "loaded '%s' manifest cert for node %s\n"
 msgstr ""
 
-#: revision.cc:1386
+#: revision.cc:1391
 #, c-format
 msgid "node %d = revision %s = manifest %s\n"
 msgstr ""
 
-#: revision.cc:1398
+#: revision.cc:1403
 #, c-format
 msgid "loaded '%s' revision cert for node %s\n"
 msgstr ""
 
-#: revision.cc:1422
+#: revision.cc:1427
 #, c-format
 msgid "processing node %d\n"
 msgstr ""
 
-#: revision.cc:1426
+#: revision.cc:1431
 #, c-format
 msgid "node %d already processed, skipping\n"
 msgstr ""
 
-#: revision.cc:1440
+#: revision.cc:1445
 #, c-format
 msgid "node %d is a root node\n"
 msgstr ""
 
-#: revision.cc:1456 revision.cc:1539
+#: revision.cc:1461 revision.cc:1544
 #, c-format
 msgid "parent node %d = revision %s\n"
 msgstr ""
 
-#: revision.cc:1518
+#: revision.cc:1523
 #, c-format
 msgid "processing edge from child %d -> parent %d\n"
 msgstr ""
 
-#: revision.cc:1556
+#: revision.cc:1561
 #, c-format
 msgid "mapped node %d to revision %s\n"
 msgstr ""
 
-#: revision.cc:1562
+#: revision.cc:1567
 #, c-format
 msgid "skipping already existing revision %s\n"
 msgstr ""
 
-#: revision.cc:1574
+#: revision.cc:1579
 msgid "rebuilding revision graph from existing graph\n"
 msgstr ""
 
-#: revision.cc:1607
+#: revision.cc:1612
 msgid "rebuilding revision graph from manifest certs\n"
 msgstr ""
 
