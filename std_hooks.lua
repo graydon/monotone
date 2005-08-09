@@ -417,7 +417,10 @@ function merge2 (left_path, right_path, merged_path, left, right)
             ret = nil 
          end
       else
-         io.write ("no external 2-way merge command found\n")
+         io.write (string.format("No external 2-way merge command found.\n"..
+            "You may want to check that $EDITOR is set to an editor that supports 2-way merge,\n"..
+            "set this explicitly in your get_preferred_merge2_command hook,\n"..
+            "or add a 2-way merge program to your path.\n\n"))
       end
    end
 
@@ -509,7 +512,10 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
             ret = nil 
          end
       else
-         io.write ("no external 3-way merge command found\n")
+         io.write (string.format("No external 3-way merge command found.\n"..
+            "You may want to check that $EDITOR is set to an editor that supports 3-way merge,\n"..
+            "set this explicitly in your get_preferred_merge3_command hook,\n"..
+            "or add a 3-way merge program to your path.\n\n"))
       end
    end
    
