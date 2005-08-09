@@ -1,5 +1,10 @@
 2005-08-08  Nathaniel Smith  <njs@pobox.com>
 
+	* configure.ac, monotone.spec, debian/changelog:
+	* win32/monotone.iss: Bump version number.
+
+2005-08-08  Nathaniel Smith  <njs@pobox.com>
+
 	* UPGRADE: Fix title.
 	* NEWS: Add --lca.
 

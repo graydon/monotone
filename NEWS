@@ -1,6 +1,6 @@
 ????????????????????????????
 
-        0.22 release.  bug fixes, ui improvements, new crypto library.
+        0.22 release.  new crypto library, bug fixes, ui improvements
 
         - switch from crypto++ to botan as underlying crypto library.
           this should not cause any user-visible changes; let us know
