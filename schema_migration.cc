@@ -43,10 +43,13 @@ static string
 lowercase(string const & in)
 {
   size_t const sz = in.size();
-  char buf[sz];
+  char *buf=new char[sz];
   in.copy(buf, sz);
-  use_facet< ctype<char> >(locale::locale()).tolower(buf, buf+sz);
-  return string(buf,sz);
+  locale loc;
+  use_facet< ctype<char> >(loc).tolower(buf, buf+sz);
+  string tmp= string(buf,sz);
+  delete[] buf;
+  return tmp;
 }
 
 static void 
