@@ -20,7 +20,6 @@
 // if you want to *read* a patch, you will like unidiff format much better.
 // take a look in diff_patch.(cc|hh) for a nice interface to that.
 
-#include <ext/hash_map>
 #include <algorithm>
 #include <vector>
 #include <set>
@@ -31,16 +30,16 @@
 #include <boost/version.hpp>
 
 #include "adler32.hh"
+#include "hash_map.hh"
 #include "numeric_vocab.hh"
 #include "sanity.hh"
 #include "xdelta.hh"
 
 using namespace std;
-using namespace __gnu_cxx;
 
 struct identity {size_t operator()(u32 const & v) const { return static_cast<size_t>(v);}};
 typedef pair<string::size_type, string::size_type> extent;
-typedef hash_map<u32, extent, identity> match_table;
+typedef hashmap::hash_map<u32, extent> match_table;
 
 struct 
 insn
