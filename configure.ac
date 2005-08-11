@@ -27,8 +27,14 @@ AC_PROG_CC
 AC_PROG_RANLIB
 AC_LANG(C++)
 
+AC_CXX_GNUCXX_HASHMAP
+AC_CXX_STLPORT_HASHMAP
+
 # check to see how to make objects in subdirs
 AM_PROG_CC_C_O
+
+# check for language features
+AC_CXX_EXTERN_TEMPLATE
 
 # intl / gettext
 # the AM_GNU_GETTEXT macro test won't compile with g++
