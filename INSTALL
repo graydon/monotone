@@ -186,27 +186,3 @@ building and installation process for monotone
     perform some additional steps to migrate your data to the newest
     version; see the file UPGRADE for details.
 
-A. build notes for solaris/x86
-
-  * on solaris/x86 the build might fail in cryptopp/integer.cpp if your gcc
-    is configured to use the sunos as. a temporary fix is to use gnu as to
-    to compile that file (remember to replace $BOOST_PREFIX with the path
-    to boost's headers):
-
-
-    if g++ -DLOCALEDIR=\"/usr/local/share/locale\" -DHAVE_CONFIG_H -I. -I. \
-       -I$BOOST_PREFIX -I./lua -I./sqlite -DNDEBUG -DBOOST_DISABLE_THREADS \ 
-       -Wall  -O2 -fno-strict-aliasing -MT cryptopp/lib3rdparty_a-integer.o \
-       -MD -MP -MF "cryptopp/.deps/lib3rdparty_a-integer.Tpo" -S -o \
-       cryptopp/lib3rdparty_a-integer.S \
-       `test -f 'cryptopp/integer.cpp' || echo './'`cryptopp/integer.cpp;
-    then
-       mv -f "cryptopp/.deps/lib3rdparty_a-integer.Tpo" \
-         "cryptopp/.deps/lib3rdparty_a-integer.Po";
-    else
-       rm -f "cryptopp/.deps/lib3rdparty_a-integer.Tpo"; exit 1;
-    fi
-    gas cryptopp/lib3rdparty_a-integer.S -o cryptopp/lib3rdparty_a-integer.o
-
-
-    after that, just do "make" again, it should finish the build now.
