@@ -108,11 +108,14 @@ void dump(ty const &, std::string &);
 ATOMIC(ty)                                             \
 inline void verify(ty &) {}
 
+#ifdef HAVE_EXTERN_TEMPLATE
 #define EXTERN extern
+#else
+#define EXTERN /* */
+#endif
 
 #include "vocab_terms.hh"
 
-#undef EXTERN
 #undef ATOMIC
 #undef ATOMIC_NOVERIFY
 #undef DECORATE
@@ -147,9 +150,11 @@ namespace fs = boost::filesystem;
 // kludge: certs are derived types. what else can we do?
 #ifndef __CERT_HH__
 #include "cert.hh"
-extern template class revision<cert>;
-extern template class manifest<cert>;
+EXTERN template class revision<cert>;
+EXTERN template class manifest<cert>;
 #endif
+
+#undef EXTERN
 
 // diff type
 enum diff_type
