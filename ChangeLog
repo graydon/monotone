@@ -1,5 +1,10 @@
 2005-08-11  Nathaniel Smith  <njs@pobox.com>
 
+	* netsync.cc: Add a list of ideas for improvement that will break
+	network compatibility and thus perhaps should go together.
+
+2005-08-11  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_commit_message_file.at: Un-double file contents.
 
 2005-08-11  Nathaniel Smith  <njs@pobox.com>
