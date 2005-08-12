@@ -1,3 +1,8 @@
+2005-08-11  Nathaniel Smith  <njs@pobox.com>
+
+	* lua.cc (ok, extract_str, extract_int, extract_double)
+	(extract_bool): Add more logging.
+
 2005-08-09  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (update): Fix helpful error message to suggest
