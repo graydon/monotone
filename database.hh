@@ -12,6 +12,8 @@ struct cert;
 
 #include <stdarg.h>
 
+#include <varargs.h>
+
 #include <vector>
 #include <set>
 #include <map>
