@@ -10,6 +10,8 @@
 #include <string>
 #include <iosfwd>
 
+#include <config.h>
+
 // the purpose of this file is to wrap things which are otherwise strings
 // in a bit of typesafety, set up enumerations and tuple-types, and
 // generally describe the "vocabulary" (nouns anyways) that modules in this
