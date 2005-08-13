@@ -505,9 +505,11 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
       if (!revision.history_error.empty())
         {
           bad_history++;
+          std::string tmp = revision.history_error;
+          if (tmp[tmp.length() - 1] == '\n')
+            tmp.erase(tmp.length() - 1);
           P(F("revision %s has bad history (%s)\n")
-            % i->first
-            % revision.history_error); 
+            % i->first % tmp);
         }
 
       if (!revision.normalized)

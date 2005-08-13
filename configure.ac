@@ -128,7 +128,7 @@ AC_SUBST(BOOST_SUFFIX)
 # Now check for Boost libraries proper.
 
 found=no
-suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -sunpro"}
+suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -mt -sunpro"}
 for BOOST_SUFFIX in ${suffixes}
 do
     test "x${BOOST_SUFFIX}" = "xnone" && BOOST_SUFFIX=
@@ -296,11 +296,7 @@ AC_ARG_ENABLE([large-file],
 )
 
 if test "x$enable_large_file" = "xno"; then
-   if test "x$bundled_sqlite" = "xno"; then
-      AC_MSG_WARN(--disable-large-file has no effect when using the bundled sqlite)
-   else
-      SQLITE_CPPFLAGS="$SQLITE_CPPFLAGS -DSQLITE_DISABLE_LFS"
-   fi
+   SQLITE_CPPFLAGS="$SQLITE_CPPFLAGS -DSQLITE_DISABLE_LFS"
 fi
 AC_SUBST(SQLITE_CPPFLAGS)
 
