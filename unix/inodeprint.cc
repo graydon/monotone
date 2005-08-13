@@ -11,6 +11,7 @@
 #include "platform.hh"
 #include "transforms.hh"
 #include "file_io.hh"
+#include "constants.hh"
 
 namespace
 {
@@ -68,9 +69,9 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
   add_hash(hash, st.st_gid);
   add_hash(hash, st.st_size);
 
-  char digest[hash.OUTPUT_LENGTH];
+  char digest[constants::sha1_digest_length];
   hash.final(reinterpret_cast<Botan::byte *>(digest));
-  std::string out(digest, hash.OUTPUT_LENGTH);
+  std::string out(digest, constants::sha1_digest_length);
   inodeprint ip_raw(out);
   encode_hexenc(ip_raw, ip);
   return true;

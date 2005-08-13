@@ -62,9 +62,9 @@ raw_sha1(string const & in)
   Botan::SHA_160 hash;
   hash.update(reinterpret_cast<Botan::byte const *>(in.data()), 
 	      static_cast<unsigned int>(in.size()));
-  char digest[hash.OUTPUT_LENGTH];
+  char digest[constants::sha1_digest_length];
   hash.final(reinterpret_cast<Botan::byte *>(digest));
-  string out(digest, hash.OUTPUT_LENGTH);
+  string out(digest, constants::sha1_digest_length);
   return out;
 }
 
