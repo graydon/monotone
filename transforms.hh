@@ -27,13 +27,19 @@ namespace Botan {
   class Gzip_Decompression;
 }
 
+#ifdef HAVE_EXTERN_TEMPLATE
+#define EXTERN extern
+#else
+#define EXTERN /* */
+#endif
+
 template<typename XFM> std::string xform(std::string const &);
-extern template std::string xform<Botan::Base64_Encoder>(std::string const &);
-extern template std::string xform<Botan::Base64_Decoder>(std::string const &);
-extern template std::string xform<Botan::Hex_Encoder>(std::string const &);
-extern template std::string xform<Botan::Hex_Decoder>(std::string const &);
-extern template std::string xform<Botan::Gzip_Compression>(std::string const &);
-extern template std::string xform<Botan::Gzip_Decompression>(std::string const &);
+EXTERN template std::string xform<Botan::Base64_Encoder>(std::string const &);
+EXTERN template std::string xform<Botan::Base64_Decoder>(std::string const &);
+EXTERN template std::string xform<Botan::Hex_Encoder>(std::string const &);
+EXTERN template std::string xform<Botan::Hex_Decoder>(std::string const &);
+EXTERN template std::string xform<Botan::Gzip_Compression>(std::string const &);
+EXTERN template std::string xform<Botan::Gzip_Decompression>(std::string const &);
 
 // base64 encoding
 
@@ -82,13 +88,13 @@ void encode_gzip(std::string const & in, gzip<T> & out)
 
 template <typename T>
 void pack(T const & in, base64< gzip<T> > & out);
-extern template void pack<data>(data const &, base64< gzip<data> > &);
-extern template void pack<delta>(delta const &, base64< gzip<delta> > &);
+EXTERN template void pack<data>(data const &, base64< gzip<data> > &);
+EXTERN template void pack<delta>(delta const &, base64< gzip<delta> > &);
 
 template <typename T>
 void unpack(base64< gzip<T> > const & in, T & out);
-extern template void unpack<data>(base64< gzip<data> > const &, data &);
-extern template void unpack<delta>(base64< gzip<delta> > const &, delta &);
+EXTERN template void unpack<data>(base64< gzip<data> > const &, data &);
+EXTERN template void unpack<delta>(base64< gzip<delta> > const &, delta &);
 
 
 // diffing and patching

@@ -6,6 +6,7 @@
 #include <botan/mutex.h>
 #include <botan/exceptn.h>
 #include <botan/init.h>
+#include <stdlib.h>
 
 namespace Botan {
 

@@ -21,24 +21,9 @@ namespace constants
   // number of bits in an RSA key we use
   size_t const keylen = 1024; 
 
-  // number of characters in a SHA1 id
-  size_t const idlen = 40;
-
-  // number of characters in an epoch_data
-  size_t const epochlen = idlen;
-
-  // number of characters in an epoch_data
-  size_t const epochlen_bytes = epochlen / 2;
-
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
   time_t const cvs_window = 60 * 5; 
-
-  // number of bytes in a password buffer. further bytes will be dropped.
-  size_t const maxpasswd = 0xfff;
-
-  // number of bytes to use in buffers, for buffered i/o operations
-  size_t const bufsz = 0x3ffff;
 
   // size of a line of database traffic logging, beyond which lines will be
   // truncated.
@@ -132,7 +117,6 @@ namespace constants
 
   // merkle tree / netcmd / netsync related stuff
 
-  size_t const merkle_hash_length_in_bytes = 20;
   size_t const merkle_fanout_bits = 4;
 
   // all other merkle constants are derived
@@ -154,24 +138,13 @@ namespace constants
   BOOST_STATIC_ASSERT((merkle_bitmap_length_in_bits % 8) == 0);
 
   u8 const netcmd_current_protocol_version = 5;
-  size_t const netcmd_minsz = (1     // version
-                               + 1   // cmd code
-                               + 1   // smallest uleb possible
-                               + 4); // adler32    
   
   // allow payloads up to 256 megs (this sets the in-practice maximum size of
   // a compressed file/manifest).
-  size_t const netcmd_payload_limit = 2 << 27;
-  size_t const netcmd_maxsz = netcmd_minsz + netcmd_payload_limit;
   size_t const netcmd_minimum_bytes_to_bother_with_gzip = 0xfff;
 
-  size_t const netsync_default_port = 5253;
-  size_t const netsync_connection_limit = 1024; 
-  size_t const netsync_timeout_seconds = 21600; // 6 hours
   size_t const netsync_session_key_length_in_bytes = 20;     // 160 bits
   size_t const netsync_hmac_value_length_in_bytes = 20;      // 160 bits
-
-  size_t const sha1_digest_length = 20; // 160 bits
 
   std::string const & netsync_key_initializer = std::string(netsync_session_key_length_in_bytes, 0);
 
