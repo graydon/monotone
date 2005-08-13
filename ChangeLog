@@ -1,5 +1,10 @@
 2005-08-13  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
+	* botan/gzip.cpp, botan/mutex.cpp: c functions via c* headers need
+	std:: prefix
+
+2005-08-13  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
 	* schema_migration.cc (lowercase): it's only used for processing sha1
 	values whos size we know: make array size constant
 	* transforms.cc (encode_hexenc, decode_hexenc): they have to work with
