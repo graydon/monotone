@@ -1,5 +1,11 @@
 2005-08-13  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.1, monotone.texi: Don't mention agraph.
+	* tests/t_netsync_repeated.at: Don't use agraph.
+	* tests/t_netsync_unrelated.at: Likewise.
+
+2005-08-13  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (agraph): Remove.
 
 2005-08-13  Nathaniel Smith  <njs@pobox.com>

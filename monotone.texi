@@ -6631,10 +6631,6 @@ Put a symbolic tag cert on a revision.
 Indicate a passing or failing test result on a revision.
 @comment TROFF INPUT: .TP
 
-@item @b{agraph}
-Dump revision graph to stdout in VCG format.
-@comment TROFF INPUT: .TP
-
 @item @b{diff} @i{[--revision=<id1> [--revision=<id2>] ] [<pathname>...]}
 Show diffs between working copy and database.
 @comment TROFF INPUT: .TP
