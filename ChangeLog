@@ -1,3 +1,11 @@
+2005-08-12  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (commit): When user uses --message or
+	--message-file, don't require non-empty logs, and don't write out
+	message to MT/log.  (This makes re-running a 'commit -m foo'
+	command line until it works possible; otherwise the second try
+	will get a 'MT/log non-empty and -m supplied' error.)
+
 2005-08-11  Nathaniel Smith  <njs@pobox.com>
 
 	* netsync.cc: Add a list of ideas for improvement that will break

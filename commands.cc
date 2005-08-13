@@ -2372,14 +2372,14 @@ CMD(commit, "working copy", "[PATH]...",
   if (app.message().length() > 0)
     log_message = app.message();
   else
-    get_log_message(rs, app, log_message);
-
-  N(log_message.find_first_not_of(" \r\t\n") != string::npos,
-    F("empty log message"));
-
-  // we write it out so that if the commit fails, the log
-  // message will be preserved for a retry
-  write_user_log(data(log_message));
+    {
+      get_log_message(rs, app, log_message);
+      N(log_message.find_first_not_of(" \r\t\n") != string::npos,
+        F("empty log message"));
+      // we write it out so that if the commit fails, the log
+      // message will be preserved for a retry
+      write_user_log(data(log_message));
+    }
 
   {
     transaction_guard guard(app.db);
