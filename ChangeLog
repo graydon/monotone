@@ -1,5 +1,9 @@
 2005-08-13  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (agraph): Remove.
+
+2005-08-13  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_commit_log_writeback.at: New test.
 	* testsuite.at: Add it.
 
