@@ -1,5 +1,11 @@
 2005-08-13  Julio M. Merino Vidal  <jmmv@menta.net>
 
+	* configure.ac: Remove an obsolete check to see if SQLite was
+	bundled or not, because the bundled version has been used
+	exclusively for quite some time.
+
+2005-08-13  Julio M. Merino Vidal  <jmmv@menta.net>
+
 	* database_check.cc: Remove trailing newline from error messages
 	when embedding them inside other strings, so that the trailing
 	closing parenthesis is printed correctly.
