@@ -128,7 +128,7 @@ AC_SUBST(BOOST_SUFFIX)
 # Now check for Boost libraries proper.
 
 found=no
-suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -sunpro"}
+suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -mt -sunpro"}
 for BOOST_SUFFIX in ${suffixes}
 do
     test "x${BOOST_SUFFIX}" = "xnone" && BOOST_SUFFIX=
