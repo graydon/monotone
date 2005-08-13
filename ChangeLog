@@ -1,3 +1,8 @@
+2005-08-13  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* revision.cc: make copy constructor of revision_set behave like
+	normal constructor in case it's copying a freshly created object
+
 2005-08-13  Nathaniel Smith  <njs@pobox.com>
 
 	* testsuite.at: Use SEGV to kill netsync servers, in hopes it will
