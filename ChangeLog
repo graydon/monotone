@@ -1,5 +1,13 @@
 2005-08-13  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
+	* schema_migration.cc (lowercase): it's only used for processing sha1
+	values whos size we know: make array size constant
+	* transforms.cc (encode_hexenc, decode_hexenc): they have to work with
+	all kinds of string sizes, so at least make them nicer by using
+	boost::scoped_array
+
+2005-08-13  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
 	* revision.cc: make copy constructor of revision_set behave like
 	normal constructor in case it's copying a freshly created object
 

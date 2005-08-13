@@ -15,6 +15,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/scoped_array.hpp>
 
 #include "botan/botan.h"
 #include "botan/gzip.h"
@@ -82,18 +83,16 @@ template string xform<Botan::Gzip_Decompression>(string const &);
 
 string encode_hexenc(string const & in)
 {
-  char *buf = new char[in.size() * 2];
+  boost::scoped_array<char> buf(new char[in.size() * 2]);
   static char const *tab = "0123456789abcdef";
-  char *c = buf;
+  char *c = buf.get();
   for (string::const_iterator i = in.begin();
        i != in.end(); ++i)
     {
       *c++ = tab[(*i >> 4) & 0xf];
       *c++ = tab[*i & 0xf];
     }
-  string tmp=string(buf, in.size() *2);
-  delete[] buf;
-  return tmp;
+  return string(buf.get(), in.size() *2);
 }
 
 static inline char decode_hex_char(char c)
@@ -108,8 +107,8 @@ static inline char decode_hex_char(char c)
 string decode_hexenc(string const & in)
 {
   I(in.size() % 2 == 0);
-  char * buf = new char[in.size() / 2];
-  char *c = buf;
+  boost::scoped_array<char> buf(new char[in.size() / 2]);
+  char *c = buf.get();
   for (string::const_iterator i = in.begin();
        i != in.end(); ++i)
     {
@@ -118,9 +117,7 @@ string decode_hexenc(string const & in)
       t |= decode_hex_char(*i);
       *c++ = t;
     }
-  string tmp=string(buf, in.size() / 2);        
-  delete[] buf;
-  return tmp;
+  return string(buf.get(), in.size() / 2);        
 }
 
 struct 
