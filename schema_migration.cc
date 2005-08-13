@@ -42,14 +42,13 @@ extern "C" {
 static string 
 lowercase(string const & in)
 {
-  size_t const sz = in.size();
-  char *buf=new char[sz];
+  I(40==in.size());
+  const int sz=40;
+  char buf[sz];
   in.copy(buf, sz);
   locale loc;
   use_facet< ctype<char> >(loc).tolower(buf, buf+sz);
-  string tmp= string(buf,sz);
-  delete[] buf;
-  return tmp;
+  return string(buf,sz);
 }
 
 static void 
