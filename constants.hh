@@ -23,23 +23,23 @@ namespace constants
   extern size_t const keylen; 
 
   // number of characters in a SHA1 id
-  extern size_t const idlen; 
+  static size_t const idlen = 40; 
 
   // number of characters in an encoded epoch
-  extern size_t const epochlen;
+  static size_t const epochlen = idlen;
 
   // number of characters in a raw epoch
-  extern size_t const epochlen_bytes;
+  static size_t const epochlen_bytes = epochlen / 2;
 
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
   extern time_t const cvs_window; 
 
   // number of bytes in a password buffer. further bytes will be dropped.
-  extern size_t const maxpasswd;
+  static size_t const maxpasswd = 0xfff;
 
   // number of bytes to use in buffers, for buffered i/o operations
-  extern size_t const bufsz;
+  static size_t const bufsz = 0x3ffff;
 
   // size of a line of database traffic logging, beyond which lines will be
   // truncated.
@@ -80,7 +80,7 @@ namespace constants
   // remaining constants are related to netsync protocol
 
   // number of bytes in the hash used in netsync
-  extern size_t const merkle_hash_length_in_bytes;
+  static size_t const merkle_hash_length_in_bytes = 20;
 
   // number of bits of merkle prefix consumed by each level of tree
   extern size_t const merkle_fanout_bits;
@@ -104,25 +104,29 @@ namespace constants
   extern u8 const netcmd_current_protocol_version;
 
   // minimum size of any netcmd on the wire
-  extern size_t const netcmd_minsz;
+  static size_t const netcmd_minsz = (1     // version
+                                      + 1   // cmd code
+                                      + 1   // smallest uleb possible
+                                      + 4); // adler32
+
   
   // largest command *payload* allowed in a netcmd
-  extern size_t const netcmd_payload_limit;
+  static size_t const netcmd_payload_limit = 2 << 27;
 
   // maximum size of any netcmd on the wire, including payload
-  extern size_t const netcmd_maxsz;
+  static size_t const netcmd_maxsz = netcmd_minsz + netcmd_payload_limit;
 
   // netsync fragments larger than this are gzipped
   extern size_t const netcmd_minimum_bytes_to_bother_with_gzip;
 
   // TCP port to listen on / connect to when doing netsync
-  extern size_t const netsync_default_port;
+  static size_t const netsync_default_port = 5253;
 
   // maximum number of simultaneous clients on a server
-  extern size_t const netsync_connection_limit;
+  static size_t const netsync_connection_limit = 1024;
 
   // number of seconds a connection can be idle before it's dropped
-  extern size_t const netsync_timeout_seconds;
+  static size_t const netsync_timeout_seconds = 21600; // 6 hours
 
   // netsync HMAC key length
   extern size_t const netsync_session_key_length_in_bytes;
@@ -131,7 +135,7 @@ namespace constants
   extern size_t const netsync_hmac_value_length_in_bytes;
 
   // how long a sha1 digest should be
-  extern size_t const sha1_digest_length;
+  static size_t const sha1_digest_length = 20; // 160 bits
 
   // netsync session key default initializer
   extern std::string const & netsync_key_initializer;

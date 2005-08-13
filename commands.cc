@@ -2372,14 +2372,14 @@ CMD(commit, "working copy", "[PATH]...",
   if (app.message().length() > 0)
     log_message = app.message();
   else
-    get_log_message(rs, app, log_message);
-
-  N(log_message.find_first_not_of(" \r\t\n") != string::npos,
-    F("empty log message"));
-
-  // we write it out so that if the commit fails, the log
-  // message will be preserved for a retry
-  write_user_log(data(log_message));
+    {
+      get_log_message(rs, app, log_message);
+      N(log_message.find_first_not_of(" \r\t\n") != string::npos,
+        F("empty log message"));
+      // we write it out so that if the commit fails, the log
+      // message will be preserved for a retry
+      write_user_log(data(log_message));
+    }
 
   {
     transaction_guard guard(app.db);
@@ -2813,68 +2813,6 @@ CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator",
     std::cout << describe_revision(app, anc) << std::endl;
   else
     std::cout << "no common ancestor/dominator found" << std::endl;
-}
-
-
-CMD(agraph, "debug", "", "dump ancestry graph to stdout in VCG format",
-    OPT_NONE)
-{
-  set<revision_id> nodes;
-  multimap<revision_id,string> branches;
-
-  std::multimap<revision_id, revision_id> edges_mmap;
-  set<pair<revision_id, revision_id> > edges;
-
-  app.db.get_revision_ancestry(edges_mmap);
-
-  // convert from a weak lexicographic order to a strong one
-  for (std::multimap<revision_id, revision_id>::const_iterator i = edges_mmap.begin();
-       i != edges_mmap.end(); ++i)
-    edges.insert(std::make_pair(i->first, i->second));
-
-  for (set<pair<revision_id, revision_id> >::const_iterator i = edges.begin();
-       i != edges.end(); ++i)
-    {
-      nodes.insert(i->first);
-      nodes.insert(i->second);
-    }
-
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(branch_cert_name, certs);
-  for(vector< revision<cert> >::iterator i = certs.begin();
-      i != certs.end(); ++i)
-    {
-      cert_value tv;
-      decode_base64(i->inner().value, tv);
-      revision_id tmp(i->inner().ident);
-      nodes.insert(tmp); // in case no edges were connected
-      branches.insert(make_pair(tmp, tv()));
-    }  
-
-
-  cout << "graph: " << endl << "{" << endl; // open graph
-  for (set<revision_id>::iterator i = nodes.begin(); i != nodes.end();
-       ++i)
-    {
-      cout << "node: { title : \"" << *i << "\"\n"
-           << "        label : \"\\fb" << *i;
-      pair<multimap<revision_id,string>::const_iterator,
-        multimap<revision_id,string>::const_iterator> pair =
-        branches.equal_range(*i);
-      for (multimap<revision_id,string>::const_iterator j = pair.first;
-           j != pair.second; ++j)
-        {
-          cout << "\\n\\fn" << j->second;
-        }
-      cout << "\"}" << endl;
-    }
-  for (set<pair<revision_id, revision_id> >::iterator i = edges.begin(); i != edges.end();
-       ++i)
-    {
-      cout << "edge: { sourcename : \"" << i->first << "\"" << endl
-           << "        targetname : \"" << i->second << "\" }" << endl;
-    }
-  cout << "}" << endl << endl; // close graph
 }
 
 
