@@ -175,7 +175,6 @@ AT_CHECK(cmp firstout secondout, [1], [ignore], [ignore])
 m4_define([CHECK_SAME_DB_CONTENTS], [
 CHECK_SAME_STDOUT(MONOTONE --db=$1 ls keys, MONOTONE --db=$2 ls keys)
 
-CHECK_SAME_STDOUT(MONOTONE --db=$1 agraph, MONOTONE --db=$2 agraph)
 REVS=`MONOTONE --db=$1 complete revision ""`
 for R in $REVS; do
   CHECK_SAME_STDOUT(MONOTONE --db=$1 ls certs $R, MONOTONE --db=$2 ls certs $R)

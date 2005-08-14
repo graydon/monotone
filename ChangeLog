@@ -1,5 +1,6 @@
 2005-08-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* testsuite.at: Don't use agraph.
 	* Makefile.am: Minor cleanups.
 
 2005-08-13  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
