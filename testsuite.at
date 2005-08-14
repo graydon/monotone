@@ -31,7 +31,7 @@ fi
 
 m4_define([MONOTONE_SETUP], [
 
-# Absolutify monotone path
+# Absolutify monotone path.
 _MT_EXEC=`which monotone`
 
 # Save the PWD so MONOTONE macro can refer back to it
