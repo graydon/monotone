@@ -217,7 +217,9 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(BOTAN_SOURCES) \
 			$(IDNA_SOURCES) \
 			$(POPT_SOURCES) \
-			$(NETXX_SOURCES)
+			$(NETXX_SOURCES) \
+			$(LUA_SOURCES) \
+			$(SQLITE_SOURCES)
 
 # flags
 
@@ -229,18 +231,10 @@ AM_LDFLAGS =
 lib3rdparty_a_CPPFLAGS =
 
 monotone_LDFLAGS = 
-monotone_CPPFLAGS =
+monotone_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
 
 unit_tests_LDFLAGS = 
-unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS
-
-lib3rdparty_a_SOURCES += $(LUA_SOURCES)
-monotone_CPPFLAGS += -I$(top_srcdir)/lua
-unit_tests_CPPFLAGS += -I$(top_srcdir)/lua
-
-lib3rdparty_a_SOURCES += $(SQLITE_SOURCES)
-monotone_CPPFLAGS += -I$(top_srcdir)/sqlite
-unit_tests_CPPFLAGS += -I$(top_srcdir)/sqlite
+unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
 
 # conditionals from configury
 

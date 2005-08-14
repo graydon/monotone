@@ -1,3 +1,7 @@
+2005-08-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Minor cleanups.
+
 2005-08-13  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
 	* botan/gzip.cpp, botan/mutex.cpp: c functions via c* headers need
