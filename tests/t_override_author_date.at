@@ -7,8 +7,8 @@ AT_CHECK(MONOTONE commit --author=the_author --date=1999-12-31T12:00:00 --branch
 REV=`BASE_REVISION`
 AT_CHECK(MONOTONE log --revision=$REV, [], [stdout], [ignore])
 
-AT_CHECK(grep -q '^Author: the_author' stdout)
-AT_CHECK(grep -q '^Date: 1999-12-31T12:00:00' stdout)
+AT_CHECK(QGREP('^Author: the_author' stdout))
+AT_CHECK(QGREP('^Date: 1999-12-31T12:00:00' stdout))
 
 SET_FILE(testfile, [oovel
 ])

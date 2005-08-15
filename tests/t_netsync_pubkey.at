@@ -39,8 +39,8 @@ COMMIT(testbranch)
 RUN_NETSYNC(pull, testbranch)
 
 AT_CHECK(MONOTONE2 ls keys, [], [stdout], [ignore])
-AT_CHECK(grep -q $PUBKEY stdout, [1])
-AT_CHECK(grep -q $PRIVKEY stdout, [1])
+AT_CHECK(QGREP($PUBKEY stdout), [1])
+AT_CHECK(QGREP($PRIVKEY stdout), [1])
 
 # Now commit a version that does use the new key, and make sure that
 # now it does get transferred.
@@ -51,7 +51,7 @@ AT_CHECK(MONOTONE --branch=testbranch commit --message blah-blah --key=foo@test.
 RUN_NETSYNC(pull, testbranch)
 
 AT_CHECK(MONOTONE2 ls keys, [], [stdout], [ignore])
-AT_CHECK(grep -q $PUBKEY stdout)
-AT_CHECK(grep -q $PRIVKEY stdout, [1])
+AT_CHECK(QGREP($PUBKEY stdout))
+AT_CHECK(QGREP($PRIVKEY stdout), [1])
 
 AT_CLEANUP

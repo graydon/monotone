@@ -1,5 +1,11 @@
 2005-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
+	* testsuite.at, tests/*.at: make testsuite less demanding:
+	- QGREP() and QEGREP() provide a portable [e]grep -q
+	- export FOO=bar -> FOO=bar; export FOO
+
+2005-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
 	* m4/typeof.m4: new test, looks if compiler knows the typeof()
 	extension
 	* configure.ac: use it

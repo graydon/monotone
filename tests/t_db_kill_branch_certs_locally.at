@@ -10,14 +10,14 @@ COMMIT(good)
 REVISION=`BASE_REVISION`
 AT_CHECK(MONOTONE cert $REVISION branch bad, [], ignore, ignore)
 AT_CHECK(MONOTONE ls branches, [], stdout, ignore)
-AT_CHECK(grep -q good stdout)
-AT_CHECK(grep -q bad stdout)
+AT_CHECK(QGREP(good stdout))
+AT_CHECK(QGREP(bad stdout))
 
 # Now we delete the branch, and make sure it's gone
 AT_CHECK(MONOTONE db kill_branch_certs_locally bad, [], ignore, ignore)
 AT_CHECK(MONOTONE ls branches, [], stdout, ignore)
-AT_CHECK(grep -q good stdout)
-AT_CHECK(grep -q bad stdout, [1])
+AT_CHECK(QGREP(good stdout))
+AT_CHECK(QGREP(bad stdout), [1])
 
 # And lets make sure our database is still OK
 AT_CHECK(MONOTONE db check, [], ignore, ignore)

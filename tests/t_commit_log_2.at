@@ -15,6 +15,6 @@ AT_CHECK(MONOTONE --branch=testbranch commit --message="Log entry", [], [ignore]
 
 TSHA=`BASE_REVISION`
 AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout], [ignore])
-AT_CHECK(grep -q 'Log entry' stdout, [])
+AT_CHECK(QGREP('Log entry' stdout), [])
 
 AT_CLEANUP

@@ -15,12 +15,12 @@ AT_CHECK(MONOTONE read < pubkey.txt, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE pubkey john@doe.com, [], [stdout], [ignore])
 
-AT_CHECK(grep -q 'john@doe.com' stdout, [])
+AT_CHECK(QGREP('john@doe.com' stdout), [])
 
 AT_CHECK(MONOTONE dropkey john@doe.com, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE pubkey john@doe.com, [1], [ignore], [stderr])
 
-AT_CHECK(grep -q 'does not exist' stderr, [])
+AT_CHECK(QGREP('does not exist' stderr), [])
 
 AT_CLEANUP

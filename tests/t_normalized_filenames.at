@@ -15,11 +15,11 @@ AT_DATA(bar, [blah blah
 ])
 
 AT_CHECK(MONOTONE cat manifest, [], [stdout], [ignore])
-AT_CHECK(grep -q ' bar' stdout)
+AT_CHECK(QGREP(' bar' stdout))
 AT_CHECK(MONOTONE cat revision, [], [stdout], [ignore])
-AT_CHECK(grep -q '"bar"' stdout)
+AT_CHECK(QGREP('"bar"' stdout))
 AT_CHECK(MONOTONE commit --message=foo --branch=foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE cat revision `BASE_REVISION`, [], [stdout], [ignore])
-AT_CHECK(grep -q '"bar"' stdout)
+AT_CHECK(QGREP('"bar"' stdout))
 
 AT_CLEANUP
