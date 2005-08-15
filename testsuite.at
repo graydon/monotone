@@ -420,6 +420,8 @@ NETSYNC_SERVE_STOP
 # same for QEGREP and egrep -q
 m4_define([QGREP], [grep $1 >/dev/null])
 m4_define([QEGREP], [egrep $1 >/dev/null])
+# run as TAIL(lines)
+m4_define([TAIL], [(tail -n $1 2>/dev/null || tail -$1)])
 
 
 # include all the sub-tests we're going to use

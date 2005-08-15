@@ -3,6 +3,7 @@
 	* testsuite.at, tests/*.at: make testsuite less demanding:
 	- QGREP() and QEGREP() provide a portable [e]grep -q
 	- export FOO=bar -> FOO=bar; export FOO
+	- tail -n $x -> TAIL($x) with appropriate macro
 
 2005-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
