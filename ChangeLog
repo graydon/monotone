@@ -1,3 +1,7 @@
+2005-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* configure.ac (BOOST_FIX_VERSION): only apply that fix on gcc.
+
 2005-08-14  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac (BOOST_VERSION_CHECK, BOOST_FIX_VERSION): Fix for

@@ -114,7 +114,7 @@ AC_DEFUN([BOOST_FIX_VERSION],
 [
   AC_COMPILE_IFELSE(
   [#include <boost/version.hpp>
-  #if BOOST_VERSION == 103200
+  #if (BOOST_VERSION == 103200) && defined(__GNUC__)
   int main() { return 0; }
   #else
   #error boost version is not 1.32.0
