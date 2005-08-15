@@ -88,9 +88,14 @@ AC_CHECK_FUNC([pthread_mutex_lock], [],
 AC_DEFUN([BOOST_VERSION_CHECK],
 [AC_CACHE_CHECK([boost version 1.32 or newer], ac_cv_version_boost,
 [
-  AC_TRY_RUN(
+  AC_COMPILE_IFELSE(
   [#include <boost/version.hpp>
-  int main() { return (BOOST_VERSION < 103200); }],
+  #if BOOST_VERSION >= 103200
+  int main() { return 0; }
+  #else
+  #error boost version is too old
+  #endif
+  ],
   ac_cv_version_boost=yes,
   ac_cv_version_boost=no)
 ])
@@ -107,9 +112,14 @@ BOOST_VERSION_CHECK
 AC_DEFUN([BOOST_FIX_VERSION],
 [AC_CACHE_CHECK([if boost requires extra flags to compile], ac_fix_boost,
 [
-  AC_TRY_RUN(
+  AC_COMPILE_IFELSE(
   [#include <boost/version.hpp>
-  int main() { return (BOOST_VERSION != 103200); }],
+  #if BOOST_VERSION == 103200
+  int main() { return 0; }
+  #else
+  #error boost version is not 1.32.0
+  #endif
+  ],
   ac_fix_boost=yes,
   ac_fix_boost=no)
 ])

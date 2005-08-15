@@ -1,3 +1,8 @@
+2005-08-14  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac (BOOST_VERSION_CHECK, BOOST_FIX_VERSION): Fix for
+	cross-compilation.  (Thanks to John Bowler <jbowler@acm.org>.)
+
 2005-08-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* testsuite.at: Don't use agraph.
