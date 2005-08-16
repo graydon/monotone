@@ -1,5 +1,10 @@
 2005-08-15  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/t_log_brief.at: New test.
+	* testsuite.at: Add it.
+
+2005-08-15  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (fcommit): Remove.  This command has never been
 	documented, tested, or maintained; it also doesn't avoid the use
 	of temporary files (which was supposed to be its purpose).  Has it
