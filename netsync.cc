@@ -62,8 +62,18 @@
 //      for the server to send back to the client "right, you're not getting
 //      the following branches: ...", so the client will not include them in
 //      its merkle trie.
-//   -- add some sort of vhost field to the clients first packet, saying who
+//   -- add some sort of vhost field to the client's first packet, saying who
 //      they expect to talk to
+//   -- connection teardown is flawed:
+//      -- simple bug: often connections "fail" even though they succeeded.
+//         should figure out why.  (Possibly one side doesn't wait for their
+//         goodbye packet to drain before closing the socket?)
+//      -- subtle misdesign: "goodbye" packets indicate completion of data
+//         transfer.  they do not indicate that data has been written to
+//         disk.  there should be some way to indicate that data has been
+//         successfully written to disk.  See message (and thread)
+//         <E0420553-34F3-45E8-9DA4-D8A5CB9B0600@hsdev.com> on
+//         monotone-devel.
 
 //
 // this is the "new" network synchronization (netsync) system in
