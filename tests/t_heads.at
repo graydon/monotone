@@ -17,7 +17,7 @@ AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ig
 ROOT_R_SHA=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
-AT_CHECK(grep -q $ROOT_R_SHA stdout)
+AT_CHECK(QGREP($ROOT_R_SHA stdout))
 
 # Create a child
 # 
@@ -33,8 +33,8 @@ AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ig
 CHILD1_R_SHA=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
-AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
-AT_CHECK(grep -q $CHILD1_R_SHA stdout)
+AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
+AT_CHECK(QGREP($CHILD1_R_SHA stdout))
 
 # Create another child
 # 
@@ -51,9 +51,9 @@ AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ig
 CHILD2_R_SHA=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
-AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
-AT_CHECK(grep -q $CHILD1_R_SHA stdout)
-AT_CHECK(grep -q $CHILD2_R_SHA stdout)
+AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
+AT_CHECK(QGREP($CHILD1_R_SHA stdout))
+AT_CHECK(QGREP($CHILD2_R_SHA stdout))
 
 # Branch from the second child into branch2
 # 
@@ -72,15 +72,15 @@ AT_CHECK(MONOTONE --branch=branch2 commit --message blah-blah, [], [ignore], [ig
 CHILD3_R_SHA=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
-AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
-AT_CHECK(grep -q $CHILD1_R_SHA stdout)
-AT_CHECK(grep -q $CHILD2_R_SHA stdout)
-AT_CHECK(grep -q $CHILD3_R_SHA stdout, [1])
+AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
+AT_CHECK(QGREP($CHILD1_R_SHA stdout))
+AT_CHECK(QGREP($CHILD2_R_SHA stdout))
+AT_CHECK(QGREP($CHILD3_R_SHA stdout), [1])
 AT_CHECK(MONOTONE --branch=branch2 heads, [], [stdout], [ignore])
-AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
-AT_CHECK(grep -q $CHILD1_R_SHA stdout, [1])
-AT_CHECK(grep -q $CHILD2_R_SHA stdout, [1])
-AT_CHECK(grep -q $CHILD3_R_SHA stdout)
+AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
+AT_CHECK(QGREP($CHILD1_R_SHA stdout), [1])
+AT_CHECK(QGREP($CHILD2_R_SHA stdout), [1])
+AT_CHECK(QGREP($CHILD3_R_SHA stdout))
 
 # Branch from the first child into branch2
 # 
@@ -100,16 +100,16 @@ AT_CHECK(MONOTONE --branch=branch2 commit --message blah-blah, [], [ignore], [ig
 CHILD4_R_SHA=`BASE_REVISION`
 
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
-AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
-AT_CHECK(grep -q $CHILD1_R_SHA stdout)
-AT_CHECK(grep -q $CHILD2_R_SHA stdout)
-AT_CHECK(grep -q $CHILD3_R_SHA stdout, [1])
-AT_CHECK(grep -q $CHILD4_R_SHA stdout, [1])
+AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
+AT_CHECK(QGREP($CHILD1_R_SHA stdout))
+AT_CHECK(QGREP($CHILD2_R_SHA stdout))
+AT_CHECK(QGREP($CHILD3_R_SHA stdout), [1])
+AT_CHECK(QGREP($CHILD4_R_SHA stdout), [1])
 AT_CHECK(MONOTONE --branch=branch2 heads, [], [stdout], [ignore])
-AT_CHECK(grep -q $ROOT_R_SHA stdout, [1])
-AT_CHECK(grep -q $CHILD1_R_SHA stdout, [1])
-AT_CHECK(grep -q $CHILD2_R_SHA stdout, [1])
-AT_CHECK(grep -q $CHILD3_R_SHA stdout)
-AT_CHECK(grep -q $CHILD4_R_SHA stdout)
+AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
+AT_CHECK(QGREP($CHILD1_R_SHA stdout), [1])
+AT_CHECK(QGREP($CHILD2_R_SHA stdout), [1])
+AT_CHECK(QGREP($CHILD3_R_SHA stdout))
+AT_CHECK(QGREP($CHILD4_R_SHA stdout))
 
 AT_CLEANUP

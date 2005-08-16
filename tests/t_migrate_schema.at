@@ -112,7 +112,7 @@ UNGZB64($1.db.dumped.gz.b64, $1.db.dumped)
 AT_CHECK(MONOTONE --db=$1.db db load < $1.db.dumped, [], [ignore], [ignore])
 # verify that the db actually has the claimed schema
 AT_CHECK(MONOTONE --db=$1.db db version, [], [stdout], [ignore])
-AT_CHECK(grep -q $1 stdout)
+AT_CHECK(QGREP($1 stdout))
 # now do the actual migration
 AT_CHECK(MONOTONE --db=$1.db db migrate, [], [ignore], [ignore])
 CHECK_SAME_DB_CONTENTS($1.db, latest.db)

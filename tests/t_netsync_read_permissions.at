@@ -48,7 +48,7 @@ AT_CHECK(MONOTONE2 cat revision $B2, [], [ignore], [ignore])
 AT_CHECK(MONOTONE2 cat revision $B3, [], [ignore], [ignore])
 AT_CHECK(MONOTONE2 cat revision $B4, [1], [ignore], [ignore])
 
-AT_CHECK(MONOTONE2 ls certs $B2 | grep -q branch2, [1])
+AT_CHECK(MONOTONE2 ls certs $B2 | QGREP(branch2), [1])
 
 NETSYNC_SERVE_STOP
 

@@ -27,6 +27,9 @@ AC_PROG_CC
 AC_PROG_RANLIB
 AC_LANG(C++)
 
+AC_PROG_CXX_WARNINGS
+AC_CXX_TYPEOF
+
 AC_CXX_GNUCXX_HASHMAP
 AC_CXX_STLPORT_HASHMAP
 
@@ -114,7 +117,7 @@ AC_DEFUN([BOOST_FIX_VERSION],
 [
   AC_COMPILE_IFELSE(
   [#include <boost/version.hpp>
-  #if BOOST_VERSION == 103200
+  #if (BOOST_VERSION == 103200) && defined(__GNUC__)
   int main() { return 0; }
   #else
   #error boost version is not 1.32.0

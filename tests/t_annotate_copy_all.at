@@ -59,9 +59,9 @@ REVD=`BASE_REVISION`
 
 AT_CHECK(MONOTONE annotate foo, [], [stdout], [ignore])
 AT_CHECK(head -n 1 stdout | grep $REVA, [0], [ignore], [ignore])
-AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REVA, [0], [ignore], [ignore])
-AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REVB, [0], [ignore], [ignore])
-AT_CHECK(head -n 4 stdout | tail -n 1 | grep $REVB, [0], [ignore], [ignore])
-AT_CHECK(head -n 5 stdout | tail -n 1 | grep $REVA, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REVA, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REVB, [0], [ignore], [ignore])
+AT_CHECK(head -n 4 stdout | TAIL(1) | grep $REVB, [0], [ignore], [ignore])
+AT_CHECK(head -n 5 stdout | TAIL(1) | grep $REVA, [0], [ignore], [ignore])
 
 AT_CLEANUP

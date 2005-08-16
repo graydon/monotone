@@ -22,18 +22,18 @@ AT_DATA(file2, [2: data 3
 
 AT_CHECK(MONOTONE diff file1, [], [stdout], [ignore])
 AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
-AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
+AT_CHECK(QGREP(file2 stdout), [1], [ignore], [ignore])
 
 AT_CHECK(MONOTONE diff --revision=$REV0 file1, [], [stdout], [ignore])
 AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
-AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
+AT_CHECK(QGREP(file2 stdout), [1], [ignore], [ignore])
 
 AT_CHECK(MONOTONE diff --revision=$REV0 --revision=$REV1 file1, [], [stdout], [ignore])
 AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
-AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
+AT_CHECK(QGREP(file2 stdout), [1], [ignore], [ignore])
 
 AT_CHECK(MONOTONE diff --revision=$REV1 --revision=$REV0 file1, [], [stdout], [ignore])
 AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
-AT_CHECK(grep -q file2 stdout, [1], [ignore], [ignore])
+AT_CHECK(QGREP(file2 stdout), [1], [ignore], [ignore])
 
 AT_CLEANUP

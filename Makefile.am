@@ -416,7 +416,7 @@ BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
 CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)
 
 txt2c: txt2c.cc Makefile
-	$(CXX) -o $@ $<
+	$(CXX) $(CXXFLAGS) -o $@ $<
 	chmod 0755 $@$(EXEEXT)
 
 apidocs:

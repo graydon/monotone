@@ -10,6 +10,25 @@
 	* lua.cc (hook_init_attributes): Do more logging; use begin()
 	instead of starting iteration by hand.
 
+2005-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* testsuite.at, tests/*.at: make testsuite less demanding:
+	- QGREP() and QEGREP() provide a portable [e]grep -q
+	- export FOO=bar -> FOO=bar; export FOO
+	- tail -n $x -> TAIL($x) with appropriate macro
+
+2005-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* m4/typeof.m4: new test, looks if compiler knows the typeof()
+	extension
+	* configure.ac: use it
+	* sanity.hh: use the test, and boost's abstraction over
+	__PRETTY_FUNCTION__ and similar pseudo-macros
+
+2005-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* configure.ac (BOOST_FIX_VERSION): only apply that fix on gcc.
+
 2005-08-14  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac (BOOST_VERSION_CHECK, BOOST_FIX_VERSION): Fix for

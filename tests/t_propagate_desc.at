@@ -26,8 +26,8 @@ B_HEAD_REV=`BASE_REVISION`
 
 AT_CHECK(MONOTONE propagate b a, [], [ignore], [ignore])
 AT_CHECK(MONOTONE heads --branch=b, [], [stdout], [ignore])
-AT_CHECK(grep -q $B_HEAD_REV stdout)
+AT_CHECK(QGREP($B_HEAD_REV stdout))
 AT_CHECK(MONOTONE heads --branch=a, [], [stdout], [ignore])
-AT_CHECK(grep -q $B_HEAD_REV stdout)
+AT_CHECK(QGREP($B_HEAD_REV stdout))
 
 AT_CLEANUP

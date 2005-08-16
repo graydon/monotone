@@ -33,6 +33,6 @@ NETSYNC_CLIENT_N_RUN(3, pull, testbranch)
 NETSYNC_SERVE_STOP
 
 AT_CHECK(MONOTONE3 ls keys, [], [stdout], [ignore])
-AT_CHECK(grep -q foo@bar stdout, [])
+AT_CHECK(QGREP(foo@bar stdout), [])
 
 AT_CLEANUP

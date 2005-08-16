@@ -855,6 +855,7 @@ line_end_convert(string const & linesep, string const & src, string & dst)
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
+#include <stdlib.h>
 
 static void 
 enc_test()

@@ -4,12 +4,12 @@ MONOTONE_SETUP
 # run as CHECK_TRUSTED(rev, name, value, signers)
 m4_define([CHECK_TRUSTED], [
 AT_CHECK(MONOTONE trusted $1 $2 $3 $4, [], [stdout], [ignore])
-AT_CHECK(grep -qi ' trusted' stdout)
+AT_CHECK(QGREP(-i ' trusted' stdout))
 ])
 # run as CHECK_UNTRUSTED(rev, name, value, signers)
 m4_define([CHECK_UNTRUSTED], [
 AT_CHECK(MONOTONE trusted $1 $2 $3 $4, [], [stdout], [ignore])
-AT_CHECK(grep -qi ' untrusted' stdout)
+AT_CHECK(QGREP(-i ' untrusted' stdout))
 ])
 
 GOOD=1111111111111111111111111111111111111111
