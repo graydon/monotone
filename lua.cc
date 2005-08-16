@@ -1135,11 +1135,13 @@ lua_hooks::hook_init_attributes(file_path const & filename,
 
   ll
     .push_str("attr_init_functions")
-    .get_tab()
-    .push_nil();
-
+    .get_tab();
+  
+  L(F("calling attr_init_function for %s") % filename);
+  ll.begin();
   while (ll.next())
     {
+      L(F("  calling an attr_init_function for %s") % filename);
       ll.push_str(filename());
       ll.call(1, 1);
 
@@ -1152,9 +1154,13 @@ lua_hooks::hook_init_attributes(file_path const & filename,
           ll.extract_str(key);
 
           attrs[key] = value;
+          L(F("  added attr %s = %s") % key % value);
         }
       else
-        ll.pop();
+        {
+          L(F("  no attr added"));
+          ll.pop();
+        }
     }
 
   return ll.pop().ok();
