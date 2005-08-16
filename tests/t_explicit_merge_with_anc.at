@@ -1,0 +1,56 @@
+AT_SETUP([explicit_merge LEFT RIGHT ANC BRANCH])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [a
+OLD
+c
+d
+e
+])
+COMMIT(testbranch)
+BAD_ANC=`BASE_REVISION`
+
+SET_FILE(testfile, [a
+b
+c
+d
+e
+])
+COMMIT(testbranch)
+GOOD_ANC=`BASE_REVISION`
+
+SET_FILE(testfile, [a
+NEW
+c
+d
+e
+])
+COMMIT(testbranch)
+LEFT=`BASE_REVISION`
+
+REVERT_TO($GOOD_ANC)
+
+SET_FILE(testfile, [a
+b
+c
+NEW
+e
+])
+COMMIT(testbranch)
+RIGHT=`BASE_REVISION`
+
+# This should fail:
+AT_CHECK(MONOTONE explicit_merge $LEFT $RIGHT $BAD_ANC testbranch, [1], [ignore], [ignore])
+# But this should work:
+AT_CHECK(MONOTONE explicit_merge $LEFT $RIGHT $GOOD_ANC testbranch, [], [ignore], [ignore])
+# And produce the logical result:
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_DATA(expected, [a
+NEW
+c
+NEW
+e
+])
+AT_CHECK(cmp expected testfile)
+
+AT_CLEANUP

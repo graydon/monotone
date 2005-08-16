@@ -1,5 +1,10 @@
 2005-08-15  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/t_explicit_merge_with_anc.at: New test.
+	* testsuite.at: Add it.
+
+2005-08-15  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_log_brief.at: New test.
 	* testsuite.at: Add it.
 
