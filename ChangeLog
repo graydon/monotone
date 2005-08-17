@@ -1,3 +1,10 @@
+2005-08-17  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* unix/process.cc: missing include
+	* m4/fexceptions.m4, configure.ac, Makefile.am: remove hardcoded
+	-fexceptions in CFLAGS and add it only if compiler doesn't freak
+	out.
+
 2005-08-17  Nathaniel Smith  <njs@pobox.com>
 
 	* netsync.cc: Add IANA port assignment to the todo list.
