@@ -58,7 +58,7 @@ int make_executable(const char *path)
 {
         mode_t mode;
         struct stat s;
-        int fd = open(path, O_RDWR);
+        int fd = open(path, O_RDONLY);
         N(fd != -1, F("error opening file %s: %s") % path % strerror(errno));
         if (fstat(fd, &s))
           return -1;
