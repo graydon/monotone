@@ -2817,11 +2817,10 @@ parse_path_rearrangement(basic_io::parser & parser,
 
 
 void 
-print_path_rearrangement(basic_io::printer & printer,
-                         change_set::path_rearrangement const & pr)
+print_insane_path_rearrangement(basic_io::printer & printer,
+                                change_set::path_rearrangement const & pr)
 {
 
-  pr.check_sane();
   for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
        i != pr.deleted_files.end(); ++i)
     {
@@ -2866,6 +2865,14 @@ print_path_rearrangement(basic_io::printer & printer,
 }
 
 void 
+print_path_rearrangement(basic_io::printer & printer,
+                         change_set::path_rearrangement const & pr)
+{
+  pr.check_sane();
+  print_insane_path_rearrangement(printer, pr);
+}
+
+void 
 parse_change_set(basic_io::parser & parser,
                  change_set & cs)
 {
@@ -2890,11 +2897,10 @@ parse_change_set(basic_io::parser & parser,
 }
 
 void 
-print_change_set(basic_io::printer & printer,
-                 change_set const & cs)
+print_insane_change_set(basic_io::printer & printer,
+                        change_set const & cs)
 {
-  cs.check_sane();
-  print_path_rearrangement(printer, cs.rearrangement);
+  print_insane_path_rearrangement(printer, cs.rearrangement);
   
   for (change_set::delta_map::const_iterator i = cs.deltas.begin();
        i != cs.deltas.end(); ++i)
@@ -2905,6 +2911,14 @@ print_change_set(basic_io::printer & printer,
       st.push_hex_pair(syms::to, i->second.second.inner()());
       printer.print_stanza(st);
     }
+}
+
+void 
+print_change_set(basic_io::printer & printer,
+                 change_set const & cs)
+{
+  cs.check_sane();
+  print_insane_change_set(printer, cs);
 }
 
 void
@@ -2936,14 +2950,21 @@ read_change_set(data const & dat,
 }
 
 void
+write_insane_change_set(change_set const & cs,
+                        data & dat)
+{
+  std::ostringstream oss;
+  basic_io::printer pr(oss);
+  print_insane_change_set(pr, cs);
+  dat = data(oss.str());  
+}
+
+void
 write_change_set(change_set const & cs,
                  data & dat)
 {
   cs.check_sane();
-  std::ostringstream oss;
-  basic_io::printer pr(oss);
-  print_change_set(pr, cs);
-  dat = data(oss.str());  
+  write_insane_change_set(cs, dat);
 }
 
 void
@@ -2961,7 +2982,8 @@ void
 dump(change_set const & cs, std::string & out)
 {
   data tmp;
-  write_change_set(cs, tmp);
+  write_insane_change_set(cs, tmp);
+//  write_change_set(cs, tmp);
   out = tmp();
 }
 

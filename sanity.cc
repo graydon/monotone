@@ -253,19 +253,21 @@ sanity::gasp()
   for (std::vector<MusingI const *>::const_iterator
          i = musings.begin(); i != musings.end(); ++i)
     {
+      std::string tmp;
       try
         {
-          std::string tmp;
           (*i)->gasp(tmp);
           out << tmp;
         }
       catch (logic_error)
         {
+          out << tmp;
           out << "<caught logic_error>\n";
           L(F("ignoring error trigged by saving work set to debug log"));
         }
       catch (informative_failure)
         {
+          out << tmp;
           out << "<caught informative_failure>\n";
           L(F("ignoring error trigged by saving work set to debug log"));
         }
