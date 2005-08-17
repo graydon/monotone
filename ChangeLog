@@ -1,3 +1,13 @@
+
+2005-08-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* sanity.cc (gasp()): When catching an error from dumping a MM'd
+	variable, do not discard output generated prior to the error. This
+	way, at least the header line (function name, file, line no.) is
+	printed.
+	* change_set.cc: write_insane_change_set: new function to write a
+	change set without sanity checking it, now used by dump().
+
 2005-08-17  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
 	* unix/process.cc: missing include
