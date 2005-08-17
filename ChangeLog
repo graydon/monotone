@@ -1,5 +1,10 @@
 2005-08-17  Nathaniel Smith  <njs@pobox.com>
 
+	* Makefile.am (lib3rdparty_a_CFLAGS): Build 3rd party C code with
+	-fexceptions.
+
+2005-08-17  Nathaniel Smith  <njs@pobox.com>
+
 	* lua.cc (lua_hooks): Re-enable panic thrower, we no longer
 	support Lua 4.
 

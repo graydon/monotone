@@ -220,6 +220,8 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(NETXX_SOURCES) \
 			$(LUA_SOURCES) \
 			$(SQLITE_SOURCES)
+# We want to be able to throw exceptions through the Lua interpreter
+lib3rdparty_a_CFLAGS = $(AM_CFLAGS) -fexceptions
 
 # flags
 
