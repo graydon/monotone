@@ -1,5 +1,10 @@
 2005-08-17  Nathaniel Smith  <njs@pobox.com>
 
+	* unix/process.cc (is_executable, make_executable): When reporting
+	an error in a syscall, include the actual error message.
+
+2005-08-17  Nathaniel Smith  <njs@pobox.com>
+
 	* lua.cc (dump_stack): New function.
 	(Lua::fail): New method; use above.
 	(get, get_fn, get_tab, get_str, get_num, get_bool, extract_str)
