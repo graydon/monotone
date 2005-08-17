@@ -134,7 +134,7 @@ build_additions(vector<file_path> const & paths,
           for (map<string, string>::const_iterator j = m.begin();
                j != m.end(); ++j)
             {
-              P(F("adding attribute '%s' to file %s to %s\n") % j->first % i->first % attr_file_name);
+              P(F("adding attribute '%s' on file %s to %s\n") % j->first % i->first % attr_file_name);
               attrs[i->first][j->first] = j->second;
             }
         }
