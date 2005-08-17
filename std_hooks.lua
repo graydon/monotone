@@ -229,6 +229,26 @@ function merge3_meld_cmd(lfile, afile, rfile)
    end
 end
 
+function merge2_tortoise_cmd(lfile, rfile, outfile)
+   return
+   function()
+      return execute("tortoisemerge",
+                     string.format("/theirs:%s", lfile),
+                     string.format("/mine:%s", rfile),
+                     string.format("/merged:%s", outfile))
+   end
+end
+
+function merge3_tortoise_cmd(lfile, afile, rfile, outfile)
+   return
+   function()
+      return execute("tortoisemerge",
+                     string.format("/base:%s", afile),
+                     string.format("/theirs:%s", lfile),
+                     string.format("/mine:%s", rfile),
+                     string.format("/merged:%s", outfile))
+   end
+end
 
 function merge2_vim_cmd(vim, lfile, rfile, outfile)
    return
@@ -356,6 +376,8 @@ function get_preferred_merge2_command (tbl)
       cmd =   merge2_kdiff3_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
    elseif program_exists_in_path ("xxdiff") then 
       cmd = merge2_xxdiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
+   elseif program_exists_in_path ("TortoiseMerge") then
+      cmd = merge2_tortoise_cmd(lfile, rfile, outfile)
    elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
       if string.find(editor, "xemacs") and program_exists_in_path("xemacs") then
          cmd = merge2_emacs_cmd ("xemacs", lfile, rfile, outfile) 
@@ -449,6 +471,8 @@ function get_preferred_merge3_command (tbl)
       cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
    elseif program_exists_in_path ("xxdiff") then 
       cmd = merge3_xxdiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
+   elseif program_exists_in_path ("TortoiseMerge") then
+      cmd = merge3_tortoise_cmd(lfile, afile, rfile, outfile)
    elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
       if string.find(editor, "xemacs") and program_exists_in_path ("xemacs") then 
          cmd = merge3_emacs_cmd ("xemacs", lfile, afile, rfile, outfile) 
