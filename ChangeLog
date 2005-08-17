@@ -4,6 +4,15 @@
 	* std_hooks.lua: Merge hooks for TortoiseMerge (part of
 	TortoiseSVN).
 
+2005-08-17  Nathaniel Smith  <njs@pobox.com>
+
+	* lua.cc (lua_hooks): Re-enable panic thrower, we no longer
+	support Lua 4.
+
+2005-08-16  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc: Add more netsync todos.
+
 2005-08-15  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/t_explicit_merge_with_anc.at: New test.

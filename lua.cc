@@ -39,12 +39,10 @@ extern "C" {
 using namespace std;
 using boost::lexical_cast;
 
-/*
 static int panic_thrower(lua_State * st)
 {
   throw oops("lua panic");
 }
-*/
 
 // This Lua object represents a single imperative transaction with the lua
 // interpreter. if it fails at any point, all further commands in the
@@ -565,8 +563,7 @@ lua_hooks::lua_hooks()
   st = lua_open ();  
   I(st);
 
-  // no atpanic support in 4.x
-  // lua_atpanic (st, &panic_thrower);
+  lua_atpanic (st, &panic_thrower);
 
   luaopen_base(st);
   luaopen_io(st);
