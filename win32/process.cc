@@ -10,6 +10,84 @@
 #include "sanity.hh"
 #include "platform.hh"
 
+static std::string munge_inner_argument(const char* arg)
+{
+  std::string result;
+  bool has_space = false;
+  int quotes = 0;
+  bool space_outside_quote = false;
+  const char* arg_end = arg + std::strlen(arg) - 1;
+
+  for (const char* c = arg; *c; ++c) {
+    switch (*c) {
+    case ' ':
+      has_space = true;
+      if (quotes % 2 == 0 || quotes == 0)
+        space_outside_quote = true;
+      break;
+    case '"':
+      quotes++;
+      break;
+    }
+  }
+
+  I(quotes % 2 == 0);
+
+  // quote start of argument if needed
+  if (has_space && space_outside_quote)
+    result += "\"";
+
+  // copy argument
+  if (quotes == 0)
+    result += arg;
+  else {
+    // escape inner quotes
+    for (const char* c = arg; *c; ++c) {
+      if (*c == '"' && c != arg && '"' && c != arg_end)
+        result += '\\';
+      result += *c;
+    }
+  }
+
+  // quote end of argument
+  if (has_space && space_outside_quote)
+    result += "\"";
+
+  return result;
+}
+
+static std::string munge_argument(const char* arg)
+{
+  std::string result;
+
+  // handle DOS-style '/file:c:\path to\file.txt' by splitting at the colon
+  // and handling the last part as a standard argument, then reassembling
+  // for the cmdline.
+  if (arg[0] == '/') {
+    const char* dos_cmd = std::strchr(arg, ':');
+    if (dos_cmd != 0) {
+      result += std::string(arg, dos_cmd - arg + 1);
+      result += munge_inner_argument(dos_cmd + 1);
+    } else
+      result += arg;
+    return result;
+  }
+
+  return munge_inner_argument(arg);
+}
+
+static std::string munge_argv_into_cmdline(const char* const argv[])
+{
+  std::string cmdline;
+
+  for (int i = 0; argv[i]; ++i) {
+    cmdline += munge_argument(argv[i]);
+    cmdline += " ";
+  }
+
+  return cmdline;
+}
+
 int existsonpath(const char *exe)
 {
   if (SearchPath(NULL, exe, ".exe", 0, NULL, NULL)==0)
@@ -29,7 +107,6 @@ int make_executable(const char *path)
 
 pid_t process_spawn(const char * const argv[])
 {
-  int i;
   char *realexe,*filepart;
   int realexelen;
   std::string cmd,tmp1,tmp2;
@@ -48,35 +125,9 @@ pid_t process_spawn(const char * const argv[])
       return -1;
     }
 
-  std::ostringstream cmdline_ss;
-  L(F("building command line\n"));
-  cmdline_ss << realexe;
-  for (const char *const *i = argv+1; *i; ++i)
-    {
-      if (i)
-        cmdline_ss << ", ";
-      cmdline_ss << "'" << *i << "'";
-    }
-  L(F("spawning command: %s\n") % cmdline_ss.str());
+  cmd = munge_argv_into_cmdline(argv);
+  L(F("spawning command: '%s' '%s'\n") % realexe % cmd);
 
-  cmd = "";
-  for (i=0; argv[i]; i++)
-    {
-      cmd += "\"";
-      tmp1 = argv[i];
-      tmp2 = "";
-      for (it=tmp1.begin(); it!=tmp1.end(); it++)
-      {
-        if (*it == '\\')
-          tmp2.append("\\\\");
-        else if (*it == '\"')
-          tmp2.append("\\\"");
-        else
-          tmp2.append(1, *it);
-      }
-      cmd += tmp2;
-      cmd += "\" ";
-    }
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(STARTUPINFO);
   /* We don't need to set any of the STARTUPINFO members */

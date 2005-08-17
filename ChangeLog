@@ -1,5 +1,6 @@
 2005-08-17  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* win32/process.cc: Slightly smarter argv->cmdline munging.
 	* std_hooks.lua: Merge hooks for TortoiseMerge (part of
 	TortoiseSVN).
 
