@@ -18,7 +18,7 @@ labellagigogin()
 # note: rcfile is placed outside workdir
 AT_CHECK(MONOTONE setup alt_wrk, [], [ignore], [ignore])
 AT_CHECK(cd alt_wrk && MONOTONE --root=. --rcfile=../gongolo status, [], [stdout], [ignore])
-AT_CHECK(grep -q "BOOGA BOOGACICCA CICCA" stdout)
+AT_CHECK(QGREP("BOOGA BOOGACICCA CICCA" stdout))
 
 # write a third file: should be read beetween the two previous ones
 AT_DATA(gongolo/aba.rc, [function notwowithoutthree()
@@ -27,6 +27,6 @@ end
 notwowithoutthree()
 ])
 AT_CHECK(cd alt_wrk && MONOTONE --root=. --rcfile=../gongolo status, [], [stdout], [ignore])
-AT_CHECK(grep -q "BOOGA BOOGAhu huCICCA CICCA" stdout)
+AT_CHECK(QGREP("BOOGA BOOGAhu huCICCA CICCA" stdout))
 
 AT_CLEANUP

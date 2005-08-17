@@ -54,8 +54,8 @@ REV1=`BASE_REVISION`
 
 AT_CHECK(MONOTONE annotate foo, [], [stdout], [ignore])
 #AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
-AT_CHECK(head -n 2 stdout | tail -n 1 | grep $REVL, [0], [ignore], [ignore])
-AT_CHECK(head -n 3 stdout | tail -n 1 | grep $REVR, [0], [ignore], [ignore])
-#AT_CHECK(head -n 4 stdout | tail -n 1 | grep $REV1, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REVL, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REVR, [0], [ignore], [ignore])
+#AT_CHECK(head -n 4 stdout | TAIL(1) | grep $REV1, [0], [ignore], [ignore])
 
 AT_CLEANUP

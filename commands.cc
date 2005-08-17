@@ -1134,91 +1134,7 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy",
 ALIAS(mv, rename)
 
 // fload and fmerge are simple commands for debugging the line
-// merger. fcommit is a helper for making single-file commits to monotone
-// (such as automated processes might want to do).
-
-CMD(fcommit, "tree", "REVISION FILENAME [LOG_MESSAGE]", 
-    "commit change to a single file", OPT_NONE)
-{
-  if (args.size() != 2 && args.size() != 3)
-    throw usage(name);
-
-  file_id old_fid, new_fid;
-  revision_id old_rid, new_rid;
-  manifest_id old_mid, new_mid;
-  manifest_map old_man, new_man;
-  file_data old_fdata, new_fdata;
-  cert_value branchname;
-  revision_data rdata;
-  revision_set rev;
-  boost::shared_ptr<change_set> cs(new change_set());
-
-  string log_message("");
-  delta del;
-  file_path pth(idx(args, 1)());
-
-  transaction_guard guard(app.db);
-  packet_db_writer dbw(app);
-  
-  complete(app, idx(args, 0)(), old_rid);
-
-  // find the old rev, manifest and file
-  app.db.get_revision_manifest(old_rid, old_mid);
-  app.db.get_manifest(old_mid, old_man);
-  manifest_map::const_iterator i = old_man.find(pth);
-  N(i != old_man.end(), 
-    F("cannot find file %s revision %s") 
-    % pth % old_rid);
-
-  // fetch the new file input
-  string s = get_stdin();
-  new_fdata = file_data(s);
-  calculate_ident(new_fdata, new_fid);
-
-  // diff and store the file edge
-  old_fid = manifest_entry_id(i);
-  app.db.get_file_version(old_fid, old_fdata);
-  diff(old_fdata.inner(), new_fdata.inner(), del);    
-  dbw.consume_file_delta(old_fid, new_fid, 
-                         file_delta(del));
-
-  // diff and store the manifest edge
-  new_man = old_man;
-  new_man[pth] = new_fid;
-  calculate_ident(new_man, new_mid);
-  diff(old_man, new_man, del);
-  dbw.consume_manifest_delta(old_mid, new_mid, 
-                             manifest_delta(del));
-
-  // build and store a changeset and revision
-  cs->apply_delta(pth, old_fid, new_fid);
-  rev.new_manifest = new_mid;
-  rev.edges.insert(std::make_pair(old_rid, 
-                                  std::make_pair(old_mid, cs)));
-  calculate_ident(rev, new_rid);
-  write_revision_set(rev, rdata);
-  dbw.consume_revision_data(new_rid, rdata);
-
-  // take care of any extra certs
-  guess_branch(old_rid, app, branchname);
-
-  if (args.size() == 3)
-    log_message = idx(args, 2)();
-  else
-    get_log_message(rev, app, log_message);
-
-  N(log_message.find_first_not_of(" \r\t\n") != string::npos,
-    F("empty log message"));
-
-  cert_revision_in_branch(new_rid, branchname, app, dbw); 
-  cert_revision_date_now(new_rid, app, dbw);
-  cert_revision_author_default(new_rid, app, dbw);
-  cert_revision_changelog(new_rid, log_message, app, dbw);
-
-  // finish off
-  guard.commit();
-}
-
+// merger.
 
 CMD(fload, "debug", "", "load file contents into db", OPT_NONE)
 {
@@ -2372,14 +2288,14 @@ CMD(commit, "working copy", "[PATH]...",
   if (app.message().length() > 0)
     log_message = app.message();
   else
-    get_log_message(rs, app, log_message);
-
-  N(log_message.find_first_not_of(" \r\t\n") != string::npos,
-    F("empty log message"));
-
-  // we write it out so that if the commit fails, the log
-  // message will be preserved for a retry
-  write_user_log(data(log_message));
+    {
+      get_log_message(rs, app, log_message);
+      N(log_message.find_first_not_of(" \r\t\n") != string::npos,
+        F("empty log message"));
+      // we write it out so that if the commit fails, the log
+      // message will be preserved for a retry
+      write_user_log(data(log_message));
+    }
 
   {
     transaction_guard guard(app.db);
@@ -2813,68 +2729,6 @@ CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator",
     std::cout << describe_revision(app, anc) << std::endl;
   else
     std::cout << "no common ancestor/dominator found" << std::endl;
-}
-
-
-CMD(agraph, "debug", "", "dump ancestry graph to stdout in VCG format",
-    OPT_NONE)
-{
-  set<revision_id> nodes;
-  multimap<revision_id,string> branches;
-
-  std::multimap<revision_id, revision_id> edges_mmap;
-  set<pair<revision_id, revision_id> > edges;
-
-  app.db.get_revision_ancestry(edges_mmap);
-
-  // convert from a weak lexicographic order to a strong one
-  for (std::multimap<revision_id, revision_id>::const_iterator i = edges_mmap.begin();
-       i != edges_mmap.end(); ++i)
-    edges.insert(std::make_pair(i->first, i->second));
-
-  for (set<pair<revision_id, revision_id> >::const_iterator i = edges.begin();
-       i != edges.end(); ++i)
-    {
-      nodes.insert(i->first);
-      nodes.insert(i->second);
-    }
-
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(branch_cert_name, certs);
-  for(vector< revision<cert> >::iterator i = certs.begin();
-      i != certs.end(); ++i)
-    {
-      cert_value tv;
-      decode_base64(i->inner().value, tv);
-      revision_id tmp(i->inner().ident);
-      nodes.insert(tmp); // in case no edges were connected
-      branches.insert(make_pair(tmp, tv()));
-    }  
-
-
-  cout << "graph: " << endl << "{" << endl; // open graph
-  for (set<revision_id>::iterator i = nodes.begin(); i != nodes.end();
-       ++i)
-    {
-      cout << "node: { title : \"" << *i << "\"\n"
-           << "        label : \"\\fb" << *i;
-      pair<multimap<revision_id,string>::const_iterator,
-        multimap<revision_id,string>::const_iterator> pair =
-        branches.equal_range(*i);
-      for (multimap<revision_id,string>::const_iterator j = pair.first;
-           j != pair.second; ++j)
-        {
-          cout << "\\n\\fn" << j->second;
-        }
-      cout << "\"}" << endl;
-    }
-  for (set<pair<revision_id, revision_id> >::iterator i = edges.begin(); i != edges.end();
-       ++i)
-    {
-      cout << "edge: { sourcename : \"" << i->first << "\"" << endl
-           << "        targetname : \"" << i->second << "\" }" << endl;
-    }
-  cout << "}" << endl << endl; // close graph
 }
 
 

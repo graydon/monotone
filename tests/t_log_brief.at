@@ -1,0 +1,25 @@
+AT_SETUP([log --brief])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+AT_CHECK(MONOTONE commit -b testbranch --date "2005-08-16T03:16:00" -m foo, [], [ignore], [ignore])
+R0=`BASE_REVISION`
+
+SET_FILE(testfile, [stuff stuff
+])
+AT_CHECK(MONOTONE commit -b testbranch --date "2005-08-16T03:16:00" -m foo, [], [ignore], [ignore])
+R1=`BASE_REVISION`
+
+SET_FILE(testfile, [other other
+])
+AT_CHECK(MONOTONE commit -b otherbranch --date "2005-08-16T03:16:05" -m foo, [], [ignore], [ignore])
+R2=`BASE_REVISION`
+
+AT_CHECK(MONOTONE log --brief, [], [stdout], [ignore])
+AT_CHECK(echo "$R2 tester@test.net 2005-08-16T03:16:05 otherbranch" > target)
+AT_CHECK(echo "$R1 tester@test.net 2005-08-16T03:16:00 testbranch" >> target)
+AT_CHECK(echo "$R0 tester@test.net 2005-08-16T03:16:00 testbranch" >> target)
+AT_CHECK(cmp stdout target)
+
+AT_CLEANUP

@@ -13,6 +13,7 @@
 
 #include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
+#include "boost/current_function.hpp"
 
 #include <config.h> // Required for ENABLE_NLS
 #include "gettext.h"
@@ -243,9 +244,14 @@ Musing<T>::gasp(std::string & out) const
 // them.)  However, while fake_M does nothing directly, it doesn't pass its
 // line argument to ##; therefore, its line argument is fully expanded before
 // being passed to real_M.
-#define real_M(obj, line) Musing<typeof(obj)> this_is_a_musing_fnord_object_ ## line (obj, #obj, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#ifdef HAVE_TYPEOF
+// even worse, this is g++ only!
+#define real_M(obj, line) Musing<typeof(obj)> this_is_a_musing_fnord_object_ ## line (obj, #obj, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
 #define fake_M(obj, line) real_M(obj, line)
 #define MM(obj) fake_M(obj, __LINE__)
+#else
+#define MM(obj) /* */ 
+#endif
 
 void dump(std::string const & obj, std::string & out);
 

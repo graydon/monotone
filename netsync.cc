@@ -46,6 +46,25 @@
 #include "netxx/streamserver.h"
 #include "netxx/timeout.h"
 
+// TODO: things to do that will break protocol compatibility
+//   -- need some way to upgrade anonymous to keyed pull, without user having
+//      to explicitly specify which they want
+//      just having a way to respond "access denied, try again" might work
+//      but perhaps better to have the anonymous command include a note "I
+//      _could_ use key <...> if you prefer", and if that would lead to more
+//      access, could reply "I do prefer".  (Does this lead to too much
+//      information exposure?  Allows anonymous people to probe what branches
+//      a key has access to.)
+//   -- "warning" packet type?
+//   -- Richard Levitte wants, when you (e.g.) request '*' but don't access to
+//      all of it, you just get the parts you have access to (maybe with
+//      warnings about skipped branches).  to do this right, should have a way
+//      for the server to send back to the client "right, you're not getting
+//      the following branches: ...", so the client will not include them in
+//      its merkle trie.
+//   -- add some sort of vhost field to the clients first packet, saying who
+//      they expect to talk to
+
 //
 // this is the "new" network synchronization (netsync) system in
 // monotone. it is based on synchronizing a pair of merkle trees over an

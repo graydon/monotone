@@ -26,11 +26,11 @@ AT_CHECK(MONOTONE setup alt_wrk, [], [ignore], [ignore])
 
 # include directly a single file
 AT_CHECK(cd alt_wrk && MONOTONE --root=. --rcfile=../include.lua status, [], [stdout], [ignore])
-AT_CHECK(grep -q "BOOGA BOOGA" stdout)
+AT_CHECK(QGREP("BOOGA BOOGA" stdout))
 
 # include dirs
 AT_CHECK(cd alt_wrk && MONOTONE --root=. --rcfile=../includedir.lua status, [], [stdout], [ignore])
-AT_CHECK(grep -q "BOOGA BOOGACICCA CICCA" stdout)
+AT_CHECK(QGREP("BOOGA BOOGACICCA CICCA" stdout))
 
 # write a third file: should be read beetween the two previous ones
 AT_DATA(gongolo/aba.rc, [function notwowithoutthree()
@@ -39,6 +39,6 @@ end
 notwowithoutthree()
 ])
 AT_CHECK(cd alt_wrk && MONOTONE --root=. --rcfile=../includedir.lua status, [], [stdout], [ignore])
-AT_CHECK(grep -q "BOOGA BOOGAhu huCICCA CICCA" stdout)
+AT_CHECK(QGREP("BOOGA BOOGAhu huCICCA CICCA" stdout))
 
 AT_CLEANUP

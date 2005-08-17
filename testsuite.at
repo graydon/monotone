@@ -31,7 +31,7 @@ fi
 
 m4_define([MONOTONE_SETUP], [
 
-# Absolutify monotone path
+# Absolutify monotone path.
 _MT_EXEC=`which monotone`
 
 # Save the PWD so MONOTONE macro can refer back to it
@@ -175,7 +175,6 @@ AT_CHECK(cmp firstout secondout, [1], [ignore], [ignore])
 m4_define([CHECK_SAME_DB_CONTENTS], [
 CHECK_SAME_STDOUT(MONOTONE --db=$1 ls keys, MONOTONE --db=$2 ls keys)
 
-CHECK_SAME_STDOUT(MONOTONE --db=$1 agraph, MONOTONE --db=$2 agraph)
 REVS=`MONOTONE --db=$1 complete revision ""`
 for R in $REVS; do
   CHECK_SAME_STDOUT(MONOTONE --db=$1 ls certs $R, MONOTONE --db=$2 ls certs $R)
@@ -351,7 +350,11 @@ if test "$OSTYPE" == "msys"; then
     ps | awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill " $a);}'
   fi
 else
-  kill $mt_pid 2>/dev/null
+  # use a SEGV because it will cause an exit, but trigger error
+  # unwind, so we will actually "exit normally"; which is important
+  # when using things like coverage tools, etc. that need to write out
+  # their data on program exit.
+  kill -SEGV $mt_pid 2>/dev/null
 fi
 rm -f monotone_at.pid 2>/dev/null
 ])
@@ -413,7 +416,12 @@ NETSYNC_SERVE_START($2)
 NETSYNC_CLIENT_RUN($1, $2, 0)
 NETSYNC_SERVE_STOP
 ])
-
+# run as QGREP(arguments) the same way you'd run 'grep -q arguments'
+# same for QEGREP and egrep -q
+m4_define([QGREP], [grep $1 >/dev/null])
+m4_define([QEGREP], [egrep $1 >/dev/null])
+# run as TAIL(lines)
+m4_define([TAIL], [(tail -n $1 2>/dev/null || tail -$1)])
 
 
 # include all the sub-tests we're going to use
@@ -683,3 +691,6 @@ m4_include(tests/t_merge_add_rename_add.at)
 m4_include(tests/t_update_branch.at)
 m4_include(tests/t_commit_cancelled.at)
 m4_include(tests/t_merge_lca.at)
+m4_include(tests/t_commit_log_writeback.at)
+m4_include(tests/t_log_brief.at)
+m4_include(tests/t_explicit_merge_with_anc.at)

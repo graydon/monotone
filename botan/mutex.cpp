@@ -6,6 +6,7 @@
 #include <botan/mutex.h>
 #include <botan/exceptn.h>
 #include <botan/init.h>
+#include <cstdlib>
 
 namespace Botan {
 
@@ -38,7 +39,7 @@ void Default_Mutex::lock()
    {
    if(locked)
       {
-      abort();
+      std::abort();
       throw Internal_Error("Default_Mutex::lock: Mutex is already locked");
       }
    locked = true;
@@ -51,7 +52,7 @@ void Default_Mutex::unlock()
    {
    if(!locked)
       {
-      abort();
+      std::abort();
       throw Internal_Error("Default_Mutex::unlock: Mutex is already unlocked");
       }
    locked = false;

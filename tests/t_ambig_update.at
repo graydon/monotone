@@ -28,9 +28,9 @@ AT_CHECK(rm -f file1)
 AT_CHECK(MONOTONE update, [1], [ignore], [stderr])
 AT_CHECK(test ! -e file1)
 # Make sure that the failure message listed the possibilities
-AT_CHECK(grep -q $LEFT stderr, [])
-AT_CHECK(grep -q $RIGHT stderr, [])
-AT_CHECK(grep -q $ANC stderr, [1])
+AT_CHECK(QGREP($LEFT stderr), [])
+AT_CHECK(QGREP($RIGHT stderr), [])
+AT_CHECK(QGREP($ANC stderr), [1])
 
 # Check also when one side is deeper than the other...
 REVERT_TO($LEFT)
@@ -46,9 +46,9 @@ AT_CHECK(MONOTONE update, [1], [ignore], [stderr])
 AT_CHECK(test ! -e file1)
 AT_CHECK(test ! -e file2)
 # Make sure that the failure message listed the possibilities
-AT_CHECK(grep -q $LEFT stderr, [1])
-AT_CHECK(grep -q $LEFT2 stderr, [])
-AT_CHECK(grep -q $RIGHT stderr, [])
-AT_CHECK(grep -q $ANC stderr, [1])
+AT_CHECK(QGREP($LEFT stderr), [1])
+AT_CHECK(QGREP($LEFT2 stderr), [])
+AT_CHECK(QGREP($RIGHT stderr), [])
+AT_CHECK(QGREP($ANC stderr), [1])
 
 AT_CLEANUP

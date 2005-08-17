@@ -22,7 +22,7 @@ R1_R_SHA=`BASE_REVISION`
 
 # Sanity check first...
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
-AT_CHECK(grep -q $R1_R_SHA stdout)
+AT_CHECK(QGREP($R1_R_SHA stdout))
 
 # Now create R2
 AT_DATA(f, [r2 data
@@ -38,8 +38,8 @@ R3_R_SHA=`BASE_REVISION`
 
 # Now check heads on branch1
 AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
-AT_CHECK(grep -q $R1_R_SHA stdout, [1])
-AT_CHECK(grep -q $R2_R_SHA stdout, [1])
-AT_CHECK(grep -q $R3_R_SHA stdout, [0])
+AT_CHECK(QGREP($R1_R_SHA stdout), [1])
+AT_CHECK(QGREP($R2_R_SHA stdout), [1])
+AT_CHECK(QGREP($R3_R_SHA stdout), [0])
 
 AT_CLEANUP

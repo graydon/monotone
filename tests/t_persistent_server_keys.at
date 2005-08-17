@@ -18,7 +18,7 @@ NETSYNC_CLIENT_N_RUN(2, push, testbranch)
 NETSYNC_CLIENT_N_RUN(3, pull, testbranch)
 
 AT_CHECK(MONOTONE3 ls keys, [], [stdout], [ignore])
-AT_CHECK(grep -q foo@foo stdout, [1])
+AT_CHECK(QGREP(foo@foo stdout), [1])
 
 AT_DATA(testfile, [stuffty stuffty
 ])
@@ -30,6 +30,6 @@ NETSYNC_CLIENT_N_RUN(3, pull, testbranch)
 NETSYNC_SERVE_STOP
 
 AT_CHECK(MONOTONE3 ls keys, [], [stdout], [ignore])
-AT_CHECK(grep -q foo@foo stdout)
+AT_CHECK(QGREP(foo@foo stdout))
 
 AT_CLEANUP

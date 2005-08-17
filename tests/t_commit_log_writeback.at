@@ -1,0 +1,36 @@
+AT_SETUP([commit writes message back to MT/log])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+
+# Make it unwriteable, so our  edit_comment hook will have a chance to
+# run, but  the overall commit  will fail.  (How  do I know  this will
+# work?  Well, it did...)
+AT_CHECK(chmod a-w test.db)
+
+AT_DATA(my_hook.lua, [function edit_comment(basetext, user_log_message)
+  return "foobar\n"
+end
+])
+
+AT_CHECK(MONOTONE commit -btestbranch --rcfile=my_hook.lua, [1], [ignore], [ignore])
+
+CHECK_SAME_CANONICALISED_STDOUT(echo "foobar", cat MT/log)
+
+AT_CHECK(rm -f MT/log)
+AT_CHECK(touch MT/log)
+
+# -m messages don't get written out to MT/log
+# (if they do, it breaks the workflow:
+#   $ monotone commit -m 'foo'
+#   <fails>
+#   <fixup>
+#   $ monotone commit -m 'foo'
+#   error, MT/log non-empty and -m specified
+AT_CHECK(MONOTONE commit -btestbranch -m "blah blah", [1], [ignore], [ignore])
+
+# So MT/log should still be empty
+AT_CHECK(test -s MT/log, [1])
+
+AT_CLEANUP

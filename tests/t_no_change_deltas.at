@@ -35,10 +35,10 @@ NEW_OTHER_SHA=`SHA1(end_file)`
 AT_CHECK(test $BASE_F_SHA = $NEW_F_SHA)
 
 AT_CHECK(MONOTONE diff --revision $BASE --revision $NEW, [], [stdout], [ignore])
-AT_CHECK(grep -q $NEW_OTHER_SHA stdout)
-AT_CHECK(grep -q $BASE_F_SHA stdout, [1])
+AT_CHECK(QGREP($NEW_OTHER_SHA stdout))
+AT_CHECK(QGREP($BASE_F_SHA stdout), [1])
 AT_CHECK(MONOTONE diff --revision $NEW --revision $BASE, [], [stdout], [ignore])
-AT_CHECK(grep -q $BASE_OTHER_SHA stdout)
-AT_CHECK(grep -q $BASE_F_SHA stdout, [1])
+AT_CHECK(QGREP($BASE_OTHER_SHA stdout))
+AT_CHECK(QGREP($BASE_F_SHA stdout), [1])
 
 AT_CLEANUP

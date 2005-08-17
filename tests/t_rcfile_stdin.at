@@ -10,6 +10,6 @@ ADD_FILE(testfile, [blah blah
 ])
 AT_CHECK(<foo.rc MONOTONE --rcfile=- commit --message=foo --branch=testbranch, [], [stdout], [ignore])
 
-AT_CHECK(grep -q BOOGA stdout)
+AT_CHECK(QGREP(BOOGA stdout))
 
 AT_CLEANUP

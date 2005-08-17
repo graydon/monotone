@@ -14,15 +14,15 @@ COMMIT(otherbranch)
 # candidate, but it's currently at an off-branch revision); and should
 # not update the MT/options
 AT_CHECK(MONOTONE update -b testbranch, [1], [ignore], [ignore])
-AT_CHECK(grep -q otherbranch MT/options, [])
-AT_CHECK(grep -q testbranch MT/options, [1])
+AT_CHECK(QGREP(otherbranch MT/options), [])
+AT_CHECK(QGREP(testbranch MT/options), [1])
 
 REVERT_TO($REV, testbranch)
-AT_CHECK(grep -q otherbranch MT/options, [1])
-AT_CHECK(grep -q testbranch MT/options, [])
+AT_CHECK(QGREP(otherbranch MT/options), [1])
+AT_CHECK(QGREP(testbranch MT/options), [])
 
 AT_CHECK(MONOTONE update -b otherbranch, [], [ignore], [ignore])
-AT_CHECK(grep -q otherbranch MT/options, [])
-AT_CHECK(grep -q testbranch MT/options, [1])
+AT_CHECK(QGREP(otherbranch MT/options), [])
+AT_CHECK(QGREP(testbranch MT/options), [1])
 
 AT_CLEANUP

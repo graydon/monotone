@@ -217,30 +217,24 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(BOTAN_SOURCES) \
 			$(IDNA_SOURCES) \
 			$(POPT_SOURCES) \
-			$(NETXX_SOURCES)
+			$(NETXX_SOURCES) \
+			$(LUA_SOURCES) \
+			$(SQLITE_SOURCES)
 
 # flags
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DSQLITE_OMIT_CURSOR -Wall $(SQLITE_CPPFLAGS)
-AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -Wall 
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DSQLITE_OMIT_CURSOR $(SQLITE_CPPFLAGS)
+AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS
 AM_LDFLAGS = 
 
 lib3rdparty_a_CPPFLAGS =
 
 monotone_LDFLAGS = 
-monotone_CPPFLAGS =
+monotone_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
 
 unit_tests_LDFLAGS = 
-unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS
-
-lib3rdparty_a_SOURCES += $(LUA_SOURCES)
-monotone_CPPFLAGS += -I$(top_srcdir)/lua
-unit_tests_CPPFLAGS += -I$(top_srcdir)/lua
-
-lib3rdparty_a_SOURCES += $(SQLITE_SOURCES)
-monotone_CPPFLAGS += -I$(top_srcdir)/sqlite
-unit_tests_CPPFLAGS += -I$(top_srcdir)/sqlite
+unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
 
 # conditionals from configury
 
@@ -422,7 +416,7 @@ BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
 CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)
 
 txt2c: txt2c.cc Makefile
-	$(CXX) -Wall -o $@ $<
+	$(CXX) $(CXXFLAGS) -o $@ $<
 	chmod 0755 $@$(EXEEXT)
 
 apidocs:

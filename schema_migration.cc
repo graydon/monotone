@@ -42,10 +42,12 @@ extern "C" {
 static string 
 lowercase(string const & in)
 {
-  size_t const sz = in.size();
+  I(40==in.size());
+  const int sz=40;
   char buf[sz];
   in.copy(buf, sz);
-  use_facet< ctype<char> >(locale::locale()).tolower(buf, buf+sz);
+  locale loc;
+  use_facet< ctype<char> >(loc).tolower(buf, buf+sz);
   return string(buf,sz);
 }
 

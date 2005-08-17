@@ -16,7 +16,7 @@ AT_DATA(test.lua, [function use_inodeprints()
 end
 ])
 AT_CHECK(MONOTONE setup --rcfile=test.lua subdir, [], [stdout], [ignore])
-AT_CHECK(grep -q asdfghjkl stdout, [])
-AT_CHECK(grep -q qwertyuiop stdout, [])
+AT_CHECK(QGREP(asdfghjkl stdout), [])
+AT_CHECK(QGREP(qwertyuiop stdout), [])
 
 AT_CLEANUP

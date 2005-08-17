@@ -281,7 +281,7 @@ void Gzip_Decompression::write(const byte input[], u32bit length)
       if (pos + len - 1 >= GZIP::HEADER_POS_OS)
          cmplen--;
 
-      if (memcmp(input, &GZIP::GZIP_HEADER[pos], cmplen) != 0)
+      if (std::memcmp(input, &GZIP::GZIP_HEADER[pos], cmplen) != 0)
          {
          throw Decoding_Error("Gzip_Decompression: Data integrity error in header");
          }

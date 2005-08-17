@@ -5,13 +5,13 @@ MONOTONE_SETUP
 AT_CHECK(touch MT/inodeprints)
 
 AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
-AT_CHECK(grep -q "no changes" stdout)
+AT_CHECK(QGREP("no changes" stdout))
 
 ADD_FILE(testfile, [blah blah
 ])
 
 AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
-AT_CHECK(grep -q "blah blah" stdout)
+AT_CHECK(QGREP("blah blah" stdout))
 
 COMMIT(testbranch)
 
@@ -21,13 +21,13 @@ AT_CHECK(cp MT/inodeprints ip1)
 
 # And stuff should still work
 AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
-AT_CHECK(grep -q "no changes" stdout)
+AT_CHECK(QGREP("no changes" stdout))
 
 SET_FILE(testfile, [stuff stuff
 ])
 
 AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
-AT_CHECK(grep -q "stuff stuff" stdout)
+AT_CHECK(QGREP("stuff stuff" stdout))
 
 # Make sure partial commit doesn't screw things up
 ADD_FILE(otherfile, [other stuff
@@ -39,6 +39,6 @@ AT_CHECK(cmp MT/inodeprints ip1, [1], [ignore], [ignore])
 
 # Still should think testfile is modified
 AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
-AT_CHECK(grep -q "stuff stuff" stdout)
+AT_CHECK(QGREP("stuff stuff" stdout))
 
 AT_CLEANUP

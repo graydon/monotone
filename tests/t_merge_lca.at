@@ -45,7 +45,7 @@ AT_CHECK(MONOTONE update, [], [ignore], [ignore])
 E=`BASE_REVISION`
 
 AT_CHECK(MONOTONE merge --lca, [], [ignore], [stderr])
-AT_CHECK(grep -q $A stderr, [1])
-AT_CHECK(grep -q $B stderr || grep -q $C stderr, [])
+AT_CHECK(QGREP($A stderr), [1])
+AT_CHECK(QGREP($B stderr) || QGREP($C stderr), [])
 
 AT_CLEANUP

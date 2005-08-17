@@ -69,6 +69,7 @@ Lua
 
   bool ok() 
   { 
+    L(F("Lua::ok(): failed = %i") % failed);
     return !failed; 
   }
 
@@ -174,6 +175,7 @@ Lua
         return *this;
       }
     str = string(lua_tostring(st, -1), lua_strlen(st, -1));
+    L(F("lua: extracted string = %s") % str);
     return *this;
   }
 
@@ -187,6 +189,7 @@ Lua
         return *this;
       }
     i = static_cast<int>(lua_tonumber(st, -1));
+    L(F("lua: extracted int = %i") % i);
     return *this;
   }
 
@@ -200,6 +203,7 @@ Lua
         return *this;
       }
     i = lua_tonumber(st, -1);
+    L(F("lua: extracted double = %i") % i);
     return *this;
   }
 
@@ -214,6 +218,7 @@ Lua
         return *this;
       }
     i = (lua_toboolean(st, -1) == 1);
+    L(F("lua: extracted bool = %i") % i);
     return *this;
   }
 
@@ -336,6 +341,7 @@ Lua
 
   Lua & func(string const & fname)
   {
+    L(F("loading lua hook %s") % fname);
     if (!failed) 
       {
         if (missing_functions.find(fname) != missing_functions.end())
@@ -738,14 +744,14 @@ bool
 lua_hooks::hook_expand_date(std::string const & sel, 
                             std::string & exp)
 {
-        exp.clear();
+  exp.clear();
   bool res= Lua(st)
     .func("expand_date")
     .push_str(sel)
     .call(1,1)
     .extract_str(exp)
     .ok();
-        return res && exp.size();
+  return res && exp.size();
 }
 
 bool 
@@ -766,7 +772,7 @@ lua_hooks::hook_get_branch_key(cert_value const & branchname,
 
 bool 
 lua_hooks::hook_get_priv_key(rsa_keypair_id const & k,
-                               base64< arc4<rsa_priv_key> > & priv_key )
+                             base64< arc4<rsa_priv_key> > & priv_key )
 {
   string key;
   bool ok = Lua(st)
@@ -1129,11 +1135,13 @@ lua_hooks::hook_init_attributes(file_path const & filename,
 
   ll
     .push_str("attr_init_functions")
-    .get_tab()
-    .push_nil();
-
+    .get_tab();
+  
+  L(F("calling attr_init_function for %s") % filename);
+  ll.begin();
   while (ll.next())
     {
+      L(F("  calling an attr_init_function for %s") % filename);
       ll.push_str(filename());
       ll.call(1, 1);
 
@@ -1146,9 +1154,13 @@ lua_hooks::hook_init_attributes(file_path const & filename,
           ll.extract_str(key);
 
           attrs[key] = value;
+          L(F("  added attr %s = %s") % key % value);
         }
       else
-        ll.pop();
+        {
+          L(F("  no attr added"));
+          ll.pop();
+        }
     }
 
   return ll.pop().ok();

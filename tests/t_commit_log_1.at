@@ -23,6 +23,6 @@ AT_CHECK(MONOTONE --branch=testbranch --rcfile=commit_log.lua commit, [], [ignor
 TSHA=`BASE_REVISION`
 AT_CHECK(test -f MT/log -a ! -s MT/log)
 AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout], [ignore])
-AT_CHECK(grep -q 'Log entry' stdout, [])
+AT_CHECK(QGREP('Log entry' stdout), [])
 
 AT_CLEANUP

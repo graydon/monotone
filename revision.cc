@@ -73,6 +73,8 @@ revision_set::is_merge_node() const
 
 revision_set::revision_set(revision_set const & other)
 {
+  /* behave like normal constructor if other is empty */
+  if (null_id(other.new_manifest) && other.edges.empty()) return;
   other.check_sane();
   new_manifest = other.new_manifest;
   edges = other.edges;

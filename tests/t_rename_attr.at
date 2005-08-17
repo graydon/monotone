@@ -5,8 +5,8 @@ ADD_FILE(testfile, [foo bar
 ])
 AT_CHECK(MONOTONE attr set testfile some_key some_value, [], [ignore], [ignore])
 AT_CHECK(MONOTONE attr get testfile, [], [stdout], [ignore])
-AT_CHECK(grep -q some_key stdout)
-AT_CHECK(grep -q some_value stdout)
+AT_CHECK(QGREP(some_key stdout))
+AT_CHECK(QGREP(some_value stdout))
 
 COMMIT(testbranch)
 
@@ -18,11 +18,11 @@ COMMIT(testbranch)
 ADD_FILE(testfile, [thing stuff
 ])
 AT_CHECK(MONOTONE attr get testfile, [], [stdout], [ignore])
-AT_CHECK(grep -q some_key stdout, [1])
-AT_CHECK(grep -q some_value stdout, [1])
+AT_CHECK(QGREP(some_key stdout), [1])
+AT_CHECK(QGREP(some_value stdout), [1])
 AT_CHECK(MONOTONE attr get otherfile, [], [stdout], [ignore])
-AT_CHECK(grep -q some_key stdout)
-AT_CHECK(grep -q some_value stdout)
+AT_CHECK(QGREP(some_key stdout))
+AT_CHECK(QGREP(some_value stdout))
 
 # Make sure rename fails if the user has someone managed to put
 # attributes on the target file.
