@@ -74,6 +74,10 @@
 //         successfully written to disk.  See message (and thread)
 //         <E0420553-34F3-45E8-9DA4-D8A5CB9B0600@hsdev.com> on
 //         monotone-devel.
+//   -- apparently we have a IANA approved port: 4691.  I guess we should
+//      switch to using that.
+//      (It's registered under the name "netsync".  "monotone" would probably
+//      be better, but I don't know how possible it is to change this...)
 
 //
 // this is the "new" network synchronization (netsync) system in
