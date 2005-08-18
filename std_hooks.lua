@@ -106,6 +106,7 @@ function ignore_file(name)
    if (string.find(name, "^_darcs/")) then return true end
    if (string.find(name, "^.cdv/")) then return true end
    if (string.find(name, "^.git/")) then return true end
+   if (string.find(name, "%.scc$")) then return true end
    return false;
 end
 
