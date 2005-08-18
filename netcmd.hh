@@ -13,6 +13,7 @@
 #include "numeric_vocab.hh"
 #include "vocab.hh"
 #include "hmac.hh"
+#include "string_queue.hh"
 
 typedef enum 
   { 
@@ -65,9 +66,20 @@ public:
   // basic cmd i/o (including checksums)
   void write(std::string & out,
              chained_hmac & hmac) const;
-  bool read(std::string & inbuf,
+  bool read(string_queue & inbuf,
             chained_hmac & hmac);
-
+  bool read_string(std::string & inbuf,
+		   chained_hmac & hmac) {
+    // this is here only for the regression tests because they want to
+    // read and write to the same type, but we want to have reads from
+    // a string queue so that when data is read in from the network it
+    // can be processed efficiently
+    string_queue tmp(inbuf.size());
+    tmp.append(inbuf);
+    bool ret = read(tmp, hmac);
+    inbuf = tmp.substr(0,tmp.size());
+    return ret;
+  }
   // i/o functions for each type of command payload
   void read_error_cmd(std::string & errmsg) const;
   void write_error_cmd(std::string const & errmsg);

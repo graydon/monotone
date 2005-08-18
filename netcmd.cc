@@ -77,7 +77,7 @@ netcmd::write(string & out, chained_hmac & hmac) const
 }
 
 bool 
-netcmd::read(string & inbuf, chained_hmac & hmac)
+netcmd::read(string_queue & inbuf, chained_hmac & hmac)
 {
   size_t pos = 0;
 
@@ -126,35 +126,25 @@ netcmd::read(string & inbuf, chained_hmac & hmac)
   // there might not be enough data yet in the input buffer
   if (inbuf.size() < pos + payload_len + constants::netsync_hmac_value_length_in_bytes)
     {
-      inbuf.reserve(pos + payload_len + constants::netsync_hmac_value_length_in_bytes + constants::bufsz);
       return false;
     }
-
-//  out.payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
-  // Do this ourselves, so we can swap the strings instead of copying.
-  require_bytes(inbuf, pos, payload_len, "netcmd payload");
 
   // grab it before the data gets munged
   I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
   string digest = hmac.process(inbuf, 0, pos + payload_len);
 
-  payload = inbuf.substr(pos + payload_len);
-  inbuf.erase(pos + payload_len, inbuf.npos);
-  inbuf.swap(payload);
-  size_t payload_pos = pos;
-  pos = 0;
+  payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
 
   // they might have given us bogus data
   string cmd_digest = extract_substring(inbuf, pos, 
       constants::netsync_hmac_value_length_in_bytes,
                                         "netcmd HMAC");
-  inbuf.erase(0, pos);
+  inbuf.pop_front(pos);
   if (cmd_digest != digest)
     throw bad_decode(F("bad HMAC checksum (got %s, wanted %s)\n"
                        "this suggests data was corrupted in transit\n")
                      % encode_hexenc(cmd_digest)
                      % encode_hexenc(digest));
-  payload.erase(0, payload_pos);
 
   return true;    
 }
@@ -571,7 +561,7 @@ test_netcmd_mac()
     chained_hmac mac(key);
     // mutates mac
     out_cmd.write(buf, mac);
-    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
+    BOOST_CHECK_THROW(in_cmd.read_string(buf, mac), bad_decode);
   }
 
   {
@@ -581,7 +571,7 @@ test_netcmd_mac()
   buf[0] ^= 0xff;
   {
     chained_hmac mac(key);
-    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
+    BOOST_CHECK_THROW(in_cmd.read_string(buf, mac), bad_decode);
   }
 
   {
@@ -591,7 +581,7 @@ test_netcmd_mac()
   buf[buf.size() - 1] ^= 0xff;
   {
     chained_hmac mac(key);
-    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
+    BOOST_CHECK_THROW(in_cmd.read_string(buf, mac), bad_decode);
   }
 
   {
@@ -601,7 +591,7 @@ test_netcmd_mac()
   buf += '\0';
   {
     chained_hmac mac(key);
-    BOOST_CHECK_THROW(in_cmd.read(buf, mac), bad_decode);
+    BOOST_CHECK_THROW(in_cmd.read_string(buf, mac), bad_decode);
   }
 }
 
@@ -615,7 +605,7 @@ do_netcmd_roundtrip(netcmd const & out_cmd, netcmd & in_cmd, string & buf)
   }
   {
     chained_hmac mac(key);
-    BOOST_CHECK(in_cmd.read(buf, mac));
+    BOOST_CHECK(in_cmd.read_string(buf, mac));
   }
   BOOST_CHECK(in_cmd == out_cmd);
 }

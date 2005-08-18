@@ -269,7 +269,7 @@ session
   Netxx::socket_type fd;
   Netxx::Stream str;  
 
-  string inbuf; 
+  string_queue inbuf; 
   // deque of pair<string data, size_t cur_pos>
   deque< pair<string,size_t> > outbuf; 
   // the total data stored in outbuf - this is
@@ -500,7 +500,7 @@ session::session(protocol_role role,
   peer_id(peer),
   fd(sock),
   str(sock, to),
-  inbuf(""),
+  inbuf(),
   outbuf_size(0),
   armed(false),
   remote_peer_key_hash(""),
@@ -1355,7 +1355,7 @@ session::read_some()
           L(F("in error unwind mode, so throwing them into the bit bucket\n"));
           return true;
         }
-      inbuf.append(string(tmp, tmp + count));
+      inbuf.append(tmp,count);
       mark_recent_io();
       if (byte_in_ticker.get() != NULL)
         (*byte_in_ticker) += count;
@@ -1598,7 +1598,16 @@ session::queue_data_cmd(netcmd_item_type type,
 
   L(F("queueing %d bytes of data for %s item '%s'\n")
     % dat.size() % typestr % hid);
+
   netcmd cmd;
+  // TODO: This pair of functions will make two copies of a large
+  // file, the first in cmd.write_data_cmd, and the second in
+  // write_netcmd_and_try_flush when the data is copied from the
+  // cmd.payload variable to the string buffer for output.  This 
+  // double copy should be collapsed out, it may be better to use
+  // a string_queue for output as well as input, as that will reduce
+  // the amount of mallocs that happen when the string queue is large
+  // enough to just store the data.
   cmd.write_data_cmd(type, item, dat);
   write_netcmd_and_try_flush(cmd);
   note_item_sent(type, item);
