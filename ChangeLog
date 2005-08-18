@@ -2,6 +2,11 @@
 
 	* std_hooks.lua (ignore_file): Ignore Visual SourceSafe junk.
 
+2005-08-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: accept_testresult_change now only cares about
+	testresults listed in MT/wanted-testresults
+
 2005-08-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* INSTALL: Remove outdated references to configure options and
