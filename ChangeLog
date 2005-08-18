@@ -1,5 +1,7 @@
 2005-08-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* INSTALL: Remove outdated references to configure options and
+	Solaris build workarounds.
 	* configure.ac: Lower gettext requirement from 0.12.1 to 0.11.5.
 
 2005-08-17  Timothy Brownawell  <tbrownaw@gmail.com>

@@ -114,25 +114,10 @@ building and installation process for monotone
        catalogs. you might like to do this if you do not have a
        working installation of GNU gettext.
 
-     --with-bundled-lua=no
-     --with-bundled-sqlite=no
-
-       build a version of monotone without the internal "bundled"
-       copies of lua and sqlite libraries. normally monotone will use
-       copies of these libraries it was bundled with. If you set these
-       flags to "no", it will try to use libraries it finds on your
-       system, and use the bundled versions only if you do not have
-       your own copies.
-
-       this is usually untested and not guaranteed to work.  if you
-       have strange problems, then try using the bundled lua and
-       sqlite.
-
      --disable-large-file
 
        this will disable large file support from the builtin sqlite, to
-       achieve maximum binary compatibility with old systems.  this option
-       has no effect when --with-bundled-sqlite=no is also given.
+       achieve maximum binary compatibility with old systems.
 
      BOOST_SUFFIX=string
 
@@ -153,8 +138,6 @@ building and installation process for monotone
   * type "make". this should produce a monotone binary in your current
     directory. if not, please send a build log to 
     monotone-devel@nongnu.org with a description of the failure.
-
-  * if you are on solaris/x86, read appendix A of this document.
 
 4. testing monotone
 
