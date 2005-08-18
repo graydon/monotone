@@ -203,9 +203,19 @@ function get_file_cert_trust(signers, id, name, val)
 end
 
 function accept_testresult_change(old_results, new_results)
-   for test,res in pairs(old_results)
+   local reqfile = io.open("MT/wanted-testresults", "r")
+   if (reqfile == nil) then return true end
+   local line = reqfile:read()
+   local required = {}
+   while (line ~= nil)
    do
-      if res == true and new_results[test] ~= true
+      required[line] = true
+      line = reqfile:read()
+   end
+   io.close(reqfile)
+   for test, res in pairs(required)
+   do
+      if old_results[test] == true and new_results[test] ~= true
       then
          return false
       end
