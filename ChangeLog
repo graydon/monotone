@@ -1,5 +1,8 @@
 2005-08-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* commands.cc (CMD(diff)): Include base revision ID in diff output
+	header when diffing against working copy.  Useful to identify what
+	revision a patch was created against.
 	* std_hooks.lua (ignore_file): Ignore Visual SourceSafe junk.
 
 2005-08-18  Timothy Brownawell  <tbrownaw@gmail.com>
