@@ -20,7 +20,6 @@
 // sub-components are separately serialized (they could be but there is no
 // call for it). a grammar (aside from the parsing code) for the serialized
 // form will show up here eventually. until then, here is an example.
-// form will show up here eventually. until then, here is an example.
 //
 // new_manifest [16afa28e8783987223993d67f54700f0ecfedfaa]
 //
