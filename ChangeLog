@@ -1,5 +1,7 @@
 2005-08-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_crlf.at: Adjust expected line count to accomodate diff
+	output change.
 	* commands.cc (CMD(diff)): Include base revision ID in diff output
 	header when diffing against working copy.  Useful to identify what
 	revision a patch was created against.

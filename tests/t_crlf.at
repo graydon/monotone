@@ -12,6 +12,6 @@ AT_CHECK(cp stdout test.crlf)
 
 AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
 LINES=`wc -l <stdout`
-AT_CHECK(test $LINES -eq 14) 
+AT_CHECK(test $LINES -eq 16) 
 
 AT_CLEANUP
