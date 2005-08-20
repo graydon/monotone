@@ -1,3 +1,13 @@
+2005-08-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* paths.{cc,hh}: New files.
+	* Makefile.am (MOST_SOURCES): Add them.
+	* unit_tests.hh (add_paths_tests): Declare.
+	* unit_tests.cc (init_unit_test_suite): Add them.
+	* platform.hh (get_current_working_dir)
+	(change_current_working_dir):  New functions.
+	* {unix,win32}/fs.cc: New files.
+
 2005-08-19  Nathaniel Smith  <njs@codesourcery.com>
 
 	* monotone.texi (Tutorial): Tweak wording, use --db at more

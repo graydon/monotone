@@ -42,7 +42,8 @@ MOST_SOURCES =								\
          restrictions.cc restrictions.hh				\
          hmac.cc hmac.hh                                                \
          globish.cc globish.hh                                          \
-         string_queue.cc string_queue.hh                                          \
+         string_queue.cc string_queue.hh                                \
+         paths.cc paths.hh                                              \
                                                                         \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\

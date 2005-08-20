@@ -35,5 +35,6 @@ void add_path_component_tests(test_suite * suite);
 void add_globish_tests(test_suite * suite);
 void add_crypto_tests(test_suite * suite);
 void add_string_queue_tests(test_suite * suite);
+void add_paths_tests(test_suite * suite);
 
 #endif

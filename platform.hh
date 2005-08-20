@@ -46,4 +46,8 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip);
 // for netsync 'serve' pidfile support
 pid_t get_process_id();
 
+// filesystem stuff
+std::string get_current_working_dir();
+void change_current_working_dir(std::string const & to);
+
 #endif // __PLATFORM_HH__
