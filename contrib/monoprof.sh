@@ -283,7 +283,7 @@ test_commit()
 	local TESTNAME="Commit kernel ${KVER} to an empty database"
 	local SHORTNAME="commitfirst"
 	bzip2 -dc ${DATADIR}/linux-${KVER}.tar.bz2 | tar -C ${DATADIR} -xf -
-	pushd ${DATADIR}/${KVER}
+	pushd ${DATADIR}/linux-${KVER}
 	mtn_noprof setup .
 	mtn_noprof --quiet add . # $(ls|grep -v '^MT')
 	cp ${DATADIR}/${EMPTYDB} ${DATADIR}/test.db
@@ -419,6 +419,11 @@ if [ ${HELP} = "true" ] ; then
 	print_help
 	exit 0
 fi
+if [ ! -d ${DATADIR} ] ; then
+	echo "datadir ${DATADIR} not found (perhaps try --datadir)"
+        print_help
+        exit 1
+fi
 if [ ${LIST} = "true" ] ; then
 	for i in ${TESTS}; do
 		echo -e "\t$i"
@@ -429,9 +434,11 @@ if [ ${SETUP} = "true" ] ; then
 	pushd ${DATADIR}
 	monotone --db=empty.db db init
 	echo -e "xxx\nxxx\n" | monotone --db=empty.db genkey xxx
-	echo "function get_passphrase(keypair_id)" >hooks.lua
-	echo "return \"xxx\"" >>hooks.lua
-	echo "end" >>hooks.lua
+        cat >hooks.lua <<EOF
+function get_passphrase(keypair_id) return "xxx" end
+function get_netsync_read_permitted(branch, keyid) return true end
+function get_netsync_write_permitted(keyid) return true end
+EOF
 	cp empty.db mt.db
 	monotone --db=mt.db pull off.net net.venge.monotone
 	monotone --db=mt.db --branch=net.venge.monotone co monotone-src

@@ -2,6 +2,36 @@
 
 	* revision.hh: Delete doubled line of text in comment.
 
+2005-08-20  Benoît Dejean  <benoit@placenet.org>
+
+	* monotone.cc (cpp_main): setlocale(LC_ALL).
+	* commands.cc (dropkey): Unify warning into a single string.
+
+2005-08-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* contrib/monoprof.sh (test_commit): Kernel tarball unpacks to
+	linux-$KVER/, not $KVER/.
+
+2005-08-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* contrib/monoprof.sh (SETUP): Put netsync hooks in the default
+	hook file.
+
+2005-08-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* contrib/monoprof.sh: Give a sensible error message if $DATADIR
+	doesn't exist.
+
+2005-08-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (put_revision): uncomment check_sane_history call
+	(was accidentally committed commented out)
+
+2005-08-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Tutorial): Tweak wording, use --db at more
+	appropriate places.
+
 2005-08-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_crlf.at: Adjust expected line count to accomodate diff

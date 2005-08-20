@@ -1250,7 +1250,7 @@ Jim creates his working copy:
 
 @smallexample
 @group
-/home/jim$ monotone setup juice
+/home/jim$ monotone --db=jim.db setup juice
 /home/jim$ cd juice
 /home/jim/juice$
 @end group
@@ -1321,7 +1321,7 @@ recursively scans the directory and adds all its files.
 
 @smallexample
 @group
-$ monotone --db=~/jim.db add include/jb.h src
+$ monotone add include/jb.h src
 monotone: adding include/jb.h to working copy add set
 monotone: adding src/apple.c to working copy add set
 monotone: adding src/banana.c to working copy add set
@@ -1348,7 +1348,7 @@ he has forgotten what he was doing. He asks monotone:
 
 @smallexample
 @group
-$ monotone --db=jim.db status
+$ monotone status
 
 new_manifest [2098eddbe833046174de28172a813150a6cbda7b]
 
@@ -1389,7 +1389,7 @@ he runs a command which prints out the status @emph{and} a GNU
 
 @smallexample
 @group
-$ monotone --db=jim.db diff
+$ monotone diff
 # 
 # add_file "include/jb.h"
 # 
@@ -1457,11 +1457,13 @@ chooses @code{jp.co.juicebot.jb7} as a branch name. (See @ref{Naming
 Conventions} for more information about appropriate branch names.) He
 then commits his working copy, which causes monotone to process the
 @file{MT/work} file and record the file contents, manifest, and revision
-into the database.
+into the database.  Since he didn't give a branch when he ran
+@command{setup}, he has to do so now; monotone will remember the branch
+and re-use it for future commits automatically.
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit --message="initial checkin of project"
+$ monotone --branch=jp.co.juicebot.jb7 commit --message="initial checkin of project"
 monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
