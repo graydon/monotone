@@ -77,6 +77,7 @@ class bookkeeping_path
 {
 public:
   // path should _not_ contain the leading MT/
+  // and _should_ look like an internal path
   bookkeeping_path(std::string const & path);
   std::string const & as_external();
 private:
@@ -86,9 +87,10 @@ private:
 class external_path
 {
 public:
-  // this path will 
+  // this path can contain anything, and it will be absolutified and
+  // tilde-expanded.  it should be in utf8.
   external_path(std::string const & path);
-  // this will always be an absolute path
+  // this will always be an absolute path, in the local character set
   std::string const & as_external();
 private:
   std::string data;

@@ -77,7 +77,7 @@ static void test_file_path_internal()
   path_prefix = "";
 }
 
-static void check_normalizes_to(char * before, char * after)
+static void check_fp_normalizes_to(char * before, char * after)
 {
   file_path fp(external, before);
   BOOST_CHECK(fp.as_internal() == after);
@@ -111,23 +111,23 @@ static void test_file_path_external_no_prefix()
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path(internal, *c), logic_error);
   
-  check_normalizes_to("", "");
-  check_normalizes_to("foo", "foo");
-  check_normalizes_to("foo/bar", "foo/bar");
-  check_normalizes_to("foo/bar/baz", "foo/bar/baz");
-  check_normalizes_to("foo/bar.baz", "foo/bar.baz");
-  check_normalizes_to("foo/with-hyphen/bar", "foo/with-hyphen/bar");
-  check_normalizes_to("foo/with_underscore/bar", "foo/with_underscore/bar");
-  check_normalizes_to(".foo/bar", ".foo/bar");
-  check_normalizes_to("..foo/bar", "..foo/bar");
-  check_normalizes_to(".", "");
+  check_fp_normalizes_to("", "");
+  check_fp_normalizes_to("foo", "foo");
+  check_fp_normalizes_to("foo/bar", "foo/bar");
+  check_fp_normalizes_to("foo/bar/baz", "foo/bar/baz");
+  check_fp_normalizes_to("foo/bar.baz", "foo/bar.baz");
+  check_fp_normalizes_to("foo/with-hyphen/bar", "foo/with-hyphen/bar");
+  check_fp_normalizes_to("foo/with_underscore/bar", "foo/with_underscore/bar");
+  check_fp_normalizes_to(".foo/bar", ".foo/bar");
+  check_fp_normalizes_to("..foo/bar", "..foo/bar");
+  check_fp_normalizes_to(".", "");
 
-  check_normalizes_to("foo//bar", "foo/bar");
-  check_normalizes_to("foo/../bar", "bar");
-  check_normalizes_to("foo/bar/", "foo/bar");
-  check_normalizes_to("foo/./bar/", "foo/bar");
-  check_normalizes_to("./foo", "foo");
-  check_normalizes_to("foo///.//", "foo");
+  check_fp_normalizes_to("foo//bar", "foo/bar");
+  check_fp_normalizes_to("foo/../bar", "bar");
+  check_fp_normalizes_to("foo/bar/", "foo/bar");
+  check_fp_normalizes_to("foo/./bar/", "foo/bar");
+  check_fp_normalizes_to("./foo", "foo");
+  check_fp_normalizes_to("foo///.//", "foo");
 
   path_prefix = "";
 }
@@ -149,27 +149,27 @@ static void test_file_path_external_prefix_a_b()
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path(internal, *c), logic_error);
   
-  check_normalizes_to("", "a/b");
-  check_normalizes_to("foo", "a/b/foo");
-  check_normalizes_to("foo/bar", "a/b/foo/bar");
-  check_normalizes_to("foo/bar/baz", "a/b/foo/bar/baz");
-  check_normalizes_to("foo/bar.baz", "a/b/foo/bar.baz");
-  check_normalizes_to("foo/with-hyphen/bar", "a/b/foo/with-hyphen/bar");
-  check_normalizes_to("foo/with_underscore/bar", "a/b/foo/with_underscore/bar");
-  check_normalizes_to(".foo/bar", "a/b/.foo/bar");
-  check_normalizes_to("..foo/bar", "a/b/..foo/bar");
-  check_normalizes_to(".", "a/b");
+  check_fp_normalizes_to("", "a/b");
+  check_fp_normalizes_to("foo", "a/b/foo");
+  check_fp_normalizes_to("foo/bar", "a/b/foo/bar");
+  check_fp_normalizes_to("foo/bar/baz", "a/b/foo/bar/baz");
+  check_fp_normalizes_to("foo/bar.baz", "a/b/foo/bar.baz");
+  check_fp_normalizes_to("foo/with-hyphen/bar", "a/b/foo/with-hyphen/bar");
+  check_fp_normalizes_to("foo/with_underscore/bar", "a/b/foo/with_underscore/bar");
+  check_fp_normalizes_to(".foo/bar", "a/b/.foo/bar");
+  check_fp_normalizes_to("..foo/bar", "a/b/..foo/bar");
+  check_fp_normalizes_to(".", "a/b");
 
-  check_normalizes_to("foo//bar", "a/b/foo/bar");
-  check_normalizes_to("foo/../bar", "a/b/bar");
-  check_normalizes_to("foo/bar/", "a/b/foo/bar");
-  check_normalizes_to("foo/./bar/", "a/b/foo/bar");
-  check_normalizes_to("./foo", "a/b/foo");
-  check_normalizes_to("foo///.//", "a/b/foo");
-  check_normalizes_to("../foo", "a/foo");
-  check_normalizes_to("..", "a");
-  check_normalizes_to("../..", "");
-  check_normalizes_to("MT/foo", "a/b/MT/foo");
+  check_fp_normalizes_to("foo//bar", "a/b/foo/bar");
+  check_fp_normalizes_to("foo/../bar", "a/b/bar");
+  check_fp_normalizes_to("foo/bar/", "a/b/foo/bar");
+  check_fp_normalizes_to("foo/./bar/", "a/b/foo/bar");
+  check_fp_normalizes_to("./foo", "a/b/foo");
+  check_fp_normalizes_to("foo///.//", "a/b/foo");
+  check_fp_normalizes_to("../foo", "a/foo");
+  check_fp_normalizes_to("..", "a");
+  check_fp_normalizes_to("../..", "");
+  check_fp_normalizes_to("MT/foo", "a/b/MT/foo");
 
   path_prefix = "";
 }
@@ -205,6 +205,69 @@ static void test_split_join()
   BOOST_CHECK(fp3 == file_path(split3));
 }
 
+static void check_bk_normalizes_to(char * before, char * after)
+{
+  BOOST_CHECK(book_keeping_file(before).as_external() == after);
+}
+
+static void test_bookkeeping_path()
+{
+  char const * baddies[] = {"/foo",
+                            "foo//bar",
+                            "foo/../bar",
+                            "../bar",
+                            "MT/blah",
+                            "foo/bar/",
+                            "foo/./bar",
+                            "./foo",
+                            ".",
+                            "..",
+#ifdef _WIN32
+                            "c:\\foo",
+                            "c:foo",
+                            "c:/foo",
+#endif
+                            0 };
+  
+  for (char const ** c = baddies; *c; ++c)
+    BOOST_CHECK_THROW(book_keeping_path(internal, *c), logic_error);
+  
+  check_bk_normalizes_to("", "MT");
+  check_bk_normalizes_to("foo", "MT/foo");
+  check_bk_normalizes_to("foo/bar", "MT/foo/bar");
+  check_bk_normalizes_to("foo/bar/baz", "MT/foo/bar/baz");
+}
+
+static void check_external_normalizes_to(char * before, char * after)
+{
+  BOOST_CHECK(external_path(before).as_external() == after);
+}
+
+static void test_external_path()
+{
+  std::string initial_path_saved = initial_path;
+  initial_path = "/a/b";
+
+  check_external_normalizes_to("foo", "/a/b/foo");
+  check_external_normalizes_to("foo/bar", "/a/b/foo/bar");
+  check_external_normalizes_to("/foo/bar", "/foo/bar");
+  check_external_normalizes_to("//foo/bar", "/foo/bar");
+#ifdef _WIN32
+  check_external_normalizes_to("c:foo", "c:foo");
+  check_external_normalizes_to("c:/foo", "c:/foo");
+  check_external_normalizes_to("c:\\foo", "c:\\foo");
+#else
+  check_external_normalizes_to("c:foo", "a/b/c:foo");
+  check_external_normalizes_to("c:/foo", "a/b/c:/foo");
+  check_external_normalizes_to("c:\\foo", "a/b/c:\\foo");
+#endif
+  // can't do particularly interesting checking of tilde expansion, but at
+  // least we can check that it's doing _something_...
+  BOOST_CHECK(external_path("~/foo").as_external()[0] == '/');
+
+  initial_path = initial_path_saved;
+}
+
 void add_paths_tests(test_suite * suite)
 {
   I(suite);
@@ -213,6 +276,8 @@ void add_paths_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&test_file_path_external_no_prefix));
   suite->add(BOOST_TEST_CASE(&test_file_path_external_prefix_a_b));
   suite->add(BOOST_TEST_CASE(&test_split_join));
+  suite->add(BOOST_TEST_CASE(&test_bookkeeping_path));
+  suite->add(BOOST_TEST_CASE(&test_external_path));
 }
 
 #endif // BUILD_UNIT_TESTS
