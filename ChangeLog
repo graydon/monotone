@@ -1,3 +1,8 @@
+2005-08-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Tutorial): Tweak wording, use --db at more
+	appropriate places.
+
 2005-08-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_crlf.at: Adjust expected line count to accomodate diff
