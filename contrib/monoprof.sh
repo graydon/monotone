@@ -434,9 +434,11 @@ if [ ${SETUP} = "true" ] ; then
 	pushd ${DATADIR}
 	monotone --db=empty.db db init
 	echo -e "xxx\nxxx\n" | monotone --db=empty.db genkey xxx
-	echo "function get_passphrase(keypair_id)" >hooks.lua
-	echo "return \"xxx\"" >>hooks.lua
-	echo "end" >>hooks.lua
+        cat >hooks.lua <<EOF
+function get_passphrase(keypair_id) return "xxx" end
+function get_netsync_read_permitted(branch, keyid) return true end
+function get_netsync_write_permitted(keyid) return true end
+EOF
 	cp empty.db mt.db
 	monotone --db=mt.db pull off.net net.venge.monotone
 	monotone --db=mt.db --branch=net.venge.monotone co monotone-src
