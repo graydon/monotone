@@ -283,7 +283,7 @@ test_commit()
 	local TESTNAME="Commit kernel ${KVER} to an empty database"
 	local SHORTNAME="commitfirst"
 	bzip2 -dc ${DATADIR}/linux-${KVER}.tar.bz2 | tar -C ${DATADIR} -xf -
-	pushd ${DATADIR}/${KVER}
+	pushd ${DATADIR}/linux-${KVER}
 	mtn_noprof setup .
 	mtn_noprof --quiet add . # $(ls|grep -v '^MT')
 	cp ${DATADIR}/${EMPTYDB} ${DATADIR}/test.db
