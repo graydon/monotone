@@ -235,8 +235,7 @@ cpp_main(int argc, char ** argv)
 
   // go-go gadget i18n
 
-  setlocale(LC_CTYPE, "");
-  setlocale(LC_MESSAGES, "");
+  setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
 
@@ -257,9 +256,8 @@ cpp_main(int argc, char ** argv)
     L(F("command line: %s\n") % cmdline_ss.str());
   }
 
-  L(F("set locale: LC_CTYPE=%s, LC_MESSAGES=%s\n")
-    % (setlocale(LC_CTYPE, NULL) == NULL ? "n/a" : setlocale(LC_CTYPE, NULL))
-    % (setlocale(LC_MESSAGES, NULL) == NULL ? "n/a" : setlocale(LC_MESSAGES, NULL)));
+  L(F("set locale: LC_ALL=%s\n")
+    % (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL)));
 
   // Set up secure memory allocation etc
   Botan::Init::initialize();
