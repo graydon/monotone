@@ -1,3 +1,8 @@
+2005-08-20  Nathaniel Smith  <njs@pobox.com>
+	
+	* paths.cc (save_initial_path): Implement.
+	Add more tests.
+	
 2005-08-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* paths.{cc,hh}: New files.
