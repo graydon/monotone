@@ -419,6 +419,11 @@ if [ ${HELP} = "true" ] ; then
 	print_help
 	exit 0
 fi
+if [ ! -d ${DATADIR} ] ; then
+	echo "datadir ${DATADIR} not found (perhaps try --datadir)"
+        print_help
+        exit 1
+fi
 if [ ${LIST} = "true" ] ; then
 	for i in ${TESTS}; do
 		echo -e "\t$i"

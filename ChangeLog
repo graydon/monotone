@@ -1,3 +1,8 @@
+2005-08-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* contrib/monoprof.sh: Give a sensible error message if $DATADIR
+	doesn't exist.
+
 2005-08-20  Matt Johnston  <matt@ucc.asn.au>
 
 	* database.cc (put_revision): uncomment check_sane_history call
