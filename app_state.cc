@@ -274,7 +274,8 @@ app_state::make_branch_sticky()
   options[branch_option] = branch_name();
   if (found_working_copy)
     {
-      // already have a working copy, can (must) write options directly
+      // already have a working copy, can (must) write options directly,
+      // because no-one else will do so
       // if we don't have a working copy yet, then require_working_copy (for
       // instance) will call write_options when it finds one.
       write_options();

@@ -1,3 +1,16 @@
+2005-08-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* paths.cc (is_absolute): New function.
+	(file_path::file_path(vector<path_component>))
+	(file_path::split): Implement.
+
+2005-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* interner.hh (interner): Add a scary constructor that lets us
+	insert an initial value and assert that we already knew that the
+	value assigned to it would be.  (This lets us make it an inlined
+	constant.)
+
 2005-08-20  Nathaniel Smith  <njs@pobox.com>
 
 	* paths.cc: Yet more tests.

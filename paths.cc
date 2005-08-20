@@ -2,6 +2,7 @@
 #include "platform.hh"
 #include "sanity.hh"
 
+// path to use when absolutifying
 static std::string initial_path;
 void
 save_initial_path()
@@ -13,6 +14,102 @@ save_initial_path()
 // original working directory to the checkout's root.  Always a normalized
 // string with no trailing /.
 static std::string path_prefix;
+
+bool
+find_and_go_to_working_copy(external_path const & search_root)
+{
+  // unimplemented
+  // should do what find_working_copy in file_io.cc does, and what
+  // allow_working_copy in app_state.cc does
+  // should use change_current_working_dir when it finds the root
+  // should set path_prefix too
+  I(false);
+}
+
+static bool
+is_absolute(std::string const & path)
+{
+  if (path.empty())
+    return false;
+  if (path[0] == '/')
+    return true;
+#ifdef _WIN32
+  if (path[0] == '\\')
+    return true;
+  if (path.size() > 1 && path[1] == ':')
+    return true;
+#endif
+  return false;
+}
+
+/////////////////////////////////////////////////////////////////
+// splitting/joining
+// this code must be superfast
+// it depends very much on knowing that it can only be applied to fully
+// normalized, relative, paths.
+/////////////////////////////////////////////////////////////////
+
+static interner<path_component> pc_interner("", the_null_component);
+
+// This function takes a vector of path components and joins them into a
+// single file_path.  Valid input may be a single-element vector whose sole
+// element is the empty path component (""); this represents the null path,
+// which we use to represent non-existent files.  Alternatively, input may be
+// a multi-element vector, in which case all elements of the vector are
+// required to be non-null.  The following are valid inputs (with strings
+// replaced by their interned version, of course):
+//    - [""]
+//    - ["foo"]
+//    - ["foo", "bar"]
+// The following are not:
+//    - []
+//    - ["foo", ""]
+//    - ["", "bar"]
+file_path::file_path(std::vector<path_component> const & pieces)
+{
+  std::vector<path_component>::const_iterator i = names.begin();
+  I(i != names.end());
+  if (names.size() > 1)
+    I(!null_name(*i));
+  data = pc_interner.lookup(*i);
+  for (++i; i != names.end(); ++i)
+    {
+      I(!null_name(*i));
+      data += "/";
+      data += pc_interner.lookup(*i);
+    }
+}
+
+//
+// this takes a path of the form
+//
+//  "p[0]/p[1]/.../p[n-1]/p[n]"
+//
+// and fills in a vector of paths corresponding to p[0] ... p[n-1]
+//
+// _unlike_ the old path splitting functions, this is the inverse to the above
+// joining function.  the difference is that this code always returns a vector
+// with at least one element in it; if you split the null path (""), you will
+// get a single-element vector containing the null component.  with the old
+// code, in this one case, you would have gotten an empty vector.
+void
+file_path::split(std::vector<path_component> & pieces)
+{
+  pieces.clear();
+  std::string::size_type start, stop;
+  start = 0;
+  while (1)
+    {
+      stop = p_str.find('/', start);
+      if (stop < 0 || stop > p_str.length())
+        {
+          pieces.push_back(pc_interner.intern(p_str.substr(start)));
+          break;
+        }
+      components.push_back(pc_interner.intern(p_str.substr(start, stop - start)));
+      start = stop + 1;
+    }
+}
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
@@ -201,8 +298,18 @@ static void test_split_join()
   file_path fp3(internal, "");
   pcv split3;
   fp3.split(split3);
-  BOOST_CHECK(split3.size() == 0);
+  BOOST_CHECK(split3.size() == 1);
+  BOOST_CHECK(null_name(split3[0]));
   BOOST_CHECK(fp3 == file_path(split3));
+
+  pcv split4;
+  BOOST_CHECK_THROW(file_path(split4), logic_error);
+  split4.push_back(the_null_component);
+  BOOST_CHECK_NOT_THROW(file_path(split4), logic_error);
+  split4.push_back(split1[0]);
+  BOOST_CHECK_THROW(file_path(split4), logic_error);
+  split4.push_front(split1[0]);
+  BOOST_CHECK_THROW(file_path(split4), logic_error);
 }
 
 static void check_bk_normalizes_to(char * before, char * after)
@@ -263,7 +370,9 @@ static void test_external_path()
 #endif
   // can't do particularly interesting checking of tilde expansion, but at
   // least we can check that it's doing _something_...
-  BOOST_CHECK(external_path("~/foo").as_external()[0] == '/');
+  std::string tilde_expanded = external_path("~/foo").as_external();
+  BOOST_CHECK(tilde_expanded[0] == '/');
+  BOOST_CHECK(tilde_expanded.find('~') == std::string::npos);
 
   initial_path = initial_path_saved;
 }
