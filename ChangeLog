@@ -1,3 +1,8 @@
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.hh (FP): New macro.  Usage:
+	FP("frobbed %i bar", "frobbed %s bars", num_bars) % num_bars
+
 2005-08-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* revision.hh: Delete doubled line of text in comment.
