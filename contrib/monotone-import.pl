@@ -32,7 +32,7 @@ use Getopt::Long;
 use Pod::Usage;
 use File::Spec::Functions qw(:ALL);
 
-my $VERSION = '0.5';
+my $VERSION = '0.6';
 
 ######################################################################
 # User options
@@ -163,12 +163,25 @@ map {
 	# Because monotone will complain and refuse to do anything if
 	# a file is missing before it's dropped, we need to make sure
 	# it's there long enough to be able to drop it.  So, we "touch"
-	# the file.
+	# the file.  Let's not forget to create intermediary directories
+	# if needed...
+	my @current_dir = ( File::Spec->curdir() );
+	my @created_dirs = ();
+	map {
+	    push @current_dir, $_;
+	    my $d = File::Spec->catdir(@current_dir);
+	    if (! -d $d) {
+		mkdir $d;
+		unshift @created_dirs, $d;
+	    }
+	} File::Spec->splitdir(dirname($_));
 	open FILE, ">$_"; close FILE; # touch
 
-	my_system("monotone drop $_");
-	my_system("monotone attr drop $_ execute");
+	my_system("monotone drop \"$_\"");
+	my_system("monotone attr drop \"$_\" execute");
+
 	unlink $_;
+	map { rmdir $_ } @created_dirs;
     }
 } my_backtick("monotone list missing\n");
 
@@ -176,7 +189,7 @@ map {
 # Figure out what files are new since the last import, and have them
 # explicitely added.
 #
-my @new_files = map { chomp; my_system("monotone add $_"); $_ }
+my @new_files = map { chomp; my_system("monotone add \"$_\""); $_ }
 		    my_backtick("monotone list unknown\n");
 
 ######################################################################
@@ -193,7 +206,11 @@ map {
 # Commit and tag.
 #
 my_system("monotone commit --message=\"$user_message\"");
-my_system("monotone tag \`cat MT/revision\` \"$user_tag\"");
+open REV,"MT/revision";
+my $newrev = <REV>;
+chomp $newrev;
+close REV;
+my_system("monotone tag $newrev \"$user_tag\"");
 
 ######################################################################
 # Tell the user what he can do with the import.
