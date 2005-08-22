@@ -1,3 +1,10 @@
+2005-08-20  Benoît Dejean  <benoit@placenet.org>
+
+	* po/monotone.pot: Remove from version control.
+	* po/POTFILES.skip: New file.
+	* po/fr.po: French translation (initial version).
+	* po/LINGUAS: Add fr.
+	
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (read): Use FP (thanks to Benoît Dejean for
