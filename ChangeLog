@@ -1,5 +1,12 @@
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (read): Use FP (thanks to Benoît Dejean for
+	catch).
+	* mt_version.cc (print_version, print_full_version): Mark more
+	strings for i18n (also thanks to Benoît Dejean).
+	
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (commands): Revert previous changes, xgettext is
 	buggy.
 	Mark every CMD() string argument with _().

@@ -1879,10 +1879,7 @@ CMD(read, _("packet i/o"), _(""), _("read packets from stdin"),
   packet_db_writer dbw(app, true);
   size_t count = read_packets(cin, dbw);
   N(count != 0, F("no packets found on stdin"));
-  if (count == 1)
-    P(F("read 1 packet\n"));
-  else
-    P(F("read %d packets\n") % count);
+  P(FP("read %d packet", "read %d packets", count) % count);
 }
 
 
