@@ -1,5 +1,10 @@
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (commands): Oops, can't call gettext on a
+	std::string...
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.cc (coptions, options): Use gettext_noop to mark usage
 	strings for i18n.
 	* commands.cc (commands): gettextify command descriptions

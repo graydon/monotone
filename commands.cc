@@ -115,8 +115,8 @@ namespace commands
             string const & p,
             string const & d,
             command_opts const & o)
-      : name(n), cmdgroup(gettext(g)), params(gettext(p)), desc(gettext(d)),
-        options(o)
+      : name(n), cmdgroup(gettext(g.c_str())), params(gettext(p.c_str())),
+        desc(gettext(d.c_str())), options(o)
     { cmds[n] = this; }
     virtual ~command() {}
     virtual void exec(app_state & app, vector<utf8> const & args) = 0;
