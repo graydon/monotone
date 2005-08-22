@@ -15,6 +15,7 @@
 #include "mt_version.hh"
 #include "package_revision.h"
 #include "package_full_revision.h"
+#include "sanity.hh"
 
 void
 print_version()
