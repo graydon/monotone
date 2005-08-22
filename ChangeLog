@@ -1,5 +1,10 @@
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc: Replace a bunch of F()'s by boost::format's,
+	because F is only for strings displayed to user.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* po/Makevars (XGETTEXT_OPTIONS): Extract FP'ed strings.
 
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
