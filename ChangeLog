@@ -1,5 +1,9 @@
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* po/Makevars (XGETTEXT_OPTIONS): Extract FP'ed strings.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* sanity.hh (FP): New macro.  Usage:
 	FP("frobbed %i bar", "frobbed %s bars", num_bars) % num_bars
 
