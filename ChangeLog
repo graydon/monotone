@@ -1,5 +1,10 @@
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* po/LINGUAS, po/ja.po: Remove ja translation again, it seems to
+	be corrupt.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (update): Don't use F() to indent things.
 	
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
