@@ -2824,7 +2824,7 @@ CMD(update, _("working copy"), _(""),
           P(F("multiple update candidates:\n"));
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
-            P(F("  %s\n") % describe_revision(app, *i));
+            P(boost::format("  %s\n") % describe_revision(app, *i));
           P(F("choose one with 'monotone update -r<id>'\n"));
           N(false, F("multiple candidates remain after selection"));
         }
