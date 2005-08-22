@@ -1678,7 +1678,7 @@ session::process_bye_cmd()
 bool 
 session::process_error_cmd(string const & errmsg) 
 {
-  throw bad_decode(F("received network error: %s\n") % errmsg);
+  throw bad_decode(F("received network error: %s") % errmsg);
 }
 
 bool 
@@ -3810,7 +3810,7 @@ run_netsync_protocol(protocol_voice voice,
   catch (Netxx::Exception & e)
     {      
       end_platform_netsync();
-      throw oops((F("network error: %s\n") % e.what()).str());;
+      throw oops((F("network error: %s") % e.what()).str());;
     }
   end_platform_netsync();
 }

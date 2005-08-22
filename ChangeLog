@@ -1,5 +1,10 @@
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* netsync.cc (process_error_cmd, run_netsync_protocol): Remove
+	some newlines to avoid translation noise.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* po/LINGUAS, po/ja.po: Remove ja translation again, it seems to
 	be corrupt.
 
