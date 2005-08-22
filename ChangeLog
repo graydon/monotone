@@ -1,3 +1,30 @@
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (commands): Oops, can't call gettext on a
+	std::string...
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (coptions, options): Use gettext_noop to mark usage
+	strings for i18n.
+	* commands.cc (commands): gettextify command descriptions
+	* po/Makevars (XGETTEXT_OPTIONS): Include the 2nd, 3rd, and 4th
+	arguments to CMD macro as translatedable strings.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc: Replace a bunch of F()'s by boost::format's,
+	because F is only for strings displayed to user.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* po/Makevars (XGETTEXT_OPTIONS): Extract FP'ed strings.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.hh (FP): New macro.  Usage:
+	FP("frobbed %i bar", "frobbed %s bars", num_bars) % num_bars
+
 2005-08-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* revision.hh: Delete doubled line of text in comment.

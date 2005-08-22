@@ -240,7 +240,7 @@ dump_row_cb(void *data, int n, char **vals, char **cols)
   I(dump != NULL);
   I(vals != NULL);
   I(dump->out != NULL);
-  *(dump->out) << F("INSERT INTO %s VALUES(") % dump->table_name;
+  *(dump->out) << boost::format("INSERT INTO %s VALUES(") % dump->table_name;
   for (int i = 0; i < n; ++i)
     {
       if (i != 0)
@@ -2163,7 +2163,7 @@ void database::complete(selector_type ty,
           if (i->first == selectors::sel_ident)
             {
               lim += "SELECT id FROM revision_certs ";
-              lim += (F("WHERE id GLOB '%s*'") 
+              lim += (boost::format("WHERE id GLOB '%s*'") 
                       % i->second).str();
             }
           else if (i->first == selectors::sel_cert)
@@ -2181,13 +2181,13 @@ void database::complete(selector_type ty,
                       spot++;
                       certvalue = i->second.substr(spot);
                       lim += "SELECT id FROM revision_certs ";
-                      lim += (F("WHERE name='%s' AND unbase64(value) glob '%s'")
+                      lim += (boost::format("WHERE name='%s' AND unbase64(value) glob '%s'")
                               % certname % certvalue).str();
                     }
                   else
                     {
                       lim += "SELECT id FROM revision_certs ";
-                      lim += (F("WHERE name='%s'")
+                      lim += (boost::format("WHERE name='%s'")
                               % i->second).str();
                     }
 
@@ -2196,11 +2196,11 @@ void database::complete(selector_type ty,
           else if (i->first == selectors::sel_unknown)
             {
               lim += "SELECT id FROM revision_certs ";
-              lim += (F(" WHERE (name='%s' OR name='%s' OR name='%s')")
+              lim += (boost::format(" WHERE (name='%s' OR name='%s' OR name='%s')")
                       % author_cert_name 
                       % tag_cert_name 
                       % branch_cert_name).str();
-              lim += (F(" AND unbase64(value) glob '*%s*'")
+              lim += (boost::format(" AND unbase64(value) glob '*%s*'")
                       % i->second).str();     
             }
           else
@@ -2209,17 +2209,17 @@ void database::complete(selector_type ty,
               string prefix;
               string suffix;
               selector_to_certname(i->first, certname, prefix, suffix);
-              lim += (F("SELECT id FROM revision_certs WHERE name='%s' AND ") % certname).str();
+              lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND ") % certname).str();
               switch (i->first)
                 {
                 case selectors::sel_earlier:
-                  lim += (F("unbase64(value) <= X'%s'") % encode_hexenc(i->second)).str();
+                  lim += (boost::format("unbase64(value) <= X'%s'") % encode_hexenc(i->second)).str();
                   break;
                 case selectors::sel_later:
-                  lim += (F("unbase64(value) > X'%s'") % encode_hexenc(i->second)).str();
+                  lim += (boost::format("unbase64(value) > X'%s'") % encode_hexenc(i->second)).str();
                   break;
                 default:
-                  lim += (F("unbase64(value) glob '%s%s%s'")
+                  lim += (boost::format("unbase64(value) glob '%s%s%s'")
                           % prefix % i->second % suffix).str();
                   break;
                 }
@@ -2235,7 +2235,7 @@ void database::complete(selector_type ty,
   string query;
   if (ty == selectors::sel_ident)
     {
-      query = (F("SELECT id FROM %s") % lim).str();
+      query = (boost::format("SELECT id FROM %s") % lim).str();
     }
   else 
     {
@@ -2245,7 +2245,7 @@ void database::complete(selector_type ty,
       if (ty == selectors::sel_unknown)
         {               
           query += 
-            (F(" (name='%s' OR name='%s' OR name='%s')")
+            (boost::format(" (name='%s' OR name='%s' OR name='%s')")
              % author_cert_name 
              % tag_cert_name 
              % branch_cert_name).str();
@@ -2255,12 +2255,12 @@ void database::complete(selector_type ty,
           string certname;
           selector_to_certname(ty, certname, prefix, suffix);
           query += 
-            (F(" (name='%s')") % certname).str();
+            (boost::format(" (name='%s')") % certname).str();
         }
         
-      query += (F(" AND (unbase64(value) GLOB '%s%s%s')")
+      query += (boost::format(" AND (unbase64(value) GLOB '%s%s%s')")
                 % prefix % partial % suffix).str();
-      query += (F(" AND (id IN %s)") % lim).str();
+      query += (boost::format(" AND (id IN %s)") % lim).str();
     }
 
   // std::cerr << query << std::endl;    // debug expr

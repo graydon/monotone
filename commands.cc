@@ -21,6 +21,8 @@
 #include <boost/filesystem/exception.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include "gettext.h"
+
 #include "commands.hh"
 #include "constants.hh"
 
@@ -113,7 +115,8 @@ namespace commands
             string const & p,
             string const & d,
             command_opts const & o)
-      : name(n), cmdgroup(g), params(p), desc(d), options(o)
+      : name(n), cmdgroup(gettext(g.c_str())), params(gettext(p.c_str())),
+        desc(gettext(d.c_str())), options(o)
     { cmds[n] = this; }
     virtual ~command() {}
     virtual void exec(app_state & app, vector<utf8> const & args) = 0;
