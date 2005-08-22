@@ -1,3 +1,11 @@
+2005-08-23  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* contrib/monotone.el: When running monotone commands, re-use
+	*monotone* buffers. Make the "status" command use the prefix
+	argument. Make the "tree"-restricted commands work in dired
+	buffers. Add the "--no-merges" option in the log command. Various
+	other innocuous changes.
+
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
 	* mt_version.cc (print_full_version): Typo.
