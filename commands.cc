@@ -231,7 +231,7 @@ namespace commands
   {
     if (cmds.find(cmd) != cmds.end())
       {
-        L(F("executing %s command\n") % cmd);
+        L(F("executing command '%s'\n") % cmd);
         cmds[cmd]->exec(app, args);
         return 0;
       }
@@ -2526,9 +2526,9 @@ dump_diffs(change_set::delta_map const & deltas,
               split_into_lines(unpacked(), lines);
               if (! lines.empty())
                 {
-                  cout << (F("--- %s\t%s\n") % delta_entry_path(i) % delta_entry_src(i))
-                       << (F("+++ %s\t%s\n") % delta_entry_path(i) % delta_entry_dst(i))
-                       << (F("@@ -0,0 +1,%d @@\n") % lines.size());
+                  cout << (boost::format("--- %s\t%s\n") % delta_entry_path(i) % delta_entry_src(i))
+                       << (boost::format("+++ %s\t%s\n") % delta_entry_path(i) % delta_entry_dst(i))
+                       << (boost::format("@@ -0,0 +1,%d @@\n") % lines.size());
                   for (vector<string>::const_iterator j = lines.begin();
                        j != lines.end(); ++j)
                     {

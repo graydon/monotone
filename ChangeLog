@@ -1,5 +1,11 @@
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (dump_diffs): Don't use F() to create diff headers.
+	(commands::process): Put '' in the log message to make Benoît
+	Dejean happy ;-).
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* po/LINGUAS, po/ja.po: Add Japanese translation by Satoru SATOH.
 	
 2005-08-20  Benoît Dejean  <benoit@placenet.org>
