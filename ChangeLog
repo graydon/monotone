@@ -1,5 +1,15 @@
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (commands): Revert previous changes, xgettext is
+	buggy.
+	Mark every CMD() string argument with _().
+	* i18n.h, Makefile.am: New file.
+	* sanity.hh: Include it.
+	* po/Makevars (XGETTEXT_OPTIONS): Learn about _() and N_() as
+	markers.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (commands): Oops, can't call gettext on a
 	std::string...
 

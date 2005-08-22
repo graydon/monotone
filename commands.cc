@@ -21,8 +21,6 @@
 #include <boost/filesystem/exception.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "gettext.h"
-
 #include "commands.hh"
 #include "constants.hh"
 
@@ -115,8 +113,7 @@ namespace commands
             string const & p,
             string const & d,
             command_opts const & o)
-      : name(n), cmdgroup(gettext(g.c_str())), params(gettext(p.c_str())),
-        desc(gettext(d.c_str())), options(o)
+      : name(n), cmdgroup(g), params(p), desc(d), options(o)
     { cmds[n] = this; }
     virtual ~command() {}
     virtual void exec(app_state & app, vector<utf8> const & args) = 0;
@@ -796,7 +793,7 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
     }
 }
 
-CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair", OPT_NONE)
+CMD(genkey, _("key and cert"), _("KEYID"), _("generate an RSA key-pair"), OPT_NONE)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -818,7 +815,7 @@ CMD(genkey, "key and cert", "KEYID", "generate an RSA key-pair", OPT_NONE)
   guard.commit();
 }
 
-CMD(dropkey, "key and cert", "KEYID", "drop a public and private key", OPT_NONE)
+CMD(dropkey, _("key and cert"), _("KEYID"), _("drop a public and private key"), OPT_NONE)
 {
   bool key_deleted = false;
   
@@ -850,7 +847,8 @@ CMD(dropkey, "key and cert", "KEYID", "drop a public and private key", OPT_NONE)
   guard.commit();
 }
 
-CMD(chkeypass, "key and cert", "KEYID", "change passphrase of a private RSA key",
+CMD(chkeypass, _("key and cert"), _("KEYID"),
+    _("change passphrase of a private RSA key"),
     OPT_NONE)
 {
   if (args.size() != 1)
@@ -873,8 +871,8 @@ CMD(chkeypass, "key and cert", "KEYID", "change passphrase of a private RSA key"
   guard.commit();
 }
 
-CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
-    "create a cert for a revision", OPT_NONE)
+CMD(cert, _("key and cert"), _("REVISION CERTNAME [CERTVAL]"),
+    _("create a cert for a revision"), OPT_NONE)
 {
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(name);
@@ -913,9 +911,10 @@ CMD(cert, "key and cert", "REVISION CERTNAME [CERTVAL]",
   guard.commit();
 }
 
-CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
-    "test whether a hypothetical cert would be trusted\n"
-    "by current settings", OPT_NONE)
+CMD(trusted, _("key and cert"), _("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"),
+    _("test whether a hypothetical cert would be trusted\n"
+      "by current settings"),
+    OPT_NONE)
 {
   if (args.size() < 4)
     throw usage(name);
@@ -951,8 +950,8 @@ CMD(trusted, "key and cert", "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]",
        << "it would be: " << (trusted ? "trusted" : "UNtrusted") << endl;
 }
 
-CMD(tag, "review", "REVISION TAGNAME",
-    "put a symbolic tag cert on a revision version", OPT_NONE)
+CMD(tag, _("review"), _("REVISION TAGNAME"),
+    _("put a symbolic tag cert on a revision version"), OPT_NONE)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -964,8 +963,8 @@ CMD(tag, "review", "REVISION TAGNAME",
 }
 
 
-CMD(testresult, "review", "ID (pass|fail|true|false|yes|no|1|0)", 
-    "note the results of running a test on a revision", OPT_NONE)
+CMD(testresult, _("review"), _("ID (pass|fail|true|false|yes|no|1|0)"), 
+    _("note the results of running a test on a revision"), OPT_NONE)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -976,8 +975,8 @@ CMD(testresult, "review", "ID (pass|fail|true|false|yes|no|1|0)",
   cert_revision_testresult(r, idx(args, 1)(), app, dbw);
 }
 
-CMD(approve, "review", "REVISION", 
-    "approve of a particular revision",
+CMD(approve, _("review"), _("REVISION"), 
+    _("approve of a particular revision"),
     OPT_BRANCH_NAME)
 {
   if (args.size() != 1)
@@ -993,8 +992,8 @@ CMD(approve, "review", "REVISION",
 }
 
 
-CMD(disapprove, "review", "REVISION", 
-    "disapprove of a particular revision",
+CMD(disapprove, _("review"), _("REVISION"), 
+    _("disapprove of a particular revision"),
     OPT_BRANCH_NAME)
 {
   if (args.size() != 1)
@@ -1039,8 +1038,8 @@ CMD(disapprove, "review", "REVISION",
   }
 }
 
-CMD(comment, "review", "REVISION [COMMENT]",
-    "comment on a particular revision", OPT_NONE)
+CMD(comment, _("review"), _("REVISION [COMMENT]"),
+    _("comment on a particular revision"), OPT_NONE)
 {
   if (args.size() != 1 && args.size() != 2)
     throw usage(name);
@@ -1063,7 +1062,8 @@ CMD(comment, "review", "REVISION [COMMENT]",
 
 
 
-CMD(add, "working copy", "PATH...", "add files to working copy", OPT_NONE)
+CMD(add, _("working copy"), _("PATH..."),
+    _("add files to working copy"), OPT_NONE)
 {
   if (args.size() < 1)
     throw usage(name);
@@ -1087,7 +1087,8 @@ CMD(add, "working copy", "PATH...", "add files to working copy", OPT_NONE)
   update_any_attrs(app);
 }
 
-CMD(drop, "working copy", "PATH...", "drop files from working copy", OPT_NONE)
+CMD(drop, _("working copy"), _("PATH..."),
+    _("drop files from working copy"), OPT_NONE)
 {
   if (args.size() < 1)
     throw usage(name);
@@ -1113,7 +1114,8 @@ CMD(drop, "working copy", "PATH...", "drop files from working copy", OPT_NONE)
 
 ALIAS(rm, drop);
 
-CMD(rename, "working copy", "SRC DST", "rename entries in the working copy",
+CMD(rename, _("working copy"), _("SRC DST"),
+    _("rename entries in the working copy"),
     OPT_NONE)
 {
   if (args.size() != 2)
@@ -1139,7 +1141,7 @@ ALIAS(mv, rename)
 // fload and fmerge are simple commands for debugging the line
 // merger.
 
-CMD(fload, "debug", "", "load file contents into db", OPT_NONE)
+CMD(fload, _("debug"), _(""), _("load file contents into db"), OPT_NONE)
 {
   string s = get_stdin();
 
@@ -1152,7 +1154,8 @@ CMD(fload, "debug", "", "load file contents into db", OPT_NONE)
   dbw.consume_file_data(f_id, f_data);  
 }
 
-CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result",
+CMD(fmerge, _("debug"), _("<parent> <left> <right>"),
+    _("merge 3 files and output result"),
     OPT_NONE)
 {
   if (args.size() != 3)
@@ -1184,7 +1187,7 @@ CMD(fmerge, "debug", "<parent> <left> <right>", "merge 3 files and output result
   
 }
 
-CMD(status, "informative", "[PATH]...", "show status of working copy",
+CMD(status, _("informative"), _("[PATH]..."), _("show status of working copy"),
     OPT_DEPTH % OPT_BRIEF)
 {
   revision_set rs;
@@ -1241,7 +1244,8 @@ CMD(status, "informative", "[PATH]...", "show status of working copy",
     }
 }
 
-CMD(identify, "working copy", "[PATH]", "calculate identity of PATH or stdin",
+CMD(identify, _("working copy"), _("[PATH]"),
+    _("calculate identity of PATH or stdin"),
     OPT_NONE)
 {
   if (!(args.size() == 0 || args.size() == 1))
@@ -1263,10 +1267,10 @@ CMD(identify, "working copy", "[PATH]", "calculate identity of PATH or stdin",
   cout << ident << endl;
 }
 
-CMD(cat, "informative",
-    "(file|manifest|revision) [ID]\n"
-    "file REVISION FILENAME", 
-    "write file, manifest, or revision from database to stdout",
+CMD(cat, _("informative"),
+    _("(file|manifest|revision) [ID]\n"
+      "file REVISION FILENAME"),
+    _("write file, manifest, or revision from database to stdout"),
     OPT_NONE)
 {
   if (args.size() < 1 || args.size() > 3)
@@ -1368,11 +1372,11 @@ CMD(cat, "informative",
 }
 
 
-CMD(checkout, "tree", "[DIRECTORY]\n",
-    "check out a revision from database into directory.\n"
+CMD(checkout, _("tree"), _("[DIRECTORY]\n"),
+    _("check out a revision from database into directory.\n"
     "If a revision is given, that's the one that will be checked out.\n"
     "Otherwise, it will be the head of the branch (given or implicit).\n"
-    "If no directory is given, the branch name will be used as directory",
+    "If no directory is given, the branch name will be used as directory"),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   revision_id ident;
@@ -1467,7 +1471,7 @@ CMD(checkout, "tree", "[DIRECTORY]\n",
 
 ALIAS(co, checkout)
 
-CMD(heads, "tree", "", "show unmerged head revisions of branch",
+CMD(heads, _("tree"), _(""), _("show unmerged head revisions of branch"),
     OPT_BRANCH_NAME)
 {
   set<revision_id> heads;
@@ -1661,19 +1665,19 @@ ls_missing (app_state & app, vector<utf8> const & args)
     }
 }
 
-CMD(list, "informative", 
-    "certs ID\n"
-    "keys [PATTERN]\n"
-    "branches\n"
-    "epochs [BRANCH [...]]\n"
-    "tags\n"
-    "vars [DOMAIN]\n"
-    "known\n"
-    "unknown\n"
-    "ignored\n"
-    "missing",
-    "show database objects, or the current working copy manifest,\n"
-    "or unknown, intentionally ignored, or missing state files",
+CMD(list, _("informative"), 
+    _("certs ID\n"
+      "keys [PATTERN]\n"
+      "branches\n"
+      "epochs [BRANCH [...]]\n"
+      "tags\n"
+      "vars [DOMAIN]\n"
+      "known\n"
+      "unknown\n"
+      "ignored\n"
+      "missing"),
+    _("show database objects, or the current working copy manifest,\n"
+      "or unknown, intentionally ignored, or missing state files"),
     OPT_DEPTH)
 {
   if (args.size() == 0)
@@ -1709,7 +1713,8 @@ CMD(list, "informative",
 ALIAS(ls, list)
 
 
-CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout",
+CMD(mdelta, _("packet i/o"), _("OLDID NEWID"),
+    _("write manifest delta packet to stdout"),
     OPT_NONE)
 {
   if (args.size() != 2)
@@ -1734,7 +1739,8 @@ CMD(mdelta, "packet i/o", "OLDID NEWID", "write manifest delta packet to stdout"
                             manifest_delta(del));
 }
 
-CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout",
+CMD(fdelta, _("packet i/o"), _("OLDID NEWID"),
+    _("write file delta packet to stdout"),
     OPT_NONE)
 {
   if (args.size() != 2)
@@ -1757,7 +1763,7 @@ CMD(fdelta, "packet i/o", "OLDID NEWID", "write file delta packet to stdout",
   pw.consume_file_delta(f_old_id, f_new_id, file_delta(del));  
 }
 
-CMD(rdata, "packet i/o", "ID", "write revision data packet to stdout",
+CMD(rdata, _("packet i/o"), _("ID"), _("write revision data packet to stdout"),
     OPT_NONE)
 {
   if (args.size() != 1)
@@ -1775,7 +1781,7 @@ CMD(rdata, "packet i/o", "ID", "write revision data packet to stdout",
   pw.consume_revision_data(r_id, r_data);  
 }
 
-CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout",
+CMD(mdata, _("packet i/o"), _("ID"), _("write manifest data packet to stdout"),
     OPT_NONE)
 {
   if (args.size() != 1)
@@ -1794,7 +1800,7 @@ CMD(mdata, "packet i/o", "ID", "write manifest data packet to stdout",
 }
 
 
-CMD(fdata, "packet i/o", "ID", "write file data packet to stdout",
+CMD(fdata, _("packet i/o"), _("ID"), _("write file data packet to stdout"),
     OPT_NONE)
 {
   if (args.size() != 1)
@@ -1813,7 +1819,7 @@ CMD(fdata, "packet i/o", "ID", "write file data packet to stdout",
 }
 
 
-CMD(certs, "packet i/o", "ID", "write cert packets to stdout",
+CMD(certs, _("packet i/o"), _("ID"), _("write cert packets to stdout"),
     OPT_NONE)
 {
   if (args.size() != 1)
@@ -1831,7 +1837,7 @@ CMD(certs, "packet i/o", "ID", "write cert packets to stdout",
     pw.consume_revision_cert(idx(certs, i));
 }
 
-CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout",
+CMD(pubkey, _("packet i/o"), _("ID"), _("write public key packet to stdout"),
     OPT_NONE)
 {
   if (args.size() != 1)
@@ -1847,7 +1853,7 @@ CMD(pubkey, "packet i/o", "ID", "write public key packet to stdout",
   pw.consume_public_key(ident, key);
 }
 
-CMD(privkey, "packet i/o", "ID", "write private key packet to stdout",
+CMD(privkey, _("packet i/o"), _("ID"), _("write private key packet to stdout"),
     OPT_NONE)
 {
   if (args.size() != 1)
@@ -1867,7 +1873,7 @@ CMD(privkey, "packet i/o", "ID", "write private key packet to stdout",
 }
 
 
-CMD(read, "packet i/o", "", "read packets from stdin",
+CMD(read, _("packet i/o"), _(""), _("read packets from stdin"),
     OPT_NONE)
 {
   packet_db_writer dbw(app, true);
@@ -1880,8 +1886,8 @@ CMD(read, "packet i/o", "", "read packets from stdin",
 }
 
 
-CMD(reindex, "network", "",
-    "rebuild the indices used to sync over the network",
+CMD(reindex, _("network"), _(""),
+    _("rebuild the indices used to sync over the network"),
     OPT_NONE)
 {
   if (args.size() > 0)
@@ -1969,8 +1975,8 @@ process_netsync_args(std::string const & name,
     }
 }
 
-CMD(push, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "push branches matching PATTERN to netsync server at ADDRESS",
+CMD(push, _("network"), _("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+    _("push branches matching PATTERN to netsync server at ADDRESS"),
     OPT_SET_DEFAULT % OPT_EXCLUDE)
 {
   utf8 addr, include_pattern, exclude_pattern;
@@ -1984,8 +1990,8 @@ CMD(push, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
                        include_pattern, exclude_pattern, app);  
 }
 
-CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "pull branches matching PATTERN from netsync server at ADDRESS",
+CMD(pull, _("network"), _("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+    _("pull branches matching PATTERN from netsync server at ADDRESS"),
     OPT_SET_DEFAULT % OPT_EXCLUDE)
 {
   utf8 addr, include_pattern, exclude_pattern;
@@ -1998,8 +2004,8 @@ CMD(pull, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
                        include_pattern, exclude_pattern, app);  
 }
 
-CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
-    "sync branches matching PATTERN with netsync server at ADDRESS",
+CMD(sync, _("network"), _("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+    _("sync branches matching PATTERN with netsync server at ADDRESS"),
     OPT_SET_DEFAULT % OPT_EXCLUDE)
 {
   utf8 addr, include_pattern, exclude_pattern;
@@ -2013,8 +2019,8 @@ CMD(sync, "network", "[ADDRESS[:PORTNUMBER] [PATTERN]]",
                        include_pattern, exclude_pattern, app);  
 }
 
-CMD(serve, "network", "ADDRESS[:PORTNUMBER] PATTERN ...",
-    "listen on ADDRESS and serve the specified branches to connecting clients",
+CMD(serve, _("network"), _("ADDRESS[:PORTNUMBER] PATTERN ..."),
+    _("listen on ADDRESS and serve the specified branches to connecting clients"),
     OPT_PIDFILE % OPT_EXCLUDE)
 {
   if (args.size() < 2)
@@ -2037,22 +2043,22 @@ CMD(serve, "network", "ADDRESS[:PORTNUMBER] PATTERN ...",
 }
 
 
-CMD(db, "database", 
-    "init\n"
-    "info\n"
-    "version\n"
-    "dump\n"
-    "load\n"
-    "migrate\n"
-    "execute\n"
-    "kill_rev_locally ID\n"
-    "kill_branch_certs_locally BRANCH\n"
-    "kill_tag_locally TAG\n"
-    "check\n"
-    "changesetify\n"
-    "rebuild\n"
-    "set_epoch BRANCH EPOCH\n", 
-    "manipulate database state",
+CMD(db, _("database"), 
+    _("init\n"
+      "info\n"
+      "version\n"
+      "dump\n"
+      "load\n"
+      "migrate\n"
+      "execute\n"
+      "kill_rev_locally ID\n"
+      "kill_branch_certs_locally BRANCH\n"
+      "kill_tag_locally TAG\n"
+      "check\n"
+      "changesetify\n"
+      "rebuild\n"
+      "set_epoch BRANCH EPOCH\n"), 
+    _("manipulate database state"),
     OPT_NONE)
 {
   if (args.size() == 1)
@@ -2105,8 +2111,8 @@ CMD(db, "database",
     throw usage(name);
 }
 
-CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE", 
-    "set, get or drop file attributes",
+CMD(attr, _("working copy"), _("set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE"), 
+    _("set, get or drop file attributes"),
     OPT_NONE)
 {
   if (args.size() < 2 || args.size() > 4)
@@ -2232,8 +2238,8 @@ string_to_datetime(std::string const & s)
   I(false);
 }
 
-CMD(commit, "working copy", "[PATH]...", 
-    "commit working copy to database",
+CMD(commit, _("working copy"), _("[PATH]..."), 
+    _("commit working copy to database"),
     OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR % OPT_DEPTH)
 {
   string log_message("");
@@ -2573,11 +2579,11 @@ dump_diffs(change_set::delta_map const & deltas,
     }
 }
 
-CMD(diff, "informative", "[PATH]...", 
-    "show current diffs on stdout.\n"
+CMD(diff, _("informative"), _("[PATH]..."), 
+    _("show current diffs on stdout.\n"
     "If one revision is given, the diff between the working directory and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
-    "them is given.  If no format is specified, unified is used by default.",
+    "them is given.  If no format is specified, unified is used by default."),
     OPT_BRANCH_NAME % OPT_REVISION % OPT_DEPTH %
     OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
     OPT_EXTERNAL_DIFF_ARGS)
@@ -2701,7 +2707,7 @@ CMD(diff, "informative", "[PATH]...",
     dump_diffs(composite.deltas, app, new_is_archived, type);
 }
 
-CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor", OPT_NONE)
+CMD(lca, _("debug"), _("LEFT RIGHT"), _("print least common ancestor"), OPT_NONE)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -2718,7 +2724,7 @@ CMD(lca, "debug", "LEFT RIGHT", "print least common ancestor", OPT_NONE)
 }
 
 
-CMD(lcad, "debug", "LEFT RIGHT", "print least common ancestor / dominator",
+CMD(lcad, _("debug"), _("LEFT RIGHT"), _("print least common ancestor / dominator"),
     OPT_NONE)
 {
   if (args.size() != 2)
@@ -2780,10 +2786,10 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
-CMD(update, "working copy", "",
-    "update working copy.\n"
+CMD(update, _("working copy"), _(""),
+    _("update working copy.\n"
     "If a revision is given, base the update on that revision.  If not,\n"
-    "base the update on the head of the branch (given or implicit).",
+    "base the update on the head of the branch (given or implicit)."),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   manifest_map m_old, m_ancestor, m_working, m_chosen;
@@ -3056,7 +3062,7 @@ try_one_merge(revision_id const & left_id,
 }                         
 
 
-CMD(merge, "tree", "", "merge unmerged heads of branch",
+CMD(merge, _("tree"), _(""), _("merge unmerged heads of branch"),
     OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR % OPT_LCA)
 {
   set<revision_id> heads;
@@ -3105,8 +3111,8 @@ CMD(merge, "tree", "", "merge unmerged heads of branch",
   P(F("note: your working copies have not been updated\n"));
 }
 
-CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH", 
-    "merge from one branch to another asymmetrically",
+CMD(propagate, _("tree"), _("SOURCE-BRANCH DEST-BRANCH"), 
+    _("merge from one branch to another asymmetrically"),
     OPT_DATE % OPT_AUTHOR % OPT_LCA)
 {
   //   this is a special merge operator, but very useful for people maintaining
@@ -3190,17 +3196,17 @@ CMD(propagate, "tree", "SOURCE-BRANCH DEST-BRANCH",
     }
 }
 
-CMD(refresh_inodeprints, "tree", "", "refresh the inodeprint cache",
+CMD(refresh_inodeprints, _("tree"), _(""), _("refresh the inodeprint cache"),
     OPT_NONE)
 {
   enable_inodeprints();
   maybe_update_inodeprints(app);
 }
 
-CMD(explicit_merge, "tree",
-    "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
-    "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH",
-    "merge two explicitly given revisions, placing result in given branch",
+CMD(explicit_merge, _("tree"),
+    _("LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
+      "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"),
+    _("merge two explicitly given revisions, placing result in given branch"),
     OPT_DATE % OPT_AUTHOR)
 {
   revision_id left, right, ancestor;
@@ -3256,8 +3262,8 @@ CMD(explicit_merge, "tree",
   P(F("[merged] %s\n") % merged);
 }
 
-CMD(complete, "informative", "(revision|manifest|file|key) PARTIAL-ID",
-    "complete partial id",
+CMD(complete, _("informative"), _("(revision|manifest|file|key) PARTIAL-ID"),
+    _("complete partial id"),
     OPT_VERBOSE)
 {
   if (args.size() != 2)
@@ -3313,8 +3319,8 @@ CMD(complete, "informative", "(revision|manifest|file|key) PARTIAL-ID",
 }
 
 
-CMD(revert, "working copy", "[PATH]...", 
-    "revert file(s), dir(s) or entire working copy", OPT_DEPTH)
+CMD(revert, _("working copy"), _("[PATH]..."), 
+    _("revert file(s), dir(s) or entire working copy"), OPT_DEPTH)
 {
   manifest_map m_old;
   revision_id old_revision_id;
@@ -3373,9 +3379,9 @@ CMD(revert, "working copy", "[PATH]...",
 }
 
 
-CMD(rcs_import, "debug", "RCSFILE...",
-    "parse versions in RCS files\n"
-    "this command doesn't reconstruct or import revisions.  you probably want cvs_import",
+CMD(rcs_import, _("debug"), _("RCSFILE..."),
+    _("parse versions in RCS files\n"
+      "this command doesn't reconstruct or import revisions.  you probably want cvs_import"),
     OPT_BRANCH_NAME)
 {
   if (args.size() < 1)
@@ -3389,7 +3395,7 @@ CMD(rcs_import, "debug", "RCSFILE...",
 }
 
 
-CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository",
+CMD(cvs_import, _("rcs"), _("CVSROOT"), _("import all versions in CVS repository"),
     OPT_BRANCH_NAME)
 {
   if (args.size() != 1)
@@ -3452,8 +3458,8 @@ log_certs(app_state & app, revision_id id, cert_name name)
 }
 
 
-CMD(annotate, "informative", "PATH",
-    "print annotated copy of the file from REVISION",
+CMD(annotate, _("informative"), _("PATH"),
+    _("print annotated copy of the file from REVISION"),
     OPT_REVISION)
 {
   revision_id rid;
@@ -3490,9 +3496,9 @@ CMD(annotate, "informative", "PATH",
   do_annotate(app, file, fid, rid);
 }
 
-CMD(log, "informative", "[FILE]",
-    "print history in reverse order (filtering by 'FILE').  If one or more\n"
-    "revisions are given, use them as a starting point.",
+CMD(log, _("informative"), _("[FILE]"),
+    _("print history in reverse order (filtering by 'FILE').  If one or more\n"
+    "revisions are given, use them as a starting point."),
     OPT_LAST % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES)
 {
   file_path file;
@@ -3659,7 +3665,7 @@ CMD(log, "informative", "[FILE]",
 }
 
 
-CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory",
+CMD(setup, _("tree"), _("DIRECTORY"), _("setup a new working copy directory"),
     OPT_BRANCH_NAME)
 {
   string dir;
@@ -3673,24 +3679,24 @@ CMD(setup, "tree", "DIRECTORY", "setup a new working copy directory",
   put_revision_id(null);
 }
 
-CMD(automate, "automation",
-    "interface_version\n"
-    "heads [BRANCH]\n"
-    "ancestors REV1 [REV2 [REV3 [...]]]\n"
-    "attributes [FILE]\n"
-    "parents REV\n"
-    "descendents REV1 [REV2 [REV3 [...]]]\n"
-    "children REV\n"
-    "graph\n"
-    "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
-    "toposort [REV1 [REV2 [REV3 [...]]]]\n"
-    "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
-    "leaves\n"
-    "inventory\n"
-    "stdio\n"
-    "certs REV\n"
-    "select SELECTOR\n",
-    "automation interface", 
+CMD(automate, _("automation"),
+    _("interface_version\n"
+      "heads [BRANCH]\n"
+      "ancestors REV1 [REV2 [REV3 [...]]]\n"
+      "attributes [FILE]\n"
+      "parents REV\n"
+      "descendents REV1 [REV2 [REV3 [...]]]\n"
+      "children REV\n"
+      "graph\n"
+      "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
+      "toposort [REV1 [REV2 [REV3 [...]]]]\n"
+      "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
+      "leaves\n"
+      "inventory\n"
+      "stdio\n"
+      "certs REV\n"
+      "select SELECTOR\n"),
+    _("automation interface"), 
     OPT_NONE)
 {
   if (args.size() == 0)
@@ -3704,8 +3710,8 @@ CMD(automate, "automation",
   automate_command(cmd, cmd_args, name, app, cout);
 }
 
-CMD(set, "vars", "DOMAIN NAME VALUE",
-    "set the database variable NAME to VALUE, in domain DOMAIN",
+CMD(set, _("vars"), _("DOMAIN NAME VALUE"),
+    _("set the database variable NAME to VALUE, in domain DOMAIN"),
     OPT_NONE)
 {
   if (args.size() != 3)
@@ -3720,8 +3726,8 @@ CMD(set, "vars", "DOMAIN NAME VALUE",
   app.db.set_var(std::make_pair(d, n), v);
 }
 
-CMD(unset, "vars", "DOMAIN NAME",
-    "remove the database variable NAME in domain DOMAIN",
+CMD(unset, _("vars"), _("DOMAIN NAME"),
+    _("remove the database variable NAME in domain DOMAIN"),
     OPT_NONE)
 {
   if (args.size() != 2)
