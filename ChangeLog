@@ -1,5 +1,9 @@
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* mt_version.cc (print_full_version): Typo.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* mt_version.cc: Include sanity.hh.
 
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
