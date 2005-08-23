@@ -1,5 +1,9 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* lua.cc, paths.cc: Few more tweaks for previous change.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.{cc,hh}: Add / operators.  Make that the usual way to use
 	bookkeeping_path's.
 	* work.cc: Adjust accordingly.

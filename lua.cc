@@ -653,7 +653,7 @@ lua_hooks::add_std_hooks()
 void 
 lua_hooks::default_rcfilename(system_path & file)
 {
-  file = system_path(get_homedir() + "/.monotone/monotonerc");
+  file = get_homedir() / ".monotone/monotonerc");
 }
 
 void 
