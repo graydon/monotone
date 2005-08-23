@@ -1,3 +1,9 @@
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh} (fully_normalized_path): Implement.
+	(external_path): Rename to system_path.
+	Misc. other updates.
+
 2005-08-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* paths.cc (is_absolute): New function.

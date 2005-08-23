@@ -24,15 +24,6 @@ null_name(path_component pc)
   return pc == the_null_component;
 }
 
-void
-save_initial_path();
-
-// returns true if working copy found, in which case cwd has been changed
-// returns false if working copy not found
-bool
-find_and_go_to_working_copy(external_path const & search_root);
-
-
 class file_path
 {
 public:
@@ -82,16 +73,27 @@ public:
   std::string const & as_external();
 private:
   std::string data;
-}
+};
 
-class external_path
+class system_path
 {
 public:
   // this path can contain anything, and it will be absolutified and
   // tilde-expanded.  it should be in utf8.
-  external_path(std::string const & path);
+  system_path(std::string const & path);
   // this will always be an absolute path, in the local character set
   std::string const & as_external();
 private:
   std::string data;
-}
+};
+
+
+void
+save_initial_path();
+
+// returns true if working copy found, in which case cwd has been changed
+// returns false if working copy not found
+bool
+find_and_go_to_working_copy(system_path const & search_root);
+
+#endif

@@ -1,3 +1,9 @@
+// copyright (C) 2005 nathaniel smith <njs@pobox.com>
+// all rights reserved.
+// licensed to the public under the terms of the GNU GPL (>= 2)
+// see the file COPYING for details
+
+#include "constants.hh"
 #include "paths.hh"
 #include "platform.hh"
 #include "sanity.hh"
@@ -15,8 +21,14 @@ save_initial_path()
 // string with no trailing /.
 static std::string path_prefix;
 
+#ifdef _WIN32
+static const bool is_win32 = true;
+#else
+static const bool is_win32 = false;
+#endif
+
 bool
-find_and_go_to_working_copy(external_path const & search_root)
+find_and_go_to_working_copy(system_path const & search_root)
 {
   // unimplemented
   // should do what find_working_copy in file_io.cc does, and what
@@ -42,12 +54,100 @@ is_absolute(std::string const & path)
   return false;
 }
 
-/////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+// verifying that internal paths are indeed normalized.
+// this code must be superfast
+///////////////////////////////////////////////////////////////////////////
+
+// normalized means:
+//  -- / as path separator
+//  -- not an absolute path (on either posix or win32)
+//     operationally, this means: first character != '/', first character != '\',
+//     second character != ':'
+//  -- no illegal characters
+//     -- 0x00 -- 0x1f, 0x7f, \ are the illegal characters.  \ is illegal
+//        unconditionally to prevent people checking in files on posix that
+//        have a different interpretation on win32
+//     -- (may want to allow 0x0a and 0x0d (LF and CR) in the future, but this
+//        is blocked on manifest format changing)
+//        (also requires changes to 'automate inventory', possibly others, to
+//        handle quoting)
+//  -- no doubled /'s
+//  -- no trailing /
+//  -- no "." or ".." path components
+static inline bool
+bad_component(std::string const & component)
+{
+  if (component == "")
+    return true;
+  if (component == ".")
+    return true;
+  if (component == "..")
+    return true;
+  return false;
+}
+
+static inline bool
+fully_normalized_path(std::string const & path)
+{
+  // FIXME: probably should make this a 256-byte static lookup table
+  const static std::string bad_chars = std::string("\\") + constants::illegal_path_bytes + std::string(1, '\0');
+  
+  // empty path is fine
+  if (path.empty())
+    return true;
+  // : in second position => absolute path on windows
+  if (path.size() > 1 && path[1] == ':')
+    return false;
+  // first scan for completely illegal bytes
+  for (std::string::const_iterator i = path.begin(); i != path.end(); ++i)
+    if (bad_chars.find(*i) != std::string::npos)
+      return false;
+  // now check each component
+  std::string::size_type start, stop;
+  start = 0;
+  while (1)
+    {
+      stop = path.find('/', start);
+      if (stop == std::string::npos)
+        {
+          if (bad_component(path.substr(start)))
+            return false;
+          break;
+        }
+      if (bad_component(path.substr(start, stop - start)))
+        return false;
+      start = stop + 1;
+    }
+}
+
+static inline bool
+in_bookkeeping_dir(std::string const & path)
+{
+  return (path.size() < 3) || (path.substr(0, 3) != "MT/");
+}
+
+file_path::file_path(file_path::source_type type, std::string const & path)
+{
+  switch source_type
+    {
+    internal:
+      I(fully_normalized_path(path));
+      I(!in_bookkeeping_dir(path));
+      data = path;
+      break;
+    external:
+      std::string tmp;
+      normalize_path(
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////
 // splitting/joining
 // this code must be superfast
 // it depends very much on knowing that it can only be applied to fully
 // normalized, relative, paths.
-/////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 
 static interner<path_component> pc_interner("", the_null_component);
 
@@ -131,11 +231,9 @@ static void test_file_path_internal()
                             "./foo",
                             ".",
                             "..",
-#ifdef _WIN32
                             "c:\\foo",
                             "c:foo",
                             "c:/foo",
-#endif
                             0 };
   path_prefix = "";
   for (char const ** c = baddies; *c; ++c)
@@ -152,6 +250,7 @@ static void test_file_path_internal()
                             "foo/with_underscore/bar",
                             ".foo/bar",
                             "..foo/bar",
+                            "MTfoo/bar",
                             0 };
   
   for (int i = 0; i < 2; ++i)
@@ -198,12 +297,11 @@ static void test_file_path_external_no_prefix()
                             "../bar",
                             "MT/blah",
                             "//blah",
+                            "\\foo",
                             "..",
-#ifdef _WIN32
                             "c:\\foo",
                             "c:foo",
                             "c:/foo",
-#endif
                             0 };
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path(internal, *c), logic_error);
@@ -237,11 +335,10 @@ static void test_file_path_external_prefix_a_b()
                             "../../../bar",
                             "../../..",
                             "//blah",
-#ifdef _WIN32
+                            "\\foo",
                             "c:\\foo",
                             "c:foo",
                             "c:/foo",
-#endif
                             0 };
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path(internal, *c), logic_error);
@@ -329,11 +426,9 @@ static void test_bookkeeping_path()
                             "./foo",
                             ".",
                             "..",
-#ifdef _WIN32
                             "c:\\foo",
                             "c:foo",
                             "c:/foo",
-#endif
                             0 };
   
   for (char const ** c = baddies; *c; ++c)
@@ -345,32 +440,32 @@ static void test_bookkeeping_path()
   check_bk_normalizes_to("foo/bar/baz", "MT/foo/bar/baz");
 }
 
-static void check_external_normalizes_to(char * before, char * after)
+static void check_system_normalizes_to(char * before, char * after)
 {
-  BOOST_CHECK(external_path(before).as_external() == after);
+  BOOST_CHECK(system_path(before).as_external() == after);
 }
 
-static void test_external_path()
+static void test_system_path()
 {
   std::string initial_path_saved = initial_path;
   initial_path = "/a/b";
 
-  check_external_normalizes_to("foo", "/a/b/foo");
-  check_external_normalizes_to("foo/bar", "/a/b/foo/bar");
-  check_external_normalizes_to("/foo/bar", "/foo/bar");
-  check_external_normalizes_to("//foo/bar", "/foo/bar");
+  check_system_normalizes_to("foo", "/a/b/foo");
+  check_system_normalizes_to("foo/bar", "/a/b/foo/bar");
+  check_system_normalizes_to("/foo/bar", "/foo/bar");
+  check_system_normalizes_to("//foo/bar", "/foo/bar");
 #ifdef _WIN32
-  check_external_normalizes_to("c:foo", "c:foo");
-  check_external_normalizes_to("c:/foo", "c:/foo");
-  check_external_normalizes_to("c:\\foo", "c:\\foo");
+  check_system_normalizes_to("c:foo", "c:foo");
+  check_system_normalizes_to("c:/foo", "c:/foo");
+  check_system_normalizes_to("c:\\foo", "c:\\foo");
 #else
-  check_external_normalizes_to("c:foo", "a/b/c:foo");
-  check_external_normalizes_to("c:/foo", "a/b/c:/foo");
-  check_external_normalizes_to("c:\\foo", "a/b/c:\\foo");
+  check_system_normalizes_to("c:foo", "a/b/c:foo");
+  check_system_normalizes_to("c:/foo", "a/b/c:/foo");
+  check_system_normalizes_to("c:\\foo", "a/b/c:\\foo");
 #endif
   // can't do particularly interesting checking of tilde expansion, but at
   // least we can check that it's doing _something_...
-  std::string tilde_expanded = external_path("~/foo").as_external();
+  std::string tilde_expanded = system_path("~/foo").as_external();
   BOOST_CHECK(tilde_expanded[0] == '/');
   BOOST_CHECK(tilde_expanded.find('~') == std::string::npos);
 
@@ -386,7 +481,7 @@ void add_paths_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&test_file_path_external_prefix_a_b));
   suite->add(BOOST_TEST_CASE(&test_split_join));
   suite->add(BOOST_TEST_CASE(&test_bookkeeping_path));
-  suite->add(BOOST_TEST_CASE(&test_external_path));
+  suite->add(BOOST_TEST_CASE(&test_system_path));
 }
 
 #endif // BUILD_UNIT_TESTS
