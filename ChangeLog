@@ -1,5 +1,9 @@
 2005-08-23  Benoît Dejean  <benoit@placenet.org>
 
+	* lua.cc: boost::format vs. F.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
 	* commands.cc (CMD*): _("") -> "" as _("") returns the PO
 	header.
 
