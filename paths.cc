@@ -473,8 +473,8 @@ static void test_bookkeeping_path()
       BOOST_CHECK_THROW(bookkeeping_root / *c, logic_error);
     }
   BOOST_CHECK_THROW(bookkeeping_root("foo/bar"), logic_error);
+  BOOST_CHECK_THROW(bookkeeping_root(""), logic_error);
   
-  check_bk_normalizes_to("", "MT");
   check_bk_normalizes_to("foo", "MT/foo");
   check_bk_normalizes_to("foo/bar", "MT/foo/bar");
   check_bk_normalizes_to("foo/bar/baz", "MT/foo/bar/baz");

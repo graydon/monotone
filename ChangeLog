@@ -1,5 +1,10 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (test_bookkeeping_path): Oops, "" is an invalid
+	bookkeeping_path.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* lua.cc, paths.cc: Few more tweaks for previous change.
 
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
