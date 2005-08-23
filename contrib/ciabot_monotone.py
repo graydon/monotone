@@ -216,7 +216,7 @@ def send_change_for(rid, m, c):
     pieces = log.split("\n")
     for p in pieces:
         if p.startswith("Author:"):
-            author = p.split()[1]
+            author = p.split(None, 1)[1].strip()
         if p.startswith("Branch:"):
             branch = p.split()[1]
         if p.startswith("ChangeLog:"):

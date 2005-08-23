@@ -1,3 +1,8 @@
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* contrib/ciabot_monotone.py (send_change_for): Handle author
+	names with spaces in.
+
 2005-08-22  Matt Johnston  <matt@ucc.asn.au>
 
 	* HACKING: change the vim modeline to something that seems to work
