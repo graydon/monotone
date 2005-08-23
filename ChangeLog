@@ -1,3 +1,8 @@
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* keys.cc (get_passphrase): Put back trailing ": " removed in
+	recent i18n changes.
+
 2005-08-23  Benoît Dejean  <benoit@placenet.org>
 
 	* change_set.cc (dump_change_set): boost::format instead of F.
