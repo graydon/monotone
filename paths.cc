@@ -212,6 +212,26 @@ file_path::split(std::vector<path_component> & pieces)
     }
 }
 
+///////////////////////////////////////////////////////////////////////////
+// localizing file names (externalizing them)
+// this code must be superfast when there is no conversion needed
+///////////////////////////////////////////////////////////////////////////
+
+static inline
+localized_path_str(std::string const & path, std::string & out)
+{
+#ifdef __APPLE__
+  // on OS X paths for the filesystem/kernel are UTF-8 encoded, regardless of
+  // locale.
+  out = path;
+#else
+  // on normal systems we actually have some work to do, alas.
+  // not much, though, because utf8_to_system does all the hard work.  it is
+  // carefully optimized.  do not screw it up.
+  utf8_to_system(path, out);
+#endif
+}
+
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
@@ -305,7 +325,7 @@ static void test_file_path_external_no_prefix()
                             "c:/foo",
                             0 };
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path(internal, *c), logic_error);
+    BOOST_CHECK_THROW(file_path(external, *c), informative_failure);
   
   check_fp_normalizes_to("", "");
   check_fp_normalizes_to("foo", "foo");
@@ -340,11 +360,11 @@ static void test_file_path_external_prefix_a_b()
                             "c:\\foo",
                             "c:foo",
                             "c:/foo",
+                            "",
                             0 };
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path(internal, *c), logic_error);
+    BOOST_CHECK_THROW(file_path(external, *c), informative_failure);
   
-  check_fp_normalizes_to("", "a/b");
   check_fp_normalizes_to("foo", "a/b/foo");
   check_fp_normalizes_to("foo/bar", "a/b/foo/bar");
   check_fp_normalizes_to("foo/bar/baz", "a/b/foo/bar/baz");
@@ -450,6 +470,8 @@ static void test_system_path()
 {
   std::string initial_path_saved = initial_path;
   initial_path = "/a/b";
+
+  BOOST_CHECK_THROW(system_path(""), informative_failure);
 
   check_system_normalizes_to("foo", "/a/b/foo");
   check_system_normalizes_to("foo/bar", "/a/b/foo/bar");

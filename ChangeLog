@@ -1,5 +1,10 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (localized_path_str): New function.
+	Fix some tests.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc: Convert to paths.hh.
 	* mkstemp.cc (monotone_mkstemp): Likewise.
 

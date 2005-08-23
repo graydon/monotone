@@ -44,9 +44,10 @@ public:
   file_path(std::vector<path_component> const & pieces);
   
   // returns raw normalized path string
-  std::string const & as_internal() const;
+  std::string const & as_internal() const
+  { return data; }
   // converts to native charset and path syntax
-  std::string const & as_external() const;
+  std::string as_external() const;
 
   void split(std::vector<path_component> & pieces) const;
 
@@ -73,7 +74,7 @@ public:
   // path should _not_ contain the leading MT/
   // and _should_ look like an internal path
   bookkeeping_path(std::string const & path);
-  std::string const & as_external() const;
+  std::string as_external() const;
 private:
   std::string data;
 };
@@ -87,7 +88,7 @@ public:
   // tilde-expanded.  it should be in utf8.
   system_path(std::string const & path);
   // this will always be an absolute path, in the local character set
-  std::string const & as_external() const;
+  std::string as_external() const;
   bool empty() const;
 private:
   std::string data;
