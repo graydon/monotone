@@ -12,8 +12,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/scoped_array.hpp>
 
@@ -348,12 +346,10 @@ calculate_ident(file_path const & file,
   else
     {
       // no conversions necessary, use streaming form
-      // still have to localize the filename
-      fs::path localized_file = localized(file);
       // Best to be safe and check it isn't a dir.
-      I(fs::exists(localized_file) && !fs::is_directory(localized_file));
+      I(path_state(file) == path::file);
       Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
-      Botan::DataSource_Stream infile(localized_file.native_file_string());
+      Botan::DataSource_Stream infile(file.as_external());
       p.process_msg(infile);
 
       ident = lowercase(p.read_all_as_string());
@@ -598,6 +594,7 @@ is_all_ascii(string const & utf)
   return true;
 }
 
+// this function must be fast.  do not make it slow.
 void 
 utf8_to_system(std::string const & utf, std::string & ext)
 {
