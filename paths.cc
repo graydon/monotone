@@ -14,6 +14,7 @@ void
 save_initial_path()
 {
   initial_path = get_current_working_dir();
+  L(F("initial path is: %s") % initial_path);
 }
 
 // path to prepend to external files, to convert them from pointing to the

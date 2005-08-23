@@ -8,6 +8,7 @@
 
 // safe, portable, fast, simple file handling -- in that order
 
+#include <ios_fwd>
 #include <string>
 #include <vector>
 
@@ -27,7 +28,7 @@ null_name(path_component pc)
 class file_path
 {
 public:
-  enum { internal, external } source_type;
+  typedef enum { internal, external } source_type;
   // input is always in utf8, because everything in our world is always in
   // utf8 (except interface code itself).
   // external paths:
@@ -43,19 +44,19 @@ public:
   file_path(std::vector<path_component> const & pieces);
   
   // returns raw normalized path string
-  std::string const & as_internal();
+  std::string const & as_internal() const;
   // converts to native charset and path syntax
-  std::string const & as_external();
+  std::string const & as_external() const;
 
-  void split(std::vector<path_component> & pieces);
+  void split(std::vector<path_component> & pieces) const;
 
-  bool operator ==(const file_path & other)
+  bool operator ==(const file_path & other) const
   { return data == other.data; }
 
-  bool operator !=(const file_path & other)
+  bool operator !=(const file_path & other) const
   { return data != other.data; }
 
-  bool operator <(const file_path & other)
+  bool operator <(const file_path & other) const
   { return data < other.data; }
 
 private:
@@ -64,16 +65,20 @@ private:
   std::string data;
 };
 
+std::ostream & operator<<(ostream & o, file_path const & a);
+
 class bookkeeping_path
 {
 public:
   // path should _not_ contain the leading MT/
   // and _should_ look like an internal path
   bookkeeping_path(std::string const & path);
-  std::string const & as_external();
+  std::string const & as_external() const;
 private:
   std::string data;
 };
+
+std::ostream & operator<<(ostream & o, bookkeeping_path const & a);
 
 class system_path
 {
@@ -82,10 +87,13 @@ public:
   // tilde-expanded.  it should be in utf8.
   system_path(std::string const & path);
   // this will always be an absolute path, in the local character set
-  std::string const & as_external();
+  std::string const & as_external() const;
+  bool empty() const;
 private:
   std::string data;
 };
+
+std::ostream & operator<<(ostream & o, system_path const & a);
 
 
 void

@@ -37,26 +37,38 @@
 
 struct lua_hooks;
 
-void save_initial_path();
 bool find_working_copy(fs::path const & search_root, 
                        fs::path & working_copy_root, 
                        fs::path & working_copy_restriction);
-
-fs::path mkpath(std::string const & s);
 
 std::string get_homedir();
 std::string absolutify(std::string const & path);
 std::string absolutify_for_command_line(std::string const & path);
 std::string tilde_expand(std::string const & path);
 
-extern std::string const book_keeping_dir;
-
 //   - file is inside the private MT/ directory
 bool book_keeping_file(local_path const & path);
 
-bool directory_exists(local_path const & path);
+// A path::state can be used as a boolean context for exists/doesn't exist,
+// or can be used in a switch statement to consider all possibilities.
+namespace path 
+{
+  typedef enum 
+    {
+      nonexistent = 0;
+      directory = 1;
+      file = 2;
+    } state;
+}
+path::state path_state_raw_(std::string const & path_raw);
+template <typename T> path::state path_state(T const & path)
+{
+  return path_state_raw_(path.as_external());
+}
+
+bool directory_exists(bookkeeping_path const & path);
 bool directory_exists(file_path const & path);
-bool file_exists(local_path const & path);
+bool file_exists(bookkeeping_path const & path);
 bool file_exists(file_path const & path);
 
 bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
@@ -64,14 +76,14 @@ bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
 // returns true if the string content is binary according to monotone euristic
 bool guess_binary(std::string const & s);
 
-void mkdir_p(local_path const & path);
+void mkdir_p(bookkeeping_path const & path);
 void mkdir_p(file_path const & path);
 void make_dir_for(file_path const & p);
 
 void delete_file(file_path const & path);
-void delete_file(local_path const & path);
+void delete_file(bookkeeping_path const & path);
 void delete_dir_recursive(file_path const & path);
-void delete_dir_recursive(local_path const & path);
+void delete_dir_recursive(bookkeeping_path const & path);
 
 void move_file(file_path const & old_path,
                file_path const & new_path);

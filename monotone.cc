@@ -30,6 +30,7 @@
 #include "ui.hh"
 #include "mt_version.hh"
 #include "options.hh"
+#include "paths.hh"
 
 // main option processing and exception handling code
 

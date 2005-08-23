@@ -31,13 +31,6 @@ string const book_keeping_dir("MT");
 #endif
 #include <sys/types.h>
 
-void 
-save_initial_path()
-{
-  fs::initial_path();
-  L(F("initial path is %s\n") % fs::initial_path().string());
-}
-
 bool
 find_working_copy(fs::path const & search_root,
                   fs::path & working_copy_root, 
@@ -95,13 +88,6 @@ find_working_copy(fs::path const & search_root,
   working_copy_restriction = removed;
 
   return true;
-}
-
-fs::path 
-mkpath(string const & s)
-{
-  fs::path p(s, fs::native);
-  return p;
 }
 
 string 
