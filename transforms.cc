@@ -666,62 +666,6 @@ utf8_to_ace(utf8 const & utf, ace & a)
   free(out);
 }
 
-inline static fs::path 
-localized_impl(string const & utf)
-{
-#ifdef __APPLE__
-  // on OS X paths for the filesystem/kernel are UTF-8 encoded.
-  return mkpath(utf);
-#else
-  if (filesystem_is_utf8())
-    return mkpath(utf);
-  if (filesystem_is_ascii_extension() && is_all_ascii(utf))
-    return mkpath(utf);
-  fs::path tmp = mkpath(utf), ret;
-  for (fs::path::iterator i = tmp.begin(); i != tmp.end(); ++i)
-    {
-      external ext;
-      utf8_to_system(utf8(*i), ext);
-      ret /= mkpath(ext());
-    }
-  return ret;
-#endif
-}
-
-std::string
-localized_as_string(file_path const & fp)
-{
-#ifdef __APPLE__
-  // on OS X paths for the filesystem/kernel are UTF-8 encoded.
-  return fp();
-#else
-  if (filesystem_is_utf8())
-    return fp();
-  if (filesystem_is_ascii_extension() && is_all_ascii(fp()))
-    return fp();
-  return localized(fp).native_file_string();
-#endif
-}
-
-fs::path 
-localized(file_path const & fp)
-{
-  return localized_impl(fp());
-}
-
-fs::path 
-localized(local_path const & lp)
-{
-  return localized_impl(lp());
-}
-
-fs::path
-localized(utf8 const & utf)
-{
-  return localized_impl(utf());
-}
-
-
 void 
 internalize_cert_name(utf8 const & utf, cert_name & c)
 {

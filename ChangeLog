@@ -1,5 +1,9 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* transforms.{cc,hh} (localized, localized_as_string): Remove.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* transforms.cc (utf8_to_system): Make fast.
 
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
