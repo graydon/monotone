@@ -3,6 +3,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <iostream>
+
 #include "constants.hh"
 #include "paths.hh"
 #include "platform.hh"
@@ -232,6 +234,18 @@ any_path::as_external() const
   utf8_to_system(data, out);
   return out();
 #endif
+}
+
+///////////////////////////////////////////////////////////////////////////
+// writing out paths
+// we do _not_ convert charsets here, because this is for embedding in larger
+// streams, and those larger streams will be converted as a whole
+///////////////////////////////////////////////////////////////////////////
+
+std::ostream &
+operator <<(std::ostream & o, any_path const & a)
+{
+  o << a.data;
 }
 
 #ifdef BUILD_UNIT_TESTS

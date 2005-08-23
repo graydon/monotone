@@ -39,9 +39,10 @@ private:
   any_path();
   any_path(any_path const & other);
   any_path & operator=(any_path const & other);
+  friend std::ostream & operator<<(std::ostream & o, any_path const & a);
 }
 
-std::ostream & operator<<(ostream & o, any_path const & a);
+std::ostream & operator<<(std::ostream & o, any_path const & a);
 
 class file_path : public any_path
 {
@@ -84,6 +85,9 @@ class bookkeeping_path : public any_path
 public:
   // path should _not_ contain the leading MT/
   // and _should_ look like an internal path
+  // FIXME: this^^ is bogus
+  // you can't poke around at subdirs of a tree!  given MT/foo, you can't
+  // generate the path MT/foo/bar...
   bookkeeping_path(std::string const & path);
   std::string as_external() const;
 };
@@ -93,7 +97,8 @@ class system_path : public any_path
 {
 public:
   // this path can contain anything, and it will be absolutified and
-  // tilde-expanded.  it should be in utf8.
+  // tilde-expanded.  it will considered to be relative to the directory
+  // monotone started in.  it should be in utf8.
   system_path(std::string const & path);
   bool empty() const;
 };

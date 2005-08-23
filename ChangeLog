@@ -1,5 +1,11 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.{cc,hh} (operator <<): Implement for any_paths.
+	* paths.hh (class bookkeeping_path): Note that current design is
+	bogus to remind myself to fix it tomorrow...
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* work.{hh,cc}: Convert to paths.hh.
 
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
