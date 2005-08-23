@@ -187,7 +187,7 @@ namespace commands
       }
 
     vector<command *> sorted;
-    out << "commands:" << endl;
+    out << _("commands:") << endl;
     for (i = cmds.begin(); i != cmds.end(); ++i)
       {
         sorted.push_back(i->second);

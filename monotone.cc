@@ -521,7 +521,7 @@ cpp_main(int argc, char ** argv)
       if (count != 0)
         {
           ostringstream sstr;
-          sstr << "Options specific to 'monotone " << u.which << "':";
+          sstr << F("Options specific to 'monotone %s':") % u.which;
           options[0].descrip = strdup(sstr.str().c_str());
 
           options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
