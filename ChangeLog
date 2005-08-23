@@ -1,5 +1,14 @@
 2005-08-23  Benoît Dejean  <benoit@placenet.org>
 
+	* netcmd.cc (test_netcmd_functions): Don't translate unittest
+	strings.
+	* rcs_import.cc (cvs_commit::cvs_commit):
+	* database.cc (version_cache::put):
+	* lua.cc (dump_stack): boost::format vs. F for strings that are
+	not messages.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
 	* xdelta.cc: Don't translate unittest strings.
 
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
