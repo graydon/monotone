@@ -3002,7 +3002,7 @@ static void dump_change_set(std::string const & ctx,
   split_into_lines(tmp(), lines);
   for (std::vector<std::string>::const_iterator i = lines.begin();
        i != lines.end(); ++i)
-    L(F("%s") % *i);
+    L(boost::format("%s") % *i);
   L(F("[end changeset %s]\n") % ctx);
 }
 
