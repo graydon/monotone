@@ -25,7 +25,22 @@ null_name(path_component pc)
   return pc == the_null_component;
 }
 
-class file_path
+class any_path
+{
+public:
+  // converts to native charset and path syntax
+  std::string as_external() const;
+protected:
+  utf8 data;
+private:
+  any_path();
+  any_path(any_path const & other);
+  any_path & operator=(any_path const & other);
+}
+
+std::ostream & operator<<(ostream & o, any_path const & a);
+
+class file_path : public any_path
 {
 public:
   typedef enum { internal, external } source_type;
@@ -44,10 +59,10 @@ public:
   file_path(std::vector<path_component> const & pieces);
   
   // returns raw normalized path string
+  // the string is always stored in normalized etc. form; so the generated
+  // copy constructor and assignment operator are fine.
   std::string const & as_internal() const
-  { return data; }
-  // converts to native charset and path syntax
-  std::string as_external() const;
+  { return data(); }
 
   void split(std::vector<path_component> & pieces) const;
 
@@ -59,42 +74,26 @@ public:
 
   bool operator <(const file_path & other) const
   { return data < other.data; }
-
-private:
-  // this string is always stored in normalized etc. form; so the generated
-  // copy constructor and assignment operator are fine.
-  std::string data;
 };
 
-std::ostream & operator<<(ostream & o, file_path const & a);
-
-class bookkeeping_path
+class bookkeeping_path : public any_path
 {
 public:
   // path should _not_ contain the leading MT/
   // and _should_ look like an internal path
   bookkeeping_path(std::string const & path);
   std::string as_external() const;
-private:
-  std::string data;
 };
 
-std::ostream & operator<<(ostream & o, bookkeeping_path const & a);
-
-class system_path
+  // this will always be an absolute path
+class system_path : public any_path
 {
 public:
   // this path can contain anything, and it will be absolutified and
   // tilde-expanded.  it should be in utf8.
   system_path(std::string const & path);
-  // this will always be an absolute path, in the local character set
-  std::string as_external() const;
   bool empty() const;
-private:
-  std::string data;
 };
-
-std::ostream & operator<<(ostream & o, system_path const & a);
 
 
 void

@@ -596,22 +596,22 @@ is_all_ascii(string const & utf)
 
 // this function must be fast.  do not make it slow.
 void 
-utf8_to_system(std::string const & utf, std::string & ext)
+utf8_to_system(utf8 const & utf, std::string & ext)
 {
   if (system_charset_is_utf8())
-    utf = ext;
+    ext = utf();
   else if (system_charset_is_ascii_extension()
            && is_all_ascii(utf))
-    utf = ext;
+    ext = utf();
   else
-    charset_convert("UTF-8", system_charset(), utf, ext);
+    charset_convert("UTF-8", system_charset(), utf(), ext);
 }
 
 void 
 utf8_to_system(utf8 const & utf, external & ext)
 {
   string out;
-  utf8_to_system(utf(), out);
+  utf8_to_system(utf, out);
   ext = out;
 }
 

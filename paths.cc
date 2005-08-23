@@ -217,18 +217,20 @@ file_path::split(std::vector<path_component> & pieces)
 // this code must be superfast when there is no conversion needed
 ///////////////////////////////////////////////////////////////////////////
 
-static inline
-localized_path_str(std::string const & path, std::string & out)
+std::string
+any_path::as_external() const
 {
 #ifdef __APPLE__
   // on OS X paths for the filesystem/kernel are UTF-8 encoded, regardless of
   // locale.
-  out = path;
+  return data();
 #else
   // on normal systems we actually have some work to do, alas.
   // not much, though, because utf8_to_system does all the hard work.  it is
   // carefully optimized.  do not screw it up.
-  utf8_to_system(path, out);
+  external out;
+  utf8_to_system(data, out);
+  return out();
 #endif
 }
 

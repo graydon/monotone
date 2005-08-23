@@ -1,5 +1,12 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (any_path): New base class.
+	(file_path, bookkeeping_path, system_path): Inherit from it.
+	* transforms.{hh,cc} (utf8_to_system): Actually, always take a
+	utf8 after all (but still have two return types).
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* transforms.cc: Convert to paths.hh.
 
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
