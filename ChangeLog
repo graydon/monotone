@@ -1,3 +1,8 @@
+2005-08-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* HACKING: change the vim modeline to something that seems to work
+	better.
+
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
 	* mt_version.cc (print_full_version): Typo.
