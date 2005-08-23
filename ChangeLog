@@ -1,5 +1,10 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* transforms.hh (utf8_to_system): Add a string->string version.
+	* transforms.cc (utf8_to_system): Implement it.
+	
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (localized_path_str): New function.
 	Fix some tests.
 

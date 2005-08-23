@@ -544,10 +544,16 @@ system_to_utf8(external const & ext, utf8 & utf)
 }
 
 void 
+utf8_to_system(std::string const & utf, std::string & ext)
+{
+  charset_convert("UTF-8", system_charset(), utf, ext);
+}
+
+void 
 utf8_to_system(utf8 const & utf, external & ext)
 {
   string out;
-  charset_convert("UTF-8", system_charset(), utf(), out);
+  utf8_to_system(utf(), out);
   ext = out;
 }
 
