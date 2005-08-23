@@ -31,6 +31,7 @@ extern "C" {
 #include "vocab.hh"
 #include "platform.hh"
 #include "transforms.hh"
+#include "paths.hh"
 
 // defined in {std,test}_hooks.lua, converted
 #include "test_hooks.h"
@@ -650,15 +651,15 @@ lua_hooks::add_std_hooks()
 }
 
 void 
-lua_hooks::default_rcfilename(fs::path & file)
+lua_hooks::default_rcfilename(system_path & file)
 {
-  file = mkpath(get_homedir()) / mkpath(".monotone/monotonerc");
+  file = system_path(get_homedir() + "/.monotone/monotonerc");
 }
 
 void 
-lua_hooks::working_copy_rcfilename(fs::path & file)
+lua_hooks::working_copy_rcfilename(bookkeeping_path & file)
 {
-  file = mkpath(book_keeping_dir) / mkpath("monotonerc");
+  file = bookkeeping_path("monotonerc");
 }
 
 
@@ -668,7 +669,7 @@ lua_hooks::load_rcfile(utf8 const & rc)
   I(st);
   if (rc() != "-")
     {
-      fs::path locpath(localized(rc));
+      fs::path locpath(system_path(rc).as_external());
       if (fs::exists(locpath) && fs::is_directory(locpath))
         {
           // directory, iterate over it, skipping subdirs, taking every filename,
@@ -684,7 +685,7 @@ lua_hooks::load_rcfile(utf8 const & rc)
           std::sort(arr.begin(), arr.end());
           for (std::vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
             {
-              load_rcfile(*i, true);
+              load_rcfile(system_path(*i.native_directory_string()), true);
             }
           return; // directory read, skip the rest ...
         }
@@ -698,20 +699,20 @@ lua_hooks::load_rcfile(utf8 const & rc)
 }
 
 void 
-lua_hooks::load_rcfile(fs::path const & rc, bool required)
+lua_hooks::load_rcfile(any_path const & rc, bool required)
 {
   I(st);  
-  if (fs::exists(rc))
+  if (path_state(rc))
     {
-      L(F("opening rcfile '%s' ...\n") % rc.string());
-      N(run_file(st, rc.string()),
-        F("lua error while loading '%s'") % rc.string());
-      L(F("'%s' is ok\n") % rc.string());
+      L(F("opening rcfile '%s' ...\n") % rc);
+      N(run_file(st, rc.as_external()),
+        F("lua error while loading '%s'") % rc);
+      L(F("'%s' is ok\n") % rc);
     }
   else
     {
-      N(!required, F("rcfile '%s' does not exist") % rc.string());
-      L(F("skipping nonexistent rcfile '%s'\n") % rc.string());
+      N(!required, F("rcfile '%s' does not exist") % rc);
+      L(F("skipping nonexistent rcfile '%s'\n") % rc);
     }
 }
 

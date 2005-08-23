@@ -60,11 +60,7 @@ namespace path
       file = 2;
     } state;
 }
-path::state path_state_raw_(std::string const & path_raw);
-template <typename T> path::state path_state(T const & path)
-{
-  return path_state_raw_(path.as_external());
-}
+path::state path_state(any_path const & path);
 
 bool directory_exists(bookkeeping_path const & path);
 bool directory_exists(file_path const & path);

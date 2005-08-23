@@ -32,10 +32,10 @@ public:
   void add_test_hooks();
 #endif
   void add_std_hooks();
-  void working_copy_rcfilename(fs::path & file);
-  void default_rcfilename(fs::path & file);
+  void working_copy_rcfilename(bookkeeping_path & file);
+  void default_rcfilename(system_path & file);
   void load_rcfile(utf8 const & file);
-  void load_rcfile(fs::path const & file, bool required);
+  void load_rcfile(any_path const & file, bool required);
 
   // cert hooks
   bool hook_expand_selector(std::string const & sel, std::string & exp);

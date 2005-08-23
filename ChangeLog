@@ -1,5 +1,13 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* lua.{cc,hh}: Mostly convert to paths.hh.  (Still uses boost::fs
+	internally for some directory iteration.)
+	* app_state.cc (load_rcfiles): Update accordingly.
+	* file_io.hh (path_state): De-templatify; take any_path instead of
+	a T.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (any_path): New base class.
 	(file_path, bookkeeping_path, system_path): Inherit from it.
 	* transforms.{hh,cc} (utf8_to_system): Actually, always take a

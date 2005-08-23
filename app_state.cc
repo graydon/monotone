@@ -414,8 +414,8 @@ app_state::load_rcfiles()
 
   if (rcfiles)
     {
-      fs::path default_rcfile;
-      fs::path working_copy_rcfile;
+      system_path default_rcfile;
+      bookkeeping_path working_copy_rcfile;
       lua.default_rcfilename(default_rcfile);
       lua.working_copy_rcfilename(working_copy_rcfile);
       lua.load_rcfile(default_rcfile, false);

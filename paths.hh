@@ -25,6 +25,9 @@ null_name(path_component pc)
   return pc == the_null_component;
 }
 
+// It's possible this will become a proper virtual interface in the future,
+// but since the implementation is exactly the same in all cases, there isn't
+// much point ATM...
 class any_path
 {
 public:
