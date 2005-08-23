@@ -1,5 +1,34 @@
 2005-08-23  Benoît Dejean  <benoit@placenet.org>
 
+	* commands.cc (CMD*): _("") -> "" as _("") returns the PO
+	header.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* transforms.cc (check_idna_encoding): No i18n for unittests.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* change_set.cc (dump_change_set): boost::format instead of F.
+	* commands.cc (get_log_message, notify_if_multiple_heads,
+	complete, CMD(attr)): Marked some strings for i18n. Replaced a
+	multiline string by prefix_lines_with(). Merged strings.
+	* diff_patch.cc (merge_provider::try_to_merge_files): Merged
+	strings.
+	* i18n.h: N_() stands for gettext_noop(), not plural.
+	* keys.cc (get_passphrase): Fixed string surgery.
+	* netsync.cc: i18nized tickers' labels. Added xgettext comment
+	as tickers do not play well with multibytes characters (like é).
+	(session::analyze_attachment): Fixed string surgery.
+	(session::process_hello_cmd): Merged many strings.
+	(session::process_data_cmd): Removed some leading/trailing
+	whitespaces.
+	* sanity.cc: Marked error prefixes for i18n.
+	* ui.cc (tick_write_count::write_ticks): Reworked and fixed
+	surgery. Merged some strings.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
 	* netcmd.cc (test_netcmd_functions): Don't translate unittest
 	strings.
 	* rcs_import.cc (cvs_commit::cvs_commit):

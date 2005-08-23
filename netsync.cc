@@ -657,25 +657,35 @@ session::set_session_key(rsa_oaep_sha_data const & hmac_key_encrypted)
 void
 session::setup_client_tickers()
 {
-  byte_in_ticker.reset(new ticker("bytes in", ">", 1024, true));
-  byte_out_ticker.reset(new ticker("bytes out", "<", 1024, true));
+  // xgettext: please use short message and try to avoid multibytes chars
+  byte_in_ticker.reset(new ticker(_("bytes in"), ">", 1024, true));
+  // xgettext: please use short message and try to avoid multibytes chars
+  byte_out_ticker.reset(new ticker(_("bytes out"), "<", 1024, true));
   if (role == sink_role)
     {
-      revision_checked_ticker.reset(new ticker("revs written", "w", 1));
-      cert_in_ticker.reset(new ticker("certs in", "c", 3));
-      revision_in_ticker.reset(new ticker("revs in", "r", 1));
+      // xgettext: please use short message and try to avoid multibytes chars
+      revision_checked_ticker.reset(new ticker(_("revs written"), "w", 1));
+      // xgettext: please use short message and try to avoid multibytes chars
+      cert_in_ticker.reset(new ticker(_("certs in"), "c", 3));
+      // xgettext: please use short message and try to avoid multibytes chars
+      revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
     }
   else if (role == source_role)
     {
-      cert_out_ticker.reset(new ticker("certs out", "C", 3));
-      revision_out_ticker.reset(new ticker("revs out", "R", 1));
+      // xgettext: please use short message and try to avoid multibytes chars
+      cert_out_ticker.reset(new ticker(_("certs out"), "C", 3));
+      // xgettext: please use short message and try to avoid multibytes chars
+      revision_out_ticker.reset(new ticker(_("revs out"), "R", 1));
     }
   else
     {
       I(role == source_and_sink_role);
-      revision_checked_ticker.reset(new ticker("revs written", "w", 1));
-      revision_in_ticker.reset(new ticker("revs in", "r", 1));
-      revision_out_ticker.reset(new ticker("revs out", "R", 1));
+      // xgettext: please use short message and try to avoid multibytes chars
+      revision_checked_ticker.reset(new ticker(_("revs written"), "w", 1));
+      // xgettext: please use short message and try to avoid multibytes chars
+      revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
+      // xgettext: please use short message and try to avoid multibytes chars
+      revision_out_ticker.reset(new ticker(_("revs out"), "R", 1));
     }
 }
 
@@ -919,7 +929,11 @@ session::analyze_attachment(revision_id const & i,
             }
         }
     }
-  L(F("decided that revision %s %s attached\n") % i % (curr_attached ? "is" : "is not"));
+  if (curr_attached)
+    L(F("decided that revision '%s' is attached\n") % i);
+  else
+    L(F("decided that revision '%s' is not attached\n") % i);
+
   attached[i] = curr_attached;
 }
 
@@ -1758,23 +1772,24 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       app.db.get_var(their_key_key, expected_key_hash);
       if (expected_key_hash() != their_key_hash())
         {
-          P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"));
-          P(F("@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"));
-          P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"));
-          P(F("IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"));
-          P(F("it is also possible that the server key has just been changed\n"));
-          P(F("remote host sent key %s\n") % their_key_hash);
-          P(F("I expected %s\n") % expected_key_hash);
-          P(F("'monotone unset %s %s' overrides this check\n")
+          P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+	      "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
+	      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+	      "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"
+	      "it is also possible that the server key has just been changed\n"
+	      "remote host sent key %s\n"
+	      "I expected %s\n"
+	      "'monotone unset %s %s' overrides this check\n")
+	    % their_key_hash % expected_key_hash
             % their_key_key.first % their_key_key.second);
           E(false, F("server key changed"));
         }
     }
   else
     {
-      P(F("first time connecting to server %s\n") % peer_id);
-      P(F("I'll assume it's really them, but you might want to double-check\n"));
-      P(F("their key's fingerprint: %s\n") % their_key_hash);
+      P(F("first time connecting to server %s\n"
+	  "I'll assume it's really them, but you might want to double-check\n"
+	  "their key's fingerprint: %s\n") % peer_id % their_key_hash);
       app.db.set_var(their_key_key, var_value(their_key_hash()));
     }
   if (!app.db.public_key_exists(their_key_hash))
@@ -2779,7 +2794,7 @@ session::process_data_cmd(netcmd_item_type type,
               // then the current netcmd packet cannot possibly have
               // written anything to the database.
               error((F("Mismatched epoch on branch %s."
-                       "  Server has '%s', client has '%s'.")
+                       " Server has '%s', client has '%s'.")
                      % branch
                      % (voice == server_voice ? i->second : epoch)
                      % (voice == server_voice ? epoch : i->second)).str());
@@ -2834,7 +2849,7 @@ session::process_data_cmd(netcmd_item_type type,
           L(F("revision '%s' already exists in our database\n") % hitem);
         else
           {
-            L(F("received revision '%s' \n") % hitem);
+	    L(F("received revision '%s'\n") % hitem);
             boost::shared_ptr< pair<revision_data, revision_set > > 
               rp(new pair<revision_data, revision_set>());
             
@@ -3669,9 +3684,12 @@ session::rebuild_merkle_trees(app_state & app,
   boost::shared_ptr<merkle_table> ktab = make_root_node(*this, key_item);
   boost::shared_ptr<merkle_table> etab = make_root_node(*this, epoch_item);
 
-  ticker revisions_ticker("revisions", "r", 64);
-  ticker certs_ticker("certs", "c", 256);
-  ticker keys_ticker("keys", "k", 1);
+  // xgettext: please use short message and try to avoid multibytes chars
+  ticker revisions_ticker(_("revisions"), "r", 64);
+  // xgettext: please use short message and try to avoid multibytes chars
+  ticker certs_ticker(_("certs"), "c", 256);
+  // xgettext: please use short message and try to avoid multibytes chars
+  ticker keys_ticker(_("keys"), "k", 1);
 
   set<revision_id> revision_ids;
   set<rsa_keypair_id> inserted_keys;

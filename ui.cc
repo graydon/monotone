@@ -111,22 +111,25 @@ void tick_write_count::write_ticks()
       if (i->second->kilocount && i->second->ticks >= 10000)
         { // automatic unit conversion is enabled
           float div;
-          string suffix;
+          const char *message;
           if (i->second->ticks >= 1048576) {
           // ticks >=1MB, use Mb
             div = 1048576;
-            suffix = "M";
+          // xgettext: mebibytes (2^20 bytes)
+            message = N_("%.1f M");
           } else {
           // ticks <1MB, use kb
             div = 1024;
-            suffix = "k";
+          // xgettext: kibibytes (2^10 bytes)
+            message = N_("%.1f k");
           }
           // we reset the mod to the divider, to avoid spurious screen updates
           i->second->mod = static_cast<int>(div / 10.0);
-          count = (F("%.1f%s") % (i->second->ticks / div) % suffix).str();
+          count = (F(message) % (i->second->ticks / div)).str();
         }
       else
         {
+          // xgettext: bytes
           count = (F("%d") % i->second->ticks).str();
         }
         
@@ -310,10 +313,11 @@ user_interface::warn(string const & warning)
 void 
 user_interface::fatal(string const & fatal)
 {
-  inform("fatal: " + fatal);
-  inform("this is almost certainly a bug in monotone.\n");
-  inform("please send this error message, the output of 'monotone --full-version',\n");
-  inform("and a description of what you were doing to " PACKAGE_BUGREPORT ".\n");
+  inform(F("fatal: %s\n"
+           "this is almost certainly a bug in monotone.\n"
+           "please send this error message, the output of 'monotone --full-version',\n"
+           "and a description of what you were doing to %s.\n")
+         % fatal % PACKAGE_BUGREPORT);
 }
 
 
@@ -352,7 +356,7 @@ void
 user_interface::inform(string const & line)
 {
   string prefixedLine;
-  prefix_lines_with("monotone: ", line, prefixedLine);
+  prefix_lines_with(_("monotone: "), line, prefixedLine);
   ensure_clean_line();
   clog << sanitize(prefixedLine) << endl;
   clog.flush();
