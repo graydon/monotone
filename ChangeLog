@@ -1,5 +1,10 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc: Convert to paths.hh.
+	* mkstemp.cc (monotone_mkstemp): Likewise.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* vocab_terms.hh, vocab.cc: Remove file_path, local_path.
 	* database.{hh,cc}, monotone.cc: Convert to paths.hh.
 	* file_io.{hh,cc}: Start to convert to paths.hh.

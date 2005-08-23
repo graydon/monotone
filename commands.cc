@@ -50,6 +50,7 @@
 #include "annotate.hh"
 #include "options.hh"
 #include "globish.hh"
+#include "paths.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -2907,7 +2908,7 @@ CMD(update, "working copy", "",
       remaining = chosen_to_merged;
     }
   
-  local_path tmp_root((mkpath(book_keeping_dir) / mkpath("tmp")).string());
+  bookkeeping_path tmp_root("tmp");
   if (directory_exists(tmp_root))
     delete_dir_recursive(tmp_root);
 
@@ -3381,7 +3382,7 @@ CMD(rcs_import, "debug", "RCSFILE...",
   for (vector<utf8>::const_iterator i = args.begin();
        i != args.end(); ++i)
     {
-      test_parse_rcs_file(mkpath((*i)()), app.db);
+      test_parse_rcs_file(system_path((*i)()), app.db);
     }
 }
 
@@ -3392,7 +3393,7 @@ CMD(cvs_import, "rcs", "CVSROOT", "import all versions in CVS repository",
   if (args.size() != 1)
     throw usage(name);
 
-  import_cvs_repo(mkpath(idx(args, 0)()), app);
+  import_cvs_repo(system_path(idx(args, 0)()), app);
 }
 
 static void
