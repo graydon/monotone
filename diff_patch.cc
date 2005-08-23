@@ -586,11 +586,15 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
         }
     }
 
-  P(F("help required for 3-way merge\n"));
-  P(F("[ancestor] %s\n") % anc_path);
-  P(F("[    left] %s\n") % left_path);
-  P(F("[   right] %s\n") % right_path);
-  P(F("[  merged] %s\n") % merged_path);
+  P(F("help required for 3-way merge\n"
+      "[ancestor] %s\n"
+      "[    left] %s\n"
+      "[   right] %s\n"
+      "[  merged] %s\n")
+    % anc_path
+    % left_path
+    % right_path
+    % merged_path);
 
   if (app.lua.hook_merge3(anc_path, left_path, right_path, merged_path,
                           ancestor_unpacked, left_unpacked, 
@@ -642,10 +646,13 @@ bool merge_provider::try_to_merge_files(file_path const & left_path,
   left_unpacked = left_data.inner();
   right_unpacked = right_data.inner();
 
-  P(F("help required for 2-way merge\n"));
-  P(F("[    left] %s\n") % left_path);
-  P(F("[   right] %s\n") % right_path);
-  P(F("[  merged] %s\n") % merged_path);
+  P(F("help required for 2-way merge\n"
+      "[    left] %s\n"
+      "[   right] %s\n"
+      "[  merged] %s\n")
+    % left_path
+    % right_path
+    % merged_path);
 
   if (app.lua.hook_merge2(left_path, right_path, merged_path, 
                           left_unpacked, right_unpacked, merged_unpacked))

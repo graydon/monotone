@@ -354,10 +354,11 @@ get_log_message(revision_set const & cs,
   write_revision_set(cs, summary);
   read_user_log(user_log_message);
   commentary += "----------------------------------------------------------------------\n";
-  commentary += "Enter Log.  Lines beginning with `MT:' are removed automatically\n";
+  commentary += _("Enter Log. Lines beginning with `MT:' are removed automatically\n");
   commentary += "\n";
   commentary += summary();
   commentary += "----------------------------------------------------------------------\n";
+
   N(app.lua.hook_edit_comment(commentary, user_log_message(), log_message),
     F("edit of log message failed"));
 }
@@ -367,8 +368,12 @@ notify_if_multiple_heads(app_state & app) {
   set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
   if (heads.size() > 1) {
-    P(F("note: branch '%s' has multiple heads\nnote: perhaps consider 'monotone merge'")
-      % app.branch_name);
+    std::string prefixedline;
+    prefix_lines_with(_("note: "),
+                      _("branch '%s' has multiple heads\n"
+                        "perhaps consider 'monotone merge'"),
+                      prefixedline);
+    P(boost::format(prefixedline) % app.branch_name);
   }
 }
 
@@ -478,8 +483,9 @@ complete(app_state & app,
       N(completions.size() == 1, boost::format(err));
     }
   completion = *(completions.begin());  
-  P(F("expanding partial id '%s'\n") % str);
-  P(F("expanded to '%s'\n") %  completion);
+  P(F("expanding partial id '%s'\n"
+      "expanded to '%s'\n")
+    % str % completion);
 }
 
 static void 
@@ -507,8 +513,9 @@ complete(app_state & app,
       N(completions.size() == 1, boost::format(err));
     }
   completion = *(completions.begin());  
-  P(F("expanding partial id '%s'\n") % str);
-  P(F("expanded to '%s'\n") %  completion);
+  P(F("expanding partial id '%s'\n"
+      "expanded to '%s'\n")
+    % str % completion);
 }
 
 static void 
@@ -1141,7 +1148,7 @@ ALIAS(mv, rename)
 // fload and fmerge are simple commands for debugging the line
 // merger.
 
-CMD(fload, _("debug"), _(""), _("load file contents into db"), OPT_NONE)
+CMD(fload, _("debug"), "", _("load file contents into db"), OPT_NONE)
 {
   string s = get_stdin();
 
@@ -1471,7 +1478,7 @@ CMD(checkout, _("tree"), _("[DIRECTORY]\n"),
 
 ALIAS(co, checkout)
 
-CMD(heads, _("tree"), _(""), _("show unmerged head revisions of branch"),
+CMD(heads, _("tree"), "", _("show unmerged head revisions of branch"),
     OPT_BRANCH_NAME)
 {
   set<revision_id> heads;
@@ -1873,7 +1880,7 @@ CMD(privkey, _("packet i/o"), _("ID"), _("write private key packet to stdout"),
 }
 
 
-CMD(read, _("packet i/o"), _(""), _("read packets from stdin"),
+CMD(read, _("packet i/o"), "", _("read packets from stdin"),
     OPT_NONE)
 {
   packet_db_writer dbw(app, true);
@@ -1883,7 +1890,7 @@ CMD(read, _("packet i/o"), _(""), _("read packets from stdin"),
 }
 
 
-CMD(reindex, _("network"), _(""),
+CMD(reindex, _("network"), "",
     _("rebuild the indices used to sync over the network"),
     OPT_NONE)
 {
@@ -2129,7 +2136,7 @@ CMD(attr, _("working copy"), _("set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE"
     }
   
   file_path path = app.prefix(idx(args,1)());
-  N(file_exists(path), F("file '%s' not found") % path);
+  N(file_exists(path), F("no such file %s") % path);
 
   bool attrs_modified = false;
 
@@ -2740,7 +2747,7 @@ CMD(lcad, _("debug"), _("LEFT RIGHT"), _("print least common ancestor / dominato
   if (find_common_ancestor_for_merge(left, right, anc, app))
     std::cout << describe_revision(app, anc) << std::endl;
   else
-    std::cout << "no common ancestor/dominator found" << std::endl;
+    std::cout << _("no common ancestor/dominator found") << std::endl;
 }
 
 
@@ -2788,7 +2795,7 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
-CMD(update, _("working copy"), _(""),
+CMD(update, _("working copy"), "",
     _("update working copy.\n"
     "If a revision is given, base the update on that revision.  If not,\n"
     "base the update on the head of the branch (given or implicit)."),
@@ -3064,7 +3071,7 @@ try_one_merge(revision_id const & left_id,
 }                         
 
 
-CMD(merge, _("tree"), _(""), _("merge unmerged heads of branch"),
+CMD(merge, _("tree"), "", _("merge unmerged heads of branch"),
     OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR % OPT_LCA)
 {
   set<revision_id> heads;
@@ -3198,7 +3205,7 @@ CMD(propagate, _("tree"), _("SOURCE-BRANCH DEST-BRANCH"),
     }
 }
 
-CMD(refresh_inodeprints, _("tree"), _(""), _("refresh the inodeprint cache"),
+CMD(refresh_inodeprints, _("tree"), "", _("refresh the inodeprint cache"),
     OPT_NONE)
 {
   enable_inodeprints();

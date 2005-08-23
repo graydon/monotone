@@ -850,7 +850,7 @@ struct version_cache
     while (!cache.empty() 
            && use + dat().size() > capacity)
       {      
-        std::string key = (F("%08.8x%08.8x%08.8x%08.8x%08.8x") 
+        std::string key = (boost::format("%08.8x%08.8x%08.8x%08.8x%08.8x") 
                            % rand() % rand() % rand() % rand() % rand()).str();
         std::map<hexenc<id>, data>::const_iterator i;
         i = cache.lower_bound(hexenc<id>(key));

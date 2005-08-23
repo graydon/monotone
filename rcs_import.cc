@@ -260,7 +260,7 @@ cvs_commit::cvs_commit(rcs_file const & r,
     I(strptime(dp, "%Y.%m.%d.%H.%M.%S", &t) != NULL);
 #endif
   time = mktime(&t);
-  L(F("= %i\n") % time);
+  L(boost::format("= %i\n") % time);
 
   is_synthetic_branch_root = is_sbr(delta->second, 
                                     deltatext->second);

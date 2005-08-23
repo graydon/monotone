@@ -194,7 +194,7 @@ sanity::naughty_failure(string const & expr, format const & explain,
   string message;
   log(format("%s:%d: usage constraint '%s' violated\n") % file % line % expr,
       file.c_str(), line);
-  prefix_lines_with("misuse: ", explain.str(), message);
+  prefix_lines_with(_("misuse: "), explain.str(), message);
   throw informative_failure(message);
 }
 
@@ -205,7 +205,7 @@ sanity::error_failure(string const & expr, format const & explain,
   string message;
   log(format("%s:%d: detected error '%s' violated\n") % file % line % expr,
       file.c_str(), line);
-  prefix_lines_with("error: ", explain.str(), message);
+  prefix_lines_with(_("error: "), explain.str(), message);
   throw informative_failure(message);
 }
 

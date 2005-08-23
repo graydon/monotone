@@ -12,6 +12,6 @@
 #include "gettext.h"
 
 #define _(str) gettext(str)
-#define N_(str1, strn, n) ngettext(str1, strn, n)
+#define N_(str) gettext_noop(str)
 
 #endif
