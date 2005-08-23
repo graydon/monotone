@@ -18,7 +18,7 @@
 	* i18n.h: N_() stands for gettext_noop(), not plural.
 	* keys.cc (get_passphrase): Fixed string surgery.
 	* netsync.cc: i18nized tickers' labels. Added xgettext comment
-	as tickers do not play well with multibytes characters (like Å√Å©).
+	as tickers do not play well with multibytes characters (like √©).
 	(session::analyze_attachment): Fixed string surgery.
 	(session::process_hello_cmd): Merged many strings.
 	(session::process_data_cmd): Removed some leading/trailing
