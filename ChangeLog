@@ -1,5 +1,9 @@
 2005-08-23  Benoît Dejean  <benoit@placenet.org>
 
+	* transforms.cc (check_idna_encoding): No i18n for unittests.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
 	* change_set.cc (dump_change_set): boost::format instead of F.
 	* commands.cc (get_log_message, notify_if_multiple_heads,
 	complete, CMD(attr)): Marked some strings for i18n. Replaced a
