@@ -534,7 +534,6 @@ charset_convert(string const & src_charset,
     }
 }
 
-
 void 
 system_to_utf8(external const & ext, utf8 & utf)
 {
@@ -543,10 +542,72 @@ system_to_utf8(external const & ext, utf8 & utf)
   utf = out;
 }
 
+// Lots of gunk to avoid charset conversion as much as possible.  Running
+// iconv over every element of every path in a 30,000 file manifest takes
+// multiple seconds, which then is a minimum bound on pretty much any
+// operation we do...
+static inline bool
+system_charset_is_utf8_impl()
+{
+  std::string lc_encoding = lowercase(system_charset());
+  return (lc_encoding == "utf-8"
+          || lc_encoding == "utf_8"
+          || lc_encoding == "utf8");
+}
+
+static inline bool
+system_charset_is_utf8()
+{
+  static bool it_is = filesystem_is_utf8_impl();
+  return it_is;
+}
+
+static inline bool
+system_charset_is_ascii_extension_impl()
+{
+  if (system_charset_is_utf8())
+    return true;
+  std::string lc_encoding = lowercase(system_charset());
+  // if your character set is identical to ascii in the lower 7 bits, then add
+  // it here for a speed boost.
+  return (lc_encoding.find("ascii") != std::string::npos
+          || lc_encoding.find("8859") != std::string::npos
+          || lc_encoding.find("ansi_x3.4") != std::string::npos
+          // http://www.cs.mcgill.ca/~aelias4/encodings.html -- "EUC (Extended
+          // Unix Code) is a simple and clean encoding, standard on Unix
+          // systems.... It is backwards-compatible with ASCII (i.e. valid
+          // ASCII implies valid EUC)."
+          || lc_encoding.find("euc") != std::string::npos);
+}
+
+static inline bool
+system_charset_is_ascii_extension()
+{
+  static bool it_is = system_charset_is_ascii_extension_impl();
+  return it_is;
+}
+
+inline static bool
+is_all_ascii(string const & utf)
+{
+  // could speed this up by vectorization -- mask against 0x80808080,
+  // process a whole word at at time...
+  for (std::string::const_iterator i = utf.begin(); i != utf.end(); ++i)
+    if (0x80 & *i)
+      return false;
+  return true;
+}
+
 void 
 utf8_to_system(std::string const & utf, std::string & ext)
 {
-  charset_convert("UTF-8", system_charset(), utf, ext);
+  if (system_charset_is_utf8())
+    utf = ext;
+  else if (system_charset_is_ascii_extension()
+           && is_all_ascii(utf))
+    utf = ext;
+  else
+    charset_convert("UTF-8", system_charset(), utf, ext);
 }
 
 void 
@@ -603,62 +664,6 @@ utf8_to_ace(utf8 const & utf, ace & a)
     % decode_idna_error(res));
   a = string(out);
   free(out);
-}
-
-// Lots of gunk to avoid charset conversion as much as possible.  Running
-// iconv over every element of every path in a 30,000 file manifest takes
-// multiple seconds, which then is a minimum bound on pretty much any
-// operation we do...
-static inline bool
-filesystem_is_utf8_impl()
-{
-  std::string lc_encoding = lowercase(system_charset());
-  return (lc_encoding == "utf-8"
-          || lc_encoding == "utf_8"
-          || lc_encoding == "utf8");
-}
-
-static inline bool
-filesystem_is_utf8()
-{
-  static bool it_is = filesystem_is_utf8_impl();
-  return it_is;
-}
-
-static inline bool
-filesystem_is_ascii_extension_impl()
-{
-  if (filesystem_is_utf8())
-    return true;
-  std::string lc_encoding = lowercase(system_charset());
-  // if your character set is identical to ascii in the lower 7 bits, then add
-  // it here for a speed boost.
-  return (lc_encoding.find("ascii") != std::string::npos
-          || lc_encoding.find("8859") != std::string::npos
-          || lc_encoding.find("ansi_x3.4") != std::string::npos
-          // http://www.cs.mcgill.ca/~aelias4/encodings.html -- "EUC (Extended
-          // Unix Code) is a simple and clean encoding, standard on Unix
-          // systems.... It is backwards-compatible with ASCII (i.e. valid
-          // ASCII implies valid EUC)."
-          || lc_encoding.find("euc") != std::string::npos);
-}
-
-static inline bool
-filesystem_is_ascii_extension()
-{
-  static bool it_is = filesystem_is_ascii_extension_impl();
-  return it_is;
-}
-
-inline static bool
-is_all_ascii(string const & utf)
-{
-  // could speed this up by vectorization -- mask against 0x80808080,
-  // process a whole word at at time...
-  for (std::string::const_iterator i = utf.begin(); i != utf.end(); ++i)
-    if (0x80 & *i)
-      return false;
-  return true;
 }
 
 inline static fs::path 
