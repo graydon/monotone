@@ -62,4 +62,7 @@ AT_CHECK(QEGREP('^diff_args: $' stdout))
 AT_CHECK(QGREP("rev_old: $OLD_SHA" stdout))
 AT_CHECK(QGREP("rev_new: $NEW_SHA" stdout))
 
+# Make sure that --diff-args without --external is an error
+AT_CHECK(MONOTONE diff --diff-args="foo", [1], [ignore], [ignore])
+
 AT_CLEANUP

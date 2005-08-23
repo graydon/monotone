@@ -2591,6 +2591,11 @@ CMD(diff, _("informative"), _("[PATH]..."),
   diff_type type = app.diff_format;
   ostringstream header;
 
+  if (app.diff_args_provided)
+    N(app.diff_format == external_diff,
+      F("--diff-args requires --external\n"
+        "try adding --external or removing --diff-args?"));
+
   change_set composite;
 
   // initialize before transaction so we have a database to work with
