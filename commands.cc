@@ -1148,7 +1148,7 @@ ALIAS(mv, rename)
 // fload and fmerge are simple commands for debugging the line
 // merger.
 
-CMD(fload, _("debug"), _(""), _("load file contents into db"), OPT_NONE)
+CMD(fload, _("debug"), "", _("load file contents into db"), OPT_NONE)
 {
   string s = get_stdin();
 
@@ -1478,7 +1478,7 @@ CMD(checkout, _("tree"), _("[DIRECTORY]\n"),
 
 ALIAS(co, checkout)
 
-CMD(heads, _("tree"), _(""), _("show unmerged head revisions of branch"),
+CMD(heads, _("tree"), "", _("show unmerged head revisions of branch"),
     OPT_BRANCH_NAME)
 {
   set<revision_id> heads;
@@ -1880,7 +1880,7 @@ CMD(privkey, _("packet i/o"), _("ID"), _("write private key packet to stdout"),
 }
 
 
-CMD(read, _("packet i/o"), _(""), _("read packets from stdin"),
+CMD(read, _("packet i/o"), "", _("read packets from stdin"),
     OPT_NONE)
 {
   packet_db_writer dbw(app, true);
@@ -1890,7 +1890,7 @@ CMD(read, _("packet i/o"), _(""), _("read packets from stdin"),
 }
 
 
-CMD(reindex, _("network"), _(""),
+CMD(reindex, _("network"), "",
     _("rebuild the indices used to sync over the network"),
     OPT_NONE)
 {
@@ -2790,7 +2790,7 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
-CMD(update, _("working copy"), _(""),
+CMD(update, _("working copy"), "",
     _("update working copy.\n"
     "If a revision is given, base the update on that revision.  If not,\n"
     "base the update on the head of the branch (given or implicit)."),
@@ -3066,7 +3066,7 @@ try_one_merge(revision_id const & left_id,
 }                         
 
 
-CMD(merge, _("tree"), _(""), _("merge unmerged heads of branch"),
+CMD(merge, _("tree"), "", _("merge unmerged heads of branch"),
     OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR % OPT_LCA)
 {
   set<revision_id> heads;
@@ -3200,7 +3200,7 @@ CMD(propagate, _("tree"), _("SOURCE-BRANCH DEST-BRANCH"),
     }
 }
 
-CMD(refresh_inodeprints, _("tree"), _(""), _("refresh the inodeprint cache"),
+CMD(refresh_inodeprints, _("tree"), "", _("refresh the inodeprint cache"),
     OPT_NONE)
 {
   enable_inodeprints();

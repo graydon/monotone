@@ -1,5 +1,10 @@
 2005-08-23  Benoît Dejean  <benoit@placenet.org>
 
+	* commands.cc (CMD*): _("") -> "" as _("") returns the PO
+	header.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
 	* transforms.cc (check_idna_encoding): No i18n for unittests.
 
 2005-08-23  Benoît Dejean  <benoit@placenet.org>
