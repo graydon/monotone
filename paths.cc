@@ -448,7 +448,7 @@ static void test_split_join()
 
 static void check_bk_normalizes_to(char * before, char * after)
 {
-  BOOST_CHECK(book_keeping_file(before).as_external() == after);
+  BOOST_CHECK((bookkeeping_root / before).as_external() == after);
 }
 
 static void test_bookkeeping_path()
@@ -457,7 +457,6 @@ static void test_bookkeeping_path()
                             "foo//bar",
                             "foo/../bar",
                             "../bar",
-                            "MT/blah",
                             "foo/bar/",
                             "foo/./bar",
                             "./foo",
@@ -469,7 +468,10 @@ static void test_bookkeeping_path()
                             0 };
   
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(book_keeping_path(internal, *c), logic_error);
+    {
+      BOOST_CHECK_THROW(bookkeeping_path(*c), logic_error);
+      BOOST_CHECK_THROW(bookkeeping_root / *c, logic_error);
+    }
   
   check_bk_normalizes_to("", "MT");
   check_bk_normalizes_to("foo", "MT/foo");

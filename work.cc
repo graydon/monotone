@@ -312,7 +312,7 @@ std::string const work_file_name("work");
 
 static void get_work_path(bookkeeping_path & w_path)
 {
-  w_path = bookkeeping_path(work_file_name);
+  w_path = bookkeeping_root / work_file_name;
   L(F("work path is %s\n") % w_path);
 }
 
@@ -366,7 +366,7 @@ std::string revision_file_name("revision");
 
 static void get_revision_path(bookkeeping_path & m_path)
 {
-  m_path = bookkeeping_path(revision_file_name);
+  m_path = bookkeeping_root / revision_file_name;
   L(F("revision path is %s\n") % m_path);
 }
 
@@ -446,7 +446,7 @@ string const user_log_file_name("log");
 void
 get_user_log_path(bookkeeping_path & ul_path)
 {
-  ul_path = bookkeeping_path(user_log_file_name);
+  ul_path = bookkeeping_root / user_log_file_name;
   L(F("user log path is %s\n") % ul_path);
 }
 
@@ -495,7 +495,7 @@ string const options_file_name("options");
 void 
 get_options_path(bookkeeping_path & o_path)
 {
-  o_path = bookkeeping_path(options_file_name);
+  o_path = bookkeeping_root / options_file_name;
   L(F("options path is %s\n") % o_path);
 }
 
@@ -542,7 +542,7 @@ static string const local_dump_file_name("debug");
 
 void get_local_dump_path(bookkeeping_path & d_path)
 {
-  d_path = bookkeeping_path(local_dump_file_name);
+  d_path = bookkeeping_root / local_dump_file_name;
   L(F("local dump path is %s\n") % d_path);
 }
 
@@ -553,7 +553,7 @@ static string const inodeprints_file_name("inodeprints");
 void
 get_inodeprints_path(bookkeeping_path & ip_path)
 {
-  ip_path = bookkeeping_path(inodeprints_file_name);
+  ip_path = bookkeeping_root / inodeprints_file_name;
 }
 
 bool

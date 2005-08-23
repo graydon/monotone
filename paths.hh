@@ -62,6 +62,8 @@ public:
   // join a file_path out of pieces
   file_path(std::vector<path_component> const & pieces);
   
+  file_path operator /(std::string const & to_append);
+
   // returns raw normalized path string
   // the string is always stored in normalized etc. form; so the generated
   // copy constructor and assignment operator are fine.
@@ -83,14 +85,15 @@ public:
 class bookkeeping_path : public any_path
 {
 public:
-  // path should _not_ contain the leading MT/
+  // path _should_ contain the leading MT/
   // and _should_ look like an internal path
-  // FIXME: this^^ is bogus
-  // you can't poke around at subdirs of a tree!  given MT/foo, you can't
-  // generate the path MT/foo/bar...
+  // usually you should just use the / operator as a constructor!
   bookkeeping_path(std::string const & path);
   std::string as_external() const;
+  bookkeeping_path operator /(std::string const & to_append);
 };
+
+extern bookkeeping_path const bookkeeping_root;
 
   // this will always be an absolute path
 class system_path : public any_path
@@ -101,6 +104,7 @@ public:
   // monotone started in.  it should be in utf8.
   system_path(std::string const & path);
   bool empty() const;
+  system_path operator /(std::string const & to_append);
 };
 
 

@@ -2908,7 +2908,7 @@ CMD(update, "working copy", "",
       remaining = chosen_to_merged;
     }
   
-  bookkeeping_path tmp_root("tmp");
+  bookkeeping_path tmp_root = bookkeeping_root / "tmp";
   if (directory_exists(tmp_root))
     delete_dir_recursive(tmp_root);
 

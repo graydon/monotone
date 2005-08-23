@@ -659,7 +659,7 @@ lua_hooks::default_rcfilename(system_path & file)
 void 
 lua_hooks::working_copy_rcfilename(bookkeeping_path & file)
 {
-  file = bookkeeping_path("monotonerc");
+  file = bookkeeping_root / "monotonerc";
 }
 
 
