@@ -13,6 +13,7 @@
 #include "change_set.hh"
 #include "manifest.hh"
 #include "vocab.hh"
+#include "paths.hh"
 
 //
 // this file defines structures to deal with the "working copy" of a tree
@@ -100,7 +101,7 @@ void get_base_manifest(app_state & app, manifest_map & man);
 // the user log is then blanked. If the commit does not succeed, no
 // change is made to the user log file.
 
-void get_user_log_path(local_path & ul_path);
+void get_user_log_path(bookkeeping_path & ul_path);
 
 void read_user_log(data & dat);
 
@@ -118,7 +119,7 @@ bool has_contents_user_log();
 
 typedef std::map<std::string, utf8> options_map;
 
-void get_options_path(local_path & o_path);
+void get_options_path(bookkeeping_path & o_path);
 
 void read_options_map(data const & dat, options_map & options);
 
@@ -128,11 +129,11 @@ void write_options_map(data & dat,
 // the "local dump file' is a debugging file, stored in MT/debug.  if we
 // crash, we save some debugging information here.
 
-void get_local_dump_path(local_path & d_path);
+void get_local_dump_path(bookkeeping_path & d_path);
 
 // the 'inodeprints file' contains inode fingerprints 
 
-void get_inodeprints_path(local_path & ip_path);
+void get_inodeprints_path(bookkeeping_path & ip_path);
 
 bool in_inodeprints_mode();
 

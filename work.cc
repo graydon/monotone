@@ -310,17 +310,17 @@ build_rename(file_path const & src,
 
 std::string const work_file_name("work");
 
-static void get_work_path(local_path & w_path)
+static void get_work_path(bookkeeping_path & w_path)
 {
-  w_path = (mkpath(book_keeping_dir) / mkpath(work_file_name)).string();
+  w_path = bookkeeping_path(work_file_name);
   L(F("work path is %s\n") % w_path);
 }
 
 void get_path_rearrangement(change_set::path_rearrangement & w)
 {
-  local_path w_path;
+  bookkeeping_path w_path;
   get_work_path(w_path);
-  if (file_exists(w_path))
+  if (path_state(w_path))
     {
       L(F("checking for un-committed work file %s\n") % w_path);
       data w_data;
@@ -336,7 +336,7 @@ void get_path_rearrangement(change_set::path_rearrangement & w)
 
 void remove_path_rearrangement()
 {
-  local_path w_path;
+  bookkeeping_path w_path;
   get_work_path(w_path);
   if (file_exists(w_path))
     delete_file(w_path);
@@ -344,7 +344,7 @@ void remove_path_rearrangement()
 
 void put_path_rearrangement(change_set::path_rearrangement & w)
 {
-  local_path w_path;
+  bookkeeping_path w_path;
   get_work_path(w_path);
   
   if (w.empty())
@@ -364,16 +364,16 @@ void put_path_rearrangement(change_set::path_rearrangement & w)
 
 std::string revision_file_name("revision");
 
-static void get_revision_path(local_path & m_path)
+static void get_revision_path(bookkeeping_path & m_path)
 {
-  m_path = (mkpath(book_keeping_dir) / mkpath(revision_file_name)).string();
+  m_path = bookkeeping_path(revision_file_name);
   L(F("revision path is %s\n") % m_path);
 }
 
 void get_revision_id(revision_id & c)
 {
   c = revision_id();
-  local_path c_path;
+  bookkeeping_path c_path;
   get_revision_path(c_path);
 
   N(file_exists(c_path),
@@ -394,7 +394,7 @@ void get_revision_id(revision_id & c)
 
 void put_revision_id(revision_id const & rev)
 {
-  local_path c_path;
+  bookkeeping_path c_path;
   get_revision_path(c_path);
   L(F("writing revision id to %s\n") % c_path);
   data c_data(rev.inner()() + "\n");
@@ -444,16 +444,16 @@ get_base_manifest(app_state & app,
 string const user_log_file_name("log");
 
 void
-get_user_log_path(local_path & ul_path)
+get_user_log_path(bookkeeping_path & ul_path)
 {
-  ul_path = (mkpath(book_keeping_dir) / mkpath(user_log_file_name)).string();
+  ul_path = bookkeeping_path(user_log_file_name);
   L(F("user log path is %s\n") % ul_path);
 }
 
 void
 read_user_log(data & dat)
 {
-  local_path ul_path;
+  bookkeeping_path ul_path;
   get_user_log_path(ul_path);
 
   if (file_exists(ul_path))
@@ -465,7 +465,7 @@ read_user_log(data & dat)
 void
 write_user_log(data const & dat)
 {
-  local_path ul_path;
+  bookkeeping_path ul_path;
   get_user_log_path(ul_path);
 
   write_data(ul_path, dat);
@@ -475,7 +475,7 @@ void
 blank_user_log()
 {
   data empty;
-  local_path ul_path;
+  bookkeeping_path ul_path;
   get_user_log_path(ul_path);
   write_data(ul_path, empty);
 }
@@ -493,9 +493,9 @@ has_contents_user_log()
 string const options_file_name("options");
 
 void 
-get_options_path(local_path & o_path)
+get_options_path(bookkeeping_path & o_path)
 {
-  o_path = (mkpath(book_keeping_dir) / mkpath(options_file_name)).string();
+  o_path = bookkeeping_path(options_file_name);
   L(F("options path is %s\n") % o_path);
 }
 
@@ -540,9 +540,9 @@ write_options_map(data & dat, options_map const & options)
 
 static string const local_dump_file_name("debug");
 
-void get_local_dump_path(local_path & d_path)
+void get_local_dump_path(bookkeeping_path & d_path)
 {
-  d_path = (mkpath(book_keeping_dir) / mkpath(local_dump_file_name)).string();
+  d_path = bookkeeping_path(local_dump_file_name);
   L(F("local dump path is %s\n") % d_path);
 }
 
@@ -551,15 +551,15 @@ void get_local_dump_path(local_path & d_path)
 static string const inodeprints_file_name("inodeprints");
 
 void
-get_inodeprints_path(local_path & ip_path)
+get_inodeprints_path(bookkeeping_path & ip_path)
 {
-  ip_path = (mkpath(book_keeping_dir) / mkpath(inodeprints_file_name)).string();
+  ip_path = bookkeeping_path(inodeprints_file_name);
 }
 
 bool
 in_inodeprints_mode()
 {
-  local_path ip_path;
+  bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   return file_exists(ip_path);
 }
@@ -568,7 +568,7 @@ void
 read_inodeprints(data & dat)
 {
   I(in_inodeprints_mode());
-  local_path ip_path;
+  bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   read_data(ip_path, dat);
 }
@@ -577,7 +577,7 @@ void
 write_inodeprints(data const & dat)
 {
   I(in_inodeprints_mode());
-  local_path ip_path;
+  bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   write_data(ip_path, dat);
 }
@@ -585,7 +585,7 @@ write_inodeprints(data const & dat)
 void
 enable_inodeprints()
 {
-  local_path ip_path;
+  bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   data dat;
   write_data(ip_path, dat);
@@ -594,7 +594,7 @@ enable_inodeprints()
 void 
 get_attr_path(file_path & a_path)
 {
-  a_path = (mkpath(attr_file_name)).string();
+  a_path = file_path(attr_file_name);
   L(F("attribute map path is %s\n") % a_path);
 }
 

@@ -1,5 +1,9 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* work.{hh,cc}: Convert to paths.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* lua.{cc,hh}: Mostly convert to paths.hh.  (Still uses boost::fs
 	internally for some directory iteration.)
 	* app_state.cc (load_rcfiles): Update accordingly.
