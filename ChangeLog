@@ -1,3 +1,7 @@
+2005-08-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.texi: Bring 'update' syntax up to date.
+
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/t_diff_external.at: --diff-args without --external is an
