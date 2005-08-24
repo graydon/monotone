@@ -13,7 +13,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <boost/filesystem/path.hpp>
 
 #include "file_io.hh"
 #include "botan/botan.h"
@@ -29,7 +28,6 @@ monotone_mkstemp(std::string &tmpl)
   int i = 0;
   int count = 0, fd = -1;
   std::string tmp;
-  fs::path path;
 
   static const char letters[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
