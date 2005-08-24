@@ -1,3 +1,8 @@
+2005-08-24  Benoît Dejean  <benoit@placenet.org>
+
+	* change_set.cc (move_files_to_tmp_bottom_up): Better strings.
+	* keys.cc (generate_key_pair): Merged 2 strings.
+
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
 	* database.cc (assert_sqlite3_ok): Remove accidentally-left-in

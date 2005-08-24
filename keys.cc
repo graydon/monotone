@@ -181,8 +181,10 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
   // if all that worked, we can return our results to caller
   encode_base64(raw_priv_key, priv_out);
   encode_base64(raw_pub_key, pub_out);
-  L(F("generated %d-byte public key\n") % pub_out().size());
-  L(F("generated %d-byte (encrypted) private key\n") % priv_out().size());
+  L(F("generated %d-byte public key\n"
+      "generated %d-byte (encrypted) private key\n")
+    % pub_out().size()
+    % priv_out().size());
 }
 
 void

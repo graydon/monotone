@@ -2440,16 +2440,21 @@ move_files_to_tmp_bottom_up(tid t,
           local_path dst((mkpath(temporary_root()) 
                           / mkpath(boost::lexical_cast<std::string>(child))).string());
           
-          P(F("moving %s -> %s\n") % src % dst);
           switch (path_item_type(item))
             {
             case ptype_file:
               if (file_exists(src))
-                move_file(src, dst);
+                {
+                   P(F("moving file %s -> %s\n") % src % dst);
+                   move_file(src, dst);
+                }
               break;
             case ptype_directory:
               if (directory_exists(src))
-                move_dir(src, dst);
+                {
+                  P(F("moving dir %s -> %s\n") % src % dst);
+                  move_dir(src, dst);
+                }
               break;
             }
         }
