@@ -1,5 +1,13 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.hh (any_path::as_internal): On second thought, return a
+	utf8 object.
+	* app_state.cc (set_database): Take a system_path.
+	(set_pidfile): Likewise.
+	* monotone.cc (cpp_main): Pass one.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.hh (get_homedir): Return a system_path.
 	* app_state.hh (app_state): Make pidfile a system_path.
 	* sanity.hh (sanity::filename): Make a system_path.

@@ -254,12 +254,11 @@ app_state::restriction_includes(file_path const & path)
 }
 
 void 
-app_state::set_database(utf8 const & filename)
+app_state::set_database(system_path const & filename)
 {
-  string dbname = absolutify(filename());
-  if (dbname != "") db.set_filename(mkpath(dbname));
+  if (!filename.empty()) db.set_filename(filename);
 
-  options[database_option] = utf8(dbname);
+  options[database_option] = filename.as_internal();
 }
 
 void 
@@ -343,9 +342,9 @@ app_state::set_last(long l)
 }
 
 void
-app_state::set_pidfile(utf8 const & p)
+app_state::set_pidfile(system_path const & p)
 {
-  pidfile = mkpath(p());
+  pidfile = p;
 }
 
 void

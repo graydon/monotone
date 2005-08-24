@@ -91,7 +91,7 @@ public:
   void set_branch(utf8 const & name);
   void make_branch_sticky();
 
-  void set_database(utf8 const & filename);
+  void set_database(system_path const & filename);
   void set_signing_key(utf8 const & key);
   void set_root(utf8 const & root);
   void set_message(utf8 const & message);
@@ -100,7 +100,7 @@ public:
   void set_author(utf8 const & author);
   void set_depth(long depth);
   void set_last(long last);
-  void set_pidfile(utf8 const & pidfile);
+  void set_pidfile(system_path const & pidfile);
   void add_revision(utf8 const & selector);
   void add_exclude(utf8 const & exclude_pattern);
   void set_diff_format(diff_type dtype);

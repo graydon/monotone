@@ -328,7 +328,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_DB_NAME:
-              app.set_database(absolutify(tilde_expand(string(argstr))));
+              app.set_database(system_path(argstr));
               break;
 
             case OPT_TICKER:
@@ -413,7 +413,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_PIDFILE:
-              app.set_pidfile(absolutify(tilde_expand(string(argstr))));
+              app.set_pidfile(system_path(argstr));
               break;
 
             case OPT_ARGFILE:
