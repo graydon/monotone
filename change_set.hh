@@ -74,7 +74,7 @@ change_set
 inline bool 
 null_name(file_path const & p)
 {
-  return p().empty();
+  return p.empty();
 }
 
 inline bool 

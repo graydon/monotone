@@ -1121,8 +1121,8 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy",
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
 
-  build_rename(file_path(external, idx(args, 0)()),
-               file_path(external, idx(args, 1)()),
+  build_rename(file_path(external, idx(args, 0)),
+               file_path(external, idx(args, 1)),
                m_old, work);
   
   put_path_rearrangement(work);
@@ -1247,7 +1247,7 @@ CMD(identify, "working copy", "[PATH]", "calculate identity of PATH or stdin",
 
   if (args.size() == 1)
     {
-      read_localized_data(file_path(idx(args, 0)()), dat, app.lua);
+      read_localized_data(file_path(external, idx(args, 0)), dat, app.lua);
     }
   else
     {
@@ -2121,7 +2121,7 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE",
       read_attr_map(attr_data, attrs);
     }
   
-  file_path path(external, idx(args,1)());
+  file_path path(external, idx(args,1));
   N(file_exists(path), F("file '%s' not found") % path);
 
   bool attrs_modified = false;
@@ -3453,7 +3453,6 @@ CMD(annotate, "informative", "PATH",
     OPT_REVISION)
 {
   revision_id rid;
-  file_path file;
 
   if (app.revision_selectors.size() == 0)
     app.require_working_copy();
@@ -3461,7 +3460,7 @@ CMD(annotate, "informative", "PATH",
   if ((args.size() != 1) || (app.revision_selectors.size() > 1))
     throw usage(name);
 
-  file=file_path(idx(args, 0)());
+  file_path file(external, idx(args, 0));
   if (app.revision_selectors.size() == 0)
     get_revision_id(rid);
   else 
@@ -3500,7 +3499,7 @@ CMD(log, "informative", "[FILE]",
     throw usage(name);
 
   if (args.size() > 0)
-     file=file_path(idx(args, 0)()); /* specified a file */
+    file = file_path(external, idx(args, 0)); /* specified a file */
 
   set< pair<file_path, revision_id> > frontier;
 

@@ -1,5 +1,12 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* app_state.cc, change_set.cc, change_set.hh, commands.cc:
+	* inodeprint.cc, manifest.cc, rcs_import.cc, restrictions.cc:
+	* work.cc: Audit all calls to file_path() to add internal/external
+	notation.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* app_state.cc: More paths.hh conversion.
 	(app_state::prefix): Remove.
 	* commands.cc: Remove uses of app.prefix.

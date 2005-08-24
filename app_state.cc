@@ -152,9 +152,7 @@ app_state::set_restriction(path_set const & valid_paths,
                            vector<utf8> const & paths,
                            bool respect_ignore)
 {
-  // this can't be a file-global static, because file_path's initializer
-  // depends on another global static being defined.
-  static file_path dot(".");
+  static file_path root(internal, "");
   restrictions.clear();
   for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
@@ -166,7 +164,7 @@ app_state::set_restriction(path_set const & valid_paths,
           continue;
         }
 
-      N(p == dot || valid_paths.find(p) != valid_paths.end(),
+      N(p == root || valid_paths.find(p) != valid_paths.end(),
         F("unknown path '%s'\n") % p());
 
       L(F("'%s' added to restricted path set\n") % p());
@@ -177,16 +175,14 @@ app_state::set_restriction(path_set const & valid_paths,
   // assume current directory
   if ((depth != -1) && restrictions.empty()) 
     {
-      restrictions.insert(dot);
+      restrictions.insert(file_path(external, "."));
     }
 }
 
 bool
 app_state::restriction_includes(file_path const & path)
 {
-  // this can't be a file-global static, because file_path's initializer
-  // depends on another global static being defined.
-  static file_path dot(".");
+  static file_path root(internal, "");
   if (restrictions.empty()) 
     {
       return true;
@@ -199,7 +195,7 @@ app_state::restriction_includes(file_path const & path)
   // careful about what goes in to the restricted path set we just
   // check for this special case here.
 
-  if ((!user_supplied_depth) && restrictions.find(dot) != restrictions.end())
+  if ((!user_supplied_depth) && restrictions.find(root) != restrictions.end())
     {
       return true;
     }
@@ -212,7 +208,7 @@ app_state::restriction_includes(file_path const & path)
     {
       L(F("checking restricted path set for '%s'\n") % test.string());
 
-      file_path p(test.string());
+      file_path p(internal, test.string());
       path_set::const_iterator i = restrictions.find(p);
 
       if (i != restrictions.end()) 
@@ -232,7 +228,7 @@ app_state::restriction_includes(file_path const & path)
       ++branch_depth;
     }
 
-  if (user_supplied_depth && (restrictions.find(dot) != restrictions.end()))
+  if (user_supplied_depth && (restrictions.find(root) != restrictions.end()))
     {
       return (branch_depth <= max_depth);
     }

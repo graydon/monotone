@@ -781,7 +781,7 @@ cvs_history::set_filename(string const & file,
   if (last_slash!=std::string::npos && last_slash>=5
         && ss.substr(last_slash-5,6)=="Attic/")
      ss.erase(last_slash-5,6);
-  curr_file = file_path(ss);
+  curr_file = file_path(internal, ss);
   curr_file_interned = path_interner.intern(ss);
 }
 
@@ -1484,7 +1484,7 @@ cluster_consumer::build_change_set(cvs_cluster const & c,
   for (cvs_cluster::entry_map::const_iterator i = c.entries.begin();
        i != c.entries.end(); ++i)
     {
-      file_path pth(cvs.path_interner.lookup(i->first));
+      file_path pth(internal, cvs.path_interner.lookup(i->first));
       file_id fid(cvs.file_version_interner.lookup(i->second.version));
       if (i->second.live)
         {
