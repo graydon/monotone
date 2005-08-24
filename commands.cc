@@ -283,7 +283,7 @@ struct pid_file
     if (path.empty())
       return;
     N(!path_state(path), F("pid file '%s' already exists") % path);
-    file.open(path.as_external());
+    file.open(path.as_external().c_str());
     file << get_process_id();
     file.flush();
   }
@@ -293,7 +293,7 @@ struct pid_file
     if (path.empty())
       return;
     pid_t pid;
-    std::ifstream(path.as_external()) >> pid;
+    std::ifstream(path.as_external().c_str()) >> pid;
     if (pid == get_process_id()) {
       file.close();
       delete_file(path);

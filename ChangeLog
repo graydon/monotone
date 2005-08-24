@@ -1,4 +1,9 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
+	
+	* More compile fixes.  All remaing compile errors are real
+	problems, yay.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
 	* Lots and lots more compile fixes.
 

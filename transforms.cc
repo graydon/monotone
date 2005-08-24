@@ -260,7 +260,7 @@ calculate_ident(manifest_map const & m,
        i != m.end(); ++i)
     {
       sz += i->second.inner()().size();
-      sz += i->first.as_internal().size();
+      sz += i->first.as_internal()().size();
       sz += 3;      
     }
 

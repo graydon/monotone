@@ -45,7 +45,7 @@ sanity::dump_buffer()
 {
   if (!filename.empty())
     {
-      ofstream out(filename.as_external());
+      ofstream out(filename.as_external().c_str());
       if (out)
         {
           copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
