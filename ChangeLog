@@ -1,5 +1,9 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc: N_("") -> "".
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc: Make all CMD() calls use N_() instead of _().
 	(commands): Insert _() everywhere usage strings are used.  This is
 	icky.

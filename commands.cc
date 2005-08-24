@@ -1153,7 +1153,7 @@ ALIAS(mv, rename)
 // fload and fmerge are simple commands for debugging the line
 // merger.
 
-CMD(fload, N_("debug"), N_(""), N_("load file contents into db"), OPT_NONE)
+CMD(fload, N_("debug"), "", N_("load file contents into db"), OPT_NONE)
 {
   string s = get_stdin();
 
@@ -1483,7 +1483,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
 
 ALIAS(co, checkout)
 
-CMD(heads, N_("tree"), N_(""), N_("show unmerged head revisions of branch"),
+CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
     OPT_BRANCH_NAME)
 {
   set<revision_id> heads;
@@ -1885,7 +1885,7 @@ CMD(privkey, N_("packet i/o"), N_("ID"), N_("write private key packet to stdout"
 }
 
 
-CMD(read, N_("packet i/o"), N_(""), N_("read packets from stdin"),
+CMD(read, N_("packet i/o"), "", N_("read packets from stdin"),
     OPT_NONE)
 {
   packet_db_writer dbw(app, true);
@@ -1895,7 +1895,7 @@ CMD(read, N_("packet i/o"), N_(""), N_("read packets from stdin"),
 }
 
 
-CMD(reindex, N_("network"), N_(""),
+CMD(reindex, N_("network"), "",
     N_("rebuild the indices used to sync over the network"),
     OPT_NONE)
 {
@@ -2795,7 +2795,7 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
-CMD(update, N_("working copy"), N_(""),
+CMD(update, N_("working copy"), "",
     N_("update working copy.\n"
     "If a revision is given, base the update on that revision.  If not,\n"
     "base the update on the head of the branch (given or implicit)."),
@@ -3071,7 +3071,7 @@ try_one_merge(revision_id const & left_id,
 }                         
 
 
-CMD(merge, N_("tree"), N_(""), N_("merge unmerged heads of branch"),
+CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
     OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR % OPT_LCA)
 {
   set<revision_id> heads;
@@ -3205,7 +3205,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
     }
 }
 
-CMD(refresh_inodeprints, N_("tree"), N_(""), N_("refresh the inodeprint cache"),
+CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
     OPT_NONE)
 {
   enable_inodeprints();
