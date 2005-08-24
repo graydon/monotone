@@ -599,28 +599,11 @@ utf8_to_ace(utf8 const & utf, ace & a)
   free(out);
 }
 
-static inline string 
-sanitize(string const & line)
-{
-  // UTF-8 does not have safe values in the sub-0x20 range.
-  string tmp;
-  tmp.reserve(line.size());
-  for (size_t i = 0; i < line.size(); ++i)
-    {
-      if ((line[i] == '\n')
-          || (line[i] >= static_cast<char>(0x20) 
-              && line[i] != static_cast<char>(0x7F)))
-        tmp += line[i];
-      else
-        tmp += ' ';
-    }
-  return tmp;
-}
 external
 outprep(std::string const & msg)
 {
   external localized_msg;
-  utf8_to_system(utf8(sanitize(msg)), localized_msg);
+  utf8_to_system(utf8(msg), localized_msg);
   return localized_msg;
 }
 external

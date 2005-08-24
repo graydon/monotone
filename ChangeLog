@@ -1,5 +1,12 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* transforms.cc (outprep): Don't sanitize all output; removes too
+	many valid characters (\r, \t, etc.).
+	* ui.cc: Call outprep on ticker output.
+	(inform): Do still sanitize ui.inform() output.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* transforms.cc (outprep): New function.
 	* ui.cc (inform): Use it.
 	* monotone.cc (cpp_main): Use it.
