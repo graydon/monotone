@@ -174,6 +174,7 @@ std::string canonical_base64(std::string const & s);
 // charset conversions
 void charset_convert(std::string const & src_charset, std::string const & dst_charset,
                      std::string const & src, std::string & dst);
+std::string system_charset();
 void system_to_utf8(external const & system, utf8 & utf);
 void utf8_to_system(utf8 const & utf, external & system);
 void ace_to_utf8(ace const & ac, utf8 & utf);

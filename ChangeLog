@@ -1,5 +1,11 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* transforms.{cc,hh} (system_charset): Expose.
+	* monotone.cc (cpp_main): Use it to fiddle with gettext's charset
+	conversion and make --help output actually correct.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* transforms.cc (outprep): Don't sanitize all output; removes too
 	many valid characters (\r, \t, etc.).
 	* ui.cc: Call outprep on ticker output.

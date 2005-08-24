@@ -502,7 +502,7 @@ canonical_base64(string const & s)
 
 // general character code conversion routines
 
-static string 
+string 
 system_charset()
 {
   char const * locale_charset_name = stringprep_locale_charset ();
