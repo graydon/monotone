@@ -347,7 +347,7 @@ sanitize(string const & line)
   for (size_t i = 0; i < line.size(); ++i)
     {
       if ((line[i] == '\n')
-          || (line[i] >= static_cast<char>(0x20) 
+          || (static_cast<unsigned char>(line[i]) >= static_cast<unsigned char>(0x20) 
               && line[i] != static_cast<char>(0x7F)))
         tmp += line[i];
       else
