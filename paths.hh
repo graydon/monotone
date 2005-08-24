@@ -90,9 +90,9 @@ inline file_path file_path_internal(std::string const & path)
 {
   return file_path(file_path::internal, path);
 }
-inline file_path file_path_external(std::string const & path)
+inline file_path file_path_external(utf8 const & path)
 {
-  return file_path(file_path::external, path);
+  return file_path(file_path::external, path());
 }
 
 

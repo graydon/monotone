@@ -237,7 +237,7 @@ automate_attributes(std::vector<utf8> args,
 
   if (args.size() == 1) {
     // a filename was given, if it has attributes, print them
-    file_path path = file_path_external(idx(args,0)());
+    file_path path = file_path_external(idx(args,0));
     attr_map::const_iterator i = attrs.find(path);
     if (i == attrs.end()) return;
 

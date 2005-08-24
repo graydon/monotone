@@ -1,5 +1,9 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.hh (file_path_external): Take a utf8() object, always.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.hh (class file_path): Make "convenience functions"
 	required.
 
