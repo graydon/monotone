@@ -28,7 +28,7 @@
 #include "numeric_vocab.hh"
 #include "sanity.hh"
 #include "smap.hh"
-#include "path_component.hh"
+#include "paths.hh"
 
 // our analyses in this file happen on one of two families of
 // related structures: a path_analysis or a directory_map.
@@ -285,8 +285,7 @@ dump(path_state const & st, std::string & out)
     {
       std::vector<path_component> tmp_v;
       tmp_v.push_back(path_item_name(path_state_item(i)));
-      file_path tmp_fp;
-      compose_path(tmp_v, tmp_fp);
+      file_path tmp_fp(tmp_v);
       out += (F("tid %d: parent %d, type %s, name %s\n")
               % path_state_tid(i) 
               % path_item_parent(path_state_item(i))
@@ -342,8 +341,7 @@ dump_state(std::string const & s,
     {
       std::vector<path_component> tmp_v;
       tmp_v.push_back(path_item_name(path_state_item(i)));
-      file_path tmp_fp;
-      compose_path(tmp_v, tmp_fp);
+      file_path tmp_fp(tmp_v);
       L(F("state '%s': tid %d, parent %d, type %s, name %s\n")
         % s
         % path_state_tid(i) 
@@ -759,7 +757,7 @@ get_full_path(path_state const & state,
   std::vector<path_component> tmp;
   get_full_path(state, t, tmp);
   // L(F("got %d-entry path for tid %d\n") % tmp.size() % t);
-  compose_path(tmp, pth);
+  pth = file_path(tmp);
 }
 
 static void
@@ -801,13 +799,13 @@ compose_rearrangement(path_analysis const & pa,
       if (!null_name(path_item_name(old_item)))
         {
           get_full_path(pa.first, curr, old_name);
-          compose_path(old_name, old_path);
+          old_path = file_path(old_name);
         }
 
       if (!null_name(path_item_name(new_item)))      
         {
           get_full_path(pa.second, curr, new_name);
-          compose_path(new_name, new_path);
+          new_path = file_path(new_name);
         }
 
       if (old_path == new_path)
@@ -895,7 +893,7 @@ lookup_path(file_path const & pth,
             tid & t)
 {
   std::vector<path_component> vec;
-  split_path(pth, vec);
+  pth.split(vec);
   return lookup_path(vec, dir, t);
 }
 
@@ -919,7 +917,7 @@ ensure_entry(directory_map & dmap,
       if (null_name(path_item_name(path_state_item(parent))))
         {
           tid new_tid = ts.next();
-          state.insert(std::make_pair(new_tid, path_item(root_tid, entry_ty, make_null_component())));
+          state.insert(std::make_pair(new_tid, path_item(root_tid, entry_ty, the_null_component)));
           return new_tid;
         }        
     }
@@ -964,7 +962,7 @@ ensure_dir_in_map (file_path const & path,
                    tid_source & ts)
 {
   std::vector<path_component> components;
-  split_path(path, components);
+  path.split(components);
   return ensure_dir_in_map(components, dmap, state, ts);
 }
 
@@ -976,7 +974,9 @@ ensure_file_in_map (file_path const & path,
 {
   std::vector<path_component> prefix;  
   path_component leaf_path;
-  split_path(path, prefix, leaf_path);
+  path.split(prefix);
+  leaf_path = prefix.back();
+  prefix.pop_back();
   
   I(! null_name(leaf_path));
   tid dir_tid = ensure_dir_in_map(prefix, dmap, state, ts);
@@ -1066,7 +1066,7 @@ reconstruct_path(file_path const & input,
 
   // L(F("reconstructing path '%s' under analysis\n") % input);
   
-  split_path(input, vec);
+  input.split(vec);
 
   tid t = root_tid;
   std::vector<path_component>::const_iterator pth = vec.begin();
@@ -1111,7 +1111,7 @@ reconstruct_path(file_path const & input,
       ++pth;
     }
 
-  compose_path(rebuilt, output);
+  output = file_path(rebuilt);
   // L(F("reconstructed path '%s' as '%s'\n") % input % output);
 }
 
@@ -1158,14 +1158,14 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
        f != pr.deleted_files.end(); ++f)
     {
       tid x = ensure_file_in_map(*f, first_map, pa.first, ts);
-      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_file, make_null_component())));
+      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_file, the_null_component)));
     }
 
   for (std::set<file_path>::const_iterator d = pr.deleted_dirs.begin();
        d != pr.deleted_dirs.end(); ++d)
     {
       tid x = ensure_dir_in_map(*d, first_map, pa.first, ts);
-      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_directory, make_null_component())));
+      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_directory, the_null_component)));
     }
 
   for (std::map<file_path,file_path>::const_iterator rf = pr.renamed_files.begin();
@@ -1192,7 +1192,7 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
        a != pr.added_files.end(); ++a)
     {
       tid x = ensure_file_in_map(*a, second_map, pa.second, ts);
-      pa.first.insert(std::make_pair(x, path_item(root_tid, ptype_file, make_null_component())));
+      pa.first.insert(std::make_pair(x, path_item(root_tid, ptype_file, the_null_component)));
       damaged_in_second.insert(x);
     }
 
@@ -1407,7 +1407,7 @@ extract_killed(path_analysis const & a,
               file_path killed_path;
               get_full_path(a.second, dir_tid, killed_name);
               killed_name.push_back(first_name);
-              compose_path(killed_name, killed_path);
+              killed_path = file_path(killed_name);
               killed.insert(killed_path);
             }
         }
@@ -2410,7 +2410,7 @@ invert_change_set(change_set const & a2b,
 
 void 
 move_files_to_tmp_bottom_up(tid t,
-                            local_path const & temporary_root,
+                            bookkeeping_path const & temporary_root,
                             path_state const & state,
                             directory_map const & dmap)
 {
@@ -2436,20 +2436,19 @@ move_files_to_tmp_bottom_up(tid t,
 
           get_full_path(state, child, path);
           
-          local_path src(path());
-          local_path dst((mkpath(temporary_root()) 
-                          / mkpath(boost::lexical_cast<std::string>(child))).string());
+          bookkeeping_path dst =
+            temporary_root / boost::lexical_cast<std::string>(child);
           
-          P(F("moving %s -> %s\n") % src % dst);
+          P(F("moving %s -> %s\n") % path % dst);
           switch (path_item_type(item))
             {
             case ptype_file:
-              if (file_exists(src))
-                move_file(src, dst);
+              if (file_exists(path))
+                move_file(path, dst);
               break;
             case ptype_directory:
-              if (directory_exists(src))
-                move_dir(src, dst);
+              if (directory_exists(path))
+                move_dir(path, dst);
               break;
             }
         }
@@ -2458,7 +2457,7 @@ move_files_to_tmp_bottom_up(tid t,
 
 void 
 move_files_from_tmp_top_down(tid t,
-                             local_path const & temporary_root,
+                             bookkeeping_path const & temporary_root,
                              path_state const & state,
                              directory_map const & dmap)
 {
@@ -2480,26 +2479,25 @@ move_files_from_tmp_top_down(tid t,
 
           get_full_path(state, child, path);
           
-          local_path src((mkpath(temporary_root()) 
-                          / mkpath(boost::lexical_cast<std::string>(child))).string());
-          local_path dst(path());
+          bookkeeping_path src =
+            temporary_root / boost::lexical_cast<std::string>(child);
           
           switch (path_item_type(item))
             {
             case ptype_file:
               if (file_exists(src))
                 {
-                  P(F("moving file %s -> %s\n") % src % dst);
+                  P(F("moving file %s -> %s\n") % src % path);
                   make_dir_for(path);
-                  move_file(src, dst);
+                  move_file(src, path);
                 }
               break;
             case ptype_directory:
               if (directory_exists(src))
                 {
-                  P(F("moving dir %s -> %s\n") % src % dst);
+                  P(F("moving dir %s -> %s\n") % src % path);
                   make_dir_for(path);
-                  move_dir(src, dst);
+                  move_dir(src, path);
                 }
               break;
             }
