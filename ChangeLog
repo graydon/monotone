@@ -1,5 +1,9 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (pid_file): Remove fs::path.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* mkstemp.cc (monotone_mkstemp): Remove references to fs::path.
 
 2005-08-23  Nathaniel Smith  <njs@pobox.com>

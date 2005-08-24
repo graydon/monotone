@@ -15,10 +15,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tokenizer.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/convenience.hpp>
-#include <boost/filesystem/exception.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "commands.hh"
@@ -280,12 +276,12 @@ CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params,         \
 
 struct pid_file
 {
-  explicit pid_file(fs::path const & p)
+  explicit pid_file(system_path const & p)
     : path(p)
   {
     if (path.empty())
       return;
-    N(!fs::exists(path), F("pid file '%s' already exists") % path.string());
+    N(!path_exists(path), F("pid file '%s' already exists") % path);
     file.open(path);
     file << get_process_id();
     file.flush();
@@ -296,16 +292,16 @@ struct pid_file
     if (path.empty())
       return;
     pid_t pid;
-    fs::ifstream(path) >> pid;
+    fs::ifstream(path.as_external()) >> pid;
     if (pid == get_process_id()) {
       file.close();
-      fs::remove(path);
+      delete_file(path);
     }
   }
 
 private:
   fs::ofstream file;
-  fs::path path;
+  system_path path;
 };
 
 static void
