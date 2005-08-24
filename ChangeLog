@@ -13,6 +13,11 @@
 
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* AUTHORS: Add Benoît Dejean <benoit@placenet.org>.  Create new
+	section for translators.  Add Benoît there too.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc: N_("") -> "".
 
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
