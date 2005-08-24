@@ -19,6 +19,7 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "work.hh"
+#include "platform.hh"
 
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
@@ -32,7 +33,7 @@ static string const branch_option("branch");
 static string const key_option("key");
 
 app_state::app_state() 
-  : branch_name(""), db(""), stdhooks(true), rcfiles(true), diffs(false),
+  : branch_name(""), db(system_path()), stdhooks(true), rcfiles(true), diffs(false),
     no_merges(false), set_default(false), verbose(false), search_root("/"),
     depth(-1), last(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false)
@@ -72,15 +73,15 @@ app_state::allow_working_copy()
       if (!current.empty()) 
         {
           relative_directory = file_path(current.native_directory_string());
-          L(F("relative directory is '%s'\n") % relative_directory());
+          L(F("relative directory is '%s'\n") % relative_directory);
         }
 
-      if (global_sanity.filename == "")
+      if (global_sanity.filename.empty())
         {
-          local_path dump_path;
+          bookkeeping_path dump_path;
           get_local_dump_path(dump_path);
           L(F("setting dump path to %s\n") % dump_path);
-          global_sanity.filename = dump_path();
+          global_sanity.filename = dump_path;
         }
     }
   load_rcfiles();
@@ -133,7 +134,7 @@ app_state::create_working_copy(std::string const & dir)
   L(F("creating book-keeping directory '%s' for working copy in '%s'\n")
     % bookkeeping_root % target);
 
-  mkdir_p(mt);
+  mkdir_p(bookkeeping_root);
 
   make_branch_sticky();
 
@@ -160,14 +161,14 @@ app_state::set_restriction(path_set const & valid_paths,
 
       if (respect_ignore && lua.hook_ignore_file(p)) 
         {
-          L(F("'%s' ignored by restricted path set\n") % p());
+          L(F("'%s' ignored by restricted path set\n") % p);
           continue;
         }
 
       N(p == root || valid_paths.find(p) != valid_paths.end(),
-        F("unknown path '%s'\n") % p());
+        F("unknown path '%s'\n") % p);
 
-      L(F("'%s' added to restricted path set\n") % p());
+      L(F("'%s' added to restricted path set\n") % p);
       restrictions.insert(p);
     }
 
@@ -200,7 +201,7 @@ app_state::restriction_includes(file_path const & path)
       return true;
     }
 
-  fs::path test = mkpath(path());
+  fs::path test = fs::path(path.as_external(), fs::native);
   long branch_depth = 0;
   long max_depth = depth + 1;
 
@@ -214,13 +215,13 @@ app_state::restriction_includes(file_path const & path)
       if (i != restrictions.end()) 
         {
           L(F("path '%s' found in restricted path set; '%s' included\n") 
-            % test.string() % path());
+            % test.string() % path);
           return true;
         }
       else
         {
           L(F("path '%s' not found in restricted path set; '%s' excluded\n") 
-            % test.string() % path());
+            % test.string() % path);
         }
 
       if (user_supplied_depth && (max_depth == branch_depth)) return false;
@@ -273,15 +274,14 @@ app_state::set_signing_key(utf8 const & key)
 }
 
 void 
-app_state::set_root(utf8 const & path)
+app_state::set_root(system_path const & path)
 {
-  search_root = absolutify(path());
-  fs::path root = mkpath(search_root());
-  N(fs::exists(root),
-    F("search root '%s' does not exist\n") % search_root);
-  N(fs::is_directory(root),
-    F("search root '%s' is not a directory\n") % search_root);
-  L(F("set search root to %s\n") % search_root);
+  N(path_state(root),
+    F("search root '%s' does not exist\n") % root);
+  N(is_directory(root),
+    F("search root '%s' is not a directory\n") % root);
+  root = path;
+  L(F("set search root to %s\n") % root);
 }
 
 void
@@ -416,7 +416,7 @@ app_state::load_rcfiles()
 void
 app_state::read_options()
 {
-  local_path o_path;
+  bookkeeping_path o_path;
   get_options_path(o_path);
   try
     {

@@ -1,5 +1,10 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.hh, monotone.cc, app_state.hh, app_state.cc:
+	* unix/inodeprint.cc: More compile fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* manifest.hh: Include paths.hh.
 	* file_io.hh: Fix syntax errors, and fixup interface.
 

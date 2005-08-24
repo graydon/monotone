@@ -45,7 +45,7 @@ public:
   utf8 message_file;
   utf8 date;
   utf8 author;
-  utf8 search_root;
+  system_path search_root;
   std::vector<utf8> revision_selectors;
   std::set<utf8> exclude_patterns;
   std::vector<utf8> extra_rcfiles;
@@ -92,7 +92,7 @@ public:
 
   void set_database(system_path const & filename);
   void set_signing_key(utf8 const & key);
-  void set_root(utf8 const & root);
+  void set_root(system_path const & root);
   void set_message(utf8 const & message);
   void set_message_file(utf8 const & message_file);
   void set_date(utf8 const & date);

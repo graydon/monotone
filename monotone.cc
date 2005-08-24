@@ -381,7 +381,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_ROOT:
-              app.set_root(string(argstr));
+              app.set_root(system_path(argstr));
               break;
 
             case OPT_LAST:

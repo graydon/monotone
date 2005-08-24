@@ -36,6 +36,8 @@ public:
   // leaves as utf8
   utf8 const & as_internal() const
   { return data; }
+  bool empty() const
+  { return data().empty(); }
 protected:
   utf8 data;
   any_path();
@@ -115,7 +117,6 @@ public:
   // monotone started in.  it should be in utf8.
   system_path(std::string const & path);
   system_path(utf8 const & path);
-  bool empty() const;
   system_path operator /(std::string const & to_append);
 };
 
