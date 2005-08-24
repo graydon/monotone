@@ -228,7 +228,7 @@ This permits quick switches between the classic vc and monotone keymaps."
 (defun monotone-find-MT-top (&optional path)
   "Find the directory which contains the 'MT' directory.
 Optional argument PATH ."
-  (setq path (or path (buffer-file-name) default-directory))
+  (setq path (or path buffer-file-name default-directory))
   (when (null path)
     (error "Cant find top for %s" path))
   ;; work with full path names
@@ -487,7 +487,7 @@ With ARG of 0, clear default server and collection."
   (interactive "p")
   (setq args (monotone-arg-decode args))
   (when (eq args 'file)
-    (when (not (setq args (buffer-file-name)))
+    (when (not (setq args buffer-file-name))
       (error "Cant commit a buffer without a filename")))
   ;; dont run two processes
   (when (monotone-cmd-is-running)
@@ -603,7 +603,7 @@ With ARG of 0, clear default server and collection."
 (defun monotone-arg-decode (arg)
   "Decode the ARG into the scope monotone should work on."
   (interactive "p")
-  (message "%s" arg)
+  (monotone-msg "%s" arg)
   (cond
    ((member arg '(global tree file)) arg) ;; identity
    ((= arg  1) 'global)
@@ -641,20 +641,25 @@ the buffer if not global."
     (monotone-cmd cmds))
    ;; path/.
    ((eq prefix 'tree)
-    (let ((path (buffer-file-name buf)))
-      (when (not path)
-        (error "This buffer is not a file"))
-      (setq 
-       path (concat (file-name-directory (monotone-extract-MT-path path)) "."))
+    (let ((path (monotone-extract-MT-path
+		 (with-current-buffer buf default-directory))))
+      (unless path
+        (error "No directory"))
       (monotone-cmd (append cmds (list path)))))
    ;; path/file
    ((eq prefix 'file)
     (let ((name (buffer-file-name buf)))
-      (if name
-        (monotone-cmd (append cmds (list (monotone-extract-MT-path name))))
-        (error "This buffer is not a file"))))
+      (unless name
+	(error "This buffer is not a file"))
+      (setq name (monotone-extract-MT-path name))
+      (monotone-cmd (append cmds (list name)))))
    (t
     (error "Bad prefix"))))
+
+(defmacro replace-buffer (name)
+  `(let ((buf (get-buffer ,name)))
+     (when buf (kill-buffer buf))
+     (rename-buffer ,name)))
 
 ;; runs the command without the buffer.
 ;;  (let ((bfn (buffer-file-name)))
@@ -681,27 +686,29 @@ the buffer if not global."
   (when (eq 'tree (monotone-arg-decode arg))
     (error "monotone subtree log is busted"))
   ;; 
-  (let ((cmds (list "log"))
+  (let ((cmds (list "log" "--no-merges"))
         (depth monotone-log-depth))
     (when (and (numberp depth) (< 0 depth))
       (setq cmds (append cmds (list (format "--last=%d" depth)))))
     (monotone-cmd-buf arg cmds)
-    (rename-buffer "*monotone log*" t)))
+    (replace-buffer "*monotone log*")))
 ;; (monotone-vc-print-log)
 
 (defun monotone-vc-diff (&optional arg)
   "Print the diffs for this buffer.  With prefix ARG, the global diffs."
   (interactive "p")
   (save-some-buffers)
-  (let ((what (monotone-arg-decode arg))
-        (name (buffer-file-name)))
+  (let* ((what (monotone-arg-decode arg))
+	 (target-buffer-name
+	  (format "*monotone diff %s*"
+		  (cond
+		   ((eq what 'file) 
+		    (monotone-extract-MT-path buffer-file-name))
+		   (t what))))) 
     (monotone-cmd-buf what '("diff"))
     (diff-mode)
-    (rename-buffer
-     (format "*monotone diff %s*"
-             (cond
-	      ((eq what 'file) (monotone-extract-MT-path name))
-	      (t what))) t)))
+    ;; dont duplicate the buffers
+    (replace-buffer target-buffer-name)))
 
 (defun monotone-vc-register ()
   "Register this file with monotone for the next commit."
@@ -710,10 +717,11 @@ the buffer if not global."
     (monotone-cmd-buf 'file '("add") (current-buffer))
     (error "This buffer does not have a file name")))
 
-(defun monotone-vc-status ()
+(defun monotone-vc-status (&optional arg)
   "Print the status of the current branch."
-  (interactive)
-  (monotone-cmd "status"))
+  (interactive "p")
+  (save-some-buffers)
+  (monotone-cmd-buf arg '("status")))
 
 (defun monotone-vc-update-change-log ()
   "Edit the monotone change log."
@@ -771,9 +779,7 @@ Grab the ids you want from the buffer and then yank back when needed."
       ;; remember it
       (setq monotone-last-id id)
       ;; dont duplicate the buffers
-      (if (get-buffer name)
-        (kill-buffer name))
-      (rename-buffer name))))
+      (replace-buffer name))))
 
 (defun monotone-cat-id-pd (what id default)
   "A helper function."

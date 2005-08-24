@@ -1,3 +1,255 @@
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.{cc,hh} (system_charset): Expose.
+	* monotone.cc (cpp_main): Use it to fiddle with gettext's charset
+	conversion and make --help output actually correct.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.cc (outprep): Don't sanitize all output; removes too
+	many valid characters (\r, \t, etc.).
+	* ui.cc: Call outprep on ticker output.
+	(inform): Do still sanitize ui.inform() output.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.cc (outprep): New function.
+	* ui.cc (inform): Use it.
+	* monotone.cc (cpp_main): Use it.
+	Everything that writes user-intended output directly (i.e., via
+	cout) must call outprep() on that data before printing it.
+	
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): Trick popt into converting its generated
+	help messages into the current locale's charset.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* ui.cc (inform, sanitize): Convert all output from utf8 to
+	current locale's charset.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): Use bind_textdomain_codeset to request
+	that all gettext'ed strings be returned in UTF-8.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* idna/nfkc.c (g_utf8_strlen): Expose.
+	* transforms.{cc,hh} (length): New function.
+	* ui.cc (write_ticks): Use length() instead of .size() to
+	calculate string widths; should support multibyte characters
+	better.  (Still some problems relating to truncating strings to
+	avoid overflow -- calculate truncation by length, but perform
+	truncation by bytes...)
+
+2005-08-24  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2005-08-24  Benoît Dejean  <benoit@placenet.org>
+
+	* monotone.cc:
+	* commands.cc: Two more i18n strings.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* lua.cc: boost::format vs. F.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* AUTHORS: Add Benoît Dejean <benoit@placenet.org>.  Create new
+	section for translators.  Add Benoît there too.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc: N_("") -> "".
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc: Make all CMD() calls use N_() instead of _().
+	(commands): Insert _() everywhere usage strings are used.  This is
+	icky.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* keys.cc (get_passphrase): Put back trailing ": " removed in
+	recent i18n changes.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* change_set.cc (dump_change_set): boost::format instead of F.
+	* commands.cc (get_log_message, notify_if_multiple_heads,
+	complete, CMD(attr)): Marked some strings for i18n. Replaced a
+	multiline string by prefix_lines_with(). Merged strings.
+	* diff_patch.cc (merge_provider::try_to_merge_files): Merged
+	strings.
+	* i18n.h: N_() stands for gettext_noop(), not plural.
+	* keys.cc (get_passphrase): Fixed string surgery.
+	* netsync.cc: i18nized tickers' labels. Added xgettext comment
+	as tickers do not play well with multibytes characters (like é).
+	(session::analyze_attachment): Fixed string surgery.
+	(session::process_hello_cmd): Merged many strings.
+	(session::process_data_cmd): Removed some leading/trailing
+	whitespaces.
+	* sanity.cc: Marked error prefixes for i18n.
+	* ui.cc (tick_write_count::write_ticks): Reworked and fixed
+	surgery. Merged some strings.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (CMD*): _("") -> "" as _("") returns the PO
+	header.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* transforms.cc (check_idna_encoding): No i18n for unittests.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* change_set.cc (dump_change_set): boost::format instead of F.
+	* commands.cc (get_log_message, notify_if_multiple_heads,
+	complete, CMD(attr)): Marked some strings for i18n. Replaced a
+	multiline string by prefix_lines_with(). Merged strings.
+	* diff_patch.cc (merge_provider::try_to_merge_files): Merged
+	strings.
+	* i18n.h: N_() stands for gettext_noop(), not plural.
+	* keys.cc (get_passphrase): Fixed string surgery.
+	* netsync.cc: i18nized tickers' labels. Added xgettext comment
+	as tickers do not play well with multibytes characters (like é).
+	(session::analyze_attachment): Fixed string surgery.
+	(session::process_hello_cmd): Merged many strings.
+	(session::process_data_cmd): Removed some leading/trailing
+	whitespaces.
+	* sanity.cc: Marked error prefixes for i18n.
+	* ui.cc (tick_write_count::write_ticks): Reworked and fixed
+	surgery. Merged some strings.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* netcmd.cc (test_netcmd_functions): Don't translate unittest
+	strings.
+	* rcs_import.cc (cvs_commit::cvs_commit):
+	* database.cc (version_cache::put):
+	* lua.cc (dump_stack): boost::format vs. F for strings that are
+	not messages.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* xdelta.cc: Don't translate unittest strings.
+
+2005-08-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.texi: Bring 'update' syntax up to date.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_diff_external.at: --diff-args without --external is an
+	error.
+	* commands.cc (diff): Likewise.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* contrib/ciabot_monotone.py (send_change_for): Handle author
+	names with spaces in.
+
+2005-08-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* HACKING: change the vim modeline to something that seems to work
+	better.
+
+2005-08-23  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* contrib/monotone.el: When running monotone commands, re-use
+	*monotone* buffers. Make the "status" command use the prefix
+	argument. Make the "tree"-restricted commands work in dired
+	buffers. Add the "--no-merges" option in the log command. Various
+	other innocuous changes.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* mt_version.cc (print_full_version): Typo.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* mt_version.cc: Include sanity.hh.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (process_error_cmd, run_netsync_protocol): Remove
+	some newlines to avoid translation noise.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* po/LINGUAS, po/ja.po: Remove ja translation again, it seems to
+	be corrupt.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Don't use F() to indent things.
+	
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (dump_diffs): Don't use F() to create diff headers.
+	(commands::process): Put '' in the log message to make Benoît
+	Dejean happy ;-).
+	
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* po/LINGUAS, po/ja.po: Add Japanese translation by Satoru SATOH.
+	
+2005-08-20  Benoît Dejean  <benoit@placenet.org>
+
+	* po/monotone.pot: Remove from version control.
+	* po/POTFILES.skip: New file.
+	* po/fr.po: French translation (initial version).
+	* po/LINGUAS: Add fr.
+	
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (read): Use FP (thanks to Benoît Dejean for
+	catch).
+	* mt_version.cc (print_version, print_full_version): Mark more
+	strings for i18n (also thanks to Benoît Dejean).
+	
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (commands): Revert previous changes, xgettext is
+	buggy.
+	Mark every CMD() string argument with _().
+	* i18n.h, Makefile.am: New file.
+	* sanity.hh: Include it.
+	* po/Makevars (XGETTEXT_OPTIONS): Learn about _() and N_() as
+	markers.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (commands): Oops, can't call gettext on a
+	std::string...
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (coptions, options): Use gettext_noop to mark usage
+	strings for i18n.
+	* commands.cc (commands): gettextify command descriptions
+	* po/Makevars (XGETTEXT_OPTIONS): Include the 2nd, 3rd, and 4th
+	arguments to CMD macro as translatedable strings.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc: Replace a bunch of F()'s by boost::format's,
+	because F is only for strings displayed to user.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* po/Makevars (XGETTEXT_OPTIONS): Extract FP'ed strings.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.hh (FP): New macro.  Usage:
+	FP("frobbed %i bar", "frobbed %s bars", num_bars) % num_bars
+
 2005-08-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* revision.hh: Delete doubled line of text in comment.

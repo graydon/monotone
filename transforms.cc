@@ -502,7 +502,7 @@ canonical_base64(string const & s)
 
 // general character code conversion routines
 
-static string 
+string 
 system_charset()
 {
   char const * locale_charset_name = stringprep_locale_charset ();
@@ -597,6 +597,28 @@ utf8_to_ace(utf8 const & utf, ace & a)
     % decode_idna_error(res));
   a = string(out);
   free(out);
+}
+
+external
+outprep(std::string const & msg)
+{
+  external localized_msg;
+  utf8_to_system(utf8(msg), localized_msg);
+  return localized_msg;
+}
+external
+outprep(boost::format const & format)
+{
+  return outprep(format.str());
+}
+
+// hack: this is an unexposed function in libidna
+extern "C" long g_utf8_strlen(const char * p, size_t max);
+
+size_t
+length(utf8 const & utf)
+{
+  return g_utf8_strlen(utf().c_str(), utf().size());
 }
 
 // Lots of gunk to avoid charset conversion as much as possible.  Running
@@ -1120,7 +1142,7 @@ check_idna_encoding()
       ace a = string(idna_vec[i].out);
       ace tace;
       utf8_to_ace(utf, tace);
-      L(F("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tace());
+      L(boost::format("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tace());
       BOOST_CHECK(lowercase(a()) == lowercase(tace()));
       ace_to_utf8(a, tutf);
       BOOST_CHECK(lowercase(utf()) == lowercase(tutf()));

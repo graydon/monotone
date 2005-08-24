@@ -619,7 +619,7 @@ test_netcmd_functions()
 
       // error_cmd
       {
-        L(F("checking i/o round trip on error_cmd\n")); 
+        L(boost::format("checking i/o round trip on error_cmd\n")); 
         netcmd out_cmd, in_cmd;
         string out_errmsg("your shoelaces are untied"), in_errmsg;
         string buf;
@@ -627,21 +627,21 @@ test_netcmd_functions()
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_error_cmd(in_errmsg);
         BOOST_CHECK(in_errmsg == out_errmsg);
-        L(F("errmsg_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("errmsg_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // bye_cmd
       {
-        L(F("checking i/o round trip on bye_cmd\n"));   
+        L(boost::format("checking i/o round trip on bye_cmd\n"));   
         netcmd out_cmd, in_cmd;
         string buf;
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
-        L(F("bye_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("bye_cmd test done, buffer was %d bytes\n") % buf.size());
       }
       
       // hello_cmd
       {
-        L(F("checking i/o round trip on hello_cmd\n"));
+        L(boost::format("checking i/o round trip on hello_cmd\n"));
         netcmd out_cmd, in_cmd;
         string buf;
         rsa_keypair_id out_server_keyname("server@there"), in_server_keyname;
@@ -653,12 +653,12 @@ test_netcmd_functions()
         BOOST_CHECK(in_server_keyname == out_server_keyname);
         BOOST_CHECK(in_server_key == out_server_key);
         BOOST_CHECK(in_nonce == out_nonce);
-        L(F("hello_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("hello_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // anonymous_cmd
       {
-        L(F("checking i/o round trip on anonymous_cmd\n"));
+        L(boost::format("checking i/o round trip on anonymous_cmd\n"));
         netcmd out_cmd, in_cmd;
         protocol_role out_role = source_and_sink_role, in_role;
         string buf;
@@ -675,12 +675,12 @@ test_netcmd_functions()
         BOOST_CHECK(in_include_pattern == out_include_pattern);
         BOOST_CHECK(in_exclude_pattern == out_exclude_pattern);
         BOOST_CHECK(in_role == out_role);
-        L(F("anonymous_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("anonymous_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // auth_cmd
       {
-        L(F("checking i/o round trip on auth_cmd\n"));
+        L(boost::format("checking i/o round trip on auth_cmd\n"));
         netcmd out_cmd, in_cmd;
         protocol_role out_role = source_and_sink_role, in_role;
         string buf;
@@ -705,23 +705,23 @@ test_netcmd_functions()
         BOOST_CHECK(in_role == out_role);
         BOOST_CHECK(in_include_pattern == out_include_pattern);
         BOOST_CHECK(in_exclude_pattern == out_exclude_pattern);
-        L(F("auth_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("auth_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // confirm_cmd
       {
-        L(F("checking i/o round trip on confirm_cmd\n"));
+        L(boost::format("checking i/o round trip on confirm_cmd\n"));
         netcmd out_cmd, in_cmd;
         string buf;
         out_cmd.write_confirm_cmd();
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_confirm_cmd();
-        L(F("confirm_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("confirm_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // refine_cmd
       {
-        L(F("checking i/o round trip on refine_cmd\n"));
+        L(boost::format("checking i/o round trip on refine_cmd\n"));
         netcmd out_cmd, in_cmd;
         string buf;
         merkle_node out_node, in_node;
@@ -739,12 +739,12 @@ test_netcmd_functions()
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_refine_cmd(in_node);
         BOOST_CHECK(in_node == out_node);
-        L(F("refine_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("refine_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // done_cmd
       {
-        L(F("checking i/o round trip on done_cmd\n"));
+        L(boost::format("checking i/o round trip on done_cmd\n"));
         netcmd out_cmd, in_cmd;
         size_t out_level(12), in_level;
         netcmd_item_type out_type(key_item), in_type(manifest_item);
@@ -755,12 +755,12 @@ test_netcmd_functions()
         in_cmd.read_done_cmd(in_level, in_type);
         BOOST_CHECK(in_level == out_level);
         BOOST_CHECK(in_type == out_type);
-        L(F("done_cmd test done, buffer was %d bytes\n") % buf.size()); 
+        L(boost::format("done_cmd test done, buffer was %d bytes\n") % buf.size()); 
       }
 
       // send_data_cmd
       {
-        L(F("checking i/o round trip on send_data_cmd\n"));
+        L(boost::format("checking i/o round trip on send_data_cmd\n"));
         netcmd out_cmd, in_cmd;
         netcmd_item_type out_type(file_item), in_type(key_item);
         id out_id(raw_sha1("avocado is the yummiest")), in_id;
@@ -771,12 +771,12 @@ test_netcmd_functions()
         in_cmd.read_send_data_cmd(in_type, in_id);
         BOOST_CHECK(in_type == out_type);
         BOOST_CHECK(in_id == out_id);
-        L(F("send_data_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("send_data_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // send_delta_cmd
       {
-        L(F("checking i/o round trip on send_delta_cmd\n"));
+        L(boost::format("checking i/o round trip on send_delta_cmd\n"));
         netcmd out_cmd, in_cmd;
         netcmd_item_type out_type(file_item), in_type(key_item);
         id out_head(raw_sha1("when you board an airplane")), in_head;
@@ -789,12 +789,12 @@ test_netcmd_functions()
         BOOST_CHECK(in_type == out_type);
         BOOST_CHECK(in_head == out_head);
         BOOST_CHECK(in_base == out_base);
-        L(F("send_delta_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("send_delta_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // data_cmd
       {
-        L(F("checking i/o round trip on data_cmd\n"));
+        L(boost::format("checking i/o round trip on data_cmd\n"));
         netcmd out_cmd, in_cmd;
         netcmd_item_type out_type(file_item), in_type(key_item);
         id out_id(raw_sha1("tuna is not yummy")), in_id;
@@ -805,12 +805,12 @@ test_netcmd_functions()
         in_cmd.read_data_cmd(in_type, in_id, in_dat);
         BOOST_CHECK(in_id == out_id);
         BOOST_CHECK(in_dat == out_dat);
-        L(F("data_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("data_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // delta_cmd
       {
-        L(F("checking i/o round trip on delta_cmd\n"));
+        L(boost::format("checking i/o round trip on delta_cmd\n"));
         netcmd out_cmd, in_cmd;
         netcmd_item_type out_type(file_item), in_type(key_item);
         id out_head(raw_sha1("your seat cusion can be reused")), in_head;
@@ -825,12 +825,12 @@ test_netcmd_functions()
         BOOST_CHECK(in_head == out_head);
         BOOST_CHECK(in_base == out_base);
         BOOST_CHECK(in_delta == out_delta);
-        L(F("delta_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("delta_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // nonexistant_cmd
       {
-        L(F("checking i/o round trip on nonexistant_cmd\n"));
+        L(boost::format("checking i/o round trip on nonexistant_cmd\n"));
         netcmd out_cmd, in_cmd;
         netcmd_item_type out_type(file_item), in_type(key_item);
         id out_id(raw_sha1("avocado is the yummiest")), in_id;
@@ -841,13 +841,13 @@ test_netcmd_functions()
         in_cmd.read_nonexistant_cmd(in_type, in_id);
         BOOST_CHECK(in_type == out_type);
         BOOST_CHECK(in_id == out_id);
-        L(F("nonexistant_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(boost::format("nonexistant_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
     }
   catch (bad_decode & d)
     {
-      L(F("bad decode exception: '%s'\n") % d.what);
+      L(boost::format("bad decode exception: '%s'\n") % d.what);
       throw;
     }
 }

@@ -58,7 +58,7 @@ dump_stack(lua_State * st)
     int t = lua_type(st, i);
     switch (t) {
     case LUA_TSTRING:  /* strings */
-      out += (F("`%s'") % std::string(lua_tostring(st, i), lua_strlen(st, i))).str();
+      out += (boost::format("`%s'") % std::string(lua_tostring(st, i), lua_strlen(st, i))).str();
       break;
       
     case LUA_TBOOLEAN:  /* booleans */
@@ -66,11 +66,11 @@ dump_stack(lua_State * st)
       break;
       
     case LUA_TNUMBER:  /* numbers */
-      out += (F("%g") % lua_tonumber(st, i)).str();
+      out += (boost::format("%g") % lua_tonumber(st, i)).str();
       break;
       
     default:  /* other values */
-      out += (F("%s") % lua_typename(st, t)).str();
+      out += (boost::format("%s") % lua_typename(st, t)).str();
       break;
       
     }
@@ -116,7 +116,7 @@ Lua
   {
     I(lua_isstring(st, -1));
     string err = string(lua_tostring(st, -1), lua_strlen(st, -1));
-    W(F("%s\n") % err);
+    W(boost::format("%s\n") % err);
     L(F("lua stack: %s") % dump_stack(st));
     lua_pop(st, 1);
     failed = true;
