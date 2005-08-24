@@ -23,10 +23,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/convenience.hpp>
-
 #include "app_state.hh"
 #include "cert.hh"
 #include "constants.hh"
@@ -41,6 +37,8 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"
+#include "platform.hh"
+#include "paths.hh"
 
 using namespace std;
 using boost::shared_ptr;
@@ -376,7 +374,7 @@ process_one_hunk(vector< piece > const & source,
       char code;
       int pos, len;
       if (sscanf(directive.c_str(), " %c %d %d", &code, &pos, &len) != 3)
-	      throw oops("illformed directive '" + directive + "'");
+              throw oops("illformed directive '" + directive + "'");
 
       if (code == 'a')
         {
@@ -636,32 +634,32 @@ process_branch(string const & begin_version,
       // recursively follow any branch commits coming from the branchpoint
       boost::shared_ptr<rcs_delta> curr_delta = r.deltas.find(curr_version)->second;
       for(vector<string>::const_iterator i = curr_delta->branches.begin();
-	  i != curr_delta->branches.end(); ++i)
-	{
-	  string branch;
-	  data branch_data;
-	  hexenc<id> branch_id;
-	  vector< piece > branch_lines;
-	  bool priv = false;
-	  map<string, string>::const_iterator be = cvs.branch_first_entries.find(*i);
+          i != curr_delta->branches.end(); ++i)
+        {
+          string branch;
+          data branch_data;
+          hexenc<id> branch_id;
+          vector< piece > branch_lines;
+          bool priv = false;
+          map<string, string>::const_iterator be = cvs.branch_first_entries.find(*i);
           
-	  if (be != cvs.branch_first_entries.end())
-	    branch = be->second;
-	  else
-	    priv = true;
-	  
-	  L(F("following RCS branch %s = '%s'\n") % (*i) % branch);
+          if (be != cvs.branch_first_entries.end())
+            branch = be->second;
+          else
+            priv = true;
           
-	  construct_version(*curr_lines, *i, branch_lines, r);          	  
-	  insert_into_db(curr_data, curr_id, 
+          L(F("following RCS branch %s = '%s'\n") % (*i) % branch);
+          
+          construct_version(*curr_lines, *i, branch_lines, r);                    
+          insert_into_db(curr_data, curr_id, 
                          branch_lines, branch_data, branch_id, db);
           
           cvs.push_branch(branch, priv);
-	  process_branch(*i, branch_lines, branch_data, branch_id, r, db, cvs);
-	  cvs.pop_branch();
-	  
-	  L(F("finished RCS branch %s = '%s'\n") % (*i) % branch);
-	}
+          process_branch(*i, branch_lines, branch_data, branch_id, r, db, cvs);
+          cvs.pop_branch();
+          
+          L(F("finished RCS branch %s = '%s'\n") % (*i) % branch);
+        }
       
       if (!r.deltas.find(curr_version)->second->next.empty())
         {  
@@ -722,18 +720,17 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
 
 
 void 
-test_parse_rcs_file(fs::path const & filename, database & db)
+test_parse_rcs_file(system_path const & filename, database & db)
 {
   cvs_history cvs;
 
   I(! filename.empty());
-  I(fs::exists(filename));
-  I(! fs::is_directory(filename));
+  I(path_state(filename) == path::file);
 
-  P(F("parsing RCS file %s\n") % filename.string());
+  P(F("parsing RCS file %s\n") % filename);
   rcs_file r;
-  parse_rcs_file(filename.string(), r);
-  P(F("parsed RCS file %s OK\n") % filename.string());
+  parse_rcs_file(filename.as_external(), r);
+  P(F("parsed RCS file %s OK\n") % filename);
 }
 
 
@@ -758,7 +755,7 @@ join_version(vector<string> const & vs, string & v)
        i != vs.end(); ++i)
     {
       if (i != vs.begin())
-	v += ".";
+        v += ".";
       v += *i;
     }
 }
@@ -794,7 +791,7 @@ void cvs_history::index_branchpoint_symbols(rcs_file const & r)
   branch_first_entries.clear();
 
   for (std::multimap<std::string, std::string>::const_iterator i = 
-	 r.admin.symbols.begin(); i != r.admin.symbols.end(); ++i)
+         r.admin.symbols.begin(); i != r.admin.symbols.end(); ++i)
     {
       std::string const & num = i->first;
       std::string const & sym = i->second;
@@ -825,16 +822,16 @@ void cvs_history::index_branchpoint_symbols(rcs_file const & r)
       else if (components.size() > 2 && 
                (components.size() % 2 == 0) &&
                components[components.size() - 2] == string("0"))
-	{
+        {
           // this is a "normal" branch
           //
           // such as "1.3.0.2", where "1.3" is the branchpoint and
           // "1.3.2.1"
 
           first_entry_components = components;
-	  first_entry_components[first_entry_components.size() - 2] 
+          first_entry_components[first_entry_components.size() - 2] 
             = first_entry_components[first_entry_components.size() - 1];          
-	  first_entry_components[first_entry_components.size() - 1] 
+          first_entry_components[first_entry_components.size() - 1] 
             = string("1");
           
           branchpoint_components = components;
@@ -1219,13 +1216,13 @@ import_branch(cvs_history & cvs,
 
 
 void 
-import_cvs_repo(fs::path const & cvsroot, 
+import_cvs_repo(system_path const & cvsroot, 
                 app_state & app)
 {
-  N(!fs::exists(cvsroot / "CVSROOT"),
+  N(path_state(cvsroot / "CVSROOT") != path::directory,
     F("%s appears to be a CVS repository root directory\n"
       "try importing a module instead, with 'cvs_import %s/<module_name>")
-    % cvsroot.native_directory_string() % cvsroot.native_directory_string());
+    % cvsroot % cvsroot);
   
   {
     // early short-circuit to avoid failure after lots of work
@@ -1247,13 +1244,12 @@ import_cvs_repo(fs::path const & cvsroot,
   {
     transaction_guard guard(app.db);
     cvs_tree_walker walker(cvs, app.db);
-    N( fs::exists(cvsroot),
-       F("path %s does not exist") % cvsroot.string());
-    N( fs::is_directory(cvsroot),
-       F("path %s is not a directory") % cvsroot.string());
+    N(path_state(cvsroot) != path::nonexistent,
+       F("path %s does not exist") % cvsroot);
+    N(path_state(cvsroot) == path::directory,
+       F("path %s is not a directory") % cvsroot);
     app.db.ensure_open();
-    N(chdir(cvsroot.native_directory_string().c_str()) == 0,
-      F("could not change directory to %s") % cvsroot.string());
+    change_current_working_dir(cvsroot);
     walk_tree(walker);
     guard.commit();
   }
@@ -1418,16 +1414,16 @@ cluster_consumer::store_manifest_edge(bool head_p)
     {
 
       L(F("skipping cyclical manifest delta %s -> %s\n") 
-	% parent_mid % child_mid);
+        % parent_mid % child_mid);
       // we are potentially breaking the chain one would use to get to
       // p. we need to make sure p exists.
       if (!app.db.manifest_version_exists(parent_mid))
-	{
-	  L(F("writing full manifest %s\n") % parent_mid);
-	  manifest_data mdat;
-	  write_manifest_map(parent_map, mdat);
-	  app.db.put_manifest(parent_mid, mdat);
-	}
+        {
+          L(F("writing full manifest %s\n") % parent_mid);
+          manifest_data mdat;
+          write_manifest_map(parent_map, mdat);
+          app.db.put_manifest(parent_mid, mdat);
+        }
       return;
     }
   
@@ -1445,8 +1441,8 @@ cluster_consumer::store_manifest_edge(bool head_p)
   delta del;
   diff(child_map, parent_map, del);
   rcs_put_raw_manifest_edge(parent_mid.inner(),
-			    child_mid.inner(),
-			    del, app.db);
+                            child_mid.inner(),
+                            del, app.db);
 }
 
 void 

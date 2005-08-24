@@ -17,8 +17,8 @@ std::string get_current_working_dir()
   return std::string(buffer);
 }
   
-void change_current_working_dir(std::string const & to)
+void change_current_working_dir(any_path const & to)
 {
-  E(!chdir(to.c_str()),
+  E(!chdir(to.as_external().c_str()),
     F("cannot change to directory %s: %s") % to % strerror(errno));
 }

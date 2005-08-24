@@ -13,6 +13,7 @@
 
 #include "vocab.hh"
 #include "config.h"
+#include "paths.hh"
 
 void read_password(std::string const & prompt, char * buf, size_t bufsz);
 void get_system_flavour(std::string & ident);
@@ -48,6 +49,7 @@ pid_t get_process_id();
 
 // filesystem stuff
 std::string get_current_working_dir();
-void change_current_working_dir(std::string const & to);
+// calls N() if fails
+void change_current_working_dir(any_path const & to);
 
 #endif // __PLATFORM_HH__

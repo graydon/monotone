@@ -1,5 +1,11 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* platform.hh, unix/fs.cc, win32/fs.cc
+	(change_current_working_dir): Take an any_path, not a string.
+	* rcs_import.{cc,hh}: Convert to paths.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (pid_file): Remove fs::path.
 
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
