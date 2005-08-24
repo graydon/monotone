@@ -3102,8 +3102,8 @@ $ cvs update -r FOO_TAG -d
 @tab
 @smallexample
 @group
-$ monotone update 830ac1a5f033825ab364f911608ec294fe37f7bc
-$ monotone update t:FOO_TAG
+$ monotone update -r 830ac1a5f033825ab364f911608ec294fe37f7bc
+$ monotone update -r t:FOO_TAG
 @end group
 @end smallexample
 @end multitable
@@ -3613,11 +3613,11 @@ should be used when reverting files to ensure that the correct set of
 files is reverted.}
 
 @item monotone update
-@itemx monotone update @var{revision}
-Without a @var{revision} argument, this command incorporates ``recent''
-changes found in your database into your working copy. It does this by
-performing 3 separate stages. If any of these stages fails, the update
-aborts, doing nothing. The stages are:
+@itemx monotone update --revision=@var{revision}
+Without a @option{--revision} argument, this command incorporates
+``recent'' changes found in your database into your working copy. It
+does this by performing 3 separate stages. If any of these stages
+fails, the update aborts, doing nothing. The stages are:
 
 @itemize
 @item
@@ -3634,13 +3634,13 @@ if the merge is successful, write the result over top of the working
 copy.
 @end itemize
 
-With an explicit @var{revision} argument, the command uses that revision
+With an explicit @option{--revision} argument, the command uses that revision
 as the update target instead of finding an acceptable candidate.
 
 The effect is always to take whatever changes you have made in the
 working copy, and to ``transpose'' them onto a new revision, using
 monotone's 3-way merge algorithm to achieve good results.  Note that
-with the explicit @var{revision} argument, it is possible to update
+with the explicit @option{--revision} argument, it is possible to update
 ``backwards'' or ``sideways'' in history --- for example, reverting to
 an earlier revision, or if your branch has two heads, updating to the
 other.  In all cases, the end result will be whatever revision you
@@ -3650,7 +3650,7 @@ applied.
 If a @option{--branch} option is specified, the @command{update} command
 tries to select the revision to update to from this branch.  The branch
 becomes the new default branch of the working copy (even if you also
-specify an explicit @var{revision} argument).
+specify an explicit @option{--revision} argument).
 
 @item monotone refresh_inodeprints
 This command puts the current working copy into @ref{Inodeprints} mode,
@@ -6800,7 +6800,7 @@ time, and if @file{MT/log} exists and is non-empty, you can cannot
 specify either of them at all.
 @comment TROFF INPUT: .TP
 
-@item @b{update} @i{[revision]}
+@item @b{update} @i{[--revision=revision]}
 Update working copy.
 @comment TROFF INPUT: .SH DESCRIPTION
 
