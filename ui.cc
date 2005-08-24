@@ -167,7 +167,7 @@ void tick_write_count::write_ticks()
           // bytes, not by characters)
           tickline1.resize(tw);
         }
-      clog << outprep(tickline1) << outprep("\n");
+      clog << tickline1 << "\n";
     }
   if (tw && length(utf8(tickline2)) > tw)
     {
@@ -177,13 +177,13 @@ void tick_write_count::write_ticks()
       // bytes, not by characters)
       tickline2.resize(tw + 1);
     }
-  clog << outprep(tickline2);
+  clog << tickline2;
   clog.flush();
 }
 
 void tick_write_count::clear_line()
 {
-  clog << outprep("\n");
+  clog << endl;
 }
 
 
@@ -248,13 +248,13 @@ void tick_write_dot::write_ticks()
         }
     }
 
-  clog << outprep(tickline1) << outprep(tickline2);
+  clog << tickline1 << tickline2;
   clog.flush();
 }
 
 void tick_write_dot::clear_line()
 {
-  clog << outprep("\n");
+  clog << endl;
 }
 
 
@@ -327,21 +327,13 @@ user_interface::fatal(string const & fatal)
          % fatal % PACKAGE_BUGREPORT);
 }
 
-void
-user_interface::ensure_clean_line()
-{
-  if (last_write_was_a_tick)
-    {
-      write_ticks();
-      t_writer->clear_line();
-    }
-  last_write_was_a_tick = false;
-}
 
 static inline string 
 sanitize(string const & line)
 {
-  // UTF-8 does not have safe values in the sub-0x20 range.
+  // FIXME: you might want to adjust this if you're using a charset
+  // which has safe values in the sub-0x20 range. ASCII, UTF-8, 
+  // and most ISO8859-x sets do not.
   string tmp;
   tmp.reserve(line.size());
   for (size_t i = 0; i < line.size(); ++i)
@@ -356,13 +348,24 @@ sanitize(string const & line)
   return tmp;
 }
 
+void
+user_interface::ensure_clean_line()
+{
+  if (last_write_was_a_tick)
+    {
+      write_ticks();
+      t_writer->clear_line();
+    }
+  last_write_was_a_tick = false;
+}
+
 void 
 user_interface::inform(string const & line)
 {
   string prefixedLine;
   prefix_lines_with(_("monotone: "), line, prefixedLine);
   ensure_clean_line();
-  clog << outprep(sanitize(prefixedLine)) << endl;
+  clog << sanitize(prefixedLine) << endl;
   clog.flush();
 }
 

@@ -16,13 +16,12 @@
 #include "package_revision.h"
 #include "package_full_revision.h"
 #include "sanity.hh"
-#include "transforms.hh"
 
 void
 print_version()
 {
-  std::cout << outprep(F("%s (base revision: %s)")
-                       % PACKAGE_STRING % package_revision_constant)
+  std::cout << (F("%s (base revision: %s)")
+                % PACKAGE_STRING % package_revision_constant)
             << std::endl;
 }
 

@@ -1,3 +1,16 @@
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* Back out most changes since
+	b580c6ac5bf8eea1f442b8bddc60283b047ade1e.  Handling charsets
+	properly by working in utf8 and then converting sucks.  Problems
+	include
+	  - gettext hates you (wants to return stuff in local charset)
+	  - strerror hates you (same reason, but you can't turn it off)
+	  - can't report charset conversion errors
+	We thus return to our "sorta-correct, by accident" status quo.
+	Only change left in is signedness fix in
+	5548868ab56d939c1fd8713aa2ac8caacd1184a1.
+
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
 	* ui.cc (sanitize): Fix signedness bug in comparison.

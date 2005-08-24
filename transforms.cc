@@ -502,7 +502,7 @@ canonical_base64(string const & s)
 
 // general character code conversion routines
 
-string 
+static string 
 system_charset()
 {
   char const * locale_charset_name = stringprep_locale_charset ();
@@ -597,19 +597,6 @@ utf8_to_ace(utf8 const & utf, ace & a)
     % decode_idna_error(res));
   a = string(out);
   free(out);
-}
-
-external
-outprep(std::string const & msg)
-{
-  external localized_msg;
-  utf8_to_system(utf8(msg), localized_msg);
-  return localized_msg;
-}
-external
-outprep(boost::format const & format)
-{
-  return outprep(format.str());
 }
 
 // hack: this is an unexposed function in libidna

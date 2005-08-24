@@ -238,7 +238,7 @@ cpp_main(int argc, char ** argv)
   setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
-  bind_textdomain_codeset(PACKAGE, "UTF-8");
+
 
   // we want to catch any early informative_failures due to charset
   // conversion etc
@@ -521,23 +521,16 @@ cpp_main(int argc, char ** argv)
       if (count != 0)
         {
           ostringstream sstr;
-          sstr << outprep(F("Options specific to 'monotone %s':") % u.which);
+          sstr << F("Options specific to 'monotone %s':") % u.which;
           options[0].descrip = strdup(sstr.str().c_str());
 
           options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
           L(F("Added 'hidden' to option # %d\n") % options[0].argInfo);
         }
 
-      // switch gettext() back to returning native charset strings, since popt
-      // will simply dump whatever gettext() returns.
-      bind_textdomain_codeset(PACKAGE, system_charset().c_str());
       poptPrintHelp(ctx(), stdout, 0);
-      bind_textdomain_codeset(PACKAGE, "UTF-8");
-
-      std::ostringstream usage_stream;
-      usage_stream << std::endl;
-      commands::explain_usage(u.which, usage_stream);
-      std::cout << outprep(usage_stream.str());
+      cout << endl;
+      commands::explain_usage(u.which, cout);
       clean_shutdown = true;
       return 0;
     }
