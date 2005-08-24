@@ -1,5 +1,11 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc (assert_sqlite3_ok): Don't print the raw sqlite
+	error code.  Do add some auxiliary information when sqlite errors
+	are confusing.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* Back out most changes since
 	b580c6ac5bf8eea1f442b8bddc60283b047ade1e.  Handling charsets
 	properly by working in utf8 and then converting sucks.  Problems

@@ -166,7 +166,23 @@ assert_sqlite3_ok(sqlite3 *s)
   
   const char * errmsg = sqlite3_errmsg(s);
 
-  E(errcode == SQLITE_OK, F("sqlite error [%d]: %s") % errcode % errmsg);
+  // sometimes sqlite is not very helpful
+  // so we keep a table of errors people have gotten and more helpful versions
+  if (errcode != SQLITE_OK)
+    {
+      // first log the code so we can find _out_ what the confusing code
+      // was... note that code does not uniquely identify the errmsg, unlike
+      // errno's.
+      L(F("got sqlite error: %d: %s") % errcode % errmsg);
+    }
+  std::string auxiliary_message = "";
+  if (errcode == SQLITE_ERROR)
+    {
+      auxiliary_message = _("make sure database and containing directory are writeable");
+    }
+  // if the last message is empty, the \n will be stripped off too
+  E(errcode == SQLITE_OK,
+    F("sqlite error: %s\n%s") % errcode % errmsg % auxiliary_message);
 }
 
 struct sqlite3 * 
