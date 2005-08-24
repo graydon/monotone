@@ -1,5 +1,10 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.cc (cpp_main): Use bind_textdomain_codeset to request
+	that all gettext'ed strings be returned in UTF-8.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* idna/nfkc.c (g_utf8_strlen): Expose.
 	* transforms.{cc,hh} (length): New function.
 	* ui.cc (write_ticks): Use length() instead of .size() to

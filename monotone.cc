@@ -238,7 +238,7 @@ cpp_main(int argc, char ** argv)
   setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
-
+  bind_textdomain_codeset(PACKAGE, "UTF-8");
 
   // we want to catch any early informative_failures due to charset
   // conversion etc
