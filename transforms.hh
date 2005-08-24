@@ -177,6 +177,9 @@ void utf8_to_system(utf8 const & utf, external & system);
 void ace_to_utf8(ace const & ac, utf8 & utf);
 void utf8_to_ace(utf8 const & utf, ace & a);
 
+// returns length in characters (not bytes)
+size_t length(utf8 const & utf);
+
 fs::path localized(file_path const & path);
 fs::path localized(local_path const & path);
 fs::path localized(utf8 const & path);

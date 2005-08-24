@@ -599,6 +599,15 @@ utf8_to_ace(utf8 const & utf, ace & a)
   free(out);
 }
 
+// hack: this is an unexposed function in libidna
+extern "C" long g_utf8_strlen(const char * p, size_t max);
+
+size_t
+length(utf8 const & utf)
+{
+  return g_utf8_strlen(utf().c_str(), utf().size());
+}
+
 // Lots of gunk to avoid charset conversion as much as possible.  Running
 // iconv over every element of every path in a 30,000 file manifest takes
 // multiple seconds, which then is a minimum bound on pretty much any

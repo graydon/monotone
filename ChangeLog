@@ -1,3 +1,13 @@
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* idna/nfkc.c (g_utf8_strlen): Expose.
+	* transforms.{cc,hh} (length): New function.
+	* ui.cc (write_ticks): Use length() instead of .size() to
+	calculate string widths; should support multibyte characters
+	better.  (Still some problems relating to truncating strings to
+	avoid overflow -- calculate truncation by length, but perform
+	truncation by bytes...)
+
 2005-08-24  Benoît Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.
