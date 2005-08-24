@@ -6,6 +6,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "boost/format.hpp"
+
 #include "revision.hh"
 #include "lua.hh"
 #include "manifest.hh"
@@ -176,6 +178,9 @@ void system_to_utf8(external const & system, utf8 & utf);
 void utf8_to_system(utf8 const & utf, external & system);
 void ace_to_utf8(ace const & ac, utf8 & utf);
 void utf8_to_ace(utf8 const & utf, ace & a);
+// all messages printed to the user should go through this function
+external outprep(std::string const & msg);
+external outprep(boost::format const & format);
 
 // returns length in characters (not bytes)
 size_t length(utf8 const & utf);

@@ -1,5 +1,13 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* transforms.cc (outprep): New function.
+	* ui.cc (inform): Use it.
+	* monotone.cc (cpp_main): Use it.
+	Everything that writes user-intended output directly (i.e., via
+	cout) must call outprep() on that data before printing it.
+	
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.cc (cpp_main): Trick popt into converting its generated
 	help messages into the current locale's charset.
 

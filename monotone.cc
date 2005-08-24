@@ -522,7 +522,7 @@ cpp_main(int argc, char ** argv)
       if (count != 0)
         {
           ostringstream sstr;
-          sstr << F("Options specific to 'monotone %s':") % u.which;
+          sstr << outprep(F("Options specific to 'monotone %s':") % u.which);
           options[0].descrip = strdup(sstr.str().c_str());
 
           options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
@@ -535,8 +535,10 @@ cpp_main(int argc, char ** argv)
       poptPrintHelp(ctx(), stdout, 0);
       bind_textdomain_codeset(PACKAGE, "UTF-8");
 
-      cout << endl;
-      commands::explain_usage(u.which, cout);
+      std::ostringstream usage_stream;
+      usage_stream << std::endl;
+      commands::explain_usage(u.which, usage_stream);
+      std::cout << outprep(usage_stream.str());
       clean_shutdown = true;
       return 0;
     }

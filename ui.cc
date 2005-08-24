@@ -327,25 +327,6 @@ user_interface::fatal(string const & fatal)
          % fatal % PACKAGE_BUGREPORT);
 }
 
-
-static inline string 
-sanitize(string const & line)
-{
-  // UTF-8 does not have safe values in the sub-0x20 range.
-  string tmp;
-  tmp.reserve(line.size());
-  for (size_t i = 0; i < line.size(); ++i)
-    {
-      if ((line[i] == '\n')
-          || (line[i] >= static_cast<char>(0x20) 
-              && line[i] != static_cast<char>(0x7F)))
-        tmp += line[i];
-      else
-        tmp += ' ';
-    }
-  return tmp;
-}
-
 void
 user_interface::ensure_clean_line()
 {
@@ -363,9 +344,7 @@ user_interface::inform(string const & line)
   string prefixedLine;
   prefix_lines_with(_("monotone: "), line, prefixedLine);
   ensure_clean_line();
-  external localized_text;
-  utf8_to_system(utf8(sanitize(prefixedLine)), localized_text);
-  clog << localized_text << endl;
+  clog << outprep(prefixedLine) << endl;
   clog.flush();
 }
 
