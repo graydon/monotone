@@ -331,9 +331,7 @@ user_interface::fatal(string const & fatal)
 static inline string 
 sanitize(string const & line)
 {
-  // FIXME: you might want to adjust this if you're using a charset
-  // which has safe values in the sub-0x20 range. ASCII, UTF-8, 
-  // and most ISO8859-x sets do not.
+  // UTF-8 does not have safe values in the sub-0x20 range.
   string tmp;
   tmp.reserve(line.size());
   for (size_t i = 0; i < line.size(); ++i)
@@ -365,7 +363,9 @@ user_interface::inform(string const & line)
   string prefixedLine;
   prefix_lines_with(_("monotone: "), line, prefixedLine);
   ensure_clean_line();
-  clog << sanitize(prefixedLine) << endl;
+  external localized_text;
+  utf8_to_system(utf8(sanitize(prefixedLine)), localized_text);
+  clog << localized_text << endl;
   clog.flush();
 }
 

@@ -1,5 +1,10 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* ui.cc (inform, sanitize): Convert all output from utf8 to
+	current locale's charset.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.cc (cpp_main): Use bind_textdomain_codeset to request
 	that all gettext'ed strings be returned in UTF-8.
 
