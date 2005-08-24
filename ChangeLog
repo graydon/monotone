@@ -1,3 +1,10 @@
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* app_state.cc: More paths.hh conversion.
+	(app_state::prefix): Remove.
+	* commands.cc: Remove uses of app.prefix.
+	* automate.cc (automate_attributes): Likewise.
+
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
 	* paths.hh (any_path::as_internal): On second thought, return a

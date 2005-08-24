@@ -1072,7 +1072,7 @@ CMD(add, "working copy", "PATH...", "add files to working copy", OPT_NONE)
 
   vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    paths.push_back(app.prefix(*i));
+    paths.push_back(file_path(external, *i));
 
   build_additions(paths, m_old, app, work);
 
@@ -1096,7 +1096,7 @@ CMD(drop, "working copy", "PATH...", "drop files from working copy", OPT_NONE)
 
   vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    paths.push_back(app.prefix(*i));
+    paths.push_back(file_path(external, *i));
 
   build_deletions(paths, m_old, app, work);
 
@@ -1121,7 +1121,9 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy",
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
 
-  build_rename(app.prefix(idx(args, 0)()), app.prefix(idx(args, 1)()), m_old, work);
+  build_rename(file_path(external, idx(args, 0)()),
+               file_path(external, idx(args, 1)()),
+               m_old, work);
   
   put_path_rearrangement(work);
   
@@ -1286,7 +1288,7 @@ CMD(cat, "informative",
         {
           revision_id rid;
           complete(app, idx(args, 1)(), rid);
-          file_path fp = app.prefix(idx(args, 2));
+          file_path fp = file_path(external, idx(args, 2));
           manifest_id mid;
           app.db.get_revision_manifest(rid, mid);
           manifest_map m;
@@ -2119,7 +2121,7 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE",
       read_attr_map(attr_data, attrs);
     }
   
-  file_path path = app.prefix(idx(args,1)());
+  file_path path(external, idx(args,1)());
   N(file_exists(path), F("file '%s' not found") % path);
 
   bool attrs_modified = false;

@@ -62,7 +62,7 @@ app_state::allow_working_copy()
 
       read_options();
 
-      string dbname = absolutify(options[database_option]());
+      system_path dbname = system_path(options[database_option]);
       if (dbname != "") db.set_filename(mkpath(dbname));
       if (branch_name().empty())
         branch_name = options[branch_option];
@@ -109,10 +109,10 @@ app_state::create_working_copy(std::string const & dir)
   L(F("create working copy in %s\n") % target);
   
   {
-    fs::path new_dir = mkpath(target);
+    system_path new_dir(target);
     try
       {
-        fs::create_directories(new_dir);
+        mkdir_p(new_dir);
       }
     catch (fs::filesystem_error & err)
       {
@@ -121,21 +121,17 @@ app_state::create_working_copy(std::string const & dir)
           % err.path1().native_directory_string()
           % strerror(err.native_error()));
       }
-    N(chdir(new_dir.native_directory_string().c_str()) != -1,
-      F("cannot change to new directory %s\n") 
-      % new_dir.native_directory_string());
+    change_current_working_dir(new_dir);
     
     relative_directory = file_path();
   }
 
-  local_path mt(book_keeping_dir);
-
-  N(!directory_exists(mt),
+  N(!directory_exists(bookkeeping_root),
     F("monotone book-keeping directory '%s' already exists in '%s'\n") 
-    % book_keeping_dir % target);
+    % bookkeeping_root % target);
 
   L(F("creating book-keeping directory '%s' for working copy in '%s'\n")
-    % book_keeping_dir % target);
+    % bookkeeping_root % target);
 
   mkdir_p(mt);
 
@@ -151,15 +147,6 @@ app_state::create_working_copy(std::string const & dir)
   load_rcfiles();
 }
 
-file_path
-app_state::prefix(utf8 const & path)
-{
-  fs::path p1 = mkpath(relative_directory()) / mkpath(path());
-  file_path p2(p1.normalize().string());
-  L(F("'%s' prefixed to '%s'\n") % path() % p2());
-  return p2;
-}
-
 void 
 app_state::set_restriction(path_set const & valid_paths, 
                            vector<utf8> const & paths,
@@ -171,7 +158,7 @@ app_state::set_restriction(path_set const & valid_paths,
   restrictions.clear();
   for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      file_path p = prefix(*i);
+      file_path p(external, *i);
 
       if (respect_ignore && lua.hook_ignore_file(p)) 
         {

@@ -76,7 +76,6 @@ public:
   void require_working_copy(std::string const & explanation = "");
   void create_working_copy(std::string const & dir);
 
-  file_path prefix(utf8 const & path);
   void app_state::set_restriction(path_set const & valid_paths, 
                              std::vector<utf8> const & paths,
                              bool respect_ignore = true);
