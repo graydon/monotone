@@ -20,6 +20,8 @@
 
 #include "quick_alloc.hh" // to get the QA() macro
 
+#include "paths.hh"
+
 #ifdef __GNUC__
 #define NORETURN __attribute__((noreturn))
 #else

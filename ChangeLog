@@ -1,5 +1,9 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
-	
+
+	* paths.hh, sanity.hh: Compilation fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc: Update tests to use path_state_* and pass utf8
 	objects.
 	

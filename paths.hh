@@ -8,7 +8,7 @@
 
 // safe, portable, fast, simple file handling -- in that order
 
-#include <ios_fwd>
+#include <iosfwd>
 #include <string>
 #include <vector>
 
@@ -38,11 +38,10 @@ public:
   { return data; }
 protected:
   utf8 data;
-private:
   any_path();
   any_path(any_path const & other);
   any_path & operator=(any_path const & other);
-}
+};
 
 std::ostream & operator<<(std::ostream & o, any_path const & a);
 
@@ -60,9 +59,6 @@ public:
   bool operator ==(const file_path & other) const
   { return data == other.data; }
 
-  bool operator !=(const file_path & other) const
-  { return data != other.data; }
-
   bool operator <(const file_path & other) const
   { return data < other.data; }
 
@@ -79,10 +75,8 @@ private:
   //   -- are confirmed to be normalized and relative
   //   -- not to be in MT/
   file_path(source_type type, std::string const & path);
-  file_path(source_type type, utf8 const & path);
   friend file_path file_path_internal(std::string const & path);
-  friend file_path file_path_external(std::string const & path);
-  
+  friend file_path file_path_external(utf8 const & path);
 };
 
 // these are the public file_path constructors
