@@ -42,12 +42,7 @@ bool find_working_copy(fs::path const & search_root,
                        fs::path & working_copy_restriction);
 
 system_path get_homedir();
-std::string absolutify(std::string const & path);
 std::string absolutify_for_command_line(std::string const & path);
-std::string tilde_expand(std::string const & path);
-
-//   - file is inside the private MT/ directory
-bool book_keeping_file(local_path const & path);
 
 // A path::state can be used as a boolean context for exists/doesn't exist,
 // or can be used in a switch statement to consider all possibilities.
@@ -55,46 +50,35 @@ namespace path
 {
   typedef enum 
     {
-      nonexistent = 0;
-      directory = 1;
-      file = 2;
+      nonexistent = 0,
+      directory = 1,
+      file = 2,
     } state;
-}
+};
 path::state path_state(any_path const & path);
 
-bool directory_exists(bookkeeping_path const & path);
-bool directory_exists(file_path const & path);
-bool file_exists(bookkeeping_path const & path);
-bool file_exists(file_path const & path);
+bool directory_exists(any_path const & path);
+bool file_exists(any_path const & path);
 
 bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
 
 // returns true if the string content is binary according to monotone euristic
 bool guess_binary(std::string const & s);
 
-void mkdir_p(bookkeeping_path const & path);
 void mkdir_p(file_path const & path);
 void make_dir_for(file_path const & p);
 
-void delete_file(file_path const & path);
-void delete_file(bookkeeping_path const & path);
-void delete_dir_recursive(file_path const & path);
-void delete_dir_recursive(bookkeeping_path const & path);
+void delete_file(any_path const & path);
+void delete_dir_recursive(any_path const & path);
 
-void move_file(file_path const & old_path,
-               file_path const & new_path);
-void move_file(local_path const & old_path,
-               local_path const & new_path);
+void move_file(any_path const & old_path,
+               any_path const & new_path);
 
-void move_dir(file_path const & old_path,
-              file_path const & new_path);
-void move_dir(local_path const & old_path,
-              local_path const & new_path);
+void move_dir(any_path const & old_path,
+              any_path const & new_path);
 
-void read_data(local_path const & path, data & data);
-void read_data(local_path const & path, base64< gzip<data> > & data);
-void read_data(file_path const & path, data & data);
-void read_data(file_path const & path, base64< gzip<data> > & data);
+void read_data(any_path const & path, data & data);
+void read_data(any_path const & path, base64< gzip<data> > & data);
 void read_localized_data(file_path const & path, 
                          data & dat, 
                          lua_hooks & lua);
@@ -105,10 +89,8 @@ void read_localized_data(file_path const & path,
 // This function knows that "-" means "stdin".
 void read_data_for_command_line(utf8 const & path, data & dat);
 
-void write_data(local_path const & path, data const & data);
-void write_data(local_path const & path, base64< gzip<data> > const & data);
-void write_data(file_path const & path, data const & data);
-void write_data(file_path const & path, base64< gzip<data> > const & data);
+void write_data(any_path const & path, data const & data);
+void write_data(any_path const & path, base64< gzip<data> > const & data);
 void write_localized_data(file_path const & path, 
                           data const & dat, 
                           lua_hooks & lua);
