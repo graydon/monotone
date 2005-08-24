@@ -781,7 +781,7 @@ cvs_history::set_filename(string const & file,
   if (last_slash!=std::string::npos && last_slash>=5
         && ss.substr(last_slash-5,6)=="Attic/")
      ss.erase(last_slash-5,6);
-  curr_file = file_path(internal, ss);
+  curr_file = file_path_internal(ss);
   curr_file_interned = path_interner.intern(ss);
 }
 

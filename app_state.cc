@@ -175,7 +175,7 @@ app_state::set_restriction(path_set const & valid_paths,
   // assume current directory
   if ((depth != -1) && restrictions.empty()) 
     {
-      restrictions.insert(file_path(external, "."));
+      restrictions.insert(file_path_external("."));
     }
 }
 

@@ -594,7 +594,7 @@ enable_inodeprints()
 void 
 get_attr_path(file_path & a_path)
 {
-  a_path = file_path(internal, attr_file_name);
+  a_path = file_path_internal(attr_file_name);
   L(F("attribute map path is %s\n") % a_path);
 }
 
@@ -622,7 +622,7 @@ read_attr_map(data const & dat, attr_map & attr)
     {
       parser.sym();
       parser.str(file);
-      file_path fp(internal, file);
+      file_path fp = file_path_internal(file);
 
       while (parser.symp() && 
              !parser.symp(syms::file)) 

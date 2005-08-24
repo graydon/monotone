@@ -227,7 +227,7 @@ read_manifest_map(data const & dat,
         file_name = dat().substr(file_name_begin);
       else
         file_name = dat().substr(file_name_begin, pos - file_name_begin);
-      man.insert(manifest_entry(file_path(internal, file_name),
+      man.insert(manifest_entry(file_path_internal(file_name),
                                 hexenc<id>(ident)));
       // skip past the '\n'
       ++pos;

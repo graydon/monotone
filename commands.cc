@@ -1072,7 +1072,7 @@ CMD(add, "working copy", "PATH...", "add files to working copy", OPT_NONE)
 
   vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    paths.push_back(file_path(external, *i));
+    paths.push_back(file_path_external(*i));
 
   build_additions(paths, m_old, app, work);
 
@@ -1096,7 +1096,7 @@ CMD(drop, "working copy", "PATH...", "drop files from working copy", OPT_NONE)
 
   vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    paths.push_back(file_path(external, *i));
+    paths.push_back(file_path_external(*i));
 
   build_deletions(paths, m_old, app, work);
 
@@ -1121,8 +1121,8 @@ CMD(rename, "working copy", "SRC DST", "rename entries in the working copy",
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
 
-  build_rename(file_path(external, idx(args, 0)),
-               file_path(external, idx(args, 1)),
+  build_rename(file_path_external(idx(args, 0)),
+               file_path_external(idx(args, 1)),
                m_old, work);
   
   put_path_rearrangement(work);
@@ -1247,7 +1247,7 @@ CMD(identify, "working copy", "[PATH]", "calculate identity of PATH or stdin",
 
   if (args.size() == 1)
     {
-      read_localized_data(file_path(external, idx(args, 0)), dat, app.lua);
+      read_localized_data(file_path_external(idx(args, 0)), dat, app.lua);
     }
   else
     {
@@ -1288,7 +1288,7 @@ CMD(cat, "informative",
         {
           revision_id rid;
           complete(app, idx(args, 1)(), rid);
-          file_path fp = file_path(external, idx(args, 2));
+          file_path fp = file_path_external(idx(args, 2));
           manifest_id mid;
           app.db.get_revision_manifest(rid, mid);
           manifest_map m;
@@ -3499,7 +3499,7 @@ CMD(log, "informative", "[FILE]",
     throw usage(name);
 
   if (args.size() > 0)
-    file = file_path(external, idx(args, 0)); /* specified a file */
+    file = file_path_external(idx(args, 0)); /* specified a file */
 
   set< pair<file_path, revision_id> > frontier;
 
