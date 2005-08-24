@@ -1,5 +1,9 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 	
+	* Switch rest of instances to using convenience functions.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+	
 	* Switch many instances to using convenience functions.
 	
 2005-08-24  Nathaniel Smith  <njs@pobox.com>

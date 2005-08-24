@@ -295,7 +295,7 @@ static void test_file_path_internal()
       path_prefix = (i ? "" : "blah/blah/blah");
       for (char const ** c = baddies; *c; ++c)
         {
-          file_path fp(internal, *c);
+          file_path fp(file_path::internal, *c);
           BOOST_CHECK(fp.as_internal() == *c);
           BOOST_CHECK(file_path(fp.as_internal()) == fp);
           std::vector<path_component> split_test;
@@ -313,7 +313,7 @@ static void test_file_path_internal()
 
 static void check_fp_normalizes_to(char * before, char * after)
 {
-  file_path fp(external, before);
+  file_path fp(file_path::external, before);
   BOOST_CHECK(fp.as_internal() == after);
   BOOST_CHECK(file_path(internal, fp.as_internal()) == after);
   // we compare after to the external form too, since as far as we know
@@ -409,8 +409,8 @@ static void test_file_path_external_prefix_a_b()
 
 static void test_split_join()
 {
-  file_path fp1(internal, "foo/bar/baz");
-  file_path fp2(internal, "bar/baz/foo");
+  file_path fp1(file_path::internal, "foo/bar/baz");
+  file_path fp2(file_path::internal, "bar/baz/foo");
   typedef std::vector<path_component> pcv;
   pcv split1, split2;
   fp1.split(split1);
@@ -431,7 +431,7 @@ static void test_split_join()
   BOOST_CHECK(split1[1] == split2[0]);
   BOOST_CHECK(split1[2] == split2[1]);
 
-  file_path fp3(internal, "");
+  file_path fp3(file_path_internal, "");
   pcv split3;
   fp3.split(split3);
   BOOST_CHECK(split3.size() == 1);

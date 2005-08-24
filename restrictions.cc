@@ -63,7 +63,7 @@ add_intermediate_paths(path_set & paths)
       std::string::size_type j = std::string::npos;
       while ((j = (*i)().rfind('/', j)) != std::string::npos)
         {
-          file_path dir(internal, (*i)().substr(0, j));
+          file_path dir = file_path_internal((*i)().substr(0, j));
           if (intermediate_paths.find(dir) != intermediate_paths.end()) break;
           if (paths.find(dir) != paths.end()) break;
           intermediate_paths.insert(dir);

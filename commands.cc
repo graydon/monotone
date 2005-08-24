@@ -2121,7 +2121,7 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE",
       read_attr_map(attr_data, attrs);
     }
   
-  file_path path(external, idx(args,1));
+  file_path path = file_path_external(idx(args,1));
   N(file_exists(path), F("file '%s' not found") % path);
 
   bool attrs_modified = false;
@@ -3460,7 +3460,7 @@ CMD(annotate, "informative", "PATH",
   if ((args.size() != 1) || (app.revision_selectors.size() > 1))
     throw usage(name);
 
-  file_path file(external, idx(args, 0));
+  file_path file = file_path_external(idx(args, 0));
   if (app.revision_selectors.size() == 0)
     get_revision_id(rid);
   else 

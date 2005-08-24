@@ -152,11 +152,11 @@ app_state::set_restriction(path_set const & valid_paths,
                            vector<utf8> const & paths,
                            bool respect_ignore)
 {
-  static file_path root(internal, "");
+  static file_path root = file_path_internal("");
   restrictions.clear();
   for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      file_path p(external, *i);
+      file_path p = file_path_external(*i);
 
       if (respect_ignore && lua.hook_ignore_file(p)) 
         {
@@ -182,7 +182,7 @@ app_state::set_restriction(path_set const & valid_paths,
 bool
 app_state::restriction_includes(file_path const & path)
 {
-  static file_path root(internal, "");
+  static file_path root = file_path_internal("");
   if (restrictions.empty()) 
     {
       return true;
@@ -208,7 +208,7 @@ app_state::restriction_includes(file_path const & path)
     {
       L(F("checking restricted path set for '%s'\n") % test.string());
 
-      file_path p(internal, test.string());
+      file_path p = file_path_internal(test.string());
       path_set::const_iterator i = restrictions.find(p);
 
       if (i != restrictions.end()) 

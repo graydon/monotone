@@ -1484,7 +1484,7 @@ cluster_consumer::build_change_set(cvs_cluster const & c,
   for (cvs_cluster::entry_map::const_iterator i = c.entries.begin();
        i != c.entries.end(); ++i)
     {
-      file_path pth(internal, cvs.path_interner.lookup(i->first));
+      file_path pth = file_path_internal(cvs.path_interner.lookup(i->first));
       file_id fid(cvs.file_version_interner.lookup(i->second.version));
       if (i->second.live)
         {
