@@ -274,10 +274,10 @@ static void test_file_path_internal()
                             0 };
   path_prefix = "";
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path(internal, *c), logic_error);
+    BOOST_CHECK_THROW(file_path_internal(*c), logic_error);
   path_prefix = "blah/blah/blah";
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path(internal, *c), logic_error);
+    BOOST_CHECK_THROW(file_path_internal(*c), logic_error);
 
   char const * goodies[] = {"",
                             "foo",
@@ -295,7 +295,7 @@ static void test_file_path_internal()
       path_prefix = (i ? "" : "blah/blah/blah");
       for (char const ** c = baddies; *c; ++c)
         {
-          file_path fp(file_path::internal, *c);
+          file_path fp = file_path_internal(*c);
           BOOST_CHECK(fp.as_internal() == *c);
           BOOST_CHECK(file_path(fp.as_internal()) == fp);
           std::vector<path_component> split_test;
@@ -315,7 +315,7 @@ static void check_fp_normalizes_to(char * before, char * after)
 {
   file_path fp(file_path::external, before);
   BOOST_CHECK(fp.as_internal() == after);
-  BOOST_CHECK(file_path(internal, fp.as_internal()) == after);
+  BOOST_CHECK(file_path_internal(fp.as_internal()) == after);
   // we compare after to the external form too, since as far as we know
   // relative normalized posix paths are always good win32 paths too
   BOOST_CHECK(fp.as_external() == after);
@@ -343,7 +343,7 @@ static void test_file_path_external_no_prefix()
                             "c:/foo",
                             0 };
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path(external, *c), informative_failure);
+    BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
   
   check_fp_normalizes_to("", "");
   check_fp_normalizes_to("foo", "foo");
@@ -381,7 +381,7 @@ static void test_file_path_external_prefix_a_b()
                             "",
                             0 };
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path(external, *c), informative_failure);
+    BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
   
   check_fp_normalizes_to("foo", "a/b/foo");
   check_fp_normalizes_to("foo/bar", "a/b/foo/bar");
@@ -409,8 +409,8 @@ static void test_file_path_external_prefix_a_b()
 
 static void test_split_join()
 {
-  file_path fp1(file_path::internal, "foo/bar/baz");
-  file_path fp2(file_path::internal, "bar/baz/foo");
+  file_path fp1 = file_path_internal("foo/bar/baz");
+  file_path fp2 = file_path_internal("bar/baz/foo");
   typedef std::vector<path_component> pcv;
   pcv split1, split2;
   fp1.split(split1);

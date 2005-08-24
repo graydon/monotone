@@ -1,4 +1,9 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
+	
+	* paths.cc: Update tests to use path_state_* and pass utf8
+	objects.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
 	* paths.hh (file_path_external): Take a utf8() object, always.
 
