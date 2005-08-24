@@ -910,7 +910,7 @@ public:
   }
   virtual void visit_file(file_path const & path)
   {
-    string file = path();
+    string file = path.as_external();
     if (file.substr(file.size() - 2) == string(",v"))      
       {
         try

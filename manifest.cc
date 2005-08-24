@@ -185,7 +185,7 @@ build_restricted_manifest_map(path_set const & paths,
             }
           else
             {
-              W(F("missing %s") % (*i)());
+              W(F("missing %s") % (*i));
               missing_files++;
             }
         }

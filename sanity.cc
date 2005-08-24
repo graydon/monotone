@@ -43,20 +43,20 @@ sanity::~sanity()
 void 
 sanity::dump_buffer()
 {
-  if (filename != "")
+  if (!filename.empty())
     {
-      ofstream out(filename.c_str());
+      ofstream out(filename.as_external());
       if (out)
         {
           copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
           copy(gasp_dump.begin(), gasp_dump.end(), ostream_iterator<char>(out));
-          ui.inform(string("wrote debugging log to ") + filename + "\n");
+          ui.inform((F("wrote debugging log to %s") % filename).str());
         }
       else
-        ui.inform("failed to write debugging log to " + filename + "\n");
+        ui.inform((F("failed to write debugging log to %s") % filename).str());
     }
   else
-    ui.inform(string("discarding debug log (maybe you want --debug or --dump?)\n"));
+    ui.inform(_("discarding debug log (maybe you want --debug or --dump?)"));
 }
 
 void 

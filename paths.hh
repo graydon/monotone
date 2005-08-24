@@ -54,7 +54,7 @@ public:
   // join a file_path out of pieces
   file_path(std::vector<path_component> const & pieces);
   
-  file_path operator /(std::string const & to_append);
+  file_path operator /(std::string const & to_append) const;
 
   void split(std::vector<path_component> & pieces) const;
 
@@ -102,7 +102,7 @@ public:
   bookkeeping_path(std::string const & path);
   bookkeeping_path(utf8 const & path);
   std::string as_external() const;
-  bookkeeping_path operator /(std::string const & to_append);
+  bookkeeping_path operator /(std::string const & to_append) const;
 };
 
 extern bookkeeping_path const bookkeeping_root;
@@ -117,7 +117,7 @@ public:
   // monotone started in.  it should be in utf8.
   system_path(std::string const & path);
   system_path(utf8 const & path);
-  system_path operator /(std::string const & to_append);
+  system_path operator /(std::string const & to_append) const;
 };
 
 

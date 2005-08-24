@@ -12,6 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <fstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tokenizer.hpp>
@@ -281,8 +282,8 @@ struct pid_file
   {
     if (path.empty())
       return;
-    N(!path_exists(path), F("pid file '%s' already exists") % path);
-    file.open(path);
+    N(!path_state(path), F("pid file '%s' already exists") % path);
+    file.open(path.as_external());
     file << get_process_id();
     file.flush();
   }
@@ -292,7 +293,7 @@ struct pid_file
     if (path.empty())
       return;
     pid_t pid;
-    fs::ifstream(path.as_external()) >> pid;
+    std::ifstream(path.as_external()) >> pid;
     if (pid == get_process_id()) {
       file.close();
       delete_file(path);
@@ -300,7 +301,7 @@ struct pid_file
   }
 
 private:
-  fs::ofstream file;
+  std::ofstream file;
   system_path path;
 };
 
@@ -717,8 +718,8 @@ changes_summary::add_change_set(change_set const & cs)
   for (change_set::delta_map::const_iterator i = cs.deltas.begin();
        i != cs.deltas.end(); i++)
     {
-      if (pr.added_files.find(i->first()) == pr.added_files.end())
-        modified_files.insert(i->first());
+      if (pr.added_files.find(i->first) == pr.added_files.end())
+        modified_files.insert(i->first);
     }
 }
 
@@ -732,7 +733,7 @@ print_indented_set(std::ostream & os,
   for (std::set<file_path>::const_iterator i = s.begin();
        i != s.end(); i++)
     {
-      const std::string str = (*i)();
+      const std::string str = boost::lexical_cast<std::string>(*i);
       if (cols > 8 && cols + str.size() + 1 >= max_cols)
         {
           cols = 8;
@@ -2558,8 +2559,8 @@ dump_diffs(change_set::delta_map const & deltas,
             {
               split_into_lines(data_old(), old_lines);
               split_into_lines(data_new(), new_lines);
-              make_diff(delta_entry_path(i)(), 
-                        delta_entry_path(i)(), 
+              make_diff(delta_entry_path(i).as_internal(), 
+                        delta_entry_path(i).as_internal(), 
                         delta_entry_src(i),
                         delta_entry_dst(i),
                         old_lines, new_lines,
@@ -3540,7 +3541,7 @@ CMD(log, "informative", "[FILE]",
           file = i->first;
           rid = i->second;
 
-          bool print_this = file().empty();
+          bool print_this = file.empty();
           set<  revision<id> > parents;
           vector< revision<cert> > tmp;
 
@@ -3567,7 +3568,7 @@ CMD(log, "informative", "[FILE]",
               ancestors.insert(edge_old_revision(e));
 
               change_set const & cs = edge_changes(e);
-              if (! file().empty())
+              if (! file.empty())
                 {
                   if (cs.rearrangement.has_deleted_file(file) ||
                       cs.rearrangement.has_renamed_file_src(file))

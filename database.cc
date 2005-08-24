@@ -133,12 +133,12 @@ check_sqlite_format_version(system_path const & filename)
 {
   switch (path_state(filename))
     {
-    path::nonexistent:
+    case path::nonexistent:
       return;
-    path::directory:
+    case path::directory:
       N(false, F("database %s is a directory") % filename);
       break;
-    path::file:
+    case path::file:
       // sqlite 3 files begin with this constant string
       // (version 2 files begin with a different one)
       std::string version_string("SQLite format 3");
@@ -666,7 +666,7 @@ database::set_filename(system_path const & file)
 {
   if (__sql)
     {
-      throw oops("cannot change filename to " + file + " while db is open");
+      throw oops((F("cannot change filename to %s while db is open") % file).str());
     }
   filename = file;
 }

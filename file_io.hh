@@ -7,6 +7,7 @@
 // see the file COPYING for details
 
 #include "vocab.hh"
+#include "paths.hh"
 
 // this layer deals with talking to the filesystem, loading and saving
 // files, walking trees, etc.
@@ -65,8 +66,9 @@ bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
 // returns true if the string content is binary according to monotone euristic
 bool guess_binary(std::string const & s);
 
-void mkdir_p(file_path const & path);
+void mkdir_p(any_path const & path);
 void make_dir_for(file_path const & p);
+void make_dir_for(bookkeeping_path const & p);
 
 void delete_file(any_path const & path);
 void delete_dir_recursive(any_path const & path);

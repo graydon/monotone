@@ -14,6 +14,7 @@
 #include <map>
 #include "file_io.hh"
 #include "vocab.hh"
+#include "paths.hh"
 
 struct patch_set;
 

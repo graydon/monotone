@@ -64,7 +64,7 @@ app_state::allow_working_copy()
       read_options();
 
       system_path dbname = system_path(options[database_option]);
-      if (dbname != "") db.set_filename(mkpath(dbname));
+      if (!dbname.empty()) db.set_filename(mkpath(dbname));
       if (branch_name().empty())
         branch_name = options[branch_option];
       L(F("branch name is '%s'\n") % branch_name());
@@ -72,7 +72,7 @@ app_state::allow_working_copy()
 
       if (!current.empty()) 
         {
-          relative_directory = file_path(current.native_directory_string());
+          relative_directory = file_path_internal(current.string());
           L(F("relative directory is '%s'\n") % relative_directory);
         }
 
@@ -276,12 +276,12 @@ app_state::set_signing_key(utf8 const & key)
 void 
 app_state::set_root(system_path const & path)
 {
-  N(path_state(root),
-    F("search root '%s' does not exist\n") % root);
-  N(is_directory(root),
-    F("search root '%s' is not a directory\n") % root);
-  root = path;
-  L(F("set search root to %s\n") % root);
+  N(path_state(path),
+    F("search root '%s' does not exist\n") % path);
+  N(is_directory(path),
+    F("search root '%s' is not a directory\n") % path);
+  search_root = path;
+  L(F("set search root to %s\n") % search_root);
 }
 
 void
@@ -436,7 +436,7 @@ app_state::read_options()
 void 
 app_state::write_options()
 {
-  local_path o_path;
+  bookkeeping_path o_path;
   get_options_path(o_path);
   try
     {

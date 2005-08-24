@@ -263,7 +263,7 @@ compute_delta(manifest_map const & a,
       size_t isz = 0;
 
       if (i != a.end())
-          isz = i->first().size() + 2 + i->second.inner()().size() + 1;
+          isz = i->first.as_internal()().size() + 2 + i->second.inner()().size() + 1;
 
       if (i != a.end() && i->first == j->first)
         {

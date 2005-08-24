@@ -95,7 +95,7 @@ build_additions(vector<file_path> const & paths,
 
   for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      N((*i)() != "", F("invalid path ''"));
+      N(!i->empty(), F("invalid path ''"));
       N(directory_exists(*i) || file_exists(*i),
         F("path %s does not exist\n") % *i);
 
@@ -154,7 +154,7 @@ known_path(file_path const & p,
            path_set const & ps,
            bool & path_is_directory)
 {
-  std::string path_as_dir = p() + "/";
+  std::string path_as_dir = p.as_internal()() + "/";
   for (path_set::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       if (*i == p) 
@@ -162,7 +162,7 @@ known_path(file_path const & p,
           path_is_directory = false;
           return true;
         }
-      else if ((*i)().find(path_as_dir) == 0)
+      else if (i->as_internal()().find(path_as_dir) == 0)
         {
           path_is_directory = true;
           return true;
@@ -201,7 +201,7 @@ build_deletions(vector<file_path> const & paths,
     {
       bool dir_p = false;
   
-      N((*i)() != "", F("invalid path ''"));
+      N(!i->empty(), F("invalid path ''"));
 
       if (! known_path(*i, ps, dir_p))
         {
@@ -248,8 +248,8 @@ build_rename(file_path const & src,
              manifest_map const & man,
              change_set::path_rearrangement & pr)
 {
-  N(src() != "", F("invalid source path ''"));
-  N(dst() != "", F("invalid destination path ''"));
+  N(!src.empty(), F("invalid source path ''"));
+  N(!dst.empty(), F("invalid destination path ''"));
 
   change_set::path_rearrangement pr_new, pr_concatenated;
   path_set ps;
@@ -644,7 +644,7 @@ write_attr_map(data & dat, attr_map const & attr)
        i != attr.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::file, i->first());
+      st.push_str_pair(syms::file, i->first.as_internal()());
 
       for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
