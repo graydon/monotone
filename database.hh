@@ -200,6 +200,9 @@ class database
                                         delta const & del,
                                         database & db);
 
+  void check_filename();
+  void open();
+
 public:
 
   database(fs::path const & file);

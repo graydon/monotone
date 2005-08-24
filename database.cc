@@ -193,7 +193,7 @@ database::sql(bool init)
 {
   if (! __sql)
     {
-      N(!filename.empty(), F("no database specified"));
+      check_filename();
 
       if (! init)
         {
@@ -204,11 +204,9 @@ database::sql(bool init)
         }
 
       check_sqlite_format_version(filename);
-      int error;
-      error = sqlite3_open(filename.string().c_str(), &__sql);
-      if (error)
-        throw oops(string("could not open database: ") + filename.string() + 
-                   (": " + string(sqlite3_errmsg(__sql))));
+
+      open();
+
       if (init)
         {
           sqlite3_exec(__sql, schema_constant, NULL, NULL, NULL);
@@ -349,14 +347,12 @@ database::load(istream & in)
   char buf[constants::bufsz];
   string tmp;
 
-  N(filename.string() != "",
-    F("need database name"));
+  check_filename();
+
   N(!fs::exists(filename),
     F("cannot create %s; it already exists\n") % filename.string());
-  int error = sqlite3_open(filename.string().c_str(), &__sql);
-  if (error)
-    throw oops(string("could not open database: ") + filename.string() + 
-               (string(sqlite3_errmsg(__sql))));
+
+  open();
 
   while(in)
     {
@@ -450,15 +446,11 @@ void
 database::version(ostream & out)
 {
   string id;
-  N(filename.string() != "",
-    F("need database name"));
-  int error = sqlite3_open(filename.string().c_str(), &__sql);
-  if (error)
-    {
-      sqlite3_close(__sql);
-      throw oops(string("could not open database: ") + filename.string() + 
-                 (": " + string(sqlite3_errmsg(__sql))));
-    }
+
+  check_filename();
+
+  open();
+
   calculate_schema_id(__sql, id);
   sqlite3_close(__sql);
   out << "database schema version: " << id << endl;
@@ -467,15 +459,10 @@ database::version(ostream & out)
 void 
 database::migrate()
 {  
-  N(filename.string() != "",
-    F("need database name"));
-  int error = sqlite3_open(filename.string().c_str(), &__sql);
-  if (error)
-    {
-      sqlite3_close(__sql);
-      throw oops(string("could not open database: ") + filename.string() + 
-                 (": " + string(sqlite3_errmsg(__sql))));
-    }
+  check_filename();
+
+  open();
+
   migrate_monotone_schema(__sql);
   sqlite3_close(__sql);
 }
@@ -2447,6 +2434,27 @@ database::get_branches(vector<string> & names)
         names.push_back(name());
       }
 }
+
+
+void
+database::check_filename()
+{
+  N(!filename.empty(), F("no database specified"));
+}
+
+
+void
+database::open()
+{
+  int error;
+
+  error = sqlite3_open(filename.string().c_str(), &__sql);
+
+  N(!error, (F("could not open database '%s': %s")
+             % filename.string()
+             % string(sqlite3_errmsg(__sql))));
+}
+
 
 // transaction guards
 
