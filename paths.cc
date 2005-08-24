@@ -245,7 +245,7 @@ any_path::as_external() const
 std::ostream &
 operator <<(std::ostream & o, any_path const & a)
 {
-  o << a.data;
+  o << a.as_internal();
 }
 
 #ifdef BUILD_UNIT_TESTS
@@ -297,6 +297,7 @@ static void test_file_path_internal()
         {
           file_path fp(internal, *c);
           BOOST_CHECK(fp.as_internal() == *c);
+          BOOST_CHECK(file_path(fp.as_internal()) == fp);
           std::vector<path_component> split_test;
           fp.split(split_test);
           file_path fp2(split_test);
@@ -314,6 +315,7 @@ static void check_fp_normalizes_to(char * before, char * after)
 {
   file_path fp(external, before);
   BOOST_CHECK(fp.as_internal() == after);
+  BOOST_CHECK(file_path(internal, fp.as_internal()) == after);
   // we compare after to the external form too, since as far as we know
   // relative normalized posix paths are always good win32 paths too
   BOOST_CHECK(fp.as_external() == after);
@@ -448,7 +450,9 @@ static void test_split_join()
 
 static void check_bk_normalizes_to(char * before, char * after)
 {
-  BOOST_CHECK((bookkeeping_root / before).as_external() == after);
+  bookkeeping_path bp(bookkeeping_root / before);
+  BOOST_CHECK(bp.as_external() == after);
+  BOOST_CHECK(bookkeeping_path(bp.as_internal()) == bp);
 }
 
 static void test_bookkeeping_path()
@@ -482,7 +486,9 @@ static void test_bookkeeping_path()
 
 static void check_system_normalizes_to(char * before, char * after)
 {
-  BOOST_CHECK(system_path(before).as_external() == after);
+  system_path sp(before);
+  BOOST_CHECK(sp.as_external() == after);
+  BOOST_CHECK(system_path(sp.as_internal()) == sp);
 }
 
 static void test_system_path()

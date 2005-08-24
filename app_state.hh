@@ -19,6 +19,7 @@ class lua_hooks;
 #include "lua.hh"
 #include "work.hh"
 #include "vocab.hh"
+#include "paths.hh"
 
 // this class is supposed to hold all (or.. well, most) of the state of the
 // application, barring some unfortunate static objects like the debugging /
@@ -53,7 +54,7 @@ public:
   bool found_working_copy;
   long depth;
   long last;
-  fs::path pidfile;
+  system_path pidfile;
   diff_type diff_format;
   bool diff_args_provided;
   utf8 diff_args;

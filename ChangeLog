@@ -1,5 +1,14 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.hh (get_homedir): Return a system_path.
+	* app_state.hh (app_state): Make pidfile a system_path.
+	* sanity.hh (sanity::filename): Make a system_path.
+	* monotone.cc (cpp_main): Adjust accordingly.
+	* paths.hh (any_path): Add as_internal() to interface.
+	* paths.cc: Add roundtripping tests.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* platform.hh, unix/fs.cc, win32/fs.cc
 	(change_current_working_dir): Take an any_path, not a string.
 	* rcs_import.{cc,hh}: Convert to paths.hh.

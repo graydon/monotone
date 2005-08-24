@@ -41,7 +41,7 @@ bool find_working_copy(fs::path const & search_root,
                        fs::path & working_copy_root, 
                        fs::path & working_copy_restriction);
 
-std::string get_homedir();
+system_path get_homedir();
 std::string absolutify(std::string const & path);
 std::string absolutify_for_command_line(std::string const & path);
 std::string tilde_expand(std::string const & path);

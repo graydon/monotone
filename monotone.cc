@@ -324,7 +324,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_DUMP:
-              global_sanity.filename = absolutify(tilde_expand(string(argstr)));
+              global_sanity.filename = system_path(argstr);
               break;
 
             case OPT_DB_NAME:

@@ -33,13 +33,15 @@ class any_path
 public:
   // converts to native charset and path syntax
   std::string as_external() const;
+  // leaves as utf8
+  std::string const & as_internal() const
+  { return data(); }
 protected:
   utf8 data;
 private:
   any_path();
   any_path(any_path const & other);
   any_path & operator=(any_path const & other);
-  friend std::ostream & operator<<(std::ostream & o, any_path const & a);
 }
 
 std::ostream & operator<<(std::ostream & o, any_path const & a);
@@ -63,12 +65,6 @@ public:
   file_path(std::vector<path_component> const & pieces);
   
   file_path operator /(std::string const & to_append);
-
-  // returns raw normalized path string
-  // the string is always stored in normalized etc. form; so the generated
-  // copy constructor and assignment operator are fine.
-  std::string const & as_internal() const
-  { return data(); }
 
   void split(std::vector<path_component> & pieces) const;
 
