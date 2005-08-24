@@ -1,5 +1,10 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* change_set.cc (apply_rearrangement_to_filesystem): Oops, missed
+	some local_path's.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* path_component.{cc,hh}: Delete.
 
 2005-08-23  Nathaniel Smith  <njs@pobox.com>

@@ -115,7 +115,7 @@ delta_entry_dst(change_set::delta_map::const_iterator i)
 
 void
 apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
-                                  local_path const & temporary_root);
+                                  bookkeeping_path const & temporary_root);
 
 
 // merging and concatenating 

@@ -2512,7 +2512,7 @@ move_files_from_tmp_top_down(tid t,
 
 void
 apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
-                                  local_path const & temporary_root)
+                                  bookkeeping_path const & temporary_root)
 {
   re.check_sane();
   tid_source ts;
