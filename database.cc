@@ -182,7 +182,7 @@ assert_sqlite3_ok(sqlite3 *s)
     }
   // if the last message is empty, the \n will be stripped off too
   E(errcode == SQLITE_OK,
-    F("sqlite error: %s\n%s") % errcode % errmsg % auxiliary_message);
+    F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
 }
 
 struct sqlite3 * 

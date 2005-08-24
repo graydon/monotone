@@ -1,5 +1,10 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc (assert_sqlite3_ok): Remove accidentally-left-in
+	format string argument.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* revision.cc (check_sane_history): Add MM's for calculated
 	changesets.
 
