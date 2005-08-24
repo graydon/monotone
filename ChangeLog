@@ -1,5 +1,9 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* path_component.{cc,hh}: Delete.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* change_set.cc (move_files_to_tmp_bottom_up) 
 	(move_files_from_tmp_top_down): Convert to paths.hh.
 	Whole file: stop using path_component.hh.
