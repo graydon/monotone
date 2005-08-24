@@ -9,13 +9,12 @@
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
-#include <string.h>
 
 #include <sstream>
 
 #include "sanity.hh"
 #include "platform.hh"
+#include "unix/unix.hh"
 
 int existsonpath(const char *exe)
 {
@@ -50,7 +49,7 @@ bool is_executable(const char *path)
         struct stat s;
 
         int rc = stat(path, &s);
-        N(rc != -1, F("error getting status of file %s: %s") % path % strerror(errno));
+        N(rc != -1, F("error getting status of file %s: %s") % path % last_error());
 
         return s.st_mode & S_IXUSR;
 }
@@ -60,13 +59,13 @@ int make_executable(const char *path)
         mode_t mode;
         struct stat s;
         int fd = open(path, O_RDONLY);
-        N(fd != -1, F("error opening file %s: %s") % path % strerror(errno));
+        N(fd != -1, F("error opening file %s: %s") % path % last_error());
         if (fstat(fd, &s))
           return -1;
         mode = s.st_mode;
         mode |= S_IXUSR|S_IXGRP|S_IXOTH;
         int ret = fchmod(fd, mode);
-        N(close(fd) == 0, F("error closing file %s: %s") % path % strerror(errno));
+        N(close(fd) == 0, F("error closing file %s: %s") % path % last_error());
         return ret;
 }
 

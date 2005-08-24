@@ -1,5 +1,13 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* ui.cc (sanitize): Fix signedness bug in comparison.
+	* unix/unix.{cc,hh}: New files.
+	* Makefile.am (UNIX_PLATFORM_SOURCES): Add them.
+	* unix/process.cc (is_executable, make_executable): Use new
+	function last_error.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* transforms.{cc,hh} (system_charset): Expose.
 	* monotone.cc (cpp_main): Use it to fiddle with gettext's charset
 	conversion and make --help output actually correct.
