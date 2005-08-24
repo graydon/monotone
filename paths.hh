@@ -50,19 +50,6 @@ class file_path : public any_path
 {
 public:
   file_path();
-  typedef enum { internal, external } source_type;
-  // input is always in utf8, because everything in our world is always in
-  // utf8 (except interface code itself).
-  // external paths:
-  //   -- are converted to internal syntax (/ rather than \, etc.)
-  //   -- normalized
-  //   -- assumed to be relative to the user's cwd, and munged
-  //      to become relative to root of the working copy instead
-  // both types of paths:
-  //   -- are confirmed to be normalized and relative
-  //   -- not to be in MT/
-  file_path(source_type type, std::string const & path);
-  file_path(source_type type, utf8 const & path);
   // join a file_path out of pieces
   file_path(std::vector<path_component> const & pieces);
   
@@ -78,14 +65,32 @@ public:
 
   bool operator <(const file_path & other) const
   { return data < other.data; }
+
+private:
+  typedef enum { internal, external } source_type;
+  // input is always in utf8, because everything in our world is always in
+  // utf8 (except interface code itself).
+  // external paths:
+  //   -- are converted to internal syntax (/ rather than \, etc.)
+  //   -- normalized
+  //   -- assumed to be relative to the user's cwd, and munged
+  //      to become relative to root of the working copy instead
+  // both types of paths:
+  //   -- are confirmed to be normalized and relative
+  //   -- not to be in MT/
+  file_path(source_type type, std::string const & path);
+  file_path(source_type type, utf8 const & path);
+  friend file_path file_path_internal(std::string const & path);
+  friend file_path file_path_external(std::string const & path);
+  
 };
 
-// normally you will use one of these convenience functions:
-inline file_path file_path_internal(std::string & path)
+// these are the public file_path constructors
+inline file_path file_path_internal(std::string const & path)
 {
   return file_path(file_path::internal, path);
 }
-inline file_path file_path_external(std::string & path)
+inline file_path file_path_external(std::string const & path)
 {
   return file_path(file_path::external, path);
 }

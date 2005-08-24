@@ -1,5 +1,10 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
-	
+
+	* paths.hh (class file_path): Make "convenience functions"
+	required.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* Switch rest of instances to using convenience functions.
 	
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
