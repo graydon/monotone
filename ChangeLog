@@ -1,5 +1,10 @@
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.cc (cpp_main): Trick popt into converting its generated
+	help messages into the current locale's charset.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
 	* ui.cc (inform, sanitize): Convert all output from utf8 to
 	current locale's charset.
 

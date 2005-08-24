@@ -238,7 +238,8 @@ cpp_main(int argc, char ** argv)
   setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
-  bind_textdomain_codeset(PACKAGE, "UTF-8");
+  const char * default_textdomain_codeset
+    = bind_textdomain_codeset(PACKAGE, "UTF-8");
 
   // we want to catch any early informative_failures due to charset
   // conversion etc
@@ -528,7 +529,12 @@ cpp_main(int argc, char ** argv)
           L(F("Added 'hidden' to option # %d\n") % options[0].argInfo);
         }
 
+      // switch gettext() back to returning native charset strings, since popt
+      // will simply dump whatever gettext() returns
+      bind_textdomain_codeset(PACKAGE, default_textdomain_codeset);
       poptPrintHelp(ctx(), stdout, 0);
+      bind_textdomain_codeset(PACKAGE, "UTF-8");
+
       cout << endl;
       commands::explain_usage(u.which, cout);
       clean_shutdown = true;
