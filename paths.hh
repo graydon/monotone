@@ -49,6 +49,7 @@ std::ostream & operator<<(std::ostream & o, any_path const & a);
 class file_path : public any_path
 {
 public:
+  file_path();
   typedef enum { internal, external } source_type;
   // input is always in utf8, because everything in our world is always in
   // utf8 (except interface code itself).
@@ -79,9 +80,21 @@ public:
   { return data < other.data; }
 };
 
+// normally you will use one of these convenience functions:
+inline file_path file_path_internal(std::string & path)
+{
+  return file_path(file_path::internal, path);
+}
+inline file_path file_path_external(std::string & path)
+{
+  return file_path(file_path::external, path);
+}
+
+
 class bookkeeping_path : public any_path
 {
 public:
+  bookkeeping_path();
   // path _should_ contain the leading MT/
   // and _should_ look like an internal path
   // usually you should just use the / operator as a constructor!
@@ -97,6 +110,7 @@ extern bookkeeping_path const bookkeeping_root;
 class system_path : public any_path
 {
 public:
+  system_path();
   // this path can contain anything, and it will be absolutified and
   // tilde-expanded.  it will considered to be relative to the directory
   // monotone started in.  it should be in utf8.

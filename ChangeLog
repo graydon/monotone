@@ -1,5 +1,12 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.hh (file_path_internal, file_path_external): Define
+	convenience functions.
+	(file_path, bookkeeping_path, system_path): Add default
+	constructors.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* app_state.cc, change_set.cc, change_set.hh, commands.cc:
 	* inodeprint.cc, manifest.cc, rcs_import.cc, restrictions.cc:
 	* work.cc: Audit all calls to file_path() to add internal/external
