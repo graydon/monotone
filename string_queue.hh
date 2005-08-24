@@ -7,6 +7,8 @@
 // see the file COPYING for details
 
 #include <string>
+#include <cstring>
+#include <cstdlib>
 
 #include "sanity.hh"
 
@@ -165,7 +167,7 @@ public:
         {
           I (buf <= front && front <= back && back <= end);
           I (selfcheck_str.size () == used_size ()
-             && memcmp (selfcheck_str.data (), front, used_size ()) == 0);
+             && std::memcmp (selfcheck_str.data (), front, used_size ()) == 0);
         }
     }
 
@@ -188,7 +190,7 @@ public:
           // 1.25* to make sure that we don't do a lot of remove 1 byte from
           // beginning, move entire array, append a byte, etc.
           size_t save_used_size = used_size ();
-          memmove (buf, front, save_used_size);
+          std::memmove (buf, front, save_used_size);
           front = buf;
           back = front + save_used_size;
           selfcheck ();
@@ -209,7 +211,7 @@ protected:
     {
       I ((size_t) (end - back) >= v.size ());
       I (v.size() <= max_string_queue_incr);
-      memcpy (back, v.data (), v.size ());
+      std::memcpy (back, v.data (), v.size ());
       back += v.size ();
     }
 
@@ -217,7 +219,7 @@ protected:
     {
       I ((size_t) (end - back) >= bytes);
       I (bytes <= max_string_queue_incr);
-      memcpy (back, str, bytes);
+      std::memcpy (back, str, bytes);
       back += bytes;
     }
 
@@ -226,7 +228,7 @@ protected:
       I (new_buffer_size <= max_string_queue_size);
       size_t save_used_size = used_size ();
       char *newbuf = new char[new_buffer_size];
-      memcpy (newbuf, front, save_used_size);
+      std::memcpy (newbuf, front, save_used_size);
       delete[]buf;
       buf = front = newbuf;
       back = front + save_used_size;
@@ -240,7 +242,7 @@ private:
   static const size_t max_string_queue_incr = 500 * 1024 * 1024;
   string_queue (string_queue & from)
     {
-      abort ();
+      std::abort ();
     }
   char *buf, *front, *back, *end;
   std::string selfcheck_str;
