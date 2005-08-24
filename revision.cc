@@ -255,6 +255,10 @@ check_sane_history(revision_id const & child_id,
       // that we haven't yet figured out whether this is a valid merge or
       // not.  so find out.
       change_set cs_parent_left, cs_parent_right, cs_left, cs_right;
+      MM(cs_parent_left);
+      MM(cs_parent_right);
+      MM(cs_left);
+      MM(cs_right);
       calculate_composite_change_set(lca, parent_left, app, cs_parent_left);
       calculate_composite_change_set(lca, parent_right, app, cs_parent_right);
       concatenate_change_sets(cs_parent_left, left_edge, cs_left);
