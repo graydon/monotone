@@ -157,20 +157,22 @@ file_path::file_path(file_path::source_type type, std::string const & path)
       data = path;
       break;
     case external:
-      fs::path tmp;
+      N(!path.empty(), F("empty path '%s' is invalid") % path);
+      fs::path out, base, relative;
       try
         {
-          tmp = fs::path(initial_rel_path.get().as_internal());
-          tmp /= fs::path(path);
-          tmp = tmp.normalize();
+          base = fs::path(initial_rel_path.get().as_internal());
+          relative = fs::path(path);
+          out = (base / relative).normalize();
         }
       catch (std::exception & e)
         {
           N(false, F("path '%s' is invalid") % path);
         }
-      data = utf8(tmp.string());
+      N(!relative.has_root_path(), F("absolute path '%s' is invalid"));
       N(fully_normalized_path(data()), F("path '%s' is invalid") % data);
       N(!in_bookkeeping_dir(data()), F("path '%s' is in bookkeeping dir") % data);
+      data = utf8(out.string());
     }
   I(fully_normalized_path(data()));
   I(!in_bookkeeping_dir(data()));
@@ -672,14 +674,18 @@ static void test_split_join()
   BOOST_CHECK(fp3 == file_path(split3));
 
   pcv split4;
-  BOOST_CHECK_THROW(file_path(split4), std::logic_error);
+  // this comparison tricks the compiler into not completely eliminating this
+  // code as dead...
+  BOOST_CHECK_THROW(file_path(split4) == file_path(), std::logic_error);
   split4.push_back(the_null_component);
-  BOOST_CHECK_NOT_THROW(file_path(split4), std::logic_error);
+  BOOST_CHECK(file_path(split4) == file_path());
   split4.clear();
   split4.push_back(split1[0]);
   split4.push_back(the_null_component);
   split4.push_back(split1[0]);
-  BOOST_CHECK_THROW(file_path(split4), std::logic_error);
+  // this comparison tricks the compiler into not completely eliminating this
+  // code as dead...
+  BOOST_CHECK_THROW(file_path(split4) == file_path(), std::logic_error);
 }
 
 static void check_bk_normalizes_to(char * before, char * after)
@@ -705,6 +711,7 @@ static void test_bookkeeping_path()
                             "c:foo",
                             "c:/foo",
                             "",
+                            "a:b",
                             0 };
   
   for (char const ** c = baddies; *c; ++c)
@@ -717,7 +724,6 @@ static void test_bookkeeping_path()
   BOOST_CHECK_THROW(bookkeeping_path(std::string("a")), std::logic_error);
   
   check_bk_normalizes_to("a", "MT/a");
-  check_bk_normalizes_to("a:b", "MT/a:b");
   check_bk_normalizes_to("foo", "MT/foo");
   check_bk_normalizes_to("foo/bar", "MT/foo/bar");
   check_bk_normalizes_to("foo/bar/baz", "MT/foo/bar/baz");
