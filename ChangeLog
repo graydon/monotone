@@ -1,5 +1,12 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.hh
+	({assert,require}_path_is_{nonexistent,file,directory}): New
+	functions.
+	Use them everywhere.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* basic_io.hh: #include "paths.hh".
 	* monotone.cc (add_rcfile): Remove obsolete absolutification, etc.
 

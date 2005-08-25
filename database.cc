@@ -131,29 +131,24 @@ database::set_app(app_state * app)
 static void 
 check_sqlite_format_version(system_path const & filename)
 {
-  switch (path_state(filename))
+  require_path_is_file(filename,
+                       F("database %s does not exist") % filename,
+                       F("%s is a directory, not a database") % filename);
+  
+  // sqlite 3 files begin with this constant string
+  // (version 2 files begin with a different one)
+  std::string version_string("SQLite format 3");
+  
+  std::ifstream file(filename.as_external().c_str());
+  N(file, F("unable to probe database version in file %s") % filename);
+  
+  for (std::string::const_iterator i = version_string.begin();
+       i != version_string.end(); ++i)
     {
-    case path::nonexistent:
-      return;
-    case path::directory:
-      N(false, F("database %s is a directory") % filename);
-      break;
-    case path::file:
-      // sqlite 3 files begin with this constant string
-      // (version 2 files begin with a different one)
-      std::string version_string("SQLite format 3");
-
-      std::ifstream file(filename.as_external().c_str());
-      N(file, F("unable to probe database version in file %s") % filename);
-
-      for (std::string::const_iterator i = version_string.begin();
-           i != version_string.end(); ++i)
-        {
-          char c;
-          file.get(c);
-          N(c == *i, F("database %s is not an sqlite version 3 file, "
-                       "try dump and reload") % filename);            
-        }
+      char c;
+      file.get(c);
+      N(c == *i, F("database %s is not an sqlite version 3 file, "
+                   "try dump and reload") % filename);            
     }
 }
 
@@ -178,13 +173,9 @@ database::sql(bool init)
       N(!filename.empty(), F("no database specified"));
 
       if (! init)
-        {
-          path::state state = path_state(filename);
-          N(state != path::nonexistent,
-            F("database %s does not exist") % filename);
-          N(state != path::directory,
-            F("database %s is a directory") % filename);
-        }
+        require_path_is_file(filename,
+                             F("database %s does not exist") % filename,
+                             F("%s is a directory, not a database") % filename);
 
       check_sqlite_format_version(filename);
       int error;
@@ -215,11 +206,12 @@ database::initialize()
     F("could not initialize database: %s: already exists") 
     % filename);
 
-  system_path journal(filename.as_external() + "-journal");
-  N(!path_state(journal),
-    F("existing (possibly stale) journal file '%s' "
-      "has same stem as new database '%s'")
-    % journal % filename);
+  system_path journal(filename.as_internal() + "-journal");
+  require_path_is_nonexistent(journal,
+                              F("existing (possibly stale) journal file '%s' "
+                                "has same stem as new database '%s'\n"
+                                "cancelling database creation")
+                              % journal % filename)
 
   sqlite3 *s = sql(true);
   I(s != NULL);
@@ -334,8 +326,8 @@ database::load(istream & in)
 
   N(!filename.empty(),
     F("need database name"));
-  N(!path_state(filename),
-    F("cannot create %s; it already exists") % filename);
+  require_path_is_nonexistent(filename,
+                              F("cannot create %s; it already exists") % filename);
   int error = sqlite3_open(filename.as_external().c_str(), &__sql);
   if (error)
     throw oops((F("could not open database: %s: %s")

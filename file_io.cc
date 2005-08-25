@@ -215,6 +215,22 @@ book_keeping_file(local_path const & p)
   return false;
 }
 
+
+// A path::state can be used as a boolean context for exists/doesn't exist,
+// or can be used in a switch statement to consider all possibilities.
+namespace path 
+{
+  typedef enum 
+    {
+      nonexistent = 0,
+      directory = 1,
+      file = 2,
+    } state;
+};
+path::state path_state(any_path const & path);
+
+
+
 bool 
 directory_exists(local_path const & p) 
 { 

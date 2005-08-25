@@ -702,7 +702,7 @@ void
 lua_hooks::load_rcfile(any_path const & rc, bool required)
 {
   I(st);  
-  if (path_state(rc))
+  if (path_exists(rc))
     {
       L(F("opening rcfile '%s' ...\n") % rc);
       N(run_file(st, rc.as_external()),

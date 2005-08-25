@@ -6,6 +6,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "boost/format.hpp"
+
 #include "vocab.hh"
 #include "paths.hh"
 
@@ -43,22 +45,27 @@ bool find_working_copy(fs::path const & search_root,
                        fs::path & working_copy_restriction);
 
 system_path get_homedir();
-std::string absolutify_for_command_line(std::string const & path);
 
-// A path::state can be used as a boolean context for exists/doesn't exist,
-// or can be used in a switch statement to consider all possibilities.
-namespace path 
-{
-  typedef enum 
-    {
-      nonexistent = 0,
-      directory = 1,
-      file = 2,
-    } state;
-};
-path::state path_state(any_path const & path);
+// use I()
+void assert_path_is_nonexistent(any_path const & path);
+void assert_path_is_file(any_path const & path);
+void assert_path_is_directory(any_path const & path);
 
+// use N()
+void require_path_is_nonexistent(any_path const & path,
+                                 boost::format const & message);
+void require_path_is_file(any_path const & path,
+                          boost::format const & message_if_nonexistent,
+                          boost::format const & message_if_directory);
+void require_path_is_directory(any_path const & path,
+                               boost::format const & message_if_nonexistent,
+                               boost::format const & message_if_file);
+
+// returns true if there is a file or directory at 'path'
+bool path_exists(any_path const & path);
+// returns true if there is a directory at 'path'
 bool directory_exists(any_path const & path);
+// returns true if there is a file at 'path'
 bool file_exists(any_path const & path);
 
 bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);

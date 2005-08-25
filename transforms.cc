@@ -347,7 +347,7 @@ calculate_ident(file_path const & file,
     {
       // no conversions necessary, use streaming form
       // Best to be safe and check it isn't a dir.
-      I(path_state(file) == path::file);
+      assert_path_is_file(file);
       Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
       Botan::DataSource_Stream infile(file.as_external());
       p.process_msg(infile);

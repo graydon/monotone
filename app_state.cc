@@ -276,10 +276,9 @@ app_state::set_signing_key(utf8 const & key)
 void 
 app_state::set_root(system_path const & path)
 {
-  N(path_state(path),
-    F("search root '%s' does not exist\n") % path);
-  N(is_directory(path),
-    F("search root '%s' is not a directory\n") % path);
+  require_path_is_directory(path,
+                            F("search root '%s' does not exist") % path,
+                            F("search root '%s' is not a directory\n") % path);
   search_root = path;
   L(F("set search root to %s\n") % search_root);
 }

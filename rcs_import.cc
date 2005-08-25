@@ -725,7 +725,7 @@ test_parse_rcs_file(system_path const & filename, database & db)
   cvs_history cvs;
 
   I(! filename.empty());
-  I(path_state(filename) == path::file);
+  assert_path_is_file(filename);
 
   P(F("parsing RCS file %s\n") % filename);
   rcs_file r;
@@ -1219,7 +1219,7 @@ void
 import_cvs_repo(system_path const & cvsroot, 
                 app_state & app)
 {
-  N(path_state(cvsroot / "CVSROOT") != path::directory,
+  N(!directory_exists(cvsroot / "CVSROOT"),
     F("%s appears to be a CVS repository root directory\n"
       "try importing a module instead, with 'cvs_import %s/<module_name>")
     % cvsroot % cvsroot);
@@ -1244,10 +1244,9 @@ import_cvs_repo(system_path const & cvsroot,
   {
     transaction_guard guard(app.db);
     cvs_tree_walker walker(cvs, app.db);
-    N(path_state(cvsroot) != path::nonexistent,
-       F("path %s does not exist") % cvsroot);
-    N(path_state(cvsroot) == path::directory,
-       F("path %s is not a directory") % cvsroot);
+    require_path_is_directory(cvsroot,
+                              F("path %s does not exist") % cvsroot,
+                              F("path %s is not a directory") % cvsroot);
     app.db.ensure_open();
     change_current_working_dir(cvsroot);
     walk_tree(walker);

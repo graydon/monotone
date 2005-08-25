@@ -320,7 +320,7 @@ void get_path_rearrangement(change_set::path_rearrangement & w)
 {
   bookkeeping_path w_path;
   get_work_path(w_path);
-  if (path_state(w_path))
+  if (path_exists(w_path))
     {
       L(F("checking for un-committed work file %s\n") % w_path);
       data w_data;
