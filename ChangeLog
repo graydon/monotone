@@ -1,5 +1,10 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.{cc,hh}: Reorganize a bit.  Implement file_path and
+	bookkeeping_path.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (file_path): Implement basic constructor.
 	Misc compile fixes.
 	Add single-character names to tests.

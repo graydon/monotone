@@ -32,6 +32,7 @@ class any_path
 {
 public:
   // converts to native charset and path syntax
+  // this is a path that you can pass to the operating system
   std::string as_external() const;
   // leaves as utf8
   std::string const & as_internal() const
@@ -40,9 +41,11 @@ public:
   { return data().empty(); }
 protected:
   utf8 data;
-  any_path();
-  any_path(any_path const & other);
-  any_path & operator=(any_path const & other);
+  any_path() {}
+  any_path(any_path const & other)
+    : data(other.data) {}
+  any_path & operator=(any_path const & other)
+  { data = other.data; }
 };
 
 std::ostream & operator<<(std::ostream & o, any_path const & a);
@@ -50,10 +53,11 @@ std::ostream & operator<<(std::ostream & o, any_path const & a);
 class file_path : public any_path
 {
 public:
-  file_path();
+  file_path() {}
   // join a file_path out of pieces
   file_path(std::vector<path_component> const & pieces);
   
+  // this currently doesn't do any normalization or anything.
   file_path operator /(std::string const & to_append) const;
 
   void split(std::vector<path_component> & pieces) const;
@@ -100,14 +104,12 @@ public:
   // and _should_ look like an internal path
   // usually you should just use the / operator as a constructor!
   bookkeeping_path(std::string const & path);
-  bookkeeping_path(utf8 const & path);
-  std::string as_external() const;
   bookkeeping_path operator /(std::string const & to_append) const;
 };
 
 extern bookkeeping_path const bookkeeping_root;
 
-  // this will always be an absolute path
+// this will always be an absolute path
 class system_path : public any_path
 {
 public:

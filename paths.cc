@@ -45,73 +45,6 @@ static const bool is_win32 = true;
 static const bool is_win32 = false;
 #endif
 
-bool
-find_and_go_to_working_copy(system_path const & search_root)
-{
-  // unimplemented
-  fs::path root = search_root.as_external();
-  fs::path bookdir = bookkeeping_root.as_external();
-  fs::path current = fs::initial_path();
-  fs::path removed;
-  fs::path check = current / bookdir;
-  
-  L(F("searching for '%s' directory with root '%s'\n") 
-    % bookdir.string()
-    % root.string());
-
-  while (current != root
-         && current.has_branch_path()
-         && current.has_leaf()
-         && !fs::exists(check))
-    {
-      L(F("'%s' not found in '%s' with '%s' removed\n")
-        % bookdir.string() % current.string() % removed.string());
-      removed = fs::path(current.leaf(), fs::native) / removed;
-      current = current.branch_path();
-      check = current / bookdir;
-    }
-
-  L(F("search for '%s' ended at '%s' with '%s' removed\n") 
-    % bookdir.string() % current.string() % removed.string());
-
-  if (!fs::exists(check))
-    {
-      L(F("'%s' does not exist\n") % check.string());
-      return false;
-    }
-
-  if (!fs::is_directory(check))
-    {
-      L(F("'%s' is not a directory\n") % check.string());
-      return false;
-    }
-
-  // check for MT/. and MT/.. to see if mt dir is readable
-  if (!fs::exists(check / ".") || !fs::exists(check / ".."))
-    {
-      L(F("problems with '%s' (missing '.' or '..')\n") % check.string());
-      return false;
-    }
-
-  working_root = current.native_file_string();
-  initial_rel_path = file_path_internal(removed.string());
-
-  L(F("working root is '%s'") % working_root);
-  L(F("initial relative path is '%s'") % initial_rel_path);
-
-  change_current_working_dir(working_root);
-
-  return true;
-}
-
-void
-go_to_working_copy(system_path const & new_working_copy)
-{
-  working_root = new_working_copy;
-  initial_rel_path = file_path();
-  change_current_working_dir(new_working_copy);
-}
-
 static bool
 is_absolute(std::string const & path)
 {
@@ -214,6 +147,12 @@ file_path::file_path(file_path::source_type type, std::string const & path)
       tmp = tmp.normalize();
       data = utf8(tmp.string());
     }
+  assert_sane();
+}
+
+void
+file_path::assert_sane()
+{
   I(fully_normalized_path(data()));
   I(not_in_bookkeeping_dir(data()));
 }
@@ -327,8 +266,96 @@ operator <<(std::ostream & o, any_path const & a)
 static inline std::string
 operator_slash(any_path const & path, std::string appended)
 {
-  
+  I(false);
+  //FIXME
 }
+
+file_path
+file_path::operator /(std::string const & to_append)
+{
+  return file_path_internal(data() + "/" + to_append);
+}
+
+bookkeeping_path
+bookkeeping_path::operator /(std::string const & to_append)
+{
+  return bookkeeping_path(data() + "/" + to_append);
+}
+
+///////////////////////////////////////////////////////////////////////////
+// working copy (and path roots) handling
+///////////////////////////////////////////////////////////////////////////
+
+bool
+find_and_go_to_working_copy(system_path const & search_root)
+{
+  // unimplemented
+  fs::path root = search_root.as_external();
+  fs::path bookdir = bookkeeping_root.as_external();
+  fs::path current = fs::initial_path();
+  fs::path removed;
+  fs::path check = current / bookdir;
+  
+  L(F("searching for '%s' directory with root '%s'\n") 
+    % bookdir.string()
+    % root.string());
+
+  while (current != root
+         && current.has_branch_path()
+         && current.has_leaf()
+         && !fs::exists(check))
+    {
+      L(F("'%s' not found in '%s' with '%s' removed\n")
+        % bookdir.string() % current.string() % removed.string());
+      removed = fs::path(current.leaf(), fs::native) / removed;
+      current = current.branch_path();
+      check = current / bookdir;
+    }
+
+  L(F("search for '%s' ended at '%s' with '%s' removed\n") 
+    % bookdir.string() % current.string() % removed.string());
+
+  if (!fs::exists(check))
+    {
+      L(F("'%s' does not exist\n") % check.string());
+      return false;
+    }
+
+  if (!fs::is_directory(check))
+    {
+      L(F("'%s' is not a directory\n") % check.string());
+      return false;
+    }
+
+  // check for MT/. and MT/.. to see if mt dir is readable
+  if (!fs::exists(check / ".") || !fs::exists(check / ".."))
+    {
+      L(F("problems with '%s' (missing '.' or '..')\n") % check.string());
+      return false;
+    }
+
+  working_root = current.native_file_string();
+  initial_rel_path = file_path_internal(removed.string());
+
+  L(F("working root is '%s'") % working_root);
+  L(F("initial relative path is '%s'") % initial_rel_path);
+
+  change_current_working_dir(working_root);
+
+  return true;
+}
+
+void
+go_to_working_copy(system_path const & new_working_copy)
+{
+  working_root = new_working_copy;
+  initial_rel_path = file_path();
+  change_current_working_dir(new_working_copy);
+}
+
+///////////////////////////////////////////////////////////////////////////
+// tests
+///////////////////////////////////////////////////////////////////////////
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
