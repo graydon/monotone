@@ -1,5 +1,10 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.cc (path_exists, directory_exists, file_exists):
+	Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* platform.hh (get_path_status): New function.
 	* unix/fs.cc (get_path_status): Implement.
 	* win32/fs.cc (get_path_status): Implement inefficiently (does
