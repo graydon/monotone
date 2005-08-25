@@ -173,59 +173,29 @@ delete_dir_recursive(any_path const & p)
 }
 
 void 
-delete_dir_recursive(local_path const & p) 
+move_file(any_path const & old_path,
+          any_path const & new_path) 
 { 
-  N(directory_exists(p), 
-    F("directory to delete '%s' does not exist") % p);
-  fs::remove_all(localized(p)); 
-}
-
-void 
-move_file(file_path const & old_path,
-          file_path const & new_path) 
-{ 
-  N(file_exists(old_path), 
-    F("rename source file '%s' does not exist") % old_path);
-  N(! file_exists(new_path), 
-    F("rename target file '%s' already exists") % new_path);
-  fs::rename(localized(old_path), 
-             localized(new_path));
-}
-
-void 
-move_file(local_path const & old_path,
-          local_path const & new_path) 
-{ 
-  N(file_exists(old_path), 
-    F("rename source file '%s' does not exist") % old_path);
-  N(! file_exists(new_path), 
-    F("rename target file '%s' already exists") % new_path);
-  fs::rename(localized(old_path), 
-             localized(new_path));
+  require_path_is_file(old_path,
+                       F("rename source file '%s' does not exist") % old_path,
+                       F("rename source file '%s' is a directory "
+                         "-- bug in monotone?") % old_path);
+  N(!path_exists(new_path),
+    F("rename target '%s' already exists") % new_path);
+  fs::rename(old_path, new_path);
 }
 
 void 
 move_dir(file_path const & old_path,
          file_path const & new_path) 
 { 
-  N(directory_exists(old_path), 
-    F("rename source dir '%s' does not exist") % old_path);
-  N(!directory_exists(new_path), 
-    F("rename target dir '%s' already exists") % new_path);
-  fs::rename(localized(old_path), 
-             localized(new_path));
-}
-
-void 
-move_dir(local_path const & old_path,
-         local_path const & new_path) 
-{ 
-  N(directory_exists(old_path), 
-    F("rename source dir '%s' does not exist") % old_path);
-  N(!directory_exists(new_path), 
-    F("rename target dir '%s' already exists") % new_path);
-  fs::rename(localized(old_path), 
-             localized(new_path));
+  require_path_is_directory(old_path,
+                            F("rename source dir '%s' does not exist") % old_path,
+                            F("rename source dir '%s' is a file "
+                              "-- bug in monotone?") % old_path);
+  N(!path_exists(new_path),
+    F("rename target '%s' already exists") % new_path);
+  fs::rename(old_path, new_path);
 }
 
 static void 

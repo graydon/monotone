@@ -1,5 +1,9 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.cc (move_file, move_dir): Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (assert_path_is_nonexistent, assert_path_is_file) 
 	(assert_path_is_directory, require_path_is_nonexistent) 
 	(require_path_is_file, require_path_is_directory) 
