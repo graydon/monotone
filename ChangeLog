@@ -1,5 +1,10 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.cc (read_data_for_command_line): We are given a
+	system_path.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc: Fix all unit test failures, except for two mysterious
 	boost::too_few_args exceptions.
 	

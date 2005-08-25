@@ -267,7 +267,7 @@ read_data_for_command_line(utf8 const & path, data & dat)
   if (path() == "-")
     read_data_stdin(dat);
   else
-    read_data(file_path_external(path), dat);
+    read_data(system_path(path), dat);
 }
 
 
