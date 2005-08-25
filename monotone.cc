@@ -320,7 +320,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_RCFILE:
-              app.add_rcfile(absolutify_for_command_line(tilde_expand(string(argstr))));
+              app.add_rcfile(argstr);
               break;
 
             case OPT_DUMP:

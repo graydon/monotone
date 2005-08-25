@@ -16,6 +16,8 @@
 #include <vector>
 #include <map>
 
+#include "paths.hh"
+
 namespace basic_io
 {
 

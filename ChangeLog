@@ -1,5 +1,10 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* basic_io.hh: #include "paths.hh".
+	* monotone.cc (add_rcfile): Remove obsolete absolutification, etc.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.hh (system_path): Add a from-any_path constructor.
 	* Makefile.am (MOST_SOURCES): Remove path_component.{cc,hh}.
 	* basic_io.hh (push_file_pair): New method.
