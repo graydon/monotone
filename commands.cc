@@ -167,8 +167,6 @@ namespace commands
     return cmd;
   }
 
-  // this writes utf-8 to its ostream; if the caller doesn't like that, they
-  // get to fix it.
   void explain_usage(string const & cmd, ostream & out)
   {
     map<string,command *>::const_iterator i;
@@ -566,7 +564,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       string washed;
       if (guess_binary(tv()))
         {
-          washed = _("<binary data>");
+          washed = "<binary data>";
         }
       else
         {
