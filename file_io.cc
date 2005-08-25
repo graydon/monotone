@@ -24,13 +24,6 @@ using namespace std;
 string const book_keeping_dir("MT");
 
 
-#include <stdlib.h>
-#include <unistd.h>
-#ifndef WIN32
- #include <pwd.h>
-#endif
-#include <sys/types.h>
-
 string 
 get_homedir()
 {
@@ -87,26 +80,6 @@ get_homedir()
   N(pw != NULL, F("could not find home directory for uid %d") % getuid());
   return string(pw->pw_dir);
 #endif
-}
-
-string 
-absolutify(string const & path)
-{
-  fs::path tmp = mkpath(path);
-  if (! tmp.has_root_path())
-    tmp = fs::current_path() / tmp;
-  I(tmp.has_root_path());
-  tmp = tmp.normalize();
-  return tmp.string();
-}
-
-string
-absolutify_for_command_line(string const & path)
-{
-  if (path == "-")
-    return path;
-  else
-    return absolutify(path);
 }
 
 string 

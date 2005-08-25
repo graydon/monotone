@@ -1,5 +1,10 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
-	
+
+	* platform.hh (tilde_expand): New function.
+	* win32/fs.cc, unix/fs.cc: Implement it.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc: Many more fixes.  Now compiles with and without unit
 	tests.
 	

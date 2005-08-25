@@ -5,6 +5,12 @@
 
 #include <unistd.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <sys/types.h>
+
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/convenience.hpp>
 
 #include "sanity.hh"
 #include "platform.hh"
@@ -21,4 +27,51 @@ void change_current_working_dir(any_path const & to)
 {
   E(!chdir(to.as_external().c_str()),
     F("cannot change to directory %s: %s") % to % strerror(errno));
+}
+
+// FIXME: BUG: this probably mangles character sets
+// (as in, we're treating system-provided data as utf8, but it's probably in
+// the filesystem charset)
+static utf8
+get_homedir()
+{
+  char * home = getenv("HOME");
+  if (home != NULL)
+    return string(home);
+
+  struct passwd * pw = getpwuid(getuid());  
+  N(pw != NULL, F("could not find home directory for uid %d") % getuid());
+  return string(pw->pw_dir);
+}
+
+utf8 tilde_expand(utf8 const & in)
+{
+  fs::path tmp(in(), fs::native);
+  fs::path::iterator i = tmp.begin();
+  if (i != tmp.end())
+    {
+      fs::path res;
+      if (*i == "~")
+        {
+          res /= mkpath(get_homedir());
+          ++i;
+        }
+      else if (i->size() > 1 && i->at(0) == '~')
+        {
+          struct passwd * pw;
+          // FIXME: BUG: this probably mangles character sets (as in, we're
+          // treating system-provided data as utf8, but it's probably in the
+          // filesystem charset)
+          pw = getpwnam(i->substr(1).c_str());
+          N(pw != NULL,
+            F("could not find home directory for user %s") % i->substr(1));
+          res /= string(pw->pw_dir);
+          ++i;
+        }
+      while (i != tmp.end())
+        res /= *i++;
+      return res.string();
+    }
+
+  return tmp;
 }

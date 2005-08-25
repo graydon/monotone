@@ -40,8 +40,6 @@
 
 struct lua_hooks;
 
-system_path get_homedir();
-
 // use I()
 void assert_path_is_nonexistent(any_path const & path);
 void assert_path_is_file(any_path const & path);
@@ -111,9 +109,6 @@ public:
   virtual void visit_file(file_path const & path) = 0;
   virtual ~tree_walker();
 };
-
-// from cwd (nb: we can't describe cwd as a file_path)
-void walk_tree(tree_walker & walker);
 
 // from some safe sub-dir of cwd
 void walk_tree(file_path const & path,
