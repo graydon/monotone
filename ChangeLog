@@ -1,5 +1,11 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* Makefile.am (UNIX_PLATFORM_SOURCES): Add unix/fs.cc
+	(WIN32_PLATFORM_SOURCES): Add win32/fs.cc
+	* paths.hh (bookkeeping_path): Implement default constructor.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* rcs_import.cc (import_cvs_repo): 
 	* lua.cc (default_rcfilename): 
 	* diff_patch.cc (get_version): Small compile fixes.

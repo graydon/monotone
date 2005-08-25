@@ -99,7 +99,7 @@ inline file_path file_path_external(utf8 const & path)
 class bookkeeping_path : public any_path
 {
 public:
-  bookkeeping_path();
+  bookkeeping_path() {};
   // path _should_ contain the leading MT/
   // and _should_ look like an internal path
   // usually you should just use the / operator as a constructor!
