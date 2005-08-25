@@ -734,7 +734,7 @@ automate_inventory(std::vector<utf8> args,
     }
 
   file_itemizer u(app, new_paths, unknown, ignored);
-  walk_tree(u);
+  walk_tree(file_path(), u);
 
   inventory_file_state(inventory, missing, inventory_item::MISSING_FILE);
 

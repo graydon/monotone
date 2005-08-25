@@ -1614,7 +1614,7 @@ ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
 
   extract_path_set(m_new, known);
   file_itemizer u(app, known, unknown, ignored);
-  walk_tree(u);
+  walk_tree(file_path(), u);
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin(); i != ignored.end(); ++i)
