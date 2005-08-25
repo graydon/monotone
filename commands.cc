@@ -167,6 +167,14 @@ namespace commands
     return cmd;
   }
 
+  const char * safe_gettext(const char * msgid)
+  {
+    if (strlen(msgid) == 0)
+      return msgid;
+
+    return _(msgid);
+  }
+
   void explain_usage(string const & cmd, ostream & out)
   {
     map<string,command *>::const_iterator i;
@@ -177,13 +185,13 @@ namespace commands
 
     if (i != cmds.end())
       {
-        string params = _(i->second->params.c_str());
+        string params = safe_gettext(i->second->params.c_str());
         vector<string> lines;
         split_into_lines(params, lines);
         for (vector<string>::const_iterator j = lines.begin();
              j != lines.end(); ++j)
           out << "     " << i->second->name << " " << *j << endl;
-        split_into_lines(_(i->second->desc.c_str()), lines);
+        split_into_lines(safe_gettext(i->second->desc.c_str()), lines);
         for (vector<string>::const_iterator j = lines.begin();
              j != lines.end(); ++j)
           out << "       " << *j << endl;
@@ -214,7 +222,7 @@ namespace commands
           {
             curr_group = idx(sorted, i)->cmdgroup;
             out << endl;
-            out << "  " << _(idx(sorted, i)->cmdgroup.c_str());
+            out << "  " << safe_gettext(idx(sorted, i)->cmdgroup.c_str());
             col = idx(sorted, i)->cmdgroup.size() + 2;
             while (col++ < (col2 + 3))
               out << ' ';

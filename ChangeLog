@@ -1,5 +1,10 @@
 2005-08-25  Benoît Dejean  <benoit@placenet.org>
 
+	* commands.cc (safe_gettext): New function.
+	(explain_usage): Used there to avoid _("").
+
+2005-08-25  Benoît Dejean  <benoit@placenet.org>
+
 	* sanity.{cc,hh} (sanity::do_format): Merged code from
 	sanity::{log, warning, progress} in order to merge
 	strings. Fixed exception rethrowing.
