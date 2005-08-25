@@ -95,23 +95,29 @@ sanity::set_relaxed(bool rel)
   relaxed = rel;
 }
 
+string
+sanity::do_format(format const & fmt, char const * file, int line)
+{
+  try
+    {
+      return fmt.str();
+    }
+  catch (std::exception & e)
+    {
+      ui.inform(F("fatal: formatter failed on %s:%d: %s")
+		% file
+		% line
+		% e.what());
+      throw;
+    }
+}
+
+
 void 
 sanity::log(format const & fmt, 
             char const * file, int line)
 {
-  string str;
-  try 
-    {
-      str = fmt.str();
-    }
-  catch (std::exception & e)
-    {
-      ui.inform("fatal: formatter failed on " 
-                + string(file) 
-                + ":" + boost::lexical_cast<string>(line) 
-                + ": " + e.what());
-      throw e;
-    }
+  string str = do_format(fmt, file, line);
   
   if (str.size() > constants::log_line_sz)
     {
@@ -130,19 +136,8 @@ void
 sanity::progress(format const & fmt, 
                  char const * file, int line)
 {
-  string str;
-  try 
-    {
-      str = fmt.str();
-    }
-  catch (std::exception & e)
-    {
-      ui.inform("fatal: formatter failed on " 
-                + string(file) 
-                + ":" + boost::lexical_cast<string>(line) 
-                + ": " + e.what());
-      throw e;
-    }
+  string str = do_format(fmt, file, line);
+
   if (str.size() > constants::log_line_sz)
     {
       str.resize(constants::log_line_sz);
@@ -160,19 +155,8 @@ void
 sanity::warning(format const & fmt, 
                 char const * file, int line)
 {
-  string str;
-  try 
-    {
-      str = fmt.str();
-    }
-  catch (std::exception & e)
-    {
-      ui.inform("fatal: formatter failed on " 
-                + string(file) 
-                + ":" + boost::lexical_cast<string>(line) 
-                + ": " + e.what());
-      throw e;
-    }
+  string str = do_format(fmt, file, line);
+
   if (str.size() > constants::log_line_sz)
     {
       str.resize(constants::log_line_sz);

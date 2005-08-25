@@ -78,6 +78,10 @@ struct sanity {
                      unsigned long idx,
                      std::string const & file, int line) NORETURN;
   void gasp();
+
+private:
+  std::string do_format(boost::format const & fmt,
+                        char const * file, int line);
 };
 
 typedef std::runtime_error oops;
