@@ -369,7 +369,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_MSGFILE:
-              app.set_message_file(absolutify_for_command_line(tilde_expand(string(argstr))));
+              app.set_message_file(string(argstr));
               break;
 
             case OPT_DATE:
