@@ -13,6 +13,8 @@
 #include "paths.hh"
 #include "platform.hh"
 #include "sanity.hh"
+#include "interner.hh"
+#include "transforms.hh"
 
 // some structure to ensure we aren't doing anything broken when resolving
 // filenames.  the idea is to make sure
@@ -27,23 +29,21 @@ struct access_tracker
     I(!used);
     value = val;
   }
-  T const & get() const
+  T const & get()
   {
     I(initialized);
     used = true;
     return value;
   }
+  T const & get_but_unused()
+  {
+    I(initialized);
+    return value;
+  }
   T value;
   bool initialized, used;
-  access_tracker() : initialized(false), used(false);
+  access_tracker() : initialized(false), used(false) {};
 };
-// need this so we can log our values
-// logging does not count as using...
-template <typename T> ostream &
-operator <<(ostream & o, access_tracker<T> const & a)
-{
-  o << a.value;
-}
 
 // paths to use in interpreting paths from various sources,
 // conceptually:
@@ -66,7 +66,7 @@ save_initial_path()
   initial_abs_path.set(system_path(get_current_working_dir()), false);
   // We still use boost::fs, so let's continue to initialize it properly.
   fs::initial_path();
-  L(F("initial abs path is: %s") % initial_abs_path);
+  L(F("initial abs path is: %s") % initial_abs_path.get_but_unused());
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -133,6 +133,7 @@ fully_normalized_path(std::string const & path)
         return false;
       start = stop + 1;
     }
+  return true;
 }
 
 static inline bool
@@ -143,12 +144,12 @@ not_in_bookkeeping_dir(std::string const & path)
 
 file_path::file_path(file_path::source_type type, std::string const & path)
 {
-  switch (source_type)
+  switch (type)
     {
-    internal:
+    case internal:
       data = path;
       break;
-    external:
+    case external:
       fs::path tmp(initial_rel_path.get().as_internal());
       tmp /= fs::path(path, fs::native);
       tmp = tmp.normalize();
@@ -190,17 +191,18 @@ static interner<path_component> pc_interner("", the_null_component);
 //    - ["", "bar"]
 file_path::file_path(std::vector<path_component> const & pieces)
 {
-  std::vector<path_component>::const_iterator i = names.begin();
-  I(i != names.end());
-  if (names.size() > 1)
+  std::vector<path_component>::const_iterator i = pieces.begin();
+  I(i != pieces.end());
+  if (pieces.size() > 1)
     I(!null_name(*i));
-  data = pc_interner.lookup(*i);
-  for (++i; i != names.end(); ++i)
+  std::string tmp = pc_interner.lookup(*i);
+  for (++i; i != pieces.end(); ++i)
     {
       I(!null_name(*i));
-      data += "/";
-      data += pc_interner.lookup(*i);
+      tmp += "/";
+      tmp += pc_interner.lookup(*i);
     }
+  data = tmp;
 }
 
 //
@@ -216,20 +218,21 @@ file_path::file_path(std::vector<path_component> const & pieces)
 // get a single-element vector containing the null component.  with the old
 // code, in this one case, you would have gotten an empty vector.
 void
-file_path::split(std::vector<path_component> & pieces)
+file_path::split(std::vector<path_component> & pieces) const
 {
   pieces.clear();
   std::string::size_type start, stop;
   start = 0;
+  std::string const & s = data();
   while (1)
     {
-      stop = p_str.find('/', start);
-      if (stop < 0 || stop > p_str.length())
+      stop = s.find('/', start);
+      if (stop < 0 || stop > s.length())
         {
-          pieces.push_back(pc_interner.intern(p_str.substr(start)));
+          pieces.push_back(pc_interner.intern(s.substr(start)));
           break;
         }
-      components.push_back(pc_interner.intern(p_str.substr(start, stop - start)));
+      pieces.push_back(pc_interner.intern(s.substr(start, stop - start)));
       start = stop + 1;
     }
 }
@@ -323,12 +326,22 @@ system_path::system_path(any_path const & other)
   data = (working_root.get() / other.as_internal()).as_internal();
 }
 
-system_path::system_path(std::string const & path)
+static inline std::string const_system_path(std::string const & path)
 {
   if (is_absolute(path))
-    data = path;
+    return path;
   else
-    data = (initial_abs_path.get() / other.as_internal()).as_internal();
+    return (initial_abs_path.get() / path).as_internal();
+}
+
+system_path::system_path(std::string const & path)
+{
+  data = const_system_path(path);
+}
+
+system_path::system_path(utf8 const & path)
+{
+  data = const_system_path(path());
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -386,10 +399,10 @@ find_and_go_to_working_copy(system_path const & search_root)
   working_root.set(current.native_file_string(), true);
   initial_rel_path.set(file_path_internal(removed.string()), true);
 
-  L(F("working root is '%s'") % working_root);
-  L(F("initial relative path is '%s'") % initial_rel_path);
+  L(F("working root is '%s'") % working_root.get_but_unused());
+  L(F("initial relative path is '%s'") % initial_rel_path.get_but_unused());
 
-  change_current_working_dir(working_root);
+  change_current_working_dir(working_root.get_but_unused());
 
   return true;
 }
