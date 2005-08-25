@@ -1,5 +1,11 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (file_path): Implement basic constructor.
+	Misc compile fixes.
+	Add single-character names to tests.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (go_to_working_copy): New function.  Implement.
 	* app_state.cc (create_working_copy): Adjust accordingly.
 

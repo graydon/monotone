@@ -32,7 +32,7 @@ save_initial_path()
   // FIXME: BUG: this only works if the current working dir is in utf8
   initial_abs_path = system_path(get_current_working_dir());
   fs::initial_path();
-  L(F("initial abs path is: %s") % initial_path);
+  L(F("initial abs path is: %s") % initial_abs_path);
 }
 
 // path to prepend to external files, to convert them from pointing to the
@@ -49,6 +49,7 @@ bool
 find_and_go_to_working_copy(system_path const & search_root)
 {
   // unimplemented
+  fs::path root = search_root.as_external();
   fs::path bookdir = bookkeeping_root.as_external();
   fs::path current = fs::initial_path();
   fs::path removed;
@@ -56,22 +57,22 @@ find_and_go_to_working_copy(system_path const & search_root)
   
   L(F("searching for '%s' directory with root '%s'\n") 
     % bookdir.string()
-    % search_root.string());
+    % root.string());
 
-  while (current != search_root
+  while (current != root
          && current.has_branch_path()
          && current.has_leaf()
          && !fs::exists(check))
     {
       L(F("'%s' not found in '%s' with '%s' removed\n")
         % bookdir.string() % current.string() % removed.string());
-      removed = mkpath(current.leaf()) / removed;
+      removed = fs::path(current.leaf(), fs::native) / removed;
       current = current.branch_path();
       check = current / bookdir;
     }
 
   L(F("search for '%s' ended at '%s' with '%s' removed\n") 
-    % book_keeping_dir % current.string() % removed.string());
+    % bookdir.string() % current.string() % removed.string());
 
   if (!fs::exists(check))
     {
@@ -92,7 +93,7 @@ find_and_go_to_working_copy(system_path const & search_root)
       return false;
     }
 
-  working_root = current.as_native_path_string();
+  working_root = current.native_file_string();
   initial_rel_path = file_path_internal(removed.string());
 
   L(F("working root is '%s'") % working_root);
@@ -107,7 +108,7 @@ void
 go_to_working_copy(system_path const & new_working_copy)
 {
   working_root = new_working_copy;
-  initial_rel_path = file_dir();
+  initial_rel_path = file_path();
   change_current_working_dir(new_working_copy);
 }
 
@@ -195,24 +196,26 @@ fully_normalized_path(std::string const & path)
 }
 
 static inline bool
-in_bookkeeping_dir(std::string const & path)
+not_in_bookkeeping_dir(std::string const & path)
 {
   return (path.size() < 3) || (path.substr(0, 3) != "MT/");
 }
 
 file_path::file_path(file_path::source_type type, std::string const & path)
 {
-  switch source_type
+  switch (source_type)
     {
     internal:
-      I(fully_normalized_path(path));
-      I(!in_bookkeeping_dir(path));
       data = path;
       break;
     external:
-      std::string tmp;
-      normalize_path(
+      fs::path tmp(initial_rel_path.as_internal());
+      tmp /= fs::path(path, fs::native);
+      tmp = tmp.normalize();
+      data = utf8(tmp.string());
     }
+  I(fully_normalized_path(data()));
+  I(not_in_bookkeeping_dir(data()));
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -308,14 +311,23 @@ any_path::as_external() const
 
 ///////////////////////////////////////////////////////////////////////////
 // writing out paths
-// we do _not_ convert charsets here, because this is for embedding in larger
-// streams, and those larger streams will be converted as a whole
 ///////////////////////////////////////////////////////////////////////////
 
 std::ostream &
 operator <<(std::ostream & o, any_path const & a)
 {
   o << a.as_internal();
+}
+
+///////////////////////////////////////////////////////////////////////////
+// path manipulation
+// this code's speed does not matter much
+///////////////////////////////////////////////////////////////////////////
+
+static inline std::string
+operator_slash(any_path const & path, std::string appended)
+{
+  
 }
 
 #ifdef BUILD_UNIT_TESTS
@@ -350,6 +362,7 @@ static void test_file_path_internal()
     BOOST_CHECK_THROW(file_path_internal(*c), logic_error);
 
   char const * goodies[] = {"",
+                            "a",
                             "foo",
                             "foo/bar/baz",
                             "foo/bar.baz",
@@ -416,6 +429,7 @@ static void test_file_path_external_no_prefix()
     BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
   
   check_fp_normalizes_to("", "");
+  check_fp_normalizes_to("a", "a");
   check_fp_normalizes_to("foo", "foo");
   check_fp_normalizes_to("foo/bar", "foo/bar");
   check_fp_normalizes_to("foo/bar/baz", "foo/bar/baz");
@@ -454,6 +468,7 @@ static void test_file_path_external_prefix_a_b()
     BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
   
   check_fp_normalizes_to("foo", "a/b/foo");
+  check_fp_normalizes_to("a", "a/b/a");
   check_fp_normalizes_to("foo/bar", "a/b/foo/bar");
   check_fp_normalizes_to("foo/bar/baz", "a/b/foo/bar/baz");
   check_fp_normalizes_to("foo/bar.baz", "a/b/foo/bar.baz");
@@ -462,7 +477,7 @@ static void test_file_path_external_prefix_a_b()
   check_fp_normalizes_to(".foo/bar", "a/b/.foo/bar");
   check_fp_normalizes_to("..foo/bar", "a/b/..foo/bar");
   check_fp_normalizes_to(".", "a/b");
-
+  // things that would have been bad without the initial_rel_path:
   check_fp_normalizes_to("foo//bar", "a/b/foo/bar");
   check_fp_normalizes_to("foo/../bar", "a/b/bar");
   check_fp_normalizes_to("foo/bar/", "a/b/foo/bar");
