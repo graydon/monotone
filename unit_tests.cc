@@ -74,9 +74,6 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   if (t.empty() || t.find("netcmd") != t.end())
     add_netcmd_tests(suite);  
 
-  if (t.empty() || t.find("path_component") != t.end())
-    add_path_component_tests(suite);  
-
   if (t.empty() || t.find("globish") != t.end())
     add_globish_tests(suite);  
   

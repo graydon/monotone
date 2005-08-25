@@ -67,7 +67,7 @@ utf8 tilde_expand(utf8 const & in)
           pw = getpwnam(i->substr(1).c_str());
           N(pw != NULL,
             F("could not find home directory for user %s") % i->substr(1));
-          res /= string(pw->pw_dir);
+          res /= std::string(pw->pw_dir);
           ++i;
         }
       while (i != tmp.end())

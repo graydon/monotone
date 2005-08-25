@@ -70,8 +70,7 @@ bool guess_binary(std::string const & s);
 // app_state.cc assumes that this is implemented by boost::fs
 void mkdir_p(any_path const & path);
 
-void make_dir_for(file_path const & p);
-void make_dir_for(bookkeeping_path const & p);
+void make_dir_for(any_path const & p);
 
 void delete_file(any_path const & path);
 void delete_dir_recursive(any_path const & path);

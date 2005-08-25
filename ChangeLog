@@ -1,5 +1,11 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* unit_tests.{cc,hh} (init_unit_test_suite): Remove
+	path_component_tests.
+	* unix/fs.cc (tilde_expand): Another compile fix.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* {unix,win32}/fs.cc: Misc. compile fixes.
 
 2005-08-25  Nathaniel Smith  <njs@pobox.com>

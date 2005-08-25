@@ -187,8 +187,8 @@ move_file(any_path const & old_path,
 }
 
 void 
-move_dir(file_path const & old_path,
-         file_path const & new_path) 
+move_dir(any_path const & old_path,
+         any_path const & new_path) 
 { 
   require_path_is_directory(old_path,
                             F("rename source dir '%s' does not exist") % old_path,
