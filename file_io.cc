@@ -361,7 +361,7 @@ walk_tree_recursive(fs::path const & absolute,
       fs::path entry = *di;
       fs::path rel_entry = relative / entry.leaf();
       
-      if (book_keeping_file(rel_entry))
+      if (bookkeeping_path::is_bookkeeping_path(rel_entry.normalize().string()))
         {
           L(F("ignoring book keeping entry %s\n") % rel_entry.string());
           continue;

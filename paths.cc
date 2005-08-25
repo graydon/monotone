@@ -171,6 +171,12 @@ bookkeeping_path::bookkeeping_path(std::string const & path)
   data = path;
 }
 
+bool
+bookkeeping_path::is_bookkeeping_path(std::string const & path)
+{
+  return !not_in_bookkeeping_dir(path);
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // splitting/joining
 // this code must be superfast
@@ -331,13 +337,13 @@ system_path::system_path(any_path const & other)
   data = (working_root.get() / other.as_internal()).as_internal();
 }
 
-static inline std::string const_system_path(std::string const & path)
+static inline std::string const_system_path(utf8 const & path)
 {
-  path = tilde_expand(path);
-  if (is_absolute(path))
-    return path;
+  std::string expanded = tilde_expand(path)();
+  if (is_absolute(expanded))
+    return expanded;
   else
-    return (initial_abs_path.get() / path).as_internal();
+    return (initial_abs_path.get() / expanded).as_internal();
 }
 
 system_path::system_path(std::string const & path)
@@ -347,7 +353,7 @@ system_path::system_path(std::string const & path)
 
 system_path::system_path(utf8 const & path)
 {
-  data = const_system_path(path());
+  data = const_system_path(path);
 }
 
 ///////////////////////////////////////////////////////////////////////////
