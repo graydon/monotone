@@ -377,11 +377,12 @@ walk_tree_recursive(fs::path const & absolute,
           file_path p;
           try 
             {
-              p = file_path(rel_entry.string());
+              // FIXME: BUG: this screws up charsets
+              p = file_path_internal(rel_entry.normalize().string());
             }
           catch (std::runtime_error const & c)
             {
-              L(F("caught runtime error %s constructing file path for %s\n") 
+              W(F("caught runtime error %s constructing file path for %s\n") 
                 % c.what() % rel_entry.string());
               continue;
             }     
@@ -396,39 +397,25 @@ walk_tree(file_path const & path,
           tree_walker & walker,
           bool require_existing_path)
 {
-  if (fs::exists(localized(path)))
+  if (path.empty())
+    walk_tree_recursive(fs::current_path(), fs::path(), walker);
+      
+  switch (get_path_status(path))
     {
-      if (! fs::is_directory(localized(path)))
-        walker.visit_file(path);
-      else
-        {
-          // the current path does not need localization
-          fs::path root(fs::current_path());
-          fs::path rel(localized(path));
-          walk_tree_recursive(root / rel, rel, walker);
-        }
-    }
-  else
-    {
-      if (require_existing_path)
-        {
-          N(false,
-            F("no such file or directory: %s") % path());
-        }
-      else
-        {
-          walker.visit_file(path);
-        }
+    case path::nonexistent:
+      N(require_existing_path, F("no such file or directory") % path);
+      walker.visit_file(path);
+      break;
+    case path::file:
+      walker.visit_file(path);
+      break;
+    case path::directory:
+      walk_tree_recursive(system_path(path).as_external(),
+                          path.as_external(),
+                          walker);
+      break;
     }
 }
-
-// from cwd (nb: we can't describe cwd as a file_path)
-void 
-walk_tree(tree_walker & walker)
-{
-  walk_tree_recursive(fs::current_path(), fs::path(), walker);
-}
-
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
