@@ -48,18 +48,11 @@ app_state::~app_state()
 void
 app_state::allow_working_copy()
 {
-  fs::path root = mkpath(search_root.as_external());
-  fs::path working;
-  fs::path current;
-
-  found_working_copy = find_working_copy(root, working, current);
+  found_working_copy = find_and_go_to_working_copy(root);
 
   if (found_working_copy) 
     {
       L(F("initializing from directory %s\n") % fs::initial_path().string());
-      L(F("found working copy directory %s\n") % working.string());
-      N(chdir(working.native_directory_string().c_str()) != -1,
-        F("cannot change to directory to %s\n") % working.native_directory_string());
 
       read_options();
 
@@ -69,12 +62,6 @@ app_state::allow_working_copy()
         branch_name = options[branch_option];
       L(F("branch name is '%s'\n") % branch_name());
       internalize_rsa_keypair_id(options[key_option], signing_key);
-
-      if (!current.empty()) 
-        {
-          relative_directory = file_path_internal(current.string());
-          L(F("relative directory is '%s'\n") % relative_directory);
-        }
 
       if (global_sanity.filename.empty())
         {
@@ -123,8 +110,6 @@ app_state::create_working_copy(std::string const & dir)
           % strerror(err.native_error()));
       }
     change_current_working_dir(new_dir);
-    
-    relative_directory = file_path();
   }
 
   N(!directory_exists(bookkeeping_root),

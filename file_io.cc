@@ -31,65 +31,6 @@ string const book_keeping_dir("MT");
 #endif
 #include <sys/types.h>
 
-bool
-find_working_copy(fs::path const & search_root,
-                  fs::path & working_copy_root, 
-                  fs::path & working_copy_restriction) 
-{
-  fs::path bookdir = mkpath(book_keeping_dir);
-  fs::path current = fs::initial_path();
-  fs::path removed;
-  fs::path check = current / bookdir;
-
-  L(F("searching for '%s' directory with root '%s'\n") 
-    % bookdir.string()
-    % search_root.string());
-
-  // nb: boost 1.32.0 has added operations::equivalent(path1, path2)
-  // and ==, !=, ... on paths which are probably better than
-  // native_directory_string comparisons used here temporarily
-
-  while ( current.native_directory_string() 
-          != search_root.native_directory_string() &&
-          current.has_branch_path() && 
-          current.has_leaf() && 
-          !fs::exists(check))
-    {
-      L(F("'%s' not found in '%s' with '%s' removed\n")
-        % bookdir.string() % current.string() % removed.string());
-      removed = mkpath(current.leaf()) / removed;
-      current = current.branch_path();
-      check = current / bookdir;
-    }
-
-  L(F("search for '%s' ended at '%s' with '%s' removed\n") 
-    % book_keeping_dir % current.string() % removed.string());
-
-  if (!fs::exists(check))
-    {
-      L(F("'%s' does not exist\n") % check.string());
-      return false;
-    }
-
-  if (!fs::is_directory(check))
-    {
-      L(F("'%s' is not a directory\n") % check.string());
-      return false;
-    }
-
-  // check for MT/. and MT/.. to see if mt dir is readable
-  if (!fs::exists(check / ".") || !fs::exists(check / ".."))
-    {
-      L(F("problems with '%s' (missing '.' or '..')\n") % check.string());
-      return false;
-    }
-
-  working_copy_root = current;
-  working_copy_restriction = removed;
-
-  return true;
-}
-
 string 
 get_homedir()
 {

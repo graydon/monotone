@@ -31,7 +31,8 @@ save_initial_path()
 {
   // FIXME: BUG: this only works if the current working dir is in utf8
   initial_abs_path = system_path(get_current_working_dir());
-  L(F("initial path is: %s") % initial_path);
+  fs::initial_path();
+  L(F("initial abs path is: %s") % initial_path);
 }
 
 // path to prepend to external files, to convert them from pointing to the
@@ -48,15 +49,58 @@ bool
 find_and_go_to_working_copy(system_path const & search_root)
 {
   // unimplemented
-
+  fs::path bookdir = bookkeeping_root.as_external();
+  fs::path current = fs::initial_path();
+  fs::path removed;
+  fs::path check = current / bookdir;
   
+  L(F("searching for '%s' directory with root '%s'\n") 
+    % bookdir.string()
+    % search_root.string());
 
-  // should do what find_working_copy in file_io.cc does, and what
-  // allow_working_copy in app_state.cc does
-  // should use change_current_working_dir when it finds the root
+  while (current != search_root
+         && current.has_branch_path()
+         && current.has_leaf()
+         && !fs::exists(check))
+    {
+      L(F("'%s' not found in '%s' with '%s' removed\n")
+        % bookdir.string() % current.string() % removed.string());
+      removed = mkpath(current.leaf()) / removed;
+      current = current.branch_path();
+      check = current / bookdir;
+    }
 
-  // should set initial_rel_path and working_root
-  I(false);
+  L(F("search for '%s' ended at '%s' with '%s' removed\n") 
+    % book_keeping_dir % current.string() % removed.string());
+
+  if (!fs::exists(check))
+    {
+      L(F("'%s' does not exist\n") % check.string());
+      return false;
+    }
+
+  if (!fs::is_directory(check))
+    {
+      L(F("'%s' is not a directory\n") % check.string());
+      return false;
+    }
+
+  // check for MT/. and MT/.. to see if mt dir is readable
+  if (!fs::exists(check / ".") || !fs::exists(check / ".."))
+    {
+      L(F("problems with '%s' (missing '.' or '..')\n") % check.string());
+      return false;
+    }
+
+  working_root = current.as_native_path_string();
+  initial_rel_path = file_path_internal(removed.string());
+
+  L(F("working root is '%s'") % working_root);
+  L(F("initial relative path is '%s'") % initial_rel_path);
+
+  change_current_working_dir(working_root);
+
+  return true;
 }
 
 static bool

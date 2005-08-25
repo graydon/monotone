@@ -40,10 +40,6 @@
 
 struct lua_hooks;
 
-bool find_working_copy(fs::path const & search_root, 
-                       fs::path & working_copy_root, 
-                       fs::path & working_copy_restriction);
-
 system_path get_homedir();
 
 // use I()
