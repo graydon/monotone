@@ -1,5 +1,11 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (in_bookkeeping_dir): Last change didn't work out so
+	well; let's remove some negatives and see if I can understand what
+	the code does this way...
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (not_in_bookkeeping_dir): Handle "MT" case.
 	Update tests to make sure it sticks...
 

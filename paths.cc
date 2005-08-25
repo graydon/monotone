@@ -142,9 +142,9 @@ fully_normalized_path(std::string const & path)
 }
 
 static inline bool
-not_in_bookkeeping_dir(std::string const & path)
+in_bookkeeping_dir(std::string const & path)
 {
-  return (path.size() < 3 && path != "MT") || (path.substr(0, 3) != "MT/");
+  return path == "MT" || (path.size() >= 3 && (path.substr(0, 3) == "MT/"));
 }
 
 file_path::file_path(file_path::source_type type, std::string const & path)
@@ -161,20 +161,20 @@ file_path::file_path(file_path::source_type type, std::string const & path)
       data = utf8(tmp.string());
     }
   I(fully_normalized_path(data()));
-  I(not_in_bookkeeping_dir(data()));
+  I(!in_bookkeeping_dir(data()));
 }
 
 bookkeeping_path::bookkeeping_path(std::string const & path)
 {
   I(fully_normalized_path(path));
-  I(!not_in_bookkeeping_dir(path));
+  I(in_bookkeeping_dir(path));
   data = path;
 }
 
 bool
 bookkeeping_path::is_bookkeeping_path(std::string const & path)
 {
-  return !not_in_bookkeeping_dir(path);
+  return in_bookkeeping_dir(path);
 }
 
 ///////////////////////////////////////////////////////////////////////////
