@@ -450,10 +450,10 @@ static void test_file_path_internal()
                             0 };
   initial_rel_path.set(file_path(), true);
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path_internal(*c), logic_error);
+    BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
   initial_rel_path.set(file_path_internal("blah/blah/blah"), true);
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path_internal(*c), logic_error);
+    BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
 
   char const * goodies[] = {"",
                             "a",
@@ -469,12 +469,14 @@ static void test_file_path_internal()
   
   for (int i = 0; i < 2; ++i)
     {
-      initial_rel_path = (i ? file_path() : file_path_internal("blah/blah/blah"));
-      for (char const ** c = baddies; *c; ++c)
+      initial_rel_path.set(i ? file_path()
+                             : file_path_internal("blah/blah/blah"),
+                           true);
+      for (char const ** c = goodies; *c; ++c)
         {
           file_path fp = file_path_internal(*c);
           BOOST_CHECK(fp.as_internal() == *c);
-          BOOST_CHECK(file_path(fp.as_internal()) == fp);
+          BOOST_CHECK(file_path_internal(fp.as_internal()) == fp);
           std::vector<path_component> split_test;
           fp.split(split_test);
           file_path fp2(split_test);
@@ -490,9 +492,9 @@ static void test_file_path_internal()
 
 static void check_fp_normalizes_to(char * before, char * after)
 {
-  file_path fp(file_path::external, before);
+  file_path fp = file_path_external(std::string(before));
   BOOST_CHECK(fp.as_internal() == after);
-  BOOST_CHECK(file_path_internal(fp.as_internal()) == after);
+  BOOST_CHECK(file_path_internal(fp.as_internal()) == fp);
   // we compare after to the external form too, since as far as we know
   // relative normalized posix paths are always good win32 paths too
   BOOST_CHECK(fp.as_external() == after);
@@ -596,8 +598,8 @@ static void test_split_join()
   fp2.split(split2);
   BOOST_CHECK(fp1 == file_path(split1));
   BOOST_CHECK(fp2 == file_path(split2));
-  BOOST_CHECK(fp1 != file_path(split2));
-  BOOST_CHECK(fp2 != file_path(split1));
+  BOOST_CHECK(!(fp1 == file_path(split2)));
+  BOOST_CHECK(!(fp2 == file_path(split1)));
   BOOST_CHECK(split1.size() == 3);
   BOOST_CHECK(split2.size() == 3);
   BOOST_CHECK(split1[0] != split1[1]);
@@ -610,7 +612,7 @@ static void test_split_join()
   BOOST_CHECK(split1[1] == split2[0]);
   BOOST_CHECK(split1[2] == split2[1]);
 
-  file_path fp3(file_path_internal, "");
+  file_path fp3 = file_path_internal("");
   pcv split3;
   fp3.split(split3);
   BOOST_CHECK(split3.size() == 1);
@@ -618,20 +620,21 @@ static void test_split_join()
   BOOST_CHECK(fp3 == file_path(split3));
 
   pcv split4;
-  BOOST_CHECK_THROW(file_path(split4), logic_error);
+  BOOST_CHECK_THROW(file_path(split4), std::logic_error);
   split4.push_back(the_null_component);
-  BOOST_CHECK_NOT_THROW(file_path(split4), logic_error);
+  BOOST_CHECK_NOT_THROW(file_path(split4), std::logic_error);
+  split4.clear();
   split4.push_back(split1[0]);
-  BOOST_CHECK_THROW(file_path(split4), logic_error);
-  split4.push_front(split1[0]);
-  BOOST_CHECK_THROW(file_path(split4), logic_error);
+  split4.push_back(the_null_component);
+  split4.push_back(split1[0]);
+  BOOST_CHECK_THROW(file_path(split4), std::logic_error);
 }
 
 static void check_bk_normalizes_to(char * before, char * after)
 {
   bookkeeping_path bp(bookkeeping_root / before);
   BOOST_CHECK(bp.as_external() == after);
-  BOOST_CHECK(bookkeeping_path(bp.as_internal()) == bp);
+  BOOST_CHECK(bookkeeping_path(bp.as_internal()).as_internal() == bp.as_internal());
 }
 
 static void test_bookkeeping_path()
@@ -648,16 +651,18 @@ static void test_bookkeeping_path()
                             "c:\\foo",
                             "c:foo",
                             "c:/foo",
+                            "",
                             0 };
   
   for (char const ** c = baddies; *c; ++c)
     {
-      BOOST_CHECK_THROW(bookkeeping_path(*c), logic_error);
-      BOOST_CHECK_THROW(bookkeeping_root / *c, logic_error);
+      BOOST_CHECK_THROW(bookkeeping_path(std::string(*c)), std::logic_error);
+      BOOST_CHECK_THROW(bookkeeping_root / std::string(*c), std::logic_error);
     }
-  BOOST_CHECK_THROW(bookkeeping_root("foo/bar"), logic_error);
-  BOOST_CHECK_THROW(bookkeeping_root(""), logic_error);
+  BOOST_CHECK_THROW(bookkeeping_path(std::string("foo/bar")), std::logic_error);
+  BOOST_CHECK_THROW(bookkeeping_path(std::string("a")), std::logic_error);
   
+  check_bk_normalizes_to("a", "MT/foo");
   check_bk_normalizes_to("foo", "MT/foo");
   check_bk_normalizes_to("foo/bar", "MT/foo/bar");
   check_bk_normalizes_to("foo/bar/baz", "MT/foo/bar/baz");
@@ -667,7 +672,7 @@ static void check_system_normalizes_to(char * before, char * after)
 {
   system_path sp(before);
   BOOST_CHECK(sp.as_external() == after);
-  BOOST_CHECK(system_path(sp.as_internal()) == sp);
+  BOOST_CHECK(system_path(sp.as_internal()).as_internal() == sp.as_internal());
 }
 
 static void test_system_path()
@@ -713,7 +718,7 @@ static void test_system_path()
   BOOST_CHECK(system_path(system_path("/foo/bar")).as_internal() == "/foo/bar");
   BOOST_CHECK(system_path(file_path_internal("foo/bar")).as_internal()
               == "/working/root/foo/bar");
-  BOOST_CHECK(system_path(file_path_external("foo/bar")).as_external()
+  BOOST_CHECK(system_path(file_path_external(std::string("foo/bar"))).as_external()
               == "/working/root/rel/initial/foo/bar");
   BOOST_CHECK(system_path(bookkeeping_path("MT/foo/bar")).as_internal()
               == "/working/root/MT/foo/bar");
@@ -726,13 +731,13 @@ static void test_system_path()
 static void test_access_tracker()
 {
   access_tracker<int> a;
-  BOOST_CHECK_THROW(a.get(), invariant_failure);
+  BOOST_CHECK_THROW(a.get(), std::logic_error);
   a.set(1, false);
-  BOOST_CHECK_THROW(a.set(2, false), invariant_failure);
+  BOOST_CHECK_THROW(a.set(2, false), std::logic_error);
   a.set(2, true);
-  BOOST_CHECK_THROW(a.set(3, false), invariant_failure);
+  BOOST_CHECK_THROW(a.set(3, false), std::logic_error);
   BOOST_CHECK(a.get() == 2);
-  BOOST_CHECK_THROW(a.set(3, true), invariant_failure);
+  BOOST_CHECK_THROW(a.set(3, true), std::logic_error);
 }
 
 void add_paths_tests(test_suite * suite)
