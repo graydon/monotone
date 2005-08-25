@@ -36,6 +36,13 @@ struct access_tracker
   T value;
   bool initialized, used;
   access_tracker() : initialized(false), used(false);
+};
+// need this so we can log our values
+// logging does not count as using...
+template <typename T> ostream &
+operator <<(ostream & o, access_tracker<T> const & a)
+{
+  o << a.value;
 }
 
 // paths to use in interpreting paths from various sources,
@@ -56,7 +63,7 @@ void
 save_initial_path()
 {
   // FIXME: BUG: this only works if the current working dir is in utf8
-  initial_abs_path = system_path(get_current_working_dir());
+  initial_abs_path.set(system_path(get_current_working_dir()), false);
   fs::initial_path();
   L(F("initial abs path is: %s") % initial_abs_path);
 }
@@ -283,6 +290,7 @@ std::ostream &
 operator <<(std::ostream & o, any_path const & a)
 {
   o << a.as_internal();
+  return o;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -367,8 +375,8 @@ find_and_go_to_working_copy(system_path const & search_root)
       return false;
     }
 
-  working_root = current.native_file_string();
-  initial_rel_path = file_path_internal(removed.string());
+  working_root.set(current.native_file_string(), true);
+  initial_rel_path.set(file_path_internal(removed.string()), true);
 
   L(F("working root is '%s'") % working_root);
   L(F("initial relative path is '%s'") % initial_rel_path);
@@ -381,8 +389,8 @@ find_and_go_to_working_copy(system_path const & search_root)
 void
 go_to_working_copy(system_path const & new_working_copy)
 {
-  working_root = new_working_copy;
-  initial_rel_path = file_path();
+  working_root.set(new_working_copy, true);
+  initial_rel_path.set(file_path(), true);
   change_current_working_dir(new_working_copy);
 }
 

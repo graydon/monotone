@@ -1,5 +1,12 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (find_and_go_to_working_copy, save_initial_path) 
+	(go_to_working_copy): Use new checked structure.
+	(operator <<): Make sure we can log our access_tracked values
+	without marking them as used.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (struct access_tracker): Add invariant checking on
 	lifetime usage of path roots.
 
