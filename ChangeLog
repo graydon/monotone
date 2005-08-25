@@ -1,3 +1,10 @@
+2005-08-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* transform.cc ({int,ext}ernalize_rsa_keypair_id): don't 
+	convert the username portion of key ids to/from ACE.
+	* tests/t_genkey.at: check that foo+bar@example.com works
+	and foobar@exam+ple.com doesn't.
+
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
 	* database.cc (assert_sqlite3_ok): Remove accidentally-left-in

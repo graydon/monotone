@@ -758,9 +758,10 @@ internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
     tokenizer;
   boost::char_separator<char> sep("", ".@", boost::keep_empty_tokens);
   tokenizer tokens(utf(), sep);
+  bool in_domain = false;
   for(tokenizer::iterator i = tokens.begin(); i != tokens.end(); ++i)
     {
-      if (*i == "." || *i == "@")
+      if (!in_domain || *i == "." || *i == "@")
         tmp += *i;
       else
         {
@@ -768,6 +769,8 @@ internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
           utf8_to_ace(*i, a);
           tmp += a();
         }
+      if (*i == "@")
+        in_domain = true;
     }
   key = tmp;
 }
@@ -788,9 +791,10 @@ externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
     tokenizer;
   boost::char_separator<char> sep("", ".@", boost::keep_empty_tokens);
   tokenizer tokens(key(), sep);
+  bool in_domain = false;
   for(tokenizer::iterator i = tokens.begin(); i != tokens.end(); ++i)
     {
-      if (*i == "." || *i == "@")
+      if (!in_domain || *i == "." || *i == "@")
         tmp += *i;
       else
         {
@@ -799,6 +803,8 @@ externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
           ace_to_utf8(a, u);
           tmp += u();
         }
+      if (*i == "@")
+        in_domain = true;
     }
   utf = tmp;
 }
