@@ -82,14 +82,14 @@ get_homedir()
 utf8
 tilde_expand(utf8 const & path)
 {
-  fs::path tmp(path, fs::native);
+  fs::path tmp(path(), fs::native);
   fs::path::iterator i = tmp.begin();
   if (i != tmp.end())
     {
       fs::path res;
       if (*i == "~" || i->size() > 1 && i->at(0) == '~')
         {
-          res /= mkpath(get_homedir());
+          res /= get_homedir()();
           ++i;
         }
       while (i != tmp.end())

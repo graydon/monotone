@@ -1,5 +1,9 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* {unix,win32}/fs.cc: Misc. compile fixes.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* Makefile.am (UNIX_PLATFORM_SOURCES): Add unix/fs.cc
 	(WIN32_PLATFORM_SOURCES): Add win32/fs.cc
 	* paths.hh (bookkeeping_path): Implement default constructor.

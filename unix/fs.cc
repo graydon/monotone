@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <pwd.h>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -38,11 +39,11 @@ get_homedir()
 {
   char * home = getenv("HOME");
   if (home != NULL)
-    return string(home);
+    return std::string(home);
 
   struct passwd * pw = getpwuid(getuid());  
   N(pw != NULL, F("could not find home directory for uid %d") % getuid());
-  return string(pw->pw_dir);
+  return std::string(pw->pw_dir);
 }
 
 utf8 tilde_expand(utf8 const & in)
@@ -54,7 +55,7 @@ utf8 tilde_expand(utf8 const & in)
       fs::path res;
       if (*i == "~")
         {
-          res /= mkpath(get_homedir());
+          res /= get_homedir()();
           ++i;
         }
       else if (i->size() > 1 && i->at(0) == '~')
@@ -74,7 +75,7 @@ utf8 tilde_expand(utf8 const & in)
       return res.string();
     }
 
-  return tmp;
+  return tmp.string();
 }
 
 path::status
