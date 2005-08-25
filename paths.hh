@@ -45,7 +45,7 @@ protected:
   any_path(any_path const & other)
     : data(other.data) {}
   any_path & operator=(any_path const & other)
-  { data = other.data; }
+  { data = other.data; return *this; }
 };
 
 std::ostream & operator<<(std::ostream & o, any_path const & a);
