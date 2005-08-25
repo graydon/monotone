@@ -64,34 +64,9 @@ save_initial_path()
 {
   // FIXME: BUG: this only works if the current working dir is in utf8
   initial_abs_path.set(system_path(get_current_working_dir()), false);
+  // We still use boost::fs, so let's continue to initialize it properly.
   fs::initial_path();
   L(F("initial abs path is: %s") % initial_abs_path);
-}
-
-// path to prepend to external files, to convert them from pointing to the
-// original working directory to the checkout's root.  Always a normalized
-// string with no trailing /.
-
-#ifdef _WIN32
-static const bool is_win32 = true;
-#else
-static const bool is_win32 = false;
-#endif
-
-static bool
-is_absolute(std::string const & path)
-{
-  if (path.empty())
-    return false;
-  if (path[0] == '/')
-    return true;
-#ifdef _WIN32
-  if (path[0] == '\\')
-    return true;
-  if (path.size() > 1 && path[1] == ':')
-    return true;
-#endif
-  return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -140,9 +115,8 @@ fully_normalized_path(std::string const & path)
   if (path.size() > 1 && path[1] == ':')
     return false;
   // first scan for completely illegal bytes
-  for (std::string::const_iterator i = path.begin(); i != path.end(); ++i)
-    if (bad_chars.find(*i) != std::string::npos)
-      return false;
+  if (path.find_first_of(bad_chars) != std::string::npos)
+    return false;
   // now check each component
   std::string::size_type start, stop;
   start = 0;
@@ -321,6 +295,40 @@ system_path::operator /(std::string const & to_append) const
 {
   I(!empty());
   return system_path(data() + "/" + to_append);
+}
+
+///////////////////////////////////////////////////////////////////////////
+// system_path
+///////////////////////////////////////////////////////////////////////////
+
+static bool
+is_absolute(std::string const & path)
+{
+  if (path.empty())
+    return false;
+  if (path[0] == '/')
+    return true;
+#ifdef _WIN32
+  if (path[0] == '\\')
+    return true;
+  if (path.size() > 1 && path[1] == ':')
+    return true;
+#endif
+  return false;
+}
+
+system_path::system_path(any_path const & other)
+{
+  I(!is_absolute(other.as_internal()));
+  data = (working_root.get() / other.as_internal()).as_internal();
+}
+
+system_path::system_path(std::string const & path)
+{
+  if (is_absolute(path))
+    data = path;
+  else
+    data = (initial_abs_path.get() / other.as_internal()).as_internal();
 }
 
 ///////////////////////////////////////////////////////////////////////////

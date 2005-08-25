@@ -114,6 +114,7 @@ class system_path : public any_path
 {
 public:
   system_path() {};
+  system_path(system_path const & other) : any_path(other) {};
   explicit system_path(any_path const & other);
   // this path can contain anything, and it will be absolutified and
   // tilde-expanded.  it will considered to be relative to the directory
