@@ -1,5 +1,10 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc (sql): Only check schema version when db actually
+	exists.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (read_data_for_command_line): We are given a
 	system_path.
 

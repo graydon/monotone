@@ -173,11 +173,13 @@ database::sql(bool init)
       N(!filename.empty(), F("no database specified"));
 
       if (! init)
-        require_path_is_file(filename,
-                             F("database %s does not exist") % filename,
-                             F("%s is a directory, not a database") % filename);
+        {
+          require_path_is_file(filename,
+                               F("database %s does not exist") % filename,
+                               F("%s is a directory, not a database") % filename);
 
-      check_sqlite_format_version(filename);
+          check_sqlite_format_version(filename);
+        }
       int error;
       error = sqlite3_open(filename.as_external().c_str(), &__sql);
       if (error)
