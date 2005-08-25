@@ -333,6 +333,7 @@ system_path::system_path(any_path const & other)
 
 static inline std::string const_system_path(std::string const & path)
 {
+  path = tilde_expand(path);
   if (is_absolute(path))
     return path;
   else

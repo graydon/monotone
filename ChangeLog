@@ -1,5 +1,9 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (const_system_path): Do tilde expansion.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (read_localized_data, read_data_for_command_line) 
 	(write_localized_data, write_data, write_data_impl): Implement.
 
