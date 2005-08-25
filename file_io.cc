@@ -35,7 +35,7 @@ assert_path_is_file(any_path const & path)
 }
 
 void
-assert_path_is_directory(any_path const & path);
+assert_path_is_directory(any_path const & path)
 {
   I(get_path_status(path) == path::directory);
 }
@@ -104,7 +104,7 @@ file_exists(any_path const & p)
 bool
 ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua)
 {
-  fs::path local_p(p.as_external);
+  fs::path local_p(p.as_external());
 
   if (!fs::exists(local_p))
     return false;
@@ -116,7 +116,7 @@ ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua)
     case path::file:
       break;
     case path::directory:
-      W(F("expected file '%s', but it is a directory.") % p());
+      W(F("expected file '%s', but it is a directory.") % p);
       return false;
     }
 
@@ -167,9 +167,10 @@ delete_file(any_path const & p)
 void 
 delete_dir_recursive(any_path const & p) 
 { 
-  N(directory_exists(p), 
-    F("directory to delete '%s' does not exist") % p);
-  fs::remove_all(localized(p)); 
+  require_path_is_directory(p,
+                            F("directory to delete, '%s', does not exist") % p,
+                            F("directory to delete, '%s', is a file") % p);
+  fs::remove_all(p.as_external());
 }
 
 void 
@@ -182,7 +183,7 @@ move_file(any_path const & old_path,
                          "-- bug in monotone?") % old_path);
   N(!path_exists(new_path),
     F("rename target '%s' already exists") % new_path);
-  fs::rename(old_path, new_path);
+  fs::rename(old_path.as_external(), new_path.as_external());
 }
 
 void 
@@ -195,7 +196,7 @@ move_dir(file_path const & old_path,
                               "-- bug in monotone?") % old_path);
   N(!path_exists(new_path),
     F("rename target '%s' already exists") % new_path);
-  fs::rename(old_path, new_path);
+  fs::rename(old_path.as_external(), new_path.as_external());
 }
 
 void 
@@ -216,7 +217,7 @@ read_data(any_path const & p, data & dat)
 }
 
 void 
-read_localized_data(any_path const & path, 
+read_localized_data(file_path const & path, 
                     data & dat, 
                     lua_hooks & lua)
 {
@@ -357,8 +358,8 @@ walk_tree_recursive(fs::path const & absolute,
   for(fs::directory_iterator di(absolute);
       di != ei; ++di)
     {
-      fs::path entry = mkpath(di->string());
-      fs::path rel_entry = relative / mkpath(entry.leaf());
+      fs::path entry = *di;
+      fs::path rel_entry = relative / entry.leaf();
       
       if (book_keeping_file(rel_entry))
         {

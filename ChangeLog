@@ -1,5 +1,10 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.cc (delete_dir_recursive): Implement.
+	Misc. compile fixes.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (test_book_keeping_file): Remove.
 
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
