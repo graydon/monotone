@@ -1,5 +1,10 @@
 2005-08-25  Benoît Dejean  <benoit@placenet.org>
 
+	* commands.cc (CMD(lca)): One more string for i18n.
+	(CMD(trusted)): Merged all strings.
+
+2005-08-25  Benoît Dejean  <benoit@placenet.org>
+
 	* po/fr.po: Updated French translation.
 
 2005-08-25  Benoît Dejean  <benoit@placenet.org>

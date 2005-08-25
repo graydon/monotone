@@ -952,14 +952,21 @@ CMD(trusted, N_("key and cert"), N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]
   bool trusted = app.lua.hook_get_revision_cert_trust(signers, ident,
                                                       name, value);
 
-  cout << "if a cert on: " << ident << endl
-       << "with key: " << name << endl
-       << "and value: " << value << endl
-       << "was signed by: ";
-  for (set<rsa_keypair_id>::const_iterator i = signers.begin(); i != signers.end(); ++i)
-    cout << *i << " ";
-  cout << endl
-       << "it would be: " << (trusted ? "trusted" : "UNtrusted") << endl;
+
+  ostringstream all_signers;
+  copy(signers.begin(), signers.end(),
+       ostream_iterator<rsa_keypair_id>(all_signers, " "));
+
+  cout << F("if a cert on: %s\n"
+            "with key: %s\n"
+            "and value: %s\n"
+            "was signed by: %s\n"
+            "it would be: %s\n")
+    % ident
+    % name
+    % value
+    % all_signers.str()
+    % (trusted ? _("trusted") : _("UNtrusted"));
 }
 
 CMD(tag, N_("review"), N_("REVISION TAGNAME"),
@@ -2734,7 +2741,7 @@ CMD(lca, N_("debug"), N_("LEFT RIGHT"), N_("print least common ancestor"), OPT_N
   if (find_least_common_ancestor(left, right, anc, app))
     std::cout << describe_revision(app, anc) << std::endl;
   else
-    std::cout << "no common ancestor found" << std::endl;
+    std::cout << _("no common ancestor found") << std::endl;
 }
 
 
