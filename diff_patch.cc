@@ -702,7 +702,7 @@ void update_merge_provider::get_version(file_path const & path,
       file_id fid;
       require_path_is_file(path,
                            F("file '%s' does not exist in working copy") % path,
-                           F("'%s' in working copy is a directory, not a file") % path)
+                           F("'%s' in working copy is a directory, not a file") % path);
       read_localized_data(path, tmp, app.lua);
       calculate_ident(tmp, fid);
       N(fid == ident,

@@ -1,5 +1,11 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* rcs_import.cc (import_cvs_repo): 
+	* lua.cc (default_rcfilename): 
+	* diff_patch.cc (get_version): Small compile fixes.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.{cc,hh} (is_bookkeeping_path): New static method.
 	* file_io.cc (walk_tree_recursive): Use it.  Now compiles.
 	paths.cc and file_io.cc now compile.

@@ -1249,7 +1249,7 @@ import_cvs_repo(system_path const & cvsroot,
                               F("path %s is not a directory") % cvsroot);
     app.db.ensure_open();
     change_current_working_dir(cvsroot);
-    walk_tree(walker);
+    walk_tree(file_path(), walker);
     guard.commit();
   }
 
