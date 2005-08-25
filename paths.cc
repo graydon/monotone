@@ -117,7 +117,8 @@ fully_normalized_path(std::string const & path)
   // empty path is fine
   if (path.empty())
     return true;
-  // : in second position => absolute path on windows
+  // could use is_absolute_somewhere, but this is the only part of it that
+  // wouldn't be redundant
   if (path.size() > 1 && path[1] == ':')
     return false;
   // first scan for completely illegal bytes
@@ -156,10 +157,20 @@ file_path::file_path(file_path::source_type type, std::string const & path)
       data = path;
       break;
     case external:
-      fs::path tmp(initial_rel_path.get().as_internal());
-      tmp /= fs::path(path, fs::native);
-      tmp = tmp.normalize();
+      fs::path tmp;
+      try
+        {
+          tmp = fs::path(initial_rel_path.get().as_internal());
+          tmp /= fs::path(path);
+          tmp = tmp.normalize();
+        }
+      catch (std::exception & e)
+        {
+          N(false, F("path '%s' is invalid") % path);
+        }
       data = utf8(tmp.string());
+      N(fully_normalized_path(data()), F("path '%s' is invalid") % data);
+      N(!in_bookkeeping_dir(data()), F("path '%s' is in bookkeeping dir") % data);
     }
   I(fully_normalized_path(data()));
   I(!in_bookkeeping_dir(data()));
@@ -287,37 +298,8 @@ operator <<(std::ostream & o, any_path const & a)
 // this code's speed does not matter much
 ///////////////////////////////////////////////////////////////////////////
 
-file_path
-file_path::operator /(std::string const & to_append) const
-{
-  if (empty())
-    return file_path_internal(to_append);
-  else
-    return file_path_internal(data() + "/" + to_append);
-}
-
-bookkeeping_path
-bookkeeping_path::operator /(std::string const & to_append) const
-{
-  if (empty())
-    return bookkeeping_path(to_append);
-  else
-    return bookkeeping_path(data() + "/" + to_append);
-}
-
-system_path
-system_path::operator /(std::string const & to_append) const
-{
-  I(!empty());
-  return system_path(data() + "/" + to_append);
-}
-
-///////////////////////////////////////////////////////////////////////////
-// system_path
-///////////////////////////////////////////////////////////////////////////
-
 static bool
-is_absolute(std::string const & path)
+is_absolute_here(std::string const & path)
 {
   if (path.empty())
     return false;
@@ -332,16 +314,61 @@ is_absolute(std::string const & path)
   return false;
 }
 
+static inline bool
+is_absolute_somewhere(std::string const & path)
+{
+  if (path.empty())
+    return false;
+  if (path[0] == '/')
+    return true;
+  if (path[0] == '\\')
+    return true;
+  if (path.size() > 1 && path[1] == ':')
+    return true;
+  return false;
+}
+
+file_path
+file_path::operator /(std::string const & to_append) const
+{
+  I(!is_absolute_somewhere(to_append));
+  if (empty())
+    return file_path_internal(to_append);
+  else
+    return file_path_internal(data() + "/" + to_append);
+}
+
+bookkeeping_path
+bookkeeping_path::operator /(std::string const & to_append) const
+{
+  I(!is_absolute_somewhere(to_append));
+  I(!empty());
+  return bookkeeping_path(data() + "/" + to_append);
+}
+
+system_path
+system_path::operator /(std::string const & to_append) const
+{
+  I(!empty());
+  I(!is_absolute_here(to_append));
+  return system_path(data() + "/" + to_append);
+}
+
+///////////////////////////////////////////////////////////////////////////
+// system_path
+///////////////////////////////////////////////////////////////////////////
+
 system_path::system_path(any_path const & other)
 {
-  I(!is_absolute(other.as_internal()));
+  I(!is_absolute_here(other.as_internal()));
   data = (working_root.get() / other.as_internal()).as_internal();
 }
 
 static inline std::string const_system_path(utf8 const & path)
 {
+  N(!path().empty(), F("invalid path ''"));
   std::string expanded = tilde_expand(path)();
-  if (is_absolute(expanded))
+  if (is_absolute_here(expanded))
     return expanded;
   else
     return (initial_abs_path.get() / expanded).as_internal();
@@ -456,9 +483,11 @@ static void test_file_path_internal()
                             "c:foo",
                             "c:/foo",
                             0 };
+  initial_rel_path.unset();
   initial_rel_path.set(file_path(), true);
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
+  initial_rel_path.unset();
   initial_rel_path.set(file_path_internal("blah/blah/blah"), true);
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
@@ -473,10 +502,12 @@ static void test_file_path_internal()
                             ".foo/bar",
                             "..foo/bar",
                             "MTfoo/bar",
+                            "foo:bar",
                             0 };
   
   for (int i = 0; i < 2; ++i)
     {
+      initial_rel_path.unset();
       initial_rel_path.set(i ? file_path()
                              : file_path_internal("blah/blah/blah"),
                            true);
@@ -489,6 +520,7 @@ static void test_file_path_internal()
           fp.split(split_test);
           file_path fp2(split_test);
           BOOST_CHECK(fp == fp2);
+          BOOST_CHECK(!split_test.empty());
           if (split_test.size() > 1)
             for (std::vector<path_component>::const_iterator i = split_test.begin();
                  i != split_test.end(); ++i)
@@ -511,13 +543,16 @@ static void check_fp_normalizes_to(char * before, char * after)
   fp.split(split_test);
   file_path fp2(split_test);
   BOOST_CHECK(fp == fp2);
-  for (std::vector<path_component>::const_iterator i = split_test.begin();
-       i != split_test.end(); ++i)
-    BOOST_CHECK(!null_name(*i));
+  BOOST_CHECK(!split_test.empty());
+  if (split_test.size() > 1)
+    for (std::vector<path_component>::const_iterator i = split_test.begin();
+         i != split_test.end(); ++i)
+      BOOST_CHECK(!null_name(*i));
 }
   
 static void test_file_path_external_no_prefix()
 {
+  initial_rel_path.unset();
   initial_rel_path.set(file_path(), true);
 
   char const * baddies[] = {"/foo",
@@ -545,6 +580,7 @@ static void test_file_path_external_no_prefix()
   check_fp_normalizes_to(".foo/bar", ".foo/bar");
   check_fp_normalizes_to("..foo/bar", "..foo/bar");
   check_fp_normalizes_to(".", "");
+  check_fp_normalizes_to("foo:bar", "foo:bar");
 
   check_fp_normalizes_to("foo//bar", "foo/bar");
   check_fp_normalizes_to("foo/../bar", "bar");
@@ -558,6 +594,7 @@ static void test_file_path_external_no_prefix()
 
 static void test_file_path_external_prefix_a_b()
 {
+  initial_rel_path.unset();
   initial_rel_path.set(file_path_internal("a/b"), true);
 
   char const * baddies[] = {"/foo",
@@ -571,7 +608,10 @@ static void test_file_path_external_prefix_a_b()
                             "",
                             0 };
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
+    {
+      L(F("test_file_path_external_prefix_a_b: trying baddie: %s") % *c);
+      BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
+    }
   
   check_fp_normalizes_to("foo", "a/b/foo");
   check_fp_normalizes_to("a", "a/b/a");
@@ -583,6 +623,7 @@ static void test_file_path_external_prefix_a_b()
   check_fp_normalizes_to(".foo/bar", "a/b/.foo/bar");
   check_fp_normalizes_to("..foo/bar", "a/b/..foo/bar");
   check_fp_normalizes_to(".", "a/b");
+  check_fp_normalizes_to("foo:bar", "a/b/foo:bar");
   // things that would have been bad without the initial_rel_path:
   check_fp_normalizes_to("foo//bar", "a/b/foo/bar");
   check_fp_normalizes_to("foo/../bar", "a/b/bar");
@@ -644,6 +685,7 @@ static void test_split_join()
 static void check_bk_normalizes_to(char * before, char * after)
 {
   bookkeeping_path bp(bookkeeping_root / before);
+  L(F("normalizing %s to %s (got %s)") % before % after % bp);
   BOOST_CHECK(bp.as_external() == after);
   BOOST_CHECK(bookkeeping_path(bp.as_internal()).as_internal() == bp.as_internal());
 }
@@ -667,13 +709,15 @@ static void test_bookkeeping_path()
   
   for (char const ** c = baddies; *c; ++c)
     {
+      L(F("test_bookkeeping_path baddie: trying '%s'") % *c);
       BOOST_CHECK_THROW(bookkeeping_path(std::string(*c)), std::logic_error);
       BOOST_CHECK_THROW(bookkeeping_root / std::string(*c), std::logic_error);
     }
   BOOST_CHECK_THROW(bookkeeping_path(std::string("foo/bar")), std::logic_error);
   BOOST_CHECK_THROW(bookkeeping_path(std::string("a")), std::logic_error);
   
-  check_bk_normalizes_to("a", "MT/foo");
+  check_bk_normalizes_to("a", "MT/a");
+  check_bk_normalizes_to("a:b", "MT/a:b");
   check_bk_normalizes_to("foo", "MT/foo");
   check_bk_normalizes_to("foo/bar", "MT/foo/bar");
   check_bk_normalizes_to("foo/bar/baz", "MT/foo/bar/baz");
@@ -682,12 +726,14 @@ static void test_bookkeeping_path()
 static void check_system_normalizes_to(char * before, char * after)
 {
   system_path sp(before);
+  L(F("normalizing '%s' to '%s' (got '%s')") % before % after % sp);
   BOOST_CHECK(sp.as_external() == after);
   BOOST_CHECK(system_path(sp.as_internal()).as_internal() == sp.as_internal());
 }
 
 static void test_system_path()
 {
+  initial_abs_path.unset();
   initial_abs_path.set(system_path("/a/b"), true);
 
   BOOST_CHECK_THROW(system_path(""), informative_failure);
@@ -695,16 +741,17 @@ static void test_system_path()
   check_system_normalizes_to("foo", "/a/b/foo");
   check_system_normalizes_to("foo/bar", "/a/b/foo/bar");
   check_system_normalizes_to("/foo/bar", "/foo/bar");
-  check_system_normalizes_to("//foo/bar", "/foo/bar");
+  check_system_normalizes_to("//foo/bar", "//foo/bar");
 #ifdef _WIN32
   check_system_normalizes_to("c:foo", "c:foo");
   check_system_normalizes_to("c:/foo", "c:/foo");
   check_system_normalizes_to("c:\\foo", "c:\\foo");
 #else
-  check_system_normalizes_to("c:foo", "a/b/c:foo");
-  check_system_normalizes_to("c:/foo", "a/b/c:/foo");
-  check_system_normalizes_to("c:\\foo", "a/b/c:\\foo");
+  check_system_normalizes_to("c:foo", "/a/b/c:foo");
+  check_system_normalizes_to("c:/foo", "/a/b/c:/foo");
+  check_system_normalizes_to("c:\\foo", "/a/b/c:\\foo");
 #endif
+  check_system_normalizes_to("foo:bar", "/a/b/foo:bar");
   // can't do particularly interesting checking of tilde expansion, but at
   // least we can check that it's doing _something_...
   std::string tilde_expanded = system_path("~/foo").as_external();
@@ -722,7 +769,9 @@ static void test_system_path()
   // finally, make sure that the copy-from-any_path constructor works right
   // in particular, it should interpret the paths it gets as being relative to
   // the project root, not the initial path
+  working_root.unset();
   working_root.set(system_path("/working/root"), true);
+  initial_rel_path.unset();
   initial_rel_path.set(file_path_internal("rel/initial"), true);
 
   BOOST_CHECK(system_path(system_path("foo/bar")).as_internal() == "/a/b/foo/bar");
@@ -731,8 +780,12 @@ static void test_system_path()
               == "/working/root/foo/bar");
   BOOST_CHECK(system_path(file_path_external(std::string("foo/bar"))).as_external()
               == "/working/root/rel/initial/foo/bar");
+  BOOST_CHECK(system_path(file_path()).as_external()
+              == "/working/root/");
   BOOST_CHECK(system_path(bookkeeping_path("MT/foo/bar")).as_internal()
               == "/working/root/MT/foo/bar");
+  BOOST_CHECK(system_path(bookkeeping_root).as_internal()
+              == "/working/root/MT");
 
   initial_abs_path.unset();
   working_root.unset();

@@ -1,5 +1,9 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc, unix/fs.cc: Many, many fixes and some new tests too.	
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (struct access_tracker): Doh, initializer should set
 	'initialized'...
 	(test_file_path_internal): It's valid for a split file

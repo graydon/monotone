@@ -48,6 +48,8 @@ get_homedir()
 
 utf8 tilde_expand(utf8 const & in)
 {
+  if (in().empty() || in()[0] != '~')
+    return in;
   fs::path tmp(in(), fs::native);
   fs::path::iterator i = tmp.begin();
   if (i != tmp.end())
