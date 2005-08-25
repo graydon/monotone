@@ -1,5 +1,11 @@
 2005-08-25  Benoît Dejean  <benoit@placenet.org>
 
+	* database.cc (database::version): Marked string for i18n
+	and simplifed.
+	(database::info): Reworked to merge all strings for i18n.
+
+2005-08-25  Benoît Dejean  <benoit@placenet.org>
+
 	* database.{cc,hh} (database::open, database::check_filename):
 	New functions to avoid error handling code and string duplicates.
 

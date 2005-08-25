@@ -391,55 +391,67 @@ database::debug(string const & sql, ostream & out)
     }
 }
 
+
+namespace
+{
+  unsigned long
+  add(unsigned long count, unsigned long & total)
+  {
+    total += count;
+    return count;
+  }
+}
+
 void 
 database::info(ostream & out)
 {
   string id;
   calculate_schema_id(sql(), id);
-  unsigned long space = 0, tmp;
-  out << "schema version    : " << id << endl;
 
-  out << "counts:" << endl;
-  out << "  full manifests  : " << count("manifests") << endl;
-  out << "  manifest deltas : " << count("manifest_deltas") << endl;
-  out << "  full files      : " << count("files") << endl;
-  out << "  file deltas     : " << count("file_deltas") << endl;
-  out << "  revisions       : " << count("revisions") << endl;
-  out << "  ancestry edges  : " << count("revision_ancestry") << endl;
-  out << "  certs           : " << count("revision_certs") << endl;
+  unsigned long total = 0UL;
 
-  out << "bytes:" << endl;
-  // FIXME: surely there is a less lame way to do this, that doesn't require
-  // updating every time the schema changes?
-  tmp = space_usage("manifests", "id || data");
-  space += tmp;
-  out << "  full manifests  : " << tmp << endl;
+#define SPACE_USAGE(TABLE, COLS) add(space_usage(TABLE, COLS), total)
 
-  tmp = space_usage("manifest_deltas", "id || base || delta");
-  space += tmp;
-  out << "  manifest deltas : " << tmp << endl;
+  out << \
+    F("schema version    : %s\n"
+      "counts:\n"
+      "  full manifests  : %u\n"
+      "  manifest deltas : %u\n"
+      "  full files      : %u\n"
+      "  file deltas     : %u\n"
+      "  revisions       : %u\n"
+      "  ancestry edges  : %u\n"
+      "  certs           : %u\n"
+      "bytes:\n"
+      "  full manifests  : %u\n"
+      "  manifest deltas : %u\n"
+      "  full files      : %u\n"
+      "  file deltas     : %u\n"
+      "  revisions       : %u\n"
+      "  cached ancestry : %u\n"
+      "  certs           : %u\n"
+      "  total           : %u\n"
+      )
+    % id
+    // counts
+    % count("manifests")
+    % count("manifest_deltas")
+    % count("files")
+    % count("file_deltas")
+    % count("revisions")
+    % count("revision_ancestry")
+    % count("revision_certs")
+    // bytes
+    % SPACE_USAGE("manifests", "id || data")
+    % SPACE_USAGE("manifest_deltas", "id || base || delta")
+    % SPACE_USAGE("files", "id || data")
+    % SPACE_USAGE("file_deltas", "id || base || delta")
+    % SPACE_USAGE("revisions", "id || data")
+    % SPACE_USAGE("revision_ancestry", "parent || child")
+    % SPACE_USAGE("revision_certs", "hash || id || name || value || keypair || signature")
+    % total;
 
-  tmp = space_usage("files", "id || data");
-  space += tmp;
-  out << "  full files      : " << tmp << endl;
-
-  tmp = space_usage("file_deltas", "id || base || delta");
-  space += tmp;
-  out << "  file deltas     : " << tmp << endl;
-
-  tmp = space_usage("revisions", "id || data");
-  space += tmp;
-  out << "  revisions       : " << tmp << endl;
-
-  tmp = space_usage("revision_ancestry", "parent || child");
-  space += tmp;
-  out << "  cached ancestry : " << tmp << endl;
-
-  tmp = space_usage("revision_certs", "hash || id || name || value || keypair || signature");
-  space += tmp;
-  out << "  certs           : " << tmp << endl;
-
-  out << "  total           : " << space << endl;
+#undef SPACE_USAGE
 }
 
 void 
@@ -447,13 +459,9 @@ database::version(ostream & out)
 {
   string id;
 
-  check_filename();
+  calculate_schema_id(sql(), id);
 
-  open();
-
-  calculate_schema_id(__sql, id);
-  sqlite3_close(__sql);
-  out << "database schema version: " << id << endl;
+  out << F("database schema version: %s") % id << endl;
 }
 
 void 
