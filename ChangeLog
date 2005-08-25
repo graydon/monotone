@@ -1,5 +1,10 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.cc (get_homedir, tilde_expand, book_keeping_file)
+	(book_keeping_dir): Remove.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* platform.hh (get_homedir): New function.
 	* {win32,unix}/fs.cc (get_homedir): Expose.
 
