@@ -420,37 +420,11 @@ walk_tree(file_path const & path,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-static void 
-test_book_keeping_file()
-{
-  // positive tests
-
-  BOOST_CHECK(book_keeping_file(local_path("MT")));
-  BOOST_CHECK(book_keeping_file(local_path("MT/foo")));
-  BOOST_CHECK(book_keeping_file(local_path("MT/foo/bar/baz")));
-
-  BOOST_CHECK(book_keeping_file(fs::path("MT")));
-  BOOST_CHECK(book_keeping_file(fs::path("MT/foo")));
-  BOOST_CHECK(book_keeping_file(fs::path("MT/foo/bar/baz")));
-
-  // negative tests
-
-  BOOST_CHECK( ! book_keeping_file(local_path("safe")));
-  BOOST_CHECK( ! book_keeping_file(local_path("safe/path")));
-  BOOST_CHECK( ! book_keeping_file(local_path("safe/path/MT")));
-  BOOST_CHECK( ! book_keeping_file(local_path("MTT")));
-
-  BOOST_CHECK( ! book_keeping_file(fs::path("safe")));
-  BOOST_CHECK( ! book_keeping_file(fs::path("safe/path")));
-  BOOST_CHECK( ! book_keeping_file(fs::path("safe/path/MT")));
-  BOOST_CHECK( ! book_keeping_file(fs::path("MTT")));
-}
-
 void 
 add_file_io_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&test_book_keeping_file));
+  // none, ATM.
 }
 
 #endif // BUILD_UNIT_TESTS
