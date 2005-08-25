@@ -29,6 +29,13 @@
 	* database.{cc,hh} (database::open, database::check_filename):
 	New functions to avoid error handling code and string duplicates.
 
+2005-08-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* transform.cc ({int,ext}ernalize_rsa_keypair_id): don't 
+	convert the username portion of key ids to/from ACE.
+	* tests/t_genkey.at: check that foo+bar@example.com works
+	and foobar@exam+ple.com doesn't.
+
 2005-08-24  Benoît Dejean  <benoit@placenet.org>
 
 	* database.cc (assert_sqlite3_ok): Somehow merged error messages.
@@ -326,6 +333,17 @@
 
 	* sanity.hh (FP): New macro.  Usage:
 	FP("frobbed %i bar", "frobbed %s bars", num_bars) % num_bars
+
+2005-08-22  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-import.pl: When temporarly touching files that
+	have disappeared since last import, don't forget to create
+	intermediary directories as well (and to remove them later on).
+	Make sure all file arguments are quoted.  Finally, pick up the
+	newly created revision by reading MT/revision instead of relying
+	on backquotes working.
+	Notofication and initial correction submitted by
+	BigFish <bigfische@gmail.com>.
 
 2005-08-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
