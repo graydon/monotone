@@ -26,6 +26,8 @@ static file_path initial_rel_path;
 // system_path's.
 static system_path working_root;
 
+bookkeeping_path const bookkeeping_root("MT");
+
 void
 save_initial_path()
 {
@@ -147,14 +149,15 @@ file_path::file_path(file_path::source_type type, std::string const & path)
       tmp = tmp.normalize();
       data = utf8(tmp.string());
     }
-  assert_sane();
-}
-
-void
-file_path::assert_sane()
-{
   I(fully_normalized_path(data()));
   I(not_in_bookkeeping_dir(data()));
+}
+
+bookkeeping_path::bookkeeping_path(std::string const & path)
+{
+  I(fully_normalized_path(path));
+  I(!not_in_bookkeeping_dir(path));
+  data = path;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -263,23 +266,29 @@ operator <<(std::ostream & o, any_path const & a)
 // this code's speed does not matter much
 ///////////////////////////////////////////////////////////////////////////
 
-static inline std::string
-operator_slash(any_path const & path, std::string appended)
-{
-  I(false);
-  //FIXME
-}
-
 file_path
-file_path::operator /(std::string const & to_append)
+file_path::operator /(std::string const & to_append) const
 {
-  return file_path_internal(data() + "/" + to_append);
+  if (empty())
+    return file_path_internal(to_append);
+  else
+    return file_path_internal(data() + "/" + to_append);
 }
 
 bookkeeping_path
-bookkeeping_path::operator /(std::string const & to_append)
+bookkeeping_path::operator /(std::string const & to_append) const
 {
-  return bookkeeping_path(data() + "/" + to_append);
+  if (empty())
+    return bookkeeping_path(to_append);
+  else
+    return bookkeeping_path(data() + "/" + to_append);
+}
+
+system_path
+system_path::operator /(std::string const & to_append) const
+{
+  I(!empty());
+  return system_path(data() + "/" + to_append);
 }
 
 ///////////////////////////////////////////////////////////////////////////
