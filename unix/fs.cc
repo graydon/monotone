@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -74,4 +75,28 @@ utf8 tilde_expand(utf8 const & in)
     }
 
   return tmp;
+}
+
+path::status
+get_path_status(any_path const & path)
+{
+  struct stat buf;
+  int res;
+  res = stat(path.as_external().c_str(), &buf);
+  if (res < 0)
+    {
+      if (errno == ENOENT)
+        return path::nonexistent;
+      else
+        E(false, F("error accessing file %s: %s") % path % strerror(errno));
+    }
+  if (S_ISREG(buf.st_mode))
+    return path::file;
+  else if (S_ISDIR(buf.st_mode))
+    return path::directory;
+  else
+    {
+      // fifo or device or who knows what...
+      E(false, F("cannot handle special file %s") % path);
+    }
 }

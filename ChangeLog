@@ -1,5 +1,12 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* platform.hh (get_path_status): New function.
+	* unix/fs.cc (get_path_status): Implement.
+	* win32/fs.cc (get_path_status): Implement inefficiently (does
+	win32 have stat?)
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (get_homedir, tilde_expand, book_keeping_file)
 	(book_keeping_dir): Remove.
 

@@ -37,17 +37,10 @@ path::state path_state(any_path const & path);
 
 
 bool 
-directory_exists(local_path const & p) 
+directory_exists(any_path const & p) 
 { 
-  return fs::exists(localized(p)) &&
-    fs::is_directory(localized(p)); 
-}
-
-bool 
-directory_exists(file_path const & p) 
-{ 
-  return fs::exists(localized(p)) &&
-    fs::is_directory(localized(p)); 
+  return fs::exists(p.as_external()) &&
+    fs::is_directory(p.as_external()); 
 }
 
 bool 

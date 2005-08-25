@@ -54,4 +54,10 @@ std::string get_current_working_dir();
 void change_current_working_dir(any_path const & to);
 utf8 tilde_expand(utf8 const & path);
 utf8 get_homedir();
+namespace path
+{
+  typedef enum { nonexistent, directory, file } status;
+};
+path::status get_path_status(any_path const & path);
+  
 #endif // __PLATFORM_HH__

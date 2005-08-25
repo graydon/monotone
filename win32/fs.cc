@@ -10,6 +10,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 
+#include "vocab.hh"
 #include "sanity.hh"
 #include "platform.hh"
 
@@ -97,4 +98,16 @@ tilde_expand(utf8 const & path)
     }
 
   return tmp.string();
+}
+
+path::status
+get_path_status(any_path const & path)
+{
+  fs::path p(path.as_external(), fs::native);
+  if (!fs::exists(p))
+    return path::nonexistent;
+  else if (fs::is_directory(p))
+    return path::directory;
+  else
+    return path::file;
 }
