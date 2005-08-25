@@ -5,6 +5,10 @@
 
 #include <iostream>
 
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/convenience.hpp>
+
 #include "constants.hh"
 #include "paths.hh"
 #include "platform.hh"
@@ -26,7 +30,7 @@ void
 save_initial_path()
 {
   // FIXME: BUG: this only works if the current working dir is in utf8
-  initial_path = system_path(get_current_working_dir());
+  initial_abs_path = system_path(get_current_working_dir());
   L(F("initial path is: %s") % initial_path);
 }
 
@@ -44,10 +48,14 @@ bool
 find_and_go_to_working_copy(system_path const & search_root)
 {
   // unimplemented
+
+  
+
   // should do what find_working_copy in file_io.cc does, and what
   // allow_working_copy in app_state.cc does
   // should use change_current_working_dir when it finds the root
-  // should set path_prefix too
+
+  // should set initial_rel_path and working_root
   I(false);
 }
 

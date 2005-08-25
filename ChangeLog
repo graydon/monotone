@@ -1,5 +1,9 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (save_initial_path): Update for previous changes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (test_system_path): Add tests for the
 	from-any_path constructor.  Add test for "~foo" handling.
 	Start cleaning up path roots.
