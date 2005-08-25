@@ -14,17 +14,41 @@
 #include "platform.hh"
 #include "sanity.hh"
 
+// some structure to ensure we aren't doing anything broken when resolving
+// filenames.  the idea is to make sure
+//   -- we don't depend on the existence of something before it has been set
+//   -- we don't re-set something that has already been used
+template <typename T>
+struct access_tracker
+{
+  void set(T const & val, bool may_be_initialized)
+  {
+    I(may_be_initialized || !initialized);
+    I(!used);
+    value = val;
+  }
+  T const & get() const
+  {
+    I(initialized);
+    used = true;
+    return value;
+  }
+  T value;
+  bool initialized, used;
+  access_tracker() : initialized(false), used(false);
+}
+
 // paths to use in interpreting paths from various sources,
 // conceptually:
 //    working_root / initial_rel_path == initial_abs_path
 
 // initial_abs_path is for interpreting relative system_path's
-static system_path initial_abs_path;
+static access_tracker<system_path> initial_abs_path;
 // initial_rel_path is for interpreting external file_path's
-static file_path initial_rel_path;
+static access_tracker<file_path> initial_rel_path;
 // working_root is for converting file_path's and bookkeeping_path's to
 // system_path's.
-static system_path working_root;
+static access_tracker<system_path> working_root;
 
 bookkeeping_path const bookkeeping_root("MT");
 
@@ -144,7 +168,7 @@ file_path::file_path(file_path::source_type type, std::string const & path)
       data = path;
       break;
     external:
-      fs::path tmp(initial_rel_path.as_internal());
+      fs::path tmp(initial_rel_path.get().as_internal());
       tmp /= fs::path(path, fs::native);
       tmp = tmp.normalize();
       data = utf8(tmp.string());

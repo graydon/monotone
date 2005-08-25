@@ -1,5 +1,10 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (struct access_tracker): Add invariant checking on
+	lifetime usage of path roots.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.hh (any_path::operator =): return *this.
 
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
