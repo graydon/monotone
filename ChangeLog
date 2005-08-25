@@ -1,5 +1,12 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (struct access_tracker): Doh, initializer should set
+	'initialized'...
+	(test_file_path_internal): It's valid for a split file
+	to have a null component if the file is "".
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (in_bookkeeping_dir): Last change didn't work out so
 	well; let's remove some negatives and see if I can understand what
 	the code does this way...

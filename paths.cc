@@ -27,6 +27,7 @@ struct access_tracker
   {
     I(may_be_initialized || !initialized);
     I(!used);
+    initialized = true;
     value = val;
   }
   T const & get()
@@ -488,9 +489,10 @@ static void test_file_path_internal()
           fp.split(split_test);
           file_path fp2(split_test);
           BOOST_CHECK(fp == fp2);
-          for (std::vector<path_component>::const_iterator i = split_test.begin();
-               i != split_test.end(); ++i)
-            BOOST_CHECK(!null_name(*i));
+          if (split_test.size() > 1)
+            for (std::vector<path_component>::const_iterator i = split_test.begin();
+                 i != split_test.end(); ++i)
+              BOOST_CHECK(!null_name(*i));
         }
     }
 
