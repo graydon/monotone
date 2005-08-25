@@ -83,12 +83,8 @@ void move_dir(any_path const & old_path,
               any_path const & new_path);
 
 void read_data(any_path const & path, data & data);
-void read_data(any_path const & path, base64< gzip<data> > & data);
 void read_localized_data(file_path const & path, 
                          data & dat, 
-                         lua_hooks & lua);
-void read_localized_data(file_path const & path,
-                         base64< gzip<data> > & dat,
                          lua_hooks & lua);
 
 // This function knows that "-" means "stdin".

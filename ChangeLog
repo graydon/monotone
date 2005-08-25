@@ -1,5 +1,10 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.cc (read_data): Implement.  Remove the base64<gzip<>>
+	versions.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (move_file, move_dir): Implement.
 
 2005-08-25  Nathaniel Smith  <njs@pobox.com>

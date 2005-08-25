@@ -198,83 +198,21 @@ move_dir(file_path const & old_path,
   fs::rename(old_path, new_path);
 }
 
-static void 
-read_data_impl(fs::path const & p,
-               data & dat)
+void 
+read_data(any_path const & p, data & dat)
 {
-  if (!fs::exists(p))
-    throw oops("file '" + p.string() + "' does not exist");
-  
-  if (fs::is_directory(p))
-    throw oops("file '" + p.string() + "' cannot be read as data; it is a directory");
-  
-  ifstream file(p.string().c_str(),
+  require_path_is_file(p,
+                       F("file %s does not exist") % p,
+                       F("file %s cannot be read as data; it is a directory") % p);
+
+  ifstream file(p.as_external().c_str(),
                 ios_base::in | ios_base::binary);
-  if (!file)
-    throw oops(string("cannot open file ") + p.string() + " for reading");
+  N(file, F("cannot open file %s for reading") % p);
   Botan::Pipe pipe;
   pipe.start_msg();
   file >> pipe;
   pipe.end_msg();
   dat = pipe.read_all_as_string();
-}
-
-// This function can only be called once per run.
-static void
-read_data_stdin(data & dat)
-{
-  static bool have_consumed_stdin = false;
-  N(!have_consumed_stdin, F("Cannot read standard input multiple times"));
-  have_consumed_stdin = true;
-  Botan::Pipe pipe;
-  pipe.start_msg();
-  cin >> pipe;
-  pipe.end_msg();
-  dat = pipe.read_all_as_string();
-}
-
-void 
-read_data(local_path const & path, data & dat)
-{ 
-  read_data_impl(localized(path), dat); 
-}
-
-void 
-read_data(file_path const & path, data & dat)
-{ 
-  read_data_impl(localized(path), dat); 
-}
-
-void 
-read_data(local_path const & path,
-          base64< gzip<data> > & dat)
-{
-  data data_plain;
-  read_data_impl(localized(path), data_plain);
-  gzip<data> data_compressed;
-  base64< gzip<data> > data_encoded;  
-  encode_gzip(data_plain, data_compressed);
-  encode_base64(data_compressed, dat);
-}
-
-void 
-read_data(file_path const & path, 
-          base64< gzip<data> > & dat)
-{ 
-  read_data(local_path(path()), dat); 
-}
-
-void 
-read_localized_data(file_path const & path,
-                    base64< gzip<data> > & dat,
-                    lua_hooks & lua)
-{
-  data data_plain;
-  read_localized_data(path, data_plain, lua);
-  gzip<data> data_compressed;
-  base64< gzip<data> > data_encoded;  
-  encode_gzip(data_plain, data_compressed);
-  encode_base64(data_compressed, dat);
 }
 
 void 
@@ -307,6 +245,20 @@ read_localized_data(file_path const & path,
   dat = tmp2;
 }
 
+
+// This function can only be called once per run.
+static void
+read_data_stdin(data & dat)
+{
+  static bool have_consumed_stdin = false;
+  N(!have_consumed_stdin, F("Cannot read standard input multiple times"));
+  have_consumed_stdin = true;
+  Botan::Pipe pipe;
+  pipe.start_msg();
+  cin >> pipe;
+  pipe.end_msg();
+  dat = pipe.read_all_as_string();
+}
 
 void
 read_data_for_command_line(utf8 const & path, data & dat)
