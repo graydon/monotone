@@ -1653,7 +1653,7 @@ ls_missing (app_state & app, vector<utf8> const & args)
 
   for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
     {
-      if (app.restriction_includes(*i) && !file_exists(*i))     
+      if (app.restriction_includes(*i) && !path_exists(*i))     
         cout << *i << endl;
     }
 }
@@ -2123,7 +2123,7 @@ CMD(attr, "working copy", "set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE",
     }
   
   file_path path = file_path_external(idx(args,1));
-  N(file_exists(path), F("file '%s' not found") % path);
+  N(path_exists(path), F("file '%s' not found") % path);
 
   bool attrs_modified = false;
 

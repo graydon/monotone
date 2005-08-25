@@ -701,7 +701,7 @@ automate_inventory(std::vector<utf8> args,
          i = included.added_files.begin();
        i != included.added_files.end(); ++i)
     {
-      if (file_exists(*i))
+      if (path_exists(*i))
         {
           // add path from [] to [xxx]
           hexenc<id> ident;

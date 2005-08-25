@@ -397,7 +397,7 @@ app_state::read_options()
   get_options_path(o_path);
   try
     {
-      if (file_exists(o_path))
+      if (path_exists(o_path))
         {
           data dat;
           read_data(o_path, dat);

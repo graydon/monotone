@@ -1,5 +1,12 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* Audit uses of 'file_exists', because its semantics have changed;
+	it now checks to see if a path exists and is a regular file,
+	rather than that it simply exists.  A fair amount of code already
+	thought it meant that... other places now use 'path_exists'.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (path_exists, directory_exists, file_exists):
 	Implement.
 

@@ -96,7 +96,7 @@ build_additions(vector<file_path> const & paths,
   for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       N(!i->empty(), F("invalid path ''"));
-      N(directory_exists(*i) || file_exists(*i),
+      N(path_exists(*i),
         F("path %s does not exist\n") % *i);
 
       walk_tree(*i, build);
@@ -119,7 +119,7 @@ build_additions(vector<file_path> const & paths,
       data attr_data;
       attr_map attrs;
 
-      if (file_exists(attr_path))
+      if (path_exists(attr_path))
         {
           read_data(attr_path, attr_data);
           read_attr_map(attr_data, attrs);
@@ -189,7 +189,7 @@ build_deletions(vector<file_path> const & paths,
   data attr_data;
   attr_map attrs;
 
-  if (file_exists(attr_path))
+  if (path_exists(attr_path))
   {
     read_data(attr_path, attr_data);
     read_attr_map(attr_data, attrs);
@@ -275,7 +275,7 @@ build_rename(file_path const & src,
   file_path attr_path;
   get_attr_path(attr_path);
 
-  if (file_exists(attr_path))
+  if (path_exists(attr_path))
   {
     data attr_data;
     read_data(attr_path, attr_data);
@@ -376,8 +376,9 @@ void get_revision_id(revision_id & c)
   bookkeeping_path c_path;
   get_revision_path(c_path);
 
-  N(file_exists(c_path),
-    F("working copy is corrupt: %s does not exist\n") % c_path);
+  require_path_is_file(c_path,
+                       F("working copy is corrupt: %s does not exist") % c_path,
+                       F("working copy is corrupt: %s is a directory") % c_path);
 
   data c_data;
   L(F("loading revision id from %s\n") % c_path);
