@@ -2823,7 +2823,7 @@ print_insane_path_rearrangement(basic_io::printer & printer,
        i != pr.deleted_files.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::delete_file, (*i)());
+      st.push_str_pair(syms::delete_file, *i);
       printer.print_stanza(st);
     }
 
@@ -2831,7 +2831,7 @@ print_insane_path_rearrangement(basic_io::printer & printer,
        i != pr.deleted_dirs.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::delete_dir, (*i)());
+      st.push_str_pair(syms::delete_dir, *i);
       printer.print_stanza(st);
     }
 
@@ -2839,8 +2839,8 @@ print_insane_path_rearrangement(basic_io::printer & printer,
        i != pr.renamed_files.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::rename_file, i->first());
-      st.push_str_pair(syms::to, i->second());
+      st.push_str_pair(syms::rename_file, i->first);
+      st.push_str_pair(syms::to, i->second);
       printer.print_stanza(st);
     }
 
@@ -2848,8 +2848,8 @@ print_insane_path_rearrangement(basic_io::printer & printer,
        i != pr.renamed_dirs.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::rename_dir, i->first());
-      st.push_str_pair(syms::to, i->second());
+      st.push_file_pair(syms::rename_dir, i->first);
+      st.push_file_pair(syms::to, i->second);
       printer.print_stanza(st);
     }
 
@@ -2857,7 +2857,7 @@ print_insane_path_rearrangement(basic_io::printer & printer,
        i != pr.added_files.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::add_file, (*i)());
+      st.push_file_pair(syms::add_file, *i);
       printer.print_stanza(st);
     }
 }
@@ -2904,7 +2904,7 @@ print_insane_change_set(basic_io::printer & printer,
        i != cs.deltas.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::patch, i->first());
+      st.push_str_pair(syms::patch, i->first);
       st.push_hex_pair(syms::from, i->second.first.inner()());
       st.push_hex_pair(syms::to, i->second.second.inner()());
       printer.print_stanza(st);

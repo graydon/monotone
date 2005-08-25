@@ -34,7 +34,6 @@ MOST_SOURCES =								\
          mt_version.cc mt_version.hh					\
          automate.cc automate.hh					\
          database_check.cc database_check.hh				\
-	 path_component.cc path_component.hh				\
          epoch.cc epoch.hh						\
          inodeprint.cc inodeprint.hh					\
          selectors.cc selectors.hh					\
