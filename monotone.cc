@@ -320,7 +320,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_RCFILE:
-              app.add_rcfile(argstr);
+              app.add_rcfile(string(argstr));
               break;
 
             case OPT_DUMP:

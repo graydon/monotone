@@ -202,9 +202,9 @@ database::initialize()
   if (__sql)
     throw oops("cannot initialize database while it is open");
 
-  N(!path_state(filename),
-    F("could not initialize database: %s: already exists") 
-    % filename);
+  require_path_is_nonexistent(filename,
+                              F("could not initialize database: %s: already exists") 
+                              % filename);
 
   system_path journal(filename.as_internal() + "-journal");
   require_path_is_nonexistent(journal,

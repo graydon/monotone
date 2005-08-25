@@ -1,5 +1,11 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* change_set.cc (print_insane_path_rearrangement): 
+	* database.cc (initialize): 
+	* monotone.cc (cpp_main): More small compile fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.hh
 	({assert,require}_path_is_{nonexistent,file,directory}): New
 	functions.
