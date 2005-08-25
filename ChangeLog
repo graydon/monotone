@@ -1,5 +1,10 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (not_in_bookkeeping_dir): Handle "MT" case.
+	Update tests to make sure it sticks...
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* unit_tests.{cc,hh} (init_unit_test_suite): Remove
 	path_component_tests.
 	* unix/fs.cc (tilde_expand): Another compile fix.

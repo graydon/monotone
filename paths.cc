@@ -144,7 +144,7 @@ fully_normalized_path(std::string const & path)
 static inline bool
 not_in_bookkeeping_dir(std::string const & path)
 {
-  return (path.size() < 3) || (path.substr(0, 3) != "MT/");
+  return (path.size() < 3 && path != "MT") || (path.substr(0, 3) != "MT/");
 }
 
 file_path::file_path(file_path::source_type type, std::string const & path)
@@ -521,6 +521,7 @@ static void test_file_path_external_no_prefix()
   char const * baddies[] = {"/foo",
                             "../bar",
                             "MT/blah",
+                            "MT",
                             "//blah",
                             "\\foo",
                             "..",
@@ -591,6 +592,7 @@ static void test_file_path_external_prefix_a_b()
   check_fp_normalizes_to("..", "a");
   check_fp_normalizes_to("../..", "");
   check_fp_normalizes_to("MT/foo", "a/b/MT/foo");
+  check_fp_normalizes_to("MT", "a/b/MT");
 
   initial_rel_path.unset();
 }
