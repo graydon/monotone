@@ -2904,7 +2904,7 @@ print_insane_change_set(basic_io::printer & printer,
        i != cs.deltas.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::patch, i->first);
+      st.push_file_pair(syms::patch, i->first);
       st.push_hex_pair(syms::from, i->second.first.inner()());
       st.push_hex_pair(syms::to, i->second.second.inner()());
       printer.print_stanza(st);

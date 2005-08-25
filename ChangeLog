@@ -1,5 +1,13 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* app_state.cc (allow_working_copy): 
+	* change_set.cc (print_insane_change_set): Two more small compile
+	fixes.
+	All remaining compile errors are localized to unimplemented
+	paths.cc/file_io.cc functionality.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* database.cc (initialize): Missing ;.
 
 2005-08-24  Nathaniel Smith  <njs@pobox.com>

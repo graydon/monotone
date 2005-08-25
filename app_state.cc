@@ -48,7 +48,7 @@ app_state::~app_state()
 void
 app_state::allow_working_copy()
 {
-  fs::path root = mkpath(search_root());
+  fs::path root = mkpath(search_root.as_external());
   fs::path working;
   fs::path current;
 
@@ -81,7 +81,7 @@ app_state::allow_working_copy()
           bookkeeping_path dump_path;
           get_local_dump_path(dump_path);
           L(F("setting dump path to %s\n") % dump_path);
-          global_sanity.filename = dump_path;
+          global_sanity.filename = system_path(dump_path);
         }
     }
   load_rcfiles();
