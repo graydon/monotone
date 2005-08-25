@@ -1,5 +1,10 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc: Lots of compile fixes for unit tests.
+	Add a test for access_tracker.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc: Many fixes.  Now compiles.
 
 2005-08-25  Nathaniel Smith  <njs@pobox.com>

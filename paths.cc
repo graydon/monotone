@@ -40,6 +40,11 @@ struct access_tracker
     I(initialized);
     return value;
   }
+  // for unit tests
+  void unset()
+  {
+    used = initialized = false;
+  }
   T value;
   bool initialized, used;
   access_tracker() : initialized(false), used(false) {};
@@ -443,10 +448,10 @@ static void test_file_path_internal()
                             "c:foo",
                             "c:/foo",
                             0 };
-  initial_rel_path = file_path();
+  initial_rel_path.set(file_path(), true);
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path_internal(*c), logic_error);
-  initial_rel_path = file_path_internal("blah/blah/blah");
+  initial_rel_path.set(file_path_internal("blah/blah/blah"), true);
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path_internal(*c), logic_error);
 
@@ -480,7 +485,7 @@ static void test_file_path_internal()
         }
     }
 
-  initial_rel_path = file_path();
+  initial_rel_path.unset();
 }
 
 static void check_fp_normalizes_to(char * before, char * after)
@@ -502,7 +507,7 @@ static void check_fp_normalizes_to(char * before, char * after)
   
 static void test_file_path_external_no_prefix()
 {
-  intial_rel_path = file_path()
+  initial_rel_path.set(file_path(), true);
 
   char const * baddies[] = {"/foo",
                             "../bar",
@@ -536,12 +541,12 @@ static void test_file_path_external_no_prefix()
   check_fp_normalizes_to("./foo", "foo");
   check_fp_normalizes_to("foo///.//", "foo");
 
-  intial_rel_path = file_path()
+  initial_rel_path.unset();
 }
 
 static void test_file_path_external_prefix_a_b()
 {
-  initial_rel_path = file_path_internal("a/b");
+  initial_rel_path.set(file_path_internal("a/b"), true);
 
   char const * baddies[] = {"/foo",
                             "../../../bar",
@@ -578,7 +583,7 @@ static void test_file_path_external_prefix_a_b()
   check_fp_normalizes_to("../..", "");
   check_fp_normalizes_to("MT/foo", "a/b/MT/foo");
 
-  initial_rel_path = file_path();
+  initial_rel_path.unset();
 }
 
 static void test_split_join()
@@ -667,8 +672,7 @@ static void check_system_normalizes_to(char * before, char * after)
 
 static void test_system_path()
 {
-  system_path initial_abs_path_saved = initial_abs_path;
-  initial_abs_path = system_path("/a/b");
+  initial_abs_path.set(system_path("/a/b"), true);
 
   BOOST_CHECK_THROW(system_path(""), informative_failure);
 
@@ -702,8 +706,8 @@ static void test_system_path()
   // finally, make sure that the copy-from-any_path constructor works right
   // in particular, it should interpret the paths it gets as being relative to
   // the project root, not the initial path
-  working_root = system_path("/working/root");
-  initial_rel_path = file_path_internal("rel/initial");
+  working_root.set(system_path("/working/root"), true);
+  initial_rel_path.set(file_path_internal("rel/initial"), true);
 
   BOOST_CHECK(system_path(system_path("foo/bar")).as_internal() == "/a/b/foo/bar");
   BOOST_CHECK(system_path(system_path("/foo/bar")).as_internal() == "/foo/bar");
@@ -714,9 +718,21 @@ static void test_system_path()
   BOOST_CHECK(system_path(bookkeeping_path("MT/foo/bar")).as_internal()
               == "/working/root/MT/foo/bar");
 
-  initial_abs_path = initial_abs_path_saved;
-  working_root = initial_abs_path_saved;
-  initial_rel_path = file_path();
+  initial_abs_path.unset();
+  working_root.unset();
+  initial_rel_path.unset();
+}
+
+static void test_access_tracker()
+{
+  access_tracker<int> a;
+  BOOST_CHECK_THROW(a.get(), invariant_failure);
+  a.set(1, false);
+  BOOST_CHECK_THROW(a.set(2, false), invariant_failure);
+  a.set(2, true);
+  BOOST_CHECK_THROW(a.set(3, false), invariant_failure);
+  BOOST_CHECK(a.get() == 2);
+  BOOST_CHECK_THROW(a.set(3, true), invariant_failure);
 }
 
 void add_paths_tests(test_suite * suite)
@@ -729,6 +745,7 @@ void add_paths_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&test_split_join));
   suite->add(BOOST_TEST_CASE(&test_bookkeeping_path));
   suite->add(BOOST_TEST_CASE(&test_system_path));
+  suite->add(BOOST_TEST_CASE(&test_access_tracker));
 }
 
 #endif // BUILD_UNIT_TESTS

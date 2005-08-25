@@ -69,7 +69,9 @@ bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
 // returns true if the string content is binary according to monotone euristic
 bool guess_binary(std::string const & s);
 
+// app_state.cc assumes that this is implemented by boost::fs
 void mkdir_p(any_path const & path);
+
 void make_dir_for(file_path const & p);
 void make_dir_for(bookkeeping_path const & p);
 
