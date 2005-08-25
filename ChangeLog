@@ -1,5 +1,10 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (go_to_working_copy): New function.  Implement.
+	* app_state.cc (create_working_copy): Adjust accordingly.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (find_and_go_to_working_copy): Implement.
 	* app_state.cc (allow_working_copy): Adjust accordingly.
 	(relative_directory): Remove.

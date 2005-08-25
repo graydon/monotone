@@ -103,6 +103,14 @@ find_and_go_to_working_copy(system_path const & search_root)
   return true;
 }
 
+void
+go_to_working_copy(system_path const & new_working_copy)
+{
+  working_root = new_working_copy;
+  initial_rel_path = file_dir();
+  change_current_working_dir(new_working_copy);
+}
+
 static bool
 is_absolute(std::string const & path)
 {

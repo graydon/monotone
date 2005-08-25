@@ -73,7 +73,7 @@ public:
 
   void allow_working_copy();
   void require_working_copy(std::string const & explanation = "");
-  void create_working_copy(std::string const & dir);
+  void create_working_copy(system_path const & dir);
 
   void app_state::set_restriction(path_set const & valid_paths, 
                              std::vector<utf8> const & paths,

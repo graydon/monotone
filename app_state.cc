@@ -48,7 +48,7 @@ app_state::~app_state()
 void
 app_state::allow_working_copy()
 {
-  found_working_copy = find_and_go_to_working_copy(root);
+  found_working_copy = find_and_go_to_working_copy(search_root);
 
   if (found_working_copy) 
     {
@@ -57,7 +57,7 @@ app_state::allow_working_copy()
       read_options();
 
       system_path dbname = system_path(options[database_option]);
-      if (!dbname.empty()) db.set_filename(mkpath(dbname));
+      if (!dbname.empty()) db.set_filename(dbname);
       if (branch_name().empty())
         branch_name = options[branch_option];
       L(F("branch name is '%s'\n") % branch_name());
@@ -84,20 +84,13 @@ app_state::require_working_copy(std::string const & explanation)
 }
 
 void 
-app_state::create_working_copy(std::string const & dir)
+app_state::create_working_copy(system_path const & new_dir)
 {
-  N(dir.size(), F("invalid directory ''"));
+  N(!new_dir.empty(), F("invalid directory ''"));
 
-  // cd back to where we started from
-  N(chdir(fs::initial_path().native_directory_string().c_str()) != -1,
-    F("cannot change to initial directory %s\n") 
-    % fs::initial_path().native_directory_string());
-
-  string target = absolutify(dir);
-  L(F("create working copy in %s\n") % target);
+  L(F("creating working copy in %s\n") % new_dir);
   
   {
-    system_path new_dir(target);
     try
       {
         mkdir_p(new_dir);
@@ -109,15 +102,15 @@ app_state::create_working_copy(std::string const & dir)
           % err.path1().native_directory_string()
           % strerror(err.native_error()));
       }
-    change_current_working_dir(new_dir);
   }
+  go_to_working_copy(new_dir);
 
   N(!directory_exists(bookkeeping_root),
-    F("monotone book-keeping directory '%s' already exists in '%s'\n") 
-    % bookkeeping_root % target);
+    F("monotone bookkeeping directory '%s' already exists in '%s'\n") 
+    % bookkeeping_root % new_dir);
 
-  L(F("creating book-keeping directory '%s' for working copy in '%s'\n")
-    % bookkeeping_root % target);
+  L(F("creating bookkeeping directory '%s' for working copy in '%s'\n")
+    % bookkeeping_root % new_dir);
 
   mkdir_p(bookkeeping_root);
 

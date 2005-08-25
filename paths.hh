@@ -130,4 +130,9 @@ save_initial_path();
 bool
 find_and_go_to_working_copy(system_path const & search_root);
 
+// this is like change_current_working_dir, but also initializes the various
+// root paths that are needed to interpret paths
+void
+go_to_working_copy(system_path const & new_working_copy);
+
 #endif
