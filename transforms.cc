@@ -260,7 +260,7 @@ calculate_ident(manifest_map const & m,
        i != m.end(); ++i)
     {
       sz += i->second.inner()().size();
-      sz += i->first.as_internal()().size();
+      sz += i->first.as_internal().size();
       sz += 3;      
     }
 
@@ -280,8 +280,8 @@ calculate_ident(manifest_map const & m,
       c += i->second.inner()().size();
       *c++ = ' '; 
       *c++ = ' '; 
-      memcpy(c, i->first.as_internal()().data(), i->first.as_internal()().size());
-      c += i->first.as_internal()().size();
+      memcpy(c, i->first.as_internal().data(), i->first.as_internal().size());
+      c += i->first.as_internal().size();
       *c++ = '\n'; 
     }
   

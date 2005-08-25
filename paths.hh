@@ -34,8 +34,8 @@ public:
   // converts to native charset and path syntax
   std::string as_external() const;
   // leaves as utf8
-  utf8 const & as_internal() const
-  { return data; }
+  std::string const & as_internal() const
+  { return data(); }
   bool empty() const
   { return data().empty(); }
 protected:

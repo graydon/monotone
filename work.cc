@@ -154,7 +154,7 @@ known_path(file_path const & p,
            path_set const & ps,
            bool & path_is_directory)
 {
-  std::string path_as_dir = p.as_internal()() + "/";
+  std::string path_as_dir = p.as_internal() + "/";
   for (path_set::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       if (*i == p) 
@@ -162,7 +162,7 @@ known_path(file_path const & p,
           path_is_directory = false;
           return true;
         }
-      else if (i->as_internal()().find(path_as_dir) == 0)
+      else if (i->as_internal().find(path_as_dir) == 0)
         {
           path_is_directory = true;
           return true;
@@ -644,7 +644,7 @@ write_attr_map(data & dat, attr_map const & attr)
        i != attr.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::file, i->first.as_internal()());
+      st.push_str_pair(syms::file, i->first.as_internal());
 
       for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)

@@ -1,5 +1,12 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (any_path::as_internal): On second thought, return a
+	std::string, not a utf8 -- utf8 would be better, but should wait
+	for some more general charset handling cleanup.
+	* Adjust other files accordingly.
 	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* More compile fixes.  All remaing compile errors are real
 	problems, yay.
 	
