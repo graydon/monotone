@@ -1,5 +1,14 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (test_system_path): Add tests for the
+	from-any_path constructor.  Add test for "~foo" handling.
+	Start cleaning up path roots.
+	* platform.hh: Note that get_current_working_dir() is
+	charset-broken (i.e., operations started inside non-utf8
+	directories are probably broken).
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* app_state.cc (allow_working_copy): 
 	* change_set.cc (print_insane_change_set): Two more small compile
 	fixes.

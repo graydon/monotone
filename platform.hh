@@ -48,6 +48,7 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip);
 pid_t get_process_id();
 
 // filesystem stuff
+// FIXME: BUG: this returns a string in the filesystem charset/encoding
 std::string get_current_working_dir();
 // calls N() if fails
 void change_current_working_dir(any_path const & to);

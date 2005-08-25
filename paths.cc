@@ -10,19 +10,29 @@
 #include "platform.hh"
 #include "sanity.hh"
 
-// path to use when absolutifying
-static std::string initial_path;
+// paths to use in interpreting paths from various sources,
+// conceptually:
+//    working_root / initial_rel_path == initial_abs_path
+
+// initial_abs_path is for interpreting relative system_path's
+static system_path initial_abs_path;
+// initial_rel_path is for interpreting external file_path's
+static file_path initial_rel_path;
+// working_root is for converting file_path's and bookkeeping_path's to
+// system_path's.
+static system_path working_root;
+
 void
 save_initial_path()
 {
-  initial_path = get_current_working_dir();
+  // FIXME: BUG: this only works if the current working dir is in utf8
+  initial_path = system_path(get_current_working_dir());
   L(F("initial path is: %s") % initial_path);
 }
 
 // path to prepend to external files, to convert them from pointing to the
 // original working directory to the checkout's root.  Always a normalized
 // string with no trailing /.
-static std::string path_prefix;
 
 #ifdef _WIN32
 static const bool is_win32 = true;
@@ -272,10 +282,10 @@ static void test_file_path_internal()
                             "c:foo",
                             "c:/foo",
                             0 };
-  path_prefix = "";
+  initial_rel_path = file_path();
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path_internal(*c), logic_error);
-  path_prefix = "blah/blah/blah";
+  initial_rel_path = file_path_internal("blah/blah/blah");
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path_internal(*c), logic_error);
 
@@ -292,7 +302,7 @@ static void test_file_path_internal()
   
   for (int i = 0; i < 2; ++i)
     {
-      path_prefix = (i ? "" : "blah/blah/blah");
+      initial_rel_path = (i ? file_path() : file_path_internal("blah/blah/blah"));
       for (char const ** c = baddies; *c; ++c)
         {
           file_path fp = file_path_internal(*c);
@@ -308,7 +318,7 @@ static void test_file_path_internal()
         }
     }
 
-  path_prefix = "";
+  initial_rel_path = file_path();
 }
 
 static void check_fp_normalizes_to(char * before, char * after)
@@ -330,7 +340,7 @@ static void check_fp_normalizes_to(char * before, char * after)
   
 static void test_file_path_external_no_prefix()
 {
-  path_prefix = "";
+  intial_rel_path = file_path()
 
   char const * baddies[] = {"/foo",
                             "../bar",
@@ -363,12 +373,12 @@ static void test_file_path_external_no_prefix()
   check_fp_normalizes_to("./foo", "foo");
   check_fp_normalizes_to("foo///.//", "foo");
 
-  path_prefix = "";
+  intial_rel_path = file_path()
 }
 
 static void test_file_path_external_prefix_a_b()
 {
-  path_prefix = "a/b";
+  initial_rel_path = file_path_internal("a/b");
 
   char const * baddies[] = {"/foo",
                             "../../../bar",
@@ -404,7 +414,7 @@ static void test_file_path_external_prefix_a_b()
   check_fp_normalizes_to("../..", "");
   check_fp_normalizes_to("MT/foo", "a/b/MT/foo");
 
-  path_prefix = "";
+  initial_rel_path = file_path();
 }
 
 static void test_split_join()
@@ -493,8 +503,8 @@ static void check_system_normalizes_to(char * before, char * after)
 
 static void test_system_path()
 {
-  std::string initial_path_saved = initial_path;
-  initial_path = "/a/b";
+  system_path initial_abs_path_saved = initial_abs_path;
+  initial_abs_path = system_path("/a/b");
 
   BOOST_CHECK_THROW(system_path(""), informative_failure);
 
@@ -516,8 +526,33 @@ static void test_system_path()
   std::string tilde_expanded = system_path("~/foo").as_external();
   BOOST_CHECK(tilde_expanded[0] == '/');
   BOOST_CHECK(tilde_expanded.find('~') == std::string::npos);
+  // and check for the weird WIN32 version
+#ifdef _WIN32
+  std::string tilde_expanded2 = system_path("~this_user_does_not_exist_anywhere").as_external();
+  BOOST_CHECK(tilde_expanded2[0] = '/');
+  BOOST_CHECK(tilde_expanded.find('~') == std::string::npos);
+#else
+  BOOST_CHECK_THROW(system_path("~this_user_does_not_exist_anywhere"), informative_failure);
+#endif
 
-  initial_path = initial_path_saved;
+  // finally, make sure that the copy-from-any_path constructor works right
+  // in particular, it should interpret the paths it gets as being relative to
+  // the project root, not the initial path
+  working_root = system_path("/working/root");
+  initial_rel_path = file_path_internal("rel/initial");
+
+  BOOST_CHECK(system_path(system_path("foo/bar")).as_internal() == "/a/b/foo/bar");
+  BOOST_CHECK(system_path(system_path("/foo/bar")).as_internal() == "/foo/bar");
+  BOOST_CHECK(system_path(file_path_internal("foo/bar")).as_internal()
+              == "/working/root/foo/bar");
+  BOOST_CHECK(system_path(file_path_external("foo/bar")).as_external()
+              == "/working/root/rel/initial/foo/bar");
+  BOOST_CHECK(system_path(bookkeeping_path("MT/foo/bar")).as_internal()
+              == "/working/root/MT/foo/bar");
+
+  initial_abs_path = initial_abs_path_saved;
+  working_root = initial_abs_path_saved;
+  initial_rel_path = file_path();
 }
 
 void add_paths_tests(test_suite * suite)
