@@ -32,7 +32,7 @@ void change_current_working_dir(any_path const & to)
 // FIXME: BUG: this probably mangles character sets
 // (as in, we're treating system-provided data as utf8, but it's probably in
 // the filesystem charset)
-static utf8
+utf8
 get_homedir()
 {
   char * home = getenv("HOME");

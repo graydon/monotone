@@ -1,5 +1,10 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* platform.hh (get_homedir): New function.
+	* {win32,unix}/fs.cc (get_homedir): Expose.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* Minor compile fixes.
 	
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
