@@ -15,11 +15,73 @@
 #include "lua.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "platform.hh"
 
 // this file deals with talking to the filesystem, loading and
 // saving files.
 
 using namespace std;
+
+void
+assert_path_is_nonexistent(any_path const & path)
+{
+  I(get_path_status(path) == path::nonexistent);
+}
+
+void
+assert_path_is_file(any_path const & path)
+{
+  I(get_path_status(path) == path::file);
+}
+
+void
+assert_path_is_directory(any_path const & path);
+{
+  I(get_path_status(path) == path::directory);
+}
+
+void
+require_path_is_nonexistent(any_path const & path,
+                            boost::format const & message)
+{
+  N(!path_exists(path), message);
+}
+
+void
+require_path_is_file(any_path const & path,
+                     boost::format const & message_if_nonexistent,
+                     boost::format const & message_if_directory)
+{
+  switch (get_path_status(path))
+    {
+    case path::nonexistent:
+      N(false, message_if_nonexistent);
+      break;
+    case path::file:
+      return;
+    case path::directory:
+      N(false, message_if_directory);
+      break;
+    }
+}
+
+void
+require_path_is_directory(any_path const & path,
+                          boost::format const & message_if_nonexistent,
+                          boost::format const & message_if_file)
+{
+  switch (get_path_status(path))
+    {
+    case path::nonexistent:
+      N(false, message_if_nonexistent);
+      break;
+    case path::file:
+      N(false, message_if_file);
+    case path::directory:
+      return;
+      break;
+    }
+}
 
 bool 
 path_exists(any_path const & p) 
@@ -42,13 +104,18 @@ file_exists(any_path const & p)
 bool
 ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua)
 {
-  fs::path local_p(localized(p));
+  fs::path local_p(p.as_external);
 
   if (!fs::exists(local_p))
     return false;
 
-  if (fs::is_directory(local_p))
+  switch (get_path_status(p))
     {
+    case path::nonexistent:
+      return false;
+    case path::file:
+      break;
+    case path::directory:
       W(F("expected file '%s', but it is a directory.") % p());
       return false;
     }
@@ -73,23 +140,32 @@ bool guess_binary(string const & s)
 }
 
 void 
-delete_file(local_path const & p) 
+mkdir_p(any_path const & p) 
 { 
-  N(file_exists(p), 
-    F("file to delete '%s' does not exist") % p);
-  fs::remove(localized(p)); 
+  fs::create_directories(p.as_external());
 }
 
 void 
-delete_file(file_path const & p) 
+make_dir_for(any_path const & p) 
 { 
-  N(file_exists(p), 
-    F("file to delete '%s' does not exist") % p);
-  fs::remove(localized(p)); 
+  fs::path tmp(p.as_external(), fs::native);
+  if (tmp.has_branch_path())
+    {
+      fs::create_directories(tmp.branch_path()); 
+    }
 }
 
 void 
-delete_dir_recursive(file_path const & p) 
+delete_file(any_path const & p) 
+{ 
+  require_path_is_file(p,
+                       F("file to delete '%s' does not exist") % p,
+                       F("file to delete, '%s', is not a file but a directory") % p);
+  fs::remove(p.as_external()); 
+}
+
+void 
+delete_dir_recursive(any_path const & p) 
 { 
   N(directory_exists(p), 
     F("directory to delete '%s' does not exist") % p);
@@ -150,28 +226,6 @@ move_dir(local_path const & old_path,
     F("rename target dir '%s' already exists") % new_path);
   fs::rename(localized(old_path), 
              localized(new_path));
-}
-
-void 
-mkdir_p(local_path const & p) 
-{ 
-  fs::create_directories(localized(p)); 
-}
-
-void 
-mkdir_p(file_path const & p) 
-{ 
-  fs::create_directories(localized(p)); 
-}
-
-void 
-make_dir_for(file_path const & p) 
-{ 
-  fs::path tmp = localized(p);
-  if (tmp.has_branch_path())
-    {
-      fs::create_directories(tmp.branch_path()); 
-    }
 }
 
 static void 
