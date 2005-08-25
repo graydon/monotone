@@ -1,5 +1,9 @@
 2005-08-24  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc (initialize): Missing ;.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.cc (cpp_main): Handle message_file right.
 
 2005-08-24  Nathaniel Smith  <njs@pobox.com>

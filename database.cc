@@ -211,7 +211,7 @@ database::initialize()
                               F("existing (possibly stale) journal file '%s' "
                                 "has same stem as new database '%s'\n"
                                 "cancelling database creation")
-                              % journal % filename)
+                              % journal % filename);
 
   sqlite3 *s = sql(true);
   I(s != NULL);
