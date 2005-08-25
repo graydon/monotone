@@ -216,7 +216,7 @@ read_data(any_path const & p, data & dat)
 }
 
 void 
-read_localized_data(file_path const & path, 
+read_localized_data(any_path const & path, 
                     data & dat, 
                     lua_hooks & lua)
 {
@@ -266,10 +266,7 @@ read_data_for_command_line(utf8 const & path, data & dat)
   if (path() == "-")
     read_data_stdin(dat);
   else
-    {
-      N(fs::exists(localized(path)), F("file '%s' does not exist") % path);
-      read_data_impl(localized(path), dat);
-    }
+    read_data(file_path_external(path), dat);
 }
 
 
@@ -280,48 +277,45 @@ read_data_for_command_line(utf8 const & path, data & dat)
 
 
 static void 
-write_data_impl(fs::path const & p,
+write_data_impl(any_path const & p,
                 data const & dat)
 {  
-  if (fs::exists(p) && fs::is_directory(p))
-    throw oops("file '" + p.string() + "' cannot be over-written as data; it is a directory");
+  N(!directory_exists(p),
+    F("file '%s' cannot be overwritten as data; it is a directory") % p);
 
-  fs::create_directories(mkpath(p.branch_path().string()));
+  make_dir_for(p);
   
   // we write, non-atomically, to MT/data.tmp.
   // nb: no mucking around with multiple-writer conditions. we're a
   // single-user single-threaded program. you get what you paid for.
-  fs::path mtdir = mkpath(book_keeping_dir);
-  fs::create_directories(mtdir);
-  fs::path tmp = mtdir / "data.tmp"; 
+  assert_path_is_directory(bookkeeping_root);
+  bookkeeping_path tmp = bookkeeping_root / "data.tmp";
 
   {
     // data.tmp opens
-    ofstream file(tmp.string().c_str(),
+    ofstream file(tmp.as_external().c_str(),
                   ios_base::out | ios_base::trunc | ios_base::binary);
-    if (!file)
-      throw oops(string("cannot open file ") + tmp.string() + " for writing");    
+    N(file, F("cannot open file %s for writing") % tmp);
     Botan::Pipe pipe(new Botan::DataSink_Stream(file));
     pipe.process_msg(dat());
     // data.tmp closes
   }
 
-  if (fs::exists(p))
-    N(fs::remove(p),
-      F("removing %s failed") % p.string());
-  fs::rename(tmp, p);
-}
-
-void 
-write_data(local_path const & path, data const & dat)
-{ 
-  write_data_impl(localized(path), dat); 
+  if (path_exists(p))
+    N(fs::remove(p.as_external()), F("removing %s failed") % p);
+  fs::rename(tmp.as_external(), p.as_external());
 }
 
 void 
 write_data(file_path const & path, data const & dat)
 { 
-  write_data_impl(localized(path), dat); 
+  write_data_impl(path, dat); 
+}
+
+void 
+write_data(bookkeeping_path const & path, data const & dat)
+{ 
+  write_data_impl(path, dat); 
 }
 
 void 
@@ -351,37 +345,6 @@ write_localized_data(file_path const & path,
 
   write_data(path, data(tmp2));
 }
-
-void 
-write_localized_data(file_path const & path,
-                     base64< gzip<data> > const & dat,
-                     lua_hooks & lua)
-{
-  gzip<data> data_decoded;
-  data data_decompressed;      
-  decode_base64(dat, data_decoded);
-  decode_gzip(data_decoded, data_decompressed);
-  write_localized_data(path, data_decompressed, lua);
-}
-
-void 
-write_data(local_path const & path,
-           base64< gzip<data> > const & dat)
-{
-  gzip<data> data_decoded;
-  data data_decompressed;      
-  decode_base64(dat, data_decoded);
-  decode_gzip(data_decoded, data_decompressed);      
-  write_data_impl(localized(path), data_decompressed);
-}
-
-void 
-write_data(file_path const & path,
-           base64< gzip<data> > const & dat)
-{ 
-  write_data(local_path(path()), dat); 
-}
-
 
 tree_walker::~tree_walker() {}
 
