@@ -1,9 +1,13 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
 #include <sstream>
+#include <cstdio>
+#include <cstring>
+#include <cerrno>
 
 #include "app_state.hh"
 #include "basic_io.hh"
@@ -227,6 +231,11 @@ build_deletions(vector<file_path> const & paths,
               updated_attr_map = true;
               P(F("dropped attributes for file %s from %s\n") % (*i) % attr_file_name);
             }
+	  if (app.execute)
+	    {
+	      N(unlink((*i)().c_str()) == 0,
+		F("Can't remove %s: %s\n") % (*i) % strerror(errno));
+	    }
         }
   }
 
@@ -246,6 +255,7 @@ void
 build_rename(file_path const & src,
              file_path const & dst,
              manifest_map const & man,
+             app_state & app,
              change_set::path_rearrangement & pr)
 {
   N(src() != "", F("invalid source path ''"));
@@ -270,6 +280,12 @@ build_rename(file_path const & src,
     pr_new.renamed_dirs.insert(std::make_pair(src, dst));
   else 
     pr_new.renamed_files.insert(std::make_pair(src, dst));
+
+  if (app.execute)
+    {
+      N(rename(src().c_str(), dst().c_str()) == 0,
+	F("Can't rename %s to %s: %s\n") % src % dst % strerror(errno));
+    }
 
   // read attribute map if available
   file_path attr_path;

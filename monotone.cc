@@ -66,6 +66,7 @@ struct poptOption coptions[] =
     {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, gettext_noop("Use external diff hook for generating diffs"), NULL},
     {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, gettext_noop("Argument to pass external diff hook"), NULL},
     {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("Use least common ancestor as ancestor for merge"), NULL},
+    {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("Perform the associated file operation"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -435,6 +436,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_LCA:
               app.use_lca = true;
+              break;
+
+            case OPT_EXECUTE:
+              app.execute = true;
               break;
 
             case OPT_HELP:

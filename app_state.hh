@@ -58,6 +58,7 @@ public:
   bool diff_args_provided;
   utf8 diff_args;
   bool use_lca;
+  bool execute;
 
 
 

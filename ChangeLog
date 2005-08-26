@@ -1,3 +1,20 @@
+2005-08-26  Richard Levitte  <richard@levitte.org>
+
+	* options.hh, monotone.cc: Add the '--execute' command-specific
+	option.
+	* monotone.cc (cpp_main): ... and process it.
+	* app_state.hh (class app_state): Add the 'execute' boolean.
+	* app_state.cc (app_state): Initialise it.
+	* commands.cc (CMD(drop)): Add '--execute' capability.
+	* commands.cc (CMD(rename)): Add '--execute' capability.  Pass
+	'app' to build_rename.
+	* work.hh, work.cc (build_deletions, build_rename): Do the actual
+	work.  This required the addition of an app_state parameter to
+	build_rename.
+
+	* tests/t_drop_execute.at, tests/t_rename_execute.at: New tests.
+	* testsuite.at: Add them.
+
 2005-08-26  Benoît Dejean  <benoit@placenet.org>
 
 	* mt_version.cc (print_full_version): Merged strings.

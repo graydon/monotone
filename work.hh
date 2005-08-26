@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 #ifndef __WORK_HH__
 #define __WORK_HH__
 
@@ -73,6 +74,7 @@ void
 build_rename(file_path const & src,
              file_path const & dst,
              manifest_map const & m_old,
+             app_state & app,
              change_set::path_rearrangement & pr);
 
 

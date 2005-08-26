@@ -1115,7 +1115,7 @@ CMD(add, N_("working copy"), N_("PATH..."),
 }
 
 CMD(drop, N_("working copy"), N_("PATH..."),
-    N_("drop files from working copy"), OPT_NONE)
+    N_("drop files from working copy"), OPT_EXECUTE)
 {
   if (args.size() < 1)
     throw usage(name);
@@ -1143,7 +1143,7 @@ ALIAS(rm, drop);
 
 CMD(rename, N_("working copy"), N_("SRC DST"),
     N_("rename entries in the working copy"),
-    OPT_NONE)
+    OPT_EXECUTE)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1156,7 +1156,8 @@ CMD(rename, N_("working copy"), N_("SRC DST"),
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
 
-  build_rename(app.prefix(idx(args, 0)()), app.prefix(idx(args, 1)()), m_old, work);
+  build_rename(app.prefix(idx(args, 0)()), app.prefix(idx(args, 1)()), m_old,
+               app, work);
   
   put_path_rearrangement(work);
   
