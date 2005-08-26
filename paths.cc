@@ -811,7 +811,7 @@ static void test_system_path()
   BOOST_CHECK(!working_root.used);
   BOOST_CHECK(system_path(system_path("/foo/bar")).as_internal() == "/foo/bar");
   BOOST_CHECK(!working_root.used);
-  BOOST_CHECK(system_path(file_path_internal("foo/bar"), true).as_internal()
+  BOOST_CHECK(system_path(file_path_internal("foo/bar"), false).as_internal()
               == "/working/root/foo/bar");
   BOOST_CHECK(!working_root.used);
   BOOST_CHECK(system_path(file_path_internal("foo/bar")).as_internal()
