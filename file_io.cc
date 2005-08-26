@@ -104,11 +104,6 @@ file_exists(any_path const & p)
 bool
 ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua)
 {
-  fs::path local_p(p.as_external());
-
-  if (!fs::exists(local_p))
-    return false;
-
   switch (get_path_status(p))
     {
     case path::nonexistent:

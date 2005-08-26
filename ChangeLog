@@ -1,3 +1,10 @@
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (ident_existing_file): Remove accidentally-left-in
+	code.  Test 26 now passes.
+	* lua.cc (monotone_includedir_for_lua, load_rcfile): Add
+	fs::native's.
+
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
 	* paths.hh (system_path::system_path): Add new boolean argument

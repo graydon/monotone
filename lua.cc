@@ -547,7 +547,7 @@ extern "C"
     const char *pathstr = lua_tostring(L, -1);
     N(pathstr, F("IncludeDir called with an invalid parameter"));
 
-    fs::path locpath(pathstr);
+    fs::path locpath(pathstr, fs::native);
     N(fs::exists(locpath), F("Directory '%s' does not exists") % pathstr);
     N(fs::is_directory(locpath), F("'%s' is not a directory") % pathstr);
 
@@ -669,7 +669,7 @@ lua_hooks::load_rcfile(utf8 const & rc)
   I(st);
   if (rc() != "-")
     {
-      fs::path locpath(system_path(rc).as_external());
+      fs::path locpath(system_path(rc).as_external(), fs::native);
       if (fs::exists(locpath) && fs::is_directory(locpath))
         {
           // directory, iterate over it, skipping subdirs, taking every filename,
