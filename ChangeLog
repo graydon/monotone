@@ -1,5 +1,11 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (test_file_path_external_prefix_a_b) 
+	(test_file_path_external_no_prefix, test_file_path_internal): Test
+	for validity of more strange characters (,+@*%#$=).
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (ident_existing_file): Remove accidentally-left-in
 	code.  Test 26 now passes.
 	* lua.cc (monotone_includedir_for_lua, load_rcfile): Add

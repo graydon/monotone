@@ -513,6 +513,7 @@ static void test_file_path_internal()
                             "foo/bar.baz",
                             "foo/with-hyphen/bar",
                             "foo/with_underscore/bar",
+                            "foo/with,other+@weird*%#$=stuff/bar",
                             ".foo/bar",
                             "..foo/bar",
                             "MTfoo/bar",
@@ -600,6 +601,8 @@ static void test_file_path_external_no_prefix()
   check_fp_normalizes_to("..foo/bar", "..foo/bar");
   check_fp_normalizes_to(".", "");
   check_fp_normalizes_to("foo:bar", "foo:bar");
+  check_fp_normalizes_to("foo/with,other+@weird*%#$=stuff/bar",
+                         "foo/with,other+@weird*%#$=stuff/bar");
 
   // Why are these tests with // in them commented out?  because boost::fs
   // sucks and can't normalize them.  FIXME.
@@ -647,6 +650,8 @@ static void test_file_path_external_prefix_a_b()
   check_fp_normalizes_to("..foo/bar", "a/b/..foo/bar");
   check_fp_normalizes_to(".", "a/b");
   check_fp_normalizes_to("foo:bar", "a/b/foo:bar");
+  check_fp_normalizes_to("foo/with,other+@weird*%#$=stuff/bar",
+                         "a/b/foo/with,other+@weird*%#$=stuff/bar");
   // why are the tests with // in them commented out?  because boost::fs sucks
   // and can't normalize them.  FIXME.
   //check_fp_normalizes_to("foo//bar", "a/b/foo/bar");
