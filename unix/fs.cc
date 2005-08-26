@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pwd.h>
+#include <cstring>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -21,14 +22,14 @@ std::string get_current_working_dir()
 {
   char buffer[4096];
   E(getcwd(buffer, 4096),
-    F("cannot get working directory: %s") % strerror(errno));
+    F("cannot get working directory: %s") % std::strerror(errno));
   return std::string(buffer);
 }
   
 void change_current_working_dir(any_path const & to)
 {
   E(!chdir(to.as_external().c_str()),
-    F("cannot change to directory %s: %s") % to % strerror(errno));
+    F("cannot change to directory %s: %s") % to % std::strerror(errno));
 }
 
 // FIXME: BUG: this probably mangles character sets
@@ -91,7 +92,7 @@ get_path_status(any_path const & path)
       if (errno == ENOENT)
         return path::nonexistent;
       else
-        E(false, F("error accessing file %s: %s") % path % strerror(errno));
+        E(false, F("error accessing file %s: %s") % path % std::strerror(errno));
     }
   if (S_ISREG(buf.st_mode))
     return path::file;
