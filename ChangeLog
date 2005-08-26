@@ -1,3 +1,7 @@
+2005-08-26  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
 2005-08-26  Richard Levitte  <richard@levitte.org>
 
 	* options.hh, monotone.cc: Add the '--execute' command-specific

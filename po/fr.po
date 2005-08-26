@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-08-25 03:18+0200\n"
-"PO-Revision-Date: 2005-08-25 03:18+0200\n"
+"POT-Creation-Date: 2005-08-26 09:57+0200\n"
+"PO-Revision-Date: 2005-08-26 04:07+0200\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -337,11 +337,11 @@ msgstr ""
 
 #: ../change_set.cc:1880
 msgid "conflict detected, resolved in A's favour\n"
-msgstr ""
+msgstr "conflit détecté, résolu en faveur de A\n"
 
 #: ../change_set.cc:1886
 msgid "conflict detected, resolved in B's favour\n"
-msgstr ""
+msgstr "conflit détecté, résolu en faveur de B\n"
 
 #: ../change_set.cc:2053
 #, c-format
@@ -460,83 +460,6 @@ msgstr "déplacement du fichier %s -> %s\n"
 msgid "moving dir %s -> %s\n"
 msgstr "déplacement du dossier %s -> %s\n"
 
-#: ../change_set.cc:3005
-#, c-format
-msgid "[begin changeset %s]\n"
-msgstr ""
-
-#: ../change_set.cc:3011
-#, c-format
-msgid "[end changeset %s]\n"
-msgstr ""
-
-#: ../change_set.cc:3043
-msgid "beginning disjoint_merge_test\n"
-msgstr ""
-
-#: ../change_set.cc:3061
-msgid "finished disjoint_merge_test\n"
-msgstr ""
-
-#: ../change_set.cc:3133 ../change_set.cc:3218 ../change_set.cc:3263
-#, c-format
-msgid "informative failure: %s\n"
-msgstr ""
-
-#: ../change_set.cc:3137 ../change_set.cc:3222 ../change_set.cc:3267
-#, c-format
-msgid "runtime error: %s\n"
-msgstr "erreur d'exécution : %s\n"
-
-#: ../change_set.cc:3144
-msgid "STARTING invert_change_test\n"
-msgstr ""
-
-#: ../change_set.cc:3178
-msgid "ENDING invert_change_test\n"
-msgstr ""
-
-#: ../change_set.cc:3287
-#, c-format
-msgid "%s:%d"
-msgstr ""
-
-#: ../change_set.cc:3289
-#, c-format
-msgid "BEGINNING concatenation test %s\n"
-msgstr ""
-
-#: ../change_set.cc:3294
-#, c-format
-msgid "FINISHING concatenation test %s\n"
-msgstr ""
-
-#: ../change_set.cc:3349
-#, c-format
-msgid "RUNNING bad_concatenate_change_test %s\n"
-msgstr ""
-
-#: ../change_set.cc:3357
-msgid "skipping change_set printing, one or both are not sane\n"
-msgstr ""
-
-#: ../change_set.cc:3362
-msgid "concat change_set is insane\n"
-msgstr ""
-
-#: ../change_set.cc:3365
-msgid "Checking combined change set\n"
-msgstr ""
-
-#: ../change_set.cc:3372
-msgid "combined_concat is insane\n"
-msgstr ""
-
-#: ../change_set.cc:3378
-#, c-format
-msgid "RUNNING bad_concatenate_change_test %s again backwards\n"
-msgstr ""
-
 #: ../commands.cc:138
 #, c-format
 msgid "expanding command '%s'\n"
@@ -552,40 +475,40 @@ msgstr ""
 msgid "command '%s' has multiple ambiguous expansions: \n"
 msgstr ""
 
-#: ../commands.cc:195
+#: ../commands.cc:203
 msgid "commands:"
 msgstr "commandes :"
 
-#: ../commands.cc:239
+#: ../commands.cc:247
 #, c-format
 msgid "executing command '%s'\n"
 msgstr "exécution de la commande « %s »\n"
 
-#: ../commands.cc:245
+#: ../commands.cc:253
 #, c-format
 msgid "unknown command '%s'\n"
 msgstr "commande inconnue « %s »\n"
 
-#: ../commands.cc:292
+#: ../commands.cc:300
 #, c-format
 msgid "pid file '%s' already exists"
 msgstr "le fichier pid « %s » existe déjà"
 
-#: ../commands.cc:362
+#: ../commands.cc:370
 msgid "Enter Log. Lines beginning with `MT:' are removed automatically\n"
 msgstr ""
 "Saisissez le journal. Les lignes débutant par « MT: » sont supprimées "
 "automatiquement\n"
 
-#: ../commands.cc:368
+#: ../commands.cc:376
 msgid "edit of log message failed"
 msgstr "l'édition du message du journal a échouée"
 
-#: ../commands.cc:377
+#: ../commands.cc:385
 msgid "note: "
 msgstr ""
 
-#: ../commands.cc:378
+#: ../commands.cc:386
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -594,115 +517,115 @@ msgstr ""
 "la branche « %s » a plusieurs heads\n"
 "vous devriez peut-être lancer « monotone merge »"
 
-#: ../commands.cc:438 ../commands.cc:3495
+#: ../commands.cc:446 ../commands.cc:3511
 #, c-format
 msgid "no such revision '%s'"
 msgstr ""
 
-#: ../commands.cc:445
+#: ../commands.cc:453
 #, c-format
 msgid "expanding selection '%s'\n"
 msgstr ""
 
-#: ../commands.cc:453
+#: ../commands.cc:461
 #, c-format
 msgid "no match for selection '%s'"
 msgstr ""
 
-#: ../commands.cc:456
+#: ../commands.cc:464
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions: \n"
 msgstr ""
 
-#: ../commands.cc:463
+#: ../commands.cc:471
 #, c-format
 msgid "expanded to '%s'\n"
 msgstr ""
 
-#: ../commands.cc:472 ../commands.cc:502
+#: ../commands.cc:480 ../commands.cc:510
 msgid "non-hex digits in id"
 msgstr ""
 
-#: ../commands.cc:481 ../commands.cc:511
+#: ../commands.cc:489 ../commands.cc:519
 #, c-format
 msgid "partial id '%s' does not have a unique expansion"
 msgstr ""
 
-#: ../commands.cc:484 ../commands.cc:514
+#: ../commands.cc:492 ../commands.cc:522
 #, c-format
 msgid "partial id '%s' has multiple ambiguous expansions: \n"
 msgstr ""
 
-#: ../commands.cc:491 ../commands.cc:521
+#: ../commands.cc:499 ../commands.cc:529
 #, c-format
 msgid ""
 "expanding partial id '%s'\n"
 "expanded to '%s'\n"
 msgstr ""
 
-#: ../commands.cc:549
+#: ../commands.cc:557
 #, c-format
 msgid "warning: no public key '%s' found in database\n"
 msgstr ""
 
-#: ../commands.cc:658
+#: ../commands.cc:666
 msgid "no keys found\n"
 msgstr ""
 
-#: ../commands.cc:660
+#: ../commands.cc:668
 #, c-format
 msgid "no keys found matching '%s'\n"
 msgstr ""
 
-#: ../commands.cc:672 ../commands.cc:1373 ../commands.cc:1427
-#: ../commands.cc:2854
+#: ../commands.cc:680 ../commands.cc:1389 ../commands.cc:1443
+#: ../commands.cc:2870
 #, c-format
 msgid "no revision %s found in database"
 msgstr ""
 
-#: ../commands.cc:678
+#: ../commands.cc:686
 #, c-format
 msgid "revision %s already has children. We cannot kill it."
 msgstr ""
 
-#: ../commands.cc:808 ../commands.cc:830 ../commands.cc:862 ../commands.cc:886
-#: ../commands.cc:926
+#: ../commands.cc:816 ../commands.cc:838 ../commands.cc:870 ../commands.cc:894
+#: ../commands.cc:934
 msgid "key and cert"
 msgstr "clef et certificat"
 
-#: ../commands.cc:808 ../commands.cc:830 ../commands.cc:862
+#: ../commands.cc:816 ../commands.cc:838 ../commands.cc:870
 msgid "KEYID"
 msgstr "IDCLEF"
 
-#: ../commands.cc:808
+#: ../commands.cc:816
 msgid "generate an RSA key-pair"
 msgstr "générer une paire de clefs RSA"
 
-#: ../commands.cc:818
+#: ../commands.cc:826
 #, c-format
 msgid "key '%s' already exists in database"
 msgstr "la clef « %s » est déjà dans la base de données"
 
-#: ../commands.cc:822
+#: ../commands.cc:830
 #, c-format
 msgid "generating key-pair '%s'\n"
 msgstr ""
 
-#: ../commands.cc:824
+#: ../commands.cc:832
 #, c-format
 msgid "storing key-pair '%s' in database\n"
 msgstr ""
 
-#: ../commands.cc:830
+#: ../commands.cc:838
 msgid "drop a public and private key"
 msgstr "supprimer une clef publique et privée"
 
-#: ../commands.cc:841
+#: ../commands.cc:849
 #, c-format
 msgid "dropping public key '%s' from database\n"
 msgstr ""
 
-#: ../commands.cc:848
+#: ../commands.cc:856
 #, c-format
 msgid ""
 "dropping private key '%s' from database\n"
@@ -711,118 +634,136 @@ msgstr ""
 "suppression de la clef privée « %s » de la base de données\n"
 "\n"
 
-#: ../commands.cc:849
+#: ../commands.cc:857
 msgid ""
 "the private key data may not have been erased from the\n"
 "database. it is recommended that you use 'db dump' and\n"
 "'db load' to be sure."
 msgstr ""
 
-#: ../commands.cc:857
+#: ../commands.cc:865
 #, c-format
 msgid "public or private key '%s' does not exist in database"
 msgstr ""
 
-#: ../commands.cc:863
+#: ../commands.cc:871
 msgid "change passphrase of a private RSA key"
 msgstr ""
 
-#: ../commands.cc:874
+#: ../commands.cc:882
 #, c-format
 msgid "key '%s' does not exist in database"
 msgstr ""
 
-#: ../commands.cc:881
+#: ../commands.cc:889
 msgid "passphrase changed\n"
 msgstr "la phrase de passe à changée\n"
 
-#: ../commands.cc:886
+#: ../commands.cc:894
 msgid "REVISION CERTNAME [CERTVAL]"
 msgstr ""
 
-#: ../commands.cc:887
+#: ../commands.cc:895
 msgid "create a cert for a revision"
 msgstr ""
 
-#: ../commands.cc:907
+#: ../commands.cc:915
 msgid "no unique private key found, and no key specified"
 msgstr ""
 
-#: ../commands.cc:926
+#: ../commands.cc:934
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 msgstr ""
 
-#: ../commands.cc:927
+#: ../commands.cc:935
 msgid ""
 "test whether a hypothetical cert would be trusted\n"
 "by current settings"
 msgstr ""
 
-#: ../commands.cc:965 ../commands.cc:978 ../commands.cc:990
-#: ../commands.cc:1007 ../commands.cc:1053
+#: ../commands.cc:968
+#, c-format
+msgid ""
+"if a cert on: %s\n"
+"with key: %s\n"
+"and value: %s\n"
+"was signed by: %s\n"
+"it would be: %s\n"
+msgstr ""
+
+#: ../commands.cc:977
+msgid "trusted"
+msgstr ""
+
+#: ../commands.cc:977
+msgid "UNtrusted"
+msgstr ""
+
+#: ../commands.cc:980 ../commands.cc:993 ../commands.cc:1005
+#: ../commands.cc:1022 ../commands.cc:1068
 msgid "review"
 msgstr ""
 
-#: ../commands.cc:965
+#: ../commands.cc:980
 msgid "REVISION TAGNAME"
 msgstr ""
 
-#: ../commands.cc:966
+#: ../commands.cc:981
 #, fuzzy
 msgid "put a symbolic tag cert on a revision version"
 msgstr "mettre une certificat-étiquette symbolique"
 
-#: ../commands.cc:978
+#: ../commands.cc:993
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
 msgstr ""
 
-#: ../commands.cc:979
+#: ../commands.cc:994
 msgid "note the results of running a test on a revision"
 msgstr ""
 
-#: ../commands.cc:990 ../commands.cc:1007
+#: ../commands.cc:1005 ../commands.cc:1022
 msgid "REVISION"
 msgstr ""
 
-#: ../commands.cc:991
+#: ../commands.cc:1006
 msgid "approve of a particular revision"
 msgstr ""
 
-#: ../commands.cc:1002
+#: ../commands.cc:1017
 msgid "need --branch argument for approval"
 msgstr ""
 
-#: ../commands.cc:1008
+#: ../commands.cc:1023
 msgid "disapprove of a particular revision"
 msgstr ""
 
-#: ../commands.cc:1021
+#: ../commands.cc:1036
 #, c-format
 msgid "revision %s has %d changesets, cannot invert\n"
 msgstr ""
 
-#: ../commands.cc:1025
+#: ../commands.cc:1040
 msgid "need --branch argument for disapproval"
 msgstr ""
 
-#: ../commands.cc:1048
+#: ../commands.cc:1063
 #, c-format
 msgid "disapproval of revision %s"
 msgstr ""
 
-#: ../commands.cc:1053
+#: ../commands.cc:1068
 msgid "REVISION [COMMENT]"
 msgstr ""
 
-#: ../commands.cc:1054
+#: ../commands.cc:1069
 msgid "comment on a particular revision"
 msgstr ""
 
-#: ../commands.cc:1064
+#: ../commands.cc:1079
 msgid "edit comment failed"
 msgstr ""
 
-#: ../commands.cc:1067
+#: ../commands.cc:1082
 msgid "empty comment"
 msgstr "commentaire vide"
 
@@ -833,141 +774,141 @@ msgstr "commentaire vide"
 #. write_change_set(cs, dat);
 #. cout << "change set '" << name << "'\n" << dat << endl;
 #. }
-#: ../commands.cc:1077 ../commands.cc:1102 ../commands.cc:1129
-#: ../commands.cc:1259 ../commands.cc:2123 ../commands.cc:2250
-#: ../commands.cc:2803 ../commands.cc:3336
+#: ../commands.cc:1092 ../commands.cc:1117 ../commands.cc:1144
+#: ../commands.cc:1275 ../commands.cc:2139 ../commands.cc:2266
+#: ../commands.cc:2819 ../commands.cc:3352
 msgid "working copy"
 msgstr "copie de travail"
 
-#: ../commands.cc:1077 ../commands.cc:1102
+#: ../commands.cc:1092 ../commands.cc:1117
 msgid "PATH..."
 msgstr "CHEMIN..."
 
-#: ../commands.cc:1078
+#: ../commands.cc:1093
 msgid "add files to working copy"
 msgstr "ajouter des fichiers à la copie de travail"
 
-#: ../commands.cc:1103
+#: ../commands.cc:1118
 msgid "drop files from working copy"
 msgstr "supprimer des fichiers de la copie de travail"
 
-#: ../commands.cc:1129
+#: ../commands.cc:1144
 msgid "SRC DST"
 msgstr ""
 
-#: ../commands.cc:1130
+#: ../commands.cc:1145
 msgid "rename entries in the working copy"
 msgstr "renommer des entrées dans la copie de travail"
 
 #. fload and fmerge are simple commands for debugging the line
 #. merger.
-#: ../commands.cc:1156 ../commands.cc:1169 ../commands.cc:2724
-#: ../commands.cc:2741 ../commands.cc:3396
+#: ../commands.cc:1172 ../commands.cc:1185 ../commands.cc:2740
+#: ../commands.cc:2757 ../commands.cc:3412
 msgid "debug"
 msgstr ""
 
-#: ../commands.cc:1156
+#: ../commands.cc:1172
 msgid "load file contents into db"
 msgstr ""
 
-#: ../commands.cc:1169
+#: ../commands.cc:1185
 msgid "<parent> <left> <right>"
 msgstr "<parent> <gauche> <droite>"
 
-#: ../commands.cc:1170
+#: ../commands.cc:1186
 msgid "merge 3 files and output result"
 msgstr ""
 
-#: ../commands.cc:1180
+#: ../commands.cc:1196
 msgid "ancestor file id does not exist"
 msgstr ""
 
-#: ../commands.cc:1183
+#: ../commands.cc:1199
 msgid "left file id does not exist"
 msgstr ""
 
-#: ../commands.cc:1186
+#: ../commands.cc:1202
 msgid "right file id does not exist"
 msgstr ""
 
-#: ../commands.cc:1197
+#: ../commands.cc:1213
 msgid "merge failed"
 msgstr ""
 
-#: ../commands.cc:1202 ../commands.cc:1282 ../commands.cc:1680
-#: ../commands.cc:2591 ../commands.cc:3279 ../commands.cc:3475
-#: ../commands.cc:3513
+#: ../commands.cc:1218 ../commands.cc:1298 ../commands.cc:1696
+#: ../commands.cc:2607 ../commands.cc:3295 ../commands.cc:3491
+#: ../commands.cc:3529
 msgid "informative"
 msgstr "information"
 
-#: ../commands.cc:1202 ../commands.cc:2250 ../commands.cc:2591
-#: ../commands.cc:3336
+#: ../commands.cc:1218 ../commands.cc:2266 ../commands.cc:2607
+#: ../commands.cc:3352
 msgid "[PATH]..."
 msgstr ""
 
-#: ../commands.cc:1202
+#: ../commands.cc:1218
 msgid "show status of working copy"
 msgstr ""
 
-#: ../commands.cc:1259
+#: ../commands.cc:1275
 msgid "[PATH]"
 msgstr ""
 
-#: ../commands.cc:1260
+#: ../commands.cc:1276
 msgid "calculate identity of PATH or stdin"
 msgstr ""
 
-#: ../commands.cc:1283
+#: ../commands.cc:1299
 msgid ""
 "(file|manifest|revision) [ID]\n"
 "file REVISION FILENAME"
 msgstr ""
 
-#: ../commands.cc:1285
+#: ../commands.cc:1301
 msgid "write file, manifest, or revision from database to stdout"
 msgstr ""
 
-#: ../commands.cc:1305
+#: ../commands.cc:1321
 #, c-format
 msgid "no file version %s found in database"
 msgstr ""
 
-#: ../commands.cc:1317
+#: ../commands.cc:1333
 #, c-format
 msgid "no file '%s' found in revision '%s'\n"
 msgstr ""
 
-#: ../commands.cc:1322
+#: ../commands.cc:1338
 #, c-format
 msgid "dumping file %s\n"
 msgstr ""
 
-#: ../commands.cc:1346
+#: ../commands.cc:1362
 #, c-format
 msgid "no manifest version %s found in database"
 msgstr ""
 
-#: ../commands.cc:1350
+#: ../commands.cc:1366
 #, c-format
 msgid "dumping manifest %s\n"
 msgstr ""
 
-#: ../commands.cc:1377
+#: ../commands.cc:1393
 #, c-format
 msgid "dumping revision %s\n"
 msgstr ""
 
-#: ../commands.cc:1387 ../commands.cc:1486 ../commands.cc:3079
-#: ../commands.cc:3128 ../commands.cc:3213 ../commands.cc:3220
-#: ../commands.cc:3682
+#: ../commands.cc:1403 ../commands.cc:1502 ../commands.cc:3095
+#: ../commands.cc:3144 ../commands.cc:3229 ../commands.cc:3236
+#: ../commands.cc:3698
 msgid "tree"
 msgstr "arborescence"
 
-#: ../commands.cc:1387
+#: ../commands.cc:1403
 msgid "[DIRECTORY]\n"
 msgstr ""
 
-#: ../commands.cc:1388
+#: ../commands.cc:1404
 msgid ""
 "check out a revision from database into directory.\n"
 "If a revision is given, that's the one that will be checked out.\n"
@@ -977,80 +918,80 @@ msgstr ""
 
 #. no checkout dir specified, use branch name for dir
 #. use branch head revision
-#: ../commands.cc:1403 ../commands.cc:1415
+#: ../commands.cc:1419 ../commands.cc:1431
 msgid "need --branch argument for branch-based checkout"
 msgstr ""
 
-#: ../commands.cc:1418
+#: ../commands.cc:1434
 #, c-format
 msgid "branch %s is empty"
 msgstr "la branche %s est vide"
 
-#: ../commands.cc:1419
+#: ../commands.cc:1435
 #, c-format
 msgid "branch %s has multiple heads"
 msgstr ""
 
-#: ../commands.cc:1440
+#: ../commands.cc:1456
 #, c-format
 msgid "found %d %s branch certs on revision %s\n"
 msgstr ""
 
-#: ../commands.cc:1445
+#: ../commands.cc:1461
 #, c-format
 msgid "revision %s is not a member of branch %s\n"
 msgstr ""
 
-#: ../commands.cc:1461
+#: ../commands.cc:1477
 #, c-format
 msgid "no manifest %s found in database"
 msgstr ""
 
-#: ../commands.cc:1463
+#: ../commands.cc:1479
 #, c-format
 msgid "checking out revision %s to directory %s\n"
 msgstr ""
 
-#: ../commands.cc:1469
+#: ../commands.cc:1485
 #, c-format
 msgid "no file %s found in database for %s"
 msgstr ""
 
-#: ../commands.cc:1473 ../commands.cc:3383
+#: ../commands.cc:1489 ../commands.cc:3399
 #, c-format
 msgid "writing file %s to %s\n"
 msgstr ""
 
-#: ../commands.cc:1486
+#: ../commands.cc:1502
 msgid "show unmerged head revisions of branch"
 msgstr ""
 
-#: ../commands.cc:1494 ../commands.cc:3088
+#: ../commands.cc:1510 ../commands.cc:3104
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr ""
 
-#: ../commands.cc:1499 ../commands.cc:3092 ../commands.cc:3162
-#: ../commands.cc:3165
+#: ../commands.cc:1515 ../commands.cc:3108 ../commands.cc:3178
+#: ../commands.cc:3181
 #, c-format
 msgid "branch '%s' is empty\n"
 msgstr "la branche « %s » est vide\n"
 
-#: ../commands.cc:1501
+#: ../commands.cc:1517
 #, c-format
 msgid "branch '%s' is currently merged:\n"
 msgstr "la branche « %s » est actuellement fusionnée :\n"
 
-#: ../commands.cc:1503
+#: ../commands.cc:1519
 #, c-format
 msgid "branch '%s' is currently unmerged:\n"
 msgstr "la branche « %s » n'est actuellement pas fusionnée :\n"
 
-#: ../commands.cc:1542
+#: ../commands.cc:1558
 #, c-format
 msgid "no epoch for branch %s\n"
 msgstr ""
 
-#: ../commands.cc:1681
+#: ../commands.cc:1697
 msgid ""
 "certs ID\n"
 "keys [PATTERN]\n"
@@ -1064,200 +1005,200 @@ msgid ""
 "missing"
 msgstr ""
 
-#: ../commands.cc:1691
+#: ../commands.cc:1707
 msgid ""
 "show database objects, or the current working copy manifest,\n"
 "or unknown, intentionally ignored, or missing state files"
 msgstr ""
 
-#: ../commands.cc:1728 ../commands.cc:1754 ../commands.cc:1778
-#: ../commands.cc:1796 ../commands.cc:1815 ../commands.cc:1834
-#: ../commands.cc:1852 ../commands.cc:1868 ../commands.cc:1888
+#: ../commands.cc:1744 ../commands.cc:1770 ../commands.cc:1794
+#: ../commands.cc:1812 ../commands.cc:1831 ../commands.cc:1850
+#: ../commands.cc:1868 ../commands.cc:1884 ../commands.cc:1904
 msgid "packet i/o"
 msgstr ""
 
-#: ../commands.cc:1728 ../commands.cc:1754
+#: ../commands.cc:1744 ../commands.cc:1770
 msgid "OLDID NEWID"
 msgstr ""
 
-#: ../commands.cc:1729
+#: ../commands.cc:1745
 msgid "write manifest delta packet to stdout"
 msgstr ""
 
-#: ../commands.cc:1743 ../commands.cc:1745 ../commands.cc:1809
+#: ../commands.cc:1759 ../commands.cc:1761 ../commands.cc:1825
 #, c-format
 msgid "no such manifest %s"
 msgstr ""
 
-#: ../commands.cc:1755
+#: ../commands.cc:1771
 msgid "write file delta packet to stdout"
 msgstr ""
 
-#: ../commands.cc:1769 ../commands.cc:1771 ../commands.cc:1828
-#: ../commands.cc:2144
+#: ../commands.cc:1785 ../commands.cc:1787 ../commands.cc:1844
+#: ../commands.cc:2160
 #, c-format
 msgid "no such file %s"
 msgstr ""
 
-#: ../commands.cc:1778 ../commands.cc:1796 ../commands.cc:1815
-#: ../commands.cc:1834 ../commands.cc:1852 ../commands.cc:1868
+#: ../commands.cc:1794 ../commands.cc:1812 ../commands.cc:1831
+#: ../commands.cc:1850 ../commands.cc:1868 ../commands.cc:1884
 msgid "ID"
 msgstr ""
 
-#: ../commands.cc:1778
+#: ../commands.cc:1794
 msgid "write revision data packet to stdout"
 msgstr ""
 
-#: ../commands.cc:1791
+#: ../commands.cc:1807
 #, c-format
 msgid "no such revision %s"
 msgstr ""
 
-#: ../commands.cc:1796
+#: ../commands.cc:1812
 msgid "write manifest data packet to stdout"
 msgstr ""
 
-#: ../commands.cc:1815
+#: ../commands.cc:1831
 msgid "write file data packet to stdout"
 msgstr ""
 
-#: ../commands.cc:1834
+#: ../commands.cc:1850
 msgid "write cert packets to stdout"
 msgstr ""
 
-#: ../commands.cc:1852
-msgid "write public key packet to stdout"
-msgstr ""
-
-#: ../commands.cc:1860
-#, c-format
-msgid "public key '%s' does not exist in database"
-msgstr ""
-
 #: ../commands.cc:1868
-msgid "write private key packet to stdout"
+msgid "write public key packet to stdout"
 msgstr ""
 
 #: ../commands.cc:1876
 #, c-format
+msgid "public key '%s' does not exist in database"
+msgstr ""
+
+#: ../commands.cc:1884
+msgid "write private key packet to stdout"
+msgstr ""
+
+#: ../commands.cc:1892
+#, c-format
 msgid "public and private key '%s' do not exist in database"
 msgstr ""
 
-#: ../commands.cc:1888
+#: ../commands.cc:1904
 msgid "read packets from stdin"
 msgstr "lecture des paquets depuis l'entrée standard"
 
-#: ../commands.cc:1893
+#: ../commands.cc:1909
 msgid "no packets found on stdin"
 msgstr "aucun paquet trouvé sur l'entrée standard"
 
-#: ../commands.cc:1894
+#: ../commands.cc:1910
 #, c-format
 msgid "read %d packet"
 msgid_plural "read %d packets"
 msgstr[0] "lu %d paquet"
 msgstr[1] "lu %d paquets"
 
-#: ../commands.cc:1898 ../commands.cc:1987 ../commands.cc:2002
-#: ../commands.cc:2016 ../commands.cc:2031
+#: ../commands.cc:1914 ../commands.cc:2003 ../commands.cc:2018
+#: ../commands.cc:2032 ../commands.cc:2047
 msgid "network"
 msgstr "réseau"
 
-#: ../commands.cc:1899
+#: ../commands.cc:1915
 msgid "rebuild the indices used to sync over the network"
 msgstr ""
 
-#: ../commands.cc:1933
+#: ../commands.cc:1949
 #, c-format
 msgid "setting default server to %s\n"
 msgstr ""
 
-#: ../commands.cc:1939
+#: ../commands.cc:1955
 msgid "no hostname given"
 msgstr ""
 
-#: ../commands.cc:1941
+#: ../commands.cc:1957
 msgid "no server given and no default server set"
 msgstr ""
 
-#: ../commands.cc:1945
+#: ../commands.cc:1961
 #, c-format
 msgid "using default server address: %s\n"
 msgstr ""
 
-#: ../commands.cc:1957
+#: ../commands.cc:1973
 #, c-format
 msgid "setting default branch include pattern to '%s'\n"
 msgstr ""
 
-#: ../commands.cc:1963
+#: ../commands.cc:1979
 #, c-format
 msgid "setting default branch exclude pattern to '%s'\n"
 msgstr ""
 
-#: ../commands.cc:1969
+#: ../commands.cc:1985
 msgid "no branch pattern given"
 msgstr ""
 
-#: ../commands.cc:1971
+#: ../commands.cc:1987
 msgid "no branch pattern given and no default pattern set"
 msgstr ""
 
-#: ../commands.cc:1975
+#: ../commands.cc:1991
 #, c-format
 msgid "using default branch include pattern: '%s'\n"
 msgstr ""
 
-#: ../commands.cc:1983
+#: ../commands.cc:1999
 #, c-format
 msgid "excluding: %s\n"
 msgstr ""
 
-#: ../commands.cc:1987 ../commands.cc:2002 ../commands.cc:2016
+#: ../commands.cc:2003 ../commands.cc:2018 ../commands.cc:2032
 msgid "[ADDRESS[:PORTNUMBER] [PATTERN]]"
 msgstr ""
 
-#: ../commands.cc:1988
+#: ../commands.cc:2004
 msgid "push branches matching PATTERN to netsync server at ADDRESS"
 msgstr ""
 
-#: ../commands.cc:1995 ../commands.cc:2024 ../commands.cc:2041
+#: ../commands.cc:2011 ../commands.cc:2040 ../commands.cc:2057
 msgid "could not guess default signing key"
 msgstr ""
 
-#: ../commands.cc:2003
+#: ../commands.cc:2019
 msgid "pull branches matching PATTERN from netsync server at ADDRESS"
 msgstr ""
 
-#: ../commands.cc:2010
+#: ../commands.cc:2026
 msgid "doing anonymous pull; use -kKEYNAME if you need authentication\n"
 msgstr ""
 "récupération anonyme; utilisez -kNOMCLEF si vous avez besoin d'une "
 "authentification\n"
 
-#: ../commands.cc:2017
+#: ../commands.cc:2033
 msgid "sync branches matching PATTERN with netsync server at ADDRESS"
 msgstr ""
 
-#: ../commands.cc:2031
+#: ../commands.cc:2047
 msgid "ADDRESS[:PORTNUMBER] PATTERN ..."
 msgstr "ADRESSE[:PORT] MOTIF ..."
 
-#: ../commands.cc:2032
+#: ../commands.cc:2048
 msgid ""
 "listen on ADDRESS and serve the specified branches to connecting clients"
 msgstr ""
 
-#: ../commands.cc:2045
+#: ../commands.cc:2061
 msgid ""
 "need permission to store persistent passphrase (see hook persist_phrase_ok())"
 msgstr ""
 
-#: ../commands.cc:2055
+#: ../commands.cc:2071
 msgid "database"
 msgstr "base de données"
 
-#: ../commands.cc:2056
+#: ../commands.cc:2072
 msgid ""
 "init\n"
 "info\n"
@@ -1275,140 +1216,140 @@ msgid ""
 "set_epoch BRANCH EPOCH\n"
 msgstr ""
 
-#: ../commands.cc:2070
+#: ../commands.cc:2086
 msgid "manipulate database state"
 msgstr "manipule l'état de la base de données"
 
-#: ../commands.cc:2123
+#: ../commands.cc:2139
 msgid ""
 "set FILE ATTR VALUE\n"
 "get FILE [ATTR]\n"
 "drop FILE"
 msgstr ""
 
-#: ../commands.cc:2124
+#: ../commands.cc:2140
 msgid "set, get or drop file attributes"
 msgstr ""
 
-#: ../commands.cc:2212 ../work.cc:114
+#: ../commands.cc:2228 ../work.cc:118
 #, c-format
 msgid "registering %s file in working copy\n"
 msgstr ""
 
-#: ../commands.cc:2241
+#: ../commands.cc:2257
 #, c-format
 msgid "failed to parse date string '%s': %s"
 msgstr ""
 
-#: ../commands.cc:2245
+#: ../commands.cc:2261
 #, c-format
 msgid "failed to parse date string '%s'"
 msgstr ""
 
-#: ../commands.cc:2251
+#: ../commands.cc:2267
 msgid "commit working copy to database"
 msgstr ""
 
-#: ../commands.cc:2269
+#: ../commands.cc:2285
 #, fuzzy
 msgid "no changes to commit\n"
 msgstr "aucun changement à commiter\n"
 
-#: ../commands.cc:2280
+#: ../commands.cc:2296
 #, c-format
 msgid "beginning commit on branch '%s'\n"
 msgstr ""
 
-#: ../commands.cc:2281
+#: ../commands.cc:2297
 #, c-format
 msgid "new manifest %s\n"
 msgstr "nouveau manifeste %s\n"
 
-#: ../commands.cc:2282
+#: ../commands.cc:2298
 #, c-format
 msgid "new revision %s\n"
 msgstr "nouvelle révisions %s\n"
 
-#: ../commands.cc:2286
+#: ../commands.cc:2302
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message et --message-file sont mutuellement exclusifs"
 
-#: ../commands.cc:2289
+#: ../commands.cc:2305
 msgid ""
 "MT/log is non-empty and --message supplied\n"
 "perhaps move or delete MT/log,\n"
 "or remove --message from the command line?"
 msgstr ""
 
-#: ../commands.cc:2294
+#: ../commands.cc:2310
 msgid ""
 "MT/log is non-empty and --message-file supplied\n"
 "perhaps move or delete MT/log,\n"
 "or remove --message-file from the command line?"
 msgstr ""
 
-#: ../commands.cc:2312
+#: ../commands.cc:2328
 msgid "empty log message"
 msgstr "message du journal vide"
 
-#: ../commands.cc:2324
+#: ../commands.cc:2340
 #, c-format
 msgid "revision %s already in database\n"
 msgstr "la révision %s est déjà dans la base de données\n"
 
 #. new revision
-#: ../commands.cc:2329
+#: ../commands.cc:2345
 #, c-format
 msgid "inserting new revision %s\n"
 msgstr ""
 
-#: ../commands.cc:2338
+#: ../commands.cc:2354
 #, c-format
 msgid "skipping manifest %s, already in database\n"
 msgstr ""
 
-#: ../commands.cc:2342
+#: ../commands.cc:2358
 #, c-format
 msgid "inserting manifest delta %s -> %s\n"
 msgstr ""
 
-#: ../commands.cc:2353
+#: ../commands.cc:2369
 #, c-format
 msgid "inserting full manifest %s\n"
 msgstr ""
 
-#: ../commands.cc:2366
+#: ../commands.cc:2382
 #, c-format
 msgid "skipping file delta %s, already in database\n"
 msgstr ""
 
-#: ../commands.cc:2372
+#: ../commands.cc:2388
 #, c-format
 msgid "inserting delta %s -> %s\n"
 msgstr ""
 
-#: ../commands.cc:2382 ../commands.cc:2399
+#: ../commands.cc:2398 ../commands.cc:2415
 #, c-format
 msgid "file '%s' modified during commit, aborting"
 msgstr "le fichier « %s » a été modifié pendant le commit, interruption"
 
-#: ../commands.cc:2392
+#: ../commands.cc:2408
 #, c-format
 msgid "inserting full version %s\n"
 msgstr ""
 
-#: ../commands.cc:2426
+#: ../commands.cc:2442
 #, c-format
 msgid "committed revision %s\n"
 msgstr ""
 
-#: ../commands.cc:2432
+#: ../commands.cc:2448
 msgid ""
 "note: this revision creates divergence\n"
 "note: you may (or may not) wish to run 'monotone merge'"
 msgstr ""
 
-#: ../commands.cc:2592
+#: ../commands.cc:2608
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the working directory and\n"
@@ -1416,98 +1357,103 @@ msgid ""
 "them is given.  If no format is specified, unified is used by default."
 msgstr ""
 
-#: ../commands.cc:2608
+#: ../commands.cc:2624
 msgid ""
 "--diff-args requires --external\n"
 "try adding --external or removing --diff-args?"
 msgstr ""
 
-#: ../commands.cc:2638 ../commands.cc:2653 ../commands.cc:2656
+#: ../commands.cc:2654 ../commands.cc:2669 ../commands.cc:2672
 #, c-format
 msgid "revision %s does not exist"
 msgstr "la révision %s n'existe pas"
 
-#: ../commands.cc:2642
+#: ../commands.cc:2658
 msgid "current revision has no ancestor"
 msgstr "la révision actuelle n'existe pas"
 
-#: ../commands.cc:2681
+#: ../commands.cc:2697
 #, c-format
 msgid "no common ancestor for %s and %s"
 msgstr "pas d'ancêtre commun pour %s et %s"
 
-#: ../commands.cc:2687
+#: ../commands.cc:2703
 msgid "concatenating un-committed changeset to composite\n"
 msgstr ""
 
-#: ../commands.cc:2714
+#: ../commands.cc:2730
 msgid "# no changes"
 msgstr ""
 
-#: ../commands.cc:2724 ../commands.cc:2741
+#: ../commands.cc:2740 ../commands.cc:2757
 msgid "LEFT RIGHT"
 msgstr "GAUCHE DROITE"
 
-#: ../commands.cc:2724
+#: ../commands.cc:2740
 #, fuzzy
 msgid "print least common ancestor"
 msgstr "l'ancêtre commun est %s\n"
 
-#: ../commands.cc:2741
+#: ../commands.cc:2753
+#, fuzzy
+msgid "no common ancestor found"
+msgstr "l'ancêtre commun est %s\n"
+
+#: ../commands.cc:2757
 msgid "print least common ancestor / dominator"
 msgstr ""
 
-#: ../commands.cc:2755
+#: ../commands.cc:2771
 #, fuzzy
 msgid "no common ancestor/dominator found"
 msgstr "l'ancêtre commun est %s\n"
 
-#: ../commands.cc:2780
+#: ../commands.cc:2796
 #, c-format
 msgid "updating %s to %s\n"
 msgstr ""
 
-#: ../commands.cc:2804
+#: ../commands.cc:2820
 msgid ""
 "update working copy.\n"
 "If a revision is given, base the update on that revision.  If not,\n"
 "base the update on the head of the branch (given or implicit)."
 msgstr ""
 
-#: ../commands.cc:2829
+#: ../commands.cc:2845
 msgid "this working directory is a new project; cannot update"
 msgstr ""
 
-#: ../commands.cc:2836
+#: ../commands.cc:2852
 msgid ""
 "your request matches no descendents of the current revision\n"
 "in fact, it doesn't even match the current revision\n"
 "maybe you want --revision=<rev on other branch>"
 msgstr ""
 
-#: ../commands.cc:2841
+#: ../commands.cc:2857
 msgid "multiple update candidates:\n"
 msgstr "plusieurs candidats pour la mise-à-jour :\n"
 
-#: ../commands.cc:2845
+#: ../commands.cc:2861
 msgid "choose one with 'monotone update -r<id>'\n"
 msgstr "choisissez en un avec « monotone update -r<id> »\n"
 
-#: ../commands.cc:2846
+#: ../commands.cc:2862
 msgid "multiple candidates remain after selection"
 msgstr ""
 
-#: ../commands.cc:2861
+#: ../commands.cc:2877
 #, c-format
 msgid "already up to date at %s\n"
 msgstr "déjà à jour en %s\n"
 
-#: ../commands.cc:2865
+#: ../commands.cc:2881
 #, c-format
 msgid "selected update target %s\n"
 msgstr ""
 
-#: ../commands.cc:2877
+#: ../commands.cc:2893
 #, c-format
 msgid ""
 "revision %s is not a member of branch %s\n"
@@ -1515,61 +1461,61 @@ msgid ""
 msgstr ""
 
 #. working copy has no changes
-#: ../commands.cc:2892
+#: ../commands.cc:2908
 #, c-format
 msgid "updating along chosen edge %s -> %s\n"
 msgstr ""
 
-#: ../commands.cc:2903
+#: ../commands.cc:2919
 #, c-format
 msgid "merging working copy with chosen edge %s -> %s\n"
 msgstr ""
 
-#: ../commands.cc:2952
+#: ../commands.cc:2968
 #, c-format
 msgid "updated to base revision %s\n"
 msgstr "mise à jour vers la révision de base %s\n"
 
-#: ../commands.cc:3018
+#: ../commands.cc:3034
 #, c-format
 msgid "common ancestor %s found\n"
 msgstr ""
 
-#: ../commands.cc:3019
+#: ../commands.cc:3035
 msgid "trying 3-way merge\n"
 msgstr ""
 
-#: ../commands.cc:3029
+#: ../commands.cc:3045
 msgid "no common ancestor found, synthesizing edges\n"
 msgstr ""
 
-#: ../commands.cc:3079
+#: ../commands.cc:3095
 msgid "merge unmerged heads of branch"
 msgstr ""
 
-#: ../commands.cc:3093
+#: ../commands.cc:3109
 #, c-format
 msgid "branch '%s' is merged\n"
 msgstr "la branche « %s » est fusionnée\n"
 
-#: ../commands.cc:3099
+#: ../commands.cc:3115
 #, c-format
 msgid "starting with revision 1 / %d\n"
 msgstr ""
 
-#: ../commands.cc:3103
+#: ../commands.cc:3119
 #, c-format
 msgid "merging with revision %d / %d\n"
 msgstr ""
 
 #. Somewhat redundant, but consistent with output of plain "merge" command.
-#: ../commands.cc:3104 ../commands.cc:3105 ../commands.cc:3172
-#: ../commands.cc:3256 ../commands.cc:3257
+#: ../commands.cc:3120 ../commands.cc:3121 ../commands.cc:3188
+#: ../commands.cc:3272 ../commands.cc:3273
 #, c-format
 msgid "[source] %s\n"
 msgstr ""
 
-#: ../commands.cc:3117
+#: ../commands.cc:3133
 #, c-format
 msgid ""
 "merge of %s\n"
@@ -1578,89 +1524,89 @@ msgstr ""
 "fusion de %s\n"
 "       et %s\n"
 
-#: ../commands.cc:3122 ../commands.cc:3209 ../commands.cc:3276
+#: ../commands.cc:3138 ../commands.cc:3225 ../commands.cc:3292
 #, c-format
 msgid "[merged] %s\n"
 msgstr ""
 
-#: ../commands.cc:3125
+#: ../commands.cc:3141
 msgid "note: your working copies have not been updated\n"
 msgstr ""
 
-#: ../commands.cc:3128
+#: ../commands.cc:3144
 msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr ""
 
-#: ../commands.cc:3129
+#: ../commands.cc:3145
 msgid "merge from one branch to another asymmetrically"
 msgstr ""
 
-#: ../commands.cc:3163 ../commands.cc:3166
+#: ../commands.cc:3179 ../commands.cc:3182
 #, c-format
 msgid "branch '%s' is not merged\n"
 msgstr "la branche « %s » n'est pas fusionnée\n"
 
-#: ../commands.cc:3171
+#: ../commands.cc:3187
 #, c-format
 msgid "propagating %s -> %s\n"
 msgstr ""
 
-#: ../commands.cc:3173
+#: ../commands.cc:3189
 #, c-format
 msgid "[target] %s\n"
 msgstr ""
 
-#: ../commands.cc:3178
+#: ../commands.cc:3194
 #, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'\n"
 msgstr ""
 
-#: ../commands.cc:3180
+#: ../commands.cc:3196
 msgid "no action taken\n"
 msgstr ""
 
-#: ../commands.cc:3184
+#: ../commands.cc:3200
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'\n"
 msgstr ""
 
-#: ../commands.cc:3201
+#: ../commands.cc:3217
 #, c-format
 msgid ""
 "propagate from branch '%s' (head %s)\n"
 "            to branch '%s' (head %s)\n"
 msgstr ""
 
-#: ../commands.cc:3213
+#: ../commands.cc:3229
 msgid "refresh the inodeprint cache"
 msgstr ""
 
-#: ../commands.cc:3221
+#: ../commands.cc:3237
 msgid ""
 "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
 "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"
 msgstr ""
 
-#: ../commands.cc:3223
+#: ../commands.cc:3239
 msgid "merge two explicitly given revisions, placing result in given branch"
 msgstr ""
 
-#: ../commands.cc:3238 ../commands.cc:3240
+#: ../commands.cc:3254 ../commands.cc:3256
 #, c-format
 msgid "%s is not an ancestor of %s"
 msgstr "%s n'est pas un ancêtre de %s"
 
-#: ../commands.cc:3249
+#: ../commands.cc:3265
 #, c-format
 msgid "%s and %s are the same revision, aborting"
 msgstr ""
 
-#: ../commands.cc:3251 ../commands.cc:3253
+#: ../commands.cc:3267 ../commands.cc:3269
 #, c-format
 msgid "%s is already an ancestor of %s"
 msgstr ""
 
-#: ../commands.cc:3267
+#: ../commands.cc:3283
 #, c-format
 msgid ""
 "explicit_merge of %s\n"
@@ -1669,116 +1615,116 @@ msgid ""
 "        to branch '%s'\n"
 msgstr ""
 
-#: ../commands.cc:3279
+#: ../commands.cc:3295
 msgid "(revision|manifest|file|key) PARTIAL-ID"
 msgstr ""
 
-#: ../commands.cc:3280
+#: ../commands.cc:3296
 msgid "complete partial id"
 msgstr ""
 
-#: ../commands.cc:3289
+#: ../commands.cc:3305
 msgid "non-hex digits in partial id"
 msgstr ""
 
-#: ../commands.cc:3337
+#: ../commands.cc:3353
 msgid "revert file(s), dir(s) or entire working copy"
 msgstr ""
 
-#: ../commands.cc:3375
+#: ../commands.cc:3391
 #, c-format
 msgid "reverting %s from %s to %s\n"
 msgstr ""
 
-#: ../commands.cc:3379
+#: ../commands.cc:3395
 #, c-format
 msgid "no file version %s found in database for %s"
 msgstr ""
 
-#: ../commands.cc:3396
+#: ../commands.cc:3412
 msgid "RCSFILE..."
 msgstr ""
 
-#: ../commands.cc:3397
+#: ../commands.cc:3413
 msgid ""
 "parse versions in RCS files\n"
 "this command doesn't reconstruct or import revisions.  you probably want "
 "cvs_import"
 msgstr ""
 
-#: ../commands.cc:3412
+#: ../commands.cc:3428
 msgid "rcs"
 msgstr ""
 
-#: ../commands.cc:3412
+#: ../commands.cc:3428
 msgid "CVSROOT"
 msgstr ""
 
-#: ../commands.cc:3412
+#: ../commands.cc:3428
 msgid "import all versions in CVS repository"
 msgstr ""
 
-#: ../commands.cc:3475
+#: ../commands.cc:3491
 msgid "PATH"
 msgstr ""
 
-#: ../commands.cc:3476
+#: ../commands.cc:3492
 msgid "print annotated copy of the file from REVISION"
 msgstr ""
 
-#: ../commands.cc:3494
+#: ../commands.cc:3510
 #, c-format
 msgid "no revision for file '%s' in database"
 msgstr ""
 
-#: ../commands.cc:3497
+#: ../commands.cc:3513
 #, c-format
 msgid "annotate file file_path '%s'\n"
 msgstr ""
 
-#: ../commands.cc:3506
+#: ../commands.cc:3522
 #, c-format
 msgid "No such file '%s' in revision %s\n"
 msgstr ""
 
-#: ../commands.cc:3508
+#: ../commands.cc:3524
 #, c-format
 msgid "annotate for file_id %s\n"
 msgstr ""
 
-#: ../commands.cc:3513
+#: ../commands.cc:3529
 msgid "[FILE]"
 msgstr ""
 
-#: ../commands.cc:3514
+#: ../commands.cc:3530
 msgid ""
 "print history in reverse order (filtering by 'FILE').  If one or more\n"
 "revisions are given, use them as a starting point."
 msgstr ""
 
-#: ../commands.cc:3574
+#: ../commands.cc:3590
 #, c-format
 msgid "revision %s does not exist in db, skipping\n"
 msgstr ""
 
-#: ../commands.cc:3607
+#: ../commands.cc:3623
 #, c-format
 msgid "revision '%s' in '%s' maps to '%s' in %s\n"
 msgstr ""
 
-#: ../commands.cc:3682
+#: ../commands.cc:3698
 msgid "DIRECTORY"
 msgstr ""
 
-#: ../commands.cc:3682
+#: ../commands.cc:3698
 msgid "setup a new working copy directory"
 msgstr ""
 
-#: ../commands.cc:3696
+#: ../commands.cc:3712
 msgid "automation"
 msgstr "automatisation"
 
-#: ../commands.cc:3697
+#: ../commands.cc:3713
 msgid ""
 "interface_version\n"
 "heads [BRANCH]\n"
@@ -1798,31 +1744,31 @@ msgid ""
 "select SELECTOR\n"
 msgstr ""
 
-#: ../commands.cc:3713
+#: ../commands.cc:3729
 msgid "automation interface"
 msgstr ""
 
-#: ../commands.cc:3727 ../commands.cc:3743
+#: ../commands.cc:3743 ../commands.cc:3759
 msgid "vars"
 msgstr "variables"
 
-#: ../commands.cc:3727
+#: ../commands.cc:3743
 msgid "DOMAIN NAME VALUE"
 msgstr ""
 
-#: ../commands.cc:3728
+#: ../commands.cc:3744
 msgid "set the database variable NAME to VALUE, in domain DOMAIN"
 msgstr ""
 
-#: ../commands.cc:3743
+#: ../commands.cc:3759
 msgid "DOMAIN NAME"
 msgstr ""
 
-#: ../commands.cc:3744
+#: ../commands.cc:3760
 msgid "remove the database variable NAME in domain DOMAIN"
 msgstr ""
 
-#: ../commands.cc:3755
+#: ../commands.cc:3771
 #, c-format
 msgid "no var with name %s in domain %s"
 msgstr ""
@@ -2659,108 +2605,112 @@ msgstr ""
 msgid "Use least common ancestor as ancestor for merge"
 msgstr ""
 
-#: ../monotone.cc:77
-msgid "print debug log to stderr while running"
+#: ../monotone.cc:69
+msgid "Perform the associated file operation"
 msgstr ""
 
 #: ../monotone.cc:78
-msgid "file to dump debugging log to, on failure"
+msgid "print debug log to stderr while running"
 msgstr ""
 
 #: ../monotone.cc:79
-msgid "suppress log and progress messages"
+msgid "file to dump debugging log to, on failure"
 msgstr ""
 
 #: ../monotone.cc:80
+msgid "suppress log and progress messages"
+msgstr ""
+
+#: ../monotone.cc:81
 msgid "display help message"
 msgstr "afficher le message d'aide"
 
-#: ../monotone.cc:81
+#: ../monotone.cc:82
 msgid "print version number, then exit"
 msgstr "afficher le numéro de version, puis quitte"
 
-#: ../monotone.cc:82
+#: ../monotone.cc:83
 msgid "print detailed version number, then exit"
 msgstr "afficher le numéro de version détaillée, puis quitte"
 
-#: ../monotone.cc:83
+#: ../monotone.cc:84
 msgid "insert command line arguments taken from the given file"
 msgstr ""
 
-#: ../monotone.cc:84
+#: ../monotone.cc:85
 msgid "set ticker style (count|dot|none) [count]"
 msgstr ""
 
-#: ../monotone.cc:85
+#: ../monotone.cc:86
 msgid "do not load standard lua hooks"
 msgstr "ne pas charger les hooks standards lua"
 
-#: ../monotone.cc:86
+#: ../monotone.cc:87
 msgid "do not load ~/.monotone/monotonerc or MT/monotonerc lua files"
 msgstr ""
 "ne pas charger les fichiers lua ~/.monotone/monotonerc ou MT/monotonerc"
 
-#: ../monotone.cc:87
+#: ../monotone.cc:88
 msgid "load extra rc file"
 msgstr "charger un fichier rc supplémentaire"
 
-#: ../monotone.cc:88
+#: ../monotone.cc:89
 msgid "set key for signatures"
 msgstr ""
 
-#: ../monotone.cc:89
+#: ../monotone.cc:90
 msgid "set name of database"
 msgstr ""
 
-#: ../monotone.cc:90
+#: ../monotone.cc:91
 msgid "limit search for working copy to specified root"
 msgstr ""
 
-#: ../monotone.cc:91
+#: ../monotone.cc:92
 msgid "verbose completion output"
 msgstr ""
 
-#: ../monotone.cc:197
+#: ../monotone.cc:198
 #, c-format
 msgid "problem parsing arguments from file %s: %s"
 msgstr ""
 
-#: ../monotone.cc:206
+#: ../monotone.cc:207
 #, c-format
 msgid "weird error when stuffing arguments read from %s: %s\n"
 msgstr ""
 
-#: ../monotone.cc:256
+#: ../monotone.cc:257
 #, c-format
 msgid "command line: %s\n"
 msgstr "ligne de commande : %s\n"
 
-#: ../monotone.cc:259
+#: ../monotone.cc:260
 #, c-format
 msgid "set locale: LC_ALL=%s\n"
 msgstr "paramétrage de la locale : LC_ALL=%s\n"
 
-#: ../monotone.cc:450
+#: ../monotone.cc:455
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
 msgstr ""
 
-#: ../monotone.cc:489
+#: ../monotone.cc:494
 #, c-format
 msgid "monotone %s doesn't use the option %s"
 msgstr ""
 
-#: ../monotone.cc:511
+#: ../monotone.cc:516
 #, c-format
 msgid "Removed 'hidden' from option # %d\n"
 msgstr ""
 
-#: ../monotone.cc:517 ../monotone.cc:528
+#: ../monotone.cc:522 ../monotone.cc:533
 #, c-format
 msgid "Added 'hidden' to option # %d\n"
 msgstr ""
 
-#: ../monotone.cc:524
+#: ../monotone.cc:529
 #, c-format
 msgid "Options specific to 'monotone %s':"
 msgstr "Options spécifiques à « monotone %s » :"
@@ -2771,12 +2721,10 @@ msgid "%s (base revision: %s)"
 msgstr "%s (révision de base : %s)"
 
 #: ../mt_version.cc:34
-#, c-format
-msgid "Running on: %s"
-msgstr "Fonctionne sur : %s"
-
-#: ../mt_version.cc:35
-msgid "Changes since base revision:"
+#, fuzzy, c-format
+msgid ""
+"Running on: %s\n"
+"Changes since base revision: %s\n"
 msgstr "Changements depuis la révision de base :"
 
 #: ../netcmd.cc:42
@@ -2846,12 +2794,12 @@ msgstr "la vérification de « %s » a échouée"
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:661
 msgid "bytes in"
-msgstr "octets in"
+msgstr "octets ⇩"
 
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:663
 msgid "bytes out"
-msgstr "octets out"
+msgstr "octets ⇧"
 
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:667 ../netsync.cc:684
@@ -2861,22 +2809,22 @@ msgstr "révs écrites"
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:669
 msgid "certs in"
-msgstr "certs in"
+msgstr "certs ⇩"
 
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:671 ../netsync.cc:686
 msgid "revs in"
-msgstr "révs in"
+msgstr "révs ⇩"
 
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:676
 msgid "certs out"
-msgstr "certs out"
+msgstr "certs ⇧"
 
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:678 ../netsync.cc:688
 msgid "revs out"
-msgstr "révs out"
+msgstr "révs ⇧"
 
 #. But otherwise, we're ready to go!
 #: ../netsync.cc:746
@@ -4597,42 +4545,47 @@ msgstr ""
 msgid "started up on %s\n"
 msgstr ""
 
-#: ../sanity.cc:197
+#: ../sanity.cc:107
+#, c-format
+msgid "fatal: formatter failed on %s:%d: %s"
+msgstr ""
+
+#: ../sanity.cc:181
 msgid "misuse: "
 msgstr ""
 
-#: ../sanity.cc:208
+#: ../sanity.cc:192
 msgid "error: "
 msgstr "erreur :"
 
-#: ../sanity.cc:246
+#: ../sanity.cc:230
 msgid "ignoring request to give last gasp; already in process of dumping\n"
 msgstr ""
 
-#: ../sanity.cc:250
+#: ../sanity.cc:234
 #, c-format
 msgid "saving current work set: %i items"
 msgstr ""
 
-#: ../sanity.cc:252
+#: ../sanity.cc:236
 #, c-format
 msgid "Current work set: %i items\n"
 msgstr ""
 
-#: ../sanity.cc:266 ../sanity.cc:272
+#: ../sanity.cc:250 ../sanity.cc:256
 msgid "ignoring error trigged by saving work set to debug log"
 msgstr ""
 
-#: ../sanity.cc:276
+#: ../sanity.cc:260
 msgid "finished saving work set"
 msgstr ""
 
-#: ../sanity.hh:235
+#: ../sanity.hh:239
 #, c-format
 msgid "----- begin '%s' (in %s, at %s:%d)\n"
 msgstr ""
 
-#: ../sanity.hh:239
+#: ../sanity.hh:243
 #, c-format
 msgid "-----   end '%s' (in %s, at %s:%d)\n"
 msgstr ""
@@ -4680,7 +4633,7 @@ msgstr ""
 msgid "converting %d bytes from UTF-8 to IDNA ACE\n"
 msgstr "conversion de %d octets d'UTF-8 en IDNA ACE\n"
 
-#: ../transforms.cc:855
+#: ../transforms.cc:861
 #, c-format
 msgid "doing linesep conversion to %s\n"
 msgstr ""
@@ -4810,46 +4763,46 @@ msgstr ""
 msgid "prohibited book-keeping path in '%s'"
 msgstr ""
 
-#: ../work.cc:60
+#: ../work.cc:64
 #, c-format
 msgid "skipping ignorable file %s\n"
 msgstr ""
 
-#: ../work.cc:66
+#: ../work.cc:70
 #, c-format
 msgid "skipping %s, already accounted for in working copy\n"
 msgstr ""
 
-#: ../work.cc:70
+#: ../work.cc:74
 #, c-format
 msgid "adding %s to working copy add set\n"
 msgstr ""
 
-#: ../work.cc:98 ../work.cc:204
+#: ../work.cc:102 ../work.cc:208
 msgid "invalid path ''"
 msgstr ""
 
-#: ../work.cc:100
+#: ../work.cc:104
 #, c-format
 msgid "path %s does not exist\n"
 msgstr "le chemin %s n'existe pas\n"
 
-#: ../work.cc:137
+#: ../work.cc:141
 #, c-format
 msgid "adding attribute '%s' on file %s to %s\n"
 msgstr ""
 
-#: ../work.cc:208
+#: ../work.cc:212
 #, c-format
 msgid "skipping %s, not currently tracked\n"
 msgstr ""
 
-#: ../work.cc:212
+#: ../work.cc:216
 #, c-format
 msgid "adding %s to working copy delete set\n"
 msgstr ""
 
-#: ../work.cc:216
+#: ../work.cc:220
 #, c-format
 msgid ""
 "sorry -- 'drop <directory>' is currently broken.\n"
@@ -4858,125 +4811,135 @@ msgstr ""
 "désolé mais « drop <répertoire> » est actuellement cassé.\n"
 "essayez « find %s -type f | monotone drop -@- »\n"
 
-#: ../work.cc:228
+#: ../work.cc:232
 #, c-format
 msgid "dropped attributes for file %s from %s\n"
 msgstr ""
 
-#: ../work.cc:251
+#: ../work.cc:237
+#, c-format
+msgid "Can't remove %s: %s\n"
+msgstr ""
+
+#: ../work.cc:261
 msgid "invalid source path ''"
 msgstr ""
 
-#: ../work.cc:252
+#: ../work.cc:262
 msgid "invalid destination path ''"
 msgstr ""
 
-#: ../work.cc:263
+#: ../work.cc:273
 #, c-format
 msgid "%s does not exist in current revision\n"
 msgstr ""
 
-#: ../work.cc:266
+#: ../work.cc:276
 #, c-format
 msgid "%s already exists in current revision\n"
 msgstr ""
 
-#: ../work.cc:268
+#: ../work.cc:278
 #, c-format
 msgid "adding %s -> %s to working copy rename set\n"
 msgstr ""
 
-#: ../work.cc:288
+#: ../work.cc:287
+#, c-format
+msgid "Can't rename %s to %s: %s\n"
+msgstr ""
+
+#: ../work.cc:304
 #, c-format
 msgid "%s has existing attributes in %s; clean them up first"
 msgstr ""
 
-#: ../work.cc:297
+#: ../work.cc:313
 #, c-format
 msgid "moving attributes for %s to %s\n"
 msgstr ""
 
-#: ../work.cc:316
+#: ../work.cc:332
 #, c-format
 msgid "work path is %s\n"
 msgstr ""
 
-#: ../work.cc:325
+#: ../work.cc:341
 #, c-format
 msgid "checking for un-committed work file %s\n"
 msgstr ""
 
-#: ../work.cc:329
+#: ../work.cc:345
 #, c-format
 msgid "read rearrangement from %s\n"
 msgstr ""
 
-#: ../work.cc:333
+#: ../work.cc:349
 #, c-format
 msgid "no un-committed work file %s\n"
 msgstr ""
 
-#: ../work.cc:370
+#: ../work.cc:386
 #, c-format
 msgid "revision path is %s\n"
 msgstr ""
 
-#: ../work.cc:380
+#: ../work.cc:396
 #, c-format
 msgid "working copy is corrupt: %s does not exist\n"
 msgstr ""
 
-#: ../work.cc:383
+#: ../work.cc:399
 #, c-format
 msgid "loading revision id from %s\n"
 msgstr ""
 
-#: ../work.cc:390
+#: ../work.cc:406
 #, c-format
 msgid "Problem with working directory: %s is unreadable"
 msgstr ""
 
-#: ../work.cc:399
+#: ../work.cc:415
 #, c-format
 msgid "writing revision id to %s\n"
 msgstr ""
 
-#: ../work.cc:418
+#: ../work.cc:434
 #, c-format
 msgid "base revision %s does not exist in database\n"
 msgstr ""
 
-#: ../work.cc:421
+#: ../work.cc:437
 #, c-format
 msgid "old manifest is %s\n"
 msgstr ""
 
-#: ../work.cc:424
+#: ../work.cc:440
 #, c-format
 msgid "base manifest %s does not exist in database\n"
 msgstr ""
 
-#: ../work.cc:429
+#: ../work.cc:445
 #, c-format
 msgid "old manifest has %d entries\n"
 msgstr ""
 
-#: ../work.cc:450
+#: ../work.cc:466
 #, c-format
 msgid "user log path is %s\n"
 msgstr ""
 
-#: ../work.cc:499
+#: ../work.cc:515
 #, c-format
 msgid "options path is %s\n"
 msgstr ""
 
-#: ../work.cc:546
+#: ../work.cc:562
 #, c-format
 msgid "local dump path is %s\n"
 msgstr ""
 
-#: ../work.cc:598
+#: ../work.cc:614
 #, c-format
 msgid "attribute map path is %s\n"
 msgstr ""
@@ -4988,6 +4951,12 @@ msgstr ""
 #: ../xdelta.cc:347
 msgid "computed binary delta instructions\n"
 msgstr ""
+
+#~ msgid "runtime error: %s\n"
+#~ msgstr "erreur d'exécution : %s\n"
+
+#~ msgid "Running on: %s"
+#~ msgstr "Fonctionne sur : %s"
 
 #~ msgid ""
 #~ "sqlite error: %s\n"
