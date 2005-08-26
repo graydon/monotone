@@ -31,8 +31,9 @@ print_full_version()
   print_version();
   std::string s;
   get_system_flavour(s);
-  std::cout << F("Running on: %s") % s << std::endl;
-  std::cout << F("Changes since base revision:") << std::endl
-            << package_full_revision_constant;
+  std::cout << F("Running on: %s\n"
+		 "Changes since base revision: %s\n")
+    % s
+    % package_full_revision_constant;
 }
 
