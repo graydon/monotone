@@ -152,7 +152,7 @@ make_dir_for(any_path const & p)
   fs::path tmp(p.as_external(), fs::native);
   if (tmp.has_branch_path())
     {
-      fs::create_directories(fs::path(tmp.branch_path(), fs::native));
+      fs::create_directories(tmp.branch_path());
     }
 }
 

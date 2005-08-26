@@ -1,5 +1,11 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.cc (make_dir_for): Oops, this doesn't need a
+	fs::native.
+	Test 37 now passes.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (mkdir): New function.  Now with extra brain-eating
 	power.
 	(mkdir_p, make_dir_for, delete_file, delete_dir_recursive) 
