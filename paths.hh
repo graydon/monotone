@@ -117,7 +117,18 @@ class system_path : public any_path
 public:
   system_path() {};
   system_path(system_path const & other) : any_path(other) {};
-  explicit system_path(any_path const & other);
+  // the optional argument takes some explanation.  this constructor takes a
+  // path relative to the working copy root.  the question is how to interpret
+  // that path -- since it's possible to have multiple working copies over the
+  // course of a the program's execution (e.g., if someone runs 'checkout'
+  // while already in a working copy).  if 'true' is passed (the default),
+  // then monotone will trigger an invariant if the working copy changes after
+  // we have already interpreted the path relative to some other working
+  // copy.  if 'false' is passed, then the path is taken to be relative to
+  // whatever the current working copy is, and will continue to reference it
+  // even if the working copy later changes.
+  explicit system_path(any_path const & other,
+                       bool in_true_working_copy = true);
   // this path can contain anything, and it will be absolutified and
   // tilde-expanded.  it will considered to be relative to the directory
   // monotone started in.  it should be in utf8.

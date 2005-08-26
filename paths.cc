@@ -364,10 +364,15 @@ system_path::operator /(std::string const & to_append) const
 // system_path
 ///////////////////////////////////////////////////////////////////////////
 
-system_path::system_path(any_path const & other)
+system_path::system_path(any_path const & other, bool in_true_working_copy)
 {
   I(!is_absolute_here(other.as_internal()));
-  data = (working_root.get() / other.as_internal()).as_internal();
+  system_path wr;
+  if (in_true_working_copy)
+    wr = working_root.get();
+  else
+    wr = working_root.get_but_unused();
+  data = (wr / other.as_internal()).as_internal();
 }
 
 static inline std::string const_system_path(utf8 const & path)
@@ -803,9 +808,15 @@ static void test_system_path()
   initial_rel_path.set(file_path_internal("rel/initial"), true);
 
   BOOST_CHECK(system_path(system_path("foo/bar")).as_internal() == "/a/b/foo/bar");
+  BOOST_CHECK(!working_root.used);
   BOOST_CHECK(system_path(system_path("/foo/bar")).as_internal() == "/foo/bar");
+  BOOST_CHECK(!working_root.used);
+  BOOST_CHECK(system_path(file_path_internal("foo/bar"), true).as_internal()
+              == "/working/root/foo/bar");
+  BOOST_CHECK(!working_root.used);
   BOOST_CHECK(system_path(file_path_internal("foo/bar")).as_internal()
               == "/working/root/foo/bar");
+  BOOST_CHECK(working_root.used);
   BOOST_CHECK(system_path(file_path_external(std::string("foo/bar"))).as_external()
               == "/working/root/rel/initial/foo/bar");
   BOOST_CHECK(system_path(file_path()).as_external()
@@ -814,7 +825,6 @@ static void test_system_path()
               == "/working/root/MT/foo/bar");
   BOOST_CHECK(system_path(bookkeeping_root).as_internal()
               == "/working/root/MT");
-
   initial_abs_path.unset();
   working_root.unset();
   initial_rel_path.unset();

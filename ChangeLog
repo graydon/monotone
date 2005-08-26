@@ -1,5 +1,13 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.hh (system_path::system_path): Add new boolean argument
+	controlling some access_tracker behavior.
+	* app_state.cc (allow_working_copy): Use it.
+	* paths.cc (system_path): Implement it.
+	(test_system_path): Test it.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (walk_tree): Return properly.
 	
 2005-08-25  Nathaniel Smith  <njs@pobox.com>

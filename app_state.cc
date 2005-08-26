@@ -68,7 +68,10 @@ app_state::allow_working_copy()
           bookkeeping_path dump_path;
           get_local_dump_path(dump_path);
           L(F("setting dump path to %s\n") % dump_path);
-          global_sanity.filename = system_path(dump_path);
+          // the 'true' means that, e.g., if we're running checkout, then it's
+          // okay for dumps to go into our starting working dir's MT rather
+          // than the checked-out dir's MT.
+          global_sanity.filename = system_path(dump_path, true);
         }
     }
   load_rcfiles();
