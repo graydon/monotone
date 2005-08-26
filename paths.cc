@@ -498,6 +498,9 @@ static void test_file_path_internal()
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
 
+  BOOST_CHECK(file_path().empty());
+  BOOST_CHECK(file_path_internal("").empty());
+
   char const * goodies[] = {"",
                             "a",
                             "foo",

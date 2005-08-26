@@ -1,5 +1,11 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (test_file_path_internal): Add tests for
+	file_path.empty().
+	* file_io.cc (walk_tree_recursive): Add explicit fs::native.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc: Many small changes.  Unit tests now pass.  72
 	unexpected autotest failures.
 

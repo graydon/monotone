@@ -359,7 +359,9 @@ walk_tree_recursive(fs::path const & absolute,
       di != ei; ++di)
     {
       fs::path entry = *di;
-      fs::path rel_entry = relative / entry.leaf();
+      // the fs::native is necessary here, or it will bomb out on any paths
+      // that look at it funny.  (E.g., rcs files with "," in the name.)
+      fs::path rel_entry = relative / fs::path(entry.leaf(), fs::native);
       
       if (bookkeeping_path::is_bookkeeping_path(rel_entry.normalize().string()))
         {
