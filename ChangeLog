@@ -1,5 +1,12 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/t_unreadable_MT.at: This test was called "do not fail on
+	unreadable MT/options".  I do not know why we wanted such
+	behavior.  I am making it "fail cleanly on unreadable
+	MT/options".
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (check_fp_normalizes_to, test_file_path_internal):
 	Oops, there were more places testing for non-brokenness; break
 	them too.
