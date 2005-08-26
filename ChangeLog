@@ -1,5 +1,14 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (test_split_join): Test that you cannot create a path
+	in MT by joining.
+	(file_path): Implement it.
+	(split): Break, to match broken behavior of old splitter (easier
+	than fixing change_set.cc...)
+	(file_path_internal): Test for brokenness accordingly.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (cat): Hack so that 'cat file REV PATH' works
 	correctly both inside and outside of working copy, interpreting
 	path slightly differently in each case.

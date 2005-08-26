@@ -237,6 +237,7 @@ file_path::file_path(std::vector<path_component> const & pieces)
   if (pieces.size() > 1)
     I(!null_name(*i));
   std::string tmp = pc_interner.lookup(*i);
+  I(tmp != bookkeeping_root.as_internal());
   for (++i; i != pieces.end(); ++i)
     {
       I(!null_name(*i));
@@ -253,15 +254,25 @@ file_path::file_path(std::vector<path_component> const & pieces)
 //
 // and fills in a vector of paths corresponding to p[0] ... p[n-1]
 //
-// _unlike_ the old path splitting functions, this is the inverse to the above
-// joining function.  the difference is that this code always returns a vector
-// with at least one element in it; if you split the null path (""), you will
-// get a single-element vector containing the null component.  with the old
-// code, in this one case, you would have gotten an empty vector.
+// FIXME: this code carefully duplicates the behavior of the old path
+// splitting functions, in that it is _not_ the inverse to the above joining
+// function.  The difference is that if you pass a null path (the one
+// represented by the empty string, or 'file_path()'), then it will return an
+// _empty_ vector.  This vector will not be suitable to pass to the above path
+// joiner; to get the null path back again, you have to pass the above
+// function a single-element vector containing a the null component.
+//
+// Why does it work this way?  Because that's what the old code did, and
+// that's what change_set.cc was written around; and it's much much easier to
+// make this code do something weird than to try and fix change_set.cc.  When
+// change_set.cc is rewritten, however, you should revisit the semantics of
+// this function.
 void
 file_path::split(std::vector<path_component> & pieces) const
 {
   pieces.clear();
+  if (empty())
+    return;
   std::string::size_type start, stop;
   start = 0;
   std::string const & s = data();
@@ -729,9 +740,7 @@ static void test_split_join()
   file_path fp3 = file_path_internal("");
   pcv split3;
   fp3.split(split3);
-  BOOST_CHECK(split3.size() == 1);
-  BOOST_CHECK(null_name(split3[0]));
-  BOOST_CHECK(fp3 == file_path(split3));
+  BOOST_CHECK(split3.empty());
 
   pcv split4;
   // this comparison tricks the compiler into not completely eliminating this
@@ -746,6 +755,20 @@ static void test_split_join()
   // this comparison tricks the compiler into not completely eliminating this
   // code as dead...
   BOOST_CHECK_THROW(file_path(split4) == file_path(), std::logic_error);
+
+  // Make sure that we can't use joining to create a path into the bookkeeping
+  // dir
+  pcv split_mt1, split_mt2;
+  file_path_internal("foo/MT").split(split_mt1);
+  BOOST_CHECK(split_mt1.size() == 2);
+  split_mt2.push_back(split_mt1[1]);
+  // split_mt2 now contains the component "MT"
+  BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+  split_mt2.push_back(split_mt1[0]);
+  // split_mt2 now contains the components "MT", "foo" in that order
+  // this comparison tricks the compiler into not completely eliminating this
+  // code as dead...
+  BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
 }
 
 static void check_bk_normalizes_to(char * before, char * after)
