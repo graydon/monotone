@@ -364,6 +364,12 @@ system_path::operator /(std::string const & to_append) const
 // system_path
 ///////////////////////////////////////////////////////////////////////////
 
+static std::string
+normalize_out_dots(std::string const & path)
+{
+  return fs::path(path, fs::native).normalize().native_file_string();
+}
+
 system_path::system_path(any_path const & other, bool in_true_working_copy)
 {
   I(!is_absolute_here(other.as_internal()));
@@ -372,7 +378,7 @@ system_path::system_path(any_path const & other, bool in_true_working_copy)
     wr = working_root.get();
   else
     wr = working_root.get_but_unused();
-  data = (wr / other.as_internal()).as_internal();
+  data = normalize_out_dots((wr / other.as_internal()).as_internal());
 }
 
 static inline std::string const_system_path(utf8 const & path)
@@ -380,9 +386,9 @@ static inline std::string const_system_path(utf8 const & path)
   N(!path().empty(), F("invalid path ''"));
   std::string expanded = tilde_expand(path)();
   if (is_absolute_here(expanded))
-    return expanded;
+    return normalize_out_dots(expanded);
   else
-    return (initial_abs_path.get() / expanded).as_internal();
+    return normalize_out_dots((initial_abs_path.get() / expanded).as_internal());
 }
 
 system_path::system_path(std::string const & path)
@@ -790,6 +796,21 @@ static void test_system_path()
   check_system_normalizes_to("c:\\foo", "/a/b/c:\\foo");
 #endif
   check_system_normalizes_to("foo:bar", "/a/b/foo:bar");
+  // we require that system_path normalize out ..'s, because of the following
+  // case:
+  //   /work mkdir newdir
+  //   /work$ cd newdir
+  //   /work/newdir$ monotone setup --db=../foo.db
+  // Now they have either "/work/foo.db" or "/work/newdir/../foo.db" in
+  // MT/options
+  //   /work/newdir$ cd ..
+  //   /work$ mv newdir newerdir  # better name
+  // Oops, now, if we stored the version with ..'s in, this working directory
+  // is broken.
+  check_system_normalizes_to("../foo", "/a/foo");
+  check_system_normalizes_to("foo/..", "/a/b");
+  check_system_normalizes_to("/foo/bar/..", "/foo");
+  check_system_normalizes_to("/foo/..", "/");
   // can't do particularly interesting checking of tilde expansion, but at
   // least we can check that it's doing _something_...
   std::string tilde_expanded = system_path("~/foo").as_external();
@@ -825,7 +846,7 @@ static void test_system_path()
   BOOST_CHECK(system_path(file_path_external(std::string("foo/bar"))).as_external()
               == "/working/root/rel/initial/foo/bar");
   BOOST_CHECK(system_path(file_path()).as_external()
-              == "/working/root/");
+              == "/working/root");
   BOOST_CHECK(system_path(bookkeeping_path("MT/foo/bar")).as_internal()
               == "/working/root/MT/foo/bar");
   BOOST_CHECK(system_path(bookkeeping_root).as_internal()

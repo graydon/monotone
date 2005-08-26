@@ -1,5 +1,11 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (test_system_path): Require that system_path normalize
+	out ..'s.
+	(system_path): Do so.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* work.cc (build_additions): Remove redundant (and now wrong)
 	code.
 	Test 53 now passes.
