@@ -1,3 +1,9 @@
+2005-08-26  Richard Levitte  <richard@levitte.org>
+
+	* database.cc (version): Revert the change done earlier, as it
+	aborted if the schema isn't the current one, rendering this method
+	useless.
+
 2005-08-26  Matt Johnston  <matt@ucc.asn.au>
 
 	* change_set.cc (check_depth, confirm_proper_tree): 

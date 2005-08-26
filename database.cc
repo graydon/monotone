@@ -459,7 +459,12 @@ database::version(ostream & out)
 {
   string id;
 
-  calculate_schema_id(sql(), id);
+  check_filename();
+  open();
+
+  calculate_schema_id(__sql, id);
+
+  sqlite3_close(__sql);
 
   out << F("database schema version: %s") % id << endl;
 }
