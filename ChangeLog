@@ -1,5 +1,11 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/t_normalized_filenames.at: Internal unnormalized pathnames
+	are no longer silently normalized, but rather a hard error.
+	Adjust test accordingly.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.hh (file_path_internal_from_user): New constructor.
 	* paths.cc (test_file_path_internal): Test it.
 	(file_path::file_path): Implement it.
