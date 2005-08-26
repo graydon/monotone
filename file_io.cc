@@ -134,10 +134,16 @@ bool guess_binary(string const & s)
   return false;
 }
 
+static fs::path
+mkdir(any_path const & p)
+{
+  return fs::path(p.as_external(), fs::native);
+}
+
 void 
 mkdir_p(any_path const & p) 
 { 
-  fs::create_directories(p.as_external());
+  fs::create_directories(mkdir(p));
 }
 
 void 
@@ -146,7 +152,7 @@ make_dir_for(any_path const & p)
   fs::path tmp(p.as_external(), fs::native);
   if (tmp.has_branch_path())
     {
-      fs::create_directories(tmp.branch_path()); 
+      fs::create_directories(fs::path(tmp.branch_path(), fs::native));
     }
 }
 
@@ -156,7 +162,7 @@ delete_file(any_path const & p)
   require_path_is_file(p,
                        F("file to delete '%s' does not exist") % p,
                        F("file to delete, '%s', is not a file but a directory") % p);
-  fs::remove(p.as_external()); 
+  fs::remove(mkdir(p)); 
 }
 
 void 
@@ -165,7 +171,7 @@ delete_dir_recursive(any_path const & p)
   require_path_is_directory(p,
                             F("directory to delete, '%s', does not exist") % p,
                             F("directory to delete, '%s', is a file") % p);
-  fs::remove_all(p.as_external());
+  fs::remove_all(mkdir(p));
 }
 
 void 
@@ -178,7 +184,7 @@ move_file(any_path const & old_path,
                          "-- bug in monotone?") % old_path);
   N(!path_exists(new_path),
     F("rename target '%s' already exists") % new_path);
-  fs::rename(old_path.as_external(), new_path.as_external());
+  fs::rename(mkdir(old_path), mkdir(new_path));
 }
 
 void 
@@ -191,7 +197,7 @@ move_dir(any_path const & old_path,
                               "-- bug in monotone?") % old_path);
   N(!path_exists(new_path),
     F("rename target '%s' already exists") % new_path);
-  fs::rename(old_path.as_external(), new_path.as_external());
+  fs::rename(mkdir(old_path), mkdir(new_path));
 }
 
 void 
@@ -298,8 +304,8 @@ write_data_impl(any_path const & p,
   }
 
   if (path_exists(p))
-    N(fs::remove(p.as_external()), F("removing %s failed") % p);
-  fs::rename(tmp.as_external(), p.as_external());
+    N(fs::remove(mkdir(p)), F("removing %s failed") % p);
+  fs::rename(mkdir(tmp), mkdir(p));
 }
 
 void 

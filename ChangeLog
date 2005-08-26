@@ -1,5 +1,13 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.cc (mkdir): New function.  Now with extra brain-eating
+	power.
+	(mkdir_p, make_dir_for, delete_file, delete_dir_recursive) 
+	(move_file, move_dir, write_data_impl): Use it, to make all
+	fs::path's native and disable boost's random rejection of paths.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (test_file_path_external_prefix_a_b) 
 	(test_file_path_external_no_prefix, test_file_path_internal): Test
 	for validity of more strange characters (,+@*%#$=).
