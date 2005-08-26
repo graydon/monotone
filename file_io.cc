@@ -401,7 +401,10 @@ walk_tree(file_path const & path,
           bool require_existing_path)
 {
   if (path.empty())
-    walk_tree_recursive(fs::current_path(), fs::path(), walker);
+    {
+      walk_tree_recursive(fs::current_path(), fs::path(), walker);
+      return;
+    }
       
   switch (get_path_status(path))
     {

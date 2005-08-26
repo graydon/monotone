@@ -1,5 +1,9 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.cc (walk_tree): Return properly.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (test_file_path_internal): Add tests for
 	file_path.empty().
 	* file_io.cc (walk_tree_recursive): Add explicit fs::native.
