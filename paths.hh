@@ -69,7 +69,7 @@ public:
   { return data < other.data; }
 
 private:
-  typedef enum { internal, external } source_type;
+  typedef enum { internal, external, internal_from_user } source_type;
   // input is always in utf8, because everything in our world is always in
   // utf8 (except interface code itself).
   // external paths:
@@ -83,6 +83,7 @@ private:
   file_path(source_type type, std::string const & path);
   friend file_path file_path_internal(std::string const & path);
   friend file_path file_path_external(utf8 const & path);
+  friend file_path file_path_internal_from_user(utf8 const & path);
 };
 
 // these are the public file_path constructors
@@ -93,6 +94,15 @@ inline file_path file_path_internal(std::string const & path)
 inline file_path file_path_external(utf8 const & path)
 {
   return file_path(file_path::external, path());
+}
+// this is rarely used; it is for when the user provides not a path relative
+// to their position in the working directory, but instead a project-root
+// relative path (e.g., in 'cat REV PATH').  It is exactly like
+// file_path_internal, but counts invalid paths as naughtiness rather than
+// bugs.
+inline file_path file_path_internal_from_user(utf8 const & path)
+{
+  return file_path(file_path::internal_from_user, path());
 }
 
 

@@ -149,12 +149,24 @@ in_bookkeeping_dir(std::string const & path)
   return path == "MT" || (path.size() >= 3 && (path.substr(0, 3) == "MT/"));
 }
 
+static inline bool
+is_valid_internal(std::string const & path)
+{
+  return (fully_normalized_path(path)
+          && !in_bookkeeping_dir(path));
+}
+
 file_path::file_path(file_path::source_type type, std::string const & path)
 {
   switch (type)
     {
     case internal:
       data = path;
+      break;
+    case internal_from_user:
+      data = path;
+      N(is_valid_internal(path),
+        F("path '%s' is invalid") % path);
       break;
     case external:
       N(!path.empty(), F("empty path '%s' is invalid") % path);
@@ -177,9 +189,9 @@ file_path::file_path(file_path::source_type type, std::string const & path)
         F("absolute path '%s' is invalid") % relative.string());
       N(fully_normalized_path(data()), F("path '%s' is invalid") % data);
       N(!in_bookkeeping_dir(data()), F("path '%s' is in bookkeeping dir") % data);
+      break;
     }
-  I(fully_normalized_path(data()));
-  I(!in_bookkeeping_dir(data()));
+  I(is_valid_internal(data()));
 }
 
 bookkeeping_path::bookkeeping_path(std::string const & path)
@@ -503,11 +515,19 @@ static void test_file_path_internal()
   initial_rel_path.unset();
   initial_rel_path.set(file_path(), true);
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
+    {
+      BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
+      BOOST_CHECK_THROW(file_path_internal_from_user(std::string(*c)),
+                        informative_failure);
+    }
   initial_rel_path.unset();
   initial_rel_path.set(file_path_internal("blah/blah/blah"), true);
   for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
+    {
+      BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
+      BOOST_CHECK_THROW(file_path_internal_from_user(std::string(*c)),
+                        informative_failure);
+    }
 
   BOOST_CHECK(file_path().empty());
   BOOST_CHECK(file_path_internal("").empty());
@@ -546,6 +566,8 @@ static void test_file_path_internal()
             for (std::vector<path_component>::const_iterator i = split_test.begin();
                  i != split_test.end(); ++i)
               BOOST_CHECK(!null_name(*i));
+          file_path fp_user = file_path_internal_from_user(std::string(*c));
+          BOOST_CHECK(fp == fp_user);
         }
     }
 

@@ -1,5 +1,13 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.hh (file_path_internal_from_user): New constructor.
+	* paths.cc (test_file_path_internal): Test it.
+	(file_path::file_path): Implement it.
+	* commands.cc (cat): Use it to create/validate passed in
+	filenames.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (test_system_path): Require that system_path normalize
 	out ..'s.
 	(system_path): Do so.

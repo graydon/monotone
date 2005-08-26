@@ -1285,11 +1285,11 @@ CMD(cat, "informative",
           N(app.db.file_version_exists(ident),
             F("no file version %s found in database") % ident);
         }
-      else
+      else if (args.size() == 3)
         {
           revision_id rid;
           complete(app, idx(args, 1)(), rid);
-          file_path fp = file_path_external(idx(args, 2));
+          file_path fp = file_path_internal_from_user(idx(args, 2));
           manifest_id mid;
           app.db.get_revision_manifest(rid, mid);
           manifest_map m;
@@ -1298,6 +1298,8 @@ CMD(cat, "informative",
           N(i != m.end(), F("no file '%s' found in revision '%s'\n") % fp % rid);
           ident = manifest_entry_id(i);
         }
+      else
+        throw usage(name);
       
       file_data dat;
       L(F("dumping file %s\n") % ident);
