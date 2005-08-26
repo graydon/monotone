@@ -1,3 +1,10 @@
+2005-08-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (check_depth, confirm_proper_tree): 
+	more efficient algorithm to check for no loops
+	* constants.hh: new constant max_path_depth to limit
+	recursion in check_depth.
+
 2005-08-26  Benoît Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.

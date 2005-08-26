@@ -551,60 +551,60 @@ sanity_check_path_item(path_item const & pi)
 {
 }
 
+// recursive helper for confirm_proper_tree.
+// traverse up the tree from p, return true if the root tid is hit
+// in finite (ttl) time.
+static bool check_depth(path_state const & ps, path_item const & p,
+                        size_t ttl,
+                        boost::dynamic_bitset<> & checked, tid min_tid)
+{
+  if (ttl == 0)
+      return false;
+
+  if (path_item_parent(p) == root_tid)
+      return true;
+
+  // can only use the checked cache if the name isn't null.
+  // null names' parents need to be checked further on.
+  if (!null_name(path_item_name(p)) 
+      && checked[path_item_parent(p) - min_tid])
+      return true;
+
+  path_state::const_iterator par = ps.find(path_item_parent(p));
+  I(par != ps.end());
+  I(path_item_type(path_state_item(par)) == ptype_directory);
+
+  // if we're null, our parent must also be null
+  if (null_name(path_item_name(p)))
+      I(null_name(path_item_name(path_state_item(par))));
+
+  // recurse
+  bool ret = check_depth(ps, path_state_item(par), ttl - 1, checked, min_tid);
+  checked[path_item_parent(p) - min_tid] = ret;
+  return ret;
+}
+
+// Check that there are no loops in the path_state.
+// This can be done by recursing up the tree, and ensuring that the root
+// tid is hit in finite steps.
 static void
 confirm_proper_tree(path_state const & ps)
 {
   if (ps.empty())
-    return;
+      return;
 
   I(ps.find(root_tid) == ps.end()); // Note that this find() also ensures
-                                    // sortedness of ps.
-
-  tid min_tid = ps.begin()->first;
+                                    // sortedness of ps...
+  tid min_tid = ps.begin()->first;  // ... which matters here
   tid max_tid = ps.rbegin()->first;
   size_t tid_range = max_tid - min_tid + 1;
-  
-  boost::dynamic_bitset<> confirmed(tid_range);
-  boost::dynamic_bitset<> ancbits(tid_range);
-  std::vector<tid> ancs; // a set is more efficient, at least in normal
-                      // trees where the number of ancestors is
-                      // significantly less than tid_range
-  tid curr;
-  path_item item;
+  boost::dynamic_bitset<> checked(tid_range);
 
-  for (path_state::const_iterator i = ps.begin(); i != ps.end(); ++i)
+  for (path_state::const_iterator p = ps.begin(); p != ps.end(); p++)
     {
-      ancs.clear();
-      ancbits.reset();
-      curr = i->first;
-      item = i->second;
-
-      while (confirmed.test(curr - min_tid) == false)
-        {             
-          sanity_check_path_item(item);
-          I(ancbits.test(curr-min_tid) == false);
-          ancs.push_back(curr);
-          ancbits.set(curr-min_tid);
-          if (path_item_parent(item) == root_tid)
-            break;
-          else
-            {
-              curr = path_item_parent(item);
-              path_state::const_iterator j = ps.find(curr);
-              I(j != ps.end());
-
-              // if we're null, our parent must also be null
-              if (null_name(item.name))
-                I(null_name(path_state_item(j).name));
-
-              item = path_state_item(j);
-              I(path_item_type(item) == ptype_directory);
-            }
-        }
-      for (std::vector<tid>::const_iterator a = ancs.begin(); a != ancs.end(); a++)
-        {
-          confirmed.set(*a - min_tid);
-        }
+      // the path to the top must be finite, otherwise there are loops.
+      I(check_depth(ps, path_state_item(p), 
+                    constants::max_path_depth, checked, min_tid) == true);
     }
 }
 
