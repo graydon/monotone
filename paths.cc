@@ -169,10 +169,11 @@ file_path::file_path(file_path::source_type type, std::string const & path)
         {
           N(false, F("path '%s' is invalid") % path);
         }
-      N(!relative.has_root_path(), F("absolute path '%s' is invalid"));
+      data = utf8(out.string());
+      N(!relative.has_root_path(),
+        F("absolute path '%s' is invalid") % relative.string());
       N(fully_normalized_path(data()), F("path '%s' is invalid") % data);
       N(!in_bookkeeping_dir(data()), F("path '%s' is in bookkeeping dir") % data);
-      data = utf8(out.string());
     }
   I(fully_normalized_path(data()));
   I(!in_bookkeeping_dir(data()));
@@ -567,11 +568,11 @@ static void test_file_path_external_no_prefix()
                             "c:\\foo",
                             "c:foo",
                             "c:/foo",
+                            "",
                             0 };
   for (char const ** c = baddies; *c; ++c)
     BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
   
-  check_fp_normalizes_to("", "");
   check_fp_normalizes_to("a", "a");
   check_fp_normalizes_to("foo", "foo");
   check_fp_normalizes_to("foo/bar", "foo/bar");

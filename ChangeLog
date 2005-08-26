@@ -1,5 +1,12 @@
 2005-08-25  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (file_path): Fix up error reporting in external path
+	normalization.
+	(test_file_path_external_no_prefix): "" is always an invalid
+	path.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
 	* database.cc (sql): Only check schema version when db actually
 	exists.
 
