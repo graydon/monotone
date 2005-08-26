@@ -1,5 +1,11 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (check_fp_normalizes_to, test_file_path_internal):
+	Oops, there were more places testing for non-brokenness; break
+	them too.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (test_split_join): Test that you cannot create a path
 	in MT by joining.
 	(file_path): Implement it.

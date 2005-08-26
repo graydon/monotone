@@ -570,13 +570,17 @@ static void test_file_path_internal()
           BOOST_CHECK(file_path_internal(fp.as_internal()) == fp);
           std::vector<path_component> split_test;
           fp.split(split_test);
-          file_path fp2(split_test);
-          BOOST_CHECK(fp == fp2);
-          BOOST_CHECK(!split_test.empty());
-          if (split_test.size() > 1)
-            for (std::vector<path_component>::const_iterator i = split_test.begin();
-                 i != split_test.end(); ++i)
-              BOOST_CHECK(!null_name(*i));
+          if (fp.empty())
+            BOOST_CHECK(split_test.empty());
+          else
+            {
+              BOOST_CHECK(!split_test.empty());
+              file_path fp2(split_test);
+              BOOST_CHECK(fp == fp2);
+            }
+          for (std::vector<path_component>::const_iterator i = split_test.begin();
+               i != split_test.end(); ++i)
+            BOOST_CHECK(!null_name(*i));
           file_path fp_user = file_path_internal_from_user(std::string(*c));
           BOOST_CHECK(fp == fp_user);
         }
@@ -597,13 +601,17 @@ static void check_fp_normalizes_to(char * before, char * after)
   BOOST_CHECK(fp.as_external() == after);
   std::vector<path_component> split_test;
   fp.split(split_test);
-  file_path fp2(split_test);
-  BOOST_CHECK(fp == fp2);
-  BOOST_CHECK(!split_test.empty());
-  if (split_test.size() > 1)
-    for (std::vector<path_component>::const_iterator i = split_test.begin();
-         i != split_test.end(); ++i)
-      BOOST_CHECK(!null_name(*i));
+  if (fp.empty())
+    BOOST_CHECK(split_test.empty());
+  else
+    {
+      BOOST_CHECK(!split_test.empty());
+      file_path fp2(split_test);
+      BOOST_CHECK(fp == fp2);
+    }
+  for (std::vector<path_component>::const_iterator i = split_test.begin();
+       i != split_test.end(); ++i)
+    BOOST_CHECK(!null_name(*i));
 }
   
 static void test_file_path_external_no_prefix()
