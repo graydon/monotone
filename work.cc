@@ -94,13 +94,8 @@ build_additions(vector<file_path> const & paths,
   addition_builder build(app, pr_new, ps, am_attrs);
 
   for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      N(!i->empty(), F("invalid path ''"));
-      N(path_exists(*i),
-        F("path %s does not exist\n") % *i);
-
-      walk_tree(*i, build);
-    }
+    // NB.: walk_tree will handle error checking for non-existent paths
+    walk_tree(*i, build);
 
   if (am_attrs.size () > 0)
     {

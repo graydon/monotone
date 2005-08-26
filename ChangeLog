@@ -1,5 +1,11 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* work.cc (build_additions): Remove redundant (and now wrong)
+	code.
+	Test 53 now passes.
+	
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (make_dir_for): Oops, this doesn't need a
 	fs::native.
 	Test 37 now passes.
