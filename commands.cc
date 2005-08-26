@@ -1289,7 +1289,13 @@ CMD(cat, "informative",
         {
           revision_id rid;
           complete(app, idx(args, 1)(), rid);
-          file_path fp = file_path_internal_from_user(idx(args, 2));
+          // paths are interpreted as standard external ones when we're in a
+          // working copy, but as project-rooted external ones otherwise
+          file_path fp;
+          if (app.found_working_copy)
+            fp = file_path_external(idx(args, 2));
+          else
+            fp = file_path_internal_from_user(idx(args, 2));
           manifest_id mid;
           app.db.get_revision_manifest(rid, mid);
           manifest_map m;

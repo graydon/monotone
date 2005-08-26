@@ -1,5 +1,11 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (cat): Hack so that 'cat file REV PATH' works
+	correctly both inside and outside of working copy, interpreting
+	path slightly differently in each case.
+	
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_normalized_filenames.at: Internal unnormalized pathnames
 	are no longer silently normalized, but rather a hard error.
 	Adjust test accordingly.
