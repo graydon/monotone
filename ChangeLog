@@ -1,5 +1,9 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc: Include <string>.  Helps build on g++ 3.3?
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (get_log_message): Make the log message commentary a
 	little more descriptive for people who may not know what a log
 	message is...
