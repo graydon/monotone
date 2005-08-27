@@ -226,11 +226,8 @@ build_deletions(vector<file_path> const & paths,
               updated_attr_map = true;
               P(F("dropped attributes for file %s from %s\n") % (*i) % attr_file_name);
             }
-	  if (app.execute)
-	    {
-	      N(unlink((*i)().c_str()) == 0,
-		F("Can't remove %s: %s\n") % (*i) % strerror(errno));
-	    }
+          if (app.execute && path_exists(*i))
+            delete_file(*i);
         }
   }
 
@@ -276,11 +273,8 @@ build_rename(file_path const & src,
   else 
     pr_new.renamed_files.insert(std::make_pair(src, dst));
 
-  if (app.execute)
-    {
-      N(rename(src().c_str(), dst().c_str()) == 0,
-	F("Can't rename %s to %s: %s\n") % src % dst % strerror(errno));
-    }
+  if (app.execute && (path_exists(src) || !path_exists(dst)))
+    move_path(src, dst);
 
   // read attribute map if available
   file_path attr_path;

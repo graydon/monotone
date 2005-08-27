@@ -2494,7 +2494,7 @@ move_files_from_tmp_top_down(tid t,
                 {
                   P(F("moving file %s -> %s\n") % src % dst);
                   make_dir_for(dst);
-                  move_file(src, dist);
+                  move_file(src, dst);
                 }
               break;
             case ptype_directory:

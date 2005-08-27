@@ -182,8 +182,8 @@ move_file(any_path const & old_path,
                        F("rename source file '%s' does not exist") % old_path,
                        F("rename source file '%s' is a directory "
                          "-- bug in monotone?") % old_path);
-  N(!path_exists(new_path),
-    F("rename target '%s' already exists") % new_path);
+  require_path_is_nonexistent(new_path,
+                              F("rename target '%s' already exists") % new_path);
   fs::rename(mkdir(old_path), mkdir(new_path));
 }
 
@@ -195,9 +195,27 @@ move_dir(any_path const & old_path,
                             F("rename source dir '%s' does not exist") % old_path,
                             F("rename source dir '%s' is a file "
                               "-- bug in monotone?") % old_path);
-  N(!path_exists(new_path),
-    F("rename target '%s' already exists") % new_path);
+  require_path_is_nonexistent(new_path,
+                              F("rename target '%s' already exists") % new_path);
   fs::rename(mkdir(old_path), mkdir(new_path));
+}
+
+void
+move_path(any_path const & old_path,
+          any_path const & new_path)
+{
+  switch (get_path_status(old_path))
+    {
+    case path::nonexistent:
+      N(false, F("rename source path '%s' does not exist") % old_path);
+      break;
+    case path::file:
+      move_file(old_path, new_path);
+      break;
+    case path::directory:
+      move_dir(old_path, new_path);
+      break;
+    }
 }
 
 void 

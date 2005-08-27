@@ -81,6 +81,10 @@ void move_file(any_path const & old_path,
 void move_dir(any_path const & old_path,
               any_path const & new_path);
 
+// calls move_file or move_dir as appropriate
+void move_path(any_path const & old_path,
+               any_path const & new_path);
+
 void read_data(any_path const & path, data & data);
 void read_localized_data(file_path const & path, 
                          data & dat, 

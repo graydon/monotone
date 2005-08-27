@@ -1,5 +1,18 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* change_set.cc (move_files_from_tmp_top_down): Typo.
+
+	* file_io.cc (move_path): New function.
+	(move_file, move_dir): Minor cleanup -- use
+	require_path_is_nonexistent.
+
+	* work.cc (build_deletions): Use delete_file, rather than unlink.
+	If file is already non-existent, do nothing.
+	(build_rename): Use move_path, rather than rename.  If file
+	already appears to have been renamed, do nothing.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* app_state.cc (allow_working_copy): Make logging more sensible.
 
 2005-08-26  Nathaniel Smith  <njs@pobox.com>

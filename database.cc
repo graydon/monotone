@@ -193,8 +193,6 @@ database::sql(bool init)
 
       if (! init)
         {
-          N(fs::exists(filename), 
-          N(!fs::is_directory(filename), 
           require_path_is_file(filename,
                                F("database %s does not exist") % filename,
                                F("database %s is a directory") % filename);
