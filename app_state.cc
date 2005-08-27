@@ -48,12 +48,11 @@ app_state::~app_state()
 void
 app_state::allow_working_copy()
 {
+  L(F("initializing from directory %s\n") % fs::initial_path().string());
   found_working_copy = find_and_go_to_working_copy(search_root);
 
   if (found_working_copy) 
     {
-      L(F("initializing from directory %s\n") % fs::initial_path().string());
-
       read_options();
 
       system_path dbname = system_path(options[database_option]);

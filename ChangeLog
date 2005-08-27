@@ -1,5 +1,9 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* app_state.cc (allow_working_copy): Make logging more sensible.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* transforms.cc (length): 
 	* database.cc (sql, load, open): 
 	* commands.cc (rename, attr): 
