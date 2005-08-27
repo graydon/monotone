@@ -12,13 +12,10 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <fstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tokenizer.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/convenience.hpp>
-#include <boost/filesystem/exception.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "commands.hh"
@@ -50,6 +47,7 @@
 #include "annotate.hh"
 #include "options.hh"
 #include "globish.hh"
+#include "paths.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -292,13 +290,13 @@ CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params,         \
 
 struct pid_file
 {
-  explicit pid_file(fs::path const & p)
+  explicit pid_file(system_path const & p)
     : path(p)
   {
     if (path.empty())
       return;
-    N(!fs::exists(path), F("pid file '%s' already exists") % path.string());
-    file.open(path);
+    require_path_is_nonexistent(path, F("pid file '%s' already exists") % path);
+    file.open(path.as_external().c_str());
     file << get_process_id();
     file.flush();
   }
@@ -308,16 +306,16 @@ struct pid_file
     if (path.empty())
       return;
     pid_t pid;
-    fs::ifstream(path) >> pid;
+    std::ifstream(path.as_external().c_str()) >> pid;
     if (pid == get_process_id()) {
       file.close();
-      fs::remove(path);
+      delete_file(path);
     }
   }
 
 private:
-  fs::ofstream file;
-  fs::path path;
+  std::ofstream file;
+  system_path path;
 };
 
 static void
@@ -740,8 +738,8 @@ changes_summary::add_change_set(change_set const & cs)
   for (change_set::delta_map::const_iterator i = cs.deltas.begin();
        i != cs.deltas.end(); i++)
     {
-      if (pr.added_files.find(i->first()) == pr.added_files.end())
-        modified_files.insert(i->first());
+      if (pr.added_files.find(i->first) == pr.added_files.end())
+        modified_files.insert(i->first);
     }
 }
 
@@ -755,7 +753,7 @@ print_indented_set(std::ostream & os,
   for (std::set<file_path>::const_iterator i = s.begin();
        i != s.end(); i++)
     {
-      const std::string str = (*i)();
+      const std::string str = boost::lexical_cast<std::string>(*i);
       if (cols > 8 && cols + str.size() + 1 >= max_cols)
         {
           cols = 8;
@@ -1105,7 +1103,7 @@ CMD(add, N_("working copy"), N_("PATH..."),
 
   vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    paths.push_back(app.prefix(*i));
+    paths.push_back(file_path_external(*i));
 
   build_additions(paths, m_old, app, work);
 
@@ -1130,7 +1128,7 @@ CMD(drop, N_("working copy"), N_("PATH..."),
 
   vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    paths.push_back(app.prefix(*i));
+    paths.push_back(file_path_external(*i));
 
   build_deletions(paths, m_old, app, work);
 
@@ -1283,7 +1281,7 @@ CMD(identify, N_("working copy"), N_("[PATH]"),
 
   if (args.size() == 1)
     {
-      read_localized_data(file_path(idx(args, 0)()), dat, app.lua);
+      read_localized_data(file_path_external(idx(args, 0)), dat, app.lua);
     }
   else
     {
@@ -1320,11 +1318,17 @@ CMD(cat, N_("informative"),
           N(app.db.file_version_exists(ident),
             F("no file version %s found in database") % ident);
         }
-      else
+      else if (args.size() == 3)
         {
           revision_id rid;
           complete(app, idx(args, 1)(), rid);
-          file_path fp = app.prefix(idx(args, 2));
+          // paths are interpreted as standard external ones when we're in a
+          // working copy, but as project-rooted external ones otherwise
+          file_path fp;
+          if (app.found_working_copy)
+            fp = file_path_external(idx(args, 2));
+          else
+            fp = file_path_internal_from_user(idx(args, 2));
           manifest_id mid;
           app.db.get_revision_manifest(rid, mid);
           manifest_map m;
@@ -1333,6 +1337,8 @@ CMD(cat, N_("informative"),
           N(i != m.end(), F("no file '%s' found in revision '%s'\n") % fp % rid);
           ident = manifest_entry_id(i);
         }
+      else
+        throw usage(name);
       
       file_data dat;
       L(F("dumping file %s\n") % ident);
@@ -1649,7 +1655,7 @@ ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
 
   extract_path_set(m_new, known);
   file_itemizer u(app, known, unknown, ignored);
-  walk_tree(u);
+  walk_tree(file_path(), u);
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin(); i != ignored.end(); ++i)
@@ -1688,7 +1694,7 @@ ls_missing (app_state & app, vector<utf8> const & args)
 
   for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
     {
-      if (app.restriction_includes(*i) && !file_exists(*i))     
+      if (app.restriction_includes(*i) && !path_exists(*i))     
         cout << *i << endl;
     }
 }
@@ -2593,8 +2599,8 @@ dump_diffs(change_set::delta_map const & deltas,
             {
               split_into_lines(data_old(), old_lines);
               split_into_lines(data_new(), new_lines);
-              make_diff(delta_entry_path(i)(), 
-                        delta_entry_path(i)(), 
+              make_diff(delta_entry_path(i).as_internal(), 
+                        delta_entry_path(i).as_internal(), 
                         delta_entry_src(i),
                         delta_entry_dst(i),
                         old_lines, new_lines,
@@ -2946,7 +2952,7 @@ CMD(update, N_("working copy"), "",
       remaining = chosen_to_merged;
     }
   
-  local_path tmp_root((mkpath(book_keeping_dir) / mkpath("tmp")).string());
+  bookkeeping_path tmp_root = bookkeeping_root / "tmp";
   if (directory_exists(tmp_root))
     delete_dir_recursive(tmp_root);
 
@@ -3420,7 +3426,7 @@ CMD(rcs_import, N_("debug"), N_("RCSFILE..."),
   for (vector<utf8>::const_iterator i = args.begin();
        i != args.end(); ++i)
     {
-      test_parse_rcs_file(mkpath((*i)()), app.db);
+      test_parse_rcs_file(system_path((*i)()), app.db);
     }
 }
 
@@ -3431,7 +3437,7 @@ CMD(cvs_import, N_("rcs"), N_("CVSROOT"), N_("import all versions in CVS reposit
   if (args.size() != 1)
     throw usage(name);
 
-  import_cvs_repo(mkpath(idx(args, 0)()), app);
+  import_cvs_repo(system_path(idx(args, 0)()), app);
 }
 
 static void
@@ -3493,7 +3499,6 @@ CMD(annotate, N_("informative"), N_("PATH"),
     OPT_REVISION)
 {
   revision_id rid;
-  file_path file;
 
   if (app.revision_selectors.size() == 0)
     app.require_working_copy();
@@ -3501,7 +3506,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
   if ((args.size() != 1) || (app.revision_selectors.size() > 1))
     throw usage(name);
 
-  file=file_path(idx(args, 0)());
+  file_path file = file_path_external(idx(args, 0));
   if (app.revision_selectors.size() == 0)
     get_revision_id(rid);
   else 
@@ -3540,7 +3545,7 @@ CMD(log, N_("informative"), N_("[FILE]"),
     throw usage(name);
 
   if (args.size() > 0)
-     file=file_path(idx(args, 0)()); /* specified a file */
+    file = file_path_external(idx(args, 0)); /* specified a file */
 
   set< pair<file_path, revision_id> > frontier;
 
@@ -3581,7 +3586,7 @@ CMD(log, N_("informative"), N_("[FILE]"),
           file = i->first;
           rid = i->second;
 
-          bool print_this = file().empty();
+          bool print_this = file.empty();
           set<  revision<id> > parents;
           vector< revision<cert> > tmp;
 
@@ -3608,7 +3613,7 @@ CMD(log, N_("informative"), N_("[FILE]"),
               ancestors.insert(edge_old_revision(e));
 
               change_set const & cs = edge_changes(e);
-              if (! file().empty())
+              if (! file.empty())
                 {
                   if (cs.rearrangement.has_deleted_file(file) ||
                       cs.rearrangement.has_renamed_file_src(file))

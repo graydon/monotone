@@ -15,257 +15,103 @@
 #include "lua.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "platform.hh"
 
 // this file deals with talking to the filesystem, loading and
 // saving files.
 
 using namespace std;
 
-string const book_keeping_dir("MT");
-
-
-#include <stdlib.h>
-#include <unistd.h>
-#ifndef WIN32
- #include <pwd.h>
-#endif
-#include <sys/types.h>
-
-void 
-save_initial_path()
+void
+assert_path_is_nonexistent(any_path const & path)
 {
-  fs::initial_path();
-  L(F("initial path is %s\n") % fs::initial_path().string());
+  I(get_path_status(path) == path::nonexistent);
 }
 
-bool
-find_working_copy(fs::path const & search_root,
-                  fs::path & working_copy_root, 
-                  fs::path & working_copy_restriction) 
+void
+assert_path_is_file(any_path const & path)
 {
-  fs::path bookdir = mkpath(book_keeping_dir);
-  fs::path current = fs::initial_path();
-  fs::path removed;
-  fs::path check = current / bookdir;
-
-  L(F("searching for '%s' directory with root '%s'\n") 
-    % bookdir.string()
-    % search_root.string());
-
-  // nb: boost 1.32.0 has added operations::equivalent(path1, path2)
-  // and ==, !=, ... on paths which are probably better than
-  // native_directory_string comparisons used here temporarily
-
-  while ( current.native_directory_string() 
-          != search_root.native_directory_string() &&
-          current.has_branch_path() && 
-          current.has_leaf() && 
-          !fs::exists(check))
-    {
-      L(F("'%s' not found in '%s' with '%s' removed\n")
-        % bookdir.string() % current.string() % removed.string());
-      removed = mkpath(current.leaf()) / removed;
-      current = current.branch_path();
-      check = current / bookdir;
-    }
-
-  L(F("search for '%s' ended at '%s' with '%s' removed\n") 
-    % book_keeping_dir % current.string() % removed.string());
-
-  if (!fs::exists(check))
-    {
-      L(F("'%s' does not exist\n") % check.string());
-      return false;
-    }
-
-  if (!fs::is_directory(check))
-    {
-      L(F("'%s' is not a directory\n") % check.string());
-      return false;
-    }
-
-  // check for MT/. and MT/.. to see if mt dir is readable
-  if (!fs::exists(check / ".") || !fs::exists(check / ".."))
-    {
-      L(F("problems with '%s' (missing '.' or '..')\n") % check.string());
-      return false;
-    }
-
-  working_copy_root = current;
-  working_copy_restriction = removed;
-
-  return true;
+  I(get_path_status(path) == path::file);
 }
 
-fs::path 
-mkpath(string const & s)
+void
+assert_path_is_directory(any_path const & path)
 {
-  fs::path p(s, fs::native);
-  return p;
+  I(get_path_status(path) == path::directory);
 }
 
-string 
-get_homedir()
+void
+require_path_is_nonexistent(any_path const & path,
+                            boost::format const & message)
 {
-#ifdef WIN32
-  // Windows is fun!
-  // See thread on monotone-devel:
-  //   Message-Id: <20050221.182951.104117563.dalcolmo@vh-s.de>
-  //   URL: http://lists.gnu.org/archive/html/monotone-devel/2005-02/msg00241.html
-  char * home;
-  L(F("Searching for home directory\n"));
-  // First try MONOTONE_HOME, to give people a way out in case the cruft below
-  // doesn't work for them.
-  home = getenv("MONOTONE_HOME");
-  if (home != NULL)
-    {
-      L(F("Home directory from MONOTONE_HOME\n"));
-      return string(home);
-    }
-  // If running under cygwin or mingw, try HOME next:
-  home = getenv("HOME");
-  char * ostype = getenv("OSTYPE");
-  if (home != NULL
-      && ostype != NULL
-      && (string(ostype) == "cygwin" || string(ostype) == "msys"))
-    {
-      L(F("Home directory from HOME\n"));
-      return string(home);
-    }
-  // Otherwise, try USERPROFILE:
-  home = getenv("USERPROFILE");
-  if (home != NULL)
-    {
-      L(F("Home directory from USERPROFILE\n"));
-      return string(home);
-    }
-  // Finally, if even that doesn't work (old version of Windows, I think?),
-  // try the HOMEDRIVE/HOMEPATH combo:
-  char * homedrive = getenv("HOMEDRIVE");
-  char * homepath = getenv("HOMEPATH");
-  if (homedrive != NULL && homepath != NULL)
-    {
-      L(F("Home directory from HOMEDRIVE+HOMEPATH\n"));
-      return string(homedrive) + string(homepath);
-    }
-  // And if things _still_ didn't work, give up.
-  N(false, F("could not find home directory (tried MONOTONE_HOME, HOME (if "
-              "cygwin/mingw), USERPROFILE, HOMEDRIVE/HOMEPATH"));
-#else
-  char * home = getenv("HOME");
-  if (home != NULL)
-    return string(home);
-
-  struct passwd * pw = getpwuid(getuid());  
-  N(pw != NULL, F("could not find home directory for uid %d") % getuid());
-  return string(pw->pw_dir);
-#endif
+  N(!path_exists(path), message);
 }
 
-string 
-absolutify(string const & path)
+void
+require_path_is_file(any_path const & path,
+                     boost::format const & message_if_nonexistent,
+                     boost::format const & message_if_directory)
 {
-  fs::path tmp = mkpath(path);
-  if (! tmp.has_root_path())
-    tmp = fs::current_path() / tmp;
-  I(tmp.has_root_path());
-  tmp = tmp.normalize();
-  return tmp.string();
-}
-
-string
-absolutify_for_command_line(string const & path)
-{
-  if (path == "-")
-    return path;
-  else
-    return absolutify(path);
-}
-
-string 
-tilde_expand(string const & path)
-{
-  fs::path tmp = mkpath(path);
-  fs::path::iterator i = tmp.begin();
-  if (i != tmp.end())
+  switch (get_path_status(path))
     {
-      fs::path res;
-      if (*i == "~")
-        {
-          res /= mkpath(get_homedir());
-          ++i;
-        }
-      else if (i->size() > 1 && i->at(0) == '~')
-        {
-#ifdef WIN32
-          res /= mkpath(get_homedir());
-#else
-          struct passwd * pw;
-          pw = getpwnam(i->substr(1).c_str());
-          N(pw != NULL, F("could not find home directory for user %s") % i->substr(1));
-          res /= mkpath(string(pw->pw_dir));
-#endif
-          ++i;
-        }
-      while (i != tmp.end())
-        res /= mkpath(*i++);
-      return res.string();
+    case path::nonexistent:
+      N(false, message_if_nonexistent);
+      break;
+    case path::file:
+      return;
+    case path::directory:
+      N(false, message_if_directory);
+      break;
     }
-
-  return tmp.string();
 }
 
-static bool 
-book_keeping_file(fs::path const & p)
+void
+require_path_is_directory(any_path const & path,
+                          boost::format const & message_if_nonexistent,
+                          boost::format const & message_if_file)
 {
-  return *(p.begin()) == book_keeping_dir;
+  switch (get_path_status(path))
+    {
+    case path::nonexistent:
+      N(false, message_if_nonexistent);
+      break;
+    case path::file:
+      N(false, message_if_file);
+    case path::directory:
+      return;
+      break;
+    }
 }
 
 bool 
-book_keeping_file(local_path const & p)
-{
-  if (p() == book_keeping_dir) return true;
-  if (*(mkpath(p()).begin()) == book_keeping_dir) return true;
-  return false;
-}
-
-bool 
-directory_exists(local_path const & p) 
+path_exists(any_path const & p) 
 { 
-  return fs::exists(localized(p)) &&
-    fs::is_directory(localized(p)); 
+  return get_path_status(p) != path::nonexistent;
 }
 
 bool 
-directory_exists(file_path const & p) 
+directory_exists(any_path const & p) 
 { 
-  return fs::exists(localized(p)) &&
-    fs::is_directory(localized(p)); 
+  return get_path_status(p) == path::directory;
 }
 
 bool 
-file_exists(file_path const & p) 
+file_exists(any_path const & p) 
 { 
-  return fs::exists(localized(p)); 
-}
-
-bool 
-file_exists(local_path const & p) 
-{ 
-  return fs::exists(localized(p)); 
+  return get_path_status(p) == path::file;
 }
 
 bool
 ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua)
 {
-  fs::path local_p(localized(p));
-
-  if (!fs::exists(local_p))
-    return false;
-
-  if (fs::is_directory(local_p))
+  switch (get_path_status(p))
     {
-      W(F("expected file '%s', but it is a directory.") % p());
+    case path::nonexistent:
+      return false;
+    case path::file:
+      break;
+    case path::directory:
+      W(F("expected file '%s', but it is a directory.") % p);
       return false;
     }
 
@@ -288,185 +134,87 @@ bool guess_binary(string const & s)
   return false;
 }
 
-void 
-delete_file(local_path const & p) 
-{ 
-  N(file_exists(p), 
-    F("file to delete '%s' does not exist") % p);
-  fs::remove(localized(p)); 
+static fs::path
+mkdir(any_path const & p)
+{
+  return fs::path(p.as_external(), fs::native);
 }
 
 void 
-delete_file(file_path const & p) 
+mkdir_p(any_path const & p) 
 { 
-  N(file_exists(p), 
-    F("file to delete '%s' does not exist") % p);
-  fs::remove(localized(p)); 
+  fs::create_directories(mkdir(p));
 }
 
 void 
-delete_dir_recursive(file_path const & p) 
+make_dir_for(any_path const & p) 
 { 
-  N(directory_exists(p), 
-    F("directory to delete '%s' does not exist") % p);
-  fs::remove_all(localized(p)); 
-}
-
-void 
-delete_dir_recursive(local_path const & p) 
-{ 
-  N(directory_exists(p), 
-    F("directory to delete '%s' does not exist") % p);
-  fs::remove_all(localized(p)); 
-}
-
-void 
-move_file(file_path const & old_path,
-          file_path const & new_path) 
-{ 
-  N(file_exists(old_path), 
-    F("rename source file '%s' does not exist") % old_path);
-  N(! file_exists(new_path), 
-    F("rename target file '%s' already exists") % new_path);
-  fs::rename(localized(old_path), 
-             localized(new_path));
-}
-
-void 
-move_file(local_path const & old_path,
-          local_path const & new_path) 
-{ 
-  N(file_exists(old_path), 
-    F("rename source file '%s' does not exist") % old_path);
-  N(! file_exists(new_path), 
-    F("rename target file '%s' already exists") % new_path);
-  fs::rename(localized(old_path), 
-             localized(new_path));
-}
-
-void 
-move_dir(file_path const & old_path,
-         file_path const & new_path) 
-{ 
-  N(directory_exists(old_path), 
-    F("rename source dir '%s' does not exist") % old_path);
-  N(!directory_exists(new_path), 
-    F("rename target dir '%s' already exists") % new_path);
-  fs::rename(localized(old_path), 
-             localized(new_path));
-}
-
-void 
-move_dir(local_path const & old_path,
-         local_path const & new_path) 
-{ 
-  N(directory_exists(old_path), 
-    F("rename source dir '%s' does not exist") % old_path);
-  N(!directory_exists(new_path), 
-    F("rename target dir '%s' already exists") % new_path);
-  fs::rename(localized(old_path), 
-             localized(new_path));
-}
-
-void 
-mkdir_p(local_path const & p) 
-{ 
-  fs::create_directories(localized(p)); 
-}
-
-void 
-mkdir_p(file_path const & p) 
-{ 
-  fs::create_directories(localized(p)); 
-}
-
-void 
-make_dir_for(file_path const & p) 
-{ 
-  fs::path tmp = localized(p);
+  fs::path tmp(p.as_external(), fs::native);
   if (tmp.has_branch_path())
     {
-      fs::create_directories(tmp.branch_path()); 
+      fs::create_directories(tmp.branch_path());
     }
 }
 
-static void 
-read_data_impl(fs::path const & p,
-               data & dat)
+void 
+delete_file(any_path const & p) 
+{ 
+  require_path_is_file(p,
+                       F("file to delete '%s' does not exist") % p,
+                       F("file to delete, '%s', is not a file but a directory") % p);
+  fs::remove(mkdir(p)); 
+}
+
+void 
+delete_dir_recursive(any_path const & p) 
+{ 
+  require_path_is_directory(p,
+                            F("directory to delete, '%s', does not exist") % p,
+                            F("directory to delete, '%s', is a file") % p);
+  fs::remove_all(mkdir(p));
+}
+
+void 
+move_file(any_path const & old_path,
+          any_path const & new_path) 
+{ 
+  require_path_is_file(old_path,
+                       F("rename source file '%s' does not exist") % old_path,
+                       F("rename source file '%s' is a directory "
+                         "-- bug in monotone?") % old_path);
+  N(!path_exists(new_path),
+    F("rename target '%s' already exists") % new_path);
+  fs::rename(mkdir(old_path), mkdir(new_path));
+}
+
+void 
+move_dir(any_path const & old_path,
+         any_path const & new_path) 
+{ 
+  require_path_is_directory(old_path,
+                            F("rename source dir '%s' does not exist") % old_path,
+                            F("rename source dir '%s' is a file "
+                              "-- bug in monotone?") % old_path);
+  N(!path_exists(new_path),
+    F("rename target '%s' already exists") % new_path);
+  fs::rename(mkdir(old_path), mkdir(new_path));
+}
+
+void 
+read_data(any_path const & p, data & dat)
 {
-  if (!fs::exists(p))
-    throw oops("file '" + p.string() + "' does not exist");
-  
-  if (fs::is_directory(p))
-    throw oops("file '" + p.string() + "' cannot be read as data; it is a directory");
-  
-  ifstream file(p.string().c_str(),
+  require_path_is_file(p,
+                       F("file %s does not exist") % p,
+                       F("file %s cannot be read as data; it is a directory") % p);
+
+  ifstream file(p.as_external().c_str(),
                 ios_base::in | ios_base::binary);
-  if (!file)
-    throw oops(string("cannot open file ") + p.string() + " for reading");
+  N(file, F("cannot open file %s for reading") % p);
   Botan::Pipe pipe;
   pipe.start_msg();
   file >> pipe;
   pipe.end_msg();
   dat = pipe.read_all_as_string();
-}
-
-// This function can only be called once per run.
-static void
-read_data_stdin(data & dat)
-{
-  static bool have_consumed_stdin = false;
-  N(!have_consumed_stdin, F("Cannot read standard input multiple times"));
-  have_consumed_stdin = true;
-  Botan::Pipe pipe;
-  pipe.start_msg();
-  cin >> pipe;
-  pipe.end_msg();
-  dat = pipe.read_all_as_string();
-}
-
-void 
-read_data(local_path const & path, data & dat)
-{ 
-  read_data_impl(localized(path), dat); 
-}
-
-void 
-read_data(file_path const & path, data & dat)
-{ 
-  read_data_impl(localized(path), dat); 
-}
-
-void 
-read_data(local_path const & path,
-          base64< gzip<data> > & dat)
-{
-  data data_plain;
-  read_data_impl(localized(path), data_plain);
-  gzip<data> data_compressed;
-  base64< gzip<data> > data_encoded;  
-  encode_gzip(data_plain, data_compressed);
-  encode_base64(data_compressed, dat);
-}
-
-void 
-read_data(file_path const & path, 
-          base64< gzip<data> > & dat)
-{ 
-  read_data(local_path(path()), dat); 
-}
-
-void 
-read_localized_data(file_path const & path,
-                    base64< gzip<data> > & dat,
-                    lua_hooks & lua)
-{
-  data data_plain;
-  read_localized_data(path, data_plain, lua);
-  gzip<data> data_compressed;
-  base64< gzip<data> > data_encoded;  
-  encode_gzip(data_plain, data_compressed);
-  encode_base64(data_compressed, dat);
 }
 
 void 
@@ -500,16 +248,27 @@ read_localized_data(file_path const & path,
 }
 
 
+// This function can only be called once per run.
+static void
+read_data_stdin(data & dat)
+{
+  static bool have_consumed_stdin = false;
+  N(!have_consumed_stdin, F("Cannot read standard input multiple times"));
+  have_consumed_stdin = true;
+  Botan::Pipe pipe;
+  pipe.start_msg();
+  cin >> pipe;
+  pipe.end_msg();
+  dat = pipe.read_all_as_string();
+}
+
 void
 read_data_for_command_line(utf8 const & path, data & dat)
 {
   if (path() == "-")
     read_data_stdin(dat);
   else
-    {
-      N(fs::exists(localized(path)), F("file '%s' does not exist") % path);
-      read_data_impl(localized(path), dat);
-    }
+    read_data(system_path(path), dat);
 }
 
 
@@ -520,48 +279,45 @@ read_data_for_command_line(utf8 const & path, data & dat)
 
 
 static void 
-write_data_impl(fs::path const & p,
+write_data_impl(any_path const & p,
                 data const & dat)
 {  
-  if (fs::exists(p) && fs::is_directory(p))
-    throw oops("file '" + p.string() + "' cannot be over-written as data; it is a directory");
+  N(!directory_exists(p),
+    F("file '%s' cannot be overwritten as data; it is a directory") % p);
 
-  fs::create_directories(mkpath(p.branch_path().string()));
+  make_dir_for(p);
   
   // we write, non-atomically, to MT/data.tmp.
   // nb: no mucking around with multiple-writer conditions. we're a
   // single-user single-threaded program. you get what you paid for.
-  fs::path mtdir = mkpath(book_keeping_dir);
-  fs::create_directories(mtdir);
-  fs::path tmp = mtdir / "data.tmp"; 
+  assert_path_is_directory(bookkeeping_root);
+  bookkeeping_path tmp = bookkeeping_root / "data.tmp";
 
   {
     // data.tmp opens
-    ofstream file(tmp.string().c_str(),
+    ofstream file(tmp.as_external().c_str(),
                   ios_base::out | ios_base::trunc | ios_base::binary);
-    if (!file)
-      throw oops(string("cannot open file ") + tmp.string() + " for writing");    
+    N(file, F("cannot open file %s for writing") % tmp);
     Botan::Pipe pipe(new Botan::DataSink_Stream(file));
     pipe.process_msg(dat());
     // data.tmp closes
   }
 
-  if (fs::exists(p))
-    N(fs::remove(p),
-      F("removing %s failed") % p.string());
-  fs::rename(tmp, p);
-}
-
-void 
-write_data(local_path const & path, data const & dat)
-{ 
-  write_data_impl(localized(path), dat); 
+  if (path_exists(p))
+    N(fs::remove(mkdir(p)), F("removing %s failed") % p);
+  fs::rename(mkdir(tmp), mkdir(p));
 }
 
 void 
 write_data(file_path const & path, data const & dat)
 { 
-  write_data_impl(localized(path), dat); 
+  write_data_impl(path, dat); 
+}
+
+void 
+write_data(bookkeeping_path const & path, data const & dat)
+{ 
+  write_data_impl(path, dat); 
 }
 
 void 
@@ -592,37 +348,6 @@ write_localized_data(file_path const & path,
   write_data(path, data(tmp2));
 }
 
-void 
-write_localized_data(file_path const & path,
-                     base64< gzip<data> > const & dat,
-                     lua_hooks & lua)
-{
-  gzip<data> data_decoded;
-  data data_decompressed;      
-  decode_base64(dat, data_decoded);
-  decode_gzip(data_decoded, data_decompressed);
-  write_localized_data(path, data_decompressed, lua);
-}
-
-void 
-write_data(local_path const & path,
-           base64< gzip<data> > const & dat)
-{
-  gzip<data> data_decoded;
-  data data_decompressed;      
-  decode_base64(dat, data_decoded);
-  decode_gzip(data_decoded, data_decompressed);      
-  write_data_impl(localized(path), data_decompressed);
-}
-
-void 
-write_data(file_path const & path,
-           base64< gzip<data> > const & dat)
-{ 
-  write_data(local_path(path()), dat); 
-}
-
-
 tree_walker::~tree_walker() {}
 
 static void 
@@ -634,10 +359,12 @@ walk_tree_recursive(fs::path const & absolute,
   for(fs::directory_iterator di(absolute);
       di != ei; ++di)
     {
-      fs::path entry = mkpath(di->string());
-      fs::path rel_entry = relative / mkpath(entry.leaf());
+      fs::path entry = *di;
+      // the fs::native is necessary here, or it will bomb out on any paths
+      // that look at it funny.  (E.g., rcs files with "," in the name.)
+      fs::path rel_entry = relative / fs::path(entry.leaf(), fs::native);
       
-      if (book_keeping_file(rel_entry))
+      if (bookkeeping_path::is_bookkeeping_path(rel_entry.normalize().string()))
         {
           L(F("ignoring book keeping entry %s\n") % rel_entry.string());
           continue;
@@ -654,11 +381,12 @@ walk_tree_recursive(fs::path const & absolute,
           file_path p;
           try 
             {
-              p = file_path(rel_entry.string());
+              // FIXME: BUG: this screws up charsets
+              p = file_path_internal(rel_entry.normalize().string());
             }
           catch (std::runtime_error const & c)
             {
-              L(F("caught runtime error %s constructing file path for %s\n") 
+              W(F("caught runtime error %s constructing file path for %s\n") 
                 % c.what() % rel_entry.string());
               continue;
             }     
@@ -673,74 +401,37 @@ walk_tree(file_path const & path,
           tree_walker & walker,
           bool require_existing_path)
 {
-  if (fs::exists(localized(path)))
+  if (path.empty())
     {
-      if (! fs::is_directory(localized(path)))
-        walker.visit_file(path);
-      else
-        {
-          // the current path does not need localization
-          fs::path root(fs::current_path());
-          fs::path rel(localized(path));
-          walk_tree_recursive(root / rel, rel, walker);
-        }
+      walk_tree_recursive(fs::current_path(), fs::path(), walker);
+      return;
     }
-  else
+      
+  switch (get_path_status(path))
     {
-      if (require_existing_path)
-        {
-          N(false,
-            F("no such file or directory: %s") % path());
-        }
-      else
-        {
-          walker.visit_file(path);
-        }
+    case path::nonexistent:
+      N(require_existing_path, F("no such file or directory") % path);
+      walker.visit_file(path);
+      break;
+    case path::file:
+      walker.visit_file(path);
+      break;
+    case path::directory:
+      walk_tree_recursive(system_path(path).as_external(),
+                          path.as_external(),
+                          walker);
+      break;
     }
 }
-
-// from cwd (nb: we can't describe cwd as a file_path)
-void 
-walk_tree(tree_walker & walker)
-{
-  walk_tree_recursive(fs::current_path(), fs::path(), walker);
-}
-
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
-
-static void 
-test_book_keeping_file()
-{
-  // positive tests
-
-  BOOST_CHECK(book_keeping_file(local_path("MT")));
-  BOOST_CHECK(book_keeping_file(local_path("MT/foo")));
-  BOOST_CHECK(book_keeping_file(local_path("MT/foo/bar/baz")));
-
-  BOOST_CHECK(book_keeping_file(fs::path("MT")));
-  BOOST_CHECK(book_keeping_file(fs::path("MT/foo")));
-  BOOST_CHECK(book_keeping_file(fs::path("MT/foo/bar/baz")));
-
-  // negative tests
-
-  BOOST_CHECK( ! book_keeping_file(local_path("safe")));
-  BOOST_CHECK( ! book_keeping_file(local_path("safe/path")));
-  BOOST_CHECK( ! book_keeping_file(local_path("safe/path/MT")));
-  BOOST_CHECK( ! book_keeping_file(local_path("MTT")));
-
-  BOOST_CHECK( ! book_keeping_file(fs::path("safe")));
-  BOOST_CHECK( ! book_keeping_file(fs::path("safe/path")));
-  BOOST_CHECK( ! book_keeping_file(fs::path("safe/path/MT")));
-  BOOST_CHECK( ! book_keeping_file(fs::path("MTT")));
-}
 
 void 
 add_file_io_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&test_book_keeping_file));
+  // none, ATM.
 }
 
 #endif // BUILD_UNIT_TESTS

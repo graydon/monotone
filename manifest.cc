@@ -185,7 +185,7 @@ build_restricted_manifest_map(path_set const & paths,
             }
           else
             {
-              W(F("missing %s") % (*i)());
+              W(F("missing %s") % (*i));
               missing_files++;
             }
         }
@@ -227,7 +227,8 @@ read_manifest_map(data const & dat,
         file_name = dat().substr(file_name_begin);
       else
         file_name = dat().substr(file_name_begin, pos - file_name_begin);
-      man.insert(manifest_entry(file_path(file_name), hexenc<id>(ident)));
+      man.insert(manifest_entry(file_path_internal(file_name),
+                                hexenc<id>(ident)));
       // skip past the '\n'
       ++pos;
     }

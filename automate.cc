@@ -237,7 +237,7 @@ automate_attributes(std::vector<utf8> args,
 
   if (args.size() == 1) {
     // a filename was given, if it has attributes, print them
-    file_path path = app.prefix(idx(args,0)());
+    file_path path = file_path_external(idx(args,0));
     attr_map::const_iterator i = attrs.find(path);
     if (i == attrs.end()) return;
 
@@ -701,7 +701,7 @@ automate_inventory(std::vector<utf8> args,
          i = included.added_files.begin();
        i != included.added_files.end(); ++i)
     {
-      if (file_exists(*i))
+      if (path_exists(*i))
         {
           // add path from [] to [xxx]
           hexenc<id> ident;
@@ -734,7 +734,7 @@ automate_inventory(std::vector<utf8> args,
     }
 
   file_itemizer u(app, new_paths, unknown, ignored);
-  walk_tree(u);
+  walk_tree(file_path(), u);
 
   inventory_file_state(inventory, missing, inventory_item::MISSING_FILE);
 

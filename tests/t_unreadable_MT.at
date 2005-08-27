@@ -1,12 +1,13 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([do not fail on unreadable MT/options])
+AT_SETUP([fail cleanly on unreadable MT/options])
 
 MONOTONE_SETUP
 
 AT_CHECK(chmod a-rwx MT/)
 
-AT_CHECK(monotone --norc, [0], [ignore], [ignore])
+AT_CHECK(monotone --norc, [1], [ignore], [ignore])
+AT_CHECK(monotone, [1], [ignore], [ignore])
 
 AT_CHECK(chmod u+rwx MT/)
 

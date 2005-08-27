@@ -15,8 +15,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
 
 #include <sqlite3.h>
 
@@ -61,7 +59,7 @@ extern "C" {
   const char *sqlite3_column_text_s(sqlite3_stmt*, int col);
 }
 
-database::database(fs::path const & fn) :
+database::database(system_path const & fn) :
   filename(fn),
   // nb. update this if you change the schema. unfortunately we are not
   // using self-digesting schemas due to comment irregularities and
@@ -131,28 +129,26 @@ database::set_app(app_state * app)
 }
 
 static void 
-check_sqlite_format_version(fs::path const & filename)
+check_sqlite_format_version(system_path const & filename)
 {
-  if (fs::exists(filename))
+  require_path_is_file(filename,
+                       F("database %s does not exist") % filename,
+                       F("%s is a directory, not a database") % filename);
+  
+  // sqlite 3 files begin with this constant string
+  // (version 2 files begin with a different one)
+  std::string version_string("SQLite format 3");
+  
+  std::ifstream file(filename.as_external().c_str());
+  N(file, F("unable to probe database version in file %s") % filename);
+  
+  for (std::string::const_iterator i = version_string.begin();
+       i != version_string.end(); ++i)
     {
-      N(!fs::is_directory(filename), 
-        F("database %s is a directory\n") % filename.string());
- 
-      // sqlite 3 files begin with this constant string
-      // (version 2 files begin with a different one)
-      std::string version_string("SQLite format 3");
-
-      std::ifstream file(filename.string().c_str());
-      N(file, F("unable to probe database version in file %s") % filename.string());
-
-      for (std::string::const_iterator i = version_string.begin();
-           i != version_string.end(); ++i)
-        {
-          char c;
-          file.get(c);
-          N(c == *i, F("database %s is not an sqlite version 3 file, "
-                       "try dump and reload") % filename.string());            
-        }
+      char c;
+      file.get(c);
+      N(c == *i, F("database %s is not an sqlite version 3 file, "
+                   "try dump and reload") % filename);            
     }
 }
 
@@ -226,15 +222,16 @@ database::initialize()
   if (__sql)
     throw oops("cannot initialize database while it is open");
 
-  N(!fs::exists(filename),
-    F("could not initialize database: %s: already exists") 
-    % filename.string());
+  require_path_is_nonexistent(filename,
+                              F("could not initialize database: %s: already exists") 
+                              % filename);
 
-  fs::path journal = mkpath(filename.string() + "-journal");
-  N(!fs::exists(journal),
-    F("existing (possibly stale) journal file '%s' "
-      "has same stem as new database '%s'")
-    % journal.string() % filename.string());
+  system_path journal(filename.as_internal() + "-journal");
+  require_path_is_nonexistent(journal,
+                              F("existing (possibly stale) journal file '%s' "
+                                "has same stem as new database '%s'\n"
+                                "cancelling database creation")
+                              % journal % filename);
 
   sqlite3 *s = sql(true);
   I(s != NULL);
@@ -679,11 +676,11 @@ database::fetch(results & res,
 // general application-level logic
 
 void 
-database::set_filename(fs::path const & file)
+database::set_filename(system_path const & file)
 {
   if (__sql)
     {
-      throw oops("cannot change filename to " + file.string() + " while db is open");
+      throw oops((F("cannot change filename to %s while db is open") % file).str());
     }
   filename = file;
 }

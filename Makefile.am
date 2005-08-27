@@ -34,7 +34,6 @@ MOST_SOURCES =								\
          mt_version.cc mt_version.hh					\
          automate.cc automate.hh					\
          database_check.cc database_check.hh				\
-	 path_component.cc path_component.hh				\
          epoch.cc epoch.hh						\
          inodeprint.cc inodeprint.hh					\
          selectors.cc selectors.hh					\
@@ -42,7 +41,8 @@ MOST_SOURCES =								\
          restrictions.cc restrictions.hh				\
          hmac.cc hmac.hh                                                \
          globish.cc globish.hh                                          \
-         string_queue.cc string_queue.hh                                          \
+         string_queue.cc string_queue.hh                                \
+         paths.cc paths.hh                                              \
                                                                         \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
@@ -196,11 +196,11 @@ POPT_SOURCES = \
 
 UNIX_PLATFORM_SOURCES = \
 	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/terminal.cc \
-	unix/platform_netsync.cc unix/inodeprint.cc
+	unix/platform_netsync.cc unix/inodeprint.cc unix/fs.cc
 
 WIN32_PLATFORM_SOURCES = \
 	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/terminal.cc \
-	win32/platform_netsync.cc win32/inodeprint.cc
+	win32/platform_netsync.cc win32/inodeprint.cc win32/fs.cc
 
 # primaries
 

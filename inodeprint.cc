@@ -42,7 +42,7 @@ read_inodeprint_map(data const & dat,
         file_name = dat().substr(file_name_begin);
       else
         file_name = dat().substr(file_name_begin, pos - file_name_begin);
-      ipm.insert(inodeprint_entry(file_path(file_name),
+      ipm.insert(inodeprint_entry(file_path_internal(file_name),
                                   hexenc<inodeprint>(ident)));
       // skip past the '\n'
       ++pos;

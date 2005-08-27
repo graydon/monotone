@@ -31,6 +31,7 @@ extern "C" {
 #include "vocab.hh"
 #include "platform.hh"
 #include "transforms.hh"
+#include "paths.hh"
 
 // defined in {std,test}_hooks.lua, converted
 #include "test_hooks.h"
@@ -546,7 +547,7 @@ extern "C"
     const char *pathstr = lua_tostring(L, -1);
     N(pathstr, F("IncludeDir called with an invalid parameter"));
 
-    fs::path locpath(pathstr);
+    fs::path locpath(pathstr, fs::native);
     N(fs::exists(locpath), F("Directory '%s' does not exists") % pathstr);
     N(fs::is_directory(locpath), F("'%s' is not a directory") % pathstr);
 
@@ -650,15 +651,15 @@ lua_hooks::add_std_hooks()
 }
 
 void 
-lua_hooks::default_rcfilename(fs::path & file)
+lua_hooks::default_rcfilename(system_path & file)
 {
-  file = mkpath(get_homedir()) / mkpath(".monotone/monotonerc");
+  file = system_path(get_homedir()) / ".monotone/monotonerc";
 }
 
 void 
-lua_hooks::working_copy_rcfilename(fs::path & file)
+lua_hooks::working_copy_rcfilename(bookkeeping_path & file)
 {
-  file = mkpath(book_keeping_dir) / mkpath("monotonerc");
+  file = bookkeeping_root / "monotonerc";
 }
 
 
@@ -668,7 +669,7 @@ lua_hooks::load_rcfile(utf8 const & rc)
   I(st);
   if (rc() != "-")
     {
-      fs::path locpath(localized(rc));
+      fs::path locpath(system_path(rc).as_external(), fs::native);
       if (fs::exists(locpath) && fs::is_directory(locpath))
         {
           // directory, iterate over it, skipping subdirs, taking every filename,
@@ -684,7 +685,7 @@ lua_hooks::load_rcfile(utf8 const & rc)
           std::sort(arr.begin(), arr.end());
           for (std::vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
             {
-              load_rcfile(*i, true);
+              load_rcfile(system_path(i->native_directory_string()), true);
             }
           return; // directory read, skip the rest ...
         }
@@ -698,20 +699,20 @@ lua_hooks::load_rcfile(utf8 const & rc)
 }
 
 void 
-lua_hooks::load_rcfile(fs::path const & rc, bool required)
+lua_hooks::load_rcfile(any_path const & rc, bool required)
 {
   I(st);  
-  if (fs::exists(rc))
+  if (path_exists(rc))
     {
-      L(F("opening rcfile '%s' ...\n") % rc.string());
-      N(run_file(st, rc.string()),
-        F("lua error while loading '%s'") % rc.string());
-      L(F("'%s' is ok\n") % rc.string());
+      L(F("opening rcfile '%s' ...\n") % rc);
+      N(run_file(st, rc.as_external()),
+        F("lua error while loading '%s'") % rc);
+      L(F("'%s' is ok\n") % rc);
     }
   else
     {
-      N(!required, F("rcfile '%s' does not exist") % rc.string());
-      L(F("skipping nonexistent rcfile '%s'\n") % rc.string());
+      N(!required, F("rcfile '%s' does not exist") % rc);
+      L(F("skipping nonexistent rcfile '%s'\n") % rc);
     }
 }
 
@@ -833,7 +834,7 @@ lua_hooks::hook_ignore_file(file_path const & p)
   bool ignore_it = false;
   bool exec_ok = Lua(st)
     .func("ignore_file")
-    .push_str(p())
+    .push_str(p.as_external())
     .call(1,1)
     .extract_bool(ignore_it)
     .ok();
@@ -967,9 +968,9 @@ lua_hooks::hook_merge2(file_path const & left_path,
   string res;
   bool ok = Lua(st)
     .func("merge2")
-    .push_str(left_path())
-    .push_str(right_path())
-    .push_str(merged_path())
+    .push_str(left_path.as_external())
+    .push_str(right_path.as_external())
+    .push_str(merged_path.as_external())
     .push_str(left())
     .push_str(right())
     .call(5,1)
@@ -992,10 +993,10 @@ lua_hooks::hook_merge3(file_path const & anc_path,
   string res;
   bool ok = Lua(st)
     .func("merge3")
-    .push_str(anc_path())
-    .push_str(left_path())
-    .push_str(right_path())
-    .push_str(merged_path())
+    .push_str(anc_path.as_external())
+    .push_str(left_path.as_external())
+    .push_str(right_path.as_external())
+    .push_str(merged_path.as_external())
     .push_str(ancestor())
     .push_str(left())
     .push_str(right())
@@ -1015,13 +1016,13 @@ lua_hooks::hook_resolve_file_conflict(file_path const & anc,
   string tmp;
   bool ok = Lua(st)
     .func("resolve_file_conflict")
-    .push_str(anc())
-    .push_str(a())
-    .push_str(b())
+    .push_str(anc.as_external())
+    .push_str(a.as_external())
+    .push_str(b.as_external())
     .call(3,1)
     .extract_str(tmp)
     .ok();
-  res = tmp;
+  res = file_path_internal(tmp);
   return ok;
 }
 
@@ -1034,13 +1035,13 @@ lua_hooks::hook_resolve_dir_conflict(file_path const & anc,
   string tmp;
   bool ok = Lua(st)
     .func("resolve_dir_conflict")
-    .push_str(anc())
-    .push_str(a())
-    .push_str(b())
+    .push_str(anc.as_external())
+    .push_str(a.as_external())
+    .push_str(b.as_external())
     .call(3,1)
     .extract_str(tmp)
     .ok();
-  res = tmp;
+  res = file_path_internal(tmp);
   return ok;  
 }
 
@@ -1058,7 +1059,7 @@ lua_hooks::hook_external_diff(file_path const & path,
 
   ll
     .func("external_diff")
-    .push_str(path());
+    .push_str(path.as_external());
 
   if (oldrev.length() != 0)
     ll.push_str(data_old());
@@ -1157,7 +1158,7 @@ lua_hooks::hook_init_attributes(file_path const & filename,
   while (ll.next())
     {
       L(F("  calling an attr_init_function for %s") % filename);
-      ll.push_str(filename());
+      ll.push_str(filename.as_external());
       ll.call(1, 1);
 
       if (lua_isstring(st, -1))
@@ -1191,7 +1192,7 @@ lua_hooks::hook_apply_attribute(string const & attr,
     .get_tab()
     .push_str(attr)
     .get_fn(-2)
-    .push_str(filename())
+    .push_str(filename.as_external())
     .push_str(value)
     .call(2,0)
     .ok();
@@ -1216,7 +1217,7 @@ lua_hooks::hook_get_charset_conv(file_path const & p,
   Lua ll(st);
   ll
     .func("get_charset_conv")
-    .push_str(p())
+    .push_str(p.as_external())
     .call(1,1)
     .begin();
   
@@ -1236,7 +1237,7 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
   Lua ll(st);
   ll
     .func("get_linesep_conv")
-    .push_str(p())
+    .push_str(p.as_external())
     .call(1,1)
     .begin();
   

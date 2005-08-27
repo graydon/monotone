@@ -20,6 +20,8 @@
 
 #include "quick_alloc.hh" // to get the QA() macro
 
+#include "paths.hh"
+
 #ifdef __GNUC__
 #define NORETURN __attribute__((noreturn))
 #else
@@ -55,7 +57,7 @@ struct sanity {
   bool quiet;
   bool relaxed;
   boost::circular_buffer<char> logbuf;
-  std::string filename;
+  system_path filename;
   std::string gasp_dump;
   bool already_dumping;
   std::vector<MusingI const *> musings;

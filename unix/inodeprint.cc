@@ -32,7 +32,7 @@ namespace
 bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
 {
   struct stat st;
-  if (stat(localized_as_string(file).c_str(), &st) < 0)
+  if (stat(file.as_external().c_str(), &st) < 0)
     return false;
 
   Botan::SHA_160 hash;

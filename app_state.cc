@@ -19,6 +19,7 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "work.hh"
+#include "platform.hh"
 
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
@@ -32,7 +33,7 @@ static string const branch_option("branch");
 static string const key_option("key");
 
 app_state::app_state() 
-  : branch_name(""), db(""), stdhooks(true), rcfiles(true), diffs(false),
+  : branch_name(""), db(system_path()), stdhooks(true), rcfiles(true), diffs(false),
     no_merges(false), set_default(false), verbose(false), search_root("/"),
     depth(-1), last(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false)
@@ -47,40 +48,30 @@ app_state::~app_state()
 void
 app_state::allow_working_copy()
 {
-  fs::path root = mkpath(search_root());
-  fs::path working;
-  fs::path current;
-
-  found_working_copy = find_working_copy(root, working, current);
+  found_working_copy = find_and_go_to_working_copy(search_root);
 
   if (found_working_copy) 
     {
       L(F("initializing from directory %s\n") % fs::initial_path().string());
-      L(F("found working copy directory %s\n") % working.string());
-      N(chdir(working.native_directory_string().c_str()) != -1,
-        F("cannot change to directory to %s\n") % working.native_directory_string());
 
       read_options();
 
-      string dbname = absolutify(options[database_option]());
-      if (dbname != "") db.set_filename(mkpath(dbname));
+      system_path dbname = system_path(options[database_option]);
+      if (!dbname.empty()) db.set_filename(dbname);
       if (branch_name().empty())
         branch_name = options[branch_option];
       L(F("branch name is '%s'\n") % branch_name());
       internalize_rsa_keypair_id(options[key_option], signing_key);
 
-      if (!current.empty()) 
+      if (global_sanity.filename.empty())
         {
-          relative_directory = file_path(current.native_directory_string());
-          L(F("relative directory is '%s'\n") % relative_directory());
-        }
-
-      if (global_sanity.filename == "")
-        {
-          local_path dump_path;
+          bookkeeping_path dump_path;
           get_local_dump_path(dump_path);
           L(F("setting dump path to %s\n") % dump_path);
-          global_sanity.filename = dump_path();
+          // the 'true' means that, e.g., if we're running checkout, then it's
+          // okay for dumps to go into our starting working dir's MT rather
+          // than the checked-out dir's MT.
+          global_sanity.filename = system_path(dump_path, false);
         }
     }
   load_rcfiles();
@@ -96,23 +87,16 @@ app_state::require_working_copy(std::string const & explanation)
 }
 
 void 
-app_state::create_working_copy(std::string const & dir)
+app_state::create_working_copy(system_path const & new_dir)
 {
-  N(dir.size(), F("invalid directory ''"));
+  N(!new_dir.empty(), F("invalid directory ''"));
 
-  // cd back to where we started from
-  N(chdir(fs::initial_path().native_directory_string().c_str()) != -1,
-    F("cannot change to initial directory %s\n") 
-    % fs::initial_path().native_directory_string());
-
-  string target = absolutify(dir);
-  L(F("create working copy in %s\n") % target);
+  L(F("creating working copy in %s\n") % new_dir);
   
   {
-    fs::path new_dir = mkpath(target);
     try
       {
-        fs::create_directories(new_dir);
+        mkdir_p(new_dir);
       }
     catch (fs::filesystem_error & err)
       {
@@ -121,23 +105,17 @@ app_state::create_working_copy(std::string const & dir)
           % err.path1().native_directory_string()
           % strerror(err.native_error()));
       }
-    N(chdir(new_dir.native_directory_string().c_str()) != -1,
-      F("cannot change to new directory %s\n") 
-      % new_dir.native_directory_string());
-    
-    relative_directory = file_path();
   }
+  go_to_working_copy(new_dir);
 
-  local_path mt(book_keeping_dir);
+  N(!directory_exists(bookkeeping_root),
+    F("monotone bookkeeping directory '%s' already exists in '%s'\n") 
+    % bookkeeping_root % new_dir);
 
-  N(!directory_exists(mt),
-    F("monotone book-keeping directory '%s' already exists in '%s'\n") 
-    % book_keeping_dir % target);
+  L(F("creating bookkeeping directory '%s' for working copy in '%s'\n")
+    % bookkeeping_root % new_dir);
 
-  L(F("creating book-keeping directory '%s' for working copy in '%s'\n")
-    % book_keeping_dir % target);
-
-  mkdir_p(mt);
+  mkdir_p(bookkeeping_root);
 
   make_branch_sticky();
 
@@ -151,38 +129,27 @@ app_state::create_working_copy(std::string const & dir)
   load_rcfiles();
 }
 
-file_path
-app_state::prefix(utf8 const & path)
-{
-  fs::path p1 = mkpath(relative_directory()) / mkpath(path());
-  file_path p2(p1.normalize().string());
-  L(F("'%s' prefixed to '%s'\n") % path() % p2());
-  return p2;
-}
-
 void 
 app_state::set_restriction(path_set const & valid_paths, 
                            vector<utf8> const & paths,
                            bool respect_ignore)
 {
-  // this can't be a file-global static, because file_path's initializer
-  // depends on another global static being defined.
-  static file_path dot(".");
+  static file_path root = file_path_internal("");
   restrictions.clear();
   for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      file_path p = prefix(*i);
+      file_path p = file_path_external(*i);
 
       if (respect_ignore && lua.hook_ignore_file(p)) 
         {
-          L(F("'%s' ignored by restricted path set\n") % p());
+          L(F("'%s' ignored by restricted path set\n") % p);
           continue;
         }
 
-      N(p == dot || valid_paths.find(p) != valid_paths.end(),
-        F("unknown path '%s'\n") % p());
+      N(p == root || valid_paths.find(p) != valid_paths.end(),
+        F("unknown path '%s'\n") % p);
 
-      L(F("'%s' added to restricted path set\n") % p());
+      L(F("'%s' added to restricted path set\n") % p);
       restrictions.insert(p);
     }
 
@@ -190,16 +157,14 @@ app_state::set_restriction(path_set const & valid_paths,
   // assume current directory
   if ((depth != -1) && restrictions.empty()) 
     {
-      restrictions.insert(dot);
+      restrictions.insert(file_path_external(utf8(".")));
     }
 }
 
 bool
 app_state::restriction_includes(file_path const & path)
 {
-  // this can't be a file-global static, because file_path's initializer
-  // depends on another global static being defined.
-  static file_path dot(".");
+  static file_path root = file_path_internal("");
   if (restrictions.empty()) 
     {
       return true;
@@ -212,12 +177,12 @@ app_state::restriction_includes(file_path const & path)
   // careful about what goes in to the restricted path set we just
   // check for this special case here.
 
-  if ((!user_supplied_depth) && restrictions.find(dot) != restrictions.end())
+  if ((!user_supplied_depth) && restrictions.find(root) != restrictions.end())
     {
       return true;
     }
 
-  fs::path test = mkpath(path());
+  fs::path test = fs::path(path.as_external(), fs::native);
   long branch_depth = 0;
   long max_depth = depth + 1;
 
@@ -225,19 +190,19 @@ app_state::restriction_includes(file_path const & path)
     {
       L(F("checking restricted path set for '%s'\n") % test.string());
 
-      file_path p(test.string());
+      file_path p = file_path_internal(test.string());
       path_set::const_iterator i = restrictions.find(p);
 
       if (i != restrictions.end()) 
         {
           L(F("path '%s' found in restricted path set; '%s' included\n") 
-            % test.string() % path());
+            % test.string() % path);
           return true;
         }
       else
         {
           L(F("path '%s' not found in restricted path set; '%s' excluded\n") 
-            % test.string() % path());
+            % test.string() % path);
         }
 
       if (user_supplied_depth && (max_depth == branch_depth)) return false;
@@ -245,7 +210,7 @@ app_state::restriction_includes(file_path const & path)
       ++branch_depth;
     }
 
-  if (user_supplied_depth && (restrictions.find(dot) != restrictions.end()))
+  if (user_supplied_depth && (restrictions.find(root) != restrictions.end()))
     {
       return (branch_depth <= max_depth);
     }
@@ -254,12 +219,11 @@ app_state::restriction_includes(file_path const & path)
 }
 
 void 
-app_state::set_database(utf8 const & filename)
+app_state::set_database(system_path const & filename)
 {
-  string dbname = absolutify(filename());
-  if (dbname != "") db.set_filename(mkpath(dbname));
+  if (!filename.empty()) db.set_filename(filename);
 
-  options[database_option] = utf8(dbname);
+  options[database_option] = filename.as_internal();
 }
 
 void 
@@ -274,7 +238,8 @@ app_state::make_branch_sticky()
   options[branch_option] = branch_name();
   if (found_working_copy)
     {
-      // already have a working copy, can (must) write options directly
+      // already have a working copy, can (must) write options directly,
+      // because no-one else will do so
       // if we don't have a working copy yet, then require_working_copy (for
       // instance) will call write_options when it finds one.
       write_options();
@@ -290,14 +255,12 @@ app_state::set_signing_key(utf8 const & key)
 }
 
 void 
-app_state::set_root(utf8 const & path)
+app_state::set_root(system_path const & path)
 {
-  search_root = absolutify(path());
-  fs::path root = mkpath(search_root());
-  N(fs::exists(root),
-    F("search root '%s' does not exist\n") % search_root);
-  N(fs::is_directory(root),
-    F("search root '%s' is not a directory\n") % search_root);
+  require_path_is_directory(path,
+                            F("search root '%s' does not exist") % path,
+                            F("search root '%s' is not a directory\n") % path);
+  search_root = path;
   L(F("set search root to %s\n") % search_root);
 }
 
@@ -342,9 +305,9 @@ app_state::set_last(long l)
 }
 
 void
-app_state::set_pidfile(utf8 const & p)
+app_state::set_pidfile(system_path const & p)
 {
-  pidfile = mkpath(p());
+  pidfile = p;
 }
 
 void
@@ -413,8 +376,8 @@ app_state::load_rcfiles()
 
   if (rcfiles)
     {
-      fs::path default_rcfile;
-      fs::path working_copy_rcfile;
+      system_path default_rcfile;
+      bookkeeping_path working_copy_rcfile;
       lua.default_rcfilename(default_rcfile);
       lua.working_copy_rcfilename(working_copy_rcfile);
       lua.load_rcfile(default_rcfile, false);
@@ -433,11 +396,11 @@ app_state::load_rcfiles()
 void
 app_state::read_options()
 {
-  local_path o_path;
+  bookkeeping_path o_path;
   get_options_path(o_path);
   try
     {
-      if (file_exists(o_path))
+      if (path_exists(o_path))
         {
           data dat;
           read_data(o_path, dat);
@@ -453,7 +416,7 @@ app_state::read_options()
 void 
 app_state::write_options()
 {
-  local_path o_path;
+  bookkeeping_path o_path;
   get_options_path(o_path);
   try
     {

@@ -28,7 +28,7 @@
 #include "numeric_vocab.hh"
 #include "sanity.hh"
 #include "smap.hh"
-#include "path_component.hh"
+#include "paths.hh"
 
 // our analyses in this file happen on one of two families of
 // related structures: a path_analysis or a directory_map.
@@ -285,8 +285,7 @@ dump(path_state const & st, std::string & out)
     {
       std::vector<path_component> tmp_v;
       tmp_v.push_back(path_item_name(path_state_item(i)));
-      file_path tmp_fp;
-      compose_path(tmp_v, tmp_fp);
+      file_path tmp_fp(tmp_v);
       out += (F("tid %d: parent %d, type %s, name %s\n")
               % path_state_tid(i) 
               % path_item_parent(path_state_item(i))
@@ -342,8 +341,7 @@ dump_state(std::string const & s,
     {
       std::vector<path_component> tmp_v;
       tmp_v.push_back(path_item_name(path_state_item(i)));
-      file_path tmp_fp;
-      compose_path(tmp_v, tmp_fp);
+      file_path tmp_fp(tmp_v);
       L(F("state '%s': tid %d, parent %d, type %s, name %s\n")
         % s
         % path_state_tid(i) 
@@ -759,7 +757,7 @@ get_full_path(path_state const & state,
   std::vector<path_component> tmp;
   get_full_path(state, t, tmp);
   // L(F("got %d-entry path for tid %d\n") % tmp.size() % t);
-  compose_path(tmp, pth);
+  pth = file_path(tmp);
 }
 
 static void
@@ -801,13 +799,13 @@ compose_rearrangement(path_analysis const & pa,
       if (!null_name(path_item_name(old_item)))
         {
           get_full_path(pa.first, curr, old_name);
-          compose_path(old_name, old_path);
+          old_path = file_path(old_name);
         }
 
       if (!null_name(path_item_name(new_item)))      
         {
           get_full_path(pa.second, curr, new_name);
-          compose_path(new_name, new_path);
+          new_path = file_path(new_name);
         }
 
       if (old_path == new_path)
@@ -895,7 +893,7 @@ lookup_path(file_path const & pth,
             tid & t)
 {
   std::vector<path_component> vec;
-  split_path(pth, vec);
+  pth.split(vec);
   return lookup_path(vec, dir, t);
 }
 
@@ -919,7 +917,7 @@ ensure_entry(directory_map & dmap,
       if (null_name(path_item_name(path_state_item(parent))))
         {
           tid new_tid = ts.next();
-          state.insert(std::make_pair(new_tid, path_item(root_tid, entry_ty, make_null_component())));
+          state.insert(std::make_pair(new_tid, path_item(root_tid, entry_ty, the_null_component)));
           return new_tid;
         }        
     }
@@ -964,7 +962,7 @@ ensure_dir_in_map (file_path const & path,
                    tid_source & ts)
 {
   std::vector<path_component> components;
-  split_path(path, components);
+  path.split(components);
   return ensure_dir_in_map(components, dmap, state, ts);
 }
 
@@ -976,7 +974,9 @@ ensure_file_in_map (file_path const & path,
 {
   std::vector<path_component> prefix;  
   path_component leaf_path;
-  split_path(path, prefix, leaf_path);
+  path.split(prefix);
+  leaf_path = prefix.back();
+  prefix.pop_back();
   
   I(! null_name(leaf_path));
   tid dir_tid = ensure_dir_in_map(prefix, dmap, state, ts);
@@ -1066,7 +1066,7 @@ reconstruct_path(file_path const & input,
 
   // L(F("reconstructing path '%s' under analysis\n") % input);
   
-  split_path(input, vec);
+  input.split(vec);
 
   tid t = root_tid;
   std::vector<path_component>::const_iterator pth = vec.begin();
@@ -1111,7 +1111,7 @@ reconstruct_path(file_path const & input,
       ++pth;
     }
 
-  compose_path(rebuilt, output);
+  output = file_path(rebuilt);
   // L(F("reconstructed path '%s' as '%s'\n") % input % output);
 }
 
@@ -1158,14 +1158,14 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
        f != pr.deleted_files.end(); ++f)
     {
       tid x = ensure_file_in_map(*f, first_map, pa.first, ts);
-      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_file, make_null_component())));
+      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_file, the_null_component)));
     }
 
   for (std::set<file_path>::const_iterator d = pr.deleted_dirs.begin();
        d != pr.deleted_dirs.end(); ++d)
     {
       tid x = ensure_dir_in_map(*d, first_map, pa.first, ts);
-      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_directory, make_null_component())));
+      pa.second.insert(std::make_pair(x, path_item(root_tid, ptype_directory, the_null_component)));
     }
 
   for (std::map<file_path,file_path>::const_iterator rf = pr.renamed_files.begin();
@@ -1192,7 +1192,7 @@ analyze_rearrangement(change_set::path_rearrangement const & pr,
        a != pr.added_files.end(); ++a)
     {
       tid x = ensure_file_in_map(*a, second_map, pa.second, ts);
-      pa.first.insert(std::make_pair(x, path_item(root_tid, ptype_file, make_null_component())));
+      pa.first.insert(std::make_pair(x, path_item(root_tid, ptype_file, the_null_component)));
       damaged_in_second.insert(x);
     }
 
@@ -1407,7 +1407,7 @@ extract_killed(path_analysis const & a,
               file_path killed_path;
               get_full_path(a.second, dir_tid, killed_name);
               killed_name.push_back(first_name);
-              compose_path(killed_name, killed_path);
+              killed_path = file_path(killed_name);
               killed.insert(killed_path);
             }
         }
@@ -2410,7 +2410,7 @@ invert_change_set(change_set const & a2b,
 
 void 
 move_files_to_tmp_bottom_up(tid t,
-                            local_path const & temporary_root,
+                            bookkeeping_path const & temporary_root,
                             path_state const & state,
                             directory_map const & dmap)
 {
@@ -2436,9 +2436,8 @@ move_files_to_tmp_bottom_up(tid t,
 
           get_full_path(state, child, path);
           
-          local_path src(path());
-          local_path dst((mkpath(temporary_root()) 
-                          / mkpath(boost::lexical_cast<std::string>(child))).string());
+          bookkeeping_path dst =
+            temporary_root / boost::lexical_cast<std::string>(child);
           
           switch (path_item_type(item))
             {
@@ -2463,7 +2462,7 @@ move_files_to_tmp_bottom_up(tid t,
 
 void 
 move_files_from_tmp_top_down(tid t,
-                             local_path const & temporary_root,
+                             bookkeeping_path const & temporary_root,
                              path_state const & state,
                              directory_map const & dmap)
 {
@@ -2485,26 +2484,25 @@ move_files_from_tmp_top_down(tid t,
 
           get_full_path(state, child, path);
           
-          local_path src((mkpath(temporary_root()) 
-                          / mkpath(boost::lexical_cast<std::string>(child))).string());
-          local_path dst(path());
+          bookkeeping_path src =
+            temporary_root / boost::lexical_cast<std::string>(child);
           
           switch (path_item_type(item))
             {
             case ptype_file:
               if (file_exists(src))
                 {
-                  P(F("moving file %s -> %s\n") % src % dst);
+                  P(F("moving file %s -> %s\n") % src % path);
                   make_dir_for(path);
-                  move_file(src, dst);
+                  move_file(src, path);
                 }
               break;
             case ptype_directory:
               if (directory_exists(src))
                 {
-                  P(F("moving dir %s -> %s\n") % src % dst);
+                  P(F("moving dir %s -> %s\n") % src % path);
                   make_dir_for(path);
-                  move_dir(src, dst);
+                  move_dir(src, path);
                 }
               break;
             }
@@ -2519,7 +2517,7 @@ move_files_from_tmp_top_down(tid t,
 
 void
 apply_rearrangement_to_filesystem(change_set::path_rearrangement const & re,
-                                  local_path const & temporary_root)
+                                  bookkeeping_path const & temporary_root)
 {
   re.check_sane();
   tid_source ts;
@@ -2782,19 +2780,19 @@ parse_path_rearrangement(basic_io::parser & parser,
         { 
           parser.sym();
           parser.str(t1);
-          cs.add_file(file_path(t1));
+          cs.add_file(file_path_internal(t1));
         }
       else if (parser.symp(syms::delete_file)) 
         { 
           parser.sym();
           parser.str(t1);
-          cs.delete_file(file_path(t1));
+          cs.delete_file(file_path_internal(t1));
         }
       else if (parser.symp(syms::delete_dir)) 
         { 
           parser.sym();
           parser.str(t1);
-          cs.delete_dir(file_path(t1));
+          cs.delete_dir(file_path_internal(t1));
         }
       else if (parser.symp(syms::rename_file)) 
         { 
@@ -2802,8 +2800,8 @@ parse_path_rearrangement(basic_io::parser & parser,
           parser.str(t1);
           parser.esym(syms::to);
           parser.str(t2);
-          cs.rename_file(file_path(t1),
-                         file_path(t2));
+          cs.rename_file(file_path_internal(t1),
+                         file_path_internal(t2));
         }
       else if (parser.symp(syms::rename_dir)) 
         { 
@@ -2811,8 +2809,8 @@ parse_path_rearrangement(basic_io::parser & parser,
           parser.str(t1);
           parser.esym(syms::to);
           parser.str(t2);
-          cs.rename_dir(file_path(t1),
-                        file_path(t2));
+          cs.rename_dir(file_path_internal(t1),
+                        file_path_internal(t2));
         }
       else
         break;
@@ -2830,7 +2828,7 @@ print_insane_path_rearrangement(basic_io::printer & printer,
        i != pr.deleted_files.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::delete_file, (*i)());
+      st.push_file_pair(syms::delete_file, *i);
       printer.print_stanza(st);
     }
 
@@ -2838,7 +2836,7 @@ print_insane_path_rearrangement(basic_io::printer & printer,
        i != pr.deleted_dirs.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::delete_dir, (*i)());
+      st.push_file_pair(syms::delete_dir, *i);
       printer.print_stanza(st);
     }
 
@@ -2846,8 +2844,8 @@ print_insane_path_rearrangement(basic_io::printer & printer,
        i != pr.renamed_files.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::rename_file, i->first());
-      st.push_str_pair(syms::to, i->second());
+      st.push_file_pair(syms::rename_file, i->first);
+      st.push_file_pair(syms::to, i->second);
       printer.print_stanza(st);
     }
 
@@ -2855,8 +2853,8 @@ print_insane_path_rearrangement(basic_io::printer & printer,
        i != pr.renamed_dirs.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::rename_dir, i->first());
-      st.push_str_pair(syms::to, i->second());
+      st.push_file_pair(syms::rename_dir, i->first);
+      st.push_file_pair(syms::to, i->second);
       printer.print_stanza(st);
     }
 
@@ -2864,7 +2862,7 @@ print_insane_path_rearrangement(basic_io::printer & printer,
        i != pr.added_files.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::add_file, (*i)());
+      st.push_file_pair(syms::add_file, *i);
       printer.print_stanza(st);
     }
 }
@@ -2894,7 +2892,7 @@ parse_change_set(basic_io::parser & parser,
       parser.hex(src);
       parser.esym(syms::to);
       parser.hex(dst);
-      cs.deltas.insert(std::make_pair(file_path(path),
+      cs.deltas.insert(std::make_pair(file_path_internal(path),
                                       std::make_pair(file_id(src),
                                                      file_id(dst))));
     }
@@ -2911,7 +2909,7 @@ print_insane_change_set(basic_io::printer & printer,
        i != cs.deltas.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::patch, i->first());
+      st.push_file_pair(syms::patch, i->first);
       st.push_hex_pair(syms::from, i->second.first.inner()());
       st.push_hex_pair(syms::to, i->second.second.inner()());
       printer.print_stanza(st);
@@ -3110,20 +3108,24 @@ basic_change_set_test()
     {
       
       change_set cs;
-      cs.delete_file(file_path("usr/lib/zombie"));
-      cs.add_file(file_path("usr/bin/cat"),
+      cs.delete_file(file_path_internal("usr/lib/zombie"));
+      cs.add_file(file_path_internal("usr/bin/cat"),
                   file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
-      cs.add_file(file_path("usr/local/bin/dog"),
+      cs.add_file(file_path_internal("usr/local/bin/dog"),
                   file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
-      cs.rename_file(file_path("usr/local/bin/dog"), file_path("usr/bin/dog"));
-      cs.rename_file(file_path("usr/bin/cat"), file_path("usr/local/bin/chicken"));
-      cs.add_file(file_path("usr/lib/libc.so"),
+      cs.rename_file(file_path_internal("usr/local/bin/dog"),
+                     file_path_internal("usr/bin/dog"));
+      cs.rename_file(file_path_internal("usr/bin/cat"),
+                     file_path_internal("usr/local/bin/chicken"));
+      cs.add_file(file_path_internal("usr/lib/libc.so"),
                   file_id(hexenc<id>("435e816c30263c9184f94e7c4d5aec78ea7c028a")));
       // FIXME: this should be valid, but our directory semantics are broken.  Re-add
       // tests for things like this when fixing directory semantics!  (see bug tracker)
-      // cs.rename_dir(file_path("usr/lib"), file_path("usr/local/lib"));
-      cs.rename_dir(file_path("some/dir"), file_path("some/other/dir"));
-      cs.apply_delta(file_path("usr/local/bin/chicken"), 
+      // cs.rename_dir(file_path_internal("usr/lib"),
+      //               file_path_internal("usr/local/lib"));
+      cs.rename_dir(file_path_internal("some/dir"),
+                    file_path_internal("some/other/dir"));
+      cs.apply_delta(file_path_internal("usr/local/bin/chicken"), 
                      file_id(hexenc<id>("c6a4a6196bb4a744207e1a6e90273369b8c2e925")),
                      file_id(hexenc<id>("fe18ec0c55cbc72e4e51c58dc13af515a2f3a892")));
       spin_change_set(cs);
@@ -3145,22 +3147,23 @@ invert_change_test()
   change_set cs;
   manifest_map a;
 
-  a.insert(std::make_pair(file_path("usr/lib/zombie"),
+  a.insert(std::make_pair(file_path_internal("usr/lib/zombie"),
                           file_id(hexenc<id>("92ceb3cd922db36e48d5c30764e0f5488cdfca28"))));
-  cs.delete_file(file_path("usr/lib/zombie"));
-  cs.add_file(file_path("usr/bin/cat"),
+  cs.delete_file(file_path_internal("usr/lib/zombie"));
+  cs.add_file(file_path_internal("usr/bin/cat"),
               file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
-  cs.add_file(file_path("usr/local/dog"),
+  cs.add_file(file_path_internal("usr/local/dog"),
               file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
-  a.insert(std::make_pair(file_path("usr/foo"),
+  a.insert(std::make_pair(file_path_internal("usr/foo"),
                           file_id(hexenc<id>("9a4d3ae90b0cc26758e17e1f80229a13f57cad6e"))));
-  cs.rename_file(file_path("usr/foo"), file_path("usr/bar"));
-  cs.apply_delta(file_path("usr/bar"),
+  cs.rename_file(file_path_internal("usr/foo"),
+                 file_path_internal("usr/bar"));
+  cs.apply_delta(file_path_internal("usr/bar"),
                  file_id(hexenc<id>("9a4d3ae90b0cc26758e17e1f80229a13f57cad6e")),
                  file_id(hexenc<id>("fe18ec0c55cbc72e4e51c58dc13af515a2f3a892")));
-  a.insert(std::make_pair(file_path("usr/quuux"),
+  a.insert(std::make_pair(file_path_internal("usr/quuux"),
                           file_id(hexenc<id>("fe18ec0c55cbc72e4e51c58dc13af515a2f3a892"))));
-  cs.apply_delta(file_path("usr/quuux"),
+  cs.apply_delta(file_path_internal("usr/quuux"),
                  file_id(hexenc<id>("fe18ec0c55cbc72e4e51c58dc13af515a2f3a892")),
                  file_id(hexenc<id>("c6a4a6196bb4a744207e1a6e90273369b8c2e925")));
 
@@ -3185,20 +3188,20 @@ neutralize_change_test()
     {
       
       change_set cs1, cs2, csa;
-      cs1.add_file(file_path("usr/lib/zombie"),
+      cs1.add_file(file_path_internal("usr/lib/zombie"),
                    file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
-      cs1.rename_file(file_path("usr/lib/apple"),
-                      file_path("usr/lib/orange"));
-      cs1.rename_dir(file_path("usr/lib/moose"),
-                     file_path("usr/lib/squirrel"));
+      cs1.rename_file(file_path_internal("usr/lib/apple"),
+                      file_path_internal("usr/lib/orange"));
+      cs1.rename_dir(file_path_internal("usr/lib/moose"),
+                     file_path_internal("usr/lib/squirrel"));
 
       dump_change_set("neutralize target", cs1);
 
-      cs2.delete_file(file_path("usr/lib/zombie"));
-      cs2.rename_file(file_path("usr/lib/orange"),
-                      file_path("usr/lib/apple"));
-      cs2.rename_dir(file_path("usr/lib/squirrel"),
-                     file_path("usr/lib/moose"));
+      cs2.delete_file(file_path_internal("usr/lib/zombie"));
+      cs2.rename_file(file_path_internal("usr/lib/orange"),
+                      file_path_internal("usr/lib/apple"));
+      cs2.rename_dir(file_path_internal("usr/lib/squirrel"),
+                     file_path_internal("usr/lib/moose"));
 
       dump_change_set("neutralizer", cs2);
       
@@ -3230,20 +3233,20 @@ non_interfering_change_test()
     {
       
       change_set cs1, cs2, csa;
-      cs1.delete_file(file_path("usr/lib/zombie"));
-      cs1.rename_file(file_path("usr/lib/orange"),
-                      file_path("usr/lib/apple"));
-      cs1.rename_dir(file_path("usr/lib/squirrel"),
-                     file_path("usr/lib/moose"));
+      cs1.delete_file(file_path_internal("usr/lib/zombie"));
+      cs1.rename_file(file_path_internal("usr/lib/orange"),
+                      file_path_internal("usr/lib/apple"));
+      cs1.rename_dir(file_path_internal("usr/lib/squirrel"),
+                     file_path_internal("usr/lib/moose"));
 
       dump_change_set("non-interference A", cs1);
 
-      cs2.add_file(file_path("usr/lib/zombie"),
+      cs2.add_file(file_path_internal("usr/lib/zombie"),
                    file_id(hexenc<id>("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc")));
-      cs2.rename_file(file_path("usr/lib/pear"),
-                      file_path("usr/lib/orange"));
-      cs2.rename_dir(file_path("usr/lib/spy"),
-                     file_path("usr/lib/squirrel"));
+      cs2.rename_file(file_path_internal("usr/lib/pear"),
+                      file_path_internal("usr/lib/orange"));
+      cs2.rename_dir(file_path_internal("usr/lib/spy"),
+                     file_path_internal("usr/lib/squirrel"));
       
       dump_change_set("non-interference B", cs2);
 
@@ -3306,43 +3309,47 @@ struct bad_concatenate_change_test
   void combine() { do_combine = true; }
   void add_file(which_t which, std::string const & path, file_id fid = fid1)
   {
-    getit(which).add_file(file_path(path), fid);
+    getit(which).add_file(file_path_internal(path), fid);
     if (do_combine)
-      combined.add_file(file_path(path), fid);
+      combined.add_file(file_path_internal(path), fid);
   }
   void apply_delta(which_t which, std::string const & path,
                    file_id from_fid,
                    file_id to_fid)
   {
-    getit(which).apply_delta(file_path(path), from_fid, to_fid);
+    getit(which).apply_delta(file_path_internal(path), from_fid, to_fid);
     if (do_combine)
-      combined.apply_delta(file_path(path), from_fid, to_fid);
+      combined.apply_delta(file_path_internal(path), from_fid, to_fid);
   }
   void delete_file(which_t which, std::string const & path)
   {
-    getit(which).delete_file(file_path(path));
+    getit(which).delete_file(file_path_internal(path));
     if (do_combine)
-      combined.delete_file(file_path(path));
+      combined.delete_file(file_path_internal(path));
   }
   void delete_dir(which_t which, std::string const & path)
   {
-    getit(which).delete_dir(file_path(path));
+    getit(which).delete_dir(file_path_internal(path));
     if (do_combine)
-      combined.delete_dir(file_path(path));
+      combined.delete_dir(file_path_internal(path));
   }
   void rename_file(which_t which,
                    std::string const & path1, std::string const & path2)
   {
-    getit(which).rename_file(file_path(path1), file_path(path2));
+    getit(which).rename_file(file_path_internal(path1),
+                             file_path_internal(path2));
     if (do_combine)
-      combined.rename_file(file_path(path1), file_path(path2));
+      combined.rename_file(file_path_internal(path1),
+                           file_path_internal(path2));
   }
   void rename_dir(which_t which,
                   std::string const & path1, std::string const & path2)
   {
-    getit(which).rename_dir(file_path(path1), file_path(path2));
+    getit(which).rename_dir(file_path_internal(path1),
+                            file_path_internal(path2));
     if (do_combine)
-      combined.rename_dir(file_path(path1), file_path(path2));
+      combined.rename_dir(file_path_internal(path1),
+                          file_path_internal(path2));
   }
   void run()
   {

@@ -538,8 +538,7 @@ do_annotate_node (const annotate_node_work &work_unit,
       file_path parent_fpath = apply_change_set_inverse(cs, work_unit.node_fpath);
       L(F("file %s in parent revision %s is %s\n") % work_unit.node_fpath % parent_revision % parent_fpath);
 
-      I(!(parent_fpath == std::string("")));
-      I(parent_fpath().size() > 0);
+      I(!parent_fpath.empty());
 
       change_set::delta_map::const_iterator fdelta_iter = cs.deltas.find(parent_fpath);
       file_id parent_fid = work_unit.node_fid;

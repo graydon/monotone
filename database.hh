@@ -17,12 +17,11 @@ struct cert;
 #include <map>
 #include <string>
 
-#include <boost/filesystem/path.hpp>
-
 #include "selectors.hh"
 #include "manifest.hh"
 #include "numeric_vocab.hh"
 #include "vocab.hh"
+#include "paths.hh"
 
 struct revision_set;
 
@@ -71,7 +70,7 @@ struct app_state;
 
 class database
 {
-  fs::path filename;
+  system_path filename;
   std::string const schema;
   void check_schema();
 
@@ -205,9 +204,9 @@ class database
 
 public:
 
-  database(fs::path const & file);
+  database(system_path const & file);
 
-  void set_filename(fs::path const & file);
+  void set_filename(system_path const & file);
   void initialize();
   void debug(std::string const & sql, std::ostream & out);
   void dump(std::ostream &);

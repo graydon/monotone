@@ -30,6 +30,7 @@
 #include "ui.hh"
 #include "mt_version.hh"
 #include "options.hh"
+#include "paths.hh"
 
 // main option processing and exception handling code
 
@@ -318,15 +319,15 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_RCFILE:
-              app.add_rcfile(absolutify_for_command_line(tilde_expand(string(argstr))));
+              app.add_rcfile(string(argstr));
               break;
 
             case OPT_DUMP:
-              global_sanity.filename = absolutify(tilde_expand(string(argstr)));
+              global_sanity.filename = system_path(argstr);
               break;
 
             case OPT_DB_NAME:
-              app.set_database(absolutify(tilde_expand(string(argstr))));
+              app.set_database(system_path(argstr));
               break;
 
             case OPT_TICKER:
@@ -367,7 +368,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_MSGFILE:
-              app.set_message_file(absolutify_for_command_line(tilde_expand(string(argstr))));
+              app.set_message_file(string(argstr));
               break;
 
             case OPT_DATE:
@@ -379,7 +380,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_ROOT:
-              app.set_root(string(argstr));
+              app.set_root(system_path(argstr));
               break;
 
             case OPT_LAST:
@@ -411,7 +412,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_PIDFILE:
-              app.set_pidfile(absolutify(tilde_expand(string(argstr))));
+              app.set_pidfile(system_path(argstr));
               break;
 
             case OPT_ARGFILE:

@@ -1,3 +1,621 @@
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* database_check.cc: Track and report on manifest and revision
+	parseability.
+	* tests/t_database_check_normalized.at: Update to expect "not
+	parseable" messages rather than "not normalized" messages.
+	All tests pass.
+	
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_unreadable_MT.at: This test was called "do not fail on
+	unreadable MT/options".  I do not know why we wanted such
+	behavior.  I am making it "fail cleanly on unreadable
+	MT/options".
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (check_fp_normalizes_to, test_file_path_internal):
+	Oops, there were more places testing for non-brokenness; break
+	them too.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_split_join): Test that you cannot create a path
+	in MT by joining.
+	(file_path): Implement it.
+	(split): Break, to match broken behavior of old splitter (easier
+	than fixing change_set.cc...)
+	(file_path_internal): Test for brokenness accordingly.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (cat): Hack so that 'cat file REV PATH' works
+	correctly both inside and outside of working copy, interpreting
+	path slightly differently in each case.
+	
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_normalized_filenames.at: Internal unnormalized pathnames
+	are no longer silently normalized, but rather a hard error.
+	Adjust test accordingly.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (file_path_internal_from_user): New constructor.
+	* paths.cc (test_file_path_internal): Test it.
+	(file_path::file_path): Implement it.
+	* commands.cc (cat): Use it to create/validate passed in
+	filenames.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_system_path): Require that system_path normalize
+	out ..'s.
+	(system_path): Do so.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (build_additions): Remove redundant (and now wrong)
+	code.
+	Test 53 now passes.
+	
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (make_dir_for): Oops, this doesn't need a
+	fs::native.
+	Test 37 now passes.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (mkdir): New function.  Now with extra brain-eating
+	power.
+	(mkdir_p, make_dir_for, delete_file, delete_dir_recursive) 
+	(move_file, move_dir, write_data_impl): Use it, to make all
+	fs::path's native and disable boost's random rejection of paths.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_file_path_external_prefix_a_b) 
+	(test_file_path_external_no_prefix, test_file_path_internal): Test
+	for validity of more strange characters (,+@*%#$=).
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (ident_existing_file): Remove accidentally-left-in
+	code.  Test 26 now passes.
+	* lua.cc (monotone_includedir_for_lua, load_rcfile): Add
+	fs::native's.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (system_path::system_path): Add new boolean argument
+	controlling some access_tracker behavior.
+	* app_state.cc (allow_working_copy): Use it.
+	* paths.cc (system_path): Implement it.
+	(test_system_path): Test it.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (walk_tree): Return properly.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_file_path_internal): Add tests for
+	file_path.empty().
+	* file_io.cc (walk_tree_recursive): Add explicit fs::native.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Many small changes.  Unit tests now pass.  72
+	unexpected autotest failures.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (file_path): Fix up error reporting in external path
+	normalization.
+	(test_file_path_external_no_prefix): "" is always an invalid
+	path.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (sql): Only check schema version when db actually
+	exists.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (read_data_for_command_line): We are given a
+	system_path.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Fix all unit test failures, except for two mysterious
+	boost::too_few_args exceptions.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc, unix/fs.cc: Many, many fixes and some new tests too.	
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (struct access_tracker): Doh, initializer should set
+	'initialized'...
+	(test_file_path_internal): It's valid for a split file
+	to have a null component if the file is "".
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (in_bookkeeping_dir): Last change didn't work out so
+	well; let's remove some negatives and see if I can understand what
+	the code does this way...
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (not_in_bookkeeping_dir): Handle "MT" case.
+	Update tests to make sure it sticks...
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* unit_tests.{cc,hh} (init_unit_test_suite): Remove
+	path_component_tests.
+	* unix/fs.cc (tilde_expand): Another compile fix.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* {unix,win32}/fs.cc: Misc. compile fixes.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (UNIX_PLATFORM_SOURCES): Add unix/fs.cc
+	(WIN32_PLATFORM_SOURCES): Add win32/fs.cc
+	* paths.hh (bookkeeping_path): Implement default constructor.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* rcs_import.cc (import_cvs_repo): 
+	* lua.cc (default_rcfilename): 
+	* diff_patch.cc (get_version): Small compile fixes.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh} (is_bookkeeping_path): New static method.
+	* file_io.cc (walk_tree_recursive): Use it.  Now compiles.
+	paths.cc and file_io.cc now compile.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (delete_dir_recursive): Implement.
+	Misc. compile fixes.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (test_book_keeping_file): Remove.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (walk_tree_recursive, walk_tree): Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (const_system_path): Do tilde expansion.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (read_localized_data, read_data_for_command_line) 
+	(write_localized_data, write_data, write_data_impl): Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (read_data): Implement.  Remove the base64<gzip<>>
+	versions.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (move_file, move_dir): Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (assert_path_is_nonexistent, assert_path_is_file) 
+	(assert_path_is_directory, require_path_is_nonexistent) 
+	(require_path_is_file, require_path_is_directory) 
+	(ident_existing_file, mkdir_p, make_dir_for, delete_file) 
+	(delete_dir_recursive): Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* Audit uses of 'file_exists', because its semantics have changed;
+	it now checks to see if a path exists and is a regular file,
+	rather than that it simply exists.  A fair amount of code already
+	thought it meant that... other places now use 'path_exists'.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (path_exists, directory_exists, file_exists):
+	Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* platform.hh (get_path_status): New function.
+	* unix/fs.cc (get_path_status): Implement.
+	* win32/fs.cc (get_path_status): Implement inefficiently (does
+	win32 have stat?)
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (get_homedir, tilde_expand, book_keeping_file)
+	(book_keeping_dir): Remove.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* platform.hh (get_homedir): New function.
+	* {win32,unix}/fs.cc (get_homedir): Expose.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* Minor compile fixes.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* platform.hh (tilde_expand): New function.
+	* win32/fs.cc, unix/fs.cc: Implement it.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Many more fixes.  Now compiles with and without unit
+	tests.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Lots of compile fixes for unit tests.
+	Add a test for access_tracker.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Many fixes.  Now compiles.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (system_path): Implement.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (fully_normalized_path): Use find_first_of.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (find_and_go_to_working_copy, save_initial_path) 
+	(go_to_working_copy): Use new checked structure.
+	(operator <<): Make sure we can log our access_tracked values
+	without marking them as used.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (struct access_tracker): Add invariant checking on
+	lifetime usage of path roots.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (any_path::operator =): return *this.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh}: More fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh}: Reorganize a bit.  Implement file_path and
+	bookkeeping_path.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (file_path): Implement basic constructor.
+	Misc compile fixes.
+	Add single-character names to tests.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (go_to_working_copy): New function.  Implement.
+	* app_state.cc (create_working_copy): Adjust accordingly.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (find_and_go_to_working_copy): Implement.
+	* app_state.cc (allow_working_copy): Adjust accordingly.
+	(relative_directory): Remove.
+	* file_io.cc (find_working_copy): Remove.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (save_initial_path): Update for previous changes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_system_path): Add tests for the
+	from-any_path constructor.  Add test for "~foo" handling.
+	Start cleaning up path roots.
+	* platform.hh: Note that get_current_working_dir() is
+	charset-broken (i.e., operations started inside non-utf8
+	directories are probably broken).
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* app_state.cc (allow_working_copy): 
+	* change_set.cc (print_insane_change_set): Two more small compile
+	fixes.
+	All remaining compile errors are localized to unimplemented
+	paths.cc/file_io.cc functionality.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (initialize): Missing ;.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): Handle message_file right.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (print_insane_path_rearrangement): 
+	* database.cc (initialize): 
+	* monotone.cc (cpp_main): More small compile fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.hh
+	({assert,require}_path_is_{nonexistent,file,directory}): New
+	functions.
+	Use them everywhere.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* basic_io.hh: #include "paths.hh".
+	* monotone.cc (add_rcfile): Remove obsolete absolutification, etc.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (system_path): Add a from-any_path constructor.
+	* Makefile.am (MOST_SOURCES): Remove path_component.{cc,hh}.
+	* basic_io.hh (push_file_pair): New method.
+	* change_set.cc (print_insane_change_set) 
+	(print_insane_path_rearrangement): Use it.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (any_path::as_internal): On second thought, return a
+	std::string, not a utf8 -- utf8 would be better, but should wait
+	for some more general charset handling cleanup.
+	* Adjust other files accordingly.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* More compile fixes.  All remaing compile errors are real
+	problems, yay.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* Lots and lots more compile fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh, monotone.cc, app_state.hh, app_state.cc:
+	* unix/inodeprint.cc: More compile fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* manifest.hh: Include paths.hh.
+	* file_io.hh: Fix syntax errors, and fixup interface.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh, sanity.hh: Compilation fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Update tests to use path_state_* and pass utf8
+	objects.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (file_path_external): Take a utf8() object, always.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (class file_path): Make "convenience functions"
+	required.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* Switch rest of instances to using convenience functions.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+	
+	* Switch many instances to using convenience functions.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (file_path_internal, file_path_external): Define
+	convenience functions.
+	(file_path, bookkeeping_path, system_path): Add default
+	constructors.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* app_state.cc, change_set.cc, change_set.hh, commands.cc:
+	* inodeprint.cc, manifest.cc, rcs_import.cc, restrictions.cc:
+	* work.cc: Audit all calls to file_path() to add internal/external
+	notation.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* app_state.cc: More paths.hh conversion.
+	(app_state::prefix): Remove.
+	* commands.cc: Remove uses of app.prefix.
+	* automate.cc (automate_attributes): Likewise.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (any_path::as_internal): On second thought, return a
+	utf8 object.
+	* app_state.cc (set_database): Take a system_path.
+	(set_pidfile): Likewise.
+	* monotone.cc (cpp_main): Pass one.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.hh (get_homedir): Return a system_path.
+	* app_state.hh (app_state): Make pidfile a system_path.
+	* sanity.hh (sanity::filename): Make a system_path.
+	* monotone.cc (cpp_main): Adjust accordingly.
+	* paths.hh (any_path): Add as_internal() to interface.
+	* paths.cc: Add roundtripping tests.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* platform.hh, unix/fs.cc, win32/fs.cc
+	(change_current_working_dir): Take an any_path, not a string.
+	* rcs_import.{cc,hh}: Convert to paths.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (pid_file): Remove fs::path.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* mkstemp.cc (monotone_mkstemp): Remove references to fs::path.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (apply_rearrangement_to_filesystem): Oops, missed
+	some local_path's.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* path_component.{cc,hh}: Delete.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (move_files_to_tmp_bottom_up) 
+	(move_files_from_tmp_top_down): Convert to paths.hh.
+	Whole file: stop using path_component.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_bookkeeping_path): Oops, "" is an invalid
+	bookkeeping_path.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* lua.cc, paths.cc: Few more tweaks for previous change.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh}: Add / operators.  Make that the usual way to use
+	bookkeeping_path's.
+	* work.cc: Adjust accordingly.
+	* lua.cc (working_copy_rcfilename): Likewise.
+	* commands.cc (update): Likewise.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh} (operator <<): Implement for any_paths.
+	* paths.hh (class bookkeeping_path): Note that current design is
+	bogus to remind myself to fix it tomorrow...
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* work.{hh,cc}: Convert to paths.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* lua.{cc,hh}: Mostly convert to paths.hh.  (Still uses boost::fs
+	internally for some directory iteration.)
+	* app_state.cc (load_rcfiles): Update accordingly.
+	* file_io.hh (path_state): De-templatify; take any_path instead of
+	a T.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (any_path): New base class.
+	(file_path, bookkeeping_path, system_path): Inherit from it.
+	* transforms.{hh,cc} (utf8_to_system): Actually, always take a
+	utf8 after all (but still have two return types).
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.cc: Convert to paths.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.{cc,hh} (localized, localized_as_string): Remove.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.cc (utf8_to_system): Make fast.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.hh (utf8_to_system): Add a string->string version.
+	* transforms.cc (utf8_to_system): Implement it.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (localized_path_str): New function.
+	Fix some tests.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc: Convert to paths.hh.
+	* mkstemp.cc (monotone_mkstemp): Likewise.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* vocab_terms.hh, vocab.cc: Remove file_path, local_path.
+	* database.{hh,cc}, monotone.cc: Convert to paths.hh.
+	* file_io.{hh,cc}: Start to convert to paths.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh} (fully_normalized_path): Implement.
+	(external_path): Rename to system_path.
+	Misc. other updates.
+
+2005-08-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* paths.cc (is_absolute): New function.
+	(file_path::file_path(vector<path_component>))
+	(file_path::split): Implement.
+
+2005-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* interner.hh (interner): Add a scary constructor that lets us
+	insert an initial value and assert that we already knew that the
+	value assigned to it would be.  (This lets us make it an inlined
+	constant.)
+
+2005-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Yet more tests.
+
+2005-08-20  Nathaniel Smith  <njs@pobox.com>
+	
+	* paths.cc (save_initial_path): Implement.
+	Add more tests.
+	
+2005-08-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* paths.{cc,hh}: New files.
+	* Makefile.am (MOST_SOURCES): Add them.
+	* unit_tests.hh (add_paths_tests): Declare.
+	* unit_tests.cc (init_unit_test_suite): Add them.
+	* platform.hh (get_current_working_dir)
+	(change_current_working_dir):  New functions.
+	* {unix,win32}/fs.cc: New files.
+
+2005-08-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Tutorial): Tweak wording, use --db at more
+	appropriate places.
+
 2005-08-26  Richard Levitte  <richard@levitte.org>
 
 	* database.cc (version): Revert the change done earlier, as it

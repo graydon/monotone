@@ -174,16 +174,12 @@ void charset_convert(std::string const & src_charset, std::string const & dst_ch
                      std::string const & src, std::string & dst);
 void system_to_utf8(external const & system, utf8 & utf);
 void utf8_to_system(utf8 const & utf, external & system);
+void utf8_to_system(utf8 const & utf, std::string & system);
 void ace_to_utf8(ace const & ac, utf8 & utf);
 void utf8_to_ace(utf8 const & utf, ace & a);
 
 // returns length in characters (not bytes)
 size_t length(utf8 const & utf);
-
-fs::path localized(file_path const & path);
-fs::path localized(local_path const & path);
-fs::path localized(utf8 const & path);
-std::string localized_as_string(file_path const & path);
 
 // specific internal / external conversions for various vocab terms
 void internalize_cert_name(utf8 const & utf, cert_name & c);

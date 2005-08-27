@@ -84,6 +84,10 @@ void basic_io::stanza::push_str_pair(std::string const & k, std::string const & 
     indent = k.size();
 }
 
+void basic_io::stanza::push_file_pair(std::string const & k, file_path const & v)
+{
+  push_str_pair(k, v.as_internal());
+}
 
 basic_io::printer::printer(std::ostream & ost) 
   : empty_output(true), out(ost)
