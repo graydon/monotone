@@ -138,11 +138,19 @@ function binary_file(name)
 end
 
 function edit_comment(basetext, user_log_message)
-   local exe = "vi"
+   local exe = nil
+   if (program_exists_in_path("vi")) then exe = "vi" end
+   if (program_exists_in_path("notepad.exe")) then exe = "notepad.exe" end
    local visual = os.getenv("VISUAL")
    if (visual ~= nil) then exe = visual end
    local editor = os.getenv("EDITOR")
    if (editor ~= nil) then exe = editor end
+
+   if (exe == nil) then
+      io.write("Could not find editor to enter commit message\n"
+               .. "Try setting the environment variable EDITOR\n")
+      return nil
+   end
 
    local tmp, tname = temp_file()
    if (tmp == nil) then return nil end
@@ -152,6 +160,8 @@ function edit_comment(basetext, user_log_message)
    io.close(tmp)
 
    if (execute(exe, tname) ~= 0) then
+      io.write(string.format("Error running editor '%s' to enter log message\n",
+                             exe))
       os.remove(tname)
       return nil
    end

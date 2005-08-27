@@ -1,5 +1,12 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* std_hooks.lua: Check for both "vi" and "notepad.exe" as fallback
+	editors.  If no editor was found, print a helpful message instead
+	of just running "vi" anyway.  Print a message if the editor exited
+	with error.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* file_io.cc (mkdir_p, make_dir_for): Increase error checking.
 	* commands.cc (checkout): Make sure that checkout target directory
 	does not already exist.  Also use system_path more uniformly.
