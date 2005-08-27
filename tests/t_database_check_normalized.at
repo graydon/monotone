@@ -101,7 +101,7 @@ UNGZB64(bad.db.gz.b64, bad.db)
 
 AT_CHECK(MONOTONE db check -d bad.db, [1], [ignore], [stderr])
 
-AT_CHECK(grep 'revisions not in normalized form' stderr, [], [ignore], [ignore])
-AT_CHECK(grep 'manifests not in normalized form' stderr, [], [ignore], [ignore])
+AT_CHECK(grep 'revisions not parseable' stderr, [], [ignore], [ignore])
+AT_CHECK(grep 'manifests not parseable' stderr, [], [ignore], [ignore])
 
 AT_CLEANUP

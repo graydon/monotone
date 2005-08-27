@@ -1,5 +1,13 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* database_check.cc: Track and report on manifest and revision
+	parseability.
+	* tests/t_database_check_normalized.at: Update to expect "not
+	parseable" messages rather than "not normalized" messages.
+	All tests pass.
+	
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_unreadable_MT.at: This test was called "do not fail on
 	unreadable MT/options".  I do not know why we wanted such
 	behavior.  I am making it "fail cleanly on unreadable
