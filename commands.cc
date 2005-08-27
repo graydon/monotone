@@ -365,7 +365,8 @@ get_log_message(revision_set const & cs,
   write_revision_set(cs, summary);
   read_user_log(user_log_message);
   commentary += "----------------------------------------------------------------------\n";
-  commentary += _("Enter Log. Lines beginning with `MT:' are removed automatically\n");
+  commentary += _("Enter a description of this change.\n"
+                  "Lines beginning with `MT:' are removed automatically.\n");
   commentary += "\n";
   commentary += summary();
   commentary += "----------------------------------------------------------------------\n";
@@ -2353,7 +2354,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
     {
       get_log_message(rs, app, log_message);
       N(log_message.find_first_not_of(" \r\t\n") != string::npos,
-        F("empty log message"));
+        F("empty log message; commit canceled"));
       // we write it out so that if the commit fails, the log
       // message will be preserved for a retry
       write_user_log(data(log_message));

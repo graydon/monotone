@@ -1,5 +1,13 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (get_log_message): Make the log message commentary a
+	little more descriptive for people who may not know what a log
+	message is...
+	(commit): When canceling a commit due to empty log message, say
+	so.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* std_hooks.lua: Check for both "vi" and "notepad.exe" as fallback
 	editors.  If no editor was found, print a helpful message instead
 	of just running "vi" anyway.  Print a message if the editor exited
