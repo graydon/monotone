@@ -2459,7 +2459,7 @@ database::open()
   error = sqlite3_open(filename.as_external().c_str(), &__sql);
 
   N(!error, (F("could not open database '%s': %s")
-             % filename() % string(sqlite3_errmsg(__sql))));
+             % filename % string(sqlite3_errmsg(__sql))));
 }
 
 
