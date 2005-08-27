@@ -1,5 +1,12 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* app_state.cc (create_working_copy): Remove
+	fs::filesystem_exception catching.
+	* file_io.hh (mkdir_p): Remove comment noting app_state.cc's
+	dependence on a boost-based implementation.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc: Include <string>.  Helps build on g++ 3.3?
 
 2005-08-26  Nathaniel Smith  <njs@pobox.com>

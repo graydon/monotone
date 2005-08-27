@@ -92,19 +92,7 @@ app_state::create_working_copy(system_path const & new_dir)
 
   L(F("creating working copy in %s\n") % new_dir);
   
-  {
-    try
-      {
-        mkdir_p(new_dir);
-      }
-    catch (fs::filesystem_error & err)
-      {
-        N(false,
-          F("could not create directory: %s: %s\n")
-          % err.path1().native_directory_string()
-          % strerror(err.native_error()));
-      }
-  }
+  mkdir_p(new_dir);
   go_to_working_copy(new_dir);
 
   N(!directory_exists(bookkeeping_root),
