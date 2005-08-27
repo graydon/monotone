@@ -13,30 +13,10 @@
 
 // this layer deals with talking to the filesystem, loading and saving
 // files, walking trees, etc.
-//
-// we have *three* types of file path we're willing to deal with.
-// 
-// - a boost::filesystem::path (fs::path)
-//   [ defined in boost/filesystem/path.hpp ]
-//   this is a generally portable path to anywhere in the fs
-//
-// - a local_path
-//   [ defined in vocab.{hh,cc} ]
-//   this is a path to a file in-or-under the current directory; it doesn't
-//   escape cwd, and it's name restrictions are tighter than an fs::path,
-//   as far as illegal characters and junk
-//
-// - a file_path
-//   [ defined in vocab.{hh,cc} ]
-//   this is a local_path which is *not* in the MT/ book-keeping
-//   directory. in other words, it's a local_path which may permissibly be
-//   part of a manifest.
-//
-// several functions in *this* file are defined on more than one of these
-// sorts of paths. the reason for the multiple path types is to avoid ever
-// constructing (and "forgetting to check the validity" of) an illegal
-// value in *other* parts of the code. this file contains stuff which is so
-// low level we can't mostly know whether what's being asked for is legal.
+
+// this code mostly deals in any_path's, because these operations are too low
+// level for us to say whether applying them in any given case is valid or
+// not.
 
 struct lua_hooks;
 
@@ -64,11 +44,10 @@ bool file_exists(any_path const & path);
 
 bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
 
-// returns true if the string content is binary according to monotone euristic
+// returns true if the string content is binary according to monotone heuristic
 bool guess_binary(std::string const & s);
 
 void mkdir_p(any_path const & path);
-
 void make_dir_for(any_path const & p);
 
 void delete_file(any_path const & path);

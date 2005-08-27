@@ -6,7 +6,97 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-// safe, portable, fast, simple file handling -- in that order
+// safe, portable, fast, simple path handling -- in that order.
+// but they all count.
+//
+// this file defines the vocabulary we speak in when dealing with the
+// filesystem.  this is an extremely complex problem by the time one worries
+// about normalization, security issues, character sets, and so on;
+// furthermore, path manipulation has historically been a performance
+// bottleneck in monotone.  so the goal here is the efficient implementation
+// of a design that makes it hard or impossible to introduce as many classes
+// of bugs as possible.
+//
+// Our approach is to have three different types of paths:
+//   -- system_path
+//      this is a path to anywhere in the fs.  it is in native format.  it is
+//      always absolute.  when constructed from a string, it interprets the
+//      string as being relative to the directory that monotone was run in.
+//      (note that this may be different from monotone's current directory, as
+//      when run in working copy monotone chdir's to the project root.)
+//
+//      one can also construct a system_path from one of the below two types
+//      of paths.  this is intelligent, in that it knows that these sorts of
+//      paths are considered to be relative to the project root.  thus
+//        system_path(file_path_internal("foo"))
+//      is not, in general, the same as
+//        system_path("foo")
+//      
+//   -- file_path
+//      this is a path representing a versioned file.  it is always
+//      a fully normalized relative path, that does not escape the project
+//      root.  it is always relative to the project root.
+//      you cannot construct a file_path directly from a string; you must pick
+//      a constructor:
+//        file_path_internal: use this for strings that come from
+//          "monotone-internal" places, e.g. parsing revisions.  this turns on
+//          stricter checking -- the string must already be normalized -- and
+//          is extremely fast.  such strings are interpreted as being relative
+//          to the project root.
+//        file_path_external: use this for strings that come from the user.
+//          these strings are normalized before being checked, and if there is
+//          a problem trigger N() invariants rather than I() invariants.  such
+//          strings are interpreted as being _relative to the user's original
+//          directory_.  this function can only be called from within a
+//          working copy.
+//        file_path_internal_from_user: use this for strings that come from
+//          the user, _but_ are not referring to paths in the working copy,
+//          but rather in some database object directly.  for instance, 'cat
+//          file REV PATH' uses this function.  this function is exactly like
+//          file_path_internal, except that it raises N() errors rather than
+//          I() errors.
+//      file_path's also provide optimized splitting and joining
+//      functionality.
+//
+//   -- bookkeeping_path
+//      this is a path representing something in the MT/ directory of a
+//      working copy.  it has the same format restrictions as a file_path,
+//      except instead of being forbidden to point into the MT directory, it
+//      is _required_ to point into the MT directory.  the one constructor is
+//      strict, and analogous to file_path_internal.  however, the normal way
+//      to construct bookkeeping_path's is to use the global constant
+//      'bookkeeping_root', which points to the MT directory.  Thus to
+//      construct a path pointing to MT/options, use:
+//          bookkeeping_root / "options"
+//          
+// All path types should always be constructed from utf8-encoded strings.
+//
+// All path types provide an "operator /" which allows one to construct new
+// paths pointing to things underneath a given path.  E.g.,
+//     file_path_internal("foo") / "bar" == file_path_internal("foo/bar")
+//
+// All path types subclass 'any_path', which provides:
+//    -- emptyness checking with .empty()
+//    -- a method .as_internal(), which returns the utf8-encoded string
+//       representing this path for internal use.  for instance, this is the
+//       string that should be embedded into the text of revisions.
+//    -- a method .as_external(), which returns a std::string suitable for
+//       passing to filesystem interface functions.  in practice, this means
+//       that it is recoded into an appropriate character set, etc.
+//    -- a operator<< for ostreams.  this should always be used when writing
+//       out paths for display to the user.  at the moment it just calls one
+//       of the above functions, but this is _not_ correct.  there are
+//       actually 3 different logical character sets -- internal (utf8),
+//       user (locale-specific), and filesystem (locale-specific, except
+//       when it's not, i.e., on OS X).  so we need three distinct operations,
+//       and you should use the correct one.
+//
+//       all this means that when you want to print out a path, you usually
+//       want to just say:
+//           F("my path is %s") % my_path
+//       i.e., nothing fancy necessary, for purposes of F() just treat it like
+//       it were a string
+
 
 #include <iosfwd>
 #include <string>
