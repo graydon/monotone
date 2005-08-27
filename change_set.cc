@@ -2422,7 +2422,7 @@ move_files_to_tmp_bottom_up(tid t,
            entry != node->end(); ++entry)
         {
           tid child = directory_entry_tid(entry);
-          file_path path;
+          file_path src;
           path_item item;
               
           find_item(child, state, item);
@@ -2434,7 +2434,7 @@ move_files_to_tmp_bottom_up(tid t,
           if (path_item_type(item) == ptype_directory)
             move_files_to_tmp_bottom_up(child, temporary_root, state, dmap);
 
-          get_full_path(state, child, path);
+          get_full_path(state, child, src);
           
           bookkeeping_path dst =
             temporary_root / boost::lexical_cast<std::string>(child);
@@ -2474,7 +2474,7 @@ move_files_from_tmp_top_down(tid t,
            entry != node->end(); ++entry)
         {
           tid child = directory_entry_tid(entry);
-          file_path path;
+          file_path dst;
           path_item item;
               
           find_item(child, state, item);
@@ -2482,7 +2482,7 @@ move_files_from_tmp_top_down(tid t,
           if (null_name(path_item_name(item)))
             continue;
 
-          get_full_path(state, child, path);
+          get_full_path(state, child, dst);
           
           bookkeeping_path src =
             temporary_root / boost::lexical_cast<std::string>(child);
@@ -2492,17 +2492,17 @@ move_files_from_tmp_top_down(tid t,
             case ptype_file:
               if (file_exists(src))
                 {
-                  P(F("moving file %s -> %s\n") % src % path);
-                  make_dir_for(path);
-                  move_file(src, path);
+                  P(F("moving file %s -> %s\n") % src % dst);
+                  make_dir_for(dst);
+                  move_file(src, dist);
                 }
               break;
             case ptype_directory:
               if (directory_exists(src))
                 {
-                  P(F("moving dir %s -> %s\n") % src % path);
-                  make_dir_for(path);
-                  move_dir(src, path);
+                  P(F("moving dir %s -> %s\n") % src % dist);
+                  make_dir_for(dist);
+                  move_dir(src, dst);
                 }
               break;
             }

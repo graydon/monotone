@@ -1154,8 +1154,9 @@ CMD(rename, N_("working copy"), N_("SRC DST"),
   change_set::path_rearrangement work;
   get_path_rearrangement(work);
 
-  build_rename(app.prefix(idx(args, 0)()), app.prefix(idx(args, 1)()), m_old,
-               app, work);
+  build_rename(file_path_external(idx(args, 0)),
+               file_path_external(idx(args, 1)),
+               m_old, app, work);
   
   put_path_rearrangement(work);
   
@@ -2162,7 +2163,7 @@ CMD(attr, N_("working copy"), N_("set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FIL
       read_attr_map(attr_data, attrs);
     }
   
-  file_path path = app.prefix(idx(args,1)());
+  file_path path = file_path_external(idx(args,1));
   N(file_exists(path), F("no such file %s") % path);
 
   bool attrs_modified = false;

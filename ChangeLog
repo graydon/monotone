@@ -1,5 +1,13 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* transforms.cc (length): 
+	* database.cc (sql, load, open): 
+	* commands.cc (rename, attr): 
+	* change_set.cc (move_files_to_tmp_bottom_up) 
+	(move_files_from_tmp_top_down): Merge fixups.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* database_check.cc: Track and report on manifest and revision
 	parseability.
 	* tests/t_database_check_normalized.at: Update to expect "not

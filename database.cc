@@ -194,12 +194,12 @@ database::sql(bool init)
       if (! init)
         {
           N(fs::exists(filename), 
-            F("database %s does not exist") % filename.string());
           N(!fs::is_directory(filename), 
-            F("database %s is a directory") % filename.string());
+          require_path_is_file(filename,
+                               F("database %s does not exist") % filename,
+                               F("database %s is a directory") % filename);
+          check_sqlite_format_version(filename);
         }
-
-      check_sqlite_format_version(filename);
 
       open();
 
@@ -346,8 +346,8 @@ database::load(istream & in)
 
   check_filename();
 
-  N(!fs::exists(filename),
-    F("cannot create %s; it already exists\n") % filename.string());
+  require_path_is_nonexistent(filename,
+                              F("cannot create %s; it already exists") % filename);
 
   open();
 
@@ -2458,11 +2458,10 @@ database::open()
 {
   int error;
 
-  error = sqlite3_open(filename.string().c_str(), &__sql);
+  error = sqlite3_open(filename.as_external().c_str(), &__sql);
 
   N(!error, (F("could not open database '%s': %s")
-             % filename.string()
-             % string(sqlite3_errmsg(__sql))));
+             % filename() % string(sqlite3_errmsg(__sql))));
 }
 
 
