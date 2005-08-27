@@ -1,5 +1,13 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* file_io.cc (mkdir_p, make_dir_for): Increase error checking.
+	* commands.cc (checkout): Make sure that checkout target directory
+	does not already exist.  Also use system_path more uniformly.
+	* tests/t_checkout_dir.at: Test.
+	* tests/t_setup_existing_path.at: New test.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (read): Optionally take files on command line.
 	* tests/t_read_from_file.at, testsuite.at: New test.
 	* monotone.texi (Network Service): Show Jim using this.

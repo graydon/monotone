@@ -8,6 +8,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
+#include <boost/filesystem/exception.hpp>
 
 #include "botan/botan.h"
 
@@ -143,7 +144,23 @@ mkdir(any_path const & p)
 void 
 mkdir_p(any_path const & p) 
 { 
-  fs::create_directories(mkdir(p));
+  try
+    {
+      fs::create_directories(mkdir(p));
+    }
+  catch (fs::filesystem_error & err)
+    {
+      // check for this case first, because in this case, the next line will
+      // print "could not create directory: Success".  Which is unhelpful.
+      E(get_path_status(p) != path::file,
+        F("could not create directory '%s'\nit is a file") % p);
+      E(false,
+        F("could not create directory '%s'\n%s")
+        % err.path1().native_directory_string() % strerror(err.native_error()));
+    }
+  require_path_is_directory(p,
+                            F("could not create directory '%s'") % p,
+                            F("could not create directory '%s'\nit is a file") % p);
 }
 
 void 
@@ -152,7 +169,10 @@ make_dir_for(any_path const & p)
   fs::path tmp(p.as_external(), fs::native);
   if (tmp.has_branch_path())
     {
-      fs::create_directories(tmp.branch_path());
+      fs::path dir = tmp.branch_path();
+      fs::create_directories(dir);
+      N(fs::exists(dir) && fs::is_directory(dir),
+        F("failed to create directory '%s' for '%s'") % dir.string() % p);
     }
 }
 

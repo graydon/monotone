@@ -1415,7 +1415,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   revision_id ident;
-  string dir;
+  system_path dir;
 
   if (args.size() > 1 || app.revision_selectors.size() > 1)
     throw usage(name);
@@ -1424,12 +1424,12 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     {
       // no checkout dir specified, use branch name for dir
       N(!app.branch_name().empty(), F("need --branch argument for branch-based checkout"));
-      dir = app.branch_name();
+      dir = system_path(app.branch_name());
     }
   else
     {
       // checkout to specified dir
-      dir = idx(args, 0)();
+      dir = system_path(idx(args, 0));
     }
 
   if (app.revision_selectors.size() == 0)
@@ -1469,6 +1469,9 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
         % ident % app.branch_name);
     }
 
+  require_path_is_nonexistent(dir,
+                              F("checkout directory '%s' already exists")
+                              % dir);
   app.create_working_copy(dir);
 
   transaction_guard guard(app.db);
