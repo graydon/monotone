@@ -1908,12 +1908,30 @@ CMD(privkey, N_("packet i/o"), N_("ID"), N_("write private key packet to stdout"
 }
 
 
-CMD(read, N_("packet i/o"), "", N_("read packets from stdin"),
+CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
+    N_("read packets from files or stdin"),
     OPT_NONE)
 {
   packet_db_writer dbw(app, true);
-  size_t count = read_packets(cin, dbw);
-  N(count != 0, F("no packets found on stdin"));
+  size_t count = 0;
+  if (args.empty())
+    {
+      count += read_packets(cin, dbw);
+      N(count != 0, F("no packets found on stdin"));
+    }
+  else
+    {
+      for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+        {
+          data dat;
+          read_data(system_path(*i), dat);
+          istringstream ss(dat());
+          count += read_packets(ss, dbw);
+        }
+      N(count != 0, FP("no packets found in given file",
+                       "no packets found in given files",
+                       args.size()));
+    }
   P(FP("read %d packet", "read %d packets", count) % count);
 }
 

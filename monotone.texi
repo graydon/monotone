@@ -1602,10 +1602,8 @@ into his database:
 
 @smallexample
 @group
-$ monotone --db=~/jim.db read <~/abe.pubkey
-monotone: read 1 packet
-$ monotone --db=~/jim.db read <~/beth.pubkey
-monotone: read 1 packet
+$ monotone --db=~/jim.db read ~/abe.pubkey ~/beth.pubkey
+monotone: read 2 packets
 @end group
 @end smallexample
 
@@ -4198,9 +4196,10 @@ private keys safely between monotone databases.
 
 
 @item monotone read
+@item monotone read @var{file1} @var{file2...}
 
-This command reads packets from @code{stdin} and applies them to your
-database. 
+This command reads packets from files or @code{stdin} and stores them
+in your database.
 
 @end ftable
 
@@ -6737,10 +6736,8 @@ Write private key packet to stdout.
 Write public key packet to stdout.
 @comment TROFF INPUT: .TP
 
-@item @b{read}
-Read packets from stdin. It is very important to @b{only read keys
-from trusted sources}; all other trust relationships are built out of
-the trust assigned to keys.
+@item @b{read} @i{[<file1> [<file2> [...]]]}
+Read packets from files or stdin.
 @comment TROFF INPUT: .TP
 
 @item @b{cvs_import} @i{<cvsroot>/<module>}

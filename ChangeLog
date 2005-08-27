@@ -1,5 +1,13 @@
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (read): Optionally take files on command line.
+	* tests/t_read_from_file.at, testsuite.at: New test.
+	* monotone.texi (Network Service): Show Jim using this.
+	(Packet I/O, Commands): Document.
+	* monotone.1: Likewise.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
 	* change_set.cc (move_files_from_tmp_top_down): Typo again.
 	
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
