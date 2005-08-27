@@ -1,3 +1,8 @@
+2005-08-27  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (checkout): Special-case "checkout ."
+	* tests/t_checkout_dir.at: Test it.
+
 2005-08-26  Nathaniel Smith  <njs@pobox.com>
 
 	* file_io.hh: Remove comment describing old path types.

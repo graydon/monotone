@@ -29,4 +29,10 @@ AT_CHECK(MONOTONE --branch=testbranch checkout test_dir4/subdir,
 # temporary directory.
 chmod 700 test_dir4
 
+# checkout <existing dir> normally is disallowed
+# but as a special case, we allow "checkout ."
+
+mkdir test_dir5
+AT_CHECK(cd test_dir5 && MONOTONE --branch=testbranch checkout ., [], [ignore], [ignore])
+
 AT_CLEANUP
