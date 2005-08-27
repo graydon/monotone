@@ -2500,8 +2500,8 @@ move_files_from_tmp_top_down(tid t,
             case ptype_directory:
               if (directory_exists(src))
                 {
-                  P(F("moving dir %s -> %s\n") % src % dist);
-                  make_dir_for(dist);
+                  P(F("moving dir %s -> %s\n") % src % dst);
+                  make_dir_for(dst);
                   move_dir(src, dst);
                 }
               break;
