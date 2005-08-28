@@ -1,3 +1,8 @@
+2005-08-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_attributes.at: Delete checkout dir in between
+	checkouts.
+
 2005-08-27  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (checkout): Special-case "checkout ."
