@@ -72,6 +72,15 @@ void key_hash_code(rsa_keypair_id const & id,
                    base64< arc4<rsa_priv_key> > const & priv,
                    hexenc<id> & out);
 
+bool keys_match(rsa_keypair_id const & id1,
+                base64<rsa_pub_key> const & key1,
+                rsa_keypair_id const & id2,
+                base64<rsa_pub_key> const & key2);
+
+bool keys_match(rsa_keypair_id const & id1,
+                base64< arc4<rsa_priv_key> > const & key1,
+                rsa_keypair_id const & id2,
+                base64< arc4<rsa_priv_key> > const & key2);
 
 
 #endif // __KEYS_HH__

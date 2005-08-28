@@ -369,7 +369,7 @@ load_priv_key(app_state & app,
             {
               // We really don't want the database key and the rcfile key
               // to differ.
-              N(remove_ws(dbkey()) == remove_ws(luakey()),
+              N(keys_match(id, dbkey, id, luakey),
                   F("mismatch between private key '%s' in database"
                     " and get_priv_key hook") % id);
             }
