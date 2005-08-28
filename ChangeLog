@@ -3,6 +3,12 @@
 	* tests/t_attributes.at: Delete checkout dir in between
 	checkouts.
 
+2005-08-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* keys.cc (keys_match): new function to compare whether two keys
+	match (ignoring whitespace as the database does, etc).
+	* packet.cc, keys.cc: use it for existing-key-comparison.
+
 2005-08-27  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (checkout): Special-case "checkout ."

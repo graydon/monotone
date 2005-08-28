@@ -17,6 +17,7 @@
 #include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "keys.hh"
 
 using namespace std;
 using boost::shared_ptr;
@@ -982,7 +983,7 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
     {
       base64<rsa_pub_key> tmp;
       pimpl->app.db.get_key(ident, tmp);
-      if (!(tmp() == k()))
+      if (!keys_match(ident, tmp, ident, k))
         W(F("key '%s' is not equal to key '%s' in database\n") % ident % ident);
       L(F("skipping existing public key %s\n") % ident);
     }
