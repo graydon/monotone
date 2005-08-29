@@ -263,6 +263,7 @@ cpp_main(int argc, char ** argv)
 
   // Set up secure memory allocation etc
   Botan::Init::initialize();
+  Botan::set_default_allocator("malloc");
   
   // decode all argv values into a UTF-8 array
 

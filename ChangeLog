@@ -1,3 +1,9 @@
+2005-08-30  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/allocate.cpp: avoid string comparison when looking up the 
+	default allocator
+	* monotone.cc (cpp_main): set a default allocator
+
 2005-08-28  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/t_attributes.at: Delete checkout dir in between
