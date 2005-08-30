@@ -1,3 +1,9 @@
+2005-08-30  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* revision.cc (ensure_parents_loaded): Don't reuse an iterator
+	after we've invalidated it.  Fixes 'diff' crash reported by Howard
+	Spindel.
+
 2005-08-30  Matt Johnston  <matt@ucc.asn.au>
 
 	* botan/allocate.cpp: avoid string comparison when looking up the 
