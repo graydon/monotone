@@ -1,3 +1,8 @@
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (ls_certs): Reworked for i18n.
+	(CMD(commit)): Merged 2 strings.
+
 2005-08-30  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* revision.cc (ensure_parents_loaded): Don't reuse an iterator

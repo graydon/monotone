@@ -563,6 +563,21 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   // particular.
   sort(certs.begin(), certs.end());
 
+  string str     = _("Key   : %s\n"
+                     "Sig   : %s\n"
+                     "Name  : %s\n"
+                     "Value : %s\n");
+  string extra_str = "      : %s\n";
+
+  string::size_type colon_pos = str.find(':');
+
+  if (colon_pos != string::npos)
+    {
+      string substr(str, 0, colon_pos);
+      colon_pos = length(substr);
+      extra_str = string(colon_pos, ' ') + ": %s\n";
+    }
+
   for (size_t i = 0; i < certs.size(); ++i)
     {
       cert_status status = check_cert(app, idx(certs, i));
@@ -582,13 +597,13 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       switch (status)
         {
         case cert_ok:
-          stat = "ok";
+          stat = _("ok");
           break;
         case cert_bad:
-          stat = "bad";
+          stat = _("bad");
           break;
         case cert_unknown:
-          stat = "unknown";
+          stat = _("unknown");
           break;
         }
 
@@ -596,14 +611,15 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       split_into_lines(washed, lines);
       I(lines.size() > 0);
 
-      cout << "-----------------------------------------------------------------" << endl
-           << "Key   : " << idx(certs, i).key() << endl
-           << "Sig   : " << stat << endl           
-           << "Name  : " << idx(certs, i).name() << endl           
-           << "Value : " << idx(lines, 0) << endl;
+      cout << std::string(guess_terminal_width(), '-') << '\n'
+           << boost::format(str)
+        % idx(certs, i).key()
+        % stat
+        % idx(certs, i).name()
+        % idx(lines, 0);
       
       for (size_t i = 1; i < lines.size(); ++i)
-        cout << "      : " << idx(lines, i) << endl;
+        cout << boost::format(extra_str) % idx(lines, i);
     }  
 
   if (certs.size() > 0)
@@ -2328,8 +2344,10 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
 
   P(F("beginning commit on branch '%s'\n") % branchname);
-  L(F("new manifest %s\n") % rs.new_manifest);
-  L(F("new revision %s\n") % rid);
+  L(F("new manifest '%s'\n"
+      "new revision '%s'\n")
+    % rs.new_manifest
+    % rid);
 
   // can't have both a --message and a --message-file ...
   N(app.message().length() == 0 || app.message_file().length() == 0,
