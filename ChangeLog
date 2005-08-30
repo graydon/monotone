@@ -1,3 +1,7 @@
+2005-08-30  Petr Baudis  <pasky@suse.cz>
+
+	* std_hooks.lua: Simple support for merging using merge(1) and vim.
+
 2005-08-30  Benoît Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.
