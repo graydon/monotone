@@ -1759,9 +1759,9 @@ CMD(mdelta, N_("packet i/o"), N_("OLDID NEWID"),
   complete(app, idx(args, 0)(), m_old_id);
   complete(app, idx(args, 1)(), m_new_id);
 
-  N(app.db.manifest_version_exists(m_old_id), F("no such manifest %s") % m_old_id);
+  N(app.db.manifest_version_exists(m_old_id), F("no such manifest '%s'") % m_old_id);
   app.db.get_manifest(m_old_id, m_old);
-  N(app.db.manifest_version_exists(m_new_id), F("no such manifest %s") % m_new_id);
+  N(app.db.manifest_version_exists(m_new_id), F("no such manifest '%s'") % m_new_id);
   app.db.get_manifest(m_new_id, m_new);
 
   delta del;
@@ -1785,9 +1785,9 @@ CMD(fdelta, N_("packet i/o"), N_("OLDID NEWID"),
   complete(app, idx(args, 0)(), f_old_id);
   complete(app, idx(args, 1)(), f_new_id);
 
-  N(app.db.file_version_exists(f_old_id), F("no such file %s") % f_old_id);
+  N(app.db.file_version_exists(f_old_id), F("no such file '%s'") % f_old_id);
   app.db.get_file_version(f_old_id, f_old_data);
-  N(app.db.file_version_exists(f_new_id), F("no such file %s") % f_new_id);
+  N(app.db.file_version_exists(f_new_id), F("no such file '%s'") % f_new_id);
   app.db.get_file_version(f_new_id, f_new_data);
   delta del;
   diff(f_old_data.inner(), f_new_data.inner(), del);
@@ -1807,7 +1807,7 @@ CMD(rdata, N_("packet i/o"), N_("ID"), N_("write revision data packet to stdout"
 
   complete(app, idx(args, 0)(), r_id);
 
-  N(app.db.revision_exists(r_id), F("no such revision %s") % r_id);
+  N(app.db.revision_exists(r_id), F("no such revision '%s'") % r_id);
   app.db.get_revision(r_id, r_data);
   pw.consume_revision_data(r_id, r_data);  
 }
@@ -1825,7 +1825,7 @@ CMD(mdata, N_("packet i/o"), N_("ID"), N_("write manifest data packet to stdout"
 
   complete(app, idx(args, 0)(), m_id);
 
-  N(app.db.manifest_version_exists(m_id), F("no such manifest %s") % m_id);
+  N(app.db.manifest_version_exists(m_id), F("no such manifest '%s'") % m_id);
   app.db.get_manifest_version(m_id, m_data);
   pw.consume_manifest_data(m_id, m_data);  
 }
@@ -1844,7 +1844,7 @@ CMD(fdata, N_("packet i/o"), N_("ID"), N_("write file data packet to stdout"),
 
   complete(app, idx(args, 0)(), f_id);
 
-  N(app.db.file_version_exists(f_id), F("no such file %s") % f_id);
+  N(app.db.file_version_exists(f_id), F("no such file '%s'") % f_id);
   app.db.get_file_version(f_id, f_data);
   pw.consume_file_data(f_id, f_data);  
 }
@@ -2178,7 +2178,7 @@ CMD(attr, N_("working copy"), N_("set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FIL
     }
   
   file_path path = file_path_external(idx(args,1));
-  N(file_exists(path), F("no such file %s") % path);
+  N(file_exists(path), F("no such file '%s'") % path);
 
   bool attrs_modified = false;
 
@@ -3541,7 +3541,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
   app.db.get_manifest(rev.new_manifest, mm);
   manifest_map::const_iterator i = mm.find(file);
   N(i != mm.end(),
-    F("No such file '%s' in revision %s\n") % file % rid);
+    F("no such file '%s' in revision '%s'\n") % file % rid);
   file_id fid = manifest_entry_id(*i);
   L(F("annotate for file_id %s\n") % manifest_entry_id(*i));
 
