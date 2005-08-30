@@ -80,9 +80,11 @@ get_homedir()
 }
 
 utf8
-tilde_expand(utf8 const & path)
+tilde_expand(utf8 const & in)
 {
-  fs::path tmp(path(), fs::native);
+  if (in().empty() || in()[0] != '~')
+    return in;
+  fs::path tmp(in(), fs::native);
   fs::path::iterator i = tmp.begin();
   if (i != tmp.end())
     {
@@ -93,7 +95,7 @@ tilde_expand(utf8 const & path)
           ++i;
         }
       while (i != tmp.end())
-        res /= mkpath(*i++);
+        res /= *i++;
       return res.string();
     }
 
