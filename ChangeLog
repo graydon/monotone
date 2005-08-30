@@ -1,5 +1,9 @@
 2005-08-30  Benoît Dejean  <benoit@placenet.org>
 
+	* po/fr.po: Updated French translation.
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
 	* commands.cc: Merged some error messages.
 
 2005-08-30  Benoît Dejean  <benoit@placenet.org>
