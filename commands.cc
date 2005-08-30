@@ -470,63 +470,34 @@ complete(app_state & app,
   P(F("expanded to '%s'\n") %  completion);  
 }
 
-static void 
-complete(app_state & app, 
-         string const & str,
-         manifest_id & completion)
-{
-  N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
-    F("non-hex digits in id"));
-  if (str.size() == constants::idlen)
-    {
-      completion = manifest_id(str);
-      return;
-    }
-  set<manifest_id> completions;
-  app.db.complete(str, completions);
-  N(completions.size() != 0,
-    F("partial id '%s' does not have a unique expansion") % str);
-  if (completions.size() > 1)
-    {
-      string err = (F("partial id '%s' has multiple ambiguous expansions: \n") % str).str();
-      for (set<manifest_id>::const_iterator i = completions.begin();
-           i != completions.end(); ++i)
-        err += (i->inner()() + "\n");
-      N(completions.size() == 1, boost::format(err));
-    }
-  completion = *(completions.begin());  
-  P(F("expanding partial id '%s'\n"
-      "expanded to '%s'\n")
-    % str % completion);
-}
 
+template<typename ID>
 static void 
 complete(app_state & app, 
          string const & str,
-         file_id & completion)
+         ID & completion)
 {
   N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
     F("non-hex digits in id"));
   if (str.size() == constants::idlen)
     {
-      completion = file_id(str);
+      completion = ID(str);
       return;
     }
-  set<file_id> completions;
+  set<ID> completions;
   app.db.complete(str, completions);
   N(completions.size() != 0,
-    F("partial id '%s' does not have a unique expansion") % str);
+    F("partial id '%s' does not have an expansion") % str);
   if (completions.size() > 1)
     {
       string err = (F("partial id '%s' has multiple ambiguous expansions: \n") % str).str();
-      for (set<file_id>::const_iterator i = completions.begin();
+      for (typename set<ID>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         err += (i->inner()() + "\n");
       N(completions.size() == 1, boost::format(err));
     }
   completion = *(completions.begin());  
-  P(F("expanding partial id '%s'\n"
-      "expanded to '%s'\n")
+  P(F("expanded partial id '%s' to '%s'\n")
     % str % completion);
 }
 

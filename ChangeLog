@@ -1,5 +1,10 @@
 2005-08-30  Benoît Dejean  <benoit@placenet.org>
 
+	* commands.cc: Merged complete(..., file_id) and
+	complete(..., manifest_id) into template complete(..., ID).
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
 	* commands.cc (ls_certs): Reworked for i18n.
 	(CMD(commit)): Merged 2 strings.
 
