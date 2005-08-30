@@ -470,63 +470,34 @@ complete(app_state & app,
   P(F("expanded to '%s'\n") %  completion);  
 }
 
-static void 
-complete(app_state & app, 
-         string const & str,
-         manifest_id & completion)
-{
-  N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
-    F("non-hex digits in id"));
-  if (str.size() == constants::idlen)
-    {
-      completion = manifest_id(str);
-      return;
-    }
-  set<manifest_id> completions;
-  app.db.complete(str, completions);
-  N(completions.size() != 0,
-    F("partial id '%s' does not have a unique expansion") % str);
-  if (completions.size() > 1)
-    {
-      string err = (F("partial id '%s' has multiple ambiguous expansions: \n") % str).str();
-      for (set<manifest_id>::const_iterator i = completions.begin();
-           i != completions.end(); ++i)
-        err += (i->inner()() + "\n");
-      N(completions.size() == 1, boost::format(err));
-    }
-  completion = *(completions.begin());  
-  P(F("expanding partial id '%s'\n"
-      "expanded to '%s'\n")
-    % str % completion);
-}
 
+template<typename ID>
 static void 
 complete(app_state & app, 
          string const & str,
-         file_id & completion)
+         ID & completion)
 {
   N(str.find_first_not_of(constants::legal_id_bytes) == string::npos,
     F("non-hex digits in id"));
   if (str.size() == constants::idlen)
     {
-      completion = file_id(str);
+      completion = ID(str);
       return;
     }
-  set<file_id> completions;
+  set<ID> completions;
   app.db.complete(str, completions);
   N(completions.size() != 0,
-    F("partial id '%s' does not have a unique expansion") % str);
+    F("partial id '%s' does not have an expansion") % str);
   if (completions.size() > 1)
     {
       string err = (F("partial id '%s' has multiple ambiguous expansions: \n") % str).str();
-      for (set<file_id>::const_iterator i = completions.begin();
+      for (typename set<ID>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         err += (i->inner()() + "\n");
       N(completions.size() == 1, boost::format(err));
     }
   completion = *(completions.begin());  
-  P(F("expanding partial id '%s'\n"
-      "expanded to '%s'\n")
+  P(F("expanded partial id '%s' to '%s'\n")
     % str % completion);
 }
 
@@ -563,6 +534,21 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   // particular.
   sort(certs.begin(), certs.end());
 
+  string str     = _("Key   : %s\n"
+                     "Sig   : %s\n"
+                     "Name  : %s\n"
+                     "Value : %s\n");
+  string extra_str = "      : %s\n";
+
+  string::size_type colon_pos = str.find(':');
+
+  if (colon_pos != string::npos)
+    {
+      string substr(str, 0, colon_pos);
+      colon_pos = length(substr);
+      extra_str = string(colon_pos, ' ') + ": %s\n";
+    }
+
   for (size_t i = 0; i < certs.size(); ++i)
     {
       cert_status status = check_cert(app, idx(certs, i));
@@ -582,13 +568,13 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       switch (status)
         {
         case cert_ok:
-          stat = "ok";
+          stat = _("ok");
           break;
         case cert_bad:
-          stat = "bad";
+          stat = _("bad");
           break;
         case cert_unknown:
-          stat = "unknown";
+          stat = _("unknown");
           break;
         }
 
@@ -596,14 +582,15 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       split_into_lines(washed, lines);
       I(lines.size() > 0);
 
-      cout << "-----------------------------------------------------------------" << endl
-           << "Key   : " << idx(certs, i).key() << endl
-           << "Sig   : " << stat << endl           
-           << "Name  : " << idx(certs, i).name() << endl           
-           << "Value : " << idx(lines, 0) << endl;
+      cout << std::string(guess_terminal_width(), '-') << '\n'
+           << boost::format(str)
+        % idx(certs, i).key()
+        % stat
+        % idx(certs, i).name()
+        % idx(lines, 0);
       
       for (size_t i = 1; i < lines.size(); ++i)
-        cout << "      : " << idx(lines, i) << endl;
+        cout << boost::format(extra_str) % idx(lines, i);
     }  
 
   if (certs.size() > 0)
@@ -1772,9 +1759,9 @@ CMD(mdelta, N_("packet i/o"), N_("OLDID NEWID"),
   complete(app, idx(args, 0)(), m_old_id);
   complete(app, idx(args, 1)(), m_new_id);
 
-  N(app.db.manifest_version_exists(m_old_id), F("no such manifest %s") % m_old_id);
+  N(app.db.manifest_version_exists(m_old_id), F("no such manifest '%s'") % m_old_id);
   app.db.get_manifest(m_old_id, m_old);
-  N(app.db.manifest_version_exists(m_new_id), F("no such manifest %s") % m_new_id);
+  N(app.db.manifest_version_exists(m_new_id), F("no such manifest '%s'") % m_new_id);
   app.db.get_manifest(m_new_id, m_new);
 
   delta del;
@@ -1798,9 +1785,9 @@ CMD(fdelta, N_("packet i/o"), N_("OLDID NEWID"),
   complete(app, idx(args, 0)(), f_old_id);
   complete(app, idx(args, 1)(), f_new_id);
 
-  N(app.db.file_version_exists(f_old_id), F("no such file %s") % f_old_id);
+  N(app.db.file_version_exists(f_old_id), F("no such file '%s'") % f_old_id);
   app.db.get_file_version(f_old_id, f_old_data);
-  N(app.db.file_version_exists(f_new_id), F("no such file %s") % f_new_id);
+  N(app.db.file_version_exists(f_new_id), F("no such file '%s'") % f_new_id);
   app.db.get_file_version(f_new_id, f_new_data);
   delta del;
   diff(f_old_data.inner(), f_new_data.inner(), del);
@@ -1820,7 +1807,7 @@ CMD(rdata, N_("packet i/o"), N_("ID"), N_("write revision data packet to stdout"
 
   complete(app, idx(args, 0)(), r_id);
 
-  N(app.db.revision_exists(r_id), F("no such revision %s") % r_id);
+  N(app.db.revision_exists(r_id), F("no such revision '%s'") % r_id);
   app.db.get_revision(r_id, r_data);
   pw.consume_revision_data(r_id, r_data);  
 }
@@ -1838,7 +1825,7 @@ CMD(mdata, N_("packet i/o"), N_("ID"), N_("write manifest data packet to stdout"
 
   complete(app, idx(args, 0)(), m_id);
 
-  N(app.db.manifest_version_exists(m_id), F("no such manifest %s") % m_id);
+  N(app.db.manifest_version_exists(m_id), F("no such manifest '%s'") % m_id);
   app.db.get_manifest_version(m_id, m_data);
   pw.consume_manifest_data(m_id, m_data);  
 }
@@ -1857,7 +1844,7 @@ CMD(fdata, N_("packet i/o"), N_("ID"), N_("write file data packet to stdout"),
 
   complete(app, idx(args, 0)(), f_id);
 
-  N(app.db.file_version_exists(f_id), F("no such file %s") % f_id);
+  N(app.db.file_version_exists(f_id), F("no such file '%s'") % f_id);
   app.db.get_file_version(f_id, f_data);
   pw.consume_file_data(f_id, f_data);  
 }
@@ -2191,7 +2178,7 @@ CMD(attr, N_("working copy"), N_("set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FIL
     }
   
   file_path path = file_path_external(idx(args,1));
-  N(file_exists(path), F("no such file %s") % path);
+  N(file_exists(path), F("no such file '%s'") % path);
 
   bool attrs_modified = false;
 
@@ -2328,8 +2315,10 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
 
   P(F("beginning commit on branch '%s'\n") % branchname);
-  L(F("new manifest %s\n") % rs.new_manifest);
-  L(F("new revision %s\n") % rid);
+  L(F("new manifest '%s'\n"
+      "new revision '%s'\n")
+    % rs.new_manifest
+    % rid);
 
   // can't have both a --message and a --message-file ...
   N(app.message().length() == 0 || app.message_file().length() == 0,
@@ -3552,7 +3541,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
   app.db.get_manifest(rev.new_manifest, mm);
   manifest_map::const_iterator i = mm.find(file);
   N(i != mm.end(),
-    F("No such file '%s' in revision %s\n") % file % rid);
+    F("no such file '%s' in revision '%s'\n") % file % rid);
   file_id fid = manifest_entry_id(*i);
   L(F("annotate for file_id %s\n") % manifest_entry_id(*i));
 

@@ -279,11 +279,27 @@ function merge2_vim_cmd(vim, lfile, rfile, outfile)
    end
 end
 
-function merge3_vim_cmd(vim, lfile, afile, rfile, outfile)
+function merge3_vim_cmd(vim, afile, lfile, rfile, outfile)
    return
    function()
       return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
-                     lfile, afile, rfile)
+                     afile, lfile, rfile)
+   end
+end
+
+function merge3_rcsmerge_vim_cmd(merge, vim, lfile, afile, rfile, outfile)
+   return
+   function()
+      -- XXX: This is tough - should we check if conflict markers stay or not?
+      -- If so, we should certainly give the user some way to still force
+      -- the merge to proceed since they can appear in the files (and I saw
+      -- that). --pasky
+      if execute(merge, lfile, afile, rfile) == 0 then
+	 copy_text_file(lfile, outfile);
+	 return 0
+      end
+      return execute(vim, "-f", "-c", string.format("file %s", outfile),
+                     lfile)
    end
 end
 
@@ -364,6 +380,22 @@ function write_to_temporary_file(data)
    tmp:write(data)
    io.close(tmp)
    return filename
+end
+
+function copy_text_file(srcname, destname)
+   src = io.open(srcname, "r")
+   if (src == nil) then return nil end
+   dest = io.open(destname, "w")
+   if (dest == nil) then return nil end
+
+   while true do
+      local line = src:read()
+      if line == nil then break end
+      dest:write(line, "\n")
+   end
+
+   io.close(dest)
+   io.close(src)
 end
 
 function read_contents_of_file(filename, mode)
@@ -488,7 +520,16 @@ function get_preferred_merge3_command (tbl)
    local editor = os.getenv("EDITOR")
    if editor ~= nil then editor = string.lower(editor) else editor = "" end
 
-   if program_exists_in_path("kdiff3") then
+   local merge = os.getenv("MTMERGE")
+   -- TODO: Support for rcsmerge_emacs
+   if merge ~= nil and string.find(editor, "vim") ~= nil then
+      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then 
+         cmd = merge3_rcsmerge_vim_cmd (merge, "gvim", lfile, afile, rfile, outfile) 
+      elseif program_exists_in_path ("vim") then 
+         cmd = merge3_rcsmerge_vim_cmd (merge, "vim", lfile, afile, rfile, outfile) 
+      end
+
+   elseif program_exists_in_path("kdiff3") then
       cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
    elseif program_exists_in_path ("xxdiff") then 
       cmd = merge3_xxdiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 

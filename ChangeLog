@@ -4,6 +4,28 @@
 	handling code.
 	* win32/fs.cc (tilde_expand): Compile fix.
 
+2005-08-30  Petr Baudis  <pasky@suse.cz>
+
+	* std_hooks.lua: Simple support for merging using merge(1) and vim.
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: Merged some error messages.
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: Merged complete(..., file_id) and
+	complete(..., manifest_id) into template complete(..., ID).
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (ls_certs): Reworked for i18n.
+	(CMD(commit)): Merged 2 strings.
+
 2005-08-30  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* revision.cc (ensure_parents_loaded): Don't reuse an iterator
