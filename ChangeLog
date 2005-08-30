@@ -1,5 +1,8 @@
 2005-08-30  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* paths.cc (test_bookkeeping_path, test_system_path): Shift object
+	instantiation around a little to work around what seems to be a
+	bug in the gcc 3.3 parser.
 	* win32/inodeprint.cc (inodeprint_file): Update to use new path
 	handling code.
 	* win32/fs.cc (tilde_expand): Compile fix.

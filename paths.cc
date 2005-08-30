@@ -809,11 +809,14 @@ static void test_bookkeeping_path()
   for (char const ** c = baddies; *c; ++c)
     {
       L(F("test_bookkeeping_path baddie: trying '%s'") % *c);
-      BOOST_CHECK_THROW(bookkeeping_path(std::string(*c)), std::logic_error);
-      BOOST_CHECK_THROW(bookkeeping_root / std::string(*c), std::logic_error);
+      std::string path_string(*c);
+      BOOST_CHECK_THROW(bookkeeping_path(path_string), std::logic_error);
+      BOOST_CHECK_THROW(bookkeeping_root / path_string, std::logic_error);
     }
-  BOOST_CHECK_THROW(bookkeeping_path(std::string("foo/bar")), std::logic_error);
-  BOOST_CHECK_THROW(bookkeeping_path(std::string("a")), std::logic_error);
+  std::string path_foo_bar("foo/bar");
+  BOOST_CHECK_THROW(bookkeeping_path(path_foo_bar), std::logic_error);
+  std::string path_a("a");
+  BOOST_CHECK_THROW(bookkeeping_path(path_a), std::logic_error);
   
   check_bk_normalizes_to("a", "MT/a");
   check_bk_normalizes_to("foo", "MT/foo");
@@ -899,7 +902,8 @@ static void test_system_path()
   BOOST_CHECK(working_root.used);
   BOOST_CHECK(system_path(file_path_external(std::string("foo/bar"))).as_external()
               == "/working/root/rel/initial/foo/bar");
-  BOOST_CHECK(system_path(file_path()).as_external()
+  file_path a_file_path;
+  BOOST_CHECK(system_path(a_file_path).as_external()
               == "/working/root");
   BOOST_CHECK(system_path(bookkeeping_path("MT/foo/bar")).as_internal()
               == "/working/root/MT/foo/bar");
