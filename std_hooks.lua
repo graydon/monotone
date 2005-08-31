@@ -140,7 +140,7 @@ function binary_file(name)
    if (string.find(lowname, "%.sql$")) then return false end
    -- unknown - read file and use the guess-binary 
    -- monotone built-in function
-   return guess_binary_filename(name)
+   return guess_binary_file_contents(name)
 end
 
 function edit_comment(basetext, user_log_message)

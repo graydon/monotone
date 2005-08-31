@@ -1,3 +1,9 @@
+2005-08-31  Richard Levitte  <richard@levitte.org>
+
+	* lua.cc, std_hooks.lua: Rename monotone_guess_binary_filename_for_lua
+	and guess_binary_filename to monotone_guess_binary_file_contents_for_lua
+	and guess_binary_file_contents.
+
 2005-08-31  Nathaniel Smith  <njs@pobox.com>
 
 	* file_io.cc (set_char_is_binary, guess_binary): static_cast chars

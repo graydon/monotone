@@ -520,7 +520,7 @@ extern "C"
   }
 
   static int
-  monotone_guess_binary_filename_for_lua(lua_State *L)
+  monotone_guess_binary_file_contents_for_lua(lua_State *L)
   {
     const char *path = lua_tostring(L, -1);
     N(path, F("guess_binary called with an invalid parameter"));
@@ -622,7 +622,7 @@ lua_hooks::lua_hooks()
   lua_register(st, "wait", monotone_wait_for_lua);
   lua_register(st, "kill", monotone_kill_for_lua);
   lua_register(st, "sleep", monotone_sleep_for_lua);
-  lua_register(st, "guess_binary_filename", monotone_guess_binary_filename_for_lua);
+  lua_register(st, "guess_binary_file_contents", monotone_guess_binary_file_contents_for_lua);
   lua_register(st, "include", monotone_include_for_lua);
   lua_register(st, "includedir", monotone_includedir_for_lua);
 }
