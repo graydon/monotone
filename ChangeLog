@@ -4,6 +4,20 @@
 	to uint8_t before using as array indices.  Also replace some ints
 	with size_t's to quiet g++ warnings.
 
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	* file_io.cc (walk_tree): Fixed format.
+
+	Someone should fix these new warnings for ppl with signed chars.
+
+	In function void set_char_is_binary(char, bool)
+	133: warning: array subscript has type char
+	In function void init_char_is_binary()
+	147: warning: comparison between signed and unsigned integer expressions
+	In function bool guess_binary(const std::string&)
+	160: warning: comparison between signed and unsigned integer expressions
+	162: warning: array subscript has type char
+
 2005-08-31  Marcel van der Boom  <marcel@hsdev.com>
 
 	* std_hooks.lua (execute_confirm): New function.
