@@ -1,3 +1,9 @@
+2005-08-31  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (set_char_is_binary, guess_binary): static_cast chars
+	to uint8_t before using as array indices.  Also replace some ints
+	with size_t's to quiet g++ warnings.
+
 2005-08-31  Marcel van der Boom  <marcel@hsdev.com>
 
 	* std_hooks.lua (execute_confirm): New function.

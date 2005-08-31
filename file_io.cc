@@ -130,7 +130,7 @@ static bool char_is_binary[256];
 void
 set_char_is_binary(char c, bool is_binary)
 {
-    char_is_binary[c] = is_binary;
+    char_is_binary[static_cast<uint8_t>(c)] = is_binary;
 }
 
 static void
@@ -141,25 +141,25 @@ init_char_is_binary()
   // Should be calling a lua hook here that can use set_char_is_binary()
   // That will at least fix (b)
   string nontext_chars("\x01\x02\x03\x04\x05\x06\x0e\x0f"
-		       "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
-		       "\x19\x1a\x1c\x1d\x1e\x1f");
+                       "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
+                       "\x19\x1a\x1c\x1d\x1e\x1f");
   set_char_is_binary('\0',true);
-  for(int i=0;i<nontext_chars.size();++i) 
+  for(size_t i = 0; i < nontext_chars.size(); ++i)
     {
-      set_char_is_binary(nontext_chars[i],true);
+      set_char_is_binary(nontext_chars[i], true);
     }
 }
 
 bool guess_binary(string const & s)
 {
-  if (did_char_is_binary_init == false) 
+  if (did_char_is_binary_init == false)
     {
       init_char_is_binary();
     }
 
-  for(int i = 0;i<s.size(); ++i) 
+  for (size_t i = 0; i < s.size(); ++i) 
     {
-      if (char_is_binary[s[i]])
+      if (char_is_binary[ static_cast<uint8_t>(s[i]) ])
         return true;
     }
   return false;
