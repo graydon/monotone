@@ -131,10 +131,7 @@ function binary_file(name)
    if (string.find(lowname, "%.sql$")) then return false end
    -- unknown - read file and use the guess-binary 
    -- monotone built-in function
-   filedata=read_contents_of_file(name, "rb")
-   if (filedata ~= nil) then return guess_binary(filedata) end
-   -- still unknown (file empty or unreadable) - report it as nil
-   return nil
+   return guess_binary_filename(name)
 end
 
 function edit_comment(basetext, user_log_message)

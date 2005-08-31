@@ -724,6 +724,12 @@
 	(external_path): Rename to system_path.
 	Misc. other updates.
 
+2005-08-21  Eric Anderson  <anderse-monotone@cello.hpl.hp.com>
+	* file_io.cc, file_io.hh, lua.cc, std_hooks.lua: determine if a
+	file is binary by looking at it incrementally, rather than reading
+	it in entirely.  Prepare for making it possible to control what
+	characters are considered "binary"
+
 2005-08-20  Nathaniel Smith  <njs@codesourcery.com>
 
 	* paths.cc (is_absolute): New function.
@@ -1421,6 +1427,12 @@
 
 	* monotone.spec: include zlib-devel and texinfo as build
 	requirements, zlib as a runtime requirement.
+
+2005-08-09  Eric Anderson  <anderse-monotone@cello.hpl.hp.com>
+
+	* tests/perf-test.sh: A repeatable performance test harness
+	* tests/parse-accounting.pl: A script that parses the accounting
+	output into a nice tabular format
 
 2005-08-09  Eric Anderson  <anderse-monotone@cello.hpl.hp.com>
  
