@@ -1,3 +1,9 @@
+2005-08-09  Eric Anderson  <anderse-monotone@cello.hpl.hp.com>
+
+	* tests/perf-test.sh: A repeatable performance test harness
+	* tests/parse-accounting.pl: A script that parses the accounting
+	output into a nice tabular format
+
 2005-08-31  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* paths.cc (test_bookkeeping_path, test_system_path): Second
