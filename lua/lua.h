@@ -1,4 +1,3 @@
-/* delete this line */
 /*
 ** $Id: lua.h,v 1.175b 2003/03/18 12:31:39 roberto Exp $
 ** Lua - An Extensible Extension Language
