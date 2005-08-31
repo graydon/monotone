@@ -805,18 +805,16 @@ static void test_bookkeeping_path()
                             "",
                             "a:b",
                             0 };
-  
+  std::string tmp_path_string;
+
   for (char const ** c = baddies; *c; ++c)
     {
       L(F("test_bookkeeping_path baddie: trying '%s'") % *c);
-      std::string path_string(*c);
-      BOOST_CHECK_THROW(bookkeeping_path(path_string), std::logic_error);
-      BOOST_CHECK_THROW(bookkeeping_root / path_string, std::logic_error);
+            BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign(*c)), std::logic_error);
+            BOOST_CHECK_THROW(bookkeeping_root / tmp_path_string.assign(*c), std::logic_error);
     }
-  std::string path_foo_bar("foo/bar");
-  BOOST_CHECK_THROW(bookkeeping_path(path_foo_bar), std::logic_error);
-  std::string path_a("a");
-  BOOST_CHECK_THROW(bookkeeping_path(path_a), std::logic_error);
+  BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("foo/bar")), std::logic_error);
+  BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("a")), std::logic_error);
   
   check_bk_normalizes_to("a", "MT/a");
   check_bk_normalizes_to("foo", "MT/foo");

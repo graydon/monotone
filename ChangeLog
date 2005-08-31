@@ -1,3 +1,9 @@
+2005-08-31  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc (test_bookkeeping_path, test_system_path): Second
+	attempt at compile fixes; this time the unit tests actually pass
+	too.
+
 2005-08-30  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* paths.cc (test_bookkeeping_path, test_system_path): Shift object
