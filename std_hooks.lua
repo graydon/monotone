@@ -19,7 +19,16 @@ function execute(path, ...)
    return ret
 end
 
-
+-- Wrapper around execute to let user confirm in the case where a subprocess
+-- returns immediately
+-- This is needed to work around some brokenness with some merge tools
+-- (e.g. on OS X)
+function execute_confirm(path, ...)   
+   execute(path, unpack(arg))
+   print("Press enter when the subprocess has completed")
+   io.read()
+   return ret
+end
 
 -- attributes are persistent metadata about files (such as execute
 -- bit, ACLs, various special flags) which we want to have set and
@@ -292,8 +301,8 @@ function merge3_rcsmerge_vim_cmd(merge, vim, lfile, afile, rfile, outfile)
       -- the merge to proceed since they can appear in the files (and I saw
       -- that). --pasky
       if execute(merge, lfile, afile, rfile) == 0 then
-	 copy_text_file(lfile, outfile);
-	 return 0
+         copy_text_file(lfile, outfile);
+         return 0
       end
       return execute(vim, "-f", "-c", string.format("file %s", outfile),
                      lfile)
@@ -369,6 +378,22 @@ function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path,
    end
 end
 
+function merge2_opendiff_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
+   return 
+   function()
+      -- As opendiff immediately returns, let user confirm manually
+      return execute_confirm("opendiff",lfile,rfile,"-merge",outfile) 
+  end
+end
+
+function merge3_opendiff_cmd(left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile)
+   return 
+   function()
+      -- As opendiff immediately returns, let user confirm manually
+      execute_confirm("opendiff",lfile,rfile,"-ancestor",afile,"-merge",outfile)
+   end
+end
+
 function write_to_temporary_file(data)
    tmp, filename = temp_file()
    if (tmp == nil) then 
@@ -426,6 +451,8 @@ function get_preferred_merge2_command (tbl)
       cmd =   merge2_kdiff3_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
    elseif program_exists_in_path ("xxdiff") then 
       cmd = merge2_xxdiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
+   elseif program_exists_in_path ("opendiff") then 
+      cmd = merge2_opendiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
    elseif program_exists_in_path ("TortoiseMerge") then
       cmd = merge2_tortoise_cmd(lfile, rfile, outfile)
    elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
@@ -530,6 +557,8 @@ function get_preferred_merge3_command (tbl)
       cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
    elseif program_exists_in_path ("xxdiff") then 
       cmd = merge3_xxdiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
+   elseif program_exists_in_path ("opendiff") then 
+      cmd = merge3_opendiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
    elseif program_exists_in_path ("TortoiseMerge") then
       cmd = merge3_tortoise_cmd(lfile, afile, rfile, outfile)
    elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 

@@ -1,3 +1,8 @@
+2005-08-31  Marcel van der Boom  <marcel@hsdev.com>
+
+	* std_hooks.lua (execute_confirm): New function.
+	(merge2_opendiff_cmd, merge3_opendiff_cmd): Add.
+
 2005-08-31  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* paths.cc (test_bookkeeping_path, test_system_path): Second
