@@ -1,3 +1,7 @@
+2005-08-31  Benoît Dejean  <benoit@placenet.org>
+
+	* basic_io.cc (basic_io::input_source::err): Merged strings.
+
 2005-08-31  Nathaniel Smith  <njs@pobox.com>
 
 	* file_io.cc (set_char_is_binary, guess_binary): static_cast chars

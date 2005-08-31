@@ -24,7 +24,7 @@
 void basic_io::input_source::err(std::string const & s)
 {
   L(F("error in %s:%d:%d:E: %s") % name % line % col % s);
-  throw informative_failure((F("%s:%d:%d:E: %s") 
+  throw informative_failure((F("error in %s:%d:%d:E: %s") 
                              % name % line % col % s).str());
 }
 
