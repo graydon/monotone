@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -123,15 +124,44 @@ ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua)
   return true;
 }
 
-bool guess_binary(string const & s)
+static bool did_char_is_binary_init;
+static bool char_is_binary[256];
+
+void
+set_char_is_binary(char c, bool is_binary)
+{
+    char_is_binary[c] = is_binary;
+}
+
+static void
+init_char_is_binary()
 {
   // these do not occur in ASCII text files
   // FIXME: this heuristic is (a) crap and (b) hardcoded. fix both these.
-  if (s.find_first_of('\x00') != string::npos ||
-      s.find_first_of("\x01\x02\x03\x04\x05\x06\x0e\x0f"
-                      "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
-                      "\x19\x1a\x1c\x1d\x1e\x1f") != string::npos)
-    return true;
+  // Should be calling a lua hook here that can use set_char_is_binary()
+  // That will at least fix (b)
+  string nontext_chars("\x01\x02\x03\x04\x05\x06\x0e\x0f"
+		       "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
+		       "\x19\x1a\x1c\x1d\x1e\x1f");
+  set_char_is_binary('\0',true);
+  for(int i=0;i<nontext_chars.size();++i) 
+    {
+      set_char_is_binary(nontext_chars[i],true);
+    }
+}
+
+bool guess_binary(string const & s)
+{
+  if (did_char_is_binary_init == false) 
+    {
+      init_char_is_binary();
+    }
+
+  for(int i = 0;i<s.size(); ++i) 
+    {
+      if (char_is_binary[s[i]])
+        return true;
+    }
   return false;
 }
 
