@@ -1,5 +1,10 @@
 2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* ui.cc (user_interface): Avoid calling sync_with_stdio(false) on
+	Win32 for now to work around a bug in MinGW where unsynchronized
+	std::cin returns EOF earlier when reading a stream with DOS
+	newlines.  Resolves 'db load' failure reported by Howard Spindel.
+	* database.cc (load): Don't bother executing an empty string.
 	* commands.cc (ALIAS(import, setup)): Remove alias.
 
 2005-09-01  Matt Johnston  <matt@ucc.asn.au>
