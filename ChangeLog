@@ -1,5 +1,9 @@
 2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* monotone.texi: Fix a couple of minor typos.
+
+2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* monotone.texi: Update 'setup' documentation and tutorial to
 	reflect new usage.  Also update much of the monotone output in the
 	tutorials to reflect the output of more modern versions of

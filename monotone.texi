@@ -1658,7 +1658,7 @@ the monotone @code{sync} command:
 
 @smallexample
 @group
-monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+$ monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
 monotone: setting default server to jim-laptop.juicebot.co.jp
 monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
 monotone: setting default branch exclude pattern to ''
@@ -1892,7 +1892,6 @@ And she syncs with Jim again:
 @smallexample
 @group
 $ monotone sync
-
 monotone: connecting to jim-laptop.juicebot.co.jp
 monotone: finding items to synchronize:
 monotone:   certs |    keys | revisions
@@ -3956,7 +3955,7 @@ branch:
 
 @smallexample
 @group
-$ ./monotone list certs 4a96
+$ monotone list certs 4a96
 monotone: expandeding partial id '4a96'
 monotone: expanded to '4a96a230293456baa9c6e7167cafb3c5b52a8e7f'
 -----------------------------------------------------------------
