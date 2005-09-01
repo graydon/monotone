@@ -1,5 +1,14 @@
 2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* lua.cc, std_hooks.lua: use proper regexes for .mt-ignore
+	taken from a patch from Martin Dvorak
+	* contrib/monotone-cvs-ignore.lua: New file, from the same patch.
+	supports .cvsignore files
+	* tests/t_mt_ignore.at: check that a missing .mt-ignore
+	doesn't cause problems
+
+2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* tests/t_mt_ignore.at: use RAW_MONOTONE instead of ugly --rcfile
 	Also actually do "mtn add" this time.
 
