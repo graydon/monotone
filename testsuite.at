@@ -40,7 +40,7 @@ _ROOT_DIR=`pwd -P`
 # Pick a random port, so running multiple testsuites concurrently on the
 # same machine has a hope of working.  Port range will usually be
 # 20050..53347.
-_PORT=`echo $RANDOM | awk 'BEGIN {srand()} END {printf "%.0f\n", ((rand() * 529 + 20050 + $1) % 64512 + 1024)}'`
+_PORT=`echo $RANDOM | awk 'BEGIN {a=1;srand()} END {printf "%.0f\n", ((rand() * 529 + 20050 + $a) % 64512 + 1024)}'`
 
 AT_DATA(test_keys, [@<:@pubkey tester@test.net@:>@
 MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCfN/cAMabgb6T7m8ksGnpQ7LO6hOdnc/7V
