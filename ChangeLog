@@ -1,5 +1,10 @@
 2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/t_mt_ignore.at: use RAW_MONOTONE instead of ugly --rcfile
+	Also actually do "mtn add" this time.
+
+2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* tests/t_mt_ignore.at: new test, checks that .mt-ignore works
 	* testsuite.at: add it
 
