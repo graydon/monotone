@@ -1,5 +1,7 @@
 2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* testsuite.at: Increase entropy used to generate port numbers
+	where we can and increase range of port numbers generated.
 	* monotone.texi: Fix a couple of minor typos.
 
 2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
