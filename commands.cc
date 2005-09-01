@@ -663,7 +663,7 @@ kill_rev_locally(app_state& app, std::string const& id)
   revision_id ident;
   complete(app, id, ident);
   N(app.db.revision_exists(ident),
-    F("no revision %s found in database") % ident);
+    F("no such revision '%s'") % ident);
 
   //check that the revision does not have any children
   set<revision_id> children;
@@ -1381,7 +1381,7 @@ CMD(cat, N_("informative"),
         {
           complete(app, idx(args, 1)(), ident);
           N(app.db.revision_exists(ident),
-            F("no revision %s found in database") % ident);
+            F("no such revision '%s'") % ident);
           app.db.get_revision(ident, dat);
         }
 
@@ -1439,7 +1439,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
       // use specified revision
       complete(app, idx(app.revision_selectors, 0)(), ident);
       N(app.db.revision_exists(ident),
-        F("no revision %s found in database") % ident);
+        F("no such revision '%s'") % ident);
       
       cert_value b;
       guess_branch(ident, app, b);
@@ -2273,13 +2273,9 @@ string_to_datetime(std::string const & s)
         tmp.erase(pos, 1);
       return boost::posix_time::from_iso_string(tmp);
     }
-  catch (std::out_of_range &e)
+  catch (std::exception &e)
     {
       N(false, F("failed to parse date string '%s': %s") % s % e.what());
-    }
-  catch (std::exception &)
-    {
-      N(false, F("failed to parse date string '%s'") % s);
     }
   I(false);
 }
@@ -2674,7 +2670,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       manifest_map m_old;
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
-        F("revision %s does not exist") % r_old_id);
+        F("no such revision '%s'") % r_old_id);
       app.db.get_revision(r_old_id, r_old);
       calculate_unrestricted_revision(app, r_new, m_old, m_new);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
@@ -2689,10 +2685,10 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       complete(app, idx(app.revision_selectors, 1)(), r_new_id);
       N(app.db.revision_exists(r_old_id),
-        F("revision %s does not exist") % r_old_id);
+        F("no such revision '%s'") % r_old_id);
       app.db.get_revision(r_old_id, r_old);
       N(app.db.revision_exists(r_new_id),
-        F("revision %s does not exist") % r_new_id);
+        F("no such revision '%s'") % r_new_id);
       app.db.get_revision(r_new_id, r_new);
       app.db.get_revision_manifest(r_new_id, m_new_id);
       app.db.get_manifest(m_new_id, m_new);
