@@ -138,9 +138,9 @@ attr_functions[["test_attr"]] =
 
 ])
 
-AT_CHECK(MONOTONE setup ., [], [ignore], [ignore])
 AT_CHECK(MONOTONE db init, [], [ignore], [ignore])
 AT_CHECK(MONOTONE read <test_keys, [], [ignore], [ignore])
+AT_CHECK(MONOTONE setup --branch=testbranch ., [], [ignore], [ignore])
 AT_CHECK(rm test_keys)
 ])
 

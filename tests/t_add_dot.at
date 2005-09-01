@@ -13,13 +13,13 @@ AT_DATA(subdir/testdir1/subfile1, [baz
 AT_DATA(subdir/testdir1/subfile2, [quux
 ])
 
-AT_CHECK(MONOTONE setup subdir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE setup --branch=testbranch subdir, [], [ignore], [ignore])
 
 # Make sure that "add ." works, even at the root of the tree
 AT_CHECK(cd subdir && MONOTONE add ., [], [ignore], [ignore])
 
 # Make sure that it took
-AT_CHECK(cd subdir && MONOTONE commit --message="foo" --branch=testbranch, [], [ignore], [ignore])
+AT_CHECK(cd subdir && MONOTONE commit --message="foo", [], [ignore], [ignore])
 
 AT_CHECK(rm subdir/testfile1)
 AT_CHECK(rm subdir/testfile2)

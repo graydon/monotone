@@ -8,14 +8,14 @@ COMMIT(1branch1)
 REV11=`BASE_REVISION`
 
 AT_CHECK(rm -rf MT)
-AT_CHECK(MONOTONE setup .)
+AT_CHECK(MONOTONE setup --branch=testbranch .)
 ADD_FILE(testfile, [bar
 ])
 COMMIT(1branch2)
 REV12=`BASE_REVISION`
 
 AT_CHECK(rm -rf MT)
-AT_CHECK(MONOTONE setup .)
+AT_CHECK(MONOTONE setup --branch=testbranch .)
 ADD_FILE(testfile, [baz
 ])
 COMMIT(2branch1)

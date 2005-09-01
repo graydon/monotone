@@ -32,7 +32,7 @@ CHECK_SAME_STDOUT(MONOTONE automate graph, MONOTONE2 automate graph)
 CHECK_SAME_STDOUT(MONOTONE ls certs $BASE, MONOTONE ls certs $BASE)
 
 AT_CHECK(rm -rf MT)
-AT_CHECK(MONOTONE setup ., [], [ignore], [ignore])
+AT_CHECK(MONOTONE setup --branch=testbranch., [], [ignore], [ignore])
 
 ADD_FILE(testfile2, [This is test file 2
 ])

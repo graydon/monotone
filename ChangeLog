@@ -1,3 +1,13 @@
+2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.texi: Update 'setup' documentation and tutorial to
+	reflect new usage.  Also update much of the monotone output in the
+	tutorials to reflect the output of more modern versions of
+	monotone.  Correct some minor errors and typos while here.
+	* commands.cc (CMD(setup)): Require database and branch arguments.
+	(ALIAS(import,setup)): Add setup alias.
+	* testsuite.at, tests/*.at: Update 'setup' usage.
+
 2005-08-31  Richard Levitte  <richard@levitte.org>
 
 	* lua.cc, std_hooks.lua: Rename monotone_guess_binary_filename_for_lua
