@@ -1,3 +1,7 @@
+2005-09-01  Benoît Dejean  <benoit@placenet.org>
+
+	* ChangeLog: Fixed.
+
 2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* commands.cc (ALIAS(import, setup)): Remove alias.
@@ -40,6 +44,16 @@
 	* file_io.cc (set_char_is_binary, guess_binary): static_cast chars
 	to uint8_t before using as array indices.  Also replace some ints
 	with size_t's to quiet g++ warnings.
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	In function void set_char_is_binary(char, bool)
+	133: warning: array subscript has type char
+	In function void init_char_is_binary()
+	147: warning: comparison between signed and unsigned integer expressions
+	In function bool guess_binary(const std::string&)
+	160: warning: comparison between signed and unsigned integer expressions
+	162: warning: array subscript has type char
 
 2005-08-30  Benoît Dejean  <benoit@placenet.org>
 
