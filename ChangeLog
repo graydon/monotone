@@ -1,3 +1,10 @@
+2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: support .mt-ignore
+	* monotone.texi: mention .mt-ignore and MT/wanted-testresults under
+	"Existing control files"
+	* .mt-ignore: ignore testsuite.dir
+
 2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* commands.cc (ALIAS(import, setup)): Remove alias.
