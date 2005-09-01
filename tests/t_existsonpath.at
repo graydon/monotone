@@ -15,7 +15,7 @@ AT_DATA(test.lua, [function use_inodeprints()
   return false
 end
 ])
-AT_CHECK(MONOTONE setup --rcfile=test.lua subdir, [], [stdout], [ignore])
+AT_CHECK(MONOTONE setup --rcfile=test.lua --branch=testbranch subdir, [], [stdout], [ignore])
 AT_CHECK(QGREP(asdfghjkl stdout), [])
 AT_CHECK(QGREP(qwertyuiop stdout), [])
 

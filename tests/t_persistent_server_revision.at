@@ -15,7 +15,7 @@ AT_CHECK(rm -rf MT)
 AT_DATA(otherfile, [stuff stuff
 nonsense
 ])
-AT_CHECK(MONOTONE3 setup ., [], [ignore], [ignore])
+AT_CHECK(MONOTONE3 setup --branch=testbranch ., [], [ignore], [ignore])
 AT_CHECK(MONOTONE3 add otherfile, [], [ignore], [ignore])
 AT_CHECK(MONOTONE3 commit --branch=testbranch --message foo, [], [ignore], [ignore])
 REV2=`BASE_REVISION`

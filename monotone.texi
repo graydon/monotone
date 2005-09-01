@@ -1145,8 +1145,9 @@ Jim does the following:
 @smallexample
 @group
 $ monotone --db=~/jim.db genkey jim@@juicebot.co.jp
-enter passphrase for key ID [jim@@juicebot.co.jp] : @i{<Jim enters his passphrase>}
 monotone: generating key-pair 'jim@@juicebot.co.jp'
+enter passphrase for key ID [jim@@juicebot.co.jp] : @i{<Jim enters his passphrase>}
+confirm passphrase for key ID [jim@@juicebot.co.jp]: @i{<Jim confirms his passphrase>}
 monotone: storing key-pair 'jim@@juicebot.co.jp' in database
 @end group
 @end smallexample
@@ -1156,8 +1157,9 @@ Abe does something similar:
 @smallexample
 @group
 $ monotone --db=~/abe.db genkey abe@@juicebot.co.jp
-enter passphrase for key ID [abe@@juicebot.co.jp] : @i{<Abe enters his passphrase>}
 monotone: generating key-pair 'abe@@juicebot.co.jp'
+enter passphrase for key ID [abe@@juicebot.co.jp] : @i{<Abe enters his passphrase>}
+confirm passphrase for key ID [abe@@juicebot.co.jp]: @i{<Abe confirms his passphrase>}
 monotone: storing key-pair 'abe@@juicebot.co.jp' in database
 @end group
 @end smallexample
@@ -1167,8 +1169,9 @@ as does Beth:
 @smallexample
 @group
 $ monotone --db=~/beth.db genkey beth@@juicebot.co.jp
-enter passphrase for key ID [beth@@juicebot.co.jp] : @i{<Beth enters her passphrase>}
 monotone: generating key-pair 'beth@@juicebot.co.jp'
+enter passphrase for key ID [beth@@juicebot.co.jp] : @i{<Beth enters her passphrase>}
+confirm passphrase for key ID [beth@@juicebot.co.jp]: @i{<Beth confirms her passphrase>}
 monotone: storing key-pair 'beth@@juicebot.co.jp' in database
 @end group
 @end smallexample
@@ -1246,11 +1249,13 @@ options to the @code{setup} command will be cached in a file called
 @file{MT/options}, so you don't have to keep passing them to monotone
 all the time.
 
-Jim creates his working copy:
+He chooses @code{jp.co.juicebot.jb7} as a branch name. (See
+@ref{Naming Conventions} for more information about appropriate branch
+names.)  Jim then creates his working copy:
 
 @smallexample
 @group
-/home/jim$ monotone --db=jim.db setup juice
+/home/jim$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 setup juice
 /home/jim$ cd juice
 /home/jim/juice$
 @end group
@@ -1409,8 +1414,9 @@ $ monotone diff
 #  from []
 #    to [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
 # 
+============================================================================
 --- include/jb.h
-+++ include/jb.h
++++ include/jb.h 3b12b2d0b31439bd50976633db1895cff8b19da0
 @@ -0,0 +1,13 @@
 +/* Standard JuiceBot hw interface */
 +
@@ -1425,8 +1431,9 @@ $ monotone diff
 +#define BANANA_SPOUT 0x7f
 +void dispense_apple_juice ();
 +void dispense_banana_juice ();
+============================================================================
 --- src/apple.c
-+++ src/apple.c
++++ src/apple.c 2650ffc660dd00a08b659b883b65a060cac7e560
 @@ -0,0 +1,7 @@
 +#include "jb.h"
 +
@@ -1435,8 +1442,9 @@ $ monotone diff
 +@{
 +  /* Fill this in please, Abe. */
 +@}
+============================================================================
 --- src/banana.c
-+++ src/banana.c
++++ src/banana.c e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f
 @@ -0,0 +1,7 @@
 +#include "jb.h"
 +
@@ -1452,18 +1460,17 @@ $ monotone diff
 @node    Committing Work
 @section Committing Work
 
-Satisfied with the work he's done, Jim wants to save his changes. He
-chooses @code{jp.co.juicebot.jb7} as a branch name. (See @ref{Naming
-Conventions} for more information about appropriate branch names.) He
+Satisfied with the work he's done, Jim wants to save his changes.  He
 then commits his working copy, which causes monotone to process the
-@file{MT/work} file and record the file contents, manifest, and revision
-into the database.  Since he didn't give a branch when he ran
-@command{setup}, he has to do so now; monotone will remember the branch
-and re-use it for future commits automatically.
+@file{MT/work} file and record the file contents, manifest, and
+revision into the database.  Since he provided a branch name when he
+ran @command{setup}, monotone will use this as the default branch name
+when he commits.
+
 
 @smallexample
 @group
-$ monotone --branch=jp.co.juicebot.jb7 commit --message="initial checkin of project"
+$ monotone commit --message="initial checkin of project"
 monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
@@ -1602,7 +1609,7 @@ into his database:
 
 @smallexample
 @group
-$ monotone --db=~/jim.db read ~/abe.pubkey ~/beth.pubkey
+$ cat ~/abe.pubkey ~/beth.pubkey | monotone --db=~/jim.db read
 monotone: read 2 packets
 @end group
 @end smallexample
@@ -1651,10 +1658,18 @@ the monotone @code{sync} command:
 
 @smallexample
 @group
-monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: rebuilding merkle trees ...
+$ monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+monotone: setting default server to jim-laptop.juicebot.co.jp
+monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
+monotone: setting default branch exclude pattern to ''
 monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: [bytes in: 3200] [bytes out: 673] 
+monotone: first time connecting to server jim-laptop.juicebot.co.jp:5253
+monotone: I'll assume it's really them, but you might want to double-check
+monotone: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
+monotone: warning: saving public key for jim@@juicebot.co.jp to database
+monotone: finding items to synchronize:
+monotone: bytes in | bytes out | revs in | revs out | revs written
+monotone:     2587 |      1025 |       1 |        0 |            1
 monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
@@ -1726,8 +1741,9 @@ $ monotone diff
 #  from [2650ffc660dd00a08b659b883b65a060cac7e560]
 #    to [e2c418703c863eabe70f9bde988765406f885fd0]
 # 
---- src/apple.c
-+++ src/apple.c
+============================================================================
+--- src/apple.c 2650ffc660dd00a08b659b883b65a060cac7e560
++++ src/apple.c e2c418703c863eabe70f9bde988765406f885fd0
 @@ -1,7 +1,10 @@
  #include "jb.h"
  
@@ -1749,7 +1765,6 @@ Satisfied with his day's work, Abe decides to commit.
 @group
 $ monotone commit 
 monotone: beginning commit on branch 'jp.co.juicebot.jb7'
-monotone: commited revision 70decb4b31a8227a629c0e364495286c5c75f979
 @end group
 @end smallexample
 
@@ -1797,12 +1812,13 @@ Abe then sends his new revision back to Jim:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: rebuilding merkle trees ...
-monotone: including branch jp.co.juicebot.jb7
-monotone: [keys: 2] [rcerts: 8] 
+$ monotone sync
 monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: [bytes in: 630] [bytes out: 2844] 
+monotone: finding items to synchronize:
+monotone:   certs |    keys | revisions
+monotone:       8 |       2 |         2
+monotone: bytes in | bytes out | revs in | revs out | revs written
+monotone:      615 |      2822 |       0 |        1 |            0
 monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
@@ -1813,9 +1829,20 @@ Jim's:
 @smallexample
 @group
 $ monotone --db=beth.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: rebuilding merkle trees ...
+monotone: setting default server to jim-laptop.juicebot.co.jp
+monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
+monotone: setting default branch exclude pattern to ''
 monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: [bytes in: 3200] [bytes out: 673] 
+monotone: first time connecting to server jim-laptop.juicebot.co.jp:5253
+monotone: I'll assume it's really them, but you might want to double-check
+monotone: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
+monotone: warning: saving public key for jim@@juicebot.co.jp to database
+monotone: finding items to synchronize:
+monotone: bytes in | bytes out | revs in | revs out | revs written
+monotone:     4601 |      1239 |       2 |        0 |            1
+monotone: verifying new revisions (this may take a while)
+monotone: bytes in | bytes out | revs in | revs out | revs written
+monotone:     4601 |      1285 |       2 |        0 |            2
 monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
@@ -1864,12 +1891,13 @@ And she syncs with Jim again:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: rebuilding merkle trees ...
-monotone: including branch jp.co.juicebot.jb7
-monotone: [keys: 3] [rcerts: 12] 
+$ monotone sync
 monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: [bytes in: 630] [bytes out: 2844] 
+monotone: finding items to synchronize:
+monotone:   certs |    keys | revisions
+monotone:      12 |       3 |         3
+monotone: bytes in | bytes out | revs in | revs out | revs written
+monotone:      709 |      2879 |       0 |        1 |            0
 monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
@@ -1940,8 +1968,9 @@ $ monotone diff
 #  from [7381d6b3adfddaf16dc0fdb05e0f2d1873e3132a]
 #    to [5e6622cf5c8805bcbd50921ce7db86dad40f2ec6]
 # 
---- src/banana.c
-+++ src/banana.c
+============================================================================
+--- src/banana.c 7381d6b3adfddaf16dc0fdb05e0f2d1873e3132a
++++ src/banana.c 5e6622cf5c8805bcbd50921ce7db86dad40f2ec6
 @@ -1,10 +1,15 @@
  #include "jb.h"
  
@@ -1979,7 +2008,7 @@ And she syncs with Jim:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+$ monotone sync
 @end group
 @end smallexample
 
@@ -2010,7 +2039,7 @@ he has new work to contribute, however, he now syncs:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+$ monotone sync
 @end group
 @end smallexample
 
@@ -2036,10 +2065,11 @@ conflicts Jim does so himself:
 @smallexample
 @group
 $ monotone merge
-monotone: merging with revision 1 / 2
+monotone: starting with revision 1 / 2
+monotone: merging with revision 2 / 2
 monotone: [source] 39969614e5a14316c7ffefc588771f491c709152
 monotone: [source] 8b41b5399a564494993063287a737d26ede3dee4
-monotone: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 found
+monotone: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 abe@@juicebot.co.jp  2004-10-26T:02:50:01 found
 monotone: trying 3-way merge
 monotone: [merged] da499b9d9465a0e003a4c6b2909102ef98bf4e6d
 monotone: your working copies have not been updated
@@ -2156,7 +2186,9 @@ $ monotone propagate jp.co.juicebot.jb7 jp.co.juicebot.jb7.muffins
 monotone: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
 monotone: [source] da003f115752ac6e4750b89aaca9dbba178ac80c
 monotone: [target] d0e5c93bb61e5fd25a0dadf41426f209b73f40af
-monotone: common ancestor 853b8c7ac5689181d4b958504adfb5d07fd959ab found
+monotone: common ancestor 853b8c7ac5689181d4b958504adfb5d07fd959ab jim@@juicebot.co.jp 2004-10-26T:12:44:23 found
+monotone: trying 3-way merge
+monotone: [merged] 89585b3c5e51a5a75f5d1a05dda859c5b7dde52f
 @end group
 @end smallexample
 
@@ -2164,15 +2196,16 @@ The @command{propagate} merges all of the new changes on one branch onto
 another.
 
 When the muffins code is eventually stable and ready to be integrated
-into the main line of development, she simple propagates the other way:
+into the main line of development, she simply propagates the other way:
 
 @smallexample
 @group
 $ monotone propagate jp.co.juicebot.jb7.muffins jp.co.juicebot.jb7
-monotone: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
+monotone: propagating jp.co.juicebot.jb7.muffins -> jp.co.juicebot.jb7
 monotone: [source] 4e48e2c9a3d2ca8a708cb0cc545700544efb5021
 monotone: [target] bd29b2bfd07644ab370f50e0d68f26dcfd3bb4af
-monotone: common ancestor 652b1035343281a0d2a5de79919f9a31a30c9028 found
+monotone: common ancestor 652b1035343281a0d2a5de79919f9a31a30c9028 jim@@juicebot.co.jp 2004-10-26T:15:25:05 found
+monotone: [merged] 03f7495b51cc70b76872ed019d19dee1b73e89b6
 @end group
 @end smallexample
 
@@ -3922,7 +3955,7 @@ branch:
 
 @smallexample
 @group
-$ ./monotone list certs 4a96
+$ monotone list certs 4a96
 monotone: expandeding partial id '4a96'
 monotone: expanded to '4a96a230293456baa9c6e7167cafb3c5b52a8e7f'
 -----------------------------------------------------------------

@@ -3716,16 +3716,16 @@ CMD(log, N_("informative"), N_("[FILE]"),
     }
 }
 
-
 CMD(setup, N_("tree"), N_("DIRECTORY"), N_("setup a new working copy directory"),
     OPT_BRANCH_NAME)
 {
-  string dir;
-
   if (args.size() != 1)
     throw usage(name);
 
-  dir = idx(args,0)();
+  N(!app.branch_name().empty(), F("need --branch argument for setup"));
+  app.db.ensure_open();
+
+  string dir = idx(args,0)();
   app.create_working_copy(dir);
   revision_id null;
   put_revision_id(null);

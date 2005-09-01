@@ -47,12 +47,12 @@ AT_CHECK(cd updir && MONOTONE update, [], [ignore], [ignore])
 AT_CHECK(cmp otherdir/foo updir/foo)
 
 # merge doesn't affect given branch
-AT_CHECK(MONOTONE setup third1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE setup --branch=testbranch third1, [], [ignore], [ignore])
 AT_DATA(third1/a, [1a
 ])
 AT_CHECK(cd third1 && MONOTONE add a, [], [ignore], [ignore])
 AT_CHECK(cd third1 && MONOTONE commit --branch=third --message=foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE setup third2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE setup --branch=testbranch third2, [], [ignore], [ignore])
 AT_DATA(third2/b, [2b
 ])
 AT_CHECK(cd third2 && MONOTONE add b, [], [ignore], [ignore])

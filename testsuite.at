@@ -37,9 +37,10 @@ _MT_EXEC=`which monotone`
 # Save the PWD so MONOTONE macro can refer back to it
 _ROOT_DIR=`pwd -P`
 
-# Pick a random port, so running multiple testsuites concurrently on
-# the same machine has a hope of working.
-_PORT=`awk 'BEGIN {srand()} END {printf "%.0f\n", (rand() * 450 + 20050)}'< /dev/null`
+# Pick a random port, so running multiple testsuites concurrently on the
+# same machine has a hope of working.  Port range will usually be
+# 20050..53347.
+_PORT=`echo $RANDOM | awk 'BEGIN {a=1;srand()} END {printf "%.0f\n", ((rand() * 529 + 20050 + $a) % 64512 + 1024)}'`
 
 AT_DATA(test_keys, [@<:@pubkey tester@test.net@:>@
 MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCfN/cAMabgb6T7m8ksGnpQ7LO6hOdnc/7V
@@ -138,9 +139,9 @@ attr_functions[["test_attr"]] =
 
 ])
 
-AT_CHECK(MONOTONE setup ., [], [ignore], [ignore])
 AT_CHECK(MONOTONE db init, [], [ignore], [ignore])
 AT_CHECK(MONOTONE read <test_keys, [], [ignore], [ignore])
+AT_CHECK(MONOTONE setup --branch=testbranch ., [], [ignore], [ignore])
 AT_CHECK(rm test_keys)
 ])
 
