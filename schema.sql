@@ -13,6 +13,8 @@
 -- licensed to the public under the terms of the GNU GPL 2.1+
 -- see the file COPYING for details
 
+-- Transactions avoid syncing for each action, db init gets faster.
+BEGIN;
 
 -- primary data structures concerned with storing and 
 -- versionning state-of-tree configurations
@@ -117,3 +119,5 @@ CREATE TABLE db_vars
         value not null,       -- var value
         unique(domain, name)
         );
+
+COMMIT;
