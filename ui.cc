@@ -262,7 +262,9 @@ user_interface::user_interface() :
   last_write_was_a_tick(false),
   t_writer(0)
 {
+#ifndef WIN32
   clog.sync_with_stdio(false);
+#endif
   clog.unsetf(ios_base::unitbuf);
   if (have_smart_terminal()) 
     set_tick_writer(new tick_write_count);
