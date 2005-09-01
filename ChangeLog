@@ -1,8 +1,12 @@
+2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (ALIAS(import, setup)): Remove alias.
+
 2005-09-01  Matt Johnston  <matt@ucc.asn.au>
 
-  * schema.sql: add BEGIN, COMMIT to make it a single transaction,
-  improves db init performance significantly on OS X (avoids many
-  disk-cache flushes).
+	* schema.sql: add BEGIN, COMMIT to make it a single transaction,
+	improves db init performance significantly on OS X (avoids many
+	disk-cache flushes).
 
 2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
@@ -22,9 +26,10 @@
 
 2005-08-31  Richard Levitte  <richard@levitte.org>
 
-	* lua.cc, std_hooks.lua: Rename monotone_guess_binary_filename_for_lua
-	and guess_binary_filename to monotone_guess_binary_file_contents_for_lua
-	and guess_binary_file_contents.
+	* lua.cc, std_hooks.lua: Rename
+	monotone_guess_binary_filename_for_lua and guess_binary_filename
+	to monotone_guess_binary_file_contents_for_lua and
+	guess_binary_file_contents.
 
 2005-08-31  Nathaniel Smith  <njs@pobox.com>
 
@@ -35,16 +40,6 @@
 2005-08-30  Benoît Dejean  <benoit@placenet.org>
 
 	* file_io.cc (walk_tree): Fixed format.
-
-	Someone should fix these new warnings for ppl with signed chars.
-
-	In function void set_char_is_binary(char, bool)
-	133: warning: array subscript has type char
-	In function void init_char_is_binary()
-	147: warning: comparison between signed and unsigned integer expressions
-	In function bool guess_binary(const std::string&)
-	160: warning: comparison between signed and unsigned integer expressions
-	162: warning: array subscript has type char
 
 2005-08-31  Marcel van der Boom  <marcel@hsdev.com>
 

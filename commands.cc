@@ -3731,8 +3731,6 @@ CMD(setup, N_("tree"), N_("DIRECTORY"), N_("setup a new working copy directory")
   put_revision_id(null);
 }
 
-ALIAS(import, setup);
-
 CMD(automate, N_("automation"),
     N_("interface_version\n"
       "heads [BRANCH]\n"
