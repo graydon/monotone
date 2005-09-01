@@ -13,9 +13,10 @@
 // a persistent element id
 // but "file_id" means something else...
 // "element" terminology is stolen from clearcase, it means (file|directory)
-// 32 bits should be sufficient; 4 billion distinct files would use 4
-// terabytes of disk space, assuming each file requires only a single sqlite
-// page.  easy to change in a few years, in any case.
+// 32 bits should be sufficient; even with half of them temporary, 2 billion
+// distinct files would use 2 terabytes of disk space, assuming each file
+// requires only a single sqlite page.  easy to change in a few years, in any
+// case.
 // FIXME: we have too many integer types.  make them type-distinct.
 typedef uint32_t element_soul;
 
@@ -27,9 +28,30 @@ inline bool null_soul(element_soul es)
   return es = the_null_soul;
 }
 
+const element_soul first_temp_soul = 0x80000000;
+
+inline bool temp_soul(element_soul es)
+{
+  return es & first_temp_soul;
+}
+
+struct temp_soul_source
+{
+  temp_soul_source() : curr(first_temp_soul) {}
+  element_soul next()
+  {
+    element_soul r = curr++;
+    I(temp_soul(r));
+    return r;
+  }
+  element_soul curr;
+};
+  
+typedef enum { etype_dir, etype_file } etype;
+
 struct element_t
 {
-  bool is_dir;
+  etype type;
   revision_id birth_revision;
   // this is null iff this is a root dir
   element_soul parent;
@@ -50,28 +72,48 @@ struct mark_item
 typedef std::map<element_soul, element_t> element_map;
 typedef std::map<path_component, element_soul> dir_map;
 
+typedef std::vector<path_component> split_path;
+
+class dir_tree
+{
+public:
+  dir_tree() : root_dir(the_null_soul) {};
+  dir_tree(element_map const & elements) {};
+  element_soul lookup(file_path const & fp);
+  element_soul lookup(split_path const & sp);
+  // returns the soul of the removed element
+  element_soul remove(split_path const & sp);
+  void add(split_path const & sp, element_soul es, etype type);
+  void add(element_soul parent, element_soul es, etype type);
+private:
+  std::map<element_soul, dir_map> children;
+  element_soul root_dir;
+};
+
 // FIXME: should we just make the root_dir always have the null soul for now?
 struct roster_t
 {
-  roster_t() : root_dir(the_null_element) {}
+  roster_t() : root_dir(the_null_soul) {}
   // might be better to make this destructive -- eat the element_map given...
-  roster_t(element_map const & elements);
+  roster_t(element_map const & elements)
+    : elements(elements), tree(elements)
+    {}
+  element_t & element(element_soul es);
+  void assert_type(element_soul es, etype type);
   element_map elements;
-  std::map<element_soul, dir_map> children;
-  element_soul root_dir;
-  void clear()
-  {
-    elements.clear(); children.clear(); root_dir = the_null_element;
-  }
+  dir_tree tree;
 };
 
 typedef std::map<element_soul, mark_item> marking_t;
 
 element_soul lookup(roster_t const & roster, file_path const & fp);
+element_soul lookup(roster_t const & roster,
+                    std::vector<path_component> const & path);
 void get_name(roster_t const & roster, element_soul es, file_path & fp);
 
-// FIXME: how should this work?
-void apply_change_set(change_set const & cs, element_map & em);
+// This generates a roster containing temp souls
+void apply_change_set(change_set const & cs, roster_t & roster,
+                      temp_soul_source & tss);
 
 void markup(revision_id const & rid, roster_t const & root,
             marking_t & marking);
