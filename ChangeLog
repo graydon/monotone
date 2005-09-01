@@ -1,5 +1,9 @@
 2005-09-01  Benoît Dejean  <benoit@placenet.org>
 
+	* commands.cc: Merged one more "no such revision '%s'" string.
+
+2005-09-01  Benoît Dejean  <benoit@placenet.org>
+
 	* commands.cc: Merged all "no such revision '%s'" strings.
 	(string_to_datetime): Merged catch blocks in order to merge error
 	messages.

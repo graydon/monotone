@@ -2886,7 +2886,7 @@ CMD(update, N_("working copy"), "",
     {
       complete(app, app.revision_selectors[0](), r_chosen_id);
       N(app.db.revision_exists(r_chosen_id),
-        F("no revision %s found in database") % r_chosen_id);
+        F("no such revision '%s'") % r_chosen_id);
     }
 
   notify_if_multiple_heads(app);
