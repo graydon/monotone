@@ -533,12 +533,13 @@ extern "C"
         return 1;
       }
     const int bufsize = 8192;
+    char tmpbuf[bufsize];
     string buf;
     while(file.good()) 
       {
-        buf.resize(bufsize);
-        file.read(&buf[0],bufsize);
-        buf.resize(file.gcount());
+        file.read(tmpbuf, sizeof(tmpbuf));
+        I(file.gcount() <= sizeof(tmpbuf));
+        buf.assign(tmpbuf, file.gcount());
         if (guess_binary(buf)) 
           {
             lua_pushboolean(L, true);
