@@ -1,3 +1,12 @@
+2005-09-02  Matt Johnston  <matt@ucc.asn.au>
+
+	* lua.cc (monotone_guess_binary_file_contents_for_lua): use a temporary
+	char* buffer rather than &string[], extra copying seems to have negligible
+	performance impact.
+
+	* tests/perf-test.sh: change path from tests/ to contrib/, make executable.
+	* tests/parse-accounting.pl: make executable.
+
 2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* lua.cc, std_hooks.lua: use proper regexes for .mt-ignore

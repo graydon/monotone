@@ -14,13 +14,13 @@ if [ ! -x $MONOTONE ]; then
     exit 1
 fi
 
-PARSE_ACCOUNT=`pwd`/tests/parse-accounting.pl
+PARSE_ACCOUNT=`pwd`/contrib/parse-accounting.pl
 if [ -x $PARSE_ACCOUNT ]; then
     :
-elif [ -x `dirname $MONOTONE`/tests/parse-accounting.pl ]; then
-    PARSE_ACCOUNT=`dirname $MONOTONE`/tests/parse-accounting.pl
+elif [ -x `dirname $MONOTONE`/contrib/parse-accounting.pl ]; then
+    PARSE_ACCOUNT=`dirname $MONOTONE`/contrib/parse-accounting.pl
 else
-    echo "can't find parse-accounting.pl.  Looked in `pwd`/tests, and `dirname $MONOTONE`/tests"
+    echo "can't find parse-accounting.pl.  Looked in `pwd`/contrib, and `dirname $MONOTONE`/contrib"
     exit 1
 fi
 
