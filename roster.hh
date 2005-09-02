@@ -81,10 +81,11 @@ public:
   dir_tree(element_map const & elements) {};
   element_soul lookup(file_path const & fp);
   element_soul lookup(split_path const & sp);
+  element_soul lookup(element_soul parent, path_component child);
   // returns the soul of the removed element
-  element_soul remove(split_path const & sp);
-  void add(split_path const & sp, element_soul es, etype type);
-  void add(element_soul parent, element_soul es, etype type);
+  element_soul detach(split_path const & sp);
+  void attach(split_path const & sp, element_soul es, etype type);
+  void attach(element_soul parent, element_soul es, etype type);
 private:
   std::map<element_soul, dir_map> children;
   element_soul root_dir;

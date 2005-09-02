@@ -27,11 +27,9 @@ erase_existing_key(std::map<K, V> & m, K const & key)
 // logic, wrt handling of null paths?
 
 element_soul
-dir_tree::lookup(file_path const & fp)
+dir_tree::lookup(element_soul parent, path_component child)
 {
-  split_path sp;
-  fp.split(sp);
-  return lookup(sp);
+  return get_existing_value(get_existing_value(children, parent), child);
 }
 element_soul
 dir_tree::lookup(split_path const & sp)
@@ -39,16 +37,16 @@ dir_tree::lookup(split_path const & sp)
   element_soul es = roster.tree.root_dir;
   I(!null_soul(es));
   for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
-    es = get_existing_value(get_existing_value(children, es), *i);
+    es = lookup(es, *i);
   return es;
 }
-
-bool is_root_dir(element_t const & element)
+element_soul
+dir_tree::lookup(file_path const & fp)
 {
-  return null_soul(element.parent);
+  split_path sp;
+  fp.split(sp);
+  return lookup(sp);
 }
-
-
 
 void
 get_name(roster_t const & roster, element_soul es, file_path & fp)
@@ -80,6 +78,11 @@ check_sane_element(element_t const & element)
       I(!null_id(element.content));
       break;
     }
+}
+
+bool is_root_dir(element_t const & element)
+{
+  return null_soul(element.parent);
 }
 
 dir_tree::dir_tree(element_map const & elements)
@@ -397,4 +400,191 @@ apply_change_set(change_set const & cs, roster_t & roster, temp_soul_source & ts
           }
       }
   }
+}
+
+
+
+struct parallel_roster_walker
+{
+  virtual void visit_left(roster_t & left, element_soul left_soul) = 0;
+  virtual void visit_right(roster_t & right, element_soul right_soul) = 0;
+  virtual void visit_both(roster_t & left, element_soul left_soul,
+                          roster_t & right, element_soul right_soul);
+};
+
+void
+parallel_walk_rosters_recurse_left(roster_t & left, element_soul & start,
+                                   parallel_roster_walker & walker)
+{
+  walker.visit_left(left, start);
+  std::map<element_soul, dir_map>::const_iterator i = left.tree.children.find(start);
+  if (i != left.tree.children.end())
+    for (dir_map::const_iterator j = i->second.begin(); j != i->second.end(); ++j)
+      parallel_walk_rosters_recurse_left(left, j->second, walker);
+}
+
+void
+parallel_walk_rosters_recurse_right(roster_t & right, element_soul start,
+                                    parallel_roster_walker & walker)
+{
+  walker.visit_right(right, start);
+  std::map<element_soul, dir_map>::const_iterator i = right.tree.children.find(start);
+  if (i != right.tree.children.end())
+    for (dir_map::const_iterator j = i->second.begin(); j != i->second.end(); ++j)
+      parallel_walk_rosters_recurse_right(right, j->second, walker);
+}
+
+void
+parallel_walk_rosters_recurse_both(roster_t & left, element_soul start_left,
+                                   roster_t & right, element_soul start_right,
+                                   parallel_roster_walker & walker)
+{
+  walker.visit_both(left, start_left, right, start_right);
+  std::map<element_soul, dir_map>::const_iterator
+    li = left.tree.children.find(start_left);
+  std::map<element_soul, dir_map>::const_iterator
+    ri = right.tree.children.find(start_left);
+  if (li == left.tree.children.end())
+    {
+      I(ri == right.tree.children.end());
+      return;
+    }
+  else
+    {
+      I(ri != right.tree.children.end());
+      dir_map & ldir = li->second;
+      dir_map & rdir = ri->second;
+      dir_map::iterator lc = ldir.begin();
+      dir_map::iterator rc = rdir.begin();
+      while (lc != ldir.end() || rc != rdir.end())
+        {
+          if (lc == ldir.end() || rc->first < lc->first)
+            {
+              parallel_walk_rosters_recurse_right(right, rc->second, walker);
+              ++rc;
+            }
+          else if (rc == rdir.end() || lc->first < rc->first)
+            {
+              parallel_walk_rosters_recurse_left(left, lc->second, walker);
+              ++lc;
+            }
+          else
+            {
+              I(lc->first == rc->first);
+              parallel_walk_rosters_recurse_both(left, lc->second,
+                                                 right, rc->second,
+                                                 walker);
+              ++lc;
+              ++rc;
+            }
+        }
+    }
+}
+
+// FIXME: either make sure this is only passed non-loopy rosters, or add depth
+// checking to this recursion
+void
+parallel_walk_rosters(roster_t & left, roster_t & right,
+                      parallel_roster_walker & walker)
+{
+  parallel_walk_rosters_recurse_both(left, left.tree.root_dir,
+                                     right, right.tree.root_dir,
+                                     walker);
+}
+
+
+struct merge_id_fixer : parallel_roster_walker
+{
+  revision_id const & left_parent_id;
+  revision_id const & right_parent_id;
+  revision_id const & my_id;
+  std::set<revision_id> const & left_ancestors;
+  std::set<revision_id> const & right_ancestors;
+  marking_t & marking;
+  app_state & app;
+  merge_id_fixer(revision_id const & li, revision_id const & ri,
+                 revision_id const & my_id,
+                 std::set<revision_id> const & la,
+                 std::set<revision_id> const & ra,
+                 marking_t & marking, app_state & app)
+    : left_parent_id(li), right_parent_id(ri), my_id(my_id), left_ancestors(la),
+      right_ancestors(ra), marking(marking), app(app)
+    {}
+  virtual void visit_left(roster_t & left, element_soul left_soul);
+  virtual void visit_right(roster_t & right, element_soul right_soul);
+  virtual void visit_both(roster_t & left, element_soul left_soul,
+                          roster_t & right, element_soul right_soul);
+}
+
+void
+merge_id_fixer::visit_left(roster_t & left, element_soul left_soul)
+{
+  I(false);
+}
+void
+merge_id_fixer::visit_right(roster_t & right, element_soul right_soul)
+{
+  I(false);
+}
+
+void
+merge_id_fixer::visit_both(roster_t & left, element_soul left_soul,
+                           roster_t & right, element_soul right_soul)
+{
+  element_t & left_element = get_existing_value(left.elements, left_soul);
+  element_t & right_elementt = get_existing_value(right.elements, right_soul);
+  I(left_element == right_element);
+  if (temp_soul(left_soul) && temp_soul(right_soul))
+    {
+      // brand new element
+      element_soul new_soul = app.db.next_soul();
+      left.resoul(left_soul, new_soul);
+      right.resoul(right_soul, new_soul);
+      mark_item mi;
+      mi.name_marks.insert(my_id);
+      mi.content
+        marking.insert();
+    }
+  
+}
+
+// the last step in generating a merge roster
+static void
+unify_rosters(roster_t & target, element_soul ts,
+              roster const & other, element_soul os,
+              revision_id const & new_rev,
+              app_state & app)
+{
+  element_t & telement = get_existing_value(target.elements, ts);
+  element_t & oelement = get_existing_value(other.elements, os);
+  if (temp_soul(ts) && temp_soul(os))
+    {
+      element_soul new_soul = app.db.next_soul();
+      target.resoul(ts, new_soul);
+      ts = new_soul;
+      telement.birth_revision = new_rev;
+    }
+  else if (temp_soul(ts) && !temp_soul(os))
+    {
+      // not a new file -- picked it up from other
+      target.resoul(ts, os);
+      ts = os;
+      telement.birth_revision = oelement.birth_revision;
+    }
+  else if (temp_soul(ts) && !temp_soul(os))
+    {
+      // not a new file -- we already have the right stuff
+    }
+  else if (!temp_soul(ts) && !temp_soul(os))
+    {
+      // file existed in both parents -- we already have the right stuff
+    }
+  else
+    I(false);
+  I(telement == oelement);
+  if (telement.type == etype_dir)
+    {
+      dir_map & tdir = get_existing_value(target.tree.children, ts);
+      dir_map & odir = get_existing_value(other.tree.children, os);
+      
 }
