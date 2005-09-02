@@ -1,3 +1,7 @@
+2005-09-02  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Use consistent case in option descriptions.
+
 2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* lua.cc, std_hooks.lua: use proper regexes for .mt-ignore
