@@ -538,7 +538,7 @@ extern "C"
     while(file.good()) 
       {
         file.read(tmpbuf, sizeof(tmpbuf));
-        I(file.gcount <= sizeof(tmpbuf));
+        I(file.gcount() <= sizeof(tmpbuf));
         buf.assign(tmpbuf, file.gcount());
         if (guess_binary(buf)) 
           {
