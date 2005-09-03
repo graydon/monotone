@@ -26,16 +26,16 @@ checked into project
 AT_CHECK(mkdir alicewd)
 AT_CHECK(cp initial alicewd/initial)
 AT_CHECK(MONOTONE --branch=testbranch setup alicewd, [], [ignore], [ignore])
-AT_CHECK( (cd alicewd; MONOTONE --branch=testbranch --root=. add initial), [], [ignore], [ignore])
+AT_CHECK( (cd alicewd; MONOTONE --root=. add initial), [], [ignore], [ignore])
 AT_CHECK( (cd alicewd; MONOTONE --branch=testbranch --root=. commit -m 'initial commit'), [], [ignore], [ignore])
 AT_CHECK(cp foo.alice alicewd/foo)
 
 # Bob does add of file foo, and commits
 AT_CHECK(MONOTONE --branch=testbranch checkout bobwd, [], [ignore], [ignore])
 AT_CHECK(cp foo.bob bobwd/foo)
-AT_CHECK( (cd bobwd; MONOTONE --branch=testbranch --root=. add foo), [], [ignore], [ignore])
+AT_CHECK( (cd bobwd; MONOTONE --root=. add foo), [], [ignore], [ignore])
 AT_CHECK( (cd bobwd; MONOTONE --branch=testbranch --root=. commit -m 'bob commit'), [], [ignore], [ignore])
-REV=`BASE_REVISION`
+REV=`cd bobwd; BASE_REVISION`
 
 # Alice does her update, discovers foo has been stomped!
 AT_CHECK( (cd alicewd; MONOTONE --branch=testbranch --root=. update --revision=$REV), [], [ignore], [ignore])

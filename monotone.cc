@@ -62,12 +62,12 @@ struct poptOption coptions[] =
     {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, gettext_noop("skip merges when printing logs"), NULL},
     {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, gettext_noop("use the current arguments as the future default"), NULL},
     {"exclude", 0, POPT_ARG_STRING, &argstr, OPT_EXCLUDE, gettext_noop("leave out branches matching a pattern"), NULL},
-    {"unified", 0, POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("Use unified diff format"), NULL},
-    {"context", 0, POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("Use context diff format"), NULL},
-    {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, gettext_noop("Use external diff hook for generating diffs"), NULL},
-    {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, gettext_noop("Argument to pass external diff hook"), NULL},
-    {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("Use least common ancestor as ancestor for merge"), NULL},
-    {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("Perform the associated file operation"), NULL},
+    {"unified", 0, POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("use unified diff format"), NULL},
+    {"context", 0, POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("use context diff format"), NULL},
+    {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, gettext_noop("use external diff hook for generating diffs"), NULL},
+    {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, gettext_noop("argument to pass external diff hook"), NULL},
+    {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("use least common ancestor as ancestor for merge"), NULL},
+    {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 

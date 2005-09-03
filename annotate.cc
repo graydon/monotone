@@ -390,7 +390,7 @@ annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_conte
 
   // do the copied lines thing for our annotate_context
   std::vector<long> lcs_src_lines;
-  lcs_src_lines.reserve(lcs.size());
+  lcs_src_lines.resize(lcs.size());
   size_t i, j;
   i = j = 0;
   while (i < file_interned.size() && j < lcs.size()) {

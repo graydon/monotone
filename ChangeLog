@@ -10,6 +10,36 @@
 	do not complete IDs, make sure invalid IDs are caught.
 	* testsuite.at: add new tests
 
+2005-09-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_persistent_server_keys_2.at: 'commit' needs a commit
+	message.  Un-XFAIL.
+	* tests/t_netsync_unrelated.at: Fix 'setup' syntax.
+	* tests/t_add_vs_commit.at: BASE_REVISION needs to be in the root
+	of a working copy to work.  Un-XFAIL.
+	* tests/t_add_stomp_file.at: 'add' does not take a --branch
+	argument.  BASE_REVISION needs to be in the root of a working copy
+	to work.
+	* annotate.cc (build_parent_lineage): Don't access uninitialized
+	memory--use resize() rather than reserve().
+
+2005-09-02  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Use consistent case in option descriptions.
+
+2005-09-02  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{hh,cc}: Add split_path typedef.  Use it.
+
+2005-09-02  Matt Johnston  <matt@ucc.asn.au>
+
+	* lua.cc (monotone_guess_binary_file_contents_for_lua): use a
+	temporary char* buffer rather than &string[], extra copying seems
+	to have negligible performance impact.
+	* tests/perf-test.sh: change path from tests/ to contrib/, make
+	executable.
+	* tests/parse-accounting.pl: make executable.
+
 2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* lua.cc, std_hooks.lua: use proper regexes for .mt-ignore
