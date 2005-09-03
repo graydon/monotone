@@ -31,6 +31,7 @@ MOST_SOURCES =								\
          rcs_import.cc rcs_import.hh					\
          revision.cc revision.hh					\
 	 change_set.cc change_set.hh					\
+	 cset.cc cset.hh						\
          mt_version.cc mt_version.hh					\
          automate.cc automate.hh					\
          database_check.cc database_check.hh				\
