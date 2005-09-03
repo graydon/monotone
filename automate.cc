@@ -903,6 +903,154 @@ automate_certs(std::vector<utf8> args,
   guard.commit();
 }
 
+// Name: get_revision
+// Arguments:
+//   1: a revision id (optional, determined from working directory if non-existant)
+// Added in: 1.0
+// Purpose: Prints changeset information for the specified revision id.
+//
+// There are several changes that are described; each of these is described by 
+// a different basic_io stanza. The first string pair of each stanza indicates the 
+// type of change represented. 
+//
+// Possible values of this first value are along with an ordered list of 
+// basic_io formatted string pairs that will be provided are:
+//
+//  'old_revision' : represents a parent revision.
+//                   format: ('old_revision', revision id)
+//  'new_manifest' : represents the new manifest associated with the revision.
+//                   format: ('new_manifest', manifest id)
+//  'old_manifest' : represents a manifest associated with a parent revision.
+//                   format: ('old_manifest', manifest id)
+//  'patch' : represents a file that was modified.
+//            format: ('patch', filename), ('from', file id), ('to', file id)
+//  'add_file' : represents a file that was added.
+//               format: ('add_file', filename)
+//  'delete_file' : represents a file that was deleted.
+//                  format: ('delete_file', filename)
+//  'delete_dir' : represents a directory that was deleted.
+//                 format: ('delete_dir', filename)
+//  'rename_file' : represents a file that was renamed.
+//                  format: ('rename_file', old filename), ('to', new filename)
+//  'rename_dir' : represents a directory that was renamed.
+//                 format: ('rename_dir', old filename), ('to', new filename)
+//
+// Output format: All stanzas are formatted by basic_io. Stanzas are seperated 
+// by a blank line. Values will be escaped, '\' -> '\\' and '"' -> '\"'.
+//
+// Error conditions: If the revision specified is unknown or invalid prints an 
+// error message to stderr and exits with status 1.
+static void
+automate_get_revision(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() > 1)
+    throw usage(help_name);
+
+  revision_data dat;
+  revision_id ident;
+
+  if (args.size() == 0)
+    {
+      revision_set rev;
+      manifest_map m_old, m_new;
+
+      app.require_working_copy(); 
+      calculate_unrestricted_revision(app, rev, m_old, m_new);
+      calculate_ident(rev, ident);
+      write_revision_set(rev, dat);
+    }
+  else
+    {
+      ident = revision_id(idx(args, 0)());
+      N(app.db.revision_exists(ident),
+        F("no revision %s found in database") % ident);
+      app.db.get_revision(ident, dat);
+    }
+
+  L(F("dumping revision %s\n") % ident);
+  output.write(dat.inner()().data(), dat.inner()().size());
+}
+
+// Name: get_manifest
+// Arguments:
+//   1: a manifest id (optional, determined from working directory if non-existant)
+// Added in: 1.0
+// Purpose: Prints the contents of the manifest associated with the given manifest ID.
+//
+// Output format: One line for each file in the manifest. Each line begins with a 
+// 40 character file ID, followed by two space characters (' ') and then the filename.
+// eg:
+// 22382ac1bdffec21170a88ff2580fe39b508243f  vocab.hh
+//
+// Error conditions:  If the manifest ID specified is unknown or invalid prints an 
+// error message to stderr and exits with status 1.
+static void
+automate_get_manifest(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() > 1)
+    throw usage(help_name);
+
+  manifest_data dat;
+  manifest_id ident;
+
+  if (args.size() == 0)
+    {
+      revision_set rev;
+      manifest_map m_old, m_new;
+
+      app.require_working_copy();
+      calculate_unrestricted_revision(app, rev, m_old, m_new);
+
+      calculate_ident(m_new, ident);
+      write_manifest_map(m_new, dat);
+    }
+  else
+    {
+      ident = manifest_id(idx(args, 0)());
+      N(app.db.manifest_version_exists(ident),
+        F("no manifest version %s found in database") % ident);
+      app.db.get_manifest_version(ident, dat);
+    }
+
+  L(F("dumping manifest %s\n") % ident);
+  output.write(dat.inner()().data(), dat.inner()().size());
+}
+
+// Name: get_file
+// Arguments:
+//   1: a file id
+// Added in: 1.0
+// Purpose: Prints the contents of the specified file.
+//
+// Output format: The file contents are output without modification.
+//
+// Error conditions: If the file id specified is unknown or invalid prints 
+// an error message to stderr and exits with status 1.
+static void
+automate_get_file(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+
+  file_id ident(idx(args, 0)());
+  N(app.db.file_version_exists(ident),
+    F("no file version %s found in database") % ident);
+
+  file_data dat;
+  L(F("dumping file %s\n") % ident);
+  app.db.get_file_version(ident, dat);
+  output.write(dat.inner()().data(), dat.inner()().size());
+}
+
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
                  std::string const & root_cmd_name,
@@ -1153,6 +1301,12 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_stdio(args, root_cmd_name, app, output);
   else if (cmd() == "certs")
     automate_certs(args, root_cmd_name, app, output);
+  else if (cmd() == "get_revision")
+    automate_get_revision(args, root_cmd_name, app, output);
+  else if (cmd() == "get_manifest")
+    automate_get_manifest(args, root_cmd_name, app, output);
+  else if (cmd() == "get_file")
+    automate_get_file(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }

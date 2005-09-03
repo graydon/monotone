@@ -5334,6 +5334,188 @@ message.
 
 @end table
 
+@item monotone automate get_revision
+@item monotone automate get_revision @var{id}
+
+@table @strong
+@item Arguments:
+
+Specifying the option @var{id} argument outputs the changeset 
+information for the specified @var{id}. Otherwise, @var{id} is 
+determined from the working directory.
+
+@item Added in:
+
+1.0
+
+@item Purpose:
+
+Prints changeset information for the specified revision id.
+
+There are several changes that are described; each of these is described by 
+a different basic_io stanza. The first string pair of each stanza indicates the 
+type of change represented. 
+
+Possible values of this first value are along with an ordered list of 
+basic_io formatted string pairs that will be provided are:
+
+@verbatim
+'old_revision'
+      represents a parent revision.
+      format: ('old_revision', revision id)
+'new_manifest'
+      represents the new manifest associated with the revision.
+      format: ('new_manifest', manifest id)
+'old_manifest'
+      represents a manifest associated with a parent revision.
+      format: ('old_manifest', manifest id)
+'patch'
+      represents a file that was modified.
+      format: ('patch', filename), ('from', file id), ('to', file id)
+'add_file'
+      represents a file that was added.
+      format: ('add_file', filename)
+'delete_file'
+      represents a file that was deleted.
+      format: ('delete_file', filename)
+'delete_dir'
+      represents a directory that was deleted.
+      format: ('delete_dir', filename)
+'rename_file'
+      represents a file that was renamed.
+      format: ('rename_file', old filename), ('to', new filename)
+'rename_dir'
+      represents a directory that was renamed.
+      format: ('rename_dir', old filename), ('to', new filename)
+@end verbatim
+ 
+@item Sample output:
+
+@verbatim
+new_manifest [bfe2df785c07bebeb369e537116ab9bb7a4b5e19]
+
+old_revision [429fea55e9e819a046843f618d90674486695745]
+old_manifest [b71855116f7049ac663102c0cb628653ffe316d1]
+
+patch "ChangeLog"
+ from [7dc21d3a46c6ecd94685ab21e67b131b32002f12]
+   to [234513e3838d423b24d5d6c98f70ce995c8bab6e]
+
+patch "std_hooks.lua"
+ from [0408707bb6b97eae7f8da61af7b35364dbd5a189]
+   to [d7bd0756c48ace573926197709e53eb24dae5f5f]
+@end verbatim
+
+@item Output format:
+
+All stanzas are formatted by basic_io. Stanzas are seperated 
+by a blank line. Values will be escaped, '\' to '\\' and 
+'"' to '\"'.
+
+@item Error conditions:
+
+If the revision specified is unknown or invalid prints an error message
+to stderr and exits with status 1.
+
+@end table
+
+@item monotone automate get_manifest
+@item monotone automate get_manifest @var{id}
+
+@table @strong
+@item Arguments:
+
+Specifying the optional @var{id} argument outputs the maifest for the
+specified @var{id}. Otherwise, @var{id} is determined from the working
+directory.
+
+@item Added in:
+
+1.0
+
+@item Purpose:
+
+Prints the contents of the manifest associated with the given manifest ID.
+
+@item Sample output:
+
+@verbatim
+e3915658cb464d05f21332e03d30dca5d94fe776  .htaccess
+00ff89c69e7a8f6a0f48c6503168d9b62a0cfeb0  .mt-attrs
+80d8f3f75c9b517ec462233e155f7dfb93379f67  AUTHORS
+fc74a48c7f73eedcbe1ea709755fbe819b29736c  ChangeLog
+dfac199a7539a404407098a2541b9482279f690d  LICENSE
+440eec971e7bb61ccbb61634deb2729bb25931cd  README
+e0ea26c666b37c5f98ccf80cb933d021ee55c593  TODO
+b28ece354969314ce996f3030569215d685973d6  branch.psp
+1fdb62e05fb2a9338d2c72ddc58de3ab2b3976fe  common.py
+64cb5898e3a026b4782c343ca4386585e0c3c275  config.py.example
+7152c3ff110418aca5d23c374ea9fb92a0e98379  error.psp
+5d8536100fdf51d505b6f20bc9c16aa78d4e86a8  fileinbranch.psp
+981df124a0b5655a9f78c42504cfa8c6f02b267a  headofbranch.psp
+a43d0588a69e622b2afc681678c2a5c3b3b1f342  help.psp
+18a8bffc8729d7bfd71d2e0cb35a1aed1854fa74  html.py
+c621827db187839e1a7c6e51d5f1a7f6e0aa560c  index.psp
+708b61436dce59f47bd07397ce96a1cfabe81970  monotone.py
+a02b1c161006840ea8685e461fd07f0e9bb145a3  revision.psp
+027515fd4558abf317d54c437b83ec6bc76e3dd8  rss_feed.gif
+638140d6823eee5844de37d985773be75707fa25  tags.psp
+be83f459a152ffd49d89d69555f870291bc85311  tarofbranch.psp
+fb51955563d64e628e0e67e4acca1a1abc4cd989  utility.py
+8d04b3fc352a860b0e3240dcb539c1193705398f  viewmtn.css
+7cb5c6b1b1710bf2c0fa41e9631ae43b03424a35  viewmtn.py
+530290467a99ca65f87b74f653bf462b28c6cda9  wrapper.py
+@end verbatim
+
+@item Output format:
+
+The output format is one line for each file in the manifest. Each line begins 
+with a 40 character file ID, followed by two space characters ('  ') and then 
+the filename.
+
+@item Error conditions:
+
+If the manifest ID specified is unknown or invalid prints an error
+message to stderr and exits with status 1.
+
+@end table
+
+@item monotone automate get_file @var{id}
+
+@table @strong
+@item Arguments:
+
+The  @var{id} argument specifies the file to be output.
+
+@item Added in:
+
+1.0
+
+@item Purpose:
+
+Prints the contents of the specified file.
+
+@item Sample output:
+
+@verbatim
+If you've downloaded a release, see INSTALL for installation
+instructions.  If you've checked this out, the generated files are not
+included, and you must use "autoreconf --install" to create them.
+
+"make html" for docs, or read the .info file and / or man page.
+@end verbatim
+
+@item Output format:
+
+The file contents are output without modification.
+
+@item Error conditions:
+
+If the file id specified is unknown or invalid prints an error message
+to stderr and exits with status 1.
+
+@end table
+
 @end ftable
 
 @page

@@ -3747,7 +3747,10 @@ CMD(automate, N_("automation"),
       "inventory\n"
       "stdio\n"
       "certs REV\n"
-      "select SELECTOR\n"),
+      "select SELECTOR\n"
+      "get_file ID\n"
+      "get_manifest [ID]\n"
+      "get_revision [ID]\n"),
     N_("automation interface"), 
     OPT_NONE)
 {

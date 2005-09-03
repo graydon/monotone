@@ -1,3 +1,15 @@
+2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc, commands.cc: add "automate get_file", 
+	"automate get_revision" and "automate get_manifest" to 
+	automation interface.
+	* monotone.texi: document new automation commands
+	* tests/t_automate_get_file.at, tests/t_automate_get_revision_at, 
+	tests/t_automate_get_manifest.at: trivial testing of new 
+	automation commands for output as specified, make sure they 
+	do not complete IDs, make sure invalid IDs are caught.
+	* testsuite.at: add new tests
+
 2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* lua.cc, std_hooks.lua: use proper regexes for .mt-ignore
