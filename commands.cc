@@ -524,7 +524,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       {
         if (checked.find(idx(certs, i).key) == checked.end() &&
             !app.db.public_key_exists(idx(certs, i).key))
-          P(F("warning: no public key '%s' found in database\n")
+          P(F("no public key '%s' found in database")
             % idx(certs, i).key);
         checked.insert(idx(certs, i).key);
       }

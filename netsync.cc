@@ -2191,7 +2191,7 @@ load_data(netcmd_item_type type,
         }
       else
         {
-          throw bad_decode(F("public key '%s' does not exist in our database") % hitem);
+          throw bad_decode(F("no public key '%s' found in database") % hitem);
         }
       break;
 

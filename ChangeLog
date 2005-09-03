@@ -1,3 +1,8 @@
+2005-09-03  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (ls_certs):
+	* netsync.cc (load_data): Merged strings.
+
 2005-09-01  Benoît Dejean  <benoit@placenet.org>
 
 	* commands.cc: Merged one more "no such revision '%s'" string.
