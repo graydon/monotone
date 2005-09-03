@@ -1,5 +1,13 @@
 2005-09-03  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_persistent_server_keys_2.at: 'commit' needs a commit
+	message.  Un-XFAIL.
+	* tests/t_netsync_unrelated.at: Fix 'setup' syntax.
+	* tests/t_add_vs_commit.at: BASE_REVISION needs to be in the root
+	of a working copy to work.  Un-XFAIL.
+	* tests/t_add_stomp_file.at: 'add' does not take a --branch
+	argument.  BASE_REVISION needs to be in the root of a working copy
+	to work.
 	* annotate.cc (build_parent_lineage): Don't access uninitialized
 	memory--use resize() rather than reserve().
 

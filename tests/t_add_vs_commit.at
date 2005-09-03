@@ -1,14 +1,9 @@
 AT_SETUP([add working copy commit in another])
 MONOTONE_SETUP
 
-# This test is a bug report
-AT_XFAIL_IF(true)
-
 # 1. Alice writes a file, does an add, *doesn't* do a commit, and sends patch
 # 2. Bob applies (modified) patch to tree, does the add, then a commit.
 # 3. Now Alice does an update (resolves the merge conflict, choosing Bob's changes).
-#
-# Alice's working dir now give I()'s when she tries to do stuff (diff, update, etc.).
 
 AT_DATA(initial, [some initial data
 ])
@@ -38,7 +33,7 @@ AT_CHECK(MONOTONE --branch=testbranch checkout bobwd, [], [ignore], [ignore])
 AT_CHECK(cp foo.bob bobwd/foo)
 AT_CHECK( (cd bobwd; MONOTONE --root=. add foo), [], [ignore], [ignore])
 AT_CHECK( (cd bobwd; MONOTONE --root=. commit -m 'bob commit'), [], [ignore], [ignore])
-REV=`BASE_REVISION`
+REV=`cd bobwd; BASE_REVISION`
 
 # Alice does her update, then attempts, eg., a diff
 AT_CHECK( (cd alicewd; MONOTONE --root=. update --revision=$REV), [], [ignore], [ignore])
