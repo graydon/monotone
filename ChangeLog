@@ -1,14 +1,19 @@
+2005-09-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* annotate.cc (build_parent_lineage): Don't access uninitialized
+	memory--use resize() rather than reserve().
+
 2005-09-02  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* monotone.cc: Use consistent case in option descriptions.
 
 2005-09-02  Matt Johnston  <matt@ucc.asn.au>
 
-	* lua.cc (monotone_guess_binary_file_contents_for_lua): use a temporary
-	char* buffer rather than &string[], extra copying seems to have negligible
-	performance impact.
-
-	* tests/perf-test.sh: change path from tests/ to contrib/, make executable.
+	* lua.cc (monotone_guess_binary_file_contents_for_lua): use a
+	temporary char* buffer rather than &string[], extra copying seems
+	to have negligible performance impact.
+	* tests/perf-test.sh: change path from tests/ to contrib/, make
+	executable.
 	* tests/parse-accounting.pl: make executable.
 
 2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
