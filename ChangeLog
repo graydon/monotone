@@ -1,3 +1,7 @@
+2005-09-02  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{hh,cc}: Add split_path typedef.  Use it.
+
 2005-09-02  Matt Johnston  <matt@ucc.asn.au>
 
 	* lua.cc (monotone_guess_binary_file_contents_for_lua): use a temporary
