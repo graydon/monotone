@@ -1,5 +1,9 @@
 2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
 
+	* ChangeLog: fix up screwed up three-way merge
+
+2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
+
 	* automate.cc, commands.cc: add "automate get_file", 
 	"automate get_revision" and "automate get_manifest" to 
 	automation interface.
