@@ -89,7 +89,7 @@ AT_CHECK(MONOTONE --branch=branch.y commit --message 'state J', [], [ignore], [i
 AT_CHECK(MONOTONE --branch=branch.y merge, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=branch.y update, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE cat manifest, [], [stdout])
+AT_CHECK(MONOTONE automate get_manifest, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep y manifest, [], [ignore], [ignore])
 AT_CHECK(grep -v x manifest, [], [ignore], [ignore])

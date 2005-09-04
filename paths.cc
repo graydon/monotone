@@ -231,15 +231,15 @@ static interner<path_component> pc_interner("", the_null_component);
 //    - []
 //    - ["foo", ""]
 //    - ["", "bar"]
-file_path::file_path(std::vector<path_component> const & pieces)
+file_path::file_path(split_path const & sp)
 {
-  std::vector<path_component>::const_iterator i = pieces.begin();
-  I(i != pieces.end());
-  if (pieces.size() > 1)
+  split_path::const_iterator i = sp.begin();
+  I(i != sp.end());
+  if (sp.size() > 1)
     I(!null_name(*i));
   std::string tmp = pc_interner.lookup(*i);
   I(tmp != bookkeeping_root.as_internal());
-  for (++i; i != pieces.end(); ++i)
+  for (++i; i != sp.end(); ++i)
     {
       I(!null_name(*i));
       tmp += "/";
@@ -269,9 +269,9 @@ file_path::file_path(std::vector<path_component> const & pieces)
 // change_set.cc is rewritten, however, you should revisit the semantics of
 // this function.
 void
-file_path::split(std::vector<path_component> & pieces) const
+file_path::split(split_path & sp) const
 {
-  pieces.clear();
+  sp.clear();
   if (empty())
     return;
   std::string::size_type start, stop;
@@ -282,10 +282,10 @@ file_path::split(std::vector<path_component> & pieces) const
       stop = s.find('/', start);
       if (stop < 0 || stop > s.length())
         {
-          pieces.push_back(pc_interner.intern(s.substr(start)));
+          sp.push_back(pc_interner.intern(s.substr(start)));
           break;
         }
-      pieces.push_back(pc_interner.intern(s.substr(start, stop - start)));
+      sp.push_back(pc_interner.intern(s.substr(start, stop - start)));
       start = stop + 1;
     }
 }

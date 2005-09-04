@@ -96,6 +96,12 @@
 //           F("my path is %s") % my_path
 //       i.e., nothing fancy necessary, for purposes of F() just treat it like
 //       it were a string
+//
+//
+// There is also one "not really a path" type, 'split_path'.  This is a vector
+// of path_component's, and semantically equivalent to a file_path --
+// file_path's can be split into split_path's, and split_path's can be joined
+// into file_path's.
 
 
 #include <iosfwd>
@@ -106,6 +112,8 @@
 #include "vocab.hh"
 
 typedef u32 path_component;
+
+typedef std::vector<path_component> split_path;
 
 const path_component the_null_component = 0;
 
@@ -145,12 +153,12 @@ class file_path : public any_path
 public:
   file_path() {}
   // join a file_path out of pieces
-  file_path(std::vector<path_component> const & pieces);
+  file_path(split_path const & sp);
   
   // this currently doesn't do any normalization or anything.
   file_path operator /(std::string const & to_append) const;
 
-  void split(std::vector<path_component> & pieces) const;
+  void split(split_path & sp) const;
 
   bool operator ==(const file_path & other) const
   { return data == other.data; }

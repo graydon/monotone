@@ -10,7 +10,7 @@ T1=`BASE_REVISION`
 
 # set defaults in db 2
 RUN_NETSYNC(pull, testbranch)
-AT_CHECK(MONOTONE2 cat revision $T1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $T1, [], [ignore], [ignore])
 
 SET_FILE(testfile, [blah blah
 ])
@@ -21,7 +21,7 @@ T2=`BASE_REVISION`
 NETSYNC_SERVE_START(testbranch)
 AT_CHECK(MONOTONE2 pull, [], [ignore], [ignore])
 NETSYNC_SERVE_STOP
-AT_CHECK(MONOTONE2 cat revision $T2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $T2, [], [ignore], [ignore])
 
 # do a --set-default pull of another branch
 NETSYNC_SERVE_START(otherbranch)
@@ -39,6 +39,6 @@ NETSYNC_SERVE_START(otherbranch)
 AT_CHECK(MONOTONE2 pull, [], [ignore], [ignore])
 NETSYNC_SERVE_STOP
 
-AT_CHECK(MONOTONE2 cat revision $O1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $O1, [], [ignore], [ignore])
 
 AT_CLEANUP

@@ -25,13 +25,13 @@ NETSYNC_SERVE_START(testbranch)
 NETSYNC_CLIENT_N_RUN(2, sync, testbranch)
 NETSYNC_CLIENT_N_RUN(3, sync, testbranch)
 
-CHECK_SAME_STDOUT(MONOTONE2 cat revision $REV1, MONOTONE3 cat revision $REV1)
+CHECK_SAME_STDOUT(MONOTONE2 automate get_revision $REV1, MONOTONE3 automate get_revision $REV1)
 CHECK_SAME_STDOUT(MONOTONE2 ls certs $REV1, MONOTONE3 ls certs $REV1)
 # Also exercise files and manifest
 AT_CHECK(MONOTONE3 checkout --revision=$REV1 somedir, [], [ignore], [ignore])
 
 NETSYNC_CLIENT_N_RUN(2, sync, testbranch)
-CHECK_SAME_STDOUT(MONOTONE2 cat revision $REV2, MONOTONE3 cat revision $REV2)
+CHECK_SAME_STDOUT(MONOTONE2 automate get_revision $REV2, MONOTONE3 automate get_revision $REV2)
 CHECK_SAME_STDOUT(MONOTONE2 ls certs $REV2, MONOTONE3 ls certs $REV2)
 # Also exercise files and manifest
 AT_CHECK(MONOTONE2 checkout --revision=$REV2 otherdir, [], [ignore], [ignore])
@@ -56,7 +56,7 @@ AT_CHECK(MONOTONE3 comment $REV1 'sorry dave', [], [ignore], [ignore])
 NETSYNC_CLIENT_N_RUN(3, sync, testbranch)
 NETSYNC_CLIENT_N_RUN(2, sync, testbranch)
 
-CHECK_SAME_STDOUT(MONOTONE2 cat revision $REV3, MONOTONE3 cat revision $REV3)
+CHECK_SAME_STDOUT(MONOTONE2 automate get_revision $REV3, MONOTONE3 automate get_revision $REV3)
 CHECK_SAME_STDOUT(MONOTONE2 ls certs $REV3, MONOTONE3 ls certs $REV3)
 # Also exercise files and manifest
 AT_CHECK(MONOTONE2 checkout --revision=$REV3 somedir2, [], [ignore], [ignore])
@@ -66,7 +66,7 @@ CHECK_SAME_STDOUT(MONOTONE2 ls certs $REV1, MONOTONE3 ls certs $REV1)
 
 NETSYNC_CLIENT_N_RUN(3, sync, testbranch)
 
-CHECK_SAME_STDOUT(MONOTONE2 cat revision $REV4, MONOTONE3 cat revision $REV4)
+CHECK_SAME_STDOUT(MONOTONE2 automate get_revision $REV4, MONOTONE3 automate get_revision $REV4)
 CHECK_SAME_STDOUT(MONOTONE2 ls certs $REV4, MONOTONE3 ls certs $REV4)
 # Also exercise files and manifest
 AT_CHECK(MONOTONE3 checkout --revision=$REV4 somedir3, [], [ignore], [ignore])

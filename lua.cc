@@ -20,6 +20,7 @@ extern "C" {
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/regex.hpp>
 
 #include <set>
 #include <map>
@@ -532,12 +533,13 @@ extern "C"
         return 1;
       }
     const int bufsize = 8192;
+    char tmpbuf[bufsize];
     string buf;
     while(file.good()) 
       {
-        buf.resize(bufsize);
-        file.read(&buf[0],bufsize);
-        buf.resize(file.gcount());
+        file.read(tmpbuf, sizeof(tmpbuf));
+        I(file.gcount() <= sizeof(tmpbuf));
+        buf.assign(tmpbuf, file.gcount());
         if (guess_binary(buf)) 
           {
             lua_pushboolean(L, true);
@@ -596,6 +598,17 @@ extern "C"
     lua_pushboolean(L, true); 
     return 1;
   }
+
+  static int
+  monotone_regex_search_for_lua(lua_State *L)
+  {
+    const char *re = lua_tostring(L, -2);
+    const char *str = lua_tostring(L, -1);
+    boost::cmatch what;
+
+    lua_pushboolean(L, boost::regex_search(str, what, boost::regex(re)));
+    return 1;
+  }
 }
 
 
@@ -625,6 +638,18 @@ lua_hooks::lua_hooks()
   lua_register(st, "guess_binary_file_contents", monotone_guess_binary_file_contents_for_lua);
   lua_register(st, "include", monotone_include_for_lua);
   lua_register(st, "includedir", monotone_includedir_for_lua);
+
+  // add regex functions:
+  lua_newtable(st);
+  lua_pushstring(st, "regex");
+  lua_pushvalue(st, -2);
+  lua_settable(st, LUA_GLOBALSINDEX);
+
+  lua_pushstring(st, "search");
+  lua_pushcfunction(st, monotone_regex_search_for_lua);
+  lua_settable(st, -3);
+
+  lua_pop(st, 1);
 }
 
 lua_hooks::~lua_hooks()

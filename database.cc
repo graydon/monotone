@@ -363,7 +363,8 @@ database::load(istream & in)
       tmp.erase(0, len);
     }
 
-  sqlite3_exec(__sql, tmp.c_str(), NULL, NULL, NULL);
+  if (!tmp.empty())
+    sqlite3_exec(__sql, tmp.c_str(), NULL, NULL, NULL);
   assert_sqlite3_ok(__sql);
 }
 

@@ -32,7 +32,7 @@ AT_CHECK(MONOTONE update, [], [ignore], [ignore])
 
 MERGED=`BASE_REVISION`
 
-AT_CHECK(MONOTONE cat revision $MERGED, [], [stdout])
+AT_CHECK(MONOTONE automate get_revision $MERGED, [], [stdout])
 AT_CHECK(mv stdout rev)
 AT_CHECK(grep add_file rev, [1], [ignore])
 

@@ -72,6 +72,24 @@ attr_functions["execute"] =
 
 
 function ignore_file(name)
+   -- project specific
+   if (ignored_files == nil) then
+      ignored_files = {}
+      local ignfile = io.open(".mt-ignore", "r")
+      if (ignfile ~= nil) then
+         local line = ignfile:read()
+         while (line ~= nil)
+         do
+            table.insert(ignored_files, line)
+            line = ignfile:read()
+         end
+         io.close(ignfile)
+      end
+   end
+   for i, line in pairs(ignored_files)
+   do
+      if (regex.search(line, name)) then return true end
+   end
    -- c/c++
    if (string.find(name, "%.a$")) then return true end
    if (string.find(name, "%.so$")) then return true end

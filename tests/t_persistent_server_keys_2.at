@@ -3,12 +3,6 @@ AT_KEYWORDS(netsync)
 MONOTONE_SETUP
 NETSYNC_SETUP
 
-# This test is a bug report
-AT_XFAIL_IF(true)
-# Probably this one should not be fixed directly, but by implementing
-# the changes described in t_netsync_diffbranch.at, which would solve
-# it automatically.  OTOH, a fix for this wouldn't be a _bad_ thing.
-
 # This tests a somewhat subtle version of how public keys are handled
 # with netsync.  The rule is, we serve a key if we're serving any cert
 # signed by that key.  The question is, if when we boot up the server
@@ -25,7 +19,7 @@ AT_CHECK(MONOTONE2 pubkey foo@bar | MONOTONE read, [], [ignore], [ignore])
 
 ADD_FILE(foo, [data data blah
 ])
-AT_CHECK(MONOTONE2 commit --key=foo@bar --branch=testbranch blah, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 commit --key=foo@bar --branch=testbranch -m 'commit foo' foo, [], [ignore], [ignore])
 
 NETSYNC_SERVE_START(testbranch)
 NETSYNC_CLIENT_N_RUN(2, push, testbranch)

@@ -16,13 +16,13 @@ CHILD=`BASE_REVISION`
 
 # trying to kill the ancestor. This *is supposed to fail*
 AT_CHECK(MONOTONE db kill_rev_locally $ANCESTOR, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE cat revision $ANCESTOR, [], [ignore], [ignore])
+AT_CHECK(MONOTONE automate get_revision $ANCESTOR, [], [ignore], [ignore])
 AT_CHECK(MONOTONE db check, [], [ignore], [ignore])
 
 # killing children is ok, though :)
-AT_CHECK(MONOTONE cat revision $CHILD, [], [ignore], [ignore])
+AT_CHECK(MONOTONE automate get_revision $CHILD, [], [ignore], [ignore])
 AT_CHECK(MONOTONE db kill_rev_locally $CHILD, [], [ignore], [ignore])
-AT_CHECK(MONOTONE cat revision $CHILD, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE automate get_revision $CHILD, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE db check, [], ignore, ignore)
 
 AT_CLEANUP

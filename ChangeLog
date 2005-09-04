@@ -1,3 +1,100 @@
+2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
+
+	* commands.cc: siplify the monotone cat command 
+	to "monotone cat [-r] FIELNAME" (as in bug #12597)
+	* monotone.texi: update documentation of "monotone cat"
+	* tests/t_add_edge.at, tests/t_cat_file_by_name.at, 
+	tests/t_change_empty_file.at, tests/t_cvsimport.at, 
+	tests/t_cvsimport_deleted_invar.at, tests/t_cvsimport_drepper.at, 
+	tests/t_cvsimport_drepper2.at, tests/t_cvsimport_manifest_cycle.at, 
+	tests/t_cvsimport_samelog.at, tests/t_database_check.at, 
+	tests/t_db_kill_rev_locally.at, tests/t_empty_id_completion.at, 
+	tests/t_epoch.at, tests/t_epoch_server.at, tests/t_erename.at, 
+	tests/t_i18n_file.at, tests/t_import.at, tests/t_merge_add_del.at, 
+	tests/t_movedel.at, tests/t_movepatch.at, tests/t_netsync.at, 
+	tests/t_netsync_exclude.at, tests/t_netsync_exclude_default.at, 
+	tests/t_netsync_globs.at, tests/t_netsync_nocerts.at, 
+	tests/t_netsync_permissions.at, tests/t_netsync_read_permissions.at, 
+	tests/t_netsync_single.at, tests/t_normalized_filenames.at, 
+	tests/t_persistent_server_revision.at, tests/t_remerge.at, 
+	tests/t_rename.at, tests/t_renamed.at, tests/t_scan.at, 
+	tests/t_set_default.at, tests/t_singlecvs.at, 
+	tests/t_update_with_pending_add.at, tests/t_update_with_pending_drop.at, 
+	tests/t_update_with_pending_rename.at, tests/t_versions.at: 
+	use automation interface rather than "monotone cat"
+
+2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
+
+	* ChangeLog: fix up screwed up three-way merge
+
+2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc, commands.cc: add "automate get_file", 
+	"automate get_revision" and "automate get_manifest" to 
+	automation interface.
+	* monotone.texi: document new automation commands
+	* tests/t_automate_get_file.at, tests/t_automate_get_revision_at, 
+	tests/t_automate_get_manifest.at: trivial testing of new 
+	automation commands for output as specified, make sure they 
+	do not complete IDs, make sure invalid IDs are caught.
+	* testsuite.at: add new tests
+
+2005-09-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_persistent_server_keys_2.at: 'commit' needs a commit
+	message.  Un-XFAIL.
+	* tests/t_netsync_unrelated.at: Fix 'setup' syntax.
+	* tests/t_add_vs_commit.at: BASE_REVISION needs to be in the root
+	of a working copy to work.  Un-XFAIL.
+	* tests/t_add_stomp_file.at: 'add' does not take a --branch
+	argument.  BASE_REVISION needs to be in the root of a working copy
+	to work.
+	* annotate.cc (build_parent_lineage): Don't access uninitialized
+	memory--use resize() rather than reserve().
+
+2005-09-02  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Use consistent case in option descriptions.
+
+2005-09-02  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{hh,cc}: Add split_path typedef.  Use it.
+
+2005-09-02  Matt Johnston  <matt@ucc.asn.au>
+
+	* lua.cc (monotone_guess_binary_file_contents_for_lua): use a
+	temporary char* buffer rather than &string[], extra copying seems
+	to have negligible performance impact.
+	* tests/perf-test.sh: change path from tests/ to contrib/, make
+	executable.
+	* tests/parse-accounting.pl: make executable.
+
+2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* lua.cc, std_hooks.lua: use proper regexes for .mt-ignore
+	taken from a patch from Martin Dvorak
+	* contrib/monotone-cvs-ignore.lua: New file, from the same patch.
+	supports .cvsignore files
+	* tests/t_mt_ignore.at: check that a missing .mt-ignore
+	doesn't cause problems
+
+2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_mt_ignore.at: use RAW_MONOTONE instead of ugly --rcfile
+	Also actually do "mtn add" this time.
+
+2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_mt_ignore.at: new test, checks that .mt-ignore works
+	* testsuite.at: add it
+
+2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: support .mt-ignore
+	* monotone.texi: mention .mt-ignore and MT/wanted-testresults under
+	"Existing control files"
+	* .mt-ignore: ignore testsuite.dir
+
 2005-09-03  Benoît Dejean  <benoit@placenet.org>
 
 	* commands.cc (ls_certs):
@@ -19,6 +116,11 @@
 
 2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* ui.cc (user_interface): Avoid calling sync_with_stdio(false) on
+	Win32 for now to work around a bug in MinGW where unsynchronized
+	std::cin returns EOF earlier when reading a stream with DOS
+	newlines.  Resolves 'db load' failure reported by Howard Spindel.
+	* database.cc (load): Don't bother executing an empty string.
 	* commands.cc (ALIAS(import, setup)): Remove alias.
 
 2005-09-01  Matt Johnston  <matt@ucc.asn.au>
