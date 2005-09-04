@@ -24,8 +24,7 @@ AT_CHECK(cd codir && MONOTONE update, [], [ignore], [ignore])
 
 # why doesn't an abbreviated revision id work
 
-AT_CHECK(cd codir && MONOTONE cat revision b482, [1], [ignore], [ignore])
-AT_CHECK(cd codir && MONOTONE cat revision b482c907f27f160f7ff9259d353d5d5399fb9fc4, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE automate get_revision b482c907f27f160f7ff9259d353d5d5399fb9fc4, [], [ignore], [ignore])
 
 # make sure there are no changes in the working copy
 

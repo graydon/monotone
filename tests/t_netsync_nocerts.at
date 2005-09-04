@@ -19,9 +19,9 @@ VER1=`BASE_REVISION`
 
 RUN_NETSYNC(pull, testbranch)
 
-CHECK_SAME_STDOUT(MONOTONE cat revision $VER0, MONOTONE2 cat revision $VER0)
+CHECK_SAME_STDOUT(MONOTONE automate get_revision $VER0, MONOTONE2 automate get_revision $VER0)
 CHECK_SAME_STDOUT(MONOTONE ls certs $VER0, MONOTONE2 ls certs $VER0)
-CHECK_SAME_STDOUT(MONOTONE cat revision $VER1, MONOTONE2 cat revision $VER1)
+CHECK_SAME_STDOUT(MONOTONE automate get_revision $VER1, MONOTONE2 automate get_revision $VER1)
 CHECK_SAME_STDOUT(MONOTONE ls certs $VER1, MONOTONE2 ls certs $VER1)
 
 AT_CLEANUP

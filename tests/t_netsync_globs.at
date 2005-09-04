@@ -25,15 +25,15 @@ NETSYNC_SERVE_START("*")
 
 # check a glob
 NETSYNC_CLIENT_N_RUN(2, pull, "*anch2")
-AT_CHECK(MONOTONE2 cat revision $REV12, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $REV11, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $REV21, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $REV12, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $REV11, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $REV21, [1], [ignore], [ignore])
 
 # check explicit multiple branches
 NETSYNC_CLIENT_N_RUN(3, pull, 1branch1 2branch1)
-AT_CHECK(MONOTONE3 cat revision $REV12, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE3 cat revision $REV11, [], [ignore], [ignore])
-AT_CHECK(MONOTONE3 cat revision $REV21, [], [ignore], [ignore])
+AT_CHECK(MONOTONE3 automate get_revision $REV12, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE3 automate get_revision $REV11, [], [ignore], [ignore])
+AT_CHECK(MONOTONE3 automate get_revision $REV21, [], [ignore], [ignore])
 
 NETSYNC_SERVE_STOP
 

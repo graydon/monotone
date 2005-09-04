@@ -37,22 +37,22 @@ AT_CHECK(grep branch certs, [], [ignore])
 AT_CHECK(grep changelog certs, [], [ignore])
 AT_CHECK(grep bad certs, [1], [ignore])
 
-AT_CHECK(MONOTONE2 cat revision $VER0, [], [stdout])
+AT_CHECK(MONOTONE2 automate get_revision $VER0, [], [stdout])
 AT_CHECK(CANONICALISE(stdout))
 CHK=`SHA1(stdout)`
 AT_CHECK(test $CHK = $VER0)
 
-AT_CHECK(MONOTONE2 cat revision $VER1, [], [stdout])
+AT_CHECK(MONOTONE2 automate get_revision $VER1, [], [stdout])
 AT_CHECK(CANONICALISE(stdout))
 CHK=`SHA1(stdout)`
 AT_CHECK(test $CHK = $VER1)
 
-AT_CHECK(MONOTONE2 cat file $F_VER0, [], [stdout])
+AT_CHECK(MONOTONE2 automate get_file $F_VER0, [], [stdout])
 AT_CHECK(CANONICALISE(stdout))
 CHK=`SHA1(stdout)`
 AT_CHECK(test $CHK = $F_VER0)
 
-AT_CHECK(MONOTONE2 cat file $F_VER1, [], [stdout])
+AT_CHECK(MONOTONE2 automate get_file $F_VER1, [], [stdout])
 AT_CHECK(CANONICALISE(stdout))
 CHK=`SHA1(stdout)`
 AT_CHECK(test $CHK = $F_VER1)

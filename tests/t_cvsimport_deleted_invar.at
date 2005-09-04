@@ -28,9 +28,9 @@ TSHA2=`SHA1(attest/cfile)`
 
 AT_CHECK(MONOTONE --branch=testbranch cvs_import $CVSROOT/attest, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE cat file $TSHA0, [], [ignore])
-AT_CHECK(MONOTONE cat file $TSHA1, [], [ignore])
-AT_CHECK(MONOTONE cat file $TSHA2, [], [ignore])
+AT_CHECK(MONOTONE automate get_file $TSHA0, [], [ignore])
+AT_CHECK(MONOTONE automate get_file $TSHA1, [], [ignore])
+AT_CHECK(MONOTONE automate get_file $TSHA2, [], [ignore])
 
 AT_CLEANUP
 

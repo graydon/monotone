@@ -1,5 +1,30 @@
 2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
 
+	* commands.cc: siplify the monotone cat command 
+	to "monotone cat [-r] FIELNAME" (as in bug #12597)
+	* monotone.texi: update documentation of "monotone cat"
+	* tests/t_add_edge.at, tests/t_cat_file_by_name.at, 
+	tests/t_change_empty_file.at, tests/t_cvsimport.at, 
+	tests/t_cvsimport_deleted_invar.at, tests/t_cvsimport_drepper.at, 
+	tests/t_cvsimport_drepper2.at, tests/t_cvsimport_manifest_cycle.at, 
+	tests/t_cvsimport_samelog.at, tests/t_database_check.at, 
+	tests/t_db_kill_rev_locally.at, tests/t_empty_id_completion.at, 
+	tests/t_epoch.at, tests/t_epoch_server.at, tests/t_erename.at, 
+	tests/t_i18n_file.at, tests/t_import.at, tests/t_merge_add_del.at, 
+	tests/t_movedel.at, tests/t_movepatch.at, tests/t_netsync.at, 
+	tests/t_netsync_exclude.at, tests/t_netsync_exclude_default.at, 
+	tests/t_netsync_globs.at, tests/t_netsync_nocerts.at, 
+	tests/t_netsync_permissions.at, tests/t_netsync_read_permissions.at, 
+	tests/t_netsync_single.at, tests/t_normalized_filenames.at, 
+	tests/t_persistent_server_revision.at, tests/t_remerge.at, 
+	tests/t_rename.at, tests/t_renamed.at, tests/t_scan.at, 
+	tests/t_set_default.at, tests/t_singlecvs.at, 
+	tests/t_update_with_pending_add.at, tests/t_update_with_pending_drop.at, 
+	tests/t_update_with_pending_rename.at, tests/t_versions.at: 
+	use automation interface rather than "monotone cat"
+
+2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
+
 	* ChangeLog: fix up screwed up three-way merge
 
 2005-09-04  Grahame Bowland  <grahame@angrygoats.net>

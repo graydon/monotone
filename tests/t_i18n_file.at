@@ -43,7 +43,7 @@ AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding european and japa
 export LANG=en_US.UTF-8
 export CHARSET=UTF-8
 
-AT_CHECK(MONOTONE cat manifest, [], [stdout])
+AT_CHECK(MONOTONE automate get_manifest, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep funny manifest, [], [ignore], [ignore])
 AT_CHECK(grep spaces manifest, [], [ignore], [ignore])
@@ -74,7 +74,7 @@ fi
 
 # check the names showed up in our manifest
 
-AT_CHECK(MONOTONE cat manifest, [], [stdout])
+AT_CHECK(MONOTONE automate get_manifest, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep funny manifest, [], [ignore], [ignore])
 AT_CHECK(grep spaces manifest, [], [ignore], [ignore])
@@ -101,7 +101,7 @@ fi
 
 # check the names showed up in our manifest
 
-AT_CHECK(MONOTONE cat manifest, [], [stdout])
+AT_CHECK(MONOTONE automate get_manifest, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep funny manifest, [], [ignore], [ignore])
 AT_CHECK(grep spaces manifest, [], [ignore], [ignore])

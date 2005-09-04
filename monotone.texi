@@ -3354,19 +3354,17 @@ all, commands are grouped into logical categories.
 @section Tree
 
 @ftable @command
-@item monotone cat file @var{id}
-@itemx monotone cat file @var{rid} @var{path}
-@itemx monotone cat manifest
-@itemx monotone cat manifest @var{id}
-@itemx monotone cat revision
-@itemx monotone cat revision @var{id}
+@itemx monotone cat @var{path}
+@itemx monotone cat --revision=@var{id} @var{path}
 
-These commands write the contents of a specific file, manifest or
-revision @var{id} to standard output, or the contents of the file
-@var{path} as it was at revision @var{rid}. They are useful if you wish
-to inspect a version without checking it out into your working copy.  An
-unspecified manifest or revision @var{id} is allowed from within a
-working copy and refers to the current manifest or revision.
+Write the contents of a specific file @var{path} to standard output.
+
+Without a @option{--revision} argument, the command outputs the 
+contents of @var{path} as found in the current revision. This requires 
+the command be executed from within a working copy.
+
+With an explicit @option{--revision} argument, the command outputs
+contents of @var{path} at that revision.
 
 @item monotone checkout --revision=@var{id} @var{directory}
 @itemx monotone co --revision=@var{id} @var{directory}

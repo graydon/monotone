@@ -1283,113 +1283,45 @@ CMD(identify, N_("working copy"), N_("[PATH]"),
 }
 
 CMD(cat, N_("informative"),
-    N_("(file|manifest|revision) [ID]\n"
-      "file REVISION FILENAME"),
-    N_("write file, manifest, or revision from database to stdout"),
-    OPT_NONE)
+    N_("FILENAME"),
+    N_("write file from database to stdout"),
+    OPT_REVISION)
 {
-  if (args.size() < 1 || args.size() > 3)
+  if (args.size() != 1)
     throw usage(name);
-  if (args.size() == 3 && idx(args, 0)() != "file")
-    throw usage(name);
+
+  if (app.revision_selectors.size() == 0)
+    app.require_working_copy();
 
   transaction_guard guard(app.db);
 
-  if (idx(args, 0)() == "file")
-    {
-      file_id ident;
-      if (args.size() == 1)
-        throw usage(name);
-      else if (args.size() == 2)
-        {
-          complete(app, idx(args, 1)(), ident);
-          
-          N(app.db.file_version_exists(ident),
-            F("no file version %s found in database") % ident);
-        }
-      else if (args.size() == 3)
-        {
-          revision_id rid;
-          complete(app, idx(args, 1)(), rid);
-          // paths are interpreted as standard external ones when we're in a
-          // working copy, but as project-rooted external ones otherwise
-          file_path fp;
-          if (app.found_working_copy)
-            fp = file_path_external(idx(args, 2));
-          else
-            fp = file_path_internal_from_user(idx(args, 2));
-          manifest_id mid;
-          app.db.get_revision_manifest(rid, mid);
-          manifest_map m;
-          app.db.get_manifest(mid, m);
-          manifest_map::const_iterator i = m.find(fp);
-          N(i != m.end(), F("no file '%s' found in revision '%s'\n") % fp % rid);
-          ident = manifest_entry_id(i);
-        }
-      else
-        throw usage(name);
-      
-      file_data dat;
-      L(F("dumping file %s\n") % ident);
-      app.db.get_file_version(ident, dat);
-      cout.write(dat.inner()().data(), dat.inner()().size());
-    }
-  else if (idx(args, 0)() == "manifest")
-    {
-      manifest_data dat;
-      manifest_id ident;
-
-      if (args.size() == 1)
-        {
-          revision_set rev;
-          manifest_map m_old, m_new;
-
-          app.require_working_copy();
-          calculate_unrestricted_revision(app, rev, m_old, m_new);
-
-          calculate_ident(m_new, ident);
-          write_manifest_map(m_new, dat);
-        }
-      else
-        {
-          complete(app, idx(args, 1)(), ident);
-          N(app.db.manifest_version_exists(ident),
-            F("no manifest version %s found in database") % ident);
-          app.db.get_manifest_version(ident, dat);
-        }
-
-      L(F("dumping manifest %s\n") % ident);
-      cout.write(dat.inner()().data(), dat.inner()().size());
-    }
-
-  else if (idx(args, 0)() == "revision")
-    {
-      revision_data dat;
-      revision_id ident;
-
-      if (args.size() == 1)
-        {
-          revision_set rev;
-          manifest_map m_old, m_new;
-
-          app.require_working_copy();
-          calculate_unrestricted_revision(app, rev, m_old, m_new);
-          calculate_ident(rev, ident);
-          write_revision_set(rev, dat);
-        }
-      else
-        {
-          complete(app, idx(args, 1)(), ident);
-          N(app.db.revision_exists(ident),
-            F("no revision %s found in database") % ident);
-          app.db.get_revision(ident, dat);
-        }
-
-      L(F("dumping revision %s\n") % ident);
-      cout.write(dat.inner()().data(), dat.inner()().size());
-    }
+  file_id ident;
+  revision_id rid;
+  if (app.revision_selectors.size() == 0)
+    get_revision_id(rid);
   else 
-    throw usage(name);
+    complete(app, idx(app.revision_selectors, 0)(), rid);
+  N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
+
+  // paths are interpreted as standard external ones when we're in a
+  // working copy, but as project-rooted external ones otherwise
+  file_path fp;
+  if (app.found_working_copy)
+    fp = file_path_external(idx(args, 0));
+  else
+    fp = file_path_internal_from_user(idx(args, 0));
+  manifest_id mid;
+  app.db.get_revision_manifest(rid, mid);
+  manifest_map m;
+  app.db.get_manifest(mid, m);
+  manifest_map::const_iterator i = m.find(fp);
+  N(i != m.end(), F("no file '%s' found in revision '%s'\n") % fp % rid);
+  ident = manifest_entry_id(i);
+  
+  file_data dat;
+  L(F("dumping file %s\n") % ident);
+  app.db.get_file_version(ident, dat);
+  cout.write(dat.inner()().data(), dat.inner()().size());
 
   guard.commit();
 }
