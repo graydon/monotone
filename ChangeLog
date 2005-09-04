@@ -1,3 +1,9 @@
+2005-09-03  Nathaniel Smith  <njs@pobox.com>
+
+	* po/Makevars (XGETTEXT_OPTIONS): N_ != ngettext.
+	Add c-format flags on F() and FP() calls (only partially
+	successful on latter, because of bug in xgettext).
+	
 2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
 
 	* commands.cc: siplify the monotone cat command 
