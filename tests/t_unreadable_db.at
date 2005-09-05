@@ -1,0 +1,32 @@
+AT_SETUP([fail cleanly on unreadable db])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+
+# unreadable file
+AT_CHECK(chmod a-rwx test.db)
+AT_CHECK(MONOTONE, [], [ignore], [ignore])
+AT_CHECK(MONOTONE ls branches, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE db info, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE db version, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE db migrate, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE commit -mfoo, [1], [ignore], [ignore])
+AT_CHECK(echo | MONOTONE db load, [1], [ignore], [ignore])
+AT_CHECK(chmod a+rwx test.db)
+
+AT_CHECK(mkdir subdir)
+AT_CHECK(MONOTONE --db subdir/foo.db db init, [], [ignore], [ignore])
+
+# unreadable directory
+AT_CHECK(chmod a-rwx subdir)
+AT_CHECK(MONOTONE --db subdir/foo.db, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --db subdir/foo.db ls branches, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE --db subdir/foo.db db info, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE --db subdir/foo.db db version, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE --db subdir/foo.db db migrate, [1], [ignore], [ignore])
+AT_CHECK(echo | MONOTONE --db subdir/foo.db db load, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE --db subdir/bar.db db init, [1], [ignore], [ignore])
+AT_CHECK(chmod a+rwx subdir)
+
+AT_CLEANUP
