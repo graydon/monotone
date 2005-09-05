@@ -1,3 +1,8 @@
+2005-09-05  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (dump_diffs): don't use the terminal width to
+	print ===== seperators.
+
 2005-09-05  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* paths.cc (find_and_go_to_working_copy): Create root and bookdir
