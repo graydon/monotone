@@ -1046,7 +1046,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     cert_revision_in_branch(inv_id, branchname, app, dbw); 
     cert_revision_date_now(inv_id, app, dbw);
     cert_revision_author_default(inv_id, app, dbw);
-    cert_revision_changelog(inv_id, (F("disapproval of revision '%s'") % r).str(), app, dbw);
+    cert_revision_changelog(inv_id, (boost::format("disapproval of revision '%s'") % r).str(), app, dbw);
     guard.commit();
   }
 }
@@ -3081,8 +3081,8 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       packet_db_writer dbw(app);
       cert_revision_in_branch(merged, app.branch_name(), app, dbw);
 
-      string log = (F("merge of %s\n"
-                      "     and %s\n") % left % right).str();
+      string log = (boost::format("merge of %s\n"
+                                  "     and %s\n") % left % right).str();
       cert_revision_changelog(merged, log, app, dbw);
           
       guard.commit();
@@ -3165,8 +3165,8 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 
       cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
 
-      string log = (F("propagate from branch '%s' (head %s)\n"
-                      "            to branch '%s' (head %s)\n")
+      string log = (boost::format("propagate from branch '%s' (head %s)\n"
+                                  "            to branch '%s' (head %s)\n")
                     % idx(args, 0) % (*src_i)
                     % idx(args, 1) % (*dst_i)).str();
 
@@ -3231,10 +3231,10 @@ CMD(explicit_merge, N_("tree"),
   
   cert_revision_in_branch(merged, branch, app, dbw);
   
-  string log = (F("explicit_merge of %s\n"
-                  "              and %s\n"
-                  "   using ancestor %s\n"
-                  "        to branch '%s'\n")
+  string log = (boost::format("explicit_merge of '%s'\n"
+                              "              and '%s'\n"
+                              "   using ancestor '%s'\n"
+                              "        to branch '%s'\n")
                 % left % right % ancestor % branch).str();
   
   cert_revision_changelog(merged, log, app, dbw);

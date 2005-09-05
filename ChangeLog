@@ -1,3 +1,7 @@
+2005-09-06  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: No i18n for cert_revision_changelog.
+
 2005-09-05  Benoît Dejean  <benoit@placenet.org>
 
 	* commands.cc: Fixed some strings (added ' around revisions).
