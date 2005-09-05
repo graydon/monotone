@@ -1,5 +1,7 @@
 2005-09-05  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* paths.cc (find_and_go_to_working_copy): Create root and bookdir
+	paths as fs::native.
 	* main.cc: Tweak #ifdef to avoid exposing some unused SEH handling
 	on MinGW.
 	* configure.ac: Minor cleanup to Win32 configure test.
