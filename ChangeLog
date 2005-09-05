@@ -1,3 +1,9 @@
+2005-09-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* main.cc: Tweak #ifdef to avoid exposing some unused SEH handling
+	on MinGW.
+	* configure.ac: Minor cleanup to Win32 configure test.
+
 2005-09-04  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.cc (options): Remove default from the help string for

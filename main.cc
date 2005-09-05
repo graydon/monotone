@@ -124,7 +124,7 @@ assert_reporting_function(int reportType, char* userMessage, int* retVal)
 }
 #endif
 
-#ifdef MS_STRUCTURED_EXCEPTION_HANDLING
+#if defined(MS_STRUCTURED_EXCEPTION_HANDLING) && !defined(__BORLANDC__) && !defined(__MINGW32__)
 struct
 ms_se_exception 
 {
