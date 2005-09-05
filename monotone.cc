@@ -83,7 +83,7 @@ struct poptOption options[] =
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, gettext_noop("print version number, then exit"), NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, gettext_noop("print detailed version number, then exit"), NULL},
     {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, gettext_noop("insert command line arguments taken from the given file"), NULL},
-    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, gettext_noop("set ticker style (count|dot|none) [count]"), NULL},
+    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, gettext_noop("set ticker style (count|dot|none)"), NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, gettext_noop("do not load standard lua hooks"), NULL},
     {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, gettext_noop("do not load ~/.monotone/monotonerc or MT/monotonerc lua files"), NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, gettext_noop("load extra rc file"), NULL},

@@ -1,5 +1,11 @@
 2005-09-04  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.cc (options): Remove default from the help string for
+	--count, since none of the options listed are actually the
+	default.
+
+2005-09-04  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_unreadable_db.at, testsuite.at: New test.
 
 2005-09-03  Nathaniel Smith  <njs@pobox.com>
