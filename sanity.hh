@@ -220,29 +220,41 @@ public:
   virtual void gasp(std::string & out) const = 0;
 };
 
+
+class MusingBase
+{
+  char const * name;
+  char const * file;
+  char const * func;
+  int line;
+
+protected:
+  MusingBase(char const * name, char const * file, int line, char const * func)
+    : name(name), file(file), func(func), line(line)  {}
+
+  void gasp(const std::string & objstr, std::string & out) const;
+};
+
+
 template <typename T>
-class Musing : public MusingI
+class Musing : public MusingI, private MusingBase
 {
 public:
   Musing(T const & obj, char const * name, char const * file, int line, char const * func)
-    : obj(obj), name(name), file(file), line(line), func(func) {}
+    : MusingBase(name, file, line, func), obj(obj) {}
   virtual void gasp(std::string & out) const;
 private:
   T const & obj;
-  char const * name;
-  char const * file;
-  int line;
-  char const * func;
 };
+
 
 template <typename T> void
 Musing<T>::gasp(std::string & out) const
 {
-  out = (F("----- begin '%s' (in %s, at %s:%d)\n") % name % func % file % line).str();
   std::string tmp;
   dump(obj, tmp);
-  out += tmp;
-  out += (F("-----   end '%s' (in %s, at %s:%d)\n") % name % func % file % line).str();
+
+  MusingBase::gasp(tmp, out);
 }
 
 // Yes, this is insane.  No, it doesn't work if you do something more sane.

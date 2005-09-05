@@ -1,3 +1,8 @@
+2005-09-03  Benoît Dejean  <benoit@placenet.org>
+
+	* sanity.{cc,hh}: boost::format vs. F(). Merged boost::format
+	and moved non-template code to sanity.cc.
+
 2005-09-05  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* paths.cc (find_and_go_to_working_copy): Create root and bookdir
