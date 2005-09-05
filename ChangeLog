@@ -1,4 +1,10 @@
-2005-09-03  Benoît Dejean  <benoit@placenet.org>
+2005-09-05  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: Fixed some strings (added ' around revisions).
+	Removed some whitespaces.
+	No i18n in diff output.
+
+2005-09-05  Benoît Dejean  <benoit@placenet.org>
 
 	* sanity.{cc,hh}: boost::format vs. F(). Merged boost::format
 	and moved non-template code to sanity.cc.

@@ -155,7 +155,7 @@ namespace commands
       }
     else if (matched.size() > 1) 
       {
-      string err = (F("command '%s' has multiple ambiguous expansions: \n") % cmd).str();
+      string err = (F("command '%s' has multiple ambiguous expansions:\n") % cmd).str();
       for (vector<string>::iterator i = matched.begin();
            i != matched.end(); ++i)
         err += (*i + "\n");
@@ -490,7 +490,7 @@ complete(app_state & app,
     F("partial id '%s' does not have an expansion") % str);
   if (completions.size() > 1)
     {
-      string err = (F("partial id '%s' has multiple ambiguous expansions: \n") % str).str();
+      string err = (F("partial id '%s' has multiple ambiguous expansions:\n") % str).str();
       for (typename set<ID>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         err += (i->inner()() + "\n");
@@ -1019,7 +1019,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   app.db.get_revision(r, rev);
 
   N(rev.edges.size() == 1, 
-    F("revision %s has %d changesets, cannot invert\n") % r % rev.edges.size());
+    F("revision '%s' has %d changesets, cannot invert\n") % r % rev.edges.size());
 
   cert_value branchname;
   guess_branch(r, app, branchname);
@@ -1046,7 +1046,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     cert_revision_in_branch(inv_id, branchname, app, dbw); 
     cert_revision_date_now(inv_id, app, dbw);
     cert_revision_author_default(inv_id, app, dbw);
-    cert_revision_changelog(inv_id, (F("disapproval of revision %s") % r).str(), app, dbw);
+    cert_revision_changelog(inv_id, (F("disapproval of revision '%s'") % r).str(), app, dbw);
     guard.commit();
   }
 }
@@ -1319,7 +1319,7 @@ CMD(cat, N_("informative"),
   ident = manifest_entry_id(i);
   
   file_data dat;
-  L(F("dumping file %s\n") % ident);
+  L(F("dumping file '%s'\n") % ident);
   app.db.get_file_version(ident, dat);
   cout.write(dat.inner()().data(), dat.inner()().size());
 
@@ -2678,7 +2678,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
   else
     {
-      cout << F("# no changes") << endl;
+      cout << "# no changes" << endl;
     }
   cout << "# " << endl;
 
@@ -2982,8 +2982,8 @@ try_one_merge(revision_id const & left_id,
     }
   else if (find_common_ancestor_for_merge(left_id, right_id, anc_id, app))
     {     
-      P(F("common ancestor %s found\n") % describe_revision(app, anc_id)); 
-      P(F("trying 3-way merge\n"));
+      P(F("common ancestor %s found\n"
+          "trying 3-way merge\n") % describe_revision(app, anc_id));
       
       app.db.get_revision(anc_id, anc_rev);
       app.db.get_manifest(anc_rev.new_manifest, anc_man);
@@ -3362,7 +3362,8 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
 
 CMD(rcs_import, N_("debug"), N_("RCSFILE..."),
     N_("parse versions in RCS files\n"
-      "this command doesn't reconstruct or import revisions.  you probably want cvs_import"),
+       "this command doesn't reconstruct or import revisions."
+       "you probably want cvs_import"),
     OPT_BRANCH_NAME)
 {
   if (args.size() < 1)
@@ -3477,7 +3478,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 }
 
 CMD(log, N_("informative"), N_("[FILE]"),
-    N_("print history in reverse order (filtering by 'FILE').  If one or more\n"
+    N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
     OPT_LAST % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES)
 {
