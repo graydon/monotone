@@ -1,3 +1,9 @@
+2005-09-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/terminal.cc (have_smart_terminal): We were returning false
+	in almost all circumstances; changed logic so that we at least
+	work when running in a cmd.exe window.
+
 2005-09-05  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc (dump_diffs): don't use the terminal width to
