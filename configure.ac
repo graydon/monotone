@@ -254,11 +254,14 @@ int main(void)
 __wont_compile_
 #endif
 ],
-   AM_CONDITIONAL(WIN32_PLATFORM, true),
-   AM_CONDITIONAL(WIN32_PLATFORM, false),
+        ac_win32=yes,
+        ac_win32=no,
+        ac_win32=no)])
+if test "$ac_win32" = "yes"; then
+   AM_CONDITIONAL(WIN32_PLATFORM, true)
+else
    AM_CONDITIONAL(WIN32_PLATFORM, false)
-)])
-
+fi
 
 # Check for IPv6.  Let the user enable or disable it manually using a
 # three-state (yes|no|auto) --enable argument.
