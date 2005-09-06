@@ -20,7 +20,7 @@ detach
   {}
   
   detach(split_path const & src, 
-	 split_path const & dst) 
+         split_path const & dst) 
     : src_path(src), 
       reattach(true), 
       dst_path(dst) 
@@ -41,7 +41,7 @@ struct
 attach
 {
   attach(node_id n, 
-	 split_path const & p) 
+         split_path const & p) 
     : node(n), path(p)
   {}
 
@@ -51,19 +51,15 @@ attach
   bool operator<(struct attach const & other) const
   {
     // We sort attach operations top-down by path
+    // SPEEDUP?: simply sort by path.size() rather than full lexicographical
+    // comparison?
     return path < other.path;
   }
 };
 
-
-void 
-cset::apply_to(editable_tree & t)
+static void
+check_normalized(cset const & cs)
 {
-  set<detach> detaches;
-  set<attach> attaches;
-  set<node_id> drops;
-
-
   // FIXME -- normalize:
   //
   //   add_file foo@id1 + apply_delta id1->id2
@@ -71,6 +67,49 @@ cset::apply_to(editable_tree & t)
   //
   // possibly more?
 
+  // no file appears in both the "added" list and the "patched" list
+  {
+    set<split_path>::const_iterator a = cs.files_added.begin();
+    map<split_path, std::pair<file_id, file_id> >::const_iterator
+      d = cs.deltas_applied.begin();
+    while (a != cs.files_added.end() && d != cs.deltas_applied.end())
+      {
+        if (a->first < d->first)
+          ++a;
+        else if (d->first < a->first)
+          ++d;
+        else
+          I(false);
+      }
+  }
+  
+  // no file+attr pair appears in both the "set" list and the "cleared" list
+  {
+    set<pair<split_path, attr_name> >::const_iterator c = cs.attrs_cleared.begin();
+    map<pair<split_path, attr_name>, attr_value>::const_iterator
+      s = cs.attrs_set.begin();
+    while (c != cs.attrs_cleared.end() && s != cs.attrs_set.end())
+      {
+        if (*c < s->first)
+          ++c;
+        else if (s->first < *c)
+          ++s;
+        else
+          I(false);
+      }
+  }
+}
+
+void 
+cset::apply_to(editable_tree & t)
+{
+  // SPEEDUP?: use vectors and sort them once, instead of maintaining sorted
+  // sets?
+  set<detach> detaches;
+  set<attach> attaches;
+  set<node_id> drops;
+
+  check_normalized(*this);
 
   // Decompose all additions into a set of pending attachments to be
   // executed top-down. We might as well do this first, to be sure we
@@ -108,9 +147,9 @@ cset::apply_to(editable_tree & t)
     {
       node_id n = t.detach_node(i->src_path);
       if (i->reattach)
-	attaches.insert(attach(n, i->dst_path));
+        attaches.insert(attach(n, i->dst_path));
       else
-	drops.insert(n);
+        drops.insert(n);
     }
 
 
@@ -131,7 +170,7 @@ cset::apply_to(editable_tree & t)
        i != deltas_applied.end(); ++i)
     t.apply_delta(i->first, i->second.first, i->second.second);
 
-  for (map<split_path, attr_name>::const_iterator i = attrs_cleared.begin();
+  for (set<pair<split_path, attr_name> >::const_iterator i = attrs_cleared.begin();
        i != attrs_cleared.end(); ++i)
     t.clear_attr(i->first, i->second);
 

@@ -41,13 +41,13 @@ struct editable_tree
 
   // Modifying elements in-place
   virtual void apply_delta(split_path const & pth, 
-			   file_id const & old_id, 
-			   file_id const & new_new) = 0;
+                           file_id const & old_id, 
+                           file_id const & new_new) = 0;
   virtual void clear_attr(split_path const & pth,
-			  attr_name const & name) = 0;
+                          attr_name const & name) = 0;
   virtual void set_attr(split_path const & pth,
-			attr_name const & name,
-			attr_val const & val) = 0;
+                        attr_name const & name,
+                        attr_val const & val) = 0;
 
   virtual ~editable_tree() {}
 };
@@ -71,7 +71,7 @@ struct cset
   std::map<split_path, std::pair<file_id, file_id> > deltas_applied;
 
   // Attribute changes.
-  std::map<split_path, attr_name> attrs_cleared;
+  std::set<std::pair<split_path, attr_name> > attrs_cleared;
   std::map<std::pair<split_path, attr_name>, attr_val> attrs_set;
 
   void apply_to(editable_tree & t);

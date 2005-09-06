@@ -472,5 +472,8 @@ void roster_for_revision(revision_id const & rid, revision_set const & rev,
   // get uncommon ancestors
   // scan over new and touched pieces of new roster to generate markings
 
+  // NB: merge parents cannot have null ids
+  // note: remove old_manifest lines, pure redundancy
+
   // otherwise: I(false)
 }
