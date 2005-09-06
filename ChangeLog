@@ -1,5 +1,9 @@
 2005-09-06  Benoît Dejean  <benoit@placenet.org>
 
+	* monotone.cc: One more i18n string.
+
+2005-09-06  Benoît Dejean  <benoit@placenet.org>
+
 	* po/fr.po: Updated French translation.
 
 2005-09-06  Benoît Dejean  <benoit@placenet.org>
