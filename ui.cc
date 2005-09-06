@@ -259,6 +259,7 @@ void tick_write_dot::clear_line()
 
 
 user_interface::user_interface() :
+  user_locale(""),
   last_write_was_a_tick(false),
   t_writer(0)
 {

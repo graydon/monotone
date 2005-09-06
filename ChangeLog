@@ -1,3 +1,8 @@
+2005-09-07  Benoît Dejean  <benoit@placenet.org>
+
+	* ui.{cc,hh}: Added user_inferface::user_locale.
+	* sanity.hh: Made F() and FP() locale aware.
+
 2005-09-06  Benoît Dejean  <benoit@placenet.org>
 
 	* monotone.cc: One more i18n string.
