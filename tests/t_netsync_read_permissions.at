@@ -34,7 +34,7 @@ AT_DATA(limited_permission.at, [function get_netsync_read_permitted(branch, key)
 end
 ])
 
-NETSYNC_SERVE_START(--rcfile=limited_permission.at '*')
+NETSYNC_SERVE_START(--rcfile=limited_permission.at 'branch*')
 
 NETSYNC_CLIENT_RUN(pull, 'branch*')
 AT_CHECK(MONOTONE2 automate get_revision $B1, [1], [ignore], [ignore])

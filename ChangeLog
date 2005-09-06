@@ -1,5 +1,10 @@
 2005-09-06  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_netsync_read_permissions.at: Tweak tests so we aren't
+	trying to serve a bare '*'; works around test hangs due to glob
+	expansion sillyness on MinGW.
+	* tests/t_netsync_globs.at: Ditto.
+	* tests/t_netsync_exclude.at: Ditto.
 	* std_hooks.lua (ignore_file): Add Mac OS X (.DS_Store) and
 	Windows (desktop.ini) per-directory browser configuration files.
 
