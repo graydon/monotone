@@ -1,3 +1,8 @@
+2005-09-06  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* std_hooks.lua (ignore_file): Add Mac OS X (.DS_Store) and
+	Windows (desktop.ini) per-directory browser configuration files.
+
 2005-09-05  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/terminal.cc (have_smart_terminal): We were returning false
