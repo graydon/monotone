@@ -1,5 +1,9 @@
 2005-09-06  Benoît Dejean  <benoit@placenet.org>
 
+	* po/fr.po: Updated French translation.
+
+2005-09-06  Benoît Dejean  <benoit@placenet.org>
+
 	* commands.cc: No i18n for cert_revision_changelog.
 
 2005-09-05  Benoît Dejean  <benoit@placenet.org>
