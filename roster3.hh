@@ -24,6 +24,11 @@ struct node_id_source
 
 typedef enum { ntype_dir, ntype_file } ntype;
 
+// (true, "val") or (false, "") are both valid attr values (for proper
+// merging, we have to widen the attr_value type to include a first-class
+// "undefined" value).
+typedef std::map<attr_key, std::pair<bool, attr_value> > attr_map;
+
 struct node_t
 {
   node_t(ntype type)
@@ -44,11 +49,27 @@ struct node_t
   // this is null iff this is a root dir
   path_component name;
   file_id content;
-  // (true, "val") or (false, "") are both valid attr values (for proper
-  // merging, we have to widen the attr_value type to include a first-class
-  // "undefined" value).
-  std::map<attr_key, std::pair<bool, attr_value> > attrs;
+  attr_map attrs;
 };
+
+struct marking_t
+{
+  std::set<revision_id> parent_name;
+  std::set<revision_id> file_content;
+  std::map<attr_key, std::set<revision_id> > attrs;
+  marking_t(revision_id const & birth_rid, node_t const & n)
+  {
+    std::set<node_id> singleton;
+    singleton.insert(birth_rid);
+    parent_name = singleton;
+    file_content = singleton;
+    for (std::map<attr_key, attr_value>::const_iterator i = n.attrs.begin();
+         i != n.attrs.end(); ++i)
+      attrs.insert(std::make_pair(i->first, singleton));
+  }
+};
+
+typedef std::map<node_id, marking_t> marking_map;
 
 typedef std::map<path_component, node_id> dir_map;
 
@@ -85,7 +106,10 @@ public:
   {
     return nodes;
   }
+  // verify that this roster is sane, and corresponds to the given marking map
+  check_sane(marking_map const & marks) const;
 private:
+  check_finite_depth(node_id nid, int depth = 0) const;
   std::map<node_id, node_t> nodes;
   std::map<node_id, dir_map> children_map;
   node_id root_dir;
@@ -148,21 +172,3 @@ private:
 };
 
 
-struct marking_t
-{
-  std::set<revision_id> parent_name;
-  std::set<revision_id> file_content;
-  std::map<attr_key, std::set<revision_id> > attrs;
-  marking_t(revision_id const & birth_rid, node_t const & n)
-  {
-    std::set<node_id> singleton;
-    singleton.insert(birth_rid);
-    parent_name = singleton;
-    file_content = singleton;
-    for (std::map<attr_key, attr_value>::const_iterator i = n.attrs.begin();
-         i != n.attrs.end(); ++i)
-      attrs.insert(std::make_pair(i->first, singleton));
-  }
-};
-
-typedef std::map<node_id, marking_t> marking_map;

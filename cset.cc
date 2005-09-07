@@ -74,6 +74,9 @@ check_normalized(cset const & cs)
       d = cs.deltas_applied.begin();
     while (a != cs.files_added.end() && d != cs.deltas_applied.end())
       {
+        // SPEEDUP?: should this use lower_bound instead of ++?  it should
+        // make this loop iterate about as many times as the shorter list,
+        // rather the sum of the two lists...
         if (a->first < d->first)
           ++a;
         else if (d->first < a->first)

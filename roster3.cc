@@ -7,14 +7,18 @@
 
 // FIXME: move this to a header somewhere
 template <typename T, typename K>
+void
 safe_erase(T & container, K const & key)
 {
   I(container.erase(key));
 }
 template <typename T, typename V>
+T::iterator
 safe_insert(T & container, V const & val)
 {
-  I(container.insert(val).second);
+  std::pair<T::iterator, bool> r = container.insert(val);
+  I(r.second);
+  return r.first;
 }
 
 // FIXME: we assume split and join paths always start with a null component
@@ -207,13 +211,13 @@ void
 roster_t::clear_attr(split_path const & pth,
                      attr_name const & name)
 {
-  set_attr(pth, name, std::make_pair(false, attr_val()));
+  set_attr(pth, name, std::make_pair(false, attr_value()));
 }
 
 void
 roster_t::set_attr(split_path const & pth,
                    attr_name const & name,
-                   attr_val const & val)
+                   attr_value const & val)
 {
   set_attr(pth, name, std::make_pair(true, val));
 }
@@ -221,13 +225,15 @@ roster_t::set_attr(split_path const & pth,
 void
 roster_t::set_attr(split_path const & pth,
                    attr_name const & name,
-                   std::pair<bool, attr_val> const & val)
+                   std::pair<bool, attr_value> const & val)
 {
   I(val.first || val.second().empty());
   node_id nid = lookup(pth);
   node_t & n = node(nid);
-  std::map<attr_key, std::pair<bool, attr_value> >::iterator i = n.attrs.find(name);
-  I(i != n.attrs.end());
+  attr_map::iterator i = n.attrs.find(name);
+  if (i == n.attrs.end())
+    i = safe_insert(n.attrs, std::make_pair(name,
+                                            std::pair<false, attr_value()));
   I(i->second != val);
   i->second = val;
 }
@@ -475,12 +481,115 @@ make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
                 mark_won_merge(rmarks.file_content, right_uncommon_ancestors,
                                lmarks.file_content, new_rid,
                                marks.file_content);
-            else
+              else
                 std::set_union(lmarks.file_content.begin(), lmarks.file_content.end(),
                                rmarks.file_content.begin(), rmarks.file_content.end(),
                                std::inserter(marks.file_content));
             }
-          
+          // attrs
+          {
+            // attributes can never be deleted.  make sure this invariant is
+            // respected.
+            // this is kinda slow, but very rarely will any node have more
+            // than 1 attribute
+            for (attr_map::const_iterator j = ln.attrs.begin(); j != ln.attrs.end();
+                 ++j)
+              I(n.attrs.find(j->first) != n.attrs.end());
+            for (attr_map::const_iterator j = rn.attrs.begin(); j != rn.attrs.end();
+                 ++j)
+              I(n.attrs.find(j->first) != n.attrs.end());
+            // now do the marking
+            for (attr_map::const_iterator j = n.attrs.begin(); j != n.attrs.end();
+                 ++j)
+              {
+                attr_map::const_iterator lai = ln.attrs.find(j->first);
+                attr_map::const_iterator rai = rn.attrs.find(j->first);
+                if (lai == ln.attrs.end() && rai == rn.attrs.end())
+                  marks.attrs[j->first].insert(new_rid);
+                else if (lai == ln.attrs.end() && rai != rn.attrs.end())
+                  marks.attrs.insert(*rmarks.attrs.find(j->first));
+                else if (lai != ln.attrs.end() && rai == rn.attrs.end())
+                  marks.attrs.insert(*lmarks.attrs.find(j->first));
+                else
+                  {
+                    bool diff_from_left = (j->second != lai->second);
+                    bool diff_from_right = (j->second != rai->second);
+                    if (diff_from_left && diff_from_right)
+                      new_marks.attrs.insert(std::make_pair(j->first, new_rid));
+                    else if (diff_from_left && !diff_from_right)
+                      mark_won_merge(*lmarks.attrs.find(j->first),
+                                     left_uncommon_ancestors,
+                                     *rmarks.attrs.find(j->first),
+                                     new_rid, marks.attrs[j->first]);
+                    else if (!diff_from_left && diff_from_right)
+                      mark_won_merge(*rmarks.attrs.find(j->first),
+                                     right_uncommon_ancestors,
+                                     *lmarks.attrs.find(j->first),
+                                     new_rid, marks.attrs[j->first]);
+                    else
+                      std::set_union(lmarks.attrs.find(j->first)->begin(),
+                                     lmarks.attrs.find(j->first)->end(),
+                                     rmarks.attrs.find(j->first)->begin(),
+                                     rmarks.attrs.find(j->first)->end(),
+                                     std::inserter(marks.attrs[j->first]));
+                  }
+              }
+          }
+        }
     }
-  check_sane(result);
+  result.check_sane(marking);
+}
+
+void
+roster_t::check_finite_depth(node_id nid, int depth) const
+{
+  I(depth < constants::max_path_depth);
+  std::map<node_id, dir_map>::const_iterator i = children_map.find(nid);
+  if (i != children_map.end())
+    for (dir_map::const_iterator j = i->second.begin(); j != i->second.end();
+         ++j)
+      check_finite_depth(j->second, depth + 1);
+}
+
+
+void
+check_sane(roster_t const & r, marking_map const & marking) const
+{
+  roster_t::const_iterator ri;
+  marking_map::const_iterator mi;
+  bool root_id_exists = false;
+  size_t num_dirs;
+  for (ri = r.all_nodes.begin(), mi = marking.begin();
+       ri != r.all_nodes.end() && mi != marking.end();
+       ++ri, ++mi)
+  {
+    I(ri->first == mi->first);
+    node_id nid = ri->first;
+    I(!null_node(nid) && !temp_node(nid));
+    node_t const & n = ri->second;
+    marking_t const & marks = mi->second;
+    if (n.type == ntype_dir)
+      {
+        ++num_dirs;
+        I(children_map.find(nid) != children_map.end());
+        I(null_id(n.content));
+        if (null_name(n.name) || null_node(n.parent))
+          {
+            I(null_name(n.name) && null_node(n.parent));
+            I(nid == root_dir);
+            root_dir_found = true;
+          }
+      }
+    else
+      I(!null_id(n.content) && !null_name(n.name) && !null_node(n.parent));
+    I(!null_id(n.birth_revision));
+    for (attr_map::const_iterator i = n.attrs.begin(); i != n.attrs.end(); ++i)
+      I(i->second.first || !i->second.second().empty());
+    if (nid != root_dir)
+      I(children(n.parent).find(n.name)->second == nid);
+  }
+  I(root_id_exists);
+  I(num_dirs == children_map.size());
+  I(ri == r.all_nodes.end() && mi == marking.end());
+  check_finite_depth(root_dir);
 }
