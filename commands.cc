@@ -2476,7 +2476,8 @@ dump_diffs(change_set::delta_map const & deltas,
            bool new_is_archived,
            diff_type type)
 {
-  std::string patch_sep = std::string(guess_terminal_width(), '=');
+  // 60 is somewhat arbitrary, but less than 80
+  std::string patch_sep = std::string(60, '=');
   for (change_set::delta_map::const_iterator i = deltas.begin();
        i != deltas.end(); ++i)
     {

@@ -15,6 +15,17 @@
 
 	* commands.cc: No i18n for cert_revision_changelog.
 
+2005-09-06  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_netsync_read_permissions.at: Tweak tests so we aren't
+	trying to serve a bare '*'; works around test hangs due to glob
+	expansion sillyness on MinGW.
+	* tests/t_netsync_globs.at: Ditto.
+	* tests/t_netsync_exclude.at: Ditto.
+	* std_hooks.lua (ignore_file): Add Mac OS X (.DS_Store) and
+	Windows (desktop.ini) per-directory browser configuration files.
+
+
 2005-09-05  Benoît Dejean  <benoit@placenet.org>
 
 	* commands.cc: Fixed some strings (added ' around revisions).
@@ -25,6 +36,17 @@
 
 	* sanity.{cc,hh}: boost::format vs. F(). Merged boost::format
 	and moved non-template code to sanity.cc.
+
+2005-09-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/terminal.cc (have_smart_terminal): We were returning false
+	in almost all circumstances; changed logic so that we at least
+	work when running in a cmd.exe window.
+
+2005-09-05  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (dump_diffs): don't use the terminal width to
+	print ===== seperators.
 
 2005-09-05  Matthew Gregan  <kinetik@orcon.net.nz>
 
