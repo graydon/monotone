@@ -13,6 +13,7 @@
 #include "numeric_vocab.hh"
 #include "paths.hh"
 #include "cset.hh"
+#include "app_state.hh"
 
 struct node_id_source
 {
@@ -115,60 +116,10 @@ private:
   node_id root_dir;
 };
 
-// adaptor class to enable cset application on rosters.
-class editable_roster : public editable_tree
-{
-public:
-  editable_roster(roster_t & r, node_id_source & nis)
-    : r(r), nis(nis)
-    {}
 
-  // editable_tree methods
-  virtual node_id detach_node(split_path const & src)
-  {
-    return r.detch_node(src);
-  }
-  virtual void drop_detached_node(node_id nid)
-  {
-    r.drop_detached_node(nid);
-  }
-  virtual node_id create_dir_node()
-  {
-    node_id nid = r.create_dir_node(nis);
-    new_nodes.insert(nid);
-    return nid;
-  }
-  virtual node_id create_file_node(file_id const & content)
-  {
-    node_id nid = r.create_file_node(content, nis);
-    new_nodes.insert(nid);
-    return nid;
-  }
-  virtual void attach_node(node_id nid, split_path const & dst)
-  {
-    r.attach_node(nid, dst);
-  }
-  virtual void apply_delta(split_path const & pth, 
-                           file_id const & old_id, 
-                           file_id const & new_id)
-  {
-    r.apply_delta(pth, old_id, new_id);
-  }
-  virtual void clear_attr(split_path const & pth,
-                          attr_name const & name)
-  {
-    r.clear_attr(pth, name);
-  }
-  virtual void set_attr(split_path const & pth,
-                        attr_name const & name,
-                        attr_val const & val)
-  {
-    r.set_attr(pth, name, val);
-  }
-  std::set<node_id> new_nodes;
-private:
-  roster_t & r;
-  node_id_source & nis;
-};
+void make_roster_for_revision(revision_set const & rev, revision_id const & rid,
+                              roster_t & result, marking_map & marking,
+                              app_state & app);
 
+#endif
 

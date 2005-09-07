@@ -6,19 +6,27 @@
 #include "roster3.hh"
 
 // FIXME: move this to a header somewhere
-template <typename T, typename K>
+template <typename T>
 void
-safe_erase(T & container, K const & key)
+safe_erase(T & container, T::key_type const & key)
 {
   I(container.erase(key));
 }
-template <typename T, typename V>
+template <typename T>
 T::iterator
-safe_insert(T & container, V const & val)
+safe_insert(T & container, T::value_type const & val)
 {
   std::pair<T::iterator, bool> r = container.insert(val);
   I(r.second);
   return r.first;
+}
+template <typename T>
+T::value_type &
+safe_get(T & container, T::key_type const & key)
+{
+  T::iterator i = container.find(key);
+  I(i != container.end());
+  return i->second;
 }
 
 // FIXME: we assume split and join paths always start with a null component
@@ -42,9 +50,7 @@ roster_t::lookup(node_id parent, path_component child) const
       return root_dir;
     }
   dir_map & dir = children(parent);
-  dir_map::const_iterator i = dir.find(child);
-  I(i != dir.end());
-  return i->second;
+  return safe_get(dir, child);
 }
 
 node_id
@@ -63,16 +69,12 @@ roster_t::get_name(node_id nid, split_path & sp) const
 dir_map & children
 roster_t::children(node_id nid)
 {
-  std::map<node_id, dir_map>::iterator i = children_map.find(nid);
-  I(i != children_map.end());
-  return *i;
+  return safe_get(children_map, nid);
 }
 
 node_t & node(node_id nid)
 {
-  std::map<node_id, node_t>::iterator i = nodes.find(nid);
-  I(i != nodes.end());
-  return *i;
+  return safe_get(nodes, nid);
 }
 
 void replace_node_id(node_id from, node_id to)
@@ -89,16 +91,14 @@ void replace_node_id(node_id from, node_id to)
   else
     {
       dir_map & dir = children(n.parent);
-      dir_map::iterator i = dir.find(n.name);
-      I(i != dir.end());
-      I(i->second == from);
-      i->second = to;
+      node_id & nid_ref = safe_get(dir, n.name);
+      I(nid_ref == from);
+      nid_ref = to;
     }
   if (n.type == etype_dir)
     {
-      std::map<node_id, dir_map>::iterator i = children_map.find(from);
-      I(i != children_map.end());
-      for (dir_map::iterator j = i->second.begin(); j != i->second.end(); ++j)
+      dir_map & dir = safe_get(children_map, from);
+      for (dir_map::iterator j = dir.begin(); j != dir.end(); ++j)
         {
           node_t & child_n = node(j->second);
           I(child_n.parent == from);
@@ -274,6 +274,74 @@ namespace
       return n;
     }
     app_state & app;
+  };
+
+  // adaptor class to enable cset application on rosters.
+  class editable_roster_base : public editable_tree
+  {
+  public:
+    editable_roster(roster_t & r, node_id_source & nis)
+      : r(r), nis(nis)
+      {}
+
+    virtual node_id detach_node(split_path const & src)
+    {
+      return r.detch_node(src);
+    }
+    virtual void drop_detached_node(node_id nid)
+    {
+      r.drop_detached_node(nid);
+    }
+    virtual node_id create_dir_node()
+    {
+      return r.create_dir_node(nis);
+    }
+    virtual node_id create_file_node(file_id const & content)
+    {
+      return r.create_file_node(content, nis);
+    }
+    virtual void attach_node(node_id nid, split_path const & dst)
+    {
+      r.attach_node(nid, dst);
+    }
+    virtual void apply_delta(split_path const & pth, 
+                             file_id const & old_id, 
+                             file_id const & new_id)
+    {
+      r.apply_delta(pth, old_id, new_id);
+    }
+    virtual void clear_attr(split_path const & pth,
+                            attr_name const & name)
+    {
+      r.clear_attr(pth, name);
+    }
+    virtual void set_attr(split_path const & pth,
+                          attr_name const & name,
+                          attr_value const & val)
+    {
+      r.set_attr(pth, name, val);
+    }
+  protected:
+    roster_t & r;
+    node_id_source & nis;
+  };
+
+  class editable_roster_for_merge : editable_roster_base
+  {
+  public:
+    std::set<node_id> new_nodes;
+    virtual node_id create_dir_node()
+    {
+      node_id nid = this->editable_roster_base::create_dir_node();
+      new_nodes.insert(nid);
+      return nid;
+    }
+    virtual node_id create_file_node()
+    {
+      node_id nid = this->editable_roster_base::create_file_node();
+      new_nodes.insert(nid);
+      return nid;
+    }
   };
 
   // this handles all the stuff in a_new
@@ -574,6 +642,115 @@ make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
   mark_merge_roster(left_r, right_r, left_marking, right_marking,
                     left_uncommon_ancestors, right_uncommon_ancestors,
                     result, marking);
+}
+
+namespace
+{
+  class editable_roster_for_nonmerge : editable_roster_base
+  {
+  public:
+    editable_roster_for_nonmerge(roster_t & r, node_id_source & nis,
+                                 revision_id const & rid,
+                                 marking_map & marking)
+      : editable_roster_base(r, nis),
+        rid(rid), marking(marking)
+    {}
+    virtual node_id detach_node(split_path const & src)
+    {
+      node_id nid = this->editable_roster_base::detach_node(nid);
+      marking_t & marks = safe_get(marking, nid);
+      marks.parent_name.clear();
+      marks.parent_name.insert(rid);
+      return nid;
+    }
+    virtual void drop_detached_node(node_id nid)
+    {
+      this->editable_roster_base::drop_detached_node(nid);
+      safe_erase(marking, nid);
+    }
+    node_id handle_new(node_id nid)
+    {
+      node_t & n = r.node(nid);
+      n.birth_revision = rid;
+      marking.insert(std::make_pair(nid, marking_t(rid, n)));
+      return nid;
+    }
+    virtual node_id create_dir_node()
+    {
+      return handle_new(this->editable_roster_base::create_dir_node());
+    }
+    virtual node_id create_file_node()
+    {
+      return handle_new(this->editable_roster_base::create_file_node());
+    }
+    virtual void apply_delta(split_path const & pth,
+                             file_id const & old_id, file_id const & new_id)
+    {
+      this->editable_roster_base::apply_delta(pth, old_id, new_id);
+      marking_t & marks = safe_get(marking, r.lookup(pth));
+      marks.file_content.clear();
+      marks.file_content.insert(rid);
+    }
+    void handle_attr(split_path const & pth, attr_name const & name)
+    {
+      marking_t & marks = safe_get(marking, r.lookup(pth));
+      if (marks.attrs.find(name) == marks.attrs.end())
+        marks.attrs.insert(std::make_pair(name, std::set<revision_id>()));
+      std::set<revision_id> & markset = safe_get(marks.attrs, name);
+      markset.clear();
+      markset.insert(rid);
+    }
+    virtual void clear_attr(split_path const & pth, attr_name const & name)
+    {
+      this->editable_roster_base::clear_attr(pth, name);
+      handle_attr(pth, name);
+    }
+    virtual void set_attr(split_path const & pth, attr_name const & name,
+                          attr_value const & val);
+    {
+      this->editable_roster_base::set_attr(pth, name, val);
+      handle_attr(pth, name);
+    }
+  private:
+    revision_id const & rid;
+    // marking starts out as the parent's marking
+    marking_map & marking;
+  };
+}
+
+void
+make_roster_for_nonmerge(cset const & cs, revision_id const & parent_rid,
+                         revision_id const & new_rid,
+                         roster_t & result, marking_map & marking, app_state & app)
+{
+  roster_t parent_r;
+  app.db.get_roster(parent_rid, result, marking);
+  true_node_id_source nis(app.db);
+  editable_roster_for_nonmerge er(result, nis, new_rid, marking);
+  cs.apply_to(er);
+}
+
+void
+make_roster_for_revision(revision_set const & rev, revision_id const & rid,
+                         roster_t & result, marking_map & marking, app_state & app)
+{
+  if (rev.edges.size() == 1)
+    make_roster_for_nonmerge(rev.edges.begin()->second,
+                             rev.edges.begin()->first,
+                             rid, result, marking, app);
+  else if (rev.edges.size() == 2)
+    {
+      edge_map::iterator i = rev.edges.begin();
+      revision_id const & left_rid = i->first;
+      cset const & left_cs = i->second;
+      ++i;
+      revision_id const & right_rid = i->first;
+      cset const & left_cs = i->second;
+      make_roster_for_merge(left_cs, left_rid, right_cs, right_rid,
+                            rid, result, marking, app);
+    }
+  else
+    I(false);
   result.check_sane(marking);
 }
 

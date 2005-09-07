@@ -64,6 +64,7 @@ check_normalized(cset const & cs)
   //
   //   add_file foo@id1 + apply_delta id1->id2
   //   clear_attr foo:bar + set_attr foo:bar=baz
+  //   rename foo -> foo
   //
   // possibly more?
 
@@ -101,6 +102,11 @@ check_normalized(cset const & cs)
           I(false);
       }
   }
+
+  // no no-op renames
+  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+       i != cs.nodes_renamed.end(); ++i)
+    I(i->first != i->second);
 }
 
 void 
