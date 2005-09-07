@@ -44,7 +44,10 @@ struct node_t
   // this is null iff this is a root dir
   path_component name;
   file_id content;
-  std::map<attr_key, attr_value> attrs;
+  // (true, "val") or (false, "") are both valid attr values (for proper
+  // merging, we have to widen the attr_value type to include a first-class
+  // "undefined" value).
+  std::map<attr_key, std::pair<bool, attr_value> > attrs;
 };
 
 typedef std::map<path_component, node_id> dir_map;
@@ -75,6 +78,9 @@ public:
   void set_attr(split_path const & pth,
                 attr_name const & name,
                 attr_val const & val);
+  void set_attr(split_path const & pth,
+                attr_name const & name,
+                std::pair<bool, attr_val> const & val);
   std::map<node_id, node_t> const & all_nodes() const
   {
     return nodes;

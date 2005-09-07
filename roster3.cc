@@ -207,9 +207,7 @@ void
 roster_t::clear_attr(split_path const & pth,
                      attr_name const & name)
 {
-  node_id nid = lookup(pth);
-  node_t & n = node(nid);
-  safe_erase(n.attrs, name);
+  set_attr(pth, name, std::make_pair(false, attr_val()));
 }
 
 void
@@ -217,9 +215,18 @@ roster_t::set_attr(split_path const & pth,
                    attr_name const & name,
                    attr_val const & val)
 {
+  set_attr(pth, name, std::make_pair(true, val));
+}
+
+void
+roster_t::set_attr(split_path const & pth,
+                   attr_name const & name,
+                   std::pair<bool, attr_val> const & val)
+{
+  I(val.first || val.second().empty());
   node_id nid = lookup(pth);
   node_t & n = node(nid);
-  std::map<attr_key, attr_value>::iterator i = n.attrs.find(name);
+  std::map<attr_key, std::pair<bool, attr_value> >::iterator i = n.attrs.find(name);
   I(i != n.attrs.end());
   I(i->second != val);
   i->second = val;
