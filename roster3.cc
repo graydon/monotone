@@ -348,6 +348,194 @@ namespace
     // so copy forward the marks.
     new_marks = b1_marks;
   }
+
+  void
+  mark_attrs(attr_map const & lattrs, attr_map const & rattrs,
+             marking_t const & lmarks, marking_t const & rmarks,
+             std::set<revision_id> const & left_uncommon_ancestors,
+             std::set<revision_id> const & right_uncommon_ancestors,
+             attr_map const & attrs, marking_t & marks)
+    {
+      for (attr_map::const_iterator j = attrs.begin(); j != attrs.end();
+           ++j)
+        {
+          attr_map::const_iterator lai = lattrs.find(j->first);
+          attr_map::const_iterator rai = rattrs.find(j->first);
+          if (lai == lattrs.end() && rai == rattrs.end())
+            marks.attrs[j->first].insert(new_rid);
+          else if (lai == lattrs.end() && rai != rattrs.end())
+            marks.attrs.insert(*rmarks.attrs.find(j->first));
+          else if (lai != lattrs.end() && rai == rattrs.end())
+            marks.attrs.insert(*lmarks.attrs.find(j->first));
+          else
+            {
+              bool diff_from_left = (j->second != lai->second);
+              bool diff_from_right = (j->second != rai->second);
+              if (diff_from_left && diff_from_right)
+                new_marks.attrs.insert(std::make_pair(j->first, new_rid));
+              else if (diff_from_left && !diff_from_right)
+                mark_won_merge(*lmarks.attrs.find(j->first),
+                               left_uncommon_ancestors,
+                               *rmarks.attrs.find(j->first),
+                               new_rid, marks.attrs[j->first]);
+              else if (!diff_from_left && diff_from_right)
+                mark_won_merge(*rmarks.attrs.find(j->first),
+                               right_uncommon_ancestors,
+                               *lmarks.attrs.find(j->first),
+                               new_rid, marks.attrs[j->first]);
+              else
+                std::set_union(lmarks.attrs.find(j->first)->begin(),
+                               lmarks.attrs.find(j->first)->end(),
+                               rmarks.attrs.find(j->first)->begin(),
+                               rmarks.attrs.find(j->first)->end(),
+                               std::inserter(marks.attrs[j->first]));
+            }
+        }
+    }
+
+  // take care of marking a single node both of whose parents exist
+  void
+  mark_nontrivial_node(node_t const & ln, node_t const & rn,
+                       marking_t const & lmarks, marking_t const & rmarks,
+                       std::set<revision_id> left_uncommon_ancestors,
+                       std::set<revision_id> right_uncommon_ancestors,
+                       node_t const & n, marking_t & marks)
+  {
+    // name
+    {
+      bool diff_from_left = (n.parent != ln.parent || n.name != ln.name);
+      bool diff_from_right = (n.parent != rn.parent || n.name != rn.name);
+      if (diff_from_left && diff_from_right)
+        new_marks.parent_name.insert(new_rid);
+      else if (diff_from_left && !diff_from_right)
+        mark_won_merge(lmarks.parent_name, left_uncommon_ancestors,
+                       rmarks.parent_name, new_rid,
+                       marks.parent_name);
+      else if (!diff_from_left && diff_from_right)
+        mark_won_merge(rmarks.parent_name, right_uncommon_ancestors,
+                       lmarks.parent_name, new_rid,
+                       marks.parent_name);
+      else
+        {
+          // this is the case
+          //   a   a
+          //    \ /
+          //     a
+          // so we simply union the mark sets.  This is technically not
+          // quite the canonical multi-*-merge thing to do; in the case
+          //     a1*
+          //    / \
+          //   b   a2
+          //   |   |
+          //   a3* |
+          //    \ /
+          //     a4
+          // we will set *(a4) = {a1, a3}, even though the minimal
+          // common ancestor set is {a3}.  we could fix this by running
+          // erase_ancestors.  However, there isn't really any point;
+          // the only operation performed on *(a4) is to test *(a4) > R
+          // for some revision R.  The truth-value of this test cannot
+          // be affected by added new revisions to *(a4) that are
+          // ancestors of revisions that are already in *(a4).
+          std::set_union(lmarks.parent_name.begin(), lmarks.parent_name.end(),
+                         rmarks.parent_name.begin(), rmarks.parent_name.end(),
+                         std::inserter(marks.parent_name));
+        }
+    }
+    // content
+    if (n.type == ntype_file)
+      {
+        bool diff_from_left = (n.content != ln.content);
+        bool diff_from_right = (n.content != rn.content);
+        if (diff_from_left && diff_from_right)
+          new_marks.file_content.insert(new_rid);
+        else if (diff_from_left && !diff_from_right)
+          mark_won_merge(lmarks.file_content, left_uncommon_ancestors,
+                         rmarks.file_content, new_rid,
+                         marks.file_content);
+        else if (!diff_from_left && diff_from_right)
+          mark_won_merge(rmarks.file_content, right_uncommon_ancestors,
+                         lmarks.file_content, new_rid,
+                         marks.file_content);
+        else
+          std::set_union(lmarks.file_content.begin(), lmarks.file_content.end(),
+                         rmarks.file_content.begin(), rmarks.file_content.end(),
+                         std::inserter(marks.file_content));
+      }
+    // attrs are pain, and thus get their own function
+    mark_attrs(ln.attrs, rn.attrs, lmarks, rmarks,
+               left_uncommon_ancestors, right_uncommon_ancestors,
+               attrs, marks);
+  }
+             
+  // this function is also responsible for verifying ancestry invariants --
+  // those invariants on a roster that involve the structure of the roster's
+  // parents, rather than just the structure of the roster itself.
+  void
+  mark_merge_roster(roster_t const & left_r, roster_t const & right_r,
+                    marking_map const & left_marking,
+                    marking_map const & right_marking,
+                    std::set<revision_id> const & left_uncommon_ancestors,
+                    std::set<revision_id> const & right_uncommon_ancestors,
+                    roster_t const & merge, marking_map & marking)
+  {
+    for (std::map<node_id, node_t>::const_iterator i = merge.all_nodes().begin();
+         i != merge.all_nodes().end(); ++i)
+      {
+        node_t const & n = i->second;
+        // SPEEDUP?: instead of using find repeatedly, iterate everything in
+        // parallel
+        std::map<node_id, node_t>::const_iterator lni = left_r.all_nodes().find(i->first);
+        std::map<node_id, node_t>::const_iterator rni = right_r.all_nodes().find(i->first);
+        marking_map::const_iterator lmi = left_marking.find(i->first);
+        marking_map::const_iterator rmi = right_marking.find(i->first);
+        bool exists_in_left = (lni != left_r.all_nodes.end());
+        bool exists_in_right = (rni != right_r.all_nodes.end());
+        if (!exists_in_left && !exists_in_right)
+          {
+            marking.insert(std::make_pair(i->first, marking_t(new_rid)));
+            I(n.birth_revision == new_rid);
+          }
+        else if (!exists_in_left && exists_in_right)
+          {
+            marking.insert(*rni);
+            node_t const & rn = rni->second;
+            I(n.type == rn.type && n.birth_revision == rn.birth_revision);
+            I(right_uncommon_ancestors.find(n.birth_revision)
+              != right_uncommon_ancestors.end());
+          }
+        else if (exists_in_left && !exists_in_right)
+          {
+            marking.insert(*lni);
+            node_t const & ln = lni->second;
+            I(n.type == ln.type && n.birth_revision == ln.birth_revision);
+            I(left_uncommon_ancestors.find(n.birth_revision)
+              != left_uncommon_ancestors.end());
+          }
+        else
+          {
+            node_t const & ln = lni->second;
+            node_t const & rn = rni->second;
+            I(n.type == rn.type && n.birth_revision == rn.birth_revision);
+            I(n.type == ln.type && n.birth_revision == ln.birth_revision);
+            marking_t marks;
+            marking_t const & lmarks = lmi->second;
+            marking_t const & rmarks = rmi->second;
+            mark_nontrivial_node(ln, rn, lmi->second, rmi->second,
+                                 left_uncommon_ancestors, right_uncommon_ancestors,
+                                 n, marks);
+            // attributes can never be deleted.
+            // this is kinda inefficent, but very rarely will any node have
+            // more than 1 attribute.
+            for (attr_map::const_iterator j = ln.attrs.begin();
+                 j != ln.attrs.end(); ++j)
+              I(n.attrs.find(j->first) != n.attrs.end());
+            for (attr_map::const_iterator j = rn.attrs.begin();
+                 j != rn.attrs.end(); ++j)
+              I(n.attrs.find(j->first) != n.attrs.end());
+          }
+      }
+  }
 }
 
 void
@@ -383,160 +571,9 @@ make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
   std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
   app.db.get_uncommon_ancestors(left_rid, right_rid,
                                 left_uncommon_ancestors, right_uncommon_ancestors);
-  for (std::map<node_id, node_t>::const_iterator i = result.all_nodes().begin();
-       i != result.all_nodes().end(); ++i)
-    {
-      node_t const & n = i->second;
-      // SPEEDUP?: instead of using find repeatedly, iterate everything in
-      // parallel
-      std::map<node_id, node_t>::const_iterator lni = left_r.all_nodes().find(i->first);
-      std::map<node_id, node_t>::const_iterator rni = right_r.all_nodes().find(i->first);
-      marking_map::const_iterator lmi = left_marking.find(i->first);
-      marking_map::const_iterator rmi = right_marking.find(i->first);
-      bool exists_in_left = (lni != left_r.all_nodes.end());
-      bool exists_in_right = (rni != right_r.all_nodes.end());
-      if (!exists_in_left && !exists_in_right)
-        {
-          marking.insert(std::make_pair(i->first, marking_t(new_rid)));
-          I(n.birth_revision == new_rid);
-        }
-      else if (!exists_in_left && exists_in_right)
-        {
-          marking.insert(*rni);
-          node_t const & rn = rni->second;
-          I(n.type == rn.type && n.birth_revision == rn.birth_revision);
-          I(right_uncommon_ancestors.find(n.birth_revision)
-            != right_uncommon_ancestors.end());
-        }
-      else if (exists_in_left && !exists_in_right)
-        {
-          marking.insert(*lni);
-          node_t const & ln = lni->second;
-          I(n.type == ln.type && n.birth_revision == ln.birth_revision);
-          I(left_uncommon_ancestors.find(n.birth_revision)
-            != left_uncommon_ancestors.end());
-        }
-      else
-        {
-          node_t const & ln = lni->second;
-          node_t const & rn = rni->second;
-          I(n.type == rn.type && n.birth_revision == rn.birth_revision);
-          I(n.type == ln.type && n.birth_revision == ln.birth_revision);
-          marking_t marks;
-          marking_t const & lmarks = lmi->second;
-          marking_t const & rmarks = rmi->second;
-          // name
-          {
-            bool diff_from_left = (n.parent != ln.parent || n.name != ln.name);
-            bool diff_from_right = (n.parent != rn.parent || n.name != rn.name);
-            if (diff_from_left && diff_from_right)
-              new_marks.parent_name.insert(new_rid);
-            else if (diff_from_left && !diff_from_right)
-              mark_won_merge(lmarks.parent_name, left_uncommon_ancestors,
-                             rmarks.parent_name, new_rid,
-                             marks.parent_name);
-            else if (!diff_from_left && diff_from_right)
-              mark_won_merge(rmarks.parent_name, right_uncommon_ancestors,
-                             lmarks.parent_name, new_rid,
-                             marks.parent_name);
-            else
-              {
-                // this is the case
-                //   a   a
-                //    \ /
-                //     a
-                // so we simply union the mark sets.  This is technically not
-                // quite the canonical multi-*-merge thing to do; in the case
-                //    a1*
-                //   / \
-                //  b   a2
-                //  |   |
-                //  a3* |
-                //   \ /
-                //    a4
-                // we will set *(a4) = {a1, a3}, even though the minimal
-                // common ancestor set is {a3}.  we could fix this by running
-                // erase_ancestors.  However, there isn't really any point;
-                // the only operation performed on *(a4) is to test *(a4) > R
-                // for some revision R.  The truth-value of this test cannot
-                // be affected by added new revisions to *(a4) that are
-                // ancestors of revisions that are already in *(a4).
-                std::set_union(lmarks.parent_name.begin(), lmarks.parent_name.end(),
-                               rmarks.parent_name.begin(), rmarks.parent_name.end(),
-                               std::inserter(marks.parent_name));
-              }
-          }
-          // content
-          if (n.type == ntype_file)
-            {
-              bool diff_from_left = (n.content != ln.content);
-              bool diff_from_right = (n.content != rn.content);
-              if (diff_from_left && diff_from_right)
-                new_marks.file_content.insert(new_rid);
-              else if (diff_from_left && !diff_from_right)
-                mark_won_merge(lmarks.file_content, left_uncommon_ancestors,
-                               rmarks.file_content, new_rid,
-                               marks.file_content);
-              else if (!diff_from_left && diff_from_right)
-                mark_won_merge(rmarks.file_content, right_uncommon_ancestors,
-                               lmarks.file_content, new_rid,
-                               marks.file_content);
-              else
-                std::set_union(lmarks.file_content.begin(), lmarks.file_content.end(),
-                               rmarks.file_content.begin(), rmarks.file_content.end(),
-                               std::inserter(marks.file_content));
-            }
-          // attrs
-          {
-            // attributes can never be deleted.  make sure this invariant is
-            // respected.
-            // this is kinda slow, but very rarely will any node have more
-            // than 1 attribute
-            for (attr_map::const_iterator j = ln.attrs.begin(); j != ln.attrs.end();
-                 ++j)
-              I(n.attrs.find(j->first) != n.attrs.end());
-            for (attr_map::const_iterator j = rn.attrs.begin(); j != rn.attrs.end();
-                 ++j)
-              I(n.attrs.find(j->first) != n.attrs.end());
-            // now do the marking
-            for (attr_map::const_iterator j = n.attrs.begin(); j != n.attrs.end();
-                 ++j)
-              {
-                attr_map::const_iterator lai = ln.attrs.find(j->first);
-                attr_map::const_iterator rai = rn.attrs.find(j->first);
-                if (lai == ln.attrs.end() && rai == rn.attrs.end())
-                  marks.attrs[j->first].insert(new_rid);
-                else if (lai == ln.attrs.end() && rai != rn.attrs.end())
-                  marks.attrs.insert(*rmarks.attrs.find(j->first));
-                else if (lai != ln.attrs.end() && rai == rn.attrs.end())
-                  marks.attrs.insert(*lmarks.attrs.find(j->first));
-                else
-                  {
-                    bool diff_from_left = (j->second != lai->second);
-                    bool diff_from_right = (j->second != rai->second);
-                    if (diff_from_left && diff_from_right)
-                      new_marks.attrs.insert(std::make_pair(j->first, new_rid));
-                    else if (diff_from_left && !diff_from_right)
-                      mark_won_merge(*lmarks.attrs.find(j->first),
-                                     left_uncommon_ancestors,
-                                     *rmarks.attrs.find(j->first),
-                                     new_rid, marks.attrs[j->first]);
-                    else if (!diff_from_left && diff_from_right)
-                      mark_won_merge(*rmarks.attrs.find(j->first),
-                                     right_uncommon_ancestors,
-                                     *lmarks.attrs.find(j->first),
-                                     new_rid, marks.attrs[j->first]);
-                    else
-                      std::set_union(lmarks.attrs.find(j->first)->begin(),
-                                     lmarks.attrs.find(j->first)->end(),
-                                     rmarks.attrs.find(j->first)->begin(),
-                                     rmarks.attrs.find(j->first)->end(),
-                                     std::inserter(marks.attrs[j->first]));
-                  }
-              }
-          }
-        }
-    }
+  mark_merge_roster(left_r, right_r, left_marking, right_marking,
+                    left_uncommon_ancestors, right_uncommon_ancestors,
+                    result, marking);
   result.check_sane(marking);
 }
 
