@@ -225,3 +225,118 @@ roster_t::set_attr(split_path const & pth,
   i->second = val;
 }
 
+namespace 
+{
+  const node_id the_null_node = 0;
+  const node_id first_node = 1;
+  inline bool null_node(node_id n)
+  {
+    return n == the_null_node;
+  }
+  const node_id first_temp_node = widen<node_id, int>(1) << (sizeof(node_id) * 8 - 1);
+  inline bool temp_node(node_id n)
+  {
+    return n & first_temp_node;
+  }
+  
+  struct temp_node_id_source : public node_id_source
+  {
+    temp_node_id_source() : curr(first_temp_node) {}
+    virtual node_id next()
+    {
+      node_id n = curr++;
+      I(temp_node(n));
+      return n;
+    }
+    node_id curr;
+  };
+
+  struct true_node_id_source : public node_id_source
+  {
+    true_node_id_source(app_state & app) : app(app) {}
+    virtual node_id next()
+    {
+      node_id n = app.db.next_node_id();
+      I(!temp_node(n));
+      return n;
+    }
+    app_state & app;
+  };
+
+  // this handles all the stuff in a_new
+  void unify_roster_oneway(roster_t & a, std::set<node_id> & a_new,
+                           roster_t & b, std::set<node_id> & b_new,
+                           std::set<node_id> & new_ids,
+                           node_id_source & nis)
+  {
+    for (std::set<node_id>::const_iterator i = a_new.begin(); i != a_new.end(); ++i)
+      {
+        node_id const aid = *i;
+        split_path sp;
+        // SPEEDUP?: climb out only so far as is necessary to find a shared
+        // id?  possibly faster (since usually will get a hit immediately),
+        // but may not be worth the effort (since it doesn't take that long to
+        // get out in any case)
+        a.get_name(aid, sp);
+        node_id const bid = b.lookup(aid);
+        if (temp_node(bid))
+          {
+            node_id new_nid = nis.next();
+            a.replace_node_id(ls, new_nid);
+            b.replace_node_id(rs, new_nid);
+            new_ids.insert(new_nid);
+            b_new.erase(bid);
+          }
+        else
+          {
+            a.replace_node_id(aid, bid);
+            a.node(bid).birth_revision = b.node(bid).birth_revision;
+          }
+      }
+  }
+
+  // after this, left should == right, and there should be no temporary ids
+  // destroys sets, because that's handy (it has to scan over both, but it can
+  // skip some double-scanning)
+  void
+  unify_rosters(roster_t & left, std::set<node_id> & left_new,
+                roster_t & right, std::set<node_id> & right_new,
+                // these new_souls all come from the given soul source
+                std::set<node_id> & new_ids,
+                node_id_source & nis)
+  {
+    unify_roster_oneway(left, left_new, right, right_new, new_souls, ss);
+    unify_roster_oneway(right, right_new, left, left_new, new_souls, ss);
+  }
+}
+
+void
+make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
+                      cset const & right_cs, revision_id const & right_rid,
+                      revision_id const & new_rid,
+                      roster_t & result, marking_map & marking, app_state & app)
+{
+  I(!null_id(left_rid) && !null_id(right_rid));
+  roster_t left_r, right_r;
+  marking_map left_marking, right_marking;
+  app.db.get_roster(left_rid, left_r, left_marking);
+  app.db.get_roster(right_rid, right_r, right_marking);
+  temp_node_id_source nis;
+  result = left_r;
+  roster_t from_right_r(right_r);
+  editable_roster from_left_er(result, nis), from_right_er(from_right_r, nis);
+  left_cs.apply_to(from_left_er);
+  right_cs.apply_to(from_right_er);
+  std::set<node_id> new_ids;
+  unify_rosters(result, from_left_er.new_nodes,
+                from_right_r, from_right_er.new_nodes,
+                new_ids, true_node_id_source(app));
+  I(result == new_from_right);
+  for (std::set<node_id>::const_iterator i = new_ids.begin();
+       i != new_ids.end(); ++i)
+    {
+      node_t & n = result.node(*i);
+      n.birth_revision = new_rid;
+      safe_insert(marking, std::make_pair(*i, marking_t(new_rid, n)));
+    }
+}

@@ -14,33 +14,9 @@
 #include "paths.hh"
 #include "cset.hh"
 
-const node_id the_null_node = 0;
-const node_id first_node = 1;
-inline bool null_node(node_id n)
-{
-  return n == the_null_node;
-}
-const node_id first_temp_node = widen<node_id, int>(1) << (sizeof(node_id) * 8 - 1);
-inline bool temp_node(node_id n)
-{
-  return n & first_temp_node;
-}
-
 struct node_id_source
 {
   virtual node_id next() = 0;
-}
-
-struct temp_node_id_source : public node_id_source
-{
-  temp_node_id_source() : curr(first_temp_node) {}
-  virtual node_id next()
-  {
-    node_id n = curr++;
-    I(temp_node(n));
-    return n;
-  }
-  node_id curr;
 };
 
 ///////////////////////////////////////////////////////////////////
@@ -99,12 +75,17 @@ public:
   void set_attr(split_path const & pth,
                 attr_name const & name,
                 attr_val const & val);
+  std::map<node_id, node_t> const & all_nodes() const
+  {
+    return nodes;
+  }
 private:
   std::map<node_id, node_t> nodes;
   std::map<node_id, dir_map> children_map;
   node_id root_dir;
 };
 
+// adaptor class to enable cset application on rosters.
 class editable_roster : public editable_tree
 {
 public:
@@ -124,43 +105,58 @@ public:
   virtual node_id create_dir_node()
   {
     node_id nid = r.create_dir_node(nis);
-    new_nodes.insiert(nid);
+    new_nodes.insert(nid);
     return nid;
   }
   virtual node_id create_file_node(file_id const & content)
   {
     node_id nid = r.create_file_node(content, nis);
-    new_nodes.insiert(nid);
+    new_nodes.insert(nid);
     return nid;
   }
   virtual void attach_node(node_id nid, split_path const & dst)
   {
     r.attach_node(nid, dst);
-    touched_nodes.insert(nid);
   }
   virtual void apply_delta(split_path const & pth, 
                            file_id const & old_id, 
                            file_id const & new_id)
   {
     r.apply_delta(pth, old_id, new_id);
-    touched_nodes.insert(r.lookup(pth));
   }
   virtual void clear_attr(split_path const & pth,
                           attr_name const & name)
   {
     r.clear_attr(pth, name);
-    touched_nodes.insert(r.lookup(pth));
   }
   virtual void set_attr(split_path const & pth,
                         attr_name const & name,
                         attr_val const & val)
   {
     r.set_attr(pth, name, val);
-    touched_nodes.insert(r.lookup(pth));
   }
+  std::set<node_id> new_nodes;
 private:
   roster_t & r;
   node_id_source & nis;
-  std::set<node_id> new_nodes;
-  std::set<node_id> touched_nodes;
 };
+
+
+struct marking_t
+{
+  std::set<revision_id> parent_name;
+  std::set<revision_id> file_content;
+  std::map<attr_key, std::set<revision_id> > attrs;
+  marking_t(revision_id const & birth_rid, node_t const & n)
+  {
+    std::set<node_id> singleton;
+    singleton.insert(birth_rid);
+    parent_name = singleton;
+    file_content = singleton;
+    for (std::map<attr_key, attr_value>::const_iterator i = n.attrs.begin();
+         i != n.attrs.end(); ++i)
+      attrs.insert(std::make_pair(i->first, singleton));
+  }
+};
+
+typedef std::map<node_id, marking_t> marking_map;
