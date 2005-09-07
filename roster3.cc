@@ -308,6 +308,33 @@ namespace
     unify_roster_oneway(left, left_new, right, right_new, new_souls, ss);
     unify_roster_oneway(right, right_new, left, left_new, new_souls, ss);
   }
+
+  // this function implements the case
+  //   a   b1
+  //    \ /
+  //     b2
+  void
+  mark_won_merge(std::set<revision_id> const & a_marks,
+                 std::set<revision_id> const & a_uncommon_ancestors,
+                 std::set<revision_id> const & b1_marks,
+                 revision_id const & new_rid,
+                 std::set<revision_id> & new_marks)
+  {
+    for (std::set<revision_id>::const_iterator i = a_marks.begin();
+         i != a_marks.end(); ++i)
+      {
+        if (a_uncommon_ancestors.find(*j) != a_uncommon_ancestors.end())
+          {
+            // at least one element of *(a) is not an ancestor of b1
+            new_marks.clear();
+            new_marks.insert(new_rid);
+            return;
+          }
+      }
+    // all elements of *(a) are ancestors of b1; this was a clean merge to b,
+    // so copy forward the marks.
+    new_marks = b1_marks;
+  }
 }
 
 void
@@ -321,22 +348,132 @@ make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
   marking_map left_marking, right_marking;
   app.db.get_roster(left_rid, left_r, left_marking);
   app.db.get_roster(right_rid, right_r, right_marking);
-  temp_node_id_source nis;
-  result = left_r;
-  roster_t from_right_r(right_r);
-  editable_roster from_left_er(result, nis), from_right_er(from_right_r, nis);
-  left_cs.apply_to(from_left_er);
-  right_cs.apply_to(from_right_er);
-  std::set<node_id> new_ids;
-  unify_rosters(result, from_left_er.new_nodes,
-                from_right_r, from_right_er.new_nodes,
-                new_ids, true_node_id_source(app));
-  I(result == new_from_right);
-  for (std::set<node_id>::const_iterator i = new_ids.begin();
-       i != new_ids.end(); ++i)
+  {
+    temp_node_id_source nis;
+    // SPEEDUP?: the copies on the next two lines are probably the main
+    // bottleneck in this code
+    result = left_r;
+    roster_t from_right_r(right_r);
+    editable_roster from_left_er(result, nis), from_right_er(from_right_r, nis);
+    left_cs.apply_to(from_left_er);
+    right_cs.apply_to(from_right_er);
+    std::set<node_id> new_ids;
+    unify_rosters(result, from_left_er.new_nodes,
+                  from_right_r, from_right_er.new_nodes,
+                  new_ids, true_node_id_source(app));
+    I(result == new_from_right);
+  }
+  // SPEEDUP?: instead of constructing new marking from scratch, track which
+  // nodes were modified, and scan only them
+  // load one of the parent markings directly into the new marking map
+  marking.clear();
+  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  app.db.get_uncommon_ancestors(left_rid, right_rid,
+                                left_uncommon_ancestors, right_uncommon_ancestors);
+  for (std::map<node_id, node_t>::const_iterator i = result.all_nodes().begin();
+       i != result.all_nodes().end(); ++i)
     {
-      node_t & n = result.node(*i);
-      n.birth_revision = new_rid;
-      safe_insert(marking, std::make_pair(*i, marking_t(new_rid, n)));
+      node_t const & n = i->second;
+      // SPEEDUP?: instead of using find repeatedly, iterate everything in
+      // parallel
+      std::map<node_id, node_t>::const_iterator lni = left_r.all_nodes().find(i->first);
+      std::map<node_id, node_t>::const_iterator rni = right_r.all_nodes().find(i->first);
+      marking_map::const_iterator lmi = left_marking.find(i->first);
+      marking_map::const_iterator rmi = right_marking.find(i->first);
+      bool exists_in_left = (lni != left_r.all_nodes.end());
+      bool exists_in_right = (rni != right_r.all_nodes.end());
+      if (!exists_in_left && !exists_in_right)
+        {
+          marking.insert(std::make_pair(i->first, marking_t(new_rid)));
+          I(n.birth_revision == new_rid);
+        }
+      else if (!exists_in_left && exists_in_right)
+        {
+          marking.insert(*rni);
+          node_t const & rn = rni->second;
+          I(n.type == rn.type && n.birth_revision == rn.birth_revision);
+          I(right_uncommon_ancestors.find(n.birth_revision)
+            != right_uncommon_ancestors.end());
+        }
+      else if (exists_in_left && !exists_in_right)
+        {
+          marking.insert(*lni);
+          node_t const & ln = lni->second;
+          I(n.type == ln.type && n.birth_revision == ln.birth_revision);
+          I(left_uncommon_ancestors.find(n.birth_revision)
+            != left_uncommon_ancestors.end());
+        }
+      else
+        {
+          node_t const & ln = lni->second;
+          node_t const & rn = rni->second;
+          I(n.type == rn.type && n.birth_revision == rn.birth_revision);
+          I(n.type == ln.type && n.birth_revision == ln.birth_revision);
+          marking_t marks;
+          marking_t const & lmarks = lmi->second;
+          marking_t const & rmarks = rmi->second;
+          // name
+          {
+            bool diff_from_left = (n.parent != ln.parent || n.name != ln.name);
+            bool diff_from_right = (n.parent != rn.parent || n.name != rn.name);
+            if (diff_from_left && diff_from_right)
+              new_marks.parent_name.insert(new_rid);
+            else if (diff_from_left && !diff_from_right)
+              mark_won_merge(lmarks.parent_name, left_uncommon_ancestors,
+                             rmarks.parent_name, new_rid,
+                             marks.parent_name);
+            else if (!diff_from_left && diff_from_right)
+              mark_won_merge(rmarks.parent_name, right_uncommon_ancestors,
+                             lmarks.parent_name, new_rid,
+                             marks.parent_name);
+            else
+              {
+                // this is the case
+                //   a   a
+                //    \ /
+                //     a
+                // so we simply union the mark sets.  This is technically not
+                // quite the canonical multi-*-merge thing to do; in the case
+                //    a1*
+                //   / \
+                //  b   a2
+                //  |   |
+                //  a3* |
+                //   \ /
+                //    a4
+                // we will set *(a4) = {a1, a3}, even though the minimal
+                // common ancestor set is {a3}.  we could fix this by running
+                // erase_ancestors.  However, there isn't really any point;
+                // the only operation performed on *(a4) is to test *(a4) > R
+                // for some revision R.  The truth-value of this test cannot
+                // be affected by added new revisions to *(a4) that are
+                // ancestors of revisions that are already in *(a4).
+                std::set_union(lmarks.parent_name.begin(), lmarks.parent_name.end(),
+                               rmarks.parent_name.begin(), rmarks.parent_name.end(),
+                               std::inserter(marks.parent_name));
+              }
+          }
+          // content
+          if (n.type == ntype_file)
+            {
+              bool diff_from_left = (n.content != ln.content);
+              bool diff_from_right = (n.content != rn.content);
+              if (diff_from_left && diff_from_right)
+                new_marks.file_content.insert(new_rid);
+              else if (diff_from_left && !diff_from_right)
+                mark_won_merge(lmarks.file_content, left_uncommon_ancestors,
+                               rmarks.file_content, new_rid,
+                               marks.file_content);
+              else if (!diff_from_left && diff_from_right)
+                mark_won_merge(rmarks.file_content, right_uncommon_ancestors,
+                               lmarks.file_content, new_rid,
+                               marks.file_content);
+            else
+                std::set_union(lmarks.file_content.begin(), lmarks.file_content.end(),
+                               rmarks.file_content.begin(), rmarks.file_content.end(),
+                               std::inserter(marks.file_content));
+            }
+          
     }
+  check_sane(result);
 }
