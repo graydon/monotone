@@ -571,11 +571,6 @@ signatures made by you. Exchanging public keys should be done over a
 trusted medium, in person, or via a trusted third party. Advanced
 secure key exchange techniques are beyond the scope of this document.
 
-Most of monotone's certs refer to revision IDs. Some certs may refer
-to file IDs or manifest IDs, depending on context. This capability may
-also be removed in the future, at which point certs will @emph{only}
-refer to revisions.
-
 @page
 @node    Storage and workflow
 @section Storage and workflow

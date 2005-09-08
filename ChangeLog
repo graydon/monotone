@@ -1,3 +1,8 @@
+2005-09-08  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Certificates): Remove mention of fcerts and
+	mcerts.
+
 2005-09-04  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.cc (options): Remove default from the help string for
