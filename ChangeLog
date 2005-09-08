@@ -1,3 +1,8 @@
+2005-09-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Add '-f' argument to 'mv'; avoids build waiting on
+	 user confirmation in some cases.
+
 2005-09-08  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Certificates): Remove mention of fcerts and
