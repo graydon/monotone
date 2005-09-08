@@ -19,8 +19,9 @@ bool have_smart_terminal()
   else
     term = "";
 
-  if (term == "" || term == "emacs" || term == "dumb"
-      || !_isatty(_fileno(stderr)))
+  // Win32 consoles are weird; cmd.exe does not set TERM, but isatty returns
+  // true, Cygwin and MinGW MSYS shells set a TERM but isatty returns false.
+  if (term == "emacs" || term == "dumb" || !isatty(fileno(stderr)))
     return false;
   else
     return true;

@@ -28,7 +28,7 @@ B4=`BASE_REVISION`
 # pulling everything but them should give revs B1, B2, B3; and only
 # give branch certs on B1, B3.
 
-NETSYNC_SERVE_START('*' --exclude=branch2 --exclude=branch4)
+NETSYNC_SERVE_START('branch*' --exclude=branch2 --exclude=branch4)
 
 NETSYNC_CLIENT_RUN(pull, 'branch*')
 AT_CHECK(MONOTONE2 automate get_revision $B1, [1], [ignore], [ignore])

@@ -286,7 +286,7 @@ cpp_main(int argc, char ** argv)
   bool requested_help = false;
   set<int> used_local_options;
 
-  poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
+  poptSetOtherOptionHelp(ctx(), _("[OPTION...] command [ARGS...]\n"));
 
   try
     {

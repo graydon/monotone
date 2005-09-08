@@ -21,7 +21,7 @@ ADD_FILE(testfile, [baz
 COMMIT(2branch1)
 REV21=`BASE_REVISION`
 
-NETSYNC_SERVE_START("*")
+NETSYNC_SERVE_START("*branch*")
 
 # check a glob
 NETSYNC_CLIENT_N_RUN(2, pull, "*anch2")
