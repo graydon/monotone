@@ -73,6 +73,7 @@ save_initial_path()
   initial_abs_path.set(system_path(get_current_working_dir()), false);
   // We still use boost::fs, so let's continue to initialize it properly.
   fs::initial_path();
+  fs::path::default_name_check(fs::native);
   L(F("initial abs path is: %s") % initial_abs_path.get_but_unused());
 }
 

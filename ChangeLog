@@ -1,5 +1,7 @@
 2005-09-09  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* paths.cc (save_initial_path): Default Boost's fs::path to
+	fs::native grammar.
 	* tests/t_unreadable_{db,MT}.at: Disable on Win32 for now.
 	* paths.cc: Consistency--use WIN32 rather than _WIN32.
 	* file_io.cc (walk_tree): Correct test for file existence.
