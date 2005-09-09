@@ -1,6 +1,9 @@
 AT_SETUP([fail cleanly on unreadable db])
 MONOTONE_SETUP
 
+# disable for now; can't see a sane way to test this
+NOT_ON_WIN32
+
 ADD_FILE(testfile, [blah blah
 ])
 
