@@ -1,3 +1,7 @@
+2005-09-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* file_io.cc (walk_tree): Correct test for file existence.
+
 2005-09-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* Makefile.am: Add '-f' argument to 'mv'; avoids build waiting on

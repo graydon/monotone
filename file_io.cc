@@ -478,7 +478,7 @@ walk_tree(file_path const & path,
   switch (get_path_status(path))
     {
     case path::nonexistent:
-      N(require_existing_path, F("no such file or directory: '%s'") % path);
+      N(!require_existing_path, F("no such file or directory: '%s'") % path);
       walker.visit_file(path);
       break;
     case path::file:
