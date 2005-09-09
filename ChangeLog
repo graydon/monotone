@@ -1,5 +1,6 @@
 2005-09-09  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* paths.cc: Consistency--use WIN32 rather than _WIN32.
 	* file_io.cc (walk_tree): Correct test for file existence.
 
 2005-09-08  Matthew Gregan  <kinetik@orcon.net.nz>

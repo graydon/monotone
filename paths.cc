@@ -335,7 +335,7 @@ is_absolute_here(std::string const & path)
     return false;
   if (path[0] == '/')
     return true;
-#ifdef _WIN32
+#ifdef WIN32
   if (path[0] == '\\')
     return true;
   if (path.size() > 1 && path[1] == ':')
@@ -675,7 +675,7 @@ static void test_file_path_external_prefix_a_b()
                             "//blah",
                             "\\foo",
                             "c:\\foo",
-#ifdef _WIN32
+#ifdef WIN32
                             "c:foo",
                             "c:/foo",
 #endif
@@ -714,7 +714,7 @@ static void test_file_path_external_prefix_a_b()
   check_fp_normalizes_to("../..", "");
   check_fp_normalizes_to("MT/foo", "a/b/MT/foo");
   check_fp_normalizes_to("MT", "a/b/MT");
-#ifndef _WIN32
+#ifndef WIN32
   check_fp_normalizes_to("c:foo", "a/b/c:foo");
   check_fp_normalizes_to("c:/foo", "a/b/c:/foo");
 #endif
@@ -841,7 +841,7 @@ static void test_system_path()
   check_system_normalizes_to("foo/bar", "/a/b/foo/bar");
   check_system_normalizes_to("/foo/bar", "/foo/bar");
   check_system_normalizes_to("//foo/bar", "//foo/bar");
-#ifdef _WIN32
+#ifdef WIN32
   check_system_normalizes_to("c:foo", "c:foo");
   check_system_normalizes_to("c:/foo", "c:/foo");
   check_system_normalizes_to("c:\\foo", "c:\\foo");
@@ -872,7 +872,7 @@ static void test_system_path()
   BOOST_CHECK(tilde_expanded[0] == '/');
   BOOST_CHECK(tilde_expanded.find('~') == std::string::npos);
   // and check for the weird WIN32 version
-#ifdef _WIN32
+#ifdef WIN32
   std::string tilde_expanded2 = system_path("~this_user_does_not_exist_anywhere").as_external();
   BOOST_CHECK(tilde_expanded2[0] = '/');
   BOOST_CHECK(tilde_expanded.find('~') == std::string::npos);
