@@ -357,6 +357,8 @@ session
   bool got_all_data();
   void maybe_say_goodbye();
 
+  void get_heads_and_consume_certs(set<revision_id> heads);
+
   void analyze_attachment(revision_id const & i, 
                           set<revision_id> & visited,
                           map<revision_id, bool> & attached);
@@ -460,6 +462,37 @@ session
   bool dispatch_payload(netcmd const & cmd);
   void begin_service();
   bool process();
+};
+
+struct
+ancestry_fetcher
+{
+  session & sess;
+
+  set<revision_id> seen_revs;
+  // map children to parents
+  map< file_id, set<file_id> > rev_file_deltas;
+  // map an ancestor to a child
+  map< file_id, file_id > fwd_file_deltas;
+  set< file_id > full_files;
+  map< manifest_id, set<manifest_id> > rev_manifest_deltas;
+  map< manifest_id, manifest_id > fwd_manifest_deltas;
+  set< manifest_id > full_manifests;
+  set< file_id > seen_files;
+
+  ancestry_fetcher(session & s);
+  void traverse_files(change_set const & cset,
+                      map< file_id, file_id > & fwd_jump_deltas);
+  void traverse_manifest(manifest_id const & child_man,
+                         manifest_id const & parent_man,
+                         manifest_id & fwd_anc);
+  void traverse_ancestry(revision_id const & head);
+  void request_rev_file_deltas(file_id const & start);
+  void request_files();
+  void request_rev_manifest_deltas(manifest_id const & start);
+  void request_manifests();
+
+
 };
 
 
@@ -1186,8 +1219,10 @@ session::request_fwd_revisions(revision_id const & i,
 }
 
 void
-session::get_heads_and_consume_certs( set<revision_set> heads )
+session::get_heads_and_consume_certs( set<revision_id> heads )
 {
+  typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
+  typedef map<cert_name, vector<cert> > cert_map;
 
   set<revision_id> nodes, parents;
   map<revision_id, int> chld_num;
@@ -1313,54 +1348,6 @@ session::analyze_ancestry_graph()
 
   ancestry_fetcher fetch();
 
-  analyzed_ancestry = true;
-}
-
-void 
-session::analyze_ancestry_graph()
-{
-  typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
-  typedef map<cert_name, vector<cert> > cert_map;
-
-  if (! (all_requested_revisions_received() && cert_refinement_done()))
-    return;
-
-  if (analyzed_ancestry)
-    return;
-
-  // graph. 
-
-  map<revision_id, bool> attached;
-  set<revision_id> visited;
-  for (set<revision_id>::const_iterator i = heads.begin();
-       i != heads.end(); ++i)
-    analyze_attachment(*i, visited, attached);
-
-  // then we walk the graph upwards, recursively, starting from each of the
-  // heads. we either walk requesting forward deltas or reverse deltas,
-  // depending on whether we are walking an attached or detached subgraph,
-  // respectively. the forward walk ignores detached nodes, the backward walk
-  // ignores attached nodes.
-
-  set<revision_id> fwd_visited, rev_visited;
-
-  for (set<revision_id>::const_iterator i = heads.begin();
-       i != heads.end(); ++i)
-    {
-      map<revision_id, bool>::const_iterator k = attached.find(*i);
-      I(k != attached.end());
-      
-      if (k->second)
-        {
-          L(F("requesting attached ancestry of revision '%s'\n") % *i);
-          request_fwd_revisions(*i, attached, fwd_visited);
-        }
-      else
-        {
-          L(F("requesting detached ancestry of revision '%s'\n") % *i);
-          request_rev_revisions(*i, attached, rev_visited);
-        }       
-    }
   analyzed_ancestry = true;
 }
 
@@ -3861,24 +3848,25 @@ run_netsync_protocol(protocol_voice voice,
   end_platform_netsync();
 }
 
-struct
-ancestry_fetcher
+ancestry_fetcher::ancestry_fetcher(session & s)
+    : sess(s)
 {
-  session & sess;
 
-  set<revision_id> const & seen_revs;
-  // map children to parents
-  map< file_id, set<file_id> > & rev_file_deltas;
-  // map an ancestor to a child
-  map< file_id, file_id > & fwd_file_deltas;
-  set< file_id > & full_files;
-  map< manifest_id, set<manifest_id> > & rev_manifest_deltas;
-  map< manifest_id, manifest_id > & fwd_manifest_deltas;
-  set< manifest_id > & full_manifests;
-  set< file_id > & seen_files;
+  // Get the heads.
+  set<revision_id> new_heads;
+  sess.get_heads_and_consume_certs( new_heads );
+ 
+  // for each new head, we traverse up the ancestry until we reach an existing
+  // revision, an already-requested revision, or a root revision.
+  for (set<revision_id>::const_iterator h = new_heads.begin();
+       h != new_heads.end(); h++)
+    {
+      traverse_ancestry(*h);
+    }
 
-  ancestry_fetcher(session & s) { sess = s };
-};
+  request_files();
+  request_manifests();
+}
 
 void
 ancestry_fetcher::traverse_files(change_set const & cset,
@@ -3892,7 +3880,7 @@ ancestry_fetcher::traverse_files(change_set const & cset,
       file_id child_file (delta_entry_dst(d));
 
       // surely we can assume this
-      I(parent_file != child_file);
+      I(!(parent_file == child_file));
 
       // when changeset format is altered, this needs revisiting
       I(!null_id(child_file));
@@ -3903,7 +3891,7 @@ ancestry_fetcher::traverse_files(change_set const & cset,
       // if this is the first time we've seen the child file_id,
       // add it to the fwd-delta list.
       if (seen_files.find(child_file) == seen_files.end()
-          && !this->app.db.file_version_exists(child_file))
+          && !sess.app.db.file_version_exists(child_file))
         {
           L(F("inserting fwd_jump_deltas"));
           fwd_jump_deltas.insert( make_pair( parent_file, child_file ) );
@@ -3911,7 +3899,7 @@ ancestry_fetcher::traverse_files(change_set const & cset,
       else
         {
           // otherwise, request the reverse delta...
-          if (!this->app.db.file_version_exists(parent_file)
+          if (!sess.app.db.file_version_exists(parent_file)
               && !null_id(parent_file))
             {
               L(F("inserting file rev_deltas"));
@@ -3920,7 +3908,7 @@ ancestry_fetcher::traverse_files(change_set const & cset,
           // ... and update any fwd_jump_deltas.
           // no point updating if it already references something we have.
           if (fwd_jump_deltas.find(child_file) != fwd_jump_deltas.end()
-              && !this->app.db.file_version_exists(child_file))
+              && !sess.app.db.file_version_exists(child_file))
             {
               L(F("updating fwd_jump_deltas for head file %s")
                 % fwd_jump_deltas[child_file]);
@@ -3943,7 +3931,7 @@ ancestry_fetcher::traverse_manifest(manifest_id const & child_man,
   L(F("traverse_manifest parent %s child %s")
     % parent_man % child_man);
   // add reverse deltas
-  if (!this->app.db.manifest_version_exists(parent_man)
+  if (!sess.app.db.manifest_version_exists(parent_man)
       && !null_id(parent_man))
     {
       L(F("inserting manifest rev_deltas"));
@@ -3952,10 +3940,10 @@ ancestry_fetcher::traverse_manifest(manifest_id const & child_man,
   
   // handle the manifest forward-delta for this head
   if (child_man == fwd_anc
-      && !this->app.db.manifest_version_exists(child_man))
+      && !sess.app.db.manifest_version_exists(child_man))
     {
       L(F("set connected_manifest to %s (was %s)") 
-        % parent_man, fwd_anc);
+        % parent_man % fwd_anc);
       fwd_anc = parent_man;
     }
 
@@ -3976,9 +3964,9 @@ ancestry_fetcher::traverse_ancestry(revision_id const & head)
   // is traversed.
   map< file_id, file_id > fwd_jump_deltas;
   // similarly for the manifest, we'll request it entirely
-  manifest_id m = sess.ancestry[head].second.new_manifest;
+  manifest_id m = sess.ancestry[head]->second.new_manifest;
   manifest_id head_manifest;
-  if (this->app.db.manifest_version_exists(m))
+  if (sess.app.db.manifest_version_exists(m))
     {
       head_manifest = m;
     }
@@ -3993,14 +3981,17 @@ ancestry_fetcher::traverse_ancestry(revision_id const & head)
 
       frontier.pop_front();
 
-      for (edge_map::const_iterator e = sess.ancestry[rev].second.edges.begin()
-           e != sess.ancestry[rev].second.edges.end(); e++)
+      for (edge_map::const_iterator e = sess.ancestry[rev]->second.edges.begin();
+           e != sess.ancestry[rev]->second.edges.end(); e++)
         {
           if (seen_revs.find(e->first) == seen_revs.end())
-            front.push_back(head);
+            {
+              frontier.push_back(head);
+              seen_revs.insert(head);
+            }
 
-          traverse_manifest(sess.ancestry[rev].second.new_manifest, edge_old_manifest(e),
-                            connected_manifest, rev_man_deltas);
+          traverse_manifest(sess.ancestry[rev]->second.new_manifest, edge_old_manifest(e),
+                            connected_manifest);
           traverse_files(edge_changes(e), fwd_jump_deltas);
         }
     }
@@ -4039,7 +4030,7 @@ void
 ancestry_fetcher::request_rev_file_deltas(file_id const & start)
 {
   vector< pair<file_id,file_id> > frontier;
-  frontier.push_back(make_pair("", start));
+  frontier.push_back(make_pair(file_id(), start));
 
   // depth first
   while (!frontier.empty())
@@ -4052,15 +4043,18 @@ ancestry_fetcher::request_rev_file_deltas(file_id const & start)
         {
           L(F("requesting rev file delta child %s -> parent %s") 
             % child % parent);
-          queue_send_delta_cmd(file_item, 
+          sess.queue_send_delta_cmd(file_item, 
                                plain_id(child), plain_id(parent));
         }
       frontier.pop_back();
 
       if (rev_file_deltas.find(parent) != rev_file_deltas.end())
         {
-          frontier.insert(frontier.end(), rev_file_deltas.begin(),
-                          rev_file_deltas.end());
+          for (set<file_id>::const_iterator f = rev_file_deltas[parent].begin();
+               f != rev_file_deltas[parent].end(); f++)
+            {
+              frontier.push_back( make_pair(parent, *f) );
+            }
         }
     }
 }
@@ -4074,7 +4068,7 @@ ancestry_fetcher::request_files()
        f != full_files.end(); f++)
     {
       L(F("requesting full file data %s") % *f);
-      queue_send_data_cmd(file_item, plain_id(*f));
+      sess.queue_send_data_cmd(file_item, plain_id(*f));
       request_rev_file_deltas(*f);
     }
   full_files.clear();
@@ -4084,9 +4078,9 @@ ancestry_fetcher::request_files()
        d != fwd_file_deltas.end(); d++)
     {
       L(F("requesting fwd file delta %s->%s") % d->first % d->second);
-      queue_send_delta_cmd(file_item, plain_id(d->first), plain_id(d->second));
+      sess.queue_send_delta_cmd(file_item, plain_id(d->first), plain_id(d->second));
       request_rev_file_deltas(d->second);
-      sess.note_item_full_delta(file_item, d->second);
+      sess.note_item_full_delta(file_item, plain_id(d->second));
     }
 }
 
@@ -4094,7 +4088,7 @@ void
 ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start)
 {
   vector< pair<manifest_id,manifest_id> > frontier;
-  frontier.push_back(make_pair("", start));
+  frontier.push_back(make_pair(manifest_id(), start));
 
   // depth first
   while (!frontier.empty())
@@ -4107,15 +4101,18 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start)
         {
           L(F("requesting rev manifest delta child %s -> parent %s") 
             % child % parent);
-          queue_send_delta_cmd(manifest_item, 
-                               plain_id(child), plain_id(parent));
+          sess.queue_send_delta_cmd(manifest_item, 
+                                    plain_id(child), plain_id(parent));
         }
       frontier.pop_back();
 
       if (rev_manifest_deltas.find(parent) != rev_manifest_deltas.end())
         {
-          frontier.insert(frontier.end(), rev_manifest_deltas.begin(),
-                          rev_manifest_deltas.end());
+          for (set<manifest_id>::const_iterator m = rev_manifest_deltas[parent].begin();
+               m != rev_manifest_deltas[parent].end(); m++)
+            {
+              frontier.push_back( make_pair(parent, *m) );
+            }
         }
     }
 }
@@ -4129,7 +4126,7 @@ ancestry_fetcher::request_manifests()
        f != full_manifests.end(); f++)
     {
       L(F("requesting full manifest data %s") % *f);
-      queue_send_data_cmd(manifest_item, plain_id(*f));
+      sess.queue_send_data_cmd(manifest_item, plain_id(*f));
       request_rev_manifest_deltas(*f);
     }
   full_manifests.clear();
@@ -4139,30 +4136,9 @@ ancestry_fetcher::request_manifests()
        d != fwd_manifest_deltas.end(); d++)
     {
       L(F("requesting fwd manifest delta %s->%s") % d->first % d->second);
-      queue_send_delta_cmd(manifest_item, plain_id(d->first), plain_id(d->second));
+      sess.queue_send_delta_cmd(manifest_item, plain_id(d->first), plain_id(d->second));
       request_rev_manifest_deltas(d->second);
-      sess.note_item_full_delta(manifest_item, d->second);
+      sess.note_item_full_delta(manifest_item, plain_id(d->second));
     }
 }
 
-void
-ancestry_fetcher::ancestry_fetcher(session & sess)
-{
-  this->sess = sess;
-
-  // Get the heads.
-  set<revision_id> new_heads;
-  set<seen_revs> new_heads; // TODO: is this the right datastructure?
-  sess.get_heads_and_consume_certs( new_heads );
- 
-  // for each new head, we traverse up the ancestry until we reach an existing
-  // revision, an already-requested revision, or a root revision.
-  for (set<revision_id>::const_iterator h = new_heads.being();
-       h != new_heads.end(); h++)
-    {
-      traverse_ancestry(*h);
-    }
-
-  request_files();
-  request_manifests();
-}
