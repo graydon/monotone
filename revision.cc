@@ -315,10 +315,12 @@ ensure_parents_loaded(ctx child,
   // The null revision is not a parent for purposes of finding common
   // ancestors.
   for (std::set<revision_id>::iterator p = imm_parents.begin();
-       p != imm_parents.end(); ++p)
+       p != imm_parents.end(); )
     {
       if (null_id(*p))
-        imm_parents.erase(p);
+        imm_parents.erase(p++);
+      else
+        ++p;
     }
               
   shared_bitmap bits = shared_bitmap(new bitmap(parents.size()));

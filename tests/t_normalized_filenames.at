@@ -7,15 +7,15 @@ AT_DATA(foo, [blah blah
 # the inner code directly.
 AT_DATA(MT/work, [add_file "."
 ])
-AT_CHECK(MONOTONE cat manifest, [3], [ignore], [ignore])
+AT_CHECK(MONOTONE automate get_manifest, [3], [ignore], [ignore])
 
 AT_DATA(MT/work, [add_file "./bar"
 ])
 AT_DATA(bar, [blah blah
 ])
 
-AT_CHECK(MONOTONE cat manifest, [3], [stdout], [ignore])
-AT_CHECK(MONOTONE cat revision, [3], [stdout], [ignore])
+AT_CHECK(MONOTONE automate get_manifest, [3], [stdout], [ignore])
+AT_CHECK(MONOTONE automate get_revision, [3], [stdout], [ignore])
 AT_CHECK(MONOTONE commit --message=foo --branch=foo, [3], [ignore], [ignore])
 
 AT_CLEANUP

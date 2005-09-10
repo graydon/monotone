@@ -27,7 +27,7 @@ patch "foo1"
  from @<:@da39a3ee5e6b4b0d3255bfef95601890afd80709@:>@
    to @<:@b0d699dae7df285e64265ec6b46538b0ce785da0@:>@
 ])
-AT_CHECK(MONOTONE cat revision c1dc9e4d249ac7a5f6143a87a1e90246d8be0ee5,
+AT_CHECK(MONOTONE automate get_revision c1dc9e4d249ac7a5f6143a87a1e90246d8be0ee5,
          [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp stdout expout, [], [ignore]) 

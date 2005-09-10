@@ -124,7 +124,8 @@ assert_reporting_function(int reportType, char* userMessage, int* retVal)
 }
 #endif
 
-#ifdef MS_STRUCTURED_EXCEPTION_HANDLING
+#if defined(MS_STRUCTURED_EXCEPTION_HANDLING)
+#if !defined(__BORLANDC__) && !defined(__MINGW32__)
 struct
 ms_se_exception 
 {
@@ -201,6 +202,7 @@ report_ms_se_error(unsigned int id)
       report_error("unrecognized exception or signal");
     }
 }
+#endif
 
 #if (defined(__BORLANDC__) && defined(_Windows))
 // this works for Borland but not other Win32 compilers (which trap too many cases)
@@ -431,7 +433,7 @@ main_with_many_flavours_of_exception(int argc, char **argv)
         report_error("std::exception: ", ex.what()); 
       }
 
-#if defined(MS_STRUCTURED_EXCEPTION_HANDLING)
+#if defined(MS_STRUCTURED_EXCEPTION_HANDLING) && !defined(__BORLANDC__) && !defined(__MINGW32__)
     catch(ms_se_exception const & ex)
       { 
         report_ms_se_error(ex.exception_id); 

@@ -66,7 +66,7 @@ AT_CHECK(tar -xf e.tar)
 
 AT_CHECK(MONOTONE --branch=foo.bar cvs_import e, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=foo.bar co)
-AT_CHECK(cd foo.bar && MONOTONE cat manifest, [], [stdout])
+AT_CHECK(cd foo.bar && MONOTONE automate get_manifest, [], [stdout])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp test.manifest stdout)
 AT_CHECK(cd foo.bar && MONOTONE list tags, [], [stdout])

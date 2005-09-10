@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -19,9 +20,11 @@ extern "C" {
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/regex.hpp>
 
 #include <set>
 #include <map>
+#include <fstream>
 
 #include "app_state.hh"
 #include "file_io.hh"
@@ -518,11 +521,32 @@ extern "C"
   }
 
   static int
-  monotone_guess_binary_for_lua(lua_State *L)
+  monotone_guess_binary_file_contents_for_lua(lua_State *L)
   {
     const char *path = lua_tostring(L, -1);
     N(path, F("guess_binary called with an invalid parameter"));
-    lua_pushboolean(L, guess_binary(std::string(path, lua_strlen(L, -1))));
+
+    std::ifstream file(path, ios_base::binary);
+    if (!file) 
+      {
+        lua_pushnil(L);
+        return 1;
+      }
+    const int bufsize = 8192;
+    char tmpbuf[bufsize];
+    string buf;
+    while(file.good()) 
+      {
+        file.read(tmpbuf, sizeof(tmpbuf));
+        I(file.gcount() <= sizeof(tmpbuf));
+        buf.assign(tmpbuf, file.gcount());
+        if (guess_binary(buf)) 
+          {
+            lua_pushboolean(L, true);
+            return 1;
+          }
+      }
+    lua_pushboolean(L, false);
     return 1;
   }
   
@@ -574,6 +598,17 @@ extern "C"
     lua_pushboolean(L, true); 
     return 1;
   }
+
+  static int
+  monotone_regex_search_for_lua(lua_State *L)
+  {
+    const char *re = lua_tostring(L, -2);
+    const char *str = lua_tostring(L, -1);
+    boost::cmatch what;
+
+    lua_pushboolean(L, boost::regex_search(str, what, boost::regex(re)));
+    return 1;
+  }
 }
 
 
@@ -600,9 +635,21 @@ lua_hooks::lua_hooks()
   lua_register(st, "wait", monotone_wait_for_lua);
   lua_register(st, "kill", monotone_kill_for_lua);
   lua_register(st, "sleep", monotone_sleep_for_lua);
-  lua_register(st, "guess_binary", monotone_guess_binary_for_lua);
+  lua_register(st, "guess_binary_file_contents", monotone_guess_binary_file_contents_for_lua);
   lua_register(st, "include", monotone_include_for_lua);
   lua_register(st, "includedir", monotone_includedir_for_lua);
+
+  // add regex functions:
+  lua_newtable(st);
+  lua_pushstring(st, "regex");
+  lua_pushvalue(st, -2);
+  lua_settable(st, LUA_GLOBALSINDEX);
+
+  lua_pushstring(st, "search");
+  lua_pushcfunction(st, monotone_regex_search_for_lua);
+  lua_settable(st, -3);
+
+  lua_pop(st, 1);
 }
 
 lua_hooks::~lua_hooks()

@@ -30,13 +30,13 @@ AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], 
 UPDATE_R_SHA1=`BASE_REVISION`
 
 # Check checkouts.
-AT_CHECK(rm -rf co-dir/MT)
+AT_CHECK(rm -rf co-dir)
 AT_CHECK(MONOTONE checkout --revision=$CO_R_SHA1 co-dir, [], [stdout])
 AT_CHECK(grep "test_attr:foo:true" stdout, [], [ignore])
 AT_CHECK(grep "test_attr:a:1" stdout, [], [ignore])
 
 # Check updates.
-AT_CHECK(rm -rf co-dir/MT)
+AT_CHECK(rm -rf co-dir)
 AT_CHECK(MONOTONE checkout --revision=$UPDATE_R_SHA1 co-dir, [], [stdout])
 AT_CHECK(grep "test_attr:foo" stdout, [1], [ignore])
 AT_CHECK(grep "test_attr:a:2" stdout, [], [ignore])

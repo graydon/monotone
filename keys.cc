@@ -474,6 +474,32 @@ key_hash_code(rsa_keypair_id const & id,
   calculate_ident(tdat, out);
 }
 
+// helper to compare if two keys have the same hash
+// (ie are the same key)
+bool 
+keys_match(rsa_keypair_id const & id1,
+           base64<rsa_pub_key> const & key1,
+           rsa_keypair_id const & id2,
+           base64<rsa_pub_key> const & key2)
+{
+  hexenc<id> hash1, hash2;
+  key_hash_code(id1, key1, hash1);
+  key_hash_code(id2, key2, hash2);
+  return hash1 == hash2;
+}
+
+bool 
+keys_match(rsa_keypair_id const & id1,
+           base64< arc4<rsa_priv_key> > const & key1,
+           rsa_keypair_id const & id2,
+           base64< arc4<rsa_priv_key> > const & key2)
+{
+  hexenc<id> hash1, hash2;
+  key_hash_code(id1, key1, hash1);
+  key_hash_code(id2, key2, hash2);
+  return hash1 == hash2;
+}
+
 void
 require_password(rsa_keypair_id const & key,
                  app_state & app)

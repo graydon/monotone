@@ -15,8 +15,8 @@ B21=`BASE_REVISION`
 
 
 RUN_NETSYNC(pull, 'branch*' --exclude=branch2)
-AT_CHECK(MONOTONE2 cat revision $B11, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B21, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B11, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B21, [1], [ignore], [ignore])
 
 REVERT_TO($B11)
 SET_FILE(testfile, [12
@@ -31,18 +31,18 @@ COMMIT(branch2)
 B22=`BASE_REVISION`
 
 RUN_NETSYNC(pull)
-AT_CHECK(MONOTONE2 cat revision $B11, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B21, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B12, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B22, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B11, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B21, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B12, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B22, [1], [ignore], [ignore])
 
 # passing only an include pattern causes the default exclude to be
 # ignored...
 RUN_NETSYNC(pull, branch2)
-AT_CHECK(MONOTONE2 cat revision $B11, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B21, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B12, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B22, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B11, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B21, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B12, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B22, [], [ignore], [ignore])
 
 # but not set by default
 
@@ -59,22 +59,22 @@ COMMIT(branch2)
 B23=`BASE_REVISION`
 
 RUN_NETSYNC(pull)
-AT_CHECK(MONOTONE2 cat revision $B11, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B21, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B12, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B22, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B13, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B23, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B11, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B21, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B12, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B22, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B13, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B23, [1], [ignore], [ignore])
 
 # but --set-default overrides
 
 RUN_NETSYNC(pull --set-default, 'branch*')
-AT_CHECK(MONOTONE2 cat revision $B11, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B21, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B12, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B22, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B13, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B23, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B11, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B21, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B12, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B22, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B13, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B23, [], [ignore], [ignore])
 
 REVERT_TO($B13)
 SET_FILE(testfile, [14
@@ -89,13 +89,13 @@ COMMIT(branch2)
 B24=`BASE_REVISION`
 
 RUN_NETSYNC(pull)
-AT_CHECK(MONOTONE2 cat revision $B11, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B21, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B12, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B22, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B13, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B23, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B14, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B24, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B11, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B21, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B12, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B22, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B13, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B23, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B14, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B24, [], [ignore], [ignore])
 
 AT_CLEANUP

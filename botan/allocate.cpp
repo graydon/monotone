@@ -21,6 +21,7 @@ class AllocatorFactory
    {
    public:
       Allocator* get(const std::string&) const;
+      Allocator* get_default() const;
       void add(const std::string&, Allocator*);
       std::string set_default_allocator(const std::string&);
 
@@ -42,6 +43,21 @@ Allocator* AllocatorFactory::get(const std::string& type) const
    std::map<std::string, Allocator*>::const_iterator iter;
    if(type == "default") iter = alloc.find(default_allocator);
    else                  iter = alloc.find(type);
+
+   if(iter == alloc.end())
+      return 0;
+   return iter->second;
+   }
+
+/*************************************************
+* Get the default allocator from the factory     *
+*************************************************/
+Allocator* AllocatorFactory::get_default() const
+   {
+   Mutex_Holder lock(factory_lock);
+
+   std::map<std::string, Allocator*>::const_iterator iter;
+   iter = alloc.find(default_allocator);
 
    if(iter == alloc.end())
       return 0;
@@ -101,13 +117,13 @@ Allocator* get_allocator(const std::string& type)
 
    Allocator* alloc = 0;
 
-   if(type != "")
+   if(!type.empty())
       {
       alloc = factory->get(type);
       if(alloc) return alloc;
       }
 
-   alloc = factory->get("default");
+   alloc = factory->get_default();
    if(alloc) return alloc;
 
    alloc = factory->get("locking");

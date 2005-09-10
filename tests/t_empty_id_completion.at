@@ -2,9 +2,6 @@ AT_SETUP([empty id completion])
 MONOTONE_SETUP
 
 # regression test: completing the revision "" doesn't crash
-AT_CHECK(MONOTONE cat revision "", [1], [ignore], [ignore])
-# might as well check the others...
-AT_CHECK(MONOTONE cat manifest "", [1], [ignore], [ignore])
-AT_CHECK(MONOTONE cat file "", [1], [ignore], [ignore])
+AT_CHECK(MONOTONE cat -r "" nosuchfile, [1], [ignore], [ignore])
 
 AT_CLEANUP

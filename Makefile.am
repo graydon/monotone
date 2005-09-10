@@ -361,7 +361,7 @@ monotone.pdf: monotone.texi version.texi std_hooks.lua $(PDF_FIGURES)
 monotone.dvi: monotone.texi version.texi std_hooks.lua $(EPS_FIGURES)
 
 #%.eps: %.epsi
-#	mv $< $@
+#	mv -f $< $@
 #
 #%.epsi: %.ps
 #	ps2epsi $< $@
@@ -378,6 +378,8 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 # testsuite stuff (could this possibly be more ugly?)
 
 TESTS = unit_tests $(srcdir)/testsuite
+
+TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 
 mostlyclean-local:
 	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
@@ -408,7 +410,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
                      $(srcdir)/package.m4 
 	autom4te --language=Autotest -I $(srcdir) $< -o $@.tmp
-	mv $@.tmp $@
+	mv -f $@.tmp $@
 
 # we generate some headers to copy data into the executable
 
@@ -428,12 +430,12 @@ apidocs:
 
 %.h: %.sql txt2c Makefile
 	./txt2c $< $(*F) >$@.tmp
-	cmp -s $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
 %.h: %.lua txt2c Makefile
 	./txt2c $< $(*F) >$@.tmp
-	cmp -s $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
 # A fake target so we can use MT/revision as a prerequisite, yet not
@@ -445,7 +447,7 @@ package_revision.txt: $(srcdir)/MT/revision
 	if [ ! -f $@ ]; then echo "unknown" > $@; fi
 package_revision.c: package_revision.txt txt2c Makefile
 	./txt2c --strip-trailing --no-static $< package_revision >$@.tmp
-	cmp -s $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
 .PHONY: package_full_revision.txt apidocs
@@ -462,7 +464,7 @@ package_full_revision_dist.txt: package_full_revision.txt
 	 echo '  further changes may have been made.') >> $@
 package_full_revision.c: package_full_revision.txt txt2c Makefile
 	./txt2c --no-static $< package_full_revision >$@.tmp
-	cmp -s $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
 # automake doesn't build html docs

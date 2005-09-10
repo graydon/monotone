@@ -62,12 +62,12 @@ struct poptOption coptions[] =
     {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, gettext_noop("skip merges when printing logs"), NULL},
     {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, gettext_noop("use the current arguments as the future default"), NULL},
     {"exclude", 0, POPT_ARG_STRING, &argstr, OPT_EXCLUDE, gettext_noop("leave out branches matching a pattern"), NULL},
-    {"unified", 0, POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("Use unified diff format"), NULL},
-    {"context", 0, POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("Use context diff format"), NULL},
-    {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, gettext_noop("Use external diff hook for generating diffs"), NULL},
-    {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, gettext_noop("Argument to pass external diff hook"), NULL},
-    {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("Use least common ancestor as ancestor for merge"), NULL},
-    {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("Perform the associated file operation"), NULL},
+    {"unified", 0, POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("use unified diff format"), NULL},
+    {"context", 0, POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("use context diff format"), NULL},
+    {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, gettext_noop("use external diff hook for generating diffs"), NULL},
+    {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, gettext_noop("argument to pass external diff hook"), NULL},
+    {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("use least common ancestor as ancestor for merge"), NULL},
+    {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -83,7 +83,7 @@ struct poptOption options[] =
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, gettext_noop("print version number, then exit"), NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, gettext_noop("print detailed version number, then exit"), NULL},
     {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, gettext_noop("insert command line arguments taken from the given file"), NULL},
-    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, gettext_noop("set ticker style (count|dot|none) [count]"), NULL},
+    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, gettext_noop("set ticker style (count|dot|none)"), NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, gettext_noop("do not load standard lua hooks"), NULL},
     {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, gettext_noop("do not load ~/.monotone/monotonerc or MT/monotonerc lua files"), NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, gettext_noop("load extra rc file"), NULL},
@@ -263,6 +263,7 @@ cpp_main(int argc, char ** argv)
 
   // Set up secure memory allocation etc
   Botan::Init::initialize();
+  Botan::set_default_allocator("malloc");
   
   // decode all argv values into a UTF-8 array
 
@@ -285,7 +286,7 @@ cpp_main(int argc, char ** argv)
   bool requested_help = false;
   set<int> used_local_options;
 
-  poptSetOtherOptionHelp(ctx(), "[OPTION...] command [ARGS...]\n");
+  poptSetOtherOptionHelp(ctx(), _("[OPTION...] command [ARGS...]\n"));
 
   try
     {

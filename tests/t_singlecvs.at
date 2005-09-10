@@ -29,6 +29,6 @@ AT_CHECK(cvs -d $CVSROOT commit -m 'commit 0' testdir/importme, [], [ignore], [i
 # import into monotone and check presence of file
 
 AT_CHECK(MONOTONE --branch=testbranch cvs_import $CVSROOT/testdir, [], [ignore], [ignore])
-AT_CHECK(MONOTONE cat file $TSHA0, [], [ignore])
+AT_CHECK(MONOTONE automate get_file $TSHA0, [], [ignore])
 
 AT_CLEANUP

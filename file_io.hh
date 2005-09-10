@@ -46,6 +46,7 @@ bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
 
 // returns true if the string content is binary according to monotone heuristic
 bool guess_binary(std::string const & s);
+void set_char_is_binary(char c, bool is_binary);
 
 void mkdir_p(any_path const & path);
 void make_dir_for(any_path const & p);

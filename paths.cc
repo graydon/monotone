@@ -73,6 +73,7 @@ save_initial_path()
   initial_abs_path.set(system_path(get_current_working_dir()), false);
   // We still use boost::fs, so let's continue to initialize it properly.
   fs::initial_path();
+  fs::path::default_name_check(fs::native);
   L(F("initial abs path is: %s") % initial_abs_path.get_but_unused());
 }
 
@@ -231,15 +232,15 @@ static interner<path_component> pc_interner("", the_null_component);
 //    - []
 //    - ["foo", ""]
 //    - ["", "bar"]
-file_path::file_path(std::vector<path_component> const & pieces)
+file_path::file_path(split_path const & sp)
 {
-  std::vector<path_component>::const_iterator i = pieces.begin();
-  I(i != pieces.end());
-  if (pieces.size() > 1)
+  split_path::const_iterator i = sp.begin();
+  I(i != sp.end());
+  if (sp.size() > 1)
     I(!null_name(*i));
   std::string tmp = pc_interner.lookup(*i);
   I(tmp != bookkeeping_root.as_internal());
-  for (++i; i != pieces.end(); ++i)
+  for (++i; i != sp.end(); ++i)
     {
       I(!null_name(*i));
       tmp += "/";
@@ -269,9 +270,9 @@ file_path::file_path(std::vector<path_component> const & pieces)
 // change_set.cc is rewritten, however, you should revisit the semantics of
 // this function.
 void
-file_path::split(std::vector<path_component> & pieces) const
+file_path::split(split_path & sp) const
 {
-  pieces.clear();
+  sp.clear();
   if (empty())
     return;
   std::string::size_type start, stop;
@@ -282,10 +283,10 @@ file_path::split(std::vector<path_component> & pieces) const
       stop = s.find('/', start);
       if (stop < 0 || stop > s.length())
         {
-          pieces.push_back(pc_interner.intern(s.substr(start)));
+          sp.push_back(pc_interner.intern(s.substr(start)));
           break;
         }
-      pieces.push_back(pc_interner.intern(s.substr(start, stop - start)));
+      sp.push_back(pc_interner.intern(s.substr(start, stop - start)));
       start = stop + 1;
     }
 }
@@ -335,7 +336,7 @@ is_absolute_here(std::string const & path)
     return false;
   if (path[0] == '/')
     return true;
-#ifdef _WIN32
+#ifdef WIN32
   if (path[0] == '\\')
     return true;
   if (path.size() > 1 && path[1] == ':')
@@ -433,12 +434,12 @@ bool
 find_and_go_to_working_copy(system_path const & search_root)
 {
   // unimplemented
-  fs::path root = search_root.as_external();
-  fs::path bookdir = bookkeeping_root.as_external();
-  fs::path current = fs::initial_path();
+  fs::path root(search_root.as_external(), fs::native);
+  fs::path bookdir(bookkeeping_root.as_external(), fs::native);
+  fs::path current(fs::initial_path());
   fs::path removed;
   fs::path check = current / bookdir;
-  
+
   L(F("searching for '%s' directory with root '%s'\n") 
     % bookdir.string()
     % root.string());
@@ -675,7 +676,7 @@ static void test_file_path_external_prefix_a_b()
                             "//blah",
                             "\\foo",
                             "c:\\foo",
-#ifdef _WIN32
+#ifdef WIN32
                             "c:foo",
                             "c:/foo",
 #endif
@@ -714,7 +715,7 @@ static void test_file_path_external_prefix_a_b()
   check_fp_normalizes_to("../..", "");
   check_fp_normalizes_to("MT/foo", "a/b/MT/foo");
   check_fp_normalizes_to("MT", "a/b/MT");
-#ifndef _WIN32
+#ifndef WIN32
   check_fp_normalizes_to("c:foo", "a/b/c:foo");
   check_fp_normalizes_to("c:/foo", "a/b/c:/foo");
 #endif
@@ -805,15 +806,16 @@ static void test_bookkeeping_path()
                             "",
                             "a:b",
                             0 };
-  
+  std::string tmp_path_string;
+
   for (char const ** c = baddies; *c; ++c)
     {
       L(F("test_bookkeeping_path baddie: trying '%s'") % *c);
-      BOOST_CHECK_THROW(bookkeeping_path(std::string(*c)), std::logic_error);
-      BOOST_CHECK_THROW(bookkeeping_root / std::string(*c), std::logic_error);
+            BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign(*c)), std::logic_error);
+            BOOST_CHECK_THROW(bookkeeping_root / tmp_path_string.assign(*c), std::logic_error);
     }
-  BOOST_CHECK_THROW(bookkeeping_path(std::string("foo/bar")), std::logic_error);
-  BOOST_CHECK_THROW(bookkeeping_path(std::string("a")), std::logic_error);
+  BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("foo/bar")), std::logic_error);
+  BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("a")), std::logic_error);
   
   check_bk_normalizes_to("a", "MT/a");
   check_bk_normalizes_to("foo", "MT/foo");
@@ -840,7 +842,7 @@ static void test_system_path()
   check_system_normalizes_to("foo/bar", "/a/b/foo/bar");
   check_system_normalizes_to("/foo/bar", "/foo/bar");
   check_system_normalizes_to("//foo/bar", "//foo/bar");
-#ifdef _WIN32
+#ifdef WIN32
   check_system_normalizes_to("c:foo", "c:foo");
   check_system_normalizes_to("c:/foo", "c:/foo");
   check_system_normalizes_to("c:\\foo", "c:\\foo");
@@ -871,7 +873,7 @@ static void test_system_path()
   BOOST_CHECK(tilde_expanded[0] == '/');
   BOOST_CHECK(tilde_expanded.find('~') == std::string::npos);
   // and check for the weird WIN32 version
-#ifdef _WIN32
+#ifdef WIN32
   std::string tilde_expanded2 = system_path("~this_user_does_not_exist_anywhere").as_external();
   BOOST_CHECK(tilde_expanded2[0] = '/');
   BOOST_CHECK(tilde_expanded.find('~') == std::string::npos);
@@ -899,7 +901,8 @@ static void test_system_path()
   BOOST_CHECK(working_root.used);
   BOOST_CHECK(system_path(file_path_external(std::string("foo/bar"))).as_external()
               == "/working/root/rel/initial/foo/bar");
-  BOOST_CHECK(system_path(file_path()).as_external()
+  file_path a_file_path;
+  BOOST_CHECK(system_path(a_file_path).as_external()
               == "/working/root");
   BOOST_CHECK(system_path(bookkeeping_path("MT/foo/bar")).as_internal()
               == "/working/root/MT/foo/bar");
