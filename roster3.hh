@@ -121,5 +121,6 @@ void make_roster_for_revision(revision_set const & rev, revision_id const & rid,
                               roster_t & result, marking_map & marking,
                               app_state & app);
 
-#endif
+void make_cset(roster_t const & from, roster_t const & to, cset & cs);
 
+#endif
