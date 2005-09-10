@@ -357,7 +357,7 @@ session
   bool got_all_data();
   void maybe_say_goodbye();
 
-  void get_heads_and_consume_certs(set<revision_id> heads);
+  void get_heads_and_consume_certs(set<revision_id> & heads);
 
   void analyze_attachment(revision_id const & i, 
                           set<revision_id> & visited,
@@ -1219,7 +1219,7 @@ session::request_fwd_revisions(revision_id const & i,
 }
 
 void
-session::get_heads_and_consume_certs( set<revision_id> heads )
+session::get_heads_and_consume_certs( set<revision_id> & heads )
 {
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
   typedef map<cert_name, vector<cert> > cert_map;
@@ -1247,6 +1247,8 @@ session::get_heads_and_consume_certs( set<revision_id> heads )
   set_difference(nodes.begin(), nodes.end(),
                  parents.begin(), parents.end(),
                  inserter(heads, heads.begin()));
+
+  L(F("intermediate set_difference heads size %d") % heads.size());
 
   // Write permissions checking:
   // remove heads w/o proper certs, add their children to heads
@@ -1298,6 +1300,8 @@ session::get_heads_and_consume_certs( set<revision_id> heads )
     }
   for (list<revision_id>::iterator i = tmp.begin(); i != tmp.end(); ++i)
     heads.erase(*i);
+
+  L(F("after step 2, heads size %d") % heads.size());
   //3
   while (tmp.size())
     {
@@ -1321,6 +1325,7 @@ session::get_heads_and_consume_certs( set<revision_id> heads )
         tmp.pop_front();
     }
 
+  L(F("after step 3, heads size %d") % heads.size());
   // We've reduced the certs to those we want now, send them to dbw.
   for (map<revision_id, cert_map>::iterator i = received_certs.begin();
       i != received_certs.end(); ++i)
@@ -1340,13 +1345,22 @@ session::get_heads_and_consume_certs( set<revision_id> heads )
 void
 session::analyze_ancestry_graph()
 {
+  L(F("analyze_ancestry_graph"));
   if (! (all_requested_revisions_received() && cert_refinement_done()))
-    return;
+    {
+      L(F("not all done in analyze_ancestry_graph"));
+      return;
+    }
 
   if (analyzed_ancestry)
-    return;
+    {
+      L(F("already analyzed_ancestry in analyze_ancestry_graph"));
+      return;
+    }
 
-  ancestry_fetcher fetch();
+  L(F("analyze_ancestry_graph doing a fetch"));
+
+  ancestry_fetcher fetch(*this);
 
   analyzed_ancestry = true;
 }
@@ -3855,12 +3869,14 @@ ancestry_fetcher::ancestry_fetcher(session & s)
   // Get the heads.
   set<revision_id> new_heads;
   sess.get_heads_and_consume_certs( new_heads );
+  L(F("ancestry_fetcher: got %d heads") % new_heads.size());
  
   // for each new head, we traverse up the ancestry until we reach an existing
   // revision, an already-requested revision, or a root revision.
   for (set<revision_id>::const_iterator h = new_heads.begin();
        h != new_heads.end(); h++)
     {
+      L(F("traverse head %s") % *h);
       traverse_ancestry(*h);
     }
 
@@ -3890,11 +3906,17 @@ ancestry_fetcher::traverse_files(change_set const & cset,
 
       // if this is the first time we've seen the child file_id,
       // add it to the fwd-delta list.
-      if (seen_files.find(child_file) == seen_files.end()
-          && !sess.app.db.file_version_exists(child_file))
+      if (seen_files.find(child_file) == seen_files.end())
         {
-          L(F("inserting fwd_jump_deltas"));
-          fwd_jump_deltas.insert( make_pair( parent_file, child_file ) );
+          if (!sess.app.db.file_version_exists(child_file))
+            {
+              L(F("inserting fwd_jump_deltas"));
+              fwd_jump_deltas.insert( make_pair( parent_file, child_file ) );
+            }
+          else
+            {
+              L(F("already have 'unseen' file %s") % child_file);
+            }
         }
       else
         {
@@ -3966,17 +3988,18 @@ ancestry_fetcher::traverse_ancestry(revision_id const & head)
   // similarly for the manifest, we'll request it entirely
   manifest_id m = sess.ancestry[head]->second.new_manifest;
   manifest_id head_manifest;
-  if (sess.app.db.manifest_version_exists(m))
+  if (!sess.app.db.manifest_version_exists(m))
     {
       head_manifest = m;
     }
+  L(F("head_manifest %s, new_manifest %s") % head_manifest % m);
   manifest_id connected_manifest = head_manifest;
 
   // breadth first up the ancestry
   while (!frontier.empty())
     {
-      revision_id const & rev = frontier.front();
-      L(F("traversing %s") % rev);
+      revision_id rev = frontier.front();
+      L(F("ancestry frontier front %s") % rev);
       I(sess.ancestry.find(rev) != sess.ancestry.end());
 
       frontier.pop_front();
@@ -3984,10 +4007,19 @@ ancestry_fetcher::traverse_ancestry(revision_id const & head)
       for (edge_map::const_iterator e = sess.ancestry[rev]->second.edges.begin();
            e != sess.ancestry[rev]->second.edges.end(); e++)
         {
-          if (seen_revs.find(e->first) == seen_revs.end())
+          revision_id const & par = e->first;
+          if (seen_revs.find(par) == seen_revs.end())
             {
-              frontier.push_back(head);
-              seen_revs.insert(head);
+              if (sess.ancestry.find(par) != sess.ancestry.end())
+                {
+                  L(F("ancestry frontier push_back %s") % par);
+                  frontier.push_back(par);
+                }
+              else
+                {
+                  L(F("ancestry frontier not adding %s, isn't in ancestry") % par);
+                }
+              seen_revs.insert(par);
             }
 
           traverse_manifest(sess.ancestry[rev]->second.new_manifest, edge_old_manifest(e),
@@ -4032,6 +4064,8 @@ ancestry_fetcher::request_rev_file_deltas(file_id const & start)
   vector< pair<file_id,file_id> > frontier;
   frontier.push_back(make_pair(file_id(), start));
 
+  L(F("request_rev_file_deltas: start %s, %d rev_file_deltas") 
+    % start % rev_file_deltas.size());
   // depth first
   while (!frontier.empty())
     {
@@ -4062,6 +4096,9 @@ ancestry_fetcher::request_rev_file_deltas(file_id const & start)
 void
 ancestry_fetcher::request_files()
 {
+
+  L(F("request_files: %d full, %d fwd_deltas")
+    % full_files.size() % fwd_file_deltas.size());
   // we start with the full files, and work
   // our way back.
   for (set<file_id>::const_iterator f = full_files.begin();
@@ -4079,8 +4116,8 @@ ancestry_fetcher::request_files()
     {
       L(F("requesting fwd file delta %s->%s") % d->first % d->second);
       sess.queue_send_delta_cmd(file_item, plain_id(d->first), plain_id(d->second));
-      request_rev_file_deltas(d->second);
       sess.note_item_full_delta(file_item, plain_id(d->second));
+      request_rev_file_deltas(d->second);
     }
 }
 
@@ -4089,6 +4126,9 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start)
 {
   vector< pair<manifest_id,manifest_id> > frontier;
   frontier.push_back(make_pair(manifest_id(), start));
+
+  L(F("request_rev_manifest_deltas: start %s, %d rev_manifest_deltas") 
+    % start % rev_manifest_deltas.size());
 
   // depth first
   while (!frontier.empty())
@@ -4120,6 +4160,9 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start)
 void
 ancestry_fetcher::request_manifests()
 {
+  L(F("request_manifests: %d full, %d fwd_deltas")
+    % full_manifests.size() % fwd_manifest_deltas.size());
+
   // we start with the full manifests, and work
   // our way back.
   for (set<manifest_id>::const_iterator f = full_manifests.begin();
@@ -4137,8 +4180,8 @@ ancestry_fetcher::request_manifests()
     {
       L(F("requesting fwd manifest delta %s->%s") % d->first % d->second);
       sess.queue_send_delta_cmd(manifest_item, plain_id(d->first), plain_id(d->second));
-      request_rev_manifest_deltas(d->second);
       sess.note_item_full_delta(manifest_item, plain_id(d->second));
+      request_rev_manifest_deltas(d->second);
     }
 }
 
