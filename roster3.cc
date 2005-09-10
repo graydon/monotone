@@ -807,3 +807,142 @@ check_sane(roster_t const & r, marking_map const & marking) const
   I(ri == r.all_nodes.end() && mi == marking.end());
   check_finite_depth(root_dir);
 }
+
+
+namespace
+{
+  // an ugly, but handy, little helper function for doing parallel iteration
+  // over maps
+  // usage:
+  //   std::map<foo, bar>::const_iterator left_i, right_i;
+  //   parllel_state state = start;
+  //   while (parallel_iter_incr(state, left_map, left_i, right_map, right_i))
+  //     switch (state)
+  //     {}
+  typedef enum { start, in_left, in_right, in_both, no_more } parallel_state;
+  template <typename M>
+  bool
+  parallel_iter_incr(parallel_state & state,
+                     M const & left, M::const_iterator & left_i,
+                     M const & right, M::const_iterator & right_i)
+  {
+    I(state != no_more);
+    if (state == start)
+      {
+        left_i = left.begin();
+        right_i = right.begin();
+      }
+    if (state == in_left || state == in_both)
+      ++left_i;
+    if (state == in_right || state == in_both)
+      ++right_i;
+    if (left_i == left.end() && right_i == right.end())
+      state = no_more;
+    else if (left_i == left.end() && right_i != right.end())
+      state = in_right;
+    else if (left_i != left.end() && right_i == right.end())
+      state = in_left;
+    else
+      {
+        // both iterators valid
+        if (left_i->first < right_i->first)
+          state = in_left;
+        else if (left_i->first > right_i->first)
+          state = in_right;
+        else
+          // left_i->first == right_i->first
+          state = in_both;
+      }
+    return state != no_more;
+  }
+  
+  void delta_only_in_from(roster_t const & from, node_id nid, node_t const & n,
+                          cset & cs)
+  {
+    split_path sp;
+    from.get_name(nid);
+    cs.removed.insert(sp);
+  }
+  void delta_only_in_to(roster_t const & to, node_id nid, node_t const & n,
+                        cset & cs)
+  {
+    split_path sp;
+    to.get_name(nid);
+    switch (n.type)
+      {
+      case ntype_file:
+        cs.files_added.insert(std::make_pair(sp, n.content));
+        break;
+      case ntype_dir:
+        cs.dirs_added.insert(sp);
+        break;
+      }
+    for (attr_map::const_iterator i = n.attrs.begin(); i != n.attrs.end(); ++i)
+      if (i->second.first)
+        csets.attrs_set.insert(std::make_pair(std::make_pair(sp, i->first),
+                                              i->second.second));
+  }
+  void delta_in_both(node_id nid,
+                     roster_t const & from, node_t const & from_n,
+                     roster_t const & to, node_t const & to_n,
+                     cset & cs)
+  {
+    if (from_n == to_n)
+      return;
+    I(from_n.type == to_n.type);
+    split_path from_sp, to_sp;
+    from.get_name(nid, from_sp);
+    to.get_name(nid, to_sp);
+    // name
+    if (from_n.name != to_n.name || from_n.parent != to_n.parent)
+      cs.nodes_renamed.insert(std::make_pair(from_sp, to_sp));
+    // content
+    if (from_n.type == ntype_file
+        && from_n.content != to_n.content)
+      cs.deltas_applied.insert(std::make_pair(to_sp,
+                                              std::make_pair(from_n.content,
+                                                             to_n.content)));
+    // attrs
+    {
+      attr_map::const_iterator from_ai, to_ai;
+      parallel_state state = start;
+      while (parallel_iter_incr(state, from_n.attrs, from_ai, to_n.attrs, to_ai))
+        {
+          if ((state == in_left || (state == in_both && !to_ai->second.first))
+              && from_ai->second.first)
+            cs.attrs_cleared.insert(std::make_pair(to_sp, to_ai->first));
+          else if ((state == in_right || (state == in_both && !from_ai->second.first))
+                   && to_ai->second.first)
+            cs.attrs.set_.insert(std::make_pair(std::make_pair(to_sp, to_ai->first),
+                                                to_ai->second.second));
+          else
+            I(false);
+        }
+    }
+  }
+}
+
+void
+make_cset(roster_t const & from, roster_t const & to, cset & cs)
+{
+  std::map<node_id, node_t>::const_iterator from_i, to_i;
+  paralle_state state = start;
+  while (parallel_iter_incr(state, from, from_i, to, to_i))
+    {
+      switch (state)
+        {
+        case start:
+        case no_more:
+          I(false);
+        case in_left:
+          delta_only_in_from(from, from_i->first, from_i->second, cs);
+          break;
+        case in_right:
+          delta_only_in_to(to, to_i->first, to_i->second, cs);
+          break;
+        case in_both:
+          delta_in_both(from_i->first, from, from_i->second, to, to_i->second, cs);
+          break;
+        }
+    }
+}
