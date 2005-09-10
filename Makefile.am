@@ -32,6 +32,7 @@ MOST_SOURCES =								\
          revision.cc revision.hh					\
 	 change_set.cc change_set.hh					\
 	 cset.cc cset.hh						\
+	 roster4.cc roster4.hh						\
          mt_version.cc mt_version.hh					\
          automate.cc automate.hh					\
          database_check.cc database_check.hh				\

@@ -26,7 +26,7 @@ typedef std::vector<path_component> split_path;
 // destructively; this may be the filesystem or an in-memory
 // representation (a roster / mfest).
 
-typedef u64 node_id;
+typedef u32 node_id;
 
 struct editable_tree
 {
