@@ -503,6 +503,7 @@ roster_t::check_sane(marking_map const & marking) const
     node_id nid = ri->first;
     I(!null_node(nid) && !temp_node(nid));
     node_t n = ri->second;
+    I(n->self == nid);
     if (is_dir_t(n))
       {
         if (null_name(n->name) || null_node(n->parent))
