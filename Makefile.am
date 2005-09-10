@@ -379,6 +379,8 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 
 TESTS = unit_tests $(srcdir)/testsuite
 
+TESTS_ENVIRONMENT=AUTOTEST_PATH="."
+
 mostlyclean-local:
 	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
 
