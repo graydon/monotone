@@ -469,7 +469,7 @@ ancestry_fetcher
 {
   session & sess;
 
-  set<revision_id> seen_revs;
+  set< revision_id> seen_revs;
   // map children to parents
   map< file_id, set<file_id> > rev_file_deltas;
   // map an ancestor to a child
@@ -479,6 +479,8 @@ ancestry_fetcher
   map< manifest_id, manifest_id > fwd_manifest_deltas;
   set< manifest_id > full_manifests;
   set< file_id > seen_files;
+  set< file_id > anchor_files;
+  set< manifest_id > anchor_manifests;
 
   ancestry_fetcher(session & s);
   void traverse_files(change_set const & cset,
@@ -2966,7 +2968,15 @@ session::process_delta_cmd(netcmd_item_type type,
     case file_item:
       {
         file_id src_file(hbase), dst_file(hident);
-        if (reverse_delta_requests.find(id_pair)
+        if (full_delta_items[file_item].find(dst_file)
+            != full_delta_items[file_item].end())
+          {
+            this->dbw.consume_file_delta(src_file, 
+                                         dst_file,
+                                         file_delta(del),
+                                         true);
+          }
+        else if (reverse_delta_requests.find(id_pair)
             != reverse_delta_requests.end())
           {
             reverse_delta_requests.erase(id_pair);
@@ -3898,7 +3908,8 @@ ancestry_fetcher::traverse_files(change_set const & cset,
       // surely we can assume this
       I(!(parent_file == child_file));
 
-      // when changeset format is altered, this needs revisiting
+      // when changeset format is altered to have ->"" deltas on deletion,
+      // this needs revisiting.
       I(!null_id(child_file));
 
       L(F("traverse_files parent %s child %s")
@@ -3908,25 +3919,16 @@ ancestry_fetcher::traverse_files(change_set const & cset,
       // add it to the fwd-delta list.
       if (seen_files.find(child_file) == seen_files.end())
         {
+          L(F("unseen file %s, adding to anchor_files") % child_file);
+          anchor_files.insert(child_file);
           if (!sess.app.db.file_version_exists(child_file))
             {
               L(F("inserting fwd_jump_deltas"));
               fwd_jump_deltas.insert( make_pair( parent_file, child_file ) );
             }
-          else
-            {
-              L(F("already have 'unseen' file %s") % child_file);
-            }
         }
       else
         {
-          // otherwise, request the reverse delta...
-          if (!sess.app.db.file_version_exists(parent_file)
-              && !null_id(parent_file))
-            {
-              L(F("inserting file rev_deltas"));
-              rev_file_deltas[child_file].insert(parent_file);
-            }
           // ... and update any fwd_jump_deltas.
           // no point updating if it already references something we have.
           if (fwd_jump_deltas.find(child_file) != fwd_jump_deltas.end()
@@ -3937,6 +3939,14 @@ ancestry_fetcher::traverse_files(change_set const & cset,
               fwd_jump_deltas[parent_file] = fwd_jump_deltas[child_file];
               fwd_jump_deltas.erase(child_file);
             }
+        }
+
+      // request the reverse delta
+      if (!sess.app.db.file_version_exists(parent_file)
+          && !null_id(parent_file))
+        {
+          L(F("inserting file rev_deltas"));
+          rev_file_deltas[child_file].insert(parent_file);
         }
       seen_files.insert(child_file);
       seen_files.insert(parent_file);
@@ -4025,6 +4035,8 @@ ancestry_fetcher::traverse_ancestry(revision_id const & head)
           traverse_manifest(sess.ancestry[rev]->second.new_manifest, edge_old_manifest(e),
                             connected_manifest);
           traverse_files(edge_changes(e), fwd_jump_deltas);
+
+          sess.dbw.consume_revision_data(rev, sess.ancestry[rev]->first);
         }
     }
 
@@ -4099,6 +4111,19 @@ ancestry_fetcher::request_files()
 
   L(F("request_files: %d full, %d fwd_deltas")
     % full_files.size() % fwd_file_deltas.size());
+
+  L(F("rev files deltas are:"));
+  for (map<file_id,set<file_id> >::const_iterator d = rev_file_deltas.begin();
+       d != rev_file_deltas.end(); d++)
+    {
+      L(F("child %s") % d->first);
+      for (set<file_id>::const_iterator p = d->second.begin();
+           p != d->second.end(); p++)
+        {
+          L(F("\tpar %s") % *p);
+        }
+    }
+  
   // we start with the full files, and work
   // our way back.
   for (set<file_id>::const_iterator f = full_files.begin();
@@ -4107,6 +4132,7 @@ ancestry_fetcher::request_files()
       L(F("requesting full file data %s") % *f);
       sess.queue_send_data_cmd(file_item, plain_id(*f));
       request_rev_file_deltas(*f);
+      anchor_files.erase(*f);
     }
   full_files.clear();
 
@@ -4118,7 +4144,17 @@ ancestry_fetcher::request_files()
       sess.queue_send_delta_cmd(file_item, plain_id(d->first), plain_id(d->second));
       sess.note_item_full_delta(file_item, plain_id(d->second));
       request_rev_file_deltas(d->second);
+      anchor_files.erase(d->second);
     }
+
+  // and finally all the remaining anchor files
+  for (set<file_id>::const_iterator f = anchor_files.begin();
+       f != anchor_files.end(); f++)
+    {
+      L(F("rev deltas from anchor file %s") % *f);
+      request_rev_file_deltas(*f);
+    }
+  anchor_files.clear();
 }
 
 void
