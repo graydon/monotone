@@ -85,6 +85,9 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   
   if (t.empty() || t.find("paths") != t.end())
     add_paths_tests(suite);  
+
+  if (t.empty() || t.find("roster") != t.end())
+    add_roster_tests(suite);  
   
   // all done, add our clean-shutdown-indicator
   suite->add(BOOST_TEST_CASE(&clean_shutdown_dummy_test));

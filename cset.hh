@@ -16,9 +16,7 @@
 #include "paths.hh"
 #include "vocab.hh"
 
-typedef std::string attr_name;
-typedef std::string attr_val;
-typedef std::map<attr_name, attr_val> attr_map;
+typedef std::map<attr_key, attr_value> attr_map;
 
 typedef std::vector<path_component> split_path;
 
@@ -44,10 +42,10 @@ struct editable_tree
                            file_id const & old_id, 
                            file_id const & new_id) = 0;
   virtual void clear_attr(split_path const & pth,
-                          attr_name const & name) = 0;
+                          attr_key const & name) = 0;
   virtual void set_attr(split_path const & pth,
-                        attr_name const & name,
-                        attr_val const & val) = 0;
+                        attr_key const & name,
+                        attr_value const & val) = 0;
 
   virtual ~editable_tree() {}
 };
@@ -71,10 +69,11 @@ struct cset
   std::map<split_path, std::pair<file_id, file_id> > deltas_applied;
 
   // Attribute changes.
-  std::set<std::pair<split_path, attr_name> > attrs_cleared;
-  std::map<std::pair<split_path, attr_name>, attr_val> attrs_set;
+  std::set<std::pair<split_path, attr_key> > attrs_cleared;
+  std::map<std::pair<split_path, attr_key>, attr_value> attrs_set;
 
   void apply_to(editable_tree & t);
+  bool empty();
 };
 
 #endif // __CSET_HH__

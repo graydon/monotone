@@ -235,10 +235,14 @@ file_path::file_path(std::vector<path_component> const & pieces)
 {
   std::vector<path_component>::const_iterator i = pieces.begin();
   I(i != pieces.end());
-  if (pieces.size() > 1)
-    I(!null_name(*i));
+
+  // FIXME: this is disabled for the moment, as rosters make
+  // paths of the form ["", "foo", "bar"] all the time...
+  //   if (pieces.size() > 1)
+  //     I(!null_name(*i));
+
   std::string tmp = pc_interner.lookup(*i);
-  I(tmp != bookkeeping_root.as_internal());
+  //I(tmp != bookkeeping_root.as_internal());
   for (++i; i != pieces.end(); ++i)
     {
       I(!null_name(*i));

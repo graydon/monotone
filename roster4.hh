@@ -33,9 +33,9 @@ typedef boost::shared_ptr<file_node> file_t;
 typedef boost::shared_ptr<dir_node> dir_t;
 
 // (true, "val") or (false, "") are both valid attr values (for proper
-// merging, we have to widen the attr_val type to include a first-class
+// merging, we have to widen the attr_value type to include a first-class
 // "undefined" value).
-typedef std::map<attr_key, std::pair<bool, attr_val> > full_attr_map;
+typedef std::map<attr_key, std::pair<bool, attr_value> > full_attr_map;
 typedef std::map<path_component, node_t> dir_map;
 typedef std::map<node_id, node_t> node_map;
 
@@ -145,13 +145,13 @@ public:
                    file_id const & old_id, 
                    file_id const & new_new);
   void clear_attr(split_path const & pth,
-                  attr_name const & name);
+                  attr_key const & name);
   void set_attr(split_path const & pth,
-                attr_name const & name,
-                attr_val const & val);
+                attr_key const & name,
+                attr_value const & val);
   void set_attr(split_path const & pth,
-                attr_name const & name,
-                std::pair<bool, attr_val> const & val);
+                attr_key const & name,
+                std::pair<bool, attr_value> const & val);
 
   node_map const & all_nodes() const
   {

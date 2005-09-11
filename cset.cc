@@ -70,7 +70,7 @@ check_normalized(cset const & cs)
 
   // no file appears in both the "added" list and the "patched" list
   {
-    set<split_path>::const_iterator a = cs.files_added.begin();
+    map<split_path, file_id>::const_iterator a = cs.files_added.begin();
     map<split_path, std::pair<file_id, file_id> >::const_iterator
       d = cs.deltas_applied.begin();
     while (a != cs.files_added.end() && d != cs.deltas_applied.end())
@@ -89,8 +89,8 @@ check_normalized(cset const & cs)
   
   // no file+attr pair appears in both the "set" list and the "cleared" list
   {
-    set<pair<split_path, attr_name> >::const_iterator c = cs.attrs_cleared.begin();
-    map<pair<split_path, attr_name>, attr_value>::const_iterator
+    set<pair<split_path, attr_key> >::const_iterator c = cs.attrs_cleared.begin();
+    map<pair<split_path, attr_key>, attr_value>::const_iterator
       s = cs.attrs_set.begin();
     while (c != cs.attrs_cleared.end() && s != cs.attrs_set.end())
       {
@@ -107,6 +107,19 @@ check_normalized(cset const & cs)
   for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     I(i->first != i->second);
+}
+
+bool
+cset::empty()
+{
+  return 
+    nodes_deleted.empty() 
+    && dirs_added.empty()
+    && files_added.empty()
+    && nodes_renamed.empty()
+    && deltas_applied.empty()
+    && attrs_cleared.empty()
+    && attrs_set.empty();
 }
 
 void 
@@ -179,11 +192,11 @@ cset::apply_to(editable_tree & t)
        i != deltas_applied.end(); ++i)
     t.apply_delta(i->first, i->second.first, i->second.second);
 
-  for (set<pair<split_path, attr_name> >::const_iterator i = attrs_cleared.begin();
+  for (set<pair<split_path, attr_key> >::const_iterator i = attrs_cleared.begin();
        i != attrs_cleared.end(); ++i)
     t.clear_attr(i->first, i->second);
 
-  for (map<pair<split_path, attr_name>, attr_val>::const_iterator i = attrs_set.begin();
+  for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = attrs_set.begin();
        i != attrs_set.end(); ++i)
     t.set_attr(i->first.first, i->first.second, i->second);
 }
