@@ -1,3 +1,12 @@
+2005-09-11  Benoît Dejean  <benoit@placenet.org>
+
+	* database.cc
+	* database_check.cc
+	* netsync.cc
+	* po/POTFILES.in
+	* po/POTFILES.skip
+	* rcs_import.cc: More i18n strings.
+
 2005-09-07  Jim Meyering  <jim@meyering.net>
 	
 	* tests/t_rename_dir_cross_level.at: When invoking mv to rename

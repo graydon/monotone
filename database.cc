@@ -480,9 +480,9 @@ void
 database::rehash()
 {
   transaction_guard guard(*this);
-  ticker mcerts("mcerts", "m", 1);
-  ticker pubkeys("pubkeys", "+", 1);
-  ticker privkeys("privkeys", "!", 1);
+  ticker mcerts(_("mcerts"), "m", 1);
+  ticker pubkeys(_("pubkeys"), "+", 1);
+  ticker privkeys(_("privkeys"), "!", 1);
   
   {
     // rehash all mcerts
