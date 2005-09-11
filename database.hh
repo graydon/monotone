@@ -17,11 +17,12 @@ struct cert;
 #include <map>
 #include <string>
 
-#include "selectors.hh"
+#include "cset.hh"
 #include "manifest.hh"
 #include "numeric_vocab.hh"
-#include "vocab.hh"
 #include "paths.hh"
+#include "selectors.hh"
+#include "vocab.hh"
 
 struct revision_set;
 
@@ -431,6 +432,10 @@ public:
 
   // branches
   void get_branches(std::vector<std::string> & names);
+
+  // node_id maintainance
+  
+  node_id next_node_id();
   
   // completion stuff
 

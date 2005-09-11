@@ -16,7 +16,7 @@
 #include "paths.hh"
 #include "vocab.hh"
 
-typedef std::map<attr_key, attr_value> attr_map;
+typedef std::map<attr_key, attr_value> attr_map_t;
 
 typedef std::vector<path_component> split_path;
 

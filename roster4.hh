@@ -35,7 +35,7 @@ typedef boost::shared_ptr<dir_node> dir_t;
 // (true, "val") or (false, "") are both valid attr values (for proper
 // merging, we have to widen the attr_value type to include a first-class
 // "undefined" value).
-typedef std::map<attr_key, std::pair<bool, attr_value> > full_attr_map;
+typedef std::map<attr_key, std::pair<bool, attr_value> > full_attr_map_t;
 typedef std::map<path_component, node_t> dir_map;
 typedef std::map<node_id, node_t> node_map;
 
@@ -47,7 +47,7 @@ struct node
   node_id self;
   node_id parent; // the_null_node iff this is a root dir  
   path_component name; // the_null_component iff this is a root dir  
-  full_attr_map attrs;
+  full_attr_map_t attrs;
 
   // need a virtual function to make dynamic_cast work
   virtual node_t clone() = 0;
