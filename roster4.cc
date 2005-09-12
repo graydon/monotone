@@ -746,25 +746,28 @@ namespace
 
           I(marks.attrs.find(j->first) == marks.attrs.end());
 
-          // Neither left nor right had a value for this attr, so it was
+          // Neither left nor right have ever seen this attr, so it was
           // new in this rev. We make a new marking set for it and add the
           // current rev to the marking set.
           if (lai == lattrs.end() && rai == rattrs.end())
             safe_insert(marks.attrs[j->first], new_rid);
 
-          // Only the left side had a value for this attr, so the left side
+/// FIXME: this logic is all wrong, we need to compare the new value against the old value
+
+          // Only the left side has ever seen this attr, so the left side
           // won merging, and we copy the entire left marking set forward.
           else if (lai == lattrs.end() && rai != rattrs.end())
             safe_insert(marks.attrs, make_pair(j->first, 
                                                safe_get(rmarks.attrs, j->first)));
 
-          // Only the right side had a value for this attr, so the right
+          // Only the right side has ever seen this attr, so the right
           // side won merging, and we copy the entire right marking set forward.
           else if (lai != lattrs.end() && rai == rattrs.end())
             safe_insert(marks.attrs, make_pair(j->first, 
                                                safe_get(lmarks.attrs, j->first)));
 
-          // Otherwise both sides have values.
+          // Otherwise both sides have seen this attr, and we need to look at
+          // both old values.
           else
             {
               bool diff_from_left = (j->second != lai->second);
