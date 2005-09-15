@@ -1,3 +1,11 @@
+2005-09-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.{cc,hh}: restrictions now understand --exclude
+	* commands.cc: commit and revert now take OPT_EXCLUDE
+	* monotone.cc: update description of --exclude
+	* tests/t_restriction_with_exclude.at: new test
+	* testsuite.at: add it
+
 2005-09-14  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/ciabot_monotone_hookversion.py: CIA bot client script

@@ -2214,7 +2214,7 @@ string_to_datetime(std::string const & s)
 
 CMD(commit, N_("working copy"), N_("[PATH]..."), 
     N_("commit working copy to database"),
-    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR % OPT_DEPTH)
+    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR % OPT_DEPTH % OPT_EXCLUDE)
 {
   string log_message("");
   revision_set rs;
@@ -3304,7 +3304,7 @@ CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
 
 
 CMD(revert, N_("working copy"), N_("[PATH]..."), 
-    N_("revert file(s), dir(s) or entire working copy"), OPT_DEPTH)
+    N_("revert file(s), dir(s) or entire working copy"), OPT_DEPTH % OPT_EXCLUDE)
 {
   manifest_map m_old;
   revision_id old_revision_id;
