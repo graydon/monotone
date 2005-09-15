@@ -3714,19 +3714,13 @@ ancestry_fetcher::traverse_manifest(manifest_id const & child_man,
   
   // handle the manifest forward-deltas
   if (!null_id(parent_man)
+      // don't update child to itself, it makes the loop iterate infinitely.
+      && !(parent_man == child_man)
       && fwd_manifest_deltas.find(child_man) != fwd_manifest_deltas.end())
     {
       // We're traversing with child->parent of A->B.
       // Update any forward deltas with a parent of B to 
       // have A as a parent, ie B->C becomes A->C.
-      L(F("inserting manifest rev_deltas"));
-      for (multimap<manifest_id,manifest_id>::iterator d = 
-           fwd_manifest_deltas.lower_bound(child_man);
-           d != fwd_manifest_deltas.upper_bound(child_man);
-           d++)
-        {
-          L(F("here %s,%s") % d->first % d->second);
-        }
       for (multimap<manifest_id,manifest_id>::iterator d = 
            fwd_manifest_deltas.lower_bound(child_man);
            d != fwd_manifest_deltas.upper_bound(child_man);
@@ -3735,7 +3729,6 @@ ancestry_fetcher::traverse_manifest(manifest_id const & child_man,
           L(F("size %d\n") % fwd_manifest_deltas.size());
           L(F("inserting %s->%s") % parent_man % d->second);
           fwd_manifest_deltas.insert(make_pair(parent_man, d->second));
-          L(F("erasing %s,%s") % d->first % d->second);
         }
 
       fwd_manifest_deltas.erase(fwd_manifest_deltas.lower_bound(child_man),
