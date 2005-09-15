@@ -1,3 +1,12 @@
+2005-09-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/ciabot_monotone_hookversion.py: CIA bot client script
+	meant to be called from the note_netsync_revision_received hook.
+	* lua.{cc,hh}: hook_note_commit and hook_note_netsync_revision_received
+	now take the text of the revision as an argument.
+	* netsync.cc, commands.cc: Give hooks new argument.
+	* monotone.texi: Update documentation for those hooks.
+
 2005-09-11  Benoît Dejean  <benoit@placenet.org>
 
 	* database.cc

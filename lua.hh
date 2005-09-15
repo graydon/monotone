@@ -125,9 +125,11 @@ public:
 
   // notification hooks
   bool hook_note_commit(revision_id const & new_id,
+                        revision_data const & rdat,
                         std::map<cert_name, cert_value> const & certs);
 
   bool hook_note_netsync_revision_received(revision_id const & new_id,
+                                           revision_data const & rdat,
                         std::set<std::pair<rsa_keypair_id,
                                          std::pair<cert_name,
                                                 cert_value> > > const & certs);

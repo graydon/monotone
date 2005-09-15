@@ -587,7 +587,9 @@ session::~session()
           decode_base64(j->value, vtmp);
           certs.insert(make_pair(j->key, make_pair(j->name, vtmp)));
         }
-      app.lua.hook_note_netsync_revision_received(*i, certs);
+      revision_data rdat;
+      app.db.get_revision(*i, rdat);
+      app.lua.hook_note_netsync_revision_received(*i, rdat, certs);
     }
   //Certs (not attached to a new revision)
   for (vector<cert>::iterator i = unattached_certs.begin();

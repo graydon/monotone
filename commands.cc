@@ -2418,7 +2418,9 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
         decode_base64(i->inner().value, vtmp);
         certs.insert(make_pair(i->inner().name, vtmp));
       }
-    app.lua.hook_note_commit(rid, certs);
+    revision_data rdat;
+    app.db.get_revision(rid, rdat);
+    app.lua.hook_note_commit(rid, rdat, certs);
   }
 }
 

@@ -5584,10 +5584,12 @@ This section documents the existing hook functions and their default
 definitions. 
 
 @ftable @code
-@item note_commit (@var{new_id}, @var{certs})
+@item note_commit (@var{new_id}, @var{revision}, @var{certs})
 
 Called by monotone after the version @var{new_id} is committed. The
-second parameter, @var{certs}, is a lua table containing the set of
+second parameter, @var{revision} is the text of the revision, what would
+be given by "monotone cat revision @var{new_id}". The
+third parameter, @var{certs}, is a lua table containing the set of
 certificate names and values committed along with this version. There
 is no default definition for this hook. 
 
@@ -5598,10 +5600,12 @@ hook is only intended as an aid for integrating monotone with informal
 commit-notification systems such as mailing lists or news services. It
 should not perform any security-critical operations.
 
-@item note_netsync_revision_received (@var{new_id}, @var{certs})
+@item note_netsync_revision_received (@var{new_id}, @var{revision}, @var{certs})
 
 Called by monotone after the revision @var{new_id} is recieved through
-netsync. @var{certs} is a lua table containing one subtable for each
+netsync. @var{revision} is the text of the revision, what would be given
+by "monotone cat revision @var{new_id}". @var{certs} is a lua table
+containing one subtable for each
 cert attached to the revision @var{new_id}. These subtables have fields
 named "key", "name", and "value", containing the signing key for the cert,
 the name of the cert, and the value of the cert. There is no default
