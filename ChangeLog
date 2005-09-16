@@ -1,5 +1,10 @@
 2005-09-16  Matt Johnston  <matt@ucc.asn.au>
 
+	* botan/pkcs8.cpp: re-add the monotone-specific code for guessing if
+	a key is DER encoded or not.
+
+2005-09-16  Matt Johnston  <matt@ucc.asn.au>
+
 	* botan/*: update to Botan 1.4.6
 	* Makefile.am: ditto
 
