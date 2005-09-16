@@ -1,5 +1,9 @@
 2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* netsync.cc: finish renaming things, so it compiles again...
+
+2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* contrib/usher.cc: A simple usher/proxy server. It asks connecting
 	clients for their include pattern, and then forwards the connection
 	to an appropriate (as given in a config file) monotone server. Note

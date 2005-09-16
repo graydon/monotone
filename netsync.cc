@@ -2979,12 +2979,12 @@ session::process_nonexistant_cmd(netcmd_item_type type,
 bool
 session::process_usher_cmd(utf8 const & msg)
 {
-  if (greeting().size())
+  if (msg().size())
     {
-      if (greeting()[0] == '!')
-        P(F("Received warning from usher: %s") % greeting().substr(1));
+      if (msg()[0] == '!')
+        P(F("Received warning from usher: %s") % msg().substr(1));
       else
-        L(F("Received greeting from usher: %s") % greeting().substr(1));
+        L(F("Received greeting from usher: %s") % msg().substr(1));
     }
   netcmd cmdout;
   cmdout.write_usher_reply_cmd(our_include_pattern);
