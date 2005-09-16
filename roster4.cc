@@ -752,19 +752,40 @@ namespace
           if (lai == lattrs.end() && rai == rattrs.end())
             safe_insert(marks.attrs[j->first], new_rid);
 
-/// FIXME: this logic is all wrong, we need to compare the new value against the old value
-
-          // Only the left side has ever seen this attr, so the left side
-          // won merging, and we copy the entire left marking set forward.
+          // Only the right side has ever seen this attr, so the right side
+          // won merging.
           else if (lai == lattrs.end() && rai != rattrs.end())
-            safe_insert(marks.attrs, make_pair(j->first, 
-                                               safe_get(rmarks.attrs, j->first)));
+            {
+              // Two sub-possibilities:               
+              if (j->second == rai->second)
+                {
+                  // 1. The right edge is of the form a->a, and represents no decision
+                  // on the part of the user, just a propagation of an existing state.
+                  // In this case we carry the old mark-set forward from the right marking.
+                  safe_insert(marks.attrs, make_pair(j->first, 
+                                                     safe_get(rmarks.attrs, j->first)));
+                }
+              else
+                
+                {
+                  // 2. The right edge represents a change to the attr value --
+                  // thus a decision on the part of the user -- in which case
+                  // we need to set the new mark-set to {new_rid}
+                  safe_insert(marks.attrs[j->first], new_rid);
+                }
+            }
 
-          // Only the right side has ever seen this attr, so the right
-          // side won merging, and we copy the entire right marking set forward.
+          // Only the left side has ever seen this attr, so the left
+          // side won merging.
           else if (lai != lattrs.end() && rai == rattrs.end())
-            safe_insert(marks.attrs, make_pair(j->first, 
-                                               safe_get(lmarks.attrs, j->first)));
+            {
+              // Same two sub-cases here as above:
+              if (j->second == lai->second)
+                safe_insert(marks.attrs, make_pair(j->first, 
+                                                   safe_get(lmarks.attrs, j->first)));
+              else
+                safe_insert(marks.attrs[j->first], new_rid);
+            }
 
           // Otherwise both sides have seen this attr, and we need to look at
           // both old values.
@@ -908,16 +929,15 @@ namespace
                left_uncommon_ancestors, right_uncommon_ancestors,
                new_rid, n->attrs, marks);
   }
-
-
 }
+
+
 
 /// Remainder is not yet compiling, so commented out
 /*
 
 namespace 
 {
-             
   // this function is also responsible for verifying ancestry invariants --
   // those invariants on a roster that involve the structure of the roster's
   // parents, rather than just the structure of the roster itself.
@@ -927,7 +947,9 @@ namespace
                     marking_map const & right_marking,
                     set<revision_id> const & left_uncommon_ancestors,
                     set<revision_id> const & right_uncommon_ancestors,
-                    roster_t const & merge, marking_map & marking)
+                    revision_id const & new_rid,
+                    roster_t const & merge, 
+                    marking_map & marking)
   {
     for (map<node_id, node_t>::const_iterator i = merge.all_nodes().begin();
          i != merge.all_nodes().end(); ++i)
@@ -939,8 +961,8 @@ namespace
         map<node_id, node_t>::const_iterator rni = right_r.all_nodes().find(i->first);
         marking_map::const_iterator lmi = left_marking.find(i->first);
         marking_map::const_iterator rmi = right_marking.find(i->first);
-        bool exists_in_left = (lni != left_r.all_nodes.end());
-        bool exists_in_right = (rni != right_r.all_nodes.end());
+        bool exists_in_left = (lni != left_r.all_nodes().end());
+        bool exists_in_right = (rni != right_r.all_nodes().end());
         if (!exists_in_left && !exists_in_right)
           {
             marking.insert(make_pair(i->first, marking_t(new_rid)));
@@ -985,7 +1007,7 @@ namespace
               I(n.attrs.find(j->first) != n.attrs.end());
           }
       }
-  }
+  }             
 }
 
 void
