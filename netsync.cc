@@ -3835,8 +3835,8 @@ ancestry_fetcher::request_rev_file_deltas(file_id const & start,
                   L(F("file %s exists, not requesting rev delta")
                     % parent);
                 }
+              frontier.push(parent);
             }
-          frontier.push(parent);
         }
     }
 }
@@ -3917,8 +3917,8 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start,
                   L(F("manifest %s exists, not requesting rev delta")
                     % parent);
                 }
+              frontier.push(parent);
             }
-          frontier.push(parent);
         }
     }
 }
