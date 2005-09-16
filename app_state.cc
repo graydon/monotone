@@ -123,6 +123,7 @@ app_state::set_restriction(path_set const & valid_paths,
 {
   static file_path root = file_path_internal("");
   restrictions.clear();
+  excludes.clear();
   for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       file_path p = file_path_external(*i);
@@ -140,6 +141,24 @@ app_state::set_restriction(path_set const & valid_paths,
       restrictions.insert(p);
     }
 
+  for (std::set<utf8>::const_iterator i = exclude_patterns.begin();
+       i != exclude_patterns.end(); ++i)
+    {
+      file_path p = file_path_external(*i);
+
+      if (respect_ignore && lua.hook_ignore_file(p)) 
+        {
+          L(F("'%s' ignored by excluded path set\n") % p);
+          continue;
+        }
+
+      N(p == root || valid_paths.find(p) != valid_paths.end(),
+        F("unknown path '%s'\n") % p);
+
+      L(F("'%s' added to excluded path set\n") % p);
+      excludes.insert(p);
+    }
+
   // if user supplied a depth but provided no paths 
   // assume current directory
   if ((depth != -1) && restrictions.empty()) 
@@ -152,22 +171,36 @@ bool
 app_state::restriction_includes(file_path const & path)
 {
   static file_path root = file_path_internal("");
-  if (restrictions.empty()) 
+
+  if (restrictions.empty())
     {
+      if (!excludes.empty())
+        {
+          if (excludes.find(root) != excludes.end())
+            return false;
+          fs::path test = fs::path(path.as_external(), fs::native);
+
+          while (!test.empty()) 
+            {
+              L(F("checking excluded path set for '%s'\n") % test.string());
+
+              file_path p = file_path_internal(test.string());
+              path_set::const_iterator i = excludes.find(p);
+
+              if (i != excludes.end()) 
+                {
+                  L(F("path '%s' found in excluded path set; '%s' excluded\n") 
+                    % test.string() % path);
+                  return false;
+                }
+
+              test = test.branch_path();
+            }
+        }
       return true;
     }
 
   bool user_supplied_depth = (depth != -1);
-
-  // a path that normalizes to "." means that the restriction has been
-  // essentially cleared (all files are included). rather than be
-  // careful about what goes in to the restricted path set we just
-  // check for this special case here.
-
-  if ((!user_supplied_depth) && restrictions.find(root) != restrictions.end())
-    {
-      return true;
-    }
 
   fs::path test = fs::path(path.as_external(), fs::native);
   long branch_depth = 0;
@@ -179,6 +212,7 @@ app_state::restriction_includes(file_path const & path)
 
       file_path p = file_path_internal(test.string());
       path_set::const_iterator i = restrictions.find(p);
+      path_set::const_iterator j = excludes.find(p);
 
       if (i != restrictions.end()) 
         {
@@ -186,10 +220,11 @@ app_state::restriction_includes(file_path const & path)
             % test.string() % path);
           return true;
         }
-      else
+      else if (j != excludes.end())
         {
-          L(F("path '%s' not found in restricted path set; '%s' excluded\n") 
+          L(F("path '%s' found in excluded path set; '%s' excluded\n") 
             % test.string() % path);
+          return false;
         }
 
       if (user_supplied_depth && (max_depth == branch_depth)) return false;
@@ -197,9 +232,13 @@ app_state::restriction_includes(file_path const & path)
       ++branch_depth;
     }
 
-  if (user_supplied_depth && (restrictions.find(root) != restrictions.end()))
+  // a path that normalizes to "." means that the restriction has been
+  // essentially cleared (all files are included). rather than be
+  // careful about what goes in to the restricted path set we just
+  // check for this special case here.
+  if (restrictions.find(root) != restrictions.end())
     {
-      return (branch_depth <= max_depth);
+      return (!user_supplied_depth) || (branch_depth <= max_depth);
     }
 
   return false;

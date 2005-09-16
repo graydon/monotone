@@ -50,6 +50,7 @@ public:
   std::set<utf8> exclude_patterns;
   std::vector<utf8> extra_rcfiles;
   path_set restrictions;
+  path_set excludes;
   bool found_working_copy;
   long depth;
   long last;

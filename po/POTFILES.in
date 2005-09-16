@@ -13,6 +13,7 @@ commands.hh
 constants.cc
 constants.hh
 cycle_detector.hh
+database_check.cc
 database.cc
 database.hh
 diff_patch.cc

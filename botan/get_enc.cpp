@@ -1,6 +1,6 @@
 /*************************************************
 * EMSA/EME/KDF/MGF Retrieval Source File         *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/lookup.h>
@@ -88,22 +88,7 @@ KDF* get_kdf(const std::string& algo_spec)
    std::vector<std::string> name = parse_algorithm_name(algo_spec);
    const std::string kdf_name = deref_alias(name[0]);
 
-   if(kdf_name == "TLS-PRF")
-      {
-      if(name.size() == 1)
-         return new TLS_PRF;
-      }
-   else if(kdf_name == "SSL3-PRF")
-      {
-      if(name.size() == 1)
-         return new SSL3_PRF;
-      }
-   else if(kdf_name == "X9.42-PRF")
-      {
-      if(name.size() == 2)
-         return new X942_PRF(name[1]);
-      }
-   else if(kdf_name == "KDF1")
+   if(kdf_name == "KDF1")
       {
       if(name.size() == 2)
          return new KDF1(name[1]);
@@ -112,6 +97,11 @@ KDF* get_kdf(const std::string& algo_spec)
       {
       if(name.size() == 2)
          return new KDF2(name[1]);
+      }
+   else if(kdf_name == "X9.42-PRF")
+      {
+      if(name.size() == 2)
+         return new X942_PRF(name[1]);
       }
    else
       throw Algorithm_Not_Found(algo_spec);

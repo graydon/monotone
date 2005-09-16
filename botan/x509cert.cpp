@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificates Source File                 *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/x509cert.h>
@@ -43,6 +43,12 @@ void load_info(std::multimap<std::string, std::string>& names,
 
    for(rdn_iter j = attr.begin(); j != attr.end(); j++)
       multimap_insert(names, j->first, j->second);
+
+   typedef std::multimap<OID, ASN1_String>::const_iterator on_iter;
+   std::multimap<OID, ASN1_String> othernames = alt_info.get_othernames();
+   for(on_iter j = othernames.begin(); j != othernames.end(); j++)
+      multimap_insert(names, OIDS::lookup(j->first), j->second.value());
+
    }
 
 /*************************************************
@@ -56,9 +62,16 @@ std::string get_info(const std::multimap<std::string, std::string>& names,
    const std::string what = X509_DN::deref_info_field(info);
    std::pair<rdn_iter, rdn_iter> range = names.equal_range(what);
 
-   std::string value;
+   std::vector<std::string> results;
    for(rdn_iter j = range.first; j != range.second; j++)
-      value += j->second + '/';
+      {
+      if(std::find(results.begin(), results.end(), j->second) == results.end())
+         results.push_back(j->second);
+      }
+
+   std::string value;
+   for(u32bit j = 0; j != results.size(); j++)
+      value += results[j] + '/';
    if(value.size())
       value.erase(value.size() - 1, 1);
    return value;

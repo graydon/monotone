@@ -1,6 +1,6 @@
 /*************************************************
 * Simple ASN.1 String Types Source File          *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1_obj.h>
@@ -51,6 +51,18 @@ ASN1_Tag choose_encoding(const std::string& str)
    }
 
 }
+
+/*************************************************
+* Check if type is a known ASN.1 string type     *
+*************************************************/
+bool is_string_type(ASN1_Tag tag)
+   {
+   if(tag == NUMERIC_STRING || tag == PRINTABLE_STRING ||
+      tag == VISIBLE_STRING || tag == T61_STRING || tag == IA5_STRING ||
+      tag == UTF8_STRING || tag == BMP_STRING)
+      return true;
+   return false;
+   }
 
 /*************************************************
 * Create an ASN1_String                          *

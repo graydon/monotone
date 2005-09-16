@@ -1255,8 +1255,8 @@ import_cvs_repo(system_path const & cvsroot,
 
   I(cvs.stk.size() == 1);
 
-  ticker n_revs("revisions", "r", 1);
-  ticker n_manifests("manifests", "m", 1);
+  ticker n_revs(_("revisions"), "r", 1);
+  ticker n_manifests(_("manifests"), "m", 1);
 
   while (cvs.branches.size() > 0)
     {
@@ -1281,7 +1281,7 @@ import_cvs_repo(system_path const & cvsroot,
 
   // now we have a "last" rev for each tag
   {
-    ticker n_tags("tags", "t", 1);
+    ticker n_tags(_("tags"), "t", 1);
     packet_db_writer dbw(app);
     transaction_guard guard(app.db);
     for (map<unsigned long, pair<time_t, revision_id> >::const_iterator i = cvs.resolved_tags.begin();

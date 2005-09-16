@@ -1,6 +1,6 @@
 /*************************************************
 * Parsing Functions Source File                  *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/exceptn.h>
@@ -216,6 +216,34 @@ std::string iso2utf(const std::string& iso8859)
          }
       }
    return utf8;
+   }
+
+/*************************************************
+* Parse and compute an arithmetic expression     *
+*************************************************/
+u32bit parse_expr(const std::string& expr)
+   {
+   const bool have_add = (expr.find('+') != std::string::npos);
+   const bool have_mul = (expr.find('*') != std::string::npos);
+
+   if(have_add)
+      {
+      std::vector<std::string> sub_expr = split_on(expr, '+');
+      u32bit result = 0;
+      for(u32bit j = 0; j != sub_expr.size(); j++)
+         result += parse_expr(sub_expr[j]);
+      return result;
+      }
+   else if(have_mul)
+      {
+      std::vector<std::string> sub_expr = split_on(expr, '*');
+      u32bit result = 1;
+      for(u32bit j = 0; j != sub_expr.size(); j++)
+         result *= parse_expr(sub_expr[j]);
+      return result;
+      }
+   else
+      return to_u32bit(expr);
    }
 
 }

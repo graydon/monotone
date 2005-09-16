@@ -1,6 +1,6 @@
 /*************************************************
 * Common ASN.1 Objects Header File               *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_ASN1_OBJ_H__
@@ -131,12 +131,16 @@ class AlternativeName
       void add_attribute(const std::string&, const std::string&);
       std::multimap<std::string, std::string> get_attributes() const;
 
+      void add_othername(const OID&, const std::string&, ASN1_Tag);
+      std::multimap<OID, ASN1_String> get_othernames() const;
+
       bool has_items() const;
 
       AlternativeName(const std::string& = "", const std::string& = "",
                       const std::string& = "");
    private:
       std::multimap<std::string, std::string> alt_info;
+      std::multimap<OID, ASN1_String> othernames;
    };
 
 /*************************************************
@@ -155,6 +159,8 @@ bool operator!=(const X509_DN&, const X509_DN&);
 bool operator<(const X509_DN&, const X509_DN&);
 
 s32bit validity_check(const X509_Time&, const X509_Time&, u64bit);
+
+bool is_string_type(ASN1_Tag);
 
 /*************************************************
 * DER Encoding Functions                         *

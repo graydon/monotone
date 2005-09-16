@@ -1,6 +1,6 @@
 /*************************************************
 * Discrete Logarithm Parameters Source File      *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/dl_param.h>
@@ -50,17 +50,7 @@ DL_Group::DL_Group(u32bit pbits, PrimeType type)
       else
          generate_dsa_primes(p, q, pbits);
 
-      BigInt e = (p - 1) / q;
-
-      for(u32bit j = 0; j != PRIME_TABLE_SIZE; j++)
-         {
-         g = power_mod(PRIMES[j], e, p);
-         if(g != 1)
-            break;
-         }
-
-      if(g == 1)
-         throw Exception("DL_Group: Couldn't create a suitable generator");
+      g = make_dsa_generator(p, q);
       }
 
    initialized = true;
@@ -75,17 +65,7 @@ DL_Group::DL_Group(const MemoryRegion<byte>& seed, u32bit pbits, u32bit start)
       throw Invalid_Argument("DL_Group: The seed/counter given does not "
                              "generate a DSA group");
 
-   BigInt e = (p - 1) / q;
-
-   for(u32bit j = 0; j != PRIME_TABLE_SIZE; j++)
-      {
-      g = power_mod(PRIMES[j], e, p);
-      if(g != 1)
-         break;
-      }
-
-   if(g == 1)
-      throw Exception("DL_Group: Couldn't create a suitable generator");
+   g = make_dsa_generator(p, q);
 
    initialized = true;
    }
@@ -291,6 +271,26 @@ void DL_Group::PEM_decode(DataSource& source)
       BER_decode(ber, ANSI_X9_42);
    else
       throw Decoding_Error("DL_Group: Invalid PEM label " + label);
+   }
+
+/*************************************************
+* Create a random DSA-style generator            *
+*************************************************/
+BigInt DL_Group::make_dsa_generator(const BigInt& p, const BigInt& q)
+   {
+   BigInt g, e = (p - 1) / q;
+
+   for(u32bit j = 0; j != PRIME_TABLE_SIZE; j++)
+      {
+      g = power_mod(PRIMES[j], e, p);
+      if(g != 1)
+         break;
+      }
+
+   if(g == 1)
+      throw Exception("DL_Group: Couldn't create a suitable generator");
+
+   return g;
    }
 
 }

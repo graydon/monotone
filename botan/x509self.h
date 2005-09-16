@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Self-Signed Certificate Header File      *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_X509_SELF_H__
@@ -26,9 +26,7 @@ class X509_Cert_Options
       std::string state;
       std::string serial_number;
 
-      std::string email;
-      std::string uri;
-      std::string dns;
+      std::string email, uri, dns, xmpp;
 
       std::string challenge;
 

@@ -108,7 +108,7 @@ check_files(app_state & app, std::map<file_id, checked_file> & checked_files)
   app.db.get_file_ids(files);
   L(F("checking %d files\n") % files.size());
 
-  ticker ticks("files", "f", files.size()/70+1);
+  ticker ticks(_("files"), "f", files.size()/70+1);
 
   for (std::set<file_id>::const_iterator i = files.begin();
        i != files.end(); ++i) 
@@ -133,7 +133,7 @@ check_manifests(app_state & app,
   app.db.get_manifest_ids(manifests);
   L(F("checking %d manifests\n") % manifests.size());
 
-  ticker ticks("manifests", "m", manifests.size()/70+1);
+  ticker ticks(_("manifests"), "m", manifests.size()/70+1);
 
   for (std::set<manifest_id>::const_iterator i = manifests.begin();
        i != manifests.end(); ++i) 
@@ -189,7 +189,7 @@ check_revisions(app_state & app,
   app.db.get_revision_ids(revisions);
   L(F("checking %d revisions\n") % revisions.size());
 
-  ticker ticks("revisions", "r", revisions.size()/70+1);
+  ticker ticks(_("revisions"), "r", revisions.size()/70+1);
 
   for (std::set<revision_id>::const_iterator i = revisions.begin();
        i != revisions.end(); ++i) 
@@ -288,7 +288,7 @@ check_ancestry(app_state & app,
   app.db.get_revision_ancestry(graph);
   L(F("checking %d ancestry edges\n") % graph.size());
 
-  ticker ticks("ancestry", "a", graph.size()/70+1);
+  ticker ticks(_("ancestry"), "a", graph.size()/70+1);
 
   // checked revision has set of parents
   // graph has revision and associated parents
@@ -321,7 +321,7 @@ check_keys(app_state & app,
 
   L(F("checking %d public keys\n") % pubkeys.size());
 
-  ticker ticks("keys", "k", 1);
+  ticker ticks(_("keys"), "k", 1);
 
   for (std::vector<rsa_keypair_id>::const_iterator i = pubkeys.begin();
        i != pubkeys.end(); ++i)
@@ -347,7 +347,7 @@ check_certs(app_state & app,
 
   L(F("checking %d revision certs\n") % certs.size());
 
-  ticker ticks("certs", "c", certs.size()/70+1);
+  ticker ticks(_("certs"), "c", certs.size()/70+1);
 
   for (std::vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
@@ -377,7 +377,7 @@ check_sane(app_state & app,
 {
   L(F("checking local history of %d revisions\n") % checked_revisions.size());
 
-  ticker ticks("revisions", "r", 1);
+  ticker ticks(_("revisions"), "r", 1);
 
   for (std::map<revision_id, checked_revision>::iterator 
          i = checked_revisions.begin(); i != checked_revisions.end(); ++i)

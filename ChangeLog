@@ -1,3 +1,39 @@
+2005-09-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/pkcs8.cpp: re-add the monotone-specific code for guessing if
+	a key is DER encoded or not.
+
+2005-09-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/*: update to Botan 1.4.6
+	* Makefile.am: ditto
+
+2005-09-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.{cc,hh}: restrictions now understand --exclude
+	* commands.cc: commit and revert now take OPT_EXCLUDE
+	* monotone.cc: update description of --exclude
+	* tests/t_restriction_with_exclude.at: new test
+	* testsuite.at: add it
+
+2005-09-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/ciabot_monotone_hookversion.py: CIA bot client script
+	meant to be called from the note_netsync_revision_received hook.
+	* lua.{cc,hh}: hook_note_commit and hook_note_netsync_revision_received
+	now take the text of the revision as an argument.
+	* netsync.cc, commands.cc: Give hooks new argument.
+	* monotone.texi: Update documentation for those hooks.
+
+2005-09-11  Benoît Dejean  <benoit@placenet.org>
+
+	* database.cc
+	* database_check.cc
+	* netsync.cc
+	* po/POTFILES.in
+	* po/POTFILES.skip
+	* rcs_import.cc: More i18n strings.
+
 2005-09-07  Jim Meyering  <jim@meyering.net>
 	
 	* tests/t_rename_dir_cross_level.at: When invoking mv to rename

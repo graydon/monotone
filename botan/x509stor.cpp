@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Store Source File            *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/x509stor.h>
@@ -257,8 +257,8 @@ u32bit X509_Store::find_parent_of(const X509_Certificate& cert)
 
          if(got.size() == 0) continue;
 
-         for(u32bit j = 0; j != got.size(); j++)
-            add_cert(got[j]);
+         for(u32bit k = 0; k != got.size(); k++)
+            add_cert(got[k]);
          return find_cert(issuer_dn, auth_key_id);
          }
       }

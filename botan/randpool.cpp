@@ -1,6 +1,6 @@
 /*************************************************
 * Randpool Source File                           *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/randpool.h>
@@ -89,7 +89,7 @@ void Randpool::add_randomness(const byte data[], u32bit length) throw()
       length -= added;
       data += added;
       }
-   generate(system_clock());
+   generate(system_time());
    mix_pool();
    }
 

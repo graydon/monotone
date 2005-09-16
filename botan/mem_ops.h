@@ -1,6 +1,6 @@
 /*************************************************
 * Memory Operations Header File                  *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_MEMORY_OPS_H__
@@ -15,7 +15,7 @@ namespace Botan {
 * Memory Manipulation Functions                  *
 *************************************************/
 template<typename T> inline void copy_mem(T* out, const T* in, u32bit n)
-   { std::memmove(out, in, sizeof(T)*n); }
+   { if(n) std::memmove(out, in, sizeof(T)*n); }
 
 template<typename T> inline void clear_mem(T* ptr, u32bit n)
    { std::memset(ptr, 0, sizeof(T)*n); }

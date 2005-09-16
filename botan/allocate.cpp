@@ -1,6 +1,6 @@
 /*************************************************
 * Allocator Factory Source File                  *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/allocate.h>
@@ -25,12 +25,12 @@ class AllocatorFactory
       void add(const std::string&, Allocator*);
       std::string set_default_allocator(const std::string&);
 
-      AllocatorFactory() { factory_lock = get_mutex(); }
+      AllocatorFactory() { factory_mutex = get_mutex(); }
       ~AllocatorFactory();
    private:
-      std::map<std::string, Allocator*> alloc;
+      std::map<std::string, Allocator*> alloc_map;
       std::string default_allocator;
-      Mutex* factory_lock;
+      Mutex* factory_mutex;
    };
 
 /*************************************************
@@ -38,13 +38,13 @@ class AllocatorFactory
 *************************************************/
 Allocator* AllocatorFactory::get(const std::string& type) const
    {
-   Mutex_Holder lock(factory_lock);
+   Mutex_Holder lock(factory_mutex);
 
    std::map<std::string, Allocator*>::const_iterator iter;
-   if(type == "default") iter = alloc.find(default_allocator);
-   else                  iter = alloc.find(type);
+   if(type == "default") iter = alloc_map.find(default_allocator);
+   else                  iter = alloc_map.find(type);
 
-   if(iter == alloc.end())
+   if(iter == alloc_map.end())
       return 0;
    return iter->second;
    }
@@ -54,12 +54,12 @@ Allocator* AllocatorFactory::get(const std::string& type) const
 *************************************************/
 Allocator* AllocatorFactory::get_default() const
    {
-   Mutex_Holder lock(factory_lock);
+   Mutex_Holder lock(factory_mutex);
 
    std::map<std::string, Allocator*>::const_iterator iter;
-   iter = alloc.find(default_allocator);
+   iter = alloc_map.find(default_allocator);
 
-   if(iter == alloc.end())
+   if(iter == alloc_map.end())
       return 0;
    return iter->second;
    }
@@ -69,9 +69,9 @@ Allocator* AllocatorFactory::get_default() const
 *************************************************/
 void AllocatorFactory::add(const std::string& type, Allocator* allocator)
    {
-   Mutex_Holder lock(factory_lock);
+   Mutex_Holder lock(factory_mutex);
    allocator->init();
-   alloc[type] = allocator;
+   alloc_map[type] = allocator;
    }
 
 /*************************************************
@@ -79,7 +79,7 @@ void AllocatorFactory::add(const std::string& type, Allocator* allocator)
 *************************************************/
 std::string AllocatorFactory::set_default_allocator(const std::string& alloc)
    {
-   Mutex_Holder lock(factory_lock);
+   Mutex_Holder lock(factory_mutex);
 
    std::string old_default = default_allocator;
    default_allocator = alloc;
@@ -92,12 +92,12 @@ std::string AllocatorFactory::set_default_allocator(const std::string& alloc)
 AllocatorFactory::~AllocatorFactory()
    {
    std::map<std::string, Allocator*>::iterator iter;
-   for(iter = alloc.begin(); iter != alloc.end(); iter++)
+   for(iter = alloc_map.begin(); iter != alloc_map.end(); iter++)
       {
       iter->second->destroy();
       delete iter->second;
       }
-   delete factory_lock;
+   delete factory_mutex;
    }
 
 /*************************************************

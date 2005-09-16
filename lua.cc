@@ -1298,12 +1298,14 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
 
 bool 
 lua_hooks::hook_note_commit(revision_id const & new_id,
+                            revision_data const & rdat,
                             map<cert_name, cert_value> const & certs)
 {
   Lua ll(st);
   ll
     .func("note_commit")
-    .push_str(new_id.inner()());
+    .push_str(new_id.inner()())
+    .push_str(rdat.inner()());
 
   ll.push_table();
 
@@ -1315,12 +1317,13 @@ lua_hooks::hook_note_commit(revision_id const & new_id,
       ll.set_table();
     }
   
-  ll.call(2, 0);
+  ll.call(3, 0);
   return ll.ok();
 }
 
 bool 
 lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
+                                               revision_data const & rdat,
                             set<pair<rsa_keypair_id,
                                      pair<cert_name,
                                           cert_value> > > const & certs)
@@ -1328,7 +1331,8 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
   Lua ll(st);
   ll
     .func("note_netsync_revision_received")
-    .push_str(new_id.inner()());
+    .push_str(new_id.inner()())
+    .push_str(rdat.inner()());
 
   ll.push_table();
   
@@ -1351,7 +1355,7 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
       ll.set_table();
     }
 
-  ll.call(2, 0);
+  ll.call(3, 0);
   return ll.ok();
 }
 

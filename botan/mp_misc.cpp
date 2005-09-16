@@ -1,6 +1,6 @@
 /*************************************************
 * MP Misc Functions Source File                  *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/mp_core.h>
@@ -105,7 +105,7 @@ void bigint_wordmul(word a, word b, word* out_low, word* out_high)
    x2 += x3 >> (MP_HWORD_BITS);
    x2 += x1;
    if(x2 < x1)
-      x0 += (1 << MP_HWORD_BITS);
+      x0 += ((word)1 << MP_HWORD_BITS);
 
    *out_high = x0 + (x2 >> MP_HWORD_BITS);
    *out_low = ((x2 & MP_HWORD_MASK) << MP_HWORD_BITS) + (x3 & MP_HWORD_MASK);

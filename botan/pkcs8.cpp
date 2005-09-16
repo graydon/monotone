@@ -1,6 +1,6 @@
 /*************************************************
 * PKCS #8 Source File                            *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/pkcs8.h>
@@ -18,6 +18,7 @@ namespace PKCS8 {
 
 namespace {
 
+/* XXX this is monotone specific XXX */
 /*************************************************
 * Get info from an RAW_BER pkcs8 key.            *
 * Whether it is encrypted will be determined,    *
