@@ -1,3 +1,12 @@
+2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netcmd.{cc,hh}, netsync.cc: new netcmd types: usher_cmd and
+	usher_reply_cmd. They are not included in the HMAC, and do not
+	occur during normal communication. Purpose: running multiple servers
+	from the same port. This allows a special server to ask for the
+	client's include pattern, and then forward the connection to a real
+	monotone server.
+
 2005-09-15  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* app_state.{cc,hh}: restrictions now understand --exclude

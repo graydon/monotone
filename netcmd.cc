@@ -62,7 +62,8 @@ netcmd::operator==(netcmd const & other) const
     cmd_code == other.cmd_code &&
     payload == other.payload;
 }
-  
+
+// note: usher_reply_cmd does not get included in the hmac.
 void 
 netcmd::write(string & out, chained_hmac & hmac) const
 {
@@ -71,11 +72,15 @@ netcmd::write(string & out, chained_hmac & hmac) const
   out += static_cast<char>(cmd_code);
   insert_variable_length_string(payload, out);
 
-  string digest = hmac.process(out, oldlen);
-  I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
-  out.append(digest);
+  if (cmd_code != usher_reply_cmd)
+    {
+      string digest = hmac.process(out, oldlen);
+      I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
+      out.append(digest);
+    }
 }
 
+// note: usher_cmd does not get included in the hmac.
 bool 
 netcmd::read(string_queue & inbuf, chained_hmac & hmac)
 {
@@ -107,6 +112,7 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
     case static_cast<u8>(data_cmd):
     case static_cast<u8>(delta_cmd):
     case static_cast<u8>(nonexistant_cmd):
+    case static_cast<u8>(usher_cmd):
       cmd_code = static_cast<netcmd_code>(cmd_byte);
       break;
     default:
@@ -124,21 +130,30 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
     throw bad_decode(F("oversized payload of '%d' bytes") % payload_len);
   
   // there might not be enough data yet in the input buffer
-  if (inbuf.size() < pos + payload_len + constants::netsync_hmac_value_length_in_bytes)
+  unsigned int minsize;
+  if (cmd_code == usher_cmd)
+    minsize = pos + payload_len;
+  else
+    minsize = pos + payload_len + constants::netsync_hmac_value_length_in_bytes;
+  if (inbuf.size() < minsize)
     {
       return false;
     }
 
   // grab it before the data gets munged
   I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
-  string digest = hmac.process(inbuf, 0, pos + payload_len);
+  string digest;
+  if (cmd_code != usher_cmd)
+    digest = hmac.process(inbuf, 0, pos + payload_len);
 
   payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
 
   // they might have given us bogus data
-  string cmd_digest = extract_substring(inbuf, pos, 
-      constants::netsync_hmac_value_length_in_bytes,
-                                        "netcmd HMAC");
+  string cmd_digest;
+  if (cmd_code != usher_cmd)
+    cmd_digest = extract_substring(inbuf, pos, 
+        constants::netsync_hmac_value_length_in_bytes,
+                                          "netcmd HMAC");
   inbuf.pop_front(pos);
   if (cmd_digest != digest)
     throw bad_decode(F("bad HMAC checksum (got %s, wanted %s)\n"
@@ -542,6 +557,24 @@ netcmd::write_nonexistant_cmd(netcmd_item_type type, id const & item)
   I(item().size() == constants::merkle_hash_length_in_bytes);
   payload = static_cast<char>(type);
   payload += item();
+}
+
+void 
+netcmd::read_usher_cmd(utf8 & greeting) const
+{
+  size_t pos = 0;
+  std::string str;
+  extract_variable_length_string(payload, str, pos, "error netcmd, message");
+  greeting = utf8(str);
+  assert_end_of_buffer(payload, pos, "error netcmd payload");
+}
+
+void 
+netcmd::write_usher_reply_cmd(utf8 const & pattern)
+{
+  cmd_code = usher_reply_cmd;
+  payload.clear();
+  insert_variable_length_string(pattern(), payload);
 }
 
 
