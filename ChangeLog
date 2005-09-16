@@ -1,5 +1,11 @@
 2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* Makefile.am (EXTRA_DIST): add contrib/monotone-cvs-ignore.lua,
+	contrib/ciabot_monotone_hookversion.py, and contrib/usher.cc .
+	also remove duplicate of contrib/monoprof.sh
+
+2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* netsync.cc: finish renaming things, so it compiles again...
 
 2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>

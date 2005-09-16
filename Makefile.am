@@ -344,12 +344,14 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/monotone-nav.el \
              contrib/monotone.bash_completion \
              contrib/monotone.zsh_completion \
-             contrib/monoprof.sh \
              contrib/mtbrowse.sh \
              contrib/colorize \
              contrib/color-logs.sh \
              contrib/color-logs.conf \
              contrib/get_stdio.pl \
+             contrib/ciabot_monotone_hookversion.py \
+             contrib/monotone-cvs-ignore.lua \
+             contrib/usher.cc \
              win32/monotone.iss \
              $(wildcard $(srcdir)/debian/*)
 
