@@ -44,7 +44,16 @@ typedef enum
     send_delta_cmd = 9,
     data_cmd = 10,
     delta_cmd = 11,
-    nonexistant_cmd = 12
+    nonexistant_cmd = 12,
+
+    // usher commands
+    // usher_cmd is sent by a server farm (or anyone else who wants to serve
+    // from multiple databases over the same port), and the reply (containing
+    // the client's include pattern) is used to choose a server to forward the
+    // connection to.
+    // usher_cmd is never sent by the monotone server itself.
+    usher_cmd = 100,
+    usher_reply_cmd = 101
   }
 netcmd_code;
 
@@ -157,6 +166,9 @@ public:
                             id & item) const;
   void write_nonexistant_cmd(netcmd_item_type type,
                              id const & item);
+
+  void read_usher_cmd(utf8 & greeting) const;
+  void write_usher_reply_cmd(utf8 const & pattern);
 
 };
 

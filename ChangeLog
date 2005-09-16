@@ -1,3 +1,24 @@
+2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc: finish renaming things, so it compiles again...
+
+2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: A simple usher/proxy server. It asks connecting
+	clients for their include pattern, and then forwards the connection
+	to an appropriate (as given in a config file) monotone server. Note
+	that all servers operating behind one usher need to have the same
+	server key.
+
+2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netcmd.{cc,hh}, netsync.cc: new netcmd types: usher_cmd and
+	usher_reply_cmd. They are not included in the HMAC, and do not
+	occur during normal communication. Purpose: running multiple servers
+	from the same port. This allows a special server to ask for the
+	client's include pattern, and then forward the connection to a real
+	monotone server.
+
 2005-09-16  Matt Johnston  <matt@ucc.asn.au>
 
 	* botan/pkcs8.cpp: re-add the monotone-specific code for guessing if

@@ -442,6 +442,7 @@ session
                          delta const & del);
   bool process_nonexistant_cmd(netcmd_item_type type,
                                id const & item);
+  bool process_usher_cmd(utf8 const & msg);
 
   bool merkle_node_exists(netcmd_item_type type,
                           size_t level,
@@ -2976,6 +2977,23 @@ session::process_nonexistant_cmd(netcmd_item_type type,
 }
 
 bool
+session::process_usher_cmd(utf8 const & msg)
+{
+  if (msg().size())
+    {
+      if (msg()[0] == '!')
+        P(F("Received warning from usher: %s") % msg().substr(1));
+      else
+        L(F("Received greeting from usher: %s") % msg().substr(1));
+    }
+  netcmd cmdout;
+  cmdout.write_usher_reply_cmd(our_include_pattern);
+  write_netcmd_and_try_flush(cmdout);
+  L(F("Sent reply."));
+  return true;
+}
+
+bool
 session::merkle_node_exists(netcmd_item_type type,
                             size_t level,
                             prefix const & pref)
@@ -3192,6 +3210,16 @@ session::dispatch_payload(netcmd const & cmd)
         cmd.read_nonexistant_cmd(type, item);
         return process_nonexistant_cmd(type, item);
       }
+      break;
+    case usher_cmd:
+      {
+        utf8 greeting;
+        cmd.read_usher_cmd(greeting);
+        return process_usher_cmd(greeting);
+      }
+      break;
+    case usher_reply_cmd:
+      return false;// should not happen
       break;
     }
   return false;
