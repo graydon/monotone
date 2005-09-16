@@ -1,6 +1,6 @@
 /*************************************************
 * Discrete Logarithm Group Header File           *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_DL_PARM_H__
@@ -30,6 +30,8 @@ class DL_Group
       SecureVector<byte> DER_encode(Format) const;
       void BER_decode(DataSource&, Format);
       void PEM_decode(DataSource&);
+
+      static BigInt make_dsa_generator(const BigInt&, const BigInt&);
 
       DL_Group();
       DL_Group(u32bit, PrimeType = Strong);

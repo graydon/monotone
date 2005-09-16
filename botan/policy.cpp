@@ -1,6 +1,6 @@
 /*************************************************
 * Default Policy Source File                     *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/look_add.h>
@@ -127,6 +127,8 @@ void add_default_oids()
    add_oid("1.3.6.1.5.5.7.3.7", "PKIX.IPsecUser");
    add_oid("1.3.6.1.5.5.7.3.8", "PKIX.TimeStamping");
    add_oid("1.3.6.1.5.5.7.3.9", "PKIX.OCSPSigning");
+
+   add_oid("1.3.6.1.5.5.7.8.5", "PKIX.XMPPAddr");
    }
 
 /*************************************************
@@ -152,7 +154,7 @@ void add_default_aliases()
    add_alias("OpenPGP.Digest.7", "HAVAL(20,5)");
    add_alias("OpenPGP.Digest.8", "SHA-256");
 
-   add_alias("TLS.Digest.0",     "Parallel(MD5,SHA-1)");
+   add_alias("TLS.Digest.0",     "Parallel(MD5,SHA-160)");
 
    add_alias("EME-PKCS1-v1_5",  "PKCS1v15");
    add_alias("OAEP-MGF1",       "EME1");

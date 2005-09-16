@@ -83,6 +83,7 @@ BOTAN_SOURCES =                                                                 
         botan/def_ops.cpp botan/defalloc.cpp botan/der_code.cpp		\
         botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp		\
         botan/dl_get.cpp botan/dl_group.cpp botan/dl_param.cpp		\
+        botan/dl_cache.cpp \
         botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp	\
         botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp		\
         botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp		\
@@ -104,7 +105,7 @@ BOTAN_SOURCES =                                                                 
         botan/pipe_rw.cpp botan/pk_algs.cpp botan/pk_core.cpp		\
         botan/pk_filts.cpp botan/pk_keys.cpp botan/pk_util.cpp		\
         botan/pkcs10.cpp botan/pkcs8.cpp botan/policy.cpp		\
-        botan/pow_mod.cpp botan/prf_ssl3.cpp botan/prf_tls.cpp		\
+        botan/pow_mod.cpp \
         botan/prf_x942.cpp botan/primes.cpp botan/pubkey.cpp		\
         botan/randpool.cpp botan/reducer.cpp botan/rng.cpp		\
         botan/rsa.cpp botan/s2k.cpp botan/secqueue.cpp			\

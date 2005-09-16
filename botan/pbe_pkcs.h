@@ -1,6 +1,6 @@
 /*************************************************
 * PKCS PBE Header File                           *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_PBE_PKCS_H__
@@ -53,6 +53,8 @@ class PBE_PKCS5v20 : public PBE
       void decode_params(DataSource&);
       OID get_oid() const;
       void flush_pipe(bool);
+      bool known_cipher(const std::string&) const;
+
       const Cipher_Dir direction;
       std::string digest, cipher, cipher_algo;
       SecureVector<byte> salt, key, iv;

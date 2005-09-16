@@ -1,6 +1,6 @@
 /*************************************************
 * AlternativeName Source File                    *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1_obj.h>
@@ -38,6 +38,17 @@ void AlternativeName::add_attribute(const std::string& type,
    }
 
 /*************************************************
+* Add an OtherName field                         *
+*************************************************/
+void AlternativeName::add_othername(const OID& oid, const std::string& value,
+                                    ASN1_Tag type)
+   {
+   if(value == "")
+      return;
+   multimap_insert(othernames, oid, ASN1_String(value, type));
+   }
+
+/*************************************************
 * Get the attributes of this alternative name    *
 *************************************************/
 std::multimap<std::string, std::string> AlternativeName::get_attributes() const
@@ -46,11 +57,19 @@ std::multimap<std::string, std::string> AlternativeName::get_attributes() const
    }
 
 /*************************************************
+* Get the otherNames                             *
+*************************************************/
+std::multimap<OID, ASN1_String> AlternativeName::get_othernames() const
+   {
+   return othernames;
+   }
+
+/*************************************************
 * Return if this object has anything useful      *
 *************************************************/
 bool AlternativeName::has_items() const
    {
-   return (alt_info.size() > 0);
+   return (alt_info.size() > 0 || othernames.size() > 0);
    }
 
 namespace DER {
@@ -78,9 +97,24 @@ void encode_entries(DER_Encoder& encoder, const AlternativeName& alt_name,
 void encode(DER_Encoder& encoder, const AlternativeName& alt_name)
    {
    encoder.start_sequence();
+
    encode_entries(encoder, alt_name, "RFC822", ASN1_Tag(1));
    encode_entries(encoder, alt_name, "DNS", ASN1_Tag(2));
    encode_entries(encoder, alt_name, "URI", ASN1_Tag(6));
+
+   std::multimap<OID, ASN1_String> othernames = alt_name.get_othernames();
+
+   std::multimap<OID, ASN1_String>::const_iterator i;
+   for(i = othernames.begin(); i != othernames.end(); i++)
+      {
+      encoder.start_explicit(ASN1_Tag(0));
+      DER::encode(encoder, i->first);
+         encoder.start_explicit(ASN1_Tag(0));
+            DER::encode(encoder, i->second);
+         encoder.end_explicit(ASN1_Tag(0));
+      encoder.end_explicit(ASN1_Tag(0));
+      }
+
    encoder.end_sequence();
    }
 
@@ -97,15 +131,49 @@ void decode(BER_Decoder& source, AlternativeName& alt_name)
    while(names.more_items())
       {
       BER_Object obj = names.get_next_object();
-      if(obj.class_tag != CONTEXT_SPECIFIC)
+      if((obj.class_tag != CONTEXT_SPECIFIC) &&
+         (obj.class_tag != (CONTEXT_SPECIFIC | CONSTRUCTED)))
          continue;
 
       ASN1_Tag tag = obj.type_tag;
-      const std::string value = iso2local(BER::to_string(obj));
 
-      if(tag == 1)      alt_name.add_attribute("RFC822", value);
-      else if(tag == 2) alt_name.add_attribute("DNS", value);
-      else if(tag == 6) alt_name.add_attribute("URI", value);
+      if(tag == 0)
+         {
+         BER_Decoder othername(obj.value);
+
+         OID oid;
+         BER::decode(othername, oid);
+         if(othername.more_items())
+            {
+            BER_Object othername_value_outer = othername.get_next_object();
+            othername.verify_end();
+
+            if(othername_value_outer.type_tag != ASN1_Tag(0) ||
+               othername_value_outer.class_tag !=
+                   (CONTEXT_SPECIFIC | CONSTRUCTED)
+               )
+               throw Decoding_Error("Invalid tags on otherName value");
+
+            BER_Decoder othername_value_inner(othername_value_outer.value);
+
+            BER_Object value = othername_value_inner.get_next_object();
+            othername_value_inner.verify_end();
+
+            ASN1_Tag value_type = value.type_tag;
+
+            if(is_string_type(value_type) && value.class_tag == UNIVERSAL)
+               alt_name.add_othername(oid, BER::to_string(value), value_type);
+            }
+         }
+      else if(tag == 1 || tag == 2 || tag == 6)
+         {
+         const std::string value = iso2local(BER::to_string(obj));
+
+         if(tag == 1) alt_name.add_attribute("RFC822", value);
+         if(tag == 2) alt_name.add_attribute("DNS", value);
+         if(tag == 6) alt_name.add_attribute("URI", value);
+         }
+
       }
    }
 

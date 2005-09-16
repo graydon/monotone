@@ -1,6 +1,6 @@
 /*************************************************
 * Filters Header File                            *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_FILTERS_H__

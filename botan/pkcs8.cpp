@@ -1,6 +1,6 @@
 /*************************************************
 * PKCS #8 Source File                            *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/pkcs8.h>
@@ -17,48 +17,6 @@ namespace Botan {
 namespace PKCS8 {
 
 namespace {
-
-/*************************************************
-* Get info from an RAW_BER pkcs8 key.            *
-* Whether it is encrypted will be determined,    *
-* returned in is_encrypted.                      *
-*************************************************/
-SecureVector<byte> PKCS8_maybe_enc_extract(DataSource& source,
-                                 AlgorithmIdentifier& alg_id,
-                                 bool& is_encrypted)
-   {
-   SecureVector<byte> enc_pkcs8_key;
-   u32bit version = 0;
-
-   is_encrypted = false;
-   try {
-      BER_Decoder decoder(source);
-      BER_Decoder sequence = BER::get_subsequence(decoder);
-
-      try {
-         BER::decode(sequence, version);
-         }
-      catch(Decoding_Error) {
-         is_encrypted = true;
-         }
-
-      BER::decode(sequence, alg_id);
-      BER::decode(sequence, enc_pkcs8_key, OCTET_STRING);
-      if (is_encrypted)
-         sequence.discard_remaining();
-      sequence.verify_end();
-      }
-   catch(Decoding_Error)
-      {
-      throw PKCS8_Exception("Private key decoding failed");
-      }
-
-   if (version != 0)
-      throw Decoding_Error("PKCS #8: Unknown version number");
-
-
-   return enc_pkcs8_key;
-   }
 
 /*************************************************
 * Get info from an EncryptedPrivateKeyInfo       *
@@ -95,16 +53,7 @@ SecureVector<byte> PKCS8_decode(DataSource& source, const User_Interface& ui,
 
    try {
       if(BER::maybe_BER(source) && !PEM_Code::matches(source))
-         {
-         key_data = PKCS8_maybe_enc_extract(source, pbe_alg_id, is_encrypted);
-         if(key_data.is_empty())
-            throw Decoding_Error("PKCS #8 private key decoding failed");
-         if(!is_encrypted)
-            {
-            pk_alg_id = pbe_alg_id;
-            return key_data; // just plain unencrypted BER
-            }
-         }
+         key_data = PKCS8_extract(source, pbe_alg_id);
       else
          {
          std::string label;
@@ -131,11 +80,12 @@ SecureVector<byte> PKCS8_decode(DataSource& source, const User_Interface& ui,
    if(!is_encrypted)
       key = key_data;
 
+   const u32bit max_tries = Config::get_u32bit("base/pkcs8_tries");
    u32bit tries = 0;
    while(true)
       {
       try {
-         if(tries >= Config::get_u32bit("base/pkcs8_tries"))
+         if(max_tries && tries >= max_tries)
             break;
 
          if(is_encrypted)

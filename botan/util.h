@@ -1,6 +1,6 @@
 /*************************************************
 * Utility Functions Header File                  *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_UTIL_H__
@@ -8,6 +8,7 @@
 
 #include <botan/secmem.h>
 #include <botan/enums.h>
+#include <botan/charset.h>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -88,6 +89,7 @@ std::vector<std::string> parse_algorithm_name(const std::string&);
 std::vector<std::string> split_on(const std::string&, char);
 std::vector<u32bit> parse_asn1_oid(const std::string&);
 bool x500_name_cmp(const std::string&, const std::string&);
+u32bit parse_expr(const std::string&);
 
 /*************************************************
 * Misc Utility Functions                         *
@@ -112,28 +114,6 @@ u32bit dl_work_factor(u32bit);
 *************************************************/
 std::string to_string(u64bit, u32bit = 0);
 u32bit to_u32bit(const std::string&);
-
-/*************************************************
-* Character Set Handling                         *
-*************************************************/
-bool is_digit(char);
-bool is_space(char);
-char to_lower(char);
-
-byte char2digit(char);
-char digit2char(byte);
-
-std::string local2iso(const std::string&);
-std::string iso2local(const std::string&);
-
-std::string utf2iso(const std::string&);
-std::string iso2utf(const std::string&);
-
-/*************************************************
-* Return the values of various defined HashIDs   *
-*************************************************/
-MemoryVector<byte> pkcs_hash_id(const std::string&);
-byte ieee1363_hash_id(const std::string&);
 
 }
 

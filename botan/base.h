@@ -1,6 +1,6 @@
 /*************************************************
 * Base Classes Header File                       *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_BASE_H__
@@ -10,7 +10,6 @@
 #include <botan/exceptn.h>
 #include <botan/symkey.h>
 #include <botan/util.h>
-#include <botan/init.h>
 
 namespace Botan {
 

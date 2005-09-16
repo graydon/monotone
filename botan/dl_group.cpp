@@ -1,6 +1,6 @@
 /*************************************************
 * DL Groups Source File                          *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/dl_param.h>
@@ -107,22 +107,38 @@ const char* IETF_4096_PRIME =
   "FFFFFFFF FFFFFFFF";
 
 /*************************************************
-* JCE seed/counter for 512-bit DSA modulus       *
+* JCE default 512-bit DSA group                  *
 *************************************************/
-const char* JCE_512_SEED = "B869C82B 35D70E1B 1FF91B28 E37A62EC DC34409B";
-const u32bit JCE_512_COUNTER = 123;
+const char* JCE_512_PRIME_P =
+  "FCA682CE 8E12CABA 26EFCCF7 110E526D B078B05E DECBCD1E"
+  "B4A208F3 AE1617AE 01F35B91 A47E6DF6 3413C5E1 2ED0899B"
+  "CD132ACD 50D99151 BDC43EE7 37592E17";
+const char* JCE_512_PRIME_Q =
+  "962EDDCC 369CBA8E BB260EE6 B6A126D9 346E38C5";
 
 /*************************************************
-* JCE seed/counter for 768-bit DSA modulus       *
+* JCE default 768-bit DSA group                  *
 *************************************************/
-const char* JCE_768_SEED = "77D0F8C4 DAD15EB8 C4F2F8D6 726CEFD9 6D5BB399";
-const u32bit JCE_768_COUNTER = 263;
+const char* JCE_768_PRIME_P =
+  "E9E64259 9D355F37 C97FFD35 67120B8E 25C9CD43 E927B3A9"
+  "670FBEC5 D8901419 22D2C3B3 AD248009 3799869D 1E846AAB"
+  "49FAB0AD 26D2CE6A 22219D47 0BCE7D77 7D4A21FB E9C270B5"
+  "7F607002 F3CEF839 3694CF45 EE3688C1 1A8C56AB 127A3DAF";
+const char* JCE_768_PRIME_Q =
+  "9CDBD84C 9F1AC2F3 8D0F80F4 2AB952E7 338BF511";
 
 /*************************************************
-* JCE seed/counter for 1024-bit DSA modulus      *
+* JCE default 1024-bit DSA group                 *
 *************************************************/
-const char* JCE_1024_SEED = "8D515589 4229D5E6 89EE01E6 018A237E 2CAE64CD";
-const u32bit JCE_1024_COUNTER = 92;
+const char* JCE_1024_PRIME_P =
+  "FD7F5381 1D751229 52DF4A9C 2EECE4E7 F611B752 3CEF4400"
+  "C31E3F80 B6512669 455D4022 51FB593D 8D58FABF C5F5BA30"
+  "F6CB9B55 6CD7813B 801D346F F26660B7 6B9950A5 A49F9FE8"
+  "047B1022 C24FBBA9 D7FEB7C6 1BF83B57 E7C6A8A6 150F04FB"
+  "83F6D3C5 1EC30235 54135A16 9132F675 F3AE2B61 D72AEFF2"
+  "2203199D D14801C7";
+const char* JCE_1024_PRIME_Q =
+  "9760508F 15230BCC B292B982 A2EB840B F0581CF5";
 
 /*************************************************
 * Decode the modulus string                      *
@@ -133,14 +149,6 @@ BigInt decode(const char* prime)
                          BigInt::Hexadecimal);
    }
 
-/*************************************************
-* Decode the seed for DSA prime generation       *
-*************************************************/
-MemoryVector<byte> decode_seed(const std::string& hex_seed)
-   {
-   return OctetString(hex_seed).bits_of();
-   }
-
 }
 
 /*************************************************
@@ -148,14 +156,20 @@ MemoryVector<byte> decode_seed(const std::string& hex_seed)
 *************************************************/
 DL_Group try_to_get_dl_group(const std::string& name)
    {
-   if(name == "DSA-512")
-      return DL_Group(decode_seed(JCE_512_SEED), 512, JCE_512_COUNTER);
-   if(name == "DSA-768")
-      return DL_Group(decode_seed(JCE_768_SEED), 768, JCE_768_COUNTER);
-   if(name == "DSA-1024")
-      return DL_Group(decode_seed(JCE_1024_SEED), 1024, JCE_1024_COUNTER);
+   if(name == "DSA-512" || name == "DSA-768" || name == "DSA-1024")
+      {
+      const char* P = 0;
+      const char* Q = 0;
+      if(name == "DSA-512")  { P = JCE_512_PRIME_P; Q = JCE_512_PRIME_Q; }
+      if(name == "DSA-768")  { P = JCE_768_PRIME_P; Q = JCE_768_PRIME_Q; }
+      if(name == "DSA-1024") { P = JCE_1024_PRIME_P; Q = JCE_1024_PRIME_Q; }
 
-   BigInt p, q, g;
+      BigInt p = decode(P), q = decode(Q);
+      BigInt g = DL_Group::make_dsa_generator(p, q);
+      return DL_Group(p, q, g);
+      }
+
+   BigInt p, g;
 
    if(name == "IETF-768")  { g = 2; p = decode(IETF_768_PRIME); }
    if(name == "IETF-1024") { g = 2; p = decode(IETF_1024_PRIME); }
@@ -164,10 +178,8 @@ DL_Group try_to_get_dl_group(const std::string& name)
    if(name == "IETF-3072") { g = 2; p = decode(IETF_3072_PRIME); }
    if(name == "IETF-4096") { g = 2; p = decode(IETF_4096_PRIME); }
 
-   if(p > 0 && g > 0 && !q)
+   if(p > 0 && g > 0)
       return DL_Group(p, g);
-   if(p > 0 && g > 0 && q > 0)
-      return DL_Group(p, q, g);
 
    throw Lookup_Error("DL group \"" + name + "\" not found");
    }

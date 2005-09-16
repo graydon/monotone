@@ -1,6 +1,6 @@
 /*************************************************
 * PKCS #5 PBES2 Source File                      *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/pbe_pkcs.h>
@@ -134,14 +134,12 @@ void PBE_PKCS5v20::decode_params(DataSource& source)
       BER_Decoder algo_params = BER::get_subsequence(pbkdf2_params);
       BER::decode(algo_params, salt, OCTET_STRING);
       BER::decode(algo_params, iterations);
-      if(algo_params.more_items())
-         BER::decode(algo_params, key_length);
-      else
-         key_length = 0;
+      BER::decode_optional(algo_params, key_length, INTEGER, UNIVERSAL);
+
       algo_params.verify_end();
       }
    else
-      throw Decoding_Error("PBES2: Unknown KDF algorithm " +
+      throw Decoding_Error("PBE-PKCS5 v2.0: Unknown KDF algorithm " +
                            kdf_algo.oid.as_string());
 
    cipher = OIDS::lookup(enc_algo.oid);
@@ -149,8 +147,11 @@ void PBE_PKCS5v20::decode_params(DataSource& source)
    if(cipher_spec.size() != 2)
       throw Decoding_Error("PBE-PKCS5 v2.0: Invalid cipher spec " + cipher);
    cipher_algo = deref_alias(cipher_spec[0]);
-   if(cipher != "DES/CBC" && cipher != "TripleDES/CBC")
-      throw Decoding_Error("PBES2: Don't know param format for " + cipher);
+
+   if(!known_cipher(cipher_algo) || cipher_spec[1] != "CBC")
+      throw Decoding_Error("PBE-PKCS5 v2.0: Don't know param format for " +
+                           cipher);
+
    BER_Decoder algo_params(enc_algo.parameters);
    BER::decode(algo_params, iv, OCTET_STRING);
 
@@ -158,7 +159,7 @@ void PBE_PKCS5v20::decode_params(DataSource& source)
       key_length = max_keylength_of(cipher_algo);
 
    if(salt.size() < 8)
-      throw Decoding_Error("PBES2: Encoded salt is too small");
+      throw Decoding_Error("PBE-PKCS5 v2.0: Encoded salt is too small");
    }
 
 /*************************************************
@@ -167,6 +168,18 @@ void PBE_PKCS5v20::decode_params(DataSource& source)
 OID PBE_PKCS5v20::get_oid() const
    {
    return OIDS::lookup("PBE-PKCS5v20");
+   }
+
+/*************************************************
+* Check if this is a known PBES2 cipher          *
+*************************************************/
+bool PBE_PKCS5v20::known_cipher(const std::string& cipher) const
+   {
+   if(cipher == "AES-128" || cipher == "AES-192" || cipher == "AES-256")
+      return true;
+   if(cipher == "DES" || cipher == "TripleDES")
+      return true;
+   return false;
    }
 
 /*************************************************
@@ -187,8 +200,9 @@ PBE_PKCS5v20::PBE_PKCS5v20(const std::string& d_algo,
    if(!have_hash(digest))
       throw Algorithm_Not_Found(digest);
 
-   if((cipher_algo != "DES" && cipher_algo != "TripleDES") ||
-      (cipher_mode != "CBC"))
+   if(!known_cipher(cipher_algo))
+      throw Invalid_Argument("PBE-PKCS5 v2.0: Invalid cipher " + cipher);
+   if(cipher_mode != "CBC")
       throw Invalid_Argument("PBE-PKCS5 v2.0: Invalid cipher " + cipher);
    if(digest != "SHA-160")
       throw Invalid_Argument("PBE-PKCS5 v2.0: Invalid digest " + digest);

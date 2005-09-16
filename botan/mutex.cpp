@@ -1,12 +1,11 @@
 /*************************************************
 * Mutex Source File                              *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/mutex.h>
 #include <botan/exceptn.h>
 #include <botan/init.h>
-#include <cstdlib>
 
 namespace Botan {
 
@@ -38,10 +37,7 @@ class Default_Mutex : public Mutex
 void Default_Mutex::lock()
    {
    if(locked)
-      {
-      std::abort();
       throw Internal_Error("Default_Mutex::lock: Mutex is already locked");
-      }
    locked = true;
    }
 
@@ -51,10 +47,7 @@ void Default_Mutex::lock()
 void Default_Mutex::unlock()
    {
    if(!locked)
-      {
-      std::abort();
       throw Internal_Error("Default_Mutex::unlock: Mutex is already unlocked");
-      }
    locked = false;
    }
 

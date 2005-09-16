@@ -1,6 +1,6 @@
 /*************************************************
 * Initialization Function Source File            *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/init.h>
@@ -240,6 +240,8 @@ void initialize(const std::string& arg_string)
    if(arg_set(args, "thread_safe"))
       set_mutex();
 
+   startup_conf();
+   startup_oids();
    set_default_options();
    startup_memory_subsystem();
 
@@ -287,6 +289,8 @@ void initialize(const std::string& arg_string)
       if(total_bits < min_entropy)
          throw PRNG_Unseeded("Unable to collect sufficient entropy");
       }
+
+   startup_dl_cache();
    }
 
 /*************************************************
@@ -296,9 +300,10 @@ void deinitialize()
    {
    shutdown_engines();
    shutdown_rng_subsystem();
-   set_global_rngs(0, 0);
    destroy_lookup_tables();
-   destroy_dl_groups();
+   shutdown_dl_cache();
+   shutdown_conf();
+   shutdown_oids();
    set_timer_type(0);
    set_mutex_type(0);
    shutdown_memory_subsystem();
