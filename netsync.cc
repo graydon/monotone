@@ -3789,10 +3789,7 @@ void
 ancestry_fetcher::request_rev_file_deltas(file_id const & start)
 {
   stack< file_id > frontier;
-  set<file_id> done_files;
-
   frontier.push(start);
-  done_files.insert(start);
 
   while (!frontier.empty())
     {
@@ -3821,11 +3818,7 @@ ancestry_fetcher::request_rev_file_deltas(file_id const & start)
               L(F("already have file %s, not requesting rev delta")
                 % parent);
             }
-          if (done_files.find(parent) == done_files.end())
-            {
-              frontier.push(parent);
-              done_files.insert(parent);
-            }
+          frontier.push(parent);
         }
     }
 }
@@ -3870,10 +3863,7 @@ void
 ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start)
 {
   stack< manifest_id > frontier;
-  set< manifest_id > done_manifests;
-
   frontier.push(start);
-  done_manifests.insert(start);
 
   while (!frontier.empty())
     {
@@ -3902,11 +3892,7 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start)
               L(F("already have manifest %s, not requesting rev delta")
                 % parent);
             }
-          if (done_manifests.find(parent) == done_manifests.end())
-            {
-              frontier.push(parent);
-              done_manifests.insert(parent);
-            }
+          frontier.push(parent);
         }
     }
 }
