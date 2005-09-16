@@ -478,9 +478,11 @@ ancestry_fetcher
   void traverse_ancestry(set<revision_id> const & heads);
 
   // requesting the data
-  void request_rev_file_deltas(file_id const & start);
+  void request_rev_file_deltas(file_id const & start, 
+                               set<file_id> & done_files);
   void request_files();
-  void request_rev_manifest_deltas(manifest_id const & start);
+  void request_rev_manifest_deltas(manifest_id const & start,
+                                   set<manifest_id> & done_manifests);
   void request_manifests();
 
 
@@ -3594,19 +3596,38 @@ run_netsync_protocol(protocol_voice voice,
 }
 
 
+// Steps for determining files/manifests to request, from 
+// a given revision ancestry:
+//
+// 1) find the new heads, consume valid branch certs etc.
+//
+// 2) foreach new head, traverse up the revision ancestry, building
+// a set of reverse file/manifest deltas (we stop when we hit an
+// already-seen or existing-in-db rev). At the same time, build a
+// smaller set of forward deltas to files/manifests which exist in the
+// head revisions.
+//
+// 3) For each file/manifest in head, first request the forward delta
+// (or full data if there is no path back to existing data). Then
+// traverse up the set of reverse deltas, daisychaining our way until
+// we get to existing revisions.
+//
 // Notes:
 //
-// - it is cheaper for both the source and for the sink to receive
-// reverse deltas (as opposed to forward deltas), since that's what
-// gets stored in the db. Hence, we try to always use reverse deltas.
-// If we have the (manifest) ancestry
+// - The database stores reverse deltas, so preferring these allows
+// a server to send pre-computed deltas straight from the database
+// (this isn't done yet). In order to bootstrap the tip-most data,
+// forward deltas from a close(est?)-ancestor are used, or full data
+// is requested if there is no existing ancestor.
+//
+// eg, if we have the (manifest) ancestry
 // A -> B -> C -> D
 // where A is existing, {B,C,D} are new, then we will request deltas
 // A->D (fwd)
 // D->C (rev)
 // C->B (rev)
 // This may result in slightly larger deltas than using all forward
-// deltas, however it is much more efficient.
+// deltas, however it should be more efficient.
 //
 // - in order to keep a good hit ratio with the reconstructed version
 // cache in database, we'll request deltas for a single file/manifest
@@ -3614,21 +3635,6 @@ run_netsync_protocol(protocol_voice voice,
 // requires a bit more memory usage, though it will be less memory
 // than would be required to store all the outgoing delta requests
 // anyway.
-//
-// Steps:
-// 1) get new heads, consume valid branch certs etc.
-//
-// 2) foreach new head, traverse up the revision ancestry building
-// a set of mainly reverse deltas, with forward deltas to files or
-// manifests which exist in the head revision.
-//
-// 3) remove any deltas which already exist, and make requests
-// for full files in the case where we don't already have the source
-// for a full delta.
-//
-// 4) For each file/manifest in head, traverse up the set of reverse
-// deltas requesting those deltas.
-//
 ancestry_fetcher::ancestry_fetcher(session & s)
     : sess(s)
 {
@@ -3793,7 +3799,8 @@ ancestry_fetcher::traverse_ancestry(set<revision_id> const & heads)
 }
 
 void
-ancestry_fetcher::request_rev_file_deltas(file_id const & start)
+ancestry_fetcher::request_rev_file_deltas(file_id const & start, 
+                                          set<file_id> & done_files)
 {
   stack< file_id > frontier;
   frontier.push(start);
@@ -3811,19 +3818,23 @@ ancestry_fetcher::request_rev_file_deltas(file_id const & start)
         {
           file_id const & parent = d->second;
           I(!null_id(parent));
-          if (!sess.app.db.file_version_exists(parent))
+          if (done_files.find(parent) == done_files.end())
             {
-              L(F("requesting reverse file delta %s->%s")
-                % child % parent);
-              sess.queue_send_delta_cmd(file_item,
-                                        plain_id(child), plain_id(parent));
-              sess.reverse_delta_requests.insert(make_pair(plain_id(child),
-                                                           plain_id(parent)));
-            }
-          else
-            {
-              L(F("already have file %s, not requesting rev delta")
-                % parent);
+              done_files.insert(parent);
+              if (!sess.app.db.file_version_exists(parent))
+                {
+                  L(F("requesting reverse file delta %s->%s")
+                    % child % parent);
+                  sess.queue_send_delta_cmd(file_item,
+                                            plain_id(child), plain_id(parent));
+                  sess.reverse_delta_requests.insert(make_pair(plain_id(child),
+                                                               plain_id(parent)));
+                }
+              else
+                {
+                  L(F("file %s exists, not requesting rev delta")
+                    % parent);
+                }
             }
           frontier.push(parent);
         }
@@ -3833,6 +3844,9 @@ ancestry_fetcher::request_rev_file_deltas(file_id const & start)
 void
 ancestry_fetcher::request_files()
 {
+  // just a cache to avoid checking db.foo_version_exists() too much
+  set<file_id> done_files;
+
   for (multimap<file_id,file_id>::const_iterator d = fwd_file_deltas.begin();
        d != fwd_file_deltas.end(); d++)
     {
@@ -3862,12 +3876,13 @@ ancestry_fetcher::request_files()
         }
 
       // traverse up the reverse deltas
-      request_rev_file_deltas(child);
+      request_rev_file_deltas(child, done_files);
     }
 }
 
 void
-ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start)
+ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start,
+                                              set<manifest_id> & done_manifests)
 {
   stack< manifest_id > frontier;
   frontier.push(start);
@@ -3885,19 +3900,23 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start)
         {
           manifest_id const & parent = d->second;
           I(!null_id(parent));
-          if (!sess.app.db.manifest_version_exists(parent))
+          if (done_manifests.find(parent) == done_manifests.end())
             {
-              L(F("requesting reverse manifest delta %s->%s")
-                % child % parent);
-              sess.queue_send_delta_cmd(manifest_item,
-                                        plain_id(child), plain_id(parent));
-              sess.reverse_delta_requests.insert(make_pair(plain_id(child),
-                                                           plain_id(parent)));
-            }
-          else
-            {
-              L(F("already have manifest %s, not requesting rev delta")
-                % parent);
+              done_manifests.insert(parent);
+              if (!sess.app.db.manifest_version_exists(parent))
+                {
+                  L(F("requesting reverse manifest delta %s->%s")
+                    % child % parent);
+                  sess.queue_send_delta_cmd(manifest_item,
+                                            plain_id(child), plain_id(parent));
+                  sess.reverse_delta_requests.insert(make_pair(plain_id(child),
+                                                               plain_id(parent)));
+                }
+              else
+                {
+                  L(F("manifest %s exists, not requesting rev delta")
+                    % parent);
+                }
             }
           frontier.push(parent);
         }
@@ -3907,6 +3926,9 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start)
 void
 ancestry_fetcher::request_manifests()
 {
+  // just a cache to avoid checking db.foo_version_exists() too much
+  set<manifest_id> done_manifests;
+
   for (multimap<manifest_id,manifest_id>::const_iterator d = fwd_manifest_deltas.begin();
        d != fwd_manifest_deltas.end(); d++)
     {
@@ -3936,6 +3958,6 @@ ancestry_fetcher::request_manifests()
         }
 
       // traverse up the reverse deltas
-      request_rev_manifest_deltas(child);
+      request_rev_manifest_deltas(child, done_manifests);
     }
 }
