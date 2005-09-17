@@ -1384,6 +1384,182 @@ make_roster_for_revision(revision_set const & rev, revision_id const & rid,
 }
 
 
+////////////////////////////////////////////////////////////////////
+//   Calculation of a cset
+////////////////////////////////////////////////////////////////////
+
+
+namespace
+{
+  // An ugly, but handy, little helper function for doing parallel iteration
+  // over maps.
+  // Usage:
+  //   std::map<foo, bar>::const_iterator left_i, right_i;
+  //   parllel_state state = start;
+  //   while (parallel_iter_incr(state, left_map, left_i, right_map, right_i))
+  //     switch (state)
+  //     {}
+
+  typedef enum { start, in_left, in_right, in_both, no_more } parallel_state;
+
+
+  template <typename M>
+  bool
+  parallel_iter_incr(parallel_state & state,
+                     M const & left, typename M::const_iterator & left_i,
+                     M const & right, typename M::const_iterator & right_i)
+  {
+    I(state != no_more);
+    if (state == start)
+      {
+        left_i = left.begin();
+        right_i = right.begin();
+      }
+    if (state == in_left || state == in_both)
+      ++left_i;
+    if (state == in_right || state == in_both)
+      ++right_i;
+    if (left_i == left.end() && right_i == right.end())
+      state = no_more;
+    else if (left_i == left.end() && right_i != right.end())
+      state = in_right;
+    else if (left_i != left.end() && right_i == right.end())
+      state = in_left;
+    else
+      {
+        // Both iterators valid.
+        if (left_i->first < right_i->first)
+          state = in_left;
+        else if (right_i->first < left_i->first)
+          state = in_right;
+        else
+          {
+            I(left_i->first == right_i->first);
+            state = in_both;
+          }
+      }
+    return state != no_more;
+  }
+
+  
+  void delta_only_in_from(roster_t const & from, 
+                          node_id nid, node_t n,
+                          cset & cs)
+  {
+    split_path sp;
+    from.get_name(nid, sp);
+    safe_insert(cs.nodes_deleted, sp);
+  }
+
+
+  void delta_only_in_to(roster_t const & to, node_id nid, node_t n,
+                        cset & cs)
+  {
+    split_path sp;
+    to.get_name(nid, sp);
+    if (is_file_t(n))
+      {
+        safe_insert(cs.files_added,
+                    make_pair(sp, downcast_to_file_t(n)->content));
+      }
+    else
+      {
+        safe_insert(cs.dirs_added, sp);
+      }
+    for (full_attr_map_t::const_iterator i = n->attrs.begin(); 
+         i != n->attrs.end(); ++i)
+      if (i->second.first)
+        safe_insert(cs.attrs_set,
+                    make_pair(make_pair(sp, i->first), i->second.second));
+  }
+
+  void delta_in_both(node_id nid,
+                     roster_t const & from, node_t from_n,
+                     roster_t const & to, node_t to_n,
+                     cset & cs)
+  {
+    I(same_type(from_n, to_n));
+    I(from_n->self == to_n->self);
+
+    if (shallow_equal(from_n, to_n, false))
+      return;
+
+    split_path from_sp, to_sp;
+    from.get_name(nid, from_sp);
+    to.get_name(nid, to_sp);
+
+    // Compare name and path.
+    if (from_n->name != to_n->name || from_n->parent != to_n->parent)
+      safe_insert(cs.nodes_renamed, make_pair(from_sp, to_sp));
+
+    // Compare file content.
+    if (is_file_t(from_n))
+      {
+        file_t from_f = downcast_to_file_t(from_n);
+        file_t to_f = downcast_to_file_t(from_n);
+        if (!(from_f->content == to_f->content))
+          {
+            safe_insert(cs.deltas_applied,
+                        make_pair(to_sp, make_pair(from_f->content,
+                                                   to_f->content)));
+          }
+      }
+
+    // Compare attrs.
+    {
+      full_attr_map_t::const_iterator from_ai, to_ai;
+      parallel_state state = start;
+
+      while (parallel_iter_incr(state, from_n->attrs, from_ai, to_n->attrs, to_ai))
+        {
+          if ((state == in_left || (state == in_both && !to_ai->second.first))
+              && from_ai->second.first)
+            safe_insert(cs.attrs_cleared,
+                        make_pair(to_sp, to_ai->first));
+
+          else if ((state == in_right || (state == in_both && !from_ai->second.first))
+                   && to_ai->second.first)
+            safe_insert(cs.attrs_set,
+                        make_pair(make_pair(to_sp, to_ai->first),
+                                  to_ai->second.second));
+
+          else
+            I(false);
+        }
+    }
+  }
+}
+
+void
+make_cset(roster_t const & from, roster_t const & to, cset & cs)
+{
+  map<node_id, node_t>::const_iterator from_i, to_i;
+  parallel_state state = start;
+  while (parallel_iter_incr(state, 
+                            from.all_nodes(), from_i, 
+                            to.all_nodes(), to_i))
+    {
+      switch (state)
+        {
+        case start:
+        case no_more:
+          I(false);
+
+        case in_left:
+          delta_only_in_from(from, from_i->first, from_i->second, cs);
+          break;
+ 
+        case in_right:
+          delta_only_in_to(to, to_i->first, to_i->second, cs);
+          break;
+
+        case in_both:
+          delta_in_both(from_i->first, from, from_i->second, to, to_i->second, cs);
+          break;
+        }
+    }
+}
+
 
 ////////////////////////////////////////////////////////////////////
 //   I/O routines
@@ -1904,9 +2080,9 @@ automaton_roster_test()
   change_automaton aut;
   testing_node_id_source nis;
 
-  for (int i = 0; i < 100000; ++i)
+  for (int i = 0; i < 10000; ++i)
     {
-      if (i < 500 || i % 500 == 0)
+      if (i % 500 == 0)
         P(F("performing random action %d\n") % i);
       aut.perform_random_action(r1, nis);
     }
