@@ -169,6 +169,10 @@ public:
 		marking_map const & mm,
 		bool print_local_parts) const;
 
+  void parse_from(basic_io::parser & pa,
+                  marking_map & mm,
+                  bool parse_local_parts);
+
 private:
   void check_finite_depth() const;
   dir_t root_dir;

@@ -34,30 +34,6 @@ using boost::lexical_cast;
 
 ///////////////////////////////////////////////////////////////////
 
-template <typename T>
-void
-safe_erase(T & container, typename T::key_type const & key)
-{
-  I(container.erase(key));
-}
-
-template <typename T>
-typename T::iterator
-safe_insert(T & container, typename T::value_type const & val)
-{
-  std::pair<typename T::iterator, bool> r = container.insert(val);
-  I(r.second);
-  return r.first;
-}
-
-template <typename T>
-typename T::mapped_type const &
-safe_get(T & container, typename T::key_type const & key)
-{
-  typename T::const_iterator i = container.find(key);
-  I(i != container.end());
-  return i->second;
-}
 
 ///////////////////////////////////////////////////////////////////
 
@@ -1327,26 +1303,14 @@ namespace
     string const dir("dir");
     string const file("file");
     string const content("content");
+    string const attr("attr");
     
-    // 'local' roster symbols
+    // 'local' roster and marking symbols
     string const ident("ident");
     string const birth("birth");
     string const path_mark("path_mark");
     string const content_mark("content_mark");
     string const attr_mark("attr_mark");
-
-    // cset symbols
-    string const delete_file("delete");
-    string const rename_node("rename");
-    string const add_file("add_file");
-    string const add_dir("add_dir");
-    string const patch("patch");
-    string const from("from");
-    string const to("to");
-    string const clear("clear");
-    string const set("set");
-    string const attr("attr");
-    string const value("value");
   }
 }
 
@@ -1382,8 +1346,6 @@ push_local_parts(basic_io::stanza & st,
 	st.push_hex_pair(syms::content_mark, i->inner()());
     }
 }
-
-
 
 
 void 
@@ -1438,6 +1400,14 @@ roster_t::print_to(basic_io::printer & pr,
     }
 }
 
+void 
+roster_t::parse_from(basic_io::parser & pa,
+                     marking_map & mm,
+                     bool parse_local_parts)
+{
+  // FIXME: implement
+  I(false);
+}
 
 
 

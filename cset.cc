@@ -4,12 +4,19 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "basic_io.hh"
 #include "cset.hh"
 #include "sanity.hh"
+
+#include <map>
+#include <set>
+#include <string>
 
 using std::set;
 using std::map;
 using std::pair;
+using std::string;
+using std::make_pair;
 
 struct
 detach
@@ -122,6 +129,18 @@ cset::empty() const
     && attrs_set.empty();
 }
 
+void
+cset::clear()
+{
+  nodes_deleted.clear();
+  dirs_added.clear();
+  files_added.clear();
+  nodes_renamed.clear();
+  deltas_applied.clear();
+  attrs_cleared.clear();
+  attrs_set.clear();
+}
+
 void 
 cset::apply_to(editable_tree & t) const
 {
@@ -201,21 +220,183 @@ cset::apply_to(editable_tree & t) const
     t.set_attr(i->first.first, i->first.second, i->second);
 }
 
+////////////////////////////////////////////////////////////////////
+//   I/O routines
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+  namespace syms
+  {
+    // cset symbols
+    string const delete_node("delete");
+    string const rename_node("rename");
+    string const content("content");
+    string const add_file("add_file");
+    string const add_dir("add_dir");
+    string const patch("patch");
+    string const from("from");
+    string const to("to");
+    string const clear("clear");
+    string const set("set");
+    string const attr("attr");
+    string const value("value");
+  }
+}
 
 void 
 print_cset(basic_io::printer & printer,
 	   cset const & cs)
 {
-  // FIXME: implement
-  I(false);
+  for (set<split_path>::const_iterator i = cs.nodes_deleted.begin();
+       i != cs.nodes_deleted.end(); ++i)
+    {
+      basic_io::stanza st;
+      st.push_file_pair(syms::delete_node, file_path(*i));
+      printer.print_stanza(st);
+    }
+
+  for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+       i != cs.nodes_renamed.end(); ++i)
+    {
+      basic_io::stanza st;
+      st.push_file_pair(syms::rename_node, file_path(i->first));
+      st.push_file_pair(syms::to, file_path(i->second));
+      printer.print_stanza(st);
+    }
+
+  for (set<split_path>::const_iterator i = cs.dirs_added.begin();
+       i != cs.dirs_added.end(); ++i)
+    {
+      basic_io::stanza st;
+      st.push_file_pair(syms::add_dir, file_path(*i));
+      printer.print_stanza(st);
+    }
+
+  for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+       i != cs.files_added.end(); ++i)
+    {
+      basic_io::stanza st;
+      st.push_file_pair(syms::add_file, file_path(i->first));
+      st.push_hex_pair(syms::content, i->second.inner()());
+      printer.print_stanza(st);
+    }
+
+  for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+       i != cs.deltas_applied.end(); ++i)
+    {
+      basic_io::stanza st;
+      st.push_file_pair(syms::patch, file_path(i->first));
+      st.push_hex_pair(syms::from, i->second.first.inner()());
+      st.push_hex_pair(syms::to, i->second.second.inner()());
+      printer.print_stanza(st);
+    }
+
+  for (set<pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
+       i != cs.attrs_cleared.end(); ++i)
+    {
+      basic_io::stanza st;
+      st.push_file_pair(syms::clear, file_path(i->first));
+      st.push_str_pair(syms::attr, i->second());
+      printer.print_stanza(st);
+    }
+
+  for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
+       i != cs.attrs_set.end(); ++i)
+    {
+      basic_io::stanza st;
+      st.push_file_pair(syms::set, file_path(i->first.first));
+      st.push_str_pair(syms::attr, i->first.second());
+      st.push_str_pair(syms::value, i->second());
+      printer.print_stanza(st);
+    }
+}
+
+inline split_path
+string_to_path(string const & str)
+{
+  split_path sp;
+  file_path_internal(str).split(sp);
+  return sp;
 }
 
 void 
 parse_cset(basic_io::parser & parser,
 	   cset & cs)
 {
-  // FIXME: implement
-  I(false);
+  cs.clear();
+  while (parser.symp())
+    {
+      string t1, t2, t3;
+      if (parser.symp(syms::delete_node))
+        {
+          parser.sym();
+          parser.str(t1);
+          safe_insert(cs.nodes_deleted, string_to_path(t1));
+        }
+      else if (parser.symp(syms::rename_node))
+        {
+          parser.sym();
+          parser.str(t1);
+          parser.esym(syms::to);
+          parser.str(t2);
+          safe_insert(cs.nodes_renamed, make_pair(string_to_path(t1),
+                                                  string_to_path(t2)));
+        }
+      else if (parser.symp(syms::add_dir))
+        {
+          parser.sym();
+          parser.str(t1);
+          safe_insert(cs.dirs_added, string_to_path(t1));
+        }
+      else if (parser.symp(syms::add_file))
+        {
+          parser.sym();
+          parser.str(t1);
+	  parser.esym(syms::content);
+	  parser.hex(t2);
+          safe_insert(cs.files_added, make_pair(string_to_path(t1),
+                                                file_id(t2)));
+        }
+      else if (parser.symp(syms::patch))
+	{
+	  parser.sym();
+	  parser.str(t1);
+	  parser.esym(syms::from);
+	  parser.hex(t2);
+	  parser.esym(syms::to);
+	  parser.hex(t3);
+	  safe_insert(cs.deltas_applied, 
+                      make_pair(string_to_path(t1),
+                                make_pair(file_id(t2), 
+                                          file_id(t3))));
+	}
+      else if (parser.symp(syms::clear))
+	{
+	  parser.sym();
+	  parser.str(t1);
+	  parser.esym(syms::attr);
+	  parser.str(t2);
+	  safe_insert(cs.attrs_cleared, 
+                      make_pair(string_to_path(t1), 
+                                attr_key(t2)));
+	}
+      else if (parser.symp(syms::set))
+	{
+	  parser.sym();
+	  parser.str(t1);
+	  parser.esym(syms::attr);
+	  parser.str(t2);
+	  parser.esym(syms::value);
+	  parser.str(t3);
+	  safe_insert(cs.attrs_set, 
+                      make_pair(make_pair(string_to_path(t1),
+                                          attr_key(t2)),
+                                attr_value(t3)));
+	}
+      else
+        break;
+    }
 }
 
 

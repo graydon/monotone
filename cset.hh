@@ -15,6 +15,7 @@
 #include "numeric_vocab.hh"
 #include "paths.hh"
 #include "vocab.hh"
+#include "sanity.hh"
 
 typedef std::map<attr_key, attr_value> attr_map_t;
 
@@ -74,6 +75,7 @@ struct cset
 
   void apply_to(editable_tree & t) const;
   bool empty() const;
+  void clear();
 };
 
 namespace basic_io { struct printer; struct parser; }
@@ -85,5 +87,33 @@ print_cset(basic_io::printer & printer,
 void 
 parse_cset(basic_io::parser & parser,
 	   cset & cs);
+
+
+// Some helpers.
+
+template <typename T>
+void
+safe_erase(T & container, typename T::key_type const & key)
+{
+  I(container.erase(key));
+}
+
+template <typename T>
+typename T::iterator
+safe_insert(T & container, typename T::value_type const & val)
+{
+  std::pair<typename T::iterator, bool> r = container.insert(val);
+  I(r.second);
+  return r.first;
+}
+
+template <typename T>
+typename T::mapped_type const &
+safe_get(T & container, typename T::key_type const & key)
+{
+  typename T::const_iterator i = container.find(key);
+  I(i != container.end());
+  return i->second;
+}
 
 #endif // __CSET_HH__
