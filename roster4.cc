@@ -80,12 +80,34 @@ namespace
   }
 }
 
+
+node::node(node_id i)
+  : self(i),    
+    parent(the_null_node),
+    name(the_null_component)
+{
+}
+
+
 node::node()
   : self(the_null_node),
     parent(the_null_node), 
     name(the_null_component)
 {
 }
+
+
+dir_node::dir_node(node_id i)
+  : node(i)
+{
+}
+
+
+dir_node::dir_node()
+  : node()
+{
+}
+
 
 node_t 
 dir_node::get_child(path_component const & pc) const
@@ -115,12 +137,11 @@ dir_node::detach_child(path_component const & pc)
   return n;
 }
 
+
 node_t
 dir_node::clone()
 {
-  dir_t d = dir_t(new dir_node());
-  d->birth_revision = birth_revision;
-  d->self = self;
+  dir_t d = dir_t(new dir_node(self));
   d->parent = parent;
   d->name = name;
   d->attrs = attrs;
@@ -128,16 +149,27 @@ dir_node::clone()
   return d;
 }
 
+
+file_node::file_node(node_id i, file_id const & f)
+  : node(i),
+    content(f)
+{
+}
+
+
+file_node::file_node()
+  : node()
+{
+}
+
+
 node_t
 file_node::clone()
 {
-  file_t f = file_t(new file_node());
-  f->birth_revision = birth_revision;
-  f->self = self;
+  file_t f = file_t(new file_node(self, content));
   f->parent = parent;
   f->name = name;
   f->attrs = attrs;
-  f->content = content;
   return f;
 }
 
@@ -158,6 +190,7 @@ dirname_basename(split_path const & sp,
     }
 }
 
+
 struct
 dfs_iter
 {
@@ -167,12 +200,14 @@ dfs_iter
   stack< pair<dir_t, dir_map::const_iterator> > stk;
   split_path dirname;
 
+
   dfs_iter(dir_t r) 
     : root(r), return_root(true)
   {
     if (!root->children.empty())
       stk.push(make_pair(root, root->children.begin()));
   }
+
 
   void path(split_path & pv)
   {
@@ -190,10 +225,12 @@ dfs_iter
       }
   }
 
+
   bool finished()
   {
     return (!return_root) && stk.empty();
   }
+
 
   node_t operator*()
   {
@@ -208,6 +245,7 @@ dfs_iter
 	return stk.top().second->second;
       }
   }
+
 
   void operator++()
   {
@@ -245,11 +283,13 @@ roster_t::has_root() const
   return static_cast<bool>(root_dir);
 }
 
+
 inline bool
 same_type(node_t a, node_t b)
 {
   return is_file_t(a) == is_file_t(b);
 }
+
 
 inline bool
 shallow_equal(node_t a, node_t b, 
@@ -262,9 +302,6 @@ shallow_equal(node_t a, node_t b,
     return false;
 
   if (a->name != b->name)
-    return false;
-
-  if (!(a->birth_revision == b->birth_revision))
     return false;
 
   if (a->attrs != b->attrs)
@@ -309,6 +346,7 @@ shallow_equal(node_t a, node_t b,
   return true;
 }
 
+
 bool 
 roster_t::operator==(roster_t const & other) const
 {
@@ -340,6 +378,7 @@ roster_t::operator==(roster_t const & other) const
 
   return true;
 }
+
 
 node_t
 roster_t::get_node(split_path const & sp) const
@@ -540,15 +579,60 @@ roster_t::set_attr(split_path const & pth,
   i->second = val;
 }
 
-marking_t::marking_t(revision_id const & birth_rid, node_t n)
+
+marking_t::marking_t()
+{
+}
+
+
+marking_t::marking_t(revision_id const & birth_rid, 
+                     revision_id const & current_rid, 
+                     node_t n)
+  : birth_revision(birth_rid)
 {
   set<revision_id> singleton;
-  singleton.insert(birth_rid);
+  singleton.insert(current_rid);
   parent_name = singleton;
   file_content = singleton;
   for (full_attr_map_t::const_iterator i = n->attrs.begin();
        i != n->attrs.end(); ++i)
     attrs.insert(make_pair(i->first, singleton));
+}
+
+marking_t
+marking_t::freshen(node_t old_node,
+                   node_t new_node,
+                   revision_id const & current_rid) const
+{
+  I(same_type(old_node, new_node));
+  set<revision_id> singleton;
+  singleton.insert(current_rid);
+  
+  marking_t mk = marking_t(*this);
+
+  if (old_node->parent != new_node->parent
+      || old_node->name != new_node->name)
+    mk.parent_name = singleton;
+
+  if (is_file_t(old_node))
+    {
+      file_t fold = downcast_to_file_t(old_node);
+      file_t fnew = downcast_to_file_t(new_node);
+      if (!(fold->content == fnew->content))
+        mk.file_content = singleton;
+    }
+
+  for (full_attr_map_t::const_iterator i = new_node->attrs.begin();
+       i != new_node->attrs.end(); ++i)
+    {
+      full_attr_map_t::const_iterator j = old_node->attrs.find(i->first);
+      I(j != old_node->attrs.end());
+      map<attr_key, set<revision_id> >::iterator k = mk.attrs.find(i->first);
+      I(k != mk.attrs.end());
+      if (i->second != j->second)
+        k->second = singleton;
+    }
+  return mk;
 }
 
 
@@ -591,7 +675,7 @@ roster_t::check_sane(marking_map const & marking) const
 	  I(!null_name(n->name) && !null_node(n->parent));
 	  !null_id(downcast_to_file_t(n)->content);
 	}
-      I(!null_id(n->birth_revision));
+      I(!null_id(mi->second.birth_revision));
       for (full_attr_map_t::const_iterator i = n->attrs.begin(); i != n->attrs.end(); ++i)
 	I(i->second.first || !i->second.second().empty());
       if (n != root_dir)
@@ -669,6 +753,7 @@ namespace
     node_id_source & nis;
   };
 
+
   struct testing_node_id_source 
     : public node_id_source
   {
@@ -683,6 +768,7 @@ namespace
     node_id curr;
   };
 
+
   struct temp_node_id_source 
     : public node_id_source
   {
@@ -696,6 +782,7 @@ namespace
     node_id curr;
   };
 
+
   struct true_node_id_source 
     : public node_id_source
   {
@@ -708,6 +795,7 @@ namespace
     }
     app_state & app;
   };
+
 
   class editable_roster_for_merge 
     : public editable_roster_base
@@ -731,7 +819,8 @@ namespace
     }
   };
 
-  // this handles all the stuff in a_new
+
+  // This handles all the stuff in a_new.
   void unify_roster_oneway(roster_t & a, set<node_id> & a_new,
                            roster_t & b, set<node_id> & b_new,
                            set<node_id> & new_ids,
@@ -758,10 +847,10 @@ namespace
         else
           {
             a.replace_node_id(aid, bid);
-            a.get_node(bid)->birth_revision = b.get_node(bid)->birth_revision;
           }
       }
   }
+
 
   // After this, left should == right, and there should be no temporary ids.
   // Destroys sets, because that's handy (it has to scan over both, but it can
@@ -777,7 +866,8 @@ namespace
     unify_roster_oneway(right, right_new, left, left_new, new_ids, nis);
   }
 
-  // this function implements the case
+
+  // This function implements the case.
   //   a   b1
   //    \ /
   //     b2
@@ -917,7 +1007,8 @@ namespace
       }
   }
 
-  // take care of marking a single node both of whose parents exist
+
+  // Take care of marking a single node both of whose parents exist.
   void
   mark_nontrivial_node(node_t ln, 
                        node_t rn,
@@ -1013,7 +1104,8 @@ namespace
                new_rid, n->attrs, marks);
   }
 
-  // this function is also responsible for verifying ancestry invariants --
+
+  // This function is also responsible for verifying ancestry invariants --
   // those invariants on a roster that involve the structure of the roster's
   // parents, rather than just the structure of the roster itself.
   void
@@ -1044,16 +1136,16 @@ namespace
 	    // If the node didn't exist at all in either right or left
 	    // side, it was added; there's no need to examine the left
 	    // and right sides further, we know all the markings for
-	    // this node will be the set {new_rid}.
-            marking.insert(make_pair(i->first, marking_t(new_rid, n)));
-            I(n->birth_revision == new_rid);
+	    // this node will be the set {new_rid}, and set the birth
+            // revision to new_rid.
+            marking.insert(make_pair(i->first, marking_t(new_rid, new_rid, n)));
           }
 
         else if (!exists_in_left && exists_in_right)
           {
 	    node_t const & rn = rni->second;
-	    I(same_type(n, rn) && n->birth_revision == rn->birth_revision);
-	    I(right_uncommon_ancestors.find(n->birth_revision)
+	    I(same_type(n, rn) && n->self == rn->self);
+	    I(right_uncommon_ancestors.find(rmi->second.birth_revision)
 	      != right_uncommon_ancestors.end());
 
 	    // Two sub-cases: 
@@ -1068,33 +1160,36 @@ namespace
 	      }
 	    else
 	      {
-		// 2. The right edge represents a change to the node
-		// -- thus a decision on the part of the user -- in
-		// which case we need to set the new mark-set to
-		// {new_rid}
-		marking.insert(make_pair(i->first, marking_t(new_rid, n)));
+		// 2. The right edge represents a change to the node --
+		// thus a decision on the part of the user -- in which case
+		// we need to "freshen" the marks based on the changes 
+                // which occurred along the edge.
+		marking.insert(make_pair(i->first, 
+                                         rmi->second.freshen(rn, n, new_rid)));
 	      }
           }
         else if (exists_in_left && !exists_in_right)
           {
             node_t const & ln = lni->second;
-            I(same_type(n, ln) && n->birth_revision == ln->birth_revision);
-            I(left_uncommon_ancestors.find(n->birth_revision)
+            I(same_type(n, ln) && n->self == ln->self);
+            I(left_uncommon_ancestors.find(lmi->second.birth_revision)
               != left_uncommon_ancestors.end());
 
 	    // Same two sub-cases here as above:
 	    if (shallow_equal(n, ln, false))
 	      marking.insert(*lmi);
 	    else
-	      marking.insert(make_pair(i->first, marking_t(new_rid, n)));
+	      marking.insert(make_pair(i->first, 
+                                       lmi->second.freshen(ln, n, new_rid)));
           }
         else
           {
             node_t const & ln = lni->second;
             node_t const & rn = rni->second;
-            I(same_type(n, rn) && n->birth_revision == rn->birth_revision);
-            I(same_type(n, ln) && n->birth_revision == ln->birth_revision);
-            marking_t marks(new_rid, n);
+            I(same_type(n, rn));
+            I(same_type(n, ln));
+            I(lmi->second.birth_revision == rmi->second.birth_revision);
+            marking_t marks(lmi->second.birth_revision, new_rid, n);
             mark_nontrivial_node(ln, rn, lmi->second, rmi->second,
                                  left_uncommon_ancestors, right_uncommon_ancestors,
                                  new_rid, n, marks);
@@ -1178,8 +1273,7 @@ namespace
     node_id handle_new(node_id nid)
     {
       node_t n = r.get_node(nid);
-      n->birth_revision = rid;
-      markings.insert(make_pair(nid, marking_t(rid, n)));
+      markings.insert(make_pair(nid, marking_t(rid, rid, n)));
       return nid;
     }
 
@@ -1236,7 +1330,7 @@ make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
     unify_rosters(result, from_left_er.new_nodes,
                   from_right_r, from_right_er.new_nodes,
                   new_ids, tnis);
-    
+
     I(result == from_right_r);
   }
   // SPEEDUP?: instead of constructing new marking from scratch, track which
@@ -1250,6 +1344,7 @@ make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
                     left_uncommon_ancestors, right_uncommon_ancestors,
                     new_rid, result, marking);
 }
+
 
 void
 make_roster_for_nonmerge(cset const & cs, revision_id const & parent_rid,
@@ -1308,6 +1403,8 @@ namespace
     // 'local' roster and marking symbols
     string const ident("ident");
     string const birth("birth");
+    string const dormant_attr("dormant_attr");
+
     string const path_mark("path_mark");
     string const content_mark("content_mark");
     string const attr_mark("attr_mark");
@@ -1315,13 +1412,14 @@ namespace
 }
 
 
-static inline void
-push_local_parts(basic_io::stanza & st,
-		 node_t curr,
-		 marking_t const & mark)
+static void
+push_marking(basic_io::stanza & st,
+             node_t curr,
+             marking_t const & mark)
 {
-  st.push_str_pair(syms::ident, lexical_cast<string>(curr->self));
-  st.push_hex_pair(syms::birth, curr->birth_revision.inner()());
+
+  I(!null_id(mark.birth_revision));
+  st.push_hex_pair(syms::birth, mark.birth_revision.inner()());
 
   for (set<revision_id>::const_iterator i = mark.parent_name.begin();
        i != mark.parent_name.end(); ++i)
@@ -1341,9 +1439,50 @@ push_local_parts(basic_io::stanza & st,
     {
       map<attr_key, std::set<revision_id> >::const_iterator am = mark.attrs.find(i->first);
       I(am != mark.attrs.end());
-      for (set<revision_id>::const_iterator i = am->second.begin();
-	   i != am->second.end(); ++i)
-	st.push_hex_pair(syms::content_mark, i->inner()());
+      for (set<revision_id>::const_iterator j = am->second.begin();
+	   j != am->second.end(); ++j)
+	st.push_hex_triple(syms::attr_mark, i->first(), j->inner()());
+    }
+}
+
+
+void
+parse_marking(basic_io::parser & pa, 
+              node_t n, 
+              marking_t & marking)
+{
+  while (pa.symp())
+    {
+      string rev;
+      if (pa.symp(syms::birth))
+        {
+          pa.sym();
+          pa.hex(rev);
+          marking.birth_revision = revision_id(rev);
+        }
+      else if (pa.symp(syms::path_mark))
+        {
+          pa.sym();
+          pa.hex(rev);
+          safe_insert(marking.parent_name, revision_id(rev));
+        }
+      else if (pa.symp(syms::content_mark))
+        {
+          pa.sym();
+          pa.hex(rev);
+          safe_insert(marking.file_content, revision_id(rev));
+        }
+      else if (pa.symp(syms::attr_mark))
+        {
+          string k;
+          pa.sym();
+          pa.str(k);
+          pa.hex(rev);
+          attr_key key = attr_key(k);
+          I(n->attrs.find(key) != n->attrs.end());
+          safe_insert(marking.attrs[key], revision_id(rev));
+        }
+      else break;
     }
 }
 
@@ -1375,6 +1514,14 @@ roster_t::print_to(basic_io::printer & pr,
 	  st.push_hex_pair(syms::content, ftmp->content.inner()());
           // L(F("printing file %s\n") % fp);
 	}
+
+      if (print_local_parts)
+        {
+          I(curr->self != the_null_node);
+          st.push_str_pair(syms::ident, lexical_cast<string>(curr->self));
+        }
+
+      // Push the non-dormant part of the attr map
       for (full_attr_map_t::const_iterator j = curr->attrs.begin();
 	   j != curr->attrs.end(); ++j)
 	{
@@ -1386,29 +1533,140 @@ roster_t::print_to(basic_io::printer & pr,
 	    }
 	}
 
-      // Now, we *might* print an extended roster here, including the
-      // marking, assuming we're writing the internal
-      // (local-to-this-database) form of the roster.
-
       if (print_local_parts)
 	{
+          // Push the dormant part of the attr map
+          for (full_attr_map_t::const_iterator j = curr->attrs.begin();
+               j != curr->attrs.end(); ++j)
+            {
+              if (!j->second.first)
+                {
+                  I(j->second.second().empty());
+                  st.push_str_pair(syms::dormant_attr, j->first());
+                }
+            }
+
 	  marking_map::const_iterator m = mm.find(curr->self);
 	  I(m != mm.end());
-	  push_local_parts(st, curr, m->second);
+	  push_marking(st, curr, m->second);
 	}
+
       pr.print_stanza(st);
     }
 }
 
+
 void 
 roster_t::parse_from(basic_io::parser & pa,
-                     marking_map & mm,
-                     bool parse_local_parts)
+                     marking_map & mm)
 {
-  // FIXME: implement
-  I(false);
+  // We *always* parse the local part of a roster, because we do not
+  // actually send the non-local part over the network; the only times
+  // we serialize a manifest (non-local roster) is when we're printing
+  // it out for a user, or when we're hashing it for a manifest ID.
+  nodes.clear();
+  root_dir.reset();
+  mm.clear();
+
+  while(pa.symp())
+    {
+      string pth, ident, rev;
+      node_t n;
+
+      if (pa.symp(syms::file))
+        {
+          string content;
+          pa.sym();
+          pa.str(pth);
+          pa.esym(syms::content);
+          pa.hex(content);
+          pa.esym(syms::ident);
+          pa.str(ident);
+          n = file_t(new file_node(lexical_cast<node_id>(ident),
+                                   file_id(content)));
+        }
+      else if (pa.symp(syms::dir))
+        {
+          pa.sym();
+          pa.str(pth);
+          pa.esym(syms::ident);
+          pa.str(ident);
+          n = dir_t(new dir_node(lexical_cast<node_id>(ident)));
+        }
+      else 
+        break;
+
+      I(static_cast<bool>(n));
+
+      safe_insert(nodes, make_pair(n->self, n));
+      if (is_dir_t(n) && pth.empty())
+        {
+          I(! has_root());
+          root_dir = downcast_to_dir_t(n);
+        }
+      else
+        {
+          I(!pth.empty());
+          attach_node(n->self, internal_string_to_split_path(pth));
+        }
+
+      // Non-dormant attrs
+      while(pa.symp(syms::attr))
+        {
+          pa.sym();
+          string k, v;
+          pa.str(k);
+          pa.str(v);
+          safe_insert(n->attrs, make_pair(attr_key(k),
+                                          make_pair(true, attr_value(v))));
+        }
+
+      // Dormant attrs
+      while(pa.symp(syms::dormant_attr))
+        {
+          pa.sym();
+          string k;
+          pa.str(k);
+          safe_insert(n->attrs, make_pair(attr_key(k),
+                                          make_pair(false, attr_value())));
+        }
+
+      {
+        marking_t marking;
+        parse_marking(pa, n, marking);
+        safe_insert(mm, make_pair(n->self, marking));
+      }
+    }
 }
 
+
+void 
+read_roster_and_marking(data const & dat,
+                        roster_t & ros,
+                        marking_map & mm)
+{
+  std::istringstream iss(dat());
+  basic_io::input_source src(iss, "roster");
+  basic_io::tokenizer tok(src);
+  basic_io::parser pars(tok);
+  ros.parse_from(pars, mm);
+  I(src.lookahead == EOF);
+  ros.check_sane(mm);
+}
+
+
+void
+write_roster_and_marking(roster_t const & ros,
+                         marking_map const & mm,
+                         data & dat,
+                         bool print_local_parts)
+{
+  ros.check_sane(mm);
+  std::ostringstream oss;
+  basic_io::printer pr(oss);
+  ros.print_to(pr, mm, print_local_parts);
+  dat = data(oss.str());
+}
 
 
 

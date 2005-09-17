@@ -116,4 +116,12 @@ safe_get(T & container, typename T::key_type const & key)
   return i->second;
 }
 
+inline split_path
+internal_string_to_split_path(std::string const & str)
+{
+  split_path sp;
+  file_path_internal(str).split(sp);
+  return sp;
+}
+
 #endif // __CSET_HH__

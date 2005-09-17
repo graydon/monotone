@@ -312,13 +312,6 @@ print_cset(basic_io::printer & printer,
     }
 }
 
-inline split_path
-string_to_path(string const & str)
-{
-  split_path sp;
-  file_path_internal(str).split(sp);
-  return sp;
-}
 
 void 
 parse_cset(basic_io::parser & parser,
@@ -332,7 +325,7 @@ parse_cset(basic_io::parser & parser,
         {
           parser.sym();
           parser.str(t1);
-          safe_insert(cs.nodes_deleted, string_to_path(t1));
+          safe_insert(cs.nodes_deleted, internal_string_to_split_path(t1));
         }
       else if (parser.symp(syms::rename_node))
         {
@@ -340,14 +333,14 @@ parse_cset(basic_io::parser & parser,
           parser.str(t1);
           parser.esym(syms::to);
           parser.str(t2);
-          safe_insert(cs.nodes_renamed, make_pair(string_to_path(t1),
-                                                  string_to_path(t2)));
+          safe_insert(cs.nodes_renamed, make_pair(internal_string_to_split_path(t1),
+                                                  internal_string_to_split_path(t2)));
         }
       else if (parser.symp(syms::add_dir))
         {
           parser.sym();
           parser.str(t1);
-          safe_insert(cs.dirs_added, string_to_path(t1));
+          safe_insert(cs.dirs_added, internal_string_to_split_path(t1));
         }
       else if (parser.symp(syms::add_file))
         {
@@ -355,7 +348,7 @@ parse_cset(basic_io::parser & parser,
           parser.str(t1);
 	  parser.esym(syms::content);
 	  parser.hex(t2);
-          safe_insert(cs.files_added, make_pair(string_to_path(t1),
+          safe_insert(cs.files_added, make_pair(internal_string_to_split_path(t1),
                                                 file_id(t2)));
         }
       else if (parser.symp(syms::patch))
@@ -367,7 +360,7 @@ parse_cset(basic_io::parser & parser,
 	  parser.esym(syms::to);
 	  parser.hex(t3);
 	  safe_insert(cs.deltas_applied, 
-                      make_pair(string_to_path(t1),
+                      make_pair(internal_string_to_split_path(t1),
                                 make_pair(file_id(t2), 
                                           file_id(t3))));
 	}
@@ -378,7 +371,7 @@ parse_cset(basic_io::parser & parser,
 	  parser.esym(syms::attr);
 	  parser.str(t2);
 	  safe_insert(cs.attrs_cleared, 
-                      make_pair(string_to_path(t1), 
+                      make_pair(internal_string_to_split_path(t1), 
                                 attr_key(t2)));
 	}
       else if (parser.symp(syms::set))
@@ -390,7 +383,7 @@ parse_cset(basic_io::parser & parser,
 	  parser.esym(syms::value);
 	  parser.str(t3);
 	  safe_insert(cs.attrs_set, 
-                      make_pair(make_pair(string_to_path(t1),
+                      make_pair(make_pair(internal_string_to_split_path(t1),
                                           attr_key(t2)),
                                 attr_value(t3)));
 	}

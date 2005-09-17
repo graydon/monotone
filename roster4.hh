@@ -43,7 +43,7 @@ typedef std::map<node_id, node_t> node_map;
 struct node 
 {
   node();
-  revision_id birth_revision;
+  node(node_id i);
   node_id self;
   node_id parent; // the_null_node iff this is a root dir  
   path_component name; // the_null_component iff this is a root dir  
@@ -58,6 +58,8 @@ struct node
 struct dir_node
   : public node
 {
+  dir_node();
+  dir_node(node_id i);
   dir_map children;
   node_t get_child(path_component const & pc) const;
   void attach_child(path_component const & pc, node_t child);
@@ -72,6 +74,8 @@ struct dir_node
 struct file_node
   : public node
 {
+  file_node();
+  file_node(node_id i, file_id const & f);
   file_id content;
 
   // need a virtual function to make dynamic_cast work
@@ -115,10 +119,17 @@ downcast_to_file_t(node_t const n)
 
 struct marking_t
 {
+  revision_id birth_revision;
   std::set<revision_id> parent_name;
   std::set<revision_id> file_content;
   std::map<attr_key, std::set<revision_id> > attrs;
-  marking_t(revision_id const & birth_rid, node_t n);
+  marking_t();
+  marking_t(revision_id const & birth_rid,
+            revision_id const & current_rid, 
+            node_t n);
+  marking_t freshen(node_t old_node,
+                    node_t new_node,
+                    revision_id const & current_rid) const;
 };
 
 typedef std::map<node_id, marking_t> marking_map;
@@ -170,8 +181,7 @@ public:
 		bool print_local_parts) const;
 
   void parse_from(basic_io::parser & pa,
-                  marking_map & mm,
-                  bool parse_local_parts);
+                  marking_map & mm);
 
 private:
   void check_finite_depth() const;
