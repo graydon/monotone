@@ -21,10 +21,9 @@ struct cert;
 #include "manifest.hh"
 #include "numeric_vocab.hh"
 #include "paths.hh"
+#include "roster4.hh"
 #include "selectors.hh"
 #include "vocab.hh"
-
-struct revision_set;
 
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
@@ -68,6 +67,7 @@ struct revision_set;
 class transaction_guard;
 struct posting;
 struct app_state;
+struct revision_set;
 
 class database
 {
@@ -433,8 +433,16 @@ public:
   // branches
   void get_branches(std::vector<std::string> & names);
 
-  // node_id maintainance
-  
+  // roster and node_id stuff
+ 
+  void get_roster(revision_id const & rid, 
+		  roster_t & roster,
+		  marking_map & marks);
+  void get_uncommon_ancestors(revision_id const & a,
+			      revision_id const & b,
+			      std::set<revision_id> & a_uncommon_ancs,
+			      std::set<revision_id> & b_uncommon_ancs);
+			      
   node_id next_node_id();
   
   // completion stuff

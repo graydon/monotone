@@ -59,8 +59,8 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   if (t.empty() || t.find("revision") != t.end())
     add_revision_tests(suite);  
 
-  if (t.empty() || t.find("change_set") != t.end())
-    add_change_set_tests(suite);  
+  if (t.empty() || t.find("cset") != t.end())
+    add_cset_tests(suite);  
 
   if (t.empty() || t.find("diff_patch") != t.end())
     add_diff_patch_tests(suite);

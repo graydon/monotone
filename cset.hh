@@ -72,8 +72,18 @@ struct cset
   std::set<std::pair<split_path, attr_key> > attrs_cleared;
   std::map<std::pair<split_path, attr_key>, attr_value> attrs_set;
 
-  void apply_to(editable_tree & t);
-  bool empty();
+  void apply_to(editable_tree & t) const;
+  bool empty() const;
 };
+
+namespace basic_io { struct printer; struct parser; }
+
+void 
+print_cset(basic_io::printer & printer,
+	   cset const & cs);
+
+void 
+parse_cset(basic_io::parser & parser,
+	   cset & cs);
 
 #endif // __CSET_HH__

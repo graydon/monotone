@@ -1376,8 +1376,10 @@ database::put_revision(revision_id const & new_id,
               new_id.inner()().c_str());
     }
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
   check_sane_history(new_id, constants::verify_depth, *__app);
-
+*/
   guard.commit();
 }
 
@@ -2441,6 +2443,33 @@ database::get_branches(vector<string> & names)
         decode_base64(row_encoded, name);
         names.push_back(name());
       }
+}
+
+void 
+database::get_roster(revision_id const & rid, 
+                     roster_t & roster,
+                     marking_map & marks)
+{
+  // FIXME: implement
+  I(false);
+}
+
+void 
+database::get_uncommon_ancestors(revision_id const & a,
+                                 revision_id const & b,
+                                 std::set<revision_id> & a_uncommon_ancs,
+                                 std::set<revision_id> & b_uncommon_ancs)
+{
+  // FIXME: implement
+  I(false);
+}
+
+node_id 
+database::next_node_id()
+{
+  // FIXME: implement
+  I(false);
+  return 0;
 }
 
 

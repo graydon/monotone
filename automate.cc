@@ -665,6 +665,8 @@ automate_inventory(std::vector<utf8> args,
                    app_state & app,
                    std::ostream & output)
 {
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
   if (args.size() != 0)
     throw usage(help_name);
 
@@ -790,7 +792,7 @@ automate_inventory(std::vector<utf8> args,
 
       output << std::endl;
     }
- 
+*/ 
 }
 
 // Name: certs

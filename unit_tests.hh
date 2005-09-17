@@ -26,7 +26,7 @@ void add_file_io_tests(test_suite * suite);
 void add_key_tests(test_suite * suite);
 void add_transform_tests(test_suite * suite);
 void add_vocab_tests(test_suite * suite);
-void add_change_set_tests(test_suite * suite);
+void add_cset_tests(test_suite * suite);
 void add_revision_tests(test_suite * suite);
 void add_xdelta_tests(test_suite * suite);
 void add_packet_tests(test_suite * suite);

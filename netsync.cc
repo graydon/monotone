@@ -960,6 +960,8 @@ session::request_rev_revisions(revision_id const & init,
                                map<revision_id, bool> attached,
                                set<revision_id> visited)
 {
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
 
   set<manifest_id> seen_manifests;
@@ -1026,8 +1028,6 @@ session::request_rev_revisions(revision_id const & init,
                         }
                       seen_manifests.insert(parent_manifest);
                     }
-
-
                   
                   // check out each file delta edge
                   change_set const & cset = edge_changes(k);
@@ -1079,6 +1079,7 @@ session::request_rev_revisions(revision_id const & init,
         }
       frontier = next_frontier;
     }
+*/
 }
 
 void 
@@ -1086,6 +1087,8 @@ session::request_fwd_revisions(revision_id const & i,
                                map<revision_id, bool> attached,
                                set<revision_id> & visited)
 {
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
   if (visited.find(i) != visited.end())
     return;
   
@@ -1168,6 +1171,7 @@ session::request_fwd_revisions(revision_id const & i,
       // arrival of its prerequisites in the packet_db_writer
       this->dbw.consume_revision_data(j->first, j->second->first);
     }
+*/
 }
 
 void 

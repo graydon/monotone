@@ -386,7 +386,10 @@ check_sane(app_state & app,
       {
         try 
           {
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
             check_sane_history(i->first, constants::verify_depth, app);
+*/
           }
         catch (std::exception & e)
           {

@@ -167,4 +167,23 @@ enum diff_type
 };
 
 
+inline bool 
+null_id(file_id const & i)
+{
+  return i.inner()().empty();
+}
+
+inline bool 
+null_id(manifest_id const & i)
+{
+  return i.inner()().empty();
+}
+
+inline bool 
+null_id(revision_id const & i)
+{
+  return i.inner()().empty();
+}
+
+
 #endif // __VOCAB_HH__

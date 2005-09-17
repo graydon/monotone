@@ -7,13 +7,17 @@
 #include <algorithm>
 #include <stack>
 #include <set>
+#include <string>
 #include <vector>
 
 #include "app_state.hh"
-#include "change_set.hh" // Remove this when fully defunct
+#include "basic_io.hh"
 #include "cset.hh"
 #include "roster4.hh"
+#include "revision.hh"
 #include "vocab.hh"
+
+#include <boost/lexical_cast.hpp>
 
 using std::inserter;
 using std::make_pair;
@@ -23,7 +27,9 @@ using std::reverse;
 using std::set;
 using std::set_union;
 using std::stack;
+using std::string;
 using std::vector;
+using boost::lexical_cast;
 
 
 ///////////////////////////////////////////////////////////////////
@@ -176,6 +182,86 @@ dirname_basename(split_path const & sp,
     }
 }
 
+struct
+dfs_iter
+{
+  
+  dir_t root;
+  bool return_root;
+  stack< pair<dir_t, dir_map::const_iterator> > stk;
+  split_path dirname;
+
+  dfs_iter(dir_t r) 
+    : root(r), return_root(true)
+  {
+    if (!root->children.empty())
+      stk.push(make_pair(root, root->children.begin()));
+  }
+
+  void path(split_path & pv)
+  {
+    I(!finished());
+    if (return_root)
+      {
+	pv.clear();
+	pv.push_back(the_null_component);
+      }
+    else
+      {
+	I(!stk.empty());
+	pv = dirname;
+	pv.push_back(stk.top().second->first);
+      }
+  }
+
+  bool finished()
+  {
+    return (!return_root) && stk.empty();
+  }
+
+  node_t operator*()
+  {
+    if (return_root)
+      {
+	return_root = false;
+	return root;
+      }
+    else
+      {
+	I(!stk.empty());
+	return stk.top().second->second;
+      }
+  }
+
+  void operator++()
+  {
+    if (finished())
+      return;
+    
+    return_root = false;
+
+    node_t ntmp = stk.top().second->second;
+    if (is_dir_t(ntmp))
+      {
+        dirname.push_back(stk.top().second->first);
+	dir_t dtmp = downcast_to_dir_t(ntmp);
+	stk.push(make_pair(dtmp, dtmp->children.begin()));
+      }
+    else
+      ++(stk.top().second);
+
+    while (!stk.empty()
+	   && stk.top().second == stk.top().first->children.end())
+      {
+	stk.pop();
+	if (!dirname.empty())
+	  dirname.pop_back();
+	if (!stk.empty())
+	  ++stk.top().second;
+      }
+  }
+};
+
 
 bool
 roster_t::has_root() const
@@ -183,6 +269,101 @@ roster_t::has_root() const
   return static_cast<bool>(root_dir);
 }
 
+inline bool
+same_type(node_t a, node_t b)
+{
+  return is_file_t(a) == is_file_t(b);
+}
+
+inline bool
+shallow_equal(node_t a, node_t b, 
+	      bool shallow_compare_dir_children)
+{
+  if (a->self != b->self)
+    return false;
+  
+  if (a->parent != b->parent)
+    return false;
+
+  if (a->name != b->name)
+    return false;
+
+  if (!(a->birth_revision == b->birth_revision))
+    return false;
+
+  if (a->attrs != b->attrs)
+    return false;
+
+  if (! same_type(a,b))
+    return false;
+
+  if (is_file_t(a))
+    {
+      file_t fa = downcast_to_file_t(a);
+      file_t fb = downcast_to_file_t(b);
+      if (!(fa->content == fb->content))
+	return false;     
+    }
+  else
+    {
+      dir_t da = downcast_to_dir_t(a);
+      dir_t db = downcast_to_dir_t(b);
+
+      if (shallow_compare_dir_children)
+	{
+	  if (da->children.size() != db->children.size())
+	    return false;
+	  
+	  dir_map::const_iterator 
+	    i = da->children.begin(),
+	    j = db->children.begin(); 
+	  
+	  while (i != da->children.end() && j != db->children.end())
+	    {
+	      if (i->first != j->first)
+		return false;
+	      if (i->second->self != j->second->self)
+		return false;
+	      ++i;
+	      ++j;
+	    }
+	  I(i == da->children.end() && j == db->children.end());
+	}
+    }
+  return true;
+}
+
+bool 
+roster_t::operator==(roster_t const & other) const
+{
+  node_map::const_iterator i = nodes.begin(), j = other.nodes.begin(); 
+  while (i != nodes.end() && j != other.nodes.end())
+    {
+      if (i->first != j->first)
+	return false;
+      if (!shallow_equal(i->second, j->second, true))
+	return false;
+      ++i;
+      ++j;
+    }
+
+  if (i != nodes.end() || j != other.nodes.end())
+    return false;
+
+  dfs_iter p(root_dir), q(other.root_dir);
+  while (! (p.finished() || q.finished()))
+    {
+      if (!shallow_equal(*p, *q, true))
+	return false;
+      ++p;
+      ++q;
+    }
+
+  if (!(p.finished() && q.finished()))
+    return false;
+
+  return true;
+}
 
 node_t
 roster_t::get_node(split_path const & sp) const
@@ -395,87 +576,6 @@ marking_t::marking_t(revision_id const & birth_rid, node_t n)
 }
 
 
-struct
-dfs_iter
-{
-  
-  dir_t root;
-  bool return_root;
-  stack< pair<dir_t, dir_map::const_iterator> > stk;
-  split_path dirname;
-
-  dfs_iter(dir_t r) 
-    : root(r), return_root(true)
-  {
-    if (!root->children.empty())
-      stk.push(make_pair(root, root->children.begin()));
-  }
-
-  void path(split_path & pv)
-  {
-    I(!finished());
-    if (return_root)
-      {
-	pv.clear();
-	pv.push_back(the_null_component);
-      }
-    else
-      {
-	I(!stk.empty());
-	pv = dirname;
-	pv.push_back(stk.top().second->first);
-      }
-  }
-
-  bool finished()
-  {
-    return (!return_root) && stk.empty();
-  }
-
-  node_t operator*()
-  {
-    if (return_root)
-      {
-	return_root = false;
-	return root;
-      }
-    else
-      {
-	I(!stk.empty());
-	return stk.top().second->second;
-      }
-  }
-
-  void operator++()
-  {
-    if (finished())
-      return;
-    
-    return_root = false;
-
-    node_t ntmp = stk.top().second->second;
-    if (is_dir_t(ntmp))
-      {
-        dirname.push_back(stk.top().second->first);
-	dir_t dtmp = downcast_to_dir_t(ntmp);
-	stk.push(make_pair(dtmp, dtmp->children.begin()));
-      }
-    else
-      ++(stk.top().second);
-
-    while (!stk.empty()
-	   && stk.top().second == stk.top().first->children.end())
-      {
-	stk.pop();
-	if (!dirname.empty())
-	  dirname.pop_back();
-	if (!stk.empty())
-	  ++stk.top().second;
-      }
-  }
-};
-
-
 void
 roster_t::check_finite_depth() const
 {
@@ -497,30 +597,30 @@ roster_t::check_sane(marking_map const & marking) const
   for (ri = nodes.begin(), mi = marking.begin();
        ri != nodes.end() && mi != marking.end();
        ++ri, ++mi)
-  {
-    I(ri->first == mi->first);
-    node_id nid = ri->first;
-    I(!null_node(nid) && !temp_node(nid));
-    node_t n = ri->second;
-    I(n->self == nid);
-    if (is_dir_t(n))
-      {
-        if (null_name(n->name) || null_node(n->parent))
-	  I(null_name(n->name) && null_node(n->parent));
-	else
+    {
+      I(ri->first == mi->first);
+      node_id nid = ri->first;
+      I(!null_node(nid) && !temp_node(nid));
+      node_t n = ri->second;
+      I(n->self == nid);
+      if (is_dir_t(n))
+	{
+	  if (null_name(n->name) || null_node(n->parent))
+	    I(null_name(n->name) && null_node(n->parent));
+	  else
+	    I(!null_name(n->name) && !null_node(n->parent));
+	}
+      else
+	{
 	  I(!null_name(n->name) && !null_node(n->parent));
-      }
-    else
-      {
-	I(!null_name(n->name) && !null_node(n->parent));
-	!null_id(downcast_to_file_t(n)->content);
-      }
-    I(!null_id(n->birth_revision));
-    for (full_attr_map_t::const_iterator i = n->attrs.begin(); i != n->attrs.end(); ++i)
-      I(i->second.first || !i->second.second().empty());
-    if (n != root_dir)
-      I(downcast_to_dir_t(get_node(n->parent))->get_child(n->name) == n);
-  }
+	  !null_id(downcast_to_file_t(n)->content);
+	}
+      I(!null_id(n->birth_revision));
+      for (full_attr_map_t::const_iterator i = n->attrs.begin(); i != n->attrs.end(); ++i)
+	I(i->second.first || !i->second.second().empty());
+      if (n != root_dir)
+	I(downcast_to_dir_t(get_node(n->parent))->get_child(n->name) == n);
+    }
 
   I(ri == nodes.end() && mi == marking.end());
   check_finite_depth();
@@ -537,7 +637,7 @@ namespace
   public:
     editable_roster_base(roster_t & r, node_id_source & nis)
       : r(r), nis(nis)
-      {}
+    {}
 
     virtual node_id detach_node(split_path const & src)
     {
@@ -593,7 +693,8 @@ namespace
     node_id_source & nis;
   };
 
-  struct testing_node_id_source : public node_id_source
+  struct testing_node_id_source 
+    : public node_id_source
   {
     testing_node_id_source() : curr(first_node) {}
     virtual node_id next()
@@ -606,7 +707,8 @@ namespace
     node_id curr;
   };
 
-  struct temp_node_id_source : public node_id_source
+  struct temp_node_id_source 
+    : public node_id_source
   {
     temp_node_id_source() : curr(first_temp_node) {}
     virtual node_id next()
@@ -618,7 +720,8 @@ namespace
     node_id curr;
   };
 
-  struct true_node_id_source : public node_id_source
+  struct true_node_id_source 
+    : public node_id_source
   {
     true_node_id_source(app_state & app) : app(app) {}
     virtual node_id next()
@@ -630,10 +733,14 @@ namespace
     app_state & app;
   };
 
-  class editable_roster_for_merge : editable_roster_base
+  class editable_roster_for_merge 
+    : public editable_roster_base
   {
   public:
     set<node_id> new_nodes;
+    editable_roster_for_merge(roster_t & r, node_id_source & nis)
+      : editable_roster_base(r, nis)
+    {}
     virtual node_id create_dir_node()
     {
       node_id nid = this->editable_roster_base::create_dir_node();
@@ -736,103 +843,103 @@ namespace
              revision_id const & new_rid,
              full_attr_map_t const & attrs, 
              marking_t & marks)
-    {
-      I(marks.attrs.empty());
-      for (full_attr_map_t::const_iterator j = attrs.begin(); j != attrs.end();
-           ++j)
-        {
-          full_attr_map_t::const_iterator lai = lattrs.find(j->first);
-          full_attr_map_t::const_iterator rai = rattrs.find(j->first);
+  {
+    I(marks.attrs.empty());
+    for (full_attr_map_t::const_iterator j = attrs.begin(); j != attrs.end();
+	 ++j)
+      {
+	full_attr_map_t::const_iterator lai = lattrs.find(j->first);
+	full_attr_map_t::const_iterator rai = rattrs.find(j->first);
 
-          I(marks.attrs.find(j->first) == marks.attrs.end());
+	I(marks.attrs.find(j->first) == marks.attrs.end());
 
-          // Neither left nor right have ever seen this attr, so it was
-          // new in this rev. We make a new marking set for it and add the
-          // current rev to the marking set.
-          if (lai == lattrs.end() && rai == rattrs.end())
-            safe_insert(marks.attrs[j->first], new_rid);
+	// Neither left nor right have ever seen this attr, so it was
+	// new in this rev. We make a new marking set for it and add the
+	// current rev to the marking set.
+	if (lai == lattrs.end() && rai == rattrs.end())
+	  safe_insert(marks.attrs[j->first], new_rid);
 
-          // Only the right side has ever seen this attr, so the right side
-          // won merging.
-          else if (lai == lattrs.end() && rai != rattrs.end())
-            {
-              // Two sub-possibilities:               
-              if (j->second == rai->second)
-                {
-                  // 1. The right edge is of the form a->a, and represents no decision
-                  // on the part of the user, just a propagation of an existing state.
-                  // In this case we carry the old mark-set forward from the right marking.
-                  safe_insert(marks.attrs, make_pair(j->first, 
-                                                     safe_get(rmarks.attrs, j->first)));
-                }
-              else
+	// Only the right side has ever seen this attr, so the right side
+	// won merging.
+	else if (lai == lattrs.end() && rai != rattrs.end())
+	  {
+	    // Two sub-cases:               
+	    if (j->second == rai->second)
+	      {
+		// 1. The right edge is of the form a->a, and represents no decision
+		// on the part of the user, just a propagation of an existing state.
+		// In this case we carry the old mark-set forward from the right marking.
+		safe_insert(marks.attrs, make_pair(j->first, 
+						   safe_get(rmarks.attrs, j->first)));
+	      }
+	    else
                 
-                {
-                  // 2. The right edge represents a change to the attr value --
-                  // thus a decision on the part of the user -- in which case
-                  // we need to set the new mark-set to {new_rid}
-                  safe_insert(marks.attrs[j->first], new_rid);
-                }
-            }
+	      {
+		// 2. The right edge represents a change to the attr value --
+		// thus a decision on the part of the user -- in which case
+		// we need to set the new mark-set to {new_rid}
+		safe_insert(marks.attrs[j->first], new_rid);
+	      }
+	  }
 
-          // Only the left side has ever seen this attr, so the left
-          // side won merging.
-          else if (lai != lattrs.end() && rai == rattrs.end())
-            {
-              // Same two sub-cases here as above:
-              if (j->second == lai->second)
-                safe_insert(marks.attrs, make_pair(j->first, 
-                                                   safe_get(lmarks.attrs, j->first)));
-              else
-                safe_insert(marks.attrs[j->first], new_rid);
-            }
+	// Only the left side has ever seen this attr, so the left
+	// side won merging.
+	else if (lai != lattrs.end() && rai == rattrs.end())
+	  {
+	    // Same two sub-cases here as above:
+	    if (j->second == lai->second)
+	      safe_insert(marks.attrs, make_pair(j->first, 
+						 safe_get(lmarks.attrs, j->first)));
+	    else
+	      safe_insert(marks.attrs[j->first], new_rid);
+	  }
 
-          // Otherwise both sides have seen this attr, and we need to look at
-          // both old values.
-          else
-            {
-              bool diff_from_left = (j->second != lai->second);
-              bool diff_from_right = (j->second != rai->second);
+	// Otherwise both sides have seen this attr, and we need to look at
+	// both old values.
+	else
+	  {
+	    bool diff_from_left = (j->second != lai->second);
+	    bool diff_from_right = (j->second != rai->second);
 
-              // If the merged attr value differs from both inputs, the
-              // user "expressed a preference" by making a new setting, so
-              // we make the marking set for the new attr value contain
-              // only the new rev.
-              if (diff_from_left && diff_from_right)
-                safe_insert(marks.attrs[j->first], new_rid);
+	    // If the merged attr value differs from both inputs, the
+	    // user "expressed a preference" by making a new setting, so
+	    // we make the marking set for the new attr value contain
+	    // only the new rev.
+	    if (diff_from_left && diff_from_right)
+	      safe_insert(marks.attrs[j->first], new_rid);
 
-              // If the merged attr is equal to one side of the merge input,
-              // we must ask for help in determining what to do with the 
-              // marks.
-              else if (diff_from_left && !diff_from_right)
-                mark_won_merge(safe_get(lmarks.attrs, j->first),
-                               left_uncommon_ancestors,
-                               safe_get(rmarks.attrs, j->first),
-                               new_rid, marks.attrs[j->first]);
+	    // If the merged attr is equal to one side of the merge input,
+	    // we must ask for help in determining what to do with the 
+	    // marks.
+	    else if (diff_from_left && !diff_from_right)
+	      mark_won_merge(safe_get(lmarks.attrs, j->first),
+			     left_uncommon_ancestors,
+			     safe_get(rmarks.attrs, j->first),
+			     new_rid, marks.attrs[j->first]);
 
-              else if (!diff_from_left && diff_from_right)
-                mark_won_merge(safe_get(rmarks.attrs, j->first),
-                               right_uncommon_ancestors,
-                               safe_get(lmarks.attrs, j->first),
-                               new_rid, marks.attrs[j->first]);
+	    else if (!diff_from_left && diff_from_right)
+	      mark_won_merge(safe_get(rmarks.attrs, j->first),
+			     right_uncommon_ancestors,
+			     safe_get(lmarks.attrs, j->first),
+			     new_rid, marks.attrs[j->first]);
 
-              // Otherwise the merged attr is the same as both ancestors,
-              // meaning we have a clean merge in which the user said
-              // nothing; we must preserve (union) the mark sets of both
-              // inputs.
-              else
-                {
-                  set<revision_id> const & lam = safe_get(lmarks.attrs, j->first);
-                  set<revision_id> const & ram = safe_get(rmarks.attrs, j->first);
-                  set<revision_id> res;
-                  set_union(lam.begin(), lam.end(),
-                            ram.begin(), ram.end(),
-                            inserter(res, res.begin()));
-                  safe_insert(marks.attrs, make_pair(j->first, res));
-                }
-            }
-        }
-    }
+	    // Otherwise the merged attr is the same as both ancestors,
+	    // meaning we have a clean merge in which the user said
+	    // nothing; we must preserve (union) the mark sets of both
+	    // inputs.
+	    else
+	      {
+		set<revision_id> const & lam = safe_get(lmarks.attrs, j->first);
+		set<revision_id> const & ram = safe_get(rmarks.attrs, j->first);
+		set<revision_id> res;
+		set_union(lam.begin(), lam.end(),
+			  ram.begin(), ram.end(),
+			  inserter(res, res.begin()));
+		safe_insert(marks.attrs, make_pair(j->first, res));
+	      }
+	  }
+      }
+  }
 
   // take care of marking a single node both of whose parents exist
   void
@@ -929,15 +1036,7 @@ namespace
                left_uncommon_ancestors, right_uncommon_ancestors,
                new_rid, n->attrs, marks);
   }
-}
 
-
-
-/// Remainder is not yet compiling, so commented out
-/*
-
-namespace 
-{
   // this function is also responsible for verifying ancestry invariants --
   // those invariants on a roster that involve the structure of the roster's
   // parents, rather than just the structure of the roster itself.
@@ -963,52 +1062,174 @@ namespace
         marking_map::const_iterator rmi = right_marking.find(i->first);
         bool exists_in_left = (lni != left_r.all_nodes().end());
         bool exists_in_right = (rni != right_r.all_nodes().end());
+
         if (!exists_in_left && !exists_in_right)
           {
-            marking.insert(make_pair(i->first, marking_t(new_rid)));
-            I(n.birth_revision == new_rid);
+	    // If the node didn't exist at all in either right or left
+	    // side, it was added; there's no need to examine the left
+	    // and right sides further, we know all the markings for
+	    // this node will be the set {new_rid}.
+            marking.insert(make_pair(i->first, marking_t(new_rid, n)));
+            I(n->birth_revision == new_rid);
           }
+
         else if (!exists_in_left && exists_in_right)
           {
-            marking.insert(*rni);
-            node_t const & rn = rni->second;
-            I(n.type == rn.type && n.birth_revision == rn.birth_revision);
-            I(right_uncommon_ancestors.find(n.birth_revision)
-              != right_uncommon_ancestors.end());
+	    node_t const & rn = rni->second;
+	    I(same_type(n, rn) && n->birth_revision == rn->birth_revision);
+	    I(right_uncommon_ancestors.find(n->birth_revision)
+	      != right_uncommon_ancestors.end());
+
+	    // Two sub-cases: 
+	    if (shallow_equal(n, rn, false))
+	      {
+		// 1. The right edge is of the form a->a, and
+		// represents no decision on the part of the user,
+		// just a propagation of an existing state.  In this
+		// case we carry the old mark-set forward from the
+		// right marking.
+		marking.insert(*rmi);
+	      }
+	    else
+	      {
+		// 2. The right edge represents a change to the node
+		// -- thus a decision on the part of the user -- in
+		// which case we need to set the new mark-set to
+		// {new_rid}
+		marking.insert(make_pair(i->first, marking_t(new_rid, n)));
+	      }
           }
         else if (exists_in_left && !exists_in_right)
           {
-            marking.insert(*lni);
             node_t const & ln = lni->second;
-            I(n.type == ln.type && n.birth_revision == ln.birth_revision);
-            I(left_uncommon_ancestors.find(n.birth_revision)
+            I(same_type(n, ln) && n->birth_revision == ln->birth_revision);
+            I(left_uncommon_ancestors.find(n->birth_revision)
               != left_uncommon_ancestors.end());
+
+	    // Same two sub-cases here as above:
+	    if (shallow_equal(n, ln, false))
+	      marking.insert(*lmi);
+	    else
+	      marking.insert(make_pair(i->first, marking_t(new_rid, n)));
           }
         else
           {
             node_t const & ln = lni->second;
             node_t const & rn = rni->second;
-            I(n.type == rn.type && n.birth_revision == rn.birth_revision);
-            I(n.type == ln.type && n.birth_revision == ln.birth_revision);
-            marking_t marks;
-            marking_t const & lmarks = lmi->second;
-            marking_t const & rmarks = rmi->second;
+            I(same_type(n, rn) && n->birth_revision == rn->birth_revision);
+            I(same_type(n, ln) && n->birth_revision == ln->birth_revision);
+            marking_t marks(new_rid, n);
             mark_nontrivial_node(ln, rn, lmi->second, rmi->second,
                                  left_uncommon_ancestors, right_uncommon_ancestors,
-                                 n, marks);
+                                 new_rid, n, marks);
             // attributes can never be deleted.
             // this is kinda inefficent, but very rarely will any node have
             // more than 1 attribute.
-            for (full_attr_map_t::const_iterator j = ln.attrs.begin();
-                 j != ln.attrs.end(); ++j)
-              I(n.attrs.find(j->first) != n.attrs.end());
-            for (full_attr_map_t::const_iterator j = rn.attrs.begin();
-                 j != rn.attrs.end(); ++j)
-              I(n.attrs.find(j->first) != n.attrs.end());
+            for (full_attr_map_t::const_iterator j = ln->attrs.begin();
+                 j != ln->attrs.end(); ++j)
+              I(n->attrs.find(j->first) != n->attrs.end());
+            for (full_attr_map_t::const_iterator j = rn->attrs.begin();
+                 j != rn->attrs.end(); ++j)
+              I(n->attrs.find(j->first) != n->attrs.end());
+
+            marking.insert(make_pair(i->first, marks));
           }
       }
   }             
+  
+  
+  class editable_roster_for_nonmerge 
+    : public editable_roster_base
+  {
+  public:
+    editable_roster_for_nonmerge(roster_t & r, node_id_source & nis,
+                                 revision_id const & rid,
+                                 marking_map & markings)
+      : editable_roster_base(r, nis),
+        rid(rid), markings(markings)
+    {}
+
+    virtual node_id detach_node(split_path const & src)
+    {
+      node_id nid = this->editable_roster_base::detach_node(src);
+      marking_map::iterator marking = markings.find(nid);
+      I(marking != markings.end());
+      marking->second.parent_name.clear();
+      marking->second.parent_name.insert(rid);
+      return nid;
+    }
+
+    virtual void drop_detached_node(node_id nid)
+    {
+      this->editable_roster_base::drop_detached_node(nid);
+      safe_erase(markings, nid);
+    }
+
+    virtual node_id create_dir_node()
+    {
+      return handle_new(this->editable_roster_base::create_dir_node());
+    }
+
+    virtual node_id create_file_node(file_id const & content)
+    {
+      return handle_new(this->editable_roster_base::create_file_node(content));
+    }
+
+    virtual void apply_delta(split_path const & pth,
+                             file_id const & old_id, file_id const & new_id)
+    {
+      this->editable_roster_base::apply_delta(pth, old_id, new_id);
+      node_id nid = r.get_node(pth)->self;
+      marking_map::iterator marking = markings.find(nid);
+      I(marking != markings.end());
+      marking->second.file_content.clear();
+      marking->second.file_content.insert(rid);
+    }
+
+    virtual void clear_attr(split_path const & pth, attr_key const & name)
+    {
+      this->editable_roster_base::clear_attr(pth, name);
+      handle_attr(pth, name);
+    }
+
+    virtual void set_attr(split_path const & pth, attr_key const & name,
+                          attr_value const & val)
+    {
+      this->editable_roster_base::set_attr(pth, name, val);
+      handle_attr(pth, name);
+    }
+
+    node_id handle_new(node_id nid)
+    {
+      node_t n = r.get_node(nid);
+      n->birth_revision = rid;
+      markings.insert(make_pair(nid, marking_t(rid, n)));
+      return nid;
+    }
+
+    void handle_attr(split_path const & pth, attr_key const & name)
+    {
+      node_id nid = r.get_node(pth)->self;
+      marking_map::iterator marking = markings.find(nid);
+      std::map<attr_key, std::set<revision_id> >::iterator am = marking->second.attrs.find(name);
+      if (am == marking->second.attrs.end())
+	{
+	  marking->second.attrs.insert(make_pair(name, set<revision_id>()));
+	  am = marking->second.attrs.find(name);
+	}
+      
+      I(am != marking->second.attrs.end());
+      am->second.clear();
+      am->second.insert(rid);
+    }
+    
+  private:
+    revision_id const & rid;
+    // markings starts out as the parent's markings
+    marking_map & markings;
+  };
 }
+
 
 void
 make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
@@ -1027,14 +1248,20 @@ make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
     // bottleneck in this code
     result = left_r;
     roster_t from_right_r(right_r);
-    editable_roster from_left_er(result, nis), from_right_er(from_right_r, nis);
+
+    editable_roster_for_merge from_left_er(result, nis);
+    editable_roster_for_merge from_right_er(from_right_r, nis);
+
     left_cs.apply_to(from_left_er);
     right_cs.apply_to(from_right_er);
+
     set<node_id> new_ids;
+    true_node_id_source tnis = true_node_id_source(app);
     unify_rosters(result, from_left_er.new_nodes,
                   from_right_r, from_right_er.new_nodes,
-                  new_ids, true_node_id_source(app));
-    I(result == new_from_right);
+                  new_ids, tnis);
+    
+    I(result == from_right_r);
   }
   // SPEEDUP?: instead of constructing new marking from scratch, track which
   // nodes were modified, and scan only them
@@ -1045,81 +1272,7 @@ make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
                                 left_uncommon_ancestors, right_uncommon_ancestors);
   mark_merge_roster(left_r, right_r, left_marking, right_marking,
                     left_uncommon_ancestors, right_uncommon_ancestors,
-                    result, marking);
-}
-
-namespace
-{
-  class editable_roster_for_nonmerge : editable_roster_base
-  {
-  public:
-    editable_roster_for_nonmerge(roster_t & r, node_id_source & nis,
-                                 revision_id const & rid,
-                                 marking_map & marking)
-      : editable_roster_base(r, nis),
-        rid(rid), marking(marking)
-    {}
-    virtual node_id detach_node(split_path const & src)
-    {
-      node_id nid = this->editable_roster_base::detach_node(nid);
-      marking_t & marks = safe_get(marking, nid);
-      marks.parent_name.clear();
-      marks.parent_name.insert(rid);
-      return nid;
-    }
-    virtual void drop_detached_node(node_id nid)
-    {
-      this->editable_roster_base::drop_detached_node(nid);
-      safe_erase(marking, nid);
-    }
-    node_id handle_new(node_id nid)
-    {
-      node_t & n = r.node(nid);
-      n.birth_revision = rid;
-      marking.insert(make_pair(nid, marking_t(rid, n)));
-      return nid;
-    }
-    virtual node_id create_dir_node()
-    {
-      return handle_new(this->editable_roster_base::create_dir_node());
-    }
-    virtual node_id create_file_node()
-    {
-      return handle_new(this->editable_roster_base::create_file_node());
-    }
-    virtual void apply_delta(split_path const & pth,
-                             file_id const & old_id, file_id const & new_id)
-    {
-      this->editable_roster_base::apply_delta(pth, old_id, new_id);
-      marking_t & marks = safe_get(marking, r.lookup(pth));
-      marks.file_content.clear();
-      marks.file_content.insert(rid);
-    }
-    void handle_attr(split_path const & pth, attr_key const & name)
-    {
-      marking_t & marks = safe_get(marking, r.lookup(pth));
-      if (marks.attrs.find(name) == marks.attrs.end())
-        marks.attrs.insert(make_pair(name, set<revision_id>()));
-      set<revision_id> & markset = safe_get(marks.attrs, name);
-      markset.clear();
-      markset.insert(rid);
-    }
-    virtual void clear_attr(split_path const & pth, attr_key const & name)
-    {
-      this->editable_roster_base::clear_attr(pth, name);
-      handle_attr(pth, name);
-    }
-    virtual void set_attr(split_path const & pth, attr_key const & name,
-                          attr_value const & val);
-    {
-      this->editable_roster_base::set_attr(pth, name, val);
-      handle_attr(pth, name);
-    }
-  private:
-    revision_id const & rid;
-    // marking starts out as the parent's marking
-    marking_map & marking;
-  };
+                    new_rid, result, marking);
 }
 
 void
@@ -1129,27 +1282,28 @@ make_roster_for_nonmerge(cset const & cs, revision_id const & parent_rid,
 {
   roster_t parent_r;
   app.db.get_roster(parent_rid, result, marking);
-  true_node_id_source nis(app.db);
+  true_node_id_source nis(app);
   editable_roster_for_nonmerge er(result, nis, new_rid, marking);
   cs.apply_to(er);
 }
+
 
 void
 make_roster_for_revision(revision_set const & rev, revision_id const & rid,
                          roster_t & result, marking_map & marking, app_state & app)
 {
   if (rev.edges.size() == 1)
-    make_roster_for_nonmerge(rev.edges.begin()->second,
-                             rev.edges.begin()->first,
+    make_roster_for_nonmerge(edge_changes(rev.edges.begin()),
+                             edge_old_revision(rev.edges.begin()),
                              rid, result, marking, app);
   else if (rev.edges.size() == 2)
     {
-      edge_map::iterator i = rev.edges.begin();
-      revision_id const & left_rid = i->first;
-      cset const & left_cs = i->second;
+      edge_map::const_iterator i = rev.edges.begin();
+      revision_id const & left_rid = edge_old_revision(i);
+      cset const & left_cs = edge_changes(i);
       ++i;
-      revision_id const & right_rid = i->first;
-      cset const & left_cs = i->second;
+      revision_id const & right_rid = edge_old_revision(i);
+      cset const & right_cs = edge_changes(i);
       make_roster_for_merge(left_cs, left_rid, right_cs, right_rid,
                             rid, result, marking, app);
     }
@@ -1157,7 +1311,132 @@ make_roster_for_revision(revision_set const & rev, revision_id const & rid,
     I(false);
   result.check_sane(marking);
 }
-*/
+
+
+
+////////////////////////////////////////////////////////////////////
+//   I/O routines
+////////////////////////////////////////////////////////////////////
+
+
+namespace
+{
+  namespace syms
+  {
+    // roster symbols
+    string const dir("dir");
+    string const file("file");
+    string const content("content");
+    
+    // 'local' roster symbols
+    string const ident("ident");
+    string const birth("birth");
+    string const path_mark("path_mark");
+    string const content_mark("content_mark");
+    string const attr_mark("attr_mark");
+
+    // cset symbols
+    string const delete_file("delete");
+    string const rename_node("rename");
+    string const add_file("add_file");
+    string const add_dir("add_dir");
+    string const patch("patch");
+    string const from("from");
+    string const to("to");
+    string const clear("clear");
+    string const set("set");
+    string const attr("attr");
+    string const value("value");
+  }
+}
+
+
+static inline void
+push_local_parts(basic_io::stanza & st,
+		 node_t curr,
+		 marking_t const & mark)
+{
+  st.push_str_pair(syms::ident, lexical_cast<string>(curr->self));
+  st.push_hex_pair(syms::birth, curr->birth_revision.inner()());
+
+  for (set<revision_id>::const_iterator i = mark.parent_name.begin();
+       i != mark.parent_name.end(); ++i)
+    st.push_hex_pair(syms::path_mark, i->inner()());
+
+  if (is_file_t(curr))
+    {
+      for (set<revision_id>::const_iterator i = mark.file_content.begin();
+	   i != mark.file_content.end(); ++i)
+	st.push_hex_pair(syms::content_mark, i->inner()());
+    }
+  else
+    I(mark.file_content.empty());
+  
+  for (full_attr_map_t::const_iterator i = curr->attrs.begin();
+       i != curr->attrs.end(); ++i)
+    {
+      map<attr_key, std::set<revision_id> >::const_iterator am = mark.attrs.find(i->first);
+      I(am != mark.attrs.end());
+      for (set<revision_id>::const_iterator i = am->second.begin();
+	   i != am->second.end(); ++i)
+	st.push_hex_pair(syms::content_mark, i->inner()());
+    }
+}
+
+
+
+
+void 
+roster_t::print_to(basic_io::printer & pr,
+		   marking_map const & mm,
+		   bool print_local_parts) const
+{
+  I(has_root());
+  for (dfs_iter i(root_dir); !i.finished(); ++i)
+    {
+      node_t curr = *i;
+      split_path pth;
+      i.path(pth);
+
+      file_path fp = file_path(pth);
+
+      basic_io::stanza st;
+      if (is_dir_t(curr))
+        {
+          // L(F("printing dir %s\n") % fp);
+          st.push_file_pair(syms::dir, fp);
+        }
+      else
+	{
+	  file_t ftmp = downcast_to_file_t(curr);
+	  st.push_file_pair(syms::file, fp);
+	  st.push_hex_pair(syms::content, ftmp->content.inner()());
+          // L(F("printing file %s\n") % fp);
+	}
+      for (full_attr_map_t::const_iterator j = curr->attrs.begin();
+	   j != curr->attrs.end(); ++j)
+	{
+	  if (j->second.first)
+	    {
+	      I(!j->second.second().empty());
+	      // L(F("printing attr %s : %s = %s\n") % fp % j->first % j->second);
+	      st.push_str_triple(syms::attr, j->first(), j->second.second());
+	    }
+	}
+
+      // Now, we *might* print an extended roster here, including the
+      // marking, assuming we're writing the internal
+      // (local-to-this-database) form of the roster.
+
+      if (print_local_parts)
+	{
+	  marking_map::const_iterator m = mm.find(curr->self);
+	  I(m != mm.end());
+	  push_local_parts(st, curr, m->second);
+	}
+      pr.print_stanza(st);
+    }
+}
 
 
 
@@ -1273,7 +1552,7 @@ change_automaton
   {
     cset c;
     while (c.empty())
-       {
+      {
         if (r.all_nodes().empty())
           {
             // Must add, couldn't find anything to work with

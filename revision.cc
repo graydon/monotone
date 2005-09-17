@@ -23,19 +23,24 @@
 
 #include "botan/botan.h"
 
+#include "app_state.hh"
 #include "basic_io.hh"
-#include "change_set.hh"
+#include "cset.hh"
 #include "constants.hh"
+#include "interner.hh"
+#include "keys.hh"
 #include "numeric_vocab.hh"
 #include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
-#include "keys.hh"
+
 
 void revision_set::check_sane() const
 {
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
   I(!null_id(new_manifest));
 
   manifest_map fragment;
@@ -63,6 +68,7 @@ void revision_set::check_sane() const
             }
         }
     }
+*/
 }
 
 bool 
@@ -108,6 +114,9 @@ revision_set::operator=(revision_set const & other)
 // NB: While this function has some invariants in it itself, a lot of its
 // purpose is just to exercise all the invariants inside change_set.cc.  So
 // don't remove those invariants.  (As if you needed another reason...)
+
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 void
 check_sane_history(revision_id const & child_id,
                    int depth,
@@ -266,6 +275,7 @@ check_sane_history(revision_id const & child_id,
       I(cs_left == cs_right);
     }
 }
+*/
 
 // calculating least common ancestors is a delicate thing.
 // 
@@ -878,6 +888,9 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
       }
   }
 }
+
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 
 // 
 // The idea with this algorithm is to walk from child up to ancestor,
@@ -1647,7 +1660,7 @@ build_changesets_from_manifest_ancestry(app_state & app)
   
   graph.rebuild_ancestry();
 }
-
+*/
 
 // i/o stuff
 
@@ -1670,7 +1683,7 @@ print_edge(basic_io::printer & printer,
   st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner()());
   st.push_hex_pair(syms::old_manifest, edge_old_manifest(e).inner()());
   printer.print_stanza(st);
-  print_change_set(printer, edge_changes(e)); 
+  print_cset(printer, edge_changes(e)); 
 }
 
 
@@ -1692,7 +1705,7 @@ void
 parse_edge(basic_io::parser & parser,
            edge_map & es)
 {
-  boost::shared_ptr<change_set> cs(new change_set());
+  boost::shared_ptr<cset> cs(new cset());
   manifest_id old_man;
   revision_id old_rev;
   std::string tmp;
@@ -1705,7 +1718,7 @@ parse_edge(basic_io::parser & parser,
   parser.hex(tmp);
   old_man = manifest_id(tmp);
   
-  parse_change_set(parser, *cs);
+  parse_cset(parser, *cs);
 
   es.insert(std::make_pair(old_rev, std::make_pair(old_man, cs)));
 }

@@ -321,6 +321,8 @@ private:
 static void
 maybe_update_inodeprints(app_state & app)
 {
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
   if (!in_inodeprints_mode())
     return;
   inodeprint_map ipm_new;
@@ -340,6 +342,7 @@ maybe_update_inodeprints(app_state & app)
   data dat;
   write_inodeprint_map(ipm_new, dat);
   write_inodeprints(dat);
+*/
 }
 
 static string 
@@ -678,6 +681,8 @@ kill_rev_locally(app_state& app, std::string const& id)
 // affected in a revision, and is useful in the 'log' command to print this
 // information easily.  It has to be constructed from all change_set objects
 // that belong to a revision.
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 struct
 changes_summary
 {
@@ -798,6 +803,7 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
       print_indented_set(os, modified_files, max_cols);
     }
 }
+*/
 
 CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), OPT_NONE)
 {
@@ -1004,7 +1010,8 @@ CMD(approve, N_("review"), N_("REVISION"),
   cert_revision_in_branch(r, app.branch_name(), app, dbw);
 }
 
-
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(disapprove, N_("review"), N_("REVISION"), 
     N_("disapprove of a particular revision"),
     OPT_BRANCH_NAME)
@@ -1050,6 +1057,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     guard.commit();
   }
 }
+*/
 
 CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
     N_("comment on a particular revision"), OPT_NONE)
@@ -1075,6 +1083,8 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 
 
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(add, N_("working copy"), N_("PATH..."),
     N_("add files to working copy"), OPT_NONE)
 {
@@ -1152,6 +1162,7 @@ CMD(rename, N_("working copy"), N_("SRC DST"),
 }
 
 ALIAS(mv, rename)
+*/
 
 // fload and fmerge are simple commands for debugging the line
 // merger.
@@ -1201,6 +1212,9 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
   copy(merged_lines.begin(), merged_lines.end(), ostream_iterator<string>(cout, "\n"));
   
 }
+
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"),
     OPT_DEPTH % OPT_BRIEF)
@@ -1258,6 +1272,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
       cout << endl << tmp << endl;
     }
 }
+*/
 
 CMD(identify, N_("working copy"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
@@ -1282,6 +1297,8 @@ CMD(identify, N_("working copy"), N_("[PATH]"),
   cout << ident << endl;
 }
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(cat, N_("informative"),
     N_("(file|manifest|revision) [ID]\n"
       "file REVISION FILENAME"),
@@ -1394,7 +1411,6 @@ CMD(cat, N_("informative"),
   guard.commit();
 }
 
-
 CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     N_("check out a revision from database into directory.\n"
     "If a revision is given, that's the one that will be checked out.\n"
@@ -1501,6 +1517,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
 }
 
 ALIAS(co, checkout)
+*/
 
 CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
     OPT_BRANCH_NAME)
@@ -1620,6 +1637,9 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
     }
 }
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
+
 static void
 ls_known (app_state & app, vector<utf8> const & args)
 {
@@ -1662,6 +1682,7 @@ ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
       cout << *i << endl;
 }
 
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 static void
 ls_missing (app_state & app, vector<utf8> const & args)
 {
@@ -1695,6 +1716,7 @@ ls_missing (app_state & app, vector<utf8> const & args)
         cout << *i << endl;
     }
 }
+*/
 
 CMD(list, N_("informative"), 
     N_("certs ID\n"
@@ -1729,6 +1751,8 @@ CMD(list, N_("informative"),
     ls_tags(name, app, removed);
   else if (idx(args, 0)() == "vars")
     ls_vars(name, app, removed);
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
   else if (idx(args, 0)() == "known")
     ls_known(app, removed);
   else if (idx(args, 0)() == "unknown")
@@ -1737,12 +1761,12 @@ CMD(list, N_("informative"),
     ls_unknown(app, true, removed);
   else if (idx(args, 0)() == "missing")
     ls_missing(app, removed);
+*/
   else
     throw usage(name);
 }
 
 ALIAS(ls, list)
-
 
 CMD(mdelta, N_("packet i/o"), N_("OLDID NEWID"),
     N_("write manifest delta packet to stdout"),
@@ -2123,10 +2147,13 @@ CMD(db, N_("database"),
         app.db.migrate();
       else if (idx(args, 0)() == "check")
         check_db(app);
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
       else if (idx(args, 0)() == "changesetify")
         build_changesets_from_manifest_ancestry(app);
       else if (idx(args, 0)() == "rebuild")
         build_changesets_from_existing_revs(app);
+*/
       else
         throw usage(name);
     }
@@ -2157,6 +2184,8 @@ CMD(db, N_("database"),
     throw usage(name);
 }
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(attr, N_("working copy"), N_("set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE"), 
     N_("set, get or drop file attributes"),
     OPT_NONE)
@@ -2257,6 +2286,7 @@ CMD(attr, N_("working copy"), N_("set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FIL
       }
     }
 }
+*/
 
 static boost::posix_time::ptime
 string_to_datetime(std::string const & s)
@@ -2284,6 +2314,8 @@ string_to_datetime(std::string const & s)
   I(false);
 }
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use roster
 CMD(commit, N_("working copy"), N_("[PATH]..."), 
     N_("commit working copy to database"),
     OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR % OPT_DEPTH)
@@ -2495,7 +2527,10 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
 }
 
 ALIAS(ci, commit);
+*/
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 static void
 do_external_diff(change_set::delta_map const & deltas,
                  app_state & app,
@@ -2759,6 +2794,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   } else
     dump_diffs(composite.deltas, app, new_is_archived, type);
 }
+*/
 
 CMD(lca, N_("debug"), N_("LEFT RIGHT"), N_("print least common ancestor"), OPT_NONE)
 {
@@ -2795,6 +2831,8 @@ CMD(lcad, N_("debug"), N_("LEFT RIGHT"), N_("print least common ancestor / domin
 }
 
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 static void
 write_file_targets(change_set const & cs,
                    update_merge_provider & merger,
@@ -3430,7 +3468,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
   update_any_attrs(app);
   maybe_update_inodeprints(app);
 }
-
+*/
 
 CMD(rcs_import, N_("debug"), N_("RCSFILE..."),
     N_("parse versions in RCS files\n"
@@ -3548,6 +3586,8 @@ CMD(annotate, N_("informative"), N_("PATH"),
   do_annotate(app, file, fid, rid);
 }
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(log, N_("informative"), N_("[FILE]"),
     N_("print history in reverse order (filtering by 'FILE').  If one or more\n"
     "revisions are given, use them as a starting point."),
@@ -3562,7 +3602,7 @@ CMD(log, N_("informative"), N_("[FILE]"),
     throw usage(name);
 
   if (args.size() > 0)
-    file = file_path_external(idx(args, 0)); /* specified a file */
+    file = file_path_external(idx(args, 0)); // specified a file
 
   set< pair<file_path, revision_id> > frontier;
 
@@ -3715,7 +3755,7 @@ CMD(log, N_("informative"), N_("[FILE]"),
       frontier = next_frontier;
     }
 }
-
+*/
 
 CMD(setup, N_("tree"), N_("DIRECTORY"), N_("setup a new working copy directory"),
     OPT_BRANCH_NAME)

@@ -30,7 +30,6 @@ MOST_SOURCES =								\
          lcs.cc lcs.hh							\
          rcs_import.cc rcs_import.hh					\
          revision.cc revision.hh					\
-	 change_set.cc change_set.hh					\
 	 cset.cc cset.hh						\
 	 roster4.cc roster4.hh						\
          mt_version.cc mt_version.hh					\

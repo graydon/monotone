@@ -12,7 +12,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "app_state.hh"
-#include "change_set.hh"
+#include "cset.hh"
 #include "packet.hh"
 #include "revision.hh"
 #include "sanity.hh"
@@ -892,6 +892,9 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
               dp->add_prerequisite(fp);
               fp->add_dependent(dp);
             }
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
+
           for (change_set::delta_map::const_iterator d = edge_changes(i).deltas.begin();
                d != edge_changes(i).deltas.end(); ++d)
             {
@@ -916,6 +919,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
                   fp->add_dependent(dp);
                 }
             }     
+*/
         }
 
       if (dp->all_prerequisites_satisfied())

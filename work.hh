@@ -11,7 +11,7 @@
 #include <set>
 #include <map>
 
-#include "change_set.hh"
+#include "cset.hh"
 #include "manifest.hh"
 #include "vocab.hh"
 #include "paths.hh"
@@ -58,6 +58,8 @@ struct file_itemizer : public tree_walker
     : app(a), known(k), unknown(u), ignored(i) {}
   virtual void file_itemizer::visit_file(file_path const & path);
 };
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 
 void 
 build_additions(std::vector<file_path> const & args,
@@ -78,13 +80,13 @@ build_rename(file_path const & src,
              app_state & app,
              change_set::path_rearrangement & pr);
 
-
 // the "work" file contains the current path rearrangement representing
 // uncommitted add/drop/rename operations in the serialized change set format
 
 void get_path_rearrangement(change_set::path_rearrangement & w);
 void remove_path_rearrangement();
 void put_path_rearrangement(change_set::path_rearrangement & w);
+*/
 
 // the "revision" file contains the base revision id that the current working
 // copy was checked out from

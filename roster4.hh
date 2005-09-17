@@ -123,6 +123,7 @@ struct marking_t
 
 typedef std::map<node_id, marking_t> marking_map;
 
+namespace basic_io { struct printer; struct parser; }
 
 class roster_t
 {
@@ -158,9 +159,15 @@ public:
     return nodes;
   }
 
+  bool operator==(roster_t const & other) const;
+
   // verify that this roster is sane, and corresponds to the given
   // marking map
   void check_sane(marking_map const & marks) const;
+
+  void print_to(basic_io::printer & pr,
+		marking_map const & mm,
+		bool print_local_parts) const;
 
 private:
   void check_finite_depth() const;

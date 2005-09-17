@@ -110,7 +110,7 @@ check_normalized(cset const & cs)
 }
 
 bool
-cset::empty()
+cset::empty() const
 {
   return 
     nodes_deleted.empty() 
@@ -123,7 +123,7 @@ cset::empty()
 }
 
 void 
-cset::apply_to(editable_tree & t)
+cset::apply_to(editable_tree & t) const
 {
   // SPEEDUP?: use vectors and sort them once, instead of maintaining sorted
   // sets?
@@ -200,4 +200,34 @@ cset::apply_to(editable_tree & t)
        i != attrs_set.end(); ++i)
     t.set_attr(i->first.first, i->first.second, i->second);
 }
+
+
+void 
+print_cset(basic_io::printer & printer,
+	   cset const & cs)
+{
+  // FIXME: implement
+  I(false);
+}
+
+void 
+parse_cset(basic_io::parser & parser,
+	   cset & cs)
+{
+  // FIXME: implement
+  I(false);
+}
+
+
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+
+void
+add_cset_tests(test_suite * suite)
+{
+  I(suite);
+}
+
+#endif // BUILD_UNIT_TESTS
+
 
