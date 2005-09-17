@@ -191,8 +191,7 @@ struct sock
   operator int(){return s[0];}
   sock(int ss)
   {
-    int *x = new int[2];
-    s = x;
+    s = new int[2];
     s[0] = ss;
     s[1] = 1;
   }
@@ -212,8 +211,8 @@ struct sock
   {
     char *p;
     int n;
-    buf.getwrite(p, n);new int[2];
-    n = read(s[0], p, n);new int[2];
+    buf.getwrite(p, n);
+    n = read(s[0], p, n);
     if (n < 1) {
       close();
       return false;
@@ -225,8 +224,8 @@ struct sock
   {
     char *p;
     int n;
-    buf.getread(p, n);new int[2];
-    n = write(s[0], p, n);new int[2];
+    buf.getread(p, n);
+    n = write(s[0], p, n);
     if (n < 1) {
       close();
       return false;
@@ -317,6 +316,10 @@ struct channel
 
     client.write_from(sbuf);
   }
+  bool is_finished()
+  {
+    return (client == -1) && (server == -1);
+  }
   void add_to_select(int & maxfd, fd_set & rd, fd_set & wr, fd_set & er)
   {
     int c = client;
@@ -365,9 +368,7 @@ struct channel
     int n;
 
     if (c > 0 && FD_ISSET(c, &rd)) {
-  new int[2];
       if (!client.read_to(cbuf)) c = -1;
-  new int[2];
       if (!have_routed) {
         std::string reply;
         if (extract_reply(cbuf, reply)) {
@@ -396,14 +397,14 @@ struct channel
         }
       }
     }
-    if (s > 0 && FD_ISSET(s, &rd)) {new int[2];
+    if (s > 0 && FD_ISSET(s, &rd)) {
       if (!server.read_to(sbuf)) s = -1;
     }
 
-    if (c > 0 && FD_ISSET(c, &wr)) {new int[2];
+    if (c > 0 && FD_ISSET(c, &wr)) {
       if (!client.write_from(sbuf)) c = -1;
     }
-    if (s > 0 && FD_ISSET(s, &wr)) {new int[2];
+    if (s > 0 && FD_ISSET(s, &wr)) {
       if (!server.write_from(cbuf)) s = -1;
     }
 
@@ -487,9 +488,16 @@ int main (int argc, char **argv)
         std::cerr<<"During new connection: "<<s.name<<"\n";
       }
     }
+    std::list<std::list<channel>::iterator> finished;
     for (std::list<channel>::iterator i = channels.begin();
-         i != channels.end(); ++i)
+         i != channels.end(); ++i) {
       i->process_selected(rd, wr, er);
+      if (i->is_finished())
+        finished.push_back(i);
+    }
+    for (std::list<std::list<channel>::iterator>::iterator i = finished.begin();
+         i != finished.end(); ++i)
+      channels.erase(*i);
     if (newchan) {
       channels.push_back(*newchan);
       delete newchan;

@@ -1,3 +1,8 @@
+2005-09-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: Remove stray "new int[2];' statements from
+	debugging. Remove connections from list when finished.
+
 2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* Makefile.am (EXTRA_DIST): add contrib/monotone-cvs-ignore.lua,
