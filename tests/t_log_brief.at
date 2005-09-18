@@ -20,6 +20,8 @@ AT_CHECK(MONOTONE log --brief, [], [stdout], [ignore])
 AT_CHECK(echo "$R2 tester@test.net 2005-08-16T03:16:05 otherbranch" > target)
 AT_CHECK(echo "$R1 tester@test.net 2005-08-16T03:16:00 testbranch" >> target)
 AT_CHECK(echo "$R0 tester@test.net 2005-08-16T03:16:00 testbranch" >> target)
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(CANONICALISE(target))
 AT_CHECK(cmp stdout target)
 
 AT_CLEANUP
