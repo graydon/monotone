@@ -1,3 +1,8 @@
+2005-09-18  Nathaniel Smith  <njs@pobox.com>
+
+	* po/ja.po: New translation from Satoru SATOH <ss@gnome.gr.jp>.
+	* AUTHORS: Add Satoru SATOH.
+	
 2005-09-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* testsuite.at: Tweak default 'eveything' netsync glob to
