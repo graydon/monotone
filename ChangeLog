@@ -1,5 +1,8 @@
 2005-09-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* sqlite*: Update in-tree SQLite from 3.2.2 to 3.2.6.
+	* Makefile.am: Add sqlite/{analyze,vbdefifo,complete}.c to
+	SQLITE_SOURCES
 	* schema_migration.cc (calculate_schema_id): Explicitly exclude
 	sqlite_stat1 table from schema ID calculation.  This is a new
 	magic table created by the 'analyze' command in SQLite >= 3.2.3.
