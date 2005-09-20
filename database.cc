@@ -757,7 +757,9 @@ unsigned long
 database::space_usage(string const & table, string const & concatenated_columns)
 {
   results res;
-  string query = "SELECT SUM(LENGTH(" + concatenated_columns + ")) FROM " + table;
+  // COALESCE is required since SUM({empty set}) is NULL.
+  // the sqlite docs for SUM suggest this as a workaround
+  string query = "SELECT COALESCE(SUM(LENGTH(" + concatenated_columns + ")), 0) FROM " + table;
   fetch(res, one_col, one_row, query.c_str());
   return lexical_cast<unsigned long>(res[0][0]);
 }

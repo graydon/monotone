@@ -1,5 +1,12 @@
 2005-09-20  Matt Johnston  <matt@ucc.asn.au>
 
+	* database.cc (space_usage): workaround the issue that in sqlite
+	3.2.6, SUM({empty set}) returns NULL. (this is part of the sql spec,
+	see http://www.sqlite.org/cvstrac/tktview?tn=1413 and the comment for
+	SUM() in sqlite docs).
+
+2005-09-20  Matt Johnston  <matt@ucc.asn.au>
+
 	* ui.cc, ui.hh, sanity.hh: replace ui.user_locale with
 	get_user_locale(), so that we can guarantee that it will be
 	initialised when the global_sanity object (and probably other things)
