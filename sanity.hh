@@ -92,10 +92,10 @@ typedef std::runtime_error oops;
 extern sanity global_sanity;
 
 // F is for when you want to build a boost formatter for display
-#define F(str) boost::format(gettext(str), ui.user_locale)
+#define F(str) boost::format(gettext(str), get_user_locale())
 
 // FP is for when you want to build a boost formatter for displaying a plural
-#define FP(str1, strn, count) boost::format(ngettext(str1, strn, count), ui.user_locale)
+#define FP(str1, strn, count) boost::format(ngettext(str1, strn, count), get_user_locale())
 
 // L is for logging, you can log all you want
 #define L(fmt) global_sanity.log(fmt, __FILE__, __LINE__)

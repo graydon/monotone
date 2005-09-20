@@ -1,3 +1,10 @@
+2005-09-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* ui.cc, ui.hh, sanity.hh: replace ui.user_locale with
+	get_user_locale(), so that we can guarantee that it will be
+	initialised when the global_sanity object (and probably other things)
+	are instantiated.
+
 2005-09-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_restriction_with_exclude_iprint.at: New test, variant of

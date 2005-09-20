@@ -85,8 +85,6 @@ public:
   void set_tick_writer(tick_writer * t_writer);
   void ensure_clean_line();
 
-  const std::locale user_locale;
-
 private:  
   std::set<std::string> issued_warnings;  
 
@@ -108,5 +106,8 @@ extern struct user_interface ui;
 // like platform.hh's "terminal_width", but always returns a sensible value
 // (even if there is no terminal)
 unsigned int guess_terminal_width();
+
+// returns the a default user locale value
+const std::locale get_user_locale();
 
 #endif // __UI_HH__
