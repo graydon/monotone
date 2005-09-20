@@ -1,6 +1,10 @@
 2005-09-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
-	* sqlite*: Update in-tree SQLite from 3.2.2 to 3.2.6.
+	* tests/t_restriction_with_exclude_iprint.at: New test, variant of
+	t_restriction_exclude.at, but with inodeprints enabled.  Mark as
+	XFAILed.
+	* testsuite.at: Add new test.
+	* sqlite/*: Update in-tree SQLite from 3.2.2 to 3.2.6.
 	* Makefile.am: Add sqlite/{analyze,vbdefifo,complete}.c to
 	SQLITE_SOURCES
 	* schema_migration.cc (calculate_schema_id): Explicitly exclude

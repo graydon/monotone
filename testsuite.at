@@ -1,4 +1,4 @@
-#  -*- Autoconf -*-
+G#  -*- Autoconf -*-
 #
 # the monotone integration testsuite is written in bourne shell,
 # strung together with the autotest framework (part of autoconf).
@@ -705,3 +705,4 @@ m4_include(tests/t_automate_get_manifest.at)
 m4_include(tests/t_automate_get_revision.at)
 m4_include(tests/t_unreadable_db.at)
 m4_include(tests/t_restriction_with_exclude.at)
+m4_include(tests/t_restriction_with_exclude_iprint.at)
