@@ -1,3 +1,9 @@
+2005-09-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* schema_migration.cc (calculate_schema_id): Explicitly exclude
+	sqlite_stat1 table from schema ID calculation.  This is a new
+	magic table created by the 'analyze' command in SQLite >= 3.2.3.
+
 2005-09-18  Nathaniel Smith  <njs@pobox.com>
 
 	* po/ja.po: New translation from Satoru SATOH <ss@gnome.gr.jp>.

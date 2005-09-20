@@ -156,6 +156,7 @@ calculate_schema_id(sqlite3 *sql, string & id)
                          // those are auto-generated indices (for
                          // UNIQUE constraints, etc.).
                          "AND sql IS NOT NULL "
+                         "AND name != 'sqlite_stat1' "
                          "ORDER BY name", 
                          &append_sql_stmt, &tmp, NULL);
   if (res != SQLITE_OK)
