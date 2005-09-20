@@ -1,3 +1,8 @@
+2005-09-20  Patrick Mauritz <oxygene@studentenbude.ath.cx>
+
+	* configure.ac: solaris needs librt for fdatasync
+	* sqlite/parse.c: #line and #include interactions aren't defined
+
 2005-09-20  Matt Johnston  <matt@ucc.asn.au>
 
 	* database.cc (space_usage): workaround the issue that in sqlite
