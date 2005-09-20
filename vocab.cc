@@ -228,6 +228,9 @@ void dump(dec<INNER> const & obj, std::string & out)     \
 template class revision<cert>;
 template class manifest<cert>;
 
+template
+void dump(revision_id const & r, std::string &);
+
 // the rest is unit tests
 
 #ifdef BUILD_UNIT_TESTS

@@ -246,12 +246,14 @@ delayed_file_delta_packet
   file_id new_id;
   file_delta del;
   bool forward_delta;
+  bool write_full;
 public:
   delayed_file_delta_packet(file_id const & oi, 
                             file_id const & ni,
                             file_delta const & md,
-                            bool fwd) 
-    : old_id(oi), new_id(ni), del(md), forward_delta(fwd)
+                            bool fwd,
+                            bool full = false) 
+    : old_id(oi), new_id(ni), del(md), forward_delta(fwd), write_full(full)
   {}
   virtual void apply_delayed_packet(packet_db_writer & pw);
   virtual ~delayed_file_delta_packet();
@@ -265,12 +267,14 @@ delayed_manifest_delta_packet
   manifest_id new_id;
   manifest_delta del;
   bool forward_delta;
+  bool write_full;
 public:
   delayed_manifest_delta_packet(manifest_id const & oi, 
                                 manifest_id const & ni,
                                 manifest_delta const & md,
-                                bool fwd) 
-    : old_id(oi), new_id(ni), del(md), forward_delta(fwd)
+                                bool fwd,
+                                bool full = false)
+    : old_id(oi), new_id(ni), del(md), forward_delta(fwd), write_full(full)
   {}
   virtual void apply_delayed_packet(packet_db_writer & pw);
   virtual ~delayed_manifest_delta_packet();
@@ -361,12 +365,13 @@ delayed_file_data_packet::~delayed_file_data_packet()
 void 
 delayed_manifest_delta_packet::apply_delayed_packet(packet_db_writer & pw)
 {
-  L(F("writing delayed manifest %s packet for %s -> %s\n") 
+  L(F("writing delayed manifest %s packet for %s -> %s%s\n") 
     % (forward_delta ? "delta" : "reverse delta") 
     % (forward_delta ? old_id : new_id)
-    % (forward_delta ? new_id : old_id));
+    % (forward_delta ? new_id : old_id)
+    % (write_full ? " (writing in full)" : ""));
   if (forward_delta)
-    pw.consume_manifest_delta(old_id, new_id, del);
+      pw.consume_manifest_delta(old_id, new_id, del, write_full);
   else
     pw.consume_manifest_reverse_delta(new_id, old_id, del);
 }
@@ -381,12 +386,13 @@ delayed_manifest_delta_packet::~delayed_manifest_delta_packet()
 void 
 delayed_file_delta_packet::apply_delayed_packet(packet_db_writer & pw)
 {
-  L(F("writing delayed file %s packet for %s -> %s\n") 
+  L(F("writing delayed file %s packet for %s -> %s%s\n") 
     % (forward_delta ? "delta" : "reverse delta")
     % (forward_delta ? old_id : new_id)
-    % (forward_delta ? new_id : old_id));
+    % (forward_delta ? new_id : old_id)
+    % (write_full ? " (writing in full)" : ""));
   if (forward_delta)
-    pw.consume_file_delta(old_id, new_id, del);
+    pw.consume_file_delta(old_id, new_id, del, write_full);
   else
     pw.consume_file_reverse_delta(new_id, old_id, del);
 }
@@ -656,6 +662,15 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
                                      file_id const & new_id,
                                      file_delta const & del)
 {
+  consume_file_delta(old_id, new_id, del, false);
+}
+
+void 
+packet_db_writer::consume_file_delta(file_id const & old_id, 
+                                     file_id const & new_id,
+                                     file_delta const & del,
+                                     bool write_full)
+{
   transaction_guard guard(pimpl->app.db);
   if (! pimpl->file_version_exists_in_db(new_id))
     {
@@ -669,7 +684,10 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
           calculate_ident(file_data(new_dat), confirm);
           if (confirm == new_id)
             {
-              pimpl->app.db.put_file_version(old_id, new_id, del);
+              if (!write_full)
+                pimpl->app.db.put_file_version(old_id, new_id, del);
+              else
+                pimpl->app.db.put_file(new_id, file_data(new_dat));
               pimpl->accepted_file(new_id, *this);
             }
           else
@@ -682,7 +700,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
         {
           L(F("delaying file delta %s -> %s for preimage\n") % old_id % new_id);
           shared_ptr<delayed_packet> dp;
-          dp = shared_ptr<delayed_packet>(new delayed_file_delta_packet(old_id, new_id, del, true));
+          dp = shared_ptr<delayed_packet>(new delayed_file_delta_packet(old_id, new_id, del, true, write_full));
           shared_ptr<prerequisite> fp;
           pimpl->get_file_prereq(old_id, fp); 
           dp->add_prerequisite(fp);
@@ -761,6 +779,15 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
                                          manifest_id const & new_id,
                                          manifest_delta const & del)
 {
+  consume_manifest_delta(old_id, new_id, del, false);
+}
+
+void
+packet_db_writer::consume_manifest_delta(manifest_id const & old_id, 
+                                         manifest_id const & new_id,
+                                         manifest_delta const & del,
+                                         bool write_full)
+{
   transaction_guard guard(pimpl->app.db);
   if (! pimpl->manifest_version_exists_in_db(new_id))
     {
@@ -774,7 +801,11 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
           calculate_ident(manifest_data(new_dat), confirm);
           if (confirm == new_id)
             {
-              pimpl->app.db.put_manifest_version(old_id, new_id, del);
+              if (!write_full)
+                pimpl->app.db.put_manifest_version(old_id, new_id, del);
+              else
+                pimpl->app.db.put_manifest(new_id, manifest_data(new_dat));
+
               pimpl->accepted_manifest(new_id, *this);
             }
           else
@@ -787,7 +818,7 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
         {
           L(F("delaying manifest delta %s -> %s for preimage\n") % old_id % new_id);
           shared_ptr<delayed_packet> dp;
-          dp = shared_ptr<delayed_packet>(new delayed_manifest_delta_packet(old_id, new_id, del, true));
+          dp = shared_ptr<delayed_packet>(new delayed_manifest_delta_packet(old_id, new_id, del, true, write_full));
           shared_ptr<prerequisite> fp;
           pimpl->get_manifest_prereq(old_id, fp); 
           dp->add_prerequisite(fp);
@@ -1108,6 +1139,15 @@ packet_db_valve::consume_file_delta(file_id const & id_old,
 }
 
 void
+packet_db_valve::consume_file_delta(file_id const & id_old, 
+                                    file_id const & id_new,
+                                    file_delta const & del,
+                                    bool write_full)
+{
+  DOIT(delayed_file_delta_packet(id_old, id_new, del, true, write_full));
+}
+
+void
 packet_db_valve::consume_file_reverse_delta(file_id const & id_new,
                                             file_id const & id_old,
                                             file_delta const & del)
@@ -1128,6 +1168,15 @@ packet_db_valve::consume_manifest_delta(manifest_id const & id_old,
                                         manifest_delta const & del)
 {
   DOIT(delayed_manifest_delta_packet(id_old, id_new, del, true));
+}
+
+void
+packet_db_valve::consume_manifest_delta(manifest_id const & id_old, 
+                                        manifest_id const & id_new,
+                                        manifest_delta const & del,
+                                        bool write_full)
+{
+  DOIT(delayed_manifest_delta_packet(id_old, id_new, del, true, write_full));
 }
 
 void

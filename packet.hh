@@ -136,6 +136,10 @@ public:
   virtual void consume_file_delta(file_id const & id_old, 
                                   file_id const & id_new,
                                   file_delta const & del);
+  virtual void consume_file_delta(file_id const & id_old, 
+                                  file_id const & id_new,
+                                  file_delta const & del,
+                                  bool write_full);
   virtual void consume_file_reverse_delta(file_id const & id_new,
                                           file_id const & id_old,
                                           file_delta const & del);
@@ -145,6 +149,10 @@ public:
   virtual void consume_manifest_delta(manifest_id const & id_old, 
                                       manifest_id const & id_new,
                                       manifest_delta const & del);
+  virtual void consume_manifest_delta(manifest_id const & id_old, 
+                                      manifest_id const & id_new,
+                                      manifest_delta const & del,
+                                      bool write_full);
   virtual void consume_manifest_reverse_delta(manifest_id const & id_new,
                                               manifest_id const & id_old,
                                               manifest_delta const & del);
@@ -185,6 +193,10 @@ public:
   virtual void consume_file_delta(file_id const & id_old, 
                                   file_id const & id_new,
                                   file_delta const & del);
+  virtual void consume_file_delta(file_id const & id_old, 
+                                  file_id const & id_new,
+                                  file_delta const & del,
+                                  bool write_full);
   virtual void consume_file_reverse_delta(file_id const & id_new,
                                           file_id const & id_old,
                                           file_delta const & del);
@@ -194,6 +206,10 @@ public:
   virtual void consume_manifest_delta(manifest_id const & id_old, 
                                       manifest_id const & id_new,
                                       manifest_delta const & del);
+  virtual void consume_manifest_delta(manifest_id const & id_old, 
+                                      manifest_id const & id_new,
+                                      manifest_delta const & del,
+                                      bool write_full);
   virtual void consume_manifest_reverse_delta(manifest_id const & id_new,
                                               manifest_id const & id_old,
                                               manifest_delta const & del);
