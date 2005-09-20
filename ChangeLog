@@ -1,3 +1,9 @@
+2005-09-20  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* restrictions.cc: Make calculate_unrestricted_revision work
+	with --exclude
+	* tests/t_restriction_with_exclude_iprint.at: remove XFAIL
+
 2005-09-20  Patrick Mauritz <oxygene@studentenbude.ath.cx>
 
 	* configure.ac: solaris needs librt for fdatasync
