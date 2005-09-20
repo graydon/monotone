@@ -11,6 +11,7 @@ AT_DATA(foo/bar, [y
 
 AT_CHECK(MONOTONE add file1, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add foo/bar, [], [ignore], [ignore])
+AT_CHECK(MONOTONE ci -m 'x', [], [ignore], [ignore])
 
 AT_CHECK(monotone refresh_inodeprints)
 AT_CHECK(echo a >>file1)
