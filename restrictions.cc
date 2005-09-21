@@ -244,7 +244,10 @@ calculate_unrestricted_revision(app_state & app,
                                 manifest_map & m_new)
 {
   std::vector<utf8> empty_args;
+  std::set<utf8> saved_exclude_patterns(app.exclude_patterns);
+  app.exclude_patterns.clear();
   calculate_restricted_revision(app, empty_args, rev, m_old, m_new);
+  app.exclude_patterns = saved_exclude_patterns;
 }
 
 void

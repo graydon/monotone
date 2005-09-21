@@ -1,4 +1,4 @@
-#  -*- Autoconf -*-
+G#  -*- Autoconf -*-
 #
 # the monotone integration testsuite is written in bourne shell,
 # strung together with the autotest framework (part of autoconf).
@@ -385,13 +385,13 @@ m4_define([NETSYNC_ADDRESS], [localhost:$_PORT])
 # note that NETSYNC_SERVE_START is _not_ a special case of this macro.
 m4_define([NETSYNC_SERVE_N_START], [
 NETSYNC_KILLHARD
-MONOTONE --db=test$1.db --rcfile=netsync.lua --pid-file=monotone_at.pid serve NETSYNC_ADDRESS m4_if($2, [], "*", $2) &
+MONOTONE --db=test$1.db --rcfile=netsync.lua --pid-file=monotone_at.pid serve NETSYNC_ADDRESS m4_if($2, [], "{}*", $2) &
 sleep 4
 ])
 # run as NETSYNC_SERVE_START(pattern)
 m4_define([NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
-MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid serve NETSYNC_ADDRESS m4_if($1, [], "*", $1) &
+MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid serve NETSYNC_ADDRESS m4_if($1, [], "{}*", $1) &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
@@ -705,3 +705,4 @@ m4_include(tests/t_automate_get_manifest.at)
 m4_include(tests/t_automate_get_revision.at)
 m4_include(tests/t_unreadable_db.at)
 m4_include(tests/t_restriction_with_exclude.at)
+m4_include(tests/t_restriction_with_exclude_iprint.at)

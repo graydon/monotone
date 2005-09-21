@@ -11,7 +11,7 @@
 *************************************************************************
 ** This file contains code used to implement the PRAGMA command.
 **
-** $Id: pragma.c,v 1.95 2005/06/12 21:35:52 drh Exp $
+** $Id: pragma.c,v 1.99 2005/09/17 16:36:56 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -583,12 +583,13 @@ void sqlite3Pragma(
         while(pFK){
           int j;
           for(j=0; j<pFK->nCol; j++){
+            char *zCol = pFK->aCol[j].zCol;
             sqlite3VdbeAddOp(v, OP_Integer, i, 0);
             sqlite3VdbeAddOp(v, OP_Integer, j, 0);
             sqlite3VdbeOp3(v, OP_String8, 0, 0, pFK->zTo, 0);
             sqlite3VdbeOp3(v, OP_String8, 0, 0,
                              pTab->aCol[pFK->aCol[j].iFrom].zName, 0);
-            sqlite3VdbeOp3(v, OP_String8, 0, 0, pFK->aCol[j].zCol, 0);
+            sqlite3VdbeOp3(v, zCol ? OP_String8 : OP_Null, 0, 0, zCol, 0);
             sqlite3VdbeAddOp(v, OP_Callback, 5, 0);
           }
           ++i;
@@ -602,13 +603,24 @@ void sqlite3Pragma(
 #ifndef NDEBUG
   if( sqlite3StrICmp(zLeft, "parser_trace")==0 ){
     extern void sqlite3ParserTrace(FILE*, char *);
-    if( getBoolean(zRight) ){
-      sqlite3ParserTrace(stdout, "parser: ");
-    }else{
-      sqlite3ParserTrace(0, 0);
+    if( zRight ){
+      if( getBoolean(zRight) ){
+        sqlite3ParserTrace(stderr, "parser: ");
+      }else{
+        sqlite3ParserTrace(0, 0);
+      }
     }
   }else
 #endif
+
+  /* Reinstall the LIKE and GLOB functions.  The variant of LIKE
+  ** used will be case sensitive or not depending on the RHS.
+  */
+  if( sqlite3StrICmp(zLeft, "case_sensitive_like")==0 ){
+    if( zRight ){
+      sqlite3RegisterLikeFunctions(db, getBoolean(zRight));
+    }
+  }else
 
 #ifndef SQLITE_OMIT_INTEGRITY_CHECK
   if( sqlite3StrICmp(zLeft, "integrity_check")==0 ){
@@ -891,13 +903,13 @@ void sqlite3Pragma(
       Btree *pBt;
       Pager *pPager;
       if( db->aDb[i].zName==0 ) continue;
-      sqlite3VdbeOp3(v, OP_String, 0, 0, db->aDb[i].zName, P3_STATIC);
+      sqlite3VdbeOp3(v, OP_String8, 0, 0, db->aDb[i].zName, P3_STATIC);
       pBt = db->aDb[i].pBt;
       if( pBt==0 || (pPager = sqlite3BtreePager(pBt))==0 ){
-        sqlite3VdbeOp3(v, OP_String, 0, 0, "closed", P3_STATIC);
+        sqlite3VdbeOp3(v, OP_String8, 0, 0, "closed", P3_STATIC);
       }else{
         int j = sqlite3pager_lockstate(pPager);
-        sqlite3VdbeOp3(v, OP_String, 0, 0, 
+        sqlite3VdbeOp3(v, OP_String8, 0, 0, 
             (j>=0 && j<=4) ? azLockName[j] : "unknown", P3_STATIC);
       }
       sqlite3VdbeAddOp(v, OP_Callback, 2, 0);

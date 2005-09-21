@@ -2,6 +2,56 @@
 
 	* contrib/usher.cc: better error checking
 
+2005-09-20  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* restrictions.cc: Make calculate_unrestricted_revision work
+	with --exclude
+	* tests/t_restriction_with_exclude_iprint.at: remove XFAIL
+
+2005-09-20  Patrick Mauritz <oxygene@studentenbude.ath.cx>
+
+	* configure.ac: solaris needs librt for fdatasync
+	* sqlite/parse.c: #line and #include interactions aren't defined
+
+2005-09-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (space_usage): workaround the issue that in sqlite
+	3.2.6, SUM({empty set}) returns NULL. (this is part of the sql spec,
+	see http://www.sqlite.org/cvstrac/tktview?tn=1413 and the comment for
+	SUM() in sqlite docs).
+
+2005-09-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* ui.cc, ui.hh, sanity.hh: replace ui.user_locale with
+	get_user_locale(), so that we can guarantee that it will be
+	initialised when the global_sanity object (and probably other things)
+	are instantiated.
+
+2005-09-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_restriction_with_exclude_iprint.at: New test, variant of
+	t_restriction_exclude.at, but with inodeprints enabled.  Mark as
+	XFAILed.
+	* testsuite.at: Add new test.
+	* sqlite/*: Update in-tree SQLite from 3.2.2 to 3.2.6.
+	* Makefile.am: Add sqlite/{analyze,vbdefifo,complete}.c to
+	SQLITE_SOURCES
+	* schema_migration.cc (calculate_schema_id): Explicitly exclude
+	sqlite_stat1 table from schema ID calculation.  This is a new
+	magic table created by the 'analyze' command in SQLite >= 3.2.3.
+
+2005-09-18  Nathaniel Smith  <njs@pobox.com>
+
+	* po/ja.po: New translation from Satoru SATOH <ss@gnome.gr.jp>.
+	* AUTHORS: Add Satoru SATOH.
+	
+2005-09-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Tweak default 'eveything' netsync glob to
+	something that works around the MinGW/Win32 globbing issues for
+	now.
+	* tests/t_log_brief.at: Canonicalise output on Win32.
+
 2005-09-17  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/usher.cc: Remove stray "new int[2];' statements from

@@ -259,7 +259,6 @@ void tick_write_dot::clear_line()
 
 
 user_interface::user_interface() :
-  user_locale(""),
   last_write_was_a_tick(false),
   t_writer(0)
 {
@@ -381,3 +380,10 @@ guess_terminal_width()
   return w;
 }
 
+// a cache used to avoid initialising locale("") on every call to boost::format
+const locale
+get_user_locale()
+{
+  static const locale user_locale("");
+  return user_locale;
+}

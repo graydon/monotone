@@ -1,0 +1,21 @@
+AT_SETUP([use restrictions with --exclude and inodeprints])
+MONOTONE_SETUP
+
+AT_CHECK(mkdir foo)
+AT_DATA(file1, [x
+])
+AT_DATA(foo/bar, [y
+])
+
+AT_CHECK(MONOTONE add file1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add foo/bar, [], [ignore], [ignore])
+AT_CHECK(MONOTONE ci -m 'x', [], [ignore], [ignore])
+
+AT_CHECK(monotone refresh_inodeprints)
+AT_CHECK(echo a >>file1)
+AT_CHECK(echo b >>foo/bar)
+AT_CHECK(MONOTONE ci --exclude foo -m 'x', [], [ignore], [ignore])
+AT_CHECK(MONOTONE status --brief | grep "foo/bar", [], [ignore], [ignore])
+AT_CHECK(MONOTONE status --brief | grep "file1", [1], [ignore], [ignore])
+
+AT_CLEANUP
