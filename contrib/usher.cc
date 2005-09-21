@@ -180,7 +180,8 @@ struct buffer
   }
   void fixwrite(int n)
   {
-    if (n < 0) throw errstr("negative write\n", 0);
+    if (n < 0)
+      throw errstr("negative write\n", 0);
     writepos += n;
   }
 };
@@ -188,27 +189,60 @@ struct buffer
 struct sock
 {
   int *s;
-  operator int(){return s[0];}
+  operator int()
+  {
+    if (!s)
+      return -1;
+    else
+      return s[0];
+  }
   sock(int ss)
   {
     s = new int[2];
     s[0] = ss;
     s[1] = 1;
   }
-  sock(sock const & ss){s = ss.s; s[1]++;}
-  ~sock(){if (s[1]--) return; ::close(s[0]); delete[] s;}
-  sock operator=(int ss){s[0]=ss;}
+  sock(sock const & ss)
+  {
+    s = ss.s;
+    if (s)
+      s[1]++;
+  }
   void close()
   {
-    if (s[0] == -1) return;
-    tosserr(shutdown(s[0], SHUT_RDWR), "shutdown()");
-    while (::close(s[0]) < 0) {
-      if (errno != EINTR) throw errstr("close()", 0);
-    }
+    if (!s || s[0] == -1)
+      return;
+    shutdown(s[0], SHUT_RDWR);
+      while (::close(s[0]) < 0) {
+        if (errno == EIO)
+          throw errstr("close failed", errno);
+        if (errno != EINTR)
+          break;
+      }
     s[0]=-1;
+  }
+  ~sock()
+  {
+    if (!s || s[1]--)
+      return;
+    try {
+      close();
+    } catch(errstr & e) {
+      // if you want it to throw errors, call close manually
+    }
+    delete[] s;
+    s = 0;
+  }
+  sock operator=(int ss)
+  {
+    if (!s)
+      s = new int[2];
+    s[0]=ss;
   }
   bool read_to(buffer & buf)
   {
+    if (!s)
+      return false;
     char *p;
     int n;
     buf.getwrite(p, n);
@@ -222,6 +256,8 @@ struct sock
   }
   bool write_from(buffer & buf)
   {
+    if (!s)
+      return false;
     char *p;
     int n;
     buf.getread(p, n);
@@ -294,13 +330,16 @@ bool extract_reply(buffer & buf, std::string & out)
 
 struct channel
 {
+  static int counter;
+  int num;
   sock client;
   sock server;
   bool have_routed;
   bool no_server;
   buffer cbuf;
   buffer sbuf;
-  channel(sock & c): client(c), server(-1),
+  channel(sock & c): num(++counter),
+   client(c), server(-1),
    have_routed(false), no_server(false)
   {
     char * dat;
@@ -417,6 +456,7 @@ struct channel
     }
   }
 };
+int channel::counter = 0;
 
 int main (int argc, char **argv)
 {
@@ -491,9 +531,14 @@ int main (int argc, char **argv)
     std::list<std::list<channel>::iterator> finished;
     for (std::list<channel>::iterator i = channels.begin();
          i != channels.end(); ++i) {
-      i->process_selected(rd, wr, er);
-      if (i->is_finished())
+      try {
+        i->process_selected(rd, wr, er);
+        if (i->is_finished())
+          finished.push_back(i);
+      } catch (errstr & e) {
         finished.push_back(i);
+        std::cerr<<"Error proccessing connection "<<i->num<<": "<<e.name<<"\n";
+      }
     }
     for (std::list<std::list<channel>::iterator>::iterator i = finished.begin();
          i != finished.end(); ++i)

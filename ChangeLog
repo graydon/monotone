@@ -1,3 +1,7 @@
+2005-09-21  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: better error checking
+
 2005-09-17  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/usher.cc: Remove stray "new int[2];' statements from
