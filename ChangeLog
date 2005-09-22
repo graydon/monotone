@@ -1,3 +1,7 @@
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
+	* ui.{cc,hh} (get_user_locale): Returns a const &.
+
 2005-09-21  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/usher.cc: better error checking
