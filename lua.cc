@@ -609,6 +609,14 @@ extern "C"
     lua_pushboolean(L, boost::regex_search(str, what, boost::regex(re)));
     return 1;
   }
+
+  static int
+  monotone_gettext_for_lua(lua_State *L)
+  {
+    const char *msgid = lua_tostring(L, -1);
+    lua_pushstring(L, gettext(msgid));
+    return 1;
+  }
 }
 
 
@@ -638,6 +646,7 @@ lua_hooks::lua_hooks()
   lua_register(st, "guess_binary_file_contents", monotone_guess_binary_file_contents_for_lua);
   lua_register(st, "include", monotone_include_for_lua);
   lua_register(st, "includedir", monotone_includedir_for_lua);
+  lua_register(st, "gettext", monotone_gettext_for_lua);
 
   // add regex functions:
   lua_newtable(st);

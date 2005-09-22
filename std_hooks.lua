@@ -189,7 +189,7 @@ function edit_comment(basetext, user_log_message)
    io.close(tmp)
 
    if (execute(exe, tname) ~= 0) then
-      io.write(string.format("Error running editor '%s' to enter log message\n",
+      io.write(string.format(gettext("Error running editor '%s' to enter log message\n"),
                              exe))
       os.remove(tname)
       return nil

@@ -58,6 +58,7 @@ sanity.cc
 sanity.hh
 schema_migration.cc
 schema_migration.hh
+std_hooks.lua
 transforms.cc
 transforms.hh
 txt2c.cc

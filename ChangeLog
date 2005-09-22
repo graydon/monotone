@@ -1,5 +1,11 @@
 2005-09-22  Benoît Dejean  <benoit@placenet.org>
 
+	* lua.cc (monotone_gettext_for_lua): New function.
+	* po/POTFILES.in: Added std_hooks.lua.
+	* std_hooks.lua: One more string for i18n.
+
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
 	* ui.{cc,hh} (get_user_locale): Returns a const &.
 
 2005-09-21  Timothy Brownawell  <tbrownaw@gmail.com>
