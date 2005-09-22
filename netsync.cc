@@ -661,34 +661,34 @@ void
 session::setup_client_tickers()
 {
   // xgettext: please use short message and try to avoid multibytes chars
-  byte_in_ticker.reset(new ticker(N_("bytes in"), ">", 1024, true));
+  byte_in_ticker.reset(new ticker(_("bytes in"), ">", 1024, true));
   // xgettext: please use short message and try to avoid multibytes chars
-  byte_out_ticker.reset(new ticker(N_("bytes out"), "<", 1024, true));
+  byte_out_ticker.reset(new ticker(_("bytes out"), "<", 1024, true));
   if (role == sink_role)
     {
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_checked_ticker.reset(new ticker(N_("revs written"), "w", 1));
+      revision_checked_ticker.reset(new ticker(_("revs written"), "w", 1));
       // xgettext: please use short message and try to avoid multibytes chars
-      cert_in_ticker.reset(new ticker(N_("certs in"), "c", 3));
+      cert_in_ticker.reset(new ticker(_("certs in"), "c", 3));
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_in_ticker.reset(new ticker(N_("revs in"), "r", 1));
+      revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
     }
   else if (role == source_role)
     {
       // xgettext: please use short message and try to avoid multibytes chars
-      cert_out_ticker.reset(new ticker(N_("certs out"), "C", 3));
+      cert_out_ticker.reset(new ticker(_("certs out"), "C", 3));
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_out_ticker.reset(new ticker(N_("revs out"), "R", 1));
+      revision_out_ticker.reset(new ticker(_("revs out"), "R", 1));
     }
   else
     {
       I(role == source_and_sink_role);
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_checked_ticker.reset(new ticker(N_("revs written"), "w", 1));
+      revision_checked_ticker.reset(new ticker(_("revs written"), "w", 1));
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_in_ticker.reset(new ticker(N_("revs in"), "r", 1));
+      revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_out_ticker.reset(new ticker(N_("revs out"), "R", 1));
+      revision_out_ticker.reset(new ticker(_("revs out"), "R", 1));
     }
 }
 

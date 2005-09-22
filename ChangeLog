@@ -1,5 +1,11 @@
 2005-09-22  Benoît Dejean  <benoit@placenet.org>
 
+	* netsync.cc: Reverted changes
+	from f0a632bf14468b6e03a488d6f1a64ef18b61d04c
+	to   4f7f638954c79c54460d04c3be111acad8b26dd3
+
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
 	* lua.cc (monotone_gettext_for_lua): New function.
 	* po/POTFILES.in: Added std_hooks.lua.
 	* std_hooks.lua: One more string for i18n.
