@@ -1,3 +1,11 @@
+2005-09-23  Benoît Dejean  <benoit@placenet.org>
+
+	* std_hooks.lua: More i18n strings.
+	
+	I don't know how to handle lua
+	"multiline" ..
+	"strings" because gettext doesn't join them.
+
 2005-09-22  Benoît Dejean  <benoit@placenet.org>
 
 	* sanity.{cc,hh}: Uninlined F() and FP().
