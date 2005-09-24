@@ -73,6 +73,18 @@ struct cset
   std::set<std::pair<split_path, attr_key> > attrs_cleared;
   std::map<std::pair<split_path, attr_key>, attr_value> attrs_set;
 
+  bool operator==(cset const & other) const
+  {
+    return nodes_deleted == other.nodes_deleted
+      && dirs_added == other.dirs_added
+      && files_added == other.files_added
+      && nodes_renamed == other.nodes_renamed
+      && deltas_applied == other.deltas_applied
+      && attrs_cleared == other.attrs_cleared
+      && attrs_set == other.attrs_set
+      ;
+  }
+  
   void apply_to(editable_tree & t) const;
   bool empty() const;
   void clear();
@@ -82,12 +94,20 @@ namespace basic_io { struct printer; struct parser; }
 
 void 
 print_cset(basic_io::printer & printer,
-	   cset const & cs);
+           cset const & cs);
+
+void
+write_cset(cset const & cs, data & dat);
 
 void 
 parse_cset(basic_io::parser & parser,
-	   cset & cs);
+           cset & cs);
 
+void
+read_cset(data const & dat, cset & cs);
+
+void
+dump(cset const & cs, std::string & out);
 
 // Some helpers.
 

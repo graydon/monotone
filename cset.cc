@@ -246,7 +246,7 @@ namespace
 
 void 
 print_cset(basic_io::printer & printer,
-	   cset const & cs)
+           cset const & cs)
 {
   for (set<split_path>::const_iterator i = cs.nodes_deleted.begin();
        i != cs.nodes_deleted.end(); ++i)
@@ -315,7 +315,7 @@ print_cset(basic_io::printer & printer,
 
 void 
 parse_cset(basic_io::parser & parser,
-	   cset & cs)
+           cset & cs)
 {
   cs.clear();
   while (parser.symp())
@@ -346,52 +346,80 @@ parse_cset(basic_io::parser & parser,
         {
           parser.sym();
           parser.str(t1);
-	  parser.esym(syms::content);
-	  parser.hex(t2);
+          parser.esym(syms::content);
+          parser.hex(t2);
           safe_insert(cs.files_added, make_pair(internal_string_to_split_path(t1),
                                                 file_id(t2)));
         }
       else if (parser.symp(syms::patch))
-	{
-	  parser.sym();
-	  parser.str(t1);
-	  parser.esym(syms::from);
-	  parser.hex(t2);
-	  parser.esym(syms::to);
-	  parser.hex(t3);
-	  safe_insert(cs.deltas_applied, 
+        {
+          parser.sym();
+          parser.str(t1);
+          parser.esym(syms::from);
+          parser.hex(t2);
+          parser.esym(syms::to);
+          parser.hex(t3);
+          safe_insert(cs.deltas_applied, 
                       make_pair(internal_string_to_split_path(t1),
                                 make_pair(file_id(t2), 
                                           file_id(t3))));
-	}
+        }
       else if (parser.symp(syms::clear))
-	{
-	  parser.sym();
-	  parser.str(t1);
-	  parser.esym(syms::attr);
-	  parser.str(t2);
-	  safe_insert(cs.attrs_cleared, 
+        {
+          parser.sym();
+          parser.str(t1);
+          parser.esym(syms::attr);
+          parser.str(t2);
+          safe_insert(cs.attrs_cleared, 
                       make_pair(internal_string_to_split_path(t1), 
                                 attr_key(t2)));
-	}
+        }
       else if (parser.symp(syms::set))
-	{
-	  parser.sym();
-	  parser.str(t1);
-	  parser.esym(syms::attr);
-	  parser.str(t2);
-	  parser.esym(syms::value);
-	  parser.str(t3);
-	  safe_insert(cs.attrs_set, 
+        {
+          parser.sym();
+          parser.str(t1);
+          parser.esym(syms::attr);
+          parser.str(t2);
+          parser.esym(syms::value);
+          parser.str(t3);
+          safe_insert(cs.attrs_set, 
                       make_pair(make_pair(internal_string_to_split_path(t1),
                                           attr_key(t2)),
                                 attr_value(t3)));
-	}
+        }
       else
         break;
     }
 }
 
+
+void
+write_cset(cset const & cs, data & dat)
+{
+  std::ostringstream oss;
+  basic_io::printer pr(oss);
+  print_cset(pr, cs);
+  dat = data(oss.str());
+}
+
+void
+read_cset(data const & dat, cset & cs)
+{
+  std::istringstream iss(dat());
+  basic_io::input_source src(iss, "cset");
+  basic_io::tokenizer tok(src);
+  basic_io::parser pars(tok);
+  parse_cset(pars, cs);
+  I(src.lookahead == EOF);
+}
+
+void
+dump(cset const & cs, std::string & out)
+{
+  data dat;
+  write_cset(cs, dat);
+  out = dat();
+}
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
