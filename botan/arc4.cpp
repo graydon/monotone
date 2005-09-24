@@ -93,7 +93,8 @@ void ARC4::clear() throw()
 /*************************************************
 * ARC4 Constructor                               *
 *************************************************/
-ARC4::ARC4(u32bit s) : StreamCipher(1, 32), SKIP(s)
+// monotone-specific: max keysize is 256 bytes
+ARC4::ARC4(u32bit s) : StreamCipher(1, 256), SKIP(s)
    {
    clear();
    }
