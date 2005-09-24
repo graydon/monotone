@@ -1,3 +1,8 @@
+2005-09-25  Benoît Dejean  <benoit@placenet.org>
+
+	* lua.cc (monotone_guess_binary_file_contents_for_lua):
+	Fixed signednes warning and istream usage.
+
 2005-09-25  Matt Johnston  <matt@ucc.asn.au>
 
 	* ui.cc: fallback to the default locale if locale("") fails.

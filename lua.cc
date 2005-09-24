@@ -535,10 +535,9 @@ extern "C"
     const int bufsize = 8192;
     char tmpbuf[bufsize];
     string buf;
-    while(file.good()) 
+    while (file.read(tmpbuf, sizeof tmpbuf))
       {
-        file.read(tmpbuf, sizeof(tmpbuf));
-        I(file.gcount() <= sizeof(tmpbuf));
+        I(file.gcount() <= static_cast<int>(sizeof tmpbuf));
         buf.assign(tmpbuf, file.gcount());
         if (guess_binary(buf)) 
           {
