@@ -1,3 +1,7 @@
+2005-09-24  Satoru SATOH <ss@gnome.gr.jp>
+
+	* po/ja.po: Updated Japanese translation.
+
 2005-09-22  Benoît Dejean  <benoit@placenet.org>
 
 	* netsync.cc: Reverted changes
@@ -141,7 +145,7 @@
 	* tests/t_rename_dir_cross_level.at: When invoking mv to rename
 	a directory, do not include a trailing slash on the target -- that
 	is not portable.                                                  
-                       
+
 	* Makefile.am (TESTS_ENVIRONMENT): Ensure that PATH starts with
 	the current directory, so we test the just-built monotone binary,
 	not some older version.                                          
