@@ -1,5 +1,9 @@
 2005-09-25  Matt Johnston  <matt@ucc.asn.au>
 
+	* ui.cc: fallback to the default locale if locale("") fails.
+
+2005-09-25  Matt Johnston  <matt@ucc.asn.au>
+
 	* botan/arc4.cpp: increase maximum keylength to 256 bytes.
 
 2005-09-24  Satoru SATOH <ss@gnome.gr.jp>
