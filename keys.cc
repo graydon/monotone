@@ -146,8 +146,7 @@ get_passphrase(lua_hooks & lua,
 void 
 generate_key_pair(lua_hooks & lua,              // to hook for phrase
                   rsa_keypair_id const & id,    // to prompting user for phrase
-                  base64<rsa_pub_key> & pub_out,
-                  base64< arc4<rsa_priv_key> > & priv_out,
+                  keypair & kp_out,
                   string const unit_test_passphrase)
 {
   
@@ -179,12 +178,12 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
   raw_pub_key = string(reinterpret_cast<char const *>(pubkey.begin()), pubkey.size());
   
   // if all that worked, we can return our results to caller
-  encode_base64(raw_priv_key, priv_out);
-  encode_base64(raw_pub_key, pub_out);
+  encode_base64(raw_priv_key, kp_out.priv);
+  encode_base64(raw_pub_key, kp_out.pub);
   L(F("generated %d-byte public key\n"
       "generated %d-byte (encrypted) private key\n")
-    % pub_out().size()
-    % priv_out().size());
+    % kp_out.pub().size()
+    % kp_out.priv().size());
 }
 
 void
@@ -505,19 +504,17 @@ require_password(rsa_keypair_id const & key,
                  app_state & app)
 {
   N(priv_key_exists(app, key),
-    F("no private key '%s' found in database or get_priv_key hook") % key);
-  N(app.db.public_key_exists(key),
-    F("no public key '%s' found in database") % key);
-  base64<rsa_pub_key> pub;
-  app.db.get_key(key, pub);
-  base64< arc4<rsa_priv_key> > priv;
-  load_priv_key(app, key, priv);
+    F("no key pair '%s' found in key store or get_priv_key hook") % key);
+//  N(app.db.public_key_exists(key),
+//    F("no public key '%s' found in database") % key);
+  keypair kp;
+  load_key_pair(app, key, kp);
   if (app.lua.hook_persist_phrase_ok())
     {
       string plaintext("hi maude");
       base64<rsa_sha1_signature> sig;
-      make_signature(app, key, priv, plaintext, sig);
-      N(check_signature(app, key, pub, plaintext, sig),
+      make_signature(app, key, kp.priv, plaintext, sig);
+      N(check_signature(app, key, kp.pub, plaintext, sig),
         F("passphrase for '%s' is incorrect") % key);
     }
 }
@@ -561,9 +558,8 @@ signature_round_trip_test()
 
   BOOST_CHECKPOINT("generating key pairs");
   rsa_keypair_id key("bob123@test.com");
-  base64<rsa_pub_key> pubkey;
-  base64< arc4<rsa_priv_key> > privkey;
-  generate_key_pair(app.lua, key, pubkey, privkey, "bob123@test.com");
+  keypair kp;
+  generate_key_pair(app.lua, key, kp, "bob123@test.com");
 
   BOOST_CHECKPOINT("signing plaintext");
   string plaintext("test string to sign");

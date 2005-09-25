@@ -15,7 +15,7 @@ AT_TESTED([monotone])
 # some command abbreviations to make life easier
 
 # Set PREEXECUTE in your environment to run monotone under, e.g., valgrind.
-m4_define([MONOTONE], [$PREEXECUTE $_MT_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net --root=$_ROOT_DIR])
+m4_define([MONOTONE], [$PREEXECUTE $_MT_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --key=tester@test.net --root=$_ROOT_DIR])
 m4_define([RAW_MONOTONE], [$PREEXECUTE monotone --norc])
 m4_define([SHA1], [monotone --norc identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
@@ -120,6 +120,7 @@ end
 
 function ignore_file(name)
 	if (string.find(name, "test_hooks.lua")) then return true end
+	if (string.find(name, "keys")) then return true end
 	if (string.find(name, "test.db")) then return true end
 	return false
 end
@@ -320,7 +321,9 @@ UNGZ($2.gz, $2)
 m4_define([NETSYNC_SETUP], [
 
 AT_CHECK(cp test.db test2.db)
+AT_CHECK(cp -r keys/ keys2)
 AT_CHECK(cp test.db test3.db)
+AT_CHECK(cp -r keys/ keys3)
 AT_DATA(netsync.lua, [
 function get_netsync_read_permitted(pattern, identity)
 	return true
@@ -333,8 +336,8 @@ end
 
 ])
 
-m4_define([MONOTONE2], MONOTONE --db=test2.db)
-m4_define([MONOTONE3], MONOTONE --db=test3.db)
+m4_define([MONOTONE2], MONOTONE --db=test2.db --keydir=keys2)
+m4_define([MONOTONE3], MONOTONE --db=test3.db --keydir=keys3)
 
 m4_define([NETSYNC_KILL], [
 # kill last seen pid if there is no pid file (needed for cases where
@@ -385,13 +388,13 @@ m4_define([NETSYNC_ADDRESS], [localhost:$_PORT])
 # note that NETSYNC_SERVE_START is _not_ a special case of this macro.
 m4_define([NETSYNC_SERVE_N_START], [
 NETSYNC_KILLHARD
-MONOTONE --db=test$1.db --rcfile=netsync.lua --pid-file=monotone_at.pid serve NETSYNC_ADDRESS m4_if($2, [], "*", $2) &
+MONOTONE --db=test$1.db --keydir=keys$1 --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=MT/server_dump serve NETSYNC_ADDRESS m4_if($2, [], "*", $2) &
 sleep 4
 ])
 # run as NETSYNC_SERVE_START(pattern)
 m4_define([NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
-MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid serve NETSYNC_ADDRESS m4_if($1, [], "*", $1) &
+MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=MT/server_dump serve NETSYNC_ADDRESS m4_if($1, [], "*", $1) &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
@@ -403,7 +406,7 @@ NETSYNC_KILLHARD
 # run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, pattern[, expected result])
 # first argument chooses whether to use the 2nd or 3rd database
 m4_define([NETSYNC_CLIENT_N_RUN], [
-AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 NETSYNC_ADDRESS $3, [$4], [ignore], [ignore])
+AT_CHECK(MONOTONE --db=test$1.db --keydir=keys$1 --rcfile=netsync.lua $2 NETSYNC_ADDRESS $3, [$4], [ignore], [ignore])
 ])
 # run as NETSYNC_CLIENT_RUN(push|pull|sync, pattern[, expected result])
 m4_define([NETSYNC_CLIENT_RUN], [

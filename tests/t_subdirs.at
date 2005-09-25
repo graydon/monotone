@@ -28,7 +28,7 @@ AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
 
 ROOT=`pwd`
-m4_define([MONOTONE_SUB], [monotone --rcfile=$ROOT/test_hooks.lua --nostd --norc --db=$ROOT/test.db --key=tester@test.net])
+m4_define([MONOTONE_SUB], [monotone --rcfile=$ROOT/test_hooks.lua --nostd --norc --db=$ROOT/test.db --key=tester@test.net --keydir=$ROOT/keys])
 
 cd foo
 AT_CHECK(MONOTONE_SUB status, [], [stdout], [])

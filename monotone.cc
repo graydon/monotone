@@ -91,6 +91,7 @@ struct poptOption options[] =
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, gettext_noop("set name of database"), NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, gettext_noop("limit search for working copy to specified root"), NULL},
     {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, gettext_noop("verbose completion output"), NULL},
+    {"keydir", 0, POPT_ARG_STRING, &argstr, OPT_KEY_DIR, gettext_noop("set location of key store"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -329,6 +330,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_DB_NAME:
               app.set_database(system_path(argstr));
+              break;
+
+            case OPT_KEY_DIR:
+              app.set_key_dir(system_path(argstr));
               break;
 
             case OPT_TICKER:

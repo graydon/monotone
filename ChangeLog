@@ -1,3 +1,25 @@
+2005-09-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Move private keys outside the database.
+	They're now stored as keypairs in ~/.monotone/keys
+	Details:
+	* keystore.{cc,hh}: handle storage of keypairs
+	* tests*: Specify keystore location when running the testsuite.
+		This prevents it from polluting the user's keystore.
+	* database{cc,hh}: remove ability to put privkeys. They can still
+		be listed, retrieved, and deleted, to support
+	* commands.cc: New command, extract_keys. Copies private keys from
+		the database to the keystore.
+	* vocab.hh: add keypair type, like pair<pubkey, privkey>, except that
+		the members are named pub and priv.
+	* packet.cc: Clean up read_packets.
+	* packet.{cc,hh}: privkey packets no longer exists, handle keypair
+		packets instead.
+	* file_io.{cc,hh}: add read_directory because tree_walker needs to
+		be in the wc. add a write_data that works outside the wc.
+	* Makefile.am: add keystore.{cc,hh}
+	* others: update to work with new key storage
+
 2005-09-21  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/usher.cc: better error checking

@@ -608,9 +608,15 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
   transaction_guard guard(app.db);
 
   if (args.size() == 0)
-    app.db.get_key_ids("", pubkeys, privkeys);
+    {
+      app.db.get_key_ids("", pubkeys);
+      app.keys.get_key_ids("", privkeys);
+    }
   else if (args.size() == 1)
-    app.db.get_key_ids(idx(args, 0)(), pubkeys, privkeys);
+    {
+      app.db.get_key_ids(idx(args, 0)(), pubkeys);
+      app.keys.get_key_ids(idx(args, 0)(), privkeys);
+    }
   else
     throw usage(name);
   
@@ -636,10 +642,10 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
       for (size_t i = 0; i < privkeys.size(); ++i)
         {
           rsa_keypair_id keyid = idx(privkeys, i)();
-          base64< arc4<rsa_priv_key> > priv_encoded;
+          keypair kp;
           hexenc<id> hash_code;
-          app.db.get_key(keyid, priv_encoded); 
-          key_hash_code(keyid, priv_encoded, hash_code);
+          app.keys.get_key_pair(keyid, kp); 
+          key_hash_code(keyid, kp.priv, hash_code);
           cout << hash_code << " " << keyid << endl;
         }
       cout << endl;
@@ -808,15 +814,14 @@ CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), OPT
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
 
-  N(! app.db.key_exists(ident),
-    F("key '%s' already exists in database") % ident);
+  N(! (app.db.public_key_exists(ident) || app.keys.key_pair_exists(ident)),
+    F("key '%s' already exists") % ident);
   
-  base64<rsa_pub_key> pub;
-  base64< arc4<rsa_priv_key> > priv;
+  keypair kp;
   P(F("generating key-pair '%s'\n") % ident);
-  generate_key_pair(app.lua, ident, pub, priv);
+  generate_key_pair(app.lua, ident, kp);
   P(F("storing key-pair '%s' in database\n") % ident);
-  app.db.put_key_pair(ident, pub, priv);
+  app.keys.put_key_pair(ident, kp);
 
   guard.commit();
 }
@@ -847,8 +852,15 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"
       key_deleted = true;
     }
 
+  if (app.keys.key_pair_exists(ident))
+    {
+      P(F("dropping key pair '%s' from key store\n\n") % ident);
+      app.keys.delete_key(ident);
+      key_deleted = true;
+    }
+
   N(key_deleted,
-    F("public or private key '%s' does not exist in database") % idx(args, 0)());
+    F("public or private key '%s' does not exist") % idx(args, 0)());
   
   guard.commit();
 }
@@ -864,14 +876,14 @@ CMD(chkeypass, N_("key and cert"), N_("KEYID"),
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
 
-  N(app.db.key_exists(ident),
-    F("key '%s' does not exist in database") % ident);
+  N(app.keys.key_pair_exists(ident),
+    F("key '%s' does not exist in the key store") % ident);
 
-  base64< arc4<rsa_priv_key> > key;
-  app.db.get_key(ident, key);
-  change_key_passphrase(app.lua, ident, key);
-  app.db.delete_private_key(ident);
-  app.db.put_key(ident, key);
+  keypair key;
+  app.keys.get_key_pair(ident, key);
+  change_key_passphrase(app.lua, ident, key.priv);
+  app.keys.delete_key(ident);
+  app.keys.put_key_pair(ident, key);
   P(F("passphrase changed\n"));
 
   guard.commit();
@@ -910,7 +922,7 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
   encode_base64(val, val_encoded);
 
   cert t(ident, name, val_encoded, key);
-  
+
   packet_db_writer dbw(app);
   calculate_cert(app, t);
   dbw.consume_revision_cert(revision<cert>(t));
@@ -1807,12 +1819,24 @@ CMD(pubkey, N_("packet i/o"), N_("ID"), N_("write public key packet to stdout"),
     throw usage(name);
 
   rsa_keypair_id ident(idx(args, 0)());
-  N(app.db.public_key_exists(ident),
-    F("public key '%s' does not exist in database") % idx(args, 0)());
+  bool exists(false);
+  base64< rsa_pub_key > key;
+  if (app.db.public_key_exists(ident))
+    {
+      app.db.get_key(ident, key);
+      exists = true;
+    }
+  if (app.keys.key_pair_exists(ident))
+    {
+      keypair kp;
+      app.keys.get_key_pair(ident, kp);
+      key = kp.pub;
+      exists = true;
+    }
+  N(exists,
+    F("public key '%s' does not exist") % idx(args, 0)());
 
   packet_writer pw(cout);
-  base64< rsa_pub_key > key;
-  app.db.get_key(ident, key);
   pw.consume_public_key(ident, key);
 }
 
@@ -1823,16 +1847,14 @@ CMD(privkey, N_("packet i/o"), N_("ID"), N_("write private key packet to stdout"
     throw usage(name);
 
   rsa_keypair_id ident(idx(args, 0)());
-  N(app.db.private_key_exists(ident) && app.db.private_key_exists(ident),
-    F("public and private key '%s' do not exist in database") % idx(args, 0)());
+  N(app.keys.key_pair_exists(ident),
+    F("public and private key '%s' do not exist in key store")
+      % idx(args, 0)());
 
   packet_writer pw(cout);
-  base64< arc4<rsa_priv_key> > privkey;
-  base64< rsa_pub_key > pubkey;
-  app.db.get_key(ident, privkey);
-  app.db.get_key(ident, pubkey);
-  pw.consume_public_key(ident, pubkey);
-  pw.consume_private_key(ident, privkey);
+  keypair kp;
+  app.keys.get_key_pair(ident, kp);
+  pw.consume_key_pair(ident, kp);
 }
 
 
@@ -3727,6 +3749,22 @@ CMD(unset, N_("vars"), N_("DOMAIN NAME"),
   var_key k(d, n);
   N(app.db.var_exists(k), F("no var with name %s in domain %s") % n % d);
   app.db.clear_var(k);
+}
+
+CMD(extract_keys, N_("debug"), N_(""),
+    N_("copy all private keys in the database into the keystore"),
+    OPT_NONE)
+{
+  std::vector<rsa_keypair_id> privkeys;
+  app.db.get_private_keys(privkeys);
+  for (std::vector<rsa_keypair_id>::const_iterator i = privkeys.begin();
+       i != privkeys.end(); ++i)
+    {
+      keypair kp;
+      app.db.get_key(*i, kp.priv);
+      app.db.get_key(*i, kp.pub);
+      app.keys.put_key_pair(*i, kp);
+    }
 }
 
 }; // namespace commands

@@ -70,8 +70,8 @@ function get_revision_cert_trust(signers, id, name, val)
 end
 ])
 
-m4_define([BOB], [monotone --rcfile=test_hooks.lua --rcfile=bob.lua --nostd --norc --db=test.db --key=bob])
-m4_define([ALICE], [monotone --rcfile=test_hooks.lua --rcfile=alice.lua --nostd --norc --db=test.db --key=alice])
+m4_define([BOB], [monotone --rcfile=test_hooks.lua --rcfile=bob.lua --nostd --norc --db=test.db --key=bob --keydir=keys])
+m4_define([ALICE], [monotone --rcfile=test_hooks.lua --rcfile=alice.lua --nostd --norc --db=test.db --key=alice --keydir=keys])
 
 AT_CHECK((echo "bob"; echo "bob") | BOB genkey bob, [], [ignore], [ignore])
 AT_CHECK((echo "alice"; echo "alice") | ALICE genkey alice, [], [ignore], [ignore])

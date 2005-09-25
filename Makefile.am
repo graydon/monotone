@@ -11,6 +11,7 @@ MOST_SOURCES =								\
          work.cc work.hh						\
          cert.cc cert.hh						\
          database.cc database.hh					\
+         key_store.cc key_store.hh					\
          file_io.cc file_io.hh						\
          keys.cc keys.hh						\
          manifest.cc manifest.hh					\

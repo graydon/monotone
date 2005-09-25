@@ -13,7 +13,7 @@ AT_DATA(liver, [the file liver
 ])
 
 # same as MONOTONE macro but without --db and --key
-m4_define([SHORT_MONOTONE], [$PREEXECUTE monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --root=$_ROOT_DIR])
+m4_define([SHORT_MONOTONE], [$PREEXECUTE monotone --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --root=$_ROOT_DIR --keydir=$_ROOT_DIR/keys])
 
 AT_CHECK(SHORT_MONOTONE add maude, [], [ignore], [ignore])
 

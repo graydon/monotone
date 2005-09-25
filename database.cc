@@ -1446,11 +1446,9 @@ database::delete_tag_named(cert_value const & tag)
 
 void 
 database::get_key_ids(string const & pattern,
-                      vector<rsa_keypair_id> & pubkeys,
-                      vector<rsa_keypair_id> & privkeys)
+                      vector<rsa_keypair_id> & pubkeys)
 {
   pubkeys.clear();
-  privkeys.clear();
   results res;
 
   if (pattern != "")
@@ -1463,17 +1461,6 @@ database::get_key_ids(string const & pattern,
 
   for (size_t i = 0; i < res.size(); ++i)
     pubkeys.push_back(res[i][0]);
-
-  if (pattern != "")
-    fetch(res, one_col, any_rows, 
-          "SELECT id FROM private_keys WHERE id GLOB ?",
-          pattern.c_str());
-  else
-    fetch(res, one_col, any_rows, 
-          "SELECT id FROM private_keys");
-
-  for (size_t i = 0; i < res.size(); ++i)
-    privkeys.push_back(res[i][0]);
 }
 
 void 
@@ -1488,15 +1475,15 @@ database::get_keys(string const & table, vector<rsa_keypair_id> & keys)
 }
 
 void 
-database::get_private_keys(vector<rsa_keypair_id> & keys)
-{
-  get_keys("private_keys", keys);
-}
-
-void 
 database::get_public_keys(vector<rsa_keypair_id> & keys)
 {
   get_keys("public_keys", keys);
+}
+
+void
+database::get_private_keys(vector<rsa_keypair_id> & keys)
+{
+  get_keys("private_keys", keys);
 }
 
 bool 
@@ -1525,7 +1512,7 @@ database::public_key_exists(rsa_keypair_id const & id)
   return false;
 }
 
-bool 
+bool
 database::private_key_exists(rsa_keypair_id const & id)
 {
   results res;
@@ -1538,11 +1525,6 @@ database::private_key_exists(rsa_keypair_id const & id)
   return false;
 }
 
-bool 
-database::key_exists(rsa_keypair_id const & id)
-{
-  return public_key_exists(id) || private_key_exists(id);
-}
 
 void 
 database::get_pubkey(hexenc<id> const & hash, 
@@ -1569,17 +1551,6 @@ database::get_key(rsa_keypair_id const & pub_id,
 }
 
 void 
-database::get_key(rsa_keypair_id const & priv_id, 
-                  base64< arc4<rsa_priv_key> > & priv_encoded)
-{
-  results res;
-  fetch(res, one_col, one_col, 
-        "SELECT keydata FROM private_keys WHERE id = ?", 
-        priv_id().c_str());
-  priv_encoded = res[0][0];
-}
-
-void 
 database::put_key(rsa_keypair_id const & pub_id, 
                   base64<rsa_pub_key> const & pub_encoded)
 {
@@ -1592,27 +1563,15 @@ database::put_key(rsa_keypair_id const & pub_id,
           thash().c_str(), pub_id().c_str(), pub_encoded().c_str());
 }
 
-void 
-database::put_key(rsa_keypair_id const & priv_id, 
-                  base64< arc4<rsa_priv_key> > const & priv_encoded)
+void
+database::get_key(rsa_keypair_id const & priv_id,
+                  base64< arc4<rsa_priv_key> > & priv_encoded)
 {
-  hexenc<id> thash;
-  key_hash_code(priv_id, priv_encoded, thash);
-  E(!private_key_exists(priv_id),
-    F("another key with name '%s' already exists") % priv_id);
-  execute("INSERT INTO private_keys VALUES(?, ?, ?)", 
-          thash().c_str(), priv_id().c_str(), priv_encoded().c_str());
-}
-
-void 
-database::put_key_pair(rsa_keypair_id const & id, 
-                       base64<rsa_pub_key> const & pub_encoded,
-                       base64< arc4<rsa_priv_key> > const & priv_encoded)
-{
-  transaction_guard guard(*this);
-  put_key(id, pub_encoded);
-  put_key(id, priv_encoded);
-  guard.commit();
+  results res;
+  fetch(res, one_col, one_col,
+        "SELECT keydata FROM private_keys WHERE id = ?",
+        priv_id().c_str());
+  priv_encoded = res[0][0];
 }
 
 void
