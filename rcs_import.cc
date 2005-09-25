@@ -1246,7 +1246,7 @@ import_cvs_repo(system_path const & cvsroot,
     cvs_tree_walker walker(cvs, app.db);
     require_path_is_directory(cvsroot,
                               F("path %s does not exist") % cvsroot,
-                              F("path %s is not a directory") % cvsroot);
+                              F("'%s' is not a directory") % cvsroot);
     app.db.ensure_open();
     change_current_working_dir(cvsroot);
     walk_tree(file_path(), walker);

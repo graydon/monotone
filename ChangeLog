@@ -1,5 +1,12 @@
 2005-09-25  Benoît Dejean  <benoit@placenet.org>
 
+	* cert.cc (cert_signable_text): F() vs. boost::format.
+	* lua.cc (monotone_guess_binary_file_contents_for_lua),
+	(monotone_include_for_lua), (monotone_includedir_for_lua):
+	* rcs_import.cc (import_cvs_repo): Merged some strings.
+	
+2005-09-25  Benoît Dejean  <benoit@placenet.org>
+
 	* lua.cc (monotone_guess_binary_file_contents_for_lua):
 	Fixed signednes warning and istream usage.
 
