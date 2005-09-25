@@ -273,9 +273,9 @@ dfs_iter
 
 
   dfs_iter(dir_t r) 
-    : root(r), return_root(true)
+    : root(r), return_root(root)
   {
-    if (!root->children.empty())
+    if (root && !root->children.empty())
       stk.push(make_pair(root, root->children.begin()));
   }
 
@@ -1985,6 +1985,42 @@ spin_cset(cset const & cs)
   I(tmp == tmp2);
 }
 
+static void
+apply_cset_and_do_testing(roster_t & r, cset const & cs, node_id_source & nis)
+{
+  MM(r);
+  MM(cs);
+  roster_t original = r;
+  MM(original);
+  I(original == r);
+  
+  editable_roster_base e(r, nis);
+  cs.apply_to(e);
+
+  cset derived;
+  MM(derived);
+  make_cset(original, r, derived);
+  I(derived == cs);
+
+  // we do all this reading/writing/comparing of both strings and objects to
+  // cross-check the reading, writing, and comparison logic against each
+  // other.  (if, say, there is a field in cset that == forgets to check but
+  // that write remembers to include, this should catch it).
+  data derived_dat, cs_dat, cs_dat2;
+  MM(derived_dat);
+  MM(cs_dat);
+  MM(cs_dat2);
+  write_cset(cs, cs_dat);
+  write_cset(derived, derived_dat);
+  cset cs2;
+  MM(cs2);
+  read_cset(cs_dat, cs2);
+  write_cset(cs2, cs_dat2);
+  I(cs2 == cs);
+  I(derived_dat == cs_dat);
+  I(cs_dat2 == cs_dat);
+}
+
 template<typename M>
 typename M::const_iterator 
 random_element(M const & m)
@@ -2191,17 +2227,7 @@ change_automaton
           }
       }
     // now do it
-    MM(c);
-    MM(r);
-    roster_t before = r;
-    MM(before);
-    editable_roster_base e = editable_roster_base(r, nis);
-    c.apply_to(e);
-    cset derived;
-    make_cset(before, r, derived);
-    MM(derived);
-    I(derived == c);
-    spin_cset(c);
+    apply_cset_and_do_testing(r, c, nis);
   }
 };
 
