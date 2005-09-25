@@ -299,7 +299,7 @@ void
 cert_signable_text(cert const & t,
                        string & out)
 {
-  out = (F("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
+  out = (boost::format("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
   L(F("cert: signable text %s\n") % out);
 }
 

@@ -2,6 +2,22 @@
 
 	* sqlite/*: Update in-tree SQLite from 3.2.6 to 3.2.7.
 
+2005-09-25  Benoît Dejean  <benoit@placenet.org>
+
+	* netsync.cc: 3 more i18n strings.
+
+2005-09-25  Benoît Dejean  <benoit@placenet.org>
+
+	* cert.cc (cert_signable_text): F() vs. boost::format.
+	* lua.cc (monotone_guess_binary_file_contents_for_lua),
+	(monotone_include_for_lua), (monotone_includedir_for_lua):
+	* rcs_import.cc (import_cvs_repo): Merged some strings.
+	
+2005-09-25  Benoît Dejean  <benoit@placenet.org>
+
+	* lua.cc (monotone_guess_binary_file_contents_for_lua):
+	Fixed signednes warning and istream usage.
+
 2005-09-25  Matt Johnston  <matt@ucc.asn.au>
 
 	* ui.cc: fallback to the default locale if locale("") fails.
@@ -10,9 +26,27 @@
 
 	* botan/arc4.cpp: increase maximum keylength to 256 bytes.
 
+2005-09-24  Benoît Dejean  <benoit@placenet.org>
+
+	* ChangeLog: Fixed.
+	I don't understand how xxdiff works :/ Please help.
+
 2005-09-24  Satoru SATOH <ss@gnome.gr.jp>
 
 	* po/ja.po: Updated Japanese translation.
+
+2005-09-23  Benoît Dejean  <benoit@placenet.org>
+
+        * std_hooks.lua: More i18n strings.
+
+        I don't know how to handle lua
+        "multiline" ..
+        "strings" because gettext doesn't join them.
+
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
+        * sanity.{cc,hh}: Uninlined F() and FP().
+        This happily saves ~100KB of .text on my ppc.
 
 2005-09-22  Benoît Dejean  <benoit@placenet.org>
 

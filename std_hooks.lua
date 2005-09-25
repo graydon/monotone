@@ -25,7 +25,7 @@ end
 -- (e.g. on OS X)
 function execute_confirm(path, ...)   
    execute(path, unpack(arg))
-   print("Press enter when the subprocess has completed")
+   print(gettext("Press enter when the subprocess has completed"))
    io.read()
    return ret
 end
@@ -526,7 +526,7 @@ function merge2 (left_path, right_path, merged_path, left, right)
 
       if cmd ~=nil 
       then 
-         io.write (string.format("executing external 2-way merge command\n"))
+         io.write (string.format(gettext("executing external 2-way merge command\n")))
          cmd ()
          if tbl.meld_exists 
          then 
@@ -634,7 +634,7 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
       local cmd =   get_preferred_merge3_command (tbl) 
       if cmd ~=nil 
       then 
-         io.write (string.format("executing external 3-way merge command\n"))
+         io.write (string.format(gettext("executing external 3-way merge command\n")))
          cmd ()
          if tbl.meld_exists 
          then 
@@ -771,3 +771,4 @@ function external_diff(file_path, data_old, data_new, is_binary, diff_args, rev_
    os.remove (old_file);
    os.remove (new_file);
 end
+
