@@ -1,3 +1,8 @@
+2005-09-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* netsync.cc: use lexical_cast on port numbers to avoid
+	strange-looking "port 5,253"
+
 2005-09-25  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* sqlite/*: Update in-tree SQLite from 3.2.6 to 3.2.7.
