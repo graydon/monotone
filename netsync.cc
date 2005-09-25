@@ -2086,8 +2086,8 @@ session::process_confirm_cmd(string const & signature)
   // nb. this->role is our role, the server is in the opposite role
   L(F("received 'confirm' netcmd from server '%s' for pattern '%s' exclude '%s' in %s mode\n")
     % their_key_hash % our_include_pattern % our_exclude_pattern
-    % (this->role == source_and_sink_role ? "source and sink" :
-       (this->role == source_role ? "sink" : "source")));
+    % (this->role == source_and_sink_role ? _("source and sink") :
+       (this->role == source_role ? _("sink") : _("source"))));
   
   // check their signature
   if (app.db.public_key_exists(their_key_hash))
@@ -3067,8 +3067,8 @@ session::dispatch_payload(netcmd const & cmd)
         L(F("received 'anonymous' netcmd from client for pattern '%s' excluding '%s' "
             "in %s mode\n")
           % their_include_pattern % their_exclude_pattern
-          % (role == source_and_sink_role ? "source and sink" :
-             (role == source_role ? "source " : "sink")));
+          % (role == source_and_sink_role ? _("source and sink") :
+             (role == source_role ? _("source") : _("sink"))));
 
         set_session_key(hmac_key_encrypted);
         if (!process_anonymous_cmd(role, their_include_pattern, their_exclude_pattern))
@@ -3098,8 +3098,8 @@ session::dispatch_payload(netcmd const & cmd)
         L(F("received 'auth(hmac)' netcmd from client '%s' for pattern '%s' "
             "exclude '%s' in %s mode with nonce1 '%s'\n")
           % their_key_hash % their_include_pattern % their_exclude_pattern
-          % (role == source_and_sink_role ? "source and sink" :
-             (role == source_role ? "source " : "sink"))
+          % (role == source_and_sink_role ? _("source and sink") :
+             (role == source_role ? _("source") : _("sink")))
           % hnonce1);
 
         set_session_key(hmac_key_encrypted);
