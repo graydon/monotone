@@ -2196,6 +2196,12 @@ change_automaton
 
 
 static void
+dump(int const & i, std::string & out)
+{
+  out = lexical_cast<std::string>(i) + "\n";
+}
+
+static void
 automaton_roster_test()
 {
   roster_t r1;
@@ -2204,6 +2210,7 @@ automaton_roster_test()
 
   for (int i = 0; i < 10000; ++i)
     {
+      MM(i);
       if (i % 500 == 0)
         P(F("performing random action %d\n") % i);
       aut.perform_random_action(r1, nis);
