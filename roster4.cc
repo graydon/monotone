@@ -1494,7 +1494,20 @@ namespace
 
   typedef enum { start, in_left, in_right, in_both, no_more } parallel_state;
 
-
+  void
+  dump(parallel_state const & st, std::string & out)
+  {
+    out = lexical_cast<std::string>(st);
+    switch (st)
+      {
+      case start: out += " start"; break;
+      case in_left: out += " in_left"; break;
+      case in_right: out += " in_right"; break;
+      case in_both: out += " in_both"; break;
+      case no_more: out += " no_more"; break;
+      }
+    out += "\n";
+  }
   template <typename M>
   bool
   parallel_iter_incr(parallel_state & state,
@@ -1601,9 +1614,9 @@ namespace
     {
       full_attr_map_t::const_iterator from_ai, to_ai;
       parallel_state state = start;
-
       while (parallel_iter_incr(state, from_n->attrs, from_ai, to_n->attrs, to_ai))
         {
+          MM(state);
           if ((state == in_left || (state == in_both && !to_ai->second.first))
               && from_ai->second.first)
             safe_insert(cs.attrs_cleared,
@@ -1614,9 +1627,6 @@ namespace
             safe_insert(cs.attrs_set,
                         make_pair(make_pair(to_sp, to_ai->first),
                                   to_ai->second.second));
-
-          else
-            I(false);
         }
     }
   }
@@ -1631,6 +1641,7 @@ make_cset(roster_t const & from, roster_t const & to, cset & cs)
                             from.all_nodes(), from_i, 
                             to.all_nodes(), to_i))
     {
+      MM(state);
       switch (state)
         {
         case start:
