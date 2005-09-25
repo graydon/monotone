@@ -209,6 +209,41 @@ dump(node_t const & n, std::string & out)
   out = oss.str();
 }
 
+// helper
+void
+roster_t::do_deep_copy_from(roster_t const & other)
+{
+  MM(*this);
+  MM(other);
+  I(!root_dir);
+  I(nodes.empty());
+  for (node_map::const_iterator i = other.nodes.begin(); i != other.nodes.end();
+       ++i)
+    safe_insert(nodes, std::make_pair(i->first, i->second->clone()));
+  for (node_map::iterator i = nodes.begin(); i != nodes.end(); ++i)
+    if (is_dir_t(i->second))
+      {
+        dir_map & children = downcast_to_dir_t(i->second)->children;
+        for (dir_map::iterator j = children.begin(); j != children.end(); ++j)
+          j->second = safe_get(nodes, j->second->self);
+      }
+  if (other.root_dir)
+    root_dir = downcast_to_dir_t(safe_get(nodes, other.root_dir->self));
+}
+
+roster_t::roster_t(roster_t const & other)
+{
+  do_deep_copy_from(other);
+}
+
+roster_t &
+roster_t::operator=(roster_t const & other)
+{
+  root_dir.reset();
+  nodes.clear();
+  do_deep_copy_from(other);
+  return *this;
+}
 
 static inline void
 dirname_basename(split_path const & sp,
@@ -621,8 +656,11 @@ void
 dump(roster_t const & val, std::string & out)
 {
   std::ostringstream oss;
-  oss << "Root node: " << val.root_dir->self << "\n"
-      << "   at " << val.root_dir << ", uses: " << val.root_dir.use_count() << "\n";
+  if (val.root_dir)
+    oss << "Root node: " << val.root_dir->self << "\n"
+        << "   at " << val.root_dir << ", uses: " << val.root_dir.use_count() << "\n";
+  else
+    oss << "root dir is NULL\n";
   for (node_map::const_iterator i = val.nodes.begin(); i != val.nodes.end(); ++i)
     {
       oss << "Node " << i->first << "\n";

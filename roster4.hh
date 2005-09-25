@@ -143,13 +143,15 @@ class roster_t
 {
 public:
   roster_t() {}
+  roster_t(roster_t const & other);
+  roster_t & operator=(roster_t const & other);
   bool has_root() const;
   node_t get_node(split_path const & sp) const;
   node_t get_node(node_id n) const;
   void get_name(node_id n, split_path & sp) const;
   void replace_node_id(node_id from, node_id to);
 
-  // editable_tree methods
+  // editable_tree operations
   node_id detach_node(split_path const & src);
   void drop_detached_node(node_id n);
   node_id create_dir_node(node_id_source & nid);
@@ -187,6 +189,7 @@ public:
                   marking_map & mm);
 
 private:
+  void do_deep_copy_from(roster_t const & other);
   void check_finite_depth() const;
   dir_t root_dir;
   node_map nodes;
