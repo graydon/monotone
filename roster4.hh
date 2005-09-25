@@ -39,6 +39,8 @@ typedef std::map<attr_key, std::pair<bool, attr_value> > full_attr_map_t;
 typedef std::map<path_component, node_t> dir_map;
 typedef std::map<node_id, node_t> node_map;
 
+void dump(full_attr_map_t const & val, std::string & out);
+
 
 struct node 
 {
@@ -90,7 +92,6 @@ is_dir_t(node_t n)
   return static_cast<bool>(d);
 }
 
-
 inline bool
 is_file_t(node_t n)
 {
@@ -115,6 +116,8 @@ downcast_to_file_t(node_t const n)
   I(static_cast<bool>(f));
   return f;
 }
+
+void dump(node_t const & n, std::string & out);
 
 
 struct marking_t
@@ -177,8 +180,8 @@ public:
   void check_sane(marking_map const & marks) const;
 
   void print_to(basic_io::printer & pr,
-		marking_map const & mm,
-		bool print_local_parts) const;
+                marking_map const & mm,
+                bool print_local_parts) const;
 
   void parse_from(basic_io::parser & pa,
                   marking_map & mm);
@@ -187,8 +190,10 @@ private:
   void check_finite_depth() const;
   dir_t root_dir;
   node_map nodes;
+  friend void dump(roster_t const & val, std::string & out);
 };
 
+void dump(roster_t const & val, std::string & out);
 
 struct app_state;
 struct revision_set;

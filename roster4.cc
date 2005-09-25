@@ -9,6 +9,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include "app_state.hh"
 #include "basic_io.hh"
@@ -34,8 +35,17 @@ using boost::lexical_cast;
 
 ///////////////////////////////////////////////////////////////////
 
+void
+dump(full_attr_map_t const & val, std::string & out)
+{
+  std::ostringstream oss;
+  for (full_attr_map_t::const_iterator i = val.begin(); i != val.end(); ++i)
+    oss << "attr key: '" << i->first << "'\n"
+        << "  status: " << (i->second.first ? "live" : "dead") << "\n"
+        << "   value: '" << i->second.second << "'\n";
+  out = oss.str();
+}
 
-///////////////////////////////////////////////////////////////////
 
 namespace 
 {
@@ -171,6 +181,32 @@ file_node::clone()
   f->name = name;
   f->attrs = attrs;
   return f;
+}
+
+void
+dump(node_t const & n, std::string & out)
+{
+  std::ostringstream oss;
+  oss << "address: " << n << " (uses: " << n.use_count() << ")\n"
+      << "self: " << n->self << "\n"
+      << "parent: " << n->parent << "\n"
+      << "name: " << n->name << "\n";
+  std::string attr_map_s;
+  dump(n->attrs, attr_map_s);
+  oss << "attrs:\n" << attr_map_s;
+  oss << "type: ";
+  if (is_file_t(n))
+    oss << "file\n"
+        << "content: " << downcast_to_file_t(n)->content << "\n";
+  else
+    {
+      oss << "dir\n";
+      dir_map const & c = downcast_to_dir_t(n)->children;
+      oss << "children: " << c.size() << "\n";
+      for (dir_map::const_iterator i = c.begin(); i != c.end(); ++i)
+        oss << "  " << i->first << " -> " << i->second << "\n";
+    }
+  out = oss.str();
 }
 
 
@@ -581,6 +617,22 @@ roster_t::set_attr(split_path const & pth,
   i->second = val;
 }
 
+void
+dump(roster_t const & val, std::string & out)
+{
+  std::ostringstream oss;
+  oss << "Root node: " << val.root_dir->self << "\n"
+      << "   at " << val.root_dir << ", uses: " << val.root_dir.use_count() << "\n";
+  for (node_map::const_iterator i = val.nodes.begin(); i != val.nodes.end(); ++i)
+    {
+      oss << "Node " << i->first << "\n";
+      std::string node_s;
+      dump(i->second, node_s);
+      oss << "\n"
+          << node_s;
+    }
+  out = oss.str();
+}
 
 marking_t::marking_t()
 {
@@ -2091,7 +2143,9 @@ change_automaton
       }
     // now do it
     MM(c);
+    MM(r);
     roster_t before = r;
+    MM(before);
     editable_roster_base e = editable_roster_base(r, nis);
     c.apply_to(e);
     cset derived;
