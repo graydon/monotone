@@ -1588,7 +1588,7 @@ namespace
     if (is_file_t(from_n))
       {
         file_t from_f = downcast_to_file_t(from_n);
-        file_t to_f = downcast_to_file_t(from_n);
+        file_t to_f = downcast_to_file_t(to_n);
         if (!(from_f->content == to_f->content))
           {
             safe_insert(cs.deltas_applied,
