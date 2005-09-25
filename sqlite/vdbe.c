@@ -43,7 +43,7 @@
 ** in this file for details.  If in doubt, do not deviate from existing
 ** commenting and indentation practices when changing or adding code.
 **
-** $Id: vdbe.c,v 1.488 2005/09/17 15:20:28 drh Exp $
+** $Id: vdbe.c,v 1.491 2005/09/20 17:42:23 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -1411,8 +1411,15 @@ case OP_ToBlob: {                  /* no-push */
 ** jump to instruction P2.  Otherwise, continue to the next instruction.
 **
 ** If the 0x100 bit of P1 is true and either operand is NULL then take the
-** jump.  If the 0x100 bit of P1 is false then fall thru if either operand
+** jump.  If the 0x100 bit of P1 is clear then fall thru if either operand
 ** is NULL.
+**
+** If the 0x200 bit of P1 is set and either operand is NULL then
+** both operands are converted to integers prior to comparison.
+** NULL operands are converted to zero and non-NULL operands are
+** converted to 1.  Thus, for example, with 0x200 set,  NULL==NULL is true
+** whereas it would normally be NULL.  Similarly,  NULL==123 is false when
+** 0x200 is set but is NULL when the 0x200 bit of P1 is clear.
 **
 ** The least significant byte of P1 (mask 0xff) must be an affinity character -
 ** 'n', 't', 'i' or 'o' - or 0x00. An attempt is made to coerce both values
@@ -1481,14 +1488,36 @@ case OP_Ge: {             /* same as TK_GE, no-push */
   ** the stack.
   */
   if( flags&MEM_Null ){
-    popStack(&pTos, 2);
-    if( pOp->p2 ){
-      if( pOp->p1 & 0x100 ) pc = pOp->p2-1;
+    if( (pOp->p1 & 0x200)!=0 ){
+      /* The 0x200 bit of P1 means, roughly "do not treat NULL as the
+      ** magic SQL value it normally is - treat it as if it were another
+      ** integer".
+      **
+      ** With 0x200 set, if either operand is NULL then both operands
+      ** are converted to integers prior to being passed down into the
+      ** normal comparison logic below.  NULL operands are converted to
+      ** zero and non-NULL operands are converted to 1.  Thus, for example,
+      ** with 0x200 set,  NULL==NULL is true whereas it would normally
+      ** be NULL.  Similarly,  NULL!=123 is true.
+      */
+      sqlite3VdbeMemSetInt64(pTos, (pTos->flags & MEM_Null)==0);
+      sqlite3VdbeMemSetInt64(pNos, (pNos->flags & MEM_Null)==0);
     }else{
-      pTos++;
-      pTos->flags = MEM_Null;
+      /* If the 0x200 bit of P1 is clear and either operand is NULL then
+      ** the result is always NULL.  The jump is taken if the 0x100 bit
+      ** of P1 is set.
+      */
+      popStack(&pTos, 2);
+      if( pOp->p2 ){
+        if( pOp->p1 & 0x100 ){
+          pc = pOp->p2-1;
+        }
+      }else{
+        pTos++;
+        pTos->flags = MEM_Null;
+      }
+      break;
     }
-    break;
   }
 
   affinity = pOp->p1 & 0xFF;
@@ -4145,6 +4174,39 @@ case OP_IfMemPos: {        /* no-push */
   if( pMem->i>0 ){
      pc = pOp->p2 - 1;
   }
+  break;
+}
+
+/* Opcode: MemNull P1 * *
+**
+** Store a NULL in memory cell P1
+*/
+case OP_MemNull: {
+  assert( pOp->p1>=0 && pOp->p1<p->nMem );
+  sqlite3VdbeMemSetNull(&p->aMem[pOp->p1]);
+  break;
+}
+
+/* Opcode: MemInt P1 P2 *
+**
+** Store the integer value P1 in memory cell P2.
+*/
+case OP_MemInt: {
+  assert( pOp->p2>=0 && pOp->p2<p->nMem );
+  sqlite3VdbeMemSetInt64(&p->aMem[pOp->p2], pOp->p1);
+  break;
+}
+
+/* Opcode: MemMove P1 P2 *
+**
+** Move the content of memory cell P2 over to memory cell P1.
+** Any prior content of P1 is erased.  Memory cell P2 is left
+** containing a NULL.
+*/
+case OP_MemMove: {
+  assert( pOp->p1>=0 && pOp->p1<p->nMem );
+  assert( pOp->p2>=0 && pOp->p2<p->nMem );
+  rc = sqlite3VdbeMemMove(&p->aMem[pOp->p1], &p->aMem[pOp->p2]);
   break;
 }
 

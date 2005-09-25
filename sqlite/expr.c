@@ -12,7 +12,7 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.228 2005/09/16 02:38:10 drh Exp $
+** $Id: expr.c,v 1.230 2005/09/23 21:11:54 drh Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -548,6 +548,8 @@ Select *sqlite3SelectDup(Select *p){
   pNew->iOffset = -1;
   pNew->isResolved = p->isResolved;
   pNew->isAgg = p->isAgg;
+  pNew->usesVirt = 0;
+  pNew->disallowOrderBy = 0;
   pNew->pRightmost = 0;
   pNew->addrOpenVirt[0] = -1;
   pNew->addrOpenVirt[1] = -1;
@@ -1292,8 +1294,7 @@ void sqlite3CodeSubselect(Parse *pParse, Expr *pExpr){
     sqlite3VdbeAddOp(v, OP_MemLoad, mem, 0);
     testAddr = sqlite3VdbeAddOp(v, OP_If, 0, 0);
     assert( testAddr>0 || sqlite3_malloc_failed );
-    sqlite3VdbeAddOp(v, OP_Integer, 1, 0);
-    sqlite3VdbeAddOp(v, OP_MemStore, mem, 1);
+    sqlite3VdbeAddOp(v, OP_MemInt, 1, mem);
   }
 
   switch( pExpr->op ){
@@ -1367,7 +1368,7 @@ void sqlite3CodeSubselect(Parse *pParse, Expr *pExpr){
           if( testAddr>0 && !sqlite3ExprIsConstant(pE2) ){
             VdbeOp *aOp = sqlite3VdbeGetOp(v, testAddr-1);
             int i;
-            for(i=0; i<4; i++){
+            for(i=0; i<3; i++){
               aOp[i].opcode = OP_Noop;
             }
             testAddr = 0;
@@ -1409,7 +1410,7 @@ void sqlite3CodeSubselect(Parse *pParse, Expr *pExpr){
   }
 
   if( testAddr ){
-    sqlite3VdbeChangeP2(v, testAddr, sqlite3VdbeCurrentAddr(v));
+    sqlite3VdbeJumpHere(v, testAddr);
   }
   return;
 }
@@ -1709,7 +1710,6 @@ void sqlite3ExprCode(Parse *pParse, Expr *pExpr){
     case TK_CASE: {
       int expr_end_label;
       int jumpInst;
-      int addr;
       int nExpr;
       int i;
       ExprList *pEList;
@@ -1737,8 +1737,7 @@ void sqlite3ExprCode(Parse *pParse, Expr *pExpr){
         }
         sqlite3ExprCode(pParse, aListelem[i+1].pExpr);
         sqlite3VdbeAddOp(v, OP_Goto, 0, expr_end_label);
-        addr = sqlite3VdbeCurrentAddr(v);
-        sqlite3VdbeChangeP2(v, jumpInst, addr);
+        sqlite3VdbeJumpHere(v, jumpInst);
       }
       if( pExpr->pLeft ){
         sqlite3VdbeAddOp(v, OP_Pop, 1, 0);
@@ -1905,7 +1904,7 @@ void sqlite3ExprIfTrue(Parse *pParse, Expr *pExpr, int dest, int jumpIfNull){
       codeCompare(pParse, pLeft, pRight, OP_Le, dest, jumpIfNull);
 
       sqlite3VdbeAddOp(v, OP_Integer, 0, 0);
-      sqlite3VdbeChangeP2(v, addr, sqlite3VdbeCurrentAddr(v));
+      sqlite3VdbeJumpHere(v, addr);
       sqlite3VdbeAddOp(v, OP_Pop, 1, 0);
       break;
     }
