@@ -191,11 +191,13 @@ get_private_key(lua_hooks & lua,
   bool force = false;
 
   L(F("base64-decoding %d-byte private key\n") % priv().size());
+  L(F("priv '%s'\n") % priv());
   decode_base64(priv, decoded_key);
   for (int i = 0; i < 3; ++i)
     {
       get_passphrase(lua, id, phrase, false, force);
       L(F("have %d-byte encrypted private key\n") % decoded_key().size());
+      L(F("decoded '%s'\n") % decoded_key());
 
       shared_ptr<PKCS8_PrivateKey> pkcs8_key;
       try 
@@ -258,7 +260,7 @@ migrate_private_key(app_state & app,
         {
           Pipe p;
           p.process_msg(decrypted_key);
-          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p));
+          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p, "", false));
         }
       catch (...)
         {
@@ -587,14 +589,14 @@ signature_round_trip_test()
   BOOST_CHECKPOINT("signing plaintext");
   string plaintext("test string to sign");
   base64<rsa_sha1_signature> sig;
-  make_signature(app, key, privkey, plaintext, sig);
+  make_signature(app, key, kp.priv, plaintext, sig);
   
   BOOST_CHECKPOINT("checking signature");
-  BOOST_CHECK(check_signature(app, key, pubkey, plaintext, sig));
+  BOOST_CHECK(check_signature(app, key, kp.pub, plaintext, sig));
   
   string broken_plaintext = plaintext + " ...with a lie";
   BOOST_CHECKPOINT("checking non-signature");
-  BOOST_CHECK(!check_signature(app, key, pubkey, broken_plaintext, sig));
+  BOOST_CHECK(!check_signature(app, key, kp.pub, broken_plaintext, sig));
 }
 
 void 

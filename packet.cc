@@ -1552,16 +1552,15 @@ packet_roundabout_test()
     diff(mdata.inner(), mdata2.inner(), del2);
     pw.consume_manifest_delta(mid, mid2, manifest_delta(del));
     
+    keypair kp;
     // a public key packet
-    base64<rsa_pub_key> puk;
-    encode_base64(rsa_pub_key("this is not a real rsa key"), puk);
-    pw.consume_public_key(rsa_keypair_id("test@lala.com"), puk);
+    encode_base64(rsa_pub_key("this is not a real rsa key"), kp.pub);
+    pw.consume_public_key(rsa_keypair_id("test@lala.com"), kp.pub);
 
     // a private key packet
-    base64< rsa_priv_key > pik;
-    encode_base64(rsa_priv_key("this is not a real rsa key either!"), pik);
+    encode_base64(rsa_priv_key("this is not a real rsa key either!"), kp.priv);
     
-    pw.consume_key_pair(rsa_keypair_id("test@lala.com"), puk, pik);
+    pw.consume_key_pair(rsa_keypair_id("test@lala.com"), kp);
     
   }
   

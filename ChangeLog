@@ -1,3 +1,12 @@
+2005-09-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/pkcs8.cc, keys.cc: fix monotone-specific pkcs8 key
+	parsing.
+	* commands.cc: ls keys shows keystore-only pubkeys as well
+	* packet.cc: fix unit tests
+	* testsuite.at: use keypair packet rather than privkey/pubkey 
+	packets.
+
 2005-09-26  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc, keys.cc, others: use standard

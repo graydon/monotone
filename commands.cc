@@ -602,51 +602,82 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 static void 
 ls_keys(string const & name, app_state & app, vector<utf8> const & args)
 {
-  vector<rsa_keypair_id> pubkeys;
-  vector<rsa_keypair_id> privkeys;
 
   transaction_guard guard(app.db);
 
+  vector<rsa_keypair_id> pubs;
+  vector<rsa_keypair_id> privkeys;
   if (args.size() == 0)
     {
-      app.db.get_key_ids("", pubkeys);
+      app.db.get_key_ids("", pubs);
       app.keys.get_key_ids("", privkeys);
     }
   else if (args.size() == 1)
     {
-      app.db.get_key_ids(idx(args, 0)(), pubkeys);
+      app.db.get_key_ids(idx(args, 0)(), pubs);
       app.keys.get_key_ids(idx(args, 0)(), privkeys);
     }
   else
     throw usage(name);
+
+  // true if it is in the database, false otherwise
+  map<rsa_keypair_id, bool> pubkeys;
+  for (vector<rsa_keypair_id>::const_iterator i = pubs.begin();
+       i != pubs.end(); i++)
+    pubkeys[*i] = true;
   
+  bool all_in_db = true;
+  for (vector<rsa_keypair_id>::const_iterator i = privkeys.begin();
+       i != privkeys.end(); i++)
+    {
+      if (pubkeys.find(*i) == pubkeys.end())
+        {
+          pubkeys[*i] = false;
+          all_in_db = false;
+        }
+    }
+
   if (pubkeys.size() > 0)
     {
       cout << endl << "[public keys]" << endl;
-      for (size_t i = 0; i < pubkeys.size(); ++i)
+      for (map<rsa_keypair_id, bool>::iterator i = pubkeys.begin();
+           i != pubkeys.end(); i++)
         {
-          rsa_keypair_id keyid = idx(pubkeys, i)();
           base64<rsa_pub_key> pub_encoded;
           hexenc<id> hash_code;
+          rsa_keypair_id keyid = i->first;
+          bool indb = i->second;
 
-          app.db.get_key(keyid, pub_encoded); 
+          if (indb)
+            app.db.get_key(keyid, pub_encoded); 
+          else
+            {
+              keypair kp;
+              app.keys.get_key_pair(keyid, kp);
+              pub_encoded = kp.pub;
+            }
           key_hash_code(keyid, pub_encoded, hash_code);
-          cout << hash_code << " " << keyid << endl;
+          if (indb)
+            cout << hash_code << " " << keyid << endl;
+          else
+            cout << hash_code << " " << keyid << "   (*)" << endl;
         }
+      if (!all_in_db)
+        cout << "(*) - only in keystore" << endl;
       cout << endl;
     }
 
   if (privkeys.size() > 0)
     {
       cout << endl << "[private keys]" << endl;
-      for (size_t i = 0; i < privkeys.size(); ++i)
+      for (vector<rsa_keypair_id>::iterator i = privkeys.begin();
+           i != privkeys.end(); i++)
         {
-          rsa_keypair_id keyid = idx(privkeys, i)();
           keypair kp;
           hexenc<id> hash_code;
-          app.keys.get_key_pair(keyid, kp); 
-          key_hash_code(keyid, kp.priv, hash_code);
-          cout << hash_code << " " << keyid << endl;
+          app.keys.get_key_pair(*i, kp); 
+          key_hash_code(*i, kp.priv, hash_code);
+          cout << hash_code << " " << *i << endl;
         }
       cout << endl;
     }
@@ -820,7 +851,7 @@ CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), OPT
   keypair kp;
   P(F("generating key-pair '%s'\n") % ident);
   generate_key_pair(app.lua, ident, kp);
-  P(F("storing key-pair '%s' in database\n") % ident);
+  P(F("storing key-pair '%s' in keystore\n") % ident);
   app.keys.put_key_pair(ident, kp);
 
   guard.commit();
