@@ -1,3 +1,7 @@
+2005-09-26  Benoît Dejean  <benoit@placenet.org>
+
+	* database.cc: Merged 3 strings.
+
 2005-09-26  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc: add 'help' command

@@ -195,7 +195,7 @@ database::sql(bool init)
         {
           require_path_is_file(filename,
                                F("database %s does not exist") % filename,
-                               F("database %s is a directory") % filename);
+                               F("%s is a directory, not a database") % filename);
           check_sqlite_format_version(filename);
         }
 
