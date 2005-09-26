@@ -3438,8 +3438,8 @@ handle_new_connection(Netxx::Address & addr,
                       map<Netxx::socket_type, shared_ptr<session> > & sessions,
                       app_state & app)
 {
-  L(F("accepting new connection on %s : %d\n") 
-    % addr.get_name() % addr.get_port());
+  L(F("accepting new connection on %s : %s\n") 
+    % addr.get_name() % lexical_cast<string>(addr.get_port()));
   Netxx::Peer client = server.accept_connection();
   
   if (!client) 
@@ -3582,8 +3582,8 @@ serve_connections(protocol_role role,
 
   Netxx::Address addr(address().c_str(), default_port, true);
 
-  P(F("beginning service on %s : %d\n") 
-    % addr.get_name() % addr.get_port());
+  P(F("beginning service on %s : %s\n") 
+    % addr.get_name() % lexical_cast<string>(addr.get_port()));
 
   Netxx::StreamServer server(addr, timeout);
   
@@ -3612,8 +3612,8 @@ serve_connections(protocol_role role,
       if (fd == -1)
         {
           if (armed_sessions.empty()) 
-            L(F("timed out waiting for I/O (listening on %s : %d)\n") 
-              % addr.get_name() % addr.get_port());
+            L(F("timed out waiting for I/O (listening on %s : %s)\n") 
+              % addr.get_name() % lexical_cast<string>(addr.get_port()));
         }
       
       // we either got a new connection
