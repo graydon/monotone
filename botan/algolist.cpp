@@ -6,6 +6,7 @@
 #include <botan/lookup.h>
 
 #include <botan/aes.h>
+#include <botan/des.h>
 
 #include <botan/arc4.h>
 
@@ -15,6 +16,7 @@
 #include <botan/hmac.h>
 
 #include <botan/mode_pad.h>
+#include <botan/pkcs5.h>
 
 namespace Botan {
 
@@ -75,6 +77,9 @@ BlockCipher* get_block_cipher(const std::string& algo_spec)
    HANDLE_TYPE_NO_ARGS("AES-128", AES_128);
    HANDLE_TYPE_NO_ARGS("AES-192", AES_192);
    HANDLE_TYPE_NO_ARGS("AES-256", AES_256);
+   HANDLE_TYPE_NO_ARGS("DES", DES);
+   HANDLE_TYPE_NO_ARGS("DESX", DESX);
+   HANDLE_TYPE_NO_ARGS("TripleDES", TripleDES);
 
    return 0;
    }
@@ -136,6 +141,8 @@ S2K* get_s2k(const std::string& algo_spec)
       return 0;
    const std::string algo_name = deref_alias(name[0]);
 
+   HANDLE_TYPE_ONE_STRING("PBKDF1", PKCS5_PBKDF1);
+   HANDLE_TYPE_ONE_STRING("PBKDF2", PKCS5_PBKDF2);
    return 0;
    }
 

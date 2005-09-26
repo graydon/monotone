@@ -146,11 +146,11 @@ typedef std::pair<var_domain, var_name> var_key;
 struct keypair
 {
   base64<rsa_pub_key> pub;
-  base64< arc4<rsa_priv_key> > priv;
+  base64<rsa_priv_key> priv;
   keypair()
   {}
   keypair(base64<rsa_pub_key> const & a,
-          base64< arc4<rsa_priv_key> > const & b)
+          base64<rsa_priv_key> const & b)
    : pub(a), priv(b)
   {}
 };

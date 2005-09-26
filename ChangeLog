@@ -1,3 +1,12 @@
+2005-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc, keys.cc, others: use standard
+	"PBE-PKCS5v20(SHA-1,TripleDES/CBC)" encoding rather than
+	raw arc4. extract_keys will re-encode keys, still
+	need to work on packet.cc encoding.
+	* botan/{des*,pkcs5*,algolist.cpp}: required files
+	from Botan 1.4.6
+
 2005-09-25  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Move private keys outside the database.

@@ -1558,9 +1558,8 @@ packet_roundabout_test()
     pw.consume_public_key(rsa_keypair_id("test@lala.com"), puk);
 
     // a private key packet
-    base64< arc4<rsa_priv_key> > pik;
-    encode_base64(arc4<rsa_priv_key>
-                  (rsa_priv_key("this is not a real rsa key either!")), pik);
+    base64< rsa_priv_key > pik;
+    encode_base64(rsa_priv_key("this is not a real rsa key either!"), pik);
     
     pw.consume_key_pair(rsa_keypair_id("test@lala.com"), puk, pik);
     

@@ -523,7 +523,7 @@ database::rehash()
     for (size_t i = 0; i < res.size(); ++i)
       {
         hexenc<id> tmp;
-        key_hash_code(rsa_keypair_id(res[i][0]), base64< arc4<rsa_priv_key> >(res[i][1]), tmp);
+        key_hash_code(rsa_keypair_id(res[i][0]), base64< rsa_priv_key >(res[i][1]), tmp);
         execute("INSERT INTO private_keys VALUES(?, ?, ?)", 
                 tmp().c_str(), res[i][0].c_str(), res[i][1].c_str());
         ++privkeys;

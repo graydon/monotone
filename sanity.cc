@@ -179,6 +179,7 @@ sanity::naughty_failure(string const & expr, format const & explain,
   log(format("%s:%d: usage constraint '%s' violated\n") % file % line % expr,
       file.c_str(), line);
   prefix_lines_with(_("misuse: "), explain.str(), message);
+  gasp();
   throw informative_failure(message);
 }
 

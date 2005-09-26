@@ -3760,9 +3760,19 @@ CMD(extract_keys, N_("debug"), N_(""),
   for (std::vector<rsa_keypair_id>::const_iterator i = privkeys.begin();
        i != privkeys.end(); ++i)
     {
+      base64< arc4<rsa_priv_key> > old_priv;
+      app.db.get_key(*i, old_priv);
+      // convert it to a newstyle key
       keypair kp;
-      app.db.get_key(*i, kp.priv);
-      app.db.get_key(*i, kp.pub);
+      migrate_private_key(app, *i, old_priv, kp);
+      
+      // check the public key matches
+      base64< rsa_pub_key > pub;
+      app.db.get_key(*i, pub);
+      MM(pub);
+      MM(kp.pub);
+      N(keys_match(*i, pub, *i, kp.pub), F("public and private keys for %s don't match") % (*i)());
+
       app.keys.put_key_pair(*i, kp);
     }
 }

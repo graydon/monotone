@@ -115,6 +115,7 @@ BOTAN_SOURCES =                                                                 
         botan/x509_crl.cpp botan/x509_key.cpp botan/x509_obj.cpp	\
         botan/x509cert.cpp botan/x509find.cpp botan/x509opt.cpp		\
         botan/x509self.cpp botan/x509stor.cpp botan/x917_rng.cpp	\
+		botan/des.cpp botan/des_tab.cpp botan/pkcs5.cpp \
         \
         botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h	\
         botan/lookup.h botan/omac.h botan/randpool.h botan/version.h	\
@@ -146,7 +147,7 @@ BOTAN_SOURCES =                                                                 
         botan/data_src.h botan/es_egd.h botan/look_add.h botan/ofb.h	\
         botan/pk_util.h botan/ui.h botan/blinding.h botan/defalloc.h	\
         botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h	\
-        botan/util.h
+        botan/util.h botan/des.h botan/pkcs5.h
 
 
 BOOST_SANDBOX_SOURCES = \
