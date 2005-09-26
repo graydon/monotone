@@ -79,7 +79,7 @@ struct poptOption options[] =
     {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, gettext_noop("print debug log to stderr while running"), NULL},
     {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, gettext_noop("file to dump debugging log to, on failure"), NULL},
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, gettext_noop("suppress log and progress messages"), NULL},
-    {"help", 0, POPT_ARG_NONE, NULL, OPT_HELP, gettext_noop("display help message"), NULL},
+    {"help", 'h', POPT_ARG_NONE, NULL, OPT_HELP, gettext_noop("display help message"), NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, gettext_noop("print version number, then exit"), NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, gettext_noop("print detailed version number, then exit"), NULL},
     {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, gettext_noop("insert command line arguments taken from the given file"), NULL},

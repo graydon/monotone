@@ -1,3 +1,8 @@
+2005-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc: add 'help' command
+	* monotone.cc: add -h alias for --help
+	
 2005-09-25  Matt Johnston  <matt@ucc.asn.au>
 
 	* netsync.cc: use lexical_cast on port numbers to avoid
