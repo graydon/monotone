@@ -998,13 +998,16 @@ was initially developed on the branch @code{net.venge.monotone.win32}.
 
 (For more information, see @ref{Naming Conventions}.)
 
+@page
 @node    Tutorial
 @chapter Tutorial
 
 This chapter illustrates the basic uses of monotone by means of an
-example, fictional software project. Before we walk through the
-tutorial, there are two minor issues to address: standard options and
-revision selectors.
+example, fictional software project.
+
+@section Issues
+Before we walk through the tutorial, there are two minor issues to
+address: standard options and revision selectors.
 
 @subsection Standard Options
 Before operating monotone, two important command-line options should

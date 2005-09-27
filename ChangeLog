@@ -1,3 +1,13 @@
+2005-09-27  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Tutorial): It seems like texi2pdf gets quite
+	confused when a @chapter has a @subsection with a @section in
+	between.  The resulting PDF had a Tutorial that was a indexed as a
+	subsection under Concepts/Branches instead of being indexed as the
+	chapter it is, and most confusingly, it's last subsection
+	(Branching and Merging) ended up as a a separate chapter of it's
+	own...
+
 2005-09-26  Benoît Dejean  <benoit@placenet.org>
 
 	* database.cc: Merged 3 strings.
