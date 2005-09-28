@@ -184,7 +184,8 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
 shared_ptr<RSA_PrivateKey>
 get_private_key(lua_hooks & lua,
                 rsa_keypair_id const & id,
-                base64< rsa_priv_key > const & priv)
+                base64< rsa_priv_key > const & priv,
+                bool force_from_user = false)
 {
   rsa_priv_key decoded_key;
   string phrase;
@@ -195,7 +196,7 @@ get_private_key(lua_hooks & lua,
   decode_base64(priv, decoded_key);
   for (int i = 0; i < 3; ++i)
     {
-      get_passphrase(lua, id, phrase, false, force);
+      get_passphrase(lua, id, phrase, force_from_user, force);
       L(F("have %d-byte encrypted private key\n") % decoded_key().size());
       L(F("decoded '%s'\n") % decoded_key());
 
@@ -300,7 +301,7 @@ change_key_passphrase(lua_hooks & lua,
                       rsa_keypair_id const & id,
                       base64< rsa_priv_key > & encoded_key)
 {
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(lua, id, encoded_key);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(lua, id, encoded_key, true);
 
   string new_phrase;
   get_passphrase(lua, id, new_phrase, true, true, "enter new passphrase");

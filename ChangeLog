@@ -1,3 +1,8 @@
+2005-09-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* keys.cc (get_private_keys): don't use lua hook passwords for
+	chkeypass.
+
 2005-09-28  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* key_store.cc: fix delete_key
