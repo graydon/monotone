@@ -1,5 +1,18 @@
 2005-09-27  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	Replace extract_keys command with a database migrator.
+	* database.{cc,hh}: Remove last traces of private keys in db.
+	* schema.sql: Remove private_keys table
+	* commands.cc (dropkey): private keys can no longer be in the db.
+	* schema_migration.cc: new migrator
+	* commands.cc: remove extract_keys
+	* tests/t_migrate_schema.at: update
+	* keys.hh, cert.cc, key_store.cc: keys_match doesn't work well on
+	privkeys. Don't use it.
+	* key_store.cc: Allow duplicate insertions, if they match.
+
+2005-09-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* schema_migration.hh: migrate_depot_schema() doesn't really exist
 	* database.cc, schema_migration.{cc,hh}: migrate_monotone_schema
 	now takes an app_state * , so data can be moved to/from the database.

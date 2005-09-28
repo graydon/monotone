@@ -208,11 +208,22 @@ key_store::put_key_pair(rsa_keypair_id const & ident,
 {
   maybe_read_key_dir();
   L(F("putting key pair '%s'") % ident);
-  I(keys.insert(std::make_pair(ident, kp)).second);
-  hexenc<id> hash;
-  key_hash_code(ident, kp.pub, hash);
-  I(hashes.insert(std::make_pair(hash, ident)).second);
-  write_key(ident);
+  std::pair<std::map<rsa_keypair_id, keypair>::iterator, bool> res;
+  res = keys.insert(std::make_pair(ident, kp));
+  if (res.second)
+    {
+      hexenc<id> hash;
+      key_hash_code(ident, kp.pub, hash);
+      I(hashes.insert(std::make_pair(hash, ident)).second);
+      write_key(ident);
+    }
+  else
+    {
+      E(/*keys_match(ident, res.first->second.priv, ident, kp.priv)
+        && */keys_match(ident, res.first->second.pub, ident, kp.pub),
+        F("Cannot store key '%s'; a different key by that name exists.")
+          % ident);
+    }
 }
 
 void

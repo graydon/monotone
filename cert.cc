@@ -368,8 +368,8 @@ load_key_pair(app_state & app,
             {
               // We really don't want the database key and the rcfile key
               // to differ.
-              N(keys_match(id, kskeys.priv, id, luakeys.priv)
-                && keys_match(id, kskeys.pub, id, luakeys.pub),
+              N(/*keys_match(id, kskeys.priv, id, luakeys.priv)
+                && */keys_match(id, kskeys.pub, id, luakeys.pub),
                   F("mismatch between key '%s' in key store"
                     " and get_key_pair hook") % id);
             }

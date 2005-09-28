@@ -80,11 +80,11 @@ bool keys_match(rsa_keypair_id const & id1,
                 base64<rsa_pub_key> const & key1,
                 rsa_keypair_id const & id2,
                 base64<rsa_pub_key> const & key2);
-
+/* Doesn't work
 bool keys_match(rsa_keypair_id const & id1,
                 base64< rsa_priv_key > const & key1,
                 rsa_keypair_id const & id2,
                 base64< rsa_priv_key > const & key2);
-
+*/
 
 #endif // __KEYS_HH__

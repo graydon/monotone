@@ -873,16 +873,6 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"
       key_deleted = true;
     }
 
-  if (app.db.private_key_exists(ident))
-    {
-      P(F("dropping private key '%s' from database\n\n") % ident);
-      W(F("the private key data may not have been erased from the\n"
-          "database. it is recommended that you use 'db dump' and\n"
-          "'db load' to be sure."));
-      app.db.delete_private_key(ident);
-      key_deleted = true;
-    }
-
   if (app.keys.key_pair_exists(ident))
     {
       P(F("dropping key pair '%s' from key store\n\n") % ident);
@@ -3780,32 +3770,6 @@ CMD(unset, N_("vars"), N_("DOMAIN NAME"),
   var_key k(d, n);
   N(app.db.var_exists(k), F("no var with name %s in domain %s") % n % d);
   app.db.clear_var(k);
-}
-
-CMD(extract_keys, N_("debug"), N_(""),
-    N_("copy all private keys in the database into the keystore"),
-    OPT_NONE)
-{
-  std::vector<rsa_keypair_id> privkeys;
-  app.db.get_private_keys(privkeys);
-  for (std::vector<rsa_keypair_id>::const_iterator i = privkeys.begin();
-       i != privkeys.end(); ++i)
-    {
-      base64< arc4<rsa_priv_key> > old_priv;
-      app.db.get_key(*i, old_priv);
-      // convert it to a newstyle key
-      keypair kp;
-      migrate_private_key(app, *i, old_priv, kp);
-      
-      // check the public key matches
-      base64< rsa_pub_key > pub;
-      app.db.get_key(*i, pub);
-      MM(pub);
-      MM(kp.pub);
-      N(keys_match(*i, pub, *i, kp.pub), F("public and private keys for %s don't match") % (*i)());
-
-      app.keys.put_key_pair(*i, kp);
-    }
 }
 
 }; // namespace commands

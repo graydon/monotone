@@ -9,6 +9,7 @@
 #include <locale>
 #include <stdexcept>
 #include <iostream>
+#include <map>
 
 #include <boost/tokenizer.hpp>
 
@@ -18,6 +19,7 @@
 #include "schema_migration.hh"
 #include "botan/botan.h"
 #include "app_state.hh"
+#include "keys.hh"
 
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
@@ -777,6 +779,63 @@ migrate_client_to_add_indexes(sqlite3 * sql,
   return true;
 }
 
+static int
+extract_key(void *ptr, int ncols, char **values, char **names)
+{
+  // This is stupid. The cast should not be needed.
+  map<string, string> *out = (map<string, string>*)ptr;
+  I(ncols == 2);
+  out->insert(make_pair(string(values[0]), string(values[1])));
+  return 0;
+}
+static bool
+migrate_client_to_external_privkeys(sqlite3 * sql,
+                                    char ** errmsg,
+                                    app_state *app)
+{
+  int res;
+  map<string, string> pub, priv;
+  vector<keypair> pairs;
+
+  res = sqlite3_exec(sql,
+                     "SELECT id, keydata FROM private_keys;",
+                     &extract_key, &priv, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite3_exec(sql,
+                     "SELECT id, keydata FROM public_keys;",
+                     &extract_key, &pub, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  for (map<string, string>::const_iterator i = priv.begin();
+       i != priv.end(); ++i)
+    {
+      rsa_keypair_id ident = i->first;
+      base64< arc4<rsa_priv_key> > old_priv = i->second;
+      map<string, string>::const_iterator j = pub.find(i->first);
+      keypair kp;
+      migrate_private_key(*app, ident, old_priv, kp);
+      MM(kp.pub);
+      if (j != pub.end())
+        {
+          base64< rsa_pub_key > pub = j->second;
+          MM(pub);
+          N(keys_match(ident, pub, ident, kp.pub),
+            F("public and private keys for %s don't match") % ident);
+        }
+
+      app->keys.put_key_pair(ident, kp);
+    }
+
+  res = sqlite3_exec(sql, "DROP TABLE private_keys;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  return true;
+}
+
 void 
 migrate_monotone_schema(sqlite3 *sql, app_state *app)
 {
@@ -802,9 +861,12 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
   m.add("e372b508bea9b991816d1c74680f7ae10d2a6d94",
         &migrate_client_to_add_indexes);
 
+  m.add("1509fd75019aebef5ac3da3a5edf1312393b70e9",
+        &migrate_client_to_external_privkeys);
+
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "1509fd75019aebef5ac3da3a5edf1312393b70e9");
+  m.migrate(sql, "bd86f9a90b5d552f0be1fa9aee847ea0f317778b");
 }

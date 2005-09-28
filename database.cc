@@ -66,7 +66,7 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("1509fd75019aebef5ac3da3a5edf1312393b70e9"),
+  schema("bd86f9a90b5d552f0be1fa9aee847ea0f317778b"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -514,22 +514,6 @@ database::rehash()
         ++pubkeys;
       }
   }
-
-  {
-    // rehash all privkeys
-    results res;
-    fetch(res, 2, any_rows, "SELECT id, keydata FROM private_keys");
-    execute("DELETE FROM private_keys");
-    for (size_t i = 0; i < res.size(); ++i)
-      {
-        hexenc<id> tmp;
-        key_hash_code(rsa_keypair_id(res[i][0]), base64< rsa_priv_key >(res[i][1]), tmp);
-        execute("INSERT INTO private_keys VALUES(?, ?, ?)", 
-                tmp().c_str(), res[i][0].c_str(), res[i][1].c_str());
-        ++privkeys;
-      }
-  }
-
   guard.commit();
 }
 
@@ -1480,12 +1464,6 @@ database::get_public_keys(vector<rsa_keypair_id> & keys)
   get_keys("public_keys", keys);
 }
 
-void
-database::get_private_keys(vector<rsa_keypair_id> & keys)
-{
-  get_keys("private_keys", keys);
-}
-
 bool 
 database::public_key_exists(hexenc<id> const & hash)
 {
@@ -1511,20 +1489,6 @@ database::public_key_exists(rsa_keypair_id const & id)
     return true;
   return false;
 }
-
-bool
-database::private_key_exists(rsa_keypair_id const & id)
-{
-  results res;
-  fetch(res, one_col, any_rows,
-        "SELECT id FROM private_keys WHERE id = ?",
-        id().c_str());
-  I((res.size() == 1) || (res.size() == 0));
-  if (res.size() == 1)
-    return true;
-  return false;
-}
-
 
 void 
 database::get_pubkey(hexenc<id> const & hash, 
@@ -1561,24 +1525,6 @@ database::put_key(rsa_keypair_id const & pub_id,
     F("another key with name '%s' already exists") % pub_id);
   execute("INSERT INTO public_keys VALUES(?, ?, ?)", 
           thash().c_str(), pub_id().c_str(), pub_encoded().c_str());
-}
-
-void
-database::get_key(rsa_keypair_id const & priv_id,
-                  base64< arc4<rsa_priv_key> > & priv_encoded)
-{
-  results res;
-  fetch(res, one_col, one_col,
-        "SELECT keydata FROM private_keys WHERE id = ?",
-        priv_id().c_str());
-  priv_encoded = res[0][0];
-}
-
-void
-database::delete_private_key(rsa_keypair_id const & pub_id)
-{
-  execute("DELETE FROM private_keys WHERE id = ?",
-          pub_id().c_str());
 }
 
 void
@@ -2060,16 +2006,7 @@ database::complete(string const & partial,
         pattern.c_str());
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  
-
-  res.clear();
-
-  fetch(res, 2, any_rows,
-        "SELECT hash, id FROM private_keys WHERE hash GLOB ?",
-        pattern.c_str());
-
-  for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  
+    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));
 }
 
 using selectors::selector_type;

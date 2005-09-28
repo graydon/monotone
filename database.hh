@@ -320,13 +320,10 @@ public:
   void get_key_ids(std::string const & pattern,
                    std::vector<rsa_keypair_id> & pubkeys);
 
-  void get_private_keys(std::vector<rsa_keypair_id> & privkeys);
-
   void get_public_keys(std::vector<rsa_keypair_id> & pubkeys);
 
   bool public_key_exists(hexenc<id> const & hash);
   bool public_key_exists(rsa_keypair_id const & id);
-  bool private_key_exists(rsa_keypair_id const & id);
 
   
   void get_pubkey(hexenc<id> const & hash, 
@@ -338,10 +335,6 @@ public:
 
   void put_key(rsa_keypair_id const & id, 
                base64<rsa_pub_key> const & pub_encoded);
-
-  void get_key(rsa_keypair_id const & id,
-               base64< arc4<rsa_priv_key> > & priv_encoded);
-  void delete_private_key(rsa_keypair_id const & pub_id);
 
   void delete_public_key(rsa_keypair_id const & pub_id);
   
