@@ -1,3 +1,12 @@
+2005-09-28  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* key_store.cc: fix delete_key
+	* tests/t_database_check_normalized: needs 'db migrate'
+	* tests/t_lua_privkey.at: update for new key location
+	* tests/t_netsync_absorbs.at: use genkey instead of packets
+	* tests/t_netsync_checks_server_key.at: same
+	* tests/t_netsync_pubket.at: update key packet to new format
+
 2005-09-27  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Replace extract_keys command with a database migrator.

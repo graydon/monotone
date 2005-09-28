@@ -232,7 +232,14 @@ key_store::delete_key(rsa_keypair_id const & ident)
   maybe_read_key_dir();
   std::map<rsa_keypair_id, keypair>::iterator i = keys.find(ident);
   if (i != keys.end())
-    keys.erase(i);
+    {
+      hexenc<id> hash;
+      key_hash_code(ident, i->second.pub, hash);
+      std::map<hexenc<id>, rsa_keypair_id>::iterator j = hashes.find(hash);
+      I(j != hashes.end());
+      hashes.erase(j);
+      keys.erase(i);
+    }
   system_path file;
   get_key_file(ident, file);
   delete_file(file);
