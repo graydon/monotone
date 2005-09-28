@@ -17,6 +17,7 @@
 #include "sanity.hh"
 #include "schema_migration.hh"
 #include "botan/botan.h"
+#include "app_state.hh"
 
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
@@ -167,12 +168,18 @@ calculate_schema_id(sqlite3 *sql, string & id)
   calculate_id(tmp2, id);
 }
 
-typedef bool (*migrator_cb)(sqlite3 *, char **);
+typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *);
 
 struct 
 migrator
 {
   vector< pair<string,migrator_cb> > migration_events;
+  app_state * __app;
+
+  void set_app(app_state *app)
+  {
+    __app = app;
+  }
 
   void add(string schema_id, migrator_cb cb)
   {
@@ -224,7 +231,7 @@ migrator
               }
 
             // do this migration step
-            else if (! i->second(sql, &errmsg))
+            else if (! i->second(sql, &errmsg, __app))
               {
                 string e("migration step failed");
                 if (errmsg != NULL)
@@ -305,7 +312,8 @@ static bool move_table(sqlite3 *sql, char **errmsg,
 
 static bool 
 migrate_client_merge_url_and_group(sqlite3 * sql, 
-                                   char ** errmsg)
+                                   char ** errmsg,
+                                   app_state *)
 {
 
   // migrate the posting_queue table
@@ -448,7 +456,8 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
 
 static bool 
 migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql, 
-                                           char ** errmsg)
+                                           char ** errmsg,
+                                           app_state *)
 {
 
   // add the column to manifest_certs
@@ -611,7 +620,8 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
 
 static bool 
 migrate_client_to_revisions(sqlite3 * sql, 
-                           char ** errmsg)
+                            char ** errmsg,
+                            app_state *)
 {
   int res;
 
@@ -692,7 +702,8 @@ migrate_client_to_revisions(sqlite3 * sql,
 
 static bool 
 migrate_client_to_epochs(sqlite3 * sql, 
-                         char ** errmsg)
+                         char ** errmsg,
+                         app_state *)
 {
   int res;
 
@@ -716,7 +727,8 @@ migrate_client_to_epochs(sqlite3 * sql,
 
 static bool
 migrate_client_to_vars(sqlite3 * sql,
-                       char ** errmsg)
+                       char ** errmsg,
+                       app_state *)
 {
   int res;
   
@@ -736,7 +748,8 @@ migrate_client_to_vars(sqlite3 * sql,
 
 static bool
 migrate_client_to_add_indexes(sqlite3 * sql,
-                              char ** errmsg)
+                              char ** errmsg,
+                              app_state *)
 {
   int res;
   
@@ -765,10 +778,11 @@ migrate_client_to_add_indexes(sqlite3 * sql,
 }
 
 void 
-migrate_monotone_schema(sqlite3 *sql)
+migrate_monotone_schema(sqlite3 *sql, app_state *app)
 {
 
   migrator m;
+  m.set_app(app);
   
   m.add("edb5fa6cef65bcb7d0c612023d267c3aeaa1e57a",
         &migrate_client_merge_url_and_group);

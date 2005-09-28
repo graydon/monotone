@@ -472,7 +472,7 @@ database::migrate()
 
   open();
 
-  migrate_monotone_schema(__sql);
+  migrate_monotone_schema(__sql, __app);
   sqlite3_close(__sql);
 }
 

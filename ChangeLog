@@ -1,3 +1,9 @@
+2005-09-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* schema_migration.hh: migrate_depot_schema() doesn't really exist
+	* database.cc, schema_migration.{cc,hh}: migrate_monotone_schema
+	now takes an app_state * , so data can be moved to/from the database.
+
 2005-09-27  Matt Johnston  <matt@ucc.asn.au>
 
 	* botan/pkcs8.cc, keys.cc: fix monotone-specific pkcs8 key
