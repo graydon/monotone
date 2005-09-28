@@ -3633,9 +3633,13 @@ run_netsync_protocol(protocol_voice voice,
 //
 // 2) foreach new head, traverse up the revision ancestry, building
 // a set of reverse file/manifest deltas (we stop when we hit an
-// already-seen or existing-in-db rev). At the same time, build a
-// smaller set of forward deltas to files/manifests which exist in the
-// head revisions.
+// already-seen or existing-in-db rev). 
+//
+// at the same time, build up smaller set of forward deltas (files and
+// manifests). these have a file/manifest in the new head as the
+// destination, and end up having an item already existing in the
+// database as the source (or null, in which case full data is
+// requested).
 //
 // 3) For each file/manifest in head, first request the forward delta
 // (or full data if there is no path back to existing data). Then
@@ -3679,6 +3683,8 @@ ancestry_fetcher::ancestry_fetcher(session & s)
   request_manifests();
 }
 
+// adds file deltas from the given changeset into the sets of forward
+// and reverse deltas
 void
 ancestry_fetcher::traverse_files(change_set const & cset)
 {
@@ -3691,7 +3697,7 @@ ancestry_fetcher::traverse_files(change_set const & cset)
         % parent_file % child_file);
 
       I(!(parent_file == child_file));
-      // XXX when changeset format is altered to have [...]->[] deltas on deletion,
+      // when changeset format is altered to have [...]->[] deltas on deletion,
       // this assertion needs revisiting
       I(!null_id(child_file));
 
@@ -3734,6 +3740,7 @@ ancestry_fetcher::traverse_files(change_set const & cset)
     }
 }
 
+// adds the given manifest deltas to the sets of forward and reverse deltas
 void
 ancestry_fetcher::traverse_manifest(manifest_id const & child_man,
                                     manifest_id const & parent_man)
@@ -3762,8 +3769,6 @@ ancestry_fetcher::traverse_manifest(manifest_id const & child_man,
            d != fwd_manifest_deltas.upper_bound(child_man);
            d++)
         {
-          L(F("size %d\n") % fwd_manifest_deltas.size());
-          L(F("inserting %s->%s") % parent_man % d->second);
           fwd_manifest_deltas.insert(make_pair(parent_man, d->second));
         }
 
@@ -3772,6 +3777,8 @@ ancestry_fetcher::traverse_manifest(manifest_id const & child_man,
     }
 }
 
+// traverse up the ancestry for each of the given new head revisions,
+// storing sets of file and manifest deltas
 void
 ancestry_fetcher::traverse_ancestry(set<revision_id> const & heads)
 {
