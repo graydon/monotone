@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle SELECT statements in SQLite.
 **
-** $Id: select.c,v 1.269 2005/09/12 23:03:17 drh Exp $
+** $Id: select.c,v 1.276 2005/09/20 18:13:24 drh Exp $
 */
 #include "sqliteInt.h"
 
@@ -179,6 +179,7 @@ static void addWhereTerm(
   const char *zAlias1,     /* Alias for first table.  May be NULL */
   const Table *pTab2,      /* Second table */
   const char *zAlias2,     /* Alias for second table.  May be NULL */
+  int iRightJoinTable,     /* VDBE cursor for the right table */
   Expr **ppExpr            /* Add the equality term to this expression */
 ){
   Expr *pE1a, *pE1b, *pE1c;
@@ -199,11 +200,14 @@ static void addWhereTerm(
   pE2c = sqlite3Expr(TK_DOT, pE2b, pE2a, 0);
   pE = sqlite3Expr(TK_EQ, pE1c, pE2c, 0);
   ExprSetProperty(pE, EP_FromJoin);
+  pE->iRightJoinTable = iRightJoinTable;
   *ppExpr = sqlite3ExprAnd(*ppExpr, pE);
 }
 
 /*
 ** Set the EP_FromJoin property on all terms of the given expression.
+** And set the Expr.iRightJoinTable to iTable for every term in the
+** expression.
 **
 ** The EP_FromJoin property is used on terms of an expression to tell
 ** the LEFT OUTER JOIN processing logic that this term is part of the
@@ -211,11 +215,26 @@ static void addWhereTerm(
 ** of the more general WHERE clause.  These terms are moved over to the
 ** WHERE clause during join processing but we need to remember that they
 ** originated in the ON or USING clause.
+**
+** The Expr.iRightJoinTable tells the WHERE clause processing that the
+** expression depends on table iRightJoinTable even if that table is not
+** explicitly mentioned in the expression.  That information is needed
+** for cases like this:
+**
+**    SELECT * FROM t1 LEFT JOIN t2 ON t1.a=t2.b AND t1.x=5
+**
+** The where clause needs to defer the handling of the t1.x=5
+** term until after the t2 loop of the join.  In that way, a
+** NULL t2 row will be inserted whenever t1.x!=5.  If we do not
+** defer the handling of t1.x=5, it will be processed immediately
+** after the t1 loop and rows with t1.x!=5 will never appear in
+** the output, which is incorrect.
 */
-static void setJoinExpr(Expr *p){
+static void setJoinExpr(Expr *p, int iTable){
   while( p ){
     ExprSetProperty(p, EP_FromJoin);
-    setJoinExpr(p->pLeft);
+    p->iRightJoinTable = iTable;
+    setJoinExpr(p->pLeft, iTable);
     p = p->pRight;
   } 
 }
@@ -262,7 +281,9 @@ static int sqliteProcessJoin(Parse *pParse, Select *p){
         char *zName = pLeftTab->aCol[j].zName;
         if( columnIndex(pRightTab, zName)>=0 ){
           addWhereTerm(zName, pLeftTab, pLeft->zAlias, 
-                              pRightTab, pRight->zAlias, &p->pWhere);
+                              pRightTab, pRight->zAlias,
+                              pRight->iCursor, &p->pWhere);
+          
         }
       }
     }
@@ -279,7 +300,7 @@ static int sqliteProcessJoin(Parse *pParse, Select *p){
     ** an AND operator.
     */
     if( pLeft->pOn ){
-      setJoinExpr(pLeft->pOn);
+      setJoinExpr(pLeft->pOn, pRight->iCursor);
       p->pWhere = sqlite3ExprAnd(p->pWhere, pLeft->pOn);
       pLeft->pOn = 0;
     }
@@ -301,7 +322,8 @@ static int sqliteProcessJoin(Parse *pParse, Select *p){
           return 1;
         }
         addWhereTerm(zName, pLeftTab, pLeft->zAlias, 
-                            pRightTab, pRight->zAlias, &p->pWhere);
+                            pRightTab, pRight->zAlias,
+                            pRight->iCursor, &p->pWhere);
       }
     }
   }
@@ -521,7 +543,7 @@ static int selectInnerLoop(
         sqlite3VdbeOp3(v, OP_MakeRecord, 1, 0, &aff, 1);
         sqlite3VdbeAddOp(v, OP_IdxInsert, (iParm&0x0000FFFF), 0);
       }
-      sqlite3VdbeChangeP2(v, addr2, sqlite3VdbeCurrentAddr(v));
+      sqlite3VdbeJumpHere(v, addr2);
       break;
     }
 
@@ -1571,6 +1593,7 @@ static int multiSelect(
       }
       p->pPrior = 0;
       p->pOrderBy = 0;
+      p->disallowOrderBy = pOrderBy!=0;
       pLimit = p->pLimit;
       p->pLimit = 0;
       pOffset = p->pOffset;
@@ -1786,6 +1809,7 @@ static int multiSelect(
       assert( p->addrOpenVirt[2]>=0 );
       addr = p->addrOpenVirt[2];
       sqlite3VdbeChangeP2(v, addr, p->pEList->nExpr+2);
+      pKeyInfo->nField = pOrderBy->nExpr;
       sqlite3VdbeChangeP3(v, addr, (char*)pKeyInfo, P3_KEYINFO_HANDOFF);
       pKeyInfo = 0;
       generateSortTail(pParse, p, v, p->pEList->nExpr, eDest, iParm);
@@ -1970,7 +1994,7 @@ static int flattenSubquery(
      return 0;
   }
   if( p->isDistinct && subqueryIsAgg ) return 0;
-  if( p->pOrderBy && pSub->pOrderBy ) return 0;
+  if( (p->disallowOrderBy || p->pOrderBy) && pSub->pOrderBy ) return 0;
 
   /* Restriction 3:  If the subquery is a join, make sure the subquery is 
   ** not used as the right operand of an outer join.  Examples of why this
@@ -2424,17 +2448,15 @@ int sqlite3SelectResolve(
 static void resetAccumulator(Parse *pParse, AggInfo *pAggInfo){
   Vdbe *v = pParse->pVdbe;
   int i;
-  int addr;
   struct AggInfo_func *pFunc;
   if( pAggInfo->nFunc+pAggInfo->nColumn==0 ){
     return;
   }
-  sqlite3VdbeAddOp(v, OP_Null, 0, 0);
   for(i=0; i<pAggInfo->nColumn; i++){
-    addr = sqlite3VdbeAddOp(v, OP_MemStore, pAggInfo->aCol[i].iMem, 0);
+    sqlite3VdbeAddOp(v, OP_MemNull, pAggInfo->aCol[i].iMem, 0);
   }
   for(pFunc=pAggInfo->aFunc, i=0; i<pAggInfo->nFunc; i++, pFunc++){
-    addr = sqlite3VdbeAddOp(v, OP_MemStore, pFunc->iMem, 0);
+    sqlite3VdbeAddOp(v, OP_MemNull, pFunc->iMem, 0);
     if( pFunc->iDistinct>=0 ){
       Expr *pE = pFunc->pExpr;
       if( pE->pList==0 || pE->pList->nExpr!=1 ){
@@ -2448,7 +2470,6 @@ static void resetAccumulator(Parse *pParse, AggInfo *pAggInfo){
       }
     }
   }
-  sqlite3VdbeChangeP2(v, addr, 1);
 }
 
 /*
@@ -2762,9 +2783,10 @@ int sqlite3Select(
 
   /* Initialize the memory cell to NULL for SRT_Mem or 0 for SRT_Exists
   */
-  if( eDest==SRT_Mem || eDest==SRT_Exists ){
-    sqlite3VdbeAddOp(v, eDest==SRT_Mem ? OP_Null : OP_Integer, 0, 0);
-    sqlite3VdbeAddOp(v, OP_MemStore, iParm, 1);
+  if( eDest==SRT_Mem ){
+    sqlite3VdbeAddOp(v, OP_MemNull, iParm, 0);
+  }else if( eDest==SRT_Exists ){
+    sqlite3VdbeAddOp(v, OP_MemInt, 0, iParm);
   }
 
   /* Open a virtual index to use for the distinct set.
@@ -2828,6 +2850,7 @@ int sqlite3Select(
     int addrProcessRow;     /* Code to process a single input row */
     int addrEnd;            /* End of all processing */
     int addrSortingIdx;     /* The OP_OpenVirtual for the sorting index */
+    int addrReset;          /* Subroutine for resetting the accumulator */
 
     addrEnd = sqlite3VdbeMakeLabel(v);
 
@@ -2891,11 +2914,10 @@ int sqlite3Select(
       pParse->nMem += pGroupBy->nExpr;
       iBMem = pParse->nMem;
       pParse->nMem += pGroupBy->nExpr;
-      sqlite3VdbeAddOp(v, OP_Integer, 0, 0);
-      sqlite3VdbeAddOp(v, OP_MemStore, iAbortFlag, 0);
-      sqlite3VdbeAddOp(v, OP_MemStore, iUseFlag, 1);
-      sqlite3VdbeAddOp(v, OP_Null, 0, 0);
-      sqlite3VdbeAddOp(v, OP_MemStore, iAMem, 1);
+      sqlite3VdbeAddOp(v, OP_MemInt, 0, iAbortFlag);
+      VdbeComment((v, "# clear abort flag"));
+      sqlite3VdbeAddOp(v, OP_MemInt, 0, iUseFlag);
+      VdbeComment((v, "# indicate accumulator empty"));
       sqlite3VdbeAddOp(v, OP_Goto, 0, addrInitializeLoop);
 
       /* Generate a subroutine that outputs a single row of the result
@@ -2906,10 +2928,12 @@ int sqlite3Select(
       ** order to signal the caller to abort.
       */
       addrSetAbort = sqlite3VdbeCurrentAddr(v);
-      sqlite3VdbeAddOp(v, OP_MemIncr, iAbortFlag, 0);
+      sqlite3VdbeAddOp(v, OP_MemInt, 1, iAbortFlag);
+      VdbeComment((v, "# set abort flag"));
       sqlite3VdbeAddOp(v, OP_Return, 0, 0);
       addrOutputRow = sqlite3VdbeCurrentAddr(v);
       sqlite3VdbeAddOp(v, OP_IfMemPos, iUseFlag, addrOutputRow+2);
+      VdbeComment((v, "# Groupby result generator entry point"));
       sqlite3VdbeAddOp(v, OP_Return, 0, 0);
       finalizeAggFunctions(pParse, &sAggInfo);
       if( pHaving ){
@@ -2922,6 +2946,13 @@ int sqlite3Select(
         goto select_end;
       }
       sqlite3VdbeAddOp(v, OP_Return, 0, 0);
+      VdbeComment((v, "# end groupby result generator"));
+
+      /* Generate a subroutine that will reset the group-by accumulator
+      */
+      addrReset = sqlite3VdbeCurrentAddr(v);
+      resetAccumulator(pParse, &sAggInfo);
+      sqlite3VdbeAddOp(v, OP_Return, 0, 0);
 
       /* Begin a loop that will extract all source rows in GROUP BY order.
       ** This might involve two separate loops with an OP_Sort in between, or
@@ -2929,6 +2960,7 @@ int sqlite3Select(
       ** in the right order to begin with.
       */
       sqlite3VdbeResolveLabel(v, addrInitializeLoop);
+      sqlite3VdbeAddOp(v, OP_Gosub, 0, addrReset);
       pWInfo = sqlite3WhereBegin(pParse, pTabList, pWhere, &pGroupBy);
       if( pWInfo==0 ) goto select_end;
       if( pGroupBy==0 ){
@@ -2962,6 +2994,7 @@ int sqlite3Select(
         sqlite3VdbeAddOp(v, OP_IdxInsert, sAggInfo.sortingIdx, 0);
         sqlite3WhereEnd(pWInfo);
         sqlite3VdbeAddOp(v, OP_Sort, sAggInfo.sortingIdx, addrEnd);
+        VdbeComment((v, "# GROUP BY sort"));
         sAggInfo.useSortingIdx = 1;
       }
 
@@ -2986,9 +3019,9 @@ int sqlite3Select(
         }
         sqlite3VdbeAddOp(v, OP_MemLoad, iAMem+j, 0);
         if( j==0 ){
-          sqlite3VdbeAddOp(v, OP_Eq, 0, addrProcessRow);
+          sqlite3VdbeAddOp(v, OP_Eq, 0x200, addrProcessRow);
         }else{
-          sqlite3VdbeAddOp(v, OP_Ne, 0x100, addrGroupByChange);
+          sqlite3VdbeAddOp(v, OP_Ne, 0x200, addrGroupByChange);
         }
         sqlite3VdbeChangeP3(v, -1, (void*)pKeyInfo->aColl[j], P3_COLLSEQ);
       }
@@ -3004,19 +3037,22 @@ int sqlite3Select(
       */
       sqlite3VdbeResolveLabel(v, addrGroupByChange);
       for(j=0; j<pGroupBy->nExpr; j++){
-        sqlite3VdbeAddOp(v, OP_MemLoad, iBMem+j, 0);
-        sqlite3VdbeAddOp(v, OP_MemStore, iAMem+j, 1);
+        sqlite3VdbeAddOp(v, OP_MemMove, iAMem+j, iBMem+j);
       }
       sqlite3VdbeAddOp(v, OP_Gosub, 0, addrOutputRow);
+      VdbeComment((v, "# output one row"));
       sqlite3VdbeAddOp(v, OP_IfMemPos, iAbortFlag, addrEnd);
-      resetAccumulator(pParse, &sAggInfo);
+      VdbeComment((v, "# check abort flag"));
+      sqlite3VdbeAddOp(v, OP_Gosub, 0, addrReset);
+      VdbeComment((v, "# reset accumulator"));
 
       /* Update the aggregate accumulators based on the content of
       ** the current row
       */
       sqlite3VdbeResolveLabel(v, addrProcessRow);
       updateAccumulator(pParse, &sAggInfo);
-      sqlite3VdbeAddOp(v, OP_MemIncr, iUseFlag, 0);
+      sqlite3VdbeAddOp(v, OP_MemInt, 1, iUseFlag);
+      VdbeComment((v, "# indicate data in accumulator"));
 
       /* End of the loop
       */
@@ -3030,6 +3066,7 @@ int sqlite3Select(
       /* Output the final row of result
       */
       sqlite3VdbeAddOp(v, OP_Gosub, 0, addrOutputRow);
+      VdbeComment((v, "# output final row"));
       
     } /* endif pGroupBy */
     else {

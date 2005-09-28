@@ -693,34 +693,34 @@ void
 session::setup_client_tickers()
 {
   // xgettext: please use short message and try to avoid multibytes chars
-  byte_in_ticker.reset(new ticker(N_("bytes in"), ">", 1024, true));
+  byte_in_ticker.reset(new ticker(_("bytes in"), ">", 1024, true));
   // xgettext: please use short message and try to avoid multibytes chars
-  byte_out_ticker.reset(new ticker(N_("bytes out"), "<", 1024, true));
+  byte_out_ticker.reset(new ticker(_("bytes out"), "<", 1024, true));
   if (role == sink_role)
     {
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_checked_ticker.reset(new ticker(N_("revs written"), "w", 1));
+      revision_checked_ticker.reset(new ticker(_("revs written"), "w", 1));
       // xgettext: please use short message and try to avoid multibytes chars
-      cert_in_ticker.reset(new ticker(N_("certs in"), "c", 3));
+      cert_in_ticker.reset(new ticker(_("certs in"), "c", 3));
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_in_ticker.reset(new ticker(N_("revs in"), "r", 1));
+      revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
     }
   else if (role == source_role)
     {
       // xgettext: please use short message and try to avoid multibytes chars
-      cert_out_ticker.reset(new ticker(N_("certs out"), "C", 3));
+      cert_out_ticker.reset(new ticker(_("certs out"), "C", 3));
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_out_ticker.reset(new ticker(N_("revs out"), "R", 1));
+      revision_out_ticker.reset(new ticker(_("revs out"), "R", 1));
     }
   else
     {
       I(role == source_and_sink_role);
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_checked_ticker.reset(new ticker(N_("revs written"), "w", 1));
+      revision_checked_ticker.reset(new ticker(_("revs written"), "w", 1));
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_in_ticker.reset(new ticker(N_("revs in"), "r", 1));
+      revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_out_ticker.reset(new ticker(N_("revs out"), "R", 1));
+      revision_out_ticker.reset(new ticker(_("revs out"), "R", 1));
     }
 }
 
@@ -1832,8 +1832,8 @@ session::process_confirm_cmd(string const & signature)
   // nb. this->role is our role, the server is in the opposite role
   L(F("received 'confirm' netcmd from server '%s' for pattern '%s' exclude '%s' in %s mode\n")
     % their_key_hash % our_include_pattern % our_exclude_pattern
-    % (this->role == source_and_sink_role ? "source and sink" :
-       (this->role == source_role ? "sink" : "source")));
+    % (this->role == source_and_sink_role ? _("source and sink") :
+       (this->role == source_role ? _("sink") : _("source"))));
   
   // check their signature
   if (app.db.public_key_exists(their_key_hash))
@@ -2829,8 +2829,8 @@ session::dispatch_payload(netcmd const & cmd)
         L(F("received 'anonymous' netcmd from client for pattern '%s' excluding '%s' "
             "in %s mode\n")
           % their_include_pattern % their_exclude_pattern
-          % (role == source_and_sink_role ? "source and sink" :
-             (role == source_role ? "source " : "sink")));
+          % (role == source_and_sink_role ? _("source and sink") :
+             (role == source_role ? _("source") : _("sink"))));
 
         set_session_key(hmac_key_encrypted);
         if (!process_anonymous_cmd(role, their_include_pattern, their_exclude_pattern))
@@ -2860,8 +2860,8 @@ session::dispatch_payload(netcmd const & cmd)
         L(F("received 'auth(hmac)' netcmd from client '%s' for pattern '%s' "
             "exclude '%s' in %s mode with nonce1 '%s'\n")
           % their_key_hash % their_include_pattern % their_exclude_pattern
-          % (role == source_and_sink_role ? "source and sink" :
-             (role == source_role ? "source " : "sink"))
+          % (role == source_and_sink_role ? _("source and sink") :
+             (role == source_role ? _("source") : _("sink")))
           % hnonce1);
 
         set_session_key(hmac_key_encrypted);
@@ -3200,8 +3200,8 @@ handle_new_connection(Netxx::Address & addr,
                       map<Netxx::socket_type, shared_ptr<session> > & sessions,
                       app_state & app)
 {
-  L(F("accepting new connection on %s : %d\n") 
-    % addr.get_name() % addr.get_port());
+  L(F("accepting new connection on %s : %s\n") 
+    % addr.get_name() % lexical_cast<string>(addr.get_port()));
   Netxx::Peer client = server.accept_connection();
   
   if (!client) 
@@ -3344,8 +3344,8 @@ serve_connections(protocol_role role,
 
   Netxx::Address addr(address().c_str(), default_port, true);
 
-  P(F("beginning service on %s : %d\n") 
-    % addr.get_name() % addr.get_port());
+  P(F("beginning service on %s : %s\n") 
+    % addr.get_name() % lexical_cast<string>(addr.get_port()));
 
   Netxx::StreamServer server(addr, timeout);
   
@@ -3374,8 +3374,8 @@ serve_connections(protocol_role role,
       if (fd == -1)
         {
           if (armed_sessions.empty()) 
-            L(F("timed out waiting for I/O (listening on %s : %d)\n") 
-              % addr.get_name() % addr.get_port());
+            L(F("timed out waiting for I/O (listening on %s : %s)\n") 
+              % addr.get_name() % lexical_cast<string>(addr.get_port()));
         }
       
       // we either got a new connection

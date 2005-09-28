@@ -1,3 +1,108 @@
+2005-09-27  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Tutorial): It seems like texi2pdf gets quite
+	confused when a @chapter has a @subsection with a @section in
+	between.  The resulting PDF had a Tutorial that was a indexed as a
+	subsection under Concepts/Branches instead of being indexed as the
+	chapter it is, and most confusingly, it's last subsection
+	(Branching and Merging) ended up as a a separate chapter of it's
+	own...
+
+2005-09-26  Benoît Dejean  <benoit@placenet.org>
+
+	* database.cc: Merged 3 strings.
+
+2005-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc: add 'help' command
+	* monotone.cc: add -h alias for --help
+	
+2005-09-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* netsync.cc: use lexical_cast on port numbers to avoid
+	strange-looking "port 5,253"
+
+2005-09-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Update in-tree SQLite from 3.2.6 to 3.2.7.
+
+2005-09-25  Benoît Dejean  <benoit@placenet.org>
+
+	* netsync.cc: 3 more i18n strings.
+
+2005-09-25  Benoît Dejean  <benoit@placenet.org>
+
+	* cert.cc (cert_signable_text): F() vs. boost::format.
+	* lua.cc (monotone_guess_binary_file_contents_for_lua),
+	(monotone_include_for_lua), (monotone_includedir_for_lua):
+	* rcs_import.cc (import_cvs_repo): Merged some strings.
+	
+2005-09-25  Benoît Dejean  <benoit@placenet.org>
+
+	* lua.cc (monotone_guess_binary_file_contents_for_lua):
+	Fixed signednes warning and istream usage.
+
+2005-09-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* ui.cc: fallback to the default locale if locale("") fails.
+
+2005-09-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/arc4.cpp: increase maximum keylength to 256 bytes.
+
+2005-09-24  Benoît Dejean  <benoit@placenet.org>
+
+	* ChangeLog: Fixed.
+	I don't understand how xxdiff works :/ Please help.
+
+2005-09-24  Satoru SATOH <ss@gnome.gr.jp>
+
+	* po/ja.po: Updated Japanese translation.
+
+2005-09-23  Benoît Dejean  <benoit@placenet.org>
+
+        * std_hooks.lua: More i18n strings.
+
+        I don't know how to handle lua
+        "multiline" ..
+        "strings" because gettext doesn't join them.
+
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
+        * sanity.{cc,hh}: Uninlined F() and FP().
+        This happily saves ~100KB of .text on my ppc.
+
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
+	* netsync.cc: Reverted changes
+	from f0a632bf14468b6e03a488d6f1a64ef18b61d04c
+	to   4f7f638954c79c54460d04c3be111acad8b26dd3
+
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
+	* lua.cc (monotone_gettext_for_lua): New function.
+	* po/POTFILES.in: Added std_hooks.lua.
+	* std_hooks.lua: One more string for i18n.
+
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
+	* ui.{cc,hh} (get_user_locale): Returns a const &.
+
+2005-09-21  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: better error checking
+
+2005-09-20  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* restrictions.cc: Make calculate_unrestricted_revision work
+	with --exclude
+	* tests/t_restriction_with_exclude_iprint.at: remove XFAIL
+
+2005-09-20  Patrick Mauritz <oxygene@studentenbude.ath.cx>
+
+	* configure.ac: solaris needs librt for fdatasync
+	* sqlite/parse.c: #line and #include interactions aren't defined
+
 2005-09-20  Matt Johnston  <matt@ucc.asn.au>
 
 	* database.cc (space_usage): workaround the issue that in sqlite
@@ -110,7 +215,7 @@
 	* tests/t_rename_dir_cross_level.at: When invoking mv to rename
 	a directory, do not include a trailing slash on the target -- that
 	is not portable.                                                  
-                       
+
 	* Makefile.am (TESTS_ENVIRONMENT): Ensure that PATH starts with
 	the current directory, so we test the just-built monotone binary,
 	not some older version.                                          

@@ -1,7 +1,5 @@
-AT_SETUP([use restrictions with --exclude])
+AT_SETUP([use restrictions with --exclude and inodeprints])
 MONOTONE_SETUP
-
-AT_XFAIL_IF(true)
 
 AT_CHECK(mkdir foo)
 AT_DATA(file1, [x

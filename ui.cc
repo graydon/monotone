@@ -380,10 +380,23 @@ guess_terminal_width()
   return w;
 }
 
-// a cache used to avoid initialising locale("") on every call to boost::format
-const locale
+const locale &
 get_user_locale()
 {
-  static const locale user_locale("");
+  // this is awkward because if LC_CTYPE is set to something the
+  // runtime doesn't know about, it will fail. in that case,
+  // the default will have to do.
+  static bool init = false;
+  static locale user_locale;
+  if (!init)
+    {
+      init = true;
+      try
+        {
+          user_locale = locale("");
+        }
+      catch( ... )
+        {}
+    }
   return user_locale;
 }

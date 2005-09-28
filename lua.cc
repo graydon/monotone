@@ -524,7 +524,7 @@ extern "C"
   monotone_guess_binary_file_contents_for_lua(lua_State *L)
   {
     const char *path = lua_tostring(L, -1);
-    N(path, F("guess_binary called with an invalid parameter"));
+    N(path, F("%s called with an invalid parameter") % "guess_binary");
 
     std::ifstream file(path, ios_base::binary);
     if (!file) 
@@ -535,10 +535,9 @@ extern "C"
     const int bufsize = 8192;
     char tmpbuf[bufsize];
     string buf;
-    while(file.good()) 
+    while (file.read(tmpbuf, sizeof tmpbuf))
       {
-        file.read(tmpbuf, sizeof(tmpbuf));
-        I(file.gcount() <= sizeof(tmpbuf));
+        I(file.gcount() <= static_cast<int>(sizeof tmpbuf));
         buf.assign(tmpbuf, file.gcount());
         if (guess_binary(buf)) 
           {
@@ -554,7 +553,7 @@ extern "C"
   monotone_include_for_lua(lua_State *L)
   {
     const char *path = lua_tostring(L, -1);
-    N(path, F("Include called with an invalid parameter"));
+    N(path, F("%s called with an invalid parameter") % "Include");
     
     bool res =Lua(L)
     .loadfile(std::string(path, lua_strlen(L, -1)))
@@ -569,7 +568,7 @@ extern "C"
   monotone_includedir_for_lua(lua_State *L)
   {
     const char *pathstr = lua_tostring(L, -1);
-    N(pathstr, F("IncludeDir called with an invalid parameter"));
+    N(pathstr, F("%s called with an invalid parameter") % "IncludeDir");
 
     fs::path locpath(pathstr, fs::native);
     N(fs::exists(locpath), F("Directory '%s' does not exists") % pathstr);
@@ -609,6 +608,14 @@ extern "C"
     lua_pushboolean(L, boost::regex_search(str, what, boost::regex(re)));
     return 1;
   }
+
+  static int
+  monotone_gettext_for_lua(lua_State *L)
+  {
+    const char *msgid = lua_tostring(L, -1);
+    lua_pushstring(L, gettext(msgid));
+    return 1;
+  }
 }
 
 
@@ -638,6 +645,7 @@ lua_hooks::lua_hooks()
   lua_register(st, "guess_binary_file_contents", monotone_guess_binary_file_contents_for_lua);
   lua_register(st, "include", monotone_include_for_lua);
   lua_register(st, "includedir", monotone_includedir_for_lua);
+  lua_register(st, "gettext", monotone_gettext_for_lua);
 
   // add regex functions:
   lua_newtable(st);
