@@ -1,0 +1,34 @@
+AT_SETUP([filenames in diff after rename])
+MONOTONE_SETUP
+
+# This test is a bug report.
+
+# If a file is renamed from "testfile" to "otherfile" and has changes,
+# then 'monotone diff' should display:
+#   --- testfile
+#   +++ otherfile
+# But what it does display is
+#   --- otherfile
+#   +++ otherfile
+# This is because the diffs are built based on changeset deltas, and
+# changeset deltas are applied after renames have already taken
+# effect.
+
+AT_XFAIL_IF(true)
+
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+
+SET_FILE(testfile, [stuff stuff
+])
+AT_CHECK(MONOTONE rename --execute testfile otherfile, [], [ignore], [ignore])
+
+AT_CHECK(test -f otherfile)
+
+AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
+
+AT_CHECK(QGREP(-- "--- testfile" stdout))
+AT_CHECK(QGREP(-- "+++ otherfile" stdout), [1])
+
+AT_CLEANUP
