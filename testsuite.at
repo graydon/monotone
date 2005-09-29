@@ -1,4 +1,4 @@
-G#  -*- Autoconf -*-
+#  -*- Autoconf -*-
 #
 # the monotone integration testsuite is written in bourne shell,
 # strung together with the autotest framework (part of autoconf).
