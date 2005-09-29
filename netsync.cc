@@ -3724,26 +3724,24 @@ session::rebuild_merkle_trees(app_state & app,
   set<revision_id> revision_ids;
   set<rsa_keypair_id> inserted_keys;
   
-  // bad_branch_certs is a set of cert hashes.
-  set< hexenc<id> > bad_branch_certs;
   {
-    // get all matching branch names
-    vector< revision<cert> > certs;
-    app.db.get_revision_certs(branch_cert_name, certs);
-    for (size_t i = 0; i < certs.size(); ++i)
+    // Get our branches
+    vector<string> names;
+    get_branches(app, names);
+    for (size_t i = 0; i < names.size(); ++i)
       {
-        cert_value name;
-        decode_base64(idx(certs, i).inner().value, name);
-        if (branchnames.find(name()) != branchnames.end())
+        if(branchnames.find(names[i]) != branchnames.end())
           {
-            insert_with_parents(revision_id(idx(certs, i).inner().ident),
-                                revision_ids, app, revisions_ticker);
-          }
-        else
-          {
-            hexenc<id> hash;
-            cert_hash_code(idx(certs, i).inner(), hash);
-            bad_branch_certs.insert(hash);
+            // branch matches, get its certs
+            vector< revision<cert> > certs;
+            base64<cert_value> encoded_name;
+            encode_base64(cert_value(names[i]),encoded_name);
+            app.db.get_revision_certs(branch_cert_name, encoded_name, certs);
+            for (size_t j = 0; j < certs.size(); ++j)
+              {
+                insert_with_parents(revision_id(idx(certs,j).inner().ident),
+                                    revision_ids, app, revisions_ticker);
+              }
           }
       }
   }
@@ -3781,6 +3779,7 @@ session::rebuild_merkle_trees(app_state & app,
     std::pair<revision_id, rsa_keypair_id> > > cert_idx;
   
   cert_idx idx;
+  // <mrb> this also gets *all* certs, needed?
   app.db.get_revision_cert_index(idx);
   
   // insert all certs and keys reachable via these revisions,
@@ -3793,8 +3792,6 @@ session::rebuild_merkle_trees(app_state & app,
       rsa_keypair_id const & key = i->second.second;
       
       if (revision_ids.find(ident) == revision_ids.end())
-        continue;
-      if (bad_branch_certs.find(hash) != bad_branch_certs.end())
         continue;
       
       id raw_hash;

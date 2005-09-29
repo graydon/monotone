@@ -1,3 +1,7 @@
+2005-09-29  Marcel van der Boom  <marcel@hsdev.com>
+
+	* netsync.cc (rebuild_merkle_trees): only get matched branch certs, not all of them
+
 2005-09-28  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/t_rename_diff_names.at, testsuite.at: New test.
