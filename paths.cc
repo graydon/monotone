@@ -392,7 +392,11 @@ system_path::operator /(std::string const & to_append) const
 static std::string
 normalize_out_dots(std::string const & path)
 {
+#ifdef WIN32
+  return fs::path(path, fs::native).normalize().string();
+#else
   return fs::path(path, fs::native).normalize().native_file_string();
+#endif
 }
 
 system_path::system_path(any_path const & other, bool in_true_working_copy)
@@ -556,7 +560,9 @@ static void test_file_path_internal()
                             ".foo/bar",
                             "..foo/bar",
                             "MTfoo/bar",
+#ifndef WIN32
                             "foo:bar",
+#endif
                             0 };
   
   for (int i = 0; i < 2; ++i)
@@ -649,7 +655,9 @@ static void test_file_path_external_no_prefix()
   check_fp_normalizes_to(".foo/bar", ".foo/bar");
   check_fp_normalizes_to("..foo/bar", "..foo/bar");
   check_fp_normalizes_to(".", "");
+#ifndef WIN32
   check_fp_normalizes_to("foo:bar", "foo:bar");
+#endif
   check_fp_normalizes_to("foo/with,other+@weird*%#$=stuff/bar",
                          "foo/with,other+@weird*%#$=stuff/bar");
 
@@ -698,7 +706,9 @@ static void test_file_path_external_prefix_a_b()
   check_fp_normalizes_to(".foo/bar", "a/b/.foo/bar");
   check_fp_normalizes_to("..foo/bar", "a/b/..foo/bar");
   check_fp_normalizes_to(".", "a/b");
+#ifndef WIN32
   check_fp_normalizes_to("foo:bar", "a/b/foo:bar");
+#endif
   check_fp_normalizes_to("foo/with,other+@weird*%#$=stuff/bar",
                          "a/b/foo/with,other+@weird*%#$=stuff/bar");
   // why are the tests with // in them commented out?  because boost::fs sucks
@@ -845,13 +855,12 @@ static void test_system_path()
 #ifdef WIN32
   check_system_normalizes_to("c:foo", "c:foo");
   check_system_normalizes_to("c:/foo", "c:/foo");
-  check_system_normalizes_to("c:\\foo", "c:\\foo");
 #else
   check_system_normalizes_to("c:foo", "/a/b/c:foo");
   check_system_normalizes_to("c:/foo", "/a/b/c:/foo");
   check_system_normalizes_to("c:\\foo", "/a/b/c:\\foo");
-#endif
   check_system_normalizes_to("foo:bar", "/a/b/foo:bar");
+#endif
   // we require that system_path normalize out ..'s, because of the following
   // case:
   //   /work mkdir newdir
@@ -870,13 +879,17 @@ static void test_system_path()
   // can't do particularly interesting checking of tilde expansion, but at
   // least we can check that it's doing _something_...
   std::string tilde_expanded = system_path("~/foo").as_external();
+#ifdef WIN32
+  BOOST_CHECK(tilde_expanded[1] == ':');
+#else
   BOOST_CHECK(tilde_expanded[0] == '/');
+#endif
   BOOST_CHECK(tilde_expanded.find('~') == std::string::npos);
   // and check for the weird WIN32 version
 #ifdef WIN32
   std::string tilde_expanded2 = system_path("~this_user_does_not_exist_anywhere").as_external();
   BOOST_CHECK(tilde_expanded2[0] = '/');
-  BOOST_CHECK(tilde_expanded.find('~') == std::string::npos);
+  BOOST_CHECK(tilde_expanded2.find('~') == std::string::npos);
 #else
   BOOST_CHECK_THROW(system_path("~this_user_does_not_exist_anywhere"), informative_failure);
 #endif

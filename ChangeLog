@@ -1,6 +1,11 @@
+2005-09-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc, win32/fs.cc: Fixes to allow unit tests to pass on Win32.
+
 2005-09-29  Marcel van der Boom  <marcel@hsdev.com>
 
-	* netsync.cc (rebuild_merkle_trees): only get matched branch certs, not all of them
+	* netsync.cc (rebuild_merkle_trees): only get matched branch
+	certs, not all of them
 
 2005-09-28  Nathaniel Smith  <njs@pobox.com>
 

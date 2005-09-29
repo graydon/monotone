@@ -91,7 +91,8 @@ tilde_expand(utf8 const & in)
       fs::path res;
       if (*i == "~" || i->size() > 1 && i->at(0) == '~')
         {
-          res /= get_homedir()();
+          fs::path restmp(get_homedir()(), fs::native);
+          res /= restmp;
           ++i;
         }
       while (i != tmp.end())
