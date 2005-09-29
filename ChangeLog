@@ -1,3 +1,7 @@
+2005-09-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc: Restore two unit tests on Win32.
+
 2005-09-29  Richard Levitte  <richard@levitte.org>
 
 	* testsuite.at: Removed a spurious G...

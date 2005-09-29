@@ -560,9 +560,7 @@ static void test_file_path_internal()
                             ".foo/bar",
                             "..foo/bar",
                             "MTfoo/bar",
-#ifndef WIN32
                             "foo:bar",
-#endif
                             0 };
   
   for (int i = 0; i < 2; ++i)
@@ -855,6 +853,7 @@ static void test_system_path()
 #ifdef WIN32
   check_system_normalizes_to("c:foo", "c:foo");
   check_system_normalizes_to("c:/foo", "c:/foo");
+  check_system_normalizes_to("c:\\foo", "c:/foo");
 #else
   check_system_normalizes_to("c:foo", "/a/b/c:foo");
   check_system_normalizes_to("c:/foo", "/a/b/c:/foo");
