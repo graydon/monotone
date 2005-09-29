@@ -663,11 +663,10 @@ dump(roster_t const & val, std::string & out)
     oss << "root dir is NULL\n";
   for (node_map::const_iterator i = val.nodes.begin(); i != val.nodes.end(); ++i)
     {
-      oss << "Node " << i->first << "\n";
+      oss << "\nNode " << i->first << "\n";
       std::string node_s;
       dump(i->second, node_s);
-      oss << "\n"
-          << node_s;
+      oss << node_s;
     }
   out = oss.str();
 }
@@ -1620,7 +1619,7 @@ namespace
           if ((state == in_left || (state == in_both && !to_ai->second.first))
               && from_ai->second.first)
             safe_insert(cs.attrs_cleared,
-                        make_pair(to_sp, to_ai->first));
+                        make_pair(to_sp, from_ai->first));
 
           else if ((state == in_right || (state == in_both && !from_ai->second.first))
                    && to_ai->second.first)
@@ -1969,20 +1968,39 @@ using std::string;
 using boost::lexical_cast;
 
 static void
-spin_cset(cset const & cs)
+do_testing_on_two_equivalent_csets(cset const & a, cset const & b)
 {
-  MM(cs);
-  data tmp;
-  MM(tmp);
-  write_cset(cs, tmp);
-  cset after;
-  MM(after);
-  read_cset(tmp, after);
-  I(cs == after);
-  data tmp2;
-  MM(tmp2);
-  write_cset(after, tmp2);
-  I(tmp == tmp2);
+  // we do all this reading/writing/comparing of both strings and objects to
+  // cross-check the reading, writing, and comparison logic against each
+  // other.  (if, say, there is a field in cset that == forgets to check but
+  // that write remembers to include, this should catch it).
+  MM(a);
+  MM(b);
+  I(a == b);
+
+  data a_dat, b_dat, a2_dat, b2_dat;
+  MM(a_dat);
+  MM(b_dat);
+  MM(a2_dat);
+  MM(b2_dat);
+
+  write_cset(a, a_dat);
+  write_cset(b, b_dat);
+  I(a_dat == b_dat);
+  cset a2, b2;
+  MM(a2);
+  MM(b2);
+  read_cset(a_dat, a2);
+  read_cset(b_dat, b2);
+  I(a2 == a);
+  I(b2 == b);
+  I(b2 == a);
+  I(a2 == b);
+  I(a2 == b2);
+  write_cset(a2, a2_dat);
+  write_cset(b2, b2_dat);
+  I(a_dat == a2_dat);
+  I(b_dat == b2_dat);
 }
 
 static void
@@ -2000,25 +2018,49 @@ apply_cset_and_do_testing(roster_t & r, cset const & cs, node_id_source & nis)
   cset derived;
   MM(derived);
   make_cset(original, r, derived);
-  I(derived == cs);
 
-  // we do all this reading/writing/comparing of both strings and objects to
-  // cross-check the reading, writing, and comparison logic against each
-  // other.  (if, say, there is a field in cset that == forgets to check but
-  // that write remembers to include, this should catch it).
-  data derived_dat, cs_dat, cs_dat2;
-  MM(derived_dat);
-  MM(cs_dat);
-  MM(cs_dat2);
-  write_cset(cs, cs_dat);
-  write_cset(derived, derived_dat);
-  cset cs2;
-  MM(cs2);
-  read_cset(cs_dat, cs2);
-  write_cset(cs2, cs_dat2);
-  I(cs2 == cs);
-  I(derived_dat == cs_dat);
-  I(cs_dat2 == cs_dat);
+  do_testing_on_two_equivalent_csets(cs, derived);
+}
+
+static void
+tests_on_two_rosters(roster_t const & a, roster_t const & b)
+{
+  MM(a);
+  MM(b);
+
+  cset a_to_b; MM(a_to_b);
+  cset b_to_a; MM(b_to_a);
+  make_cset(a, b, a_to_b);
+  make_cset(b, a, b_to_a);
+  roster_t a2(a); MM(a2);
+  roster_t b2(b); MM(b2);
+  testing_node_id_source nis;
+  editable_roster_base ea(a2, nis);
+  a_to_b.apply_to(ea);
+  editable_roster_base eb(b2, nis);
+  b_to_a.apply_to(eb);
+  // We'd like to assert that a2 == a and b2 == b, but we can't, because they
+  // will have new ids assigned.
+  // FIXME KLUGE: we print the non-local parts of the roster, with a dummy
+  // marking map, because we happen to know that print_to ignores the
+  // marking_map argument when print_local_parts is false...
+  data a_dat; MM(a_dat);
+  data a2_dat; MM(a2_dat);
+  data b_dat; MM(b_dat);
+  data b2_dat; MM(b2_dat);
+  write_roster_and_marking(a, marking_map(), a_dat, false);
+  write_roster_and_marking(a2, marking_map(), a2_dat, false);
+  write_roster_and_marking(b, marking_map(), b_dat, false);
+  write_roster_and_marking(b2, marking_map(), b2_dat, false);
+  I(a_dat == a2_dat);
+  I(b_dat == b2_dat);
+
+  cset a2_to_b2; MM(a2_to_b2);
+  cset b2_to_a2; MM(b2_to_a2);
+  make_cset(a2, b2, a2_to_b2);
+  make_cset(b2, a2, b2_to_a2);
+  do_testing_on_two_equivalent_csets(a_to_b, a2_to_b2);
+  do_testing_on_two_equivalent_csets(b_to_a, b2_to_a2);
 }
 
 template<typename M>
@@ -2241,16 +2283,28 @@ dump(int const & i, std::string & out)
 static void
 automaton_roster_test()
 {
-  roster_t r1;
+  roster_t r;
   change_automaton aut;
   testing_node_id_source nis;
+
+  roster_t empty, prev;
 
   for (int i = 0; i < 10000; ++i)
     {
       MM(i);
       if (i % 500 == 0)
         P(F("performing random action %d\n") % i);
-      aut.perform_random_action(r1, nis);
+      aut.perform_random_action(r, nis);
+      if (i == 0)
+        prev = r;
+      if (i == 4 || i == 100 || i == 200 || i == 2000 || i == 2001
+          || i == 3000 || i == 3005 || i == 8000 || i == 8005 || i == 8100
+          || i == 9000)
+        {
+          tests_on_two_rosters(prev, r);
+          tests_on_two_rosters(empty, r);
+          prev = r;
+        }
     }
 }
 
