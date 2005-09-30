@@ -22,8 +22,8 @@ AM_CONFIG_HEADER([config.h])
 AC_PROG_CXX
 AC_PROG_CC
 
-test "$GXX" = "g++" -a "z$CXXFLAGS" = "z" && CXXFLAGS="-O2 -fno-strict-aliasing"
-test "$GCC" = "gcc" -a "z$CFLAGS" = "z" && CFLAGS="-O2 -fno-strict-aliasing"
+test "z$GXX" = "zyes" && CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
+test "z$GCC" = "zyes" && CFLAGS="$CFLAGS -fno-strict-aliasing"
 
 AC_PROG_RANLIB
 AC_CC_FEXCEPTIONS
