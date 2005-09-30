@@ -1,5 +1,19 @@
 2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
 
+	* paths.hh: update file_path documentation, 
+	remove file_path_internal_from_user
+	* paths.cc: remove file_path_internal_from_user
+	* commands.cc CMD(cat): change file_path_internal_from_user 
+	to file_path_external
+	* tests/t_diff_outside_working_dir.at: check diff works outside 
+	  of a working dir (with a file specified)
+	* tests/t_log_outside_working_dir.at: check log works outside 
+	  of a working dir (with a file specified)
+	* tests/t_diff_changeset_bug.at: mysterious changeset bug
+	* testsuite.at: add new tests
+
+2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
+
 	* paths.cc (file_path::file_path): Allow external paths outside of
 	a working directory, so long as we don't enter a working directory 
 	later.

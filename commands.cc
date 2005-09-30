@@ -1319,10 +1319,7 @@ CMD(cat, N_("informative"),
   // paths are interpreted as standard external ones when we're in a
   // working copy, but as project-rooted external ones otherwise
   file_path fp;
-  if (app.found_working_copy)
-    fp = file_path_external(idx(args, 0));
-  else
-    fp = file_path_internal_from_user(idx(args, 0));
+  fp = file_path_external(idx(args, 0));
   manifest_id mid;
   app.db.get_revision_manifest(rid, mid);
   manifest_map m;

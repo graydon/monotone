@@ -171,11 +171,6 @@ file_path::file_path(file_path::source_type type, std::string const & path)
     case internal:
       data = path;
       break;
-    case internal_from_user:
-      data = path;
-      N(is_valid_internal(path),
-        F("path '%s' is invalid") % path);
-      break;
     case external:
       if (!initial_rel_path.initialized)
 	{
@@ -957,6 +952,9 @@ static void test_access_tracker()
   a.may_not_initialize();
   BOOST_CHECK_THROW(a.set(1, false), std::logic_error);
   BOOST_CHECK_THROW(a.set(2, true), std::logic_error);
+  a.unset();
+  a.set(1, false);
+  BOOST_CHECK_THROW(a.may_not_initialize(), std::logic_error);
 }
 
 void add_paths_tests(test_suite * suite)
