@@ -1,3 +1,8 @@
+2005-09-30  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* configure.ac: only add gnu specific CFLAGS and CXXFLAGS for
+	gnu compilers
+
 2005-09-30  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (BOTAN_SOURCES): Add botan/hash_id.h.
