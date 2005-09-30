@@ -21,8 +21,6 @@
 	* tests/t_diff_changeset_bug.at: mysterious changeset bug
 	* testsuite.at: add new tests
 
-2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
-
 2005-09-29  Nathaniel Smith  <njs@pobox.com>
 
 	* AUTHORS: Add Grahame and Marcel.
