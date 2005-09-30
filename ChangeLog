@@ -1,3 +1,8 @@
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (MOST_SOURCES): Add hash_map.hh.
+	(BOTAN_SOURCES): Add botan/charset.h.
+
 2005-09-29  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Fix typos pointed out by Matthew Gregan.

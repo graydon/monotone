@@ -49,7 +49,7 @@ MOST_SOURCES =								\
 	 netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
          package_full_revision.c package_full_revision.h options.hh     \
-         i18n.h
+         i18n.h hash_map.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -145,7 +145,7 @@ BOTAN_SOURCES =                                                                 
         botan/data_src.h botan/es_egd.h botan/look_add.h botan/ofb.h	\
         botan/pk_util.h botan/ui.h botan/blinding.h botan/defalloc.h	\
         botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h	\
-        botan/util.h
+        botan/util.h botan/charset.h
 
 
 BOOST_SANDBOX_SOURCES = \
