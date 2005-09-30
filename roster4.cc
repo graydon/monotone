@@ -669,7 +669,8 @@ marking_t::marking_t(revision_id const & birth_rid,
   set<revision_id> singleton;
   singleton.insert(current_rid);
   parent_name = singleton;
-  file_content = singleton;
+  if (is_file_t(n))
+    file_content = singleton;
   for (full_attr_map_t::const_iterator i = n->attrs.begin();
        i != n->attrs.end(); ++i)
     attrs.insert(make_pair(i->first, singleton));
@@ -1953,12 +1954,43 @@ using std::string;
 using boost::lexical_cast;
 
 static void
+make_fake_marking_for(roster_t const & r, marking_map & mm)
+{
+  mm.clear();
+  revision_id rid(std::string("0123456789abcdef0123456789abcdef01234567"));
+  for (node_map::const_iterator i = r.all_nodes().begin(); i != r.all_nodes().end();
+       ++i)
+    mm.insert(std::make_pair(i->first, marking_t(rid, rid, i->second)));
+}
+
+static void
 do_testing_on_one_roster(roster_t const & r)
 {
   MM(r);
   // read/write spin
+  data r_dat; MM(r_dat);
+  marking_map fm;
+  make_fake_marking_for(r, fm);
+  write_roster_and_marking(r, fm, r_dat, true);
+  roster_t r2; MM(r2);
+  marking_map fm2;
+  read_roster_and_marking(r_dat, r2, fm2);
+  I(r == r2);
+  I(fm == fm2);
+  data r2_dat; MM(r2_dat);
+  write_roster_and_marking(r2, fm2, r2_dat, true);
+  I(r_dat == r2_dat);
+
   // dfs_iter should return the same number of items as there are items in
   // all_nodes()
+  int n; MM(n);
+  n = r.all_nodes().size();
+  int dfs_counted = 0; MM(dfs_counted);
+  split_path root_name;
+  file_path().split(root_name);
+  for (dfs_iter i(downcast_to_dir_t(r.get_node(root_name))); !i.finished(); ++i)
+    ++dfs_counted;
+  I(n == dfs_counted);
 }
 
 static void
@@ -2015,16 +2047,6 @@ apply_cset_and_do_testing(roster_t & r, cset const & cs, node_id_source & nis)
 
   do_testing_on_two_equivalent_csets(cs, derived);
   do_testing_on_one_roster(r);
-}
-
-static void
-make_fake_marking_for(roster_t const & r, marking_map & mm)
-{
-  mm.clear();
-  revision_id rid(std::string("0123456789abcdef0123456789abcdef01234567"));
-  for (node_map::const_iterator i = r.all_nodes().begin(); i != r.all_nodes().end();
-       ++i)
-    mm.insert(std::make_pair(i->first, marking_t(rid, rid, i->second)));
 }
 
 static void

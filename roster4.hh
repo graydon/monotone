@@ -133,6 +133,13 @@ struct marking_t
   marking_t freshen(node_t old_node,
                     node_t new_node,
                     revision_id const & current_rid) const;
+  bool operator==(marking_t const & other) const
+  {
+    return birth_revision == other.birth_revision
+      && parent_name == other.parent_name
+      && file_content == other.file_content
+      && attrs == other.attrs;
+  }
 };
 
 typedef std::map<node_id, marking_t> marking_map;
