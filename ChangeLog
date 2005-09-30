@@ -1,3 +1,8 @@
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* testsuite.at: Whoops, forgot to hit save.  Remove
+	t_diff_changeset_bug.at.
+
 2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
 
 	* paths.cc: remove unit tests for 
