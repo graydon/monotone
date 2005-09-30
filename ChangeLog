@@ -1,5 +1,10 @@
 2005-09-30  Nathaniel Smith  <njs@pobox.com>
 
+	* debian/README.Debian, debian/TODO.Debian: Add debian files
+	left out of repository.
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Set date for 0.23.
 
 2005-09-30  Nathaniel Smith  <njs@pobox.com>

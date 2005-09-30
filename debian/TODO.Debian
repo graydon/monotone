@@ -1,0 +1,6 @@
+TODO for Debian
+===============
+
+* Link monotone dynamically with the sqlite3 shared library.
+
+ -- Tomas Fasth <tomfa@debian.org>  Fri, 29 Jul 2005 13:44:35 +0000
