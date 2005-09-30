@@ -1,3 +1,9 @@
+monotone (0.23-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Nathaniel Smith <njs@pobox.com>  Thu, 29 Sep 2005 23:50:22 -0700
+
 monotone (0.22-1) unstable; urgency=low
 
   * Rebuild in clean environment (pdebuild) for upload to debian

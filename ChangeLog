@@ -1,3 +1,7 @@
+2005-09-29  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE, configure.ac, monotone.spec, win32/monotone.iss:
+	* debian/changelog: Bump version number.
 2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
 
 	* paths.hh: update file_path documentation, 
@@ -12,6 +16,15 @@
 	* tests/t_diff_changeset_bug.at: mysterious changeset bug
 	* testsuite.at: add new tests
 
+2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
+
+2005-09-29  Nathaniel Smith  <njs@pobox.com>
+
+	* AUTHORS: Add Grahame and Marcel.
+	* NEWS: Write 0.23 entry.
+	* monotone.texi (Reserved Files): Mention in .mt-ignore docs that
+	the patterns are regexes.
+	
 2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
 
 	* paths.cc (file_path::file_path): Allow external paths outside of
