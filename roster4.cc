@@ -303,10 +303,11 @@ dfs_iter
   {
     I(!finished());
 
-    return_root = false;
-
-    if (finished())
-      return;
+    if (return_root)
+      {
+        return_root = false;
+        return;
+      }
 
     // we're not finished, so we need to set up so operator* will return the
     // right thing.
@@ -1966,8 +1967,27 @@ make_fake_marking_for(roster_t const & r, marking_map & mm)
 static void
 do_testing_on_one_roster(roster_t const & r)
 {
+  if (!r.has_root())
+    {
+      I(r.all_nodes().size() == 0);
+      // not much testing to be done on an empty roster -- can't iterate over
+      // it or read/write it.
+      return;
+    }
+
   MM(r);
-  // read/write spin
+  // test dfs_iter by making sure it returns the same number of items as there
+  // are items in all_nodes()
+  int n; MM(n);
+  n = r.all_nodes().size();
+  int dfs_counted = 0; MM(dfs_counted);
+  split_path root_name;
+  file_path().split(root_name);
+  for (dfs_iter i(downcast_to_dir_t(r.get_node(root_name))); !i.finished(); ++i)
+    ++dfs_counted;
+  I(n == dfs_counted);
+
+  // do a read/write spin
   data r_dat; MM(r_dat);
   marking_map fm;
   make_fake_marking_for(r, fm);
@@ -1980,17 +2000,6 @@ do_testing_on_one_roster(roster_t const & r)
   data r2_dat; MM(r2_dat);
   write_roster_and_marking(r2, fm2, r2_dat, true);
   I(r_dat == r2_dat);
-
-  // dfs_iter should return the same number of items as there are items in
-  // all_nodes()
-  int n; MM(n);
-  n = r.all_nodes().size();
-  int dfs_counted = 0; MM(dfs_counted);
-  split_path root_name;
-  file_path().split(root_name);
-  for (dfs_iter i(downcast_to_dir_t(r.get_node(root_name))); !i.finished(); ++i)
-    ++dfs_counted;
-  I(n == dfs_counted);
 }
 
 static void
