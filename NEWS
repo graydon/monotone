@@ -3,7 +3,7 @@
         0.23 release.
 
         Possibly incompatible changes:
-        - hook_note_commit and hook_note_netsync_revision_recieved
+        - hook_note_commit and hook_note_netsync_revision_received
           take a new argument containing the text of the revision that
           was received.  (Timothy Brownawell <tbrownaw@gmail.com>)
         - 'cat FILENAME' now acts like the old 'cat file REV
@@ -17,7 +17,7 @@
         - much work on making monotone more i18n friendly (Benoît
           Dejean <benoit@placenet.org>, Matt Johnston
           <matt@ucc.asn.au>)
-        - support for new more interactive merge tools:
+        - support for more interactive merge tools:
           - FileMerge.app (comes with OS X) (Marcel van der Boom
             <marcel@hsdev.com>)
           - TortoiseMerge (Win32; comes with TortoiseSVN) (Matthew
