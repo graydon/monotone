@@ -38,11 +38,23 @@
             <anderse-monotone@cello.hpl.hp.com>)
           - when handling many branches (Marcel van der Boom
             <marcel@hsdev.com>)
+        - new system to allow crash logs to contain not just execution
+          traces, but also dumps of data being handled when the error
+          was detected -- greatly improves debuggability of user
+          crashes.
         - complete rework of path handling code, for clarity,
           robustness, and speed.  No user visible changes, except for
           the many bugs fixed.  (Special thanks to Matthew Gregan
           <kinetik@orcon.net.nz> and Grahame Bowland
           <grahame@angrygoats.net>.)
+          - however, if you have non-normalized paths in your history
+            (symptom: fresh pulls with 0.18 work, but fresh pulls with
+            0.19 do not), then 0.23 will report an error and refuse to
+            handle the affected revisions.  Since it is believed this
+            only affects one project, and to conserve core developer
+            time, implementing a migration was put off for now.  If
+            this causes problems or for more details, please send an
+            email to monotone-devel@nongnu.org.
         - as always, many small bug fixes, speedups, and improved
           messages.
 
