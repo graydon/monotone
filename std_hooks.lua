@@ -98,6 +98,7 @@ function ignore_file(name)
    if (string.find(name, "%.lo$")) then return true end
    if (string.find(name, "^core$")) then return true end
    if (string.find(name, "/core$")) then return true end
+   if (string.find(name, "/core%.%d+$")) then return true end
    -- python
    if (string.find(name, "%.pyc$")) then return true end
    if (string.find(name, "%.pyo$")) then return true end

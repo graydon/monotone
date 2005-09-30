@@ -24,11 +24,10 @@ functions to client-side RSA certificates.
 %build
 CFLAGS="$RPM_OPT_FLAGS" \
 CXXFLAGS="$RPM_OPT_FLAGS" \
-./configure --prefix=$RPM_BUILD_ROOT/usr \
+./configure --prefix=$RPM_BUILD_ROOT%{_prefix} \
+            --datadir=$RPM_BUILD_ROOT%{_datadir} \
             --infodir=$RPM_BUILD_ROOT%{_infodir} \
-            --mandir=$RPM_BUILD_ROOT%{_mandir} \
-            --with-bundled-sqlite \
-            --with-bundled-lua
+            --mandir=$RPM_BUILD_ROOT%{_mandir}
 make
 
 %install
@@ -60,6 +59,7 @@ fi
 %{_bindir}/monotone
 %{_mandir}/man1/monotone.1.gz
 %{_infodir}/*.info*.gz
+%{_datadir}/locale/*/LC_MESSAGES/monotone.mo
 
 
 %changelog
@@ -127,5 +127,3 @@ fi
 
 * Wed Sep 24 2003 graydon hoare <graydon@pobox.com> 
 - Initial build.
-
-
