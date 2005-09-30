@@ -1,5 +1,10 @@
 2005-09-29  Nathaniel Smith  <njs@pobox.com>
 
+	* UPGRADE, configure.ac, monotone.spec, win32/monotone.iss:
+	* debian/changelog: Bump version number.
+
+2005-09-29  Nathaniel Smith  <njs@pobox.com>
+
 	* AUTHORS: Add Grahame and Marcel.
 	* NEWS: Write 0.23 entry.
 	* monotone.texi (Reserved Files): Mention in .mt-ignore docs that
