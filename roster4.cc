@@ -280,23 +280,6 @@ dfs_iter
   }
 
 
-  void path(split_path & pv) const
-  {
-    I(!finished());
-    if (return_root)
-      {
-        pv.clear();
-        pv.push_back(the_null_component);
-      }
-    else
-      {
-        I(!stk.empty());
-        pv = dirname;
-        pv.push_back(stk.top().second->first);
-      }
-  }
-
-
   bool finished() const
   {
     return (!return_root) && stk.empty();
@@ -1781,7 +1764,7 @@ roster_t::print_to(basic_io::printer & pr,
     {
       node_t curr = *i;
       split_path pth;
-      i.path(pth);
+      get_name(curr->self, pth);
 
       file_path fp = file_path(pth);
 
