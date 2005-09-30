@@ -1,5 +1,11 @@
 2005-09-30  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/t_log_outside_working_dir.at: Fix summary line.
+	* tests/t_diff_changeset_bug.at: Remove redundant test
+	(cf. t_restricted_diff_unchanged.at).
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
 	* Makefile.am (BOTAN_SOURCES): Add botan/hash_id.h.
 
 2005-09-30  Nathaniel Smith  <njs@pobox.com>
