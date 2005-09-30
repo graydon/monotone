@@ -280,7 +280,7 @@ dfs_iter
   }
 
 
-  void path(split_path & pv)
+  void path(split_path & pv) const
   {
     I(!finished());
     if (return_root)
@@ -297,13 +297,13 @@ dfs_iter
   }
 
 
-  bool finished()
+  bool finished() const
   {
     return (!return_root) && stk.empty();
   }
 
 
-  node_t operator*()
+  node_t operator*() const
   {
     I(!finished());
     if (return_root)
@@ -1970,6 +1970,15 @@ using std::string;
 using boost::lexical_cast;
 
 static void
+do_testing_on_one_roster(roster_t const & r)
+{
+  MM(r);
+  // read/write spin
+  // dfs_iter should return the same number of items as there are items in
+  // all_nodes()
+}
+
+static void
 do_testing_on_two_equivalent_csets(cset const & a, cset const & b)
 {
   // we do all this reading/writing/comparing of both strings and objects to
@@ -2022,6 +2031,7 @@ apply_cset_and_do_testing(roster_t & r, cset const & cs, node_id_source & nis)
   make_cset(original, r, derived);
 
   do_testing_on_two_equivalent_csets(cs, derived);
+  do_testing_on_one_roster(r);
 }
 
 static void
@@ -2039,6 +2049,9 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
 {
   MM(a);
   MM(b);
+
+  do_testing_on_one_roster(a);
+  do_testing_on_one_roster(b);
 
   cset a_to_b; MM(a_to_b);
   cset b_to_a; MM(b_to_a);
