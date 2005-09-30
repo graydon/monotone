@@ -1,5 +1,9 @@
 2005-09-30  Nathaniel Smith  <njs@pobox.com>
 
+	* NEWS: Set date for 0.23.
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
 	* testsuite.at: Whoops, forgot to hit save.  Remove
 	t_diff_changeset_bug.at.
 
