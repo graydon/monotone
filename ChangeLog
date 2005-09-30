@@ -1,3 +1,8 @@
+2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
+
+	* paths.cc: remove unit tests for 
+	file_path_internal_from_user
+
 2005-09-30  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (MOST_SOURCES): Add hash_map.hh.

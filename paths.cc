@@ -547,16 +547,12 @@ static void test_file_path_internal()
   for (char const ** c = baddies; *c; ++c)
     {
       BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
-      BOOST_CHECK_THROW(file_path_internal_from_user(std::string(*c)),
-                        informative_failure);
     }
   initial_rel_path.unset();
   initial_rel_path.set(file_path_internal("blah/blah/blah"), true);
   for (char const ** c = baddies; *c; ++c)
     {
       BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
-      BOOST_CHECK_THROW(file_path_internal_from_user(std::string(*c)),
-                        informative_failure);
     }
 
   BOOST_CHECK(file_path().empty());
@@ -600,8 +596,6 @@ static void test_file_path_internal()
           for (std::vector<path_component>::const_iterator i = split_test.begin();
                i != split_test.end(); ++i)
             BOOST_CHECK(!null_name(*i));
-          file_path fp_user = file_path_internal_from_user(std::string(*c));
-          BOOST_CHECK(fp == fp_user);
         }
     }
 
