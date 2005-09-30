@@ -3,6 +3,20 @@
 	* paths.cc: remove unit tests for 
 	file_path_internal_from_user
 
+2005-09-30  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* configure.ac: only add gnu specific CFLAGS and CXXFLAGS for
+	gnu compilers
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (BOTAN_SOURCES): Add botan/hash_id.h.
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: More additions (mention MM and the problems paths.cc will
+	cause for colinux folks).
+
 2005-09-30  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (MOST_SOURCES): Add hash_map.hh.
