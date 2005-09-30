@@ -1,3 +1,13 @@
+2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
+
+	* paths.cc (file_path::file_path): Allow external paths outside of
+	a working directory, so long as we don't enter a working directory 
+	later.
+	(access_tracker) add new very_uninitialized state which 
+	prevents subsequent initialization
+	(test_access_tracker) check the very_uninitialized state works
+	* paths.hh: correct mention of monotone cat file to new syntax
+
 2005-09-29  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* paths.cc: Restore two unit tests on Win32.

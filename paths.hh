@@ -52,7 +52,7 @@
 //        file_path_internal_from_user: use this for strings that come from
 //          the user, _but_ are not referring to paths in the working copy,
 //          but rather in some database object directly.  for instance, 'cat
-//          file REV PATH' uses this function.  this function is exactly like
+//          -r REV PATH' uses this function.  this function is exactly like
 //          file_path_internal, except that it raises N() errors rather than
 //          I() errors.
 //      file_path's also provide optimized splitting and joining

@@ -27,6 +27,7 @@ struct access_tracker
   void set(T const & val, bool may_be_initialized)
   {
     I(may_be_initialized || !initialized);
+    I(!very_uninitialized);
     I(!used);
     initialized = true;
     value = val;
@@ -42,14 +43,19 @@ struct access_tracker
     I(initialized);
     return value;
   }
+  void may_not_initialize()
+  {
+    I(!initialized);
+    very_uninitialized = true;
+  }
   // for unit tests
   void unset()
   {
-    used = initialized = false;
+    used = initialized = very_uninitialized = false;
   }
   T value;
-  bool initialized, used;
-  access_tracker() : initialized(false), used(false) {};
+  bool initialized, used, very_uninitialized;
+  access_tracker() : initialized(false), used(false), very_uninitialized(false) {};
 };
 
 // paths to use in interpreting paths from various sources,
@@ -171,6 +177,18 @@ file_path::file_path(file_path::source_type type, std::string const & path)
         F("path '%s' is invalid") % path);
       break;
     case external:
+      if (!initial_rel_path.initialized)
+	{
+	  // we are not in a working directory; treat this as an internal 
+	  // path, and set the access_tracker() into a very uninitialised 
+	  // state so that we will hit an exception if we do eventually 
+	  // enter a working directory
+	  initial_rel_path.may_not_initialize();
+	  data = path;
+	  N(is_valid_internal(path),
+	    F("path '%s' is invalid") % path);
+	  break;
+	}
       N(!path.empty(), F("empty path '%s' is invalid") % path);
       fs::path out, base, relative;
       try
@@ -935,6 +953,10 @@ static void test_access_tracker()
   BOOST_CHECK_THROW(a.set(3, false), std::logic_error);
   BOOST_CHECK(a.get() == 2);
   BOOST_CHECK_THROW(a.set(3, true), std::logic_error);
+  a.unset();
+  a.may_not_initialize();
+  BOOST_CHECK_THROW(a.set(1, false), std::logic_error);
+  BOOST_CHECK_THROW(a.set(2, true), std::logic_error);
 }
 
 void add_paths_tests(test_suite * suite)
