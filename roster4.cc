@@ -770,7 +770,7 @@ roster_t::check_sane(marking_map const & marking) const
         }
       I(!null_id(mi->second.birth_revision));
       for (full_attr_map_t::const_iterator i = n->attrs.begin(); i != n->attrs.end(); ++i)
-        I(i->second.first || !i->second.second().empty());
+        I(i->second.first || i->second.second().empty());
       if (n != root_dir)
         I(downcast_to_dir_t(get_node(n->parent))->get_child(n->name) == n);
     }
@@ -2057,12 +2057,12 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   cset b_to_a; MM(b_to_a);
   make_cset(a, b, a_to_b);
   make_cset(b, a, b_to_a);
-  roster_t a2(a); MM(a2);
-  roster_t b2(b); MM(b2);
-  editable_roster_base ea(a2, nis);
-  a_to_b.apply_to(ea);
-  editable_roster_base eb(b2, nis);
+  roster_t a2(b); MM(a2);
+  roster_t b2(a); MM(b2);
+  editable_roster_base eb(a2, nis);
   b_to_a.apply_to(eb);
+  editable_roster_base ea(b2, nis);
+  a_to_b.apply_to(ea);
   // We'd like to assert that a2 == a and b2 == b, but we can't, because they
   // will have new ids assigned.
   // But they _will_ have the same manifests, assuming things are working
