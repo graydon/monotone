@@ -145,7 +145,7 @@ BOTAN_SOURCES =                                                                 
         botan/data_src.h botan/es_egd.h botan/look_add.h botan/ofb.h	\
         botan/pk_util.h botan/ui.h botan/blinding.h botan/defalloc.h	\
         botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h	\
-        botan/util.h botan/charset.h
+        botan/util.h botan/charset.h botan/hash_id.h
 
 
 BOOST_SANDBOX_SOURCES = \

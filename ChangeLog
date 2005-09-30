@@ -1,5 +1,9 @@
 2005-09-30  Nathaniel Smith  <njs@pobox.com>
 
+	* Makefile.am (BOTAN_SOURCES): Add botan/hash_id.h.
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: More additions (mention MM and the problems paths.cc will
 	cause for colinux folks).
 
