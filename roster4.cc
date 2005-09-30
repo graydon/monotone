@@ -2059,10 +2059,14 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   make_fake_marking_for(a2, a2_map);
   make_fake_marking_for(b, b_map);
   make_fake_marking_for(b2, b2_map);
-  write_roster_and_marking(a, a_map, a_dat, false);
-  write_roster_and_marking(a2, a2_map, a2_dat, false);
-  write_roster_and_marking(b, b_map, b_dat, false);
-  write_roster_and_marking(b2, b2_map, b2_dat, false);
+  if (a.has_root())
+    write_roster_and_marking(a, a_map, a_dat, false);
+  if (a2.has_root())
+    write_roster_and_marking(a2, a2_map, a2_dat, false);
+  if (b.has_root())
+    write_roster_and_marking(b, b_map, b_dat, false);
+  if (b2.has_root())
+    write_roster_and_marking(b2, b2_map, b2_dat, false);
   I(a_dat == a2_dat);
   I(b_dat == b2_dat);
 
