@@ -305,11 +305,9 @@ dfs_iter
 
   node_t operator*()
   {
+    I(!finished());
     if (return_root)
-      {
-        return_root = false;
-        return root;
-      }
+      return root;
     else
       {
         I(!stk.empty());
@@ -320,11 +318,15 @@ dfs_iter
 
   void operator++()
   {
-    if (finished())
-      return;
-    
+    I(!finished());
+
     return_root = false;
 
+    if (finished())
+      return;
+
+    // we're not finished, so we need to set up so operator* will return the
+    // right thing.
     node_t ntmp = stk.top().second->second;
     if (is_dir_t(ntmp))
       {
@@ -2023,7 +2025,17 @@ apply_cset_and_do_testing(roster_t & r, cset const & cs, node_id_source & nis)
 }
 
 static void
-tests_on_two_rosters(roster_t const & a, roster_t const & b)
+make_fake_marking_for(roster_t const & r, marking_map & mm)
+{
+  mm.clear();
+  revision_id rid(std::string("0123456789abcdef0123456789abcdef01234567"));
+  for (node_map::const_iterator i = r.all_nodes().begin(); i != r.all_nodes().end();
+       ++i)
+    mm.insert(std::make_pair(i->first, marking_t(rid, rid, i->second)));
+}
+
+static void
+tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & nis)
 {
   MM(a);
   MM(b);
@@ -2034,24 +2046,25 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b)
   make_cset(b, a, b_to_a);
   roster_t a2(a); MM(a2);
   roster_t b2(b); MM(b2);
-  testing_node_id_source nis;
   editable_roster_base ea(a2, nis);
   a_to_b.apply_to(ea);
   editable_roster_base eb(b2, nis);
   b_to_a.apply_to(eb);
   // We'd like to assert that a2 == a and b2 == b, but we can't, because they
   // will have new ids assigned.
-  // FIXME KLUGE: we print the non-local parts of the roster, with a dummy
-  // marking map, because we happen to know that print_to ignores the
-  // marking_map argument when print_local_parts is false...
+  // But they _will_ have the same manifests, assuming things are working
+  // correctly.
   data a_dat; MM(a_dat);
   data a2_dat; MM(a2_dat);
   data b_dat; MM(b_dat);
   data b2_dat; MM(b2_dat);
-  write_roster_and_marking(a, marking_map(), a_dat, false);
-  write_roster_and_marking(a2, marking_map(), a2_dat, false);
-  write_roster_and_marking(b, marking_map(), b_dat, false);
-  write_roster_and_marking(b2, marking_map(), b2_dat, false);
+  marking_map a_map, b_map;
+  make_fake_marking_for(a, a_map);
+  make_fake_marking_for(b, b_map);
+  write_roster_and_marking(a, a_map, a_dat, false);
+  write_roster_and_marking(a2, a_map, a2_dat, false);
+  write_roster_and_marking(b, b_map, b_dat, false);
+  write_roster_and_marking(b2, b_map, b2_dat, false);
   I(a_dat == a2_dat);
   I(b_dat == b2_dat);
 
@@ -2301,8 +2314,8 @@ automaton_roster_test()
           || i == 3000 || i == 3005 || i == 8000 || i == 8005 || i == 8100
           || i == 9000)
         {
-          tests_on_two_rosters(prev, r);
-          tests_on_two_rosters(empty, r);
+          tests_on_two_rosters(prev, r, nis);
+          tests_on_two_rosters(empty, r, nis);
           prev = r;
         }
     }
