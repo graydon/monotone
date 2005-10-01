@@ -1,5 +1,11 @@
 2005-09-30  Nathaniel Smith  <njs@pobox.com>
 
+	* Makefile.am (AM_CFLAGS, AM_CXXFLAGS): Add
+	-DBOOST_SP_DISABLE_THREADS (disables thread-safe shared_ptr
+	reference counting).
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
 	* debian/README.Debian, debian/TODO.Debian: Add debian files
 	left out of repository.
 
