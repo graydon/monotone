@@ -1366,6 +1366,11 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
         checkout_dot = true;
     }
 
+  if (!checkout_dot)
+    require_path_is_nonexistent(dir,
+                                F("checkout directory '%s' already exists")
+                                % dir);
+
   if (app.revision_selectors.size() == 0)
     {
       // use branch head revision
@@ -1403,10 +1408,6 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
         % ident % app.branch_name);
     }
 
-  if (!checkout_dot)
-    require_path_is_nonexistent(dir,
-                                F("checkout directory '%s' already exists")
-                                % dir);
   app.create_working_copy(dir);
 
   transaction_guard guard(app.db);
