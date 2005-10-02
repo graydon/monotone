@@ -1,0 +1,17 @@
+README for Debian
+=================
+
+By recommendation from upstream authors, monotone is currently linked
+statically with versions of sqlite3, lua and popt libraries compiled
+from patched source code shipped together with monotone.
+
+This has implications on the security support in Debian.
+
+Work has been initiated to make monotone work with an unpatched sqlite3
+library. If this work is sucessful, monotone in Debian can start to link
+dynamically with sqlite3 as provided in the Debian archive.
+
+From Debian's point of view, lua and popt should also be used as shared
+libraries in Debian, but that is less likely according to upstream.
+
+ -- Tomas Fasth <tomfa@debian.org>  Fri, 29 Jul 2005 13:44:35 +0000

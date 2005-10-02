@@ -45,16 +45,11 @@
 //          to the project root.
 //        file_path_external: use this for strings that come from the user.
 //          these strings are normalized before being checked, and if there is
-//          a problem trigger N() invariants rather than I() invariants.  such
-//          strings are interpreted as being _relative to the user's original
-//          directory_.  this function can only be called from within a
-//          working copy.
-//        file_path_internal_from_user: use this for strings that come from
-//          the user, _but_ are not referring to paths in the working copy,
-//          but rather in some database object directly.  for instance, 'cat
-//          file REV PATH' uses this function.  this function is exactly like
-//          file_path_internal, except that it raises N() errors rather than
-//          I() errors.
+//          a problem trigger N() invariants rather than I() invariants.  if in 
+//          a working directory, such strings are interpreted as being 
+//          _relative to the user's original directory_.  
+//          if not in a working copy, strings are treated as referring to some 
+//          database object directly.
 //      file_path's also provide optimized splitting and joining
 //      functionality.
 //
@@ -167,7 +162,7 @@ public:
   { return data < other.data; }
 
 private:
-  typedef enum { internal, external, internal_from_user } source_type;
+  typedef enum { internal, external } source_type;
   // input is always in utf8, because everything in our world is always in
   // utf8 (except interface code itself).
   // external paths:
@@ -181,7 +176,6 @@ private:
   file_path(source_type type, std::string const & path);
   friend file_path file_path_internal(std::string const & path);
   friend file_path file_path_external(utf8 const & path);
-  friend file_path file_path_internal_from_user(utf8 const & path);
 };
 
 // these are the public file_path constructors
@@ -193,16 +187,6 @@ inline file_path file_path_external(utf8 const & path)
 {
   return file_path(file_path::external, path());
 }
-// this is rarely used; it is for when the user provides not a path relative
-// to their position in the working directory, but instead a project-root
-// relative path (e.g., in 'cat REV PATH').  It is exactly like
-// file_path_internal, but counts invalid paths as naughtiness rather than
-// bugs.
-inline file_path file_path_internal_from_user(utf8 const & path)
-{
-  return file_path(file_path::internal_from_user, path());
-}
-
 
 class bookkeeping_path : public any_path
 {

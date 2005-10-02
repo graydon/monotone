@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.22, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.23, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
@@ -18,12 +18,13 @@ AM_CONFIG_HEADER([config.h])
 # spirit-based programs. we turn it off here unless the user turned it
 # on themselves.
 
-test "z$CXXFLAGS" = "z" && CXXFLAGS="-O2 -fno-strict-aliasing"
-test "z$CFLAGS" = "z" && CFLAGS="-O2 -fno-strict-aliasing"
-
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
+
+test "z$GXX" = "zyes" && CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
+test "z$GCC" = "zyes" && CFLAGS="$CFLAGS -fno-strict-aliasing"
+
 AC_PROG_RANLIB
 AC_CC_FEXCEPTIONS
 AC_LANG(C++)

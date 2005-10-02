@@ -1,10 +1,113 @@
-2005-09-27  Matt Johnston  <matt@ucc.asn.au>
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
 
-	* netsync.cc (ancestry_fetcher): new approach to requesting file
-	and manifest deltas and full data. Tries to be more efficient
-	for the vcache of recontstructed data, and conceptually simpler
+	* Makefile.am (AM_CFLAGS, AM_CXXFLAGS): Add
+	-DBOOST_SP_DISABLE_THREADS (disables thread-safe shared_ptr
+	reference counting).
 
-	* tests/t_netsync_unrelated.at: passes, remove XFAIL
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* debian/README.Debian, debian/TODO.Debian: Add debian files
+	left out of repository.
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Set date for 0.23.
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* testsuite.at: Whoops, forgot to hit save.  Remove
+	t_diff_changeset_bug.at.
+
+2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
+
+	* paths.cc: remove unit tests for 
+	file_path_internal_from_user
+
+2005-09-30  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* configure.ac: only add gnu specific CFLAGS and CXXFLAGS for
+	gnu compilers
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_log_outside_working_dir.at: Fix summary line.
+	* tests/t_diff_changeset_bug.at: Remove redundant test
+	(cf. t_restricted_diff_unchanged.at).
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (BOTAN_SOURCES): Add botan/hash_id.h.
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: More additions (mention MM and the problems paths.cc will
+	cause for colinux folks).
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (MOST_SOURCES): Add hash_map.hh.
+	(BOTAN_SOURCES): Add botan/charset.h.
+
+2005-09-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Fix typos pointed out by Matthew Gregan.
+
+2005-09-29  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE, configure.ac, monotone.spec, win32/monotone.iss:
+	* debian/changelog: Bump version number.
+	
+2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
+
+	* paths.hh: update file_path documentation, 
+	remove file_path_internal_from_user
+	* paths.cc: remove file_path_internal_from_user
+	* commands.cc CMD(cat): change file_path_internal_from_user 
+	to file_path_external
+	* tests/t_diff_outside_working_dir.at: check diff works outside 
+	  of a working dir (with a file specified)
+	* tests/t_log_outside_working_dir.at: check log works outside 
+	  of a working dir (with a file specified)
+	* tests/t_diff_changeset_bug.at: mysterious changeset bug
+	* testsuite.at: add new tests
+
+2005-09-29  Nathaniel Smith  <njs@pobox.com>
+
+	* AUTHORS: Add Grahame and Marcel.
+	* NEWS: Write 0.23 entry.
+	* monotone.texi (Reserved Files): Mention in .mt-ignore docs that
+	the patterns are regexes.
+	
+2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
+
+	* paths.cc (file_path::file_path): Allow external paths outside of
+	a working directory, so long as we don't enter a working directory 
+	later.
+	(access_tracker) add new very_uninitialized state which 
+	prevents subsequent initialization
+	(test_access_tracker) check the very_uninitialized state works
+	* paths.hh: correct mention of monotone cat file to new syntax
+
+2005-09-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc: Restore two unit tests on Win32.
+
+2005-09-29  Richard Levitte  <richard@levitte.org>
+
+	* testsuite.at: Removed a spurious G...
+
+2005-09-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc, win32/fs.cc: Fixes to allow unit tests to pass on Win32.
+
+2005-09-29  Marcel van der Boom  <marcel@hsdev.com>
+
+	* netsync.cc (rebuild_merkle_trees): only get matched branch
+	certs, not all of them
+
+2005-09-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_rename_diff_names.at, testsuite.at: New test.
 
 2005-09-27  Richard Levitte  <richard@levitte.org>
 
@@ -191,6 +294,14 @@
 
 	* botan/*: update to Botan 1.4.6
 	* Makefile.am: ditto
+
+2005-09-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* netsync.cc (ancestry_fetcher): new approach to requesting file
+	and manifest deltas and full data. Tries to be more efficient
+	for the vcache of recontstructed data, and conceptually simpler
+
+	* tests/t_netsync_unrelated.at: passes, remove XFAIL
 
 2005-09-15  Timothy Brownawell  <tbrownaw@gmail.com>
 

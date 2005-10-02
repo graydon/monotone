@@ -2714,8 +2714,8 @@ in the future, but they will follow the patterns given above.
 Contains versioned attributes of files, associated with the files'
 pathnames.
 @item .mt-ignore
-Contains a list of patterns, one per line. If it exists, any file with a name
-matching one of these patterns is ignored.
+Contains a list of regular expression patterns, one per line. If it exists,
+any file with a name matching one of these patterns is ignored.
 @item MT/wanted-testresults
 Contains a list of testresult key names, one per line. If it exists, update
 will only select revisions that do not have regressions according to the given
