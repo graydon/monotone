@@ -32,9 +32,6 @@ netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
     case revision_item:
       typestr = "revision";
       break;
-    case manifest_item:
-      typestr = "manifest";
-      break;
     case file_item:
       typestr = "file";
       break;
@@ -73,7 +70,7 @@ merkle_node::merkle_node() : level(0), pref(0),
                              total_num_leaves(0), 
                              bitmap(constants::merkle_bitmap_length_in_bits),
                              slots(constants::merkle_num_slots),
-                             type(manifest_item) 
+                             type(revision_item) 
 {}
 
 bool 

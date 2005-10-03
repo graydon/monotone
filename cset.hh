@@ -90,6 +90,25 @@ struct cset
   void clear();
 };
 
+inline split_path const & 
+delta_entry_path(std::map<split_path, std::pair<file_id, file_id> >::const_iterator i)
+{
+  return i->first;
+}
+
+inline file_id const & 
+delta_entry_src(std::map<split_path, std::pair<file_id, file_id> >::const_iterator i)
+{
+  return i->second.first;
+}
+
+inline file_id const & 
+delta_entry_dst(std::map<split_path, std::pair<file_id, file_id> >::const_iterator i)
+{
+  return i->second.second;
+}
+
+
 namespace basic_io { struct printer; struct parser; }
 
 void 

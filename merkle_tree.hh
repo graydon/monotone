@@ -33,7 +33,6 @@
 
 typedef enum
   {
-    manifest_item = 1,
     file_item = 2,
     key_item = 3,    
     revision_item = 4,

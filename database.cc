@@ -4,6 +4,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <algorithm>
+#include <deque>
 #include <fstream>
 #include <iterator>
 #include <list>
@@ -23,6 +25,7 @@
 #include "cleanup.hh"
 #include "constants.hh"
 #include "database.hh"
+#include "hash_map.hh"
 #include "keys.hh"
 #include "sanity.hh"
 #include "schema_migration.hh"
@@ -2454,22 +2457,111 @@ database::get_roster(revision_id const & rid,
   I(false);
 }
 
+
+typedef hashmap::hash_multimap<string,string,hashmap::string_hash> ancestry_map;
+
+static void 
+transitive_closure(string const & x,
+                   ancestry_map const & m,
+                   set<revision_id> & results)
+{
+  results.clear();
+
+  deque<string> work;
+  work.push_back(x);
+  while (!work.empty())
+    {
+      string c = work.front();
+      work.pop_front();
+      revision_id curr(c);
+      if (results.find(curr) == results.end())
+        {
+          results.insert(curr);
+          pair<ancestry_map::const_iterator, ancestry_map::const_iterator> range;
+          range = m.equal_range(c);
+          for (ancestry_map::const_iterator i = range.first; i != range.second; ++i)
+            {
+              if (i->first == c)
+                work.push_back(i->second);
+            }
+        }
+    }
+}
+
 void 
 database::get_uncommon_ancestors(revision_id const & a,
                                  revision_id const & b,
-                                 std::set<revision_id> & a_uncommon_ancs,
-                                 std::set<revision_id> & b_uncommon_ancs)
+                                 set<revision_id> & a_uncommon_ancs,
+                                 set<revision_id> & b_uncommon_ancs)
 {
-  // FIXME: implement
-  I(false);
+  // FIXME: This is a somewhat ugly, and possibly unaccepably slow way
+  // to do it. Another approach involves maintaining frontier sets for
+  // each and slowly deepening them into history; would need to
+  // benchmark to know which is actually faster on real datasets.
+
+  a_uncommon_ancs.clear();
+  b_uncommon_ancs.clear();
+
+  results res;
+  a_uncommon_ancs.clear();
+  b_uncommon_ancs.clear();
+
+  fetch(res, 2, any_rows, 
+        "SELECT parent,child FROM revision_ancestry");
+
+  set<revision_id> a_ancs, b_ancs;
+
+  ancestry_map child_to_parent_map;
+  for (size_t i = 0; i < res.size(); ++i)
+    child_to_parent_map.insert(make_pair(res[i][1], res[i][0]));
+
+  transitive_closure(a.inner()(), child_to_parent_map, a_ancs);
+  transitive_closure(b.inner()(), child_to_parent_map, b_ancs);
+  
+  set_difference(a_ancs.begin(), a_ancs.end(), 
+                 b_ancs.begin(), b_ancs.end(),
+                 inserter(a_uncommon_ancs, a_uncommon_ancs.begin()));
+
+  set_difference(b_ancs.begin(), b_ancs.end(), 
+                 a_ancs.begin(), a_ancs.end(),
+                 inserter(b_uncommon_ancs, b_uncommon_ancs.begin()));
 }
 
 node_id 
 database::next_node_id()
 {
-  // FIXME: implement
-  I(false);
-  return 0;
+  // If you acquire a new ID, we require that you write the new roster
+  // that uses the ID atomically with the counter update. A
+  // half-measure to meet this requirement is to require that we're at
+  // least inside a transaction when called.
+  I(transaction_level > 0);
+  results res;
+
+  // We implement this as a fixed db var.
+
+  string domain = "system";
+  string name = "next_roster_id";
+
+  fetch(res, 1, any_rows, 
+        "SELECT value FROM db_vars WHERE domain = ? AND name = ?",
+        domain.c_str(), name.c_str());
+
+  node_id n = 0;
+  if (res.empty())
+    {
+      n = 1;
+      execute ("INSERT INTO db_vars VALUES(?, ?, ?)", 
+               domain.c_str(), name.c_str(), lexical_cast<string>(n).c_str());
+    }
+  else
+    {
+      n = lexical_cast<node_id>(res[0][0]);
+      ++n;
+      execute ("UPDATE db_vars SET value = ? WHERE domain = ? and name = ?",
+               lexical_cast<string>(n).c_str(), domain.c_str(), name.c_str());
+      
+    }
+  return n;
 }
 
 

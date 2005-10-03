@@ -1768,32 +1768,6 @@ CMD(list, N_("informative"),
 
 ALIAS(ls, list)
 
-CMD(mdelta, N_("packet i/o"), N_("OLDID NEWID"),
-    N_("write manifest delta packet to stdout"),
-    OPT_NONE)
-{
-  if (args.size() != 2)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  manifest_id m_old_id, m_new_id; 
-  manifest_map m_old, m_new;
-
-  complete(app, idx(args, 0)(), m_old_id);
-  complete(app, idx(args, 1)(), m_new_id);
-
-  N(app.db.manifest_version_exists(m_old_id), F("no such manifest '%s'") % m_old_id);
-  app.db.get_manifest(m_old_id, m_old);
-  N(app.db.manifest_version_exists(m_new_id), F("no such manifest '%s'") % m_new_id);
-  app.db.get_manifest(m_new_id, m_new);
-
-  delta del;
-  diff(m_old, m_new, del);
-  pw.consume_manifest_delta(m_old_id, m_new_id, 
-                            manifest_delta(del));
-}
-
 CMD(fdelta, N_("packet i/o"), N_("OLDID NEWID"),
     N_("write file delta packet to stdout"),
     OPT_NONE)
@@ -1834,24 +1808,6 @@ CMD(rdata, N_("packet i/o"), N_("ID"), N_("write revision data packet to stdout"
   N(app.db.revision_exists(r_id), F("no such revision '%s'") % r_id);
   app.db.get_revision(r_id, r_data);
   pw.consume_revision_data(r_id, r_data);  
-}
-
-CMD(mdata, N_("packet i/o"), N_("ID"), N_("write manifest data packet to stdout"),
-    OPT_NONE)
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  manifest_id m_id;
-  manifest_data m_data;
-
-  complete(app, idx(args, 0)(), m_id);
-
-  N(app.db.manifest_version_exists(m_id), F("no such manifest '%s'") % m_id);
-  app.db.get_manifest_version(m_id, m_data);
-  pw.consume_manifest_data(m_id, m_data);  
 }
 
 

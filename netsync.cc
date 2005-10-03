@@ -365,7 +365,6 @@ session
                              map<revision_id, bool> attached,
                              set<revision_id> & visited);
   void analyze_ancestry_graph();
-  void analyze_manifest(manifest_map const & man);
 
   Netxx::Probe::ready_type which_events() const;
   bool read_some();
@@ -538,14 +537,12 @@ session::session(protocol_role role,
   requested_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
 
   received_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
-  received_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
 }
@@ -860,21 +857,6 @@ session::error(std::string const & errmsg)
   encountered_error = true;
 }
 
-void 
-session::analyze_manifest(manifest_map const & man)
-{
-  L(F("analyzing %d entries in manifest\n") % man.size());
-  for (manifest_map::const_iterator i = man.begin();
-       i != man.end(); ++i)
-    {
-      if (! this->app.db.file_version_exists(manifest_entry_id(i)))
-        {
-          id tmp;
-          decode_hexenc(manifest_entry_id(i).inner(), tmp);
-          queue_send_data_cmd(file_item, tmp);
-        }
-    }
-}
 
 static bool 
 is_attached(revision_id const & i, 
@@ -960,11 +942,8 @@ session::request_rev_revisions(revision_id const & init,
                                map<revision_id, bool> attached,
                                set<revision_id> visited)
 {
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
   typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
 
-  set<manifest_id> seen_manifests;
   set<file_id> seen_files;
 
   set<revision_id> frontier;
@@ -993,50 +972,32 @@ session::request_rev_revisions(revision_id const & init,
 
                   next_frontier.insert(edge_old_revision(k));
 
-                  // check out the manifest delta edge
-                  manifest_id parent_manifest = edge_old_manifest(k);
-                  manifest_id child_manifest = j->second->second.new_manifest;  
-
-                  // first, if we have a child we've never seen before we will need
-                  // to request it in its entrety.                
-                  if (seen_manifests.find(child_manifest) == seen_manifests.end())
-                    {
-                      if (this->app.db.manifest_version_exists(child_manifest))
-                        L(F("not requesting (in reverse) initial manifest %s as we already have it\n") % child_manifest);
-                      else
-                        {
-                          L(F("requesting (in reverse) initial manifest data %s\n") % child_manifest);
-                          queue_send_data_cmd(manifest_item, plain_id(child_manifest));
-                        }
-                      seen_manifests.insert(child_manifest);
-                    }
-
-                  // second, if the parent is nonempty, we want to ask for an edge to it                  
-                  if (!parent_manifest.inner()().empty())
-                    {
-                      if (this->app.db.manifest_version_exists(parent_manifest))
-                        L(F("not requesting (in reverse) manifest delta to %s as we already have it\n") % parent_manifest);
-                      else
-                        {
-                          L(F("requesting (in reverse) manifest delta %s -> %s\n") 
-                            % child_manifest % parent_manifest);
-                          reverse_delta_requests.insert(make_pair(plain_id(child_manifest),
-                                                                  plain_id(parent_manifest)));
-                          queue_send_delta_cmd(manifest_item, 
-                                               plain_id(child_manifest), 
-                                               plain_id(parent_manifest));
-                        }
-                      seen_manifests.insert(parent_manifest);
-                    }
-                  
                   // check out each file delta edge
-                  change_set const & cset = edge_changes(k);
-                  for (change_set::delta_map::const_iterator d = cset.deltas.begin(); 
-                       d != cset.deltas.end(); ++d)
+                  cset const & cs = edge_changes(k);
+
+		  for (std::map<split_path, file_id>::const_iterator a = cs.files_added.begin();
+		       a != cs.files_added.end(); ++a)
+		    {
+		      file_id child_file = a->second;
+                      if (seen_files.find(child_file) == seen_files.end())
+                        {
+                          if (this->app.db.file_version_exists(child_file))
+                            L(F("not requesting (in reverse) initial file %s as we already have it\n") % child_file);
+                          else
+                            {
+                              L(F("requesting (in reverse) initial file data %s\n") % child_file);
+                              queue_send_data_cmd(file_item, plain_id(child_file));
+                            }
+                          seen_files.insert(child_file);
+                        }
+		    }
+
+                  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator d 
+			 = cs.deltas_applied.begin(); 
+                       d != cs.deltas_applied.end(); ++d)
                     {
                       file_id parent_file (delta_entry_src(d));
                       file_id child_file (delta_entry_dst(d));
-
 
                       // first, if we have a child we've never seen before we will need
                       // to request it in its entrety.            
@@ -1059,8 +1020,8 @@ session::request_rev_revisions(revision_id const & init,
                             L(F("not requesting (in reverse) file delta to %s as we already have it\n") % parent_file);
                           else
                             {
-                              L(F("requesting (in reverse) file delta %s -> %s on %s\n") 
-                                % child_file % parent_file % delta_entry_path(d));
+                              L(F("requesting (in reverse) file delta %s -> %s\n") 
+                                % child_file % parent_file);
                               reverse_delta_requests.insert(make_pair(plain_id(child_file),
                                                                       plain_id(parent_file)));
                               queue_send_delta_cmd(file_item, 
@@ -1079,7 +1040,6 @@ session::request_rev_revisions(revision_id const & init,
         }
       frontier = next_frontier;
     }
-*/
 }
 
 void 
@@ -1087,8 +1047,6 @@ session::request_fwd_revisions(revision_id const & i,
                                map<revision_id, bool> attached,
                                set<revision_id> & visited)
 {
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
   if (visited.find(i) != visited.end())
     return;
   
@@ -1118,37 +1076,31 @@ session::request_fwd_revisions(revision_id const & i,
       
       I(an_attached_edge != j->second->second.edges.end());
       
-      // check out the manifest delta edge
-      manifest_id parent_manifest = edge_old_manifest(an_attached_edge);
-      manifest_id child_manifest = j->second->second.new_manifest;      
-      if (this->app.db.manifest_version_exists(child_manifest))
-        L(F("not requesting forward manifest delta to '%s' as we already have it\n") 
-          % child_manifest);
-      else
-        {
-          if (parent_manifest.inner()().empty())
-            {
-              L(F("requesting full manifest data %s\n") % child_manifest);
-              queue_send_data_cmd(manifest_item, plain_id(child_manifest));
-            }
+      // check out each file add and file delta edge
+
+      cset const & an_attached_cset = edge_changes(an_attached_edge);
+
+      for (std::map<split_path, file_id>::const_iterator a = an_attached_cset.files_added.begin();
+	   a != an_attached_cset.files_added.end(); ++a)
+	{
+	  file_id child_id = a->second;
+          if (this->app.db.file_version_exists(child_id))
+            L(F("not requesting added file %s as we already have it\n")
+              % child_id);
           else
             {
-              L(F("requesting forward manifest delta %s -> %s\n")
-                % parent_manifest % child_manifest);
-              queue_send_delta_cmd(manifest_item, 
-                                   plain_id(parent_manifest), 
-                                   plain_id(child_manifest));
-            }
-        }
-
-      // check out each file delta edge
-      change_set const & an_attached_cset = edge_changes(an_attached_edge);
-      for (change_set::delta_map::const_iterator k = an_attached_cset.deltas.begin();
-           k != an_attached_cset.deltas.end(); ++k)
+	      L(F("requesting full file data %s\n") % child_id);
+	      queue_send_data_cmd(file_item, plain_id(child_id));
+	    }
+	}
+  
+      for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator k 
+	     = an_attached_cset.deltas_applied.begin();
+           k != an_attached_cset.deltas_applied.end(); ++k)
         {
           if (this->app.db.file_version_exists(delta_entry_dst(k)))
-            L(F("not requesting forward delta %s -> %s on file %s as we already have it\n")
-              % delta_entry_src(k) % delta_entry_dst(k) % delta_entry_path(k));
+            L(F("not requesting forward delta %s -> %s as we already have it\n")
+              % delta_entry_src(k) % delta_entry_dst(k));
           else
             {
               if (delta_entry_src(k).inner()().empty())
@@ -1159,8 +1111,8 @@ session::request_fwd_revisions(revision_id const & i,
               else
                 {
                   
-                  L(F("requesting forward delta %s -> %s on file %s\n")
-                    % delta_entry_src(k) % delta_entry_dst(k) % delta_entry_path(k));
+                  L(F("requesting forward delta %s -> %s\n")
+                    % delta_entry_src(k) % delta_entry_dst(k));
                   queue_send_delta_cmd(file_item, 
                                        plain_id(delta_entry_src(k)), 
                                        plain_id(delta_entry_dst(k)));
@@ -1171,7 +1123,6 @@ session::request_fwd_revisions(revision_id const & i,
       // arrival of its prerequisites in the packet_db_writer
       this->dbw.consume_revision_data(j->first, j->second->first);
     }
-*/
 }
 
 void 
@@ -1566,7 +1517,7 @@ session::queue_send_delta_cmd(netcmd_item_type type,
                               id const & base, 
                               id const & ident)
 {
-  I(type == manifest_item || type == file_item);
+  I(type == file_item);
 
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -1637,7 +1588,7 @@ session::queue_delta_cmd(netcmd_item_type type,
                          id const & ident, 
                          delta const & del)
 {
-  I(type == manifest_item || type == file_item);
+  I(type == file_item);
   I(! del().empty() || ident == base);
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -2144,8 +2095,6 @@ data_exists(netcmd_item_type type,
     {
     case key_item:
       return app.db.public_key_exists(hitem);
-    case manifest_item:
-      return app.db.manifest_version_exists(manifest_id(hitem));
     case file_item:
       return app.db.file_version_exists(file_id(hitem));
     case revision_item:
@@ -2210,20 +2159,6 @@ load_data(netcmd_item_type type,
       else
         {
           throw bad_decode(F("revision '%s' does not exist in our database") % hitem);
-        }
-      break;
-
-    case manifest_item:
-      if (app.db.manifest_version_exists(manifest_id(hitem)))
-        {
-          manifest_data mdat;
-          data dat;
-          app.db.get_manifest_version(manifest_id(hitem), mdat);
-          out = mdat.inner()();
-        }
-      else
-        {
-          throw bad_decode(F("manifest '%s' does not exist in our database") % hitem);
         }
       break;
 
@@ -2717,30 +2652,6 @@ session::process_send_delta_cmd(netcmd_item_type type,
           }
       }
       break;
-
-    case manifest_item:
-      {
-        manifest_id mbase(hbase), mident(hident);
-        manifest_delta mdel;
-        if (this->app.db.manifest_version_exists(mbase) 
-            && this->app.db.manifest_version_exists(mident))
-          {
-            manifest_data base_mdat, ident_mdat;
-            data base_dat, ident_dat;
-            this->app.db.get_manifest_version(mbase, base_mdat);
-            this->app.db.get_manifest_version(mident, ident_mdat);
-            string tmp;
-            base_dat = base_mdat.inner();
-            ident_dat = ident_mdat.inner();
-            compute_delta(base_dat(), ident_dat(), tmp);
-            del = delta(tmp);
-          }
-        else
-          {
-            return process_send_data_cmd(type, ident);
-          }
-      }
-      break;
       
     default:
       throw bad_decode(F("delta requested for item type %s\n") % typestr);
@@ -2868,21 +2779,6 @@ session::process_data_cmd(netcmd_item_type type,
       }
       break;
 
-    case manifest_item:
-      {
-        manifest_id mid(hitem);
-        if (this->app.db.manifest_version_exists(mid))
-          L(F("manifest version '%s' already exists in our database\n") % hitem);
-        else
-          {
-            this->dbw.consume_manifest_data(mid, manifest_data(dat));
-            manifest_map man;
-            read_manifest_map(data(dat), man);
-            analyze_manifest(man);
-          }
-      }
-      break;
-
     case file_item:
       {
         file_id fid(hitem);
@@ -2919,25 +2815,6 @@ session::process_delta_cmd(netcmd_item_type type,
 
   switch (type)
     {
-    case manifest_item:
-      {
-        manifest_id src_manifest(hbase), dst_manifest(hident);
-        if (reverse_delta_requests.find(id_pair)
-            != reverse_delta_requests.end())
-          {
-            reverse_delta_requests.erase(id_pair);
-            this->dbw.consume_manifest_reverse_delta(src_manifest, 
-                                                     dst_manifest,
-                                                     manifest_delta(del));
-          }
-        else
-          this->dbw.consume_manifest_delta(src_manifest, 
-                                           dst_manifest,
-                                           manifest_delta(del));
-        
-      }
-      break;
-
     case file_item:
       {
         file_id src_file(hbase), dst_file(hident);

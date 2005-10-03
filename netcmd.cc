@@ -28,8 +28,6 @@ read_netcmd_item_type(string const & in,
     {
     case static_cast<u8>(revision_item):
       return revision_item;      
-    case static_cast<u8>(manifest_item):
-      return manifest_item;
     case static_cast<u8>(file_item):
       return file_item;
     case static_cast<u8>(cert_item):
@@ -747,7 +745,7 @@ test_netcmd_functions()
         L(boost::format("checking i/o round trip on done_cmd\n"));
         netcmd out_cmd, in_cmd;
         size_t out_level(12), in_level;
-        netcmd_item_type out_type(key_item), in_type(manifest_item);
+        netcmd_item_type out_type(key_item), in_type(revision_item);
         string buf;
 
         out_cmd.write_done_cmd(out_level, out_type);
