@@ -435,9 +435,17 @@ public:
 
   // roster and node_id stuff
  
+  void get_roster_id_for_revision(revision_id const & rev_id,
+				  hexenc<id> & roster_id);
+
+  void put_roster(revision_id const & rev_id,
+		  roster_t & roster,
+		  marking_map & marks);
+
   void get_roster(revision_id const & rid, 
 		  roster_t & roster,
 		  marking_map & marks);
+
   void get_uncommon_ancestors(revision_id const & a,
 			      revision_id const & b,
 			      std::set<revision_id> & a_uncommon_ancs,

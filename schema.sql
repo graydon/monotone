@@ -58,6 +58,24 @@ CREATE TABLE revision_ancestry
 	unique(parent, child)
 	);
 
+CREATE TABLE rosters
+	(
+	id primary key,         -- strong hash of the roster
+	rev_id not null unique, -- strong hash of associated revision
+	data not null           -- compressed, encoded contents of the roster
+	);
+
+CREATE TABLE roster_deltas
+	(
+	id not null,            -- strong hash of the roster
+	rev_id not null,        -- strong hash of associated revision
+	base not null,          -- joins with either rosters.id or roster_deltas.id
+	delta not null,         -- rdiff to construct current from base
+	unique(id, base),
+	unique(rev_id, base)
+	);
+
+
 CREATE INDEX revision_ancestry__child ON revision_ancestry (child);
 
 -- structures for managing RSA keys and file / manifest certs

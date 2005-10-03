@@ -237,5 +237,16 @@ make_roster_for_revision(revision_set const & rev,
                          marking_map & marking,
                          app_state & app);
 
+void 
+read_roster_and_marking(data const & dat,
+                        roster_t & ros,
+                        marking_map & mm);
+
+void
+write_roster_and_marking(roster_t const & ros,
+                         marking_map const & mm,
+                         data & dat,
+                         bool print_local_parts);
+
 #endif
 

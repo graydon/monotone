@@ -2438,7 +2438,7 @@ database::get_branches(vector<string> & names)
     results res;
     string query="SELECT DISTINCT value FROM revision_certs WHERE name= ?";
     string cert_name="branch";
-    fetch(res,one_col,any_rows,query.c_str(),cert_name.c_str());
+    fetch(res, one_col, any_rows, query.c_str(), cert_name.c_str());
     for (size_t i = 0; i < res.size(); ++i)
       {
         base64<data> row_encoded(res[i][0]);
@@ -2448,13 +2448,107 @@ database::get_branches(vector<string> & names)
       }
 }
 
+
+void
+database::get_roster_id_for_revision(revision_id const & rev_id,
+                                     hexenc<id> & roster_id)
+{
+  results res;
+  string data_table = "rosters";
+  string delta_table = "roster_deltas";
+  string query = ("SELECT id FROM " + data_table + " WHERE rev_id = ? "
+                  "UNION "
+                  "SELECT id FROM " + delta_table + " WHERE rev_id = ? ");
+  
+  fetch(res, one_col, one_row, query.c_str(),
+        rev_id.inner()().c_str(),
+        rev_id.inner()().c_str());
+  roster_id = hexenc<id>(res[0][0]);
+}
+
+
 void 
-database::get_roster(revision_id const & rid, 
+database::get_roster(revision_id const & rev_id, 
                      roster_t & roster,
                      marking_map & marks)
 {
-  // FIXME: implement
-  I(false);
+  string data_table = "rosters";
+  string delta_table = "roster_deltas";
+  data dat;
+  hexenc<id> ident;
+
+  get_roster_id_for_revision(rev_id, ident);
+  get_version(ident, dat, data_table, delta_table);
+  read_roster_and_marking(dat, roster, marks);
+}
+
+
+void
+database::put_roster(revision_id const & rev_id,
+                     roster_t & roster,
+                     marking_map & marks)
+{
+  data old_data, new_data;
+  delta reverse_delta;
+  hexenc<id> ident;
+  base64<gzip<data> > new_data_packed;
+
+  write_roster_and_marking(roster, marks, new_data, true);
+  calculate_ident(new_data, ident);
+  pack(new_data, new_data_packed);
+
+  // First: find the "old" revision; if there are multiple old
+  // revisions, we just pick the first. It probably doesn't matter for
+  // the sake of delta-encoding.
+
+  string data_table = "rosters";
+  string delta_table = "roster_deltas";
+
+  results res;
+  fetch(res, one_col, any_rows, 
+        "SELECT parent FROM revision_ancestry WHERE child = ?",
+        rev_id.inner()().c_str());
+
+  transaction_guard guard(*this);
+  if (res.size() != 0)
+    {
+      // There's a parent revision; we are going to do delta
+      // compression on the roster by using the roster associated with
+      // the parent rev. Keep in mind that we're composing a *reverse*
+      // delta here, which goes from new->old. So the row we insert
+      // will have (id=old_id, rev_id=old_rev, base=new_id,
+      // delta=new->old)
+
+      revision_id old_rev = revision_id(res[0][0]);
+      hexenc<id> old_ident;
+      get_roster_id_for_revision(old_rev, old_ident);
+      get_version(old_ident, old_data, data_table, delta_table);
+      diff(new_data, old_data, reverse_delta);
+      base64<gzip<delta> > del_packed;
+      pack(reverse_delta, del_packed);
+
+      if (exists(old_ident, data_table))
+        {
+          // Descendent of a head version replaces the head, therefore
+          // old head, if it exists in entirety, must be disposed of.
+          drop(old_ident, data_table);
+        }
+
+      // nb: roster_deltas schema is (id, rev_id, base, delta)
+      string query = "INSERT INTO " + delta_table + " VALUES(?, ?, ?, ?)";
+      execute(query.c_str(), 
+              old_ident().c_str(), old_rev.inner()().c_str(), 
+              ident().c_str(), del_packed().c_str());
+
+    }
+
+  // nb: rosters schema is (id, rev_id, data)
+  string query = "INSERT INTO " + data_table + " VALUES(?, ?, ?, ?)";
+  execute(query.c_str(),
+          ident().c_str(), rev_id.inner()().c_str(), 
+          new_data_packed().c_str());      
+
+  guard.commit();
 }
 
 
