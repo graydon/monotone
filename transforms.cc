@@ -326,11 +326,11 @@ void calculate_ident(revision_set const & cs,
 // not include the local sequence numbers or markings, but produces
 // the manifest_id which is stored in the public revision_set object.
 void calculate_ident(roster_t const & ros,
-                     marking_map const & mm,
                      manifest_id & ident)
 {
   data tmp;
   hexenc<id> tid;
+  marking_map mm;
   write_roster_and_marking(ros, mm, tmp, false);
   calculate_ident(tmp, tid);
   ident = tid;

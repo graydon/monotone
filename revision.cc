@@ -1081,7 +1081,7 @@ calculate_arbitrary_change_set(revision_id const & start,
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
 
-
+/*
 static void 
 analyze_manifest_changes(app_state & app,
                          manifest_id const & parent, 
@@ -1130,7 +1130,7 @@ analyze_manifest_changes(app_state & app,
                     manifest_entry_id(i));
     }
 }
-
+*/
 
 struct anc_graph
 {
@@ -1171,7 +1171,7 @@ struct anc_graph
   void get_node_manifest(u64 node, manifest_id & man);
   u64 add_node_for_old_manifest(manifest_id const & man);
   u64 add_node_for_old_revision(revision_id const & rev);                     
-  revision_id construct_revision_from_ancestry(u64 child);
+  void construct_revisions_from_ancestry();
 };
 
 
@@ -1434,32 +1434,83 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
                                           file_id const & fid,
                                           parent_roster_map const & parent_rosters,
                                           temp_node_id_source & nis,
-                                          roster_t const & child_roster)                                          
+                                          roster_t & child_roster)
 {
-  node_id nid = create_file_node(i->second, nis);
-  split_path sp;
-  i->first.split(sp);
+
+  split_path sp, dirname;
+  path_component basename;
+  pth.split(sp);
+
+  E(!child_roster.has_node(sp),
+    F("Path %s added to child roster multiple times\n") % pth);
+
+  dirname_basename(sp, dirname, basename);
+
+  E(!dirname.empty(),
+    F("Empty path encountered during reconstruction\n"));
+
+  // First, we make sure the entire dir containing the file in question has
+  // been inserted into the child roster.
+  {
+    split_path tmp_pth;
+    for (split_path::const_iterator i = dirname.begin(); i != dirname.end();
+         ++i)
+      {
+        tmp_pth.push_back(*i);
+        if (child_roster.has_node(tmp_pth))
+          {
+            E(is_dir_t(child_roster.get_node(tmp_pth)),
+              F("Directory for path %s cannot be added, as there is a file in the way\n") % pth);
+          }
+        else
+          child_roster.attach_node(child_roster.create_dir_node(nis), tmp_pth);
+      }
+  }
+
+  // Then add a node for the file and attach it
+  node_id nid = child_roster.create_file_node(fid, nis);
+  child_roster.attach_node(nid, sp);
+
+  // Finally, try to find a file in one of the parents which has the same name;
+  // if such a file is found, replace all the temporary node IDs we've assigned
+  // with the node IDs found in the parent.
+
   for (parent_roster_map::const_iterator j = parent_rosters.begin();
        j != parent_rosters.end(); ++j)
     {
       // We use a stupid heuristic: first parent who has
       // a file with the same name gets the node
-      // identity copied forward. Anything else is
-      // considered a new file.
-      boost::shared_ptr<roster_t> ros = j->second.first;
-      if (ros->has_node(sp))
+      // identity copied forward. 
+      boost::shared_ptr<roster_t> parent_roster = j->second.first;
+      if (parent_roster->has_node(sp))
         {
-          node_t existing_node = ros->get_node(sp);
-          if (is_file_t(existing_node))
+          node_t other_node = parent_roster->get_node(sp);
+          if (is_file_t(other_node))
             {
-              child_roster.replace_node_id(nid, existing_node->self);
-              nid = existing_node->self;
+              // Here we've found an existing node for our file in a parent
+              // roster; For example, we have foo1=p/foo2=q/foo3=r in our
+              // child roster, and we've found foo1=x/foo2=y/foo3=z in a
+              // parent roster. We want to perform the following
+              // operations:
+              //
+              // child_roster.replace_node_id(r,z)
+              // child_roster.replace_node_id(q,y)
+              // child_roster.replace_node_id(p,x)
+              //
+              // where "foo1" is actually "", the root dir.
+
+              for (node_id other_id = other_node->self; 
+                   ! null_node(other_id); 
+                   other_id = parent_roster->get_node(other_id)->parent)
+                {
+                  child_roster.replace_node_id(nid, other_id);
+                  nid = child_roster.get_node(nid)->parent;
+                }
+              I(null_node(nid));
               break;
             }
         }
     }
-  child_roster.attach_node();
-    //...    
 }
 
 void 
@@ -1474,11 +1525,14 @@ anc_graph::construct_revisions_from_ancestry()
   // need to worry about one side of the frontier advancing faster than
   // another.
 
+  typedef std::multimap<u64,u64>::const_iterator ci;
   std::multimap<u64,u64> parent_to_child_map;
   std::deque<u64> work;
   std::set<u64> done;
 
   {
+    // Set up the parent->child mapping and prime the work queue
+
     std::set<u64> parents, children;
     for (std::multimap<u64, u64>::const_iterator i = ancestry.begin();
          i != ancestry.end(); ++i)
@@ -1498,9 +1552,8 @@ anc_graph::construct_revisions_from_ancestry()
       
       u64 child = work.front();
       work.pop_front();
-      typedef std::multimap<u64,u64>::const_iterator ci;
       std::pair<ci,ci> parent_range = ancestry.equal_range(child);
-      set<u64> parents;
+      std::set<u64> parents;
       bool parents_all_done = true;
       for (ci i = parent_range.first; parents_all_done && i != parent_range.second; ++i)
       {
@@ -1520,11 +1573,11 @@ anc_graph::construct_revisions_from_ancestry()
           && (node_to_new_rev.find(child) == node_to_new_rev.end()))
         {          
           L(F("processing node %d\n") % child);
-          revision_set rev;
 
           manifest_id old_child_mid;
-          get_node_manifest(child, old_child_mid);
           manifest_map old_child_man;
+
+          get_node_manifest(child, old_child_mid);
           app.db.get_manifest(old_child_mid, old_child_man);
 
           // Load all the parent rosters into a temporary roster map
@@ -1540,27 +1593,69 @@ anc_graph::construct_revisions_from_ancestry()
                   boost::shared_ptr<roster_t> ros = boost::shared_ptr<roster_t>(new roster_t());
                   boost::shared_ptr<marking_map> mm = boost::shared_ptr<marking_map>(new marking_map());
                   app.db.get_roster(safe_get(node_to_new_rev, parent), *ros, *mm);
-                  safe_insert(parent_rosters, std::make_pair(ros, mm));                                   
+                  safe_insert(parent_rosters, std::make_pair(parent, std::make_pair(ros, mm)));
                 }
             }
 
-          // Now convert the old-skool manifest into a cset adding all
-          // the files in question, and build a roster out of that.
+          // Convert the old-skool manifest into a cset adding all the
+          // files in question, and build a roster out of that.
           roster_t child_roster;
           temp_node_id_source nis;
-          {
-            for (manifest_map::const_iterator i = old_child_man.begin();
-                 i != old_child_man.end(); ++i)
-              {
-                insert_into_roster_reusing_parent_entries(i->first, i->second,
-                                                          parent_rosters,
-                                                          nis, child_roster);
-              }
-          }
+          for (manifest_map::const_iterator i = old_child_man.begin();
+               i != old_child_man.end(); ++i)
+            {
+              insert_into_roster_reusing_parent_entries(i->first, i->second,
+                                                        parent_rosters,
+                                                        nis, child_roster);
+            }
+
+          revision_set rev;
+          calculate_ident(child_roster, rev.new_manifest);
+
+          // For each parent, construct an edge in the revision structure by analyzing the
+          // relationship between the parent roster and the child roster (and placing the
+          // result in a cset)
+
+          for (parent_roster_map::const_iterator i = parent_rosters.begin();
+               i != parent_rosters.end(); ++i)
+            {
+              u64 parent = i->first;
+              revision_id parent_rid = safe_get(node_to_new_rev, parent);
+              boost::shared_ptr<roster_t> parent_roster = i->second.first;
+              boost::shared_ptr<cset> cs = boost::shared_ptr<cset>(new cset());
+              make_cset(*parent_roster, child_roster, *cs); 
+              manifest_id parent_manifest_id;
+              calculate_ident(*parent_roster, parent_manifest_id);
+              safe_insert (rev.edges, std::make_pair (parent_rid, 
+                                                      std::make_pair (parent_manifest_id, cs)));
+                                                                      
+            }
+
+          // Finally, put all this excitement into the database and save
+          // the new_rid for use in the cert-writing pass.
+
+          revision_id new_rid;
+          calculate_ident(rev, new_rid);
+          node_to_new_rev.insert(std::make_pair(child, new_rid));
+
+          if (!app.db.revision_exists (new_rid))
+            {
+              L(F("mapped node %d to revision %s\n") % child % new_rid);
+              app.db.put_revision(new_rid, rev);
+              ++n_revs_out;
+            }
+          else
+            {
+              L(F("skipping already existing revision %s\n") % new_rid);
+            }
+          
+          // Mark this child as done, hooray!
+          safe_insert(done, child);
         }
     }
 }
 
+/*
 revision_id
 anc_graph::construct_revision_from_ancestry(u64 child)
 {
@@ -1709,6 +1804,7 @@ anc_graph::construct_revision_from_ancestry(u64 child)
 
   return rid;  
 }
+*/
 
 void 
 build_changesets_from_existing_revs(app_state & app)
@@ -1779,7 +1875,6 @@ build_changesets_from_manifest_ancestry(app_state & app)
   
   graph.rebuild_ancestry();
 }
-*/
 
 // i/o stuff
 

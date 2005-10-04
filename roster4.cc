@@ -76,13 +76,7 @@ namespace
   //
 
 
-  const node_id the_null_node = 0;
   const node_id first_node = 1;
-  inline bool null_node(node_id n)
-  {
-    return n == the_null_node;
-  }
-
   const node_id first_temp_node = widen<node_id, int>(1) << (sizeof(node_id) * 8 - 1);
   inline bool temp_node(node_id n)
   {
@@ -245,7 +239,7 @@ roster_t::operator=(roster_t const & other)
   return *this;
 }
 
-static inline void
+void
 dirname_basename(split_path const & sp,
                  split_path & dirname, path_component & basename)
 {
@@ -790,6 +784,19 @@ roster_t::check_sane(marking_map const & marking) const
 }
 
 
+temp_node_id_source::temp_node_id_source() 
+  : curr(first_temp_node) 
+{}
+
+node_id 
+temp_node_id_source::next()
+{
+    node_id n = curr++;
+    I(temp_node(n));
+    return n;
+}
+
+
 namespace 
 {
 
@@ -855,7 +862,6 @@ namespace
     roster_t & r;
     node_id_source & nis;
   };
-
 
   struct testing_node_id_source 
     : public node_id_source

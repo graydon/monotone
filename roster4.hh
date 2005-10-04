@@ -32,6 +32,20 @@ typedef boost::shared_ptr<node> node_t;
 typedef boost::shared_ptr<file_node> file_t;
 typedef boost::shared_ptr<dir_node> dir_t;
 
+// FIXME: perhaps move this to paths.{cc,hh}
+void
+dirname_basename(split_path const & sp,
+                 split_path & dirname, path_component & basename);
+
+node_id const the_null_node = 0;
+
+inline bool 
+null_node(node_id n)
+{
+  return n == the_null_node;
+}
+
+
 // (true, "val") or (false, "") are both valid attr values (for proper
 // merging, we have to widen the attr_value type to include a first-class
 // "undefined" value).
@@ -207,13 +221,8 @@ private:
 struct temp_node_id_source 
   : public node_id_source
 {
-  temp_node_id_source() : curr(first_temp_node) {}
-  virtual node_id next()
-  {
-    node_id n = curr++;
-    I(temp_node(n));
-    return n;
-  }
+  temp_node_id_source();
+  virtual node_id next();
   node_id curr;
 };
 
