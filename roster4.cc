@@ -459,6 +459,31 @@ roster_t::get_node(split_path const & sp) const
   return d->get_child(basename);
 }
 
+bool
+roster_t::has_node(split_path const & sp) const
+{
+  split_path dirname;
+  path_component basename;
+  dirname_basename(sp, dirname, basename);
+
+  if (dirname.empty())
+    {
+      I(null_name(basename));
+      return has_root();
+    }
+
+  I(has_root());
+  dir_t d = root_dir;  
+  for (split_path::const_iterator i = dirname.begin()+1; i != dirname.end(); ++i)
+    {
+      if (d->children.find(*i) == d->children.end())
+	return false;
+      d = downcast_to_dir_t(d->get_child(*i));
+    }
+  return d->children.find(basename) != d->children.end();
+}
+
+
 
 node_t
 roster_t::get_node(node_id nid) const
@@ -841,20 +866,6 @@ namespace
       // L(F("creating node %x\n") % curr);
       node_id n = curr++;
       I(!temp_node(n));
-      return n;
-    }
-    node_id curr;
-  };
-
-
-  struct temp_node_id_source 
-    : public node_id_source
-  {
-    temp_node_id_source() : curr(first_temp_node) {}
-    virtual node_id next()
-    {
-      node_id n = curr++;
-      I(temp_node(n));
       return n;
     }
     node_id curr;

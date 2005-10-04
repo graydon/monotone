@@ -200,6 +200,13 @@ class database
                                         delta const & del,
                                         database & db);
 
+  void get_roster_id_for_revision(revision_id const & rev_id,
+				  hexenc<id> & roster_id);
+
+  void put_roster(revision_id const & rev_id,
+		  roster_t & roster,
+		  marking_map & marks);
+
   void check_filename();
   void open();
 
@@ -233,12 +240,6 @@ public:
   void get_file_version(file_id const & id,
                         file_data & dat);
 
-  // get file delta if it exists, else calculate it.
-  // both manifests must exist.
-  void get_file_delta(file_id const & src,
-                      file_id const & dst,
-                      file_delta & del);
-
   // put file w/o predecessor into db
   void put_file(file_id const & new_id,
                 file_data const & dat);
@@ -262,12 +263,6 @@ public:
   // get a constructed manifest
   void get_manifest(manifest_id const & id,
                     manifest_map & mm);
-
-  // get manifest delta if it exists, else calculate it.
-  // both manifests must exist.
-  void get_manifest_delta(manifest_id const & src,
-                          manifest_id const & dst,
-                          manifest_delta & del);
 
   // put manifest w/o predecessor into db
   void put_manifest(manifest_id const & new_id,
@@ -303,10 +298,10 @@ public:
                    revision_data & dat);
 
   void put_revision(revision_id const & new_id,
-                   revision_set const & cs);
+		    revision_set const & rev);
 
   void put_revision(revision_id const & new_id,
-                    revision_data const & dat);
+		    revision_data const & dat);
   
   void delete_existing_revs_and_certs();
 
@@ -435,13 +430,6 @@ public:
 
   // roster and node_id stuff
  
-  void get_roster_id_for_revision(revision_id const & rev_id,
-				  hexenc<id> & roster_id);
-
-  void put_roster(revision_id const & rev_id,
-		  roster_t & roster,
-		  marking_map & marks);
-
   void get_roster(revision_id const & rid, 
 		  roster_t & roster,
 		  marking_map & marks);

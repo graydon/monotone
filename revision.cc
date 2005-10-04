@@ -1076,6 +1076,7 @@ calculate_arbitrary_change_set(revision_id const & start,
   concatenate_change_sets(start_to_ca, ca_to_end, composed);
 }
 
+*/
 
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
@@ -1086,7 +1087,7 @@ analyze_manifest_changes(app_state & app,
                          manifest_id const & parent, 
                          manifest_id const & child, 
                          std::set<file_path> const & need_history_splitting,
-                         change_set & cs)
+                         cset & cs)
 {
   manifest_map m_parent, m_child;
 
@@ -1337,26 +1338,8 @@ anc_graph::rebuild_ancestry()
   {
     transaction_guard guard(app.db);
     if (existing_graph)
-      app.db.delete_existing_revs_and_certs();
-    
-    std::set<u64> parents, children, heads;
-    for (std::multimap<u64, u64>::const_iterator i = ancestry.begin();
-         i != ancestry.end(); ++i)
-      {
-        children.insert(i->first);
-        parents.insert(i->second);
-      }
-    set_difference(children.begin(), children.end(),
-                   parents.begin(), parents.end(),
-                   std::inserter(heads, heads.begin()));
-
-    // FIXME: should do a depth-first traversal here, or something like,
-    // instead of being recursive.
-    for (std::set<u64>::const_iterator i = heads.begin();
-         i != heads.end(); ++i)
-      {
-        construct_revision_from_ancestry(*i);
-      }
+      app.db.delete_existing_revs_and_certs();    
+    construct_revisions_from_ancestry();
     write_certs();
     guard.commit();
   }
@@ -1440,8 +1423,144 @@ u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
   return node;
 }
 
-// FIXME: this is recursive -- stack depth grows as ancestry depth -- and will
-// overflow the stack on large histories.
+typedef std::map<u64, 
+                 std::pair<boost::shared_ptr<roster_t>, 
+                           boost::shared_ptr<marking_map>
+                 > > 
+parent_roster_map;
+
+static void 
+insert_into_roster_reusing_parent_entries(file_path const & pth,
+                                          file_id const & fid,
+                                          parent_roster_map const & parent_rosters,
+                                          temp_node_id_source & nis,
+                                          roster_t const & child_roster)                                          
+{
+  node_id nid = create_file_node(i->second, nis);
+  split_path sp;
+  i->first.split(sp);
+  for (parent_roster_map::const_iterator j = parent_rosters.begin();
+       j != parent_rosters.end(); ++j)
+    {
+      // We use a stupid heuristic: first parent who has
+      // a file with the same name gets the node
+      // identity copied forward. Anything else is
+      // considered a new file.
+      boost::shared_ptr<roster_t> ros = j->second.first;
+      if (ros->has_node(sp))
+        {
+          node_t existing_node = ros->get_node(sp);
+          if (is_file_t(existing_node))
+            {
+              child_roster.replace_node_id(nid, existing_node->self);
+              nid = existing_node->self;
+              break;
+            }
+        }
+    }
+  child_roster.attach_node();
+    //...    
+}
+
+void 
+anc_graph::construct_revisions_from_ancestry()
+{
+  // This is an incredibly cheesy, and also reasonably simple sorting
+  // system: we put all the root nodes in the work queue. we take a
+  // node out of the work queue and check if its parents are done. if
+  // they are, we process it and insert its children. otherwise we put
+  // it back on the end of the work queue. This both ensures that we're
+  // always processing something *like* a frontier, while avoiding the
+  // need to worry about one side of the frontier advancing faster than
+  // another.
+
+  std::multimap<u64,u64> parent_to_child_map;
+  std::deque<u64> work;
+  std::set<u64> done;
+
+  {
+    std::set<u64> parents, children;
+    for (std::multimap<u64, u64>::const_iterator i = ancestry.begin();
+         i != ancestry.end(); ++i)
+      {
+        parent_to_child_map.insert(std::make_pair(i->second, i->first));
+        children.insert(i->first);
+        parents.insert(i->second);
+      }
+    
+    set_difference(parents.begin(), parents.end(),
+                   children.begin(), children.end(),
+                   std::back_inserter(work));
+  }
+
+  while (!work.empty())
+    {
+      
+      u64 child = work.front();
+      work.pop_front();
+      typedef std::multimap<u64,u64>::const_iterator ci;
+      std::pair<ci,ci> parent_range = ancestry.equal_range(child);
+      set<u64> parents;
+      bool parents_all_done = true;
+      for (ci i = parent_range.first; parents_all_done && i != parent_range.second; ++i)
+      {
+        if (i->first != child)
+          continue;
+        u64 parent = i->second;
+        if (done.find(parent) == done.end())
+          {
+            work.push_back(child);
+            parents_all_done = false;
+          }
+        else
+          parents.insert(parent);
+      }
+
+      if (parents_all_done 
+          && (node_to_new_rev.find(child) == node_to_new_rev.end()))
+        {          
+          L(F("processing node %d\n") % child);
+          revision_set rev;
+
+          manifest_id old_child_mid;
+          get_node_manifest(child, old_child_mid);
+          manifest_map old_child_man;
+          app.db.get_manifest(old_child_mid, old_child_man);
+
+          // Load all the parent rosters into a temporary roster map
+          parent_roster_map parent_rosters;
+          
+          for (ci i = parent_range.first; parents_all_done && i != parent_range.second; ++i)
+            {
+              if (i->first != child)
+                continue;
+              u64 parent = i->second;
+              if (parent_rosters.find(parent) == parent_rosters.end())
+                {
+                  boost::shared_ptr<roster_t> ros = boost::shared_ptr<roster_t>(new roster_t());
+                  boost::shared_ptr<marking_map> mm = boost::shared_ptr<marking_map>(new marking_map());
+                  app.db.get_roster(safe_get(node_to_new_rev, parent), *ros, *mm);
+                  safe_insert(parent_rosters, std::make_pair(ros, mm));                                   
+                }
+            }
+
+          // Now convert the old-skool manifest into a cset adding all
+          // the files in question, and build a roster out of that.
+          roster_t child_roster;
+          temp_node_id_source nis;
+          {
+            for (manifest_map::const_iterator i = old_child_man.begin();
+                 i != old_child_man.end(); ++i)
+              {
+                insert_into_roster_reusing_parent_entries(i->first, i->second,
+                                                          parent_rosters,
+                                                          nis, child_roster);
+              }
+          }
+        }
+    }
+}
+
 revision_id
 anc_graph::construct_revision_from_ancestry(u64 child)
 {

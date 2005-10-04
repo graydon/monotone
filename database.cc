@@ -1346,6 +1346,7 @@ database::get_revision(revision_id const & id,
   dat = rdat;
 }
 
+
 void 
 database::put_revision(revision_id const & new_id,
                        revision_set const & rev)
@@ -1353,19 +1354,35 @@ database::put_revision(revision_id const & new_id,
 
   I(!null_id(new_id));
   I(!revision_exists(new_id));
-  revision_data d;
 
   rev.check_sane();
-
+  revision_data d;
   write_revision_set(rev, d);
-  revision_id tmp;
-  calculate_ident(d, tmp);
-  I(tmp == new_id);
+
+  // Phase 1: confirm the revision makes sense
+  {
+    revision_id tmp;
+    calculate_ident(d, tmp);
+    I(tmp == new_id);
+  }
+
+  transaction_guard guard(*this);
+  
+  // Phase 2: construct a new roster and sanity-check its manifest_id
+  // against the manifest_id of the revision you're writing
+  roster_t ros;
+  marking_map mm;
+  {
+    manifest_id roster_manifest_id;
+    make_roster_for_revision(rev, new_id, ros, mm, *__app);
+    calculate_ident(ros, mm, roster_manifest_id);
+    I(rev.new_manifest == roster_manifest_id);
+  }
+
+  // Phase 3: Write the revision data
 
   base64<gzip<data> > d_packed;
   pack(d.inner(), d_packed);
-
-  transaction_guard guard(*this);
 
   execute("INSERT INTO revisions VALUES(?, ?)", 
           new_id.inner()().c_str(), 
@@ -1379,14 +1396,14 @@ database::put_revision(revision_id const & new_id,
               new_id.inner()().c_str());
     }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
-  check_sane_history(new_id, constants::verify_depth, *__app);
-*/
+  // Phase 4: write the roster data and commit
+  put_roster(new_id, ros, mm);
+
   guard.commit();
 }
 
-void 
+
+void
 database::put_revision(revision_id const & new_id,
                        revision_data const & dat)
 {
@@ -1399,6 +1416,8 @@ database::put_revision(revision_id const & new_id,
 void 
 database::delete_existing_revs_and_certs()
 {
+  execute("DELETE FROM rosters");
+  execute("DELETE FROM roster_deltas");
   execute("DELETE FROM revisions");
   execute("DELETE FROM revision_ancestry");
   execute("DELETE FROM revision_certs");

@@ -153,6 +153,7 @@ public:
   roster_t(roster_t const & other);
   roster_t & operator=(roster_t const & other);
   bool has_root() const;
+  bool has_node(split_path const & sp) const;
   node_t get_node(split_path const & sp) const;
   node_t get_node(node_id n) const;
   void get_name(node_id n, split_path & sp) const;
@@ -201,6 +202,19 @@ private:
   dir_t root_dir;
   node_map nodes;
   friend void dump(roster_t const & val, std::string & out);
+};
+
+struct temp_node_id_source 
+  : public node_id_source
+{
+  temp_node_id_source() : curr(first_temp_node) {}
+  virtual node_id next()
+  {
+    node_id n = curr++;
+    I(temp_node(n));
+    return n;
+  }
+  node_id curr;
 };
 
 void dump(roster_t const & val, std::string & out);

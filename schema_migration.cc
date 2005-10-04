@@ -764,6 +764,41 @@ migrate_client_to_add_indexes(sqlite3 * sql,
   return true;
 }
 
+static bool
+migrate_client_to_add_rosters(sqlite3 * sql,
+                              char ** errmsg)
+{
+  int res;
+  
+  res = sqlite3_exec(sql,
+		     "CREATE TABLE rosters\n"
+		     "(\n"
+		     "id primary key,         -- strong hash of the roster\n"
+		     "rev_id not null unique, -- strong hash of associated revision\n"
+		     "data not null           -- compressed, encoded contents of the roster\n"
+		     ");",
+                     NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite3_exec(sql,
+		     "CREATE TABLE roster_deltas\n"
+		     "(\n"
+		     "id not null,            -- strong hash of the roster\n"
+		     "rev_id not null,        -- strong hash of associated revision\n"
+		     "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
+		     "delta not null,         -- rdiff to construct current from base\n"
+		     "unique(id, base),\n"
+		     "unique(rev_id, base)\n"
+		     ");",
+                     NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  return true;
+}
+
+
 void 
 migrate_monotone_schema(sqlite3 *sql)
 {
