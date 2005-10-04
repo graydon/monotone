@@ -256,14 +256,6 @@ void PK_Verifier::update(const MemoryRegion<byte>& in)
 /*************************************************
 * Check a signature                              *
 *************************************************/
-bool PK_Verifier::valid_signature(const byte sig[], u32bit length)
-   {
-   return check_signature(sig, length);
-   }
-
-/*************************************************
-* Check a signature                              *
-*************************************************/
 bool PK_Verifier::check_signature(const MemoryRegion<byte>& sig)
    {
    return check_signature(sig, sig.size());

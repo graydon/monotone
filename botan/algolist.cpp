@@ -1,130 +1,15 @@
 /*************************************************
 * Algorithms List Source File                    *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/lookup.h>
-
-#include <botan/aes.h>
-
-#include <botan/arc4.h>
-
-#include <botan/crc32.h>
-#include <botan/sha160.h>
-
-#include <botan/hmac.h>
 
 #include <botan/mode_pad.h>
 
 namespace Botan {
 
 namespace Algolist {
-
-/*************************************************
-* Some macros to simplify control flow           *
-*************************************************/
-#define HANDLE_TYPE_NO_ARGS(NAME, TYPE)        \
-   if(algo_name == NAME)                       \
-      {                                        \
-      if(name.size() == 1)                     \
-         return new TYPE;                      \
-      throw Invalid_Algorithm_Name(algo_spec); \
-      }
-
-#define HANDLE_TYPE_ONE_U32BIT(NAME, TYPE, DEFAULT) \
-   if(algo_name == NAME)                            \
-      {                                             \
-      if(name.size() == 1)                          \
-         return new TYPE(DEFAULT);                  \
-      if(name.size() == 2)                          \
-         return new TYPE(to_u32bit(name[1]));       \
-      throw Invalid_Algorithm_Name(algo_spec);      \
-      }
-
-#define HANDLE_TYPE_TWO_U32BIT(NAME, TYPE, DEFAULT)               \
-   if(algo_name == NAME)                                          \
-      {                                                           \
-      if(name.size() == 1)                                        \
-         return new TYPE(DEFAULT);                                \
-      if(name.size() == 2)                                        \
-         return new TYPE(to_u32bit(name[1]));                     \
-      if(name.size() == 3)                                        \
-         return new TYPE(to_u32bit(name[1]), to_u32bit(name[2])); \
-      throw Invalid_Algorithm_Name(algo_spec);                    \
-      }
-
-#define HANDLE_TYPE_ONE_STRING(NAME, TYPE)     \
-   if(algo_name == NAME)                       \
-      {                                        \
-      if(name.size() == 2)                     \
-         return new TYPE(name[1]);             \
-      throw Invalid_Algorithm_Name(algo_spec); \
-      }
-
-/*************************************************
-* Attempt to get a block cipher object           *
-*************************************************/
-BlockCipher* get_block_cipher(const std::string& algo_spec)
-   {
-   std::vector<std::string> name = parse_algorithm_name(algo_spec);
-   if(name.size() == 0)
-      return 0;
-   const std::string algo_name = deref_alias(name[0]);
-
-   HANDLE_TYPE_NO_ARGS("AES", AES);
-   HANDLE_TYPE_NO_ARGS("AES-128", AES_128);
-   HANDLE_TYPE_NO_ARGS("AES-192", AES_192);
-   HANDLE_TYPE_NO_ARGS("AES-256", AES_256);
-
-   return 0;
-   }
-
-/*************************************************
-* Attempt to get a stream cipher object          *
-*************************************************/
-StreamCipher* get_stream_cipher(const std::string& algo_spec)
-   {
-   std::vector<std::string> name = parse_algorithm_name(algo_spec);
-   if(name.size() == 0)
-      return 0;
-   const std::string algo_name = deref_alias(name[0]);
-
-   HANDLE_TYPE_ONE_U32BIT("ARC4", ARC4, 0);
-   HANDLE_TYPE_ONE_U32BIT("RC4_drop", ARC4, 768);
-
-   return 0;
-   }
-
-/*************************************************
-* Attempt to get a hash function object          *
-*************************************************/
-HashFunction* get_hash(const std::string& algo_spec)
-   {
-   std::vector<std::string> name = parse_algorithm_name(algo_spec);
-   if(name.size() == 0)
-      return 0;
-   const std::string algo_name = deref_alias(name[0]);
-
-   HANDLE_TYPE_NO_ARGS("CRC32", CRC32);
-   HANDLE_TYPE_NO_ARGS("SHA-160", SHA_160);
-
-   return 0;
-   }
-
-/*************************************************
-* Attempt to get an authentication code object   *
-*************************************************/
-MessageAuthenticationCode* get_mac(const std::string& algo_spec)
-   {
-   std::vector<std::string> name = parse_algorithm_name(algo_spec);
-   if(name.size() == 0)
-      return 0;
-   const std::string algo_name = deref_alias(name[0]);
-
-   HANDLE_TYPE_ONE_STRING("HMAC", HMAC);
-
-   return 0;
-   }
 
 /*************************************************
 * Attempt to get a string to key object          *
@@ -134,7 +19,15 @@ S2K* get_s2k(const std::string& algo_spec)
    std::vector<std::string> name = parse_algorithm_name(algo_spec);
    if(name.size() == 0)
       return 0;
+   if(name.size() != 2)
+      throw Invalid_Algorithm_Name(algo_spec);
+
    const std::string algo_name = deref_alias(name[0]);
+
+   // removed in monotone
+   //if(algo_name == "OpenPGP-S2K") return new OpenPGP_S2K(name[1]);
+   //if(algo_name == "PBKDF1") return new PKCS5_PBKDF1(name[1]);
+   //if(algo_name == "PBKDF2") return new PKCS5_PBKDF2(name[1]);
 
    return 0;
    }
@@ -147,12 +40,15 @@ BlockCipherModePaddingMethod* get_bc_pad(const std::string& algo_spec)
    std::vector<std::string> name = parse_algorithm_name(algo_spec);
    if(name.size() == 0)
       return 0;
+   if(name.size() != 1)
+      throw Invalid_Algorithm_Name(algo_spec);
+
    const std::string algo_name = deref_alias(name[0]);
 
-   HANDLE_TYPE_NO_ARGS("PKCS7", PKCS7_Padding);
-   HANDLE_TYPE_NO_ARGS("OneAndZeros", OneAndZeros_Padding);
-   HANDLE_TYPE_NO_ARGS("X9.23",  ANSI_X923_Padding);
-   HANDLE_TYPE_NO_ARGS("NoPadding", Null_Padding);
+   if(algo_name == "PKCS7") return new PKCS7_Padding;
+   if(algo_name == "OneAndZeros") return new OneAndZeros_Padding;
+   if(algo_name == "X9.23") return new  ANSI_X923_Padding;
+   if(algo_name == "NoPadding") return new Null_Padding;
 
    return 0;
    }

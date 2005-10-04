@@ -27,7 +27,9 @@ class Algorithm
       virtual void clear() throw() {};
       virtual std::string name() const = 0;
       virtual ~Algorithm() {}
+      Algorithm() {}
    private:
+      Algorithm(const Algorithm&) {}
       Algorithm& operator=(const Algorithm&) { return (*this); }
    };
 
@@ -159,11 +161,8 @@ class RandomNumberGenerator : public Algorithm
       void add_entropy(const byte[], u32bit);
       void add_entropy(EntropySource&, bool = true);
       virtual ~RandomNumberGenerator() {}
-   protected:
-      void update_entropy(const byte[], u32bit, u32bit) throw();
-      u32bit entropy;
    private:
-      virtual void add_randomness(const byte[], u32bit) throw() = 0;
+      virtual void add_randomness(const byte[], u32bit) = 0;
    };
 
 }

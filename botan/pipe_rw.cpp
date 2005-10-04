@@ -123,13 +123,15 @@ std::string Pipe::read_all_as_string(u32bit msg)
    SecureVector<byte> buffer(DEFAULT_BUFFERSIZE);
    std::string str;
    str.reserve(remaining(msg));
-   while (true)
+
+   while(true)
       {
       u32bit got = read(buffer, buffer.size(), msg);
-	  if (got == 0)
-		  break;
+      if(got == 0)
+         break;
       str.append((const char*)buffer.begin(), got);
       }
+
    return str;
    }
 

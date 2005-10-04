@@ -227,18 +227,6 @@ void RandomNumberGenerator::add_entropy(EntropySource& source, bool slowpoll)
    }
 
 /*************************************************
-* Update the internal entropy count              *
-*************************************************/
-void RandomNumberGenerator::update_entropy(const byte data[], u32bit length,
-                                           u32bit state_size) throw()
-   {
-   if(entropy == 8*state_size)
-      return;
-   entropy += entropy_estimate(data, length);
-   entropy = std::min(entropy, 8*state_size);
-   }
-
-/*************************************************
 * Return the version as a string                 *
 *************************************************/
 std::string version_string()

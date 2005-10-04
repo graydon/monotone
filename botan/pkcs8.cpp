@@ -132,11 +132,12 @@ SecureVector<byte> PKCS8_decode(DataSource& source, const User_Interface& ui,
    if(!is_encrypted)
       key = key_data;
 
+   const u32bit max_tries = Config::get_u32bit("base/pkcs8_tries");
    u32bit tries = 0;
    while(true)
       {
       try {
-         if(tries >= Config::get_u32bit("base/pkcs8_tries"))
+         if(max_tries && tries >= max_tries)
             break;
 
          if(is_encrypted)

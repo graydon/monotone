@@ -79,17 +79,17 @@ BOTAN_SOURCES =                                                                 
         botan/buf_filt.cpp botan/cbc.cpp botan/certstore.cpp		\
         botan/cfb.cpp botan/charset.cpp botan/conf.cpp botan/crc32.cpp	\
         botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp			\
-        botan/data_snk.cpp botan/data_src.cpp botan/def_eng.cpp		\
+        botan/data_snk.cpp botan/data_src.cpp \
         botan/def_ops.cpp botan/defalloc.cpp botan/der_code.cpp		\
         botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp		\
-        botan/dl_get.cpp botan/dl_group.cpp botan/dl_param.cpp		\
+        botan/dl_group.cpp botan/dl_param.cpp		\
         botan/dl_cache.cpp \
         botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp	\
         botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp		\
         botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp		\
         botan/eng_base.cpp botan/engine.cpp botan/es_file.cpp		\
         botan/exceptn.cpp botan/filter.cpp botan/filters.cpp		\
-        botan/fips140.cpp botan/fips_rng.cpp botan/fused.cpp		\
+        botan/fips140.cpp botan/fused.cpp		\
         botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp		\
         botan/gzip.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp	\
         botan/if_algo.cpp botan/inifile.cpp botan/init.cpp		\
@@ -113,7 +113,8 @@ BOTAN_SOURCES =                                                                 
         botan/ui.cpp botan/util.cpp botan/x509_ca.cpp			\
         botan/x509_crl.cpp botan/x509_key.cpp botan/x509_obj.cpp	\
         botan/x509cert.cpp botan/x509find.cpp botan/x509opt.cpp		\
-        botan/x509self.cpp botan/x509stor.cpp botan/x917_rng.cpp	\
+        botan/x509self.cpp botan/x509stor.cpp \
+        botan/def_alg.cpp botan/def_mode.cpp \
         \
         botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h	\
         botan/lookup.h botan/omac.h botan/randpool.h botan/version.h	\
@@ -127,14 +128,14 @@ BOTAN_SOURCES =                                                                 
         botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h	\
         botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h	\
         botan/cfb.h botan/dl_param.h botan/fips_rng.h botan/modebase.h	\
-        botan/pipe.h botan/secalloc.h botan/x509_obj.h			\
+        botan/pipe.h botan/x509_obj.h			\
         botan/asn1_oid.h botan/conf.h botan/eax.h botan/gzip.h		\
         botan/mode_pad.h botan/pk_algs.h botan/secmem.h			\
         botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h	\
         botan/hex.h botan/mod_exp.h botan/pk_core.h botan/secqueue.h	\
         botan/x509stor.h botan/base64.h botan/crc32.h botan/eme.h	\
         botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h	\
-        botan/x917_rng.h botan/base_eng.h botan/crl_ent.h botan/emsa.h	\
+        botan/crl_ent.h botan/emsa.h	\
         botan/if_algo.h botan/mp_madd.h botan/pkcs8.h botan/socket.h	\
         botan/x919_mac.h botan/basefilt.h botan/ctr.h botan/engine.h	\
         botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h	\
@@ -145,7 +146,8 @@ BOTAN_SOURCES =                                                                 
         botan/data_src.h botan/es_egd.h botan/look_add.h botan/ofb.h	\
         botan/pk_util.h botan/ui.h botan/blinding.h botan/defalloc.h	\
         botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h	\
-        botan/util.h botan/charset.h botan/hash_id.h
+        botan/util.h botan/charset.h botan/hash_id.h \
+		botan/x931_rng.cpp botan/x931_rng.h
 
 
 BOOST_SANDBOX_SOURCES = \

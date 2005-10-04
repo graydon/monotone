@@ -1,3 +1,7 @@
+2005-10-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/, Makefile.am: update to Botan 1.4.7
+
 2005-10-03  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Automation): Clean up formatting and description
