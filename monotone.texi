@@ -5018,9 +5018,11 @@ renames.
 
 @item Sample output:
 
+All basic status codes:
+
 @verbatim
   M 0 0 missing
- AP 0 0 added patched
+ AP 0 0 added
 D   0 0 dropped
 R   1 0 renamed-from-this
  R  0 1 renamed-to-this
@@ -5028,57 +5030,81 @@ R   1 0 renamed-from-this
     0 0 unchanged
   U 0 0 unknown
   I 0 0 ignored
+@end verbatim
 
-# swapped but not moved
+Two files swapped:
 
-RRP 1 2 unchanged
-RRP 2 1 original
-
-# swapped and moved
-
+@verbatim
 RR  1 2 unchanged
 RR  2 1 original
+@end verbatim
 
-# rename foo bar; add foo
+Recorded with monotone that two files were swapped, but they were not
+actually swapped in the filesystem.  Thus they both appear as patched:
 
+@verbatim
+RRP 1 2 unchanged
+RRP 2 1 original
+@end verbatim
+
+Rename @file{foo} to @file{bar}; add new file @file{foo}:
+
+@verbatim
 RAP 1 0 foo
  R  0 1 bar
+@end verbatim
 
-# rotated but not moved dropped -> missing -> original -> dropped
+Rotated files @file{foo} -> @file{bar} -> @file{baz} -> @file{foo}:
 
-RRP 1 3 dropped
-RRP 2 1 missing
-RRP 3 2 original
+@verbatim
+RR  1 3 foo
+RR  2 1 bar
+RR  3 2 baz
+@end verbatim
 
-# rotated and moved
+Recorded the rotation of files @file{foo} -> @file{bar} -> @file{baz} ->
+@file{foo}, but the actual files in the working directory were not
+moved, so monotone interprets all files as having been patched:
 
-RR  1 3 dropped
-RR  2 1 missing
-RR  3 2 original
+@verbatim
+RRP 1 3 foo
+RRP 2 1 bar
+RRP 3 2 baz
+@end verbatim
 
-# dropped but not removed and thus unknown
+Dropped but not removed and thus unknown:
 
+@verbatim
 D U 0 0 dropped
+@end verbatim
 
-# added but removed and thus missing
+Added a non-existent file which is thus missing:
 
+@verbatim
  AM 0 0 added
+@end verbatim
 
-# renamed but not moved and thus unknown source and missing target
+Recorded a rename, but not moved in the filesystem, and thus unknown
+source and missing target:
 
+@verbatim
 R U 1 0 original
  RM 0 1 renamed
+@end verbatim
 
-# moved but not renamed and thus missing source and unknown target
+Moved in the filesystem but no rename recorded, and thus missing source
+and unknown target:
 
+@verbatim
   M 0 0 original
   U 0 0 renamed
+@end verbatim
 
-# renamed and patched
+Renamed and patched:
 
+@verbatim
 R   1 0 original
  RP 0 1 renamed
-
 @end verbatim
 
 @item Output format:

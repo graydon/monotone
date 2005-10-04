@@ -1,6 +1,12 @@
+2005-10-03  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Automation): Clean up formatting and description
+	of 'automate inventory' sample output.
+
 2005-10-02  Marcel van der Boom  <marcel@hsdev.com>
 
-	* commands.cc (CMD(checkout)): Check for non-existant checkout dir earlier, so we can fail earlier 
+	* commands.cc (CMD(checkout)): Check for non-existant checkout dir
+	earlier, so we can fail earlier.
 
 2005-09-30  Nathaniel Smith  <njs@pobox.com>
 
