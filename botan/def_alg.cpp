@@ -12,6 +12,7 @@
 
 #include <botan/crc32.h>
 #include <botan/sha160.h>
+#include <botan/sha256.h>
 
 #include <botan/hmac.h>
 
@@ -105,6 +106,7 @@ Default_Engine::find_hash(const std::string& algo_spec) const
 
    HANDLE_TYPE_NO_ARGS("CRC32", CRC32);
    HANDLE_TYPE_NO_ARGS("SHA-160", SHA_160);
+   HANDLE_TYPE_NO_ARGS("SHA-256", SHA_256);
    return 0;
    }
 
