@@ -5194,6 +5194,34 @@ are not valid, detailed below.
 'RRM' rename source and target and target missing
 @end verbatim
 
+The two numbers are used to match up the pre-state and post-state of a
+rename.  Imagine a situation where there are two renames.
+@command{automate inventory} will print something like:
+
+@verbatim
+R   1 0 a
+R   2 0 b
+ R  0 2 c
+ R  0 1 d
+@end verbatim
+
+Here the status characters tell us that @file{a} and @file{b} were
+renamed, and we can tell that one was renamed to @file{c} and one was
+renamed to @file{d}, but we can't tell which was renamed to which.  To
+do that, we have to refer to the numbers.  The numbers do not themselves
+mean anything; their only purpose is to let you match up the two
+``ends'' of a rename.  The 1 in the left column by @file{a} means that
+@file{a} was the source of a rename, and the 1 in the right column by
+@file{d} means that @file{d} was the target of that same rename.
+Similarly, the two 2's tell us that @file{b} was renamed to @file{c}.
+
+There are two columns of numbers because the same file can
+simultaneously be the target and source of a rename.  The number '0' is
+used as a meaningless placeholder in all cases where a file is not a
+source or target of a rename.  Any non-zero number that occurs at all
+will occur exactly once in the first column and exactly once in the
+second column.
+
 Full support for versioned directories is not yet complete and the
 inventory will only list entries for renamed or dropped
 directories. 
