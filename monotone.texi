@@ -1645,7 +1645,12 @@ $ monotone --db=jim.db serve jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
 @end smallexample
 
 This command sets up a single listener loop on the host
-@code{jim-laptop.juicebot.co.jp}, serving all branches matching
+@code{jim-laptop.juicebot.co.jp}@footnote{Make sure that the name 
+resolves to the right IP address. E.g. by checking @code{ping
+jim-laptop.juicebot.co.jp}. A server listening on localhost
+(127.0.0.1) will not be reachable by other computers. If you don't want 
+to think about interfaces and addresses start monotone on @code{0.0.0.0}.
+}, serving all branches matching
 @code{jp.co.juicebot.jb7*}. This will naturally include the
 @code{jp.co.juicebot.jb7} branch, and any sub-branches.  The quotes
 around @code{"jp.co.juicebot.jb7*"} are there to protect the @code{*}
