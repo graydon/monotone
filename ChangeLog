@@ -1,3 +1,8 @@
+2005-10-04  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Automation): Document the mysterious columns of
+	numbers in 'automate inventory' output format.
+
 2005-10-04  Matt Johnston  <matt@ucc.asn.au>
 
 	* botan/, Makefile.am: update to Botan 1.4.7
