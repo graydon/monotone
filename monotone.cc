@@ -548,6 +548,11 @@ cpp_main(int argc, char ** argv)
     clean_shutdown = true;
     return 1;
   }
+  catch (std::ios_base::failure const & ex)
+  {
+    clean_shutdown = true;
+    return 1;
+  }
 
   clean_shutdown = true;
   return ret;

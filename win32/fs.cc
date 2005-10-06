@@ -21,7 +21,7 @@ std::string get_current_working_dir()
     F("cannot get working directory: %s") % strerror(errno));
   return std::string(buffer);
 }
-  
+
 void change_current_working_dir(any_path const & to)
 {
   E(!chdir(to.as_external().c_str()),
@@ -113,4 +113,55 @@ get_path_status(any_path const & path)
     return path::directory;
   else
     return path::file;
+}
+
+static bool
+rename_clobberingly_impl(const char* from, const char* to)
+{
+  // MoveFileEx is only available on NT-based systems.  We will revert to a
+  // more compatible DeleteFile/MoveFile pair as a compatibility fall-back.
+  typedef BOOL (*MoveFileExFun)(LPCTSTR, LPCTSTR, DWORD);
+  static MoveFileExFun MoveFileEx = 0;
+  if (MoveFileEx == 0) {
+    HMODULE hModule = LoadLibrary("kernel32");
+    MoveFileEx = reinterpret_cast<MoveFileExFun>
+      (GetProcAddress(hModule, "MoveFileExA"));
+    if (MoveFileEx)
+      L(F("using MoveFileEx for renames"));
+  }
+
+  if (MoveFileEx) {
+    if (MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
+      return true;
+  } else {
+    // This is not even remotely atomic, but what can you do?
+    DeleteFile(to);
+    if (MoveFile(from, to))
+      return true;
+  }
+  return false;
+}
+
+void
+rename_clobberingly(any_path const & from, any_path const & to)
+{
+  const char* szFrom = from.as_external().c_str();
+  const char* szTo = to.as_external().c_str();
+  static const int renameAttempts = 16;
+  DWORD sleepTime = 1;
+
+  // If a clobbering rename attempt fails, we wait and try again, up to an
+  // (arbitrary) maximum of 16 attempts.  This is a gross hack to work
+  // around the common problem where another process (e.g. a virus checker)
+  // will exclusive open a file you've just touched.
+  for (int i = 0; i < renameAttempts; ++i) {
+    if (rename_clobberingly_impl(szFrom, szTo))
+      return;
+    L(F("attempted rename of '%s' to '%s' failed: %d")
+      % szFrom % szTo % GetLastError());
+    Sleep(sleepTime);
+    if (sleepTime < 250)
+      sleepTime *= 2;
+  }
+  E(false, F("renaming '%s' to '%s' failed: %d") % from % to);
 }

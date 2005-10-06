@@ -1,3 +1,26 @@
+2005-10-06  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* std_hooks.lua: Pass '--eval' rather than '-eval' to Emacs; the
+	CVS emacsclient does not consider '-eval' as valid.
+	* platform.hh, unix/fs.cc, win32/fs.cc (rename_clobberingly): New
+	function for best-effort atomic renames.  This will probably never
+	be atomic on Win32.
+	* file_io.cc (write_data_impl): Append process ID to temporary
+	file name so that multiple monotone processes operating on the
+	same working copy are less likely to clobber each other.  Use
+	rename_clobberingly().
+	* ui.cc (user_interface): Allow std::cout to raise
+	ios_base::failure exceptions if stream goes bad (e.g. stream
+	receives EPIPE).
+	* monotone.cc (cpp_main): Catch ios_base::failure exceptions and
+	exit cleanly.
+	* main.cc (main_with_signal_handlers): Install handler to ignore
+	SIGPIPE.
+	* Makefile.am: Remove platform_netsync.cc references.
+	* {unix,win32}/platform_netsync.cc: Remove files.
+	* platform.hh, netsync.cc (run_netsync_protocol):
+	Remove {start,end}_platform_netsync() calls.
+
 2005-10-04  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Automation): Document the mysterious columns of

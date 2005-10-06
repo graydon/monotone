@@ -337,17 +337,17 @@ function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
    local elisp = "(ediff-merge-files \"%s\" \"%s\" nil \"%s\")"
    return 
    function()
-      return execute(emacs, "-eval", 
+      return execute(emacs, "--eval", 
                      string.format(elisp, lfile, rfile, outfile))
    end
 end
 
 function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
    local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
-   local cmd_fmt = "%s -eval " .. elisp
+   local cmd_fmt = "%s --eval " .. elisp
    return 
    function()
-      execute(emacs, "-eval", 
+      execute(emacs, "--eval", 
               string.format(elisp, lfile, rfile, afile, outfile))
    end
 end
