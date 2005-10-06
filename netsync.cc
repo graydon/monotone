@@ -3829,7 +3829,6 @@ run_netsync_protocol(protocol_voice voice,
 {
   try 
     {
-      start_platform_netsync();
       if (voice == server_voice)
         {
           serve_connections(role, include_pattern, exclude_pattern, app,
@@ -3849,14 +3848,11 @@ run_netsync_protocol(protocol_voice voice,
     }
   catch (Netxx::NetworkException & e)
     {      
-      end_platform_netsync();
       throw informative_failure((F("network error: %s") % e.what()).str());
     }
   catch (Netxx::Exception & e)
     {      
-      end_platform_netsync();
       throw oops((F("network error: %s") % e.what()).str());;
     }
-  end_platform_netsync();
 }
 

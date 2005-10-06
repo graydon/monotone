@@ -359,7 +359,8 @@ write_data_impl(any_path const & p,
   // nb: no mucking around with multiple-writer conditions. we're a
   // single-user single-threaded program. you get what you paid for.
   assert_path_is_directory(bookkeeping_root);
-  bookkeeping_path tmp = bookkeeping_root / "data.tmp";
+  bookkeeping_path tmp = bookkeeping_root / (boost::format("data.tmp.%d") %
+                                             get_process_id()).str();
 
   {
     // data.tmp opens
@@ -371,9 +372,7 @@ write_data_impl(any_path const & p,
     // data.tmp closes
   }
 
-  if (path_exists(p))
-    N(fs::remove(mkdir(p)), F("removing %s failed") % p);
-  fs::rename(mkdir(tmp), mkdir(p));
+  rename_clobberingly(tmp, p);
 }
 
 void 

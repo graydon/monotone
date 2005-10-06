@@ -262,6 +262,7 @@ user_interface::user_interface() :
   last_write_was_a_tick(false),
   t_writer(0)
 {
+  cout.exceptions(ios_base::badbit);
 #ifndef WIN32
   clog.sync_with_stdio(false);
 #endif
