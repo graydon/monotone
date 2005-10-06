@@ -75,6 +75,10 @@ CREATE TABLE roster_deltas
 	unique(rev_id, base)
 	);
 
+CREATE TABLE next_roster_node_number
+	(
+	node primary key        -- only one entry in this table, ever
+	);
 
 CREATE INDEX revision_ancestry__child ON revision_ancestry (child);
 

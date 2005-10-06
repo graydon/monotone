@@ -742,20 +742,16 @@ roster_t::check_finite_depth() const
     I(maxdepth-- > 0);
 }
 
-
 void
-roster_t::check_sane(marking_map const & marking) const
+roster_t::check_sane() const
 {
-  node_map::const_iterator ri;
-  marking_map::const_iterator mi;
-
   I(has_root());
+  node_map::const_iterator ri;
 
-  for (ri = nodes.begin(), mi = marking.begin();
-       ri != nodes.end() && mi != marking.end();
-       ++ri, ++mi)
+  for (ri = nodes.begin();
+       ri != nodes.end();
+       ++ri)
     {
-      I(ri->first == mi->first);
       node_id nid = ri->first;
       I(!null_node(nid) && !temp_node(nid));
       node_t n = ri->second;
@@ -772,15 +768,33 @@ roster_t::check_sane(marking_map const & marking) const
           I(!null_name(n->name) && !null_node(n->parent));
           !null_id(downcast_to_file_t(n)->content);
         }
-      I(!null_id(mi->second.birth_revision));
       for (full_attr_map_t::const_iterator i = n->attrs.begin(); i != n->attrs.end(); ++i)
         I(i->second.first || i->second.second().empty());
       if (n != root_dir)
         I(downcast_to_dir_t(get_node(n->parent))->get_child(n->name) == n);
+
+    }
+
+  check_finite_depth();
+}
+
+void
+roster_t::check_sane_against(marking_map const & marking) const
+{
+
+  check_sane();
+
+  node_map::const_iterator ri;
+  marking_map::const_iterator mi;
+
+  for (ri = nodes.begin(), mi = marking.begin();
+       ri != nodes.end() && mi != marking.end();
+       ++ri, ++mi)
+    {
+      I(!null_id(mi->second.birth_revision));
     }
 
   I(ri == nodes.end() && mi == marking.end());
-  check_finite_depth();
 }
 
 
@@ -1475,7 +1489,7 @@ make_roster_for_revision(revision_set const & rev, revision_id const & rid,
     }
   else
     I(false);
-  result.check_sane(marking);
+  result.check_sane_against(marking);
 }
 
 
@@ -1937,23 +1951,43 @@ read_roster_and_marking(data const & dat,
   basic_io::parser pars(tok);
   ros.parse_from(pars, mm);
   I(src.lookahead == EOF);
-  ros.check_sane(mm);
+  ros.check_sane_against(mm);
 }
 
 
-void
+static void
 write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
                          data & dat,
                          bool print_local_parts)
 {
-  ros.check_sane(mm);
+  if (print_local_parts)
+    ros.check_sane_against(mm);
+  else
+    ros.check_sane();
   std::ostringstream oss;
   basic_io::printer pr(oss);
   ros.print_to(pr, mm, print_local_parts);
   dat = data(oss.str());
 }
 
+
+void
+write_roster_and_marking(roster_t const & ros,
+                         marking_map const & mm,
+                         data & dat)
+{
+  write_roster_and_marking(ros, mm, dat, true);
+}
+
+
+void
+write_manifest_of_roster(roster_t const & ros,
+                         data & dat)
+{
+  marking_map mm;
+  write_roster_and_marking(ros, mm, dat, false);  
+}
 
 
 ////////////////////////////////////////////////////////////////////
@@ -2008,14 +2042,14 @@ do_testing_on_one_roster(roster_t const & r)
   data r_dat; MM(r_dat);
   marking_map fm;
   make_fake_marking_for(r, fm);
-  write_roster_and_marking(r, fm, r_dat, true);
+  write_roster_and_marking(r, fm, r_dat);
   roster_t r2; MM(r2);
   marking_map fm2;
   read_roster_and_marking(r_dat, r2, fm2);
   I(r == r2);
   I(fm == fm2);
   data r2_dat; MM(r2_dat);
-  write_roster_and_marking(r2, fm2, r2_dat, true);
+  write_roster_and_marking(r2, fm2, r2_dat);
   I(r_dat == r2_dat);
 }
 
@@ -2102,19 +2136,14 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   data a2_dat; MM(a2_dat);
   data b_dat; MM(b_dat);
   data b2_dat; MM(b2_dat);
-  marking_map a_map, a2_map, b_map, b2_map;
-  make_fake_marking_for(a, a_map);
-  make_fake_marking_for(a2, a2_map);
-  make_fake_marking_for(b, b_map);
-  make_fake_marking_for(b2, b2_map);
   if (a.has_root())
-    write_roster_and_marking(a, a_map, a_dat, false);
+    write_manifest_of_roster(a, a_dat);
   if (a2.has_root())
-    write_roster_and_marking(a2, a2_map, a2_dat, false);
+    write_manifest_of_roster(a2, a2_dat);
   if (b.has_root())
-    write_roster_and_marking(b, b_map, b_dat, false);
+    write_manifest_of_roster(b, b_dat);
   if (b2.has_root())
-    write_roster_and_marking(b2, b2_map, b2_dat, false);
+    write_manifest_of_roster(b2, b2_dat);
   I(a_dat == a2_dat);
   I(b_dat == b2_dat);
 

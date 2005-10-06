@@ -330,8 +330,7 @@ void calculate_ident(roster_t const & ros,
 {
   data tmp;
   hexenc<id> tid;
-  marking_map mm;
-  write_roster_and_marking(ros, mm, tmp, false);
+  write_manifest_of_roster(ros, tmp);
   calculate_ident(tmp, tid);
   ident = tid;
 }

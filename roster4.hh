@@ -199,9 +199,11 @@ public:
 
   bool operator==(roster_t const & other) const;
 
+  void check_sane() const;
+
   // verify that this roster is sane, and corresponds to the given
   // marking map
-  void check_sane(marking_map const & marks) const;
+  void check_sane_against(marking_map const & marks) const;
 
   void print_to(basic_io::printer & pr,
                 marking_map const & mm,
@@ -268,8 +270,11 @@ read_roster_and_marking(data const & dat,
 void
 write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
-                         data & dat,
-                         bool print_local_parts);
+                         data & dat);
+
+void
+write_manifest_of_roster(roster_t const & ros,
+                         data & dat);
 
 #endif
 

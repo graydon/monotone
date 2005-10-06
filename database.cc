@@ -69,7 +69,7 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("1509fd75019aebef5ac3da3a5edf1312393b70e9"),
+  schema("0f537561d65e8561b66134dee5ad12c5e73ebb91"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -1429,8 +1429,6 @@ database::put_revision(revision_id const & new_id,
 void 
 database::delete_existing_revs_and_certs()
 {
-  execute("DELETE FROM rosters");
-  execute("DELETE FROM roster_deltas");
   execute("DELETE FROM revisions");
   execute("DELETE FROM revision_ancestry");
   execute("DELETE FROM revision_certs");
@@ -2525,7 +2523,7 @@ database::put_roster(revision_id const & rev_id,
   hexenc<id> ident;
   base64<gzip<data> > new_data_packed;
 
-  write_roster_and_marking(roster, marks, new_data, true);
+  write_roster_and_marking(roster, marks, new_data);
   calculate_ident(new_data, ident);
   pack(new_data, new_data_packed);
 
@@ -2656,37 +2654,31 @@ database::get_uncommon_ancestors(revision_id const & a,
 node_id 
 database::next_node_id()
 {
-  // If you acquire a new ID, we require that you write the new roster
-  // that uses the ID atomically with the counter update. A
-  // half-measure to meet this requirement is to require that we're at
-  // least inside a transaction when called.
-  I(transaction_level > 0);
+  transaction_guard guard(*this);
   results res;
 
   // We implement this as a fixed db var.
 
-  string domain = "system";
-  string name = "next_roster_id";
-
-  fetch(res, 1, any_rows, 
-        "SELECT value FROM db_vars WHERE domain = ? AND name = ?",
-        domain.c_str(), name.c_str());
-
-  node_id n = 0;
+  fetch(res, one_col, any_rows, 
+        "SELECT node FROM next_roster_node_number");
+  
+  node_id n;
   if (res.empty())
     {
       n = 1;
-      execute ("INSERT INTO db_vars VALUES(?, ?, ?)", 
-               domain.c_str(), name.c_str(), lexical_cast<string>(n).c_str());
+      execute ("INSERT INTO next_roster_node_number VALUES(?)", 
+               lexical_cast<string>(n).c_str());
     }
   else
     {
+      I(res.size() == 1);
       n = lexical_cast<node_id>(res[0][0]);
       ++n;
-      execute ("UPDATE db_vars SET value = ? WHERE domain = ? and name = ?",
-               lexical_cast<string>(n).c_str(), domain.c_str(), name.c_str());
+      execute ("UPDATE next_roster_node_number SET node = ?",
+               lexical_cast<string>(n).c_str());
       
     }
+  guard.commit();
   return n;
 }
 
