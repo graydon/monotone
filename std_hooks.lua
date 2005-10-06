@@ -344,11 +344,10 @@ end
 
 function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
    local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
-   local cmd_fmt = "%s --eval " .. elisp
    return 
    function()
-      execute(emacs, "--eval", 
-              string.format(elisp, lfile, rfile, afile, outfile))
+      return execute(emacs, "--eval", 
+                     string.format(elisp, lfile, rfile, afile, outfile))
    end
 end
 

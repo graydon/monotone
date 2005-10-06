@@ -1,5 +1,6 @@
 2005-10-06  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* std_hooks.lua (merge3_emacs_cmd): Minor cleanup.
 	* std_hooks.lua: Pass '--eval' rather than '-eval' to Emacs; the
 	CVS emacsclient does not consider '-eval' as valid.
 	* platform.hh, unix/fs.cc, win32/fs.cc (rename_clobberingly): New
@@ -12246,3 +12247,4 @@
 2003-04-06  graydon hoare  <graydon@pobox.com>
 
 	* initial release.
+
