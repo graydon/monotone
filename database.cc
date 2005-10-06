@@ -2348,6 +2348,13 @@ database::check_filename()
 }
 
 
+bool
+database::database_specified()
+{
+  return !filename.empty();
+}
+
+
 void
 database::open()
 {

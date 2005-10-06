@@ -840,21 +840,24 @@ CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), OPT
 {
   if (args.size() != 1)
     throw usage(name);
-  
-  transaction_guard guard(app.db);
+
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
+  bool exists = app.keys.key_pair_exists(ident);
+  if (app.db.database_specified())
+    {
+      transaction_guard guard(app.db);
+      exists = exists || app.db.public_key_exists(ident);
+      guard.commit();
+    }
 
-  N(! (app.db.public_key_exists(ident) || app.keys.key_pair_exists(ident)),
-    F("key '%s' already exists") % ident);
+  N(!exists, F("key '%s' already exists") % ident);
   
   keypair kp;
   P(F("generating key-pair '%s'\n") % ident);
   generate_key_pair(app.lua, ident, kp);
   P(F("storing key-pair '%s' in keystore\n") % ident);
   app.keys.put_key_pair(ident, kp);
-
-  guard.commit();
 }
 
 CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"), OPT_NONE)

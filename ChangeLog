@@ -1,3 +1,13 @@
+2005-10-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* database.{cc,hh}: new function, database::database_specified()
+	return whether we were given a database (doesn't care about validity,
+	only that we were told to use one)
+	* commands.cc (genkey): don't insist on having a db, but still
+	check it for duplicates if we're given one.
+	* tests/t_genkey_without_db.at: make sure it works
+	* testsuite.at: add test
+
 2005-09-28  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* keys.cc (get_private_key): don't use lua hook passwords for

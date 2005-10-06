@@ -216,6 +216,7 @@ public:
   void migrate();
   void rehash();
   void ensure_open();
+  bool database_specified();
   
   bool file_version_exists(file_id const & id);
   bool manifest_version_exists(manifest_id const & id);
