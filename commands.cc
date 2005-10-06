@@ -867,13 +867,19 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"
   if (args.size() != 1)
     throw usage(name);
 
-  transaction_guard guard(app.db);
   rsa_keypair_id ident(idx(args, 0)());
-  if (app.db.public_key_exists(ident))
+  bool checked_db = false;
+  if (app.db.database_specified())
     {
-      P(F("dropping public key '%s' from database\n") % ident);
-      app.db.delete_public_key(ident);
-      key_deleted = true;
+      transaction_guard guard(app.db);
+      if (app.db.public_key_exists(ident))
+        {
+          P(F("dropping public key '%s' from database\n") % ident);
+          app.db.delete_public_key(ident);
+          key_deleted = true;
+        }
+      guard.commit();
+      checked_db = true;
     }
 
   if (app.keys.key_pair_exists(ident))
@@ -883,10 +889,12 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"
       key_deleted = true;
     }
 
-  N(key_deleted,
-    F("public or private key '%s' does not exist") % idx(args, 0)());
-  
-  guard.commit();
+  boost::format fmt;
+  if (checked_db)
+    fmt = F("public or private key '%s' does not exist in keystore or database");
+  else
+    fmt = F("public or private key '%s' does not exist in keystore, and no database was specified");
+  N(key_deleted, fmt % idx(args, 0)());
 }
 
 CMD(chkeypass, N_("key and cert"), N_("KEYID"),
@@ -896,7 +904,6 @@ CMD(chkeypass, N_("key and cert"), N_("KEYID"),
   if (args.size() != 1)
     throw usage(name);
 
-  transaction_guard guard(app.db);
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
 
@@ -909,8 +916,6 @@ CMD(chkeypass, N_("key and cert"), N_("KEYID"),
   app.keys.delete_key(ident);
   app.keys.put_key_pair(ident, key);
   P(F("passphrase changed\n"));
-
-  guard.commit();
 }
 
 CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),

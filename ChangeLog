@@ -1,5 +1,12 @@
 2005-10-06  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* commands.cc (chkeypass): doesn't use the db, so we don't need a guard
+	* commands.cc (dropkey): don't insist on having a db
+	* tests/t_genkey_without_db.at: rename (s/genkey/key_management) and
+	add checks for chkeypass and dropkey without a db
+
+2005-10-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* database.{cc,hh}: new function, database::database_specified()
 	return whether we were given a database (doesn't care about validity,
 	only that we were told to use one)
