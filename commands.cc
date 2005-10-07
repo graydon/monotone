@@ -1859,7 +1859,7 @@ CMD(pubkey, N_("packet i/o"), N_("ID"), N_("write public key packet to stdout"),
   rsa_keypair_id ident(idx(args, 0)());
   bool exists(false);
   base64< rsa_pub_key > key;
-  if (app.db.public_key_exists(ident))
+  if (app.db.database_specified() && app.db.public_key_exists(ident))
     {
       app.db.get_key(ident, key);
       exists = true;

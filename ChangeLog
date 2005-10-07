@@ -1,5 +1,10 @@
 2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* commands.cc (pubkey): don't insist on having a database
+	* tests/t_key_management_without_db.at: check it
+
+2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* file_io.cc, vocab.cc, Makefile.am: fix merge
 	* botan/algolist.cpp, botan/def_alg.cpp: fix merge
 
