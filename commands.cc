@@ -599,11 +599,9 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   guard.commit();
 }
 
-static void 
+static void
 ls_keys(string const & name, app_state & app, vector<utf8> const & args)
 {
-
-
   vector<rsa_keypair_id> pubs;
   vector<rsa_keypair_id> privkeys;
   std::string pattern;
@@ -884,7 +882,7 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"
 
   if (app.keys.key_pair_exists(ident))
     {
-      P(F("dropping key pair '%s' from key store\n\n") % ident);
+      P(F("dropping key pair '%s' from key store\n") % ident);
       app.keys.delete_key(ident);
       key_deleted = true;
     }
@@ -3733,7 +3731,8 @@ CMD(automate, N_("automation"),
       "select SELECTOR\n"
       "get_file ID\n"
       "get_manifest [ID]\n"
-      "get_revision [ID]\n"),
+      "get_revision [ID]\n"
+      "keys\n"),
     N_("automation interface"), 
     OPT_NONE)
 {

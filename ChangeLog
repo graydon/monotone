@@ -1,3 +1,16 @@
+2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: add "automate keys". like "ls keys", except it
+	uses basic_io (since "ls keys" is now slightly irregular and not
+	very well suited to machine interpretation).
+	* monotone.texi: document it
+	* tests/t_automate_keys.at: test for it
+	* testsuite.at: add test
+	* basic_io.{cc,hh} (stanza): add push_str_multi, for entries
+	that can take a variable number of string arguments.
+	* commands.cc: add "automate keys" to automate help
+	misc minor whitespace cleanup
+
 2005-10-06  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* commands.cc (ls_keys): don't insist on having a db

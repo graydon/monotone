@@ -5515,6 +5515,56 @@ to stderr and exits with status 1.
 
 @end table
 
+
+@item monotone automate keys
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+1.1
+
+@item Purpose:
+
+Print all keys in basic_io format.
+
+@item Sample output:
+
+@verbatim
+            name "tbrownaw@gmail.com"
+     public_hash [475055ec71ad48f5dfaf875b0fea597b5cbbee64]
+    private_hash [7f76dae3f91bb48f80f1871856d9d519770b7f8a]
+ public_location "database" "keystore"
+private_location "keystore"
+
+           name "tomfa@debian.org"
+    public_hash [3ac4afcd86af28413b0a23b7d22b9401e15027fc]
+public_location "database"
+
+            name "underwater@fishtank.net"
+     public_hash [115fdc73d87a5e9901d018462b21a1f53eca33a1]
+    private_hash [b520d2cfe7d30e4ea1725fc4f34646fc5469b13d]
+ public_location "keystore"
+private_location "keystore"
+
+@end verbatim
+
+@item Output format:
+
+For each key, a basic_io stanza is printed. The public_location and
+private_location items may have multiple values as shown above for public_location, one value for each place that the key is stored. If the
+private key does not exist, then the private_hash and private_location
+items will be absent. The keys are ordered alphabetically by name.
+
+@item Error conditions:
+
+None.
+
+@end table
+
 @end ftable
 
 @page
