@@ -1,4 +1,4 @@
-AT_SETUP([genkey, dropkey, chkeypass without a database])
+AT_SETUP([key management without a database])
 
 MONOTONE_SETUP
 
@@ -6,6 +6,8 @@ MONOTONE_SETUP
 AT_CHECK((echo foobar; echo foobar) | RAW_MONOTONE --keydir=keys genkey foobar, [], [ignore], [ignore])
 
 AT_CHECK((echo foobar; echo barfoo; echo barfoo) | RAW_MONOTONE --keydir=keys chkeypass foobar, [], [ignore], [ignore])
+
+AT_CHECK(RAW_MONOTONE --keydir=keys ls keys, [], [ignore], [ignore])
 
 AT_CHECK(RAW_MONOTONE --keydir=keys dropkey foobar, [], [ignore], [ignore])
 

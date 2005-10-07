@@ -603,22 +603,22 @@ static void
 ls_keys(string const & name, app_state & app, vector<utf8> const & args)
 {
 
-  transaction_guard guard(app.db);
 
   vector<rsa_keypair_id> pubs;
   vector<rsa_keypair_id> privkeys;
-  if (args.size() == 0)
-    {
-      app.db.get_key_ids("", pubs);
-      app.keys.get_key_ids("", privkeys);
-    }
-  else if (args.size() == 1)
-    {
-      app.db.get_key_ids(idx(args, 0)(), pubs);
-      app.keys.get_key_ids(idx(args, 0)(), privkeys);
-    }
-  else
+  std::string pattern;
+  if (args.size() == 1)
+    pattern = idx(args, 0)();
+  else if (args.size() > 1)
     throw usage(name);
+
+  if (app.db.database_specified())
+    {
+      transaction_guard guard(app.db);
+      app.db.get_key_ids(pattern, pubs);
+      guard.commit();
+    }
+  app.keys.get_key_ids(pattern, privkeys);
 
   // true if it is in the database, false otherwise
   map<rsa_keypair_id, bool> pubkeys;
