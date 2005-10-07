@@ -229,6 +229,9 @@ template class revision<cert>;
 template class manifest<cert>;
 
 template
+void dump<rsa_pub_key>(base64<rsa_pub_key> const&, std::string &);
+
+template
 void dump(revision_id const & r, std::string &);
 
 template

@@ -1,5 +1,10 @@
 2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* file_io.cc, vocab.cc, Makefile.am: fix merge
+	* botan/algolist.cpp, botan/def_alg.cpp: fix merge
+
+2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* automate.cc: add "automate keys". like "ls keys", except it
 	uses basic_io (since "ls keys" is now slightly irregular and not
 	very well suited to machine interpretation).

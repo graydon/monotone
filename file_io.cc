@@ -379,7 +379,6 @@ write_data_impl(any_path const & p,
 
   make_dir_for(p);
 
-                                             get_process_id()).str();
   {
     // data.tmp opens
     ofstream file(tmp.as_external().c_str(),
@@ -401,7 +400,8 @@ write_data_impl(any_path const & p,
   // nb: no mucking around with multiple-writer conditions. we're a
   // single-user single-threaded program. you get what you paid for.
   assert_path_is_directory(bookkeeping_root);
-  bookkeeping_path tmp = bookkeeping_root / "data.tmp";
+  bookkeeping_path tmp = bookkeeping_root / (boost::format("data.tmp.%d") %
+                                             get_process_id()).str();
   write_data_impl(p, dat, tmp);
 }
 
