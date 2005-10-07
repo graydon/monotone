@@ -338,6 +338,14 @@
 	* botan/*: update to Botan 1.4.6
 	* Makefile.am: ditto
 
+2005-09-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* netsync.cc (ancestry_fetcher): new approach to requesting file
+	and manifest deltas and full data. Tries to be more efficient
+	for the vcache of recontstructed data, and conceptually simpler
+
+	* tests/t_netsync_unrelated.at: passes, remove XFAIL
+
 2005-09-15  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* app_state.{cc,hh}: restrictions now understand --exclude

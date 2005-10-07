@@ -77,24 +77,6 @@ null_name(file_path const & p)
   return p.empty();
 }
 
-inline bool 
-null_id(file_id const & i)
-{
-  return i.inner()().empty();
-}
-
-inline bool 
-null_id(manifest_id const & i)
-{
-  return i.inner()().empty();
-}
-
-inline bool 
-null_id(revision_id const & i)
-{
-  return i.inner()().empty();
-}
-
 inline file_path const & 
 delta_entry_path(change_set::delta_map::const_iterator i)
 {
