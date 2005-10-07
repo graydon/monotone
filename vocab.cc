@@ -231,6 +231,12 @@ template class manifest<cert>;
 template
 void dump(revision_id const & r, std::string &);
 
+template
+void dump(manifest_id const & r, std::string &);
+
+template
+void dump(file_id const & r, std::string &);
+
 // the rest is unit tests
 
 #ifdef BUILD_UNIT_TESTS

@@ -3628,7 +3628,7 @@ run_netsync_protocol(protocol_voice voice,
 // a set of reverse file/manifest deltas (we stop when we hit an
 // already-seen or existing-in-db rev). 
 //
-// at the same time, build up smaller set of forward deltas (files and
+// at the same time, build a (smaller) set of forward deltas (files and
 // manifests). these have a file/manifest in the new head as the
 // destination, and end up having an item already existing in the
 // database as the source (or null, in which case full data is
@@ -3686,8 +3686,8 @@ ancestry_fetcher::traverse_files(change_set const & cset)
     {
       file_id parent_file (delta_entry_src(d));
       file_id child_file (delta_entry_dst(d));
-      L(F("traverse_files parent %s child %s")
-        % parent_file % child_file);
+      MM(parent_file);
+      MM(child_file);
 
       I(!(parent_file == child_file));
       // when changeset format is altered to have [...]->[] deltas on deletion,
@@ -3697,14 +3697,12 @@ ancestry_fetcher::traverse_files(change_set const & cset)
       // request the reverse delta
       if (!null_id(parent_file))
         {
-          L(F("inserting file rev_deltas"));
           rev_file_deltas.insert(make_pair(child_file, parent_file));
         }
 
       // add any new forward deltas
       if (seen_files.find(child_file) == seen_files.end())
         {
-          L(F("inserting fwd_jump_deltas"));
           fwd_file_deltas.insert( make_pair( parent_file, child_file ) );
         }
 
@@ -3738,13 +3736,12 @@ void
 ancestry_fetcher::traverse_manifest(manifest_id const & child_man,
                                     manifest_id const & parent_man)
 {
-  L(F("traverse_manifest parent %s child %s")
-    % parent_man % child_man);
+  MM(child_man);
+  MM(parent_man);
   I(!null_id(child_man));
   // add reverse deltas
   if (!null_id(parent_man))
     {
-      L(F("inserting manifest rev_deltas"));
       rev_manifest_deltas.insert(make_pair(child_man, parent_man));
     }
   
@@ -3781,7 +3778,7 @@ ancestry_fetcher::traverse_ancestry(set<revision_id> const & heads)
   for (set<revision_id>::const_iterator h = heads.begin(); 
        h != heads.end(); h++)
     {
-      L(F("inserting head %s") % *h);
+      L(F("traversing head %s") % *h);
       frontier.push_back(*h);
       seen_revs.insert(*h);
       manifest_id const & m = sess.ancestry[*h]->second.new_manifest;
@@ -3792,19 +3789,19 @@ ancestry_fetcher::traverse_ancestry(set<revision_id> const & heads)
   while (!frontier.empty())
     {
       revision_id const & rev = frontier.front();
+      MM(rev);
 
-      L(F("frontier %s") % rev);
       I(sess.ancestry.find(rev) != sess.ancestry.end());
 
       for (edge_map::const_iterator e = sess.ancestry[rev]->second.edges.begin();
            e != sess.ancestry[rev]->second.edges.end(); e++)
         {
           revision_id const & par = edge_old_revision(e);
+          MM(par);
           if (seen_revs.find(par) == seen_revs.end())
             {
               if (sess.ancestry.find(par) != sess.ancestry.end())
                 {
-                  L(F("push_back to frontier %s") % par);
                   frontier.push_back(par);
                 }
               seen_revs.insert(par);
@@ -3831,6 +3828,7 @@ ancestry_fetcher::request_rev_file_deltas(file_id const & start,
   while (!frontier.empty())
     {
       file_id const child = frontier.top();
+      MM(child);
       I(!null_id(child));
       frontier.pop();
 
@@ -3840,23 +3838,17 @@ ancestry_fetcher::request_rev_file_deltas(file_id const & start,
            d++)
         {
           file_id const & parent = d->second;
+          MM(parent);
           I(!null_id(parent));
           if (done_files.find(parent) == done_files.end())
             {
               done_files.insert(parent);
               if (!sess.app.db.file_version_exists(parent))
                 {
-                  L(F("requesting reverse file delta %s->%s")
-                    % child % parent);
                   sess.queue_send_delta_cmd(file_item,
                                             plain_id(child), plain_id(parent));
                   sess.reverse_delta_requests.insert(make_pair(plain_id(child),
                                                                plain_id(parent)));
-                }
-              else
-                {
-                  L(F("file %s exists, not requesting rev delta")
-                    % parent);
                 }
               frontier.push(parent);
             }
@@ -3875,27 +3867,21 @@ ancestry_fetcher::request_files()
     {
       file_id const & anc = d->first;
       file_id const & child = d->second;
+      MM(anc);
+      MM(child);
       if (!sess.app.db.file_version_exists(child))
         {
           if (null_id(anc)
               || !sess.app.db.file_version_exists(anc))
             {
-              L(F("requesting full file %s") % child);
               sess.queue_send_data_cmd(file_item, plain_id(child));
             }
           else
             {
-              L(F("requesting forward delta %s->%s")
-                % anc % child);
               sess.queue_send_delta_cmd(file_item, 
                                         plain_id(anc), plain_id(child));
               sess.note_item_full_delta(file_item, plain_id(child));
             }
-        }
-      else
-        {
-          L(F("not requesting fwd delta %s->%s, already have dst")
-            % anc % child);
         }
 
       // traverse up the reverse deltas
@@ -3913,6 +3899,7 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start,
   while (!frontier.empty())
     {
       manifest_id const child = frontier.top();
+      MM(child);
       I(!null_id(child));
       frontier.pop();
 
@@ -3922,23 +3909,17 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start,
            d++)
         {
           manifest_id const & parent = d->second;
+          MM(parent);
           I(!null_id(parent));
           if (done_manifests.find(parent) == done_manifests.end())
             {
               done_manifests.insert(parent);
               if (!sess.app.db.manifest_version_exists(parent))
                 {
-                  L(F("requesting reverse manifest delta %s->%s")
-                    % child % parent);
                   sess.queue_send_delta_cmd(manifest_item,
                                             plain_id(child), plain_id(parent));
                   sess.reverse_delta_requests.insert(make_pair(plain_id(child),
                                                                plain_id(parent)));
-                }
-              else
-                {
-                  L(F("manifest %s exists, not requesting rev delta")
-                    % parent);
                 }
               frontier.push(parent);
             }
@@ -3946,6 +3927,8 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start,
     }
 }
 
+// could try and make this a template function, is the same as request_files(),
+// though it calls non-template functions
 void
 ancestry_fetcher::request_manifests()
 {
@@ -3957,27 +3940,21 @@ ancestry_fetcher::request_manifests()
     {
       manifest_id const & anc = d->first;
       manifest_id const & child = d->second;
+      MM(anc);
+      MM(child);
       if (!sess.app.db.manifest_version_exists(child))
         {
           if (null_id(anc)
               || !sess.app.db.manifest_version_exists(anc))
             {
-              L(F("requesting full manifest %s") % child);
               sess.queue_send_data_cmd(manifest_item, plain_id(child));
             }
           else
             {
-              L(F("requesting forward delta %s->%s")
-                % anc % child);
               sess.queue_send_delta_cmd(manifest_item, 
                                         plain_id(anc), plain_id(child));
               sess.note_item_full_delta(manifest_item, plain_id(child));
             }
-        }
-      else
-        {
-          L(F("not requesting fwd delta %s->%s, already have dst")
-            % anc % child);
         }
 
       // traverse up the reverse deltas
