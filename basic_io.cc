@@ -89,6 +89,27 @@ void basic_io::stanza::push_file_pair(std::string const & k, file_path const & v
   push_str_pair(k, v.as_internal());
 }
 
+void basic_io::stanza::push_str_multi(std::string const & k,
+                                      std::vector<std::string> const & v)
+{
+  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
+    I(std::isalnum(*i) || *i == '_');
+
+  std::string val;
+  bool first = true;
+  for (std::vector<std::string>::const_iterator i = v.begin();
+       i != v.end(); ++i)
+    {
+      if (!first)
+        val += " ";
+      val += escape(*i);
+      first = false;
+    }
+  entries.push_back(std::make_pair(k, val));
+  if (k.size() > indent)
+    indent = k.size();
+}
+
 basic_io::printer::printer(std::ostream & ost) 
   : empty_output(true), out(ost)
 {}

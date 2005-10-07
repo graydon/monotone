@@ -69,6 +69,10 @@ void read_localized_data(file_path const & path,
                          data & dat, 
                          lua_hooks & lua);
 
+void read_directory(system_path const & path,
+                    std::vector<utf8> & files,
+                    std::vector<utf8> & dirs);
+
 // This function knows that "-" means "stdin".
 void read_data_for_command_line(utf8 const & path, data & dat);
 
@@ -82,6 +86,14 @@ void write_data(bookkeeping_path const & path, data const & data);
 void write_localized_data(file_path const & path, 
                           data const & dat, 
                           lua_hooks & lua);
+
+// Version that takes a system_path. To work with the "somewhat atomic"
+// goal, it also takes as an argument the place to put the temp file. Whoever
+// uses this is responsible to make sure that the tmpdir argument is somewhere
+// that the file can be atomically renamed from (same file system)
+void write_data(system_path const & path,
+                data const & data,
+                system_path const & tmpdir);
 
 class tree_walker
 {

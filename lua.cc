@@ -842,8 +842,8 @@ lua_hooks::hook_get_branch_key(cert_value const & branchname,
 }
 
 bool 
-lua_hooks::hook_get_priv_key(rsa_keypair_id const & k,
-                             base64< arc4<rsa_priv_key> > & priv_key )
+lua_hooks::hook_get_key_pair(rsa_keypair_id const & k,
+                             keypair & kp)
 {
   string key;
   bool ok = Lua(st)
@@ -853,7 +853,11 @@ lua_hooks::hook_get_priv_key(rsa_keypair_id const & k,
     .extract_str(key)
     .ok();
 
-  priv_key = key;
+  size_t pos = key.find("#");
+  if (pos == std::string::npos)
+    return false;
+  kp.pub = key.substr(0, pos);
+  kp.priv = key.substr(pos+1);
   return ok;
 }
 

@@ -99,6 +99,8 @@ AAA=
 ])
 UNGZB64(bad.db.gz.b64, bad.db)
 
+AT_CHECK(MONOTONE db migrate -d bad.db)
+
 AT_CHECK(MONOTONE db check -d bad.db, [1], [ignore], [stderr])
 
 AT_CHECK(grep 'revisions not parseable' stderr, [], [ignore], [ignore])

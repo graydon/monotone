@@ -315,6 +315,29 @@ read_localized_data(file_path const & path,
   dat = tmp2;
 }
 
+void read_directory(system_path const & path,
+                    std::vector<utf8> & files,
+                    std::vector<utf8> & dirs)
+{
+  files.clear();
+  dirs.clear();
+  fs::directory_iterator ei;
+  for(fs::directory_iterator di(path.as_external());
+      di != ei; ++di)
+    {
+      fs::path entry = *di;
+      if (!fs::exists(entry)
+          || di->string() == "."
+          || di->string() == "..")
+        continue;
+
+      if (fs::is_directory(entry))
+        dirs.push_back(utf8(entry.leaf()));
+      else
+        files.push_back(utf8(entry.leaf()));
+    }
+}
+
 
 // This function can only be called once per run.
 static void
@@ -348,20 +371,15 @@ read_data_for_command_line(utf8 const & path, data & dat)
 
 static void 
 write_data_impl(any_path const & p,
-                data const & dat)
+                data const & dat,
+                any_path const & tmp)
 {  
   N(!directory_exists(p),
     F("file '%s' cannot be overwritten as data; it is a directory") % p);
 
   make_dir_for(p);
-  
-  // we write, non-atomically, to MT/data.tmp.
-  // nb: no mucking around with multiple-writer conditions. we're a
-  // single-user single-threaded program. you get what you paid for.
-  assert_path_is_directory(bookkeeping_root);
-  bookkeeping_path tmp = bookkeeping_root / (boost::format("data.tmp.%d") %
-                                             get_process_id()).str();
 
+                                             get_process_id()).str();
   {
     // data.tmp opens
     ofstream file(tmp.as_external().c_str(),
@@ -373,6 +391,18 @@ write_data_impl(any_path const & p,
   }
 
   rename_clobberingly(tmp, p);
+}
+
+static void
+write_data_impl(any_path const & p,
+                data const & dat)
+{  
+  // we write, non-atomically, to MT/data.tmp.
+  // nb: no mucking around with multiple-writer conditions. we're a
+  // single-user single-threaded program. you get what you paid for.
+  assert_path_is_directory(bookkeeping_root);
+  bookkeeping_path tmp = bookkeeping_root / "data.tmp";
+  write_data_impl(p, dat, tmp);
 }
 
 void 
@@ -413,6 +443,17 @@ write_localized_data(file_path const & path,
   }
 
   write_data(path, data(tmp2));
+}
+
+void
+write_data(system_path const & path,
+           data const & data,
+           system_path const & tmpdir)
+{
+  write_data_impl(path, data, tmpdir / (boost::format("data.tmp.%d") %
+                                             get_process_id()).str());
+
+
 }
 
 tree_walker::~tree_walker() {}

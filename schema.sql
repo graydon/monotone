@@ -71,13 +71,6 @@ CREATE TABLE public_keys
 	keydata not null        -- RSA public params
 	);
 
-CREATE TABLE private_keys
-	(
-	hash not null unique,   -- hash of remaining fields separated by ":"
-	id primary key,         -- as in public_keys (same identifiers, in fact)
-	keydata not null        -- encrypted RSA private params
-	);
-
 CREATE TABLE manifest_certs
 	(
 	hash not null unique,   -- hash of remaining fields separated by ":"

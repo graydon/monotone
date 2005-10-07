@@ -142,6 +142,19 @@ typedef     file< delta >      file_delta;
 
 typedef std::pair<var_domain, var_name> var_key;
 
+
+struct keypair
+{
+  base64<rsa_pub_key> pub;
+  base64<rsa_priv_key> priv;
+  keypair()
+  {}
+  keypair(base64<rsa_pub_key> const & a,
+          base64<rsa_priv_key> const & b)
+   : pub(a), priv(b)
+  {}
+};
+
 // fs::path is our "generic" safe path type, pointing potentially anywhere
 // in the filesystem. if you want to *define* or work with any of these you
 // need to include boost/filesystem/path.hpp.

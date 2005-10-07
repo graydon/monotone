@@ -374,7 +374,8 @@ session
   void queue_bye_cmd();
   void queue_error_cmd(string const & errmsg);
   void queue_done_cmd(size_t level, netcmd_item_type type);
-  void queue_hello_cmd(id const & server, 
+  void queue_hello_cmd(rsa_keypair_id const & key_name,
+                       base64<rsa_pub_key> const & pub_encoded, 
                        id const & nonce);
   void queue_anonymous_cmd(protocol_role role, 
                            utf8 const & include_pattern, 
@@ -682,10 +683,11 @@ session::set_session_key(string const & key)
 void
 session::set_session_key(rsa_oaep_sha_data const & hmac_key_encrypted)
 {
-  base64< arc4<rsa_priv_key> > our_priv;
-  load_priv_key(app, app.signing_key, our_priv);
+  keypair our_kp;
+  load_key_pair(app, app.signing_key, our_kp);
   string hmac_key;
-  decrypt_rsa(app.lua, app.signing_key, our_priv, hmac_key_encrypted, hmac_key);
+  decrypt_rsa(app.lua, app.signing_key, our_kp.priv,
+              hmac_key_encrypted, hmac_key);
   set_session_key(hmac_key);
 }
 
@@ -1199,18 +1201,11 @@ session::queue_done_cmd(size_t level,
 }
 
 void 
-session::queue_hello_cmd(id const & server, 
+session::queue_hello_cmd(rsa_keypair_id const & key_name,
+                         base64<rsa_pub_key> const & pub_encoded, 
                          id const & nonce) 
 {
-  netcmd cmd;
-  hexenc<id> server_encoded;
-  encode_hexenc(server, server_encoded);
-  
-  rsa_keypair_id key_name;
-  base64<rsa_pub_key> pub_encoded;
   rsa_pub_key pub;
-
-  app.db.get_pubkey(server_encoded, key_name, pub_encoded);
   decode_base64(pub_encoded, pub);
   cmd.write_hello_cmd(key_name, pub, nonce);
   write_netcmd_and_try_flush(cmd);
@@ -1580,20 +1575,20 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
     
   if (app.signing_key() != "")
     {
-      // get our public key for its hash identifier
-      base64<rsa_pub_key> our_pub;
+      // get our key pair
+      keypair our_kp;
+      load_key_pair(app, app.signing_key, our_kp);
+
+      // get the hash identifier for our pubkey
       hexenc<id> our_key_hash;
       id our_key_hash_raw;
-      app.db.get_key(app.signing_key, our_pub);
-      key_hash_code(app.signing_key, our_pub, our_key_hash);
+      key_hash_code(app.signing_key, our_kp.pub, our_key_hash);
       decode_hexenc(our_key_hash, our_key_hash_raw);
       
-      // get our private key and make a signature
+      // make a signature
       base64<rsa_sha1_signature> sig;
       rsa_sha1_signature sig_raw;
-      base64< arc4<rsa_priv_key> > our_priv;
-      load_priv_key(app, app.signing_key, our_priv);
-      make_signature(app, app.signing_key, our_priv, nonce(), sig);
+      make_signature(app, app.signing_key, our_kp.priv, nonce(), sig);
       decode_base64(sig, sig_raw);
       
       // make a new nonce of our own and send off the 'auth'
@@ -1713,9 +1708,14 @@ session::process_auth_cmd(protocol_role their_role,
 
   if (!app.db.public_key_exists(their_key_hash))
     {
-      W(F("remote public key hash '%s' is unknown\n") % their_key_hash);
-      this->saved_nonce = id("");
-      return false;
+      // if it's not in the db, it still could be in the keystore if we
+      // have the private key that goes with it
+      if (!app.keys.try_ensure_in_db(their_key_hash))
+        {
+          W(F("remote public key hash '%s' is unknown\n") % their_key_hash);
+          this->saved_nonce = id("");
+          return false;
+        }
     }
   
   // get their public key
@@ -2991,13 +2991,9 @@ session::dispatch_payload(netcmd const & cmd)
 void 
 session::begin_service()
 {
-  base64<rsa_pub_key> pub_encoded;
-  app.db.get_key(app.signing_key, pub_encoded);
-  hexenc<id> keyhash;
-  id keyhash_raw;
-  key_hash_code(app.signing_key, pub_encoded, keyhash);
-  decode_hexenc(keyhash, keyhash_raw);
-  queue_hello_cmd(keyhash_raw(), mk_nonce());
+  keypair kp;
+  app.keys.get_key_pair(app.signing_key, kp);
+  queue_hello_cmd(app.signing_key, kp.pub, mk_nonce());
 }
 
 void 
@@ -3039,6 +3035,8 @@ bool session::process()
         W(F("input buffer for peer %s is overfull after netcmd dispatch\n") % peer_id);
       guard.commit();
       maybe_say_goodbye();
+      if (!ret)
+        P(F("failed to process '%s' packet") % cmd.get_cmd_code());
       return ret;
     }
   catch (bad_decode & bd)

@@ -20,6 +20,7 @@ class lua_hooks;
 #include "work.hh"
 #include "vocab.hh"
 #include "paths.hh"
+#include "key_store.hh"
 
 // this class is supposed to hold all (or.. well, most) of the state of the
 // application, barring some unfortunate static objects like the debugging /
@@ -34,6 +35,7 @@ public:
   utf8 branch_name;
   database db;
   lua_hooks lua;
+  key_store keys;
   bool stdhooks;
   bool rcfiles;
   bool diffs;
@@ -92,6 +94,7 @@ public:
   void make_branch_sticky();
 
   void set_database(system_path const & filename);
+  void set_key_dir(system_path const & filename);
   void set_signing_key(utf8 const & key);
   void set_root(system_path const & root);
   void set_message(utf8 const & message);

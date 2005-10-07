@@ -80,6 +80,7 @@ EXTERN template class     file< delta >;
 EXTERN template class         arc4<rsa_priv_key>;
 EXTERN template class base64< arc4<rsa_priv_key> >;
 EXTERN template class base64< rsa_pub_key >;
+EXTERN template class base64< rsa_priv_key >;
 EXTERN template class base64< rsa_sha1_signature >;
 EXTERN template class hexenc< rsa_sha1_signature >;
 EXTERN template class base64< cert_value >;

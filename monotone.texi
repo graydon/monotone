@@ -575,10 +575,12 @@ secure key exchange techniques are beyond the scope of this document.
 @node    Storage and workflow
 @section Storage and workflow
 
-Monotone moves information in and out of three different types of
+Monotone moves information in and out of four different types of
 storage:
 
 @itemize
+@item
+a @i{keystore} in your home directory
 @item
 a @i{working copy} in the local file system
 @item
@@ -586,6 +588,12 @@ a @i{local database} in the local file system
 @item
 a @i{remote database} elsewhere on the internet
 @end itemize
+
+The @dfn{keystore} is a directory @file{.monotone/keys} in your home directory
+which contains copies of all your private keys. Each key is stored in a file
+whose name is the key identifier with some characters converted to underscores.
+When you use a key to sign a cert, the public half of that key is copied into
+your local database along with the cert.
 
 All information passes @emph{through} your local database, en route to
 some other destination. For example, when changes are made in a
@@ -1146,7 +1154,7 @@ $ monotone --db=~/jim.db genkey jim@@juicebot.co.jp
 monotone: generating key-pair 'jim@@juicebot.co.jp'
 enter passphrase for key ID [jim@@juicebot.co.jp] : @i{<Jim enters his passphrase>}
 confirm passphrase for key ID [jim@@juicebot.co.jp]: @i{<Jim confirms his passphrase>}
-monotone: storing key-pair 'jim@@juicebot.co.jp' in database
+monotone: storing key-pair 'jim@@juicebot.co.jp' in keystore
 @end group
 @end smallexample
 
@@ -1158,7 +1166,7 @@ $ monotone --db=~/abe.db genkey abe@@juicebot.co.jp
 monotone: generating key-pair 'abe@@juicebot.co.jp'
 enter passphrase for key ID [abe@@juicebot.co.jp] : @i{<Abe enters his passphrase>}
 confirm passphrase for key ID [abe@@juicebot.co.jp]: @i{<Abe confirms his passphrase>}
-monotone: storing key-pair 'abe@@juicebot.co.jp' in database
+monotone: storing key-pair 'abe@@juicebot.co.jp' in keystore
 @end group
 @end smallexample
 
@@ -1170,20 +1178,21 @@ $ monotone --db=~/beth.db genkey beth@@juicebot.co.jp
 monotone: generating key-pair 'beth@@juicebot.co.jp'
 enter passphrase for key ID [beth@@juicebot.co.jp] : @i{<Beth enters her passphrase>}
 confirm passphrase for key ID [beth@@juicebot.co.jp]: @i{<Beth confirms her passphrase>}
-monotone: storing key-pair 'beth@@juicebot.co.jp' in database
+monotone: storing key-pair 'beth@@juicebot.co.jp' in keystore
 @end group
 @end smallexample
 
 Each programmer has now generated a key pair and placed it in their
-local database. Each can list the keys in their database, to ensure
+keystore. Each can list the keys in their keystore, to ensure
 the correct key was generated. For example, Jim might see this:
 
 @smallexample
 @group
-$ monotone --db=~/jim.db list keys
+$ monotone list keys
 
 [public keys]
-9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c jim@@juicebot.co.jp
+9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c jim@@juicebot.co.jp   (*)
+(*) - only in keystore
 
 
 [private keys]
@@ -1195,7 +1204,7 @@ $ monotone --db=~/jim.db list keys
 The hexadecimal string printed out before each key name is a
 @emph{fingerprint} of the key, and can be used to verify that the key
 you have stored under a given name is the one you intended to
-store. Monotone will never permit one database to store two keys with
+store. Monotone will never permit one keystore to store two keys with
 the same name or the same fingerprint.
 
 This output shows one private and one public key stored under the name
@@ -1461,7 +1470,7 @@ $ monotone diff
 Satisfied with the work he's done, Jim wants to save his changes.  He
 then commits his working copy, which causes monotone to process the
 @file{MT/work} file and record the file contents, manifest, and
-revision into the database.  Since he provided a branch name when he
+revision into the database. Since he provided a branch name when he
 ran @command{setup}, monotone will use this as the default branch name
 when he commits.
 
@@ -1487,8 +1496,9 @@ $ cat MT/revision
 @end group
 @end smallexample
 
-Monotone also generated a number of certificates, attached to
-the new revision. These certs store metadata about the commit. Jim can
+Monotone also generated a number of certificates attached to
+the new revision, and made sure that the database contained a copy of Jim's
+public key. These certs store metadata about the commit. Jim can
 ask monotone for a list of certs on this revision.
 
 @smallexample
@@ -3999,8 +4009,8 @@ Value : 2003-10-16  graydon hoare  <graydon@@pobox.com>
 
 @item monotone list keys
 @itemx monotone list keys @var{pattern}
-These commands list @sc{rsa} keys held in your current database. They
-do not print out any cryptographic information; they simply list the
+These commands list @sc{rsa} keys held in your keystore and current database.
+They do not print out any cryptographic information; they simply list the
 names of public and private keys you have on hand.
 
 If @var{pattern} is provided, it is used as a glob to limit the keys
@@ -4092,7 +4102,7 @@ files to the current subdirectory of the working copy.
 @item monotone genkey @var{keyid}
 
 This command generates an @sc{rsa} public/private key pair, using a
-system random number generator, and stores it in your database under
+system random number generator, and stores it in your keystore under
 the key name @var{keyid}. If the the hook
 @code{non_blocking_rng_ok()} returns @code{true}, the key
 generation will use an unlimited random number generator (such as
@@ -4100,11 +4110,10 @@ generation will use an unlimited random number generator (such as
 number generator (such as @file{/dev/random}) but might run slightly
 slower.
 
-The private half of the key is stored in an encrypted form, using the
-symmetric cipher @sc{arc4}, so that anyone accidentally reading your
-database cannot extract your private key and use it. You must provide
-a passphrase for your key when it is generated, which is used to key
-the @sc{arc4} cipher. In the future you will need to enter this
+The private half of the key is stored in an encrypted form, so that anyone
+who can read your keystore cannot extract your private key and use it.
+You must provide a passphrase for your key when it is generated, which is used
+to determine the encryption key. In the future you will need to enter this
 passphrase again each time you sign a certificate, which happens every
 time you @command{commit} to your database. You can tell monotone to
 automatically use a certain passphrase for a given key using the
@@ -4117,10 +4126,7 @@ careful using this hook.
 This command drops the public and/or private key. If both exist, both
 are dropped, if only one exists, it is dropped. This command should
 be used with caution as changes are irreversible without a backup of
-the key(s) that were dropped. Note also that the private key is not
-guaranteed to actually be erased from your database file --- if you are
-going to make the database file public, you should use @command{db dump}
-and @command{db load} to import into a fresh database.
+the key(s) that were dropped.
 
 @item monotone chkeypass @var{id}
 
@@ -4231,7 +4237,7 @@ manifest differences safely between monotone databases.
 @item monotone privkey @var{keyid}
 @itemx monotone pubkey @var{keyid}
 
-These commands print out an @code{privkey} or @code{pubkey} packet for
+These commands print out an @code{keypair} or @code{pubkey} packet for
 the @sc{rsa} key @var{keyid}. These can be used to transport public or
 private keys safely between monotone databases.
 
@@ -5571,6 +5577,56 @@ to stderr and exits with status 1.
 
 @end table
 
+
+@item monotone automate keys
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+1.1
+
+@item Purpose:
+
+Print all keys in basic_io format.
+
+@item Sample output:
+
+@verbatim
+            name "tbrownaw@gmail.com"
+     public_hash [475055ec71ad48f5dfaf875b0fea597b5cbbee64]
+    private_hash [7f76dae3f91bb48f80f1871856d9d519770b7f8a]
+ public_location "database" "keystore"
+private_location "keystore"
+
+           name "tomfa@debian.org"
+    public_hash [3ac4afcd86af28413b0a23b7d22b9401e15027fc]
+public_location "database"
+
+            name "underwater@fishtank.net"
+     public_hash [115fdc73d87a5e9901d018462b21a1f53eca33a1]
+    private_hash [b520d2cfe7d30e4ea1725fc4f34646fc5469b13d]
+ public_location "keystore"
+private_location "keystore"
+
+@end verbatim
+
+@item Output format:
+
+For each key, a basic_io stanza is printed. The public_location and
+private_location items may have multiple values as shown above for public_location, one value for each place that the key is stored. If the
+private key does not exist, then the private_hash and private_location
+items will be absent. The keys are ordered alphabetically by name.
+
+@item Error conditions:
+
+None.
+
+@end table
+
 @end ftable
 
 @page
@@ -6683,7 +6739,7 @@ Similarly, if you do not trust our vigilance in keeping up to date
 with cryptography literature, you can modify monotone to use any
 stronger hash you like, at the cost of isolating your own
 communications to a group using the modified version. Monotone is free
-software, and runs atop @code{crypto++}, so it is both legal and
+software, and runs atop @code{botan}, so it is both legal and
 relatively simple to change it to use some other algorithm.
 
 @page

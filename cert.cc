@@ -319,69 +319,71 @@ bool
 priv_key_exists(app_state & app, rsa_keypair_id const & id)
 {
 
-  if (app.db.private_key_exists(id))
+  if (app.keys.key_pair_exists(id))
     return true;
-  
-  base64< arc4<rsa_priv_key> > dummy;
 
-  if (app.lua.hook_get_priv_key(id, dummy))
+  keypair kp;
+
+  if (app.lua.hook_get_key_pair(id, kp))
     return true;
 
   return false;
 }
 
-// Loads a private key for a given key id, from either a lua hook
-// or the database. This will bomb out if the same keyid exists
+// Loads a key pair for a given key id, from either a lua hook
+// or the key store. This will bomb out if the same keyid exists
 // in both with differing contents.
 void
-load_priv_key(app_state & app,
+load_key_pair(app_state & app,
               rsa_keypair_id const & id,
-              base64< arc4<rsa_priv_key> > & priv)
+              keypair & kp)
 {
 
-  static std::map<rsa_keypair_id, base64< arc4<rsa_priv_key> > > privkeys;
-  bool persist_ok = (!privkeys.empty()) || app.lua.hook_persist_phrase_ok();
+  static std::map<rsa_keypair_id, keypair> keys;
+  bool persist_ok = (!keys.empty()) || app.lua.hook_persist_phrase_ok();
 
 
-  if (persist_ok
-      && privkeys.find(id) != privkeys.end())
+  if (persist_ok && keys.find(id) != keys.end())
     {
-      priv = privkeys[id];
+      kp = keys[id];
     }
   else
     {
-      base64< arc4<rsa_priv_key> > dbkey, luakey;
-      bool havedb = false, havelua = false;
+      keypair kskeys, luakeys;
+      bool haveks = false, havelua = false;
 
-      if (app.db.private_key_exists(id))
+      if (app.keys.key_pair_exists(id))
         {
-          app.db.get_key(id, dbkey);
-          havedb = true;
+          app.keys.get_key_pair(id, kskeys);
+          haveks = true;
         }
-      havelua = app.lua.hook_get_priv_key(id, luakey);
+      havelua = app.lua.hook_get_key_pair(id, luakeys);
 
-      N(havedb || havelua,
-        F("no private key '%s' found in database or get_priv_key hook") % id);
+      N(haveks || havelua,
+        F("no private key '%s' found in key store or get_priv_key hook") % id);
 
       if (havelua)
         {
-          if (havedb)
+          if (haveks)
             {
               // We really don't want the database key and the rcfile key
               // to differ.
-              N(keys_match(id, dbkey, id, luakey),
-                  F("mismatch between private key '%s' in database"
-                    " and get_priv_key hook") % id);
+              N(/*keys_match(id, kskeys.priv, id, luakeys.priv)
+                && */keys_match(id, kskeys.pub, id, luakeys.pub),
+                  F("mismatch between key '%s' in key store"
+                    " and get_key_pair hook") % id);
             }
-          priv = luakey;
+          kp = luakeys;
         }
-      else if (havedb)
+      else if (haveks)
         {
-          priv = dbkey;
+          kp = kskeys;
         }
 
       if (persist_ok)
-        privkeys.insert(make_pair(id, priv));
+        {
+          keys.insert(make_pair(id, kp));
+        }
     }
 }
 
@@ -389,12 +391,14 @@ void
 calculate_cert(app_state & app, cert & t)
 {
   string signed_text;
-  base64< arc4<rsa_priv_key> > priv;
+  keypair kp;
   cert_signable_text(t, signed_text);
 
-  load_priv_key(app, t.key, priv);
+  load_key_pair(app, t.key, kp);
+  if (!app.db.public_key_exists(t.key))
+    app.db.put_key(t.key, kp.pub);
 
-  make_signature(app, t.key, priv, signed_text, t.sig);
+  make_signature(app, t.key, kp.priv, signed_text, t.sig);
 }
 
 cert_status 
@@ -452,7 +456,7 @@ guess_default_key(rsa_keypair_id & key,
     }
   
   vector<rsa_keypair_id> all_privkeys;
-  app.db.get_private_keys(all_privkeys);
+  app.keys.get_keys(all_privkeys);
   if (all_privkeys.size() != 1) 
     return false;
   else
