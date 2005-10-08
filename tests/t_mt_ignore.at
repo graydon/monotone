@@ -2,6 +2,9 @@ AT_SETUP([things in .mt-ignore get ignored])
 
 MONOTONE_SETUP
 
+# The '*.d' is not a legal regexp, and the boost::regexp exception causes monotone to die.
+AT_XFAIL_IF(true)
+
 AT_CHECK(touch foo)
 AT_CHECK(touch bar)
 AT_CHECK(mkdir baz)
@@ -9,6 +12,7 @@ AT_CHECK(touch baz/xyzzy)
 
 AT_DATA(.mt-ignore, [bar
 baz
+*.d
 ])
 
 AT_CHECK(RAW_MONOTONE ls unknown, [], [stdout], [])
