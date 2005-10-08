@@ -674,7 +674,7 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
             cout << hash_code << " " << keyid << "   (*)" << endl;
         }
       if (!all_in_db)
-        cout << "(*) - only in keystore" << endl;
+        cout << _("(*) - only in keystore") << endl;
       cout << endl;
     }
 

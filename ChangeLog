@@ -1,3 +1,7 @@
+2005-10-08  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: One more i18n string.
+
 2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_automate_keys.at: Don't rely on extended sed either!
