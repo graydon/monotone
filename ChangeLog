@@ -1,3 +1,8 @@
+2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_automate_keys.at: Use sed rather than relying on an
+	extended grep being available.
+
 2005-10-08  Nathaniel Smith  <njs@pobox.com>
 
 	* contrib/ciabot_monotone.py (send_change_for): Handle branch-less
