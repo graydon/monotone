@@ -1,3 +1,7 @@
+2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_automate_keys.at: Don't rely on extended sed either!
+
 2005-10-08  Nathaniel Smith  <njs@pobox.com>
 
 	* database.{hh,cc}: Clean-up previous change -- switch to using a
