@@ -9,6 +9,7 @@ COMMIT(testbranch)
 
 AT_CHECK((echo foo@bar; echo foo@bar) | MONOTONE genkey foo@bar, [], [ignore], [ignore])
 AT_CHECK(MONOTONE pubkey foo@bar, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cp stdout foo_public)
 
 NETSYNC_SERVE_START(--key=foo@bar testbranch)

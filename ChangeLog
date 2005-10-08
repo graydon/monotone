@@ -1,3 +1,10 @@
+2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/fs.cc: Don't consider USERPROFILE as a possible home
+	directory; APPDATA is more appropriate.  Add a second method to
+	get the APPDATA path.
+	* tests/t_netsync_absorbs.at: Add missing CANONICALISE().
+
 2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* commands.cc (pubkey): don't insist on having a database

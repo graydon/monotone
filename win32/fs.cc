@@ -5,6 +5,9 @@
 
 #include <io.h>
 #include <errno.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <shlobj.h>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -48,22 +51,25 @@ get_homedir()
       L(F("Home directory from MONOTONE_HOME\n"));
       return std::string(home);
     }
-  // If running under cygwin or mingw, try HOME next:
+  // Try HOME next:
   home = getenv("HOME");
-  char * ostype = getenv("OSTYPE");
-  if (home != NULL
-      && ostype != NULL
-      && (std::string(ostype) == "cygwin" || std::string(ostype) == "msys"))
+  if (home != NULL)
     {
       L(F("Home directory from HOME\n"));
       return std::string(home);
     }
-  // Otherwise, try USERPROFILE:
-  home = getenv("USERPROFILE");
+  // Otherwise, try APPDATA:
+  home = getenv("APPDATA");
   if (home != NULL)
     {
-      L(F("Home directory from USERPROFILE\n"));
+      L(F("Home directory from APPDATA\n"));
       return std::string(home);
+    }
+  // Try a second method to get APPDATA:
+  TCHAR szPath[MAX_PATH];
+  if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, szPath))
+    {
+      return std::string(szPath);
     }
   // Finally, if even that doesn't work (old version of Windows, I think?),
   // try the HOMEDRIVE/HOMEPATH combo:
@@ -75,8 +81,8 @@ get_homedir()
       return std::string(homedrive) + std::string(homepath);
     }
   // And if things _still_ didn't work, give up.
-  N(false, F("could not find home directory (tried MONOTONE_HOME, HOME (if "
-             "cygwin/mingw), USERPROFILE, HOMEDRIVE/HOMEPATH"));
+  N(false, F("could not find home directory (tried MONOTONE_HOME, HOME, "
+             "APPDATA, HOMEDRIVE/HOMEPATH"));
 }
 
 utf8
