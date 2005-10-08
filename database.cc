@@ -531,10 +531,9 @@ database::~database()
 
   for (map<string, statement>::const_iterator i = statement_cache.begin(); 
        i != statement_cache.end(); ++i)
-    {
-      L(F("%d executions of %s\n") % i->second.count % i->first);
-      sqlite3_finalize(i->second.stmt);
-    }
+    L(F("%d executions of %s\n") % i->second.count % i->first);
+  // trigger destructors to finalize cached statements
+  statement_cache.clear();
 
   if (__sql)
     {
@@ -587,7 +586,7 @@ database::fetch(results & res,
       I(i != statement_cache.end());
 
       const char * tail;
-      sqlite3_prepare(sql(), query, -1, &i->second.stmt, &tail);
+      sqlite3_prepare(sql(), query, -1, i->second.stmt.paddr(), &tail);
       assert_sqlite3_ok(sql());
       L(F("prepared statement %s\n") % query);
 
@@ -596,14 +595,14 @@ database::fetch(results & res,
         F("multiple statements in query: %s\n") % query);
     }
 
-  ncol = sqlite3_column_count(i->second.stmt);
+  ncol = sqlite3_column_count(i->second.stmt());
 
   E(want_cols == any_cols || want_cols == ncol, 
     F("wanted %d columns got %d in query: %s\n") % want_cols % ncol % query);
 
   // bind parameters for this execution
 
-  int params = sqlite3_bind_parameter_count(i->second.stmt);
+  int params = sqlite3_bind_parameter_count(i->second.stmt());
 
   L(F("binding %d parameters for %s\n") % params % query);
 
@@ -621,20 +620,20 @@ database::fetch(results & res,
 
       L(F("binding %d with value '%s'\n") % param % log);
 
-      sqlite3_bind_text(i->second.stmt, param, value, -1, SQLITE_TRANSIENT);
+      sqlite3_bind_text(i->second.stmt(), param, value, -1, SQLITE_TRANSIENT);
       assert_sqlite3_ok(sql());
     }
 
   // execute and process results
 
   nrow = 0;
-  for (rescode = sqlite3_step(i->second.stmt); rescode == SQLITE_ROW; 
-       rescode = sqlite3_step(i->second.stmt))
+  for (rescode = sqlite3_step(i->second.stmt()); rescode == SQLITE_ROW; 
+       rescode = sqlite3_step(i->second.stmt()))
     {
       vector<string> row;
       for (int col = 0; col < ncol; col++) 
         {
-          const char * value = sqlite3_column_text_s(i->second.stmt, col);
+          const char * value = sqlite3_column_text_s(i->second.stmt(), col);
           E(value, F("null result in query: %s\n") % query);
           row.push_back(value);
           //L(F("row %d col %d value='%s'\n") % nrow % col % value);
@@ -645,7 +644,7 @@ database::fetch(results & res,
   if (rescode != SQLITE_DONE)
     assert_sqlite3_ok(sql());
 
-  sqlite3_reset(i->second.stmt);
+  sqlite3_reset(i->second.stmt());
   assert_sqlite3_ok(sql());
 
   nrow = res.size();

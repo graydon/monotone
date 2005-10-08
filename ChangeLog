@@ -1,3 +1,32 @@
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* database.{hh,cc}: Clean-up previous change -- switch to using a
+	cleanup_ptr to hold sqlite3_stmt handles, for proper exception
+	safety.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (fetch): Do not insert prepared statements into the
+	statement table until they are successfully created, to avoid
+	segfaults on database teardown.
+
+2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_automate_keys.at: Use sed rather than relying on an
+	extended grep being available.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* contrib/ciabot_monotone.py (send_change_for): Handle branch-less
+	revisions.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Make initial_rel_path an fs::path.  Adjust code
+	correspondingly.  Add tests that calling monotone from inside MT
+	should work.
+	* tests/t_add_inside_MT.at, testsuite.at: New test.
+
 2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/fs.cc: Don't consider USERPROFILE as a possible home

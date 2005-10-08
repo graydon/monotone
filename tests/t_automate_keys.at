@@ -16,9 +16,9 @@ AT_CHECK(MONOTONE automate keys, [], [stdout], [ignore])
 AT_CHECK(cp stdout output)
 
 AT_CHECK(sed 's/^$/\n\n/g' < output > processed)
-AT_CHECK(grep -A4 'foo@bar.com' processed > foobar)
-AT_CHECK(grep -A4 'foo@baz.com' processed > foobaz)
-AT_CHECK(grep -A4 'tester@test.net' processed > tester)
+AT_CHECK([sed -ne '/foo@bar.com/,+4p' processed > foobar])
+AT_CHECK([sed -ne '/foo@baz.com/,+2p' processed > foobaz])
+AT_CHECK([sed -ne '/tester@test.net/,+4p' processed > tester])
 
 AT_CHECK(QGREP database foobar, [1])
 AT_CHECK(QGREP private foobaz, [1])

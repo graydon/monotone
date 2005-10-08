@@ -21,6 +21,8 @@
 // filenames.  the idea is to make sure
 //   -- we don't depend on the existence of something before it has been set
 //   -- we don't re-set something that has already been used
+//   -- sometimes, we use the _non_-existence of something, so we shouldn't
+//      set anything whose un-setted-ness has already been used
 template <typename T>
 struct access_tracker
 {
@@ -65,7 +67,10 @@ struct access_tracker
 // initial_abs_path is for interpreting relative system_path's
 static access_tracker<system_path> initial_abs_path;
 // initial_rel_path is for interpreting external file_path's
-static access_tracker<file_path> initial_rel_path;
+// for now we just make it an fs::path for convenience; we used to make it a
+// file_path, but then you can't run monotone from inside the MT/ dir (even
+// when referring to files outside the MT/ dir).
+static access_tracker<fs::path> initial_rel_path;
 // working_root is for converting file_path's and bookkeeping_path's to
 // system_path's.
 static access_tracker<system_path> working_root;
@@ -173,22 +178,22 @@ file_path::file_path(file_path::source_type type, std::string const & path)
       break;
     case external:
       if (!initial_rel_path.initialized)
-	{
-	  // we are not in a working directory; treat this as an internal 
-	  // path, and set the access_tracker() into a very uninitialised 
-	  // state so that we will hit an exception if we do eventually 
-	  // enter a working directory
-	  initial_rel_path.may_not_initialize();
-	  data = path;
-	  N(is_valid_internal(path),
-	    F("path '%s' is invalid") % path);
-	  break;
-	}
+        {
+          // we are not in a working directory; treat this as an internal 
+          // path, and set the access_tracker() into a very uninitialised 
+          // state so that we will hit an exception if we do eventually 
+          // enter a working directory
+          initial_rel_path.may_not_initialize();
+          data = path;
+          N(is_valid_internal(path) && !in_bookkeeping_dir(path),
+            F("path '%s' is invalid") % path);
+          break;
+        }
       N(!path.empty(), F("empty path '%s' is invalid") % path);
       fs::path out, base, relative;
       try
         {
-          base = fs::path(initial_rel_path.get().as_internal());
+          base = initial_rel_path.get();
           // the fs::native is needed to get it to accept paths like ".foo".
           relative = fs::path(path, fs::native);
           out = (base / relative).normalize();
@@ -496,10 +501,10 @@ find_and_go_to_working_copy(system_path const & search_root)
     }
 
   working_root.set(current.native_file_string(), true);
-  initial_rel_path.set(file_path_internal(removed.string()), true);
+  initial_rel_path.set(removed, true);
 
   L(F("working root is '%s'") % working_root.get_but_unused());
-  L(F("initial relative path is '%s'") % initial_rel_path.get_but_unused());
+  L(F("initial relative path is '%s'") % initial_rel_path.get_but_unused().string());
 
   change_current_working_dir(working_root.get_but_unused());
 
@@ -510,7 +515,7 @@ void
 go_to_working_copy(system_path const & new_working_copy)
 {
   working_root.set(new_working_copy, true);
-  initial_rel_path.set(file_path(), true);
+  initial_rel_path.set(fs::path(), true);
   change_current_working_dir(new_working_copy);
 }
 
@@ -543,13 +548,13 @@ static void test_file_path_internal()
                             "c:/foo",
                             0 };
   initial_rel_path.unset();
-  initial_rel_path.set(file_path(), true);
+  initial_rel_path.set(fs::path(), true);
   for (char const ** c = baddies; *c; ++c)
     {
       BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
     }
   initial_rel_path.unset();
-  initial_rel_path.set(file_path_internal("blah/blah/blah"), true);
+  initial_rel_path.set(fs::path("blah/blah/blah", fs::native), true);
   for (char const ** c = baddies; *c; ++c)
     {
       BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
@@ -575,8 +580,8 @@ static void test_file_path_internal()
   for (int i = 0; i < 2; ++i)
     {
       initial_rel_path.unset();
-      initial_rel_path.set(i ? file_path()
-                             : file_path_internal("blah/blah/blah"),
+      initial_rel_path.set(i ? fs::path()
+                             : fs::path("blah/blah/blah", fs::native),
                            true);
       for (char const ** c = goodies; *c; ++c)
         {
@@ -627,10 +632,10 @@ static void check_fp_normalizes_to(char * before, char * after)
     BOOST_CHECK(!null_name(*i));
 }
   
-static void test_file_path_external_no_prefix()
+static void test_file_path_external_null_prefix()
 {
   initial_rel_path.unset();
-  initial_rel_path.set(file_path(), true);
+  initial_rel_path.set(fs::path(), true);
 
   char const * baddies[] = {"/foo",
                             "../bar",
@@ -646,7 +651,7 @@ static void test_file_path_external_no_prefix()
                             0 };
   for (char const ** c = baddies; *c; ++c)
     {
-      L(F("test_file_path_external_no_prefix: trying baddie: %s") % *c);
+      L(F("test_file_path_external_null_prefix: trying baddie: %s") % *c);
       BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
     }
   
@@ -678,14 +683,28 @@ static void test_file_path_external_no_prefix()
   initial_rel_path.unset();
 }
 
+static void test_file_path_external_prefix_MT()
+{
+  initial_rel_path.unset();
+  initial_rel_path.set(fs::path("MT"), true);
+
+  BOOST_CHECK_THROW(file_path_external(utf8("foo")), informative_failure);
+  BOOST_CHECK_THROW(file_path_external(utf8(".")), informative_failure);
+  BOOST_CHECK_THROW(file_path_external(utf8("./blah")), informative_failure);
+  check_fp_normalizes_to("..", "");
+  check_fp_normalizes_to("../foo", "foo");
+}
+
 static void test_file_path_external_prefix_a_b()
 {
   initial_rel_path.unset();
-  initial_rel_path.set(file_path_internal("a/b"), true);
+  initial_rel_path.set(fs::path("a/b"), true);
 
   char const * baddies[] = {"/foo",
                             "../../../bar",
                             "../../..",
+                            "../../MT",
+                            "../../MT/foo",
                             "//blah",
                             "\\foo",
                             "c:\\foo",
@@ -906,7 +925,7 @@ static void test_system_path()
   working_root.unset();
   working_root.set(system_path("/working/root"), true);
   initial_rel_path.unset();
-  initial_rel_path.set(file_path_internal("rel/initial"), true);
+  initial_rel_path.set(fs::path("rel/initial"), true);
 
   BOOST_CHECK(system_path(system_path("foo/bar")).as_internal() == "/a/b/foo/bar");
   BOOST_CHECK(!working_root.used);
@@ -956,7 +975,8 @@ void add_paths_tests(test_suite * suite)
   I(suite);
   suite->add(BOOST_TEST_CASE(&test_null_name));
   suite->add(BOOST_TEST_CASE(&test_file_path_internal));
-  suite->add(BOOST_TEST_CASE(&test_file_path_external_no_prefix));
+  suite->add(BOOST_TEST_CASE(&test_file_path_external_null_prefix));
+  suite->add(BOOST_TEST_CASE(&test_file_path_external_prefix_MT));
   suite->add(BOOST_TEST_CASE(&test_file_path_external_prefix_a_b));
   suite->add(BOOST_TEST_CASE(&test_split_join));
   suite->add(BOOST_TEST_CASE(&test_bookkeeping_path));
