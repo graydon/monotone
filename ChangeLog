@@ -1,3 +1,10 @@
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Make initial_rel_path an fs::path.  Adjust code
+	correspondingly.  Add tests that calling monotone from inside MT
+	should work.
+	* tests/t_add_inside_MT.at, testsuite.at: New test.
+
 2005-10-04  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Automation): Document the mysterious columns of
