@@ -2,7 +2,8 @@
 
 	* win32/fs.cc: Don't consider USERPROFILE as a possible home
 	directory; APPDATA is more appropriate.  Add a second method to
-	get the APPDATA path.
+	get the APPDATA path.  Always use HOME if it's set (not just under
+	Cygwin/MinGW).
 	* tests/t_netsync_absorbs.at: Add missing CANONICALISE().
 
 2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
