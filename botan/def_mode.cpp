@@ -4,7 +4,6 @@
 *************************************************/
 
 #include <botan/def_eng.h>
-#include <botan/algolist.h>
 #include <botan/lookup.h>
 #include <botan/filters.h>
 #include <botan/ecb.h>
@@ -117,39 +116,6 @@ Keyed_Filter* Default_Engine::get_cipher(const std::string& algo_spec,
       }
 
    return 0;
-   }
-
-/*************************************************
-* Look for an algorithm with this name           *
-*************************************************/
-BlockCipher* Default_Engine::find_block_cipher(const std::string& name) const
-   {
-   return Algolist::get_block_cipher(name);
-   }
-
-/*************************************************
-* Look for an algorithm with this name           *
-*************************************************/
-StreamCipher* Default_Engine::find_stream_cipher(const std::string& name) const
-   {
-   return Algolist::get_stream_cipher(name);
-   }
-
-/*************************************************
-* Look for an algorithm with this name           *
-*************************************************/
-HashFunction* Default_Engine::find_hash(const std::string& name) const
-   {
-   return Algolist::get_hash(name);
-   }
-
-/*************************************************
-* Look for an algorithm with this name           *
-*************************************************/
-MessageAuthenticationCode*
-Default_Engine::find_mac(const std::string& name) const
-   {
-   return Algolist::get_mac(name);
    }
 
 }

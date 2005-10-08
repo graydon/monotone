@@ -9,9 +9,7 @@
 #include <botan/look_add.h>
 #include <botan/mutex.h>
 #include <botan/rng.h>
-#include <botan/randpool.h>
-#include <botan/x917_rng.h>
-#include <botan/fips_rng.h>
+#include <botan/x931_rng.h>
 #include <botan/fips140.h>
 #include <botan/es_file.h>
 #include <botan/conf.h>
@@ -261,11 +259,7 @@ void initialize(const std::string& arg_string)
       set_engines();
    init_rng_subsystem();
 
-   if(arg_set(args, "fips140"))
-      set_global_rngs(new FIPS_186_RNG, new FIPS_186_RNG);
-   else
-      set_global_rngs(new Randpool, new ANSI_X917_RNG);
-
+   set_global_rngs(new ANSI_X931_RNG, new ANSI_X931_RNG);
    add_entropy_sources();
 
    if(!FIPS140::passes_self_tests())

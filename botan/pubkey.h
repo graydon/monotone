@@ -77,9 +77,6 @@ class PK_Verifier
       bool check_signature(const byte[], u32bit);
       bool check_signature(const MemoryRegion<byte>&);
 
-      // DEPRECATED FUNCTION
-      bool valid_signature(const byte[], u32bit);
-
       void set_input_format(Signature_Format);
 
       PK_Verifier(const PK_Key&, const std::string&);

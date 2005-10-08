@@ -9,6 +9,7 @@
 #include <locale>
 #include <stdexcept>
 #include <iostream>
+#include <map>
 
 #include <boost/tokenizer.hpp>
 
@@ -17,6 +18,8 @@
 #include "sanity.hh"
 #include "schema_migration.hh"
 #include "botan/botan.h"
+#include "app_state.hh"
+#include "keys.hh"
 
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
@@ -168,12 +171,18 @@ calculate_schema_id(sqlite3 *sql, string & id)
   calculate_id(tmp2, id);
 }
 
-typedef bool (*migrator_cb)(sqlite3 *, char **);
+typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *);
 
 struct 
 migrator
 {
   vector< pair<string,migrator_cb> > migration_events;
+  app_state * __app;
+
+  void set_app(app_state *app)
+  {
+    __app = app;
+  }
 
   void add(string schema_id, migrator_cb cb)
   {
@@ -225,7 +234,7 @@ migrator
               }
 
             // do this migration step
-            else if (! i->second(sql, &errmsg))
+            else if (! i->second(sql, &errmsg, __app))
               {
                 string e("migration step failed");
                 if (errmsg != NULL)
@@ -306,7 +315,8 @@ static bool move_table(sqlite3 *sql, char **errmsg,
 
 static bool 
 migrate_client_merge_url_and_group(sqlite3 * sql, 
-                                   char ** errmsg)
+                                   char ** errmsg,
+                                   app_state *)
 {
 
   // migrate the posting_queue table
@@ -449,7 +459,8 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
 
 static bool 
 migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql, 
-                                           char ** errmsg)
+                                           char ** errmsg,
+                                           app_state *)
 {
 
   // add the column to manifest_certs
@@ -612,7 +623,8 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
 
 static bool 
 migrate_client_to_revisions(sqlite3 * sql, 
-                           char ** errmsg)
+                            char ** errmsg,
+                            app_state *)
 {
   int res;
 
@@ -693,7 +705,8 @@ migrate_client_to_revisions(sqlite3 * sql,
 
 static bool 
 migrate_client_to_epochs(sqlite3 * sql, 
-                         char ** errmsg)
+                         char ** errmsg,
+                         app_state *)
 {
   int res;
 
@@ -717,7 +730,8 @@ migrate_client_to_epochs(sqlite3 * sql,
 
 static bool
 migrate_client_to_vars(sqlite3 * sql,
-                       char ** errmsg)
+                       char ** errmsg,
+                       app_state *)
 {
   int res;
   
@@ -737,7 +751,8 @@ migrate_client_to_vars(sqlite3 * sql,
 
 static bool
 migrate_client_to_add_indexes(sqlite3 * sql,
-                              char ** errmsg)
+                              char ** errmsg,
+                              app_state *)
 {
   int res;
   
@@ -765,11 +780,69 @@ migrate_client_to_add_indexes(sqlite3 * sql,
   return true;
 }
 
+static int
+extract_key(void *ptr, int ncols, char **values, char **names)
+{
+  // This is stupid. The cast should not be needed.
+  map<string, string> *out = (map<string, string>*)ptr;
+  I(ncols == 2);
+  out->insert(make_pair(string(values[0]), string(values[1])));
+  return 0;
+}
+static bool
+migrate_client_to_external_privkeys(sqlite3 * sql,
+                                    char ** errmsg,
+                                    app_state *app)
+{
+  int res;
+  map<string, string> pub, priv;
+  vector<keypair> pairs;
+
+  res = sqlite3_exec(sql,
+                     "SELECT id, keydata FROM private_keys;",
+                     &extract_key, &priv, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite3_exec(sql,
+                     "SELECT id, keydata FROM public_keys;",
+                     &extract_key, &pub, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  for (map<string, string>::const_iterator i = priv.begin();
+       i != priv.end(); ++i)
+    {
+      rsa_keypair_id ident = i->first;
+      base64< arc4<rsa_priv_key> > old_priv = i->second;
+      map<string, string>::const_iterator j = pub.find(i->first);
+      keypair kp;
+      migrate_private_key(*app, ident, old_priv, kp);
+      MM(kp.pub);
+      if (j != pub.end())
+        {
+          base64< rsa_pub_key > pub = j->second;
+          MM(pub);
+          N(keys_match(ident, pub, ident, kp.pub),
+            F("public and private keys for %s don't match") % ident);
+        }
+
+      app->keys.put_key_pair(ident, kp);
+    }
+
+  res = sqlite3_exec(sql, "DROP TABLE private_keys;", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  return true;
+}
+
 void 
-migrate_monotone_schema(sqlite3 *sql)
+migrate_monotone_schema(sqlite3 *sql, app_state *app)
 {
 
   migrator m;
+  m.set_app(app);
   
   m.add("edb5fa6cef65bcb7d0c612023d267c3aeaa1e57a",
         &migrate_client_merge_url_and_group);
@@ -789,9 +862,12 @@ migrate_monotone_schema(sqlite3 *sql)
   m.add("e372b508bea9b991816d1c74680f7ae10d2a6d94",
         &migrate_client_to_add_indexes);
 
+  m.add("1509fd75019aebef5ac3da3a5edf1312393b70e9",
+        &migrate_client_to_external_privkeys);
+
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "1509fd75019aebef5ac3da3a5edf1312393b70e9");
+  m.migrate(sql, "bd86f9a90b5d552f0be1fa9aee847ea0f317778b");
 }

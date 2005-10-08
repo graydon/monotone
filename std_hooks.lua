@@ -88,7 +88,16 @@ function ignore_file(name)
    end
    for i, line in pairs(ignored_files)
    do
-      if (regex.search(line, name)) then return true end
+      local pcallstatus, result = pcall(function() if (regex.search(line, name)) then return true else return false end end)
+      if pcallstatus == true then
+          -- no error from the regex.search call
+          if result == true then return true end
+      else
+          -- regex.search had a problem, warn the user their .mt-ignore file syntax is wrong
+          io.stderr:write("WARNING: the line '" .. line .. "' in your .mt-ignore file caused exception '" .. result .. "'"
+                           .. " while matching filename '" .. name .. "', ignoring this regex for all remaining files.\n")
+          table.remove(ignored_files, i)
+      end
    end
    -- c/c++
    if (string.find(name, "%.a$")) then return true end
@@ -337,18 +346,17 @@ function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
    local elisp = "(ediff-merge-files \"%s\" \"%s\" nil \"%s\")"
    return 
    function()
-      return execute(emacs, "-eval", 
+      return execute(emacs, "--eval", 
                      string.format(elisp, lfile, rfile, outfile))
    end
 end
 
 function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
    local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
-   local cmd_fmt = "%s -eval " .. elisp
    return 
    function()
-      execute(emacs, "-eval", 
-              string.format(elisp, lfile, rfile, afile, outfile))
+      return execute(emacs, "--eval", 
+                     string.format(elisp, lfile, rfile, afile, outfile))
    end
 end
 

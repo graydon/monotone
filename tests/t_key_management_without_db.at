@@ -1,0 +1,19 @@
+AT_SETUP([key management without a database])
+
+MONOTONE_SETUP
+
+# with no database should work
+AT_CHECK((echo foobar; echo foobar) | RAW_MONOTONE --keydir=keys genkey foobar, [], [ignore], [ignore])
+
+AT_CHECK((echo foobar; echo barfoo; echo barfoo) | RAW_MONOTONE --keydir=keys chkeypass foobar, [], [ignore], [ignore])
+
+AT_CHECK(RAW_MONOTONE --keydir=keys ls keys, [], [ignore], [ignore])
+
+AT_CHECK(RAW_MONOTONE --keydir=keys pubkey foobar, [], [ignore], [ignore])
+
+AT_CHECK(RAW_MONOTONE --keydir=keys dropkey foobar, [], [ignore], [ignore])
+
+# with an invalid database should fail
+AT_CHECK((echo foo@baz; echo foo@baz) | RAW_MONOTONE --keydir=keys --db=bork genkey foo@baz, [1], [ignore], [ignore])
+
+AT_CLEANUP

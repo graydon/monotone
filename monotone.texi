@@ -575,10 +575,12 @@ secure key exchange techniques are beyond the scope of this document.
 @node    Storage and workflow
 @section Storage and workflow
 
-Monotone moves information in and out of three different types of
+Monotone moves information in and out of four different types of
 storage:
 
 @itemize
+@item
+a @i{keystore} in your home directory
 @item
 a @i{working copy} in the local file system
 @item
@@ -586,6 +588,12 @@ a @i{local database} in the local file system
 @item
 a @i{remote database} elsewhere on the internet
 @end itemize
+
+The @dfn{keystore} is a directory @file{.monotone/keys} in your home directory
+which contains copies of all your private keys. Each key is stored in a file
+whose name is the key identifier with some characters converted to underscores.
+When you use a key to sign a cert, the public half of that key is copied into
+your local database along with the cert.
 
 All information passes @emph{through} your local database, en route to
 some other destination. For example, when changes are made in a
@@ -1146,7 +1154,7 @@ $ monotone --db=~/jim.db genkey jim@@juicebot.co.jp
 monotone: generating key-pair 'jim@@juicebot.co.jp'
 enter passphrase for key ID [jim@@juicebot.co.jp] : @i{<Jim enters his passphrase>}
 confirm passphrase for key ID [jim@@juicebot.co.jp]: @i{<Jim confirms his passphrase>}
-monotone: storing key-pair 'jim@@juicebot.co.jp' in database
+monotone: storing key-pair 'jim@@juicebot.co.jp' in keystore
 @end group
 @end smallexample
 
@@ -1158,7 +1166,7 @@ $ monotone --db=~/abe.db genkey abe@@juicebot.co.jp
 monotone: generating key-pair 'abe@@juicebot.co.jp'
 enter passphrase for key ID [abe@@juicebot.co.jp] : @i{<Abe enters his passphrase>}
 confirm passphrase for key ID [abe@@juicebot.co.jp]: @i{<Abe confirms his passphrase>}
-monotone: storing key-pair 'abe@@juicebot.co.jp' in database
+monotone: storing key-pair 'abe@@juicebot.co.jp' in keystore
 @end group
 @end smallexample
 
@@ -1170,20 +1178,21 @@ $ monotone --db=~/beth.db genkey beth@@juicebot.co.jp
 monotone: generating key-pair 'beth@@juicebot.co.jp'
 enter passphrase for key ID [beth@@juicebot.co.jp] : @i{<Beth enters her passphrase>}
 confirm passphrase for key ID [beth@@juicebot.co.jp]: @i{<Beth confirms her passphrase>}
-monotone: storing key-pair 'beth@@juicebot.co.jp' in database
+monotone: storing key-pair 'beth@@juicebot.co.jp' in keystore
 @end group
 @end smallexample
 
 Each programmer has now generated a key pair and placed it in their
-local database. Each can list the keys in their database, to ensure
+keystore. Each can list the keys in their keystore, to ensure
 the correct key was generated. For example, Jim might see this:
 
 @smallexample
 @group
-$ monotone --db=~/jim.db list keys
+$ monotone list keys
 
 [public keys]
-9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c jim@@juicebot.co.jp
+9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c jim@@juicebot.co.jp   (*)
+(*) - only in keystore
 
 
 [private keys]
@@ -1195,7 +1204,7 @@ $ monotone --db=~/jim.db list keys
 The hexadecimal string printed out before each key name is a
 @emph{fingerprint} of the key, and can be used to verify that the key
 you have stored under a given name is the one you intended to
-store. Monotone will never permit one database to store two keys with
+store. Monotone will never permit one keystore to store two keys with
 the same name or the same fingerprint.
 
 This output shows one private and one public key stored under the name
@@ -1461,7 +1470,7 @@ $ monotone diff
 Satisfied with the work he's done, Jim wants to save his changes.  He
 then commits his working copy, which causes monotone to process the
 @file{MT/work} file and record the file contents, manifest, and
-revision into the database.  Since he provided a branch name when he
+revision into the database. Since he provided a branch name when he
 ran @command{setup}, monotone will use this as the default branch name
 when he commits.
 
@@ -1487,8 +1496,9 @@ $ cat MT/revision
 @end group
 @end smallexample
 
-Monotone also generated a number of certificates, attached to
-the new revision. These certs store metadata about the commit. Jim can
+Monotone also generated a number of certificates attached to
+the new revision, and made sure that the database contained a copy of Jim's
+public key. These certs store metadata about the commit. Jim can
 ask monotone for a list of certs on this revision.
 
 @smallexample
@@ -1645,7 +1655,12 @@ $ monotone --db=jim.db serve jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
 @end smallexample
 
 This command sets up a single listener loop on the host
-@code{jim-laptop.juicebot.co.jp}, serving all branches matching
+@code{jim-laptop.juicebot.co.jp}@footnote{Make sure that the name 
+resolves to the right IP address. E.g. by checking @code{ping
+jim-laptop.juicebot.co.jp}. A server listening on localhost
+(127.0.0.1) will not be reachable by other computers. If you don't want 
+to think about interfaces and addresses start monotone on @code{0.0.0.0}.
+}, serving all branches matching
 @code{jp.co.juicebot.jb7*}. This will naturally include the
 @code{jp.co.juicebot.jb7} branch, and any sub-branches.  The quotes
 around @code{"jp.co.juicebot.jb7*"} are there to protect the @code{*}
@@ -3994,8 +4009,8 @@ Value : 2003-10-16  graydon hoare  <graydon@@pobox.com>
 
 @item monotone list keys
 @itemx monotone list keys @var{pattern}
-These commands list @sc{rsa} keys held in your current database. They
-do not print out any cryptographic information; they simply list the
+These commands list @sc{rsa} keys held in your keystore and current database.
+They do not print out any cryptographic information; they simply list the
 names of public and private keys you have on hand.
 
 If @var{pattern} is provided, it is used as a glob to limit the keys
@@ -4087,7 +4102,7 @@ files to the current subdirectory of the working copy.
 @item monotone genkey @var{keyid}
 
 This command generates an @sc{rsa} public/private key pair, using a
-system random number generator, and stores it in your database under
+system random number generator, and stores it in your keystore under
 the key name @var{keyid}. If the the hook
 @code{non_blocking_rng_ok()} returns @code{true}, the key
 generation will use an unlimited random number generator (such as
@@ -4095,11 +4110,10 @@ generation will use an unlimited random number generator (such as
 number generator (such as @file{/dev/random}) but might run slightly
 slower.
 
-The private half of the key is stored in an encrypted form, using the
-symmetric cipher @sc{arc4}, so that anyone accidentally reading your
-database cannot extract your private key and use it. You must provide
-a passphrase for your key when it is generated, which is used to key
-the @sc{arc4} cipher. In the future you will need to enter this
+The private half of the key is stored in an encrypted form, so that anyone
+who can read your keystore cannot extract your private key and use it.
+You must provide a passphrase for your key when it is generated, which is used
+to determine the encryption key. In the future you will need to enter this
 passphrase again each time you sign a certificate, which happens every
 time you @command{commit} to your database. You can tell monotone to
 automatically use a certain passphrase for a given key using the
@@ -4112,10 +4126,7 @@ careful using this hook.
 This command drops the public and/or private key. If both exist, both
 are dropped, if only one exists, it is dropped. This command should
 be used with caution as changes are irreversible without a backup of
-the key(s) that were dropped. Note also that the private key is not
-guaranteed to actually be erased from your database file --- if you are
-going to make the database file public, you should use @command{db dump}
-and @command{db load} to import into a fresh database.
+the key(s) that were dropped.
 
 @item monotone chkeypass @var{id}
 
@@ -4226,7 +4237,7 @@ manifest differences safely between monotone databases.
 @item monotone privkey @var{keyid}
 @itemx monotone pubkey @var{keyid}
 
-These commands print out an @code{privkey} or @code{pubkey} packet for
+These commands print out an @code{keypair} or @code{pubkey} packet for
 the @sc{rsa} key @var{keyid}. These can be used to transport public or
 private keys safely between monotone databases.
 
@@ -5018,9 +5029,11 @@ renames.
 
 @item Sample output:
 
+All basic status codes:
+
 @verbatim
   M 0 0 missing
- AP 0 0 added patched
+ AP 0 0 added
 D   0 0 dropped
 R   1 0 renamed-from-this
  R  0 1 renamed-to-this
@@ -5028,57 +5041,81 @@ R   1 0 renamed-from-this
     0 0 unchanged
   U 0 0 unknown
   I 0 0 ignored
+@end verbatim
 
-# swapped but not moved
+Two files swapped:
 
-RRP 1 2 unchanged
-RRP 2 1 original
-
-# swapped and moved
-
+@verbatim
 RR  1 2 unchanged
 RR  2 1 original
+@end verbatim
 
-# rename foo bar; add foo
+Recorded with monotone that two files were swapped, but they were not
+actually swapped in the filesystem.  Thus they both appear as patched:
 
+@verbatim
+RRP 1 2 unchanged
+RRP 2 1 original
+@end verbatim
+
+Rename @file{foo} to @file{bar}; add new file @file{foo}:
+
+@verbatim
 RAP 1 0 foo
  R  0 1 bar
+@end verbatim
 
-# rotated but not moved dropped -> missing -> original -> dropped
+Rotated files @file{foo} -> @file{bar} -> @file{baz} -> @file{foo}:
 
-RRP 1 3 dropped
-RRP 2 1 missing
-RRP 3 2 original
+@verbatim
+RR  1 3 foo
+RR  2 1 bar
+RR  3 2 baz
+@end verbatim
 
-# rotated and moved
+Recorded the rotation of files @file{foo} -> @file{bar} -> @file{baz} ->
+@file{foo}, but the actual files in the working directory were not
+moved, so monotone interprets all files as having been patched:
 
-RR  1 3 dropped
-RR  2 1 missing
-RR  3 2 original
+@verbatim
+RRP 1 3 foo
+RRP 2 1 bar
+RRP 3 2 baz
+@end verbatim
 
-# dropped but not removed and thus unknown
+Dropped but not removed and thus unknown:
 
+@verbatim
 D U 0 0 dropped
+@end verbatim
 
-# added but removed and thus missing
+Added a non-existent file which is thus missing:
 
+@verbatim
  AM 0 0 added
+@end verbatim
 
-# renamed but not moved and thus unknown source and missing target
+Recorded a rename, but not moved in the filesystem, and thus unknown
+source and missing target:
 
+@verbatim
 R U 1 0 original
  RM 0 1 renamed
+@end verbatim
 
-# moved but not renamed and thus missing source and unknown target
+Moved in the filesystem but no rename recorded, and thus missing source
+and unknown target:
 
+@verbatim
   M 0 0 original
   U 0 0 renamed
+@end verbatim
 
-# renamed and patched
+Renamed and patched:
 
+@verbatim
 R   1 0 original
  RP 0 1 renamed
-
 @end verbatim
 
 @item Output format:
@@ -5167,6 +5204,34 @@ are not valid, detailed below.
 'RRI' rename source and target and target ignored (seems invalid, but may be possible?)
 'RRM' rename source and target and target missing
 @end verbatim
+
+The two numbers are used to match up the pre-state and post-state of a
+rename.  Imagine a situation where there are two renames.
+@command{automate inventory} will print something like:
+
+@verbatim
+R   1 0 a
+R   2 0 b
+ R  0 2 c
+ R  0 1 d
+@end verbatim
+
+Here the status characters tell us that @file{a} and @file{b} were
+renamed, and we can tell that one was renamed to @file{c} and one was
+renamed to @file{d}, but we can't tell which was renamed to which.  To
+do that, we have to refer to the numbers.  The numbers do not themselves
+mean anything; their only purpose is to let you match up the two
+``ends'' of a rename.  The 1 in the left column by @file{a} means that
+@file{a} was the source of a rename, and the 1 in the right column by
+@file{d} means that @file{d} was the target of that same rename.
+Similarly, the two 2's tell us that @file{b} was renamed to @file{c}.
+
+There are two columns of numbers because the same file can
+simultaneously be the target and source of a rename.  The number '0' is
+used as a meaningless placeholder in all cases where a file is not a
+source or target of a rename.  Any non-zero number that occurs at all
+will occur exactly once in the first column and exactly once in the
+second column.
 
 Full support for versioned directories is not yet complete and the
 inventory will only list entries for renamed or dropped
@@ -5509,6 +5574,56 @@ The file contents are output without modification.
 
 If the file id specified is unknown or invalid prints an error message
 to stderr and exits with status 1.
+
+@end table
+
+
+@item monotone automate keys
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+1.1
+
+@item Purpose:
+
+Print all keys in basic_io format.
+
+@item Sample output:
+
+@verbatim
+            name "tbrownaw@gmail.com"
+     public_hash [475055ec71ad48f5dfaf875b0fea597b5cbbee64]
+    private_hash [7f76dae3f91bb48f80f1871856d9d519770b7f8a]
+ public_location "database" "keystore"
+private_location "keystore"
+
+           name "tomfa@debian.org"
+    public_hash [3ac4afcd86af28413b0a23b7d22b9401e15027fc]
+public_location "database"
+
+            name "underwater@fishtank.net"
+     public_hash [115fdc73d87a5e9901d018462b21a1f53eca33a1]
+    private_hash [b520d2cfe7d30e4ea1725fc4f34646fc5469b13d]
+ public_location "keystore"
+private_location "keystore"
+
+@end verbatim
+
+@item Output format:
+
+For each key, a basic_io stanza is printed. The public_location and
+private_location items may have multiple values as shown above for public_location, one value for each place that the key is stored. If the
+private key does not exist, then the private_hash and private_location
+items will be absent. The keys are ordered alphabetically by name.
+
+@item Error conditions:
+
+None.
 
 @end table
 
@@ -6624,7 +6739,7 @@ Similarly, if you do not trust our vigilance in keeping up to date
 with cryptography literature, you can modify monotone to use any
 stronger hash you like, at the cost of isolating your own
 communications to a group using the modified version. Monotone is free
-software, and runs atop @code{crypto++}, so it is both legal and
+software, and runs atop @code{botan}, so it is both legal and
 relatively simple to change it to use some other algorithm.
 
 @page

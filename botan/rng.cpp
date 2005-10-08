@@ -290,7 +290,7 @@ void shutdown_rng_subsystem()
 void set_global_rngs(RandomNumberGenerator* rng1, RandomNumberGenerator* rng2)
    {
    if(!rng_state)
-      throw Internal_Error("Global_RNG::seed: RNG state never created");
+      throw Internal_Error("set_global_rngs: RNG state never created");
    rng_state->set_rngs(rng1, rng2);
    }
 

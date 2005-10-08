@@ -58,12 +58,12 @@ class Pooling_Allocator : public Allocator
       void* find_free_block(u32bit) const;
       void defrag_free_list() const;
 
-      static bool are_contiguous(const Buffer&, const Buffer&);
       u32bit find_block(void*) const;
       bool same_buffer(Buffer&, Buffer&) const;
       void remove_empty_buffers(std::vector<Buffer>&) const;
 
       static bool is_empty_buffer(const Buffer&);
+      static bool are_contiguous(const Buffer&, const Buffer&);
 
       const u32bit PREF_SIZE, ALIGN_TO;
       mutable std::vector<Buffer> real_mem, free_list;

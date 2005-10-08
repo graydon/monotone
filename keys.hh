@@ -18,18 +18,22 @@ struct lua_hooks;
 
 void generate_key_pair(lua_hooks & lua,           // to hook for phrase
                        rsa_keypair_id const & id, // to prompting user for phrase
-                       base64<rsa_pub_key> & pub,
-                       base64< arc4<rsa_priv_key> > & priv,
+                       keypair & kp,
                        // Used for unit tests only:
                        std::string const unit_test_passphrase = std::string());
 
 void change_key_passphrase(lua_hooks & lua,       // to hook for phrase
                            rsa_keypair_id const & id, // to prompting user for phrase
-                           base64< arc4<rsa_priv_key> > & encoded_key);
+                           base64< rsa_priv_key > & encoded_key);
+
+void migrate_private_key(app_state & app,
+                         rsa_keypair_id const & id,
+                         base64< arc4<rsa_priv_key> > const & old_priv,
+                         keypair & kp);
 
 void make_signature(app_state & app,           // to hook for phrase
                     rsa_keypair_id const & id, // to prompting user for phrase
-                    base64< arc4<rsa_priv_key> > const & priv,
+                    base64< rsa_priv_key > const & priv,
                     std::string const & tosign,
                     base64<rsa_sha1_signature> & signature);
 
@@ -50,7 +54,7 @@ void encrypt_rsa(lua_hooks & lua,
 
 void decrypt_rsa(lua_hooks & lua,
                  rsa_keypair_id const & id,
-                 base64< arc4<rsa_priv_key> > const & priv,
+                 base64< rsa_priv_key > const & priv,
                  rsa_oaep_sha_data const & ciphertext,
                  std::string & plaintext);
 
@@ -69,18 +73,18 @@ void key_hash_code(rsa_keypair_id const & id,
                    hexenc<id> & out);
 
 void key_hash_code(rsa_keypair_id const & id,
-                   base64< arc4<rsa_priv_key> > const & priv,
+                   base64< rsa_priv_key > const & priv,
                    hexenc<id> & out);
 
 bool keys_match(rsa_keypair_id const & id1,
                 base64<rsa_pub_key> const & key1,
                 rsa_keypair_id const & id2,
                 base64<rsa_pub_key> const & key2);
-
+/* Doesn't work
 bool keys_match(rsa_keypair_id const & id1,
-                base64< arc4<rsa_priv_key> > const & key1,
+                base64< rsa_priv_key > const & key1,
                 rsa_keypair_id const & id2,
-                base64< arc4<rsa_priv_key> > const & key2);
-
+                base64< rsa_priv_key > const & key2);
+*/
 
 #endif // __KEYS_HH__

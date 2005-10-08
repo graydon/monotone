@@ -66,7 +66,7 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("1509fd75019aebef5ac3da3a5edf1312393b70e9"),
+  schema("bd86f9a90b5d552f0be1fa9aee847ea0f317778b"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -472,7 +472,7 @@ database::migrate()
 
   open();
 
-  migrate_monotone_schema(__sql);
+  migrate_monotone_schema(__sql, __app);
   sqlite3_close(__sql);
 }
 
@@ -514,22 +514,6 @@ database::rehash()
         ++pubkeys;
       }
   }
-
-  {
-    // rehash all privkeys
-    results res;
-    fetch(res, 2, any_rows, "SELECT id, keydata FROM private_keys");
-    execute("DELETE FROM private_keys");
-    for (size_t i = 0; i < res.size(); ++i)
-      {
-        hexenc<id> tmp;
-        key_hash_code(rsa_keypair_id(res[i][0]), base64< arc4<rsa_priv_key> >(res[i][1]), tmp);
-        execute("INSERT INTO private_keys VALUES(?, ?, ?)", 
-                tmp().c_str(), res[i][0].c_str(), res[i][1].c_str());
-        ++privkeys;
-      }
-  }
-
   guard.commit();
 }
 
@@ -547,10 +531,9 @@ database::~database()
 
   for (map<string, statement>::const_iterator i = statement_cache.begin(); 
        i != statement_cache.end(); ++i)
-    {
-      L(F("%d executions of %s\n") % i->second.count % i->first);
-      sqlite3_finalize(i->second.stmt);
-    }
+    L(F("%d executions of %s\n") % i->second.count % i->first);
+  // trigger destructors to finalize cached statements
+  statement_cache.clear();
 
   if (__sql)
     {
@@ -603,7 +586,7 @@ database::fetch(results & res,
       I(i != statement_cache.end());
 
       const char * tail;
-      sqlite3_prepare(sql(), query, -1, &i->second.stmt, &tail);
+      sqlite3_prepare(sql(), query, -1, i->second.stmt.paddr(), &tail);
       assert_sqlite3_ok(sql());
       L(F("prepared statement %s\n") % query);
 
@@ -612,14 +595,14 @@ database::fetch(results & res,
         F("multiple statements in query: %s\n") % query);
     }
 
-  ncol = sqlite3_column_count(i->second.stmt);
+  ncol = sqlite3_column_count(i->second.stmt());
 
   E(want_cols == any_cols || want_cols == ncol, 
     F("wanted %d columns got %d in query: %s\n") % want_cols % ncol % query);
 
   // bind parameters for this execution
 
-  int params = sqlite3_bind_parameter_count(i->second.stmt);
+  int params = sqlite3_bind_parameter_count(i->second.stmt());
 
   L(F("binding %d parameters for %s\n") % params % query);
 
@@ -637,20 +620,20 @@ database::fetch(results & res,
 
       L(F("binding %d with value '%s'\n") % param % log);
 
-      sqlite3_bind_text(i->second.stmt, param, value, -1, SQLITE_TRANSIENT);
+      sqlite3_bind_text(i->second.stmt(), param, value, -1, SQLITE_TRANSIENT);
       assert_sqlite3_ok(sql());
     }
 
   // execute and process results
 
   nrow = 0;
-  for (rescode = sqlite3_step(i->second.stmt); rescode == SQLITE_ROW; 
-       rescode = sqlite3_step(i->second.stmt))
+  for (rescode = sqlite3_step(i->second.stmt()); rescode == SQLITE_ROW; 
+       rescode = sqlite3_step(i->second.stmt()))
     {
       vector<string> row;
       for (int col = 0; col < ncol; col++) 
         {
-          const char * value = sqlite3_column_text_s(i->second.stmt, col);
+          const char * value = sqlite3_column_text_s(i->second.stmt(), col);
           E(value, F("null result in query: %s\n") % query);
           row.push_back(value);
           //L(F("row %d col %d value='%s'\n") % nrow % col % value);
@@ -661,7 +644,7 @@ database::fetch(results & res,
   if (rescode != SQLITE_DONE)
     assert_sqlite3_ok(sql());
 
-  sqlite3_reset(i->second.stmt);
+  sqlite3_reset(i->second.stmt());
   assert_sqlite3_ok(sql());
 
   nrow = res.size();
@@ -1448,11 +1431,9 @@ database::delete_tag_named(cert_value const & tag)
 
 void 
 database::get_key_ids(string const & pattern,
-                      vector<rsa_keypair_id> & pubkeys,
-                      vector<rsa_keypair_id> & privkeys)
+                      vector<rsa_keypair_id> & pubkeys)
 {
   pubkeys.clear();
-  privkeys.clear();
   results res;
 
   if (pattern != "")
@@ -1465,17 +1446,6 @@ database::get_key_ids(string const & pattern,
 
   for (size_t i = 0; i < res.size(); ++i)
     pubkeys.push_back(res[i][0]);
-
-  if (pattern != "")
-    fetch(res, one_col, any_rows, 
-          "SELECT id FROM private_keys WHERE id GLOB ?",
-          pattern.c_str());
-  else
-    fetch(res, one_col, any_rows, 
-          "SELECT id FROM private_keys");
-
-  for (size_t i = 0; i < res.size(); ++i)
-    privkeys.push_back(res[i][0]);
 }
 
 void 
@@ -1487,12 +1457,6 @@ database::get_keys(string const & table, vector<rsa_keypair_id> & keys)
   fetch(res, one_col, any_rows, query.c_str());
   for (size_t i = 0; i < res.size(); ++i)
     keys.push_back(res[i][0]);
-}
-
-void 
-database::get_private_keys(vector<rsa_keypair_id> & keys)
-{
-  get_keys("private_keys", keys);
 }
 
 void 
@@ -1527,25 +1491,6 @@ database::public_key_exists(rsa_keypair_id const & id)
   return false;
 }
 
-bool 
-database::private_key_exists(rsa_keypair_id const & id)
-{
-  results res;
-  fetch(res, one_col, any_rows,
-        "SELECT id FROM private_keys WHERE id = ?",
-        id().c_str());
-  I((res.size() == 1) || (res.size() == 0));
-  if (res.size() == 1)
-    return true;
-  return false;
-}
-
-bool 
-database::key_exists(rsa_keypair_id const & id)
-{
-  return public_key_exists(id) || private_key_exists(id);
-}
-
 void 
 database::get_pubkey(hexenc<id> const & hash, 
                      rsa_keypair_id & id,
@@ -1571,17 +1516,6 @@ database::get_key(rsa_keypair_id const & pub_id,
 }
 
 void 
-database::get_key(rsa_keypair_id const & priv_id, 
-                  base64< arc4<rsa_priv_key> > & priv_encoded)
-{
-  results res;
-  fetch(res, one_col, one_col, 
-        "SELECT keydata FROM private_keys WHERE id = ?", 
-        priv_id().c_str());
-  priv_encoded = res[0][0];
-}
-
-void 
 database::put_key(rsa_keypair_id const & pub_id, 
                   base64<rsa_pub_key> const & pub_encoded)
 {
@@ -1592,36 +1526,6 @@ database::put_key(rsa_keypair_id const & pub_id,
     F("another key with name '%s' already exists") % pub_id);
   execute("INSERT INTO public_keys VALUES(?, ?, ?)", 
           thash().c_str(), pub_id().c_str(), pub_encoded().c_str());
-}
-
-void 
-database::put_key(rsa_keypair_id const & priv_id, 
-                  base64< arc4<rsa_priv_key> > const & priv_encoded)
-{
-  hexenc<id> thash;
-  key_hash_code(priv_id, priv_encoded, thash);
-  E(!private_key_exists(priv_id),
-    F("another key with name '%s' already exists") % priv_id);
-  execute("INSERT INTO private_keys VALUES(?, ?, ?)", 
-          thash().c_str(), priv_id().c_str(), priv_encoded().c_str());
-}
-
-void 
-database::put_key_pair(rsa_keypair_id const & id, 
-                       base64<rsa_pub_key> const & pub_encoded,
-                       base64< arc4<rsa_priv_key> > const & priv_encoded)
-{
-  transaction_guard guard(*this);
-  put_key(id, pub_encoded);
-  put_key(id, priv_encoded);
-  guard.commit();
-}
-
-void
-database::delete_private_key(rsa_keypair_id const & pub_id)
-{
-  execute("DELETE FROM private_keys WHERE id = ?",
-          pub_id().c_str());
 }
 
 void
@@ -2103,16 +2007,7 @@ database::complete(string const & partial,
         pattern.c_str());
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  
-
-  res.clear();
-
-  fetch(res, 2, any_rows,
-        "SELECT hash, id FROM private_keys WHERE hash GLOB ?",
-        pattern.c_str());
-
-  for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));  
+    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));
 }
 
 using selectors::selector_type;
@@ -2451,6 +2346,13 @@ void
 database::check_filename()
 {
   N(!filename.empty(), F("no database specified"));
+}
+
+
+bool
+database::database_specified()
+{
+  return !filename.empty();
 }
 
 

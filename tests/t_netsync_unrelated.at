@@ -16,9 +16,6 @@ MONOTONE_SETUP
 # mentioned there; doing sideways deltas between heads, all sorts of
 # possibilities for maybe-efficient algorithms.
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
-
 NETSYNC_SETUP
 
 ADD_FILE(testfile1, [This is test file 1

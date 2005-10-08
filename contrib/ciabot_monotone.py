@@ -224,6 +224,8 @@ def send_change_for(rid, m, c):
         elif started_changelog:
             changelog_pieces.append(p)
     changelog = "\n".join(changelog_pieces).strip()
+    if branch is None:
+        return
     project = c.project_for_branch(branch)
     if project is None:
         return

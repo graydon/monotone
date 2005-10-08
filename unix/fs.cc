@@ -104,3 +104,10 @@ get_path_status(any_path const & path)
       E(false, F("cannot handle special file %s") % path);
     }
 }
+
+void
+rename_clobberingly(any_path const & from, any_path const & to)
+{
+  E(!rename(from.as_external().c_str(), to.as_external().c_str()),
+    F("renaming '%s' to '%s' failed: %s") % from % to % std::strerror(errno));
+}

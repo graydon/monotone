@@ -8,6 +8,7 @@
 
 #include <botan/base.h>
 #include <botan/pk_ops.h>
+#include <botan/pkcs8.h>
 #include <botan/reducer.h>
 #include <botan/basefilt.h>
 #include <botan/mutex.h>

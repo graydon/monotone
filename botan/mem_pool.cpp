@@ -36,14 +36,6 @@ Pooling_Allocator::~Pooling_Allocator()
    }
 
 /*************************************************
-* Buffer Comparison                              *
-*************************************************/
-bool Pooling_Allocator::is_empty_buffer(const Buffer& block)
-   {
-   return (block.length == 0);
-   }
-
-/*************************************************
 * Allocate some initial buffers                  *
 *************************************************/
 void Pooling_Allocator::init()
@@ -83,6 +75,14 @@ void Pooling_Allocator::destroy()
    destroyed = true;
    for(u32bit j = 0; j != real_mem.size(); j++)
       dealloc_block(real_mem[j].buf, real_mem[j].length);
+   }
+
+/*************************************************
+* Buffer Comparison                              *
+*************************************************/
+bool Pooling_Allocator::is_empty_buffer(const Buffer& block)
+   {
+   return (block.length == 0);
    }
 
 /*************************************************

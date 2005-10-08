@@ -1,35 +1,35 @@
 /*************************************************
-* ANSI X9.17 RNG Header File                     *
+* ANSI X9.31 RNG Header File                     *
 * (C) 1999-2005 The Botan Project                *
 *************************************************/
 
-#ifndef BOTAN_ANSI_X917_RNG_H__
-#define BOTAN_ANSI_X917_RNG_H__
+#ifndef BOTAN_ANSI_X931_RNG_H__
+#define BOTAN_ANSI_X931_RNG_H__
 
 #include <botan/base.h>
 
 namespace Botan {
 
 /*************************************************
-* ANSI X9.17 RNG                                 *
+* ANSI X9.31 RNG                                 *
 *************************************************/
-class ANSI_X917_RNG : public RandomNumberGenerator
+class ANSI_X931_RNG : public RandomNumberGenerator
    {
    public:
       void randomize(byte[], u32bit) throw(PRNG_Unseeded);
       bool is_seeded() const;
       void clear() throw();
       std::string name() const;
-      ANSI_X917_RNG();
-      ~ANSI_X917_RNG() { delete cipher; }
+      ANSI_X931_RNG(RandomNumberGenerator* = 0);
+      ~ANSI_X931_RNG();
    private:
-      void add_randomness(const byte[], u32bit) throw();
-      void generate(u64bit) throw();
-      void reseed() throw();
-      const u32bit ITERATIONS_BEFORE_RESEED;
+      void add_randomness(const byte[], u32bit);
+      void update_buffer();
+
       BlockCipher* cipher;
-      SecureVector<byte> output, state, tstamp;
-      u32bit iteration;
+      RandomNumberGenerator* prng;
+      SecureVector<byte> V, R;
+      u32bit position;
    };
 
 }

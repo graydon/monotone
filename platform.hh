@@ -34,10 +34,6 @@ bool have_smart_terminal();
 // return value of 0 means "unlimited"
 unsigned int terminal_width();
 
-// for netsync
-void start_platform_netsync();
-void end_platform_netsync();
-
 // for "reckless mode" working copy change detection.
 // returns 'true' if it has generated a valid inodeprint; returns 'false' if
 // there was a problem, in which case we should act as if the inodeprint has
@@ -59,5 +55,7 @@ namespace path
   typedef enum { nonexistent, directory, file } status;
 };
 path::status get_path_status(any_path const & path);
-  
+
+void rename_clobberingly(any_path const & from, any_path const & to);
+
 #endif // __PLATFORM_HH__
