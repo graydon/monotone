@@ -7,6 +7,7 @@
 #include <botan/lookup.h>
 
 #include <botan/aes.h>
+#include <botan/des.h>
 
 #include <botan/arc4.h>
 
@@ -15,6 +16,8 @@
 #include <botan/sha256.h>
 
 #include <botan/hmac.h>
+
+#include <botan/pkcs5.h>
 
 namespace Botan {
 
@@ -74,6 +77,10 @@ Default_Engine::find_block_cipher(const std::string& algo_spec) const
    HANDLE_TYPE_NO_ARGS("AES-128", AES_128);
    HANDLE_TYPE_NO_ARGS("AES-192", AES_192);
    HANDLE_TYPE_NO_ARGS("AES-256", AES_256);
+   HANDLE_TYPE_NO_ARGS("DES", DES);
+   HANDLE_TYPE_NO_ARGS("DESX", DESX);
+   HANDLE_TYPE_NO_ARGS("TripleDES", TripleDES);
+
    return 0;
    }
 
@@ -89,6 +96,8 @@ Default_Engine::find_stream_cipher(const std::string& algo_spec) const
    const std::string algo_name = deref_alias(name[0]);
 
    HANDLE_TYPE_ONE_U32BIT("ARC4", ARC4, 0);
+   HANDLE_TYPE_ONE_U32BIT("RC4_drop", ARC4, 768);
+
 
    return 0;
    }

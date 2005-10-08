@@ -216,6 +216,7 @@ public:
   void migrate();
   void rehash();
   void ensure_open();
+  bool database_specified();
   
   bool file_version_exists(file_id const & id);
   bool manifest_version_exists(manifest_id const & id);
@@ -318,17 +319,13 @@ public:
   // crypto key / cert operations
 
   void get_key_ids(std::string const & pattern,
-                   std::vector<rsa_keypair_id> & pubkeys,
-                   std::vector<rsa_keypair_id> & privkeys);
+                   std::vector<rsa_keypair_id> & pubkeys);
 
-  void get_private_keys(std::vector<rsa_keypair_id> & privkeys);
   void get_public_keys(std::vector<rsa_keypair_id> & pubkeys);
-
-  bool key_exists(rsa_keypair_id const & id);
 
   bool public_key_exists(hexenc<id> const & hash);
   bool public_key_exists(rsa_keypair_id const & id);
-  bool private_key_exists(rsa_keypair_id const & id);
+
   
   void get_pubkey(hexenc<id> const & hash, 
                   rsa_keypair_id & id,
@@ -337,20 +334,9 @@ public:
   void get_key(rsa_keypair_id const & id, 
                base64<rsa_pub_key> & pub_encoded);
 
-  void get_key(rsa_keypair_id const & id, 
-               base64< arc4<rsa_priv_key> > & priv_encoded);
-
   void put_key(rsa_keypair_id const & id, 
                base64<rsa_pub_key> const & pub_encoded);
-  
-  void put_key(rsa_keypair_id const & id, 
-               base64< arc4<rsa_priv_key> > const & priv_encoded);
-  
-  void put_key_pair(rsa_keypair_id const & pub_id, 
-                    base64<rsa_pub_key> const & pub_encoded,
-                    base64< arc4<rsa_priv_key> > const & priv_encoded);
 
-  void delete_private_key(rsa_keypair_id const & pub_id);
   void delete_public_key(rsa_keypair_id const & pub_id);
   
   // note: this section is ridiculous. please do something about it.

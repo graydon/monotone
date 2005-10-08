@@ -40,16 +40,16 @@ protected:
   boost::function1<void, revision_id> on_revision_written;
   boost::function1<void, cert const &> on_cert_written;
   boost::function1<void, rsa_keypair_id> on_pubkey_written;
-  boost::function1<void, rsa_keypair_id> on_privkey_written;
+  boost::function1<void, rsa_keypair_id> on_keypair_written;
 public:
-  
+
   virtual void set_on_revision_written(boost::function1<void, revision_id>
                                                 const & x);
   virtual void set_on_cert_written(boost::function1<void, cert const &>
                                                 const & x);
   virtual void set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
                                                 const & x);
-  virtual void set_on_privkey_written(boost::function1<void, rsa_keypair_id>
+  virtual void set_on_keypair_written(boost::function1<void, rsa_keypair_id>
                                                 const & x);
   
   virtual ~packet_consumer() {}
@@ -80,8 +80,8 @@ public:
 
   virtual void consume_public_key(rsa_keypair_id const & ident,
                                   base64< rsa_pub_key > const & k) = 0;  
-  virtual void consume_private_key(rsa_keypair_id const & ident,
-                                   base64< arc4<rsa_priv_key> > const & k) = 0;  
+  virtual void consume_key_pair(rsa_keypair_id const & ident,
+                                keypair const & kp) = 0;  
 };
 
 // this writer writes packets into a stream
@@ -115,8 +115,8 @@ struct packet_writer : public packet_consumer
 
   virtual void consume_public_key(rsa_keypair_id const & ident,
                                   base64< rsa_pub_key > const & k);
-  virtual void consume_private_key(rsa_keypair_id const & ident,
-                                   base64< arc4<rsa_priv_key> > const & k);
+  virtual void consume_key_pair(rsa_keypair_id const & ident,
+                                keypair const & kp);
 };
 
 // this writer injects packets it receives to the database.
@@ -136,6 +136,10 @@ public:
   virtual void consume_file_delta(file_id const & id_old, 
                                   file_id const & id_new,
                                   file_delta const & del);
+  virtual void consume_file_delta(file_id const & id_old, 
+                                  file_id const & id_new,
+                                  file_delta const & del,
+                                  bool write_full);
   virtual void consume_file_reverse_delta(file_id const & id_new,
                                           file_id const & id_old,
                                           file_delta const & del);
@@ -145,6 +149,10 @@ public:
   virtual void consume_manifest_delta(manifest_id const & id_old, 
                                       manifest_id const & id_new,
                                       manifest_delta const & del);
+  virtual void consume_manifest_delta(manifest_id const & id_old, 
+                                      manifest_id const & id_new,
+                                      manifest_delta const & del,
+                                      bool write_full);
   virtual void consume_manifest_reverse_delta(manifest_id const & id_new,
                                               manifest_id const & id_old,
                                               manifest_delta const & del);
@@ -155,8 +163,8 @@ public:
 
   virtual void consume_public_key(rsa_keypair_id const & ident,
                                   base64< rsa_pub_key > const & k);
-  virtual void consume_private_key(rsa_keypair_id const & ident,
-                                   base64< arc4<rsa_priv_key> > const & k);
+  virtual void consume_key_pair(rsa_keypair_id const & ident,
+                                keypair const & kp);
 };
 
 // this writer is just like packet_db_writer, except that none of your calls
@@ -178,13 +186,17 @@ public:
                                                 const & x);
   virtual void set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
                                                 const & x);
-  virtual void set_on_privkey_written(boost::function1<void, rsa_keypair_id>
+  virtual void set_on_keypair_written(boost::function1<void, rsa_keypair_id>
                                                 const & x);
   virtual void consume_file_data(file_id const & ident, 
                                  file_data const & dat);
   virtual void consume_file_delta(file_id const & id_old, 
                                   file_id const & id_new,
                                   file_delta const & del);
+  virtual void consume_file_delta(file_id const & id_old, 
+                                  file_id const & id_new,
+                                  file_delta const & del,
+                                  bool write_full);
   virtual void consume_file_reverse_delta(file_id const & id_new,
                                           file_id const & id_old,
                                           file_delta const & del);
@@ -194,6 +206,10 @@ public:
   virtual void consume_manifest_delta(manifest_id const & id_old, 
                                       manifest_id const & id_new,
                                       manifest_delta const & del);
+  virtual void consume_manifest_delta(manifest_id const & id_old, 
+                                      manifest_id const & id_new,
+                                      manifest_delta const & del,
+                                      bool write_full);
   virtual void consume_manifest_reverse_delta(manifest_id const & id_new,
                                               manifest_id const & id_old,
                                               manifest_delta const & del);
@@ -204,8 +220,8 @@ public:
 
   virtual void consume_public_key(rsa_keypair_id const & ident,
                                   base64< rsa_pub_key > const & k);
-  virtual void consume_private_key(rsa_keypair_id const & ident,
-                                   base64< arc4<rsa_priv_key> > const & k);
+  virtual void consume_key_pair(rsa_keypair_id const & ident,
+                                keypair const & kp);
 
   virtual void open_valve();
 };

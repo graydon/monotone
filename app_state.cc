@@ -31,9 +31,11 @@ using namespace std;
 static string const database_option("database");
 static string const branch_option("branch");
 static string const key_option("key");
+static string const keydir_option("keydir");
 
 app_state::app_state() 
-  : branch_name(""), db(system_path()), stdhooks(true), rcfiles(true), diffs(false),
+  : branch_name(""), db(system_path()), keys(this), stdhooks(true),
+    rcfiles(true), diffs(false),
     no_merges(false), set_default(false), verbose(false), search_root("/"),
     depth(-1), last(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false)
@@ -250,6 +252,14 @@ app_state::set_database(system_path const & filename)
   if (!filename.empty()) db.set_filename(filename);
 
   options[database_option] = filename.as_internal();
+}
+
+void 
+app_state::set_key_dir(system_path const & filename)
+{
+  if (!filename.empty()) keys.set_key_dir(filename);
+
+  options[keydir_option] = filename.as_internal();
 }
 
 void 

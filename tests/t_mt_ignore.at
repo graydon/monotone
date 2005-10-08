@@ -9,6 +9,7 @@ AT_CHECK(touch baz/xyzzy)
 
 AT_DATA(.mt-ignore, [bar
 baz
+*.d
 ])
 
 AT_CHECK(RAW_MONOTONE ls unknown, [], [stdout], [])

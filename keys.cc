@@ -36,11 +36,11 @@ using boost::shared_dynamic_cast;
 using Botan::byte;
 
 static void 
-do_arc4(SecureVector<byte> & phrase,
+do_arc4(SecureVector<byte> & sym_key,
         SecureVector<byte> & payload)
 {
   L(F("running arc4 process on %d bytes of data\n") % payload.size());
-  Pipe enc(get_cipher("ARC4", phrase, ENCRYPTION));
+  Pipe enc(get_cipher("ARC4", sym_key, ENCRYPTION));
   enc.process_msg(payload);
   payload = enc.read_all();
 }
@@ -50,12 +50,11 @@ do_arc4(SecureVector<byte> & phrase,
 static void 
 get_passphrase(lua_hooks & lua,
                rsa_keypair_id const & keyid,
-               SecureVector<byte> & phrase,
+               string & phrase,
                bool confirm_phrase = false,
                bool force_from_user = false,
                string prompt_beginning = "enter passphrase")
 {
-  string lua_phrase;
 
   // we permit the user to relax security here, by caching a passphrase (if
   // they permit it) through the life of a program run. this helps when
@@ -66,17 +65,14 @@ get_passphrase(lua_hooks & lua,
   
   if (!force_from_user && phrases.find(keyid) != phrases.end())
     {
-      string phr = phrases[keyid];
-      phrase.set(reinterpret_cast<byte const *>(phr.data()), phr.size());
+      phrase = phrases[keyid];
       return;
     }
 
-  if (!force_from_user && lua.hook_get_passphrase(keyid, lua_phrase))
+  if (!force_from_user && lua.hook_get_passphrase(keyid, phrase))
     {
       // user is being a slob and hooking lua to return his passphrase
-      phrase.set(reinterpret_cast<const byte *>(lua_phrase.data()), 
-                    lua_phrase.size());
-      N(lua_phrase != "",
+      N(phrase != "",
         F("got empty passphrase from get_passphrase() hook"));
     }
   else
@@ -123,7 +119,7 @@ get_passphrase(lua_hooks & lua,
 
       try 
         {
-          phrase.set(reinterpret_cast<byte const *>(pass1), strlen(pass1));
+          phrase = pass1;
 
           // permit security relaxation. maybe.
           if (persist_phrase)
@@ -146,93 +142,186 @@ get_passphrase(lua_hooks & lua,
 void 
 generate_key_pair(lua_hooks & lua,              // to hook for phrase
                   rsa_keypair_id const & id,    // to prompting user for phrase
-                  base64<rsa_pub_key> & pub_out,
-                  base64< arc4<rsa_priv_key> > & priv_out,
+                  keypair & kp_out,
                   string const unit_test_passphrase)
 {
   
-  SecureVector<byte> phrase, pubkey, privkey;
+  string phrase;
+  SecureVector<byte> pubkey, privkey;
   rsa_pub_key raw_pub_key;
-  arc4<rsa_priv_key> raw_priv_key;
+  rsa_priv_key raw_priv_key;
   
   // generate private key (and encrypt it)
   RSA_PrivateKey priv(constants::keylen);
 
-  Pipe p;
-  p.start_msg();
-  PKCS8::encode(priv, p, RAW_BER);
-  privkey = p.read_all();
-  
   if (unit_test_passphrase.empty())
     get_passphrase(lua, id, phrase, true, true);
   else
-    phrase.set(reinterpret_cast<byte const *>(unit_test_passphrase.c_str()),
-                  unit_test_passphrase.size());
-  do_arc4(phrase, privkey); 
-  raw_priv_key = string(reinterpret_cast<char const *>(privkey.begin()), privkey.size());
+    phrase = unit_test_passphrase;
+
+  Pipe p;
+  p.start_msg();
+  PKCS8::encrypt_key(priv, p, phrase, 
+                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", RAW_BER);
+  raw_priv_key = rsa_priv_key(p.read_all_as_string());
   
   // generate public key
   Pipe p2;
   p2.start_msg();
   X509::encode(priv, p2, RAW_BER);
-  pubkey = p2.read_all();
-  raw_pub_key = string(reinterpret_cast<char const *>(pubkey.begin()), pubkey.size());
+  raw_pub_key = rsa_pub_key(p2.read_all_as_string());
   
   // if all that worked, we can return our results to caller
-  encode_base64(raw_priv_key, priv_out);
-  encode_base64(raw_pub_key, pub_out);
+  encode_base64(raw_priv_key, kp_out.priv);
+  encode_base64(raw_pub_key, kp_out.pub);
   L(F("generated %d-byte public key\n"
       "generated %d-byte (encrypted) private key\n")
-    % pub_out().size()
-    % priv_out().size());
+    % kp_out.pub().size()
+    % kp_out.priv().size());
+}
+
+// ask for passphrase then decrypt a private key.
+shared_ptr<RSA_PrivateKey>
+get_private_key(lua_hooks & lua,
+                rsa_keypair_id const & id,
+                base64< rsa_priv_key > const & priv,
+                bool force_from_user = false)
+{
+  rsa_priv_key decoded_key;
+  string phrase;
+  bool force = force_from_user;
+
+  L(F("base64-decoding %d-byte private key\n") % priv().size());
+  L(F("priv '%s'\n") % priv());
+  decode_base64(priv, decoded_key);
+  for (int i = 0; i < 3; ++i)
+    {
+      get_passphrase(lua, id, phrase, false, force);
+      L(F("have %d-byte encrypted private key\n") % decoded_key().size());
+      L(F("decoded '%s'\n") % decoded_key());
+
+      shared_ptr<PKCS8_PrivateKey> pkcs8_key;
+      try 
+        {
+          Pipe p;
+          p.process_msg(decoded_key());
+          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p, phrase));
+        }
+      catch (...)
+        {
+          if (i >= 2)
+            throw informative_failure("failed to decrypt private RSA key, "
+                                      "probably incorrect passphrase");
+          // don't use the cache bad one next time
+          force = true;
+          continue;
+        }
+
+      shared_ptr<RSA_PrivateKey> priv_key;
+      priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
+      if (!priv_key)
+          throw informative_failure("Failed to get RSA signing key");
+
+      return priv_key;
+    }
+  I(false);
+}
+
+// converts an oldstyle arc4 encrypted key into a newstyle pkcs#8 encoded
+// key. the public key is also included
+void
+migrate_private_key(app_state & app,
+                    rsa_keypair_id const & id,
+                    base64< arc4<rsa_priv_key> > const & old_priv,
+                    keypair & new_kp)
+{
+  arc4<rsa_priv_key> decoded_key;
+  SecureVector<byte> decrypted_key;
+  string phrase;
+
+  bool force = false;
+
+  // need to decrypt the old key
+  shared_ptr<RSA_PrivateKey> priv_key;
+  L(F("base64-decoding %d-byte old private key\n") % old_priv().size());
+  decode_base64(old_priv, decoded_key);
+  for (int i = 0; i < 3; ++i)
+    {
+      decrypted_key.set(reinterpret_cast<byte const *>(decoded_key().data()), 
+                           decoded_key().size());
+      get_passphrase(app.lua, id, phrase, false, force);
+      SecureVector<byte> sym_key;
+      sym_key.set(reinterpret_cast<byte const *>(phrase.data()), phrase.size());
+      do_arc4(sym_key, decrypted_key);
+
+      L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
+
+      shared_ptr<PKCS8_PrivateKey> pkcs8_key;
+      try 
+        {
+          Pipe p;
+          p.process_msg(decrypted_key);
+          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p, "", false));
+        }
+      catch (...)
+        {
+          if (i >= 2)
+            throw informative_failure("failed to decrypt old private RSA key, "
+                                      "probably incorrect passphrase");
+          // don't use the cache bad one next time
+          force = true;
+          continue;
+        }
+
+      priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
+      if (!priv_key)
+          throw informative_failure("Failed to get old RSA key");
+    }
+
+  I(priv_key);
+
+  // now we can write out the new key
+  Pipe p;
+  p.start_msg();
+  PKCS8::encrypt_key(*priv_key, p, phrase, 
+                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", RAW_BER);
+  rsa_priv_key raw_priv = rsa_priv_key(p.read_all_as_string());
+  encode_base64(raw_priv, new_kp.priv);
+
+  // also the public portion
+  Pipe p2;
+  p2.start_msg();
+  X509::encode(*priv_key, p2, RAW_BER);
+  rsa_pub_key raw_pub = rsa_pub_key(p2.read_all_as_string());
+  encode_base64(raw_pub, new_kp.pub);
 }
 
 void
 change_key_passphrase(lua_hooks & lua,
                       rsa_keypair_id const & id,
-                      base64< arc4<rsa_priv_key> > & encoded_key)
+                      base64< rsa_priv_key > & encoded_key)
 {
-  SecureVector<byte> phrase;
-  get_passphrase(lua, id, phrase, false, true, "enter old passphrase");
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(lua, id, encoded_key, true);
 
-  arc4<rsa_priv_key> decoded_key;
-  SecureVector<byte> key_block;
-  decode_base64(encoded_key, decoded_key);
-  key_block.set(reinterpret_cast<byte const *>(decoded_key().data()),
-                   decoded_key().size());
-  do_arc4(phrase, key_block);
+  string new_phrase;
+  get_passphrase(lua, id, new_phrase, true, true, "enter new passphrase");
 
-  try
-    {
-      L(F("building signer from %d-byte decrypted private key\n") % key_block.size());
-      Pipe p;
-      p.process_msg(key_block);
-      shared_ptr<PKCS8_PrivateKey> pkcs8_key = 
-        shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p));
-    }
-  catch (...)
-    {
-      throw informative_failure("failed to decrypt private RSA key, "
-                                "probably incorrect passphrase");
-    }
+  Pipe p;
+  p.start_msg();
+  PKCS8::encrypt_key(*priv, p, new_phrase, 
+                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", RAW_BER);
+  rsa_priv_key decoded_key = rsa_priv_key(p.read_all_as_string());
 
-  get_passphrase(lua, id, phrase, true, true, "enter new passphrase");
-  do_arc4(phrase, key_block);
-  decoded_key = string(reinterpret_cast<char const *>(key_block.begin()),
-                       key_block.size());
   encode_base64(decoded_key, encoded_key);
 }
 
 void 
 make_signature(app_state & app,           // to hook for phrase
                rsa_keypair_id const & id, // to prompting user for phrase
-               base64< arc4<rsa_priv_key> > const & priv,
+               base64< rsa_priv_key > const & priv,
                string const & tosign,
                base64<rsa_sha1_signature> & signature)
 {
-  arc4<rsa_priv_key> decoded_key;
-  SecureVector<byte> decrypted_key;
-  SecureVector<byte> phrase;
   SecureVector<byte> sig;
   string sig_string;
 
@@ -242,7 +331,6 @@ make_signature(app_state & app,           // to hook for phrase
   // something.
 
   bool persist_phrase = (!app.signers.empty()) || app.lua.hook_persist_phrase_ok();
-  bool force = false;
 
   shared_ptr<PK_Signer> signer;
   shared_ptr<RSA_PrivateKey> priv_key;
@@ -251,47 +339,16 @@ make_signature(app_state & app,           // to hook for phrase
 
   else
     {
-      for (int i = 0; i < 3; ++i)
-        {
-          L(F("base64-decoding %d-byte private key\n") % priv().size());
-          decode_base64(priv, decoded_key);
-          decrypted_key.set(reinterpret_cast<byte const *>(decoded_key().data()), 
-                               decoded_key().size());
-          get_passphrase(app.lua, id, phrase, false, force);
-          do_arc4(phrase, decrypted_key);
-
-          L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
-
-          shared_ptr<PKCS8_PrivateKey> pkcs8_key;
-          try 
-            {
-              Pipe p;
-              p.process_msg(decrypted_key);
-              pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p));
-            }
-          catch (...)
-            {
-              if (i >= 2)
-                throw informative_failure("failed to decrypt private RSA key, "
-                                          "probably incorrect passphrase");
-              // don't use the cache bad one next time
-              force = true;
-              continue;
-            }
-
-          priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
-          if (!priv_key)
-              throw informative_failure("Failed to get RSA signing key");
-
-          signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
-          
-          /* XXX This is ugly. We need to keep the key around as long
-           * as the signer is around, but the shared_ptr for the key will go
-           * away after we leave this scope. Hence we store a pair of
-           * <verifier,key> so they both exist. */
-          if (persist_phrase)
-            app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
-        }
+      shared_ptr<RSA_PrivateKey> priv_key;
+      priv_key = get_private_key(app.lua, id, priv);
+      signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
+      
+      /* XXX This is ugly. We need to keep the key around as long
+       * as the signer is around, but the shared_ptr for the key will go
+       * away after we leave this scope. Hence we store a pair of
+       * <verifier,key> so they both exist. */
+      if (persist_phrase)
+        app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
     }
 
   sig = signer->sign_message(reinterpret_cast<byte const *>(tosign.data()), tosign.size());
@@ -384,51 +441,19 @@ void encrypt_rsa(lua_hooks & lua,
 
 void decrypt_rsa(lua_hooks & lua,
                  rsa_keypair_id const & id,
-                 base64< arc4<rsa_priv_key> > const & priv,
+                 base64< rsa_priv_key > const & priv,
                  rsa_oaep_sha_data const & ciphertext,
                  std::string & plaintext)
 {
-  arc4<rsa_priv_key> decoded_key;
-  SecureVector<byte> decrypted_key;
-  SecureVector<byte> phrase;
+  shared_ptr<RSA_PrivateKey> priv_key = get_private_key(lua, id, priv);
+
   shared_ptr<PK_Decryptor> decryptor;
-  shared_ptr<PKCS8_PrivateKey> pkcs8_key;
+  decryptor = shared_ptr<PK_Decryptor>(get_pk_decryptor(*priv_key, "EME1(SHA-1)"));
 
-  for (int i = 0; i < 3; i++)
-    {
-      bool force = false;
-      decode_base64(priv, decoded_key);
-      decrypted_key.set(reinterpret_cast<byte const *>(decoded_key().data()), 
-                           decoded_key().size());
-      get_passphrase(lua, id, phrase, false, force);
-      do_arc4(phrase, decrypted_key);
-
-      try 
-        {
-          Pipe p;
-          p.process_msg(decrypted_key);
-          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p));
-        }
-      catch (...)
-        {
-          if (i >= 2)
-            throw informative_failure("failed to decrypt private RSA key, "
-                                      "probably incorrect passphrase");
-          // don't use the cache bad one next time
-          force = true;
-          continue;
-        }
-    }
-
-    shared_ptr<RSA_PrivateKey> priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
-    if (!priv_key)
-        throw informative_failure("Failed to get RSA decrypting key");
-    decryptor = shared_ptr<PK_Decryptor>(get_pk_decryptor(*priv_key, "EME1(SHA-1)"));
-
-    SecureVector<byte> plain;
-    plain = decryptor->decrypt(
-          reinterpret_cast<byte const *>(ciphertext().data()), ciphertext().size());
-    plaintext = string(reinterpret_cast<char const*>(plain.begin()), plain.size());
+  SecureVector<byte> plain;
+  plain = decryptor->decrypt(
+        reinterpret_cast<byte const *>(ciphertext().data()), ciphertext().size());
+  plaintext = string(reinterpret_cast<char const*>(plain.begin()), plain.size());
 }
 
 void 
@@ -467,7 +492,7 @@ key_hash_code(rsa_keypair_id const & id,
 
 void 
 key_hash_code(rsa_keypair_id const & id,
-              base64< arc4<rsa_priv_key> > const & priv,
+              base64< rsa_priv_key > const & priv,
               hexenc<id> & out)
 {
   data tdat(id() + ":" + remove_ws(priv()));
@@ -490,9 +515,9 @@ keys_match(rsa_keypair_id const & id1,
 
 bool 
 keys_match(rsa_keypair_id const & id1,
-           base64< arc4<rsa_priv_key> > const & key1,
+           base64< rsa_priv_key > const & key1,
            rsa_keypair_id const & id2,
-           base64< arc4<rsa_priv_key> > const & key2)
+           base64< rsa_priv_key > const & key2)
 {
   hexenc<id> hash1, hash2;
   key_hash_code(id1, key1, hash1);
@@ -505,19 +530,17 @@ require_password(rsa_keypair_id const & key,
                  app_state & app)
 {
   N(priv_key_exists(app, key),
-    F("no private key '%s' found in database or get_priv_key hook") % key);
-  N(app.db.public_key_exists(key),
-    F("no public key '%s' found in database") % key);
-  base64<rsa_pub_key> pub;
-  app.db.get_key(key, pub);
-  base64< arc4<rsa_priv_key> > priv;
-  load_priv_key(app, key, priv);
+    F("no key pair '%s' found in key store or get_priv_key hook") % key);
+//  N(app.db.public_key_exists(key),
+//    F("no public key '%s' found in database") % key);
+  keypair kp;
+  load_key_pair(app, key, kp);
   if (app.lua.hook_persist_phrase_ok())
     {
       string plaintext("hi maude");
       base64<rsa_sha1_signature> sig;
-      make_signature(app, key, priv, plaintext, sig);
-      N(check_signature(app, key, pub, plaintext, sig),
+      make_signature(app, key, kp.priv, plaintext, sig);
+      N(check_signature(app, key, kp.pub, plaintext, sig),
         F("passphrase for '%s' is incorrect") % key);
     }
 }
@@ -561,21 +584,20 @@ signature_round_trip_test()
 
   BOOST_CHECKPOINT("generating key pairs");
   rsa_keypair_id key("bob123@test.com");
-  base64<rsa_pub_key> pubkey;
-  base64< arc4<rsa_priv_key> > privkey;
-  generate_key_pair(app.lua, key, pubkey, privkey, "bob123@test.com");
+  keypair kp;
+  generate_key_pair(app.lua, key, kp, "bob123@test.com");
 
   BOOST_CHECKPOINT("signing plaintext");
   string plaintext("test string to sign");
   base64<rsa_sha1_signature> sig;
-  make_signature(app, key, privkey, plaintext, sig);
+  make_signature(app, key, kp.priv, plaintext, sig);
   
   BOOST_CHECKPOINT("checking signature");
-  BOOST_CHECK(check_signature(app, key, pubkey, plaintext, sig));
+  BOOST_CHECK(check_signature(app, key, kp.pub, plaintext, sig));
   
   string broken_plaintext = plaintext + " ...with a lie";
   BOOST_CHECKPOINT("checking non-signature");
-  BOOST_CHECK(!check_signature(app, key, pubkey, broken_plaintext, sig));
+  BOOST_CHECK(!check_signature(app, key, kp.pub, broken_plaintext, sig));
 }
 
 void 

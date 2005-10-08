@@ -228,6 +228,18 @@ void dump(dec<INNER> const & obj, std::string & out)     \
 template class revision<cert>;
 template class manifest<cert>;
 
+template
+void dump<rsa_pub_key>(base64<rsa_pub_key> const&, std::string &);
+
+template
+void dump(revision_id const & r, std::string &);
+
+template
+void dump(manifest_id const & r, std::string &);
+
+template
+void dump(file_id const & r, std::string &);
+
 // the rest is unit tests
 
 #ifdef BUILD_UNIT_TESTS

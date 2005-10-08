@@ -14,6 +14,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include "app_state.hh"
 #include "basic_io.hh"
@@ -23,8 +24,9 @@
 #include "revision.hh"
 #include "transforms.hh"
 #include "vocab.hh"
+#include "keys.hh"
 
-static std::string const interface_version = "1.0";
+static std::string const interface_version = "1.1";
 
 // Name: interface_version
 // Arguments: none
@@ -1263,6 +1265,105 @@ automate_stdio(std::vector<utf8> args,
     }
 }
 
+// Name: keys
+// Arguments: none
+// Added in: 1.1
+// Purpose: Prints all keys in the keystore, and if a database is given
+//   also all keys in the database, in basic_io format.
+// Output format: For each key, a basic_io stanza is printed. The items in
+//   the stanza are:
+//     name - the key identifier
+//     public_hash - the hash of the public half of the key
+//     private_hash - the hash of the private half of the key
+//     public_location - where the public half of the key is stored
+//     private_location - where the private half of the key is stored
+//   The *_location items may have multiple values, as shown below
+//   for public_location.
+//   If the private key does not exist, then the private_hash and
+//   private_location items will be absent.
+//
+// Sample output:
+//               name "tbrownaw@gmail.com"
+//        public_hash [475055ec71ad48f5dfaf875b0fea597b5cbbee64]
+//       private_hash [7f76dae3f91bb48f80f1871856d9d519770b7f8a]
+//    public_location "database" "keystore"
+//   private_location "keystore"
+//
+//              name "njs@pobox.com"
+//       public_hash [de84b575d5e47254393eba49dce9dc4db98ed42d]
+//   public_location "database"
+//
+//               name "foo@bar.com"
+//        public_hash [7b6ce0bd83240438e7a8c7c207d8654881b763f6]
+//       private_hash [bfc3263e3257087f531168850801ccefc668312d]
+//    public_location "keystore"
+//   private_location "keystore"
+//
+// Error conditions: None.
+static void
+automate_keys(std::vector<utf8> args, std::string const & help_name,
+              app_state & app, std::ostream & output)
+{
+  if (args.size() != 0)
+    throw usage(help_name);
+  std::vector<rsa_keypair_id> dbkeys;
+  std::vector<rsa_keypair_id> kskeys;
+  // public_hash, private_hash, public_location, private_location
+  std::map<std::string, boost::tuple<hexenc<id>, hexenc<id>,
+                                     std::vector<std::string>,
+                                     std::vector<std::string> > > items;
+  if (app.db.database_specified())
+    {
+      transaction_guard guard(app.db);
+      app.db.get_key_ids("", dbkeys);
+      guard.commit();
+    }
+  app.keys.get_key_ids("", kskeys);
+
+  for (std::vector<rsa_keypair_id>::iterator i = dbkeys.begin();
+       i != dbkeys.end(); i++)
+    {
+      base64<rsa_pub_key> pub_encoded;
+      hexenc<id> hash_code;
+
+      app.db.get_key(*i, pub_encoded);
+      key_hash_code(*i, pub_encoded, hash_code);
+      items[(*i)()].get<0>() = hash_code;
+      items[(*i)()].get<2>().push_back("database");
+    }
+
+  for (std::vector<rsa_keypair_id>::iterator i = kskeys.begin();
+       i != kskeys.end(); i++)
+    {
+      keypair kp;
+      hexenc<id> privhash, pubhash;
+      app.keys.get_key_pair(*i, kp); 
+      key_hash_code(*i, kp.pub, pubhash);
+      key_hash_code(*i, kp.priv, privhash);
+      items[(*i)()].get<0>() = pubhash;
+      items[(*i)()].get<1>() = privhash;
+      items[(*i)()].get<2>().push_back("keystore");
+      items[(*i)()].get<3>().push_back("keystore");
+    }
+  basic_io::printer prt(output);
+  for (std::map<std::string, boost::tuple<hexenc<id>, hexenc<id>,
+                                     std::vector<std::string>,
+                                     std::vector<std::string> > >::iterator
+         i = items.begin(); i != items.end(); ++i)
+    {
+      basic_io::stanza stz;
+      stz.push_str_pair("name", i->first);
+      stz.push_hex_pair("public_hash", i->second.get<0>()());
+      if (!i->second.get<1>()().empty())
+        stz.push_hex_pair("private_hash", i->second.get<1>()());
+      stz.push_str_multi("public_location", i->second.get<2>());
+      if (!i->second.get<3>().empty())
+        stz.push_str_multi("private_location", i->second.get<3>());
+      prt.print_stanza(stz);
+    }
+}
+
+
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
                  std::string const & root_cmd_name,
@@ -1307,6 +1408,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_get_manifest(args, root_cmd_name, app, output);
   else if (cmd() == "get_file")
     automate_get_file(args, root_cmd_name, app, output);
+  else if (cmd() == "keys")
+    automate_keys(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }

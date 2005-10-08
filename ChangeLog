@@ -5,6 +5,168 @@
 	should work.
 	* tests/t_add_inside_MT.at, testsuite.at: New test.
 
+2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/fs.cc: Don't consider USERPROFILE as a possible home
+	directory; APPDATA is more appropriate.  Add a second method to
+	get the APPDATA path.  Always use HOME if it's set (not just under
+	Cygwin/MinGW).
+	* tests/t_netsync_absorbs.at: Add missing CANONICALISE().
+
+2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (pubkey): don't insist on having a database
+	* tests/t_key_management_without_db.at: check it
+
+2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* file_io.cc, vocab.cc, Makefile.am: fix merge
+	* botan/algolist.cpp, botan/def_alg.cpp: fix merge
+
+2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: add "automate keys". like "ls keys", except it
+	uses basic_io (since "ls keys" is now slightly irregular and not
+	very well suited to machine interpretation).
+	* monotone.texi: document it
+	* tests/t_automate_keys.at: test for it
+	* testsuite.at: add test
+	* basic_io.{cc,hh} (stanza): add push_str_multi, for entries
+	that can take a variable number of string arguments.
+	* commands.cc: add "automate keys" to automate help
+	misc minor whitespace cleanup
+
+2005-10-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (ls_keys): don't insist on having a db
+	* tests/t_key_management_without_db.at: check ls keys
+	* monotone.texi: update for new key storage
+		* concepts :: storage and workflow
+		* tutorial :: generating keys
+		* tutorial :: committing work
+		* command reference :: informative
+		* command reference :: key and cert
+		* command reference :: packet I/O
+
+2005-10-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (chkeypass): doesn't use the db, so we don't need a guard
+	* commands.cc (dropkey): don't insist on having a db
+	* tests/t_genkey_without_db.at: rename (s/genkey/key_management) and
+	add checks for chkeypass and dropkey without a db
+
+2005-10-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* database.{cc,hh}: new function, database::database_specified()
+	return whether we were given a database (doesn't care about validity,
+	only that we were told to use one)
+	* commands.cc (genkey): don't insist on having a db, but still
+	check it for duplicates if we're given one.
+	* tests/t_genkey_without_db.at: make sure it works
+	* testsuite.at: add test
+
+2005-09-28  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* keys.cc (get_private_key): don't use lua hook passwords for
+	chkeypass.
+
+2005-09-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* keys.cc (get_private_keys): don't use lua hook passwords for
+	chkeypass.
+
+2005-09-28  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* key_store.cc: fix delete_key
+	* tests/t_database_check_normalized: needs 'db migrate'
+	* tests/t_lua_privkey.at: update for new key location
+	* tests/t_netsync_absorbs.at: use genkey instead of packets
+	* tests/t_netsync_checks_server_key.at: same
+	* tests/t_netsync_pubket.at: update key packet to new format
+
+2005-09-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Replace extract_keys command with a database migrator.
+	* database.{cc,hh}: Remove last traces of private keys in db.
+	* schema.sql: Remove private_keys table
+	* commands.cc (dropkey): private keys can no longer be in the db.
+	* schema_migration.cc: new migrator
+	* commands.cc: remove extract_keys
+	* tests/t_migrate_schema.at: update
+	* keys.hh, cert.cc, key_store.cc: keys_match doesn't work well on
+	privkeys. Don't use it.
+	* key_store.cc: Allow duplicate insertions, if they match.
+
+2005-09-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* schema_migration.hh: migrate_depot_schema() doesn't really exist
+	* database.cc, schema_migration.{cc,hh}: migrate_monotone_schema
+	now takes an app_state * , so data can be moved to/from the database.
+
+2005-09-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/pkcs8.cc, keys.cc: fix monotone-specific pkcs8 key
+	parsing.
+	* commands.cc: ls keys shows keystore-only pubkeys as well
+	* packet.cc: fix unit tests
+	* testsuite.at: use keypair packet rather than privkey/pubkey 
+	packets.
+
+2005-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc, keys.cc, others: use standard
+	"PBE-PKCS5v20(SHA-1,TripleDES/CBC)" encoding rather than
+	raw arc4. extract_keys will re-encode keys, still
+	need to work on packet.cc encoding.
+	* botan/{des*,pkcs5*,algolist.cpp}: required files
+	from Botan 1.4.6
+
+2005-09-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Move private keys outside the database.
+	They're now stored as keypairs in ~/.monotone/keys
+	Details:
+	* keystore.{cc,hh}: handle storage of keypairs
+	* tests*: Specify keystore location when running the testsuite.
+		This prevents it from polluting the user's keystore.
+	* database{cc,hh}: remove ability to put privkeys. They can still
+		be listed, retrieved, and deleted, to support
+	* commands.cc: New command, extract_keys. Copies private keys from
+		the database to the keystore.
+	* vocab.hh: add keypair type, like pair<pubkey, privkey>, except that
+		the members are named pub and priv.
+	* packet.cc: Clean up read_packets.
+	* packet.{cc,hh}: privkey packets no longer exists, handle keypair
+		packets instead.
+	* file_io.{cc,hh}: add read_directory because tree_walker needs to
+		be in the wc. add a write_data that works outside the wc.
+	* Makefile.am: add keystore.{cc,hh}
+	* others: update to work with new key storage
+
+2005-10-06  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* std_hooks.lua (merge3_emacs_cmd): Minor cleanup.
+	* std_hooks.lua: Pass '--eval' rather than '-eval' to Emacs; the
+	CVS emacsclient does not consider '-eval' as valid.
+	* platform.hh, unix/fs.cc, win32/fs.cc (rename_clobberingly): New
+	function for best-effort atomic renames.  This will probably never
+	be atomic on Win32.
+	* file_io.cc (write_data_impl): Append process ID to temporary
+	file name so that multiple monotone processes operating on the
+	same working copy are less likely to clobber each other.  Use
+	rename_clobberingly().
+	* ui.cc (user_interface): Allow std::cout to raise
+	ios_base::failure exceptions if stream goes bad (e.g. stream
+	receives EPIPE).
+	* monotone.cc (cpp_main): Catch ios_base::failure exceptions and
+	exit cleanly.
+	* main.cc (main_with_signal_handlers): Install handler to ignore
+	SIGPIPE.
+	* Makefile.am: Remove platform_netsync.cc references.
+	* {unix,win32}/platform_netsync.cc: Remove files.
+	* platform.hh, netsync.cc (run_netsync_protocol):
+	Remove {start,end}_platform_netsync() calls.
+
 2005-10-04  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Automation): Document the mysterious columns of
@@ -144,6 +306,14 @@
 	chapter it is, and most confusingly, it's last subsection
 	(Branching and Merging) ended up as a a separate chapter of it's
 	own...
+
+2005-09-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* netsync.cc (ancestry_fetcher): new approach to requesting file
+	and manifest deltas and full data. Tries to be more efficient
+	for the vcache of recontstructed data, and conceptually simpler
+
+	* tests/t_netsync_unrelated.at: passes, remove XFAIL
 
 2005-09-26  Benoît Dejean  <benoit@placenet.org>
 
@@ -12230,3 +12400,4 @@
 2003-04-06  graydon hoare  <graydon@pobox.com>
 
 	* initial release.
+

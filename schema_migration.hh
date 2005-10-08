@@ -17,9 +17,9 @@
 // of the migration.
 
 struct sqlite3;
+struct app_state;
 
 void calculate_schema_id(sqlite3 *sql, std::string & id);
-void migrate_depot_schema(sqlite3 *sql);
-void migrate_monotone_schema(sqlite3 *sql);
+void migrate_monotone_schema(sqlite3 *sql, app_state *app);
 
 #endif // __SCHEMA_MIGRATION__

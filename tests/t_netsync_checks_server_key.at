@@ -2,28 +2,7 @@ AT_SETUP([netsync verifies server keys])
 MONOTONE_SETUP
 NETSYNC_SETUP
 
-AT_DATA(foo, [@<:@pubkey foo@bar@:>@
-MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQDXdNcDvz8ARAxEw7ESs2y60RgT9HdpoPHA
-AXvhjWtojgoW8t7RLp+62RUm+c9H2tWFAVMBRtLzd9kFl58f+muDAiQVEJo4rgPy2jjrHO6Z
-UtfQv7Fh2d/euba9cbtNPaNjWu7RsnVOo4iEQhb3czeObhE0n+hJ3/dGj9d1IClbCwIBEQ==
-@<:@end@:>@
-@<:@privkey foo@bar@:>@
-gWGUHfbvsqKRQZ7inK1NQUO1cAuNcKENJNvoxhBtQKv6iIZp23ZBSrpBGuKoSnQSPXresXLD
-tYc4Ztecez0hBTjGsTmUm1EQLGf2dTJ4dG2nBJGbI2R6QvX9/KJbF1dIc9DCoJGB3XTpVg4R
-kMc9IFKM5tzwpNYRx+vpjf5GTamIyj1O5qmQmg7VFWx8uC3hzgW/FnaP9Qh2lnjiaEVDNzjA
-7FzTQAPUIcZJNOSQM/Tck0wharmaMzBaM1QZCoTXRgydARVW4eunxdFfK88U/5IICkcEYYII
-ssoz73Ukyvz8QQfJSnmbxK6b2x4RSoqOmjt8yC7rMrZOm05ZtaG+OzgFL19M+oZ9Aj3xVO7y
-DcEK2gNfBH7deHPcgJCLy42UkciCgstcAwBmrv6KkuRx7R/BqP/Oo+xCQJE0yeFNwmDvNTxV
-e0G7STVEoJYBdthevS55RUwrEwnW30q8wsI8FjzRkd5AiO61/WgMxhMsBpyp3ya2qzt5QEAf
-qTbOZaFedhQl+m6RsfJSBwjM/PQpLij5FnF/2etlyk9YtaUXyTqu8g4g83uzXfomCZXukbIG
-uS34HCqjEqP4zCxyezoKQydn4aiNluijDhvVx8GQGZ1n5coUdpOLWgF9aewIgFGalYGhZ70h
-zjBS/xmDvW09W+kcFtr5L7eopALvkpBVzc7PuSwXE+ev0lyxxXoC0fZ2u8dLmPfClSZ8kVf4
-ko05lS/Cu/Zrn4jDRSksYmBk+4nAirNSn7LLNNTtCVymcthokx90xDS2CNVHM7or49cih1lC
-756VX7YoqIDTYt7C3tBUSYs5rCW1/LotC43A4/Ai2kiqcRmaggr/
-@<:@end@:>@
-])
-
-AT_CHECK(MONOTONE read <foo, [], [ignore], [ignore])
+AT_CHECK((echo foo@bar; echo foo@bar) | MONOTONE genkey foo@bar, [], [ignore], [ignore])
 
 # Once to let the client note down the key...
 RUN_NETSYNC(pull, testbranch)
