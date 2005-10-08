@@ -582,12 +582,16 @@ database::fetch(results & res,
   map<string, statement>::iterator i = statement_cache.find(query);
   if (i == statement_cache.end()) 
     {
-      statement_cache.insert(make_pair(query, statement()));
-      i = statement_cache.find(query);
-      I(i != statement_cache.end());
-
+      statement s;
       const char * tail;
-      sqlite3_prepare(sql(), query, -1, &i->second.stmt, &tail);
+      // this line can throw, which leaves our statement uninitialized.  so we
+      // insert the statement into the table _after_ running it successfully.
+      sqlite3_prepare(sql(), query, -1, &s.stmt, &tail);
+      // note that this copies the statement, and thus the statement pointer.
+      // But we immediately tear down s, so we still end up with a single
+      // unique pointer to the statement, on which sqlite3_finalize will
+      // eventually be called by ~database.
+      statement_cache.insert(make_pair(query, s));
       assert_sqlite3_ok(sql());
       L(F("prepared statement %s\n") % query);
 

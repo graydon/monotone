@@ -1,5 +1,11 @@
 2005-10-08  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc (fetch): Do not insert prepared statements into the
+	statement table until they are successfully created, to avoid
+	segfaults on database teardown.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
 	* contrib/ciabot_monotone.py (send_change_for): Handle branch-less
 	revisions.
 
