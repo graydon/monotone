@@ -605,7 +605,13 @@ extern "C"
     const char *str = lua_tostring(L, -1);
     boost::cmatch what;
 
-    lua_pushboolean(L, boost::regex_search(str, what, boost::regex(re)));
+    try {
+      lua_pushboolean(L, boost::regex_search(str, what, boost::regex(re)));
+    } catch(boost::bad_pattern e) {
+      lua_pushstring(L, e.what());
+      lua_error(L);
+      return 0;
+    }
     return 1;
   }
 

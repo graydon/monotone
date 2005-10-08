@@ -88,7 +88,16 @@ function ignore_file(name)
    end
    for i, line in pairs(ignored_files)
    do
-      if (regex.search(line, name)) then return true end
+      local pcallstatus, result = pcall(function() if (regex.search(line, name)) then return true else return false end end)
+      if pcallstatus == true then
+          -- no error from the regex.search call
+          if result == true then return true end
+      else
+          -- regex.search had a problem, warn the user their .mt-ignore file syntax is wrong
+          io.write("\nWARNING: the line '" .. line .. "' in your .mt-ignore file caused exception '" .. result .. "'"
+                   .. " while matching filename '" .. name .. "', ignoring this regex for all remaining files.\n\n")
+          table.remove(ignored_files, i)
+      end
    end
    -- c/c++
    if (string.find(name, "%.a$")) then return true end
