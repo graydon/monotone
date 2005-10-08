@@ -1,5 +1,10 @@
 2005-10-08  Nathaniel Smith  <njs@pobox.com>
 
+	* contrib/ciabot_monotone.py (send_change_for): Handle branch-less
+	revisions.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc: Make initial_rel_path an fs::path.  Adjust code
 	correspondingly.  Add tests that calling monotone from inside MT
 	should work.
