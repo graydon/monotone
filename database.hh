@@ -9,6 +9,7 @@
 struct sqlite3;
 struct sqlite3_stmt;
 struct cert;
+int sqlite3_finalize(sqlite3_stmt *);
 
 #include <stdarg.h>
 
@@ -22,6 +23,7 @@ struct cert;
 #include "numeric_vocab.hh"
 #include "vocab.hh"
 #include "paths.hh"
+#include "cleanup.hh"
 
 struct revision_set;
 
@@ -75,9 +77,9 @@ class database
   void check_schema();
 
   struct statement {
+    statement() : count(0), stmt(0, sqlite3_finalize) {}
     int count;
-    statement() : count(0) {}
-    sqlite3_stmt *stmt;
+    cleanup_ptr<sqlite3_stmt*, int> stmt;
   };
 
   std::map<std::string, statement> statement_cache;
