@@ -67,8 +67,9 @@ get_homedir()
     }
   // Try a second method to get APPDATA:
   TCHAR szPath[MAX_PATH];
-  if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, szPath))
+  if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, szPath)))
     {
+      L(F("Home directory from APPDATA (via SHGetFolderPath)\n"));
       return std::string(szPath);
     }
   // Finally, if even that doesn't work (old version of Windows, I think?),
