@@ -1,5 +1,9 @@
 2005-10-08  Nathaniel Smith  <njs@pobox.com>
 
+	* revision.cc (analyze_manifest_changes): Remove.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
 	* revision.cc (calculate_change_sets_recursive):
 	(find_subgraph_for_composite_search) 
 	(calculate_composite_change_set, calculate_arbitrary_change_set):

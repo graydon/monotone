@@ -711,57 +711,6 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
 
-/*
-static void 
-analyze_manifest_changes(app_state & app,
-                         manifest_id const & parent, 
-                         manifest_id const & child, 
-                         std::set<file_path> const & need_history_splitting,
-                         cset & cs)
-{
-  manifest_map m_parent, m_child;
-
-  if (!null_id(parent))
-    app.db.get_manifest(parent, m_parent);
-
-  I(!null_id(child));
-  app.db.get_manifest(child, m_child);
-
-  L(F("analyzing manifest changes from '%s' -> '%s'\n") % parent % child);
-
-  for (manifest_map::const_iterator i = m_parent.begin(); 
-       i != m_parent.end(); ++i)
-    {
-      file_path f = manifest_entry_path(i);
-      manifest_map::const_iterator j = m_child.find(f);
-      if (j == m_child.end())
-        {
-          cs.delete_file(f);
-        }
-      else if (need_history_splitting.find(f) != need_history_splitting.end())
-        {
-          P(F("splitting ancestry for file %s\n") % f);
-          cs.delete_file(f);
-          cs.add_file(f, manifest_entry_id(j));
-        }
-      else if (! (manifest_entry_id(i) == manifest_entry_id(j)))
-        {
-          cs.apply_delta(manifest_entry_path(i),
-                         manifest_entry_id(i), 
-                         manifest_entry_id(j));
-        }
-    }
-  for (manifest_map::const_iterator i = m_child.begin(); 
-       i != m_child.end(); ++i)
-    {
-      manifest_map::const_iterator j = m_parent.find(manifest_entry_path(i));
-      if (j == m_parent.end())
-        cs.add_file(manifest_entry_path(i),
-                    manifest_entry_id(i));
-    }
-}
-*/
-
 struct anc_graph
 {
   anc_graph(bool existing, app_state & a) : 
