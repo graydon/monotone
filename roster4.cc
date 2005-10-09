@@ -474,7 +474,7 @@ roster_t::has_node(split_path const & sp) const
   for (split_path::const_iterator i = dirname.begin()+1; i != dirname.end(); ++i)
     {
       if (d->children.find(*i) == d->children.end())
-	return false;
+        return false;
       d = downcast_to_dir_t(d->get_child(*i));
     }
   return d->children.find(basename) != d->children.end();
@@ -980,6 +980,19 @@ namespace
     unify_roster_oneway(right, right_new, left, left_new, new_ids, nis);
   }
 
+  template <typename T> void
+  mark_unmerged_scalar(set<revision_id> const & parent_marks,
+                       T const & parent_val,
+                       revision_id const & new_rid,
+                       T const & new_val,
+                       set<revision_id> & new_marks)
+  {
+    I(new_marks.empty());
+    if (parent_val == new_val)
+      new_marks = parent_marks;
+    else
+      new_marks.insert(new_rid);
+  }
 
   // This function implements the case.
   //   a   b1
@@ -1008,214 +1021,135 @@ namespace
     new_marks = b1_marks;
   }
 
-
-  void
-  mark_attrs(full_attr_map_t const & lattrs, 
-             full_attr_map_t const & rattrs,
-             marking_t const & lmarks, 
-             marking_t const & rmarks,
-             set<revision_id> const & left_uncommon_ancestors,
-             set<revision_id> const & right_uncommon_ancestors,
-
-             // We are in the process of marking a new revision, so we take
-             // its rev id and its new attrs, plus the new marking for the
-             // attrs (which we write to in this function).
-             revision_id const & new_rid,
-             full_attr_map_t const & attrs, 
-             marking_t & marks)
+  template <typename T> void
+  mark_merged_scalar(set<revision_id> const & left_marks,
+                     set<revision_id> const & left_uncommon_ancestors,
+                     T const & left_val,
+                     set<revision_id> const & right_marks,
+                     set<revision_id> const & right_uncommon_ancestors,
+                     T const & right_val,
+                     revision_id const & new_rid,
+                     T const & new_val,
+                     set<revision_id> & new_marks)
   {
-    I(marks.attrs.empty());
-    for (full_attr_map_t::const_iterator j = attrs.begin(); j != attrs.end();
-         ++j)
+    I(new_marks.empty());
+    
+    // let's not depend on T::operator!= being defined, only on T::operator==
+    // being defined.
+    bool diff_from_left = !(new_val == left_val);
+    bool diff_from_right = !(new_val == right_val);
+
+    if (diff_from_left && diff_from_right)
+      new_marks.insert(new_rid);
+
+    else if (diff_from_left && !diff_from_right)
+      mark_won_merge(left_marks, left_uncommon_ancestors, right_marks,
+                     new_rid, new_marks);
+
+    else if (!diff_from_left && diff_from_right)
+      mark_won_merge(right_marks, right_uncommon_ancestors, left_marks,
+                     new_rid, new_marks);
+
+    else
       {
-        full_attr_map_t::const_iterator lai = lattrs.find(j->first);
-        full_attr_map_t::const_iterator rai = rattrs.find(j->first);
-
-        I(marks.attrs.find(j->first) == marks.attrs.end());
-
-        // Neither left nor right have ever seen this attr, so it was
-        // new in this rev. We make a new marking set for it and add the
-        // current rev to the marking set.
-        if (lai == lattrs.end() && rai == rattrs.end())
-          safe_insert(marks.attrs[j->first], new_rid);
-
-        // Only the right side has ever seen this attr, so the right side
-        // won merging.
-        else if (lai == lattrs.end() && rai != rattrs.end())
-          {
-            // Two sub-cases:               
-            if (j->second == rai->second)
-              {
-                // 1. The right edge is of the form a->a, and represents no decision
-                // on the part of the user, just a propagation of an existing state.
-                // In this case we carry the old mark-set forward from the right marking.
-                safe_insert(marks.attrs, make_pair(j->first, 
-                                                   safe_get(rmarks.attrs, j->first)));
-              }
-            else
-                
-              {
-                // 2. The right edge represents a change to the attr value --
-                // thus a decision on the part of the user -- in which case
-                // we need to set the new mark-set to {new_rid}
-                safe_insert(marks.attrs[j->first], new_rid);
-              }
-          }
-
-        // Only the left side has ever seen this attr, so the left
-        // side won merging.
-        else if (lai != lattrs.end() && rai == rattrs.end())
-          {
-            // Same two sub-cases here as above:
-            if (j->second == lai->second)
-              safe_insert(marks.attrs, make_pair(j->first, 
-                                                 safe_get(lmarks.attrs, j->first)));
-            else
-              safe_insert(marks.attrs[j->first], new_rid);
-          }
-
-        // Otherwise both sides have seen this attr, and we need to look at
-        // both old values.
-        else
-          {
-            bool diff_from_left = (j->second != lai->second);
-            bool diff_from_right = (j->second != rai->second);
-
-            // If the merged attr value differs from both inputs, the
-            // user "expressed a preference" by making a new setting, so
-            // we make the marking set for the new attr value contain
-            // only the new rev.
-            if (diff_from_left && diff_from_right)
-              safe_insert(marks.attrs[j->first], new_rid);
-
-            // If the merged attr is equal to one side of the merge input,
-            // we must ask for help in determining what to do with the 
-            // marks.
-            else if (diff_from_left && !diff_from_right)
-              mark_won_merge(safe_get(lmarks.attrs, j->first),
-                             left_uncommon_ancestors,
-                             safe_get(rmarks.attrs, j->first),
-                             new_rid, marks.attrs[j->first]);
-
-            else if (!diff_from_left && diff_from_right)
-              mark_won_merge(safe_get(rmarks.attrs, j->first),
-                             right_uncommon_ancestors,
-                             safe_get(lmarks.attrs, j->first),
-                             new_rid, marks.attrs[j->first]);
-
-            // Otherwise the merged attr is the same as both ancestors,
-            // meaning we have a clean merge in which the user said
-            // nothing; we must preserve (union) the mark sets of both
-            // inputs.
-            else
-              {
-                set<revision_id> const & lam = safe_get(lmarks.attrs, j->first);
-                set<revision_id> const & ram = safe_get(rmarks.attrs, j->first);
-                set<revision_id> res;
-                set_union(lam.begin(), lam.end(),
-                          ram.begin(), ram.end(),
-                          inserter(res, res.begin()));
-                safe_insert(marks.attrs, make_pair(j->first, res));
-              }
-          }
+        // this is the case
+        //   a   a
+        //    \ /
+        //     a
+        // so we simply union the mark sets.  This is technically not
+        // quite the canonical multi-*-merge thing to do; in the case
+        //     a1*
+        //    / \      (blah blah; avoid multi-line-comment warning)
+        //   b   a2
+        //   |   |
+        //   a3* |
+        //    \ /
+        //     a4
+        // we will set *(a4) = {a1, a3}, even though the minimal
+        // common ancestor set is {a3}.  we could fix this by running
+        // erase_ancestors.  However, there isn't really any point;
+        // the only operation performed on *(a4) is to test *(a4) > R
+        // for some revision R.  The truth-value of this test cannot
+        // be affected by added new revisions to *(a4) that are
+        // ancestors of revisions that are already in *(a4).
+        set_union(left_marks.begin(), left_marks.end(),
+                  right_marks.begin(), right_marks.end(),
+                  inserter(new_marks, new_marks.begin()));
       }
   }
 
-
-  // Take care of marking a single node both of whose parents exist.
   void
-  mark_nontrivial_node(node_t ln, 
-                       node_t rn,
-                       marking_t const & lmarks, 
-                       marking_t const & rmarks,
-                       set<revision_id> left_uncommon_ancestors,
-                       set<revision_id> right_uncommon_ancestors,
-                       
-                       // We are in the process of marking a new revision,
-                       // so we take its rev id and the new node, plus the
-                       // new marking for the node (which we write to in
-                       // this function).
-                       revision_id const & new_rid,
-                       node_t n, 
-                       marking_t & marks)
+  mark_merged_node(marking_t const & left_marking,
+                   set<revision_id> left_uncommon_ancestors,
+                   node_t ln,
+                   marking_t const & right_marking,
+                   set<revision_id> right_uncommon_ancestors,
+                   node_t rn,
+                   revision_id const & new_rid,
+                   node_t n,
+                   marking_t & new_marking)
   {
     // name
-    {
-      bool diff_from_left = (n->parent != ln->parent || n->name != ln->name);
-      bool diff_from_right = (n->parent != rn->parent || n->name != rn->name);
-
-      if (diff_from_left && diff_from_right)
-        marks.parent_name.insert(new_rid);
-
-      else if (diff_from_left && !diff_from_right)
-        mark_won_merge(lmarks.parent_name, left_uncommon_ancestors,
-                       rmarks.parent_name, new_rid,
-                       marks.parent_name);
-
-      else if (!diff_from_left && diff_from_right)
-        mark_won_merge(rmarks.parent_name, right_uncommon_ancestors,
-                       lmarks.parent_name, new_rid,
-                       marks.parent_name);
-      else
-        {
-          // this is the case
-          //   a   a
-          //    \ /
-          //     a
-          // so we simply union the mark sets.  This is technically not
-          // quite the canonical multi-*-merge thing to do; in the case
-          //     a1*
-          //    / \      (blah blah; avoid multi-line-comment warning)
-          //   b   a2
-          //   |   |
-          //   a3* |
-          //    \ /
-          //     a4
-          // we will set *(a4) = {a1, a3}, even though the minimal
-          // common ancestor set is {a3}.  we could fix this by running
-          // erase_ancestors.  However, there isn't really any point;
-          // the only operation performed on *(a4) is to test *(a4) > R
-          // for some revision R.  The truth-value of this test cannot
-          // be affected by added new revisions to *(a4) that are
-          // ancestors of revisions that are already in *(a4).
-          set_union(lmarks.parent_name.begin(), lmarks.parent_name.end(),
-                    rmarks.parent_name.begin(), rmarks.parent_name.end(),
-                    inserter(marks.parent_name, marks.parent_name.begin()));
-        }
-    }
+    mark_merged_scalar(left_marking.parent_name, left_uncommon_ancestors,
+                       std::make_pair(ln->parent, ln->name),
+                       right_marking.parent_name, right_uncommon_ancestors,
+                       std::make_pair(rn->parent, rn->name),
+                       new_rid,
+                       std::make_pair(n->parent, n->name),
+                       new_marking.parent_name);
     // content
     if (is_file_t(n))
       {
         file_t f = downcast_to_file_t(n);
         file_t lf = downcast_to_file_t(ln);
         file_t rf = downcast_to_file_t(rn);
-
-        bool diff_from_left = (!(f->content == lf->content));
-        bool diff_from_right = (!(f->content == rf->content));
-
-        if (diff_from_left && diff_from_right)
-          marks.file_content.insert(new_rid);
-
-        else if (diff_from_left && !diff_from_right)
-          mark_won_merge(lmarks.file_content, left_uncommon_ancestors,
-                         rmarks.file_content, new_rid,
-                         marks.file_content);
-
-        else if (!diff_from_left && diff_from_right)
-          mark_won_merge(rmarks.file_content, right_uncommon_ancestors,
-                         lmarks.file_content, new_rid,
-                         marks.file_content);
-
-        else
-          set_union(lmarks.file_content.begin(), lmarks.file_content.end(),
-                    rmarks.file_content.begin(), rmarks.file_content.end(),
-                    inserter(marks.file_content, marks.file_content.begin()));
+        mark_merged_scalar(left_marking.file_content, left_uncommon_ancestors,
+                           lf->content,
+                           right_marking.file_content, right_uncommon_ancestors,
+                           rf->content,
+                           new_rid,
+                           f->content,
+                           new_marking.file_content);
       }
-    // attrs are pain, and thus get their own function
-    mark_attrs(ln->attrs, rn->attrs, 
-               lmarks, rmarks,
-               left_uncommon_ancestors, right_uncommon_ancestors,
-               new_rid, n->attrs, marks);
+    // attrs
+    for (full_attr_map_t::const_iterator i = n->attrs.begin();
+         i != n->attrs.end(); ++i)
+      {
+        attr_key const & key = i->first;
+        full_attr_map_t::const_iterator li = ln->attrs.find(key);
+        full_attr_map_t::const_iterator ri = rn->attrs.find(key);
+        I(new_marking.attrs.find(key) == new_marking.attrs.end());
+        // [], when used to refer to a non-existent element, default
+        // constructs that element and returns a reference to it.  We make use
+        // of this here.
+        set<revision_id> & new_marks = new_marking.attrs[key];
+
+        if (li == ln->attrs.end() && ri == rn->attrs.end())
+          // this is a brand new attribute, never before seen
+          safe_insert(new_marks, new_rid);
+
+        else if (li != ln->attrs.end() && ri == rn->attrs.end())
+          // only the left side has seen this attr before
+          mark_unmerged_scalar(safe_get(left_marking.attrs, key),
+                               li->second,
+                               new_rid, i->second, new_marks);
+        
+        else if (li == ln->attrs.end() && ri != rn->attrs.end())
+          // only the right side has seen this attr before
+          mark_unmerged_scalar(safe_get(right_marking.attrs, key),
+                               ri->second,
+                               new_rid, i->second, new_marks);
+        
+        else
+          // both sides have seen this attr before
+          mark_merged_scalar(safe_get(left_marking.attrs, key),
+                             left_uncommon_ancestors,
+                             li->second,
+                             safe_get(right_marking.attrs, key),
+                             right_uncommon_ancestors,
+                             ri->second,
+                             new_rid, i->second, new_marks);
+      }
   }
 
 
@@ -1304,10 +1238,11 @@ namespace
             I(same_type(n, ln));
             I(lmi->second.birth_revision == rmi->second.birth_revision);
             marking_t marks(lmi->second.birth_revision, new_rid, n);
-            mark_nontrivial_node(ln, rn, lmi->second, rmi->second,
-                                 left_uncommon_ancestors, right_uncommon_ancestors,
-                                 new_rid, n, marks);
-            // attributes can never be deleted.
+            mark_merged_node(lmi->second, left_uncommon_ancestors, ln,
+                             rmi->second, right_uncommon_ancestors, rn,
+                             new_rid, n, marks);
+            // attributes can never be deleted, so just double-check that they
+            // haven't been (sanity-checking).
             // this is kinda inefficent, but very rarely will any node have
             // more than 1 attribute.
             for (full_attr_map_t::const_iterator j = ln->attrs.begin();
