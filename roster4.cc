@@ -949,7 +949,7 @@ namespace
         // but may not be worth the effort (since it doesn't take that long to
         // get out in any case)
         a.get_name(aid, sp);
-        node_id bid = b.get_node(aid)->self;
+        node_id bid = b.get_node(sp)->self;
         if (temp_node(bid))
           {
             node_id new_nid = nis.next();

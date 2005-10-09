@@ -1087,8 +1087,9 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
                    ! null_node(other_id); 
                    other_id = parent_roster->get_node(other_id)->parent)
                 {
+                  node_id next_nid = child_roster.get_node(nid)->parent;
                   child_roster.replace_node_id(nid, other_id);
-                  nid = child_roster.get_node(nid)->parent;
+                  nid = next_nid;
                 }
               I(null_node(nid));
               break;
@@ -1171,7 +1172,7 @@ anc_graph::construct_revisions_from_ancestry()
             {
               if (i->first != child)
                 continue;
-              u64 parent = i->second;
+              u64 parent = i->second;           
               if (parent_rosters.find(parent) == parent_rosters.end())
                 {
                   boost::shared_ptr<roster_t> ros = boost::shared_ptr<roster_t>(new roster_t());
@@ -1255,6 +1256,16 @@ anc_graph::construct_revisions_from_ancestry()
           
           // Mark this child as done, hooray!
           safe_insert(done, child);
+
+          // Extend the work queue with all the children of this child
+          std::pair<ci,ci> grandchild_range = parent_to_child_map.equal_range(child);
+          for (ci i = grandchild_range.first; 
+               i != grandchild_range.second; ++i)
+            {
+              if (i->first != child)
+                continue;
+              work.push_back(i->second);
+            }
         }
     }
 }
