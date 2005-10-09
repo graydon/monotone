@@ -476,7 +476,7 @@ int main (int argc, char **argv)
     else if (pos == 2)
       cf>>rec.port;
     else if (pos == 3) {
-      pos = 0;
+      pos = -1;
       servers.push_back(rec);
     }
     ++pos;

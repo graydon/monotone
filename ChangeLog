@@ -1,5 +1,7 @@
 2005-10-09  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* contrib/usher.cc (main): Reset parser state for config file
+	parser.
 	* win32/monotone.iss: Reduce minimum OS version for installer.
 	* configure.ac: Another Boost library suffix.
 
