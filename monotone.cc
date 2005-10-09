@@ -13,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <locale.h>
 
 #include <stdlib.h>
 #ifdef WIN32
