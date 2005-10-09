@@ -1,3 +1,8 @@
+2005-10-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/monotone.iss: Reduce minimum OS version for installer.
+	* configure.ac: Another Boost library suffix.
+
 2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_automate_keys.at: Portability fixes.
