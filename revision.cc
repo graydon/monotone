@@ -958,6 +958,11 @@ u64 anc_graph::add_node_for_old_manifest(manifest_id const & man)
   return node;
 }
 
+static void 
+get_manifest_for_rev(app_state & app,
+                     revision_id const & ident,
+                     manifest_id & mid);
+
 u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
 {
   I(existing_graph);
@@ -969,7 +974,7 @@ u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
       ++n_nodes;
       
       manifest_id man;
-      app.db.get_revision_manifest(rev, man);
+      get_manifest_for_rev(app, rev, man);
       
       L(F("node %d = revision %s = manifest %s\n") % node % rev % man);
       old_rev_to_node.insert(std::make_pair(rev, node));
@@ -1210,12 +1215,32 @@ anc_graph::construct_revisions_from_ancestry()
                                                                       
             }
 
+          // It is possible that we're at a "root" node here -- a node
+          // which had no parent in the old rev graph -- in which case we
+          // synthesize an edge from the empty revision to the current,
+          // containing a cset which adds all the files in the child.
+
+          if (rev.edges.empty())
+            {
+              revision_id parent_rid;
+              boost::shared_ptr<roster_t> parent_roster = boost::shared_ptr<roster_t>(new roster_t());
+              boost::shared_ptr<cset> cs = boost::shared_ptr<cset>(new cset());
+              make_cset(*parent_roster, child_roster, *cs); 
+              manifest_id parent_manifest_id;
+              safe_insert (rev.edges, std::make_pair (parent_rid, 
+                                                      std::make_pair (parent_manifest_id, cs)));
+              
+            }
+
           // Finally, put all this excitement into the database and save
           // the new_rid for use in the cert-writing pass.
 
           revision_id new_rid;
           calculate_ident(rev, new_rid);
           node_to_new_rev.insert(std::make_pair(child, new_rid));
+
+          L(F("made revision %s with %d edges, manifest id = %s\n")
+            % new_rid % rev.edges.size() % rev.new_manifest);
 
           if (!app.db.revision_exists (new_rid))
             {
@@ -1314,6 +1339,41 @@ namespace
     std::string const new_manifest("new_manifest");
     std::string const old_manifest("old_manifest");
   }
+}
+
+
+// HACK: this is a special reader which picks out the new_manifest field in
+// a revision; it ignores all other symbols. This is because, in the
+// pre-roster database, we have revisions holding change_sets, not
+// csets. If we apply the cset reader to them, they fault. We need to
+// *partially* read them, however, in order to get the manifest IDs out of
+// the old revisions (before we delete the revs and rebuild them)
+
+static void 
+get_manifest_for_rev(app_state & app,
+                     revision_id const & ident,
+                     manifest_id & mid)
+{
+  revision_data dat;
+  app.db.get_revision(ident,dat);
+  std::istringstream iss(dat.inner()());
+  basic_io::input_source src(iss, "revision");
+  basic_io::tokenizer tok(src);
+  basic_io::parser pars(tok);
+  while (pars.symp())
+    {
+      if (pars.symp(syms::new_manifest))
+        {
+          std::string tmp;
+          pars.sym();
+          pars.hex(tmp);
+          mid = manifest_id(tmp);
+          return;
+        }
+      else
+        pars.sym();
+    }
+  I(false);
 }
 
 

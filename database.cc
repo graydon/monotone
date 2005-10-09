@@ -1386,9 +1386,12 @@ database::put_revision(revision_id const & new_id,
         roster_t parent_roster;
         marking_map ignored;
         manifest_id parent_mid;
-        get_roster(edge_old_revision(i), parent_roster, ignored);
-        calculate_ident(parent_roster, parent_mid);
-        I(edge_old_manifest(i) == parent_mid);
+        if (!edge_old_revision(i).inner()().empty())
+          {
+            get_roster(edge_old_revision(i), parent_roster, ignored);
+            calculate_ident(parent_roster, parent_mid);
+            I(edge_old_manifest(i) == parent_mid);
+          }
       }
   }
 
@@ -2483,6 +2486,12 @@ void
 database::get_roster_id_for_revision(revision_id const & rev_id,
                                      hexenc<id> & roster_id)
 {
+  if (rev_id.inner()().empty())
+    {
+      roster_id = hexenc<id>();
+      return;
+    }
+
   results res;
   string data_table = "rosters";
   string delta_table = "roster_deltas";
@@ -2502,6 +2511,13 @@ database::get_roster(revision_id const & rev_id,
                      roster_t & roster,
                      marking_map & marks)
 {
+  if (rev_id.inner()().empty())
+    {
+      roster = roster_t();
+      marks = marking_map();
+      return;
+    }
+
   string data_table = "rosters";
   string delta_table = "roster_deltas";
   data dat;
@@ -2540,7 +2556,7 @@ database::put_roster(revision_id const & rev_id,
         rev_id.inner()().c_str());
 
   transaction_guard guard(*this);
-  if (res.size() != 0)
+  if (res.size() != 0 && !res[0][0].empty())
     {
       // There's a parent revision; we are going to do delta
       // compression on the roster by using the roster associated with
@@ -2573,7 +2589,7 @@ database::put_roster(revision_id const & rev_id,
     }
 
   // nb: rosters schema is (id, rev_id, data)
-  string query = "INSERT INTO " + data_table + " VALUES(?, ?, ?, ?)";
+  string query = "INSERT INTO " + data_table + " VALUES(?, ?, ?)";
   execute(query.c_str(),
           ident().c_str(), rev_id.inner()().c_str(), 
           new_data_packed().c_str());      

@@ -466,7 +466,10 @@ roster_t::has_node(split_path const & sp) const
       return has_root();
     }
 
-  I(has_root());
+  // If we have no root, we *definitely* don't have a non-root path
+  if (!has_root())
+    return false;
+    
   dir_t d = root_dir;  
   for (split_path::const_iterator i = dirname.begin()+1; i != dirname.end(); ++i)
     {
@@ -743,7 +746,7 @@ roster_t::check_finite_depth() const
 }
 
 void
-roster_t::check_sane() const
+roster_t::check_sane(bool temp_nodes_ok) const
 {
   I(has_root());
   node_map::const_iterator ri;
@@ -753,7 +756,9 @@ roster_t::check_sane() const
        ++ri)
     {
       node_id nid = ri->first;
-      I(!null_node(nid) && !temp_node(nid));
+      I(!null_node(nid));
+      if (!temp_nodes_ok)
+        I(!temp_node(nid));
       node_t n = ri->second;
       I(n->self == nid);
       if (is_dir_t(n))
@@ -1964,7 +1969,7 @@ write_roster_and_marking(roster_t const & ros,
   if (print_local_parts)
     ros.check_sane_against(mm);
   else
-    ros.check_sane();
+    ros.check_sane(true);
   std::ostringstream oss;
   basic_io::printer pr(oss);
   ros.print_to(pr, mm, print_local_parts);

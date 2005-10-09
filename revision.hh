@@ -169,12 +169,13 @@ calculate_arbitrary_cset(revision_id const & start,
 			 app_state & app,
 			 cset & composed);
 
+*/
+
 void 
 build_changesets_from_manifest_ancestry(app_state & app);
 
 void 
 build_changesets_from_existing_revs(app_state & app);
-*/
 
 // basic_io access to printers and parsers
 

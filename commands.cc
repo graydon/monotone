@@ -2103,13 +2103,10 @@ CMD(db, N_("database"),
         app.db.migrate();
       else if (idx(args, 0)() == "check")
         check_db(app);
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
       else if (idx(args, 0)() == "changesetify")
         build_changesets_from_manifest_ancestry(app);
       else if (idx(args, 0)() == "rebuild")
         build_changesets_from_existing_revs(app);
-*/
       else
         throw usage(name);
     }

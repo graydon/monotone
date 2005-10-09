@@ -199,7 +199,7 @@ public:
 
   bool operator==(roster_t const & other) const;
 
-  void check_sane() const;
+  void check_sane(bool temp_nodes_ok=false) const;
 
   // verify that this roster is sane, and corresponds to the given
   // marking map
