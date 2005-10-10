@@ -1,5 +1,7 @@
 2005-10-10  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* lua.cc (Lua::ok): Only log the 'Lua::ok() failed' message if
+	there has been a failure.
 	* monotone.texi: Fix a typo.
 	* win32/fs.cc (get_homedir): Clarify comment.
 

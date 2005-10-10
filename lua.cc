@@ -111,8 +111,9 @@ Lua
   }
 
   bool ok() 
-  { 
-    L(F("Lua::ok(): failed = %i") % failed);
+  {
+    if (failed) 
+      L(F("Lua::ok(): failed"));
     return !failed; 
   }
 
