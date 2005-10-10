@@ -685,63 +685,6 @@ dump(roster_t const & val, std::string & out)
   out = oss.str();
 }
 
-marking_t::marking_t()
-{
-}
-
-
-marking_t::marking_t(revision_id const & birth_rid, 
-                     revision_id const & current_rid, 
-                     node_t n)
-  : birth_revision(birth_rid)
-{
-  set<revision_id> singleton;
-  singleton.insert(current_rid);
-  parent_name = singleton;
-  if (is_file_t(n))
-    file_content = singleton;
-  for (full_attr_map_t::const_iterator i = n->attrs.begin();
-       i != n->attrs.end(); ++i)
-    attrs.insert(make_pair(i->first, singleton));
-}
-
-marking_t
-marking_t::freshen(node_t old_node,
-                   node_t new_node,
-                   revision_id const & current_rid) const
-{
-  I(same_type(old_node, new_node));
-  set<revision_id> singleton;
-  singleton.insert(current_rid);
-  
-  marking_t mk = marking_t(*this);
-
-  if (old_node->parent != new_node->parent
-      || old_node->name != new_node->name)
-    mk.parent_name = singleton;
-
-  if (is_file_t(old_node))
-    {
-      file_t fold = downcast_to_file_t(old_node);
-      file_t fnew = downcast_to_file_t(new_node);
-      if (!(fold->content == fnew->content))
-        mk.file_content = singleton;
-    }
-
-  for (full_attr_map_t::const_iterator i = new_node->attrs.begin();
-       i != new_node->attrs.end(); ++i)
-    {
-      full_attr_map_t::const_iterator j = old_node->attrs.find(i->first);
-      I(j != old_node->attrs.end());
-      map<attr_key, set<revision_id> >::iterator k = mk.attrs.find(i->first);
-      I(k != mk.attrs.end());
-      if (i->second != j->second)
-        k->second = singleton;
-    }
-  return mk;
-}
-
-
 void
 roster_t::check_finite_depth() const
 {
@@ -1085,6 +1028,66 @@ namespace
   }
 
   void
+  mark_new_node(revision_id const & new_rid, node_t n, marking_t & new_marking)
+  {
+    new_marking.birth_revision = new_rid;
+    I(new_marking.parent_name.empty());
+    new_marking.parent_name.insert(new_rid);
+    I(new_marking.file_content.empty());
+    if (is_file_t(n))
+      new_marking.file_content.insert(new_rid);
+    I(new_marking.attrs.empty());
+    set<revision_id> singleton;
+    singleton.insert(new_rid);
+    for (full_attr_map_t::const_iterator i = n->attrs.begin();
+         i != n->attrs.end(); ++i)
+      new_marking.attrs.insert(make_pair(i->first, singleton));
+  }
+
+  void
+  mark_unmerged_node(marking_t const & parent_marking, node_t parent_n,
+                     revision_id const & new_rid, node_t n,
+                     marking_t & new_marking)
+  {
+    // SPEEDUP?: the common case here is that the parent and child nodes are
+    // exactly identical, in which case the markings are also exactly
+    // identical.  There might be a win in first doing an overall
+    // comparison/copy, in case it can be better optimized as a block
+    // comparison and a block copy...
+
+    I(same_type(parent_n, n) && parent_n->self == n->self);
+
+    new_marking.birth_revision = parent_marking.birth_revision;
+
+    mark_unmerged_scalar(parent_marking.parent_name,
+                         std::make_pair(parent_n->parent, parent_n->name),
+                         new_rid,
+                         std::make_pair(n->parent, n->name),
+                         new_marking.parent_name);
+
+    if (is_file_t(n))
+      mark_unmerged_scalar(parent_marking.file_content,
+                           downcast_to_file_t(parent_n)->content,
+                           new_rid,
+                           downcast_to_file_t(n)->content,
+                           new_marking.file_content);
+
+    for (full_attr_map_t::const_iterator i = n->attrs.begin();
+           i != n->attrs.end(); ++i)
+      {
+        set<revision_id> & new_marks = new_marking.attrs[i->first];
+        I(new_marks.empty());
+        full_attr_map_t::const_iterator j = parent_n->attrs.find(i->first);
+        if (j == parent_n->attrs.end())
+          new_marks.insert(new_rid);
+        else
+          mark_unmerged_scalar(safe_get(parent_marking.attrs, i->first),
+                               j->second,
+                               new_rid, i->second, new_marks);
+      }
+  }
+
+  void
   mark_merged_node(marking_t const & left_marking,
                    set<revision_id> left_uncommon_ancestors,
                    node_t ln,
@@ -1095,7 +1098,7 @@ namespace
                    node_t n,
                    marking_t & new_marking)
   {
-
+    I(same_type(ln, n) && same_type(rn, n));
     I(left_marking.birth_revision == right_marking.birth_revision);
     new_marking.birth_revision = left_marking.birth_revision;
 
@@ -1117,9 +1120,7 @@ namespace
                            lf->content,
                            right_marking.file_content, right_uncommon_ancestors,
                            rf->content,
-                           new_rid,
-                           f->content,
-                           new_marking.file_content);
+                           new_rid, f->content, new_marking.file_content);
       }
     // attrs
     for (full_attr_map_t::const_iterator i = n->attrs.begin();
@@ -1160,6 +1161,18 @@ namespace
                              ri->second,
                              new_rid, i->second, new_marks);
       }
+
+    // some extra sanity checking -- attributes are not allowed to be deleted,
+    // so we double check that they haven't.
+    // SPEEDUP?: this code could probably be made more efficient -- but very
+    // rarely will any node have more than, say, one attribute, so it probably
+    // doesn't matter.
+    for (full_attr_map_t::const_iterator i = ln->attrs.begin();
+         i != ln->attrs.end(); ++i)
+      I(n->attrs.find(i->first) != n->attrs.end());
+    for (full_attr_map_t::const_iterator i = rn->attrs.begin();
+         i != rn->attrs.end(); ++i)
+      I(n->attrs.find(i->first) != n->attrs.end());
   }
 
 
@@ -1168,8 +1181,8 @@ namespace
   // parents, rather than just the structure of the roster itself.
   void
   mark_merge_roster(roster_t const & left_r, roster_t const & right_r,
-                    marking_map const & left_marking,
-                    marking_map const & right_marking,
+                    marking_map const & left_marking_map,
+                    marking_map const & right_marking_map,
                     set<revision_id> const & left_uncommon_ancestors,
                     set<revision_id> const & right_uncommon_ancestors,
                     revision_id const & new_rid,
@@ -1184,103 +1197,47 @@ namespace
         // parallel
         map<node_id, node_t>::const_iterator lni = left_r.all_nodes().find(i->first);
         map<node_id, node_t>::const_iterator rni = right_r.all_nodes().find(i->first);
-        marking_map::const_iterator lmi = left_marking.find(i->first);
-        marking_map::const_iterator rmi = right_marking.find(i->first);
+
         bool exists_in_left = (lni != left_r.all_nodes().end());
         bool exists_in_right = (rni != right_r.all_nodes().end());
 
+        marking_t new_marking;
+
         if (!exists_in_left && !exists_in_right)
-          {
-            // If the node didn't exist at all in either right or left
-            // side, it was added; there's no need to examine the left
-            // and right sides further, we know all the markings for
-            // this node will be the set {new_rid}, and set the birth
-            // revision to new_rid.
-            marking.insert(make_pair(i->first, marking_t(new_rid, new_rid, n)));
-          }
+          mark_new_node(new_rid, n, new_marking);
 
         else if (!exists_in_left && exists_in_right)
           {
-            node_t const & rn = rni->second;
-            I(same_type(n, rn) && n->self == rn->self);
-            /*
-            if (right_uncommon_ancestors.find(rmi->second.birth_revision)
-                == right_uncommon_ancestors.end())
-              {
-                std::string ntmp;
-                dump(n, ntmp);
-                P(F("uncommon ancestor fault, seeking birth revision [%s]\n")
-                  % rmi->second.birth_revision);
-                P(F("node: %s\n") % ntmp);
-                for (set<revision_id>::const_iterator i = right_uncommon_ancestors.begin();
-                     i != right_uncommon_ancestors.end(); ++i)
-                  P(F("right uncommon ancestor: [%s]\n") % *i);
-                for (set<revision_id>::const_iterator i = left_uncommon_ancestors.begin();
-                     i != left_uncommon_ancestors.end(); ++i)
-                  P(F("left uncommon ancestor: [%s]\n") % *i);
-              }
-            */
-            I(right_uncommon_ancestors.find(rmi->second.birth_revision)
+            node_t const & right_node = rni->second;
+            marking_t const & right_marking = safe_get(right_marking_map, n->self);
+            // must be unborn on the left (as opposed to dead)
+            I(right_uncommon_ancestors.find(right_marking.birth_revision)
               != right_uncommon_ancestors.end());
-
-            // Two sub-cases: 
-            if (shallow_equal(n, rn, false))
-              {
-                // 1. The right edge is of the form a->a, and
-                // represents no decision on the part of the user,
-                // just a propagation of an existing state.  In this
-                // case we carry the old mark-set forward from the
-                // right marking.
-                marking.insert(*rmi);
-              }
-            else
-              {
-                // 2. The right edge represents a change to the node --
-                // thus a decision on the part of the user -- in which case
-                // we need to "freshen" the marks based on the changes 
-                // which occurred along the edge.
-                marking.insert(make_pair(i->first, 
-                                         rmi->second.freshen(rn, n, new_rid)));
-              }
+            mark_unmerged_node(right_marking, right_node,
+                               new_rid, n, new_marking);
           }
         else if (exists_in_left && !exists_in_right)
           {
-            node_t const & ln = lni->second;
-            I(same_type(n, ln) && n->self == ln->self);
-            I(left_uncommon_ancestors.find(lmi->second.birth_revision)
+            node_t const & left_node = lni->second;
+            marking_t const & left_marking = safe_get(left_marking_map, n->self);
+            // must be unborn on the right (as opposed to dead)
+            I(left_uncommon_ancestors.find(left_marking.birth_revision)
               != left_uncommon_ancestors.end());
-
-            // Same two sub-cases here as above:
-            if (shallow_equal(n, ln, false))
-              marking.insert(*lmi);
-            else
-              marking.insert(make_pair(i->first, 
-                                       lmi->second.freshen(ln, n, new_rid)));
+            mark_unmerged_node(left_marking, left_node,
+                               new_rid, n, new_marking);
           }
         else
           {
-            node_t const & ln = lni->second;
-            node_t const & rn = rni->second;
-            I(same_type(n, rn));
-            I(same_type(n, ln));
-            I(lmi->second.birth_revision == rmi->second.birth_revision);
-            marking_t marks;
-            mark_merged_node(lmi->second, left_uncommon_ancestors, ln,
-                             rmi->second, right_uncommon_ancestors, rn,
-                             new_rid, n, marks);
-            // attributes can never be deleted, so just double-check that they
-            // haven't been (sanity-checking).
-            // this is kinda inefficent, but very rarely will any node have
-            // more than 1 attribute.
-            for (full_attr_map_t::const_iterator j = ln->attrs.begin();
-                 j != ln->attrs.end(); ++j)
-              I(n->attrs.find(j->first) != n->attrs.end());
-            for (full_attr_map_t::const_iterator j = rn->attrs.begin();
-                 j != rn->attrs.end(); ++j)
-              I(n->attrs.find(j->first) != n->attrs.end());
-
-            marking.insert(make_pair(i->first, marks));
+            node_t const & left_node = lni->second;
+            node_t const & right_node = rni->second;
+            mark_merged_node(safe_get(left_marking_map, n->self),
+                             left_uncommon_ancestors, left_node,
+                             safe_get(right_marking_map, n->self),
+                             right_uncommon_ancestors, right_node,
+                             new_rid, n, new_marking);
           }
+
+        safe_insert(marking, make_pair(i->first, new_marking));
       }
   }             
   
@@ -1349,7 +1306,9 @@ namespace
     node_id handle_new(node_id nid)
     {
       node_t n = r.get_node(nid);
-      markings.insert(make_pair(nid, marking_t(rid, rid, n)));
+      marking_t new_marking;
+      mark_new_node(rid, n, new_marking);
+      safe_insert(markings, make_pair(nid, new_marking));
       return nid;
     }
 
@@ -1979,7 +1938,11 @@ make_fake_marking_for(roster_t const & r, marking_map & mm)
   revision_id rid(std::string("0123456789abcdef0123456789abcdef01234567"));
   for (node_map::const_iterator i = r.all_nodes().begin(); i != r.all_nodes().end();
        ++i)
-    mm.insert(std::make_pair(i->first, marking_t(rid, rid, i->second)));
+    {
+      marking_t fake_marks;
+      mark_new_node(rid, i->second, fake_marks);
+      mm.insert(std::make_pair(i->first, fake_marks));
+    }
 }
 
 static void
