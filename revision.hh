@@ -99,6 +99,9 @@ edge_changes(edge_map::const_iterator i)
   return *(i->second.second); 
 }
 
+void
+dump(revision_set const & rev, std::string & out);
+
 void 
 read_revision_set(data const & dat,
                   revision_set & rev);
@@ -159,15 +162,15 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
 /*
 void 
 calculate_composite_cset(revision_id const & ancestor,
-			 revision_id const & child,
-			 app_state & app,
-			 cset & composed);
+                         revision_id const & child,
+                         app_state & app,
+                         cset & composed);
 
 void
 calculate_arbitrary_cset(revision_id const & start,
-			 revision_id const & end,
-			 app_state & app,
-			 cset & composed);
+                         revision_id const & end,
+                         app_state & app,
+                         cset & composed);
 
 */
 

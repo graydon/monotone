@@ -1016,6 +1016,27 @@ typedef std::map<u64,
                  > > 
 parent_roster_map;
 
+void
+dump(parent_roster_map const & prm, std::string & out)
+{
+  std::ostringstream oss;
+  for (parent_roster_map::const_iterator i = prm.begin(); i != prm.end(); ++i)
+    {
+      oss << "roster: " << i->first << "\n";
+      std::string roster_str, indented_roster_str;
+      dump(*i->second.first, roster_str);
+      prefix_lines_with("    ", roster_str, indented_roster_str);
+      oss << indented_roster_str;
+      oss << "\nroster's marking:\n";
+      std::string marking_str, indented_marking_str;
+      dump(*i->second.second, marking_str);
+      prefix_lines_with("    ", marking_str, indented_marking_str);
+      oss << indented_marking_str;
+      oss << "\n\n";
+    }
+  out = oss.str();
+}
+
 static bool
 viable_replacement(std::map<node_id, u64> const & birth_revs, 
                    parent_roster_map const & parent_rosters,
@@ -1308,6 +1329,7 @@ anc_graph::construct_revisions_from_ancestry()
 
           // Load all the parent rosters into a temporary roster map
           parent_roster_map parent_rosters;
+          MM(parent_rosters);
           
           for (ci i = parent_range.first; parents_all_done && i != parent_range.second; ++i)
             {
@@ -1326,6 +1348,7 @@ anc_graph::construct_revisions_from_ancestry()
           // Convert the old-skool manifest into a cset adding all the
           // files in question, and build a roster out of that.
           roster_t child_roster;
+          MM(child_roster);
           temp_node_id_source nis;
           for (manifest_map::const_iterator i = old_child_man.begin();
                i != old_child_man.end(); ++i)
@@ -1338,6 +1361,7 @@ anc_graph::construct_revisions_from_ancestry()
             }
 
           revision_set rev;
+          MM(rev);
           calculate_ident(child_roster, rev.new_manifest);
 
           // For each parent, construct an edge in the revision structure by analyzing the
@@ -1351,11 +1375,12 @@ anc_graph::construct_revisions_from_ancestry()
               revision_id parent_rid = safe_get(node_to_new_rev, parent);
               boost::shared_ptr<roster_t> parent_roster = i->second.first;
               boost::shared_ptr<cset> cs = boost::shared_ptr<cset>(new cset());
+              MM(*cs);
               make_cset(*parent_roster, child_roster, *cs); 
               manifest_id parent_manifest_id;
               calculate_ident(*parent_roster, parent_manifest_id);
-              safe_insert (rev.edges, std::make_pair (parent_rid, 
-                                                      std::make_pair (parent_manifest_id, cs)));
+              safe_insert(rev.edges, std::make_pair(parent_rid, 
+                                                    std::make_pair(parent_manifest_id, cs)));
                                                                       
             }
 
@@ -1369,6 +1394,7 @@ anc_graph::construct_revisions_from_ancestry()
               revision_id parent_rid;
               boost::shared_ptr<roster_t> parent_roster = boost::shared_ptr<roster_t>(new roster_t());
               boost::shared_ptr<cset> cs = boost::shared_ptr<cset>(new cset());
+              MM(*cs);
               make_cset(*parent_roster, child_roster, *cs); 
               manifest_id parent_manifest_id;
               safe_insert (rev.edges, std::make_pair (parent_rid, 
@@ -1629,11 +1655,9 @@ read_revision_set(revision_data const & dat,
   rev.check_sane();
 }
 
-void
-write_revision_set(revision_set const & rev,
-                   data & dat)
+static void write_insane_revision_set(revision_set const & rev,
+                                      data & dat)
 {
-  rev.check_sane();
   std::ostringstream oss;
   basic_io::printer pr(oss);
   print_revision(pr, rev);
@@ -1641,10 +1665,25 @@ write_revision_set(revision_set const & rev,
 }
 
 void
+dump(revision_set const & rev, std::string & out)
+{
+  data dat;
+  write_insane_revision_set(rev, dat);
+  out = dat();
+}
+
+void
+write_revision_set(revision_set const & rev,
+                   data & dat)
+{
+  rev.check_sane();
+  write_insane_revision_set(rev, dat);
+}
+
+void
 write_revision_set(revision_set const & rev,
                    revision_data & dat)
 {
-  rev.check_sane();
   data d;
   write_revision_set(rev, d);
   dat = revision_data(d);

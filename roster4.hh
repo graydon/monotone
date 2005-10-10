@@ -152,6 +152,10 @@ struct marking_t
 
 typedef std::map<node_id, marking_t> marking_map;
 
+void dump(std::set<revision_id> & revids, std::string & out);
+void dump(marking_t const & marking, std::string & out);
+void dump(marking_map const & marking_map, std::string & out);
+
 namespace basic_io { struct printer; struct parser; }
 
 class roster_t

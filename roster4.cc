@@ -17,6 +17,7 @@
 #include "roster4.hh"
 #include "revision.hh"
 #include "vocab.hh"
+#include "transforms.hh"
 
 #include <boost/lexical_cast.hpp>
 
@@ -46,6 +47,56 @@ dump(full_attr_map_t const & val, std::string & out)
   out = oss.str();
 }
 
+void
+dump(std::set<revision_id> const & revids, std::string & out)
+{
+  out.clear();
+  bool first = true;
+  for (std::set<revision_id>::const_iterator i = revids.begin();
+       i != revids.end(); ++i)
+    {
+      if (!first)
+        out += ", ";
+      first = false;
+      out += i->inner()();
+    }
+}
+
+void
+dump(marking_t const & marking, std::string & out)
+{
+  std::ostringstream oss;
+  std::string tmp;
+  oss << "birth_revision: " << marking.birth_revision << "\n";
+  dump(marking.parent_name, tmp);
+  oss << "parent_name: " << tmp << "\n";
+  dump(marking.file_content, tmp);
+  oss << "file_content: " << tmp << "\n";
+  oss << "attrs (number: " << marking.attrs.size() << "):\n";
+  for (std::map<attr_key, std::set<revision_id> >::const_iterator
+         i = marking.attrs.begin(); i != marking.attrs.end(); ++i)
+    {
+      dump(i->second, tmp);
+      oss << "  " << i->first << ": " << tmp << "\n";
+    }
+  out = oss.str();
+}
+
+void
+dump(marking_map const & marking_map, std::string & out)
+{
+  std::ostringstream oss;
+  for (marking_map::const_iterator i = marking_map.begin(); i != marking_map.end();
+       ++i)
+    {
+      oss << "Marking for " << i->first << ":\n";
+      std::string marking_str, indented_marking_str;
+      dump(i->second, marking_str);
+      prefix_lines_with("    ", marking_str, indented_marking_str);
+      oss << indented_marking_str;
+    }
+  out = oss.str();
+}
 
 namespace 
 {

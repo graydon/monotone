@@ -67,6 +67,8 @@ attach
 static void
 check_normalized(cset const & cs)
 {
+  MM(cs);
+
   // FIXME -- normalize:
   //
   //   add_file foo@id1 + apply_delta id1->id2
