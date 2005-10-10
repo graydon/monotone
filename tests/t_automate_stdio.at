@@ -1,6 +1,12 @@
 AT_SETUP([automate stdio])
 MONOTONE_SETUP
 
+# This is the same as contrib/get_stdio.pl. It does:
+#
+# for i in split_into_packets($x)
+#     $results[i.cmdnum] += i.contents
+# print $results[n]
+#
 AT_DATA(get_stdio.pl, [#!/usr/bin/perl
 $x="";
 open $file, $ARGV[[0]];

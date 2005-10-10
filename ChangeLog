@@ -1,5 +1,9 @@
 2005-10-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/t_automate_stdio.at: Add comment here too.
+
+2005-10-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* contrib/get_stdio.pl: Add comments. I'm told it was "obtuse",
 	hopefully this will help somewhat.
 
