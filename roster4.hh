@@ -140,13 +140,7 @@ struct marking_t
   std::set<revision_id> parent_name;
   std::set<revision_id> file_content;
   std::map<attr_key, std::set<revision_id> > attrs;
-  marking_t();
-  marking_t(revision_id const & birth_rid,
-            revision_id const & current_rid, 
-            node_t n);
-  marking_t freshen(node_t old_node,
-                    node_t new_node,
-                    revision_id const & current_rid) const;
+  marking_t() {};
   bool operator==(marking_t const & other) const
   {
     return birth_revision == other.birth_revision
