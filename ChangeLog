@@ -1,3 +1,8 @@
+2005-10-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/get_stdio.pl: Add comments. I'm told it was "obtuse",
+	hopefully this will help somewhat.
+
 2005-10-10  Matt Johnston  <matt@ucc.asn.au>
 
 	* configure.ac, Makefile.am: add {MONOTONE,LIB3RDPARTY}_C{,XX}FLAGS
