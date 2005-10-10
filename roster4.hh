@@ -168,6 +168,7 @@ public:
   roster_t & operator=(roster_t const & other);
   bool has_root() const;
   bool has_node(split_path const & sp) const;
+  bool has_node(node_id n) const;
   node_t get_node(split_path const & sp) const;
   node_t get_node(node_id n) const;
   void get_name(node_id n, split_path & sp) const;

@@ -454,6 +454,12 @@ roster_t::get_node(split_path const & sp) const
 }
 
 bool
+roster_t::has_node(node_id n) const
+{
+  return nodes.find(n) != nodes.end();
+}
+
+bool
 roster_t::has_node(split_path const & sp) const
 {
   split_path dirname;
@@ -1197,6 +1203,23 @@ namespace
           {
             node_t const & rn = rni->second;
             I(same_type(n, rn) && n->self == rn->self);
+            /*
+            if (right_uncommon_ancestors.find(rmi->second.birth_revision)
+                == right_uncommon_ancestors.end())
+              {
+                std::string ntmp;
+                dump(n, ntmp);
+                P(F("uncommon ancestor fault, seeking birth revision [%s]\n")
+                  % rmi->second.birth_revision);
+                P(F("node: %s\n") % ntmp);
+                for (set<revision_id>::const_iterator i = right_uncommon_ancestors.begin();
+                     i != right_uncommon_ancestors.end(); ++i)
+                  P(F("right uncommon ancestor: [%s]\n") % *i);
+                for (set<revision_id>::const_iterator i = left_uncommon_ancestors.begin();
+                     i != left_uncommon_ancestors.end(); ++i)
+                  P(F("left uncommon ancestor: [%s]\n") % *i);
+              }
+            */
             I(right_uncommon_ancestors.find(rmi->second.birth_revision)
               != right_uncommon_ancestors.end());
 

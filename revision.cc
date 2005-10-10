@@ -739,6 +739,8 @@ struct anc_graph
   std::map<revision_id,u64> old_rev_to_node;
 
   std::map<u64,revision_id> node_to_new_rev;
+  std::map<revision_id,u64> new_rev_to_node;
+
   std::multimap<u64, std::pair<cert_name, cert_value> > certs;
   std::multimap<u64, u64> ancestry;
   std::set<std::string> branches;
@@ -924,7 +926,8 @@ anc_graph::rebuild_ancestry()
   }
 }
 
-u64 anc_graph::add_node_for_old_manifest(manifest_id const & man)
+u64 
+anc_graph::add_node_for_old_manifest(manifest_id const & man)
 {
   I(!existing_graph);
   u64 node = 0;
@@ -1013,12 +1016,86 @@ typedef std::map<u64,
                  > > 
 parent_roster_map;
 
+static bool
+viable_replacement(std::map<node_id, u64> const & birth_revs, 
+                   parent_roster_map const & parent_rosters,
+                   std::multimap<u64, u64> const & child_to_parents)
+{
+  // This is a somewhat crazy function. Conceptually, we have a set NS of
+  // node_t values (representing all the elements of a path) and a set RS
+  // of rosters. We want to know whether there is an N in NS and an R in RS
+  // satisfying:
+  //
+  //       N is not present in R 
+  // *and*
+  //       N's birth_revision is an ancestor of R
+  //
+  // If we find such a pair, then the set is considered "non viable" for
+  // replacement.
+    
+  //   L(F("beginning viability comparison for %d path nodes, %d parents\n") 
+  //     % birth_revs.size() % parent_rosters.size());
+
+  for (std::map<node_id, u64>::const_iterator n = birth_revs.begin();
+       n != birth_revs.end(); ++n)
+    {
+      // L(F("testing viability of node %d, born in rev %d\n") % n->first % n->second);
+      for (parent_roster_map::const_iterator r = parent_rosters.begin();
+           r != parent_rosters.end(); ++r)
+        {
+          boost::shared_ptr<roster_t> parent = r->second.first;
+          // L(F("node %d %s in parent roster %d\n") 
+          //             % n->first
+          //             % (parent->has_node(n->first) ? "exists" : "does not exist" ) 
+          //             % r->first);
+
+          if (!parent->has_node(n->first))
+            {
+              u64 birth_rev = n->second;
+              std::deque<u64> work;
+              std::set<u64> seen;
+              work.push_back(r->first);
+              while (!work.empty())
+                {
+                  u64 curr = work.front();
+                  work.pop_front();
+                  // L(F("examining ancestor %d of parent roster %d, looking for anc=%d\n")
+                  //                     % curr % r->first % birth_rev);
+
+                  if (seen.find(curr) != seen.end())
+                    continue;
+                  seen.insert(curr);
+
+                  if (curr == birth_rev)
+                    {
+                      // L(F("determined non-viability, returning\n"));
+                      return false;
+                    }
+                  typedef std::multimap<u64, u64>::const_iterator ci;
+                  std::pair<ci,ci> range = child_to_parents.equal_range(curr);
+                  for (ci i = range.first; i != range.second; ++i)
+                    {
+                      if (i->first != curr)
+                        continue;
+                      work.push_back(i->second);
+                    }
+                }
+            }
+        }  
+    }
+  // L(F("exhausted possibilities for non-viability, returning\n"));
+  return true;
+}
+
+
 static void 
 insert_into_roster_reusing_parent_entries(file_path const & pth,
                                           file_id const & fid,
                                           parent_roster_map const & parent_rosters,
                                           temp_node_id_source & nis,
-                                          roster_t & child_roster)
+                                          roster_t & child_roster,
+                                          std::map<revision_id, u64> const & new_rev_to_node,
+                                          std::multimap<u64, u64> const & child_to_parents)
 {
 
   split_path sp, dirname;
@@ -1066,6 +1143,8 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
       // a file with the same name gets the node
       // identity copied forward. 
       boost::shared_ptr<roster_t> parent_roster = j->second.first;
+      boost::shared_ptr<marking_map> parent_marking = j->second.second;
+
       if (parent_roster->has_node(sp))
         {
           node_t other_node = parent_roster->get_node(sp);
@@ -1083,16 +1162,46 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
               //
               // where "foo1" is actually "", the root dir.
 
-              for (node_id other_id = other_node->self; 
-                   ! null_node(other_id); 
-                   other_id = parent_roster->get_node(other_id)->parent)
+              // Before we perform this, however, we want to ensure that
+              // none of the existing target nodes (x,y,z) are killed in
+              // any of the parent rosters. If any is killed -- defined
+              // by saying that its birth revision fails to dominate one
+              // of the parent rosters -- then we want to *avoid* making
+              // the replacements, and leave this node as its own child.
+
+              bool replace_this_node = true;
+              if (parent_rosters.size() > 1)
                 {
-                  node_id next_nid = child_roster.get_node(nid)->parent;
-                  child_roster.replace_node_id(nid, other_id);
-                  nid = next_nid;
+                  std::map<node_id, u64> birth_revs;
+                  
+                  for (node_id other_id = other_node->self; 
+                       ! null_node(other_id); 
+                       other_id = parent_roster->get_node(other_id)->parent)
+                    {
+                      revision_id birth_rev = safe_get(*parent_marking, 
+                                                       other_id).birth_revision;
+                      birth_revs.insert(std::make_pair(other_id, 
+                                                       safe_get(new_rev_to_node,
+                                                                birth_rev)));
+                    }
+                  replace_this_node = 
+                    viable_replacement(birth_revs, parent_rosters, 
+                                       child_to_parents);
                 }
-              I(null_node(nid));
-              break;
+                  
+              if (replace_this_node)
+                {
+                  for (node_id other_id = other_node->self; 
+                       ! null_node(other_id); 
+                       other_id = parent_roster->get_node(other_id)->parent)
+                    {
+                      node_id next_nid = child_roster.get_node(nid)->parent;
+                      child_roster.replace_node_id(nid, other_id);
+                      nid = next_nid;
+                    }
+                  I(null_node(nid));
+                  break;
+                }              
             }
         }
     }
@@ -1223,7 +1332,9 @@ anc_graph::construct_revisions_from_ancestry()
             {
               insert_into_roster_reusing_parent_entries(i->first, i->second,
                                                         parent_rosters,
-                                                        nis, child_roster);
+                                                        nis, child_roster,
+                                                        new_rev_to_node,
+                                                        ancestry);
             }
 
           revision_set rev;
@@ -1271,9 +1382,23 @@ anc_graph::construct_revisions_from_ancestry()
           revision_id new_rid;
           calculate_ident(rev, new_rid);
           node_to_new_rev.insert(std::make_pair(child, new_rid));
+          new_rev_to_node.insert(std::make_pair(new_rid, child));
 
-          L(F("made revision %s with %d edges, manifest id = %s\n")
+          /*
+          P(F("------------------------------------------------\n"));
+          P(F("made revision %s with %d edges, manifest id = %s\n")
             % new_rid % rev.edges.size() % rev.new_manifest);
+
+          {
+            std::string rtmp;
+            data dtmp;
+            dump(dbg, rtmp);
+            write_revision_set(rev, dtmp);
+            P(F("%s\n") % rtmp);
+            P(F("%s\n") % dtmp);
+          }
+          P(F("------------------------------------------------\n"));
+          */
 
           if (!app.db.revision_exists (new_rid))
             {
