@@ -41,6 +41,16 @@ get_homedir()
   // See thread on monotone-devel:
   //   Message-Id: <20050221.182951.104117563.dalcolmo@vh-s.de>
   //   URL: http://lists.gnu.org/archive/html/monotone-devel/2005-02/msg00241.html
+  // Since the discussion above, the code has been reverted to use always
+  // HOME if it is set.  We now use APPDATA (e.g. C:\Documents And
+  // Settings\user\Application Data) rather than USERPROFILE so that we're a
+  // better behaved Windows application.  There is still one potentially
+  // confusing case where a user is switching between Cygwin/MinGW shells
+  // and a Windows command prompt where HOME is only set up inside the
+  // Cygwin/MinGW shells and not globally--in this case, monotone will use
+  // HOME inside the Cygwin/MinGW shell and something else (probably
+  // APPDATA) when run in the Windows command prompt.  In many ways, it's
+  // tempting to simplify this code to always and only use APPDATA.
   char * home;
   L(F("Searching for home directory\n"));
   // First try MONOTONE_HOME, to give people a way out in case the cruft below

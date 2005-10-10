@@ -5691,7 +5691,7 @@ hooks}.
 
 @menu
 * Hooks::                     All hooks called by monotone.
-* Additional Lua Functions::  Extra functionality availabe to hook writers.
+* Additional Lua Functions::  Extra functionality available to hook writers.
 @end menu
 
 @page

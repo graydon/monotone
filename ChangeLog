@@ -1,3 +1,8 @@
+2005-10-10  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.texi: Fix a typo.
+	* win32/fs.cc (get_homedir): Clarify comment.
+
 2005-10-09  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* contrib/usher.cc (main): Reset parser state for config file
