@@ -1,5 +1,8 @@
 2005-10-10  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_netsync_largish_file.at: Tweak the random file
+	generation so that it's a bit faster on platforms with slow awk
+	implementations.
 	* netsync.cc: Remove comment stating that our official IANA port
 	should be renamed from 'netsync' to 'monotone'; Tomas sorted this
 	out a while ago.
