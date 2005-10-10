@@ -230,8 +230,6 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(NETXX_SOURCES) \
 			$(LUA_SOURCES) \
 			$(SQLITE_SOURCES)
-# We want to be able to throw exceptions through the Lua interpreter
-lib3rdparty_a_CFLAGS = $(AM_CFLAGS)
 
 # flags
 
@@ -241,9 +239,13 @@ AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE
 AM_LDFLAGS = 
 
 lib3rdparty_a_CPPFLAGS =
+lib3rdparty_a_CFLAGS = $(AM_CFLAGS) $(LIB3RDPARTY_CFLAGS)
+lib3rdparty_a_CXXFLAGS = $(AM_CXXFLAGS) $(LIB3RDPARTY_CXXFLAGS)
 
 monotone_LDFLAGS = 
 monotone_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
+monotone_CFLAGS = $(AM_CFLAGS) $(MONOTONE_CFLAGS)
+monotone_CXXFLAGS = $(AM_CXXFLAGS) $(MONOTONE_CXXFLAGS)
 
 unit_tests_LDFLAGS = 
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite

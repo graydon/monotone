@@ -422,6 +422,13 @@ AC_CHECK_FUNC(inet_ntop, [AM_CONDITIONAL(MISSING_INET_NTOP, false)],
 AC_CHECK_FUNC(getaddrinfo, [AM_CONDITIONAL(MISSING_GETADDRINFO, false)], 
 			   [AM_CONDITIONAL(MISSING_GETADDRINFO, true)])
 
+# allow compiling with different flags/optimisation
+# for monotone versus libs, useful for testing.
+# only makes sense if CFLAGS="" or CXXFLAGS=""
+AC_SUBST(MONOTONE_CFLAGS)
+AC_SUBST(MONOTONE_CXXFLAGS)
+AC_SUBST(LIB3RDPARTY_CFLAGS)
+AC_SUBST(LIB3RDPARTY_CXXFLAGS)
 
 AC_CONFIG_FILES([Makefile tests/atlocal po/Makefile.in])
 AC_OUTPUT
