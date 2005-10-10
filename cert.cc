@@ -437,33 +437,31 @@ check_cert(app_state & app, cert const & t)
 
 string const branch_cert_name("branch");
 
-bool 
-guess_default_key(rsa_keypair_id & key, 
-                  app_state & app)
+void
+get_user_key(rsa_keypair_id & key, app_state & app)
 {
 
   if (app.signing_key() != "")
     {
       key = app.signing_key;
-      return true;
+      return;
     }
 
   if (app.branch_name() != "")
     {
       cert_value branch(app.branch_name());
       if (app.lua.hook_get_branch_key(branch, key))
-        return true;
+        return;
     }
   
   vector<rsa_keypair_id> all_privkeys;
   app.keys.get_keys(all_privkeys);
-  if (all_privkeys.size() != 1) 
-    return false;
-  else
-    {
-      key = all_privkeys[0];  
-      return true;
-    }
+  N(!all_privkeys.empty(), F("you have no private key to make signatures with\n"
+                             "perhaps you need to 'genkey <your email>'"));
+  N(all_privkeys.size() > 1,
+    F("you have multiple private keys\n"
+      "pick one to use for signatures by adding '-k<keyname>' to your command"));
+  key = all_privkeys[0];  
 }
 
 void 
@@ -507,8 +505,7 @@ make_simple_cert(hexenc<id> const & id,
                  cert & c)
 {
   rsa_keypair_id key;
-  N(guess_default_key(key,app),
-    F("no unique private key for cert construction"));
+  get_user_key(key, app);
   base64<cert_value> encoded_val;
   encode_base64(cv, encoded_val);
   cert t(id, nm, encoded_val, key);
@@ -622,9 +619,7 @@ cert_revision_author_default(revision_id const & m,
   if (!app.lua.hook_get_author(app.branch_name(), author))
     {
       rsa_keypair_id key;
-      N(guess_default_key(key, app),
-        F("no default author name for branch '%s'") 
-        % app.branch_name);
+      get_user_key(key, app),
       author = key();
     }
   cert_revision_author(m, author, app, pc);

@@ -1227,8 +1227,7 @@ import_cvs_repo(system_path const & cvsroot,
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    N(guess_default_key(key,app),
-      F("no unique private key for cert construction"));
+    get_user_key(key, app);
     require_password(key, app);
   }
 

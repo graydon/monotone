@@ -321,14 +321,14 @@ private:
 
 CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help"), OPT_NONE)
 {
-	if (args.size() < 1)
-		throw usage("");
+        if (args.size() < 1)
+                throw usage("");
 
-	string full_cmd = complete_command(idx(args, 0)());
-	if (cmds.find(full_cmd) == cmds.end())
-		throw usage("");
+        string full_cmd = complete_command(idx(args, 0)());
+        if (cmds.find(full_cmd) == cmds.end())
+                throw usage("");
 
-	throw usage(full_cmd);
+        throw usage(full_cmd);
 }
 
 static void
@@ -946,11 +946,7 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
   internalize_cert_name(idx(args, 1), name);
 
   rsa_keypair_id key;
-  if (app.signing_key() != "")
-    key = app.signing_key;
-  else
-    N(guess_default_key(key, app),
-      F("no unique private key found, and no key specified"));
+  get_user_key(key, app);
   
   cert_value val;
   if (args.size() == 3)
@@ -2021,7 +2017,7 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   rsa_keypair_id key;
-  N(guess_default_key(key, app), F("could not guess default signing key"));
+  get_user_key(key, app);
   app.signing_key = key;
 
   run_netsync_protocol(client_voice, source_role, addr,
@@ -2050,7 +2046,7 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, app);
 
   rsa_keypair_id key;
-  N(guess_default_key(key, app), F("could not guess default signing key"));
+  get_user_key(key, app);
   app.signing_key = key;
 
   run_netsync_protocol(client_voice, source_and_sink_role, addr,
@@ -2067,7 +2063,7 @@ CMD(serve, N_("network"), N_("ADDRESS[:PORTNUMBER] PATTERN ..."),
   pid_file pid(app.pidfile);
 
   rsa_keypair_id key;
-  N(guess_default_key(key, app), F("could not guess default signing key"));
+  get_user_key(key, app);
   app.signing_key = key;
 
   N(app.lua.hook_persist_phrase_ok(),

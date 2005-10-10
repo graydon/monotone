@@ -1,3 +1,14 @@
+2005-10-10  Nathaniel Smith  <njs@pobox.com>
+
+	* cert.{cc,hh} (get_user_key): New function, replacing
+	guess_default_key.
+	* revision.cc (build_changesets_from_existing_revs) 
+	(build_changesets_from_manifest_ancestry): 
+	* rcs_import.cc (import_cvs_repo): 
+	* commands.cc (internalize_cert_name, push, sync, serve):
+	* cert.cc (make_simple_cert, cert_revision_author_default): Use
+	it.
+
 2005-10-10  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* netsync.cc: Clean up another case where port numbers were being
