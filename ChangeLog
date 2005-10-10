@@ -1,5 +1,8 @@
 2005-10-10  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* netsync.cc: Remove comment stating that our official IANA port
+	should be renamed from 'netsync' to 'monotone'; Tomas sorted this
+	out a while ago.
 	* lua.cc (Lua::ok): Only log the 'Lua::ok() failed' message if
 	there has been a failure.
 	* monotone.texi: Fix a typo.
