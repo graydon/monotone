@@ -3206,7 +3206,8 @@ handle_new_connection(Netxx::Address & addr,
     }
   else
     {
-      P(F("accepted new client connection from %s\n") % client);
+      P(F("accepted new client connection from %s : %s\n")
+        % client.get_address() % lexical_cast<string>(client.get_port()));
       shared_ptr<session> sess(new session(role, server_voice,
                                            include_pattern, exclude_pattern,
                                            app,
