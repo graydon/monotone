@@ -7,7 +7,9 @@ AT_KEYWORDS([netsync])
 # compressed in the monotone database and on the wire.
 
 m4_define([LARGISH_FILE_CREATE], [
-awk -- 'BEGIN{srand(5253);for(a=0;a<32*1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish
+awk -- 'BEGIN{srand(5253);for(a=0;a<1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish.tmp
+cat largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp > largish
+rm -f largish.tmp
 ])
 
 
