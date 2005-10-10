@@ -1098,6 +1098,34 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
     }
 }
 
+struct 
+current_rev_debugger
+{
+  u64 node;
+  anc_graph const & agraph;
+  current_rev_debugger(u64 n, anc_graph const & ag) 
+    : node(n), agraph(ag)
+  {
+  }
+};
+
+void
+dump(current_rev_debugger const & d, std::string & out)
+{
+  typedef std::multimap<u64, std::pair<cert_name, cert_value> >::const_iterator ci;
+  std::pair<ci,ci> range = d.agraph.certs.equal_range(d.node);
+  for(ci i = range.first; i != range.second; ++i)
+    {
+      if (i->first == d.node)
+        {
+          out += "cert '" + i->second.first() + "'";
+          out += "= '" + i->second.second() + "'\n";
+        }
+    }
+}
+
+
+
 void 
 anc_graph::construct_revisions_from_ancestry()
 {
@@ -1136,6 +1164,10 @@ anc_graph::construct_revisions_from_ancestry()
     {
       
       u64 child = work.front();
+
+      current_rev_debugger dbg(child, *this);
+      MM(dbg);
+
       work.pop_front();
       std::pair<ci,ci> parent_range = ancestry.equal_range(child);
       std::set<u64> parents;

@@ -1089,6 +1089,10 @@ namespace
                    node_t n,
                    marking_t & new_marking)
   {
+
+    I(left_marking.birth_revision == right_marking.birth_revision);
+    new_marking.birth_revision = left_marking.birth_revision;
+
     // name
     mark_merged_scalar(left_marking.parent_name, left_uncommon_ancestors,
                        std::make_pair(ln->parent, ln->name),
@@ -1237,7 +1241,7 @@ namespace
             I(same_type(n, rn));
             I(same_type(n, ln));
             I(lmi->second.birth_revision == rmi->second.birth_revision);
-            marking_t marks(lmi->second.birth_revision, new_rid, n);
+            marking_t marks;
             mark_merged_node(lmi->second, left_uncommon_ancestors, ln,
                              rmi->second, right_uncommon_ancestors, rn,
                              new_rid, n, marks);
