@@ -895,7 +895,7 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"
 
   if (app.keys.key_pair_exists(ident))
     {
-      P(F("dropping key pair '%s' from key store\n") % ident);
+      P(F("dropping key pair '%s' from keystore\n") % ident);
       app.keys.delete_key(ident);
       key_deleted = true;
     }
@@ -919,7 +919,7 @@ CMD(chkeypass, N_("key and cert"), N_("KEYID"),
   internalize_rsa_keypair_id(idx(args, 0), ident);
 
   N(app.keys.key_pair_exists(ident),
-    F("key '%s' does not exist in the key store") % ident);
+    F("key '%s' does not exist in the keystore") % ident);
 
   keypair key;
   app.keys.get_key_pair(ident, key);
@@ -1882,7 +1882,7 @@ CMD(privkey, N_("packet i/o"), N_("ID"), N_("write private key packet to stdout"
 
   rsa_keypair_id ident(idx(args, 0)());
   N(app.keys.key_pair_exists(ident),
-    F("public and private key '%s' do not exist in key store")
+    F("public and private key '%s' do not exist in keystore")
       % idx(args, 0)());
 
   packet_writer pw(cout);
