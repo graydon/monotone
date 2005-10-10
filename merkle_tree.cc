@@ -395,8 +395,8 @@ insert_into_merkle_tree(merkle_table & tab,
   I(constants::merkle_fanout_bits * (level + 1) 
     <= constants::merkle_hash_length_in_bits);
   
-  hexenc<id> hleaf;
-  encode_hexenc(leaf, hleaf);
+  //hexenc<id> hleaf;
+  //encode_hexenc(leaf, hleaf);
 
   size_t slotnum;
   dynamic_bitset<unsigned char> pref;

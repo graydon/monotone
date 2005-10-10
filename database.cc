@@ -1748,13 +1748,13 @@ database::put_revision_cert(revision<cert> const & cert)
   put_cert(cert.inner(), "revision_certs"); 
 }
 
-void database::get_revision_cert_index(std::vector< std::pair<hexenc<id>,
+void database::get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
                                        std::pair<revision_id, rsa_keypair_id> > > & idx)
 {
   results res;
   fetch(res, 3, any_rows, 
         "SELECT hash, id, keypair "
-        "FROM 'revision_certs'");
+        "FROM 'revision_certs' WHERE name != 'branch'");
 
   idx.clear();
   idx.reserve(res.size());

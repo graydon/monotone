@@ -2,6 +2,14 @@
 
 	* commands.cc: s/key store/keystore/g.
 
+2005-10-10  Matt Johnston  <matt@ucc.asn.au>
+
+	* netsync.cc, database.{cc,hh}: don't include unwanted branch
+	certs when building the merkle tree.
+	* merkle.hh: add variant of insert_into_merkle_tree
+	taking non-raw id.
+	* markle.cc: comment out unused bits
+
 2005-10-10  Nathaniel Smith  <njs@pobox.com>
 
 	* cert.{cc,hh} (get_user_key): New function, replacing

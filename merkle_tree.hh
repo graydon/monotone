@@ -13,6 +13,7 @@
 #include "app_state.hh"
 #include "numeric_vocab.hh"
 #include "vocab.hh"
+#include "transforms.hh"
 
 // this file contains data structures and functions for managing merkle
 // trees. a merkle tree is a general construction whereby a range of K data
@@ -104,6 +105,18 @@ insert_into_merkle_tree(merkle_table & tab,
                         bool live_p,
                         id const & leaf,
                         size_t level);
+
+inline void
+insert_into_merkle_tree(merkle_table & tab,
+                        netcmd_item_type type,
+                        bool live_p,
+                        hexenc<id> const & hex_leaf,
+                        size_t level)
+{
+  id leaf;
+  decode_hexenc(hex_leaf, leaf);
+  insert_into_merkle_tree(tab, type, live_p, leaf, level);
+}
 
 // recalculates the hashes in the given tree.  must be called after
 // insert_into_merkle_tree, and before using tree (but you can batch up
