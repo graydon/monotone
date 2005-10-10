@@ -97,9 +97,9 @@ find_common_ancestor(revision_id const & left,
 // conventions. you should use these unless you have a compelling
 // reason not to.
 
-bool 
-guess_default_key(rsa_keypair_id & key, 
-                  app_state & app);
+// N()'s out if there is no unique key for us to use
+void
+get_user_key(rsa_keypair_id & key, app_state & app);
 
 void 
 guess_branch(revision_id const & id,
