@@ -458,7 +458,7 @@ get_user_key(rsa_keypair_id & key, app_state & app)
   app.keys.get_keys(all_privkeys);
   N(!all_privkeys.empty(), F("you have no private key to make signatures with\n"
                              "perhaps you need to 'genkey <your email>'"));
-  N(all_privkeys.size() > 1,
+  N(all_privkeys.size() == 1,
     F("you have multiple private keys\n"
       "pick one to use for signatures by adding '-k<keyname>' to your command"));
   key = all_privkeys[0];  

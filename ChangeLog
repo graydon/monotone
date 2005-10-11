@@ -1,3 +1,8 @@
+2005-10-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* certs.cc (get_user_key): Correct logic in N() test for multiple
+	keys.  Resolves bug reported by Malte Thoma.
+
 2005-10-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Make netsync shutdown work properly.
