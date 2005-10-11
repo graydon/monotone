@@ -216,6 +216,13 @@ private:
   void check_finite_depth() const;
   dir_t root_dir;
   node_map nodes;
+  // this attribute holds the previous location of detached nodes.  when
+  // applying a cset, we pass through intermediate states where some nodes are
+  // detached from the directory tree.  it is illegal to re-attach these nodes
+  // to where they started -- you shouldn't have detached them in the first
+  // place, if you were just going to put them back!  this checking verifies
+  // that csets are in normalized form.
+  std::map<node_id, std::pair<node_id, path_component> > old_locations;
   friend void dump(roster_t const & val, std::string & out);
 };
 

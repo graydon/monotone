@@ -111,11 +111,6 @@ check_normalized(cset const & cs)
           I(false);
       }
   }
-
-  // no no-op renames
-  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
-       i != cs.nodes_renamed.end(); ++i)
-    I(i->first != i->second);
 }
 
 bool

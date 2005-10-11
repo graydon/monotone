@@ -583,6 +583,8 @@ roster_t::replace_node_id(node_id from, node_id to)
 }
 
 
+// this records the old location into the old_locations member, to prevent the
+// same node from being re-attached at the same place.
 node_id
 roster_t::detach_node(split_path const & pth)
 {
@@ -595,29 +597,41 @@ roster_t::detach_node(split_path const & pth)
       // detaching the root dir
       I(null_name(basename));
       node_id root_id = root_dir->self;
+      safe_insert(old_locations,
+                  make_pair(root_id, make_pair(root_dir->parent, root_dir->name)));
       // cleare set the root_dir shared_pointer
       root_dir.reset();
       return root_id;
     }
 
   dir_t parent = downcast_to_dir_t(get_node(dirname));
-  node_id n = parent->detach_child(basename)->self;
-  I(!null_node(n));
-  return n;
+  node_id nid = parent->detach_child(basename)->self;
+  safe_insert(old_locations,
+              make_pair(nid, make_pair(parent->self, basename)));
+  I(!null_node(nid));
+  return nid;
 }
 
 
 void
 roster_t::drop_detached_node(node_id nid)
 {
-  // ensure the node is already detached (as best one can)
+  // ensure the node is already detached
   node_t n = get_node(nid);
   I(null_node(n->parent));
   I(null_name(n->name));
   safe_erase(nodes, nid);
+  // can use safe_erase here, because while not every detached node appears in
+  // old_locations, all those that used to be in the tree do.  and you should
+  // only ever be dropping nodes that were detached, not nodes that you just
+  // created and that have never been attached.
+  safe_erase(old_locations, nid);
 }
 
 
+// this creates a node in a detached state, but it does _not_ insert an entry
+// for it into the old_locations member, because there is no old_location to
+// forbid
 node_id
 roster_t::create_dir_node(node_id_source & nis)
 {
@@ -629,6 +643,9 @@ roster_t::create_dir_node(node_id_source & nis)
 }
 
 
+// this creates a node in a detached state, but it does _not_ insert an entry
+// for it into the old_locations member, because there is no old_location to
+// forbid
 node_id
 roster_t::create_file_node(file_id const & content, node_id_source & nis)
 {
@@ -655,19 +672,34 @@ roster_t::attach_node(node_id nid, split_path const & dst)
   I(null_name(n->name));
   I(!null_node(n->self));
 
+  // this iterator might point to old_locations.end(), because old_locations
+  // only includes entries for renames, not new nodes
+  std::map<node_id, std::pair<node_id, path_component> >::iterator
+    i = old_locations.find(nid);
+
   if (dirname.empty())
     {
       // attaching the root dir
+      // (we repeat the above checks to clarify dependencies, just in case
+      // someone changes the magic defaults and removes the above checks...)
+      I(null_node(n->parent));
+      I(null_name(n->name));
       I(null_name(basename));
       I(!has_root());     
       root_dir = downcast_to_dir_t(n);
+      I(i == old_locations.end() || i->second != make_pair(root_dir->parent,
+                                                           root_dir->name));
     }
   else
     {
       // L(F("attaching into dir '%s'\n") % file_path(dirname));
       dir_t parent = downcast_to_dir_t(get_node(dirname));
       parent->attach_child(basename, n);
+      I(i == old_locations.end() || i->second != make_pair(n->parent, n->name));
     }
+
+  if (i != old_locations.end())
+    old_locations.erase(i);
 }
 
 
@@ -750,6 +782,8 @@ roster_t::check_sane(bool temp_nodes_ok) const
 {
   I(has_root());
   node_map::const_iterator ri;
+
+  I(old_locations.empty());
 
   for (ri = nodes.begin();
        ri != nodes.end();
