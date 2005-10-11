@@ -181,17 +181,16 @@ namespace commands
     // convert from multi-byte to wide-char string
     size_t wchars = mbstowcs(NULL, msg, 0) + 1;
     if (wchars == (size_t)-1)
-      return 0;
-    wchar_t * wmsg = new wchar_t[wchars];
-    mbstowcs(wmsg, msg, wchars);
+      return std::strlen(msgid); // conversion failed; punt and return original length
+    boost::scoped_array<wchar_t> wmsg(new wchar_t[wchars]);
+    mbstowcs(wmsg.get(), msg, wchars);
 
     // and get printed width
-    size_t width = wcswidth(wmsg, wchars);
-    
-    delete[] wmsg;
+    size_t width = wcswidth(wmsg.get(), wchars);
+
     return width;
   }
-  
+
 
   void explain_usage(string const & cmd, ostream & out)
   {

@@ -1,5 +1,9 @@
 2005-10-11  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* commands.cc (message_width, explain_usage): New function to
+	calculate display width of translated strings.  Use it in
+	explain_usage.
+	Patch from Thomas Moschny <thomas.moschny@gmx.de>
 	* certs.cc (get_user_key): Correct logic in N() test for multiple
 	keys.  Resolves bug reported by Malte Thoma.
 
