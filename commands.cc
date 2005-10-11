@@ -173,6 +173,26 @@ namespace commands
     return _(msgid);
   }
 
+  // returns the columns needed for printing the translated msgid
+  size_t message_width(const char * msgid)
+  {
+    const char * msg = safe_gettext(msgid);
+
+    // convert from multi-byte to wide-char string
+    size_t wchars = mbstowcs(NULL, msg, 0) + 1;
+    if (wchars == (size_t)-1)
+      return 0;
+    wchar_t * wmsg = new wchar_t[wchars];
+    mbstowcs(wmsg, msg, wchars);
+
+    // and get printed width
+    size_t width = wcswidth(wmsg, wchars);
+    
+    delete[] wmsg;
+    return width;
+  }
+  
+
   void explain_usage(string const & cmd, ostream & out)
   {
     map<string,command *>::const_iterator i;
@@ -211,7 +231,8 @@ namespace commands
     size_t col2 = 0;
     for (size_t i = 0; i < sorted.size(); ++i)
       {
-        col2 = col2 > idx(sorted, i)->cmdgroup.size() ? col2 : idx(sorted, i)->cmdgroup.size();
+        size_t cmp = message_width(idx(sorted, i)->cmdgroup.c_str());
+        col2 = col2 > cmp ? col2 : cmp;
       }
 
     for (size_t i = 0; i < sorted.size(); ++i)
@@ -221,7 +242,7 @@ namespace commands
             curr_group = idx(sorted, i)->cmdgroup;
             out << endl;
             out << "  " << safe_gettext(idx(sorted, i)->cmdgroup.c_str());
-            col = idx(sorted, i)->cmdgroup.size() + 2;
+            col = message_width(idx(sorted, i)->cmdgroup.c_str()) + 2;
             while (col++ < (col2 + 3))
               out << ' ';
           }
