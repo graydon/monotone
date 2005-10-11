@@ -534,19 +534,21 @@ do_annotate_node (const annotate_node_work &work_unit,
           added_in_parent_count++;
           continue;
         }
-      
-      file_path parent_fpath = apply_change_set_inverse(cs, work_unit.node_fpath);
-      L(F("file %s in parent revision %s is %s\n") % work_unit.node_fpath % parent_revision % parent_fpath);
+  
+      // even if the file was renamed in the parent, that's represented as 'rename oldname -> newname'
+      // plus 'patch newname -> newname', so we don't have to find the oldname in the parent before 
+      // checking the delta
+      I(!work_unit.node_fpath.empty());
 
-      I(!parent_fpath.empty());
-
-      change_set::delta_map::const_iterator fdelta_iter = cs.deltas.find(parent_fpath);
+      change_set::delta_map::const_iterator fdelta_iter = cs.deltas.find(work_unit.node_fpath);
       file_id parent_fid = work_unit.node_fid;
       
       boost::shared_ptr<annotate_lineage_mapping> parent_lineage;
 
       if (fdelta_iter != cs.deltas.end()) // then the file changed
         { 
+          L(F("delta_entry_dst(fdelta_iter) = %s, work_unit.node_fid = %s\n") 
+            % delta_entry_dst(fdelta_iter) % work_unit.node_fid);
           I(delta_entry_dst(fdelta_iter) == work_unit.node_fid);
           parent_fid = delta_entry_src(fdelta_iter);
           file_data data;
@@ -568,17 +570,20 @@ do_annotate_node (const annotate_node_work &work_unit,
       std::map<revision_id, lineage_merge_node>::iterator lmn = pending_merge_nodes.find(parent_revision);
       if (lmn == pending_merge_nodes.end()) 
         {
-          annotate_node_work newunit(work_unit.annotations, parent_lineage, parent_revision, parent_fid, parent_fpath);
+          // once we move on to processing the parent that this file was renamed from, we'll need the old name
+          file_path parent_fpath_orig = apply_change_set_inverse(cs, work_unit.node_fpath);
+          annotate_node_work newunit(work_unit.annotations, parent_lineage, parent_revision, parent_fid, parent_fpath_orig);
 
           std::map<revision_id, size_t>::const_iterator ptn = paths_to_nodes.find(parent_revision);
           if (ptn->second > 1) {
             lineage_merge_node nmn(newunit, ptn->second);
             pending_merge_nodes.insert(std::make_pair(parent_revision, nmn));
+            L(F("put new merge node on pending_merge_nodes for parent %s\n") % parent_revision);
             // just checking...
             //(pending_merge_nodes.find(parent_revision))->second.dump();
           }
           else {
-            //L(F("single path to node, just stick work on the queue\n"));
+            L(F("single path to node, just stick work on the queue for parent %s\n") % parent_revision);
             nodes_to_process.push_back(newunit);
           }
         } 
