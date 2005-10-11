@@ -1087,17 +1087,18 @@ session::analyze_ancestry_graph()
 
 Netxx::Probe::ready_type 
 session::which_events() const
-{    
+{
+  // Only ask to read if we're not armed.
   if (outbuf.empty())
     {
-      if (inbuf.size() < constants::netcmd_maxsz)
+      if (inbuf.size() < constants::netcmd_maxsz && !armed)
         return Netxx::Probe::ready_read | Netxx::Probe::ready_oobd;
       else
         return Netxx::Probe::ready_oobd;
     }
   else
     {
-      if (inbuf.size() < constants::netcmd_maxsz)
+      if (inbuf.size() < constants::netcmd_maxsz && !armed)
         return Netxx::Probe::ready_write | Netxx::Probe::ready_read | Netxx::Probe::ready_oobd;
       else
         return Netxx::Probe::ready_write | Netxx::Probe::ready_oobd;
@@ -2998,7 +2999,7 @@ void
 session::maybe_say_goodbye()
 {
   if (done_all_refinements() &&
-      got_all_data())
+      got_all_data() && !sent_goodbye)
     queue_bye_cmd();
 }
 
@@ -3132,7 +3133,7 @@ call_server(protocol_role role,
           P(F("got OOB data on fd %d (peer %s), disconnecting\n") 
             % fd % sess.peer_id);
           return;
-        }      
+        }
 
       if (armed)
         {
@@ -3149,8 +3150,8 @@ call_server(protocol_role role,
           P(F("successful exchange with %s\n") 
             % sess.peer_id);
           return;
-        }         
-    }  
+        }
+    }
 }
 
 static void 

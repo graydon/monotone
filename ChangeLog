@@ -1,5 +1,14 @@
 2005-10-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	Make netsync shutdown work properly.
+	* netsync.cc (session::which_events): Only ask to read if not armed.
+	A read failure will discard all read-but-not-processed commands.
+	* netsync.cc (session::maybe_say_goodbye): Only say goodbye once.
+	Repeated goodbyes means that one side *will* have a full write-queue
+	when the connection is torn down.
+
+2005-10-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* tests/t_automate_stdio.at: Add comment here too.
 
 2005-10-10  Timothy Brownawell  <tbrownaw@gmail.com>
