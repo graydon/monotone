@@ -62,6 +62,8 @@ public:
   utf8 diff_args;
   bool use_lca;
   bool execute;
+  utf8 bind_address;
+  utf8 bind_port;
 
 
 

@@ -1,3 +1,19 @@
+2005-10-11  Emile Snyder <emile@alumni.reed.edu>
+
+	* app_state.{cc,hh}: new bind_address and bind_port class members.
+	* options.hh: new OPT_BIND for serve command.
+	* monotone.cc: handle OPT_BIND.
+	* commands.cc (process_netsync_args, CMD(serve)): use values from
+	the new --bind=[addr]:port option for 'monotone serve' rather than
+	the positional argument.  default to binding all interfaces.
+	* monotone.texi: document new serve syntax
+	* netsync.cc (serve_connections): use empty address argument to
+	mean bind all interfaces.
+	* netxx/address.cxx (Address::add_all_addresses): set port_ member
+	from passed in port argument.
+	* testsuite.at, tests/t_netsync_single.at: use new --bind syntax
+	for serve commands.
+	
 2005-10-11  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* commands.cc (message_width, explain_usage): New function to

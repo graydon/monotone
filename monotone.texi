@@ -1650,21 +1650,33 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+$ monotone --db=jim.db serve "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
-This command sets up a single listener loop on the host
-@code{jim-laptop.juicebot.co.jp}@footnote{Make sure that the name 
-resolves to the right IP address. E.g. by checking @code{ping
-jim-laptop.juicebot.co.jp}. A server listening on localhost
-(127.0.0.1) will not be reachable by other computers. If you don't want 
-to think about interfaces and addresses start monotone on @code{0.0.0.0}.
-}, serving all branches matching
+This command starts monotone listening on all network interfaces of 
+his laptop on the default port 5253, serving any branch matching
 @code{jp.co.juicebot.jb7*}. This will naturally include the
 @code{jp.co.juicebot.jb7} branch, and any sub-branches.  The quotes
 around @code{"jp.co.juicebot.jb7*"} are there to protect the @code{*}
 from expansion by the shell; they have no meaning to monotone.
+
+If you want to be more 
+restrictive in which interfaces you listen on, or use a non-standard port, 
+you can use the @code{--bind=address:port} argument like so:
+
+@smallexample
+@group
+$ monotone --db=jim.db --bind=localhost:1234 "jp.co.juicebot.jb7*"
+@end group
+@end smallexample
+
+The example above will start monotone listening on port 1234 only 
+on the loopback interface 127.0.0.1 (which is not accessible 
+from the network, so you can use it for testing without 
+exposing an open port to the rest of the world).  
+You can cause monotone to listen on all interfaces on 
+port 1234 by leaving out the address part like @code{--bind=:1234}.
 
 Now Abe decides he wishes to fetch Jim's code. To do this he issues
 the monotone @code{sync} command:

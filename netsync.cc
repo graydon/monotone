@@ -3340,10 +3340,17 @@ serve_connections(protocol_role role,
     timeout(static_cast<long>(timeout_seconds)), 
     instant(0,1);
 
-  Netxx::Address addr(address().c_str(), default_port, true);
+  if (length(app.bind_port))
+    default_port = ::atoi(app.bind_port().c_str());
+  Netxx::Address addr;
+  if (length(app.bind_address)) 
+      addr.add_address(app.bind_address().c_str(), default_port);
+  else
+      addr.add_all_addresses (default_port);
 
+  const char *name = addr.get_name();
   P(F("beginning service on %s : %s\n") 
-    % addr.get_name() % lexical_cast<string>(addr.get_port()));
+    % (name != NULL ? name : "all interfaces") % lexical_cast<string>(addr.get_port()));
 
   Netxx::StreamServer server(addr, timeout);
   
