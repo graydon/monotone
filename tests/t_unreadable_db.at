@@ -9,7 +9,7 @@ ADD_FILE(testfile, [blah blah
 
 # unreadable file
 AT_CHECK(chmod a-rwx test.db)
-AT_CHECK(MONOTONE, [], [ignore], [ignore])
+AT_CHECK(MONOTONE, [2], [ignore], [ignore])
 AT_CHECK(MONOTONE ls branches, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE db info, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE db version, [1], [ignore], [ignore])
@@ -23,7 +23,7 @@ AT_CHECK(MONOTONE --db subdir/foo.db db init, [], [ignore], [ignore])
 
 # unreadable directory
 AT_CHECK(chmod a-rwx subdir)
-AT_CHECK(MONOTONE --db subdir/foo.db, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --db subdir/foo.db, [2], [ignore], [ignore])
 AT_CHECK(MONOTONE --db subdir/foo.db ls branches, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE --db subdir/foo.db db info, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE --db subdir/foo.db db version, [1], [ignore], [ignore])

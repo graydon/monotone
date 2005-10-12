@@ -2,7 +2,7 @@ AT_SETUP([check that --xargs / -@ behave correctly])
 
 # Generate the general expected output, as we're testing using the
 # output of 'list --help'
-AT_CHECK(RAW_MONOTONE list --help, [], [stdout], [ignore], [:], [:])
+AT_CHECK(RAW_MONOTONE list --help, [2], [stdout], [ignore], [:], [:])
 mv stdout expout
 
 # Check that --xargs works at all

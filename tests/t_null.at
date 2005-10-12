@@ -2,16 +2,16 @@
 
 AT_SETUP([basic invocations and options])
 
-AT_CHECK([monotone --norc], [], [ignore])
-AT_CHECK([monotone --help], [], [ignore])
+AT_CHECK([monotone --norc], [2], [ignore])
+AT_CHECK([monotone --help], [2], [ignore])
 AT_CHECK([monotone --version], [], [ignore])
-AT_CHECK([monotone --nostd   --help], [], [ignore])
-AT_CHECK([monotone --norc    --help], [], [ignore])
-AT_CHECK([monotone --debug --help], [], [ignore], [ignore])
-AT_CHECK([monotone --quiet   --help], [], [ignore])
-AT_CHECK([monotone --db=foo.db   --help], [], [ignore])
-AT_CHECK([monotone --db foo.db   --help], [], [ignore])
-AT_CHECK([monotone --key=someone@foo.com   --help], [], [ignore])
-AT_CHECK([monotone --key someone@foo.com   --help], [], [ignore])
+AT_CHECK([monotone --nostd   --help], [2], [ignore])
+AT_CHECK([monotone --norc    --help], [2], [ignore])
+AT_CHECK([monotone --debug --help], [2], [ignore], [ignore])
+AT_CHECK([monotone --quiet   --help], [2], [ignore])
+AT_CHECK([monotone --db=foo.db   --help], [2], [ignore])
+AT_CHECK([monotone --db foo.db   --help], [2], [ignore])
+AT_CHECK([monotone --key=someone@foo.com   --help], [2], [ignore])
+AT_CHECK([monotone --key someone@foo.com   --help], [2], [ignore])
 
 AT_CLEANUP

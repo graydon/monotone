@@ -1,3 +1,12 @@
+2005-10-12  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.cc: return with exit code of 2 on usage output
+	* testsuite.at: turn "cat_foo" into "automate get_foo"
+	* tests/t_empty_env.at, tests/t_null.at, tests/t_at_sign.at,
+	tests/t_unreadable_db.at: expect 2 exit code
+	* tests/t_cross.at: update to the changeset paradigm of immutable
+	ancestors.
+
 2005-10-11  Emile Snyder <emile@alumni.reed.edu>
 
 	* app_state.{cc,hh}: new bind_address and bind_port class members.
