@@ -2,38 +2,38 @@ AT_SETUP([check that --xargs / -@ behave correctly])
 
 # Generate the general expected output, as we're testing using the
 # output of 'list --help'
-AT_CHECK(RAW_MONOTONE list --help, [], [stdout], [ignore], [:], [:])
+AT_CHECK(RAW_MONOTONE list --help, [2], [stdout], [ignore], [:], [:])
 mv stdout expout
 
 # Check that --xargs works at all
 AT_DATA([at_test.input], [--help
 ])
-AT_CHECK(RAW_MONOTONE list --xargs=at_test.input, [], [expout], [ignore])
+AT_CHECK(RAW_MONOTONE list --xargs=at_test.input, [2], [expout], [ignore])
 
 # The rest of the checks use the short form, -@
 
 # Check that -@ works at all
 AT_DATA([at_test.input], [--help
 ])
-AT_CHECK(RAW_MONOTONE list -@ at_test.input, [], [expout], [ignore])
+AT_CHECK(RAW_MONOTONE list -@ at_test.input, [2], [expout], [ignore])
 
 # Check that -@ works when injected in the middle of the arguments
 # (i.e. that it's prepended correctly)
 AT_DATA([at_test.input], [list
 ])
-AT_CHECK(RAW_MONOTONE -@ at_test.input --help, [], [expout], [ignore])
+AT_CHECK(RAW_MONOTONE -@ at_test.input --help, [2], [expout], [ignore])
 
 # Check that -@ works when used more than once
 AT_DATA([at_test.input1], [list
 ])
 AT_DATA([at_test.input2], [--help
 ])
-AT_CHECK(RAW_MONOTONE -@ at_test.input1 -@ at_test.input2, [], [expout], [ignore])
+AT_CHECK(RAW_MONOTONE -@ at_test.input1 -@ at_test.input2, [2], [expout], [ignore])
 
 # Check that -@ works with an argument file with no content
-AT_CHECK(RAW_MONOTONE list, [], [stdout], [ignore], [:], [:])
+AT_CHECK(RAW_MONOTONE list, [2], [stdout], [ignore], [:], [:])
 mv stdout expout
 AT_DATA([at_test.input], [])
-AT_CHECK(RAW_MONOTONE list -@ at_test.input, [], [expout], [ignore])
+AT_CHECK(RAW_MONOTONE list -@ at_test.input, [2], [expout], [ignore])
 
 AT_CLEANUP

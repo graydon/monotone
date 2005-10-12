@@ -557,7 +557,7 @@ cpp_main(int argc, char ** argv)
       cout << endl;
       commands::explain_usage(u.which, cout);
       clean_shutdown = true;
-      return 0;
+      return 2;
     }
   }
   catch (informative_failure & inf)
