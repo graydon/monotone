@@ -1,3 +1,9 @@
+2005-10-12  Emile Snyder <emile@alumni.reed.edu>
+
+	* monotone.texi: add njs's lucid definition of what the disapprove
+	actually means in terms of the revision graph to it's section in
+	the documentation.
+	
 2005-10-12  Matt Johnston  <matt@ucc.asn.au>
 
 	* monotone.cc: return with exit code of 2 on usage output

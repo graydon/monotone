@@ -3437,7 +3437,13 @@ changes as a new revision descending from @var{id}. The new revision
 will show up as a new head and thus a subsequent @command{merge} will
 incorporate the inverse of the disapproved changes in the other head(s).
 
-Note that this command only works if @var{id} has exactly one ancestor.
+Conceptually, @code{disapprove}s contract is that disapprove(A) gives a 
+revision B such that whenever B is merged with a descendent D of A the merge 
+will result in what D ``would have looked like'' if A had never happened.
+
+Note that as a consequence of this contract the @code{disapprove} command 
+only works if @var{id} has exactly one ancestor, since it hasn't been 
+worked out how to generate such a descendent in the multi-ancestor case.
 
 
 @item monotone heads --branch=@var{branchname}
