@@ -22,7 +22,7 @@ static std::string munge_inner_argument(const char* arg)
     switch (*c) {
     case ' ':
       has_space = true;
-      if (quotes % 2 == 0 || quotes == 0)
+      if (quotes % 2 == 0)
         space_outside_quote = true;
       break;
     case '"':
