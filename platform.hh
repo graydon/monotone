@@ -58,4 +58,9 @@ path::status get_path_status(any_path const & path);
 
 void rename_clobberingly(any_path const & from, any_path const & to);
 
+#ifdef WIN32
+// Win32 doesn't have wcswidth, so we supply our own implementation.
+extern "C" int wcswidth(const wchar_t * pwcs, size_t n);
+#endif
+
 #endif // __PLATFORM_HH__

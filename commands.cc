@@ -179,7 +179,7 @@ namespace commands
     const char * msg = safe_gettext(msgid);
 
     // convert from multi-byte to wide-char string
-    size_t wchars = mbstowcs(NULL, msg, 0) + 1;
+    size_t wchars = mbstowcs(0, msg, 0) + 1;
     if (wchars == (size_t)-1)
       return std::strlen(msgid); // conversion failed; punt and return original length
     boost::scoped_array<wchar_t> wmsg(new wchar_t[wchars]);
