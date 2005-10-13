@@ -10,7 +10,7 @@
 #include "lua.hh"
 #include "manifest.hh"
 #include "vocab.hh"
-#include "roster4.hh"
+#include "roster.hh"
 
 #include <vector>
 

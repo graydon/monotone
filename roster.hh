@@ -2,132 +2,285 @@
 #define __ROSTER_HH__
 
 // copyright (C) 2005 nathaniel smith <njs@pobox.com>
+// copyright (C) 2005 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include "vocab.hh"
+#include <map>
+
+#include <boost/shared_ptr.hpp>
+
+#include "cset.hh"
 #include "numeric_vocab.hh"
 #include "paths.hh"
+#include "sanity.hh"
+#include "vocab.hh"
 
-// a persistent element id
-// but "file_id" means something else...
-// "element" terminology is stolen from clearcase, it means (file|directory)
-// 32 bits should be sufficient; even with half of them temporary, 2 billion
-// distinct files would use 2 terabytes of disk space, assuming each file
-// requires only a single sqlite page.  easy to change in a few years, in any
-// case.
-// FIXME: we have too many integer types.  make them type-distinct.
-typedef uint32_t element_soul;
-
-const element_soul the_null_soul = 0;
-const uint32_t first_element_soul = 1;
-
-inline bool null_soul(element_soul es)
+struct node_id_source
 {
-  return es = the_null_soul;
-}
-
-const element_soul first_temp_soul = 0x80000000;
-
-inline bool temp_soul(element_soul es)
-{
-  return es & first_temp_soul;
-}
-
-struct temp_soul_source
-{
-  temp_soul_source() : curr(first_temp_soul) {}
-  element_soul next()
-  {
-    element_soul r = curr++;
-    I(temp_soul(r));
-    return r;
-  }
-  element_soul curr;
+  virtual node_id next() = 0;
+  virtual ~node_id_source() {}
 };
-  
-typedef enum { etype_dir, etype_file } etype;
 
-struct element_t
+///////////////////////////////////////////////////////////////////
+
+struct node;
+struct dir_node;
+struct file_node;
+typedef boost::shared_ptr<node> node_t;
+typedef boost::shared_ptr<file_node> file_t;
+typedef boost::shared_ptr<dir_node> dir_t;
+
+// FIXME: perhaps move this to paths.{cc,hh}
+void
+dirname_basename(split_path const & sp,
+                 split_path & dirname, path_component & basename);
+
+node_id const the_null_node = 0;
+
+inline bool 
+null_node(node_id n)
 {
-  etype type;
-  revision_id birth_revision;
-  // this is null iff this is a root dir
-  element_soul parent;
-  // this is null iff this is a root dir
-  path_component name;
+  return n == the_null_node;
+}
+
+
+// (true, "val") or (false, "") are both valid attr values (for proper
+// merging, we have to widen the attr_value type to include a first-class
+// "undefined" value).
+typedef std::map<attr_key, std::pair<bool, attr_value> > full_attr_map_t;
+typedef std::map<path_component, node_t> dir_map;
+typedef std::map<node_id, node_t> node_map;
+
+void dump(full_attr_map_t const & val, std::string & out);
+
+
+struct node 
+{
+  node();
+  node(node_id i);
+  node_id self;
+  node_id parent; // the_null_node iff this is a root dir  
+  path_component name; // the_null_component iff this is a root dir  
+  full_attr_map_t attrs;
+
+  // need a virtual function to make dynamic_cast work
+  virtual node_t clone() = 0;
+  virtual ~node() {}
+};
+
+
+struct dir_node
+  : public node
+{
+  dir_node();
+  dir_node(node_id i);
+  dir_map children;
+  node_t get_child(path_component const & pc) const;
+  void attach_child(path_component const & pc, node_t child);
+  node_t detach_child(path_component const & pc);
+
+  // need a virtual function to make dynamic_cast work
+  virtual node_t clone();
+  virtual ~dir_node() {}
+};
+
+
+struct file_node
+  : public node
+{
+  file_node();
+  file_node(node_id i, file_id const & f);
   file_id content;
-  std::map<attr_key, attr_value> attrs;
-  virtual ~element() {};
+
+  // need a virtual function to make dynamic_cast work
+  virtual node_t clone();
+  virtual ~file_node() {}
 };
 
-struct mark_item
+inline bool
+is_dir_t(node_t n)
 {
-  std::set<revision_id> name_marks;
-  std::set<revision_id> content_marks;
-  std::map<attr_key, std::set<revision_id> > attr_marks;
+  dir_t d = boost::dynamic_pointer_cast<dir_node, node>(n);
+  return static_cast<bool>(d);
+}
+
+inline bool
+is_file_t(node_t n)
+{
+  file_t f = boost::dynamic_pointer_cast<file_node, node>(n);
+  return static_cast<bool>(f);
+}
+
+
+inline dir_t
+downcast_to_dir_t(node_t const n)
+{
+  dir_t d = boost::dynamic_pointer_cast<dir_node, node>(n);
+  I(static_cast<bool>(d));
+  return d;
+}
+
+
+inline file_t
+downcast_to_file_t(node_t const n)
+{
+  file_t f = boost::dynamic_pointer_cast<file_node, node>(n);
+  I(static_cast<bool>(f));
+  return f;
+}
+
+void dump(node_t const & n, std::string & out);
+
+
+struct marking_t
+{
+  revision_id birth_revision;
+  std::set<revision_id> parent_name;
+  std::set<revision_id> file_content;
+  std::map<attr_key, std::set<revision_id> > attrs;
+  marking_t() {};
+  bool operator==(marking_t const & other) const
+  {
+    return birth_revision == other.birth_revision
+      && parent_name == other.parent_name
+      && file_content == other.file_content
+      && attrs == other.attrs;
+  }
 };
 
-typedef std::map<element_soul, element_t> element_map;
-typedef std::map<path_component, element_soul> dir_map;
+typedef std::map<node_id, marking_t> marking_map;
 
-typedef std::vector<path_component> split_path;
+void dump(std::set<revision_id> & revids, std::string & out);
+void dump(marking_t const & marking, std::string & out);
+void dump(marking_map const & marking_map, std::string & out);
 
-class dir_tree
+namespace basic_io { struct printer; struct parser; }
+
+class roster_t
 {
 public:
-  dir_tree() : root_dir(the_null_soul) {};
-  dir_tree(element_map const & elements) {};
-  element_soul lookup(file_path const & fp);
-  element_soul lookup(split_path const & sp);
-  element_soul lookup(element_soul parent, path_component child);
-  // returns the soul of the removed element
-  element_soul detach(split_path const & sp);
-  void attach(split_path const & sp, element_soul es, etype type);
-  void attach(element_soul parent, element_soul es, etype type);
+  roster_t() {}
+  roster_t(roster_t const & other);
+  roster_t & operator=(roster_t const & other);
+  bool has_root() const;
+  bool has_node(split_path const & sp) const;
+  bool has_node(node_id n) const;
+  node_t get_node(split_path const & sp) const;
+  node_t get_node(node_id n) const;
+  void get_name(node_id n, split_path & sp) const;
+  void replace_node_id(node_id from, node_id to);
+
+  // editable_tree operations
+  node_id detach_node(split_path const & src);
+  void drop_detached_node(node_id n);
+  node_id create_dir_node(node_id_source & nid);
+  node_id create_file_node(file_id const & content,
+                           node_id_source & nid);
+  void attach_node(node_id n, split_path const & dst);
+  void apply_delta(split_path const & pth, 
+                   file_id const & old_id, 
+                   file_id const & new_new);
+  void clear_attr(split_path const & pth,
+                  attr_key const & name);
+  void set_attr(split_path const & pth,
+                attr_key const & name,
+                attr_value const & val);
+  void set_attr(split_path const & pth,
+                attr_key const & name,
+                std::pair<bool, attr_value> const & val);
+
+  node_map const & all_nodes() const
+  {
+    return nodes;
+  }
+
+  bool operator==(roster_t const & other) const;
+
+  void check_sane(bool temp_nodes_ok=false) const;
+
+  // verify that this roster is sane, and corresponds to the given
+  // marking map
+  void check_sane_against(marking_map const & marks) const;
+
+  void print_to(basic_io::printer & pr,
+                marking_map const & mm,
+                bool print_local_parts) const;
+
+  void parse_from(basic_io::parser & pa,
+                  marking_map & mm);
+
 private:
-  std::map<element_soul, dir_map> children;
-  element_soul root_dir;
+  void do_deep_copy_from(roster_t const & other);
+  void check_finite_depth() const;
+  dir_t root_dir;
+  node_map nodes;
+  // this attribute holds the previous location of detached nodes.  when
+  // applying a cset, we pass through intermediate states where some nodes are
+  // detached from the directory tree.  it is illegal to re-attach these nodes
+  // to where they started -- you shouldn't have detached them in the first
+  // place, if you were just going to put them back!  this checking verifies
+  // that csets are in normalized form.
+  std::map<node_id, std::pair<node_id, path_component> > old_locations;
+  friend void dump(roster_t const & val, std::string & out);
 };
 
-// FIXME: should we just make the root_dir always have the null soul for now?
-struct roster_t
+struct temp_node_id_source 
+  : public node_id_source
 {
-  roster_t() : root_dir(the_null_soul) {}
-  // might be better to make this destructive -- eat the element_map given...
-  roster_t(element_map const & elements)
-    : elements(elements), tree(elements)
-    {}
-  element_t & element(element_soul es);
-  void assert_type(element_soul es, etype type);
-  element_map elements;
-  dir_tree tree;
+  temp_node_id_source();
+  virtual node_id next();
+  node_id curr;
 };
 
-typedef std::map<element_soul, mark_item> marking_t;
+void dump(roster_t const & val, std::string & out);
 
-element_soul lookup(roster_t const & roster, file_path const & fp);
-element_soul lookup(roster_t const & roster,
-                    std::vector<path_component> const & path);
-void get_name(roster_t const & roster, element_soul es, file_path & fp);
+struct app_state;
+struct revision_set;
 
-// This generates a roster containing temp souls
-void apply_change_set(change_set const & cs, roster_t & roster,
-                      temp_soul_source & tss);
+void
+make_cset(roster_t const & from, 
+          roster_t const & to, 
+          cset & cs);
 
-void markup(revision_id const & rid, roster_t const & root,
-            marking_t & marking);
-void markup(revision_id const & rid, roster_t const & child,
-            revision_id const & parent_rid, roster_t const & parent,
-            marking_t & marking);
-void markup(revision_id const & rid, roster_t const & root,
-            revision_id const & parent1_rid, roster_t const & parent1,
-            revision_id const & parent2_rid, roster_t const & parent2,
-            marking_t & marking);
 
-void read_roster(data const & dat, roster_t & roster, marking_t & marking);
-void write_roster(roster_t const & roster, marking_t const & marking, data & dat);
-void write_manifest(roster_t const & roster, data & dat);
+void
+make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
+                      cset const & right_cs, revision_id const & right_rid,
+                      revision_id const & new_rid,
+                      roster_t & result, 
+                      marking_map & marking, 
+                      app_state & app);
 
-#endif  // header guard
+void
+make_roster_for_nonmerge(cset const & cs, 
+                         revision_id const & parent_rid,
+                         revision_id const & new_rid,
+                         roster_t & result, 
+                         marking_map & marking, 
+                         app_state & app);
+
+void 
+make_roster_for_revision(revision_set const & rev, 
+                         revision_id const & rid,
+                         roster_t & result, 
+                         marking_map & marking,
+                         app_state & app);
+
+void 
+read_roster_and_marking(data const & dat,
+                        roster_t & ros,
+                        marking_map & mm);
+
+void
+write_roster_and_marking(roster_t const & ros,
+                         marking_map const & mm,
+                         data & dat);
+
+void
+write_manifest_of_roster(roster_t const & ros,
+                         data & dat);
+
+#endif
+

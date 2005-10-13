@@ -21,7 +21,7 @@ struct cert;
 #include "manifest.hh"
 #include "numeric_vocab.hh"
 #include "paths.hh"
-#include "roster4.hh"
+#include "roster.hh"
 #include "selectors.hh"
 #include "vocab.hh"
 
@@ -201,11 +201,11 @@ class database
                                         database & db);
 
   void get_roster_id_for_revision(revision_id const & rev_id,
-				  hexenc<id> & roster_id);
+                                  hexenc<id> & roster_id);
 
   void put_roster(revision_id const & rev_id,
-		  roster_t & roster,
-		  marking_map & marks);
+                  roster_t & roster,
+                  marking_map & marks);
 
   void check_filename();
   void open();
@@ -298,10 +298,10 @@ public:
                    revision_data & dat);
 
   void put_revision(revision_id const & new_id,
-		    revision_set const & rev);
+                    revision_set const & rev);
 
   void put_revision(revision_id const & new_id,
-		    revision_data const & dat);
+                    revision_data const & dat);
   
   void delete_existing_revs_and_certs();
 
@@ -431,14 +431,14 @@ public:
   // roster and node_id stuff
  
   void get_roster(revision_id const & rid, 
-		  roster_t & roster,
-		  marking_map & marks);
+                  roster_t & roster,
+                  marking_map & marks);
 
   void get_uncommon_ancestors(revision_id const & a,
-			      revision_id const & b,
-			      std::set<revision_id> & a_uncommon_ancs,
-			      std::set<revision_id> & b_uncommon_ancs);
-			      
+                              revision_id const & b,
+                              std::set<revision_id> & a_uncommon_ancs,
+                              std::set<revision_id> & b_uncommon_ancs);
+                              
   node_id next_node_id();
   
   // completion stuff
