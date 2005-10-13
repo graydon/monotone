@@ -1,3 +1,11 @@
+2005-10-12  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (add_node_for_old_revision): Rename to...
+	(add_node_for_oldstyle_revision): ...this.
+	(build_changesets_from_existing_revs): Rename to...
+	(build_roster_style_revs_from_manifest_style_revs): ...this.
+	* commands.cc (db): Rename "rebuild" to "rosterify".
+
 2005-10-08  Nathaniel Smith  <njs@pobox.com>
 
 	* revision.cc (analyze_manifest_changes): Remove.

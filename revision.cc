@@ -966,7 +966,7 @@ get_manifest_for_rev(app_state & app,
                      revision_id const & ident,
                      manifest_id & mid);
 
-u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
+u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
 {
   I(existing_graph);
   I(!null_id(rev));
@@ -1454,12 +1454,12 @@ anc_graph::construct_revisions_from_ancestry()
 }
 
 void 
-build_changesets_from_existing_revs(app_state & app)
+build_roster_style_revs_from_manifest_style_revs(app_state & app)
 {
   global_sanity.set_relaxed(true);
   anc_graph graph(true, app);
 
-  P(F("rebuilding revision graph from existing graph\n"));
+  P(F("converting existing revision graph to new-style revisions\n"));
   std::multimap<revision_id, revision_id> existing_graph;
 
   {
@@ -1476,8 +1476,8 @@ build_changesets_from_existing_revs(app_state & app)
     {
       if (!null_id(i->first))
         {
-          u64 parent_node = graph.add_node_for_old_revision(i->first);
-          u64 child_node = graph.add_node_for_old_revision(i->second);
+          u64 parent_node = graph.add_node_for_oldstyle_revision(i->first);
+          u64 child_node = graph.add_node_for_oldstyle_revision(i->second);
           graph.add_node_ancestry(child_node, parent_node);
         }
     }

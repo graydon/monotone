@@ -2082,7 +2082,7 @@ CMD(db, N_("database"),
       "kill_tag_locally TAG\n"
       "check\n"
       "changesetify\n"
-      "rebuild\n"
+      "rosterify\n"
       "set_epoch BRANCH EPOCH\n"), 
     N_("manipulate database state"),
     OPT_NONE)
@@ -2105,8 +2105,8 @@ CMD(db, N_("database"),
         check_db(app);
       else if (idx(args, 0)() == "changesetify")
         build_changesets_from_manifest_ancestry(app);
-      else if (idx(args, 0)() == "rebuild")
-        build_changesets_from_existing_revs(app);
+      else if (idx(args, 0)() == "rosterify")
+        build_roster_style_revs_from_manifest_style_revs(app);
       else
         throw usage(name);
     }
