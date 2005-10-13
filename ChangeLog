@@ -1,3 +1,9 @@
+2005-10-13  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/mem_pool.cpp: fix bug preventing remove_empty_buffers()
+	from being called, gives significant improvements for long-running
+	processes.
+
 2005-10-12  Emile Snyder <emile@alumni.reed.edu>
 
 	* monotone.texi: add njs's lucid definition of what the disapprove

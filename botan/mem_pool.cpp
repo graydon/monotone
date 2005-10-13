@@ -268,10 +268,10 @@ void Pooling_Allocator::free_block(void* ptr, u32bit n) const
          else
             real_mem[j].in_use = false;
 
+         remove_empty_buffers(real_mem);
          return;
          }
 
-   remove_empty_buffers(real_mem);
 
    throw Internal_Error("Pooling_Allocator: Unknown pointer was freed");
    }
