@@ -2027,6 +2027,10 @@ static void selector_to_certname(selector_type ty,
       prefix = suffix = "";
       s = branch_cert_name;
       break;
+    case selectors::sel_head:
+      prefix = suffix = "";
+      s = branch_cert_name;
+      break;
     case selectors::sel_date:
     case selectors::sel_later:
     case selectors::sel_earlier:
@@ -2049,6 +2053,7 @@ void database::complete(selector_type ty,
                         vector<pair<selector_type, string> > const & limit,
                         set<string> & completions)
 {
+  //L(F("database::complete for partial '%s'\n") % partial);
   completions.clear();
 
   // step 1: the limit is transformed into an SQL select statement which
@@ -2115,6 +2120,46 @@ void database::complete(selector_type ty,
               lim += (boost::format(" AND unbase64(value) glob '*%s*'")
                       % i->second).str();     
             }
+          else if (i->first == selectors::sel_head) 
+            {
+              // get branch names
+              string subquery = (boost::format("SELECT DISTINCT value FROM revision_certs WHERE name='%s' and unbase64(value) glob '%s'") 
+                                 % branch_cert_name % i->second).str();
+              vector<cert_value> branch_names;
+              results res;
+              fetch(res, one_col, any_rows, subquery.c_str());
+              for (size_t i = 0; i < res.size(); ++i)
+                {
+                  base64<data> row_encoded(res[i][0]);
+                  data row_decoded;
+                  decode_base64(row_encoded, row_decoded);
+                  branch_names.push_back(row_decoded());
+                }
+
+              // for each branch name, get the branch heads
+              set<revision_id> heads;
+              for (vector<cert_value>::const_iterator bn = branch_names.begin(); bn != branch_names.end(); bn++)
+                {
+                  set<revision_id> branch_heads;
+                  get_branch_heads(*bn, *__app, branch_heads);
+                  heads.insert(branch_heads.begin(), branch_heads.end());
+                  L(F("after get_branch_heads for %s, heads has %d entries\n") % (*bn) % heads.size());
+                }
+
+              lim += "SELECT id FROM revision_certs WHERE id IN (";
+              if (heads.size())
+                {
+                  set<revision_id>::const_iterator r = heads.begin();
+                  lim += (boost::format("'%s'") % r->inner()()).str();
+                  r++;
+                  while (r != heads.end())
+                    {
+                      lim += (boost::format(", '%s'") % r->inner()()).str();
+                      r++;
+                    }
+                }
+              lim += ") ";
+            }
           else
             {
               string certname;
@@ -2136,6 +2181,7 @@ void database::complete(selector_type ty,
                   break;
                 }
             }
+          //L(F("found selector type %d, selecting_head is now %d\n") % i->first % selecting_head);
         }
     }
   lim += ")";
@@ -2181,7 +2227,7 @@ void database::complete(selector_type ty,
   fetch(res, one_col, any_rows, query.c_str());
   for (size_t i = 0; i < res.size(); ++i)
     {
-      if (ty == selectors::sel_ident)
+      if (ty == selectors::sel_ident) 
         completions.insert(res[i][0]);
       else
         {

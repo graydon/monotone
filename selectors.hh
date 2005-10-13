@@ -21,6 +21,7 @@ namespace selectors
     {
       sel_author,
       sel_branch,
+      sel_head,
       sel_date,
       sel_tag,
       sel_ident,

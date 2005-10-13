@@ -2330,6 +2330,11 @@ Uses selector type @code{a}. For example, @code{a:graydon} matches
 Uses selector type @code{b}. For example, @code{b:net.venge.monotone} matches
 @code{branch} certs where the cert value is @code{net.venge.monotone}.
 Values to match for can have shell wildcards.
+@item Heads selection
+Uses selector type @code{h}. For example, @code{h:net.venge.monotone} matches
+@code{branch} certs where the cert value is @code{net.venge.monotone} and 
+the associated revision is a head revision on that branch.  Values to match
+for can have shell wildcards like the branch selector.
 @item Date selection
 Uses selector type @code{d}. For example, @code{d:2004-04} matches
 @code{date} certs where the cert value begins with

@@ -46,6 +46,9 @@ namespace selectors
           case 'b':
             type = sel_branch;
             break;
+          case 'h':
+            type = sel_head;
+            break;
           case 'd':
             type = sel_date;
             break;
