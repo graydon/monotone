@@ -1418,71 +1418,73 @@ namespace
     // markings starts out as the parent's markings
     marking_map & markings;
   };
-}
 
 
-void
-make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
-                      cset const & right_cs, revision_id const & right_rid,
-                      revision_id const & new_rid,
-                      roster_t & result, marking_map & marking, app_state & app)
-{
-  I(!null_id(left_rid) && !null_id(right_rid));
-  roster_t left_r, right_r;
-  marking_map left_marking, right_marking;
-  app.db.get_roster(left_rid, left_r, left_marking);
-  app.db.get_roster(right_rid, right_r, right_marking);
+  void
+  make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
+                        cset const & right_cs, revision_id const & right_rid,
+                        revision_id const & new_rid,
+                        roster_t & result, marking_map & marking, app_state & app)
   {
-    temp_node_id_source nis;
-    // SPEEDUP?: the copies on the next two lines are probably the main
-    // bottleneck in this code
-    result = left_r;
-    roster_t from_right_r(right_r);
+    I(!null_id(left_rid) && !null_id(right_rid));
+    roster_t left_r, right_r;
+    marking_map left_marking, right_marking;
+    app.db.get_roster(left_rid, left_r, left_marking);
+    app.db.get_roster(right_rid, right_r, right_marking);
+    {
+      temp_node_id_source nis;
+      // SPEEDUP?: the copies on the next two lines are probably the main
+      // bottleneck in this code
+      result = left_r;
+      roster_t from_right_r(right_r);
 
-    editable_roster_for_merge from_left_er(result, nis);
-    editable_roster_for_merge from_right_er(from_right_r, nis);
+      editable_roster_for_merge from_left_er(result, nis);
+      editable_roster_for_merge from_right_er(from_right_r, nis);
 
-    left_cs.apply_to(from_left_er);
-    right_cs.apply_to(from_right_er);
+      left_cs.apply_to(from_left_er);
+      right_cs.apply_to(from_right_er);
 
-    set<node_id> new_ids;
-    true_node_id_source tnis = true_node_id_source(app);
-    unify_rosters(result, from_left_er.new_nodes,
-                  from_right_r, from_right_er.new_nodes,
-                  new_ids, tnis);
+      set<node_id> new_ids;
+      true_node_id_source tnis = true_node_id_source(app);
+      unify_rosters(result, from_left_er.new_nodes,
+                    from_right_r, from_right_er.new_nodes,
+                    new_ids, tnis);
 
-    I(result == from_right_r);
+      I(result == from_right_r);
+    }
+    // SPEEDUP?: instead of constructing new marking from scratch, track which
+    // nodes were modified, and scan only them
+    // load one of the parent markings directly into the new marking map
+    marking.clear();
+    set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+    app.db.get_uncommon_ancestors(left_rid, right_rid,
+                                  left_uncommon_ancestors,
+                                  right_uncommon_ancestors);
+    mark_merge_roster(left_r, right_r, left_marking, right_marking,
+                      left_uncommon_ancestors, right_uncommon_ancestors,
+                      new_rid, result, marking);
   }
-  // SPEEDUP?: instead of constructing new marking from scratch, track which
-  // nodes were modified, and scan only them
-  // load one of the parent markings directly into the new marking map
-  marking.clear();
-  set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
-  app.db.get_uncommon_ancestors(left_rid, right_rid,
-                                left_uncommon_ancestors, right_uncommon_ancestors);
-  mark_merge_roster(left_r, right_r, left_marking, right_marking,
-                    left_uncommon_ancestors, right_uncommon_ancestors,
-                    new_rid, result, marking);
+
+
+  void
+  make_roster_for_nonmerge(cset const & cs, revision_id const & parent_rid,
+                           revision_id const & new_rid,
+                           roster_t & result, marking_map & marking,
+                           app_state & app)
+  {
+    roster_t parent_r;
+    app.db.get_roster(parent_rid, result, marking);
+    true_node_id_source nis(app);
+    editable_roster_for_nonmerge er(result, nis, new_rid, marking);
+    cs.apply_to(er);
+  }
 }
-
-
-void
-make_roster_for_nonmerge(cset const & cs, revision_id const & parent_rid,
-                         revision_id const & new_rid,
-                         roster_t & result, marking_map & marking, app_state & app)
-{
-  roster_t parent_r;
-  app.db.get_roster(parent_rid, result, marking);
-  true_node_id_source nis(app);
-  editable_roster_for_nonmerge er(result, nis, new_rid, marking);
-  cs.apply_to(er);
-}
-
 
 void
 make_roster_for_revision(revision_set const & rev, revision_id const & rid,
                          roster_t & result, marking_map & marking, app_state & app)
 {
+  MM(rev);
   if (rev.edges.size() == 1)
     make_roster_for_nonmerge(edge_changes(rev.edges.begin()),
                              edge_old_revision(rev.edges.begin()),

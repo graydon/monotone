@@ -3787,4 +3787,23 @@ CMD(unset, N_("vars"), N_("DOMAIN NAME"),
   app.db.clear_var(k);
 }
 
+CMD(get_roster, N_("debug"), N_("REVID"),
+    N_("dump the roster associated with the given REVID"),
+    OPT_NONE)
+{
+  if (args.size() != 1)
+    throw usage(name);
+
+  revision_id rid;
+  complete(app, idx(args, 0)(), rid);
+      
+  roster_t roster;
+  marking_map mm;
+  app.db.get_roster(rid, roster, mm);
+  
+  data dat;
+  write_roster_and_marking(roster, mm, dat);
+  cout << dat;
+}
+
 }; // namespace commands

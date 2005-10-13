@@ -245,22 +245,6 @@ make_cset(roster_t const & from,
           cset & cs);
 
 
-void
-make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
-                      cset const & right_cs, revision_id const & right_rid,
-                      revision_id const & new_rid,
-                      roster_t & result, 
-                      marking_map & marking, 
-                      app_state & app);
-
-void
-make_roster_for_nonmerge(cset const & cs, 
-                         revision_id const & parent_rid,
-                         revision_id const & new_rid,
-                         roster_t & result, 
-                         marking_map & marking, 
-                         app_state & app);
-
 void 
 make_roster_for_revision(revision_set const & rev, 
                          revision_id const & rid,
