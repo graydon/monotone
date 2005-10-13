@@ -1261,7 +1261,7 @@ static void
 read_oldstyle_dot_mt_attrs(data const & dat, oldstyle_attr_map & attr)
 {
   std::istringstream iss(dat());
-  basic_io::input_source src(iss, attr_file_name);
+  basic_io::input_source src(iss, ".mt-attrs");
   basic_io::tokenizer tok(src);
   basic_io::parser parser(tok);
 
@@ -1269,14 +1269,14 @@ read_oldstyle_dot_mt_attrs(data const & dat, oldstyle_attr_map & attr)
 
   attr.clear();
 
-  while (parser.symp(syms::file))
+  while (parser.symp("file"))
     {
       parser.sym();
       parser.str(file);
       file_path fp = file_path_internal(file);
 
       while (parser.symp() && 
-             !parser.symp(syms::file)) 
+             !parser.symp("file"))
         {
           parser.sym(name);
           parser.str(value);
@@ -1383,7 +1383,7 @@ anc_graph::construct_revisions_from_ancestry()
           for (manifest_map::const_iterator i = old_child_man.begin();
                i != old_child_man.end(); ++i)
             {
-              if (i->first != attr_path)
+              if (!(i->first == attr_path))
                 insert_into_roster_reusing_parent_entries(i->first, i->second,
                                                           parent_rosters,
                                                           nis, child_roster,
@@ -1399,7 +1399,7 @@ anc_graph::construct_revisions_from_ancestry()
                 file_data dat;
                 app.db.get_file_version(i->second, dat);
                 oldstyle_attr_map attrs;
-                read_oldstyle_dot_mt_attrs(dat(), attrs);
+                read_oldstyle_dot_mt_attrs(dat.inner(), attrs);
                 for (oldstyle_attr_map::const_iterator j = attrs.begin();
                      j != attrs.end(); ++j)
                   {
@@ -1407,12 +1407,14 @@ anc_graph::construct_revisions_from_ancestry()
                     j->first.split(sp);
                     if (child_roster.has_node(sp))
                       {
-                        node_t n = child_roster.get_node(sp);
-                        map<string, string> const & fattrs = i->second;
-                        for (map<string, string>::const_iterator k = fattrs.begin();
+                        std::map<std::string, std::string> const &
+                          fattrs = j->second;
+                        for (std::map<std::string, std::string>::const_iterator
+                               k = fattrs.begin();
                              k != fattrs.end(); ++k)
-                          safe_insert(n->attrs,
-                                      attr_key(k->first), attr_value(k->second));
+                          child_roster.set_attr(sp,
+                                                attr_key(k->first),
+                                                attr_value(k->second));
                       }
                   }
               }
