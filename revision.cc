@@ -1520,7 +1520,7 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
   global_sanity.set_relaxed(true);
   anc_graph graph(true, app);
 
-  P(F("converting existing revision graph to new-style revisions\n"));
+  P(F("converting existing revision graph to new roster-style revisions\n"));
   std::multimap<revision_id, revision_id> existing_graph;
 
   {
