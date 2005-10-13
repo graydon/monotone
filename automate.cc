@@ -950,6 +950,8 @@ automate_get_revision(std::vector<utf8> args,
                  app_state & app,
                  std::ostream & output)
 {
+/*
+// FIXME ROSTERS: disabled until rewritten to use rosters
   if (args.size() > 1)
     throw usage(help_name);
 
@@ -976,6 +978,7 @@ automate_get_revision(std::vector<utf8> args,
 
   L(F("dumping revision %s\n") % ident);
   output.write(dat.inner()().data(), dat.inner()().size());
+*/
 }
 
 // Name: get_manifest
@@ -997,6 +1000,8 @@ automate_get_manifest(std::vector<utf8> args,
                  app_state & app,
                  std::ostream & output)
 {
+/*
+// FIXME ROSTERS: disabled until rewritten to use rosters
   if (args.size() > 1)
     throw usage(help_name);
 
@@ -1024,6 +1029,7 @@ automate_get_manifest(std::vector<utf8> args,
 
   L(F("dumping manifest %s\n") % ident);
   output.write(dat.inner()().data(), dat.inner()().size());
+*/
 }
 
 // Name: get_file
