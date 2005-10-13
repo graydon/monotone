@@ -1255,6 +1255,36 @@ dump(current_rev_debugger const & d, std::string & out)
 }
 
 
+typedef std::map<file_path, std::map<std::string, std::string> > oldstyle_attr_map;
+
+static void 
+read_oldstyle_dot_mt_attrs(data const & dat, oldstyle_attr_map & attr)
+{
+  std::istringstream iss(dat());
+  basic_io::input_source src(iss, attr_file_name);
+  basic_io::tokenizer tok(src);
+  basic_io::parser parser(tok);
+
+  std::string file, name, value;
+
+  attr.clear();
+
+  while (parser.symp(syms::file))
+    {
+      parser.sym();
+      parser.str(file);
+      file_path fp = file_path_internal(file);
+
+      while (parser.symp() && 
+             !parser.symp(syms::file)) 
+        {
+          parser.sym(name);
+          parser.str(value);
+          attr[fp][name] = value;
+        }
+    }
+}
+
 
 void 
 anc_graph::construct_revisions_from_ancestry()
@@ -1345,20 +1375,49 @@ anc_graph::construct_revisions_from_ancestry()
                 }
             }
 
-          // Convert the old-skool manifest into a cset adding all the
-          // files in question, and build a roster out of that.
+          file_path attr_path = file_path_internal(".mt-attrs");
+
           roster_t child_roster;
           MM(child_roster);
           temp_node_id_source nis;
           for (manifest_map::const_iterator i = old_child_man.begin();
                i != old_child_man.end(); ++i)
             {
-              insert_into_roster_reusing_parent_entries(i->first, i->second,
-                                                        parent_rosters,
-                                                        nis, child_roster,
-                                                        new_rev_to_node,
-                                                        ancestry);
+              if (i->first != attr_path)
+                insert_into_roster_reusing_parent_entries(i->first, i->second,
+                                                          parent_rosters,
+                                                          nis, child_roster,
+                                                          new_rev_to_node,
+                                                          ancestry);
             }
+          
+          // migrate attributes out of .mt-attrs
+          {
+            manifest_map::const_iterator i = old_child_man.find(attr_path);
+            if (i != old_child_man.end())
+              {
+                file_data dat;
+                app.db.get_file_version(i->second, dat);
+                oldstyle_attr_map attrs;
+                read_oldstyle_dot_mt_attrs(dat(), attrs);
+                for (oldstyle_attr_map::const_iterator j = attrs.begin();
+                     j != attrs.end(); ++j)
+                  {
+                    split_path sp;
+                    j->first.split(sp);
+                    if (child_roster.has_node(sp))
+                      {
+                        node_t n = child_roster.get_node(sp);
+                        map<string, string> const & fattrs = i->second;
+                        for (map<string, string>::const_iterator k = fattrs.begin();
+                             k != fattrs.end(); ++k)
+                          safe_insert(n->attrs,
+                                      attr_key(k->first), attr_value(k->second));
+                      }
+                  }
+              }
+          }
+                    
 
           revision_set rev;
           MM(rev);
