@@ -751,7 +751,7 @@ struct anc_graph
   void rebuild_ancestry();
   void get_node_manifest(u64 node, manifest_id & man);
   u64 add_node_for_old_manifest(manifest_id const & man);
-  u64 add_node_for_old_revision(revision_id const & rev);                     
+  u64 add_node_for_oldstyle_revision(revision_id const & rev);                     
   void construct_revisions_from_ancestry();
 };
 
