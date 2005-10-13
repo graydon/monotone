@@ -1,5 +1,9 @@
 2005-10-12  Nathaniel Smith  <njs@pobox.com>
 
+	* revision.hh: Oops, missed a bit.
+
+2005-10-12  Nathaniel Smith  <njs@pobox.com>
+
 	* revision.cc (add_node_for_old_revision): Rename to...
 	(add_node_for_oldstyle_revision): ...this.
 	(build_changesets_from_existing_revs): Rename to...

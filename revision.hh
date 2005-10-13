@@ -178,7 +178,7 @@ void
 build_changesets_from_manifest_ancestry(app_state & app);
 
 void 
-build_changesets_from_existing_revs(app_state & app);
+build_roster_style_revs_from_manifest_style_revs(app_state & app);
 
 // basic_io access to printers and parsers
 
