@@ -3681,6 +3681,13 @@ manifest, and by erasing the @file{MT/work} file.
 If files or directories are given as arguments, only those files and
 directories are affected instead of the entirety of your working copy.
 
+If the flag --missing is given, in addition to files or directories given
+as arguments, it reverts any files which monotone 
+has listed in it's manifest, but which have been deleted from the working
+copy.  If you specify --missing with no additional path arguments, 
+and there are no files missing from the working copy, revert is 
+conservative and does nothing.
+
 From within a subdirectory of the working copy the @command{revert}
 command will, by default, revert @emph{all changes} in the working copy.
 Specifying only the pathname "." will restrict @command{revert} to files

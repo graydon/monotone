@@ -3406,7 +3406,7 @@ CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
 
 
 CMD(revert, N_("working copy"), N_("[PATH]..."), 
-    N_("revert file(s), dir(s) or entire working copy"), OPT_DEPTH % OPT_EXCLUDE)
+    N_("revert file(s), dir(s) or entire working copy"), OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
   manifest_map m_old;
   revision_id old_revision_id;
@@ -3427,7 +3427,27 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
 
   extract_rearranged_paths(work, valid_paths);
   add_intermediate_paths(valid_paths);
-  app.set_restriction(valid_paths, args, false);
+
+  vector<utf8> args_copy(args);
+  if (app.missing)
+    {
+      L(F("revert adding find_missing entries to %d original args elements\n") % args_copy.size());
+      path_set missing;
+      find_missing(app, args_copy, missing);
+
+      // chose as_external because app_state::set_restriction turns utf8s into file_paths
+      // using file_path_external()...
+      for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
+        args_copy.push_back(i->as_external());
+
+      L(F("after adding everything from find_missing, revert args_copy has %d elements\n") % args_copy.size());
+
+      // when given --missing, never revert if there's nothing missing and no 
+      // specific files were specified.
+      if (args_copy.size() == 0)
+        return;
+    }
+  app.set_restriction(valid_paths, args_copy, false);
 
   restrict_path_rearrangement(work, included, excluded, app);
 
