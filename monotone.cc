@@ -70,6 +70,7 @@ struct poptOption coptions[] =
     {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("use least common ancestor as ancestor for merge"), NULL},
     {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
     {"bind", 0, POPT_ARG_STRING, &argstr, OPT_BIND, gettext_noop("address:port to listen on (default :5253)"), NULL},
+    {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from working directory"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -460,6 +461,10 @@ cpp_main(int argc, char ** argv)
                 app.bind_address = utf8(addr_part);
                 app.bind_port = utf8(port_part);
               }
+              break;
+
+            case OPT_MISSING:
+              app.missing = true;
               break;
 
             case OPT_HELP:

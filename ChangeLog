@@ -1,5 +1,15 @@
 2005-10-13  Emile Snyder <emile@alumni.reed.edu>
 
+	* app_state.{cc,hh}: new missing class member for --missing flag.
+	* commands.cc (CMD(drop), ls_missing, find_missing): use new
+	--missing flag to drop any files already deleted in the working copy.
+	* monotone.cc (coptions, cpp_main): add the --missing flag handling.
+	* options.hh: add OPT_MISSING.
+	* monotone.texi: document it.
+	* tests/t_drop_missing.at: test it.
+	
+2005-10-13  Emile Snyder <emile@alumni.reed.edu>
+
 	* database.cc (complete): implementation for h:branch selector to
 	find heads of a branch.
 	* selectors.{cc,hh}: add sel_head with selector character 'h'.

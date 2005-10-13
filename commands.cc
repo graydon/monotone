@@ -1168,10 +1168,12 @@ CMD(add, N_("working copy"), N_("PATH..."),
   update_any_attrs(app);
 }
 
-CMD(drop, N_("working copy"), N_("PATH..."),
-    N_("drop files from working copy"), OPT_EXECUTE)
+static void find_missing (app_state & app, vector<utf8> const & args, path_set & missing);
+
+CMD(drop, N_("working copy"), N_("[PATH]..."),
+    N_("drop files from working copy"), OPT_EXECUTE % OPT_MISSING)
 {
-  if (args.size() < 1)
+  if (!app.missing && (args.size() < 1))
     throw usage(name);
 
   app.require_working_copy();
@@ -1183,6 +1185,13 @@ CMD(drop, N_("working copy"), N_("PATH..."),
   get_path_rearrangement(work);
 
   vector<file_path> paths;
+  if (app.missing)
+    {
+      set<file_path> missing;
+      find_missing(app, args, missing);
+      paths.insert(paths.end(), missing.begin(), missing.end());
+    }
+
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     paths.push_back(file_path_external(*i));
 
@@ -1661,7 +1670,7 @@ ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
 }
 
 static void
-ls_missing (app_state & app, vector<utf8> const & args)
+find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
 {
   revision_set rev;
   revision_id rid;
@@ -1690,7 +1699,19 @@ ls_missing (app_state & app, vector<utf8> const & args)
   for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
     {
       if (app.restriction_includes(*i) && !path_exists(*i))     
-        cout << *i << endl;
+        missing.insert(*i);
+    }
+}
+
+static void
+ls_missing (app_state & app, vector<utf8> const & args)
+{
+  path_set missing;
+  find_missing(app, args, missing);
+
+  for (path_set::const_iterator i = missing.begin(); i != missing.end(); ++i)
+    {
+      cout << *i << endl;
     }
 }
 

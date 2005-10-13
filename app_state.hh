@@ -64,6 +64,7 @@ public:
   bool execute;
   utf8 bind_address;
   utf8 bind_port;
+  bool missing;
 
 
 

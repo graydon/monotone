@@ -3289,7 +3289,8 @@ $ monotone drop file.txt
 
 Monotone does not require that you erase a file from the working copy
 before you drop it. Dropping a file merely removes its entry in the
-manifest of the current revision.
+manifest of the current revision unless you give it the @command{--execute}
+flag, which tells monotone to go ahead and also remove it from the filesystem.
 
 
 @heading Viewing History
@@ -3551,7 +3552,10 @@ your working copy is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also removes
 any attributes on @var{pathname}; see @ref{File Attributes} for more
-details.
+details.  If you use the --missing flag it will add drop entries for any
+paths that monotone is tracking for which you have already removed the
+files from the filesystem, in addition to all those specified in 
+@var{pathname...}.
 
 While this command places a ``drop'' entry on your work list, it does
 not immediately affect your database. When you @command{commit} your
@@ -7135,9 +7139,12 @@ database, merely adds it to the work list. You must @b{commit} your
 changes in order to copy added files to the database.
 @comment TROFF INPUT: .TP
 
-@item @b{drop} @i{<pathname> [...]}
+@item @b{drop} @i{[--missing] [--execute] [<pathname>...]}
 Drop files from working copy. Files are not deleted from working copy,
-merely noted as removals in the work list.
+merely noted as removals in the work list, unless the --execute flag
+is given.  If the --missing flag is given any files that monotone is
+tracking but which are not present in the working copy (ie. the
+output that @command{monotone ls missing} would give) are dropped.
 @comment TROFF INPUT: .TP
 
 @item @b{rename} @i{<src> <dst>}
