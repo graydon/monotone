@@ -11,7 +11,7 @@
 
 #include "app_state.hh"
 #include "basic_io.hh"
-#include "change_set.hh"
+#include "cset.hh"
 #include "file_io.hh"
 #include "sanity.hh"
 #include "transforms.hh"
@@ -37,6 +37,9 @@ file_itemizer::visit_file(file_path const & path)
         unknown.insert(path);
     }
 }
+
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 
 class 
 addition_builder 
@@ -364,6 +367,7 @@ void put_path_rearrangement(change_set::path_rearrangement & w)
       write_data(w_path, w_data);
     }
 }
+*/
 
 // revision file name 
 

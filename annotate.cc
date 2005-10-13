@@ -10,16 +10,17 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "platform.hh"
-#include "vocab.hh"
-#include "sanity.hh"
-#include "revision.hh"
-#include "change_set.hh"
-#include "app_state.hh"
-#include "manifest.hh"
-#include "transforms.hh"
-#include "lcs.hh"
 #include "annotate.hh"
+#include "app_state.hh"
+#include "cset.hh"
+#include "interner.hh"
+#include "lcs.hh"
+#include "manifest.hh"
+#include "platform.hh"
+#include "revision.hh"
+#include "sanity.hh"
+#include "transforms.hh"
+#include "vocab.hh"
 
 
 
@@ -501,6 +502,8 @@ do_annotate_node (const annotate_node_work &work_unit,
                   const std::map<revision_id, size_t> &paths_to_nodes,
                   std::map<revision_id, lineage_merge_node> &pending_merge_nodes)
 {
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
   L(F("do_annotate_node for node %s\n") % work_unit.node_revision);
   I(nodes_complete.find(work_unit.node_revision) == nodes_complete.end());
   //nodes_seen.insert(std::make_pair(work_unit.node_revision, work_unit.lineage));
@@ -611,6 +614,7 @@ do_annotate_node (const annotate_node_work &work_unit,
   
   work_unit.annotations->evaluate(work_unit.node_revision);
   nodes_complete.insert(work_unit.node_revision);
+*/
 }
 
 

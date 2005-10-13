@@ -322,6 +322,19 @@ void calculate_ident(revision_set const & cs,
   ident = tid;
 }
 
+// Variant which calculates the "manifest part" of a roster; this does
+// not include the local sequence numbers or markings, but produces
+// the manifest_id which is stored in the public revision_set object.
+void calculate_ident(roster_t const & ros,
+                     manifest_id & ident)
+{
+  data tmp;
+  hexenc<id> tid;
+  write_manifest_of_roster(ros, tmp);
+  calculate_ident(tmp, tid);
+  ident = tid;
+}
+
 // this might reasonably go in file_io.cc too...
 void 
 calculate_ident(file_path const & file,

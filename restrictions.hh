@@ -7,8 +7,11 @@
 // see the file COPYING for details
 
 #include "app_state.hh"
-#include "change_set.hh"
+#include "cset.hh"
 #include "vocab.hh"
+
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 
 void extract_rearranged_paths(change_set::path_rearrangement 
                               const & rearrangement, path_set & paths);
@@ -53,5 +56,6 @@ void calculate_restricted_change_set(app_state & app,
                                      change_set const & cs,
                                      change_set & included,
                                      change_set & excluded);
+*/
 
 #endif  // header guard

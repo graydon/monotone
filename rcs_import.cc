@@ -987,6 +987,9 @@ public:
 // commit to the rev with the closest initial timestamp. that is,
 // the *latest* beginning time.
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
+
 struct
 cvs_cluster
 {
@@ -1213,12 +1216,14 @@ import_branch(cvs_history & cvs,
   cons.store_revisions();
 
 }
-
+*/
 
 void 
 import_cvs_repo(system_path const & cvsroot, 
                 app_state & app)
 {
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
   N(!directory_exists(cvsroot / "CVSROOT"),
     F("%s appears to be a CVS repository root directory\n"
       "try importing a module instead, with 'cvs_import %s/<module_name>")
@@ -1296,9 +1301,11 @@ import_cvs_repo(system_path const & cvsroot,
 
 
   return;
-
+*/
 }
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 cluster_consumer::cluster_consumer(cvs_history & cvs,
                                    app_state & app,
                                    string const & branchname,
@@ -1548,3 +1555,4 @@ cluster_consumer::consume_cluster(cvs_cluster const & c,
   parent_rid = child_rid;
   L(F("END consume_cluster('%s') (parent '%s')\n") % child_rid % rev->edges.begin()->first);  
 }
+*/

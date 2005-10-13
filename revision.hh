@@ -12,7 +12,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "app_state.hh"
-#include "change_set.hh"
+#include "cset.hh"
 #include "vocab.hh"
 
 // a revision is a text object. It has a precise, normalizable serial form
@@ -45,7 +45,7 @@
 //  from [95b50ede90037557fd0fbbfad6a9fdd67b0bf413]
 //    to [bd39086b9da776fc22abd45734836e8afb59c8c0]
 
-typedef std::map<revision_id, std::pair<manifest_id, boost::shared_ptr<change_set> > > 
+typedef std::map<revision_id, std::pair<manifest_id, boost::shared_ptr<cset> > > 
 edge_map;
 
 typedef edge_map::value_type
@@ -87,17 +87,20 @@ edge_old_manifest(edge_map::const_iterator i)
   return i->second.first; 
 }
 
-inline change_set const & 
+inline cset const & 
 edge_changes(edge_entry const & e) 
 { 
   return *(e.second.second); 
 }
 
-inline change_set const & 
+inline cset const & 
 edge_changes(edge_map::const_iterator i) 
 { 
   return *(i->second.second); 
 }
+
+void
+dump(revision_set const & rev, std::string & out);
 
 void 
 read_revision_set(data const & dat,
@@ -117,8 +120,12 @@ write_revision_set(revision_set const & rev,
 
 // sanity checking
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
+
 void
 check_sane_history(revision_id const & child_id, int depth, app_state & app);
+*/
 
 // graph walking
 
@@ -152,23 +159,26 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
                     std::set<revision_id> & new_stuff,
                     app_state & app);
 
+/*
 void 
-calculate_composite_change_set(revision_id const & ancestor,
-                               revision_id const & child,
-                               app_state & app,
-                               change_set & composed);
+calculate_composite_cset(revision_id const & ancestor,
+                         revision_id const & child,
+                         app_state & app,
+                         cset & composed);
 
 void
-calculate_arbitrary_change_set(revision_id const & start,
-                               revision_id const & end,
-                               app_state & app,
-                               change_set & composed);
+calculate_arbitrary_cset(revision_id const & start,
+                         revision_id const & end,
+                         app_state & app,
+                         cset & composed);
+
+*/
 
 void 
 build_changesets_from_manifest_ancestry(app_state & app);
 
 void 
-build_changesets_from_existing_revs(app_state & app);
+build_roster_style_revs_from_manifest_style_revs(app_state & app);
 
 // basic_io access to printers and parsers
 

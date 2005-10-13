@@ -36,6 +36,9 @@ ATOMIC_NOVERIFY(rsa_oaep_sha_data);
 ATOMIC(netsync_session_key);  // key for netsync session HMAC
 ATOMIC(netsync_hmac_value);   // 160-bit SHA-1 HMAC
 
+ATOMIC_NOVERIFY(attr_key);
+ATOMIC_NOVERIFY(attr_value);
+
 DECORATE(revision);           // thing associated with a revision
 DECORATE(manifest);           // thing associated with a manifest
 DECORATE(file);               // thing associated with a file

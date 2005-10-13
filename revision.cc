@@ -23,19 +23,24 @@
 
 #include "botan/botan.h"
 
+#include "app_state.hh"
 #include "basic_io.hh"
-#include "change_set.hh"
+#include "cset.hh"
 #include "constants.hh"
+#include "interner.hh"
+#include "keys.hh"
 #include "numeric_vocab.hh"
 #include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
-#include "keys.hh"
+
 
 void revision_set::check_sane() const
 {
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
   I(!null_id(new_manifest));
 
   manifest_map fragment;
@@ -63,6 +68,7 @@ void revision_set::check_sane() const
             }
         }
     }
+*/
 }
 
 bool 
@@ -89,183 +95,6 @@ revision_set::operator=(revision_set const & other)
   return *this;
 }
 
-
-// Traces history back 'depth' levels from 'child_id', ensuring that
-// historical information is consistent within this subgraph.
-// The child must be in the database already.
-//
-// "Consistent" currently means that we compose manifests along every path (of
-// any length) that terminates at the child, and for each one check that paths
-// that should be the same in fact are the same, and that the calculated
-// change sets can be applied to the old manifests to create the new
-// manifest.
-//
-// We also make a special check for merge nodes, where if the previous
-// paragraph wasn't enough to get us back to a common ancestor, we also search
-// all the way up to a common ancestor and make the same check, because that's
-// the invariant that merge is actually required to preserve.
-//
-// NB: While this function has some invariants in it itself, a lot of its
-// purpose is just to exercise all the invariants inside change_set.cc.  So
-// don't remove those invariants.  (As if you needed another reason...)
-void
-check_sane_history(revision_id const & child_id,
-                   int depth,
-                   app_state & app)
-{
-  // We are, unfortunately, still quite slow.  So we want to give at least a
-  // little feedback.  Let's print exactly one warning, on the _second_ time
-  // we are called within one run -- just checking one revision isn't too
-  // slow, so no need to print anything on "commit", but usually if we're
-  // checking 2 revisions we're checking a lot more.
-  // FIXME: make sanity checking faster, so we can remove this kluge
-  // altogether...
-  static int num_checked = 0;
-  ++num_checked;
-  if (num_checked == 2)
-    P(F("verifying new revisions (this may take a while)\n"));
-
-  L(F("Verifying revision %s has sane history (to depth %i)\n")
-    % child_id % depth);
-
-  typedef boost::shared_ptr<change_set> shared_cs;
-  // (ancestor, change_set from ancestor to child)
-  std::map<revision_id, shared_cs> changesets;
-  
-  manifest_id m_child_id;
-  app.db.get_revision_manifest(child_id, m_child_id);
-  manifest_map m_child;
-  app.db.get_manifest(m_child_id, m_child);
-
-  std::set<revision_id> frontier;
-  frontier.insert(child_id);
-    
-  while (depth-- > 0)
-    {
-      std::set<revision_id> next_frontier;
-      
-      for (std::set<revision_id>::const_iterator i = frontier.begin();
-           i != frontier.end();
-           ++i)
-        {
-          revision_id current_id = *i;
-          revision_set current;
-          app.db.get_revision(current_id, current);
-          // and the parents's manifests to the manifests
-          // and the change_set's to the parents to the changesets
-          for (edge_map::const_iterator j = current.edges.begin();
-               j != current.edges.end();
-               ++j)
-            {
-              revision_id old_id = edge_old_revision(j);
-              manifest_id m_old_id = edge_old_manifest(j);
-              change_set old_to_current_changes = edge_changes(j);
-              if (!null_id(old_id))
-                next_frontier.insert(old_id);
-              
-              L(F("Examining %s -> %s\n") % old_id % child_id);
-
-              // build the change_set
-              // if 
-              shared_cs old_to_child_changes_p = shared_cs(new change_set);
-              if (current_id == child_id)
-                *old_to_child_changes_p = old_to_current_changes;
-              else
-                {
-                  shared_cs current_to_child_changes_p;
-                  I(changesets.find(current_id) != changesets.end());
-                  current_to_child_changes_p = changesets.find(current_id)->second;
-                  concatenate_change_sets(old_to_current_changes,
-                                          *current_to_child_changes_p,
-                                          *old_to_child_changes_p);
-                }
-              MM(*old_to_child_changes_p);
-
-              // we have the change_set; now, is it one we've seen before?
-              if (changesets.find(old_id) != changesets.end())
-                {
-                  // If it is, then make sure the paths agree on the
-                  // changeset.
-                  MM(*changesets.find(old_id)->second);
-                  I(*changesets.find(old_id)->second == *old_to_child_changes_p);
-                }
-              else
-                {
-                  // If not, this is the first time we've seen this.
-                  // So store it in the map for later reference:
-                  changesets.insert(std::make_pair(old_id, old_to_child_changes_p));
-                  // and check that it works:
-
-                  manifest_map purported_m_child;
-                  // The null revision has empty manifest, which is the
-                  // default.
-                  if (!null_id(old_id))
-                    app.db.get_manifest(m_old_id, purported_m_child);
-                  apply_change_set(*old_to_child_changes_p, purported_m_child);
-                  MM(purported_m_child);
-                  MM(m_child);
-                  I(purported_m_child == m_child);
-                }
-            }
-        }
-      frontier = next_frontier;
-    }
-
-  // Finally, there's a danger that if we have a long divergence, then after a
-  // merge, the common ancestor will be far back enough that the above
-  // depth-limited search won't have any idea whether the ancestry invariants
-  // are actually preserved.  So do an additional check on merge revisions, to
-  // make sure that the paths to both ways going back to their parents's
-  // common ancestor give the same change_set (i.e., this is a valid merge at
-  // all).
-  if (!global_sanity.relaxed)
-    {
-      revision_set child_rev;
-      app.db.get_revision(child_id, child_rev);
-      // Nothing inherently impossible about having more than 2 parents, but if
-      // you come up with some case where it should be possible then you'll
-      // have to also adjust the code below to figure out what "common
-      // ancestor" means.
-      I(child_rev.edges.size() <= 2);
-      if (child_rev.edges.size() != 2)
-        return;
-      edge_map::const_iterator i = child_rev.edges.begin();
-      revision_id parent_left = edge_old_revision(i);
-      change_set left_edge = edge_changes(i);
-      ++i;
-      revision_id parent_right = edge_old_revision(i);
-      change_set right_edge = edge_changes(i);
-      ++i;
-      I(i == child_rev.edges.end());
-      revision_id lca;
-      if (!find_least_common_ancestor(parent_left, parent_right, lca, app))
-        {
-          L(F("%s and %s have no common ancestor, so done\n")
-            % parent_left % parent_right);
-          return;
-        }
-      if (changesets.find(lca) != changesets.end())
-        {
-          L(F("already checked common ancestor, so done\n"));
-          return;
-        }
-      L(F("%s is a merge; verifying paths to common ancestor %s are sane\n")
-        % child_id % lca);
-      // we have a merge node, with an lca sufficiently far back in history
-      // that we haven't yet figured out whether this is a valid merge or
-      // not.  so find out.
-      change_set cs_parent_left, cs_parent_right, cs_left, cs_right;
-      MM(cs_parent_left);
-      MM(cs_parent_right);
-      MM(cs_left);
-      MM(cs_right);
-      calculate_composite_change_set(lca, parent_left, app, cs_parent_left);
-      calculate_composite_change_set(lca, parent_right, app, cs_parent_right);
-      concatenate_change_sets(cs_parent_left, left_edge, cs_left);
-      concatenate_change_sets(cs_parent_right, right_edge, cs_right);
-      I(cs_left == cs_right);
-    }
-}
 
 // calculating least common ancestors is a delicate thing.
 // 
@@ -879,244 +708,8 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
   }
 }
 
-// 
-// The idea with this algorithm is to walk from child up to ancestor,
-// recursively, accumulating all the change_sets associated with
-// intermediate nodes into *one big change_set*.
-//
-// clever readers will realize this is an overlapping-subproblem type
-// situation and thus needs to keep a dynamic programming map to keep
-// itself in linear complexity.
-//
-// in fact, we keep two: one which maps to computed results (partial_csets)
-// and one which just keeps a set of all nodes we traversed
-// (visited_nodes). in theory it could be one map with an extra bool stuck
-// on each entry, but I think that would make it even less readable. it's
-// already quite ugly.
-//
-
-static bool 
-calculate_change_sets_recursive(revision_id const & ancestor,
-                                revision_id const & child,
-                                app_state & app,
-                                change_set & cumulative_cset,
-                                std::map<revision_id, boost::shared_ptr<change_set> > & partial_csets,
-                                std::set<revision_id> & visited_nodes,
-                                std::set<revision_id> const & subgraph)
-{
-
-  if (ancestor == child)
-    return true;
-
-  if (subgraph.find(child) == subgraph.end())
-    return false;
-
-  visited_nodes.insert(child);
-
-  bool relevant_child = false;
-
-  revision_set rev;
-  app.db.get_revision(child, rev);
-
-  L(F("exploring changesets from parents of %s, seeking towards %s\n") 
-    % child % ancestor);
-
-  for(edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
-    {
-      bool relevant_parent = false;
-      revision_id curr_parent = edge_old_revision(i);
-
-      if (curr_parent.inner()().empty())
-        continue;
-
-      change_set cset_to_curr_parent;
-
-      L(F("considering parent %s of %s\n") % curr_parent % child);
-
-      std::map<revision_id, boost::shared_ptr<change_set> >::const_iterator j = 
-        partial_csets.find(curr_parent);
-      if (j != partial_csets.end()) 
-        {
-          // a recursive call has traversed this parent before and built an
-          // existing cset. just reuse that rather than re-traversing
-          cset_to_curr_parent = *(j->second);
-          relevant_parent = true;
-        }
-      else if (visited_nodes.find(curr_parent) != visited_nodes.end())
-        {
-          // a recursive call has traversed this parent, but there was no
-          // path from it to the root, so the parent is irrelevant. skip.
-          relevant_parent = false;
-        }
-      else
-        relevant_parent = calculate_change_sets_recursive(ancestor, curr_parent, app, 
-                                                          cset_to_curr_parent, 
-                                                          partial_csets,
-                                                          visited_nodes,
-                                                          subgraph);
-
-      if (relevant_parent)
-        {
-          L(F("revision %s is relevant, composing with edge to %s\n") 
-            % curr_parent % child);
-          concatenate_change_sets(cset_to_curr_parent, edge_changes(i), cumulative_cset);
-          relevant_child = true;
-          break;
-        }
-      else
-        L(F("parent %s of %s is not relevant\n") % curr_parent % child);
-    }
-
-  // store the partial edge from ancestor -> child, so that if anyone
-  // re-traverses this edge they'll just fetch from the partial_edges
-  // cache.
-  if (relevant_child)
-    partial_csets.insert(std::make_pair(child, 
-                                        boost::shared_ptr<change_set>
-                                        (new change_set(cumulative_cset))));
-  
-  return relevant_child;
-}
-
-// this finds (by breadth-first search) the set of nodes you'll have to
-// walk over in calculate_change_sets_recursive, to build the composite
-// changeset. this is to prevent the recursive algorithm from going way
-// back in history on an unlucky guess of parent.
-
-static void
-find_subgraph_for_composite_search(revision_id const & ancestor,
-                                   revision_id const & child,
-                                   app_state & app,
-                                   std::set<revision_id> & subgraph)
-{
-  std::set<revision_id> frontier;
-  frontier.insert(child);
-  subgraph.insert(child);
-  while (!frontier.empty())
-    {
-      std::set<revision_id> next_frontier;      
-      for (std::set<revision_id>::const_iterator i = frontier.begin();
-           i != frontier.end(); ++i)
-        {
-          revision_set rev;
-          app.db.get_revision(*i, rev);
-          L(F("adding parents of %s to subgraph\n") % *i);
-          
-          for(edge_map::const_iterator j = rev.edges.begin(); j != rev.edges.end(); ++j)
-            {
-              revision_id curr_parent = edge_old_revision(j);
-              if (null_id(curr_parent))
-                continue;
-              subgraph.insert(curr_parent);
-              if (curr_parent == ancestor)
-                {
-                  L(F("found parent %s of %s\n") % curr_parent % *i);
-                  return;
-                }
-              else
-                L(F("adding parent %s to next frontier\n") % curr_parent);
-                next_frontier.insert(curr_parent);
-            }
-        }
-      frontier = next_frontier;
-    }
-}
-
-void 
-calculate_composite_change_set(revision_id const & ancestor,
-                               revision_id const & child,
-                               app_state & app,
-                               change_set & composed)
-{
-  I(composed.empty());
-  L(F("calculating composite changeset between %s and %s\n")
-    % ancestor % child);
-  if (ancestor == child)
-    return;
-  std::set<revision_id> visited;
-  std::set<revision_id> subgraph;
-  std::map<revision_id, boost::shared_ptr<change_set> > partial;
-  find_subgraph_for_composite_search(ancestor, child, app, subgraph);
-  calculate_change_sets_recursive(ancestor, child, app, composed, partial, 
-                                  visited, subgraph);
-}
-
-void
-calculate_arbitrary_change_set(revision_id const & start,
-                               revision_id const & end,
-                               app_state & app,
-                               change_set & composed)
-{
-  L(F("calculating changeset from %s to %s\n") % start % end);
-  revision_id r_ca_id;
-  change_set ca_to_start, ca_to_end, start_to_ca;
-  N(find_least_common_ancestor(start, end, r_ca_id, app),
-    F("no common ancestor for %s and %s\n") % start % end);
-  L(F("common ancestor is %s\n") % r_ca_id);
-  calculate_composite_change_set(r_ca_id, start, app, ca_to_start);
-  calculate_composite_change_set(r_ca_id, end, app, ca_to_end);
-  manifest_id m_ca_id;
-  manifest_map m_ca;
-  app.db.get_revision_manifest(r_ca_id, m_ca_id);
-  app.db.get_manifest(m_ca_id, m_ca);
-  invert_change_set(ca_to_start, m_ca, start_to_ca);
-  concatenate_change_sets(start_to_ca, ca_to_end, composed);
-}
-
-
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
-
-
-static void 
-analyze_manifest_changes(app_state & app,
-                         manifest_id const & parent, 
-                         manifest_id const & child, 
-                         std::set<file_path> const & need_history_splitting,
-                         change_set & cs)
-{
-  manifest_map m_parent, m_child;
-
-  if (!null_id(parent))
-    app.db.get_manifest(parent, m_parent);
-
-  I(!null_id(child));
-  app.db.get_manifest(child, m_child);
-
-  L(F("analyzing manifest changes from '%s' -> '%s'\n") % parent % child);
-
-  for (manifest_map::const_iterator i = m_parent.begin(); 
-       i != m_parent.end(); ++i)
-    {
-      file_path f = manifest_entry_path(i);
-      manifest_map::const_iterator j = m_child.find(f);
-      if (j == m_child.end())
-        {
-          cs.delete_file(f);
-        }
-      else if (need_history_splitting.find(f) != need_history_splitting.end())
-        {
-          P(F("splitting ancestry for file %s\n") % f);
-          cs.delete_file(f);
-          cs.add_file(f, manifest_entry_id(j));
-        }
-      else if (! (manifest_entry_id(i) == manifest_entry_id(j)))
-        {
-          cs.apply_delta(manifest_entry_path(i),
-                         manifest_entry_id(i), 
-                         manifest_entry_id(j));
-        }
-    }
-  for (manifest_map::const_iterator i = m_child.begin(); 
-       i != m_child.end(); ++i)
-    {
-      manifest_map::const_iterator j = m_parent.find(manifest_entry_path(i));
-      if (j == m_parent.end())
-        cs.add_file(manifest_entry_path(i),
-                    manifest_entry_id(i));
-    }
-}
-
 
 struct anc_graph
 {
@@ -1146,6 +739,8 @@ struct anc_graph
   std::map<revision_id,u64> old_rev_to_node;
 
   std::map<u64,revision_id> node_to_new_rev;
+  std::map<revision_id,u64> new_rev_to_node;
+
   std::multimap<u64, std::pair<cert_name, cert_value> > certs;
   std::multimap<u64, u64> ancestry;
   std::set<std::string> branches;
@@ -1156,8 +751,8 @@ struct anc_graph
   void rebuild_ancestry();
   void get_node_manifest(u64 node, manifest_id & man);
   u64 add_node_for_old_manifest(manifest_id const & man);
-  u64 add_node_for_old_revision(revision_id const & rev);                     
-  revision_id construct_revision_from_ancestry(u64 child);
+  u64 add_node_for_oldstyle_revision(revision_id const & rev);                     
+  void construct_revisions_from_ancestry();
 };
 
 
@@ -1324,32 +919,15 @@ anc_graph::rebuild_ancestry()
   {
     transaction_guard guard(app.db);
     if (existing_graph)
-      app.db.delete_existing_revs_and_certs();
-    
-    std::set<u64> parents, children, heads;
-    for (std::multimap<u64, u64>::const_iterator i = ancestry.begin();
-         i != ancestry.end(); ++i)
-      {
-        children.insert(i->first);
-        parents.insert(i->second);
-      }
-    set_difference(children.begin(), children.end(),
-                   parents.begin(), parents.end(),
-                   std::inserter(heads, heads.begin()));
-
-    // FIXME: should do a depth-first traversal here, or something like,
-    // instead of being recursive.
-    for (std::set<u64>::const_iterator i = heads.begin();
-         i != heads.end(); ++i)
-      {
-        construct_revision_from_ancestry(*i);
-      }
+      app.db.delete_existing_revs_and_certs();    
+    construct_revisions_from_ancestry();
     write_certs();
     guard.commit();
   }
 }
 
-u64 anc_graph::add_node_for_old_manifest(manifest_id const & man)
+u64 
+anc_graph::add_node_for_old_manifest(manifest_id const & man)
 {
   I(!existing_graph);
   u64 node = 0;
@@ -1383,7 +961,12 @@ u64 anc_graph::add_node_for_old_manifest(manifest_id const & man)
   return node;
 }
 
-u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
+static void 
+get_manifest_for_rev(app_state & app,
+                     revision_id const & ident,
+                     manifest_id & mid);
+
+u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
 {
   I(existing_graph);
   I(!null_id(rev));
@@ -1394,7 +977,7 @@ u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
       ++n_nodes;
       
       manifest_id man;
-      app.db.get_revision_manifest(rev, man);
+      get_manifest_for_rev(app, rev, man);
       
       L(F("node %d = revision %s = manifest %s\n") % node % rev % man);
       old_rev_to_node.insert(std::make_pair(rev, node));
@@ -1427,164 +1010,517 @@ u64 anc_graph::add_node_for_old_revision(revision_id const & rev)
   return node;
 }
 
-// FIXME: this is recursive -- stack depth grows as ancestry depth -- and will
-// overflow the stack on large histories.
-revision_id
-anc_graph::construct_revision_from_ancestry(u64 child)
+typedef std::map<u64, 
+                 std::pair<boost::shared_ptr<roster_t>, 
+                           boost::shared_ptr<marking_map>
+                 > > 
+parent_roster_map;
+
+void
+dump(parent_roster_map const & prm, std::string & out)
 {
-  L(F("processing node %d\n") % child);
-
-  if (node_to_new_rev.find(child) != node_to_new_rev.end())
+  std::ostringstream oss;
+  for (parent_roster_map::const_iterator i = prm.begin(); i != prm.end(); ++i)
     {
-      L(F("node %d already processed, skipping\n") % child);
-      return node_to_new_rev.find(child)->second;
+      oss << "roster: " << i->first << "\n";
+      std::string roster_str, indented_roster_str;
+      dump(*i->second.first, roster_str);
+      prefix_lines_with("    ", roster_str, indented_roster_str);
+      oss << indented_roster_str;
+      oss << "\nroster's marking:\n";
+      std::string marking_str, indented_marking_str;
+      dump(*i->second.second, marking_str);
+      prefix_lines_with("    ", marking_str, indented_marking_str);
+      oss << indented_marking_str;
+      oss << "\n\n";
     }
+  out = oss.str();
+}
 
-  manifest_id child_man;
-  get_node_manifest(child, child_man);
+static bool
+viable_replacement(std::map<node_id, u64> const & birth_revs, 
+                   parent_roster_map const & parent_rosters,
+                   std::multimap<u64, u64> const & child_to_parents)
+{
+  // This is a somewhat crazy function. Conceptually, we have a set NS of
+  // node_t values (representing all the elements of a path) and a set RS
+  // of rosters. We want to know whether there is an N in NS and an R in RS
+  // satisfying:
+  //
+  //       N is not present in R 
+  // *and*
+  //       N's birth_revision is an ancestor of R
+  //
+  // If we find such a pair, then the set is considered "non viable" for
+  // replacement.
+    
+  //   L(F("beginning viability comparison for %d path nodes, %d parents\n") 
+  //     % birth_revs.size() % parent_rosters.size());
 
-  revision_set rev;
-  rev.new_manifest = child_man;
-
-  typedef std::multimap<u64, u64>::const_iterator ci;
-  std::pair<ci,ci> range = ancestry.equal_range(child);
-  if (range.first == range.second)
+  for (std::map<node_id, u64>::const_iterator n = birth_revs.begin();
+       n != birth_revs.end(); ++n)
     {
-      L(F("node %d is a root node\n") % child);
-      revision_id null_rid;
-      manifest_id null_mid;
-      boost::shared_ptr<change_set> cs(new change_set());
-      std::set<file_path> blah;
-      analyze_manifest_changes(app, null_mid, child_man, blah, *cs);
-      rev.edges.insert(std::make_pair(null_rid,
-                                      std::make_pair(null_mid, cs)));
-    }
-  else if (std::distance(range.first, range.second) == 1)
-    {
-      I(child == range.first->first);
-      u64 parent = range.first->second;
-      if (node_to_new_rev.find(parent) == node_to_new_rev.end())
-        construct_revision_from_ancestry(parent);
-      revision_id parent_rid = node_to_new_rev.find(parent)->second;
-      L(F("parent node %d = revision %s\n") % parent % parent_rid);      
-      manifest_id parent_man;
-      get_node_manifest(parent, parent_man);
-      boost::shared_ptr<change_set> cs(new change_set());
-      std::set<file_path> need_killing_files;
-      analyze_manifest_changes(app, parent_man, child_man, need_killing_files,
-                               *cs);
-      rev.edges.insert(std::make_pair(parent_rid,
-                                      std::make_pair(parent_man, cs)));
-    }
-  else
-    {
-      // this section has lots and lots of rigmorale, in order to handle the
-      // following case: A -> B -> D, A -> C -> D.  File "foo" exists in
-      // manifests A, C, and D only.  (I.e., it was deleted and then re-added
-      // along the B path, and left alone along the C path.)  The problem here
-      // is that we have to synthesize a delete/add pair on the C -> D edge,
-      // to make sure that the A -> D changeset is path invariant -- we have
-      // to make sure that no matter how you go from A to D, we will learn
-      // that A's "foo" and D's "foo" are actually logically distinct files.
-      //
-      // In order to do this, before we generate the changeset for any merged
-      // revision, we calculate the changeset through from the parents's
-      // common ancestor to the _other_ parent, which will tell us which files
-      // have been deleted since then.  We also calculate the changeset
-      // through from the parents's common ancestor to the current parent,
-      // which tells us which files have already been deleted on our side, and
-      // so don't need to be deleted again.
-      //
-      // Finally, we feed the list of deleted files to analyze_manifest, which
-      // uses that information to break file ancestries when necessary.
-      // 
-      // we only know how to preserve file ids when there are exactly two
-      // parents, so assert that there are.
-      std::vector<u64> parents, others;
-      {
-        u64 left_p, right_p;
-        ci i = range.first;
-        I(child == i->first);
-        left_p = i->second;
-        ++i;
-        I(child == i->first);
-        right_p = i->second;
-        ++i;
-        I(i == range.second);
-        parents.push_back(left_p);
-        others.push_back(right_p);
-        parents.push_back(right_p);
-        others.push_back(left_p);
-      }
-      // make sure our parents are all saved.
-      for (std::vector<u64>::const_iterator i = parents.begin(); i != parents.end(); ++i)
+      // L(F("testing viability of node %d, born in rev %d\n") % n->first % n->second);
+      for (parent_roster_map::const_iterator r = parent_rosters.begin();
+           r != parent_rosters.end(); ++r)
         {
-          if (node_to_new_rev.find(*i) == node_to_new_rev.end())
-            construct_revision_from_ancestry(*i);
-          I(node_to_new_rev.find(*i) != node_to_new_rev.end());
-        }
-      // actually process the two nodes
-      for (int i = 0; i != 2; ++i)
-        {
-          u64 parent = idx(parents, i);
-          u64 other_parent = idx(others, i);
-          L(F("processing edge from child %d -> parent %d\n") % child % parent);
+          boost::shared_ptr<roster_t> parent = r->second.first;
+          // L(F("node %d %s in parent roster %d\n") 
+          //             % n->first
+          //             % (parent->has_node(n->first) ? "exists" : "does not exist" ) 
+          //             % r->first);
 
-          revision_id parent_rid = node_to_new_rev.find(parent)->second;
-          revision_id other_parent_rid = node_to_new_rev.find(other_parent)->second;
-          // this is stupidly inefficient, in that we do this whole expensive
-          // changeset finding thing twice in a row.  oh well.
-          revision_id lca;
-          std::set<file_path> need_killing_files;
-          if (find_least_common_ancestor(parent_rid, other_parent_rid, lca, app))
+          if (!parent->has_node(n->first))
             {
-              change_set parent_cs, other_parent_cs;
-              calculate_composite_change_set(lca, other_parent_rid, app, other_parent_cs);
-              calculate_composite_change_set(lca, parent_rid, app, parent_cs);
-              std::set_difference(other_parent_cs.rearrangement.deleted_files.begin(),
-                                  other_parent_cs.rearrangement.deleted_files.end(),
-                                  parent_cs.rearrangement.deleted_files.begin(),
-                                  parent_cs.rearrangement.deleted_files.end(),
-                                  std::inserter(need_killing_files,
-                                                need_killing_files.begin()));
+              u64 birth_rev = n->second;
+              std::deque<u64> work;
+              std::set<u64> seen;
+              work.push_back(r->first);
+              while (!work.empty())
+                {
+                  u64 curr = work.front();
+                  work.pop_front();
+                  // L(F("examining ancestor %d of parent roster %d, looking for anc=%d\n")
+                  //                     % curr % r->first % birth_rev);
+
+                  if (seen.find(curr) != seen.end())
+                    continue;
+                  seen.insert(curr);
+
+                  if (curr == birth_rev)
+                    {
+                      // L(F("determined non-viability, returning\n"));
+                      return false;
+                    }
+                  typedef std::multimap<u64, u64>::const_iterator ci;
+                  std::pair<ci,ci> range = child_to_parents.equal_range(curr);
+                  for (ci i = range.first; i != range.second; ++i)
+                    {
+                      if (i->first != curr)
+                        continue;
+                      work.push_back(i->second);
+                    }
+                }
+            }
+        }  
+    }
+  // L(F("exhausted possibilities for non-viability, returning\n"));
+  return true;
+}
+
+
+static void 
+insert_into_roster_reusing_parent_entries(file_path const & pth,
+                                          file_id const & fid,
+                                          parent_roster_map const & parent_rosters,
+                                          temp_node_id_source & nis,
+                                          roster_t & child_roster,
+                                          std::map<revision_id, u64> const & new_rev_to_node,
+                                          std::multimap<u64, u64> const & child_to_parents)
+{
+
+  split_path sp, dirname;
+  path_component basename;
+  pth.split(sp);
+
+  E(!child_roster.has_node(sp),
+    F("Path %s added to child roster multiple times\n") % pth);
+
+  dirname_basename(sp, dirname, basename);
+
+  E(!dirname.empty(),
+    F("Empty path encountered during reconstruction\n"));
+
+  // First, we make sure the entire dir containing the file in question has
+  // been inserted into the child roster.
+  {
+    split_path tmp_pth;
+    for (split_path::const_iterator i = dirname.begin(); i != dirname.end();
+         ++i)
+      {
+        tmp_pth.push_back(*i);
+        if (child_roster.has_node(tmp_pth))
+          {
+            E(is_dir_t(child_roster.get_node(tmp_pth)),
+              F("Directory for path %s cannot be added, as there is a file in the way\n") % pth);
+          }
+        else
+          child_roster.attach_node(child_roster.create_dir_node(nis), tmp_pth);
+      }
+  }
+
+  // Then add a node for the file and attach it
+  node_id nid = child_roster.create_file_node(fid, nis);
+  child_roster.attach_node(nid, sp);
+
+  // Finally, try to find a file in one of the parents which has the same name;
+  // if such a file is found, replace all the temporary node IDs we've assigned
+  // with the node IDs found in the parent.
+
+  for (parent_roster_map::const_iterator j = parent_rosters.begin();
+       j != parent_rosters.end(); ++j)
+    {
+      // We use a stupid heuristic: first parent who has
+      // a file with the same name gets the node
+      // identity copied forward. 
+      boost::shared_ptr<roster_t> parent_roster = j->second.first;
+      boost::shared_ptr<marking_map> parent_marking = j->second.second;
+
+      if (parent_roster->has_node(sp))
+        {
+          node_t other_node = parent_roster->get_node(sp);
+          if (is_file_t(other_node))
+            {
+              // Here we've found an existing node for our file in a parent
+              // roster; For example, we have foo1=p/foo2=q/foo3=r in our
+              // child roster, and we've found foo1=x/foo2=y/foo3=z in a
+              // parent roster. We want to perform the following
+              // operations:
+              //
+              // child_roster.replace_node_id(r,z)
+              // child_roster.replace_node_id(q,y)
+              // child_roster.replace_node_id(p,x)
+              //
+              // where "foo1" is actually "", the root dir.
+
+              // Before we perform this, however, we want to ensure that
+              // none of the existing target nodes (x,y,z) are killed in
+              // any of the parent rosters. If any is killed -- defined
+              // by saying that its birth revision fails to dominate one
+              // of the parent rosters -- then we want to *avoid* making
+              // the replacements, and leave this node as its own child.
+
+              bool replace_this_node = true;
+              if (parent_rosters.size() > 1)
+                {
+                  std::map<node_id, u64> birth_revs;
+                  
+                  for (node_id other_id = other_node->self; 
+                       ! null_node(other_id); 
+                       other_id = parent_roster->get_node(other_id)->parent)
+                    {
+                      revision_id birth_rev = safe_get(*parent_marking, 
+                                                       other_id).birth_revision;
+                      birth_revs.insert(std::make_pair(other_id, 
+                                                       safe_get(new_rev_to_node,
+                                                                birth_rev)));
+                    }
+                  replace_this_node = 
+                    viable_replacement(birth_revs, parent_rosters, 
+                                       child_to_parents);
+                }
+                  
+              if (replace_this_node)
+                {
+                  for (node_id other_id = other_node->self; 
+                       ! null_node(other_id); 
+                       other_id = parent_roster->get_node(other_id)->parent)
+                    {
+                      node_id next_nid = child_roster.get_node(nid)->parent;
+                      child_roster.replace_node_id(nid, other_id);
+                      nid = next_nid;
+                    }
+                  I(null_node(nid));
+                  break;
+                }              
+            }
+        }
+    }
+}
+
+struct 
+current_rev_debugger
+{
+  u64 node;
+  anc_graph const & agraph;
+  current_rev_debugger(u64 n, anc_graph const & ag) 
+    : node(n), agraph(ag)
+  {
+  }
+};
+
+void
+dump(current_rev_debugger const & d, std::string & out)
+{
+  typedef std::multimap<u64, std::pair<cert_name, cert_value> >::const_iterator ci;
+  std::pair<ci,ci> range = d.agraph.certs.equal_range(d.node);
+  for(ci i = range.first; i != range.second; ++i)
+    {
+      if (i->first == d.node)
+        {
+          out += "cert '" + i->second.first() + "'";
+          out += "= '" + i->second.second() + "'\n";
+        }
+    }
+}
+
+
+typedef std::map<file_path, std::map<std::string, std::string> > oldstyle_attr_map;
+
+static void 
+read_oldstyle_dot_mt_attrs(data const & dat, oldstyle_attr_map & attr)
+{
+  std::istringstream iss(dat());
+  basic_io::input_source src(iss, ".mt-attrs");
+  basic_io::tokenizer tok(src);
+  basic_io::parser parser(tok);
+
+  std::string file, name, value;
+
+  attr.clear();
+
+  while (parser.symp("file"))
+    {
+      parser.sym();
+      parser.str(file);
+      file_path fp = file_path_internal(file);
+
+      while (parser.symp() && 
+             !parser.symp("file"))
+        {
+          parser.sym(name);
+          parser.str(value);
+          attr[fp][name] = value;
+        }
+    }
+}
+
+
+void 
+anc_graph::construct_revisions_from_ancestry()
+{
+  // This is an incredibly cheesy, and also reasonably simple sorting
+  // system: we put all the root nodes in the work queue. we take a
+  // node out of the work queue and check if its parents are done. if
+  // they are, we process it and insert its children. otherwise we put
+  // it back on the end of the work queue. This both ensures that we're
+  // always processing something *like* a frontier, while avoiding the
+  // need to worry about one side of the frontier advancing faster than
+  // another.
+
+  typedef std::multimap<u64,u64>::const_iterator ci;
+  std::multimap<u64,u64> parent_to_child_map;
+  std::deque<u64> work;
+  std::set<u64> done;
+
+  {
+    // Set up the parent->child mapping and prime the work queue
+
+    std::set<u64> parents, children;
+    for (std::multimap<u64, u64>::const_iterator i = ancestry.begin();
+         i != ancestry.end(); ++i)
+      {
+        parent_to_child_map.insert(std::make_pair(i->second, i->first));
+        children.insert(i->first);
+        parents.insert(i->second);
+      }
+    
+    set_difference(parents.begin(), parents.end(),
+                   children.begin(), children.end(),
+                   std::back_inserter(work));
+  }
+
+  while (!work.empty())
+    {
+      
+      u64 child = work.front();
+
+      current_rev_debugger dbg(child, *this);
+      MM(dbg);
+
+      work.pop_front();
+      std::pair<ci,ci> parent_range = ancestry.equal_range(child);
+      std::set<u64> parents;
+      bool parents_all_done = true;
+      for (ci i = parent_range.first; parents_all_done && i != parent_range.second; ++i)
+      {
+        if (i->first != child)
+          continue;
+        u64 parent = i->second;
+        if (done.find(parent) == done.end())
+          {
+            work.push_back(child);
+            parents_all_done = false;
+          }
+        else
+          parents.insert(parent);
+      }
+
+      if (parents_all_done 
+          && (node_to_new_rev.find(child) == node_to_new_rev.end()))
+        {          
+          L(F("processing node %d\n") % child);
+
+          manifest_id old_child_mid;
+          manifest_map old_child_man;
+
+          get_node_manifest(child, old_child_mid);
+          app.db.get_manifest(old_child_mid, old_child_man);
+
+          // Load all the parent rosters into a temporary roster map
+          parent_roster_map parent_rosters;
+          MM(parent_rosters);
+          
+          for (ci i = parent_range.first; parents_all_done && i != parent_range.second; ++i)
+            {
+              if (i->first != child)
+                continue;
+              u64 parent = i->second;           
+              if (parent_rosters.find(parent) == parent_rosters.end())
+                {
+                  boost::shared_ptr<roster_t> ros = boost::shared_ptr<roster_t>(new roster_t());
+                  boost::shared_ptr<marking_map> mm = boost::shared_ptr<marking_map>(new marking_map());
+                  app.db.get_roster(safe_get(node_to_new_rev, parent), *ros, *mm);
+                  safe_insert(parent_rosters, std::make_pair(parent, std::make_pair(ros, mm)));
+                }
             }
 
-          L(F("parent node %d = revision %s\n") % parent % parent_rid);      
-          manifest_id parent_man;
-          get_node_manifest(parent, parent_man);
-          boost::shared_ptr<change_set> cs(new change_set());
-          analyze_manifest_changes(app, parent_man, child_man, need_killing_files,
-                                   *cs);
-          rev.edges.insert(std::make_pair(parent_rid,
-                                          std::make_pair(parent_man, cs)));
+          file_path attr_path = file_path_internal(".mt-attrs");
+
+          roster_t child_roster;
+          MM(child_roster);
+          temp_node_id_source nis;
+          for (manifest_map::const_iterator i = old_child_man.begin();
+               i != old_child_man.end(); ++i)
+            {
+              if (!(i->first == attr_path))
+                insert_into_roster_reusing_parent_entries(i->first, i->second,
+                                                          parent_rosters,
+                                                          nis, child_roster,
+                                                          new_rev_to_node,
+                                                          ancestry);
+            }
+          
+          // migrate attributes out of .mt-attrs
+          {
+            manifest_map::const_iterator i = old_child_man.find(attr_path);
+            if (i != old_child_man.end())
+              {
+                file_data dat;
+                app.db.get_file_version(i->second, dat);
+                oldstyle_attr_map attrs;
+                read_oldstyle_dot_mt_attrs(dat.inner(), attrs);
+                for (oldstyle_attr_map::const_iterator j = attrs.begin();
+                     j != attrs.end(); ++j)
+                  {
+                    split_path sp;
+                    j->first.split(sp);
+                    if (child_roster.has_node(sp))
+                      {
+                        std::map<std::string, std::string> const &
+                          fattrs = j->second;
+                        for (std::map<std::string, std::string>::const_iterator
+                               k = fattrs.begin();
+                             k != fattrs.end(); ++k)
+                          child_roster.set_attr(sp,
+                                                attr_key(k->first),
+                                                attr_value(k->second));
+                      }
+                  }
+              }
+          }
+                    
+
+          revision_set rev;
+          MM(rev);
+          calculate_ident(child_roster, rev.new_manifest);
+
+          // For each parent, construct an edge in the revision structure by analyzing the
+          // relationship between the parent roster and the child roster (and placing the
+          // result in a cset)
+
+          for (parent_roster_map::const_iterator i = parent_rosters.begin();
+               i != parent_rosters.end(); ++i)
+            {
+              u64 parent = i->first;
+              revision_id parent_rid = safe_get(node_to_new_rev, parent);
+              boost::shared_ptr<roster_t> parent_roster = i->second.first;
+              boost::shared_ptr<cset> cs = boost::shared_ptr<cset>(new cset());
+              MM(*cs);
+              make_cset(*parent_roster, child_roster, *cs); 
+              manifest_id parent_manifest_id;
+              calculate_ident(*parent_roster, parent_manifest_id);
+              safe_insert(rev.edges, std::make_pair(parent_rid, 
+                                                    std::make_pair(parent_manifest_id, cs)));
+                                                                      
+            }
+
+          // It is possible that we're at a "root" node here -- a node
+          // which had no parent in the old rev graph -- in which case we
+          // synthesize an edge from the empty revision to the current,
+          // containing a cset which adds all the files in the child.
+
+          if (rev.edges.empty())
+            {
+              revision_id parent_rid;
+              boost::shared_ptr<roster_t> parent_roster = boost::shared_ptr<roster_t>(new roster_t());
+              boost::shared_ptr<cset> cs = boost::shared_ptr<cset>(new cset());
+              MM(*cs);
+              make_cset(*parent_roster, child_roster, *cs); 
+              manifest_id parent_manifest_id;
+              safe_insert (rev.edges, std::make_pair (parent_rid, 
+                                                      std::make_pair (parent_manifest_id, cs)));
+              
+            }
+
+          // Finally, put all this excitement into the database and save
+          // the new_rid for use in the cert-writing pass.
+
+          revision_id new_rid;
+          calculate_ident(rev, new_rid);
+          node_to_new_rev.insert(std::make_pair(child, new_rid));
+          new_rev_to_node.insert(std::make_pair(new_rid, child));
+
+          /*
+          P(F("------------------------------------------------\n"));
+          P(F("made revision %s with %d edges, manifest id = %s\n")
+            % new_rid % rev.edges.size() % rev.new_manifest);
+
+          {
+            std::string rtmp;
+            data dtmp;
+            dump(dbg, rtmp);
+            write_revision_set(rev, dtmp);
+            P(F("%s\n") % rtmp);
+            P(F("%s\n") % dtmp);
+          }
+          P(F("------------------------------------------------\n"));
+          */
+
+          if (!app.db.revision_exists (new_rid))
+            {
+              L(F("mapped node %d to revision %s\n") % child % new_rid);
+              app.db.put_revision(new_rid, rev);
+              ++n_revs_out;
+            }
+          else
+            {
+              L(F("skipping already existing revision %s\n") % new_rid);
+            }
+          
+          // Mark this child as done, hooray!
+          safe_insert(done, child);
+
+          // Extend the work queue with all the children of this child
+          std::pair<ci,ci> grandchild_range = parent_to_child_map.equal_range(child);
+          for (ci i = grandchild_range.first; 
+               i != grandchild_range.second; ++i)
+            {
+              if (i->first != child)
+                continue;
+              work.push_back(i->second);
+            }
         }
     }
-
-  revision_id rid;
-  calculate_ident(rev, rid);
-  node_to_new_rev.insert(std::make_pair(child, rid));
-
-  if (!app.db.revision_exists (rid))
-    {
-      L(F("mapped node %d to revision %s\n") % child % rid);
-      app.db.put_revision(rid, rev);
-      ++n_revs_out;
-    }
-  else
-    {
-      L(F("skipping already existing revision %s\n") % rid);
-    }
-
-  return rid;  
 }
 
 void 
-build_changesets_from_existing_revs(app_state & app)
+build_roster_style_revs_from_manifest_style_revs(app_state & app)
 {
   global_sanity.set_relaxed(true);
   anc_graph graph(true, app);
 
-  P(F("rebuilding revision graph from existing graph\n"));
+  P(F("converting existing revision graph to new roster-style revisions\n"));
   std::multimap<revision_id, revision_id> existing_graph;
 
   {
@@ -1600,8 +1536,8 @@ build_changesets_from_existing_revs(app_state & app)
     {
       if (!null_id(i->first))
         {
-          u64 parent_node = graph.add_node_for_old_revision(i->first);
-          u64 child_node = graph.add_node_for_old_revision(i->second);
+          u64 parent_node = graph.add_node_for_oldstyle_revision(i->first);
+          u64 child_node = graph.add_node_for_oldstyle_revision(i->second);
           graph.add_node_ancestry(child_node, parent_node);
         }
     }
@@ -1646,7 +1582,6 @@ build_changesets_from_manifest_ancestry(app_state & app)
   graph.rebuild_ancestry();
 }
 
-
 // i/o stuff
 
 namespace 
@@ -1660,6 +1595,41 @@ namespace
 }
 
 
+// HACK: this is a special reader which picks out the new_manifest field in
+// a revision; it ignores all other symbols. This is because, in the
+// pre-roster database, we have revisions holding change_sets, not
+// csets. If we apply the cset reader to them, they fault. We need to
+// *partially* read them, however, in order to get the manifest IDs out of
+// the old revisions (before we delete the revs and rebuild them)
+
+static void 
+get_manifest_for_rev(app_state & app,
+                     revision_id const & ident,
+                     manifest_id & mid)
+{
+  revision_data dat;
+  app.db.get_revision(ident,dat);
+  std::istringstream iss(dat.inner()());
+  basic_io::input_source src(iss, "revision");
+  basic_io::tokenizer tok(src);
+  basic_io::parser pars(tok);
+  while (pars.symp())
+    {
+      if (pars.symp(syms::new_manifest))
+        {
+          std::string tmp;
+          pars.sym();
+          pars.hex(tmp);
+          mid = manifest_id(tmp);
+          return;
+        }
+      else
+        pars.sym();
+    }
+  I(false);
+}
+
+
 void 
 print_edge(basic_io::printer & printer,
            edge_entry const & e)
@@ -1668,7 +1638,7 @@ print_edge(basic_io::printer & printer,
   st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner()());
   st.push_hex_pair(syms::old_manifest, edge_old_manifest(e).inner()());
   printer.print_stanza(st);
-  print_change_set(printer, edge_changes(e)); 
+  print_cset(printer, edge_changes(e)); 
 }
 
 
@@ -1690,7 +1660,7 @@ void
 parse_edge(basic_io::parser & parser,
            edge_map & es)
 {
-  boost::shared_ptr<change_set> cs(new change_set());
+  boost::shared_ptr<cset> cs(new cset());
   manifest_id old_man;
   revision_id old_rev;
   std::string tmp;
@@ -1703,7 +1673,7 @@ parse_edge(basic_io::parser & parser,
   parser.hex(tmp);
   old_man = manifest_id(tmp);
   
-  parse_change_set(parser, *cs);
+  parse_cset(parser, *cs);
 
   es.insert(std::make_pair(old_rev, std::make_pair(old_man, cs)));
 }
@@ -1744,11 +1714,9 @@ read_revision_set(revision_data const & dat,
   rev.check_sane();
 }
 
-void
-write_revision_set(revision_set const & rev,
-                   data & dat)
+static void write_insane_revision_set(revision_set const & rev,
+                                      data & dat)
 {
-  rev.check_sane();
   std::ostringstream oss;
   basic_io::printer pr(oss);
   print_revision(pr, rev);
@@ -1756,10 +1724,25 @@ write_revision_set(revision_set const & rev,
 }
 
 void
+dump(revision_set const & rev, std::string & out)
+{
+  data dat;
+  write_insane_revision_set(rev, dat);
+  out = dat();
+}
+
+void
+write_revision_set(revision_set const & rev,
+                   data & dat)
+{
+  rev.check_sane();
+  write_insane_revision_set(rev, dat);
+}
+
+void
 write_revision_set(revision_set const & rev,
                    revision_data & dat)
 {
-  rev.check_sane();
   data d;
   write_revision_set(rev, d);
   dat = revision_data(d);

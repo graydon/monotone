@@ -10,6 +10,7 @@
 #include "lua.hh"
 #include "manifest.hh"
 #include "vocab.hh"
+#include "roster.hh"
 
 #include <vector>
 
@@ -134,6 +135,12 @@ void calculate_ident(revision_data const & dat,
 
 void calculate_ident(revision_set const & cs,
                      revision_id & ident);
+
+// Variant which calculates the "manifest part" of a roster; this does
+// not include the local sequence numbers or markings, but produces
+// the manifest_id which is stored in the public revision_set object.
+void calculate_ident(roster_t const & ros,
+                     manifest_id & ident);
 
 
 // quick streamy variant which doesn't necessarily load the whole file

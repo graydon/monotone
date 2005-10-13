@@ -11,6 +11,8 @@
 #include "restrictions.hh"
 #include "revision.hh"
 #include "transforms.hh"
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 
 void
 extract_rearranged_paths(change_set::path_rearrangement const & rearrangement, path_set & paths)
@@ -271,3 +273,4 @@ calculate_restricted_change_set(app_state & app,
 }
 
 
+*/

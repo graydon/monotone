@@ -359,7 +359,6 @@ session
   void get_heads_and_consume_certs(set<revision_id> & heads);
 
   void analyze_ancestry_graph();
-  void analyze_manifest(manifest_map const & man);
 
   Netxx::Probe::ready_type which_events() const;
   bool read_some();
@@ -472,7 +471,7 @@ ancestry_fetcher
 
   ancestry_fetcher(session & s);
   // analysing the ancestry graph
-  void traverse_files(change_set const & cset);
+  void traverse_files(cset const & cs);
   void traverse_manifest(manifest_id const & child_man,
                          manifest_id const & parent_man);
   void traverse_ancestry(set<revision_id> const & heads);
@@ -567,18 +566,15 @@ session::session(protocol_role role,
   requested_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
 
   received_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
-  received_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
 
-  full_delta_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   full_delta_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
 }
 
@@ -904,21 +900,6 @@ session::error(std::string const & errmsg)
   encountered_error = true;
 }
 
-void 
-session::analyze_manifest(manifest_map const & man)
-{
-  L(F("analyzing %d entries in manifest\n") % man.size());
-  for (manifest_map::const_iterator i = man.begin();
-       i != man.end(); ++i)
-    {
-      if (! this->app.db.file_version_exists(manifest_entry_id(i)))
-        {
-          id tmp;
-          decode_hexenc(manifest_entry_id(i).inner(), tmp);
-          queue_send_data_cmd(file_item, tmp);
-        }
-    }
-}
 
 inline static id
 plain_id(manifest_id const & i)
@@ -1305,7 +1286,7 @@ session::queue_send_delta_cmd(netcmd_item_type type,
                               id const & base, 
                               id const & ident)
 {
-  I(type == manifest_item || type == file_item);
+  I(type == file_item);
 
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -1376,7 +1357,7 @@ session::queue_delta_cmd(netcmd_item_type type,
                          id const & ident, 
                          delta const & del)
 {
-  I(type == manifest_item || type == file_item);
+  I(type == file_item);
   I(! del().empty() || ident == base);
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -1888,8 +1869,6 @@ data_exists(netcmd_item_type type,
     {
     case key_item:
       return app.db.public_key_exists(hitem);
-    case manifest_item:
-      return app.db.manifest_version_exists(manifest_id(hitem));
     case file_item:
       return app.db.file_version_exists(file_id(hitem));
     case revision_item:
@@ -1954,20 +1933,6 @@ load_data(netcmd_item_type type,
       else
         {
           throw bad_decode(F("revision '%s' does not exist in our database") % hitem);
-        }
-      break;
-
-    case manifest_item:
-      if (app.db.manifest_version_exists(manifest_id(hitem)))
-        {
-          manifest_data mdat;
-          data dat;
-          app.db.get_manifest_version(manifest_id(hitem), mdat);
-          out = mdat.inner()();
-        }
-      else
-        {
-          throw bad_decode(F("manifest '%s' does not exist in our database") % hitem);
         }
       break;
 
@@ -2461,30 +2426,6 @@ session::process_send_delta_cmd(netcmd_item_type type,
           }
       }
       break;
-
-    case manifest_item:
-      {
-        manifest_id mbase(hbase), mident(hident);
-        manifest_delta mdel;
-        if (this->app.db.manifest_version_exists(mbase) 
-            && this->app.db.manifest_version_exists(mident))
-          {
-            manifest_data base_mdat, ident_mdat;
-            data base_dat, ident_dat;
-            this->app.db.get_manifest_version(mbase, base_mdat);
-            this->app.db.get_manifest_version(mident, ident_mdat);
-            string tmp;
-            base_dat = base_mdat.inner();
-            ident_dat = ident_mdat.inner();
-            compute_delta(base_dat(), ident_dat(), tmp);
-            del = delta(tmp);
-          }
-        else
-          {
-            return process_send_data_cmd(type, ident);
-          }
-      }
-      break;
       
     default:
       throw bad_decode(F("delta requested for item type %s\n") % typestr);
@@ -2612,21 +2553,6 @@ session::process_data_cmd(netcmd_item_type type,
       }
       break;
 
-    case manifest_item:
-      {
-        manifest_id mid(hitem);
-        if (this->app.db.manifest_version_exists(mid))
-          L(F("manifest version '%s' already exists in our database\n") % hitem);
-        else
-          {
-            this->dbw.consume_manifest_data(mid, manifest_data(dat));
-            manifest_map man;
-            read_manifest_map(data(dat), man);
-            analyze_manifest(man);
-          }
-      }
-      break;
-
     case file_item:
       {
         file_id fid(hitem);
@@ -2663,33 +2589,6 @@ session::process_delta_cmd(netcmd_item_type type,
 
   switch (type)
     {
-    case manifest_item:
-      {
-        manifest_id src_manifest(hbase), dst_manifest(hident);
-        if (full_delta_items[manifest_item]->find(ident)
-            != full_delta_items[manifest_item]->end())
-          {
-            this->dbw.consume_manifest_delta(src_manifest, 
-                                             dst_manifest,
-                                             manifest_delta(del),
-                                             true);
-          }
-        else if (reverse_delta_requests.find(id_pair)
-            != reverse_delta_requests.end())
-          {
-            reverse_delta_requests.erase(id_pair);
-            this->dbw.consume_manifest_reverse_delta(src_manifest, 
-                                                     dst_manifest,
-                                                     manifest_delta(del));
-          }
-        else
-          this->dbw.consume_manifest_delta(src_manifest, 
-                                           dst_manifest,
-                                           manifest_delta(del));
-        
-      }
-      break;
-
     case file_item:
       {
         file_id src_file(hbase), dst_file(hident);
@@ -3690,8 +3589,9 @@ ancestry_fetcher::ancestry_fetcher(session & s)
 // adds file deltas from the given changeset into the sets of forward
 // and reverse deltas
 void
-ancestry_fetcher::traverse_files(change_set const & cset)
+ancestry_fetcher::traverse_files(cset const & cs)
 {
+/* FIXME ROSTERS: disabled until updated to use rosters
   for (change_set::delta_map::const_iterator d = cset.deltas.begin(); 
        d != cset.deltas.end(); ++d)
     {
@@ -3740,6 +3640,7 @@ ancestry_fetcher::traverse_files(change_set const & cset)
       seen_files.insert(child_file);
       seen_files.insert(parent_file);
     }
+*/
 }
 
 // adds the given manifest deltas to the sets of forward and reverse deltas
@@ -3904,6 +3805,7 @@ void
 ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start,
                                               set<manifest_id> & done_manifests)
 {
+/* FIXME ROSTERS: disabled until updated to use rosters
   stack< manifest_id > frontier;
   frontier.push(start);
 
@@ -3936,6 +3838,7 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start,
             }
         }
     }
+*/
 }
 
 // could try and make this a template function, is the same as request_files(),
@@ -3943,6 +3846,7 @@ ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start,
 void
 ancestry_fetcher::request_manifests()
 {
+/* FIXME ROSTERS: disabled until updated to use rosters
   // just a cache to avoid checking db.foo_version_exists() too much
   set<manifest_id> done_manifests;
 
@@ -3971,4 +3875,5 @@ ancestry_fetcher::request_manifests()
       // traverse up the reverse deltas
       request_rev_manifest_deltas(child, done_manifests);
     }
+*/
 }

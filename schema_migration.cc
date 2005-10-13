@@ -837,6 +837,50 @@ migrate_client_to_external_privkeys(sqlite3 * sql,
   return true;
 }
 
+static bool
+migrate_client_to_add_rosters(sqlite3 * sql,
+                              char ** errmsg,
+                              app_state *)
+{
+  int res;
+  
+  res = sqlite3_exec(sql,
+		     "CREATE TABLE rosters\n"
+		     "(\n"
+		     "id primary key,         -- strong hash of the roster\n"
+		     "rev_id not null unique, -- strong hash of associated revision\n"
+		     "data not null           -- compressed, encoded contents of the roster\n"
+		     ");",
+                     NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite3_exec(sql,
+		     "CREATE TABLE roster_deltas\n"
+		     "(\n"
+		     "id not null,            -- strong hash of the roster\n"
+		     "rev_id not null,        -- strong hash of associated revision\n"
+		     "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
+		     "delta not null,         -- rdiff to construct current from base\n"
+		     "unique(id, base),\n"
+		     "unique(rev_id, base)\n"
+		     ");",
+                     NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite3_exec(sql,
+                     "CREATE TABLE next_roster_node_number\n"
+                     "(\n"
+                     "node primary key        -- only one entry in this table, ever\n"
+		     ");",
+                     NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  return true;
+}
+
 void 
 migrate_monotone_schema(sqlite3 *sql, app_state *app)
 {
@@ -865,9 +909,12 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
   m.add("1509fd75019aebef5ac3da3a5edf1312393b70e9",
         &migrate_client_to_external_privkeys);
 
+  m.add("bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
+        &migrate_client_to_add_rosters);
+
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "bd86f9a90b5d552f0be1fa9aee847ea0f317778b");
+  m.migrate(sql, "9598aecfa8fbd6bb00acf8dc6e42b46d7e2a46a2");
 }

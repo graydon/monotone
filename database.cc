@@ -4,6 +4,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <algorithm>
+#include <deque>
 #include <fstream>
 #include <iterator>
 #include <list>
@@ -23,6 +25,7 @@
 #include "cleanup.hh"
 #include "constants.hh"
 #include "database.hh"
+#include "hash_map.hh"
 #include "keys.hh"
 #include "sanity.hh"
 #include "schema_migration.hh"
@@ -66,7 +69,7 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("bd86f9a90b5d552f0be1fa9aee847ea0f317778b"),
+  schema("9598aecfa8fbd6bb00acf8dc6e42b46d7e2a46a2"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -1329,6 +1332,7 @@ database::get_revision(revision_id const & id,
   dat = rdat;
 }
 
+
 void 
 database::put_revision(revision_id const & new_id,
                        revision_set const & rev)
@@ -1336,19 +1340,51 @@ database::put_revision(revision_id const & new_id,
 
   I(!null_id(new_id));
   I(!revision_exists(new_id));
-  revision_data d;
 
   rev.check_sane();
-
+  revision_data d;
   write_revision_set(rev, d);
-  revision_id tmp;
-  calculate_ident(d, tmp);
-  I(tmp == new_id);
+
+  // Phase 1: confirm the revision makes sense
+  {
+    revision_id tmp;
+    calculate_ident(d, tmp);
+    I(tmp == new_id);
+  }
+
+  transaction_guard guard(*this);
+  
+  // Phase 2: construct a new roster and sanity-check its manifest_id
+  // against the manifest_id of the revision you're writing. Also, to be
+  // *totally* thorough, check the manifest_ids of the parents of the new
+  // rev you're making and make sure they match the calculated manifest_id
+  // of their associated rosters.
+  roster_t ros;
+  marking_map mm;
+  {
+    manifest_id roster_manifest_id;
+    make_roster_for_revision(rev, new_id, ros, mm, *__app);
+    calculate_ident(ros, roster_manifest_id);
+    I(rev.new_manifest == roster_manifest_id);
+    for (edge_map::const_iterator i = rev.edges.begin();
+         i != rev.edges.end(); ++i)
+      {
+        roster_t parent_roster;
+        marking_map ignored;
+        manifest_id parent_mid;
+        if (!edge_old_revision(i).inner()().empty())
+          {
+            get_roster(edge_old_revision(i), parent_roster, ignored);
+            calculate_ident(parent_roster, parent_mid);
+            I(edge_old_manifest(i) == parent_mid);
+          }
+      }
+  }
+
+  // Phase 3: Write the revision data
 
   base64<gzip<data> > d_packed;
   pack(d.inner(), d_packed);
-
-  transaction_guard guard(*this);
 
   execute("INSERT INTO revisions VALUES(?, ?)", 
           new_id.inner()().c_str(), 
@@ -1362,12 +1398,14 @@ database::put_revision(revision_id const & new_id,
               new_id.inner()().c_str());
     }
 
-  check_sane_history(new_id, constants::verify_depth, *__app);
+  // Phase 4: write the roster data and commit
+  put_roster(new_id, ros, mm);
 
   guard.commit();
 }
 
-void 
+
+void
 database::put_revision(revision_id const & new_id,
                        revision_data const & dat)
 {
@@ -2331,7 +2369,7 @@ database::get_branches(vector<string> & names)
     results res;
     string query="SELECT DISTINCT value FROM revision_certs WHERE name= ?";
     string cert_name="branch";
-    fetch(res,one_col,any_rows,query.c_str(),cert_name.c_str());
+    fetch(res, one_col, any_rows, query.c_str(), cert_name.c_str());
     for (size_t i = 0; i < res.size(); ++i)
       {
         base64<data> row_encoded(res[i][0]);
@@ -2339,6 +2377,223 @@ database::get_branches(vector<string> & names)
         decode_base64(row_encoded, name);
         names.push_back(name());
       }
+}
+
+
+void
+database::get_roster_id_for_revision(revision_id const & rev_id,
+                                     hexenc<id> & roster_id)
+{
+  if (rev_id.inner()().empty())
+    {
+      roster_id = hexenc<id>();
+      return;
+    }
+
+  results res;
+  string data_table = "rosters";
+  string delta_table = "roster_deltas";
+  string query = ("SELECT id FROM " + data_table + " WHERE rev_id = ? "
+                  "UNION "
+                  "SELECT id FROM " + delta_table + " WHERE rev_id = ? ");
+  
+  fetch(res, one_col, one_row, query.c_str(),
+        rev_id.inner()().c_str(),
+        rev_id.inner()().c_str());
+  roster_id = hexenc<id>(res[0][0]);
+}
+
+
+void 
+database::get_roster(revision_id const & rev_id, 
+                     roster_t & roster,
+                     marking_map & marks)
+{
+  if (rev_id.inner()().empty())
+    {
+      roster = roster_t();
+      marks = marking_map();
+      return;
+    }
+
+  string data_table = "rosters";
+  string delta_table = "roster_deltas";
+  data dat;
+  hexenc<id> ident;
+
+  get_roster_id_for_revision(rev_id, ident);
+  get_version(ident, dat, data_table, delta_table);
+  read_roster_and_marking(dat, roster, marks);
+}
+
+
+void
+database::put_roster(revision_id const & rev_id,
+                     roster_t & roster,
+                     marking_map & marks)
+{
+  data old_data, new_data;
+  delta reverse_delta;
+  hexenc<id> ident;
+  base64<gzip<data> > new_data_packed;
+
+  write_roster_and_marking(roster, marks, new_data);
+  calculate_ident(new_data, ident);
+  pack(new_data, new_data_packed);
+
+  // First: find the "old" revision; if there are multiple old
+  // revisions, we just pick the first. It probably doesn't matter for
+  // the sake of delta-encoding.
+
+  string data_table = "rosters";
+  string delta_table = "roster_deltas";
+
+  results res;
+  fetch(res, one_col, any_rows, 
+        "SELECT parent FROM revision_ancestry WHERE child = ?",
+        rev_id.inner()().c_str());
+
+  transaction_guard guard(*this);
+  if (res.size() != 0 && !res[0][0].empty())
+    {
+      // There's a parent revision; we are going to do delta
+      // compression on the roster by using the roster associated with
+      // the parent rev. Keep in mind that we're composing a *reverse*
+      // delta here, which goes from new->old. So the row we insert
+      // will have (id=old_id, rev_id=old_rev, base=new_id,
+      // delta=new->old)
+
+      revision_id old_rev = revision_id(res[0][0]);
+      hexenc<id> old_ident;
+      get_roster_id_for_revision(old_rev, old_ident);
+      get_version(old_ident, old_data, data_table, delta_table);
+      diff(new_data, old_data, reverse_delta);
+      base64<gzip<delta> > del_packed;
+      pack(reverse_delta, del_packed);
+
+      if (exists(old_ident, data_table))
+        {
+          // Descendent of a head version replaces the head, therefore
+          // old head, if it exists in entirety, must be disposed of.
+          drop(old_ident, data_table);
+        }
+
+      // nb: roster_deltas schema is (id, rev_id, base, delta)
+      string query = "INSERT INTO " + delta_table + " VALUES(?, ?, ?, ?)";
+      execute(query.c_str(), 
+              old_ident().c_str(), old_rev.inner()().c_str(), 
+              ident().c_str(), del_packed().c_str());
+
+    }
+
+  // nb: rosters schema is (id, rev_id, data)
+  string query = "INSERT INTO " + data_table + " VALUES(?, ?, ?)";
+  execute(query.c_str(),
+          ident().c_str(), rev_id.inner()().c_str(), 
+          new_data_packed().c_str());      
+
+  guard.commit();
+}
+
+
+typedef hashmap::hash_multimap<string,string,hashmap::string_hash> ancestry_map;
+
+static void 
+transitive_closure(string const & x,
+                   ancestry_map const & m,
+                   set<revision_id> & results)
+{
+  results.clear();
+
+  deque<string> work;
+  work.push_back(x);
+  while (!work.empty())
+    {
+      string c = work.front();
+      work.pop_front();
+      revision_id curr(c);
+      if (results.find(curr) == results.end())
+        {
+          results.insert(curr);
+          pair<ancestry_map::const_iterator, ancestry_map::const_iterator> range;
+          range = m.equal_range(c);
+          for (ancestry_map::const_iterator i = range.first; i != range.second; ++i)
+            {
+              if (i->first == c)
+                work.push_back(i->second);
+            }
+        }
+    }
+}
+
+void 
+database::get_uncommon_ancestors(revision_id const & a,
+                                 revision_id const & b,
+                                 set<revision_id> & a_uncommon_ancs,
+                                 set<revision_id> & b_uncommon_ancs)
+{
+  // FIXME: This is a somewhat ugly, and possibly unaccepably slow way
+  // to do it. Another approach involves maintaining frontier sets for
+  // each and slowly deepening them into history; would need to
+  // benchmark to know which is actually faster on real datasets.
+
+  a_uncommon_ancs.clear();
+  b_uncommon_ancs.clear();
+
+  results res;
+  a_uncommon_ancs.clear();
+  b_uncommon_ancs.clear();
+
+  fetch(res, 2, any_rows, 
+        "SELECT parent,child FROM revision_ancestry");
+
+  set<revision_id> a_ancs, b_ancs;
+
+  ancestry_map child_to_parent_map;
+  for (size_t i = 0; i < res.size(); ++i)
+    child_to_parent_map.insert(make_pair(res[i][1], res[i][0]));
+
+  transitive_closure(a.inner()(), child_to_parent_map, a_ancs);
+  transitive_closure(b.inner()(), child_to_parent_map, b_ancs);
+  
+  set_difference(a_ancs.begin(), a_ancs.end(), 
+                 b_ancs.begin(), b_ancs.end(),
+                 inserter(a_uncommon_ancs, a_uncommon_ancs.begin()));
+
+  set_difference(b_ancs.begin(), b_ancs.end(), 
+                 a_ancs.begin(), a_ancs.end(),
+                 inserter(b_uncommon_ancs, b_uncommon_ancs.begin()));
+}
+
+node_id 
+database::next_node_id()
+{
+  transaction_guard guard(*this);
+  results res;
+
+  // We implement this as a fixed db var.
+
+  fetch(res, one_col, any_rows, 
+        "SELECT node FROM next_roster_node_number");
+  
+  node_id n;
+  if (res.empty())
+    {
+      n = 1;
+      execute ("INSERT INTO next_roster_node_number VALUES(?)", 
+               lexical_cast<string>(n).c_str());
+    }
+  else
+    {
+      I(res.size() == 1);
+      n = lexical_cast<node_id>(res[0][0]);
+      ++n;
+      execute ("UPDATE next_roster_node_number SET node = ?",
+               lexical_cast<string>(n).c_str());
+      
+    }
+  guard.commit();
+  return n;
 }
 
 
