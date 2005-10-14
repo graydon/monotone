@@ -1,3 +1,9 @@
+2005-10-14  Emile Snyder <emile@alumni.reed.edu>
+
+	* database.cc (complete): enhance h: and b: to mean "current
+	branch" (as defined by your working copy) when given empty.
+	* monotone.texi: document it.
+	
 2005-10-13  Emile Snyder <emile@alumni.reed.edu>
 
 	* commands.cc (CMD(revert)): use --missing for revert a'la drop.
