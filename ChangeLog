@@ -1,5 +1,12 @@
 2005-10-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* database.cc, schema.sql, schema_migration.cc: Use SQLite 3's
+	exclusive locking whereever we start a new transaction; allows
+	monotone to report database locking errors earlier if a second
+	monotone process attempts to perform database operations.
+
+2005-10-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* commands.cc (message_width): Refactor into display_width() and
 	remove message_width().
 	* transforms.{cc,hh} (display_width): Rename length() to
