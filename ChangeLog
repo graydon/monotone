@@ -1,3 +1,12 @@
+2005-10-14  Nathaniel Smith  <njs@pobox.com>
+
+	* key_store.{cc,hh} (get_key_dir): New method.
+	* schema_migration.cc (migrate_client_to_external_privkeys): Tell
+	user that we're moving their keys.
+	* commands.cc (genkey): Refer to keystore by the directory, not as
+	"keystore".
+	(ls_keys): Likewise.
+
 2005-10-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* database.cc, schema.sql, schema_migration.cc: Use SQLite 3's
