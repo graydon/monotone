@@ -1123,7 +1123,8 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 }
 
 
-static void find_unknown (app_state & app, bool want_ignored, vector<utf8> const & args, path_set & unknown);
+static void find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const & args, 
+                                      path_set & unknown, path_set & ignored);
 
 CMD(add, N_("working copy"), N_("[PATH]..."),
     N_("add files to working copy"), OPT_UNKNOWN)
@@ -1145,8 +1146,8 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
 
   if (app.unknown)
     {
-      path_set unknown;
-      find_unknown(app, false, args, unknown);
+      path_set unknown, ignored;
+      find_unknown_and_ignored(app, false, args, unknown, ignored);
       paths.insert(paths.end(), unknown.begin(), unknown.end());
     }
 
@@ -1639,33 +1640,35 @@ ls_known (app_state & app, vector<utf8> const & args)
 }
 
 static void
-find_unknown (app_state & app, bool want_ignored, vector<utf8> const & args, path_set & unknown)
+find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const & args, 
+                          path_set & unknown, path_set & ignored)
 {
   revision_set rev;
   manifest_map m_old, m_new;
   //path_set known, unknown, ignored;
-  path_set known, dummy;
+  path_set known;
 
   calculate_restricted_revision(app, args, rev, m_old, m_new);
 
   extract_path_set(m_new, known);
-  path_set &ignoredref = unknown;
-  if (!want_ignored)
-    ignoredref = dummy;
-  file_itemizer u(app, known, unknown, ignoredref);
+  file_itemizer u(app, known, unknown, ignored);
   walk_tree(file_path(), u);
 }
 
 static void
-ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
+ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & args)
 {
   app.require_working_copy();
 
-  path_set unknown;
-  find_unknown(app, want_ignored, args, unknown);
+  path_set unknown, ignored;
+  find_unknown_and_ignored(app, want_ignored, args, unknown, ignored);
 
-  for (path_set::const_iterator i = unknown.begin(); i != unknown.end(); ++i)
-    cout << *i << endl;
+  if (want_ignored)
+    for (path_set::const_iterator i = ignored.begin(); i != ignored.end(); ++i)
+      cout << *i << endl;
+  else
+    for (path_set::const_iterator i = unknown.begin(); i != unknown.end(); ++i)
+      cout << *i << endl;
 }
 
 static void
@@ -1750,9 +1753,9 @@ CMD(list, N_("informative"),
   else if (idx(args, 0)() == "known")
     ls_known(app, removed);
   else if (idx(args, 0)() == "unknown")
-    ls_unknown(app, false, removed);
+    ls_unknown_or_ignored(app, false, removed);
   else if (idx(args, 0)() == "ignored")
-    ls_unknown(app, true, removed);
+    ls_unknown_or_ignored(app, true, removed);
   else if (idx(args, 0)() == "missing")
     ls_missing(app, removed);
   else

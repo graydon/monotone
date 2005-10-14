@@ -1,3 +1,11 @@
+2005-10-14  Emile Snyder  <emile@alumni.reed.edu>
+
+	* commands.cc: Fix breakage I introduced with the --unknown flag.
+	Rename find_unknown to find_unknown_and_ignored, since that's what
+	it's actually doing.  Likewise ls_unknown ->
+	ls_unknown_or_ignored, and use find_unknown_and_ignored correctly.
+	Fixes t_mt_ignore.at failures.
+	
 2005-10-14  Nathaniel Smith  <njs@pobox.com>
 
 	* key_store.{cc,hh} (get_key_dir): New method.
