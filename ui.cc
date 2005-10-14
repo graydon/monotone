@@ -93,17 +93,17 @@ void tick_write_count::write_ticks()
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
        i != ui.tickers.end(); ++i)
     {
-      width = 1 + length(utf8(i->second->name));
+      width = 1 + display_width(utf8(i->second->name));
       if (!first_tick)
         {
           tickline1 += " | ";
           tickline2 += " |";
         }
       first_tick = false;
-      if (length(utf8(i->second->name)) < minwidth)
+      if (display_width(utf8(i->second->name)) < minwidth)
         {
-          tickline1.append(minwidth - length(utf8(i->second->name)),' ');
-          width += minwidth - length(utf8(i->second->name));
+          tickline1.append(minwidth - display_width(utf8(i->second->name)),' ');
+          width += minwidth - display_width(utf8(i->second->name));
         }
       tickline1 += i->second->name;
       
@@ -133,16 +133,16 @@ void tick_write_count::write_ticks()
           count = (F("%d") % i->second->ticks).str();
         }
         
-      if (length(utf8(count)) < width)
+      if (display_width(utf8(count)) < width)
         {
-          tickline2.append(width - length(utf8(count)),' ');
+          tickline2.append(width - display_width(utf8(count)),' ');
         }
-      else if (length(utf8(count)) > width)
+      else if (display_width(utf8(count)) > width)
         {
           // FIXME: not quite right, because substr acts on bytes rather than
           // characters; but there are always more bytes than characters, so
           // at worst this will just chop off a little too much.
-          count = count.substr(length(utf8(count)) - width);
+          count = count.substr(display_width(utf8(count)) - width);
         }
       tickline2 += count;
     }
@@ -153,7 +153,7 @@ void tick_write_count::write_ticks()
       tickline2 += ui.tick_trailer;
     }
   
-  size_t curr_sz = length(utf8(tickline2));
+  size_t curr_sz = display_width(utf8(tickline2));
   if (curr_sz < last_tick_len)
     tickline2.append(last_tick_len - curr_sz, ' ');
   last_tick_len = curr_sz;
@@ -161,7 +161,7 @@ void tick_write_count::write_ticks()
   unsigned int tw = terminal_width();
   if(!ui.last_write_was_a_tick)
     {
-      if (tw && length(utf8(tickline1)) > tw)
+      if (tw && display_width(utf8(tickline1)) > tw)
         {
           // FIXME: may chop off more than necessary (because we chop by
           // bytes, not by characters)
@@ -169,7 +169,7 @@ void tick_write_count::write_ticks()
         }
       clog << tickline1 << "\n";
     }
-  if (tw && length(utf8(tickline2)) > tw)
+  if (tw && display_width(utf8(tickline2)) > tw)
     {
       // first character in tickline2 is "\r", which does not take up any
       // width, so we add 1 to compensate.

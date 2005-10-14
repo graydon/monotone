@@ -538,13 +538,28 @@ system_to_utf8(external const & ext, utf8 & utf)
   utf = out;
 }
 
-// hack: this is an unexposed function in libidna
-extern "C" long g_utf8_strlen(const char * p, size_t max);
-
 size_t
-length(utf8 const & utf)
+display_width(utf8 const & utf)
 {
-  return g_utf8_strlen(utf().c_str(), utf().size());
+  // this function is called many thousands of times by the tickers, so we
+  // try and avoid performing heap allocations by starting with a reasonable
+  // size buffer, and only ever growing the buffer if needed.
+  static size_t widebuf_sz = 128;
+  static boost::scoped_array<wchar_t> widebuf(new wchar_t[widebuf_sz]);
+
+  size_t len = mbstowcs(0, utf().c_str(), 0) + 1;
+
+  if (len == static_cast<size_t>(-1))
+    return utf().length(); // conversion failed; punt and return original length
+
+  if (len > widebuf_sz) {
+    widebuf.reset(new wchar_t[len]);
+    widebuf_sz = len;
+  }
+
+  mbstowcs(widebuf.get(), utf().c_str(), widebuf_sz);
+
+  return wcswidth(widebuf.get(), widebuf_sz);
 }
 
 // Lots of gunk to avoid charset conversion as much as possible.  Running
