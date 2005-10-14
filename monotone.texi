@@ -7144,10 +7144,12 @@ Show unmerged heads of branch, or report when branch is merged.
 Merge unmerged heads of branch.
 @comment TROFF INPUT: .TP
 
-@item @b{add} @i{<pathname> [...]}
+@item @b{add} @i{[--unknown] [<pathname>...]}
 Add files to working copy. adding a file does not copy it into the
 database, merely adds it to the work list. You must @b{commit} your
-changes in order to copy added files to the database.
+changes in order to copy added files to the database.  The missing 
+flag causes those files that @command{monotone ls unknown} would
+display to be added to the project.
 @comment TROFF INPUT: .TP
 
 @item @b{drop} @i{[--missing] [--execute] [<pathname>...]}

@@ -46,3 +46,4 @@
 #define OPT_KEY_DIR 37
 #define OPT_BIND 38
 #define OPT_MISSING 39
+#define OPT_UNKNOWN 40

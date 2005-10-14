@@ -1123,11 +1123,12 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 }
 
 
+static void find_unknown (app_state & app, bool want_ignored, vector<utf8> const & args, path_set & unknown);
 
-CMD(add, N_("working copy"), N_("PATH..."),
-    N_("add files to working copy"), OPT_NONE)
+CMD(add, N_("working copy"), N_("[PATH]..."),
+    N_("add files to working copy"), OPT_UNKNOWN)
 {
-  if (args.size() < 1)
+  if (!app.unknown && (args.size() < 1))
     throw usage(name);
 
   app.require_working_copy();
@@ -1141,6 +1142,16 @@ CMD(add, N_("working copy"), N_("PATH..."),
   vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     paths.push_back(file_path_external(*i));
+
+  if (app.unknown)
+    {
+      path_set unknown;
+      find_unknown(app, false, args, unknown);
+      paths.insert(paths.end(), unknown.begin(), unknown.end());
+    }
+
+  if (paths.size() == 0)
+    return;
 
   build_additions(paths, m_old, app, work);
 
@@ -1628,26 +1639,33 @@ ls_known (app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
+find_unknown (app_state & app, bool want_ignored, vector<utf8> const & args, path_set & unknown)
 {
-  app.require_working_copy();
-
   revision_set rev;
   manifest_map m_old, m_new;
-  path_set known, unknown, ignored;
+  //path_set known, unknown, ignored;
+  path_set known, dummy;
 
   calculate_restricted_revision(app, args, rev, m_old, m_new);
 
   extract_path_set(m_new, known);
-  file_itemizer u(app, known, unknown, ignored);
+  path_set &ignoredref = unknown;
+  if (!want_ignored)
+    ignoredref = dummy;
+  file_itemizer u(app, known, unknown, ignoredref);
   walk_tree(file_path(), u);
+}
 
-  if (want_ignored)
-    for (path_set::const_iterator i = ignored.begin(); i != ignored.end(); ++i)
-      cout << *i << endl;
-  else 
-    for (path_set::const_iterator i = unknown.begin(); i != unknown.end(); ++i)
-      cout << *i << endl;
+static void
+ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
+{
+  app.require_working_copy();
+
+  path_set unknown;
+  find_unknown(app, want_ignored, args, unknown);
+
+  for (path_set::const_iterator i = unknown.begin(); i != unknown.end(); ++i)
+    cout << *i << endl;
 }
 
 static void

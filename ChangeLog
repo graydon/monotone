@@ -1,5 +1,16 @@
 2005-10-14  Emile Snyder <emile@alumni.reed.edu>
 
+	* app_state.{cc,hh}: new 'unknown' class member for --unknown flag.
+	* commands.cc (CMD(add), ls_unknown, find_unknown): use new
+	--unknown flag to add any files in the working copy that monotone
+	doesn't know about (and isn't ignoring).
+	* monotone.cc (coptions, cpp_main): add the --unknown flag handling.
+	* options.hh: add OPT_UNKNOWN.
+	* monotone.texi: document it.
+	* tests/t_add.at: test it.
+	
+2005-10-14  Emile Snyder <emile@alumni.reed.edu>
+
 	* database.cc (complete): enhance h: and b: to mean "current
 	branch" (as defined by your working copy) when given empty.
 	* monotone.texi: document it.

@@ -65,6 +65,7 @@ public:
   utf8 bind_address;
   utf8 bind_port;
   bool missing;
+  bool unknown;
 
 
 

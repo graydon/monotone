@@ -38,7 +38,8 @@ app_state::app_state()
     rcfiles(true), diffs(false),
     no_merges(false), set_default(false), verbose(false), search_root("/"),
     depth(-1), last(-1), diff_format(unified_diff), diff_args_provided(false),
-    use_lca(false), execute(false), bind_address(""), bind_port(""), missing(false)
+    use_lca(false), execute(false), bind_address(""), bind_port(""), 
+    missing(false), unknown(false)
 {
   db.set_app(this);
 }
