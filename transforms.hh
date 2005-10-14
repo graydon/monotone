@@ -179,7 +179,7 @@ void ace_to_utf8(ace const & ac, utf8 & utf);
 void utf8_to_ace(utf8 const & utf, ace & a);
 
 // returns length in characters (not bytes)
-size_t length(utf8 const & utf);
+size_t display_width(utf8 const & utf);
 
 // specific internal / external conversions for various vocab terms
 void internalize_cert_name(utf8 const & utf, cert_name & c);

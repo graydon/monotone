@@ -209,7 +209,7 @@ migrator
 
         if (i->first == init)
           {
-            if (sqlite3_exec(sql, "BEGIN", NULL, NULL, NULL) != SQLITE_OK)
+            if (sqlite3_exec(sql, "BEGIN EXCLUSIVE", NULL, NULL, NULL) != SQLITE_OK)
               throw runtime_error("error at transaction BEGIN statement");          
             migrating = true;
           }

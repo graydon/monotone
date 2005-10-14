@@ -55,4 +55,31 @@ AT_CHECK(cmp testfile origfile, [0], [ignore], [ignore])
 AT_CHECK(cmp file.ignore orig.ignore, [0], [ignore], [ignore])
 AT_CHECK(cmp file2 modified3, [0], [ignore], [ignore])
 
+
+# now try just reverting missing files
+
+AT_CHECK(cp modified1 testfile)
+AT_CHECK(cp modified2 file.ignore)
+AT_CHECK(rm file2)
+
+AT_CHECK(MONOTONE --rcfile=ignore_hook.lua revert --missing --debug, [], [ignore], [ignore])
+
+AT_CHECK(cmp testfile modified1, [0], [ignore], [ignore])
+AT_CHECK(cmp file.ignore modified2, [0], [ignore], [ignore])
+AT_CHECK(cmp file2 orig2, [0], [ignore], [ignore])
+
+
+# make sure that 'revert --missing' when there are no missing files doesn't
+# revert existing changes
+
+AT_CHECK(cp modified1 testfile)
+AT_CHECK(cp orig.ignore file.ignore)
+AT_CHECK(cp orig2 file2)
+
+AT_CHECK(MONOTONE --rcfile=ignore_hook.lua revert --missing --debug, [], [ignore], [ignore])
+
+AT_CHECK(cmp testfile modified1, [0], [ignore], [ignore])
+AT_CHECK(cmp file.ignore orig.ignore, [0], [ignore], [ignore])
+AT_CHECK(cmp file2 orig2, [0], [ignore], [ignore])
+
 AT_CLEANUP

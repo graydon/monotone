@@ -3340,10 +3340,10 @@ serve_connections(protocol_role role,
     timeout(static_cast<long>(timeout_seconds)), 
     instant(0,1);
 
-  if (length(app.bind_port))
+  if (!app.bind_port().empty())
     default_port = ::atoi(app.bind_port().c_str());
   Netxx::Address addr;
-  if (length(app.bind_address)) 
+  if (!app.bind_address().empty()) 
       addr.add_address(app.bind_address().c_str(), default_port);
   else
       addr.add_all_addresses (default_port);

@@ -14,7 +14,7 @@
 -- see the file COPYING for details
 
 -- Transactions avoid syncing for each action, db init gets faster.
-BEGIN;
+BEGIN EXCLUSIVE;
 
 -- primary data structures concerned with storing and 
 -- versionning state-of-tree configurations
