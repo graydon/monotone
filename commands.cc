@@ -675,7 +675,7 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
             cout << hash_code << " " << keyid << "   (*)" << endl;
         }
       if (!all_in_db)
-        cout << _("(*) - only in keystore") << endl;
+        cout << F("(*) - only in %s/") % app.keys.get_key_dir() << endl;
       cout << endl;
     }
 
@@ -866,9 +866,9 @@ CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), OPT
   N(!exists, F("key '%s' already exists") % ident);
   
   keypair kp;
-  P(F("generating key-pair '%s'\n") % ident);
+  P(F("generating key-pair '%s'") % ident);
   generate_key_pair(app.lua, ident, kp);
-  P(F("storing key-pair '%s' in keystore\n") % ident);
+  P(F("storing key-pair '%s' in %s/") % ident % app.keys.get_key_dir());
   app.keys.put_key_pair(ident, kp);
 }
 

@@ -65,10 +65,17 @@ key_store::key_store(app_state * a): have_read(false), app(a)
 {
   key_dir = system_path(get_homedir()) / ".monotone/keys";
 }
+
 void
 key_store::set_key_dir(system_path const & kd)
 {
   key_dir = kd;
+}
+
+system_path const &
+key_store::get_key_dir()
+{
+  return key_dir;
 }
 
 void

@@ -13,6 +13,7 @@ struct keyreader;
 
 class key_store
 {
+private:
   friend struct keyreader;
   system_path key_dir;
   bool have_read;
@@ -27,6 +28,7 @@ class key_store
 public:
   key_store(app_state * a);
   void set_key_dir(system_path const & kd);
+  system_path const & get_key_dir();
 
   void ensure_in_database(rsa_keypair_id const & ident);
   bool try_ensure_in_db(hexenc<id> const & hash);

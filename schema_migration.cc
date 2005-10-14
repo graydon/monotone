@@ -827,6 +827,8 @@ migrate_client_to_external_privkeys(sqlite3 * sql,
             F("public and private keys for %s don't match") % ident);
         }
 
+      P(F("moving key '%s' from database to %s")
+        % ident % app->keys.get_key_dir());
       app->keys.put_key_pair(ident, kp);
     }
 
