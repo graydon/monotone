@@ -319,7 +319,7 @@ database::dump(ostream & out)
   dump_request req;
   req.out = &out;
   req.sql = sql();
-  out << "BEGIN TRANSACTION;\n";
+  out << "BEGIN EXCLUSIVE;\n";
   int res;
   res = sqlite3_exec(req.sql,
                         "SELECT name, type, sql FROM sqlite_master "
@@ -671,7 +671,7 @@ void
 database::begin_transaction() 
 {
   if (transaction_level == 0)
-    execute("BEGIN");
+    execute("BEGIN EXCLUSIVE");
   transaction_level++;
 }
 

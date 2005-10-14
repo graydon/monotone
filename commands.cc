@@ -173,25 +173,6 @@ namespace commands
     return _(msgid);
   }
 
-  // returns the columns needed for printing the translated msgid
-  size_t message_width(const char * msgid)
-  {
-    const char * msg = safe_gettext(msgid);
-
-    // convert from multi-byte to wide-char string
-    size_t wchars = mbstowcs(0, msg, 0) + 1;
-    if (wchars == (size_t)-1)
-      return std::strlen(msgid); // conversion failed; punt and return original length
-    boost::scoped_array<wchar_t> wmsg(new wchar_t[wchars]);
-    mbstowcs(wmsg.get(), msg, wchars);
-
-    // and get printed width
-    size_t width = wcswidth(wmsg.get(), wchars);
-
-    return width;
-  }
-
-
   void explain_usage(string const & cmd, ostream & out)
   {
     map<string,command *>::const_iterator i;
@@ -230,7 +211,7 @@ namespace commands
     size_t col2 = 0;
     for (size_t i = 0; i < sorted.size(); ++i)
       {
-        size_t cmp = message_width(idx(sorted, i)->cmdgroup.c_str());
+        size_t cmp = display_width(utf8(safe_gettext(idx(sorted, i)->cmdgroup.c_str())));
         col2 = col2 > cmp ? col2 : cmp;
       }
 
@@ -241,7 +222,7 @@ namespace commands
             curr_group = idx(sorted, i)->cmdgroup;
             out << endl;
             out << "  " << safe_gettext(idx(sorted, i)->cmdgroup.c_str());
-            col = message_width(idx(sorted, i)->cmdgroup.c_str()) + 2;
+            col = display_width(utf8(safe_gettext(idx(sorted, i)->cmdgroup.c_str()))) + 2;
             while (col++ < (col2 + 3))
               out << ' ';
           }
@@ -578,7 +559,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   if (colon_pos != string::npos)
     {
       string substr(str, 0, colon_pos);
-      colon_pos = length(substr);
+      colon_pos = display_width(substr);
       extra_str = string(colon_pos, ' ') + ": %s\n";
     }
 
