@@ -201,7 +201,9 @@ build_restricted_manifest_map(path_set const & paths,
     F("%d missing files\n"
       "to restore consistency, on each missing file run either\n"
       "'monotone drop FILE' to remove it permanently, or\n"
-      "'monotone revert FILE' to restore it\n")
+      "'monotone revert FILE' to restore it\n"
+      "or to handle all at once, simple 'monotone drop --missing'\n"
+      "or 'monotone revert --missing'")
     % missing_files);
 
 }
