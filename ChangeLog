@@ -1,3 +1,9 @@
+2005-10-15  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Use boost_filesystem as the library to test for
+	when trying to guess a suitable BOOST_SUFFIX.  Make a missing
+	boost_unit_test_framework library a non-fatal error.
+
 2005-10-14  Emile Snyder  <emile@alumni.reed.edu>
 
 	* commands.cc: Fix breakage I introduced with the --unknown flag.
