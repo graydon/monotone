@@ -316,6 +316,7 @@ dump_index_cb(void *data, int n, char **vals, char **cols)
 void 
 database::dump(ostream & out)
 {
+  transaction_guard guard(*this);
   dump_request req;
   req.out = &out;
   req.sql = sql();
@@ -334,6 +335,7 @@ database::dump(ostream & out)
                         dump_index_cb, &req, NULL);
   assert_sqlite3_ok(req.sql);
   out << "COMMIT;\n";
+  guard.commit();
 }
 
 void 
