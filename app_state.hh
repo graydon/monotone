@@ -67,7 +67,7 @@ public:
   bool missing;
   bool unknown;
   std::vector<rsa_keypair_id> keys_to_push;
-
+  system_path confdir;
 
 
   // These are used to cache signers/verifiers (if the hook allows).
@@ -119,6 +119,9 @@ public:
   void set_rcfiles(bool b);
   void set_verbose(bool b);
   void add_rcfile(utf8 const & filename);
+
+  void set_confdir(system_path const & cd);
+  system_path get_confdir();
 
   explicit app_state();
   ~app_state();

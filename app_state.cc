@@ -39,9 +39,11 @@ app_state::app_state()
     no_merges(false), set_default(false), verbose(false), search_root("/"),
     depth(-1), last(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false), bind_address(""), bind_port(""), 
-    missing(false), unknown(false)
+    missing(false), unknown(false),
+    confdir(system_path(get_homedir()) / ".monotone")
 {
   db.set_app(this);
+  lua.set_app(this);
 }
 
 app_state::~app_state()
@@ -402,6 +404,18 @@ void
 app_state::add_rcfile(utf8 const & filename)
 {
   extra_rcfiles.push_back(filename);
+}
+
+void
+app_state::set_confdir(system_path const & cd)
+{
+  confdir = cd;
+}
+
+system_path
+app_state::get_confdir()
+{
+  return confdir;
 }
 
 // rc files are loaded after we've changed to the working copy directory so

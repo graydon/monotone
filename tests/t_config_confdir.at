@@ -1,0 +1,15 @@
+AT_SETUP([--confdir option and get_confdir lua function work])
+MONOTONE_SETUP
+
+AT_DATA([myhooks],[-- lua script to check that --condfir works
+dir = get_confdir()
+if string.find(dir, "fooxyzzybar$") then
+  file = io.open(dir .. "/checkfile", "w")
+  file:write("foobar")
+  io.close(file)
+end
+])
+AT_CHECK(mkdir fooxyzzybar)
+AT_CHECK(MONOTONE --confdir=fooxyzzybar --rcfile=myhooks ls known)
+AT_CHECK(cat fooxyzzybar/checkfile, [], [ignore])
+AT_CLEANUP

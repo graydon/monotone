@@ -1,5 +1,17 @@
 2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	Make the configuration directory configurable and available to lua
+	* lua.cc: export new function to lua, "get_confdir"
+	* app_state.{cc,hh} monotone.cc options.hh: new option --confdir,
+	make the configuration directory something other than ~/.monotone
+	* lua.{cc,hh}: make the app_state availabe to lua callbacks
+	* key_store.cc: use get_confdir instead of hardcoded
+	* lua.cc: use get_confdir instead of hardcoded
+	* tests/t_config_confdir.at: test --confdir and lua get_confdir
+	* testsuite.at: add it
+
+2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	Teach client to optionally push unused keys; new pubkeys can now be
 	given to a server without restarting it.
 	* app_state.{cc,hh}, monotone.cc, options.hh:

@@ -97,6 +97,7 @@ struct poptOption options[] =
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, gettext_noop("limit search for working copy to specified root"), NULL},
     {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, gettext_noop("verbose completion output"), NULL},
     {"keydir", 0, POPT_ARG_STRING, &argstr, OPT_KEY_DIR, gettext_noop("set location of key store"), NULL},
+    {"confdir", 0, POPT_ARG_STRING, &argstr, OPT_CONF_DIR, gettext_noop("set location of configuration directory"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -339,6 +340,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_KEY_DIR:
               app.set_key_dir(system_path(argstr));
+              break;
+
+            case OPT_CONF_DIR:
+              app.set_confdir(system_path(argstr));
               break;
 
             case OPT_TICKER:
