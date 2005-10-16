@@ -20,6 +20,7 @@
 #include "transforms.hh"
 #include "sanity.hh"
 #include "inodeprint.hh"
+#include "paths.hh"
 #include "platform.hh"
 #include "constants.hh"
 
@@ -55,15 +56,6 @@ manifest_map_builder::visit_file(file_path const & path)
   L(F("scanning file %s\n") % path);
   calculate_ident(path, ident, app.lua);
   man.insert(manifest_entry(path, file_id(ident)));
-}
-
-void 
-extract_path_set(manifest_map const & man, path_set & paths)
-{
-  paths.clear();
-  for (manifest_map::const_iterator i = man.begin();
-       i != man.end(); ++i)
-    paths.insert(manifest_entry_path(i));
 }
 
 inline static bool
@@ -103,6 +95,9 @@ classify_manifest_paths(app_state & app,
 
   for (manifest_map::const_iterator i = man.begin(); i != man.end(); ++i)
     {
+      split_path sp;
+      i->first.split(sp);
+
       if (app.restriction_includes(i->first))
         {
           // compute the current sha1 id for included files
@@ -113,7 +108,7 @@ classify_manifest_paths(app_state & app,
               // hasn't either.
               manifest_map::const_iterator k = man.find(i->first);
               I(k != man.end());
-              unchanged.insert(i->first);
+              unchanged.insert(sp);
               continue;
             }
 
@@ -122,20 +117,20 @@ classify_manifest_paths(app_state & app,
           if (ident_existing_file(i->first, ident, app.lua))
             {
               if (ident == i->second)
-                unchanged.insert(i->first);
+                unchanged.insert(sp);
               else
-                changed.insert(i->first);
+                changed.insert(sp);
             }
           else
             {
-              missing.insert(i->first);
+              missing.insert(sp);
             }
 
         }
       else
         {
           // changes to excluded files are ignored
-          unchanged.insert(i->first);
+          unchanged.insert(sp);
         }
     }
 }
@@ -185,7 +180,8 @@ build_restricted_manifest_map(path_set const & paths,
             }
           else
             {
-              W(F("missing %s") % (*i));
+              file_path fp(*i);              
+              W(F("missing %s") % fp);
               missing_files++;
             }
         }

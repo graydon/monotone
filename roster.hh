@@ -191,6 +191,8 @@ public:
                 attr_key const & name,
                 std::pair<bool, attr_value> const & val);
 
+  void extract_path_set(path_set & paths) const;
+
   node_map const & all_nodes() const
   {
     return nodes;
@@ -239,11 +241,45 @@ void dump(roster_t const & val, std::string & out);
 struct app_state;
 struct revision_set;
 
+// adaptor class to enable cset application on rosters.
+class editable_roster_base 
+  : public editable_tree
+{
+public:
+  editable_roster_base(roster_t & r, node_id_source & nis);
+  virtual node_id detach_node(split_path const & src);
+  virtual void drop_detached_node(node_id nid);
+  virtual node_id create_dir_node();
+  virtual node_id create_file_node(file_id const & content);
+  virtual void attach_node(node_id nid, split_path const & dst);
+  virtual void apply_delta(split_path const & pth, 
+                           file_id const & old_id, 
+                           file_id const & new_id);
+  virtual void clear_attr(split_path const & pth,
+                          attr_key const & name);
+  virtual void set_attr(split_path const & pth,
+                        attr_key const & name,
+                        attr_value const & val);
+protected:
+  roster_t & r;
+  node_id_source & nis;
+};
+
+
 void
 make_cset(roster_t const & from, 
           roster_t const & to, 
           cset & cs);
 
+void 
+build_restricted_roster(path_set const & paths,
+                        roster_t const & r_old, 
+                        roster_t & r_new, 
+                        app_state & app);
+
+void
+extract_roster_path_set(roster_t const & ros, 
+                        path_set & paths);
 
 void 
 make_roster_for_revision(revision_set const & rev, 

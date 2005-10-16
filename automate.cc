@@ -556,7 +556,8 @@ inventory_pre_state(inventory_map & inventory,
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(F("%d %d %s\n") % inventory[*i].pre_state % pre_state % *i);
+      file_path fp(*i);
+      L(F("%d %d %s\n") % inventory[*i].pre_state % pre_state % fp);
       I(inventory[*i].pre_state == inventory_item::KNOWN_PATH);
       inventory[*i].pre_state = pre_state;
       inventory[*i].path_type = path_type;
@@ -577,7 +578,8 @@ inventory_post_state(inventory_map & inventory,
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(F("%d %d %s\n") % inventory[*i].post_state % post_state % *i);
+      file_path fp(*i);
+      L(F("%d %d %s\n") % inventory[*i].post_state % post_state % fp);
       I(inventory[*i].post_state == inventory_item::KNOWN_PATH);
       inventory[*i].post_state = post_state;
       inventory[*i].path_type = path_type;
@@ -596,7 +598,8 @@ inventory_file_state(inventory_map & inventory,
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(F("%d %d %s\n") % inventory[*i].file_state % file_state % *i);
+      file_path fp(*i);
+      L(F("%d %d %s\n") % inventory[*i].file_state % file_state % fp);
       I(inventory[*i].file_state == inventory_item::KNOWN_FILE);
       inventory[*i].file_state = file_state;
     }
@@ -615,8 +618,11 @@ inventory_renames(inventory_map & inventory,
   for (std::map<file_path,file_path>::const_iterator i = renames.begin(); 
        i != renames.end(); i++)
     {
-      old_name.insert(i->first);
-      new_name.insert(i->second);
+      split_path sp1, sp2;
+      i->first.split(sp1);
+      i->second.split(sp2);
+      old_name.insert(sp1);
+      new_name.insert(sp2);
 
       inventory_pre_state(inventory, old_name, inventory_item::RENAMED_PATH, id, path_type);
       inventory_post_state(inventory, new_name, inventory_item::RENAMED_PATH, id, path_type);

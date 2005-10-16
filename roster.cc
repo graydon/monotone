@@ -14,6 +14,7 @@
 #include "app_state.hh"
 #include "basic_io.hh"
 #include "cset.hh"
+#include "inodeprint.hh"
 #include "roster.hh"
 #include "revision.hh"
 #include "vocab.hh"
@@ -849,73 +850,77 @@ temp_node_id_source::next()
     return n;
 }
 
+editable_roster_base::editable_roster_base(roster_t & r, node_id_source & nis)
+  : r(r), nis(nis)
+{}
+
+node_id 
+editable_roster_base::detach_node(split_path const & src)
+{
+  // L(F("detach_node('%s')") % file_path(src)); 
+  return r.detach_node(src);
+}
+
+void 
+editable_roster_base::drop_detached_node(node_id nid)
+{
+  // L(F("drop_detached_node(%d)") % nid); 
+  r.drop_detached_node(nid);
+}
+
+node_id 
+editable_roster_base::create_dir_node()
+{
+  // L(F("create_dir_node()\n")); 
+  node_id n = r.create_dir_node(nis);
+  // L(F("create_dir_node() -> %d\n") % n); 
+  return n;
+}
+
+node_id 
+editable_roster_base::create_file_node(file_id const & content)
+{
+  // L(F("create_file_node('%s')\n") % content); 
+  node_id n = r.create_file_node(content, nis);
+  // L(F("create_file_node('%s') -> %d\n") % content % n); 
+  return n;
+}
+
+void 
+editable_roster_base::attach_node(node_id nid, split_path const & dst)
+{
+  // L(F("attach_node(%d, '%s')") % nid % file_path(dst));
+  r.attach_node(nid, dst);
+}
+
+void 
+editable_roster_base::apply_delta(split_path const & pth, 
+                                  file_id const & old_id, 
+                                  file_id const & new_id)
+{
+  // L(F("clear_attr('%s', '%s', '%s')") % file_path(pth) % old_id % new_id);
+  r.apply_delta(pth, old_id, new_id);
+}
+
+void 
+editable_roster_base::clear_attr(split_path const & pth,
+                                 attr_key const & name)
+{
+  // L(F("clear_attr('%s', '%s')") % file_path(pth) % name);
+  r.clear_attr(pth, name);
+}
+
+void 
+editable_roster_base::set_attr(split_path const & pth,
+                               attr_key const & name,
+                               attr_value const & val)
+{
+  // L(F("set_attr('%s', '%s', '%s')") % file_path(pth) % name % val);
+  r.set_attr(pth, name, val);
+}
 
 namespace 
 {
-
-  // adaptor class to enable cset application on rosters.
-  class editable_roster_base 
-    : public editable_tree
-  {
-  public:
-    editable_roster_base(roster_t & r, node_id_source & nis)
-      : r(r), nis(nis)
-    {}
-
-    virtual node_id detach_node(split_path const & src)
-    {
-      // L(F("detach_node('%s')") % file_path(src)); 
-      return r.detach_node(src);
-    }
-    virtual void drop_detached_node(node_id nid)
-    {
-      // L(F("drop_detached_node(%d)") % nid); 
-      r.drop_detached_node(nid);
-    }
-    virtual node_id create_dir_node()
-    {
-      // L(F("create_dir_node()\n")); 
-      node_id n = r.create_dir_node(nis);
-      // L(F("create_dir_node() -> %d\n") % n); 
-      return n;
-    }
-    virtual node_id create_file_node(file_id const & content)
-    {
-      // L(F("create_file_node('%s')\n") % content); 
-      node_id n = r.create_file_node(content, nis);
-      // L(F("create_file_node('%s') -> %d\n") % content % n); 
-      return n;
-    }
-    virtual void attach_node(node_id nid, split_path const & dst)
-    {
-      // L(F("attach_node(%d, '%s')") % nid % file_path(dst));
-      r.attach_node(nid, dst);
-    }
-    virtual void apply_delta(split_path const & pth, 
-                             file_id const & old_id, 
-                             file_id const & new_id)
-    {
-      // L(F("clear_attr('%s', '%s', '%s')") % file_path(pth) % old_id % new_id);
-      r.apply_delta(pth, old_id, new_id);
-    }
-    virtual void clear_attr(split_path const & pth,
-                            attr_key const & name)
-    {
-      // L(F("clear_attr('%s', '%s')") % file_path(pth) % name);
-      r.clear_attr(pth, name);
-    }
-    virtual void set_attr(split_path const & pth,
-                          attr_key const & name,
-                          attr_value const & val)
-    {
-      // L(F("set_attr('%s', '%s', '%s')") % file_path(pth) % name % val);
-      r.set_attr(pth, name, val);
-    }
-  protected:
-    roster_t & r;
-    node_id_source & nis;
-  };
-
   struct testing_node_id_source 
     : public node_id_source
   {
@@ -1690,6 +1695,97 @@ make_cset(roster_t const & from, roster_t const & to, cset & cs)
           delta_in_both(from_i->first, from, from_i->second, to, to_i->second, cs);
           break;
         }
+    }
+}
+
+
+/// getting rosters from the working copy
+
+inline static bool
+inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path) 
+{
+  inodeprint_map::const_iterator old_ip = ipm.find(path);
+  if (old_ip != ipm.end())
+    {
+      hexenc<inodeprint> ip;
+      if (inodeprint_file(path, ip) && ip == old_ip->second)
+          return true; // unchanged
+      else
+          return false; // changed or unavailable
+    }
+  else
+    return false; // unavailable
+}
+
+void 
+build_restricted_roster(path_set const & paths,
+                        roster_t const & r_old, 
+                        roster_t & r_new, 
+                        app_state & app)
+{
+  temp_node_id_source nis;
+  r_new = r_old;
+  inodeprint_map ipm;
+
+  if (in_inodeprints_mode())
+    {
+      data dat;
+      read_inodeprints(dat);
+      read_inodeprint_map(dat, ipm);
+    }
+
+  size_t missing_files = 0;
+
+  // this code is speed critical, hence the use of inode fingerprints so be
+  // careful when making changes in here and preferably do some timing tests
+
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      node_t new_n = r_new.get_node(*i);
+
+      // Only analyze files further, not dirs.
+      if (! is_file_t(new_n))
+        continue;
+
+      file_path fp(*i);
+
+      // Only analyze restriction-included files.
+      if (!app.restriction_includes(fp))
+        continue;
+
+      // Only analyze changed files (or all files if inodeprints mode
+      // is disabled).
+      if (inodeprint_unchanged(ipm, fp))
+        continue;
+
+      file_t new_f = downcast_to_file_t(new_n);
+      if (!ident_existing_file(fp, new_f->content, app.lua))
+        {
+          W(F("missing %s") % (fp));
+          missing_files++;
+        }
+    }
+
+  N(missing_files == 0, 
+    F("%d missing files\n"
+      "to restore consistency, on each missing file run either\n"
+      "'monotone drop FILE' to remove it permanently, or\n"
+      "'monotone revert FILE' to restore it\n")
+    % missing_files);
+
+}
+
+void
+roster_t::extract_path_set(path_set & paths) const
+{
+  paths.clear();
+  I(has_root());
+  for (dfs_iter i(root_dir); !i.finished(); ++i)
+    {
+      node_t curr = *i;
+      split_path pth;
+      get_name(curr->self, pth);
+      paths.insert(pth);
     }
 }
 

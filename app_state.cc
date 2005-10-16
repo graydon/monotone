@@ -123,12 +123,18 @@ app_state::set_restriction(path_set const & valid_paths,
                            vector<utf8> const & paths,
                            bool respect_ignore)
 {
+  // FIXME: this was written before split_path, and only later kludged to
+  // work with it. Could be much tidier if written with knowledge of
+  // split_path.
+
   static file_path root = file_path_internal("");
   restrictions.clear();
   excludes.clear();
   for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       file_path p = file_path_external(*i);
+      split_path sp;
+      p.split(sp);
 
       if (respect_ignore && lua.hook_ignore_file(p)) 
         {
@@ -136,17 +142,19 @@ app_state::set_restriction(path_set const & valid_paths,
           continue;
         }
 
-      N(p == root || valid_paths.find(p) != valid_paths.end(),
+      N(p == root || valid_paths.find(sp) != valid_paths.end(),
         F("unknown path '%s'\n") % p);
 
       L(F("'%s' added to restricted path set\n") % p);
-      restrictions.insert(p);
+      restrictions.insert(sp);
     }
 
   for (std::set<utf8>::const_iterator i = exclude_patterns.begin();
        i != exclude_patterns.end(); ++i)
     {
       file_path p = file_path_external(*i);
+      split_path sp;
+      p.split(sp);
 
       if (respect_ignore && lua.hook_ignore_file(p)) 
         {
@@ -154,31 +162,40 @@ app_state::set_restriction(path_set const & valid_paths,
           continue;
         }
 
-      N(p == root || valid_paths.find(p) != valid_paths.end(),
+      N(p == root || valid_paths.find(sp) != valid_paths.end(),
         F("unknown path '%s'\n") % p);
 
       L(F("'%s' added to excluded path set\n") % p);
-      excludes.insert(p);
+      excludes.insert(sp);
     }
 
   // if user supplied a depth but provided no paths 
   // assume current directory
   if ((depth != -1) && restrictions.empty()) 
     {
-      restrictions.insert(file_path_external(utf8(".")));
+      file_path fp = file_path_external(utf8("."));
+      split_path sp;
+      fp.split(sp);
+      restrictions.insert(sp);
     }
 }
 
 bool
 app_state::restriction_includes(file_path const & path)
 {
+  // FIXME: this was written before split_path, and only later kludged to
+  // work with it. Could be much tidier if written with knowledge of
+  // split_path.
+
   static file_path root = file_path_internal("");
+  split_path sp_root;
+  root.split(sp_root);
 
   if (restrictions.empty())
     {
       if (!excludes.empty())
         {
-          if (excludes.find(root) != excludes.end())
+          if (excludes.find(sp_root) != excludes.end())
             return false;
           fs::path test = fs::path(path.as_external(), fs::native);
 
@@ -187,7 +204,9 @@ app_state::restriction_includes(file_path const & path)
               L(F("checking excluded path set for '%s'\n") % test.string());
 
               file_path p = file_path_internal(test.string());
-              path_set::const_iterator i = excludes.find(p);
+              split_path sp;
+              p.split(sp);
+              path_set::const_iterator i = excludes.find(sp);
 
               if (i != excludes.end()) 
                 {
@@ -213,8 +232,10 @@ app_state::restriction_includes(file_path const & path)
       L(F("checking restricted path set for '%s'\n") % test.string());
 
       file_path p = file_path_internal(test.string());
-      path_set::const_iterator i = restrictions.find(p);
-      path_set::const_iterator j = excludes.find(p);
+      split_path sp;
+      p.split(sp);
+      path_set::const_iterator i = restrictions.find(sp);
+      path_set::const_iterator j = excludes.find(sp);
 
       if (i != restrictions.end()) 
         {
@@ -238,7 +259,7 @@ app_state::restriction_includes(file_path const & path)
   // essentially cleared (all files are included). rather than be
   // careful about what goes in to the restricted path set we just
   // check for this special case here.
-  if (restrictions.find(root) != restrictions.end())
+  if (restrictions.find(sp_root) != restrictions.end())
     {
       return (!user_supplied_depth) || (branch_depth <= max_depth);
     }

@@ -29,12 +29,14 @@ string const attr_file_name(".mt-attrs");
 void 
 file_itemizer::visit_file(file_path const & path)
 {
-  if (app.restriction_includes(path) && known.find(path) == known.end())
+  split_path sp;
+  path.split(sp);
+  if (app.restriction_includes(path) && known.find(sp) == known.end())
     {
       if (app.lua.hook_ignore_file(path))
-        ignored.insert(path);
+        ignored.insert(sp);
       else
-        unknown.insert(path);
+        unknown.insert(sp);
     }
 }
 
@@ -313,6 +315,7 @@ build_rename(file_path const & src,
   concatenate_rearrangements(pr, pr_new, pr_concatenated);
   pr = pr_concatenated;
 }
+*/
 
 // work file containing rearrangement from uncommitted adds/drops/renames
 
@@ -324,7 +327,7 @@ static void get_work_path(bookkeeping_path & w_path)
   L(F("work path is %s\n") % w_path);
 }
 
-void get_path_rearrangement(change_set::path_rearrangement & w)
+void get_work_cset(cset & w)
 {
   bookkeeping_path w_path;
   get_work_path(w_path);
@@ -333,8 +336,8 @@ void get_path_rearrangement(change_set::path_rearrangement & w)
       L(F("checking for un-committed work file %s\n") % w_path);
       data w_data;
       read_data(w_path, w_data);
-      read_path_rearrangement(w_data, w);
-      L(F("read rearrangement from %s\n") % w_path);
+      read_cset(w_data, w);
+      L(F("read cset from %s\n") % w_path);
     }
   else
     {
@@ -342,7 +345,7 @@ void get_path_rearrangement(change_set::path_rearrangement & w)
     }
 }
 
-void remove_path_rearrangement()
+void remove_work_cset()
 {
   bookkeeping_path w_path;
   get_work_path(w_path);
@@ -350,7 +353,7 @@ void remove_path_rearrangement()
     delete_file(w_path);
 }
 
-void put_path_rearrangement(change_set::path_rearrangement & w)
+void put_work_cset(cset & w)
 {
   bookkeeping_path w_path;
   get_work_path(w_path);
@@ -363,11 +366,10 @@ void put_path_rearrangement(change_set::path_rearrangement & w)
   else
     {
       data w_data;
-      write_path_rearrangement(w, w_data);
+      write_cset(w, w_data);
       write_data(w_path, w_data);
     }
 }
-*/
 
 // revision file name 
 
@@ -414,11 +416,9 @@ void put_revision_id(revision_id const & rev)
 void
 get_base_revision(app_state & app, 
                   revision_id & rid,
-                  manifest_id & mid,
-                  manifest_map & man)
+                  roster_t & ros,
+                  marking_map & mm)
 {
-  man.clear();
-
   get_revision_id(rid);
 
   if (!null_id(rid))
@@ -427,25 +427,28 @@ get_base_revision(app_state & app,
       N(app.db.revision_exists(rid),
         F("base revision %s does not exist in database\n") % rid);
       
-      app.db.get_revision_manifest(rid, mid);
-      L(F("old manifest is %s\n") % mid);
-      
-      N(app.db.manifest_version_exists(mid),
-        F("base manifest %s does not exist in database\n") % mid);
-      
-      app.db.get_manifest(mid, man);
+      app.db.get_roster(rid, ros, mm);
     }
 
-  L(F("old manifest has %d entries\n") % man.size());
+  L(F("base roster has %d entries\n") % ros.all_nodes().size());
 }
 
 void
-get_base_manifest(app_state & app, 
-                  manifest_map & man)
+get_base_revision(app_state & app, 
+                  revision_id & rid,
+                  roster_t & ros)
+{
+  marking_map mm;
+  get_base_revision(app, rid, ros, mm);
+}
+
+void
+get_base_roster(app_state & app, 
+                roster_t & ros)
 {
   revision_id rid;
-  manifest_id mid;
-  get_base_revision(app, rid, mid, man);
+  marking_map mm;
+  get_base_revision(app, rid, ros, mm);
 }
 
 

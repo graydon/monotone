@@ -8,54 +8,60 @@
 
 #include "app_state.hh"
 #include "cset.hh"
+#include "roster.hh"
 #include "vocab.hh"
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
+void 
+extract_rearranged_paths(cset const & rearrangement, 
+                         path_set & paths);
 
-void extract_rearranged_paths(change_set::path_rearrangement 
-                              const & rearrangement, path_set & paths);
+void 
+add_intermediate_paths(path_set & paths);
 
-void add_intermediate_paths(path_set & paths);
+void 
+restrict_cset(cset const & work, 
+              cset & included,
+              cset & excluded,
+              app_state & app);
 
-void restrict_path_rearrangement(change_set::path_rearrangement const & work, 
-                                 change_set::path_rearrangement & included,
-                                 change_set::path_rearrangement & excluded,
-                                 app_state & app);
+void 
+get_base_roster_and_working_cset(app_state & app, 
+                                 std::vector<utf8> const & args,
+                                 revision_id & old_revision_id,
+                                 manifest_id & old_manifest_id,
+                                 roster_t & old_roster,
+                                 path_set & old_paths, 
+                                 path_set & new_paths,
+                                 cset & included,
+                                 cset & excluded);
 
-void calculate_restricted_rearrangement(app_state & app, 
-                                        std::vector<utf8> const & args,
-                                        manifest_id & old_manifest_id,
-                                        revision_id & old_revision_id,
-                                        manifest_map & m_old,
-                                        path_set & old_paths, 
-                                        path_set & new_paths,
-                                        change_set::path_rearrangement & included,
-                                        change_set::path_rearrangement & excluded);
+void 
+get_working_revision_and_rosters(app_state & app, 
+                                 std::vector<utf8> const & args,
+                                 revision_set & rev,
+                                 roster_t & old_roster,
+                                 roster_t & new_roster,
+                                 cset & excluded);
 
-void calculate_restricted_revision(app_state & app, 
-                                   std::vector<utf8> const & args,
-                                   revision_set & rev,
-                                   manifest_map & m_old,
-                                   manifest_map & m_new,
-                                   change_set::path_rearrangement & excluded);
+// Same as above, only without the "excluded" out-parameter.
+void
+get_working_revision_and_rosters(app_state & app, 
+                                 std::vector<utf8> const & args,
+                                 revision_set & rev,
+                                 roster_t & old_roster,
+                                 roster_t & new_roster);
 
-void calculate_restricted_revision(app_state & app, 
-                                   std::vector<utf8> const & args,
-                                   revision_set & rev,
-                                   manifest_map & m_old,
-                                   manifest_map & m_new);
+void
+get_unrestricted_working_revision_and_rosters(app_state & app, 
+                                              revision_set & rev,
+                                              roster_t & old_roster,
+                                              roster_t & new_roster);
 
-void calculate_unrestricted_revision(app_state & app, 
-                                     revision_set & rev,
-                                     manifest_map & m_old,
-                                     manifest_map & m_new);
-
-void calculate_restricted_change_set(app_state & app, 
-                                     std::vector<utf8> const & args,
-                                     change_set const & cs,
-                                     change_set & included,
-                                     change_set & excluded);
-*/
+void
+calculate_restricted_cset(app_state & app, 
+                          std::vector<utf8> const & args,
+                          cset const & cs,
+                          cset & included,
+                          cset & excluded);
 
 #endif  // header guard

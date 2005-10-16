@@ -142,6 +142,7 @@ protected:
 };
 
 std::ostream & operator<<(std::ostream & o, any_path const & a);
+std::ostream & operator<<(std::ostream & o, split_path const & s);
 
 class file_path : public any_path
 {
@@ -242,5 +243,7 @@ find_and_go_to_working_copy(system_path const & search_root);
 // root paths that are needed to interpret paths
 void
 go_to_working_copy(system_path const & new_working_copy);
+
+typedef std::set<split_path> path_set;
 
 #endif

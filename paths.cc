@@ -336,6 +336,13 @@ operator <<(std::ostream & o, any_path const & a)
   return o;
 }
 
+std::ostream &
+operator <<(std::ostream & o, split_path const & sp)
+{
+  file_path tmp(sp);
+  return o << tmp;
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // path manipulation
 // this code's speed does not matter much

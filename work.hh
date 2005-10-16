@@ -13,8 +13,9 @@
 
 #include "cset.hh"
 #include "manifest.hh"
-#include "vocab.hh"
 #include "paths.hh"
+#include "roster.hh"
+#include "vocab.hh"
 
 //
 // this file defines structures to deal with the "working copy" of a tree
@@ -28,7 +29,7 @@
 //
 // MT/revision       -- contains the id of the checked out revision
 // MT/work           -- (optional) a set of added, deleted or moved pathnames
-//                      this file is, syntactically, a path_rearrangement
+//                      this file is, syntactically, a cset
 // MT/options        -- the database, branch and key options currently in use
 // MT/log            -- user edited log file
 // MT/inodeprints    -- file fingerprint cache, presence turns on "reckless"
@@ -39,14 +40,13 @@
 // added or deleted or renamed (and the paths of those changes recorded in
 // 'MT/work').
 // 
-// when it comes time to commit, the change_set is calculated by applying
-// the path_rearrangement to the manifest and then calculating the
-// delta_set between the modified manifest and the files in the working
-// copy.
+// when it comes time to commit, the cset in MT/work (which can have no
+// deltas) is applied to the base roster, then a new roster is built by
+// analyzing the content of every file in the roster, as it appears in the
+// working copy. a final cset is calculated which contains the requisite
+// deltas, and placed in a rev, which is written to the db.
 //
 // MT/inodes, if present, can be used to speed up this last step.
-
-typedef std::set<file_path> path_set;
 
 struct file_itemizer : public tree_walker
 {
@@ -80,13 +80,14 @@ build_rename(file_path const & src,
              app_state & app,
              change_set::path_rearrangement & pr);
 
-// the "work" file contains the current path rearrangement representing
-// uncommitted add/drop/rename operations in the serialized change set format
-
-void get_path_rearrangement(change_set::path_rearrangement & w);
-void remove_path_rearrangement();
-void put_path_rearrangement(change_set::path_rearrangement & w);
 */
+
+// the "work" file contains the current cset representing uncommitted
+// add/drop/rename operations (not deltas)
+
+void get_work_cset(cset & w);
+void remove_work_cset();
+void put_work_cset(cset & w);
 
 // the "revision" file contains the base revision id that the current working
 // copy was checked out from
@@ -95,9 +96,12 @@ void get_revision_id(revision_id & c);
 void put_revision_id(revision_id const & rev);
 void get_base_revision(app_state & app, 
                        revision_id & rid,
-                       manifest_id & mid,
-                       manifest_map & man);
-void get_base_manifest(app_state & app, manifest_map & man);
+                       roster_t & ros,
+                       marking_map & mm);
+void get_base_revision(app_state & app, 
+                       revision_id & rid,
+                       roster_t & ros);
+void get_base_roster(app_state & app, roster_t & ros);
 
 // the "user log" is a file the user can edit as they program to record
 // changes they make to their source code. Upon commit the file is read
