@@ -2056,7 +2056,7 @@ process_netsync_args(std::string const & name,
 
 CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("push branches matching PATTERN to netsync server at ADDRESS"),
-    OPT_SET_DEFAULT % OPT_EXCLUDE)
+    OPT_SET_DEFAULT % OPT_EXCLUDE % OPT_KEY_TO_PUSH)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
@@ -2085,7 +2085,7 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
 
 CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("sync branches matching PATTERN with netsync server at ADDRESS"),
-    OPT_SET_DEFAULT % OPT_EXCLUDE)
+    OPT_SET_DEFAULT % OPT_EXCLUDE % OPT_KEY_TO_PUSH)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);

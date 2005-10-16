@@ -66,6 +66,7 @@ public:
   utf8 bind_port;
   bool missing;
   bool unknown;
+  std::vector<rsa_keypair_id> keys_to_push;
 
 
 
@@ -112,6 +113,7 @@ public:
   void add_exclude(utf8 const & exclude_pattern);
   void set_diff_format(diff_type dtype);
   void set_diff_args(utf8 const & args);
+  void add_key_to_push(utf8 const & key);
 
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);

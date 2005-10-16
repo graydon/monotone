@@ -292,6 +292,14 @@ app_state::set_signing_key(utf8 const & key)
 }
 
 void 
+app_state::add_key_to_push(utf8 const & key)
+{
+  rsa_keypair_id k;
+  internalize_rsa_keypair_id(key, k);
+  keys_to_push.push_back(k);
+}
+
+void 
 app_state::set_root(system_path const & path)
 {
   require_path_is_directory(path,

@@ -1,3 +1,14 @@
+2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Teach client to optionally push unused keys; new pubkeys can now be
+	given to a server without restarting it.
+	* app_state.{cc,hh}, monotone.cc, options.hh:
+	new command-specific-option --key-to-push=<key> , used to sync/push
+	a key that hasn't signed anything
+	* netsync.cc: make it work
+	* commands.cc: push and sync take it
+	* tests/t_netsync_pubkey.at: test it
+
 2005-10-14  Nathaniel Smith  <njs@pobox.com>
 
 	* key_store.{cc,hh} (get_key_dir): New method.

@@ -3572,6 +3572,22 @@ session::rebuild_merkle_trees(app_state & app,
       }
   }
 
+  // add any keys specified on the command line
+  for (vector<rsa_keypair_id>::const_iterator key = app.keys_to_push.begin();
+       key != app.keys_to_push.end(); ++key)
+    {
+      if (inserted_keys.find(*key) == inserted_keys.end())
+        {
+          if (!app.db.public_key_exists(*key))
+            {
+              if (app.keys.key_pair_exists(*key))
+                app.keys.ensure_in_database(*key);
+              else
+                W(F("Cannot find key '%s'") % *key);
+            }
+          inserted_keys.insert(*key);
+        }
+    }
   // insert all the keys
   for (set<rsa_keypair_id>::const_iterator key = inserted_keys.begin();
        key != inserted_keys.end(); key++)
