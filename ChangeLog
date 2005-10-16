@@ -1,5 +1,10 @@
 2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* app_state.{cc,hh}, key_store.cc: change how the keystore directory
+	is initialized; was using app.confdir before it was ready
+
+2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	Make the configuration directory configurable and available to lua
 	* lua.cc: export new function to lua, "get_confdir"
 	* app_state.{cc,hh} monotone.cc options.hh: new option --confdir,

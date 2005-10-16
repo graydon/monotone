@@ -40,10 +40,11 @@ app_state::app_state()
     depth(-1), last(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false), bind_address(""), bind_port(""), 
     missing(false), unknown(false),
-    confdir(system_path(get_homedir()) / ".monotone")
+    confdir(system_path(get_homedir()) / ".monotone"), have_set_key_dir(false)
 {
   db.set_app(this);
   lua.set_app(this);
+  keys.set_key_dir(confdir / "keys");
 }
 
 app_state::~app_state()
@@ -260,7 +261,11 @@ app_state::set_database(system_path const & filename)
 void 
 app_state::set_key_dir(system_path const & filename)
 {
-  if (!filename.empty()) keys.set_key_dir(filename);
+  if (!filename.empty())
+    {
+      keys.set_key_dir(filename);
+      have_set_key_dir = true;
+    }
 
   options[keydir_option] = filename.as_internal();
 }
@@ -410,6 +415,8 @@ void
 app_state::set_confdir(system_path const & cd)
 {
   confdir = cd;
+  if (!have_set_key_dir)
+    keys.set_key_dir(cd / "keys");
 }
 
 system_path
