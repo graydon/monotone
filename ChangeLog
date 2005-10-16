@@ -1,3 +1,10 @@
+2005-10-16  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Don't add boost_unit_test_framework to global
+	LIBS, we will link against it directly when needed.
+	* Makefile.am: Only allow unit_tests to be built if
+	boost_unit_test_framework was available at configure time.
+
 2005-10-15  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* configure.ac: Use boost_filesystem as the library to test for

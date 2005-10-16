@@ -180,9 +180,11 @@ using boost::unit_test_framework::test_suite;
 test_suite * init_unit_test_suite(int argc, char * argv[]) 
 { return NULL; }
 ]])],
- [AC_MSG_RESULT([yes])],
+ [AC_MSG_RESULT([yes])
+  AM_CONDITIONAL(BUILD_UNIT_TESTS, true)],
  [AC_MSG_RESULT([no])
-  LIBS=$OLD_LIBS])
+  AM_CONDITIONAL(BUILD_UNIT_TESTS, false)])
+LIBS=$OLD_LIBS
 
 LIBS="-lboost_date_time${BOOST_SUFFIX} $LIBS"
 AC_MSG_CHECKING(for the libboost_date_time${BOOST_SUFFIX} library)
