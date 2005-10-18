@@ -335,28 +335,45 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
 static void
 maybe_update_inodeprints(app_state & app)
 {
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
   if (!in_inodeprints_mode())
     return;
   inodeprint_map ipm_new;
   revision_set rev;
-  manifest_map man_old, man_new;
-  calculate_unrestricted_revision(app, rev, man_old, man_new);
-  for (manifest_map::const_iterator i = man_new.begin(); i != man_new.end(); ++i)
+  roster_t old_roster, new_roster;
+  get_unrestricted_working_revision_and_rosters(app, rev, 
+                                                old_roster, 
+                                                new_roster);
+  
+  node_map const & new_nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
     {
-      manifest_map::const_iterator o = man_old.find(i->first);
-      if (o != man_old.end() && o->second == i->second)
+      node_id nid = i->first;
+      if (old_roster.has_node(nid))
         {
-          hexenc<inodeprint> ip;
-          if (inodeprint_file(i->first, ip))
-            ipm_new.insert(inodeprint_entry(i->first, ip));
+          node_t old_node = old_roster.get_node(nid);
+          if (is_file_t(old_node))
+            {
+              node_t new_node = i->second;
+              I(is_file_t(new_node));
+
+              file_t old_file = downcast_to_file_t(old_node);
+              file_t new_file = downcast_to_file_t(new_node);
+
+              if (!(new_file->content == old_file->content))
+                {
+                  split_path sp;
+                  new_roster.get_name(nid, sp);
+                  file_path fp(sp);                  
+                  hexenc<inodeprint> ip;
+                  if (inodeprint_file(fp, ip))
+                    ipm_new.insert(inodeprint_entry(fp, ip));
+                }
+            }
         }
     }
   data dat;
   write_inodeprint_map(ipm_new, dat);
   write_inodeprints(dat);
-*/
 }
 
 static string 
@@ -3278,6 +3295,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
       P(F("[merged] %s\n") % merged);
     }
 }
+*/
 
 CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
     OPT_NONE)
@@ -3286,6 +3304,7 @@ CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
   maybe_update_inodeprints(app);
 }
 
+/*
 CMD(explicit_merge, N_("tree"),
     N_("LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
       "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"),
