@@ -1,3 +1,9 @@
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: support dynamic local servers
+	These are started when a client attempts to connect, and killed at
+	a set time interval after the last client has disconnected.
+
 2005-10-17  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* commands.cc (serve): check that the db is valid before beginning
