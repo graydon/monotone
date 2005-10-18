@@ -1,3 +1,10 @@
+2005-10-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (serve): check that the db is valid before beginning
+	service (would previously not know until someone connected)
+	* netsync.cc (serve_connections): don't say "beginning service" until
+	after opening the socket.
+
 2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* app_state.{cc,hh}, key_store.cc: change how the keystore directory

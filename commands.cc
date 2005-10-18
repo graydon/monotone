@@ -2118,6 +2118,8 @@ CMD(serve, N_("network"), N_("PATTERN ..."),
     F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
   require_password(key, app);
 
+  app.db.ensure_open();
+
   utf8 dummy_addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, dummy_addr, include_pattern, exclude_pattern, false, true, app);
   run_netsync_protocol(server_voice, source_and_sink_role, app.bind_address,

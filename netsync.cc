@@ -3348,11 +3348,11 @@ serve_connections(protocol_role role,
   else
       addr.add_all_addresses (default_port);
 
+
+  Netxx::StreamServer server(addr, timeout);
   const char *name = addr.get_name();
   P(F("beginning service on %s : %s\n") 
     % (name != NULL ? name : "all interfaces") % lexical_cast<string>(addr.get_port()));
-
-  Netxx::StreamServer server(addr, timeout);
   
   map<Netxx::socket_type, shared_ptr<session> > sessions;
   set<Netxx::socket_type> armed_sessions;
