@@ -15,20 +15,23 @@
 // <bind address> is the address to listen on
 // <port-number> is the local port to listen on
 // <server-file> is a file containing lines of
-//   stem    remote   ip-address   port-number
-//   stem    local    <server arguments>
+//   hostname    remote   ip-address   port-number
+//   hostname    local    <server arguments>
 //
 // Example server-file:
-// localhost.personal-project  local   -d /usr/local/src/project.db *
-// net.venge.monotone          remote  66.96.28.3 5253
+// localhost          local   -d /usr/local/src/project.db *
+// venge.net          remote  66.96.28.3 5253
+// company.com:5200   remote  192.168.4.5 5200
 //
-// A request for a pattern starting with "stem" will be directed to the
+// A request to server "hostname" will be directed to the
 // server at <ip-address>:<port-number>, if that stem is marked as remote,
 // and to a local server managed by the usher, started with the given
 // arguments ("monotone serve --bind=something <server arguments>"),
 // if it is marked as local.
-// No stem should have any other stem as an initial substring - having both
-// "foo" and "foo-bar" as stems will not work properly.
+// Note that "hostname" has to be an initial substring of who the client asked
+// to connect to, but does not have to match exactly. This means that you don't
+// have to know in advance whether clients will be asking for
+// <host> or <host>:<port> .
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -528,6 +531,7 @@ server * get_server(std::string const & stem)
     std::cerr<<"no server found for "<<stem<<"\n";
     return 0;
   }
+  cerr<<"found server "<<i->stem<<" for "<<stem<<"\n";
   return &i->srv;
 }
 

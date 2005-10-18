@@ -1,5 +1,11 @@
 2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* netsync.cc (session::process_usher_cmd): reply with who we connected
+	to (hostname or hostname:port), not what pattern we asked for.
+	* contrib/usher.cc: Update comment.
+
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* contrib/usher.cc: support dynamic local servers
 	These are started when a client attempts to connect, and killed at
 	a set time interval after the last client has disconnected.
