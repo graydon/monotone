@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2005 emile snyder <emile@alumni.reed.edu>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -118,26 +119,25 @@ interner<long> annotate_lineage_mapping::in;
 struct annotate_node_work {
   annotate_node_work (boost::shared_ptr<annotate_context> annotations_,
                       boost::shared_ptr<annotate_lineage_mapping> lineage_,
-                      revision_id node_revision_, file_id node_fid_, file_path node_fpath_)
+                      revision_id revision_, node_id fid_)//, file_path node_fpath_)
     : annotations(annotations_), 
       lineage(lineage_),
-      node_revision(node_revision_), 
-      node_fid(node_fid_), 
-      node_fpath(node_fpath_)
+      revision(revision_), 
+      fid(fid_)//, node_fpath(node_fpath_)
   {}
   annotate_node_work (const annotate_node_work &w)
     : annotations(w.annotations), 
       lineage(w.lineage),
-      node_revision(w.node_revision),
-      node_fid(w.node_fid),
-      node_fpath(w.node_fpath)
+      revision(w.revision),
+      fid(w.fid) //, node_fpath(w.node_fpath)
   {}
 
   boost::shared_ptr<annotate_context> annotations;
   boost::shared_ptr<annotate_lineage_mapping> lineage;
-  revision_id node_revision;
-  file_id     node_fid;
-  file_path   node_fpath;
+  revision_id revision;
+  //file_id     node_fid;
+  node_id fid;
+  //file_path   node_fpath;
 };
 
 
@@ -502,41 +502,80 @@ do_annotate_node (const annotate_node_work &work_unit,
                   const std::map<revision_id, size_t> &paths_to_nodes,
                   std::map<revision_id, lineage_merge_node> &pending_merge_nodes)
 {
+  L(F("do_annotate_node for node %s\n") % work_unit.revision);
+  I(nodes_complete.find(work_unit.revision) == nodes_complete.end());
+  //nodes_seen.insert(std::make_pair(work_unit.revision, work_unit.lineage));
+
+  roster_t roster;
+  marking_map markmap;
+  app.db.get_roster(work_unit.revision, roster, markmap);
+  marking_t marks;
+  std::map<node_id, marking_t>::const_iterator mmi = markmap.find(work_unit.fid);
+  I(mmi != markmap.end());
+  marks = mmi->second;
+
+  if (marks.file_content.size() == 0)
+    {
+      L(F("do_annotate_node credit_mapped_lines to revision %s\n") % work_unit.revision);
+      work_unit.lineage->credit_mapped_lines(work_unit.annotations);
+      work_unit.annotations->evaluate(work_unit.revision);
+      nodes_complete.insert(work_unit.revision);
+      return;
+    }
+
+  // if all edges from the parent revs to this (work_unit.revision) child have 
+  // to add the file, then we credit any mapped but unassigned lines in our lineage
+  // to this revision.  so we count adds to compare to number of parent revs.
+  size_t added_in_parent_count = 0;
+
+  // iterate over set of content marks from the roster.  each one represents
+  // a development history where a committer expressed an intention about a change
+  // in the content of the file we're interested in.
+  for (std::set<revision_id>::const_iterator i = marks.file_content.begin(); 
+       i != marks.file_content.end(); 
+       i++)
+    {
+      roster_t parent_roster;
+      marking_map parent_marks;
+      L(F("do_annotate_node processing edge from parent %s to child %s\n") % *i % work_unit.revision);
+      app.db.get_roster(*i, parent_roster, parent_marks);
+
+      // determine if the file changed on this edge...
+      //node_t parent_node = parent_roster.get_node(work_unit.fid);
+      //if (null_node(parent_node))
+      //  {
+      //    L(F("file added in %s, continuing\n") % work_unit.revision);
+      //    added_in_parent++;
+      //    continue;
+      //  } 
+
+      // ok, wasn't added in this parent->child edge, but might have 
+      // been renamed/moved.
+
+      // I() that the file content is different, since that's what the 
+      // mark that got us to the parent_revision was supposed to indicate
+    }
+
+  I(added_in_parent_count <= marks.file_content.size());
+  if (added_in_parent_count == marks.file_content.size()) 
+    {
+      //L(F("added_in_parent_count == marks.file_content.size(), credit_mapped_lines to %s\n") % work_unit.revision);
+      work_unit.lineage->credit_mapped_lines(work_unit.annotations);
+    }
+  
+  work_unit.annotations->evaluate(work_unit.revision);
+  nodes_complete.insert(work_unit.revision);
+
 /*
 // FIXME_ROSTERS: disabled until rewritten to use rosters
-  L(F("do_annotate_node for node %s\n") % work_unit.node_revision);
-  I(nodes_complete.find(work_unit.node_revision) == nodes_complete.end());
-  //nodes_seen.insert(std::make_pair(work_unit.node_revision, work_unit.lineage));
-
-  revision_set rev;
-  app.db.get_revision(work_unit.node_revision, rev);
-
-  if (rev.edges.size() == 0) {
-    L(F("do_annotate_node credit_mapped_lines to revision %s\n") % work_unit.node_revision);
-    work_unit.lineage->credit_mapped_lines(work_unit.annotations);
-    work_unit.annotations->evaluate(work_unit.node_revision);
-    nodes_complete.insert(work_unit.node_revision);
-    return;
-  }
-
-  // if all deltas backwards have to add the file, then we credit any mapped but 
-  // unassigned lines in our lineage to this revision.  gotta count adds to compare to number
-  // of parent revs.
-  size_t added_in_parent_count = 0;
 
   // edges are from parent -> child where child is our work_unit node
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); i++) 
     {
-      revision_id parent_revision = edge_old_revision(i);
-      L(F("do_annotate_node processing edge from parent %s to child %s\n") % parent_revision % work_unit.node_revision);
+      ... snip
 
       change_set cs = edge_changes(i);
-      if (cs.rearrangement.added_files.find(work_unit.node_fpath) != cs.rearrangement.added_files.end()) 
-        {
-          L(F("file %s added in %s, continuing\n") % work_unit.node_fpath % work_unit.node_revision);
-          added_in_parent_count++;
-          continue;
-        }
+      ... snip
   
       // even if the file was renamed in the parent, that's represented as 'rename oldname -> newname'
       // plus 'patch newname -> newname', so we don't have to find the oldname in the parent before 
@@ -594,9 +633,9 @@ do_annotate_node (const annotate_node_work &work_unit,
         {
           // already a pending node, so we just have to merge the lineage and decide whether to move it
           // over to the nodes_to_process queue
-          L(F("merging lineage from node %s to parent %s\n") % work_unit.node_revision % parent_revision);
+          L(F("merging lineage from node %s to parent %s\n") % work_unit.revision % parent_revision);
           lmn->second.merge(parent_lineage, work_unit.annotations);
-          //L(F("after merging from work revision %s to parent %s lineage_merge_node is:\n") % work_unit.node_revision % parent_revision);
+          //L(F("after merging from work revision %s to parent %s lineage_merge_node is:\n") % work_unit.revision % parent_revision);
           //lmn->second.dump();
           if (lmn->second.iscomplete()) {
             nodes_to_process.push_back(lmn->second.get_work());
@@ -605,15 +644,7 @@ do_annotate_node (const annotate_node_work &work_unit,
         }
     }
   
-  I(added_in_parent_count <= rev.edges.size());
-  if (added_in_parent_count == rev.edges.size()) 
-    {
-      //L(F("added_in_parent_count == rev.edges.size(), credit_mapped_lines to %s\n") % work_unit.node_revision);
-      work_unit.lineage->credit_mapped_lines(work_unit.annotations);
-    }
-  
-  work_unit.annotations->evaluate(work_unit.node_revision);
-  nodes_complete.insert(work_unit.node_revision);
+    ... done
 */
 }
 
@@ -650,11 +681,11 @@ find_ancestors(app_state &app, revision_id rid, std::map<revision_id, size_t> &p
 }
 
 void 
-do_annotate (app_state &app, file_path fpath, file_id fid, revision_id rid)
+do_annotate (app_state &app, file_t file_node, revision_id rid)
 {
-  L(F("annotating file %s with id %s in revision %s\n") % fpath % fid % rid);
+  L(F("annotating file %s with content %s in revision %s\n") % file_node->self % file_node->content % rid);
 
-  boost::shared_ptr<annotate_context> acp(new annotate_context(fid, app));
+  boost::shared_ptr<annotate_context> acp(new annotate_context(file_node->content, app));
   boost::shared_ptr<annotate_lineage_mapping> lineage = acp->initial_lineage();
 
   std::set<revision_id> nodes_complete;
@@ -664,14 +695,16 @@ do_annotate (app_state &app, file_path fpath, file_id fid, revision_id rid)
 
   // build node work unit
   std::deque<annotate_node_work> nodes_to_process;
-  annotate_node_work workunit(acp, lineage, rid, fid, fpath);
+  annotate_node_work workunit(acp, lineage, rid, file_node->self); //, fpath);
   nodes_to_process.push_back(workunit);
 
-  while (nodes_to_process.size() && !acp->is_complete()) {
-    annotate_node_work work = nodes_to_process.front();
-    nodes_to_process.pop_front();
-    do_annotate_node(work, app, nodes_to_process, nodes_complete, paths_to_nodes, pending_merge_nodes);
-  }
+  while (nodes_to_process.size() && !acp->is_complete()) 
+    {
+      annotate_node_work work = nodes_to_process.front();
+      nodes_to_process.pop_front();
+      do_annotate_node(work, app, nodes_to_process, nodes_complete, paths_to_nodes, pending_merge_nodes);
+    }
+  
   I(pending_merge_nodes.size() == 0);
   acp->annotate_equivalent_lines();
   I(acp->is_complete());

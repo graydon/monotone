@@ -1365,8 +1365,6 @@ CMD(identify, N_("working copy"), N_("[PATH]"),
   cout << ident << endl;
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(cat, N_("informative"),
     N_("FILENAME"),
     N_("write file from database to stdout"),
@@ -1380,7 +1378,6 @@ CMD(cat, N_("informative"),
 
   transaction_guard guard(app.db);
 
-  file_id ident;
   revision_id rid;
   if (app.revision_selectors.size() == 0)
     get_revision_id(rid);
@@ -1391,15 +1388,18 @@ CMD(cat, N_("informative"),
   // paths are interpreted as standard external ones when we're in a
   // working copy, but as project-rooted external ones otherwise
   file_path fp;
+  split_path sp;
   fp = file_path_external(idx(args, 0));
-  manifest_id mid;
-  app.db.get_revision_manifest(rid, mid);
-  manifest_map m;
-  app.db.get_manifest(mid, m);
-  manifest_map::const_iterator i = m.find(fp);
-  N(i != m.end(), F("no file '%s' found in revision '%s'\n") % fp % rid);
-  ident = manifest_entry_id(i);
-  
+  fp.split(sp);
+
+  roster_t roster;
+  marking_map marks;
+  app.db.get_roster(rid, roster, marks);
+  node_t node = roster.get_node(sp);
+  N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'\n") % fp % rid);
+
+  file_t file_node = downcast_to_file_t(node);
+  file_id ident = file_node->content;  
   file_data dat;
   L(F("dumping file '%s'\n") % ident);
   app.db.get_file_version(ident, dat);
@@ -1408,6 +1408,8 @@ CMD(cat, N_("informative"),
   guard.commit();
 }
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     N_("check out a revision from database into directory.\n"
     "If a revision is given, that's the one that will be checked out.\n"
@@ -3515,10 +3517,14 @@ log_certs(app_state & app, revision_id id, cert_name name)
 }
 
 
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
     OPT_REVISION)
 {
+  // this function compiles, but the do_annotate() stuff in annotate.cc is 
+  // still in flux, so disabling command here.
   revision_id rid;
 
   if (app.revision_selectors.size() == 0)
@@ -3528,6 +3534,9 @@ CMD(annotate, N_("informative"), N_("PATH"),
     throw usage(name);
 
   file_path file = file_path_external(idx(args, 0));
+  split_path sp;
+  file.split(sp);
+
   if (app.revision_selectors.size() == 0)
     get_revision_id(rid);
   else 
@@ -3539,21 +3548,17 @@ CMD(annotate, N_("informative"), N_("PATH"),
   L(F("annotate file file_path '%s'\n") % file);
 
   // find the version of the file requested
-  manifest_map mm;
-  revision_set rev;
-  app.db.get_revision(rid, rev);
-  app.db.get_manifest(rev.new_manifest, mm);
-  manifest_map::const_iterator i = mm.find(file);
-  N(i != mm.end(),
-    F("no such file '%s' in revision '%s'\n") % file % rid);
-  file_id fid = manifest_entry_id(*i);
-  L(F("annotate for file_id %s\n") % manifest_entry_id(*i));
+  roster_t roster;
+  marking_map marks;
+  app.db.get_roster(rid, roster, marks);
+  node_t node = roster.get_node(sp);
+  N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'\n") % file % rid);
 
-  do_annotate(app, file, fid, rid);
+  file_t file_node = downcast_to_file_t(node);
+  L(F("annotate for file_id %s\n") % file_node->self);
+  do_annotate(app, file_node, rid);
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(log, N_("informative"), N_("[FILE]"),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
