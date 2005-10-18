@@ -389,7 +389,11 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 
 # testsuite stuff (could this possibly be more ugly?)
 
+if BUILD_UNIT_TESTS
 TESTS = unit_tests $(srcdir)/testsuite
+else
+TESTS = $(srcdir)/testsuite
+endif
 
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 

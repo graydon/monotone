@@ -63,7 +63,6 @@ struct keyreader : public packet_consumer
 
 key_store::key_store(app_state * a): have_read(false), app(a)
 {
-  key_dir = system_path(get_homedir()) / ".monotone/keys";
 }
 
 void

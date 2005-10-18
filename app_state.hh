@@ -65,7 +65,10 @@ public:
   utf8 bind_address;
   utf8 bind_port;
   bool missing;
-
+  bool unknown;
+  std::vector<rsa_keypair_id> keys_to_push;
+  system_path confdir;
+  bool have_set_key_dir;
 
 
   // These are used to cache signers/verifiers (if the hook allows).
@@ -111,11 +114,15 @@ public:
   void add_exclude(utf8 const & exclude_pattern);
   void set_diff_format(diff_type dtype);
   void set_diff_args(utf8 const & args);
+  void add_key_to_push(utf8 const & key);
 
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);
   void set_verbose(bool b);
   void add_rcfile(utf8 const & filename);
+
+  void set_confdir(system_path const & cd);
+  system_path get_confdir();
 
   explicit app_state();
   ~app_state();

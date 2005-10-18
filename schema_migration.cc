@@ -159,7 +159,7 @@ calculate_schema_id(sqlite3 *sql, string & id)
                          // those are auto-generated indices (for
                          // UNIQUE constraints, etc.).
                          "AND sql IS NOT NULL "
-                         "AND name != 'sqlite_stat1' "
+                         "AND name not like 'sqlite_stat%' "
                          "ORDER BY name", 
                          &append_sql_stmt, &tmp, NULL);
   if (res != SQLITE_OK)
@@ -263,6 +263,9 @@ migrator
 
         if (sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
           throw runtime_error("error vacuuming after migration");
+
+        if (sqlite3_exec(sql, "ANALYZE", NULL, NULL, NULL) != SQLITE_OK)
+          throw runtime_error("error running analyze after migration");
       }
     else
       {

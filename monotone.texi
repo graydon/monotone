@@ -2329,12 +2329,16 @@ Uses selector type @code{a}. For example, @code{a:graydon} matches
 @item Branch selection
 Uses selector type @code{b}. For example, @code{b:net.venge.monotone} matches
 @code{branch} certs where the cert value is @code{net.venge.monotone}.
-Values to match for can have shell wildcards.
+Values to match for can have shell wildcards.  If you give a bare @code{b:}
+monotone will require you to be in a working copy, and will use the branch
+value recorded in your MT/options file.
 @item Heads selection
 Uses selector type @code{h}. For example, @code{h:net.venge.monotone} matches
 @code{branch} certs where the cert value is @code{net.venge.monotone} and 
 the associated revision is a head revision on that branch.  Values to match
-for can have shell wildcards like the branch selector.
+for can have shell wildcards like the branch selector.  If you give a bare 
+@code{h:} monotone will require you to be in a working copy, and use the branch
+recorded in your MT/options file.
 @item Date selection
 Uses selector type @code{d}. For example, @code{d:2004-04} matches
 @code{date} certs where the cert value begins with
@@ -7140,10 +7144,12 @@ Show unmerged heads of branch, or report when branch is merged.
 Merge unmerged heads of branch.
 @comment TROFF INPUT: .TP
 
-@item @b{add} @i{<pathname> [...]}
+@item @b{add} @i{[--unknown] [<pathname>...]}
 Add files to working copy. adding a file does not copy it into the
 database, merely adds it to the work list. You must @b{commit} your
-changes in order to copy added files to the database.
+changes in order to copy added files to the database.  The missing 
+flag causes those files that @command{monotone ls unknown} would
+display to be added to the project.
 @comment TROFF INPUT: .TP
 
 @item @b{drop} @i{[--missing] [--execute] [<pathname>...]}
