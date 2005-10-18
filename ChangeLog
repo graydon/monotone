@@ -1,5 +1,9 @@
 2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* contrib/usher.cc: Update comment about client versions
+
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* netsync.cc netcmd.{cc,hh}: usher_reply_cmd now has both who we
 	connected to *and* what pattern we asked for
 	* contrib/usher.cc: new file format, allow to key servers on either

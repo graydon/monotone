@@ -2,13 +2,15 @@
 // GPL v2
 //
 // This is an "usher" to allow multiple monotone servers to work from
-// the same port. It asks the client for the pattern it wants to sync,
+// the same port. It asks the client what it wants to sync,
 // and then looks up the matching server in a table. It then forwards
 // the connection to that server. All servers using the same usher need
 // to have the same server key.
 //
 // This requires cooperation from the client, which means it only works
-// for recent (post-0.22) clients.
+// for recent (0.23 or later) clients. In order to match against hostnames
+// a post-0.23 client is needed (0.23 clients can only be matched against
+// their include pattern).
 //
 // Usage: usher [-a <bind address>] [-p <port-number>] <server-file>
 //
