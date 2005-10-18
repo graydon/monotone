@@ -32,6 +32,7 @@ public:
 #ifdef BUILD_UNIT_TESTS
   void add_test_hooks();
 #endif
+  void set_app(app_state *_app);
   void add_std_hooks();
   void working_copy_rcfilename(bookkeeping_path & file);
   void default_rcfilename(system_path & file);

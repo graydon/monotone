@@ -47,4 +47,46 @@ AT_CHECK(grep file0 stdout, [1], [ignore])
 AT_CHECK(grep file1 stdout, [1], [ignore])
 AT_CHECK(grep file2 stdout, [1], [ignore])
 
+# add --unknown should add any files that ls unknown shows you and not ignored
+
+AT_DATA(file3, [file 3
+])
+#AT_DATA(file4.ignore, [file 4 ignore
+#])
+AT_DATA(dir/file5, [file 5
+])
+AT_DATA(dir/file6.ignore, [file 6
+])
+#AT_DATA(.mt-ignore, [.*\.ignore$
+#])
+
+#AT_CHECK(RAW_MONOTONE ls unkown, [], [stdout], [ignore])
+
+AT_CHECK(MONOTONE add --unknown, [], [ignore], [stderr])
+AT_CHECK(grep 'adding file3' stderr, [0], [ignore])
+#AT_CHECK(grep 'adding file4.ignore' stderr, [1], [ignore])
+AT_CHECK(grep 'adding dir/file5' stderr, [0], [ignore])
+#AT_CHECK(grep 'adding dir/file6.ignore' stderr, [1], [ignore])
+AT_CHECK(grep 'adding test_hooks.lua' stderr, [1], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep file0 stdout, [1], [ignore])
+AT_CHECK(grep file1 stdout, [1], [ignore])
+AT_CHECK(grep file2 stdout, [1], [ignore])
+AT_CHECK(grep file3 stdout, [0], [ignore])
+#AT_CHECK(grep file4 stdout, [1], [ignore])
+AT_CHECK(grep file5 stdout, [0], [ignore])
+#AT_CHECK(grep file6 stdout, [1], [ignore])
+
+AT_CHECK(MONOTONE --branch=testbranch commit --message 'add second set of files', [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep file0 stdout, [1], [ignore])
+AT_CHECK(grep file1 stdout, [1], [ignore])
+AT_CHECK(grep file2 stdout, [1], [ignore])
+AT_CHECK(grep file3 stdout, [1], [ignore])
+#AT_CHECK(grep file4 stdout, [1], [ignore])
+AT_CHECK(grep file5 stdout, [1], [ignore])
+#AT_CHECK(grep file6 stdout, [1], [ignore])
+
 AT_CLEANUP

@@ -70,6 +70,9 @@ struct poptOption coptions[] =
     {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("use least common ancestor as ancestor for merge"), NULL},
     {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
     {"bind", 0, POPT_ARG_STRING, &argstr, OPT_BIND, gettext_noop("address:port to listen on (default :5253)"), NULL},
+    {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from working directory"), NULL},
+    {"unknown", 0, POPT_ARG_NONE, NULL, OPT_UNKNOWN, gettext_noop("perform the operations for unknown files from working directory"), NULL},
+    {"key-to-push", 0, POPT_ARG_STRING, &argstr, OPT_KEY_TO_PUSH, gettext_noop("push the specified key even if it hasn't signed anything"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -94,6 +97,7 @@ struct poptOption options[] =
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, gettext_noop("limit search for working copy to specified root"), NULL},
     {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, gettext_noop("verbose completion output"), NULL},
     {"keydir", 0, POPT_ARG_STRING, &argstr, OPT_KEY_DIR, gettext_noop("set location of key store"), NULL},
+    {"confdir", 0, POPT_ARG_STRING, &argstr, OPT_CONF_DIR, gettext_noop("set location of configuration directory"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -338,6 +342,10 @@ cpp_main(int argc, char ** argv)
               app.set_key_dir(system_path(argstr));
               break;
 
+            case OPT_CONF_DIR:
+              app.set_confdir(system_path(argstr));
+              break;
+
             case OPT_TICKER:
               if (string(argstr) == "dot")
                 ui.set_tick_writer(new tick_write_dot);
@@ -459,6 +467,20 @@ cpp_main(int argc, char ** argv)
                 std::string port_part = (colon == std::string::npos ? "" :  arg.substr(colon+1, arg.size() - colon));
                 app.bind_address = utf8(addr_part);
                 app.bind_port = utf8(port_part);
+              }
+              break;
+
+            case OPT_MISSING:
+              app.missing = true;
+              break;
+
+            case OPT_UNKNOWN:
+              app.unknown = true;
+              break;
+
+            case OPT_KEY_TO_PUSH:
+              {
+                app.add_key_to_push(string(argstr));
               }
               break;
 

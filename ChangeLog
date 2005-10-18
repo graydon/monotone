@@ -1,3 +1,168 @@
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: Update comment about client versions
+
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc netcmd.{cc,hh}: usher_reply_cmd now has both who we
+	connected to *and* what pattern we asked for
+	* contrib/usher.cc: new file format, allow to key servers on either
+	hostname or pattern, hostname checked first
+	reload config file on SIGHUP
+
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc (session::process_usher_cmd): reply with who we connected
+	to (hostname or hostname:port), not what pattern we asked for.
+	* contrib/usher.cc: Update comment.
+
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: support dynamic local servers
+	These are started when a client attempts to connect, and killed at
+	a set time interval after the last client has disconnected.
+
+2005-10-15  Nathaniel Smith  <njs@pobox.com>
+
+	* manifest.cc (build_restricted_manifest_map): Mention the new
+	--missing option in the missing files error message hint.
+
+2005-10-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (serve): check that the db is valid before beginning
+	service (would previously not know until someone connected)
+	* netsync.cc (serve_connections): don't say "beginning service" until
+	after opening the socket.
+
+2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.{cc,hh}, key_store.cc: change how the keystore directory
+	is initialized; was using app.confdir before it was ready
+
+2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make the configuration directory configurable and available to lua
+	* lua.cc: export new function to lua, "get_confdir"
+	* app_state.{cc,hh} monotone.cc options.hh: new option --confdir,
+	make the configuration directory something other than ~/.monotone
+	* lua.{cc,hh}: make the app_state availabe to lua callbacks
+	* key_store.cc: use get_confdir instead of hardcoded
+	* lua.cc: use get_confdir instead of hardcoded
+	* tests/t_config_confdir.at: test --confdir and lua get_confdir
+	* testsuite.at: add it
+
+2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Teach client to optionally push unused keys; new pubkeys can now be
+	given to a server without restarting it.
+	* app_state.{cc,hh}, monotone.cc, options.hh:
+	new command-specific-option --key-to-push=<key> , used to sync/push
+	a key that hasn't signed anything
+	* netsync.cc: make it work
+	* commands.cc: push and sync take it
+	* tests/t_netsync_pubkey.at: test it
+
+2005-10-16  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Don't add boost_unit_test_framework to global
+	LIBS, we will link against it directly when needed.
+	* Makefile.am: Only allow unit_tests to be built if
+	boost_unit_test_framework was available at configure time.
+
+2005-10-15  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Use boost_filesystem as the library to test for
+	when trying to guess a suitable BOOST_SUFFIX.  Make a missing
+	boost_unit_test_framework library a non-fatal error.
+
+2005-10-14  Emile Snyder  <emile@alumni.reed.edu>
+
+	* commands.cc: Fix breakage I introduced with the --unknown flag.
+	Rename find_unknown to find_unknown_and_ignored, since that's what
+	it's actually doing.  Likewise ls_unknown ->
+	ls_unknown_or_ignored, and use find_unknown_and_ignored correctly.
+	Fixes t_mt_ignore.at failures.
+	
+2005-10-14  Nathaniel Smith  <njs@pobox.com>
+
+	* key_store.{cc,hh} (get_key_dir): New method.
+	* schema_migration.cc (migrate_client_to_external_privkeys): Tell
+	user that we're moving their keys.
+	* commands.cc (genkey): Refer to keystore by the directory, not as
+	"keystore".
+	(ls_keys): Likewise.
+
+2005-10-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Add .mt-ignore, ignore most generated files, except for the *m4 files.
+
+2005-10-14  Emile Snyder <emile@alumni.reed.edu>
+
+	* app_state.{cc,hh}: new 'unknown' class member for --unknown flag.
+	* commands.cc (CMD(add), ls_unknown, find_unknown): use new
+	--unknown flag to add any files in the working copy that monotone
+	doesn't know about (and isn't ignoring).
+	* monotone.cc (coptions, cpp_main): add the --unknown flag handling.
+	* options.hh: add OPT_UNKNOWN.
+	* monotone.texi: document it.
+	* tests/t_add.at: test it.
+	
+2005-10-14  Emile Snyder <emile@alumni.reed.edu>
+
+	* database.cc (complete): enhance h: and b: to mean "current
+	branch" (as defined by your working copy) when given empty.
+	* monotone.texi: document it.
+	
+2005-10-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc: Exclusively lock the database when performing a 'db
+	dump'.
+	* schema_migration.cc: Run an analyze at the end of a database
+	migration to help out the SQLite query optimizer.  Also change
+	schema id calculation to match 'sqlite_stat%' rather than the
+	specific table 'sqlite_stat1'--the SQLite docs suggest that more
+	tables will be created in the future.
+
+2005-10-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc, schema.sql, schema_migration.cc: Use SQLite 3's
+	exclusive locking whereever we start a new transaction; allows
+	monotone to report database locking errors earlier if a second
+	monotone process attempts to perform database operations.
+
+2005-10-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (message_width): Refactor into display_width() and
+	remove message_width().
+	* transforms.{cc,hh} (display_width): Rename length() to
+	display_width() and use the code from message_width().
+	* ui.cc, commands.cc: Change calls to length() to display_width().
+	* netsync.cc: Remove length() calls, test for string emptiness
+	instead.
+
+2005-10-13  Emile Snyder <emile@alumni.reed.edu>
+
+	* commands.cc (CMD(revert)): use --missing for revert a'la drop.
+	* monotone.texi: document it.
+	* tests/t_revert_restrict.at: test it.
+	
+2005-10-13  Emile Snyder <emile@alumni.reed.edu>
+
+	* app_state.{cc,hh}: new missing class member for --missing flag.
+	* commands.cc (CMD(drop), ls_missing, find_missing): use new
+	--missing flag to drop any files already deleted in the working copy.
+	* monotone.cc (coptions, cpp_main): add the --missing flag handling.
+	* options.hh: add OPT_MISSING.
+	* monotone.texi: document it.
+	* tests/t_drop_missing.at: test it.
+	
+2005-10-13  Emile Snyder <emile@alumni.reed.edu>
+
+	* database.cc (complete): implementation for h:branch selector to
+	find heads of a branch.
+	* selectors.{cc,hh}: add sel_head with selector character 'h'.
+	* monotone.texi: document it.
+	
 2005-10-12  Nathaniel Smith  <njs@pobox.com>
 
 	* revision.hh: Oops, missed a bit.

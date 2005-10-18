@@ -173,25 +173,6 @@ namespace commands
     return _(msgid);
   }
 
-  // returns the columns needed for printing the translated msgid
-  size_t message_width(const char * msgid)
-  {
-    const char * msg = safe_gettext(msgid);
-
-    // convert from multi-byte to wide-char string
-    size_t wchars = mbstowcs(0, msg, 0) + 1;
-    if (wchars == (size_t)-1)
-      return std::strlen(msgid); // conversion failed; punt and return original length
-    boost::scoped_array<wchar_t> wmsg(new wchar_t[wchars]);
-    mbstowcs(wmsg.get(), msg, wchars);
-
-    // and get printed width
-    size_t width = wcswidth(wmsg.get(), wchars);
-
-    return width;
-  }
-
-
   void explain_usage(string const & cmd, ostream & out)
   {
     map<string,command *>::const_iterator i;
@@ -230,7 +211,7 @@ namespace commands
     size_t col2 = 0;
     for (size_t i = 0; i < sorted.size(); ++i)
       {
-        size_t cmp = message_width(idx(sorted, i)->cmdgroup.c_str());
+        size_t cmp = display_width(utf8(safe_gettext(idx(sorted, i)->cmdgroup.c_str())));
         col2 = col2 > cmp ? col2 : cmp;
       }
 
@@ -241,7 +222,7 @@ namespace commands
             curr_group = idx(sorted, i)->cmdgroup;
             out << endl;
             out << "  " << safe_gettext(idx(sorted, i)->cmdgroup.c_str());
-            col = message_width(idx(sorted, i)->cmdgroup.c_str()) + 2;
+            col = display_width(utf8(safe_gettext(idx(sorted, i)->cmdgroup.c_str()))) + 2;
             while (col++ < (col2 + 3))
               out << ' ';
           }
@@ -581,7 +562,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   if (colon_pos != string::npos)
     {
       string substr(str, 0, colon_pos);
-      colon_pos = length(substr);
+      colon_pos = display_width(substr);
       extra_str = string(colon_pos, ' ') + ": %s\n";
     }
 
@@ -697,7 +678,7 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
             cout << hash_code << " " << keyid << "   (*)" << endl;
         }
       if (!all_in_db)
-        cout << _("(*) - only in keystore") << endl;
+        cout << F("(*) - only in %s/") % app.keys.get_key_dir() << endl;
       cout << endl;
     }
 
@@ -891,9 +872,9 @@ CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), OPT
   N(!exists, F("key '%s' already exists") % ident);
   
   keypair kp;
-  P(F("generating key-pair '%s'\n") % ident);
+  P(F("generating key-pair '%s'") % ident);
   generate_key_pair(app.lua, ident, kp);
-  P(F("storing key-pair '%s' in keystore\n") % ident);
+  P(F("storing key-pair '%s' in %s/") % ident % app.keys.get_key_dir());
   app.keys.put_key_pair(ident, kp);
 }
 
@@ -1150,13 +1131,15 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 }
 
 
+static void find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const & args, 
+                                      path_set & unknown, path_set & ignored);
 
 /*
 // FIXME_ROSTERS: disabled until rewritten to use rosters
-CMD(add, N_("working copy"), N_("PATH..."),
-    N_("add files to working copy"), OPT_NONE)
+CMD(add, N_("working copy"), N_("[PATH]..."),
+    N_("add files to working copy"), OPT_UNKNOWN)
 {
-  if (args.size() < 1)
+  if (!app.unknown && (args.size() < 1))
     throw usage(name);
 
   app.require_working_copy();
@@ -1171,6 +1154,16 @@ CMD(add, N_("working copy"), N_("PATH..."),
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     paths.push_back(file_path_external(*i));
 
+  if (app.unknown)
+    {
+      path_set unknown, ignored;
+      find_unknown_and_ignored(app, false, args, unknown, ignored);
+      paths.insert(paths.end(), unknown.begin(), unknown.end());
+    }
+
+  if (paths.size() == 0)
+    return;
+
   build_additions(paths, m_old, app, work);
 
   put_path_rearrangement(work);
@@ -1178,10 +1171,12 @@ CMD(add, N_("working copy"), N_("PATH..."),
   update_any_attrs(app);
 }
 
-CMD(drop, N_("working copy"), N_("PATH..."),
-    N_("drop files from working copy"), OPT_EXECUTE)
+static void find_missing (app_state & app, vector<utf8> const & args, path_set & missing);
+
+CMD(drop, N_("working copy"), N_("[PATH]..."),
+    N_("drop files from working copy"), OPT_EXECUTE % OPT_MISSING)
 {
-  if (args.size() < 1)
+  if (!app.missing && (args.size() < 1))
     throw usage(name);
 
   app.require_working_copy();
@@ -1193,6 +1188,13 @@ CMD(drop, N_("working copy"), N_("PATH..."),
   get_path_rearrangement(work);
 
   vector<file_path> paths;
+  if (app.missing)
+    {
+      set<file_path> missing;
+      find_missing(app, args, missing);
+      paths.insert(paths.end(), missing.begin(), missing.end());
+    }
+
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     paths.push_back(file_path_external(*i));
 
@@ -1660,31 +1662,40 @@ ls_known (app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_unknown (app_state & app, bool want_ignored, vector<utf8> const & args)
+find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const & args, 
+                          path_set & unknown, path_set & ignored)
 {
-  app.require_working_copy();
-
   revision_set rev;
   manifest_map m_old, m_new;
-  path_set known, unknown, ignored;
+  //path_set known, unknown, ignored;
+  path_set known;
 
   calculate_restricted_revision(app, args, rev, m_old, m_new);
 
   extract_path_set(m_new, known);
   file_itemizer u(app, known, unknown, ignored);
   walk_tree(file_path(), u);
+}
+
+static void
+ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & args)
+{
+  app.require_working_copy();
+
+  path_set unknown, ignored;
+  find_unknown_and_ignored(app, want_ignored, args, unknown, ignored);
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin(); i != ignored.end(); ++i)
       cout << *i << endl;
-  else 
+  else
     for (path_set::const_iterator i = unknown.begin(); i != unknown.end(); ++i)
       cout << *i << endl;
 }
 
 // FIXME_ROSTERS: disabled until rewritten to use rosters
 static void
-ls_missing (app_state & app, vector<utf8> const & args)
+find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
 {
   revision_set rev;
   revision_id rid;
@@ -1713,7 +1724,19 @@ ls_missing (app_state & app, vector<utf8> const & args)
   for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
     {
       if (app.restriction_includes(*i) && !path_exists(*i))     
-        cout << *i << endl;
+        missing.insert(*i);
+    }
+}
+
+static void
+ls_missing (app_state & app, vector<utf8> const & args)
+{
+  path_set missing;
+  find_missing(app, args, missing);
+
+  for (path_set::const_iterator i = missing.begin(); i != missing.end(); ++i)
+    {
+      cout << *i << endl;
     }
 }
 */
@@ -1756,9 +1779,9 @@ CMD(list, N_("informative"),
   else if (idx(args, 0)() == "known")
     ls_known(app, removed);
   else if (idx(args, 0)() == "unknown")
-    ls_unknown(app, false, removed);
+    ls_unknown_or_ignored(app, false, removed);
   else if (idx(args, 0)() == "ignored")
-    ls_unknown(app, true, removed);
+    ls_unknown_or_ignored(app, true, removed);
   else if (idx(args, 0)() == "missing")
     ls_missing(app, removed);
 */
@@ -2018,7 +2041,7 @@ process_netsync_args(std::string const & name,
 
 CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("push branches matching PATTERN to netsync server at ADDRESS"),
-    OPT_SET_DEFAULT % OPT_EXCLUDE)
+    OPT_SET_DEFAULT % OPT_EXCLUDE % OPT_KEY_TO_PUSH)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
@@ -2047,7 +2070,7 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
 
 CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("sync branches matching PATTERN with netsync server at ADDRESS"),
-    OPT_SET_DEFAULT % OPT_EXCLUDE)
+    OPT_SET_DEFAULT % OPT_EXCLUDE % OPT_KEY_TO_PUSH)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
@@ -2076,6 +2099,8 @@ CMD(serve, N_("network"), N_("PATTERN ..."),
   N(app.lua.hook_persist_phrase_ok(),
     F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
   require_password(key, app);
+
+  app.db.ensure_open();
 
   utf8 dummy_addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, dummy_addr, include_pattern, exclude_pattern, false, true, app);
@@ -3378,7 +3403,7 @@ CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
 
 
 CMD(revert, N_("working copy"), N_("[PATH]..."), 
-    N_("revert file(s), dir(s) or entire working copy"), OPT_DEPTH % OPT_EXCLUDE)
+    N_("revert file(s), dir(s) or entire working copy"), OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
   manifest_map m_old;
   revision_id old_revision_id;
@@ -3399,7 +3424,27 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
 
   extract_rearranged_paths(work, valid_paths);
   add_intermediate_paths(valid_paths);
-  app.set_restriction(valid_paths, args, false);
+
+  vector<utf8> args_copy(args);
+  if (app.missing)
+    {
+      L(F("revert adding find_missing entries to %d original args elements\n") % args_copy.size());
+      path_set missing;
+      find_missing(app, args_copy, missing);
+
+      // chose as_external because app_state::set_restriction turns utf8s into file_paths
+      // using file_path_external()...
+      for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
+        args_copy.push_back(i->as_external());
+
+      L(F("after adding everything from find_missing, revert args_copy has %d elements\n") % args_copy.size());
+
+      // when given --missing, never revert if there's nothing missing and no 
+      // specific files were specified.
+      if (args_copy.size() == 0)
+        return;
+    }
+  app.set_restriction(valid_paths, args_copy, false);
 
   restrict_path_rearrangement(work, included, excluded, app);
 

@@ -43,6 +43,12 @@ AT_CHECK(MONOTONE2 ls keys, [], [stdout], [ignore])
 AT_CHECK(QGREP($PUBKEY stdout), [1])
 AT_CHECK(QGREP($PRIVKEY stdout), [1])
 
+# Now check that --key-to-push works.
+NETSYNC_SERVE_N_START(2, testbranch)
+AT_CHECK(MONOTONE --rcfile=netsync.lua push NETSYNC_ADDRESS testbranch --key-to-push=foo@test.example.com, [], [ignore], [ignore])
+NETSYNC_SERVE_STOP
+AT_CHECK(MONOTONE2 dropkey foo@test.example.com, [], [ignore], [ignore])
+
 # Now commit a version that does use the new key, and make sure that
 # now it does get transferred.
 SET_FILE(testfile, [version 1 of test file

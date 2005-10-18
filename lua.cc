@@ -43,6 +43,14 @@ extern "C" {
 using namespace std;
 using boost::lexical_cast;
 
+// this lets the lua callbacks (monotone_*_for_lua) have access to the
+// app_state the're associated with.
+// it was added so that the confdir (normally ~/.monotone) can be specified on
+// the command line (and so known only to the app_state), and still be
+// available to lua
+// please *don't* use it for complex things that can throw errors
+static std::map<lua_State*, app_state*> map_of_lua_to_app;
+
 static int panic_thrower(lua_State * st)
 {
   throw oops("lua panic");
@@ -625,6 +633,21 @@ extern "C"
     lua_pushstring(L, gettext(msgid));
     return 1;
   }
+
+  static int
+  monotone_get_confdir_for_lua(lua_State *L)
+  {
+    map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(L);
+    if (i != map_of_lua_to_app.end())
+      {
+        system_path dir = i->second->get_confdir();
+        string confdir = dir.as_external();
+        lua_pushstring(L, confdir.c_str());
+      }
+    else
+      lua_pushnil(L);
+    return 1;
+  }
 }
 
 
@@ -655,6 +678,7 @@ lua_hooks::lua_hooks()
   lua_register(st, "include", monotone_include_for_lua);
   lua_register(st, "includedir", monotone_includedir_for_lua);
   lua_register(st, "gettext", monotone_gettext_for_lua);
+  lua_register(st, "get_confdir", monotone_get_confdir_for_lua);
 
   // add regex functions:
   lua_newtable(st);
@@ -671,8 +695,17 @@ lua_hooks::lua_hooks()
 
 lua_hooks::~lua_hooks()
 {
+  map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(st);
   if (st)
     lua_close (st);
+  if (i != map_of_lua_to_app.end())
+    map_of_lua_to_app.erase(i);
+}
+
+void
+lua_hooks::set_app(app_state *_app)
+{
+  map_of_lua_to_app.insert(make_pair(st, _app));
 }
 
 static bool 
@@ -717,7 +750,9 @@ lua_hooks::add_std_hooks()
 void 
 lua_hooks::default_rcfilename(system_path & file)
 {
-  file = system_path(get_homedir()) / ".monotone/monotonerc";
+  map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(st);
+  I(i != map_of_lua_to_app.end());
+  file = i->second->get_confdir() / "monotonerc";
 }
 
 void 

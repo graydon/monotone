@@ -319,10 +319,11 @@ dump_index_cb(void *data, int n, char **vals, char **cols)
 void 
 database::dump(ostream & out)
 {
+  transaction_guard guard(*this);
   dump_request req;
   req.out = &out;
   req.sql = sql();
-  out << "BEGIN TRANSACTION;\n";
+  out << "BEGIN EXCLUSIVE;\n";
   int res;
   res = sqlite3_exec(req.sql,
                         "SELECT name, type, sql FROM sqlite_master "
@@ -337,6 +338,7 @@ database::dump(ostream & out)
                         dump_index_cb, &req, NULL);
   assert_sqlite3_ok(req.sql);
   out << "COMMIT;\n";
+  guard.commit();
 }
 
 void 
@@ -674,7 +676,7 @@ void
 database::begin_transaction() 
 {
   if (transaction_level == 0)
-    execute("BEGIN");
+    execute("BEGIN EXCLUSIVE");
   transaction_level++;
 }
 
@@ -2065,6 +2067,10 @@ static void selector_to_certname(selector_type ty,
       prefix = suffix = "";
       s = branch_cert_name;
       break;
+    case selectors::sel_head:
+      prefix = suffix = "";
+      s = branch_cert_name;
+      break;
     case selectors::sel_date:
     case selectors::sel_later:
     case selectors::sel_earlier:
@@ -2087,6 +2093,7 @@ void database::complete(selector_type ty,
                         vector<pair<selector_type, string> > const & limit,
                         set<string> & completions)
 {
+  //L(F("database::complete for partial '%s'\n") % partial);
   completions.clear();
 
   // step 1: the limit is transformed into an SQL select statement which
@@ -2153,27 +2160,88 @@ void database::complete(selector_type ty,
               lim += (boost::format(" AND unbase64(value) glob '*%s*'")
                       % i->second).str();     
             }
+          else if (i->first == selectors::sel_head) 
+            {
+              // get branch names
+              vector<cert_value> branch_names;
+              if (i->second.size() == 0)
+                {
+                  __app->require_working_copy("the empty head selector h: refers to the head of the current branch");
+                  branch_names.push_back((__app->branch_name)());
+                }
+              else
+                {
+                  string subquery = (boost::format("SELECT DISTINCT value FROM revision_certs WHERE name='%s' and unbase64(value) glob '%s'") 
+                                     % branch_cert_name % i->second).str();
+                  results res;
+                  fetch(res, one_col, any_rows, subquery.c_str());
+                  for (size_t i = 0; i < res.size(); ++i)
+                    {
+                      base64<data> row_encoded(res[i][0]);
+                      data row_decoded;
+                      decode_base64(row_encoded, row_decoded);
+                      branch_names.push_back(row_decoded());
+                    }
+                }
+
+              // for each branch name, get the branch heads
+              set<revision_id> heads;
+              for (vector<cert_value>::const_iterator bn = branch_names.begin(); bn != branch_names.end(); bn++)
+                {
+                  set<revision_id> branch_heads;
+                  get_branch_heads(*bn, *__app, branch_heads);
+                  heads.insert(branch_heads.begin(), branch_heads.end());
+                  L(F("after get_branch_heads for %s, heads has %d entries\n") % (*bn) % heads.size());
+                }
+
+              lim += "SELECT id FROM revision_certs WHERE id IN (";
+              if (heads.size())
+                {
+                  set<revision_id>::const_iterator r = heads.begin();
+                  lim += (boost::format("'%s'") % r->inner()()).str();
+                  r++;
+                  while (r != heads.end())
+                    {
+                      lim += (boost::format(", '%s'") % r->inner()()).str();
+                      r++;
+                    }
+                }
+              lim += ") ";
+            }
           else
             {
               string certname;
               string prefix;
               string suffix;
               selector_to_certname(i->first, certname, prefix, suffix);
-              lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND ") % certname).str();
-              switch (i->first)
+              L(F("processing selector type %d with i->second '%s'\n") % ty % i->second);
+              if ((i->first == selectors::sel_branch) && (i->second.size() == 0))
                 {
-                case selectors::sel_earlier:
-                  lim += (boost::format("unbase64(value) <= X'%s'") % encode_hexenc(i->second)).str();
-                  break;
-                case selectors::sel_later:
-                  lim += (boost::format("unbase64(value) > X'%s'") % encode_hexenc(i->second)).str();
-                  break;
-                default:
-                  lim += (boost::format("unbase64(value) glob '%s%s%s'")
-                          % prefix % i->second % suffix).str();
-                  break;
+                  __app->require_working_copy("the empty branch selector b: refers to the current branch");
+                  // FIXME: why do we have to glob on the unbase64(value), rather than being able to use == ?
+                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND unbase64(value) glob '%s'")
+                          % branch_cert_name % __app->branch_name).str();
+                  L(F("limiting to current branch '%s'\n") % __app->branch_name);
+                }
+              else
+                {
+                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND ") % certname).str();
+                  switch (i->first)
+                    {
+                    case selectors::sel_earlier:
+                      lim += (boost::format("unbase64(value) <= X'%s'") % encode_hexenc(i->second)).str();
+                      break;
+                    case selectors::sel_later:
+                      lim += (boost::format("unbase64(value) > X'%s'") % encode_hexenc(i->second)).str();
+                      break;
+                    default:
+                      lim += (boost::format("unbase64(value) glob '%s%s%s'")
+                              % prefix % i->second % suffix).str();
+                      break;
+                    }
                 }
             }
+          //L(F("found selector type %d, selecting_head is now %d\n") % i->first % selecting_head);
         }
     }
   lim += ")";
@@ -2219,7 +2287,7 @@ void database::complete(selector_type ty,
   fetch(res, one_col, any_rows, query.c_str());
   for (size_t i = 0; i < res.size(); ++i)
     {
-      if (ty == selectors::sel_ident)
+      if (ty == selectors::sel_ident) 
         completions.insert(res[i][0]);
       else
         {

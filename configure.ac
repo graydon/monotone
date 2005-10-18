@@ -149,39 +149,42 @@ AC_SUBST(BOOST_SUFFIX)
 # Now check for Boost libraries proper.
 
 found=no
-suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -mt -sunpro -sw -mgw"}
+suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt-s"}
 for BOOST_SUFFIX in ${suffixes}
 do
     test "x${BOOST_SUFFIX}" = "xnone" && BOOST_SUFFIX=
-    LIBS="-lboost_unit_test_framework${BOOST_SUFFIX} $OLD_LIBS"
-    AC_MSG_CHECKING(for the libboost_unit_test_framework${BOOST_SUFFIX} library)
-    AC_LINK_IFELSE([AC_LANG_SOURCE([[
+    LIBS="-lboost_filesystem${BOOST_SUFFIX} $OLD_LIBS"
+    AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+      #include <boost/filesystem/path.hpp>
+      #include <boost/filesystem/operations.hpp>
+      using namespace boost::filesystem;
+    ]],
+    [[exists(path("/boot"));]])],
+     [AC_MSG_RESULT([yes])
+      found=yes],
+     [AC_MSG_RESULT([no])])
+    test "x${found}" = "xyes" && break
+done
+if test "x${found}" = "xno"; then
+    AC_MSG_FAILURE([libboost_filesystem failure])
+fi
+
+OLD_LIBS=$LIBS
+LIBS="-lboost_unit_test_framework${BOOST_SUFFIX} $LIBS"
+AC_MSG_CHECKING(for the libboost_unit_test_framework${BOOST_SUFFIX} library)
+AC_LINK_IFELSE([AC_LANG_SOURCE([[
 #include <boost/test/unit_test_suite.hpp>
 #include <boost/test/test_tools.hpp>
 using boost::unit_test_framework::test_suite;
 test_suite * init_unit_test_suite(int argc, char * argv[]) 
 { return NULL; }
 ]])],
-     [AC_MSG_RESULT([yes])
-      found=yes],
-     [AC_MSG_RESULT([no])])
-    LIBS=$OLD_LIBS
-    test "x${found}" = "xyes" && break
-done
-if test "x${found}" = "xno"; then
-    AC_MSG_FAILURE([libboost_unit_test_framework failure])
-fi
-
-LIBS="-lboost_filesystem${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-  #include <boost/filesystem/path.hpp>
-  #include <boost/filesystem/operations.hpp>
-  using namespace boost::filesystem;
-]],
-[[exists(path("/boot"));]])],
- [AC_MSG_RESULT([yes])],
- [AC_MSG_FAILURE([libboost_filesystem failure])])
+ [AC_MSG_RESULT([yes])
+  AM_CONDITIONAL(BUILD_UNIT_TESTS, true)],
+ [AC_MSG_RESULT([no])
+  AM_CONDITIONAL(BUILD_UNIT_TESTS, false)])
+LIBS=$OLD_LIBS
 
 LIBS="-lboost_date_time${BOOST_SUFFIX} $LIBS"
 AC_MSG_CHECKING(for the libboost_date_time${BOOST_SUFFIX} library)

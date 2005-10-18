@@ -2,51 +2,110 @@
 // GPL v2
 //
 // This is an "usher" to allow multiple monotone servers to work from
-// the same port. It asks the client for the pattern it wants to sync,
+// the same port. It asks the client what it wants to sync,
 // and then looks up the matching server in a table. It then forwards
 // the connection to that server. All servers using the same usher need
 // to have the same server key.
 //
 // This requires cooperation from the client, which means it only works
-// for recent (post-0.22) clients.
+// for recent (0.23 or later) clients. In order to match against hostnames
+// a post-0.23 client is needed (0.23 clients can only be matched against
+// their include pattern).
 //
-// Usage: usher <port-number> <server-file>
+// Usage: usher [-a <bind address>] [-p <port-number>] <server-file>
 //
+// <bind address> is the address to listen on
 // <port-number> is the local port to listen on
-// <server-file> is a file containing lines of
-//   stem    ip-address   port-number
+// <server-file> is a file that looks like
+//   server monotone
+//   host localhost
+//   pattern net.venge.monotone
+//   remote 66.96.28.3:5253
+//   
+//   server local
+//   host 127.0.0.1
+//   pattern *
+//   local -d /usr/local/src/managed/mt.db~ *
 //
-// A request for a pattern starting with "stem" will be directed to the
-// server at <ip-address>:<port-number>
+// or in general, blocks of a
+//   server <name>
+// line followed by one or more
+//   host <hostname>
+// lines and/or one or more
+//   pattern <pattern>
+// lines, and one of
+//    remote <address:port>
+//    local <arguments>
+// , with blocks separated by blank lines
+//
+// A request to server "hostname" will be directed to the
+// server at <ip-address>:<port-number>, if that stem is marked as remote,
+// and to a local server managed by the usher, started with the given
+// arguments ("monotone serve --bind=something <server arguments>"),
+// if it is marked as local.
+// Note that "hostname" has to be an initial substring of who the client asked
+// to connect to, but does not have to match exactly. This means that you don't
+// have to know in advance whether clients will be asking for
+// <host> or <host>:<port> .
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <string.h>
 #include <signal.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <time.h>
 
 #include <string>
 #include <list>
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <set>
+#include <map>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+
+using std::vector;
+using std::max;
+using std::string;
+using std::list;
+using std::set;
+using std::map;
+using boost::lexical_cast;
+using boost::shared_ptr;
+using std::cerr;
+using std::make_pair;
+
+// defaults, overridden by command line
 int listenport = 5253;
+string listenaddr = "0.0.0.0";
+
+// keep local servers around for this many seconds after the last
+// client disconnects from them (only accurate to ~10 seconds)
+int const server_idle_timeout = 60;
+
+// ranges that dynamic (local) servers can be put on
+int const minport = 15000;
+int const maxport = 65000;
+int const minaddr[] = {127, 0, 1, 1};
+int const maxaddr[] = {127, 254, 254, 254};
+int currport = 0;
+int curraddr[] = {0, 0, 0, 0};
 
 char const netsync_version = 5;
 
-char const * const greeting = " Hello! This is the monotone usher at localhost. What would you like?";
+string const greeting = " Hello! This is the monotone usher at localhost. What would you like?";
 
-char const * const errmsg = "!Sorry, I don't know where to find that.";
+string const errmsg = "!Sorry, I don't know where to find that.";
 
-
-#undef max
-#define max(x,y) ((x) > (y) ? (x) : (y))
 
 struct errstr
 {
@@ -64,38 +123,16 @@ int tosserr(int ret, std::string const & name)
   return ret;
 }
 
-struct record
-{
-  std::string stem;
-  std::string addr;
-  int port;
-};
-
-std::list<record> servers;
-
-bool get_server(std::string const & reply, std::string & addr, int & port)
-{
-  std::list<record>::iterator i;
-  for (i = servers.begin(); i != servers.end(); ++i) {
-    if (reply.find(i->stem) == 0)
-      break;
-  }
-  if (i == servers.end()) {
-    std::cerr<<"no server found for "<<reply<<"\n";
-    return false;
-  }
-  port = i->port;
-  addr = i->addr;
-//  std::cerr<<"server for "<<reply<<" is "<<addr<<":"<<port<<"\n";
-  return true;
-}
-
 // packet format is:
 // byte version
 // byte cmd {100 if we send, 101 if we receive}
 // uleb128 {size of everything after this}
-// uleb128 {size of everything after this}
+// uleb128 {size of string}
 // string
+// {
+// uleb128 {size of string}
+// string
+// } // only present if we're receiving
 
 // uleb128 is
 // byte 0x80 | <low 7 bits>
@@ -189,6 +226,7 @@ struct buffer
 struct sock
 {
   int *s;
+  static set<int*> all_socks;
   operator int()
   {
     if (!s)
@@ -201,25 +239,13 @@ struct sock
     s = new int[2];
     s[0] = ss;
     s[1] = 1;
+    all_socks.insert(s);
   }
   sock(sock const & ss)
   {
     s = ss.s;
     if (s)
       s[1]++;
-  }
-  void close()
-  {
-    if (!s || s[0] == -1)
-      return;
-    shutdown(s[0], SHUT_RDWR);
-      while (::close(s[0]) < 0) {
-        if (errno == EIO)
-          throw errstr("close failed", errno);
-        if (errno != EINTR)
-          break;
-      }
-    s[0]=-1;
   }
   ~sock()
   {
@@ -231,13 +257,37 @@ struct sock
       // if you want it to throw errors, call close manually
     }
     delete[] s;
+    all_socks.erase(all_socks.find(s));
     s = 0;
   }
   sock operator=(int ss)
   {
-    if (!s)
+    if (!s) {
       s = new int[2];
+      all_socks.insert(s);
+    }
     s[0]=ss;
+  }
+  void close()
+  {
+    if (!s || s[0] == -1)
+      return;
+    shutdown(s[0], SHUT_RDWR);
+    while (::close(s[0]) < 0) {
+      if (errno == EIO)
+        throw errstr("close failed", errno);
+      if (errno != EINTR)
+        break;
+      }
+    s[0]=-1;
+  }
+  static void close_all_socks()
+  {
+    for (set<int*>::iterator i = all_socks.begin(); i != all_socks.end(); ++i) {
+      while (::close((*i)[0]) < 0)
+        if (errno != EINTR)
+          break;
+    }
   }
   bool read_to(buffer & buf)
   {
@@ -270,8 +320,9 @@ struct sock
     return true;
   }
 };
+set<int*> sock::all_socks;
 
-sock start(int port)
+bool check_address_empty(string const & addr, int port)
 {
   sock s = tosserr(socket(AF_INET, SOCK_STREAM, 0), "socket()");
   int yes = 1;
@@ -279,67 +330,459 @@ sock start(int port)
       &yes, sizeof(yes)), "setsockopt");
   sockaddr_in a;
   memset (&a, 0, sizeof (a));
+  if (!inet_aton(addr.c_str(), (in_addr *) &a.sin_addr.s_addr))
+    throw errstr("bad ip address format", 0);
+  a.sin_port = htons(port);
+  a.sin_family = AF_INET;
+  int r = bind(s, (sockaddr *) &a, sizeof(a));
+  s.close();
+  return r == 0;
+}
+
+void find_addr(string & addr, int & port)
+{
+  if (currport == 0) {
+    currport = minport-1;
+    for(int i = 0; i < 4; ++i)
+      curraddr[i] = minaddr[i];
+    curraddr[0];
+  }
+  do {
+    // get the next address in our list
+    if (++currport > maxport) {
+      currport = minport;
+      for (int i = 0; i < 4; ++i) {
+        if (++curraddr[i] <= maxaddr[i])
+          break;
+        curraddr[i] = minaddr[i];
+      }
+    }
+    port = currport;
+    addr = lexical_cast<string>(curraddr[0]) + "." +
+           lexical_cast<string>(curraddr[1]) + "." +
+           lexical_cast<string>(curraddr[2]) + "." +
+           lexical_cast<string>(curraddr[3]);
+  } while (!check_address_empty(addr, port));
+}
+
+sock start(string addr, int port)
+{
+  sock s = tosserr(socket(AF_INET, SOCK_STREAM, 0), "socket()");
+  int yes = 1;
+  tosserr(setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+      &yes, sizeof(yes)), "setsockopt");
+  sockaddr_in a;
+  memset (&a, 0, sizeof (a));
+  if (!inet_aton(addr.c_str(), (in_addr *) &a.sin_addr.s_addr))
+    throw errstr("bad ip address format", 0);
   a.sin_port = htons(port);
   a.sin_family = AF_INET;
   tosserr(bind(s, (sockaddr *) &a, sizeof(a)), "bind");
+  cerr<<"bound to "<<addr<<":"<<port<<"\n";
   listen(s, 10);
   return s;
 }
 
-sock make_outgoing(int port, std::string const & address)
+sock make_outgoing(int port, string const & address)
 {
-       sock s = tosserr(socket(AF_INET, SOCK_STREAM, 0), "socket()");
+  sock s = tosserr(socket(AF_INET, SOCK_STREAM, 0), "socket()");
 
-       struct sockaddr_in a;
-       memset(&a, 0, sizeof(a));
-       a.sin_family = AF_INET;
-       a.sin_port = htons(port);
+  struct sockaddr_in a;
+  memset(&a, 0, sizeof(a));
+  a.sin_family = AF_INET;
+  a.sin_port = htons(port);
 
-       if (!inet_aton(address.c_str(), (in_addr *) &a.sin_addr.s_addr))
-              throw errstr("bad ip address format", 0);
+  if (!inet_aton(address.c_str(), (in_addr *) &a.sin_addr.s_addr))
+    throw errstr("bad ip address format", 0);
 
-       tosserr(connect(s, (sockaddr *) &a, sizeof (a)), "connect()");
-       return s;
+  tosserr(connect(s, (sockaddr *) &a, sizeof (a)), "connect()");
+  return s;
 }
 
-bool extract_reply(buffer & buf, std::string & out)
+int fork_server(vector<string> const & args)
+{
+  int err[2];
+  if (pipe(err) < 0)
+    return false;
+  int pid = fork();
+  if (pid == -1) {
+    close(err[0]);
+    close(err[1]);
+    cerr<<"Failed to fork server.\n";
+    return false;
+  } else if (pid == 0) {
+    close(err[0]);
+    close(0);
+    close(1);
+    close(2);
+    sock::close_all_socks();
+    if (dup2(err[1], 2) < 0) {
+      exit(1);
+    }
+
+    char ** a = new char*[args.size()+1];
+    for (int i = 0; i < args.size(); ++i) {
+      a[i] = new char[args[i].size()+1];
+      memcpy(a[i], args[i].c_str(), args[i].size()+1);
+    }
+    a[args.size()] = 0;
+
+    execvp(a[0], a);
+    exit(1);
+  } else {
+    close(err[1]);
+    char head[256];
+    int got = 0;
+    int r = 0;
+    bool line = false;
+    // the first line output on the server's stderr will be either
+    // "monotone: beginning service on <interface> : <port>" or
+    // "monotone: network error: bind(2) error: Address already in use"
+    while(r >= 0 && !line) {
+      r = read(err[0], head + got, 256 - got);
+      if (r > 0) {
+        for (int i = 0; i < r && !line; ++i)
+          if (head[got+i] == '\n')
+            line = true;
+        got += r;
+      }
+    }
+    head[got] = 0;
+    if (string(head).find("beginning service") != string::npos)
+      return pid;
+    kill(pid, SIGKILL);
+    do {r = waitpid(pid, 0, 0);} while (r==-1 && errno == EINTR);
+    return -1;
+  }
+}
+
+struct server
+{
+  list<map<string, shared_ptr<server> >::iterator> by_host, by_pat;
+  map<string, shared_ptr<server> >::iterator by_name;
+  static map<string, shared_ptr<server> > servers_by_host;
+  static map<string, shared_ptr<server> > servers_by_pattern;
+  static map<string, shared_ptr<server> > servers_by_name;
+  static set<shared_ptr<server> > live_servers;
+  bool local;
+  int pid;
+  string arguments;
+  string addr;
+  int port;
+  int connection_count;
+  int last_conn_time;
+  server() : pid(-1), local(false), port(0),
+   connection_count(0), last_conn_time(0)
+  {
+  }
+  ~server()
+  {
+    yeskill();
+  }
+  void delist()
+  {
+    vector<string> foo;
+    set_hosts(foo);
+    set_patterns(foo);
+    servers_by_name.erase(by_name);
+    by_name = 0;
+  }
+  void rename(string const & n)
+  {
+    shared_ptr<server> me = by_name->second;
+    servers_by_name.erase(by_name);
+    by_name = servers_by_name.insert(make_pair(n, me)).first;
+  }
+  void set_hosts(vector<string> const & h)
+  {
+    shared_ptr<server> me = by_name->second;
+    map<string, shared_ptr<server> >::iterator c;
+    for (list<map<string, shared_ptr<server> >::iterator>::iterator
+           i = by_host.begin(); i != by_host.end(); ++i)
+      servers_by_host.erase(*i);
+    by_host.clear();
+    for (vector<string>::const_iterator i = h.begin(); i != h.end(); ++i) {
+      c = servers_by_host.find(*i);
+      if (c != servers_by_host.end()) {
+        list<map<string, shared_ptr<server> >::iterator>::iterator j;
+        for (j = c->second->by_host.begin(); j != c->second->by_host.end(); ++j)
+          if ((*j)->first == *i) {
+            servers_by_host.erase(*j);
+            c->second->by_host.erase(j);
+          }
+      }
+      c = servers_by_host.insert(make_pair(*i, me)).first;
+      by_host.push_back(c);
+    }
+  }
+  void set_patterns(vector<string> const & p)
+  {
+    shared_ptr<server> me = by_name->second;
+    map<string, shared_ptr<server> >::iterator c;
+    for (list<map<string, shared_ptr<server> >::iterator>::iterator
+           i = by_pat.begin(); i != by_pat.end(); ++i)
+      servers_by_pattern.erase(*i);
+    by_pat.clear();
+    for (vector<string>::const_iterator i = p.begin(); i != p.end(); ++i) {
+      c = servers_by_pattern.find(*i);
+      if (c != servers_by_pattern.end()) {
+        list<map<string, shared_ptr<server> >::iterator>::iterator j;
+        for (j = c->second->by_pat.begin(); j != c->second->by_pat.end(); ++j)
+          if ((*j)->first == *i) {
+            servers_by_pattern.erase(*j);
+            c->second->by_pat.erase(j);
+          }
+      }
+      c = servers_by_pattern.insert(make_pair(*i, me)).first;
+      by_pat.push_back(c);
+    }
+  }
+  sock connect()
+  {
+    if (local && pid == -1) {
+      // server needs to be started
+      // we'll try 3 times, since there's a delay between our checking that
+      // a port's available and the server taking it
+      for (int i = 0; i < 3 && pid == -1; ++i) {
+        if (i > 0 || port == 0)
+          find_addr(addr, port);
+        vector<string> args;
+        args.push_back("monotone");
+        args.push_back("serve");
+        args.push_back("--bind=" + addr + ":" + lexical_cast<string>(port));
+        int n = 0, m = 0;
+        n = arguments.find_first_not_of(" \t");
+        while (n != string::npos && m != string::npos) {
+          m = arguments.find_first_of(" ", n);
+          args.push_back(arguments.substr(n, m-n));
+          n = arguments.find_first_not_of(" ", m);
+        }
+        pid = fork_server(args);
+      }
+    }
+    sock s = make_outgoing(port, addr);
+    ++connection_count;
+    return s;
+  }
+  void disconnect()
+  {
+    if (--connection_count || !local)
+      return;
+    last_conn_time = time(0);
+  }
+  void maybekill()
+  {
+    if (!local)
+      return;
+    int difftime = time(0) - last_conn_time;
+    if (difftime > server_idle_timeout && !connection_count)
+      yeskill();
+    else if (waitpid(pid, 0, WNOHANG) == 0) {
+      pid = -1;
+      port = 0;
+    }
+  }
+  void yeskill()
+  {
+    if (local && pid != -1) {
+      kill(pid, SIGTERM);
+      int r;
+      do {r = waitpid(pid, 0, 0);} while (r==-1 && errno == EINTR);
+      pid = -1;
+      port = 0;
+    }
+  }
+  string name()
+  {
+    if (local && port == 0)
+      return "dynamic local server";
+    else
+      return addr + ":" + lexical_cast<string>(port);
+  }
+};
+
+map<string, shared_ptr<server> > server::servers_by_host;
+map<string, shared_ptr<server> > server::servers_by_pattern;
+map<string, shared_ptr<server> > server::servers_by_name;
+set<shared_ptr<server> > server::live_servers;
+
+string getline(std::istream & in)
+{
+  string out;
+  char buf[256];
+  do {
+    in.getline(buf, 256);
+    int got = in.gcount()-1;
+    if (got > 0)
+      out.append(buf, got);
+  } while (in.fail() && !in.eof());
+  return out;
+}
+
+string read_server_record(std::istream & in)
+{
+  // server foobar
+  // hostname foobar.com
+  // hostname mtn.foobar.com
+  // pattern com.foobar
+  // remote 127.5.6.7:80
+  //
+  // server myproj
+  // hostname localhost
+  // local -d foo.db *
+  vector<string> hosts, patterns;
+  string name, desc;
+  bool local(false);
+  string line = getline(in);
+  while (!line.empty()) {
+    //    server     foobar
+    //    ^     ^    ^
+    //    a     b    c
+    int a = line.find_first_not_of(" \t");
+    int b = line.find_first_of(" \t", a);
+    int c = line.find_first_not_of(" \t", b);
+    string cmd = line.substr(a, b-a);
+    string arg = line.substr(c);
+    if (cmd == "server")
+      name = arg;
+    else if (cmd == "local") {
+      local = true;
+      desc = arg;
+    } else if (cmd == "remote") {
+      local = false;
+      desc = arg;
+    } else if (cmd == "host")
+      hosts.push_back(arg);
+    else if (cmd == "pattern")
+      patterns.push_back(arg);
+    line = getline(in);
+  }
+  if (name.empty())
+    return string();
+  shared_ptr<server> srv(new server);
+  map<string, shared_ptr<server> >::iterator
+    i = server::servers_by_name.find(name);
+  if (i != server::servers_by_name.end())
+    i->second->delist();
+  srv->by_name = server::servers_by_name.insert(make_pair(name, srv)).first;
+  srv->set_hosts(hosts);
+  srv->set_patterns(patterns);
+  if (local) {
+    srv->local = true;
+    srv->arguments = desc;
+  } else {
+    srv->local = false;
+    int c = desc.find(":");
+    if (c != desc.npos) {
+      srv->addr = desc.substr(0, c);
+      srv->port = lexical_cast<int>(desc.substr(c+1));
+    } else {
+      srv->addr = desc;
+      srv->port = 5253;
+    }
+  }
+  return name;
+}
+
+shared_ptr<server> get_server(string const & srv, string const & pat)
+{
+  map<string, shared_ptr<server> >::iterator i;
+  for (i = server::servers_by_host.begin();
+       i != server::servers_by_host.end(); ++i) {
+    if (srv.find(i->first) == 0) {
+      return i->second;
+    }
+  }
+  for (i = server::servers_by_pattern.begin();
+       i != server::servers_by_pattern.end(); ++i) {
+    if (pat.find(i->first) == 0) {
+      return i->second;
+    }
+  }
+  std::cerr<<"no server found for '"<<pat<<"' at '"<<srv<<"'\n";
+  return shared_ptr<server>();
+}
+
+void kill_old_servers()
+{
+  set<shared_ptr<server> >::iterator i;
+  for (i = server::live_servers.begin(); i != server::live_servers.end(); ++i) {
+    (*i)->maybekill();
+  }
+}
+
+int extract_uleb128(char *p, int maxsize, int & out)
+{
+  out = 0;
+  int b = 0;
+  unsigned char got;
+  do {
+    if (b == maxsize)
+      return -1;
+    got = p[b];
+    out += ((int)(p[b] & 0x7f))<<(b*7);
+    ++b;
+  } while (b*7 < sizeof(int)*8-1 && (got & 0x80));
+  return b;
+}
+
+int extract_vstr(char *p, int maxsize, string & out)
+{
+  int size;
+  out.clear();
+  int chars = extract_uleb128(p, maxsize, size);
+  if (chars == -1 || chars + size > maxsize) {
+    return -1;
+  }
+  out.append(p+chars, size);
+  return chars+size;
+}
+
+bool extract_reply(buffer & buf, string & host, string & pat)
 {
   char *p;
-  int n;
+  int n, s;
   buf.getread(p, n);
   if (n < 4) return false;
-  int b = 2;
-  unsigned int psize = p[b];
-  ++b;
-  if (psize >=128) {
-    psize = psize - 128 + ((unsigned int)(p[b])<<7);
-    ++b;
+  p += 2; // first 2 bytes are header
+  n -= 2;
+  // extract size, and make sure we have the entire packet
+  int pos = extract_uleb128(p, n, s);
+  if (pos == -1 || n < s+pos) {
+    return false;
   }
-  if (n < b+psize) return false;
-  unsigned int size = p[b];
-  ++b;
-  if (size >=128) {
-    size = size - 128 + ((unsigned int)(p[b])<<7);
-    ++b;
+  // extract host vstr
+  int num = extract_vstr(p+pos, n-pos, host);
+  if (num == -1) {
+    return false;
   }
-  if (n < b+size) return false;
-  out.clear();
-  out.append(p+b, size);
-  buf.fixread(b + size);
+  pos += num;
+  // extract pattern vstr
+  num = extract_vstr(p+pos, n-pos, pat);
+  if (num == -1) {
+    cerr<<"old-style reply.\n";
+    pat = host;
+    host.clear();
+    return true;
+  }
+  pos += num;
+  buf.fixread(pos+2);
+  return true;
 }
 
 struct channel
 {
   static int counter;
   int num;
-  sock client;
-  sock server;
+  sock cli;
+  sock srv;
   bool have_routed;
   bool no_server;
   buffer cbuf;
   buffer sbuf;
+  shared_ptr<server> who;
   channel(sock & c): num(++counter),
-   client(c), server(-1),
+   cli(c), srv(-1),
    have_routed(false), no_server(false)
   {
     char * dat;
@@ -353,16 +796,21 @@ struct channel
     sbuf.fixwrite(size);
     delete[] dat;
 
-    client.write_from(sbuf);
+    cli.write_from(sbuf);
+  }
+  ~channel()
+  {
+    if (who)
+      who->disconnect();
   }
   bool is_finished()
   {
-    return (client == -1) && (server == -1);
+    return (cli == -1) && (srv == -1);
   }
   void add_to_select(int & maxfd, fd_set & rd, fd_set & wr, fd_set & er)
   {
-    int c = client;
-    int s = server;
+    int c = cli;
+    int s = srv;
 
     if (c > 0) {
       FD_SET(c, &er);
@@ -383,14 +831,14 @@ struct channel
   }
   bool process_selected(fd_set & rd, fd_set & wr, fd_set & er)
   {
-    int c = client;
-    int s = server;
+    int c = cli;
+    int s = srv;
 /* NB: read oob data before normal reads */
     if (c > 0 && FD_ISSET(c, &er)) {
       char d;
       errno = 0;
       if (recv(c, &d, 1, MSG_OOB) < 1) 
-        client.close(), c = -1;
+        cli.close(), c = -1;
       else
         send(s, &d, 1, MSG_OOB);
     }
@@ -398,7 +846,7 @@ struct channel
       char d;
       errno = 0;
       if (recv(s, &d, 1, MSG_OOB) < 1)
-        server.close(), s = -1;
+        srv.close(), s = -1;
       else
         send(c, &d, 1, MSG_OOB);
     }
@@ -407,19 +855,18 @@ struct channel
     int n;
 
     if (c > 0 && FD_ISSET(c, &rd)) {
-      if (!client.read_to(cbuf)) c = -1;
+      if (!cli.read_to(cbuf)) c = -1;
       if (!have_routed) {
-        std::string reply;
-        if (extract_reply(cbuf, reply)) {
-          int port;
-          std::string addr;
-          if (get_server(reply, addr, port)) {
+        string reply_srv, reply_pat;
+        if (extract_reply(cbuf, reply_srv, reply_pat)) {
+          who = get_server(reply_srv, reply_pat);
+          if (who) {
             try {
-              server = make_outgoing(port, addr);
+              srv = who->connect();
               have_routed = true;
-              s = server;
+              s = srv;
             } catch (errstr & e) {
-              std::cerr<<"cannot contact server "<<addr<<": "<<e.name<<"\n";
+              std::cerr<<"cannot contact server "<<who->name()<<"\n";
               no_server = true;
             }
           } else {
@@ -437,56 +884,100 @@ struct channel
       }
     }
     if (s > 0 && FD_ISSET(s, &rd)) {
-      if (!server.read_to(sbuf)) s = -1;
+      if (!srv.read_to(sbuf)) s = -1;
     }
 
     if (c > 0 && FD_ISSET(c, &wr)) {
-      if (!client.write_from(sbuf)) c = -1;
+      if (!cli.write_from(sbuf)) c = -1;
     }
     if (s > 0 && FD_ISSET(s, &wr)) {
-      if (!server.write_from(cbuf)) s = -1;
+      if (!srv.write_from(cbuf)) s = -1;
     }
 
     // close sockets we have nothing more to send to
     if (c < 0 && !cbuf.canread()) {
-      server.close(), s = -1;
+      srv.close(), s = -1;
     }
     if ((no_server || have_routed && s < 0) && !sbuf.canread()) {
-      client.close(), c = -1;
+      cli.close(), c = -1;
     }
   }
 };
 int channel::counter = 0;
 
-int main (int argc, char **argv)
-{
-  if (argc != 3) {
-    fprintf (stderr, "Usage\n\tusher <listen-port> <config-file>\n");
-    exit (1);
-  }
+bool reload_pending;
 
-  record rec;
-  std::ifstream cf(argv[2]);
+void reload_conffile(string const & file)
+{
+  reload_pending = false;
+  cerr<<"Reloading config file...\n";
+  std::ifstream cf(file.c_str());
+  set<string> names;
   int pos = 0;
   while(cf) {
-    if (pos == 0)
-      cf>>rec.stem;
-    else if (pos == 1)
-      cf>>rec.addr;
-    else if (pos == 2)
-      cf>>rec.port;
-    else if (pos == 3) {
-      pos = -1;
-      servers.push_back(rec);
-    }
-    ++pos;
+    string n = read_server_record(cf);
+    if(!n.empty())
+      names.insert(n);
   }
+  for (map<string, shared_ptr<server> >::iterator
+         i = server::servers_by_name.begin();
+       i != server::servers_by_name.end(); ++i) {
+    if (names.find(i->first) == names.end())
+      i->second->delist();
+  }
+  cerr<<"Servers:\n";
+  for (map<string, shared_ptr<server> >::iterator
+         i = server::servers_by_name.begin();
+       i != server::servers_by_name.end(); ++i) {
+    cerr<<"\t"<<i->first<<"\n";
+    list<map<string, shared_ptr<server> >::iterator>::iterator j;
+    for (j = i->second->by_host.begin(); j != i->second->by_host.end(); ++j)
+      cerr<<"\t\tHost: '"<<(*j)->first<<"'\n";
+    for (j = i->second->by_pat.begin(); j != i->second->by_pat.end(); ++j)
+      cerr<<"\t\tPattern: '"<<(*j)->first<<"'\n";
+  }
+  cerr<<"Reload complete.\n";
+}
+void sched_reload(int sig)
+{
+  reload_pending = true;
+}
 
-  signal (SIGPIPE, SIG_IGN);
+int main (int argc, char **argv)
+{
+  string conffile;
+  {
+    int i;
+    for (i = 1; i < argc; ++i) {
+      if (string(argv[i]) == "-a")
+        listenaddr = argv[++i];
+      else if (string(argv[i]) == "-p")
+        listenport = lexical_cast<int>(argv[++i]);
+      else
+        conffile = argv[i];
+    }
+    if (conffile.empty() || i != argc) {
+      cerr<<"Usage:\n";
+      cerr<<"\tusher [-a <listen-addr>] [-p <listen-port>] <config-file>\n";
+      exit (1);
+    }
+  }
+  reload_conffile(conffile);
+
+
+  struct sigaction sa, sa_old;
+  sa.sa_handler = &sched_reload;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  while(sigaction(SIGHUP, &sa, &sa_old) == -1 && errno == EINTR);
+  sa.sa_handler = SIG_IGN;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  while(sigaction(SIGPIPE, &sa, &sa_old) == -1 && errno == EINTR);
 
   sock h(-1);
   try {
-    h = start(atoi(argv[1]));
+    h = start(listenaddr, listenport);
   } catch (errstr & s) {
     std::cerr<<s.name<<"\n";
     exit (1);
@@ -507,7 +998,10 @@ int main (int argc, char **argv)
          i != channels.end(); ++i)
       i->add_to_select(nfds, rd, wr, er);
 
-    int r = select(nfds+1, &rd, &wr, &er, NULL);
+    timeval timeout;
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
+    int r = select(nfds+1, &rd, &wr, &er, &timeout);
 
     if (r == -1 && errno == EINTR)
       continue;
@@ -522,10 +1016,9 @@ int main (int argc, char **argv)
         memset(&client_address, 0, l);
         sock cli = tosserr(accept(h, (struct sockaddr *)
                                      &client_address, &l), "accept()");
-//        std::cerr<<"connect from "<<inet_ntoa(client_address.sin_addr)<<"\n";
         newchan = new channel(cli);
       } catch(errstr & s) {
-        std::cerr<<"During new connection: "<<s.name<<"\n";
+        cerr<<"During new connection: "<<s.name<<"\n";
       }
     }
     std::list<std::list<channel>::iterator> finished;
@@ -537,7 +1030,7 @@ int main (int argc, char **argv)
           finished.push_back(i);
       } catch (errstr & e) {
         finished.push_back(i);
-        std::cerr<<"Error proccessing connection "<<i->num<<": "<<e.name<<"\n";
+        cerr<<"Error proccessing connection "<<i->num<<": "<<e.name<<"\n";
       }
     }
     for (std::list<std::list<channel>::iterator>::iterator i = finished.begin();
@@ -548,6 +1041,9 @@ int main (int argc, char **argv)
       delete newchan;
       newchan = 0;
     }
+    kill_old_servers();
+    if (reload_pending)
+      reload_conffile(conffile);
   }
   return 0;
 }

@@ -159,7 +159,7 @@ calculate_schema_id(sqlite3 *sql, string & id)
                          // those are auto-generated indices (for
                          // UNIQUE constraints, etc.).
                          "AND sql IS NOT NULL "
-                         "AND name != 'sqlite_stat1' "
+                         "AND name not like 'sqlite_stat%' "
                          "ORDER BY name", 
                          &append_sql_stmt, &tmp, NULL);
   if (res != SQLITE_OK)
@@ -209,7 +209,7 @@ migrator
 
         if (i->first == init)
           {
-            if (sqlite3_exec(sql, "BEGIN", NULL, NULL, NULL) != SQLITE_OK)
+            if (sqlite3_exec(sql, "BEGIN EXCLUSIVE", NULL, NULL, NULL) != SQLITE_OK)
               throw runtime_error("error at transaction BEGIN statement");          
             migrating = true;
           }
@@ -263,6 +263,9 @@ migrator
 
         if (sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
           throw runtime_error("error vacuuming after migration");
+
+        if (sqlite3_exec(sql, "ANALYZE", NULL, NULL, NULL) != SQLITE_OK)
+          throw runtime_error("error running analyze after migration");
       }
     else
       {
@@ -827,6 +830,8 @@ migrate_client_to_external_privkeys(sqlite3 * sql,
             F("public and private keys for %s don't match") % ident);
         }
 
+      P(F("moving key '%s' from database to %s")
+        % ident % app->keys.get_key_dir());
       app->keys.put_key_pair(ident, kp);
     }
 

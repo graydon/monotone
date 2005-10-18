@@ -38,9 +38,13 @@ app_state::app_state()
     rcfiles(true), diffs(false),
     no_merges(false), set_default(false), verbose(false), search_root("/"),
     depth(-1), last(-1), diff_format(unified_diff), diff_args_provided(false),
-    use_lca(false), execute(false), bind_address(""), bind_port("")
+    use_lca(false), execute(false), bind_address(""), bind_port(""), 
+    missing(false), unknown(false),
+    confdir(system_path(get_homedir()) / ".monotone"), have_set_key_dir(false)
 {
   db.set_app(this);
+  lua.set_app(this);
+  keys.set_key_dir(confdir / "keys");
 }
 
 app_state::~app_state()
@@ -278,7 +282,11 @@ app_state::set_database(system_path const & filename)
 void 
 app_state::set_key_dir(system_path const & filename)
 {
-  if (!filename.empty()) keys.set_key_dir(filename);
+  if (!filename.empty())
+    {
+      keys.set_key_dir(filename);
+      have_set_key_dir = true;
+    }
 
   options[keydir_option] = filename.as_internal();
 }
@@ -309,6 +317,14 @@ app_state::set_signing_key(utf8 const & key)
   internalize_rsa_keypair_id(key, signing_key);
 
   options[key_option] = key;
+}
+
+void 
+app_state::add_key_to_push(utf8 const & key)
+{
+  rsa_keypair_id k;
+  internalize_rsa_keypair_id(key, k);
+  keys_to_push.push_back(k);
 }
 
 void 
@@ -414,6 +430,20 @@ void
 app_state::add_rcfile(utf8 const & filename)
 {
   extra_rcfiles.push_back(filename);
+}
+
+void
+app_state::set_confdir(system_path const & cd)
+{
+  confdir = cd;
+  if (!have_set_key_dir)
+    keys.set_key_dir(cd / "keys");
+}
+
+system_path
+app_state::get_confdir()
+{
+  return confdir;
 }
 
 // rc files are loaded after we've changed to the working copy directory so

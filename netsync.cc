@@ -2647,7 +2647,7 @@ session::process_usher_cmd(utf8 const & msg)
         L(F("Received greeting from usher: %s") % msg().substr(1));
     }
   netcmd cmdout;
-  cmdout.write_usher_reply_cmd(our_include_pattern);
+  cmdout.write_usher_reply_cmd(peer_id, our_include_pattern);
   write_netcmd_and_try_flush(cmdout);
   L(F("Sent reply."));
   return true;
@@ -3239,19 +3239,19 @@ serve_connections(protocol_role role,
     timeout(static_cast<long>(timeout_seconds)), 
     instant(0,1);
 
-  if (length(app.bind_port))
+  if (!app.bind_port().empty())
     default_port = ::atoi(app.bind_port().c_str());
   Netxx::Address addr;
-  if (length(app.bind_address)) 
+  if (!app.bind_address().empty()) 
       addr.add_address(app.bind_address().c_str(), default_port);
   else
       addr.add_all_addresses (default_port);
 
+
+  Netxx::StreamServer server(addr, timeout);
   const char *name = addr.get_name();
   P(F("beginning service on %s : %s\n") 
     % (name != NULL ? name : "all interfaces") % lexical_cast<string>(addr.get_port()));
-
-  Netxx::StreamServer server(addr, timeout);
   
   map<Netxx::socket_type, shared_ptr<session> > sessions;
   set<Netxx::socket_type> armed_sessions;
@@ -3471,6 +3471,22 @@ session::rebuild_merkle_trees(app_state & app,
       }
   }
 
+  // add any keys specified on the command line
+  for (vector<rsa_keypair_id>::const_iterator key = app.keys_to_push.begin();
+       key != app.keys_to_push.end(); ++key)
+    {
+      if (inserted_keys.find(*key) == inserted_keys.end())
+        {
+          if (!app.db.public_key_exists(*key))
+            {
+              if (app.keys.key_pair_exists(*key))
+                app.keys.ensure_in_database(*key);
+              else
+                W(F("Cannot find key '%s'") % *key);
+            }
+          inserted_keys.insert(*key);
+        }
+    }
   // insert all the keys
   for (set<rsa_keypair_id>::const_iterator key = inserted_keys.begin();
        key != inserted_keys.end(); key++)
