@@ -570,10 +570,11 @@ netcmd::read_usher_cmd(utf8 & greeting) const
 }
 
 void 
-netcmd::write_usher_reply_cmd(utf8 const & pattern)
+netcmd::write_usher_reply_cmd(utf8 const & server, utf8 const & pattern)
 {
   cmd_code = usher_reply_cmd;
   payload.clear();
+  insert_variable_length_string(server(), payload);
   insert_variable_length_string(pattern(), payload);
 }
 

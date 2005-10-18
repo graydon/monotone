@@ -14,14 +14,27 @@
 //
 // <bind address> is the address to listen on
 // <port-number> is the local port to listen on
-// <server-file> is a file containing lines of
-//   hostname    remote   ip-address   port-number
-//   hostname    local    <server arguments>
+// <server-file> is a file that looks like
+//   server monotone
+//   host localhost
+//   pattern net.venge.monotone
+//   remote 66.96.28.3:5253
+//   
+//   server local
+//   host 127.0.0.1
+//   pattern *
+//   local -d /usr/local/src/managed/mt.db~ *
 //
-// Example server-file:
-// localhost          local   -d /usr/local/src/project.db *
-// venge.net          remote  66.96.28.3 5253
-// company.com:5200   remote  192.168.4.5 5200
+// or in general, blocks of a
+//   server <name>
+// line followed by one or more
+//   host <hostname>
+// lines and/or one or more
+//   pattern <pattern>
+// lines, and one of
+//    remote <address:port>
+//    local <arguments>
+// , with blocks separated by blank lines
 //
 // A request to server "hostname" will be directed to the
 // server at <ip-address>:<port-number>, if that stem is marked as remote,
@@ -53,16 +66,21 @@
 #include <fstream>
 #include <vector>
 #include <set>
+#include <map>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 
 using std::vector;
 using std::max;
 using std::string;
 using std::list;
 using std::set;
+using std::map;
 using boost::lexical_cast;
+using boost::shared_ptr;
 using std::cerr;
+using std::make_pair;
 
 // defaults, overridden by command line
 int listenport = 5253;
@@ -107,8 +125,12 @@ int tosserr(int ret, std::string const & name)
 // byte version
 // byte cmd {100 if we send, 101 if we receive}
 // uleb128 {size of everything after this}
-// uleb128 {size of everything after this}
+// uleb128 {size of string}
 // string
+// {
+// uleb128 {size of string}
+// string
+// } // only present if we're receiving
 
 // uleb128 is
 // byte 0x80 | <low 7 bits>
@@ -260,7 +282,6 @@ struct sock
   static void close_all_socks()
   {
     for (set<int*>::iterator i = all_socks.begin(); i != all_socks.end(); ++i) {
-//      shutdown((*i)[0], SHUT_RDWR);
       while (::close((*i)[0]) < 0)
         if (errno != EINTR)
           break;
@@ -435,6 +456,12 @@ int fork_server(vector<string> const & args)
 
 struct server
 {
+  list<map<string, shared_ptr<server> >::iterator> by_host, by_pat;
+  map<string, shared_ptr<server> >::iterator by_name;
+  static map<string, shared_ptr<server> > servers_by_host;
+  static map<string, shared_ptr<server> > servers_by_pattern;
+  static map<string, shared_ptr<server> > servers_by_name;
+  static set<shared_ptr<server> > live_servers;
   bool local;
   int pid;
   string arguments;
@@ -449,6 +476,64 @@ struct server
   ~server()
   {
     yeskill();
+  }
+  void delist()
+  {
+    vector<string> foo;
+    set_hosts(foo);
+    set_patterns(foo);
+    servers_by_name.erase(by_name);
+    by_name = 0;
+  }
+  void rename(string const & n)
+  {
+    shared_ptr<server> me = by_name->second;
+    servers_by_name.erase(by_name);
+    by_name = servers_by_name.insert(make_pair(n, me)).first;
+  }
+  void set_hosts(vector<string> const & h)
+  {
+    shared_ptr<server> me = by_name->second;
+    map<string, shared_ptr<server> >::iterator c;
+    for (list<map<string, shared_ptr<server> >::iterator>::iterator
+           i = by_host.begin(); i != by_host.end(); ++i)
+      servers_by_host.erase(*i);
+    by_host.clear();
+    for (vector<string>::const_iterator i = h.begin(); i != h.end(); ++i) {
+      c = servers_by_host.find(*i);
+      if (c != servers_by_host.end()) {
+        list<map<string, shared_ptr<server> >::iterator>::iterator j;
+        for (j = c->second->by_host.begin(); j != c->second->by_host.end(); ++j)
+          if ((*j)->first == *i) {
+            servers_by_host.erase(*j);
+            c->second->by_host.erase(j);
+          }
+      }
+      c = servers_by_host.insert(make_pair(*i, me)).first;
+      by_host.push_back(c);
+    }
+  }
+  void set_patterns(vector<string> const & p)
+  {
+    shared_ptr<server> me = by_name->second;
+    map<string, shared_ptr<server> >::iterator c;
+    for (list<map<string, shared_ptr<server> >::iterator>::iterator
+           i = by_pat.begin(); i != by_pat.end(); ++i)
+      servers_by_pattern.erase(*i);
+    by_pat.clear();
+    for (vector<string>::const_iterator i = p.begin(); i != p.end(); ++i) {
+      c = servers_by_pattern.find(*i);
+      if (c != servers_by_pattern.end()) {
+        list<map<string, shared_ptr<server> >::iterator>::iterator j;
+        for (j = c->second->by_pat.begin(); j != c->second->by_pat.end(); ++j)
+          if ((*j)->first == *i) {
+            servers_by_pattern.erase(*j);
+            c->second->by_pat.erase(j);
+          }
+      }
+      c = servers_by_pattern.insert(make_pair(*i, me)).first;
+      by_pat.push_back(c);
+    }
   }
   sock connect()
   {
@@ -485,6 +570,8 @@ struct server
   }
   void maybekill()
   {
+    if (!local)
+      return;
     int difftime = time(0) - last_conn_time;
     if (difftime > server_idle_timeout && !connection_count)
       yeskill();
@@ -512,61 +599,173 @@ struct server
   }
 };
 
-struct record
-{
-  std::string stem;
-  server srv;
-};
+map<string, shared_ptr<server> > server::servers_by_host;
+map<string, shared_ptr<server> > server::servers_by_pattern;
+map<string, shared_ptr<server> > server::servers_by_name;
+set<shared_ptr<server> > server::live_servers;
 
-list<record> servers;
-
-server * get_server(std::string const & stem)
+string getline(std::istream & in)
 {
-  std::list<record>::iterator i;
-  for (i = servers.begin(); i != servers.end(); ++i) {
-    if (stem.find(i->stem) == 0)
-      break;
+  string out;
+  char buf[256];
+  do {
+    in.getline(buf, 256);
+    int got = in.gcount()-1;
+    if (got > 0)
+      out.append(buf, got);
+  } while (in.fail() && !in.eof());
+  return out;
+}
+
+string read_server_record(std::istream & in)
+{
+  // server foobar
+  // hostname foobar.com
+  // hostname mtn.foobar.com
+  // pattern com.foobar
+  // remote 127.5.6.7:80
+  //
+  // server myproj
+  // hostname localhost
+  // local -d foo.db *
+  vector<string> hosts, patterns;
+  string name, desc;
+  bool local(false);
+  string line = getline(in);
+  while (!line.empty()) {
+    //    server     foobar
+    //    ^     ^    ^
+    //    a     b    c
+    int a = line.find_first_not_of(" \t");
+    int b = line.find_first_of(" \t", a);
+    int c = line.find_first_not_of(" \t", b);
+    string cmd = line.substr(a, b-a);
+    string arg = line.substr(c);
+    if (cmd == "server")
+      name = arg;
+    else if (cmd == "local") {
+      local = true;
+      desc = arg;
+    } else if (cmd == "remote") {
+      local = false;
+      desc = arg;
+    } else if (cmd == "host")
+      hosts.push_back(arg);
+    else if (cmd == "pattern")
+      patterns.push_back(arg);
+    line = getline(in);
   }
-  if (i == servers.end()) {
-    std::cerr<<"no server found for "<<stem<<"\n";
-    return 0;
+  if (name.empty())
+    return string();
+  shared_ptr<server> srv(new server);
+  map<string, shared_ptr<server> >::iterator
+    i = server::servers_by_name.find(name);
+  if (i != server::servers_by_name.end())
+    i->second->delist();
+  srv->by_name = server::servers_by_name.insert(make_pair(name, srv)).first;
+  srv->set_hosts(hosts);
+  srv->set_patterns(patterns);
+  if (local) {
+    srv->local = true;
+    srv->arguments = desc;
+  } else {
+    srv->local = false;
+    int c = desc.find(":");
+    if (c != desc.npos) {
+      srv->addr = desc.substr(0, c);
+      srv->port = lexical_cast<int>(desc.substr(c+1));
+    } else {
+      srv->addr = desc;
+      srv->port = 5253;
+    }
   }
-  cerr<<"found server "<<i->stem<<" for "<<stem<<"\n";
-  return &i->srv;
+  return name;
+}
+
+shared_ptr<server> get_server(string const & srv, string const & pat)
+{
+  map<string, shared_ptr<server> >::iterator i;
+  for (i = server::servers_by_host.begin();
+       i != server::servers_by_host.end(); ++i) {
+    if (srv.find(i->first) == 0) {
+      return i->second;
+    }
+  }
+  for (i = server::servers_by_pattern.begin();
+       i != server::servers_by_pattern.end(); ++i) {
+    if (pat.find(i->first) == 0) {
+      return i->second;
+    }
+  }
+  std::cerr<<"no server found for '"<<pat<<"' at '"<<srv<<"'\n";
+  return shared_ptr<server>();
 }
 
 void kill_old_servers()
 {
-  std::list<record>::iterator i;
-  for (i = servers.begin(); i != servers.end(); ++i) {
-    i->srv.maybekill();
+  set<shared_ptr<server> >::iterator i;
+  for (i = server::live_servers.begin(); i != server::live_servers.end(); ++i) {
+    (*i)->maybekill();
   }
 }
 
-bool extract_reply(buffer & buf, std::string & out)
+int extract_uleb128(char *p, int maxsize, int & out)
+{
+  out = 0;
+  int b = 0;
+  unsigned char got;
+  do {
+    if (b == maxsize)
+      return -1;
+    got = p[b];
+    out += ((int)(p[b] & 0x7f))<<(b*7);
+    ++b;
+  } while (b*7 < sizeof(int)*8-1 && (got & 0x80));
+  return b;
+}
+
+int extract_vstr(char *p, int maxsize, string & out)
+{
+  int size;
+  out.clear();
+  int chars = extract_uleb128(p, maxsize, size);
+  if (chars == -1 || chars + size > maxsize) {
+    return -1;
+  }
+  out.append(p+chars, size);
+  return chars+size;
+}
+
+bool extract_reply(buffer & buf, string & host, string & pat)
 {
   char *p;
-  int n;
+  int n, s;
   buf.getread(p, n);
   if (n < 4) return false;
-  int b = 2;
-  unsigned int psize = p[b];
-  ++b;
-  if (psize >=128) {
-    psize = psize - 128 + ((unsigned int)(p[b])<<7);
-    ++b;
+  p += 2; // first 2 bytes are header
+  n -= 2;
+  // extract size, and make sure we have the entire packet
+  int pos = extract_uleb128(p, n, s);
+  if (pos == -1 || n < s+pos) {
+    return false;
   }
-  if (n < b+psize) return false;
-  unsigned int size = p[b];
-  ++b;
-  if (size >=128) {
-    size = size - 128 + ((unsigned int)(p[b])<<7);
-    ++b;
+  // extract host vstr
+  int num = extract_vstr(p+pos, n-pos, host);
+  if (num == -1) {
+    return false;
   }
-  if (n < b+size) return false;
-  out.clear();
-  out.append(p+b, size);
-  buf.fixread(b + size);
+  pos += num;
+  // extract pattern vstr
+  num = extract_vstr(p+pos, n-pos, pat);
+  if (num == -1) {
+    cerr<<"old-style reply.\n";
+    pat = host;
+    host.clear();
+    return true;
+  }
+  pos += num;
+  buf.fixread(pos+2);
+  return true;
 }
 
 struct channel
@@ -579,10 +778,10 @@ struct channel
   bool no_server;
   buffer cbuf;
   buffer sbuf;
-  server * who;
+  shared_ptr<server> who;
   channel(sock & c): num(++counter),
    cli(c), srv(-1),
-   have_routed(false), no_server(false), who(0)
+   have_routed(false), no_server(false)
   {
     char * dat;
     int size;
@@ -656,9 +855,9 @@ struct channel
     if (c > 0 && FD_ISSET(c, &rd)) {
       if (!cli.read_to(cbuf)) c = -1;
       if (!have_routed) {
-        std::string reply;
-        if (extract_reply(cbuf, reply)) {
-          who = get_server(reply);
+        string reply_srv, reply_pat;
+        if (extract_reply(cbuf, reply_srv, reply_pat)) {
+          who = get_server(reply_srv, reply_pat);
           if (who) {
             try {
               srv = who->connect();
@@ -704,10 +903,48 @@ struct channel
 };
 int channel::counter = 0;
 
+bool reload_pending;
+
+void reload_conffile(string const & file)
+{
+  reload_pending = false;
+  cerr<<"Reloading config file...\n";
+  std::ifstream cf(file.c_str());
+  set<string> names;
+  int pos = 0;
+  while(cf) {
+    string n = read_server_record(cf);
+    if(!n.empty())
+      names.insert(n);
+  }
+  for (map<string, shared_ptr<server> >::iterator
+         i = server::servers_by_name.begin();
+       i != server::servers_by_name.end(); ++i) {
+    if (names.find(i->first) == names.end())
+      i->second->delist();
+  }
+  cerr<<"Servers:\n";
+  for (map<string, shared_ptr<server> >::iterator
+         i = server::servers_by_name.begin();
+       i != server::servers_by_name.end(); ++i) {
+    cerr<<"\t"<<i->first<<"\n";
+    list<map<string, shared_ptr<server> >::iterator>::iterator j;
+    for (j = i->second->by_host.begin(); j != i->second->by_host.end(); ++j)
+      cerr<<"\t\tHost: '"<<(*j)->first<<"'\n";
+    for (j = i->second->by_pat.begin(); j != i->second->by_pat.end(); ++j)
+      cerr<<"\t\tPattern: '"<<(*j)->first<<"'\n";
+  }
+  cerr<<"Reload complete.\n";
+}
+void sched_reload(int sig)
+{
+  reload_pending = true;
+}
+
 int main (int argc, char **argv)
 {
+  string conffile;
   {
-    char const * conffile = 0;
     int i;
     for (i = 1; i < argc; ++i) {
       if (string(argv[i]) == "-a")
@@ -717,41 +954,24 @@ int main (int argc, char **argv)
       else
         conffile = argv[i];
     }
-    if (conffile == 0 || i != argc) {
+    if (conffile.empty() || i != argc) {
       cerr<<"Usage:\n";
       cerr<<"\tusher [-a <listen-addr>] [-p <listen-port>] <config-file>\n";
       exit (1);
     }
-    std::ifstream cf(conffile);
-    int pos = 0;
-    while(cf) {
-      string stem, type;
-      cf>>stem;
-      cf>>type;
-      if (!cf)
-        break;
-      record rec;
-      rec.stem = stem;
-      if (type == "local") {
-        rec.srv.local = true;
-        rec.srv.arguments.clear();
-        while(cf.peek() != '\n')
-          rec.srv.arguments += cf.get();
-      } else if (type == "remote") {
-        rec.srv.local = false;
-        cf>>rec.srv.addr;
-        cf>>rec.srv.port;
-      } else {
-        cerr<<"Error parsing "<<conffile<<"\n";
-        exit(1);
-      }
-      cerr<<"Adding server for "<<rec.stem<<": "<<rec.srv.name()<<"\n";
-      servers.push_back(rec);
-    }
   }
+  reload_conffile(conffile);
 
 
-  signal (SIGPIPE, SIG_IGN);
+  struct sigaction sa, sa_old;
+  sa.sa_handler = &sched_reload;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  while(sigaction(SIGHUP, &sa, &sa_old) == -1 && errno == EINTR);
+  sa.sa_handler = SIG_IGN;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  while(sigaction(SIGPIPE, &sa, &sa_old) == -1 && errno == EINTR);
 
   sock h(-1);
   try {
@@ -794,7 +1014,6 @@ int main (int argc, char **argv)
         memset(&client_address, 0, l);
         sock cli = tosserr(accept(h, (struct sockaddr *)
                                      &client_address, &l), "accept()");
-//        std::cerr<<"connect from "<<inet_ntoa(client_address.sin_addr)<<"\n";
         newchan = new channel(cli);
       } catch(errstr & s) {
         cerr<<"During new connection: "<<s.name<<"\n";
@@ -821,6 +1040,8 @@ int main (int argc, char **argv)
       newchan = 0;
     }
     kill_old_servers();
+    if (reload_pending)
+      reload_conffile(conffile);
   }
   return 0;
 }

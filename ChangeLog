@@ -1,5 +1,13 @@
 2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* netsync.cc netcmd.{cc,hh}: usher_reply_cmd now has both who we
+	connected to *and* what pattern we asked for
+	* contrib/usher.cc: new file format, allow to key servers on either
+	hostname or pattern, hostname checked first
+	reload config file on SIGHUP
+
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* netsync.cc (session::process_usher_cmd): reply with who we connected
 	to (hostname or hostname:port), not what pattern we asked for.
 	* contrib/usher.cc: Update comment.

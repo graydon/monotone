@@ -2748,7 +2748,7 @@ session::process_usher_cmd(utf8 const & msg)
         L(F("Received greeting from usher: %s") % msg().substr(1));
     }
   netcmd cmdout;
-  cmdout.write_usher_reply_cmd(peer_id);
+  cmdout.write_usher_reply_cmd(peer_id, our_include_pattern);
   write_netcmd_and_try_flush(cmdout);
   L(F("Sent reply."));
   return true;

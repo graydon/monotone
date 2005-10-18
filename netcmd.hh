@@ -168,7 +168,7 @@ public:
                              id const & item);
 
   void read_usher_cmd(utf8 & greeting) const;
-  void write_usher_reply_cmd(utf8 const & pattern);
+  void write_usher_reply_cmd(utf8 const & server, utf8 const & pattern);
 
 };
 
