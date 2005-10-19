@@ -1167,19 +1167,19 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
   get_base_revision(app, base_rid, base_roster);
   get_work_cset(work);
 
-  vector<file_path> paths;
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    paths.push_back(file_path_external(*i));
-
+  path_set paths;
   if (app.unknown)
     {
-      path_set unknown, ignored;
-      find_unknown_and_ignored(app, false, args, unknown, ignored);
-      paths.insert(paths.end(), unknown.begin(), unknown.end());
+      path_set ignored;
+      find_unknown_and_ignored(app, false, args, paths, ignored);
     }
-
-  if (paths.size() == 0)
-    return;
+  else
+    for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+      {
+        split_path sp;
+        file_path_external(*i).split(sp);
+        paths.insert(sp);
+      }
 
   build_additions(paths, base_roster, app, work);
 

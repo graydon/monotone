@@ -123,11 +123,14 @@ addition_builder::visit_file(file_path const & path)
 }
 
 void
-build_additions(vector<file_path> const & paths, 
+build_additions(path_set const & paths, 
                 roster_t const & base_roster,
                 app_state & app,
                 cset & work)
 {
+  if (paths.empty())
+    return;
+  
   temp_node_id_source nis;
   roster_t new_roster(base_roster);
   editable_roster_base er(new_roster, nis);
@@ -144,9 +147,9 @@ build_additions(vector<file_path> const & paths,
   I(new_roster.has_root());
   addition_builder build(app, new_roster, er);
 
-  for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     // NB.: walk_tree will handle error checking for non-existent paths
-    walk_tree(*i, build);
+    walk_tree(file_path(*i), build);
 
   work.clear();
   make_cset(base_roster, new_roster, work);
@@ -158,6 +161,9 @@ build_deletions(path_set const & paths,
                 app_state & app,
                 cset & work)
 {
+  if (paths.empty())
+    return;
+  
   temp_node_id_source nis;
   roster_t new_roster(base_roster);
   editable_roster_base er(new_roster, nis);

@@ -61,7 +61,7 @@ struct file_itemizer : public tree_walker
 };
 
 void 
-build_additions(std::vector<file_path> const & args,
+build_additions(path_set const & targets,
                 roster_t const & base_roster,
                 app_state & app,
                 cset & work);
