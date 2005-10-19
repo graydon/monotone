@@ -1006,36 +1006,40 @@ automate_get_manifest(std::vector<utf8> args,
                  app_state & app,
                  std::ostream & output)
 {
-/*
-// FIXME ROSTERS: disabled until rewritten to use rosters
   if (args.size() > 1)
     throw usage(help_name);
 
-  manifest_data dat;
-  manifest_id ident;
-
   if (args.size() == 0)
     {
-      revision_set rev;
-      manifest_map m_old, m_new;
-
+      L(F("dumping working copy manifest"));
       app.require_working_copy();
-      calculate_unrestricted_revision(app, rev, m_old, m_new);
 
-      calculate_ident(m_new, ident);
-      write_manifest_map(m_new, dat);
+      // FIXME: this should be refactored
+      revision_id base_rid;
+      roster_t roster;
+      get_base_revision(app, base_rid, roster);
+      temp_node_id_source nis;
+      editable_roster_base er(roster, nis);
+      cset work;
+      get_work_cset(work);
+      work.apply_to(er);
+
+      data dat;
+      write_manifest_of_roster(roster, dat);
+      output.write(dat().data(), dat().size());
     }
   else
     {
+      I(false);
+/*
+// FIXME ROSTERS: disabled until rewritten to use rosters
+      L(F("dumping manifest %s\n") % ident);
       ident = manifest_id(idx(args, 0)());
       N(app.db.manifest_version_exists(ident),
         F("no manifest version %s found in database") % ident);
       app.db.get_manifest_version(ident, dat);
-    }
-
-  L(F("dumping manifest %s\n") % ident);
-  output.write(dat.inner()().data(), dat.inner()().size());
 */
+    }
 }
 
 // Name: get_file
