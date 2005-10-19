@@ -272,10 +272,8 @@ make_cset(roster_t const & from,
           cset & cs);
 
 void 
-build_restricted_roster(path_set const & paths,
-                        roster_t const & r_old, 
-                        roster_t & r_new, 
-                        app_state & app);
+update_restricted_roster_from_filesystem(roster_t & ros, 
+                                         app_state & app);
 
 void
 extract_roster_path_set(roster_t const & ros, 

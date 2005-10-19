@@ -488,9 +488,6 @@ write_data(system_path const & path,
 
 }
 
-void
-tree_walker::visit_dir(file_path const & path) {}
-
 tree_walker::~tree_walker() {}
 
 static void 
@@ -547,6 +544,12 @@ walk_tree_recursive(fs::path const & absolute,
         }
     }
 }
+
+void
+tree_walker::visit_dir(file_path const & path)
+{
+}
+
 
 // from some (safe) sub-entry of cwd
 void 
