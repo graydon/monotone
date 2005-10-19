@@ -52,6 +52,8 @@ void mkdir_p(any_path const & path);
 void make_dir_for(any_path const & p);
 
 void delete_file(any_path const & path);
+void delete_dir_shallow(any_path const & path);
+void delete_file_or_dir_shallow(any_path const & path);
 void delete_dir_recursive(any_path const & path);
 
 void move_file(any_path const & old_path,

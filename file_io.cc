@@ -206,13 +206,45 @@ make_dir_for(any_path const & p)
     }
 }
 
+static void
+do_shallow_deletion_with_sane_error_message(any_path const & p)
+{
+  fs::path fp = mkdir(p);
+  try
+    {
+      fs::remove(fp);
+    }
+  catch (fs::filesystem_error & err)
+    {
+      E(false, F("could not remove '%s'\n%s")
+        % err.path1().native_directory_string()
+        % strerror(err.native_error()));
+    }
+}
+
 void 
 delete_file(any_path const & p) 
 { 
   require_path_is_file(p,
                        F("file to delete '%s' does not exist") % p,
                        F("file to delete, '%s', is not a file but a directory") % p);
-  fs::remove(mkdir(p)); 
+  do_shallow_deletion_with_sane_error_message(p);
+}
+
+void
+delete_dir_shallow(any_path const & p)
+{
+  require_path_is_directory(p,
+                            F("directory to delete '%s' does not exist") % p,
+                            F("directory to delete, '%s', is not a directory but a file") % p);
+  do_shallow_deletion_with_sane_error_message(p);
+}
+
+void
+delete_file_or_dir_shallow(any_path const & p)
+{
+  N(path_exists(p), F("object to delete, '%s', does not exist") % p);
+  do_shallow_deletion_with_sane_error_message(p);
 }
 
 void 
