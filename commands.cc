@@ -1303,57 +1303,43 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
   
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
-
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"),
     OPT_DEPTH % OPT_BRIEF)
 {
   revision_set rs;
-  manifest_map m_old, m_new;
+  roster_t old_roster, new_roster;
   data tmp;
 
   app.require_working_copy();
-
-  calculate_restricted_revision(app, args, rs, m_old, m_new);
+  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
 
   if (global_sanity.brief)
     {
       I(rs.edges.size() == 1);
-      change_set const & changes = edge_changes(rs.edges.begin());
-      change_set::path_rearrangement const & rearrangement = changes.rearrangement;
-      change_set::delta_map const & deltas = changes.deltas;
-
-      for (path_set::const_iterator i = rearrangement.deleted_files.begin();
-           i != rearrangement.deleted_files.end(); ++i) 
+      cset const & cs = edge_changes(rs.edges.begin());
+      
+      for (std::set<split_path>::const_iterator i = cs.nodes_deleted.begin();
+           i != cs.nodes_deleted.end(); ++i) 
         cout << "dropped " << *i << endl;
 
-      for (path_set::const_iterator i = rearrangement.deleted_dirs.begin();
-           i != rearrangement.deleted_dirs.end(); ++i) 
-        cout << "dropped " << *i << "/" << endl;
-
-      for (map<file_path, file_path>::const_iterator 
-           i = rearrangement.renamed_files.begin();
-           i != rearrangement.renamed_files.end(); ++i) 
+      for (std::map<split_path, split_path>::const_iterator 
+           i = cs.nodes_renamed.begin();
+           i != cs.nodes_renamed.end(); ++i) 
         cout << "renamed " << i->first << endl 
              << "     to " << i->second << endl;
 
-      for (map<file_path, file_path>::const_iterator 
-           i = rearrangement.renamed_dirs.begin();
-           i != rearrangement.renamed_dirs.end(); ++i) 
-        cout << "renamed " << i->first << "/" << endl 
-             << "     to " << i->second << "/" << endl;
-
-      for (path_set::const_iterator i = rearrangement.added_files.begin();
-           i != rearrangement.added_files.end(); ++i) 
+      for (std::set<split_path>::const_iterator i = cs.dirs_added.begin();
+           i != cs.dirs_added.end(); ++i) 
         cout << "added   " << *i << endl;
 
-      for (change_set::delta_map::const_iterator i = deltas.begin(); 
-           i != deltas.end(); ++i) 
+      for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+           i != cs.files_added.end(); ++i) 
+        cout << "added   " << i->first << endl;
+
+      for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
+             i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i) 
         {
-          // don't bother printing patches on added files
-          if (rearrangement.added_files.find(i->first) == rearrangement.added_files.end())
-            cout << "patched " << i->first << endl;
+          cout << "patched " << i->first << endl;
         }
     }
   else
@@ -1362,7 +1348,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
       cout << endl << tmp << endl;
     }
 }
-*/
+
 
 CMD(identify, N_("working copy"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
