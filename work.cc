@@ -433,6 +433,15 @@ get_base_roster(app_state & app,
   get_base_revision(app, rid, ros, mm);
 }
 
+void
+get_current_roster(roster_t & ros, node_id_source & nis, app_state & app)
+{
+  get_base_roster(app, ros);
+  cset cs;
+  get_work_cset(cs);
+  editable_roster_base er(ros, nis);
+  cs.apply_to(es);
+}
 
 // user log file
 
