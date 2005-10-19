@@ -125,7 +125,7 @@ restrict_cset(cset const & cs,
 // Project the old_paths through r_old + work, to find the new names of the
 // paths (if they survived work)
 
-static void
+void
 remap_paths(path_set const & old_paths,
             roster_t const & r_old,
             cset const & work,
@@ -153,7 +153,6 @@ void
 get_base_roster_and_working_cset(app_state & app, 
                                  std::vector<utf8> const & args,
                                  revision_id & old_revision_id,
-                                 manifest_id & old_manifest_id,
                                  roster_t & old_roster,
                                  path_set & old_paths, 
                                  path_set & new_paths,
@@ -192,12 +191,12 @@ get_working_revision_and_rosters(app_state & app,
   rev.edges.clear();
   get_base_roster_and_working_cset(app, args, 
                                    old_revision_id,
-                                   old_manifest_id,
                                    old_roster,
                                    old_paths,
                                    new_paths, 
                                    *cs, excluded);
-  
+
+  calculate_ident(old_roster, old_manifest_id);  
   build_restricted_roster(new_paths, old_roster, new_roster, app);
   calculate_ident(new_roster, rev.new_manifest);
   L(F("new manifest_id is %s\n") % rev.new_manifest);

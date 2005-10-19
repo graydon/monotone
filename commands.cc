@@ -1151,8 +1151,7 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 static void find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const & args, 
                                       path_set & unknown, path_set & ignored);
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
+
 CMD(add, N_("working copy"), N_("[PATH]..."),
     N_("add files to working copy"), OPT_UNKNOWN)
 {
@@ -1161,11 +1160,12 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
 
   app.require_working_copy();
 
-  manifest_map m_old;
-  get_base_manifest(app, m_old);
+  revision_id base_rid;
+  roster_t base_roster;
+  cset work;
 
-  change_set::path_rearrangement work;  
-  get_path_rearrangement(work);
+  get_base_revision(app, base_rid, base_roster);
+  get_work_cset(work);
 
   vector<file_path> paths;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -1181,14 +1181,17 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
   if (paths.size() == 0)
     return;
 
-  build_additions(paths, m_old, app, work);
+  build_additions(paths, base_roster, app, work);
 
-  put_path_rearrangement(work);
+  put_work_cset(work);
 
   update_any_attrs(app);
 }
 
 static void find_missing (app_state & app, vector<utf8> const & args, path_set & missing);
+
+/*
+FIXME_ROSTERS
 
 CMD(drop, N_("working copy"), N_("[PATH]..."),
     N_("drop files from working copy"), OPT_EXECUTE % OPT_MISSING)
@@ -1656,43 +1659,43 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
     }
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
-
 static void
 ls_known (app_state & app, vector<utf8> const & args)
 {
   revision_set rs;
-  manifest_map m_old, m_new;
+  roster_t old_roster, new_roster;
   data tmp;
 
   app.require_working_copy();
 
-  calculate_restricted_revision(app, args, rs, m_old, m_new);
-
-  for (manifest_map::const_iterator p = m_new.begin(); p != m_new.end(); ++p)
+  path_set paths;
+  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
+  new_roster.extract_path_set(paths);
+  
+  for (path_set::const_iterator p = paths.begin(); p != paths.end(); ++p)
     {
-      file_path const & path(p->first);
+      file_path path(*p);
       if (app.restriction_includes(path))
-        cout << p->first << '\n';
+        cout << path << endl;
     }
 }
+
 
 static void
 find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const & args, 
                           path_set & unknown, path_set & ignored)
 {
   revision_set rev;
-  manifest_map m_old, m_new;
-  //path_set known, unknown, ignored;
+  roster_t old_roster, new_roster;
   path_set known;
 
-  calculate_restricted_revision(app, args, rev, m_old, m_new);
+  get_working_revision_and_rosters(app, args, rev, old_roster, new_roster);
+  new_roster.extract_path_set(known);
 
-  extract_path_set(m_new, known);
   file_itemizer u(app, known, unknown, ignored);
   walk_tree(file_path(), u);
 }
+
 
 static void
 ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & args)
@@ -1704,46 +1707,36 @@ ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & 
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin(); i != ignored.end(); ++i)
-      cout << *i << endl;
+      cout << file_path(*i) << endl;
   else
     for (path_set::const_iterator i = unknown.begin(); i != unknown.end(); ++i)
-      cout << *i << endl;
+      cout << file_path(*i) << endl;
 }
 
-// FIXME_ROSTERS: disabled until rewritten to use rosters
+
 static void
 find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
 {
-  revision_set rev;
-  revision_id rid;
-  manifest_id mid;
-  manifest_map man;
-  change_set::path_rearrangement work, included, excluded;
+  revision_id base_rid;
+  roster_t base_roster;
+  cset included_work, excluded_work;
   path_set old_paths, new_paths;
 
   app.require_working_copy();
 
-  get_base_revision(app, rid, mid, man);
 
-  get_path_rearrangement(work);
-  extract_path_set(man, old_paths);
-
-  path_set valid_paths(old_paths);
-  
-  extract_rearranged_paths(work, valid_paths);
-  add_intermediate_paths(valid_paths);
-  app.set_restriction(valid_paths, args); 
-
-  restrict_path_rearrangement(work, included, excluded, app);
-
-  apply_path_rearrangement(old_paths, included, new_paths);
+  get_base_roster_and_working_cset(app, args, base_rid, base_roster,
+                                   old_paths, new_paths,
+                                   included_work, excluded_work);
 
   for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
     {
-      if (app.restriction_includes(*i) && !path_exists(*i))     
+      file_path fp(*i);
+      if (app.restriction_includes(fp) && !path_exists(fp))
         missing.insert(*i);
     }
 }
+
 
 static void
 ls_missing (app_state & app, vector<utf8> const & args)
@@ -1753,10 +1746,10 @@ ls_missing (app_state & app, vector<utf8> const & args)
 
   for (path_set::const_iterator i = missing.begin(); i != missing.end(); ++i)
     {
-      cout << *i << endl;
+      cout << file_path(*i) << endl;
     }
 }
-*/
+
 
 CMD(list, N_("informative"), 
     N_("certs ID\n"
@@ -1791,8 +1784,6 @@ CMD(list, N_("informative"),
     ls_tags(name, app, removed);
   else if (idx(args, 0)() == "vars")
     ls_vars(name, app, removed);
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
   else if (idx(args, 0)() == "known")
     ls_known(app, removed);
   else if (idx(args, 0)() == "unknown")
@@ -1801,7 +1792,6 @@ CMD(list, N_("informative"),
     ls_unknown_or_ignored(app, true, removed);
   else if (idx(args, 0)() == "missing")
     ls_missing(app, removed);
-*/
   else
     throw usage(name);
 }

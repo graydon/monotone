@@ -13,6 +13,7 @@
 #include "basic_io.hh"
 #include "cset.hh"
 #include "file_io.hh"
+#include "platform.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "vocab.hh"
@@ -40,23 +41,19 @@ file_itemizer::visit_file(file_path const & path)
     }
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
 
 class 
 addition_builder 
   : public tree_walker
 {
   app_state & app;
-  change_set::path_rearrangement & pr;
-  path_set ps;
-  attr_map & am_attrs;
+  roster_t & ros;
+  editable_roster_base & er;
 public:
-  addition_builder(app_state & a, 
-                   change_set::path_rearrangement & pr,
-                   path_set & p,
-                   attr_map & am)
-    : app(a), pr(pr), ps(p), am_attrs(am)
+  addition_builder(app_state & a,
+                   roster_t & r,
+                   editable_roster_base & e)
+    : app(a), ros(r), er(e)
   {}
   virtual void visit_file(file_path const & path);
 };
@@ -70,88 +67,71 @@ addition_builder::visit_file(file_path const & path)
       return;
     }  
 
-  if (ps.find(path) != ps.end())
+  split_path sp;
+  path.split(sp);
+  if (ros.has_node(sp))
     {
       P(F("skipping %s, already accounted for in working copy\n") % path);
       return;
     }
 
   P(F("adding %s to working copy add set\n") % path);
-  ps.insert(path);
-  pr.added_files.insert(path);
+
+  node_id nid = the_null_node;
+  switch (get_path_status(path))
+    {
+    case path::nonexistent:
+      return;
+    case path::file:
+      {
+        file_id ident;
+        I(ident_existing_file(path, ident, app.lua));
+        nid = er.create_file_node(ident);
+      }
+        break;
+    case path::directory:
+      er.create_dir_node();
+      break;
+    }
+
+  I(nid != the_null_node);
+  er.attach_node(nid, sp);
 
   map<string, string> attrs;
   app.lua.hook_init_attributes(path, attrs);
   if (attrs.size() > 0)
-    am_attrs[path] = attrs;
+    {
+      for (map<string, string>::const_iterator i = attrs.begin();
+           i != attrs.end(); ++i)
+        {
+          er.set_attr(sp, attr_key(i->first), attr_value(i->second));
+        }
+    }
 }
 
 void
 build_additions(vector<file_path> const & paths, 
-                manifest_map const & man,
+                roster_t const & base_roster,
                 app_state & app,
-                change_set::path_rearrangement & pr)
+                cset & work)
 {
-  change_set::path_rearrangement pr_new, pr_concatenated;
-  change_set cs_new;
+  temp_node_id_source nis;
+  roster_t new_roster(base_roster);
+  editable_roster_base er(new_roster, nis);
 
-  path_set ps;
-  attr_map am_attrs;
-  extract_path_set(man, ps);
-  apply_path_rearrangement(pr, ps);    
-
-  addition_builder build(app, pr_new, ps, am_attrs);
+  work.apply_to(er);
+  addition_builder build(app, new_roster, er);
 
   for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     // NB.: walk_tree will handle error checking for non-existent paths
     walk_tree(*i, build);
 
-  if (am_attrs.size () > 0)
-    {
-      // add .mt-attrs to manifest if not already registered
-      file_path attr_path;
-      get_attr_path(attr_path);
-
-      if ((man.find(attr_path) == man.end ()) && 
-          (pr_new.added_files.find(attr_path) == pr_new.added_files.end()))
-        {
-          P(F("registering %s file in working copy\n") % attr_path);
-          pr.added_files.insert(attr_path);
-        }
-
-      // read attribute map if available
-      data attr_data;
-      attr_map attrs;
-
-      if (path_exists(attr_path))
-        {
-          read_data(attr_path, attr_data);
-          read_attr_map(attr_data, attrs);
-        }
-
-      // add new attribute entries
-      for (attr_map::const_iterator i = am_attrs.begin();
-           i != am_attrs.end(); ++i)
-        {
-          map<string, string> m = i->second;
-          
-          for (map<string, string>::const_iterator j = m.begin();
-               j != m.end(); ++j)
-            {
-              P(F("adding attribute '%s' on file %s to %s\n") % j->first % i->first % attr_file_name);
-              attrs[i->first][j->first] = j->second;
-            }
-        }
-
-      // write out updated map
-      write_attr_map(attr_data, attrs);
-      write_data(attr_path, attr_data);
-    }
-
-  normalize_path_rearrangement(pr_new);
-  concatenate_rearrangements(pr, pr_new, pr_concatenated);
-  pr = pr_concatenated;
+  work.clear();
+  make_cset(base_roster, new_roster, work);
 }
+
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 
 static bool
 known_path(file_path const & p,
@@ -750,6 +730,8 @@ bool get_attribute_from_working_copy(file_path const & file,
 
 void update_any_attrs(app_state & app)
 {
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
   file_path fp;
   data attr_data;
   attr_map attr;
@@ -761,4 +743,5 @@ void update_any_attrs(app_state & app)
   read_data(fp, attr_data);
   read_attr_map(attr_data, attr);
   apply_attributes(app, attr);
+*/
 }

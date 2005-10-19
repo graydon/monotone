@@ -1670,6 +1670,7 @@ namespace
 void
 make_cset(roster_t const & from, roster_t const & to, cset & cs)
 {
+  cs.clear();
   map<node_id, node_t>::const_iterator from_i, to_i;
   parallel_state state = start;
   while (parallel_iter_incr(state, 

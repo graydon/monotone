@@ -58,14 +58,15 @@ struct file_itemizer : public tree_walker
     : app(a), known(k), unknown(u), ignored(i) {}
   virtual void file_itemizer::visit_file(file_path const & path);
 };
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
 
 void 
 build_additions(std::vector<file_path> const & args,
-               manifest_map const & m_old,
-               app_state & app,
-               change_set::path_rearrangement & pr);
+                roster_t const & base_roster,
+                app_state & app,
+                cset & work);
+
+/*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 
 void 
 build_deletions(std::vector<file_path> const & args,
