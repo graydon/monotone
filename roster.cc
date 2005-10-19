@@ -1719,13 +1719,10 @@ inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
 }
 
 void 
-build_restricted_roster(path_set const & paths,
-                        roster_t const & r_old, 
-                        roster_t & r_new, 
-                        app_state & app)
+update_restricted_roster_from_filesystem(roster_t & ros, 
+                                         app_state & app)
 {
   temp_node_id_source nis;
-  r_new = r_old;
   inodeprint_map ipm;
 
   if (in_inodeprints_mode())
@@ -1740,15 +1737,23 @@ build_restricted_roster(path_set const & paths,
   // this code is speed critical, hence the use of inode fingerprints so be
   // careful when making changes in here and preferably do some timing tests
 
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+  if (!ros.has_root())
+    return;
+
+  node_map const & nodes = ros.all_nodes();
+  for (node_map::const_iterator i = nodes.begin();
+       i != nodes.end(); ++i)
     {
-      node_t new_n = r_new.get_node(*i);
+      node_id nid = i->first;
+      node_t node = i->second;
 
       // Only analyze files further, not dirs.
-      if (! is_file_t(new_n))
+      if (! is_file_t(node))
         continue;
 
-      file_path fp(*i);
+      split_path sp;
+      ros.get_name(nid, sp);
+      file_path fp(sp);
 
       // Only analyze restriction-included files.
       if (!app.restriction_includes(fp))
@@ -1759,8 +1764,8 @@ build_restricted_roster(path_set const & paths,
       if (inodeprint_unchanged(ipm, fp))
         continue;
 
-      file_t new_f = downcast_to_file_t(new_n);
-      if (!ident_existing_file(fp, new_f->content, app.lua))
+      file_t file = downcast_to_file_t(node);
+      if (!ident_existing_file(fp, file->content, app.lua))
         {
           W(F("missing %s") % (fp));
           missing_files++;
@@ -1773,23 +1778,24 @@ build_restricted_roster(path_set const & paths,
       "'monotone drop FILE' to remove it permanently, or\n"
       "'monotone revert FILE' to restore it\n")
     % missing_files);
-
 }
 
 void
 roster_t::extract_path_set(path_set & paths) const
 {
   paths.clear();
-  I(has_root());
-  for (dfs_iter i(root_dir); !i.finished(); ++i)
+  if (has_root())
     {
-      node_t curr = *i;
-      split_path pth;
-      get_name(curr->self, pth);
-      if (pth.size() == 1)
-        I(null_name(idx(pth,0)));
-      else
-        paths.insert(pth);
+      for (dfs_iter i(root_dir); !i.finished(); ++i)
+        {
+          node_t curr = *i;
+          split_path pth;
+          get_name(curr->self, pth);
+          if (pth.size() == 1)
+            I(null_name(idx(pth,0)));
+          else
+            paths.insert(pth);
+        }
     }
 }
 

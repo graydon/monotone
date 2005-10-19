@@ -63,7 +63,44 @@ public:
   {}
   virtual void visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
+  void add_node_for(split_path const & sp);
 };
+
+void 
+addition_builder::add_node_for(split_path const & sp)
+{
+  file_path path(sp);
+
+  node_id nid = the_null_node;
+  switch (get_path_status(path))
+    {
+    case path::nonexistent:
+      return;
+    case path::file:
+      {
+        file_id ident;
+        I(ident_existing_file(path, ident, app.lua));
+        nid = er.create_file_node(ident);
+      }
+      break;
+    case path::directory:
+      nid = er.create_dir_node();
+      break;
+    }
+  
+  I(nid != the_null_node);
+  er.attach_node(nid, sp);
+
+  map<string, string> attrs;
+  app.lua.hook_init_attributes(path, attrs);
+  if (attrs.size() > 0)
+    {
+      for (map<string, string>::const_iterator i = attrs.begin();
+           i != attrs.end(); ++i)
+        er.set_attr(sp, attr_key(i->first), attr_value(i->second));
+    }
+}
+
 
 void 
 addition_builder::visit_dir(file_path const & path)
@@ -90,36 +127,21 @@ addition_builder::visit_file(file_path const & path)
 
   P(F("adding %s to working copy add set\n") % path);
 
-  node_id nid = the_null_node;
-  switch (get_path_status(path))
+  split_path dirname, prefix;
+  path_component basename;
+  dirname_basename(sp, dirname, basename);
+  I(ros.has_root());
+  for (split_path::const_iterator i = dirname.begin(); i != dirname.end();
+       ++i)
     {
-    case path::nonexistent:
-      return;
-    case path::file:
-      {
-        file_id ident;
-        I(ident_existing_file(path, ident, app.lua));
-        nid = er.create_file_node(ident);
-      }
-        break;
-    case path::directory:
-      nid = er.create_dir_node();
-      break;
+      prefix.push_back(*i);
+      if (i == dirname.begin())
+        continue;
+      if (!ros.has_node(prefix))
+        add_node_for(prefix);
     }
 
-  I(nid != the_null_node);
-  er.attach_node(nid, sp);
-
-  map<string, string> attrs;
-  app.lua.hook_init_attributes(path, attrs);
-  if (attrs.size() > 0)
-    {
-      for (map<string, string>::const_iterator i = attrs.begin();
-           i != attrs.end(); ++i)
-        {
-          er.set_attr(sp, attr_key(i->first), attr_value(i->second));
-        }
-    }
+  add_node_for(sp);
 }
 
 void
