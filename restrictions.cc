@@ -197,7 +197,13 @@ get_working_revision_and_rosters(app_state & app,
                                    *cs, excluded);
 
   calculate_ident(old_roster, old_manifest_id);  
-  build_restricted_roster(new_paths, old_roster, new_roster, app);
+
+  temp_node_id_source nis;
+  new_roster = old_roster;
+  editable_roster_base er(new_roster, nis);
+  cs->apply_to(er);
+
+  update_restricted_roster_from_filesystem(new_roster, app);
   calculate_ident(new_roster, rev.new_manifest);
   L(F("new manifest_id is %s\n") % rev.new_manifest);
   

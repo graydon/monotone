@@ -1718,7 +1718,6 @@ find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
 
   app.require_working_copy();
 
-
   get_base_roster_and_working_cset(app, args, base_rid, base_roster,
                                    old_paths, new_paths,
                                    included_work, excluded_work);
