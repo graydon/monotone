@@ -600,7 +600,7 @@ function get_preferred_merge3_command (tbl)
          cmd = merge3_emacs_cmd ("emacs", lfile, afile, rfile, outfile) 
       end
    elseif string.find(editor, "vim") ~= nil then
-      io.write (string.format("\nWARNING: 'vim' was choosen to perform external 2-way merge.\n"..
+      io.write (string.format("\nWARNING: 'vim' was choosen to perform external 3-way merge.\n"..
           "You should merge all changes to *LEFT* file due to limitation of program\n"..
           "arguments.  The order of the files is ancestor, left, right.\n\n")) 
       if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then 

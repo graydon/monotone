@@ -1,3 +1,7 @@
+2005-10-19  Matthew A. Nicholson  <matt@matt-land.com>
+
+	* std_hooks.lua: Minor correction to vim warning during 3-way merge.
+
 2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/usher.cc: Update comment about client versions
