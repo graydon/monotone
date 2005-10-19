@@ -60,17 +60,11 @@ struct file_itemizer : public tree_walker
   virtual void visit_file(file_path const & path);
 };
 
-void 
-build_additions(path_set const & targets,
-                roster_t const & base_roster,
-                app_state & app,
-                cset & work);
+void
+perform_additions(path_set const & targets, app_state & app);
 
-void 
-build_deletions(path_set const & targets,
-                roster_t const & base_roster,
-                app_state & app,
-                cset & work);
+void
+perform_deletions(path_set const & targets, app_state & app);
 
 /*
 // FIXME_ROSTERS: disabled until rewritten to use rosters
@@ -100,12 +94,17 @@ void get_base_revision(app_state & app,
                        revision_id & rid,
                        roster_t & ros,
                        marking_map & mm);
-void get_base_revision(app_state & app, 
-                       revision_id & rid,
-                       roster_t & ros);
+void get_base_revision(revision_id & rid,
+                       roster_t & ros,
+                       app_state & app);
 void get_base_roster(app_state & app, roster_t & ros);
 
 void get_current_roster(roster_t & ros, node_id_source & nis, app_state & app);
+
+void get_base_and_current_roster(roster_t & base_roster,
+                                 roster_t & current_roster,
+                                 node_id_source & nis,
+                                 app_state & app);
 
 // the "user log" is a file the user can edit as they program to record
 // changes they make to their source code. Upon commit the file is read

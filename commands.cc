@@ -1160,12 +1160,6 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
 
   app.require_working_copy();
 
-  roster_t base_roster;
-  cset work;
-
-  get_base_roster(app, base_roster);
-  get_work_cset(work);
-
   path_set paths;
   if (app.unknown)
     {
@@ -1180,11 +1174,7 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
         paths.insert(sp);
       }
 
-  build_additions(paths, base_roster, app, work);
-
-  put_work_cset(work);
-
-  update_any_attrs(app);
+  perform_additions(paths, app);
 }
 
 static void find_missing (app_state & app,
@@ -1198,12 +1188,6 @@ CMD(drop, N_("working copy"), N_("[PATH]..."),
 
   app.require_working_copy();
 
-  roster_t base_roster;
-  cset work;
-  
-  get_base_roster(app, base_roster);
-  get_work_cset(work);
-
   path_set paths;
   if (app.missing)
     find_missing(app, args, paths);
@@ -1215,11 +1199,7 @@ CMD(drop, N_("working copy"), N_("[PATH]..."),
         paths.insert(sp);
       }
 
-  build_deletions(paths, base_roster, app, work);
-
-  put_work_cset(work);
-
-  update_any_attrs(app);
+  perform_deletions(paths, app);
 }
 
 ALIAS(rm, drop);

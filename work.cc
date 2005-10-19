@@ -145,19 +145,14 @@ addition_builder::visit_file(file_path const & path)
 }
 
 void
-build_additions(path_set const & paths, 
-                roster_t const & base_roster,
-                app_state & app,
-                cset & work)
+perform_additions(path_set const & paths, app_state & app)
 {
   if (paths.empty())
     return;
   
   temp_node_id_source nis;
-  roster_t new_roster(base_roster);
-  editable_roster_base er(new_roster, nis);
-
-  work.apply_to(er);
+  roster_t base_roster, new_roster;
+  get_base_and_current_roster(base_roster, new_roster, nis, app);
 
   if (!new_roster.has_root())
     {
@@ -173,24 +168,21 @@ build_additions(path_set const & paths,
     // NB.: walk_tree will handle error checking for non-existent paths
     walk_tree(file_path(*i), build);
 
-  work.clear();
-  make_cset(base_roster, new_roster, work);
+  cset new_work;
+  make_cset(base_roster, new_roster, new_work);
+  put_work_cset(new_work);
+  update_any_attrs(new_work);
 }
 
 void
-build_deletions(path_set const & paths, 
-                roster_t const & base_roster,
-                app_state & app,
-                cset & work)
+perform_deletions(path_set const & paths, app_state & app)
 {
   if (paths.empty())
     return;
   
   temp_node_id_source nis;
-  roster_t new_roster(base_roster);
-  editable_roster_base er(new_roster, nis);
-
-  work.apply_to(er);
+  roster_t base_roster, new_roster;
+  get_base_and_current_roster(base_roster, current_roster, nis, app);
 
   // we traverse the the paths backwards, so that we always hit deep paths
   // before shallow paths (because path_set is lexicographically sorted).
@@ -215,16 +207,16 @@ build_deletions(path_set const & paths,
                 F("cannot remove %s/, it is not empty") % name);
             }
           P(F("adding %s to working copy delete set\n") % name);
-          node_id nid = new_roster.detach_node(*i);
-          I(nid == n->self);
-          new_roster.drop_detached_node(nid);
+          new_roster.drop_detached_node(new_roster.detach_node(*i));
           if (app.execute && path_exists(name))
             delete_file_or_dir_shallow(name);
         }
     }
 
-  work.clear();
-  make_cset(base_roster, new_roster, work);
+  cset new_work;
+  make_cset(base_roster, new_roster, new_work);
+  put_work_cset(new_work);
+  update_any_attrs(app);
 }
 
 /*
@@ -440,7 +432,21 @@ get_current_roster(roster_t & ros, node_id_source & nis, app_state & app)
   cset cs;
   get_work_cset(cs);
   editable_roster_base er(ros, nis);
-  cs.apply_to(es);
+  cs.apply_to(er);
+}
+
+void
+get_base_and_current_roster(roster_t & base_roster,
+                            roster_t & current_roster,
+                            node_id_source & nis,
+                            app_state & app)
+{
+  get_base_roster(app, base_roster);
+  current_roster = base_roster;
+  cset cs;
+  get_work_cset(cs);
+  editable_roster_base er(current_roster, nis);
+  cs.apply_to(er);
 }
 
 // user log file
