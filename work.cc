@@ -154,6 +154,8 @@ perform_additions(path_set const & paths, app_state & app)
   roster_t base_roster, new_roster;
   get_base_and_current_roster(base_roster, new_roster, nis, app);
 
+  editable_roster_base er(new_roster, nis);
+
   if (!new_roster.has_root())
     {
       split_path root;
@@ -171,7 +173,7 @@ perform_additions(path_set const & paths, app_state & app)
   cset new_work;
   make_cset(base_roster, new_roster, new_work);
   put_work_cset(new_work);
-  update_any_attrs(new_work);
+  update_any_attrs(app);
 }
 
 void
@@ -182,7 +184,7 @@ perform_deletions(path_set const & paths, app_state & app)
   
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
-  get_base_and_current_roster(base_roster, current_roster, nis, app);
+  get_base_and_current_roster(base_roster, new_roster, nis, app);
 
   // we traverse the the paths backwards, so that we always hit deep paths
   // before shallow paths (because path_set is lexicographically sorted).

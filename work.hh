@@ -94,9 +94,9 @@ void get_base_revision(app_state & app,
                        revision_id & rid,
                        roster_t & ros,
                        marking_map & mm);
-void get_base_revision(revision_id & rid,
-                       roster_t & ros,
-                       app_state & app);
+void get_base_revision(app_state & app,
+                       revision_id & rid,
+                       roster_t & ros);
 void get_base_roster(app_state & app, roster_t & ros);
 
 void get_current_roster(roster_t & ros, node_id_source & nis, app_state & app);
