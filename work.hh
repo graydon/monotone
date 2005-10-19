@@ -66,14 +66,14 @@ build_additions(std::vector<file_path> const & args,
                 app_state & app,
                 cset & work);
 
+void 
+build_deletions(path_set const & targets,
+                roster_t const & base_roster,
+                app_state & app,
+                cset & work);
+
 /*
 // FIXME_ROSTERS: disabled until rewritten to use rosters
-
-void 
-build_deletions(std::vector<file_path> const & args,
-               manifest_map const & m_old,
-                app_state & app,
-               change_set::path_rearrangement & pr);
 
 void 
 build_rename(file_path const & src,

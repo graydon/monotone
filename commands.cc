@@ -1188,10 +1188,8 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
   update_any_attrs(app);
 }
 
-static void find_missing (app_state & app, vector<utf8> const & args, path_set & missing);
-
-/*
-FIXME_ROSTERS
+static void find_missing (app_state & app,
+                          vector<utf8> const & args, path_set & missing);
 
 CMD(drop, N_("working copy"), N_("[PATH]..."),
     N_("drop files from working copy"), OPT_EXECUTE % OPT_MISSING)
@@ -1201,31 +1199,35 @@ CMD(drop, N_("working copy"), N_("[PATH]..."),
 
   app.require_working_copy();
 
-  manifest_map m_old;
-  get_base_manifest(app, m_old);
+  revision_id base_rid;
+  roster_t base_roster;
+  cset work;
+  
+  get_base_revision(app, base_rid, base_roster);
+  get_work_cset(work);
 
-  change_set::path_rearrangement work;
-  get_path_rearrangement(work);
-
-  vector<file_path> paths;
+  path_set paths;
   if (app.missing)
-    {
-      set<file_path> missing;
-      find_missing(app, args, missing);
-      paths.insert(paths.end(), missing.begin(), missing.end());
-    }
+    find_missing(app, args, paths);
+  else
+    for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+      {
+        split_path sp;
+        file_path_external(*i).split(sp);
+        paths.insert(sp);
+      }
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    paths.push_back(file_path_external(*i));
+  build_deletions(paths, base_roster, app, work);
 
-  build_deletions(paths, m_old, app, work);
-
-  put_path_rearrangement(work);
+  put_work_cset(work);
 
   update_any_attrs(app);
 }
 
 ALIAS(rm, drop);
+
+/*
+FIXME_ROSTERS
 
 CMD(rename, N_("working copy"), N_("SRC DST"),
     N_("rename entries in the working copy"),

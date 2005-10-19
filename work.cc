@@ -152,103 +152,53 @@ build_additions(vector<file_path> const & paths,
   make_cset(base_roster, new_roster, work);
 }
 
+void
+build_deletions(path_set const & paths, 
+                roster_t const & base_roster,
+                app_state & app,
+                cset & work)
+{
+  temp_node_id_source nis;
+  roster_t new_roster(base_roster);
+  editable_roster_base er(new_roster, nis);
+
+  work.apply_to(er);
+
+  // we traverse the the paths backwards, so that we always hit deep paths
+  // before shallow paths (because path_set is lexicographically sorted).
+  // this is important in cases like
+  //    monotone drop foo/bar foo foo/baz
+  // where, when processing 'foo', we need to know whether or not it is empty
+  // (and thus legal to remove)
+
+  for (path_set::const_reverse_iterator i = paths.rbegin(); i != paths.rend(); ++i)
+    {
+      file_path name(*i);
+
+      if (!new_roster.has_node(*i))
+        P(F("skipping %s, not currently tracked\n") % name);
+      else
+        {
+          node_t n = new_roster.get_node(*i);
+          if (is_dir_t(n))
+            {
+              dir_t d = downcast_to_dir_t(n);
+              N(d->children.empty(),
+                F("cannot remove %s/, it is not empty") % name);
+            }
+          P(F("adding %s to working copy delete set\n") % name);
+          node_id nid = new_roster.detach_node(*i);
+          I(nid == n->self);
+          new_roster.drop_detached_node(nid);
+        }
+    }
+
+  work.clear();
+  make_cset(base_roster, new_roster, work);
+}
+
 /*
 // FIXME_ROSTERS: disabled until rewritten to use rosters
-
-static bool
-known_path(file_path const & p,
-           path_set const & ps,
-           bool & path_is_directory)
-{
-  std::string path_as_dir = p.as_internal() + "/";
-  for (path_set::const_iterator i = ps.begin(); i != ps.end(); ++i)
-    {
-      if (*i == p) 
-        {
-          path_is_directory = false;
-          return true;
-        }
-      else if (i->as_internal().find(path_as_dir) == 0)
-        {
-          path_is_directory = true;
-          return true;
-        }
-    }
-  return false;
-}
-
-void
-build_deletions(vector<file_path> const & paths, 
-                manifest_map const & man,
-                app_state & app,
-                change_set::path_rearrangement & pr)
-{
-  change_set::path_rearrangement pr_new, pr_concatenated;
-  path_set ps;
-  extract_path_set(man, ps);
-  apply_path_rearrangement(pr, ps);    
-
-  // read attribute map if available
-  file_path attr_path;
-  get_attr_path(attr_path);
-
-  data attr_data;
-  attr_map attrs;
-
-  if (path_exists(attr_path))
-  {
-    read_data(attr_path, attr_data);
-    read_attr_map(attr_data, attrs);
-  }
-
-  bool updated_attr_map = false;
-
-  for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      bool dir_p = false;
-  
-      N(!i->empty(), F("invalid path ''"));
-
-      if (! known_path(*i, ps, dir_p))
-        {
-          P(F("skipping %s, not currently tracked\n") % *i);
-          continue;
-        }
-
-      P(F("adding %s to working copy delete set\n") % *i);
-
-      if (dir_p) 
-        {
-          E(false, F("sorry -- 'drop <directory>' is currently broken.\n"
-                     "try 'find %s -type f | monotone drop -@-'\n") % (*i));
-          pr_new.deleted_dirs.insert(*i);
-        }
-      else 
-        {
-          pr_new.deleted_files.insert(*i);
-
-          // delete any associated attributes for this file
-          if (1 == attrs.erase(*i))
-            {
-              updated_attr_map = true;
-              P(F("dropped attributes for file %s from %s\n") % (*i) % attr_file_name);
-            }
-          if (app.execute && path_exists(*i))
-            delete_file(*i);
-        }
-  }
-
-  normalize_path_rearrangement(pr_new);
-  concatenate_rearrangements(pr, pr_new, pr_concatenated);
-  pr = pr_concatenated;
-
-  // write out updated map if necessary
-  if (updated_attr_map)
-    {
-      write_attr_map(attr_data, attrs);
-      write_data(attr_path, attr_data);
-    }
-}
 
 void 
 build_rename(file_path const & src,
