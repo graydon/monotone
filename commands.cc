@@ -1160,11 +1160,10 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
 
   app.require_working_copy();
 
-  revision_id base_rid;
   roster_t base_roster;
   cset work;
 
-  get_base_revision(app, base_rid, base_roster);
+  get_base_roster(app, base_roster);
   get_work_cset(work);
 
   path_set paths;
@@ -1199,11 +1198,10 @@ CMD(drop, N_("working copy"), N_("[PATH]..."),
 
   app.require_working_copy();
 
-  revision_id base_rid;
   roster_t base_roster;
   cset work;
   
-  get_base_revision(app, base_rid, base_roster);
+  get_base_roster(app, base_roster);
   get_work_cset(work);
 
   path_set paths;
@@ -3287,6 +3285,7 @@ CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
 }
 
 /*
+// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(explicit_merge, N_("tree"),
     N_("LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
       "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"),

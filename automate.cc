@@ -1015,15 +1015,9 @@ automate_get_manifest(std::vector<utf8> args,
       app.require_working_copy();
 
       // FIXME: this should be refactored
-      revision_id base_rid;
       roster_t roster;
-      get_base_revision(app, base_rid, roster);
       temp_node_id_source nis;
-      editable_roster_base er(roster, nis);
-      cset work;
-      get_work_cset(work);
-      work.apply_to(er);
-
+      get_current_roster(roster, nis, app);
       data dat;
       write_manifest_of_roster(roster, dat);
       output.write(dat().data(), dat().size());
