@@ -1430,8 +1430,6 @@ CMD(cat, N_("informative"),
   guard.commit();
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     N_("check out a revision from database into directory.\n"
     "If a revision is given, that's the one that will be checked out.\n"
@@ -1504,42 +1502,49 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     }
 
   app.create_working_copy(dir);
-
-  transaction_guard guard(app.db);
     
   file_data data;
-  manifest_id mid;
-  manifest_map m;
-
-  app.db.get_revision_manifest(ident, mid);
+  roster_t ros;
+  marking_map mm;
+  
   put_revision_id(ident);
-
-  N(app.db.manifest_version_exists(mid),
-    F("no manifest %s found in database") % ident);
   
   L(F("checking out revision %s to directory %s\n") % ident % dir);
-  app.db.get_manifest(mid, m);
+  app.db.get_roster(ident, ros, mm);
   
-  for (manifest_map::const_iterator i = m.begin(); i != m.end(); ++i)
+  node_map const & nodes = ros.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
     {
-      N(app.db.file_version_exists(manifest_entry_id(i)),
-        F("no file %s found in database for %s")
-        % manifest_entry_id(i) % manifest_entry_path(i));
+      node_t node = i->second;
+      split_path sp;
+      ros.get_name(i->first, sp);
+      file_path path(sp);
+
+      if (is_dir_t(node))
+        {
+          mkdir_p(path);
+        }
+      else
+        {
+          file_t file = downcast_to_file_t(node);
+          N(app.db.file_version_exists(file->content),
+            F("no file %s found in database for %s")
+            % file->content % path);
       
-      file_data dat;
-      L(F("writing file %s to %s\n")
-        % manifest_entry_id(i) % manifest_entry_path(i));
-      app.db.get_file_version(manifest_entry_id(i), dat);
-      write_localized_data(manifest_entry_path(i), dat.inner(), app.lua);
+          file_data dat;
+          L(F("writing file %s to %s\n")
+            % file->content % path);
+          app.db.get_file_version(file->content, dat);
+          write_localized_data(path, dat.inner(), app.lua);
+        }
     }
-  remove_path_rearrangement();
-  guard.commit();
+  remove_work_cset();
   update_any_attrs(app);
   maybe_update_inodeprints(app);
 }
 
 ALIAS(co, checkout)
-*/
+
 
 CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
     OPT_BRANCH_NAME)
