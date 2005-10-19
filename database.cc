@@ -53,6 +53,12 @@ int const one_col = 1;
 int const any_rows = -1;
 int const any_cols = -1;
 
+namespace
+{
+  // track all open databases for close_all_databases() handler
+  set<sqlite3*> sql_contexts;
+}
+
 extern "C" {
 // some wrappers to ease migration
   const char *sqlite3_value_text_s(sqlite3_value *v);
@@ -462,7 +468,7 @@ database::version(ostream & out)
 
   calculate_schema_id(__sql, id);
 
-  sqlite3_close(__sql);
+  close();
 
   out << F("database schema version: %s") % id << endl;
 }
@@ -475,7 +481,7 @@ database::migrate()
   open();
 
   migrate_monotone_schema(__sql, __app);
-  sqlite3_close(__sql);
+  close();
 }
 
 void 
@@ -537,11 +543,7 @@ database::~database()
   // trigger destructors to finalize cached statements
   statement_cache.clear();
 
-  if (__sql)
-    {
-      sqlite3_close(__sql);
-      __sql = 0;
-    }
+  close();
 }
 
 void 
@@ -2429,10 +2431,30 @@ database::open()
 {
   int error;
 
+  I(!__sql);
+
   error = sqlite3_open(filename.as_external().c_str(), &__sql);
+
+  if (__sql)
+    {
+      I(sql_contexts.find(__sql) == sql_contexts.end());
+      sql_contexts.insert(__sql);
+    }
 
   N(!error, (F("could not open database '%s': %s")
              % filename % string(sqlite3_errmsg(__sql))));
+}
+
+void
+database::close()
+{
+  if (__sql)
+    {
+      sqlite3_close(__sql);
+      I(sql_contexts.find(__sql) != sql_contexts.end());
+      sql_contexts.erase(__sql);
+      __sql = 0;
+    }
 }
 
 
@@ -2454,4 +2476,23 @@ void
 transaction_guard::commit()
 {
   committed = true;
+}
+
+// called to avoid foo.db-journal files hanging around if we exit cleanly
+// without unwinding the stack (happens with SIGINT & SIGTERM)
+void
+close_all_databases()
+{
+  L(F("attempting to rollback and close %d databases") % sql_contexts.size());
+  for (set<sqlite3*>::iterator i = sql_contexts.begin();
+       i != sql_contexts.end(); i++)
+    {
+      // the ROLLBACK is required here, even though the sqlite docs
+      // imply that transactions are rolled back on database closure
+      int exec_err = sqlite3_exec(*i, "ROLLBACK", NULL, NULL, NULL);
+      int close_err = sqlite3_close(*i);
+
+      L(F("exec_err = %d, close_err = %d") % exec_err % close_err);
+    }
+  sql_contexts.clear();
 }

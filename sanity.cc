@@ -30,7 +30,8 @@ using boost::format;
 sanity global_sanity;
 
 sanity::sanity() : 
-  debug(false), quiet(false), relaxed(false), logbuf(0xffff), already_dumping(false)
+  debug(false), quiet(false), relaxed(false), logbuf(0xffff), 
+  already_dumping(false), clean_shutdown(false)
 {
   std::string flavour;
   get_system_flavour(flavour);

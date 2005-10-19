@@ -1,3 +1,14 @@
+2005-10-19  Matt Johnston  <matt@ucc.asn.au>
+
+	* main.cc, database.{cc,hh}: SIGINT and SIGTERM handlers
+	exit gracefully, and try to ROLLBACK+close any databases to clean up
+	.db-journal files. Added new database::close() method to be used
+	rather than sqlite_close() directly
+	* monotone.{cc,hh}, sanity.{cc.hh}: move clean_shutdown flag to
+	global_sanity
+	* tests/t_database_sig_cleanup.at: test it
+	* keys.cc: don't L() private key
+
 2005-10-19  Matthew A. Nicholson  <matt@matt-land.com>
 
 	* std_hooks.lua: Minor correction to vim warning during 3-way merge.
