@@ -234,9 +234,9 @@ delete_file(any_path const & p)
 void
 delete_dir_shallow(any_path const & p)
 {
-  require_path_is_dir(p,
-                      F("directory to delete '%s' does not exist") % p,
-                      F("directory to delete, '%s', is not a directory but a file") % p);
+  require_path_is_directory(p,
+                            F("directory to delete '%s' does not exist") % p,
+                            F("directory to delete, '%s', is not a directory but a file") % p);
   do_shallow_deletion_with_sane_error_message(p);
 }
 

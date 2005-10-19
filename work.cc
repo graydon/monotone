@@ -196,6 +196,8 @@ build_deletions(path_set const & paths,
           node_id nid = new_roster.detach_node(*i);
           I(nid == n->self);
           new_roster.drop_detached_node(nid);
+          if (app.execute && path_exists(name))
+            delete_file_or_dir_shallow(name);
         }
     }
 
