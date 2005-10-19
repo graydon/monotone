@@ -481,9 +481,10 @@ walk_tree_recursive(fs::path const & absolute,
       if (!fs::exists(entry) 
           || di->string() == "." 
           || di->string() == "..") 
-        ;                       // ignore
-      else if (fs::is_directory(entry))
-        walk_tree_recursive(entry, rel_entry, walker);
+        {
+          // ignore
+          continue;
+        }
       else
         {
           file_path p;
@@ -497,8 +498,17 @@ walk_tree_recursive(fs::path const & absolute,
               W(F("caught runtime error %s constructing file path for %s\n") 
                 % c.what() % rel_entry.string());
               continue;
-            }     
-          walker.visit_file(p);
+            }
+          if (fs::is_directory(entry))
+            {
+              walker.visit_dir(p);
+              walk_tree_recursive(entry, rel_entry, walker);
+            }
+          else
+            {
+              walker.visit_file(p);
+            }
+
         }
     }
 }

@@ -2301,23 +2301,22 @@ string_to_datetime(std::string const & s)
   I(false);
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use roster
 CMD(commit, N_("working copy"), N_("[PATH]..."), 
     N_("commit working copy to database"),
-    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR % OPT_DEPTH % OPT_EXCLUDE)
+    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % 
+    OPT_AUTHOR % OPT_DEPTH % OPT_EXCLUDE)
 {
   string log_message("");
   revision_set rs;
   revision_id rid;
-  manifest_map m_old, m_new;
+  roster_t old_roster, new_roster;
   
   app.make_branch_sticky();
   app.require_working_copy();
 
   // preserve excluded work for future commmits
-  change_set::path_rearrangement excluded_work;
-  calculate_restricted_revision(app, args, rs, m_old, m_new, excluded_work);
+  cset excluded_work;
+  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, excluded_work);
   calculate_ident(rs, rid);
 
   N(!(rs.edges.size() == 0 || 
@@ -2390,74 +2389,72 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
         edge_map::const_iterator edge = rs.edges.begin();
         I(edge != rs.edges.end());
 
-        // process manifest delta or new manifest
-        if (app.db.manifest_version_exists(rs.new_manifest))
-          {
-            L(F("skipping manifest %s, already in database\n") % rs.new_manifest);
-          }
-        else if (app.db.manifest_version_exists(edge_old_manifest(edge)))
-          {
-            L(F("inserting manifest delta %s -> %s\n")
-              % edge_old_manifest(edge)
-              % rs.new_manifest);
-            delta del;
-            diff(m_old, m_new, del);
-            dbw.consume_manifest_delta(edge_old_manifest(edge),
-                                       rs.new_manifest,
-                                       manifest_delta(del));
-          }
-        else
-          {
-            L(F("inserting full manifest %s\n") % rs.new_manifest);
-            manifest_data m_new_data;
-            write_manifest_map(m_new, m_new_data);
-            dbw.consume_manifest_data(rs.new_manifest, m_new_data);
-          }
-
         // process file deltas or new files
-        for (change_set::delta_map::const_iterator i = edge_changes(edge).deltas.begin();
-             i != edge_changes(edge).deltas.end(); ++i)
+        cset const & cs = edge_changes(edge);
+
+        for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+             i != cs.deltas_applied.end(); ++i)
           {
-            if (! delta_entry_src(i).inner()().empty() && 
-                app.db.file_version_exists(delta_entry_dst(i)))
+            file_path path(i->first);
+            file_id old_content = i->second.first;
+            file_id new_content = i->second.second;
+
+            if (app.db.file_version_exists(new_content))
               {
                 L(F("skipping file delta %s, already in database\n")
                   % delta_entry_dst(i));
               }
-            else if (! delta_entry_src(i).inner()().empty() && 
-                     app.db.file_version_exists(delta_entry_src(i)))
+            else if (app.db.file_version_exists(old_content))
               {
                 L(F("inserting delta %s -> %s\n")
-                  % delta_entry_src(i) % delta_entry_dst(i));
+                  % old_content % new_content);
                 file_data old_data;
                 data new_data;
-                app.db.get_file_version(delta_entry_src(i), old_data);
-                read_localized_data(delta_entry_path(i), new_data, app.lua);
+                app.db.get_file_version(old_content, old_data);
+                read_localized_data(path, new_data, app.lua);
                 // sanity check
                 hexenc<id> tid;
                 calculate_ident(new_data, tid);
-                N(tid == delta_entry_dst(i).inner(),
+                N(tid == new_content.inner(),
                   F("file '%s' modified during commit, aborting")
-                  % delta_entry_path(i));
+                  % path);
                 delta del;
                 diff(old_data.inner(), new_data, del);
-                dbw.consume_file_delta(delta_entry_src(i),
-                                       delta_entry_dst(i), 
+                dbw.consume_file_delta(old_content, 
+                                       new_content, 
                                        file_delta(del));
               }
             else
               {
-                L(F("inserting full version %s\n") % delta_entry_dst(i));
+                L(F("inserting full version %s\n") % new_content);
                 data new_data;
-                read_localized_data(delta_entry_path(i), new_data, app.lua);
+                read_localized_data(path, new_data, app.lua);
                 // sanity check
                 hexenc<id> tid;
                 calculate_ident(new_data, tid);
-                N(tid == delta_entry_dst(i).inner(),
+                N(tid == new_content.inner(),
                   F("file '%s' modified during commit, aborting")
-                  % delta_entry_path(i));
-                dbw.consume_file_data(delta_entry_dst(i), file_data(new_data));
+                  % path);
+                dbw.consume_file_data(new_content, file_data(new_data));
               }
+          }
+
+        for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+             i != cs.files_added.end(); ++i)
+          {
+            file_path path(i->first);
+            file_id new_content = i->second;
+
+            L(F("inserting full version %s\n") % new_content);
+            data new_data;
+            read_localized_data(path, new_data, app.lua);
+            // sanity check
+            hexenc<id> tid;
+            calculate_ident(new_data, tid);
+            N(tid == new_content.inner(),
+              F("file '%s' modified during commit, aborting")
+              % path);
+            dbw.consume_file_data(new_content, file_data(new_data));
           }
       }
 
@@ -2479,7 +2476,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   }
   
   // small race condition here...
-  put_path_rearrangement(excluded_work);
+  put_work_cset(excluded_work);
   put_revision_id(rid);
   P(F("committed revision %s\n") % rid);
   
@@ -2516,7 +2513,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
 }
 
 ALIAS(ci, commit);
-*/
+
 
 /*
 // FIXME_ROSTERS: disabled until rewritten to use rosters

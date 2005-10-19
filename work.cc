@@ -28,6 +28,12 @@ using namespace std;
 string const attr_file_name(".mt-attrs");
 
 void 
+file_itemizer::visit_dir(file_path const & path)
+{
+  this->visit_file(path);
+}
+
+void 
 file_itemizer::visit_file(file_path const & path)
 {
   split_path sp;
@@ -55,8 +61,15 @@ public:
                    editable_roster_base & e)
     : app(a), ros(r), er(e)
   {}
+  virtual void visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
 };
+
+void 
+addition_builder::visit_dir(file_path const & path)
+{
+  this->visit_file(path);
+}
 
 void 
 addition_builder::visit_file(file_path const & path)
@@ -90,7 +103,7 @@ addition_builder::visit_file(file_path const & path)
       }
         break;
     case path::directory:
-      er.create_dir_node();
+      nid = er.create_dir_node();
       break;
     }
 
@@ -120,6 +133,15 @@ build_additions(vector<file_path> const & paths,
   editable_roster_base er(new_roster, nis);
 
   work.apply_to(er);
+
+  if (!new_roster.has_root())
+    {
+      split_path root;
+      root.push_back(the_null_component);
+      er.attach_node(er.create_dir_node(), root);
+    }
+
+  I(new_roster.has_root());
   addition_builder build(app, new_roster, er);
 
   for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
