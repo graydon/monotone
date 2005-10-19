@@ -1508,7 +1508,10 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
 
       if (is_dir_t(node))
         {
-          mkdir_p(path);
+          if (sp.size() == 1)
+            I(null_name(idx(sp,0)));
+          else
+            mkdir_p(path);
         }
       else
         {
