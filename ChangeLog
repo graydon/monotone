@@ -1,3 +1,8 @@
+2005-10-19  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Make branch sticky even if update target
+	== current rid.
+
 2005-10-19  Matthew A. Nicholson  <matt@matt-land.com>
 
 	* std_hooks.lua: Minor correction to vim warning during 3-way merge.
