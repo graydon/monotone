@@ -86,13 +86,6 @@ get_branch_heads(cert_value const & branchname,
                  app_state & app,
                  std::set<revision_id> & heads);
 
-bool 
-find_common_ancestor(revision_id const & left,
-                     revision_id const & right,
-                     revision_id & anc,
-                     app_state & app);
-
-
 // we also define some common cert types, to help establish useful
 // conventions. you should use these unless you have a compelling
 // reason not to.

@@ -83,9 +83,11 @@ database::check_schema()
   string db_schema_id;  
   calculate_schema_id (__sql, db_schema_id);
   N (schema == db_schema_id,
-     F("database schemas do not match: "
-       "wanted %s, got %s. try migrating database") 
-     % schema % db_schema_id);
+     F("layout of database %s doesn't match this version of monotone\n"
+       "wanted schema %s, got %s\n"
+       "try 'monotone db migrate' to upgrade\n"
+       "(this is irreversible; you may want to make a backup copy first)")
+     % filename % schema % db_schema_id);
 }
 
 // sqlite3_value_text gives a const unsigned char * but most of the time

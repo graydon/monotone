@@ -1,3 +1,9 @@
+2005-10-20  Nathaniel Smith  <njs@pobox.com>
+
+	* cert.hh (find_common_ancestor): Remove dead declaration.
+	* database.cc (check_schema): Improve schema mismatch error
+	message.
+
 2005-10-20  Richard Levitte  <richard@levitte.org>
 
 	* tests/t_database_sig_cleanup.at: Sleep for a couple of seconds,
