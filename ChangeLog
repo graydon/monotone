@@ -1,3 +1,9 @@
+2005-10-20  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_database_sig_cleanup.at: Sleep for a couple of seconds,
+	so monotone has a chance to clean up and die properly, even on a
+	slower machine.
+
 2005-10-19  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/t_update_switch_branch.at, testsuite.at: New test.
