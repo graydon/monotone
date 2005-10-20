@@ -1700,7 +1700,81 @@ make_cset(roster_t const & from, roster_t const & to, cset & cs)
 }
 
 
-/// getting rosters from the working copy
+////////////////////////////////////////////////////////////////////
+//   merging
+////////////////////////////////////////////////////////////////////
+
+struct node_name_conflict
+{
+  node_id nid;
+  std::pair<node_id, path_component> left, right;
+};
+
+struct file_content_conflict
+{
+  node_id nid;
+  file_id left, right;
+};
+
+struct node_attr_conflict
+{
+  node_id nid;
+  attr_key key;
+  std::pair<bool, attr_value> left, right;
+};
+
+// structural conflicts:
+//   -- orphans
+//   -- directory containment loops
+//   -- multiple nodes with the same name
+// renaming the root dir allows:
+//   -- MT in root
+//   -- missing root directory
+
+struct roster_merge_result
+{
+  std::vector<node_name_conflict> node_name_conflicts;
+  std::vector<file_content_conflict> file_content_conflicts;
+  std::vector<node_attr_conflict> node_attr_conflicts;
+  // this roster is sane iff is_clean() returns true
+  roster_t roster;
+  bool is_clean();
+  void clear();
+};
+
+bool
+roster_merge_result::is_clean()
+{
+  return node_name_conflicts.empty()
+    && file_content_conflicts.empty()
+    && node_attr_conflicts.empty();
+}
+
+void
+roster_merge_result::clear()
+{
+  node_attr_conflicts.clear();
+  file_content_conflicts.clear();
+  node_attr_conflicts.clear();
+  roster = roster_t();
+}
+
+void
+roster_merge(roster_t const & left_parent,
+             marking_map const & left_marking,
+             std::set<revision_id> left_uncommon_ancestors,
+             roster_t const & right_parent,
+             marking_map const & right_marking,
+             std::set<revision_id> right_uncommon_ancestors,
+             roster_merge_result & result)
+{
+  result.clear();
+  
+}
+
+////////////////////////////////////////////////////////////////////
+//   getting rosters from the working copy
+////////////////////////////////////////////////////////////////////
 
 inline static bool
 inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path) 
