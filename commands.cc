@@ -2935,6 +2935,10 @@ CMD(update, N_("working copy"), "",
   if (r_old_id == r_chosen_id)
     {
       P(F("already up to date at %s\n") % r_old_id);
+      // do still switch the working copy branch, in case they have used
+      // update to switch branches.
+      if (!app.branch_name().empty())
+        app.make_branch_sticky();
       return;
     }
   

@@ -1,3 +1,12 @@
+2005-10-19  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_update_switch_branch.at, testsuite.at: New test.
+
+2005-10-19  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Make branch sticky even if update target
+	== current rid.
+
 2005-10-19  Matt Johnston  <matt@ucc.asn.au>
 
 	* main.cc, database.{cc,hh}: SIGINT and SIGTERM handlers
