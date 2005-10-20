@@ -152,7 +152,7 @@ perform_additions(path_set const & paths, app_state & app)
   
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
-  get_base_and_current_roster(base_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
 
   editable_roster_base er(new_roster, nis);
 
@@ -184,7 +184,7 @@ perform_deletions(path_set const & paths, app_state & app)
   
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
-  get_base_and_current_roster(base_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
 
   // we traverse the the paths backwards, so that we always hit deep paths
   // before shallow paths (because path_set is lexicographically sorted).
@@ -428,7 +428,7 @@ get_base_roster(app_state & app,
 }
 
 void
-get_current_roster(roster_t & ros, node_id_source & nis, app_state & app)
+get_current_roster_shape(roster_t & ros, node_id_source & nis, app_state & app)
 {
   get_base_roster(app, ros);
   cset cs;
@@ -438,10 +438,17 @@ get_current_roster(roster_t & ros, node_id_source & nis, app_state & app)
 }
 
 void
-get_base_and_current_roster(roster_t & base_roster,
-                            roster_t & current_roster,
-                            node_id_source & nis,
-                            app_state & app)
+get_current_restricted_roster(roster_t & ros, node_id_source & nis, app_state & app)
+{
+  get_current_roster_shape(ros, nis, app);
+  update_restricted_roster_from_filesystem(ros, app);
+}
+
+void
+get_base_and_current_roster_shape(roster_t & base_roster,
+                                  roster_t & current_roster,
+                                  node_id_source & nis,
+                                  app_state & app)
 {
   get_base_roster(app, base_roster);
   current_roster = base_roster;
@@ -449,6 +456,16 @@ get_base_and_current_roster(roster_t & base_roster,
   get_work_cset(cs);
   editable_roster_base er(current_roster, nis);
   cs.apply_to(er);
+}
+
+void
+get_base_and_current_restricted_roster(roster_t & base_roster,
+                                       roster_t & current_roster,
+                                       node_id_source & nis,
+                                       app_state & app)
+{
+  get_base_and_current_roster_shape(base_roster, current_roster, nis, app);
+  update_restricted_roster_from_filesystem(current_roster, app);
 }
 
 // user log file
