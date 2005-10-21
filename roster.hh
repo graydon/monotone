@@ -175,9 +175,10 @@ public:
   // editable_tree operations
   node_id detach_node(split_path const & src);
   void drop_detached_node(node_id n);
-  node_id create_dir_node(node_id_source & nid);
+  node_id create_dir_node(node_id_source & nis);
   node_id create_file_node(file_id const & content,
-                           node_id_source & nid);
+                           node_id_source & nis);
+  void insert_node(node_t n);
   void attach_node(node_id n, split_path const & dst);
   void apply_delta(split_path const & pth, 
                    file_id const & old_id, 
