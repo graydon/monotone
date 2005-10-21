@@ -23,6 +23,7 @@ AT_CHECK(MONOTONE --rcfile=wait.lua --branch=testbranch commit --message=blah-bl
 AT_CHECK(sleep 2, [], [ignore], [ignore])
 AT_CHECK(test -f test.db-journal, [], [ignore], [ignore])
 AT_CHECK(kill -TERM `cat monotone_commit.pid`, [], [ignore], [ignore])
+AT_CHECK(sleep 2, [], [ignore], [ignore])
 AT_CHECK(test -f test.db-journal, [1], [ignore], [ignore])
 
 
@@ -31,6 +32,7 @@ AT_CHECK(MONOTONE --rcfile=wait.lua --branch=testbranch commit --message=blah-bl
 AT_CHECK(sleep 2, [], [ignore], [ignore])
 AT_CHECK(test -f test.db-journal, [], [ignore], [ignore])
 AT_CHECK(kill -INT `cat monotone_commit.pid`, [], [ignore], [ignore])
+AT_CHECK(sleep 2, [], [ignore], [ignore])
 AT_CHECK(test -f test.db-journal, [1], [ignore], [ignore])
 
 

@@ -1,3 +1,7 @@
+2005-10-22  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_database_sig_cleanup.at: Two more sleeps that I forgot.
+
 2005-10-20  Nathaniel Smith  <njs@pobox.com>
 
 	* cert.hh (find_common_ancestor): Remove dead declaration.
