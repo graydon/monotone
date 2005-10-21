@@ -1017,7 +1017,7 @@ automate_get_manifest(std::vector<utf8> args,
       // FIXME: this should be refactored
       roster_t roster;
       temp_node_id_source nis;
-      get_current_roster(roster, nis, app);
+      get_current_restricted_roster(roster, nis, app);
       data dat;
       write_manifest_of_roster(roster, dat);
       output.write(dat().data(), dat().size());
