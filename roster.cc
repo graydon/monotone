@@ -660,7 +660,7 @@ roster_t::create_file_node(file_id const & content, node_id_source & nis)
   return nid;
 }
 void
-roster_t::create_file_node(file_id const & content, node_id & nid)
+roster_t::create_file_node(file_id const & content, node_id nid)
 {
   file_t f = file_t(new file_node());
   f->self = nid;
@@ -1730,7 +1730,7 @@ a_wins(std::set<revision_id> const & b_marks,
 
 // returns true if merge was successful ('result' is valid), false otherwise
 // ('conflict_descriptor' is valid).
-static template <typename T, typename C> bool
+template <typename T, typename C> bool
 merge_scalar(T const & left,
              std::set<revision_id> const & left_marks,
              std::set<revision_id> const & left_uncommon_ancestors,
@@ -1746,7 +1746,7 @@ merge_scalar(T const & left,
       return true;
     }
   bool left_wins = a_wins(right_marks, right_uncommon_ancestors);
-  bool right_wins = a_wins(left_wins, left_uncommon_ancestors);
+  bool right_wins = a_wins(left_marks, left_uncommon_ancestors);
   // two bools means 4 cases:
   //   left_wins && right_wins
   //     this is ambiguous clean merge, which is theoretically impossible.
@@ -1777,27 +1777,25 @@ merge_scalar(T const & left,
 // conflicts encountered in that roster.  Each conflict encountered in merging
 // the roster creates an entry in this list.
 
-struct conflict
-{
-  node_id nid;
-  conflict(node_id nid) : nid(nid) {}
-};
-
 // nodes with name conflicts are left detached in the resulting roster, with
 // null parent and name fields.
 // note that it is possible that the parent node on the left, the right, or
 // both, no longer exist in the merged roster.  also note that it is possible
 // that on one or both sides, they do exist, but already have an entry with
 // the given name.
-struct node_name_conflict : public conflict
+struct node_name_conflict
 {
+  node_id nid;
+  node_name_conflict(node_id nid) : nid(nid) {}
   std::pair<node_id, path_component> left, right;
 };
 
 // files with content conflicts are left attached in resulting tree (unless
 // detached for some other reason), but with a null content hash.
-struct file_content_conflict : public conflict
+struct file_content_conflict
 {
+  node_id nid;
+  file_content_conflict(node_id nid) : nid(nid) {}
   file_id left, right;
 };
 
@@ -1807,8 +1805,10 @@ struct file_content_conflict : public conflict
 // roster insane (FIXME: we could put an invalid attr value in instead, like a
 // pair (false, "foo") (since the second value can only be non-null if the
 // first is 'true').  Should we do this?)
-struct node_attr_conflict : public conflict
+struct node_attr_conflict
 {
+  node_id nid;
+  node_attr_conflict(node_id nid) : nid(nid) {}
   attr_key key;
   std::pair<bool, attr_value> left, right;
 };
@@ -1933,9 +1933,9 @@ roster_merge(roster_t const & left_parent,
   {
     node_map::const_iterator left_i, right_i;
     parallel_state state = start;
-    while (parallel_iter_inc(state,
-                             left_parent.all_nodes(), left_i,
-                             right_parent.all_nodes(), right_i))
+    while (parallel_iter_incr(state,
+                              left_parent.all_nodes(), left_i,
+                              right_parent.all_nodes(), right_i))
       {
         switch (state)
           {
@@ -1966,7 +1966,7 @@ roster_merge(roster_t const & left_parent,
   // them in one at a time with *-merge.
   {
     node_map::const_iterator left_i, right_i;
-    node_map::const_iterator new_i = result.all_nodes().begin();
+    node_map::const_iterator new_i = result.roster.all_nodes().begin();
     marking_map::const_iterator left_mi = left_marking.begin();
     marking_map::const_iterator right_mi = right_marking.begin();
     parallel_state state = start;
@@ -1999,7 +1999,7 @@ roster_merge(roster_t const & left_parent,
               marking_t const & left_marking = left_mi->second;
               node_t const & right_n = right_i->second;
               marking_t const & right_marking = right_mi->second;
-              node_t & new_n = new_i->second;
+              node_t const & new_n = new_i->second;
               // merge name
               {
                 std::pair<node_id, path_component> new_name;
@@ -2013,8 +2013,8 @@ roster_merge(roster_t const & left_parent,
                                  new_name, conflict))
                   {
                     // FIXME: this could hit a conflict! (orphan or rename-target)
-                    dir_t const & p = downcast_to_dir_t(new_roster.get_node(new_name.parent));
-                    p->attach_child(new_n->name, new_n);
+                    dir_t const & p = downcast_to_dir_t(result.roster.get_node(new_name.first));
+                    p->attach_child(new_name.second, new_n);
                   }
                 else
                   {
@@ -2077,7 +2077,8 @@ roster_merge(roster_t const & left_parent,
                                        conflict))
                         {
                           // successful merge
-                          safe_insert(new_n->attrs, new_value);
+                          safe_insert(new_n->attrs,
+                                      std::make_pair(left_ai->first, new_value));
                         }
                       else
                         {

@@ -176,8 +176,11 @@ public:
   node_id detach_node(split_path const & src);
   void drop_detached_node(node_id n);
   node_id create_dir_node(node_id_source & nis);
+  void create_dir_node(node_id nid);
   node_id create_file_node(file_id const & content,
                            node_id_source & nis);
+  void create_file_node(file_id const & content,
+                        node_id nid);
   void insert_node(node_t n);
   void attach_node(node_id n, split_path const & dst);
   void apply_delta(split_path const & pth, 
