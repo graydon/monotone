@@ -1,6 +1,6 @@
 /*************************************************
 * Public Key Base Source File                    *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/pubkey.h>
@@ -251,14 +251,6 @@ void PK_Verifier::update(const byte in[], u32bit length)
 void PK_Verifier::update(const MemoryRegion<byte>& in)
    {
    emsa->update(in, in.size());
-   }
-
-/*************************************************
-* Check a signature                              *
-*************************************************/
-bool PK_Verifier::valid_signature(const byte sig[], u32bit length)
-   {
-   return check_signature(sig, length);
    }
 
 /*************************************************

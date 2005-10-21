@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Authority Source File        *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/x509_ca.h>
@@ -11,7 +11,7 @@
 #include <botan/numthry.h>
 #include <botan/oids.h>
 #include <memory>
-#include <map>
+#include <set>
 
 namespace Botan {
 
@@ -250,26 +250,26 @@ X509_CRL X509_CA::update_crl(const X509_CRL& crl,
    if(store.add_crl(crl) != VERIFIED)
       throw Invalid_Argument("X509_CA::update_crl: Invalid CRL provided");
 
-   std::map<SecureVector<byte>, bool> removed_from_crl;
+   std::set<SecureVector<byte> > removed_from_crl;
    for(u32bit j = 0; j != new_revoked.size(); j++)
       {
       if(new_revoked[j].reason == DELETE_CRL_ENTRY)
-         removed_from_crl[new_revoked[j].serial] = true;
+         removed_from_crl.insert(new_revoked[j].serial);
       else
          all_revoked.push_back(new_revoked[j]);
       }
 
    for(u32bit j = 0; j != already_revoked.size(); j++)
       {
-      std::map<SecureVector<byte>, bool>::const_iterator i;
+      std::set<SecureVector<byte> >::const_iterator i;
       i = removed_from_crl.find(already_revoked[j].serial);
 
       if(i == removed_from_crl.end())
          all_revoked.push_back(already_revoked[j]);
       }
+   std::sort(all_revoked.begin(), all_revoked.end());
 
    std::vector<CRL_Entry> cert_list;
-   std::sort(all_revoked.begin(), all_revoked.end());
    std::unique_copy(all_revoked.begin(), all_revoked.end(),
                     std::back_inserter(cert_list));
 

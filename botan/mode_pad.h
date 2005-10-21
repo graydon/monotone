@@ -1,6 +1,6 @@
 /*************************************************
 * CBC Padding Methods Header File                *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_CBC_PADDING_H__
@@ -17,12 +17,12 @@ namespace Botan {
 class BlockCipherModePaddingMethod
    {
    public:
-      virtual ~BlockCipherModePaddingMethod() {}
       virtual void pad(byte[], u32bit, u32bit) const = 0;
       virtual u32bit unpad(const byte[], u32bit) const = 0;
       virtual u32bit pad_bytes(u32bit, u32bit) const;
       virtual bool valid_blocksize(u32bit) const = 0;
       virtual std::string name() const = 0;
+      virtual ~BlockCipherModePaddingMethod() {}
    };
 
 /*************************************************

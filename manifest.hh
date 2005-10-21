@@ -12,6 +12,7 @@
 
 #include "quick_alloc.hh"
 #include "vocab.hh"
+#include "paths.hh"
 
 // this file defines the class of manifest_map objects, and various
 // comparison and i/o functions on them. a manifest_map is an unpacked

@@ -1,0 +1,31 @@
+AT_SETUP([automate keys])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [foo bar
+])
+AT_CHECK(MONOTONE ci -m foobar, [], [ignore], [ignore])
+AT_CHECK((echo foo@bar.com; echo foo@bar.com) | MONOTONE genkey foo@bar.com, [], [ignore], [ignore])
+AT_CHECK((echo foo@baz.com; echo foo@baz.com) | MONOTONE genkey foo@baz.com, [], [ignore], [ignore])
+AT_CHECK(MONOTONE pubkey foo@baz.com > baz)
+AT_CHECK(MONOTONE dropkey foo@baz.com, [], [ignore], [ignore])
+AT_CHECK(MONOTONE read < baz, [], [ignore], [ignore])
+
+# we now have foo@bar.com in the keystore, tester@test.net in both keystore
+# and database, and foo@baz.com in only the database
+AT_CHECK(MONOTONE automate keys, [], [stdout], [ignore])
+AT_CHECK(cp stdout output)
+
+AT_CHECK([sed -ne '/foo@bar.com/,/^$/p' output > foobar])
+AT_CHECK([sed -ne '/foo@baz.com/,/^$/p' output > foobaz])
+AT_CHECK([sed -ne '/tester@test.net/,/^$/p' output > tester])
+
+AT_CHECK(QGREP database foobar, [1])
+AT_CHECK(QGREP private foobaz, [1])
+AT_CHECK(grep keystore tester | QGREP database)
+AT_CHECK(grep keystore tester | QGREP -v database)
+AT_CHECK(QGREP private tester)
+AT_CHECK(QGREP public foobar)
+AT_CHECK(QGREP public foobaz)
+AT_CHECK(QGREP public tester)
+
+AT_CLEANUP

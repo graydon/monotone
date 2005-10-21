@@ -14,6 +14,7 @@
 
 #include "numeric_vocab.hh"
 #include "sanity.hh"
+#include "string_queue.hh"
 
 struct bad_decode {
   bad_decode(boost::format const & fmt) : what(fmt.str()) {}
@@ -22,6 +23,24 @@ struct bad_decode {
 
 inline void 
 require_bytes(std::string const & str, 
+	      size_t pos, 
+	      size_t len, 
+	      std::string const & name)
+{
+  // if you've gone past the end of the buffer, there's a logic error,
+  // and this program is not safe to keep running. shut down.
+  I(pos < str.size() || (pos == str.size() && len == 0));
+  // otherwise make sure there's room for this decode operation, but
+  // use a recoverable exception type.
+  if (len == 0)
+    return;
+  if (str.size() < pos + len)
+    throw bad_decode(F("need %d bytes to decode %s at %d, only have %d") 
+		     % len % name % pos % (str.size() - pos));
+}
+
+inline void 
+require_bytes(string_queue const & str, 
               size_t pos, 
               size_t len, 
               std::string const & name)
@@ -41,6 +60,41 @@ require_bytes(std::string const & str,
 template <typename T>
 inline bool 
 try_extract_datum_uleb128(std::string const & in, 
+			  size_t & pos,
+			  std::string const & name,
+			  T & out)
+{
+  BOOST_STATIC_ASSERT(std::numeric_limits<T>::is_signed == false);
+  size_t shift = 0;
+  size_t maxbytes = sizeof(T) + 1 + (sizeof(T) / 8);
+  out = 0;
+  while (maxbytes > 0)
+    {
+      if (pos >= in.size())
+	return false;
+      T curr = widen<T,u8>(in[pos]);
+      ++pos;
+      out |= ((static_cast<u8>(curr) 
+	       & static_cast<u8>(0x7f)) << shift);
+      bool finished = ! static_cast<bool>(static_cast<u8>(curr)
+					  & static_cast<u8>(0x80));
+      if (finished)
+	break;
+      else if (maxbytes == 1)
+	throw bad_decode(F("uleb128 decode for '%s' into %d-byte datum overflowed") 
+			 % name % maxbytes);
+      else
+	{
+	  --maxbytes;
+	  shift += 7;
+	}
+    }
+  return true;
+}
+
+template <typename T>
+inline bool 
+try_extract_datum_uleb128(string_queue const & in, 
                           size_t & pos,
                           std::string const & name,
                           T & out)
@@ -100,6 +154,31 @@ insert_datum_uleb128(T in, std::string & out)
       T remainder = in >> 7;
       bool finished = ! static_cast<bool>(remainder);
       if (finished)
+	{
+	  out += item;
+	  break;
+	}
+      else
+	{
+	  out += (item | static_cast<u8>(0x80));
+	  --maxbytes;
+	  in = remainder;
+	}
+    }
+}
+
+template <typename T>
+inline void 
+insert_datum_uleb128(T in, string_queue & out)
+{
+  BOOST_STATIC_ASSERT(std::numeric_limits<T>::is_signed == false);
+  size_t maxbytes = sizeof(T) + 1 + (sizeof(T) / 8);
+  while (maxbytes > 0)
+    {
+      u8 item = (static_cast<u8>(in) & static_cast<u8>(0x7f));
+      T remainder = in >> 7;
+      bool finished = ! static_cast<bool>(remainder);
+      if (finished)
         {
           out += item;
           break;
@@ -116,6 +195,27 @@ insert_datum_uleb128(T in, std::string & out)
 template <typename T>
 inline T 
 extract_datum_lsb(std::string const & in, 
+		  size_t & pos, 
+		  std::string const & name)
+{
+  size_t nbytes = sizeof(T);
+  T out = 0;
+  size_t shift = 0;
+
+  require_bytes(in, pos, nbytes, name);
+
+  while (nbytes > 0)
+    {
+      out |= widen<T,u8>(in[pos++]) << shift;
+      shift += 8;
+      --nbytes;
+    }
+  return out;
+}
+
+template <typename T>
+inline T 
+extract_datum_lsb(string_queue const & in, 
                   size_t & pos, 
                   std::string const & name)
 {
@@ -137,6 +237,20 @@ extract_datum_lsb(std::string const & in,
 template <typename T>
 inline void 
 insert_datum_lsb(T in, std::string & out)
+{
+  size_t const nbytes = sizeof(T);
+  char tmp[nbytes];
+  for (size_t i = 0; i < nbytes; ++i)
+    {
+      tmp[i] = static_cast<u8>(in) & static_cast<u8>(0xff);
+      in >>= 8;
+    }
+  out.append(std::string(tmp, tmp+nbytes));
+}
+
+template <typename T>
+inline void 
+insert_datum_lsb(T in, string_queue & out)
 {
   size_t const nbytes = sizeof(T);
   char tmp[nbytes];
@@ -174,9 +288,29 @@ insert_variable_length_string(std::string const & in,
   buf.append(in);
 }
 
+inline void 
+insert_variable_length_string(std::string const & in,
+			      string_queue & buf)
+{
+  size_t len = in.size();
+  insert_datum_uleb128<size_t>(len, buf);
+  buf.append(in);
+}
 
 inline std::string
 extract_substring(std::string const & buf, 
+		  size_t & pos,
+		  size_t len, 
+		  std::string const & name)
+{
+  require_bytes(buf, pos, len, name);
+  std::string tmp = buf.substr(pos, len);
+  pos += len;
+  return tmp;
+}
+
+inline std::string
+extract_substring(string_queue const & buf, 
                   size_t & pos,
                   size_t len, 
                   std::string const & name)

@@ -12,8 +12,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/scoped_array.hpp>
 
@@ -262,7 +260,7 @@ calculate_ident(manifest_map const & m,
        i != m.end(); ++i)
     {
       sz += i->second.inner()().size();
-      sz += i->first().size();
+      sz += i->first.as_internal().size();
       sz += 3;      
     }
 
@@ -282,8 +280,8 @@ calculate_ident(manifest_map const & m,
       c += i->second.inner()().size();
       *c++ = ' '; 
       *c++ = ' '; 
-      memcpy(c, i->first().data(), i->first().size());
-      c += i->first().size();
+      memcpy(c, i->first.as_internal().data(), i->first.as_internal().size());
+      c += i->first.as_internal().size();
       *c++ = '\n'; 
     }
   
@@ -348,12 +346,10 @@ calculate_ident(file_path const & file,
   else
     {
       // no conversions necessary, use streaming form
-      // still have to localize the filename
-      fs::path localized_file = localized(file);
       // Best to be safe and check it isn't a dir.
-      I(fs::exists(localized_file) && !fs::is_directory(localized_file));
+      assert_path_is_file(file);
       Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
-      Botan::DataSource_Stream infile(localized_file.native_file_string());
+      Botan::DataSource_Stream infile(file.as_external());
       p.process_msg(infile);
 
       ident = lowercase(p.read_all_as_string());
@@ -534,7 +530,6 @@ charset_convert(string const & src_charset,
     }
 }
 
-
 void 
 system_to_utf8(external const & ext, utf8 & utf)
 {
@@ -543,11 +538,104 @@ system_to_utf8(external const & ext, utf8 & utf)
   utf = out;
 }
 
+size_t
+display_width(utf8 const & utf)
+{
+  // this function is called many thousands of times by the tickers, so we
+  // try and avoid performing heap allocations by starting with a reasonable
+  // size buffer, and only ever growing the buffer if needed.
+  static size_t widebuf_sz = 128;
+  static boost::scoped_array<wchar_t> widebuf(new wchar_t[widebuf_sz]);
+
+  size_t len = mbstowcs(0, utf().c_str(), 0) + 1;
+
+  if (len == static_cast<size_t>(-1))
+    return utf().length(); // conversion failed; punt and return original length
+
+  if (len > widebuf_sz) {
+    widebuf.reset(new wchar_t[len]);
+    widebuf_sz = len;
+  }
+
+  mbstowcs(widebuf.get(), utf().c_str(), widebuf_sz);
+
+  return wcswidth(widebuf.get(), widebuf_sz);
+}
+
+// Lots of gunk to avoid charset conversion as much as possible.  Running
+// iconv over every element of every path in a 30,000 file manifest takes
+// multiple seconds, which then is a minimum bound on pretty much any
+// operation we do...
+static inline bool
+system_charset_is_utf8_impl()
+{
+  std::string lc_encoding = lowercase(system_charset());
+  return (lc_encoding == "utf-8"
+          || lc_encoding == "utf_8"
+          || lc_encoding == "utf8");
+}
+
+static inline bool
+system_charset_is_utf8()
+{
+  static bool it_is = system_charset_is_utf8_impl();
+  return it_is;
+}
+
+static inline bool
+system_charset_is_ascii_extension_impl()
+{
+  if (system_charset_is_utf8())
+    return true;
+  std::string lc_encoding = lowercase(system_charset());
+  // if your character set is identical to ascii in the lower 7 bits, then add
+  // it here for a speed boost.
+  return (lc_encoding.find("ascii") != std::string::npos
+          || lc_encoding.find("8859") != std::string::npos
+          || lc_encoding.find("ansi_x3.4") != std::string::npos
+          // http://www.cs.mcgill.ca/~aelias4/encodings.html -- "EUC (Extended
+          // Unix Code) is a simple and clean encoding, standard on Unix
+          // systems.... It is backwards-compatible with ASCII (i.e. valid
+          // ASCII implies valid EUC)."
+          || lc_encoding.find("euc") != std::string::npos);
+}
+
+static inline bool
+system_charset_is_ascii_extension()
+{
+  static bool it_is = system_charset_is_ascii_extension_impl();
+  return it_is;
+}
+
+inline static bool
+is_all_ascii(string const & utf)
+{
+  // could speed this up by vectorization -- mask against 0x80808080,
+  // process a whole word at at time...
+  for (std::string::const_iterator i = utf.begin(); i != utf.end(); ++i)
+    if (0x80 & *i)
+      return false;
+  return true;
+}
+
+// this function must be fast.  do not make it slow.
+void 
+utf8_to_system(utf8 const & utf, std::string & ext)
+{
+  if (system_charset_is_utf8())
+    ext = utf();
+  else if (system_charset_is_ascii_extension()
+           && is_all_ascii(utf()))
+    ext = utf();
+  else
+    charset_convert("UTF-8", system_charset(), utf(), ext);
+}
+
 void 
 utf8_to_system(utf8 const & utf, external & ext)
 {
   string out;
-  charset_convert("UTF-8", system_charset(), utf(), out);
+  utf8_to_system(utf, out);
   ext = out;
 }
 
@@ -599,118 +687,6 @@ utf8_to_ace(utf8 const & utf, ace & a)
   free(out);
 }
 
-// Lots of gunk to avoid charset conversion as much as possible.  Running
-// iconv over every element of every path in a 30,000 file manifest takes
-// multiple seconds, which then is a minimum bound on pretty much any
-// operation we do...
-static inline bool
-filesystem_is_utf8_impl()
-{
-  std::string lc_encoding = lowercase(system_charset());
-  return (lc_encoding == "utf-8"
-          || lc_encoding == "utf_8"
-          || lc_encoding == "utf8");
-}
-
-static inline bool
-filesystem_is_utf8()
-{
-  static bool it_is = filesystem_is_utf8_impl();
-  return it_is;
-}
-
-static inline bool
-filesystem_is_ascii_extension_impl()
-{
-  if (filesystem_is_utf8())
-    return true;
-  std::string lc_encoding = lowercase(system_charset());
-  // if your character set is identical to ascii in the lower 7 bits, then add
-  // it here for a speed boost.
-  return (lc_encoding.find("ascii") != std::string::npos
-          || lc_encoding.find("8859") != std::string::npos
-          || lc_encoding.find("ansi_x3.4") != std::string::npos
-          // http://www.cs.mcgill.ca/~aelias4/encodings.html -- "EUC (Extended
-          // Unix Code) is a simple and clean encoding, standard on Unix
-          // systems.... It is backwards-compatible with ASCII (i.e. valid
-          // ASCII implies valid EUC)."
-          || lc_encoding.find("euc") != std::string::npos);
-}
-
-static inline bool
-filesystem_is_ascii_extension()
-{
-  static bool it_is = filesystem_is_ascii_extension_impl();
-  return it_is;
-}
-
-inline static bool
-is_all_ascii(string const & utf)
-{
-  // could speed this up by vectorization -- mask against 0x80808080,
-  // process a whole word at at time...
-  for (std::string::const_iterator i = utf.begin(); i != utf.end(); ++i)
-    if (0x80 & *i)
-      return false;
-  return true;
-}
-
-inline static fs::path 
-localized_impl(string const & utf)
-{
-#ifdef __APPLE__
-  // on OS X paths for the filesystem/kernel are UTF-8 encoded.
-  return mkpath(utf);
-#else
-  if (filesystem_is_utf8())
-    return mkpath(utf);
-  if (filesystem_is_ascii_extension() && is_all_ascii(utf))
-    return mkpath(utf);
-  fs::path tmp = mkpath(utf), ret;
-  for (fs::path::iterator i = tmp.begin(); i != tmp.end(); ++i)
-    {
-      external ext;
-      utf8_to_system(utf8(*i), ext);
-      ret /= mkpath(ext());
-    }
-  return ret;
-#endif
-}
-
-std::string
-localized_as_string(file_path const & fp)
-{
-#ifdef __APPLE__
-  // on OS X paths for the filesystem/kernel are UTF-8 encoded.
-  return fp();
-#else
-  if (filesystem_is_utf8())
-    return fp();
-  if (filesystem_is_ascii_extension() && is_all_ascii(fp()))
-    return fp();
-  return localized(fp).native_file_string();
-#endif
-}
-
-fs::path 
-localized(file_path const & fp)
-{
-  return localized_impl(fp());
-}
-
-fs::path 
-localized(local_path const & lp)
-{
-  return localized_impl(lp());
-}
-
-fs::path
-localized(utf8 const & utf)
-{
-  return localized_impl(utf());
-}
-
-
 void 
 internalize_cert_name(utf8 const & utf, cert_name & c)
 {
@@ -749,9 +725,10 @@ internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
     tokenizer;
   boost::char_separator<char> sep("", ".@", boost::keep_empty_tokens);
   tokenizer tokens(utf(), sep);
+  bool in_domain = false;
   for(tokenizer::iterator i = tokens.begin(); i != tokens.end(); ++i)
     {
-      if (*i == "." || *i == "@")
+      if (!in_domain || *i == "." || *i == "@")
         tmp += *i;
       else
         {
@@ -759,6 +736,8 @@ internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
           utf8_to_ace(*i, a);
           tmp += a();
         }
+      if (*i == "@")
+        in_domain = true;
     }
   key = tmp;
 }
@@ -779,9 +758,10 @@ externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
     tokenizer;
   boost::char_separator<char> sep("", ".@", boost::keep_empty_tokens);
   tokenizer tokens(key(), sep);
+  bool in_domain = false;
   for(tokenizer::iterator i = tokens.begin(); i != tokens.end(); ++i)
     {
-      if (*i == "." || *i == "@")
+      if (!in_domain || *i == "." || *i == "@")
         tmp += *i;
       else
         {
@@ -790,6 +770,8 @@ externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
           ace_to_utf8(a, u);
           tmp += u();
         }
+      if (*i == "@")
+        in_domain = true;
     }
   utf = tmp;
 }
@@ -1120,7 +1102,7 @@ check_idna_encoding()
       ace a = string(idna_vec[i].out);
       ace tace;
       utf8_to_ace(utf, tace);
-      L(F("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tace());
+      L(boost::format("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tace());
       BOOST_CHECK(lowercase(a()) == lowercase(tace()));
       ace_to_utf8(a, tutf);
       BOOST_CHECK(lowercase(utf()) == lowercase(tutf()));

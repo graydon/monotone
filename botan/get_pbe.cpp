@@ -1,6 +1,6 @@
 /*************************************************
 * PBE Retrieval Source File                      *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/oids.h>
@@ -10,7 +10,7 @@
 namespace Botan {
 
 /*************************************************
-* Get an encrpytion PBE, set new parameters      *
+* Get an encryption PBE, set new parameters      *
 *************************************************/
 PBE* get_pbe(const std::string& pbe_name)
    {
@@ -49,9 +49,9 @@ PBE* get_pbe(const OID& pbe_oid, DataSource& params)
 
    if(algo_name.size() < 1)
       throw Invalid_Algorithm_Name(pbe_oid.as_string());
-   const std::string pbe = algo_name[0];
+   const std::string pbe_algo = algo_name[0];
 
-   if(pbe == "PBE-PKCS5v15")
+   if(pbe_algo == "PBE-PKCS5v15")
       {
       if(algo_name.size() != 3)
          throw Invalid_Algorithm_Name(pbe_oid.as_string());
@@ -61,7 +61,7 @@ PBE* get_pbe(const OID& pbe_oid, DataSource& params)
       pbe->decode_params(params);
       return pbe;
       }
-   else if(pbe == "PBE-PKCS5v20")
+   else if(pbe_algo == "PBE-PKCS5v20")
       return new PBE_PKCS5v20(params);
 
    throw Algorithm_Not_Found(pbe_oid.as_string());

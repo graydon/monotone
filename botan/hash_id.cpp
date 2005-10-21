@@ -1,9 +1,9 @@
 /*************************************************
 * Hash Function Identification Source File       *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
-#include <botan/util.h>
+#include <botan/hash_id.h>
 #include <botan/lookup.h>
 
 namespace Botan {
@@ -56,6 +56,10 @@ MemoryVector<byte> pkcs_hash_id(const std::string& name_or_alias)
    const std::string name = deref_alias(name_or_alias);
 
    MemoryVector<byte> out;
+
+   if(name == "Parallel(MD5,SHA-160)")
+      return out;
+
    if(name == "MD2")
       out.set(PKCS_IDS::MD2_ID, sizeof(PKCS_IDS::MD2_ID));
    else if(name == "MD5")
@@ -74,7 +78,11 @@ MemoryVector<byte> pkcs_hash_id(const std::string& name_or_alias)
       out.set(PKCS_IDS::SHA_512_ID, sizeof(PKCS_IDS::SHA_512_ID));
    else if(name == "Tiger(24,3)")
       out.set(PKCS_IDS::TIGER_ID, sizeof(PKCS_IDS::TIGER_ID));
-   return out;
+
+   if(out.size())
+      return out;
+
+   throw Invalid_Argument("No PKCS #1 identifier for " + name_or_alias);
    }
 
 /*************************************************

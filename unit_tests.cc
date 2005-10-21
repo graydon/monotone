@@ -74,14 +74,17 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   if (t.empty() || t.find("netcmd") != t.end())
     add_netcmd_tests(suite);  
 
-  if (t.empty() || t.find("path_component") != t.end())
-    add_path_component_tests(suite);  
-
   if (t.empty() || t.find("globish") != t.end())
     add_globish_tests(suite);  
   
   if (t.empty() || t.find("crypto") != t.end())
     add_crypto_tests(suite);  
+  
+  if (t.empty() || t.find("string_queue") != t.end())
+    add_string_queue_tests(suite);  
+  
+  if (t.empty() || t.find("paths") != t.end())
+    add_paths_tests(suite);  
   
   // all done, add our clean-shutdown-indicator
   suite->add(BOOST_TEST_CASE(&clean_shutdown_dummy_test));

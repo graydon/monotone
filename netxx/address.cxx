@@ -159,6 +159,8 @@ void Netxx::Address::add_all_addresses (port_type port)
 	addrs_.push_back(Peer("localhost", port, sai, saddr.get_sa_size()));
     }
 
+    port_ = port;
+
 # ifndef NETXX_NO_INET6
     if (ipv6_) {
 	SockAddr saddr(AF_INET6, port);

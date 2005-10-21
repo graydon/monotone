@@ -57,11 +57,12 @@ struct checked_manifest {
   size_t revision_refs; // number of revision references to this manifest
   size_t missing_files; // number of missing files referenced by this manifest
 
+  bool parseable;       // read_manifest_map does not throw
   bool normalized;      // write_manifest_map( read_manifest_map(dat) ) == dat
 
   checked_manifest(): 
     found(false), revision_refs(0), 
-    missing_files(0), normalized(false) {}
+    missing_files(0), parseable(false), normalized(false) {}
 };
 
 // the number of times a revision is referenced (revision_refs)
@@ -84,6 +85,7 @@ struct checked_revision {
   
   size_t cert_refs;            // number of references to this revision by revision certs;
 
+  bool parseable;              // read_revision_set does not throw
   bool normalized;             // write_revision_set( read_revision_set(dat) ) == dat
 
   std::string history_error;
@@ -95,7 +97,7 @@ struct checked_revision {
     found(false),
     revision_refs(0), ancestry_parent_refs(0), ancestry_child_refs(0), 
     missing_manifests(0), missing_revisions(0), incomplete_manifests(0), 
-    cert_refs(0), normalized(false) {}
+    cert_refs(0), parseable(false), normalized(false) {}
 };
 
 static void
@@ -106,7 +108,7 @@ check_files(app_state & app, std::map<file_id, checked_file> & checked_files)
   app.db.get_file_ids(files);
   L(F("checking %d files\n") % files.size());
 
-  ticker ticks("files", "f", files.size()/70+1);
+  ticker ticks(_("files"), "f", files.size()/70+1);
 
   for (std::set<file_id>::const_iterator i = files.begin();
        i != files.end(); ++i) 
@@ -131,7 +133,7 @@ check_manifests(app_state & app,
   app.db.get_manifest_ids(manifests);
   L(F("checking %d manifests\n") % manifests.size());
 
-  ticker ticks("manifests", "m", manifests.size()/70+1);
+  ticker ticks(_("manifests"), "m", manifests.size()/70+1);
 
   for (std::set<manifest_id>::const_iterator i = manifests.begin();
        i != manifests.end(); ++i) 
@@ -142,7 +144,17 @@ check_manifests(app_state & app,
       checked_manifests[*i].found = true;
 
       manifest_map man;
-      read_manifest_map(data, man);
+      try
+        {
+          read_manifest_map(data, man);
+        }
+      catch (std::logic_error & e)
+        {
+          L(F("error parsing manifest %s: %s") % *i % e.what());
+          checked_manifests[*i].parseable = false;
+          continue;
+        }
+      checked_manifests[*i].parseable = true;
 
       // normalisation check
       manifest_id norm_ident;
@@ -177,7 +189,7 @@ check_revisions(app_state & app,
   app.db.get_revision_ids(revisions);
   L(F("checking %d revisions\n") % revisions.size());
 
-  ticker ticks("revisions", "r", revisions.size()/70+1);
+  ticker ticks(_("revisions"), "r", revisions.size()/70+1);
 
   for (std::set<revision_id>::const_iterator i = revisions.begin();
        i != revisions.end(); ++i) 
@@ -188,7 +200,17 @@ check_revisions(app_state & app,
       checked_revisions[*i].found = true;
 
       revision_set rev;
-      read_revision_set(data, rev);
+      try
+        {
+          read_revision_set(data, rev);
+        }
+      catch (std::logic_error & e)
+        {
+          L(F("error parsing revision %s: %s") % *i % e.what());
+          checked_revisions[*i].parseable = false;
+          continue;
+        }
+      checked_revisions[*i].parseable = true;
 
       // normalisation check
       revision_id norm_ident;
@@ -266,7 +288,7 @@ check_ancestry(app_state & app,
   app.db.get_revision_ancestry(graph);
   L(F("checking %d ancestry edges\n") % graph.size());
 
-  ticker ticks("ancestry", "a", graph.size()/70+1);
+  ticker ticks(_("ancestry"), "a", graph.size()/70+1);
 
   // checked revision has set of parents
   // graph has revision and associated parents
@@ -299,7 +321,7 @@ check_keys(app_state & app,
 
   L(F("checking %d public keys\n") % pubkeys.size());
 
-  ticker ticks("keys", "k", 1);
+  ticker ticks(_("keys"), "k", 1);
 
   for (std::vector<rsa_keypair_id>::const_iterator i = pubkeys.begin();
        i != pubkeys.end(); ++i)
@@ -325,7 +347,7 @@ check_certs(app_state & app,
 
   L(F("checking %d revision certs\n") % certs.size());
 
-  ticker ticks("certs", "c", certs.size()/70+1);
+  ticker ticks(_("certs"), "c", certs.size()/70+1);
 
   for (std::vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
@@ -355,7 +377,7 @@ check_sane(app_state & app,
 {
   L(F("checking local history of %d revisions\n") % checked_revisions.size());
 
-  ticker ticks("revisions", "r", 1);
+  ticker ticks(_("revisions"), "r", 1);
 
   for (std::map<revision_id, checked_revision>::iterator 
          i = checked_revisions.begin(); i != checked_revisions.end(); ++i)
@@ -406,6 +428,7 @@ report_manifests(std::map<manifest_id, checked_manifest> const & checked_manifes
                  size_t & missing_manifests, 
                  size_t & unreferenced_manifests,
                  size_t & incomplete_manifests,
+                 size_t & non_parseable_manifests,
                  size_t & non_normalized_manifests)
 {
   for (std::map<manifest_id, checked_manifest>::const_iterator 
@@ -433,7 +456,14 @@ report_manifests(std::map<manifest_id, checked_manifest> const & checked_manifes
             % i->first % manifest.missing_files);
         }
 
-      if (!manifest.normalized)
+      if (!manifest.parseable)
+        {
+          non_parseable_manifests++;
+          P(F("manifest %s is not parseable (perhaps with unnormalized paths?)\n")
+            % i->first);
+        }
+
+      if (manifest.parseable && !manifest.normalized)
         {
           non_normalized_manifests++;
           P(F("manifest %s is not in normalized form\n")
@@ -449,6 +479,7 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
                  size_t & mismatched_parents,
                  size_t & mismatched_children,
                  size_t & bad_history,
+                 size_t & non_parseable_revisions,
                  size_t & non_normalized_revisions)
 {
   for (std::map<revision_id, checked_revision>::const_iterator 
@@ -512,7 +543,14 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
             % i->first % tmp);
         }
 
-      if (!revision.normalized)
+      if (!revision.parseable)
+        {
+          non_parseable_revisions++;
+          P(F("revision %s is not parseable (perhaps with unnormalized paths?)\n")
+            % i->first);
+        }
+
+      if (revision.parseable && !revision.normalized)
         {
           non_normalized_revisions++;
           P(F("revision %s is not in normalized form\n")
@@ -628,6 +666,7 @@ check_db(app_state & app)
   size_t missing_manifests = 0;
   size_t unreferenced_manifests = 0;
   size_t incomplete_manifests = 0;
+  size_t non_parseable_manifests = 0;
   size_t non_normalized_manifests = 0;
 
   size_t missing_revisions = 0;
@@ -635,6 +674,7 @@ check_db(app_state & app)
   size_t mismatched_parents = 0;
   size_t mismatched_children = 0;
   size_t bad_history = 0;
+  size_t non_parseable_revisions = 0;
   size_t non_normalized_revisions = 0;
   
   size_t missing_keys = 0;
@@ -658,12 +698,14 @@ check_db(app_state & app)
   report_manifests(checked_manifests, 
                    missing_manifests, unreferenced_manifests, 
                    incomplete_manifests,
+                   non_parseable_manifests,
                    non_normalized_manifests);
 
   report_revisions(checked_revisions,
                    missing_revisions, incomplete_revisions, 
                    mismatched_parents, mismatched_children,
-                   bad_history, non_normalized_revisions);
+                   bad_history, non_parseable_revisions,
+                   non_normalized_revisions);
 
   report_keys(checked_keys, missing_keys);
 
@@ -682,6 +724,9 @@ check_db(app_state & app)
     W(F("%d unreferenced manifests\n") % unreferenced_manifests);
   if (incomplete_manifests > 0)
     W(F("%d incomplete manifests\n") % incomplete_manifests);
+  if (non_parseable_manifests > 0)
+    W(F("%d manifests not parseable (perhaps with invalid paths)\n")
+      % non_parseable_manifests);
   if (non_normalized_manifests > 0)
     W(F("%d manifests not in normalized form\n") % non_normalized_manifests);
 
@@ -695,6 +740,9 @@ check_db(app_state & app)
     W(F("%d mismatched children\n") % mismatched_children);
   if (bad_history > 0)
     W(F("%d revisions with bad history\n") % bad_history);
+  if (non_parseable_revisions > 0)
+    W(F("%d revisions not parseable (perhaps with invalid paths)\n")
+      % non_parseable_revisions);
   if (non_normalized_revisions > 0)
     W(F("%d revisions not in normalized form\n") % non_normalized_revisions);
 
@@ -712,9 +760,9 @@ check_db(app_state & app)
 
   size_t total = missing_files + unreferenced_files +
     missing_manifests + unreferenced_manifests + incomplete_manifests +
-    non_normalized_manifests +
+    non_parseable_manifests + non_normalized_manifests +
     missing_revisions + incomplete_revisions + 
-    non_normalized_revisions +
+    non_parseable_revisions + non_normalized_revisions +
     mismatched_parents + mismatched_children +
     bad_history +
     missing_certs + mismatched_certs +
@@ -724,9 +772,9 @@ check_db(app_state & app)
   // serious errors; odd, but nothing will break.
   size_t serious = missing_files + 
     missing_manifests + incomplete_manifests +
-    non_normalized_manifests +
+    non_parseable_manifests + non_normalized_manifests +
     missing_revisions + incomplete_revisions + 
-    non_normalized_revisions +
+    non_parseable_revisions + non_normalized_revisions +
     mismatched_parents + mismatched_children +
     bad_history +
     missing_certs +

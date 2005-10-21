@@ -1,6 +1,6 @@
 /*************************************************
 * Public Key Interface Header File               *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_PUBKEY_H__
@@ -76,9 +76,6 @@ class PK_Verifier
 
       bool check_signature(const byte[], u32bit);
       bool check_signature(const MemoryRegion<byte>&);
-
-      // DEPRECATED FUNCTION
-      bool valid_signature(const byte[], u32bit);
 
       void set_input_format(Signature_Format);
 

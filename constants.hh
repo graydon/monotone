@@ -140,6 +140,8 @@ namespace constants
   // netsync session key default initializer
   extern std::string const & netsync_key_initializer;
 
+  // maximum path depth to allow (as a recursion limit)
+  static size_t const max_path_depth = 300;
 }
 
 #endif // __CONSTANTS_HH__

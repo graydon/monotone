@@ -22,7 +22,7 @@ labellagigogin()
 ])
 
 # setup a wrk dir
-AT_CHECK(MONOTONE setup alt_wrk, [], [ignore], [ignore])
+AT_CHECK(MONOTONE setup --branch=testbranch alt_wrk, [], [ignore], [ignore])
 
 # include directly a single file
 AT_CHECK(cd alt_wrk && MONOTONE --root=. --rcfile=../include.lua status, [], [stdout], [ignore])
@@ -32,7 +32,7 @@ AT_CHECK(QGREP("BOOGA BOOGA" stdout))
 AT_CHECK(cd alt_wrk && MONOTONE --root=. --rcfile=../includedir.lua status, [], [stdout], [ignore])
 AT_CHECK(QGREP("BOOGA BOOGACICCA CICCA" stdout))
 
-# write a third file: should be read beetween the two previous ones
+# write a third file: should be read between the two previous ones
 AT_DATA(gongolo/aba.rc, [function notwowithoutthree()
   io.write("hu hu")
 end

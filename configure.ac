@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.22, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.23, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
@@ -18,13 +18,15 @@ AM_CONFIG_HEADER([config.h])
 # spirit-based programs. we turn it off here unless the user turned it
 # on themselves.
 
-test "z$CXXFLAGS" = "z" && CXXFLAGS="-O2 -fno-strict-aliasing"
-test "z$CFLAGS" = "z" && CFLAGS="-O2 -fno-strict-aliasing"
-
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
+
+test "z$GXX" = "zyes" && CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
+test "z$GCC" = "zyes" && CFLAGS="$CFLAGS -fno-strict-aliasing"
+
 AC_PROG_RANLIB
+AC_CC_FEXCEPTIONS
 AC_LANG(C++)
 
 AC_PROG_CXX_WARNINGS
@@ -43,7 +45,7 @@ AC_CXX_EXTERN_TEMPLATE
 # the AM_GNU_GETTEXT macro test won't compile with g++
 AC_LANG_PUSH(C)
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION(0.12.1)
+AM_GNU_GETTEXT_VERSION(0.11.5)
 AM_ICONV
 AC_LANG_POP()
 
@@ -147,39 +149,42 @@ AC_SUBST(BOOST_SUFFIX)
 # Now check for Boost libraries proper.
 
 found=no
-suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -mt -sunpro"}
+suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt-s"}
 for BOOST_SUFFIX in ${suffixes}
 do
     test "x${BOOST_SUFFIX}" = "xnone" && BOOST_SUFFIX=
-    LIBS="-lboost_unit_test_framework${BOOST_SUFFIX} $OLD_LIBS"
-    AC_MSG_CHECKING(for the libboost_unit_test_framework${BOOST_SUFFIX} library)
-    AC_LINK_IFELSE([AC_LANG_SOURCE([[
+    LIBS="-lboost_filesystem${BOOST_SUFFIX} $OLD_LIBS"
+    AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+      #include <boost/filesystem/path.hpp>
+      #include <boost/filesystem/operations.hpp>
+      using namespace boost::filesystem;
+    ]],
+    [[exists(path("/boot"));]])],
+     [AC_MSG_RESULT([yes])
+      found=yes],
+     [AC_MSG_RESULT([no])])
+    test "x${found}" = "xyes" && break
+done
+if test "x${found}" = "xno"; then
+    AC_MSG_FAILURE([libboost_filesystem failure])
+fi
+
+OLD_LIBS=$LIBS
+LIBS="-lboost_unit_test_framework${BOOST_SUFFIX} $LIBS"
+AC_MSG_CHECKING(for the libboost_unit_test_framework${BOOST_SUFFIX} library)
+AC_LINK_IFELSE([AC_LANG_SOURCE([[
 #include <boost/test/unit_test_suite.hpp>
 #include <boost/test/test_tools.hpp>
 using boost::unit_test_framework::test_suite;
 test_suite * init_unit_test_suite(int argc, char * argv[]) 
 { return NULL; }
 ]])],
-     [AC_MSG_RESULT([yes])
-      found=yes],
-     [AC_MSG_RESULT([no])])
-    LIBS=$OLD_LIBS
-    test "x${found}" = "xyes" && break
-done
-if test "x${found}" = "xno"; then
-    AC_MSG_FAILURE([libboost_unit_test_framework failure])
-fi
-
-LIBS="-lboost_filesystem${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-  #include <boost/filesystem/path.hpp>
-  #include <boost/filesystem/operations.hpp>
-  using namespace boost::filesystem;
-]],
-[[exists(path("/boot"));]])],
- [AC_MSG_RESULT([yes])],
- [AC_MSG_FAILURE([libboost_filesystem failure])])
+ [AC_MSG_RESULT([yes])
+  AM_CONDITIONAL(BUILD_UNIT_TESTS, true)],
+ [AC_MSG_RESULT([no])
+  AM_CONDITIONAL(BUILD_UNIT_TESTS, false)])
+LIBS=$OLD_LIBS
 
 LIBS="-lboost_date_time${BOOST_SUFFIX} $LIBS"
 AC_MSG_CHECKING(for the libboost_date_time${BOOST_SUFFIX} library)
@@ -253,11 +258,14 @@ int main(void)
 __wont_compile_
 #endif
 ],
-   AM_CONDITIONAL(WIN32_PLATFORM, true),
-   AM_CONDITIONAL(WIN32_PLATFORM, false),
+        ac_win32=yes,
+        ac_win32=no,
+        ac_win32=no)])
+if test "$ac_win32" = "yes"; then
+   AM_CONDITIONAL(WIN32_PLATFORM, true)
+else
    AM_CONDITIONAL(WIN32_PLATFORM, false)
-)])
-
+fi
 
 # Check for IPv6.  Let the user enable or disable it manually using a
 # three-state (yes|no|auto) --enable argument.
@@ -303,6 +311,7 @@ AH_TEMPLATE([USE_DLOPEN], [For LUA: use dlopen for loadlib])
 AC_SEARCH_LIBS([inet_aton], [resolv])
 AC_SEARCH_LIBS([accept], [socket])
 AC_SEARCH_LIBS([inet_ntoa], [nsl])
+AC_SEARCH_LIBS([fdatasync], [rt])
 AC_CHECK_LIB([z], [deflate], , AC_MSG_FAILURE([zlib is required]))
 
 # Now let the user specify whether he wants large file support or not in
@@ -416,6 +425,13 @@ AC_CHECK_FUNC(inet_ntop, [AM_CONDITIONAL(MISSING_INET_NTOP, false)],
 AC_CHECK_FUNC(getaddrinfo, [AM_CONDITIONAL(MISSING_GETADDRINFO, false)], 
 			   [AM_CONDITIONAL(MISSING_GETADDRINFO, true)])
 
+# allow compiling with different flags/optimisation
+# for monotone versus libs, useful for testing.
+# only makes sense if CFLAGS="" or CXXFLAGS=""
+AC_SUBST(MONOTONE_CFLAGS)
+AC_SUBST(MONOTONE_CXXFLAGS)
+AC_SUBST(LIB3RDPARTY_CFLAGS)
+AC_SUBST(LIB3RDPARTY_CXXFLAGS)
 
 AC_CONFIG_FILES([Makefile tests/atlocal po/Makefile.in])
 AC_OUTPUT

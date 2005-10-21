@@ -55,8 +55,8 @@ CHECK_DIFFERENT_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
 
 # double-check that the revisions didn't change (because otherwise our
 # next test is unreliable):
-AT_CHECK(MONOTONE cat revision $VER1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE automate get_revision $VER1, [], [ignore], [ignore])
 # confirm, we did not get the new revision
-AT_CHECK(MONOTONE2 cat revision $VER1, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $VER1, [1], [ignore], [ignore])
 
 AT_CLEANUP

@@ -15,11 +15,11 @@ AT_TESTED([monotone])
 # some command abbreviations to make life easier
 
 # Set PREEXECUTE in your environment to run monotone under, e.g., valgrind.
-m4_define([MONOTONE], [$PREEXECUTE $_MT_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net --root=$_ROOT_DIR])
+m4_define([MONOTONE], [$PREEXECUTE $_MT_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --key=tester@test.net --root=$_ROOT_DIR])
 m4_define([RAW_MONOTONE], [$PREEXECUTE monotone --norc])
 m4_define([SHA1], [monotone --norc identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
-m4_define([WORKING_REVISION], [monotone --norc cat revision | monotone --norc identify])
+m4_define([WORKING_REVISION], [monotone --norc automate get_revision | monotone --norc identify])
 m4_define([CANONICALISE], [
 if test "$OSTYPE" == "msys"; then
   dos2unix -q -o $1
@@ -37,28 +37,29 @@ _MT_EXEC=`which monotone`
 # Save the PWD so MONOTONE macro can refer back to it
 _ROOT_DIR=`pwd -P`
 
-# Pick a random port, so running multiple testsuites concurrently on
-# the same machine has a hope of working.
-_PORT=`awk 'BEGIN {srand()} END {printf "%.0f\n", (rand() * 450 + 20050)}'< /dev/null`
+# Pick a random port, so running multiple testsuites concurrently on the
+# same machine has a hope of working.  Port range will usually be
+# 20050..53347.
+_PORT=`echo $RANDOM | awk 'BEGIN {a=1;srand()} END {printf "%.0f\n", ((rand() * 529 + 20050 + $a) % 64512 + 1024)}'`
 
-AT_DATA(test_keys, [@<:@pubkey tester@test.net@:>@
-MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCfN/cAMabgb6T7m8ksGnpQ7LO6hOdnc/7V
-yivrRGtmpwSItljht1bmgLQF37KiSPoMEDUb1stfKxaMsYiy8iTyoQ+M2EVFP37n2rtnNZ0H
-oVcQd2sRsCerQFh9nslRPymlkQXUlOiNFN6RlFNcdjkucqNe+YorFX21EYw7XuT5XwIBEQ==
-@<:@end@:>@
-@<:@privkey tester@test.net@:>@
-npy0jyqbZdylFkMjdR9OvlqmDHuBGXpGFPt94h96aG+Lp+OdBCmWx8GueHk8FKkexwPqhRBM
-PPopUeuwqxuSX+yEodMl5IHBmin0nLnbOeBjtasjemBFEmdNl/jPDF/AeQ2WHhanB731dSQc
-vzLOQfKAYmfk56PPULi9oJJNUxaCkvsWtvaI+HUHZrjyyV7dA4Vsc6Jvx2Yf1+MdDAEGk/Rw
-ZtP0LmuoiyvRDFqBF8aTmnotyb4kRKohnJ7VF+y6hYvmtMpM3TKnpR7EbojBzNPqKuO7nPUz
-jGxA7F84O24Vbf128PNSI5vj4istow26aPjn28qPjfRrkV30WLL/dXfYJkfkTqglYnoEXvF/
-xZoVxxNeAX58mgy0A1ErVxv8U7TwuP983GHEpLwy3gbiP+9akAJCr8r823DHmQqq5QDELibP
-cuXZfOttpfVRkcbMhjeF0M6czc4HoKgHTAnf/18hzdZwGX/WWvRIBHImbUJ+mDbp2ByDTfKf
-ErGXSvZ3HxCqBD8yx1SnXhV8IDHaBmV9wwYcN+H2cxOWGZk7g7xJS19+a3UQB3c3sSXQVJBp
-6QpCZgysxkZwzuXDzzLZPT9SLZz4K2p7+7BwMbpy9ZxcyAzmiEtpA24UP06jtjFN7WcXAdx/
-E5Gmoe9b1EiXWdReHjUGpc6k0LQ0PPXAwqrcGdwYbOLDZ5xsQ5AsEYSFtyTS60D1nHBcdNmW
-M0eOUJFdJf/uNe/2EApc3a8TyEkZtVqiYtOVV3qDB9NmU4bVOkDqzl1F7zJwATWbmasSdkM3
-6lxDkczBfCrEjH5p5Y8DU+ge4e4LRtknY9oBOJ7EQO0twYJg3k0=
+AT_DATA(test_keys, [@<:@keypair tester@test.net@:>@
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC6Pz+IvvOCDDqzN9WFO/zOjL7s9dVCS+zn
+s/L9jQ2kHfNWXFof4GcgmMu4DfU4sUrRz39QxDlUrxEOvmIc9z3DNuIcbFZx7UZg9DWfdmDm
+vbW79bZlVMeIudAIUwa6euX163AK5hacmqJfuB5U7awQM9o3rn8JYULleAoz5QTtawIDAQAB#
+MIICyTBDBgkqhkiG9w0BBQ0wNjAeBgkqhkiG9w0BBQwwEQQIvYSV8ucj9m4CAggAAgEYMBQG
+CCqGSIb3DQMHBAg/BZPM2O3QfASCAoBBGkVz4E/Pr1CsIioC92eCz4qWLclhc53HgHSCEo9I
+XdNCTpCs/oxOXhQ0WQCPFhYEaxU8STgZm0Yhq8WEF1QfxOPOU8nDiwMT0L7/ARruu5bTCxnW
+B3kkn+XiO5GldVJhULFlrl91t83yMsTSw+vyCyxZkqewBLR7mqHQUe2suVquMyutxxr2vZgV
+QMfRxk65fSvySUHeNaj1dmakYcpP+35iejyUTAtAGuBsv2C68bwif4wkpLpedghNCtmccSdQ
+t9QDF3yy6Q42tAW/OK6/t836/qn39f+47Kp4LMJUMmxNrtV7IntIkgBGgnGsqP9Br2B4GYXc
+sWK0YApA3+Sf3kfH/wQ6Hib8nN4YxUTxxnS9WNHvRFrXCmfbGd5vAzi4lKCm/W+2Nlpd4DDQ
+3JZjjCR73PMfKtHJCGULkNkK/9kRyhLYql2u/ZUJoEcdZxzEpYgExW8Wu1CrCVtWd+ueXs1h
+or6Fdua7Gg4cjMgVg6EUSxdMBFQCX8heD8JeG6jMFNR9hTxe8o/PK8Ys63JyLMLRUv3Ud+f8
+8T0TtCZV5+rgLfvb6k89uDJJK228WuJB6rp8S+qqq30RFPmkzW8JNulRilY+wrIfcowA6+TA
+T5WKzFOIbkZd/R34tNLJMjTJlUq6SQKaOlQnqOEFbyY/GXgzYgnmc3tl8pigXEJvNzU5GiuB
+ib35QQbzh87KlfLtWELK+8ZoyhZAZAMr97IavUbuFubOyEoEozUliARyRZ1ZudM4Ii+J6TRX
+cmLryIBlz3OXgUUBSwJPwtWuR4tZ8nIt7cVJr7pxLblGfeFuu01HWN55hv4C78/aNSipVYCF
+OFt8n7wQHxbbJvoTIdd/
 @<:@end@:>@
 ])
 
@@ -119,6 +120,7 @@ end
 
 function ignore_file(name)
 	if (string.find(name, "test_hooks.lua")) then return true end
+	if (string.find(name, "keys")) then return true end
 	if (string.find(name, "test.db")) then return true end
 	return false
 end
@@ -138,9 +140,9 @@ attr_functions[["test_attr"]] =
 
 ])
 
-AT_CHECK(MONOTONE setup ., [], [ignore], [ignore])
 AT_CHECK(MONOTONE db init, [], [ignore], [ignore])
 AT_CHECK(MONOTONE read <test_keys, [], [ignore], [ignore])
+AT_CHECK(MONOTONE setup --branch=testbranch ., [], [ignore], [ignore])
 AT_CHECK(rm test_keys)
 ])
 
@@ -178,19 +180,19 @@ CHECK_SAME_STDOUT(MONOTONE --db=$1 ls keys, MONOTONE --db=$2 ls keys)
 REVS=`MONOTONE --db=$1 complete revision ""`
 for R in $REVS; do
   CHECK_SAME_STDOUT(MONOTONE --db=$1 ls certs $R, MONOTONE --db=$2 ls certs $R)
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 cat revision $R, MONOTONE --db=$2 cat revision $R)
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_revision $R, MONOTONE --db=$2 automate get_revision $R)
 done
 
 CHECK_SAME_STDOUT(MONOTONE --db=$1 complete manifest "", MONOTONE --db=$2 complete manifest "")
 MANIFESTS=`MONOTONE --db=$1 complete manifest ""`
 for M in $MANIFESTS; do
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 cat manifest $M, MONOTONE --db=$2 cat manifest $M)
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_manifest $M, MONOTONE --db=$2 automate get_manifest $M)
 done
 
 CHECK_SAME_STDOUT(MONOTONE --db=$1 complete file "", MONOTONE --db=$2 complete file "")
 FILES=`MONOTONE --db=$1 complete file ""`
 for F in $FILES; do
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 cat file $F, MONOTONE --db=$2 cat file $F)
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_file $F, MONOTONE --db=$2 automate get_file $F)
 done
 ])
 
@@ -319,7 +321,9 @@ UNGZ($2.gz, $2)
 m4_define([NETSYNC_SETUP], [
 
 AT_CHECK(cp test.db test2.db)
+AT_CHECK(cp -r keys/ keys2)
 AT_CHECK(cp test.db test3.db)
+AT_CHECK(cp -r keys/ keys3)
 AT_DATA(netsync.lua, [
 function get_netsync_read_permitted(pattern, identity)
 	return true
@@ -332,8 +336,8 @@ end
 
 ])
 
-m4_define([MONOTONE2], MONOTONE --db=test2.db)
-m4_define([MONOTONE3], MONOTONE --db=test3.db)
+m4_define([MONOTONE2], MONOTONE --db=test2.db --keydir=keys2)
+m4_define([MONOTONE3], MONOTONE --db=test3.db --keydir=keys3)
 
 m4_define([NETSYNC_KILL], [
 # kill last seen pid if there is no pid file (needed for cases where
@@ -384,13 +388,13 @@ m4_define([NETSYNC_ADDRESS], [localhost:$_PORT])
 # note that NETSYNC_SERVE_START is _not_ a special case of this macro.
 m4_define([NETSYNC_SERVE_N_START], [
 NETSYNC_KILLHARD
-MONOTONE --db=test$1.db --rcfile=netsync.lua --pid-file=monotone_at.pid serve NETSYNC_ADDRESS m4_if($2, [], "*", $2) &
+MONOTONE --db=test$1.db --keydir=keys$1 --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($2, [], "{}*", $2) &
 sleep 4
 ])
 # run as NETSYNC_SERVE_START(pattern)
 m4_define([NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
-MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid serve NETSYNC_ADDRESS m4_if($1, [], "*", $1) &
+MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($1, [], "{}*", $1) &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
@@ -402,7 +406,7 @@ NETSYNC_KILLHARD
 # run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, pattern[, expected result])
 # first argument chooses whether to use the 2nd or 3rd database
 m4_define([NETSYNC_CLIENT_N_RUN], [
-AT_CHECK(MONOTONE --db=test$1.db --rcfile=netsync.lua $2 NETSYNC_ADDRESS $3, [$4], [ignore], [ignore])
+AT_CHECK(MONOTONE --db=test$1.db --keydir=keys$1 --rcfile=netsync.lua $2 NETSYNC_ADDRESS $3, [$4], [ignore], [ignore])
 ])
 # run as NETSYNC_CLIENT_RUN(push|pull|sync, pattern[, expected result])
 m4_define([NETSYNC_CLIENT_RUN], [
@@ -692,3 +696,26 @@ m4_include(tests/t_update_branch.at)
 m4_include(tests/t_commit_cancelled.at)
 m4_include(tests/t_merge_lca.at)
 m4_include(tests/t_commit_log_writeback.at)
+m4_include(tests/t_log_brief.at)
+m4_include(tests/t_explicit_merge_with_anc.at)
+m4_include(tests/t_drop_execute.at)
+m4_include(tests/t_rename_execute.at)
+m4_include(tests/t_read_from_file.at)
+m4_include(tests/t_setup_existing_path.at)
+m4_include(tests/t_mt_ignore.at)
+m4_include(tests/t_automate_get_file.at)
+m4_include(tests/t_automate_get_manifest.at)
+m4_include(tests/t_automate_get_revision.at)
+m4_include(tests/t_unreadable_db.at)
+m4_include(tests/t_restriction_with_exclude.at)
+m4_include(tests/t_restriction_with_exclude_iprint.at)
+m4_include(tests/t_rename_diff_names.at)
+m4_include(tests/t_key_management_without_db.at)
+m4_include(tests/t_automate_keys.at)
+m4_include(tests/t_diff_outside_working_dir.at)
+m4_include(tests/t_log_outside_working_dir.at)
+m4_include(tests/t_add_inside_MT.at)
+m4_include(tests/t_annotate_renames.at)
+m4_include(tests/t_config_confdir.at)
+m4_include(tests/t_database_sig_cleanup.at)
+m4_include(tests/t_update_switch_branch.at)

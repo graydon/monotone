@@ -571,19 +571,16 @@ signatures made by you. Exchanging public keys should be done over a
 trusted medium, in person, or via a trusted third party. Advanced
 secure key exchange techniques are beyond the scope of this document.
 
-Most of monotone's certs refer to revision IDs. Some certs may refer
-to file IDs or manifest IDs, depending on context. This capability may
-also be removed in the future, at which point certs will @emph{only}
-refer to revisions.
-
 @page
 @node    Storage and workflow
 @section Storage and workflow
 
-Monotone moves information in and out of three different types of
+Monotone moves information in and out of four different types of
 storage:
 
 @itemize
+@item
+a @i{keystore} in your home directory
 @item
 a @i{working copy} in the local file system
 @item
@@ -591,6 +588,12 @@ a @i{local database} in the local file system
 @item
 a @i{remote database} elsewhere on the internet
 @end itemize
+
+The @dfn{keystore} is a directory @file{.monotone/keys} in your home directory
+which contains copies of all your private keys. Each key is stored in a file
+whose name is the key identifier with some characters converted to underscores.
+When you use a key to sign a cert, the public half of that key is copied into
+your local database along with the cert.
 
 All information passes @emph{through} your local database, en route to
 some other destination. For example, when changes are made in a
@@ -1003,13 +1006,16 @@ was initially developed on the branch @code{net.venge.monotone.win32}.
 
 (For more information, see @ref{Naming Conventions}.)
 
+@page
 @node    Tutorial
 @chapter Tutorial
 
 This chapter illustrates the basic uses of monotone by means of an
-example, fictional software project. Before we walk through the
-tutorial, there are two minor issues to address: standard options and
-revision selectors.
+example, fictional software project.
+
+@section Issues
+Before we walk through the tutorial, there are two minor issues to
+address: standard options and revision selectors.
 
 @subsection Standard Options
 Before operating monotone, two important command-line options should
@@ -1145,9 +1151,10 @@ Jim does the following:
 @smallexample
 @group
 $ monotone --db=~/jim.db genkey jim@@juicebot.co.jp
-enter passphrase for key ID [jim@@juicebot.co.jp] : @i{<Jim enters his passphrase>}
 monotone: generating key-pair 'jim@@juicebot.co.jp'
-monotone: storing key-pair 'jim@@juicebot.co.jp' in database
+enter passphrase for key ID [jim@@juicebot.co.jp] : @i{<Jim enters his passphrase>}
+confirm passphrase for key ID [jim@@juicebot.co.jp]: @i{<Jim confirms his passphrase>}
+monotone: storing key-pair 'jim@@juicebot.co.jp' in keystore
 @end group
 @end smallexample
 
@@ -1156,9 +1163,10 @@ Abe does something similar:
 @smallexample
 @group
 $ monotone --db=~/abe.db genkey abe@@juicebot.co.jp
-enter passphrase for key ID [abe@@juicebot.co.jp] : @i{<Abe enters his passphrase>}
 monotone: generating key-pair 'abe@@juicebot.co.jp'
-monotone: storing key-pair 'abe@@juicebot.co.jp' in database
+enter passphrase for key ID [abe@@juicebot.co.jp] : @i{<Abe enters his passphrase>}
+confirm passphrase for key ID [abe@@juicebot.co.jp]: @i{<Abe confirms his passphrase>}
+monotone: storing key-pair 'abe@@juicebot.co.jp' in keystore
 @end group
 @end smallexample
 
@@ -1167,22 +1175,24 @@ as does Beth:
 @smallexample
 @group
 $ monotone --db=~/beth.db genkey beth@@juicebot.co.jp
-enter passphrase for key ID [beth@@juicebot.co.jp] : @i{<Beth enters her passphrase>}
 monotone: generating key-pair 'beth@@juicebot.co.jp'
-monotone: storing key-pair 'beth@@juicebot.co.jp' in database
+enter passphrase for key ID [beth@@juicebot.co.jp] : @i{<Beth enters her passphrase>}
+confirm passphrase for key ID [beth@@juicebot.co.jp]: @i{<Beth confirms her passphrase>}
+monotone: storing key-pair 'beth@@juicebot.co.jp' in keystore
 @end group
 @end smallexample
 
 Each programmer has now generated a key pair and placed it in their
-local database. Each can list the keys in their database, to ensure
+keystore. Each can list the keys in their keystore, to ensure
 the correct key was generated. For example, Jim might see this:
 
 @smallexample
 @group
-$ monotone --db=~/jim.db list keys
+$ monotone list keys
 
 [public keys]
-9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c jim@@juicebot.co.jp
+9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c jim@@juicebot.co.jp   (*)
+(*) - only in keystore
 
 
 [private keys]
@@ -1194,7 +1204,7 @@ $ monotone --db=~/jim.db list keys
 The hexadecimal string printed out before each key name is a
 @emph{fingerprint} of the key, and can be used to verify that the key
 you have stored under a given name is the one you intended to
-store. Monotone will never permit one database to store two keys with
+store. Monotone will never permit one keystore to store two keys with
 the same name or the same fingerprint.
 
 This output shows one private and one public key stored under the name
@@ -1246,11 +1256,13 @@ options to the @code{setup} command will be cached in a file called
 @file{MT/options}, so you don't have to keep passing them to monotone
 all the time.
 
-Jim creates his working copy:
+He chooses @code{jp.co.juicebot.jb7} as a branch name. (See
+@ref{Naming Conventions} for more information about appropriate branch
+names.)  Jim then creates his working copy:
 
 @smallexample
 @group
-/home/jim$ monotone setup juice
+/home/jim$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 setup juice
 /home/jim$ cd juice
 /home/jim/juice$
 @end group
@@ -1321,7 +1333,7 @@ recursively scans the directory and adds all its files.
 
 @smallexample
 @group
-$ monotone --db=~/jim.db add include/jb.h src
+$ monotone add include/jb.h src
 monotone: adding include/jb.h to working copy add set
 monotone: adding src/apple.c to working copy add set
 monotone: adding src/banana.c to working copy add set
@@ -1348,7 +1360,7 @@ he has forgotten what he was doing. He asks monotone:
 
 @smallexample
 @group
-$ monotone --db=jim.db status
+$ monotone status
 
 new_manifest [2098eddbe833046174de28172a813150a6cbda7b]
 
@@ -1389,7 +1401,7 @@ he runs a command which prints out the status @emph{and} a GNU
 
 @smallexample
 @group
-$ monotone --db=jim.db diff
+$ monotone diff
 # 
 # add_file "include/jb.h"
 # 
@@ -1409,8 +1421,9 @@ $ monotone --db=jim.db diff
 #  from []
 #    to [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
 # 
+============================================================================
 --- include/jb.h
-+++ include/jb.h
++++ include/jb.h 3b12b2d0b31439bd50976633db1895cff8b19da0
 @@ -0,0 +1,13 @@
 +/* Standard JuiceBot hw interface */
 +
@@ -1425,8 +1438,9 @@ $ monotone --db=jim.db diff
 +#define BANANA_SPOUT 0x7f
 +void dispense_apple_juice ();
 +void dispense_banana_juice ();
+============================================================================
 --- src/apple.c
-+++ src/apple.c
++++ src/apple.c 2650ffc660dd00a08b659b883b65a060cac7e560
 @@ -0,0 +1,7 @@
 +#include "jb.h"
 +
@@ -1435,8 +1449,9 @@ $ monotone --db=jim.db diff
 +@{
 +  /* Fill this in please, Abe. */
 +@}
+============================================================================
 --- src/banana.c
-+++ src/banana.c
++++ src/banana.c e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f
 @@ -0,0 +1,7 @@
 +#include "jb.h"
 +
@@ -1452,16 +1467,17 @@ $ monotone --db=jim.db diff
 @node    Committing Work
 @section Committing Work
 
-Satisfied with the work he's done, Jim wants to save his changes. He
-chooses @code{jp.co.juicebot.jb7} as a branch name. (See @ref{Naming
-Conventions} for more information about appropriate branch names.) He
+Satisfied with the work he's done, Jim wants to save his changes.  He
 then commits his working copy, which causes monotone to process the
-@file{MT/work} file and record the file contents, manifest, and revision
-into the database.
+@file{MT/work} file and record the file contents, manifest, and
+revision into the database. Since he provided a branch name when he
+ran @command{setup}, monotone will use this as the default branch name
+when he commits.
+
 
 @smallexample
 @group
-$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 commit --message="initial checkin of project"
+$ monotone commit --message="initial checkin of project"
 monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
@@ -1480,8 +1496,9 @@ $ cat MT/revision
 @end group
 @end smallexample
 
-Monotone also generated a number of certificates, attached to
-the new revision. These certs store metadata about the commit. Jim can
+Monotone also generated a number of certificates attached to
+the new revision, and made sure that the database contained a copy of Jim's
+public key. These certs store metadata about the commit. Jim can
 ask monotone for a list of certs on this revision.
 
 @smallexample
@@ -1600,10 +1617,8 @@ into his database:
 
 @smallexample
 @group
-$ monotone --db=~/jim.db read <~/abe.pubkey
-monotone: read 1 packet
-$ monotone --db=~/jim.db read <~/beth.pubkey
-monotone: read 1 packet
+$ cat ~/abe.pubkey ~/beth.pubkey | monotone --db=~/jim.db read
+monotone: read 2 packets
 @end group
 @end smallexample
 
@@ -1635,26 +1650,51 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.db serve jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+$ monotone --db=jim.db serve "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
-This command sets up a single listener loop on the host
-@code{jim-laptop.juicebot.co.jp}, serving all branches matching
+This command starts monotone listening on all network interfaces of 
+his laptop on the default port 5253, serving any branch matching
 @code{jp.co.juicebot.jb7*}. This will naturally include the
 @code{jp.co.juicebot.jb7} branch, and any sub-branches.  The quotes
 around @code{"jp.co.juicebot.jb7*"} are there to protect the @code{*}
 from expansion by the shell; they have no meaning to monotone.
+
+If you want to be more 
+restrictive in which interfaces you listen on, or use a non-standard port, 
+you can use the @code{--bind=address:port} argument like so:
+
+@smallexample
+@group
+$ monotone --db=jim.db --bind=localhost:1234 "jp.co.juicebot.jb7*"
+@end group
+@end smallexample
+
+The example above will start monotone listening on port 1234 only 
+on the loopback interface 127.0.0.1 (which is not accessible 
+from the network, so you can use it for testing without 
+exposing an open port to the rest of the world).  
+You can cause monotone to listen on all interfaces on 
+port 1234 by leaving out the address part like @code{--bind=:1234}.
 
 Now Abe decides he wishes to fetch Jim's code. To do this he issues
 the monotone @code{sync} command:
 
 @smallexample
 @group
-monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: rebuilding merkle trees ...
+$ monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+monotone: setting default server to jim-laptop.juicebot.co.jp
+monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
+monotone: setting default branch exclude pattern to ''
 monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: [bytes in: 3200] [bytes out: 673] 
+monotone: first time connecting to server jim-laptop.juicebot.co.jp:5253
+monotone: I'll assume it's really them, but you might want to double-check
+monotone: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
+monotone: warning: saving public key for jim@@juicebot.co.jp to database
+monotone: finding items to synchronize:
+monotone: bytes in | bytes out | revs in | revs out | revs written
+monotone:     2587 |      1025 |       1 |        0 |            1
 monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
@@ -1726,8 +1766,9 @@ $ monotone diff
 #  from [2650ffc660dd00a08b659b883b65a060cac7e560]
 #    to [e2c418703c863eabe70f9bde988765406f885fd0]
 # 
---- src/apple.c
-+++ src/apple.c
+============================================================================
+--- src/apple.c 2650ffc660dd00a08b659b883b65a060cac7e560
++++ src/apple.c e2c418703c863eabe70f9bde988765406f885fd0
 @@ -1,7 +1,10 @@
  #include "jb.h"
  
@@ -1749,7 +1790,6 @@ Satisfied with his day's work, Abe decides to commit.
 @group
 $ monotone commit 
 monotone: beginning commit on branch 'jp.co.juicebot.jb7'
-monotone: commited revision 70decb4b31a8227a629c0e364495286c5c75f979
 @end group
 @end smallexample
 
@@ -1797,12 +1837,13 @@ Abe then sends his new revision back to Jim:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: rebuilding merkle trees ...
-monotone: including branch jp.co.juicebot.jb7
-monotone: [keys: 2] [rcerts: 8] 
+$ monotone sync
 monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: [bytes in: 630] [bytes out: 2844] 
+monotone: finding items to synchronize:
+monotone:   certs |    keys | revisions
+monotone:       8 |       2 |         2
+monotone: bytes in | bytes out | revs in | revs out | revs written
+monotone:      615 |      2822 |       0 |        1 |            0
 monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
@@ -1813,9 +1854,20 @@ Jim's:
 @smallexample
 @group
 $ monotone --db=beth.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: rebuilding merkle trees ...
+monotone: setting default server to jim-laptop.juicebot.co.jp
+monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
+monotone: setting default branch exclude pattern to ''
 monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: [bytes in: 3200] [bytes out: 673] 
+monotone: first time connecting to server jim-laptop.juicebot.co.jp:5253
+monotone: I'll assume it's really them, but you might want to double-check
+monotone: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
+monotone: warning: saving public key for jim@@juicebot.co.jp to database
+monotone: finding items to synchronize:
+monotone: bytes in | bytes out | revs in | revs out | revs written
+monotone:     4601 |      1239 |       2 |        0 |            1
+monotone: verifying new revisions (this may take a while)
+monotone: bytes in | bytes out | revs in | revs out | revs written
+monotone:     4601 |      1285 |       2 |        0 |            2
 monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
@@ -1864,12 +1916,13 @@ And she syncs with Jim again:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: rebuilding merkle trees ...
-monotone: including branch jp.co.juicebot.jb7
-monotone: [keys: 3] [rcerts: 12] 
+$ monotone sync
 monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: [bytes in: 630] [bytes out: 2844] 
+monotone: finding items to synchronize:
+monotone:   certs |    keys | revisions
+monotone:      12 |       3 |         3
+monotone: bytes in | bytes out | revs in | revs out | revs written
+monotone:      709 |      2879 |       0 |        1 |            0
 monotone: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
@@ -1940,8 +1993,9 @@ $ monotone diff
 #  from [7381d6b3adfddaf16dc0fdb05e0f2d1873e3132a]
 #    to [5e6622cf5c8805bcbd50921ce7db86dad40f2ec6]
 # 
---- src/banana.c
-+++ src/banana.c
+============================================================================
+--- src/banana.c 7381d6b3adfddaf16dc0fdb05e0f2d1873e3132a
++++ src/banana.c 5e6622cf5c8805bcbd50921ce7db86dad40f2ec6
 @@ -1,10 +1,15 @@
  #include "jb.h"
  
@@ -1979,7 +2033,7 @@ And she syncs with Jim:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+$ monotone sync
 @end group
 @end smallexample
 
@@ -2010,7 +2064,7 @@ he has new work to contribute, however, he now syncs:
 
 @smallexample
 @group
-$ monotone sync jim-laptop.juicebot.co.jp jp.co.juicebot.jb7
+$ monotone sync
 @end group
 @end smallexample
 
@@ -2036,10 +2090,11 @@ conflicts Jim does so himself:
 @smallexample
 @group
 $ monotone merge
-monotone: merging with revision 1 / 2
+monotone: starting with revision 1 / 2
+monotone: merging with revision 2 / 2
 monotone: [source] 39969614e5a14316c7ffefc588771f491c709152
 monotone: [source] 8b41b5399a564494993063287a737d26ede3dee4
-monotone: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 found
+monotone: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 abe@@juicebot.co.jp  2004-10-26T:02:50:01 found
 monotone: trying 3-way merge
 monotone: [merged] da499b9d9465a0e003a4c6b2909102ef98bf4e6d
 monotone: your working copies have not been updated
@@ -2156,7 +2211,9 @@ $ monotone propagate jp.co.juicebot.jb7 jp.co.juicebot.jb7.muffins
 monotone: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
 monotone: [source] da003f115752ac6e4750b89aaca9dbba178ac80c
 monotone: [target] d0e5c93bb61e5fd25a0dadf41426f209b73f40af
-monotone: common ancestor 853b8c7ac5689181d4b958504adfb5d07fd959ab found
+monotone: common ancestor 853b8c7ac5689181d4b958504adfb5d07fd959ab jim@@juicebot.co.jp 2004-10-26T:12:44:23 found
+monotone: trying 3-way merge
+monotone: [merged] 89585b3c5e51a5a75f5d1a05dda859c5b7dde52f
 @end group
 @end smallexample
 
@@ -2164,15 +2221,16 @@ The @command{propagate} merges all of the new changes on one branch onto
 another.
 
 When the muffins code is eventually stable and ready to be integrated
-into the main line of development, she simple propagates the other way:
+into the main line of development, she simply propagates the other way:
 
 @smallexample
 @group
 $ monotone propagate jp.co.juicebot.jb7.muffins jp.co.juicebot.jb7
-monotone: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
+monotone: propagating jp.co.juicebot.jb7.muffins -> jp.co.juicebot.jb7
 monotone: [source] 4e48e2c9a3d2ca8a708cb0cc545700544efb5021
 monotone: [target] bd29b2bfd07644ab370f50e0d68f26dcfd3bb4af
-monotone: common ancestor 652b1035343281a0d2a5de79919f9a31a30c9028 found
+monotone: common ancestor 652b1035343281a0d2a5de79919f9a31a30c9028 jim@@juicebot.co.jp 2004-10-26T:15:25:05 found
+monotone: [merged] 03f7495b51cc70b76872ed019d19dee1b73e89b6
 @end group
 @end smallexample
 
@@ -2271,7 +2329,16 @@ Uses selector type @code{a}. For example, @code{a:graydon} matches
 @item Branch selection
 Uses selector type @code{b}. For example, @code{b:net.venge.monotone} matches
 @code{branch} certs where the cert value is @code{net.venge.monotone}.
-Values to match for can have shell wildcards.
+Values to match for can have shell wildcards.  If you give a bare @code{b:}
+monotone will require you to be in a working copy, and will use the branch
+value recorded in your MT/options file.
+@item Heads selection
+Uses selector type @code{h}. For example, @code{h:net.venge.monotone} matches
+@code{branch} certs where the cert value is @code{net.venge.monotone} and 
+the associated revision is a head revision on that branch.  Values to match
+for can have shell wildcards like the branch selector.  If you give a bare 
+@code{h:} monotone will require you to be in a working copy, and use the branch
+recorded in your MT/options file.
 @item Date selection
 Uses selector type @code{d}. For example, @code{d:2004-04} matches
 @code{date} certs where the cert value begins with
@@ -2682,6 +2749,13 @@ in the future, but they will follow the patterns given above.
 @item .mt-attrs
 Contains versioned attributes of files, associated with the files'
 pathnames.
+@item .mt-ignore
+Contains a list of regular expression patterns, one per line. If it exists,
+any file with a name matching one of these patterns is ignored.
+@item MT/wanted-testresults
+Contains a list of testresult key names, one per line. If it exists, update
+will only select revisions that do not have regressions according to the given
+testresult keys.
 @item MT/revision
 Contains the identity of the ``base'' revision of the working copy.
 Each working copy has a base revision. When the working copy is
@@ -3100,8 +3174,8 @@ $ cvs update -r FOO_TAG -d
 @tab
 @smallexample
 @group
-$ monotone update 830ac1a5f033825ab364f911608ec294fe37f7bc
-$ monotone update t:FOO_TAG
+$ monotone update -r 830ac1a5f033825ab364f911608ec294fe37f7bc
+$ monotone update -r t:FOO_TAG
 @end group
 @end smallexample
 @end multitable
@@ -3219,7 +3293,8 @@ $ monotone drop file.txt
 
 Monotone does not require that you erase a file from the working copy
 before you drop it. Dropping a file merely removes its entry in the
-manifest of the current revision.
+manifest of the current revision unless you give it the @command{--execute}
+flag, which tells monotone to go ahead and also remove it from the filesystem.
 
 
 @heading Viewing History
@@ -3314,19 +3389,17 @@ all, commands are grouped into logical categories.
 @section Tree
 
 @ftable @command
-@item monotone cat file @var{id}
-@itemx monotone cat file @var{rid} @var{path}
-@itemx monotone cat manifest
-@itemx monotone cat manifest @var{id}
-@itemx monotone cat revision
-@itemx monotone cat revision @var{id}
+@itemx monotone cat @var{path}
+@itemx monotone cat --revision=@var{id} @var{path}
 
-These commands write the contents of a specific file, manifest or
-revision @var{id} to standard output, or the contents of the file
-@var{path} as it was at revision @var{rid}. They are useful if you wish
-to inspect a version without checking it out into your working copy.  An
-unspecified manifest or revision @var{id} is allowed from within a
-working copy and refers to the current manifest or revision.
+Write the contents of a specific file @var{path} to standard output.
+
+Without a @option{--revision} argument, the command outputs the 
+contents of @var{path} as found in the current revision. This requires 
+the command be executed from within a working copy.
+
+With an explicit @option{--revision} argument, the command outputs
+contents of @var{path} at that revision.
 
 @item monotone checkout --revision=@var{id} @var{directory}
 @itemx monotone co --revision=@var{id} @var{directory}
@@ -3374,7 +3447,13 @@ changes as a new revision descending from @var{id}. The new revision
 will show up as a new head and thus a subsequent @command{merge} will
 incorporate the inverse of the disapproved changes in the other head(s).
 
-Note that this command only works if @var{id} has exactly one ancestor.
+Conceptually, @code{disapprove}s contract is that disapprove(A) gives a 
+revision B such that whenever B is merged with a descendent D of A the merge 
+will result in what D ``would have looked like'' if A had never happened.
+
+Note that as a consequence of this contract the @code{disapprove} command 
+only works if @var{id} has exactly one ancestor, since it hasn't been 
+worked out how to generate such a descendent in the multi-ancestor case.
 
 
 @item monotone heads --branch=@var{branchname}
@@ -3477,7 +3556,10 @@ your working copy is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also removes
 any attributes on @var{pathname}; see @ref{File Attributes} for more
-details.
+details.  If you use the --missing flag it will add drop entries for any
+paths that monotone is tracking for which you have already removed the
+files from the filesystem, in addition to all those specified in 
+@var{pathname...}.
 
 While this command places a ``drop'' entry on your work list, it does
 not immediately affect your database. When you @command{commit} your
@@ -3603,6 +3685,13 @@ manifest, and by erasing the @file{MT/work} file.
 If files or directories are given as arguments, only those files and
 directories are affected instead of the entirety of your working copy.
 
+If the flag --missing is given, in addition to files or directories given
+as arguments, it reverts any files which monotone 
+has listed in it's manifest, but which have been deleted from the working
+copy.  If you specify --missing with no additional path arguments, 
+and there are no files missing from the working copy, revert is 
+conservative and does nothing.
+
 From within a subdirectory of the working copy the @command{revert}
 command will, by default, revert @emph{all changes} in the working copy.
 Specifying only the pathname "." will restrict @command{revert} to files
@@ -3611,11 +3700,11 @@ should be used when reverting files to ensure that the correct set of
 files is reverted.}
 
 @item monotone update
-@itemx monotone update @var{revision}
-Without a @var{revision} argument, this command incorporates ``recent''
-changes found in your database into your working copy. It does this by
-performing 3 separate stages. If any of these stages fails, the update
-aborts, doing nothing. The stages are:
+@itemx monotone update --revision=@var{revision}
+Without a @option{--revision} argument, this command incorporates
+``recent'' changes found in your database into your working copy. It
+does this by performing 3 separate stages. If any of these stages
+fails, the update aborts, doing nothing. The stages are:
 
 @itemize
 @item
@@ -3632,13 +3721,13 @@ if the merge is successful, write the result over top of the working
 copy.
 @end itemize
 
-With an explicit @var{revision} argument, the command uses that revision
+With an explicit @option{--revision} argument, the command uses that revision
 as the update target instead of finding an acceptable candidate.
 
 The effect is always to take whatever changes you have made in the
 working copy, and to ``transpose'' them onto a new revision, using
 monotone's 3-way merge algorithm to achieve good results.  Note that
-with the explicit @var{revision} argument, it is possible to update
+with the explicit @option{--revision} argument, it is possible to update
 ``backwards'' or ``sideways'' in history --- for example, reverting to
 an earlier revision, or if your branch has two heads, updating to the
 other.  In all cases, the end result will be whatever revision you
@@ -3648,7 +3737,7 @@ applied.
 If a @option{--branch} option is specified, the @command{update} command
 tries to select the revision to update to from this branch.  The branch
 becomes the new default branch of the working copy (even if you also
-specify an explicit @var{revision} argument).
+specify an explicit @option{--revision} argument).
 
 @item monotone refresh_inodeprints
 This command puts the current working copy into @ref{Inodeprints} mode,
@@ -3922,7 +4011,7 @@ branch:
 
 @smallexample
 @group
-$ ./monotone list certs 4a96
+$ monotone list certs 4a96
 monotone: expandeding partial id '4a96'
 monotone: expanded to '4a96a230293456baa9c6e7167cafb3c5b52a8e7f'
 -----------------------------------------------------------------
@@ -3958,8 +4047,8 @@ Value : 2003-10-16  graydon hoare  <graydon@@pobox.com>
 
 @item monotone list keys
 @itemx monotone list keys @var{pattern}
-These commands list @sc{rsa} keys held in your current database. They
-do not print out any cryptographic information; they simply list the
+These commands list @sc{rsa} keys held in your keystore and current database.
+They do not print out any cryptographic information; they simply list the
 names of public and private keys you have on hand.
 
 If @var{pattern} is provided, it is used as a glob to limit the keys
@@ -4051,7 +4140,7 @@ files to the current subdirectory of the working copy.
 @item monotone genkey @var{keyid}
 
 This command generates an @sc{rsa} public/private key pair, using a
-system random number generator, and stores it in your database under
+system random number generator, and stores it in your keystore under
 the key name @var{keyid}. If the the hook
 @code{non_blocking_rng_ok()} returns @code{true}, the key
 generation will use an unlimited random number generator (such as
@@ -4059,11 +4148,10 @@ generation will use an unlimited random number generator (such as
 number generator (such as @file{/dev/random}) but might run slightly
 slower.
 
-The private half of the key is stored in an encrypted form, using the
-symmetric cipher @sc{arc4}, so that anyone accidentally reading your
-database cannot extract your private key and use it. You must provide
-a passphrase for your key when it is generated, which is used to key
-the @sc{arc4} cipher. In the future you will need to enter this
+The private half of the key is stored in an encrypted form, so that anyone
+who can read your keystore cannot extract your private key and use it.
+You must provide a passphrase for your key when it is generated, which is used
+to determine the encryption key. In the future you will need to enter this
 passphrase again each time you sign a certificate, which happens every
 time you @command{commit} to your database. You can tell monotone to
 automatically use a certain passphrase for a given key using the
@@ -4076,10 +4164,7 @@ careful using this hook.
 This command drops the public and/or private key. If both exist, both
 are dropped, if only one exists, it is dropped. This command should
 be used with caution as changes are irreversible without a backup of
-the key(s) that were dropped. Note also that the private key is not
-guaranteed to actually be erased from your database file --- if you are
-going to make the database file public, you should use @command{db dump}
-and @command{db load} to import into a fresh database.
+the key(s) that were dropped.
 
 @item monotone chkeypass @var{id}
 
@@ -4190,15 +4275,16 @@ manifest differences safely between monotone databases.
 @item monotone privkey @var{keyid}
 @itemx monotone pubkey @var{keyid}
 
-These commands print out an @code{privkey} or @code{pubkey} packet for
+These commands print out an @code{keypair} or @code{pubkey} packet for
 the @sc{rsa} key @var{keyid}. These can be used to transport public or
 private keys safely between monotone databases.
 
 
 @item monotone read
+@item monotone read @var{file1} @var{file2...}
 
-This command reads packets from @code{stdin} and applies them to your
-database. 
+This command reads packets from files or @code{stdin} and stores them
+in your database.
 
 @end ftable
 
@@ -4981,9 +5067,11 @@ renames.
 
 @item Sample output:
 
+All basic status codes:
+
 @verbatim
   M 0 0 missing
- AP 0 0 added patched
+ AP 0 0 added
 D   0 0 dropped
 R   1 0 renamed-from-this
  R  0 1 renamed-to-this
@@ -4991,57 +5079,81 @@ R   1 0 renamed-from-this
     0 0 unchanged
   U 0 0 unknown
   I 0 0 ignored
+@end verbatim
 
-# swapped but not moved
+Two files swapped:
 
-RRP 1 2 unchanged
-RRP 2 1 original
-
-# swapped and moved
-
+@verbatim
 RR  1 2 unchanged
 RR  2 1 original
+@end verbatim
 
-# rename foo bar; add foo
+Recorded with monotone that two files were swapped, but they were not
+actually swapped in the filesystem.  Thus they both appear as patched:
 
+@verbatim
+RRP 1 2 unchanged
+RRP 2 1 original
+@end verbatim
+
+Rename @file{foo} to @file{bar}; add new file @file{foo}:
+
+@verbatim
 RAP 1 0 foo
  R  0 1 bar
+@end verbatim
 
-# rotated but not moved dropped -> missing -> original -> dropped
+Rotated files @file{foo} -> @file{bar} -> @file{baz} -> @file{foo}:
 
-RRP 1 3 dropped
-RRP 2 1 missing
-RRP 3 2 original
+@verbatim
+RR  1 3 foo
+RR  2 1 bar
+RR  3 2 baz
+@end verbatim
 
-# rotated and moved
+Recorded the rotation of files @file{foo} -> @file{bar} -> @file{baz} ->
+@file{foo}, but the actual files in the working directory were not
+moved, so monotone interprets all files as having been patched:
 
-RR  1 3 dropped
-RR  2 1 missing
-RR  3 2 original
+@verbatim
+RRP 1 3 foo
+RRP 2 1 bar
+RRP 3 2 baz
+@end verbatim
 
-# dropped but not removed and thus unknown
+Dropped but not removed and thus unknown:
 
+@verbatim
 D U 0 0 dropped
+@end verbatim
 
-# added but removed and thus missing
+Added a non-existent file which is thus missing:
 
+@verbatim
  AM 0 0 added
+@end verbatim
 
-# renamed but not moved and thus unknown source and missing target
+Recorded a rename, but not moved in the filesystem, and thus unknown
+source and missing target:
 
+@verbatim
 R U 1 0 original
  RM 0 1 renamed
+@end verbatim
 
-# moved but not renamed and thus missing source and unknown target
+Moved in the filesystem but no rename recorded, and thus missing source
+and unknown target:
 
+@verbatim
   M 0 0 original
   U 0 0 renamed
+@end verbatim
 
-# renamed and patched
+Renamed and patched:
 
+@verbatim
 R   1 0 original
  RP 0 1 renamed
-
 @end verbatim
 
 @item Output format:
@@ -5130,6 +5242,34 @@ are not valid, detailed below.
 'RRI' rename source and target and target ignored (seems invalid, but may be possible?)
 'RRM' rename source and target and target missing
 @end verbatim
+
+The two numbers are used to match up the pre-state and post-state of a
+rename.  Imagine a situation where there are two renames.
+@command{automate inventory} will print something like:
+
+@verbatim
+R   1 0 a
+R   2 0 b
+ R  0 2 c
+ R  0 1 d
+@end verbatim
+
+Here the status characters tell us that @file{a} and @file{b} were
+renamed, and we can tell that one was renamed to @file{c} and one was
+renamed to @file{d}, but we can't tell which was renamed to which.  To
+do that, we have to refer to the numbers.  The numbers do not themselves
+mean anything; their only purpose is to let you match up the two
+``ends'' of a rename.  The 1 in the left column by @file{a} means that
+@file{a} was the source of a rename, and the 1 in the right column by
+@file{d} means that @file{d} was the target of that same rename.
+Similarly, the two 2's tell us that @file{b} was renamed to @file{c}.
+
+There are two columns of numbers because the same file can
+simultaneously be the target and source of a rename.  The number '0' is
+used as a meaningless placeholder in all cases where a file is not a
+source or target of a rename.  Any non-zero number that occurs at all
+will occur exactly once in the first column and exactly once in the
+second column.
 
 Full support for versioned directories is not yet complete and the
 inventory will only list entries for renamed or dropped
@@ -5293,6 +5433,238 @@ message.
 
 @end table
 
+@item monotone automate get_revision
+@item monotone automate get_revision @var{id}
+
+@table @strong
+@item Arguments:
+
+Specifying the option @var{id} argument outputs the changeset 
+information for the specified @var{id}. Otherwise, @var{id} is 
+determined from the working directory.
+
+@item Added in:
+
+1.0
+
+@item Purpose:
+
+Prints changeset information for the specified revision id.
+
+There are several changes that are described; each of these is described by 
+a different basic_io stanza. The first string pair of each stanza indicates the 
+type of change represented. 
+
+Possible values of this first value are along with an ordered list of 
+basic_io formatted string pairs that will be provided are:
+
+@verbatim
+'old_revision'
+      represents a parent revision.
+      format: ('old_revision', revision id)
+'new_manifest'
+      represents the new manifest associated with the revision.
+      format: ('new_manifest', manifest id)
+'old_manifest'
+      represents a manifest associated with a parent revision.
+      format: ('old_manifest', manifest id)
+'patch'
+      represents a file that was modified.
+      format: ('patch', filename), ('from', file id), ('to', file id)
+'add_file'
+      represents a file that was added.
+      format: ('add_file', filename)
+'delete_file'
+      represents a file that was deleted.
+      format: ('delete_file', filename)
+'delete_dir'
+      represents a directory that was deleted.
+      format: ('delete_dir', filename)
+'rename_file'
+      represents a file that was renamed.
+      format: ('rename_file', old filename), ('to', new filename)
+'rename_dir'
+      represents a directory that was renamed.
+      format: ('rename_dir', old filename), ('to', new filename)
+@end verbatim
+ 
+@item Sample output:
+
+@verbatim
+new_manifest [bfe2df785c07bebeb369e537116ab9bb7a4b5e19]
+
+old_revision [429fea55e9e819a046843f618d90674486695745]
+old_manifest [b71855116f7049ac663102c0cb628653ffe316d1]
+
+patch "ChangeLog"
+ from [7dc21d3a46c6ecd94685ab21e67b131b32002f12]
+   to [234513e3838d423b24d5d6c98f70ce995c8bab6e]
+
+patch "std_hooks.lua"
+ from [0408707bb6b97eae7f8da61af7b35364dbd5a189]
+   to [d7bd0756c48ace573926197709e53eb24dae5f5f]
+@end verbatim
+
+@item Output format:
+
+All stanzas are formatted by basic_io. Stanzas are seperated 
+by a blank line. Values will be escaped, '\' to '\\' and 
+'"' to '\"'.
+
+@item Error conditions:
+
+If the revision specified is unknown or invalid prints an error message
+to stderr and exits with status 1.
+
+@end table
+
+@item monotone automate get_manifest
+@item monotone automate get_manifest @var{id}
+
+@table @strong
+@item Arguments:
+
+Specifying the optional @var{id} argument outputs the maifest for the
+specified @var{id}. Otherwise, @var{id} is determined from the working
+directory.
+
+@item Added in:
+
+1.0
+
+@item Purpose:
+
+Prints the contents of the manifest associated with the given manifest ID.
+
+@item Sample output:
+
+@verbatim
+e3915658cb464d05f21332e03d30dca5d94fe776  .htaccess
+00ff89c69e7a8f6a0f48c6503168d9b62a0cfeb0  .mt-attrs
+80d8f3f75c9b517ec462233e155f7dfb93379f67  AUTHORS
+fc74a48c7f73eedcbe1ea709755fbe819b29736c  ChangeLog
+dfac199a7539a404407098a2541b9482279f690d  LICENSE
+440eec971e7bb61ccbb61634deb2729bb25931cd  README
+e0ea26c666b37c5f98ccf80cb933d021ee55c593  TODO
+b28ece354969314ce996f3030569215d685973d6  branch.psp
+1fdb62e05fb2a9338d2c72ddc58de3ab2b3976fe  common.py
+64cb5898e3a026b4782c343ca4386585e0c3c275  config.py.example
+7152c3ff110418aca5d23c374ea9fb92a0e98379  error.psp
+5d8536100fdf51d505b6f20bc9c16aa78d4e86a8  fileinbranch.psp
+981df124a0b5655a9f78c42504cfa8c6f02b267a  headofbranch.psp
+a43d0588a69e622b2afc681678c2a5c3b3b1f342  help.psp
+18a8bffc8729d7bfd71d2e0cb35a1aed1854fa74  html.py
+c621827db187839e1a7c6e51d5f1a7f6e0aa560c  index.psp
+708b61436dce59f47bd07397ce96a1cfabe81970  monotone.py
+a02b1c161006840ea8685e461fd07f0e9bb145a3  revision.psp
+027515fd4558abf317d54c437b83ec6bc76e3dd8  rss_feed.gif
+638140d6823eee5844de37d985773be75707fa25  tags.psp
+be83f459a152ffd49d89d69555f870291bc85311  tarofbranch.psp
+fb51955563d64e628e0e67e4acca1a1abc4cd989  utility.py
+8d04b3fc352a860b0e3240dcb539c1193705398f  viewmtn.css
+7cb5c6b1b1710bf2c0fa41e9631ae43b03424a35  viewmtn.py
+530290467a99ca65f87b74f653bf462b28c6cda9  wrapper.py
+@end verbatim
+
+@item Output format:
+
+The output format is one line for each file in the manifest. Each line begins 
+with a 40 character file ID, followed by two space characters ('  ') and then 
+the filename.
+
+@item Error conditions:
+
+If the manifest ID specified is unknown or invalid prints an error
+message to stderr and exits with status 1.
+
+@end table
+
+@item monotone automate get_file @var{id}
+
+@table @strong
+@item Arguments:
+
+The  @var{id} argument specifies the file to be output.
+
+@item Added in:
+
+1.0
+
+@item Purpose:
+
+Prints the contents of the specified file.
+
+@item Sample output:
+
+@verbatim
+If you've downloaded a release, see INSTALL for installation
+instructions.  If you've checked this out, the generated files are not
+included, and you must use "autoreconf --install" to create them.
+
+"make html" for docs, or read the .info file and / or man page.
+@end verbatim
+
+@item Output format:
+
+The file contents are output without modification.
+
+@item Error conditions:
+
+If the file id specified is unknown or invalid prints an error message
+to stderr and exits with status 1.
+
+@end table
+
+
+@item monotone automate keys
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+1.1
+
+@item Purpose:
+
+Print all keys in basic_io format.
+
+@item Sample output:
+
+@verbatim
+            name "tbrownaw@gmail.com"
+     public_hash [475055ec71ad48f5dfaf875b0fea597b5cbbee64]
+    private_hash [7f76dae3f91bb48f80f1871856d9d519770b7f8a]
+ public_location "database" "keystore"
+private_location "keystore"
+
+           name "tomfa@debian.org"
+    public_hash [3ac4afcd86af28413b0a23b7d22b9401e15027fc]
+public_location "database"
+
+            name "underwater@fishtank.net"
+     public_hash [115fdc73d87a5e9901d018462b21a1f53eca33a1]
+    private_hash [b520d2cfe7d30e4ea1725fc4f34646fc5469b13d]
+ public_location "keystore"
+private_location "keystore"
+
+@end verbatim
+
+@item Output format:
+
+For each key, a basic_io stanza is printed. The public_location and
+private_location items may have multiple values as shown above for public_location, one value for each place that the key is stored. If the
+private key does not exist, then the private_hash and private_location
+items will be absent. The keys are ordered alphabetically by name.
+
+@item Error conditions:
+
+None.
+
+@end table
+
 @end ftable
 
 @page
@@ -5357,7 +5729,7 @@ hooks}.
 
 @menu
 * Hooks::                     All hooks called by monotone.
-* Additional Lua Functions::  Extra functionality availabe to hook writers.
+* Additional Lua Functions::  Extra functionality available to hook writers.
 @end menu
 
 @page
@@ -5368,10 +5740,12 @@ This section documents the existing hook functions and their default
 definitions. 
 
 @ftable @code
-@item note_commit (@var{new_id}, @var{certs})
+@item note_commit (@var{new_id}, @var{revision}, @var{certs})
 
 Called by monotone after the version @var{new_id} is committed. The
-second parameter, @var{certs}, is a lua table containing the set of
+second parameter, @var{revision} is the text of the revision, what would
+be given by "monotone cat revision @var{new_id}". The
+third parameter, @var{certs}, is a lua table containing the set of
 certificate names and values committed along with this version. There
 is no default definition for this hook. 
 
@@ -5382,10 +5756,12 @@ hook is only intended as an aid for integrating monotone with informal
 commit-notification systems such as mailing lists or news services. It
 should not perform any security-critical operations.
 
-@item note_netsync_revision_received (@var{new_id}, @var{certs})
+@item note_netsync_revision_received (@var{new_id}, @var{revision}, @var{certs})
 
 Called by monotone after the revision @var{new_id} is recieved through
-netsync. @var{certs} is a lua table containing one subtable for each
+netsync. @var{revision} is the text of the revision, what would be given
+by "monotone cat revision @var{new_id}". @var{certs} is a lua table
+containing one subtable for each
 cert attached to the revision @var{new_id}. These subtables have fields
 named "key", "name", and "value", containing the signing key for the cert,
 the name of the cert, and the value of the cert. There is no default
@@ -6401,7 +6777,7 @@ Similarly, if you do not trust our vigilance in keeping up to date
 with cryptography literature, you can modify monotone to use any
 stronger hash you like, at the cost of isolating your own
 communications to a group using the modified version. Monotone is free
-software, and runs atop @code{crypto++}, so it is both legal and
+software, and runs atop @code{botan}, so it is both legal and
 relatively simple to change it to use some other algorithm.
 
 @page
@@ -6735,10 +7111,8 @@ Write private key packet to stdout.
 Write public key packet to stdout.
 @comment TROFF INPUT: .TP
 
-@item @b{read}
-Read packets from stdin. It is very important to @b{only read keys
-from trusted sources}; all other trust relationships are built out of
-the trust assigned to keys.
+@item @b{read} @i{[<file1> [<file2> [...]]]}
+Read packets from files or stdin.
 @comment TROFF INPUT: .TP
 
 @item @b{cvs_import} @i{<cvsroot>/<module>}
@@ -6770,15 +7144,20 @@ Show unmerged heads of branch, or report when branch is merged.
 Merge unmerged heads of branch.
 @comment TROFF INPUT: .TP
 
-@item @b{add} @i{<pathname> [...]}
+@item @b{add} @i{[--unknown] [<pathname>...]}
 Add files to working copy. adding a file does not copy it into the
 database, merely adds it to the work list. You must @b{commit} your
-changes in order to copy added files to the database.
+changes in order to copy added files to the database.  The missing 
+flag causes those files that @command{monotone ls unknown} would
+display to be added to the project.
 @comment TROFF INPUT: .TP
 
-@item @b{drop} @i{<pathname> [...]}
+@item @b{drop} @i{[--missing] [--execute] [<pathname>...]}
 Drop files from working copy. Files are not deleted from working copy,
-merely noted as removals in the work list.
+merely noted as removals in the work list, unless the --execute flag
+is given.  If the --missing flag is given any files that monotone is
+tracking but which are not present in the working copy (ie. the
+output that @command{monotone ls missing} would give) are dropped.
 @comment TROFF INPUT: .TP
 
 @item @b{rename} @i{<src> <dst>}
@@ -6798,7 +7177,7 @@ time, and if @file{MT/log} exists and is non-empty, you can cannot
 specify either of them at all.
 @comment TROFF INPUT: .TP
 
-@item @b{update} @i{[revision]}
+@item @b{update} @i{[--revision=revision]}
 Update working copy.
 @comment TROFF INPUT: .SH DESCRIPTION
 

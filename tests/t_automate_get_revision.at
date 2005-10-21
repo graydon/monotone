@@ -1,0 +1,55 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([automate get_manifest])
+NEED_UNB64
+MONOTONE_SETUP
+
+AT_DATA(expected, [new_manifest @<:@095e136cd6e47e3519869fb0f07dcce183780b6e@:>@
+
+old_revision @<:@@:>@
+old_manifest @<:@@:>@
+
+add_file "foo"
+
+patch "foo"
+ from @<:@@:>@
+   to @<:@4cbd040533a2f43fc6691d773d510cda70f4126a@:>@
+])
+
+AT_DATA(expected2, [new_manifest @<:@095e136cd6e47e3519869fb0f07dcce183780b6e@:>@
+
+old_revision @<:@306c506078df4b58470f75c845ccd11c2ea8cb26@:>@
+old_manifest @<:@095e136cd6e47e3519869fb0f07dcce183780b6e@:>@
+])
+
+AT_DATA(empty, [])
+
+ADD_FILE(foo, [blah
+])
+AT_CHECK(MONOTONE commit --date=2005-05-21T12:30:51 --branch=testbranch --message=blah-blah, [], [ignore], [ignore])
+BASE_R=`BASE_REVISION`
+
+# check that a correct usage produces correctly formatted output
+AT_CHECK(MONOTONE automate get_revision $BASE_R, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp expected stdout)
+
+# should work even if we don't specify the revision
+AT_CHECK(MONOTONE automate get_revision, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp expected2 stdout)
+
+# ensure that missing revisions fail
+NOSUCHREV=0000000000000000000000000000000000000000
+AT_CHECK(MONOTONE automate get_file $NOSUCHREV, [1], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp empty stdout)
+
+# ensure that revisions are not being completed
+# (the above commit will have created rev 306c506078df4b58470f75c845ccd11c2ea8cb26)
+TRUNCATEDREV=095e136cd6e47e3519869fb0f07dcc
+AT_CHECK(MONOTONE automate get_file $TRUNCATEDREV, [1], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp empty stdout)
+
+AT_CLEANUP

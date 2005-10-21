@@ -11,6 +11,7 @@ MOST_SOURCES =								\
          work.cc work.hh						\
          cert.cc cert.hh						\
          database.cc database.hh					\
+         key_store.cc key_store.hh					\
          file_io.cc file_io.hh						\
          keys.cc keys.hh						\
          manifest.cc manifest.hh					\
@@ -34,7 +35,6 @@ MOST_SOURCES =								\
          mt_version.cc mt_version.hh					\
          automate.cc automate.hh					\
          database_check.cc database_check.hh				\
-	 path_component.cc path_component.hh				\
          epoch.cc epoch.hh						\
          inodeprint.cc inodeprint.hh					\
          selectors.cc selectors.hh					\
@@ -42,12 +42,15 @@ MOST_SOURCES =								\
          restrictions.cc restrictions.hh				\
          hmac.cc hmac.hh                                                \
          globish.cc globish.hh                                          \
+         string_queue.cc string_queue.hh                                \
+         paths.cc paths.hh                                              \
                                                                         \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
 	 netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
-         package_full_revision.c package_full_revision.h options.hh
+         package_full_revision.c package_full_revision.h options.hh     \
+         i18n.h hash_map.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -77,16 +80,17 @@ BOTAN_SOURCES =                                                                 
         botan/buf_filt.cpp botan/cbc.cpp botan/certstore.cpp		\
         botan/cfb.cpp botan/charset.cpp botan/conf.cpp botan/crc32.cpp	\
         botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp			\
-        botan/data_snk.cpp botan/data_src.cpp botan/def_eng.cpp		\
+        botan/data_snk.cpp botan/data_src.cpp \
         botan/def_ops.cpp botan/defalloc.cpp botan/der_code.cpp		\
         botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp		\
-        botan/dl_get.cpp botan/dl_group.cpp botan/dl_param.cpp		\
+        botan/dl_group.cpp botan/dl_param.cpp		\
+        botan/dl_cache.cpp \
         botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp	\
         botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp		\
         botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp		\
         botan/eng_base.cpp botan/engine.cpp botan/es_file.cpp		\
         botan/exceptn.cpp botan/filter.cpp botan/filters.cpp		\
-        botan/fips140.cpp botan/fips_rng.cpp botan/fused.cpp		\
+        botan/fips140.cpp botan/fused.cpp		\
         botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp		\
         botan/gzip.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp	\
         botan/if_algo.cpp botan/inifile.cpp botan/init.cpp		\
@@ -102,7 +106,7 @@ BOTAN_SOURCES =                                                                 
         botan/pipe_rw.cpp botan/pk_algs.cpp botan/pk_core.cpp		\
         botan/pk_filts.cpp botan/pk_keys.cpp botan/pk_util.cpp		\
         botan/pkcs10.cpp botan/pkcs8.cpp botan/policy.cpp		\
-        botan/pow_mod.cpp botan/prf_ssl3.cpp botan/prf_tls.cpp		\
+        botan/pow_mod.cpp \
         botan/prf_x942.cpp botan/primes.cpp botan/pubkey.cpp		\
         botan/randpool.cpp botan/reducer.cpp botan/rng.cpp		\
         botan/rsa.cpp botan/s2k.cpp botan/secqueue.cpp			\
@@ -110,7 +114,9 @@ BOTAN_SOURCES =                                                                 
         botan/ui.cpp botan/util.cpp botan/x509_ca.cpp			\
         botan/x509_crl.cpp botan/x509_key.cpp botan/x509_obj.cpp	\
         botan/x509cert.cpp botan/x509find.cpp botan/x509opt.cpp		\
-        botan/x509self.cpp botan/x509stor.cpp botan/x917_rng.cpp	\
+        botan/des.cpp botan/des_tab.cpp botan/pkcs5.cpp 		\
+        botan/x509self.cpp botan/x509stor.cpp 				\
+        botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp 		\
         \
         botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h	\
         botan/lookup.h botan/omac.h botan/randpool.h botan/version.h	\
@@ -124,14 +130,14 @@ BOTAN_SOURCES =                                                                 
         botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h	\
         botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h	\
         botan/cfb.h botan/dl_param.h botan/fips_rng.h botan/modebase.h	\
-        botan/pipe.h botan/secalloc.h botan/x509_obj.h			\
+        botan/pipe.h botan/x509_obj.h			\
         botan/asn1_oid.h botan/conf.h botan/eax.h botan/gzip.h		\
         botan/mode_pad.h botan/pk_algs.h botan/secmem.h			\
         botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h	\
         botan/hex.h botan/mod_exp.h botan/pk_core.h botan/secqueue.h	\
         botan/x509stor.h botan/base64.h botan/crc32.h botan/eme.h	\
         botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h	\
-        botan/x917_rng.h botan/base_eng.h botan/crl_ent.h botan/emsa.h	\
+        botan/crl_ent.h botan/emsa.h	\
         botan/if_algo.h botan/mp_madd.h botan/pkcs8.h botan/socket.h	\
         botan/x919_mac.h botan/basefilt.h botan/ctr.h botan/engine.h	\
         botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h	\
@@ -142,7 +148,9 @@ BOTAN_SOURCES =                                                                 
         botan/data_src.h botan/es_egd.h botan/look_add.h botan/ofb.h	\
         botan/pk_util.h botan/ui.h botan/blinding.h botan/defalloc.h	\
         botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h	\
-        botan/util.h
+        botan/util.h botan/charset.h botan/hash_id.h 			\
+        botan/des.h botan/pkcs5.h					\
+	botan/x931_rng.cpp botan/x931_rng.h botan/sha256.h
 
 
 BOOST_SANDBOX_SOURCES = \
@@ -164,6 +172,8 @@ SQLITE_SOURCES = \
         sqlite/vdbe.c sqlite/vdbeapi.c sqlite/vdbeaux.c \
         sqlite/vdbemem.c sqlite/where.c \
 	sqlite/prepare.c sqlite/callback.c \
+	sqlite/analyze.c sqlite/vdbefifo.c \
+	sqlite/complete.c \
 	\
         sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
         sqlite/os_common.h sqlite/os_unix.h sqlite/os_win.h \
@@ -194,11 +204,11 @@ POPT_SOURCES = \
 
 UNIX_PLATFORM_SOURCES = \
 	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/terminal.cc \
-	unix/platform_netsync.cc unix/inodeprint.cc
+	unix/inodeprint.cc unix/fs.cc
 
 WIN32_PLATFORM_SOURCES = \
 	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/terminal.cc \
-	win32/platform_netsync.cc win32/inodeprint.cc
+	win32/inodeprint.cc win32/fs.cc win32/wcwidth.c
 
 # primaries
 
@@ -224,14 +234,18 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 # flags
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DSQLITE_OMIT_CURSOR $(SQLITE_CPPFLAGS)
-AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR $(SQLITE_CPPFLAGS)
+AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS
 AM_LDFLAGS = 
 
 lib3rdparty_a_CPPFLAGS =
+lib3rdparty_a_CFLAGS = $(AM_CFLAGS) $(LIB3RDPARTY_CFLAGS)
+lib3rdparty_a_CXXFLAGS = $(AM_CXXFLAGS) $(LIB3RDPARTY_CXXFLAGS)
 
 monotone_LDFLAGS = 
 monotone_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
+monotone_CFLAGS = $(AM_CFLAGS) $(MONOTONE_CFLAGS)
+monotone_CXXFLAGS = $(AM_CXXFLAGS) $(MONOTONE_CXXFLAGS)
 
 unit_tests_LDFLAGS = 
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
@@ -339,12 +353,14 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/monotone-nav.el \
              contrib/monotone.bash_completion \
              contrib/monotone.zsh_completion \
-             contrib/monoprof.sh \
              contrib/mtbrowse.sh \
              contrib/colorize \
              contrib/color-logs.sh \
              contrib/color-logs.conf \
              contrib/get_stdio.pl \
+             contrib/ciabot_monotone_hookversion.py \
+             contrib/monotone-cvs-ignore.lua \
+             contrib/usher.cc \
              win32/monotone.iss \
              $(wildcard $(srcdir)/debian/*)
 
@@ -357,7 +373,7 @@ monotone.pdf: monotone.texi version.texi std_hooks.lua $(PDF_FIGURES)
 monotone.dvi: monotone.texi version.texi std_hooks.lua $(EPS_FIGURES)
 
 #%.eps: %.epsi
-#	mv $< $@
+#	mv -f $< $@
 #
 #%.epsi: %.ps
 #	ps2epsi $< $@
@@ -373,7 +389,13 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 
 # testsuite stuff (could this possibly be more ugly?)
 
+if BUILD_UNIT_TESTS
 TESTS = unit_tests $(srcdir)/testsuite
+else
+TESTS = $(srcdir)/testsuite
+endif
+
+TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 
 mostlyclean-local:
 	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
@@ -404,7 +426,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
                      $(srcdir)/package.m4 
 	autom4te --language=Autotest -I $(srcdir) $< -o $@.tmp
-	mv $@.tmp $@
+	mv -f $@.tmp $@
 
 # we generate some headers to copy data into the executable
 
@@ -424,12 +446,12 @@ apidocs:
 
 %.h: %.sql txt2c Makefile
 	./txt2c $< $(*F) >$@.tmp
-	cmp -s $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
 %.h: %.lua txt2c Makefile
 	./txt2c $< $(*F) >$@.tmp
-	cmp -s $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
 # A fake target so we can use MT/revision as a prerequisite, yet not
@@ -441,7 +463,7 @@ package_revision.txt: $(srcdir)/MT/revision
 	if [ ! -f $@ ]; then echo "unknown" > $@; fi
 package_revision.c: package_revision.txt txt2c Makefile
 	./txt2c --strip-trailing --no-static $< package_revision >$@.tmp
-	cmp -s $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
 .PHONY: package_full_revision.txt apidocs
@@ -458,7 +480,7 @@ package_full_revision_dist.txt: package_full_revision.txt
 	 echo '  further changes may have been made.') >> $@
 package_full_revision.c: package_full_revision.txt txt2c Makefile
 	./txt2c --no-static $< package_full_revision >$@.tmp
-	cmp -s $@.tmp $@ || mv $@.tmp $@
+	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
 # automake doesn't build html docs

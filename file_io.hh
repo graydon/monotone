@@ -6,107 +6,94 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "boost/format.hpp"
+
 #include "vocab.hh"
+#include "paths.hh"
 
 // this layer deals with talking to the filesystem, loading and saving
 // files, walking trees, etc.
-//
-// we have *three* types of file path we're willing to deal with.
-// 
-// - a boost::filesystem::path (fs::path)
-//   [ defined in boost/filesystem/path.hpp ]
-//   this is a generally portable path to anywhere in the fs
-//
-// - a local_path
-//   [ defined in vocab.{hh,cc} ]
-//   this is a path to a file in-or-under the current directory; it doesn't
-//   escape cwd, and it's name restrictions are tighter than an fs::path,
-//   as far as illegal characters and junk
-//
-// - a file_path
-//   [ defined in vocab.{hh,cc} ]
-//   this is a local_path which is *not* in the MT/ book-keeping
-//   directory. in other words, it's a local_path which may permissibly be
-//   part of a manifest.
-//
-// several functions in *this* file are defined on more than one of these
-// sorts of paths. the reason for the multiple path types is to avoid ever
-// constructing (and "forgetting to check the validity" of) an illegal
-// value in *other* parts of the code. this file contains stuff which is so
-// low level we can't mostly know whether what's being asked for is legal.
+
+// this code mostly deals in any_path's, because these operations are too low
+// level for us to say whether applying them in any given case is valid or
+// not.
 
 struct lua_hooks;
 
-void save_initial_path();
-bool find_working_copy(fs::path const & search_root, 
-                       fs::path & working_copy_root, 
-                       fs::path & working_copy_restriction);
+// use I()
+void assert_path_is_nonexistent(any_path const & path);
+void assert_path_is_file(any_path const & path);
+void assert_path_is_directory(any_path const & path);
 
-fs::path mkpath(std::string const & s);
+// use N()
+void require_path_is_nonexistent(any_path const & path,
+                                 boost::format const & message);
+void require_path_is_file(any_path const & path,
+                          boost::format const & message_if_nonexistent,
+                          boost::format const & message_if_directory);
+void require_path_is_directory(any_path const & path,
+                               boost::format const & message_if_nonexistent,
+                               boost::format const & message_if_file);
 
-std::string get_homedir();
-std::string absolutify(std::string const & path);
-std::string absolutify_for_command_line(std::string const & path);
-std::string tilde_expand(std::string const & path);
-
-extern std::string const book_keeping_dir;
-
-//   - file is inside the private MT/ directory
-bool book_keeping_file(local_path const & path);
-
-bool directory_exists(local_path const & path);
-bool directory_exists(file_path const & path);
-bool file_exists(local_path const & path);
-bool file_exists(file_path const & path);
+// returns true if there is a file or directory at 'path'
+bool path_exists(any_path const & path);
+// returns true if there is a directory at 'path'
+bool directory_exists(any_path const & path);
+// returns true if there is a file at 'path'
+bool file_exists(any_path const & path);
 
 bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
 
-// returns true if the string content is binary according to monotone euristic
+// returns true if the string content is binary according to monotone heuristic
 bool guess_binary(std::string const & s);
+void set_char_is_binary(char c, bool is_binary);
 
-void mkdir_p(local_path const & path);
-void mkdir_p(file_path const & path);
-void make_dir_for(file_path const & p);
+void mkdir_p(any_path const & path);
+void make_dir_for(any_path const & p);
 
-void delete_file(file_path const & path);
-void delete_file(local_path const & path);
-void delete_dir_recursive(file_path const & path);
-void delete_dir_recursive(local_path const & path);
+void delete_file(any_path const & path);
+void delete_dir_recursive(any_path const & path);
 
-void move_file(file_path const & old_path,
-               file_path const & new_path);
-void move_file(local_path const & old_path,
-               local_path const & new_path);
+void move_file(any_path const & old_path,
+               any_path const & new_path);
 
-void move_dir(file_path const & old_path,
-              file_path const & new_path);
-void move_dir(local_path const & old_path,
-              local_path const & new_path);
+void move_dir(any_path const & old_path,
+              any_path const & new_path);
 
-void read_data(local_path const & path, data & data);
-void read_data(local_path const & path, base64< gzip<data> > & data);
-void read_data(file_path const & path, data & data);
-void read_data(file_path const & path, base64< gzip<data> > & data);
+// calls move_file or move_dir as appropriate
+void move_path(any_path const & old_path,
+               any_path const & new_path);
+
+void read_data(any_path const & path, data & data);
 void read_localized_data(file_path const & path, 
                          data & dat, 
                          lua_hooks & lua);
-void read_localized_data(file_path const & path,
-                         base64< gzip<data> > & dat,
-                         lua_hooks & lua);
+
+void read_directory(system_path const & path,
+                    std::vector<utf8> & files,
+                    std::vector<utf8> & dirs);
 
 // This function knows that "-" means "stdin".
 void read_data_for_command_line(utf8 const & path, data & dat);
 
-void write_data(local_path const & path, data const & data);
-void write_data(local_path const & path, base64< gzip<data> > const & data);
+// These are not any_path's because we make our write somewhat atomic -- we
+// first write to a temp file in MT/ (and it must be in MT/, not like /tmp or
+// something, because we can't necessarily atomic rename from /tmp to the
+// working copy).  But that means we can't use it in general, only for the
+// working copy.
 void write_data(file_path const & path, data const & data);
-void write_data(file_path const & path, base64< gzip<data> > const & data);
+void write_data(bookkeeping_path const & path, data const & data);
 void write_localized_data(file_path const & path, 
                           data const & dat, 
                           lua_hooks & lua);
-void write_localized_data(file_path const & path,
-                          base64< gzip<data> > const & dat,
-                          lua_hooks & lua);
+
+// Version that takes a system_path. To work with the "somewhat atomic"
+// goal, it also takes as an argument the place to put the temp file. Whoever
+// uses this is responsible to make sure that the tmpdir argument is somewhere
+// that the file can be atomically renamed from (same file system)
+void write_data(system_path const & path,
+                data const & data,
+                system_path const & tmpdir);
 
 class tree_walker
 {
@@ -115,10 +102,8 @@ public:
   virtual ~tree_walker();
 };
 
-// from cwd (nb: we can't describe cwd as a file_path)
-void walk_tree(tree_walker & walker);
-
 // from some safe sub-dir of cwd
+// file_path of "" means cwd
 void walk_tree(file_path const & path,
                tree_walker & walker,
                bool require_existing_path = true);

@@ -4,7 +4,7 @@ MONOTONE_SETUP
 AT_CHECK(MONOTONE privkey tester@test.net > privkey, [], [ignore], [ignore])
 
 KEY=tester@test.net
-m4_define([RCMONOTONE], [monotone --rcfile=test_key_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net])
+m4_define([RCMONOTONE], [monotone --rcfile=test_key_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --key=tester@test.net --keydir=$_ROOT_DIR/keys])
 
 # check it works originally
 
@@ -22,8 +22,8 @@ AT_CHECK(echo 'return @<:@@<:@ ' >> test_key_hooks.lua, [], [ignore], [ignore])
 AT_CHECK([sed -e '/^\@<:@pubkey/,/^\@<:@end\@:>@$/d' -e '/^\@<:@/d' privkey >> test_key_hooks.lua], [], [ignore], [ignore])
 AT_CHECK(echo '	@:>@@:>@ end' >> test_key_hooks.lua, [], [ignore], [ignore])
 
-AT_CHECK(RCMONOTONE db execute "delete from private_keys", [], [ignore], [ignore])
 AT_CHECK(RCMONOTONE db execute "delete from public_keys", [], [ignore], [ignore])
+AT_CHECK(rm -r keys/)
 
 AT_CHECK(RCMONOTONE comment $SOMEREV boing)
 
@@ -33,8 +33,8 @@ AT_CHECK(RCMONOTONE read < privkey, [], [ignore], [ignore])
 AT_CHECK(RCMONOTONE comment $SOMEREV matching)
 
 # check that it fails if the keys differ
-AT_CHECK(RCMONOTONE db execute "delete from private_keys", [], [ignore], [ignore])
 AT_CHECK(RCMONOTONE db execute "delete from public_keys", [], [ignore], [ignore])
+AT_CHECK(rm -r keys/)
 AT_CHECK((echo $KEY; echo $KEY) | RCMONOTONE genkey $KEY, [], [ignore], [ignore])
 
 AT_CHECK(RCMONOTONE comment $SOMEREV aintworking, [1], [ignore], [ignore])

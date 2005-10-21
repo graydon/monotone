@@ -93,17 +93,17 @@ void tick_write_count::write_ticks()
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
        i != ui.tickers.end(); ++i)
     {
-      width = 1 + i->second->name.size();
+      width = 1 + display_width(utf8(i->second->name));
       if (!first_tick)
         {
           tickline1 += " | ";
           tickline2 += " |";
         }
       first_tick = false;
-      if(i->second->name.size() < minwidth)
+      if (display_width(utf8(i->second->name)) < minwidth)
         {
-          tickline1.append(minwidth - i->second->name.size(),' ');
-          width += minwidth - i->second->name.size();
+          tickline1.append(minwidth - display_width(utf8(i->second->name)),' ');
+          width += minwidth - display_width(utf8(i->second->name));
         }
       tickline1 += i->second->name;
       
@@ -111,43 +111,49 @@ void tick_write_count::write_ticks()
       if (i->second->kilocount && i->second->ticks >= 10000)
         { // automatic unit conversion is enabled
           float div;
-          string suffix;
+          const char *message;
           if (i->second->ticks >= 1048576) {
           // ticks >=1MB, use Mb
             div = 1048576;
-            suffix = "M";
+          // xgettext: mebibytes (2^20 bytes)
+            message = N_("%.1f M");
           } else {
           // ticks <1MB, use kb
             div = 1024;
-            suffix = "k";
+          // xgettext: kibibytes (2^10 bytes)
+            message = N_("%.1f k");
           }
           // we reset the mod to the divider, to avoid spurious screen updates
           i->second->mod = static_cast<int>(div / 10.0);
-          count = (F("%.1f%s") % (i->second->ticks / div) % suffix).str();
+          count = (F(message) % (i->second->ticks / div)).str();
         }
       else
         {
+          // xgettext: bytes
           count = (F("%d") % i->second->ticks).str();
         }
         
-      if(count.size() < width)
+      if (display_width(utf8(count)) < width)
         {
-          tickline2.append(width-count.size(),' ');
+          tickline2.append(width - display_width(utf8(count)),' ');
         }
-      else if(count.size() > width)
+      else if (display_width(utf8(count)) > width)
         {
-          count = count.substr(count.size() - width);
+          // FIXME: not quite right, because substr acts on bytes rather than
+          // characters; but there are always more bytes than characters, so
+          // at worst this will just chop off a little too much.
+          count = count.substr(display_width(utf8(count)) - width);
         }
       tickline2 += count;
     }
 
-  if (ui.tick_trailer.size() > 0)
+  if (!ui.tick_trailer.empty())
     {
       tickline2 += " ";
       tickline2 += ui.tick_trailer;
     }
   
-  size_t curr_sz = tickline2.size();
+  size_t curr_sz = display_width(utf8(tickline2));
   if (curr_sz < last_tick_len)
     tickline2.append(last_tick_len - curr_sz, ' ');
   last_tick_len = curr_sz;
@@ -155,16 +161,20 @@ void tick_write_count::write_ticks()
   unsigned int tw = terminal_width();
   if(!ui.last_write_was_a_tick)
     {
-      if (tw && tickline1.size() > tw)
+      if (tw && display_width(utf8(tickline1)) > tw)
         {
+          // FIXME: may chop off more than necessary (because we chop by
+          // bytes, not by characters)
           tickline1.resize(tw);
         }
       clog << tickline1 << "\n";
     }
-  if (tw && tickline2.size() > tw)
+  if (tw && display_width(utf8(tickline2)) > tw)
     {
       // first character in tickline2 is "\r", which does not take up any
       // width, so we add 1 to compensate.
+      // FIXME: may chop off more than necessary (because we chop by
+      // bytes, not by characters)
       tickline2.resize(tw + 1);
     }
   clog << tickline2;
@@ -252,7 +262,10 @@ user_interface::user_interface() :
   last_write_was_a_tick(false),
   t_writer(0)
 {
+  cout.exceptions(ios_base::badbit);
+#ifndef WIN32
   clog.sync_with_stdio(false);
+#endif
   clog.unsetf(ios_base::unitbuf);
   if (have_smart_terminal()) 
     set_tick_writer(new tick_write_count);
@@ -310,10 +323,11 @@ user_interface::warn(string const & warning)
 void 
 user_interface::fatal(string const & fatal)
 {
-  inform("fatal: " + fatal);
-  inform("this is almost certainly a bug in monotone.\n");
-  inform("please send this error message, the output of 'monotone --full-version',\n");
-  inform("and a description of what you were doing to " PACKAGE_BUGREPORT ".\n");
+  inform(F("fatal: %s\n"
+           "this is almost certainly a bug in monotone.\n"
+           "please send this error message, the output of 'monotone --full-version',\n"
+           "and a description of what you were doing to %s.\n")
+         % fatal % PACKAGE_BUGREPORT);
 }
 
 
@@ -328,7 +342,7 @@ sanitize(string const & line)
   for (size_t i = 0; i < line.size(); ++i)
     {
       if ((line[i] == '\n')
-          || (line[i] >= static_cast<char>(0x20) 
+          || (static_cast<unsigned char>(line[i]) >= static_cast<unsigned char>(0x20) 
               && line[i] != static_cast<char>(0x7F)))
         tmp += line[i];
       else
@@ -352,7 +366,7 @@ void
 user_interface::inform(string const & line)
 {
   string prefixedLine;
-  prefix_lines_with("monotone: ", line, prefixedLine);
+  prefix_lines_with(_("monotone: "), line, prefixedLine);
   ensure_clean_line();
   clog << sanitize(prefixedLine) << endl;
   clog.flush();
@@ -367,3 +381,23 @@ guess_terminal_width()
   return w;
 }
 
+const locale &
+get_user_locale()
+{
+  // this is awkward because if LC_CTYPE is set to something the
+  // runtime doesn't know about, it will fail. in that case,
+  // the default will have to do.
+  static bool init = false;
+  static locale user_locale;
+  if (!init)
+    {
+      init = true;
+      try
+        {
+          user_locale = locale("");
+        }
+      catch( ... )
+        {}
+    }
+  return user_locale;
+}

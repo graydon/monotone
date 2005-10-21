@@ -47,4 +47,19 @@ AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout], [ignore])
 AT_CHECK(grep pink stdout, [], [ignore])
 AT_CHECK(grep yellow stdout, [], [ignore])
 
+# third section, keys with a + in the user portion work, keys with a
+# + in the domain portion don't work.
+GOODKEY=test+thing@example.com
+
+AT_CHECK((echo $GOODKEY; echo $GOODKEY) | MONOTONE genkey $GOODKEY, [], [ignore], [ignore])
+#exists
+AT_CHECK(MONOTONE ls keys, [], [stdout])
+AT_CHECK(grep $GOODKEY stdout, [], [ignore])
+
+# bad keys fail
+BADKEY1=test+thing@example+456.com
+AT_CHECK((echo $BADKEY1; echo $BADKEY1) | MONOTONE genkey $BADKEY1, [1], [ignore], [ignore])
+BADKEY2=testthing@example+123.com
+AT_CHECK((echo $BADKEY2; echo $BADKEY2) | MONOTONE genkey $BADKEY2, [1], [ignore], [ignore])
+
 AT_CLEANUP

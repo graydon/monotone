@@ -1,6 +1,6 @@
 /*************************************************
 * DataSource Source File                         *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/data_src.h>
@@ -109,11 +109,16 @@ u32bit DataSource_Stream::peek(byte out[], u32bit length, u32bit offset) const
    if(end_of_data())
       throw Invalid_State("DataSource_Stream: Cannot peek when out of data");
 
-   SecureVector<byte> buf(offset);
-   source->read((char*)buf.begin(), buf.size());
-   if(source->bad())
-      throw Stream_IO_Error("DataSource_Stream::peek: Source failure");
-   u32bit got = source->gcount();
+   u32bit got = 0;
+
+   if(offset)
+      {
+      SecureVector<byte> buf(offset);
+      source->read((char*)buf.begin(), buf.size());
+      if(source->bad())
+         throw Stream_IO_Error("DataSource_Stream::peek: Source failure");
+      got = source->gcount();
+      }
 
    if(got == offset)
       {

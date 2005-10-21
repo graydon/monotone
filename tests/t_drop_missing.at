@@ -6,18 +6,40 @@ MONOTONE_SETUP
 
 AT_DATA(maude, [the file maude
 ])
+AT_DATA(harold, [the file harold
+])
+AT_CHECK(mkdir places, [0], [ignore])
+AT_DATA(places/cemetery, [the place file cemetery
+])
 
 AT_CHECK(MONOTONE add maude, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add harold, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add places/cemetery, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit --message 'committed', [], [ignore], [ignore])
 
 AT_CHECK(rm maude)
+
 AT_CHECK(MONOTONE drop maude, [], [ignore], [stderr])
 AT_CHECK(grep 'adding maude to working copy delete set' stderr, [0], [ignore])
 
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep maude stdout, [0], [ignore])
+AT_CHECK(grep harold stdout, [1], [ignore])
+AT_CHECK(grep places/cemetery stdout, [1], [ignore])
 
 AT_CHECK(MONOTONE drop foobar, [], [ignore], [stderr])
 AT_CHECK(grep 'skipping foobar' stderr, [0], [ignore])
+
+AT_CHECK(rm harold)
+AT_CHECK(rm places/cemetery)
+
+AT_CHECK(MONOTONE drop --missing, [], [ignore], [stderr])
+AT_CHECK(grep 'adding harold to working copy delete set' stderr, [0], [ignore])
+AT_CHECK(grep 'adding places/cemetery to working copy delete set' stderr, [0], [ignore])
+
+AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(grep maude stdout, [0], [ignore])
+AT_CHECK(grep harold stdout, [0], [ignore])
+AT_CHECK(grep places/cemetery stdout, [0], [ignore])
 
 AT_CLEANUP

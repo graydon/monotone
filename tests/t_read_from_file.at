@@ -1,0 +1,14 @@
+AT_SETUP([monotone read FILE])
+MONOTONE_SETUP
+
+AT_CHECK(MONOTONE db init --db foo.db, [], [ignore], [ignore])
+AT_CHECK((echo 'foo'; echo 'foo') | MONOTONE --db foo.db genkey foo, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE --db foo.db pubkey foo >foo.keyfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE read nonexistent, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE read foo.keyfile, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE ls keys, [], [stdout], [ignore])
+AT_CHECK(QGREP(foo stdout), [])
+
+AT_CLEANUP

@@ -17,6 +17,7 @@
 #include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "keys.hh"
 
 using namespace std;
 using boost::shared_ptr;
@@ -245,12 +246,14 @@ delayed_file_delta_packet
   file_id new_id;
   file_delta del;
   bool forward_delta;
+  bool write_full;
 public:
   delayed_file_delta_packet(file_id const & oi, 
                             file_id const & ni,
                             file_delta const & md,
-                            bool fwd) 
-    : old_id(oi), new_id(ni), del(md), forward_delta(fwd)
+                            bool fwd,
+                            bool full = false) 
+    : old_id(oi), new_id(ni), del(md), forward_delta(fwd), write_full(full)
   {}
   virtual void apply_delayed_packet(packet_db_writer & pw);
   virtual ~delayed_file_delta_packet();
@@ -264,12 +267,14 @@ delayed_manifest_delta_packet
   manifest_id new_id;
   manifest_delta del;
   bool forward_delta;
+  bool write_full;
 public:
   delayed_manifest_delta_packet(manifest_id const & oi, 
                                 manifest_id const & ni,
                                 manifest_delta const & md,
-                                bool fwd) 
-    : old_id(oi), new_id(ni), del(md), forward_delta(fwd)
+                                bool fwd,
+                                bool full = false)
+    : old_id(oi), new_id(ni), del(md), forward_delta(fwd), write_full(full)
   {}
   virtual void apply_delayed_packet(packet_db_writer & pw);
   virtual ~delayed_manifest_delta_packet();
@@ -304,18 +309,18 @@ public:
 };
 
 class 
-delayed_private_key_packet 
+delayed_keypair_packet 
   : public delayed_packet
 {
   rsa_keypair_id id;
-  base64< arc4<rsa_priv_key> > key;
+  keypair kp;
 public:
-  delayed_private_key_packet(rsa_keypair_id const & id,
-                             base64< arc4<rsa_priv_key> > key)
-    : id(id), key(key)
+  delayed_keypair_packet(rsa_keypair_id const & id,
+                         keypair const & kp)
+    : id(id), kp(kp)
   {}
   virtual void apply_delayed_packet(packet_db_writer & pw);
-  virtual ~delayed_private_key_packet();
+  virtual ~delayed_keypair_packet();
 };
 
 void 
@@ -360,12 +365,13 @@ delayed_file_data_packet::~delayed_file_data_packet()
 void 
 delayed_manifest_delta_packet::apply_delayed_packet(packet_db_writer & pw)
 {
-  L(F("writing delayed manifest %s packet for %s -> %s\n") 
+  L(F("writing delayed manifest %s packet for %s -> %s%s\n") 
     % (forward_delta ? "delta" : "reverse delta") 
     % (forward_delta ? old_id : new_id)
-    % (forward_delta ? new_id : old_id));
+    % (forward_delta ? new_id : old_id)
+    % (write_full ? " (writing in full)" : ""));
   if (forward_delta)
-    pw.consume_manifest_delta(old_id, new_id, del);
+      pw.consume_manifest_delta(old_id, new_id, del, write_full);
   else
     pw.consume_manifest_reverse_delta(new_id, old_id, del);
 }
@@ -380,12 +386,13 @@ delayed_manifest_delta_packet::~delayed_manifest_delta_packet()
 void 
 delayed_file_delta_packet::apply_delayed_packet(packet_db_writer & pw)
 {
-  L(F("writing delayed file %s packet for %s -> %s\n") 
+  L(F("writing delayed file %s packet for %s -> %s%s\n") 
     % (forward_delta ? "delta" : "reverse delta")
     % (forward_delta ? old_id : new_id)
-    % (forward_delta ? new_id : old_id));
+    % (forward_delta ? new_id : old_id)
+    % (write_full ? " (writing in full)" : ""));
   if (forward_delta)
-    pw.consume_file_delta(old_id, new_id, del);
+    pw.consume_file_delta(old_id, new_id, del, write_full);
   else
     pw.consume_file_reverse_delta(new_id, old_id, del);
 }
@@ -425,13 +432,13 @@ delayed_public_key_packet::~delayed_public_key_packet()
 }
 
 void 
-delayed_private_key_packet::apply_delayed_packet(packet_db_writer & pw)
+delayed_keypair_packet::apply_delayed_packet(packet_db_writer & pw)
 {
   L(F("writing delayed private key %s\n") % id());
-  pw.consume_private_key(id, key);
+  pw.consume_key_pair(id, kp);
 }
 
-delayed_private_key_packet::~delayed_private_key_packet()
+delayed_keypair_packet::~delayed_keypair_packet()
 {
   // keys don't have dependencies
   I(all_prerequisites_satisfied());
@@ -460,10 +467,10 @@ packet_consumer::set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
 }
 
 void
-packet_consumer::set_on_privkey_written(boost::function1<void, rsa_keypair_id>
+packet_consumer::set_on_keypair_written(boost::function1<void, rsa_keypair_id>
                                                   const & x)
 {
-  on_privkey_written=x;
+  on_keypair_written=x;
 }
 
 
@@ -655,6 +662,15 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
                                      file_id const & new_id,
                                      file_delta const & del)
 {
+  consume_file_delta(old_id, new_id, del, false);
+}
+
+void 
+packet_db_writer::consume_file_delta(file_id const & old_id, 
+                                     file_id const & new_id,
+                                     file_delta const & del,
+                                     bool write_full)
+{
   transaction_guard guard(pimpl->app.db);
   if (! pimpl->file_version_exists_in_db(new_id))
     {
@@ -668,7 +684,10 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
           calculate_ident(file_data(new_dat), confirm);
           if (confirm == new_id)
             {
-              pimpl->app.db.put_file_version(old_id, new_id, del);
+              if (!write_full)
+                pimpl->app.db.put_file_version(old_id, new_id, del);
+              else
+                pimpl->app.db.put_file(new_id, file_data(new_dat));
               pimpl->accepted_file(new_id, *this);
             }
           else
@@ -681,7 +700,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
         {
           L(F("delaying file delta %s -> %s for preimage\n") % old_id % new_id);
           shared_ptr<delayed_packet> dp;
-          dp = shared_ptr<delayed_packet>(new delayed_file_delta_packet(old_id, new_id, del, true));
+          dp = shared_ptr<delayed_packet>(new delayed_file_delta_packet(old_id, new_id, del, true, write_full));
           shared_ptr<prerequisite> fp;
           pimpl->get_file_prereq(old_id, fp); 
           dp->add_prerequisite(fp);
@@ -760,6 +779,15 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
                                          manifest_id const & new_id,
                                          manifest_delta const & del)
 {
+  consume_manifest_delta(old_id, new_id, del, false);
+}
+
+void
+packet_db_writer::consume_manifest_delta(manifest_id const & old_id, 
+                                         manifest_id const & new_id,
+                                         manifest_delta const & del,
+                                         bool write_full)
+{
   transaction_guard guard(pimpl->app.db);
   if (! pimpl->manifest_version_exists_in_db(new_id))
     {
@@ -773,7 +801,11 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
           calculate_ident(manifest_data(new_dat), confirm);
           if (confirm == new_id)
             {
-              pimpl->app.db.put_manifest_version(old_id, new_id, del);
+              if (!write_full)
+                pimpl->app.db.put_manifest_version(old_id, new_id, del);
+              else
+                pimpl->app.db.put_manifest(new_id, manifest_data(new_dat));
+
               pimpl->accepted_manifest(new_id, *this);
             }
           else
@@ -786,7 +818,7 @@ packet_db_writer::consume_manifest_delta(manifest_id const & old_id,
         {
           L(F("delaying manifest delta %s -> %s for preimage\n") % old_id % new_id);
           shared_ptr<delayed_packet> dp;
-          dp = shared_ptr<delayed_packet>(new delayed_manifest_delta_packet(old_id, new_id, del, true));
+          dp = shared_ptr<delayed_packet>(new delayed_manifest_delta_packet(old_id, new_id, del, true, write_full));
           shared_ptr<prerequisite> fp;
           pimpl->get_manifest_prereq(old_id, fp); 
           dp->add_prerequisite(fp);
@@ -982,7 +1014,7 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
     {
       base64<rsa_pub_key> tmp;
       pimpl->app.db.get_key(ident, tmp);
-      if (!(tmp() == k()))
+      if (!keys_match(ident, tmp, ident, k))
         W(F("key '%s' is not equal to key '%s' in database\n") % ident % ident);
       L(F("skipping existing public key %s\n") % ident);
     }
@@ -991,22 +1023,22 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
 }
 
 void 
-packet_db_writer::consume_private_key(rsa_keypair_id const & ident,
-                                      base64< arc4<rsa_priv_key> > const & k)
+packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
+                                   keypair const & kp)
 {
   transaction_guard guard(pimpl->app.db);
   if (! pimpl->take_keys) 
     {
-      W(F("skipping prohibited private key %s\n") % ident);
+      W(F("skipping prohibited key pair %s\n") % ident);
       return;
     }
-  if (! pimpl->app.db.private_key_exists(ident))
+  if (! pimpl->app.keys.key_pair_exists(ident))
     {
-      pimpl->app.db.put_key(ident, k);
-      if(on_privkey_written) on_privkey_written(ident);
+      pimpl->app.keys.put_key_pair(ident, kp);
+      if(on_keypair_written) on_keypair_written(ident);
     }
   else
-    L(F("skipping existing private key %s\n") % ident);
+    L(F("skipping existing key pair %s\n") % ident);
   ++(pimpl->count);
   guard.commit();
 }
@@ -1084,11 +1116,11 @@ packet_db_valve::set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
 }
 
 void
-packet_db_valve::set_on_privkey_written(boost::function1<void, rsa_keypair_id>
+packet_db_valve::set_on_keypair_written(boost::function1<void, rsa_keypair_id>
                                                   const & x)
 {
-  on_privkey_written=x;
-  pimpl->writer.set_on_privkey_written(x);
+  on_keypair_written=x;
+  pimpl->writer.set_on_keypair_written(x);
 }
 
 void
@@ -1104,6 +1136,15 @@ packet_db_valve::consume_file_delta(file_id const & id_old,
                                     file_delta const & del)
 {
   DOIT(delayed_file_delta_packet(id_old, id_new, del, true));
+}
+
+void
+packet_db_valve::consume_file_delta(file_id const & id_old, 
+                                    file_id const & id_new,
+                                    file_delta const & del,
+                                    bool write_full)
+{
+  DOIT(delayed_file_delta_packet(id_old, id_new, del, true, write_full));
 }
 
 void
@@ -1127,6 +1168,15 @@ packet_db_valve::consume_manifest_delta(manifest_id const & id_old,
                                         manifest_delta const & del)
 {
   DOIT(delayed_manifest_delta_packet(id_old, id_new, del, true));
+}
+
+void
+packet_db_valve::consume_manifest_delta(manifest_id const & id_old, 
+                                        manifest_id const & id_new,
+                                        manifest_delta const & del,
+                                        bool write_full)
+{
+  DOIT(delayed_manifest_delta_packet(id_old, id_new, del, true, write_full));
 }
 
 void
@@ -1158,10 +1208,10 @@ packet_db_valve::consume_public_key(rsa_keypair_id const & ident,
 }
 
 void
-packet_db_valve::consume_private_key(rsa_keypair_id const & ident,
-                                     base64< arc4<rsa_priv_key> > const & k)
+packet_db_valve::consume_key_pair(rsa_keypair_id const & ident,
+                                  keypair const & kp)
 {
-  DOIT(delayed_private_key_packet(ident, k));
+  DOIT(delayed_keypair_packet(ident, kp));
 }
 
 #undef DOIT
@@ -1276,11 +1326,11 @@ packet_writer::consume_public_key(rsa_keypair_id const & ident,
 }
 
 void 
-packet_writer::consume_private_key(rsa_keypair_id const & ident,
-                                   base64< arc4<rsa_priv_key> > const & k)
+packet_writer::consume_key_pair(rsa_keypair_id const & ident,
+                                keypair const & kp)
 {
-  ost << "[privkey " << ident() << "]" << endl
-      << trim_ws(k()) << endl
+  ost << "[keypair " << ident() << "]" << endl
+      << trim_ws(kp.pub()) <<"#\n" <<trim_ws(kp.priv()) << endl
       << "[end]" << endl;
 }
 
@@ -1292,144 +1342,165 @@ feed_packet_consumer
 {
   size_t & count;
   packet_consumer & cons;
-  feed_packet_consumer(size_t & count, packet_consumer & c) : count(count), cons(c)
+  std::string ident;
+  std::string key;
+  std::string certname;
+  std::string base;
+  std::string sp;
+  feed_packet_consumer(size_t & count, packet_consumer & c)
+   : count(count), cons(c),
+     ident("([[:xdigit:]]{40})"),
+     key("([-a-zA-Z0-9\\.@\\+]+)"),
+     certname("([-a-zA-Z0-9]+)"),
+     base("([a-zA-Z0-9+/=[:space:]]+)"),
+     sp("[[:space:]]+")
   {}
+  void require(bool x) const
+  {
+    E(x, F("malformed packet"));
+  }
   bool operator()(match_results<std::string::const_iterator> const & res) const
   {
-    if (res.size() != 17)
+    if (res.size() != 4)
       throw oops("matched impossible packet with " 
                  + lexical_cast<string>(res.size()) + " matching parts: " +
                  string(res[0].first, res[0].second));
-    
-    if (res[1].matched)
+    I(res[1].matched);
+    I(res[2].matched);
+    I(res[3].matched);
+    std::string type(res[1].first, res[1].second);
+    std::string args(res[2].first, res[2].second);
+    std::string body(res[3].first, res[3].second);
+    if (regex_match(type, regex("[mfr]data")))
       {
-        L(F("read data packet\n"));
-        I(res[2].matched);
-        I(res[3].matched);
-        string head(res[1].first, res[1].second);
-        string ident(res[2].first, res[2].second);
-        base64<gzip<data> > body_packed(trim_ws(string(res[3].first, res[3].second)));
-        data body;
-        unpack(body_packed, body);
-        if (head == "rdata")
-          cons.consume_revision_data(revision_id(hexenc<id>(ident)), 
-                                     revision_data(body));
-        else if (head == "mdata")
-          cons.consume_manifest_data(manifest_id(hexenc<id>(ident)), 
-                                     manifest_data(body));
-        else if (head == "fdata")
-          cons.consume_file_data(file_id(hexenc<id>(ident)), 
-                                 file_data(body));
+        L(F("read data packet"));
+        require(regex_match(args, regex(ident)));
+        require(regex_match(body, regex(base)));
+        base64<gzip<data> > body_packed(trim_ws(body));
+        data contents;
+        unpack(body_packed, contents);
+        if (type == "rdata")
+          cons.consume_revision_data(revision_id(hexenc<id>(args)), 
+                                     revision_data(contents));
+        else if (type == "mdata")
+          cons.consume_manifest_data(manifest_id(hexenc<id>(args)), 
+                                     manifest_data(contents));
+        else if (type == "fdata")
+          cons.consume_file_data(file_id(hexenc<id>(args)), 
+                                 file_data(contents));
         else
-          throw oops("matched impossible data packet with head '" + head + "'");
+          throw oops("matched impossible data packet with head '" + type + "'");
       }
-    else if (res[4].matched)
+    else if (regex_match(type, regex("[mf]r?delta")))
       {
-        L(F("read delta packet\n"));
-        I(res[5].matched);
-        I(res[6].matched);
-        I(res[7].matched);
-        string head(res[4].first, res[4].second);
-        string src_id(res[5].first, res[5].second);
-        string dst_id(res[6].first, res[6].second);
-        base64<gzip<delta> > body_packed(trim_ws(string(res[7].first, res[7].second)));
-        delta body;
-        unpack(body_packed, body);
-        if (head == "mdelta")
+        L(F("read delta packet"));
+        match_results<std::string::const_iterator> matches;
+        require(regex_match(args, matches, regex(ident + sp + ident)));
+        string src_id(matches[1].first, matches[1].second);
+        string dst_id(matches[2].first, matches[2].second);
+        require(regex_match(body, regex(base)));
+        base64<gzip<delta> > body_packed(trim_ws(body));
+        delta contents;
+        unpack(body_packed, contents);
+        if (type == "mdelta")
           cons.consume_manifest_delta(manifest_id(hexenc<id>(src_id)), 
                                       manifest_id(hexenc<id>(dst_id)),
-                                      manifest_delta(body));
-        else if (head == "fdelta")
+                                      manifest_delta(contents));
+        else if (type == "fdelta")
           cons.consume_file_delta(file_id(hexenc<id>(src_id)), 
                                   file_id(hexenc<id>(dst_id)), 
-                                  file_delta(body));
-        else if (head == "mrdelta")
+                                  file_delta(contents));
+        else if (type == "mrdelta")
           cons.consume_manifest_reverse_delta(manifest_id(hexenc<id>(src_id)), 
                                               manifest_id(hexenc<id>(dst_id)), 
-                                              manifest_delta(body));
-        else if (head == "frdelta")
+                                              manifest_delta(contents));
+        else if (type == "frdelta")
           cons.consume_file_reverse_delta(file_id(hexenc<id>(src_id)), 
                                           file_id(hexenc<id>(dst_id)), 
-                                          file_delta(body));
+                                          file_delta(contents));
         else
-          throw oops("matched impossible delta packet with head '" + head + "'");
+          throw oops("matched impossible delta packet with head '"
+                     + type + "'");
       }
-    else if (res[8].matched)
+    else if (type == "rcert")
       {
-        L(F("read cert packet\n"));
-        I(res[9].matched);
-        I(res[10].matched);
-        I(res[11].matched);
-        I(res[12].matched);
-        I(res[13].matched);
-        string head(res[8].first, res[8].second);
-        string ident(res[9].first, res[9].second);
-        string certname(res[10].first, res[10].second);
-        string key(res[11].first, res[11].second);
-        string val(res[12].first, res[12].second);
-        string body(trim_ws(string(res[13].first, res[13].second)));
+        L(F("read cert packet"));
+        match_results<std::string::const_iterator> matches;
+        require(regex_match(args, matches, regex(ident + sp + certname
+                                                 + key + sp + base)));
+        string certid(matches[1].first, matches[1].second);
+        string name(matches[2].first, matches[2].second);
+        string keyid(matches[3].first, matches[3].second);
+        string val(matches[4].first, matches[4].second);
+        string contents(trim_ws(body));
 
         // canonicalize the base64 encodings to permit searches
-        cert t = cert(hexenc<id>(ident),
-                      cert_name(certname),
+        cert t = cert(hexenc<id>(certid),
+                      cert_name(name),
                       base64<cert_value>(canonical_base64(val)),
-                      rsa_keypair_id(key),
-                      base64<rsa_sha1_signature>(canonical_base64(body)));
-        if (head == "rcert")
-          cons.consume_revision_cert(revision<cert>(t));
-        else
-          throw oops("matched impossible cert packet with head '" + head + "'");
+                      rsa_keypair_id(keyid),
+                      base64<rsa_sha1_signature>(canonical_base64(contents)));
+        cons.consume_revision_cert(revision<cert>(t));
       } 
-    else if (res[14].matched)
+    else if (type == "pubkey")
       {
-        L(F("read key data packet\n"));
-        I(res[15].matched);
-        I(res[16].matched);
-        string head(res[14].first, res[14].second);
-        string ident(res[15].first, res[15].second);
-        string body(trim_ws(string(res[16].first, res[16].second)));
-        if (head == "pubkey")
-          cons.consume_public_key(rsa_keypair_id(ident),
-                                  base64<rsa_pub_key>(body));
-        else if (head == "privkey")
-          cons.consume_private_key(rsa_keypair_id(ident),
-                                   base64< arc4<rsa_priv_key> >(body));
-        else
-          throw oops("matched impossible key data packet with head '" + head + "'");
+        L(F("read pubkey data packet"));
+        require(regex_match(args, regex(key)));
+        require(regex_match(body, regex(base)));
+        string contents(trim_ws(body));
+        cons.consume_public_key(rsa_keypair_id(args),
+                                base64<rsa_pub_key>(contents));
+      }
+    else if (type == "keypair")
+      {
+        L(F("read keypair data packet"));
+        require(regex_match(args, regex(key)));
+        match_results<std::string::const_iterator> matches;
+        require(regex_match(body, matches, regex(base + "#" + base)));
+        string pub_dat(trim_ws(string(matches[1].first, matches[1].second)));
+        string priv_dat(trim_ws(string(matches[2].first, matches[2].second)));
+        cons.consume_key_pair(rsa_keypair_id(args), keypair(pub_dat, priv_dat));
       }
     else
-      return true;
+      {
+        W(F("unknown packet type: '%s'") % type);
+        return true;
+      }
     ++count;
     return true;
   }
 };
 
 static size_t 
-extract_packets(string const & s, packet_consumer & cons)
-{  
-  string const ident("([[:xdigit:]]{40})");
-  string const sp("[[:space:]]+");
-  string const bra("\\[");
-  string const ket("\\]");
-  string const certhead("(rcert)");
-  string const datahead("([mfr]data)");
-  string const deltahead("([mf]r?delta)");
-  string const keyhead("(pubkey|privkey)");
-  string const key("([-a-zA-Z0-9\\.@]+)");
-  string const certname("([-a-zA-Z0-9]+)");
-  string const base64("([a-zA-Z0-9+/=[:space:]]+)");
-  string const end("\\[end\\]");
-  string const data = bra + datahead + sp + ident + ket + base64 + end; 
-  string const delta = bra + deltahead + sp + ident + sp + ident + ket + base64 + end;
-  string const cert = bra 
-    + certhead + sp + ident + sp + certname + sp + key + sp + base64 
-    + ket 
-    + base64 + end; 
-  string const keydata = bra + keyhead + sp + key + ket + base64 + end;
-  string const biggie = (data + "|" + delta + "|" + cert + "|" + keydata);
-  regex expr(biggie);
+extract_packets(string const & s, packet_consumer & cons, bool last)
+{
+  std::string r(s);
+  {
+    // since we don't have privkey packets anymore, translate a
+    // pubkey packet immediately followed by a matching privkey
+    // packet into a keypair packet (which is what privkey packets
+    // have been replaced by)
+    string const key("([-a-zA-Z0-9\\.@]+)");
+    string const base64("([a-zA-Z0-9+/=[:space:]]+)");
+    string const pubkey("\\[pubkey[[:space:]]+"+ key + "\\]" + base64
+                        + "\\[end\\]");
+    string const privkey("\\[privkey \\1\\]" + base64 + "\\[end\\]");
+    string const pubkey_privkey = pubkey + "[[:space:]]*" + privkey;
+    string const keypair_fmt("[keypair $1]$2#$3[end]");
+    r = regex_replace(s, regex(pubkey_privkey), keypair_fmt);
+    bool pub = regex_match(s, regex(pubkey + ".*"));
+    bool two = regex_match(s, regex(".+\\[end\\].+\\[end\\]"));
+    if (!last && pub && !two)
+      return 0;
+  }
+
+  string const head("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]");
+  string const body("([^\\[\\]]+)");
+  string const tail("\\[end\\]");
+  string const whole = head + body + tail;
+  regex expr(whole);
   size_t count = 0;
-  regex_grep(feed_packet_consumer(count, cons), s, expr, match_default);
+  regex_grep(feed_packet_consumer(count, cons), r, expr, match_default);
   return count;
 }
 
@@ -1452,13 +1523,16 @@ read_packets(istream & in, packet_consumer & cons)
         {
           endpos += end.size();
           string tmp = accum.substr(0, endpos);
-          count += extract_packets(tmp, cons);
-          if (endpos < accum.size() - 1)
-            accum = accum.substr(endpos+1);
-          else
-            accum.clear();
+          size_t num = extract_packets(tmp, cons, false);
+          count += num;
+          if (num)
+            if (endpos < accum.size() - 1)
+              accum = accum.substr(endpos+1);
+            else
+              accum.clear();
         }
     }
+  count += extract_packets(accum, cons, true);
   return count;
 }
 
@@ -1506,7 +1580,7 @@ packet_roundabout_test()
     manifest_map mm;
     manifest_data mdata;
     manifest_id mid;
-    mm.insert(make_pair(file_path("foo/bar.txt"),
+    mm.insert(make_pair(file_path_internal("foo/bar.txt"),
                         file_id(hexenc<id>("cfb81b30ab3133a31b52eb50bd1c86df67eddec4"))));
     write_manifest_map(mm, mdata);
     calculate_ident(mdata, mid);
@@ -1517,9 +1591,9 @@ packet_roundabout_test()
     manifest_data mdata2;
     manifest_id mid2;
     manifest_delta mdelta;
-    mm2.insert(make_pair(file_path("foo/bar.txt"),
+    mm2.insert(make_pair(file_path_internal("foo/bar.txt"),
                          file_id(hexenc<id>("5b20eb5e5bdd9cd674337fc95498f468d80ef7bc"))));
-    mm2.insert(make_pair(file_path("bunk.txt"),
+    mm2.insert(make_pair(file_path_internal("bunk.txt"),
                          file_id(hexenc<id>("54f373ed07b4c5a88eaa93370e1bbac02dc432a8"))));
     write_manifest_map(mm2, mdata2);
     calculate_ident(mdata2, mid2);
@@ -1527,17 +1601,15 @@ packet_roundabout_test()
     diff(mdata.inner(), mdata2.inner(), del2);
     pw.consume_manifest_delta(mid, mid2, manifest_delta(del));
     
+    keypair kp;
     // a public key packet
-    base64<rsa_pub_key> puk;
-    encode_base64(rsa_pub_key("this is not a real rsa key"), puk);
-    pw.consume_public_key(rsa_keypair_id("test@lala.com"), puk);
+    encode_base64(rsa_pub_key("this is not a real rsa key"), kp.pub);
+    pw.consume_public_key(rsa_keypair_id("test@lala.com"), kp.pub);
 
     // a private key packet
-    base64< arc4<rsa_priv_key> > pik;
-    encode_base64(arc4<rsa_priv_key>
-                  (rsa_priv_key("this is not a real rsa key either!")), pik);
+    encode_base64(rsa_priv_key("this is not a real rsa key either!"), kp.priv);
     
-    pw.consume_private_key(rsa_keypair_id("test@lala.com"), pik);
+    pw.consume_key_pair(rsa_keypair_id("test@lala.com"), kp);
     
   }
   

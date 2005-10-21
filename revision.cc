@@ -255,6 +255,10 @@ check_sane_history(revision_id const & child_id,
       // that we haven't yet figured out whether this is a valid merge or
       // not.  so find out.
       change_set cs_parent_left, cs_parent_right, cs_left, cs_right;
+      MM(cs_parent_left);
+      MM(cs_parent_right);
+      MM(cs_left);
+      MM(cs_right);
       calculate_composite_change_set(lca, parent_left, app, cs_parent_left);
       calculate_composite_change_set(lca, parent_right, app, cs_parent_right);
       concatenate_change_sets(cs_parent_left, left_edge, cs_left);
@@ -311,10 +315,12 @@ ensure_parents_loaded(ctx child,
   // The null revision is not a parent for purposes of finding common
   // ancestors.
   for (std::set<revision_id>::iterator p = imm_parents.begin();
-       p != imm_parents.end(); ++p)
+       p != imm_parents.end(); )
     {
       if (null_id(*p))
-        imm_parents.erase(p);
+        imm_parents.erase(p++);
+      else
+        ++p;
     }
               
   shared_bitmap bits = shared_bitmap(new bitmap(parents.size()));
@@ -1584,8 +1590,7 @@ build_changesets_from_existing_revs(app_state & app)
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    N(guess_default_key(key,app),
-      F("no unique private key for cert construction"));
+    get_user_key(key,app);
     require_password(key, app);
   }
 
@@ -1616,8 +1621,7 @@ build_changesets_from_manifest_ancestry(app_state & app)
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    N(guess_default_key(key,app),
-      F("no unique private key for cert construction"));
+    get_user_key(key,app);
     require_password(key, app);
   }
 

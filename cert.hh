@@ -55,9 +55,9 @@ typedef enum {cert_ok, cert_bad, cert_unknown} cert_status;
 void cert_signable_text(cert const & t,std::string & out);
 cert_status check_cert(app_state & app, cert const & t);
 bool priv_key_exists(app_state & app, rsa_keypair_id const & id);
-void load_priv_key(app_state & app,
-                    rsa_keypair_id const & id,
-                    base64< arc4<rsa_priv_key> > & priv);
+void load_key_pair(app_state & app,
+                   rsa_keypair_id const & id,
+                   keypair & kp);
 void calculate_cert(app_state & app, cert & t);
 void make_simple_cert(hexenc<id> const & id,
                       cert_name const & nm,
@@ -86,20 +86,13 @@ get_branch_heads(cert_value const & branchname,
                  app_state & app,
                  std::set<revision_id> & heads);
 
-bool 
-find_common_ancestor(revision_id const & left,
-                     revision_id const & right,
-                     revision_id & anc,
-                     app_state & app);
-
-
 // we also define some common cert types, to help establish useful
 // conventions. you should use these unless you have a compelling
 // reason not to.
 
-bool 
-guess_default_key(rsa_keypair_id & key, 
-                  app_state & app);
+// N()'s out if there is no unique key for us to use
+void
+get_user_key(rsa_keypair_id & key, app_state & app);
 
 void 
 guess_branch(revision_id const & id,

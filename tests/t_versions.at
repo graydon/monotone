@@ -28,7 +28,7 @@ do
   RSHA=`cat rsha-$i`
   FSHA=`cat fsha-$i`
 
-  AT_CHECK(MONOTONE cat file $FSHA, [], [stdout])
+  AT_CHECK(MONOTONE automate get_file $FSHA, [], [stdout])
   AT_CHECK(CANONICALISE(stdout))
   AT_CHECK(cmp stdout testfile, [], [ignore])
 

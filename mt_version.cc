@@ -15,12 +15,14 @@
 #include "mt_version.hh"
 #include "package_revision.h"
 #include "package_full_revision.h"
+#include "sanity.hh"
 
 void
 print_version()
 {
-  std::cout << PACKAGE_STRING
-            << " (base revision: " << package_revision_constant << ")" << std::endl;
+  std::cout << (F("%s (base revision: %s)")
+                % PACKAGE_STRING % package_revision_constant)
+            << std::endl;
 }
 
 void
@@ -29,8 +31,9 @@ print_full_version()
   print_version();
   std::string s;
   get_system_flavour(s);
-  std::cout << "Running on: " << s << std::endl;
-  std::cout << "Changes since base revision:" << std::endl
-            << package_full_revision_constant;
+  std::cout << F("Running on: %s\n"
+		 "Changes since base revision: %s\n")
+    % s
+    % package_full_revision_constant;
 }
 

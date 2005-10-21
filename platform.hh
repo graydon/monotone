@@ -13,6 +13,7 @@
 
 #include "vocab.hh"
 #include "config.h"
+#include "paths.hh"
 
 void read_password(std::string const & prompt, char * buf, size_t bufsz);
 void get_system_flavour(std::string & ident);
@@ -33,10 +34,6 @@ bool have_smart_terminal();
 // return value of 0 means "unlimited"
 unsigned int terminal_width();
 
-// for netsync
-void start_platform_netsync();
-void end_platform_netsync();
-
 // for "reckless mode" working copy change detection.
 // returns 'true' if it has generated a valid inodeprint; returns 'false' if
 // there was a problem, in which case we should act as if the inodeprint has
@@ -45,5 +42,25 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip);
 
 // for netsync 'serve' pidfile support
 pid_t get_process_id();
+
+// filesystem stuff
+// FIXME: BUG: this returns a string in the filesystem charset/encoding
+std::string get_current_working_dir();
+// calls N() if fails
+void change_current_working_dir(any_path const & to);
+utf8 tilde_expand(utf8 const & path);
+utf8 get_homedir();
+namespace path
+{
+  typedef enum { nonexistent, directory, file } status;
+};
+path::status get_path_status(any_path const & path);
+
+void rename_clobberingly(any_path const & from, any_path const & to);
+
+#ifdef WIN32
+// Win32 doesn't have wcswidth, so we supply our own implementation.
+extern "C" int wcswidth(const wchar_t * pwcs, size_t n);
+#endif
 
 #endif // __PLATFORM_HH__

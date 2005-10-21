@@ -1,6 +1,6 @@
 /*************************************************
 * Pooling Allocator Source File                  *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/mem_pool.h>
@@ -8,20 +8,6 @@
 #include <botan/util.h>
 
 namespace Botan {
-
-namespace {
-
-/*************************************************
-* Buffer Comparison Operators                    *
-*************************************************/
-bool Buffer_Cmp(const Pooling_Allocator::Buffer& a,
-                const Pooling_Allocator::Buffer& b)
-   { return ((const byte*)a.buf < (const byte*)b.buf); }
-
-bool Empty_Buffer(const Pooling_Allocator::Buffer& block)
-   { return (block.length == 0); }
-
-}
 
 /*************************************************
 * Pooling_Allocator Constructor                  *
@@ -92,6 +78,14 @@ void Pooling_Allocator::destroy()
    }
 
 /*************************************************
+* Buffer Comparison                              *
+*************************************************/
+bool Pooling_Allocator::is_empty_buffer(const Buffer& block)
+   {
+   return (block.length == 0);
+   }
+
+/*************************************************
 * Return true if these buffers are contiguous    *
 *************************************************/
 bool Pooling_Allocator::are_contiguous(const Buffer& a, const Buffer& b)
@@ -131,11 +125,11 @@ void Pooling_Allocator::remove_empty_buffers(std::vector<Buffer>& list) const
    {
    std::vector<Buffer>::iterator empty;
 
-   empty = std::find_if(list.begin(), list.end(), Empty_Buffer);
+   empty = std::find_if(list.begin(), list.end(), is_empty_buffer);
    while(empty != list.end())
       {
       list.erase(empty);
-      empty = std::find_if(list.begin(), list.end(), Empty_Buffer);
+      empty = std::find_if(list.begin(), list.end(), is_empty_buffer);
       }
    }
 
@@ -192,7 +186,7 @@ void Pooling_Allocator::deallocate(void* ptr, u32bit n) const
    free_list.push_back(Buffer(ptr, n));
    if(free_list.size() >= 2)
       std::inplace_merge(free_list.begin(), free_list.end() - 1,
-                         free_list.end(), Buffer_Cmp);
+                         free_list.end());
 
    defrag_counter = (defrag_counter + 1) % RUNS_TO_DEFRAGS;
    if(defrag_counter == 0)
@@ -250,12 +244,13 @@ void Pooling_Allocator::free_block(void* ptr, u32bit n) const
    {
    if(!ptr) return;
 
-   u32bit free_blocks = 0;
+   u32bit free_space = 0;
    for(u32bit j = 0; j != real_mem.size(); j++)
-      if(!real_mem[j].in_use) free_blocks++;
+      if(!real_mem[j].in_use)
+         free_space += real_mem[j].length;
 
    bool free_this_block = false;
-   if((free_blocks > 2 || n != PREF_SIZE) && !should_not_free())
+   if(free_space > keep_free())
       free_this_block = true;
 
    for(u32bit j = 0; j != real_mem.size(); j++)
@@ -273,10 +268,10 @@ void Pooling_Allocator::free_block(void* ptr, u32bit n) const
          else
             real_mem[j].in_use = false;
 
+         remove_empty_buffers(real_mem);
          return;
          }
 
-   remove_empty_buffers(real_mem);
 
    throw Internal_Error("Pooling_Allocator: Unknown pointer was freed");
    }

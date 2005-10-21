@@ -25,7 +25,7 @@ AT_CHECK(QGREP('this commit uses the --message-file option' stdout), [])
 #--------------------
 #also with a file coming outside the working copy
 #--------------------
-AT_CHECK(MONOTONE setup alt_wrk, [], [ignore], [ignore])
+AT_CHECK(MONOTONE setup --branch=testbranch alt_wrk, [], [ignore], [ignore])
 
 AT_DATA(alt_wrk/input1.txt, [files... files...
 ])

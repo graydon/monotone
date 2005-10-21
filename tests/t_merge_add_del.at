@@ -76,7 +76,7 @@ AT_CHECK(MONOTONE propagate branch.main branch.fork, [], [ignore], [ignore])
 AT_CHECK(rm -rf MT)
 AT_CHECK(MONOTONE --branch=branch.fork checkout .)
 
-AT_CHECK(MONOTONE cat manifest, [], [stdout])
+AT_CHECK(MONOTONE automate get_manifest, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep bar manifest, [1], [ignore], [ignore])
 AT_CHECK(grep quux manifest, [0], [ignore], [ignore])

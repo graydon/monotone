@@ -1,6 +1,6 @@
 /*************************************************
 * Diffie-Hellman Header File                     *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_DIFFIE_HELLMAN_H__

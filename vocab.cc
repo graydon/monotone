@@ -5,12 +5,8 @@
 
 #include <string>
 #include <iostream>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/exception.hpp>
-#include <boost/version.hpp>
 
 #include "constants.hh"
-#include "file_io.hh"
 #include "sanity.hh"
 #include "vocab.hh"
 
@@ -139,118 +135,6 @@ verify(netsync_hmac_value & val)
 }
 
 
-inline void 
-verify(local_path & val)
-{
-
-  if (val.ok)
-    return;
-
-  using boost::filesystem::path;
-  boost::filesystem::path p;
-  try 
-    {
-      p = mkpath(val());
-      p = p.normalize();
-    }
-  catch (std::runtime_error &re)
-    {
-      throw informative_failure(re.what());
-    }
-  catch (fs::filesystem_error &fse)
-    {
-      throw informative_failure(fse.what());
-    }
-
-  N(! (p.has_root_path() || p.has_root_name() || p.has_root_directory()),
-    F("prohibited absolute path '%s'") % val);
-
-  for(path::iterator i = p.begin(); i != p.end(); ++i)
-    {
-      N(!( *i == "" && (! p.empty())),
-        F("empty path component in '%s'") % val);
-
-      N((*i != ".."),
-        F("prohibited path component '%s' in '%s'") % *i % val);
-
-      string::size_type pos = i->find_first_of(constants::illegal_path_bytes);
-      N(pos == string::npos,
-        F("bad character '%d' in path component '%s' of '%s'") 
-        % static_cast<int>(i->at(pos)) % *i % val);
-
-      string s = val();
-      for (string::const_iterator j = s.begin(); j != s.end(); ++j)
-      N(*j != '\0',
-        F("null byte in path component '%s' of '%s'") % *i % val);
-        
-    }
-  
-  // save back the normalized string
-  val.s = p.string();
-
-  val.ok = true;
-}
-
-// returns true if the given string is obviously a normalized file path (no
-// . or .. components, a relative path, no doubled //s, does not end in /,
-// does not start with MT)
-inline bool
-trivially_safe_file_path(std::string const & f)
-{
-  const static std::string bad_chars = std::string("\\:") + constants::illegal_path_bytes + std::string(1, '\0');
-  const static char sep_char('/');
-  const static std::string bad_after_sep_chars("./");
-  if (f.empty())
-    return true;
-  char prev = sep_char;
-  for (std::string::const_iterator i = f.begin(); i != f.end(); ++i)
-    {
-      if (bad_chars.find(*i) != std::string::npos)
-        return false;
-      if (prev == sep_char && bad_after_sep_chars.find(*i) != std::string::npos)
-        return false;
-      prev = *i;
-    }
-  if (prev == sep_char)
-    return false;
-  if (f.size() >= 2 && f[0] == 'M' && f[1] == 'T')
-    return false;
-  return true;
-}
-
-inline void 
-verify(file_path & val)
-{
-  static std::map<std::string, std::string> known_good;
-
-  if (val.ok)
-    return;
-  
-  std::map<std::string, std::string>::const_iterator j = known_good.find(val());
-  if (j == known_good.end())
-    {
-      if (trivially_safe_file_path(val()))
-        known_good.insert(std::make_pair(val(), val()));
-      else
-        {
-          local_path loc(val());
-          verify(loc);
-          N(!book_keeping_file(loc),
-            F("prohibited book-keeping path in '%s'") % val);
-          const std::string & normalized_val = loc();
-          val.s = normalized_val;
-          known_good.insert(std::make_pair(val(), normalized_val));
-        }
-    }
-  else
-    {
-      val.s = j->second;
-    }
-
-  val.ok = true;
-}
-
-
 // instantiation of various vocab functions
 
 #define ATOMIC(ty)                           \
@@ -344,65 +228,27 @@ void dump(dec<INNER> const & obj, std::string & out)     \
 template class revision<cert>;
 template class manifest<cert>;
 
+template
+void dump<rsa_pub_key>(base64<rsa_pub_key> const&, std::string &);
+
+template
+void dump(revision_id const & r, std::string &);
+
+template
+void dump(manifest_id const & r, std::string &);
+
+template
+void dump(file_id const & r, std::string &);
+
 // the rest is unit tests
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-static void test_file_path_verification()
-{
-  char const * baddies [] = {"../escape",
-                             "foo/../../escape",
-                             "/rooted",
-                             "foo//nonsense",
-                             "MT/foo",
-#ifdef _WIN32
-                             "c:\\windows\\rooted",
-                             "c:/windows/rooted",
-                             "c:thing",
-                             "//unc/share",
-                             "//unc",
-#endif
-                             0 };
-  
-  for (char const ** c = baddies; *c; ++c)
-    BOOST_CHECK_THROW(file_path p(*c), informative_failure);      
-  
-  char const * bad = "\t\r\n\v\f\a\b";
-  char badboy[] = "bad";
-  for (char const * c = bad; *c; ++c)
-    {
-      badboy[1] = *c;
-      BOOST_CHECK_THROW(file_path p(badboy), informative_failure);
-    }
-  BOOST_CHECK_THROW(file_path p(std::string(1, '\0')), informative_failure);
-  
-  char const * goodies [] = {"unrooted", 
-                             "unrooted.txt",
-                             "fun_with_underscore.png",
-                             "fun-with-hyphen.tiff", 
-                             "unrooted/../unescaping",
-                             "unrooted/general/path",
-                             "here/..",
-                             0 };
-
-  for (char const ** c = goodies; *c; ++c)
-    BOOST_CHECK_NOT_THROW(file_path p(*c), informative_failure);
-}
-
-static void test_file_path_normalization()
-{
-  BOOST_CHECK(file_path("./foo") == file_path("foo"));
-  BOOST_CHECK(file_path("foo/bar/./baz") == file_path("foo/bar/baz"));
-  BOOST_CHECK(file_path("foo/bar/../baz") == file_path("foo/baz"));
-  BOOST_CHECK(file_path("foo/bar/baz/") == file_path("foo/bar/baz"));
-}
-
 void add_vocab_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&test_file_path_verification));
-  suite->add(BOOST_TEST_CASE(&test_file_path_normalization));
+  // None, ATM.
 }
 
 #endif // BUILD_UNIT_TESTS

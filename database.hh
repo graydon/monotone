@@ -9,6 +9,7 @@
 struct sqlite3;
 struct sqlite3_stmt;
 struct cert;
+int sqlite3_finalize(sqlite3_stmt *);
 
 #include <stdarg.h>
 
@@ -17,12 +18,12 @@ struct cert;
 #include <map>
 #include <string>
 
-#include <boost/filesystem/path.hpp>
-
 #include "selectors.hh"
 #include "manifest.hh"
 #include "numeric_vocab.hh"
 #include "vocab.hh"
+#include "paths.hh"
+#include "cleanup.hh"
 
 struct revision_set;
 
@@ -71,14 +72,14 @@ struct app_state;
 
 class database
 {
-  fs::path filename;
+  system_path filename;
   std::string const schema;
   void check_schema();
 
   struct statement {
+    statement() : count(0), stmt(0, sqlite3_finalize) {}
     int count;
-    statement() : count(0) {}
-    sqlite3_stmt *stmt;
+    cleanup_ptr<sqlite3_stmt*, int> stmt;
   };
 
   std::map<std::string, statement> statement_cache;
@@ -200,11 +201,15 @@ class database
                                         delta const & del,
                                         database & db);
 
+  void check_filename();
+  void open();
+  void close();
+
 public:
 
-  database(fs::path const & file);
+  database(system_path const & file);
 
-  void set_filename(fs::path const & file);
+  void set_filename(system_path const & file);
   void initialize();
   void debug(std::string const & sql, std::ostream & out);
   void dump(std::ostream &);
@@ -214,6 +219,7 @@ public:
   void migrate();
   void rehash();
   void ensure_open();
+  bool database_specified();
   
   bool file_version_exists(file_id const & id);
   bool manifest_version_exists(manifest_id const & id);
@@ -316,17 +322,13 @@ public:
   // crypto key / cert operations
 
   void get_key_ids(std::string const & pattern,
-                   std::vector<rsa_keypair_id> & pubkeys,
-                   std::vector<rsa_keypair_id> & privkeys);
+                   std::vector<rsa_keypair_id> & pubkeys);
 
-  void get_private_keys(std::vector<rsa_keypair_id> & privkeys);
   void get_public_keys(std::vector<rsa_keypair_id> & pubkeys);
-
-  bool key_exists(rsa_keypair_id const & id);
 
   bool public_key_exists(hexenc<id> const & hash);
   bool public_key_exists(rsa_keypair_id const & id);
-  bool private_key_exists(rsa_keypair_id const & id);
+
   
   void get_pubkey(hexenc<id> const & hash, 
                   rsa_keypair_id & id,
@@ -335,20 +337,9 @@ public:
   void get_key(rsa_keypair_id const & id, 
                base64<rsa_pub_key> & pub_encoded);
 
-  void get_key(rsa_keypair_id const & id, 
-               base64< arc4<rsa_priv_key> > & priv_encoded);
-
   void put_key(rsa_keypair_id const & id, 
                base64<rsa_pub_key> const & pub_encoded);
-  
-  void put_key(rsa_keypair_id const & id, 
-               base64< arc4<rsa_priv_key> > const & priv_encoded);
-  
-  void put_key_pair(rsa_keypair_id const & pub_id, 
-                    base64<rsa_pub_key> const & pub_encoded,
-                    base64< arc4<rsa_priv_key> > const & priv_encoded);
 
-  void delete_private_key(rsa_keypair_id const & pub_id);
   void delete_public_key(rsa_keypair_id const & pub_id);
   
   // note: this section is ridiculous. please do something about it.
@@ -363,7 +354,7 @@ public:
   void put_revision_cert(revision<cert> const & cert);
 
   // this variant has to be rather coarse and fast, for netsync's use
-  void get_revision_cert_index(std::vector< std::pair<hexenc<id>,
+  void get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
                                std::pair<revision_id, rsa_keypair_id> > > & idx);
 
   void get_revision_certs(std::vector< revision<cert> > & certs);
@@ -468,6 +459,8 @@ public:
   void commit();
 };
 
+void
+close_all_databases();
 
 
 #endif // __DATABASE_HH__

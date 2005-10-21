@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Store Searching Source File  *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/x509stor.h>

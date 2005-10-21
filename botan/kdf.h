@@ -1,6 +1,6 @@
 /*************************************************
 * KDF Header File                                *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_KDF_H__
@@ -36,29 +36,6 @@ class KDF2 : public KDF
       SecureVector<byte> derive(u32bit, const byte[], u32bit,
                                 const byte[], u32bit) const;
       const std::string hash_name;
-   };
-
-/*************************************************
-* SSL3 PRF                                       *
-*************************************************/
-class SSL3_PRF : public KDF
-   {
-   private:
-      SecureVector<byte> derive(u32bit, const byte[], u32bit,
-                                const byte[], u32bit) const;
-   };
-
-/*************************************************
-* TLS PRF                                        *
-*************************************************/
-class TLS_PRF : public KDF
-   {
-   private:
-      SecureVector<byte> derive(u32bit, const byte[], u32bit,
-                                const byte[], u32bit) const;
-      SecureVector<byte> P_hash(const std::string&, u32bit,
-                                const byte[], u32bit,
-                                const byte[], u32bit) const;
    };
 
 /*************************************************

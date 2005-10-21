@@ -19,7 +19,16 @@ function execute(path, ...)
    return ret
 end
 
-
+-- Wrapper around execute to let user confirm in the case where a subprocess
+-- returns immediately
+-- This is needed to work around some brokenness with some merge tools
+-- (e.g. on OS X)
+function execute_confirm(path, ...)   
+   execute(path, unpack(arg))
+   print(gettext("Press enter when the subprocess has completed"))
+   io.read()
+   return ret
+end
 
 -- attributes are persistent metadata about files (such as execute
 -- bit, ACLs, various special flags) which we want to have set and
@@ -63,6 +72,33 @@ attr_functions["execute"] =
 
 
 function ignore_file(name)
+   -- project specific
+   if (ignored_files == nil) then
+      ignored_files = {}
+      local ignfile = io.open(".mt-ignore", "r")
+      if (ignfile ~= nil) then
+         local line = ignfile:read()
+         while (line ~= nil)
+         do
+            table.insert(ignored_files, line)
+            line = ignfile:read()
+         end
+         io.close(ignfile)
+      end
+   end
+   for i, line in pairs(ignored_files)
+   do
+      local pcallstatus, result = pcall(function() if (regex.search(line, name)) then return true else return false end end)
+      if pcallstatus == true then
+          -- no error from the regex.search call
+          if result == true then return true end
+      else
+          -- regex.search had a problem, warn the user their .mt-ignore file syntax is wrong
+          io.stderr:write("WARNING: the line '" .. line .. "' in your .mt-ignore file caused exception '" .. result .. "'"
+                           .. " while matching filename '" .. name .. "', ignoring this regex for all remaining files.\n")
+          table.remove(ignored_files, i)
+      end
+   end
    -- c/c++
    if (string.find(name, "%.a$")) then return true end
    if (string.find(name, "%.so$")) then return true end
@@ -71,6 +107,7 @@ function ignore_file(name)
    if (string.find(name, "%.lo$")) then return true end
    if (string.find(name, "^core$")) then return true end
    if (string.find(name, "/core$")) then return true end
+   if (string.find(name, "/core%.%d+$")) then return true end
    -- python
    if (string.find(name, "%.pyc$")) then return true end
    if (string.find(name, "%.pyo$")) then return true end
@@ -106,6 +143,12 @@ function ignore_file(name)
    if (string.find(name, "^_darcs/")) then return true end
    if (string.find(name, "^.cdv/")) then return true end
    if (string.find(name, "^.git/")) then return true end
+   if (string.find(name, "%.scc$")) then return true end
+   -- desktop/directory configuration metadata
+   if (string.find(name, "^.DS_Store$")) then return true end
+   if (string.find(name, "/.DS_Store$")) then return true end
+   if (string.find(name, "^desktop.ini$")) then return true end
+   if (string.find(name, "/desktop.ini$")) then return true end
    return false;
 end
 
@@ -130,18 +173,23 @@ function binary_file(name)
    if (string.find(lowname, "%.sql$")) then return false end
    -- unknown - read file and use the guess-binary 
    -- monotone built-in function
-   filedata=read_contents_of_file(name, "rb")
-   if (filedata ~= nil) then return guess_binary(filedata) end
-   -- still unknown (file empty or unreadable) - report it as nil
-   return nil
+   return guess_binary_file_contents(name)
 end
 
 function edit_comment(basetext, user_log_message)
-   local exe = "vi"
+   local exe = nil
+   if (program_exists_in_path("vi")) then exe = "vi" end
+   if (program_exists_in_path("notepad.exe")) then exe = "notepad.exe" end
    local visual = os.getenv("VISUAL")
    if (visual ~= nil) then exe = visual end
    local editor = os.getenv("EDITOR")
    if (editor ~= nil) then exe = editor end
+
+   if (exe == nil) then
+      io.write("Could not find editor to enter commit message\n"
+               .. "Try setting the environment variable EDITOR\n")
+      return nil
+   end
 
    local tmp, tname = temp_file()
    if (tmp == nil) then return nil end
@@ -151,6 +199,8 @@ function edit_comment(basetext, user_log_message)
    io.close(tmp)
 
    if (execute(exe, tname) ~= 0) then
+      io.write(string.format(gettext("Error running editor '%s' to enter log message\n"),
+                             exe))
       os.remove(tname)
       return nil
    end
@@ -203,9 +253,19 @@ function get_file_cert_trust(signers, id, name, val)
 end
 
 function accept_testresult_change(old_results, new_results)
-   for test,res in pairs(old_results)
+   local reqfile = io.open("MT/wanted-testresults", "r")
+   if (reqfile == nil) then return true end
+   local line = reqfile:read()
+   local required = {}
+   while (line ~= nil)
    do
-      if res == true and new_results[test] ~= true
+      required[line] = true
+      line = reqfile:read()
+   end
+   io.close(reqfile)
+   for test, res in pairs(required)
+   do
+      if old_results[test] == true and new_results[test] ~= true
       then
          return false
       end
@@ -229,6 +289,26 @@ function merge3_meld_cmd(lfile, afile, rfile)
    end
 end
 
+function merge2_tortoise_cmd(lfile, rfile, outfile)
+   return
+   function()
+      return execute("tortoisemerge",
+                     string.format("/theirs:%s", lfile),
+                     string.format("/mine:%s", rfile),
+                     string.format("/merged:%s", outfile))
+   end
+end
+
+function merge3_tortoise_cmd(lfile, afile, rfile, outfile)
+   return
+   function()
+      return execute("tortoisemerge",
+                     string.format("/base:%s", afile),
+                     string.format("/theirs:%s", lfile),
+                     string.format("/mine:%s", rfile),
+                     string.format("/merged:%s", outfile))
+   end
+end
 
 function merge2_vim_cmd(vim, lfile, rfile, outfile)
    return
@@ -238,11 +318,27 @@ function merge2_vim_cmd(vim, lfile, rfile, outfile)
    end
 end
 
-function merge3_vim_cmd(vim, lfile, afile, rfile, outfile)
+function merge3_vim_cmd(vim, afile, lfile, rfile, outfile)
    return
    function()
       return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
-                     lfile, afile, rfile)
+                     afile, lfile, rfile)
+   end
+end
+
+function merge3_rcsmerge_vim_cmd(merge, vim, lfile, afile, rfile, outfile)
+   return
+   function()
+      -- XXX: This is tough - should we check if conflict markers stay or not?
+      -- If so, we should certainly give the user some way to still force
+      -- the merge to proceed since they can appear in the files (and I saw
+      -- that). --pasky
+      if execute(merge, lfile, afile, rfile) == 0 then
+         copy_text_file(lfile, outfile);
+         return 0
+      end
+      return execute(vim, "-f", "-c", string.format("file %s", outfile),
+                     lfile)
    end
 end
 
@@ -250,18 +346,17 @@ function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
    local elisp = "(ediff-merge-files \"%s\" \"%s\" nil \"%s\")"
    return 
    function()
-      return execute(emacs, "-no-init-file", "-eval", 
+      return execute(emacs, "--eval", 
                      string.format(elisp, lfile, rfile, outfile))
    end
 end
 
 function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
    local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
-   local cmd_fmt = "%s -no-init-file -eval " .. elisp
    return 
    function()
-      execute(emacs, "-no-init-file", "-eval", 
-              string.format(elisp, lfile, rfile, afile, outfile))
+      return execute(emacs, "--eval", 
+                     string.format(elisp, lfile, rfile, afile, outfile))
    end
 end
 
@@ -315,6 +410,22 @@ function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path,
    end
 end
 
+function merge2_opendiff_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
+   return 
+   function()
+      -- As opendiff immediately returns, let user confirm manually
+      return execute_confirm("opendiff",lfile,rfile,"-merge",outfile) 
+  end
+end
+
+function merge3_opendiff_cmd(left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile)
+   return 
+   function()
+      -- As opendiff immediately returns, let user confirm manually
+      execute_confirm("opendiff",lfile,rfile,"-ancestor",afile,"-merge",outfile)
+   end
+end
+
 function write_to_temporary_file(data)
    tmp, filename = temp_file()
    if (tmp == nil) then 
@@ -323,6 +434,22 @@ function write_to_temporary_file(data)
    tmp:write(data)
    io.close(tmp)
    return filename
+end
+
+function copy_text_file(srcname, destname)
+   src = io.open(srcname, "r")
+   if (src == nil) then return nil end
+   dest = io.open(destname, "w")
+   if (dest == nil) then return nil end
+
+   while true do
+      local line = src:read()
+      if line == nil then break end
+      dest:write(line, "\n")
+   end
+
+   io.close(dest)
+   io.close(src)
 end
 
 function read_contents_of_file(filename, mode)
@@ -356,6 +483,10 @@ function get_preferred_merge2_command (tbl)
       cmd =   merge2_kdiff3_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
    elseif program_exists_in_path ("xxdiff") then 
       cmd = merge2_xxdiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
+   elseif program_exists_in_path ("opendiff") then 
+      cmd = merge2_opendiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
+   elseif program_exists_in_path ("TortoiseMerge") then
+      cmd = merge2_tortoise_cmd(lfile, rfile, outfile)
    elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
       if string.find(editor, "xemacs") and program_exists_in_path("xemacs") then
          cmd = merge2_emacs_cmd ("xemacs", lfile, rfile, outfile) 
@@ -404,7 +535,7 @@ function merge2 (left_path, right_path, merged_path, left, right)
 
       if cmd ~=nil 
       then 
-         io.write (string.format("executing external 2-way merge command\n"))
+         io.write (string.format(gettext("executing external 2-way merge command\n")))
          cmd ()
          if tbl.meld_exists 
          then 
@@ -445,10 +576,23 @@ function get_preferred_merge3_command (tbl)
    local editor = os.getenv("EDITOR")
    if editor ~= nil then editor = string.lower(editor) else editor = "" end
 
-   if program_exists_in_path("kdiff3") then
+   local merge = os.getenv("MTMERGE")
+   -- TODO: Support for rcsmerge_emacs
+   if merge ~= nil and string.find(editor, "vim") ~= nil then
+      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then 
+         cmd = merge3_rcsmerge_vim_cmd (merge, "gvim", lfile, afile, rfile, outfile) 
+      elseif program_exists_in_path ("vim") then 
+         cmd = merge3_rcsmerge_vim_cmd (merge, "vim", lfile, afile, rfile, outfile) 
+      end
+
+   elseif program_exists_in_path("kdiff3") then
       cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
    elseif program_exists_in_path ("xxdiff") then 
       cmd = merge3_xxdiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
+   elseif program_exists_in_path ("opendiff") then 
+      cmd = merge3_opendiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
+   elseif program_exists_in_path ("TortoiseMerge") then
+      cmd = merge3_tortoise_cmd(lfile, afile, rfile, outfile)
    elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
       if string.find(editor, "xemacs") and program_exists_in_path ("xemacs") then 
          cmd = merge3_emacs_cmd ("xemacs", lfile, afile, rfile, outfile) 
@@ -456,7 +600,7 @@ function get_preferred_merge3_command (tbl)
          cmd = merge3_emacs_cmd ("emacs", lfile, afile, rfile, outfile) 
       end
    elseif string.find(editor, "vim") ~= nil then
-      io.write (string.format("\nWARNING: 'vim' was choosen to perform external 2-way merge.\n"..
+      io.write (string.format("\nWARNING: 'vim' was choosen to perform external 3-way merge.\n"..
           "You should merge all changes to *LEFT* file due to limitation of program\n"..
           "arguments.  The order of the files is ancestor, left, right.\n\n")) 
       if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then 
@@ -499,7 +643,7 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
       local cmd =   get_preferred_merge3_command (tbl) 
       if cmd ~=nil 
       then 
-         io.write (string.format("executing external 3-way merge command\n"))
+         io.write (string.format(gettext("executing external 3-way merge command\n")))
          cmd ()
          if tbl.meld_exists 
          then 
@@ -636,3 +780,4 @@ function external_diff(file_path, data_old, data_new, is_binary, diff_args, rev_
    os.remove (old_file);
    os.remove (new_file);
 end
+

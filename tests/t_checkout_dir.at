@@ -14,15 +14,25 @@ AT_CHECK(MONOTONE --branch=testbranch checkout test_dir2,
          [1], [ignore], [ignore])
 
 mkdir test_dir3
-chmod 444 test_dir3
-# XFAIL if run as root (hi Gentoo!)
-AT_XFAIL_IF(test -O /)
 AT_CHECK(MONOTONE --branch=testbranch checkout test_dir3,
          [1], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch checkout test_dir3/subdir,
+
+mkdir test_dir4
+chmod 444 test_dir4
+# XFAIL if run as root (hi Gentoo!)
+AT_XFAIL_IF(test -O /)
+AT_CHECK(MONOTONE --branch=testbranch checkout test_dir4,
+         [1], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch checkout test_dir4/subdir,
         [1], [ignore], [ignore])
 # Reset the permissions so Autotest can correctly clean up our
 # temporary directory.
-chmod 700 test_dir3
+chmod 700 test_dir4
+
+# checkout <existing dir> normally is disallowed
+# but as a special case, we allow "checkout ."
+
+mkdir test_dir5
+AT_CHECK(cd test_dir5 && MONOTONE --branch=testbranch checkout ., [], [ignore], [ignore])
 
 AT_CLEANUP

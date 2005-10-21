@@ -1,0 +1,12 @@
+AT_SETUP([add inside MT/])
+MONOTONE_SETUP
+
+AT_DATA(testfile1, [blah blah
+])
+AT_DATA(MT/testfile2, [blah blah
+])
+
+AT_CHECK(cd MT && MONOTONE add testfile2, [1], [ignore], [ignore])
+AT_CHECK(cd MT && MONOTONE add ../testfile1, [], [ignore], [ignore])
+
+AT_CLEANUP

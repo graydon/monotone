@@ -1,3 +1,2455 @@
+2005-10-20  Nathaniel Smith  <njs@pobox.com>
+
+	* cert.hh (find_common_ancestor): Remove dead declaration.
+	* database.cc (check_schema): Improve schema mismatch error
+	message.
+
+2005-10-20  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_database_sig_cleanup.at: Sleep for a couple of seconds,
+	so monotone has a chance to clean up and die properly, even on a
+	slower machine.
+
+2005-10-19  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_update_switch_branch.at, testsuite.at: New test.
+
+2005-10-19  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Make branch sticky even if update target
+	== current rid.
+
+2005-10-19  Matt Johnston  <matt@ucc.asn.au>
+
+	* main.cc, database.{cc,hh}: SIGINT and SIGTERM handlers
+	exit gracefully, and try to ROLLBACK+close any databases to clean up
+	.db-journal files. Added new database::close() method to be used
+	rather than sqlite_close() directly
+	* monotone.{cc,hh}, sanity.{cc.hh}: move clean_shutdown flag to
+	global_sanity
+	* tests/t_database_sig_cleanup.at: test it
+	* keys.cc: don't L() private key
+
+2005-10-19  Matthew A. Nicholson  <matt@matt-land.com>
+
+	* std_hooks.lua: Minor correction to vim warning during 3-way merge.
+
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: Update comment about client versions
+
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc netcmd.{cc,hh}: usher_reply_cmd now has both who we
+	connected to *and* what pattern we asked for
+	* contrib/usher.cc: new file format, allow to key servers on either
+	hostname or pattern, hostname checked first
+	reload config file on SIGHUP
+
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc (session::process_usher_cmd): reply with who we connected
+	to (hostname or hostname:port), not what pattern we asked for.
+	* contrib/usher.cc: Update comment.
+
+2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: support dynamic local servers
+	These are started when a client attempts to connect, and killed at
+	a set time interval after the last client has disconnected.
+
+2005-10-15  Nathaniel Smith  <njs@pobox.com>
+
+	* manifest.cc (build_restricted_manifest_map): Mention the new
+	--missing option in the missing files error message hint.
+
+2005-10-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (serve): check that the db is valid before beginning
+	service (would previously not know until someone connected)
+	* netsync.cc (serve_connections): don't say "beginning service" until
+	after opening the socket.
+
+2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.{cc,hh}, key_store.cc: change how the keystore directory
+	is initialized; was using app.confdir before it was ready
+
+2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make the configuration directory configurable and available to lua
+	* lua.cc: export new function to lua, "get_confdir"
+	* app_state.{cc,hh} monotone.cc options.hh: new option --confdir,
+	make the configuration directory something other than ~/.monotone
+	* lua.{cc,hh}: make the app_state availabe to lua callbacks
+	* key_store.cc: use get_confdir instead of hardcoded
+	* lua.cc: use get_confdir instead of hardcoded
+	* tests/t_config_confdir.at: test --confdir and lua get_confdir
+	* testsuite.at: add it
+
+2005-10-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Teach client to optionally push unused keys; new pubkeys can now be
+	given to a server without restarting it.
+	* app_state.{cc,hh}, monotone.cc, options.hh:
+	new command-specific-option --key-to-push=<key> , used to sync/push
+	a key that hasn't signed anything
+	* netsync.cc: make it work
+	* commands.cc: push and sync take it
+	* tests/t_netsync_pubkey.at: test it
+
+2005-10-16  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Don't add boost_unit_test_framework to global
+	LIBS, we will link against it directly when needed.
+	* Makefile.am: Only allow unit_tests to be built if
+	boost_unit_test_framework was available at configure time.
+
+2005-10-15  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Use boost_filesystem as the library to test for
+	when trying to guess a suitable BOOST_SUFFIX.  Make a missing
+	boost_unit_test_framework library a non-fatal error.
+
+2005-10-14  Emile Snyder  <emile@alumni.reed.edu>
+
+	* commands.cc: Fix breakage I introduced with the --unknown flag.
+	Rename find_unknown to find_unknown_and_ignored, since that's what
+	it's actually doing.  Likewise ls_unknown ->
+	ls_unknown_or_ignored, and use find_unknown_and_ignored correctly.
+	Fixes t_mt_ignore.at failures.
+	
+2005-10-14  Nathaniel Smith  <njs@pobox.com>
+
+	* key_store.{cc,hh} (get_key_dir): New method.
+	* schema_migration.cc (migrate_client_to_external_privkeys): Tell
+	user that we're moving their keys.
+	* commands.cc (genkey): Refer to keystore by the directory, not as
+	"keystore".
+	(ls_keys): Likewise.
+
+2005-10-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Add .mt-ignore, ignore most generated files, except for the *m4 files.
+
+2005-10-14  Emile Snyder <emile@alumni.reed.edu>
+
+	* app_state.{cc,hh}: new 'unknown' class member for --unknown flag.
+	* commands.cc (CMD(add), ls_unknown, find_unknown): use new
+	--unknown flag to add any files in the working copy that monotone
+	doesn't know about (and isn't ignoring).
+	* monotone.cc (coptions, cpp_main): add the --unknown flag handling.
+	* options.hh: add OPT_UNKNOWN.
+	* monotone.texi: document it.
+	* tests/t_add.at: test it.
+	
+2005-10-14  Emile Snyder <emile@alumni.reed.edu>
+
+	* database.cc (complete): enhance h: and b: to mean "current
+	branch" (as defined by your working copy) when given empty.
+	* monotone.texi: document it.
+	
+2005-10-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc: Exclusively lock the database when performing a 'db
+	dump'.
+	* schema_migration.cc: Run an analyze at the end of a database
+	migration to help out the SQLite query optimizer.  Also change
+	schema id calculation to match 'sqlite_stat%' rather than the
+	specific table 'sqlite_stat1'--the SQLite docs suggest that more
+	tables will be created in the future.
+
+2005-10-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc, schema.sql, schema_migration.cc: Use SQLite 3's
+	exclusive locking whereever we start a new transaction; allows
+	monotone to report database locking errors earlier if a second
+	monotone process attempts to perform database operations.
+
+2005-10-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (message_width): Refactor into display_width() and
+	remove message_width().
+	* transforms.{cc,hh} (display_width): Rename length() to
+	display_width() and use the code from message_width().
+	* ui.cc, commands.cc: Change calls to length() to display_width().
+	* netsync.cc: Remove length() calls, test for string emptiness
+	instead.
+
+2005-10-13  Emile Snyder <emile@alumni.reed.edu>
+
+	* commands.cc (CMD(revert)): use --missing for revert a'la drop.
+	* monotone.texi: document it.
+	* tests/t_revert_restrict.at: test it.
+	
+2005-10-13  Emile Snyder <emile@alumni.reed.edu>
+
+	* app_state.{cc,hh}: new missing class member for --missing flag.
+	* commands.cc (CMD(drop), ls_missing, find_missing): use new
+	--missing flag to drop any files already deleted in the working copy.
+	* monotone.cc (coptions, cpp_main): add the --missing flag handling.
+	* options.hh: add OPT_MISSING.
+	* monotone.texi: document it.
+	* tests/t_drop_missing.at: test it.
+	
+2005-10-13  Emile Snyder <emile@alumni.reed.edu>
+
+	* database.cc (complete): implementation for h:branch selector to
+	find heads of a branch.
+	* selectors.{cc,hh}: add sel_head with selector character 'h'.
+	* monotone.texi: document it.
+	
+2005-10-13  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/mem_pool.cpp: fix bug preventing remove_empty_buffers()
+	from being called, gives significant improvements for long-running
+	processes.
+
+2005-10-12  Emile Snyder <emile@alumni.reed.edu>
+
+	* monotone.texi: add njs's lucid definition of what the disapprove
+	actually means in terms of the revision graph to it's section in
+	the documentation.
+	
+2005-10-12  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.cc: return with exit code of 2 on usage output
+	* testsuite.at: turn "cat_foo" into "automate get_foo"
+	* tests/t_empty_env.at, tests/t_null.at, tests/t_at_sign.at,
+	tests/t_unreadable_db.at, tests/t_cmdline_options.at: expect 2 exit code
+	* tests/t_cross.at: update to the changeset paradigm of immutable
+	ancestors.
+
+2005-10-11  Emile Snyder <emile@alumni.reed.edu>
+
+	* app_state.{cc,hh}: new bind_address and bind_port class members.
+	* options.hh: new OPT_BIND for serve command.
+	* monotone.cc: handle OPT_BIND.
+	* commands.cc (process_netsync_args, CMD(serve)): use values from
+	the new --bind=[addr]:port option for 'monotone serve' rather than
+	the positional argument.  default to binding all interfaces.
+	* monotone.texi: document new serve syntax
+	* netsync.cc (serve_connections): use empty address argument to
+	mean bind all interfaces.
+	* netxx/address.cxx (Address::add_all_addresses): set port_ member
+	from passed in port argument.
+	* testsuite.at, tests/t_netsync_single.at: use new --bind syntax
+	for serve commands.
+	
+2005-10-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* commands.cc (message_width, explain_usage): New function to
+	calculate display width of translated strings.  Use it in
+	explain_usage.
+	Patch from Thomas Moschny <thomas.moschny@gmx.de>
+	* certs.cc (get_user_key): Correct logic in N() test for multiple
+	keys.  Resolves bug reported by Malte Thoma.
+
+2005-10-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make netsync shutdown work properly.
+	* netsync.cc (session::which_events): Only ask to read if not armed.
+	A read failure will discard all read-but-not-processed commands.
+	* netsync.cc (session::maybe_say_goodbye): Only say goodbye once.
+	Repeated goodbyes means that one side *will* have a full write-queue
+	when the connection is torn down.
+
+2005-10-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_automate_stdio.at: Add comment here too.
+
+2005-10-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/get_stdio.pl: Add comments. I'm told it was "obtuse",
+	hopefully this will help somewhat.
+
+2005-10-10  Matt Johnston  <matt@ucc.asn.au>
+
+	* configure.ac, Makefile.am: add {MONOTONE,LIB3RDPARTY}_C{,XX}FLAGS
+	variables.
+
+2005-10-10  Benoît Dejean <benoit@placenet.org>
+
+	* commands.cc: s/key store/keystore/g.
+
+2005-10-10  Matt Johnston  <matt@ucc.asn.au>
+
+	* netsync.cc, database.{cc,hh}: don't include unwanted branch
+	certs when building the merkle tree.
+	* merkle.hh: add variant of insert_into_merkle_tree
+	taking non-raw id.
+	* markle.cc: comment out unused bits
+
+2005-10-10  Nathaniel Smith  <njs@pobox.com>
+
+	* cert.{cc,hh} (get_user_key): New function, replacing
+	guess_default_key.
+	* revision.cc (build_changesets_from_existing_revs) 
+	(build_changesets_from_manifest_ancestry): 
+	* rcs_import.cc (import_cvs_repo): 
+	* commands.cc (internalize_cert_name, push, sync, serve):
+	* cert.cc (make_simple_cert, cert_revision_author_default): Use
+	it.
+
+2005-10-10  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* netsync.cc: Clean up another case where port numbers were being
+	munged by localized iostreams.
+	* tests/t_netsync_largish_file.at: Tweak the random file
+	generation so that it's a bit faster on platforms with slow awk
+	implementations.
+	* netsync.cc: Remove comment stating that our official IANA port
+	should be renamed from 'netsync' to 'monotone'; Tomas sorted this
+	out a while ago.
+	* lua.cc (Lua::ok): Only log the 'Lua::ok() failed' message if
+	there has been a failure.
+	* monotone.texi: Fix a typo.
+	* win32/fs.cc (get_homedir): Clarify comment.
+
+2005-10-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* contrib/usher.cc (main): Reset parser state for config file
+	parser.
+	* win32/monotone.iss: Reduce minimum OS version for installer.
+	* configure.ac: Another Boost library suffix.
+
+2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_automate_keys.at: Portability fixes.
+
+2005-10-08  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: One more i18n string.
+
+2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_automate_keys.at: Don't rely on extended sed either!
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* database.{hh,cc}: Clean-up previous change -- switch to using a
+	cleanup_ptr to hold sqlite3_stmt handles, for proper exception
+	safety.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (fetch): Do not insert prepared statements into the
+	statement table until they are successfully created, to avoid
+	segfaults on database teardown.
+
+2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_automate_keys.at: Use sed rather than relying on an
+	extended grep being available.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* contrib/ciabot_monotone.py (send_change_for): Handle branch-less
+	revisions.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Make initial_rel_path an fs::path.  Adjust code
+	correspondingly.  Add tests that calling monotone from inside MT
+	should work.
+	* tests/t_add_inside_MT.at, testsuite.at: New test.
+
+2005-10-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/fs.cc: Don't consider USERPROFILE as a possible home
+	directory; APPDATA is more appropriate.  Add a second method to
+	get the APPDATA path.  Always use HOME if it's set (not just under
+	Cygwin/MinGW).
+	* tests/t_netsync_absorbs.at: Add missing CANONICALISE().
+
+2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (pubkey): don't insist on having a database
+	* tests/t_key_management_without_db.at: check it
+
+2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* file_io.cc, vocab.cc, Makefile.am: fix merge
+	* botan/algolist.cpp, botan/def_alg.cpp: fix merge
+
+2005-10-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: add "automate keys". like "ls keys", except it
+	uses basic_io (since "ls keys" is now slightly irregular and not
+	very well suited to machine interpretation).
+	* monotone.texi: document it
+	* tests/t_automate_keys.at: test for it
+	* testsuite.at: add test
+	* basic_io.{cc,hh} (stanza): add push_str_multi, for entries
+	that can take a variable number of string arguments.
+	* commands.cc: add "automate keys" to automate help
+	misc minor whitespace cleanup
+
+2005-10-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (ls_keys): don't insist on having a db
+	* tests/t_key_management_without_db.at: check ls keys
+	* monotone.texi: update for new key storage
+		* concepts :: storage and workflow
+		* tutorial :: generating keys
+		* tutorial :: committing work
+		* command reference :: informative
+		* command reference :: key and cert
+		* command reference :: packet I/O
+
+2005-10-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (chkeypass): doesn't use the db, so we don't need a guard
+	* commands.cc (dropkey): don't insist on having a db
+	* tests/t_genkey_without_db.at: rename (s/genkey/key_management) and
+	add checks for chkeypass and dropkey without a db
+
+2005-10-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* database.{cc,hh}: new function, database::database_specified()
+	return whether we were given a database (doesn't care about validity,
+	only that we were told to use one)
+	* commands.cc (genkey): don't insist on having a db, but still
+	check it for duplicates if we're given one.
+	* tests/t_genkey_without_db.at: make sure it works
+	* testsuite.at: add test
+
+2005-09-28  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* keys.cc (get_private_key): don't use lua hook passwords for
+	chkeypass.
+
+2005-09-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* keys.cc (get_private_keys): don't use lua hook passwords for
+	chkeypass.
+
+2005-09-28  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* key_store.cc: fix delete_key
+	* tests/t_database_check_normalized: needs 'db migrate'
+	* tests/t_lua_privkey.at: update for new key location
+	* tests/t_netsync_absorbs.at: use genkey instead of packets
+	* tests/t_netsync_checks_server_key.at: same
+	* tests/t_netsync_pubket.at: update key packet to new format
+
+2005-09-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Replace extract_keys command with a database migrator.
+	* database.{cc,hh}: Remove last traces of private keys in db.
+	* schema.sql: Remove private_keys table
+	* commands.cc (dropkey): private keys can no longer be in the db.
+	* schema_migration.cc: new migrator
+	* commands.cc: remove extract_keys
+	* tests/t_migrate_schema.at: update
+	* keys.hh, cert.cc, key_store.cc: keys_match doesn't work well on
+	privkeys. Don't use it.
+	* key_store.cc: Allow duplicate insertions, if they match.
+
+2005-09-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* schema_migration.hh: migrate_depot_schema() doesn't really exist
+	* database.cc, schema_migration.{cc,hh}: migrate_monotone_schema
+	now takes an app_state * , so data can be moved to/from the database.
+
+2005-09-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/pkcs8.cc, keys.cc: fix monotone-specific pkcs8 key
+	parsing.
+	* commands.cc: ls keys shows keystore-only pubkeys as well
+	* packet.cc: fix unit tests
+	* testsuite.at: use keypair packet rather than privkey/pubkey 
+	packets.
+
+2005-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc, keys.cc, others: use standard
+	"PBE-PKCS5v20(SHA-1,TripleDES/CBC)" encoding rather than
+	raw arc4. extract_keys will re-encode keys, still
+	need to work on packet.cc encoding.
+	* botan/{des*,pkcs5*,algolist.cpp}: required files
+	from Botan 1.4.6
+
+2005-09-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Move private keys outside the database.
+	They're now stored as keypairs in ~/.monotone/keys
+	Details:
+	* keystore.{cc,hh}: handle storage of keypairs
+	* tests*: Specify keystore location when running the testsuite.
+		This prevents it from polluting the user's keystore.
+	* database{cc,hh}: remove ability to put privkeys. They can still
+		be listed, retrieved, and deleted, to support
+	* commands.cc: New command, extract_keys. Copies private keys from
+		the database to the keystore.
+	* vocab.hh: add keypair type, like pair<pubkey, privkey>, except that
+		the members are named pub and priv.
+	* packet.cc: Clean up read_packets.
+	* packet.{cc,hh}: privkey packets no longer exists, handle keypair
+		packets instead.
+	* file_io.{cc,hh}: add read_directory because tree_walker needs to
+		be in the wc. add a write_data that works outside the wc.
+	* Makefile.am: add keystore.{cc,hh}
+	* others: update to work with new key storage
+
+2005-10-06  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* std_hooks.lua (merge3_emacs_cmd): Minor cleanup.
+	* std_hooks.lua: Pass '--eval' rather than '-eval' to Emacs; the
+	CVS emacsclient does not consider '-eval' as valid.
+	* platform.hh, unix/fs.cc, win32/fs.cc (rename_clobberingly): New
+	function for best-effort atomic renames.  This will probably never
+	be atomic on Win32.
+	* file_io.cc (write_data_impl): Append process ID to temporary
+	file name so that multiple monotone processes operating on the
+	same working copy are less likely to clobber each other.  Use
+	rename_clobberingly().
+	* ui.cc (user_interface): Allow std::cout to raise
+	ios_base::failure exceptions if stream goes bad (e.g. stream
+	receives EPIPE).
+	* monotone.cc (cpp_main): Catch ios_base::failure exceptions and
+	exit cleanly.
+	* main.cc (main_with_signal_handlers): Install handler to ignore
+	SIGPIPE.
+	* Makefile.am: Remove platform_netsync.cc references.
+	* {unix,win32}/platform_netsync.cc: Remove files.
+	* platform.hh, netsync.cc (run_netsync_protocol):
+	Remove {start,end}_platform_netsync() calls.
+
+2005-10-04  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Automation): Document the mysterious columns of
+	numbers in 'automate inventory' output format.
+
+2005-10-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/, Makefile.am: update to Botan 1.4.7
+
+2005-10-03  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Automation): Clean up formatting and description
+	of 'automate inventory' sample output.
+
+2005-10-02  Marcel van der Boom  <marcel@hsdev.com>
+
+	* commands.cc (CMD(checkout)): Check for non-existant checkout dir
+	earlier, so we can fail earlier.
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (AM_CFLAGS, AM_CXXFLAGS): Add
+	-DBOOST_SP_DISABLE_THREADS (disables thread-safe shared_ptr
+	reference counting).
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* debian/README.Debian, debian/TODO.Debian: Add debian files
+	left out of repository.
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Set date for 0.23.
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* testsuite.at: Whoops, forgot to hit save.  Remove
+	t_diff_changeset_bug.at.
+
+2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
+
+	* paths.cc: remove unit tests for 
+	file_path_internal_from_user
+
+2005-09-30  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* configure.ac: only add gnu specific CFLAGS and CXXFLAGS for
+	gnu compilers
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_log_outside_working_dir.at: Fix summary line.
+	* tests/t_diff_changeset_bug.at: Remove redundant test
+	(cf. t_restricted_diff_unchanged.at).
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (BOTAN_SOURCES): Add botan/hash_id.h.
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: More additions (mention MM and the problems paths.cc will
+	cause for colinux folks).
+
+2005-09-30  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (MOST_SOURCES): Add hash_map.hh.
+	(BOTAN_SOURCES): Add botan/charset.h.
+
+2005-09-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Fix typos pointed out by Matthew Gregan.
+
+2005-09-29  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE, configure.ac, monotone.spec, win32/monotone.iss:
+	* debian/changelog: Bump version number.
+	
+2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
+
+	* paths.hh: update file_path documentation, 
+	remove file_path_internal_from_user
+	* paths.cc: remove file_path_internal_from_user
+	* commands.cc CMD(cat): change file_path_internal_from_user 
+	to file_path_external
+	* tests/t_diff_outside_working_dir.at: check diff works outside 
+	  of a working dir (with a file specified)
+	* tests/t_log_outside_working_dir.at: check log works outside 
+	  of a working dir (with a file specified)
+	* tests/t_diff_changeset_bug.at: mysterious changeset bug
+	* testsuite.at: add new tests
+
+2005-09-29  Nathaniel Smith  <njs@pobox.com>
+
+	* AUTHORS: Add Grahame and Marcel.
+	* NEWS: Write 0.23 entry.
+	* monotone.texi (Reserved Files): Mention in .mt-ignore docs that
+	the patterns are regexes.
+	
+2005-09-30  Grahame Bowland  <grahame@angrygoats.net>
+
+	* paths.cc (file_path::file_path): Allow external paths outside of
+	a working directory, so long as we don't enter a working directory 
+	later.
+	(access_tracker) add new very_uninitialized state which 
+	prevents subsequent initialization
+	(test_access_tracker) check the very_uninitialized state works
+	* paths.hh: correct mention of monotone cat file to new syntax
+
+2005-09-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc: Restore two unit tests on Win32.
+
+2005-09-29  Richard Levitte  <richard@levitte.org>
+
+	* testsuite.at: Removed a spurious G...
+
+2005-09-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc, win32/fs.cc: Fixes to allow unit tests to pass on Win32.
+
+2005-09-29  Marcel van der Boom  <marcel@hsdev.com>
+
+	* netsync.cc (rebuild_merkle_trees): only get matched branch
+	certs, not all of them
+
+2005-09-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_rename_diff_names.at, testsuite.at: New test.
+
+2005-09-27  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Tutorial): It seems like texi2pdf gets quite
+	confused when a @chapter has a @subsection with a @section in
+	between.  The resulting PDF had a Tutorial that was a indexed as a
+	subsection under Concepts/Branches instead of being indexed as the
+	chapter it is, and most confusingly, it's last subsection
+	(Branching and Merging) ended up as a a separate chapter of it's
+	own...
+
+2005-09-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* netsync.cc (ancestry_fetcher): new approach to requesting file
+	and manifest deltas and full data. Tries to be more efficient
+	for the vcache of recontstructed data, and conceptually simpler
+
+	* tests/t_netsync_unrelated.at: passes, remove XFAIL
+
+2005-09-26  Benoît Dejean  <benoit@placenet.org>
+
+	* database.cc: Merged 3 strings.
+
+2005-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc: add 'help' command
+	* monotone.cc: add -h alias for --help
+	
+2005-09-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* netsync.cc: use lexical_cast on port numbers to avoid
+	strange-looking "port 5,253"
+
+2005-09-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Update in-tree SQLite from 3.2.6 to 3.2.7.
+
+2005-09-25  Benoît Dejean  <benoit@placenet.org>
+
+	* netsync.cc: 3 more i18n strings.
+
+2005-09-25  Benoît Dejean  <benoit@placenet.org>
+
+	* cert.cc (cert_signable_text): F() vs. boost::format.
+	* lua.cc (monotone_guess_binary_file_contents_for_lua),
+	(monotone_include_for_lua), (monotone_includedir_for_lua):
+	* rcs_import.cc (import_cvs_repo): Merged some strings.
+	
+2005-09-25  Benoît Dejean  <benoit@placenet.org>
+
+	* lua.cc (monotone_guess_binary_file_contents_for_lua):
+	Fixed signednes warning and istream usage.
+
+2005-09-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* ui.cc: fallback to the default locale if locale("") fails.
+
+2005-09-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/arc4.cpp: increase maximum keylength to 256 bytes.
+
+2005-09-24  Benoît Dejean  <benoit@placenet.org>
+
+	* ChangeLog: Fixed.
+	I don't understand how xxdiff works :/ Please help.
+
+2005-09-24  Satoru SATOH <ss@gnome.gr.jp>
+
+	* po/ja.po: Updated Japanese translation.
+
+2005-09-23  Benoît Dejean  <benoit@placenet.org>
+
+        * std_hooks.lua: More i18n strings.
+
+        I don't know how to handle lua
+        "multiline" ..
+        "strings" because gettext doesn't join them.
+
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
+        * sanity.{cc,hh}: Uninlined F() and FP().
+        This happily saves ~100KB of .text on my ppc.
+
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
+	* netsync.cc: Reverted changes
+	from f0a632bf14468b6e03a488d6f1a64ef18b61d04c
+	to   4f7f638954c79c54460d04c3be111acad8b26dd3
+
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
+	* lua.cc (monotone_gettext_for_lua): New function.
+	* po/POTFILES.in: Added std_hooks.lua.
+	* std_hooks.lua: One more string for i18n.
+
+2005-09-22  Benoît Dejean  <benoit@placenet.org>
+
+	* ui.{cc,hh} (get_user_locale): Returns a const &.
+
+2005-09-21  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: better error checking
+
+2005-09-20  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* restrictions.cc: Make calculate_unrestricted_revision work
+	with --exclude
+	* tests/t_restriction_with_exclude_iprint.at: remove XFAIL
+
+2005-09-20  Patrick Mauritz <oxygene@studentenbude.ath.cx>
+
+	* configure.ac: solaris needs librt for fdatasync
+	* sqlite/parse.c: #line and #include interactions aren't defined
+
+2005-09-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (space_usage): workaround the issue that in sqlite
+	3.2.6, SUM({empty set}) returns NULL. (this is part of the sql spec,
+	see http://www.sqlite.org/cvstrac/tktview?tn=1413 and the comment for
+	SUM() in sqlite docs).
+
+2005-09-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* ui.cc, ui.hh, sanity.hh: replace ui.user_locale with
+	get_user_locale(), so that we can guarantee that it will be
+	initialised when the global_sanity object (and probably other things)
+	are instantiated.
+
+2005-09-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_restriction_with_exclude_iprint.at: New test, variant of
+	t_restriction_exclude.at, but with inodeprints enabled.  Mark as
+	XFAILed.
+	* testsuite.at: Add new test.
+	* sqlite/*: Update in-tree SQLite from 3.2.2 to 3.2.6.
+	* Makefile.am: Add sqlite/{analyze,vbdefifo,complete}.c to
+	SQLITE_SOURCES
+	* schema_migration.cc (calculate_schema_id): Explicitly exclude
+	sqlite_stat1 table from schema ID calculation.  This is a new
+	magic table created by the 'analyze' command in SQLite >= 3.2.3.
+
+2005-09-18  Nathaniel Smith  <njs@pobox.com>
+
+	* po/ja.po: New translation from Satoru SATOH <ss@gnome.gr.jp>.
+	* AUTHORS: Add Satoru SATOH.
+	
+2005-09-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Tweak default 'eveything' netsync glob to
+	something that works around the MinGW/Win32 globbing issues for
+	now.
+	* tests/t_log_brief.at: Canonicalise output on Win32.
+
+2005-09-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: Remove stray "new int[2];' statements from
+	debugging. Remove connections from list when finished.
+
+2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* Makefile.am (EXTRA_DIST): add contrib/monotone-cvs-ignore.lua,
+	contrib/ciabot_monotone_hookversion.py, and contrib/usher.cc .
+	also remove duplicate of contrib/monoprof.sh
+
+2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc: finish renaming things, so it compiles again...
+
+2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: A simple usher/proxy server. It asks connecting
+	clients for their include pattern, and then forwards the connection
+	to an appropriate (as given in a config file) monotone server. Note
+	that all servers operating behind one usher need to have the same
+	server key.
+
+2005-09-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netcmd.{cc,hh}, netsync.cc: new netcmd types: usher_cmd and
+	usher_reply_cmd. They are not included in the HMAC, and do not
+	occur during normal communication. Purpose: running multiple servers
+	from the same port. This allows a special server to ask for the
+	client's include pattern, and then forward the connection to a real
+	monotone server.
+
+2005-09-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/pkcs8.cpp: re-add the monotone-specific code for guessing if
+	a key is DER encoded or not.
+
+2005-09-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/*: update to Botan 1.4.6
+	* Makefile.am: ditto
+
+2005-09-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.{cc,hh}: restrictions now understand --exclude
+	* commands.cc: commit and revert now take OPT_EXCLUDE
+	* monotone.cc: update description of --exclude
+	* tests/t_restriction_with_exclude.at: new test
+	* testsuite.at: add it
+
+2005-09-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/ciabot_monotone_hookversion.py: CIA bot client script
+	meant to be called from the note_netsync_revision_received hook.
+	* lua.{cc,hh}: hook_note_commit and hook_note_netsync_revision_received
+	now take the text of the revision as an argument.
+	* netsync.cc, commands.cc: Give hooks new argument.
+	* monotone.texi: Update documentation for those hooks.
+
+2005-09-11  Benoît Dejean  <benoit@placenet.org>
+
+	* database.cc
+	* database_check.cc
+	* netsync.cc
+	* po/POTFILES.in
+	* po/POTFILES.skip
+	* rcs_import.cc: More i18n strings.
+
+2005-09-07  Jim Meyering  <jim@meyering.net>
+	
+	* tests/t_rename_dir_cross_level.at: When invoking mv to rename
+	a directory, do not include a trailing slash on the target -- that
+	is not portable.                                                  
+
+	* Makefile.am (TESTS_ENVIRONMENT): Ensure that PATH starts with
+	the current directory, so we test the just-built monotone binary,
+	not some older version.                                          
+
+2005-09-07  Benoît Dejean  <benoit@placenet.org>
+
+	* std_hooks.lua: Don't spawn emacs with '-no-init-file'.
+
+2005-09-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc (save_initial_path): Default Boost's fs::path to
+	fs::native grammar.
+	* tests/t_unreadable_{db,MT}.at: Disable on Win32 for now.
+	* paths.cc: Consistency--use WIN32 rather than _WIN32.
+	* file_io.cc (walk_tree): Correct test for file existence.
+
+2005-09-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Add '-f' argument to 'mv'; avoids build waiting on
+	 user confirmation in some cases.
+
+2005-09-08  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Certificates): Remove mention of fcerts and
+	mcerts.
+
+2005-09-07  Benoît Dejean  <benoit@placenet.org>
+
+	* ui.{cc,hh}: Added user_inferface::user_locale.
+	* sanity.hh: Made F() and FP() locale aware.
+
+2005-09-06  Benoît Dejean  <benoit@placenet.org>
+
+	* monotone.cc: One more i18n string.
+
+2005-09-06  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2005-09-06  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: No i18n for cert_revision_changelog.
+
+2005-09-06  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_netsync_read_permissions.at: Tweak tests so we aren't
+	trying to serve a bare '*'; works around test hangs due to glob
+	expansion sillyness on MinGW.
+	* tests/t_netsync_globs.at: Ditto.
+	* tests/t_netsync_exclude.at: Ditto.
+	* std_hooks.lua (ignore_file): Add Mac OS X (.DS_Store) and
+	Windows (desktop.ini) per-directory browser configuration files.
+
+
+2005-09-05  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: Fixed some strings (added ' around revisions).
+	Removed some whitespaces.
+	No i18n in diff output.
+
+2005-09-05  Benoît Dejean  <benoit@placenet.org>
+
+	* sanity.{cc,hh}: boost::format vs. F(). Merged boost::format
+	and moved non-template code to sanity.cc.
+
+2005-09-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/terminal.cc (have_smart_terminal): We were returning false
+	in almost all circumstances; changed logic so that we at least
+	work when running in a cmd.exe window.
+
+2005-09-05  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (dump_diffs): don't use the terminal width to
+	print ===== seperators.
+
+2005-09-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc (find_and_go_to_working_copy): Create root and bookdir
+	paths as fs::native.
+	* main.cc: Tweak #ifdef to avoid exposing some unused SEH handling
+	on MinGW.
+	* configure.ac: Minor cleanup to Win32 configure test.
+
+2005-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (options): Remove default from the help string for
+	--count, since none of the options listed are actually the
+	default.
+
+2005-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_unreadable_db.at, testsuite.at: New test.
+
+2005-09-03  Nathaniel Smith  <njs@pobox.com>
+
+	* po/Makevars (XGETTEXT_OPTIONS): N_ != ngettext.
+	Add c-format flags on F() and FP() calls (only partially
+	successful on latter, because of bug in xgettext).
+	
+2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
+
+	* commands.cc: siplify the monotone cat command 
+	to "monotone cat [-r] FIELNAME" (as in bug #12597)
+	* monotone.texi: update documentation of "monotone cat"
+	* tests/t_add_edge.at, tests/t_cat_file_by_name.at, 
+	tests/t_change_empty_file.at, tests/t_cvsimport.at, 
+	tests/t_cvsimport_deleted_invar.at, tests/t_cvsimport_drepper.at, 
+	tests/t_cvsimport_drepper2.at, tests/t_cvsimport_manifest_cycle.at, 
+	tests/t_cvsimport_samelog.at, tests/t_database_check.at, 
+	tests/t_db_kill_rev_locally.at, tests/t_empty_id_completion.at, 
+	tests/t_epoch.at, tests/t_epoch_server.at, tests/t_erename.at, 
+	tests/t_i18n_file.at, tests/t_import.at, tests/t_merge_add_del.at, 
+	tests/t_movedel.at, tests/t_movepatch.at, tests/t_netsync.at, 
+	tests/t_netsync_exclude.at, tests/t_netsync_exclude_default.at, 
+	tests/t_netsync_globs.at, tests/t_netsync_nocerts.at, 
+	tests/t_netsync_permissions.at, tests/t_netsync_read_permissions.at, 
+	tests/t_netsync_single.at, tests/t_normalized_filenames.at, 
+	tests/t_persistent_server_revision.at, tests/t_remerge.at, 
+	tests/t_rename.at, tests/t_renamed.at, tests/t_scan.at, 
+	tests/t_set_default.at, tests/t_singlecvs.at, 
+	tests/t_update_with_pending_add.at, tests/t_update_with_pending_drop.at, 
+	tests/t_update_with_pending_rename.at, tests/t_versions.at: 
+	use automation interface rather than "monotone cat"
+
+2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
+
+	* ChangeLog: fix up screwed up three-way merge
+
+2005-09-04  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc, commands.cc: add "automate get_file", 
+	"automate get_revision" and "automate get_manifest" to 
+	automation interface.
+	* monotone.texi: document new automation commands
+	* tests/t_automate_get_file.at, tests/t_automate_get_revision_at, 
+	tests/t_automate_get_manifest.at: trivial testing of new 
+	automation commands for output as specified, make sure they 
+	do not complete IDs, make sure invalid IDs are caught.
+	* testsuite.at: add new tests
+
+2005-09-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_persistent_server_keys_2.at: 'commit' needs a commit
+	message.  Un-XFAIL.
+	* tests/t_netsync_unrelated.at: Fix 'setup' syntax.
+	* tests/t_add_vs_commit.at: BASE_REVISION needs to be in the root
+	of a working copy to work.  Un-XFAIL.
+	* tests/t_add_stomp_file.at: 'add' does not take a --branch
+	argument.  BASE_REVISION needs to be in the root of a working copy
+	to work.
+	* annotate.cc (build_parent_lineage): Don't access uninitialized
+	memory--use resize() rather than reserve().
+
+2005-09-02  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Use consistent case in option descriptions.
+
+2005-09-02  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{hh,cc}: Add split_path typedef.  Use it.
+
+2005-09-02  Matt Johnston  <matt@ucc.asn.au>
+
+	* lua.cc (monotone_guess_binary_file_contents_for_lua): use a
+	temporary char* buffer rather than &string[], extra copying seems
+	to have negligible performance impact.
+	* tests/perf-test.sh: change path from tests/ to contrib/, make
+	executable.
+	* tests/parse-accounting.pl: make executable.
+
+2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* lua.cc, std_hooks.lua: use proper regexes for .mt-ignore
+	taken from a patch from Martin Dvorak
+	* contrib/monotone-cvs-ignore.lua: New file, from the same patch.
+	supports .cvsignore files
+	* tests/t_mt_ignore.at: check that a missing .mt-ignore
+	doesn't cause problems
+
+2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_mt_ignore.at: use RAW_MONOTONE instead of ugly --rcfile
+	Also actually do "mtn add" this time.
+
+2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_mt_ignore.at: new test, checks that .mt-ignore works
+	* testsuite.at: add it
+
+2005-09-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: support .mt-ignore
+	* monotone.texi: mention .mt-ignore and MT/wanted-testresults under
+	"Existing control files"
+	* .mt-ignore: ignore testsuite.dir
+
+2005-09-03  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (ls_certs):
+	* netsync.cc (load_data): Merged strings.
+
+2005-09-01  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: Merged one more "no such revision '%s'" string.
+
+2005-09-01  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: Merged all "no such revision '%s'" strings.
+	(string_to_datetime): Merged catch blocks in order to merge error
+	messages.
+
+2005-09-01  Benoît Dejean  <benoit@placenet.org>
+
+	* ChangeLog: Fixed.
+
+2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* ui.cc (user_interface): Avoid calling sync_with_stdio(false) on
+	Win32 for now to work around a bug in MinGW where unsynchronized
+	std::cin returns EOF earlier when reading a stream with DOS
+	newlines.  Resolves 'db load' failure reported by Howard Spindel.
+	* database.cc (load): Don't bother executing an empty string.
+	* commands.cc (ALIAS(import, setup)): Remove alias.
+
+2005-09-01  Matt Johnston  <matt@ucc.asn.au>
+
+	* schema.sql: add BEGIN, COMMIT to make it a single transaction,
+	improves db init performance significantly on OS X (avoids many
+	disk-cache flushes).
+
+2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Increase entropy used to generate port numbers
+	where we can and increase range of port numbers generated.
+	* monotone.texi: Fix a couple of minor typos.
+
+2005-09-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.texi: Update 'setup' documentation and tutorial to
+	reflect new usage.  Also update much of the monotone output in the
+	tutorials to reflect the output of more modern versions of
+	monotone.  Correct some minor errors and typos while here.
+	* commands.cc (CMD(setup)): Require database and branch arguments.
+	(ALIAS(import,setup)): Add setup alias.
+	* testsuite.at, tests/*.at: Update 'setup' usage.
+
+2005-08-31  Richard Levitte  <richard@levitte.org>
+
+	* lua.cc, std_hooks.lua: Rename
+	monotone_guess_binary_filename_for_lua and guess_binary_filename
+	to monotone_guess_binary_file_contents_for_lua and
+	guess_binary_file_contents.
+
+2005-08-31  Benoît Dejean  <benoit@placenet.org>
+
+	* basic_io.cc (basic_io::input_source::err): Merged strings.
+
+2005-08-31  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (set_char_is_binary, guess_binary): static_cast chars
+	to uint8_t before using as array indices.  Also replace some ints
+	with size_t's to quiet g++ warnings.
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	In function void set_char_is_binary(char, bool)
+	133: warning: array subscript has type char
+	In function void init_char_is_binary()
+	147: warning: comparison between signed and unsigned integer expressions
+	In function bool guess_binary(const std::string&)
+	160: warning: comparison between signed and unsigned integer expressions
+	162: warning: array subscript has type char
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	* file_io.cc (walk_tree): Fixed format.
+
+2005-08-31  Marcel van der Boom  <marcel@hsdev.com>
+
+	* std_hooks.lua (execute_confirm): New function.
+	(merge2_opendiff_cmd, merge3_opendiff_cmd): Add.
+
+2005-08-31  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc (test_bookkeeping_path, test_system_path): Second
+	attempt at compile fixes; this time the unit tests actually pass
+	too.
+
+2005-08-30  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc (test_bookkeeping_path, test_system_path): Shift object
+	instantiation around a little to work around what seems to be a
+	bug in the gcc 3.3 parser.
+	* win32/inodeprint.cc (inodeprint_file): Update to use new path
+	handling code.
+	* win32/fs.cc (tilde_expand): Compile fix.
+
+2005-08-30  Petr Baudis  <pasky@suse.cz>
+
+	* std_hooks.lua: Simple support for merging using merge(1) and vim.
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: Merged some error messages.
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: Merged complete(..., file_id) and
+	complete(..., manifest_id) into template complete(..., ID).
+
+2005-08-30  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (ls_certs): Reworked for i18n.
+	(CMD(commit)): Merged 2 strings.
+
+2005-08-30  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* revision.cc (ensure_parents_loaded): Don't reuse an iterator
+	after we've invalidated it.  Fixes 'diff' crash reported by Howard
+	Spindel.
+
+2005-08-30  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/allocate.cpp: avoid string comparison when looking up the 
+	default allocator
+	* monotone.cc (cpp_main): set a default allocator
+
+2005-08-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_attributes.at: Delete checkout dir in between
+	checkouts.
+
+2005-08-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* keys.cc (keys_match): new function to compare whether two keys
+	match (ignoring whitespace as the database does, etc).
+	* packet.cc, keys.cc: use it for existing-key-comparison.
+
+2005-08-27  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (checkout): Special-case "checkout ."
+	* tests/t_checkout_dir.at: Test it.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.hh: Remove comment describing old path types.
+	* paths.hh: Add comment describing new path types.
+	
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* app_state.cc (create_working_copy): Remove
+	fs::filesystem_exception catching.
+	* file_io.hh (mkdir_p): Remove comment noting app_state.cc's
+	dependence on a boost-based implementation.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Include <string>.  Helps build on g++ 3.3?
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (get_log_message): Make the log message commentary a
+	little more descriptive for people who may not know what a log
+	message is...
+	(commit): When canceling a commit due to empty log message, say
+	so.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua: Check for both "vi" and "notepad.exe" as fallback
+	editors.  If no editor was found, print a helpful message instead
+	of just running "vi" anyway.  Print a message if the editor exited
+	with error.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (mkdir_p, make_dir_for): Increase error checking.
+	* commands.cc (checkout): Make sure that checkout target directory
+	does not already exist.  Also use system_path more uniformly.
+	* tests/t_checkout_dir.at: Test.
+	* tests/t_setup_existing_path.at: New test.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (read): Optionally take files on command line.
+	* tests/t_read_from_file.at, testsuite.at: New test.
+	* monotone.texi (Network Service): Show Jim using this.
+	(Packet I/O, Commands): Document.
+	* monotone.1: Likewise.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (move_files_from_tmp_top_down): Typo again.
+	
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+	
+	* database.cc (open): Convert stray line to paths.cc.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (move_files_from_tmp_top_down): Typo.
+
+	* file_io.cc (move_path): New function.
+	(move_file, move_dir): Minor cleanup -- use
+	require_path_is_nonexistent.
+
+	* work.cc (build_deletions): Use delete_file, rather than unlink.
+	If file is already non-existent, do nothing.
+	(build_rename): Use move_path, rather than rename.  If file
+	already appears to have been renamed, do nothing.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* app_state.cc (allow_working_copy): Make logging more sensible.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.cc (length): 
+	* database.cc (sql, load, open): 
+	* commands.cc (rename, attr): 
+	* change_set.cc (move_files_to_tmp_bottom_up) 
+	(move_files_from_tmp_top_down): Merge fixups.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* database_check.cc: Track and report on manifest and revision
+	parseability.
+	* tests/t_database_check_normalized.at: Update to expect "not
+	parseable" messages rather than "not normalized" messages.
+	All tests pass.
+	
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_unreadable_MT.at: This test was called "do not fail on
+	unreadable MT/options".  I do not know why we wanted such
+	behavior.  I am making it "fail cleanly on unreadable
+	MT/options".
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (check_fp_normalizes_to, test_file_path_internal):
+	Oops, there were more places testing for non-brokenness; break
+	them too.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_split_join): Test that you cannot create a path
+	in MT by joining.
+	(file_path): Implement it.
+	(split): Break, to match broken behavior of old splitter (easier
+	than fixing change_set.cc...)
+	(file_path_internal): Test for brokenness accordingly.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (cat): Hack so that 'cat file REV PATH' works
+	correctly both inside and outside of working copy, interpreting
+	path slightly differently in each case.
+	
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_normalized_filenames.at: Internal unnormalized pathnames
+	are no longer silently normalized, but rather a hard error.
+	Adjust test accordingly.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (file_path_internal_from_user): New constructor.
+	* paths.cc (test_file_path_internal): Test it.
+	(file_path::file_path): Implement it.
+	* commands.cc (cat): Use it to create/validate passed in
+	filenames.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_system_path): Require that system_path normalize
+	out ..'s.
+	(system_path): Do so.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (build_additions): Remove redundant (and now wrong)
+	code.
+	Test 53 now passes.
+	
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (make_dir_for): Oops, this doesn't need a
+	fs::native.
+	Test 37 now passes.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (mkdir): New function.  Now with extra brain-eating
+	power.
+	(mkdir_p, make_dir_for, delete_file, delete_dir_recursive) 
+	(move_file, move_dir, write_data_impl): Use it, to make all
+	fs::path's native and disable boost's random rejection of paths.
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_file_path_external_prefix_a_b) 
+	(test_file_path_external_no_prefix, test_file_path_internal): Test
+	for validity of more strange characters (,+@*%#$=).
+
+2005-08-26  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (ident_existing_file): Remove accidentally-left-in
+	code.  Test 26 now passes.
+	* lua.cc (monotone_includedir_for_lua, load_rcfile): Add
+	fs::native's.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (system_path::system_path): Add new boolean argument
+	controlling some access_tracker behavior.
+	* app_state.cc (allow_working_copy): Use it.
+	* paths.cc (system_path): Implement it.
+	(test_system_path): Test it.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (walk_tree): Return properly.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_file_path_internal): Add tests for
+	file_path.empty().
+	* file_io.cc (walk_tree_recursive): Add explicit fs::native.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Many small changes.  Unit tests now pass.  72
+	unexpected autotest failures.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (file_path): Fix up error reporting in external path
+	normalization.
+	(test_file_path_external_no_prefix): "" is always an invalid
+	path.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (sql): Only check schema version when db actually
+	exists.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (read_data_for_command_line): We are given a
+	system_path.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Fix all unit test failures, except for two mysterious
+	boost::too_few_args exceptions.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc, unix/fs.cc: Many, many fixes and some new tests too.	
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (struct access_tracker): Doh, initializer should set
+	'initialized'...
+	(test_file_path_internal): It's valid for a split file
+	to have a null component if the file is "".
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (in_bookkeeping_dir): Last change didn't work out so
+	well; let's remove some negatives and see if I can understand what
+	the code does this way...
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (not_in_bookkeeping_dir): Handle "MT" case.
+	Update tests to make sure it sticks...
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* unit_tests.{cc,hh} (init_unit_test_suite): Remove
+	path_component_tests.
+	* unix/fs.cc (tilde_expand): Another compile fix.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* {unix,win32}/fs.cc: Misc. compile fixes.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (UNIX_PLATFORM_SOURCES): Add unix/fs.cc
+	(WIN32_PLATFORM_SOURCES): Add win32/fs.cc
+	* paths.hh (bookkeeping_path): Implement default constructor.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* rcs_import.cc (import_cvs_repo): 
+	* lua.cc (default_rcfilename): 
+	* diff_patch.cc (get_version): Small compile fixes.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh} (is_bookkeeping_path): New static method.
+	* file_io.cc (walk_tree_recursive): Use it.  Now compiles.
+	paths.cc and file_io.cc now compile.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (delete_dir_recursive): Implement.
+	Misc. compile fixes.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (test_book_keeping_file): Remove.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (walk_tree_recursive, walk_tree): Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (const_system_path): Do tilde expansion.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (read_localized_data, read_data_for_command_line) 
+	(write_localized_data, write_data, write_data_impl): Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (read_data): Implement.  Remove the base64<gzip<>>
+	versions.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (move_file, move_dir): Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (assert_path_is_nonexistent, assert_path_is_file) 
+	(assert_path_is_directory, require_path_is_nonexistent) 
+	(require_path_is_file, require_path_is_directory) 
+	(ident_existing_file, mkdir_p, make_dir_for, delete_file) 
+	(delete_dir_recursive): Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* Audit uses of 'file_exists', because its semantics have changed;
+	it now checks to see if a path exists and is a regular file,
+	rather than that it simply exists.  A fair amount of code already
+	thought it meant that... other places now use 'path_exists'.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (path_exists, directory_exists, file_exists):
+	Implement.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* platform.hh (get_path_status): New function.
+	* unix/fs.cc (get_path_status): Implement.
+	* win32/fs.cc (get_path_status): Implement inefficiently (does
+	win32 have stat?)
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (get_homedir, tilde_expand, book_keeping_file)
+	(book_keeping_dir): Remove.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* platform.hh (get_homedir): New function.
+	* {win32,unix}/fs.cc (get_homedir): Expose.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* Minor compile fixes.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* platform.hh (tilde_expand): New function.
+	* win32/fs.cc, unix/fs.cc: Implement it.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Many more fixes.  Now compiles with and without unit
+	tests.
+	
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Lots of compile fixes for unit tests.
+	Add a test for access_tracker.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Many fixes.  Now compiles.
+
+2005-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (system_path): Implement.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (fully_normalized_path): Use find_first_of.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (find_and_go_to_working_copy, save_initial_path) 
+	(go_to_working_copy): Use new checked structure.
+	(operator <<): Make sure we can log our access_tracked values
+	without marking them as used.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (struct access_tracker): Add invariant checking on
+	lifetime usage of path roots.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (any_path::operator =): return *this.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh}: More fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh}: Reorganize a bit.  Implement file_path and
+	bookkeeping_path.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (file_path): Implement basic constructor.
+	Misc compile fixes.
+	Add single-character names to tests.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (go_to_working_copy): New function.  Implement.
+	* app_state.cc (create_working_copy): Adjust accordingly.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (find_and_go_to_working_copy): Implement.
+	* app_state.cc (allow_working_copy): Adjust accordingly.
+	(relative_directory): Remove.
+	* file_io.cc (find_working_copy): Remove.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (save_initial_path): Update for previous changes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_system_path): Add tests for the
+	from-any_path constructor.  Add test for "~foo" handling.
+	Start cleaning up path roots.
+	* platform.hh: Note that get_current_working_dir() is
+	charset-broken (i.e., operations started inside non-utf8
+	directories are probably broken).
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* app_state.cc (allow_working_copy): 
+	* change_set.cc (print_insane_change_set): Two more small compile
+	fixes.
+	All remaining compile errors are localized to unimplemented
+	paths.cc/file_io.cc functionality.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (initialize): Missing ;.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): Handle message_file right.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (print_insane_path_rearrangement): 
+	* database.cc (initialize): 
+	* monotone.cc (cpp_main): More small compile fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.hh
+	({assert,require}_path_is_{nonexistent,file,directory}): New
+	functions.
+	Use them everywhere.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* basic_io.hh: #include "paths.hh".
+	* monotone.cc (add_rcfile): Remove obsolete absolutification, etc.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (system_path): Add a from-any_path constructor.
+	* Makefile.am (MOST_SOURCES): Remove path_component.{cc,hh}.
+	* basic_io.hh (push_file_pair): New method.
+	* change_set.cc (print_insane_change_set) 
+	(print_insane_path_rearrangement): Use it.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (any_path::as_internal): On second thought, return a
+	std::string, not a utf8 -- utf8 would be better, but should wait
+	for some more general charset handling cleanup.
+	* Adjust other files accordingly.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* More compile fixes.  All remaing compile errors are real
+	problems, yay.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* Lots and lots more compile fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh, monotone.cc, app_state.hh, app_state.cc:
+	* unix/inodeprint.cc: More compile fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* manifest.hh: Include paths.hh.
+	* file_io.hh: Fix syntax errors, and fixup interface.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh, sanity.hh: Compilation fixes.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Update tests to use path_state_* and pass utf8
+	objects.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (file_path_external): Take a utf8() object, always.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (class file_path): Make "convenience functions"
+	required.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* Switch rest of instances to using convenience functions.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+	
+	* Switch many instances to using convenience functions.
+	
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (file_path_internal, file_path_external): Define
+	convenience functions.
+	(file_path, bookkeeping_path, system_path): Add default
+	constructors.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* app_state.cc, change_set.cc, change_set.hh, commands.cc:
+	* inodeprint.cc, manifest.cc, rcs_import.cc, restrictions.cc:
+	* work.cc: Audit all calls to file_path() to add internal/external
+	notation.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* app_state.cc: More paths.hh conversion.
+	(app_state::prefix): Remove.
+	* commands.cc: Remove uses of app.prefix.
+	* automate.cc (automate_attributes): Likewise.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.hh (any_path::as_internal): On second thought, return a
+	utf8 object.
+	* app_state.cc (set_database): Take a system_path.
+	(set_pidfile): Likewise.
+	* monotone.cc (cpp_main): Pass one.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.hh (get_homedir): Return a system_path.
+	* app_state.hh (app_state): Make pidfile a system_path.
+	* sanity.hh (sanity::filename): Make a system_path.
+	* monotone.cc (cpp_main): Adjust accordingly.
+	* paths.hh (any_path): Add as_internal() to interface.
+	* paths.cc: Add roundtripping tests.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* platform.hh, unix/fs.cc, win32/fs.cc
+	(change_current_working_dir): Take an any_path, not a string.
+	* rcs_import.{cc,hh}: Convert to paths.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (pid_file): Remove fs::path.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* mkstemp.cc (monotone_mkstemp): Remove references to fs::path.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (apply_rearrangement_to_filesystem): Oops, missed
+	some local_path's.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* path_component.{cc,hh}: Delete.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.cc (move_files_to_tmp_bottom_up) 
+	(move_files_from_tmp_top_down): Convert to paths.hh.
+	Whole file: stop using path_component.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_bookkeeping_path): Oops, "" is an invalid
+	bookkeeping_path.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* lua.cc, paths.cc: Few more tweaks for previous change.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh}: Add / operators.  Make that the usual way to use
+	bookkeeping_path's.
+	* work.cc: Adjust accordingly.
+	* lua.cc (working_copy_rcfilename): Likewise.
+	* commands.cc (update): Likewise.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh} (operator <<): Implement for any_paths.
+	* paths.hh (class bookkeeping_path): Note that current design is
+	bogus to remind myself to fix it tomorrow...
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* work.{hh,cc}: Convert to paths.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* lua.{cc,hh}: Mostly convert to paths.hh.  (Still uses boost::fs
+	internally for some directory iteration.)
+	* app_state.cc (load_rcfiles): Update accordingly.
+	* file_io.hh (path_state): De-templatify; take any_path instead of
+	a T.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (any_path): New base class.
+	(file_path, bookkeeping_path, system_path): Inherit from it.
+	* transforms.{hh,cc} (utf8_to_system): Actually, always take a
+	utf8 after all (but still have two return types).
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.cc: Convert to paths.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.{cc,hh} (localized, localized_as_string): Remove.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.cc (utf8_to_system): Make fast.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.hh (utf8_to_system): Add a string->string version.
+	* transforms.cc (utf8_to_system): Implement it.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (localized_path_str): New function.
+	Fix some tests.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc: Convert to paths.hh.
+	* mkstemp.cc (monotone_mkstemp): Likewise.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* vocab_terms.hh, vocab.cc: Remove file_path, local_path.
+	* database.{hh,cc}, monotone.cc: Convert to paths.hh.
+	* file_io.{hh,cc}: Start to convert to paths.hh.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.{cc,hh} (fully_normalized_path): Implement.
+	(external_path): Rename to system_path.
+	Misc. other updates.
+
+2005-08-21  Eric Anderson  <anderse-monotone@cello.hpl.hp.com>
+	* file_io.cc, file_io.hh, lua.cc, std_hooks.lua: determine if a
+	file is binary by looking at it incrementally, rather than reading
+	it in entirely.  Prepare for making it possible to control what
+	characters are considered "binary"
+
+2005-08-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* paths.cc (is_absolute): New function.
+	(file_path::file_path(vector<path_component>))
+	(file_path::split): Implement.
+
+2005-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* interner.hh (interner): Add a scary constructor that lets us
+	insert an initial value and assert that we already knew that the
+	value assigned to it would be.  (This lets us make it an inlined
+	constant.)
+
+2005-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Yet more tests.
+
+2005-08-20  Nathaniel Smith  <njs@pobox.com>
+	
+	* paths.cc (save_initial_path): Implement.
+	Add more tests.
+	
+2005-08-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* paths.{cc,hh}: New files.
+	* Makefile.am (MOST_SOURCES): Add them.
+	* unit_tests.hh (add_paths_tests): Declare.
+	* unit_tests.cc (init_unit_test_suite): Add them.
+	* platform.hh (get_current_working_dir)
+	(change_current_working_dir):  New functions.
+	* {unix,win32}/fs.cc: New files.
+
+2005-08-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Tutorial): Tweak wording, use --db at more
+	appropriate places.
+
+2005-08-26  Richard Levitte  <richard@levitte.org>
+
+	* database.cc (version): Revert the change done earlier, as it
+	aborted if the schema isn't the current one, rendering this method
+	useless.
+
+2005-08-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* change_set.cc (check_depth, confirm_proper_tree): 
+	more efficient algorithm to check for no loops
+	* constants.hh: new constant max_path_depth to limit
+	recursion in check_depth.
+
+2005-08-26  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2005-08-26  Richard Levitte  <richard@levitte.org>
+
+	* options.hh, monotone.cc: Add the '--execute' command-specific
+	option.
+	* monotone.cc (cpp_main): ... and process it.
+	* app_state.hh (class app_state): Add the 'execute' boolean.
+	* app_state.cc (app_state): Initialise it.
+	* commands.cc (CMD(drop)): Add '--execute' capability.
+	* commands.cc (CMD(rename)): Add '--execute' capability.  Pass
+	'app' to build_rename.
+	* work.hh, work.cc (build_deletions, build_rename): Do the actual
+	work.  This required the addition of an app_state parameter to
+	build_rename.
+
+	* tests/t_drop_execute.at, tests/t_rename_execute.at: New tests.
+	* testsuite.at: Add them.
+
+2005-08-26  Benoît Dejean  <benoit@placenet.org>
+
+	* mt_version.cc (print_full_version): Merged strings.
+	* change_set.cc: No i18n for unittests. Wow, this saves
+	21 strings (total 781).
+
+2005-08-25  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (safe_gettext): New function.
+	(explain_usage): Used there to avoid _("").
+
+2005-08-25  Benoît Dejean  <benoit@placenet.org>
+
+	* sanity.{cc,hh} (sanity::do_format): Merged code from
+	sanity::{log, warning, progress} in order to merge
+	strings. Fixed exception rethrowing.
+
+2005-08-25  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (CMD(lca)): One more string for i18n.
+	(CMD(trusted)): Merged all strings.
+
+2005-08-25  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2005-08-25  Benoît Dejean  <benoit@placenet.org>
+
+	* database.cc (database::version): Marked string for i18n
+	and simplifed.
+	(database::info): Reworked to merge all strings for i18n.
+
+2005-08-25  Benoît Dejean  <benoit@placenet.org>
+
+	* database.{cc,hh} (database::open, database::check_filename):
+	New functions to avoid error handling code and string duplicates.
+
+2005-08-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* transform.cc ({int,ext}ernalize_rsa_keypair_id): don't 
+	convert the username portion of key ids to/from ACE.
+	* tests/t_genkey.at: check that foo+bar@example.com works
+	and foobar@exam+ple.com doesn't.
+
+2005-08-24  Benoît Dejean  <benoit@placenet.org>
+
+	* database.cc (assert_sqlite3_ok): Somehow merged error messages.
+
+2005-08-24  Benoît Dejean  <benoit@placenet.org>
+
+	* change_set.cc (move_files_to_tmp_bottom_up): Better strings.
+	* keys.cc (generate_key_pair): Merged 2 strings.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (assert_sqlite3_ok): Remove accidentally-left-in
+	format string argument.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (check_sane_history): Add MM's for calculated
+	changesets.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (assert_sqlite3_ok): Don't print the raw sqlite
+	error code.  Do add some auxiliary information when sqlite errors
+	are confusing.
+
+2005-08-24  Nathaniel Smith  <njs@pobox.com>
+
+	* Back out most changes since
+	b580c6ac5bf8eea1f442b8bddc60283b047ade1e.  Handling charsets
+	properly by working in utf8 and then converting sucks.  Problems
+	include
+	  - gettext hates you (wants to return stuff in local charset)
+	  - strerror hates you (same reason, but you can't turn it off)
+	  - can't report charset conversion errors
+	We thus return to our "sorta-correct, by accident" status quo.
+	Only change left in is signedness fix in
+	5548868ab56d939c1fd8713aa2ac8caacd1184a1.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* ui.cc (sanitize): Fix signedness bug in comparison.
+	* unix/unix.{cc,hh}: New files.
+	* Makefile.am (UNIX_PLATFORM_SOURCES): Add them.
+	* unix/process.cc (is_executable, make_executable): Use new
+	function last_error.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.{cc,hh} (system_charset): Expose.
+	* monotone.cc (cpp_main): Use it to fiddle with gettext's charset
+	conversion and make --help output actually correct.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.cc (outprep): Don't sanitize all output; removes too
+	many valid characters (\r, \t, etc.).
+	* ui.cc: Call outprep on ticker output.
+	(inform): Do still sanitize ui.inform() output.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* transforms.cc (outprep): New function.
+	* ui.cc (inform): Use it.
+	* monotone.cc (cpp_main): Use it.
+	Everything that writes user-intended output directly (i.e., via
+	cout) must call outprep() on that data before printing it.
+	
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): Trick popt into converting its generated
+	help messages into the current locale's charset.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* ui.cc (inform, sanitize): Convert all output from utf8 to
+	current locale's charset.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): Use bind_textdomain_codeset to request
+	that all gettext'ed strings be returned in UTF-8.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* idna/nfkc.c (g_utf8_strlen): Expose.
+	* transforms.{cc,hh} (length): New function.
+	* ui.cc (write_ticks): Use length() instead of .size() to
+	calculate string widths; should support multibyte characters
+	better.  (Still some problems relating to truncating strings to
+	avoid overflow -- calculate truncation by length, but perform
+	truncation by bytes...)
+
+2005-08-24  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2005-08-24  Benoît Dejean  <benoit@placenet.org>
+
+	* monotone.cc:
+	* commands.cc: Two more i18n strings.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* lua.cc: boost::format vs. F.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* AUTHORS: Add Benoît Dejean <benoit@placenet.org>.  Create new
+	section for translators.  Add Benoît there too.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc: N_("") -> "".
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc: Make all CMD() calls use N_() instead of _().
+	(commands): Insert _() everywhere usage strings are used.  This is
+	icky.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* keys.cc (get_passphrase): Put back trailing ": " removed in
+	recent i18n changes.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* change_set.cc (dump_change_set): boost::format instead of F.
+	* commands.cc (get_log_message, notify_if_multiple_heads,
+	complete, CMD(attr)): Marked some strings for i18n. Replaced a
+	multiline string by prefix_lines_with(). Merged strings.
+	* diff_patch.cc (merge_provider::try_to_merge_files): Merged
+	strings.
+	* i18n.h: N_() stands for gettext_noop(), not plural.
+	* keys.cc (get_passphrase): Fixed string surgery.
+	* netsync.cc: i18nized tickers' labels. Added xgettext comment
+	as tickers do not play well with multibytes characters (like é).
+	(session::analyze_attachment): Fixed string surgery.
+	(session::process_hello_cmd): Merged many strings.
+	(session::process_data_cmd): Removed some leading/trailing
+	whitespaces.
+	* sanity.cc: Marked error prefixes for i18n.
+	* ui.cc (tick_write_count::write_ticks): Reworked and fixed
+	surgery. Merged some strings.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (CMD*): _("") -> "" as _("") returns the PO
+	header.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* transforms.cc (check_idna_encoding): No i18n for unittests.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* change_set.cc (dump_change_set): boost::format instead of F.
+	* commands.cc (get_log_message, notify_if_multiple_heads,
+	complete, CMD(attr)): Marked some strings for i18n. Replaced a
+	multiline string by prefix_lines_with(). Merged strings.
+	* diff_patch.cc (merge_provider::try_to_merge_files): Merged
+	strings.
+	* i18n.h: N_() stands for gettext_noop(), not plural.
+	* keys.cc (get_passphrase): Fixed string surgery.
+	* netsync.cc: i18nized tickers' labels. Added xgettext comment
+	as tickers do not play well with multibytes characters (like é).
+	(session::analyze_attachment): Fixed string surgery.
+	(session::process_hello_cmd): Merged many strings.
+	(session::process_data_cmd): Removed some leading/trailing
+	whitespaces.
+	* sanity.cc: Marked error prefixes for i18n.
+	* ui.cc (tick_write_count::write_ticks): Reworked and fixed
+	surgery. Merged some strings.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* netcmd.cc (test_netcmd_functions): Don't translate unittest
+	strings.
+	* rcs_import.cc (cvs_commit::cvs_commit):
+	* database.cc (version_cache::put):
+	* lua.cc (dump_stack): boost::format vs. F for strings that are
+	not messages.
+
+2005-08-23  Benoît Dejean  <benoit@placenet.org>
+
+	* xdelta.cc: Don't translate unittest strings.
+
+2005-08-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.texi: Bring 'update' syntax up to date.
+
+2005-08-23  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_diff_external.at: --diff-args without --external is an
+	error.
+	* commands.cc (diff): Likewise.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* contrib/ciabot_monotone.py (send_change_for): Handle author
+	names with spaces in.
+
+2005-08-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* HACKING: change the vim modeline to something that seems to work
+	better.
+
+2005-08-23  Olivier Andrieu  <oliv__a@users.sourceforge.net>
+
+	* contrib/monotone.el: When running monotone commands, re-use
+	*monotone* buffers. Make the "status" command use the prefix
+	argument. Make the "tree"-restricted commands work in dired
+	buffers. Add the "--no-merges" option in the log command. Various
+	other innocuous changes.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* mt_version.cc (print_full_version): Typo.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* mt_version.cc: Include sanity.hh.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (process_error_cmd, run_netsync_protocol): Remove
+	some newlines to avoid translation noise.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* po/LINGUAS, po/ja.po: Remove ja translation again, it seems to
+	be corrupt.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Don't use F() to indent things.
+	
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (dump_diffs): Don't use F() to create diff headers.
+	(commands::process): Put '' in the log message to make Benoît
+	Dejean happy ;-).
+	
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* po/LINGUAS, po/ja.po: Add Japanese translation by Satoru SATOH.
+	
+2005-08-20  Benoît Dejean  <benoit@placenet.org>
+
+	* po/monotone.pot: Remove from version control.
+	* po/POTFILES.skip: New file.
+	* po/fr.po: French translation (initial version).
+	* po/LINGUAS: Add fr.
+	
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (read): Use FP (thanks to Benoît Dejean for
+	catch).
+	* mt_version.cc (print_version, print_full_version): Mark more
+	strings for i18n (also thanks to Benoît Dejean).
+	
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (commands): Revert previous changes, xgettext is
+	buggy.
+	Mark every CMD() string argument with _().
+	* i18n.h, Makefile.am: New file.
+	* sanity.hh: Include it.
+	* po/Makevars (XGETTEXT_OPTIONS): Learn about _() and N_() as
+	markers.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (commands): Oops, can't call gettext on a
+	std::string...
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (coptions, options): Use gettext_noop to mark usage
+	strings for i18n.
+	* commands.cc (commands): gettextify command descriptions
+	* po/Makevars (XGETTEXT_OPTIONS): Include the 2nd, 3rd, and 4th
+	arguments to CMD macro as translatedable strings.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc: Replace a bunch of F()'s by boost::format's,
+	because F is only for strings displayed to user.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* po/Makevars (XGETTEXT_OPTIONS): Extract FP'ed strings.
+
+2005-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.hh (FP): New macro.  Usage:
+	FP("frobbed %i bar", "frobbed %s bars", num_bars) % num_bars
+
+2005-08-22  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-import.pl: When temporarly touching files that
+	have disappeared since last import, don't forget to create
+	intermediary directories as well (and to remove them later on).
+	Make sure all file arguments are quoted.  Finally, pick up the
+	newly created revision by reading MT/revision instead of relying
+	on backquotes working.
+	Notofication and initial correction submitted by
+	BigFish <bigfische@gmail.com>.
+
+2005-08-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* revision.hh: Delete doubled line of text in comment.
+
+2005-08-20  Benoît Dejean  <benoit@placenet.org>
+
+	* monotone.cc (cpp_main): setlocale(LC_ALL).
+	* commands.cc (dropkey): Unify warning into a single string.
+
+2005-08-20  Nathaniel Smith  <njs@codesourcery.com>
+
+	* contrib/monoprof.sh (test_commit): Kernel tarball unpacks to
+	linux-$KVER/, not $KVER/.
+
+2005-08-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* contrib/monoprof.sh (SETUP): Put netsync hooks in the default
+	hook file.
+
+2005-08-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* contrib/monoprof.sh: Give a sensible error message if $DATADIR
+	doesn't exist.
+
+2005-08-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (put_revision): uncomment check_sane_history call
+	(was accidentally committed commented out)
+
+2005-08-19  Nathaniel Smith  <njs@codesourcery.com>
+
+	* monotone.texi (Tutorial): Tweak wording, use --db at more
+	appropriate places.
+
+2005-08-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_crlf.at: Adjust expected line count to accomodate diff
+	output change.
+	* commands.cc (CMD(diff)): Include base revision ID in diff output
+	header when diffing against working copy.  Useful to identify what
+	revision a patch was created against.
+	* std_hooks.lua (ignore_file): Ignore Visual SourceSafe junk.
+
+2005-08-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: accept_testresult_change now only cares about
+	testresults listed in MT/wanted-testresults
+
+2005-08-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* INSTALL: Remove outdated references to configure options and
+	Solaris build workarounds.
+	* configure.ac: Lower gettext requirement from 0.12.1 to 0.11.5.
+
+2005-08-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* sanity.cc (gasp()): When catching an error from dumping a MM'd
+	variable, do not discard output generated prior to the error. This
+	way, at least the header line (function name, file, line no.) is
+	printed.
+	* change_set.cc: write_insane_change_set: new function to write a
+	change set without sanity checking it, now used by dump().
+
+2005-08-17  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* unix/process.cc: missing include
+	* m4/fexceptions.m4, configure.ac, Makefile.am: remove hardcoded
+	-fexceptions in CFLAGS and add it only if compiler doesn't freak
+	out.
+
+2005-08-17  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (build_additions): Tweak wording.
+
+2005-08-17  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc: Add IANA port assignment to the todo list.
+
+2005-08-17  Nathaniel Smith  <njs@pobox.com>
+
+	* unix/process.cc (make_executable): Open the fd read-only, avoids
+	problems with read-only files, and a writeable fd doesn't seem to
+	be necessary to change permission bits.
+
+2005-08-17  Nathaniel Smith  <njs@pobox.com>
+
+	* unix/process.cc (is_executable, make_executable): When reporting
+	an error in a syscall, include the actual error message.
+
+2005-08-17  Nathaniel Smith  <njs@pobox.com>
+
+	* lua.cc (dump_stack): New function.
+	(Lua::fail): New method; use above.
+	(get, get_fn, get_tab, get_str, get_num, get_bool, extract_str)
+	(extract_int, extract_double, extract_bool, begin, next, pop): Use
+	it, to give better logging.
+	
+2005-08-17  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (lib3rdparty_a_CFLAGS): Build 3rd party C code with
+	-fexceptions.
+
+2005-08-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/process.cc: Slightly smarter argv->cmdline munging.
+	* std_hooks.lua: Merge hooks for TortoiseMerge (part of
+	TortoiseSVN).
+
+2005-08-17  Nathaniel Smith  <njs@pobox.com>
+
+	* lua.cc (lua_hooks): Re-enable panic thrower, we no longer
+	support Lua 4.
+
+2005-08-16  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc: Add more netsync todos.
+
+2005-08-15  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_explicit_merge_with_anc.at: New test.
+	* testsuite.at: Add it.
+
+2005-08-15  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_log_brief.at: New test.
+	* testsuite.at: Add it.
+
+2005-08-15  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (fcommit): Remove.  This command has never been
+	documented, tested, or maintained; it also doesn't avoid the use
+	of temporary files (which was supposed to be its purpose).  Has it
+	ever actually been used...?
+	
+2005-08-15  Nathaniel Smith  <njs@pobox.com>
+
+	* lua.cc (hook_init_attributes): Do more logging; use begin()
+	instead of starting iteration by hand.
+
 2005-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
 	* testsuite.at, tests/*.at: make testsuite less demanding:
@@ -132,6 +2584,32 @@
 
 	* monotone.spec: include zlib-devel and texinfo as build
 	requirements, zlib as a runtime requirement.
+
+2005-08-09  Eric Anderson  <anderse-monotone@cello.hpl.hp.com>
+
+	* tests/perf-test.sh: A repeatable performance test harness
+	* tests/parse-accounting.pl: A script that parses the accounting
+	output into a nice tabular format
+
+2005-08-09  Eric Anderson  <anderse-monotone@cello.hpl.hp.com>
+ 
+	* Changes to significantly improve network pull performance
+	* string_queue.hh: created to store pending data and allow for
+	efficient removal from the front.  The string queue automatically
+	reduces its buffer size if it is very empty.  	
+	* hmac.{cc,hh}: Add in a version of chained_hmac::process that can
+	operate on a string_queue for use during read.
+	* netcmd.{cc,hh}: update netcmd::read to use a string_queue rather
+	than a string, update all the regression tests also.  This required
+	the somewhat ugly creation of a read_string function because the
+	netcmd read and write functions are no longer using the same type.
+	* netio.hh: introduce functions for operating on a string_queue. They
+	are identical to the equivalent string functions except for the type
+	of the argument.
+	* netsync.cc: Use a string_queue rather than a string for storing the 
+	input and output buffers.
+
+	* string_queue.cc: unit tests (Matt Johnston)
 
 2005-08-09  Richard Li  <richardl@redhat.com>
 
@@ -10271,3 +12749,4 @@
 2003-04-06  graydon hoare  <graydon@pobox.com>
 
 	* initial release.
+

@@ -30,7 +30,8 @@ using boost::format;
 sanity global_sanity;
 
 sanity::sanity() : 
-  debug(false), quiet(false), relaxed(false), logbuf(0xffff), already_dumping(false)
+  debug(false), quiet(false), relaxed(false), logbuf(0xffff), 
+  already_dumping(false), clean_shutdown(false)
 {
   std::string flavour;
   get_system_flavour(flavour);
@@ -43,20 +44,20 @@ sanity::~sanity()
 void 
 sanity::dump_buffer()
 {
-  if (filename != "")
+  if (!filename.empty())
     {
-      ofstream out(filename.c_str());
+      ofstream out(filename.as_external().c_str());
       if (out)
         {
           copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
           copy(gasp_dump.begin(), gasp_dump.end(), ostream_iterator<char>(out));
-          ui.inform(string("wrote debugging log to ") + filename + "\n");
+          ui.inform((F("wrote debugging log to %s") % filename).str());
         }
       else
-        ui.inform("failed to write debugging log to " + filename + "\n");
+        ui.inform((F("failed to write debugging log to %s") % filename).str());
     }
   else
-    ui.inform(string("discarding debug log (maybe you want --debug or --dump?)\n"));
+    ui.inform("discarding debug log (maybe you want --debug or --dump?)");
 }
 
 void 
@@ -95,23 +96,29 @@ sanity::set_relaxed(bool rel)
   relaxed = rel;
 }
 
+string
+sanity::do_format(format const & fmt, char const * file, int line)
+{
+  try
+    {
+      return fmt.str();
+    }
+  catch (std::exception & e)
+    {
+      ui.inform(F("fatal: formatter failed on %s:%d: %s")
+		% file
+		% line
+		% e.what());
+      throw;
+    }
+}
+
+
 void 
 sanity::log(format const & fmt, 
             char const * file, int line)
 {
-  string str;
-  try 
-    {
-      str = fmt.str();
-    }
-  catch (std::exception & e)
-    {
-      ui.inform("fatal: formatter failed on " 
-                + string(file) 
-                + ":" + boost::lexical_cast<string>(line) 
-                + ": " + e.what());
-      throw e;
-    }
+  string str = do_format(fmt, file, line);
   
   if (str.size() > constants::log_line_sz)
     {
@@ -130,19 +137,8 @@ void
 sanity::progress(format const & fmt, 
                  char const * file, int line)
 {
-  string str;
-  try 
-    {
-      str = fmt.str();
-    }
-  catch (std::exception & e)
-    {
-      ui.inform("fatal: formatter failed on " 
-                + string(file) 
-                + ":" + boost::lexical_cast<string>(line) 
-                + ": " + e.what());
-      throw e;
-    }
+  string str = do_format(fmt, file, line);
+
   if (str.size() > constants::log_line_sz)
     {
       str.resize(constants::log_line_sz);
@@ -160,19 +156,8 @@ void
 sanity::warning(format const & fmt, 
                 char const * file, int line)
 {
-  string str;
-  try 
-    {
-      str = fmt.str();
-    }
-  catch (std::exception & e)
-    {
-      ui.inform("fatal: formatter failed on " 
-                + string(file) 
-                + ":" + boost::lexical_cast<string>(line) 
-                + ": " + e.what());
-      throw e;
-    }
+  string str = do_format(fmt, file, line);
+
   if (str.size() > constants::log_line_sz)
     {
       str.resize(constants::log_line_sz);
@@ -194,7 +179,8 @@ sanity::naughty_failure(string const & expr, format const & explain,
   string message;
   log(format("%s:%d: usage constraint '%s' violated\n") % file % line % expr,
       file.c_str(), line);
-  prefix_lines_with("misuse: ", explain.str(), message);
+  prefix_lines_with(_("misuse: "), explain.str(), message);
+  gasp();
   throw informative_failure(message);
 }
 
@@ -205,7 +191,7 @@ sanity::error_failure(string const & expr, format const & explain,
   string message;
   log(format("%s:%d: detected error '%s' violated\n") % file % line % expr,
       file.c_str(), line);
-  prefix_lines_with("error: ", explain.str(), message);
+  prefix_lines_with(_("error: "), explain.str(), message);
   throw informative_failure(message);
 }
 
@@ -253,19 +239,21 @@ sanity::gasp()
   for (std::vector<MusingI const *>::const_iterator
          i = musings.begin(); i != musings.end(); ++i)
     {
+      std::string tmp;
       try
         {
-          std::string tmp;
           (*i)->gasp(tmp);
           out << tmp;
         }
       catch (logic_error)
         {
+          out << tmp;
           out << "<caught logic_error>\n";
           L(F("ignoring error trigged by saving work set to debug log"));
         }
       catch (informative_failure)
         {
+          out << tmp;
           out << "<caught informative_failure>\n";
           L(F("ignoring error trigged by saving work set to debug log"));
         }
@@ -299,5 +287,29 @@ void
 dump(std::string const & obj, std::string & out)
 {
   out = obj;
+}
+
+
+void MusingBase::gasp(const std::string & objstr, std::string & out) const
+{
+  out = (boost::format("----- begin '%s' (in %s, at %s:%d)\n"
+		       "%s"
+		       "-----   end '%s' (in %s, at %s:%d)\n")
+	 % name % func % file % line
+	 % objstr
+	 % name % func % file % line
+	 ).str();
+}
+
+
+boost::format F(const char * str)
+{
+  return boost::format(gettext(str), get_user_locale());
+}
+
+
+boost::format FP(const char * str1, const char * strn, unsigned long count)
+{
+  return boost::format(ngettext(str1, strn, count), get_user_locale());
 }
 

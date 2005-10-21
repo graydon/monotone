@@ -61,9 +61,9 @@ add_intermediate_paths(path_set & paths)
       // we know that file_path's are normalized relative paths.  So we can
       // find intermediate paths simply by searching for /.
       std::string::size_type j = std::string::npos;
-      while ((j = (*i)().rfind('/', j)) != std::string::npos)
+      while ((j = (*i).as_internal().rfind('/', j)) != std::string::npos)
         {
-          file_path dir((*i)().substr(0, j));
+          file_path dir = file_path_internal((*i).as_internal().substr(0, j));
           if (intermediate_paths.find(dir) != intermediate_paths.end()) break;
           if (paths.find(dir) != paths.end()) break;
           intermediate_paths.insert(dir);
@@ -244,7 +244,10 @@ calculate_unrestricted_revision(app_state & app,
                                 manifest_map & m_new)
 {
   std::vector<utf8> empty_args;
+  std::set<utf8> saved_exclude_patterns(app.exclude_patterns);
+  app.exclude_patterns.clear();
   calculate_restricted_revision(app, empty_args, rev, m_old, m_new);
+  app.exclude_patterns = saved_exclude_patterns;
 }
 
 void

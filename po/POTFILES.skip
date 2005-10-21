@@ -1,0 +1,6 @@
+contrib/ciabot_monotone.py
+idna/nfkc.c
+popt/popt.c
+popt/popthelp.c
+sqlite/os_common.h
+sqlite/vdbe.c

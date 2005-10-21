@@ -19,6 +19,8 @@ class lua_hooks;
 #include "lua.hh"
 #include "work.hh"
 #include "vocab.hh"
+#include "paths.hh"
+#include "key_store.hh"
 
 // this class is supposed to hold all (or.. well, most) of the state of the
 // application, barring some unfortunate static objects like the debugging /
@@ -33,6 +35,7 @@ public:
   utf8 branch_name;
   database db;
   lua_hooks lua;
+  key_store keys;
   bool stdhooks;
   bool rcfiles;
   bool diffs;
@@ -44,21 +47,28 @@ public:
   utf8 message_file;
   utf8 date;
   utf8 author;
-  utf8 search_root;
+  system_path search_root;
   std::vector<utf8> revision_selectors;
   std::set<utf8> exclude_patterns;
   std::vector<utf8> extra_rcfiles;
   path_set restrictions;
-  file_path relative_directory;
+  path_set excludes;
   bool found_working_copy;
   long depth;
   long last;
-  fs::path pidfile;
+  system_path pidfile;
   diff_type diff_format;
   bool diff_args_provided;
   utf8 diff_args;
   bool use_lca;
-
+  bool execute;
+  utf8 bind_address;
+  utf8 bind_port;
+  bool missing;
+  bool unknown;
+  std::vector<rsa_keypair_id> keys_to_push;
+  system_path confdir;
+  bool have_set_key_dir;
 
 
   // These are used to cache signers/verifiers (if the hook allows).
@@ -73,9 +83,8 @@ public:
 
   void allow_working_copy();
   void require_working_copy(std::string const & explanation = "");
-  void create_working_copy(std::string const & dir);
+  void create_working_copy(system_path const & dir);
 
-  file_path prefix(utf8 const & path);
   void app_state::set_restriction(path_set const & valid_paths, 
                              std::vector<utf8> const & paths,
                              bool respect_ignore = true);
@@ -90,25 +99,30 @@ public:
   void set_branch(utf8 const & name);
   void make_branch_sticky();
 
-  void set_database(utf8 const & filename);
+  void set_database(system_path const & filename);
+  void set_key_dir(system_path const & filename);
   void set_signing_key(utf8 const & key);
-  void set_root(utf8 const & root);
+  void set_root(system_path const & root);
   void set_message(utf8 const & message);
   void set_message_file(utf8 const & message_file);
   void set_date(utf8 const & date);
   void set_author(utf8 const & author);
   void set_depth(long depth);
   void set_last(long last);
-  void set_pidfile(utf8 const & pidfile);
+  void set_pidfile(system_path const & pidfile);
   void add_revision(utf8 const & selector);
   void add_exclude(utf8 const & exclude_pattern);
   void set_diff_format(diff_type dtype);
   void set_diff_args(utf8 const & args);
+  void add_key_to_push(utf8 const & key);
 
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);
   void set_verbose(bool b);
   void add_rcfile(utf8 const & filename);
+
+  void set_confdir(system_path const & cd);
+  system_path get_confdir();
 
   explicit app_state();
   ~app_state();

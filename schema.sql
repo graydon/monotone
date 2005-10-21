@@ -13,6 +13,8 @@
 -- licensed to the public under the terms of the GNU GPL 2.1+
 -- see the file COPYING for details
 
+-- Transactions avoid syncing for each action, db init gets faster.
+BEGIN EXCLUSIVE;
 
 -- primary data structures concerned with storing and 
 -- versionning state-of-tree configurations
@@ -69,13 +71,6 @@ CREATE TABLE public_keys
 	keydata not null        -- RSA public params
 	);
 
-CREATE TABLE private_keys
-	(
-	hash not null unique,   -- hash of remaining fields separated by ":"
-	id primary key,         -- as in public_keys (same identifiers, in fact)
-	keydata not null        -- encrypted RSA private params
-	);
-
 CREATE TABLE manifest_certs
 	(
 	hash not null unique,   -- hash of remaining fields separated by ":"
@@ -117,3 +112,5 @@ CREATE TABLE db_vars
         value not null,       -- var value
         unique(domain, name)
         );
+
+COMMIT;

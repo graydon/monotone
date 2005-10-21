@@ -1,9 +1,10 @@
 /*************************************************
 * EMSA3 Source File                              *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/emsa.h>
+#include <botan/hash_id.h>
 #include <botan/lookup.h>
 
 namespace Botan {
@@ -55,8 +56,6 @@ SecureVector<byte> EMSA3::encoding_of(const MemoryRegion<byte>& msg,
 EMSA3::EMSA3(const std::string& hash_name)
    {
    hash_id = pkcs_hash_id(hash_name);
-   if(hash_id.is_empty())
-      throw Invalid_Argument("EMSA3 cannot be used with " + hash_name);
    hash = get_hash(hash_name);
    }
 

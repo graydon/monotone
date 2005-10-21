@@ -1,6 +1,6 @@
 /*************************************************
 * Number Theory Source File                      *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/numthry.h>
@@ -261,7 +261,7 @@ s32bit simple_primality_tests(const BigInt& n)
 
    if(n <= PRIMES[PRIME_TABLE_SIZE-1])
       {
-      const u32bit num = n.word_at(0);
+      const word num = n.word_at(0);
       for(u32bit j = 0; PRIMES[j]; j++)
          {
          if(num == PRIMES[j]) return PRIME;
@@ -339,7 +339,9 @@ bool passes_mr_tests(const BigInt& n, u32bit level)
    BigInt nonce;
    for(u32bit j = 0; j != tests; j++)
       {
-      nonce = (verify) ? (random_integer(NONCE_BITS, Nonce)) : (PRIMES[j]);
+      if(verify) nonce = random_integer(NONCE_BITS, Nonce);
+      else       nonce = PRIMES[j];
+
       if(!mr.passes_test(nonce))
          return false;
       }

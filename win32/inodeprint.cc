@@ -29,7 +29,7 @@ namespace
 bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
 {
   struct _stati64 st;
-  if (_stati64(localized_as_string(file).c_str(), &st) < 0)
+  if (_stati64(file.as_external().c_str(), &st) < 0)
     return false;
 
   Botan::SHA_160 hash;
@@ -38,7 +38,7 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
   add_hash(hash, st.st_dev);
   add_hash(hash, st.st_size);
 
-  HANDLE filehandle = CreateFile(file().c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  HANDLE filehandle = CreateFile(file.as_external().c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (filehandle == INVALID_HANDLE_VALUE)
     return false;
 

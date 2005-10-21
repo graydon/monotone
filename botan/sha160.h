@@ -28,9 +28,9 @@ class SHA_160 : public MDx_HashFunction
       void copy_out(byte[]);
 
       SecureBuffer<u32bit, 5> digest;
+      SecureBuffer<u32bit, 80> W;
    };
 
 }
 
 #endif
-

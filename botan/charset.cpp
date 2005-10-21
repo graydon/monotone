@@ -1,14 +1,71 @@
 /*************************************************
 * Character Set Handling Source File             *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
-#include <botan/util.h>
+#include <botan/charset.h>
 #include <botan/hex.h>
 #include <botan/base64.h>
 #include <ctype.h>
 
 namespace Botan {
+
+/*************************************************
+* Check if a character represents a digit        *
+*************************************************/
+bool is_digit(char c)
+   {
+   if(c == '0' || c == '1' || c == '2' || c == '3' || c == '4' ||
+      c == '5' || c == '6' || c == '7' || c == '8' || c == '9')
+      return true;
+   return false;
+   }
+
+/*************************************************
+* Check if a character represents whitespace     *
+*************************************************/
+bool is_space(char c)
+   {
+   if(c == ' ' || c == '\t' || c == '\n' || c == '\r')
+      return true;
+   return false;
+   }
+
+/*************************************************
+* Convert a character to a digit                 *
+*************************************************/
+byte char2digit(char c)
+   {
+   if(c == '0') return 0;
+   if(c == '1') return 1;
+   if(c == '2') return 2;
+   if(c == '3') return 3;
+   if(c == '4') return 4;
+   if(c == '5') return 5;
+   if(c == '6') return 6;
+   if(c == '7') return 7;
+   if(c == '8') return 8;
+   if(c == '9') return 9;
+   throw Invalid_Argument("char2digit: Invalid decimal char " + c);
+   }
+
+/*************************************************
+* Convert a digit to a character                 *
+*************************************************/
+char digit2char(byte b)
+   {
+   if(b == 0) return '0';
+   if(b == 1) return '1';
+   if(b == 2) return '2';
+   if(b == 3) return '3';
+   if(b == 4) return '4';
+   if(b == 5) return '5';
+   if(b == 6) return '6';
+   if(b == 7) return '7';
+   if(b == 8) return '8';
+   if(b == 9) return '9';
+   throw Invalid_Argument("digit2char: Input is not a digit");
+   }
 
 /*************************************************
 * Return the lower-case representation           *

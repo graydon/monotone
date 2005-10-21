@@ -1,6 +1,6 @@
 /*************************************************
 * Base Classes Source File                       *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/base.h>
@@ -217,25 +217,13 @@ void RandomNumberGenerator::add_entropy(const byte random[], u32bit length)
 *************************************************/
 void RandomNumberGenerator::add_entropy(EntropySource& source, bool slowpoll)
    {
-   SecureVector<byte> entropy(slowpoll ? 192 : 64);
+   SecureVector<byte> buffer(slowpoll ? 192 : 64);
    u32bit returned;
 
-   if(slowpoll) returned = source.slow_poll(entropy, entropy.size());
-   else         returned = source.fast_poll(entropy, entropy.size());
+   if(slowpoll) returned = source.slow_poll(buffer, buffer.size());
+   else         returned = source.fast_poll(buffer, buffer.size());
 
-   add_entropy(entropy, returned);
-   }
-
-/*************************************************
-* Update the internal entropy count              *
-*************************************************/
-void RandomNumberGenerator::update_entropy(const byte data[], u32bit length,
-                                           u32bit state_size) throw()
-   {
-   if(entropy == 8*state_size)
-      return;
-   entropy += entropy_estimate(data, length);
-   entropy = std::min(entropy, 8*state_size);
+   add_entropy(buffer, returned);
    }
 
 /*************************************************

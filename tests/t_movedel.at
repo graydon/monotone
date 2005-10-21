@@ -34,7 +34,7 @@ AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
 AT_CHECK(MONOTONE update, [], [ignore], [ignore])
 
 # check that the delete landed on the renamed target
-AT_CHECK(MONOTONE cat manifest, [], [stdout])
+AT_CHECK(MONOTONE automate get_manifest, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep baz manifest, [0], [ignore], [ignore])
 AT_CHECK(grep bar manifest, [1], [ignore], [ignore])

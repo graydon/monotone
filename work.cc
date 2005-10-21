@@ -1,9 +1,13 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
 #include <sstream>
+#include <cstdio>
+#include <cstring>
+#include <cerrno>
 
 #include "app_state.hh"
 #include "basic_io.hh"
@@ -94,13 +98,8 @@ build_additions(vector<file_path> const & paths,
   addition_builder build(app, pr_new, ps, am_attrs);
 
   for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      N((*i)() != "", F("invalid path ''"));
-      N(directory_exists(*i) || file_exists(*i),
-        F("path %s does not exist\n") % *i);
-
-      walk_tree(*i, build);
-    }
+    // NB.: walk_tree will handle error checking for non-existent paths
+    walk_tree(*i, build);
 
   if (am_attrs.size () > 0)
     {
@@ -119,7 +118,7 @@ build_additions(vector<file_path> const & paths,
       data attr_data;
       attr_map attrs;
 
-      if (file_exists(attr_path))
+      if (path_exists(attr_path))
         {
           read_data(attr_path, attr_data);
           read_attr_map(attr_data, attrs);
@@ -134,7 +133,7 @@ build_additions(vector<file_path> const & paths,
           for (map<string, string>::const_iterator j = m.begin();
                j != m.end(); ++j)
             {
-              P(F("adding attribute '%s' to file %s to %s\n") % j->first % i->first % attr_file_name);
+              P(F("adding attribute '%s' on file %s to %s\n") % j->first % i->first % attr_file_name);
               attrs[i->first][j->first] = j->second;
             }
         }
@@ -154,7 +153,7 @@ known_path(file_path const & p,
            path_set const & ps,
            bool & path_is_directory)
 {
-  std::string path_as_dir = p() + "/";
+  std::string path_as_dir = p.as_internal() + "/";
   for (path_set::const_iterator i = ps.begin(); i != ps.end(); ++i)
     {
       if (*i == p) 
@@ -162,7 +161,7 @@ known_path(file_path const & p,
           path_is_directory = false;
           return true;
         }
-      else if ((*i)().find(path_as_dir) == 0)
+      else if (i->as_internal().find(path_as_dir) == 0)
         {
           path_is_directory = true;
           return true;
@@ -189,7 +188,7 @@ build_deletions(vector<file_path> const & paths,
   data attr_data;
   attr_map attrs;
 
-  if (file_exists(attr_path))
+  if (path_exists(attr_path))
   {
     read_data(attr_path, attr_data);
     read_attr_map(attr_data, attrs);
@@ -201,7 +200,7 @@ build_deletions(vector<file_path> const & paths,
     {
       bool dir_p = false;
   
-      N((*i)() != "", F("invalid path ''"));
+      N(!i->empty(), F("invalid path ''"));
 
       if (! known_path(*i, ps, dir_p))
         {
@@ -227,6 +226,8 @@ build_deletions(vector<file_path> const & paths,
               updated_attr_map = true;
               P(F("dropped attributes for file %s from %s\n") % (*i) % attr_file_name);
             }
+          if (app.execute && path_exists(*i))
+            delete_file(*i);
         }
   }
 
@@ -246,10 +247,11 @@ void
 build_rename(file_path const & src,
              file_path const & dst,
              manifest_map const & man,
+             app_state & app,
              change_set::path_rearrangement & pr)
 {
-  N(src() != "", F("invalid source path ''"));
-  N(dst() != "", F("invalid destination path ''"));
+  N(!src.empty(), F("invalid source path ''"));
+  N(!dst.empty(), F("invalid destination path ''"));
 
   change_set::path_rearrangement pr_new, pr_concatenated;
   path_set ps;
@@ -271,11 +273,14 @@ build_rename(file_path const & src,
   else 
     pr_new.renamed_files.insert(std::make_pair(src, dst));
 
+  if (app.execute && (path_exists(src) || !path_exists(dst)))
+    move_path(src, dst);
+
   // read attribute map if available
   file_path attr_path;
   get_attr_path(attr_path);
 
-  if (file_exists(attr_path))
+  if (path_exists(attr_path))
   {
     data attr_data;
     read_data(attr_path, attr_data);
@@ -310,17 +315,17 @@ build_rename(file_path const & src,
 
 std::string const work_file_name("work");
 
-static void get_work_path(local_path & w_path)
+static void get_work_path(bookkeeping_path & w_path)
 {
-  w_path = (mkpath(book_keeping_dir) / mkpath(work_file_name)).string();
+  w_path = bookkeeping_root / work_file_name;
   L(F("work path is %s\n") % w_path);
 }
 
 void get_path_rearrangement(change_set::path_rearrangement & w)
 {
-  local_path w_path;
+  bookkeeping_path w_path;
   get_work_path(w_path);
-  if (file_exists(w_path))
+  if (path_exists(w_path))
     {
       L(F("checking for un-committed work file %s\n") % w_path);
       data w_data;
@@ -336,7 +341,7 @@ void get_path_rearrangement(change_set::path_rearrangement & w)
 
 void remove_path_rearrangement()
 {
-  local_path w_path;
+  bookkeeping_path w_path;
   get_work_path(w_path);
   if (file_exists(w_path))
     delete_file(w_path);
@@ -344,7 +349,7 @@ void remove_path_rearrangement()
 
 void put_path_rearrangement(change_set::path_rearrangement & w)
 {
-  local_path w_path;
+  bookkeeping_path w_path;
   get_work_path(w_path);
   
   if (w.empty())
@@ -364,20 +369,21 @@ void put_path_rearrangement(change_set::path_rearrangement & w)
 
 std::string revision_file_name("revision");
 
-static void get_revision_path(local_path & m_path)
+static void get_revision_path(bookkeeping_path & m_path)
 {
-  m_path = (mkpath(book_keeping_dir) / mkpath(revision_file_name)).string();
+  m_path = bookkeeping_root / revision_file_name;
   L(F("revision path is %s\n") % m_path);
 }
 
 void get_revision_id(revision_id & c)
 {
   c = revision_id();
-  local_path c_path;
+  bookkeeping_path c_path;
   get_revision_path(c_path);
 
-  N(file_exists(c_path),
-    F("working copy is corrupt: %s does not exist\n") % c_path);
+  require_path_is_file(c_path,
+                       F("working copy is corrupt: %s does not exist") % c_path,
+                       F("working copy is corrupt: %s is a directory") % c_path);
 
   data c_data;
   L(F("loading revision id from %s\n") % c_path);
@@ -394,7 +400,7 @@ void get_revision_id(revision_id & c)
 
 void put_revision_id(revision_id const & rev)
 {
-  local_path c_path;
+  bookkeeping_path c_path;
   get_revision_path(c_path);
   L(F("writing revision id to %s\n") % c_path);
   data c_data(rev.inner()() + "\n");
@@ -444,16 +450,16 @@ get_base_manifest(app_state & app,
 string const user_log_file_name("log");
 
 void
-get_user_log_path(local_path & ul_path)
+get_user_log_path(bookkeeping_path & ul_path)
 {
-  ul_path = (mkpath(book_keeping_dir) / mkpath(user_log_file_name)).string();
+  ul_path = bookkeeping_root / user_log_file_name;
   L(F("user log path is %s\n") % ul_path);
 }
 
 void
 read_user_log(data & dat)
 {
-  local_path ul_path;
+  bookkeeping_path ul_path;
   get_user_log_path(ul_path);
 
   if (file_exists(ul_path))
@@ -465,7 +471,7 @@ read_user_log(data & dat)
 void
 write_user_log(data const & dat)
 {
-  local_path ul_path;
+  bookkeeping_path ul_path;
   get_user_log_path(ul_path);
 
   write_data(ul_path, dat);
@@ -475,7 +481,7 @@ void
 blank_user_log()
 {
   data empty;
-  local_path ul_path;
+  bookkeeping_path ul_path;
   get_user_log_path(ul_path);
   write_data(ul_path, empty);
 }
@@ -493,9 +499,9 @@ has_contents_user_log()
 string const options_file_name("options");
 
 void 
-get_options_path(local_path & o_path)
+get_options_path(bookkeeping_path & o_path)
 {
-  o_path = (mkpath(book_keeping_dir) / mkpath(options_file_name)).string();
+  o_path = bookkeeping_root / options_file_name;
   L(F("options path is %s\n") % o_path);
 }
 
@@ -540,9 +546,9 @@ write_options_map(data & dat, options_map const & options)
 
 static string const local_dump_file_name("debug");
 
-void get_local_dump_path(local_path & d_path)
+void get_local_dump_path(bookkeeping_path & d_path)
 {
-  d_path = (mkpath(book_keeping_dir) / mkpath(local_dump_file_name)).string();
+  d_path = bookkeeping_root / local_dump_file_name;
   L(F("local dump path is %s\n") % d_path);
 }
 
@@ -551,15 +557,15 @@ void get_local_dump_path(local_path & d_path)
 static string const inodeprints_file_name("inodeprints");
 
 void
-get_inodeprints_path(local_path & ip_path)
+get_inodeprints_path(bookkeeping_path & ip_path)
 {
-  ip_path = (mkpath(book_keeping_dir) / mkpath(inodeprints_file_name)).string();
+  ip_path = bookkeeping_root / inodeprints_file_name;
 }
 
 bool
 in_inodeprints_mode()
 {
-  local_path ip_path;
+  bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   return file_exists(ip_path);
 }
@@ -568,7 +574,7 @@ void
 read_inodeprints(data & dat)
 {
   I(in_inodeprints_mode());
-  local_path ip_path;
+  bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   read_data(ip_path, dat);
 }
@@ -577,7 +583,7 @@ void
 write_inodeprints(data const & dat)
 {
   I(in_inodeprints_mode());
-  local_path ip_path;
+  bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   write_data(ip_path, dat);
 }
@@ -585,7 +591,7 @@ write_inodeprints(data const & dat)
 void
 enable_inodeprints()
 {
-  local_path ip_path;
+  bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   data dat;
   write_data(ip_path, dat);
@@ -594,7 +600,7 @@ enable_inodeprints()
 void 
 get_attr_path(file_path & a_path)
 {
-  a_path = (mkpath(attr_file_name)).string();
+  a_path = file_path_internal(attr_file_name);
   L(F("attribute map path is %s\n") % a_path);
 }
 
@@ -622,7 +628,7 @@ read_attr_map(data const & dat, attr_map & attr)
     {
       parser.sym();
       parser.str(file);
-      file_path fp(file);
+      file_path fp = file_path_internal(file);
 
       while (parser.symp() && 
              !parser.symp(syms::file)) 
@@ -644,7 +650,7 @@ write_attr_map(data & dat, attr_map const & attr)
        i != attr.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_str_pair(syms::file, i->first());
+      st.push_str_pair(syms::file, i->first.as_internal());
 
       for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)

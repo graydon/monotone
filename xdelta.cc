@@ -263,7 +263,7 @@ compute_delta(manifest_map const & a,
       size_t isz = 0;
 
       if (i != a.end())
-          isz = i->first().size() + 2 + i->second.inner()().size() + 1;
+          isz = i->first.as_internal().size() + 2 + i->second.inner()().size() + 1;
 
       if (i != a.end() && i->first == j->first)
         {
@@ -800,11 +800,11 @@ xdelta_random_simple_delta_test()
       xdelta_randomly_delete(b);
       compute_delta(a, b, fdel);
       compute_delta(b, a, rdel);
-      L(F("src %d, dst %d, fdel %d, rdel %d\n")
+      L(boost::format("src %d, dst %d, fdel %d, rdel %d\n")
         % a.size() % b.size()% fdel.size() % rdel.size()) ;
       if (fdel.size() == 0)
         {
-          L(F("confirming src == dst and rdel == 0\n"));
+          L(boost::format("confirming src == dst and rdel == 0\n"));
           BOOST_CHECK(a == b);
           BOOST_CHECK(rdel.size() == 0);
         }      
@@ -812,7 +812,7 @@ xdelta_random_simple_delta_test()
         {
           apply_delta(a, fdel, c);
           apply_delta(b, rdel, d);
-          L(F("confirming dst1 %d, dst2 %d\n") % c.size() % d.size());
+          L(boost::format("confirming dst1 %d, dst2 %d\n") % c.size() % d.size());
           BOOST_CHECK(b == c);
           BOOST_CHECK(a == d);
         }

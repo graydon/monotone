@@ -1,6 +1,6 @@
 /*************************************************
 * Initialization Function Source File            *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/init.h>
@@ -9,9 +9,7 @@
 #include <botan/look_add.h>
 #include <botan/mutex.h>
 #include <botan/rng.h>
-#include <botan/randpool.h>
-#include <botan/x917_rng.h>
-#include <botan/fips_rng.h>
+#include <botan/x931_rng.h>
 #include <botan/fips140.h>
 #include <botan/es_file.h>
 #include <botan/conf.h>
@@ -240,6 +238,8 @@ void initialize(const std::string& arg_string)
    if(arg_set(args, "thread_safe"))
       set_mutex();
 
+   startup_conf();
+   startup_oids();
    set_default_options();
    startup_memory_subsystem();
 
@@ -259,11 +259,7 @@ void initialize(const std::string& arg_string)
       set_engines();
    init_rng_subsystem();
 
-   if(arg_set(args, "fips140"))
-      set_global_rngs(new FIPS_186_RNG, new FIPS_186_RNG);
-   else
-      set_global_rngs(new Randpool, new ANSI_X917_RNG);
-
+   set_global_rngs(new ANSI_X931_RNG, new ANSI_X931_RNG);
    add_entropy_sources();
 
    if(!FIPS140::passes_self_tests())
@@ -287,6 +283,8 @@ void initialize(const std::string& arg_string)
       if(total_bits < min_entropy)
          throw PRNG_Unseeded("Unable to collect sufficient entropy");
       }
+
+   startup_dl_cache();
    }
 
 /*************************************************
@@ -296,9 +294,10 @@ void deinitialize()
    {
    shutdown_engines();
    shutdown_rng_subsystem();
-   set_global_rngs(0, 0);
    destroy_lookup_tables();
-   destroy_dl_groups();
+   shutdown_dl_cache();
+   shutdown_conf();
+   shutdown_oids();
    set_timer_type(0);
    set_mutex_type(0);
    shutdown_memory_subsystem();

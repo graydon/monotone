@@ -1,4 +1,4 @@
-/* nfkc.c	Unicode normalization utilities.
+/* nfkc.c       Unicode normalization utilities.
  * Copyright (C) 2002, 2003  Simon Josefsson
  *
  * This file is part of GNU Libidn.
@@ -52,22 +52,22 @@
 #define g_free free
 #define GError void
 #define g_set_error(a,b,c,d) 0
-#define g_new(struct_type, n_structs)					\
+#define g_new(struct_type, n_structs)                                   \
   ((struct_type *) g_malloc (((gsize) sizeof (struct_type)) * ((gsize) (n_structs))))
 #  if defined (__GNUC__) && !defined (__STRICT_ANSI__) && !defined (__cplusplus)
-#    define G_STMT_START	(void)(
-#    define G_STMT_END		)
+#    define G_STMT_START        (void)(
+#    define G_STMT_END          )
 #  else
 #    if (defined (sun) || defined (__sun__))
-#      define G_STMT_START	if (1)
-#      define G_STMT_END	else (void)0
+#      define G_STMT_START      if (1)
+#      define G_STMT_END        else (void)0
 #    else
-#      define G_STMT_START	do
-#      define G_STMT_END	while (0)
+#      define G_STMT_START      do
+#      define G_STMT_END        while (0)
 #    endif
 #  endif
-#define g_return_val_if_fail(expr,val)		G_STMT_START{ (void)0; }G_STMT_END
-#define G_N_ELEMENTS(arr)		(sizeof (arr) / sizeof ((arr)[0]))
+#define g_return_val_if_fail(expr,val)          G_STMT_START{ (void)0; }G_STMT_END
+#define G_N_ELEMENTS(arr)               (sizeof (arr) / sizeof ((arr)[0]))
 #define TRUE 1
 #define FALSE 0
 
@@ -88,65 +88,65 @@ GNormalizeMode;
 
 /* Code from GLIB gutf8.c starts here. */
 
-#define UTF8_COMPUTE(Char, Mask, Len)		\
-  if (Char < 128)				\
-    {						\
-      Len = 1;					\
-      Mask = 0x7f;				\
-    }						\
-  else if ((Char & 0xe0) == 0xc0)		\
-    {						\
-      Len = 2;					\
-      Mask = 0x1f;				\
-    }						\
-  else if ((Char & 0xf0) == 0xe0)		\
-    {						\
-      Len = 3;					\
-      Mask = 0x0f;				\
-    }						\
-  else if ((Char & 0xf8) == 0xf0)		\
-    {						\
-      Len = 4;					\
-      Mask = 0x07;				\
-    }						\
-  else if ((Char & 0xfc) == 0xf8)		\
-    {						\
-      Len = 5;					\
-      Mask = 0x03;				\
-    }						\
-  else if ((Char & 0xfe) == 0xfc)		\
-    {						\
-      Len = 6;					\
-      Mask = 0x01;				\
-    }						\
-  else						\
+#define UTF8_COMPUTE(Char, Mask, Len)           \
+  if (Char < 128)                               \
+    {                                           \
+      Len = 1;                                  \
+      Mask = 0x7f;                              \
+    }                                           \
+  else if ((Char & 0xe0) == 0xc0)               \
+    {                                           \
+      Len = 2;                                  \
+      Mask = 0x1f;                              \
+    }                                           \
+  else if ((Char & 0xf0) == 0xe0)               \
+    {                                           \
+      Len = 3;                                  \
+      Mask = 0x0f;                              \
+    }                                           \
+  else if ((Char & 0xf8) == 0xf0)               \
+    {                                           \
+      Len = 4;                                  \
+      Mask = 0x07;                              \
+    }                                           \
+  else if ((Char & 0xfc) == 0xf8)               \
+    {                                           \
+      Len = 5;                                  \
+      Mask = 0x03;                              \
+    }                                           \
+  else if ((Char & 0xfe) == 0xfc)               \
+    {                                           \
+      Len = 6;                                  \
+      Mask = 0x01;                              \
+    }                                           \
+  else                                          \
     Len = -1;
 
-#define UTF8_LENGTH(Char)			\
-  ((Char) < 0x80 ? 1 :				\
-   ((Char) < 0x800 ? 2 :			\
-    ((Char) < 0x10000 ? 3 :			\
-     ((Char) < 0x200000 ? 4 :			\
+#define UTF8_LENGTH(Char)                       \
+  ((Char) < 0x80 ? 1 :                          \
+   ((Char) < 0x800 ? 2 :                        \
+    ((Char) < 0x10000 ? 3 :                     \
+     ((Char) < 0x200000 ? 4 :                   \
       ((Char) < 0x4000000 ? 5 : 6)))))
 
 
-#define UTF8_GET(Result, Chars, Count, Mask, Len)	\
-  (Result) = (Chars)[0] & (Mask);			\
-  for ((Count) = 1; (Count) < (Len); ++(Count))		\
-    {							\
-      if (((Chars)[(Count)] & 0xc0) != 0x80)		\
-	{						\
-	  (Result) = -1;				\
-	  break;					\
-	}						\
-      (Result) <<= 6;					\
-      (Result) |= ((Chars)[(Count)] & 0x3f);		\
+#define UTF8_GET(Result, Chars, Count, Mask, Len)       \
+  (Result) = (Chars)[0] & (Mask);                       \
+  for ((Count) = 1; (Count) < (Len); ++(Count))         \
+    {                                                   \
+      if (((Chars)[(Count)] & 0xc0) != 0x80)            \
+        {                                               \
+          (Result) = -1;                                \
+          break;                                        \
+        }                                               \
+      (Result) <<= 6;                                   \
+      (Result) |= ((Chars)[(Count)] & 0x3f);            \
     }
 
-#define UNICODE_VALID(Char)			\
-  ((Char) < 0x110000 &&				\
-   (((Char) & 0xFFFFF800) != 0xD800) &&		\
-   ((Char) < 0xFDD0 || (Char) > 0xFDEF) &&	\
+#define UNICODE_VALID(Char)                     \
+  ((Char) < 0x110000 &&                         \
+   (((Char) & 0xFFFFF800) != 0xD800) &&         \
+   ((Char) < 0xFDD0 || (Char) > 0xFDEF) &&      \
    ((Char) & 0xFFFE) != 0xFFFE)
 
 
@@ -185,7 +185,7 @@ const gchar *const g_utf8_skip = utf8_skip_data;
  *
  * Return value: the length of the string in characters
  **/
-static glong
+glong
 g_utf8_strlen (const gchar * p, gssize max)
 {
   glong len = 0;
@@ -195,29 +195,29 @@ g_utf8_strlen (const gchar * p, gssize max)
   if (max < 0)
     {
       while (*p)
-	{
-	  p = g_utf8_next_char (p);
-	  ++len;
-	}
+        {
+          p = g_utf8_next_char (p);
+          ++len;
+        }
     }
   else
     {
       if (max == 0 || !*p)
-	return 0;
+        return 0;
 
       p = g_utf8_next_char (p);
 
       while (p - start < max && *p)
-	{
-	  ++len;
-	  p = g_utf8_next_char (p);
-	}
+        {
+          ++len;
+          p = g_utf8_next_char (p);
+        }
 
       /* only do the last len increment if we got a complete
        * char (don't count partial chars)
        */
       if (p - start == max)
-	++len;
+        ++len;
     }
 
   return len;
@@ -302,10 +302,10 @@ g_unichar_to_utf8 (gunichar c, gchar * outbuf)
   if (outbuf)
     {
       for (i = len - 1; i > 0; --i)
-	{
-	  outbuf[i] = (c & 0x3f) | 0x80;
-	  c >>= 6;
-	}
+        {
+          outbuf[i] = (c & 0x3f) | 0x80;
+          c >>= 6;
+        }
       outbuf[0] = c | first;
     }
 
@@ -343,18 +343,18 @@ g_utf8_to_ucs4_fast (const gchar * str, glong len, glong * items_written)
   if (len < 0)
     {
       while (*p)
-	{
-	  p = g_utf8_next_char (p);
-	  ++n_chars;
-	}
+        {
+          p = g_utf8_next_char (p);
+          ++n_chars;
+        }
     }
   else
     {
       while (p < str + len && *p)
-	{
-	  p = g_utf8_next_char (p);
-	  ++n_chars;
-	}
+        {
+          p = g_utf8_next_char (p);
+          ++n_chars;
+        }
     }
 
   result = g_new (gunichar, n_chars + 1);
@@ -367,47 +367,47 @@ g_utf8_to_ucs4_fast (const gchar * str, glong len, glong * items_written)
       gunichar wc = ((unsigned char *) p)[0];
 
       if (wc < 0x80)
-	{
-	  result[i] = wc;
-	  p++;
-	}
+        {
+          result[i] = wc;
+          p++;
+        }
       else
-	{
-	  if (wc < 0xe0)
-	    {
-	      charlen = 2;
-	      wc &= 0x1f;
-	    }
-	  else if (wc < 0xf0)
-	    {
-	      charlen = 3;
-	      wc &= 0x0f;
-	    }
-	  else if (wc < 0xf8)
-	    {
-	      charlen = 4;
-	      wc &= 0x07;
-	    }
-	  else if (wc < 0xfc)
-	    {
-	      charlen = 5;
-	      wc &= 0x03;
-	    }
-	  else
-	    {
-	      charlen = 6;
-	      wc &= 0x01;
-	    }
+        {
+          if (wc < 0xe0)
+            {
+              charlen = 2;
+              wc &= 0x1f;
+            }
+          else if (wc < 0xf0)
+            {
+              charlen = 3;
+              wc &= 0x0f;
+            }
+          else if (wc < 0xf8)
+            {
+              charlen = 4;
+              wc &= 0x07;
+            }
+          else if (wc < 0xfc)
+            {
+              charlen = 5;
+              wc &= 0x03;
+            }
+          else
+            {
+              charlen = 6;
+              wc &= 0x01;
+            }
 
-	  for (j = 1; j < charlen; j++)
-	    {
-	      wc <<= 6;
-	      wc |= ((unsigned char *) p)[j] & 0x3f;
-	    }
+          for (j = 1; j < charlen; j++)
+            {
+              wc <<= 6;
+              wc |= ((unsigned char *) p)[j] & 0x3f;
+            }
 
-	  result[i] = wc;
-	  p += charlen;
-	}
+          result[i] = wc;
+          p += charlen;
+        }
     }
   result[i] = 0;
 
@@ -440,8 +440,8 @@ g_utf8_to_ucs4_fast (const gchar * str, glong len, glong * items_written)
  **/
 static gchar *
 g_ucs4_to_utf8 (const gunichar * str,
-		glong len,
-		glong * items_read, glong * items_written, GError ** error)
+                glong len,
+                glong * items_read, glong * items_written, GError ** error)
 {
   gint result_length;
   gchar *result = NULL;
@@ -452,18 +452,18 @@ g_ucs4_to_utf8 (const gunichar * str,
   for (i = 0; len < 0 || i < len; i++)
     {
       if (!str[i])
-	break;
+        break;
 
       if (str[i] >= 0x80000000)
-	{
-	  if (items_read)
-	    *items_read = i;
+        {
+          if (items_read)
+            *items_read = i;
 
-	  g_set_error (error, G_CONVERT_ERROR,
-		       G_CONVERT_ERROR_ILLEGAL_SEQUENCE,
-		       _("Character out of range for UTF-8"));
-	  goto err_out;
-	}
+          g_set_error (error, G_CONVERT_ERROR,
+                       G_CONVERT_ERROR_ILLEGAL_SEQUENCE,
+                       _("Character out of range for UTF-8"));
+          goto err_out;
+        }
 
       result_length += UTF8_LENGTH (str[i]);
     }
@@ -544,28 +544,28 @@ g_unicode_canonical_ordering (gunichar * string, gsize len)
       swap = 0;
       last = COMBINING_CLASS (string[0]);
       for (i = 0; i < len - 1; ++i)
-	{
-	  int next = COMBINING_CLASS (string[i + 1]);
-	  if (next != 0 && last > next)
-	    {
-	      gsize j;
-	      /* Percolate item leftward through string.  */
-	      for (j = i + 1; j > 0; --j)
-		{
-		  gunichar t;
-		  if (COMBINING_CLASS (string[j - 1]) <= next)
-		    break;
-		  t = string[j];
-		  string[j] = string[j - 1];
-		  string[j - 1] = t;
-		  swap = 1;
-		}
-	      /* We're re-entering the loop looking at the old
-	         character again.  */
-	      next = last;
-	    }
-	  last = next;
-	}
+        {
+          int next = COMBINING_CLASS (string[i + 1]);
+          if (next != 0 && last > next)
+            {
+              gsize j;
+              /* Percolate item leftward through string.  */
+              for (j = i + 1; j > 0; --j)
+                {
+                  gunichar t;
+                  if (COMBINING_CLASS (string[j - 1]) <= next)
+                    break;
+                  t = string[j];
+                  string[j] = string[j - 1];
+                  string[j - 1] = t;
+                  swap = 1;
+                }
+              /* We're re-entering the loop looking at the old
+                 character again.  */
+              next = last;
+            }
+          last = next;
+        }
     }
 }
 
@@ -582,7 +582,7 @@ decompose_hangul (gunichar s, gunichar * r, gsize * result_len)
   if (SIndex < 0 || SIndex >= SCount)
     {
       if (r)
-	r[0] = s;
+        r[0] = s;
       *result_len = 1;
     }
   else
@@ -592,19 +592,19 @@ decompose_hangul (gunichar s, gunichar * r, gsize * result_len)
       gunichar T = TBase + SIndex % TCount;
 
       if (r)
-	{
-	  r[0] = L;
-	  r[1] = V;
-	}
+        {
+          r[0] = L;
+          r[1] = V;
+        }
 
       if (T != TBase)
-	{
-	  if (r)
-	    r[2] = T;
-	  *result_len = 3;
-	}
+        {
+          if (r)
+            r[2] = T;
+          *result_len = 3;
+        }
       else
-	*result_len = 2;
+        *result_len = 2;
     }
 }
 
@@ -618,34 +618,34 @@ find_decomposition (gunichar ch, gboolean compat)
   if (ch >= decomp_table[start].ch && ch <= decomp_table[end - 1].ch)
     {
       while (TRUE)
-	{
-	  int half = (start + end) / 2;
-	  if (ch == decomp_table[half].ch)
-	    {
-	      int offset;
+        {
+          int half = (start + end) / 2;
+          if (ch == decomp_table[half].ch)
+            {
+              int offset;
 
-	      if (compat)
-		{
-		  offset = decomp_table[half].compat_offset;
-		  if (offset == G_UNICODE_NOT_PRESENT_OFFSET)
-		    offset = decomp_table[half].canon_offset;
-		}
-	      else
-		{
-		  offset = decomp_table[half].canon_offset;
-		  if (offset == G_UNICODE_NOT_PRESENT_OFFSET)
-		    return NULL;
-		}
+              if (compat)
+                {
+                  offset = decomp_table[half].compat_offset;
+                  if (offset == G_UNICODE_NOT_PRESENT_OFFSET)
+                    offset = decomp_table[half].canon_offset;
+                }
+              else
+                {
+                  offset = decomp_table[half].canon_offset;
+                  if (offset == G_UNICODE_NOT_PRESENT_OFFSET)
+                    return NULL;
+                }
 
-	      return &(decomp_expansion_string[offset]);
-	    }
-	  else if (half == start)
-	    break;
-	  else if (ch > decomp_table[half].ch)
-	    start = half;
-	  else
-	    end = half;
-	}
+              return &(decomp_expansion_string[offset]);
+            }
+          else if (half == start)
+            break;
+          else if (ch > decomp_table[half].ch)
+            start = half;
+          else
+            end = half;
+        }
     }
 
   return NULL;
@@ -667,7 +667,7 @@ combine_hangul (gunichar a, gunichar b, gunichar * result)
       return TRUE;
     }
   else if (0 <= SIndex && SIndex < SCount && (SIndex % TCount) == 0
-	   && 0 <= TIndex && TIndex <= TCount)
+           && 0 <= TIndex && TIndex <= TCount)
     {
       *result = a + TIndex;
       return TRUE;
@@ -697,13 +697,13 @@ combine (gunichar a, gunichar b, gunichar * result)
   if (index_a >= COMPOSE_FIRST_SINGLE_START && index_a < COMPOSE_SECOND_START)
     {
       if (b == compose_first_single[index_a - COMPOSE_FIRST_SINGLE_START][0])
-	{
-	  *result =
-	    compose_first_single[index_a - COMPOSE_FIRST_SINGLE_START][1];
-	  return TRUE;
-	}
+        {
+          *result =
+            compose_first_single[index_a - COMPOSE_FIRST_SINGLE_START][1];
+          return TRUE;
+        }
       else
-	return FALSE;
+        return FALSE;
     }
 
   index_b = COMPOSE_INDEX (b);
@@ -711,14 +711,14 @@ combine (gunichar a, gunichar b, gunichar * result)
   if (index_b >= COMPOSE_SECOND_SINGLE_START)
     {
       if (a ==
-	  compose_second_single[index_b - COMPOSE_SECOND_SINGLE_START][0])
-	{
-	  *result =
-	    compose_second_single[index_b - COMPOSE_SECOND_SINGLE_START][1];
-	  return TRUE;
-	}
+          compose_second_single[index_b - COMPOSE_SECOND_SINGLE_START][0])
+        {
+          *result =
+            compose_second_single[index_b - COMPOSE_SECOND_SINGLE_START][1];
+          return TRUE;
+        }
       else
-	return FALSE;
+        return FALSE;
     }
 
   if (index_a >= COMPOSE_FIRST_START && index_a < COMPOSE_FIRST_SINGLE_START
@@ -726,14 +726,14 @@ combine (gunichar a, gunichar b, gunichar * result)
       && index_b < COMPOSE_SECOND_SINGLE_START)
     {
       gunichar res =
-	compose_array[index_a - COMPOSE_FIRST_START][index_b -
-						     COMPOSE_SECOND_START];
+        compose_array[index_a - COMPOSE_FIRST_START][index_b -
+                                                     COMPOSE_SECOND_START];
 
       if (res)
-	{
-	  *result = res;
-	  return TRUE;
-	}
+        {
+          *result = res;
+          return TRUE;
+        }
     }
 
   return FALSE;
@@ -757,20 +757,20 @@ _g_utf8_normalize_wc (const gchar * str, gssize max_len, GNormalizeMode mode)
       gunichar wc = g_utf8_get_char (p);
 
       if (wc >= 0xac00 && wc <= 0xd7af)
-	{
-	  gsize result_len;
-	  decompose_hangul (wc, NULL, &result_len);
-	  n_wc += result_len;
-	}
+        {
+          gsize result_len;
+          decompose_hangul (wc, NULL, &result_len);
+          n_wc += result_len;
+        }
       else
-	{
-	  decomp = find_decomposition (wc, do_compat);
+        {
+          decomp = find_decomposition (wc, do_compat);
 
-	  if (decomp)
-	    n_wc += g_utf8_strlen (decomp, -1);
-	  else
-	    n_wc++;
-	}
+          if (decomp)
+            n_wc += g_utf8_strlen (decomp, -1);
+          else
+            n_wc++;
+        }
 
       p = g_utf8_next_char (p);
     }
@@ -790,36 +790,36 @@ _g_utf8_normalize_wc (const gchar * str, gssize max_len, GNormalizeMode mode)
       gsize old_n_wc = n_wc;
 
       if (wc >= 0xac00 && wc <= 0xd7af)
-	{
-	  gsize result_len;
-	  decompose_hangul (wc, wc_buffer + n_wc, &result_len);
-	  n_wc += result_len;
-	}
+        {
+          gsize result_len;
+          decompose_hangul (wc, wc_buffer + n_wc, &result_len);
+          n_wc += result_len;
+        }
       else
-	{
-	  decomp = find_decomposition (wc, do_compat);
+        {
+          decomp = find_decomposition (wc, do_compat);
 
-	  if (decomp)
-	    {
-	      const char *pd;
-	      for (pd = decomp; *pd != '\0'; pd = g_utf8_next_char (pd))
-		wc_buffer[n_wc++] = g_utf8_get_char (pd);
-	    }
-	  else
-	    wc_buffer[n_wc++] = wc;
-	}
+          if (decomp)
+            {
+              const char *pd;
+              for (pd = decomp; *pd != '\0'; pd = g_utf8_next_char (pd))
+                wc_buffer[n_wc++] = g_utf8_get_char (pd);
+            }
+          else
+            wc_buffer[n_wc++] = wc;
+        }
 
       if (n_wc > 0)
-	{
-	  cc = COMBINING_CLASS (wc_buffer[old_n_wc]);
+        {
+          cc = COMBINING_CLASS (wc_buffer[old_n_wc]);
 
-	  if (cc == 0)
-	    {
-	      g_unicode_canonical_ordering (wc_buffer + last_start,
-					    n_wc - last_start);
-	      last_start = old_n_wc;
-	    }
-	}
+          if (cc == 0)
+            {
+              g_unicode_canonical_ordering (wc_buffer + last_start,
+                                            n_wc - last_start);
+              last_start = old_n_wc;
+            }
+        }
 
       p = g_utf8_next_char (p);
     }
@@ -827,7 +827,7 @@ _g_utf8_normalize_wc (const gchar * str, gssize max_len, GNormalizeMode mode)
   if (n_wc > 0)
     {
       g_unicode_canonical_ordering (wc_buffer + last_start,
-				    n_wc - last_start);
+                                    n_wc - last_start);
       last_start = n_wc;
     }
 
@@ -842,32 +842,32 @@ _g_utf8_normalize_wc (const gchar * str, gssize max_len, GNormalizeMode mode)
       last_start = 0;
 
       for (i = 0; i < n_wc; i++)
-	{
-	  int cc = COMBINING_CLASS (wc_buffer[i]);
+        {
+          int cc = COMBINING_CLASS (wc_buffer[i]);
 
-	  if (i > 0 &&
-	      (last_cc == 0 || last_cc != cc) &&
-	      combine (wc_buffer[last_start], wc_buffer[i],
-		       &wc_buffer[last_start]))
-	    {
-	      for (j = i + 1; j < n_wc; j++)
-		wc_buffer[j - 1] = wc_buffer[j];
-	      n_wc--;
-	      i--;
+          if (i > 0 &&
+              (last_cc == 0 || last_cc != cc) &&
+              combine (wc_buffer[last_start], wc_buffer[i],
+                       &wc_buffer[last_start]))
+            {
+              for (j = i + 1; j < n_wc; j++)
+                wc_buffer[j - 1] = wc_buffer[j];
+              n_wc--;
+              i--;
 
-	      if (i == last_start)
-		last_cc = 0;
-	      else
-		last_cc = COMBINING_CLASS (wc_buffer[i - 1]);
+              if (i == last_start)
+                last_cc = 0;
+              else
+                last_cc = COMBINING_CLASS (wc_buffer[i - 1]);
 
-	      continue;
-	    }
+              continue;
+            }
 
-	  if (cc == 0)
-	    last_start = i;
+          if (cc == 0)
+            last_start = i;
 
-	  last_cc = cc;
-	}
+          last_cc = cc;
+        }
     }
 
   wc_buffer[n_wc] = 0;
@@ -999,10 +999,10 @@ stringprep_utf8_to_ucs4 (const char *str, ssize_t len, size_t * items_written)
  **/
 char *
 stringprep_ucs4_to_utf8 (const uint32_t * str, ssize_t len,
-			 size_t * items_read, size_t * items_written)
+                         size_t * items_read, size_t * items_written)
 {
   return g_ucs4_to_utf8 (str, len, (glong *) items_read,
-			 (glong *) items_written, NULL);
+                         (glong *) items_written, NULL);
 }
 
 /**

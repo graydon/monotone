@@ -34,19 +34,19 @@ AT_DATA(limited_permission.at, [function get_netsync_read_permitted(branch, key)
 end
 ])
 
-NETSYNC_SERVE_START(--rcfile=limited_permission.at '*')
+NETSYNC_SERVE_START(--rcfile=limited_permission.at 'branch*')
 
 NETSYNC_CLIENT_RUN(pull, 'branch*')
-AT_CHECK(MONOTONE2 cat revision $B1, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B2, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B3, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B4, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B1, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B2, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B3, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B4, [1], [ignore], [ignore])
 
 NETSYNC_CLIENT_RUN(pull, branch1 branch3)
-AT_CHECK(MONOTONE2 cat revision $B1, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B2, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B3, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 cat revision $B4, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B3, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 automate get_revision $B4, [1], [ignore], [ignore])
 
 AT_CHECK(MONOTONE2 ls certs $B2 | QGREP(branch2), [1])
 

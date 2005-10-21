@@ -14,6 +14,7 @@
 #include <map>
 #include "file_io.hh"
 #include "vocab.hh"
+#include "paths.hh"
 
 struct patch_set;
 
@@ -31,18 +32,19 @@ public:
 #ifdef BUILD_UNIT_TESTS
   void add_test_hooks();
 #endif
+  void set_app(app_state *_app);
   void add_std_hooks();
-  void working_copy_rcfilename(fs::path & file);
-  void default_rcfilename(fs::path & file);
+  void working_copy_rcfilename(bookkeeping_path & file);
+  void default_rcfilename(system_path & file);
   void load_rcfile(utf8 const & file);
-  void load_rcfile(fs::path const & file, bool required);
+  void load_rcfile(any_path const & file, bool required);
 
   // cert hooks
   bool hook_expand_selector(std::string const & sel, std::string & exp);
   bool hook_expand_date(std::string const & sel, std::string & exp);
   bool hook_get_branch_key(cert_value const & branchname, rsa_keypair_id & k);
-  bool lua_hooks::hook_get_priv_key(rsa_keypair_id const & k,
-                                   base64< arc4<rsa_priv_key> > & priv_key );
+  bool hook_get_key_pair(rsa_keypair_id const & k,
+                         keypair & kp);
   bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
   bool hook_get_author(cert_value const & branchname, std::string & author);
   bool hook_edit_comment(std::string const & commentary,
@@ -124,9 +126,11 @@ public:
 
   // notification hooks
   bool hook_note_commit(revision_id const & new_id,
+                        revision_data const & rdat,
                         std::map<cert_name, cert_value> const & certs);
 
   bool hook_note_netsync_revision_received(revision_id const & new_id,
+                                           revision_data const & rdat,
                         std::set<std::pair<rsa_keypair_id,
                                          std::pair<cert_name,
                                                 cert_value> > > const & certs);

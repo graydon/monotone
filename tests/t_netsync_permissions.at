@@ -24,6 +24,7 @@ end
 ])
 
 AT_CHECK(cp test.db clean.db)
+AT_CHECK(cp -r keys/ clean_keys)
 
 ADD_FILE(testfile, [testfile
 ])
@@ -35,32 +36,37 @@ NETSYNC_SERVE_START(testbranch --rcfile open.lua)
 # anonymous pull 
 
 AT_CHECK(cp clean.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 NETSYNC_CLIENT_RUN(pull --key="", testbranch)
-AT_CHECK(MONOTONE2 cat revision $BASE, [0], [stdout], [stderr])
+AT_CHECK(MONOTONE2 automate get_revision $BASE, [0], [stdout], [stderr])
 
 # pull with default key
 
 AT_CHECK(cp clean.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 NETSYNC_CLIENT_RUN(pull, testbranch)
-AT_CHECK(MONOTONE2 cat revision $BASE, [0], [stdout], [stderr])
+AT_CHECK(MONOTONE2 automate get_revision $BASE, [0], [stdout], [stderr])
 
 # pull with other key
 
 AT_CHECK(cp clean.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 NETSYNC_CLIENT_RUN(pull --key=$OTHER, testbranch)
-AT_CHECK(MONOTONE2 cat revision $BASE, [0], [stdout], [stderr])
+AT_CHECK(MONOTONE2 automate get_revision $BASE, [0], [stdout], [stderr])
 
 # pull with unknown key fails
 
 AT_CHECK(cp clean.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 UNKNOWN=unknown@test.net
 AT_CHECK((echo $UNKNOWN; echo $UNKNOWN) | MONOTONE2 genkey $UNKNOWN, [], [ignore], [ignore])
 NETSYNC_CLIENT_RUN(pull --key=$UNKNOWN, testbranch)
-AT_CHECK(MONOTONE2 cat revision $BASE, [1], [stdout], [stderr])
+AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 # push with default key
 
 AT_CHECK(cp test.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r keys/ keys2)
 REVERT_TO($BASE)
 ADD_FILE(default, [default
 ])
@@ -89,9 +95,9 @@ NETSYNC_CLIENT_RUN(push --key=$UNKNOWN, testbranch)
 
 NETSYNC_SERVE_STOP
 
-AT_CHECK(MONOTONE cat revision $DEFAULT_REV, [0], [stdout], [stderr])
-AT_CHECK(MONOTONE cat revision $OTHER_REV, [0], [stdout], [stderr])
-AT_CHECK(MONOTONE cat revision $UNKNOWN_REV, [1], [stdout], [stderr])
+AT_CHECK(MONOTONE automate get_revision $DEFAULT_REV, [0], [stdout], [stderr])
+AT_CHECK(MONOTONE automate get_revision $OTHER_REV, [0], [stdout], [stderr])
+AT_CHECK(MONOTONE automate get_revision $UNKNOWN_REV, [1], [stdout], [stderr])
 
 
 # test with closed security settings
@@ -109,6 +115,7 @@ end
 ])
 
 AT_CHECK(cp clean.db test.db)
+AT_CHECK(rm -r keys && cp -r clean_keys/ keys)
 AT_DATA(MT/revision [])
 
 ADD_FILE(testfile, [testfile
@@ -121,32 +128,37 @@ NETSYNC_SERVE_START(testbranch --rcfile closed.lua)
 # anonymous pull fails
 
 AT_CHECK(cp clean.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 NETSYNC_CLIENT_RUN(pull --key="", testbranch)
-AT_CHECK(MONOTONE2 cat revision $BASE, [1], [stdout], [stderr])
+AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 # pull with default key
 
 AT_CHECK(cp clean.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 NETSYNC_CLIENT_RUN(pull, testbranch)
-AT_CHECK(MONOTONE2 cat revision $BASE, [0], [stdout], [stderr])
+AT_CHECK(MONOTONE2 automate get_revision $BASE, [0], [stdout], [stderr])
 
 # pull with other key fails
 
 AT_CHECK(cp clean.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 NETSYNC_CLIENT_RUN(pull --key=$OTHER, testbranch)
-AT_CHECK(MONOTONE2 cat revision $BASE, [1], [stdout], [stderr])
+AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 # pull with unknown key fails
 
 AT_CHECK(cp clean.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 UNKNOWN=unknown@test.net
 AT_CHECK((echo $UNKNOWN; echo $UNKNOWN) | MONOTONE2 genkey $UNKNOWN, [], [ignore], [ignore])
 NETSYNC_CLIENT_RUN(pull --key=$UNKNOWN, testbranch)
-AT_CHECK(MONOTONE2 cat revision $BASE, [1], [stdout], [stderr])
+AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 # push with default key
 
 AT_CHECK(cp test.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r keys/ keys2)
 REVERT_TO($BASE)
 ADD_FILE(default, [default
 ])
@@ -175,8 +187,8 @@ NETSYNC_CLIENT_RUN(push --key=$UNKNOWN, testbranch)
 
 NETSYNC_SERVE_STOP
 
-AT_CHECK(MONOTONE cat revision $DEFAULT_REV, [0], [stdout], [stderr])
-AT_CHECK(MONOTONE cat revision $OTHER_REV, [1], [stdout], [stderr])
-AT_CHECK(MONOTONE cat revision $UNKNOWN_REV, [1], [stdout], [stderr])
+AT_CHECK(MONOTONE automate get_revision $DEFAULT_REV, [0], [stdout], [stderr])
+AT_CHECK(MONOTONE automate get_revision $OTHER_REV, [1], [stdout], [stderr])
+AT_CHECK(MONOTONE automate get_revision $UNKNOWN_REV, [1], [stdout], [stderr])
 
 AT_CLEANUP

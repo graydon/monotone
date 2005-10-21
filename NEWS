@@ -1,3 +1,87 @@
+Fri Sep 30 02:50:05 PDT 2005
+
+        0.23 release.
+
+        Possibly incompatible changes:
+        - hook_note_commit and hook_note_netsync_revision_received
+          take a new argument containing the text of the revision that
+          was received.  (Timothy Brownawell <tbrownaw@gmail.com>)
+        - 'cat FILENAME' now acts like the old 'cat file REV
+          FILENAME'; use new commands 'automate get_revision',
+          'automate get_manifest', 'automate get_file' to fetch
+          objects by hash.  (Grahame Bowland <grahame@angrygoats.net>)
+
+        General improvements:
+        - .mt-ignore support (Martin Dvorak
+          <jezek2@advel.cz>, Timothy Brownawell <tbrownaw@gmail.com>)
+        - much work on making monotone more i18n friendly (Benoît
+          Dejean <benoit@placenet.org>, Matt Johnston
+          <matt@ucc.asn.au>)
+        - support for more interactive merge tools:
+          - FileMerge.app (comes with OS X) (Marcel van der Boom
+            <marcel@hsdev.com>)
+          - TortoiseMerge (Win32; comes with TortoiseSVN) (Matthew
+            Gregan <kinetik@orcon.net.nz>)
+        - rename and drop now actually perform the specified rename or
+          deletion when the argument --execute is passed.  (Richard
+          Levitte <richard@levitte.org>)
+        - 'help' command, same as --help (Matt Johnston
+          <matt@ucc.asn.au>).
+        - 'usher' support: experimental method for proxying multiple
+          netsync servers through a single port (similar concept to
+          vhosts) (Timothy Brownawell <tbrownaw@gmail.com>)
+        - support long passphrases (Matt Johnston <matt@ucc.asn.au>)
+        - Faster binary file detection (Eric Anderson
+          <anderse-monotone@cello.hpl.hp.com>)
+        - netsync speedups:
+          - when handling large files (Eric Anderson
+            <anderse-monotone@cello.hpl.hp.com>)
+          - when handling many branches (Marcel van der Boom
+            <marcel@hsdev.com>)
+        - new system to allow crash logs to contain not just execution
+          traces, but also dumps of data being handled when the error
+          was detected -- greatly improves debuggability of user
+          crashes.
+        - complete rework of path handling code, for clarity,
+          robustness, and speed.  No user visible changes, except for
+          the many bugs fixed.  (Special thanks to Matthew Gregan
+          <kinetik@orcon.net.nz> and Grahame Bowland
+          <grahame@angrygoats.net>.)
+          - however, if you have non-normalized paths in your history
+            (symptom: fresh pulls with 0.18 work, but fresh pulls with
+            0.19 do not), then 0.23 will report an error and refuse to
+            handle the affected revisions.  Since it is believed this
+            only affects one project, and to conserve core developer
+            time, implementing a migration was put off for now.  If
+            this causes problems or for more details, please send an
+            email to monotone-devel@nongnu.org.
+        - as always, many small bug fixes, speedups, and improved
+          messages.
+
+        New translations:
+        - fr (Benoît Dejean <benoit@placenet.org>)
+        - ja (Satoru SATOH <ss@gnome.gr.jp>)
+
+        Other new monotone-related projects since 0.22:
+        - mtsh by Timothy Brownawell:
+            https://netfiles.uiuc.edu/brownawe/www/mtsh/
+          GTK+ wrapper for monotone focusing on working copy
+          operations -- add/drop/revert/rename/commit/update/diff and
+          browsing.  Has a mechanism for per-file commit comments.
+
+        - "dumb server" support by Nathaniel Smith (share your
+          monotone repositories via HTTP/FTP, no netsync daemon
+          needed):
+            http://viewmtn.angrygoats.net//branch.psp?branch=net.venge.monotone.dumb
+          Still needs a command-line frontend to be usable, among
+          other things.  Help wanted.  In python.
+
+        - m7 by Larry Hastings <larry@hastings.org>
+            http://www.midwinter.com/~lch/programming/m7/
+          Experimental drop-in command-line wrapper for monotone.
+          Uses certs to add local incrementing version numbers, and an
+          enhanced annotate front-end.
+
 Mon Aug  8 23:23:53 PDT 2005
 
         0.22 release.  new crypto library, bug fixes, ui improvements

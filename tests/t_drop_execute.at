@@ -1,0 +1,22 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([drop with actual removal])
+
+MONOTONE_SETUP
+
+ADD_FILE(file0, [file 0
+])
+ADD_FILE(file1, [file 1
+])
+ADD_FILE(file2, [file 2
+])
+
+AT_CHECK(MONOTONE drop file0, [], [ignore], [ignore])
+AT_CHECK(MONOTONE drop --execute file1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE drop -e file2, [], [ignore], [ignore])
+
+AT_CHECK(test -f file0, [], [ignore], [ignore])
+AT_CHECK(test -f file1, [1], [ignore], [ignore])
+AT_CHECK(test -f file2, [1], [ignore], [ignore])
+
+AT_CLEANUP

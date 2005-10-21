@@ -16,9 +16,6 @@ ATOMIC_NOVERIFY(data);        // meaningless blob
 ATOMIC_NOVERIFY(delta);       // xdelta between 2 datas
 ATOMIC_NOVERIFY(inodeprint);  // fingerprint of an inode
 
-ATOMIC(local_path);           // non-absolute file
-ATOMIC(file_path);            // non-absolute, non-bookeeping file
-
 ATOMIC(cert_name);            // symbol-of-your-choosing
 ATOMIC_NOVERIFY(cert_value);  // symbol-of-your-choosing
 
@@ -83,6 +80,7 @@ EXTERN template class     file< delta >;
 EXTERN template class         arc4<rsa_priv_key>;
 EXTERN template class base64< arc4<rsa_priv_key> >;
 EXTERN template class base64< rsa_pub_key >;
+EXTERN template class base64< rsa_priv_key >;
 EXTERN template class base64< rsa_sha1_signature >;
 EXTERN template class hexenc< rsa_sha1_signature >;
 EXTERN template class base64< cert_value >;

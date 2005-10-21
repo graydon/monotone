@@ -13,7 +13,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <boost/filesystem/path.hpp>
 
 #include "file_io.hh"
 #include "botan/botan.h"
@@ -29,7 +28,6 @@ monotone_mkstemp(std::string &tmpl)
   int i = 0;
   int count = 0, fd = -1;
   std::string tmp;
-  fs::path path;
 
   static const char letters[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -48,9 +46,7 @@ monotone_mkstemp(std::string &tmpl)
       fd = open(tmp.c_str(), O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
       if (fd >= 0)
       {
-        fs::path path;
-        path = mkpath(tmp);
-        tmpl = path.native_directory_string();
+        tmpl = tmp;
         return fd;
       }
       else if (errno != EEXIST)

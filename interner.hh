@@ -31,6 +31,10 @@ interner
   hmap fwd;
   std::vector<std::string> rev;
   interner() {}
+  interner(std::string const & init_str, T init_value)
+  {
+    I(intern(init_str) == init_value);
+  }
   std::string lookup (T in) const
   {
     std::vector<std::string>::size_type k = static_cast<std::vector<std::string>::size_type>(in);

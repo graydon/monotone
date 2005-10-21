@@ -107,4 +107,7 @@ extern struct user_interface ui;
 // (even if there is no terminal)
 unsigned int guess_terminal_width();
 
+// returns the a default user locale value
+const std::locale & get_user_locale();
+
 #endif // __UI_HH__

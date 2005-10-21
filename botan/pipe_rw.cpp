@@ -1,6 +1,6 @@
 /*************************************************
 * Pipe Reading/Writing Source File               *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/pipe.h>
@@ -123,13 +123,15 @@ std::string Pipe::read_all_as_string(u32bit msg)
    SecureVector<byte> buffer(DEFAULT_BUFFERSIZE);
    std::string str;
    str.reserve(remaining(msg));
-   while (true)
+
+   while(true)
       {
       u32bit got = read(buffer, buffer.size(), msg);
-	  if (got == 0)
-		  break;
+      if(got == 0)
+         break;
       str.append((const char*)buffer.begin(), got);
       }
+
    return str;
    }
 

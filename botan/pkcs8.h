@@ -1,6 +1,6 @@
 /*************************************************
 * PKCS #8 Header File                            *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_PKCS8_H__
@@ -44,11 +44,15 @@ std::string PEM_encode(const PKCS8_PrivateKey&);
 std::string PEM_encode(const PKCS8_PrivateKey&, const std::string&,
                        const std::string& = "");
 
-PKCS8_PrivateKey* load_key(DataSource&, const User_Interface&);
-PKCS8_PrivateKey* load_key(DataSource&, const std::string& = "");
+PKCS8_PrivateKey* load_key(DataSource&, const User_Interface&,
+                           bool encrypted = true);
+PKCS8_PrivateKey* load_key(DataSource&, const std::string& = "",
+                           bool encrypted = true);
 
-PKCS8_PrivateKey* load_key(const std::string&, const User_Interface&);
-PKCS8_PrivateKey* load_key(const std::string&, const std::string& = "");
+PKCS8_PrivateKey* load_key(const std::string&, const User_Interface&,
+                           bool encrypted = true);
+PKCS8_PrivateKey* load_key(const std::string&, const std::string& = "",
+                           bool encrypted = true);
 
 PKCS8_PrivateKey* copy_key(const PKCS8_PrivateKey&);
 

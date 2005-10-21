@@ -1,64 +1,99 @@
 /*************************************************
 * Configuration Handling Source File             *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2005 The Botan Project                *
 *************************************************/
 
 #include <botan/conf.h>
 #include <botan/lookup.h>
 #include <botan/mutex.h>
+#include <string>
 #include <map>
 
 namespace Botan {
 
-namespace Config {
-
 namespace {
 
-std::map<std::string, std::string> options;
-Mutex* options_lock = 0;
+/*************************************************
+* Holder for name-value option pairs             *
+*************************************************/
+class Options
+   {
+   public:
+      std::string get(const std::string&);
+      void set(const std::string&, const std::string&, bool);
+
+      Options() { options_mutex = get_mutex(); }
+      ~Options() { delete options_mutex; }
+   private:
+      std::map<std::string, std::string> options;
+      Mutex* options_mutex;
+   };
 
 /*************************************************
-* Parse and compute an arithmetic expression     *
+* Get an option by name                          *
 *************************************************/
-u32bit parse_expr(const std::string& expr)
+std::string Options::get(const std::string& name)
    {
-   const bool have_add = (expr.find('+') != std::string::npos);
-   const bool have_mul = (expr.find('*') != std::string::npos);
+   Mutex_Holder lock(options_mutex);
 
-   if(have_add)
-      {
-      std::vector<std::string> sub_expr = split_on(expr, '+');
-      u32bit result = 0;
-      for(u32bit j = 0; j != sub_expr.size(); j++)
-         result += parse_expr(sub_expr[j]);
-      return result;
-      }
-   else if(have_mul)
-      {
-      std::vector<std::string> sub_expr = split_on(expr, '*');
-      u32bit result = 1;
-      for(u32bit j = 0; j != sub_expr.size(); j++)
-         result *= parse_expr(sub_expr[j]);
-      return result;
-      }
-   else
-      return to_u32bit(expr);
+   std::map<std::string, std::string>::const_iterator i = options.find(name);
+   if(i != options.end())
+      return i->second;
+   return "";
+   }
+
+/*************************************************
+* Set an option by name                          *
+*************************************************/
+void Options::set(const std::string& name, const std::string& value,
+                  bool overwrite)
+   {
+   const bool have_it = ((get(name) == "") ? false : true);
+
+   Mutex_Holder lock(options_mutex);
+   if(overwrite || !have_it)
+      options[name] = value;
+   }
+
+/*************************************************
+* Global state                                   *
+*************************************************/
+Options* options = 0;
+
+}
+
+namespace Init {
+
+/*************************************************
+* Startup the configuration system               *
+*************************************************/
+void startup_conf()
+   {
+   options = new Options;
+   }
+
+/*************************************************
+* Shutdown the configuration system              *
+*************************************************/
+void shutdown_conf()
+   {
+   delete options;
+   options = 0;
    }
 
 }
+
+namespace Config {
 
 /*************************************************
 * Set an option                                  *
 *************************************************/
 void set(const std::string& name, const std::string& value, bool overwrite)
    {
-   const bool have_it = ((get_string(name) == "") ? false : true);
+   if(!options)
+      throw Internal_Error("Config::set: Conf system never started");
 
-   initialize_mutex(options_lock);
-   Mutex_Holder lock(options_lock);
-
-   if(overwrite || !have_it)
-      options[name] = value;
+   options->set(name, value, overwrite);
    }
 
 /*************************************************
@@ -66,13 +101,10 @@ void set(const std::string& name, const std::string& value, bool overwrite)
 *************************************************/
 std::string get_string(const std::string& name)
    {
-   initialize_mutex(options_lock);
-   Mutex_Holder lock(options_lock);
+   if(!options)
+      throw Internal_Error("Config::get: Conf system never started");
 
-   std::map<std::string, std::string>::const_iterator i = options.find(name);
-   if(i != options.end())
-      return i->second;
-   return "";
+   return options->get(name);
    }
 
 /*************************************************

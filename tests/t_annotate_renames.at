@@ -1,0 +1,48 @@
+AT_SETUP([annotate file whose name changed])
+MONOTONE_SETUP
+
+ADD_FILE(foo, [a
+b
+c
+])
+
+AT_DATA(foo.rightnewname, [a
+b
+x
+])
+
+COMMIT(testbranch)
+REV0=`BASE_REVISION`
+
+
+# do something to a file we don't care about to make a commitable change
+ADD_FILE(junk, [some
+junk
+])
+COMMIT(testbranch)
+REVL=`BASE_REVISION`
+
+REVERT_TO($REV0)
+AT_CHECK(cp foo.rightnewname foo)
+AT_CHECK(MONOTONE rename -e foo foo.new, [], [ignore], [ignore])
+COMMIT(testbranch)
+REVR=`BASE_REVISION`
+
+
+AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+REV1=`BASE_REVISION`
+
+#
+# annotate foo should now be
+# REV0: a
+# REV0: b
+# REVR: x
+#
+
+AT_CHECK(MONOTONE annotate foo.new, [], [stdout], [ignore])
+AT_CHECK(head -n 1 stdout | grep $REV0, [0], [ignore], [ignore])
+AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REV0, [0], [ignore], [ignore])
+AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REVR, [0], [ignore], [ignore])
+
+AT_CLEANUP
