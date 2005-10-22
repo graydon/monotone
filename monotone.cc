@@ -125,12 +125,10 @@ struct poptOption options[] =
 // in other words, this program should *never* unexpectedly terminate
 // without dumping some diagnostics.
 
-static bool clean_shutdown;
-
 void 
 dumper() 
 {
-  if (!clean_shutdown)
+  if (!global_sanity.clean_shutdown)
     global_sanity.dump_buffer();
   
   Botan::Init::deinitialize();
@@ -237,7 +235,6 @@ coption_string(int o)
 int 
 cpp_main(int argc, char ** argv)
 {
-  clean_shutdown = false;
   int ret = 0;
 
   atexit(&dumper);
@@ -367,12 +364,12 @@ cpp_main(int argc, char ** argv)
 
             case OPT_VERSION:
               print_version();
-              clean_shutdown = true;
+              global_sanity.clean_shutdown = true;
               return 0;
 
             case OPT_FULL_VERSION:
               print_full_version();
-              clean_shutdown = true;
+              global_sanity.clean_shutdown = true;
               return 0;
 
             case OPT_REVISION:
@@ -578,22 +575,22 @@ cpp_main(int argc, char ** argv)
       poptPrintHelp(ctx(), stdout, 0);
       cout << endl;
       commands::explain_usage(u.which, cout);
-      clean_shutdown = true;
+      global_sanity.clean_shutdown = true;
       return 2;
     }
   }
   catch (informative_failure & inf)
   {
     ui.inform(inf.what);
-    clean_shutdown = true;
+    global_sanity.clean_shutdown = true;
     return 1;
   }
   catch (std::ios_base::failure const & ex)
   {
-    clean_shutdown = true;
+    global_sanity.clean_shutdown = true;
     return 1;
   }
 
-  clean_shutdown = true;
+  global_sanity.clean_shutdown = true;
   return ret;
 }

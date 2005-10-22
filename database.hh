@@ -203,6 +203,7 @@ class database
 
   void check_filename();
   void open();
+  void close();
 
 public:
 
@@ -458,6 +459,8 @@ public:
   void commit();
 };
 
+void
+close_all_databases();
 
 
 #endif // __DATABASE_HH__

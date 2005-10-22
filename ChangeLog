@@ -6,6 +6,46 @@
 	servers or the whole usher (listens for connections on a separate
 	port, only enabled if specified on the command line).
 
+2005-10-22  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_database_sig_cleanup.at: Two more sleeps that I forgot.
+
+2005-10-20  Nathaniel Smith  <njs@pobox.com>
+
+	* cert.hh (find_common_ancestor): Remove dead declaration.
+	* database.cc (check_schema): Improve schema mismatch error
+	message.
+
+2005-10-20  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_database_sig_cleanup.at: Sleep for a couple of seconds,
+	so monotone has a chance to clean up and die properly, even on a
+	slower machine.
+
+2005-10-19  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_update_switch_branch.at, testsuite.at: New test.
+
+2005-10-19  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Make branch sticky even if update target
+	== current rid.
+
+2005-10-19  Matt Johnston  <matt@ucc.asn.au>
+
+	* main.cc, database.{cc,hh}: SIGINT and SIGTERM handlers
+	exit gracefully, and try to ROLLBACK+close any databases to clean up
+	.db-journal files. Added new database::close() method to be used
+	rather than sqlite_close() directly
+	* monotone.{cc,hh}, sanity.{cc.hh}: move clean_shutdown flag to
+	global_sanity
+	* tests/t_database_sig_cleanup.at: test it
+	* keys.cc: don't L() private key
+
+2005-10-19  Matthew A. Nicholson  <matt@matt-land.com>
+
+	* std_hooks.lua: Minor correction to vim warning during 3-way merge.
+
 2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/usher.cc: Update comment about client versions

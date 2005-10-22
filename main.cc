@@ -25,6 +25,10 @@
 #include <signal.h>
 #include <setjmp.h>
 
+#include "i18n.h"
+#include "database.hh"
+#include "sanity.hh"
+
 // Microsoft + other compatible compilers such as Intel
 #if defined(_MSC_VER) || (defined(__MWERKS__) && __MWERKS__ >= 0x3000)
 #define MS_STRUCTURED_EXCEPTION_HANDLING
@@ -266,6 +270,8 @@ main_with_signal_handlers(int argc, char **argv)
     struct sigaction old_SIGSEGV_action;
     struct sigaction old_SIGBUS_action;
     struct sigaction old_SIGABRT_action;
+    struct sigaction old_SIGTERM_action;
+    struct sigaction old_SIGINT_action;
     struct sigaction old_SIGPIPE_action;
 
     all_signals_action.sa_flags   = 0;
@@ -281,10 +287,13 @@ main_with_signal_handlers(int argc, char **argv)
     sigaction(SIGSEGV, &all_signals_action, &old_SIGSEGV_action);
     sigaction(SIGBUS , &all_signals_action, &old_SIGBUS_action);
     sigaction(SIGABRT, &all_signals_action, &old_SIGABRT_action);
+    sigaction(SIGTERM, &all_signals_action, &old_SIGTERM_action);
+    sigaction(SIGINT, &all_signals_action, &old_SIGINT_action);
     sigaction(SIGPIPE, &ignore_signals_action, &old_SIGPIPE_action);
 
     int result = 0;
     bool trapped_signal = false;
+    bool clean_signal_exit = false;
     char const *em = NULL;
 
     volatile int sigtype = sigsetjmp(jump_buf, 1);
@@ -312,6 +321,14 @@ main_with_signal_handlers(int argc, char **argv)
           case SIGBUS:
             em = "signal: memory access violation";
             break;
+          case SIGINT:
+            em = _("interrupted");
+            clean_signal_exit = true;
+            break;
+          case SIGTERM:
+            em = _("terminated by signal");
+            clean_signal_exit = true;
+            break;
           default:
             em = "signal: unrecognized signal";
           }
@@ -323,6 +340,14 @@ main_with_signal_handlers(int argc, char **argv)
     sigaction(SIGBUS , &old_SIGBUS_action , sigaction_ptr());
     sigaction(SIGABRT, &old_SIGABRT_action, sigaction_ptr());
     sigaction(SIGPIPE, &old_SIGPIPE_action, sigaction_ptr());
+
+    if(clean_signal_exit)
+      {
+        global_sanity.clean_shutdown = true;
+        ui.inform(em);
+        close_all_databases();
+        return 1;
+      }
     
     if(trapped_signal) 
       throw unix_signal_exception(em);
