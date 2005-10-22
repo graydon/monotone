@@ -39,7 +39,7 @@ namespace constants
 
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.
-  size_t const log_line_sz = 0xff;
+  size_t const log_line_sz = 0x300;
 
   // all the ASCII characters (bytes) which are legal in a packet.
   char const * const legal_packet_bytes = 
