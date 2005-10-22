@@ -1,3 +1,11 @@
+2005-10-22  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/usher.cc: Support friendly shutdown (no new connections, but
+	don't kill existing ones) of local servers and the usher as a whole.
+	Simple admin interface to start/stop or get the status of individual
+	servers or the whole usher (listens for connections on a separate
+	port, only enabled if specified on the command line).
+
 2005-10-18  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* contrib/usher.cc: Update comment about client versions
