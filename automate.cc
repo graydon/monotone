@@ -956,8 +956,6 @@ automate_get_revision(std::vector<utf8> args,
                  app_state & app,
                  std::ostream & output)
 {
-/*
-// FIXME ROSTERS: disabled until rewritten to use rosters
   if (args.size() > 1)
     throw usage(help_name);
 
@@ -967,10 +965,12 @@ automate_get_revision(std::vector<utf8> args,
   if (args.size() == 0)
     {
       revision_set rev;
-      manifest_map m_old, m_new;
+      roster_t old_roster, new_roster;
 
       app.require_working_copy(); 
-      calculate_unrestricted_revision(app, rev, m_old, m_new);
+      get_unrestricted_working_revision_and_rosters(app, rev, 
+                                                    old_roster, 
+                                                    new_roster);
       calculate_ident(rev, ident);
       write_revision_set(rev, dat);
     }
@@ -984,7 +984,6 @@ automate_get_revision(std::vector<utf8> args,
 
   L(F("dumping revision %s\n") % ident);
   output.write(dat.inner()().data(), dat.inner()().size());
-*/
 }
 
 // Name: get_manifest

@@ -462,29 +462,20 @@ ancestry_fetcher
 
   // map children to parents
   multimap< file_id, file_id > rev_file_deltas;
-  multimap< manifest_id, manifest_id > rev_manifest_deltas;
   // map an ancestor to a child
   multimap< file_id, file_id > fwd_file_deltas;
-  multimap< manifest_id, manifest_id > fwd_manifest_deltas;
 
   set< file_id > seen_files;
 
   ancestry_fetcher(session & s);
   // analysing the ancestry graph
   void traverse_files(cset const & cs);
-  void traverse_manifest(manifest_id const & child_man,
-                         manifest_id const & parent_man);
   void traverse_ancestry(set<revision_id> const & heads);
 
   // requesting the data
   void request_rev_file_deltas(file_id const & start, 
                                set<file_id> & done_files);
   void request_files();
-  void request_rev_manifest_deltas(manifest_id const & start,
-                                   set<manifest_id> & done_manifests);
-  void request_manifests();
-
-
 };
 
 
@@ -3599,7 +3590,6 @@ ancestry_fetcher::ancestry_fetcher(session & s)
   traverse_ancestry(new_heads);
 
   request_files();
-  request_manifests();
 }
 
 // adds file deltas from the given changeset into the sets of forward
@@ -3607,9 +3597,21 @@ ancestry_fetcher::ancestry_fetcher(session & s)
 void
 ancestry_fetcher::traverse_files(cset const & cs)
 {
-/* FIXME ROSTERS: disabled until updated to use rosters
-  for (change_set::delta_map::const_iterator d = cset.deltas.begin(); 
-       d != cset.deltas.end(); ++d)
+  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+       i != cs.files_added.end(); ++i)
+    {
+      // add any new forward deltas
+      if (seen_files.find(i->second) == seen_files.end())
+        {
+          file_id parent;
+          fwd_file_deltas.insert( make_pair( parent, i->second ) );
+        }
+      seen_files.insert(i->second);
+    }
+
+  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
+         d = cs.deltas_applied.begin(); 
+       d != cs.deltas_applied.end(); ++d)
     {
       file_id parent_file (delta_entry_src(d));
       file_id child_file (delta_entry_dst(d));
@@ -3656,43 +3658,6 @@ ancestry_fetcher::traverse_files(cset const & cs)
       seen_files.insert(child_file);
       seen_files.insert(parent_file);
     }
-*/
-}
-
-// adds the given manifest deltas to the sets of forward and reverse deltas
-void
-ancestry_fetcher::traverse_manifest(manifest_id const & child_man,
-                                    manifest_id const & parent_man)
-{
-  MM(child_man);
-  MM(parent_man);
-  I(!null_id(child_man));
-  // add reverse deltas
-  if (!null_id(parent_man))
-    {
-      rev_manifest_deltas.insert(make_pair(child_man, parent_man));
-    }
-  
-  // handle the manifest forward-deltas
-  if (!null_id(parent_man)
-      // don't update child to itself, it makes the loop iterate infinitely.
-      && !(parent_man == child_man)
-      && fwd_manifest_deltas.find(child_man) != fwd_manifest_deltas.end())
-    {
-      // We're traversing with child->parent of A->B.
-      // Update any forward deltas with a parent of B to 
-      // have A as a parent, ie B->C becomes A->C.
-      for (multimap<manifest_id,manifest_id>::iterator d = 
-           fwd_manifest_deltas.lower_bound(child_man);
-           d != fwd_manifest_deltas.upper_bound(child_man);
-           d++)
-        {
-          fwd_manifest_deltas.insert(make_pair(parent_man, d->second));
-        }
-
-      fwd_manifest_deltas.erase(fwd_manifest_deltas.lower_bound(child_man),
-                                fwd_manifest_deltas.upper_bound(child_man));
-    }
 }
 
 // traverse up the ancestry for each of the given new head revisions,
@@ -3709,8 +3674,6 @@ ancestry_fetcher::traverse_ancestry(set<revision_id> const & heads)
       L(F("traversing head %s") % *h);
       frontier.push_back(*h);
       seen_revs.insert(*h);
-      manifest_id const & m = sess.ancestry[*h]->second.new_manifest;
-      fwd_manifest_deltas.insert(make_pair(m,m));
     }
 
   // breadth first up the ancestry
@@ -3735,8 +3698,6 @@ ancestry_fetcher::traverse_ancestry(set<revision_id> const & heads)
               seen_revs.insert(par);
             }
 
-          traverse_manifest(sess.ancestry[rev]->second.new_manifest,
-                            edge_old_manifest(e));
           traverse_files(edge_changes(e));
 
         }
@@ -3817,79 +3778,4 @@ ancestry_fetcher::request_files()
     }
 }
 
-void
-ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start,
-                                              set<manifest_id> & done_manifests)
-{
-/* FIXME ROSTERS: disabled until updated to use rosters
-  stack< manifest_id > frontier;
-  frontier.push(start);
 
-  while (!frontier.empty())
-    {
-      manifest_id const child = frontier.top();
-      MM(child);
-      I(!null_id(child));
-      frontier.pop();
-
-      for (multimap< manifest_id, manifest_id>::const_iterator
-           d = rev_manifest_deltas.lower_bound(child);
-           d != rev_manifest_deltas.upper_bound(child);
-           d++)
-        {
-          manifest_id const & parent = d->second;
-          MM(parent);
-          I(!null_id(parent));
-          if (done_manifests.find(parent) == done_manifests.end())
-            {
-              done_manifests.insert(parent);
-              if (!sess.app.db.manifest_version_exists(parent))
-                {
-                  sess.queue_send_delta_cmd(manifest_item,
-                                            plain_id(child), plain_id(parent));
-                  sess.reverse_delta_requests.insert(make_pair(plain_id(child),
-                                                               plain_id(parent)));
-                }
-              frontier.push(parent);
-            }
-        }
-    }
-*/
-}
-
-// could try and make this a template function, is the same as request_files(),
-// though it calls non-template functions
-void
-ancestry_fetcher::request_manifests()
-{
-/* FIXME ROSTERS: disabled until updated to use rosters
-  // just a cache to avoid checking db.foo_version_exists() too much
-  set<manifest_id> done_manifests;
-
-  for (multimap<manifest_id,manifest_id>::const_iterator d = fwd_manifest_deltas.begin();
-       d != fwd_manifest_deltas.end(); d++)
-    {
-      manifest_id const & anc = d->first;
-      manifest_id const & child = d->second;
-      MM(anc);
-      MM(child);
-      if (!sess.app.db.manifest_version_exists(child))
-        {
-          if (null_id(anc)
-              || !sess.app.db.manifest_version_exists(anc))
-            {
-              sess.queue_send_data_cmd(manifest_item, plain_id(child));
-            }
-          else
-            {
-              sess.queue_send_delta_cmd(manifest_item, 
-                                        plain_id(anc), plain_id(child));
-              sess.note_item_full_delta(manifest_item, plain_id(child));
-            }
-        }
-
-      // traverse up the reverse deltas
-      request_rev_manifest_deltas(child, done_manifests);
-    }
-*/
-}
