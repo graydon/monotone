@@ -1,5 +1,12 @@
 2005-10-22  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* constants.cc: increase log_line_sz so that the new unified
+	"SERVER IDENTIFICATION HAS CHANGED" message doesn't get truncated.
+	It used to be multiple print statements but was merged into one,
+	apparently to help with translation.
+
+2005-10-22  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* contrib/usher.cc: Support friendly shutdown (no new connections, but
 	don't kill existing ones) of local servers and the usher as a whole.
 	Simple admin interface to start/stop or get the status of individual
