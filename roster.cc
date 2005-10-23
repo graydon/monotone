@@ -19,6 +19,7 @@
 #include "revision.hh"
 #include "vocab.hh"
 #include "transforms.hh"
+#include "parallel_iter.hh"
 
 #include <boost/lexical_cast.hpp>
 
@@ -1527,69 +1528,6 @@ make_roster_for_revision(revision_set const & rev, revision_id const & rid,
 
 namespace
 {
-  // An ugly, but handy, little helper function for doing parallel iteration
-  // over maps.
-  // Usage:
-  //   std::map<foo, bar>::const_iterator left_i, right_i;
-  //   parallel_state state = start;
-  //   while (parallel_iter_incr(state, left_map, left_i, right_map, right_i))
-  //     switch (state)
-  //     {}
-
-  typedef enum { start, in_left, in_right, in_both, no_more } parallel_state;
-
-  void
-  dump(parallel_state const & st, std::string & out)
-  {
-    out = lexical_cast<std::string>(st);
-    switch (st)
-      {
-      case start: out += " start"; break;
-      case in_left: out += " in_left"; break;
-      case in_right: out += " in_right"; break;
-      case in_both: out += " in_both"; break;
-      case no_more: out += " no_more"; break;
-      }
-    out += "\n";
-  }
-  template <typename M>
-  bool
-  parallel_iter_incr(parallel_state & state,
-                     M const & left, typename M::const_iterator & left_i,
-                     M const & right, typename M::const_iterator & right_i)
-  {
-    I(state != no_more);
-    if (state == start)
-      {
-        left_i = left.begin();
-        right_i = right.begin();
-      }
-    if (state == in_left || state == in_both)
-      ++left_i;
-    if (state == in_right || state == in_both)
-      ++right_i;
-    if (left_i == left.end() && right_i == right.end())
-      state = no_more;
-    else if (left_i == left.end() && right_i != right.end())
-      state = in_right;
-    else if (left_i != left.end() && right_i == right.end())
-      state = in_left;
-    else
-      {
-        // Both iterators valid.
-        if (left_i->first < right_i->first)
-          state = in_left;
-        else if (right_i->first < left_i->first)
-          state = in_right;
-        else
-          {
-            I(left_i->first == right_i->first);
-            state = in_both;
-          }
-      }
-    return state != no_more;
-  }
-
   
   void delta_only_in_from(roster_t const & from, 
                           node_id nid, node_t n,
@@ -1656,21 +1594,25 @@ namespace
 
     // Compare attrs.
     {
-      full_attr_map_t::const_iterator from_ai, to_ai;
-      parallel_state state = start;
-      while (parallel_iter_incr(state, from_n->attrs, from_ai, to_n->attrs, to_ai))
+      parallel::iter<full_attr_map_t> i(from_n->attrs, to_n->attrs);
+      while (i.next())
         {
-          MM(state);
-          if ((state == in_left || (state == in_both && !to_ai->second.first))
-              && from_ai->second.first)
-            safe_insert(cs.attrs_cleared,
-                        make_pair(to_sp, from_ai->first));
-
-          else if ((state == in_right || (state == in_both && !from_ai->second.first))
-                   && to_ai->second.first)
-            safe_insert(cs.attrs_set,
-                        make_pair(make_pair(to_sp, to_ai->first),
-                                  to_ai->second.second));
+          MM(i);
+          if ((i.state() == parallel::in_left
+               || (i.state() == parallel::in_both && !i.right_data().first))
+              && i.left_data().first)
+            {
+              safe_insert(cs.attrs_cleared,
+                          make_pair(to_sp, i.left_key()));
+            }
+          else if ((i.state() == parallel::in_right
+                    || (i.state() == parallel::in_both && !i.left_data().first))
+                   && i.right_data().first)
+            {
+              safe_insert(cs.attrs_set,
+                          make_pair(make_pair(to_sp, i.right_key()),
+                                    i.right_data().second));
+            }
         }
     }
   }
@@ -1680,429 +1622,30 @@ void
 make_cset(roster_t const & from, roster_t const & to, cset & cs)
 {
   cs.clear();
-  map<node_id, node_t>::const_iterator from_i, to_i;
-  parallel_state state = start;
-  while (parallel_iter_incr(state, 
-                            from.all_nodes(), from_i, 
-                            to.all_nodes(), to_i))
+  parallel::iter<map<node_id, node_t> > i(from.all_nodes(), to.all_nodes());
+  while (i.next())
     {
-      MM(state);
-      switch (state)
+      MM(i);
+      switch (i.state())
         {
-        case start:
-        case no_more:
+        case parallel::invalid:
           I(false);
 
-        case in_left:
-          delta_only_in_from(from, from_i->first, from_i->second, cs);
+        case parallel::in_left:
+          delta_only_in_from(from, i.left_key(), i.left_data(), cs);
           break;
  
-        case in_right:
-          delta_only_in_to(to, to_i->first, to_i->second, cs);
+        case parallel::in_right:
+          delta_only_in_to(to, i.right_key(), i.right_data(), cs);
           break;
 
-        case in_both:
-          delta_in_both(from_i->first, from, from_i->second, to, to_i->second, cs);
+        case parallel::in_both:
+          delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), cs);
           break;
         }
     }
 }
 
-
-////////////////////////////////////////////////////////////////////
-//   merging
-////////////////////////////////////////////////////////////////////
-
-// a wins if *(b) > a.  Which is to say that all members of b_marks are
-// ancestors of a.  But all members of b_marks are ancestors of the
-// _b_, so the previous statement is the same as saying that _no_
-// members of b_marks is an _uncommon_ ancestor of _b_.
-static bool
-a_wins(std::set<revision_id> const & b_marks,
-       std::set<revision_id> const & b_uncommon_ancestors)
-{
-  for (std::set<revision_id>::const_iterator i = b_marks.begin();
-       i != b_marks.end(); ++i)
-    if (b_uncommon_ancestors.find(*i) != b_uncommon_ancestors.end())
-      return false;
-  return true;
-}
-
-// returns true if merge was successful ('result' is valid), false otherwise
-// ('conflict_descriptor' is valid).
-template <typename T, typename C> bool
-merge_scalar(T const & left,
-             std::set<revision_id> const & left_marks,
-             std::set<revision_id> const & left_uncommon_ancestors,
-             T const & right,
-             std::set<revision_id> const & right_marks,
-             std::set<revision_id> const & right_uncommon_ancestors,
-             T & result,
-             C & conflict_descriptor)
-{
-  if (left == right)
-    {
-      result = left;
-      return true;
-    }
-  bool left_wins = a_wins(right_marks, right_uncommon_ancestors);
-  bool right_wins = a_wins(left_marks, left_uncommon_ancestors);
-  // two bools means 4 cases:
-  //   left_wins && right_wins
-  //     this is ambiguous clean merge, which is theoretically impossible.
-  I(!(left_wins && right_wins));
-  //   left_wins && !right_wins
-  if (left_wins && !right_wins)
-    {
-      result = left;
-      return true;
-    }
-  //   !left_wins && right_wins
-  if (!left_wins && right_wins)
-    {
-      result = right;
-      return true;
-    }
-  //   !left_wins && !right_wins
-  if (!left_wins && !right_wins)
-    {
-      conflict_descriptor.left = left;
-      conflict_descriptor.right = right;
-      return false;
-    }
-  I(false);
-}
-
-// our general strategy is to return a (possibly insane) roster, and a list of
-// conflicts encountered in that roster.  Each conflict encountered in merging
-// the roster creates an entry in this list.
-
-// nodes with name conflicts are left detached in the resulting roster, with
-// null parent and name fields.
-// note that it is possible that the parent node on the left, the right, or
-// both, no longer exist in the merged roster.  also note that it is possible
-// that on one or both sides, they do exist, but already have an entry with
-// the given name.
-struct node_name_conflict
-{
-  node_id nid;
-  node_name_conflict(node_id nid) : nid(nid) {}
-  std::pair<node_id, path_component> left, right;
-};
-
-// files with content conflicts are left attached in resulting tree (unless
-// detached for some other reason), but with a null content hash.
-struct file_content_conflict
-{
-  node_id nid;
-  file_content_conflict(node_id nid) : nid(nid) {}
-  file_id left, right;
-};
-
-// nodes with attrs conflicts are left attached in the resulting tree (unless
-// detached for some other reason), but with the given attribute left out of
-// their full_attr_map_t.  Note that this doesn't actually leave the resulting
-// roster insane (FIXME: we could put an invalid attr value in instead, like a
-// pair (false, "foo") (since the second value can only be non-null if the
-// first is 'true').  Should we do this?)
-struct node_attr_conflict
-{
-  node_id nid;
-  node_attr_conflict(node_id nid) : nid(nid) {}
-  attr_key key;
-  std::pair<bool, attr_value> left, right;
-};
-
-// interactions between conflict types:
-//   node rename conflicts never participate in structural conflicts
-//     (e.g., merge <rename a foo; rename b bar>, <rename a bar> could be
-//     considered to have two conflicts -- 'a' being renamed to both 'foo' and
-//     'bar', and 'a' and 'b' both being renamed to 'bar'.  Only the former
-//     occurs; 'b' merges cleanly and will be named 'bar' in the resulting
-//     manifest.)
-//   
-
-// structural conflicts:
-//   -- orphans
-//   -- directory containment loops
-//   -- multiple nodes with the same name
-
-// orphaned nodes always merged their name cleanly, so we simply put that name
-// here.  the node in the resulting roster is detached.
-// struct orphaned_node_conflict
-// {
-//   node_id nid;
-//   node_id dead_parent;
-//   path_component name;
-// };
-
-// this is when two (or more, but in fact only two is possible, since we only
-// merge two rosters at a time) distinct nodes want to have the same name.
-// these nodes always each merged their names cleanly.
-// the nodes in the resulting roster are both detached.
-// struct rename_target_conflict
-// {
-//   node_id nid1, nid2;
-//   std::pair<node_id, path_component> name;
-// };
-
-// FIXME:
-
-
-// renaming the root dir (as we currently do _not_) allows:
-//   -- MT in root
-//   -- missing root directory
-
-struct roster_merge_result
-{
-  std::vector<node_name_conflict> node_name_conflicts;
-  std::vector<file_content_conflict> file_content_conflicts;
-  std::vector<node_attr_conflict> node_attr_conflicts;
-  // this roster is sane iff is_clean() returns true
-  roster_t roster;
-  bool is_clean();
-  void clear();
-};
-
-bool
-roster_merge_result::is_clean()
-{
-  return node_name_conflicts.empty()
-    && file_content_conflicts.empty()
-    && node_attr_conflicts.empty();
-}
-
-void
-roster_merge_result::clear()
-{
-  node_attr_conflicts.clear();
-  file_content_conflicts.clear();
-  node_attr_conflicts.clear();
-  roster = roster_t();
-}
-
-static inline void
-create_node_for(node_t const & n, roster_t & new_roster)
-{
-  if (is_dir_t(n))
-    new_roster.create_dir_node(n->self);
-  else if (is_file_t(n))
-    new_roster.create_file_node(file_id(), n->self);
-  else
-    I(false);
-}
-
-static inline void
-insert_if_unborn(node_t const & n,
-                 marking_map const & marking,
-                 std::set<revision_id> const & uncommon_ancestors,
-                 roster_t & new_roster)
-{
-  revision_id const & birth = safe_get(marking, n->self).birth_revision;
-  if (uncommon_ancestors.find(birth) != uncommon_ancestors.end())
-    create_node_for(n, new_roster);
-}
-
-static void
-copy_node_forward(node_t const & n, roster_t & new_roster,
-                  node_t const & old_n)
-{
-  I(n->self == old_n->self);
-  n->attrs = old_n->attrs;
-  if (is_file_t(n))
-    downcast_to_file_t(n)->content = downcast_to_file_t(old_n)->content;
-  dir_t const & p = downcast_to_dir_t(new_roster.get_node(old_n->parent));
-  // FIXME: this could hit a conflict!  (orphan or rename-target)
-  p->attach_child(old_n->name, n);
-}
-
-void
-roster_merge(roster_t const & left_parent,
-             marking_map const & left_marking,
-             std::set<revision_id> const & left_uncommon_ancestors,
-             roster_t const & right_parent,
-             marking_map const & right_marking,
-             std::set<revision_id> const & right_uncommon_ancestors,
-             roster_merge_result & result)
-{
-  result.clear();
-  
-  // First handle lifecycles, by die-die-die merge -- our result will contain
-  // everything that is alive in both parents, or alive in one and unborn in
-  // the other, exactly.
-  {
-    node_map::const_iterator left_i, right_i;
-    parallel_state state = start;
-    while (parallel_iter_incr(state,
-                              left_parent.all_nodes(), left_i,
-                              right_parent.all_nodes(), right_i))
-      {
-        switch (state)
-          {
-          case start:
-          case no_more:
-            I(false);
-
-          case in_left:
-            insert_if_unborn(left_i->second,
-                             left_marking, left_uncommon_ancestors,
-                             result.roster);
-            break;
-
-          case in_right:
-            insert_if_unborn(right_i->second,
-                             right_marking, right_uncommon_ancestors,
-                             result.roster);
-            break;
-
-          case in_both:
-            create_node_for(right_i->second, result.roster);
-            break;
-          }
-      }
-  }
-
-  // okay, our roster now contains a bunch of empty, detached nodes.  fill
-  // them in one at a time with *-merge.
-  {
-    node_map::const_iterator left_i, right_i;
-    node_map::const_iterator new_i = result.roster.all_nodes().begin();
-    marking_map::const_iterator left_mi = left_marking.begin();
-    marking_map::const_iterator right_mi = right_marking.begin();
-    parallel_state state = start;
-    while (parallel_iter_incr(state,
-                              left_parent.all_nodes(), left_i,
-                              right_parent.all_nodes(), right_i))
-      {
-        switch (state)
-          {
-          case start:
-          case no_more:
-            I(false);
-
-          case in_left:
-            copy_node_forward(new_i->second, result.roster, left_i->second);
-            ++left_mi;
-            break;
-
-          case in_right:
-            copy_node_forward(new_i->second, result.roster, left_i->second);
-            ++right_mi;
-            break;
-
-          case in_both:
-            {
-              I(new_i->first == left_i->first);
-              I(left_mi->first == left_i->first);
-              I(right_mi->first == right_i->first);
-              node_t const & left_n = left_i->second;
-              marking_t const & left_marking = left_mi->second;
-              node_t const & right_n = right_i->second;
-              marking_t const & right_marking = right_mi->second;
-              node_t const & new_n = new_i->second;
-              // merge name
-              {
-                std::pair<node_id, path_component> new_name;
-                node_name_conflict conflict(new_n->self);
-                if (merge_scalar(std::make_pair(left_n->parent, left_n->name),
-                                 left_marking.parent_name,
-                                 left_uncommon_ancestors,
-                                 std::make_pair(right_n->parent, right_n->name),
-                                 right_marking.parent_name,
-                                 right_uncommon_ancestors,
-                                 new_name, conflict))
-                  {
-                    // FIXME: this could hit a conflict! (orphan or rename-target)
-                    dir_t const & p = downcast_to_dir_t(result.roster.get_node(new_name.first));
-                    p->attach_child(new_name.second, new_n);
-                  }
-                else
-                  {
-                    // unsuccessful merge; leave node detached and save
-                    // conflict object
-                    result.node_name_conflicts.push_back(conflict);
-                  }
-              }
-              // if a file, merge content
-              if (is_file_t(new_n))
-                {
-                  file_content_conflict conflict(new_n->self);
-                  if (merge_scalar(downcast_to_file_t(left_n)->content,
-                                   left_marking.file_content,
-                                   left_uncommon_ancestors,
-                                   downcast_to_file_t(right_n)->content,
-                                   right_marking.file_content,
-                                   right_uncommon_ancestors,
-                                   downcast_to_file_t(new_n)->content,
-                                   conflict))
-                    {
-                      // successful merge
-                    }
-                  else
-                    {
-                      downcast_to_file_t(new_n)->content = file_id();
-                      result.file_content_conflicts.push_back(conflict);
-                    }
-                }
-              // merge attributes
-              {
-                full_attr_map_t::const_iterator left_ai = left_n->attrs.begin();
-                full_attr_map_t::const_iterator right_ai = right_n->attrs.begin();
-                parallel_state attr_state = start;
-                while (parallel_iter_incr(attr_state,
-                                          left_n->attrs, left_ai,
-                                          right_n->attrs, right_ai))
-                {
-                  switch(attr_state)
-                    {
-                    case start:
-                    case no_more:
-                      I(false);
-                    case in_left:
-                      safe_insert(new_n->attrs, *left_ai);
-                      break;
-                    case in_right:
-                      safe_insert(new_n->attrs, *right_ai);
-                      break;
-                    case in_both:
-                      std::pair<bool, attr_value> new_value;
-                      node_attr_conflict conflict(new_n->self);
-                      if (merge_scalar(left_ai->second,
-                                       safe_get(left_marking.attrs, left_ai->first),
-                                       left_uncommon_ancestors,
-                                       right_ai->second,
-                                       safe_get(right_marking.attrs, right_ai->first),
-                                       right_uncommon_ancestors,
-                                       new_value,
-                                       conflict))
-                        {
-                          // successful merge
-                          safe_insert(new_n->attrs,
-                                      std::make_pair(left_ai->first, new_value));
-                        }
-                      else
-                        {
-                          // unsuccessful merge
-                          // leave out the attr entry entirely, and save the
-                          // conflict
-                          result.node_attr_conflicts.push_back(conflict);
-                        }
-                      break;
-                    }
-                  
-                }
-              }
-            }
-            ++left_mi;
-            ++right_mi;
-            break;
-          }
-        ++new_i;
-      }
-  }
-
-  // FIXME: looped nodes here
-}
 
 ////////////////////////////////////////////////////////////////////
 //   getting rosters from the working copy
