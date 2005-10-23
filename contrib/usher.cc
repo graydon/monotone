@@ -12,11 +12,12 @@
 // a post-0.23 client is needed (0.23 clients can only be matched against
 // their include pattern).
 //
-// Usage: usher [-l address[:port]] [-a address:port] <server-file>
+// Usage: usher [-l address[:port]] [-a address:port] [-p pidfile] <server-file>
 //
 // options:
 // -l   address and port to listen on, defaults to 0.0.0.0:5253
 // -a   address and port to listen for admin commands
+// -p   a file (deleted on program exit) to record the pid of the usher in
 // <server-file>   a file that looks like
 //   userpass username password
 //
@@ -514,6 +515,7 @@ int fork_server(vector<string> const & args)
     a[args.size()] = 0;
 
     execvp(a[0], a);
+    perror("execvp failed\n");
     exit(1);
   } else {
     close(err[1]);
@@ -524,8 +526,10 @@ int fork_server(vector<string> const & args)
     // the first line output on the server's stderr will be either
     // "monotone: beginning service on <interface> : <port>" or
     // "monotone: network error: bind(2) error: Address already in use"
-    while(r >= 0 && !line) {
+    while(r >= 0 && !line && got < 256) {
       r = read(err[0], head + got, 256 - got);
+      if (r)
+        cerr<<"Read '"<<string(head+got, r)<<"'\n";
       if (r > 0) {
         for (int i = 0; i < r && !line; ++i)
           if (head[got+i] == '\n')
@@ -1085,10 +1089,10 @@ struct channel
             char * dat;
             int size;
             sbuf.getwrite(p, n);
-            if (who->enabled)
-              make_packet(notfound, dat, size);
-            else
+            if (who)
               make_packet(srvdisabled, dat, size);
+            else
+              make_packet(notfound, dat, size);
             if (n < size) size = n;
             memcpy(p, dat, size);
             sbuf.fixwrite(size);
@@ -1362,8 +1366,31 @@ struct administrator
   }
 };
 
+struct pidfile
+{
+  string filename;
+  void initialize(string const & file)
+  {
+    filename = file;
+    std::ofstream ofs(filename.c_str());
+    ofs<<getpid();
+  }
+  ~pidfile()
+  {
+    if (!filename.empty())
+      unlink(filename.c_str());
+  }
+};
+
+bool done;
+void sig_end(int sig)
+{
+  done = true;
+}
+
 int main (int argc, char **argv)
 {
+  pidfile pf;
   administrator admin;
   {
     int i;
@@ -1376,6 +1403,8 @@ int main (int argc, char **argv)
           listenport = lexical_cast<int>(lp.substr(c+1));
       } else if (string(argv[i]) == "-a")
         admin.initialize(argv[++i]);
+      else if (string(argv[i]) == "-p")
+        pf.initialize(argv[++i]);
       else
         conffile = argv[i];
     }
@@ -1394,21 +1423,23 @@ int main (int argc, char **argv)
   sa.sa_flags = 0;
   while(sigaction(SIGHUP, &sa, &sa_old) == -1 && errno == EINTR);
   sa.sa_handler = SIG_IGN;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
   while(sigaction(SIGPIPE, &sa, &sa_old) == -1 && errno == EINTR);
+  sa.sa_handler = sig_end;
+  while(sigaction(SIGTERM, &sa, &sa_old) == -1 && errno == EINTR);
+  while(sigaction(SIGINT, &sa, &sa_old) == -1 && errno == EINTR);
 
   sock h(-1);
   try {
     h = start(listenaddr, listenport);
   } catch (errstr & s) {
-    std::cerr<<s.name<<"\n";
+    std::cerr<<"Error while opening socket: "<<s.name<<"\n";
     exit (1);
   }
 
   std::list<channel> channels;
 
-  for (;;) {
+  done = false;
+  while (!done) {
     fd_set rd, wr, er;
     FD_ZERO (&rd);
     FD_ZERO (&wr);
@@ -1432,6 +1463,8 @@ int main (int argc, char **argv)
       perror ("select()");
       exit (1);
     }
+    if (done)
+      return 0;
     if (FD_ISSET(h, &rd)) {
       try {
         struct sockaddr_in client_address;
