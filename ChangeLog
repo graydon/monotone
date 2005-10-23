@@ -1,5 +1,11 @@
 2005-10-23  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* std_hooks.lua: new default get_netsync_*_permitted hooks, which
+	read permissions setting from $confdir/{read,write}-permissions
+	* monotone.texi: document the new default hooks
+
+2005-10-23  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* contrib/usher.cc: new option "-p <pidfile>", catch SIGTERM and SIGINT
 	and exit cleanly
 
