@@ -131,31 +131,6 @@ dump(cset const & cs, std::string & out);
 
 // Some helpers.
 
-template <typename T>
-void
-safe_erase(T & container, typename T::key_type const & key)
-{
-  I(container.erase(key));
-}
-
-template <typename T>
-typename T::iterator
-safe_insert(T & container, typename T::value_type const & val)
-{
-  std::pair<typename T::iterator, bool> r = container.insert(val);
-  I(r.second);
-  return r.first;
-}
-
-template <typename T>
-typename T::mapped_type const &
-safe_get(T & container, typename T::key_type const & key)
-{
-  typename T::const_iterator i = container.find(key);
-  I(i != container.end());
-  return i->second;
-}
-
 inline split_path
 internal_string_to_split_path(std::string const & str)
 {

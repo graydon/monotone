@@ -35,6 +35,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
+#include "safe_map.hh"
 
 
 void revision_set::check_sane() const
@@ -711,9 +712,9 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
 void
 select_nodes_modified_by_rev(revision_id const & rid,
                              revision_set const & rev,
-			     std::set<node_id> & nodes_changed,
-			     std::set<node_id> & nodes_born,
-			     app_state & app)
+                             std::set<node_id> & nodes_changed,
+                             std::set<node_id> & nodes_born,
+                             app_state & app)
 {
   roster_t new_roster;
   marking_map mm;
