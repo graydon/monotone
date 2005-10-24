@@ -94,7 +94,7 @@ struct roster_merge_result
   std::vector<node_name_conflict> node_name_conflicts;
   std::vector<file_content_conflict> file_content_conflicts;
   std::vector<node_attr_conflict> node_attr_conflicts;
-  // this roster is sane iff is_clean() returns true
+  // this roster is sane if is_clean() returns true
   roster_t roster;
   bool is_clean();
   void clear();

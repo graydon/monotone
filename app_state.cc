@@ -36,7 +36,8 @@ static string const keydir_option("keydir");
 app_state::app_state() 
   : branch_name(""), db(system_path()), keys(this), stdhooks(true),
     rcfiles(true), diffs(false),
-    no_merges(false), set_default(false), verbose(false), search_root("/"),
+    no_merges(false), set_default(false), verbose(false), date_set(false),
+    search_root("/"),
     depth(-1), last(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false), bind_address(""), bind_port(""), 
     missing(false), unknown(false),
@@ -352,7 +353,23 @@ app_state::set_message_file(utf8 const & m)
 void
 app_state::set_date(utf8 const & d)
 {
-  date = d;
+  try
+    {
+      // boost::posix_time is lame: it can parse "basic" ISO times, of the
+      // form 20000101T120000, but not "extended" ISO times, of the form
+      // 2000-01-01T12:00:00.  So do something stupid to convert one to the
+      // other.
+      std::string tmp = d();
+      std::string::size_type pos = 0;
+      while ((pos = tmp.find_first_of("-:")) != string::npos)
+        tmp.erase(pos, 1);
+      date = boost::posix_time::from_iso_string(tmp);
+      date_set = true;
+    }
+  catch (std::exception &e)
+    {
+      N(false, F("failed to parse date string '%s': %s") % d % e.what());
+    }
 }
 
 void

@@ -16,7 +16,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tokenizer.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "commands.hh"
 #include "constants.hh"
@@ -48,6 +47,7 @@
 #include "options.hh"
 #include "globish.hh"
 #include "paths.hh"
+#include "merge.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -2261,28 +2261,6 @@ CMD(attr, N_("working copy"), N_("set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FIL
 }
 */
 
-static boost::posix_time::ptime
-string_to_datetime(std::string const & s)
-{
-  try
-    {
-      // boost::posix_time is lame: it can parse "basic" ISO times, of the
-      // form 20000101T120000, but not "extended" ISO times, of the form
-      // 2000-01-01T12:00:00.  So do something stupid to convert one to the
-      // other.
-      std::string tmp = s;
-      std::string::size_type pos = 0;
-      while ((pos = tmp.find_first_of("-:")) != string::npos)
-        tmp.erase(pos, 1);
-      return boost::posix_time::from_iso_string(tmp);
-    }
-  catch (std::exception &e)
-    {
-      N(false, F("failed to parse date string '%s': %s") % s % e.what());
-    }
-  I(false);
-}
-
 CMD(commit, N_("working copy"), N_("[PATH]..."), 
     N_("commit working copy to database"),
     OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % 
@@ -2445,8 +2423,8 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
     dbw.consume_revision_data(rid, rdat);
   
     cert_revision_in_branch(rid, branchname, app, dbw); 
-    if (app.date().length() > 0)
-      cert_revision_date_time(rid, string_to_datetime(app.date()), app, dbw);
+    if (app.date_set)
+      cert_revision_date_time(rid, app.date, app, dbw);
     else
       cert_revision_date_now(rid, app, dbw);
     if (app.author().length() > 0)
@@ -3002,125 +2980,7 @@ CMD(update, N_("working copy"), "",
   maybe_update_inodeprints(app);
 }
 
-
-
-// this helper tries to produce merge <- mergeN(left,right); it searches
-// for a common ancestor and if none is found synthesizes a common one with
-// no contents. it then computes composite changesets via the common
-// ancestor and does a 3-way merge.
-
-static void 
-try_one_merge(revision_id const & left_id,
-              revision_id const & right_id,
-              revision_id const & ancestor_id, // empty ==> use common ancestor
-              revision_id & merged_id,
-              app_state & app)
-{
-  revision_id anc_id;
-  revision_set left_rev, right_rev, anc_rev, merged_rev;
-
-  app.db.get_revision(left_id, left_rev);
-  app.db.get_revision(right_id, right_rev);
-  
-  packet_db_writer dbw(app);    
-    
-  manifest_map anc_man, left_man, right_man, merged_man;
-  
-  boost::shared_ptr<change_set>
-    anc_to_left(new change_set()), 
-    anc_to_right(new change_set()), 
-    left_to_merged(new change_set()), 
-    right_to_merged(new change_set());
-  
-  app.db.get_manifest(right_rev.new_manifest, right_man);
-  app.db.get_manifest(left_rev.new_manifest, left_man);
-  
-  // Make sure that we can't create malformed graphs where the left parent is
-  // a descendent or ancestor of the right, or where both parents are equal,
-  // etc.
-  {
-    set<revision_id> ids;
-    ids.insert(left_id);
-    ids.insert(right_id);
-    erase_ancestors(ids, app);
-    I(ids.size() == 2);
-  }
-
-  if (!null_id(ancestor_id))
-    {
-      I(is_ancestor(ancestor_id, left_id, app));
-      I(is_ancestor(ancestor_id, right_id, app));
-
-      anc_id = ancestor_id;
-
-      app.db.get_revision(anc_id, anc_rev);
-      app.db.get_manifest(anc_rev.new_manifest, anc_man);
-
-      calculate_composite_change_set(anc_id, left_id, app, *anc_to_left);
-      calculate_composite_change_set(anc_id, right_id, app, *anc_to_right);
-    }
-  else if (find_common_ancestor_for_merge(left_id, right_id, anc_id, app))
-    {     
-      P(F("common ancestor %s found\n"
-          "trying 3-way merge\n") % describe_revision(app, anc_id));
-      
-      app.db.get_revision(anc_id, anc_rev);
-      app.db.get_manifest(anc_rev.new_manifest, anc_man);
-      
-      calculate_composite_change_set(anc_id, left_id, app, *anc_to_left);
-      calculate_composite_change_set(anc_id, right_id, app, *anc_to_right);
-    }
-  else
-    {
-      P(F("no common ancestor found, synthesizing edges\n")); 
-      build_pure_addition_change_set(left_man, *anc_to_left);
-      build_pure_addition_change_set(right_man, *anc_to_right);
-    }
-  
-  merge_provider merger(app, anc_man, left_man, right_man);
-  
-  merge_change_sets(*anc_to_left, *anc_to_right, 
-                    *left_to_merged, *right_to_merged,
-                    merger, app);
-  
-  {
-    // we have to record *some* route to this manifest. we pick the
-    // smaller of the two.
-    manifest_map tmp;
-    apply_change_set(anc_man, *anc_to_left, tmp);
-    apply_change_set(tmp, *left_to_merged, merged_man);
-    calculate_ident(merged_man, merged_rev.new_manifest);
-    delta left_mdelta, right_mdelta;
-    diff(left_man, merged_man, left_mdelta);
-    diff(right_man, merged_man, right_mdelta);
-    if (left_mdelta().size() < right_mdelta().size())
-      dbw.consume_manifest_delta(left_rev.new_manifest, 
-                                 merged_rev.new_manifest, left_mdelta);
-    else
-      dbw.consume_manifest_delta(right_rev.new_manifest, 
-                                 merged_rev.new_manifest, right_mdelta);
-  }
-  
-  merged_rev.edges.insert(std::make_pair(left_id,
-                                         std::make_pair(left_rev.new_manifest,
-                                                        left_to_merged)));
-  merged_rev.edges.insert(std::make_pair(right_id,
-                                         std::make_pair(right_rev.new_manifest,
-                                                        right_to_merged)));
-  revision_data merged_data;
-  write_revision_set(merged_rev, merged_data);
-  calculate_ident(merged_data, merged_id);
-  dbw.consume_revision_data(merged_id, merged_data);
-  if (app.date().length() > 0)
-    cert_revision_date_time(merged_id, string_to_datetime(app.date()), app, dbw);
-  else
-    cert_revision_date_now(merged_id, app, dbw);
-  if (app.author().length() > 0)
-    cert_revision_author(merged_id, app.author(), app, dbw);
-  else
-    cert_revision_author_default(merged_id, app, dbw);
-}                         
-
+*/
 
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
     OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR % OPT_LCA)
@@ -3152,7 +3012,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
 
       revision_id merged;
       transaction_guard guard(app.db);
-      try_one_merge(left, right, revision_id(), merged, app);
+      interactive_merge_and_store(left, right, merged, app);
                   
       // merged 1 edge; now we commit this, update merge source and
       // try next one
@@ -3238,7 +3098,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
     {
       revision_id merged;
       transaction_guard guard(app.db);
-      try_one_merge(*src_i, *dst_i, revision_id(), merged, app);
+      interactive_merge_and_store(*src_i, *dst_i, merged, app);
 
       packet_db_writer dbw(app);
 
@@ -3255,7 +3115,6 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
       P(F("[merged] %s\n") % merged);
     }
 }
-*/
 
 CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
     OPT_NONE)

@@ -46,6 +46,7 @@ MOST_SOURCES =								\
          string_queue.cc string_queue.hh                                \
          paths.cc paths.hh                                              \
          roster_merge.cc roster_merge.hh                                \
+         merge.cc merge.hh                                              \
                                                                         \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\

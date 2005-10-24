@@ -12,6 +12,7 @@ class lua_hooks;
 #include <boost/shared_ptr.hpp>
 #include <botan/pubkey.h>
 #include <botan/rsa.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <vector>
 
@@ -45,7 +46,8 @@ public:
   options_map options;
   utf8 message;
   utf8 message_file;
-  utf8 date;
+  bool date_set;
+  boost::posix_time::ptime date;
   utf8 author;
   system_path search_root;
   std::vector<utf8> revision_selectors;
