@@ -745,74 +745,66 @@ kill_rev_locally(app_state& app, std::string const& id)
 
 // The changes_summary structure holds a list all of files and directories
 // affected in a revision, and is useful in the 'log' command to print this
-// information easily.  It has to be constructed from all change_set objects
+// information easily.  It has to be constructed from all cset objects
 // that belong to a revision.
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
+
 struct
 changes_summary
 {
-  bool empty;
-  change_set::path_rearrangement rearrangement;
-  std::set<file_path> modified_files;
-
+  cset cs;
   changes_summary(void);
-  void add_change_set(change_set const & cs);
+  void add_change_set(cset const & cs);
   void print(std::ostream & os, size_t max_cols) const;
 };
 
-changes_summary::changes_summary(void) : empty(true)
+changes_summary::changes_summary(void) 
 {
 }
 
 void
-changes_summary::add_change_set(change_set const & cs)
+changes_summary::add_change_set(cset const & c)
 {
   if (cs.empty())
     return;
-  empty = false;
 
-  change_set::path_rearrangement const & pr = cs.rearrangement;
+  // FIXME: not sure whether it matters for an informal summary
+  // object like this, but the pre-state names in deletes and renames
+  // are not really sensible to union; they refer to different trees
+  // so mixing them up in a single set is potentially ambiguous.
 
-  for (std::set<file_path>::const_iterator i = pr.deleted_files.begin();
-       i != pr.deleted_files.end(); i++)
-    rearrangement.deleted_files.insert(*i);
+  copy(c.nodes_deleted.begin(), c.nodes_deleted.end(), 
+       inserter(cs.nodes_deleted, cs.nodes_deleted.begin()));
 
-  for (std::set<file_path>::const_iterator i = pr.deleted_dirs.begin();
-       i != pr.deleted_dirs.end(); i++)
-    rearrangement.deleted_dirs.insert(*i);
+  copy(c.files_added.begin(), c.files_added.end(), 
+       inserter(cs.files_added, cs.files_added.begin()));
 
-  for (std::map<file_path, file_path>::const_iterator
-       i = pr.renamed_files.begin(); i != pr.renamed_files.end(); i++)
-    rearrangement.renamed_files.insert(*i);
+  copy(c.dirs_added.begin(), c.dirs_added.end(), 
+       inserter(cs.dirs_added, cs.dirs_added.begin()));
 
-  for (std::map<file_path, file_path>::const_iterator
-       i = pr.renamed_dirs.begin(); i != pr.renamed_dirs.end(); i++)
-    rearrangement.renamed_dirs.insert(*i);
+  copy(c.nodes_renamed.begin(), c.nodes_renamed.end(), 
+       inserter(cs.nodes_renamed, cs.nodes_renamed.begin()));
 
-  for (std::set<file_path>::const_iterator i = pr.added_files.begin();
-       i != pr.added_files.end(); i++)
-    rearrangement.added_files.insert(*i);
+  copy(c.deltas_applied.begin(), c.deltas_applied.end(), 
+       inserter(cs.deltas_applied, cs.deltas_applied.begin()));
 
-  for (change_set::delta_map::const_iterator i = cs.deltas.begin();
-       i != cs.deltas.end(); i++)
-    {
-      if (pr.added_files.find(i->first) == pr.added_files.end())
-        modified_files.insert(i->first);
-    }
+  copy(c.attrs_cleared.begin(), c.attrs_cleared.end(), 
+       inserter(cs.attrs_cleared, cs.attrs_cleared.begin()));
+
+  copy(c.attrs_set.begin(), c.attrs_set.end(), 
+       inserter(cs.attrs_set, cs.attrs_set.begin()));
 }
 
 static void 
 print_indented_set(std::ostream & os, 
-                   set<file_path> const & s,
+                   set<split_path> const & s,
                    size_t max_cols)
 {
   size_t cols = 8;
   os << "       ";
-  for (std::set<file_path>::const_iterator i = s.begin();
+  for (std::set<split_path>::const_iterator i = s.begin();
        i != s.end(); i++)
     {
-      const std::string str = boost::lexical_cast<std::string>(*i);
+      const std::string str = boost::lexical_cast<std::string>(file_path(*i));
       if (cols > 8 && cols + str.size() + 1 >= max_cols)
         {
           cols = 8;
@@ -827,49 +819,63 @@ print_indented_set(std::ostream & os,
 void
 changes_summary::print(std::ostream & os, size_t max_cols) const
 {
-  if (! rearrangement.deleted_files.empty())
+  if (! cs.nodes_deleted.empty())
     {
-      os << "Deleted files:" << endl;
-      print_indented_set(os, rearrangement.deleted_files, max_cols);
+      os << "Deleted entries:" << endl;
+      print_indented_set(os, cs.nodes_deleted, max_cols);
     }
   
-  if (! rearrangement.deleted_dirs.empty())
+  if (! cs.nodes_renamed.empty())
     {
-      os << "Deleted directories:" << endl;
-      print_indented_set(os, rearrangement.deleted_dirs, max_cols);
+      os << "Renamed entries:" << endl;
+      for (std::map<split_path, split_path>::const_iterator
+           i = cs.nodes_renamed.begin();
+           i != cs.nodes_renamed.end(); i++)
+        os << "        " << file_path(i->first) << " to " << file_path(i->second) << endl;
     }
 
-  if (! rearrangement.renamed_files.empty())
+  if (! cs.files_added.empty())
     {
-      os << "Renamed files:" << endl;
-      for (std::map<file_path, file_path>::const_iterator
-           i = rearrangement.renamed_files.begin();
-           i != rearrangement.renamed_files.end(); i++)
-        os << "        " << i->first << " to " << i->second << endl;
+      std::set<split_path> tmp;
+      for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+           i != cs.files_added.end(); ++i)
+        tmp.insert(i->first);
+      os << "Added files:" << endl;
+      print_indented_set(os, tmp, max_cols);
     }
 
-  if (! rearrangement.renamed_dirs.empty())
-    {
-      os << "Renamed directories:" << endl;
-      for (std::map<file_path, file_path>::const_iterator
-           i = rearrangement.renamed_dirs.begin();
-           i != rearrangement.renamed_dirs.end(); i++)
-        os << "        " << i->first << " to " << i->second << endl;
-    }
-
-  if (! rearrangement.added_files.empty())
+  if (! cs.dirs_added.empty())
     {
       os << "Added files:" << endl;
-      print_indented_set(os, rearrangement.added_files, max_cols);
+      print_indented_set(os, cs.dirs_added, max_cols);
     }
 
-  if (! modified_files.empty())
+  if (! cs.deltas_applied.empty())
     {
+      std::set<split_path> tmp;
+      for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+           i != cs.deltas_applied.end(); ++i)
+        tmp.insert(i->first);
       os << "Modified files:" << endl;
-      print_indented_set(os, modified_files, max_cols);
+      print_indented_set(os, tmp, max_cols);
+    }
+
+  if (! cs.attrs_set.empty() || ! cs.attrs_cleared.empty())
+    {
+      std::set<split_path> tmp;
+      for (std::set<std::pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
+           i != cs.attrs_cleared.end(); ++i)
+        tmp.insert(i->first);
+
+      for (std::map<std::pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
+           i != cs.attrs_set.end(); ++i)
+        tmp.insert(i->first.first);
+
+      os << "Modified attrs:" << endl;
+      print_indented_set(os, tmp, max_cols);
     }
 }
-*/
+
 
 CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), OPT_NONE)
 {
@@ -2497,25 +2503,21 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
 ALIAS(ci, commit);
 
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
 static void
-do_external_diff(change_set::delta_map const & deltas,
+do_external_diff(cset const & cs,
                  app_state & app,
                  bool new_is_archived)
 {
-  for (change_set::delta_map::const_iterator i = deltas.begin();
-       i != deltas.end(); ++i)
+  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
+         i = cs.deltas_applied.begin();
+       i != cs.deltas_applied.end(); ++i)
     {
       data data_old;
       data data_new;
 
-      if (!null_id(delta_entry_src(i)))
-        {
-          file_data f_old;
-          app.db.get_file_version(delta_entry_src(i), f_old);
-          data_old = f_old.inner();
-        }
+      file_data f_old;
+      app.db.get_file_version(delta_entry_src(i), f_old);
+      data_old = f_old.inner();
 
       if (new_is_archived)
         {
@@ -2525,7 +2527,7 @@ do_external_diff(change_set::delta_map const & deltas,
         }
       else
         {
-          read_localized_data(delta_entry_path(i),
+          read_localized_data(file_path(delta_entry_path(i)),
                               data_new, app.lua);
         }
 
@@ -2534,7 +2536,7 @@ do_external_diff(change_set::delta_map const & deltas,
           guess_binary(data_new()))
         is_binary = true;
 
-      app.lua.hook_external_diff(delta_entry_path(i),
+      app.lua.hook_external_diff(file_path(delta_entry_path(i)),
                                  data_old,
                                  data_new,
                                  is_binary,
@@ -2546,90 +2548,94 @@ do_external_diff(change_set::delta_map const & deltas,
 }
 
 static void 
-dump_diffs(change_set::delta_map const & deltas,
+dump_diffs(cset const & cs,
            app_state & app,
            bool new_is_archived,
            diff_type type)
 {
   // 60 is somewhat arbitrary, but less than 80
   std::string patch_sep = std::string(60, '=');
-  for (change_set::delta_map::const_iterator i = deltas.begin();
-       i != deltas.end(); ++i)
+
+  for (std::map<split_path, file_id>::const_iterator 
+         i = cs.files_added.begin();
+       i != cs.files_added.end(); ++i)
     {
       cout << patch_sep << "\n";
-      if (null_id(delta_entry_src(i)))
+      data unpacked;
+      vector<string> lines;
+      
+      if (new_is_archived)
         {
-          data unpacked;
-          vector<string> lines;
-          
-          if (new_is_archived)
-            {
-              file_data dat;
-              app.db.get_file_version(delta_entry_dst(i), dat);
-              unpacked = dat.inner();
-            }
-          else
-            {
-              read_localized_data(delta_entry_path(i),
-                                  unpacked, app.lua);
-            }
-          
-          if (guess_binary(unpacked()))
-            cout << "# " << delta_entry_path(i) << " is binary\n";
-          else
-            {     
-              split_into_lines(unpacked(), lines);
-              if (! lines.empty())
-                {
-                  cout << (boost::format("--- %s\t%s\n") % delta_entry_path(i) % delta_entry_src(i))
-                       << (boost::format("+++ %s\t%s\n") % delta_entry_path(i) % delta_entry_dst(i))
-                       << (boost::format("@@ -0,0 +1,%d @@\n") % lines.size());
-                  for (vector<string>::const_iterator j = lines.begin();
-                       j != lines.end(); ++j)
-                    {
-                      cout << "+" << *j << endl;
-                    }
-                }
-            }
+          file_data dat;
+          app.db.get_file_version(i->second, dat);
+          unpacked = dat.inner();
         }
       else
         {
-          file_data f_old;
-          data data_old, data_new;
-          vector<string> old_lines, new_lines;
-          
-          app.db.get_file_version(delta_entry_src(i), f_old);
-          data_old = f_old.inner();
-          
-          if (new_is_archived)
+          read_localized_data(file_path(i->first),
+                              unpacked, app.lua);
+        }
+      
+      if (guess_binary(unpacked()))
+        cout << "# " << file_path(i->first) << " is binary\n";
+      else
+        {     
+          split_into_lines(unpacked(), lines);
+          if (! lines.empty())
             {
-              file_data f_new;
-              app.db.get_file_version(delta_entry_dst(i), f_new);
-              data_new = f_new.inner();
-            }
-          else
-            {
-              read_localized_data(delta_entry_path(i), 
-                                  data_new, app.lua);
-            }
-
-          if (guess_binary(data_new()) || 
-              guess_binary(data_old()))
-            cout << "# " << delta_entry_path(i) << " is binary\n";
-          else
-            {
-              split_into_lines(data_old(), old_lines);
-              split_into_lines(data_new(), new_lines);
-              make_diff(delta_entry_path(i).as_internal(), 
-                        delta_entry_path(i).as_internal(), 
-                        delta_entry_src(i),
-                        delta_entry_dst(i),
-                        old_lines, new_lines,
-                        cout, type);
+              cout << (boost::format("--- %s\t%s\n") % file_path(i->first) % i->second)
+                   << (boost::format("+++ %s\t%s\n") % file_path(i->first) % i->second)
+                   << (boost::format("@@ -0,0 +1,%d @@\n") % lines.size());
+              for (vector<string>::const_iterator j = lines.begin();
+                   j != lines.end(); ++j)
+                {
+                  cout << "+" << *j << endl;
+                }
             }
         }
     }
+
+  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
+         i = cs.deltas_applied.begin();
+       i != cs.deltas_applied.end(); ++i)
+    {
+      file_data f_old;
+      data data_old, data_new;
+      vector<string> old_lines, new_lines;
+      
+      app.db.get_file_version(delta_entry_src(i), f_old);
+      data_old = f_old.inner();
+      
+      if (new_is_archived)
+        {
+          file_data f_new;
+          app.db.get_file_version(delta_entry_dst(i), f_new);
+          data_new = f_new.inner();
+        }
+      else
+        {
+          read_localized_data(file_path(delta_entry_path(i)), 
+                              data_new, app.lua);
+        }
+      
+      if (guess_binary(data_new()) || 
+          guess_binary(data_old()))
+        cout << "# " << file_path(delta_entry_path(i)) << " is binary\n";
+      else
+        {
+          split_into_lines(data_old(), old_lines);
+          split_into_lines(data_new(), new_lines);
+          make_diff(file_path(delta_entry_path(i)).as_internal(), 
+                    file_path(delta_entry_path(i)).as_internal(), 
+                    delta_entry_src(i),
+                    delta_entry_dst(i),
+                    old_lines, new_lines,
+                    cout, type);
+        }
+    }
 }
+
+  /*
 
 CMD(diff, N_("informative"), N_("[PATH]..."), 
     N_("show current diffs on stdout.\n"
@@ -2651,7 +2657,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       F("--diff-args requires --external\n"
         "try adding --external or removing --diff-args?"));
 
-  change_set composite;
+  cset composite;
 
   // initialize before transaction so we have a database to work with
 
@@ -3583,30 +3589,42 @@ CMD(annotate, N_("informative"), N_("PATH"),
   L(F("annotate for file_id %s\n") % file_node->self);
   do_annotate(app, file_node, rid);
 }
+*/
 
-CMD(log, N_("informative"), N_("[FILE]"),
+CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
     OPT_LAST % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES)
 {
-  file_path file;
-
   if (app.revision_selectors.size() == 0)
     app.require_working_copy("try passing a --revision to start at");
 
-  if (args.size() > 1)
-    throw usage(name);
+  set<node_id> nodes;
 
   if (args.size() > 0)
-    file = file_path_external(idx(args, 0)); // specified a file
+    {
+      // User wants to trace only specific files
+      roster_t old_roster, new_roster;
+      revision_set rev;
+      get_unrestricted_working_revision_and_rosters(app, rev, old_roster, new_roster);
+      for (size_t i = 0; i < args.size(); ++i)
+        {
+          file_path fp = file_path_external(idx(args, i));
+          split_path sp;
+          fp.split(sp);
+          N(new_roster.has_node(sp),
+            F("Unknown file '%s' for log command") % fp);
+          nodes.insert(new_roster.get_node(sp)->self);
+        }
+    }
 
-  set< pair<file_path, revision_id> > frontier;
+  set<revision_id> frontier;
 
   if (app.revision_selectors.size() == 0)
     {
       revision_id rid;
       get_revision_id(rid);
-      frontier.insert(make_pair(file, rid));
+      frontier.insert(rid);
     }
   else
     {
@@ -3614,7 +3632,7 @@ CMD(log, N_("informative"), N_("[FILE]"),
            i != app.revision_selectors.end(); i++) {
         revision_id rid;
         complete(app, (*i)(), rid);
-        frontier.insert(make_pair(file, rid));
+        frontier.insert(rid);
       }
     }
 
@@ -3631,15 +3649,14 @@ CMD(log, N_("informative"), N_("[FILE]"),
   revision_set rev;
   while(! frontier.empty() && (last == -1 || last > 0))
     {
-      set< pair<file_path, revision_id> > next_frontier;
-      for (set< pair<file_path, revision_id> >::const_iterator i = frontier.begin();
+      set<revision_id> next_frontier;
+      
+      for (set<revision_id>::const_iterator i = frontier.begin();
            i != frontier.end(); ++i)
         { 
-          revision_id rid;
-          file = i->first;
-          rid = i->second;
+          revision_id rid = *i;
 
-          bool print_this = file.empty();
+          bool print_this = nodes.empty();
           set<  revision<id> > parents;
           vector< revision<cert> > tmp;
 
@@ -3653,8 +3670,32 @@ CMD(log, N_("informative"), N_("[FILE]"),
             continue;
 
           seen.insert(rid);
-
           app.db.get_revision(rid, rev);
+
+          if (!nodes.empty())
+            {
+              set<node_id> nodes_changed;
+              set<node_id> nodes_born;
+              bool any_node_hit = false;
+              select_nodes_modified_by_rev(rid, rev, 
+                                           nodes_changed, 
+                                           nodes_born,
+                                           app);
+              for (set<node_id>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
+                {
+                  if (nodes_changed.find(*n) != nodes_changed.end())
+                    {
+                      any_node_hit = true;
+                      break;
+                    }
+                }
+              for (set<node_id>::const_iterator n = nodes_born.begin(); n != nodes_born.end();
+                   ++n)
+                nodes.erase(*n);
+
+              if (!any_node_hit)
+                print_this = false;
+            }
 
           changes_summary csum;
           
@@ -3664,33 +3705,8 @@ CMD(log, N_("informative"), N_("[FILE]"),
                e != rev.edges.end(); ++e)
             {
               ancestors.insert(edge_old_revision(e));
-
-              change_set const & cs = edge_changes(e);
-              if (! file.empty())
-                {
-                  if (cs.rearrangement.has_deleted_file(file) ||
-                      cs.rearrangement.has_renamed_file_src(file))
-                    {
-                      print_this = false;
-                      next_frontier.clear();
-                      break;
-                    }
-                  else
-                    {
-                      file_path old_file = apply_change_set_inverse(cs, file);
-                      L(F("revision '%s' in '%s' maps to '%s' in %s\n")
-                        % rid % file % old_file % edge_old_revision(e));
-                      if (!(old_file == file) ||
-                          cs.deltas.find(file) != cs.deltas.end())
-                        {
-                          file = old_file;
-                          print_this = true;
-                        }
-                    }
-                }
-              next_frontier.insert(std::make_pair(file, edge_old_revision(e)));
-
-              csum.add_change_set(cs);
+              next_frontier.insert(edge_old_revision(e));
+              csum.add_change_set(edge_changes(e));
             }
 
           if (app.no_merges && rev.is_merge_node())
@@ -3721,7 +3737,7 @@ CMD(log, N_("informative"), N_("[FILE]"),
                 log_certs(app, rid, branch_name, "Branch: ", false);
                 log_certs(app, rid, tag_name,    "Tag: ",    false);
 
-                if (! csum.empty)
+                if (! csum.cs.empty())
                   {
                     cout << endl;
                     csum.print(cout, 70);
@@ -3737,8 +3753,7 @@ CMD(log, N_("informative"), N_("[FILE]"),
                 for (edge_map::const_iterator e = rev.edges.begin();
                      e != rev.edges.end(); ++e)
                   {
-                    dump_diffs(edge_changes(e).deltas,
-                               app, true, unified_diff);
+                    dump_diffs(edge_changes(e), app, true, unified_diff);
                   }
               }
 
@@ -3751,7 +3766,7 @@ CMD(log, N_("informative"), N_("[FILE]"),
       frontier = next_frontier;
     }
 }
-*/
+
 CMD(setup, N_("tree"), N_("DIRECTORY"), N_("setup a new working copy directory"),
     OPT_BRANCH_NAME)
 {
