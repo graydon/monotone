@@ -1434,7 +1434,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
       N(!app.branch_name().empty(), F("need --branch argument for branch-based checkout"));
       set<revision_id> heads;
       get_branch_heads(app.branch_name(), app, heads);
-      N(heads.size() > 0, F("branch %s is empty") % app.branch_name);
+      N(heads.size() > 0, F("branch '%s' is empty\n") % app.branch_name);
       N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
       ident = *(heads.begin());
     }

@@ -1,3 +1,7 @@
+2005-10-24  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: Merged 2 i18n strings.
+
 2005-10-23  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* std_hooks.lua: new default get_netsync_*_permitted hooks, which
