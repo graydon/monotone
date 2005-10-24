@@ -276,6 +276,13 @@ make_cset(roster_t const & from,
           roster_t const & to, 
           cset & cs);
 
+void
+select_nodes_modified_by_cset(cset const & cs,
+			      roster_t const & old_roster,
+			      roster_t const & new_roster,
+			      std::set<node_id> & nodes_changed,
+			      std::set<node_id> & nodes_born);
+
 void 
 update_restricted_roster_from_filesystem(roster_t & ros, 
                                          app_state & app);

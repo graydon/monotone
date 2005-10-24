@@ -203,7 +203,10 @@ get_working_revision_and_rosters(app_state & app,
   editable_roster_base er(new_roster, nis);
   cs->apply_to(er);
 
+  // Now update any idents in the new roster, and deltas in the cset
   update_restricted_roster_from_filesystem(new_roster, app);
+  make_cset(old_roster, new_roster, *cs);
+
   calculate_ident(new_roster, rev.new_manifest);
   L(F("new manifest_id is %s\n") % rev.new_manifest);
   
