@@ -128,6 +128,7 @@ read_cset(data const & dat, cset & cs);
 void
 dump(cset const & cs, std::string & out);
 
+
 // Some helpers.
 
 template <typename T>

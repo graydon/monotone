@@ -2104,6 +2104,85 @@ roster_merge(roster_t const & left_parent,
   // FIXME: looped nodes here
 }
 
+
+void
+select_nodes_modified_by_cset(cset const & cs,
+			      roster_t const & old_roster,
+			      roster_t const & new_roster,
+			      std::set<node_id> & nodes_changed,
+			      std::set<node_id> & nodes_born)
+{
+  nodes_changed.clear();
+  nodes_born.clear();
+
+  set<split_path> modified_prestate_nodes;
+  set<split_path> modified_poststate_nodes;
+
+  // Pre-state damage
+
+  copy(cs.nodes_deleted.begin(), cs.nodes_deleted.end(), 
+       inserter(modified_prestate_nodes, modified_prestate_nodes.begin()));
+  
+  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+       i != cs.nodes_renamed.end(); ++i)
+    modified_prestate_nodes.insert(i->first);
+
+  // Post-state damage
+
+  copy(cs.dirs_added.begin(), cs.dirs_added.end(), 
+       inserter(modified_poststate_nodes, modified_poststate_nodes.begin()));
+
+  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+       i != cs.files_added.end(); ++i)
+    modified_poststate_nodes.insert(i->first);
+
+  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+       i != cs.nodes_renamed.end(); ++i)
+    modified_poststate_nodes.insert(i->second);
+
+  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+       i != cs.deltas_applied.end(); ++i)
+    modified_poststate_nodes.insert(i->first);
+
+  for (std::set<std::pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
+       i != cs.attrs_cleared.end(); ++i)
+    modified_poststate_nodes.insert(i->first);
+
+  for (std::map<std::pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
+       i != cs.attrs_set.end(); ++i)
+    modified_poststate_nodes.insert(i->first.first);
+
+  // Finale
+
+  for (set<split_path>::const_iterator i = modified_prestate_nodes.begin();
+       i != modified_prestate_nodes.end(); ++i)
+    {
+      I(old_roster.has_node(*i));
+      nodes_changed.insert(old_roster.get_node(*i)->self);
+    }
+
+  for (set<split_path>::const_iterator i = modified_poststate_nodes.begin();
+       i != modified_poststate_nodes.end(); ++i)
+    {
+      I(new_roster.has_node(*i));
+      nodes_changed.insert(new_roster.get_node(*i)->self);
+    }
+
+  for (std::set<split_path>::const_iterator i = cs.dirs_added.begin();
+       i != cs.dirs_added.end(); ++i)
+    {
+      I(new_roster.has_node(*i));
+      nodes_born.insert(new_roster.get_node(*i)->self);
+    }
+
+  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+       i != cs.files_added.end(); ++i)
+    {
+      I(new_roster.has_node(i->first));
+      nodes_born.insert(new_roster.get_node(i->first)->self);
+    }
+}
+
 ////////////////////////////////////////////////////////////////////
 //   getting rosters from the working copy
 ////////////////////////////////////////////////////////////////////
