@@ -118,9 +118,8 @@ namespace
     n->attrs = old_n->attrs;
     if (is_file_t(n))
       downcast_to_file_t(n)->content = downcast_to_file_t(old_n)->content;
-    dir_t const & p = downcast_to_dir_t(new_roster.get_node(old_n->parent));
     // FIXME: this could hit a conflict!  (orphan or rename-target)
-    p->attach_child(old_n->name, n);
+    new_roster.attach_node(n->self, old_n->parent, old_n->name);
   }
   
 } // end anonymous namespace
@@ -136,6 +135,11 @@ roster_merge(roster_t const & left_parent,
 {
 
   result.clear();
+  MM(left_parent);
+  MM(left_marking);
+  MM(right_parent);
+  MM(right_marking);
+  MM(result.roster);
   
   // First handle lifecycles, by die-die-die merge -- our result will contain
   // everything that is alive in both parents, or alive in one and unborn in
@@ -216,8 +220,8 @@ roster_merge(roster_t const & left_parent,
                                  new_name, conflict))
                   {
                     // FIXME: this could hit a conflict! (orphan or rename-target)
-                    dir_t const & p = downcast_to_dir_t(result.roster.get_node(new_name.first));
-                    p->attach_child(new_name.second, new_n);
+                    result.roster.attach_node(new_n->self,
+                                              new_name.first, new_name.second);
                   }
                 else
                   {

@@ -183,6 +183,7 @@ public:
                         node_id nid);
   void insert_node(node_t n);
   void attach_node(node_id n, split_path const & dst);
+  void attach_node(node_id n, node_id parent, path_component name);
   void apply_delta(split_path const & pth, 
                    file_id const & old_id, 
                    file_id const & new_new);

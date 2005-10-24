@@ -95,7 +95,7 @@ dump(marking_map const & marking_map, std::string & out)
       std::string marking_str, indented_marking_str;
       dump(i->second, marking_str);
       prefix_lines_with("    ", marking_str, indented_marking_str);
-      oss << indented_marking_str;
+      oss << indented_marking_str << "\n";
     }
   out = oss.str();
 }
@@ -676,43 +676,47 @@ roster_t::attach_node(node_id nid, split_path const & dst)
   path_component basename;
   dirname_basename(dst, dirname, basename);
 
-  node_t n = get_node(nid);
+  if (dirname.empty())
+    // attaching the root node
+    attach_node(nid, the_null_node, basename);
+  else
+    attach_node(nid, get_node(dirname)->self, basename);
+}
 
+void
+roster_t::attach_node(node_id nid, node_id parent, path_component name)
+{
+  node_t n = get_node(nid);
+  
+  I(!null_node(n->self));
   // ensure the node is already detached (as best one can)
   I(null_node(n->parent));
   I(null_name(n->name));
-  I(!null_node(n->self));
 
   // this iterator might point to old_locations.end(), because old_locations
   // only includes entries for renames, not new nodes
   std::map<node_id, std::pair<node_id, path_component> >::iterator
     i = old_locations.find(nid);
 
-  if (dirname.empty())
+  if (null_node(parent) || null_name(name))
     {
-      // attaching the root dir
-      // (we repeat the above checks to clarify dependencies, just in case
-      // someone changes the magic defaults and removes the above checks...)
+      I(null_node(parent) && null_name(name));
       I(null_node(n->parent));
       I(null_name(n->name));
-      I(null_name(basename));
-      I(!has_root());     
       root_dir = downcast_to_dir_t(n);
       I(i == old_locations.end() || i->second != make_pair(root_dir->parent,
                                                            root_dir->name));
     }
   else
     {
-      // L(F("attaching into dir '%s'\n") % file_path(dirname));
-      dir_t parent = downcast_to_dir_t(get_node(dirname));
-      parent->attach_child(basename, n);
+      dir_t parent_n = downcast_to_dir_t(get_node(parent));
+      parent_n->attach_child(name, n);
       I(i == old_locations.end() || i->second != make_pair(n->parent, n->name));
     }
-
+  
   if (i != old_locations.end())
     old_locations.erase(i);
 }
-
 
 void
 roster_t::apply_delta(split_path const & pth,
