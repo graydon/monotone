@@ -207,6 +207,20 @@ get_working_revision_and_rosters(app_state & app,
   calculate_ident(new_roster, rev.new_manifest);
   L(F("new manifest_id is %s\n") % rev.new_manifest);
   
+  {
+    // FIXME: oh, this is so bad... we have to restrict and apply the cset once
+    // above, to get the tree rearrangements right
+    // but now we have to recalculate and restrict it again, so it will pick up
+    // patches (which weren't available until we called
+    // update_restricted_roster_from_filesystem above).
+    cset tmp_full, tmp_excluded;
+    // we ignore excluded stuff, our 'excluded' argument is only really
+    // supposed to have tree rearrangement stuff in it, and it already has
+    // that
+    make_cset(old_roster, new_roster, tmp_full);
+    restrict_cset(tmp_full, *cs, tmp_excluded, app);
+  }
+
   rev.edges.insert(std::make_pair(old_revision_id,
                                   std::make_pair(old_manifest_id, cs)));
 }
