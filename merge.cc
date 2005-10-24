@@ -3,8 +3,13 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <set>
+
+#include "revision.hh"
+#include "transforms.hh"
 #include "merge.hh"
 #include "roster_merge.hh"
+#include "packet.hh"
 
 void
 interactive_merge_and_store(revision_id const & left_rid,
@@ -33,7 +38,7 @@ interactive_merge_and_store(revision_id const & left_rid,
   // write new files into the db
 
   I(result.is_clean());
-  I(check_sane(merged_roster));
+  merged_roster.check_sane();
 
   revision_set merged_rev;
   
@@ -41,16 +46,16 @@ interactive_merge_and_store(revision_id const & left_rid,
   
   manifest_id left_mid;
   calculate_ident(left_roster, left_mid);
-  cset left_to_merged;
-  make_cset(left_roster, merged_roster, left_to_merged);
+  boost::shared_ptr<cset> left_to_merged(new cset);
+  make_cset(left_roster, merged_roster, *left_to_merged);
   safe_insert(merged_rev.edges, std::make_pair(left_rid,
                                                std::make_pair(left_mid,
                                                               left_to_merged)));
   
   manifest_id right_mid;
   calculate_ident(right_roster, right_mid);
-  cset right_to_merged;
-  make_cset(right_roster, merged_roster, right_to_merged);
+  boost::shared_ptr<cset> right_to_merged(new cset);
+  make_cset(right_roster, merged_roster, *right_to_merged);
   safe_insert(merged_rev.edges, std::make_pair(right_rid,
                                                std::make_pair(right_mid,
                                                               right_to_merged)));
@@ -62,14 +67,15 @@ interactive_merge_and_store(revision_id const & left_rid,
     transaction_guard guard(app.db);
   
     app.db.put_revision(merged_rid, merged_rev);
+    packet_db_writer dbw(app);
     if (app.date_set)
-      cert_revision_date_time(merged_id, app.date, app, dbw);
+      cert_revision_date_time(merged_rid, app.date, app, dbw);
     else
-      cert_revision_date_now(merged_id, app, dbw);
+      cert_revision_date_now(merged_rid, app, dbw);
     if (app.author().length() > 0)
-      cert_revision_author(merged_id, app.author(), app, dbw);
+      cert_revision_author(merged_rid, app.author(), app, dbw);
     else
-      cert_revision_author_default(merged_id, app, dbw);
+      cert_revision_author_default(merged_rid, app, dbw);
 
     guard.commit();
   }
