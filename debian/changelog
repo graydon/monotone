@@ -1,8 +1,29 @@
+monotone (0.23-2) unstable; urgency=low
+
+  * Arm, hppa and m68k is now build-depending on g++-3.4
+  * Closes: #334999: FTBFS on arm/hppa/m68k: please use g++-3.4
+  * Build is now controlled by Common Debian Build System (CDBS).
+
+ -- Tomas Fasth <tomfa@debian.org>  Fri, 21 Oct 2005 17:18:16 +0000
+
+monotone (0.23-1) unstable; urgency=low
+
+  * Rebuild in clean environment for upload to debian archive.
+
+ -- Tomas Fasth <tomfa@debian.org>  Mon, 10 Oct 2005 16:59:06 +0000
+
 monotone (0.23-0.1) unstable; urgency=low
 
   * New upstream release.
 
  -- Nathaniel Smith <njs@pobox.com>  Thu, 29 Sep 2005 23:50:22 -0700
+
+monotone (0.22-2) unstable; urgency=high
+
+  * Closes: #323858: package has unmet dependencies
+  * New build to fix broken library dependencies for unstable.
+
+ -- Tomas Fasth <tomfa@debian.org>  Thu, 18 Aug 2005 23:08:51 +0000
 
 monotone (0.22-1) unstable; urgency=low
 

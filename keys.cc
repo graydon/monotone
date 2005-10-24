@@ -192,13 +192,11 @@ get_private_key(lua_hooks & lua,
   bool force = force_from_user;
 
   L(F("base64-decoding %d-byte private key\n") % priv().size());
-  L(F("priv '%s'\n") % priv());
   decode_base64(priv, decoded_key);
   for (int i = 0; i < 3; ++i)
     {
       get_passphrase(lua, id, phrase, false, force);
       L(F("have %d-byte encrypted private key\n") % decoded_key().size());
-      L(F("decoded '%s'\n") % decoded_key());
 
       shared_ptr<PKCS8_PrivateKey> pkcs8_key;
       try 

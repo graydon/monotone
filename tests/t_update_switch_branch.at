@@ -1,0 +1,22 @@
+AT_SETUP([update -b switches branches even when noop])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+
+RID1=`BASE_REVISION`
+
+AT_CHECK(MONOTONE cert $RID1 branch otherbranch, [], [ignore], [ignore])
+
+AT_CHECK(QGREP(testbranch MT/options))
+AT_CHECK(QGREP(otherbranch MT/options), [1])
+
+AT_CHECK(MONOTONE update -b otherbranch, [], [ignore], [ignore])
+RID2=`BASE_REVISION`
+AT_CHECK(test "$RID1" = "$RID2")
+
+AT_CHECK(QGREP(testbranch MT/options), [1])
+AT_CHECK(QGREP(otherbranch MT/options))
+
+AT_CLEANUP

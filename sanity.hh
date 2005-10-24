@@ -61,6 +61,7 @@ struct sanity {
   system_path filename;
   std::string gasp_dump;
   bool already_dumping;
+  bool clean_shutdown;
   std::vector<MusingI const *> musings;
 
   void log(boost::format const & fmt, 

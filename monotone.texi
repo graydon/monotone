@@ -1623,23 +1623,20 @@ monotone: read 2 packets
 @end smallexample
 
 Now Jim's monotone is able to identify Beth and Abe, and he is ready to
-give them permission to access his database.  He does this by adding a
-small amount of extra information to his @file{monotonerc} file:
+give them permission to access his database.  He does this by editing a
+pair of small files in his @file{~/.monotone} directory:
 
 @smallexample
 @group
-$ cat >>~/.monotone/monotonerc
-function get_netsync_read_permitted (branch, identity)
-  if (identity == "abe@@juicebot.co.jp") then return true end
-  if (identity == "beth@@juicebot.co.jp") then return true end
-  return false
-end
+$ cat >>~/.monotone/read-permissions
+[*]
+abe@@juicebot.co.jp
+beth@@juicebot.co.jp
+^D
 
-function get_netsync_write_permitted (identity)
-  if (identity == "abe@@juicebot.co.jp") then return true end
-  if (identity == "beth@@juicebot.co.jp") then return true end
-  return false
-end
+$ cat >>~/.monotone/write-permissions
+abe@@juicebot.co.jp
+beth@@juicebot.co.jp
 ^D
 @end group
 @end smallexample
@@ -5900,8 +5897,35 @@ end
 Returns @code{true} if a peer authenticated as key @var{identity}
 should be allowed to read from your database certs, revisions,
 manifests, and files associated with @var{branch}; otherwise @code{false}.
-This hook has no default definition, therefore the default behavior is
-to deny all reads.
+The default definition of this hook reads a file @file{read-permissions} in
+the configuration directory. This file looks like
+@smallexample
+@group
+[net.example.project.security*]
+[net.example.project.private*]
+! --all--
+joe@@example.net
+jim@@example.net
+[net.example.public*]
+[net.example.project*]
+--all--
+@end group
+@end smallexample
+This example allows everyone access to branches @code{net.example.project} and
+@code{net.example.public} and their sub-branches, except for the branches in
+@code{net.example.security} and @code{net.example.private}, which are only
+readable by Joe and Jim.
+
+The file is divided into sections of one or more lines in square brackets
+followed by one or more lines not in square brackets. A line in square brackets
+is a wildcard expression, which is matched against the @var{branch}. If one
+matches, then the other lines in that section are compared against
+@var{identity}. A line @code{keyname} allows @code{keyname} read access, and a
+line @code{! keyname} denies access. The special value @code{--all--} allows
+read access to everyone (including anonymous), and @code{! --all--} means that
+only keys allowed by this section have access. Without @code{! --all--}, if a
+key is neither allowed nor denied permission in a section, the hook will keep
+looking for matching sections in the rest of the file.
 
 If a client connects anonymously, this hook will be called with a
 @var{identity} of @code{nil}.
@@ -5917,8 +5941,10 @@ key fingerprints of each key in your database, as key ID strings are
 
 Returns @code{true} if a peer authenticated as key @var{identity} should
 be allowed to write into your database certs, revisions, manifests, and
-files; otherwise @code{false}.  This hook has no default definition,
-therefore the default behavior is to deny all writes.
+files; otherwise @code{false}. The default definition of this hook reads a file
+@file{write-permissions} in the configuration directory which contains a list
+of keys, one per line, which are allowed write access. The special value
+@code{--all--} means to allow access to anyone whose public key we already have.
 
 If a client connects anonymously, it will be unconditionally denied
 write access; this hook will @emph{not} be called with a @var{identity}
