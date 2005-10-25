@@ -203,21 +203,31 @@ get_working_revision_and_rosters(app_state & app,
   editable_roster_base er(new_roster, nis);
   cs->apply_to(er);
 
-  // Now update any idents in the new roster, and deltas in the cset
+  // Now update any idents in the new roster
   update_restricted_roster_from_filesystem(new_roster, app);
-  make_cset(old_roster, new_roster, *cs);
 
   calculate_ident(new_roster, rev.new_manifest);
   L(F("new manifest_id is %s\n") % rev.new_manifest);
   
   {
-    // FIXME: oh, this is so bad... we have to restrict and apply the cset once
-    // above, to get the tree rearrangements right
-    // but now we have to recalculate and restrict it again, so it will pick up
-    // patches (which weren't available until we called
-    // update_restricted_roster_from_filesystem above).
+    // We did the following:
+    //
+    //  - restrict the working cset (MT/work)
+    //  - apply the working cset to the new roster,
+    //    giving us a rearranged roster (with incorrect content hashes)
+    //  - re-scan file contents, updating content hashes
+    // 
+    // Alas, this is not enough: we must now re-calculate the cset
+    // such that it contains the content deltas we found, and 
+    // re-restrict that cset.
+    //
+    // FIXME: arguably, this *could* be made faster by doing a
+    // "make_restricted_cset" (or "augment_restricted_cset_deltas_only" 
+    // call, for maximum speed) but it's worth profiling before 
+    // spending time on it.
+
     cset tmp_full, tmp_excluded;
-    // we ignore excluded stuff, our 'excluded' argument is only really
+    // We ignore excluded stuff, our 'excluded' argument is only really
     // supposed to have tree rearrangement stuff in it, and it already has
     // that
     make_cset(old_roster, new_roster, tmp_full);

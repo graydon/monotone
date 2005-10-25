@@ -3250,24 +3250,22 @@ CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
     throw usage(name);  
 }
 
+*/
 
 CMD(revert, N_("working copy"), N_("[PATH]..."), 
     N_("revert file(s), dir(s) or entire working copy"), OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
-  manifest_map m_old;
+  roster_t old_roster;
   revision_id old_revision_id;
-  manifest_id old_manifest_id;
-  change_set::path_rearrangement work, included, excluded;
+  cset work, included_work, excluded_work;
   path_set old_paths;
  
   app.require_working_copy();
 
-  get_base_revision(app, 
-                    old_revision_id,
-                    old_manifest_id, m_old);
+  get_base_revision(app, old_revision_id, old_roster);
 
-  get_path_rearrangement(work);
-  extract_path_set(m_old, old_paths);
+  get_work_cset(work);
+  old_roster.extract_path_set(old_paths);
 
   path_set valid_paths(old_paths);
 
@@ -3284,7 +3282,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       // chose as_external because app_state::set_restriction turns utf8s into file_paths
       // using file_path_external()...
       for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
-        args_copy.push_back(i->as_external());
+        args_copy.push_back(file_path(*i).as_external());
 
       L(F("after adding everything from find_missing, revert args_copy has %d elements\n") % args_copy.size());
 
@@ -3293,43 +3291,60 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       if (args_copy.size() == 0)
         return;
     }
+
   app.set_restriction(valid_paths, args_copy, false);
 
-  restrict_path_rearrangement(work, included, excluded, app);
+  restrict_cset(work, included_work, excluded_work, app);
 
-  for (manifest_map::const_iterator i = m_old.begin(); i != m_old.end(); ++i)
+  node_map const & nodes = old_roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
     {
-      if (!app.restriction_includes(manifest_entry_path(i))) continue;
+      node_id nid = i->first;
+      node_t node = i->second;
 
-      hexenc<id> ident;
+      split_path sp;
+      old_roster.get_name(nid, sp);
+      file_path fp(sp);
 
-      if (file_exists(manifest_entry_path(i)))
+      // Only revert restriction-included files.
+      if (!app.restriction_includes(fp))
+        continue;
+
+      if (is_file_t(node))
         {
-          calculate_ident(manifest_entry_path(i), ident, app.lua);
-          // don't touch unchanged files
-          if (manifest_entry_id(i) == ident) continue;
-      }
+          file_t f = downcast_to_file_t(node);
+          if (file_exists(fp))
+            {
+              hexenc<id> ident;
+              calculate_ident(fp, ident, app.lua);
+              // don't touch unchanged files
+              if (ident == f->content.inner()) 
+                continue;
+            }
       
-      L(F("reverting %s from %s to %s\n") %
-        manifest_entry_path(i) % ident % manifest_entry_id(i));
-
-      N(app.db.file_version_exists(manifest_entry_id(i)),
-        F("no file version %s found in database for %s")
-        % manifest_entry_id(i) % manifest_entry_path(i));
-      
-      file_data dat;
-      L(F("writing file %s to %s\n")
-        % manifest_entry_id(i) % manifest_entry_path(i));
-      app.db.get_file_version(manifest_entry_id(i), dat);
-      write_localized_data(manifest_entry_path(i), dat.inner(), app.lua);
+          L(F("reverting %s to [%s]\n") % fp % f->content);
+          
+          N(app.db.file_version_exists(f->content),
+            F("no file version %s found in database for %s")
+            % f->content % fp);
+          
+          file_data dat;
+          L(F("writing file %s to %s\n")
+            % f->content % fp);
+          app.db.get_file_version(f->content, dat);
+          write_localized_data(fp, dat.inner(), app.lua);
+        }
+      else
+        {
+          mkdir_p(fp);
+        }
     }
 
   // race
-  put_path_rearrangement(excluded);
+  put_work_cset(excluded_work);
   update_any_attrs(app);
   maybe_update_inodeprints(app);
 }
-*/
 
 CMD(rcs_import, N_("debug"), N_("RCSFILE..."),
     N_("parse versions in RCS files\n"
