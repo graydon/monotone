@@ -8,6 +8,7 @@
 #include "vocab.hh"
 #include "roster_merge.hh"
 #include "parallel_iter.hh"
+#include "safe_map.hh"
 
 bool
 roster_merge_result::is_clean()

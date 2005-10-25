@@ -4,13 +4,14 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include "basic_io.hh"
-#include "cset.hh"
-#include "sanity.hh"
-
 #include <map>
 #include <set>
 #include <string>
+
+#include "basic_io.hh"
+#include "cset.hh"
+#include "sanity.hh"
+#include "safe_map.hh"
 
 using std::set;
 using std::map;

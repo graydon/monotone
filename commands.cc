@@ -2285,9 +2285,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, excluded_work);
   calculate_ident(rs, rid);
 
-  N(!(rs.edges.size() == 0 || 
-      edge_changes(rs.edges.begin()).empty()), 
-    F("no changes to commit\n"));
+  N(rs.is_nontrivial(), F("no changes to commit\n"));
     
   cert_value branchname;
   I(rs.edges.size() == 1);

@@ -56,6 +56,9 @@ revision_set
 {
   void check_sane() const;
   bool is_merge_node() const;
+  // trivial revisions are ones that have no effect -- e.g., commit should
+  // refuse to commit them, saying that there are no changes to commit.
+  bool is_nontrivial() const;
   revision_set() {}
   revision_set(revision_set const & other);
   revision_set const & operator=(revision_set const & other);
@@ -164,10 +167,10 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
 // frontier set of shared_ptr<roster_t>s, while traversing history.
 void
 select_nodes_modified_by_rev(revision_id const & rid,
-			     revision_set const & rev,
-			     std::set<node_id> & nodes_changed,
-			     std::set<node_id> & nodes_born,
-			     app_state & app);
+                             revision_set const & rev,
+                             std::set<node_id> & nodes_changed,
+                             std::set<node_id> & nodes_born,
+                             app_state & app);
 
 /*
 void 

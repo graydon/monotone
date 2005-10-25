@@ -10,6 +10,7 @@
 #include "merge.hh"
 #include "roster_merge.hh"
 #include "packet.hh"
+#include "safe_map.hh"
 
 void
 interactive_merge_and_store(revision_id const & left_rid,

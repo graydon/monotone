@@ -20,6 +20,7 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "parallel_iter.hh"
+#include "safe_map.hh"
 
 #include <boost/lexical_cast.hpp>
 
@@ -1653,10 +1654,10 @@ make_cset(roster_t const & from, roster_t const & to, cset & cs)
 
 void
 select_nodes_modified_by_cset(cset const & cs,
-			      roster_t const & old_roster,
-			      roster_t const & new_roster,
-			      std::set<node_id> & nodes_changed,
-			      std::set<node_id> & nodes_born)
+                              roster_t const & old_roster,
+                              roster_t const & new_roster,
+                              std::set<node_id> & nodes_changed,
+                              std::set<node_id> & nodes_born)
 {
   nodes_changed.clear();
   nodes_born.clear();

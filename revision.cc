@@ -35,46 +35,57 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
+#include "safe_map.hh"
 
 
 void revision_set::check_sane() const
 {
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
   I(!null_id(new_manifest));
-
-  manifest_map fragment;
-  for (edge_map::const_iterator i = edges.begin(); i != edges.end(); ++i)
+  if (edges.size() == 1)
     {
-      change_set const & cs = edge_changes(i);
-      cs.check_sane();
-      if (!global_sanity.relaxed)
+      // null revision is allowed iff there is a null manifest
+      I(null_id(edge_old_revision(edges.begin()))
+        == null_id(edge_old_manifest(edges.begin())));
+    }
+  else if (edges.size() == 2)
+    {
+      // merge nodes cannot have null revisions or null manifests, ever
+      for (edge_map::const_iterator i = edges.begin(); i != edges.end(); ++i)
         {
-          // null old revisions come with null old manifests
-          I(!null_id(edge_old_revision(i)) || null_id(edge_old_manifest(i)));
-        }
-      for (change_set::delta_map::const_iterator j = cs.deltas.begin(); j != cs.deltas.end(); ++j)
-        {
-          manifest_map::const_iterator k = fragment.find(delta_entry_path(j));
-          if (k == fragment.end())
-            fragment.insert(std::make_pair(delta_entry_path(j),
-                                           delta_entry_dst(j)));
-          else
-            {
-              if (!global_sanity.relaxed)
-                {                  
-                  I(delta_entry_dst(j) == manifest_entry_id(k));
-                }
-            }
+          I(!null_id(edge_old_revision(i)));
+          I(!null_id(edge_old_manifest(i)));
+          if (!(new_manifest == edge_old_manifest(i)))
+            I(!edge_changes(i).empty());
         }
     }
-*/
+  else
+    // revisions must always have either 1 or 2 edges
+    I(false);
+
+  // we used to also check that if there were multiple edges that had patches
+  // for the same file, then the new hashes on each edge matched each other.
+  // this is not ported over to roster-style revisions because it's an
+  // inadequate check, and the real check, that the new manifest id is correct
+  // (done in put_revision, for instance) covers this case automatically.
 }
 
 bool 
 revision_set::is_merge_node() const
 { 
   return edges.size() > 1; 
+}
+
+bool
+revision_set::is_nontrivial() const
+{
+  check_sane();
+  // merge revisions are never trivial, because even if the resulting node
+  // happens to be identical to both parents, the merge is still recording
+  // that fact.
+  if (is_merge_node())
+    return true;
+  else
+    return !edge_changes(edges.begin()).empty();
 }
 
 revision_set::revision_set(revision_set const & other)
@@ -711,9 +722,9 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
 void
 select_nodes_modified_by_rev(revision_id const & rid,
                              revision_set const & rev,
-			     std::set<node_id> & nodes_changed,
-			     std::set<node_id> & nodes_born,
-			     app_state & app)
+                             std::set<node_id> & nodes_changed,
+                             std::set<node_id> & nodes_born,
+                             app_state & app)
 {
   roster_t new_roster;
   marking_map mm;
