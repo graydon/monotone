@@ -70,6 +70,9 @@ public:
   system_path confdir;
   bool have_set_key_dir;
 
+  std::map<int, bool> explicit_option_map;  // set if the value of the flag was explicitly given on the command line
+  void set_is_explicit_option (int option_id);
+  bool is_explicit_option(int option_id) const;
 
   // These are used to cache signers/verifiers (if the hook allows).
   // They can't be function-static variables in key.cc, since they must be

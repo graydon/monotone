@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -13,6 +14,7 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"
+#include "options.hh"
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -469,7 +471,7 @@ guess_branch(revision_id const & ident,
              app_state & app,
              cert_value & branchname)
 {
-  if (app.branch_name() != "")
+  if ((app.branch_name() != "") && app.is_explicit_option(OPT_BRANCH_NAME))
     {
       branchname = app.branch_name();
     }

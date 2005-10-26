@@ -1,3 +1,19 @@
+2005-10-25  Emile Snyder  <emile@alumni.reed.edu>
+
+	Fix bug reported on mailing list by Wim Oudshoorn and Tom Koelman
+	where 'disapprove REV' inappropriately uses your working copy
+	branch for the disapproved revision.
+	* app_state.{cc,hh} (set_is_explicit_option, is_explicit_option):
+	New methods to determine if a given option value was set via
+	command line flag or not.
+	* cert.cc (guess_branch): Only accept explicit --branch values in
+	preference to the branch the given revision lives on.
+	* commands.cc (CMD(commit)): Explicitly use app.branch_name() if
+	it exists before calling guess_branch, so pick up MT/options
+	setting.
+	* monotone.cc (cpp_main): Set the explicit_option_map entries for
+	select command line flag processing.
+	
 2005-10-26  Matt Johnston  <matt@ucc.asn.au>
 
 	* INSTALL: mention that zlib is required
