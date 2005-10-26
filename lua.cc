@@ -35,6 +35,7 @@ extern "C" {
 #include "platform.hh"
 #include "transforms.hh"
 #include "paths.hh"
+#include "globish.hh"
 
 // defined in {std,test}_hooks.lua, converted
 #include "test_hooks.h"
@@ -627,6 +628,35 @@ extern "C"
   }
 
   static int
+  monotone_globish_match_for_lua(lua_State *L)
+  {
+    const char *re = lua_tostring(L, -2);
+    const char *str = lua_tostring(L, -1);
+
+    bool result = false;
+    try {
+      string r(re);
+      string n;
+      string s(str);
+      result = globish_matcher(r, n)(s);
+    } catch (informative_failure & e) {
+      lua_pushstring(L, e.what.c_str());
+      lua_error(L);
+      return 0;
+    } catch (boost::bad_pattern & e) {
+      lua_pushstring(L, e.what());
+      lua_error(L);
+      return 0;
+    } catch (...) {
+      lua_pushstring(L, "Unknown error.");
+      lua_error(L);
+      return 0;
+    }
+    lua_pushboolean(L, result);
+    return 1;
+  }
+
+  static int
   monotone_gettext_for_lua(lua_State *L)
   {
     const char *msgid = lua_tostring(L, -1);
@@ -688,6 +718,16 @@ lua_hooks::lua_hooks()
 
   lua_pushstring(st, "search");
   lua_pushcfunction(st, monotone_regex_search_for_lua);
+  lua_settable(st, -3);
+
+  // add globish functions:
+  lua_newtable(st);
+  lua_pushstring(st, "globish");
+  lua_pushvalue(st, -2);
+  lua_settable(st, LUA_GLOBALSINDEX);
+
+  lua_pushstring(st, "match");
+  lua_pushcfunction(st, monotone_globish_match_for_lua);
   lua_settable(st, -3);
 
   lua_pop(st, 1);

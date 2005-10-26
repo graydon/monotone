@@ -5901,14 +5901,12 @@ The default definition of this hook reads a file @file{read-permissions} in
 the configuration directory. This file looks like
 @smallexample
 @group
-[net.example.project.security*]
-[net.example.project.private*]
-! --all--
-joe@@example.net
-jim@@example.net
-[net.example.public*]
-[net.example.project*]
---all--
+pattern "net.example.project.\{private,security\}*"
+allow "joe@@example.net"
+allow "jim@@example.net"
+
+pattern "net.example.\{public,project\}*"
+allow "*"
 @end group
 @end smallexample
 This example allows everyone access to branches @code{net.example.project} and
@@ -5916,16 +5914,19 @@ This example allows everyone access to branches @code{net.example.project} and
 @code{net.example.security} and @code{net.example.private}, which are only
 readable by Joe and Jim.
 
-The file is divided into sections of one or more lines in square brackets
-followed by one or more lines not in square brackets. A line in square brackets
-is a wildcard expression, which is matched against the @var{branch}. If one
-matches, then the other lines in that section are compared against
-@var{identity}. A line @code{keyname} allows @code{keyname} read access, and a
-line @code{! keyname} denies access. The special value @code{--all--} allows
-read access to everyone (including anonymous), and @code{! --all--} means that
-only keys allowed by this section have access. Without @code{! --all--}, if a
-key is neither allowed nor denied permission in a section, the hook will keep
-looking for matching sections in the rest of the file.
+The file is divided into stanzas of one @code{pattern} line followed by any
+number of @code{allow} and @code{deny} lines, and possibly a @code{continue}
+line. Lines which do not consist of one of these words followed by an argument
+in quotes will be ignored. A stanza is processed if the argument to
+@code{pattern} is a glob that matches @var{branch}. Any keys which match an
+@code{allow} line are given access, and any keys which match a @code{deny} line
+are denied access. If there is a @code{continue "true"} line, then if the key
+is not granted or denied access in this stanza the next matching stanza will be
+processed. If there is not a @code{continue "true"} line, then any key which
+has not been given access will be denied access even if it doesn't match any
+@code{deny} lines. Thus, deny lines are redundant unless there is also a
+@code{continue "true"} line.
+
 
 If a client connects anonymously, this hook will be called with a
 @var{identity} of @code{nil}.
@@ -5944,7 +5945,7 @@ be allowed to write into your database certs, revisions, manifests, and
 files; otherwise @code{false}. The default definition of this hook reads a file
 @file{write-permissions} in the configuration directory which contains a list
 of keys, one per line, which are allowed write access. The special value
-@code{--all--} means to allow access to anyone whose public key we already have.
+@code{*} means to allow access to anyone whose public key we already have.
 
 If a client connects anonymously, it will be unconditionally denied
 write access; this hook will @emph{not} be called with a @var{identity}
