@@ -5901,11 +5901,11 @@ The default definition of this hook reads a file @file{read-permissions} in
 the configuration directory. This file looks like
 @smallexample
 @group
-pattern "net.example.project.\{private,security\}*"
+pattern "net.example.project.@{private,security@}*"
 allow "joe@@example.net"
 allow "jim@@example.net"
 
-pattern "net.example.\{public,project\}*"
+pattern "net.example.@{public,project@}*"
 allow "*"
 @end group
 @end smallexample
