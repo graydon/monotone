@@ -3,6 +3,12 @@
 	* INSTALL: mention that zlib is required
 	* debian/control: monotone doesn't work over plain network protocols
 
+2005-10-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* lua.cc: make the globish matcher available to lua
+	* std_hooks.lua: new (better) format for read-permissions
+	* monotone.texi: update documentation
+
 2005-10-24  Benoît Dejean  <benoit@placenet.org>
 
 	* commands.cc: Merged 2 i18n strings.
