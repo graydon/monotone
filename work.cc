@@ -781,3 +781,108 @@ void update_any_attrs(app_state & app)
   apply_attributes(app, attr);
 */
 }
+
+editable_working_tree::editable_working_tree(app_state & app,
+                                             file_content_source const & source)
+  : app(app), source(source), next_nid(1)
+{
+}
+
+static inline bookkeeping_path
+path_for_nid(node_id nid)
+{
+  return bookkeeping_root / "tmp" / boost::lexical_cast<std::string>(nid);
+}
+
+node_id
+editable_working_tree::detach_node(split_path const & src)
+{
+  node_id nid = next_nid++;
+  file_path src_pth(src);
+  bookkeeping_path dst_pth = path_for_nid(nid);
+  make_dir_for(dst_pth);
+  move_path(src_pth, dst_pth);
+  return nid;
+}
+
+void
+editable_working_tree::drop_detached_node(node_id nid)
+{
+  bookkeeping_path pth = path_for_nid(nid);
+  delete_file_or_dir_shallow(pth);
+}
+
+node_id
+editable_working_tree::create_dir_node()
+{
+  node_id nid = next_nid++;
+  bookkeeping_path pth = path_for_nid(nid);
+  require_path_is_nonexistent(pth,
+                              F("path %s already exists"));
+  mkdir_p(pth);
+  return nid;
+}
+
+node_id
+editable_working_tree::create_file_node(file_id const & content)
+{
+  node_id nid = next_nid++;
+  bookkeeping_path pth = path_for_nid(nid);
+  require_path_is_nonexistent(pth,
+                              F("path %s already exists"));
+  file_data dat;
+  source.get_file_content(content, dat);
+  // FIXME_ROSTERS: what about charset conversion etc.?
+  write_data(pth, dat.inner());
+  return nid;
+}
+
+void
+editable_working_tree::attach_node(node_id nid, split_path const & dst)
+{
+  bookkeeping_path src_pth = path_for_nid(nid);
+  file_path dst_pth(dst);
+  move_path(src_pth, dst_pth);
+}
+
+void
+editable_working_tree::apply_delta(split_path const & pth, 
+                                   file_id const & old_id, 
+                                   file_id const & new_id)
+{
+  file_path pth_unsplit(pth);
+  require_path_is_file(pth_unsplit,
+                       F("file '%s' does not exist") % pth_unsplit,
+                       F("file '%s' is a directory") % pth_unsplit);
+  hexenc<id> curr_id_raw;
+  calculate_ident(pth_unsplit, curr_id_raw, app.lua);
+  file_id curr_id(curr_id_raw);
+  E(curr_id == old_id,
+    F("content of file '%s' has changed, not overwriting"));
+  P(F("updating %s to %s") % pth_unsplit % new_id);
+
+  file_data dat;
+  source.get_file_content(new_id, dat);
+  // FIXME_ROSTERS: inconsistent with file addition code above, and
+  // write_localized_data is poorly designed anyway...
+  write_localized_data(pth_unsplit, dat.inner(), app.lua);
+}
+
+void
+editable_working_tree::clear_attr(split_path const & pth,
+                                  attr_key const & name)
+{
+  // FIXME_ROSTERS: call a lua hook
+}
+
+void
+editable_working_tree::set_attr(split_path const & pth,
+                                attr_key const & name,
+                                attr_value const & val)
+{
+  // FIXME_ROSTERS: call a lua hook
+}
+
+editable_working_tree::~editable_working_tree()
+{
+}

@@ -2611,7 +2611,7 @@ dump_diffs(cset const & cs,
     }
 }
 
-  /*
+  /* FIXME_ROSTERS
 
 CMD(diff, N_("informative"), N_("[PATH]..."), 
     N_("show current diffs on stdout.\n"

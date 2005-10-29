@@ -166,15 +166,15 @@ public:
   roster_t & operator=(roster_t const & other);
   bool has_root() const;
   bool has_node(split_path const & sp) const;
-  bool has_node(node_id n) const;
+  bool has_node(node_id nid) const;
   node_t get_node(split_path const & sp) const;
-  node_t get_node(node_id n) const;
-  void get_name(node_id n, split_path & sp) const;
+  node_t get_node(node_id nid) const;
+  void get_name(node_id nid, split_path & sp) const;
   void replace_node_id(node_id from, node_id to);
 
   // editable_tree operations
   node_id detach_node(split_path const & src);
-  void drop_detached_node(node_id n);
+  void drop_detached_node(node_id nid);
   node_id create_dir_node(node_id_source & nis);
   void create_dir_node(node_id nid);
   node_id create_file_node(file_id const & content,
@@ -182,8 +182,8 @@ public:
   void create_file_node(file_id const & content,
                         node_id nid);
   void insert_node(node_t n);
-  void attach_node(node_id n, split_path const & dst);
-  void attach_node(node_id n, node_id parent, path_component name);
+  void attach_node(node_id nid, split_path const & dst);
+  void attach_node(node_id nid, node_id parent, path_component name);
   void apply_delta(split_path const & pth, 
                    file_id const & old_id, 
                    file_id const & new_new);
@@ -278,10 +278,10 @@ make_cset(roster_t const & from,
 
 void
 select_nodes_modified_by_cset(cset const & cs,
-			      roster_t const & old_roster,
-			      roster_t const & new_roster,
-			      std::set<node_id> & nodes_changed,
-			      std::set<node_id> & nodes_born);
+                              roster_t const & old_roster,
+                              roster_t const & new_roster,
+                              std::set<node_id> & nodes_changed,
+                              std::set<node_id> & nodes_born);
 
 void 
 update_restricted_roster_from_filesystem(roster_t & ros, 

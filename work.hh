@@ -207,4 +207,38 @@ void update_any_attrs(app_state & app);
 extern std::string const binary_encoding;
 extern std::string const default_encoding;
 
+struct file_content_source
+{
+  virtual void get_file_content(file_id const & fid,
+                                file_data const & dat) const = 0;
+  virtual ~file_content_source() {};
+};
+
+struct editable_working_tree : public editable_tree
+{
+  editable_working_tree(app_state & app, file_content_source const & source);
+
+  virtual node_id detach_node(split_path const & src);
+  virtual void drop_detached_node(node_id nid);
+
+  virtual node_id create_dir_node();
+  virtual node_id create_file_node(file_id const & content);
+  virtual void attach_node(node_id nid, split_path const & dst);
+
+  virtual void apply_delta(split_path const & pth, 
+                           file_id const & old_id, 
+                           file_id const & new_id);
+  virtual void clear_attr(split_path const & pth,
+                          attr_key const & name);
+  virtual void set_attr(split_path const & pth,
+                        attr_key const & name,
+                        attr_value const & val);
+
+  virtual ~editable_working_tree();
+private:
+  app_state & app;
+  file_content_source const & source;
+  node_id next_nid;
+};
+
 #endif // __WORK_HH__
