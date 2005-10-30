@@ -1,3 +1,8 @@
+2005-10-30  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (edit_comment): Insert a blank line if there is no
+	user log message, so the user doesn't have to.
+
 2005-10-25  Emile Snyder  <emile@alumni.reed.edu>
 
 	Fix bug reported on mailing list by Wim Oudshoorn and Tom Koelman
