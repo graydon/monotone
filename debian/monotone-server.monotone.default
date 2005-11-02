@@ -10,8 +10,8 @@ ADDRESS=0.0.0.0
 DB=/var/lib/monotone/default.db
 
 # Branches that monotone should serve (seperated by white space)
-BRANCHES='com.domain.*
-          com.domain.branch
-          domain.com/*
-          domain.com/branch'
+BRANCHES='tld.domain.*
+          tld.domain.branch
+          domain.tld/*
+          domain.tld/branch'
 

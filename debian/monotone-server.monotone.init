@@ -44,7 +44,8 @@ d_start() {
 
        start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE \
                --exec $DAEMON --chuid monotone --chdir /var/lib/monotone -- \
-	       --db=$DB --norc --rcfile=/etc/monotone/hooks.lua serve \
+	       --confdir=/etc/monotone --db=$DB --norc \
+	       --rcfile=/etc/monotone/hooks.lua serve \
                $ADDRESS $BRANCHES >> /var/log/monotone.log 2>&1 &
 
 }
