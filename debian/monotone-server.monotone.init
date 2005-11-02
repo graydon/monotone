@@ -24,6 +24,10 @@ DAEMON=/usr/bin/$NAME
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
+MTN_HOME=/var/lib/monotone
+MTN_CONFDIR=/etc/monotone
+MTN_KEYDIR=$MTN_HOME/keys
+
 # Gracefully exit if the package has been removed.
 test -x $DAEMON || exit 0
 
@@ -43,10 +47,10 @@ d_start() {
        fi
 
        start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE \
-               --exec $DAEMON --chuid monotone --chdir /var/lib/monotone -- \
-	       --confdir=/etc/monotone --db=$DB --norc \
-	       --rcfile=/etc/monotone/hooks.lua serve \
-               $ADDRESS $BRANCHES >> /var/log/monotone.log 2>&1 &
+               --exec $DAEMON --chuid monotone --chdir $MTN_HOME -- \
+	       --confdir=$MTN_CONFDIR --db=$DB --norc \
+	       --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR \
+               serve $ADDRESS $BRANCHES >> /var/log/monotone.log 2>&1 &
 
 }
 

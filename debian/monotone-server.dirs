@@ -1,2 +1,3 @@
 var/lib/monotone
+var/lib/monotone/keys
 etc/monotone

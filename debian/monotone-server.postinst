@@ -1,5 +1,5 @@
 #! /bin/sh
-# postinst script for #PACKAGE#
+# postinst script for monotone-server
 #
 # see: dh_installdeb(1)
 
@@ -17,33 +17,75 @@ set -e
 # the debian-policy package
 #
 
+MONOTONE=/usr/bin/monotone
+
 case "$1" in
     configure)
 
-    MTN_DB=/var/lib/monotone/default.db
-    MTN_HOME=/var/lib/monotone
+       MTN_DB=/var/lib/monotone/default.db
+       MTN_HOME=/var/lib/monotone
+       MTN_CONFDIR=/etc/monotone
+       MTN_KEYDIR=$MTN_HOME/keys
 
-    # create monotone user and fix permissions of files
-    if [ -z "`id -u monotone 2> /dev/null`" ]; then
-        /usr/sbin/adduser --system --group --home $MTN_HOME --no-create-home --disabled-password --quiet monotone --gecos "Monotone"
-	chmod 0740 $MTN_HOME
-	chmod 0740 /etc/monotone
-	chown monotone.monotone /etc/monotone
-    fi
+       # TODO: debconf monotone stuff
+       #MTN_KEY=
+       #MTN_KEY_PASSWD=
 
-    if [ -e $MTN_DB ]; then
-        echo "Monotone database exists."
-    else
-	echo "Creating Monotone database..."
-        /usr/bin/monotone --db $MTN_DB db init
-	chmod 0600 $MTN_DB
-	echo "Creating Monotone server keypair..."
-        echo -ne "$MTN_KEY_PASSWD\n$MTN_KEY_PASSWD\n" | /usr/bin/monotone \
-	    --db $MTN_DB genkey $MTN_KEY &> /dev/null
-	/usr/bin/monotone --db $MTN_DB pubkey $MTN_KEY > $MTN_HOME/$MTN_KEY.pubkey
-	echo "Monotone database created successfully."
-    fi
+       MTN_VERSION=`echo "$2" | awk -F - '{print $1}'`
+       
+       # Since we are configuring, we should check if we are upgrading.  If we are
+       # upgrading, we should run the proper db migrate commands if necessary.
 
+       if [ -z "$2"]; then
+          # not upgrading, fresh install
+          # create monotone user and fix permissions of files
+          if [ -z "`id -u monotone 2> /dev/null`" ]; then
+              /usr/sbin/adduser --system --group --home $MTN_HOME --no-create-home --disabled-password --quiet monotone --gecos "Monotone"
+              chown monotone.monotone $MTN_HOME
+              chown monotone.monotone $MTN_CONFDIR
+              chown monotone.monotone $MTN_KEYDIR
+              chmod 0740 $MTN_HOME
+              chmod 0740 $MTN_CONFDIR
+              chmod 0740 $MTN_KEYDIR
+          fi
+
+          # if there is no database, create one
+          if [ -e $MTN_DB ]; then
+              echo "Monotone database exists."
+          else
+              echo "Creating Monotone database..."
+              $MONOTONE --db $MTN_DB db init
+              chmod 0600 $MTN_DB
+              echo "Creating Monotone server keypair..."
+
+              echo -ne "$MTN_KEY_PASSWD\n$MTN_KEY_PASSWD\n" | 
+                 $MONOTONE --db $MTN_DB genkey $MTN_KEY \
+                 --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR &> /dev/null
+
+              $MONOTONE --db $MTN_DB pubkey $MTN_KEY \
+                 --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR > $MTN_HOME/$MTN_KEY.pubkey
+
+              echo "Monotone database created successfully."
+          fi
+       elif [ "`echo "$MTN_VERSION < 0.17" | bc`" == "1" ]; then 
+          # monotone version to old to automatically upgrade
+          echo "Cannot automatically upgrade from monotone version $2."
+          echo -e "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for\n \
+                   information on upgrading."
+       elif [ "`echo "$MTN_VERSION < 0.22" | bc`" == "1" ]; then 
+          # upgradable version of monotone
+          echo "Attempting to migrate monotone database..."
+          echo "A backup will be created in $MTN_HOME."
+
+          cp $MTN_DB $MTN_DB~
+          (echo -ne "$MTN_KEY_PASSWD\n" | 
+             $MONOTONE --db $MTN_DB db migrate \
+             --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR &&
+             echo "Database successfully migrated.") || 
+          (echo "*** Error migrating database. ***" &&
+              echo -e "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for\n \
+                       information on manually upgrading your database.")
+       fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
