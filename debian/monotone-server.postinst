@@ -58,7 +58,7 @@ case "$1" in
               chmod 0600 $MTN_DB
               echo "Creating Monotone server keypair..."
 
-              echo -ne "$MTN_KEY_PASSWD\n$MTN_KEY_PASSWD\n" | 
+              yes "$MTN_KEY_PASSWD" | 
                  $MONOTONE --db $MTN_DB genkey $MTN_KEY \
                  --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR &> /dev/null
 
@@ -78,7 +78,7 @@ case "$1" in
           echo "A backup will be created in $MTN_HOME."
 
           cp $MTN_DB $MTN_DB~
-          (echo -ne "$MTN_KEY_PASSWD\n" | 
+          (yes "$MTN_KEY_PASSWD" |
              $MONOTONE --db $MTN_DB db migrate \
              --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR &&
              echo "Database successfully migrated.") || 
