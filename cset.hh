@@ -31,12 +31,12 @@ struct editable_tree
 {
   // Detaching existing nodes (for renaming or deleting)
   virtual node_id detach_node(split_path const & src) = 0;
-  virtual void drop_detached_node(node_id n) = 0;
+  virtual void drop_detached_node(node_id nid) = 0;
 
   // Attaching new nodes (via creation or as the tail end of renaming)
   virtual node_id create_dir_node() = 0;
   virtual node_id create_file_node(file_id const & content) = 0;
-  virtual void attach_node(node_id n, split_path const & dst) = 0;
+  virtual void attach_node(node_id nid, split_path const & dst) = 0;
 
   // Modifying elements in-place
   virtual void apply_delta(split_path const & pth, 
