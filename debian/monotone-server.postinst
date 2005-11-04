@@ -31,12 +31,12 @@ case "$1" in
        #MTN_KEY=
        #MTN_KEY_PASSWD=
 
-       MTN_VERSION=`echo "$2" | awk -F - '{print $1}'`
+       MTN_VERSION="$2"
        
        # Since we are configuring, we should check if we are upgrading.  If we are
        # upgrading, we should run the proper db migrate commands if necessary.
 
-       if [ -z "$2"]; then
+       if [ -z "$2" ]; then
           # not upgrading, fresh install
           # create monotone user and fix permissions of files
           if [ -z "`id -u monotone 2> /dev/null`" ]; then
@@ -50,9 +50,7 @@ case "$1" in
           fi
 
           # if there is no database, create one
-          if [ -e $MTN_DB ]; then
-              echo "Monotone database exists."
-          else
+          if [ ! -e $MTN_DB ]; then
               echo "Creating Monotone database..."
               $MONOTONE --db $MTN_DB db init
               chmod 0600 $MTN_DB
@@ -67,12 +65,12 @@ case "$1" in
 
               echo "Monotone database created successfully."
           fi
-       elif [ "`echo "$MTN_VERSION < 0.17" | bc`" == "1" ]; then 
+       elif [ dpkg --compare-versions "$MTN_VERSION" lt 0.17 ]; then 
           # monotone version to old to automatically upgrade
           echo "Cannot automatically upgrade from monotone version $2."
           echo -e "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for\n \
                    information on upgrading."
-       elif [ "`echo "$MTN_VERSION < 0.22" | bc`" == "1" ]; then 
+       elif [ dpkg --compare-versions "$MTN_VERSION" lt 0.22 ]; then 
           # upgradable version of monotone
           echo "Attempting to migrate monotone database..."
           echo "A backup will be created in $MTN_HOME."
