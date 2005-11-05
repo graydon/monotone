@@ -221,77 +221,40 @@ perform_deletions(path_set const & paths, app_state & app)
   update_any_attrs(app);
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
-
 void 
-build_rename(file_path const & src,
-             file_path const & dst,
-             manifest_map const & man,
-             app_state & app,
-             change_set::path_rearrangement & pr)
+perform_rename(file_path const & src_path,
+               file_path const & dst_path,
+               app_state & app)
 {
-  N(!src.empty(), F("invalid source path ''"));
-  N(!dst.empty(), F("invalid destination path ''"));
+  temp_node_id_source nis;
+  roster_t base_roster, new_roster;
+  split_path src, dst;
 
-  change_set::path_rearrangement pr_new, pr_concatenated;
-  path_set ps;
-  extract_path_set(man, ps);
-  apply_path_rearrangement(pr, ps);    
+  get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
 
-  bool src_dir_p = false;
-  bool dst_dir_p = false;
+  src_path.split(src);
+  dst_path.split(dst);
 
-  N(known_path(src, ps, src_dir_p), 
-    F("%s does not exist in current revision\n") % src);
+  N(new_roster.has_node(src),
+    F("%s does not exist in current revision\n") % src_path);
 
-  N(!known_path(dst, ps, dst_dir_p), 
-    F("%s already exists in current revision\n") % dst);
+  N(!new_roster.has_node(dst),
+    F("%s already exists in current revision\n") % dst_path);
 
-  P(F("adding %s -> %s to working copy rename set\n") % src % dst);
-  if (src_dir_p)
-    pr_new.renamed_dirs.insert(std::make_pair(src, dst));
-  else 
-    pr_new.renamed_files.insert(std::make_pair(src, dst));
+  P(F("adding %s -> %s to working copy rename set\n") % src_path % dst_path);
 
-  if (app.execute && (path_exists(src) || !path_exists(dst)))
-    move_path(src, dst);
+  node_id nid = new_roster.detach_node(src);
+  new_roster.attach_node(nid, dst);
 
-  // read attribute map if available
-  file_path attr_path;
-  get_attr_path(attr_path);
+  if (app.execute && path_exists(src_path) && !path_exists(dst_path))
+    move_path(src_path, dst_path);
 
-  if (path_exists(attr_path))
-  {
-    data attr_data;
-    read_data(attr_path, attr_data);
-    attr_map attrs;
-    read_attr_map(attr_data, attrs);
-
-    // make sure there aren't pre-existing attributes that we'd accidentally
-    // pick up
-    N(attrs.find(dst) == attrs.end(), 
-      F("%s has existing attributes in %s; clean them up first") % dst % attr_file_name);
-
-    // only write out a new attribute map if we find attrs to move
-    attr_map::iterator a = attrs.find(src);
-    if (a != attrs.end())
-    {
-      attrs[dst] = (*a).second;
-      attrs.erase(a);
-
-      P(F("moving attributes for %s to %s\n") % src % dst);
-
-      write_attr_map(attr_data, attrs);
-      write_data(attr_path, attr_data);
-    }
-  }
-
-  normalize_path_rearrangement(pr_new);
-  concatenate_rearrangements(pr, pr_new, pr_concatenated);
-  pr = pr_concatenated;
+  cset new_work;
+  make_cset(base_roster, new_roster, new_work);
+  put_work_cset(new_work);
+  update_any_attrs(app);
 }
-*/
+
 
 // work file containing rearrangement from uncommitted adds/drops/renames
 

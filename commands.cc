@@ -819,6 +819,7 @@ print_indented_set(std::ostream & os,
 void
 changes_summary::print(std::ostream & os, size_t max_cols) const
 {
+
   if (! cs.nodes_deleted.empty())
     {
       os << "Deleted entries:" << endl;
@@ -846,7 +847,7 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
 
   if (! cs.dirs_added.empty())
     {
-      os << "Added files:" << endl;
+      os << "Added directories:" << endl;
       print_indented_set(os, cs.dirs_added, max_cols);
     }
 
@@ -1210,8 +1211,6 @@ CMD(drop, N_("working copy"), N_("[PATH]..."),
 
 ALIAS(rm, drop);
 
-/*
-FIXME_ROSTERS
 
 CMD(rename, N_("working copy"), N_("SRC DST"),
     N_("rename entries in the working copy"),
@@ -1222,23 +1221,14 @@ CMD(rename, N_("working copy"), N_("SRC DST"),
   
   app.require_working_copy();
 
-  manifest_map m_old;
-  get_base_manifest(app, m_old);
+  file_path src_path = file_path_external(idx(args, 0));
+  file_path dst_path = file_path_external(idx(args, 1));
 
-  change_set::path_rearrangement work;
-  get_path_rearrangement(work);
-
-  build_rename(file_path_external(idx(args, 0)),
-               file_path_external(idx(args, 1)),
-               m_old, app, work);
-  
-  put_path_rearrangement(work);
-  
-  update_any_attrs(app);
+  perform_rename(src_path, dst_path, app);
 }
 
 ALIAS(mv, rename)
-*/
+
 
 // fload and fmerge are simple commands for debugging the line
 // merger.

@@ -133,7 +133,6 @@ downcast_to_file_t(node_t const n)
 
 void dump(node_t const & n, std::string & out);
 
-
 struct marking_t
 {
   revision_id birth_revision;
@@ -186,7 +185,7 @@ public:
   void attach_node(node_id nid, node_id parent, path_component name);
   void apply_delta(split_path const & pth, 
                    file_id const & old_id, 
-                   file_id const & new_new);
+                   file_id const & new_id);
   void clear_attr(split_path const & pth,
                   attr_key const & name);
   void set_attr(split_path const & pth,

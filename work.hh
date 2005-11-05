@@ -66,17 +66,10 @@ perform_additions(path_set const & targets, app_state & app);
 void
 perform_deletions(path_set const & targets, app_state & app);
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
-
-void 
-build_rename(file_path const & src,
-             file_path const & dst,
-             manifest_map const & m_old,
-             app_state & app,
-             change_set::path_rearrangement & pr);
-
-*/
+void
+perform_rename(file_path const & src_path,
+               file_path const & dst_path,
+               app_state & app);
 
 // the "work" file contains the current cset representing uncommitted
 // add/drop/rename operations (not deltas)

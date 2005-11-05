@@ -132,8 +132,8 @@ BOTAN_SOURCES =                                                                 
         botan/pbe_pkcs.h botan/rsa.h botan/x509_crl.h botan/asn1.h	\
         botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h	\
         botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h	\
-        botan/cfb.h botan/dl_param.h botan/fips_rng.h botan/modebase.h	\
-        botan/pipe.h botan/x509_obj.h			\
+        botan/cfb.h botan/dl_param.h botan/modebase.h			\
+        botan/pipe.h botan/x509_obj.h					\
         botan/asn1_oid.h botan/conf.h botan/eax.h botan/gzip.h		\
         botan/mode_pad.h botan/pk_algs.h botan/secmem.h			\
         botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h	\
