@@ -13,7 +13,7 @@
 #include "diff_patch.hh"
 #include "interner.hh"
 #include "lcs.hh"
-#include "manifest.hh"
+#include "roster.hh"
 #include "packet.hh"
 #include "sanity.hh"
 #include "transforms.hh"
@@ -457,10 +457,10 @@ bool merge3(vector<string> const & ancestor,
 
 
 merge_provider::merge_provider(app_state & app, 
-                               manifest_map const & anc_man,
-                               manifest_map const & left_man, 
-                               manifest_map const & right_man)
-  : app(app), anc_man(anc_man), left_man(left_man), right_man(right_man)
+                               roster_t const & anc_ros,
+                               roster_t const & left_ros, 
+                               roster_t const & right_ros)
+  : app(app), anc_ros(anc_ros), left_ros(left_ros), right_ros(right_ros)
 {}
 
 void merge_provider::record_merge(file_id const & left_ident, 
@@ -489,25 +489,22 @@ void merge_provider::get_version(file_path const & path,
 }
 
 std::string merge_provider::get_file_encoding(file_path const & path,
-                                              manifest_map const & man)
+                                              roster_t const & ros)
 {
-  std::string enc;
-  if (get_attribute_from_db(path, encoding_attribute, man, enc, app))
-    return enc;
-  else
-    return default_encoding;
+  attr_value v;
+  if (get_attribute_from_roster(ros, path, encoding_attribute, v))
+    return v();
+  return default_encoding;
 }
 
 bool merge_provider::attribute_manual_merge(file_path const & path,
-                                              manifest_map const & man)
+                                              roster_t const & ros)
 {
-  std::string mmf;
-  if (get_attribute_from_db(path, manual_merge_attribute, man, mmf, app))
-  {
-    return mmf == std::string("true");
-  }
-  else
-    return false; // default: enable auto merge
+  attr_value v;
+  if (get_attribute_from_roster(ros, path, manual_merge_attribute, v)
+      && v() == "true")
+    return true;
+  return false; // default: enable auto merge
 }
 
 bool merge_provider::try_to_merge_files(file_path const & anc_path,
@@ -546,17 +543,17 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
   ancestor_unpacked = ancestor_data.inner();
   right_unpacked = right_data.inner();
 
-  if (!attribute_manual_merge(left_path, left_man) && 
-      !attribute_manual_merge(right_path, right_man))
+  if (!attribute_manual_merge(left_path, left_ros) && 
+      !attribute_manual_merge(right_path, right_ros))
     {
       // both files mergeable by monotone internal algorithm, try to merge
       // note: the ancestor is not considered for manual merging. Forcing the 
       // user to merge manually just because of an ancestor mistakenly marked
       // manual seems too harsh
       string left_encoding, anc_encoding, right_encoding;
-      left_encoding = this->get_file_encoding(left_path, left_man);
-      anc_encoding = this->get_file_encoding(anc_path, anc_man);
-      right_encoding = this->get_file_encoding(right_path, right_man);
+      left_encoding = this->get_file_encoding(left_path, left_ros);
+      anc_encoding = this->get_file_encoding(anc_path, anc_ros);
+      right_encoding = this->get_file_encoding(right_path, right_ros);
         
       vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
       split_into_lines(left_unpacked(), left_encoding, left_lines);
@@ -680,10 +677,10 @@ bool merge_provider::try_to_merge_files(file_path const & left_path,
 // and we only record the merges in a transient, in-memory table.
 
 update_merge_provider::update_merge_provider(app_state & app,
-                                             manifest_map const & anc_man,
-                                             manifest_map const & left_man, 
-                                             manifest_map const & right_man) 
-  : merge_provider(app, anc_man, left_man, right_man) {}
+                                             roster_t const & anc_ros,
+                                             roster_t const & left_ros, 
+                                             roster_t const & right_ros) 
+  : merge_provider(app, anc_ros, left_ros, right_ros) {}
 
 void update_merge_provider::record_merge(file_id const & left_id, 
                                          file_id const & right_id,
@@ -717,30 +714,6 @@ void update_merge_provider::get_version(file_path const & path,
         % path % fid % ident);
       dat = tmp;
     }
-}
-
-std::string update_merge_provider::get_file_encoding(file_path const & path,
-                                                     manifest_map const & man)
-{
-  std::string enc;
-  if (get_attribute_from_working_copy(path, encoding_attribute, enc))
-    return enc;
-  else if (get_attribute_from_db(path, encoding_attribute, man, enc, app))
-    return enc;
-  else
-    return default_encoding;
-}
-
-bool update_merge_provider::attribute_manual_merge(file_path const & path,
-                                              manifest_map const & man)
-{
-  std::string mmf;
-  if (get_attribute_from_working_copy(path, manual_merge_attribute, mmf))
-    return mmf == std::string("true");
-  else if (get_attribute_from_db(path, manual_merge_attribute, man, mmf, app))
-    return mmf == std::string("true");
-  else
-    return false; // default: enable auto merge
 }
 
 // the remaining part of this file just handles printing out various

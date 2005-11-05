@@ -2747,43 +2747,9 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 }
 */
 
-CMD(lca, N_("debug"), N_("LEFT RIGHT"), N_("print least common ancestor"), OPT_NONE)
-{
-  if (args.size() != 2)
-    throw usage(name);
-
-  revision_id anc, left, right;
-
-  complete(app, idx(args, 0)(), left);
-  complete(app, idx(args, 1)(), right);
-
-  if (find_least_common_ancestor(left, right, anc, app))
-    std::cout << describe_revision(app, anc) << std::endl;
-  else
-    std::cout << _("no common ancestor found") << std::endl;
-}
-
-
-CMD(lcad, N_("debug"), N_("LEFT RIGHT"), N_("print least common ancestor / dominator"),
-    OPT_NONE)
-{
-  if (args.size() != 2)
-    throw usage(name);
-
-  revision_id anc, left, right;
-
-  complete(app, idx(args, 0)(), left);
-  complete(app, idx(args, 1)(), right);
-
-  if (find_common_ancestor_for_merge(left, right, anc, app))
-    std::cout << describe_revision(app, anc) << std::endl;
-  else
-    std::cout << _("no common ancestor/dominator found") << std::endl;
-}
-
-
 /*
 // FIXME_ROSTERS: disabled until rewritten to use rosters
+
 static void
 write_file_targets(change_set const & cs,
                    update_merge_provider & merger,

@@ -107,344 +107,127 @@ revision_set::operator=(revision_set const & other)
 }
 
 
-// calculating least common ancestors is a delicate thing.
-// 
-// it turns out that we cannot choose the simple "least common ancestor"
-// for purposes of a merge, because it is possible that there are two
-// equally reachable common ancestors, and this produces ambiguity in the
-// merge. the result -- in a pathological case -- is silently accepting one
-// set of edits while discarding another; not exactly what you want a
-// version control tool to do.
+// For a surprisingly long time, we have been using an algorithm which
+// is nonsense, based on a misunderstanding of what "LCA" means. The
+// LCA of two nodes is *not* the first common ancestor which you find
+// when iteratively expanding their ancestor sets. Instead, the LCA is
+// the common ancestor which is a descendent of all other common
+// ancestors.
 //
-// a conservative approximation is what we'll call a "subgraph recurring"
-// LCA algorithm. this is somewhat like locating the least common dominator
-// node, but not quite. it is actually just a vanilla LCA search, except
-// that any time there's a fork (a historical merge looks like a fork from
-// our perspective, working backwards from children to parents) it reduces
-// the fork to a common parent via a sequence of pairwise recursive calls
-// to itself before proceeding. this will always resolve to a common parent
-// with no ambiguity, unless it falls off the root of the graph.
+// In general, a set of nodes in a DAG doesn't always have an
+// LCA. There might be multiple common ancestors which are not parents
+// of one another. So we implement something which is "functionally
+// useful" for finding a merge point (and moreover, which always
+// terminates): we find an LCA of the input set if it exists,
+// otherwise we replace the input set with the nodes we did find and
+// repeat.
 //
-// unfortunately the subgraph recurring algorithm sometimes goes too far
-// back in history -- for example if there is an unambiguous propagate from
-// one branch to another, the entire subgraph preceeding the propagate on
-// the recipient branch is elided, since it is a merge.
-//
-// our current hypothesis is that the *exact* condition we're looking for,
-// when doing a merge, is the least node which dominates one side of the
-// merge and is an ancestor of the other.
+// All previous discussions in monotone-land, before say August 2005,
+// of LCA (and LCAD) are essentially wrong due to our silly
+// misunderstanding. It's unfortunate, but our half-baked
+// approximations worked almost well enough to take us through 3 years
+// of deployed use. Hopefully this more accurate new use will serve us
+// even longer.
 
 typedef unsigned long ctx;
 typedef boost::dynamic_bitset<> bitmap;
 typedef boost::shared_ptr<bitmap> shared_bitmap;
 
 static void 
-ensure_parents_loaded(ctx child,
-                      std::map<ctx, shared_bitmap> & parents,
-                      interner<ctx> & intern,
-                      app_state & app)
-{
-  if (parents.find(child) != parents.end())
-    return;
+calculate_ancestors_from_graph(interner<ctx> & intern,
+                               revision_id const & init,
+                               std::multimap<revision_id, revision_id> const & graph, 
+                               std::map< ctx, shared_bitmap > & ancestors,
+                               shared_bitmap & total_union);
 
-  L(F("loading parents for node %d\n") % child);
-
-  std::set<revision_id> imm_parents;
-  app.db.get_revision_parents(revision_id(intern.lookup(child)), imm_parents);
-
-  // The null revision is not a parent for purposes of finding common
-  // ancestors.
-  for (std::set<revision_id>::iterator p = imm_parents.begin();
-       p != imm_parents.end(); )
-    {
-      if (null_id(*p))
-        imm_parents.erase(p++);
-      else
-        ++p;
-    }
-              
-  shared_bitmap bits = shared_bitmap(new bitmap(parents.size()));
-  
-  for (std::set<revision_id>::const_iterator p = imm_parents.begin();
-       p != imm_parents.end(); ++p)
-    {
-      ctx pn = intern.intern(p->inner()());
-      L(F("parent %s -> node %d\n") % *p % pn);
-      if (pn >= bits->size()) 
-        bits->resize(pn+1);
-      bits->set(pn);
-    }
-    
-  parents.insert(std::make_pair(child, bits));
-}
-
-static bool 
-expand_dominators(std::map<ctx, shared_bitmap> & parents,
-                  std::map<ctx, shared_bitmap> & dominators,
-                  interner<ctx> & intern,
-                  app_state & app)
-{
-  bool something_changed = false;
-  std::vector<ctx> nodes;
-
-  nodes.reserve(dominators.size());
-
-  // pass 1, pull out all the node numbers we're going to scan this time around
-  for (std::map<ctx, shared_bitmap>::reverse_iterator e = dominators.rbegin(); 
-       e != dominators.rend(); ++e)
-    nodes.push_back(e->first);
-  
-  // pass 2, update any of the dominator entries we can
-  for (std::vector<ctx>::const_iterator n = nodes.begin(); 
-       n != nodes.end(); ++n)
-    {
-      shared_bitmap bits = dominators[*n];
-      bitmap saved(*bits);
-      if (bits->size() <= *n)
-        bits->resize(*n + 1);
-      bits->set(*n);
-      
-      ensure_parents_loaded(*n, parents, intern, app);
-      shared_bitmap n_parents = parents[*n];
-      
-      bitmap intersection(bits->size());
-      
-      bool first = true;
-      for (unsigned long parent = 0; 
-           parent != n_parents->size(); ++parent)
-        {
-          if (! n_parents->test(parent))
-            continue;
-
-          if (dominators.find(parent) == dominators.end())
-            dominators.insert(std::make_pair(parent, 
-                                             shared_bitmap(new bitmap())));
-          shared_bitmap pbits = dominators[parent];
-
-          if (intersection.size() > pbits->size())
-            pbits->resize(intersection.size());
-
-          if (pbits->size() > intersection.size())
-            intersection.resize(pbits->size());
-
-          if (first)
-            {
-              intersection = (*pbits);
-              first = false;
-            }
-          else
-            intersection &= (*pbits);
-        }
-
-      if (intersection.size() > bits->size())
-        bits->resize(intersection.size());
-
-      if (bits->size() > intersection.size())
-        intersection.resize(bits->size());
-      (*bits) |= intersection;
-      if (*bits != saved)
-        something_changed = true;
-    }
-  return something_changed;
-}
-
-
-static bool 
-expand_ancestors(std::map<ctx, shared_bitmap> & parents,
-                 std::map<ctx, shared_bitmap> & ancestors,
-                 interner<ctx> & intern,
-                 app_state & app)
-{
-  bool something_changed = false;
-  std::vector<ctx> nodes;
-
-  nodes.reserve(ancestors.size());
-
-  // pass 1, pull out all the node numbers we're going to scan this time around
-  for (std::map<ctx, shared_bitmap>::reverse_iterator e = ancestors.rbegin(); 
-       e != ancestors.rend(); ++e)
-    nodes.push_back(e->first);
-  
-  // pass 2, update any of the ancestor entries we can
-  for (std::vector<ctx>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
-    {
-      shared_bitmap bits = ancestors[*n];
-      bitmap saved(*bits);
-      if (bits->size() <= *n)
-        bits->resize(*n + 1);
-      bits->set(*n);
-
-      ensure_parents_loaded(*n, parents, intern, app);
-      shared_bitmap n_parents = parents[*n];
-      for (ctx parent = 0; parent != n_parents->size(); ++parent)
-        {
-          if (! n_parents->test(parent))
-            continue;
-
-          if (bits->size() <= parent)
-            bits->resize(parent + 1);
-          bits->set(parent);
-
-          if (ancestors.find(parent) == ancestors.end())
-            ancestors.insert(make_pair(parent, 
-                                        shared_bitmap(new bitmap())));
-          shared_bitmap pbits = ancestors[parent];
-
-          if (bits->size() > pbits->size())
-            pbits->resize(bits->size());
-
-          if (pbits->size() > bits->size())
-            bits->resize(pbits->size());
-
-          (*bits) |= (*pbits);
-        }
-      if (*bits != saved)
-        something_changed = true;
-    }
-  return something_changed;
-}
-
-static bool 
-find_intersecting_node(bitmap & fst, 
-                       bitmap & snd, 
-                       interner<ctx> const & intern, 
-                       revision_id & anc)
-{
-  
-  if (fst.size() > snd.size())
-    snd.resize(fst.size());
-  else if (snd.size() > fst.size())
-    fst.resize(snd.size());
-  
-  bitmap intersection = fst & snd;
-  if (intersection.any())
-    {
-      L(F("found %d intersecting nodes\n") % intersection.count());
-      for (ctx i = 0; i < intersection.size(); ++i)
-        {
-          if (intersection.test(i))
-            {
-              anc = revision_id(intern.lookup(i));
-              return true;
-            }
-        }
-    }
-  return false;
-}
-
-//  static void
-//  dump_bitset_map(std::string const & hdr,
-//              std::map< ctx, shared_bitmap > const & mm)
-//  {
-//    L(F("dumping [%s] (%d entries)\n") % hdr % mm.size());
-//    for (std::map< ctx, shared_bitmap >::const_iterator i = mm.begin();
-//         i != mm.end(); ++i)
-//      {
-//        L(F("dump [%s]: %d -> %s\n") % hdr % i->first % (*(i->second)));
-//      }
-//  }
-
-bool 
+void
 find_common_ancestor_for_merge(revision_id const & left,
                                revision_id const & right,
                                revision_id & anc,
                                app_state & app)
 {
-  // Temporary workaround until we figure out how to clean up the whole
-  // ancestor selection mess:
-  if (app.use_lca)
-    return find_least_common_ancestor(left, right, anc, app);
-
   interner<ctx> intern;
-  std::map< ctx, shared_bitmap > 
-    parents, ancestors, dominators;
-  
-  ctx ln = intern.intern(left.inner()());
-  ctx rn = intern.intern(right.inner()());
-  
-  shared_bitmap lanc = shared_bitmap(new bitmap());
-  shared_bitmap ranc = shared_bitmap(new bitmap());
-  shared_bitmap ldom = shared_bitmap(new bitmap());
-  shared_bitmap rdom = shared_bitmap(new bitmap());
+  std::set<ctx> leaves;
+  std::map<ctx, shared_bitmap> ancestors;
 
-  ancestors.insert(make_pair(ln, lanc));
-  ancestors.insert(make_pair(rn, ranc));
-  dominators.insert(make_pair(ln, ldom));
-  dominators.insert(make_pair(rn, rdom));
+  shared_bitmap isect = shared_bitmap(new bitmap());
+  shared_bitmap isect_ancs = shared_bitmap(new bitmap());
+
+  leaves.insert(intern.intern(left.inner()()));
+  leaves.insert(intern.intern(right.inner()()));
+
+
+  std::multimap<revision_id, revision_id> inverse_graph;
+  {
+    std::multimap<revision_id, revision_id> graph;
+    app.db.get_revision_ancestry(graph);
+    typedef std::multimap<revision_id, revision_id>::const_iterator gi;
+    for (gi i = graph.begin(); i != graph.end(); ++i)
+      inverse_graph.insert(std::make_pair(i->second, i->first));
+  }
+
   
-  L(F("searching for common ancestor, left=%s right=%s\n") % left % right);
-  
-  while (expand_ancestors(parents, ancestors, intern, app) |
-         expand_dominators(parents, dominators, intern, app))
+  while (leaves.size() != 1)
     {
-      L(F("common ancestor scan [par=%d,anc=%d,dom=%d]\n") % 
-        parents.size() % ancestors.size() % dominators.size());
+      isect->clear();
+      isect_ancs->clear();
 
-      if (find_intersecting_node(*lanc, *rdom, intern, anc))
+      // First intersect all ancestors of current leaf set
+      for (std::set<ctx>::const_iterator i = leaves.begin(); i != leaves.end(); ++i)
         {
-          L(F("found node %d, ancestor of left %s and dominating right %s\n")
-            % anc % left % right);
-          return true;
+          ctx curr_leaf = *i;
+          shared_bitmap curr_leaf_ancestors;
+          std::map<ctx, shared_bitmap >::const_iterator j = ancestors.find(*i);
+          if (j != ancestors.end())
+            curr_leaf_ancestors = j->second;
+          else
+            {
+              curr_leaf_ancestors = shared_bitmap(new bitmap());
+              calculate_ancestors_from_graph(intern, revision_id(intern.lookup(curr_leaf)), 
+                                             inverse_graph, ancestors, 
+                                             curr_leaf_ancestors);
+            }
+          if (isect->size() > curr_leaf_ancestors->size())
+            curr_leaf_ancestors->resize(isect->size());
+
+          if (curr_leaf_ancestors->size() > isect->size())
+            isect->resize(curr_leaf_ancestors->size());
+
+          if (i == leaves.begin())
+            *isect = *curr_leaf_ancestors;
+          else
+            (*isect) &= (*curr_leaf_ancestors);
         }
       
-      else if (find_intersecting_node(*ranc, *ldom, intern, anc))
+      // isect is now the set of common ancestors of leaves, but that is not enough.
+      // We need the set of leaves of isect; to do that we calculate the set of 
+      // ancestors of isect, in order to subtract it from isect (below).
+      std::set<ctx> new_leaves;
+      for (ctx i = 0; i < isect->size(); ++i)
         {
-          L(F("found node %d, ancestor of right %s and dominating left %s\n")
-            % anc % right % left);
-          return true;
+          if (isect->test(i))
+            {
+              calculate_ancestors_from_graph(intern, revision_id(intern.lookup(i)), 
+                                             inverse_graph, ancestors, isect_ancs);
+            }
+        }
+
+      // Finally, the subtraction step: for any element i of isect, if
+      // it's *not* in isect_ancs, it survives as a new leaf.
+      leaves.clear();
+      for (ctx i = 0; i < isect->size(); ++i)
+        {
+          if (!isect->test(i))
+            continue;
+          if (i < isect_ancs->size() && isect_ancs->test(i))
+            continue;
+          safe_insert(leaves, i);
         }
     }
-//      dump_bitset_map("ancestors", ancestors);
-//      dump_bitset_map("dominators", dominators);
-//      dump_bitset_map("parents", parents);
-  return false;
+
+  I(leaves.size() == 1);
+  anc = revision_id(intern.lookup(*leaves.begin()));
 }
-
-
-bool
-find_least_common_ancestor(revision_id const & left,
-                           revision_id const & right,
-                           revision_id & anc,
-                           app_state & app)
-{
-  interner<ctx> intern;
-  std::map< ctx, shared_bitmap >
-    parents, ancestors;
-
-  if (left == right)
-    {
-      anc = left;
-      return true;
-    }
-
-  ctx ln = intern.intern(left.inner()());
-  ctx rn = intern.intern(right.inner()());
-
-  shared_bitmap lanc = shared_bitmap(new bitmap());
-  shared_bitmap ranc = shared_bitmap(new bitmap());
-
-  ancestors.insert(make_pair(ln, lanc));
-  ancestors.insert(make_pair(rn, ranc));
-
-  L(F("searching for least common ancestor, left=%s right=%s\n") % left % right);
-
-  while (expand_ancestors(parents, ancestors, intern, app))
-    {
-      L(F("least common ancestor scan [par=%d,anc=%d]\n") %
-        parents.size() % ancestors.size());
-
-      if (find_intersecting_node(*lanc, *ranc, intern, anc))
-        {
-          L(F("found node %d, ancestor of left %s and right %s\n")
-            % anc % left % right);
-          return true;
-        }
-    }
-//      dump_bitset_map("ancestors", ancestors);
-//      dump_bitset_map("parents", parents);
-  return false;
-}
-
 
 // FIXME: this algorithm is incredibly inefficient; it's O(n) where n is the
 // size of the entire revision graph.

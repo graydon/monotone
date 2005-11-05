@@ -721,6 +721,28 @@ static bool find_in_attr_map(attr_map const & attr,
   return true;
 }
 
+bool 
+get_attribute_from_roster(roster_t const & ros,                               
+                          file_path const & path,
+                          attr_key const & key,
+                          attr_value & val)
+{
+  split_path sp;
+  path.split(sp);
+  if (ros.has_node(sp))
+    {
+      node_t n = ros.get_node(sp);
+      full_attr_map_t::const_iterator i = n->attrs.find(manual_merge_attribute);
+      if (i != n->attrs.end() && i->second.first)
+        {
+          val = i->second.second;
+          return true;
+        }
+    }
+  return false;
+}
+
+
 bool get_attribute_from_db(file_path const & file,
                            std::string const & attr_key,
                            manifest_map const & man,

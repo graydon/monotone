@@ -132,17 +132,11 @@ check_sane_history(revision_id const & child_id, int depth, app_state & app);
 
 // graph walking
 
-bool 
+void
 find_common_ancestor_for_merge(revision_id const & left,
                                revision_id const & right,
                                revision_id & anc,
                                app_state & app);
-
-bool 
-find_least_common_ancestor(revision_id const & left,
-                           revision_id const & right,
-                           revision_id & anc,
-                           app_state & app);
 
 bool
 is_ancestor(revision_id const & ancestor,

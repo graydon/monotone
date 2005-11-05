@@ -14,6 +14,8 @@
 #include <vector>
 #include <iostream>
 
+struct roster_t;
+
 struct conflict {};
 
 // this file is to contain some stripped down, in-process implementations
@@ -36,13 +38,13 @@ bool merge3(std::vector<std::string> const & ancestor,
 struct merge_provider
 {
   app_state & app;
-  manifest_map const & anc_man;
-  manifest_map const & left_man;
-  manifest_map const & right_man;
+  roster_t const & anc_ros;
+  roster_t const & left_ros;
+  roster_t const & right_ros;
   merge_provider(app_state & app, 
-                 manifest_map const & anc_man,
-                 manifest_map const & left_man, 
-                 manifest_map const & right_man);
+                 roster_t const & anc_ros,
+                 roster_t const & left_ros, 
+                 roster_t const & right_ros);
 
   // merge3 on a file (line by line)
   virtual bool try_to_merge_files(file_path const & anc_path,
@@ -73,11 +75,11 @@ struct merge_provider
                            file_data & dat);
 
   virtual std::string get_file_encoding(file_path const & path,
-                                        manifest_map const & man);
+                                        roster_t const & ros);
 
   virtual bool attribute_manual_merge(file_path const & path,
-                                        manifest_map const & man);
-
+				      roster_t const & ros);
+  
   virtual ~merge_provider() {}
 };
 
@@ -85,9 +87,9 @@ struct update_merge_provider : public merge_provider
 {
   std::map<file_id, file_data> temporary_store;
   update_merge_provider(app_state & app,
-                        manifest_map const & anc_man,
-                        manifest_map const & left_man, 
-                        manifest_map const & right_man);
+                        roster_t const & anc_ros,
+                        roster_t const & left_ros, 
+                        roster_t const & right_ros);
 
   virtual void record_merge(file_id const & left_ident, 
                             file_id const & right_ident, 
@@ -98,12 +100,6 @@ struct update_merge_provider : public merge_provider
   virtual void get_version(file_path const & path,
                            file_id const & ident,
                            file_data & dat);
-
-  virtual std::string get_file_encoding(file_path const & path,
-                                        manifest_map const & man);
-
-  virtual bool attribute_manual_merge(file_path const & path,
-                                        manifest_map const & man);
 
   virtual ~update_merge_provider() {}
 };

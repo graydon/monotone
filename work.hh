@@ -192,6 +192,11 @@ void write_attr_map(data & dat,
 extern std::string const encoding_attribute;
 extern std::string const manual_merge_attribute;
 
+bool get_attribute_from_roster(roster_t const & ros,                               
+                               file_path const & path,
+                               attr_key const & key,
+                               attr_value & val);
+
 bool get_attribute_from_db(file_path const & file,
                            std::string const & attr_key,
                            manifest_map const & man,
