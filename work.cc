@@ -15,6 +15,7 @@
 #include "file_io.hh"
 #include "platform.hh"
 #include "sanity.hh"
+#include "safe_map.hh"
 #include "transforms.hh"
 #include "vocab.hh"
 #include "work.hh"
@@ -773,6 +774,13 @@ editable_working_tree::editable_working_tree(app_state & app,
 {
 }
 
+void
+move_path_if_not_already_present(any_path const & old_path,
+                                 any_path const & new_path,
+                                 app_state & app)
+{
+}
+
 static inline bookkeeping_path
 path_for_nid(node_id nid)
 {
@@ -819,6 +827,7 @@ editable_working_tree::create_file_node(file_id const & content)
   source.get_file_content(content, dat);
   // FIXME_ROSTERS: what about charset conversion etc.?
   write_data(pth, dat.inner());
+  safe_insert(written_content, make_pair(pth, content));
   return nid;
 }
 
@@ -827,6 +836,29 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
 {
   bookkeeping_path src_pth = path_for_nid(nid);
   file_path dst_pth(dst);
+  switch (get_path_status(src_pth))
+    {
+    case path::nonexistent:
+      I(false);
+      break;
+    case path::file:
+      if (file_exists(dst_pth))
+        {
+          std::map<bookkeeping_path, file_id>::const_iterator i 
+            = written_content.find(src_pth);
+          I(i != written_content.end());
+          file_id dst_id;
+          ident_existing_file(dst_pth, dst_id, app.lua);
+          if (i->second == dst_id)
+            return;
+        }
+      break;
+    case path::directory:
+      if (directory_exists(dst_pth))
+        return;
+      break;
+    }
+  // This will complain if the move is actually impossible
   move_path(src_pth, dst_pth);
 }
 

@@ -35,74 +35,95 @@ bool merge3(std::vector<std::string> const & ancestor,
             std::vector<std::string> const & right,
             std::vector<std::string> & merged);
 
-struct merge_provider
+struct 
+content_merge_adaptor
+{
+  virtual void record_merge(file_id const & left_ident, 
+                            file_id const & right_ident, 
+                            file_id const & merged_ident,
+                            file_data const & left_data, 
+                            file_data const & merged_data) = 0;
+  
+  virtual void get_version(file_path const & path,
+                           file_id const & ident,                           
+                           file_data & dat) = 0;
+
+  virtual ~content_merge_adaptor() {}
+};
+
+struct
+content_merge_database_adaptor 
+  : public content_merge_adaptor
+{
+  app_state & app;
+  content_merge_database_adaptor (app_state & app) : app(app) {}
+  void record_merge(file_id const & left_ident, 
+                    file_id const & right_ident, 
+                    file_id const & merged_ident,
+                    file_data const & left_data, 
+                    file_data const & merged_data);
+  
+  void get_version(file_path const & path,
+                   file_id const & ident,                           
+                   file_data & dat);
+};
+
+struct
+content_merge_working_copy_adaptor
+  : public content_merge_adaptor
+{
+  std::map<file_id, file_data> temporary_store;
+  app_state & app;
+  content_merge_working_copy_adaptor (app_state & app) : app(app) {}
+  void record_merge(file_id const & left_ident, 
+                    file_id const & right_ident, 
+                    file_id const & merged_ident,
+                    file_data const & left_data, 
+                    file_data const & merged_data);
+  
+  void get_version(file_path const & path,
+                   file_id const & ident,                           
+                   file_data & dat);
+};
+
+struct content_merger
 {
   app_state & app;
   roster_t const & anc_ros;
   roster_t const & left_ros;
   roster_t const & right_ros;
-  merge_provider(app_state & app, 
+
+  content_merge_adaptor & adaptor;
+
+  content_merger(app_state & app,
                  roster_t const & anc_ros,
                  roster_t const & left_ros, 
-                 roster_t const & right_ros);
+                 roster_t const & right_ros,
+                 content_merge_adaptor & adaptor);
 
   // merge3 on a file (line by line)
-  virtual bool try_to_merge_files(file_path const & anc_path,
-                                  file_path const & left_path,
-                                  file_path const & right_path,
-                                  file_path const & merged_path,
-                                  file_id const & ancestor_id,
-                                  file_id const & left_id,
-                                  file_id const & right,
-                                  file_id & merged_id);
+  bool try_to_merge_files(file_path const & anc_path,
+                          file_path const & left_path,
+                          file_path const & right_path,
+                          file_path const & merged_path,
+                          file_id const & ancestor_id,
+                          file_id const & left_id,
+                          file_id const & right,
+                          file_id & merged_id);
 
   // merge2 on a file (line by line)
-  virtual bool try_to_merge_files(file_path const & left_path,
-                                  file_path const & right_path,
-                                  file_path const & merged_path,
-                                  file_id const & left_id,
-                                  file_id const & right_id,
-                                  file_id & merged);
+  bool try_to_merge_files(file_path const & left_path,
+                          file_path const & right_path,
+                          file_path const & merged_path,
+                          file_id const & left_id,
+                          file_id const & right_id,
+                          file_id & merged);
 
-  virtual void record_merge(file_id const & left_ident, 
-                            file_id const & right_ident, 
-                            file_id const & merged_ident,
-                            file_data const & left_data, 
-                            file_data const & merged_data);
+  std::string get_file_encoding(file_path const & path,
+                                roster_t const & ros);
   
-  virtual void get_version(file_path const & path,
-                           file_id const & ident,                           
-                           file_data & dat);
-
-  virtual std::string get_file_encoding(file_path const & path,
-                                        roster_t const & ros);
-
-  virtual bool attribute_manual_merge(file_path const & path,
-				      roster_t const & ros);
-  
-  virtual ~merge_provider() {}
+  bool attribute_manual_merge(file_path const & path,
+                              roster_t const & ros);
 };
-
-struct update_merge_provider : public merge_provider
-{
-  std::map<file_id, file_data> temporary_store;
-  update_merge_provider(app_state & app,
-                        roster_t const & anc_ros,
-                        roster_t const & left_ros, 
-                        roster_t const & right_ros);
-
-  virtual void record_merge(file_id const & left_ident, 
-                            file_id const & right_ident, 
-                            file_id const & merged_ident,
-                            file_data const & left_data, 
-                            file_data const & merged_data);
-
-  virtual void get_version(file_path const & path,
-                           file_id const & ident,
-                           file_data & dat);
-
-  virtual ~update_merge_provider() {}
-};
-
 
 #endif // __DIFF_PATCH_HH__

@@ -1,4 +1,5 @@
 // copyright (C) 2005 nathaniel smith <njs@pobox.com>
+// copyright (C) 2005 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
@@ -31,8 +32,7 @@ load_and_cache_roster(revision_id const & rid,
   else
     { 
       rout = shared_ptr<roster_t>(new roster_t());
-      marking_map mm;
-      app.db.get_roster(rid, *rout, mm);
+      app.db.get_roster(rid, *rout);
       safe_insert(rmap, make_pair(rid, rout));
     }
 }
@@ -51,33 +51,21 @@ get_file_details(roster_t const & ros, node_id nid,
 }
 
 void
-interactive_merge_and_store(revision_id const & left_rid,
-                            revision_id const & right_rid,
-                            revision_id & merged_rid,
-                            app_state & app)
+resolve_merge_conflicts(revision_id const & left_rid,
+                        revision_id const & right_rid,
+                        roster_t const & left_roster, 
+                        roster_t const & right_roster,
+                        marking_map const & left_marking_map, 
+                        marking_map const & right_marking_map,
+                        roster_merge_result & result,
+                        content_merge_adaptor & adaptor,
+                        app_state & app)
 {
-  roster_t left_roster, right_roster;
-  marking_map left_marking_map, right_marking_map;
-  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
-
-  app.db.get_roster(left_rid, left_roster, left_marking_map);
-  app.db.get_roster(right_rid, right_roster, right_marking_map);
-  app.db.get_uncommon_ancestors(left_rid, right_rid,
-                                left_uncommon_ancestors, right_uncommon_ancestors);
-
-  roster_merge_result result;
-
-  roster_merge(left_roster, left_marking_map, left_uncommon_ancestors,
-               right_roster, right_marking_map, right_uncommon_ancestors,
-               result);
-
-  roster_t & merged_roster = result.roster;
-
   // FIXME_ROSTERS: we only have code (below) to invoke the
   // line-merger on content conflicts. Other classes of conflict will
   // cause an invariant to trip below.  Probably just a bunch of lua
   // hooks for remaining conflict types will be ok.
-
+  
   if (!result.is_clean())
     {
       L(F("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts\n")	
@@ -155,20 +143,54 @@ interactive_merge_and_store(revision_id const & left_rid,
 	      
 	      file_id merged_id;
 	      
-	      merge_provider mp(app, *roster_for_file_lca, left_roster, right_roster);
-	      if (mp.try_to_merge_files(anc_path, left_path, right_path, right_path,
+	      content_merger cm(app, *roster_for_file_lca, 
+                                left_roster, right_roster, 
+                                adaptor);
+
+	      if (cm.try_to_merge_files(anc_path, left_path, right_path, right_path,
 					anc_id, left_id, right_id, merged_id))
 		{
 		  L(F("resolved content conflict %d / %d\n") 
 		    % (i+1) % result.file_content_conflicts.size());
+                  file_t f = downcast_to_file_t(result.roster.get_node(conflict.nid));
+                  f->content = merged_id;
 		}
 	      else
 		residual_conflicts.push_back(conflict);
 	    }
 	  result.file_content_conflicts = residual_conflicts;	  
-	}	 
+	}
     }
+}
 
+void
+interactive_merge_and_store(revision_id const & left_rid,
+                            revision_id const & right_rid,
+                            revision_id & merged_rid,
+                            app_state & app)
+{
+  roster_t left_roster, right_roster;
+  marking_map left_marking_map, right_marking_map;
+  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+
+  app.db.get_roster(left_rid, left_roster, left_marking_map);
+  app.db.get_roster(right_rid, right_roster, right_marking_map);
+  app.db.get_uncommon_ancestors(left_rid, right_rid,
+                                left_uncommon_ancestors, right_uncommon_ancestors);
+
+  roster_merge_result result;
+
+  roster_merge(left_roster, left_marking_map, left_uncommon_ancestors,
+               right_roster, right_marking_map, right_uncommon_ancestors,
+               result);
+
+  roster_t & merged_roster = result.roster;
+
+  content_merge_database_adaptor dba(app);
+  resolve_merge_conflicts (left_rid, right_rid,
+                           left_roster, right_roster,
+                           left_marking_map, right_marking_map,
+                           result, dba, app);
 
   // write new files into the db
 

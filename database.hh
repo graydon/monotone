@@ -418,6 +418,9 @@ public:
   void get_branches(std::vector<std::string> & names);
 
   // roster and node_id stuff
+
+  void get_roster(revision_id const & rid, 
+                  roster_t & roster);
  
   void get_roster(revision_id const & rid, 
                   roster_t & roster,

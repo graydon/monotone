@@ -2475,6 +2475,13 @@ database::get_roster_id_for_revision(revision_id const & rev_id,
   roster_id = hexenc<id>(res[0][0]);
 }
 
+void 
+database::get_roster(revision_id const & rev_id, 
+                     roster_t & roster)
+{
+  marking_map mm;
+  get_roster(rev_id, roster, mm);
+}
 
 void 
 database::get_roster(revision_id const & rev_id, 

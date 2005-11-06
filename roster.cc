@@ -821,7 +821,7 @@ roster_t::check_sane(bool temp_nodes_ok) const
       else
         {
           I(!null_name(n->name) && !null_node(n->parent));
-          !null_id(downcast_to_file_t(n)->content);
+          I(!null_id(downcast_to_file_t(n)->content));
         }
       for (full_attr_map_t::const_iterator i = n->attrs.begin(); i != n->attrs.end(); ++i)
         I(i->second.first || i->second.second().empty());

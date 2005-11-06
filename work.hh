@@ -208,12 +208,13 @@ extern std::string const default_encoding;
 struct file_content_source
 {
   virtual void get_file_content(file_id const & fid,
-                                file_data const & dat) const = 0;
+                                file_data & dat) const = 0;
   virtual ~file_content_source() {};
 };
 
 struct editable_working_tree : public editable_tree
 {
+  std::map<bookkeeping_path, file_id> written_content;
   editable_working_tree(app_state & app, file_content_source const & source);
 
   virtual node_id detach_node(split_path const & src);

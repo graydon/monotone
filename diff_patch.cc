@@ -456,18 +456,16 @@ bool merge3(vector<string> const & ancestor,
 }
 
 
-merge_provider::merge_provider(app_state & app, 
-                               roster_t const & anc_ros,
-                               roster_t const & left_ros, 
-                               roster_t const & right_ros)
-  : app(app), anc_ros(anc_ros), left_ros(left_ros), right_ros(right_ros)
-{}
+///////////////////////////////////////////////////////////////////////////
+// content_merge_database_adaptor
+///////////////////////////////////////////////////////////////////////////
 
-void merge_provider::record_merge(file_id const & left_ident, 
-                                         file_id const & right_ident, 
-                                         file_id const & merged_ident,
-                                         file_data const & left_data, 
-                                         file_data const & merged_data)
+void 
+content_merge_database_adaptor::record_merge(file_id const & left_ident, 
+                                             file_id const & right_ident, 
+                                             file_id const & merged_ident,
+                                             file_data const & left_data, 
+                                             file_data const & merged_data)
 {  
   L(F("recording successful merge of %s <-> %s into %s\n")
     % left_ident % right_ident % merged_ident);
@@ -481,15 +479,75 @@ void merge_provider::record_merge(file_id const & left_ident,
   guard.commit();
 }
 
-void merge_provider::get_version(file_path const & path,
-                                 file_id const & ident,
-                                 file_data & dat)
+void 
+content_merge_database_adaptor::get_version(file_path const & path,
+                                            file_id const & ident,
+                                            file_data & dat)
 {
   app.db.get_file_version(ident, dat);
 }
 
-std::string merge_provider::get_file_encoding(file_path const & path,
-                                              roster_t const & ros)
+
+///////////////////////////////////////////////////////////////////////////
+// content_merge_working_copy_adaptor
+///////////////////////////////////////////////////////////////////////////
+
+void 
+content_merge_working_copy_adaptor::record_merge(file_id const & left_id, 
+                                                 file_id const & right_id,
+                                                 file_id const & merged_id,
+                                                 file_data const & left_data, 
+                                                 file_data const & merged_data)
+{  
+  L(F("temporarily recording merge of %s <-> %s into %s\n")
+    % left_id % right_id % merged_id);
+  I(temporary_store.find(merged_id) == temporary_store.end());
+  temporary_store.insert(make_pair(merged_id, merged_data));
+}
+
+void 
+content_merge_working_copy_adaptor::get_version(file_path const & path,
+                                                file_id const & ident, 
+                                                file_data & dat)
+{
+  if (app.db.file_version_exists(ident))
+    app.db.get_file_version(ident, dat);
+  else
+    {
+      data tmp;
+      file_id fid;
+      require_path_is_file(path,
+                           F("file '%s' does not exist in working copy") % path,
+                           F("'%s' in working copy is a directory, not a file") % path);
+      read_localized_data(path, tmp, app.lua);
+      calculate_ident(tmp, fid);
+      N(fid == ident,
+        F("file %s in working copy has id %s, wanted %s")
+        % path % fid % ident);
+      dat = tmp;
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+// content_merger
+///////////////////////////////////////////////////////////////////////////
+
+content_merger::content_merger(app_state & app, 
+                               roster_t const & anc_ros,
+                               roster_t const & left_ros, 
+                               roster_t const & right_ros,
+                               content_merge_adaptor & adaptor)
+  : app(app), 
+    anc_ros(anc_ros), 
+    left_ros(left_ros), 
+    right_ros(right_ros),
+    adaptor(adaptor)
+{}
+
+std::string 
+content_merger::get_file_encoding(file_path const & path,
+                                  roster_t const & ros)
 {
   attr_value v;
   if (get_attribute_from_roster(ros, path, encoding_attribute, v))
@@ -497,8 +555,9 @@ std::string merge_provider::get_file_encoding(file_path const & path,
   return default_encoding;
 }
 
-bool merge_provider::attribute_manual_merge(file_path const & path,
-                                              roster_t const & ros)
+bool 
+content_merger::attribute_manual_merge(file_path const & path,
+                                       roster_t const & ros)
 {
   attr_value v;
   if (get_attribute_from_roster(ros, path, manual_merge_attribute, v)
@@ -507,14 +566,15 @@ bool merge_provider::attribute_manual_merge(file_path const & path,
   return false; // default: enable auto merge
 }
 
-bool merge_provider::try_to_merge_files(file_path const & anc_path,
-                                        file_path const & left_path,
-                                        file_path const & right_path,
-                                        file_path const & merged_path,
-                                        file_id const & ancestor_id,                                    
-                                        file_id const & left_id,
-                                        file_id const & right_id,
-                                        file_id & merged_id)
+bool 
+content_merger::try_to_merge_files(file_path const & anc_path,
+                                   file_path const & left_path,
+                                   file_path const & right_path,
+                                   file_path const & merged_path,
+                                   file_id const & ancestor_id,                                    
+                                   file_id const & left_id,
+                                   file_id const & right_id,
+                                   file_id & merged_id)
 {
   // This version of try_to_merge_files should only be called when there is a
   // real merge3 to perform.
@@ -535,9 +595,9 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
   file_data left_data, right_data, ancestor_data;
   data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
 
-  this->get_version(left_path, left_id, left_data);
-  this->get_version(anc_path, ancestor_id, ancestor_data);
-  this->get_version(right_path, right_id, right_data);
+  adaptor.get_version(left_path, left_id, left_data);
+  adaptor.get_version(anc_path, ancestor_id, ancestor_data);
+  adaptor.get_version(right_path, right_id, right_data);
 
   left_unpacked = left_data.inner();
   ancestor_unpacked = ancestor_data.inner();
@@ -576,8 +636,8 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
           merge_data = file_data(tmp);
     
           merged_id = merged_fid;
-          record_merge(left_id, right_id, merged_fid, 
-                       left_data, merge_data);
+          adaptor.record_merge(left_id, right_id, merged_fid, 
+                               left_data, merge_data);
     
           return true;
         }
@@ -606,20 +666,21 @@ bool merge_provider::try_to_merge_files(file_path const & anc_path,
       merge_data = file_data(merged_unpacked);
 
       merged_id = merged_fid;
-      record_merge(left_id, right_id, merged_fid, 
-                   left_data, merge_data);
+      adaptor.record_merge(left_id, right_id, merged_fid, 
+                           left_data, merge_data);
       return true;
     }
 
   return false;
 }
 
-bool merge_provider::try_to_merge_files(file_path const & left_path,
-                                        file_path const & right_path,
-                                        file_path const & merged_path,
-                                        file_id const & left_id,
-                                        file_id const & right_id,
-                                        file_id & merged_id)
+bool 
+content_merger::try_to_merge_files(file_path const & left_path,
+                                   file_path const & right_path,
+                                   file_path const & merged_path,
+                                   file_id const & left_id,
+                                   file_id const & right_id,
+                                   file_id & merged_id)
 {
   I(!null_id(left_id));
   I(!null_id(right_id));
@@ -637,8 +698,8 @@ bool merge_provider::try_to_merge_files(file_path const & left_path,
       return true;      
     }  
 
-  this->get_version(left_path, left_id, left_data);
-  this->get_version(right_path, right_id, right_data);
+  adaptor.get_version(left_path, left_id, left_data);
+  adaptor.get_version(right_path, right_id, right_data);
     
   left_unpacked = left_data.inner();
   right_unpacked = right_data.inner();
@@ -663,58 +724,14 @@ bool merge_provider::try_to_merge_files(file_path const & left_path,
       merge_data = file_data(merged_unpacked);
       
       merged_id = merged_fid;
-      record_merge(left_id, right_id, merged_fid, 
-                   left_data, merge_data);
+      adaptor.record_merge(left_id, right_id, merged_fid, 
+                           left_data, merge_data);
       return true;
     }
   
   return false;
 }
 
-
-// during the "update" command, the only real differences from merging
-// are that we take our right versions from the filesystem, not the db,
-// and we only record the merges in a transient, in-memory table.
-
-update_merge_provider::update_merge_provider(app_state & app,
-                                             roster_t const & anc_ros,
-                                             roster_t const & left_ros, 
-                                             roster_t const & right_ros) 
-  : merge_provider(app, anc_ros, left_ros, right_ros) {}
-
-void update_merge_provider::record_merge(file_id const & left_id, 
-                                         file_id const & right_id,
-                                         file_id const & merged_id,
-                                         file_data const & left_data, 
-                                         file_data const & merged_data)
-{  
-  L(F("temporarily recording merge of %s <-> %s into %s\n")
-    % left_id % right_id % merged_id);
-  I(temporary_store.find(merged_id) == temporary_store.end());
-  temporary_store.insert(make_pair(merged_id, merged_data));
-}
-
-void update_merge_provider::get_version(file_path const & path,
-                                        file_id const & ident, 
-                                        file_data & dat)
-{
-  if (app.db.file_version_exists(ident))
-    app.db.get_file_version(ident, dat);
-  else
-    {
-      data tmp;
-      file_id fid;
-      require_path_is_file(path,
-                           F("file '%s' does not exist in working copy") % path,
-                           F("'%s' in working copy is a directory, not a file") % path);
-      read_localized_data(path, tmp, app.lua);
-      calculate_ident(tmp, fid);
-      N(fid == ident,
-        F("file %s in working copy has id %s, wanted %s")
-        % path % fid % ident);
-      dat = tmp;
-    }
-}
 
 // the remaining part of this file just handles printing out various
 // diff formats for the case where someone wants to *read* a diff

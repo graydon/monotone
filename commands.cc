@@ -48,6 +48,8 @@
 #include "globish.hh"
 #include "paths.hh"
 #include "merge.hh"
+#include "roster_merge.hh"
+#include "roster.hh"
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -2737,45 +2739,6 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 }
 */
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
-
-static void
-write_file_targets(change_set const & cs,
-                   update_merge_provider & merger,
-                   app_state & app)
-{
-
-  manifest_map files_to_write;
-  for (change_set::delta_map::const_iterator i = cs.deltas.begin();
-       i != cs.deltas.end(); ++i)
-    {
-      file_path pth(delta_entry_path(i));
-      file_id ident(delta_entry_dst(i));
-      
-      if (file_exists(pth))
-        {
-          hexenc<id> tmp_id;
-          calculate_ident(pth, tmp_id, app.lua);
-          if (tmp_id == ident.inner())
-            continue;
-        }
-      
-      P(F("updating %s to %s\n") % pth % ident);
-      
-      I(app.db.file_version_exists(ident)
-        || merger.temporary_store.find(ident) != merger.temporary_store.end());
-      
-      file_data tmp;
-      if (app.db.file_version_exists(ident))
-        app.db.get_file_version(ident, tmp);
-      else if (merger.temporary_store.find(ident) != merger.temporary_store.end())
-        tmp = merger.temporary_store[ident];    
-      write_localized_data(pth, tmp.inner(), app.lua);
-    }
-}
-
-
 // static void dump_change_set(string const & name,
 //                          change_set & cs)
 // {
@@ -2784,17 +2747,36 @@ write_file_targets(change_set const & cs,
 //   cout << "change set '" << name << "'\n" << dat << endl;
 // }
 
+struct update_source 
+  : public file_content_source
+{
+  std::map<file_id, file_data> & temporary_store;
+  app_state & app;
+  update_source (std::map<file_id, file_data> & tmp,
+                 app_state & app)
+    : temporary_store(tmp), app(app)
+  {}
+  void get_file_content(file_id const & fid,
+                        file_data & dat) const
+  {
+    std::map<file_id, file_data>::const_iterator i = temporary_store.find(fid);
+    if (i != temporary_store.end())
+      dat = i->second;
+    else
+      app.db.get_file_version(fid, dat);
+  }
+};
+
 CMD(update, N_("working copy"), "",
     N_("update working copy.\n"
     "If a revision is given, base the update on that revision.  If not,\n"
     "base the update on the head of the branch (given or implicit)."),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
-  manifest_map m_old, m_ancestor, m_working, m_chosen;
-  manifest_id m_ancestor_id, m_chosen_id;
   revision_set r_old, r_working, r_new;
-  revision_id r_old_id, r_chosen_id;
-  change_set old_to_chosen, update, remaining;
+  roster_t old_roster, working_roster, chosen_roster;
+  marking_map working_mm, chosen_mm, merged_mm;
+  revision_id r_old_id, r_working_id, r_chosen_id;
 
   if (args.size() > 0)
     throw usage(name);
@@ -2804,8 +2786,19 @@ CMD(update, N_("working copy"), "",
 
   app.require_working_copy();
 
-  calculate_unrestricted_revision(app, r_working, m_old, m_working);
+  // FIXME: the next few lines are a little bit expensive insofar as they
+  // load the base roster twice. The API could use some factoring or
+  // such. But it should work for now; revisit if performance is
+  // intolerable.
+
+  get_unrestricted_working_revision_and_rosters(app, r_working,
+                                                old_roster, 
+                                                working_roster);
+  calculate_ident(r_working, r_working_id);
+  make_roster_for_revision(r_working, r_working_id,
+                           working_roster, working_mm, app);
   
+
   I(r_working.edges.size() == 1);
   r_old_id = edge_old_revision(r_working.edges.begin());
 
@@ -2867,67 +2860,96 @@ CMD(update, N_("working copy"), "",
         % r_chosen_id % app.branch_name);
     }
 
-  app.db.get_revision_manifest(r_chosen_id, m_chosen_id);
-  app.db.get_manifest(m_chosen_id, m_chosen);
+  // FIXME_ROSTERS: In the old (pre-roster) code, we supported updating to
+  // any revision in the graph, anywhere; if there was a path to get there,
+  // we'd synthesize a changeset to get there. This was a little easier to
+  // work with in pre-roster monotone because we merged changesets, not
+  // rosters.
+  //
+  // To do this using rosters' default "mark-merge", we'd need to
+  // synthesize a marking map using a fake ancestry graph. It's
+  // conceivable, but it's a fair amount of work, and it's not clear that
+  // many people used it, nor that mark-merge is ideal for the task. It
+  // might make more sense to make a different merger for this
+  // case. 
+  //
+  // Anyways, for the time being we're only implementing "forwards
+  // updates". That is, you can only "update" to new base revisions which
+  // are descendents of the base revision you have in your working copy.
 
-  calculate_arbitrary_change_set(r_old_id, r_chosen_id, app, old_to_chosen);
+  N(is_ancestor(r_old_id, r_chosen_id, app),
+    F("Update target is not a descendent of working copy base revision\n"));
+
+  app.db.get_roster(r_chosen_id, chosen_roster, chosen_mm);
+
+  // Note that, as far as "uncommon ancestors" go, the working's "uncommon
+  // ancestors" are the same as the base revision's "uncommon ancestors"
+  // relative to the chosen target: it's an empty set.  The only "uncommon
+  // ancestors" we're really interested in finding are those above the
+  // chosen target and not above the base revision; so we can use the
+  // database function here using the base revision id, not the working
+  // copy revision id. 
+  //
+  // This will stop being true when we have merge-into-dir support.
+
+  std::set<revision_id> 
+    working_uncommon_ancestors, 
+    chosen_uncommon_ancestors;
+
+  app.db.get_uncommon_ancestors(r_old_id, r_chosen_id,
+                                working_uncommon_ancestors, 
+                                chosen_uncommon_ancestors);
+
+  // Now merge the working roster with the chosen target. 
+
+  roster_merge_result result;  
+  roster_merge(working_roster, working_mm, working_uncommon_ancestors,
+               chosen_roster, chosen_mm, chosen_uncommon_ancestors,
+               result);
+
+  roster_t & merged_roster = result.roster;
+
+  content_merge_working_copy_adaptor wca(app);
+  resolve_merge_conflicts (r_old_id, r_chosen_id,
+                           working_roster, chosen_roster,
+                           working_mm, chosen_mm,
+                           result, wca, app);
+
+  I(result.is_clean());
+  merged_roster.check_sane();
+
+  // we have the following
+  //
+  // old --> working
+  //   |         | 
+  //   V         V
+  //  chosen --> merged
+  //
+  // - old is the revision specified in MT/revision
+  // - working is based on old and includes the working copy's changes
+  // - chosen is the revision we're updating to and will end up in MT/revision
+  // - merged is the merge of working and chosen
+  // 
+  // we apply the working to merged cset to the working copy
+  // and write the cset from chosen to merged changeset in MT/work
   
-  update_merge_provider merger(app, m_old, m_chosen, m_working);
+  cset update, remaining;
+  make_cset (working_roster, merged_roster, update);
+  make_cset (chosen_roster, merged_roster, remaining);
 
-  if (r_working.edges.size() == 0)
-    {
-      // working copy has no changes
-      L(F("updating along chosen edge %s -> %s\n") 
-        % r_old_id % r_chosen_id);
-      update = old_to_chosen;
-    }
-  else
-    {      
-      change_set 
-        old_to_working(edge_changes(r_working.edges.begin())),
-        working_to_merged, 
-        chosen_to_merged;
+  //   {
+  //     data t1, t2, t3;
+  //     write_cset(update, t1);
+  //     write_cset(remaining, t2);
+  //     write_manifest_of_roster(merged_roster, t3);
+  //     P(F("updating working copy with [[[\n%s\n]]]\n") % t1);
+  //     P(F("leaving residual work [[[\n%s\n]]]\n") % t2);
+  //     P(F("merged roster [[[\n%s\n]]]\n") % t3);
+  //   }
 
-      L(F("merging working copy with chosen edge %s -> %s\n")
-        % r_old_id % r_chosen_id);
-
-      // we have the following
-      //
-      // old --> working
-      //   |         | 
-      //   V         V
-      //  chosen --> merged
-      //
-      // - old is the revision specified in MT/revision
-      // - working is based on old and includes the working copy's changes
-      // - chosen is the revision we're updating to and will end up in MT/revision
-      // - merged is the merge of working and chosen
-      // 
-      // we apply the working to merged changeset to the working copy
-      // and keep the rearrangement from chosen to merged changeset in MT/work
-
-      merge_change_sets(old_to_chosen, 
-                        old_to_working,
-                        chosen_to_merged, 
-                        working_to_merged,
-                        merger, app);
-      // dump_change_set("chosen to merged", chosen_to_merged);
-      // dump_change_set("working to merged", working_to_merged);
-
-      update = working_to_merged;
-      remaining = chosen_to_merged;
-    }
-  
-  bookkeeping_path tmp_root = bookkeeping_root / "tmp";
-  if (directory_exists(tmp_root))
-    delete_dir_recursive(tmp_root);
-
-  mkdir_p(tmp_root);
-  apply_rearrangement_to_filesystem(update.rearrangement, tmp_root);
-  write_file_targets(update, merger, app);
-
-  if (directory_exists(tmp_root))
-    delete_dir_recursive(tmp_root);
+  update_source fsource(wca.temporary_store, app);
+  editable_working_tree ewt(app, fsource);
+  update.apply_to(ewt);
   
   // small race condition here...
   // nb: we write out r_chosen, not r_new, because the revision-on-disk
@@ -2939,12 +2961,11 @@ CMD(update, N_("working copy"), "",
     }
   P(F("updated to base revision %s\n") % r_chosen_id);
 
-  put_path_rearrangement(remaining.rearrangement);
+  put_work_cset(remaining);
   update_any_attrs(app);
   maybe_update_inodeprints(app);
 }
 
-*/
 
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
     OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR % OPT_LCA)

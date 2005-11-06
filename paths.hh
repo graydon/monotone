@@ -200,6 +200,11 @@ public:
   bookkeeping_path operator /(std::string const & to_append) const;
   // exposed for the use of walk_tree
   static bool is_bookkeeping_path(std::string const & path);
+  bool operator ==(const bookkeeping_path & other) const
+  { return data == other.data; }
+
+  bool operator <(const bookkeeping_path & other) const
+  { return data < other.data; }
 };
 
 extern bookkeeping_path const bookkeeping_root;
