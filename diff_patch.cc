@@ -472,12 +472,14 @@ void merge_provider::record_merge(file_id const & left_ident,
   L(F("recording successful merge of %s <-> %s into %s\n")
     % left_ident % right_ident % merged_ident);
 
-  delta merge_delta;
+  delta left_delta, right_delta;
   transaction_guard guard(app.db);
 
-  diff(left_data.inner(), merged_data.inner(), merge_delta);  
+  diff(left_data.inner(), merged_data.inner(), left_delta); 
+  diff(left_data.inner(), merged_data.inner(), right_delta);  
   packet_db_writer dbw(app);
-  dbw.consume_file_delta (left_ident, merged_ident, file_delta(merge_delta));
+  dbw.consume_file_delta (left_ident, merged_ident, file_delta(left_delta));
+  dbw.consume_file_delta (right_ident, merged_ident, file_delta(right_delta));
   guard.commit();
 }
 

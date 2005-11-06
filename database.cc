@@ -813,6 +813,8 @@ database::put(hexenc<id> const & ident,
   I(ident() != "");
   hexenc<id> tid;
   calculate_ident(dat, tid);
+  MM(ident);
+  MM(tid);
   I(tid == ident);
 
   base64<gzip<data> > dat_packed;
@@ -1335,6 +1337,62 @@ database::get_revision(revision_id const & id,
   dat = rdat;
 }
 
+void
+database::deltify_revision(revision_id const & rid)
+{
+  transaction_guard guard(*this);
+  revision_set rev;
+  get_revision(rid, rev);
+  // make sure that all parent revs have their manifests and files
+  // replaced with deltas from this rev's manifest and files
+  // assume that if the manifest is already deltafied, so are the files
+  {
+    MM(rev.new_manifest);
+    for (edge_map::const_iterator i = rev.edges.begin();
+         i != rev.edges.end(); ++i)
+      {
+        manifest_id oldman = edge_old_manifest(i);
+        MM(oldman);
+        if (exists(oldman.inner(), "manifests") &&
+            !(oldman == rev.new_manifest) &&
+            manifest_version_exists(oldman))
+          {
+            manifest_data mdat_new, mdat_old;
+            get_manifest_version(oldman, mdat_old);
+            get_manifest_version(rev.new_manifest, mdat_new);
+            delta delt;
+            diff(mdat_old.inner(), mdat_new.inner(), delt);
+            manifest_delta mdelt(delt);
+            drop(rev.new_manifest.inner(), "manifests");
+            drop(rev.new_manifest.inner(), "manifest_deltas");
+            put_manifest_version(oldman, rev.new_manifest, mdelt);
+          }
+
+        for (change_set::delta_map::const_iterator
+               j = edge_changes(i).deltas.begin();
+             j != edge_changes(i).deltas.end(); ++j)
+          {
+            if (! delta_entry_src(j).inner()().empty() && 
+                  exists(delta_entry_src(j).inner(), "files") &&
+                  file_version_exists(delta_entry_dst(j)))
+              {
+                file_data old_data;
+                file_data new_data;
+                get_file_version(delta_entry_src(j), old_data);
+                get_file_version(delta_entry_dst(j), new_data);
+                delta delt;
+                diff(old_data.inner(), new_data.inner(), delt);
+                file_delta del(delt);
+                drop(delta_entry_dst(j).inner(), "files");
+                drop(delta_entry_dst(j).inner(), "file_deltas");
+                put_file_version(delta_entry_src(j), delta_entry_dst(j), del);
+              }
+          }
+      }
+  }
+  guard.commit();
+}
+
 void 
 database::put_revision(revision_id const & new_id,
                        revision_set const & rev)
@@ -1367,6 +1425,8 @@ database::put_revision(revision_id const & new_id,
               edge_old_revision(e).inner()().c_str(),
               new_id.inner()().c_str());
     }
+
+  deltify_revision(new_id);
 
   check_sane_history(new_id, constants::verify_depth, *__app);
 

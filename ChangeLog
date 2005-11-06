@@ -1,3 +1,11 @@
+2005-11-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make sure that all new revisions added to the db deltify as much as
+	possible.
+	* commands.cc, diff_patch.cc: deltify both sides when doing a merge
+	* database.{cc,hh}: new function, database::deltify_revision()
+	call it from put_revision, so all new revisions will be deltified
+
 2005-10-25  Emile Snyder  <emile@alumni.reed.edu>
 
 	Fix bug reported on mailing list by Wim Oudshoorn and Tom Koelman
