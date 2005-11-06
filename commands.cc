@@ -3121,8 +3121,6 @@ try_one_merge(revision_id const & left_id,
                     merger, app);
   
   {
-    // we have to record *some* route to this manifest. we pick the
-    // smaller of the two.
     manifest_map tmp;
     apply_change_set(anc_man, *anc_to_left, tmp);
     apply_change_set(tmp, *left_to_merged, merged_man);
@@ -3130,14 +3128,12 @@ try_one_merge(revision_id const & left_id,
     delta left_mdelta, right_mdelta;
     diff(left_man, merged_man, left_mdelta);
     diff(right_man, merged_man, right_mdelta);
-    if (left_mdelta().size() < right_mdelta().size())
-      dbw.consume_manifest_delta(left_rev.new_manifest, 
-                                 merged_rev.new_manifest, left_mdelta);
-    else
-      dbw.consume_manifest_delta(right_rev.new_manifest, 
-                                 merged_rev.new_manifest, right_mdelta);
+    dbw.consume_manifest_delta(left_rev.new_manifest, 
+                               merged_rev.new_manifest, left_mdelta);
+    dbw.consume_manifest_delta(right_rev.new_manifest, 
+                               merged_rev.new_manifest, right_mdelta);
   }
-  
+
   merged_rev.edges.insert(std::make_pair(left_id,
                                          std::make_pair(left_rev.new_manifest,
                                                         left_to_merged)));

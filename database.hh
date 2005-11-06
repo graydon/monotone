@@ -299,6 +299,8 @@ public:
   void get_revision_manifest(revision_id const & cid,
                             manifest_id & mid);
 
+  void deltify_revision(revision_id const & rid);
+
   void get_revision(revision_id const & id,
                    revision_set & cs);
 
