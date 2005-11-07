@@ -2796,11 +2796,12 @@ CMD(update, N_("working copy"), "",
                                                 *old_roster, 
                                                 working_roster);
   calculate_ident(r_working, r_working_id);
-  make_roster_for_revision(r_working, r_working_id,
-                           working_roster, working_mm, app);
-  
   I(r_working.edges.size() == 1);
   r_old_id = edge_old_revision(r_working.edges.begin());
+  make_roster_for_base_plus_cset(r_old_id, 
+                                 edge_changes(r_working.edges.begin()),
+                                 r_working_id,
+                                 working_roster, working_mm, app);
 
   N(!null_id(r_old_id),
     F("this working directory is a new project; cannot update"));

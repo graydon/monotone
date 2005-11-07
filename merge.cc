@@ -143,6 +143,14 @@ interactive_merge_and_store(revision_id const & left_rid,
 
   roster_merge_result result;
 
+//   {
+//     data tmp;
+//     write_roster_and_marking(left_roster, left_marking_map, tmp);
+//     P(F("merge left roster: [[[\n%s\n]]]\n") % tmp);
+//     write_roster_and_marking(right_roster, right_marking_map, tmp);
+//     P(F("merge right roster: [[[\n%s\n]]]\n") % tmp);
+//   }
+
   roster_merge(left_roster, left_marking_map, left_uncommon_ancestors,
                right_roster, right_marking_map, right_uncommon_ancestors,
                result);

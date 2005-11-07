@@ -217,6 +217,8 @@ public:
   void parse_from(basic_io::parser & pa,
                   marking_map & mm);
 
+  dir_t const & root() { return root_dir; }
+
 private:
   void do_deep_copy_from(roster_t const & other);
   void check_finite_depth() const;
@@ -289,6 +291,14 @@ update_restricted_roster_from_filesystem(roster_t & ros,
 void
 extract_roster_path_set(roster_t const & ros, 
                         path_set & paths);
+
+void
+make_roster_for_base_plus_cset(revision_id const & base, 
+                               cset const & cs,
+                               revision_id const & new_rid,
+                               roster_t & result, 
+                               marking_map & marking,
+                               app_state & app);
 
 void 
 make_roster_for_revision(revision_set const & rev, 

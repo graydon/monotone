@@ -826,7 +826,10 @@ roster_t::check_sane(bool temp_nodes_ok) const
       for (full_attr_map_t::const_iterator i = n->attrs.begin(); i != n->attrs.end(); ++i)
         I(i->second.first || i->second.second().empty());
       if (n != root_dir)
-        I(downcast_to_dir_t(get_node(n->parent))->get_child(n->name) == n);
+        {
+          I(!null_node(n->parent));
+          I(downcast_to_dir_t(get_node(n->parent))->get_child(n->name) == n);
+        }
 
     }
 
@@ -1501,6 +1504,19 @@ namespace
 }
 
 void
+make_roster_for_base_plus_cset(revision_id const & base, cset const & cs,
+                               revision_id const & new_rid,
+                               roster_t & result, marking_map & marking,
+                               app_state & app)
+{
+  roster_t parent_r;
+  app.db.get_roster(base, result, marking);
+  temp_node_id_source nis;
+  editable_roster_for_nonmerge er(result, nis, new_rid, marking);
+  cs.apply_to(er);
+}
+
+void
 make_roster_for_revision(revision_set const & rev, revision_id const & rid,
                          roster_t & result, marking_map & marking, app_state & app)
 {
@@ -1522,6 +1538,7 @@ make_roster_for_revision(revision_set const & rev, revision_id const & rid,
     }
   else
     I(false);
+
   result.check_sane_against(marking);
 }
 
