@@ -3274,10 +3274,13 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       node_id nid = i->first;
       node_t node = i->second;
 
+      if (null_node(node->parent))
+        continue;
+
       split_path sp;
       old_roster.get_name(nid, sp);
       file_path fp(sp);
-
+      
       // Only revert restriction-included files.
       if (!app.restriction_includes(fp))
         continue;
