@@ -40,7 +40,18 @@
 
 void revision_set::check_sane() const
 {
-  I(!null_id(new_manifest));
+  // null id in current manifest only permitted if previous
+  // state was null and no changes
+  if (null_id(new_manifest))
+    {
+      for (edge_map::const_iterator i = edges.begin();
+           i != edges.end(); ++i)
+        {
+          I(null_id(edge_old_revision(*i)));
+          I(null_id(edge_old_manifest(*i)));
+        }
+    }
+
   if (edges.size() == 1)
     {
       // null revision is allowed iff there is a null manifest
