@@ -2774,7 +2774,8 @@ CMD(update, N_("working copy"), "",
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   revision_set r_old, r_working, r_new;
-  roster_t old_roster, working_roster, chosen_roster;
+  roster_t working_roster, chosen_roster;
+  boost::shared_ptr<roster_t> old_roster = boost::shared_ptr<roster_t>(new roster_t());
   marking_map working_mm, chosen_mm, merged_mm;
   revision_id r_old_id, r_working_id, r_chosen_id;
 
@@ -2792,13 +2793,12 @@ CMD(update, N_("working copy"), "",
   // intolerable.
 
   get_unrestricted_working_revision_and_rosters(app, r_working,
-                                                old_roster, 
+                                                *old_roster, 
                                                 working_roster);
   calculate_ident(r_working, r_working_id);
   make_roster_for_revision(r_working, r_working_id,
                            working_roster, working_mm, app);
   
-
   I(r_working.edges.size() == 1);
   r_old_id = edge_old_revision(r_working.edges.begin());
 
@@ -2882,16 +2882,6 @@ CMD(update, N_("working copy"), "",
 
   app.db.get_roster(r_chosen_id, chosen_roster, chosen_mm);
 
-  // Note that, as far as "uncommon ancestors" go, the working's "uncommon
-  // ancestors" are the same as the base revision's "uncommon ancestors"
-  // relative to the chosen target: it's an empty set.  The only "uncommon
-  // ancestors" we're really interested in finding are those above the
-  // chosen target and not above the base revision; so we can use the
-  // database function here using the base revision id, not the working
-  // copy revision id. 
-  //
-  // This will stop being true when we have merge-into-dir support.
-
   std::set<revision_id> 
     working_uncommon_ancestors, 
     chosen_uncommon_ancestors;
@@ -2899,6 +2889,12 @@ CMD(update, N_("working copy"), "",
   app.db.get_uncommon_ancestors(r_old_id, r_chosen_id,
                                 working_uncommon_ancestors, 
                                 chosen_uncommon_ancestors);
+
+  // Note that under the definition of mark-merge, the working copy is an
+  // "uncommon ancestor" if itself too, even though it was not present in
+  // the database (hence not returned by the query above).
+
+  working_uncommon_ancestors.insert(r_working_id);
 
   // Now merge the working roster with the chosen target. 
 
@@ -2909,7 +2905,7 @@ CMD(update, N_("working copy"), "",
 
   roster_t & merged_roster = result.roster;
 
-  content_merge_working_copy_adaptor wca(app);
+  content_merge_working_copy_adaptor wca(app, old_roster);
   resolve_merge_conflicts (r_old_id, r_chosen_id,
                            working_roster, chosen_roster,
                            working_mm, chosen_mm,

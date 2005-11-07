@@ -10,6 +10,7 @@
 #include "manifest.hh"
 #include "restrictions.hh"
 #include "revision.hh"
+#include "safe_map.hh"
 #include "transforms.hh"
 
 void
@@ -56,13 +57,16 @@ restrict_cset(cset const & cs,
               cset & excluded,
               app_state & app)
 {
+  included.clear();
+  excluded.clear();
+
   for (std::set<split_path>::const_iterator i = cs.nodes_deleted.begin();
        i != cs.nodes_deleted.end(); ++i)
     {
       if (app.restriction_includes(*i)) 
-        included.nodes_deleted.insert(*i);
+        safe_insert(included.nodes_deleted, *i);
       else
-        excluded.nodes_deleted.insert(*i);
+        safe_insert(excluded.nodes_deleted, *i);
     }
 
   for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin(); 
@@ -70,54 +74,54 @@ restrict_cset(cset const & cs,
     {
       if (app.restriction_includes(i->first) ||
           app.restriction_includes(i->second)) 
-        included.nodes_renamed.insert(*i);
+        safe_insert(included.nodes_renamed, *i);
       else
-        excluded.nodes_renamed.insert(*i);
+        safe_insert(excluded.nodes_renamed, *i);
     }
 
   for (std::set<split_path>::const_iterator i = cs.dirs_added.begin();
        i != cs.dirs_added.end(); ++i)
     {
       if (app.restriction_includes(*i)) 
-        included.dirs_added.insert(*i);
+        safe_insert(included.dirs_added, *i);
       else
-        excluded.dirs_added.insert(*i);
+        safe_insert(excluded.dirs_added, *i);
     }
 
   for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     {
       if (app.restriction_includes(i->first)) 
-        included.files_added.insert(*i);
+        safe_insert(included.files_added, *i);
       else
-        excluded.files_added.insert(*i);
+        safe_insert(excluded.files_added, *i);
     }
 
   for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i = 
          cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
     {
       if (app.restriction_includes(i->first)) 
-        included.deltas_applied.insert(*i);
+        safe_insert(included.deltas_applied, *i);
       else
-        excluded.deltas_applied.insert(*i);
+        safe_insert(excluded.deltas_applied, *i);
     }
 
   for (std::set<std::pair<split_path, attr_key> >::const_iterator i = 
          cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
     {
       if (app.restriction_includes(i->first)) 
-        included.attrs_cleared.insert(*i);
+        safe_insert(included.attrs_cleared, *i);
       else
-        excluded.attrs_cleared.insert(*i);
+        safe_insert(excluded.attrs_cleared, *i);
     }
 
   for (std::map<std::pair<split_path, attr_key>, attr_value>::const_iterator i =
          cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
     {
       if (app.restriction_includes(i->first.first)) 
-        included.attrs_set.insert(*i);
+        safe_insert(included.attrs_set, *i);
       else
-        excluded.attrs_set.insert(*i);
+        safe_insert(excluded.attrs_set, *i);
     }
 }
 
@@ -234,8 +238,8 @@ get_working_revision_and_rosters(app_state & app,
     restrict_cset(tmp_full, *cs, tmp_excluded, app);
   }
 
-  rev.edges.insert(std::make_pair(old_revision_id,
-                                  std::make_pair(old_manifest_id, cs)));
+  safe_insert(rev.edges, std::make_pair(old_revision_id,
+                                        std::make_pair(old_manifest_id, cs)));
 }
 
 void

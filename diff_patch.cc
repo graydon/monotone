@@ -4,10 +4,13 @@
 // see the file COPYING for details
 
 #include <algorithm>
-#include <iterator>
-#include <vector>
-#include <string>
 #include <iostream>
+#include <iterator>
+#include <map>
+#include <string>
+#include <vector>
+
+#include <boost/shared_ptr.hpp>
 
 #include "config.h"
 #include "diff_patch.hh"
@@ -15,11 +18,13 @@
 #include "lcs.hh"
 #include "roster.hh"
 #include "packet.hh"
+#include "safe_map.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "vocab.hh"
 
 using namespace std;
+using boost::shared_ptr;
 
 //
 // a 3-way merge works like this:
@@ -460,6 +465,19 @@ bool merge3(vector<string> const & ancestor,
 // content_merge_database_adaptor
 ///////////////////////////////////////////////////////////////////////////
 
+
+content_merge_database_adaptor::content_merge_database_adaptor(app_state & app,
+                                                               revision_id const & left,
+                                                               revision_id const & right,
+                                                               marking_map const & mm)
+  : app(app), mm(mm)
+{
+  // FIXME: possibly refactor to run this lazily, as we don't 
+  // need to find common ancestors if we're never actually
+  // called on to do content merging.
+  find_common_ancestor_for_merge(left, right, lca, app);
+}
+
 void 
 content_merge_database_adaptor::record_merge(file_id const & left_ident, 
                                              file_id const & right_ident, 
@@ -477,6 +495,45 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
   packet_db_writer dbw(app);
   dbw.consume_file_delta (left_ident, merged_ident, file_delta(merge_delta));
   guard.commit();
+}
+
+static void
+load_and_cache_roster(revision_id const & rid,
+		      map<revision_id, shared_ptr<roster_t> > & rmap,
+		      shared_ptr<roster_t> & rout,
+		      app_state & app)
+{
+  map<revision_id, shared_ptr<roster_t> >::const_iterator i = rmap.find(rid);
+  if (i != rmap.end())
+    rout = i->second;
+  else
+    { 
+      rout = shared_ptr<roster_t>(new roster_t());
+      app.db.get_roster(rid, *rout);
+      safe_insert(rmap, make_pair(rid, rout));
+    }
+}
+
+void 
+content_merge_database_adaptor::get_ancestral_roster(node_id nid,
+                                                     boost::shared_ptr<roster_t> & anc)
+{
+  // Given a file, if the lca is nonzero and its roster contains the file,
+  // then we use its roster.  Otherwise we use the roster at the file's
+  // birth revision, which is the "per-file worst case" lca.
+  
+  // Begin by loading any non-empty file lca roster
+  if (!lca.inner()().empty())
+    load_and_cache_roster(lca, rosters, anc, app);
+  
+  // If this roster doesn't contain the file, replace it with 
+  // the file's birth roster.
+  if (!anc->has_node(nid))
+    {
+      marking_map::const_iterator j = mm.find(nid);
+      I(j != mm.end());
+      load_and_cache_roster(j->second.birth_revision, rosters, anc, app);
+    }
 }
 
 void 
@@ -503,6 +560,15 @@ content_merge_working_copy_adaptor::record_merge(file_id const & left_id,
     % left_id % right_id % merged_id);
   I(temporary_store.find(merged_id) == temporary_store.end());
   temporary_store.insert(make_pair(merged_id, merged_data));
+}
+
+void 
+content_merge_working_copy_adaptor::get_ancestral_roster(node_id nid,
+                                                         boost::shared_ptr<roster_t> & anc)
+{
+  // When doing an update, the base revision is always the ancestor to 
+  // use for content merging.
+  anc = base;
 }
 
 void 

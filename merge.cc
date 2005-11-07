@@ -21,23 +21,6 @@ using std::make_pair;
 using boost::shared_ptr;
 
 static void
-load_and_cache_roster(revision_id const & rid,
-		      map<revision_id, shared_ptr<roster_t> > & rmap,
-		      shared_ptr<roster_t> & rout,
-		      app_state & app)
-{
-  map<revision_id, shared_ptr<roster_t> >::const_iterator i = rmap.find(rid);
-  if (i != rmap.end())
-    rout = i->second;
-  else
-    { 
-      rout = shared_ptr<roster_t>(new roster_t());
-      app.db.get_roster(rid, *rout);
-      safe_insert(rmap, make_pair(rid, rout));
-    }
-}
-
-static void
 get_file_details(roster_t const & ros, node_id nid,
 		 file_id & fid,
 		 file_path & pth)
@@ -104,35 +87,15 @@ resolve_merge_conflicts(revision_id const & left_rid,
 	  L(F("examining content conflicts\n"));
 	  std::vector<file_content_conflict> residual_conflicts;
 
-	  revision_id lca;
-	  map<revision_id, shared_ptr<roster_t> > lca_rosters;
-	  find_common_ancestor_for_merge(left_rid, right_rid, lca, app);
-
 	  for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
 	    {
 	      file_content_conflict const & conflict = result.file_content_conflicts[i];
 
-	      // For each file, if the lca is nonzero and its roster
-	      // contains the file, then we use its roster.  Otherwise
-	      // we use the roster at the file's birth revision, which
-	      // is the "per-file worst case" lca.
-	      shared_ptr<roster_t> roster_for_file_lca;
+              boost::shared_ptr<roster_t> roster_for_file_lca;
+              adaptor.get_ancestral_roster(conflict.nid, roster_for_file_lca);
 
-	      // Begin by loading any non-empty file lca roster
-	      if (!lca.inner()().empty())
-		load_and_cache_roster(lca, lca_rosters, roster_for_file_lca, app);
-
-	      // If this roster doesn't contain the file, replace it with 
-	      // the file's birth roster.
-	      if (!roster_for_file_lca->has_node(conflict.nid))
-		{
-		  marking_map::const_iterator j = left_marking_map.find(conflict.nid);
-		  I(j != left_marking_map.end());
-		  load_and_cache_roster(j->second.birth_revision, lca_rosters, 
-					roster_for_file_lca, app);
-		}
-
-	      // Now we should certainly have the node.
+	      // Now we should certainly have a roster, which has the node.
+              I(roster_for_file_lca);
 	      I(roster_for_file_lca->has_node(conflict.nid));
 
 	      file_id anc_id, left_id, right_id;
@@ -186,7 +149,7 @@ interactive_merge_and_store(revision_id const & left_rid,
 
   roster_t & merged_roster = result.roster;
 
-  content_merge_database_adaptor dba(app);
+  content_merge_database_adaptor dba(app, left_rid, right_rid, left_marking_map);
   resolve_merge_conflicts (left_rid, right_rid,
                            left_roster, right_roster,
                            left_marking_map, right_marking_map,
