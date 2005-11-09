@@ -3105,8 +3105,6 @@ CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
   maybe_update_inodeprints(app);
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(explicit_merge, N_("tree"),
     N_("LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
       "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"),
@@ -3148,7 +3146,7 @@ CMD(explicit_merge, N_("tree"),
 
   revision_id merged;
   transaction_guard guard(app.db);
-  try_one_merge(left, right, ancestor, merged, app);
+  interactive_merge_and_store(left, right, merged, app);
   
   packet_db_writer dbw(app);
   
@@ -3221,8 +3219,6 @@ CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
   else
     throw usage(name);  
 }
-
-*/
 
 CMD(revert, N_("working copy"), N_("[PATH]..."), 
     N_("revert file(s), dir(s) or entire working copy"), OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
