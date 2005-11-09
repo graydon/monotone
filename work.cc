@@ -811,7 +811,7 @@ editable_working_tree::create_dir_node()
   node_id nid = next_nid++;
   bookkeeping_path pth = path_for_nid(nid);
   require_path_is_nonexistent(pth,
-                              F("path %s already exists"));
+                              F("path %s already exists") % pth);
   mkdir_p(pth);
   return nid;
 }
@@ -822,7 +822,7 @@ editable_working_tree::create_file_node(file_id const & content)
   node_id nid = next_nid++;
   bookkeeping_path pth = path_for_nid(nid);
   require_path_is_nonexistent(pth,
-                              F("path %s already exists"));
+                              F("path %s already exists") % pth);
   file_data dat;
   source.get_file_content(content, dat);
   // FIXME_ROSTERS: what about charset conversion etc.?

@@ -361,7 +361,7 @@ maybe_update_inodeprints(app_state & app)
               file_t old_file = downcast_to_file_t(old_node);
               file_t new_file = downcast_to_file_t(new_node);
 
-              if (!(new_file->content == old_file->content))
+              if (new_file->content == old_file->content)
                 {
                   split_path sp;
                   new_roster.get_name(nid, sp);
@@ -1695,14 +1695,18 @@ find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
   path_set old_paths, new_paths;
 
   app.require_working_copy();
-
   get_base_roster_and_working_cset(app, args, base_rid, base_roster,
                                    old_paths, new_paths,
                                    included_work, excluded_work);
 
   for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
     {
-      file_path fp(*i);
+      if (i->size() == 1)
+        {
+          I(null_name(idx(*i, 0)));
+          continue;
+        }
+      file_path fp(*i);      
       if (app.restriction_includes(fp) && !path_exists(fp))
         missing.insert(*i);
     }
@@ -2624,6 +2628,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
         "try adding --external or removing --diff-args?"));
 
   cset composite;
+  cset excluded;
 
   // initialize before transaction so we have a database to work with
 
@@ -2634,7 +2639,6 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
   if (app.revision_selectors.size() == 0)
     {
-      cset excluded;
       get_working_revision_and_rosters(app, args, r_new,
                                        old_roster, 
                                        new_roster,
@@ -2654,9 +2658,10 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
-      get_unrestricted_working_revision_and_rosters(app, r_new, 
-                                                    old_roster,
-                                                    new_roster);
+      get_working_revision_and_rosters(app, args, r_new,
+                                       old_roster, 
+                                       new_roster,
+                                       excluded);
       // now clobber old_roster with the one specified
       app.db.get_revision(r_old_id, r_old);
       app.db.get_roster(r_old_id, old_roster);

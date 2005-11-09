@@ -177,6 +177,18 @@ get_base_roster_and_working_cset(app_state & app,
 
   restrict_cset(work, included, excluded, app);  
   remap_paths(old_paths, old_roster, work, new_paths);
+
+  for (std::set<split_path>::const_iterator i = included.dirs_added.begin();
+       i != included.dirs_added.end(); ++i)
+    new_paths.insert(*i);
+  
+  for (std::map<split_path, file_id>::const_iterator i = included.files_added.begin();
+       i != included.files_added.end(); ++i)
+    new_paths.insert(i->first);
+  
+  for (std::map<split_path, split_path>::const_iterator i = included.nodes_renamed.begin(); 
+       i != included.nodes_renamed.end(); ++i) 
+    new_paths.insert(i->second);
 }
 
 void
