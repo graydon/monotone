@@ -2603,8 +2603,6 @@ dump_diffs(cset const & cs,
     }
 }
 
-  /* FIXME_ROSTERS
-
 CMD(diff, N_("informative"), N_("[PATH]..."), 
     N_("show current diffs on stdout.\n"
     "If one revision is given, the diff between the working directory and\n"
@@ -2615,7 +2613,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     OPT_EXTERNAL_DIFF_ARGS)
 {
   revision_set r_old, r_new;
-  manifest_map m_new;
+  roster_t new_roster, old_roster;
   bool new_is_archived;
   diff_type type = app.diff_format;
   ostringstream header;
@@ -2636,8 +2634,12 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
   if (app.revision_selectors.size() == 0)
     {
-      manifest_map m_old;
-      calculate_restricted_revision(app, args, r_new, m_old, m_new);
+      cset excluded;
+      get_working_revision_and_rosters(app, args, r_new,
+                                       old_roster, 
+                                       new_roster,
+                                       excluded);
+
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       if (r_new.edges.size() == 1)
         composite = edge_changes(r_new.edges.begin());
@@ -2649,12 +2651,15 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   else if (app.revision_selectors.size() == 1)
     {
       revision_id r_old_id;
-      manifest_map m_old;
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
+      get_unrestricted_working_revision_and_rosters(app, r_new, 
+                                                    old_roster,
+                                                    new_roster);
+      // now clobber old_roster with the one specified
       app.db.get_revision(r_old_id, r_old);
-      calculate_unrestricted_revision(app, r_new, m_old, m_new);
+      app.db.get_roster(r_old_id, old_roster);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       N(r_new.edges.size() == 1, F("current revision has no ancestor"));
       new_is_archived = false;
@@ -2663,7 +2668,6 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   else if (app.revision_selectors.size() == 2)
     {
       revision_id r_old_id, r_new_id;
-      manifest_id m_new_id;
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       complete(app, idx(app.revision_selectors, 1)(), r_new_id);
       N(app.db.revision_exists(r_old_id),
@@ -2672,8 +2676,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       N(app.db.revision_exists(r_new_id),
         F("no such revision '%s'") % r_new_id);
       app.db.get_revision(r_new_id, r_new);
-      app.db.get_revision_manifest(r_new_id, m_new_id);
-      app.db.get_manifest(m_new_id, m_new);
+      app.db.get_roster(r_old_id, old_roster);
+      app.db.get_roster(r_new_id, new_roster);
       new_is_archived = true;
     }
   else
@@ -2682,40 +2686,10 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
 
   if (app.revision_selectors.size() > 0)
-    {
-      revision_id new_id, src_id, dst_id, anc_id;
-      calculate_ident(r_old, src_id);
-      calculate_ident(r_new, new_id);
-      if (new_is_archived)
-        dst_id = new_id;
-      else
-        {
-          I(r_new.edges.size() == 1);
-          dst_id = edge_old_revision(r_new.edges.begin());
-        }
-
-      N(find_least_common_ancestor(src_id, dst_id, anc_id, app),
-        F("no common ancestor for %s and %s") % src_id % dst_id);
-
-      calculate_arbitrary_change_set(src_id, dst_id, app, composite);
-
-      if (!new_is_archived)
-        {
-          L(F("concatenating un-committed changeset to composite\n"));
-          change_set tmp;
-          I(r_new.edges.size() == 1);
-          concatenate_change_sets(composite, edge_changes(r_new.edges.begin()), tmp);
-          composite = tmp;
-        }
-
-      change_set included, excluded;
-      calculate_restricted_change_set(app, args, composite, included, excluded);
-      composite = included;
-
-    }
-
+    make_cset (old_roster, new_roster, composite);
+  
   data summary;
-  write_change_set(composite, summary);
+  write_cset(composite, summary);
 
   vector<string> lines;
   split_into_lines(summary(), lines);
@@ -2733,19 +2707,11 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   cout << "# " << endl;
 
   if (type == external_diff) {
-    do_external_diff(composite.deltas, app, new_is_archived);
+    do_external_diff(composite, app, new_is_archived);
   } else
-    dump_diffs(composite.deltas, app, new_is_archived, type);
+    dump_diffs(composite, app, new_is_archived, type);
 }
-*/
 
-// static void dump_change_set(string const & name,
-//                          change_set & cs)
-// {
-//   data dat;
-//   write_change_set(cs, dat);
-//   cout << "change set '" << name << "'\n" << dat << endl;
-// }
 
 struct update_source 
   : public file_content_source
