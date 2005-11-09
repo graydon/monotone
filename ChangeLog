@@ -1,3 +1,9 @@
+2005-11-08  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make a basic_io parser available to Lua.
+	* lua.cc: new function, monotone_parse_basicio_for_lua
+	* std_hooks.lua: use it in get_netsync_read_permitted
+
 2005-11-05  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Make sure that all new revisions added to the db deltify as much as
