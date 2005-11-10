@@ -1,5 +1,13 @@
 2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* testsuite.at: Several MINHOOKS_* macros that use the standard hooks
+	and only load predefined hooks about passphrase and rng.
+	* tests/t_netsync_permissions, tests/t_netsync_read_permissions: use
+	the standard permission hooks and define {read,write}-permissions files.
+	Check both the permissions mechanism and the standard hooks at once.
+
+2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* monotone.texi: update example project with latest read-permissions
 	format. Mention comment lines in the description in the hooks section
 

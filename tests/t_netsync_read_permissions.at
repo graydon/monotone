@@ -26,15 +26,15 @@ B4=`BASE_REVISION`
 # pulling more than that should error out
 # pulling exactly that should give revs B1, B2, B3; and only give
 # branch certs on B1, B3.
-
-AT_DATA(limited_permission.at, [function get_netsync_read_permitted(branch, key)
-  if branch == "branch1" then return true end
-  if branch == "branch3" then return true end
-  return false
-end
+AT_CHECK(mkdir perm)
+AT_DATA(perm/read-permissions, [
+pattern "branch1"
+allow "*"
+pattern "branch3"
+allow "*"
 ])
 
-NETSYNC_SERVE_START(--rcfile=limited_permission.at 'branch*')
+MINHOOKS_NETSYNC_SERVE_START(--confdir=perm 'branch*')
 
 NETSYNC_CLIENT_RUN(pull, 'branch*')
 AT_CHECK(MONOTONE2 automate get_revision $B1, [1], [ignore], [ignore])
