@@ -681,12 +681,12 @@ extern "C"
   }
 
   static int
-  monotone_parse_basicio_for_lua(lua_State *L)
+  monotone_parse_basic_io_for_lua(lua_State *L)
   {
     vector<pair<string, vector<string> > > res;
     const char *str = lua_tostring(L, -1);
     std::istringstream iss(str);
-    basic_io::input_source in(iss, "monotone_parse_basicio_for_lua");
+    basic_io::input_source in(iss, "monotone_parse_basic_io_for_lua");
     basic_io::tokenizer tok(in);
     try
       {
@@ -702,7 +702,7 @@ extern "C"
                 break;
               case basic_io::TOK_STRING:
               case basic_io::TOK_HEX:
-                E(!res.empty(), boost::format("bad input to parse_basicio"));
+                E(!res.empty(), boost::format("bad input to parse_basic_io"));
                 res.back().second.push_back(got);
                 break;
               default:
@@ -772,7 +772,7 @@ lua_hooks::lua_hooks()
   lua_register(st, "includedir", monotone_includedir_for_lua);
   lua_register(st, "gettext", monotone_gettext_for_lua);
   lua_register(st, "get_confdir", monotone_get_confdir_for_lua);
-  lua_register(st, "parse_basicio", monotone_parse_basicio_for_lua);
+  lua_register(st, "parse_basic_io", monotone_parse_basic_io_for_lua);
 
   // add regex functions:
   lua_newtable(st);

@@ -1,5 +1,10 @@
 2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* lua.cc, std_hooks.lua, monotone.texi: basic_io parser for lua is
+	now called parse_basic_io
+
+2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* monotone.texi: document parse_basicio in the
 	"Additional Lua Functions" section
 

@@ -800,7 +800,7 @@ function get_netsync_read_permitted(branch, ident)
    local permfile = io.open(get_confdir() .. "/read-permissions", "r")
    if (permfile == nil) then return false end
    local dat = permfile:read("*a")
-   local res = parse_basicio(dat)
+   local res = parse_basic_io(dat)
    if res == nil then
       io.stderr:write("file read-permissions cannot be parsed\n")
       return false

@@ -6374,7 +6374,7 @@ Returns two values: a result value and the exit code of the waited-for
 process.
 The exit code is meaningful only if the result value is 0.
 
-@item parse_basicio(@var{data})
+@item parse_basic_io(@var{data})
 
 Parse the string @var{data}, which should be in basic_io format. It returns nil
 if it can't parse the string; otherwise it returns a table. This will be a list
