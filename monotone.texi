@@ -5912,8 +5912,8 @@ allow "*"
 @end smallexample
 This example allows everyone access to branches @code{net.example.project} and
 @code{net.example.public} and their sub-branches, except for the branches in
-@code{net.example.security} and @code{net.example.private}, which are only
-readable by Joe and Jim.
+@code{net.example.project.security} and @code{net.example.project.private},
+which are only readable by Joe and Jim.
 
 The file is divided into stanzas of one @code{pattern} line followed by any
 number of @code{allow} and @code{deny} lines, and possibly a @code{continue}
