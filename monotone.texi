@@ -1629,9 +1629,9 @@ pair of small files in his @file{~/.monotone} directory:
 @smallexample
 @group
 $ cat >>~/.monotone/read-permissions
-[*]
-abe@@juicebot.co.jp
-beth@@juicebot.co.jp
+pattern "*"
+allow "abe@@juicebot.co.jp"
+allow "beth@@juicebot.co.jp"
 ^D
 
 $ cat >>~/.monotone/write-permissions
@@ -5905,6 +5905,7 @@ pattern "net.example.project.@{private,security@}*"
 allow "joe@@example.net"
 allow "jim@@example.net"
 
+comment "everyone can read these branches"
 pattern "net.example.@{public,project@}*"
 allow "*"
 @end group
@@ -5916,8 +5917,8 @@ readable by Joe and Jim.
 
 The file is divided into stanzas of one @code{pattern} line followed by any
 number of @code{allow} and @code{deny} lines, and possibly a @code{continue}
-line. Lines which do not consist of one of these words followed by an argument
-in quotes will be ignored. A stanza is processed if the argument to
+line. Anything from the unquoted word @code{comment} until the next unquoted
+word is ignored. A stanza is processed if the argument to
 @code{pattern} is a glob that matches @var{branch}. Any keys which match an
 @code{allow} line are given access, and any keys which match a @code{deny} line
 are denied access. If there is a @code{continue "true"} line, then if the key

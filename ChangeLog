@@ -1,3 +1,8 @@
+2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.texi: update example project with latest read-permissions
+	format. Mention comment lines in the description in the hooks section
+
 2005-11-08  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Make a basic_io parser available to Lua.
