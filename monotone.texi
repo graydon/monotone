@@ -6374,6 +6374,37 @@ Returns two values: a result value and the exit code of the waited-for
 process.
 The exit code is meaningful only if the result value is 0.
 
+@item parse_basicio(@var{data})
+
+Parse the string @var{data}, which should be in basic_io format. It returns nil
+if it can't parse the string; otherwise it returns a table. This will be a list
+of all statements, with each entry being a table having a "name" element that is
+the symbol beginning the statement and a "values" element that is a list of all
+the arguments.
+
+For example, given this as input:
+
+@smallexample
+@group
+thingy "foo" "bar"
+thingy "baz"
+spork
+frob "oops"
+@end group
+@end smallexample
+
+The output table will be:
+@smallexample
+@group
+@{
+   1 = @{ name = "thingy", args = @{ 1 = "foo", 2 = "bar" @} @},
+   2 = @{ name = "thingy", args = @{ 1 = "baz" @} @},
+   3 = @{ name = "spork", args = @{ @} @},
+   4 = @{ name = "frob", args = @{ 1 = "oops" @} @}
+@}
+@end group
+@end smallexample
+
 @end ftable
 
 

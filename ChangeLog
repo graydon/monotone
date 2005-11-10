@@ -1,5 +1,10 @@
 2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* monotone.texi: document parse_basicio in the
+	"Additional Lua Functions" section
+
+2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* testsuite.at: Several MINHOOKS_* macros that use the standard hooks
 	and only load predefined hooks about passphrase and rng.
 	* tests/t_netsync_permissions, tests/t_netsync_read_permissions: use
