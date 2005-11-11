@@ -17,6 +17,7 @@ AT_TESTED([monotone])
 # Set PREEXECUTE in your environment to run monotone under, e.g., valgrind.
 m4_define([MONOTONE], [$PREEXECUTE $_MT_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --key=tester@test.net --root=$_ROOT_DIR])
 m4_define([RAW_MONOTONE], [$PREEXECUTE monotone --norc])
+m4_define([MINHOOKS_MONOTONE], [$PREEXECUTE $_MT_EXEC --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --rcfile=$_ROOT_DIR/min_hooks.lua --key=tester@test.net --root=$_ROOT_DIR])
 m4_define([SHA1], [monotone --norc identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
 m4_define([WORKING_REVISION], [monotone --norc automate get_revision | monotone --norc identify])
@@ -61,6 +62,18 @@ ib35QQbzh87KlfLtWELK+8ZoyhZAZAMr97IavUbuFubOyEoEozUliARyRZ1ZudM4Ii+J6TRX
 cmLryIBlz3OXgUUBSwJPwtWuR4tZ8nIt7cVJr7pxLblGfeFuu01HWN55hv4C78/aNSipVYCF
 OFt8n7wQHxbbJvoTIdd/
 @<:@end@:>@
+])
+
+AT_DATA(min_hooks.lua, [
+function get_passphrase(keyid)
+	return keyid
+end
+function non_blocking_rng_ok()
+	return true
+end
+function persist_phrase_ok()
+	return true
+end
 ])
 
 AT_DATA(test_hooks.lua, [
@@ -395,6 +408,19 @@ sleep 4
 m4_define([NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
 MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($1, [], "{}*", $1) &
+sleep 4
+])
+# run as STDHOOKS_NETSYNC_SERVE_N_START(2|3, pattern)
+# note that NETSYNC_SERVE_START is _not_ a special case of this macro.
+m4_define([MINHOOKS_NETSYNC_SERVE_N_START], [
+NETSYNC_KILLHARD
+MINHOOKS_MONOTONE --db=test$1.db --keydir=keys$1 --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($2, [], "{}*", $2) &
+sleep 4
+])
+# run as MINHOOKS_NETSYNC_SERVE_START(pattern)
+m4_define([MINHOOKS_NETSYNC_SERVE_START], [
+NETSYNC_KILLHARD
+MINHOOKS_MONOTONE --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($1, [], "{}*", $1) &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP

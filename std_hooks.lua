@@ -796,36 +796,43 @@ function globish_match(glob, str)
       end
 end
 
--- can't handle args with quotes in them, or lines with multiple args
-function read_basicio_line(file)
-   local _, a, b
-   while _ == nil do
-      local line = file:read()
-      if line == nil then return nil end
-      _, _, a, b = string.find(line, "%s*([^%s]*)%s*\"([^\"]*)\"")
-   end
-   return a, b
-end
-
 function get_netsync_read_permitted(branch, ident)
    local permfile = io.open(get_confdir() .. "/read-permissions", "r")
    if (permfile == nil) then return false end
+   local dat = permfile:read("*a")
+   local res = parse_basic_io(dat)
+   if res == nil then
+      io.stderr:write("file read-permissions cannot be parsed\n")
+      return false
+   end
    local matches = false
    local cont = false
-   while true do
-      local name, param = read_basicio_line(permfile)
-      if name == nil then return false end
-      if name == "pattern" then
+   for i, item in pairs(res)
+   do
+      -- legal names: pattern, allow, deny, continue
+      if item.name == "pattern" then
          if matches and not cont then return false end
-         matches = globish_match(param, branch)
-      end
-      if matches then
-         if name == "continue" then
-           if param ~= "false" then cont = true end
+         matches = false
+         for j, val in pairs(item.values) do
+            if globish_match(val, branch) then matches = true end
          end
-         if name == "allow" and param == "*" then return true end
-         if name == "allow" and globish_match(param, ident) then return true end
-         if name == "deny" and globish_match(param, ident) then return false end
+      elseif item.name == "allow" then if matches then
+         for j, val in pairs(item.values) do
+            if val == "*" then return true end
+            if globish_match(val, ident) then return true end
+         end
+      end elseif item.name == "deny" then if matches then
+         for j, val in pairs(item.values) do
+            if globish_match(val, ident) then return false end
+         end
+      end elseif item.name == "continue" then if matches then
+         cont = true
+         for j, val in pairs(item.values) do
+            if val == "false" or val == "no" then cont = false end
+         end
+      end elseif item.name ~= "comment" then
+         io.stderr:write("unknown symbol in read-permissions: " .. item.name .. "\n")
+         return false
       end
    end
    return false
