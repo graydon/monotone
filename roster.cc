@@ -1768,6 +1768,72 @@ inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
 }
 
 void 
+classify_roster_paths(roster_t const & ros,
+                      path_set & unchanged,
+                      path_set & changed,
+                      path_set & missing,
+                      app_state & app)
+{
+  temp_node_id_source nis;
+  inodeprint_map ipm;
+
+  if (in_inodeprints_mode())
+    {
+      data dat;
+      read_inodeprints(dat);
+      read_inodeprint_map(dat, ipm);
+    }
+
+  // this code is speed critical, hence the use of inode fingerprints so be
+  // careful when making changes in here and preferably do some timing tests
+
+  if (!ros.has_root())
+    return;
+
+  node_map const & nodes = ros.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_id nid = i->first;
+      node_t node = i->second;
+
+      split_path sp;
+      ros.get_name(nid, sp);
+      file_path fp(sp);
+
+      // Only analyze restriction-included files.
+      if (app.restriction_includes(fp))
+        {
+          if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
+            {
+              // dirs don't have content changes
+              unchanged.insert(sp);
+            }
+          else 
+            {
+              file_t file = downcast_to_file_t(node);
+              file_id fid;
+              if (ident_existing_file(fp, fid, app.lua))
+                {
+                  if (file->content == fid)
+                    unchanged.insert(sp);
+                  else
+                    changed.insert(sp);
+                }
+              else
+                {
+                  missing.insert(sp);
+                }
+            }
+        }
+      else
+        {
+          // changes to excluded files are ignored
+          unchanged.insert(sp);
+        }
+    }
+}
+
+void 
 update_restricted_roster_from_filesystem(roster_t & ros, 
                                          app_state & app)
 {
@@ -1790,8 +1856,7 @@ update_restricted_roster_from_filesystem(roster_t & ros,
     return;
 
   node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin();
-       i != nodes.end(); ++i)
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
     {
       node_id nid = i->first;
       node_t node = i->second;
