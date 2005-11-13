@@ -5036,7 +5036,8 @@ Print all revisions that match the given selector.
 
 Zero or more lines, each giving the ID of one revision that matches the
 given selector.  Each line consists of a revision ID, in hexadecimal,
-followed by a newline.
+followed by a newline.  Revision ids are printed in alphabetically
+sorted order.
 
 @item Error conditions:
 

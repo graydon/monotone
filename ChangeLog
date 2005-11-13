@@ -1,3 +1,8 @@
+2005-11-13  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Automation): Document sort order for 'automate
+	select'.
+
 2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* lua.cc, std_hooks.lua, monotone.texi: basic_io parser for lua is
