@@ -2567,6 +2567,15 @@ dump_diffs(cset const & cs,
         }
     }
 
+  std::map<split_path, split_path> reverse_rename_map;
+
+  for (std::map<split_path, split_path>::const_iterator 
+         i = cs.nodes_renamed.begin();
+       i != cs.nodes_renamed.end(); ++i)
+    {
+      reverse_rename_map.insert(std::make_pair(i->second, i->first));
+    }
+
   for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
          i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
@@ -2597,8 +2606,18 @@ dump_diffs(cset const & cs,
         {
           split_into_lines(data_old(), old_lines);
           split_into_lines(data_new(), new_lines);
-          make_diff(file_path(delta_entry_path(i)).as_internal(), 
-                    file_path(delta_entry_path(i)).as_internal(), 
+
+          split_path dst_path = delta_entry_path(i);
+          split_path src_path = dst_path;
+
+          std::map<split_path, split_path>::const_iterator re;
+          re = reverse_rename_map.find(dst_path);
+
+          if (re != reverse_rename_map.end())
+            src_path = re->second;
+
+          make_diff(file_path(src_path).as_internal(), 
+                    file_path(dst_path).as_internal(), 
                     delta_entry_src(i),
                     delta_entry_dst(i),
                     old_lines, new_lines,

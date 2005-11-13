@@ -247,7 +247,8 @@ perform_rename(file_path const & src_path,
   node_id nid = new_roster.detach_node(src);
   new_roster.attach_node(nid, dst);
 
-  if (app.execute && path_exists(src_path) && !path_exists(dst_path))
+  // this should fail if src doesn't exist or dst does
+  if (app.execute && (path_exists(src_path) || !path_exists(dst_path)))
     move_path(src_path, dst_path);
 
   cset new_work;

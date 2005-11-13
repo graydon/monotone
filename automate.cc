@@ -517,54 +517,49 @@ automate_select(std::vector<utf8> args,
 //
 // pre-state  corresponds to deletions and the "from" side of renames
 // post-state corresponds to the "to" side of renames and additions
-// file-state corresponds to the state of the file with the given name
+// node-state corresponds to the state of the node with the given name
 //
-// pre and post state are related to the path rearrangement specified in MT/work
-// file state is related to the details of the resulting file
+// pre/post state are related to the path rearrangement in MT/work
+// node state is related to the details of the resulting path
 
 struct inventory_item
 {
+  // pre/post rearrangement state
   enum pstate 
-    { KNOWN_PATH, ADDED_PATH, DROPPED_PATH, RENAMED_PATH } 
+    { UNCHANGED_PATH, ADDED_PATH, DROPPED_PATH, RENAMED_PATH } 
     pre_state, post_state;
 
-  enum fstate
-    { KNOWN_FILE, PATCHED_FILE, MISSING_FILE, UNKNOWN_FILE, IGNORED_FILE } 
-    file_state;
-
-  enum ptype
-    { FILE, DIRECTORY } 
-    path_type;
+  enum nstate
+    { UNCHANGED_NODE, PATCHED_NODE, MISSING_NODE, UNKNOWN_NODE, IGNORED_NODE } 
+    node_state;
 
   size_t pre_id, post_id;
 
   inventory_item():
-    pre_state(KNOWN_PATH), post_state(KNOWN_PATH), 
-    file_state(KNOWN_FILE), 
-    path_type(FILE),
+    pre_state(UNCHANGED_PATH), post_state(UNCHANGED_PATH), 
+    node_state(UNCHANGED_NODE), 
     pre_id(0), post_id(0) {}
 };
 
-typedef std::map<file_path, inventory_item> inventory_map;
+typedef std::map<split_path, inventory_item> inventory_map;
+typedef std::map<split_path, split_path> rename_map; // this might be good in cset.hh
+typedef std::map<split_path, file_id> addition_map;  // ditto
 
 static void
 inventory_pre_state(inventory_map & inventory,
                     path_set const & paths,
                     inventory_item::pstate pre_state, 
-                    size_t id = 0,
-                    inventory_item::ptype path_type = inventory_item::FILE)
+                    size_t rename_id)
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      file_path fp(*i);
-      L(F("%d %d %s\n") % inventory[*i].pre_state % pre_state % fp);
-      I(inventory[*i].pre_state == inventory_item::KNOWN_PATH);
+      L(F("%d %d %s\n") % inventory[*i].pre_state % pre_state % file_path(*i));
+      I(inventory[*i].pre_state == inventory_item::UNCHANGED_PATH);
       inventory[*i].pre_state = pre_state;
-      inventory[*i].path_type = path_type;
-      if (id != 0) 
+      if (rename_id != 0) 
         {
           I(inventory[*i].pre_id == 0);
-          inventory[*i].pre_id = id;
+          inventory[*i].pre_id = rename_id;
         }
     }
 }
@@ -573,67 +568,69 @@ static void
 inventory_post_state(inventory_map & inventory,
                      path_set const & paths,
                      inventory_item::pstate post_state, 
-                     size_t id = 0,
-                     inventory_item::ptype path_type = inventory_item::FILE)
+                     size_t rename_id)
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      file_path fp(*i);
-      L(F("%d %d %s\n") % inventory[*i].post_state % post_state % fp);
-      I(inventory[*i].post_state == inventory_item::KNOWN_PATH);
+      L(F("%d %d %s\n") % inventory[*i].post_state % post_state % file_path(*i));
+      I(inventory[*i].post_state == inventory_item::UNCHANGED_PATH);
       inventory[*i].post_state = post_state;
-      inventory[*i].path_type = path_type;
-      if (id != 0) 
+      if (rename_id != 0) 
         {
           I(inventory[*i].post_id == 0);
-          inventory[*i].post_id = id;
+          inventory[*i].post_id = rename_id;
         }
     }
 }
 
 static void
-inventory_file_state(inventory_map & inventory,
+inventory_node_state(inventory_map & inventory,
                      path_set const & paths,
-                     inventory_item::fstate file_state)
+                     inventory_item::nstate node_state)
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      file_path fp(*i);
-      L(F("%d %d %s\n") % inventory[*i].file_state % file_state % fp);
-      I(inventory[*i].file_state == inventory_item::KNOWN_FILE);
-      inventory[*i].file_state = file_state;
+      L(F("%d %d %s\n") % inventory[*i].node_state % node_state % file_path(*i));
+      I(inventory[*i].node_state == inventory_item::UNCHANGED_NODE);
+      inventory[*i].node_state = node_state;
     }
 }
 
 static void
 inventory_renames(inventory_map & inventory,
-                  std::map<file_path,file_path> const & renames,
-                  inventory_item::ptype path_type = inventory_item::FILE)
+                  rename_map const & renames)
 {
   path_set old_name;
   path_set new_name;
 
-  static size_t id = 1;
+  static size_t rename_id = 1;
 
-  for (std::map<file_path,file_path>::const_iterator i = renames.begin(); 
+  for (rename_map::const_iterator i = renames.begin(); 
        i != renames.end(); i++)
     {
-      split_path sp1, sp2;
-      i->first.split(sp1);
-      i->second.split(sp2);
-      old_name.insert(sp1);
-      new_name.insert(sp2);
-
-      inventory_pre_state(inventory, old_name, inventory_item::RENAMED_PATH, id, path_type);
-      inventory_post_state(inventory, new_name, inventory_item::RENAMED_PATH, id, path_type);
-
-      id++;
-
       old_name.clear();
       new_name.clear();
+
+      old_name.insert(i->first);
+      new_name.insert(i->second);
+
+      inventory_pre_state(inventory, old_name, inventory_item::RENAMED_PATH, rename_id);
+      inventory_post_state(inventory, new_name, inventory_item::RENAMED_PATH, rename_id);
+
+      rename_id++;
     }
 }
-               
+
+static void
+extract_added_file_paths(addition_map const & additions, path_set & paths) 
+{
+  for (addition_map::const_iterator i = additions.begin(); i != additions.end(); ++i) 
+    {
+      paths.insert(i->first);
+    }
+}
+
+
 // Name: inventory
 // Arguments: none
 // Added in: 1.0
@@ -650,12 +647,12 @@ inventory_renames(inventory_map & inventory,
 //         ' ' the path was unchanged in the post-state
 //         'R' the path was renamed to the post-state name
 //         'A' the path was added to the post-state
-//   column 3 file-state
-//         ' ' the file is known and unchanged from the current manifest version
-//         'P' the file is patched to a new version
-//         'U' the file is unknown and not included in the current manifest
-//         'I' the file is ignored and not included in the current manifest
-//         'M' the file is missing but is included in the current manifest
+//   column 3 node-state
+//         ' ' the node is unchanged from the current roster
+//         'P' the node is patched to a new version
+//         'U' the node is unknown and not included in the roster
+//         'I' the node is ignored and not included in the roster
+//         'M' the node is missing but is included in the roster
 //
 // Output format: Each path is printed on its own line, prefixed by three status
 //   characters as described above. The status is followed by a single space and
@@ -673,134 +670,108 @@ automate_inventory(std::vector<utf8> args,
                    app_state & app,
                    std::ostream & output)
 {
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
   if (args.size() != 0)
     throw usage(help_name);
 
-  manifest_id old_manifest_id;
-  revision_id old_revision_id;
-  manifest_map m_old, m_new;
-  path_set old_paths, new_paths, empty;
-  change_set::path_rearrangement included, excluded;
-  change_set cs;
-  path_set missing, changed, unchanged, unknown, ignored;
-  inventory_map inventory;
   app.require_working_copy();
 
-  calculate_restricted_rearrangement(app, args, 
-                                     old_manifest_id, old_revision_id,
-                                     m_old, old_paths, new_paths,
-                                     included, excluded);
+  temp_node_id_source nis;
+  roster_t base, curr;
+  inventory_map inventory;
+  cset cs;
+  path_set unchanged, changed, missing, known, unknown, ignored;
 
-  // this is a bit screwey. we need to rearrange the old manifest 
-  // according to the included rearrangement and for that we need
-  // a complete changeset, which is normally obtained from both 
-  // the old and the new manifest. we can't do that because there 
-  // may be missing files, so instead we add our own set of deltas
-  // below.
+  get_base_and_current_roster_shape(base, curr, nis, app);
+  make_cset(base, curr, cs);
 
-  // we have the rearrangement of the changeset from above
-  // now we need to build up the deltas for the added files
+  I(cs.deltas_applied.empty());
 
-  cs.rearrangement = included;
+  // the current roster (curr) has the complete set of registered nodes
+  // conveniently with unchanged sha1 hash values
 
-  hexenc<id> null_ident;
+  // the cset (cs) has the list of drops/renames/adds that have occurred between
+  // the two rosters along with an empty list of deltas.  this list is empty
+  // only because the current roster used to generate the cset does not have
+  // current hash values as recorded on the filesystem (because get_..._shape
+  // was used to build it)
 
-  for (path_set::const_iterator 
-         i = included.added_files.begin();
-       i != included.added_files.end(); ++i)
-    {
-      if (path_exists(*i))
-        {
-          // add path from [] to [xxx]
-          hexenc<id> ident;
-          calculate_ident(*i, ident, app.lua);
-          cs.deltas.insert(std::make_pair(*i,std::make_pair(null_ident, ident)));
-        }
-      else
-        {
-          // remove missing files from the added list since they have not deltas
-          missing.insert(*i);
-          cs.rearrangement.added_files.erase(*i);
-        }
-    }
+  path_set nodes_added(cs.dirs_added);
+  extract_added_file_paths(cs.files_added, nodes_added);
 
-  apply_change_set(m_old, cs, m_new);
+  inventory_pre_state(inventory, cs.nodes_deleted, inventory_item::DROPPED_PATH, 0);
+  inventory_renames(inventory, cs.nodes_renamed);
+  inventory_post_state(inventory, nodes_added, inventory_item::ADDED_PATH, 0);
 
-  classify_manifest_paths(app, m_new, missing, changed, unchanged);
+  classify_roster_paths(curr, unchanged, changed, missing, app);
+  curr.extract_path_set(known);
 
-  // remove the remaining added files from the unchanged set since they have been 
-  // changed in the deltas construction above. also, only consider the file as 
-  // changed if its not missing
-
-  for (path_set::const_iterator 
-         i = included.added_files.begin();
-       i != included.added_files.end(); ++i)
-    {
-      unchanged.erase(*i);
-      if (missing.find(*i) == missing.end()) 
-        changed.insert(*i);
-    }
-
-  file_itemizer u(app, new_paths, unknown, ignored);
+  file_itemizer u(app, known, unknown, ignored);
   walk_tree(file_path(), u);
 
-  inventory_file_state(inventory, missing, inventory_item::MISSING_FILE);
+  inventory_node_state(inventory, unchanged, inventory_item::UNCHANGED_NODE);
+  inventory_node_state(inventory, changed, inventory_item::PATCHED_NODE);
+  inventory_node_state(inventory, missing, inventory_item::MISSING_NODE);
+  inventory_node_state(inventory, unknown, inventory_item::UNKNOWN_NODE);
+  inventory_node_state(inventory, ignored, inventory_item::IGNORED_NODE);
 
-  inventory_pre_state(inventory, included.deleted_files, inventory_item::DROPPED_PATH);
-  inventory_pre_state(inventory, included.deleted_dirs, 
-                      inventory_item::DROPPED_PATH, inventory_item::DIRECTORY);
-
-  inventory_renames(inventory, included.renamed_files);
-  inventory_renames(inventory, included.renamed_dirs, inventory_item::DIRECTORY);
-
-  inventory_post_state(inventory, included.added_files, inventory_item::ADDED_PATH);
-
-  inventory_file_state(inventory, changed, inventory_item::PATCHED_FILE);
-  inventory_file_state(inventory, unchanged, inventory_item::KNOWN_FILE);
-  inventory_file_state(inventory, unknown, inventory_item::UNKNOWN_FILE);
-  inventory_file_state(inventory, ignored, inventory_item::IGNORED_FILE);
+  // FIXME: do we want to report on attribute changes here?!?
 
   for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end(); ++i)
     {
-      switch (inventory[i->first].pre_state) 
+
+      std::string path_suffix;
+
+      if (curr.has_node(i->first)) 
         {
-        case inventory_item::KNOWN_PATH:   output << " "; break;
+          // explicitly skip the root dir for now... 
+          // the trailing / dir format isn't going to work here
+          node_t n = curr.get_node(i->first);
+          if (is_root_dir_t(n)) continue;
+          if (is_dir_t(n)) path_suffix = "/";
+        }
+      else if (directory_exists(file_path(i->first)))
+        {
+          path_suffix = "/";
+        }
+
+      switch (i->second.pre_state) 
+        {
+        case inventory_item::UNCHANGED_PATH: output << " "; break;
         case inventory_item::DROPPED_PATH: output << "D"; break;
         case inventory_item::RENAMED_PATH: output << "R"; break;
         default: I(false); // invalid pre_state
         }
 
-      switch (inventory[i->first].post_state) 
+      switch (i->second.post_state) 
         {
-        case inventory_item::KNOWN_PATH:   output << " "; break;
+        case inventory_item::UNCHANGED_PATH: output << " "; break;
         case inventory_item::RENAMED_PATH: output << "R"; break;
         case inventory_item::ADDED_PATH:   output << "A"; break;
         default: I(false); // invalid post_state
         }
 
-      switch (inventory[i->first].file_state) 
+      switch (i->second.node_state) 
         {
-        case inventory_item::KNOWN_FILE:   output << " "; break;
-        case inventory_item::PATCHED_FILE: output << "P"; break;
-        case inventory_item::UNKNOWN_FILE: output << "U"; break;
-        case inventory_item::IGNORED_FILE: output << "I"; break;
-        case inventory_item::MISSING_FILE: output << "M"; break;
+        case inventory_item::UNCHANGED_NODE: output << " "; break;
+        case inventory_item::PATCHED_NODE: output << "P"; break;
+        case inventory_item::UNKNOWN_NODE: output << "U"; break;
+        case inventory_item::IGNORED_NODE: output << "I"; break;
+        case inventory_item::MISSING_NODE: output << "M"; break;
+        default: I(false); // invalid node_state
         }
 
-      // need directory indicators
-
-      output << " " << inventory[i->first].pre_id 
-             << " " << inventory[i->first].post_id 
+      output << " " << i->second.pre_id 
+             << " " << i->second.post_id 
              << " " << i->first;
 
-      if (inventory[i->first].path_type  == inventory_item::DIRECTORY)
-        output << "/";
+      // FIXME: it's possible that a directory was deleted and a file was added
+      // in it's place (or vice-versa) so we need something like pre/post node
+      // type indicators rather than a simple path suffix! ugh.
+      
+      output << path_suffix;
 
       output << std::endl;
     }
-*/ 
 }
 
 // Name: certs
