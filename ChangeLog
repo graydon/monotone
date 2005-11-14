@@ -8,6 +8,11 @@
 	* monotone.texi (Automation): Document sort order for 'automate
 	select'.
 
+2005-11-10  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Hooks): Small correction so the text matches the
+	example.
+
 2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* lua.cc, std_hooks.lua, monotone.texi: basic_io parser for lua is
