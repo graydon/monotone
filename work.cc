@@ -222,6 +222,21 @@ perform_deletions(path_set const & paths, app_state & app)
   update_any_attrs(app);
 }
 
+static void 
+add_parent_dirs(split_path const & dst, roster_t & ros, node_id_source & nis, 
+                app_state & app)
+{
+  editable_roster_base er(ros, nis);
+  addition_builder build(app, ros, er);
+
+  split_path dirname;
+  path_component basename;
+  dirname_basename(dst, dirname, basename);
+
+  // FIXME: this is a somewhat odd way to use the builder
+  build.visit_dir(dirname);
+}
+
 void 
 perform_rename(file_path const & src_path,
                file_path const & dst_path,
@@ -241,6 +256,8 @@ perform_rename(file_path const & src_path,
 
   N(!new_roster.has_node(dst),
     F("%s already exists in current revision\n") % dst_path);
+
+  add_parent_dirs(dst, new_roster, nis, app);
 
   P(F("adding %s -> %s to working copy rename set\n") % src_path % dst_path);
 

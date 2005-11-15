@@ -16,20 +16,16 @@ AT_DATA(foo1, [Some contents.
 AT_CHECK(MONOTONE --branch=testbranch commit --message blah,
          [], [ignore], [ignore])
 
+REV=`BASE_REVISION`
+
 # Verify that the latest revision contains a patch, rather than a delete/add
 # sequence (as reported in bug #9964).
-AT_DATA(expout, [new_manifest @<:@1f13fdc7b3bdef2f32f6e349a95a96dfd9fd6e82@:>@
 
-old_revision @<:@a227ca00ce56a54c36ca51b0e35ed4d0979da3b9@:>@
-old_manifest @<:@1a4470129e06e1786a59ab846e49881afde32c8f@:>@
-
-patch "foo1"
- from @<:@da39a3ee5e6b4b0d3255bfef95601890afd80709@:>@
-   to @<:@b0d699dae7df285e64265ec6b46538b0ce785da0@:>@
-])
-AT_CHECK(MONOTONE automate get_revision c1dc9e4d249ac7a5f6143a87a1e90246d8be0ee5,
+AT_CHECK(MONOTONE automate get_revision $REV,
          [], [stdout], [ignore])
-AT_CHECK(CANONICALISE(stdout))
-AT_CHECK(cmp stdout expout, [], [ignore]) 
+
+AT_CHECK(grep '^patch "foo1"$' stdout, [], [ignore], [ignore])
+AT_CHECK(grep 'add' stdout, [1], [ignore], [ignore])
+AT_CHECK(grep 'delete' stdout, [1], [ignore], [ignore])
 
 AT_CLEANUP
