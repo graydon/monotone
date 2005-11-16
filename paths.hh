@@ -118,6 +118,9 @@ null_name(path_component pc)
   return pc == the_null_component;
 }
 
+void dump(split_path const & sp, std::string & out);
+void dump(path_component const & pc, std::string & out);
+
 // It's possible this will become a proper virtual interface in the future,
 // but since the implementation is exactly the same in all cases, there isn't
 // much point ATM...

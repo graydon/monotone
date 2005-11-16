@@ -303,6 +303,30 @@ file_path::split(split_path & sp) const
     }
 }
 
+void dump(split_path const & sp, std::string & out)
+{
+  std::ostringstream oss;
+
+  for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
+    {
+      if (null_name(*i)) 
+        oss << ".";
+      else
+        oss << "/" << pc_interner.lookup(*i);
+    }
+
+  oss << "\n";
+
+  out = oss.str();
+}
+
+void dump(path_component const & pc, std::string & out)
+{
+  std::ostringstream oss;
+  oss << pc << " " << pc_interner.lookup(pc);
+  out = oss.str();
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // localizing file names (externalizing them)
 // this code must be superfast when there is no conversion needed

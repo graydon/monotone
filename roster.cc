@@ -235,10 +235,12 @@ void
 dump(node_t const & n, std::string & out)
 {
   std::ostringstream oss;
+  std::string name;
+  dump(n->name, name);
   oss << "address: " << n << " (uses: " << n.use_count() << ")\n"
       << "self: " << n->self << "\n"
       << "parent: " << n->parent << "\n"
-      << "name: " << n->name << "\n";
+      << "name: " << name << "\n";
   std::string attr_map_s;
   dump(n->attrs, attr_map_s);
   oss << "attrs:\n" << attr_map_s;
@@ -252,7 +254,10 @@ dump(node_t const & n, std::string & out)
       dir_map const & c = downcast_to_dir_t(n)->children;
       oss << "children: " << c.size() << "\n";
       for (dir_map::const_iterator i = c.begin(); i != c.end(); ++i)
-        oss << "  " << i->first << " -> " << i->second << "\n";
+        {
+          dump(i->first, name);
+          oss << "  " << name << " -> " << i->second << "\n";
+        }
     }
   out = oss.str();
 }
@@ -500,6 +505,9 @@ roster_t::get_node(split_path const & sp) const
       return root_dir;
     }
 
+  MM(sp);
+  MM(*this);
+
   I(has_root());
   dir_t d = root_dir;  
   for (split_path::const_iterator i = dirname.begin()+1; i != dirname.end(); ++i)
@@ -676,6 +684,8 @@ roster_t::attach_node(node_id nid, split_path const & dst)
   split_path dirname;
   path_component basename;
   dirname_basename(dst, dirname, basename);
+
+  MM(dst);
 
   if (dirname.empty())
     // attaching the root node
@@ -908,6 +918,8 @@ void
 editable_roster_base::attach_node(node_id nid, split_path const & dst)
 {
   // L(F("attach_node(%d, '%s')") % nid % file_path(dst));
+  MM(dst);
+  MM(this->r);
   r.attach_node(nid, dst);
 }
 
