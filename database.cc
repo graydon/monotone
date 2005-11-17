@@ -1343,6 +1343,8 @@ void
 database::put_revision(revision_id const & new_id,
                        revision_set const & rev)
 {
+  MM(new_id);
+  MM(rev);
 
   I(!null_id(new_id));
   I(!revision_exists(new_id));
@@ -1354,6 +1356,7 @@ database::put_revision(revision_id const & new_id,
   // Phase 1: confirm the revision makes sense
   {
     revision_id tmp;
+    MM(tmp);
     calculate_ident(d, tmp);
     I(tmp == new_id);
   }

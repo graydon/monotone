@@ -2730,7 +2730,7 @@ add_roster_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
-  //suite->add(BOOST_TEST_CASE(&automaton_roster_test));
+  suite->add(BOOST_TEST_CASE(&automaton_roster_test));
 }
 
 
