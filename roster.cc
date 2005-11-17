@@ -951,21 +951,6 @@ editable_roster_base::set_attr(split_path const & pth,
 
 namespace 
 {
-  struct testing_node_id_source 
-    : public node_id_source
-  {
-    testing_node_id_source() : curr(first_node) {}
-    virtual node_id next()
-    {
-      // L(F("creating node %x\n") % curr);
-      node_id n = curr++;
-      I(!temp_node(n));
-      return n;
-    }
-    node_id curr;
-  };
-
-
   struct true_node_id_source 
     : public node_id_source
   {
@@ -2614,6 +2599,19 @@ change_automaton
   }
 };
 
+struct testing_node_id_source 
+  : public node_id_source
+{
+  testing_node_id_source() : curr(first_node) {}
+  virtual node_id next()
+  {
+    // L(F("creating node %x\n") % curr);
+    node_id n = curr++;
+    I(!temp_node(n));
+    return n;
+  }
+  node_id curr;
+};
 
 static void
 dump(int const & i, std::string & out)
@@ -2649,12 +2647,90 @@ automaton_roster_test()
     }
 }
 
+// some of our raising operations leave our state corrupted.  so rather than
+// trying to do all the illegal things in one pass, we re-run this function a
+// bunch of times, and each time we do only one of these potentially
+// corrupting tests.  Test numbers are in the range [0, total).
+
+#define MAYBE(code) if (total == to_run) { L(F(#code)); code; return; } ++total
+
+static void
+check_sane_roster_do_tests(int to_run, int& total)
+{
+  total = 0;
+  testing_node_id_source nis;
+  roster_t r;
+  MM(r);
+  
+  // roster must have a root dir
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), std::logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), std::logic_error));
+
+  split_path sp_, sp_foo, sp_foo_bar, sp_foo_baz;
+  file_path().split(sp_);
+  file_path_internal("foo").split(sp_foo);
+  file_path_internal("foo/bar").split(sp_foo_bar);
+  file_path_internal("foo/baz").split(sp_foo_baz);
+  node_id nid_f = r.create_file_node(file_id(std::string("0000000000000000000000000000000000000000")),
+                                     nis);
+  // root must be a directory, not a file
+  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_f, sp_), std::logic_error));
+
+  node_id root_dir = r.create_dir_node(nis);
+  r.attach_node(root_dir, sp_);
+  // has a root dir, but a detached file
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), std::logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), std::logic_error));
+
+  r.attach_node(nid_f, sp_foo);
+  // now should be sane
+  BOOST_CHECK_NOT_THROW(r.check_sane(false), std::logic_error);
+  BOOST_CHECK_NOT_THROW(r.check_sane(true), std::logic_error);
+
+  node_id nid_d = r.create_dir_node(nis);
+  // if "foo" exists, can't attach another node at "foo"
+  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_d, sp_foo), std::logic_error));
+  // if "foo" is a file, can't attach a node at "foo/bar"
+  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_d, sp_foo_bar), std::logic_error));
+
+  BOOST_CHECK(r.detach_node(sp_foo) == nid_f);
+  r.attach_node(nid_d, sp_foo);
+  r.attach_node(nid_f, sp_foo_bar);
+  BOOST_CHECK_NOT_THROW(r.check_sane(false), std::logic_error);
+  BOOST_CHECK_NOT_THROW(r.check_sane(true), std::logic_error);
+
+  temp_node_id_source nis_tmp;
+  node_id nid_tmp = r.create_dir_node(nis_tmp);
+  // has a detached node
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), std::logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), std::logic_error));
+  r.attach_node(nid_tmp, sp_foo_baz);
+  // now has no detached nodes, but one temp node
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), std::logic_error));
+  BOOST_CHECK_NOT_THROW(r.check_sane(true), std::logic_error);
+}
+
+#undef MAYBE
+
+static void
+check_sane_roster_test()
+{
+  int total;
+  check_sane_roster_do_tests(-1, total);
+  for (int to_run = 0; to_run < total; ++to_run)
+    {
+      L(F("check_sane_roster_test: loop = %i (of %i)") % to_run % (total - 1));
+      int tmp;
+      check_sane_roster_do_tests(to_run, tmp);
+    }
+}
 
 void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&automaton_roster_test));
+  suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
+  //suite->add(BOOST_TEST_CASE(&automaton_roster_test));
 }
 
 
