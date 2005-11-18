@@ -622,7 +622,48 @@ invalid_csets_test()
     split_path sp1, sp2;
     file_path().split(sp1);
     file_path_internal("baz").split(sp2);
+    cs.dirs_added.insert(sp1);
     cs.nodes_renamed.insert(std::make_pair(sp1, sp2));
+    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+  }
+  {
+    L(F("TEST: can't delete non-empty directory"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    split_path sp;
+    file_path_internal("foo").split(sp);
+    cs.nodes_deleted.insert(sp);
+    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+  }
+  {
+    L(F("TEST: can't delete root"));
+    // for this test, make sure root has no contents
+    r = roster_t();
+    cset cs; MM(cs);
+    split_path sp;
+    file_path().split(sp);
+    cs.nodes_deleted.insert(sp);
+    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+  }
+  {
+    L(F("TEST: can't delete and replace root"));
+    // for this test, make sure root has no contents
+    r = roster_t();
+    cset cs; MM(cs);
+    split_path sp;
+    file_path().split(sp);
+    cs.nodes_deleted.insert(sp);
+    cs.dirs_added.insert(sp);
+    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+  }
+  {
+    L(F("TEST: attach node with no root directory present"));
+    // for this test, make sure root has no contents
+    r = roster_t();
+    cset cs; MM(cs);
+    split_path sp;
+    file_path_internal("blah/blah/blah").split(sp);
+    cs.dirs_added.insert(sp);
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
 }

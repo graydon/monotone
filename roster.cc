@@ -457,7 +457,8 @@ shallow_equal(node_t a, node_t b,
 }
 
 
-// FIXME: why does this do two loops?  why does it pass 'true' to shallow_equal?
+// FIXME_ROSTERS: why does this do two loops?  why does it pass 'true' to
+// shallow_equal?
 // -- njs
 bool 
 roster_t::operator==(roster_t const & other) const
@@ -499,16 +500,17 @@ roster_t::get_node(split_path const & sp) const
   path_component basename;
   dirname_basename(sp, dirname, basename);
 
+  MM(sp);
+  MM(*this);
+
+  I(has_root());
+
   if (dirname.empty())
     {
       I(null_name(basename));
       return root_dir;
     }
 
-  MM(sp);
-  MM(*this);
-
-  I(has_root());
   dir_t d = root_dir;  
   for (split_path::const_iterator i = dirname.begin()+1; i != dirname.end(); ++i)
     d = downcast_to_dir_t(d->get_child(*i));
@@ -610,7 +612,7 @@ roster_t::detach_node(split_path const & pth)
       node_id root_id = root_dir->self;
       safe_insert(old_locations,
                   make_pair(root_id, make_pair(root_dir->parent, root_dir->name)));
-      // cleare set the root_dir shared_pointer
+      // clear ("reset") the root_dir shared_pointer
       root_dir.reset();
       return root_id;
     }
