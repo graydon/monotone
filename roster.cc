@@ -1676,8 +1676,8 @@ select_nodes_modified_by_cset(cset const & cs,
   nodes_changed.clear();
   nodes_born.clear();
 
-  set<split_path> modified_prestate_nodes;
-  set<split_path> modified_poststate_nodes;
+  path_set modified_prestate_nodes;
+  path_set modified_poststate_nodes;
 
   // Pre-state damage
 
@@ -1715,21 +1715,21 @@ select_nodes_modified_by_cset(cset const & cs,
 
   // Finale
 
-  for (set<split_path>::const_iterator i = modified_prestate_nodes.begin();
+  for (path_set::const_iterator i = modified_prestate_nodes.begin();
        i != modified_prestate_nodes.end(); ++i)
     {
       I(old_roster.has_node(*i));
       nodes_changed.insert(old_roster.get_node(*i)->self);
     }
 
-  for (set<split_path>::const_iterator i = modified_poststate_nodes.begin();
+  for (path_set::const_iterator i = modified_poststate_nodes.begin();
        i != modified_poststate_nodes.end(); ++i)
     {
       I(new_roster.has_node(*i));
       nodes_changed.insert(new_roster.get_node(*i)->self);
     }
 
-  for (std::set<split_path>::const_iterator i = cs.dirs_added.begin();
+  for (path_set::const_iterator i = cs.dirs_added.begin();
        i != cs.dirs_added.end(); ++i)
     {
       I(new_roster.has_node(*i));
@@ -2438,7 +2438,7 @@ change_automaton
 
   path_component new_component()
   {
-    vector<path_component> pieces;
+    split_path pieces;
     file_path_internal(new_word()).split(pieces);
     return pieces.back();
   }

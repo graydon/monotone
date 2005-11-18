@@ -148,6 +148,8 @@ cset::apply_to(editable_tree & t) const
   set<attach> attaches;
   set<node_id> drops;
 
+  MM(*this);
+
   check_normalized(*this);
 
   // Decompose all additions into a set of pending attachments to be
@@ -156,7 +158,7 @@ cset::apply_to(editable_tree & t) const
   // anything else potentially destructive. This should all be
   // happening in a temp directory anyways.
 
-  for (set<split_path>::const_iterator i = dirs_added.begin();
+  for (path_set::const_iterator i = dirs_added.begin();
        i != dirs_added.end(); ++i)
     attaches.insert(attach(t.create_dir_node(), *i));
 
@@ -169,7 +171,7 @@ cset::apply_to(editable_tree & t) const
   // existing paths into the set of pending detaches, to be executed
   // bottom-up.
 
-  for (set<split_path>::const_iterator i = nodes_deleted.begin();
+  for (path_set::const_iterator i = nodes_deleted.begin();
        i != nodes_deleted.end(); ++i)    
     detaches.insert(detach(*i));
   
@@ -246,7 +248,7 @@ void
 print_cset(basic_io::printer & printer,
            cset const & cs)
 {
-  for (set<split_path>::const_iterator i = cs.nodes_deleted.begin();
+  for (path_set::const_iterator i = cs.nodes_deleted.begin();
        i != cs.nodes_deleted.end(); ++i)
     {
       basic_io::stanza st;
@@ -263,7 +265,7 @@ print_cset(basic_io::printer & printer,
       printer.print_stanza(st);
     }
 
-  for (set<split_path>::const_iterator i = cs.dirs_added.begin();
+  for (path_set::const_iterator i = cs.dirs_added.begin();
        i != cs.dirs_added.end(); ++i)
     {
       basic_io::stanza st;
