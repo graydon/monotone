@@ -3096,32 +3096,19 @@ CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
 }
 
 CMD(explicit_merge, N_("tree"),
-    N_("LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
-      "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"),
+    N_("LEFT-REVISION RIGHT-REVISION DEST-BRANCH"),
     N_("merge two explicitly given revisions, placing result in given branch"),
     OPT_DATE % OPT_AUTHOR)
 {
-  revision_id left, right, ancestor;
+  revision_id left, right;
   string branch;
 
-  if (args.size() != 3 && args.size() != 4)
+  if (args.size() != 3)
     throw usage(name);
 
   complete(app, idx(args, 0)(), left);
   complete(app, idx(args, 1)(), right);
-  if (args.size() == 4)
-    {
-      complete(app, idx(args, 2)(), ancestor);
-      N(is_ancestor(ancestor, left, app),
-        F("%s is not an ancestor of %s") % ancestor % left);
-      N(is_ancestor(ancestor, right, app),
-        F("%s is not an ancestor of %s") % ancestor % right);
-      branch = idx(args, 3)();
-    }
-  else
-    {
-      branch = idx(args, 2)();
-    }
+  branch = idx(args, 2)();
   
   N(!(left == right),
     F("%s and %s are the same revision, aborting") % left % right);
@@ -3144,9 +3131,8 @@ CMD(explicit_merge, N_("tree"),
   
   string log = (boost::format("explicit_merge of '%s'\n"
                               "              and '%s'\n"
-                              "   using ancestor '%s'\n"
                               "        to branch '%s'\n")
-                % left % right % ancestor % branch).str();
+                % left % right % branch).str();
   
   cert_revision_changelog(merged, log, app, dbw);
   
