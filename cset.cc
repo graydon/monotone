@@ -558,7 +558,7 @@ invalid_csets_test()
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.attrs_set.insert(std::make_pair(std::make_pair(foo_bar, attr_key("attr_file")),
-                                       attr_value("attr_dir")));
+                                       attr_value("value_file")));
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
@@ -566,6 +566,16 @@ invalid_csets_test()
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.attrs_cleared.insert(std::make_pair(foo_bar, attr_key("blah")));
+    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+  }
+  {
+    L(F("TEST: can't clear non-existent attr that once existed"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.attrs_cleared.insert(std::make_pair(foo_bar, attr_key("attr_file")));
+    // exists now, so should be fine
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    // but last time killed it, so can't be killed again
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
