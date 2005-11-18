@@ -637,6 +637,10 @@ roster_t::drop_detached_node(node_id nid)
   node_t n = get_node(nid);
   I(null_node(n->parent));
   I(null_name(n->name));
+  // if it's a dir, make sure it's empty
+  if (is_dir_t(n))
+    I(downcast_to_dir_t(n)->children.empty());
+  // all right, kill it
   safe_erase(nodes, nid);
   // can use safe_erase here, because while not every detached node appears in
   // old_locations, all those that used to be in the tree do.  and you should
