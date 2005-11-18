@@ -19,52 +19,6 @@ using std::pair;
 using std::string;
 using std::make_pair;
 
-struct
-detach
-{
-  detach(split_path const & src) 
-    : src_path(src), 
-      reattach(false) 
-  {}
-  
-  detach(split_path const & src, 
-         split_path const & dst) 
-    : src_path(src), 
-      reattach(true), 
-      dst_path(dst) 
-  {}
-  
-  split_path src_path;
-  bool reattach;
-  split_path dst_path;
-
-  bool operator<(struct detach const & other) const
-  {
-    // We sort detach operations bottom-up by src path
-    return src_path > other.src_path;
-  }
-};
-
-struct
-attach
-{
-  attach(node_id n, 
-         split_path const & p) 
-    : node(n), path(p)
-  {}
-
-  node_id node;
-  split_path path;
-
-  bool operator<(struct attach const & other) const
-  {
-    // We sort attach operations top-down by path
-    // SPEEDUP?: simply sort by path.size() rather than full lexicographical
-    // comparison?
-    return path < other.path;
-  }
-};
-
 static void
 check_normalized(cset const & cs)
 {
@@ -139,6 +93,54 @@ cset::clear()
   attrs_set.clear();
 }
 
+struct
+detach
+{
+  detach(split_path const & src) 
+    : src_path(src), 
+      reattach(false) 
+  {}
+  
+  detach(split_path const & src, 
+         split_path const & dst) 
+    : src_path(src), 
+      reattach(true), 
+      dst_path(dst) 
+  {}
+  
+  split_path src_path;
+  bool reattach;
+  split_path dst_path;
+
+  bool operator<(struct detach const & other) const
+  {
+    // We sort detach operations bottom-up by src path
+    // SPEEDUP?: simply sort by path.size() rather than full lexicographical
+    // comparison?
+    return src_path > other.src_path;
+  }
+};
+
+struct
+attach
+{
+  attach(node_id n, 
+         split_path const & p) 
+    : node(n), path(p)
+  {}
+
+  node_id node;
+  split_path path;
+
+  bool operator<(struct attach const & other) const
+  {
+    // We sort attach operations top-down by path
+    // SPEEDUP?: simply sort by path.size() rather than full lexicographical
+    // comparison?
+    return path < other.path;
+  }
+};
+
 void 
 cset::apply_to(editable_tree & t) const
 {
@@ -156,13 +158,19 @@ cset::apply_to(editable_tree & t) const
   // anything else potentially destructive. This should all be
   // happening in a temp directory anyways.
 
+  // NB: it's very important we do safe_insert's here, because our comparison
+  // operator for attach and detach does not distinguish all nodes!  the nodes
+  // that it does not distinguish are ones where we're attaching or detaching
+  // repeatedly from the same place, so they're impossible anyway, but we need
+  // to error out if someone tries to add them.
+
   for (set<split_path>::const_iterator i = dirs_added.begin();
        i != dirs_added.end(); ++i)
-    attaches.insert(attach(t.create_dir_node(), *i));
+    safe_insert(attaches, attach(t.create_dir_node(), *i));
 
   for (map<split_path, file_id>::const_iterator i = files_added.begin();
        i != files_added.end(); ++i)
-    attaches.insert(attach(t.create_file_node(i->second), i->first));
+    safe_insert(attaches, attach(t.create_file_node(i->second), i->first));
 
 
   // Decompose all path deletion and the first-half of renamings on
@@ -171,11 +179,11 @@ cset::apply_to(editable_tree & t) const
 
   for (set<split_path>::const_iterator i = nodes_deleted.begin();
        i != nodes_deleted.end(); ++i)    
-    detaches.insert(detach(*i));
+    safe_insert(detaches, detach(*i));
   
   for (map<split_path, split_path>::const_iterator i = nodes_renamed.begin();
        i != nodes_renamed.end(); ++i)
-    detaches.insert(detach(i->first, i->second));
+    safe_insert(detaches, detach(i->first, i->second));
 
 
   // Execute all the detaches, rescheduling the results of each detach
@@ -186,9 +194,9 @@ cset::apply_to(editable_tree & t) const
     {
       node_id n = t.detach_node(i->src_path);
       if (i->reattach)
-        attaches.insert(attach(n, i->dst_path));
+        safe_insert(attaches, attach(n, i->dst_path));
       else
-        drops.insert(n);
+        safe_insert(drops, n);
     }
 
 
