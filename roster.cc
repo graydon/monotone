@@ -608,6 +608,10 @@ roster_t::detach_node(split_path const & pth)
   if (dirname.empty())
     {
       // detaching the root dir
+      {
+        // detaching the root dir is currently forbidden.
+        I(false);
+      }
       I(null_name(basename));
       node_id root_id = root_dir->self;
       safe_insert(old_locations,
