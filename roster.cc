@@ -1798,7 +1798,7 @@ classify_roster_paths(roster_t const & ros,
       file_path fp(sp);
 
       // Only analyze restriction-included files.
-      if (app.restriction_includes(fp))
+      if (app.restriction_includes(sp))
         {
           if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
             {
@@ -1867,7 +1867,7 @@ update_restricted_roster_from_filesystem(roster_t & ros,
       file_path fp(sp);
 
       // Only analyze restriction-included files.
-      if (!app.restriction_includes(fp))
+      if (!app.restriction_includes(sp))
         continue;
 
       // Only analyze changed files (or all files if inodeprints mode

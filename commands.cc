@@ -1646,9 +1646,8 @@ ls_known (app_state & app, vector<utf8> const & args)
   
   for (path_set::const_iterator p = paths.begin(); p != paths.end(); ++p)
     {
-      file_path path(*p);
-      if (app.restriction_includes(path))
-        cout << path << endl;
+      if (app.restriction_includes(*p))
+        cout << file_path(*p) << endl;
     }
 }
 
@@ -1707,7 +1706,7 @@ find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
           continue;
         }
       file_path fp(*i);      
-      if (app.restriction_includes(fp) && !path_exists(fp))
+      if (app.restriction_includes(*i) && !path_exists(fp))
         missing.insert(*i);
     }
 }
@@ -3268,7 +3267,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       file_path fp(sp);
       
       // Only revert restriction-included files.
-      if (!app.restriction_includes(fp))
+      if (!app.restriction_includes(sp))
         continue;
 
       if (is_file_t(node))
