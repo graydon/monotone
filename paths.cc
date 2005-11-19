@@ -605,13 +605,13 @@ static void test_file_path_internal()
           file_path fp = file_path_internal(*c);
           BOOST_CHECK(fp.as_internal() == *c);
           BOOST_CHECK(file_path_internal(fp.as_internal()) == fp);
-          std::vector<path_component> split_test;
+          split_path split_test;
           fp.split(split_test);
           BOOST_CHECK(!split_test.empty());
           file_path fp2(split_test);
           BOOST_CHECK(fp == fp2);
           BOOST_CHECK(null_name(split_test[0]));
-          for (std::vector<path_component>::const_iterator
+          for (split_path::const_iterator
                  i = split_test.begin() + 1; i != split_test.end(); ++i)
             BOOST_CHECK(!null_name(*i));
         }
@@ -630,13 +630,13 @@ static void check_fp_normalizes_to(char * before, char * after)
   // we compare after to the external form too, since as far as we know
   // relative normalized posix paths are always good win32 paths too
   BOOST_CHECK(fp.as_external() == after);
-  std::vector<path_component> split_test;
+  split_path split_test;
   fp.split(split_test);
   BOOST_CHECK(!split_test.empty());
   file_path fp2(split_test);
   BOOST_CHECK(fp == fp2);
   BOOST_CHECK(null_name(split_test[0]));
-  for (std::vector<path_component>::const_iterator
+  for (split_path::const_iterator
          i = split_test.begin() + 1; i != split_test.end(); ++i)
     BOOST_CHECK(!null_name(*i));
 }
@@ -770,8 +770,7 @@ static void test_split_join()
 {
   file_path fp1 = file_path_internal("foo/bar/baz");
   file_path fp2 = file_path_internal("bar/baz/foo");
-  typedef std::vector<path_component> pcv;
-  pcv split1, split2;
+  split_path split1, split2;
   fp1.split(split1);
   fp2.split(split2);
   BOOST_CHECK(fp1 == file_path(split1));

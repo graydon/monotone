@@ -19,8 +19,6 @@
 
 typedef std::map<attr_key, attr_value> attr_map_t;
 
-typedef std::vector<path_component> split_path;
-
 // Virtual interface to a tree-of-files which you can edit
 // destructively; this may be the filesystem or an in-memory
 // representation (a roster / mfest).
@@ -57,10 +55,10 @@ struct editable_tree
 struct cset 
 {
   // Deletions.
-  std::set<split_path> nodes_deleted;
+  path_set nodes_deleted;
 
   // Additions.
-  std::set<split_path> dirs_added;
+  path_set dirs_added;
   std::map<split_path, file_id> files_added;
 
   // Pure renames.

@@ -1686,8 +1686,8 @@ select_nodes_modified_by_cset(cset const & cs,
   nodes_changed.clear();
   nodes_born.clear();
 
-  set<split_path> modified_prestate_nodes;
-  set<split_path> modified_poststate_nodes;
+  path_set modified_prestate_nodes;
+  path_set modified_poststate_nodes;
 
   // Pre-state damage
 
@@ -1725,21 +1725,21 @@ select_nodes_modified_by_cset(cset const & cs,
 
   // Finale
 
-  for (set<split_path>::const_iterator i = modified_prestate_nodes.begin();
+  for (path_set::const_iterator i = modified_prestate_nodes.begin();
        i != modified_prestate_nodes.end(); ++i)
     {
       I(old_roster.has_node(*i));
       nodes_changed.insert(old_roster.get_node(*i)->self);
     }
 
-  for (set<split_path>::const_iterator i = modified_poststate_nodes.begin();
+  for (path_set::const_iterator i = modified_poststate_nodes.begin();
        i != modified_poststate_nodes.end(); ++i)
     {
       I(new_roster.has_node(*i));
       nodes_changed.insert(new_roster.get_node(*i)->self);
     }
 
-  for (std::set<split_path>::const_iterator i = cs.dirs_added.begin();
+  for (path_set::const_iterator i = cs.dirs_added.begin();
        i != cs.dirs_added.end(); ++i)
     {
       I(new_roster.has_node(*i));
@@ -1808,7 +1808,7 @@ classify_roster_paths(roster_t const & ros,
       file_path fp(sp);
 
       // Only analyze restriction-included files.
-      if (app.restriction_includes(fp))
+      if (app.restriction_includes(sp))
         {
           if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
             {
@@ -1877,7 +1877,7 @@ update_restricted_roster_from_filesystem(roster_t & ros,
       file_path fp(sp);
 
       // Only analyze restriction-included files.
-      if (!app.restriction_includes(fp))
+      if (!app.restriction_includes(sp))
         continue;
 
       // Only analyze changed files (or all files if inodeprints mode
@@ -2456,7 +2456,7 @@ change_automaton
 
   path_component new_component()
   {
-    vector<path_component> pieces;
+    split_path pieces;
     file_path_internal(new_word()).split(pieces);
     return pieces.back();
   }

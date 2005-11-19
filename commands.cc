@@ -798,12 +798,12 @@ changes_summary::add_change_set(cset const & c)
 
 static void 
 print_indented_set(std::ostream & os, 
-                   set<split_path> const & s,
+                   path_set const & s,
                    size_t max_cols)
 {
   size_t cols = 8;
   os << "       ";
-  for (std::set<split_path>::const_iterator i = s.begin();
+  for (path_set::const_iterator i = s.begin();
        i != s.end(); i++)
     {
       const std::string str = boost::lexical_cast<std::string>(file_path(*i));
@@ -839,7 +839,7 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
 
   if (! cs.files_added.empty())
     {
-      std::set<split_path> tmp;
+      path_set tmp;
       for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
            i != cs.files_added.end(); ++i)
         tmp.insert(i->first);
@@ -855,7 +855,7 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
 
   if (! cs.deltas_applied.empty())
     {
-      std::set<split_path> tmp;
+      path_set tmp;
       for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
            i != cs.deltas_applied.end(); ++i)
         tmp.insert(i->first);
@@ -865,7 +865,7 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
 
   if (! cs.attrs_set.empty() || ! cs.attrs_cleared.empty())
     {
-      std::set<split_path> tmp;
+      path_set tmp;
       for (std::set<std::pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
            i != cs.attrs_cleared.end(); ++i)
         tmp.insert(i->first);
@@ -1296,7 +1296,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
       I(rs.edges.size() == 1);
       cset const & cs = edge_changes(rs.edges.begin());
       
-      for (std::set<split_path>::const_iterator i = cs.nodes_deleted.begin();
+      for (path_set::const_iterator i = cs.nodes_deleted.begin();
            i != cs.nodes_deleted.end(); ++i) 
         cout << "dropped " << *i << endl;
 
@@ -1306,7 +1306,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
         cout << "renamed " << i->first << endl 
              << "     to " << i->second << endl;
 
-      for (std::set<split_path>::const_iterator i = cs.dirs_added.begin();
+      for (path_set::const_iterator i = cs.dirs_added.begin();
            i != cs.dirs_added.end(); ++i) 
         cout << "added   " << *i << endl;
 
@@ -1646,9 +1646,8 @@ ls_known (app_state & app, vector<utf8> const & args)
   
   for (path_set::const_iterator p = paths.begin(); p != paths.end(); ++p)
     {
-      file_path path(*p);
-      if (app.restriction_includes(path))
-        cout << path << endl;
+      if (app.restriction_includes(*p))
+        cout << file_path(*p) << endl;
     }
 }
 
@@ -1707,7 +1706,7 @@ find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
           continue;
         }
       file_path fp(*i);      
-      if (app.restriction_includes(fp) && !path_exists(fp))
+      if (app.restriction_includes(*i) && !path_exists(fp))
         missing.insert(*i);
     }
 }
@@ -3268,7 +3267,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       file_path fp(sp);
       
       // Only revert restriction-included files.
-      if (!app.restriction_includes(fp))
+      if (!app.restriction_includes(sp))
         continue;
 
       if (is_file_t(node))
