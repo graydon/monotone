@@ -442,6 +442,10 @@ basic_csets_test()
   //   each cset thingie sets what it's supposed to
   //   the topdown/bottomup stuff works
   // don't forget to check normalization of written form, either...
+  //   no duplicate entries (as would be silently ignored, if we don't use
+  //     safe_insert in the parser!)
+  //   ordering
+  //   whitespace normalization
 }
 
 static void
