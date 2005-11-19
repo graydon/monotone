@@ -99,9 +99,16 @@ public:                                                \
   ty const & operator=(ty const & other);              \
   bool operator==(ty const & other) const              \
     { return s == other(); }                           \
+  bool operator!=(ty const & other) const              \
+    { return s != other(); }                           \
   friend void verify(ty &);                            \
   friend std::ostream & operator<<(std::ostream &,     \
                                    ty const &);        \
+  struct symtab                                        \
+  {                                                    \
+    symtab();                                          \
+    ~symtab();                                         \
+  };                                                   \
 };                                                     \
 std::ostream & operator<<(std::ostream &, ty const &); \
 void dump(ty const &, std::string &);

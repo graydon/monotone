@@ -2100,6 +2100,14 @@ void
 roster_t::parse_from(basic_io::parser & pa,
                      marking_map & mm)
 {
+  // Instantiate some lookaside caches to ensure this roster reuses
+  // string storage across ATOMIC elements.
+  id::symtab id_syms;
+  path_component::symtab path_syms;
+  attr_key::symtab attr_key_syms;
+  attr_value::symtab attr_value_syms;
+
+
   // We *always* parse the local part of a roster, because we do not
   // actually send the non-local part over the network; the only times
   // we serialize a manifest (non-local roster) is when we're printing

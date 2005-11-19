@@ -103,14 +103,11 @@
 #include <string>
 #include <vector>
 
-#include "numeric_vocab.hh"
 #include "vocab.hh"
-
-typedef u32 path_component;
 
 typedef std::vector<path_component> split_path;
 
-const path_component the_null_component = 0;
+const path_component the_null_component;
 
 inline bool
 null_name(path_component pc)
@@ -119,7 +116,6 @@ null_name(path_component pc)
 }
 
 void dump(split_path const & sp, std::string & out);
-void dump(path_component const & pc, std::string & out);
 
 // It's possible this will become a proper virtual interface in the future,
 // but since the implementation is exactly the same in all cases, there isn't

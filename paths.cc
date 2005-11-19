@@ -234,8 +234,6 @@ bookkeeping_path::is_bookkeeping_path(std::string const & path)
 // normalized, relative, paths.
 ///////////////////////////////////////////////////////////////////////////
 
-static interner<path_component> pc_interner("", the_null_component);
-
 // This function takes a vector of path components and joins them into a
 // single file_path.  This is the inverse to file_path::split.  It takes a
 // vector of the form:
@@ -258,7 +256,7 @@ file_path::file_path(split_path const & sp)
       I(!null_name(*i));
       if (!start)
         tmp += "/";
-      tmp += pc_interner.lookup(*i);
+      tmp += (*i)();
       if (start)
         {
           I(tmp != bookkeeping_root.as_internal());
@@ -295,10 +293,10 @@ file_path::split(split_path & sp) const
       stop = s.find('/', start);
       if (stop < 0 || stop > s.length())
         {
-          sp.push_back(pc_interner.intern(s.substr(start)));
+          sp.push_back(s.substr(start));
           break;
         }
-      sp.push_back(pc_interner.intern(s.substr(start, stop - start)));
+      sp.push_back(s.substr(start, stop - start));
       start = stop + 1;
     }
 }
@@ -312,7 +310,7 @@ void dump(split_path const & sp, std::string & out)
       if (null_name(*i)) 
         oss << ".";
       else
-        oss << "/" << pc_interner.lookup(*i);
+        oss << "/" << *i;
     }
 
   oss << "\n";
@@ -320,12 +318,6 @@ void dump(split_path const & sp, std::string & out)
   out = oss.str();
 }
 
-void dump(path_component const & pc, std::string & out)
-{
-  std::ostringstream oss;
-  oss << pc << " " << pc_interner.lookup(pc);
-  out = oss.str();
-}
 
 ///////////////////////////////////////////////////////////////////////////
 // localizing file names (externalizing them)
