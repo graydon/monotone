@@ -424,16 +424,16 @@ database::info(ostream & out)
   out << \
     F("schema version    : %s\n"
       "counts:\n"
-      "  full manifests  : %u\n"
-      "  manifest deltas : %u\n"
+      "  full rosters    : %u\n"
+      "  roster deltas   : %u\n"
       "  full files      : %u\n"
       "  file deltas     : %u\n"
       "  revisions       : %u\n"
       "  ancestry edges  : %u\n"
       "  certs           : %u\n"
       "bytes:\n"
-      "  full manifests  : %u\n"
-      "  manifest deltas : %u\n"
+      "  full rosters    : %u\n"
+      "  roster deltas   : %u\n"
       "  full files      : %u\n"
       "  file deltas     : %u\n"
       "  revisions       : %u\n"
@@ -443,16 +443,16 @@ database::info(ostream & out)
       )
     % id
     // counts
-    % count("manifests")
-    % count("manifest_deltas")
+    % count("rosters")
+    % count("roster_deltas")
     % count("files")
     % count("file_deltas")
     % count("revisions")
     % count("revision_ancestry")
     % count("revision_certs")
     // bytes
-    % SPACE_USAGE("manifests", "id || data")
-    % SPACE_USAGE("manifest_deltas", "id || base || delta")
+    % SPACE_USAGE("rosters", "id || data")
+    % SPACE_USAGE("roster_deltas", "id || base || delta")
     % SPACE_USAGE("files", "id || data")
     % SPACE_USAGE("file_deltas", "id || base || delta")
     % SPACE_USAGE("revisions", "id || data")
