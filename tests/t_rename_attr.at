@@ -24,13 +24,4 @@ AT_CHECK(MONOTONE attr get otherfile, [], [stdout], [ignore])
 AT_CHECK(QGREP(some_key stdout))
 AT_CHECK(QGREP(some_value stdout))
 
-# Make sure rename fails if the user has someone managed to put
-# attributes on the target file.
-
-AT_DATA(.mt-attrs, [   file "has_attrs"
-execute "true"
-])
-
-AT_CHECK(MONOTONE rename otherfile has_attrs, [1], [ignore], [ignore])
-
 AT_CLEANUP
