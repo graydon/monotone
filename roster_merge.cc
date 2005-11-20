@@ -117,16 +117,88 @@ namespace
       create_node_for(n, new_roster);
   }
   
+  bool
+  would_make_dir_loop(roster_t const & r, node_id nid, node_id parent)
+  {
+    // parent may not be fully attached yet; that's okay.  that just means
+    // we'll run into a node with a null parent somewhere before we hit the
+    // actual root; whether we hit the actual root or not, hitting a node
+    // with a null parent will tell us that this particular attachment won't
+    // create a loop.
+    for (node_id curr = parent; curr = r.get_node(curr)->parent; !null_node(curr))
+      {
+        if (curr == nid)
+          return true;
+      }
+    return false;
+  }
+
   void
-  copy_node_forward(node_t const & n, roster_t & new_roster,
+  assign_name(roster_merge_result & result, node_id nid,
+              node_id parent, path_component name)
+  {
+    // this function is reponsible for detecting structural conflicts.  by the
+    // time we've gotten here, we have a node that's unambiguously decided on
+    // a name; but it might be that that name does not exist (because the
+    // parent dir is gone), or that it's already taken (by another node), or
+    // that putting this node there would create a directory loop.  In all
+    // such cases, rather than actually attach the node, we write a conflict
+    // structure and leave it detached.
+
+    // orphan:
+    if (!result.roster.has_node(parent))
+      {
+        orphaned_node_conflict c;
+        c.nid = nid;
+        c.parent_name = std::make_pair(parent, name);
+        result.orphaned_node_conflicts.push_back(c);
+        return;
+      }
+
+    dir_t p = downcast_to_dir_t(result.roster.get_node(parent));
+
+    // name conflict:
+    // see the comment in roster_merge.hh for the analysis showing that at
+    // most two nodes can participate in a rename target conflict.  this code
+    // exploits that; after this code runs, there will be no node at the given
+    // location in the tree, which means that in principle, if there were a
+    // third node that _also_ wanted to go here, when we got around to
+    // attaching it we'd have no way to realize it should be a conflict.  but
+    // that never happens, so we don't have to keep a lookaside set of
+    // "poisoned locations" or anything.
+    if (p->has_child(name))
+      {
+        rename_target_conflict c;
+        c.nid1 = nid;
+        c.nid2 = p->get_child(name)->self;
+        c.parent_name = std::make_pair(parent, name);
+        p->detach_child(name);
+        result.rename_target_conflicts.push_back(c);
+        return;
+      }
+
+    if (would_make_dir_loop(result.roster, nid, parent))
+      {
+        directory_loop_conflict c;
+        c.nid = nid;
+        c.parent_name = std::make_pair(parent, name);
+        result.directory_loop_conflicts.push_back(c);
+        return;
+      }
+
+    // hey, we actually made it.  attach the node!
+    result.roster.attach_node(nid, parent, name);
+  }
+
+  void
+  copy_node_forward(roster_merge_result & result, node_t const & n,
                     node_t const & old_n)
   {
     I(n->self == old_n->self);
     n->attrs = old_n->attrs;
     if (is_file_t(n))
       downcast_to_file_t(n)->content = downcast_to_file_t(old_n)->content;
-    // FIXME: this could hit a conflict!  (orphan or rename-target)
-    new_roster.attach_node(n->self, old_n->parent, old_n->name);
+    assign_name(result, n->self, old_n->parent, old_n->name);
   }
   
 } // end anonymous namespace
@@ -195,12 +267,12 @@ roster_merge(roster_t const & left_parent,
             I(false);
 
           case parallel::in_left:
-            copy_node_forward(new_i->second, result.roster, i.left_data());
+            copy_node_forward(result, new_i->second, i.left_data());
             ++left_mi;
             break;
 
           case parallel::in_right:
-            copy_node_forward(new_i->second, result.roster, i.right_data());
+            copy_node_forward(result, new_i->second, i.right_data());
             ++right_mi;
             break;
 
@@ -226,9 +298,8 @@ roster_merge(roster_t const & left_parent,
                                  right_uncommon_ancestors,
                                  new_name, conflict))
                   {
-                    // FIXME: this could hit a conflict! (orphan or rename-target)
-                    result.roster.attach_node(new_n->self,
-                                              new_name.first, new_name.second);
+                    assign_name(result, new_n->self,
+                                new_name.first, new_name.second);
                   }
                 else
                   {

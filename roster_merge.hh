@@ -58,18 +58,12 @@ struct node_attr_conflict
 //     manifest.)
 //   
 
-// structural conflicts:
-//   -- orphans
-//   -- directory containment loops
-//   -- multiple nodes with the same name
-
 // orphaned nodes always merged their name cleanly, so we simply put that name
 // here.  the node in the resulting roster is detached.
 struct orphaned_node_conflict
 {
   node_id nid;
-  node_id dead_parent;
-  path_component name;
+  std::pair<node_id, path_component> parent_name;
 };
 
 // this is when two distinct nodes want to have the same name.  these nodes
@@ -89,11 +83,13 @@ struct orphaned_node_conflict
 struct rename_target_conflict
 {
   node_id nid1, nid2;
-  std::pair<node_id, path_component> name;
+  std::pair<node_id, path_component> parent_name;
 };
 
 struct directory_loop_conflict
 {
+  node_id nid;
+  std::pair<node_id, path_component> parent_name;
 };
 
 // renaming the root dir (as we currently do _not_) allows:

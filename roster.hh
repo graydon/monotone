@@ -77,6 +77,7 @@ struct dir_node
   dir_node();
   dir_node(node_id i);
   dir_map children;
+  bool has_child(path_component const & pc) const;
   node_t get_child(path_component const & pc) const;
   void attach_child(path_component const & pc, node_t child);
   node_t detach_child(path_component const & pc);

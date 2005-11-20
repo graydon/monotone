@@ -167,6 +167,12 @@ dir_node::dir_node()
 }
 
 
+bool
+dir_node::has_child(path_component const & pc) const
+{
+  return children.find(pc) != children.end();
+}
+
 node_t 
 dir_node::get_child(path_component const & pc) const
 {
