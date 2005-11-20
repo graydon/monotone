@@ -948,6 +948,7 @@ viable_replacement(std::map<node_id, u64> const & birth_revs,
 
 static void 
 insert_into_roster_reusing_parent_entries(file_path const & pth,
+                                          bool is_file,  // as opposed to dir
                                           file_id const & fid,
                                           parent_roster_map const & parent_rosters,
                                           temp_node_id_source & nis,
@@ -965,11 +966,9 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
 
   dirname_basename(sp, dirname, basename);
 
-  E(!dirname.empty(),
-    F("Empty path encountered during reconstruction\n"));
-
   // First, we make sure the entire dir containing the file in question has
-  // been inserted into the child roster.
+  // been inserted into the child roster, with proper identity fixups and all
+  // applied.
   {
     split_path tmp_pth;
     for (split_path::const_iterator i = dirname.begin(); i != dirname.end();
@@ -982,23 +981,36 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
               F("Directory for path %s cannot be added, as there is a file in the way\n") % pth);
           }
         else
-          child_roster.attach_node(child_roster.create_dir_node(nis), tmp_pth);
+          insert_into_roster_reusing_parent_entries(file_path(tmp_pth),
+                                                    false,
+                                                    file_id(),
+                                                    parent_rosters,
+                                                    nis,
+                                                    child_roster,
+                                                    new_rev_to_node,
+                                                    child_to_parents);
       }
   }
 
-  // Then add a node for the file and attach it
-  node_id nid = child_roster.create_file_node(fid, nis);
+  // okay, now all we have to do is add the single leaf node, and maybe fixup
+  // its identity.
+
+  node_id nid;
+  if (is_file)
+    nid = child_roster.create_file_node(fid, nis);
+  else
+    nid = child_roster.create_dir_node(nis);
   child_roster.attach_node(nid, sp);
 
-  // Finally, try to find a file in one of the parents which has the same name;
-  // if such a file is found, replace all the temporary node IDs we've assigned
-  // with the node IDs found in the parent.
+  // Try to find a node in one of the parents which has the same name;
+  // if such a file is found, replace the temporary node ID we've assigned
+  // with the node ID found in the parent.
 
   for (parent_roster_map::const_iterator j = parent_rosters.begin();
        j != parent_rosters.end(); ++j)
     {
       // We use a stupid heuristic: first parent who has
-      // a file with the same name gets the node
+      // a node with the same name gets the node
       // identity copied forward. 
       boost::shared_ptr<roster_t> parent_roster = j->second.first;
       boost::shared_ptr<marking_map> parent_marking = j->second.second;
@@ -1006,42 +1018,34 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
       if (parent_roster->has_node(sp))
         {
           node_t other_node = parent_roster->get_node(sp);
-          if (is_file_t(other_node))
+          node_id other_id = other_node->self;
+          if (is_file_t(other_node) == is_file)
             {
-              // Here we've found an existing node for our file in a parent
-              // roster; For example, we have foo1=p/foo2=q/foo3=r in our
-              // child roster, and we've found foo1=x/foo2=y/foo3=z in a
-              // parent roster. We want to perform the following
-              // operations:
+              // Here we've found an existing node for our node in a parent
+              // roster; For example, we have foo1/foo2/foo3=r in our
+              // child roster, and we've found foo1/foo2/foo3=z in a
+              // parent roster. We want to perform:
               //
               // child_roster.replace_node_id(r,z)
-              // child_roster.replace_node_id(q,y)
-              // child_roster.replace_node_id(p,x)
-              //
-              // where "foo1" is actually "", the root dir.
 
               // Before we perform this, however, we want to ensure that
-              // none of the existing target nodes (x,y,z) are killed in
-              // any of the parent rosters. If any is killed -- defined
+              // the existing target nodes z is not killed in
+              // any of the parent rosters. If it is killed -- defined
               // by saying that its birth revision fails to dominate one
               // of the parent rosters -- then we want to *avoid* making
-              // the replacements, and leave this node as its own child.
+              // the replacement, and leave this node as its 'new' in the
+              // child.
 
               bool replace_this_node = true;
               if (parent_rosters.size() > 1)
                 {
                   std::map<node_id, u64> birth_revs;
                   
-                  for (node_id other_id = other_node->self; 
-                       ! null_node(other_id); 
-                       other_id = parent_roster->get_node(other_id)->parent)
-                    {
-                      revision_id birth_rev = safe_get(*parent_marking, 
-                                                       other_id).birth_revision;
-                      birth_revs.insert(std::make_pair(other_id, 
-                                                       safe_get(new_rev_to_node,
-                                                                birth_rev)));
-                    }
+                  revision_id birth_rev = safe_get(*parent_marking, 
+                                                   other_id).birth_revision;
+                  birth_revs.insert(std::make_pair(other_id, 
+                                                   safe_get(new_rev_to_node,
+                                                            birth_rev)));
                   replace_this_node = 
                     viable_replacement(birth_revs, parent_rosters, 
                                        child_to_parents);
@@ -1049,15 +1053,7 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
                   
               if (replace_this_node)
                 {
-                  for (node_id other_id = other_node->self; 
-                       ! null_node(other_id); 
-                       other_id = parent_roster->get_node(other_id)->parent)
-                    {
-                      node_id next_nid = child_roster.get_node(nid)->parent;
-                      child_roster.replace_node_id(nid, other_id);
-                      nid = next_nid;
-                    }
-                  I(null_node(nid));
+                  child_roster.replace_node_id(nid, other_id);
                   break;
                 }              
             }
@@ -1221,7 +1217,7 @@ anc_graph::construct_revisions_from_ancestry()
                i != old_child_man.end(); ++i)
             {
               if (!(i->first == attr_path))
-                insert_into_roster_reusing_parent_entries(i->first, i->second,
+                insert_into_roster_reusing_parent_entries(i->first, true, i->second,
                                                           parent_rosters,
                                                           nis, child_roster,
                                                           new_rev_to_node,
