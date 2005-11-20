@@ -234,8 +234,6 @@ bookkeeping_path::is_bookkeeping_path(std::string const & path)
 // normalized, relative, paths.
 ///////////////////////////////////////////////////////////////////////////
 
-static interner<path_component> pc_interner("", the_null_component);
-
 // This function takes a vector of path components and joins them into a
 // single file_path.  This is the inverse to file_path::split.  It takes a
 // vector of the form:
@@ -258,7 +256,7 @@ file_path::file_path(split_path const & sp)
       I(!null_name(*i));
       if (!start)
         tmp += "/";
-      tmp += pc_interner.lookup(*i);
+      tmp += (*i)();
       if (start)
         {
           I(tmp != bookkeeping_root.as_internal());
@@ -295,10 +293,10 @@ file_path::split(split_path & sp) const
       stop = s.find('/', start);
       if (stop < 0 || stop > s.length())
         {
-          sp.push_back(pc_interner.intern(s.substr(start)));
+          sp.push_back(s.substr(start));
           break;
         }
-      sp.push_back(pc_interner.intern(s.substr(start, stop - start)));
+      sp.push_back(s.substr(start, stop - start));
       start = stop + 1;
     }
 }
@@ -312,7 +310,7 @@ void dump(split_path const & sp, std::string & out)
       if (null_name(*i)) 
         oss << ".";
       else
-        oss << "/" << pc_interner.lookup(*i);
+        oss << "/" << *i;
     }
 
   oss << "\n";
@@ -320,12 +318,6 @@ void dump(split_path const & sp, std::string & out)
   out = oss.str();
 }
 
-void dump(path_component const & pc, std::string & out)
-{
-  std::ostringstream oss;
-  oss << pc << " " << pc_interner.lookup(pc);
-  out = oss.str();
-}
 
 ///////////////////////////////////////////////////////////////////////////
 // localizing file names (externalizing them)
@@ -613,13 +605,13 @@ static void test_file_path_internal()
           file_path fp = file_path_internal(*c);
           BOOST_CHECK(fp.as_internal() == *c);
           BOOST_CHECK(file_path_internal(fp.as_internal()) == fp);
-          std::vector<path_component> split_test;
+          split_path split_test;
           fp.split(split_test);
           BOOST_CHECK(!split_test.empty());
           file_path fp2(split_test);
           BOOST_CHECK(fp == fp2);
           BOOST_CHECK(null_name(split_test[0]));
-          for (std::vector<path_component>::const_iterator
+          for (split_path::const_iterator
                  i = split_test.begin() + 1; i != split_test.end(); ++i)
             BOOST_CHECK(!null_name(*i));
         }
@@ -638,13 +630,13 @@ static void check_fp_normalizes_to(char * before, char * after)
   // we compare after to the external form too, since as far as we know
   // relative normalized posix paths are always good win32 paths too
   BOOST_CHECK(fp.as_external() == after);
-  std::vector<path_component> split_test;
+  split_path split_test;
   fp.split(split_test);
   BOOST_CHECK(!split_test.empty());
   file_path fp2(split_test);
   BOOST_CHECK(fp == fp2);
   BOOST_CHECK(null_name(split_test[0]));
-  for (std::vector<path_component>::const_iterator
+  for (split_path::const_iterator
          i = split_test.begin() + 1; i != split_test.end(); ++i)
     BOOST_CHECK(!null_name(*i));
 }
@@ -778,8 +770,7 @@ static void test_split_join()
 {
   file_path fp1 = file_path_internal("foo/bar/baz");
   file_path fp2 = file_path_internal("bar/baz/foo");
-  typedef std::vector<path_component> pcv;
-  pcv split1, split2;
+  split_path split1, split2;
   fp1.split(split1);
   fp2.split(split2);
   BOOST_CHECK(fp1 == file_path(split1));

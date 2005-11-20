@@ -186,11 +186,13 @@ app_state::set_restriction(path_set const & valid_paths,
 }
 
 bool
-app_state::restriction_includes(file_path const & path)
+app_state::restriction_includes(split_path const & sp)
 {
   // FIXME: this was written before split_path, and only later kludged to
   // work with it. Could be much tidier if written with knowledge of
   // split_path.
+
+  file_path path(sp);
 
   static file_path root = file_path_internal("");
   split_path sp_root;
@@ -202,25 +204,23 @@ app_state::restriction_includes(file_path const & path)
         {
           if (excludes.find(sp_root) != excludes.end())
             return false;
-          fs::path test = fs::path(path.as_external(), fs::native);
+
+          split_path test = sp;
 
           while (!test.empty()) 
             {
-              L(F("checking excluded path set for '%s'\n") % test.string());
+              L(F("checking excluded path set for '%s'\n") % file_path(test));
 
-              file_path p = file_path_internal(test.string());
-              split_path sp;
-              p.split(sp);
-              path_set::const_iterator i = excludes.find(sp);
+              path_set::const_iterator i = excludes.find(test);
 
               if (i != excludes.end()) 
                 {
                   L(F("path '%s' found in excluded path set; '%s' excluded\n") 
-                    % test.string() % path);
+                    % file_path(test) % path);
                   return false;
                 }
 
-              test = test.branch_path();
+              test.pop_back();
             }
         }
       return true;
@@ -228,35 +228,32 @@ app_state::restriction_includes(file_path const & path)
 
   bool user_supplied_depth = (depth != -1);
 
-  fs::path test = fs::path(path.as_external(), fs::native);
+  split_path test = sp;
   long branch_depth = 0;
   long max_depth = depth + 1;
 
   while (!test.empty()) 
     {
-      L(F("checking restricted path set for '%s'\n") % test.string());
+      L(F("checking restricted path set for '%s'\n") % file_path(test));
 
-      file_path p = file_path_internal(test.string());
-      split_path sp;
-      p.split(sp);
-      path_set::const_iterator i = restrictions.find(sp);
-      path_set::const_iterator j = excludes.find(sp);
+      path_set::const_iterator i = restrictions.find(test);
+      path_set::const_iterator j = excludes.find(test);
 
       if (i != restrictions.end()) 
         {
           L(F("path '%s' found in restricted path set; '%s' included\n") 
-            % test.string() % path);
+            % file_path(test) % path);
           return true;
         }
       else if (j != excludes.end())
         {
           L(F("path '%s' found in excluded path set; '%s' excluded\n") 
-            % test.string() % path);
+            % file_path(test) % path);
           return false;
         }
 
       if (user_supplied_depth && (max_depth == branch_depth)) return false;
-      test = test.branch_path();
+      test.pop_back();
       ++branch_depth;
     }
 

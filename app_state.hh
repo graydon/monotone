@@ -90,7 +90,7 @@ public:
   void app_state::set_restriction(path_set const & valid_paths, 
                              std::vector<utf8> const & paths,
                              bool respect_ignore = true);
-  bool restriction_includes(file_path const & path);
+  bool restriction_includes(split_path const & path);
 
   // Set the branch name.  If you only invoke set_branch, the branch
   // name is not sticky (and won't be written to the working copy and

@@ -39,7 +39,7 @@ file_itemizer::visit_file(file_path const & path)
 {
   split_path sp;
   path.split(sp);
-  if (app.restriction_includes(path) && known.find(sp) == known.end())
+  if (app.restriction_includes(sp) && known.find(sp) == known.end())
     {
       if (app.lua.hook_ignore_file(path))
         ignored.insert(sp);

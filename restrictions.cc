@@ -60,7 +60,7 @@ restrict_cset(cset const & cs,
   included.clear();
   excluded.clear();
 
-  for (std::set<split_path>::const_iterator i = cs.nodes_deleted.begin();
+  for (path_set::const_iterator i = cs.nodes_deleted.begin();
        i != cs.nodes_deleted.end(); ++i)
     {
       if (app.restriction_includes(*i)) 
@@ -79,7 +79,7 @@ restrict_cset(cset const & cs,
         safe_insert(excluded.nodes_renamed, *i);
     }
 
-  for (std::set<split_path>::const_iterator i = cs.dirs_added.begin();
+  for (path_set::const_iterator i = cs.dirs_added.begin();
        i != cs.dirs_added.end(); ++i)
     {
       if (app.restriction_includes(*i)) 
@@ -178,7 +178,7 @@ get_base_roster_and_working_cset(app_state & app,
   restrict_cset(work, included, excluded, app);  
   remap_paths(old_paths, old_roster, work, new_paths);
 
-  for (std::set<split_path>::const_iterator i = included.dirs_added.begin();
+  for (path_set::const_iterator i = included.dirs_added.begin();
        i != included.dirs_added.end(); ++i)
     new_paths.insert(*i);
   
