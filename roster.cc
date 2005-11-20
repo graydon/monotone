@@ -2686,17 +2686,19 @@ automaton_roster_test()
 
   roster_t empty, prev;
 
-  for (int i = 0; i < 10000; ++i)
+  for (int i = 0; i < 2000; ++i)
     {
       MM(i);
-      if (i % 500 == 0)
+      if (i % 100 == 0)
         P(F("performing random action %d\n") % i);
       aut.perform_random_action(r, nis);
       if (i == 0)
         prev = r;
-      if (i == 4 || i == 100 || i == 200 || i == 2000 || i == 2001
-          || i == 3000 || i == 3005 || i == 8000 || i == 8005 || i == 8100
-          || i == 9000)
+      // some randomly made up magic numbers, just to make sure we do tests on
+      // rosters that have a number of changes between them, not just a single
+      // change.
+      if (i == 4 || i == 50 || i == 100 || i == 200 || i == 205
+          || i == 500 || i == 640 || i == 1200 || i == 1900 || i == 1910)
         {
           tests_on_two_rosters(prev, r, nis);
           tests_on_two_rosters(empty, r, nis);
