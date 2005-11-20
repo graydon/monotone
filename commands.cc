@@ -1384,6 +1384,7 @@ CMD(cat, N_("informative"),
   roster_t roster;
   marking_map marks;
   app.db.get_roster(rid, roster, marks);
+  N(roster.has_node(sp), F("no file '%s' found in revision '%s'\n") % fp % rid);
   node_t node = roster.get_node(sp);
   N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'\n") % fp % rid);
 
