@@ -1069,6 +1069,7 @@ CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
   cert_revision_testresult(r, idx(args, 1)(), app, dbw);
 }
 
+
 CMD(approve, N_("review"), N_("REVISION"), 
     N_("approve of a particular revision"),
     OPT_BRANCH_NAME)
@@ -1085,8 +1086,7 @@ CMD(approve, N_("review"), N_("REVISION"),
   cert_revision_in_branch(r, app.branch_name(), app, dbw);
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
+
 CMD(disapprove, N_("review"), N_("REVISION"), 
     N_("disapprove of a particular revision"),
     OPT_BRANCH_NAME)
@@ -1096,7 +1096,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
 
   revision_id r;
   revision_set rev, rev_inverse;
-  boost::shared_ptr<change_set> cs_inverse(new change_set());
+  boost::shared_ptr<cset> cs_inverse(new cset());
   complete(app, idx(args, 0)(), r);
   app.db.get_revision(r, rev);
 
@@ -1109,9 +1109,12 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   
   edge_entry const & old_edge (*rev.edges.begin());
   rev_inverse.new_manifest = edge_old_manifest(old_edge);
-  manifest_map m_old;
-  app.db.get_manifest(edge_old_manifest(old_edge), m_old);
-  invert_change_set(edge_changes(old_edge), m_old, *cs_inverse);
+  {
+    roster_t old_roster, new_roster;
+    app.db.get_roster(edge_old_revision(old_edge), old_roster);
+    app.db.get_roster(r, new_roster);
+    make_cset(new_roster, old_roster, *cs_inverse);
+  }
   rev_inverse.edges.insert(make_pair(r, make_pair(rev.new_manifest, cs_inverse)));
 
   {
@@ -1132,7 +1135,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     guard.commit();
   }
 }
-*/
+
 
 CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
     N_("comment on a particular revision"), OPT_NONE)
