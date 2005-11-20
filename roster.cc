@@ -1642,6 +1642,15 @@ namespace
                           make_pair(make_pair(to_sp, i.right_key()),
                                     i.right_data().second));
             }
+          else if (i.state() == parallel::in_both
+                   && i.right_data().first 
+                   && i.left_data().first
+                   && i.right_data().second != i.left_data().second)
+            {
+              safe_insert(cs.attrs_set,
+                          make_pair(make_pair(to_sp, i.right_key()),
+                                    i.right_data().second));              
+            }
         }
     }
   }

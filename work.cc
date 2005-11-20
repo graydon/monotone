@@ -668,18 +668,6 @@ write_attr_map(data & dat, attr_map const & attr)
 }
 
 
-static void 
-apply_attributes(app_state & app, attr_map const & attr)
-{
-  for (attr_map::const_iterator i = attr.begin();
-       i != attr.end(); ++i)
-      for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
-           j != i->second.end(); ++j)
-        app.lua.hook_apply_attribute (j->first,
-                                      i->first, 
-                                      j->second);
-}
-
 string const encoding_attribute("encoding");
 string const binary_encoding("binary");
 string const default_encoding("default");
@@ -770,20 +758,27 @@ bool get_attribute_from_working_copy(file_path const & file,
 
 void update_any_attrs(app_state & app)
 {
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
-  file_path fp;
-  data attr_data;
-  attr_map attr;
-
-  get_attr_path(fp);
-  if (!file_exists(fp))
-    return;
-
-  read_data(fp, attr_data);
-  read_attr_map(attr_data, attr);
-  apply_attributes(app, attr);
-*/
+  temp_node_id_source nis;
+  roster_t new_roster;
+  get_current_roster_shape(new_roster, nis, app);
+  node_map const & nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin();
+       i != nodes.end(); ++i)
+    {
+      node_t n = i->second;
+      for (full_attr_map_t::const_iterator j = n->attrs.begin();
+           j != n->attrs.end(); ++j)
+        {
+          if (j->second.first)
+            {
+              split_path sp;
+              new_roster.get_name(i->first, sp);
+              app.lua.hook_apply_attribute (j->first(),
+                                            file_path(sp),
+                                            j->second.second());
+            }
+        }          
+    }
 }
 
 editable_working_tree::editable_working_tree(app_state & app,
