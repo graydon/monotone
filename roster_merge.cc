@@ -17,7 +17,8 @@ roster_merge_result::is_clean()
     && file_content_conflicts.empty()
     && node_attr_conflicts.empty()
     && orphaned_node_conflicts.empty()
-    && rename_target_conflicts.empty();
+    && rename_target_conflicts.empty()
+    && directory_loop_conflicts.empty();
 }
 
 void
@@ -28,6 +29,7 @@ roster_merge_result::clear()
   node_attr_conflicts.clear();
   orphaned_node_conflicts.clear();
   rename_target_conflicts.clear();
+  directory_loop_conflicts.clear();
   roster = roster_t();
 }
 

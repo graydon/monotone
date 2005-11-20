@@ -2777,10 +2777,27 @@ check_sane_roster_test()
     }
 }
 
+static void
+check_sane_roster_loop_test()
+{
+  temp_node_id_source nis;
+  roster_t r;
+  split_path root, foo_bar;
+  file_path().split(root);
+  file_path_internal("foo/bar").split(foo_bar);
+  r.attach_node(r.create_dir_node(nis), root);
+  node_id nid_foo = r.create_dir_node(nis);
+  node_id nid_bar = r.create_dir_node(nis);
+  r.attach_node(nid_foo, nid_bar, foo_bar[0]);
+  r.attach_node(nid_bar, nid_foo, foo_bar[1]);
+  BOOST_CHECK_THROW(r.check_sane(false), std::logic_error);
+}
+
 void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
   suite->add(BOOST_TEST_CASE(&automaton_roster_test));
 }

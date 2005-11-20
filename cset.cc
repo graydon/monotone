@@ -652,6 +652,15 @@ invalid_csets_test()
     cs.dirs_added.insert(sp);
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
+  {
+    L(F("TEST: can't move a directory underneath itself"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    split_path foo_blah;
+    file_path_internal("foo/blah").split(foo_blah);
+    cs.nodes_renamed.insert(std::make_pair(foo, foo_blah));
+    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+  }
 }
 
 void

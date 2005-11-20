@@ -178,8 +178,8 @@ ty::ty(string const & str) :                 \
   s((ty ## _tab_active > 0)                  \
     ? (ty ## _tab.unique(str))               \
     : str),                                  \
-  ok(false)				     \
-{ verify(*this); }			     \
+  ok(false)                                  \
+{ verify(*this); }                           \
                                              \
 ty::ty(ty const & other) :                   \
             s(other.s), ok(other.ok)         \
@@ -196,10 +196,10 @@ ostream & operator<<(ostream & o,            \
 void dump(ty const & obj, std::string & out) \
 { out = obj(); }                             \
                                              \
-ty::symtab::symtab()			     \
-{ ty ## _tab_active++; }		     \
+ty::symtab::symtab()                         \
+{ ty ## _tab_active++; }                     \
                                              \
-ty::symtab::~symtab()			     \
+ty::symtab::~symtab()                        \
 {                                            \
   I(ty ## _tab_active > 0);                  \
   ty ## _tab_active--;                       \

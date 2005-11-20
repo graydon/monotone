@@ -72,18 +72,29 @@ struct orphaned_node_conflict
   path_component name;
 };
 
-// this is when two (or more, but in fact only two is possible, since we only
-// merge two rosters at a time) distinct nodes want to have the same name.
-// these nodes always each merged their names cleanly.
-// the nodes in the resulting roster are both detached.
+// this is when two distinct nodes want to have the same name.  these nodes
+// always each merged their names cleanly.  the nodes in the resulting roster
+// are both detached.
+// only two nodes are possible, because we
+//   -- only merge two rosters at a time
+//   -- merge (parent, basename) as a single scalar.  If we merged them
+//      separately, then it would be possible to have one side of a merge
+//      rename a bunch of files in different directories to all have the same
+//      basename, and the other side of the merge to move them all into the
+//      same directory.
+// a clean *-merge of a scalar always takes on the value of one parent or
+// another, and the requirement here is that each node have a unique (parent,
+// basename) tuple, and since our requirement matches our *-merge scalar,
+// we're okay.
 struct rename_target_conflict
 {
-  node_id nid_left, nid_right;
+  node_id nid1, nid2;
   std::pair<node_id, path_component> name;
 };
 
-// FIXME:
-
+struct directory_loop_conflict
+{
+};
 
 // renaming the root dir (as we currently do _not_) allows:
 //   -- MT in root
@@ -96,6 +107,7 @@ struct roster_merge_result
   std::vector<node_attr_conflict> node_attr_conflicts;
   std::vector<orphaned_node_conflict> orphaned_node_conflicts;
   std::vector<rename_target_conflict> rename_target_conflicts;
+  std::vector<directory_loop_conflict> directory_loop_conflicts;
   // this roster is sane if is_clean() returns true
   roster_t roster;
   bool is_clean();
