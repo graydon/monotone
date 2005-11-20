@@ -2158,109 +2158,96 @@ CMD(db, N_("database"),
     throw usage(name);
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
-CMD(attr, N_("working copy"), N_("set FILE ATTR VALUE\nget FILE [ATTR]\ndrop FILE"), 
+CMD(attr, N_("working copy"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"), 
     N_("set, get or drop file attributes"),
     OPT_NONE)
 {
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
 
+  revision_set rs;
+  roster_t old_roster, new_roster;
+
   app.require_working_copy();
-
-  data attr_data;
-  file_path attr_path;
-  attr_map attrs;
-  get_attr_path(attr_path);
-
-  if (file_exists(attr_path))
-    {
-      read_data(attr_path, attr_data);
-      read_attr_map(attr_data, attrs);
-    }
+  get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster);
   
   file_path path = file_path_external(idx(args,1));
-  N(file_exists(path), F("no such file '%s'") % path);
+  split_path sp;
+  path.split(sp);
 
-  bool attrs_modified = false;
+  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(sp);
 
-  if (idx(args, 0)() == "set")
+  string subcmd = idx(args, 0)();
+  if (subcmd == "set" || subcmd == "drop")
     {
-      if (args.size() != 4)
-        throw usage(name);
-      attrs[path][idx(args, 2)()] = idx(args, 3)();
+      if (subcmd == "set")
+        {
+          if (args.size() != 4)
+            throw usage(name);
 
-      attrs_modified = true;
+          attr_key a_key = idx(args, 2)();
+          attr_value a_value = idx(args, 3)();
+
+          node->attrs[a_key] = make_pair(true, a_value);
+        }
+      else
+        {
+          // Clear all attrs (or a specific attr)
+          if (args.size() == 2)
+            {
+              for (full_attr_map_t::iterator i = node->attrs.begin();
+                   i != node->attrs.end(); ++i)
+                i->second = make_pair(false, "");
+            }
+          else if (args.size() == 3)
+            {
+              attr_key a_key = idx(args, 2)();
+              N(node->attrs.find(a_key) != node->attrs.end(),
+                F("Path '%s' does not have attribute '%s'\n") 
+                % path % a_key);
+              node->attrs[a_key] = make_pair(false, "");
+            }
+          else
+            throw usage(name);
+        }
+
+      cset new_work;
+      make_cset(old_roster, new_roster, new_work);
+      put_work_cset(new_work);
+      update_any_attrs(app);
     }
-  else if (idx(args, 0)() == "drop")
+  else if (subcmd == "get")
     {
       if (args.size() == 2)
         {
-          attrs.erase(path);
+          bool has_any_live_attrs = false;
+          for (full_attr_map_t::const_iterator i = node->attrs.begin();
+               i != node->attrs.end(); ++i)
+            if (i->second.first)
+              {
+                cout << path << " : " << i->first << "=" << i->second.second << endl;
+                has_any_live_attrs = true;
+              }
+          if (!has_any_live_attrs)
+            cout << "No attributes for " << path << endl;
         }
       else if (args.size() == 3)
         {
-          attrs[path].erase(idx(args, 2)());
-        }
-      else
-        throw usage(name);
-
-      attrs_modified = true;
-    }
-  else if (idx(args, 0)() == "get")
-    {
-      if (args.size() != 2 && args.size() != 3)
-        throw usage(name);
-
-      attr_map::const_iterator i = attrs.find(path);
-      if (i == attrs.end())
-        cout << "no attributes for " << path << endl;
-      else
-        {
-          if (args.size() == 2)
-            {
-              for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
-                   j != i->second.end(); ++j)
-                cout << path << " : " << j->first << "=" << j->second << endl;
-            }
+          attr_key a_key = idx(args, 2)();
+          full_attr_map_t::const_iterator i = node->attrs.find(a_key);              
+          if (i != node->attrs.end() && i->second.first)
+            cout << path << " : " << i->first << "=" << i->second.second << endl;
           else
-            {       
-              std::map<std::string, std::string>::const_iterator j = i->second.find(idx(args, 2)());
-              if (j == i->second.end())
-                cout << "no attribute " << idx(args, 2)() << " on file " << path << endl;
-              else
-                cout << path << " : " << j->first << "=" << j->second << endl;
-            }
+            cout << "No attribute " << a_key << " on path " << path << endl;
         }
+      else
+        throw usage(name);
     }
   else 
     throw usage(name);
-
-  if (attrs_modified)
-    {
-      write_attr_map(attr_data, attrs);
-      write_data(attr_path, attr_data);
-
-      {
-        // check to make sure .mt-attr exists in 
-        // current manifest.
-        manifest_map man;
-        get_base_manifest(app, man);
-        if (man.find(attr_path) == man.end())
-          {
-            P(F("registering %s file in working copy\n") % attr_path);
-            change_set::path_rearrangement work;
-            get_path_rearrangement(work);
-            vector<file_path> paths;
-            paths.push_back(attr_path);
-            build_additions(paths, man, app, work);
-            put_path_rearrangement(work);
-          }
-      }
-    }
 }
-*/
+
 
 CMD(commit, N_("working copy"), N_("[PATH]..."), 
     N_("commit working copy to database"),
