@@ -2569,6 +2569,8 @@ dump_diffs(cset const & cs,
       file_data f_old;
       data data_old, data_new;
       vector<string> old_lines, new_lines;
+
+      cout << patch_sep << "\n";
       
       app.db.get_file_version(delta_entry_src(i), f_old);
       data_old = f_old.inner();
