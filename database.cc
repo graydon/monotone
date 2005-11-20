@@ -1432,6 +1432,13 @@ database::delete_existing_revs_and_certs()
   execute("DELETE FROM revision_certs");
 }
 
+void
+database::delete_existing_manifests()
+{
+  execute("DELETE FROM manifests");
+  execute("DELETE FROM manifest_deltas");
+}
+
 /// Deletes one revision from the local database. 
 /// @see kill_rev_locally
 void

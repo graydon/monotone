@@ -759,6 +759,8 @@ anc_graph::rebuild_ancestry()
       app.db.delete_existing_revs_and_certs();    
     construct_revisions_from_ancestry();
     write_certs();
+    if (existing_graph)
+      app.db.delete_existing_manifests();
     guard.commit();
   }
 }
