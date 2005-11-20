@@ -2669,13 +2669,22 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
                                        old_roster, 
                                        new_roster,
                                        excluded);
-      // now clobber old_roster with the one specified
+      // Clobber old_roster with the one specified
       app.db.get_revision(r_old_id, r_old);
       app.db.get_roster(r_old_id, old_roster);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       N(r_new.edges.size() == 1, F("current revision has no ancestor"));
       new_is_archived = false;
       header << "# old_revision [" << r_old_id << "]" << endl;
+      {
+        // Calculate a cset from old->new, then re-restrict it (using the
+        // one from get_working_revision_and_rosters doesn't work here,
+        // since it only restricts the edge base->new, and there might be
+        // changes outside the restriction in old->base)
+        cset tmp1, tmp2;
+        make_cset (old_roster, new_roster, tmp1);
+        calculate_restricted_cset (app, args, tmp1, composite, tmp2);
+      }
     }
   else if (app.revision_selectors.size() == 2)
     {
@@ -2691,14 +2700,27 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.db.get_roster(r_old_id, old_roster);
       app.db.get_roster(r_new_id, new_roster);
       new_is_archived = true;
+      {
+        // Calculate a cset from old->new, then re-restrict it. 
+        // FIXME: this is *possibly* a UI bug, insofar as we
+        // look at the restriction name(s) you provided on the command
+        // line in the context of new and old, *not* the working copy.
+        // One way of "fixing" this is to map the filenames on the command
+        // line to node_ids, and then restrict based on those. This 
+        // might be more intuitive; on the other hand it would make it
+        // impossible to restrict to paths which are dead in the working
+        // copy but live between old and new. So ... no rush to "fix" it;
+        // discuss implications first.
+        cset tmp1, tmp2;
+        make_cset (old_roster, new_roster, tmp1);
+        calculate_restricted_cset (app, args, tmp1, composite, tmp2);
+      }
     }
   else
     {
       throw usage(name);
     }
 
-  if (app.revision_selectors.size() > 0)
-    make_cset (old_roster, new_roster, composite);
   
   data summary;
   write_cset(composite, summary);
