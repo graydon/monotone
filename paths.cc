@@ -791,12 +791,12 @@ static void test_split_join()
   BOOST_CHECK(split1[3] == split2[2]);
 
   file_path fp3 = file_path_internal("");
-  pcv split3;
+  split_path split3;
   fp3.split(split3);
   BOOST_CHECK(split3.size() == 1 && null_name(split3[0]));
 
   // empty split_path is invalid
-  pcv split4;
+  split_path split4;
   // this comparison tricks the compiler into not completely eliminating this
   // code as dead...
   BOOST_CHECK_THROW(file_path(split4) == file_path(), std::logic_error);
@@ -821,7 +821,7 @@ static void test_split_join()
 
   // Make sure that we can't use joining to create a path into the bookkeeping
   // dir
-  pcv split_mt1, split_mt2;
+  split_path split_mt1, split_mt2;
   file_path_internal("foo/MT").split(split_mt1);
   BOOST_CHECK(split_mt1.size() == 3);
   split_mt2.push_back(the_null_component);

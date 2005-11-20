@@ -65,22 +65,22 @@ struct node_attr_conflict
 
 // orphaned nodes always merged their name cleanly, so we simply put that name
 // here.  the node in the resulting roster is detached.
-// struct orphaned_node_conflict
-// {
-//   node_id nid;
-//   node_id dead_parent;
-//   path_component name;
-// };
+struct orphaned_node_conflict
+{
+  node_id nid;
+  node_id dead_parent;
+  path_component name;
+};
 
 // this is when two (or more, but in fact only two is possible, since we only
 // merge two rosters at a time) distinct nodes want to have the same name.
 // these nodes always each merged their names cleanly.
 // the nodes in the resulting roster are both detached.
-// struct rename_target_conflict
-// {
-//   node_id nid1, nid2;
-//   std::pair<node_id, path_component> name;
-// };
+struct rename_target_conflict
+{
+  node_id nid_left, nid_right;
+  std::pair<node_id, path_component> name;
+};
 
 // FIXME:
 
@@ -94,6 +94,8 @@ struct roster_merge_result
   std::vector<node_name_conflict> node_name_conflicts;
   std::vector<file_content_conflict> file_content_conflicts;
   std::vector<node_attr_conflict> node_attr_conflicts;
+  std::vector<orphaned_node_conflict> orphaned_node_conflicts;
+  std::vector<rename_target_conflict> rename_target_conflicts;
   // this roster is sane if is_clean() returns true
   roster_t roster;
   bool is_clean();

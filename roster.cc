@@ -2385,10 +2385,22 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   make_cset(b, a, b_to_a);
   roster_t a2(b); MM(a2);
   roster_t b2(a); MM(b2);
-  editable_roster_base eb(a2, nis);
-  b_to_a.apply_to(eb);
-  editable_roster_base ea(b2, nis);
-  a_to_b.apply_to(ea);
+  // we can't use a cset to entirely empty out a roster, so don't bother doing
+  // the apply_to tests towards an empty roster
+  if (!a.all_nodes().empty())
+    {
+      editable_roster_base eb(a2, nis);
+      b_to_a.apply_to(eb);
+    }
+  else
+    a2 = a;
+  if (!b.all_nodes().empty())
+    {
+      editable_roster_base ea(b2, nis);
+      a_to_b.apply_to(ea);
+    }
+  else
+    b2 = b;
   // We'd like to assert that a2 == a and b2 == b, but we can't, because they
   // will have new ids assigned.
   // But they _will_ have the same manifests, assuming things are working
@@ -2608,8 +2620,21 @@ change_automaton
                     attr_key k = pick_attr(n->attrs);
                     if (safe_get(n->attrs, k).first)
                       {
-                        // L(F("clearing attr on '%s'\n") % file_path(pth));
-                        safe_insert(c.attrs_cleared, make_pair(pth, k));
+                        if (flip())
+                          {
+                            // L(F("clearing attr on '%s'\n") % file_path(pth));
+                            safe_insert(c.attrs_cleared, make_pair(pth, k));
+                          }
+                        else
+                          {
+                            // L(F("changing attr on '%s'\n) % file_path(pth));
+                            safe_insert(c.attrs_set, make_pair(make_pair(pth, k), new_word()));
+                          }
+                      }
+                    else
+                      {
+                        // L(F("setting previously set attr on '%s'\n") % file_path(pth));
+                        safe_insert(c.attrs_set, make_pair(make_pair(pth, k), new_word()));
                       }
                   }
                 else
