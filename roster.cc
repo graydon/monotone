@@ -817,6 +817,7 @@ roster_t::check_finite_depth() const
   size_t maxdepth = nodes.size(); 
   for (dfs_iter i(root_dir); !i.finished(); ++i)
     I(maxdepth-- > 0);
+  I(maxdepth == 0);
 }
 
 void
