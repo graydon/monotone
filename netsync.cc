@@ -2029,7 +2029,7 @@ session::process_refine_cmd(merkle_node const & their_node)
             case empty_state:
               {
                 // we agree, this slot is empty
-                L(F("(#0) they have an empty slot %d (in a %s node '%s', level %d, we do not have)\n")
+                L(boost::format("(#0) they have an empty slot %d (in a %s node '%s', level %d, we do not have)\n")
                   % slot % typestr % hpref % lev);
                 continue;
               }
@@ -2041,16 +2041,16 @@ session::process_refine_cmd(merkle_node const & their_node)
                 hexenc<id> hslotval;
                 their_node.get_raw_slot(slot, slotval);
                 their_node.get_hex_slot(slot, hslotval);
-                L(F("(#0) they have a live leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
+                L(boost::format("(#0) they have a live leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
                   % slot % typestr % hpref % lev);
-                L(F("(#0) requesting their %s leaf %s\n") % typestr % hslotval);
+                L(boost::format("(#0) requesting their %s leaf %s\n") % typestr % hslotval);
                 queue_send_data_cmd(their_node.type, slotval);
               }
               break;
             case dead_leaf_state:
               {
                 // we cannot ask for what they have, it is dead
-                L(F("(#0) they have a dead leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
+                L(boost::format("(#0) they have a dead leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
                   % slot % typestr % hpref % lev);
                 continue;
               }
@@ -2058,7 +2058,7 @@ session::process_refine_cmd(merkle_node const & their_node)
             case subtree_state:
               {
                 // they have a subtree; might as well ask for that
-                L(F("(#0) they have a subtree at slot %d (in a %s node '%s', level %d, we do not have)\n")
+                L(boost::format("(#0) they have a subtree at slot %d (in a %s node '%s', level %d, we do not have)\n")
                   % slot % typestr % hpref % lev);
                 merkle_node our_fake_subtree;
                 their_node.extended_prefix(slot, our_fake_subtree.pref);
@@ -2088,14 +2088,14 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case empty_state:
                   // 1: theirs == empty, ours == empty 
-                  L(F("(#1) they have an empty slot %d in %s node '%s', level %d, and so do we\n")
+                  L(boost::format("(#1) they have an empty slot %d in %s node '%s', level %d, and so do we\n")
                     % slot % typestr % hpref % lev);
                   continue;
                   break;
 
                 case live_leaf_state:
                   // 2: theirs == empty, ours == live 
-                  L(F("(#2) they have an empty slot %d in %s node '%s', level %d, we have a live leaf\n")
+                  L(boost::format("(#2) they have an empty slot %d in %s node '%s', level %d, we have a live leaf\n")
                     % slot % typestr % hpref % lev);
                   {
                     I(their_node.type == our_node->type);
@@ -2109,14 +2109,14 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case dead_leaf_state:
                   // 3: theirs == empty, ours == dead 
-                  L(F("(#3) they have an empty slot %d in %s node '%s', level %d, we have a dead leaf\n")
+                  L(boost::format("(#3) they have an empty slot %d in %s node '%s', level %d, we have a dead leaf\n")
                     % slot % typestr % hpref % lev);
                   continue;
                   break;
 
                 case subtree_state:
                   // 4: theirs == empty, ours == subtree 
-                  L(F("(#4) they have an empty slot %d in %s node '%s', level %d, we have a subtree\n")
+                  L(boost::format("(#4) they have an empty slot %d in %s node '%s', level %d, we have a subtree\n")
                     % slot % typestr % hpref % lev);
                   {
                     prefix subprefix;
@@ -2143,7 +2143,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case empty_state:
                   // 5: theirs == live, ours == empty 
-                  L(F("(#5) they have a live leaf at slot %d in %s node '%s', level %d, we have nothing\n")
+                  L(boost::format("(#5) they have a live leaf at slot %d in %s node '%s', level %d, we have nothing\n")
                     % slot % typestr % hpref % lev);
                   {
                     id slotval;
@@ -2154,7 +2154,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case live_leaf_state:
                   // 6: theirs == live, ours == live 
-                  L(F("(#6) they have a live leaf at slot %d in %s node '%s', and so do we\n")
+                  L(boost::format("(#6) they have a live leaf at slot %d in %s node '%s', and so do we\n")
                     % slot % typestr % hpref);
                   {
                     id our_slotval, their_slotval;
@@ -2164,7 +2164,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                       {
                         hexenc<id> hslotval;
                         their_node.get_hex_slot(slot, hslotval);
-                        L(F("(#6) we both have live %s leaf '%s'\n") % typestr % hslotval);
+                        L(boost::format("(#6) we both have live %s leaf '%s'\n") % typestr % hslotval);
                         continue;
                       }
                     else
@@ -2180,7 +2180,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case dead_leaf_state:
                   // 7: theirs == live, ours == dead 
-                  L(F("(#7) they have a live leaf at slot %d in %s node %s, level %d, we have a dead one\n")
+                  L(boost::format("(#7) they have a live leaf at slot %d in %s node %s, level %d, we have a dead one\n")
                     % slot % typestr % hpref % lev);
                   {
                     id our_slotval, their_slotval;
@@ -2190,7 +2190,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                       {
                         hexenc<id> hslotval;
                         their_node.get_hex_slot(slot, hslotval);
-                        L(F("(#7) it's the same %s leaf '%s', but ours is dead\n") 
+                        L(boost::format("(#7) it's the same %s leaf '%s', but ours is dead\n") 
                           % typestr % hslotval);
                         continue;
                       }
@@ -2203,7 +2203,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case subtree_state:
                   // 8: theirs == live, ours == subtree 
-                  L(F("(#8) they have a live leaf in slot %d of %s node '%s', level %d, we have a subtree\n")
+                  L(boost::format("(#8) they have a live leaf in slot %d of %s node '%s', level %d, we have a subtree\n")
                     % slot % typestr % hpref % lev);
                   {
 
@@ -2212,16 +2212,16 @@ session::process_refine_cmd(merkle_node const & their_node)
                     their_node.get_raw_slot(slot, their_slotval);
                     encode_hexenc(their_slotval, their_hval);
                     if (data_exists(their_node.type, their_slotval, app))
-                      L(F("(#8) we have a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
+                      L(boost::format("(#8) we have a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
                         % their_hval % slot % typestr % hpref % lev);
                     else
                       {
-                        L(F("(#8) requesting a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
+                        L(boost::format("(#8) requesting a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
                           % their_hval % slot % typestr % hpref % lev);
                         queue_send_data_cmd(their_node.type, their_slotval);
                       }
                     
-                    L(F("(#8) sending our subtree for refinement, in slot %d of %s node '%s', level %d\n")
+                    L(boost::format("(#8) sending our subtree for refinement, in slot %d of %s node '%s', level %d\n")
                       % slot % typestr % hpref % lev);
                     prefix subprefix;
                     our_node->extended_raw_prefix(slot, subprefix);
@@ -2244,14 +2244,14 @@ session::process_refine_cmd(merkle_node const & their_node)
                 {
                 case empty_state:
                   // 9: theirs == dead, ours == empty 
-                  L(F("(#9) they have a dead leaf at slot %d in %s node '%s', level %d, we have nothing\n")
+                  L(boost::format("(#9) they have a dead leaf at slot %d in %s node '%s', level %d, we have nothing\n")
                     % slot % typestr % hpref % lev);
                   continue;
                   break;
 
                 case live_leaf_state:
                   // 10: theirs == dead, ours == live 
-                  L(F("(#10) they have a dead leaf at slot %d in %s node '%s', level %d, we have a live one\n")
+                  L(boost::format("(#10) they have a dead leaf at slot %d in %s node '%s', level %d, we have a live one\n")
                     % slot % typestr % hpref % lev);
                   {
                     id our_slotval, their_slotval;
@@ -2261,7 +2261,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                     our_node->get_hex_slot(slot, hslotval);
                     if (their_slotval == our_slotval)
                       {
-                        L(F("(#10) we both have %s leaf %s, theirs is dead\n") 
+                        L(boost::format("(#10) we both have %s leaf %s, theirs is dead\n") 
                           % typestr % hslotval);
                         continue;
                       }
@@ -2277,14 +2277,14 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case dead_leaf_state:
                   // 11: theirs == dead, ours == dead 
-                  L(F("(#11) they have a dead leaf at slot %d in %s node '%s', level %d, so do we\n")
+                  L(boost::format("(#11) they have a dead leaf at slot %d in %s node '%s', level %d, so do we\n")
                     % slot % typestr % hpref % lev);
                   continue;
                   break;
 
                 case subtree_state:
                   // theirs == dead, ours == subtree 
-                  L(F("(#12) they have a dead leaf in slot %d of %s node '%s', we have a subtree\n")
+                  L(boost::format("(#12) they have a dead leaf in slot %d of %s node '%s', we have a subtree\n")
                     % slot % typestr % hpref % lev);
                   {
                     prefix subprefix;
@@ -2307,7 +2307,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                 {
                 case empty_state:
                   // 13: theirs == subtree, ours == empty 
-                  L(F("(#13) they have a subtree at slot %d in %s node '%s', level %d, we have nothing\n")
+                  L(boost::format("(#13) they have a subtree at slot %d in %s node '%s', level %d, we have nothing\n")
                     % slot % typestr % hpref % lev);
                   {
                     merkle_node our_fake_subtree;
@@ -2320,7 +2320,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case live_leaf_state:
                   // 14: theirs == subtree, ours == live 
-                  L(F("(#14) they have a subtree at slot %d in %s node '%s', level %d, we have a live leaf\n")
+                  L(boost::format("(#14) they have a subtree at slot %d in %s node '%s', level %d, we have a live leaf\n")
                     % slot % typestr % hpref % lev);
                   {
                     size_t subslot;
@@ -2332,7 +2332,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                     
                     pick_slot_and_prefix_for_value(our_slotval, our_node->level + 1, subslot, 
                                                    our_fake_subtree.pref);
-                    L(F("(#14) pushed our leaf '%s' into fake subtree slot %d, level %d\n")
+                    L(boost::format("(#14) pushed our leaf '%s' into fake subtree slot %d, level %d\n")
                       % hslotval % subslot % (lev + 1));
                     our_fake_subtree.type = their_node.type;
                     our_fake_subtree.level = our_node->level + 1;
@@ -2344,7 +2344,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case dead_leaf_state:
                   // 15: theirs == subtree, ours == dead 
-                  L(F("(#15) they have a subtree at slot %d in %s node '%s', level %d, we have a dead leaf\n")
+                  L(boost::format("(#15) they have a subtree at slot %d in %s node '%s', level %d, we have a dead leaf\n")
                     % slot % typestr % hpref % lev);
                   {
                     size_t subslot;
@@ -2363,7 +2363,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case subtree_state:
                   // 16: theirs == subtree, ours == subtree 
-                  L(F("(#16) they have a subtree at slot %d in %s node '%s', level %d, and so do we\n")
+                  L(boost::format("(#16) they have a subtree at slot %d in %s node '%s', level %d, and so do we\n")
                     % slot % typestr % hpref % lev);
                   {
                     id our_slotval, their_slotval;
@@ -2373,12 +2373,12 @@ session::process_refine_cmd(merkle_node const & their_node)
                     our_node->get_hex_slot(slot, hslotval);
                     if (their_slotval == our_slotval)
                       {
-                        L(F("(#16) we both have %s subtree '%s'\n") % typestr % hslotval);
+                        L(boost::format("(#16) we both have %s subtree '%s'\n") % typestr % hslotval);
                         continue;
                       }
                     else
                       {
-                        L(F("(#16) %s subtrees at slot %d differ, refining ours\n") % typestr % slot);
+                        L(boost::format("(#16) %s subtrees at slot %d differ, refining ours\n") % typestr % slot);
                         prefix subprefix;
                         our_node->extended_raw_prefix(slot, subprefix);
                         merkle_ptr our_subtree;

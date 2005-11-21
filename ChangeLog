@@ -2,6 +2,11 @@
 
 	* NEWS: Initial draft of 0.24 release notes.
 
+2005-11-14  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+	* netsync.cc: Removed many i18n strings.
+
 2005-11-14  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Historical records): Clarify wording, based on
