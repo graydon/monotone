@@ -15,6 +15,6 @@ Description: A distributed version (revision) control system
  Monotone is a free, distributed version control system. It provides
  fully disconnected operation, manages complete tree versions, keeps
  its state in a local transactional database, supports overlapping
- branches and extensible metadata, exchanges work over plain network
- protocols, performs history-sensitive merging, and delegates trust
- functions to client-side RSA certificates.
+ branches and extensible metadata, uses an efficient peer-to-peer
+ network protocol, performs history-sensitive merging, and delegates
+ trust functions to client-side RSA certificates.

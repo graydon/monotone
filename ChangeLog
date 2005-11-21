@@ -1,3 +1,92 @@
+2005-11-14  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+	* netsync.cc: Removed many i18n strings.
+
+2005-11-14  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Historical records): Clarify wording, based on
+	feedback from Daniel Phillips.
+
+2005-11-13  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Automation): Document sort order for 'automate
+	select'.
+
+2005-11-10  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Hooks): Small correction so the text matches the
+	example.
+
+2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* lua.cc, std_hooks.lua, monotone.texi: basic_io parser for lua is
+	now called parse_basic_io
+
+2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.texi: document parse_basicio in the
+	"Additional Lua Functions" section
+
+2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* testsuite.at: Several MINHOOKS_* macros that use the standard hooks
+	and only load predefined hooks about passphrase and rng.
+	* tests/t_netsync_permissions, tests/t_netsync_read_permissions: use
+	the standard permission hooks and define {read,write}-permissions files.
+	Check both the permissions mechanism and the standard hooks at once.
+
+2005-11-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.texi: update example project with latest read-permissions
+	format. Mention comment lines in the description in the hooks section
+
+2005-11-08  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make a basic_io parser available to Lua.
+	* lua.cc: new function, monotone_parse_basicio_for_lua
+	* std_hooks.lua: use it in get_netsync_read_permitted
+
+2005-11-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make sure that all new revisions added to the db deltify as much as
+	possible.
+	* commands.cc, diff_patch.cc: deltify both sides when doing a merge
+	* database.{cc,hh}: new function, database::deltify_revision()
+	call it from put_revision, so all new revisions will be deltified
+
+2005-10-30  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (edit_comment): Insert a blank line if there is no
+	user log message, so the user doesn't have to.
+
+2005-10-25  Emile Snyder  <emile@alumni.reed.edu>
+
+	Fix bug reported on mailing list by Wim Oudshoorn and Tom Koelman
+	where 'disapprove REV' inappropriately uses your working copy
+	branch for the disapproved revision.
+	* app_state.{cc,hh} (set_is_explicit_option, is_explicit_option):
+	New methods to determine if a given option value was set via
+	command line flag or not.
+	* cert.cc (guess_branch): Only accept explicit --branch values in
+	preference to the branch the given revision lives on.
+	* commands.cc (CMD(commit)): Explicitly use app.branch_name() if
+	it exists before calling guess_branch, so pick up MT/options
+	setting.
+	* monotone.cc (cpp_main): Set the explicit_option_map entries for
+	select command line flag processing.
+	
+2005-10-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* INSTALL: mention that zlib is required
+	* debian/control: monotone doesn't work over plain network protocols
+
+2005-10-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* lua.cc: make the globish matcher available to lua
+	* std_hooks.lua: new (better) format for read-permissions
+	* monotone.texi: update documentation
+
 2005-10-24  Benoît Dejean  <benoit@placenet.org>
 
 	* commands.cc: Merged 2 i18n strings.

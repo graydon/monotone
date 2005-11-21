@@ -12,15 +12,13 @@ AT_CHECK((echo $OTHER; echo $OTHER) | MONOTONE genkey $OTHER, [], [ignore], [ign
 NETSYNC_SETUP
 
 # test with open security settings
-
-AT_DATA(open.lua, [
-function get_netsync_read_permitted(pattern, identity)
-        return true
-end
-
-function get_netsync_write_permitted(identity)
-        return true
-end
+AT_CHECK(mkdir open)
+AT_DATA(open/read-permissions, [
+pattern "*"
+allow "*"
+])
+AT_DATA(open/write-permissions, [
+*
 ])
 
 AT_CHECK(cp test.db clean.db)
@@ -31,7 +29,7 @@ ADD_FILE(testfile, [testfile
 AT_CHECK(MONOTONE --branch=testbranch commit --message testfile, [], [ignore], [ignore])
 BASE=`BASE_REVISION`
 
-NETSYNC_SERVE_START(testbranch --rcfile open.lua)
+MINHOOKS_NETSYNC_SERVE_START(testbranch --confdir open)
 
 # anonymous pull 
 
@@ -101,17 +99,13 @@ AT_CHECK(MONOTONE automate get_revision $UNKNOWN_REV, [1], [stdout], [stderr])
 
 
 # test with closed security settings
-
-AT_DATA(closed.lua, [
-function get_netsync_read_permitted(pattern, identity)
-        if (identity == "tester@test.net") then return true end
-        return false
-end
-
-function get_netsync_write_permitted(identity)
-        if (identity == "tester@test.net") then return true end
-        return false
-end
+AT_CHECK(mkdir closed)
+AT_DATA(closed/read-permissions, [
+pattern "*"
+allow "tester@test.net"
+])
+AT_DATA(closed/write-permissions, [
+tester@test.net
 ])
 
 AT_CHECK(cp clean.db test.db)
@@ -123,7 +117,7 @@ ADD_FILE(testfile, [testfile
 AT_CHECK(MONOTONE --branch=testbranch commit --message testfile, [], [ignore], [ignore])
 BASE=`BASE_REVISION`
 
-NETSYNC_SERVE_START(testbranch --rcfile closed.lua)
+MINHOOKS_NETSYNC_SERVE_START(testbranch --confdir closed)
 
 # anonymous pull fails
 
