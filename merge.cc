@@ -22,8 +22,8 @@ using boost::shared_ptr;
 
 static void
 get_file_details(roster_t const & ros, node_id nid,
-		 file_id & fid,
-		 file_path & pth)
+                 file_id & fid,
+                 file_path & pth)
 {
   I(ros.has_node(nid));
   file_t f = downcast_to_file_t(ros.get_node(nid));
@@ -51,78 +51,100 @@ resolve_merge_conflicts(revision_id const & left_rid,
   
   if (!result.is_clean())
     {
-      L(F("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts\n")	
-	% result.node_name_conflicts.size()
-	% result.file_content_conflicts.size()
-	% result.node_attr_conflicts.size());
+      L(F("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts, %d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
+        % result.node_name_conflicts.size()
+        % result.file_content_conflicts.size()
+        % result.node_attr_conflicts.size()
+        % result.orphaned_node_conflicts.size()
+        % result.rename_target_conflicts.size()
+        % result.directory_loop_conflicts.size());
 
       for (size_t i = 0; i < result.node_name_conflicts.size(); ++i)
-	L(F("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
-	  % result.node_name_conflicts[i].nid 
-	  % result.node_name_conflicts[i].left.first 
-	  % result.node_name_conflicts[i].left.second
-	  % result.node_name_conflicts[i].right.first 
-	  % result.node_name_conflicts[i].right.second);
+        L(F("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
+          % result.node_name_conflicts[i].nid 
+          % result.node_name_conflicts[i].left.first 
+          % result.node_name_conflicts[i].left.second
+          % result.node_name_conflicts[i].right.first 
+          % result.node_name_conflicts[i].right.second);
 
       for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
-	L(F("content conflict on node %d: [%s] vs. [%s]\n") 
-	  % result.file_content_conflicts[i].nid
-	  % result.file_content_conflicts[i].left
-	  % result.file_content_conflicts[i].right);
+        L(F("content conflict on node %d: [%s] vs. [%s]\n") 
+          % result.file_content_conflicts[i].nid
+          % result.file_content_conflicts[i].left
+          % result.file_content_conflicts[i].right);
 
       for (size_t i = 0; i < result.node_attr_conflicts.size(); ++i)
-	L(F("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
-	  % result.node_attr_conflicts[i].nid
-	  % result.node_attr_conflicts[i].key
-	  % result.node_attr_conflicts[i].left.first
-	  % result.node_attr_conflicts[i].left.second
-	  % result.node_attr_conflicts[i].right.first
-	  % result.node_attr_conflicts[i].right.second);
+        L(F("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
+          % result.node_attr_conflicts[i].nid
+          % result.node_attr_conflicts[i].key
+          % result.node_attr_conflicts[i].left.first
+          % result.node_attr_conflicts[i].left.second
+          % result.node_attr_conflicts[i].right.first
+          % result.node_attr_conflicts[i].right.second);
 
+      for (size_t i = 0; i < result.orphaned_node_conflicts.size(); ++i)
+        L(F("orphaned node conflict on node %d, dead parent %d, name %s")
+          % result.orphaned_node_conflicts[i].nid
+          % result.orphaned_node_conflicts[i].parent_name.first
+          % result.orphaned_node_conflicts[i].parent_name.second);
+
+      for (size_t i = 0; i < result.rename_target_conflicts.size(); ++i)
+        L(F("rename target conflict: nodes %d, %d, both want parent %d, name %s")
+          % result.rename_target_conflicts[i].nid1
+          % result.rename_target_conflicts[i].nid2
+          % result.rename_target_conflicts[i].parent_name.first
+          % result.rename_target_conflicts[i].parent_name.second);
+
+      for (size_t i = 0; i < result.directory_loop_conflicts.size(); ++i)
+        L(F("directory loop conflict: node %d, wanted parent %d, name %s")
+          % result.directory_loop_conflicts[i].nid
+          % result.directory_loop_conflicts[i].parent_name.first
+          % result.directory_loop_conflicts[i].parent_name.second);
+        
       // Attempt to auto-resolve any content conflicts using the line-merger.
       // To do this requires finding a merge ancestor.
       if (!result.file_content_conflicts.empty())
-	{
+        {
 
-	  L(F("examining content conflicts\n"));
-	  std::vector<file_content_conflict> residual_conflicts;
+          L(F("examining content conflicts\n"));
+          std::vector<file_content_conflict> residual_conflicts;
 
-	  for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
-	    {
-	      file_content_conflict const & conflict = result.file_content_conflicts[i];
+          for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
+            {
+              file_content_conflict const & conflict = result.file_content_conflicts[i];
 
               boost::shared_ptr<roster_t> roster_for_file_lca;
               adaptor.get_ancestral_roster(conflict.nid, roster_for_file_lca);
 
-	      // Now we should certainly have a roster, which has the node.
+              // Now we should certainly have a roster, which has the node.
               I(roster_for_file_lca);
-	      I(roster_for_file_lca->has_node(conflict.nid));
+              I(roster_for_file_lca->has_node(conflict.nid));
 
-	      file_id anc_id, left_id, right_id;
-	      file_path anc_path, left_path, right_path;
-	      get_file_details (*roster_for_file_lca, conflict.nid, anc_id, anc_path);
-	      get_file_details (left_roster, conflict.nid, left_id, left_path);
-	      get_file_details (right_roster, conflict.nid, right_id, right_path);
-	      
-	      file_id merged_id;
-	      
-	      content_merger cm(app, *roster_for_file_lca, 
+              file_id anc_id, left_id, right_id;
+              file_path anc_path, left_path, right_path;
+              get_file_details (*roster_for_file_lca, conflict.nid, anc_id, anc_path);
+              get_file_details (left_roster, conflict.nid, left_id, left_path);
+              get_file_details (right_roster, conflict.nid, right_id, right_path);
+              
+              file_id merged_id;
+              
+              content_merger cm(app, *roster_for_file_lca, 
                                 left_roster, right_roster, 
                                 adaptor);
 
-	      if (cm.try_to_merge_files(anc_path, left_path, right_path, right_path,
-					anc_id, left_id, right_id, merged_id))
-		{
-		  L(F("resolved content conflict %d / %d\n") 
-		    % (i+1) % result.file_content_conflicts.size());
+              if (cm.try_to_merge_files(anc_path, left_path, right_path, right_path,
+                                        anc_id, left_id, right_id, merged_id))
+                {
+                  L(F("resolved content conflict %d / %d\n") 
+                    % (i+1) % result.file_content_conflicts.size());
                   file_t f = downcast_to_file_t(result.roster.get_node(conflict.nid));
                   f->content = merged_id;
-		}
-	      else
-		residual_conflicts.push_back(conflict);
-	    }
-	  result.file_content_conflicts = residual_conflicts;	  
-	}
+                }
+              else
+                residual_conflicts.push_back(conflict);
+            }
+          result.file_content_conflicts = residual_conflicts;     
+        }
     }
 }
 
