@@ -1269,7 +1269,7 @@ database::get_revision_ancestry(std::multimap<revision_id, revision_id> & graph)
 
 void 
 database::get_revision_parents(revision_id const & id,
-                              set<revision_id> & parents)
+                               set<revision_id> & parents)
 {
   I(!null_id(id));
   results res;
@@ -2537,14 +2537,16 @@ database::put_roster(revision_id const & rev_id,
   string data_table = "rosters";
   string delta_table = "roster_deltas";
 
-  results res;
-  fetch(res, one_col, any_rows, 
-        "SELECT parent FROM revision_ancestry WHERE child = ?",
-        rev_id.inner()().c_str());
+  std::set<revision_id> parents;
+  get_revision_parents(rev_id, parents);
 
   transaction_guard guard(*this);
-  if (res.size() != 0 && !res[0][0].empty())
+  for (std::set<revision_id>::const_iterator i = parents.starts();
+       i != parents.end(); ++i)
     {
+      if (null_id(*i))
+        continue;
+
       // There's a parent revision; we are going to do delta
       // compression on the roster by using the roster associated with
       // the parent rev. Keep in mind that we're composing a *reverse*
@@ -2552,7 +2554,7 @@ database::put_roster(revision_id const & rev_id,
       // will have (id=old_id, rev_id=old_rev, base=new_id,
       // delta=new->old)
 
-      revision_id old_rev = revision_id(res[0][0]);
+      revision_id old_rev = *i;
       hexenc<id> old_ident;
       get_roster_id_for_revision(old_rev, old_ident);
       get_version(old_ident, old_data, data_table, delta_table);
