@@ -1,3 +1,15 @@
+2005-11-21  Henry Nestler  <Henry@BigFoot.de>
+
+	* contrib/mtbrowse.sh: Version 0.1.13
+	Handle authors without '@'.  Minor box sizing.
+	Get Version of monotone before starts anything.
+	DEPTH_LAST detects for version >0.19, no save to config.
+	'cat revision' replaced with 'automate get_revision'.
+	ANCESTORS "M" changed to "A". Default "L" (monotone log --brief).
+	Warn user about misconfigurations. Temp files without tailing dot.
+	New option: Sort by Date/Time, up or down.
+	Fix: Parents of merge, if certs list from cache (ncolor).
+
 2005-11-21  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* NEWS: Minor spelling tweaks.

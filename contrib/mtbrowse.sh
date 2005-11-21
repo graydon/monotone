@@ -99,12 +99,23 @@
 # Automatic author color.
 # Date have inverse color for last selection.
 # Expand revision after input, if not 40 chars. (parents don't allow short rev)
+#
+# 2005-11-20 Version 0.1.13 Henry@BigFoot.de
+# Handle authors without '@'.
+# Minor box sizing.
+# Get Version of monotone before starts anything.
+# DEPTH_LAST detects for version >0.19, no save to config.
+# 'cat revision' replaced with 'automate get_revision' (mt >0.22).
+# ANCESTORS "M" changed to "A". Default "L" (monotone log --brief).
+# Warn user about misconfigurations.
+# Temp files without tailing dot.
+# New option: Sort by Date/Time with up or down.
+# Fix: Parent of merge, if certs list from cache (ncolor).
 
 # Known Bugs / ToDo-List:
-# * For Monotone Version >0.19  s/--depth/--last/, remove the fallback
 # * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.1.12"
+VERSION="0.1.13"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
@@ -112,20 +123,21 @@ CONFIGFILE="$HOME/.mtbrowserc"
 
 # Store lists for menu here
 TEMPDIR="$HOME/.mtbrowse"
-TEMPFILE="$TEMPDIR/.tmp"
+TEMPFILE="$TEMPDIR/tmp"
 
 # Called with filename.
 VISUAL="vim -R"
 
 # Called with stdin redirection.
 # Set VISUAL empty to use PAGER!
-# Don't VISUAL and PAGER to use internal viewer.
+# If VISUAL and PAGER are empty, than use an internal viewer.
 PAGER="less"
 
 # 1=Certs Cached, 0=Clean at end (slow and save mode)
 CACHE="1"
 
-# T=Toposort revisions, D=Date sort (reverse toposort)
+# T=Toposort revisions, D=Date sort, R=Date reverse (reverse toposort),
+# N=None (unsorted from list)
 TOPOSORT="T"
 
 # count of certs to get from DB, "0" for all
@@ -137,10 +149,10 @@ HASH_TRIM="10"
 # Format for Date/Time
 FORMAT_DATE="L"
 
-# Format Branch Full,Short,None
+# Format Branch: F=Full,S=Short,N=None
 FORMAT_BRANCH="N"
 
-# Format author (strip domain from mail address)
+# Format author: F=Full, S=strip domain from mail address, N=None
 FORMAT_AUTHOR="S"
 
 # Changelog format
@@ -149,14 +161,9 @@ FORMAT_LOG="F"
 # Author coloring?
 FORMAT_COLOR="\\Z7\\Zb"
 
-# "log --depth=n" was changed to "log --last=n", see
-# Author: joelwreed@comcast.net,  Date: 2005-05-30T00:15:27
-# Autodetect this and fallback for a while.
-# TODO: Remove in future
-DEPTH_LAST="--last"
-
-# automate ancestors (I)nteral function, (M)onotone
-ANCESTORS="I"
+# How get automate ancestors: I=interal function, A=automate ancestors,
+# L=Log brief
+ANCESTORS="L"
 
 # read saved settings
 if [ -f $CONFIGFILE ]
@@ -236,7 +243,7 @@ do_clear_on_exit()
 {
     rm -f $TEMPFILE.branches $TEMPFILE.ancestors $TEMPFILE.toposort \
       $TEMPFILE.action-select $TEMPFILE.menu $TEMPFILE.input \
-      $TEMPFILE.ncolor $TEMPFILE.c
+      $TEMPFILE.ncolor $TEMPFILE.tfc
 
     if [ "$CACHE" != "1" ]
     then
@@ -281,7 +288,7 @@ fill_date_key()
 {
     local in_file=$1
     local out_file=$2
-    local short_hash dat bra aut log lineno color count
+    local short_hash dat bra aut log lineno color count tfc
 
     line_count=`wc -l < $in_file`
     if [ "$line_count" -eq 0 ]
@@ -291,6 +298,8 @@ fill_date_key()
 
     lineno=0
     rm -f $out_file
+    tfc=$TEMPFILE.tfc
+
     # Read Key and Date value from certs
     cat $in_file | \
     while read hash
@@ -305,8 +314,7 @@ fill_date_key()
 
 	short_hash=`echo $hash | cut -c 1-$HASH_TRIM`
 
-	# get all certs of revision, check cached first
-	tfc=$TEMPFILE.c
+	# get certs of revision, cache it
 	monotone --db=$DB list certs $hash > $tfc
 		
 	# Date format
@@ -361,7 +369,7 @@ fill_date_key()
 		;;
 	    S) # short
 		aut=`sed -n -r -e \
-		    '/^Name  : author/,+1s/Value : (.{1,10}).*@.+$/\1/p' \
+		    '/^Name  : author/,+1s/Value : (.{1,10}).*[@ ].+$/\1/p' \
 		    < $tfc | sed -n -e '1p'`
 		;;
 	esac
@@ -385,6 +393,7 @@ fill_date_key()
 	then
 	    # Bug in dialog: Don't allow empty string after \\Zn
 	    test -z "$log" && log=" "
+
 	    if [ "$last_aut" != "$aut" ]
 	    then
 	     # Automatic color by author?
@@ -414,7 +423,7 @@ fill_date_key()
 	    echo "$short_hash \"$dat$bra\\ZR$aut$log\"" >> $out_file
 	fi
     done | dialog --gauge "$line_count certs reading" 6 60
-    rm $TEMPFILE.c.tmp
+    rm $tfc
 }
 
 
@@ -515,7 +524,6 @@ do_head_sel()
     SHORT_HEAD=`echo $HEAD | cut -c 1-$HASH_TRIM`
 
     rm -f $TEMPFILE.heads
-#    do_clear_cache
 }
 
 
@@ -542,16 +550,8 @@ do_action_sel()
 	    # LOG
 	    # 0.19   monotone log --depth=n id file
 	    # 0.19+  monotone log --last=n id file
-	    if ! monotone --db=$DB log $DEPTH_LAST=1 --revision=$REVISION \
-	      > $TEMPFILE.change.log
-	    then
-		DEPTH_LAST="--depth"
-		echo "Fallback to --depth usage."
-
-		# Try again
-		monotone --db=$DB log $DEPTH_LAST=1 --revision=$REVISION \
-		  > $TEMPFILE.change.log || exit 200
-	    fi
+	    monotone --db=$DB log $DEPTH_LAST=1 --revision=$REVISION \
+	      > $TEMPFILE.change.log || exit 200
 
 	    do_pager $TEMPFILE.change.log
 	    ;;
@@ -562,6 +562,9 @@ do_action_sel()
 	    if [ `wc -l < $TEMPFILE.parents` -ne 1 ]
 	    then
 		# multiple parents (from merge)
+
+		# Create, if used a cached list
+		touch $TEMPFILE.ncolor
 
 		# Set DATE/KEY information
 		fill_date_key $TEMPFILE.parents $TEMPFILE.certs3tmp
@@ -637,11 +640,13 @@ do_action_sel()
 	    do_pager $TEMPFILE.certs.log
 	    ;;
 	  F)
-	    # List changed files
-	    monotone --db=$DB cat revision $REVISION > $TEMPFILE.rev.changed \
-	      || exit 200
-	    do_pager $TEMPFILE.rev.changed
-	    ;;
+	   # List changed files
+	   # 0.22: monotone cat revision <id>
+	   # 0.23: monotone automate get_revision <id>
+	   monotone --db=$DB automate get_revision $REVISION > $TEMPFILE.rev.changed \
+	     || exit 200
+	   do_pager $TEMPFILE.rev.changed
+	   ;;
 	  Q)
 	    # Menu return
 	    return
@@ -706,17 +711,30 @@ do_revision_sel()
 	touch $TEMPFILE.ncolor
 
 	echo "Reading ancestors ($HEAD)"
-	echo "$HEAD" > $TEMPFILE.ancestors
 
-	if [ "$ANCESTORS" = "I" -a "$CERTS_MAX" -gt 0 ]
-	then
-	    do_automate_ancestors_depth 1 $HEAD || exit 200
-	else
-	    monotone --db=$DB automate ancestors $HEAD \
-	      >> $TEMPFILE.ancestors || exit 200
-	fi
+	case $ANCESTORS in
+	    L)
+		# Get ancestors from log
+		monotone log --brief --last=$CERTS_MAX --revision=$HEAD \
+		  --db=$DB | cut -d ' ' -f 1 > $TEMPFILE.ancestors
+		# Check empty output, if fails
+		test -s $TEMPFILE.ancestors || exit 200
+	    ;;
+	    I)
+		# Get only 'CERTS_MAX' of ancestors
+		echo "$HEAD" > $TEMPFILE.ancestors
+		do_automate_ancestors_depth 1 $HEAD || exit 200
+	    ;;
+	    *)
+		# Get all ancestors
+		echo "$HEAD" > $TEMPFILE.ancestors
+		monotone --db=$DB automate ancestors $HEAD \
+		  >> $TEMPFILE.ancestors || exit 200
+	    ;;
+	esac
 
-	if [ "$TOPOSORT" = "T" -o "$CERTS_MAX" -gt 0 ]
+	# Must toposort, if enabled by user, or before tailing
+	if [ "$TOPOSORT" = "T" -o "$CERTS_MAX" -gt 0 -a "$ANCESTORS" != 'L' ]
 	then
 		echo "Toposort..."
 		monotone --db=$DB automate toposort `cat $TEMPFILE.ancestors` \
@@ -733,17 +751,25 @@ do_revision_sel()
 		mv $TEMPFILE.ancestors $TEMPFILE.toposort
 	fi
 
-	# Reading revisions and fill with date
+	# Reading revisions and fill with date, names and changelog
 	fill_date_key $TEMPFILE.toposort $TEMPFILE.certs3tmp
 
-	if [ "$TOPOSORT" != "T" ]
-	then
+	case $TOPOSORT in
+	    D)
 		# Sort by date+time
+		sort -k 2 < $TEMPFILE.certs3tmp > $TEMPFILE.certs.$BRANCH
+		rm $TEMPFILE.certs3tmp
+	    ;;
+	    R)
+		# Reverse sort by date+time
 		sort -k 2 -r < $TEMPFILE.certs3tmp > $TEMPFILE.certs.$BRANCH
 		rm $TEMPFILE.certs3tmp
-	else
+	    ;;
+	    *)
+		# Not sorted, or toposort
 		mv $TEMPFILE.certs3tmp $TEMPFILE.certs.$BRANCH
-	fi
+	    ;;
+	esac
     fi
 
     # if first rev is empty, use head instand
@@ -803,14 +829,14 @@ do_config()
 	"Vd" "Set VISUAL default to vim -R" \
 	"P" "PAGER  [$PAGER]" \
 	"Pd" "set PAGER default to less" \
-	"S" "Sort by Toposort or Date [$TOPOSORT]" \
 	"T" "Time and date format [$FORMAT_DATE]" \
 	"B" "Branch format [$FORMAT_BRANCH]" \
 	"A" "Author format [$FORMAT_AUTHOR]" \
 	"Ac" "Author Color format [$FORMAT_COLOR]" \
 	"L" "changeLog format [$FORMAT_LOG]" \
-	"D" "Depth limit for ancestors [$ANCESTORS]" \
 	"C" "Certs limit in Select-List [$CERTS_MAX]" \
+	"D" "Depth limit for ancestors [$ANCESTORS]" \
+	"S" "Sort by Toposort, Date or none [$TOPOSORT]" \
 	"-" "-" \
 	"W" "Write configuration file" \
 	"R" "Return to main menu" \
@@ -822,7 +848,7 @@ do_config()
 	    # Setup for VISUAL
 	    if dialog --inputbox \
 		"Config for file viewer\nuse in sample: \"vim -R changes.diff\"" \
-		8 70 "$VISUAL" 2> $TEMPFILE.input
+		9 70 "$VISUAL" 2> $TEMPFILE.input
 	    then
 		VISUAL=`cat $TEMPFILE.input`
 	    fi
@@ -835,7 +861,7 @@ do_config()
 	    # Setup for PAGER
 	    if dialog --inputbox \
 		"Config for pipe pager\nuse in sample: \"monotone log | less\"" \
-		8 70 "$PAGER" 2> $TEMPFILE.input
+		9 70 "$PAGER" 2> $TEMPFILE.input
 	    then
 		PAGER=`cat $TEMPFILE.input`
 	    fi
@@ -845,11 +871,13 @@ do_config()
 	    PAGER="less"
 	    ;;
 	  S)
-	    # change T=Toposort revisions, D=Date sort (reverse toposort)
+	    # change T=Toposort revisions, D=Date sort, N=None (from list)
 	    if dialog --default-item "$TOPOSORT" \
 		--menu "Sort revisions by" 0 0 0 \
 		"T" "Toposort, oldest top (from Monotone)" \
-		"D" "Date/Time (reverse toposort)" \
+		"D" "Date/Time, oldest top" \
+		"R" "Reverse Date/Time (reverse toposort)" \
+		"N" "None. Simple get from list" \
 		2> $TEMPFILE.input
 	    then
 		TOPOSORT=`cat $TEMPFILE.input`
@@ -946,11 +974,12 @@ do_config()
 		&& FORMAT_LOG=`cat $TEMPFILE.input`
 	    ;;
 	  D)
-	    # automate ancestors (I)nteral function, (M)onotone
+	    # How to get ancestors
 	    if dialog --default-item "$ANCESTORS" \
 		--menu "Get ancestors by using" 0 0 0 \
-		"M" "Monotone \"automate ancestor\" (save mode)" \
+		"L" "Monotone \"log --brief\" (fastest)" \
 		"I" "Internal function with depth limit (faster)" \
+		"A" "Monotone \"automate ancestor\" (save mode, very slow)" \
 		2> $TEMPFILE.input
 	    then
 		ANCESTORS=`cat $TEMPFILE.input`
@@ -967,6 +996,7 @@ do_config()
 	    # Save environment
 	    cat > $CONFIGFILE << EOF
 # File: ~/.mtbrowserc
+# Created for monotone $MT_MAJOR.$MT_MINOR
 
 DB="$DB"
 BRANCH="$BRANCH"
@@ -977,7 +1007,6 @@ TEMPFILE="$TEMPFILE"
 TOPOSORT="$TOPOSORT"
 CACHE="$CACHE"
 CERTS_MAX="$CERTS_MAX"
-DEPTH_LAST="$DEPTH_LAST"
 FORMAT_DATE="$FORMAT_DATE"
 FORMAT_BRANCH="$FORMAT_BRANCH"
 FORMAT_AUTHOR="$FORMAT_AUTHOR"
@@ -995,6 +1024,33 @@ EOF
 	    return
 	    ;;
 	esac
+
+	# Check non working combinations
+	if [ $ANCESTORS = "L" -a \( $MT_MAJOR -eq 0 -a $MT_MINOR -lt 20 \) ]
+	then
+	    dialog --title " Info " --msgbox \
+"\"log brief\" is only supported on monotone version 0.20 or newer
+Automatic corrected" 0 0
+	    ANCESTORS="I"
+	fi
+
+	if [ "$CERTS_MAX" -le 0 -a "$ANCESTORS" != "A" ]
+	then
+	    # functions don't work without limit
+	    dialog --title " Info " --msgbox \
+"Certs limit in Select-List:
+negative or zero last not allowed
+Automatic corrected" 0 0
+	    CERTS_MAX=20
+	fi
+
+	if [ \( "$TOPOSORT" = "D" -o "$TOPOSORT" = "R" \) -a "$FORMAT_DATE" = "N" ]
+	then
+	    dialog --title " Info " --msgbox \
+"\"Sort Date/Time\" is not usable, if no time in list
+Automatic corrected" 0 0
+	    FORMAT_DATE="L"
+	fi
     done
 }
 
@@ -1007,6 +1063,30 @@ then
     echo "Dialog is needed for this tool, please install it!"
     echo
     exit -1
+fi
+
+# Get monotone version
+MT_MAJOR=`monotone --version | sed -r -e 's/^.+ ([0-9]{1,2})\.([0-9]{1,2}) .+$/\1/'`
+MT_MINOR=`monotone --version | sed -r -e 's/^.+ ([0-9]{1,2})\.([0-9]{1,2}) .+$/\2/'`
+
+if [ -z "$MT_MAJOR" -o -z "$MT_MINOR" ]
+then
+    # Hm, need this here
+    echo
+    echo "monotone - distributed version control system."
+    echo "Can't execute!"
+    echo
+    exit -1
+fi
+
+# "log --depth=n" was changed to "log --last=n", in MT 0.20
+# 0.19   monotone log --depth=n id file
+# 0.20+  monotone log --last=n id file
+if [ $MT_MAJOR -eq 0 -a $MT_MINOR -lt 20 ]
+then
+    DEPTH_LAST="--depth"
+else
+    DEPTH_LAST="--last"
 fi
 
 mkdir -p $TEMPDIR
