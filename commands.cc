@@ -1069,6 +1069,7 @@ CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
   cert_revision_testresult(r, idx(args, 1)(), app, dbw);
 }
 
+
 CMD(approve, N_("review"), N_("REVISION"), 
     N_("approve of a particular revision"),
     OPT_BRANCH_NAME)
@@ -1085,8 +1086,7 @@ CMD(approve, N_("review"), N_("REVISION"),
   cert_revision_in_branch(r, app.branch_name(), app, dbw);
 }
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
+
 CMD(disapprove, N_("review"), N_("REVISION"), 
     N_("disapprove of a particular revision"),
     OPT_BRANCH_NAME)
@@ -1096,7 +1096,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
 
   revision_id r;
   revision_set rev, rev_inverse;
-  boost::shared_ptr<change_set> cs_inverse(new change_set());
+  boost::shared_ptr<cset> cs_inverse(new cset());
   complete(app, idx(args, 0)(), r);
   app.db.get_revision(r, rev);
 
@@ -1109,9 +1109,12 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   
   edge_entry const & old_edge (*rev.edges.begin());
   rev_inverse.new_manifest = edge_old_manifest(old_edge);
-  manifest_map m_old;
-  app.db.get_manifest(edge_old_manifest(old_edge), m_old);
-  invert_change_set(edge_changes(old_edge), m_old, *cs_inverse);
+  {
+    roster_t old_roster, new_roster;
+    app.db.get_roster(edge_old_revision(old_edge), old_roster);
+    app.db.get_roster(r, new_roster);
+    make_cset(new_roster, old_roster, *cs_inverse);
+  }
   rev_inverse.edges.insert(make_pair(r, make_pair(rev.new_manifest, cs_inverse)));
 
   {
@@ -1132,7 +1135,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     guard.commit();
   }
 }
-*/
+
 
 CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
     N_("comment on a particular revision"), OPT_NONE)
@@ -1381,6 +1384,7 @@ CMD(cat, N_("informative"),
   roster_t roster;
   marking_map marks;
   app.db.get_roster(rid, roster, marks);
+  N(roster.has_node(sp), F("no file '%s' found in revision '%s'\n") % fp % rid);
   node_t node = roster.get_node(sp);
   N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'\n") % fp % rid);
 
@@ -2669,13 +2673,22 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
                                        old_roster, 
                                        new_roster,
                                        excluded);
-      // now clobber old_roster with the one specified
+      // Clobber old_roster with the one specified
       app.db.get_revision(r_old_id, r_old);
       app.db.get_roster(r_old_id, old_roster);
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       N(r_new.edges.size() == 1, F("current revision has no ancestor"));
       new_is_archived = false;
       header << "# old_revision [" << r_old_id << "]" << endl;
+      {
+        // Calculate a cset from old->new, then re-restrict it (using the
+        // one from get_working_revision_and_rosters doesn't work here,
+        // since it only restricts the edge base->new, and there might be
+        // changes outside the restriction in old->base)
+        cset tmp1, tmp2;
+        make_cset (old_roster, new_roster, tmp1);
+        calculate_restricted_cset (app, args, tmp1, composite, tmp2);
+      }
     }
   else if (app.revision_selectors.size() == 2)
     {
@@ -2691,14 +2704,27 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.db.get_roster(r_old_id, old_roster);
       app.db.get_roster(r_new_id, new_roster);
       new_is_archived = true;
+      {
+        // Calculate a cset from old->new, then re-restrict it. 
+        // FIXME: this is *possibly* a UI bug, insofar as we
+        // look at the restriction name(s) you provided on the command
+        // line in the context of new and old, *not* the working copy.
+        // One way of "fixing" this is to map the filenames on the command
+        // line to node_ids, and then restrict based on those. This 
+        // might be more intuitive; on the other hand it would make it
+        // impossible to restrict to paths which are dead in the working
+        // copy but live between old and new. So ... no rush to "fix" it;
+        // discuss implications first.
+        cset tmp1, tmp2;
+        make_cset (old_roster, new_roster, tmp1);
+        calculate_restricted_cset (app, args, tmp1, composite, tmp2);
+      }
     }
   else
     {
       throw usage(name);
     }
 
-  if (app.revision_selectors.size() > 0)
-    make_cset (old_roster, new_roster, composite);
   
   data summary;
   write_cset(composite, summary);
