@@ -1348,36 +1348,16 @@ database::deltify_revision(revision_id const & rid)
   get_revision(rid, rev);
   // make sure that all parent revs have their manifests and files
   // replaced with deltas from this rev's manifest and files
-  // assume that if the manifest is already deltafied, so are the files
   {
-    MM(rev.new_manifest);
     for (edge_map::const_iterator i = rev.edges.begin();
          i != rev.edges.end(); ++i)
       {
-        manifest_id oldman = edge_old_manifest(i);
-        MM(oldman);
-        if (exists(oldman.inner(), "manifests") &&
-            !(oldman == rev.new_manifest) &&
-            manifest_version_exists(oldman))
+        for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator
+               j = edge_changes(i).deltas_applied.begin();
+             j != edge_changes(i).deltas_applied.end(); ++j)
           {
-            manifest_data mdat_new, mdat_old;
-            get_manifest_version(oldman, mdat_old);
-            get_manifest_version(rev.new_manifest, mdat_new);
-            delta delt;
-            diff(mdat_old.inner(), mdat_new.inner(), delt);
-            manifest_delta mdelt(delt);
-            drop(rev.new_manifest.inner(), "manifests");
-            drop(rev.new_manifest.inner(), "manifest_deltas");
-            put_manifest_version(oldman, rev.new_manifest, mdelt);
-          }
-
-        for (change_set::delta_map::const_iterator
-               j = edge_changes(i).deltas.begin();
-             j != edge_changes(i).deltas.end(); ++j)
-          {
-            if (! delta_entry_src(j).inner()().empty() && 
-                  exists(delta_entry_src(j).inner(), "files") &&
-                  file_version_exists(delta_entry_dst(j)))
+            if (exists(delta_entry_src(j).inner(), "files") &&
+                file_version_exists(delta_entry_dst(j)))
               {
                 file_data old_data;
                 file_data new_data;
@@ -2601,7 +2581,7 @@ database::put_roster(revision_id const & rev_id,
   get_revision_parents(rev_id, parents);
 
   transaction_guard guard(*this);
-  for (std::set<revision_id>::const_iterator i = parents.starts();
+  for (std::set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
     {
       if (null_id(*i))
