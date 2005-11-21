@@ -1,3 +1,18 @@
+2005-11-21  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* NEWS: Minor spelling tweaks.
+	* platform.hh: Add get_default_confdir().
+	* app_state.cc (app_state::app_state): Call get_default_confdir()
+	to initialize confdir.
+	* unix/fs.cc (get_default_confdir): Use the home directory as the
+	base of the default configuration dir.
+	* win32/fs.cc (get_default_confdir): Use either %APPDATA% or the
+	result of querying SHGetFolderPath() for CISDL_APPDATA as the base
+	of the default configuration dir.
+	(get_homedir): More consistent method for deciding what the user's
+	home directory is.  Behaviour based on the documentation for Qt's
+	QDir::home().
+
 2005-11-21  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Initial draft of 0.24 release notes.

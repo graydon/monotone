@@ -7,17 +7,17 @@
           be some complicated and varying function of %HOME%,
           %USERPROFILE%, %HOMEDRIVE%\%HOMEPATH%, whether you were
           running in mingw/cygwin, etc.  It is now, always,
-          %APPDATA%\Monotone.  For instance, if your configuration
+          %APPDATA%\monotone.  For instance, if your configuration
           file used to be named
-            ...\Documents and Settings\.monotone\monotonerc
+           ...\Documents and Settings\user\.monotone\monotonerc
           it will now be named
-            ...\???\Monotone\monotonerc
+           ...\Documents and Settings\user\Application Data\monotone\monotonerc
           Please rename files appropriately.
 
         Major key management changes:
         - Private keys are no longer stored in your database.  They
           are stored in ~/.monotone/keys/ (Unix, OS X) or
-          %APPDATA%\Monotone\keys\ (Windows).  'db migrate' will
+          %APPDATA%\monotone\keys\ (Windows).  'db migrate' will
           automatically move your keys out of your database and into
           their proper location.  Consequences:
           - 'genkey' no longer requires a database.  Simply run it
@@ -40,7 +40,7 @@
             monotone serve my.host.com "*"
           becomes
             monotone serve --bind=my.host.com "*"
-          or simple
+          or simply
             monotone serve "*"
           (to serve on the default port, on all interfaces).
         - Speaking of which, we can now bind to all interfaces; run

@@ -49,6 +49,7 @@ std::string get_current_working_dir();
 // calls N() if fails
 void change_current_working_dir(any_path const & to);
 utf8 tilde_expand(utf8 const & path);
+system_path get_default_confdir();
 utf8 get_homedir();
 namespace path
 {

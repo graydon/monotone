@@ -3,9 +3,9 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#define WIN32_LEAN_AND_MEAN
 #include <io.h>
 #include <errno.h>
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <shlobj.h>
 
@@ -17,7 +17,8 @@
 #include "sanity.hh"
 #include "platform.hh"
 
-std::string get_current_working_dir()
+std::string
+get_current_working_dir()
 {
   char buffer[4096];
   E(getcwd(buffer, 4096),
@@ -25,10 +26,29 @@ std::string get_current_working_dir()
   return std::string(buffer);
 }
 
-void change_current_working_dir(any_path const & to)
+void
+change_current_working_dir(any_path const & to)
 {
   E(!chdir(to.as_external().c_str()),
     F("cannot change to directory %s: %s") % to % strerror(errno));
+}
+
+system_path
+get_default_confdir()
+{
+  std::string base;
+  char * appdata;
+  appdata = getenv("APPDATA");
+  if (appdata != NULL)
+    base = appdata;
+  else
+    {
+      TCHAR szPath[MAX_PATH];
+      if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, szPath)))
+        base = szPath;
+    }
+  N(!base.empty(), F("could not determine configuration path"));
+  return system_path(base) / "monotone";
 }
 
 // FIXME: BUG: this probably mangles character sets
@@ -38,52 +58,28 @@ utf8
 get_homedir()
 {
   // Windows is fun!
-  // See thread on monotone-devel:
-  //   Message-Id: <20050221.182951.104117563.dalcolmo@vh-s.de>
-  //   URL: http://lists.gnu.org/archive/html/monotone-devel/2005-02/msg00241.html
-  // Since the discussion above, the code has been reverted to use always
-  // HOME if it is set.  We now use APPDATA (e.g. C:\Documents And
-  // Settings\user\Application Data) rather than USERPROFILE so that we're a
-  // better behaved Windows application.  There is still one potentially
-  // confusing case where a user is switching between Cygwin/MinGW shells
-  // and a Windows command prompt where HOME is only set up inside the
-  // Cygwin/MinGW shells and not globally--in this case, monotone will use
-  // HOME inside the Cygwin/MinGW shell and something else (probably
-  // APPDATA) when run in the Windows command prompt.  In many ways, it's
-  // tempting to simplify this code to always and only use APPDATA.
+  // There has been much discussion about the correct way to do this, and a
+  // couple of methods have been tried (look at previous versions of this
+  // file for the discussion).  For consistency, we now calculate the user's
+  // home path using the same technique that Qt's QDir::homePath() uses on
+  // Windows.
   char * home;
-  L(F("Searching for home directory\n"));
-  // First try MONOTONE_HOME, to give people a way out in case the cruft below
-  // doesn't work for them.
-  home = getenv("MONOTONE_HOME");
-  if (home != NULL)
-    {
-      L(F("Home directory from MONOTONE_HOME\n"));
-      return std::string(home);
-    }
-  // Try HOME next:
   home = getenv("HOME");
   if (home != NULL)
     {
       L(F("Home directory from HOME\n"));
       return std::string(home);
     }
-  // Otherwise, try APPDATA:
-  home = getenv("APPDATA");
-  if (home != NULL)
+  // Otherwise, try USERPROFILE.  We could also use SHGetFolderPath() to get
+  // at USERPROFILE without requiring it to be set as an environment
+  // variable, but Qt doesn't, so we won't either.
+  char * userprofile = getenv("USERPROFILE");
+  if (userprofile != NULL)
     {
-      L(F("Home directory from APPDATA\n"));
-      return std::string(home);
+      L(F("Home directory from USERPROFILE\n"));
+      return std::string(userprofile);
     }
-  // Try a second method to get APPDATA:
-  TCHAR szPath[MAX_PATH];
-  if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, szPath)))
-    {
-      L(F("Home directory from APPDATA (via SHGetFolderPath)\n"));
-      return std::string(szPath);
-    }
-  // Finally, if even that doesn't work (old version of Windows, I think?),
-  // try the HOMEDRIVE/HOMEPATH combo:
+  // Try concatenating HOMEDRIVE and HOMEPATH
   char * homedrive = getenv("HOMEDRIVE");
   char * homepath = getenv("HOMEPATH");
   if (homedrive != NULL && homepath != NULL)
@@ -91,9 +87,13 @@ get_homedir()
       L(F("Home directory from HOMEDRIVE+HOMEPATH\n"));
       return std::string(homedrive) + std::string(homepath);
     }
-  // And if things _still_ didn't work, give up.
-  N(false, F("could not find home directory (tried MONOTONE_HOME, HOME, "
-             "APPDATA, HOMEDRIVE/HOMEPATH"));
+  char * systemdrive = getenv("SystemDrive");
+  if (systemdrive != NULL)
+    {
+      L(F("Home directory from SystemDrive\n"));
+      return std::string(systemdrive);
+    }
+  return std::string("C:");
 }
 
 utf8

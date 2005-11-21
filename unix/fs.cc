@@ -18,18 +18,26 @@
 #include "sanity.hh"
 #include "platform.hh"
 
-std::string get_current_working_dir()
+std::string
+get_current_working_dir()
 {
   char buffer[4096];
   E(getcwd(buffer, 4096),
     F("cannot get working directory: %s") % std::strerror(errno));
   return std::string(buffer);
 }
-  
-void change_current_working_dir(any_path const & to)
+
+void
+change_current_working_dir(any_path const & to)
 {
   E(!chdir(to.as_external().c_str()),
     F("cannot change to directory %s: %s") % to % std::strerror(errno));
+}
+
+system_path
+get_default_confdir()
+{
+  return system_path(get_homedir()) / ".monotone";
 }
 
 // FIXME: BUG: this probably mangles character sets
@@ -42,12 +50,13 @@ get_homedir()
   if (home != NULL)
     return std::string(home);
 
-  struct passwd * pw = getpwuid(getuid());  
+  struct passwd * pw = getpwuid(getuid());
   N(pw != NULL, F("could not find home directory for uid %d") % getuid());
   return std::string(pw->pw_dir);
 }
 
-utf8 tilde_expand(utf8 const & in)
+utf8
+tilde_expand(utf8 const & in)
 {
   if (in().empty() || in()[0] != '~')
     return in;
