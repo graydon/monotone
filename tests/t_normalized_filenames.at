@@ -5,7 +5,7 @@ AT_DATA(foo, [blah blah
 ])
 # The UI used to fix these, while later code did not, so let's check
 # the inner code directly.
-AT_DATA(MT/work, [add_file "."
+AT_DATA(MT/work, [add_dir "."
 ])
 AT_CHECK(MONOTONE automate get_manifest, [3], [ignore], [ignore])
 

@@ -37,8 +37,8 @@ COMMIT(testbranch)
 VER1=`BASE_REVISION`
 
 # change the epochs in the first db
-AT_CHECK(MONOTONE db set_epoch testbranch wooooooo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE db set_epoch otherbranch wheeeeeee, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db set_epoch testbranch aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db set_epoch otherbranch aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, [], [ignore], [ignore])
 
 # this should *fail* to sync 
 NETSYNC_SERVE_START(testbranch)
