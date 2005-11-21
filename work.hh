@@ -160,28 +160,6 @@ void write_inodeprints(data const & dat);
 
 void enable_inodeprints();
 
-// the "attribute map" is part of a working copy. it is *not* stored in MT,
-// because its contents are considered part of the "content" of a tree of
-// files. it is therefore stored in .mt-attrs, in the root of your
-// tree. you do not need a .mt-attrs file, it's just an extension
-// mechanism.
-//
-// the contents of the .mt-attrs file is a list of [file, name, value]
-// triples, each of which assigns a particular "extended attribute" to a
-// file in your manifest. example "extended attributes" are things like
-// "set the execute bit" or "this file is read-only" or whatnot. they are
-// intrinsic properties of the files, but not actually part of the file's
-// data stream. so they're kept here.
-
-typedef std::map<file_path, std::map<std::string, std::string> > attr_map;
-
-void get_attr_path(file_path & a_path);
-
-void read_attr_map(data const & dat, attr_map & attrs);
-
-void write_attr_map(data & dat,
-                    attr_map const & options);
-
 extern std::string const encoding_attribute;
 extern std::string const manual_merge_attribute;
 
@@ -189,16 +167,6 @@ bool get_attribute_from_roster(roster_t const & ros,
                                file_path const & path,
                                attr_key const & key,
                                attr_value & val);
-
-bool get_attribute_from_db(file_path const & file,
-                           std::string const & attr_key,
-                           manifest_map const & man,
-                           std::string & attr_val,
-                           app_state & app); 
-
-bool get_attribute_from_working_copy(file_path const & file,
-                                     std::string const & attr_key,
-                                     std::string & attr_val); 
 
 void update_any_attrs(app_state & app);
 

@@ -8,7 +8,6 @@
 
 #include "revision.hh"
 #include "lua.hh"
-#include "manifest.hh"
 #include "vocab.hh"
 #include "roster.hh"
 
@@ -104,10 +103,6 @@ void diff(data const & olddata,
           data const & newdata,
           delta & del);
 
-void diff(manifest_map const & oldman,
-          manifest_map const & newman,
-          delta & del);
-
 void patch(data const & olddata,
            delta const & del,
            data & newdata);
@@ -125,9 +120,6 @@ void calculate_ident(file_data const & dat,
                      file_id & ident);
 
 void calculate_ident(manifest_data const & dat,
-                     manifest_id & ident);
-
-void calculate_ident(manifest_map const & mm,
                      manifest_id & ident);
 
 void calculate_ident(revision_data const & dat,
