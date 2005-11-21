@@ -125,7 +125,7 @@ namespace
     // actual root; whether we hit the actual root or not, hitting a node
     // with a null parent will tell us that this particular attachment won't
     // create a loop.
-    for (node_id curr = parent; curr = r.get_node(curr)->parent; !null_node(curr))
+    for (node_id curr = parent; !null_node(curr); curr = r.get_node(curr)->parent)
       {
         if (curr == nid)
           return true;
@@ -145,47 +145,69 @@ namespace
     // such cases, rather than actually attach the node, we write a conflict
     // structure and leave it detached.
 
-    // orphan:
-    if (!result.roster.has_node(parent))
+    // the root dir is somewhat special.  it can't be orphaned, and it can't
+    // make a dir loop.  it can, however, have a name collision.
+    if (null_node(parent))
       {
-        orphaned_node_conflict c;
-        c.nid = nid;
-        c.parent_name = std::make_pair(parent, name);
-        result.orphaned_node_conflicts.push_back(c);
-        return;
+        I(null_name(name));
+        if (result.roster.has_root())
+          {
+            // see comments below about name collisions.
+            rename_target_conflict c;
+            c.nid1 = nid;
+            c.nid2 = result.roster.root()->self;
+            c.parent_name = std::make_pair(parent, name);
+            split_path root_sp;
+            file_path().split(root_sp);
+            // this line will currently cause an abort, because we don't
+            // support detaching the root node
+            result.roster.detach_node(root_sp);
+            result.rename_target_conflicts.push_back(c);
+          }
       }
-
-    dir_t p = downcast_to_dir_t(result.roster.get_node(parent));
-
-    // name conflict:
-    // see the comment in roster_merge.hh for the analysis showing that at
-    // most two nodes can participate in a rename target conflict.  this code
-    // exploits that; after this code runs, there will be no node at the given
-    // location in the tree, which means that in principle, if there were a
-    // third node that _also_ wanted to go here, when we got around to
-    // attaching it we'd have no way to realize it should be a conflict.  but
-    // that never happens, so we don't have to keep a lookaside set of
-    // "poisoned locations" or anything.
-    if (p->has_child(name))
+    else
       {
-        rename_target_conflict c;
-        c.nid1 = nid;
-        c.nid2 = p->get_child(name)->self;
-        c.parent_name = std::make_pair(parent, name);
-        p->detach_child(name);
-        result.rename_target_conflicts.push_back(c);
-        return;
-      }
+        // orphan:
+        if (!result.roster.has_node(parent))
+          {
+            orphaned_node_conflict c;
+            c.nid = nid;
+            c.parent_name = std::make_pair(parent, name);
+            result.orphaned_node_conflicts.push_back(c);
+            return;
+          }
 
-    if (would_make_dir_loop(result.roster, nid, parent))
-      {
-        directory_loop_conflict c;
-        c.nid = nid;
-        c.parent_name = std::make_pair(parent, name);
-        result.directory_loop_conflicts.push_back(c);
-        return;
-      }
+        dir_t p = downcast_to_dir_t(result.roster.get_node(parent));
 
+        // name conflict:
+        // see the comment in roster_merge.hh for the analysis showing that at
+        // most two nodes can participate in a rename target conflict.  this code
+        // exploits that; after this code runs, there will be no node at the given
+        // location in the tree, which means that in principle, if there were a
+        // third node that _also_ wanted to go here, when we got around to
+        // attaching it we'd have no way to realize it should be a conflict.  but
+        // that never happens, so we don't have to keep a lookaside set of
+        // "poisoned locations" or anything.
+        if (p->has_child(name))
+          {
+            rename_target_conflict c;
+            c.nid1 = nid;
+            c.nid2 = p->get_child(name)->self;
+            c.parent_name = std::make_pair(parent, name);
+            p->detach_child(name);
+            result.rename_target_conflicts.push_back(c);
+            return;
+          }
+
+        if (would_make_dir_loop(result.roster, nid, parent))
+          {
+            directory_loop_conflict c;
+            c.nid = nid;
+            c.parent_name = std::make_pair(parent, name);
+            result.directory_loop_conflicts.push_back(c);
+            return;
+          }
+      }
     // hey, we actually made it.  attach the node!
     result.roster.attach_node(nid, parent, name);
   }
