@@ -123,6 +123,8 @@ check_files(app_state & app, std::map<file_id, checked_file> & checked_files)
   I(checked_files.size() == files.size());
 }
 
+/* FIXME_ROSTERS
+
 static void
 check_manifests(app_state & app, 
                 std::map<manifest_id, checked_manifest> & checked_manifests, 
@@ -178,6 +180,8 @@ check_manifests(app_state & app,
 
   I(checked_manifests.size() == manifests.size());
 }
+
+*/
 
 static void
 check_revisions(app_state & app, 
@@ -689,7 +693,8 @@ check_db(app_state & app)
   size_t bad_sigs = 0;
 
   check_files(app, checked_files);
-  check_manifests(app, checked_manifests, checked_files);
+  // FIXME_ROSTERS
+  //check_manifests(app, checked_manifests, checked_files);
   check_revisions(app, checked_revisions, checked_manifests);
   check_ancestry(app, checked_revisions);
   check_sane(app, checked_revisions);

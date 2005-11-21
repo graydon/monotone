@@ -225,34 +225,38 @@ automate_attributes(std::vector<utf8> args,
   if (args.size() > 1)
     throw usage(help_name);
 
-  // is there an .mt-attrs?
-  file_path attr_path;
-  get_attr_path(attr_path);
-  if (!file_exists(attr_path)) return;
+  roster_t base, current;
+  temp_node_id_source nis;
+  get_base_and_current_roster_shape(base, current, nis, app);
 
-  // read attribute map 
-  data attr_data;
-  attr_map attrs;
-
-  read_data(attr_path, attr_data);
-  read_attr_map(attr_data, attrs);
-
-  if (args.size() == 1) {
-    // a filename was given, if it has attributes, print them
-    file_path path = file_path_external(idx(args,0));
-    attr_map::const_iterator i = attrs.find(path);
-    if (i == attrs.end()) return;
-
-    for (std::map<std::string, std::string>::const_iterator j = i->second.begin();
-         j != i->second.end(); ++j)
-      output << j->first << std::endl;
-  }
-  else {
-    for (attr_map::const_iterator i = attrs.begin(); i != attrs.end(); ++i)
-      {
-        output << (*i).first << std::endl;
-      }
-  }
+  if (args.size() == 1)
+    {
+      // a filename was given, if it has attributes, print them
+      split_path path;
+      file_path_external(idx(args,0)).split(path);
+      
+      if (current.has_node(path))
+        {
+          node_t n = current.get_node(path);
+          for (full_attr_map_t::const_iterator i = n->attrs.begin();
+               i != n->attrs.end(); ++i)
+            if (i->second.first)
+              output << i->first << std::endl;
+        }
+    }
+  else
+    {
+      for (node_map::const_iterator i = current.all_nodes().begin();
+           i != current.all_nodes().end(); ++i)
+        {
+          if (!i->second->attrs.empty())
+            {
+              split_path path;
+              current.get_name(i->first, path);
+              output << file_path(path) << std::endl;
+            }
+        }
+    }
 }
 
 // Name: toposort
