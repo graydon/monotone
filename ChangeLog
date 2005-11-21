@@ -1,3 +1,7 @@
+2005-11-21  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Initial draft of 0.24 release notes.
+
 2005-11-14  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Historical records): Clarify wording, based on

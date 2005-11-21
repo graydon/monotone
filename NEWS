@@ -1,3 +1,108 @@
+????????????????????????????
+
+        0.24 release.
+
+        Configuration change (Windows only):
+        - Configuration directory on Windows has changed.  It used to
+          be some complicated and varying function of %HOME%,
+          %USERPROFILE%, %HOMEDRIVE%\%HOMEPATH%, whether you were
+          running in mingw/cygwin, etc.  It is now, always,
+          %APPDATA%\Monotone.  For instance, if your configuration
+          file used to be named
+            ...\Documents and Settings\.monotone\monotonerc
+          it will now be named
+            ...\???\Monotone\monotonerc
+          Please rename files appropriately.
+
+        Major key management changes:
+        - Private keys are no longer stored in your database.  They
+          are stored in ~/.monotone/keys/ (Unix, OS X) or
+          %APPDATA%\Monotone\keys\ (Windows).  'db migrate' will
+          automatically move your keys out of your database and into
+          their proper location.  Consequences:
+          - 'genkey' no longer requires a database.  Simply run it
+            once when you first start using monotone, even before you
+            have created a database.
+          - Running 'genkey' once will suffice to give all databases
+            on one computer access to your key.  No more fiddling with
+            'read'.
+          - When you want to make your key available on another
+            computer, simply copy over the appropriate file from your
+            'keys' directory to the corresponding directory on the new
+            computer.
+        - Private keys also use a more standard on-disk envelope
+          encoding ("PBE-PKCS5v20(SHA-1,TripleDES/CBC)") instead of
+          previous ARC4.  More secure, and with extra crypto karma.
+
+        Netsync changes:
+        - Command line syntax for 'serve' changed; administrators WILL
+          have to adjust scripts.
+            monotone serve my.host.com "*"
+          becomes
+            monotone serve --bind=my.host.com "*"
+          or simple
+            monotone serve "*"
+          (to serve on the default port, on all interfaces).
+        - Speaking of which, we can now bind to all interfaces; run
+          'serve' without passing --bind, or with passing
+          --bind=:port, and monotone will listen on all interfaces.
+        - New option '--key-to-push' for 'push', 'sync', allows
+          administrator to push a new user's public key into a running
+          server without restarting it.
+        - Netsync permission hooks have new defaults that read a
+          description of allowed access out of a standard,
+          basic_io-based textfile (the same stanza-based format that
+          revisions use).  Current hooks will continue to work, but
+          users may prefer to transition to this format; see manual
+          for details.
+        - Between these, it is now straightforward to change
+          permissions and add users without restarting your server.
+        - Improvements to experimental "usher" facility.
+
+        UI improvements:
+        - New convenience options "add --unknown", "drop --missing",
+          "revert --missing" do what you'd expect -- add all
+          non-ignored non-versioned files, drop all
+          deleted-but-undropped files, and restore all
+          deleted-but-undropped files, respectively.
+        - New selector "h:" to select heads of a branch.  "h:" means
+          heads of current branch, "h:mybranch" means heads of
+          mybranch.
+        - Similarly, "b:" selector with no argument now refers to
+          current branch.
+        - Commit messages now have a blank line at the top so you can
+          start typing directly.
+        - No more obscure error messages when multiple monotone
+          processes attempt to access a single database at the same
+          time; we now fail early with a more sensible error message.
+          (Concurrent access has never caused database corruption;
+          this simply makes the corruption prevention less frustrating
+          for the user.)
+        - New handlers for SIGTERM, SIGINT to rollback database
+          transactions.  Not visible to users (unless you're really
+          looking carefully).  (Again, killing monotone has never been
+          able to cause database corruption; this simply causes the
+          transactions to be rolled back immediately, rather than the
+          next time monotone runs, which improves robustness in some
+          theoretical way.)
+
+        Changes in 'automate':
+        - New command 'automate keys' to get information on existing
+          keys in basic_io format.
+
+        Smaller changes:
+        - Improved handling of multibyte characters in message
+          displays.
+        - Fixes to Botan's memory allocator, to avoid pathological
+          slowdowns in some rare cases.
+        - Fix bug in delta-storage code; we were not being as aggressive
+          about delta-compressing files and manifests as we should
+          have been.
+        - Minor bugs fixed, error messages improved.
+
+                - Upgrading from 0.23: You must run 'db migrate' and
+                  provide your password, for each database.
+
 Fri Sep 30 02:50:05 PDT 2005
 
         0.23 release.
