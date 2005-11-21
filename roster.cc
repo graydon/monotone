@@ -2788,17 +2788,17 @@ check_sane_roster_test()
 static void
 check_sane_roster_loop_test()
 {
-  temp_node_id_source nis;
-  roster_t r;
+  testing_node_id_source nis;
+  roster_t r; MM(r);
   split_path root, foo_bar;
   file_path().split(root);
   file_path_internal("foo/bar").split(foo_bar);
   r.attach_node(r.create_dir_node(nis), root);
   node_id nid_foo = r.create_dir_node(nis);
   node_id nid_bar = r.create_dir_node(nis);
-  r.attach_node(nid_foo, nid_bar, foo_bar[0]);
-  r.attach_node(nid_bar, nid_foo, foo_bar[1]);
-  BOOST_CHECK_THROW(r.check_sane(false), std::logic_error);
+  r.attach_node(nid_foo, nid_bar, foo_bar[1]);
+  r.attach_node(nid_bar, nid_foo, foo_bar[2]);
+  BOOST_CHECK_THROW(r.check_sane(true), std::logic_error);
 }
 
 void
