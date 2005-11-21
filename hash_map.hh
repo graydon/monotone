@@ -29,6 +29,7 @@ namespace hashmap {
 #ifdef HAVE_STLPORT_HASHMAP
 #define HASHMAP_PRESENT
 #include <hash_map>
+#include <hash_set>
 #include <string>
 
 namespace hashmap {

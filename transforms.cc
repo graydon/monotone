@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <wchar.h>
 
 #include <boost/tokenizer.hpp>
 #include <boost/scoped_array.hpp>
