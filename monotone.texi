@@ -90,7 +90,7 @@ Complete table of contents
 @chapter Concepts
 
 This chapter should familiarize you with the concepts, terminology,
-and behavior described in the remainder of the user manual. Please
+and behavior described in the remainder of the user manual.  Please
 take a moment to read it, as later sections will assume familiarity
 with these terms.
 
@@ -418,17 +418,20 @@ function and thus assigned a @dfn{revision ID}.
 @image{figures/revision}
 @end ifnotinfo
 
-The content of a revision makes reference to file IDs, in describing
-a changeset, and manifest IDs, in describing tree states ``before and
-after'' the changeset. Crucially, revisions also make reference to
-@i{other revision IDs}. This fact -- that revisions include the IDs of
-other revisions -- causes the set of revisions to join together into a
-historical @i{chain of events}, somewhat like a ``linked list''.  Each
-revision in the chain has a unique ID, which includes @i{by reference}
-all the revisions preceeding it. Even if you undo a changeset, and
-return to a previously-visited manifest ID during the course of your
-edits, each revision will incorporate the ID of its predecessor, thus
-forming a new unique ID for each point in history.
+The content of a revision includes one or more changesets.  These
+changesets make reference to file IDs, to describe how the tree changed.
+The revision also contains manifest IDs, as another way of describing
+the tree ``before and after'' the changeset --- storing this information
+in two forms allows monotone to detect any bugs or corrupted data before
+they can enter your history.  Finally and crucially, revisions also make
+reference to @i{other revision IDs}. This fact -- that revisions include
+the IDs of other revisions -- causes the set of revisions to join
+together into a historical @i{chain of events}, somewhat like a ``linked
+list''.  Each revision in the chain has a unique ID, which includes
+@i{by reference} all the revisions preceeding it. Even if you undo a
+changeset, and return to a previously-visited manifest ID during the
+course of your edits, each revision will incorporate the ID of its
+predecessor, thus forming a new unique ID for each point in history.
 
 @ifinfo
 @smallexample
@@ -1629,9 +1632,9 @@ pair of small files in his @file{~/.monotone} directory:
 @smallexample
 @group
 $ cat >>~/.monotone/read-permissions
-[*]
-abe@@juicebot.co.jp
-beth@@juicebot.co.jp
+pattern "*"
+allow "abe@@juicebot.co.jp"
+allow "beth@@juicebot.co.jp"
 ^D
 
 $ cat >>~/.monotone/write-permissions
@@ -5036,7 +5039,8 @@ Print all revisions that match the given selector.
 
 Zero or more lines, each giving the ID of one revision that matches the
 given selector.  Each line consists of a revision ID, in hexadecimal,
-followed by a newline.
+followed by a newline.  Revision ids are printed in alphabetically
+sorted order.
 
 @item Error conditions:
 
@@ -5901,31 +5905,33 @@ The default definition of this hook reads a file @file{read-permissions} in
 the configuration directory. This file looks like
 @smallexample
 @group
-[net.example.project.security*]
-[net.example.project.private*]
-! --all--
-joe@@example.net
-jim@@example.net
-[net.example.public*]
-[net.example.project*]
---all--
+pattern "net.example.project.@{private,security@}*"
+allow "joe@@example.net"
+allow "jim@@example.net"
+
+comment "everyone can read these branches"
+pattern "net.example.@{public,project@}*"
+allow "*"
 @end group
 @end smallexample
 This example allows everyone access to branches @code{net.example.project} and
 @code{net.example.public} and their sub-branches, except for the branches in
-@code{net.example.security} and @code{net.example.private}, which are only
-readable by Joe and Jim.
+@code{net.example.project.security} and @code{net.example.project.private},
+which are only readable by Joe and Jim.
 
-The file is divided into sections of one or more lines in square brackets
-followed by one or more lines not in square brackets. A line in square brackets
-is a wildcard expression, which is matched against the @var{branch}. If one
-matches, then the other lines in that section are compared against
-@var{identity}. A line @code{keyname} allows @code{keyname} read access, and a
-line @code{! keyname} denies access. The special value @code{--all--} allows
-read access to everyone (including anonymous), and @code{! --all--} means that
-only keys allowed by this section have access. Without @code{! --all--}, if a
-key is neither allowed nor denied permission in a section, the hook will keep
-looking for matching sections in the rest of the file.
+The file is divided into stanzas of one @code{pattern} line followed by any
+number of @code{allow} and @code{deny} lines, and possibly a @code{continue}
+line. Anything from the unquoted word @code{comment} until the next unquoted
+word is ignored. A stanza is processed if the argument to
+@code{pattern} is a glob that matches @var{branch}. Any keys which match an
+@code{allow} line are given access, and any keys which match a @code{deny} line
+are denied access. If there is a @code{continue "true"} line, then if the key
+is not granted or denied access in this stanza the next matching stanza will be
+processed. If there is not a @code{continue "true"} line, then any key which
+has not been given access will be denied access even if it doesn't match any
+@code{deny} lines. Thus, deny lines are redundant unless there is also a
+@code{continue "true"} line.
+
 
 If a client connects anonymously, this hook will be called with a
 @var{identity} of @code{nil}.
@@ -5944,7 +5950,7 @@ be allowed to write into your database certs, revisions, manifests, and
 files; otherwise @code{false}. The default definition of this hook reads a file
 @file{write-permissions} in the configuration directory which contains a list
 of keys, one per line, which are allowed write access. The special value
-@code{--all--} means to allow access to anyone whose public key we already have.
+@code{*} means to allow access to anyone whose public key we already have.
 
 If a client connects anonymously, it will be unconditionally denied
 write access; this hook will @emph{not} be called with a @var{identity}
@@ -6371,6 +6377,37 @@ Wait until the process with given pid (process handle on Win32) exits.
 Returns two values: a result value and the exit code of the waited-for
 process.
 The exit code is meaningful only if the result value is 0.
+
+@item parse_basic_io(@var{data})
+
+Parse the string @var{data}, which should be in basic_io format. It returns nil
+if it can't parse the string; otherwise it returns a table. This will be a list
+of all statements, with each entry being a table having a "name" element that is
+the symbol beginning the statement and a "values" element that is a list of all
+the arguments.
+
+For example, given this as input:
+
+@smallexample
+@group
+thingy "foo" "bar"
+thingy "baz"
+spork
+frob "oops"
+@end group
+@end smallexample
+
+The output table will be:
+@smallexample
+@group
+@{
+   1 = @{ name = "thingy", args = @{ 1 = "foo", 2 = "bar" @} @},
+   2 = @{ name = "thingy", args = @{ 1 = "baz" @} @},
+   3 = @{ name = "spork", args = @{ @} @},
+   4 = @{ name = "frob", args = @{ 1 = "oops" @} @}
+@}
+@end group
+@end smallexample
 
 @end ftable
 

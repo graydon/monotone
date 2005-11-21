@@ -2280,7 +2280,10 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   get_branch_heads(app.branch_name(), app, heads);
   unsigned int old_head_size = heads.size();
 
-  guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
+  if (app.branch_name() != "") 
+    branchname = app.branch_name();
+  else 
+    guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
 
   P(F("beginning commit on branch '%s'\n") % branchname);
   L(F("new manifest '%s'\n"

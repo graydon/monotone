@@ -53,6 +53,20 @@ app_state::~app_state()
 }
 
 void
+app_state::set_is_explicit_option (int option_id)
+{
+  explicit_option_map[option_id] = true;
+}
+
+bool
+app_state::is_explicit_option(int option_id) const
+{
+  std::map<int, bool>::const_iterator i = explicit_option_map.find(option_id);
+  if (i == explicit_option_map.end()) return false;
+  return i->second;
+}
+
+void
 app_state::allow_working_copy()
 {
   L(F("initializing from directory %s\n") % fs::initial_path().string());

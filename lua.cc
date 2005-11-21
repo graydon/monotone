@@ -35,6 +35,8 @@ extern "C" {
 #include "platform.hh"
 #include "transforms.hh"
 #include "paths.hh"
+#include "globish.hh"
+#include "basic_io.hh"
 
 // defined in {std,test}_hooks.lua, converted
 #include "test_hooks.h"
@@ -627,6 +629,35 @@ extern "C"
   }
 
   static int
+  monotone_globish_match_for_lua(lua_State *L)
+  {
+    const char *re = lua_tostring(L, -2);
+    const char *str = lua_tostring(L, -1);
+
+    bool result = false;
+    try {
+      string r(re);
+      string n;
+      string s(str);
+      result = globish_matcher(r, n)(s);
+    } catch (informative_failure & e) {
+      lua_pushstring(L, e.what.c_str());
+      lua_error(L);
+      return 0;
+    } catch (boost::bad_pattern & e) {
+      lua_pushstring(L, e.what());
+      lua_error(L);
+      return 0;
+    } catch (...) {
+      lua_pushstring(L, "Unknown error.");
+      lua_error(L);
+      return 0;
+    }
+    lua_pushboolean(L, result);
+    return 1;
+  }
+
+  static int
   monotone_gettext_for_lua(lua_State *L)
   {
     const char *msgid = lua_tostring(L, -1);
@@ -646,6 +677,68 @@ extern "C"
       }
     else
       lua_pushnil(L);
+    return 1;
+  }
+
+  static int
+  monotone_parse_basic_io_for_lua(lua_State *L)
+  {
+    vector<pair<string, vector<string> > > res;
+    const char *str = lua_tostring(L, -1);
+    std::istringstream iss(str);
+    basic_io::input_source in(iss, "monotone_parse_basic_io_for_lua");
+    basic_io::tokenizer tok(in);
+    try
+      {
+        string got;
+        basic_io::token_type tt;
+        do
+          {
+            tt = tok.get_token(got);
+            switch (tt)
+              {
+              case basic_io::TOK_SYMBOL:
+                res.push_back(make_pair(got, vector<string>()));
+                break;
+              case basic_io::TOK_STRING:
+              case basic_io::TOK_HEX:
+                E(!res.empty(), boost::format("bad input to parse_basic_io"));
+                res.back().second.push_back(got);
+                break;
+              default:
+                break;
+              }
+          }
+        while (tt != basic_io::TOK_NONE);
+      }
+    catch (informative_failure & e)
+      {// there was a syntax error in our string
+        lua_pushnil(L);
+        return 0;
+      }
+    lua_newtable(L);
+    int n = 1;
+    for (vector<pair<string, vector<string> > >::const_iterator i = res.begin();
+         i != res.end(); ++i)
+      {
+        lua_pushnumber(L, n++);
+        lua_newtable(L);
+        lua_pushstring(L, "name");
+        lua_pushstring(L, i->first.c_str());
+        lua_settable(L, -3);
+        lua_pushstring(L, "values");
+        lua_newtable(L);
+        int m = 1;
+        for (vector<string>::const_iterator j = i->second.begin();
+             j != i->second.end(); ++j)
+          {
+            lua_pushnumber(L, m++);
+            lua_pushstring(L, j->c_str());
+            lua_settable(L, -3);
+          }
+        lua_settable(L, -3);
+        lua_settable(L, -3);
+      }
     return 1;
   }
 }
@@ -679,6 +772,7 @@ lua_hooks::lua_hooks()
   lua_register(st, "includedir", monotone_includedir_for_lua);
   lua_register(st, "gettext", monotone_gettext_for_lua);
   lua_register(st, "get_confdir", monotone_get_confdir_for_lua);
+  lua_register(st, "parse_basic_io", monotone_parse_basic_io_for_lua);
 
   // add regex functions:
   lua_newtable(st);
@@ -688,6 +782,16 @@ lua_hooks::lua_hooks()
 
   lua_pushstring(st, "search");
   lua_pushcfunction(st, monotone_regex_search_for_lua);
+  lua_settable(st, -3);
+
+  // add globish functions:
+  lua_newtable(st);
+  lua_pushstring(st, "globish");
+  lua_pushvalue(st, -2);
+  lua_settable(st, LUA_GLOBALSINDEX);
+
+  lua_pushstring(st, "match");
+  lua_pushcfunction(st, monotone_globish_match_for_lua);
   lua_settable(st, -3);
 
   lua_pop(st, 1);

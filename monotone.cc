@@ -360,6 +360,7 @@ cpp_main(int argc, char ** argv)
 
             case OPT_BRANCH_NAME:
               app.set_branch(string(argstr));
+              app.set_is_explicit_option(OPT_BRANCH_NAME);
               break;
 
             case OPT_VERSION:
@@ -378,10 +379,12 @@ cpp_main(int argc, char ** argv)
 
             case OPT_MESSAGE:
               app.set_message(string(argstr));
+              app.set_is_explicit_option(OPT_MESSAGE);
               break;
 
             case OPT_MSGFILE:
               app.set_message_file(string(argstr));
+              app.set_is_explicit_option(OPT_MSGFILE);
               break;
 
             case OPT_DATE:
@@ -465,6 +468,7 @@ cpp_main(int argc, char ** argv)
                 app.bind_address = utf8(addr_part);
                 app.bind_port = utf8(port_part);
               }
+              app.set_is_explicit_option(OPT_BIND);
               break;
 
             case OPT_MISSING:

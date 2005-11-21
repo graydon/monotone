@@ -194,7 +194,11 @@ function edit_comment(basetext, user_log_message)
    local tmp, tname = temp_file()
    if (tmp == nil) then return nil end
    basetext = "MT: " .. string.gsub(basetext, "\n", "\nMT: ") .. "\n"
-   tmp:write(user_log_message)
+   if user_log_message == "" then
+      tmp:write("\n")
+   else
+      tmp:write(user_log_message)
+   end
    tmp:write(basetext)
    io.close(tmp)
 
@@ -781,52 +785,56 @@ function external_diff(file_path, data_old, data_new, is_binary, diff_args, rev_
    os.remove (new_file);
 end
 
-function wildcard_match(glob, str)
-   local pat = string.gsub(glob, "([%^%$%(%)%%%.%*%+%-%?])", "%%%1")
-   pat = string.gsub(pat, "%%%*", ".*")
-   pat = string.gsub(pat, "%%%?", ".")
-   pat = string.gsub(pat, "%[!", "%[%^")
-   return string.find(str, pat)
+function globish_match(glob, str)
+      local pcallstatus, result = pcall(function() if (globish.match(glob, str)) then return true else return false end end)
+      if pcallstatus == true then
+          -- no error
+          return result
+      else
+          -- globish.match had a problem
+          return nil
+      end
 end
 
 function get_netsync_read_permitted(branch, ident)
    local permfile = io.open(get_confdir() .. "/read-permissions", "r")
    if (permfile == nil) then return false end
-   local fallthrough = true
-   local first = true
-   local line = permfile:read()
-   while line ~= nil and (first or fallthrough) do
-      -- find the appropriate section
-      local gotbr
-      while (line ~= nil and not gotbr) do
-         local foo, _, pat = string.find(line, "^%[(.*)%]$")
-         if foo then
-            gotbr = wildcard_match(pat, branch)
-         end
-         line = permfile:read()
-      end
-      -- several [glob] lines immediately following eachother
-      -- share a list of allowed keys
-      while (line ~= nil and string.find(line, "^%[.*%]$")) do
-         line = permfile:read()
-      end
-      -- no matching entries
-      if not gotbr then return false end
-      -- check that section only
-      while (line ~= nil and not string.find(line, "^%[.*%]$")) do
-         local _, _, ln = string.find(line, "%s*([^%s]*)%s*")
-         local _, _, notln = string.find(line, "%s*!%s+([^%s]*)%s*")
-         if ln == "--all--" then return true end
-         if notln == "--all--" then fallthrough = false end
-         if ident ~= nil then
-            if ln == ident then return true end
-            if notln == ident then return false end
-         end
-         line = permfile:read()
-      end
-      first = false
+   local dat = permfile:read("*a")
+   local res = parse_basic_io(dat)
+   if res == nil then
+      io.stderr:write("file read-permissions cannot be parsed\n")
+      return false
    end
-   io.close(permfile)
+   local matches = false
+   local cont = false
+   for i, item in pairs(res)
+   do
+      -- legal names: pattern, allow, deny, continue
+      if item.name == "pattern" then
+         if matches and not cont then return false end
+         matches = false
+         for j, val in pairs(item.values) do
+            if globish_match(val, branch) then matches = true end
+         end
+      elseif item.name == "allow" then if matches then
+         for j, val in pairs(item.values) do
+            if val == "*" then return true end
+            if globish_match(val, ident) then return true end
+         end
+      end elseif item.name == "deny" then if matches then
+         for j, val in pairs(item.values) do
+            if globish_match(val, ident) then return false end
+         end
+      end elseif item.name == "continue" then if matches then
+         cont = true
+         for j, val in pairs(item.values) do
+            if val == "false" or val == "no" then cont = false end
+         end
+      end elseif item.name ~= "comment" then
+         io.stderr:write("unknown symbol in read-permissions: " .. item.name .. "\n")
+         return false
+      end
+   end
    return false
 end
 
@@ -838,8 +846,8 @@ function get_netsync_write_permitted(ident)
    local line = permfile:read()
    while (line ~= nil) do
       local _, _, ln = string.find(line, "%s*([^%s]*)%s*")
-      if ln == "--all--" then return true end
-      if ln == ident then return true end
+      if ln == "*" then return true end
+      if globish_match(ln, ident) then return true end
       line = permfile:read()
    end
    io.close(permfile)
