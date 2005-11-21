@@ -123,15 +123,6 @@ write_revision_set(revision_set const & rev,
 
 // sanity checking
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
-
-void
-check_sane_history(revision_id const & child_id, int depth, app_state & app);
-*/
-
-// graph walking
-
 void
 find_common_ancestor_for_merge(revision_id const & left,
                                revision_id const & right,
