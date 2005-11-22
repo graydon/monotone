@@ -333,6 +333,7 @@ database::dump(ostream & out)
   res = sqlite3_exec(req.sql,
                         "SELECT name, type, sql FROM sqlite_master "
                         "WHERE type='table' AND sql NOT NULL "
+                        "AND name not like 'sqlite_stat%' "
                         "ORDER BY name",
                         dump_table_cb, &req, NULL);
   assert_sqlite3_ok(req.sql);

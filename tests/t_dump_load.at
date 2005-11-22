@@ -11,6 +11,10 @@ ADD_FILE(testfile2, [foo foo
 ])
 COMMIT(branch2)
 
+# run a db analyze so that SQLite creates any internal tables and indices,
+# because we want to make sure we don't attempt to dump and load these.
+AT_CHECK(MONOTONE db execute 'analyze;', [], [ignore], [ignore])
+
 AT_CHECK(MONOTONE db dump, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(MONOTONE db load <stdout --db=test2.db, [], [ignore], [ignore])
