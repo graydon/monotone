@@ -1,3 +1,11 @@
+2005-11-22  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc (database::dump): Don't include SQLite internal
+	tables in the dump.
+	* tests/t_dump_load.at (database dump/load): Run a db analyze
+	before dumping the db--catches cases where we dump internal db
+	tables that we can't reload.
+
 2005-11-21  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* NEWS: Minor spelling tweaks.
