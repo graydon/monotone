@@ -1,3 +1,8 @@
+2005-11-23  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (automate_stdio): Fix partial reads cloberring 
+	start of buffer.
+
 2005-11-22  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* database.cc (database::dump): Don't include SQLite internal

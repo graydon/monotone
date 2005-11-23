@@ -1207,7 +1207,7 @@ automate_stdio(std::vector<utf8> args,
               char *tok=new char[toklen];
               int count=0;
               while(count<toklen)
-                count+=read(0, tok, toklen-count);
+                count+=read(0, tok+count, toklen-count);
               if(first)
                 cmd=utf8(std::string(tok, toklen));
               else
