@@ -56,21 +56,6 @@ void xor_buf(byte[], const byte[], u32bit);
 void xor_buf(byte[], const byte[], const byte[], u32bit);
 
 /*************************************************
-* Byte Swapping Functions                        *
-*************************************************/
-u16bit reverse_bytes(u16bit);
-u32bit reverse_bytes(u32bit);
-u64bit reverse_bytes(u64bit);
-
-/*************************************************
-* Bit Swapping Functions                         *
-*************************************************/
-byte reverse_bits(byte);
-u16bit reverse_bits(u16bit);
-u32bit reverse_bits(u32bit);
-u64bit reverse_bits(u64bit);
-
-/*************************************************
 * Timer Access Functions                         *
 *************************************************/
 u64bit system_time();

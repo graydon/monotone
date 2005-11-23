@@ -172,6 +172,7 @@ void add_default_aliases()
    add_alias("SHA-1",    "SHA-160");
    add_alias("SEAL",     "SEAL-3.0-BE");
    add_alias("MARK-4",   "ARC4(256)");
+   add_alias("OMAC",     "CMAC");
    }
 
 namespace Init {

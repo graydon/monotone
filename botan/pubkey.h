@@ -47,8 +47,11 @@ class PK_Signer
    public:
       SecureVector<byte> sign_message(const byte[], u32bit);
       SecureVector<byte> sign_message(const MemoryRegion<byte>&);
+
+      void update(byte);
       void update(const byte[], u32bit);
       void update(const MemoryRegion<byte>&);
+
       SecureVector<byte> signature();
 
       void set_output_format(Signature_Format);
@@ -71,6 +74,7 @@ class PK_Verifier
       bool verify_message(const MemoryRegion<byte>&,
                           const MemoryRegion<byte>&);
 
+      void update(byte);
       void update(const byte[], u32bit);
       void update(const MemoryRegion<byte>&);
 

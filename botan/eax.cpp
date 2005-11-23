@@ -11,17 +11,17 @@ namespace Botan {
 namespace {
 
 /*************************************************
-* EAX OMAC-based PRF                             *
+* EAX MAC-based PRF                              *
 *************************************************/
-SecureVector<byte> omac_n(byte param, u32bit BLOCK_SIZE,
-                          MessageAuthenticationCode* omac,
-                          const byte in[], u32bit length)
+SecureVector<byte> eax_prf(byte param, u32bit BLOCK_SIZE,
+                           MessageAuthenticationCode* mac,
+                           const byte in[], u32bit length)
    {
    for(u32bit j = 0; j != BLOCK_SIZE - 1; j++)
-      omac->update(0);
-   omac->update(param);
-   omac->update(in, length);
-   return omac->final();
+      mac->update(0);
+   mac->update(param);
+   mac->update(in, length);
+   return mac->final();
    }
 
 }
@@ -34,12 +34,12 @@ EAX_Base::EAX_Base(const std::string& cipher_name,
    TAG_SIZE(tag_size ? tag_size / 8 : block_size_of(cipher_name)),
    BLOCK_SIZE(block_size_of(cipher_name))
    {
-   const std::string omac_name = "OMAC(" + cipher_name + ")";
+   const std::string mac_name = "CMAC(" + cipher_name + ")";
 
    cipher = get_block_cipher(cipher_name);
-   omac = get_mac(omac_name);
+   mac = get_mac(mac_name);
 
-   if(tag_size % 8 != 0 || TAG_SIZE == 0 || TAG_SIZE > omac->OUTPUT_LENGTH)
+   if(tag_size % 8 != 0 || TAG_SIZE == 0 || TAG_SIZE > mac->OUTPUT_LENGTH)
       throw Invalid_Argument(name() + ": Bad tag size " + to_string(tag_size));
 
    state.create(BLOCK_SIZE);
@@ -54,7 +54,7 @@ bool EAX_Base::valid_keylength(u32bit n) const
    {
    if(!cipher->valid_keylength(n))
       return false;
-   if(!omac->valid_keylength(n))
+   if(!mac->valid_keylength(n))
       return false;
    return true;
    }
@@ -65,8 +65,8 @@ bool EAX_Base::valid_keylength(u32bit n) const
 void EAX_Base::set_key(const SymmetricKey& key)
    {
    cipher->set_key(key);
-   omac->set_key(key);
-   header_mac = omac_n(1, BLOCK_SIZE, omac, 0, 0);
+   mac->set_key(key);
+   header_mac = eax_prf(1, BLOCK_SIZE, mac, 0, 0);
    }
 
 /*************************************************
@@ -75,8 +75,8 @@ void EAX_Base::set_key(const SymmetricKey& key)
 void EAX_Base::start_msg()
    {
    for(u32bit j = 0; j != BLOCK_SIZE - 1; j++)
-      omac->update(0);
-   omac->update(2);
+      mac->update(0);
+   mac->update(2);
    }
 
 /*************************************************
@@ -84,7 +84,7 @@ void EAX_Base::start_msg()
 *************************************************/
 void EAX_Base::set_iv(const InitializationVector& iv)
    {
-   nonce_mac = omac_n(0, BLOCK_SIZE, omac, iv.begin(), iv.length());
+   nonce_mac = eax_prf(0, BLOCK_SIZE, mac, iv.begin(), iv.length());
    state = nonce_mac;
    cipher->encrypt(state, buffer);
    }
@@ -94,7 +94,7 @@ void EAX_Base::set_iv(const InitializationVector& iv)
 *************************************************/
 void EAX_Base::set_header(const byte header[], u32bit length)
    {
-   header_mac = omac_n(1, BLOCK_SIZE, omac, header, length);
+   header_mac = eax_prf(1, BLOCK_SIZE, mac, header, length);
    }
 
 /*************************************************
@@ -147,7 +147,7 @@ void EAX_Encryption::write(const byte input[], u32bit length)
    u32bit copied = std::min(BLOCK_SIZE - position, length);
    xor_buf(buffer + position, input, copied);
    send(buffer + position, copied);
-   omac->update(buffer + position, copied);
+   mac->update(buffer + position, copied);
    input += copied;
    length -= copied;
    position += copied;
@@ -159,7 +159,7 @@ void EAX_Encryption::write(const byte input[], u32bit length)
       {
       xor_buf(buffer, input, BLOCK_SIZE);
       send(buffer, BLOCK_SIZE);
-      omac->update(buffer, BLOCK_SIZE);
+      mac->update(buffer, BLOCK_SIZE);
 
       input += BLOCK_SIZE;
       length -= BLOCK_SIZE;
@@ -168,7 +168,7 @@ void EAX_Encryption::write(const byte input[], u32bit length)
 
    xor_buf(buffer + position, input, length);
    send(buffer + position, length);
-   omac->update(buffer + position, length);
+   mac->update(buffer + position, length);
    position += length;
    }
 
@@ -177,7 +177,7 @@ void EAX_Encryption::write(const byte input[], u32bit length)
 *************************************************/
 void EAX_Encryption::end_msg()
    {
-   SecureVector<byte> data_mac = omac->final();
+   SecureVector<byte> data_mac = mac->final();
    xor_buf(data_mac, nonce_mac, data_mac.size());
    xor_buf(data_mac, header_mac, data_mac.size());
 
@@ -253,7 +253,7 @@ void EAX_Decryption::write(const byte input[], u32bit length)
 *************************************************/
 void EAX_Decryption::do_write(const byte input[], u32bit length)
    {
-   omac->update(input, length);
+   mac->update(input, length);
 
    u32bit copied = std::min(BLOCK_SIZE - position, length);
    xor_buf(buffer + position, input, copied);
@@ -288,7 +288,7 @@ void EAX_Decryption::end_msg()
    if((queue_end - queue_start) != TAG_SIZE)
       throw Integrity_Failure(name() + ": Message authentication failure");
 
-   SecureVector<byte> data_mac = omac->final();
+   SecureVector<byte> data_mac = mac->final();
 
    for(u32bit j = 0; j != TAG_SIZE; j++)
       if(queue[queue_start+j] != (data_mac[j] ^ nonce_mac[j] ^ header_mac[j]))

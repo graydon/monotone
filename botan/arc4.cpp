@@ -8,7 +8,7 @@
 namespace Botan {
 
 /*************************************************
-* Combine Cipher Stream with Message             *
+* Combine cipher stream with message             *
 *************************************************/
 void ARC4::cipher(const byte in[], byte out[], u32bit length)
    {
@@ -25,7 +25,7 @@ void ARC4::cipher(const byte in[], byte out[], u32bit length)
    }
 
 /*************************************************
-* Generate ARC4 Cipher Stream                    *
+* Generate cipher stream                         *
 *************************************************/
 void ARC4::generate()
    {

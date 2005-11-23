@@ -20,7 +20,8 @@ class ANSI_X931_RNG : public RandomNumberGenerator
       bool is_seeded() const;
       void clear() throw();
       std::string name() const;
-      ANSI_X931_RNG(RandomNumberGenerator* = 0);
+
+      ANSI_X931_RNG(const std::string& = "", RandomNumberGenerator* = 0);
       ~ANSI_X931_RNG();
    private:
       void add_randomness(const byte[], u32bit);

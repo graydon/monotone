@@ -104,19 +104,20 @@ std::string ANSI_X931_RNG::name() const
 /*************************************************
 * ANSI X931 RNG Constructor                      *
 *************************************************/
-ANSI_X931_RNG::ANSI_X931_RNG(RandomNumberGenerator* prng_ptr)
+ANSI_X931_RNG::ANSI_X931_RNG(const std::string& cipher_name,
+                             RandomNumberGenerator* prng_ptr)
    {
-   cipher = get_block_cipher("AES-256");
+   if(cipher_name == "")
+      cipher = get_block_cipher("AES-256");
+   else
+      cipher = get_block_cipher(cipher_name);
 
    const u32bit BLOCK_SIZE = cipher->BLOCK_SIZE;
 
    V.create(BLOCK_SIZE);
    R.create(BLOCK_SIZE);
 
-   if(prng_ptr)
-      prng = prng_ptr;
-   else
-      prng = new Randpool;
+   prng = (prng_ptr ? prng_ptr : new Randpool);
 
    position = 0;
    }

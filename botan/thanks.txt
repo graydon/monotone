@@ -12,13 +12,17 @@ reports, useful information, or other assistance:
 
   Darren Starsmore
   Dan Nicolaescu
-  Dominik Vogt
+  Matt Johnston
   Hany Greiss
+  Dominik Vogt
+  Kaushik Veeraraghavan
   James Widener
   Jeff B
   Ken Perano
+  Mike Desjardins
   Ying-Chieh Liao
   Vaclav Ovsik
+  Friedemann Kleint
 
 In addition, the following people have unknowingly contributed help:
 
@@ -38,9 +42,7 @@ In addition, the following people have unknowingly contributed help:
   of one of the boolean functions, which was discovered by Colin Plumb.
 
   The design of Randpool takes some of it's design principles from those
-  suggested by Eric A. Young in his SSLeay documentation and Peter Gutmann's
-  paper "Software Generation of Practically Strong Random Numbers".
-
-  ANSI_X917_RNG's design was changed from the X9.17 standard in response to the
-  attacks presented in the paper "Cryptanalytic Attacks on Pseudorandom Number
-  Generators", by Kelsey, Schneier, Wagner, and Hall.
+  suggested by Eric A. Young in his SSLeay documentation, Peter Gutmann's paper
+  "Software Generation of Practically Strong Random Numbers", and the paper
+  "Cryptanalytic Attacks on Pseudorandom Number Generators", by Kelsey,
+  Schneier, Wagner, and Hall.
