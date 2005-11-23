@@ -23,7 +23,7 @@ class EAX_Base : public Keyed_Filter
 
       bool valid_keylength(u32bit) const;
 
-      ~EAX_Base() { delete cipher; delete omac; }
+      ~EAX_Base() { delete cipher; delete mac; }
    protected:
       EAX_Base(const std::string&, u32bit);
       void start_msg();
@@ -31,7 +31,7 @@ class EAX_Base : public Keyed_Filter
 
       const u32bit TAG_SIZE, BLOCK_SIZE;
       BlockCipher* cipher;
-      MessageAuthenticationCode* omac;
+      MessageAuthenticationCode* mac;
       SecureVector<byte> nonce_mac, header_mac, state, buffer;
       u32bit position;
    };

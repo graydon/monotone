@@ -12,18 +12,17 @@ namespace Botan {
 *************************************************/
 void DES::enc(const byte in[], byte out[]) const
    {
-   u32bit left  = make_u32bit(in[0], in[1], in[2], in[3]),
-          right = make_u32bit(in[4], in[5], in[6], in[7]);
-   IP(left, right);       round(left, right, 0); round(right, left, 1);
-   round(left, right, 2); round(right, left, 3); round(left, right, 4);
-   round(right, left, 5); round(left, right, 6); round(right, left, 7);
-   round(left, right, 8); round(right, left, 9); round(left, right,10);
-   round(right, left,11); round(left, right,12); round(right, left,13);
-   round(left, right,14); round(right, left,15); FP(left, right);
-   out[0] = get_byte(0, right); out[1] = get_byte(1, right);
-   out[2] = get_byte(2, right); out[3] = get_byte(3, right);
-   out[4] = get_byte(0, left);  out[5] = get_byte(1, left);
-   out[6] = get_byte(2, left);  out[7] = get_byte(3, left);
+   u32bit L = make_u32bit(in[0], in[1], in[2], in[3]),
+          R = make_u32bit(in[4], in[5], in[6], in[7]);
+
+   IP(L, R);
+   raw_encrypt(L, R);
+   FP(L, R);
+
+   out[0] = get_byte(0, R); out[1] = get_byte(1, R);
+   out[2] = get_byte(2, R); out[3] = get_byte(3, R);
+   out[4] = get_byte(0, L); out[5] = get_byte(1, L);
+   out[6] = get_byte(2, L); out[7] = get_byte(3, L);
    }
 
 /*************************************************
@@ -31,31 +30,17 @@ void DES::enc(const byte in[], byte out[]) const
 *************************************************/
 void DES::dec(const byte in[], byte out[]) const
    {
-   u32bit left  = make_u32bit(in[0], in[1], in[2], in[3]),
-          right = make_u32bit(in[4], in[5], in[6], in[7]);
-   IP(left, right);       round(left, right,15); round(right, left,14);
-   round(left, right,13); round(right, left,12); round(left, right,11);
-   round(right, left,10); round(left, right, 9); round(right, left, 8);
-   round(left, right, 7); round(right, left, 6); round(left, right, 5);
-   round(right, left, 4); round(left, right, 3); round(right, left, 2);
-   round(left, right, 1); round(right, left, 0); FP(left, right);
-   out[0] = get_byte(0, right); out[1] = get_byte(1, right);
-   out[2] = get_byte(2, right); out[3] = get_byte(3, right);
-   out[4] = get_byte(0, left);  out[5] = get_byte(1, left);
-   out[6] = get_byte(2, left);  out[7] = get_byte(3, left);
-   }
+   u32bit L = make_u32bit(in[0], in[1], in[2], in[3]),
+          R = make_u32bit(in[4], in[5], in[6], in[7]);
 
-/*************************************************
-* DES Round                                      *
-*************************************************/
-void DES::round(u32bit& left, u32bit right, u32bit n) const
-   {
-   u32bit T1 = rotate_right(right, 4) ^ round_key[2*n],
-          T2 =              right     ^ round_key[2*n + 1];
-   left ^= SPBOX1[get_byte(0, T1)] ^ SPBOX2[get_byte(0, T2)] ^
-           SPBOX3[get_byte(1, T1)] ^ SPBOX4[get_byte(1, T2)] ^
-           SPBOX5[get_byte(2, T1)] ^ SPBOX6[get_byte(2, T2)] ^
-           SPBOX7[get_byte(3, T1)] ^ SPBOX8[get_byte(3, T2)];
+   IP(L, R);
+   raw_decrypt(L, R);
+   FP(L, R);
+
+   out[0] = get_byte(0, R); out[1] = get_byte(1, R);
+   out[2] = get_byte(2, R); out[3] = get_byte(3, R);
+   out[4] = get_byte(0, L); out[5] = get_byte(1, L);
+   out[6] = get_byte(2, L); out[7] = get_byte(3, L);
    }
 
 /*************************************************
@@ -87,27 +72,55 @@ void DES::FP(u32bit& L, u32bit& R)
 /*************************************************
 * DES Raw Encryption                             *
 *************************************************/
-void DES::raw_encrypt(u32bit& left, u32bit& right) const
+void DES::raw_encrypt(u32bit& L, u32bit& R) const
    {
-   round(left, right, 0); round(right, left, 1); round(left, right, 2);
-   round(right, left, 3); round(left, right, 4); round(right, left, 5);
-   round(left, right, 6); round(right, left, 7); round(left, right, 8);
-   round(right, left, 9); round(left, right,10); round(right, left,11);
-   round(left, right,12); round(right, left,13); round(left, right,14);
-   round(right, left,15);
+   for(u32bit j = 0; j != 16; j += 2)
+      {
+      u32bit T0, T1;
+
+      T0 = rotate_right(R, 4) ^ round_key[2*j];
+      T1 =              R     ^ round_key[2*j + 1];
+
+      L ^= SPBOX1[get_byte(0, T0)] ^ SPBOX2[get_byte(0, T1)] ^
+           SPBOX3[get_byte(1, T0)] ^ SPBOX4[get_byte(1, T1)] ^
+           SPBOX5[get_byte(2, T0)] ^ SPBOX6[get_byte(2, T1)] ^
+           SPBOX7[get_byte(3, T0)] ^ SPBOX8[get_byte(3, T1)];
+
+      T0 = rotate_right(L, 4) ^ round_key[2*j + 2];
+      T1 =              L     ^ round_key[2*j + 3];
+
+      R ^= SPBOX1[get_byte(0, T0)] ^ SPBOX2[get_byte(0, T1)] ^
+           SPBOX3[get_byte(1, T0)] ^ SPBOX4[get_byte(1, T1)] ^
+           SPBOX5[get_byte(2, T0)] ^ SPBOX6[get_byte(2, T1)] ^
+           SPBOX7[get_byte(3, T0)] ^ SPBOX8[get_byte(3, T1)];
+      }
    }
 
 /*************************************************
 * DES Raw Decryption                             *
 *************************************************/
-void DES::raw_decrypt(u32bit& left, u32bit& right) const
+void DES::raw_decrypt(u32bit& L, u32bit& R) const
    {
-   round(left, right,15); round(right, left,14); round(left, right,13);
-   round(right, left,12); round(left, right,11); round(right, left,10);
-   round(left, right, 9); round(right, left, 8); round(left, right, 7);
-   round(right, left, 6); round(left, right, 5); round(right, left, 4);
-   round(left, right, 3); round(right, left, 2); round(left, right, 1);
-   round(right, left, 0);
+   for(u32bit j = 16; j != 0; j -= 2)
+      {
+      u32bit T0, T1;
+
+      T0 = rotate_right(R, 4) ^ round_key[2*j - 2];
+      T1 =              R     ^ round_key[2*j - 1];
+
+      L ^= SPBOX1[get_byte(0, T0)] ^ SPBOX2[get_byte(0, T1)] ^
+           SPBOX3[get_byte(1, T0)] ^ SPBOX4[get_byte(1, T1)] ^
+           SPBOX5[get_byte(2, T0)] ^ SPBOX6[get_byte(2, T1)] ^
+           SPBOX7[get_byte(3, T0)] ^ SPBOX8[get_byte(3, T1)];
+
+      T0 = rotate_right(L, 4) ^ round_key[2*j - 4];
+      T1 =              L     ^ round_key[2*j - 3];
+
+      R ^= SPBOX1[get_byte(0, T0)] ^ SPBOX2[get_byte(0, T1)] ^
+           SPBOX3[get_byte(1, T0)] ^ SPBOX4[get_byte(1, T1)] ^
+           SPBOX5[get_byte(2, T0)] ^ SPBOX6[get_byte(2, T1)] ^
+           SPBOX7[get_byte(3, T0)] ^ SPBOX8[get_byte(3, T1)];
+      }
    }
 
 /*************************************************
@@ -179,17 +192,19 @@ void DES::key(const byte key[], u32bit)
 *************************************************/
 void TripleDES::enc(const byte in[], byte out[]) const
    {
-   u32bit left  = make_u32bit(in[0], in[1], in[2], in[3]),
-          right = make_u32bit(in[4], in[5], in[6], in[7]);
-   DES::IP(left, right);
-   des1.raw_encrypt(left, right);
-   des2.raw_decrypt(right, left);
-   des3.raw_encrypt(left, right);
-   DES::FP(left, right);
-   out[0] = get_byte(0, right); out[1] = get_byte(1, right);
-   out[2] = get_byte(2, right); out[3] = get_byte(3, right);
-   out[4] = get_byte(0, left);  out[5] = get_byte(1, left);
-   out[6] = get_byte(2, left);  out[7] = get_byte(3, left);
+   u32bit L = make_u32bit(in[0], in[1], in[2], in[3]),
+          R = make_u32bit(in[4], in[5], in[6], in[7]);
+
+   DES::IP(L, R);
+   des1.raw_encrypt(L, R);
+   des2.raw_decrypt(R, L);
+   des3.raw_encrypt(L, R);
+   DES::FP(L, R);
+
+   out[0] = get_byte(0, R); out[1] = get_byte(1, R);
+   out[2] = get_byte(2, R); out[3] = get_byte(3, R);
+   out[4] = get_byte(0, L); out[5] = get_byte(1, L);
+   out[6] = get_byte(2, L); out[7] = get_byte(3, L);
    }
 
 /*************************************************
@@ -197,17 +212,19 @@ void TripleDES::enc(const byte in[], byte out[]) const
 *************************************************/
 void TripleDES::dec(const byte in[], byte out[]) const
    {
-   u32bit left  = make_u32bit(in[0], in[1], in[2], in[3]),
-          right = make_u32bit(in[4], in[5], in[6], in[7]);
-   DES::IP(left, right);
-   des3.raw_decrypt(left, right);
-   des2.raw_encrypt(right, left);
-   des1.raw_decrypt(left, right);
-   DES::FP(left, right);
-   out[0] = get_byte(0, right); out[1] = get_byte(1, right);
-   out[2] = get_byte(2, right); out[3] = get_byte(3, right);
-   out[4] = get_byte(0, left);  out[5] = get_byte(1, left);
-   out[6] = get_byte(2, left);  out[7] = get_byte(3, left);
+   u32bit L = make_u32bit(in[0], in[1], in[2], in[3]),
+          R = make_u32bit(in[4], in[5], in[6], in[7]);
+
+   DES::IP(L, R);
+   des3.raw_decrypt(L, R);
+   des2.raw_encrypt(R, L);
+   des1.raw_decrypt(L, R);
+   DES::FP(L, R);
+
+   out[0] = get_byte(0, R); out[1] = get_byte(1, R);
+   out[2] = get_byte(2, R); out[3] = get_byte(3, R);
+   out[4] = get_byte(0, L); out[5] = get_byte(1, L);
+   out[6] = get_byte(2, L); out[7] = get_byte(3, L);
    }
 
 /*************************************************

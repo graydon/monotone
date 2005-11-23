@@ -159,6 +159,14 @@ void PK_Signer::update(const byte in[], u32bit length)
 /*************************************************
 * Add more to the message to be signed           *
 *************************************************/
+void PK_Signer::update(byte in)
+   {
+   update(&in, 1);
+   }
+
+/*************************************************
+* Add more to the message to be signed           *
+*************************************************/
 void PK_Signer::update(const MemoryRegion<byte>& in)
    {
    update(in, in.size());
@@ -248,9 +256,17 @@ void PK_Verifier::update(const byte in[], u32bit length)
 /*************************************************
 * Append to the message                          *
 *************************************************/
+void PK_Verifier::update(byte in)
+   {
+   update(&in, 1);
+   }
+
+/*************************************************
+* Append to the message                          *
+*************************************************/
 void PK_Verifier::update(const MemoryRegion<byte>& in)
    {
-   emsa->update(in, in.size());
+   update(in, in.size());
    }
 
 /*************************************************

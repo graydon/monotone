@@ -41,66 +41,6 @@ void xor_buf(byte out[], const byte in[], const byte mask[], u32bit length)
    }
 
 /*************************************************
-* Byte Reversal Functions                        *
-*************************************************/
-u16bit reverse_bytes(u16bit input)
-   {
-   return rotate_left(input, 8);
-   }
-
-u32bit reverse_bytes(u32bit input)
-   {
-   input = ((input & 0xFF00FF00) >> 8) | ((input & 0x00FF00FF) << 8);
-   return rotate_left(input, 16);
-   }
-
-u64bit reverse_bytes(u64bit input)
-   {
-   input = ((input & 0xFF00FF00FF00FF00ULL) >>  8) |
-           ((input & 0x00FF00FF00FF00FFULL) <<  8);
-   input = ((input & 0xFFFF0000FFFF0000ULL) >> 16) |
-           ((input & 0x0000FFFF0000FFFFULL) << 16);
-   return rotate_left(input, 32);
-   }
-
-/*************************************************
-* Bit Reversal Functions                         *
-*************************************************/
-byte reverse_bits(byte input)
-   {
-   input = ((input & 0xAA) >> 1) | ((input & 0x55) << 1);
-   input = ((input & 0xCC) >> 2) | ((input & 0x33) << 2);
-   return rotate_left(input, 4);
-   }
-
-u16bit reverse_bits(u16bit input)
-   {
-   input = ((input & 0xAAAA) >> 1) | ((input & 0x5555) << 1);
-   input = ((input & 0xCCCC) >> 2) | ((input & 0x3333) << 2);
-   input = ((input & 0xF0F0) >> 4) | ((input & 0x0F0F) << 4);
-   return reverse_bytes(input);
-   }
-
-u32bit reverse_bits(u32bit input)
-   {
-   input = ((input & 0xAAAAAAAA) >> 1) | ((input & 0x55555555) << 1);
-   input = ((input & 0xCCCCCCCC) >> 2) | ((input & 0x33333333) << 2);
-   input = ((input & 0xF0F0F0F0) >> 4) | ((input & 0x0F0F0F0F) << 4);
-   return reverse_bytes(input);
-   }
-
-u64bit reverse_bits(u64bit input)
-   {
-   input = ((input & 0xAAAAAAAAAAAAAAAAULL) >> 1) |
-           ((input & 0x5555555555555555ULL) << 1);
-   input = ((input & 0xCCCCCCCCCCCCCCCCULL) >> 2) |
-           ((input & 0x3333333333333333ULL) << 2);
-   input = ((input & 0xF0F0F0F0F0F0F0F0ULL) >> 4) |
-           ((input & 0x0F0F0F0F0F0F0F0FULL) << 4);
-   return reverse_bytes(input);
-   }
-
-/*************************************************
 * Return true iff arg is 2**n for some n > 0     *
 *************************************************/
 bool power_of_2(u64bit arg)

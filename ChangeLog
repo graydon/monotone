@@ -1,3 +1,7 @@
+2005-11-23  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/*: import of Botan 1.4.9
+
 2005-11-23  Grahame Bowland  <grahame@angrygoats.net>
 
 	* automate.cc (automate_stdio): Fix partial reads cloberring 

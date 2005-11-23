@@ -22,6 +22,7 @@ class DES : public BlockCipher
       DES() : BlockCipher(8, 8) {}
    private:
       friend class TripleDES;
+
       void enc(const byte[], byte[]) const;
       void dec(const byte[], byte[]) const;
       void key(const byte[], u32bit);
@@ -30,9 +31,11 @@ class DES : public BlockCipher
       void round(u32bit&, u32bit, u32bit) const;
       static void IP(u32bit&, u32bit&);
       static void FP(u32bit&, u32bit&);
+
       static const u32bit SPBOX1[256], SPBOX2[256], SPBOX3[256], SPBOX4[256],
                           SPBOX5[256], SPBOX6[256], SPBOX7[256], SPBOX8[256];
       static const u64bit IPTAB1[256], IPTAB2[256], FPTAB1[256], FPTAB2[256];
+
       SecureBuffer<u32bit, 32> round_key;
    };
 
