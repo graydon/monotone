@@ -289,14 +289,31 @@ roster_merge(roster_t const & left_parent,
             I(false);
 
           case parallel::in_left:
-            copy_node_forward(result, new_i->second, i.left_data());
-            ++left_mi;
-            break;
+            {
+              node_t const & left_n = i.left_data();
+              // we skip nodes that aren't in the result roster (were
+              // deleted in the lifecycles step above)
+              if (result.roster.has_node(left_n->self))
+                {
+                  copy_node_forward(result, new_i->second, left_n);
+                  ++new_i;
+                }
+              ++left_mi;
+              break;
+            }
 
           case parallel::in_right:
-            copy_node_forward(result, new_i->second, i.right_data());
-            ++right_mi;
-            break;
+            {
+              node_t const & right_n = i.right_data();
+              // we skip nodes that aren't in the result roster
+              if (result.roster.has_node(right_n->self))
+                {
+                  copy_node_forward(result, new_i->second, right_n);
+                  ++new_i;
+                }
+              ++right_mi;
+              break;
+            }
 
           case parallel::in_both:
             {
@@ -403,9 +420,9 @@ roster_merge(roster_t const & left_parent,
             }
             ++left_mi;
             ++right_mi;
+            ++new_i;
             break;
           }
-        ++new_i;
       }
   }
 
