@@ -13,8 +13,4 @@ AT_CHECK(QGREP(unique_value stdout))
 COMMIT(testbranch)
 REV=`BASE_REVISION`
 
-# Make sure that 'attr set' automatically did an 'add .mt-attrs' if necessary.
-AT_CHECK(MONOTONE checkout --revision=$REV testdir, [], [ignore], [ignore])
-AT_CHECK(test -f testdir/.mt-attrs)
-
 AT_CLEANUP
