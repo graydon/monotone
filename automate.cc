@@ -26,7 +26,7 @@
 #include "vocab.hh"
 #include "keys.hh"
 
-static std::string const interface_version = "1.1";
+static std::string const interface_version = "2.0";
 
 // Name: interface_version
 // Arguments: none
@@ -961,54 +961,6 @@ automate_get_revision(std::vector<utf8> args,
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
-// Name: get_manifest
-// Arguments:
-//   1: a manifest id (optional, determined from working directory if non-existant)
-// Added in: 1.0
-// Purpose: Prints the contents of the manifest associated with the given manifest ID.
-//
-// Output format: One line for each file in the manifest. Each line begins with a 
-// 40 character file ID, followed by two space characters (' ') and then the filename.
-// eg:
-// 22382ac1bdffec21170a88ff2580fe39b508243f  vocab.hh
-//
-// Error conditions:  If the manifest ID specified is unknown or invalid prints an 
-// error message to stderr and exits with status 1.
-static void
-automate_get_manifest(std::vector<utf8> args,
-                 std::string const & help_name,
-                 app_state & app,
-                 std::ostream & output)
-{
-  if (args.size() > 1)
-    throw usage(help_name);
-
-  if (args.size() == 0)
-    {
-      L(F("dumping working copy manifest"));
-      app.require_working_copy();
-
-      // FIXME: this should be refactored
-      roster_t roster;
-      temp_node_id_source nis;
-      get_current_restricted_roster(roster, nis, app);
-      data dat;
-      write_manifest_of_roster(roster, dat);
-      output.write(dat().data(), dat().size());
-    }
-  else
-    {
-      I(false);
-/*
-// FIXME ROSTERS: disabled until rewritten to use rosters
-      L(F("dumping manifest %s\n") % ident);
-      ident = manifest_id(idx(args, 0)());
-      N(app.db.manifest_version_exists(ident),
-        F("no manifest version %s found in database") % ident);
-      app.db.get_manifest_version(ident, dat);
-*/
-    }
-}
 
 // Name: get_file
 // Arguments:
