@@ -3390,8 +3390,6 @@ log_certs(app_state & app, revision_id id, cert_name name)
 }
 
 
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
     OPT_REVISION)
@@ -3431,7 +3429,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
   L(F("annotate for file_id %s\n") % file_node->self);
   do_annotate(app, file_node, rid);
 }
-*/
+
 
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
