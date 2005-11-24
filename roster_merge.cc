@@ -424,6 +424,9 @@ roster_merge(roster_t const & left_parent,
             break;
           }
       }
+    I(left_mi == left_marking.end());
+    I(right_mi == right_marking.end());
+    I(new_i == result.roster.all_nodes().end());
   }
 
   // FIXME: looped nodes here
