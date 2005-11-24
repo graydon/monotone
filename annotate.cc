@@ -529,17 +529,20 @@ do_annotate_node (const annotate_node_work &work_unit,
   // we can jump back to them directly. If we have only a content-mark
   // equal to the current rev, it means we made a decision here, and 
   // we must move to the immediate parent revs.
+  //
+  // Unfortunately, while this algorithm *could* use the marking
+  // information as suggested above, it seems to work much better
+  // (especially wrt. merges) when it goes rev-by-rev, so we leave it that
+  // way for now.
   
-  if (marks.file_content.size() == 1 
-      && *(marks.file_content.begin()) == work_unit.revision)
-    app.db.get_revision_parents(work_unit.revision, parents);
-  else
-    parents = marks.file_content;
+  //   if (marks.file_content.size() == 1 
+  //       && *(marks.file_content.begin()) == work_unit.revision)
+  app.db.get_revision_parents(work_unit.revision, parents);
+  //   else
+  //     parents = marks.file_content;
 
+  size_t added_in_parent_count = 0;
 
-  // Iterate over set of content marks from the roster. Each one represents
-  // a development history where a committer expressed an intention about a
-  // change in the content of the file we're interested in.
   for (std::set<revision_id>::const_iterator i = parents.begin(); 
        i != parents.end(); i++)
     {
@@ -555,14 +558,9 @@ do_annotate_node (const annotate_node_work &work_unit,
 
       if (!parent_roster.has_node(work_unit.fid))
         {
-          // *Any* parent missing this node means that the node was born
-          // in work_unit.revision, so we crap out if we find such a case.
-          // This is because we don't support suturing at all.
-          L(F("found file birthplace at rev %s\n") % work_unit.revision);
-          work_unit.lineage->credit_mapped_lines(work_unit.annotations);
-          work_unit.annotations->evaluate(work_unit.revision);
-          nodes_complete.insert(work_unit.revision);
-          return;
+          L(F("file added in %s, continuing\n") % work_unit.revision);
+          added_in_parent_count++;
+          continue;
         }
 
       // The node was live in the parent, so this represents a delta.
@@ -636,6 +634,11 @@ do_annotate_node (const annotate_node_work &work_unit,
             pending_merge_nodes.erase(lmn);
           }
         }
+    }
+
+  if (added_in_parent_count == parents.size()) 
+    {
+      work_unit.lineage->credit_mapped_lines(work_unit.annotations);
     }
   
   work_unit.annotations->evaluate(work_unit.revision);
