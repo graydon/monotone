@@ -85,6 +85,8 @@ building and installation process for monotone
         $ aclocal-1.7 && autoreconf --install
         $ AUTOMAKE=automake-1.7 ACLOCAL=aclocal-1.7 autoreconf --install
 
+    If this fails early, check that you have gettext packages installed.
+
   * type "./configure" for a basic configuration of monotone.  several
     configuration options are available; type "configure --help" for a
     list of all of them. some special options are shown here:
