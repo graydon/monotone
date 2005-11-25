@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([automate get_manifest])
+AT_SETUP([automate get_manifest_of])
 NEED_UNB64
 MONOTONE_SETUP
 
@@ -18,18 +18,18 @@ AT_CHECK(MONOTONE commit --date=2005-05-21T12:30:51 --branch=testbranch --messag
 BASE_R=`BASE_REVISION`
 
 # check that a correct usage produces correctly formatted output
-AT_CHECK(MONOTONE automate get_manifest $BASE_R, [], [stdout], [ignore])
+AT_CHECK(MONOTONE automate get_manifest_of $BASE_R, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp expected stdout)
 
 # should work even if we don't specify the manifest ID
-AT_CHECK(MONOTONE automate get_manifest, [], [stdout], [ignore])
+AT_CHECK(MONOTONE automate get_manifest_of, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp expected stdout)
 
 # ensure that missing revisions fail
 NOSUCHREV=0000000000000000000000000000000000000000
-AT_CHECK(MONOTONE automate get_manifest $NOSUCHREV, [1], [stdout], [ignore])
+AT_CHECK(MONOTONE automate get_manifest_of $NOSUCHREV, [1], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp empty stdout)
 

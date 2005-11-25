@@ -7,12 +7,12 @@ AT_DATA(foo, [blah blah
 # the inner code directly.
 AT_DATA(MT/work, [add_dir "."
 ])
-AT_CHECK(MONOTONE automate get_manifest, [3], [ignore], [ignore])
+AT_CHECK(MONOTONE automate get_manifest_of, [3], [ignore], [ignore])
 
 AT_DATA(MT/work, [add_dir "./bar"
 ])
 
-AT_CHECK(MONOTONE automate get_manifest, [3], [ignore], [ignore])
+AT_CHECK(MONOTONE automate get_manifest_of, [3], [ignore], [ignore])
 AT_CHECK(MONOTONE automate get_revision, [3], [ignore], [ignore])
 AT_CHECK(MONOTONE commit --message=foo --branch=foo, [3], [ignore], [ignore])
 

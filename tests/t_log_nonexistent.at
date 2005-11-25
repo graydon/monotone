@@ -28,9 +28,9 @@ mv foo bar
 AT_CHECK(MONOTONE rename foo bar, [], [ignore], [ignore])
 COMMIT(testbranch)
 
-AT_CHECK(MONOTONE log foo, [], [], [ignore])
+AT_CHECK(MONOTONE log foo, [1], [], [ignore])
 
-AT_CHECK(MONOTONE log baz, [], [], [ignore])
+AT_CHECK(MONOTONE log baz, [1], [], [ignore])
 
 AT_CHECK(MONOTONE log bar | grep "^Addition of @<:@a-z@:>@@<:@a-z@:>@@<:@a-z@:>@.$",
 [], [Addition of foo.
