@@ -254,12 +254,6 @@ done_marker
   {}
 };
 
-struct netsync_error
-{
-  string msg;
-  netsync_error(string const & s): msg(s) {}
-};
-
 struct 
 session
 {
@@ -879,11 +873,22 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
 // mode, all received data is ignored, and no new data is queued.  We simply
 // stay connected long enough for the current write buffer to be flushed, to
 // ensure that our peer receives the error message.
-// Affects read_some, write_some, and process .
+// WARNING WARNING WARNING (FIXME): this does _not_ throw an exception.  if
+// while processing any given netcmd packet you encounter an error, you can
+// _only_ call this method if you have not touched the database, because if
+// you have touched the database then you need to throw an exception to
+// trigger a rollback.
+// you could, of course, call this method and then throw an exception, but
+// there is no point in doing that, because throwing the exception will cause
+// the connection to be immediately terminated, so your call to error() will
+// actually have no effect (except to cause your error message to be printed
+// twice).
 void
 session::error(std::string const & errmsg)
 {
-  throw netsync_error(errmsg);
+  W(F("error: %s\n") % errmsg);
+  queue_error_cmd(errmsg);
+  encountered_error = true;
 }
 
 
@@ -1992,16 +1997,16 @@ session::process_refine_cmd(merkle_node const & their_node)
                 hexenc<id> hslotval;
                 their_node.get_raw_slot(slot, slotval);
                 their_node.get_hex_slot(slot, hslotval);
-                L(boost::format("(#0) they have a live leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
+                L(F("(#0) they have a live leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
                   % slot % typestr % hpref % lev);
-                L(boost::format("(#0) requesting their %s leaf %s\n") % typestr % hslotval);
+                L(F("(#0) requesting their %s leaf %s\n") % typestr % hslotval);
                 queue_send_data_cmd(their_node.type, slotval);
               }
               break;
             case dead_leaf_state:
               {
                 // we cannot ask for what they have, it is dead
-                L(boost::format("(#0) they have a dead leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
+                L(F("(#0) they have a dead leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
                   % slot % typestr % hpref % lev);
                 continue;
               }
@@ -2009,7 +2014,7 @@ session::process_refine_cmd(merkle_node const & their_node)
             case subtree_state:
               {
                 // they have a subtree; might as well ask for that
-                L(boost::format("(#0) they have a subtree at slot %d (in a %s node '%s', level %d, we do not have)\n")
+                L(F("(#0) they have a subtree at slot %d (in a %s node '%s', level %d, we do not have)\n")
                   % slot % typestr % hpref % lev);
                 merkle_node our_fake_subtree;
                 their_node.extended_prefix(slot, our_fake_subtree.pref);
@@ -2039,14 +2044,14 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case empty_state:
                   // 1: theirs == empty, ours == empty 
-                  L(boost::format("(#1) they have an empty slot %d in %s node '%s', level %d, and so do we\n")
+                  L(F("(#1) they have an empty slot %d in %s node '%s', level %d, and so do we\n")
                     % slot % typestr % hpref % lev);
                   continue;
                   break;
 
                 case live_leaf_state:
                   // 2: theirs == empty, ours == live 
-                  L(boost::format("(#2) they have an empty slot %d in %s node '%s', level %d, we have a live leaf\n")
+                  L(F("(#2) they have an empty slot %d in %s node '%s', level %d, we have a live leaf\n")
                     % slot % typestr % hpref % lev);
                   {
                     I(their_node.type == our_node->type);
@@ -2060,14 +2065,14 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case dead_leaf_state:
                   // 3: theirs == empty, ours == dead 
-                  L(boost::format("(#3) they have an empty slot %d in %s node '%s', level %d, we have a dead leaf\n")
+                  L(F("(#3) they have an empty slot %d in %s node '%s', level %d, we have a dead leaf\n")
                     % slot % typestr % hpref % lev);
                   continue;
                   break;
 
                 case subtree_state:
                   // 4: theirs == empty, ours == subtree 
-                  L(boost::format("(#4) they have an empty slot %d in %s node '%s', level %d, we have a subtree\n")
+                  L(F("(#4) they have an empty slot %d in %s node '%s', level %d, we have a subtree\n")
                     % slot % typestr % hpref % lev);
                   {
                     prefix subprefix;
@@ -2094,7 +2099,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case empty_state:
                   // 5: theirs == live, ours == empty 
-                  L(boost::format("(#5) they have a live leaf at slot %d in %s node '%s', level %d, we have nothing\n")
+                  L(F("(#5) they have a live leaf at slot %d in %s node '%s', level %d, we have nothing\n")
                     % slot % typestr % hpref % lev);
                   {
                     id slotval;
@@ -2105,7 +2110,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case live_leaf_state:
                   // 6: theirs == live, ours == live 
-                  L(boost::format("(#6) they have a live leaf at slot %d in %s node '%s', and so do we\n")
+                  L(F("(#6) they have a live leaf at slot %d in %s node '%s', and so do we\n")
                     % slot % typestr % hpref);
                   {
                     id our_slotval, their_slotval;
@@ -2115,7 +2120,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                       {
                         hexenc<id> hslotval;
                         their_node.get_hex_slot(slot, hslotval);
-                        L(boost::format("(#6) we both have live %s leaf '%s'\n") % typestr % hslotval);
+                        L(F("(#6) we both have live %s leaf '%s'\n") % typestr % hslotval);
                         continue;
                       }
                     else
@@ -2131,7 +2136,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case dead_leaf_state:
                   // 7: theirs == live, ours == dead 
-                  L(boost::format("(#7) they have a live leaf at slot %d in %s node %s, level %d, we have a dead one\n")
+                  L(F("(#7) they have a live leaf at slot %d in %s node %s, level %d, we have a dead one\n")
                     % slot % typestr % hpref % lev);
                   {
                     id our_slotval, their_slotval;
@@ -2141,7 +2146,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                       {
                         hexenc<id> hslotval;
                         their_node.get_hex_slot(slot, hslotval);
-                        L(boost::format("(#7) it's the same %s leaf '%s', but ours is dead\n") 
+                        L(F("(#7) it's the same %s leaf '%s', but ours is dead\n") 
                           % typestr % hslotval);
                         continue;
                       }
@@ -2154,7 +2159,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case subtree_state:
                   // 8: theirs == live, ours == subtree 
-                  L(boost::format("(#8) they have a live leaf in slot %d of %s node '%s', level %d, we have a subtree\n")
+                  L(F("(#8) they have a live leaf in slot %d of %s node '%s', level %d, we have a subtree\n")
                     % slot % typestr % hpref % lev);
                   {
 
@@ -2163,16 +2168,16 @@ session::process_refine_cmd(merkle_node const & their_node)
                     their_node.get_raw_slot(slot, their_slotval);
                     encode_hexenc(their_slotval, their_hval);
                     if (data_exists(their_node.type, their_slotval, app))
-                      L(boost::format("(#8) we have a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
+                      L(F("(#8) we have a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
                         % their_hval % slot % typestr % hpref % lev);
                     else
                       {
-                        L(boost::format("(#8) requesting a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
+                        L(F("(#8) requesting a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
                           % their_hval % slot % typestr % hpref % lev);
                         queue_send_data_cmd(their_node.type, their_slotval);
                       }
                     
-                    L(boost::format("(#8) sending our subtree for refinement, in slot %d of %s node '%s', level %d\n")
+                    L(F("(#8) sending our subtree for refinement, in slot %d of %s node '%s', level %d\n")
                       % slot % typestr % hpref % lev);
                     prefix subprefix;
                     our_node->extended_raw_prefix(slot, subprefix);
@@ -2195,14 +2200,14 @@ session::process_refine_cmd(merkle_node const & their_node)
                 {
                 case empty_state:
                   // 9: theirs == dead, ours == empty 
-                  L(boost::format("(#9) they have a dead leaf at slot %d in %s node '%s', level %d, we have nothing\n")
+                  L(F("(#9) they have a dead leaf at slot %d in %s node '%s', level %d, we have nothing\n")
                     % slot % typestr % hpref % lev);
                   continue;
                   break;
 
                 case live_leaf_state:
                   // 10: theirs == dead, ours == live 
-                  L(boost::format("(#10) they have a dead leaf at slot %d in %s node '%s', level %d, we have a live one\n")
+                  L(F("(#10) they have a dead leaf at slot %d in %s node '%s', level %d, we have a live one\n")
                     % slot % typestr % hpref % lev);
                   {
                     id our_slotval, their_slotval;
@@ -2212,7 +2217,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                     our_node->get_hex_slot(slot, hslotval);
                     if (their_slotval == our_slotval)
                       {
-                        L(boost::format("(#10) we both have %s leaf %s, theirs is dead\n") 
+                        L(F("(#10) we both have %s leaf %s, theirs is dead\n") 
                           % typestr % hslotval);
                         continue;
                       }
@@ -2228,14 +2233,14 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case dead_leaf_state:
                   // 11: theirs == dead, ours == dead 
-                  L(boost::format("(#11) they have a dead leaf at slot %d in %s node '%s', level %d, so do we\n")
+                  L(F("(#11) they have a dead leaf at slot %d in %s node '%s', level %d, so do we\n")
                     % slot % typestr % hpref % lev);
                   continue;
                   break;
 
                 case subtree_state:
                   // theirs == dead, ours == subtree 
-                  L(boost::format("(#12) they have a dead leaf in slot %d of %s node '%s', we have a subtree\n")
+                  L(F("(#12) they have a dead leaf in slot %d of %s node '%s', we have a subtree\n")
                     % slot % typestr % hpref % lev);
                   {
                     prefix subprefix;
@@ -2258,7 +2263,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                 {
                 case empty_state:
                   // 13: theirs == subtree, ours == empty 
-                  L(boost::format("(#13) they have a subtree at slot %d in %s node '%s', level %d, we have nothing\n")
+                  L(F("(#13) they have a subtree at slot %d in %s node '%s', level %d, we have nothing\n")
                     % slot % typestr % hpref % lev);
                   {
                     merkle_node our_fake_subtree;
@@ -2271,7 +2276,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case live_leaf_state:
                   // 14: theirs == subtree, ours == live 
-                  L(boost::format("(#14) they have a subtree at slot %d in %s node '%s', level %d, we have a live leaf\n")
+                  L(F("(#14) they have a subtree at slot %d in %s node '%s', level %d, we have a live leaf\n")
                     % slot % typestr % hpref % lev);
                   {
                     size_t subslot;
@@ -2283,7 +2288,7 @@ session::process_refine_cmd(merkle_node const & their_node)
                     
                     pick_slot_and_prefix_for_value(our_slotval, our_node->level + 1, subslot, 
                                                    our_fake_subtree.pref);
-                    L(boost::format("(#14) pushed our leaf '%s' into fake subtree slot %d, level %d\n")
+                    L(F("(#14) pushed our leaf '%s' into fake subtree slot %d, level %d\n")
                       % hslotval % subslot % (lev + 1));
                     our_fake_subtree.type = their_node.type;
                     our_fake_subtree.level = our_node->level + 1;
@@ -2295,7 +2300,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case dead_leaf_state:
                   // 15: theirs == subtree, ours == dead 
-                  L(boost::format("(#15) they have a subtree at slot %d in %s node '%s', level %d, we have a dead leaf\n")
+                  L(F("(#15) they have a subtree at slot %d in %s node '%s', level %d, we have a dead leaf\n")
                     % slot % typestr % hpref % lev);
                   {
                     size_t subslot;
@@ -2314,7 +2319,7 @@ session::process_refine_cmd(merkle_node const & their_node)
 
                 case subtree_state:
                   // 16: theirs == subtree, ours == subtree 
-                  L(boost::format("(#16) they have a subtree at slot %d in %s node '%s', level %d, and so do we\n")
+                  L(F("(#16) they have a subtree at slot %d in %s node '%s', level %d, and so do we\n")
                     % slot % typestr % hpref % lev);
                   {
                     id our_slotval, their_slotval;
@@ -2324,12 +2329,12 @@ session::process_refine_cmd(merkle_node const & their_node)
                     our_node->get_hex_slot(slot, hslotval);
                     if (their_slotval == our_slotval)
                       {
-                        L(boost::format("(#16) we both have %s subtree '%s'\n") % typestr % hslotval);
+                        L(F("(#16) we both have %s subtree '%s'\n") % typestr % hslotval);
                         continue;
                       }
                     else
                       {
-                        L(boost::format("(#16) %s subtrees at slot %d differ, refining ours\n") % typestr % slot);
+                        L(F("(#16) %s subtrees at slot %d differ, refining ours\n") % typestr % slot);
                         prefix subprefix;
                         our_node->extended_raw_prefix(slot, subprefix);
                         merkle_ptr our_subtree;
@@ -2906,8 +2911,6 @@ session::arm()
 
 bool session::process()
 {
-  if (encountered_error)
-    return true;
   try 
     {      
       if (!arm())
@@ -2929,13 +2932,6 @@ bool session::process()
     {
       W(F("protocol error while processing peer %s: '%s'\n") % peer_id % bd.what);
       return false;
-    }
-  catch (netsync_error & err)
-    {
-      W(F("error: %s\n") % err.msg);
-      queue_error_cmd(err.msg);
-      encountered_error = true;
-      return true;// don't terminate until we've send the error_cmd
     }
 }
 
@@ -2968,8 +2964,9 @@ call_server(protocol_role role,
         }
       catch (bad_decode & bd)
         {
-          E(false, F("protocol error while processing peer %s: '%s'\n") 
+          W(F("protocol error while processing peer %s: '%s'\n") 
             % sess.peer_id % bd.what);
+          return;         
         }
 
       probe.clear();
@@ -2980,7 +2977,8 @@ call_server(protocol_role role,
       
       if (fd == -1 && !armed) 
         {
-          E(false, F("timed out waiting for I/O with peer %s, disconnecting\n") % sess.peer_id);
+          P(F("timed out waiting for I/O with peer %s, disconnecting\n") % sess.peer_id);
+          return;
         }
       
       if (event & Netxx::Probe::ready_read)
@@ -2993,8 +2991,9 @@ call_server(protocol_role role,
                 }
               catch (bad_decode & bd)
                 {
-                  E(false, F("protocol error while processing peer %s: '%s'\n") 
+                  W(F("protocol error while processing peer %s: '%s'\n") 
                     % sess.peer_id % bd.what);
+                  return;         
                 }
             }
           else
@@ -3002,7 +3001,7 @@ call_server(protocol_role role,
               if (sess.sent_goodbye)
                 P(F("read from fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
               else
-                E(false, F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
+                P(F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
               return;
             }
         }
@@ -3014,22 +3013,23 @@ call_server(protocol_role role,
               if (sess.sent_goodbye)
                 P(F("write on fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
               else
-                E(false, F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
+                P(F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
               return;
             }
         }
       
       if (event & Netxx::Probe::ready_oobd)
         {
-          E(false, F("got OOB data on fd %d (peer %s), disconnecting\n") 
+          P(F("got OOB data on fd %d (peer %s), disconnecting\n") 
             % fd % sess.peer_id);
+          return;
         }
 
       if (armed)
         {
           if (!sess.process())
             {
-              E(false, F("terminated exchange with %s\n") 
+              P(F("terminated exchange with %s\n") 
                 % sess.peer_id);
               return;
             }

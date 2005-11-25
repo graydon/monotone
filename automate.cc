@@ -1342,8 +1342,6 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_certs(args, root_cmd_name, app, output);
   else if (cmd() == "get_revision")
     automate_get_revision(args, root_cmd_name, app, output);
-  else if (cmd() == "get_manifest")
-    automate_get_manifest(args, root_cmd_name, app, output);
   else if (cmd() == "get_file")
     automate_get_file(args, root_cmd_name, app, output);
   else if (cmd() == "keys")
