@@ -1,3 +1,11 @@
+2005-11-25  graydon hoare  <graydon@pobox.com>
+
+	* database.cc (get_version): Crucial fix! Rewrite the
+	delta-reconstruction algorithm to work with a DAG storage topology,
+	rather than assuming an inverted tree. Counterpart to the
+	delta-storage optimization made by Timothy Brownawell on
+	2005-11-05.
+
 2005-11-23  Matt Johnston  <matt@ucc.asn.au>
 
 	* botan/*: import of Botan 1.4.9

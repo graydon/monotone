@@ -901,6 +901,21 @@ struct version_cache
 
 static version_cache vcache;
 
+typedef vector< hexenc<id> > version_path;
+
+static void
+extend_path_if_not_cycle(string table_name, 
+                         version_path & p, hexenc<id> const & ext)
+{
+  for (version_path::const_iterator i = p.begin(); i != p.end(); ++i)
+    {
+      if ((*i)() == ext())
+        throw oops("cycle in table '" + table_name + "', at node " 
+                   + (*i)() + " <- " + ext());
+    }
+  p.push_back(ext);
+}
+
 void 
 database::get_version(hexenc<id> const & ident,
                       data & dat,
@@ -940,99 +955,93 @@ database::get_version(hexenc<id> const & ident,
       
       L(F("reconstructing %s in %s\n") % ident % delta_table);
       I(delta_exists(ident, delta_table));
-      
-      // nb: an edge map goes in the direction of the
-      // delta, *not* the direction we discover things in,
-      // i.e. each map is of the form [newid] -> [oldid]
 
-      typedef map< hexenc<id>, hexenc<id> > edgemap;
-      list< shared_ptr<edgemap> > paths;
+      // Our reconstruction algorithm involves keeping a set of parallel
+      // linear paths, starting from ident, moving forward through the
+      // storage DAG until we hit a storage root.
+      //
+      // On each iteration, we extend every active path by one step. If our
+      // extension involves a fork, we duplicate the path. If any path
+      // contains a cycle, we fault.1
 
-      set< hexenc<id> > frontier, cycles;
-      frontier.insert(ident);
-
-      bool found_root = false;
-      hexenc<id> root("");
+      vector< shared_ptr<version_path> > paths;
 
       string delta_query = "SELECT base FROM " + delta_table + " WHERE id = ?";
 
-      while (! found_root)
+      {
+        shared_ptr<version_path> pth0 = shared_ptr<version_path>(new version_path());      
+        pth0->push_back(ident);
+        paths.push_back(pth0);
+      }
+
+      shared_ptr<version_path> selected_path;
+
+      while (!selected_path)
         {
-          set< hexenc<id> > next_frontier;
-          shared_ptr<edgemap> frontier_map(new edgemap());
-
-          I(!frontier.empty());
-
-          for (set< hexenc<id> >::const_iterator i = frontier.begin();
-               i != frontier.end(); ++i)
+          // NB: use size() here, not a const_iterator, because paths may
+          // grow during iteration.
+          for (size_t i = 0; i < paths.size(); ++i)
             {
-              if (vcache.exists(*i) || exists(*i, data_table))
+              shared_ptr<version_path> pth = idx(paths,i);
+              hexenc<id> tip = pth->back();
+
+              if (vcache.exists(tip) || exists(tip, data_table))
                 {
-                  root = *i;
-                  found_root = true;
+                  selected_path = pth;
                   break;
                 }
               else
                 {
-                  cycles.insert(*i);
-                  results res;
-                  
+                  // This tip is not a root, so extend the path.
+                  results res;                  
                   fetch(res, one_col, any_rows, 
-                        delta_query.c_str(), (*i)().c_str());
+                        delta_query.c_str(), tip().c_str());
 
-                  for (size_t k = 0; k < res.size(); ++k)
+                  if (res.size() == 0)
+                    continue;
+
+                  // Replicate the path if there's a fork.
+                  for (size_t k = 1; k < res.size(); ++k)
                     {
-                      hexenc<id> const nxt(res[k][0]);
-
-                      if (cycles.find(nxt) != cycles.end())
-                        throw oops("cycle in table '" + delta_table + "', at node " 
-                                   + (*i)() + " <- " + nxt());
-
-                      next_frontier.insert(nxt);
-
-                      if (frontier_map->find(nxt) == frontier_map->end())
-                        {
-                          L(F("inserting edge: %s <- %s\n") % (*i) % nxt);
-                          frontier_map->insert(make_pair(nxt, *i));
-                        }
-                      else
-                        L(F("skipping merge edge %s <- %s\n") % (*i) % nxt);
+                      shared_ptr<version_path> pthN 
+                        = shared_ptr<version_path>(new version_path(*pth));
+                      extend_path_if_not_cycle(delta_table, *pthN, 
+                                               hexenc<id>(res[k][0]));
+                      paths.push_back(pthN);
                     }
+
+                  // And extend the base path we're examining.
+                  extend_path_if_not_cycle(delta_table, *pth, 
+                                           hexenc<id>(res[0][0]));                  
                 }
-            }
-          if (!found_root)
-            {
-              frontier = next_frontier;
-              paths.push_front(frontier_map);
             }
         }
 
-      // path built, now all we need to do is follow it back
+      // Found a root, now trace it back along the path.
 
-      I(found_root);
-      I(root() != "");
-      data begin;      
+      I(selected_path);
+      I(selected_path->size() > 1);
 
-      if (vcache.exists(root))
+      hexenc<id> curr = selected_path->back();
+      selected_path->pop_back();
+      data begin;
+
+      if (vcache.exists(curr))
         {
-          I(vcache.get(root, begin));
+          I(vcache.get(curr, begin));
         }
       else
         {
-          get(root, begin, data_table);
+          get(curr, begin, data_table);
         }
-
-      hexenc<id> curr = root;
 
       boost::shared_ptr<delta_applicator> app = new_piecewise_applicator();
       app->begin(begin());
       
-      for (list< shared_ptr<edgemap> >::const_iterator p = paths.begin();
-           p != paths.end(); ++p)
+      for (version_path::reverse_iterator i = selected_path->rbegin();
+           i != selected_path->rend(); ++i)
         {
-          shared_ptr<edgemap> i = *p;
-          I(i->find(curr) != i->end());
-          hexenc<id> const nxt = i->find(curr)->second;
+          hexenc<id> const nxt = *i;
 
           if (!vcache.exists(curr))
             {
@@ -1040,7 +1049,6 @@ database::get_version(hexenc<id> const & ident,
               app->finish(tmp);
               vcache.put(curr, tmp);
             }
-
 
           L(F("following delta %s -> %s\n") % curr % nxt);
           delta del;
