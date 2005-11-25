@@ -33,7 +33,7 @@ AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
 AT_CHECK(MONOTONE update, [], [ignore], [ignore])
 
 # check that the delta landed on the renamed target
-AT_CHECK(MONOTONE automate get_manifest, [], [stdout])
+AT_CHECK(MONOTONE automate get_manifest_of, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep bar manifest, [0], [ignore], [ignore])
 AT_CHECK(grep foo manifest, [1], [ignore], [ignore])

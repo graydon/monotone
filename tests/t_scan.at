@@ -37,7 +37,7 @@ content @<:@5c39de9ca49b3aa34fa21f5778954665d947476c@:>@
 
 AT_CHECK(MONOTONE add testfile0 foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
-AT_CHECK(MONOTONE automate get_manifest, [], [stdout]) 
+AT_CHECK(MONOTONE automate get_manifest_of, [], [stdout]) 
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp stdout manifest, [], [ignore]) 
 

@@ -3639,9 +3639,9 @@ CMD(automate, N_("automation"),
       "stdio\n"
       "certs REV\n"
       "select SELECTOR\n"
-      "get_file ID\n"
-      "get_manifest [ID]\n"
-      "get_revision [ID]\n"
+      "get_file FILEID\n"
+      "get_manifest_of [REVID]\n"
+      "get_revision [REVID]\n"
       "keys\n"),
     N_("automation interface"), 
     OPT_NONE)
