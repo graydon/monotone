@@ -3523,7 +3523,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                                            app);
               for (set<node_id>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
                 {
-                  if (nodes_changed.find(*n) != nodes_changed.end())
+                  if (nodes_changed.find(*n) != nodes_changed.end()
+                      || nodes_born.find(*n) != nodes_born.end())
                     {
                       any_node_hit = true;
                       break;
@@ -3533,8 +3534,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                    ++n)
                 nodes.erase(*n);
 
-              if (!any_node_hit)
-                print_this = false;
+              if (any_node_hit)
+                print_this = true;
             }
 
           changes_summary csum;
