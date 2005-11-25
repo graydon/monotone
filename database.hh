@@ -18,14 +18,14 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include <map>
 #include <string>
 
-#include "selectors.hh"
+#include "cset.hh"
 #include "manifest.hh"
 #include "numeric_vocab.hh"
-#include "vocab.hh"
 #include "paths.hh"
 #include "cleanup.hh"
-
-struct revision_set;
+#include "roster.hh"
+#include "selectors.hh"
+#include "vocab.hh"
 
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
@@ -69,6 +69,7 @@ struct revision_set;
 class transaction_guard;
 struct posting;
 struct app_state;
+struct revision_set;
 
 class database
 {
@@ -201,6 +202,10 @@ class database
                                         delta const & del,
                                         database & db);
 
+  void put_roster(revision_id const & rev_id,
+                  roster_t & roster,
+                  marking_map & marks);
+
   void check_filename();
   void open();
   void close();
@@ -224,10 +229,12 @@ public:
   bool file_version_exists(file_id const & id);
   bool manifest_version_exists(manifest_id const & id);
   bool revision_exists(revision_id const & id);
+  bool roster_exists_for_revision(revision_id const & id);
 
   void get_file_ids(std::set<file_id> & ids);
   void get_manifest_ids(std::set<manifest_id> & ids);
   void get_revision_ids(std::set<revision_id> & ids);
+  void get_roster_ids(std::set< hexenc<id> > & ids) ;
 
   void set_app(app_state * app);
   
@@ -235,12 +242,6 @@ public:
   // from deltas (if they exist)
   void get_file_version(file_id const & id,
                         file_data & dat);
-
-  // get file delta if it exists, else calculate it.
-  // both manifests must exist.
-  void get_file_delta(file_id const & src,
-                      file_id const & dst,
-                      file_delta & del);
 
   // put file w/o predecessor into db
   void put_file(file_id const & new_id,
@@ -265,12 +266,6 @@ public:
   // get a constructed manifest
   void get_manifest(manifest_id const & id,
                     manifest_map & mm);
-
-  // get manifest delta if it exists, else calculate it.
-  // both manifests must exist.
-  void get_manifest_delta(manifest_id const & src,
-                          manifest_id const & dst,
-                          manifest_delta & del);
 
   // put manifest w/o predecessor into db
   void put_manifest(manifest_id const & new_id,
@@ -308,12 +303,14 @@ public:
                    revision_data & dat);
 
   void put_revision(revision_id const & new_id,
-                   revision_set const & cs);
+                    revision_set const & rev);
 
   void put_revision(revision_id const & new_id,
                     revision_data const & dat);
   
   void delete_existing_revs_and_certs();
+
+  void delete_existing_manifests();
 
   void delete_existing_rev_and_certs(revision_id const & rid);
   
@@ -422,6 +419,27 @@ public:
 
   // branches
   void get_branches(std::vector<std::string> & names);
+
+  // roster and node_id stuff
+  void get_roster_id_for_revision(revision_id const & rev_id,
+                                  hexenc<id> & roster_id);
+
+  void get_roster(revision_id const & rid, 
+                  roster_t & roster);
+
+  void get_roster(revision_id const & rid, 
+                  roster_t & roster,
+                  marking_map & marks);
+
+  void get_roster(hexenc<id> const & roster_id,
+                  data & dat);
+
+  void get_uncommon_ancestors(revision_id const & a,
+                              revision_id const & b,
+                              std::set<revision_id> & a_uncommon_ancs,
+                              std::set<revision_id> & b_uncommon_ancs);
+                              
+  node_id next_node_id();
   
   // completion stuff
 

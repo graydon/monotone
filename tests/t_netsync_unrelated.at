@@ -2,6 +2,9 @@ AT_SETUP([(normal) netsync on partially unrelated revisions])
 AT_KEYWORDS([netsync])
 MONOTONE_SETUP
 
+# This test relies on file-suturing
+AT_XFAIL_IF(true)
+
 # This tests netsync'ing
 #
 #   A   B

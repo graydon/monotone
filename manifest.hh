@@ -39,8 +39,6 @@
 // have only one entry for each pathname. the same sha1 can occur multiple
 // times in a manifest.
 
-typedef std::set<file_path> path_set;
-
 typedef std::pair<file_path const, file_id> manifest_entry;
 
 typedef std::map<file_path, file_id, 
@@ -74,19 +72,6 @@ manifest_entry_id(manifest_map::const_iterator i)
 std::ostream & operator<<(std::ostream & out, manifest_entry const & e);
 
 class app_state;
-
-void extract_path_set(manifest_map const & man, path_set & paths);
-
-void classify_manifest_paths(app_state & app,
-                             manifest_map const & man, 
-                             path_set & missing,
-                             path_set & changed,
-                             path_set & unchanged);
-
-void build_restricted_manifest_map(path_set const & paths,
-                                   manifest_map const & m_old, 
-                                   manifest_map & m_new, 
-                                   app_state & app);
 
 void read_manifest_map(data const & dat,
                        manifest_map & man);

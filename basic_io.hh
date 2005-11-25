@@ -152,7 +152,9 @@ namespace basic_io
     size_t indent;  
     std::vector<std::pair<std::string, std::string> > entries;
     void push_hex_pair(std::string const & k, std::string const & v);
+    void push_hex_triple(std::string const & k, std::string const & n, std::string const & v);
     void push_str_pair(std::string const & k, std::string const & v);
+    void push_str_triple(std::string const & k, std::string const & n, std::string const & v);
     void push_file_pair(std::string const & k, file_path const & v);
     void push_str_multi(std::string const & k,
                         std::vector<std::string> const & v);

@@ -20,6 +20,7 @@
 #include "transforms.hh"
 #include "sanity.hh"
 #include "inodeprint.hh"
+#include "paths.hh"
 #include "platform.hh"
 #include "constants.hh"
 
@@ -57,15 +58,6 @@ manifest_map_builder::visit_file(file_path const & path)
   man.insert(manifest_entry(path, file_id(ident)));
 }
 
-void 
-extract_path_set(manifest_map const & man, path_set & paths)
-{
-  paths.clear();
-  for (manifest_map::const_iterator i = man.begin();
-       i != man.end(); ++i)
-    paths.insert(manifest_entry_path(i));
-}
-
 inline static bool
 inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path) 
 {
@@ -80,132 +72,6 @@ inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
     }
   else
     return false; // unavailable
-}
-
-void 
-classify_manifest_paths(app_state & app,
-                        manifest_map const & man, 
-                        path_set & missing,
-                        path_set & changed,
-                        path_set & unchanged)
-{
-  inodeprint_map ipm;
-
-  if (in_inodeprints_mode())
-    {
-      data dat;
-      read_inodeprints(dat);
-      read_inodeprint_map(dat, ipm);
-    }
-
-  // this code is speed critical, hence the use of inode fingerprints so be
-  // careful when making changes in here and preferably do some timing tests
-
-  for (manifest_map::const_iterator i = man.begin(); i != man.end(); ++i)
-    {
-      if (app.restriction_includes(i->first))
-        {
-          // compute the current sha1 id for included files
-          // we might be able to avoid it, if we have an inode fingerprint...
-          if (inodeprint_unchanged(ipm, i->first))
-            {
-              // the inode fingerprint hasn't changed, so we assume the file
-              // hasn't either.
-              manifest_map::const_iterator k = man.find(i->first);
-              I(k != man.end());
-              unchanged.insert(i->first);
-              continue;
-            }
-
-          // ...ah, well, no good fingerprint, just check directly.
-          file_id ident;
-          if (ident_existing_file(i->first, ident, app.lua))
-            {
-              if (ident == i->second)
-                unchanged.insert(i->first);
-              else
-                changed.insert(i->first);
-            }
-          else
-            {
-              missing.insert(i->first);
-            }
-
-        }
-      else
-        {
-          // changes to excluded files are ignored
-          unchanged.insert(i->first);
-        }
-    }
-}
-
-void 
-build_restricted_manifest_map(path_set const & paths,
-                              manifest_map const & m_old, 
-                              manifest_map & m_new, 
-                              app_state & app)
-{
-  m_new.clear();
-  inodeprint_map ipm;
-
-  if (in_inodeprints_mode())
-    {
-      data dat;
-      read_inodeprints(dat);
-      read_inodeprint_map(dat, ipm);
-    }
-
-  size_t missing_files = 0;
-
-  // this code is speed critical, hence the use of inode fingerprints so be
-  // careful when making changes in here and preferably do some timing tests
-
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      if (app.restriction_includes(*i))
-        {
-          // compute the current sha1 id for included files
-          // we might be able to avoid it, if we have an inode fingerprint...
-          if (inodeprint_unchanged(ipm, *i))
-            {
-              // the inode fingerprint hasn't changed, so we assume the file
-              // hasn't either.
-              manifest_map::const_iterator k = m_old.find(*i);
-              I(k != m_old.end());
-              m_new.insert(*k);
-              continue;
-            }
-
-          // ...ah, well, no good fingerprint, just check directly.
-          file_id ident;
-          if (ident_existing_file(*i, ident, app.lua))
-            {
-              m_new.insert(manifest_entry(*i, ident));
-            }
-          else
-            {
-              W(F("missing %s") % (*i));
-              missing_files++;
-            }
-        }
-      else
-        {
-          // copy the old manifest entry for excluded files
-          manifest_map::const_iterator old = m_old.find(*i);
-          if (old != m_old.end()) m_new.insert(*old);
-        }
-    }
-
-  N(missing_files == 0, 
-    F("%d missing files\n"
-      "to restore consistency, on each missing file run either\n"
-      "'monotone drop FILE' to remove it permanently, or\n"
-      "'monotone revert FILE' to restore it\n"
-      "or to handle all at once, simple 'monotone drop --missing'\n"
-      "or 'monotone revert --missing'")
-    % missing_files);
-
 }
 
 // reading manifest_maps

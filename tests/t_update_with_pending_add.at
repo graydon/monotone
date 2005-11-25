@@ -1,8 +1,10 @@
 #  -*- Autoconf -*-
 
 AT_SETUP([update with pending add])
-
 MONOTONE_SETUP
+
+# This test relies on file-suturing
+AT_XFAIL_IF(true)
 
 ADD_FILE(file, [file
 ])

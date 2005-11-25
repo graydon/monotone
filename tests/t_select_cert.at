@@ -38,10 +38,12 @@ AT_CHECK(MONOTONE list certs 'c:testcert', [1], [ignore], [stderr])
 AT_CHECK(grep 'has multiple ambiguous expansions' stderr, [0], [ignore])
 
 # Check that exact value succeed...
-AT_CHECK(MONOTONE update --revision='c:testcert=value', [], [ignore], [ignore])
+rm -Rf MT
+AT_CHECK(MONOTONE co --revision='c:testcert=value' ., [], [ignore], [ignore])
 AT_CHECK(cmp testfile testfile2, [], [ignore])
 
-AT_CHECK(MONOTONE update --revision='c:testcert=value=with=equal=signs', [], [ignore], [ignore])
+rm -Rf MT
+AT_CHECK(MONOTONE co --revision='c:testcert=value=with=equal=signs' ., [], [ignore], [ignore])
 AT_CHECK(cmp testfile testfile1, [], [ignore])
 
 AT_CLEANUP

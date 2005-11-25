@@ -378,6 +378,34 @@
 	* selectors.{cc,hh}: add sel_head with selector character 'h'.
 	* monotone.texi: document it.
 	
+2005-10-12  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.hh: Oops, missed a bit.
+
+2005-10-12  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (add_node_for_old_revision): Rename to...
+	(add_node_for_oldstyle_revision): ...this.
+	(build_changesets_from_existing_revs): Rename to...
+	(build_roster_style_revs_from_manifest_style_revs): ...this.
+	* commands.cc (db): Rename "rebuild" to "rosterify".
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (analyze_manifest_changes): Remove.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (calculate_change_sets_recursive):
+	(find_subgraph_for_composite_search) 
+	(calculate_composite_change_set, calculate_arbitrary_change_set):
+	Remove.
+	(construct_revision_from_ancestry): Likewise.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (check_sane_history): Remove.
+
 2005-10-13  Matt Johnston  <matt@ucc.asn.au>
 
 	* botan/mem_pool.cpp: fix bug preventing remove_empty_buffers()

@@ -31,7 +31,8 @@ MOST_SOURCES =								\
          lcs.cc lcs.hh							\
          rcs_import.cc rcs_import.hh					\
          revision.cc revision.hh					\
-	 change_set.cc change_set.hh					\
+	 cset.cc cset.hh						\
+	 roster.cc roster.hh						\
          mt_version.cc mt_version.hh					\
          automate.cc automate.hh					\
          database_check.cc database_check.hh				\
@@ -44,13 +45,15 @@ MOST_SOURCES =								\
          globish.cc globish.hh                                          \
          string_queue.cc string_queue.hh                                \
          paths.cc paths.hh                                              \
+         roster_merge.cc roster_merge.hh                                \
+         merge.cc merge.hh                                              \
                                                                         \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
 	 netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
          package_full_revision.c package_full_revision.h options.hh     \
-         i18n.h hash_map.hh
+         i18n.h hash_map.hh parallel_iter.hh safe_map.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -129,8 +132,8 @@ BOTAN_SOURCES =                                                                 
         botan/pbe_pkcs.h botan/rsa.h botan/x509_crl.h botan/asn1.h	\
         botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h	\
         botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h	\
-        botan/cfb.h botan/dl_param.h botan/fips_rng.h botan/modebase.h	\
-        botan/pipe.h botan/x509_obj.h			\
+        botan/cfb.h botan/dl_param.h botan/modebase.h			\
+        botan/pipe.h botan/x509_obj.h					\
         botan/asn1_oid.h botan/conf.h botan/eax.h botan/gzip.h		\
         botan/mode_pad.h botan/pk_algs.h botan/secmem.h			\
         botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h	\
