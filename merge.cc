@@ -51,7 +51,8 @@ resolve_merge_conflicts(revision_id const & left_rid,
   
   if (!result.is_clean())
     {
-      L(F("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts, %d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
+      L(F("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
+	  "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
         % result.node_name_conflicts.size()
         % result.file_content_conflicts.size()
         % result.node_attr_conflicts.size()
@@ -146,6 +147,9 @@ resolve_merge_conflicts(revision_id const & left_rid,
           result.file_content_conflicts = residual_conflicts;     
         }
     }
+
+  E(result.is_clean(),
+    F("merge failed due to unresolved conflicts\n"));
 }
 
 void
