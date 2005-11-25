@@ -1178,6 +1178,16 @@ database::get_revision_ids(set<revision_id> & ids)
 }
 
 void 
+database::get_roster_ids(set< hexenc<id> > & ids) 
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("rosters", tmp);
+  get_ids("roster_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void 
 database::get_file_version(file_id const & id,
                            file_data & dat)
 {
@@ -2534,6 +2544,16 @@ database::get_roster(revision_id const & rev_id,
 }
 
 void 
+database::get_roster(hexenc<id> const & ros_id, 
+                     data & dat)
+{
+  string data_table = "rosters";
+  string delta_table = "roster_deltas";
+
+  get_version(ros_id, dat, data_table, delta_table);
+}
+
+void 
 database::get_roster(revision_id const & rev_id, 
                      roster_t & roster,
                      marking_map & marks)
@@ -2545,13 +2565,11 @@ database::get_roster(revision_id const & rev_id,
       return;
     }
 
-  string data_table = "rosters";
-  string delta_table = "roster_deltas";
   data dat;
   hexenc<id> ident;
 
   get_roster_id_for_revision(rev_id, ident);
-  get_version(ident, dat, data_table, delta_table);
+  get_roster(ident, dat);
   read_roster_and_marking(dat, roster, marks);
 }
 

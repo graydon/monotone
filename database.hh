@@ -202,9 +202,6 @@ class database
                                         delta const & del,
                                         database & db);
 
-  void get_roster_id_for_revision(revision_id const & rev_id,
-                                  hexenc<id> & roster_id);
-
   void put_roster(revision_id const & rev_id,
                   roster_t & roster,
                   marking_map & marks);
@@ -236,6 +233,7 @@ public:
   void get_file_ids(std::set<file_id> & ids);
   void get_manifest_ids(std::set<manifest_id> & ids);
   void get_revision_ids(std::set<revision_id> & ids);
+  void get_roster_ids(std::set< hexenc<id> > & ids) ;
 
   void set_app(app_state * app);
   
@@ -422,13 +420,18 @@ public:
   void get_branches(std::vector<std::string> & names);
 
   // roster and node_id stuff
+  void get_roster_id_for_revision(revision_id const & rev_id,
+                                  hexenc<id> & roster_id);
 
   void get_roster(revision_id const & rid, 
                   roster_t & roster);
- 
+
   void get_roster(revision_id const & rid, 
                   roster_t & roster,
                   marking_map & marks);
+
+  void get_roster(hexenc<id> const & roster_id,
+                  data & dat);
 
   void get_uncommon_ancestors(revision_id const & a,
                               revision_id const & b,

@@ -188,6 +188,12 @@ enum diff_type
 
 // do these belong here?
 inline bool 
+null_id(hexenc<id> const & i)
+{
+  return i().empty();
+}
+
+inline bool 
 null_id(file_id const & i)
 {
   return i.inner()().empty();
