@@ -961,6 +961,49 @@ automate_get_revision(std::vector<utf8> args,
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
+// Name: get_manifest
+// Arguments:
+//   1: a revision id (optional, determined from working directory if non-existant)
+// Added in: 1.0
+// Purpose: Prints the contents of the manifest associated with the given revision ID.
+//
+// Output format: A basic_io string containing the manifest.
+//
+// Error conditions:  If the revision ID specified is unknown or invalid prints an 
+// error message to stderr and exits with status 1.
+static void
+automate_get_manifest(std::vector<utf8> args,
+                      std::string const & help_name,
+                      app_state & app,
+                      std::ostream & output)
+{
+  if (args.size() > 1)
+    throw usage(help_name);
+
+  data dat;
+  manifest_id mid;
+  roster_t old_roster, new_roster;
+
+  if (args.size() == 0)
+    {
+      revision_set rs;
+      app.require_working_copy();
+      get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster);
+    }
+  else
+    {
+      revision_id rid = revision_id(idx(args, 0)());
+      N(app.db.revision_exists(rid),
+        F("no revision %s found in database") % rid);
+      app.db.get_roster(rid, new_roster);
+    }
+
+  calculate_ident(new_roster, mid);
+  write_manifest_of_roster(new_roster, dat);
+  L(F("dumping manifest %s\n") % mid);
+  output.write(dat().data(), dat().size());
+}
+
 
 // Name: get_file
 // Arguments:
@@ -1342,6 +1385,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_certs(args, root_cmd_name, app, output);
   else if (cmd() == "get_revision")
     automate_get_revision(args, root_cmd_name, app, output);
+  else if (cmd() == "get_manifest")
+    automate_get_manifest(args, root_cmd_name, app, output);
   else if (cmd() == "get_file")
     automate_get_file(args, root_cmd_name, app, output);
   else if (cmd() == "keys")
