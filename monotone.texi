@@ -5519,25 +5519,28 @@ to stderr and exits with status 1.
 
 @end table
 
-@item monotone automate get_manifest
-@item monotone automate get_manifest @var{id}
+@item monotone automate get_manifest_of
+@item monotone automate get_manifest_of @var{revid}
 
 @table @strong
 @item Arguments:
 
-Specifying the optional @var{id} argument outputs the maifest for the
-specified @var{id}. Otherwise, @var{id} is determined from the working
-directory.
+Specifying the optional @var{revid} argument outputs the manifest for the
+revision with the specified ID. Otherwise, outputs the manifest for the
+current working directory.  (You can think of leaving the argument blank
+as meaning ``give me the manifest of THIS''.)
 
 @item Added in:
 
-1.0
+2.0
 
 @item Purpose:
 
-Prints the contents of the manifest associated with the given manifest ID.
+Prints the contents of the manifest associated with the given roster.
 
 @item Sample output:
+
+FIXME_ROSTER
 
 @verbatim
 e3915658cb464d05f21332e03d30dca5d94fe776  .htaccess
