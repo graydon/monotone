@@ -1505,7 +1505,8 @@ database::delete_existing_manifests()
 /// Deletes one revision from the local database. 
 /// @see kill_rev_locally
 void
-database::delete_existing_rev_and_certs(revision_id const & rid){
+database::delete_existing_rev_and_certs(revision_id const & rid)
+{
 
   //check that the revision exists and doesn't have any children
   I(revision_exists(rid));
@@ -1518,6 +1519,26 @@ database::delete_existing_rev_and_certs(revision_id const & rid){
   execute("DELETE from revision_certs WHERE id = ?",rid.inner()().c_str());
   execute("DELETE from revision_ancestry WHERE child = ?", rid.inner()().c_str());
   execute("DELETE from revisions WHERE id = ?",rid.inner()().c_str());
+
+  // rosters
+  hexenc<id> roster_id;
+  get_roster_id_for_revision(rid, roster_id);
+  results res;
+  fetch(res, 2, any_rows, 
+        "SELECT id, rev_id FROM roster_deltas WHERE base = ?", 
+        roster_id().c_str());
+  for (size_t i = 0; i < res.size(); ++i)
+    {
+      data dat;
+      get_roster(res[i][0], dat);
+      base64<gzip<data> > dat_packed;
+      pack(dat, dat_packed);
+      execute("INSERT INTO rosters VALUES(?, ?, ?)",
+              res[i][0].c_str(), res[i][1].c_str(), dat_packed().c_str());
+    }
+  execute("DELETE from rosters WHERE rev_id = ?",rid.inner()().c_str());
+  execute("DELETE from roster_deltas WHERE rev_id = ? or base = ?",
+          rid.inner()().c_str(), rid.inner()().c_str());
 }
 
 /// Deletes all certs referring to a particular branch. 
