@@ -86,6 +86,7 @@ struct checked_revision {
   size_t revision_refs;        // number of references to this revision from other revisions
   size_t ancestry_parent_refs; // number of references to this revision by ancestry parent
   size_t ancestry_child_refs;  // number of references to this revision by ancestry child
+  size_t marking_refs;         // number of references to this revision by roster markings
   
   bool found_roster;           // the roster for this revision exists
   bool manifest_mismatch;      // manifest doesn't match the roster for this revision
@@ -106,6 +107,7 @@ struct checked_revision {
   checked_revision(): 
     found(false),
     revision_refs(0), ancestry_parent_refs(0), ancestry_child_refs(0), 
+    marking_refs(0),
     found_roster(false), manifest_mismatch(false), incomplete_roster(false),
     missing_manifests(0), missing_revisions(0), 
     cert_refs(0), parseable(false), normalized(false) {}
@@ -237,27 +239,37 @@ check_rosters_marking(app_state & app,
         {
           // lots of revisions that must exist
           marking_t mark = mm[n->first];
+          checked_revisions[mark.birth_revision].marking_refs++;
           if (!checked_revisions[mark.birth_revision].found)
             checked_rosters[ros_id].missing_mark_revs++;
 
           for (set<revision_id>::const_iterator r = mark.parent_name.begin();
                r != mark.parent_name.end(); r++)
-            if (!checked_revisions[*r].found)
-              checked_rosters[ros_id].missing_mark_revs++;
+            {
+              checked_revisions[*r].marking_refs++;
+              if (!checked_revisions[*r].found)
+                checked_rosters[ros_id].missing_mark_revs++;
+            }
 
           for (set<revision_id>::const_iterator r = mark.file_content.begin();
                r != mark.file_content.end(); r++)
-            if (!checked_revisions[*r].found)
-              checked_rosters[ros_id].missing_mark_revs++;
+            {
+              checked_revisions[*r].marking_refs++;
+              if (!checked_revisions[*r].found)
+                checked_rosters[ros_id].missing_mark_revs++;
+            }
 
           for (map<attr_key,set<revision_id> >::const_iterator attr = 
                mark.attrs.begin(); attr != mark.attrs.end(); attr++)
             for (set<revision_id>::const_iterator r = attr->second.begin();
                  r != attr->second.end(); r++)
-              if (!checked_revisions[*r].found)
-                checked_rosters[ros_id].missing_mark_revs++;
+              {
+                checked_revisions[*r].marking_refs++;
+                if (!checked_revisions[*r].found)
+                  checked_rosters[ros_id].missing_mark_revs++;
+              }
         }
-      ticks++;
+      ++ticks;
     }
 }
 
@@ -304,11 +316,12 @@ check_revisions(app_state & app,
           checked_revisions[*i].normalized = true;
 
       // roster checks
-      hexenc<id> roster_id;
-      app.db.get_roster_id_for_revision(*i, roster_id);
-      if (!null_id(roster_id))
+      if (app.db.roster_exists_for_revision(*i))
         {
+          hexenc<id> roster_id;
           checked_revisions[*i].found_roster = true;
+          app.db.get_roster_id_for_revision(*i, roster_id);
+          I(checked_rosters[roster_id].found);
           checked_rosters[roster_id].revision_refs++;
           if (!(rev.new_manifest == checked_rosters[roster_id].man_id))
             checked_revisions[*i].manifest_mismatch = true;
@@ -524,7 +537,6 @@ report_files(std::map<file_id, checked_file> const & checked_files,
 
 static void
 report_rosters(std::map<hexenc<id>, checked_roster> const & checked_rosters, 
-                 size_t & missing_rosters, 
                  size_t & unreferenced_rosters,
                  size_t & incomplete_rosters,
                  size_t & non_parseable_rosters,
@@ -534,13 +546,6 @@ report_rosters(std::map<hexenc<id>, checked_roster> const & checked_rosters,
          i = checked_rosters.begin(); i != checked_rosters.end(); ++i)
     {
       checked_roster roster = i->second;
-
-      if (!roster.found)
-        {
-          missing_rosters++;
-          P(F("roster %s missing (%d revision references)\n") 
-            % i->first % roster.revision_refs);
-        }
 
       if (roster.revision_refs == 0)
         {
@@ -597,8 +602,9 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
       if (!revision.found)
         {
           missing_revisions++;
-          P(F("revision %s missing (%d revision references; %d cert references)\n") 
-            % i->first % revision.revision_refs % revision.cert_refs);
+          P(F("revision %s missing (%d revision references; %d cert references; %d parent references; %d child references; %d roster references)\n") 
+            % i->first % revision.revision_refs % revision.cert_refs % revision.ancestry_parent_refs
+            % revision.ancestry_child_refs % revision.marking_refs);
         }
 
       if (revision.missing_manifests > 0)
@@ -818,7 +824,7 @@ check_db(app_state & app)
   report_files(checked_files, missing_files, unreferenced_files);
 
   report_rosters(checked_rosters, 
-                   missing_rosters, unreferenced_rosters, 
+                   unreferenced_rosters, 
                    incomplete_rosters,
                    non_parseable_rosters,
                    non_normalized_rosters);
@@ -841,8 +847,6 @@ check_db(app_state & app)
   if (unreferenced_files > 0) 
     W(F("%d unreferenced files\n") % unreferenced_files);
 
-  if (missing_rosters > 0)
-    W(F("%d missing rosters\n") % missing_rosters);
   if (unreferenced_rosters > 0) 
     W(F("%d unreferenced rosters\n") % unreferenced_rosters);
   if (incomplete_rosters > 0)
@@ -882,7 +886,7 @@ check_db(app_state & app)
     W(F("%d bad signatures\n") % bad_sigs);
 
   size_t total = missing_files + unreferenced_files +
-    missing_rosters + unreferenced_rosters + incomplete_rosters +
+    unreferenced_rosters + incomplete_rosters +
     non_parseable_rosters + non_normalized_rosters +
     missing_revisions + incomplete_revisions + 
     non_parseable_revisions + non_normalized_revisions +
@@ -894,7 +898,7 @@ check_db(app_state & app)
   // unreferenced files and rosters and mismatched certs are not actually
   // serious errors; odd, but nothing will break.
   size_t serious = missing_files + 
-    missing_rosters + incomplete_rosters +
+    incomplete_rosters +
     non_parseable_rosters + non_normalized_rosters +
     missing_revisions + incomplete_revisions + 
     non_parseable_revisions + non_normalized_revisions +

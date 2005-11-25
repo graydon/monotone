@@ -229,6 +229,7 @@ public:
   bool file_version_exists(file_id const & id);
   bool manifest_version_exists(manifest_id const & id);
   bool revision_exists(revision_id const & id);
+  bool roster_exists_for_revision(revision_id const & id);
 
   void get_file_ids(std::set<file_id> & ids);
   void get_manifest_ids(std::set<manifest_id> & ids);

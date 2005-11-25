@@ -1148,6 +1148,19 @@ database::revision_exists(revision_id const & id)
   return exists(id.inner(), "revisions");
 }
 
+bool
+database::roster_exists_for_revision(revision_id const & rev_id)
+{
+  results res;
+  string query = ("SELECT id FROM rosters WHERE rev_id = ? "
+                  "UNION "
+                  "SELECT id FROM roster_deltas WHERE rev_id = ? ");
+  fetch(res, one_col, any_rows, query.c_str(), 
+        rev_id.inner()().c_str(), rev_id.inner()().c_str());
+  I((res.size() == 1) || (res.size() == 0));
+  return res.size() == 1;
+}
+
 void 
 database::get_file_ids(set<file_id> & ids) 
 {
@@ -2511,7 +2524,6 @@ database::get_branches(vector<string> & names)
       }
 }
 
-
 void
 database::get_roster_id_for_revision(revision_id const & rev_id,
                                      hexenc<id> & roster_id)
@@ -2523,11 +2535,9 @@ database::get_roster_id_for_revision(revision_id const & rev_id,
     }
 
   results res;
-  string data_table = "rosters";
-  string delta_table = "roster_deltas";
-  string query = ("SELECT id FROM " + data_table + " WHERE rev_id = ? "
+  string query = ("SELECT id FROM rosters WHERE rev_id = ? "
                   "UNION "
-                  "SELECT id FROM " + delta_table + " WHERE rev_id = ? ");
+                  "SELECT id FROM roster_deltas WHERE rev_id = ? ");
   
   fetch(res, one_col, one_row, query.c_str(),
         rev_id.inner()().c_str(),
