@@ -1,3 +1,10 @@
+2005-11-26  Grahame Bowland  <grahame@glamdring.local>
+
+	* automate.cc (automate_stdio) add wrapper function to read()
+	so that loops will not wind backwards possibly overrunning buffers
+	if an error occurs. Hopefully fixes some of the strange edge cases
+	seen using automate. (Closes #15062 in bug tracker)
+
 2005-11-26  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* botan/mem_pool.cpp (Pooling_Allocator::allocate): Botan's

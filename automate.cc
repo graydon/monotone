@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <sstream>
 #include <unistd.h>
+#include <sys/errno.h>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -1175,6 +1176,22 @@ void print_some_output(int cmdnum,
   s.flush();
 }
 
+static ssize_t
+automate_stdio_read(int d, void *buf, size_t nbytes)
+{
+  ssize_t rv;
+  
+  /* EINTR occurs if the process receives a signal while in read(); this is 
+     recoverable by simply reading again. 
+  */
+  do {
+    rv = read(d, buf, nbytes);
+  } while (rv == -EINTR);
+  
+  E(rv >= 0, F("read from client failed: %s") % strerror(rv));
+  return rv;
+}
+
 static void
 automate_stdio(std::vector<utf8> args,
                    std::string const & help_name,
@@ -1194,9 +1211,9 @@ automate_stdio(std::vector<utf8> args,
       bool first=true;
       int toklen=0;
       bool firstchar=true;
-      for(n=read(0, &c, 1); c != 'l' && n; n=read(0, &c, 1))
+      for(n=automate_stdio_read(0, &c, 1); c != 'l' && n; n=automate_stdio_read(0, &c, 1))
         ;
-      for(n=read(0, &c, 1); c!='e' && n; n=read(0, &c, 1))
+      for(n=automate_stdio_read(0, &c, 1); c!='e' && n; n=automate_stdio_read(0, &c, 1))
         {
           if(c<='9' && c>='0')
             {
@@ -1207,7 +1224,7 @@ automate_stdio(std::vector<utf8> args,
               char *tok=new char[toklen];
               int count=0;
               while(count<toklen)
-                count+=read(0, tok+count, toklen-count);
+                count+=automate_stdio_read(0, tok+count, toklen-count);
               if(first)
                 cmd=utf8(std::string(tok, toklen));
               else
