@@ -35,7 +35,7 @@ AT_CHECK(MONOTONE_SUB status, [], [stdout], [])
 AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
 
-AT_CHECK(MONOTONE_SUB status ., [], [stdout], [])
+AT_CHECK(MONOTONE_SUB status ., [], [stdout], [ignore])
 AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [1], [ignore])
 
@@ -49,7 +49,7 @@ AT_CHECK(MONOTONE_SUB status, [], [stdout], [])
 AT_CHECK(grep 'foo/foo' stdout, [0], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
 
-AT_CHECK(MONOTONE_SUB status ., [], [stdout], [])
+AT_CHECK(MONOTONE_SUB status ., [], [stdout], [ignore])
 AT_CHECK(grep 'foo/foo' stdout, [1], [ignore])
 AT_CHECK(grep 'bar/bar' stdout, [0], [ignore])
 
