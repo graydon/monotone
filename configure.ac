@@ -49,6 +49,29 @@ AM_GNU_GETTEXT_VERSION(0.11.5)
 AM_ICONV
 AC_LANG_POP()
 
+# Check whether xgettext supports the --flag option.  We generate the
+# xgettext.opts file that holds the options to be used when calling this
+# utility.  These options are later added to po/Makefile.
+#
+# Yes, this is a big hack, but due to the way po/Makefile is generated,
+# there is no other way to do this in a dynamic fashion.
+AC_MSG_CHECKING([whether xgettext supports --flag])
+echo 'int main(void) { return 0; }' >> conftest.c
+if ${XGETTEXT} --flag printf:1:c-format -o conftest.po conftest.c \
+    >/dev/null 2>&1
+then
+    XGETTEXT_OPTIONS="--keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_ \
+                      --flag=F:1:c-format --flag=FP:1:c-format \
+                      --flag=FP:2:c-format"
+    xgettext_has_flag=yes
+else
+    XGETTEXT_OPTIONS="--keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_"
+    xgettext_has_flag=no
+fi
+rm -f conftest.c conftest.po
+echo "XGETTEXT_OPTIONS = ${XGETTEXT_OPTIONS}" >xgettext.opts
+AC_MSG_RESULT(${xgettext_has_flag})
+
 # Checks for idna stuff
 AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h errno.h)
@@ -433,5 +456,6 @@ AC_SUBST(MONOTONE_CXXFLAGS)
 AC_SUBST(LIB3RDPARTY_CFLAGS)
 AC_SUBST(LIB3RDPARTY_CXXFLAGS)
 
-AC_CONFIG_FILES([Makefile tests/atlocal po/Makefile.in])
+AC_CONFIG_FILES([Makefile tests/atlocal])
+AC_CONFIG_FILES([po/Makefile.in], [cat xgettext.opts >>po/Makefile.in])
 AC_OUTPUT

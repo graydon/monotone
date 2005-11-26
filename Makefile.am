@@ -400,7 +400,7 @@ TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 mostlyclean-local:
 	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
 
-DISTCLEANFILES = tests/atconfig mt-stdint.h
+DISTCLEANFILES = tests/atconfig mt-stdint.h xgettext.opts
 
 # distcheck stuff
 
