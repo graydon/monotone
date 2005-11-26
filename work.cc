@@ -619,7 +619,7 @@ get_attribute_from_roster(roster_t const & ros,
   if (ros.has_node(sp))
     {
       node_t n = ros.get_node(sp);
-      full_attr_map_t::const_iterator i = n->attrs.find(manual_merge_attribute);
+      full_attr_map_t::const_iterator i = n->attrs.find(key);
       if (i != n->attrs.end() && i->second.first)
         {
           val = i->second.second;

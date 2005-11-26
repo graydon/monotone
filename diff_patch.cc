@@ -682,7 +682,7 @@ content_merger::try_to_merge_files(file_path const & anc_path,
       left_encoding = this->get_file_encoding(left_path, left_ros);
       anc_encoding = this->get_file_encoding(anc_path, anc_ros);
       right_encoding = this->get_file_encoding(right_path, right_ros);
-        
+
       vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
       split_into_lines(left_unpacked(), left_encoding, left_lines);
       split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
