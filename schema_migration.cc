@@ -853,7 +853,6 @@ migrate_client_to_add_rosters(sqlite3 * sql,
 		     "CREATE TABLE rosters\n"
 		     "(\n"
 		     "id primary key,         -- strong hash of the roster\n"
-		     "rev_id not null unique, -- strong hash of associated revision\n"
 		     "data not null           -- compressed, encoded contents of the roster\n"
 		     ");",
                      NULL, NULL, errmsg);
@@ -864,12 +863,20 @@ migrate_client_to_add_rosters(sqlite3 * sql,
 		     "CREATE TABLE roster_deltas\n"
 		     "(\n"
 		     "id not null,            -- strong hash of the roster\n"
-		     "rev_id not null,        -- strong hash of associated revision\n"
 		     "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
 		     "delta not null,         -- rdiff to construct current from base\n"
-		     "unique(id, base),\n"
-		     "unique(rev_id, base)\n"
+		     "unique(id, base)\n"
 		     ");",
+                     NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = sqlite3_exec(sql,
+                     "CREATE TABLE revision_roster\n"
+                     "(\n"
+                     "rev_id primary key,     -- joins with revisions.id\n"
+                     "roster_id not null      -- joins with either rosters.id or roster_deltas.id\n"
+                     ");",
                      NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
@@ -878,7 +885,7 @@ migrate_client_to_add_rosters(sqlite3 * sql,
                      "CREATE TABLE next_roster_node_number\n"
                      "(\n"
                      "node primary key        -- only one entry in this table, ever\n"
-		     ");",
+                     ");",
                      NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
@@ -921,5 +928,5 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "9598aecfa8fbd6bb00acf8dc6e42b46d7e2a46a2");
+  m.migrate(sql, "1db80c7cee8fa966913db1a463ed50bf1b0e5b0e");
 }

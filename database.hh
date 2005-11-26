@@ -148,6 +148,9 @@ class database
                    delta const & del,
                    std::string const & data_table,
                    std::string const & delta_table);
+  void remove_version(hexenc<id> const & target_id,
+                      std::string const & data_table,
+                      std::string const & delta_table);
   void put_reverse_version(hexenc<id> const & new_id,
                            hexenc<id> const & old_id,
                            delta const & reverse_del,
@@ -197,10 +200,6 @@ class database
                                     hexenc<id> const & new_id,
                                     delta const & del,
                                     database & db);
-  friend void rcs_put_raw_manifest_edge(hexenc<id> const & old_id,
-                                        hexenc<id> const & new_id,
-                                        delta const & del,
-                                        database & db);
 
   void put_roster(revision_id const & rev_id,
                   roster_t & roster,
@@ -227,12 +226,13 @@ public:
   bool database_specified();
   
   bool file_version_exists(file_id const & id);
-  bool manifest_version_exists(manifest_id const & id);
+  bool roster_version_exists(hexenc<id> const & id);
   bool revision_exists(revision_id const & id);
+  bool roster_link_exists_for_revision(revision_id const & id);
   bool roster_exists_for_revision(revision_id const & id);
 
+  void get_roster_links(std::map<revision_id, hexenc<id> > & links);
   void get_file_ids(std::set<file_id> & ids);
-  void get_manifest_ids(std::set<manifest_id> & ids);
   void get_revision_ids(std::set<revision_id> & ids);
   void get_roster_ids(std::set< hexenc<id> > & ids) ;
 
@@ -263,25 +263,8 @@ public:
   void get_manifest_version(manifest_id const & id,
                             manifest_data & dat);
 
-  // get a constructed manifest
   void get_manifest(manifest_id const & id,
                     manifest_map & mm);
-
-  // put manifest w/o predecessor into db
-  void put_manifest(manifest_id const & new_id,
-                    manifest_data const & dat);
-
-  // store new version and update old version to be a delta
-  void put_manifest_version(manifest_id const & old_id,
-                            manifest_id const & new_id,
-                            manifest_delta const & del);
-
-  // load in a "direct" new -> old reverse edge (used during
-  // netsync and CVS load-in)
-  void put_manifest_reverse_version(manifest_id const & old_id,
-                                    manifest_id const & new_id,
-                                    manifest_delta const & del);
-
 
   void get_revision_ancestry(std::multimap<revision_id, revision_id> & graph);
 
