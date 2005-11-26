@@ -159,6 +159,9 @@ void* Pooling_Allocator::allocate(u32bit n) const
    if(!block.buf)
       throw Memory_Exhaustion();
    free_list.push_back(block);
+   if(free_list.size() >= 2)
+      std::inplace_merge(free_list.begin(), free_list.end() - 1,
+                         free_list.end());
 
    new_buf = find_free_block(n);
    if(new_buf)
