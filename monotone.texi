@@ -3556,7 +3556,7 @@ explicit pathname changes you wish to commit at some future time, such
 as addition, removal or renaming of files.
 
 As a convenience, the @option{--unknown} option can be used; this
-options will cause all of the files listed by @command{monotone list
+option will cause all of the files listed by @command{monotone list
 unknown} to be added.
 
 While this command places an ``add'' entry on your work list, it does
