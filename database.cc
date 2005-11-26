@@ -908,15 +908,24 @@ typedef vector< hexenc<id> > version_path;
 
 static void
 extend_path_if_not_cycle(string table_name, 
-                         version_path & p, hexenc<id> const & ext)
+                         shared_ptr<version_path> p, 
+                         hexenc<id> const & ext,
+                         set< hexenc<id> > seen_nodes,
+                         vector< shared_ptr<version_path> > & next_paths)
 {
-  for (version_path::const_iterator i = p.begin(); i != p.end(); ++i)
+  for (version_path::const_iterator i = p->begin(); i != p->end(); ++i)
     {
       if ((*i)() == ext())
         throw oops("cycle in table '" + table_name + "', at node " 
                    + (*i)() + " <- " + ext());
     }
-  p.push_back(ext);
+
+  if (seen_nodes.find(ext) == seen_nodes.end())
+    {      
+      p->push_back(ext);
+      next_paths.push_back(p);
+      seen_nodes.insert(ext);
+    }
 }
 
 void 
@@ -965,27 +974,34 @@ database::get_version(hexenc<id> const & ident,
       //
       // On each iteration, we extend every active path by one step. If our
       // extension involves a fork, we duplicate the path. If any path
-      // contains a cycle, we fault.1
+      // contains a cycle, we fault. 
+      //
+      // If, by extending a path C, we enter a node which another path
+      // D has already seen, we kill path C. This avoids the possibility of
+      // exponential growth in the number of paths due to extensive forking
+      // and merging.
 
-      vector< shared_ptr<version_path> > paths;
+      vector< shared_ptr<version_path> > live_paths;
 
       string delta_query = "SELECT base FROM " + delta_table + " WHERE id = ?";
 
       {
         shared_ptr<version_path> pth0 = shared_ptr<version_path>(new version_path());      
         pth0->push_back(ident);
-        paths.push_back(pth0);
+        live_paths.push_back(pth0);
       }
 
       shared_ptr<version_path> selected_path;
+      set< hexenc<id> > seen_nodes;
 
       while (!selected_path)
         {
-          // NB: use size() here, not a const_iterator, because paths may
-          // grow during iteration.
-          for (size_t i = 0; i < paths.size(); ++i)
+          vector< shared_ptr<version_path> > next_paths;
+
+          for (vector<shared_ptr<version_path> >::const_iterator i = live_paths.begin();
+               i != live_paths.end(); ++i)
             {
-              shared_ptr<version_path> pth = idx(paths,i);
+              shared_ptr<version_path> pth = *i;
               hexenc<id> tip = pth->back();
 
               if (vcache.exists(tip) || exists(tip, data_table))
@@ -1000,24 +1016,26 @@ database::get_version(hexenc<id> const & ident,
                   fetch(res, one_col, any_rows, 
                         delta_query.c_str(), tip().c_str());
 
-                  if (res.size() == 0)
-                    continue;
+                  I(res.size() != 0);
 
                   // Replicate the path if there's a fork.
                   for (size_t k = 1; k < res.size(); ++k)
                     {
                       shared_ptr<version_path> pthN 
                         = shared_ptr<version_path>(new version_path(*pth));
-                      extend_path_if_not_cycle(delta_table, *pthN, 
-                                               hexenc<id>(res[k][0]));
-                      paths.push_back(pthN);
+                      extend_path_if_not_cycle(delta_table, pthN, 
+                                               hexenc<id>(res[k][0]),
+                                               seen_nodes, next_paths);
                     }
 
                   // And extend the base path we're examining.
-                  extend_path_if_not_cycle(delta_table, *pth, 
-                                           hexenc<id>(res[0][0]));                  
+                  extend_path_if_not_cycle(delta_table, pth, 
+                                           hexenc<id>(res[0][0]),
+                                           seen_nodes, next_paths);
                 }
             }
+
+          live_paths = next_paths;
         }
 
       // Found a root, now trace it back along the path.

@@ -3548,11 +3548,16 @@ or within an existing directory full of files, prior to using
 
 
 @item monotone add @var{pathname...}
+@item monotone add --unknown
 This command places ``add'' entries for the paths specified in
 @var{pathname...} in the working copy's ``work list''. The work list
 of your working copy is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal or renaming of files.
+
+As a convenience, the @option{--unknown} option can be used; this
+options will cause all of the files listed by @command{monotone list
+unknown} to be added.
 
 While this command places an ``add'' entry on your work list, it does
 not immediately affect your database. When you @command{commit} your
@@ -3562,6 +3567,7 @@ any added entries inserted in its manifest.
 
 
 @item monotone drop @var{pathname...}
+@itemx monotone drop --missing
 This command places ``drop'' entries for the paths specified in
 @var{pathname...} in the working copy's ``work list''. The work list of
 your working copy is located at @file{MT/work}, and is a list of
@@ -3687,7 +3693,8 @@ and/or review your log message for the change.
 
 @item monotone revert
 @itemx monotone revert @var{pathname...}
-
+@itemx monotone revert --missing
+@itemx monotone revert --missing @var{pathname...}
 With no files given, this command changes your working copy, so that
 changes you have made since the last checkout or update are discarded.
 It does this by changing every file listed in the working copy's base
@@ -3698,11 +3705,11 @@ If files or directories are given as arguments, only those files and
 directories are affected instead of the entirety of your working copy.
 
 If the flag @option{--missing} is given, in addition to files or
-directories given as arguments, it reverts any files which monotone has
-listed in it's manifest, but which have been deleted from the working
-copy.  If you specify @option{--missing} with no additional path
-arguments, and there are no files missing from the working copy, revert
-is conservative and does nothing.
+directories given as arguments, it reverts (ie, restores) any files
+which monotone has listed in its manifest, but which have been deleted
+from the working copy.  If you specify @option{--missing} with no
+additional path arguments, and there are no files missing from the
+working copy, revert is conservative and does nothing.
 
 From within a subdirectory of the working copy the @command{revert}
 command will, by default, revert @emph{all changes} in the working copy.
