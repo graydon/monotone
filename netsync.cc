@@ -254,6 +254,12 @@ done_marker
   {}
 };
 
+struct netsync_error
+{
+  string msg;
+  netsync_error(string const & s): msg(s) {}
+};
+
 struct 
 session
 {
@@ -873,22 +879,11 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
 // mode, all received data is ignored, and no new data is queued.  We simply
 // stay connected long enough for the current write buffer to be flushed, to
 // ensure that our peer receives the error message.
-// WARNING WARNING WARNING (FIXME): this does _not_ throw an exception.  if
-// while processing any given netcmd packet you encounter an error, you can
-// _only_ call this method if you have not touched the database, because if
-// you have touched the database then you need to throw an exception to
-// trigger a rollback.
-// you could, of course, call this method and then throw an exception, but
-// there is no point in doing that, because throwing the exception will cause
-// the connection to be immediately terminated, so your call to error() will
-// actually have no effect (except to cause your error message to be printed
-// twice).
+// Affects read_some, write_some, and process .
 void
 session::error(std::string const & errmsg)
 {
-  W(F("error: %s\n") % errmsg);
-  queue_error_cmd(errmsg);
-  encountered_error = true;
+  throw netsync_error(errmsg);
 }
 
 
@@ -2911,6 +2906,8 @@ session::arm()
 
 bool session::process()
 {
+  if (encountered_error)
+    return true;
   try 
     {      
       if (!arm())
@@ -2932,6 +2929,13 @@ bool session::process()
     {
       W(F("protocol error while processing peer %s: '%s'\n") % peer_id % bd.what);
       return false;
+    }
+  catch (netsync_error & err)
+    {
+      W(F("error: %s\n") % err.msg);
+      queue_error_cmd(err.msg);
+      encountered_error = true;
+      return true;// don't terminate until we've send the error_cmd
     }
 }
 
@@ -2964,9 +2968,8 @@ call_server(protocol_role role,
         }
       catch (bad_decode & bd)
         {
-          W(F("protocol error while processing peer %s: '%s'\n") 
+          E(false, F("protocol error while processing peer %s: '%s'\n") 
             % sess.peer_id % bd.what);
-          return;         
         }
 
       probe.clear();
@@ -2977,8 +2980,7 @@ call_server(protocol_role role,
       
       if (fd == -1 && !armed) 
         {
-          P(F("timed out waiting for I/O with peer %s, disconnecting\n") % sess.peer_id);
-          return;
+          E(false, F("timed out waiting for I/O with peer %s, disconnecting\n") % sess.peer_id);
         }
       
       if (event & Netxx::Probe::ready_read)
@@ -2991,9 +2993,8 @@ call_server(protocol_role role,
                 }
               catch (bad_decode & bd)
                 {
-                  W(F("protocol error while processing peer %s: '%s'\n") 
+                  E(false, F("protocol error while processing peer %s: '%s'\n") 
                     % sess.peer_id % bd.what);
-                  return;         
                 }
             }
           else
@@ -3001,7 +3002,7 @@ call_server(protocol_role role,
               if (sess.sent_goodbye)
                 P(F("read from fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
               else
-                P(F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
+                E(false, F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
               return;
             }
         }
@@ -3013,23 +3014,22 @@ call_server(protocol_role role,
               if (sess.sent_goodbye)
                 P(F("write on fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
               else
-                P(F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
+                E(false, F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
               return;
             }
         }
       
       if (event & Netxx::Probe::ready_oobd)
         {
-          P(F("got OOB data on fd %d (peer %s), disconnecting\n") 
+          E(false, F("got OOB data on fd %d (peer %s), disconnecting\n") 
             % fd % sess.peer_id);
-          return;
         }
 
       if (armed)
         {
           if (!sess.process())
             {
-              P(F("terminated exchange with %s\n") 
+              E(false, F("terminated exchange with %s\n") 
                 % sess.peer_id);
               return;
             }
