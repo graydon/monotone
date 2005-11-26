@@ -5759,6 +5759,16 @@ hooks}.
 This section documents the existing hook functions and their default
 definitions. 
 
+@subsection Event Notifications and Triggers
+
+There are a number of hooks that are called when noteworthy events
+occur, such as commits or new revisions arriving over the network. These
+hooks can be used to feed the events into external notification systems,
+such as generating email.
+
+By default, these hooks are undefined, so no special external actions
+are taken.
+
 @ftable @code
 @item note_commit (@var{new_id}, @var{revision}, @var{certs})
 
@@ -5787,8 +5797,7 @@ named "key", "name", and "value", containing the signing key for the cert,
 the name of the cert, and the value of the cert. There is no default
 definition for this hook. 
 
-@item note_netsync_cert_received (@var{rev_id}, @var{key},
-                                  @var{name}, @var{value})
+@item note_netsync_cert_received (@var{rev_id}, @var{key}, @var{name}, @var{value})
 
 Called by monotone after a cert is received through netsync, iff the revision
 that the cert is attached to was not also received in the same netsync
@@ -5802,6 +5811,15 @@ definition for this hook.
 Called by monotone after a pubkey is received through netsync. @var{keyname}
 is the name of the key received. There is no default definition for this hook. 
 
+@end ftable
+
+@subsection User Defaults
+
+These are hooks that can be used to provide smart, context-sensitive
+default values for a number of parameters the user might otherwise be
+prompted for.
+
+@ftable @code
 @item get_branch_key (@var{branchname})
 
 Returns a string which is the name of an @sc{rsa} private key used to sign
@@ -5861,24 +5879,6 @@ the system up for another edit/commit cycle.
 
 For the default definition of this hook, see @ref{Default hooks}.
 
-@item persist_phrase_ok ()
-
-Returns @code{true} if you want monotone to remember the passphrase of
-a private key for the duration of a single command, or @code{false} if
-you want monotone to prompt you for a passphrase for each certificate
-it generates. Since monotone often generates several certificates in 
-quick succession, unless you are very concerned about security you
-probably want this hook to return @code{true}.
-
-The default definition of this hook is:
-@smallexample
-@group
-function persist_phrase_ok()
-        return true
-end
-@end group
-@end smallexample
-
 @item non_blocking_rng_ok ()
 
 Returns @code{true} if you are willing to let monotone use the
@@ -5898,6 +5898,23 @@ end
 @end group
 @end smallexample
 
+@item persist_phrase_ok ()
+
+Returns @code{true} if you want monotone to remember the passphrase of
+a private key for the duration of a single command, or @code{false} if
+you want monotone to prompt you for a passphrase for each certificate
+it generates. Since monotone often generates several certificates in 
+quick succession, unless you are very concerned about security you
+probably want this hook to return @code{true}.
+
+The default definition of this hook is:
+@smallexample
+@group
+function persist_phrase_ok()
+        return true
+end
+@end group
+@end smallexample
 
 @item use_inodeprints ()
 
@@ -5914,7 +5931,38 @@ end
 @end group
 @end smallexample
 
+@item ignore_file (@var{filename})
 
+Returns @code{true} if @var{filename} should be ignored while adding,
+dropping, or moving files. Otherwise returns @code{false}. This is
+most important when performing recursive actions on directories, which
+may affect multiple files simultaneously. 
+
+The default definition of this hook recognises a number of common file
+types and extensions for temporary and generated file types that users
+typically don't want to track. If the file @file{.mt-ignore} exists,
+this hook will read a list of regular expressions from the file, one per
+line, and ignore all files matching one of these expressions. For the
+default definition of this hook, see @ref{Default hooks}.
+
+@item ignore_branch (@var{branchname})
+
+Returns @code{true} if @var{branchname} should be ignored while listing
+branches. Otherwise returns @code{false}. This hook has no default
+definition, therefore the default behavior is to list all branches.
+
+@end ftable
+
+@subsection Netsync Permission Hooks
+
+These hooks are used when running a netsync server, via
+@command{monotone serve}. They are evaluated by the server for each new
+connection, based on the certificate used for authentication by the
+client.  Note that a long-running server will need to be restarted in
+order to reload the hook definitions if the @file{montonerc} file is
+changed.
+
+@ftable @code
 @item get_netsync_read_permitted (@var{branch}, @var{identity})
 
 Returns @code{true} if a peer authenticated as key @var{identity}
@@ -5982,20 +6030,24 @@ keys in your database to have the same ID. Make sure you confirm the
 key fingerprints of each key in your database, as key ID strings are
 ``convenience names'', not security tokens.
 
-@item ignore_file (@var{filename})
+@end ftable
 
-Returns @code{true} if @var{filename} should be ignored while adding,
-dropping, or moving files. Otherwise returns @code{false}. This is
-most important when performing recursive actions on directories, which
-may affect multiple files simultaneously. 
-For the default definition of this hook, see @ref{Default hooks}.
+@subsection Trust Evaluation Hooks
 
-@item ignore_branch (@var{branchname})
+Monotone makes heavy use of certs to provide descriptive information
+about revisions. In many projects, not all developers should have the
+same privileges, or be trusted for the same purposes (indeed, some
+signers might be automated robots, with very specific purposes).
 
-Returns @code{true} if @var{branchname} should be ignored while listing
-branches. Otherwise returns @code{false}. This hook has no default
-definition, therefore the default behavior is to list all branches.
+These hooks allow the user to configure which signers will be trusted to
+make which kinds of assertions using certs. Monotone these certs when
+selecting available revisions for commands such as @command{update}.
 
+Each user, or even each working directory, can have their own
+implementation of these hooks, and thus a different filtered view of
+valid revisions, according to their own preferences and purposes.
+
+@ftable @code
 @item get_revision_cert_trust (@var{signers}, @var{id}, @var{name}, @var{val})
 
 Returns whether or not you @emph{trust} the assertion
@@ -6081,14 +6133,59 @@ results exist, this hook has no affect; but once a @code{true} test
 result is present, future updates will require it. If you want a more
 lenient behavior you must redefine this hook.
 
+@end ftable
+
+@subsection External Diff Tools
+
+Differences between files can be shown in a number of ways, varying
+according to user preference and file type. This hook allows
+customisation of the way file differences are shown.
+
+@ftable @code
+@item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary},
+                     @var{diff_args}, @var{old_rev}, @var{new_rev})
+
+Called for each file when @command{diff} is given the
+@option{--external} command.  @var{file_path} is the pathname of the
+file that is being diffed.  @var{old_data} and @var{new_data} are the
+data contents of the old and the new file.  If the data is binary,
+@var{is_binary} will be true, otherwise false.  @var{old_rev} and
+@var{new_rev} are the revision IDs of the old and new data.
+
+If an extra arguments are given via @option{--diff-args}, the string
+will be passed in as @var{diff_args}.  Otherwise @var{diff_args} will
+be nil.
+
+The default implementation of this hook calls the program @code{diff},
+and if @option{--diff-args} were not passed, takes default arguments
+from the lua variable @code{external_diff_default_args}.  You can
+override this variable in your configuration file, without overriding
+the whole hook.
+
+@end ftable
+
+
+@subsection External Merge Tools
+
+Monotone often needs to merge together the work of multiple distributed
+developers, and uses these hooks to help this process when the merge
+does not automatcally succeed.  Often these hooks will be used to invoke
+an external interactive merge tool.  
+
+The @ref{Default hooks} include helper functions used by the hooks below
+to invoke a number of external merge tools known to monotone, and you
+can override or extend these hooks if you have a preferred tool, or if
+you have a tool specific to certain file types.
+
+@ftable @code
 @anchor{merge2}
 @item merge2 (@var{left}, @var{right})
 
 Returns a string, which should be the merger of the 2 provided
 strings, which are the contents of the @var{left} and @var{right}
 nodes of a file fork which monotone was unable to automatically
-merge. The merge should either call an intelligent merge program or
-interact with the user.
+merge. This hook delegates the actual merge 
+to the result of @ref{get_preferred_merge2_command}. 
 For the default definition of this hook, see @ref{Default hooks}.
 
 
@@ -6122,25 +6219,51 @@ is always provided by @ref{merge3}. If there is a particular editor
 that you would like to use to perform merge3 operations, override
 this hook to specify it. 
 
+@end ftable
+
+@subsection Selector Expansion
+
+Monotone's selectors are a powerful mechanism used to refer to revisions
+with symbolic names or groupings. Thanks to the hooks described in this
+section, it is possible to use various forms of shorthand in selection
+strings; these hooks are designed to recognise shorthand patterns and
+expand them to their full form.
+
+For more detail on the use of selectors, see @ref{Selectors}.  
+
+@ftable @code
 @item expand_selector (@var{str})
 
 Attempts to expand @var{str} as a selector. Expansion generally means
-providing a type prefix for the selector, such as @code{a:} for
-authors or @code{d:} for dates. Expansion may also mean recognizing
-and interpreting special words such as @code{yesterday} or @code{6
-months ago} and converting them into well formed selectors. For more
-detail on the use of selectors, see @ref{Selectors}.
-For the default definition of this hook, see @ref{Default hooks}.
+providing a type prefix for the selector, such as @code{a:} for authors
+or @code{d:} for dates. This hook is called once for each element of a
+combined selector string (between @code{/} separators) prior to
+evaluation of the selector. For the default definition of this hook, see
+@ref{Default hooks}.
 
 @item expand_date (@var{str})
 
-Attempts to expand @var{str} as a date expression. Expansion means recognizing
-and interpreting special words such as @code{yesterday} or @code{6
-months ago} and converting them into well formed date expressions. For more
-detail on the use of selectors, see @ref{Selectors}. 
-For the default definition of this hook, see @ref{Default hooks}.
+Attempts to expand @var{str} as a date expression. Expansion means
+recognizing and interpreting special words such as @code{yesterday} or
+@code{6 months ago} and converting them into well formed date
+expressions. For the default definition of this hook, see @ref{Default
+hooks}.
 
+@end ftable
 
+@subsection System Line and Character Conversions
+
+Different operating systems vary in the character(s) used as line
+separators for text files, and in the character set (locale) used for
+filenames. These differences can become annoying when multiple
+developers on a project use different operating systems. Because so much
+of monotone depends on cryptographic checksums, it is often desirable
+that these differences are removed so that files are considered
+identical regardless of platform-specific representations. The hooks in
+this section allow the user to specify these equivalence and conversion
+rules.
+
+@ftable @code
 @item get_system_linesep ()
 
 Returns a string which defines the default system line separator.
@@ -6198,7 +6321,23 @@ keep external and internal forms byte-for-byte identical. For more
 information on character set conversion, see the section on
 @ref{Internationalization}.
 
+@end ftable
 
+@subsection Attribute Handling
+
+Some files in a project are special; they may require different handling
+(such as binary or structured files that should always be manually
+merged -- see @ref{Merging}), or they may represent executable scripts
+or programs.
+
+Monotone allows each file in a repository to carry arbitrary @ref{File
+Attributes}. Persistent attributes are stored in the @file{.mt-attrs},
+in your working copy and manifest. The hooks in this section allow files
+to be automatically recognised as having certain attributes at the time
+they're added, and for custom triggers to be invoked on each file
+according to its attributes when the working copy is changed.
+
+@ftable @code
 @item attr_functions [@var{attribute}] (@var{filename}, @var{value})
 
 This is not a hook function, but a @emph{table} of hook
@@ -6207,13 +6346,11 @@ entry @var{attribute}, is a function taking a file name @var{filename}
 and a attribute value @var{value}. The function should ``apply'' the 
 attribute to the file, possibly in a platform-specific way.
 
-Persistent attributes are stored in the @file{.mt-attrs}, in your
-working copy and manifest. If such a file exists, hook functions from
-this table are called for each triple found in the file, after any
-command which modifies the working copy. This facility can be used to
-extend monotone's understanding of files with platform-specific
-attributes, such as permission bits, access control lists, or special
-file types.
+Hook functions from this table are called for each triple found in the
+@file{.mt-attrs} file, after any command which modifies the working
+copy. This facility can be used to extend monotone's understanding of
+files with platform-specific attributes, such as permission bits, access
+control lists, or special file types.
 
 By default, there is only one entry in this table, for the @code{execute}
 attribute. Its definition is:
@@ -6264,26 +6401,6 @@ attr_init_functions["manual_merge"] =
 
 The @code{binary_file} function is also defined as a lua hook. See
 @ref{Default hooks}. 
-
-@item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary},
-                     @var{diff_args}, @var{old_rev}, @var{new_rev})
-
-Called for each file when @command{diff} is given the
-@option{--external} command.  @var{file_path} is the pathname of the
-file that is being diffed.  @var{old_data} and @var{new_data} are the
-data contents of the old and the new file.  If the data is binary,
-@var{is_binary} will be true, otherwise false.  @var{old_rev} and
-@var{new_rev} are the revision IDs of the old and new data.
-
-If an extra arguments are given via @option{--diff-args}, the string
-will be passed in as @var{diff_args}.  Otherwise @var{diff_args} will
-be nil.
-
-The default implementation of this hook calls the program @code{diff},
-and if @option{--diff-args} were not passed, takes default arguments
-from the lua variable @code{external_diff_default_args}.  You can
-override this variable in your configuration file, without overriding
-the whole hook.
 
 @end ftable
 

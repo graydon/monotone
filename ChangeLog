@@ -1,3 +1,9 @@
+2005-11-27  Daniel Carosone  <dan@geek.com.au>
+
+	* monotone.texi, std_hooks.lua: sync hook definitions with
+	std_hooks.lua, and group the descriptions into @subsections,
+	reordering a few items accordingly.
+
 2005-11-25  graydon hoare  <graydon@pobox.com>
 
 	* database.cc (get_version): Crucial fix! Rewrite the

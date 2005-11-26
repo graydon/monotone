@@ -234,6 +234,12 @@ function persist_phrase_ok()
    return true
 end
 
+
+function use_inodeprints()
+   return false
+end
+
+
 -- trust evaluation hooks
 
 function intersection(a,b)
@@ -767,9 +773,6 @@ function expand_date(str)
    return nil
 end
 
-function use_inodeprints()
-   return false
-end
 
 external_diff_default_args = "-u"
 
@@ -784,6 +787,8 @@ function external_diff(file_path, data_old, data_new, is_binary, diff_args, rev_
    os.remove (old_file);
    os.remove (new_file);
 end
+
+-- netsync permissions hooks (and helper)
 
 function globish_match(glob, str)
       local pcallstatus, result = pcall(function() if (globish.match(glob, str)) then return true else return false end end)
