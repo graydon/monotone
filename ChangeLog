@@ -1,5 +1,11 @@
 2005-11-25  graydon hoare  <graydon@pobox.com>
 
+	* database.cc (get_version): Another important fix: make sure to
+	cancel overlapping paths, to avoid exponential memory requirement
+	in deep, heavily-forked-and-merged storage paths.
+
+2005-11-25  graydon hoare  <graydon@pobox.com>
+
 	* database.cc (get_version): Crucial fix! Rewrite the
 	delta-reconstruction algorithm to work with a DAG storage topology,
 	rather than assuming an inverted tree. Counterpart to the
