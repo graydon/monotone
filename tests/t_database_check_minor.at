@@ -32,7 +32,7 @@ AT_CHECK(MONOTONE fload < fileY, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE db check, [], [ignore], [stderr])
 
-AT_CHECK(QGREP('problems detected: 4' stderr))
+AT_CHECK(QGREP('problems detected: 5' stderr))
 AT_CHECK(QGREP('0 serious' stderr))
 AT_CHECK(QGREP('minor problems detected' stderr))
 
