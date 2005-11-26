@@ -1,3 +1,14 @@
+2005-11-26  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* botan/mem_pool.cpp (Pooling_Allocator::allocate): Botan's
+	Pooling_Allocator assumes that Buffers stored in free_list are
+	sorted, and uses std::inplace_merge() in deallocate() to ensure
+	the recently freed Buffer is positioned in free_list
+	appropriately.  This same check was not being performed when a
+	Buffer was added to free_list in allocate() (it's not safe to
+	assume that the address of a newly allocated Buffer will always be
+	greated than existing Buffers).
+
 2005-11-25  graydon hoare  <graydon@pobox.com>
 
 	* database.cc (get_version): Another important fix: make sure to
