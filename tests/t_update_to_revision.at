@@ -4,6 +4,10 @@ AT_SETUP([updating to a given revision])
 
 MONOTONE_SETUP
 
+# This test relies on forward updating 
+# (which is disabled in monotone at the moment)
+AT_XFAIL_IF(true)
+
 AT_DATA(root, [first line of the file
 second line of the file
 third line of the file
