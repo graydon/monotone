@@ -75,7 +75,7 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("9598aecfa8fbd6bb00acf8dc6e42b46d7e2a46a2"),
+  schema("1db80c7cee8fa966913db1a463ed50bf1b0e5b0e"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -1128,6 +1128,85 @@ database::put_version(hexenc<id> const & old_id,
 }
 
 void 
+database::remove_version(hexenc<id> const & target_id,
+                         string const & data_table,
+                         string const & delta_table)
+{
+  // We have a one of two cases (for multiple 'older' nodes):
+  //
+  //    1.  pre:        older <- target <- newer
+  //       post:                  older <- newer
+  //
+  //    2.  pre:        older <- target (a root)
+  //       post:                  older (a root)
+  // 
+  // In case 1 we want to build new deltas bypassing the target we're
+  // removing. In case 2 we just promote the older object to a root.
+
+  transaction_guard guard(*this);
+
+  I(exists(target_id, data_table) 
+    || delta_exists(target_id, delta_table));
+
+  map<hexenc<id>, data> older;
+
+  {
+    results res;
+    string query = "SELECT id FROM " + delta_table + " WHERE base = ?";
+    fetch(res, one_col, any_rows, 
+          query.c_str(), target_id().c_str());
+    for (size_t i = 0; i < res.size(); ++i)
+      {
+        hexenc<id> old_id(res[i][0]);
+        data old_data;
+        get_version(old_id, old_data, data_table, delta_table);
+        older.insert(make_pair(old_id, old_data));
+      }
+  }
+
+  if (delta_exists(target_id, delta_table))
+    {
+      if (!older.empty())
+        {          
+          // Case 1: need to re-deltify all the older values against a newer
+          // member of the delta chain. Doesn't really matter which newer
+          // element (we have no good heuristic for guessing a good one
+          // anyways).
+          hexenc<id> newer_id;
+          data newer_data;
+          results res;
+          string query = "SELECT base FROM " + delta_table + " WHERE id = ?";
+          fetch(res, one_col, any_rows, 
+                query.c_str(), target_id().c_str());
+          I(res.size() > 0);
+          newer_id = hexenc<id>(res[0][0]);
+          get_version(newer_id, newer_data, data_table, delta_table);
+          for (map<hexenc<id>, data>::const_iterator i = older.begin();
+               i != older.end(); ++i)
+            {
+              delta bypass_delta;
+              diff(newer_data, i->second, bypass_delta);
+              put_delta(i->first, newer_id, bypass_delta, delta_table);
+            }
+        }
+      string query = "DELETE from " + delta_table + " WHERE id = ?";
+      execute(query.c_str(), target_id().c_str());
+    }
+  else
+    {
+      // Case 2: just plop the older values down as new storage roots.
+      I(exists(target_id, data_table));
+      for (map<hexenc<id>, data>::const_iterator i = older.begin();
+           i != older.end(); ++i)
+        put(i->first, i->second, data_table);
+      string query = "DELETE from " + data_table + " WHERE id = ?";
+      execute(query.c_str(), target_id().c_str());
+    }
+
+  guard.commit();
+}
+
+void 
 database::put_reverse_version(hexenc<id> const & new_id,
                               hexenc<id> const & old_id,
                               delta const & reverse_del,
@@ -1163,10 +1242,10 @@ database::file_version_exists(file_id const & id)
 }
 
 bool 
-database::manifest_version_exists(manifest_id const & id)
+database::roster_version_exists(hexenc<id> const & id)
 {
-  return delta_exists(id.inner(), "manifest_deltas") 
-    || exists(id.inner(), "manifests");
+  return delta_exists(id(), "roster_deltas") 
+    || exists(id(), "rosters");
 }
 
 bool 
@@ -1176,16 +1255,39 @@ database::revision_exists(revision_id const & id)
 }
 
 bool
+database::roster_link_exists_for_revision(revision_id const & rev_id)
+{
+  results res;
+  string query = ("SELECT roster_id FROM revision_roster WHERE rev_id = ? ");
+  fetch(res, one_col, any_rows, query.c_str(), 
+        rev_id.inner()().c_str());
+  I((res.size() == 1) || (res.size() == 0));
+  return res.size() == 1;
+}
+
+bool
 database::roster_exists_for_revision(revision_id const & rev_id)
 {
   results res;
-  string query = ("SELECT id FROM rosters WHERE rev_id = ? "
-                  "UNION "
-                  "SELECT id FROM roster_deltas WHERE rev_id = ? ");
+  string query = ("SELECT roster_id FROM revision_roster WHERE rev_id = ? ");
   fetch(res, one_col, any_rows, query.c_str(), 
-        rev_id.inner()().c_str(), rev_id.inner()().c_str());
+        rev_id.inner()().c_str());
   I((res.size() == 1) || (res.size() == 0));
-  return res.size() == 1;
+  return (res.size() == 1) && roster_version_exists(hexenc<id>(res[0][0]));
+}
+
+void 
+database::get_roster_links(std::map<revision_id, hexenc<id> > & links)
+{
+  links.clear();
+  results res;
+  string query = ("SELECT rev_id, roster_id FROM revision_roster");
+  fetch(res, 2, any_rows, query.c_str());
+  for (size_t i = 0; i < res.size(); ++i)
+    {
+      links.insert(make_pair(revision_id(res[i][0]), 
+                             hexenc<id>(res[i][1])));
+    }
 }
 
 void 
@@ -1195,16 +1297,6 @@ database::get_file_ids(set<file_id> & ids)
   set< hexenc<id> > tmp;
   get_ids("files", tmp);
   get_ids("file_deltas", tmp);
-  ids.insert(tmp.begin(), tmp.end());
-}
-
-void 
-database::get_manifest_ids(set<manifest_id> & ids) 
-{
-  ids.clear();
-  set< hexenc<id> > tmp;
-  get_ids("manifests", tmp);
-  get_ids("manifest_deltas", tmp);
   ids.insert(tmp.begin(), tmp.end());
 }
 
@@ -1254,7 +1346,6 @@ database::get_manifest(manifest_id const & id,
   read_manifest_map(mdat, mm);
 }
 
-
 void 
 database::put_file(file_id const & id,
                    file_data const & dat)
@@ -1278,32 +1369,6 @@ database::put_file_reverse_version(file_id const & new_id,
 {
   put_reverse_version(new_id.inner(), old_id.inner(), del.inner(), 
                       "files", "file_deltas");
-}
-
-
-void 
-database::put_manifest(manifest_id const & id,
-                       manifest_data const & dat)
-{
-  put(id.inner(), dat.inner(), "manifests");
-}
-
-void 
-database::put_manifest_version(manifest_id const & old_id,
-                               manifest_id const & new_id,
-                               manifest_delta const & del)
-{
-  put_version(old_id.inner(), new_id.inner(), del.inner(), 
-              "manifests", "manifest_deltas");
-}
-
-void 
-database::put_manifest_reverse_version(manifest_id const & new_id,
-                                       manifest_id const & old_id,                                 
-                                       manifest_delta const & del)
-{
-  put_reverse_version(new_id.inner(), old_id.inner(), del.inner(), 
-                      "manifests", "manifest_deltas");
 }
 
 
@@ -1396,8 +1461,8 @@ database::deltify_revision(revision_id const & rid)
   transaction_guard guard(*this);
   revision_set rev;
   get_revision(rid, rev);
-  // make sure that all parent revs have their manifests and files
-  // replaced with deltas from this rev's manifest and files
+  // Make sure that all parent revs have their files replaced with deltas
+  // from this rev's files.
   {
     for (edge_map::const_iterator i = rev.edges.begin();
          i != rev.edges.end(); ++i)
@@ -1534,38 +1599,43 @@ database::delete_existing_manifests()
 void
 database::delete_existing_rev_and_certs(revision_id const & rid)
 {
+  transaction_guard guard (*this);
 
-  //check that the revision exists and doesn't have any children
+  // Check that the revision exists and doesn't have any children.
   I(revision_exists(rid));
   set<revision_id> children;
   get_revision_children(rid, children);
   I(!children.size());
+  
 
-  // perform the actual SQL transactions to kill rev rid here
   L(F("Killing revision %s locally\n") % rid);
+
+  // Kill the certs, ancestry, and rev itself.
   execute("DELETE from revision_certs WHERE id = ?",rid.inner()().c_str());
   execute("DELETE from revision_ancestry WHERE child = ?", rid.inner()().c_str());
   execute("DELETE from revisions WHERE id = ?",rid.inner()().c_str());
-
-  // rosters
+  
+  // Find the associated roster and count the number of links to it
   hexenc<id> roster_id;
+  size_t link_count = 0;  
   get_roster_id_for_revision(rid, roster_id);
-  results res;
-  fetch(res, 2, any_rows, 
-        "SELECT id, rev_id FROM roster_deltas WHERE base = ?", 
-        roster_id().c_str());
-  for (size_t i = 0; i < res.size(); ++i)
-    {
-      data dat;
-      get_roster(res[i][0], dat);
-      base64<gzip<data> > dat_packed;
-      pack(dat, dat_packed);
-      execute("INSERT INTO rosters VALUES(?, ?, ?)",
-              res[i][0].c_str(), res[i][1].c_str(), dat_packed().c_str());
-    }
-  execute("DELETE from rosters WHERE rev_id = ?",rid.inner()().c_str());
-  execute("DELETE from roster_deltas WHERE rev_id = ? or base = ?",
-          rid.inner()().c_str(), rid.inner()().c_str());
+  {  
+    results res;
+    string query = ("SELECT rev_id, roster_id FROM revision_roster "
+                    "WHERE roster_id = ?");
+    fetch(res, 2, any_rows, query.c_str(), roster_id().c_str());
+    I(res.size() > 0);
+    link_count = res.size();
+  }
+  
+  // Delete our link.
+  execute("DELETE from revision_roster WHERE rev_id = ?", rid.inner()().c_str());
+
+  // If that was the last link to the roster, kill the roster too.
+  if (link_count == 1)
+    remove_version(roster_id, "rosters", "roster_deltas");
+
+  guard.commit();
 }
 
 /// Deletes all certs referring to a particular branch. 
@@ -2583,12 +2653,8 @@ database::get_roster_id_for_revision(revision_id const & rev_id,
     }
 
   results res;
-  string query = ("SELECT id FROM rosters WHERE rev_id = ? "
-                  "UNION "
-                  "SELECT id FROM roster_deltas WHERE rev_id = ? ");
-  
+  string query = ("SELECT roster_id FROM revision_roster WHERE rev_id = ? ");  
   fetch(res, one_col, one_row, query.c_str(),
-        rev_id.inner()().c_str(),
         rev_id.inner()().c_str());
   roster_id = hexenc<id>(res[0][0]);
 }
@@ -2639,12 +2705,10 @@ database::put_roster(revision_id const & rev_id,
 {
   data old_data, new_data;
   delta reverse_delta;
-  hexenc<id> ident;
-  base64<gzip<data> > new_data_packed;
+  hexenc<id> old_id, new_id;
 
   write_roster_and_marking(roster, marks, new_data);
-  calculate_ident(new_data, ident);
-  pack(new_data, new_data_packed);
+  calculate_ident(new_data, new_id);
 
   // First: find the "old" revision; if there are multiple old
   // revisions, we just pick the first. It probably doesn't matter for
@@ -2653,52 +2717,44 @@ database::put_roster(revision_id const & rev_id,
   string data_table = "rosters";
   string delta_table = "roster_deltas";
 
+  transaction_guard guard(*this);
+
+  execute("INSERT into revision_roster VALUES (?, ?)", 
+          rev_id.inner()().c_str(),
+          new_id().c_str());
+
+  if (exists(new_id, data_table) 
+      || delta_exists(new_id, delta_table))
+    {
+      guard.commit();
+      return;
+    }
+
+  // Else we have a new roster the database hasn't seen yet; our task is to
+  // add it, and deltify all the incoming edges (if they aren't already).
+
+  put(new_id, new_data, data_table);
+
   std::set<revision_id> parents;
   get_revision_parents(rev_id, parents);
 
-  transaction_guard guard(*this);
+  // Now do what deltify would do if we bothered (we have the
+  // roster written now, so might as well do it here).
   for (std::set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
     {
       if (null_id(*i))
-        continue;
-
-      // There's a parent revision; we are going to do delta
-      // compression on the roster by using the roster associated with
-      // the parent rev. Keep in mind that we're composing a *reverse*
-      // delta here, which goes from new->old. So the row we insert
-      // will have (id=old_id, rev_id=old_rev, base=new_id,
-      // delta=new->old)
-
+        continue;      
       revision_id old_rev = *i;
-      hexenc<id> old_ident;
-      get_roster_id_for_revision(old_rev, old_ident);
-      get_version(old_ident, old_data, data_table, delta_table);
-      diff(new_data, old_data, reverse_delta);
-      base64<gzip<delta> > del_packed;
-      pack(reverse_delta, del_packed);
-
-      if (exists(old_ident, data_table))
+      get_roster_id_for_revision(old_rev, old_id);
+      if (exists(new_id, data_table))
         {
-          // Descendent of a head version replaces the head, therefore
-          // old head, if it exists in entirety, must be disposed of.
-          drop(old_ident, data_table);
+          get_version(old_id, old_data, data_table, delta_table);
+          diff(new_data, old_data, reverse_delta);
+          drop(old_id, data_table);
+          put_delta(old_id, new_id, reverse_delta, delta_table);
         }
-
-      // nb: roster_deltas schema is (id, rev_id, base, delta)
-      string query = "INSERT INTO " + delta_table + " VALUES(?, ?, ?, ?)";
-      execute(query.c_str(), 
-              old_ident().c_str(), old_rev.inner()().c_str(), 
-              ident().c_str(), del_packed().c_str());
-
     }
-
-  // nb: rosters schema is (id, rev_id, data)
-  string query = "INSERT INTO " + data_table + " VALUES(?, ?, ?)";
-  execute(query.c_str(),
-          ident().c_str(), rev_id.inner()().c_str(), 
-          new_data_packed().c_str());      
-
   guard.commit();
 }
 

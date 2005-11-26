@@ -3441,12 +3441,38 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
   set<node_id> nodes;
 
+  set<revision_id> frontier;
+
+  revision_id first_rid;
+  if (app.revision_selectors.size() == 0)
+    {
+      get_revision_id(first_rid);
+      frontier.insert(first_rid);
+    }
+  else
+    {
+      for (std::vector<utf8>::const_iterator i = app.revision_selectors.begin();
+           i != app.revision_selectors.end(); i++) 
+        {
+          revision_id rid;
+          complete(app, (*i)(), rid);
+          frontier.insert(rid);
+          if (i == app.revision_selectors.begin())
+            first_rid = rid;
+        }
+    }
+
   if (args.size() > 0)
     {
       // User wants to trace only specific files
       roster_t old_roster, new_roster;
       revision_set rev;
-      get_unrestricted_working_revision_and_rosters(app, rev, old_roster, new_roster);
+
+      if (app.revision_selectors.size() == 0)
+        get_unrestricted_working_revision_and_rosters(app, rev, old_roster, new_roster);
+      else
+        app.db.get_roster(first_rid, new_roster);          
+
       for (size_t i = 0; i < args.size(); ++i)
         {
           file_path fp = file_path_external(idx(args, i));
@@ -3458,23 +3484,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
         }
     }
 
-  set<revision_id> frontier;
-
-  if (app.revision_selectors.size() == 0)
-    {
-      revision_id rid;
-      get_revision_id(rid);
-      frontier.insert(rid);
-    }
-  else
-    {
-      for (std::vector<utf8>::const_iterator i = app.revision_selectors.begin();
-           i != app.revision_selectors.end(); i++) {
-        revision_id rid;
-        complete(app, (*i)(), rid);
-        frontier.insert(rid);
-      }
-    }
 
   cert_name author_name(author_cert_name);
   cert_name date_name(date_cert_name);

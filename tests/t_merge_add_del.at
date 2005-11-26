@@ -1,9 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([(imp) merging <add a> with <add a, drop a>])
-
-# This test is a bug report.
-AT_XFAIL_IF(true)
+AT_SETUP([merging <add a> with <add a, drop a>])
 
 MONOTONE_SETUP
 
