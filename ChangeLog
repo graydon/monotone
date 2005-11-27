@@ -1,5 +1,11 @@
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
+	* tests/t_automate_stdio.at: Don't expect perl to be in /usr/bin;
+	this assumption doesn't hold breaks on several systems (such as
+	NetBSD).
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
 	* tests/t_checkout_options.at: Use the [] operator instead of {} in
 	a shell pattern so that it works with interpreters other than bash
 	(e.g., NetBSD's sh).
