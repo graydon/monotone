@@ -1,3 +1,10 @@
+2005-11-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* Makefile.am, configure.ac, pch.hh: add --enable-pch configure
+	flag to enable precompiled boost headers. Based on LyX automake/autoconf
+	rules, Zbynek Winkler suggested that just boost headers would be
+	beneficial.
+
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* app_state.cc: No need to include headers for chdir() any more.

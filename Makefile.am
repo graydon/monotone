@@ -233,9 +233,36 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 
 # flags
 
+if BUILD_PCH
+
+PCH_SOURCE = $(srcdir)/pch.hh
+# the .gch file only will be seen if it's in the same dir as the .hh file,
+# so need to copy it for separate build directories
+PCH_BUILD = pch-build.hh
+PCH_FLAGS = -Winvalid-pch -include $(PCH_BUILD)
+PCH_FILE = ./pch-build.hh.gch
+sinclude $(PCH_FILE).dep
+
+*.o *.lo *.obj: $(PCH_FILE)
+
+$(PCH_BUILD): $(PCH_SOURCE)
+	cp $(PCH_SOURCE) $(PCH_BUILD)
+
+$(PCH_FILE): $(PCH_BUILD)
+	$(MAKE) PCH_FLAGS= pch-file
+
+pch-file:
+	$(CXXCOMPILE) -x c++-header $(PCH_BUILD) -o $(PCH_FILE) \
+        -MT $(PCH_FILE)  -MD -MP -MF "./$(PCH_FILE).Tdep" \
+        && mv "./$(PCH_FILE).Tdep" "./$(PCH_FILE).dep" \
+        || rm "./$(PCH_FILE).Tdep"
+endif
+
+SUFFIXES = .gch
+
 AM_CPPFLAGS =
 AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR $(SQLITE_CPPFLAGS)
-AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS
+AM_CXXFLAGS = $(AM_CPPFLAGS) $(PCH_FLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS
 AM_LDFLAGS = 
 
 lib3rdparty_a_CPPFLAGS =
@@ -400,7 +427,7 @@ TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 mostlyclean-local:
 	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
 
-DISTCLEANFILES = tests/atconfig mt-stdint.h xgettext.opts
+DISTCLEANFILES = tests/atconfig mt-stdint.h xgettext.opts pch-build.hh.gch.dep
 
 # distcheck stuff
 
@@ -432,10 +459,11 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
                       package_revision.txt package_revision.c \
-                      package_full_revision.txt package_full_revision.c
+                      package_full_revision.txt package_full_revision.c \
+                      pch-build.hh.gch pch-build.hh
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
-CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)
+CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES) 
 
 txt2c: txt2c.cc Makefile
 	$(CXX) $(CXXFLAGS) -o $@ $<
