@@ -1,3 +1,10 @@
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* configure.ac, ui.cc: Windows does have sync_with_iostream; the
+	problem is that it does not behave correctly on some MinGW versions.
+	Properly detect this condition.  Thanks to Matthew Gregan for the
+	explanation.
+
 2005-11-27  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_netsync_largish_file.at: Move LARGISH_FILE_CREATE
