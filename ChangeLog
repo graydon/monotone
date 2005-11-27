@@ -1,5 +1,9 @@
 2005-11-26  Nathaniel Smith  <njs@pobox.com>
 
+	* UPGRADE: Add note about serve changing syntax.
+
+2005-11-26  Nathaniel Smith  <njs@pobox.com>
+
 	* UPGRADE: Update for 0.24.
 	* configure.ac, win32/monotone.iss, monotone.spec:
 	* debian/changelog: Bump version number.

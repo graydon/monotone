@@ -6,8 +6,10 @@ if you are upgrading from:
     OS X), or %APPDATA%\Monotone\keys (Windows).  You must run 'db
     migrate' against each of your databases; this will automatically
     migrate the keys.  See NEWS for details.
+    Command line syntax for 'serve' has changed; please adjust startup
+    scripts accordingly.
     On Windows only, monotone now looks in a different place for the
-    monotonerc file; see NEWS for details.
+    monotonerc file; see NEWS for 0.24 for details.
   - 0.21 or earlier: hooks governing netsync read permission have
     changed again; see NEWS for 0.22.
   - 0.19 or earlier: there are incompatible command line and server
