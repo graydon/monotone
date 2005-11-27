@@ -240,7 +240,7 @@ PCH_SOURCE = $(srcdir)/pch.hh
 # so need to copy it for separate build directories
 PCH_BUILD = pch-build.hh
 PCH_FLAGS = -Winvalid-pch -include $(PCH_BUILD)
-PCH_FILE = ./pch-build.hh.gch
+PCH_FILE = $(PCH_BUILD).gch
 sinclude $(PCH_FILE).dep
 
 *.o *.lo *.obj: $(PCH_FILE)
@@ -460,7 +460,7 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
                       package_revision.txt package_revision.c \
                       package_full_revision.txt package_full_revision.c \
-                      pch-build.hh.gch pch-build.hh
+                      $(PCH_FILE) $(PCH_BUILD)
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
 CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES) 
