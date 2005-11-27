@@ -7,9 +7,10 @@ DOMAIN = $(PACKAGE)
 subdir = po
 top_builddir = ..
 
-# These options get passed to xgettext.
-# the second --flag=FP option is ineffective, because of a bug in gettext.
-XGETTEXT_OPTIONS = --keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_ --flag=F:1:c-format --flag=FP:1:c-format --flag=FP:2:c-format
+# These options get passed to xgettext.  They are defined in configure.ac
+# because they are dynamically generated depending on the xgettext version
+# in use.
+#XGETTEXT_OPTIONS =
 
 # This is the copyright holder that gets inserted into the header of the
 # $(DOMAIN).pot file.  Set this to the copyright holder of the surrounding
