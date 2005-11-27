@@ -119,7 +119,7 @@ BOTAN_SOURCES =                                                                 
         botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp 		\
         \
         botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h	\
-        botan/lookup.h botan/omac.h botan/randpool.h botan/version.h	\
+        botan/lookup.h botan/randpool.h botan/version.h	\
         botan/algolist.h botan/buf_es.h botan/der_enc.h			\
         botan/exceptn.h botan/mdx_hash.h botan/par_hash.h		\
         botan/reducer.h botan/x509_ca.h botan/allocate.h		\
@@ -129,7 +129,7 @@ BOTAN_SOURCES =                                                                 
         botan/pbe_pkcs.h botan/rsa.h botan/x509_crl.h botan/asn1.h	\
         botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h	\
         botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h	\
-        botan/cfb.h botan/dl_param.h botan/fips_rng.h botan/modebase.h	\
+        botan/cfb.h botan/dl_param.h botan/modebase.h	\
         botan/pipe.h botan/x509_obj.h			\
         botan/asn1_oid.h botan/conf.h botan/eax.h botan/gzip.h		\
         botan/mode_pad.h botan/pk_algs.h botan/secmem.h			\

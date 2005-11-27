@@ -1,3 +1,7 @@
+2005-11-26  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am: Remove botan/{omac,fips_rng}.h.
+
 2005-11-26  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* AUTHORS, ChangeLog: Update my email address; I don't read the
