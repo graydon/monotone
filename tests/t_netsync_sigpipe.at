@@ -4,7 +4,7 @@ AT_SETUP([netsync is not interrupted by SIGPIPE])
 AT_KEYWORDS([netsync])
 
 m4_define([NETSYNC_KILLPIPE], [
-if test "$OSTYPE" == "msys"; then
+if test "$OSTYPE" = "msys"; then
   echo "No SIGPIPE on MinGW"
 else
   kill -PIPE `cat monotone_at.pid` 2>/dev/null

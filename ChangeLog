@@ -1,5 +1,11 @@
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
+	* testsuite.at, tests/t_empty_env.at, tests/t_i18n_file.at,
+	tests/t_netsync_sigpipe.at: Do not use shell if's == operator
+	because it is not portable; use = instead.
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
 	* app_state.cc: No need to include headers for chdir() any more.
 	This function was replaced by change_current_working_dir.
 	* monotone.cc: Unconditionally include libintl.h as this file uses
