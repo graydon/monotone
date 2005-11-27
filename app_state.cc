@@ -75,8 +75,12 @@ app_state::allow_working_copy()
     {
       read_options();
 
-      system_path dbname = system_path(options[database_option]);
-      if (!dbname.empty()) db.set_filename(dbname);
+      if (!options[database_option]().empty())
+        {
+          system_path dbname = system_path(options[database_option]);
+          db.set_filename(dbname);
+        }
+
       if (branch_name().empty())
         branch_name = options[branch_option];
       L(F("branch name is '%s'\n") % branch_name());
