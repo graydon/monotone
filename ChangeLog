@@ -21,7 +21,6 @@
 	Addresses part of bug #12086.
 
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
-2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
 
 	* app_state.cc: Correctly detect when MT/options does not have a
 	database property instead of printing the cryptic message "misuse:
