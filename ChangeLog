@@ -1,5 +1,10 @@
 2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
 
+	* automate.cc (automate_stdio_read): remove check for EINTR
+	that was breaking win32 build.
+
+2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
+
 	* automate.cc (automate_certs,automate_keys): use non-exclusive 
 	transaction guard
 	* commands.cc (ls_certs,ls_keys,cat): use non-exclusive 
