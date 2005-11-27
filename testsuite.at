@@ -22,7 +22,7 @@ m4_define([SHA1], [monotone --norc identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
 m4_define([WORKING_REVISION], [monotone --norc automate get_revision | monotone --norc identify])
 m4_define([CANONICALISE], [
-if test "$OSTYPE" == "msys"; then
+if test "$OSTYPE" = "msys"; then
   dos2unix -q -o $1
 fi
 ])
@@ -251,7 +251,7 @@ AT_CHECK(MONOTONE --branch=$1 commit --message blah-blah, [], [ignore],
 ])
 
 m4_define([NOT_ON_WIN32], [
-if test "$OSTYPE" == "msys"; then
+if test "$OSTYPE" = "msys"; then
   exit 77
 fi
 ])
@@ -281,7 +281,7 @@ fi
 AT_CHECK(echo $UNB64_COMMAND, [], [ignore], [ignore])
 ])
 m4_define([UNB64], [AT_CHECK(
-if test "$OSTYPE" == "msys"; then
+if test "$OSTYPE" = "msys"; then
   mimencode -u -o $2 $1
 else
   eval $UNB64_COMMAND <$1 >$2
@@ -304,7 +304,7 @@ fi
 AT_CHECK(echo $UNGZ_COMMAND, [], [ignore], [ignore])
 ])
 m4_define([UNGZ], [AT_CHECK(
-if test "$OSTYPE" == "msys"; then
+if test "$OSTYPE" = "msys"; then
   if test "$1" != "$2.gz"; then
     mv $1 $2.gz
   fi
@@ -358,7 +358,7 @@ m4_define([NETSYNC_KILL], [
 if test -e monotone_at.pid; then
        mt_pid=`cat monotone_at.pid`
 fi
-if test "$OSTYPE" == "msys"; then
+if test "$OSTYPE" = "msys"; then
   # we can't use MingW's kill because it can't target Win32 pids.
   pskill=`which pskill`
   if test $pskill && test -x $pskill; then
@@ -381,7 +381,7 @@ m4_define([NETSYNC_KILLHARD], [
 if test -e monotone_at.pid; then
        mt_pid=`cat monotone_at.pid`
 fi
-if test "$OSTYPE" == "msys"; then
+if test "$OSTYPE" = "msys"; then
   # we can't use MingW's kill because it can't target Win32 pids.
   pskill=`which pskill`
   if test $pskill && test -x $pskill; then
@@ -453,6 +453,17 @@ m4_define([QEGREP], [egrep $1 >/dev/null])
 # run as TAIL(lines)
 m4_define([TAIL], [(tail -n $1 2>/dev/null || tail -$1)])
 
+# run as LARGISH_FILE_CREATE(filename, size) to create a <size> MB file of
+# uncompressible data
+m4_define([LARGISH_FILE_CREATE], [
+awk -- 'BEGIN{srand(5253);for(a=0;a<1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish.tmp
+i=$2
+while test $i -gt 0; do
+	cat largish.tmp >> $1
+	i=$((i - 1))
+done
+rm -f largish.tmp
+])
 
 # include all the sub-tests we're going to use
 

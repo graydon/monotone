@@ -268,6 +268,26 @@ then
    fi
 fi
 
+# check for precompiled headers option
+AC_ARG_ENABLE(pch,
+AS_HELP_STRING([--enable-pch],
+               [use precompiled boost headers]))
+AM_CONDITIONAL(BUILD_PCH, false)
+if test x"${enable_pch}" == x"yes"
+then
+	AC_MSG_CHECKING(for gcc with precompiled header support)
+	gxx_version=`${CXX} -dumpversion`
+	case $gxx_version in
+		4.0*)
+			AC_MSG_RESULT(found)
+			AM_CONDITIONAL(BUILD_PCH, true)
+			;;
+		*)
+			AC_MSG_RESULT(not found)
+			;;
+	esac
+fi
+
 AC_CACHE_CHECK([if this is Windows],
        ac_win32, [
        AC_TRY_RUN([
@@ -327,6 +347,9 @@ int main(void)
    ]
 )
 AM_CONDITIONAL(MISSING_INET6, test x"${ac_inet6}" = x"no")
+if test x"${ac_inet6}" = xyes; then
+    AC_DEFINE(USE_IPV6, 1, [Define whether to use IPv6.])
+fi
 
 # simple library checks 
 AC_SEARCH_LIBS([dlsym], [dl], AC_DEFINE(USE_DLOPEN))
@@ -369,7 +392,7 @@ if test -d /usr/ucblib ; then
 else
 	AC_MSG_RESULT(no)
 fi
-AC_CHECK_FUNCS(strerror mtrace getuid geteuid)
+AC_CHECK_FUNCS(strerror strptime mtrace getuid geteuid)
 AC_CHECK_FUNC(setreuid, [], [
     AC_CHECK_LIB(ucb, setreuid, [if echo $LIBS | grep -- -lucb >/dev/null ;then :; else LIBS="$LIBS -lc -lucb" USEUCB=y;fi])
 ])
@@ -447,6 +470,22 @@ AC_CHECK_FUNC(inet_ntop, [AM_CONDITIONAL(MISSING_INET_NTOP, false)],
 
 AC_CHECK_FUNC(getaddrinfo, [AM_CONDITIONAL(MISSING_GETADDRINFO, false)], 
 			   [AM_CONDITIONAL(MISSING_GETADDRINFO, true)])
+
+# Check whether C++ streams support sync_with_stdio.
+AC_MSG_CHECKING(whether C++ streams support sync_with_stdio)
+AC_LINK_IFELSE([AC_LANG_SOURCE([
+#include <iostream>
+
+int main(void)
+{
+  std::clog.sync_with_stdio(false);
+  return 0;
+}
+])],
+ [AC_MSG_RESULT(yes)
+  AC_DEFINE(HAVE_SYNC_WITH_STDIO, 1,
+            [Define to 1 if C++ streams support sync_with_stdio])],
+ [AC_MSG_RESULT(no)])
 
 # allow compiling with different flags/optimisation
 # for monotone versus libs, useful for testing.

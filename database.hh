@@ -88,6 +88,7 @@ class database
   struct sqlite3 * __sql;
   struct sqlite3 * sql(bool init = false);
   int transaction_level;
+  bool transaction_exclusive;
 
   void install_functions(app_state * app);
   void install_views();
@@ -188,7 +189,7 @@ class database
                  std::vector<cert> & certs,
                  std::string const & table);
 
-  void begin_transaction();
+  void begin_transaction(bool exclusive);
   void commit_transaction();
   void rollback_transaction();
   friend class transaction_guard;
@@ -451,12 +452,21 @@ public:
 // transaction-protected, and it'll make sure the db aborts a
 // txn if there's any exception before you call commit()
 
+// by default, locks the database exclusively.
+// if the transaction is intended to be read-only, call with exclusive=False
+// in this case, if a database update is attempted and another process is accessing
+// the database an exception will be thrown - uglier and more confusing for the user -
+// however no data inconsistency should result.
+// 
+// an exception is thrown if an exclusive transaction_guard is created while 
+// a non-exclusive transaction_guard exists.
+
 class transaction_guard
 {
   bool committed;
   database & db;
 public:
-  transaction_guard(database & d);
+  transaction_guard(database & d, bool exclusive=true);
   ~transaction_guard();
   void commit();
 };

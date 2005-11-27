@@ -3057,11 +3057,17 @@ call_server(protocol_role role,
 {
   Netxx::Probe probe;
   Netxx::Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
+#ifdef USE_IPV6
+  bool use_ipv6=true;
+#else
+  bool use_ipv6=false;
+#endif
 
   // FIXME: split into labels and convert to ace here.
 
   P(F("connecting to %s\n") % address());
-  Netxx::Stream server(address().c_str(), default_port, timeout);
+  Netxx::Address addr(address().c_str(), default_port, use_ipv6);
+  Netxx::Stream server(addr, timeout);
   session sess(role, client_voice, include_pattern, exclude_pattern,
                app, address(), server.get_socketfd(), timeout);
   
@@ -3342,7 +3348,13 @@ serve_connections(protocol_role role,
 
   if (!app.bind_port().empty())
     default_port = ::atoi(app.bind_port().c_str());
-  Netxx::Address addr;
+#ifdef USE_IPV6
+  bool use_ipv6=true;
+#else
+  bool use_ipv6=false;
+#endif
+  Netxx::Address addr(use_ipv6);
+
   if (!app.bind_address().empty()) 
       addr.add_address(app.bind_address().c_str(), default_port);
   else
