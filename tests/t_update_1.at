@@ -19,7 +19,7 @@ REVERT_TO($A1_SHA)
 # Put in an explicit --branch, because REVERT_TO is not smart about
 # such things.
 AT_CHECK(MONOTONE --branch=a update, [], [ignore], [ignore])
-AT_CHECK(test $A1_SHA == `BASE_REVISION`)
+AT_CHECK(test $A1_SHA = `BASE_REVISION`)
 
 AT_CHECK(MONOTONE propagate b a, [], [ignore], [ignore])
 
@@ -27,6 +27,6 @@ REVERT_TO($A1_SHA)
 # Put in an explicit --branch, because REVERT_TO is not smart about
 # such things.
 AT_CHECK(MONOTONE --branch=a update, [], [ignore], [ignore])
-AT_CHECK(test $B1_SHA == `BASE_REVISION`)
+AT_CHECK(test $B1_SHA = `BASE_REVISION`)
 
 AT_CLEANUP
