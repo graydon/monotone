@@ -21,10 +21,21 @@
 	Addresses part of bug #12086.
 
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
 
 	* app_state.cc: Correctly detect when MT/options does not have a
 	database property instead of printing the cryptic message "misuse:
 	invalid path ''".
+
+2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
+
+	* configure.ac: expose --enable-ipv6 in config.h
+	* monotone.cc (cpp_main): parse IPv6 addresses correctly 
+	in --bind arguments
+	* netsync.cc (call_server,serve_connections): if USE_IPV6 defined, 
+	create netxx Address instances with ipv6 enabled.
+	* netxx/address.cxx (parse_uri): parse IPv6 addresses as hostnames
+	* closes bug #14446
 
 2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
 
