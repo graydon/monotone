@@ -1,5 +1,10 @@
 2005-11-27  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* netxx/address.cxx (parse_uri): Reset URI parser state after
+	checking for IPv6 address.
+
+2005-11-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* tests/t_netsync_largish_file.at: Move LARGISH_FILE_CREATE
 	definition from here...
 	* testsuite.at: ...to here.

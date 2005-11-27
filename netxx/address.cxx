@@ -230,6 +230,9 @@ namespace
 	  return true;
 	}
 
+	stop_pos = uri;
+	uri = start_pos;
+
 	// check for a port number in the hostname
 	while (*uri != 0 && uri != stop_pos && *uri != ':') ++uri;
 
