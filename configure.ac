@@ -273,7 +273,7 @@ AC_ARG_ENABLE(pch,
 AS_HELP_STRING([--enable-pch],
                [use precompiled boost headers]))
 AM_CONDITIONAL(BUILD_PCH, false)
-if test x"${enable_pch}" == x"yes"
+if test x"${enable_pch}" = x"yes"
 then
 	AC_MSG_CHECKING(for gcc with precompiled header support)
 	gxx_version=`${CXX} -dumpversion`

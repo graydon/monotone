@@ -1,5 +1,10 @@
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
+	* configure.ac: Do not use test's == operator because it is not
+	compatible with many implementations; use = instead.
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
 	* configure.ac, ui.cc: Windows does have sync_with_iostream; the
 	problem is that it does not behave correctly on some MinGW versions.
 	Properly detect this condition.  Thanks to Matthew Gregan for the
