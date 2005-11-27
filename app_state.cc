@@ -1,11 +1,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#ifdef WIN32
-#include <io.h> /* for chdir() */
-#else
-#include <unistd.h> /* for chdir() on POSIX */
-#endif
 #include <cstdlib>              // for strtoul()
 
 #include <boost/filesystem/path.hpp>

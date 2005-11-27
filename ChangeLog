@@ -1,5 +1,20 @@
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
+	* app_state.cc: No need to include headers for chdir() any more.
+	This function was replaced by change_current_working_dir.
+	* monotone.cc: Unconditionally include libintl.h as this file uses
+	gettext functions.
+	* configure.ac, rcs_import.cc: Check for strptime(3) and use the
+	check results instead of assuming that only Windows lacks this
+	function.
+	* configure.ac, ui.cc: Check whether C++ streams support the
+	sync_with_stdio method and use the check results instead of assuming
+	that only Windows lacks this function.
+
+	Addresses part of bug #12086.
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
 	* app_state.cc: Correctly detect when MT/options does not have a
 	database property instead of printing the cryptic message "misuse:
 	invalid path ''".

@@ -16,9 +16,7 @@
 #include <locale.h>
 
 #include <stdlib.h>
-#ifdef WIN32
 #include <libintl.h>
-#endif
 
 #include "botan/botan.h"
 

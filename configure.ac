@@ -369,7 +369,7 @@ if test -d /usr/ucblib ; then
 else
 	AC_MSG_RESULT(no)
 fi
-AC_CHECK_FUNCS(strerror mtrace getuid geteuid)
+AC_CHECK_FUNCS(strerror strptime mtrace getuid geteuid)
 AC_CHECK_FUNC(setreuid, [], [
     AC_CHECK_LIB(ucb, setreuid, [if echo $LIBS | grep -- -lucb >/dev/null ;then :; else LIBS="$LIBS -lc -lucb" USEUCB=y;fi])
 ])
@@ -447,6 +447,22 @@ AC_CHECK_FUNC(inet_ntop, [AM_CONDITIONAL(MISSING_INET_NTOP, false)],
 
 AC_CHECK_FUNC(getaddrinfo, [AM_CONDITIONAL(MISSING_GETADDRINFO, false)], 
 			   [AM_CONDITIONAL(MISSING_GETADDRINFO, true)])
+
+# Check whether C++ streams support sync_with_stdio.
+AC_MSG_CHECKING(whether C++ streams support sync_with_stdio)
+AC_LINK_IFELSE([AC_LANG_SOURCE([
+#include <iostream>
+
+int main(void)
+{
+  std::clog.sync_with_stdio(false);
+  return 0;
+}
+])],
+ [AC_MSG_RESULT(yes)
+  AC_DEFINE(HAVE_SYNC_WITH_STDIO, 1,
+            [Define to 1 if C++ streams support sync_with_stdio])],
+ [AC_MSG_RESULT(no)])
 
 # allow compiling with different flags/optimisation
 # for monotone versus libs, useful for testing.

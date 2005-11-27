@@ -245,7 +245,10 @@ cvs_commit::cvs_commit(rcs_file const & r,
   memset(&t, 0, sizeof(t));
   char const * dp = delta->second->date.c_str();
   L(F("Calculating time of %s\n") % dp);
-#ifdef WIN32
+#ifdef HAVE_STRPTIME
+  if (strptime(dp, "%y.%m.%d.%H.%M.%S", &t) == NULL)
+    I(strptime(dp, "%Y.%m.%d.%H.%M.%S", &t) != NULL);
+#else
   I(sscanf(dp, "%d.%d.%d.%d.%d.%d", &(t.tm_year), &(t.tm_mon), 
            &(t.tm_mday), &(t.tm_hour), &(t.tm_min), &(t.tm_sec))==6);
   t.tm_mon--;
@@ -253,9 +256,6 @@ cvs_commit::cvs_commit(rcs_file const & r,
   // wants a 2 (or 3) digit year (years since 1900).
   if (t.tm_year > 1900)
     t.tm_year-=1900;
-#else
-  if (strptime(dp, "%y.%m.%d.%H.%M.%S", &t) == NULL)
-    I(strptime(dp, "%Y.%m.%d.%H.%M.%S", &t) != NULL);
 #endif
   time = mktime(&t);
   L(boost::format("= %i\n") % time);
