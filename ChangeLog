@@ -1,5 +1,11 @@
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
+	* tests/t_checkout_options.at: Use the [] operator instead of {} in
+	a shell pattern so that it works with interpreters other than bash
+	(e.g., NetBSD's sh).
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
 	* testsuite.at, tests/t_empty_env.at, tests/t_i18n_file.at,
 	tests/t_netsync_sigpipe.at, tests/t_update_1.at, tests/t_update_2.at:
 	Do not use test's == operator because it is not portable; use =

@@ -27,7 +27,7 @@ AT_CHECK(MONOTONE cert $REV branch foobar, [], [ignore], [ignore])
 AT_CHECK(RAW_MONOTONE --branch=foobar checkout --revision=$REV test_dir10, [], [ignore], [ignore])
 
 
-for DIR in test_dir{1,2,3,4,5,6,7,8}; do
+for DIR in test_dir@<:@12345678@:>@; do
   AT_CHECK(echo DIR=$DIR, [], [ignore])
   AT_CHECK(test -f $DIR/MT/options)
   AT_CHECK(QGREP(test.db $DIR/MT/options))
