@@ -1,5 +1,15 @@
 2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
 
+	* configure.ac: expose --enable-ipv6 in config.h
+	* monotone.cc (cpp_main): parse IPv6 addresses correctly 
+	in --bind arguments
+	* netsync.cc (call_server,serve_connections): if USE_IPV6 defined, 
+	create netxx Address instances with ipv6 enabled.
+	* netxx/address.cxx (parse_uri): parse IPv6 addresses as hostnames
+	* closes bug #14446
+
+2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
+
 	* automate.cc (automate_stdio_read): remove check for EINTR
 	that was breaking win32 build.
 

@@ -327,6 +327,9 @@ int main(void)
    ]
 )
 AM_CONDITIONAL(MISSING_INET6, test x"${ac_inet6}" = x"no")
+if test x"${ac_inet6}" = xyes; then
+    AC_DEFINE(USE_IPV6, 1, [Define whether to use IPv6.])
+fi
 
 # simple library checks 
 AC_SEARCH_LIBS([dlsym], [dl], AC_DEFINE(USE_DLOPEN))

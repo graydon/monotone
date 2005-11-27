@@ -186,7 +186,7 @@ namespace
 		return true;
 	    }
 #	endif
-
+	    
 	// first look for the protocol seperator
 	while (*uri != 0 && *uri != ':') ++uri;
 
@@ -217,6 +217,18 @@ namespace
 
 	stop_pos = uri;
 	uri = start_pos;
+
+	int colon_count = 0;
+	while (*uri != 0 && uri != stop_pos) {
+	  if (*uri == ':')
+	    colon_count++;
+	  ++uri;
+	}
+	if (colon_count > 1) {
+	  // ipv6 hostname
+	  name.assign(start_pos, stop_pos - start_pos);
+	  return true;
+	}
 
 	// check for a port number in the hostname
 	while (*uri != 0 && uri != stop_pos && *uri != ':') ++uri;
