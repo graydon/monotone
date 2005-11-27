@@ -13,12 +13,10 @@
 	needed to catch the iostreams-returning-EOF-early bogosity under
 	MinGW when sync_with_stdio(false) has been called on the iostream.
 
-2005-11-27  Matt Johnston  <matt@ucc.asn.au>
+2005-11-27  Nathaniel Smith  <njs@pobox.com>
 
-	* Makefile.am, configure.ac, pch.hh: add --enable-pch configure
-	flag to enable precompiled boost headers. Based on LyX automake/autoconf
-	rules, Zbynek Winkler suggested that just boost headers would be
-	beneficial.
+	* monotone.cc: Include "i18n.h" instead of "libintl.h" directly,
+	to theoretically play better with autoconf stuff.
 
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
@@ -38,6 +36,13 @@
 	tests/t_netsync_sigpipe.at, tests/t_update_1.at, tests/t_update_2.at:
 	Do not use test's == operator because it is not portable; use =
 	instead.
+
+2005-11-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* Makefile.am, configure.ac, pch.hh: add --enable-pch configure
+	flag to enable precompiled boost headers. Based on LyX automake/autoconf
+	rules, Zbynek Winkler suggested that just boost headers would be
+	beneficial.
 
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 

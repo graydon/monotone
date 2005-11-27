@@ -16,9 +16,10 @@
 #include <locale.h>
 
 #include <stdlib.h>
-#include <libintl.h>
 
 #include "botan/botan.h"
+
+#include "i18n.h"
 
 #include "app_state.hh"
 #include "commands.hh"
