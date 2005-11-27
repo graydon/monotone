@@ -1,5 +1,11 @@
 2005-11-26  Nathaniel Smith  <njs@pobox.com>
 
+	* UPGRADE: Update for 0.24.
+	* configure.ac, win32/monotone.iss, monotone.spec:
+	* debian/changelog: Bump version number.
+
+2005-11-26  Nathaniel Smith  <njs@pobox.com>
+
 	* ChangeLog: fixup after merge.
 
 2005-11-27  Daniel Carosone  <dan@geek.com.au>
