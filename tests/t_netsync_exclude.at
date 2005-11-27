@@ -30,7 +30,11 @@ B4=`BASE_REVISION`
 
 NETSYNC_SERVE_START('branch*' --exclude=branch2 --exclude=branch4)
 
-NETSYNC_CLIENT_RUN(pull, 'branch*')
+# it is apparently a permissions error to pull a branch that is not served
+# i.e. 'received network error: access to branch 'branch2' denied by server'
+
+NETSYNC_CLIENT_RUN(pull, 'branch2', [1])
+NETSYNC_CLIENT_RUN(pull, 'branch4', [1])
 AT_CHECK(MONOTONE2 automate get_revision $B1, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE2 automate get_revision $B2, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE2 automate get_revision $B3, [1], [ignore], [ignore])
