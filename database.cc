@@ -675,10 +675,20 @@ database::set_filename(system_path const & file)
 }
 
 void 
-database::begin_transaction() 
+database::begin_transaction(bool exclusive) 
 {
   if (transaction_level == 0)
-    execute("BEGIN EXCLUSIVE");
+    {
+      if (exclusive)
+        execute("BEGIN EXCLUSIVE");
+      else
+        execute("BEGIN DEFERRED");
+      transaction_exclusive = exclusive;
+    }
+  else
+    {
+      E(!exclusive || transaction_exclusive, F("Attempt to start exclusive transaction within non-exclusive transaction."));
+    }
   transaction_level++;
 }
 
@@ -2549,10 +2559,11 @@ database::close()
 
 // transaction guards
 
-transaction_guard::transaction_guard(database & d) : committed(false), db(d) 
+transaction_guard::transaction_guard(database & d, bool exclusive) : committed(false), db(d) 
 {
-  db.begin_transaction();
+  db.begin_transaction(exclusive);
 }
+
 transaction_guard::~transaction_guard()
 {
   if (committed)
@@ -2566,6 +2577,8 @@ transaction_guard::commit()
 {
   committed = true;
 }
+
+
 
 // called to avoid foo.db-journal files hanging around if we exit cleanly
 // without unwinding the stack (happens with SIGINT & SIGTERM)

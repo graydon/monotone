@@ -834,7 +834,7 @@ automate_certs(std::vector<utf8> args,
 
   std::vector<cert> certs;
   
-  transaction_guard guard(app.db);
+  transaction_guard guard(app.db, false);
   
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
@@ -1331,7 +1331,7 @@ automate_keys(std::vector<utf8> args, std::string const & help_name,
                                      std::vector<std::string> > > items;
   if (app.db.database_specified())
     {
-      transaction_guard guard(app.db);
+      transaction_guard guard(app.db, false);
       app.db.get_key_ids("", dbkeys);
       guard.commit();
     }

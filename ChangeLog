@@ -1,3 +1,15 @@
+2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (automate_certs,automate_keys): use non-exclusive 
+	transaction guard
+	* commands.cc (ls_certs,ls_keys,cat): use non-exclusive 
+	transaction guard
+	* database.cc (begin_transaction): used BEGIN DEFERRED (only attempt 
+	exclusive lock once a write is attempted on DB) when not exclusive
+	(transaction_guard::transaction_guard): new argument exclusive indicating 
+	whether an immediate exclusive lock is requested, defaults to true
+	* database.hh: update prototype for transaction_guard
+
 2005-11-26  Nathaniel Smith  <njs@pobox.com>
 
 	* UPGRADE: Add note about serve changing syntax.
@@ -33,7 +45,7 @@
 	* configure.ac, Makefile.am, po/Makevars: Avoid using xgettext's
 	--flag option on versions that do not support it.
 
-2005-11-26  Grahame Bowland  <grahame@glamdring.local>
+2005-11-26  Grahame Bowland  <grahame@angrygoats.net>
 
 	* automate.cc (automate_stdio) add wrapper function to read()
 	so that loops will not wind backwards possibly overrunning buffers
