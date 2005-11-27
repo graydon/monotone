@@ -1,5 +1,9 @@
 2005-11-26  Nathaniel Smith  <njs@pobox.com>
 
+	* NEWS: Fill in date for 0.24 release.
+
+2005-11-26  Nathaniel Smith  <njs@pobox.com>
+
 	* UPGRADE: Add note about serve changing syntax.
 
 2005-11-26  Nathaniel Smith  <njs@pobox.com>
