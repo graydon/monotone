@@ -22,6 +22,13 @@
 	Do not use test's == operator because it is not portable; use =
 	instead.
 
+2005-11-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* Makefile.am, configure.ac, pch.hh: add --enable-pch configure
+	flag to enable precompiled boost headers. Based on LyX automake/autoconf
+	rules, Zbynek Winkler suggested that just boost headers would be
+	beneficial.
+
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* app_state.cc: No need to include headers for chdir() any more.
@@ -42,6 +49,16 @@
 	* app_state.cc: Correctly detect when MT/options does not have a
 	database property instead of printing the cryptic message "misuse:
 	invalid path ''".
+
+2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
+
+	* configure.ac: expose --enable-ipv6 in config.h
+	* monotone.cc (cpp_main): parse IPv6 addresses correctly 
+	in --bind arguments
+	* netsync.cc (call_server,serve_connections): if USE_IPV6 defined, 
+	create netxx Address instances with ipv6 enabled.
+	* netxx/address.cxx (parse_uri): parse IPv6 addresses as hostnames
+	* closes bug #14446
 
 2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
 
