@@ -1,15 +1,12 @@
+2005-11-26  Nathaniel Smith  <njs@pobox.com>
+
+	* ChangeLog: fixup after merge.
+
 2005-11-27  Daniel Carosone  <dan@geek.com.au>
 
 	* monotone.texi, std_hooks.lua: sync hook definitions with
 	std_hooks.lua, and group the descriptions into @subsections,
 	reordering a few items accordingly.
-
-2005-11-26  Grahame Bowland  <grahame@glamdring.local>
-
-	* automate.cc (automate_stdio) add wrapper function to read()
-	so that loops will not wind backwards possibly overrunning buffers
-	if an error occurs. Hopefully fixes some of the strange edge cases
-	seen using automate. (Closes #15062 in bug tracker)
 
 2005-11-26  Nathaniel Smith  <njs@pobox.com>
 

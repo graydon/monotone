@@ -90,6 +90,9 @@
         - New command 'automate keys' to get information on existing
           keys in basic_io format.
 
+        Updated translations:
+        - fr
+
         Smaller changes:
         - Improved handling of multibyte characters in message
           displays.
