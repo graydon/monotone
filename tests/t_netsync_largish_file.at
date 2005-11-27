@@ -3,20 +3,10 @@ AT_KEYWORDS([netsync])
 
 # Check that we can netsync a 32MB file.
 
-# We use awk(1) to generate an incompressible file, since the file will be
-# compressed in the monotone database and on the wire.
-
-m4_define([LARGISH_FILE_CREATE], [
-awk -- 'BEGIN{srand(5253);for(a=0;a<1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish.tmp
-cat largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp largish.tmp > largish
-rm -f largish.tmp
-])
-
-
 MONOTONE_SETUP
 NETSYNC_SETUP
 
-AT_CHECK(LARGISH_FILE_CREATE)
+LARGISH_FILE_CREATE(largish, 32)
 
 AT_CHECK(MONOTONE add largish, [], [ignore], [ignore])
 COMMIT(testbranch)

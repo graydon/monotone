@@ -1,3 +1,13 @@
+2005-11-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_netsync_largish_file.at: Move LARGISH_FILE_CREATE
+	definition from here...
+	* testsuite.at: ...to here.
+	* tests/t_dump_load.at: Use LARGISH_FILE_CREATE to create a 1MB
+	file so that the db dump output is larger than a few kB.  This is
+	needed to catch the iostreams-returning-EOF-early bogosity under
+	MinGW when sync_with_stdio(false) has been called on the iostream.
+
 2005-11-27  Matt Johnston  <matt@ucc.asn.au>
 
 	* Makefile.am, configure.ac, pch.hh: add --enable-pch configure
