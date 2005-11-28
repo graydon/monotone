@@ -2672,7 +2672,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     "If one revision is given, the diff between the working directory and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.  If no format is specified, unified is used by default."),
-    OPT_BRANCH_NAME % OPT_REVISION % OPT_DEPTH %
+    OPT_REVISION % OPT_DEPTH %
     OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
     OPT_EXTERNAL_DIFF_ARGS)
 {
