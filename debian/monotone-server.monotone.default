@@ -1,0 +1,17 @@
+# init.d config file for monotone
+
+# this must be set to 1 for monotone to start
+START=0
+
+# the address and or port (ADDRESS[:PORT]) monotone should listen on
+ADDRESS=0.0.0.0
+
+# the database to use
+DB=/var/lib/monotone/default.db
+
+# Branches that monotone should serve (seperated by white space)
+BRANCHES='tld.domain.*
+          tld.domain.branch
+          domain.tld/*
+          domain.tld/branch'
+

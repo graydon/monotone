@@ -1,0 +1,8 @@
+monotone for Debian
+-------------------
+
+In order to use the monotone-server package, monotone should first be
+configured in the /etc/monotone/hooks.lua and /etc/default/monotone packages.
+The server will not start until this is done.
+
+ -- Matthew A. Nicholson <matt@matt-land.com> Sun, 30 Oct 2005 2:26:00 -0600
