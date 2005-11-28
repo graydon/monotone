@@ -1,3 +1,7 @@
+2005-11-27  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (diff): Remove OPT_BRANCH from diff's options.
+
 2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* configure.ac: Do not use test's == operator because it is not
