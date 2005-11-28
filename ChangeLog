@@ -1,3 +1,7 @@
+2005-11-28  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French i18n.
+
 2005-11-28  Nathaniel Smith  <njs@pobox.com>
 
 	* txt2c.cc (main): Work correctly even on empty files.
