@@ -1,3 +1,8 @@
+2005-11-28  Nathaniel Smith  <njs@pobox.com>
+
+	* schema_migration.cc: Provide more feedback while 'db migrate' is
+	running.
+
 2005-11-27  Nathaniel Smith  <njs@pobox.com>
 
 	* std_hooks.lua: Make regexp matching error slightly more
