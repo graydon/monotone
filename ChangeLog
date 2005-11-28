@@ -1,3 +1,9 @@
+2005-11-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* HACKING: Make a note of the fact that we kill 'monotone serve'
+	processes with a SIGSEGV.
+	* tests/README: Minor cleanup, mention SIGSEGV thing here too.
+
 2005-11-27  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* netxx/address.cxx (parse_uri): Reset URI parser state after
