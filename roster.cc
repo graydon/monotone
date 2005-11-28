@@ -2802,10 +2802,29 @@ check_sane_roster_loop_test()
   BOOST_CHECK_THROW(r.check_sane(true), std::logic_error);
 }
 
+static void
+bad_attr_test()
+{
+  testing_node_id_source nis;
+  roster_t r; MM(r);
+  split_path root;
+  file_path().split(root);
+  r.attach_node(r.create_dir_node(nis), root);
+  BOOST_CHECK_THROW(r.set_attr(root, attr_key("test_key1"),
+                               std::make_pair(false, attr_value("invalid"))),
+                    std::logic_error);
+  BOOST_CHECK_NOT_THROW(r.check_sane(true), std::logic_error);
+  safe_insert(r.get_node(root)->attrs,
+              make_pair(attr_key("test_key2"),
+                        make_pair(false, attr_value("invalid"))));
+  BOOST_CHECK_THROW(r.check_sane(true), std::logic_error);
+}
+
 void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&bad_attr_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
   suite->add(BOOST_TEST_CASE(&automaton_roster_test));
