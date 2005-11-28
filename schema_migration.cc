@@ -256,11 +256,13 @@ migrator
             throw runtime_error("mismatched result of migration, "
                                 "got " + curr + ", wanted " + target_id);
           }
+        P(F("committing changes to database"));
         if (sqlite3_exec(sql, "COMMIT", NULL, NULL, NULL) != SQLITE_OK)
           {
             throw runtime_error("failure on COMMIT");
           }
 
+        P(F("optimizing database"));
         if (sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
           throw runtime_error("error vacuuming after migration");
 

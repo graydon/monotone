@@ -1,3 +1,8 @@
+2005-11-28  Nathaniel Smith  <njs@pobox.com>
+
+	* schema_migration.cc: Provide more feedback while 'db migrate' is
+	running.
+
 2005-11-28  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* HACKING: Make a note of the fact that we kill 'monotone serve'
