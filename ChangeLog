@@ -1,5 +1,9 @@
 2005-11-28  Nathaniel Smith  <njs@pobox.com>
 
+	* txt2c.cc (main): Work correctly even on empty files.
+
+2005-11-28  Nathaniel Smith  <njs@pobox.com>
+
 	* schema_migration.cc: Provide more feedback while 'db migrate' is
 	running.
 
