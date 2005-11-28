@@ -94,8 +94,8 @@ function ignore_file(name)
           if result == true then return true end
       else
           -- regex.search had a problem, warn the user their .mt-ignore file syntax is wrong
-          io.stderr:write("WARNING: the line '" .. line .. "' in your .mt-ignore file caused exception '" .. result .. "'"
-                           .. " while matching filename '" .. name .. "', ignoring this regex for all remaining files.\n")
+          io.stderr:write("WARNING: the line '" .. line .. "' in your .mt-ignore file caused error '" .. result .. "'"
+                           .. " while matching filename '" .. name .. "'.\nignoring this regex for all remaining files.\n")
           table.remove(ignored_files, i)
       end
    end
