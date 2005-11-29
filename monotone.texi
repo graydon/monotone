@@ -6030,8 +6030,16 @@ keys in your database to have the same ID. Make sure you confirm the
 key fingerprints of each key in your database, as key ID strings are
 ``convenience names'', not security tokens.
 
+Note also that, unlike the equivalent read permission hook, the write
+permission hook does not take a @var{branch} name as an argument.  There
+is presently no way to selectively grant write access to different
+branches via netsync, for a number of reasons. Contributions in the
+database from different authors can be selectively trusted using the
+@ref{Trust Evaluation Hooks} instead.
+
 @end ftable
 
+@anchor{Trust Evaluation Hooks}
 @subsection Trust Evaluation Hooks
 
 Monotone makes heavy use of certs to provide descriptive information
