@@ -608,16 +608,6 @@ void anc_graph::get_node_manifest(u64 node, manifest_id & man)
 
 void anc_graph::write_certs()
 {
-  std::set<cert_name> cnames;
-  cnames.insert(cert_name(branch_cert_name));
-  cnames.insert(cert_name(date_cert_name));
-  cnames.insert(cert_name(author_cert_name));
-  cnames.insert(cert_name(tag_cert_name));
-  cnames.insert(cert_name(changelog_cert_name));
-  cnames.insert(cert_name(comment_cert_name));
-  cnames.insert(cert_name(testresult_cert_name));
-
-
   {
     // regenerate epochs on all branches to random states
     
@@ -647,9 +637,6 @@ void anc_graph::write_certs()
         {
           cert_name name(j->second.first);
           cert_value val(j->second.second);
-
-          if (cnames.find(name) == cnames.end())
-            continue;
 
           cert new_cert;
           make_simple_cert(rev.inner(), name, val, app, new_cert);
