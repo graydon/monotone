@@ -2677,12 +2677,15 @@ There are several pre-defined domains that monotone knows about:
 @item database
 Contains database-global configuration information.  Defined names are:
 @table @code
-@item default-server
-The default server for netsync operations to use.  Automatically set
-by first use of netsync.
+@item default-exclude-pattern
+The default branch exclusion glob pattern for netsync operations to
+use. Automatically set by first use of netsync.
 @item default-include-pattern
 The default branch glob pattern for netsync operations to use.
 Automatically set by first use of netsync.
+@item default-server
+The default server for netsync operations to use.  Automatically set
+by first use of netsync.
 @end table
 
 @item known-servers
