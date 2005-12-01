@@ -1,5 +1,10 @@
 2005-12-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* database.cc: Revert last change; db version and db migrate need
+	to be able to open databases with old schema versions.  Calling
+	sql() directly broke this.  Moved a db existence check scattered
+	through the code into db_check_exists(), and added calls to this
+	into ::version and ::migrate.
 	* database.cc (database::version, database::migrate): Improve
 	error handling where user has supplied the path to a non-existant
 	database file.  Submitted by Neil Conway.
