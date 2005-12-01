@@ -1,6 +1,12 @@
+// this is how you "ask for" the C99 constant constructor macros.  *and*
+// you have to do so before any other files accidentally include
+// stdint.h. awesome.  (from change_set.cc, required for UINT32_C)
+#define __STDC_CONSTANT_MACROS
+
 #ifdef WIN32
 #define BOOST_NO_STDC_NAMESPACE
 #endif
+
 #include <boost/bind.hpp>
 #include <boost/config.hpp>
 #include <boost/cstdlib.hpp>

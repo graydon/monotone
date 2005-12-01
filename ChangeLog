@@ -1,6 +1,8 @@
-2005-11-28  Benoît Dejean  <benoit@placenet.org>
+2005-11-29  Matt Johnston  <matt@ucc.asn.au>
 
-	* po/fr.po: Updated French i18n.
+	* Makefile.am: add PCH_FLAGS only when compiling monotone and
+	unit_tests objects, not for libs.
+	* pch.hh: define __STDC_CONSTANT_MACROS as required for UINT32_C.
 
 2005-11-28  Nathaniel Smith  <njs@pobox.com>
 
