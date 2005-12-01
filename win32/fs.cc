@@ -141,8 +141,9 @@ rename_clobberingly_impl(const char* from, const char* to)
   static MoveFileExFun MoveFileEx = 0;
   if (MoveFileEx == 0) {
     HMODULE hModule = LoadLibrary("kernel32");
-    MoveFileEx = reinterpret_cast<MoveFileExFun>
-      (GetProcAddress(hModule, "MoveFileExA"));
+    if (hModule)
+      MoveFileEx = reinterpret_cast<MoveFileExFun>
+        (GetProcAddress(hModule, "MoveFileExA"));
     if (MoveFileEx)
       L(F("using MoveFileEx for renames"));
   }

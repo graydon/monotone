@@ -1,3 +1,10 @@
+2005-12-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/fs.cc (rename_clobberingly_impl): Improve error handling
+	around LoadLibrary call.
+	* lua/{lvm.c,lgc.c,lapi.c}: Lua post-5.0.2 bugfixes from
+	http://www.lua.org/bugs.html.  Submitted by Alex Queiroz.
+
 2005-11-29  Matt Johnston  <matt@ucc.asn.au>
 
 	* Makefile.am: add PCH_FLAGS only when compiling monotone and
