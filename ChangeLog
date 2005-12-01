@@ -1,5 +1,8 @@
 2005-12-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* database.cc (database::version, database::migrate): Improve
+	error handling where user has supplied the path to a non-existant
+	database file.  Submitted by Neil Conway.
 	* win32/fs.cc (rename_clobberingly_impl): Improve error handling
 	around LoadLibrary call.
 	* lua/{lvm.c,lgc.c,lapi.c}: Lua post-5.0.2 bugfixes from

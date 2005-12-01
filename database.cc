@@ -461,33 +461,23 @@ database::info(ostream & out)
 #undef SPACE_USAGE
 }
 
-void 
+void
 database::version(ostream & out)
 {
   string id;
 
-  check_filename();
-  open();
-
-  calculate_schema_id(__sql, id);
-
-  close();
+  calculate_schema_id(sql(), id);
 
   out << F("database schema version: %s") % id << endl;
 }
 
-void 
+void
 database::migrate()
-{  
-  check_filename();
-
-  open();
-
-  migrate_monotone_schema(__sql, __app);
-  close();
+{
+  migrate_monotone_schema(sql(), __app);
 }
 
-void 
+void
 database::rehash()
 {
   transaction_guard guard(*this);
