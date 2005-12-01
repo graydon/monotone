@@ -392,9 +392,9 @@ get_stdin()
 }
 
 static void 
-get_log_message(revision_set const & cs, 
-                app_state & app,
-                string & log_message)
+get_log_message_interactively(revision_set const & cs, 
+                              app_state & app,
+                              string & log_message)
 {
   string commentary;
   data summary, user_log_message;
@@ -2253,12 +2253,41 @@ CMD(attr, N_("working copy"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PAT
 }
 
 
+// FIXME BUG: our log message handling is terribly locale-unaware -- if it's
+// passed as -m, we convert to unicode, if it's passed as --message-file or
+// entered interactively, we simply pass it through as bytes.
+
+static void
+process_commit_message_args(bool & given, string & log_message, app_state & app)
+{
+  // can't have both a --message and a --message-file ...
+  N(app.message().length() == 0 || app.message_file().length() == 0,
+    F("--message and --message-file are mutually exclusive"));
+  
+  if (app.message().length() > 0)
+    {
+      log_message = app.message();
+      given = true;
+    }
+  else if (app.message_file().length() > 0)
+    {
+      data dat;
+      read_data_for_command_line(app.message_file(), dat);
+      log_message = dat();
+      given = true;
+    }
+  else
+    given = false;
+}
+
+
 CMD(commit, N_("working copy"), N_("[PATH]..."), 
     N_("commit working copy to database"),
     OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % 
     OPT_AUTHOR % OPT_DEPTH % OPT_EXCLUDE)
 {
   string log_message("");
+  bool log_message_given;
   revision_set rs;
   revision_id rid;
   roster_t old_roster, new_roster;
@@ -2291,37 +2320,29 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
     % rs.new_manifest
     % rid);
 
-  // can't have both a --message and a --message-file ...
-  N(app.message().length() == 0 || app.message_file().length() == 0,
-    F("--message and --message-file are mutually exclusive"));
-
-  N(!( app.message().length() > 0 && has_contents_user_log()),
-    F("MT/log is non-empty and --message supplied\n"
+  process_commit_message_args(log_message_given, log_message, app);
+  
+  N(!(log_message_given && has_contents_user_log()),
+    F("MT/log is non-empty and log message was specified on command line\n"
       "perhaps move or delete MT/log,\n"
-      "or remove --message from the command line?"));
+      "or remove --message/--message-file from the command line?"));
   
-  N(!( app.message_file().length() > 0 && has_contents_user_log()),
-    F("MT/log is non-empty and --message-file supplied\n"
-      "perhaps move or delete MT/log,\n"
-      "or remove --message-file from the command line?"));
-  
-  // fill app.message with message_file contents
-  if (app.message_file().length() > 0)
-  {
-    data dat;
-    read_data_for_command_line(app.message_file(), dat);
-    app.message = dat();
-  }
-  
-  if (app.message().length() > 0)
-    log_message = app.message();
-  else
+  if (!log_message_given)
     {
-      get_log_message(rs, app, log_message);
+      // this call handles MT/log
+      get_log_message_interactively(rs, app, log_message);
+      // we only check for empty log messages when the user entered them
+      // interactively.  Consensus was that if someone wanted to explicitly
+      // type --message="", then there wasn't any reason to stop them.
       N(log_message.find_first_not_of(" \r\t\n") != string::npos,
         F("empty log message; commit canceled"));
-      // we write it out so that if the commit fails, the log
-      // message will be preserved for a retry
+      // we save interactively entered log messages to MT/log, so if something
+      // goes wrong, the next commit will pop up their old log message by
+      // default.  we only do this for interactively entered messages, because
+      // otherwise 'monotone commit -mfoo' giving an error, means that after
+      // you correct that error and hit up-arrow to try again, you get an
+      // "MT/log non-empty and message given on command line" error... which
+      // is annoying.
       write_user_log(data(log_message));
     }
 
