@@ -2992,6 +2992,8 @@ CMD(update, N_("working copy"), "",
 }
 
 
+// should merge support --message, --message-file?  It seems somewhat weird,
+// since a single 'merge' command may perform arbitrarily many actual merges.
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
     OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR % OPT_LCA)
 {
@@ -3043,7 +3045,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
 
 CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"), 
     N_("merge from one branch to another asymmetrically"),
-    OPT_DATE % OPT_AUTHOR % OPT_LCA)
+    OPT_DATE % OPT_AUTHOR % OPT_LCA % OPT_MESSAGE % OPT_MSGFILE)
 {
   //   this is a special merge operator, but very useful for people maintaining
   //   "slightly disparate but related" trees. it does a one-way merge; less
@@ -3114,12 +3116,16 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 
       cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
 
-      string log = (boost::format("propagate from branch '%s' (head %s)\n"
-                                  "            to branch '%s' (head %s)\n")
-                    % idx(args, 0) % (*src_i)
-                    % idx(args, 1) % (*dst_i)).str();
+      bool log_message_given;
+      string log_message;
+      process_commit_message_args(log_message_given, log_message, app);
+      if (!log_message_given)
+        log_message = (boost::format("propagate from branch '%s' (head %s)\n"
+                                     "            to branch '%s' (head %s)\n")
+                       % idx(args, 0) % (*src_i)
+                       % idx(args, 1) % (*dst_i)).str();
 
-      cert_revision_changelog(merged, log, app, dbw);
+      cert_revision_changelog(merged, log_message, app, dbw);
 
       guard.commit();      
       P(F("[merged] %s\n") % merged);
