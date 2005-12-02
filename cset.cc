@@ -326,80 +326,106 @@ parse_cset(basic_io::parser & parser,
            cset & cs)
 {
   cs.clear();
-  while (parser.symp())
+  string t1, t2, t3;
+  // prev is used to enforce monotonically increasing filename ordering
+  string prev; MM(prev);
+  pair<string, string> prev_pair;
+
+  while (parser.symp(syms::delete_node))
     {
-      string t1, t2, t3;
-      if (parser.symp(syms::delete_node))
-        {
-          parser.sym();
-          parser.str(t1);
-          safe_insert(cs.nodes_deleted, internal_string_to_split_path(t1));
-        }
-      else if (parser.symp(syms::rename_node))
-        {
-          parser.sym();
-          parser.str(t1);
-          parser.esym(syms::to);
-          parser.str(t2);
-          safe_insert(cs.nodes_renamed, make_pair(internal_string_to_split_path(t1),
-                                                  internal_string_to_split_path(t2)));
-        }
-      else if (parser.symp(syms::add_dir))
-        {
-          parser.sym();
-          parser.str(t1);
-          safe_insert(cs.dirs_added, internal_string_to_split_path(t1));
-        }
-      else if (parser.symp(syms::add_file))
-        {
-          parser.sym();
-          parser.str(t1);
-          parser.esym(syms::content);
-          parser.hex(t2);
-          safe_insert(cs.files_added, make_pair(internal_string_to_split_path(t1),
-                                                file_id(t2)));
-        }
-      else if (parser.symp(syms::patch))
-        {
-          parser.sym();
-          parser.str(t1);
-          parser.esym(syms::from);
-          parser.hex(t2);
-          parser.esym(syms::to);
-          parser.hex(t3);
-          safe_insert(cs.deltas_applied, 
-                      make_pair(internal_string_to_split_path(t1),
-                                make_pair(file_id(t2), 
-                                          file_id(t3))));
-        }
-      else if (parser.symp(syms::clear))
-        {
-          parser.sym();
-          parser.str(t1);
-          parser.esym(syms::attr);
-          parser.str(t2);
-          safe_insert(cs.attrs_cleared, 
-                      make_pair(internal_string_to_split_path(t1), 
-                                attr_key(t2)));
-        }
-      else if (parser.symp(syms::set))
-        {
-          parser.sym();
-          parser.str(t1);
-          parser.esym(syms::attr);
-          parser.str(t2);
-          parser.esym(syms::value);
-          parser.str(t3);
-          safe_insert(cs.attrs_set, 
-                      make_pair(make_pair(internal_string_to_split_path(t1),
-                                          attr_key(t2)),
-                                attr_value(t3)));
-        }
-      else
-        break;
+      parser.sym();
+      parser.str(t1);
+      I(prev.empty() || t1 > prev);
+      prev = t1;
+      safe_insert(cs.nodes_deleted, internal_string_to_split_path(t1));
+    }
+
+  prev.clear();
+  while (parser.symp(syms::rename_node))
+    {
+      parser.sym();
+      parser.str(t1);
+      I(prev.empty() || t1 > prev);
+      prev = t1;
+      parser.esym(syms::to);
+      parser.str(t2);
+      safe_insert(cs.nodes_renamed, make_pair(internal_string_to_split_path(t1),
+                                              internal_string_to_split_path(t2)));
+    }
+
+  prev.clear();
+  while (parser.symp(syms::add_dir))
+    {
+      parser.sym();
+      parser.str(t1);
+      I(prev.empty() || t1 > prev);
+      prev = t1;
+      safe_insert(cs.dirs_added, internal_string_to_split_path(t1));
+    }
+
+  prev.clear();
+  while (parser.symp(syms::add_file))
+    {
+      parser.sym();
+      parser.str(t1);
+      I(prev.empty() || t1 > prev);
+      prev = t1;
+      parser.esym(syms::content);
+      parser.hex(t2);
+      safe_insert(cs.files_added, make_pair(internal_string_to_split_path(t1),
+                                            file_id(t2)));
+    }
+
+  prev.clear();
+  while (parser.symp(syms::patch))
+    {
+      parser.sym();
+      parser.str(t1);
+      I(prev.empty() || t1 > prev);
+      prev = t1;
+      parser.esym(syms::from);
+      parser.hex(t2);
+      parser.esym(syms::to);
+      parser.hex(t3);
+      safe_insert(cs.deltas_applied, 
+                  make_pair(internal_string_to_split_path(t1),
+                            make_pair(file_id(t2), 
+                                      file_id(t3))));
+    }
+
+  while (parser.symp(syms::clear))
+    {
+      parser.sym();
+      parser.str(t1);
+      parser.esym(syms::attr);
+      parser.str(t2);
+      pair<string, string> new_pair(t1, t2);
+      I(new_pair > prev_pair);
+      prev_pair = new_pair;
+      safe_insert(cs.attrs_cleared, 
+                  make_pair(internal_string_to_split_path(t1), 
+                            attr_key(t2)));
+    }
+
+  prev_pair.first.clear(); 
+  prev_pair.second.clear();
+  while (parser.symp(syms::set))
+    {
+      parser.sym();
+      parser.str(t1);
+      parser.esym(syms::attr);
+      parser.str(t2);
+      pair<string, string> new_pair(t1, t2);
+      I(new_pair > prev_pair);
+      prev_pair = new_pair;
+      parser.esym(syms::value);
+      parser.str(t3);
+      safe_insert(cs.attrs_set, 
+                  make_pair(make_pair(internal_string_to_split_path(t1),
+                                      attr_key(t2)),
+                            attr_value(t3)));
     }
 }
-
 
 void
 write_cset(cset const & cs, data & dat)
@@ -413,6 +439,8 @@ write_cset(cset const & cs, data & dat)
 void
 read_cset(data const & dat, cset & cs)
 {
+  MM(dat);
+  MM(cs);
   std::istringstream iss(dat());
   basic_io::input_source src(iss, "cset");
   basic_io::tokenizer tok(src);
@@ -435,24 +463,10 @@ dump(cset const & cs, std::string & out)
 #include "roster.hh"
 
 static void
-basic_csets_test()
-{
-  // FIXME_ROSTERS: write some tests here
-  // some things to test:
-  //   each cset thingie sets what it's supposed to
-  //   the topdown/bottomup stuff works
-  // don't forget to check normalization of written form, either...
-  //   no duplicate entries (as would be silently ignored, if we don't use
-  //     safe_insert in the parser!)
-  //   ordering
-  //   whitespace normalization
-}
-
-static void
 setup_roster(roster_t & r, file_id const & fid, node_id_source & nis)
 {
-  // sets up r to have a root dir, a dir in it name "dir", and a file under
-  // that named "file", and the file has the given id.
+  // sets up r to have a root dir, a dir in it name "foo", and a file under
+  // that named "bar", and the file has the given id.
   // the file has attr "attr_file=value_file", and the dir has
   // "attr_dir=value_dir".
   r = roster_t();
@@ -473,6 +487,286 @@ setup_roster(roster_t & r, file_id const & fid, node_id_source & nis)
     file_path_internal("foo/bar").split(sp);
     r.attach_node(r.create_file_node(fid, nis), sp);
     r.set_attr(sp, attr_key("attr_file"), attr_value("value_file"));
+  }
+}
+
+static void
+cset_written_test()
+{
+  { 
+    L(F("TEST: cset reading - operation misordering"));
+    // bad cset, add_dir should be before add_file
+    string s("delete \"foo\"\n"
+             "\n"
+             "rename \"quux\"\n"
+             "    to \"baz\"\n"
+             "\n"
+             "add_file \"bar\"\n"
+             " content [0000000000000000000000000000000000000000]\n"
+             "\n"
+             "add_dir \"pling\"\n");
+    data d1(s);
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(d1, cs), std::logic_error);
+    // check that it still fails if there's extra stanzas past the
+    // mis-ordered entries
+    data d2(s + "\n"
+                "  set \"bar\"\n"
+                " attr \"flavoursome\"\n"
+                "value \"mostly\"\n");
+    BOOST_CHECK_THROW(read_cset(d2, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files"));
+    // bad cset, bar should be before foo
+    data dat("delete \"foo\"\n"
+             "\n"
+             "delete \"bar\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - duplicate entries"));
+    data dat("delete \"foo\"\n"
+             "\n"
+             "delete \"foo\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - multiple different attrs"));
+    // should succeed
+    data dat( "  set \"bar\"\n"
+              " attr \"flavoursome\"\n"
+              "value \"mostly\"\n"
+              "\n"
+              "  set \"bar\"\n"
+              " attr \"smell\"\n"
+              "value \"socks\"\n");
+    cset cs;
+    BOOST_CHECK_NOT_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - wrong attr ordering"));
+    // fooish should be before quuxy
+    data dat( "  set \"bar\"\n"
+              " attr \"quuxy\"\n"
+              "value \"mostly\"\n"
+              "\n"
+              "  set \"bar\"\n"
+              " attr \"fooish\"\n"
+              "value \"seldom\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - duplicate attrs"));
+    // can't have dups.
+    data dat( "  set \"bar\"\n"
+              " attr \"flavoursome\"\n"
+              "value \"mostly\"\n"
+              "\n"
+              "  set \"bar\"\n"
+              " attr \"flavoursome\"\n"
+              "value \"sometimes\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+}
+
+static void
+basic_csets_test()
+{
+  // FIXME_ROSTERS: write some tests here
+  // some things to test:
+  //   each cset thingie sets what it's supposed to
+  //   the topdown/bottomup stuff works
+  // don't forget to check normalization of written form, either...
+  //   no duplicate entries (as would be silently ignored, if we don't use
+  //     safe_insert in the parser!)
+  //   ordering
+  //   whitespace normalization
+
+  temp_node_id_source nis;
+  roster_t r;
+  MM(r);
+
+  editable_roster_base tree(r, nis);
+  
+  file_id f1(std::string("0000000000000000000000000000000000000001"));
+  file_id f2(std::string("0000000000000000000000000000000000000002"));
+
+  split_path root, foo, foo_bar, baz, quux;
+  file_path().split(root);
+  file_path_internal("foo").split(foo);
+  file_path_internal("foo/bar").split(foo_bar);
+  file_path_internal("baz").split(baz);
+  file_path_internal("quux").split(quux);
+
+  // some basic tests that should succeed
+  {
+    L(F("TEST: cset add file"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.files_added.insert(make_pair(baz, f2));
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK(is_file_t(r.get_node(baz)));
+    BOOST_CHECK(downcast_to_file_t(r.get_node(baz))->content == f2);
+    BOOST_CHECK(r.all_nodes().size() == 4);
+  }
+
+  {
+    L(F("TEST: cset add dir"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.dirs_added.insert(quux);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK(is_dir_t(r.get_node(quux)));
+    BOOST_CHECK(r.all_nodes().size() == 4);
+  }
+
+  {
+    L(F("TEST: cset delete"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.nodes_deleted.insert(foo_bar);
+    cs.nodes_deleted.insert(foo);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK(r.all_nodes().size() == 1); // only the root left
+  }
+
+  {
+    L(F("TEST: cset rename file"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.nodes_renamed.insert(make_pair(foo_bar, quux));
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK(is_file_t(r.get_node(quux)));
+    BOOST_CHECK(is_dir_t(r.get_node(foo)));
+    BOOST_CHECK(!r.has_node(foo_bar));
+    BOOST_CHECK(r.all_nodes().size() == 3);
+  }
+
+  {
+    L(F("TEST: cset rename dir"));
+    split_path quux_bar;
+    file_path_internal("quux/bar").split(quux_bar);
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.nodes_renamed.insert(make_pair(foo, quux));
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK(is_dir_t(r.get_node(quux)));
+    BOOST_CHECK(is_file_t(r.get_node(quux_bar)));
+    BOOST_CHECK(!r.has_node(foo));
+    BOOST_CHECK(r.all_nodes().size() == 3);
+  }
+
+  {
+    L(F("TEST: patch file"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.deltas_applied.insert(make_pair(foo_bar, make_pair(f1, f2)));
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK(is_dir_t(r.get_node(foo)));
+    BOOST_CHECK(is_file_t(r.get_node(foo_bar)));
+    BOOST_CHECK(downcast_to_file_t(r.get_node(foo_bar))->content == f2);
+    BOOST_CHECK(r.all_nodes().size() == 3);
+  }
+
+  {
+    L(F("TEST: set attr"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")), 
+                                  attr_value("klang")));
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+
+    full_attr_map_t attrs = (r.get_node(foo_bar))->attrs;
+    BOOST_CHECK(attrs[attr_key("ping")] == make_pair(true, attr_value("klang")));
+
+    attrs = (r.get_node(foo))->attrs;
+    BOOST_CHECK(attrs[attr_key("attr_dir")] == make_pair(true, attr_value("value_dir")));
+
+    BOOST_CHECK(r.all_nodes().size() == 3);
+  }
+
+  {
+    L(F("TEST: clear attr file"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")), 
+                                  attr_value("klang")));
+    cs.attrs_cleared.insert(make_pair(foo_bar, attr_key("attr_file")));
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK((r.get_node(foo_bar))->attrs[attr_key("attr_file")] 
+                == make_pair(false, attr_value("")));
+    BOOST_CHECK(r.all_nodes().size() == 3);
+  }
+
+  // some renaming tests
+  {
+    L(F("TEST: renaming at different levels"));
+    setup_roster(r, f1, nis);
+    split_path quux_sub, foo_sub, foo_sub_deep, foo_subsub, 
+               foo_subsub_deep, quux_bar, foo_bar,
+               quux_sub_thing, foo_sub_thing;
+    file_path_internal("quux/bar").split(quux_bar);
+    file_path_internal("foo/bar").split(foo_bar);
+    file_path_internal("quux/sub").split(quux_sub);
+    file_path_internal("foo/sub").split(foo_sub);
+    file_path_internal("foo/sub/thing").split(foo_sub_thing);
+    file_path_internal("quux/sub/thing").split(quux_sub_thing);
+    file_path_internal("foo/sub/deep").split(foo_sub_deep);
+    file_path_internal("foo/subsub").split(foo_subsub);
+    file_path_internal("foo/subsub/deep").split(foo_subsub_deep);
+
+    { // build a tree
+      cset cs; MM(cs);
+      cs.dirs_added.insert(quux);
+      cs.dirs_added.insert(quux_sub);
+      cs.dirs_added.insert(foo_sub);
+      cs.files_added.insert(make_pair(foo_sub_deep, f2));
+      cs.files_added.insert(make_pair(quux_sub_thing, f1));
+      BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+      BOOST_CHECK(r.all_nodes().size() == 8);
+    }
+
+    { // some renames
+      cset cs; MM(cs);
+      cs.nodes_renamed.insert(make_pair(foo, quux));
+      cs.nodes_renamed.insert(make_pair(quux, foo));
+      cs.nodes_renamed.insert(make_pair(foo_sub, foo_subsub));
+      BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    }
+
+    BOOST_CHECK(r.all_nodes().size() == 8);
+    // /foo/bar -> /quux/bar
+    BOOST_CHECK(is_file_t(r.get_node(quux_bar)));
+    BOOST_CHECK(!(r.has_node(foo_bar)));
+    // /foo/sub/deep -> /foo/subsub/deep
+    BOOST_CHECK(is_file_t(r.get_node(foo_subsub_deep)));
+    BOOST_CHECK(!(r.has_node(foo_sub_deep)));
+    // /quux/sub -> /foo/sub
+    BOOST_CHECK(is_dir_t(r.get_node(foo_sub)));
+    BOOST_CHECK(!(r.has_node(quux_sub)));
+    // /quux/sub/thing -> /foo/sub/thing
+    BOOST_CHECK(is_file_t(r.get_node(foo_sub_thing)));
+  }
+
+  {
+    L(F("delete targets pre-renamed nodes"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.nodes_renamed.insert(make_pair(foo_bar, foo));
+    cs.nodes_deleted.insert(foo);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK(r.all_nodes().size() == 2);
+    BOOST_CHECK(is_file_t(r.get_node(foo)));
   }
 }
 
@@ -669,6 +963,7 @@ add_cset_tests(test_suite * suite)
   I(suite);
   suite->add(BOOST_TEST_CASE(&basic_csets_test));
   suite->add(BOOST_TEST_CASE(&invalid_csets_test));
+  suite->add(BOOST_TEST_CASE(&cset_written_test));
 }
 
 #endif // BUILD_UNIT_TESTS
