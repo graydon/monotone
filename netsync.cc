@@ -254,6 +254,12 @@ done_marker
   {}
 };
 
+struct netsync_error
+{
+  string msg;
+  netsync_error(string const & s): msg(s) {}
+};
+
 struct 
 session
 {
@@ -359,7 +365,6 @@ session
   void get_heads_and_consume_certs(set<revision_id> & heads);
 
   void analyze_ancestry_graph();
-  void analyze_manifest(manifest_map const & man);
 
   Netxx::Probe::ready_type which_events() const;
   bool read_some();
@@ -463,29 +468,20 @@ ancestry_fetcher
 
   // map children to parents
   multimap< file_id, file_id > rev_file_deltas;
-  multimap< manifest_id, manifest_id > rev_manifest_deltas;
   // map an ancestor to a child
   multimap< file_id, file_id > fwd_file_deltas;
-  multimap< manifest_id, manifest_id > fwd_manifest_deltas;
 
   set< file_id > seen_files;
 
   ancestry_fetcher(session & s);
   // analysing the ancestry graph
-  void traverse_files(change_set const & cset);
-  void traverse_manifest(manifest_id const & child_man,
-                         manifest_id const & parent_man);
+  void traverse_files(cset const & cs);
   void traverse_ancestry(set<revision_id> const & heads);
 
   // requesting the data
   void request_rev_file_deltas(file_id const & start, 
                                set<file_id> & done_files);
   void request_files();
-  void request_rev_manifest_deltas(manifest_id const & start,
-                                   set<manifest_id> & done_manifests);
-  void request_manifests();
-
-
 };
 
 
@@ -567,18 +563,15 @@ session::session(protocol_role role,
   requested_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
   requested_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
 
   received_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
-  received_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
   received_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
 
-  full_delta_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
   full_delta_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
 }
 
@@ -886,39 +879,13 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
 // mode, all received data is ignored, and no new data is queued.  We simply
 // stay connected long enough for the current write buffer to be flushed, to
 // ensure that our peer receives the error message.
-// WARNING WARNING WARNING (FIXME): this does _not_ throw an exception.  if
-// while processing any given netcmd packet you encounter an error, you can
-// _only_ call this method if you have not touched the database, because if
-// you have touched the database then you need to throw an exception to
-// trigger a rollback.
-// you could, of course, call this method and then throw an exception, but
-// there is no point in doing that, because throwing the exception will cause
-// the connection to be immediately terminated, so your call to error() will
-// actually have no effect (except to cause your error message to be printed
-// twice).
+// Affects read_some, write_some, and process .
 void
 session::error(std::string const & errmsg)
 {
-  W(F("error: %s\n") % errmsg);
-  queue_error_cmd(errmsg);
-  encountered_error = true;
+  throw netsync_error(errmsg);
 }
 
-void 
-session::analyze_manifest(manifest_map const & man)
-{
-  L(F("analyzing %d entries in manifest\n") % man.size());
-  for (manifest_map::const_iterator i = man.begin();
-       i != man.end(); ++i)
-    {
-      if (! this->app.db.file_version_exists(manifest_entry_id(i)))
-        {
-          id tmp;
-          decode_hexenc(manifest_entry_id(i).inner(), tmp);
-          queue_send_data_cmd(file_item, tmp);
-        }
-    }
-}
 
 inline static id
 plain_id(manifest_id const & i)
@@ -1305,7 +1272,7 @@ session::queue_send_delta_cmd(netcmd_item_type type,
                               id const & base, 
                               id const & ident)
 {
-  I(type == manifest_item || type == file_item);
+  I(type == file_item);
 
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -1376,7 +1343,7 @@ session::queue_delta_cmd(netcmd_item_type type,
                          id const & ident, 
                          delta const & del)
 {
-  I(type == manifest_item || type == file_item);
+  I(type == file_item);
   I(! del().empty() || ident == base);
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -1888,8 +1855,6 @@ data_exists(netcmd_item_type type,
     {
     case key_item:
       return app.db.public_key_exists(hitem);
-    case manifest_item:
-      return app.db.manifest_version_exists(manifest_id(hitem));
     case file_item:
       return app.db.file_version_exists(file_id(hitem));
     case revision_item:
@@ -1954,20 +1919,6 @@ load_data(netcmd_item_type type,
       else
         {
           throw bad_decode(F("revision '%s' does not exist in our database") % hitem);
-        }
-      break;
-
-    case manifest_item:
-      if (app.db.manifest_version_exists(manifest_id(hitem)))
-        {
-          manifest_data mdat;
-          data dat;
-          app.db.get_manifest_version(manifest_id(hitem), mdat);
-          out = mdat.inner()();
-        }
-      else
-        {
-          throw bad_decode(F("manifest '%s' does not exist in our database") % hitem);
         }
       break;
 
@@ -2461,30 +2412,6 @@ session::process_send_delta_cmd(netcmd_item_type type,
           }
       }
       break;
-
-    case manifest_item:
-      {
-        manifest_id mbase(hbase), mident(hident);
-        manifest_delta mdel;
-        if (this->app.db.manifest_version_exists(mbase) 
-            && this->app.db.manifest_version_exists(mident))
-          {
-            manifest_data base_mdat, ident_mdat;
-            data base_dat, ident_dat;
-            this->app.db.get_manifest_version(mbase, base_mdat);
-            this->app.db.get_manifest_version(mident, ident_mdat);
-            string tmp;
-            base_dat = base_mdat.inner();
-            ident_dat = ident_mdat.inner();
-            compute_delta(base_dat(), ident_dat(), tmp);
-            del = delta(tmp);
-          }
-        else
-          {
-            return process_send_data_cmd(type, ident);
-          }
-      }
-      break;
       
     default:
       throw bad_decode(F("delta requested for item type %s\n") % typestr);
@@ -2612,21 +2539,6 @@ session::process_data_cmd(netcmd_item_type type,
       }
       break;
 
-    case manifest_item:
-      {
-        manifest_id mid(hitem);
-        if (this->app.db.manifest_version_exists(mid))
-          L(F("manifest version '%s' already exists in our database\n") % hitem);
-        else
-          {
-            this->dbw.consume_manifest_data(mid, manifest_data(dat));
-            manifest_map man;
-            read_manifest_map(data(dat), man);
-            analyze_manifest(man);
-          }
-      }
-      break;
-
     case file_item:
       {
         file_id fid(hitem);
@@ -2663,33 +2575,6 @@ session::process_delta_cmd(netcmd_item_type type,
 
   switch (type)
     {
-    case manifest_item:
-      {
-        manifest_id src_manifest(hbase), dst_manifest(hident);
-        if (full_delta_items[manifest_item]->find(ident)
-            != full_delta_items[manifest_item]->end())
-          {
-            this->dbw.consume_manifest_delta(src_manifest, 
-                                             dst_manifest,
-                                             manifest_delta(del),
-                                             true);
-          }
-        else if (reverse_delta_requests.find(id_pair)
-            != reverse_delta_requests.end())
-          {
-            reverse_delta_requests.erase(id_pair);
-            this->dbw.consume_manifest_reverse_delta(src_manifest, 
-                                                     dst_manifest,
-                                                     manifest_delta(del));
-          }
-        else
-          this->dbw.consume_manifest_delta(src_manifest, 
-                                           dst_manifest,
-                                           manifest_delta(del));
-        
-      }
-      break;
-
     case file_item:
       {
         file_id src_file(hbase), dst_file(hident);
@@ -3021,6 +2906,8 @@ session::arm()
 
 bool session::process()
 {
+  if (encountered_error)
+    return true;
   try 
     {      
       if (!arm())
@@ -3042,6 +2929,13 @@ bool session::process()
     {
       W(F("protocol error while processing peer %s: '%s'\n") % peer_id % bd.what);
       return false;
+    }
+  catch (netsync_error & err)
+    {
+      W(F("error: %s\n") % err.msg);
+      queue_error_cmd(err.msg);
+      encountered_error = true;
+      return true;// don't terminate until we've send the error_cmd
     }
 }
 
@@ -3080,9 +2974,8 @@ call_server(protocol_role role,
         }
       catch (bad_decode & bd)
         {
-          W(F("protocol error while processing peer %s: '%s'\n") 
+          E(false, F("protocol error while processing peer %s: '%s'\n") 
             % sess.peer_id % bd.what);
-          return;         
         }
 
       probe.clear();
@@ -3093,8 +2986,7 @@ call_server(protocol_role role,
       
       if (fd == -1 && !armed) 
         {
-          P(F("timed out waiting for I/O with peer %s, disconnecting\n") % sess.peer_id);
-          return;
+          E(false, F("timed out waiting for I/O with peer %s, disconnecting\n") % sess.peer_id);
         }
       
       if (event & Netxx::Probe::ready_read)
@@ -3107,9 +2999,8 @@ call_server(protocol_role role,
                 }
               catch (bad_decode & bd)
                 {
-                  W(F("protocol error while processing peer %s: '%s'\n") 
+                  E(false, F("protocol error while processing peer %s: '%s'\n") 
                     % sess.peer_id % bd.what);
-                  return;         
                 }
             }
           else
@@ -3117,7 +3008,7 @@ call_server(protocol_role role,
               if (sess.sent_goodbye)
                 P(F("read from fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
               else
-                P(F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
+                E(false, F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
               return;
             }
         }
@@ -3129,23 +3020,22 @@ call_server(protocol_role role,
               if (sess.sent_goodbye)
                 P(F("write on fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
               else
-                P(F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
+                E(false, F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
               return;
             }
         }
       
       if (event & Netxx::Probe::ready_oobd)
         {
-          P(F("got OOB data on fd %d (peer %s), disconnecting\n") 
+          E(false, F("got OOB data on fd %d (peer %s), disconnecting\n") 
             % fd % sess.peer_id);
-          return;
         }
 
       if (armed)
         {
           if (!sess.process())
             {
-              P(F("terminated exchange with %s\n") 
+              E(false, F("terminated exchange with %s\n") 
                 % sess.peer_id);
               return;
             }
@@ -3712,16 +3602,28 @@ ancestry_fetcher::ancestry_fetcher(session & s)
   traverse_ancestry(new_heads);
 
   request_files();
-  request_manifests();
 }
 
 // adds file deltas from the given changeset into the sets of forward
 // and reverse deltas
 void
-ancestry_fetcher::traverse_files(change_set const & cset)
+ancestry_fetcher::traverse_files(cset const & cs)
 {
-  for (change_set::delta_map::const_iterator d = cset.deltas.begin(); 
-       d != cset.deltas.end(); ++d)
+  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+       i != cs.files_added.end(); ++i)
+    {
+      // add any new forward deltas
+      if (seen_files.find(i->second) == seen_files.end())
+        {
+          file_id parent;
+          fwd_file_deltas.insert( make_pair( parent, i->second ) );
+        }
+      seen_files.insert(i->second);
+    }
+
+  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
+         d = cs.deltas_applied.begin(); 
+       d != cs.deltas_applied.end(); ++d)
     {
       file_id parent_file (delta_entry_src(d));
       file_id child_file (delta_entry_dst(d));
@@ -3770,42 +3672,6 @@ ancestry_fetcher::traverse_files(change_set const & cset)
     }
 }
 
-// adds the given manifest deltas to the sets of forward and reverse deltas
-void
-ancestry_fetcher::traverse_manifest(manifest_id const & child_man,
-                                    manifest_id const & parent_man)
-{
-  MM(child_man);
-  MM(parent_man);
-  I(!null_id(child_man));
-  // add reverse deltas
-  if (!null_id(parent_man))
-    {
-      rev_manifest_deltas.insert(make_pair(child_man, parent_man));
-    }
-  
-  // handle the manifest forward-deltas
-  if (!null_id(parent_man)
-      // don't update child to itself, it makes the loop iterate infinitely.
-      && !(parent_man == child_man)
-      && fwd_manifest_deltas.find(child_man) != fwd_manifest_deltas.end())
-    {
-      // We're traversing with child->parent of A->B.
-      // Update any forward deltas with a parent of B to 
-      // have A as a parent, ie B->C becomes A->C.
-      for (multimap<manifest_id,manifest_id>::iterator d = 
-           fwd_manifest_deltas.lower_bound(child_man);
-           d != fwd_manifest_deltas.upper_bound(child_man);
-           d++)
-        {
-          fwd_manifest_deltas.insert(make_pair(parent_man, d->second));
-        }
-
-      fwd_manifest_deltas.erase(fwd_manifest_deltas.lower_bound(child_man),
-                                fwd_manifest_deltas.upper_bound(child_man));
-    }
-}
-
 // traverse up the ancestry for each of the given new head revisions,
 // storing sets of file and manifest deltas
 void
@@ -3820,8 +3686,6 @@ ancestry_fetcher::traverse_ancestry(set<revision_id> const & heads)
       L(F("traversing head %s") % *h);
       frontier.push_back(*h);
       seen_revs.insert(*h);
-      manifest_id const & m = sess.ancestry[*h]->second.new_manifest;
-      fwd_manifest_deltas.insert(make_pair(m,m));
     }
 
   // breadth first up the ancestry
@@ -3846,8 +3710,6 @@ ancestry_fetcher::traverse_ancestry(set<revision_id> const & heads)
               seen_revs.insert(par);
             }
 
-          traverse_manifest(sess.ancestry[rev]->second.new_manifest,
-                            edge_old_manifest(e));
           traverse_files(edge_changes(e));
 
         }
@@ -3928,75 +3790,4 @@ ancestry_fetcher::request_files()
     }
 }
 
-void
-ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start,
-                                              set<manifest_id> & done_manifests)
-{
-  stack< manifest_id > frontier;
-  frontier.push(start);
 
-  while (!frontier.empty())
-    {
-      manifest_id const child = frontier.top();
-      MM(child);
-      I(!null_id(child));
-      frontier.pop();
-
-      for (multimap< manifest_id, manifest_id>::const_iterator
-           d = rev_manifest_deltas.lower_bound(child);
-           d != rev_manifest_deltas.upper_bound(child);
-           d++)
-        {
-          manifest_id const & parent = d->second;
-          MM(parent);
-          I(!null_id(parent));
-          if (done_manifests.find(parent) == done_manifests.end())
-            {
-              done_manifests.insert(parent);
-              if (!sess.app.db.manifest_version_exists(parent))
-                {
-                  sess.queue_send_delta_cmd(manifest_item,
-                                            plain_id(child), plain_id(parent));
-                  sess.reverse_delta_requests.insert(make_pair(plain_id(child),
-                                                               plain_id(parent)));
-                }
-              frontier.push(parent);
-            }
-        }
-    }
-}
-
-// could try and make this a template function, is the same as request_files(),
-// though it calls non-template functions
-void
-ancestry_fetcher::request_manifests()
-{
-  // just a cache to avoid checking db.foo_version_exists() too much
-  set<manifest_id> done_manifests;
-
-  for (multimap<manifest_id,manifest_id>::const_iterator d = fwd_manifest_deltas.begin();
-       d != fwd_manifest_deltas.end(); d++)
-    {
-      manifest_id const & anc = d->first;
-      manifest_id const & child = d->second;
-      MM(anc);
-      MM(child);
-      if (!sess.app.db.manifest_version_exists(child))
-        {
-          if (null_id(anc)
-              || !sess.app.db.manifest_version_exists(anc))
-            {
-              sess.queue_send_data_cmd(manifest_item, plain_id(child));
-            }
-          else
-            {
-              sess.queue_send_delta_cmd(manifest_item, 
-                                        plain_id(anc), plain_id(child));
-              sess.note_item_full_delta(manifest_item, plain_id(child));
-            }
-        }
-
-      // traverse up the reverse deltas
-      request_rev_manifest_deltas(child, done_manifests);
-    }
-}

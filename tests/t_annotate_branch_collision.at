@@ -1,6 +1,9 @@
 AT_SETUP([annotate file on multirooted branch])
 MONOTONE_SETUP
 
+# This test relies on file-suturing
+AT_XFAIL_IF(true)
+
 #
 # If two people begin a branch with the same name,
 # then the branch does not have a unique root.  If they

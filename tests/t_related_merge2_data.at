@@ -1,6 +1,9 @@
 AT_SETUP([merging data in unrelated files])
 MONOTONE_SETUP
 
+# This test relies on file-suturing
+AT_XFAIL_IF(true)
+
 AT_DATA(left, [line 1: foo
 line 2: something unexpected
 line 3: baz

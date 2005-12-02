@@ -1,8 +1,10 @@
 #  -*- Autoconf -*-
 
 AT_SETUP([update with pending add])
-
 MONOTONE_SETUP
+
+# This test relies on file-suturing
+AT_XFAIL_IF(true)
 
 ADD_FILE(file, [file
 ])
@@ -11,7 +13,7 @@ COMMIT(testbranch)
 
 AT_CHECK(MONOTONE --branch testbranch co codir, [], [ignore], [ignore])
 
-ADD_FILE(file2, [file2
+ADD_FILE(file3, [file3
 ])
 
 COMMIT(testbranch)
@@ -21,10 +23,6 @@ AT_DATA(codir/file2, [file2
 
 AT_CHECK(cd codir && MONOTONE add file2, [], [ignore], [ignore])
 AT_CHECK(cd codir && MONOTONE update, [], [ignore], [ignore])
-
-# why doesn't an abbreviated revision id work
-
-AT_CHECK(cd codir && MONOTONE automate get_revision b482c907f27f160f7ff9259d353d5d5399fb9fc4, [], [ignore], [ignore])
 
 # make sure there are no changes in the working copy
 

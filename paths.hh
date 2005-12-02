@@ -103,20 +103,19 @@
 #include <string>
 #include <vector>
 
-#include "numeric_vocab.hh"
 #include "vocab.hh"
-
-typedef u32 path_component;
 
 typedef std::vector<path_component> split_path;
 
-const path_component the_null_component = 0;
+const path_component the_null_component;
 
 inline bool
 null_name(path_component pc)
 {
   return pc == the_null_component;
 }
+
+void dump(split_path const & sp, std::string & out);
 
 // It's possible this will become a proper virtual interface in the future,
 // but since the implementation is exactly the same in all cases, there isn't
@@ -142,6 +141,7 @@ protected:
 };
 
 std::ostream & operator<<(std::ostream & o, any_path const & a);
+std::ostream & operator<<(std::ostream & o, split_path const & s);
 
 class file_path : public any_path
 {
@@ -199,6 +199,11 @@ public:
   bookkeeping_path operator /(std::string const & to_append) const;
   // exposed for the use of walk_tree
   static bool is_bookkeeping_path(std::string const & path);
+  bool operator ==(const bookkeeping_path & other) const
+  { return data == other.data; }
+
+  bool operator <(const bookkeeping_path & other) const
+  { return data < other.data; }
 };
 
 extern bookkeeping_path const bookkeeping_root;
@@ -242,5 +247,7 @@ find_and_go_to_working_copy(system_path const & search_root);
 // root paths that are needed to interpret paths
 void
 go_to_working_copy(system_path const & new_working_copy);
+
+typedef std::set<split_path> path_set;
 
 #endif

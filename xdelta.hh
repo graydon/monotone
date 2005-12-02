@@ -17,11 +17,6 @@ compute_delta(std::string const & a,
               std::string & delta);
 
 void
-compute_delta(manifest_map const & a,
-              manifest_map const & b,
-              std::string & delta);
-
-void
 apply_delta(std::string const & a,
             std::string const & delta,
             std::string & b);

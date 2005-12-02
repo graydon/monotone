@@ -206,16 +206,6 @@ patch(data const & olddata,
   newdata = result;
 }
 
-void 
-diff(manifest_map const & oldman,
-     manifest_map const & newman,
-     delta & del)
-{
-  string xd;
-  compute_delta(oldman, newman, xd);
-  del = delta(xd);
-}
-
 // identifier (a.k.a. sha1 signature) calculation
 
 void 
@@ -249,62 +239,6 @@ calculate_ident(file_data const & dat,
   ident = tmp;
 }
 
-void 
-calculate_ident(manifest_map const & m,
-                manifest_id & ident)
-{
-  size_t sz = 0;
-  static size_t bufsz = 0;
-  static char *buf = NULL;
-
-  for (manifest_map::const_iterator i = m.begin();
-       i != m.end(); ++i)
-    {
-      sz += i->second.inner()().size();
-      sz += i->first.as_internal().size();
-      sz += 3;      
-    }
-
-  if (sz > bufsz)
-    {
-      bufsz = sz;
-      buf = static_cast<char *>(realloc(buf, bufsz));
-      I(buf);
-    }
-  
-  // this has to go quite fast, for cvs importing
-  char *c = buf;
-  for (manifest_map::const_iterator i = m.begin();
-       i != m.end(); ++i)
-    {
-      memcpy(c, i->second.inner()().data(), i->second.inner()().size());
-      c += i->second.inner()().size();
-      *c++ = ' '; 
-      *c++ = ' '; 
-      memcpy(c, i->first.as_internal().data(), i->first.as_internal().size());
-      c += i->first.as_internal().size();
-      *c++ = '\n'; 
-    }
-  
-  Botan::Pipe p(new Botan::Hash_Filter("SHA-1"));
-  p.process_msg(reinterpret_cast<Botan::byte const*>(buf), sz);
-
-  id ident_decoded(p.read_all_as_string());
-  hexenc<id> raw_ident;
-  encode_hexenc(ident_decoded, raw_ident);  
-  ident = manifest_id(raw_ident);    
-}
-
-void 
-calculate_ident(manifest_data const & dat,
-                manifest_id & ident)
-{
-  hexenc<id> tmp;
-  calculate_ident(dat.inner(), tmp);
-  ident = tmp;
-}
-
-
 void calculate_ident(revision_data const & dat,
                      revision_id & ident)
 {
@@ -320,6 +254,22 @@ void calculate_ident(revision_set const & cs,
   hexenc<id> tid;
   write_revision_set(cs, tmp);
   calculate_ident(tmp, tid);
+  ident = tid;
+}
+
+// Variant which calculates the "manifest part" of a roster; this does
+// not include the local sequence numbers or markings, but produces
+// the manifest_id which is stored in the public revision_set object.
+void calculate_ident(roster_t const & ros,
+                     manifest_id & ident)
+{
+  data tmp;
+  hexenc<id> tid;
+  if (!ros.all_nodes().empty())
+    {
+      write_manifest_of_roster(ros, tmp);
+      calculate_ident(tmp, tid);
+    }
   ident = tid;
 }
 

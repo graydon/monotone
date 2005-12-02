@@ -11,37 +11,16 @@ AT_DATA(file2, [file 2
 AT_DATA(file3, [file 3
 ])
 
-# fileX is not referenced by any manifest we have
-
-AT_DATA(fileX, [@<:@fdata ff43181b2988e27db1d63605bb3e39d4f06148cb@:>@
-H4sIAAAAAAAAAFNQUEjLzElVUEpJTcpMzNMvKs1JLVbiSq1ITS4tAQqXFJWmKnEBADUsgmsm
-AAAA
-@<:@end@:>@
+AT_DATA(fileX, [coopers
 ])
 
-# manifestX below contains the following 6 files, none of which are 
-# present in the database 
-#
-# bb724c73e9f7f0dda411aa83131c648519dc0413  AUTHORS
-# 3e9d284b3c48a939e82407d5c3fa6c9e0bf5efcb  COPYING
-# 74772a499b672e55cb8367ef580a484709189513  ChangeLog
-# a9891352474f767c8d2eeba834a121e46f725cb2  INSTALL
-# 6909265d83b02ab3c0abd887f0a6ac96db42323b  Makefile.am
-# 80536d31e18d514e52983a5dbac8e19d66b564dd  NEWS
-
-AT_DATA(manifestX, [@<:@mdata 1845ba581ec220b33fd14c7ca389576c5b97e959@:>@
-H4sIAAAAAAAAAxWPy05DMQwF9/cr8gUo8SO2lxVCUKm0iBYhlk7iFMTr/3eE/dGcmdYEqAuG
-TZl5DKdS3BULll5JudjomQqmtHu5PJyez9uaDlBq2End0EKBsgzuOL12i9wmx+wtpdvT09v+
-eL8JiYCTWasCwdybYpWYrNlJSbIVNf7/uH33n2scfq+bm1pBBhKaUqXrgIi2xMgLlKA6BRYI
-Utofz5fd4bBVywaVh2LL4Esvexuqq8qrd6ujESDg8nr0z5gfX3Hj35tmxjqwRNHBhYLBFJ1H
-866x4mttXGmMlI53r+ftD+i9lrUvAQAA
-@<:@end@:>@
+AT_DATA(fileY, [vitamin
 ])
 
 AT_CHECK(MONOTONE add file1, [], [ignore], [ignore])
 AT_CHECK(MONOTONE commit --branch=test --message='add file1', [], [ignore], [ignore])
 REV1=`BASE_REVISION`
-MAN1=`monotone --norc automate get_manifest | monotone --norc identify`
+ROST1=`monotone --norc db execute "select id from rosters"| tail -1`
 
 AT_CHECK(MONOTONE add file2, [], [ignore], [ignore])
 AT_CHECK(MONOTONE commit --branch=test --message='add file2', [], [ignore], [ignore])
@@ -50,12 +29,13 @@ FILE2=`SHA1(file2)`
 
 AT_CHECK(MONOTONE add file3, [], [ignore], [ignore])
 AT_CHECK(MONOTONE commit --branch=test --message='add file3', [], [ignore], [ignore])
+FILE3=`SHA1(file3)`
 REV3=`BASE_REVISION`
 
 AT_CHECK(MONOTONE db check --ticker=dot, [], [ignore], [stderr])
 AT_CHECK(grep 'database is good' stderr, [], [ignore], [ignore])
 
-# remove file2 from the database invalidating manifest2 and manifest3
+# remove file2 from the database invalidating roster2 and roster3
 # both of which include this file
 
 AT_CHECK(MONOTONE db execute "delete from files where id='$FILE2'", [], [ignore], [ignore])
@@ -64,21 +44,29 @@ AT_CHECK(MONOTONE db check --ticker=dot, [1], [ignore], [stderr])
 AT_CHECK(grep 'database is good' stderr, [1], [ignore], [ignore])
 AT_CHECK(grep 'problems detected' stderr, [0], [ignore], [ignore])
 AT_CHECK(grep '1 missing file' stderr, [0], [ignore], [ignore])
-AT_CHECK(grep '2 incomplete manifest' stderr, [0], [ignore], [ignore])
+AT_CHECK(grep '2 incomplete roster' stderr, [0], [ignore], [ignore])
 AT_CHECK(grep '2 incomplete revision' stderr, [0], [ignore], [ignore])
 AT_CHECK(grep 'total problems detected: 5' stderr, [0], [ignore], [ignore])
 AT_CHECK(grep '5 serious' stderr, [0], [ignore], [ignore])
 
-# add an unreferenced file, and an unreferenced manifest that
-# references several files, none of which exist in the db
 
-AT_CHECK(MONOTONE read < fileX, [], [ignore], [ignore])
-AT_CHECK(MONOTONE read < manifestX, [], [ignore], [ignore])
+# add an unreferenced file
+AT_CHECK(MONOTONE fload < fileX, [], [ignore], [ignore])
+# create an unreferenced roster by deleting the revision. Note that this will increment
+# the "missing revision" count by one for further checks
+AT_CHECK(MONOTONE add fileY, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit --branch=test --message='to be removed', [], [ignore], [ignore])
+REV4=`BASE_REVISION`
+AT_CHECK(MONOTONE db execute "delete from revisions where id='$REV4'", [0], [ignore], [ignore])
+# revert to the old working copy state
+AT_CHECK(echo $REV3 > MT/revision)
+# remove another file too
+AT_CHECK(MONOTONE db execute "delete from files where id='$FILE3'", [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE db check --ticker=dot, [1], [ignore], [stderr])
 AT_CHECK(grep '1 unreferenced file' stderr, [0], [ignore], [ignore])
-AT_CHECK(grep '1 unreferenced manifest' stderr, [0], [ignore], [ignore])
-AT_CHECK(grep '7 missing files' stderr, [0], [ignore], [ignore])
+AT_CHECK(grep '1 unreferenced roster' stderr, [0], [ignore], [ignore])
+AT_CHECK(grep '2 missing files' stderr, [0], [ignore], [ignore])
 
 AT_CHECK(MONOTONE db execute "delete from revision_ancestry", [], [ignore], [ignore])
 AT_CHECK(MONOTONE db check --ticker=dot, [1], [ignore], [stderr])
@@ -94,17 +82,18 @@ AT_CHECK(MONOTONE db execute "insert into revision_ancestry values('$XDELTA_CC',
 AT_CHECK(MONOTONE db check --ticker=dot, [1], [ignore], [stderr])
 AT_CHECK(grep '3 mismatched parent' stderr, [0], [ignore], [ignore])
 AT_CHECK(grep '3 mismatched child' stderr, [0], [ignore], [ignore])
-AT_CHECK(grep '2 missing revision' stderr, [0], [ignore], [ignore])
+AT_CHECK(grep '3 missing revision' stderr, [0], [ignore], [ignore])
 
-AT_CHECK(MONOTONE db execute "delete from manifest_deltas where id='$MAN1'", [], [ignore], [ignore])
+AT_CHECK(MONOTONE db execute "delete from roster_deltas where id='$ROST1'", [], [ignore], [ignore])
 AT_CHECK(MONOTONE db check --ticker=dot, [1], [ignore], [stderr])
-AT_CHECK(grep '1 missing manifest' stderr, [0], [ignore], [ignore])
-AT_CHECK(grep '3 revisions with bad history' stderr, [0], [ignore], [ignore])
+# ROSTER TODO: need check_sane_history equivalent in db check
+#AT_CHECK(grep '3 revisions with bad history' stderr, [0], [ignore], [ignore])
 
 AT_CHECK(MONOTONE db execute "delete from revisions where id='$REV1'", [], [ignore], [ignore])
 AT_CHECK(MONOTONE db check --ticker=dot, [1], [ignore], [stderr])
-AT_CHECK(grep '3 missing revision' stderr, [0], [ignore], [ignore])
-AT_CHECK(grep '2 revisions with bad history' stderr, [0], [ignore], [ignore])
+AT_CHECK(grep '4 missing revision' stderr, [0], [ignore], [ignore])
+# ROSTER TODO
+#AT_CHECK(grep '2 revisions with bad history' stderr, [0], [ignore], [ignore])
 
 echo "$REV2:comment:this is a test:tester@test.net:bogus sig" | sha1sum | read HASH
 
@@ -115,11 +104,11 @@ AT_CHECK(grep '1 bad sig' stderr, [0], [ignore], [ignore])
 AT_CHECK(MONOTONE db execute "delete from revision_certs where name = 'date'", [], [ignore], [stderr])
 AT_CHECK(MONOTONE db check --ticker=dot, [1], [ignore], [stderr])
 AT_CHECK(grep '2 missing certs' stderr, [0], [ignore], [ignore])
-AT_CHECK(grep '2 mismatched certs' stderr, [0], [ignore], [ignore])
+AT_CHECK(grep '4 mismatched certs' stderr, [0], [ignore], [ignore])
 
 AT_CHECK(MONOTONE db execute "delete from public_keys", [], [ignore], [stderr])
 AT_CHECK(MONOTONE db check --ticker=dot, [1], [ignore], [stderr])
 AT_CHECK(grep '1 missing key' stderr, [0], [ignore], [ignore])
-AT_CHECK(grep '10 unchecked signatures' stderr, [0], [ignore], [ignore])
+AT_CHECK(grep '13 unchecked signatures' stderr, [0], [ignore], [ignore])
 
 AT_CLEANUP

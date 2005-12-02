@@ -1,25 +1,24 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([automate get_manifest])
+AT_SETUP([automate get_revision])
 NEED_UNB64
 MONOTONE_SETUP
 
-AT_DATA(expected, [new_manifest @<:@095e136cd6e47e3519869fb0f07dcce183780b6e@:>@
+AT_DATA(expected, [new_manifest @<:@ee4a0fb04b83aaa7dc91fa796dd4d0feddc9f502@:>@
 
 old_revision @<:@@:>@
 old_manifest @<:@@:>@
 
-add_file "foo"
+add_dir ""
 
-patch "foo"
- from @<:@@:>@
-   to @<:@4cbd040533a2f43fc6691d773d510cda70f4126a@:>@
+add_file "foo"
+ content @<:@4cbd040533a2f43fc6691d773d510cda70f4126a@:>@
 ])
 
-AT_DATA(expected2, [new_manifest @<:@095e136cd6e47e3519869fb0f07dcce183780b6e@:>@
+AT_DATA(expected2, [new_manifest @<:@ee4a0fb04b83aaa7dc91fa796dd4d0feddc9f502@:>@
 
-old_revision @<:@306c506078df4b58470f75c845ccd11c2ea8cb26@:>@
-old_manifest @<:@095e136cd6e47e3519869fb0f07dcce183780b6e@:>@
+old_revision @<:@3cf83369cfadbf5ba4ea3a50796fba18ec245489@:>@
+old_manifest @<:@ee4a0fb04b83aaa7dc91fa796dd4d0feddc9f502@:>@
 ])
 
 AT_DATA(empty, [])

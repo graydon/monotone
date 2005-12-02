@@ -38,7 +38,8 @@ AT_CHECK(MONOTONE2 commit --message=foo --branch=testbranch, [], [ignore], [igno
 VER1=`BASE_REVISION`
 
 # change the epochs in the second db
-AT_CHECK(MONOTONE2 db rebuild, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db set_epoch testbranch aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db set_epoch otherbranch aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, [], [ignore], [ignore])
 
 # this should *fail* to sync 
 NETSYNC_SERVE_START(testbranch)
@@ -54,9 +55,6 @@ AT_CHECK(MONOTONE2 list epochs, [], [stdout])
 AT_CHECK(grep testbranch stdout, [0], [ignore])
 CHECK_DIFFERENT_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
 
-# double-check that the revisions didn't change (because otherwise our
-# next test is unreliable):
-AT_CHECK(MONOTONE2 automate get_revision $VER1, [], [ignore], [ignore])
 # confirm, we did not get the new revision
 AT_CHECK(MONOTONE automate get_revision $VER1, [1], [ignore], [ignore])
 
