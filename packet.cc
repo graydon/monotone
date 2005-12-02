@@ -13,6 +13,7 @@
 
 #include "app_state.hh"
 #include "change_set.hh"
+#include "constants.hh"
 #include "packet.hh"
 #include "revision.hh"
 #include "sanity.hh"
@@ -1349,10 +1350,10 @@ feed_packet_consumer
   std::string sp;
   feed_packet_consumer(size_t & count, packet_consumer & c)
    : count(count), cons(c),
-     ident("([[:xdigit:]]{40})"),
-     key("([-a-zA-Z0-9\\.@\\+]+)"),
-     certname("([-a-zA-Z0-9]+)"),
-     base("([a-zA-Z0-9+/=[:space:]]+)"),
+     ident(constants::regex_legal_id_bytes),
+     key(constants::regex_legal_key_name_bytes),
+     certname(constants::regex_legal_cert_name_bytes),
+     base(constants::regex_legal_packet_bytes),
      sp("[[:space:]]+")
   {}
   void require(bool x) const
@@ -1480,11 +1481,10 @@ extract_packets(string const & s, packet_consumer & cons, bool last)
     // pubkey packet immediately followed by a matching privkey
     // packet into a keypair packet (which is what privkey packets
     // have been replaced by)
-    string const key("([-a-zA-Z0-9\\.@]+)");
-    string const base64("([a-zA-Z0-9+/=[:space:]]+)");
-    string const pubkey("\\[pubkey[[:space:]]+"+ key + "\\]" + base64
-                        + "\\[end\\]");
-    string const privkey("\\[privkey \\1\\]" + base64 + "\\[end\\]");
+    string const pubkey("\\[pubkey[[:space:]]+" + constants::regex_legal_key_name_bytes
+                        + "\\]" + constants::regex_legal_packet_bytes + "\\[end\\]");
+    string const privkey("\\[privkey \\1\\]" + constants::regex_legal_packet_bytes
+                         + "\\[end\\]");
     string const pubkey_privkey = pubkey + "[[:space:]]*" + privkey;
     string const keypair_fmt("[keypair $1]$2#$3[end]");
     r = regex_replace(s, regex(pubkey_privkey), keypair_fmt);

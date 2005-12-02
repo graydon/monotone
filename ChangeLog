@@ -1,3 +1,14 @@
+2005-12-02  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* packet.cc (feed_packet_consumer::feed_packet_consumer,
+	extract_packets): Move duplicated sets of regexs for key IDs,
+	certs, etc. into constants.cc.
+	* constants.{cc,hh}: Add regex strings extracted from packet.cc.  Also
+	fix the key ID regex to accept a few characters we allowed in
+	legal_key_name_bytes already.
+	* tests/t_genkey.at: Test good and bad keys with all characters we
+	allow in the user portion of a key id.
+
 2005-12-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* database.cc: Revert last change; db version and db migrate need
