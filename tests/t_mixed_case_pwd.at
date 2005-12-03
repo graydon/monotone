@@ -1,0 +1,20 @@
+AT_SETUP([restrictions when pwd is mixed case])
+MONOTONE_SETUP
+
+# This is trivial on case-sensitive filesystems, but a little trickier
+# on case-preserving ones.
+
+AT_CHECK(mkdir FooBar)
+ADD_FILE([FooBar/testfile], [blah blah
+])
+COMMIT(testbranch)
+
+SET_FILE([FooBar/testfile], [stuff stuff
+])
+
+AT_CHECK(cd FooBar && MONOTONE commit . -mfoo, [], [ignore], [ignore])
+
+AT_CHECK(monotone diff, [], [stdout], [ignore])
+AT_CHECK(QGREP("no changes" stdout))
+
+AT_CLEANUP

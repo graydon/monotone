@@ -1,3 +1,7 @@
+2005-12-03  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_mixed_case_pwd.at, testsuite.at: New test.
+
 2005-11-28  Nathaniel Smith  <njs@pobox.com>
 
 	* txt2c.cc (main): Work correctly even on empty files.
