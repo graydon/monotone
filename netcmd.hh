@@ -37,14 +37,13 @@ typedef enum
       
     // refinement commands
     refine_cmd = 6,
-    done_cmd = 7,
+    note_item_cmd = 7,
+    note_shared_subtree_cmd = 8,
+    done_cmd = 9,
       
     // transmission commands
-    send_data_cmd = 8,
-    send_delta_cmd = 9,
     data_cmd = 10,
     delta_cmd = 11,
-    nonexistant_cmd = 12,
 
     // usher commands
     // usher_cmd is sent by a server farm (or anyone else who wants to serve
@@ -133,20 +132,18 @@ public:
   void read_refine_cmd(merkle_node & node) const;
   void write_refine_cmd(merkle_node const & node);
 
+  void read_note_item_cmd(netcmd_item_type & type, id & item) const;
+  void write_note_item_cmd(netcmd_item_type type, id const & item);
+
+  void read_note_shared_subtree_cmd(netcmd_item_type & type, 
+                                    prefix & pref, 
+                                    size_t & level) const;
+  void write_note_shared_subtree_cmd(netcmd_item_type type,
+                                     prefix const & pref, 
+                                     size_t level);
+
   void read_done_cmd(size_t & level, netcmd_item_type & type) const;
   void write_done_cmd(size_t level, netcmd_item_type type);
-
-  void read_send_data_cmd(netcmd_item_type & type,
-                          id & item) const;
-  void write_send_data_cmd(netcmd_item_type type,
-                           id const & item);
-
-  void read_send_delta_cmd(netcmd_item_type & type,
-                           id & base,
-                           id & ident) const;
-  void write_send_delta_cmd(netcmd_item_type type,
-                            id const & base,
-                            id const & ident);
 
   void read_data_cmd(netcmd_item_type & type,
                      id & item,
@@ -161,11 +158,6 @@ public:
   void write_delta_cmd(netcmd_item_type & type,
                        id const & base, id const & ident, 
                        delta const & del);
-
-  void read_nonexistant_cmd(netcmd_item_type & type,
-                            id & item) const;
-  void write_nonexistant_cmd(netcmd_item_type type,
-                             id const & item);
 
   void read_usher_cmd(utf8 & greeting) const;
   void write_usher_reply_cmd(utf8 const & server, utf8 const & pattern);

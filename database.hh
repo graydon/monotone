@@ -360,8 +360,11 @@ public:
   void get_revision_certs(revision_id const & id, 
                           std::vector< revision<cert> > & certs);
 
+  void get_revision_certs(revision_id const & id, 
+                          std::vector< hexenc<id> > & hashes);
+
   void get_revision_cert(hexenc<id> const & hash,
-                         revision<cert> & cert);
+                         revision<cert> & c);
   
   void get_manifest_certs(manifest_id const & id, 
                           std::vector< manifest<cert> > & certs);

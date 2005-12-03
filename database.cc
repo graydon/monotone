@@ -1402,7 +1402,6 @@ void
 database::get_revision_children(revision_id const & id,
                                 set<revision_id> & children)
 {
-  I(!null_id(id));
   results res;
   children.clear();
   fetch(res, one_col, any_rows, 
@@ -2062,6 +2061,22 @@ database::get_revision_certs(revision_id const & id,
   get_certs(id.inner(), certs, "revision_certs"); 
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+}
+
+void 
+database::get_revision_certs(revision_id const & ident, 
+                             vector< hexenc<id> > & ts)
+{ 
+  results res;
+  vector<cert> certs;
+  fetch(res, one_col, any_rows, 
+        "SELECT hash "
+        "FROM revision_certs "
+        "WHERE id = ?", 
+        ident.inner()().c_str());
+  ts.clear();
+  for (size_t i = 0; i < res.size(); ++i)
+    ts.push_back(hexenc<id>(res[i][0]));
 }
 
 void 

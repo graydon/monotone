@@ -105,11 +105,8 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
     case static_cast<u8>(confirm_cmd):
     case static_cast<u8>(refine_cmd):
     case static_cast<u8>(done_cmd):
-    case static_cast<u8>(send_data_cmd):
-    case static_cast<u8>(send_delta_cmd):
     case static_cast<u8>(data_cmd):
     case static_cast<u8>(delta_cmd):
-    case static_cast<u8>(nonexistant_cmd):
     case static_cast<u8>(usher_cmd):
       cmd_code = static_cast<netcmd_code>(cmd_byte);
       break;
@@ -351,6 +348,58 @@ netcmd::write_refine_cmd(merkle_node const & node)
 }
 
 void 
+netcmd::read_note_item_cmd(netcmd_item_type & type, id & item) const
+{
+  size_t pos = 0;
+  // syntax is: <type: 1 byte> <id: 20 bytes sha1> 
+  type = read_netcmd_item_type(payload, pos, "note_item netcmd, item type");
+  item = id(extract_substring(payload, pos,
+                              constants::merkle_hash_length_in_bytes, 
+                              "note_item netcmd, item identifier"));
+  assert_end_of_buffer(payload, pos, "note_item netcmd payload");
+}
+
+void 
+netcmd::write_note_item_cmd(netcmd_item_type type, id const & item)
+{
+  I(item().size() == constants::merkle_hash_length_in_bytes);
+  cmd_code = note_item_cmd;
+  payload.clear();
+  payload = static_cast<char>(type);
+  payload += item();
+}
+
+void 
+netcmd::read_note_shared_subtree_cmd(netcmd_item_type & type, 
+                                     prefix & pref, 
+                                     size_t & level) const
+{
+  size_t pos = 0;  
+  // syntax is: <type: 1 byte> <prefix: variable-length string> <level: uleb128> 
+  type = read_netcmd_item_type(payload, pos, 
+                               "note_shared_subtree netcmd, item type");
+  string tmp;
+  extract_variable_length_string(payload, tmp, pos,
+                                 "note_shared_subtree netcmd, tree prefix");
+  pref = tmp;
+  level = extract_datum_uleb128<size_t>(payload, pos,
+                                        "note_shared_subtree netcmd, level number");
+  assert_end_of_buffer(payload, pos, "note_shared_subtree netcmd payload");
+}
+
+void 
+netcmd::write_note_shared_subtree_cmd(netcmd_item_type type, 
+                                      prefix const & pref, 
+                                      size_t level)
+{
+  payload.clear();
+  payload += static_cast<char>(type);
+  insert_variable_length_string(pref(), payload);
+  insert_datum_uleb128<size_t>(level, payload);
+}
+
+
+void 
 netcmd::read_done_cmd(size_t & level, netcmd_item_type & type)  const
 {
   size_t pos = 0;
@@ -369,57 +418,6 @@ netcmd::write_done_cmd(size_t level,
   payload.clear();
   insert_datum_uleb128<size_t>(level, payload);
   payload += static_cast<char>(type);
-}
-
-void 
-netcmd::read_send_data_cmd(netcmd_item_type & type, id & item) const
-{
-  size_t pos = 0;
-  // syntax is: <type: 1 byte> <id: 20 bytes sha1> 
-  type = read_netcmd_item_type(payload, pos, "send_data netcmd, item type");
-  item = id(extract_substring(payload, pos,
-                              constants::merkle_hash_length_in_bytes, 
-                              "send_data netcmd, item identifier"));
-  assert_end_of_buffer(payload, pos, "send_data netcmd payload");
-}
-
-void 
-netcmd::write_send_data_cmd(netcmd_item_type type, id const & item)
-{
-  cmd_code = send_data_cmd;
-  I(item().size() == constants::merkle_hash_length_in_bytes);
-  payload = static_cast<char>(type);
-  payload += item();
-}
-
-void 
-netcmd::read_send_delta_cmd(netcmd_item_type & type,
-                            id & base,
-                            id & ident) const
-{
-  size_t pos = 0;
-  // syntax is: <type: 1 byte> <src: 20 bytes sha1> <dst: 20 bytes sha1>
-  type = read_netcmd_item_type(payload, pos, "send_delta netcmd, item type");
-  base = id(extract_substring(payload, pos,
-                              constants::merkle_hash_length_in_bytes, 
-                              "send_delta netcmd, base item identifier"));
-  ident = id(extract_substring(payload, pos,
-                               constants::merkle_hash_length_in_bytes, 
-                              "send_delta netcmd, ident item identifier"));
-  assert_end_of_buffer(payload, pos, "send_delta netcmd payload");
-}
-
-void 
-netcmd::write_send_delta_cmd(netcmd_item_type type,
-                             id const & base,
-                             id const & ident)
-{
-  cmd_code = send_delta_cmd;
-  I(base().size() == constants::merkle_hash_length_in_bytes);
-  I(ident().size() == constants::merkle_hash_length_in_bytes);
-  payload = static_cast<char>(type);
-  payload += base();
-  payload += ident();
 }
 
 void 
@@ -533,28 +531,6 @@ netcmd::write_delta_cmd(netcmd_item_type & type,
     }
   I(tmp.size() <= constants::netcmd_payload_limit);
   insert_variable_length_string(tmp, payload);
-}
-
-
-void 
-netcmd::read_nonexistant_cmd(netcmd_item_type & type, id & item) const
-{
-  size_t pos = 0;
-  // syntax is: <type: 1 byte> <id: 20 bytes sha1> 
-  type = read_netcmd_item_type(payload, pos, "nonexistant netcmd, item type");
-  item = id(extract_substring(payload, pos,
-                              constants::merkle_hash_length_in_bytes, 
-                              "nonexistant netcmd, item identifier"));
-  assert_end_of_buffer(payload, pos, "nonexistant netcmd payload");
-}
-
-void 
-netcmd::write_nonexistant_cmd(netcmd_item_type type, id const & item)
-{
-  cmd_code = nonexistant_cmd;
-  I(item().size() == constants::merkle_hash_length_in_bytes);
-  payload = static_cast<char>(type);
-  payload += item();
 }
 
 void 
@@ -763,8 +739,7 @@ test_netcmd_functions()
         out_node.set_raw_slot(8, id(raw_sha1("He was arrested for auto theft")));
         out_node.set_raw_slot(15, id(raw_sha1("He was whisked away to jail")));
         out_node.set_slot_state(0, subtree_state);
-        out_node.set_slot_state(3, live_leaf_state);
-        out_node.set_slot_state(8, dead_leaf_state);
+        out_node.set_slot_state(3, leaf_state);
         out_node.set_slot_state(15, subtree_state);
 
         out_cmd.write_refine_cmd(out_node);
@@ -772,6 +747,41 @@ test_netcmd_functions()
         in_cmd.read_refine_cmd(in_node);
         BOOST_CHECK(in_node == out_node);
         L(boost::format("refine_cmd test done, buffer was %d bytes\n") % buf.size());
+      }
+
+      // note_item_cmd
+      {s
+        L(boost::format("checking i/o round trip on note_item_cmd\n"));
+        netcmd out_cmd, in_cmd;
+        string buf;
+        netcmd_item_type out_ty = revision_item, in_ty;
+        id out_id(raw_sha1("gone fishin'")), in_id;
+
+        out_cmd.write_note_item_cmd(out_ty, out_id);
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
+        in_cmd.read_note_item_cmd(in_ty, in_id);
+        BOOST_CHECK(in_ty == out_ty);
+        BOOST_CHECK(in_id == out_id);
+        L(boost::format("note_item_cmd test done, buffer was %d bytes\n") % buf.size());
+      }
+
+      // note_shared_subtree_cmd
+      {
+        L(boost::format("checking i/o round trip on note_item_cmd\n"));
+        netcmd out_cmd, in_cmd;
+        string buf;
+        netcmd_item_type out_ty = revision_item, in_ty;
+        prefix out_pref("f00f"), in_pref;
+        size_t out_lev=4, in_lev=0;
+
+        out_cmd.write_note_shared_subtree_cmd(out_ty, out_pref, out_lev);
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
+        in_cmd.read_note_shared_subtree_cmd(in_ty, in_pref, in_lev);
+        BOOST_CHECK(in_ty == out_ty);
+        BOOST_CHECK(in_pref == out_pref);
+        BOOST_CHECK(in_lev == out_lev);
+        L(boost::format("note_shared_subtre_cmd test done, buffer was %d bytes\n") 
+          % buf.size());
       }
 
       // done_cmd
@@ -788,40 +798,6 @@ test_netcmd_functions()
         BOOST_CHECK(in_level == out_level);
         BOOST_CHECK(in_type == out_type);
         L(boost::format("done_cmd test done, buffer was %d bytes\n") % buf.size()); 
-      }
-
-      // send_data_cmd
-      {
-        L(boost::format("checking i/o round trip on send_data_cmd\n"));
-        netcmd out_cmd, in_cmd;
-        netcmd_item_type out_type(file_item), in_type(key_item);
-        id out_id(raw_sha1("avocado is the yummiest")), in_id;
-        string buf;
-
-        out_cmd.write_send_data_cmd(out_type, out_id);
-        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
-        in_cmd.read_send_data_cmd(in_type, in_id);
-        BOOST_CHECK(in_type == out_type);
-        BOOST_CHECK(in_id == out_id);
-        L(boost::format("send_data_cmd test done, buffer was %d bytes\n") % buf.size());
-      }
-
-      // send_delta_cmd
-      {
-        L(boost::format("checking i/o round trip on send_delta_cmd\n"));
-        netcmd out_cmd, in_cmd;
-        netcmd_item_type out_type(file_item), in_type(key_item);
-        id out_head(raw_sha1("when you board an airplane")), in_head;
-        id out_base(raw_sha1("always check the exit locations")), in_base;
-        string buf;
-
-        out_cmd.write_send_delta_cmd(out_type, out_head, out_base);
-        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
-        in_cmd.read_send_delta_cmd(in_type, in_head, in_base);
-        BOOST_CHECK(in_type == out_type);
-        BOOST_CHECK(in_head == out_head);
-        BOOST_CHECK(in_base == out_base);
-        L(boost::format("send_delta_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
       // data_cmd
@@ -858,22 +834,6 @@ test_netcmd_functions()
         BOOST_CHECK(in_base == out_base);
         BOOST_CHECK(in_delta == out_delta);
         L(boost::format("delta_cmd test done, buffer was %d bytes\n") % buf.size());
-      }
-
-      // nonexistant_cmd
-      {
-        L(boost::format("checking i/o round trip on nonexistant_cmd\n"));
-        netcmd out_cmd, in_cmd;
-        netcmd_item_type out_type(file_item), in_type(key_item);
-        id out_id(raw_sha1("avocado is the yummiest")), in_id;
-        string buf;
-
-        out_cmd.write_nonexistant_cmd(out_type, out_id);
-        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
-        in_cmd.read_nonexistant_cmd(in_type, in_id);
-        BOOST_CHECK(in_type == out_type);
-        BOOST_CHECK(in_id == out_id);
-        L(boost::format("nonexistant_cmd test done, buffer was %d bytes\n") % buf.size());
       }
 
     }
