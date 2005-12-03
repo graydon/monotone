@@ -130,33 +130,29 @@ sqlite3_unpack_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_blob(f, unpacked().c_str(), unpacked().size(), SQLITE_TRANSIENT);
 }
 
-void 
+void
 database::set_app(app_state * app)
 {
   __app = app;
 }
 
-static void 
+static void
 check_sqlite_format_version(system_path const & filename)
 {
-  require_path_is_file(filename,
-                       F("database %s does not exist") % filename,
-                       F("%s is a directory, not a database") % filename);
-  
   // sqlite 3 files begin with this constant string
   // (version 2 files begin with a different one)
   std::string version_string("SQLite format 3");
-  
+
   std::ifstream file(filename.as_external().c_str());
   N(file, F("unable to probe database version in file %s") % filename);
-  
+
   for (std::string::const_iterator i = version_string.begin();
        i != version_string.end(); ++i)
     {
       char c;
       file.get(c);
       N(c == *i, F("database %s is not an sqlite version 3 file, "
-                   "try dump and reload") % filename);            
+                   "try dump and reload") % filename);
     }
 }
 
@@ -201,9 +197,7 @@ database::sql(bool init)
 
       if (! init)
         {
-          require_path_is_file(filename,
-                               F("database %s does not exist") % filename,
-                               F("%s is a directory, not a database") % filename);
+          check_db_exists();
           check_sqlite_format_version(filename);
         }
 
@@ -461,12 +455,13 @@ database::info(ostream & out)
 #undef SPACE_USAGE
 }
 
-void 
+void
 database::version(ostream & out)
 {
   string id;
 
   check_filename();
+  check_db_exists();
   open();
 
   calculate_schema_id(__sql, id);
@@ -476,18 +471,19 @@ database::version(ostream & out)
   out << F("database schema version: %s") % id << endl;
 }
 
-void 
+void
 database::migrate()
-{  
+{
   check_filename();
-
+  check_db_exists();
   open();
 
   migrate_monotone_schema(__sql, __app);
+
   close();
 }
 
-void 
+void
 database::rehash()
 {
   transaction_guard guard(*this);
@@ -2517,6 +2513,14 @@ database::check_filename()
   N(!filename.empty(), F("no database specified"));
 }
 
+
+void
+database::check_db_exists()
+{
+  require_path_is_file(filename,
+                       F("database %s does not exist") % filename,
+                       F("%s is a directory, not a database") % filename);
+}
 
 bool
 database::database_specified()

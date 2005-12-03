@@ -2677,12 +2677,15 @@ There are several pre-defined domains that monotone knows about:
 @item database
 Contains database-global configuration information.  Defined names are:
 @table @code
-@item default-server
-The default server for netsync operations to use.  Automatically set
-by first use of netsync.
+@item default-exclude-pattern
+The default branch exclusion glob pattern for netsync operations to
+use. Automatically set by first use of netsync.
 @item default-include-pattern
 The default branch glob pattern for netsync operations to use.
 Automatically set by first use of netsync.
+@item default-server
+The default server for netsync operations to use.  Automatically set
+by first use of netsync.
 @end table
 
 @item known-servers
@@ -6030,8 +6033,16 @@ keys in your database to have the same ID. Make sure you confirm the
 key fingerprints of each key in your database, as key ID strings are
 ``convenience names'', not security tokens.
 
+Note also that, unlike the equivalent read permission hook, the write
+permission hook does not take a @var{branch} name as an argument.  There
+is presently no way to selectively grant write access to different
+branches via netsync, for a number of reasons. Contributions in the
+database from different authors can be selectively trusted using the
+@ref{Trust Evaluation Hooks} instead.
+
 @end ftable
 
+@anchor{Trust Evaluation Hooks}
 @subsection Trust Evaluation Hooks
 
 Monotone makes heavy use of certs to provide descriptive information

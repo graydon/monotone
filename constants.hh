@@ -58,17 +58,29 @@ namespace constants
   // all the ASCII characters (bytes) which are legal in a packet
   extern char const * const legal_packet_bytes;
 
+  // boost regex that matches the bytes in legal_packet_bytes
+  extern std::string const regex_legal_packet_bytes;
+
   // all the ASCII characters (bytes) which are legal in an ACE string
   extern char const * const legal_ace_bytes;
 
   // all the ASCII characters (bytes) which are legal in a SHA1 hex id
   extern char const * const legal_id_bytes;
 
+  // boost regex that matches the bytes in legal_id_bytes
+  extern std::string const regex_legal_id_bytes;
+
   // all the ASCII characters (bytes) which can occur in cert names
   extern char const * const legal_cert_name_bytes;
 
+  // boost regex that matches the bytes in legal_cert_name_bytes
+  extern std::string const regex_legal_cert_name_bytes;
+
   // all the ASCII characters (bytes) which can occur in key names
   extern char const * const legal_key_name_bytes;
+
+  // boost regex that matches the bytes in legal_key_name_bytes
+  extern std::string const regex_legal_key_name_bytes;
 
   // all the ASCII characters (bytes) which are illegal in a (file|local)_path
   extern char const * const illegal_path_bytes;

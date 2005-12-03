@@ -262,7 +262,7 @@ SUFFIXES = .gch
 
 AM_CPPFLAGS =
 AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR $(SQLITE_CPPFLAGS)
-AM_CXXFLAGS = $(AM_CPPFLAGS) $(PCH_FLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS
+AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS
 AM_LDFLAGS = 
 
 lib3rdparty_a_CPPFLAGS =
@@ -272,10 +272,11 @@ lib3rdparty_a_CXXFLAGS = $(AM_CXXFLAGS) $(LIB3RDPARTY_CXXFLAGS)
 monotone_LDFLAGS = 
 monotone_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
 monotone_CFLAGS = $(AM_CFLAGS) $(MONOTONE_CFLAGS)
-monotone_CXXFLAGS = $(AM_CXXFLAGS) $(MONOTONE_CXXFLAGS)
+monotone_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MONOTONE_CXXFLAGS)
 
 unit_tests_LDFLAGS = 
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
+unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
 
 # conditionals from configury
 
@@ -296,8 +297,8 @@ unit_tests_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
-  monotone_LDADD += -lws2_32 -lintl -liconv -liphlpapi
-  unit_tests_LDADD += -lws2_32 -lintl -liconv -liphlpapi
+  monotone_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
+  unit_tests_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
 else
