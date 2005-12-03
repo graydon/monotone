@@ -43,7 +43,7 @@ read_netcmd_item_type(string const & in,
 }
 
 netcmd::netcmd() : version(constants::netcmd_current_protocol_version),
-                   cmd_code(bye_cmd)
+                   cmd_code(error_cmd)
 {}
 
 size_t netcmd::encoded_size() 
@@ -101,9 +101,10 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
     case static_cast<u8>(anonymous_cmd):
     case static_cast<u8>(auth_cmd):
     case static_cast<u8>(error_cmd):
-    case static_cast<u8>(bye_cmd):
     case static_cast<u8>(confirm_cmd):
     case static_cast<u8>(refine_cmd):
+    case static_cast<u8>(note_item_cmd):
+    case static_cast<u8>(note_shared_subtree_cmd):
     case static_cast<u8>(done_cmd):
     case static_cast<u8>(data_cmd):
     case static_cast<u8>(delta_cmd):
@@ -636,15 +637,6 @@ test_netcmd_functions()
         in_cmd.read_error_cmd(in_errmsg);
         BOOST_CHECK(in_errmsg == out_errmsg);
         L(boost::format("errmsg_cmd test done, buffer was %d bytes\n") % buf.size());
-      }
-
-      // bye_cmd
-      {
-        L(boost::format("checking i/o round trip on bye_cmd\n"));   
-        netcmd out_cmd, in_cmd;
-        string buf;
-        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
-        L(boost::format("bye_cmd test done, buffer was %d bytes\n") % buf.size());
       }
       
       // hello_cmd

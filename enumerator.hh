@@ -56,6 +56,7 @@ revision_enumerator
   revision_enumerator(enumerator_callbacks & cb,
                       app_state & app);
   void step();
+  bool done();
 };
 
 #endif // __ENUMERATOR_H__

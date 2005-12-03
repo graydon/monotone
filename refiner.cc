@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <set>
 #include <string>
+#include <utility>
 
 #include <boost/shared_ptr.hpp>
 
@@ -17,6 +18,7 @@
 
 using std::string;
 using std::set;
+using std::make_pair;
 
 // The previous incarnation of this algorithm had code related to sending
 // decisions (and skippable transmissions) mixed in with the refinement
@@ -31,6 +33,7 @@ using std::set;
 void 
 refiner::note_local_item(id const & item)
 {
+  local_items.insert(item);
   insert_into_merkle_tree(table, type, item, 0);
 }
 
@@ -54,6 +57,7 @@ refiner::refine_synthetic_empty_subtree(merkle_node const & their_node,
   our_fake_node.level = their_node.level + 1;
   our_fake_node.type = their_node.type;
   cb.queue_refine_cmd(our_fake_node);
+  exchanged_data_since_last_done_cmd = true;
 }
 
 
@@ -77,6 +81,7 @@ refiner::refine_synthetic_singleton_subtree(merkle_node const & their_node,
   our_fake_subtree.set_raw_slot(subslot, our_slotval);
   our_fake_subtree.set_slot_state(subslot, our_node.get_slot_state(slot));
   cb.queue_refine_cmd(our_fake_subtree);
+  exchanged_data_since_last_done_cmd = true;
 }
 
 
@@ -88,6 +93,7 @@ refiner::inform_peer_of_item_in_slot(merkle_node const & our_node,
   string tmp;
   our_node.get_raw_slot(slot, slotval);
   cb.queue_note_item_cmd(type, slotval);
+  exchanged_data_since_last_done_cmd = true;
 }
 
 
@@ -121,6 +127,13 @@ refiner::calculate_items_to_send_and_receive()
   std::set_difference(peer_items.begin(), peer_items.end(),
                       local_items.begin(), local_items.end(),
                       std::inserter(items_to_receive, items_to_receive.begin()));
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  
+  P(F("pid %d determined %d %s items to send\n") 
+    % getpid() % items_to_send.size() % typestr);
+  P(F("pid %d determined %d %s items to receive\n") 
+    % getpid() % items_to_receive.size() % typestr);
 }
 
 
@@ -133,6 +146,7 @@ refiner::inform_peer_of_subtree_in_slot(merkle_node const & our_node,
   merkle_ptr our_subtree;
   load_merkle_node(our_node.level + 1, subprefix, our_subtree);
   cb.queue_refine_cmd(*our_subtree);
+  exchanged_data_since_last_done_cmd = true;
 }
 
 void
@@ -184,6 +198,8 @@ refiner::compare_subtrees_and_maybe_refine(merkle_node const & their_node,
     }
   else
     cb.queue_refine_cmd(*our_subtree);
+
+  exchanged_data_since_last_done_cmd = true;
 }
 
 
@@ -191,7 +207,11 @@ refiner::refiner(netcmd_item_type type, refiner_callbacks & cb)
   : type(type), cb(cb), 
     exchanged_data_since_last_done_cmd(false), 
     finished_refinement(false)
-{}
+{
+  merkle_ptr root = merkle_ptr(new merkle_node());
+  root->type = type;
+  table.insert(make_pair(make_pair(prefix(""), 0), root));
+}
 
 void
 refiner::note_item_in_peer(id const & item)
@@ -243,12 +263,24 @@ refiner::begin_refinement()
 void 
 refiner::process_done_command(size_t level)
 {
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+
+  P(F("pid %d processing 'done' command on %s level %d\n")
+    % getpid() % typestr % level);
+
   if (!exchanged_data_since_last_done_cmd 
       || level >= 0xff)
     {
       // Echo 'done' if we're shutting down
       if (!finished_refinement)
-        cb.queue_done_cmd(level+1, type);
+        {
+          P(F("pid %d processing 'done' command => echoing shut down of %s refinement\n")
+            % getpid() % typestr);
+          cb.queue_done_cmd(level+1, type);
+        }
+      P(F("pid %d processing 'done' command => shut down %s refinement\n")
+        % getpid() % typestr);
       
       // Mark ourselves shut down
       finished_refinement = true;
@@ -260,6 +292,8 @@ refiner::process_done_command(size_t level)
            && !finished_refinement)
     {
       // Echo 'done', we're still active.
+      P(F("pid %d processing 'done' command => continuing to %s level %d\n")
+        % getpid() % typestr % (level+1));
       cb.queue_done_cmd(level+1, type);
     }
   

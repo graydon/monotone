@@ -296,9 +296,6 @@ session:
   vector<cert> written_certs;
 
   id saved_nonce;
-  bool received_goodbye;
-  bool sent_goodbye;
-
   packet_db_valve dbw;
 
   bool encountered_error;
@@ -342,8 +339,10 @@ session:
 
   void setup_client_tickers();
   bool done_all_refinements();
-  bool got_all_data();
-  void maybe_say_goodbye();
+  bool queued_all_items();
+  bool received_all_items();
+  bool finished_exchange_ok();
+  void maybe_step();
 
   void note_item_arrived(netcmd_item_type ty, id const & i);
   void maybe_note_epochs_finished();
@@ -392,7 +391,6 @@ session:
                        delta const & del);
 
   // Incoming dispatch-called methods.
-  bool process_bye_cmd();
   bool process_error_cmd(string const & errmsg);
   bool process_hello_cmd(rsa_keypair_id const & server_keyname,
                          rsa_pub_key const & server_key,
@@ -472,8 +470,6 @@ session::session(protocol_role role,
   revision_out_ticker(NULL),
   revision_checked_ticker(NULL),
   saved_nonce(""),
-  received_goodbye(false),
-  sent_goodbye(false),
   dbw(app, true),
   encountered_error(false),
   epoch_refiner(epoch_item, *this),
@@ -704,12 +700,31 @@ session::done_all_refinements()
 
 
 bool 
-session::got_all_data()
+session::received_all_items()
 {
   return rev_refiner.items_to_receive.empty()
     && cert_refiner.items_to_receive.empty()
     && key_refiner.items_to_receive.empty()
     && epoch_refiner.items_to_receive.empty();
+}
+
+bool 
+session::finished_exchange_ok()
+{
+  return done_all_refinements() 
+    && received_all_items()
+    && queued_all_items()
+    && rev_enumerator.done()
+    && outbuf.empty();
+}
+
+bool 
+session::queued_all_items()
+{
+  return rev_refiner.items_to_send.empty()
+    && cert_refiner.items_to_send.empty()
+    && key_refiner.items_to_send.empty()
+    && epoch_refiner.items_to_send.empty();
 }
 
 
@@ -898,23 +913,12 @@ session::write_some()
 // senders
 
 void 
-session::queue_bye_cmd() 
-{
-  L(F("queueing 'bye' command\n"));
-  netcmd cmd;
-  cmd.write_bye_cmd();
-  write_netcmd_and_try_flush(cmd);
-  this->sent_goodbye = true;
-}
-
-void 
 session::queue_error_cmd(string const & errmsg)
 {
   L(F("queueing 'error' command\n"));
   netcmd cmd;
   cmd.write_error_cmd(errmsg);
   write_netcmd_and_try_flush(cmd);
-  this->sent_goodbye = true;
 }
 
 void 
@@ -923,7 +927,7 @@ session::queue_done_cmd(size_t level,
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
-  L(F("queueing 'done' command for %s level %s\n") % typestr % level);
+  P(F("queueing 'done' command for %s level %s\n") % typestr % level);
   netcmd cmd;
   cmd.write_done_cmd(level, type);
   write_netcmd_and_try_flush(cmd);
@@ -992,7 +996,7 @@ session::queue_refine_cmd(merkle_node const & node)
   hexenc<prefix> hpref;
   node.get_hex_prefix(hpref);
   netcmd_item_type_to_string(node.type, typestr);
-  L(F("queueing request for refinement of %s node '%s', level %d\n")
+  P(F("queueing request for refinement of %s node '%s', level %d\n")
     % typestr % hpref % static_cast<int>(node.level));
   netcmd cmd;
   cmd.write_refine_cmd(node);
@@ -1006,7 +1010,7 @@ session::queue_note_item_cmd(netcmd_item_type ty, id item)
   hexenc<id> hitem;
   encode_hexenc(item, hitem);
   netcmd_item_type_to_string(ty, typestr);
-  L(F("queueing note about %s item '%s'") % typestr % hitem);
+  P(F("queueing note about %s item '%s'") % typestr % hitem);
   netcmd cmd;
   cmd.write_note_item_cmd(ty, item);
   write_netcmd_and_try_flush(cmd);  
@@ -1043,7 +1047,7 @@ session::queue_data_cmd(netcmd_item_type type,
       return;
     }
 
-  L(F("queueing %d bytes of data for %s item '%s'\n")
+  P(F("queueing %d bytes of data for %s item '%s'\n")
     % dat.size() % typestr % hid);
 
   netcmd cmd;
@@ -1082,7 +1086,7 @@ session::queue_delta_cmd(netcmd_item_type type,
       return;
     }
 
-  L(F("queueing %s delta '%s' -> '%s'\n")
+  P(F("queueing %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
   netcmd cmd;
   cmd.write_delta_cmd(type, base, ident, del);
@@ -1092,14 +1096,6 @@ session::queue_delta_cmd(netcmd_item_type type,
 
 
 // processors
-
-bool 
-session::process_bye_cmd() 
-{
-  L(F("received 'bye' netcmd\n"));
-  this->received_goodbye = true;
-  return true;
-}
 
 bool 
 session::process_error_cmd(string const & errmsg) 
@@ -1484,6 +1480,11 @@ session::process_confirm_cmd(string const & signature)
 bool
 session::process_refine_cmd(merkle_node const & node)
 {
+  string typestr;
+  netcmd_item_type_to_string(node.type, typestr);
+  P(F("processing refine cmd for %s node at level %d\n")
+    % typestr % node.level);
+
   switch (node.type)
     {    
     case file_item:
@@ -1909,10 +1910,6 @@ session::dispatch_payload(netcmd const & cmd)
   
   switch (cmd.get_cmd_code())
     {
-      
-    case bye_cmd:
-      return process_bye_cmd();
-      break;
 
     case error_cmd:
       {
@@ -2019,6 +2016,7 @@ session::dispatch_payload(netcmd const & cmd)
         size_t level;
         netcmd_item_type type;
         cmd.read_done_cmd(level, type);
+        return process_done_cmd(level, type);
       }
       break;
 
@@ -2094,11 +2092,15 @@ session::begin_service()
 }
 
 void 
-session::maybe_say_goodbye()
+session::maybe_step()
 {
-  if (done_all_refinements() &&
-      got_all_data() && !sent_goodbye)
-    queue_bye_cmd();
+  if (done_all_refinements()
+      && !rev_enumerator.done()
+      && outbuf_size < constants::bufsz * 10)
+    {
+      P(F("stepping enumerator\n"));
+      rev_enumerator.step();
+    }
 }
 
 bool 
@@ -2133,7 +2135,10 @@ bool session::process()
       if (inbuf.size() >= constants::netcmd_maxsz)
         W(F("input buffer for peer %s is overfull after netcmd dispatch\n") % peer_id);
       guard.commit();
-      maybe_say_goodbye();
+
+      if (finished_exchange_ok())
+        return true;
+
       if (!ret)
         P(F("failed to process '%s' packet") % cmd.get_cmd_code());
       return ret;
@@ -2212,11 +2217,7 @@ call_server(protocol_role role,
             }
           else
             {         
-              if (sess.sent_goodbye)
-                P(F("read from fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
-              else
-                E(false, F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
-              return;
+              E(false, F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
             }
         }
       
@@ -2224,10 +2225,7 @@ call_server(protocol_role role,
         {
           if (! sess.write_some())
             {
-              if (sess.sent_goodbye)
-                P(F("write on fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
-              else
-                E(false, F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
+              E(false, F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
               return;
             }
         }
@@ -2246,9 +2244,10 @@ call_server(protocol_role role,
                 % sess.peer_id);
               return;
             }
+          sess.maybe_step();
         }
 
-      if (sess.sent_goodbye && sess.outbuf.empty() && sess.received_goodbye)
+      if (sess.finished_exchange_ok())
         {
           P(F("successful exchange with %s\n") 
             % sess.peer_id);
@@ -2367,6 +2366,8 @@ handle_write_available(Netxx::socket_type fd,
       sessions.erase(fd);
       live_p = false;
     }
+  else
+    sess->maybe_step();
 }
 
 static void
@@ -2390,6 +2391,7 @@ process_armed_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
                 % fd % sess->peer_id);
               sessions.erase(j);
             }
+          sess->maybe_step();
         }
     }
 }
@@ -2399,7 +2401,7 @@ reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
                    unsigned long timeout_seconds)
 {
   // kill any clients which haven't done any i/o inside the timeout period
-  // or who have said goodbye and flushed their output buffers
+  // or who have exchanged all items and flushed their output buffers
   set<Netxx::socket_type> dead_clients;
   time_t now = ::time(NULL);
   for (map<Netxx::socket_type, shared_ptr<session> >::const_iterator i = sessions.begin();
@@ -2412,9 +2414,9 @@ reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
             % i->first % i->second->peer_id);
           dead_clients.insert(i->first);
         }
-      if (i->second->sent_goodbye && i->second->outbuf.empty() && i->second->received_goodbye)
+      if (i->second->finished_exchange_ok())
         {
-          P(F("fd %d (peer %s) exchanged goodbyes and flushed output, disconnecting\n") 
+          P(F("fd %d (peer %s) exchanged all items and flushed output, disconnecting\n") 
             % i->first % i->second->peer_id);
           dead_clients.insert(i->first);
         }
@@ -2533,21 +2535,22 @@ serve_connections(protocol_role role,
 
 
 void
-insert_with_parents(revision_id rev, refiner & ref, 
+insert_with_parents(revision_id rev, 
+                    refiner & ref, 
+                    set<revision_id> & revs,
                     app_state & app, 
                     ticker & revisions_ticker)
 {
   deque<revision_id> work;
-  set<revision_id> seen;
   work.push_back(rev);
   while (!work.empty())
     {
       revision_id rid = work.front();
       work.pop_front();
 
-      if (!null_id(rid) && seen.find(rid) == seen.end())
+      if (!null_id(rid) && revs.find(rid) == revs.end())
         {
-          seen.insert(rid);
+          revs.insert(rid);
           ++revisions_ticker;
           id rev_item;
           decode_hexenc(rid.inner(), rev_item);
@@ -2599,7 +2602,7 @@ session::rebuild_merkle_trees(app_state & app,
                  j != certs.end(); j++)
               {
                 insert_with_parents(revision_id(j->inner().ident),
-                                    rev_refiner, app, revisions_ticker);
+                                    rev_refiner, revision_ids, app, revisions_ticker);
                 // branch certs go in here, others later on
                 hexenc<id> tmp;
                 id item;

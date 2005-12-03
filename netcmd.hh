@@ -27,7 +27,6 @@ typedef enum
   { 
     // general commands
     error_cmd = 0,
-    bye_cmd = 1,
 
     // authentication commands
     hello_cmd = 2,
@@ -91,9 +90,6 @@ public:
   // i/o functions for each type of command payload
   void read_error_cmd(std::string & errmsg) const;
   void write_error_cmd(std::string const & errmsg);
-
-//void read_bye_cmd() {}
-  void write_bye_cmd() {cmd_code = bye_cmd;}
 
   void read_hello_cmd(rsa_keypair_id & server_keyname,
                       rsa_pub_key & server_key,
