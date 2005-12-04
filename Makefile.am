@@ -122,7 +122,7 @@ BOTAN_SOURCES =                                                                 
         botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp 		\
         \
         botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h	\
-        botan/lookup.h botan/omac.h botan/randpool.h botan/version.h	\
+        botan/lookup.h botan/randpool.h botan/version.h	\
         botan/algolist.h botan/buf_es.h botan/der_enc.h			\
         botan/exceptn.h botan/mdx_hash.h botan/par_hash.h		\
         botan/reducer.h botan/x509_ca.h botan/allocate.h		\
@@ -132,8 +132,8 @@ BOTAN_SOURCES =                                                                 
         botan/pbe_pkcs.h botan/rsa.h botan/x509_crl.h botan/asn1.h	\
         botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h	\
         botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h	\
-        botan/cfb.h botan/dl_param.h botan/modebase.h			\
-        botan/pipe.h botan/x509_obj.h					\
+        botan/cfb.h botan/dl_param.h botan/modebase.h	\
+        botan/pipe.h botan/x509_obj.h			\
         botan/asn1_oid.h botan/conf.h botan/eax.h botan/gzip.h		\
         botan/mode_pad.h botan/pk_algs.h botan/secmem.h			\
         botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h	\
@@ -236,6 +236,33 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 
 # flags
 
+if BUILD_PCH
+
+PCH_SOURCE = $(srcdir)/pch.hh
+# the .gch file only will be seen if it's in the same dir as the .hh file,
+# so need to copy it for separate build directories
+PCH_BUILD = pch-build.hh
+PCH_FLAGS = -Winvalid-pch -include $(PCH_BUILD)
+PCH_FILE = $(PCH_BUILD).gch
+sinclude $(PCH_FILE).dep
+
+*.o *.lo *.obj: $(PCH_FILE)
+
+$(PCH_BUILD): $(PCH_SOURCE)
+	cp $(PCH_SOURCE) $(PCH_BUILD)
+
+$(PCH_FILE): $(PCH_BUILD)
+	$(MAKE) PCH_FLAGS= pch-file
+
+pch-file:
+	$(CXXCOMPILE) -x c++-header $(PCH_BUILD) -o $(PCH_FILE) \
+        -MT $(PCH_FILE)  -MD -MP -MF "./$(PCH_FILE).Tdep" \
+        && mv "./$(PCH_FILE).Tdep" "./$(PCH_FILE).dep" \
+        || rm "./$(PCH_FILE).Tdep"
+endif
+
+SUFFIXES = .gch
+
 AM_CPPFLAGS =
 AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR $(SQLITE_CPPFLAGS)
 AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS
@@ -248,10 +275,11 @@ lib3rdparty_a_CXXFLAGS = $(AM_CXXFLAGS) $(LIB3RDPARTY_CXXFLAGS)
 monotone_LDFLAGS = 
 monotone_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
 monotone_CFLAGS = $(AM_CFLAGS) $(MONOTONE_CFLAGS)
-monotone_CXXFLAGS = $(AM_CXXFLAGS) $(MONOTONE_CXXFLAGS)
+monotone_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MONOTONE_CXXFLAGS)
 
 unit_tests_LDFLAGS = 
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
+unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
 
 # conditionals from configury
 
@@ -272,8 +300,8 @@ unit_tests_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
-  monotone_LDADD += -lws2_32 -lintl -liconv -liphlpapi
-  unit_tests_LDADD += -lws2_32 -lintl -liconv -liphlpapi
+  monotone_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
+  unit_tests_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
 else
@@ -403,7 +431,7 @@ TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 mostlyclean-local:
 	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
 
-DISTCLEANFILES = tests/atconfig mt-stdint.h
+DISTCLEANFILES = tests/atconfig mt-stdint.h xgettext.opts pch-build.hh.gch.dep
 
 # distcheck stuff
 
@@ -435,10 +463,11 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
                       package_revision.txt package_revision.c \
-                      package_full_revision.txt package_full_revision.c
+                      package_full_revision.txt package_full_revision.c \
+                      $(PCH_FILE) $(PCH_BUILD)
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
-CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES)
+CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES) 
 
 txt2c: txt2c.cc Makefile
 	$(CXX) $(CXXFLAGS) -o $@ $<

@@ -218,10 +218,8 @@ static void traverseclosure (GCState *st, Closure *cl) {
     markvalue(st, cl->l.p);
     for (i=0; i<cl->l.nupvalues; i++) {  /* mark its upvalues */
       UpVal *u = cl->l.upvals[i];
-      if (!u->marked) {
-        markobject(st, &u->value);
-        u->marked = 1;
-      }
+      markobject(st, u->v);
+      u->marked = 1;
     }
   }
 }

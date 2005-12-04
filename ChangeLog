@@ -1,3 +1,231 @@
+2005-12-02  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Make Win32 build link against shfolder.lib to get
+	SHGetFolderPathA on older Windows platforms (we had previously
+	been relying on it to be available in shell32.lib) .
+	* packet.cc (feed_packet_consumer::feed_packet_consumer,
+	extract_packets): Move duplicated sets of regexs for key IDs,
+	certs, etc. into constants.cc.
+	* constants.{cc,hh}: Add regex strings extracted from packet.cc.  Also
+	fix the key ID regex to accept a few characters we allowed in
+	legal_key_name_bytes already.
+	* tests/t_genkey.at: Test good and bad keys with all characters we
+	allow in the user portion of a key id.
+
+2005-12-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc: Revert last change; db version and db migrate need
+	to be able to open databases with old schema versions.  Calling
+	sql() directly broke this.  Moved a db existence check scattered
+	through the code into db_check_exists(), and added calls to this
+	into ::version and ::migrate.
+	* database.cc (database::version, database::migrate): Improve
+	error handling where user has supplied the path to a non-existant
+	database file.  Submitted by Neil Conway.
+	* win32/fs.cc (rename_clobberingly_impl): Improve error handling
+	around LoadLibrary call.
+	* lua/{lvm.c,lgc.c,lapi.c}: Lua post-5.0.2 bugfixes from
+	http://www.lua.org/bugs.html.  Submitted by Alex Queiroz.
+
+2005-11-29  Matt Johnston  <matt@ucc.asn.au>
+
+	* Makefile.am: add PCH_FLAGS only when compiling monotone and
+	unit_tests objects, not for libs.
+	* pch.hh: define __STDC_CONSTANT_MACROS as required for UINT32_C.
+
+2005-11-28  Nathaniel Smith  <njs@pobox.com>
+
+	* txt2c.cc (main): Work correctly even on empty files.
+
+2005-11-28  Nathaniel Smith  <njs@pobox.com>
+
+	* schema_migration.cc: Provide more feedback while 'db migrate' is
+	running.
+
+2005-11-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* HACKING: Make a note of the fact that we kill 'monotone serve'
+	processes with a SIGSEGV.
+	* tests/README: Minor cleanup, mention SIGSEGV thing here too.
+
+2005-11-27  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua: Make regexp matching error slightly more
+	user-friendly.
+
+2005-11-27  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (diff): Remove OPT_BRANCH from diff's options.
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* configure.ac: Do not use test's == operator because it is not
+	compatible with many implementations; use = instead.
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* configure.ac, ui.cc: Windows does have sync_with_iostream; the
+	problem is that it does not behave correctly on some MinGW versions.
+	Properly detect this condition.  Thanks to Matthew Gregan for the
+	explanation.
+
+2005-11-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* netxx/address.cxx (parse_uri): Reset URI parser state after
+	checking for IPv6 address.
+
+2005-11-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_netsync_largish_file.at: Move LARGISH_FILE_CREATE
+	definition from here...
+	* testsuite.at: ...to here.
+	* tests/t_dump_load.at: Use LARGISH_FILE_CREATE to create a 1MB
+	file so that the db dump output is larger than a few kB.  This is
+	needed to catch the iostreams-returning-EOF-early bogosity under
+	MinGW when sync_with_stdio(false) has been called on the iostream.
+
+2005-11-27  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc: Include "i18n.h" instead of "libintl.h" directly,
+	to theoretically play better with autoconf stuff.
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* tests/t_automate_stdio.at: Don't expect perl to be in /usr/bin;
+	this assumption doesn't hold breaks on several systems (such as
+	NetBSD).
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* tests/t_checkout_options.at: Use the [] operator instead of {} in
+	a shell pattern so that it works with interpreters other than bash
+	(e.g., NetBSD's sh).
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* testsuite.at, tests/t_empty_env.at, tests/t_i18n_file.at,
+	tests/t_netsync_sigpipe.at, tests/t_update_1.at, tests/t_update_2.at:
+	Do not use test's == operator because it is not portable; use =
+	instead.
+
+2005-11-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* Makefile.am, configure.ac, pch.hh: add --enable-pch configure
+	flag to enable precompiled boost headers. Based on LyX automake/autoconf
+	rules, Zbynek Winkler suggested that just boost headers would be
+	beneficial.
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* app_state.cc: No need to include headers for chdir() any more.
+	This function was replaced by change_current_working_dir.
+	* monotone.cc: Unconditionally include libintl.h as this file uses
+	gettext functions.
+	* configure.ac, rcs_import.cc: Check for strptime(3) and use the
+	check results instead of assuming that only Windows lacks this
+	function.
+	* configure.ac, ui.cc: Check whether C++ streams support the
+	sync_with_stdio method and use the check results instead of assuming
+	that only Windows lacks this function.
+
+	Addresses part of bug #12086.
+
+2005-11-27  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* app_state.cc: Correctly detect when MT/options does not have a
+	database property instead of printing the cryptic message "misuse:
+	invalid path ''".
+
+2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
+
+	* configure.ac: expose --enable-ipv6 in config.h
+	* monotone.cc (cpp_main): parse IPv6 addresses correctly 
+	in --bind arguments
+	* netsync.cc (call_server,serve_connections): if USE_IPV6 defined, 
+	create netxx Address instances with ipv6 enabled.
+	* netxx/address.cxx (parse_uri): parse IPv6 addresses as hostnames
+	* closes bug #14446
+
+2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (automate_stdio_read): remove check for EINTR
+	that was breaking win32 build.
+
+2005-11-27  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (automate_certs,automate_keys): use non-exclusive 
+	transaction guard
+	* commands.cc (ls_certs,ls_keys,cat): use non-exclusive 
+	transaction guard
+	* database.cc (begin_transaction): used BEGIN DEFERRED (only attempt 
+	exclusive lock once a write is attempted on DB) when not exclusive
+	(transaction_guard::transaction_guard): new argument exclusive indicating 
+	whether an immediate exclusive lock is requested, defaults to true
+	* database.hh: update prototype for transaction_guard
+
+2005-11-26  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Fill in date for 0.24 release.
+
+2005-11-26  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE: Add note about serve changing syntax.
+
+2005-11-26  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE: Update for 0.24.
+	* configure.ac, win32/monotone.iss, monotone.spec:
+	* debian/changelog: Bump version number.
+
+2005-11-26  Nathaniel Smith  <njs@pobox.com>
+
+	* ChangeLog: fixup after merge.
+
+2005-11-27  Daniel Carosone  <dan@geek.com.au>
+
+	* monotone.texi, std_hooks.lua: sync hook definitions with
+	std_hooks.lua, and group the descriptions into @subsections,
+	reordering a few items accordingly.
+
+2005-11-26  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am: Remove botan/{omac,fips_rng}.h.
+
+2005-11-26  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* AUTHORS, ChangeLog: Update my email address; I don't read the
+	other one any more and the new one represents better my limited
+	involvement in Monotone.
+
+2005-11-26  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* configure.ac, Makefile.am, po/Makevars: Avoid using xgettext's
+	--flag option on versions that do not support it.
+
+2005-11-26  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (automate_stdio) add wrapper function to read()
+	so that loops will not wind backwards possibly overrunning buffers
+	if an error occurs. Hopefully fixes some of the strange edge cases
+	seen using automate. (Closes #15062 in bug tracker)
+
+2005-11-26  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* botan/mem_pool.cpp (Pooling_Allocator::allocate): Botan's
+	Pooling_Allocator assumes that Buffers stored in free_list are
+	sorted, and uses std::inplace_merge() in deallocate() to ensure
+	the recently freed Buffer is positioned in free_list
+	appropriately.  This same check was not being performed when a
+	Buffer was added to free_list in allocate() (it's not safe to
+	assume that the address of a newly allocated Buffer will always be
+	greated than existing Buffers).
+
+2005-11-25  graydon hoare  <graydon@pobox.com>
+
+	* database.cc (get_version): Another important fix: make sure to
+	cancel overlapping paths, to avoid exponential memory requirement
+	in deep, heavily-forked-and-merged storage paths.
+
 2005-11-25  graydon hoare  <graydon@pobox.com>
 
 	* database.cc (get_version): Another important fix: make sure to
@@ -2715,19 +2943,19 @@
 	* testsuite.at: Use SEGV to kill netsync servers, in hopes it will
 	give better coverage information.
 
-2005-08-13  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-08-13  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* configure.ac: Remove an obsolete check to see if SQLite was
 	bundled or not, because the bundled version has been used
 	exclusively for quite some time.
 
-2005-08-13  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-08-13  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* database_check.cc: Remove trailing newline from error messages
 	when embedding them inside other strings, so that the trailing
 	closing parenthesis is printed correctly.
 
-2005-08-13  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-08-13  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* configure.ac: Add '-mt' as another possible suffix to detect the
 	Boost libraries.  It's very common when these libraries are built
@@ -8173,13 +8401,13 @@
 	* std_hooks.lua (merge2, merge3): Check for DISPLAY before
 	invoking gvim.
 
-2005-02-20  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-02-20  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* ChangeLog: Use tabs for indentation rather than spaces.  Drop
 	trailing whitespace.  While here, fix a date by adding zeros before
 	the month and the day number.
 
-2005-02-20  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-02-20  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* gettext.h: Add file.
 	* AUTHORS: Mention that it comes from the GNU Gettext package.
@@ -8215,7 +8443,7 @@
 	* configure.ac: Check for 64-bit versions of Boost static
 	libraries.
 
-2005-02-18  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-02-18  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* INSTALL:
 	* configure.ac: Improve Boost detection by trying several possible
@@ -8259,7 +8487,7 @@
 	* revision.{cc,hh}: Likewise.
 	* smap.hh: New file.
 
-2005-02-18  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-02-18  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* INSTALL:
 	* configure.ac: Improve Boost detection by trying several possible
@@ -8270,7 +8498,7 @@
 	* tests/t_add_intermediate_MT_path.at: new test
 	* testsuite.at: call it
 
-2005-02-17  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-02-17  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* testsuite.at:
 	* tests/t_change_empty_file.at: Verify that modifying an empty file
@@ -8336,26 +8564,26 @@
 	* commands.cc (push, pull, sync): Remove misleading "..." from
 	help text.
 
-2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-02-16  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* Makefile.am: Append $(BOOST_SUFFIX) to -lboost_unit_test_framework
 	to fix 'make check' on systems where boost libraries can only be
 	found by passing the exact suffix as part of the name.
 
-2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-02-16  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* monotone.texi: Fix a typo (hexidecimal to hexadecimal).  Also
 	change an example command to append stuff to ~/.monotonerc, instead
 	of completely destroying the possibily existing file.  Addresses
 	bug #11136.
 
-2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-02-16  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* cryptopp/config.h: Use uint{8,16,32,64}_t as size types instead of
 	trying to match them to unsigned char/int/long/long long respectively.
 	Should fix build on FreeBSD/sparc64, as seen in bug #10203.
 
-2005-02-16  Julio M. Merino Vidal  <jmmv@menta.net>
+2005-02-16  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* INSTALL:
 	* Makefile.am:
@@ -9348,7 +9576,7 @@
 
 	* win32/get_system_flavour.cc: Fix little compile bugs.
 
-2004-12-30  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-30  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* change_set.{cc,hh}: Add the has_renamed_file_src function in
 	change_set::path_rearrangement.
@@ -9367,13 +9595,13 @@
 	* po/monotone.pot: Regenerate.
 	* NEWS: Describe new release.
 
-2004-12-29  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-29  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* tests/t_cmdline_options.at: New test for previous: ensure that
 	monotone is actually checking for command line correctness.
 	* testsuite.at: Add it.
 
-2004-12-29  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-29  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* monotone.cc: Verify that the command line is syntactically correct
 	as regards to options (based on error codes from popt).
@@ -9419,13 +9647,13 @@
 	* testsuite.at, tests/t_netsync_single.at: don't use -q with
 	killall since it isn't portable.
 
-2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-28  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* commands.cc: Make the 'log' command show all affected files
 	in each revision in a nice format (easier to read than what
 	'cat revision' shows).
 
-2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-28  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* commands.cc: Change the order used by the 'log' command to show
 	affected files so that it matches the order in which these changes
@@ -9436,7 +9664,7 @@
 
 	* monotone.texi: Fix a typo: "not not" should be "not".
 
-2004-12-28  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-28  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* commands.cc: Make the 'log' command show all affected files
 	in each revision in a nice format (easier to read than what
@@ -9462,7 +9690,7 @@
 	* sanity.{cc,hh} (relaxed): New flag.
 	* work.cc: Use new concatenation logic.
 
-2004-12-25  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-25  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* commands.cc: During 'log', print duplicate certificates (by
 	different people) in separate lines, rather than showing them
@@ -9481,7 +9709,7 @@
 
 	* win32/read_password.c: Remove unused file.
 
-2004-12-22  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-22  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* commands.cc: Verify that the key identifier passed to the pubkey
 	and privkey commands exists in the database.  Otherwise exit with
@@ -9497,7 +9725,7 @@
 	* commands.cc: print out author/date next to ambiguous revision
 	lists from selectors.
 
-2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-19  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* testsuite.at:
 	* tests/t_fmerge.at:
@@ -9515,13 +9743,13 @@
 	it's treated as errors, but NetBSD's patch uses it to print
 	informative messages.
 
-2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-19  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* tests/t_scan.at: Instead of running sha1sum, use a prestored
 	manifest file to do the verification.  This avoids problems in
 	systems that do not have the sha1sum tool, like NetBSD.
 
-2004-12-19  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-19  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* Makefile.am: Remove obsolete --with-bundled-adns flag from
 	DISTCHECK_CONFIGURE_FLAGS.
@@ -9545,17 +9773,17 @@
 	* tests/t_delete_dir.at: New bug report.
 	* testsuite.at: Call it.
 
-2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-18  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* commands.cc: Homogenize help message for 'ls' with the one shown
 	by 'list'.
 
-2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-18  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* ChangeLog: Add missing entries for several modifications I did
 	in December 6th and 3rd.
 
-2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-18  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* tests/t_checkout_dir.at: New test triggering the bug I fixed
 	  previously in the checkout command, verifying that directory
@@ -9564,10 +9792,10 @@
 
 2004-12-18  Nathaniel Smith  <njs@codesourcery.com>
 
-	* ChangeLog: Add log entry for <jmmv@menta.net>'s last change.
+	* ChangeLog: Add log entry for <jmmv@NetBSD.org>'s last change.
 	* std_hooks.lua: Check exit status of external merge commands.
 
-2004-12-18  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-18  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* commands.cc: Include cerrno, cstring,
 	boost/filesystem/exception.hpp.
@@ -9967,7 +10195,7 @@
 	* tests/t_netsync_repeated.at: Actually check that certs were
 	transferred correctly.
 
-2004-12-06  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-06  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* figures/cert.pdf:
 	* figures/cert.png:
@@ -9976,7 +10204,7 @@
 	example.{com,org,net} subdomains instead of invented names.
 	These are defined in RFC 2606.
 
-2004-12-06  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-06  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* configure.ac: Now that we depend on GNU Autoconf >= 2.58, we
 	can use the AS_HELP_STRING macro everywhere we need to pretty-print
@@ -10101,41 +10329,41 @@
 	* change_set.cc: Remove tabs.
 	* diff_patch.cc: Likewise.
 
-2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-03  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* commands.cc: Add a missing newline to a message.
 
-2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-03  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* cryptopp/config.h:
 	* configure.ac: NetBSD does not define __unix__ nor __unix, so the
 	build fails.  To solve, check for __NetBSD__ where appropiate to
 	detect a Unix system.
 
-2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-03  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* INSTALL: Document my latest changes: --enable-ipv6 option, ability
 	to specify static boost prefix through --enable-static-boost and
 	BOOST_SUFFIX variable.
 
-2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-03  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* Makefile.am:
 	* configure.am: Add a variable, BOOST_SUFFIX, that identifies the
 	suffix string that has to be appended to Boost library names to use
 	them.  This variable can be defined on configure's command line.
 
-2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-03  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* configure.ac: Let the --enable-static-boost argument take a prefix
 	to where boost libraries are located.
 
-2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-03  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* configure.ac: Add a three-state --enable-ipv6 argument to the
 	configure script to explicitly enable or disable IPv6 support.
 
-2004-12-03  Julio M. Merino Vidal  <jmmv@menta.net>
+2004-12-03  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* std_hooks.lua: Add missing newlines to two error messages.
 

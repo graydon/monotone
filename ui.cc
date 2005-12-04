@@ -263,7 +263,7 @@ user_interface::user_interface() :
   t_writer(0)
 {
   cout.exceptions(ios_base::badbit);
-#ifndef WIN32
+#ifdef SYNC_WITH_STDIO_WORKS
   clog.sync_with_stdio(false);
 #endif
   clog.unsetf(ios_base::unitbuf);

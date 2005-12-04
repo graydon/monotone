@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.23, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.24, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
@@ -48,6 +48,29 @@ AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.11.5)
 AM_ICONV
 AC_LANG_POP()
+
+# Check whether xgettext supports the --flag option.  We generate the
+# xgettext.opts file that holds the options to be used when calling this
+# utility.  These options are later added to po/Makefile.
+#
+# Yes, this is a big hack, but due to the way po/Makefile is generated,
+# there is no other way to do this in a dynamic fashion.
+AC_MSG_CHECKING([whether xgettext supports --flag])
+echo 'int main(void) { return 0; }' >> conftest.c
+if ${XGETTEXT} --flag printf:1:c-format -o conftest.po conftest.c \
+    >/dev/null 2>&1
+then
+    XGETTEXT_OPTIONS="--keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_ \
+                      --flag=F:1:c-format --flag=FP:1:c-format \
+                      --flag=FP:2:c-format"
+    xgettext_has_flag=yes
+else
+    XGETTEXT_OPTIONS="--keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_"
+    xgettext_has_flag=no
+fi
+rm -f conftest.c conftest.po
+echo "XGETTEXT_OPTIONS = ${XGETTEXT_OPTIONS}" >xgettext.opts
+AC_MSG_RESULT(${xgettext_has_flag})
 
 # Checks for idna stuff
 AC_HEADER_STDC
@@ -245,6 +268,26 @@ then
    fi
 fi
 
+# check for precompiled headers option
+AC_ARG_ENABLE(pch,
+AS_HELP_STRING([--enable-pch],
+               [use precompiled boost headers]))
+AM_CONDITIONAL(BUILD_PCH, false)
+if test x"${enable_pch}" = x"yes"
+then
+	AC_MSG_CHECKING(for gcc with precompiled header support)
+	gxx_version=`${CXX} -dumpversion`
+	case $gxx_version in
+		4.0*)
+			AC_MSG_RESULT(found)
+			AM_CONDITIONAL(BUILD_PCH, true)
+			;;
+		*)
+			AC_MSG_RESULT(not found)
+			;;
+	esac
+fi
+
 AC_CACHE_CHECK([if this is Windows],
        ac_win32, [
        AC_TRY_RUN([
@@ -304,6 +347,9 @@ int main(void)
    ]
 )
 AM_CONDITIONAL(MISSING_INET6, test x"${ac_inet6}" = x"no")
+if test x"${ac_inet6}" = xyes; then
+    AC_DEFINE(USE_IPV6, 1, [Define whether to use IPv6.])
+fi
 
 # simple library checks 
 AC_SEARCH_LIBS([dlsym], [dl], AC_DEFINE(USE_DLOPEN))
@@ -346,7 +392,7 @@ if test -d /usr/ucblib ; then
 else
 	AC_MSG_RESULT(no)
 fi
-AC_CHECK_FUNCS(strerror mtrace getuid geteuid)
+AC_CHECK_FUNCS(strerror strptime mtrace getuid geteuid)
 AC_CHECK_FUNC(setreuid, [], [
     AC_CHECK_LIB(ucb, setreuid, [if echo $LIBS | grep -- -lucb >/dev/null ;then :; else LIBS="$LIBS -lc -lucb" USEUCB=y;fi])
 ])
@@ -425,6 +471,68 @@ AC_CHECK_FUNC(inet_ntop, [AM_CONDITIONAL(MISSING_INET_NTOP, false)],
 AC_CHECK_FUNC(getaddrinfo, [AM_CONDITIONAL(MISSING_GETADDRINFO, false)], 
 			   [AM_CONDITIONAL(MISSING_GETADDRINFO, true)])
 
+# Check whether sync_with_stdio(false) run on C++ streams works correctly.
+# It causes strange problems (EOF returned too early) on some versions of
+# MinGW.
+#
+# In order to check for this issue, we first generate a large input file
+# (over 128KB) and then try to read it (using a buffer size over 512
+# bytes).  If the amount of bytes read does not match the generated input,
+# the implementation is broken.
+AC_MSG_CHECKING(whether C++ streams support sync_with_stdio)
+AC_RUN_IFELSE([AC_LANG_SOURCE([
+/*
+ * Generates the input file.
+ */
+#include <cstdlib>
+#include <fstream>
+
+int
+main(void)
+{
+  std::ofstream ofs("_conftest.dat");
+  for (int i = 0; i < 50000; i++)
+    ofs << "0123456789\r\n";
+  ofs.close();
+
+  return EXIT_SUCCESS;
+}
+])])
+AC_RUN_IFELSE([AC_LANG_SOURCE([
+/*
+ * Reads the input file.
+ */
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+
+int
+main(int argc, char * argv[])
+{
+  if (argc == 1)
+    return EXIT_SUCCESS;
+
+  std::cin.sync_with_stdio(false);
+  int length = 0;
+  while (std::cin.good())
+    {
+      char buffer@<:@1024@:>@;
+      (void)std::cin.read(buffer, sizeof(buffer));
+      length += std::cin.gcount();
+    }
+
+  return length == 600000 ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+])],
+ [if ./conftest$ac_exeext check_it_now <_conftest.dat; then
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(SYNC_WITH_STDIO_WORKS, 1,
+              [Define to 1 if sync_with_stdio works fine on C++ streams])
+  else
+    AC_MSG_RESULT(no)
+  fi
+  rm -f _conftest.dat])
+
 # allow compiling with different flags/optimisation
 # for monotone versus libs, useful for testing.
 # only makes sense if CFLAGS="" or CXXFLAGS=""
@@ -433,5 +541,6 @@ AC_SUBST(MONOTONE_CXXFLAGS)
 AC_SUBST(LIB3RDPARTY_CFLAGS)
 AC_SUBST(LIB3RDPARTY_CXXFLAGS)
 
-AC_CONFIG_FILES([Makefile tests/atlocal po/Makefile.in])
+AC_CONFIG_FILES([Makefile tests/atlocal])
+AC_CONFIG_FILES([po/Makefile.in], [cat xgettext.opts >>po/Makefile.in])
 AC_OUTPUT

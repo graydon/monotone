@@ -7,7 +7,7 @@ MONOTONE_SETUP
 #     $results[i.cmdnum] += i.contents
 # print $results[n]
 #
-AT_DATA(get_stdio.pl, [#!/usr/bin/perl
+AT_DATA(get_stdio.pl, [#!/usr/bin/env perl
 $x="";
 open $file, $ARGV[[0]];
 while(<$file>)

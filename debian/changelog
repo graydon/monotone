@@ -1,3 +1,9 @@
+monotone (0.24-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Nathaniel Smith <njs@pobox.com>  Sat, 26 Nov 2005 17:33:48 -0800
+
 monotone (0.23-2) unstable; urgency=low
 
   * Arm, hppa and m68k is now build-depending on g++-3.4

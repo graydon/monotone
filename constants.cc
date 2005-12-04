@@ -56,10 +56,14 @@ namespace constants
   " \r\n\t" 
   ;
 
+  std::string const regex_legal_packet_bytes("([a-zA-Z0-9+/=[:space:]]+)");
+
   // all the ASCII characters (bytes) which are legal in a SHA1 hex id
   char const * const legal_id_bytes =
   "0123456789abcdef"
   ;
+
+  std::string const regex_legal_id_bytes("([[:xdigit:]]{40})");
 
   // all the ASCII characters (bytes) which are legal in an ACE string
   char const * const legal_ace_bytes =
@@ -80,7 +84,9 @@ namespace constants
   "0123456789"   
   "-"
   ;
-  
+
+  std::string const regex_legal_cert_name_bytes("([-a-zA-Z0-9]+)");
+
   // all the ASCII characters (bytes) which can occur in key names
   char const * const legal_key_name_bytes =
   // LDH characters
@@ -94,7 +100,9 @@ namespace constants
   // label and component separators
   ".@"
   ;
-  
+
+  std::string const regex_legal_key_name_bytes("([-a-zA-Z0-9\\.@\\+_]+)");
+
   // all the ASCII characters (bytes) which are illegal in a (file|local)_path
 
   char const illegal_path_bytes_arr[33] = 

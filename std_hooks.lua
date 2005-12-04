@@ -94,8 +94,8 @@ function ignore_file(name)
           if result == true then return true end
       else
           -- regex.search had a problem, warn the user their .mt-ignore file syntax is wrong
-          io.stderr:write("WARNING: the line '" .. line .. "' in your .mt-ignore file caused exception '" .. result .. "'"
-                           .. " while matching filename '" .. name .. "', ignoring this regex for all remaining files.\n")
+          io.stderr:write("WARNING: the line '" .. line .. "' in your .mt-ignore file caused error '" .. result .. "'"
+                           .. " while matching filename '" .. name .. "'.\nignoring this regex for all remaining files.\n")
           table.remove(ignored_files, i)
       end
    end
@@ -163,6 +163,10 @@ function binary_file(name)
    if (string.find(lowname, "%.bz2$")) then return true end
    if (string.find(lowname, "%.gz$")) then return true end
    if (string.find(lowname, "%.zip$")) then return true end
+   if (string.find(lowname, "%.class$")) then return true end
+   if (string.find(lowname, "%.jar$")) then return true end
+   if (string.find(lowname, "%.war$")) then return true end
+   if (string.find(lowname, "%.ear$")) then return true end
    -- some known text, return false
    if (string.find(lowname, "%.cc?$")) then return false end
    if (string.find(lowname, "%.cxx$")) then return false end
@@ -171,6 +175,7 @@ function binary_file(name)
    if (string.find(lowname, "%.lua$")) then return false end
    if (string.find(lowname, "%.texi$")) then return false end
    if (string.find(lowname, "%.sql$")) then return false end
+   if (string.find(lowname, "%.java$")) then return false end
    -- unknown - read file and use the guess-binary 
    -- monotone built-in function
    return guess_binary_file_contents(name)
@@ -233,6 +238,12 @@ end
 function persist_phrase_ok()
    return true
 end
+
+
+function use_inodeprints()
+   return false
+end
+
 
 -- trust evaluation hooks
 
@@ -767,9 +778,6 @@ function expand_date(str)
    return nil
 end
 
-function use_inodeprints()
-   return false
-end
 
 external_diff_default_args = "-u"
 
@@ -784,6 +792,8 @@ function external_diff(file_path, data_old, data_new, is_binary, diff_args, rev_
    os.remove (old_file);
    os.remove (new_file);
 end
+
+-- netsync permissions hooks (and helper)
 
 function globish_match(glob, str)
       local pcallstatus, result = pcall(function() if (globish.match(glob, str)) then return true else return false end end)

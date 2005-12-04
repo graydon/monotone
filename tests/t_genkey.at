@@ -62,4 +62,20 @@ AT_CHECK((echo $BADKEY1; echo $BADKEY1) | MONOTONE genkey $BADKEY1, [1], [ignore
 BADKEY2=testthing@example+123.com
 AT_CHECK((echo $BADKEY2; echo $BADKEY2) | MONOTONE genkey $BADKEY2, [1], [ignore], [ignore])
 
+# fourth section, keys with all supported characters (for the user portion)
+# in the user portion work, keys with the same in the domain portion don't
+# work.
+GOODKEY=test_a_+thing.ie@example.com
+
+AT_CHECK((echo $GOODKEY; echo $GOODKEY) | MONOTONE genkey $GOODKEY, [], [ignore], [ignore])
+#exists
+AT_CHECK(MONOTONE ls keys, [], [stdout])
+AT_CHECK(grep $GOODKEY stdout, [], [ignore])
+
+# bad keys fail
+BADKEY1=test_a_+thing.ie@exa_m+p.le.com
+AT_CHECK((echo $BADKEY1; echo $BADKEY1) | MONOTONE genkey $BADKEY1, [1], [ignore], [ignore])
+BADKEY2=testthing@exa_m+p.le123.com
+AT_CHECK((echo $BADKEY2; echo $BADKEY2) | MONOTONE genkey $BADKEY2, [1], [ignore], [ignore])
+
 AT_CLEANUP
