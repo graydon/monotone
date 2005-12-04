@@ -163,6 +163,10 @@ function binary_file(name)
    if (string.find(lowname, "%.bz2$")) then return true end
    if (string.find(lowname, "%.gz$")) then return true end
    if (string.find(lowname, "%.zip$")) then return true end
+   if (string.find(lowname, "%.class$")) then return true end
+   if (string.find(lowname, "%.jar$")) then return true end
+   if (string.find(lowname, "%.war$")) then return true end
+   if (string.find(lowname, "%.ear$")) then return true end
    -- some known text, return false
    if (string.find(lowname, "%.cc?$")) then return false end
    if (string.find(lowname, "%.cxx$")) then return false end
@@ -171,6 +175,7 @@ function binary_file(name)
    if (string.find(lowname, "%.lua$")) then return false end
    if (string.find(lowname, "%.texi$")) then return false end
    if (string.find(lowname, "%.sql$")) then return false end
+   if (string.find(lowname, "%.java$")) then return false end
    -- unknown - read file and use the guess-binary 
    -- monotone built-in function
    return guess_binary_file_contents(name)

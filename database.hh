@@ -203,6 +203,7 @@ class database
                                         database & db);
 
   void check_filename();
+  void check_db_exists();
   void open();
   void close();
 
