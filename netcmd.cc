@@ -98,6 +98,7 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
   switch (cmd_byte)
     {
     case static_cast<u8>(hello_cmd):
+    case static_cast<u8>(bye_cmd):
     case static_cast<u8>(anonymous_cmd):
     case static_cast<u8>(auth_cmd):
     case static_cast<u8>(error_cmd):
@@ -110,6 +111,7 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
     case static_cast<u8>(delta_cmd):
     case static_cast<u8>(usher_cmd):
       cmd_code = static_cast<netcmd_code>(cmd_byte);
+      P(F("examining command type %d\n") % cmd_code);
       break;
     default:
       throw bad_decode(F("unknown netcmd code 0x%x") % widen<u32,u8>(cmd_byte));
@@ -216,6 +218,25 @@ netcmd::write_hello_cmd(rsa_keypair_id const & server_keyname,
 }
 
 
+void 
+netcmd::read_bye_cmd(u8 & phase) const
+{
+  size_t pos = 0;
+  // syntax is: <phase: 1 byte>
+  phase = extract_datum_lsb<u8>(payload, pos, "bye netcmd, phase number");
+  assert_end_of_buffer(payload, pos, "bye netcmd payload");
+}
+
+
+void 
+netcmd::write_bye_cmd(u8 phase)
+{
+  cmd_code = bye_cmd;
+  payload.clear();
+  payload += phase;
+}
+
+
 void
 netcmd::read_anonymous_cmd(protocol_role & role,
                            utf8 & include_pattern,
@@ -251,7 +272,7 @@ netcmd::write_anonymous_cmd(protocol_role role,
                             rsa_oaep_sha_data const & hmac_key_encrypted)
 {
   cmd_code = anonymous_cmd;
-  payload = static_cast<char>(role);
+  payload += static_cast<char>(role);
   insert_variable_length_string(include_pattern(), payload);
   insert_variable_length_string(exclude_pattern(), payload);
   insert_variable_length_string(hmac_key_encrypted(), payload);
@@ -310,7 +331,7 @@ netcmd::write_auth_cmd(protocol_role role,
   cmd_code = auth_cmd;
   I(client().size() == constants::merkle_hash_length_in_bytes);
   I(nonce1().size() == constants::merkle_hash_length_in_bytes);
-  payload = static_cast<char>(role);
+  payload += static_cast<char>(role);
   insert_variable_length_string(include_pattern(), payload);
   insert_variable_length_string(exclude_pattern(), payload);
   payload += client();
@@ -366,7 +387,7 @@ netcmd::write_note_item_cmd(netcmd_item_type type, id const & item)
   I(item().size() == constants::merkle_hash_length_in_bytes);
   cmd_code = note_item_cmd;
   payload.clear();
-  payload = static_cast<char>(type);
+  payload += static_cast<char>(type);
   payload += item();
 }
 
@@ -394,6 +415,7 @@ netcmd::write_note_shared_subtree_cmd(netcmd_item_type type,
                                       size_t level)
 {
   payload.clear();
+  cmd_code = note_shared_subtree_cmd;
   payload += static_cast<char>(type);
   insert_variable_length_string(pref(), payload);
   insert_datum_uleb128<size_t>(level, payload);
@@ -456,7 +478,7 @@ netcmd::write_data_cmd(netcmd_item_type type,
 {
   cmd_code = data_cmd;
   I(item().size() == constants::merkle_hash_length_in_bytes);
-  payload = static_cast<char>(type);
+  payload += static_cast<char>(type);
   payload += item();
   if (dat.size() > constants::netcmd_minimum_bytes_to_bother_with_gzip)
     {
@@ -512,7 +534,7 @@ netcmd::write_delta_cmd(netcmd_item_type & type,
   cmd_code = delta_cmd;
   I(base().size() == constants::merkle_hash_length_in_bytes);
   I(ident().size() == constants::merkle_hash_length_in_bytes);
-  payload = static_cast<char>(type);
+  payload += static_cast<char>(type);
   payload += base();
   payload += ident();
 
@@ -654,6 +676,20 @@ test_netcmd_functions()
         BOOST_CHECK(in_server_key == out_server_key);
         BOOST_CHECK(in_nonce == out_nonce);
         L(boost::format("hello_cmd test done, buffer was %d bytes\n") % buf.size());
+      }
+
+      // bye_cmd
+      {
+        L(boost::format("checking i/o round trip on bye_cmd\n"));
+        netcmd out_cmd, in_cmd;
+        u8 out_phase(1), in_phase;
+        string buf;
+
+        out_cmd.write_bye_cmd(out_phase);
+        do_netcmd_roundtrip(out_cmd, in_cmd, buf);
+        in_cmd.read_done_cmd(in_phase);
+        BOOST_CHECK(in_phase == out_phase);
+        L(boost::format("bye_cmd test done, buffer was %d bytes\n") % buf.size()); 
       }
 
       // anonymous_cmd

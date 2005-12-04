@@ -27,6 +27,7 @@ typedef enum
   { 
     // general commands
     error_cmd = 0,
+    bye_cmd = 1,
 
     // authentication commands
     hello_cmd = 2,
@@ -97,6 +98,9 @@ public:
   void write_hello_cmd(rsa_keypair_id const & server_keyname,
                        rsa_pub_key const & server_key,
                        id const & nonce);
+
+  void read_bye_cmd(u8 & phase) const;
+  void write_bye_cmd(u8 phase);
 
   void read_anonymous_cmd(protocol_role & role,
                           utf8 & include_pattern,

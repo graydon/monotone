@@ -2,9 +2,6 @@ AT_SETUP([(normal) netsync revision with no certs])
 MONOTONE_SETUP
 NETSYNC_SETUP
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
-
 ADD_FILE(testfile, [blah stuff
 ])
 COMMIT(testbranch)

@@ -298,6 +298,13 @@ session:
   id saved_nonce;
   packet_db_valve dbw;
 
+  enum 
+    { 
+      working_state,
+      shutdown_state,
+      confirmed_state
+    }
+    protocol_state;  
   bool encountered_error;
 
   // Interface to refinement.
@@ -311,6 +318,7 @@ session:
 
   // enumerator_callbacks methods.
   bool process_this_rev(revision_id const & rev);
+  bool queue_this_cert(hexenc<id> const & c);
   void note_file_data(file_id const & f);
   void note_file_delta(file_id const & src, file_id const & dst);
   void note_rev(revision_id const & rev);
@@ -341,8 +349,9 @@ session:
   bool done_all_refinements();
   bool queued_all_items();
   bool received_all_items();
-  bool finished_exchange_ok();
+  bool finished_working();
   void maybe_step();
+  void maybe_say_goodbye();
 
   void note_item_arrived(netcmd_item_type ty, id const & i);
   void maybe_note_epochs_finished();
@@ -357,7 +366,7 @@ session:
   void write_netcmd_and_try_flush(netcmd const & cmd);
 
   // Outgoing queue-writers.
-  void queue_bye_cmd();
+  void queue_bye_cmd(u8 phase);
   void queue_error_cmd(string const & errmsg);
   void queue_done_cmd(size_t level, netcmd_item_type type);
   void queue_hello_cmd(rsa_keypair_id const & key_name,
@@ -395,6 +404,7 @@ session:
   bool process_hello_cmd(rsa_keypair_id const & server_keyname,
                          rsa_pub_key const & server_key,
                          id const & nonce);
+  bool process_bye_cmd(u8 phase);
   bool process_anonymous_cmd(protocol_role role, 
                              utf8 const & their_include_pattern,
                              utf8 const & their_exclude_pattern);
@@ -471,6 +481,7 @@ session::session(protocol_role role,
   revision_checked_ticker(NULL),
   saved_nonce(""),
   dbw(app, true),
+  protocol_state(working_state),
   encountered_error(false),
   epoch_refiner(epoch_item, *this),
   key_refiner(key_item, *this),
@@ -550,9 +561,20 @@ session::process_this_rev(revision_id const & rev)
           != rev_refiner.items_to_send.end());
 }
 
+bool 
+session::queue_this_cert(hexenc<id> const & c)
+{
+  id item;
+  decode_hexenc(c, item);
+  return (cert_refiner.items_to_send.find(item)
+          != cert_refiner.items_to_send.end());
+}
+
 void 
 session::note_file_data(file_id const & f)
 {
+  if (role == sink_role)
+    return;
   file_data fd;
   id item;
   decode_hexenc(f.inner(), item);
@@ -563,6 +585,8 @@ session::note_file_data(file_id const & f)
 void 
 session::note_file_delta(file_id const & src, file_id const & dst)
 {
+  if (role == sink_role)
+    return;
   file_data fd1, fd2;
   delta del;
   id fid1, fid2;
@@ -577,6 +601,8 @@ session::note_file_delta(file_id const & src, file_id const & dst)
 void 
 session::note_rev(revision_id const & rev)
 {
+  if (role == sink_role)
+    return;
   revision_set rs;
   id item;
   decode_hexenc(rev.inner(), item);
@@ -589,6 +615,8 @@ session::note_rev(revision_id const & rev)
 void 
 session::note_cert(hexenc<id> const & c)
 {
+  if (role == sink_role)
+    return;
   id item;
   decode_hexenc(c, item);
   revision<cert> cert;
@@ -691,10 +719,12 @@ session::setup_client_tickers()
 bool 
 session::done_all_refinements()
 {
-  return rev_refiner.done()
+  bool all = rev_refiner.done()
     && cert_refiner.done() 
     && key_refiner.done()
     && epoch_refiner.done();
+  P(F("done all refinements? %d\n") % all);
+  return all;  
 }
 
 
@@ -702,29 +732,38 @@ session::done_all_refinements()
 bool 
 session::received_all_items()
 {
-  return rev_refiner.items_to_receive.empty()
+  if (role == source_role)
+    return true;
+  bool all = rev_refiner.items_to_receive.empty()
     && cert_refiner.items_to_receive.empty()
     && key_refiner.items_to_receive.empty()
     && epoch_refiner.items_to_receive.empty();
+  P(F("received all items? %d\n") % all);
+  return all;
 }
 
 bool 
-session::finished_exchange_ok()
+session::finished_working()
 {
-  return done_all_refinements() 
+  bool all = done_all_refinements() 
     && received_all_items()
     && queued_all_items()
-    && rev_enumerator.done()
-    && outbuf.empty();
+    && rev_enumerator.done();
+  P(F("finished working? %d\n") % all);
+  return all;
 }
 
 bool 
 session::queued_all_items()
-{
-  return rev_refiner.items_to_send.empty()
+{  
+  if (role == sink_role)
+    return true;
+  bool all = rev_refiner.items_to_send.empty()
     && cert_refiner.items_to_send.empty()
     && key_refiner.items_to_send.empty()
     && epoch_refiner.items_to_send.empty();
+  P(F("queued all items? %d\n") % all);
+  return all;
 }
 
 
@@ -918,6 +957,16 @@ session::queue_error_cmd(string const & errmsg)
   L(F("queueing 'error' command\n"));
   netcmd cmd;
   cmd.write_error_cmd(errmsg);
+  write_netcmd_and_try_flush(cmd);
+}
+
+void 
+session::queue_bye_cmd(u8 phase) 
+{
+  P(F("queueing 'bye' command, phase %d\n") 
+    % static_cast<size_t>(phase));
+  netcmd cmd;
+  cmd.write_bye_cmd(phase);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1511,6 +1560,83 @@ session::process_refine_cmd(merkle_node const & node)
 }
 
 bool 
+session::process_bye_cmd(u8 phase)
+{
+
+// Ideal shutdown
+// ~~~~~~~~~~~~~~~
+//
+//             I/O events                 state transitions
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   ~~~~~~~~~~~~~~~~~~~
+//                                        client: C_WORKING
+//                                        server: S_WORKING
+// 0. [refinement, data, deltas, etc.]
+//                                        client: C_SHUTDOWN
+// 1. client -> "bye 0"                   
+// 2.           "bye 0"  -> server
+//                                        server: S_SHUTDOWN
+// 3.           "bye 1"  <- server        
+// 4. client <- "bye 1"              
+//                                        client: C_CONFIRMED
+// 5. client -> "bye 2"                   
+// 6.           "bye 2"  -> server
+//                                        server: S_CONFIRMED     
+// 7. [server drops connection]
+//
+//
+// Affects of I/O errors or disconnections
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//   C_WORKING: report error and fault
+//   S_WORKING: report error and recover
+//  C_SHUTDOWN: report error and fault
+//  S_SHUTDOWN: report success and recover
+//              (and warn that client might falsely see error)
+// C_CONFIRMED: report success
+// S_CONFIRMED: report success
+
+  switch (phase)
+    {
+    case 0:
+      if (voice == server_voice && 
+          protocol_state == working_state)
+        {
+          protocol_state = shutdown_state;
+          queue_bye_cmd(1);
+        }
+      else
+        error("unexpected bye phase 0 received");
+      break;
+
+    case 1:
+      if (voice == client_voice && 
+          protocol_state == shutdown_state)
+        {
+          protocol_state = confirmed_state;
+          queue_bye_cmd(2);
+        }
+      else
+        error("unexpected bye phase 1 received");
+      break;
+
+    case 2:
+      if (voice == server_voice && 
+          protocol_state == shutdown_state)
+        {
+          protocol_state = confirmed_state;
+          return false;
+        }
+      else
+        error("unexpected bye phase 2 received");
+      break;
+
+    default:
+      error((F("unknown bye phase %d received") % phase).str());
+    }
+
+  return true;
+}
+
+bool 
 session::process_done_cmd(size_t level, netcmd_item_type type)
 {
   switch (type)
@@ -1521,7 +1647,7 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
       
     case key_item:
       key_refiner.process_done_command(level);
-      if (key_refiner.done())
+      if (key_refiner.done() && role != sink_role)
         send_all_data(key_item, key_refiner.items_to_send);
       break;
       
@@ -1536,7 +1662,10 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
     case epoch_item:
       epoch_refiner.process_done_command(level);
       if (epoch_refiner.done())
-        send_all_data(epoch_item, epoch_refiner.items_to_send);
+        {
+          send_all_data(epoch_item, epoch_refiner.items_to_send);
+          maybe_note_epochs_finished();
+        }
       break;
     }
   return true;
@@ -1788,6 +1917,7 @@ session::process_data_cmd(netcmd_item_type type,
             throw bad_decode(F("hash check failed for public key '%s' (%s);"
                                " wanted '%s' got '%s'")  
                              % hitem % keyid % hitem % tmp);
+          P(F("writing public key '%s' (item %s)\n") % keyid % tmp);
           this->dbw.consume_public_key(keyid, pub);
         }
       break;
@@ -1892,11 +2022,20 @@ session::process_usher_cmd(utf8 const & msg)
 void
 session::send_all_data(netcmd_item_type ty, set<id> const & items)
 {
+  string typestr;
+  netcmd_item_type_to_string(ty, typestr);
+
   for (set<id>::const_iterator i = items.begin(); 
        i != items.end(); ++i)
     {  
+      hexenc<id> hitem;
+      encode_hexenc(*i, hitem);
+
+      P(F("send_all_data: %s item '%s'\n") % typestr % hitem);
+
       if (data_exists(ty, *i, this->app))
         {
+          P(F("send_all_data: %s item '%s' exists, sending\n") % typestr % hitem);
           string out;
           load_data(ty, *i, this->app, out);
           queue_data_cmd(ty, *i, out);
@@ -1928,6 +2067,15 @@ session::dispatch_payload(netcmd const & cmd)
         id nonce;
         cmd.read_hello_cmd(server_keyname, server_key, nonce);
         return process_hello_cmd(server_keyname, server_key, nonce);
+      }
+      break;
+
+    case bye_cmd:
+      require(authenticated, "bye netcmd received when not authenticated");
+      {
+        u8 phase;
+        cmd.read_bye_cmd(phase);
+        return process_bye_cmd(phase);
       }
       break;
 
@@ -2011,7 +2159,7 @@ session::dispatch_payload(netcmd const & cmd)
       break;
 
     case done_cmd:
-      require(authenticated, "done netcmd received when authenticated");
+      require(authenticated, "done netcmd received when not authenticated");
       {
         size_t level;
         netcmd_item_type type;
@@ -2021,6 +2169,7 @@ session::dispatch_payload(netcmd const & cmd)
       break;
 
     case note_item_cmd:
+      require(authenticated, "note_item netcmd received when not authenticated");
       {
         netcmd_item_type ty;
         id item;
@@ -2030,6 +2179,7 @@ session::dispatch_payload(netcmd const & cmd)
       break;
 
     case note_shared_subtree_cmd:
+      require(authenticated, "note_shared_subtree netcmd received when not authenticated");
       {
         netcmd_item_type ty;
         prefix pref;
@@ -2040,7 +2190,7 @@ session::dispatch_payload(netcmd const & cmd)
       break;
 
     case data_cmd:
-      require(authenticated, "data netcmd received when authenticated");
+      require(authenticated, "data netcmd received when not authenticated");
       require(role == sink_role ||
               role == source_and_sink_role, 
               "data netcmd received in source or source/sink role");
@@ -2054,7 +2204,7 @@ session::dispatch_payload(netcmd const & cmd)
       break;
 
     case delta_cmd:
-      require(authenticated, "delta netcmd received when authenticated");
+      require(authenticated, "delta netcmd received when not authenticated");
       require(role == sink_role ||
               role == source_and_sink_role, 
               "delta netcmd received in source or source/sink role");
@@ -2094,6 +2244,7 @@ session::begin_service()
 void 
 session::maybe_step()
 {
+  P(F("+maybe_step\n"));
   if (done_all_refinements()
       && !rev_enumerator.done()
       && outbuf_size < constants::bufsz * 10)
@@ -2101,6 +2252,22 @@ session::maybe_step()
       P(F("stepping enumerator\n"));
       rev_enumerator.step();
     }
+  P(F("-maybe_step\n"));
+}
+
+void 
+session::maybe_say_goodbye()
+{
+  P(F("+maybe say goodbye\n"));
+  if (voice == client_voice
+      && protocol_state == working_state
+      && finished_working())
+    {
+      P(F("initiating shutdown\n"));
+      protocol_state = shutdown_state;
+      queue_bye_cmd(0);
+    }
+  P(F("-maybe say goodbye\n"));
 }
 
 bool 
@@ -2124,7 +2291,7 @@ bool session::process()
   if (encountered_error)
     return true;
   try 
-    {      
+    {
       if (!arm())
         return true;
       
@@ -2135,12 +2302,9 @@ bool session::process()
       if (inbuf.size() >= constants::netcmd_maxsz)
         W(F("input buffer for peer %s is overfull after netcmd dispatch\n") % peer_id);
       guard.commit();
-
-      if (finished_exchange_ok())
-        return true;
-
+      
       if (!ret)
-        P(F("failed to process '%s' packet") % cmd.get_cmd_code());
+        P(F("finishing processing with '%d' packet") % cmd.get_cmd_code());
       return ret;
     }
   catch (bad_decode & bd)
@@ -2153,7 +2317,7 @@ bool session::process()
       W(F("error: %s\n") % err.msg);
       queue_error_cmd(err.msg);
       encountered_error = true;
-      return true;// don't terminate until we've send the error_cmd
+      return true; // don't terminate until we've send the error_cmd
     }
 }
 
@@ -2190,6 +2354,9 @@ call_server(protocol_role role,
             % sess.peer_id % bd.what);
         }
 
+      sess.maybe_step();
+      sess.maybe_say_goodbye();
+
       probe.clear();
       probe.add(sess.str, sess.which_events());
       Netxx::Probe::result_type res = probe.ready(armed ? instant : timeout);
@@ -2198,60 +2365,61 @@ call_server(protocol_role role,
       
       if (fd == -1 && !armed) 
         {
-          E(false, F("timed out waiting for I/O with peer %s, disconnecting\n") % sess.peer_id);
+          E(false, (F("timed out waiting for I/O with "
+                      "peer %s, disconnecting\n") 
+                    % sess.peer_id));
         }
-      
+
+      bool all_io_clean = true;
+
       if (event & Netxx::Probe::ready_read)
-        {
-          if (sess.read_some())
-            {
-              try 
-                {
-                  armed = sess.arm();
-                }
-              catch (bad_decode & bd)
-                {
-                  E(false, F("protocol error while processing peer %s: '%s'\n") 
-                    % sess.peer_id % bd.what);
-                }
-            }
-          else
-            {         
-              E(false, F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
-            }
-        }
+        all_io_clean = all_io_clean && sess.read_some();
       
       if (event & Netxx::Probe::ready_write)
-        {
-          if (! sess.write_some())
-            {
-              E(false, F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
-              return;
-            }
-        }
+        all_io_clean = all_io_clean && sess.write_some();
       
       if (event & Netxx::Probe::ready_oobd)
         {
-          E(false, F("got OOB data on fd %d (peer %s), disconnecting\n") 
-            % fd % sess.peer_id);
+          E(false, (F("got OOB data from "
+                      "peer %s, disconnecting\n") 
+                    % sess.peer_id));
         }
 
       if (armed)
+        if (!sess.process())
+          {
+            // We failed during processing. This should only happen in
+            // client voice when we have a decode exception, or received an
+            // error from our server (which is translated to a decode
+            // exception). We call these cases E() errors.
+            E(false, F("processing failure while talking to "
+                       "peer %s, disconnecting\n") 
+              % sess.peer_id);
+            return;
+          }
+
+      if (!all_io_clean)
         {
-          if (!sess.process())
-            {
-              E(false, F("terminated exchange with %s\n") 
+          // We had an I/O error. We must decide if this represents a
+          // user-reported error or a clean disconnect. See protocol
+          // state diagram in session::process_bye_cmd.
+          
+          if (sess.protocol_state == session::confirmed_state)
+            {          
+              P(F("successful exchange with %s\n") 
                 % sess.peer_id);
               return;
             }
-          sess.maybe_step();
-        }
-
-      if (sess.finished_exchange_ok())
-        {
-          P(F("successful exchange with %s\n") 
-            % sess.peer_id);
-          return;
+          else if (sess.encountered_error)
+            {
+              P(F("peer %s disconnected after we informed them of error\n") 
+                % sess.peer_id);
+              return;
+            }
+          else
+            E(false, (F("I/O failure while talking to "
+                        "peer %s, disconnecting\n") 
+                      % sess.peer_id));
         }
     }
 }
@@ -2266,6 +2434,8 @@ arm_sessions_and_calculate_probe(Netxx::Probe & probe,
          shared_ptr<session> >::const_iterator i = sessions.begin();
        i != sessions.end(); ++i)
     {
+      i->second->maybe_step();
+      i->second->maybe_say_goodbye();
       try 
         {
           if (i->second->arm())
@@ -2345,8 +2515,24 @@ handle_read_available(Netxx::socket_type fd,
     }
   else
     {
-      P(F("fd %d (peer %s) read failed, disconnecting\n") 
-        % fd % sess->peer_id);
+      switch (sess->protocol_state)
+        {
+        case session::working_state:
+          P(F("peer %s read failed in working state (error)\n") 
+            % sess->peer_id);
+          break;
+
+        case session::shutdown_state:
+          P(F("peer %s read failed in shutdown state "
+              "(possibly client misreported error)\n") 
+            % sess->peer_id);
+          break;
+
+        case session::confirmed_state:
+          P(F("peer %s read failed in confirmed state (success)\n") 
+            % sess->peer_id);
+          break;
+        }
       sessions.erase(fd);
       live_p = false;
     }
@@ -2359,15 +2545,30 @@ handle_write_available(Netxx::socket_type fd,
                        map<Netxx::socket_type, shared_ptr<session> > & sessions,
                        bool & live_p)
 {
-  if (! sess->write_some())
+  if (!sess->write_some())
     {
-      P(F("fd %d (peer %s) write failed, disconnecting\n") 
-        % fd % sess->peer_id);
+      switch (sess->protocol_state)
+        {
+        case session::working_state:
+          P(F("peer %s write failed in working state (error)\n") 
+            % sess->peer_id);
+          break;
+
+        case session::shutdown_state:
+          P(F("peer %s write failed in shutdown state "
+              "(possibly client misreported error)\n") 
+            % sess->peer_id);
+          break;
+
+        case session::confirmed_state:
+          P(F("peer %s write failed in confirmed state (success)\n") 
+            % sess->peer_id);
+          break;
+        }
+
       sessions.erase(fd);
       live_p = false;
     }
-  else
-    sess->maybe_step();
 }
 
 static void
@@ -2383,15 +2584,13 @@ process_armed_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
         continue;
       else
         {
-          Netxx::socket_type fd = j->first;
           shared_ptr<session> sess = j->second;
           if (!sess->process())
             {
-              P(F("fd %d (peer %s) processing finished, disconnecting\n") 
-                % fd % sess->peer_id);
+              P(F("peer %s processing finished, disconnecting\n") 
+                % sess->peer_id);
               sessions.erase(j);
             }
-          sess->maybe_step();
         }
     }
 }
@@ -2411,12 +2610,6 @@ reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
           < static_cast<unsigned long>(now))
         {
           P(F("fd %d (peer %s) has been idle too long, disconnecting\n") 
-            % i->first % i->second->peer_id);
-          dead_clients.insert(i->first);
-        }
-      if (i->second->finished_exchange_ok())
-        {
-          P(F("fd %d (peer %s) exchanged all items and flushed output, disconnecting\n") 
             % i->first % i->second->peer_id);
           dead_clients.insert(i->first);
         }
@@ -2698,6 +2891,7 @@ session::rebuild_merkle_trees(app_state & app,
           app.db.get_key(*key, pub_encoded);
           hexenc<id> keyhash;
           key_hash_code(*key, pub_encoded, keyhash);
+          P(F("noting key '%s' = '%s' to send\n") % *key % keyhash);
           id key_item;
           decode_hexenc(keyhash, key_item);
           key_refiner.note_local_item(key_item);

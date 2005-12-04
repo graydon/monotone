@@ -110,17 +110,20 @@ revision_enumerator::step()
                 item.ident_a = r.inner();
                 items.push_back(item);
               }
+            }
                 
-              // Queue up all the rev's certs
-              vector<hexenc<id> > hashes;
-              app.db.get_revision_certs(r, hashes);
-              for (vector<hexenc<id> >::const_iterator i = hashes.begin();
-                   i != hashes.end(); ++i)
+          // Queue up some or all of the rev's certs 
+          vector<hexenc<id> > hashes;
+          app.db.get_revision_certs(r, hashes);
+          for (vector<hexenc<id> >::const_iterator i = hashes.begin();
+               i != hashes.end(); ++i)
+            {
+              if (cb.queue_this_cert(*i))
                 {
                   enumerator_item item;
                   item.tag = enumerator_item::cert;
                   item.ident_a = *i;
-                  items.push_back(item);                
+                  items.push_back(item);
                 }
             }
         }

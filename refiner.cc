@@ -117,6 +117,9 @@ refiner::merkle_node_exists(size_t level,
 void 
 refiner::calculate_items_to_send_and_receive()
 {
+  if (calculated_items_to_send_and_receive)
+    return;
+
   items_to_send.clear();
   items_to_receive.clear();
 
@@ -134,6 +137,7 @@ refiner::calculate_items_to_send_and_receive()
     % getpid() % items_to_send.size() % typestr);
   P(F("pid %d determined %d %s items to receive\n") 
     % getpid() % items_to_receive.size() % typestr);
+  calculated_items_to_send_and_receive = true;
 }
 
 
@@ -155,12 +159,14 @@ refiner::note_subtree_shared_with_peer(merkle_node const & our_subtree)
   prefix pref;
   our_subtree.get_raw_prefix(pref);
   collect_items_in_subtree(table, pref, our_subtree.level, peer_items);
+  exchanged_data_since_last_done_cmd = true;
 }
 
 void 
 refiner::note_subtree_shared_with_peer(prefix const & pref, size_t lev)
 {
   collect_items_in_subtree(table, pref, lev, peer_items);
+  exchanged_data_since_last_done_cmd = true;
 }
 
 
@@ -206,7 +212,8 @@ refiner::compare_subtrees_and_maybe_refine(merkle_node const & their_node,
 refiner::refiner(netcmd_item_type type, refiner_callbacks & cb) 
   : type(type), cb(cb), 
     exchanged_data_since_last_done_cmd(false), 
-    finished_refinement(false)
+    finished_refinement(0),
+    calculated_items_to_send_and_receive(false)
 {
   merkle_ptr root = merkle_ptr(new merkle_node());
   root->type = type;
@@ -217,6 +224,7 @@ void
 refiner::note_item_in_peer(id const & item)
 {
   peer_items.insert(item);
+  exchanged_data_since_last_done_cmd = true;
 }
 
 
@@ -247,6 +255,7 @@ refiner::note_item_in_peer(merkle_node const & their_node,
                     "(in node '%s', level %d)\n")
       % typestr % hslotval % slot % hpref % lev);
   }
+  exchanged_data_since_last_done_cmd = true;
 }
 
 
@@ -273,7 +282,7 @@ refiner::process_done_command(size_t level)
       || level >= 0xff)
     {
       // Echo 'done' if we're shutting down
-      if (!finished_refinement)
+      if (finished_refinement < 3)
         {
           P(F("pid %d processing 'done' command => echoing shut down of %s refinement\n")
             % getpid() % typestr);
@@ -283,13 +292,13 @@ refiner::process_done_command(size_t level)
         % getpid() % typestr);
       
       // Mark ourselves shut down
-      finished_refinement = true;
+      finished_refinement++;
 
       // And prepare for queries from our host
       calculate_items_to_send_and_receive();
     }
   else if (exchanged_data_since_last_done_cmd 
-           && !finished_refinement)
+           && finished_refinement < 2)
     {
       // Echo 'done', we're still active.
       P(F("pid %d processing 'done' command => continuing to %s level %d\n")
@@ -304,7 +313,11 @@ refiner::process_done_command(size_t level)
 bool 
 refiner::done() const
 {
-  return finished_refinement;
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+
+  P(F("%s refiner %s done\n") % typestr % (finished_refinement >= 2 ? "is" : "is not"));
+  return finished_refinement >= 2;
 }
 
 
@@ -428,6 +441,7 @@ refiner::process_peer_node(merkle_node const & their_node)
             }
         }
     }
+  exchanged_data_since_last_done_cmd = true;
 }
 
 

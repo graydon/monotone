@@ -19,11 +19,12 @@
 struct
 enumerator_callbacks
 {
-  // Your callback will be asked whether you want the details of each rev,
-  // in order; you should return true for any rev you want to be notified
-  // about the contents of. The rev's children will be traversed no matter
-  // what you return here.
+  // Your callback will be asked whether you want the details of each rev
+  // or cert, in order; you should return true for any rev or cert you want
+  // to be notified about the contents of. The rev's children will be
+  // traversed no matter what you return here.
   virtual bool process_this_rev(revision_id const & rev) = 0;
+  virtual bool queue_this_cert(hexenc<id> const & c) = 0;
 
   virtual void note_file_data(file_id const & f) = 0;
   virtual void note_file_delta(file_id const & src, file_id const & dst) = 0;

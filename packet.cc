@@ -773,11 +773,12 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
   transaction_guard guard(pimpl->app.db);
   if (! pimpl->take_keys) 
     {
-      W(F("skipping prohibited public key %s\n") % ident);
+      P(F("skipping prohibited public key %s\n") % ident);
       return;
     }
   if (! pimpl->app.db.public_key_exists(ident))
     {
+      P(F("puttingskipping public key %s\n") % ident);
       pimpl->app.db.put_key(ident, k);
       if(on_pubkey_written) on_pubkey_written(ident);
     }
@@ -787,7 +788,7 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
       pimpl->app.db.get_key(ident, tmp);
       if (!keys_match(ident, tmp, ident, k))
         W(F("key '%s' is not equal to key '%s' in database\n") % ident % ident);
-      L(F("skipping existing public key %s\n") % ident);
+      P(F("skipping existing public key %s\n") % ident);
     }
   ++(pimpl->count);
   guard.commit();
@@ -845,7 +846,7 @@ packet_db_valve::~packet_db_valve()
 void
 packet_db_valve::open_valve()
 {
-  L(F("packet valve opened\n"));
+  P(F("packet valve opened\n"));
   pimpl->valve_is_open = true;
   int written = 0;
   for (std::vector< boost::shared_ptr<delayed_packet> >::reverse_iterator
@@ -857,7 +858,7 @@ packet_db_valve::open_valve()
       ++written;
     }
   pimpl->packets.clear();
-  L(F("wrote %i queued packets\n") % written);
+  P(F("wrote %i queued packets\n") % written);
 }
 
 #define DOIT(x) pimpl->do_packet(boost::shared_ptr<delayed_packet>(new x));

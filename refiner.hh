@@ -51,7 +51,8 @@ refiner
   netcmd_item_type type;
   refiner_callbacks & cb;
   bool exchanged_data_since_last_done_cmd;
-  bool finished_refinement;
+  size_t finished_refinement;
+  bool calculated_items_to_send_and_receive;
 
   std::set<id> local_items;
   std::set<id> peer_items;
