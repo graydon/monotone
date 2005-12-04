@@ -1,5 +1,11 @@
 2005-12-03  Nathaniel Smith  <njs@pobox.com>
 
+	* schema_migration.cc (logged_sqlite3_exec): New function.
+	Use everywhere in this file.  Enables logging of migration
+	commands for debugging purposes.
+
+2005-12-03  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_mixed_case_pwd.at, testsuite.at: New test.
 
 2005-12-02  Matthew Gregan  <kinetik@orcon.net.nz>
