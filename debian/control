@@ -21,7 +21,7 @@ Description: A distributed version (revision) control system
 
 Package: monotone-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, monotone (= ${Source-Version}), adduser
+Depends: ${shlibs:Depends}, ${misc:Depends}, monotone (= ${Source-Version}), adduser, ucf (>= 0.28)
 Description: A distributed version (revision) control system
  Monotone is a free, distributed version control system. It provides
  fully disconnected operation, manages complete tree versions, keeps
@@ -30,4 +30,4 @@ Description: A distributed version (revision) control system
  network protocol, performs history-sensitive merging, and delegates
  trust functions to client-side RSA certificates.
  .
- This package contains files to make running a monotone server eaiser.
+ This package contains files to make running a monotone server easier.

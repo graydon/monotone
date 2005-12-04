@@ -29,9 +29,19 @@ case "$1" in
        MTN_CONFDIR=/etc/monotone
        MTN_KEYDIR=$MTN_HOME/keys
 
+       # remove configs from ucf database and filesystem
+       /usr/bin/ucf --debconf-ok --purge /etc/monotone/write-permissions
+       /usr/bin/ucf --debconf-ok --purge /etc/monotone/read-permissions
+       /usr/bin/ucf --debconf-ok --purge /etc/monotone/hooks.lua
+
+       rm -f /etc/monotone/write-permissions || true
+       rm -f /etc/monotone/read-permissions || true
+       rm -f /etc/monotone/hooks.lua || true
+
        # remove database if debconf variable is set
        db_get monotone-server/purge-db
        if [ "$RET" = false ]; then
+           rm -f /etc/monotone/passphrases
            DELUSER_FLAGS="--remove-home"
            echo "deleting monotone database" >&2
        fi
@@ -40,6 +50,7 @@ case "$1" in
        /usr/sbin/delgroup --quiet monotone
 
        echo "monotone user and group removed" >&2
+
 
     ;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)

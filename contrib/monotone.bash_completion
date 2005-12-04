@@ -95,7 +95,8 @@ _monotone() {
                                 --full-version --xargs --ticker --nostd --norc
                                 --rcfile --key --db --root --verbose -k -d -@
                                 -m -b -r --branch --message --date --author
-                                --depth --execute --keydir --confdir' -- $cur) )
+                                --depth --execute --keydir --confdir
+                                --key-to-push --bind' -- $cur) )
       ;;
     * )
       case $prev in

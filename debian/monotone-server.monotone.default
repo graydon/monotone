@@ -13,5 +13,6 @@ DB=/var/lib/monotone/default.db
 BRANCHES='tld.domain.*
           tld.domain.branch
           domain.tld/*
-          domain.tld/branch'
+          domain.tld/branch
+          user@domain.tld/branch'
 

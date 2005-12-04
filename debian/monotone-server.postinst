@@ -30,14 +30,28 @@ case "$1" in
        MTN_CONFDIR=/etc/monotone
        MTN_KEYDIR=$MTN_HOME/keys
 
-       db_get monotone-server/manage
+       /usr/bin/ucf --debconf-ok /usr/share/doc/monotone-server/examples/write-permissions /etc/monotone/write-permissions
+       /usr/bin/ucf --debconf-ok /usr/share/doc/monotone-server/examples/read-permissions /etc/monotone/read-permissions
+       /usr/bin/ucf --debconf-ok /usr/share/doc/monotone-server/examples/hooks.lua /etc/monotone/hooks.lua
+       
+       # if this is our first install give config files correct permissions
+       if [ -z "$2" ]; then
+           chown monotone:monotone /etc/monotone/write-permissions
+           chown monotone:monotone /etc/monotone/read-permissions
+           chown monotone:monotone /etc/monotone/hooks.lua
+           chmod 0640 /etc/monotone/write-permissions
+           chmod 0640 /etc/monotone/read-permissions
+           chmod 0640 /etc/monotone/hooks.lua
+       fi
+
+       db_get monotone-server/manage-db
        if [ -z "$RET" ]; then
            exit 0
        fi
 
        # read our passphrase from a file
-       if [ -e "$MTN_HOME/$MTN_KEY.passphrase" ]; then
-          db_set monotone-server/passphrase "`cat $MTN_HOME/$MTN_KEY.passphrase`"
+       if [ -e "$MTN_HOME/passphrases" ]; then
+          db_set monotone-server/passphrase "`cat $MTN_HOME/passphrases | awk '{print $2}'`"
        fi
 
        db_get monotone-server/key 
@@ -59,9 +73,9 @@ case "$1" in
               chown monotone:monotone $MTN_HOME
               chown monotone:monotone $MTN_CONFDIR
               chown monotone:monotone $MTN_KEYDIR
-              chmod 0740 $MTN_HOME
-              chmod 0740 $MTN_CONFDIR
-              chmod 0740 $MTN_KEYDIR
+              chmod 0750 $MTN_HOME
+              chmod 0750 $MTN_CONFDIR
+              chmod 0750 $MTN_KEYDIR
           fi
 
           # if there is no database, create one
@@ -100,8 +114,9 @@ case "$1" in
                        information on manually upgrading your database." >&2)
        fi
 
-       echo "$MTN_KEY_PASSWD" > $MTN_HOME/$MTN_KEY.passphrase
-       chmod 0600 $MTN_HOME/$MTN_KEY.passphrase
+       echo "$MTN_KEY $MTN_KEY_PASSWD" > $MTN_CONFDIR/passphrases
+       chown monotone:monotone $MTN_CONFDIR/passphrases
+       chmod 0400 $MTN_CONFDIR/passphrases
        db_set monotone-server/passphrase ""
 
     ;;
