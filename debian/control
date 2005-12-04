@@ -2,9 +2,9 @@ Source: monotone
 Section: devel
 Priority: optional
 Maintainer: Tomas Fasth <tomfa@debian.org>
-Build-Depends: cdbs (>= 0.4.28), debhelper (>= 4.0.0), autotools-dev,
+Build-Depends: cdbs (>= 0.4.28), debhelper (>= 4.1.16), autotools-dev,
  libboost-date-time-dev, libboost-filesystem-dev, libboost-regex-dev,
- libboost-test-dev, libboost-dev, texinfo, libz-dev,
+ libboost-test-dev, libboost-dev, texinfo, libz-dev, po-debconf,
  g++ [!arm !hppa !m68k], g++-3.4 [arm hppa m68k]
 Standards-Version: 3.6.2
 
@@ -21,7 +21,7 @@ Description: A distributed version (revision) control system
 
 Package: monotone-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, monotone (= 0.23)
+Depends: ${shlibs:Depends}, ${misc:Depends}, monotone (= ${Source-Version}), adduser
 Description: A distributed version (revision) control system
  Monotone is a free, distributed version control system. It provides
  fully disconnected operation, manages complete tree versions, keeps

@@ -17,6 +17,9 @@ set -e
 # the debian-policy package
 #
 
+# source debconf stuff
+. /usr/share/debconf/confmodule
+
 MONOTONE=/usr/bin/monotone
 
 case "$1" in
@@ -27,9 +30,21 @@ case "$1" in
        MTN_CONFDIR=/etc/monotone
        MTN_KEYDIR=$MTN_HOME/keys
 
-       # TODO: debconf monotone stuff
-       #MTN_KEY=
-       #MTN_KEY_PASSWD=
+       db_get monotone-server/manage
+       if [ -z "$RET" ]; then
+           exit 0
+       fi
+
+       # read our passphrase from a file
+       if [ -e "$MTN_HOME/$MTN_KEY.passphrase" ]; then
+          db_set monotone-server/passphrase "`cat $MTN_HOME/$MTN_KEY.passphrase`"
+       fi
+
+       db_get monotone-server/key 
+       MTN_KEY=$RET
+
+       db_get monotone-server/passphrase
+       MTN_KEY_PASSWD=$RET
 
        MTN_VERSION="$2"
        
@@ -41,9 +56,9 @@ case "$1" in
           # create monotone user and fix permissions of files
           if [ -z "`id -u monotone 2> /dev/null`" ]; then
               /usr/sbin/adduser --system --group --home $MTN_HOME --no-create-home --disabled-password --quiet monotone --gecos "Monotone"
-              chown monotone.monotone $MTN_HOME
-              chown monotone.monotone $MTN_CONFDIR
-              chown monotone.monotone $MTN_KEYDIR
+              chown monotone:monotone $MTN_HOME
+              chown monotone:monotone $MTN_CONFDIR
+              chown monotone:monotone $MTN_KEYDIR
               chmod 0740 $MTN_HOME
               chmod 0740 $MTN_CONFDIR
               chmod 0740 $MTN_KEYDIR
@@ -51,39 +66,44 @@ case "$1" in
 
           # if there is no database, create one
           if [ ! -e $MTN_DB ]; then
-              echo "Creating Monotone database..."
+              echo "Creating Monotone database..." >&2
               $MONOTONE --db $MTN_DB db init
               chmod 0600 $MTN_DB
-              echo "Creating Monotone server keypair..."
+              echo "Creating Monotone server keypair..." >&2
 
               yes "$MTN_KEY_PASSWD" | 
                  $MONOTONE --db $MTN_DB genkey $MTN_KEY \
-                 --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR &> /dev/null
+                 --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR > /dev/null
 
               $MONOTONE --db $MTN_DB pubkey $MTN_KEY \
                  --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR > $MTN_HOME/$MTN_KEY.pubkey
 
-              echo "Monotone database created successfully."
+              echo "Monotone database created successfully." >&2
           fi
        elif [ dpkg --compare-versions "$MTN_VERSION" lt 0.17 ]; then 
           # monotone version to old to automatically upgrade
-          echo "Cannot automatically upgrade from monotone version $2."
+          echo "Cannot automatically upgrade from monotone version $2." >&2
           echo -e "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for\n \
-                   information on upgrading."
+                   information on upgrading." >&2
        elif [ dpkg --compare-versions "$MTN_VERSION" lt 0.22 ]; then 
           # upgradable version of monotone
-          echo "Attempting to migrate monotone database..."
-          echo "A backup will be created in $MTN_HOME."
+          echo "Attempting to migrate monotone database..." >&2
+          echo "A backup will be created in $MTN_HOME." >&2
 
           cp $MTN_DB $MTN_DB~
           (yes "$MTN_KEY_PASSWD" |
              $MONOTONE --db $MTN_DB db migrate \
              --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR &&
-             echo "Database successfully migrated.") || 
-          (echo "*** Error migrating database. ***" &&
+             echo "Database successfully migrated." >&2) || 
+          (echo "*** Error migrating database. ***" >&2 &&
               echo -e "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for\n \
-                       information on manually upgrading your database.")
+                       information on manually upgrading your database." >&2)
        fi
+
+       echo "$MTN_KEY_PASSWD" > $MTN_HOME/$MTN_KEY.passphrase
+       chmod 0600 $MTN_HOME/$MTN_KEY.passphrase
+       db_set monotone-server/passphrase ""
+
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

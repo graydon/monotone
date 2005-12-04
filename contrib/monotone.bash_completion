@@ -95,8 +95,7 @@ _monotone() {
                                 --full-version --xargs --ticker --nostd --norc
                                 --rcfile --key --db --root --verbose -k -d -@
                                 -m -b -r --branch --message --date --author
-                                --depth --execute'\
-                                -- $cur) )
+                                --depth --execute --keydir --confdir' -- $cur) )
       ;;
     * )
       case $prev in
@@ -196,6 +195,7 @@ _monotone() {
                     esac
                 else
                     unset prev2
+                    _filedir
                 fi
                 ;;
             esac
@@ -212,6 +212,8 @@ _monotone() {
                                       merge propagate refresh_inodeprints setup
                                       set unset add attr ci commit drop
                                       identify mv rename revert rm update' -- $cur) )
+          else
+              _filedir
           fi
           ;;
       esac
