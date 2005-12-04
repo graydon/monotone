@@ -104,10 +104,8 @@ struct packet_writer : public packet_consumer
 
 struct packet_db_writer : public packet_consumer
 {
-private:
-  struct impl;
-  std::auto_ptr<impl> pimpl;
-
+  app_state & app;
+  bool take_keys;
 public:
   packet_db_writer(app_state & app, 
                    bool take_keys = false);
