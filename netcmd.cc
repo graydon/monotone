@@ -111,7 +111,6 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
     case static_cast<u8>(delta_cmd):
     case static_cast<u8>(usher_cmd):
       cmd_code = static_cast<netcmd_code>(cmd_byte);
-      P(F("examining command type %d\n") % cmd_code);
       break;
     default:
       throw bad_decode(F("unknown netcmd code 0x%x") % widen<u32,u8>(cmd_byte));

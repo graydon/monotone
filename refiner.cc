@@ -133,9 +133,9 @@ refiner::calculate_items_to_send_and_receive()
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   
-  P(F("pid %d determined %d %s items to send\n") 
+  L(F("pid %d determined %d %s items to send\n") 
     % getpid() % items_to_send.size() % typestr);
-  P(F("pid %d determined %d %s items to receive\n") 
+  L(F("pid %d determined %d %s items to receive\n") 
     % getpid() % items_to_receive.size() % typestr);
   calculated_items_to_send_and_receive = true;
 }
@@ -275,7 +275,7 @@ refiner::process_done_command(size_t level)
   string typestr;
   netcmd_item_type_to_string(type, typestr);
 
-  P(F("pid %d processing 'done' command on %s level %d\n")
+  L(F("pid %d processing 'done' command on %s level %d\n")
     % getpid() % typestr % level);
 
   if (!exchanged_data_since_last_done_cmd 
@@ -284,11 +284,11 @@ refiner::process_done_command(size_t level)
       // Echo 'done' if we're shutting down
       if (finished_refinement < 3)
         {
-          P(F("pid %d processing 'done' command => echoing shut down of %s refinement\n")
+          L(F("pid %d processing 'done' command => echoing shut down of %s refinement\n")
             % getpid() % typestr);
           cb.queue_done_cmd(level+1, type);
         }
-      P(F("pid %d processing 'done' command => shut down %s refinement\n")
+      L(F("pid %d processing 'done' command => shut down %s refinement\n")
         % getpid() % typestr);
       
       // Mark ourselves shut down
@@ -301,7 +301,7 @@ refiner::process_done_command(size_t level)
            && finished_refinement < 2)
     {
       // Echo 'done', we're still active.
-      P(F("pid %d processing 'done' command => continuing to %s level %d\n")
+      L(F("pid %d processing 'done' command => continuing to %s level %d\n")
         % getpid() % typestr % (level+1));
       cb.queue_done_cmd(level+1, type);
     }
@@ -316,7 +316,8 @@ refiner::done() const
   string typestr;
   netcmd_item_type_to_string(type, typestr);
 
-  P(F("%s refiner %s done\n") % typestr % (finished_refinement >= 2 ? "is" : "is not"));
+  L(F("%s refiner %s done\n") 
+    % typestr % (finished_refinement >= 2 ? "is" : "is not"));
   return finished_refinement >= 2;
 }
 

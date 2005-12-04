@@ -46,21 +46,17 @@ revision_enumerator::done()
 void 
 revision_enumerator::step()
 {
-  P(F("stepping...\n"));
   while (!done())
     {
       if (items.empty() && !revs.empty())
         {
           revision_id r = revs.front();
           revs.pop_front();
-
-          P(F("step examining rev '%d'\n") % r);
           
           if (terminal_nodes.find(r) == terminal_nodes.end())
             {
               set<revision_id> children;
               app.db.get_revision_children(r, children);
-              P(F("step expanding %d children of rev '%d'\n") % children.size() % r);
               for (set<revision_id>::const_iterator i = children.begin();
                    i != children.end(); ++i)
                 revs.push_back(*i);
@@ -71,7 +67,8 @@ revision_enumerator::step()
 
           if (cb.process_this_rev(r))
             {
-              P(F("step expanding contents of rev '%d'\n") % r);
+              L(F("revision_enumerator::step expanding "
+                  "contents of rev '%d'\n") % r);
 
               revision_set rs;
               app.db.get_revision(r, rs);
@@ -130,7 +127,7 @@ revision_enumerator::step()
 
       if (!items.empty())
         {
-          P(F("step extracting item\n"));
+          L(F("revision_enumerator::step extracting item\n"));
 
           enumerator_item i = items.front();
           items.pop_front();

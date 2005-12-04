@@ -723,7 +723,6 @@ session::done_all_refinements()
     && cert_refiner.done() 
     && key_refiner.done()
     && epoch_refiner.done();
-  P(F("done all refinements? %d\n") % all);
   return all;  
 }
 
@@ -738,7 +737,6 @@ session::received_all_items()
     && cert_refiner.items_to_receive.empty()
     && key_refiner.items_to_receive.empty()
     && epoch_refiner.items_to_receive.empty();
-  P(F("received all items? %d\n") % all);
   return all;
 }
 
@@ -749,7 +747,6 @@ session::finished_working()
     && received_all_items()
     && queued_all_items()
     && rev_enumerator.done();
-  P(F("finished working? %d\n") % all);
   return all;
 }
 
@@ -762,7 +759,6 @@ session::queued_all_items()
     && cert_refiner.items_to_send.empty()
     && key_refiner.items_to_send.empty()
     && epoch_refiner.items_to_send.empty();
-  P(F("queued all items? %d\n") % all);
   return all;
 }
 
@@ -963,7 +959,7 @@ session::queue_error_cmd(string const & errmsg)
 void 
 session::queue_bye_cmd(u8 phase) 
 {
-  P(F("queueing 'bye' command, phase %d\n") 
+  L(F("queueing 'bye' command, phase %d\n") 
     % static_cast<size_t>(phase));
   netcmd cmd;
   cmd.write_bye_cmd(phase);
@@ -976,7 +972,8 @@ session::queue_done_cmd(size_t level,
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
-  P(F("queueing 'done' command for %s level %s\n") % typestr % level);
+  L(F("queueing 'done' command for %s level %s\n") 
+    % typestr % level);
   netcmd cmd;
   cmd.write_done_cmd(level, type);
   write_netcmd_and_try_flush(cmd);
@@ -1045,7 +1042,7 @@ session::queue_refine_cmd(merkle_node const & node)
   hexenc<prefix> hpref;
   node.get_hex_prefix(hpref);
   netcmd_item_type_to_string(node.type, typestr);
-  P(F("queueing request for refinement of %s node '%s', level %d\n")
+  L(F("queueing request for refinement of %s node '%s', level %d\n")
     % typestr % hpref % static_cast<int>(node.level));
   netcmd cmd;
   cmd.write_refine_cmd(node);
@@ -1059,7 +1056,7 @@ session::queue_note_item_cmd(netcmd_item_type ty, id item)
   hexenc<id> hitem;
   encode_hexenc(item, hitem);
   netcmd_item_type_to_string(ty, typestr);
-  P(F("queueing note about %s item '%s'") % typestr % hitem);
+  L(F("queueing note about %s item '%s'") % typestr % hitem);
   netcmd cmd;
   cmd.write_note_item_cmd(ty, item);
   write_netcmd_and_try_flush(cmd);  
@@ -1096,7 +1093,7 @@ session::queue_data_cmd(netcmd_item_type type,
       return;
     }
 
-  P(F("queueing %d bytes of data for %s item '%s'\n")
+  L(F("queueing %d bytes of data for %s item '%s'\n")
     % dat.size() % typestr % hid);
 
   netcmd cmd;
@@ -1135,7 +1132,7 @@ session::queue_delta_cmd(netcmd_item_type type,
       return;
     }
 
-  P(F("queueing %s delta '%s' -> '%s'\n")
+  L(F("queueing %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
   netcmd cmd;
   cmd.write_delta_cmd(type, base, ident, del);
@@ -1531,7 +1528,7 @@ session::process_refine_cmd(merkle_node const & node)
 {
   string typestr;
   netcmd_item_type_to_string(node.type, typestr);
-  P(F("processing refine cmd for %s node at level %d\n")
+  L(F("processing refine cmd for %s node at level %d\n")
     % typestr % node.level);
 
   switch (node.type)
@@ -1917,7 +1914,6 @@ session::process_data_cmd(netcmd_item_type type,
             throw bad_decode(F("hash check failed for public key '%s' (%s);"
                                " wanted '%s' got '%s'")  
                              % hitem % keyid % hitem % tmp);
-          P(F("writing public key '%s' (item %s)\n") % keyid % tmp);
           this->dbw.consume_public_key(keyid, pub);
         }
       break;
@@ -2031,11 +2027,8 @@ session::send_all_data(netcmd_item_type ty, set<id> const & items)
       hexenc<id> hitem;
       encode_hexenc(*i, hitem);
 
-      P(F("send_all_data: %s item '%s'\n") % typestr % hitem);
-
       if (data_exists(ty, *i, this->app))
         {
-          P(F("send_all_data: %s item '%s' exists, sending\n") % typestr % hitem);
           string out;
           load_data(ty, *i, this->app, out);
           queue_data_cmd(ty, *i, out);
@@ -2244,30 +2237,24 @@ session::begin_service()
 void 
 session::maybe_step()
 {
-  P(F("+maybe_step\n"));
   if (done_all_refinements()
       && !rev_enumerator.done()
       && outbuf_size < constants::bufsz * 10)
     {
-      P(F("stepping enumerator\n"));
       rev_enumerator.step();
     }
-  P(F("-maybe_step\n"));
 }
 
 void 
 session::maybe_say_goodbye()
 {
-  P(F("+maybe say goodbye\n"));
   if (voice == client_voice
       && protocol_state == working_state
       && finished_working())
     {
-      P(F("initiating shutdown\n"));
       protocol_state = shutdown_state;
       queue_bye_cmd(0);
     }
-  P(F("-maybe say goodbye\n"));
 }
 
 bool 
@@ -2304,7 +2291,7 @@ bool session::process()
       guard.commit();
       
       if (!ret)
-        P(F("finishing processing with '%d' packet") % cmd.get_cmd_code());
+        L(F("finishing processing with '%d' packet") % cmd.get_cmd_code());
       return ret;
     }
   catch (bad_decode & bd)
@@ -2708,8 +2695,8 @@ serve_connections(protocol_role role,
                 
               if (live_p && (event & Netxx::Probe::ready_oobd))
                 {
-                  P(F("got some OOB data on fd %d (peer %s), disconnecting\n") 
-                    % fd % sess->peer_id);
+                  P(F("got OOB from peer %s, disconnecting\n") 
+                    % sess->peer_id);
                   sessions.erase(i);
                 }
             }
@@ -2891,7 +2878,7 @@ session::rebuild_merkle_trees(app_state & app,
           app.db.get_key(*key, pub_encoded);
           hexenc<id> keyhash;
           key_hash_code(*key, pub_encoded, keyhash);
-          P(F("noting key '%s' = '%s' to send\n") % *key % keyhash);
+          L(F("noting key '%s' = '%s' to send\n") % *key % keyhash);
           id key_item;
           decode_hexenc(keyhash, key_item);
           key_refiner.note_local_item(key_item);
