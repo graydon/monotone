@@ -48,9 +48,11 @@ revision_enumerator
   enumerator_callbacks & cb;
   app_state & app;
   std::set<revision_id> terminal_nodes;
+  std::set<revision_id> enumerated_nodes;
   std::deque<revision_id> revs;
   std::deque<enumerator_item> items;
   std::multimap<revision_id, revision_id> graph;
+  std::multimap<revision_id, revision_id> inverse_graph;
 
   revision_enumerator(enumerator_callbacks & cb,
                       app_state & app,
@@ -58,6 +60,8 @@ revision_enumerator
                       std::set<revision_id> const & terminal);
   revision_enumerator(enumerator_callbacks & cb,
                       app_state & app);
+  void load_graphs();
+  bool all_parents_enumerated(revision_id const & child);
   void step();
   bool done();
 };

@@ -14,6 +14,7 @@
 #include "vocab.hh"
 
 using std::deque;
+using std::make_pair;
 using std::map;
 using std::multimap;
 using std::pair;
@@ -29,7 +30,7 @@ revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
   for (set<revision_id>::const_iterator i = initial.begin();
        i != initial.end(); ++i)
     revs.push_back(*i);
-  app.db.get_revision_ancestry(graph);
+  load_graphs();
 }
 
 revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
@@ -38,7 +39,34 @@ revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
 {
   revision_id root;
   revs.push_back(root);
+  load_graphs();
+}
+
+void 
+revision_enumerator::load_graphs()
+{
   app.db.get_revision_ancestry(graph);
+  for (multimap<revision_id, revision_id>::const_iterator i = graph.begin();
+       i != graph.end(); ++i)
+    {
+      inverse_graph.insert(make_pair(i->second, i->first));
+    }
+}
+
+bool 
+revision_enumerator::all_parents_enumerated(revision_id const & child)
+{
+  typedef multimap<revision_id, revision_id>::const_iterator ci;
+  pair<ci,ci> range = inverse_graph.equal_range(child);
+  for (ci i = range.first; i != range.second; ++i)
+    {
+      if (i->first == child)
+        {
+          if (enumerated_nodes.find(i->second) == enumerated_nodes.end())
+            return false;
+        }
+    }
+  return true;
 }
 
 bool
@@ -56,6 +84,14 @@ revision_enumerator::step()
         {
           revision_id r = revs.front();
           revs.pop_front();
+          
+          if (!all_parents_enumerated(r))
+            {
+              revs.push_back(r);
+              continue;
+            }
+
+          enumerated_nodes.insert(r);
           
           if (terminal_nodes.find(r) == terminal_nodes.end())
             {
