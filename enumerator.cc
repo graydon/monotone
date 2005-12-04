@@ -15,6 +15,8 @@
 
 using std::deque;
 using std::map;
+using std::multimap;
+using std::pair;
 using std::set;
 using std::vector;
 
@@ -27,6 +29,7 @@ revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
   for (set<revision_id>::const_iterator i = initial.begin();
        i != initial.end(); ++i)
     revs.push_back(*i);
+  app.db.get_revision_ancestry(graph);
 }
 
 revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
@@ -35,6 +38,7 @@ revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
 {
   revision_id root;
   revs.push_back(root);
+  app.db.get_revision_ancestry(graph);
 }
 
 bool
@@ -55,11 +59,13 @@ revision_enumerator::step()
           
           if (terminal_nodes.find(r) == terminal_nodes.end())
             {
-              set<revision_id> children;
-              app.db.get_revision_children(r, children);
-              for (set<revision_id>::const_iterator i = children.begin();
-                   i != children.end(); ++i)
-                revs.push_back(*i);
+              typedef multimap<revision_id, revision_id>::const_iterator ci;
+              pair<ci,ci> range = graph.equal_range(r);
+              for (ci i = range.first; i != range.second; ++i)
+                {
+                  if (i->first == r)
+                    revs.push_back(i->second);
+                }
             }
 
           if (null_id(r))

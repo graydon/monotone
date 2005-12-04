@@ -7,6 +7,7 @@
 // see the file COPYING for details
 
 #include <deque>
+#include <map>
 #include <set>
 
 #include "app_state.hh"
@@ -49,6 +50,7 @@ revision_enumerator
   std::set<revision_id> terminal_nodes;
   std::deque<revision_id> revs;
   std::deque<enumerator_item> items;
+  std::multimap<revision_id, revision_id> graph;
 
   revision_enumerator(enumerator_callbacks & cb,
                       app_state & app,
