@@ -1,5 +1,10 @@
 2005-12-03  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.cc (dump_buffer): If we dumped debug info, write out a
+	note asking that it be included in bug reports.
+
+2005-12-03  Nathaniel Smith  <njs@pobox.com>
+
 	* schema_migration.cc (logged_sqlite3_exec): New function.
 	Use everywhere in this file.  Enables logging of migration
 	commands for debugging purposes.

@@ -51,10 +51,12 @@ sanity::dump_buffer()
         {
           copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
           copy(gasp_dump.begin(), gasp_dump.end(), ostream_iterator<char>(out));
-          ui.inform((F("wrote debugging log to %s") % filename).str());
+          ui.inform((F("wrote debugging log to %s"
+                       "if reporting a bug, please include this file")
+                     % filename).str());
         }
       else
-        ui.inform((F("failed to write debugging log to %s") % filename).str());
+        ui.inform((F("failed to write debugging log to %s\n") % filename).str());
     }
   else
     ui.inform("discarding debug log (maybe you want --debug or --dump?)");
@@ -106,9 +108,9 @@ sanity::do_format(format const & fmt, char const * file, int line)
   catch (std::exception & e)
     {
       ui.inform(F("fatal: formatter failed on %s:%d: %s")
-		% file
-		% line
-		% e.what());
+                % file
+                % line
+                % e.what());
       throw;
     }
 }
@@ -293,12 +295,12 @@ dump(std::string const & obj, std::string & out)
 void MusingBase::gasp(const std::string & objstr, std::string & out) const
 {
   out = (boost::format("----- begin '%s' (in %s, at %s:%d)\n"
-		       "%s"
-		       "-----   end '%s' (in %s, at %s:%d)\n")
-	 % name % func % file % line
-	 % objstr
-	 % name % func % file % line
-	 ).str();
+                       "%s"
+                       "-----   end '%s' (in %s, at %s:%d)\n")
+         % name % func % file % line
+         % objstr
+         % name % func % file % line
+         ).str();
 }
 
 
