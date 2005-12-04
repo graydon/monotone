@@ -2873,12 +2873,94 @@ bad_attr_test()
 
 ///// exhaustive marking tests
 
+namespace
+{
+  template <typename T> std::set<T>
+  singleton(T const & t)
+  {
+    std::set<T> s;
+    s.insert(t);
+    return s;
+  }
+}
 
+static void
+foo_mark_test()
+{
+  revision_id root_rid(string("0000000000000000000000000000000000000000"));
+  revision_id left_rid(string("1111111111111111111111111111111111111111"));
+  revision_id right_rid(string("2222222222222222222222222222222222222222"));
+  revision_id new_rid(string("3333333333333333333333333333333333333333"));
+  file_id file_content(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  testing_node_id_source nis;
+  roster_t left_roster; MM(left_roster);
+  roster_t right_roster; MM(right_roster);
+  marking_map left_markings; MM(left_markings);
+  marking_map right_markings; MM(right_markings);
+
+  split_path root_name;
+  file_path().split(root_name);
+  node_id root_nid = nis.next();
+  left_roster.create_dir_node(root_nid);
+  left_roster.attach_node(root_nid, root_name);
+  right_roster.create_dir_node(root_nid);
+  right_roster.attach_node(root_nid, root_name);
+  marking_t root_marking;
+  root_marking.birth_revision = root_rid;
+  root_marking.parent_name.insert(root_rid);
+  safe_insert(left_markings, make_pair(root_nid, root_marking));
+  safe_insert(right_markings, make_pair(root_nid, root_marking));
+
+  split_path left_name, right_name, new_name;
+  file_path_internal("foo").split(left_name);
+  file_path_internal("bar").split(right_name);
+  file_path_internal("baz").split(new_name);
+  node_id file_nid = nis.next();
+  left_roster.create_file_node(file_content, file_nid);
+  left_roster.attach_node(file_nid, left_name);
+  right_roster.create_file_node(file_content, file_nid);
+  right_roster.attach_node(file_nid, right_name);
+
+  marking_t file_marking;
+  file_marking.birth_revision = root_rid;
+  file_marking.file_content.insert(root_rid);
+  // left
+  file_marking.parent_name.insert(left_rid);
+  safe_insert(left_markings, make_pair(file_nid, file_marking));
+  // right
+  file_marking.parent_name.insert(right_rid);
+  safe_insert(right_markings, make_pair(file_nid, file_marking));
+
+  cset left_cs; MM(left_cs);
+  cset right_cs; MM(right_cs);
+  safe_insert(left_cs.nodes_renamed, make_pair(left_name, new_name));
+  safe_insert(right_cs.nodes_renamed, make_pair(right_name, new_name));
+
+  set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  left_uncommon_ancestors.insert(left_rid);
+  right_uncommon_ancestors.insert(right_rid);
+
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+  make_roster_for_merge(left_rid, left_roster, left_markings, left_cs,
+                        left_uncommon_ancestors,
+                        right_rid, right_roster, right_markings, right_cs,
+                        right_uncommon_ancestors,
+                        new_rid, new_roster, new_markings,
+                        nis);
+
+  I(safe_get(new_markings, root_nid) == root_marking);
+  I(safe_get(new_markings, file_nid).birth_revision == root_rid);
+  I(safe_get(new_markings, file_nid).parent_name == singleton(new_rid));
+  I(safe_get(new_markings, file_nid).file_content == singleton(root_rid));
+  I(safe_get(new_markings, file_nid).attrs.empty());
+}
 
 void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&foo_mark_test));
   suite->add(BOOST_TEST_CASE(&bad_attr_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
