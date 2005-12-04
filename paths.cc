@@ -211,6 +211,7 @@ file_path::file_path(file_path::source_type type, std::string const & path)
       N(!in_bookkeeping_dir(data()), F("path '%s' is in bookkeeping dir") % data);
       break;
     }
+  MM(data);
   I(is_valid_internal(data()));
 }
 

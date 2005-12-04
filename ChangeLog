@@ -1,5 +1,9 @@
 2005-12-04  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (file_path): MM() the path we're validating.
+
+2005-12-04  Nathaniel Smith  <njs@pobox.com>
+
 	* schema_migration.cc: Modernize error checking a bit.  (Use E()
 	and I() instead of throwing runtime_errors.)
 
