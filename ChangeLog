@@ -1,3 +1,8 @@
+2005-12-04  Nathaniel Smith  <njs@pobox.com>
+
+	* schema_migration.cc: Modernize error checking a bit.  (Use E()
+	and I() instead of throwing runtime_errors.)
+
 2005-12-03  Nathaniel Smith  <njs@pobox.com>
 
 	* sanity.cc (dump_buffer): If we dumped debug info, write out a

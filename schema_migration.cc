@@ -181,7 +181,7 @@ calculate_schema_id(sqlite3 *sql, string & id)
   if (res != SQLITE_OK)
     {
       logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-      throw runtime_error("failure extracting schema from sqlite_master");
+      E(false, F("failure extracting schema from sqlite_master"));
     }
   massage_sql_tokens(tmp, tmp2);
   calculate_id(tmp2, id);
@@ -209,14 +209,12 @@ migrator
   {
     string init;
 
-    if (sql == NULL)
-      throw runtime_error("NULL sqlite object given to migrate");
+    I(sql != NULL);
 
     calculate_schema_id(sql, init);
 
-    if (sqlite3_create_function(sql, "sha1", -1, SQLITE_UTF8, NULL,
-            &sqlite_sha1_fn, NULL, NULL))
-      throw runtime_error("error registering sha1 function with sqlite");
+    I(!sqlite3_create_function(sql, "sha1", -1, SQLITE_UTF8, NULL,
+                               &sqlite_sha1_fn, NULL, NULL));
 
     bool migrating = false;
     for (vector< pair<string, migrator_cb> >::const_iterator i = migration_events.begin();
@@ -225,8 +223,8 @@ migrator
 
         if (i->first == init)
           {
-            if (logged_sqlite3_exec(sql, "BEGIN EXCLUSIVE", NULL, NULL, NULL) != SQLITE_OK)
-              throw runtime_error("error at transaction BEGIN statement");          
+            E(logged_sqlite3_exec(sql, "BEGIN EXCLUSIVE", NULL, NULL, NULL) == SQLITE_OK,
+              F("error at transaction BEGIN statement"));
             migrating = true;
           }
 
@@ -240,24 +238,22 @@ migrator
               {
                 if (migrating)
                   logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-                throw runtime_error("mismatched pre-state to migration step");
+                I(false);
               }
 
             if (i->second == NULL)
               {
                 logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-                throw runtime_error("NULL migration specifier");
+                I(false);
               }
 
             // do this migration step
             else if (! i->second(sql, &errmsg, __app))
               {
-                string e("migration step failed");
-                if (errmsg != NULL)
-                  e.append(string(": ") + errmsg);
                 logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-                throw runtime_error(e);
-              }     
+                E(false, F("migration step failed: %s")
+                  % (errmsg ? errmsg : "unknown error"));
+              }
           }
       }
     
@@ -269,21 +265,19 @@ migrator
         if (curr != target_id)
           {
             logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-            throw runtime_error("mismatched result of migration, "
-                                "got " + curr + ", wanted " + target_id);
+            E(false, F("mismatched result of migration, got %s, wanted %s")
+                     % curr % target_id);
           }
         P(F("committing changes to database"));
-        if (logged_sqlite3_exec(sql, "COMMIT", NULL, NULL, NULL) != SQLITE_OK)
-          {
-            throw runtime_error("failure on COMMIT");
-          }
+        E(logged_sqlite3_exec(sql, "COMMIT", NULL, NULL, NULL) == SQLITE_OK,
+          F("failure on COMMIT"));
 
         P(F("optimizing database"));
-        if (logged_sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) != SQLITE_OK)
-          throw runtime_error("error vacuuming after migration");
+        E(logged_sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) == SQLITE_OK,
+          F("error vacuuming after migration"));
 
-        if (logged_sqlite3_exec(sql, "ANALYZE", NULL, NULL, NULL) != SQLITE_OK)
-          throw runtime_error("error running analyze after migration");
+        E(logged_sqlite3_exec(sql, "ANALYZE", NULL, NULL, NULL) == SQLITE_OK,
+          F("error running analyze after migration"));
       }
     else
       {
