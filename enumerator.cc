@@ -84,14 +84,17 @@ revision_enumerator::step()
         {
           revision_id r = revs.front();
           revs.pop_front();
+
+          // It's possible we've enumerated this node elsewhere since last
+          // time around. Cull rather than reprocess.
+          if (enumerated_nodes.find(r) != enumerated_nodes.end())
+            continue;
           
           if (!all_parents_enumerated(r))
             {
               revs.push_back(r);
               continue;
             }
-
-          enumerated_nodes.insert(r);
           
           if (terminal_nodes.find(r) == terminal_nodes.end())
             {
@@ -100,9 +103,12 @@ revision_enumerator::step()
               for (ci i = range.first; i != range.second; ++i)
                 {
                   if (i->first == r)
-                    revs.push_back(i->second);
+                    if (enumerated_nodes.find(i->first) == enumerated_nodes.end())
+                      revs.push_back(i->second);
                 }
             }
+
+          enumerated_nodes.insert(r);
 
           if (null_id(r))
             continue;
