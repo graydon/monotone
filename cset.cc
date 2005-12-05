@@ -577,20 +577,76 @@ cset_written_test()
     cset cs;
     BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
   }
+
+  {
+    L(F("TEST: cset writing - normalisation"));
+    cset cs; MM(cs);
+    split_path foo, bar, quux, foo_quux, idle, fish, womble, policeman;
+    file_id f1(std::string("1234567800000000000000000000000000000000"));
+    file_id f2(std::string("9876543212394657263900000000000000000000"));
+    file_id f3(std::string("0000000000011111111000000000000000000000"));
+    file_path_internal("foo").split(foo);
+    file_path_internal("foo/quux").split(foo_quux);
+    file_path_internal("bar").split(bar);
+    file_path_internal("quux").split(quux);
+    file_path_internal("idle").split(idle);
+    file_path_internal("fish").split(fish);
+    file_path_internal("womble").split(womble);
+    file_path_internal("policeman").split(policeman);
+
+    cs.dirs_added.insert(foo_quux);
+    cs.dirs_added.insert(foo);
+    cs.files_added.insert(make_pair(bar, f1));
+    cs.nodes_deleted.insert(quux);
+    cs.nodes_deleted.insert(idle);
+    cs.nodes_renamed.insert(make_pair(fish, womble));
+    cs.deltas_applied.insert(make_pair(womble, make_pair(f2, f3)));
+    cs.attrs_cleared.insert(make_pair(policeman, attr_key("yodel")));
+    cs.attrs_set.insert(make_pair(make_pair(policeman, 
+                        attr_key("axolotyl")), attr_value("fruitily")));
+    cs.attrs_set.insert(make_pair(make_pair(policeman, 
+                        attr_key("spin")), attr_value("capybara")));
+
+    data dat; MM(dat);
+    write_cset(cs, dat);
+    data expected("delete \"idle\"\n"
+                  "\n"
+                  "delete \"quux\"\n"
+                  "\n"
+                  "rename \"fish\"\n"
+                  "    to \"womble\"\n"
+                  "\n"
+                  "add_dir \"foo\"\n"
+                  "\n"
+                  "add_dir \"foo/quux\"\n"
+                  "\n"
+                  "add_file \"bar\"\n"
+                  " content [1234567800000000000000000000000000000000]\n"
+                  "\n"
+                  "patch \"womble\"\n"
+                  " from [9876543212394657263900000000000000000000]\n"
+                  "   to [0000000000011111111000000000000000000000]\n"
+                  "\n"
+                  "clear \"policeman\"\n"
+                  " attr \"yodel\"\n"
+                  "\n"
+                  "  set \"policeman\"\n"
+                  " attr \"axolotyl\"\n"
+                  "value \"fruitily\"\n"
+                  "\n"
+                  "  set \"policeman\"\n"
+                  " attr \"spin\"\n"
+                  "value \"capybara\"\n"
+                 );
+    MM(expected);
+    // I() so that it'll dump on failure
+    BOOST_CHECK_NOT_THROW(I(expected == dat), std::logic_error);
+  }
 }
 
 static void
 basic_csets_test()
 {
-  // FIXME_ROSTERS: write some tests here
-  // some things to test:
-  //   each cset thingie sets what it's supposed to
-  //   the topdown/bottomup stuff works
-  // don't forget to check normalization of written form, either...
-  //   no duplicate entries (as would be silently ignored, if we don't use
-  //     safe_insert in the parser!)
-  //   ordering
-  //   whitespace normalization
 
   temp_node_id_source nis;
   roster_t r;
