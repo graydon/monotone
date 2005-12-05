@@ -2890,6 +2890,29 @@ namespace
 }
 
 static void
+add_old_root_with_id(node_id root_nid, roster_t & roster, marking_map & markings)
+{
+  split_path root_name;
+  file_path().split(root_name);
+  roster.create_dir_node(root_nid);
+  roster.attach_node(root_nid, root_name);
+  marking_t marking;
+  marking.birth_revision = old_rid;
+  marking.parent_name.insert(old_rid);
+  safe_insert(markings, make_pair(root_nid, marking));
+}
+
+static void
+add_old_roots(roster_t & left_roster, marking_map & left_markings,
+              roster_t & right_roster, marking_map & right_markings,
+              node_id_source & nis)
+{
+  node_id root_nid = nis.next();
+  add_old_root_with_id(root_nid, left_roster, left_markings);
+  add_old_root_with_id(root_nid, right_roster, right_markings);
+}
+
+static void
 foo_mark_test()
 {
   file_id file_content(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
@@ -2899,18 +2922,7 @@ foo_mark_test()
   marking_map left_markings; MM(left_markings);
   marking_map right_markings; MM(right_markings);
 
-  split_path root_name;
-  file_path().split(root_name);
-  node_id root_nid = nis.next();
-  left_roster.create_dir_node(root_nid);
-  left_roster.attach_node(root_nid, root_name);
-  right_roster.create_dir_node(root_nid);
-  right_roster.attach_node(root_nid, root_name);
-  marking_t root_marking;
-  root_marking.birth_revision = old_rid;
-  root_marking.parent_name.insert(old_rid);
-  safe_insert(left_markings, make_pair(root_nid, root_marking));
-  safe_insert(right_markings, make_pair(root_nid, root_marking));
+  add_old_roots(left_roster, left_markings, right_roster, right_markings, nis);
 
   split_path left_name, right_name, new_name;
   file_path_internal("foo").split(left_name);
@@ -2950,7 +2962,6 @@ foo_mark_test()
                         new_rid, new_roster, new_markings,
                         nis);
 
-  I(safe_get(new_markings, root_nid) == root_marking);
   I(safe_get(new_markings, file_nid).birth_revision == old_rid);
   I(safe_get(new_markings, file_nid).parent_name == singleton(new_rid));
   I(safe_get(new_markings, file_nid).file_content == singleton(old_rid));
@@ -2969,18 +2980,7 @@ bar_mark_test()
   marking_map left_markings; MM(left_markings);
   marking_map right_markings; MM(right_markings);
 
-  split_path root_name;
-  file_path().split(root_name);
-  node_id root_nid = nis.next();
-  left_roster.create_dir_node(root_nid);
-  left_roster.attach_node(root_nid, root_name);
-  right_roster.create_dir_node(root_nid);
-  right_roster.attach_node(root_nid, root_name);
-  marking_t root_marking;
-  root_marking.birth_revision = old_rid;
-  root_marking.parent_name.insert(old_rid);
-  safe_insert(left_markings, make_pair(root_nid, root_marking));
-  safe_insert(right_markings, make_pair(root_nid, root_marking));
+  add_old_roots(left_roster, left_markings, right_roster, right_markings, nis);
 
   split_path name;
   file_path_internal("foo").split(name);
@@ -3022,7 +3022,6 @@ bar_mark_test()
                         new_rid, new_roster, new_markings,
                         nis);
 
-  I(safe_get(new_markings, root_nid) == root_marking);
   I(safe_get(new_markings, file_nid).birth_revision == old_rid);
   I(safe_get(new_markings, file_nid).parent_name == singleton(old_rid));
   I(safe_get(new_markings, file_nid).file_content == singleton(new_rid));
