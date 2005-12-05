@@ -1,3 +1,9 @@
+2005-12-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_database_sig_cleanup.at: Mark this as NOT_ON_WIN32; as
+	per the MSDN link I've added to the test, we can't handle
+	SIGINT/SIGTERM gracefully on Windows.
+
 2005-12-04  Nathaniel Smith  <njs@pobox.com>
 
 	* paths.cc (file_path): MM() the path we're validating.
