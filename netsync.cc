@@ -2048,8 +2048,11 @@ session::send_all_data(netcmd_item_type ty, set<id> const & items)
   string typestr;
   netcmd_item_type_to_string(ty, typestr);
 
-  for (set<id>::const_iterator i = items.begin(); 
-       i != items.end(); ++i)
+  // Use temporary; passed arg will be invalidated during iteration.
+  set<id> tmp = items;
+
+  for (set<id>::const_iterator i = tmp.begin(); 
+       i != tmp.end(); ++i)
     {  
       hexenc<id> hitem;
       encode_hexenc(*i, hitem);
