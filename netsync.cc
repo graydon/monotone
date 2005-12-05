@@ -311,7 +311,6 @@ session:
   auto_ptr<ticker> cert_out_ticker;
   auto_ptr<ticker> revision_in_ticker;
   auto_ptr<ticker> revision_out_ticker;
-  auto_ptr<ticker> revision_checked_ticker;
   
   vector<revision_id> written_revisions;
   vector<rsa_keypair_id> written_keys;
@@ -339,8 +338,10 @@ session:
   revision_enumerator rev_enumerator;
 
   // Enumerator_callbacks methods.
+  set<file_id> file_items_sent;
   bool process_this_rev(revision_id const & rev);
   bool queue_this_cert(hexenc<id> const & c);
+  bool queue_this_file(hexenc<id> const & f);
   void note_file_data(file_id const & f);
   void note_file_delta(file_id const & src, file_id const & dst);
   void note_rev(revision_id const & rev);
@@ -500,7 +501,6 @@ session::session(protocol_role role,
   cert_out_ticker(NULL),
   revision_in_ticker(NULL),
   revision_out_ticker(NULL),
-  revision_checked_ticker(NULL),
   saved_nonce(""),
   dbw(app, true),
   protocol_state(working_state),
@@ -592,6 +592,12 @@ session::queue_this_cert(hexenc<id> const & c)
           != cert_refiner.items_to_send.end());
 }
 
+bool 
+session::queue_this_file(hexenc<id> const & f)
+{
+  return file_items_sent.find(f) == file_items_sent.end();
+}
+
 void 
 session::note_file_data(file_id const & f)
 {
@@ -602,6 +608,7 @@ session::note_file_data(file_id const & f)
   decode_hexenc(f.inner(), item);
   app.db.get_file_version(f, fd);
   queue_data_cmd(file_item, item, fd.inner()());
+  file_items_sent.insert(f);
 }
 
 void 
@@ -618,6 +625,7 @@ session::note_file_delta(file_id const & src, file_id const & dst)
   app.db.get_file_version(dst, fd2);
   diff(fd1.inner(), fd2.inner(), del);
   queue_delta_cmd(file_item, fid1, fid2, del);
+  file_items_sent.insert(dst);
 }
 
 void 
@@ -651,8 +659,6 @@ session::note_cert(hexenc<id> const & c)
 
 void session::rev_written_callback(revision_id rid)
 {
-  if (revision_checked_ticker.get())
-    ++(*revision_checked_ticker);
   written_revisions.push_back(rid);
 }
 
@@ -713,8 +719,6 @@ session::setup_client_tickers()
   if (role == sink_role)
     {
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_checked_ticker.reset(new ticker(_("revs written"), "w", 1));
-      // xgettext: please use short message and try to avoid multibytes chars
       cert_in_ticker.reset(new ticker(_("certs in"), "c", 3));
       // xgettext: please use short message and try to avoid multibytes chars
       revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
@@ -729,8 +733,6 @@ session::setup_client_tickers()
   else
     {
       I(role == source_and_sink_role);
-      // xgettext: please use short message and try to avoid multibytes chars
-      revision_checked_ticker.reset(new ticker(_("revs written"), "w", 1));
       // xgettext: please use short message and try to avoid multibytes chars
       revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
       // xgettext: please use short message and try to avoid multibytes chars

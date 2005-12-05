@@ -123,10 +123,13 @@ revision_enumerator::step()
                   for (map<split_path, file_id>::const_iterator fa = cs.files_added.begin();
                        fa != cs.files_added.end(); ++fa)
                     {
-                      enumerator_item item;
-                      item.tag = enumerator_item::fdata;
-                      item.ident_a = fa->second.inner();
-                      items.push_back(item);
+                      if (cb.queue_this_file(fa->second.inner()))
+                        {
+                          enumerator_item item;
+                          item.tag = enumerator_item::fdata;
+                          item.ident_a = fa->second.inner();
+                          items.push_back(item);
+                        }
                     }
                     
                   // Queue up all the file-deltas
@@ -134,11 +137,14 @@ revision_enumerator::step()
                          = cs.deltas_applied.begin();
                        fd != cs.deltas_applied.end(); ++fd)
                     {
-                      enumerator_item item;
-                      item.tag = enumerator_item::fdelta;
-                      item.ident_a = fd->second.first.inner();
-                      item.ident_b = fd->second.second.inner();
-                      items.push_back(item);
+                      if (cb.queue_this_file(fd->second.second.inner()))
+                        {
+                          enumerator_item item;
+                          item.tag = enumerator_item::fdelta;
+                          item.ident_a = fd->second.first.inner();
+                          item.ident_b = fd->second.second.inner();
+                          items.push_back(item);
+                        }
                     }
                 }
                 

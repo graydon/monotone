@@ -26,6 +26,7 @@ enumerator_callbacks
   // traversed no matter what you return here.
   virtual bool process_this_rev(revision_id const & rev) = 0;
   virtual bool queue_this_cert(hexenc<id> const & c) = 0;
+  virtual bool queue_this_file(hexenc<id> const & c) = 0;
 
   virtual void note_file_data(file_id const & f) = 0;
   virtual void note_file_delta(file_id const & src, file_id const & dst) = 0;
