@@ -1,3 +1,33 @@
+2005-12-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_database_sig_cleanup.at: Mark this as NOT_ON_WIN32; as
+	per the MSDN link I've added to the test, we can't handle
+	SIGINT/SIGTERM gracefully on Windows.
+
+2005-12-04  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (file_path): MM() the path we're validating.
+
+2005-12-04  Nathaniel Smith  <njs@pobox.com>
+
+	* schema_migration.cc: Modernize error checking a bit.  (Use E()
+	and I() instead of throwing runtime_errors.)
+
+2005-12-03  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.cc (dump_buffer): If we dumped debug info, write out a
+	note asking that it be included in bug reports.
+
+2005-12-03  Nathaniel Smith  <njs@pobox.com>
+
+	* schema_migration.cc (logged_sqlite3_exec): New function.
+	Use everywhere in this file.  Enables logging of migration
+	commands for debugging purposes.
+
+2005-12-03  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_mixed_case_pwd.at, testsuite.at: New test.
+
 2005-12-02  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* Makefile.am: Make Win32 build link against shfolder.lib to get
