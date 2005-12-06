@@ -17,9 +17,3 @@ _Description: Monotone key passphrase:
  Please choose a passphrase for your monotone key. If left blank, one will
  be generated for you.
 
-Template: monotone-server/purge-db
-Type: boolean
-Default: false
-_Description: Delete monotone database when monotone-server is removed?
- If this option is selected, the monotone database and keys will be removed
- when the package is removed.

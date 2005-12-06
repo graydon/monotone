@@ -38,19 +38,16 @@ case "$1" in
        rm -f /etc/monotone/read-permissions || true
        rm -f /etc/monotone/hooks.lua || true
 
-       # remove database if debconf variable is set
-       db_get monotone-server/purge-db
-       if [ "$RET" = false ]; then
-           rm -f /etc/monotone/passphrases
-           DELUSER_FLAGS="--remove-home"
-           echo "deleting monotone database" >&2
+       if [ -n "`id -u monotone 2>/dev/null`" ]; then
+           /usr/sbin/deluser --quiet --remove-home monotone 2>/dev/null >/dev/null
        fi
 
-       /usr/sbin/deluser --quiet $DELUSER_FLAGS monotone
-       /usr/sbin/delgroup --quiet monotone
-
-       echo "monotone user and group removed" >&2
-
+       if [ -n "`id -g monotone 2>/dev/null`" ]; then
+           /usr/sbin/delgroup --quiet monotone 2>/dev/null >/dev/null
+       fi
+       
+       # delete the monotone database (only on purge)
+       rm -rf $MTN_HOME
 
     ;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)

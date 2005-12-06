@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: tomfa@debian.org\n"
-"POT-Creation-Date: 2005-12-04 13:48-0600\n"
+"POT-Creation-Date: 2005-12-06 10:24-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -55,18 +55,4 @@ msgstr ""
 msgid ""
 "Please choose a passphrase for your monotone key. If left blank, one will be "
 "generated for you."
-msgstr ""
-
-#. Type: boolean
-#. Description
-#: ../monotone-server.templates:23
-msgid "Delete monotone database when monotone-server is removed?"
-msgstr ""
-
-#. Type: boolean
-#. Description
-#: ../monotone-server.templates:23
-msgid ""
-"If this option is selected, the monotone database and keys will be removed "
-"when the package is removed."
 msgstr ""

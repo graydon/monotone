@@ -36,6 +36,17 @@ case "$1" in
        
        # if this is our first install give config files correct permissions
        if [ -z "$2" ]; then
+           # create monotone user and fix permissions of files
+           if [ -z "`id -u monotone 2>/dev/null`" ]; then
+               /usr/sbin/adduser --system --group --home $MTN_HOME --no-create-home --disabled-password --quiet monotone --gecos "Monotone"
+               chown monotone:monotone $MTN_HOME
+               chown monotone:monotone $MTN_CONFDIR
+               chown monotone:monotone $MTN_KEYDIR
+               chmod 0750 $MTN_HOME
+               chmod 0750 $MTN_CONFDIR
+               chmod 0750 $MTN_KEYDIR
+           fi
+
            chown monotone:monotone /etc/monotone/write-permissions
            chown monotone:monotone /etc/monotone/read-permissions
            chown monotone:monotone /etc/monotone/hooks.lua
@@ -67,30 +78,21 @@ case "$1" in
 
        if [ -z "$2" ]; then
           # not upgrading, fresh install
-          # create monotone user and fix permissions of files
-          if [ -z "`id -u monotone 2> /dev/null`" ]; then
-              /usr/sbin/adduser --system --group --home $MTN_HOME --no-create-home --disabled-password --quiet monotone --gecos "Monotone"
-              chown monotone:monotone $MTN_HOME
-              chown monotone:monotone $MTN_CONFDIR
-              chown monotone:monotone $MTN_KEYDIR
-              chmod 0750 $MTN_HOME
-              chmod 0750 $MTN_CONFDIR
-              chmod 0750 $MTN_KEYDIR
-          fi
 
           # if there is no database, create one
           if [ ! -e $MTN_DB ]; then
               echo "Creating Monotone database..." >&2
-              $MONOTONE --db $MTN_DB db init
+              $MONOTONE --db=$MTN_DB db init \
+                 --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR
               chmod 0600 $MTN_DB
               echo "Creating Monotone server keypair..." >&2
 
               yes "$MTN_KEY_PASSWD" | 
-                 $MONOTONE --db $MTN_DB genkey $MTN_KEY \
-                 --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR > /dev/null
+                 $MONOTONE --db=$MTN_DB genkey $MTN_KEY \
+                 --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR 2>/dev/null >/dev/null
 
-              $MONOTONE --db $MTN_DB pubkey $MTN_KEY \
-                 --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR > $MTN_HOME/$MTN_KEY.pubkey
+              $MONOTONE --db=$MTN_DB pubkey $MTN_KEY \
+                 --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR > $MTN_HOME/$MTN_KEY.pubkey
 
               echo "Monotone database created successfully." >&2
           fi
@@ -105,9 +107,8 @@ case "$1" in
           echo "A backup named '`basename $MTN_DB~`' will be created in $MTN_HOME." >&2
 
           cp $MTN_DB $MTN_DB~
-          (yes "$MTN_KEY_PASSWD" |
-             $MONOTONE --db $MTN_DB db migrate \
-             --norc --keydir $MTN_KEYDIR --confdir $MTN_CONFDIR &&
+          ($MONOTONE --db=$MTN_DB db migrate \
+             --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2 &&
              echo "Database successfully migrated." >&2) || 
           (echo "*** Error migrating database. ***" >&2 &&
               echo -e "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for\n \
