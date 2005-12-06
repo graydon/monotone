@@ -93,6 +93,25 @@ database::check_schema()
      % filename % schema % db_schema_id);
 }
 
+void
+database::check_rosterified()
+{
+  results res;
+  string rosters_query = "SELECT 1 FROM rosters LIMIT 1";
+  string revisions_query = "SELECT 1 FROM revisions LIMIT 1";
+
+  fetch(res, one_col, any_rows, revisions_query.c_str());
+  if (res.size() > 0)
+    {
+      fetch(res, one_col, any_rows, rosters_query.c_str());
+      N (res.size() != 0,
+         F("database %s contains revisions but no rosters\n"
+           "try 'monotone db rosterify' to add rosters\n"
+           "(this is irreversible; you may want to make a backup copy first)")
+         % filename);
+    }
+}
+
 // sqlite3_value_text gives a const unsigned char * but most of the time
 // we need a signed char
 const char *
@@ -2660,8 +2679,13 @@ database::get_roster_id_for_revision(revision_id const & rev_id,
 
   results res;
   string query = ("SELECT roster_id FROM revision_roster WHERE rev_id = ? ");  
-  fetch(res, one_col, one_row, query.c_str(),
+  fetch(res, one_col, any_rows, query.c_str(),
         rev_id.inner()().c_str());
+  if (res.size() == 0)
+    {
+      check_rosterified();
+    }
+  I(res.size() == 1);
   roster_id = hexenc<id>(res[0][0]);
 }
 

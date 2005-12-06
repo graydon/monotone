@@ -76,6 +76,7 @@ class database
   system_path filename;
   std::string const schema;
   void check_schema();
+  void check_rosterified();
 
   struct statement {
     statement() : count(0), stmt(0, sqlite3_finalize) {}
