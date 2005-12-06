@@ -226,6 +226,6 @@ public:
   virtual void open_valve();
 };
 
-size_t read_packets(std::istream & in, packet_consumer & cons);
+size_t read_packets(std::istream & in, packet_consumer & cons, app_state & app);
 
 #endif

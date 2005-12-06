@@ -90,7 +90,7 @@ key_store::read_key_dir()
       data dat;
       read_data(key_dir / (*i)(), dat);
       std::istringstream is(dat());
-      read_packets(is, kr);
+      read_packets(is, kr, *app);
     }
 }
 

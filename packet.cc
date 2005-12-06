@@ -1341,6 +1341,7 @@ packet_writer::consume_key_pair(rsa_keypair_id const & ident,
 struct 
 feed_packet_consumer
 {
+  app_state & app;
   size_t & count;
   packet_consumer & cons;
   std::string ident;
@@ -1348,8 +1349,8 @@ feed_packet_consumer
   std::string certname;
   std::string base;
   std::string sp;
-  feed_packet_consumer(size_t & count, packet_consumer & c)
-   : count(count), cons(c),
+  feed_packet_consumer(size_t & count, packet_consumer & c, app_state & app_)
+   : app(app_), count(count), cons(c),
      ident(constants::regex_legal_id_bytes),
      key(constants::regex_legal_key_name_bytes),
      certname(constants::regex_legal_cert_name_bytes),
@@ -1428,7 +1429,7 @@ feed_packet_consumer
         L(F("read cert packet"));
         match_results<std::string::const_iterator> matches;
         require(regex_match(args, matches, regex(ident + sp + certname
-                                                 + key + sp + base)));
+                                                 + sp + key + sp + base)));
         string certid(matches[1].first, matches[1].second);
         string name(matches[2].first, matches[2].second);
         string keyid(matches[3].first, matches[3].second);
@@ -1462,6 +1463,19 @@ feed_packet_consumer
         string priv_dat(trim_ws(string(matches[2].first, matches[2].second)));
         cons.consume_key_pair(rsa_keypair_id(args), keypair(pub_dat, priv_dat));
       }
+    else if (type == "privkey")
+      {
+        L(F("read pubkey data packet"));
+        require(regex_match(args, regex(key)));
+        require(regex_match(body, regex(base)));
+        string contents(trim_ws(body));
+        keypair kp;
+        migrate_private_key(app,
+                            rsa_keypair_id(args),
+                            base64<arc4<rsa_priv_key> >(contents),
+                            kp);
+        cons.consume_key_pair(rsa_keypair_id(args), kp);
+      }
     else
       {
         W(F("unknown packet type: '%s'") % type);
@@ -1473,40 +1487,21 @@ feed_packet_consumer
 };
 
 static size_t 
-extract_packets(string const & s, packet_consumer & cons, bool last)
+extract_packets(string const & s, packet_consumer & cons, app_state & app)
 {
-  std::string r(s);
-  {
-    // since we don't have privkey packets anymore, translate a
-    // pubkey packet immediately followed by a matching privkey
-    // packet into a keypair packet (which is what privkey packets
-    // have been replaced by)
-    string const pubkey("\\[pubkey[[:space:]]+" + constants::regex_legal_key_name_bytes
-                        + "\\]" + constants::regex_legal_packet_bytes + "\\[end\\]");
-    string const privkey("\\[privkey \\1\\]" + constants::regex_legal_packet_bytes
-                         + "\\[end\\]");
-    string const pubkey_privkey = pubkey + "[[:space:]]*" + privkey;
-    string const keypair_fmt("[keypair $1]$2#$3[end]");
-    r = regex_replace(s, regex(pubkey_privkey), keypair_fmt);
-    bool pub = regex_match(s, regex(pubkey + ".*"));
-    bool two = regex_match(s, regex(".+\\[end\\].+\\[end\\]"));
-    if (!last && pub && !two)
-      return 0;
-  }
-
   string const head("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]");
   string const body("([^\\[\\]]+)");
   string const tail("\\[end\\]");
   string const whole = head + body + tail;
   regex expr(whole);
   size_t count = 0;
-  regex_grep(feed_packet_consumer(count, cons), r, expr, match_default);
+  regex_grep(feed_packet_consumer(count, cons, app), s, expr, match_default);
   return count;
 }
 
 
 size_t 
-read_packets(istream & in, packet_consumer & cons)
+read_packets(istream & in, packet_consumer & cons, app_state & app)
 {
   string accum, tmp;
   size_t count = 0;
@@ -1523,16 +1518,13 @@ read_packets(istream & in, packet_consumer & cons)
         {
           endpos += end.size();
           string tmp = accum.substr(0, endpos);
-          size_t num = extract_packets(tmp, cons, false);
-          count += num;
-          if (num)
-            if (endpos < accum.size() - 1)
-              accum = accum.substr(endpos+1);
-            else
-              accum.clear();
+          count += extract_packets(tmp, cons, app);
+          if (endpos < accum.size() - 1)
+            accum = accum.substr(endpos+1);
+          else
+            accum.clear();
         }
     }
-  count += extract_packets(accum, cons, true);
   return count;
 }
 
@@ -1560,7 +1552,7 @@ packet_roundabout_test()
     // an fdelta packet    
     file_data fdata2(data("this is some file data which is not the same as the first one"));
     file_id fid2;
-    calculate_ident(fdata2, fid);
+    calculate_ident(fdata2, fid2);
     delta del;
     diff(fdata.inner(), fdata2.inner(), del);
     pw.consume_file_delta(fid, fid2, file_delta(del));
@@ -1611,15 +1603,21 @@ packet_roundabout_test()
     
     pw.consume_key_pair(rsa_keypair_id("test@lala.com"), kp);
     
+    tmp = oss.str();
   }
-  
+
+  // read_packets needs this to convert privkeys to keypairs.
+  // This doesn't test privkey packets (theres a tests/ test for that),
+  // so we don't actually use the app_state for anything. So a default one
+  // is ok.
+  app_state aaa;
   for (int i = 0; i < 10; ++i)
     {
       // now spin around sending and receiving this a few times
       ostringstream oss;
       packet_writer pw(oss);      
       istringstream iss(tmp);
-      read_packets(iss, pw);
+      read_packets(iss, pw, aaa);
       BOOST_CHECK(oss.str() == tmp);
       tmp = oss.str();
     }

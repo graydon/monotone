@@ -1,3 +1,18 @@
+2005-12-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* packet.cc (packet stream reading): Fix handling of privkey packets.
+	It would convert pubkey+privkey to keypair, but not change the private
+	key to the new encryption type. Now uses migrate_private_key to
+	convert privkey->keypair. Reading privkey packets from stdin only works
+	if the get_passphrase hook is defined for that key.
+	Fix packet_roundabout_test; the send+receive part was using an empty
+	stream, rather than the packet sequence generated in the first part.
+	* packet.hh, commands.cc, key_store.cc: read_packets now takes an
+	app_state argument.
+	* tests/t_dropkey_2.at: use genkey instead of reading packets
+	* tests/t_read_privkey.at: check that reading a privkey packet works
+	* testsuite.at: add read_privkey test
+
 2005-12-06  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* contrib/usher.cc (fork_server): Avoid getting stuck in an
