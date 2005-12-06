@@ -50,7 +50,7 @@ d_start() {
                --exec $DAEMON --chuid monotone --chdir $MTN_HOME -- \
 	       --confdir=$MTN_CONFDIR --db=$DB --norc \
 	       --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR \
-               --bind $ADDRESS serve $BRANCHES >> /var/log/monotone.log 2>&1 &
+               --bind=$ADDRESS serve $BRANCHES >> /var/log/monotone.log 2>&1 &
 
 }
 

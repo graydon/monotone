@@ -25,8 +25,8 @@ MONOTONE=/usr/bin/monotone
 case "$1" in
     configure)
 
-       MTN_DB=/var/lib/monotone/default.db
        MTN_HOME=/var/lib/monotone
+       MTN_DB=$MTN_HOME/default.db
        MTN_CONFDIR=/etc/monotone
        MTN_KEYDIR=$MTN_HOME/keys
 
@@ -102,7 +102,7 @@ case "$1" in
        elif [ dpkg --compare-versions "$MTN_VERSION" lt 0.22 ]; then 
           # upgradable version of monotone
           echo "Attempting to migrate monotone database..." >&2
-          echo "A backup will be created in $MTN_HOME." >&2
+          echo "A backup named '`basename $MTN_DB~`' will be created in $MTN_HOME." >&2
 
           cp $MTN_DB $MTN_DB~
           (yes "$MTN_KEY_PASSWD" |
