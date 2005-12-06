@@ -15,6 +15,10 @@
 
 2005-12-06  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* ui.cc (write_ticks): Move CR out of tickline2; output it where
+	required instead.  Fixes brokeness of 'count' ticker on Win32 (and
+	perhaps elsewhere) that was causing each line redraw to be written
+	on a new line.
 	* contrib/usher.cc (fork_server): Avoid getting stuck in an
 	infinte loop attempting to read() from a stream that has
 	reached EOF before we've read anything from it.  This can occur if

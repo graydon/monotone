@@ -86,7 +86,7 @@ void tick_write_count::write_ticks()
   bool first_tick = true;
 
   tickline1 = "monotone: ";
-  tickline2 = "\rmonotone:";
+  tickline2 = "monotone:";
   
   unsigned int width;
   unsigned int minwidth = 7;
@@ -173,13 +173,11 @@ void tick_write_count::write_ticks()
     }
   if (tw && display_width(utf8(tickline2)) > tw)
     {
-      // first character in tickline2 is "\r", which does not take up any
-      // width, so we add 1 to compensate.
       // FIXME: may chop off more than necessary (because we chop by
       // bytes, not by characters)
-      tickline2.resize(tw + 1);
+      tickline2.resize(tw);
     }
-  clog << tickline2;
+  clog << "\r" << tickline2;
   clog.flush();
 }
 
