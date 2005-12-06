@@ -526,7 +526,7 @@ int fork_server(vector<string> const & args)
     // the first line output on the server's stderr will be either
     // "monotone: beginning service on <interface> : <port>" or
     // "monotone: network error: bind(2) error: Address already in use"
-    while(r >= 0 && !line && got < 256) {
+    do {
       r = read(err[0], head + got, 256 - got);
       if (r)
         cerr<<"Read '"<<string(head+got, r)<<"'\n";
@@ -536,7 +536,7 @@ int fork_server(vector<string> const & args)
             line = true;
         got += r;
       }
-    }
+    } while(r > 0 && !line && got < 256);
     head[got] = 0;
     if (string(head).find("beginning service") != string::npos)
       return pid;

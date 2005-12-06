@@ -93,17 +93,18 @@ void tick_write_count::write_ticks()
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
        i != ui.tickers.end(); ++i)
     {
-      width = 1 + display_width(utf8(i->second->name));
+      size_t dwidth = display_width(utf8(i->second->name));
+      width = 1 + dwidth;
       if (!first_tick)
         {
           tickline1 += " | ";
           tickline2 += " |";
         }
       first_tick = false;
-      if (display_width(utf8(i->second->name)) < minwidth)
+      if (dwidth < minwidth)
         {
-          tickline1.append(minwidth - display_width(utf8(i->second->name)),' ');
-          width += minwidth - display_width(utf8(i->second->name));
+          tickline1.append(minwidth - dwidth, ' ');
+          width += minwidth - dwidth;
         }
       tickline1 += i->second->name;
       
@@ -133,16 +134,17 @@ void tick_write_count::write_ticks()
           count = (F("%d") % i->second->ticks).str();
         }
         
-      if (display_width(utf8(count)) < width)
+      dwidth = display_width(utf8(count));
+      if (dwidth < width)
         {
-          tickline2.append(width - display_width(utf8(count)),' ');
+          tickline2.append(width - dwidth, ' ');
         }
-      else if (display_width(utf8(count)) > width)
+      else if (dwidth > width)
         {
           // FIXME: not quite right, because substr acts on bytes rather than
           // characters; but there are always more bytes than characters, so
           // at worst this will just chop off a little too much.
-          count = count.substr(display_width(utf8(count)) - width);
+          count = count.substr(dwidth - width);
         }
       tickline2 += count;
     }

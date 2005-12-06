@@ -76,6 +76,12 @@ app_state::allow_working_copy()
           db.set_filename(dbname);
         }
 
+      if (!options[keydir_option]().empty())
+        {
+          system_path keydir = system_path(options[keydir_option]);
+          set_key_dir(keydir);
+        }
+
       if (branch_name().empty())
         branch_name = options[branch_option];
       L(F("branch name is '%s'\n") % branch_name());

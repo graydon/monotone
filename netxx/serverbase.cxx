@@ -130,6 +130,11 @@ void Netxx::ServerBase::bind_to(const Address &addr, bool stream_server)
 	SockOpt socket_opt(socketfd);
 	socket_opt.set_reuse_address();
 
+#	ifndef NETXX_NO_INET6
+	if (sa->sa_family == AF_INET6)
+	    socket_opt.set_ipv6_listen_for_v6_only();
+#	endif
+
 	if (bind(socketfd, sa, sa_size) != 0) {
 	    std::string error("bind(2) error: ");
 	    error += strerror(Netxx::get_last_error());

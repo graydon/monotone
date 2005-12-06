@@ -1,3 +1,18 @@
+2005-12-06  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* contrib/usher.cc (fork_server): Avoid getting stuck in an
+	infinte loop attempting to read() from a stream that has
+	reached EOF before we've read anything from it.  This can occur if
+	the fork()+exec() of an usher managed monotone server fails.
+	* ui.cc (write_ticks): Don't call display_width() repeatedly for
+	the same string--get the result once and reuse it where necessary.
+	* netxx/sockopt.cxx, netxx/sockopt.h (set_ipv6_listen_for_v6_only):
+	New member function to set the IPV6_V6ONLY flag on a socket.
+	* netxx/serverbase.cxx (bind_to): Call set_ipv6_listen_for_v6_only
+	on IPv6 sockets.
+	* app_state.cc (allow_working_copy): Use keydir path from
+	MT/options if set.
+
 2005-12-05  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_database_sig_cleanup.at: Mark this as NOT_ON_WIN32; as
