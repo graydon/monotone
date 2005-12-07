@@ -59,8 +59,8 @@ case "$1" in
        if [ "$RET" = "true" ]; then
 
            # read our passphrase from a file
-           if [ -e "$MTN_HOME/passphrases" ]; then
-              db_set monotone-server/passphrase "`cat $MTN_HOME/passphrases | awk '{print $2}'`"
+           if [ -e "$MTN_CONFDIR/passphrases" ]; then
+              db_set monotone-server/passphrase "`cat $MTN_CONFDIR/passphrases | awk '{print $2}'`"
            fi
 
            db_get monotone-server/key 
