@@ -96,12 +96,12 @@ case "$1" in
 
               echo "Monotone database created successfully." >&2
           fi
-       elif [ dpkg --compare-versions "$MTN_VERSION" lt 0.17 ]; then 
+       elif dpkg --compare-versions "$MTN_VERSION" lt "0.17"; then 
           # monotone version to old to automatically upgrade
           echo "Cannot automatically upgrade from monotone version $2." >&2
           echo -e "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for\n \
                    information on upgrading." >&2
-       elif [ dpkg --compare-versions "$MTN_VERSION" lt 0.22 ]; then 
+       elif dpkg --compare-versions "$MTN_VERSION" lt "0.22"; then 
           # upgradable version of monotone
           echo "Attempting to migrate monotone database..." >&2
           echo "A backup named '`basename $MTN_DB~`' will be created in $MTN_HOME." >&2
