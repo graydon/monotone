@@ -7,3 +7,6 @@ include /usr/share/cdbs/1/rules/debhelper.mk
 
 install/monotone::
 	cp contrib/monotone.bash_completion debian/monotone/etc/bash_completion.d/monotone
+
+binary-install/monotone-server::
+	dh_installinit --name=monotone
