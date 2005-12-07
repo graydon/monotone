@@ -57,14 +57,13 @@ case "$1" in
 
        db_get monotone-server/manage-db
        if [ "$RET" = "true" ]; then
+           db_get monotone-server/key 
+           MTN_KEY=$RET
 
            # read our passphrase from a file
            if [ -e "$MTN_CONFDIR/passphrases" ]; then
-              db_set monotone-server/passphrase "`cat $MTN_CONFDIR/passphrases | awk '{print $2}'`"
+               db_set monotone-server/passphrase "`grep "$MTN_KEY" $MTN_CONFDIR/passphrases | awk -F ' "|" "|" |"' '{print $2}'`"
            fi
-
-           db_get monotone-server/key 
-           MTN_KEY=$RET
 
            db_get monotone-server/passphrase
            MTN_KEY_PASSWD=$RET
@@ -118,7 +117,7 @@ case "$1" in
                            information on manually upgrading your database." >&2)
            fi
 
-           echo "$MTN_KEY $MTN_KEY_PASSWD" > $MTN_CONFDIR/passphrases
+           echo "$MTN_KEY \"$MTN_KEY_PASSWD\"" > $MTN_CONFDIR/passphrases
            chown monotone:monotone $MTN_CONFDIR/passphrases
            chmod 0400 $MTN_CONFDIR/passphrases
            db_set monotone-server/passphrase ""
