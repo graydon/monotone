@@ -74,7 +74,7 @@ msgstr "'%s' adicionado ao conjunto de caminhos restritos\n"
 #: app_state.cc:170
 #, c-format
 msgid "'%s' ignored by excluded path set\n"
-msgstr "'%s' ignorado pelo conjunto de caminhos excluídos"
+msgstr "'%s' ignorado pelo conjunto de caminhos excluídos\n"
 
 #: app_state.cc:177
 #, c-format

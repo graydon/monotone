@@ -1,5 +1,6 @@
 2005-12-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* po/pt_BR.po: Add missing newline.
 	* AUTHORS: Add Alex Queiroz to list of translators.
 
 2005-12-08  Alex Queiroz  <asandroq@gmail.com>
