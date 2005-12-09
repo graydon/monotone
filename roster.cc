@@ -2970,7 +2970,7 @@ foo_mark_test()
 
 // we always have the topology:
 //     old
-//     / \
+//     / \.
 // left   right
 //     \ /
 //     new
@@ -2979,27 +2979,35 @@ namespace
 {
   typedef enum { scalar_a, scalar_b, scalar_c } scalar_val;
 
-  struct file_content_scalar
+  struct a_scalar
+  {
+    virtual void set(scalar_val val, std::set<revision_id> const & this_scalar_mark,
+                     roster_t & roster, marking_map & markings)
+      = 0;
+    virtual ~a_scalar() {};
+  };
+
+  struct file_content_scalar : public a_scalar
   {
     std::map<scalar_val, file_id> values;
     testing_node_id_source nis;
     node_id root_nid;
     node_id file_nid;
-    file_content()
+    file_content_scalar()
       : nis(), root_nid(nis.next()), file_nid(nis.next())
     {
       safe_insert(values,
                   make_pair(scalar_a,
                             file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))));
       safe_insert(values,
-                  make_pair(scalar_a,
+                  make_pair(scalar_b,
                             file_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"))));
       safe_insert(values,
-                  make_pair(scalar_a,
+                  make_pair(scalar_c,
                             file_id(string("cccccccccccccccccccccccccccccccccccccccc"))));
     }
-    void
-    set(scalar_val val, revision_id const & this_scalar_mark,
+    virtual void
+    set(scalar_val val, std::set<revision_id> const & this_scalar_mark,
         roster_t & roster, marking_map & markings)
     {
       add_old_root_with_id(root_nid, roster, markings);
@@ -3010,10 +3018,10 @@ namespace
       marking_t marking;
       marking.birth_revision = old_rid;
       marking.parent_name.insert(old_rid);
-      marking.file_content.insert(this_scalar_mark);
-      safe_insert(markings, make_pair(file_nid, this_scalar_mark));
+      marking.file_content = this_scalar_mark;
+      safe_insert(markings, make_pair(file_nid, marking));
     }
-  }
+  };
 }
 
 
@@ -3027,19 +3035,19 @@ bar_mark_test()
   marking_map right_markings; MM(right_markings);
 
   file_content_scalar s;
-  s.setup(scalar_a, left_rid, left_roster, left_markings);
-  s.setup(scalar_b, right_rid, right_roster, right_markings);
+  s.set(scalar_a, singleton(left_rid), left_roster, left_markings);
+  s.set(scalar_b, singleton(right_rid), right_roster, right_markings);
   
   roster_t expected_roster; MM(expected_roster);
   marking_map expected_markings; MM(expected_markings);
-  s.setup(scalar_c, new_rid, expected_roster, expected_markings);
+  s.set(scalar_c, singleton(new_rid), expected_roster, expected_markings);
 
   cset left_cs; MM(left_cs);
   cset right_cs; MM(right_cs);
   make_cset(left_roster, expected_roster, left_cs);
   make_cset(right_roster, expected_roster, right_cs);
 
-  set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
   left_uncommon_ancestors.insert(left_rid);
   right_uncommon_ancestors.insert(right_rid);
 
@@ -3056,16 +3064,85 @@ bar_mark_test()
   I(new_markings == expected_markings);
 }
 
+static void
+test_one_2_parent_scalar(a_scalar & s,
+                         scalar_val left_val,
+                         std::set<revision_id> const & left_mark_set,
+                         scalar_val right_val,
+                         std::set<revision_id> const & right_mark_set,
+                         scalar_val new_val,
+                         std::set<revision_id> const & new_mark_set)
+{
+  testing_node_id_source nis;
+  roster_t left_roster; MM(left_roster);
+  roster_t right_roster; MM(right_roster);
+  roster_t expected_roster; MM(expected_roster);
+  marking_map left_markings; MM(left_markings);
+  marking_map right_markings; MM(right_markings);
+  marking_map expected_markings; MM(expected_markings);
+
+  s.set(left_val, left_mark_set, left_roster, left_markings);
+  s.set(right_val, right_mark_set, right_roster, right_markings);
+  s.set(new_val, new_mark_set, expected_roster, expected_markings);
+
+  cset left_cs; MM(left_cs);
+  cset right_cs; MM(right_cs);
+  make_cset(left_roster, expected_roster, left_cs);
+  make_cset(right_roster, expected_roster, right_cs);
+
+  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  left_uncommon_ancestors.insert(left_rid);
+  right_uncommon_ancestors.insert(right_rid);
+
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+  make_roster_for_merge(left_rid, left_roster, left_markings, left_cs,
+                        left_uncommon_ancestors,
+                        right_rid, right_roster, right_markings, right_cs,
+                        right_uncommon_ancestors,
+                        new_rid, new_roster, new_markings,
+                        nis);
+
+  I(new_roster == expected_roster);
+  I(new_markings == expected_markings);
+}
+
+static void
+test_one_2_parent_scalar_case(scalar_val left_val,
+                              std::set<revision_id> const & left_mark_set,
+                              scalar_val right_val,
+                              std::set<revision_id> const & right_mark_set,
+                              scalar_val new_val,
+                              std::set<revision_id> const & new_mark_set)
+{
+  {
+    file_content_scalar s;
+    test_one_2_parent_scalar(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
+  }
+}
+
+static void
+test_all_2_parent_scalar_cases()
+{
+  //  a*  b*
+  //   \ /
+  //    c*
+  test_one_2_parent_scalar_case(scalar_a, singleton(left_rid),
+                                scalar_b, singleton(right_rid),
+                                scalar_c, singleton(new_rid));
+}
+
 void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&foo_mark_test));
   suite->add(BOOST_TEST_CASE(&bar_mark_test));
-  suite->add(BOOST_TEST_CASE(&bad_attr_test));
-  suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
-  suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
-  suite->add(BOOST_TEST_CASE(&automaton_roster_test));
+  suite->add(BOOST_TEST_CASE(&test_all_2_parent_scalar_cases));
+//   suite->add(BOOST_TEST_CASE(&bad_attr_test));
+//   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
+//   suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
+//   suite->add(BOOST_TEST_CASE(&automaton_roster_test));
 }
 
 
