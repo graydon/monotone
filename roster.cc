@@ -878,6 +878,14 @@ roster_t::check_sane_against(marking_map const & markings) const
        ++ri, ++mi)
     {
       I(!null_id(mi->second.birth_revision));
+      I(!mi->second.parent_name.empty());
+
+      if (is_file_t(ri->second))
+        I(!mi->second.file_content.empty());
+      else
+        I(mi->second.file_content.empty());
+
+      // TODO: attrs
     }
 
   I(ri == nodes.end() && mi == markings.end());
@@ -3472,6 +3480,126 @@ write_roster_test()
   }
 }
 
+static void
+check_sane_against_test()
+{
+  testing_node_id_source nis;
+  split_path root, foo, bar;
+  file_path().split(root);
+  file_path_internal("foo").split(foo);
+  file_path_internal("bar").split(bar);
+
+  file_id f1(string("1111111111111111111111111111111111111111"));
+  revision_id rid(string("1234123412341234123412341234123412341234"));
+  node_id nid;
+
+  {
+    L(F("TEST: check_sane_against_test, no extra nodes in rosters"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, bar);
+    // missing the marking
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, no extra nodes in markings"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, bar);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    r.detach_node(bar);
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, missing birth rev"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].birth_revision = revision_id();
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, missing path mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].parent_name.clear();
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, missing content mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_file_node(f1, nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].file_content.clear();
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  // TODO: matching up attr marks, etc.
+}
+
 void
 add_roster_tests(test_suite * suite)
 {
@@ -3483,6 +3611,7 @@ add_roster_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
   suite->add(BOOST_TEST_CASE(&write_roster_test));
+  suite->add(BOOST_TEST_CASE(&check_sane_against_test));
   suite->add(BOOST_TEST_CASE(&automaton_roster_test));
 }
 
