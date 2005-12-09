@@ -1743,6 +1743,45 @@ make_cset(roster_t const & from, roster_t const & to, cset & cs)
 }
 
 
+// we assume our input is sane
+bool
+equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
+                        roster_t const & b, marking_map const & b_markings)
+{
+  if (a.all_nodes().size() != b.all_nodes().size())
+    return false;
+  
+  for (node_map::const_iterator i = a.all_nodes().begin();
+       i != a.all_nodes().end(); ++i)
+    {
+      split_path sp;
+      a.get_name(i->first, sp);
+      if (!b.has_node(sp))
+        return false;
+      node_t b_n = b.get_node(sp);
+      // we already know names are the same
+      if (i->second->attrs != b_n->attrs)
+        return false;
+      if (is_file_t(i->second) && is_file_t(b_n))
+        {
+          if (!(downcast_to_file_t(i->second)->content
+                == downcast_to_file_t(b_n)->content))
+            return false;
+        }
+      else if (is_dir_t(i->second) && is_dir_t(b_n))
+        {
+          // dirs have nothing special to check
+        }
+      else
+        return false;
+      // nodes match, check the markings too
+      if (!(safe_get(a_markings, i->first) == safe_get(b_markings, b_n->self)))
+        return false;
+    }
+  return true;
+}
+
+
 void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
@@ -2746,6 +2785,11 @@ automaton_roster_test()
       aut.perform_random_action(r, nis);
       if (i == 0)
         prev = r;
+      else
+        {
+          // test operator==
+          I(!(prev == r));
+        }
       // some randomly made up magic numbers, just to make sure we do tests on
       // rosters that have a number of changes between them, not just a single
       // change.
@@ -2911,16 +2955,6 @@ add_old_root_with_id(node_id root_nid, roster_t & roster, marking_map & markings
   safe_insert(markings, make_pair(root_nid, marking));
 }
 
-static void
-add_old_roots(roster_t & left_roster, marking_map & left_markings,
-              roster_t & right_roster, marking_map & right_markings,
-              node_id_source & nis)
-{
-  node_id root_nid = nis.next();
-  add_old_root_with_id(root_nid, left_roster, left_markings);
-  add_old_root_with_id(root_nid, right_roster, right_markings);
-}
-
 // we always have the topology:
 //     old
 //     / \.
@@ -3073,6 +3107,74 @@ test_a_2_parent_mark_scenario(scalar_val left_val,
 }
 
 static void
+test_a_0_parent_scalar(a_scalar & s, scalar_val new_val,
+                       std::set<revision_id> const & new_mark_set)
+{
+  testing_node_id_source nis;
+  roster_t expected_roster; MM(expected_roster);
+  marking_map expected_markings; MM(expected_markings);
+
+  roster_t empty_roster;
+  cset cs;
+  make_cset(empty_roster, expected_roster, cs);
+  
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+  // this function takes the old parent roster/marking and modifies them; in
+  // our case, they are just these.
+  make_roster_for_nonmerge(cs, new_rid, new_roster, new_markings, nis);
+
+  I(equal_up_to_renumbering(expected_roster, expected_markings,
+                            new_roster, new_markings));
+}
+
+static void
+test_a_0_parent_mark_scenario(scalar_val new_val,
+                              std::set<revision_id> const & new_mark_set)
+{
+  {
+    file_content_scalar s;
+    test_a_0_parent_scalar(s, new_val, new_mark_set);
+  }
+  {
+    file_basename_scalar s;
+    test_a_0_parent_scalar(s, new_val, new_mark_set);
+  }
+}
+
+static void
+test_all_0_parent_mark_scenarios()
+{
+  // a*
+  test_a_0_parent_mark_scenario(scalar_a, singleton(new_rid));
+}
+
+// static void
+// test_all_1_parent_mark_scenarios()
+// {
+//   //  a
+//   //  |
+//   //  a
+//   test_a_1_parent_mark_scenario(scalar_a, singleton(old_rid),
+//                                 scalar_a, singleton(old_rid));
+//   //  a*
+//   //  |
+//   //  a
+//   test_a_1_parent_mark_scenario(scalar_a, singleton(left_rid),
+//                                 scalar_a, singleton(left_rid));
+//   //  a
+//   //  |
+//   //  b*
+//   test_a_1_parent_mark_scenario(scalar_a, singleton(old_rid),
+//                                 scalar_b, singleton(new_rid));
+//   //  a*
+//   //  |
+//   //  b*
+//   test_a_1_parent_mark_scenario(scalar_a, singleton(left_rid),
+//                                 scalar_b, singleton(new_rid));
+// }
+
+static void
 test_all_2_parent_mark_scenarios()
 {
   ///////////////////////////////////////////////////////////////////
@@ -3169,6 +3271,8 @@ void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&test_all_0_parent_mark_scenarios));
+  //  suite->add(BOOST_TEST_CASE(&test_all_1_parent_mark_scenarios));
   suite->add(BOOST_TEST_CASE(&test_all_2_parent_mark_scenarios));
 //   suite->add(BOOST_TEST_CASE(&bad_attr_test));
 //   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));

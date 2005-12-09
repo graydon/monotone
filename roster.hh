@@ -289,6 +289,10 @@ make_cset(roster_t const & from,
           roster_t const & to, 
           cset & cs);
 
+bool
+equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
+                        roster_t const & b, marking_map const & b_markings);
+
 void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
