@@ -3326,6 +3326,152 @@ test_all_2_parent_mark_scenarios()
   //      a
 }
 
+static void
+write_roster_test()
+{
+  L(F("TEST: write_roster_test"));
+  roster_t r; MM(r);
+  marking_map mm; MM(mm);
+
+  testing_node_id_source nis;
+  split_path root, foo, xx, fo, foo_bar, foo_ang, foo_zoo;
+  file_path().split(root);
+  file_path_internal("foo").split(foo);
+  file_path_internal("foo/ang").split(foo_ang);
+  file_path_internal("foo/bar").split(foo_bar);
+  file_path_internal("foo/zoo").split(foo_zoo);
+  file_path_internal("fo").split(fo);
+  file_path_internal("xx").split(xx);
+
+  file_id f1(string("1111111111111111111111111111111111111111"));
+  revision_id rid(string("1234123412341234123412341234123412341234"));
+  node_id nid;
+
+  // if adding new nodes, add them at the end to keep the node_id order
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, root);
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, foo);
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, xx);
+  r.set_attr(xx, attr_key("say"), attr_value("hello"));
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, fo);
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  // check that files aren't ordered separately to dirs & vice versa
+  nid = nis.next();
+  r.create_file_node(f1, nid);
+  r.attach_node(nid, foo_bar);
+  r.set_attr(foo_bar, attr_key("fascist"), attr_value("tidiness"));
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, foo_ang);
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, foo_zoo);
+  r.set_attr(foo_zoo, attr_key("regime"), attr_value("new"));
+  r.clear_attr(foo_zoo, attr_key("regime"));
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  { 
+    // manifest first
+    data mdat; MM(mdat);
+    write_manifest_of_roster(r, mdat);
+
+    data expected("dir \"\"\n"
+                  "\n"
+                  "dir \"fo\"\n"
+                  "\n"
+                  "dir \"foo\"\n"
+                  "\n"
+                  "dir \"foo/ang\"\n"
+                  "\n"
+                  "   file \"foo/bar\"\n"
+                  "content [1111111111111111111111111111111111111111]\n"
+                  "   attr \"fascist\" \"tidiness\"\n"
+                  "\n"
+                  "dir \"foo/zoo\"\n"
+                  "\n"
+                  " dir \"xx\"\n"
+                  "attr \"say\" \"hello\"\n"
+                 );
+    MM(expected);
+
+    BOOST_CHECK_NOT_THROW( I(expected == mdat), std::logic_error);
+  }
+
+  { 
+    // full roster with local parts
+    data rdat; MM(rdat);
+    write_roster_and_marking(r, mm, rdat);
+
+    // node_id order is a hassle.
+    // root 1, foo 2, xx 3, fo 4, foo_bar 5, foo_ang 6, foo_zoo 7
+    data expected("      dir \"\"\n"
+                  "    ident \"1\"\n"
+                  "    birth [1234123412341234123412341234123412341234]\n"
+                  "path_mark [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "      dir \"fo\"\n"
+                  "    ident \"4\"\n"
+                  "    birth [1234123412341234123412341234123412341234]\n"
+                  "path_mark [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "      dir \"foo\"\n"
+                  "    ident \"2\"\n"
+                  "    birth [1234123412341234123412341234123412341234]\n"
+                  "path_mark [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "      dir \"foo/ang\"\n"
+                  "    ident \"6\"\n"
+                  "    birth [1234123412341234123412341234123412341234]\n"
+                  "path_mark [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "        file \"foo/bar\"\n"
+                  "     content [1111111111111111111111111111111111111111]\n"
+                  "       ident \"5\"\n"
+                  "        attr \"fascist\" \"tidiness\"\n"
+                  "       birth [1234123412341234123412341234123412341234]\n"
+                  "   path_mark [1234123412341234123412341234123412341234]\n"
+                  "content_mark [1234123412341234123412341234123412341234]\n"
+                  "   attr_mark \"fascist\" [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "         dir \"foo/zoo\"\n"
+                  "       ident \"7\"\n"
+                  "dormant_attr \"regime\"\n"
+                  "       birth [1234123412341234123412341234123412341234]\n"
+                  "   path_mark [1234123412341234123412341234123412341234]\n"
+                  "   attr_mark \"regime\" [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "      dir \"xx\"\n"
+                  "    ident \"3\"\n"
+                  "     attr \"say\" \"hello\"\n"
+                  "    birth [1234123412341234123412341234123412341234]\n"
+                  "path_mark [1234123412341234123412341234123412341234]\n"
+                  "attr_mark \"say\" [1234123412341234123412341234123412341234]\n"
+                 );
+    MM(expected);
+
+    BOOST_CHECK_NOT_THROW( I(expected == rdat), std::logic_error);
+  }
+}
+
 void
 add_roster_tests(test_suite * suite)
 {
@@ -3336,6 +3482,7 @@ add_roster_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&bad_attr_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
+  suite->add(BOOST_TEST_CASE(&write_roster_test));
   suite->add(BOOST_TEST_CASE(&automaton_roster_test));
 }
 
