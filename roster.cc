@@ -1760,20 +1760,16 @@ equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
         return false;
       node_t b_n = b.get_node(sp);
       // we already know names are the same
+      if (!same_type(i->second, b_n))
+        return false;
       if (i->second->attrs != b_n->attrs)
         return false;
-      if (is_file_t(i->second) && is_file_t(b_n))
+      if (is_file_t(i->second))
         {
           if (!(downcast_to_file_t(i->second)->content
                 == downcast_to_file_t(b_n)->content))
             return false;
         }
-      else if (is_dir_t(i->second) && is_dir_t(b_n))
-        {
-          // dirs have nothing special to check
-        }
-      else
-        return false;
       // nodes match, check the markings too
       if (!(safe_get(a_markings, i->first) == safe_get(b_markings, b_n->self)))
         return false;
