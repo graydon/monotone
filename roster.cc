@@ -2484,6 +2484,8 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   roster_t b2(a); MM(b2);
   // we can't use a cset to entirely empty out a roster, so don't bother doing
   // the apply_to tests towards an empty roster
+  // (NOTE: if you notice this special case in a time when root dirs can be
+  // renamed or deleted, remove it, it will no longer be necessary.
   if (!a.all_nodes().empty())
     {
       editable_roster_base eb(a2, nis);
@@ -2782,6 +2784,8 @@ automaton_roster_test()
       MM(i);
       if (i % 100 == 0)
         P(F("performing random action %d\n") % i);
+      // test operator==
+      I(r == r);
       aut.perform_random_action(r, nis);
       if (i == 0)
         prev = r;
@@ -3333,10 +3337,10 @@ add_roster_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&test_all_0_parent_mark_scenarios));
   suite->add(BOOST_TEST_CASE(&test_all_1_parent_mark_scenarios));
   suite->add(BOOST_TEST_CASE(&test_all_2_parent_mark_scenarios));
-//   suite->add(BOOST_TEST_CASE(&bad_attr_test));
-//   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
-//   suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
-//   suite->add(BOOST_TEST_CASE(&automaton_roster_test));
+  suite->add(BOOST_TEST_CASE(&bad_attr_test));
+  suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
+  suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
+  suite->add(BOOST_TEST_CASE(&automaton_roster_test));
 }
 
 
