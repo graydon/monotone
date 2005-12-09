@@ -2883,6 +2883,15 @@ namespace
     return s;
   }
 
+  template <typename T> std::set<T>
+  doubleton(T const & t1, T const & t2)
+  {
+    std::set<T> s;
+    s.insert(t1);
+    s.insert(t2);
+    return s;
+  }
+
   revision_id old_rid(string("0000000000000000000000000000000000000000"));
   revision_id left_rid(string("1111111111111111111111111111111111111111"));
   revision_id right_rid(string("2222222222222222222222222222222222222222"));
@@ -3024,46 +3033,6 @@ namespace
   };
 }
 
-
-static void
-bar_mark_test()
-{
-  testing_node_id_source nis;
-  roster_t left_roster; MM(left_roster);
-  roster_t right_roster; MM(right_roster);
-  marking_map left_markings; MM(left_markings);
-  marking_map right_markings; MM(right_markings);
-
-  file_content_scalar s;
-  s.set(scalar_a, singleton(left_rid), left_roster, left_markings);
-  s.set(scalar_b, singleton(right_rid), right_roster, right_markings);
-  
-  roster_t expected_roster; MM(expected_roster);
-  marking_map expected_markings; MM(expected_markings);
-  s.set(scalar_c, singleton(new_rid), expected_roster, expected_markings);
-
-  cset left_cs; MM(left_cs);
-  cset right_cs; MM(right_cs);
-  make_cset(left_roster, expected_roster, left_cs);
-  make_cset(right_roster, expected_roster, right_cs);
-
-  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
-  left_uncommon_ancestors.insert(left_rid);
-  right_uncommon_ancestors.insert(right_rid);
-
-  roster_t new_roster; MM(new_roster);
-  marking_map new_markings; MM(new_markings);
-  make_roster_for_merge(left_rid, left_roster, left_markings, left_cs,
-                        left_uncommon_ancestors,
-                        right_rid, right_roster, right_markings, right_cs,
-                        right_uncommon_ancestors,
-                        new_rid, new_roster, new_markings,
-                        nis);
-
-  I(new_roster == expected_roster);
-  I(new_markings == expected_markings);
-}
-
 static void
 test_one_2_parent_scalar(a_scalar & s,
                          scalar_val left_val,
@@ -3124,12 +3093,93 @@ test_one_2_parent_scalar_case(scalar_val left_val,
 static void
 test_all_2_parent_scalar_cases()
 {
+  ///////////////////////////////////////////////////////////////////
+  // a   a
+  //  \ /
+  //   a
+  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+                                scalar_a, singleton(old_rid),
+                                scalar_a, singleton(old_rid));
+  // a   a*
+  //  \ /
+  //   a
+  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+                                scalar_a, singleton(right_rid),
+                                scalar_a, doubleton(old_rid, right_rid));
+  // a*  a*
+  //  \ /
+  //   a
+  test_one_2_parent_scalar_case(scalar_a, singleton(left_rid),
+                                scalar_a, singleton(right_rid),
+                                scalar_a, doubleton(left_rid, right_rid));
+
+  ///////////////////////////////////////////////////////////////////
+  // a   a
+  //  \ /
+  //   b*
+  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+                                scalar_a, singleton(old_rid),
+                                scalar_b, singleton(new_rid));
+  // a   a*
+  //  \ /
+  //   b*
+  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+                                scalar_a, singleton(right_rid),
+                                scalar_b, singleton(new_rid));
+  // a*  a*
+  //  \ /
+  //   b*
+  test_one_2_parent_scalar_case(scalar_a, singleton(left_rid),
+                                scalar_a, singleton(right_rid),
+                                scalar_b, singleton(new_rid));
+
+  ///////////////////////////////////////////////////////////////////
   //  a*  b*
   //   \ /
   //    c*
   test_one_2_parent_scalar_case(scalar_a, singleton(left_rid),
                                 scalar_b, singleton(right_rid),
                                 scalar_c, singleton(new_rid));
+  //  a   b*
+  //   \ /
+  //    c*
+  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+                                scalar_b, singleton(right_rid),
+                                scalar_c, singleton(new_rid));
+  // this case cannot actually arise, because if *(a) = *(b) then val(a) =
+  // val(b).  but hey.
+  //  a   b
+  //   \ /
+  //    c*
+  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+                                scalar_b, singleton(old_rid),
+                                scalar_c, singleton(new_rid));
+
+  ///////////////////////////////////////////////////////////////////
+  //  a*  b*
+  //   \ /
+  //    a*
+  test_one_2_parent_scalar_case(scalar_a, singleton(left_rid),
+                                scalar_b, singleton(right_rid),
+                                scalar_a, singleton(new_rid));
+  //  a   b*
+  //   \ /
+  //    a*
+  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+                                scalar_b, singleton(right_rid),
+                                scalar_a, singleton(new_rid));
+  //  a*  b
+  //   \ /
+  //    a
+  test_one_2_parent_scalar_case(scalar_a, singleton(left_rid),
+                                scalar_b, singleton(old_rid),
+                                scalar_a, singleton(left_rid));
+
+  //  a*  a*  b
+  //   \ /   /
+  //    a   /
+  //     \ /
+  //      a
 }
 
 void
@@ -3137,7 +3187,6 @@ add_roster_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&foo_mark_test));
-  suite->add(BOOST_TEST_CASE(&bar_mark_test));
   suite->add(BOOST_TEST_CASE(&test_all_2_parent_scalar_cases));
 //   suite->add(BOOST_TEST_CASE(&bad_attr_test));
 //   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
