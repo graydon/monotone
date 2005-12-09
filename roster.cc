@@ -2921,62 +2921,6 @@ add_old_roots(roster_t & left_roster, marking_map & left_markings,
   add_old_root_with_id(root_nid, right_roster, right_markings);
 }
 
-static void
-foo_mark_test()
-{
-  file_id file_content(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-  testing_node_id_source nis;
-  roster_t left_roster; MM(left_roster);
-  roster_t right_roster; MM(right_roster);
-  marking_map left_markings; MM(left_markings);
-  marking_map right_markings; MM(right_markings);
-
-  add_old_roots(left_roster, left_markings, right_roster, right_markings, nis);
-
-  split_path left_name, right_name, new_name;
-  file_path_internal("foo").split(left_name);
-  file_path_internal("bar").split(right_name);
-  file_path_internal("baz").split(new_name);
-  node_id file_nid = nis.next();
-  left_roster.create_file_node(file_content, file_nid);
-  left_roster.attach_node(file_nid, left_name);
-  right_roster.create_file_node(file_content, file_nid);
-  right_roster.attach_node(file_nid, right_name);
-
-  marking_t file_marking;
-  file_marking.birth_revision = old_rid;
-  file_marking.file_content.insert(old_rid);
-  // left
-  file_marking.parent_name = singleton(left_rid);
-  safe_insert(left_markings, make_pair(file_nid, file_marking));
-  // right
-  file_marking.parent_name = singleton(right_rid);
-  safe_insert(right_markings, make_pair(file_nid, file_marking));
-
-  cset left_cs; MM(left_cs);
-  cset right_cs; MM(right_cs);
-  safe_insert(left_cs.nodes_renamed, make_pair(left_name, new_name));
-  safe_insert(right_cs.nodes_renamed, make_pair(right_name, new_name));
-
-  set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
-  left_uncommon_ancestors.insert(left_rid);
-  right_uncommon_ancestors.insert(right_rid);
-
-  roster_t new_roster; MM(new_roster);
-  marking_map new_markings; MM(new_markings);
-  make_roster_for_merge(left_rid, left_roster, left_markings, left_cs,
-                        left_uncommon_ancestors,
-                        right_rid, right_roster, right_markings, right_cs,
-                        right_uncommon_ancestors,
-                        new_rid, new_roster, new_markings,
-                        nis);
-
-  I(safe_get(new_markings, file_nid).birth_revision == old_rid);
-  I(safe_get(new_markings, file_nid).parent_name == singleton(new_rid));
-  I(safe_get(new_markings, file_nid).file_content == singleton(old_rid));
-  I(safe_get(new_markings, file_nid).attrs.empty());
-}
-
 // we always have the topology:
 //     old
 //     / \.
@@ -3031,16 +2975,50 @@ namespace
       safe_insert(markings, make_pair(file_nid, marking));
     }
   };
+
+  struct file_basename_scalar : public a_scalar
+  {
+    std::map<scalar_val, split_path> values;
+    testing_node_id_source nis;
+    node_id root_nid;
+    node_id file_nid;
+    file_basename_scalar()
+      : nis(), root_nid(nis.next()), file_nid(nis.next())
+    {
+      split_path sp;
+      file_path_internal("a").split(sp);
+      safe_insert(values, make_pair(scalar_a, sp));
+      file_path_internal("b").split(sp);
+      safe_insert(values, make_pair(scalar_b, sp));
+      file_path_internal("c").split(sp);
+      safe_insert(values, make_pair(scalar_c, sp));
+    }
+    virtual void
+    set(scalar_val val, std::set<revision_id> const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      add_old_root_with_id(root_nid, roster, markings);
+      roster.create_file_node(file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+                              file_nid);
+      split_path name;
+      roster.attach_node(file_nid, safe_get(values, val));
+      marking_t marking;
+      marking.birth_revision = old_rid;
+      marking.parent_name = this_scalar_mark;
+      marking.file_content.insert(old_rid);
+      safe_insert(markings, make_pair(file_nid, marking));
+    }
+  };
 }
 
 static void
-test_one_2_parent_scalar(a_scalar & s,
-                         scalar_val left_val,
-                         std::set<revision_id> const & left_mark_set,
-                         scalar_val right_val,
-                         std::set<revision_id> const & right_mark_set,
-                         scalar_val new_val,
-                         std::set<revision_id> const & new_mark_set)
+test_a_2_parent_scalar(a_scalar & s,
+                       scalar_val left_val,
+                       std::set<revision_id> const & left_mark_set,
+                       scalar_val right_val,
+                       std::set<revision_id> const & right_mark_set,
+                       scalar_val new_val,
+                       std::set<revision_id> const & new_mark_set)
 {
   testing_node_id_source nis;
   roster_t left_roster; MM(left_roster);
@@ -3077,7 +3055,7 @@ test_one_2_parent_scalar(a_scalar & s,
 }
 
 static void
-test_one_2_parent_scalar_case(scalar_val left_val,
+test_a_2_parent_mark_scenario(scalar_val left_val,
                               std::set<revision_id> const & left_mark_set,
                               scalar_val right_val,
                               std::set<revision_id> const & right_mark_set,
@@ -3086,30 +3064,34 @@ test_one_2_parent_scalar_case(scalar_val left_val,
 {
   {
     file_content_scalar s;
-    test_one_2_parent_scalar(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
+    test_a_2_parent_scalar(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
+  }
+  {
+    file_basename_scalar s;
+    test_a_2_parent_scalar(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
   }
 }
 
 static void
-test_all_2_parent_scalar_cases()
+test_all_2_parent_mark_scenarios()
 {
   ///////////////////////////////////////////////////////////////////
   // a   a
   //  \ /
   //   a
-  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(old_rid),
                                 scalar_a, singleton(old_rid),
                                 scalar_a, singleton(old_rid));
   // a   a*
   //  \ /
   //   a
-  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(old_rid),
                                 scalar_a, singleton(right_rid),
                                 scalar_a, doubleton(old_rid, right_rid));
   // a*  a*
   //  \ /
   //   a
-  test_one_2_parent_scalar_case(scalar_a, singleton(left_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(left_rid),
                                 scalar_a, singleton(right_rid),
                                 scalar_a, doubleton(left_rid, right_rid));
 
@@ -3117,19 +3099,19 @@ test_all_2_parent_scalar_cases()
   // a   a
   //  \ /
   //   b*
-  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(old_rid),
                                 scalar_a, singleton(old_rid),
                                 scalar_b, singleton(new_rid));
   // a   a*
   //  \ /
   //   b*
-  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(old_rid),
                                 scalar_a, singleton(right_rid),
                                 scalar_b, singleton(new_rid));
   // a*  a*
   //  \ /
   //   b*
-  test_one_2_parent_scalar_case(scalar_a, singleton(left_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(left_rid),
                                 scalar_a, singleton(right_rid),
                                 scalar_b, singleton(new_rid));
 
@@ -3137,13 +3119,13 @@ test_all_2_parent_scalar_cases()
   //  a*  b*
   //   \ /
   //    c*
-  test_one_2_parent_scalar_case(scalar_a, singleton(left_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(left_rid),
                                 scalar_b, singleton(right_rid),
                                 scalar_c, singleton(new_rid));
   //  a   b*
   //   \ /
   //    c*
-  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(old_rid),
                                 scalar_b, singleton(right_rid),
                                 scalar_c, singleton(new_rid));
   // this case cannot actually arise, because if *(a) = *(b) then val(a) =
@@ -3151,7 +3133,7 @@ test_all_2_parent_scalar_cases()
   //  a   b
   //   \ /
   //    c*
-  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(old_rid),
                                 scalar_b, singleton(old_rid),
                                 scalar_c, singleton(new_rid));
 
@@ -3159,22 +3141,23 @@ test_all_2_parent_scalar_cases()
   //  a*  b*
   //   \ /
   //    a*
-  test_one_2_parent_scalar_case(scalar_a, singleton(left_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(left_rid),
                                 scalar_b, singleton(right_rid),
                                 scalar_a, singleton(new_rid));
   //  a   b*
   //   \ /
   //    a*
-  test_one_2_parent_scalar_case(scalar_a, singleton(old_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(old_rid),
                                 scalar_b, singleton(right_rid),
                                 scalar_a, singleton(new_rid));
   //  a*  b
   //   \ /
   //    a
-  test_one_2_parent_scalar_case(scalar_a, singleton(left_rid),
+  test_a_2_parent_mark_scenario(scalar_a, singleton(left_rid),
                                 scalar_b, singleton(old_rid),
                                 scalar_a, singleton(left_rid));
 
+  // FIXME ROSTERS:
   //  a*  a*  b
   //   \ /   /
   //    a   /
@@ -3186,8 +3169,7 @@ void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&foo_mark_test));
-  suite->add(BOOST_TEST_CASE(&test_all_2_parent_scalar_cases));
+  suite->add(BOOST_TEST_CASE(&test_all_2_parent_mark_scenarios));
 //   suite->add(BOOST_TEST_CASE(&bad_attr_test));
 //   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
 //   suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
