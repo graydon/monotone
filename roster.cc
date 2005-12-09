@@ -2923,7 +2923,18 @@ bad_attr_test()
   BOOST_CHECK_THROW(r.check_sane(true), std::logic_error);
 }
 
-///// exhaustive marking tests
+////////////////////////////////////////////////////////////////////////
+// exhaustive marking tests
+////////////////////////////////////////////////////////////////////////
+
+// we always have the topology:
+//     old
+//     / \.
+// left   right
+//     \ /
+//     new
+// FIXME ROSTERS: explainify how this stuff works, and why it is exhaustive,
+// so future changes can be made
 
 namespace
 {
@@ -2963,12 +2974,6 @@ add_old_root_with_id(node_id root_nid, roster_t & roster, marking_map & markings
   safe_insert(markings, make_pair(root_nid, marking));
 }
 
-// we always have the topology:
-//     old
-//     / \.
-// left   right
-//     \ /
-//     new
 
 namespace
 {
@@ -3054,13 +3059,65 @@ namespace
 }
 
 static void
-test_a_2_parent_scalar(a_scalar & s,
-                       scalar_val left_val,
-                       std::set<revision_id> const & left_mark_set,
-                       scalar_val right_val,
-                       std::set<revision_id> const & right_mark_set,
-                       scalar_val new_val,
-                       std::set<revision_id> const & new_mark_set)
+test_with_0_roster_parents(a_scalar & s, scalar_val new_val,
+                           std::set<revision_id> const & new_mark_set)
+{
+  testing_node_id_source nis;
+  roster_t expected_roster; MM(expected_roster);
+  marking_map expected_markings; MM(expected_markings);
+
+  roster_t empty_roster;
+  cset cs;
+  make_cset(empty_roster, expected_roster, cs);
+  
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+  // this function takes the old parent roster/marking and modifies them; in
+  // our case, the parent roster/marking are empty, and so are our
+  // roster/marking, so we don't need to do anything special.
+  make_roster_for_nonmerge(cs, new_rid, new_roster, new_markings, nis);
+
+  I(equal_up_to_renumbering(expected_roster, expected_markings,
+                            new_roster, new_markings));
+}
+
+static void
+test_with_1_roster_parent(a_scalar & s,
+                          scalar_val parent_val,
+                          std::set<revision_id> const & parent_mark_set,
+                          scalar_val new_val,
+                          std::set<revision_id> const & new_mark_set)
+{
+  testing_node_id_source nis;
+  roster_t parent_roster; MM(parent_roster);
+  marking_map parent_markings; MM(parent_markings);
+  roster_t expected_roster; MM(expected_roster);
+  marking_map expected_markings; MM(expected_markings);
+
+  s.set(parent_val, parent_mark_set, parent_roster, parent_markings);
+  s.set(new_val, new_mark_set, expected_roster, expected_markings);
+
+  cset cs;
+  make_cset(parent_roster, expected_roster, cs);
+  
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+  new_roster = parent_roster;
+  new_markings = parent_markings;
+  make_roster_for_nonmerge(cs, new_rid, new_roster, new_markings, nis);
+
+  I(equal_up_to_renumbering(expected_roster, expected_markings,
+                            new_roster, new_markings));
+}
+
+static void
+test_with_2_roster_parents(a_scalar & s,
+                           scalar_val left_val,
+                           std::set<revision_id> const & left_mark_set,
+                           scalar_val right_val,
+                           std::set<revision_id> const & right_mark_set,
+                           scalar_val new_val,
+                           std::set<revision_id> const & new_mark_set)
 {
   testing_node_id_source nis;
   roster_t left_roster; MM(left_roster);
@@ -3092,8 +3149,8 @@ test_a_2_parent_scalar(a_scalar & s,
                         new_rid, new_roster, new_markings,
                         nis);
 
-  I(new_roster == expected_roster);
-  I(new_markings == expected_markings);
+  I(equal_up_to_renumbering(expected_roster, expected_markings,
+                            new_roster, new_markings));
 }
 
 static void
@@ -3106,34 +3163,12 @@ test_a_2_parent_mark_scenario(scalar_val left_val,
 {
   {
     file_content_scalar s;
-    test_a_2_parent_scalar(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
+    test_with_2_roster_parents(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
   }
   {
     file_basename_scalar s;
-    test_a_2_parent_scalar(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
+    test_with_2_roster_parents(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
   }
-}
-
-static void
-test_a_0_parent_scalar(a_scalar & s, scalar_val new_val,
-                       std::set<revision_id> const & new_mark_set)
-{
-  testing_node_id_source nis;
-  roster_t expected_roster; MM(expected_roster);
-  marking_map expected_markings; MM(expected_markings);
-
-  roster_t empty_roster;
-  cset cs;
-  make_cset(empty_roster, expected_roster, cs);
-  
-  roster_t new_roster; MM(new_roster);
-  marking_map new_markings; MM(new_markings);
-  // this function takes the old parent roster/marking and modifies them; in
-  // our case, they are just these.
-  make_roster_for_nonmerge(cs, new_rid, new_roster, new_markings, nis);
-
-  I(equal_up_to_renumbering(expected_roster, expected_markings,
-                            new_roster, new_markings));
 }
 
 static void
@@ -3142,11 +3177,11 @@ test_a_0_parent_mark_scenario(scalar_val new_val,
 {
   {
     file_content_scalar s;
-    test_a_0_parent_scalar(s, new_val, new_mark_set);
+    test_with_0_roster_parents(s, new_val, new_mark_set);
   }
   {
     file_basename_scalar s;
-    test_a_0_parent_scalar(s, new_val, new_mark_set);
+    test_with_0_roster_parents(s, new_val, new_mark_set);
   }
 }
 
@@ -3158,35 +3193,6 @@ test_all_0_parent_mark_scenarios()
 }
 
 static void
-test_a_1_parent_scalar(a_scalar & s,
-                       scalar_val parent_val,
-                       std::set<revision_id> const & parent_mark_set,
-                       scalar_val new_val,
-                       std::set<revision_id> const & new_mark_set)
-{
-  testing_node_id_source nis;
-  roster_t parent_roster; MM(parent_roster);
-  marking_map parent_markings; MM(parent_markings);
-  roster_t expected_roster; MM(expected_roster);
-  marking_map expected_markings; MM(expected_markings);
-
-  s.set(parent_val, parent_mark_set, parent_roster, parent_markings);
-  s.set(new_val, new_mark_set, expected_roster, expected_markings);
-
-  cset cs;
-  make_cset(parent_roster, expected_roster, cs);
-  
-  roster_t new_roster; MM(new_roster);
-  marking_map new_markings; MM(new_markings);
-  new_roster = parent_roster;
-  new_markings = parent_markings;
-  make_roster_for_nonmerge(cs, new_rid, new_roster, new_markings, nis);
-
-  I(equal_up_to_renumbering(expected_roster, expected_markings,
-                            new_roster, new_markings));
-}
-
-static void
 test_a_1_parent_mark_scenario(scalar_val parent_val,
                               std::set<revision_id> const & parent_mark_set,
                               scalar_val new_val,
@@ -3194,11 +3200,11 @@ test_a_1_parent_mark_scenario(scalar_val parent_val,
 {
   {
     file_content_scalar s;
-    test_a_1_parent_scalar(s, parent_val, parent_mark_set, new_val, new_mark_set);
+    test_with_1_roster_parent(s, parent_val, parent_mark_set, new_val, new_mark_set);
   }
   {
     file_basename_scalar s;
-    test_a_1_parent_scalar(s, parent_val, parent_mark_set, new_val, new_mark_set);
+    test_with_1_roster_parent(s, parent_val, parent_mark_set, new_val, new_mark_set);
   }
 }
 
