@@ -2968,46 +2968,76 @@ foo_mark_test()
   I(safe_get(new_markings, file_nid).attrs.empty());
 }
 
+// we always have the topology:
+//     old
+//     / \
+// left   right
+//     \ /
+//     new
+
+namespace
+{
+  typedef enum { scalar_a, scalar_b, scalar_c } scalar_val;
+
+  struct file_content_scalar
+  {
+    std::map<scalar_val, file_id> values;
+    testing_node_id_source nis;
+    node_id root_nid;
+    node_id file_nid;
+    file_content()
+      : nis(), root_nid(nis.next()), file_nid(nis.next())
+    {
+      safe_insert(values,
+                  make_pair(scalar_a,
+                            file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))));
+      safe_insert(values,
+                  make_pair(scalar_a,
+                            file_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"))));
+      safe_insert(values,
+                  make_pair(scalar_a,
+                            file_id(string("cccccccccccccccccccccccccccccccccccccccc"))));
+    }
+    void
+    set(scalar_val val, revision_id const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      add_old_root_with_id(root_nid, roster, markings);
+      roster.create_file_node(safe_get(values, val), file_nid);
+      split_path name;
+      file_path_internal("foo").split(name);
+      roster.attach_node(file_nid, name);
+      marking_t marking;
+      marking.birth_revision = old_rid;
+      marking.parent_name.insert(old_rid);
+      marking.file_content.insert(this_scalar_mark);
+      safe_insert(markings, make_pair(file_nid, this_scalar_mark));
+    }
+  }
+}
+
+
 static void
 bar_mark_test()
 {
-  file_id file_content_left(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-  file_id file_content_right(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
-  file_id file_content_new(string("cccccccccccccccccccccccccccccccccccccccc"));
   testing_node_id_source nis;
   roster_t left_roster; MM(left_roster);
   roster_t right_roster; MM(right_roster);
   marking_map left_markings; MM(left_markings);
   marking_map right_markings; MM(right_markings);
 
-  add_old_roots(left_roster, left_markings, right_roster, right_markings, nis);
-
-  split_path name;
-  file_path_internal("foo").split(name);
-  node_id file_nid = nis.next();
-  left_roster.create_file_node(file_content_left, file_nid);
-  left_roster.attach_node(file_nid, name);
-  right_roster.create_file_node(file_content_right, file_nid);
-  right_roster.attach_node(file_nid, name);
-
-  marking_t file_marking;
-  file_marking.birth_revision = old_rid;
-  file_marking.parent_name.insert(old_rid);
-  // left
-  file_marking.file_content = singleton(left_rid);
-  safe_insert(left_markings, make_pair(file_nid, file_marking));
-  // right
-  file_marking.file_content = singleton(right_rid);
-  safe_insert(right_markings, make_pair(file_nid, file_marking));
+  file_content_scalar s;
+  s.setup(scalar_a, left_rid, left_roster, left_markings);
+  s.setup(scalar_b, right_rid, right_roster, right_markings);
+  
+  roster_t expected_roster; MM(expected_roster);
+  marking_map expected_markings; MM(expected_markings);
+  s.setup(scalar_c, new_rid, expected_roster, expected_markings);
 
   cset left_cs; MM(left_cs);
   cset right_cs; MM(right_cs);
-  safe_insert(left_cs.deltas_applied, make_pair(name,
-                                                make_pair(file_content_left,
-                                                          file_content_new)));
-  safe_insert(right_cs.deltas_applied, make_pair(name,
-                                                 make_pair(file_content_right,
-                                                           file_content_new)));
+  make_cset(left_roster, expected_roster, left_cs);
+  make_cset(right_roster, expected_roster, right_cs);
 
   set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
   left_uncommon_ancestors.insert(left_rid);
@@ -3022,10 +3052,8 @@ bar_mark_test()
                         new_rid, new_roster, new_markings,
                         nis);
 
-  I(safe_get(new_markings, file_nid).birth_revision == old_rid);
-  I(safe_get(new_markings, file_nid).parent_name == singleton(old_rid));
-  I(safe_get(new_markings, file_nid).file_content == singleton(new_rid));
-  I(safe_get(new_markings, file_nid).attrs.empty());
+  I(new_roster == expected_roster);
+  I(new_markings == expected_markings);
 }
 
 void
