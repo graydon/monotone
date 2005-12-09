@@ -3149,30 +3149,89 @@ test_all_0_parent_mark_scenarios()
   test_a_0_parent_mark_scenario(scalar_a, singleton(new_rid));
 }
 
-// static void
-// test_all_1_parent_mark_scenarios()
-// {
-//   //  a
-//   //  |
-//   //  a
-//   test_a_1_parent_mark_scenario(scalar_a, singleton(old_rid),
-//                                 scalar_a, singleton(old_rid));
-//   //  a*
-//   //  |
-//   //  a
-//   test_a_1_parent_mark_scenario(scalar_a, singleton(left_rid),
-//                                 scalar_a, singleton(left_rid));
-//   //  a
-//   //  |
-//   //  b*
-//   test_a_1_parent_mark_scenario(scalar_a, singleton(old_rid),
-//                                 scalar_b, singleton(new_rid));
-//   //  a*
-//   //  |
-//   //  b*
-//   test_a_1_parent_mark_scenario(scalar_a, singleton(left_rid),
-//                                 scalar_b, singleton(new_rid));
-// }
+static void
+test_a_1_parent_scalar(a_scalar & s,
+                       scalar_val parent_val,
+                       std::set<revision_id> const & parent_mark_set,
+                       scalar_val new_val,
+                       std::set<revision_id> const & new_mark_set)
+{
+  testing_node_id_source nis;
+  roster_t parent_roster; MM(parent_roster);
+  marking_map parent_markings; MM(parent_markings);
+  roster_t expected_roster; MM(expected_roster);
+  marking_map expected_markings; MM(expected_markings);
+
+  s.set(parent_val, parent_mark_set, parent_roster, parent_markings);
+  s.set(new_val, new_mark_set, expected_roster, expected_markings);
+
+  cset cs;
+  make_cset(parent_roster, expected_roster, cs);
+  
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+  new_roster = parent_roster;
+  new_markings = parent_markings;
+  make_roster_for_nonmerge(cs, new_rid, new_roster, new_markings, nis);
+
+  I(equal_up_to_renumbering(expected_roster, expected_markings,
+                            new_roster, new_markings));
+}
+
+static void
+test_a_1_parent_mark_scenario(scalar_val parent_val,
+                              std::set<revision_id> const & parent_mark_set,
+                              scalar_val new_val,
+                              std::set<revision_id> const & new_mark_set)
+{
+  {
+    file_content_scalar s;
+    test_a_1_parent_scalar(s, parent_val, parent_mark_set, new_val, new_mark_set);
+  }
+  {
+    file_basename_scalar s;
+    test_a_1_parent_scalar(s, parent_val, parent_mark_set, new_val, new_mark_set);
+  }
+}
+
+static void
+test_all_1_parent_mark_scenarios()
+{
+  //  a
+  //  |
+  //  a
+  test_a_1_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                scalar_a, singleton(old_rid));
+  //  a*
+  //  |
+  //  a
+  test_a_1_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                scalar_a, singleton(left_rid));
+  // a*  a*
+  //  \ /
+  //   a
+  //   |
+  //   a
+  test_a_1_parent_mark_scenario(scalar_a, doubleton(left_rid, right_rid),
+                                scalar_a, doubleton(left_rid, right_rid));
+  //  a
+  //  |
+  //  b*
+  test_a_1_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                scalar_b, singleton(new_rid));
+  //  a*
+  //  |
+  //  b*
+  test_a_1_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                scalar_b, singleton(new_rid));
+  // a*  a*
+  //  \ /
+  //   a
+  //   |
+  //   b*
+  test_a_1_parent_mark_scenario(scalar_a, doubleton(left_rid, right_rid),
+                                scalar_b, singleton(new_rid));
+}
 
 static void
 test_all_2_parent_mark_scenarios()
@@ -3272,7 +3331,7 @@ add_roster_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&test_all_0_parent_mark_scenarios));
-  //  suite->add(BOOST_TEST_CASE(&test_all_1_parent_mark_scenarios));
+  suite->add(BOOST_TEST_CASE(&test_all_1_parent_mark_scenarios));
   suite->add(BOOST_TEST_CASE(&test_all_2_parent_mark_scenarios));
 //   suite->add(BOOST_TEST_CASE(&bad_attr_test));
 //   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
