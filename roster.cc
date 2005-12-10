@@ -2964,18 +2964,9 @@ namespace
   revision_id parent_rid(string("3333333333333333333333333333333333333333"));
   revision_id new_rid(string("4444444444444444444444444444444444444444"));
 
-  // FIXME: maybe move this to a scalar base class
   void
   add_old_root_with_id(node_id root_nid, roster_t & roster, marking_map & markings)
   {
-    split_path root_name;
-    file_path().split(root_name);
-    roster.create_dir_node(root_nid);
-    roster.attach_node(root_nid, root_name);
-    marking_t marking;
-    marking.birth_revision = old_rid;
-    marking.parent_name.insert(old_rid);
-    safe_insert(markings, make_pair(root_nid, marking));
   }
 
   split_path
@@ -3005,15 +2996,20 @@ namespace
     virtual ~a_scalar() {};
 
     node_id_source & nis;
-    node_id root_nid;
-    node_id obj_under_test_nid;
+    node_id const root_nid;
+    node_id const obj_under_test_nid;
     a_scalar(node_id_source & nis)
       : nis(nis), root_nid(nis.next()), obj_under_test_nid(nis.next())
     {}
 
     void setup(roster_t & roster, marking_map & markings)
     {
-      add_old_root_with_id(root_nid, roster, markings);
+      roster.create_dir_node(root_nid);
+      roster.attach_node(root_nid, split(""));
+      marking_t marking;
+      marking.birth_revision = old_rid;
+      marking.parent_name.insert(old_rid);
+      safe_insert(markings, make_pair(root_nid, marking));
     }
   };
 
@@ -3112,6 +3108,51 @@ namespace
     }
   };
 
+  template <typename T>
+  struct X_parent_scalar : public a_scalar
+  {
+    std::map<scalar_val, split_path> values;
+    node_id const a_nid, b_nid, c_nid;
+    X_parent_scalar(node_id_source & nis)
+      : a_scalar(nis), a_nid(nis.next()), b_nid(nis.next()), c_nid(nis.next())
+    {
+      safe_insert(values, make_pair(scalar_a, split("dir_a/foo")));
+      safe_insert(values, make_pair(scalar_b, split("dir_b/foo")));
+      safe_insert(values, make_pair(scalar_c, split("dir_c/foo")));
+    }
+    void
+    setup_dirs(roster_t & roster, marking_map & markings)
+    {
+      roster.create_dir_node(a_nid);
+      roster.attach_node(a_nid, split("dir_a"));
+      roster.create_dir_node(b_nid);
+      roster.attach_node(b_nid, split("dir_b"));
+      roster.create_dir_node(c_nid);
+      roster.attach_node(c_nid, split("dir_c"));
+      marking_t marking;
+      marking.birth_revision = old_rid;
+      marking.parent_name.insert(old_rid);
+      safe_insert(markings, make_pair(a_nid, marking));
+      safe_insert(markings, make_pair(b_nid, marking));
+      safe_insert(markings, make_pair(c_nid, marking));
+    }
+    virtual void
+    set(revision_id const & origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      setup(roster, markings);
+      setup_dirs(roster, markings);
+      if (val != scalar_none)
+        {
+          T::make_obj(origin_rid, obj_under_test_nid, roster, markings);
+          roster.attach_node(obj_under_test_nid, safe_get(values, val));
+          markings[obj_under_test_nid].parent_name = this_scalar_mark;
+        }
+      roster.check_sane_against(markings);
+    }
+  };
+
   typedef std::vector<boost::shared_ptr<a_scalar> > scalars;
   scalars
   all_scalars(node_id_source & nis)
@@ -3120,6 +3161,8 @@ namespace
     ss.push_back(boost::shared_ptr<a_scalar>(new file_content_scalar(nis)));
     ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<file_maker>(nis)));
     ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<dir_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<file_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<dir_maker>(nis)));
     return ss;
   }
 }
