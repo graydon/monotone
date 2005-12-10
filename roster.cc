@@ -2993,7 +2993,7 @@ namespace
 
 namespace
 {
-  typedef enum { scalar_a, scalar_b, scalar_c } scalar_val;
+  typedef enum { scalar_a, scalar_b, scalar_c, scalar_none } scalar_val;
 
   struct a_scalar
   {
@@ -3065,10 +3065,13 @@ namespace
         roster_t & roster, marking_map & markings)
     {
       setup(roster, markings);
-      file_maker::make_file(obj_under_test_nid, safe_get(values, val),
-                            roster, markings);
-      roster.attach_node(obj_under_test_nid, split("foo"));
-      markings[obj_under_test_nid].file_content = this_scalar_mark;
+      if (val != scalar_none)
+        {
+          file_maker::make_file(obj_under_test_nid, safe_get(values, val),
+                                roster, markings);
+          roster.attach_node(obj_under_test_nid, split("foo"));
+          markings[obj_under_test_nid].file_content = this_scalar_mark;
+        }
       roster.check_sane_against(markings);
     }
   };
@@ -3088,12 +3091,26 @@ namespace
         roster_t & roster, marking_map & markings)
     {
       setup(roster, markings);
-      T::make_obj(obj_under_test_nid, roster, markings);
-      roster.attach_node(obj_under_test_nid, safe_get(values, val));
-      markings[obj_under_test_nid].parent_name = this_scalar_mark;
+      if (val != scalar_none)
+        {
+          T::make_obj(obj_under_test_nid, roster, markings);
+          roster.attach_node(obj_under_test_nid, safe_get(values, val));
+          markings[obj_under_test_nid].parent_name = this_scalar_mark;
+        }
       roster.check_sane_against(markings);
     }
   };
+
+  typedef std::vector<boost::shared_ptr<a_scalar> > scalars;
+  scalars
+  all_scalars()
+  {
+    scalars ss;
+    ss.push_back(boost::shared_ptr<a_scalar>(new file_content_scalar()));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<file_maker>()));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<dir_maker>()));
+    return ss;
+  }
 }
 
 ////////////////
@@ -3203,18 +3220,11 @@ static void
 run_a_0_scalar_parent_mark_scenario(scalar_val new_val,
                                     std::set<revision_id> const & new_mark_set)
 {
-  {
-    file_content_scalar s;
-    run_with_0_roster_parents(s, new_val, new_mark_set);
-  }
-  {
-    X_basename_scalar<file_maker> s;
-    run_with_0_roster_parents(s, new_val, new_mark_set);
-  }
-  {
-    X_basename_scalar<dir_maker> s;
-    run_with_0_roster_parents(s, new_val, new_mark_set);
-  }
+  scalars ss = all_scalars();
+  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
+    {
+      run_with_0_roster_parents(**i, new_val, new_mark_set);
+    }
 }
 
 static void
@@ -3223,18 +3233,11 @@ run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
                                     scalar_val new_val,
                                     std::set<revision_id> const & new_mark_set)
 {
-  {
-    file_content_scalar s;
-    run_with_1_roster_parent(s, parent_val, parent_mark_set, new_val, new_mark_set);
-  }
-  {
-    X_basename_scalar<file_maker> s;
-    run_with_1_roster_parent(s, parent_val, parent_mark_set, new_val, new_mark_set);
-  }
-  {
-    X_basename_scalar<dir_maker> s;
-    run_with_1_roster_parent(s, parent_val, parent_mark_set, new_val, new_mark_set);
-  }
+  scalars ss = all_scalars();
+  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
+    {
+      run_with_1_roster_parent(**i, parent_val, parent_mark_set, new_val, new_mark_set);
+    }
 }
 
 static void
@@ -3245,18 +3248,11 @@ run_a_2_scalar_parent_scenario(scalar_val left_val,
                                scalar_val new_val,
                                std::set<revision_id> const & new_mark_set)
 {
-  {
-    file_content_scalar s;
-    run_with_2_roster_parents(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
-  }
-  {
-    X_basename_scalar<file_maker> s;
-    run_with_2_roster_parents(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
-  }
-  {
-    X_basename_scalar<dir_maker> s;
-    run_with_2_roster_parents(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
-  }
+  scalars ss = all_scalars();
+  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
+    {
+      run_with_2_roster_parents(**i, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
+    }
 }
 
 ////////////////
