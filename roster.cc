@@ -2961,7 +2961,8 @@ namespace
   revision_id old_rid(string("0000000000000000000000000000000000000000"));
   revision_id left_rid(string("1111111111111111111111111111111111111111"));
   revision_id right_rid(string("2222222222222222222222222222222222222222"));
-  revision_id new_rid(string("3333333333333333333333333333333333333333"));
+  revision_id parent_rid(string("3333333333333333333333333333333333333333"));
+  revision_id new_rid(string("4444444444444444444444444444444444444444"));
 
   // FIXME: maybe move this to a scalar base class
   void
@@ -2997,16 +2998,17 @@ namespace
 
   struct a_scalar
   {
-    virtual void set(scalar_val val, std::set<revision_id> const & this_scalar_mark,
+    virtual void set(revision_id const & origin_rid,
+                     scalar_val val, std::set<revision_id> const & this_scalar_mark,
                      roster_t & roster, marking_map & markings)
       = 0;
     virtual ~a_scalar() {};
 
-    testing_node_id_source nis;
+    node_id_source & nis;
     node_id root_nid;
     node_id obj_under_test_nid;
-    a_scalar()
-      : nis(), root_nid(nis.next()), obj_under_test_nid(nis.next())
+    a_scalar(node_id_source & nis)
+      : nis(nis), root_nid(nis.next()), obj_under_test_nid(nis.next())
     {}
 
     void setup(roster_t & roster, marking_map & markings)
@@ -3017,30 +3019,34 @@ namespace
 
   struct file_maker
   {
-    static void make_obj(node_id nid, roster_t & roster, marking_map & markings)
+    static void make_obj(revision_id const & origin_rid, node_id nid,
+                         roster_t & roster, marking_map & markings)
     {
-      make_file(nid, file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+      make_file(origin_rid, nid,
+                file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
                 roster, markings);
     }
-    static void make_file(node_id nid, file_id const & fid,
+    static void make_file(revision_id const & origin_rid, node_id nid,
+                          file_id const & fid,
                           roster_t & roster, marking_map & markings)
     {
       roster.create_file_node(fid, nid);
       marking_t marking;
-      marking.birth_revision = old_rid;
-      marking.parent_name = marking.file_content = singleton(old_rid);
+      marking.birth_revision = origin_rid;
+      marking.parent_name = marking.file_content = singleton(origin_rid);
       safe_insert(markings, make_pair(nid, marking));
     }
   };
   
   struct dir_maker
   {
-    static void make_obj(node_id nid, roster_t & roster, marking_map & markings)
+    static void make_obj(revision_id const & origin_rid, node_id nid,
+                         roster_t & roster, marking_map & markings)
     {
       roster.create_dir_node(nid);
       marking_t marking;
-      marking.birth_revision = old_rid;
-      marking.parent_name = singleton(old_rid);
+      marking.birth_revision = origin_rid;
+      marking.parent_name = singleton(origin_rid);
       safe_insert(markings, make_pair(nid, marking));
     }
   };
@@ -3048,7 +3054,8 @@ namespace
   struct file_content_scalar : public a_scalar
   {
     std::map<scalar_val, file_id> values;
-    file_content_scalar()
+    file_content_scalar(node_id_source & nis)
+      : a_scalar(nis)
     {
       safe_insert(values,
                   make_pair(scalar_a,
@@ -3061,13 +3068,15 @@ namespace
                             file_id(string("cccccccccccccccccccccccccccccccccccccccc"))));
     }
     virtual void
-    set(scalar_val val, std::set<revision_id> const & this_scalar_mark,
+    set(revision_id const & origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
         roster_t & roster, marking_map & markings)
     {
       setup(roster, markings);
       if (val != scalar_none)
         {
-          file_maker::make_file(obj_under_test_nid, safe_get(values, val),
+          file_maker::make_file(origin_rid, obj_under_test_nid,
+                                safe_get(values, val),
                                 roster, markings);
           roster.attach_node(obj_under_test_nid, split("foo"));
           markings[obj_under_test_nid].file_content = this_scalar_mark;
@@ -3080,20 +3089,22 @@ namespace
   struct X_basename_scalar : public a_scalar
   {
     std::map<scalar_val, split_path> values;
-    X_basename_scalar()
+    X_basename_scalar(node_id_source & nis)
+      : a_scalar(nis)
     {
       safe_insert(values, make_pair(scalar_a, split("a")));
       safe_insert(values, make_pair(scalar_b, split("b")));
       safe_insert(values, make_pair(scalar_c, split("c")));
     }
     virtual void
-    set(scalar_val val, std::set<revision_id> const & this_scalar_mark,
+    set(revision_id const & origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
         roster_t & roster, marking_map & markings)
     {
       setup(roster, markings);
       if (val != scalar_none)
         {
-          T::make_obj(obj_under_test_nid, roster, markings);
+          T::make_obj(origin_rid, obj_under_test_nid, roster, markings);
           roster.attach_node(obj_under_test_nid, safe_get(values, val));
           markings[obj_under_test_nid].parent_name = this_scalar_mark;
         }
@@ -3103,12 +3114,12 @@ namespace
 
   typedef std::vector<boost::shared_ptr<a_scalar> > scalars;
   scalars
-  all_scalars()
+  all_scalars(node_id_source & nis)
   {
     scalars ss;
-    ss.push_back(boost::shared_ptr<a_scalar>(new file_content_scalar()));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<file_maker>()));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<dir_maker>()));
+    ss.push_back(boost::shared_ptr<a_scalar>(new file_content_scalar(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<file_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<dir_maker>(nis)));
     return ss;
   }
 }
@@ -3118,15 +3129,18 @@ namespace
 // scenario with a particular scalar with 0, 1, or 2 roster parents.
 
 static void
-run_with_0_roster_parents(a_scalar & s, scalar_val new_val,
-                          std::set<revision_id> const & new_mark_set)
+run_with_0_roster_parents(a_scalar & s, revision_id origin_rid,
+                          scalar_val new_val,
+                          std::set<revision_id> const & new_mark_set,
+                          node_id_source & nis)
 {
-  testing_node_id_source nis;
   roster_t expected_roster; MM(expected_roster);
   marking_map expected_markings; MM(expected_markings);
 
+  s.set(origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
+
   roster_t empty_roster;
-  cset cs;
+  cset cs; MM(cs);
   make_cset(empty_roster, expected_roster, cs);
   
   roster_t new_roster; MM(new_roster);
@@ -3134,7 +3148,7 @@ run_with_0_roster_parents(a_scalar & s, scalar_val new_val,
   // this function takes the old parent roster/marking and modifies them; in
   // our case, the parent roster/marking are empty, and so are our
   // roster/marking, so we don't need to do anything special.
-  make_roster_for_nonmerge(cs, new_rid, new_roster, new_markings, nis);
+  make_roster_for_nonmerge(cs, old_rid, new_roster, new_markings, nis);
 
   I(equal_up_to_renumbering(expected_roster, expected_markings,
                             new_roster, new_markings));
@@ -3142,21 +3156,22 @@ run_with_0_roster_parents(a_scalar & s, scalar_val new_val,
 
 static void
 run_with_1_roster_parent(a_scalar & s,
-                          scalar_val parent_val,
-                          std::set<revision_id> const & parent_mark_set,
-                          scalar_val new_val,
-                          std::set<revision_id> const & new_mark_set)
+                         revision_id origin_rid,
+                         scalar_val parent_val,
+                         std::set<revision_id> const & parent_mark_set,
+                         scalar_val new_val,
+                         std::set<revision_id> const & new_mark_set,
+                         node_id_source & nis)
 {
-  testing_node_id_source nis;
   roster_t parent_roster; MM(parent_roster);
   marking_map parent_markings; MM(parent_markings);
   roster_t expected_roster; MM(expected_roster);
   marking_map expected_markings; MM(expected_markings);
 
-  s.set(parent_val, parent_mark_set, parent_roster, parent_markings);
-  s.set(new_val, new_mark_set, expected_roster, expected_markings);
+  s.set(origin_rid, parent_val, parent_mark_set, parent_roster, parent_markings);
+  s.set(origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
 
-  cset cs;
+  cset cs; MM(cs);
   make_cset(parent_roster, expected_roster, cs);
   
   roster_t new_roster; MM(new_roster);
@@ -3171,14 +3186,15 @@ run_with_1_roster_parent(a_scalar & s,
 
 static void
 run_with_2_roster_parents(a_scalar & s,
-                           scalar_val left_val,
-                           std::set<revision_id> const & left_mark_set,
-                           scalar_val right_val,
-                           std::set<revision_id> const & right_mark_set,
-                           scalar_val new_val,
-                           std::set<revision_id> const & new_mark_set)
+                          revision_id origin_rid,
+                          scalar_val left_val,
+                          std::set<revision_id> const & left_mark_set,
+                          scalar_val right_val,
+                          std::set<revision_id> const & right_mark_set,
+                          scalar_val new_val,
+                          std::set<revision_id> const & new_mark_set,
+                          node_id_source & nis)
 {
-  testing_node_id_source nis;
   roster_t left_roster; MM(left_roster);
   roster_t right_roster; MM(right_roster);
   roster_t expected_roster; MM(expected_roster);
@@ -3186,9 +3202,9 @@ run_with_2_roster_parents(a_scalar & s,
   marking_map right_markings; MM(right_markings);
   marking_map expected_markings; MM(expected_markings);
 
-  s.set(left_val, left_mark_set, left_roster, left_markings);
-  s.set(right_val, right_mark_set, right_roster, right_markings);
-  s.set(new_val, new_mark_set, expected_roster, expected_markings);
+  s.set(origin_rid, left_val, left_mark_set, left_roster, left_markings);
+  s.set(origin_rid, right_val, right_mark_set, right_roster, right_markings);
+  s.set(origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
 
   cset left_cs; MM(left_cs);
   cset right_cs; MM(right_cs);
@@ -3217,13 +3233,22 @@ run_with_2_roster_parents(a_scalar & s,
 // scalar, a 1 parent scalar, and a 2 parent scalar.
 
 static void
-run_a_0_scalar_parent_mark_scenario(scalar_val new_val,
-                                    std::set<revision_id> const & new_mark_set)
+run_a_0_scalar_parent_mark_scenario()
 {
-  scalars ss = all_scalars();
+  testing_node_id_source nis;
+  scalars ss = all_scalars(nis);
   for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
     {
-      run_with_0_roster_parents(**i, new_val, new_mark_set);
+      run_with_0_roster_parents(**i, old_rid, scalar_a, singleton(old_rid), nis);
+      run_with_1_roster_parent(**i, new_rid,
+                               scalar_none, std::set<revision_id>(),
+                               scalar_a, singleton(new_rid),
+                               nis);
+      run_with_2_roster_parents(**i, new_rid,
+                                scalar_none, std::set<revision_id>(),
+                                scalar_none, std::set<revision_id>(),
+                                scalar_a, singleton(new_rid),
+                                nis);
     }
 }
 
@@ -3233,10 +3258,19 @@ run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
                                     scalar_val new_val,
                                     std::set<revision_id> const & new_mark_set)
 {
-  scalars ss = all_scalars();
+  testing_node_id_source nis;
+  scalars ss = all_scalars(nis);
   for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
     {
-      run_with_1_roster_parent(**i, parent_val, parent_mark_set, new_val, new_mark_set);
+      run_with_1_roster_parent(**i, parent_rid,
+                               parent_val, parent_mark_set,
+                               new_val, new_mark_set,
+                               nis);
+      run_with_2_roster_parents(**i, left_rid,
+                                parent_val, parent_mark_set,
+                                scalar_none, std::set<revision_id>(),
+                                new_val, new_mark_set,
+                                nis);
     }
 }
 
@@ -3248,10 +3282,15 @@ run_a_2_scalar_parent_scenario(scalar_val left_val,
                                scalar_val new_val,
                                std::set<revision_id> const & new_mark_set)
 {
-  scalars ss = all_scalars();
+  testing_node_id_source nis;
+  scalars ss = all_scalars(nis);
   for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
     {
-      run_with_2_roster_parents(**i, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
+      run_with_2_roster_parents(**i, old_rid,
+                                left_val, left_mark_set,
+                                right_val, right_mark_set,
+                                new_val, new_mark_set,
+                                nis);
     }
 }
 
@@ -3263,7 +3302,7 @@ static void
 test_all_0_scalar_parent_mark_scenarios()
 {
   // a*
-  run_a_0_scalar_parent_mark_scenario(scalar_a, singleton(new_rid));
+  run_a_0_scalar_parent_mark_scenario();
 }
 
 static void
