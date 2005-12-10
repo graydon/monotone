@@ -3153,6 +3153,35 @@ namespace
     }
   };
 
+  template <typename T>
+  struct X_attr_scalar : public a_scalar
+  {
+    std::map<scalar_val, pair<bool, attr_value> > values;
+    X_attr_scalar(node_id_source & nis)
+      : a_scalar(nis)
+    {
+      safe_insert(values, make_pair(scalar_a, make_pair(true, attr_value("a"))));
+      safe_insert(values, make_pair(scalar_b, make_pair(true, attr_value("b"))));
+      safe_insert(values, make_pair(scalar_c, make_pair(true, attr_value("c"))));
+    }
+    virtual void
+    set(revision_id const & origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      setup(roster, markings);
+      T::make_obj(origin_rid, obj_under_test_nid, roster, markings);
+      roster.attach_node(obj_under_test_nid, split("foo"));
+      if (val != scalar_none)
+        {
+          safe_insert(roster.get_node(obj_under_test_nid)->attrs,
+                      make_pair(attr_key("test_key"), safe_get(values, val)));
+          markings[obj_under_test_nid].attrs[attr_key("test_key")] = this_scalar_mark;
+        }
+      roster.check_sane_against(markings);
+    }
+  };
+
   typedef std::vector<boost::shared_ptr<a_scalar> > scalars;
   scalars
   all_scalars(node_id_source & nis)
@@ -3163,6 +3192,8 @@ namespace
     ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<dir_maker>(nis)));
     ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<file_maker>(nis)));
     ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<dir_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_scalar<file_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_scalar<dir_maker>(nis)));
     return ss;
   }
 }
