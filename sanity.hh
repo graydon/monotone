@@ -234,7 +234,8 @@ protected:
   MusingBase(char const * name, char const * file, int line, char const * func)
     : name(name), file(file), func(func), line(line)  {}
 
-  void gasp(const std::string & objstr, std::string & out) const;
+  void gasp_head(std::string & out) const;
+  void gasp_body(const std::string & objstr, std::string & out) const;
 };
 
 
@@ -249,14 +250,22 @@ private:
   T const & obj;
 };
 
-
+// The header line must be printed into the "out" string before
+// dump() is called.
+// This is so that even if the call to dump() throws an error,
+// the header line ("----- begin ...") will be printed.
+// If these calls are collapsed into one, then *no* identifying
+// information will be printed in the case of dump() throwing.
+// Having the header line without the body is still useful, as it
+// provides some semblance of a backtrace.
 template <typename T> void
 Musing<T>::gasp(std::string & out) const
 {
   std::string tmp;
+  MusingBase::gasp_head(out);
   dump(obj, tmp);
 
-  MusingBase::gasp(tmp, out);
+  MusingBase::gasp_body(tmp, out);
 }
 
 // Yes, this is insane.  No, it doesn't work if you do something more sane.

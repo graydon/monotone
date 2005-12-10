@@ -655,6 +655,7 @@ void
 packet_db_writer::consume_revision_data(revision_id const & ident, 
                                         revision_data const & dat)
 {
+  MM(ident);
   transaction_guard guard(pimpl->app.db);
   if (! pimpl->revision_exists_in_db(ident))
     {
@@ -663,6 +664,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
       dp = shared_ptr<delayed_packet>(new delayed_revision_data_packet(ident, dat));
       
       revision_set rev;
+      MM(rev);
       read_revision_set(dat, rev);
       
       for (edge_map::const_iterator i = rev.edges.begin(); 

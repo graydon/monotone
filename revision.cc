@@ -1483,6 +1483,7 @@ parse_edge(basic_io::parser & parser,
            edge_map & es)
 {
   boost::shared_ptr<cset> cs(new cset());
+  MM(*cs);
   manifest_id old_man;
   revision_id old_rev;
   std::string tmp;
@@ -1505,6 +1506,7 @@ void
 parse_revision(basic_io::parser & parser,
                revision_set & rev)
 {
+  MM(rev);
   rev.edges.clear();
   std::string tmp;
   parser.esym(syms::new_manifest);
@@ -1519,6 +1521,7 @@ void
 read_revision_set(data const & dat,
                   revision_set & rev)
 {
+  MM(rev);
   std::istringstream iss(dat());
   basic_io::input_source src(iss, "revision");
   basic_io::tokenizer tok(src);

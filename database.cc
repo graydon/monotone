@@ -1485,6 +1485,8 @@ database::deltify_revision(revision_id const & rid)
 {
   transaction_guard guard(*this);
   revision_set rev;
+  MM(rev);
+  MM(rid);
   get_revision(rid, rev);
   // Make sure that all parent revs have their files replaced with deltas
   // from this rev's files.
@@ -1529,6 +1531,7 @@ database::put_revision(revision_id const & new_id,
 
   rev.check_sane();
   revision_data d;
+  MM(d.inner());
   write_revision_set(rev, d);
 
   // Phase 1: confirm the revision makes sense
@@ -1550,6 +1553,7 @@ database::put_revision(revision_id const & new_id,
   marking_map mm;
   {
     manifest_id roster_manifest_id;
+    MM(roster_manifest_id);
     make_roster_for_revision(rev, new_id, ros, mm, *__app);
     calculate_ident(ros, roster_manifest_id);
     I(rev.new_manifest == roster_manifest_id);
@@ -2733,6 +2737,7 @@ database::put_roster(revision_id const & rev_id,
                      roster_t & roster,
                      marking_map & marks)
 {
+  MM(rev_id);
   data old_data, new_data;
   delta reverse_delta;
   hexenc<id> old_id, new_id;
