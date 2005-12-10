@@ -2976,6 +2976,14 @@ namespace
     marking.parent_name.insert(old_rid);
     safe_insert(markings, make_pair(root_nid, marking));
   }
+
+  split_path
+  split(std::string const & s)
+  {
+    split_path sp;
+    file_path_internal(s).split(sp);
+    return sp;
+  }
 }
 
 
@@ -3007,28 +3015,33 @@ namespace
     }
   };
 
-  struct file_scalar_mixin : public a_scalar
+  struct file_maker
   {
-    void make_obj(roster_t & roster, marking_map & markings)
+    static void make_obj(node_id nid, roster_t & roster, marking_map & markings)
     {
-      roster.create_file_node(file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
-                              obj_under_test_nid);
+      make_file(nid, file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+                roster, markings);
+    }
+    static void make_file(node_id nid, file_id const & fid,
+                          roster_t & roster, marking_map & markings)
+    {
+      roster.create_file_node(fid, nid);
       marking_t marking;
       marking.birth_revision = old_rid;
       marking.parent_name = marking.file_content = singleton(old_rid);
-      safe_insert(markings, make_pair(obj_under_test_nid, marking));
+      safe_insert(markings, make_pair(nid, marking));
     }
   };
   
-  struct dir_scalar_mixin : public a_scalar
+  struct dir_maker
   {
-    void make_obj(roster_t & roster, marking_map & markings)
+    static void make_obj(node_id nid, roster_t & roster, marking_map & markings)
     {
-      roster.create_dir_node(obj_under_test_nid);
+      roster.create_dir_node(nid);
       marking_t marking;
       marking.birth_revision = old_rid;
       marking.parent_name = singleton(old_rid);
-      safe_insert(markings, make_pair(obj_under_test_nid, marking));
+      safe_insert(markings, make_pair(nid, marking));
     }
   };
   
@@ -3052,39 +3065,33 @@ namespace
         roster_t & roster, marking_map & markings)
     {
       setup(roster, markings);
-      roster.create_file_node(safe_get(values, val), obj_under_test_nid);
-      split_path name;
-      file_path_internal("foo").split(name);
-      roster.attach_node(obj_under_test_nid, name);
-      safe_get(markings, obj_under_test_nid).file_content = this_scalar_mark
-      I(roster.check_sane_against(markings));
+      file_maker::make_file(obj_under_test_nid, safe_get(values, val),
+                            roster, markings);
+      roster.attach_node(obj_under_test_nid, split("foo"));
+      markings[obj_under_test_nid].file_content = this_scalar_mark;
+      roster.check_sane_against(markings);
     }
   };
 
   template <typename T>
-  struct X_basename_scalar : public T
+  struct X_basename_scalar : public a_scalar
   {
     std::map<scalar_val, split_path> values;
     X_basename_scalar()
-      : nis(), root_nid(nis.next()), obj_under_test_nid(nis.next())
     {
-      split_path sp;
-      file_path_internal("a").split(sp);
-      safe_insert(values, make_pair(scalar_a, sp));
-      file_path_internal("b").split(sp);
-      safe_insert(values, make_pair(scalar_b, sp));
-      file_path_internal("c").split(sp);
-      safe_insert(values, make_pair(scalar_c, sp));
+      safe_insert(values, make_pair(scalar_a, split("a")));
+      safe_insert(values, make_pair(scalar_b, split("b")));
+      safe_insert(values, make_pair(scalar_c, split("c")));
     }
     virtual void
     set(scalar_val val, std::set<revision_id> const & this_scalar_mark,
         roster_t & roster, marking_map & markings)
     {
       setup(roster, markings);
-      make_obj(roster, markings);
+      T::make_obj(obj_under_test_nid, roster, markings);
       roster.attach_node(obj_under_test_nid, safe_get(values, val));
-      safe_get(markings, obj_under_test_nid).parent_name = this_scalar_mark
-      I(roster.check_sane_against(markings));
+      markings[obj_under_test_nid].parent_name = this_scalar_mark;
+      roster.check_sane_against(markings);
     }
   };
 }
@@ -3193,36 +3200,40 @@ run_with_2_roster_parents(a_scalar & s,
 // scalar, a 1 parent scalar, and a 2 parent scalar.
 
 static void
-test_a_1_parent_mark_scenario(scalar_val parent_val,
-                              std::set<revision_id> const & parent_mark_set,
-                              scalar_val new_val,
-                              std::set<revision_id> const & new_mark_set)
+run_a_0_scalar_parent_mark_scenario(scalar_val new_val,
+                                    std::set<revision_id> const & new_mark_set)
 {
   {
     file_content_scalar s;
-    run_with_1_roster_parent(s, parent_val, parent_mark_set, new_val, new_mark_set);
+    run_with_0_roster_parents(s, new_val, new_mark_set);
   }
   {
-    X_basename_scalar<file_scalar_mixin> s;
-    run_with_1_roster_parent(s, parent_val, parent_mark_set, new_val, new_mark_set);
+    X_basename_scalar<file_maker> s;
+    run_with_0_roster_parents(s, new_val, new_mark_set);
   }
   {
-    X_basename_scalar<dir_scalar_mixin> s;
-    run_with_1_roster_parent(s, parent_val, parent_mark_set, new_val, new_mark_set);
+    X_basename_scalar<dir_maker> s;
+    run_with_0_roster_parents(s, new_val, new_mark_set);
   }
 }
 
 static void
-run_a_0_parent_mark_scenario(scalar_val new_val,
-                             std::set<revision_id> const & new_mark_set)
+run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
+                                    std::set<revision_id> const & parent_mark_set,
+                                    scalar_val new_val,
+                                    std::set<revision_id> const & new_mark_set)
 {
   {
     file_content_scalar s;
-    run_with_0_roster_parents(s, new_val, new_mark_set);
+    run_with_1_roster_parent(s, parent_val, parent_mark_set, new_val, new_mark_set);
   }
   {
-    file_basename_scalar s;
-    run_with_0_roster_parents(s, new_val, new_mark_set);
+    X_basename_scalar<file_maker> s;
+    run_with_1_roster_parent(s, parent_val, parent_mark_set, new_val, new_mark_set);
+  }
+  {
+    X_basename_scalar<dir_maker> s;
+    run_with_1_roster_parent(s, parent_val, parent_mark_set, new_val, new_mark_set);
   }
 }
 
@@ -3239,7 +3250,11 @@ run_a_2_scalar_parent_scenario(scalar_val left_val,
     run_with_2_roster_parents(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
   }
   {
-    file_basename_scalar s;
+    X_basename_scalar<file_maker> s;
+    run_with_2_roster_parents(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
+  }
+  {
+    X_basename_scalar<dir_maker> s;
     run_with_2_roster_parents(s, left_val, left_mark_set, right_val, right_mark_set, new_val, new_mark_set);
   }
 }
@@ -3252,7 +3267,7 @@ static void
 test_all_0_scalar_parent_mark_scenarios()
 {
   // a*
-  test_a_0_parent_mark_scenario(scalar_a, singleton(new_rid));
+  run_a_0_scalar_parent_mark_scenario(scalar_a, singleton(new_rid));
 }
 
 static void
@@ -3261,37 +3276,37 @@ test_all_1_scalar_parent_mark_scenarios()
   //  a
   //  |
   //  a
-  test_a_1_parent_mark_scenario(scalar_a, singleton(old_rid),
-                                scalar_a, singleton(old_rid));
+  run_a_1_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(old_rid));
   //  a*
   //  |
   //  a
-  test_a_1_parent_mark_scenario(scalar_a, singleton(left_rid),
-                                scalar_a, singleton(left_rid));
+  run_a_1_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_a, singleton(left_rid));
   // a*  a*
   //  \ /
   //   a
   //   |
   //   a
-  test_a_1_parent_mark_scenario(scalar_a, doubleton(left_rid, right_rid),
-                                scalar_a, doubleton(left_rid, right_rid));
+  run_a_1_scalar_parent_mark_scenario(scalar_a, doubleton(left_rid, right_rid),
+                                      scalar_a, doubleton(left_rid, right_rid));
   //  a
   //  |
   //  b*
-  test_a_1_parent_mark_scenario(scalar_a, singleton(old_rid),
-                                scalar_b, singleton(new_rid));
+  run_a_1_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_b, singleton(new_rid));
   //  a*
   //  |
   //  b*
-  test_a_1_parent_mark_scenario(scalar_a, singleton(left_rid),
-                                scalar_b, singleton(new_rid));
+  run_a_1_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_b, singleton(new_rid));
   // a*  a*
   //  \ /
   //   a
   //   |
   //   b*
-  test_a_1_parent_mark_scenario(scalar_a, doubleton(left_rid, right_rid),
-                                scalar_b, singleton(new_rid));
+  run_a_1_scalar_parent_mark_scenario(scalar_a, doubleton(left_rid, right_rid),
+                                      scalar_b, singleton(new_rid));
 }
 
 static void
