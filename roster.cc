@@ -1488,14 +1488,14 @@ namespace
   {
     I(!null_id(left_rid) && !null_id(right_rid));
     {
-      temp_node_id_source nis;
+      temp_node_id_source temp_nis;
       // SPEEDUP?: the copies on the next two lines are probably the main
       // bottleneck in this code
       new_roster = left_roster;
       roster_t from_right_r(right_roster);
 
-      editable_roster_for_merge from_left_er(new_roster, nis);
-      editable_roster_for_merge from_right_er(from_right_r, nis);
+      editable_roster_for_merge from_left_er(new_roster, temp_nis);
+      editable_roster_for_merge from_right_er(from_right_r, temp_nis);
 
       left_cs.apply_to(from_left_er);
       right_cs.apply_to(from_right_er);

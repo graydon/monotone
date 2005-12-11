@@ -1,5 +1,10 @@
 2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* roster.cc (make_roster_for_merge): unshadow the node_id_source
+	argument. Resolve usages to the argument or the local by educated guess.
+
+2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* paths.{cc,hh}: operator<() for split_path's
 
 2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
