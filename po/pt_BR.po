@@ -514,7 +514,7 @@ msgstr ""
 #: commands.cc:2933 commands.cc:3594
 #, c-format
 msgid "no such revision '%s'"
-msgstr "revisão '%s' não existe"
+msgstr "versão '%s' não existe"
 
 #: commands.cc:466
 #, c-format
@@ -604,7 +604,7 @@ msgstr "nenhuma chave de '%s' encontrada\n"
 #: commands.cc:721
 #, c-format
 msgid "revision %s already has children. We cannot kill it."
-msgstr "revisão %s já tem filhos. Não podemos matá-la."
+msgstr "versão %s já tem filhos. Não podemos matá-la."
 
 #: commands.cc:851 commands.cc:875 commands.cc:912 commands.cc:933
 #: commands.cc:969
@@ -651,46 +651,48 @@ msgstr "removendo par de chaves '%s' do repositório de chaves\n"
 #: commands.cc:906
 #, c-format
 msgid "public or private key '%s' does not exist in keystore or database"
-msgstr "chave pública ou privada '%s' não existe no repositório de chaves nem o banco de dados"
+msgstr "chave pública ou privada '%s' não existe no repositório de chaves nem no banco de dados"
 
 #: commands.cc:908
 #, c-format
 msgid ""
 "public or private key '%s' does not exist in keystore, and no database was "
 "specified"
-msgstr ""
+msgstr "chave pública ou privada '%s' não existe no repositório de chaves, e nenhum banco de dados foi especificado"
 
 #: commands.cc:913
 msgid "change passphrase of a private RSA key"
-msgstr ""
+msgstr "muda frase secreta de uma chave RSA privada"
 
 #: commands.cc:923
 #, c-format
 msgid "key '%s' does not exist in the keystore"
-msgstr ""
+msgstr "chave '%s' não existe no repositório de chaves"
 
 #: commands.cc:930
 #, c-format
 msgid "passphrase changed\n"
-msgstr ""
+msgstr "frase secreta mudada\n"
 
 #: commands.cc:933
 msgid "REVISION CERTNAME [CERTVAL]"
-msgstr ""
+msgstr "VERSÃO NOME-CERTIFICADO [VALOR-CERTIFICADO]"
 
 #: commands.cc:934
 msgid "create a cert for a revision"
-msgstr ""
+msgstr "cria um certificado para uma versão"
 
 #: commands.cc:969
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
-msgstr ""
+msgstr "VERSÃO NOME VALOR ASSINANTE1 [ASSINANTE2 [...]]"
 
 #: commands.cc:970
 msgid ""
 "test whether a hypothetical cert would be trusted\n"
 "by current settings"
 msgstr ""
+"testa se um certificado hipotético teria confiança\n"
+"baseado nos parâmetros atuais"
 
 #: commands.cc:1003
 #, c-format
@@ -701,168 +703,173 @@ msgid ""
 "was signed by: %s\n"
 "it would be: %s\n"
 msgstr ""
+"se um certificado sobre: %s\n"
+"com chave: %s\n"
+"e valor: %s\n"
+"fosse assinado por: %s\n"
+"ele seria: %s\n"
 
 #: commands.cc:1012
 msgid "trusted"
-msgstr ""
+msgstr "confiável"
 
 #: commands.cc:1012
 msgid "UNtrusted"
-msgstr ""
+msgstr "NÃO-confiável"
 
 #: commands.cc:1015 commands.cc:1028 commands.cc:1040 commands.cc:1057
 #: commands.cc:1103
 msgid "review"
-msgstr ""
+msgstr "revisão"
 
 #: commands.cc:1015
 msgid "REVISION TAGNAME"
-msgstr ""
+msgstr "VERSÃO ETIQUETA"
 
 #: commands.cc:1016
 msgid "put a symbolic tag cert on a revision version"
-msgstr ""
+msgstr "põe uma etiqueta simbólica em uma versão"
 
 #: commands.cc:1028
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
-msgstr ""
+msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 
 #: commands.cc:1029
 msgid "note the results of running a test on a revision"
-msgstr ""
+msgstr "anota os resultados de executar um teste sobre uma versão"
 
 #: commands.cc:1040 commands.cc:1057
 msgid "REVISION"
-msgstr ""
+msgstr "VERSÂO"
 
 #: commands.cc:1041
 msgid "approve of a particular revision"
-msgstr ""
+msgstr "aprova a versão especificada"
 
 #: commands.cc:1052
 #, c-format
 msgid "need --branch argument for approval"
-msgstr ""
+msgstr "argumento --branch necessário para aprovação"
 
 #: commands.cc:1058
 msgid "disapprove of a particular revision"
-msgstr ""
+msgstr "desaprova a versão especificada"
 
 #: commands.cc:1071
 #, c-format
 msgid "revision '%s' has %d changesets, cannot invert\n"
-msgstr ""
+msgstr "versão '%s' tem %d mudanças, não é possível inverter\n"
 
 #: commands.cc:1075
 #, c-format
 msgid "need --branch argument for disapproval"
-msgstr ""
+msgstr "argumento --branch necessário para desaprovação"
 
 #: commands.cc:1103
 msgid "REVISION [COMMENT]"
-msgstr ""
+msgstr "VERSÃO [COMENTÁRIO]"
 
 #: commands.cc:1104
 msgid "comment on a particular revision"
-msgstr ""
+msgstr "comenta a versão especificada"
 
 #: commands.cc:1114
 #, c-format
 msgid "edit comment failed"
-msgstr ""
+msgstr "edição de comentário falhou"
 
 #: commands.cc:1117
 #, c-format
 msgid "empty comment"
-msgstr ""
+msgstr "comentário vazio"
 
 #: commands.cc:1129 commands.cc:1166 commands.cc:1200 commands.cc:1332
 #: commands.cc:2198 commands.cc:2321 commands.cc:2882 commands.cc:3415
 msgid "working copy"
-msgstr ""
+msgstr "cópia de trabalho"
 
 #: commands.cc:1129 commands.cc:1166 commands.cc:1275 commands.cc:2321
 #: commands.cc:2670 commands.cc:3415
 msgid "[PATH]..."
-msgstr ""
+msgstr "[CAMINHO]..."
 
 #: commands.cc:1130
 msgid "add files to working copy"
-msgstr ""
+msgstr "adiciona arquivos à cópia de trabalho"
 
 #: commands.cc:1167
 msgid "drop files from working copy"
-msgstr ""
+msgstr "remove arquivos da cópia de trabalho"
 
 #: commands.cc:1200
 msgid "SRC DST"
-msgstr ""
+msgstr "ORIGEM DESTINO"
 
 #: commands.cc:1201
 msgid "rename entries in the working copy"
-msgstr ""
+msgstr "renomeia entradas na cópia de trabalho"
 
 #: commands.cc:1229 commands.cc:1242 commands.cc:2803 commands.cc:2820
 #: commands.cc:3495
 msgid "debug"
-msgstr ""
+msgstr "depuração"
 
 #: commands.cc:1229
 msgid "load file contents into db"
-msgstr ""
+msgstr "carrega o conteúdo do arquivo no banco de dados"
 
 #: commands.cc:1242
 msgid "<parent> <left> <right>"
-msgstr ""
+msgstr "<pai> <esquerda> <direita>"
 
 #: commands.cc:1243
 msgid "merge 3 files and output result"
-msgstr ""
+msgstr "combina 3 arquivos e retorna resultado"
 
 #: commands.cc:1253
 #, c-format
 msgid "ancestor file id does not exist"
-msgstr ""
+msgstr "id do arquivo ancestral não existe"
 
 #: commands.cc:1256
 #, c-format
 msgid "left file id does not exist"
-msgstr ""
+msgstr "id do arquivo esquerdo não existe"
 
 #: commands.cc:1259
 #, c-format
 msgid "right file id does not exist"
-msgstr ""
+msgstr "id do arquivo direito não existe"
 
 #: commands.cc:1270
 #, c-format
 msgid "merge failed"
-msgstr ""
+msgstr "combinação falhou"
 
 #: commands.cc:1275
 msgid "show status of working copy"
-msgstr ""
+msgstr "mostra status da cópia de trabalho"
 
 #: commands.cc:1332
 msgid "[PATH]"
-msgstr ""
+msgstr "[CAMINHO]"
 
 #: commands.cc:1333
 msgid "calculate identity of PATH or stdin"
-msgstr ""
+msgstr "calcula identidade do CAMINHO ou stdin"
 
 #: commands.cc:1356
 msgid "FILENAME"
-msgstr ""
+msgstr "ARQUIVO"
 
 #: commands.cc:1357
 msgid "write file from database to stdout"
-msgstr ""
+msgstr "escreve arquivo do banco de dados em stdout"
 
 #: commands.cc:1385
 #, c-format
 msgid "no file '%s' found in revision '%s'\n"
-msgstr ""
+msgstr "nenhum arquivo '%s' encontrado na versão '%s'\n"
 
 #: commands.cc:1389
 #, c-format
