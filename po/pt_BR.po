@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone 0.24\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-30 13:45-0200\n"
+"POT-Creation-Date: 2005-12-11 15:12-0300\n"
 "PO-Revision-Date: 2005-11-30 13:45-0200\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
@@ -21,117 +21,117 @@ msgstr ""
 msgid "initializing from directory %s\n"
 msgstr "inicializando do diretório %s\n"
 
-#: app_state.cc:81
+#: app_state.cc:87
 #, c-format
 msgid "branch name is '%s'\n"
 msgstr "nome do ramo é '%s'\n"
 
-#: app_state.cc:88
+#: app_state.cc:94
 #, c-format
 msgid "setting dump path to %s\n"
 msgstr "configurando caminho de dump para %s\n"
 
-#: app_state.cc:102
+#: app_state.cc:108
 #, c-format
 msgid "working copy directory required but not found%s%s"
 msgstr "caminho da cópia de trabalho necessário mas não encontrado%s%s"
 
-#: app_state.cc:110
+#: app_state.cc:116
 #, c-format
 msgid "invalid directory ''"
 msgstr "diretório inválido ''"
 
-#: app_state.cc:112
+#: app_state.cc:118
 #, c-format
 msgid "creating working copy in %s\n"
 msgstr "criando cópia de trabalho em %s\n"
 
-#: app_state.cc:118
+#: app_state.cc:124
 #, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'\n"
 msgstr ""
 
-#: app_state.cc:121
+#: app_state.cc:127
 #, c-format
 msgid "creating bookkeeping directory '%s' for working copy in '%s'\n"
 msgstr ""
 
-#: app_state.cc:152
+#: app_state.cc:158
 #, c-format
 msgid "'%s' ignored by restricted path set\n"
 msgstr "'%s' ignorado pelo conjunto de caminhos restritos\n"
 
-#: app_state.cc:157 app_state.cc:175
+#: app_state.cc:163 app_state.cc:181
 #, c-format
 msgid "unknown path '%s'\n"
 msgstr "caminho desconhecido '%s'\n"
 
-#: app_state.cc:159
+#: app_state.cc:165
 #, c-format
 msgid "'%s' added to restricted path set\n"
 msgstr "'%s' adicionado ao conjunto de caminhos restritos\n"
 
-#: app_state.cc:170
+#: app_state.cc:176
 #, c-format
 msgid "'%s' ignored by excluded path set\n"
 msgstr "'%s' ignorado pelo conjunto de caminhos excluídos\n"
 
-#: app_state.cc:177
+#: app_state.cc:183
 #, c-format
 msgid "'%s' added to excluded path set\n"
 msgstr "'%s' adicionado ao conjunto de caminhos excluídos\n"
 
-#: app_state.cc:204
+#: app_state.cc:210
 #, c-format
 msgid "checking excluded path set for '%s'\n"
 msgstr "verificando conjunto de caminhos excluídos para '%s'\n"
 
-#: app_state.cc:211 app_state.cc:244
+#: app_state.cc:217 app_state.cc:250
 #, c-format
 msgid "path '%s' found in excluded path set; '%s' excluded\n"
 msgstr "caminho '%s' achado em conjunto de caminhos excluídos; '%s' excluído\n"
 
-#: app_state.cc:230
+#: app_state.cc:236
 #, c-format
 msgid "checking restricted path set for '%s'\n"
 msgstr "verificando conjunto de caminhos restritos para '%s'\n"
 
-#: app_state.cc:238
+#: app_state.cc:244
 #, c-format
 msgid "path '%s' found in restricted path set; '%s' included\n"
 msgstr "caminho '%s' achado em conjunto de caminhos restritos; '%s' incluído\n"
 
-#: app_state.cc:326
+#: app_state.cc:332
 #, c-format
 msgid "search root '%s' does not exist"
 msgstr "raiz de procura '%s' não existe"
 
-#: app_state.cc:327
+#: app_state.cc:333
 #, c-format
 msgid "search root '%s' is not a directory\n"
 msgstr "raiz de procura '%s' não é um diretório\n"
 
-#: app_state.cc:329
+#: app_state.cc:335
 #, c-format
 msgid "set search root to %s\n"
 msgstr "raiz de procura configurada para %s\n"
 
-#: app_state.cc:360
+#: app_state.cc:366
 #, c-format
 msgid "negative depth not allowed\n"
 msgstr "profundidade negativa não permitida\n"
 
-#: app_state.cc:368
+#: app_state.cc:374
 #, c-format
 msgid "negative or zero last not allowed\n"
 msgstr "last negativo ou zero não permitido\n"
 
-#: app_state.cc:491
+#: app_state.cc:497
 #, c-format
 msgid "Failed to read options file %s"
 msgstr "Impossível ler arquivo de opções %s"
 
-#: app_state.cc:508
+#: app_state.cc:514
 #, c-format
 msgid "Failed to write options file %s"
 msgstr "Impossível escrever arquivo de opções %s"
@@ -488,6 +488,8 @@ msgid ""
 "Enter a description of this change.\n"
 "Lines beginning with `MT:' are removed automatically.\n"
 msgstr ""
+"Entre a descrição desta mudança.\n"
+"Linhas que iniciam com `MT:' serão removidas automaticamente.\n"
 
 #: commands.cc:389
 #, c-format
@@ -504,6 +506,8 @@ msgid ""
 "branch '%s' has multiple heads\n"
 "perhaps consider 'monotone merge'"
 msgstr ""
+"ramo '%s' tem múltiplas frentes\n"
+"considere usar 'monotone merge'"
 
 #: commands.cc:459 commands.cc:715 commands.cc:1374 commands.cc:1446
 #: commands.cc:1831 commands.cc:2717 commands.cc:2732 commands.cc:2735
@@ -565,6 +569,10 @@ msgid ""
 "Name  : %s\n"
 "Value : %s\n"
 msgstr ""
+"Chave : %s\n"
+"Assin : %s\n"
+"Nome  : %s\n"
+"Valor : %s\n"
 
 #: commands.cc:585
 msgid "ok"
@@ -586,7 +594,7 @@ msgstr "(*) - apenas em %s/"
 #: commands.cc:701
 #, c-format
 msgid "no keys found\n"
-msgstr "nehuma chave encontrada\n"
+msgstr "nenhuma chave encontrada\n"
 
 #: commands.cc:703
 #, c-format
@@ -596,54 +604,54 @@ msgstr "nenhuma chave de '%s' encontrada\n"
 #: commands.cc:721
 #, c-format
 msgid "revision %s already has children. We cannot kill it."
-msgstr ""
+msgstr "revisão %s já tem filhos. Não podemos matá-la."
 
 #: commands.cc:851 commands.cc:875 commands.cc:912 commands.cc:933
 #: commands.cc:969
 msgid "key and cert"
-msgstr ""
+msgstr "chave e certificado"
 
 #: commands.cc:851 commands.cc:875 commands.cc:912
 msgid "KEYID"
-msgstr ""
+msgstr "CHAVEID"
 
 #: commands.cc:851
 msgid "generate an RSA key-pair"
-msgstr ""
+msgstr "gera um par de chaves RSA"
 
 #: commands.cc:866
 #, c-format
 msgid "key '%s' already exists"
-msgstr ""
+msgstr "chave '%s' já existe"
 
 #: commands.cc:869
 #, c-format
 msgid "generating key-pair '%s'"
-msgstr ""
+msgstr "gerando par de chaves '%s'"
 
 #: commands.cc:871
 #, c-format
 msgid "storing key-pair '%s' in %s/"
-msgstr ""
+msgstr "salvando par de chaves '%s' em %s/"
 
 #: commands.cc:875
 msgid "drop a public and private key"
-msgstr ""
+msgstr "remove chaves pública e privada"
 
 #: commands.cc:889
 #, c-format
 msgid "dropping public key '%s' from database\n"
-msgstr ""
+msgstr "removendo chave pública '%s' do banco de dados\n"
 
 #: commands.cc:899
 #, c-format
 msgid "dropping key pair '%s' from keystore\n"
-msgstr ""
+msgstr "removendo par de chaves '%s' do repositório de chaves\n"
 
 #: commands.cc:906
 #, c-format
 msgid "public or private key '%s' does not exist in keystore or database"
-msgstr ""
+msgstr "chave pública ou privada '%s' não existe no repositório de chaves nem o banco de dados"
 
 #: commands.cc:908
 #, c-format
@@ -2054,41 +2062,31 @@ msgid ""
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
 
-#: database.cc:143 database.cc:205
-#, c-format
-msgid "database %s does not exist"
-msgstr ""
-
-#: database.cc:144 database.cc:206
-#, c-format
-msgid "%s is a directory, not a database"
-msgstr ""
-
-#: database.cc:151
+#: database.cc:147
 #, c-format
 msgid "unable to probe database version in file %s"
 msgstr ""
 
-#: database.cc:158
+#: database.cc:154
 #, c-format
 msgid "database %s is not an sqlite version 3 file, try dump and reload"
 msgstr ""
 
-#: database.cc:180 database.cc:191
+#: database.cc:176 database.cc:187
 #, c-format
 msgid "sqlite error: %d: %s"
 msgstr ""
 
-#: database.cc:185
+#: database.cc:181
 msgid "make sure database and containing directory are writeable"
 msgstr ""
 
-#: database.cc:232
+#: database.cc:226
 #, c-format
 msgid "could not initialize database: %s: already exists"
 msgstr ""
 
-#: database.cc:237
+#: database.cc:231
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -2096,12 +2094,12 @@ msgid ""
 "cancelling database creation"
 msgstr ""
 
-#: database.cc:359
+#: database.cc:353
 #, c-format
 msgid "cannot create %s; it already exists"
 msgstr ""
 
-#: database.cc:423
+#: database.cc:417
 #, c-format
 msgid ""
 "schema version    : %s\n"
@@ -2124,155 +2122,165 @@ msgid ""
 "  total           : %u\n"
 msgstr ""
 
-#: database.cc:476
+#: database.cc:471
 #, c-format
 msgid "database schema version: %s"
 msgstr ""
 
-#: database.cc:494
+#: database.cc:490
 msgid "mcerts"
 msgstr ""
 
-#: database.cc:495
+#: database.cc:491
 msgid "pubkeys"
 msgstr ""
 
-#: database.cc:496
+#: database.cc:492
 msgid "privkeys"
 msgstr ""
 
-#: database.cc:540
+#: database.cc:536
 #, c-format
 msgid "statement cache statistics\n"
 msgstr ""
 
-#: database.cc:541
+#: database.cc:537
 #, c-format
 msgid "prepared %d statements\n"
 msgstr ""
 
-#: database.cc:545
+#: database.cc:541
 #, c-format
 msgid "%d executions of %s\n"
 msgstr ""
 
-#: database.cc:598
+#: database.cc:594
 #, c-format
 msgid "prepared statement %s\n"
 msgstr ""
 
-#: database.cc:602
+#: database.cc:598
 #, c-format
 msgid "multiple statements in query: %s\n"
 msgstr ""
 
-#: database.cc:608
+#: database.cc:604
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
 msgstr ""
 
-#: database.cc:614
+#: database.cc:610
 #, c-format
 msgid "binding %d parameters for %s\n"
 msgstr ""
 
-#: database.cc:628
+#: database.cc:624
 #, c-format
 msgid "binding %d with value '%s'\n"
 msgstr ""
 
-#: database.cc:644
+#: database.cc:640
 #, c-format
 msgid "null result in query: %s\n"
 msgstr ""
 
-#: database.cc:662
+#: database.cc:658
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
 msgstr ""
 
-#: database.cc:672
+#: database.cc:668
 #, c-format
 msgid "cannot change filename to %s while db is open"
 msgstr ""
 
-#: database.cc:690
+#: database.cc:686
 #, c-format
 msgid ""
 "Attempt to start exclusive transaction within non-exclusive transaction."
 msgstr ""
 
-#: database.cc:884
+#: database.cc:880
 #, c-format
 msgid "version cache expiring %s\n"
 msgstr ""
 
-#: database.cc:906
+#: database.cc:902
 #, c-format
 msgid "version cache hit on %s\n"
 msgstr ""
 
-#: database.cc:975
+#: database.cc:971
 #, c-format
 msgid "reconstructing %s in %s\n"
 msgstr ""
 
-#: database.cc:1081
+#: database.cc:1077
 #, c-format
 msgid "following delta %s -> %s\n"
 msgstr ""
 
-#: database.cc:1503
+#: database.cc:1499
 #, c-format
 msgid "Killing revision %s locally\n"
 msgstr ""
 
-#: database.cc:1515
+#: database.cc:1511
 #, c-format
 msgid "Deleting all references to branch %s\n"
 msgstr ""
 
-#: database.cc:1528
+#: database.cc:1524
 #, c-format
 msgid "Deleting all references to tag %s\n"
 msgstr ""
 
-#: database.cc:1629
+#: database.cc:1625
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr ""
 
-#: database.cc:2257
+#: database.cc:2253
 #, c-format
 msgid "after get_branch_heads for %s, heads has %d entries\n"
 msgstr ""
 
-#: database.cc:2280
+#: database.cc:2276
 #, c-format
 msgid "processing selector type %d with i->second '%s'\n"
 msgstr ""
 
-#: database.cc:2287
+#: database.cc:2283
 #, c-format
 msgid "limiting to current branch '%s'\n"
 msgstr ""
 
-#: database.cc:2517
+#: database.cc:2513
 #, c-format
 msgid "no database specified"
 msgstr ""
 
-#: database.cc:2543
+#: database.cc:2521
+#, c-format
+msgid "database %s does not exist"
+msgstr ""
+
+#: database.cc:2522
+#, c-format
+msgid "%s is a directory, not a database"
+msgstr ""
+
+#: database.cc:2547
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr ""
 
-#: database.cc:2588
+#: database.cc:2592
 #, c-format
 msgid "attempting to rollback and close %d databases"
 msgstr ""
 
-#: database.cc:2597
+#: database.cc:2601
 #, c-format
 msgid "exec_err = %d, close_err = %d"
 msgstr ""
@@ -3788,263 +3796,263 @@ msgstr ""
 msgid "traversing head %s"
 msgstr ""
 
-#: packet.cc:329
+#: packet.cc:330
 #, c-format
 msgid "writing delayed revision data packet for %s\n"
 msgstr ""
 
-#: packet.cc:336
+#: packet.cc:337
 #, c-format
 msgid "discarding revision data packet %s with unmet dependencies\n"
 msgstr ""
 
-#: packet.cc:342
+#: packet.cc:343
 #, c-format
 msgid "writing delayed manifest data packet for %s\n"
 msgstr ""
 
-#: packet.cc:349
+#: packet.cc:350
 #, c-format
 msgid "discarding manifest data packet %s with unmet dependencies\n"
 msgstr ""
 
-#: packet.cc:355
+#: packet.cc:356
 #, c-format
 msgid "writing delayed file data packet for %s\n"
 msgstr ""
 
-#: packet.cc:368
+#: packet.cc:369
 #, c-format
 msgid "writing delayed manifest %s packet for %s -> %s%s\n"
 msgstr ""
 
-#: packet.cc:382
+#: packet.cc:383
 #, c-format
 msgid "discarding manifest delta packet %s -> %s with unmet dependencies\n"
 msgstr ""
 
-#: packet.cc:389
+#: packet.cc:390
 #, c-format
 msgid "writing delayed file %s packet for %s -> %s%s\n"
 msgstr ""
 
-#: packet.cc:403
+#: packet.cc:404
 #, c-format
 msgid "discarding file delta packet %s -> %s with unmet dependencies\n"
 msgstr ""
 
-#: packet.cc:410
+#: packet.cc:411
 #, c-format
 msgid "writing delayed revision cert on %s\n"
 msgstr ""
 
-#: packet.cc:417
+#: packet.cc:418
 #, c-format
 msgid "discarding revision cert packet %s with unmet dependencies\n"
 msgstr ""
 
-#: packet.cc:424
+#: packet.cc:425
 #, c-format
 msgid "writing delayed public key %s\n"
 msgstr ""
 
-#: packet.cc:437
+#: packet.cc:438
 #, c-format
 msgid "writing delayed private key %s\n"
 msgstr ""
 
-#: packet.cc:607
+#: packet.cc:608
 #, c-format
 msgid "noting acceptence of revision %s\n"
 msgstr ""
 
-#: packet.cc:620
+#: packet.cc:621
 #, c-format
 msgid "noting acceptence of manifest %s\n"
 msgstr ""
 
-#: packet.cc:633
+#: packet.cc:634
 #, c-format
 msgid "noting acceptence of file %s\n"
 msgstr ""
 
-#: packet.cc:655
+#: packet.cc:656
 #, c-format
 msgid "skipping existing file version %s\n"
 msgstr ""
 
-#: packet.cc:695
+#: packet.cc:696
 #, c-format
 msgid "reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n"
 msgstr ""
 
-#: packet.cc:701
+#: packet.cc:702
 #, c-format
 msgid "delaying file delta %s -> %s for preimage\n"
 msgstr ""
 
-#: packet.cc:711
+#: packet.cc:712
 #, c-format
 msgid "skipping delta to existing file version %s\n"
 msgstr ""
 
-#: packet.cc:739
+#: packet.cc:740
 #, c-format
 msgid "reconstructed file from reverse delta '%s' -> '%s' has wrong id '%s'\n"
 msgstr ""
 
-#: packet.cc:745
+#: packet.cc:746
 #, c-format
 msgid "delaying reverse file delta %s -> %s for preimage\n"
 msgstr ""
 
-#: packet.cc:755
+#: packet.cc:756
 #, c-format
 msgid "skipping reverse delta to existing file version %s\n"
 msgstr ""
 
-#: packet.cc:772
+#: packet.cc:773
 #, c-format
 msgid "skipping existing manifest version %s\n"
 msgstr ""
 
-#: packet.cc:813
+#: packet.cc:814
 #, c-format
 msgid "reconstructed manifest from delta '%s' -> '%s' has wrong id '%s'\n"
 msgstr ""
 
-#: packet.cc:819
+#: packet.cc:820
 #, c-format
 msgid "delaying manifest delta %s -> %s for preimage\n"
 msgstr ""
 
-#: packet.cc:829
+#: packet.cc:830
 #, c-format
 msgid "skipping delta to existing manifest version %s\n"
 msgstr ""
 
-#: packet.cc:857
+#: packet.cc:858
 #, c-format
 msgid ""
 "reconstructed manifest from reverse delta '%s' -> '%s' has wrong id '%s'\n"
 msgstr ""
 
-#: packet.cc:863
+#: packet.cc:864
 #, c-format
 msgid "delaying manifest reverse delta %s -> %s for preimage\n"
 msgstr ""
 
-#: packet.cc:873
+#: packet.cc:874
 #, c-format
 msgid "skipping reverse delta to existing manifest version %s\n"
 msgstr ""
 
-#: packet.cc:895
+#: packet.cc:896
 #, c-format
 msgid "delaying revision %s for new manifest %s\n"
 msgstr ""
 
-#: packet.cc:909
+#: packet.cc:910
 #, c-format
 msgid "delaying revision %s for old manifest %s\n"
 msgstr ""
 
-#: packet.cc:919
+#: packet.cc:920
 #, c-format
 msgid "delaying revision %s for old revision %s\n"
 msgstr ""
 
-#: packet.cc:932
+#: packet.cc:933
 #, c-format
 msgid "delaying revision %s for old file %s\n"
 msgstr ""
 
-#: packet.cc:942
+#: packet.cc:943
 #, c-format
 msgid "delaying revision %s for new file %s\n"
 msgstr ""
 
-#: packet.cc:960
+#: packet.cc:961
 #, c-format
 msgid "skipping existing revision %s\n"
 msgstr ""
 
-#: packet.cc:978
+#: packet.cc:979
 #, c-format
 msgid "delaying revision cert on %s\n"
 msgstr ""
 
-#: packet.cc:991
+#: packet.cc:992
 #, c-format
 msgid "skipping existing revision cert %s\n"
 msgstr ""
 
-#: packet.cc:1005
+#: packet.cc:1006
 #, c-format
 msgid "skipping prohibited public key %s\n"
 msgstr ""
 
-#: packet.cc:1018
+#: packet.cc:1019
 #, c-format
 msgid "key '%s' is not equal to key '%s' in database\n"
 msgstr ""
 
-#: packet.cc:1019
+#: packet.cc:1020
 #, c-format
 msgid "skipping existing public key %s\n"
 msgstr ""
 
-#: packet.cc:1032
+#: packet.cc:1033
 #, c-format
 msgid "skipping prohibited key pair %s\n"
 msgstr ""
 
-#: packet.cc:1041
+#: packet.cc:1042
 #, c-format
 msgid "skipping existing key pair %s\n"
 msgstr ""
 
-#: packet.cc:1077
+#: packet.cc:1078
 #, c-format
 msgid "packet valve opened\n"
 msgstr ""
 
-#: packet.cc:1089
+#: packet.cc:1090
 #, c-format
 msgid "wrote %i queued packets\n"
 msgstr ""
 
-#: packet.cc:1360
+#: packet.cc:1362
 #, c-format
 msgid "malformed packet"
 msgstr ""
 
-#: packet.cc:1376
+#: packet.cc:1378
 #, c-format
 msgid "read data packet"
 msgstr ""
 
-#: packet.cc:1396
+#: packet.cc:1398
 #, c-format
 msgid "read delta packet"
 msgstr ""
 
-#: packet.cc:1427
+#: packet.cc:1429
 #, c-format
 msgid "read cert packet"
 msgstr ""
 
-#: packet.cc:1447
+#: packet.cc:1449 packet.cc:1468
 #, c-format
 msgid "read pubkey data packet"
 msgstr ""
 
-#: packet.cc:1456
+#: packet.cc:1458
 #, c-format
 msgid "read keypair data packet"
 msgstr ""
 
-#: packet.cc:1466
+#: packet.cc:1481
 #, c-format
 msgid "unknown packet type: '%s'"
 msgstr ""
@@ -4547,78 +4555,128 @@ msgstr ""
 
 #: sanity.cc:54
 #, c-format
-msgid "wrote debugging log to %s"
+msgid "wrote debugging log to %sif reporting a bug, please include this file"
 msgstr ""
 
-#: sanity.cc:57
+#: sanity.cc:59
 #, c-format
-msgid "failed to write debugging log to %s"
-msgstr ""
+msgid "failed to write debugging log to %s\n"
+msgstr "erro escrevendo registro de depuração para %s\n"
 
-#: sanity.cc:108
+#: sanity.cc:110
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
 msgstr ""
 
-#: sanity.cc:182
+#: sanity.cc:184
 msgid "misuse: "
 msgstr ""
 
-#: sanity.cc:194
+#: sanity.cc:196
 msgid "error: "
 msgstr ""
 
-#: sanity.cc:232
+#: sanity.cc:234
 #, c-format
 msgid "ignoring request to give last gasp; already in process of dumping\n"
 msgstr ""
 
-#: sanity.cc:236
+#: sanity.cc:238
 #, c-format
 msgid "saving current work set: %i items"
 msgstr ""
 
-#: sanity.cc:238
+#: sanity.cc:240
 #, c-format
 msgid "Current work set: %i items\n"
 msgstr ""
 
-#: sanity.cc:252 sanity.cc:258
+#: sanity.cc:254 sanity.cc:260
 #, c-format
 msgid "ignoring error trigged by saving work set to debug log"
 msgstr ""
 
-#: sanity.cc:262
+#: sanity.cc:264
 #, c-format
 msgid "finished saving work set"
 msgstr ""
 
-#: schema_migration.cc:259
+#: schema_migration.cc:47
+#, c-format
+msgid "executing SQL '%s'"
+msgstr "executando comando SQL '%s'"
+
+#: schema_migration.cc:49
+#, c-format
+msgid "result: %i (%s)"
+msgstr ""
+
+#: schema_migration.cc:51
+#, c-format
+msgid "errmsg: %s"
+msgstr ""
+
+#: schema_migration.cc:184
+#, c-format
+msgid "failure extracting schema from sqlite_master"
+msgstr ""
+
+#: schema_migration.cc:227
+#, c-format
+msgid "error at transaction BEGIN statement"
+msgstr ""
+
+#: schema_migration.cc:254
+#, c-format
+msgid "migration step failed: %s"
+msgstr ""
+
+#: schema_migration.cc:268
+#, c-format
+msgid "mismatched result of migration, got %s, wanted %s"
+msgstr ""
+
+#: schema_migration.cc:271
 #, c-format
 msgid "committing changes to database"
 msgstr ""
 
-#: schema_migration.cc:265
+#: schema_migration.cc:273
+#, c-format
+msgid "failure on COMMIT"
+msgstr ""
+
+#: schema_migration.cc:275
 #, c-format
 msgid "optimizing database"
 msgstr ""
 
 #: schema_migration.cc:277
 #, c-format
+msgid "error vacuuming after migration"
+msgstr ""
+
+#: schema_migration.cc:280
+#, c-format
+msgid "error running analyze after migration"
+msgstr ""
+
+#: schema_migration.cc:287
+#, c-format
 msgid "database schema %s is unknown; cannot perform migration"
 msgstr ""
 
-#: schema_migration.cc:282
+#: schema_migration.cc:292
 #, c-format
 msgid "no migration performed; database schema already up-to-date at %s\n"
 msgstr ""
 
-#: schema_migration.cc:832
+#: schema_migration.cc:842
 #, c-format
 msgid "public and private keys for %s don't match"
 msgstr ""
 
-#: schema_migration.cc:835
+#: schema_migration.cc:845
 #, c-format
 msgid "moving key '%s' from database to %s"
 msgstr ""
@@ -4627,16 +4685,16 @@ msgstr ""
 msgid "Press enter when the subprocess has completed"
 msgstr ""
 
-#: std_hooks.lua:206
+#: std_hooks.lua:211
 #, c-format
 msgid "Error running editor '%s' to enter log message\n"
 msgstr ""
 
-#: std_hooks.lua:548
+#: std_hooks.lua:553
 msgid "executing external 2-way merge command\n"
 msgstr ""
 
-#: std_hooks.lua:656
+#: std_hooks.lua:661
 msgid "executing external 3-way merge command\n"
 msgstr ""
 
@@ -4670,17 +4728,17 @@ msgstr ""
 msgid "doing linesep conversion to %s\n"
 msgstr ""
 
-#: ui.cc:119
+#: ui.cc:120
 #, c-format
 msgid "%.1f M"
 msgstr ""
 
-#: ui.cc:124
+#: ui.cc:125
 #, c-format
 msgid "%.1f k"
 msgstr ""
 
-#: ui.cc:133
+#: ui.cc:134
 #, c-format
 msgid "%d"
 msgstr ""
