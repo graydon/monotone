@@ -86,10 +86,11 @@ dump(marking_t const & marking, std::string & out)
 }
 
 void
-dump(marking_map const & marking_map, std::string & out)
+dump(marking_map const & markings, std::string & out)
 {
   std::ostringstream oss;
-  for (marking_map::const_iterator i = marking_map.begin(); i != marking_map.end();
+  for (marking_map::const_iterator i = markings.begin();
+       i != markings.end();
        ++i)
     {
       oss << "Marking for " << i->first << ":\n";
@@ -864,7 +865,7 @@ roster_t::check_sane(bool temp_nodes_ok) const
 }
 
 void
-roster_t::check_sane_against(marking_map const & marking) const
+roster_t::check_sane_against(marking_map const & markings) const
 {
 
   check_sane();
@@ -872,14 +873,22 @@ roster_t::check_sane_against(marking_map const & marking) const
   node_map::const_iterator ri;
   marking_map::const_iterator mi;
 
-  for (ri = nodes.begin(), mi = marking.begin();
-       ri != nodes.end() && mi != marking.end();
+  for (ri = nodes.begin(), mi = markings.begin();
+       ri != nodes.end() && mi != markings.end();
        ++ri, ++mi)
     {
       I(!null_id(mi->second.birth_revision));
+      I(!mi->second.parent_name.empty());
+
+      if (is_file_t(ri->second))
+        I(!mi->second.file_content.empty());
+      else
+        I(mi->second.file_content.empty());
+
+      // TODO: attrs
     }
 
-  I(ri == nodes.end() && mi == marking.end());
+  I(ri == nodes.end() && mi == markings.end());
 }
 
 
@@ -1302,14 +1311,15 @@ namespace
   // those invariants on a roster that involve the structure of the roster's
   // parents, rather than just the structure of the roster itself.
   void
-  mark_merge_roster(roster_t const & left_r, roster_t const & right_r,
-                    marking_map const & left_marking_map,
-                    marking_map const & right_marking_map,
+  mark_merge_roster(roster_t const & left_roster,
+                    marking_map const & left_markings,
                     set<revision_id> const & left_uncommon_ancestors,
+                    roster_t const & right_roster,
+                    marking_map const & right_markings,
                     set<revision_id> const & right_uncommon_ancestors,
                     revision_id const & new_rid,
                     roster_t const & merge, 
-                    marking_map & marking)
+                    marking_map & new_markings)
   {
     for (map<node_id, node_t>::const_iterator i = merge.all_nodes().begin();
          i != merge.all_nodes().end(); ++i)
@@ -1317,11 +1327,11 @@ namespace
         node_t const & n = i->second;
         // SPEEDUP?: instead of using find repeatedly, iterate everything in
         // parallel
-        map<node_id, node_t>::const_iterator lni = left_r.all_nodes().find(i->first);
-        map<node_id, node_t>::const_iterator rni = right_r.all_nodes().find(i->first);
+        map<node_id, node_t>::const_iterator lni = left_roster.all_nodes().find(i->first);
+        map<node_id, node_t>::const_iterator rni = right_roster.all_nodes().find(i->first);
 
-        bool exists_in_left = (lni != left_r.all_nodes().end());
-        bool exists_in_right = (rni != right_r.all_nodes().end());
+        bool exists_in_left = (lni != left_roster.all_nodes().end());
+        bool exists_in_right = (rni != right_roster.all_nodes().end());
 
         marking_t new_marking;
 
@@ -1331,7 +1341,7 @@ namespace
         else if (!exists_in_left && exists_in_right)
           {
             node_t const & right_node = rni->second;
-            marking_t const & right_marking = safe_get(right_marking_map, n->self);
+            marking_t const & right_marking = safe_get(right_markings, n->self);
             // must be unborn on the left (as opposed to dead)
             I(right_uncommon_ancestors.find(right_marking.birth_revision)
               != right_uncommon_ancestors.end());
@@ -1341,7 +1351,7 @@ namespace
         else if (exists_in_left && !exists_in_right)
           {
             node_t const & left_node = lni->second;
-            marking_t const & left_marking = safe_get(left_marking_map, n->self);
+            marking_t const & left_marking = safe_get(left_markings, n->self);
             // must be unborn on the right (as opposed to dead)
             I(left_uncommon_ancestors.find(left_marking.birth_revision)
               != left_uncommon_ancestors.end());
@@ -1352,14 +1362,14 @@ namespace
           {
             node_t const & left_node = lni->second;
             node_t const & right_node = rni->second;
-            mark_merged_node(safe_get(left_marking_map, n->self),
+            mark_merged_node(safe_get(left_markings, n->self),
                              left_uncommon_ancestors, left_node,
-                             safe_get(right_marking_map, n->self),
+                             safe_get(right_markings, n->self),
                              right_uncommon_ancestors, right_node,
                              new_rid, n, new_marking);
           }
 
-        safe_insert(marking, make_pair(i->first, new_marking));
+        safe_insert(new_markings, make_pair(i->first, new_marking));
       }
   }             
   
@@ -1457,88 +1467,137 @@ namespace
   };
 
 
+  // yes, this function takes 14 arguments.  I'm very sorry.
   void
-  make_roster_for_merge(cset const & left_cs, revision_id const & left_rid,
-                        cset const & right_cs, revision_id const & right_rid,
+  make_roster_for_merge(revision_id const & left_rid,
+                        roster_t const & left_roster,
+                        marking_map const & left_markings,
+                        cset const & left_cs,
+                        std::set<revision_id> left_uncommon_ancestors,
+
+                        revision_id const & right_rid,
+                        roster_t const & right_roster,
+                        marking_map const & right_markings,
+                        cset const & right_cs,
+                        std::set<revision_id> right_uncommon_ancestors,
+
                         revision_id const & new_rid,
-                        roster_t & result, marking_map & marking, app_state & app)
+                        roster_t & new_roster,
+                        marking_map & new_markings,
+                        node_id_source & nis)
   {
     I(!null_id(left_rid) && !null_id(right_rid));
-    roster_t left_r, right_r;
-    marking_map left_marking, right_marking;
-    app.db.get_roster(left_rid, left_r, left_marking);
-    app.db.get_roster(right_rid, right_r, right_marking);
     {
-      temp_node_id_source nis;
+      temp_node_id_source temp_nis;
       // SPEEDUP?: the copies on the next two lines are probably the main
       // bottleneck in this code
-      result = left_r;
-      roster_t from_right_r(right_r);
+      new_roster = left_roster;
+      roster_t from_right_r(right_roster);
 
-      editable_roster_for_merge from_left_er(result, nis);
-      editable_roster_for_merge from_right_er(from_right_r, nis);
+      editable_roster_for_merge from_left_er(new_roster, temp_nis);
+      editable_roster_for_merge from_right_er(from_right_r, temp_nis);
 
       left_cs.apply_to(from_left_er);
       right_cs.apply_to(from_right_er);
 
       set<node_id> new_ids;
-      true_node_id_source tnis = true_node_id_source(app);
-      unify_rosters(result, from_left_er.new_nodes,
+      unify_rosters(new_roster, from_left_er.new_nodes,
                     from_right_r, from_right_er.new_nodes,
-                    new_ids, tnis);
-
-      I(result == from_right_r);
+                    new_ids, nis);
+      I(new_roster == from_right_r);
     }
+    
     // SPEEDUP?: instead of constructing new marking from scratch, track which
     // nodes were modified, and scan only them
     // load one of the parent markings directly into the new marking map
-    marking.clear();
+    new_markings.clear();
+    mark_merge_roster(left_roster, left_markings, left_uncommon_ancestors,
+                      right_roster, right_markings, right_uncommon_ancestors,
+                      new_rid, new_roster, new_markings);
+  }
+
+
+  // WARNING: this function is not tested directly (no unit tests).  Do not
+  // put real logic in it.
+  void
+  make_roster_for_merge(revision_id const & left_rid, cset const & left_cs,
+                        revision_id const & right_rid, cset const & right_cs,
+                        revision_id const & new_rid,
+                        roster_t & new_roster, marking_map & new_markings,
+                        app_state & app)
+  {
+    I(!null_id(left_rid) && !null_id(right_rid));
+    roster_t left_roster, right_roster;
+    marking_map left_marking, right_marking;
+    app.db.get_roster(left_rid, left_roster, left_marking);
+    app.db.get_roster(right_rid, right_roster, right_marking);
+    true_node_id_source tnis = true_node_id_source(app);
+
     set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
     app.db.get_uncommon_ancestors(left_rid, right_rid,
                                   left_uncommon_ancestors,
                                   right_uncommon_ancestors);
-    mark_merge_roster(left_r, right_r, left_marking, right_marking,
-                      left_uncommon_ancestors, right_uncommon_ancestors,
-                      new_rid, result, marking);
+    make_roster_for_merge(left_rid, left_roster, left_marking, left_cs,
+                          left_uncommon_ancestors,
+                          right_rid, right_roster, right_marking, right_cs,
+                          right_uncommon_ancestors,
+                          new_rid,
+                          new_roster, new_markings,
+                          tnis);
   }
 
-
+  // Warning: this function expects the parent's roster and markings in the
+  // 'new_roster' and 'new_markings' parameters, and they are modified
+  // destructively!
   void
-  make_roster_for_nonmerge(cset const & cs, revision_id const & parent_rid,
+  make_roster_for_nonmerge(cset const & cs,
                            revision_id const & new_rid,
-                           roster_t & result, marking_map & marking,
+                           roster_t & new_roster, marking_map & new_markings,
+                           node_id_source & nis)
+  {
+    editable_roster_for_nonmerge er(new_roster, nis, new_rid, new_markings);
+    cs.apply_to(er);
+  }
+
+  // WARNING: this function is not tested directly (no unit tests).  Do not
+  // put real logic in it.
+  void
+  make_roster_for_nonmerge(revision_id const & parent_rid,
+                           cset const & parent_cs,
+                           revision_id const & new_rid,
+                           roster_t & new_roster, marking_map & new_markings,
                            app_state & app)
   {
-    roster_t parent_r;
-    app.db.get_roster(parent_rid, result, marking);
+    app.db.get_roster(parent_rid, new_roster, new_markings);
     true_node_id_source nis(app);
-    editable_roster_for_nonmerge er(result, nis, new_rid, marking);
-    cs.apply_to(er);
+    make_roster_for_nonmerge(parent_cs, new_rid, new_roster, new_markings, nis);
   }
 }
 
 void
 make_roster_for_base_plus_cset(revision_id const & base, cset const & cs,
                                revision_id const & new_rid,
-                               roster_t & result, marking_map & marking,
+                               roster_t & new_roster, marking_map & new_markings,
                                app_state & app)
 {
-  roster_t parent_r;
-  app.db.get_roster(base, result, marking);
+  app.db.get_roster(base, new_roster, new_markings);
   temp_node_id_source nis;
-  editable_roster_for_nonmerge er(result, nis, new_rid, marking);
+  editable_roster_for_nonmerge er(new_roster, nis, new_rid, new_markings);
   cs.apply_to(er);
 }
 
+// WARNING: this function is not tested directly (no unit tests).  Do not put
+// real logic in it.
 void
-make_roster_for_revision(revision_set const & rev, revision_id const & rid,
-                         roster_t & result, marking_map & marking, app_state & app)
+make_roster_for_revision(revision_set const & rev, revision_id const & new_rid,
+                         roster_t & new_roster, marking_map & new_markings,
+                         app_state & app)
 {
   MM(rev);
   if (rev.edges.size() == 1)
-    make_roster_for_nonmerge(edge_changes(rev.edges.begin()),
-                             edge_old_revision(rev.edges.begin()),
-                             rid, result, marking, app);
+    make_roster_for_nonmerge(edge_old_revision(rev.edges.begin()),
+                             edge_changes(rev.edges.begin()),
+                             new_rid, new_roster, new_markings, app);
   else if (rev.edges.size() == 2)
     {
       edge_map::const_iterator i = rev.edges.begin();
@@ -1547,13 +1606,13 @@ make_roster_for_revision(revision_set const & rev, revision_id const & rid,
       ++i;
       revision_id const & right_rid = edge_old_revision(i);
       cset const & right_cs = edge_changes(i);
-      make_roster_for_merge(left_cs, left_rid, right_cs, right_rid,
-                            rid, result, marking, app);
+      make_roster_for_merge(left_rid, left_cs, right_rid, right_cs,
+                            new_rid, new_roster, new_markings, app);
     }
   else
     I(false);
 
-  result.check_sane_against(marking);
+  new_roster.check_sane_against(new_markings);
 }
 
 
@@ -1689,6 +1748,41 @@ make_cset(roster_t const & from, roster_t const & to, cset & cs)
           break;
         }
     }
+}
+
+
+// we assume our input is sane
+bool
+equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
+                        roster_t const & b, marking_map const & b_markings)
+{
+  if (a.all_nodes().size() != b.all_nodes().size())
+    return false;
+  
+  for (node_map::const_iterator i = a.all_nodes().begin();
+       i != a.all_nodes().end(); ++i)
+    {
+      split_path sp;
+      a.get_name(i->first, sp);
+      if (!b.has_node(sp))
+        return false;
+      node_t b_n = b.get_node(sp);
+      // we already know names are the same
+      if (!same_type(i->second, b_n))
+        return false;
+      if (i->second->attrs != b_n->attrs)
+        return false;
+      if (is_file_t(i->second))
+        {
+          if (!(downcast_to_file_t(i->second)->content
+                == downcast_to_file_t(b_n)->content))
+            return false;
+        }
+      // nodes match, check the markings too
+      if (!(safe_get(a_markings, i->first) == safe_get(b_markings, b_n->self)))
+        return false;
+    }
+  return true;
 }
 
 
@@ -2394,6 +2488,8 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   roster_t b2(a); MM(b2);
   // we can't use a cset to entirely empty out a roster, so don't bother doing
   // the apply_to tests towards an empty roster
+  // (NOTE: if you notice this special case in a time when root dirs can be
+  // renamed or deleted, remove it, it will no longer be necessary.
   if (!a.all_nodes().empty())
     {
       editable_roster_base eb(a2, nis);
@@ -2692,9 +2788,16 @@ automaton_roster_test()
       MM(i);
       if (i % 100 == 0)
         P(F("performing random action %d\n") % i);
+      // test operator==
+      I(r == r);
       aut.perform_random_action(r, nis);
       if (i == 0)
         prev = r;
+      else
+        {
+          // test operator==
+          I(!(prev == r));
+        }
       // some randomly made up magic numbers, just to make sure we do tests on
       // rosters that have a number of changes between them, not just a single
       // change.
@@ -2820,13 +2923,882 @@ bad_attr_test()
   BOOST_CHECK_THROW(r.check_sane(true), std::logic_error);
 }
 
+////////////////////////////////////////////////////////////////////////
+// exhaustive marking tests
+////////////////////////////////////////////////////////////////////////
+
+// we always have the topology:
+//     old
+//     / \.
+// left   right
+//     \ /
+//     new
+// FIXME ROSTERS: explainify how this stuff works, and why it is exhaustive,
+// so future changes can be made
+
+////////////////
+// These are some basic utility pieces handy for the exhaustive mark tests
+
+namespace
+{
+  template <typename T> std::set<T>
+  singleton(T const & t)
+  {
+    std::set<T> s;
+    s.insert(t);
+    return s;
+  }
+
+  template <typename T> std::set<T>
+  doubleton(T const & t1, T const & t2)
+  {
+    std::set<T> s;
+    s.insert(t1);
+    s.insert(t2);
+    return s;
+  }
+
+  revision_id old_rid(string("0000000000000000000000000000000000000000"));
+  revision_id left_rid(string("1111111111111111111111111111111111111111"));
+  revision_id right_rid(string("2222222222222222222222222222222222222222"));
+  revision_id parent_rid(string("3333333333333333333333333333333333333333"));
+  revision_id new_rid(string("4444444444444444444444444444444444444444"));
+
+  void
+  add_old_root_with_id(node_id root_nid, roster_t & roster, marking_map & markings)
+  {
+  }
+
+  split_path
+  split(std::string const & s)
+  {
+    split_path sp;
+    file_path_internal(s).split(sp);
+    return sp;
+  }
+}
+
+
+////////////////
+// These classes encapsulate information about all the different scalars
+// that *-merge applies to.
+
+namespace
+{
+  typedef enum { scalar_a, scalar_b, scalar_c, scalar_none } scalar_val;
+
+  struct a_scalar
+  {
+    virtual void set(revision_id const & origin_rid,
+                     scalar_val val, std::set<revision_id> const & this_scalar_mark,
+                     roster_t & roster, marking_map & markings)
+      = 0;
+    virtual ~a_scalar() {};
+
+    node_id_source & nis;
+    node_id const root_nid;
+    node_id const obj_under_test_nid;
+    a_scalar(node_id_source & nis)
+      : nis(nis), root_nid(nis.next()), obj_under_test_nid(nis.next())
+    {}
+
+    void setup(roster_t & roster, marking_map & markings)
+    {
+      roster.create_dir_node(root_nid);
+      roster.attach_node(root_nid, split(""));
+      marking_t marking;
+      marking.birth_revision = old_rid;
+      marking.parent_name.insert(old_rid);
+      safe_insert(markings, make_pair(root_nid, marking));
+    }
+  };
+
+  struct file_maker
+  {
+    static void make_obj(revision_id const & origin_rid, node_id nid,
+                         roster_t & roster, marking_map & markings)
+    {
+      make_file(origin_rid, nid,
+                file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+                roster, markings);
+    }
+    static void make_file(revision_id const & origin_rid, node_id nid,
+                          file_id const & fid,
+                          roster_t & roster, marking_map & markings)
+    {
+      roster.create_file_node(fid, nid);
+      marking_t marking;
+      marking.birth_revision = origin_rid;
+      marking.parent_name = marking.file_content = singleton(origin_rid);
+      safe_insert(markings, make_pair(nid, marking));
+    }
+  };
+  
+  struct dir_maker
+  {
+    static void make_obj(revision_id const & origin_rid, node_id nid,
+                         roster_t & roster, marking_map & markings)
+    {
+      roster.create_dir_node(nid);
+      marking_t marking;
+      marking.birth_revision = origin_rid;
+      marking.parent_name = singleton(origin_rid);
+      safe_insert(markings, make_pair(nid, marking));
+    }
+  };
+  
+  struct file_content_scalar : public a_scalar
+  {
+    std::map<scalar_val, file_id> values;
+    file_content_scalar(node_id_source & nis)
+      : a_scalar(nis)
+    {
+      safe_insert(values,
+                  make_pair(scalar_a,
+                            file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))));
+      safe_insert(values,
+                  make_pair(scalar_b,
+                            file_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"))));
+      safe_insert(values,
+                  make_pair(scalar_c,
+                            file_id(string("cccccccccccccccccccccccccccccccccccccccc"))));
+    }
+    virtual void
+    set(revision_id const & origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      setup(roster, markings);
+      if (val != scalar_none)
+        {
+          file_maker::make_file(origin_rid, obj_under_test_nid,
+                                safe_get(values, val),
+                                roster, markings);
+          roster.attach_node(obj_under_test_nid, split("foo"));
+          markings[obj_under_test_nid].file_content = this_scalar_mark;
+        }
+      roster.check_sane_against(markings);
+    }
+  };
+
+  template <typename T>
+  struct X_basename_scalar : public a_scalar
+  {
+    std::map<scalar_val, split_path> values;
+    X_basename_scalar(node_id_source & nis)
+      : a_scalar(nis)
+    {
+      safe_insert(values, make_pair(scalar_a, split("a")));
+      safe_insert(values, make_pair(scalar_b, split("b")));
+      safe_insert(values, make_pair(scalar_c, split("c")));
+    }
+    virtual void
+    set(revision_id const & origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      setup(roster, markings);
+      if (val != scalar_none)
+        {
+          T::make_obj(origin_rid, obj_under_test_nid, roster, markings);
+          roster.attach_node(obj_under_test_nid, safe_get(values, val));
+          markings[obj_under_test_nid].parent_name = this_scalar_mark;
+        }
+      roster.check_sane_against(markings);
+    }
+  };
+
+  template <typename T>
+  struct X_parent_scalar : public a_scalar
+  {
+    std::map<scalar_val, split_path> values;
+    node_id const a_nid, b_nid, c_nid;
+    X_parent_scalar(node_id_source & nis)
+      : a_scalar(nis), a_nid(nis.next()), b_nid(nis.next()), c_nid(nis.next())
+    {
+      safe_insert(values, make_pair(scalar_a, split("dir_a/foo")));
+      safe_insert(values, make_pair(scalar_b, split("dir_b/foo")));
+      safe_insert(values, make_pair(scalar_c, split("dir_c/foo")));
+    }
+    void
+    setup_dirs(roster_t & roster, marking_map & markings)
+    {
+      roster.create_dir_node(a_nid);
+      roster.attach_node(a_nid, split("dir_a"));
+      roster.create_dir_node(b_nid);
+      roster.attach_node(b_nid, split("dir_b"));
+      roster.create_dir_node(c_nid);
+      roster.attach_node(c_nid, split("dir_c"));
+      marking_t marking;
+      marking.birth_revision = old_rid;
+      marking.parent_name.insert(old_rid);
+      safe_insert(markings, make_pair(a_nid, marking));
+      safe_insert(markings, make_pair(b_nid, marking));
+      safe_insert(markings, make_pair(c_nid, marking));
+    }
+    virtual void
+    set(revision_id const & origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      setup(roster, markings);
+      setup_dirs(roster, markings);
+      if (val != scalar_none)
+        {
+          T::make_obj(origin_rid, obj_under_test_nid, roster, markings);
+          roster.attach_node(obj_under_test_nid, safe_get(values, val));
+          markings[obj_under_test_nid].parent_name = this_scalar_mark;
+        }
+      roster.check_sane_against(markings);
+    }
+  };
+
+  template <typename T>
+  struct X_attr_scalar : public a_scalar
+  {
+    std::map<scalar_val, pair<bool, attr_value> > values;
+    X_attr_scalar(node_id_source & nis)
+      : a_scalar(nis)
+    {
+      safe_insert(values, make_pair(scalar_a, make_pair(true, attr_value("a"))));
+      safe_insert(values, make_pair(scalar_b, make_pair(true, attr_value("b"))));
+      safe_insert(values, make_pair(scalar_c, make_pair(true, attr_value("c"))));
+    }
+    virtual void
+    set(revision_id const & origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      setup(roster, markings);
+      T::make_obj(origin_rid, obj_under_test_nid, roster, markings);
+      roster.attach_node(obj_under_test_nid, split("foo"));
+      if (val != scalar_none)
+        {
+          safe_insert(roster.get_node(obj_under_test_nid)->attrs,
+                      make_pair(attr_key("test_key"), safe_get(values, val)));
+          markings[obj_under_test_nid].attrs[attr_key("test_key")] = this_scalar_mark;
+        }
+      roster.check_sane_against(markings);
+    }
+  };
+
+  typedef std::vector<boost::shared_ptr<a_scalar> > scalars;
+  scalars
+  all_scalars(node_id_source & nis)
+  {
+    scalars ss;
+    ss.push_back(boost::shared_ptr<a_scalar>(new file_content_scalar(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<file_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<dir_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<file_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<dir_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_scalar<file_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_scalar<dir_maker>(nis)));
+    return ss;
+  }
+}
+
+////////////////
+// These functions encapsulate the logic for running a particular mark
+// scenario with a particular scalar with 0, 1, or 2 roster parents.
+
+static void
+run_with_0_roster_parents(a_scalar & s, revision_id origin_rid,
+                          scalar_val new_val,
+                          std::set<revision_id> const & new_mark_set,
+                          node_id_source & nis)
+{
+  roster_t expected_roster; MM(expected_roster);
+  marking_map expected_markings; MM(expected_markings);
+
+  s.set(origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
+
+  roster_t empty_roster;
+  cset cs; MM(cs);
+  make_cset(empty_roster, expected_roster, cs);
+  
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+  // this function takes the old parent roster/marking and modifies them; in
+  // our case, the parent roster/marking are empty, and so are our
+  // roster/marking, so we don't need to do anything special.
+  make_roster_for_nonmerge(cs, old_rid, new_roster, new_markings, nis);
+
+  I(equal_up_to_renumbering(expected_roster, expected_markings,
+                            new_roster, new_markings));
+}
+
+static void
+run_with_1_roster_parent(a_scalar & s,
+                         revision_id origin_rid,
+                         scalar_val parent_val,
+                         std::set<revision_id> const & parent_mark_set,
+                         scalar_val new_val,
+                         std::set<revision_id> const & new_mark_set,
+                         node_id_source & nis)
+{
+  roster_t parent_roster; MM(parent_roster);
+  marking_map parent_markings; MM(parent_markings);
+  roster_t expected_roster; MM(expected_roster);
+  marking_map expected_markings; MM(expected_markings);
+
+  s.set(origin_rid, parent_val, parent_mark_set, parent_roster, parent_markings);
+  s.set(origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
+
+  cset cs; MM(cs);
+  make_cset(parent_roster, expected_roster, cs);
+  
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+  new_roster = parent_roster;
+  new_markings = parent_markings;
+  make_roster_for_nonmerge(cs, new_rid, new_roster, new_markings, nis);
+
+  I(equal_up_to_renumbering(expected_roster, expected_markings,
+                            new_roster, new_markings));
+}
+
+static void
+run_with_2_roster_parents(a_scalar & s,
+                          revision_id origin_rid,
+                          scalar_val left_val,
+                          std::set<revision_id> const & left_mark_set,
+                          scalar_val right_val,
+                          std::set<revision_id> const & right_mark_set,
+                          scalar_val new_val,
+                          std::set<revision_id> const & new_mark_set,
+                          node_id_source & nis)
+{
+  roster_t left_roster; MM(left_roster);
+  roster_t right_roster; MM(right_roster);
+  roster_t expected_roster; MM(expected_roster);
+  marking_map left_markings; MM(left_markings);
+  marking_map right_markings; MM(right_markings);
+  marking_map expected_markings; MM(expected_markings);
+
+  s.set(origin_rid, left_val, left_mark_set, left_roster, left_markings);
+  s.set(origin_rid, right_val, right_mark_set, right_roster, right_markings);
+  s.set(origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
+
+  cset left_cs; MM(left_cs);
+  cset right_cs; MM(right_cs);
+  make_cset(left_roster, expected_roster, left_cs);
+  make_cset(right_roster, expected_roster, right_cs);
+
+  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  left_uncommon_ancestors.insert(left_rid);
+  right_uncommon_ancestors.insert(right_rid);
+
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+  make_roster_for_merge(left_rid, left_roster, left_markings, left_cs,
+                        left_uncommon_ancestors,
+                        right_rid, right_roster, right_markings, right_cs,
+                        right_uncommon_ancestors,
+                        new_rid, new_roster, new_markings,
+                        nis);
+
+  I(equal_up_to_renumbering(expected_roster, expected_markings,
+                            new_roster, new_markings));
+}
+
+////////////////
+// These functions encapsulate all the different ways to get a 0 parent
+// scalar, a 1 parent scalar, and a 2 parent scalar.
+
+static void
+run_a_0_scalar_parent_mark_scenario()
+{
+  testing_node_id_source nis;
+  scalars ss = all_scalars(nis);
+  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
+    {
+      run_with_0_roster_parents(**i, old_rid, scalar_a, singleton(old_rid), nis);
+      run_with_1_roster_parent(**i, new_rid,
+                               scalar_none, std::set<revision_id>(),
+                               scalar_a, singleton(new_rid),
+                               nis);
+      run_with_2_roster_parents(**i, new_rid,
+                                scalar_none, std::set<revision_id>(),
+                                scalar_none, std::set<revision_id>(),
+                                scalar_a, singleton(new_rid),
+                                nis);
+    }
+}
+
+static void
+run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
+                                    std::set<revision_id> const & parent_mark_set,
+                                    scalar_val new_val,
+                                    std::set<revision_id> const & new_mark_set)
+{
+  testing_node_id_source nis;
+  scalars ss = all_scalars(nis);
+  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
+    {
+      run_with_1_roster_parent(**i, parent_rid,
+                               parent_val, parent_mark_set,
+                               new_val, new_mark_set,
+                               nis);
+      run_with_2_roster_parents(**i, left_rid,
+                                parent_val, parent_mark_set,
+                                scalar_none, std::set<revision_id>(),
+                                new_val, new_mark_set,
+                                nis);
+    }
+}
+
+static void
+run_a_2_scalar_parent_scenario(scalar_val left_val,
+                               std::set<revision_id> const & left_mark_set,
+                               scalar_val right_val,
+                               std::set<revision_id> const & right_mark_set,
+                               scalar_val new_val,
+                               std::set<revision_id> const & new_mark_set)
+{
+  testing_node_id_source nis;
+  scalars ss = all_scalars(nis);
+  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
+    {
+      run_with_2_roster_parents(**i, old_rid,
+                                left_val, left_mark_set,
+                                right_val, right_mark_set,
+                                new_val, new_mark_set,
+                                nis);
+    }
+}
+
+////////////////
+// These functions contain the actual list of *-merge cases that we would like
+// to test.
+
+static void
+test_all_0_scalar_parent_mark_scenarios()
+{
+  // a*
+  run_a_0_scalar_parent_mark_scenario();
+}
+
+static void
+test_all_1_scalar_parent_mark_scenarios()
+{
+  //  a
+  //  |
+  //  a
+  run_a_1_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(old_rid));
+  //  a*
+  //  |
+  //  a
+  run_a_1_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_a, singleton(left_rid));
+  // a*  a*
+  //  \ /
+  //   a
+  //   |
+  //   a
+  run_a_1_scalar_parent_mark_scenario(scalar_a, doubleton(left_rid, right_rid),
+                                      scalar_a, doubleton(left_rid, right_rid));
+  //  a
+  //  |
+  //  b*
+  run_a_1_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_b, singleton(new_rid));
+  //  a*
+  //  |
+  //  b*
+  run_a_1_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_b, singleton(new_rid));
+  // a*  a*
+  //  \ /
+  //   a
+  //   |
+  //   b*
+  run_a_1_scalar_parent_mark_scenario(scalar_a, doubleton(left_rid, right_rid),
+                                      scalar_b, singleton(new_rid));
+}
+
+static void
+test_all_2_scalar_parent_mark_scenarios()
+{
+  ///////////////////////////////////////////////////////////////////
+  // a   a
+  //  \ /
+  //   a
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
+                                 scalar_a, singleton(old_rid),
+                                 scalar_a, singleton(old_rid));
+  // a   a*
+  //  \ /
+  //   a
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
+                                 scalar_a, singleton(right_rid),
+                                 scalar_a, doubleton(old_rid, right_rid));
+  // a*  a*
+  //  \ /
+  //   a
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
+                                 scalar_a, singleton(right_rid),
+                                 scalar_a, doubleton(left_rid, right_rid));
+
+  ///////////////////////////////////////////////////////////////////
+  // a   a
+  //  \ /
+  //   b*
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
+                                 scalar_a, singleton(old_rid),
+                                 scalar_b, singleton(new_rid));
+  // a   a*
+  //  \ /
+  //   b*
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
+                                 scalar_a, singleton(right_rid),
+                                 scalar_b, singleton(new_rid));
+  // a*  a*
+  //  \ /
+  //   b*
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
+                                 scalar_a, singleton(right_rid),
+                                 scalar_b, singleton(new_rid));
+
+  ///////////////////////////////////////////////////////////////////
+  //  a*  b*
+  //   \ /
+  //    c*
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
+                                 scalar_b, singleton(right_rid),
+                                 scalar_c, singleton(new_rid));
+  //  a   b*
+  //   \ /
+  //    c*
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
+                                 scalar_b, singleton(right_rid),
+                                 scalar_c, singleton(new_rid));
+  // this case cannot actually arise, because if *(a) = *(b) then val(a) =
+  // val(b).  but hey.
+  //  a   b
+  //   \ /
+  //    c*
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
+                                 scalar_b, singleton(old_rid),
+                                 scalar_c, singleton(new_rid));
+
+  ///////////////////////////////////////////////////////////////////
+  //  a*  b*
+  //   \ /
+  //    a*
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
+                                 scalar_b, singleton(right_rid),
+                                 scalar_a, singleton(new_rid));
+  //  a   b*
+  //   \ /
+  //    a*
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
+                                 scalar_b, singleton(right_rid),
+                                 scalar_a, singleton(new_rid));
+  //  a*  b
+  //   \ /
+  //    a
+  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
+                                 scalar_b, singleton(old_rid),
+                                 scalar_a, singleton(left_rid));
+
+  // FIXME ROSTERS:
+  //  a*  a*  b
+  //   \ /   /
+  //    a   /
+  //     \ /
+  //      a
+}
+
+static void
+test_all_mark_scenarios()
+{
+  test_all_0_scalar_parent_mark_scenarios();
+  test_all_1_scalar_parent_mark_scenarios();
+  test_all_2_scalar_parent_mark_scenarios();
+}
+
+////////////////////////////////////////////////////////////////////////
+// end of exhaustive tests
+////////////////////////////////////////////////////////////////////////
+
+static void
+write_roster_test()
+{
+  L(F("TEST: write_roster_test"));
+  roster_t r; MM(r);
+  marking_map mm; MM(mm);
+
+  testing_node_id_source nis;
+  split_path root, foo, xx, fo, foo_bar, foo_ang, foo_zoo;
+  file_path().split(root);
+  file_path_internal("foo").split(foo);
+  file_path_internal("foo/ang").split(foo_ang);
+  file_path_internal("foo/bar").split(foo_bar);
+  file_path_internal("foo/zoo").split(foo_zoo);
+  file_path_internal("fo").split(fo);
+  file_path_internal("xx").split(xx);
+
+  file_id f1(string("1111111111111111111111111111111111111111"));
+  revision_id rid(string("1234123412341234123412341234123412341234"));
+  node_id nid;
+
+  // if adding new nodes, add them at the end to keep the node_id order
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, root);
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, foo);
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, xx);
+  r.set_attr(xx, attr_key("say"), attr_value("hello"));
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, fo);
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  // check that files aren't ordered separately to dirs & vice versa
+  nid = nis.next();
+  r.create_file_node(f1, nid);
+  r.attach_node(nid, foo_bar);
+  r.set_attr(foo_bar, attr_key("fascist"), attr_value("tidiness"));
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, foo_ang);
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  nid = nis.next();
+  r.create_dir_node(nid);
+  r.attach_node(nid, foo_zoo);
+  r.set_attr(foo_zoo, attr_key("regime"), attr_value("new"));
+  r.clear_attr(foo_zoo, attr_key("regime"));
+  mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+  { 
+    // manifest first
+    data mdat; MM(mdat);
+    write_manifest_of_roster(r, mdat);
+
+    data expected("dir \"\"\n"
+                  "\n"
+                  "dir \"fo\"\n"
+                  "\n"
+                  "dir \"foo\"\n"
+                  "\n"
+                  "dir \"foo/ang\"\n"
+                  "\n"
+                  "   file \"foo/bar\"\n"
+                  "content [1111111111111111111111111111111111111111]\n"
+                  "   attr \"fascist\" \"tidiness\"\n"
+                  "\n"
+                  "dir \"foo/zoo\"\n"
+                  "\n"
+                  " dir \"xx\"\n"
+                  "attr \"say\" \"hello\"\n"
+                 );
+    MM(expected);
+
+    BOOST_CHECK_NOT_THROW( I(expected == mdat), std::logic_error);
+  }
+
+  { 
+    // full roster with local parts
+    data rdat; MM(rdat);
+    write_roster_and_marking(r, mm, rdat);
+
+    // node_id order is a hassle.
+    // root 1, foo 2, xx 3, fo 4, foo_bar 5, foo_ang 6, foo_zoo 7
+    data expected("      dir \"\"\n"
+                  "    ident \"1\"\n"
+                  "    birth [1234123412341234123412341234123412341234]\n"
+                  "path_mark [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "      dir \"fo\"\n"
+                  "    ident \"4\"\n"
+                  "    birth [1234123412341234123412341234123412341234]\n"
+                  "path_mark [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "      dir \"foo\"\n"
+                  "    ident \"2\"\n"
+                  "    birth [1234123412341234123412341234123412341234]\n"
+                  "path_mark [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "      dir \"foo/ang\"\n"
+                  "    ident \"6\"\n"
+                  "    birth [1234123412341234123412341234123412341234]\n"
+                  "path_mark [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "        file \"foo/bar\"\n"
+                  "     content [1111111111111111111111111111111111111111]\n"
+                  "       ident \"5\"\n"
+                  "        attr \"fascist\" \"tidiness\"\n"
+                  "       birth [1234123412341234123412341234123412341234]\n"
+                  "   path_mark [1234123412341234123412341234123412341234]\n"
+                  "content_mark [1234123412341234123412341234123412341234]\n"
+                  "   attr_mark \"fascist\" [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "         dir \"foo/zoo\"\n"
+                  "       ident \"7\"\n"
+                  "dormant_attr \"regime\"\n"
+                  "       birth [1234123412341234123412341234123412341234]\n"
+                  "   path_mark [1234123412341234123412341234123412341234]\n"
+                  "   attr_mark \"regime\" [1234123412341234123412341234123412341234]\n"
+                  "\n"
+                  "      dir \"xx\"\n"
+                  "    ident \"3\"\n"
+                  "     attr \"say\" \"hello\"\n"
+                  "    birth [1234123412341234123412341234123412341234]\n"
+                  "path_mark [1234123412341234123412341234123412341234]\n"
+                  "attr_mark \"say\" [1234123412341234123412341234123412341234]\n"
+                 );
+    MM(expected);
+
+    BOOST_CHECK_NOT_THROW( I(expected == rdat), std::logic_error);
+  }
+}
+
+static void
+check_sane_against_test()
+{
+  testing_node_id_source nis;
+  split_path root, foo, bar;
+  file_path().split(root);
+  file_path_internal("foo").split(foo);
+  file_path_internal("bar").split(bar);
+
+  file_id f1(string("1111111111111111111111111111111111111111"));
+  revision_id rid(string("1234123412341234123412341234123412341234"));
+  node_id nid;
+
+  {
+    L(F("TEST: check_sane_against_test, no extra nodes in rosters"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, bar);
+    // missing the marking
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, no extra nodes in markings"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, bar);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    r.detach_node(bar);
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, missing birth rev"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].birth_revision = revision_id();
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, missing path mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].parent_name.clear();
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, missing content mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_file_node(f1, nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].file_content.clear();
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  // TODO: matching up attr marks, etc.
+}
+
 void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&test_all_mark_scenarios));
   suite->add(BOOST_TEST_CASE(&bad_attr_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
+  suite->add(BOOST_TEST_CASE(&write_roster_test));
+  suite->add(BOOST_TEST_CASE(&check_sane_against_test));
   suite->add(BOOST_TEST_CASE(&automaton_roster_test));
 }
 

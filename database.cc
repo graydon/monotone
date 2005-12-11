@@ -93,6 +93,25 @@ database::check_schema()
      % filename % schema % db_schema_id);
 }
 
+void
+database::check_rosterified()
+{
+  results res;
+  string rosters_query = "SELECT 1 FROM rosters LIMIT 1";
+  string revisions_query = "SELECT 1 FROM revisions LIMIT 1";
+
+  fetch(res, one_col, any_rows, revisions_query.c_str());
+  if (res.size() > 0)
+    {
+      fetch(res, one_col, any_rows, rosters_query.c_str());
+      N (res.size() != 0,
+         F("database %s contains revisions but no rosters\n"
+           "try 'monotone db rosterify' to add rosters\n"
+           "(this is irreversible; you may want to make a backup copy first)")
+         % filename);
+    }
+}
+
 // sqlite3_value_text gives a const unsigned char * but most of the time
 // we need a signed char
 const char *
@@ -133,33 +152,29 @@ sqlite3_unpack_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_blob(f, unpacked().c_str(), unpacked().size(), SQLITE_TRANSIENT);
 }
 
-void 
+void
 database::set_app(app_state * app)
 {
   __app = app;
 }
 
-static void 
+static void
 check_sqlite_format_version(system_path const & filename)
 {
-  require_path_is_file(filename,
-                       F("database %s does not exist") % filename,
-                       F("%s is a directory, not a database") % filename);
-  
   // sqlite 3 files begin with this constant string
   // (version 2 files begin with a different one)
   std::string version_string("SQLite format 3");
-  
+
   std::ifstream file(filename.as_external().c_str());
   N(file, F("unable to probe database version in file %s") % filename);
-  
+
   for (std::string::const_iterator i = version_string.begin();
        i != version_string.end(); ++i)
     {
       char c;
       file.get(c);
       N(c == *i, F("database %s is not an sqlite version 3 file, "
-                   "try dump and reload") % filename);            
+                   "try dump and reload") % filename);
     }
 }
 
@@ -204,9 +219,7 @@ database::sql(bool init)
 
       if (! init)
         {
-          require_path_is_file(filename,
-                               F("database %s does not exist") % filename,
-                               F("%s is a directory, not a database") % filename);
+          check_db_exists();
           check_sqlite_format_version(filename);
         }
 
@@ -464,12 +477,13 @@ database::info(ostream & out)
 #undef SPACE_USAGE
 }
 
-void 
+void
 database::version(ostream & out)
 {
   string id;
 
   check_filename();
+  check_db_exists();
   open();
 
   calculate_schema_id(__sql, id);
@@ -479,18 +493,19 @@ database::version(ostream & out)
   out << F("database schema version: %s") % id << endl;
 }
 
-void 
+void
 database::migrate()
-{  
+{
   check_filename();
-
+  check_db_exists();
   open();
 
   migrate_monotone_schema(__sql, __app);
+
   close();
 }
 
-void 
+void
 database::rehash()
 {
   transaction_guard guard(*this);
@@ -678,10 +693,20 @@ database::set_filename(system_path const & file)
 }
 
 void 
-database::begin_transaction() 
+database::begin_transaction(bool exclusive) 
 {
   if (transaction_level == 0)
-    execute("BEGIN EXCLUSIVE");
+    {
+      if (exclusive)
+        execute("BEGIN EXCLUSIVE");
+      else
+        execute("BEGIN DEFERRED");
+      transaction_exclusive = exclusive;
+    }
+  else
+    {
+      E(!exclusive || transaction_exclusive, F("Attempt to start exclusive transaction within non-exclusive transaction."));
+    }
   transaction_level++;
 }
 
@@ -1459,6 +1484,8 @@ database::deltify_revision(revision_id const & rid)
 {
   transaction_guard guard(*this);
   revision_set rev;
+  MM(rev);
+  MM(rid);
   get_revision(rid, rev);
   // Make sure that all parent revs have their files replaced with deltas
   // from this rev's files.
@@ -1503,6 +1530,7 @@ database::put_revision(revision_id const & new_id,
 
   rev.check_sane();
   revision_data d;
+  MM(d.inner());
   write_revision_set(rev, d);
 
   // Phase 1: confirm the revision makes sense
@@ -1524,6 +1552,7 @@ database::put_revision(revision_id const & new_id,
   marking_map mm;
   {
     manifest_id roster_manifest_id;
+    MM(roster_manifest_id);
     make_roster_for_revision(rev, new_id, ros, mm, *__app);
     calculate_ident(ros, roster_manifest_id);
     I(rev.new_manifest == roster_manifest_id);
@@ -2669,8 +2698,13 @@ database::get_roster_id_for_revision(revision_id const & rev_id,
 
   results res;
   string query = ("SELECT roster_id FROM revision_roster WHERE rev_id = ? ");  
-  fetch(res, one_col, one_row, query.c_str(),
+  fetch(res, one_col, any_rows, query.c_str(),
         rev_id.inner()().c_str());
+  if (res.size() == 0)
+    {
+      check_rosterified();
+    }
+  I(res.size() == 1);
   roster_id = hexenc<id>(res[0][0]);
 }
 
@@ -2718,6 +2752,7 @@ database::put_roster(revision_id const & rev_id,
                      roster_t & roster,
                      marking_map & marks)
 {
+  MM(rev_id);
   data old_data, new_data;
   delta reverse_delta;
   hexenc<id> old_id, new_id;
@@ -2882,6 +2917,14 @@ database::check_filename()
 }
 
 
+void
+database::check_db_exists()
+{
+  require_path_is_file(filename,
+                       F("database %s does not exist") % filename,
+                       F("%s is a directory, not a database") % filename);
+}
+
 bool
 database::database_specified()
 {
@@ -2923,10 +2966,11 @@ database::close()
 
 // transaction guards
 
-transaction_guard::transaction_guard(database & d) : committed(false), db(d) 
+transaction_guard::transaction_guard(database & d, bool exclusive) : committed(false), db(d) 
 {
-  db.begin_transaction();
+  db.begin_transaction(exclusive);
 }
+
 transaction_guard::~transaction_guard()
 {
   if (committed)
@@ -2940,6 +2984,8 @@ transaction_guard::commit()
 {
   committed = true;
 }
+
+
 
 // called to avoid foo.db-journal files hanging around if we exit cleanly
 // without unwinding the stack (happens with SIGINT & SIGTERM)

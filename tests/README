@@ -14,17 +14,19 @@ Running tests:
 -  option -v will show the command outputs
 -  option -d will keep the testsuite.dir files for post-test debugging
 -  option -h is your friend :)
+-  don't panic if you see 'monotone serve' processes terminating with a SIGSEGV
+   during tests--we kill server processes with a SIGSEGV to get better code coverage.
 
 Creating tests:
 ---------------
 -  Copy and paste is your friend :)
 -  TODO: need more here...
 -  Remember to add a line at the end of testsuite.at
+-  Use CANONICALISE(file) or CHECK_SAME_CANONICALISED_STDOUT(file, cmd) so that
+   EOLs are handled correctly (think CR+LF on Win32)
 
-
-Template for a test (name t_<testname>.at
--------------------
-
+Template for a test (name tests/t_<testname>.at:
+------------------------------------------------
 AT_SETUP([brief test description goes here])
 MONOTONE_SETUP
 
@@ -47,3 +49,4 @@ AT_CHECK(MONOTONE import foo, [], ignore, ignore)
 ...
 AT_CLEANUP
 (END)
+

@@ -392,9 +392,9 @@ get_stdin()
 }
 
 static void 
-get_log_message(revision_set const & cs, 
-                app_state & app,
-                string & log_message)
+get_log_message_interactively(revision_set const & cs, 
+                              app_state & app,
+                              string & log_message)
 {
   string commentary;
   data summary, user_log_message;
@@ -545,7 +545,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 
   vector<cert> certs;
   
-  transaction_guard guard(app.db);
+  transaction_guard guard(app.db, false);
   
   revision_id ident;
   complete(app, idx(args, 0)(), ident);
@@ -648,7 +648,7 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
 
   if (app.db.database_specified())
     {
-      transaction_guard guard(app.db);
+      transaction_guard guard(app.db, false);
       app.db.get_key_ids(pattern, pubs);
       guard.commit();
     }
@@ -1365,7 +1365,7 @@ CMD(cat, N_("informative"),
   if (app.revision_selectors.size() == 0)
     app.require_working_copy();
 
-  transaction_guard guard(app.db);
+  transaction_guard guard(app.db, false);
 
   revision_id rid;
   if (app.revision_selectors.size() == 0)
@@ -2253,12 +2253,41 @@ CMD(attr, N_("working copy"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PAT
 }
 
 
+// FIXME BUG: our log message handling is terribly locale-unaware -- if it's
+// passed as -m, we convert to unicode, if it's passed as --message-file or
+// entered interactively, we simply pass it through as bytes.
+
+static void
+process_commit_message_args(bool & given, string & log_message, app_state & app)
+{
+  // can't have both a --message and a --message-file ...
+  N(app.message().length() == 0 || app.message_file().length() == 0,
+    F("--message and --message-file are mutually exclusive"));
+  
+  if (app.message().length() > 0)
+    {
+      log_message = app.message();
+      given = true;
+    }
+  else if (app.message_file().length() > 0)
+    {
+      data dat;
+      read_data_for_command_line(app.message_file(), dat);
+      log_message = dat();
+      given = true;
+    }
+  else
+    given = false;
+}
+
+
 CMD(commit, N_("working copy"), N_("[PATH]..."), 
     N_("commit working copy to database"),
     OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % 
     OPT_AUTHOR % OPT_DEPTH % OPT_EXCLUDE)
 {
   string log_message("");
+  bool log_message_given;
   revision_set rs;
   revision_id rid;
   roster_t old_roster, new_roster;
@@ -2291,37 +2320,29 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
     % rs.new_manifest
     % rid);
 
-  // can't have both a --message and a --message-file ...
-  N(app.message().length() == 0 || app.message_file().length() == 0,
-    F("--message and --message-file are mutually exclusive"));
-
-  N(!( app.message().length() > 0 && has_contents_user_log()),
-    F("MT/log is non-empty and --message supplied\n"
+  process_commit_message_args(log_message_given, log_message, app);
+  
+  N(!(log_message_given && has_contents_user_log()),
+    F("MT/log is non-empty and log message was specified on command line\n"
       "perhaps move or delete MT/log,\n"
-      "or remove --message from the command line?"));
+      "or remove --message/--message-file from the command line?"));
   
-  N(!( app.message_file().length() > 0 && has_contents_user_log()),
-    F("MT/log is non-empty and --message-file supplied\n"
-      "perhaps move or delete MT/log,\n"
-      "or remove --message-file from the command line?"));
-  
-  // fill app.message with message_file contents
-  if (app.message_file().length() > 0)
-  {
-    data dat;
-    read_data_for_command_line(app.message_file(), dat);
-    app.message = dat();
-  }
-  
-  if (app.message().length() > 0)
-    log_message = app.message();
-  else
+  if (!log_message_given)
     {
-      get_log_message(rs, app, log_message);
+      // this call handles MT/log
+      get_log_message_interactively(rs, app, log_message);
+      // we only check for empty log messages when the user entered them
+      // interactively.  Consensus was that if someone wanted to explicitly
+      // type --message="", then there wasn't any reason to stop them.
       N(log_message.find_first_not_of(" \r\t\n") != string::npos,
         F("empty log message; commit canceled"));
-      // we write it out so that if the commit fails, the log
-      // message will be preserved for a retry
+      // we save interactively entered log messages to MT/log, so if something
+      // goes wrong, the next commit will pop up their old log message by
+      // default.  we only do this for interactively entered messages, because
+      // otherwise 'monotone commit -mfoo' giving an error, means that after
+      // you correct that error and hit up-arrow to try again, you get an
+      // "MT/log non-empty and message given on command line" error... which
+      // is annoying.
       write_user_log(data(log_message));
     }
 
@@ -2626,7 +2647,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     "If one revision is given, the diff between the working directory and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.  If no format is specified, unified is used by default."),
-    OPT_BRANCH_NAME % OPT_REVISION % OPT_DEPTH %
+    OPT_REVISION % OPT_DEPTH %
     OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
     OPT_EXTERNAL_DIFF_ARGS)
 {
@@ -2971,6 +2992,8 @@ CMD(update, N_("working copy"), "",
 }
 
 
+// should merge support --message, --message-file?  It seems somewhat weird,
+// since a single 'merge' command may perform arbitrarily many actual merges.
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
     OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR % OPT_LCA)
 {
@@ -3022,7 +3045,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
 
 CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"), 
     N_("merge from one branch to another asymmetrically"),
-    OPT_DATE % OPT_AUTHOR % OPT_LCA)
+    OPT_DATE % OPT_AUTHOR % OPT_LCA % OPT_MESSAGE % OPT_MSGFILE)
 {
   //   this is a special merge operator, but very useful for people maintaining
   //   "slightly disparate but related" trees. it does a one-way merge; less
@@ -3093,12 +3116,16 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 
       cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
 
-      string log = (boost::format("propagate from branch '%s' (head %s)\n"
-                                  "            to branch '%s' (head %s)\n")
-                    % idx(args, 0) % (*src_i)
-                    % idx(args, 1) % (*dst_i)).str();
+      bool log_message_given;
+      string log_message;
+      process_commit_message_args(log_message_given, log_message, app);
+      if (!log_message_given)
+        log_message = (boost::format("propagate from branch '%s' (head %s)\n"
+                                     "            to branch '%s' (head %s)\n")
+                       % idx(args, 0) % (*src_i)
+                       % idx(args, 1) % (*dst_i)).str();
 
-      cert_revision_changelog(merged, log, app, dbw);
+      cert_revision_changelog(merged, log_message, app, dbw);
 
       guard.commit();      
       P(F("[merged] %s\n") % merged);

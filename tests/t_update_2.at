@@ -27,6 +27,6 @@ AT_CHECK(MONOTONE update --branch=mainbranch, [], [ignore], [ignore])
 GOT_R=`BASE_REVISION`
 
 AT_CHECK(test $GOT_R != $A1_R)
-AT_CHECK(test $GOT_R == $A2_R)
+AT_CHECK(test $GOT_R = $A2_R)
 
 AT_CLEANUP

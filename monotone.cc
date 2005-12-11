@@ -16,11 +16,10 @@
 #include <locale.h>
 
 #include <stdlib.h>
-#ifdef WIN32
-#include <libintl.h>
-#endif
 
 #include "botan/botan.h"
+
+#include "i18n.h"
 
 #include "app_state.hh"
 #include "commands.hh"
@@ -462,9 +461,34 @@ cpp_main(int argc, char ** argv)
             case OPT_BIND:
               {
                 std::string arg(argstr);
-                size_t colon = arg.find(':');
-                std::string addr_part = (colon == std::string::npos ? arg : arg.substr(0, colon));
-                std::string port_part = (colon == std::string::npos ? "" :  arg.substr(colon+1, arg.size() - colon));
+                std::string addr_part, port_part;
+                size_t l_colon = arg.find(':');
+                size_t r_colon = arg.rfind(':');
+                
+                // not an ipv6 address, as that would have at least two colons
+                if (l_colon == r_colon)
+                  {
+                    addr_part = (r_colon == std::string::npos ? arg : arg.substr(0, r_colon));
+                    port_part = (r_colon == std::string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+                  }
+                else
+                  { 
+                    // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
+                    size_t squareb = arg.rfind(']');
+                    if ((arg.find('[') == 0) && (squareb != std::string::npos))
+                      {
+                        if (squareb < r_colon)
+                          port_part = (r_colon == std::string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+                        else
+                          port_part = "";
+                        addr_part = (squareb == std::string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
+                      }
+                    else 
+                      {
+                        addr_part = arg;
+                        port_part = "";
+                      }
+                  }
                 app.bind_address = utf8(addr_part);
                 app.bind_port = utf8(port_part);
               }

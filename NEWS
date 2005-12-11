@@ -1,4 +1,4 @@
-????????????????????????????
+Sat Nov 27 22:29:38 PST 2005
 
         0.24 release.
 
@@ -89,6 +89,9 @@
         Changes in 'automate':
         - New command 'automate keys' to get information on existing
           keys in basic_io format.
+
+        Updated translations:
+        - fr
 
         Smaller changes:
         - Improved handling of multibyte characters in message

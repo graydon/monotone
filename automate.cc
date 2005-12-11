@@ -816,7 +816,7 @@ automate_certs(std::vector<utf8> args,
 
   std::vector<cert> certs;
   
-  transaction_guard guard(app.db);
+  transaction_guard guard(app.db, false);
   
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
@@ -1156,6 +1156,17 @@ void print_some_output(int cmdnum,
   s.flush();
 }
 
+static ssize_t
+automate_stdio_read(int d, void *buf, size_t nbytes)
+{
+  ssize_t rv;
+  
+  rv = read(d, buf, nbytes);
+  
+  E(rv >= 0, F("read from client failed with error code: %d") % rv);
+  return rv;
+}
+
 static void
 automate_stdio(std::vector<utf8> args,
                    std::string const & help_name,
@@ -1175,9 +1186,9 @@ automate_stdio(std::vector<utf8> args,
       bool first=true;
       int toklen=0;
       bool firstchar=true;
-      for(n=read(0, &c, 1); c != 'l' && n; n=read(0, &c, 1))
+      for(n=automate_stdio_read(0, &c, 1); c != 'l' && n; n=automate_stdio_read(0, &c, 1))
         ;
-      for(n=read(0, &c, 1); c!='e' && n; n=read(0, &c, 1))
+      for(n=automate_stdio_read(0, &c, 1); c!='e' && n; n=automate_stdio_read(0, &c, 1))
         {
           if(c<='9' && c>='0')
             {
@@ -1188,7 +1199,7 @@ automate_stdio(std::vector<utf8> args,
               char *tok=new char[toklen];
               int count=0;
               while(count<toklen)
-                count+=read(0, tok+count, toklen-count);
+                count+=automate_stdio_read(0, tok+count, toklen-count);
               if(first)
                 cmd=utf8(std::string(tok, toklen));
               else
@@ -1295,7 +1306,7 @@ automate_keys(std::vector<utf8> args, std::string const & help_name,
                                      std::vector<std::string> > > items;
   if (app.db.database_specified())
     {
-      transaction_guard guard(app.db);
+      transaction_guard guard(app.db, false);
       app.db.get_key_ids("", dbkeys);
       guard.commit();
     }

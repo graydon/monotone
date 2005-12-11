@@ -290,12 +290,17 @@ dump(std::string const & obj, std::string & out)
 }
 
 
-void MusingBase::gasp(const std::string & objstr, std::string & out) const
+void MusingBase::gasp_head(std::string & out) const
 {
-  out = (boost::format("----- begin '%s' (in %s, at %s:%d)\n"
-		       "%s"
-		       "-----   end '%s' (in %s, at %s:%d)\n")
+  out = (boost::format("----- begin '%s' (in %s, at %s:%d)\n")
 	 % name % func % file % line
+	 ).str();
+}
+
+void MusingBase::gasp_body(const std::string & objstr, std::string & out) const
+{
+  out += (boost::format("%s"
+		        "-----   end '%s' (in %s, at %s:%d)\n")
 	 % objstr
 	 % name % func % file % line
 	 ).str();
