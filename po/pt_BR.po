@@ -244,32 +244,32 @@ msgstr ""
 #: change_set.cc:1563
 #, c-format
 msgid "concatenating %d and %d deltas\n"
-msgstr ""
+msgstr "concatenando deltas %d e %d\n"
 
 #: change_set.cc:1573
 #, c-format
 msgid "processing delta on %s\n"
-msgstr ""
+msgstr "processando delta sobre %s\n"
 
 #: change_set.cc:1577
 #, c-format
 msgid "delta on %s in first changeset renamed to %s\n"
-msgstr ""
+msgstr "delta sobre %s no primeiro changeset renomeado para %s\n"
 
 #: change_set.cc:1582
 #, c-format
 msgid "discarding delta [%s]->[%s] for deleted file '%s'\n"
-msgstr ""
+msgstr "descartando delta [%s]->[%s] para arquivo removido '%s'\n"
 
 #: change_set.cc:1600
 #, c-format
 msgid "fusing deltas on %s : %s -> %s and %s -> %s\n"
-msgstr ""
+msgstr "combinando deltas sobre %s : %s -> %s e %s -> %s\n"
 
 #: change_set.cc:1614
 #, c-format
 msgid "delta on %s in second changeset copied forward\n"
-msgstr ""
+msgstr "delta sobre %s no segundo changeset copiado adiante\n"
 
 #: change_set.cc:1628
 #, c-format
@@ -284,7 +284,7 @@ msgstr ""
 #: change_set.cc:1751
 #, c-format
 msgid "unable to resolve file conflict '%s' -> '%s' vs. '%s'"
-msgstr ""
+msgstr "incapaz de resolver conflito de arquivo '%s' -> '%s' vs. '%s'"
 
 #: change_set.cc:1755
 #, c-format
@@ -319,12 +319,12 @@ msgstr ""
 #: change_set.cc:1880
 #, c-format
 msgid "conflict detected, resolved in A's favour\n"
-msgstr ""
+msgstr "conflito detectado, resolvido em favor de A\n"
 
 #: change_set.cc:1886
 #, c-format
 msgid "conflict detected, resolved in B's favour\n"
-msgstr ""
+msgstr "conflito detectado, resolvido em favor de B\n"
 
 #: change_set.cc:2053
 #, c-format
@@ -349,7 +349,7 @@ msgstr ""
 #: change_set.cc:2131
 #, c-format
 msgid "skipping delta '%s'->'%s' on deleted file '%s'\n"
-msgstr ""
+msgstr "ignorando delta '%s'->'%s' sobre arquivo removido '%s'\n"
 
 #: change_set.cc:2139
 #, c-format
@@ -369,12 +369,12 @@ msgstr ""
 #: change_set.cc:2183
 #, c-format
 msgid "skipping common delta '%s' : '%s' -> '%s'\n"
-msgstr ""
+msgstr "ignorando delta comum '%s' : '%s' -> '%s'\n"
 
 #: change_set.cc:2189
 #, c-format
 msgid "skipping neutral delta on '%s' : %s -> %s\n"
-msgstr ""
+msgstr "ignorando delta neutro sobre '%s' : %s -> %s\n"
 
 #: change_set.cc:2197
 #, c-format
@@ -394,7 +394,7 @@ msgstr ""
 #: change_set.cc:2249
 #, c-format
 msgid "merging change sets\n"
-msgstr ""
+msgstr "combinando changesets\n"
 
 #: change_set.cc:2311
 #, c-format
@@ -404,17 +404,17 @@ msgstr ""
 #: change_set.cc:2330
 #, c-format
 msgid "inverting change set\n"
-msgstr ""
+msgstr "invertendo changeset\n"
 
 #: change_set.cc:2360
 #, c-format
 msgid "converted 'delete %s' to 'add as %s' in inverse\n"
-msgstr ""
+msgstr "convertido 'remover %s' para 'adicionar como %s' em inverso\n"
 
 #: change_set.cc:2369
 #, c-format
 msgid "converted add %s to delete in inverse\n"
-msgstr ""
+msgstr "convertido adicionar %s para remover em inverso\n"
 
 #: change_set.cc:2379
 #, c-format
