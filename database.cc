@@ -2966,7 +2966,14 @@ database::close()
 
 // transaction guards
 
-transaction_guard::transaction_guard(database & d, bool exclusive) : committed(false), db(d) 
+transaction_guard::transaction_guard(database & d, bool exclusive,
+                                     size_t checkpoint_batch_size,
+                                     size_t checkpoint_batch_bytes) 
+  : committed(false), db(d), exclusive(exclusive),
+    checkpoint_batch_size(checkpoint_batch_size),
+    checkpoint_batch_bytes(checkpoint_batch_bytes),
+    checkpointed_calls(0),
+    checkpointed_bytes(0)
 {
   db.begin_transaction(exclusive);
 }
@@ -2977,6 +2984,25 @@ transaction_guard::~transaction_guard()
     db.commit_transaction();
   else
     db.rollback_transaction();
+}
+
+void 
+transaction_guard::do_checkpoint()
+{
+  db.commit_transaction();
+  db.begin_transaction(exclusive);
+  checkpointed_calls = 0;
+  checkpointed_bytes = 0;
+}
+
+void 
+transaction_guard::maybe_checkpoint(size_t nbytes)
+{
+  checkpointed_calls += 1;
+  checkpointed_bytes += nbytes;
+  if (checkpointed_calls >= checkpoint_batch_size
+      || checkpointed_bytes >= checkpoint_batch_bytes)
+    do_checkpoint();
 }
 
 void 
