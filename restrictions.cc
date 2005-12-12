@@ -211,7 +211,6 @@ get_working_revision_and_rosters(app_state & app,
                                  cset & excluded)
 {
   revision_id old_revision_id;
-  manifest_id old_manifest_id;
   boost::shared_ptr<cset> cs(new cset());
   path_set old_paths, new_paths;
 
@@ -222,8 +221,6 @@ get_working_revision_and_rosters(app_state & app,
                                    old_paths,
                                    new_paths, 
                                    *cs, excluded);
-
-  calculate_ident(old_roster, old_manifest_id);  
 
   temp_node_id_source nis;
   new_roster = old_roster;
@@ -261,8 +258,7 @@ get_working_revision_and_rosters(app_state & app,
     restrict_cset(tmp_full, *cs, tmp_excluded, app);
   }
 
-  safe_insert(rev.edges, std::make_pair(old_revision_id,
-                                        std::make_pair(old_manifest_id, cs)));
+  safe_insert(rev.edges, std::make_pair(old_revision_id, cs));
 }
 
 void

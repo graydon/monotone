@@ -1024,7 +1024,6 @@ cluster_consumer
   temp_node_id_source nis;
   editable_roster_base editable_ros;
   revision_id parent_rid, child_rid;
-  manifest_id parent_mid, child_mid;
 
   cluster_consumer(cvs_history & cvs,
                    app_state & app,
@@ -1454,13 +1453,13 @@ cluster_consumer::consume_cluster(cvs_cluster const & c)
   build_cset(c, *cs);
 
   cs->apply_to(editable_ros);
+  manifest_id child_mid;
   calculate_ident(ros, child_mid);
   rev->new_manifest = child_mid;
-  rev->edges.insert(make_pair(parent_rid, make_pair(parent_mid, cs)));
+  rev->edges.insert(make_pair(parent_rid, cs));
   calculate_ident(*rev, child_rid);
 
   preps.push_back(prepared_revision(child_rid, rev, c));
 
   parent_rid = child_rid;
-  parent_mid = child_mid;
 }

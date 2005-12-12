@@ -52,7 +52,7 @@ resolve_merge_conflicts(revision_id const & left_rid,
   if (!result.is_clean())
     {
       L(F("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
-	  "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
+          "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
         % result.node_name_conflicts.size()
         % result.file_content_conflicts.size()
         % result.node_attr_conflicts.size()
@@ -198,21 +198,13 @@ interactive_merge_and_store(revision_id const & left_rid,
   
   calculate_ident(merged_roster, merged_rev.new_manifest);
   
-  manifest_id left_mid;
-  calculate_ident(left_roster, left_mid);
   boost::shared_ptr<cset> left_to_merged(new cset);
   make_cset(left_roster, merged_roster, *left_to_merged);
-  safe_insert(merged_rev.edges, std::make_pair(left_rid,
-                                               std::make_pair(left_mid,
-                                                              left_to_merged)));
+  safe_insert(merged_rev.edges, std::make_pair(left_rid, left_to_merged));
   
-  manifest_id right_mid;
-  calculate_ident(right_roster, right_mid);
   boost::shared_ptr<cset> right_to_merged(new cset);
   make_cset(right_roster, merged_roster, *right_to_merged);
-  safe_insert(merged_rev.edges, std::make_pair(right_rid,
-                                               std::make_pair(right_mid,
-                                                              right_to_merged)));
+  safe_insert(merged_rev.edges, std::make_pair(right_rid, right_to_merged));
   
   revision_data merged_data;
   write_revision_set(merged_rev, merged_data);
