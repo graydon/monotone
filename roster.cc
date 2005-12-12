@@ -1580,6 +1580,8 @@ make_roster_for_base_plus_cset(revision_id const & base, cset const & cs,
                                roster_t & new_roster, marking_map & new_markings,
                                app_state & app)
 {
+  MM(base);
+  MM(cs);
   app.db.get_roster(base, new_roster, new_markings);
   temp_node_id_source nis;
   editable_roster_for_nonmerge er(new_roster, nis, new_rid, new_markings);
@@ -1594,6 +1596,9 @@ make_roster_for_revision(revision_set const & rev, revision_id const & new_rid,
                          app_state & app)
 {
   MM(rev);
+  MM(new_rid);
+  MM(new_roster);
+  MM(new_markings);
   if (rev.edges.size() == 1)
     make_roster_for_nonmerge(edge_old_revision(rev.edges.begin()),
                              edge_changes(rev.edges.begin()),
@@ -3303,8 +3308,14 @@ run_with_2_roster_parents(a_scalar & s,
 }
 
 ////////////////
+// These functions encapsulate all the different ways to get a 0 parent node,
+// a 1 parent node, and a 2 parent node.
+
+////////////////
 // These functions encapsulate all the different ways to get a 0 parent
 // scalar, a 1 parent scalar, and a 2 parent scalar.
+
+// FIXME: have clients just use s.nis instead of passing it separately...?
 
 static void
 run_a_0_scalar_parent_mark_scenario()
@@ -3371,6 +3382,19 @@ run_a_2_scalar_parent_scenario(scalar_val left_val,
 ////////////////
 // These functions contain the actual list of *-merge cases that we would like
 // to test.
+
+// FIXME ROSTERS:
+// we are missing attr cases:
+//   a   .
+//    \ /
+//     b*
+//   a*  .
+//    \ /
+//     a
+//   .   .
+//    \ /
+//     a*
+// where . means that the node does not exist.
 
 static void
 test_all_0_scalar_parent_mark_scenarios()
