@@ -2267,9 +2267,9 @@ session::begin_service()
 void 
 session::maybe_step()
 {
-  if (done_all_refinements()
-      && !rev_enumerator.done()
-      && outbuf_size < constants::bufsz * 10)
+  while (done_all_refinements()
+         && !rev_enumerator.done()
+         && outbuf_size < constants::bufsz * 10)
     {
       rev_enumerator.step();
     }
@@ -2965,11 +2965,21 @@ run_netsync_protocol(protocol_voice voice,
       else    
         {
           I(voice == client_voice);
-          transaction_guard guard(app.db);
+
+          // FIXME: this transaction guard is disabled, to make the
+          // client's pull "resumable" if the client hits ctrl-C. We are
+          // not sure this is a good optimization; some platforms (OSX?)
+          // are apparantly very grumpy if they do a lot of
+          // commits. Profile and check, possibly re-enable conditionally
+          // or with some form of commit-batching.
+
+          //transaction_guard guard(app.db);
+
           call_server(role, include_pattern, exclude_pattern, app,
                       addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
-          guard.commit();
+
+          //guard.commit();
         }
     }
   catch (Netxx::NetworkException & e)
