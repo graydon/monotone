@@ -454,28 +454,70 @@ public:
 
 };
 
-// transaction guards nest. acquire one in any scope you'd like
-// transaction-protected, and it'll make sure the db aborts a
-// txn if there's any exception before you call commit()
-
-// by default, locks the database exclusively.
-// if the transaction is intended to be read-only, call with exclusive=False
-// in this case, if a database update is attempted and another process is accessing
-// the database an exception will be thrown - uglier and more confusing for the user -
-// however no data inconsistency should result.
+// Transaction guards nest. Acquire one in any scope you'd like
+// transaction-protected, and it'll make sure the db aborts a transaction
+// if there's any exception before you call commit().
+//
+// By default, transaction_guard locks the database exclusively. If the
+// transaction is intended to be read-only, construct the guard with
+// exclusive=false. In this case, if a database update is attempted and
+// another process is accessing the database an exception will be thrown -
+// uglier and more confusing for the user - however no data inconsistency
+// should result.
 // 
-// an exception is thrown if an exclusive transaction_guard is created while 
-// a non-exclusive transaction_guard exists.
+// An exception is thrown if an exclusive transaction_guard is created
+// while a non-exclusive transaction_guard exists.
+//
+// Transaction guards also support splitting long transactions up into
+// checkpoints. Any time you feel the database is in an
+// acceptably-consistent state, you can call maybe_checkpoint(nn) with a
+// given number of bytes. When the number of bytes and number of
+// maybe_checkpoint() calls exceeds the guard's parameters, the transaction
+// is committed and reopened. Any time you feel the database has reached a
+// point where want to ensure a transaction commit, without destructing the
+// object, you can call do_checkpoint().
+//
+// This does *not* free you from having to call .commit() on the guard when
+// it "completes" its lifecycle. Here's a way to think of checkpointing: a
+// normal transaction guard is associated with a program-control
+// scope. Sometimes (notably in netsync) it is not convenient to create a
+// scope which exactly matches the size of work-unit you want to commit (a
+// bunch of packets, or a session-close, whichever comes first) so
+// checkpointing allows you to use a long-lived transaction guard and mark
+// off the moments where commits are desired, without destructing the
+// guard. The guard still performs an error-management task in case of an
+// exception, so you still have to clean it before destruction using
+// .commit().
+//
+// Checkpointing also does not override the transaction guard nesting: if
+// there's an enclosing transaction_guard, your checkpointing calls have no
+// affect.
+//
+// The purpose of checkpointing is to provide an alternative to "many short
+// transactions" on platforms (OSX in particular) where the overhead of
+// full commits at high frequency is too high. The solution for these
+// platforms is to run inside a longer-lived transaction (session-length),
+// and checkpoint at higher granularity (every megabyte or so).
 
 class transaction_guard
 {
   bool committed;
   database & db;
+  bool exclusive;
+  size_t const checkpoint_batch_size;
+  size_t const checkpoint_batch_bytes;
+  size_t checkpointed_calls;
+  size_t checkpointed_bytes;
 public:
-  transaction_guard(database & d, bool exclusive=true);
+  transaction_guard(database & d, bool exclusive=true,
+                    size_t checkpoint_batch_size=100,
+                    size_t checkpoint_batch_bytes=0xfffff);
   ~transaction_guard();
+  void do_checkpoint();
+  void maybe_checkpoint(size_t nbytes);
   void commit();
 };
+
 
 void
 close_all_databases();

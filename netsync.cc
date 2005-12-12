@@ -374,7 +374,7 @@ session:
   bool received_all_items();
   bool finished_working();
   void maybe_step();
-  void maybe_say_goodbye();
+  void maybe_say_goodbye(transaction_guard & guard);
 
   void note_item_arrived(netcmd_item_type ty, id const & i);
   void maybe_note_epochs_finished();
@@ -427,7 +427,7 @@ session:
   bool process_hello_cmd(rsa_keypair_id const & server_keyname,
                          rsa_pub_key const & server_key,
                          id const & nonce);
-  bool process_bye_cmd(u8 phase);
+  bool process_bye_cmd(u8 phase, transaction_guard & guard);
   bool process_anonymous_cmd(protocol_role role, 
                              utf8 const & their_include_pattern,
                              utf8 const & their_exclude_pattern);
@@ -455,7 +455,8 @@ session:
   bool process_usher_cmd(utf8 const & msg);
 
   // The incoming dispatcher.
-  bool dispatch_payload(netcmd const & cmd);
+  bool dispatch_payload(netcmd const & cmd,
+                        transaction_guard & guard);
 
   // Various helpers.
   void respond_to_confirm_cmd();
@@ -464,7 +465,7 @@ session:
 
   void send_all_data(netcmd_item_type ty, set<id> const & items);
   void begin_service();
-  bool process();
+  bool process(transaction_guard & guard);
 };
 
   
@@ -1588,7 +1589,8 @@ session::process_refine_cmd(merkle_node const & node)
 }
 
 bool 
-session::process_bye_cmd(u8 phase)
+session::process_bye_cmd(u8 phase, 
+                         transaction_guard & guard)
 {
 
 // Ideal shutdown
@@ -1600,9 +1602,11 @@ session::process_bye_cmd(u8 phase)
 //                                        server: S_WORKING
 // 0. [refinement, data, deltas, etc.]
 //                                        client: C_SHUTDOWN
+//                                        (client checkpoints here)
 // 1. client -> "bye 0"                   
 // 2.           "bye 0"  -> server
 //                                        server: S_SHUTDOWN
+//                                        (server checkpoints here)
 // 3.           "bye 1"  <- server        
 // 4. client <- "bye 1"              
 //                                        client: C_CONFIRMED
@@ -1629,6 +1633,7 @@ session::process_bye_cmd(u8 phase)
           protocol_state == working_state)
         {
           protocol_state = shutdown_state;
+          guard.do_checkpoint();
           queue_bye_cmd(1);
         }
       else
@@ -2067,7 +2072,8 @@ session::send_all_data(netcmd_item_type ty, set<id> const & items)
 }
 
 bool 
-session::dispatch_payload(netcmd const & cmd)
+session::dispatch_payload(netcmd const & cmd,
+                          transaction_guard & guard)
 {
   
   switch (cmd.get_cmd_code())
@@ -2098,7 +2104,7 @@ session::dispatch_payload(netcmd const & cmd)
       {
         u8 phase;
         cmd.read_bye_cmd(phase);
-        return process_bye_cmd(phase);
+        return process_bye_cmd(phase, guard);
       }
       break;
 
@@ -2276,13 +2282,14 @@ session::maybe_step()
 }
 
 void 
-session::maybe_say_goodbye()
+session::maybe_say_goodbye(transaction_guard & guard)
 {
   if (voice == client_voice
       && protocol_state == working_state
       && finished_working())
     {
       protocol_state = shutdown_state;
+      guard.do_checkpoint();
       queue_bye_cmd(0);
     }
 }
@@ -2304,7 +2311,7 @@ session::arm()
   return armed;
 }      
 
-bool session::process()
+bool session::process(transaction_guard & guard)
 {
   if (encountered_error)
     return true;
@@ -2313,19 +2320,18 @@ bool session::process()
       if (!arm())
         return true;
       
-      transaction_guard guard(app.db);
-
       armed = false;
       L(F("processing %d byte input buffer from peer %s\n") 
         % inbuf.size() % peer_id);
 
-      bool ret = dispatch_payload(cmd);
+      size_t sz = cmd.encoded_size();
+      bool ret = dispatch_payload(cmd, guard);
 
       if (inbuf.size() >= constants::netcmd_maxsz)
         W(F("input buffer for peer %s is overfull "
             "after netcmd dispatch\n") % peer_id);
 
-      guard.commit();
+      guard.maybe_checkpoint(sz);
       
       if (!ret)
         L(F("finishing processing with '%d' packet") 
@@ -2357,6 +2363,9 @@ call_server(protocol_role role,
             Netxx::port_type default_port,
             unsigned long timeout_seconds)
 {
+
+  transaction_guard guard(app.db);
+
   Netxx::Probe probe;
   Netxx::Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
 #ifdef USE_IPV6
@@ -2387,7 +2396,7 @@ call_server(protocol_role role,
         }
 
       sess.maybe_step();
-      sess.maybe_say_goodbye();
+      sess.maybe_say_goodbye(guard);
 
       probe.clear();
       probe.add(sess.str, sess.which_events());
@@ -2418,8 +2427,11 @@ call_server(protocol_role role,
         }
 
       if (armed)
-        if (!sess.process())
+        if (!sess.process(guard))
           {
+            // Commit whatever work we managed to accomplish anyways.
+            guard.commit();
+            
             // We failed during processing. This should only happen in
             // client voice when we have a decode exception, or received an
             // error from our server (which is translated to a decode
@@ -2432,6 +2444,9 @@ call_server(protocol_role role,
 
       if (!all_io_clean)
         {
+          // Commit whatever work we managed to accomplish anyways.
+          guard.commit();
+
           // We had an I/O error. We must decide if this represents a
           // user-reported error or a clean disconnect. See protocol
           // state diagram in session::process_bye_cmd.
@@ -2467,7 +2482,6 @@ arm_sessions_and_calculate_probe(Netxx::Probe & probe,
        i != sessions.end(); ++i)
     {
       i->second->maybe_step();
-      i->second->maybe_say_goodbye();
       try 
         {
           if (i->second->arm())
@@ -2605,7 +2619,8 @@ handle_write_available(Netxx::socket_type fd,
 
 static void
 process_armed_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
-                       set<Netxx::socket_type> & armed_sessions)
+                       set<Netxx::socket_type> & armed_sessions,
+                       transaction_guard & guard)
 {
   for (set<Netxx::socket_type>::const_iterator i = armed_sessions.begin();
        i != armed_sessions.end(); ++i)
@@ -2617,7 +2632,7 @@ process_armed_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
       else
         {
           shared_ptr<session> sess = j->second;
-          if (!sess->process())
+          if (!sess->process(guard))
             {
               P(F("peer %s processing finished, disconnecting\n") 
                 % sess->peer_id);
@@ -2694,6 +2709,8 @@ serve_connections(protocol_role role,
   map<Netxx::socket_type, shared_ptr<session> > sessions;
   set<Netxx::socket_type> armed_sessions;
   
+  shared_ptr<transaction_guard> guard;
+
   while (true)
     {      
       probe.clear();
@@ -2713,6 +2730,11 @@ serve_connections(protocol_role role,
                                               : instant));
       Netxx::Probe::ready_type event = res.second;
       Netxx::socket_type fd = res.first;
+
+      if (!guard)
+        guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
+
+      I(guard);
       
       if (fd == -1)
         {
@@ -2756,8 +2778,15 @@ serve_connections(protocol_role role,
                 }
             }
         }
-      process_armed_sessions(sessions, armed_sessions);
+      process_armed_sessions(sessions, armed_sessions, *guard);
       reap_dead_sessions(sessions, timeout_seconds);
+
+      if (sessions.empty())
+        {
+          // Let the guard die completely if everything's gone quiet.
+          guard->commit();
+          guard.reset();
+        }
     }
 }
 
@@ -2965,21 +2994,9 @@ run_netsync_protocol(protocol_voice voice,
       else    
         {
           I(voice == client_voice);
-
-          // FIXME: this transaction guard is disabled, to make the
-          // client's pull "resumable" if the client hits ctrl-C. We are
-          // not sure this is a good optimization; some platforms (OSX?)
-          // are apparantly very grumpy if they do a lot of
-          // commits. Profile and check, possibly re-enable conditionally
-          // or with some form of commit-batching.
-
-          //transaction_guard guard(app.db);
-
           call_server(role, include_pattern, exclude_pattern, app,
                       addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
-
-          //guard.commit();
         }
     }
   catch (Netxx::NetworkException & e)
