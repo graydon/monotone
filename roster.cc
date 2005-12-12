@@ -2546,6 +2546,74 @@ random_element(M const & m)
   return j;
 }
 
+bool flip(unsigned n = 2)
+{
+  return (rand() % n) == 0;
+}
+
+string new_word()
+{
+  static string wordchars = "abcdefghijlkmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  static unsigned tick = 0;
+  string tmp;
+  do
+    {
+      tmp += wordchars[rand() % wordchars.size()];
+    }
+  while (tmp.size() < 10 && !flip(10));
+  return tmp + lexical_cast<string>(tick++);
+}
+
+file_id new_ident()
+{
+  static string tab = "0123456789abcdef";
+  string tmp;
+  tmp.reserve(constants::idlen);
+  for (unsigned i = 0; i < constants::idlen; ++i)
+    tmp += tab[rand() % tab.size()];
+  return file_id(tmp);
+}
+
+path_component new_component()
+{
+  split_path pieces;
+  file_path_internal(new_word()).split(pieces);
+  return pieces.back();
+}
+
+
+attr_key pick_attr(full_attr_map_t const & attrs)
+{
+  return random_element(attrs)->first;
+}
+
+attr_key pick_attr(attr_map_t const & attrs)
+{
+  return random_element(attrs)->first;
+}
+
+bool parent_of(split_path const & p,
+               split_path const & c)
+{
+  bool is_parent = false;
+
+  if (p.size() <= c.size())
+    {
+      split_path::const_iterator c_anchor = 
+        search(c.begin(), c.end(),
+               p.begin(), p.end());
+        
+      is_parent = (c_anchor == c.begin());
+    }
+
+  //     L(F("path '%s' is%s parent of '%s'")
+  //       % file_path(p)
+  //       % (is_parent ? "" : " not")
+  //       % file_path(c));
+    
+  return is_parent;      
+}
+
 struct
 change_automaton
 {
@@ -2553,73 +2621,6 @@ change_automaton
   change_automaton()
   {
     srand(0x12345678);
-  }
-
-  string new_word()
-  {
-    static string wordchars = "abcdefghijlkmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    static unsigned tick = 0;
-    string tmp;
-    do
-      {
-        tmp += wordchars[rand() % wordchars.size()];
-      }
-    while (tmp.size() < 10 && !flip(10));
-    return tmp + lexical_cast<string>(tick++);
-  }
-
-  file_id new_ident()
-  {
-    static string tab = "0123456789abcdef";
-    string tmp;
-    tmp.reserve(constants::idlen);
-    for (unsigned i = 0; i < constants::idlen; ++i)
-      tmp += tab[rand() % tab.size()];
-    return file_id(tmp);
-  }
-
-  path_component new_component()
-  {
-    split_path pieces;
-    file_path_internal(new_word()).split(pieces);
-    return pieces.back();
-  }
-
-  bool flip(unsigned n = 2)
-  {
-    return (rand() % n) == 0;
-  }
-
-  attr_key pick_attr(full_attr_map_t const & attrs)
-  {
-    return random_element(attrs)->first;
-  }
-
-  attr_key pick_attr(attr_map_t const & attrs)
-  {
-    return random_element(attrs)->first;
-  }
-
-  bool parent_of(split_path const & p,
-                 split_path const & c)
-  {
-    bool is_parent = false;
-
-    if (p.size() <= c.size())
-      {
-        split_path::const_iterator c_anchor = 
-          search(c.begin(), c.end(),
-                 p.begin(), p.end());
-        
-        is_parent = (c_anchor == c.begin());
-      }
-
-    //     L(F("path '%s' is%s parent of '%s'")
-    //       % file_path(p)
-    //       % (is_parent ? "" : " not")
-    //       % file_path(c));
-    
-    return is_parent;      
   }
 
   void perform_random_action(roster_t & r, node_id_source & nis)
@@ -3789,10 +3790,131 @@ check_sane_against_test()
   // TODO: matching up attr marks, etc.
 }
 
+static bool
+unwanted_temp_node_p(roster_t const & ros, node_id nid, node_t n)
+{
+  if (temp_node(nid))
+    {
+      split_path pth;
+      ros.get_name(nid, pth);
+      W(F("temp node found where non-temp expected: %s\n") % pth);
+      return true;
+    }
+  return false;
+}
+
+static bool
+no_temp_nodes_p(roster_t const & ros)
+{
+  node_map const & nodes = ros.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      if (unwanted_temp_node_p(ros, i->first, i->second))
+        return false;
+      if (unwanted_temp_node_p(ros, i->second->self, i->second))
+        return false;
+    }
+  return true;
+}
+
+static void
+check_post_roster_unification_ok(roster_t const & left,
+                                 roster_t const & right)
+{
+  BOOST_CHECK(left == right);
+  BOOST_CHECK(no_temp_nodes_p(left));
+  BOOST_CHECK(no_temp_nodes_p(right));  
+}
+
+static void
+create_some_new_temp_nodes(temp_node_id_source & nis,
+                           roster_t & left_ros,
+                           set<node_id> & left_new_nodes,
+                           roster_t & right_ros,
+                           set<node_id> & right_new_nodes)
+{
+  size_t n_nodes = 10 + (rand() % 30);
+  editable_roster_base left_er(left_ros, nis);
+  editable_roster_base right_er(right_ros, nis);
+
+  // Stick in a root if there isn't one.
+  if (!left_ros.has_root())
+    {
+      I(!right_ros.has_root());
+      split_path root;
+      root.push_back(the_null_component);
+
+      node_id left_nid = left_er.create_dir_node();
+      left_new_nodes.insert(left_nid);
+      left_er.attach_node(left_nid, root);
+
+      node_id right_nid = right_er.create_dir_node();
+      right_new_nodes.insert(right_nid);
+      right_er.attach_node(right_nid, root);
+    }
+
+  // Now throw in a bunch of others
+  for (size_t i = 0; i < n_nodes; ++i)
+    {
+      node_t left_n = random_element(left_ros.all_nodes())->second;
+
+      node_id left_nid, right_nid;
+      if (flip())
+        {
+          left_nid = left_er.create_dir_node();
+          right_nid = right_er.create_dir_node();
+        }
+      else
+        {
+          file_id fid = new_ident();
+          left_nid = left_er.create_file_node(fid);
+          right_nid = right_er.create_file_node(fid);
+        }
+      
+      left_new_nodes.insert(left_nid);
+      right_new_nodes.insert(right_nid);
+
+      split_path pth;
+      left_ros.get_name(left_n->self, pth);
+
+      I(right_ros.has_node(pth));
+
+      if (is_file_t(left_n) || (pth.size() > 1 && flip()))
+        // Add a sibling of an existing entry.
+        pth[pth.size() - 1] = new_component();      
+      else 
+        // Add a child of an existing entry.
+        pth.push_back(new_component());
+      
+      left_er.attach_node(left_nid, pth);
+      right_er.attach_node(right_nid, pth);
+    }  
+}
+
+static void
+test_unify_rosters()
+{
+  L(F("TEST: begin checking unification of rosters\n"));
+  temp_node_id_source tmp_nis;
+  testing_node_id_source test_nis;  
+  roster_t left, right;
+  for (size_t i = 0; i < 30; ++i)
+    {
+      set<node_id> left_new, right_new, resolved_new;
+      create_some_new_temp_nodes(tmp_nis, left, left_new, right, right_new);
+      create_some_new_temp_nodes(tmp_nis, right, right_new, left, left_new);
+      unify_rosters(left, left_new, right, right_new, resolved_new, test_nis);
+      check_post_roster_unification_ok(left, right);
+    }
+  L(F("TEST: end checking unification of rosters\n"));
+}
+
+
 void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(test_unify_rosters));
   suite->add(BOOST_TEST_CASE(&test_all_mark_scenarios));
   suite->add(BOOST_TEST_CASE(&bad_attr_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
