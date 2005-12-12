@@ -46,28 +46,18 @@ void revision_set::check_sane() const
     {
       for (edge_map::const_iterator i = edges.begin();
            i != edges.end(); ++i)
-        {
-          I(null_id(edge_old_revision(*i)));
-          I(null_id(edge_old_manifest(*i)));
-        }
+        I(null_id(edge_old_revision(i)));
     }
 
   if (edges.size() == 1)
     {
-      // null revision is allowed iff there is a null manifest
-      I(null_id(edge_old_revision(edges.begin()))
-        == null_id(edge_old_manifest(edges.begin())));
+      // no particular checks to be done right now
     }
-  else if (edges.size() == 2)
+  if (edges.size() == 2)
     {
-      // merge nodes cannot have null revisions or null manifests, ever
+      // merge nodes cannot have null revisions
       for (edge_map::const_iterator i = edges.begin(); i != edges.end(); ++i)
-        {
-          I(!null_id(edge_old_revision(i)));
-          I(!null_id(edge_old_manifest(i)));
-          if (!(new_manifest == edge_old_manifest(i)))
-            I(!edge_changes(i).empty());
-        }
+        I(!null_id(edge_old_revision(i)));
     }
   else
     // revisions must always have either 1 or 2 edges
@@ -1260,11 +1250,7 @@ anc_graph::construct_revisions_from_ancestry()
               boost::shared_ptr<cset> cs = boost::shared_ptr<cset>(new cset());
               MM(*cs);
               make_cset(*parent_roster, child_roster, *cs); 
-              manifest_id parent_manifest_id;
-              calculate_ident(*parent_roster, parent_manifest_id);
-              safe_insert(rev.edges, std::make_pair(parent_rid, 
-                                                    std::make_pair(parent_manifest_id, cs)));
-                                                                      
+              safe_insert(rev.edges, std::make_pair(parent_rid, cs));
             }
 
           // It is possible that we're at a "root" node here -- a node
@@ -1279,9 +1265,7 @@ anc_graph::construct_revisions_from_ancestry()
               boost::shared_ptr<cset> cs = boost::shared_ptr<cset>(new cset());
               MM(*cs);
               make_cset(*parent_roster, child_roster, *cs); 
-              manifest_id parent_manifest_id;
-              safe_insert (rev.edges, std::make_pair (parent_rid, 
-                                                      std::make_pair (parent_manifest_id, cs)));
+              safe_insert(rev.edges, std::make_pair (parent_rid, cs));
               
             }
 
@@ -1458,7 +1442,6 @@ print_edge(basic_io::printer & printer,
 {       
   basic_io::stanza st;
   st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner()());
-  st.push_hex_pair(syms::old_manifest, edge_old_manifest(e).inner()());
   printer.print_stanza(st);
   print_cset(printer, edge_changes(e)); 
 }
@@ -1492,13 +1475,9 @@ parse_edge(basic_io::parser & parser,
   parser.hex(tmp);
   old_rev = revision_id(tmp);
   
-  parser.esym(syms::old_manifest);
-  parser.hex(tmp);
-  old_man = manifest_id(tmp);
-  
   parse_cset(parser, *cs);
 
-  es.insert(std::make_pair(old_rev, std::make_pair(old_man, cs)));
+  es.insert(std::make_pair(old_rev, cs));
 }
 
 

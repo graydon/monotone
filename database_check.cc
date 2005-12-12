@@ -371,24 +371,6 @@ check_revisions(app_state & app,
       for (edge_map::const_iterator edge = rev.edges.begin(); 
            edge != rev.edges.end(); ++edge)
         {
-          // ignore [] -> [...] manifests
-
-          manifest_id old = edge_old_manifest(edge);
-          if (!null_id(old))
-            {
-              if (found_manifests.find(old) == found_manifests.end())
-                checked_revisions[*i].missing_manifests++;
-
-          /* TODO ROSTER: doesn't make sense with rosters 
-              checked_manifests[edge_old_manifest(edge)].revision_refs++;
-
-              if (!checked_manifests[edge_old_manifest(edge)].found)
-                checked_revisions[*i].missing_manifests++;
-
-              if (checked_manifests[edge_old_manifest(edge)].missing_files > 0)
-                checked_revisions[*i].incomplete_manifests++; */
-            }
-            
           // ignore [] -> [...] revisions
 
           // delay checking parents until we've processed all revisions
