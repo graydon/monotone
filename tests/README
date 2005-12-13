@@ -14,8 +14,6 @@ Running tests:
 -  option -v will show the command outputs
 -  option -d will keep the testsuite.dir files for post-test debugging
 -  option -h is your friend :)
--  don't panic if you see 'monotone serve' processes terminating with a SIGSEGV
-   during tests--we kill server processes with a SIGSEGV to get better code coverage.
 
 Creating tests:
 ---------------
