@@ -3814,40 +3814,15 @@ check_sane_against_test()
   // TODO: matching up attr marks, etc.
 }
 
-static bool
-unwanted_temp_node_p(roster_t const & ros, node_id nid, node_t n)
-{
-  if (temp_node(nid))
-    {
-      split_path pth;
-      ros.get_name(nid, pth);
-      W(F("temp node found where non-temp expected: %s\n") % pth);
-      return true;
-    }
-  return false;
-}
-
-static bool
-no_temp_nodes_p(roster_t const & ros)
-{
-  node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
-    {
-      if (unwanted_temp_node_p(ros, i->first, i->second))
-        return false;
-      if (unwanted_temp_node_p(ros, i->second->self, i->second))
-        return false;
-    }
-  return true;
-}
-
 static void
 check_post_roster_unification_ok(roster_t const & left,
                                  roster_t const & right)
 {
-  BOOST_CHECK(left == right);
-  BOOST_CHECK(no_temp_nodes_p(left));
-  BOOST_CHECK(no_temp_nodes_p(right));  
+  MM(left);
+  MM(right);
+  I(left == right);
+  left.check_sane();
+  right.check_sane();
 }
 
 static void
@@ -3916,9 +3891,9 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
 }
 
 static void
-test_unify_rosters()
+test_unify_rosters_randomized()
 {
-  L(F("TEST: begin checking unification of rosters\n"));
+  L(F("TEST: begin checking unification of rosters (randomly)"));
   temp_node_id_source tmp_nis;
   testing_node_id_source test_nis;  
   roster_t left, right;
@@ -3930,7 +3905,86 @@ test_unify_rosters()
       unify_rosters(left, left_new, right, right_new, resolved_new, test_nis);
       check_post_roster_unification_ok(left, right);
     }
-  L(F("TEST: end checking unification of rosters\n"));
+  L(F("TEST: end checking unification of rosters (randomly)"));
+}
+
+static void
+test_unify_rosters_end_to_end()
+{
+  L(F("TEST: begin checking unification of rosters (end to end)"));
+  revision_id has_rid = left_rid;
+  revision_id has_not_rid = right_rid;
+  file_id my_fid(std::string("9012901290129012901290129012901290129012"));
+
+  testing_node_id_source nis;
+
+  roster_t has_not_roster; MM(has_not_roster);
+  marking_map has_not_markings; MM(has_not_markings);
+  {
+    has_not_roster.attach_node(has_not_roster.create_dir_node(nis), split(""));
+    marking_t root_marking;
+    root_marking.birth_revision = old_rid;
+    root_marking.parent_name = singleton(old_rid);
+    safe_insert(has_not_markings, make_pair(has_not_roster.root()->self,
+                                            root_marking));
+  }
+
+  roster_t has_roster = has_not_roster; MM(has_roster);
+  marking_map has_markings = has_not_markings; MM(has_markings);
+  {
+    has_roster.attach_node(has_roster.create_file_node(my_fid, nis),
+                           split("foo"));
+    marking_t file_marking;
+    file_marking.birth_revision = has_rid;
+    file_marking.parent_name = file_marking.file_content = singleton(has_rid);
+    safe_insert(has_markings, make_pair(has_roster.get_node(split("foo"))->self,
+                                        file_marking));
+  }
+
+  cset add_cs; MM(add_cs);
+  safe_insert(add_cs.files_added, make_pair(split("foo"), my_fid));
+  cset no_add_cs; MM(no_add_cs);
+  
+  // added in left, then merged
+  {
+    roster_t new_roster; MM(new_roster);
+    marking_map new_markings; MM(new_markings);
+    make_roster_for_merge(has_rid, has_roster, has_markings, no_add_cs,
+                          singleton(has_rid),
+                          has_not_rid, has_not_roster, has_not_markings, add_cs,
+                          singleton(has_not_rid),
+                          new_rid, new_roster, new_markings,
+                          nis);
+    I(new_roster.get_node(split("foo"))->self
+      == has_roster.get_node(split("foo"))->self);
+  }
+  // added in right, then merged
+  {
+    roster_t new_roster; MM(new_roster);
+    marking_map new_markings; MM(new_markings);
+    make_roster_for_merge(has_not_rid, has_not_roster, has_not_markings, add_cs,
+                          singleton(has_not_rid),
+                          has_rid, has_roster, has_markings, no_add_cs,
+                          singleton(has_rid),
+                          new_rid, new_roster, new_markings,
+                          nis);
+    I(new_roster.get_node(split("foo"))->self
+      == has_roster.get_node(split("foo"))->self);
+  }
+  // added in merge
+  {
+    roster_t new_roster; MM(new_roster);
+    marking_map new_markings; MM(new_markings);
+    make_roster_for_merge(has_not_rid, has_not_roster, has_not_markings, add_cs,
+                          singleton(has_not_rid),
+                          has_not_rid, has_not_roster, has_not_markings, add_cs,
+                          singleton(has_not_rid),
+                          new_rid, new_roster, new_markings,
+                          nis);
+    I(new_roster.get_node(split("foo"))->self
+      != has_roster.get_node(split("foo"))->self);
+  }
+  L(F("TEST: end checking unification of rosters (end to end)"));
 }
 
 
@@ -3938,7 +3992,8 @@ void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(test_unify_rosters));
+  suite->add(BOOST_TEST_CASE(&test_unify_rosters_end_to_end));
+  suite->add(BOOST_TEST_CASE(&test_unify_rosters_randomized));
   suite->add(BOOST_TEST_CASE(&test_all_mark_scenarios));
   suite->add(BOOST_TEST_CASE(&bad_attr_test));
   suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
