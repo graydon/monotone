@@ -3972,13 +3972,15 @@ test_unify_rosters_end_to_end()
       == has_roster.get_node(split("foo"))->self);
   }
   // added in merge
+  // this is a little "clever", it uses the same has_not_roster twice, but the
+  // second time it passes the has_rid, to make it a possible graph.
   {
     roster_t new_roster; MM(new_roster);
     marking_map new_markings; MM(new_markings);
     make_roster_for_merge(has_not_rid, has_not_roster, has_not_markings, add_cs,
                           singleton(has_not_rid),
-                          has_not_rid, has_not_roster, has_not_markings, add_cs,
-                          singleton(has_not_rid),
+                          has_rid, has_not_roster, has_not_markings, add_cs,
+                          singleton(has_rid),
                           new_rid, new_roster, new_markings,
                           nis);
     I(new_roster.get_node(split("foo"))->self
