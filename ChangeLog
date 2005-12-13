@@ -1,3 +1,10 @@
+2005-12-13  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Use SIGTERM rather than SIGSEGV to close down
+	monotone servers.
+	* HACKING, tests/README: Remove references to use of SEGV for
+	terminating monotone servers.
+
 2005-12-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* po/pt_BR.po: Add missing newline.
