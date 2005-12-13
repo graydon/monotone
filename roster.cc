@@ -3361,12 +3361,12 @@ run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
 }
 
 static void
-run_a_2_scalar_parent_scenario(scalar_val left_val,
-                               std::set<revision_id> const & left_mark_set,
-                               scalar_val right_val,
-                               std::set<revision_id> const & right_mark_set,
-                               scalar_val new_val,
-                               std::set<revision_id> const & new_mark_set)
+run_a_2_scalar_parent_scenario_exact(scalar_val left_val,
+                                     std::set<revision_id> const & left_mark_set,
+                                     scalar_val right_val,
+                                     std::set<revision_id> const & right_mark_set,
+                                     scalar_val new_val,
+                                     std::set<revision_id> const & new_mark_set)
 {
   testing_node_id_source nis;
   scalars ss = all_scalars(nis);
@@ -3378,6 +3378,24 @@ run_a_2_scalar_parent_scenario(scalar_val left_val,
                                 new_val, new_mark_set,
                                 nis);
     }
+}
+
+static void
+run_a_2_scalar_parent_scenario(scalar_val left_val,
+                               std::set<revision_id> const & left_mark_set,
+                               scalar_val right_val,
+                               std::set<revision_id> const & right_mark_set,
+                               scalar_val new_val,
+                               std::set<revision_id> const & new_mark_set)
+{
+  // run both what we're given...
+  run_a_2_scalar_parent_scenario_exact(left_val, left_mark_set,
+                                       right_val, right_mark_set,
+                                       new_val, new_mark_set);
+  // ...and its symmetric reflection
+  run_a_2_scalar_parent_scenario_exact(right_val, right_mark_set,
+                                       left_val, left_mark_set,
+                                       new_val, new_mark_set);
 }
 
 ////////////////
