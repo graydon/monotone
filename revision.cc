@@ -53,7 +53,7 @@ void revision_set::check_sane() const
     {
       // no particular checks to be done right now
     }
-  if (edges.size() == 2)
+  else if (edges.size() == 2)
     {
       // merge nodes cannot have null revisions
       for (edge_map::const_iterator i = edges.begin(); i != edges.end(); ++i)
