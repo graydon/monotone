@@ -115,12 +115,6 @@ carefully observe the test case's behaviour before and after your fix. If no
 test case exists, it is strongly recommended to write a test case before
 attempting to fix the bug.
 
-When looking at test results or debugging tests, don't immediately panic if you
-notice monotone processes being killed by a SIGSEGV.  We use SIGSEGV to
-terminate 'monotone serve' processes (only) to ensure the error exit paths are
-tested.  Other than these 'monotone serve' processes, any SIGSEGVs occurring
-during the tests is very likely a bug.
-
 
 Reporting errors to the user
 ----------------------------

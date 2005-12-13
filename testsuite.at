@@ -367,11 +367,7 @@ if test "$OSTYPE" = "msys"; then
     ps | awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill " $a);}'
   fi
 else
-  # use a SEGV because it will cause an exit, but trigger error
-  # unwind, so we will actually "exit normally"; which is important
-  # when using things like coverage tools, etc. that need to write out
-  # their data on program exit.
-  kill -SEGV $mt_pid 2>/dev/null
+  kill -TERM $mt_pid 2>/dev/null
 fi
 rm -f monotone_at.pid 2>/dev/null
 ])
