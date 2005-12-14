@@ -1072,8 +1072,7 @@ typedef std::map<file_path, std::map<std::string, std::string> > oldstyle_attr_m
 static void 
 read_oldstyle_dot_mt_attrs(data const & dat, oldstyle_attr_map & attr)
 {
-  std::istringstream iss(dat());
-  basic_io::input_source src(iss, ".mt-attrs");
+  basic_io::input_source src(dat(), ".mt-attrs");
   basic_io::tokenizer tok(src);
   basic_io::parser parser(tok);
 
@@ -1415,8 +1414,7 @@ get_manifest_for_rev(app_state & app,
 {
   revision_data dat;
   app.db.get_revision(ident,dat);
-  std::istringstream iss(dat.inner()());
-  basic_io::input_source src(iss, "revision");
+  basic_io::input_source src(dat.inner()(), "revision");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   while (pars.symp())
@@ -1501,8 +1499,7 @@ read_revision_set(data const & dat,
                   revision_set & rev)
 {
   MM(rev);
-  std::istringstream iss(dat());
-  basic_io::input_source src(iss, "revision");
+  basic_io::input_source src(dat(), "revision");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   parse_revision(pars, rev);

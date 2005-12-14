@@ -2320,8 +2320,7 @@ read_roster_and_marking(data const & dat,
                         roster_t & ros,
                         marking_map & mm)
 {
-  std::istringstream iss(dat());
-  basic_io::input_source src(iss, "roster");
+  basic_io::input_source src(dat(), "roster");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   ros.parse_from(pars, mm);

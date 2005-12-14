@@ -477,8 +477,7 @@ read_cset(data const & dat, cset & cs)
 {
   MM(dat);
   MM(cs);
-  std::istringstream iss(dat());
-  basic_io::input_source src(iss, "cset");
+  basic_io::input_source src(dat(), "cset");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   parse_cset(pars, cs);

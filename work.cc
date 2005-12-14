@@ -513,8 +513,7 @@ get_options_path(bookkeeping_path & o_path)
 void 
 read_options_map(data const & dat, options_map & options)
 {
-  std::istringstream iss(dat());
-  basic_io::input_source src(iss, "MT/options");
+  basic_io::input_source src(dat(), "MT/options");
   basic_io::tokenizer tok(src);
   basic_io::parser parser(tok);
 
