@@ -885,6 +885,16 @@ roster_t::check_sane_against(marking_map const & markings) const
       else
         I(mi->second.file_content.empty());
 
+      full_attr_map_t::const_iterator rai;
+      std::map<attr_key, std::set<revision_id> >::const_iterator mai;
+      for (rai = ri->second->attrs.begin(), mai = mi->second.attrs.begin();
+           rai != ri->second->attrs.end() && mai != mi->second.attrs.end();
+           ++rai, ++mai)
+        {
+          I(rai->first == mai->first);
+          I(!mai->second.empty());
+        }
+      I(rai == ri->second->attrs.end() && mai == mi->second.attrs.end());
       // TODO: attrs
     }
 

@@ -56,7 +56,7 @@ typedef std::map<node_id, node_t> node_map;
 void dump(full_attr_map_t const & val, std::string & out);
 
 
-struct node 
+struct node
 {
   node();
   node(node_id i);
