@@ -1,3 +1,13 @@
+2005-12-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/fs.cc: Handle the fact that the MoveFileEx symbol might
+	exist in kernel32.dll even though it doesn't actually work.  It
+	turns out that Win9x implements a bunch of NT-only symbols as
+	stubs that return ERROR_CALL_NOT_IMPLEMENTED, so it's not
+	sufficient to detect feature availability by doing symbol lookups
+	at runtime.  Also add a missing parameter to the final error
+	message.  Fixes #15063.
+
 2005-12-13  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (update): remove \n from F() string

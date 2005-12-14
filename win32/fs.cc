@@ -139,18 +139,26 @@ rename_clobberingly_impl(const char* from, const char* to)
   // more compatible DeleteFile/MoveFile pair as a compatibility fall-back.
   typedef BOOL (*MoveFileExFun)(LPCTSTR, LPCTSTR, DWORD);
   static MoveFileExFun MoveFileEx = 0;
+  static bool MoveFileExAvailable = false;
   if (MoveFileEx == 0) {
     HMODULE hModule = LoadLibrary("kernel32");
     if (hModule)
       MoveFileEx = reinterpret_cast<MoveFileExFun>
         (GetProcAddress(hModule, "MoveFileExA"));
-    if (MoveFileEx)
+    if (MoveFileEx) {
       L(F("using MoveFileEx for renames"));
+      MoveFileExAvailable = true;
+    } else
+      L(F("using DeleteFile/MoveFile fallback for renames"));
   }
 
-  if (MoveFileEx) {
+  if (MoveFileExAvailable) {
     if (MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
       return true;
+    else if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+      MoveFileExAvailable = false;
+      L(F("MoveFileEx failed with CALL_NOT_IMPLEMENTED, using fallback"));
+    }
   } else {
     // This is not even remotely atomic, but what can you do?
     DeleteFile(to);
@@ -167,6 +175,7 @@ rename_clobberingly(any_path const & from, any_path const & to)
   const char* szTo = to.as_external().c_str();
   static const int renameAttempts = 16;
   DWORD sleepTime = 1;
+  DWORD lastError = 0;
 
   // If a clobbering rename attempt fails, we wait and try again, up to an
   // (arbitrary) maximum of 16 attempts.  This is a gross hack to work
@@ -175,11 +184,13 @@ rename_clobberingly(any_path const & from, any_path const & to)
   for (int i = 0; i < renameAttempts; ++i) {
     if (rename_clobberingly_impl(szFrom, szTo))
       return;
+    lastError = GetLastError();
     L(F("attempted rename of '%s' to '%s' failed: %d")
-      % szFrom % szTo % GetLastError());
+      % szFrom % szTo % lastError);
     Sleep(sleepTime);
     if (sleepTime < 250)
       sleepTime *= 2;
   }
-  E(false, F("renaming '%s' to '%s' failed: %d") % from % to);
+  E(false, F("renaming '%s' to '%s' failed: %d") % from % to % lastError);
 }
+
