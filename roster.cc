@@ -3927,6 +3927,9 @@ test_die_die_die_merge()
   safe_insert(right_markings, make_pair(right_roster.get_node(split("foo"))->self,
                                         an_old_marking));
 
+  left_roster.check_sane_against(left_markings);
+  right_roster.check_sane_against(right_markings);
+
   cset left_cs; MM(left_cs);
   // we add the node
   left_cs.dirs_added.insert(split("foo"));
@@ -3946,32 +3949,80 @@ test_die_die_die_merge()
                            new_rid, new_roster, new_markings,
                            nis),
      std::logic_error);
+  BOOST_CHECK_THROW(
+     make_roster_for_merge(right_rid, right_roster, right_markings, right_cs,
+                           singleton(right_rid),
+                           left_rid, left_roster, left_markings, left_cs,
+                           singleton(left_rid),
+                           new_rid, new_roster, new_markings,
+                           nis),
+     std::logic_error);
 }
 // nodes can't change type file->dir or dir->file
 //    make_cset fails
+//    merging a file and a dir with the same nid and no mention of what should
+//      happen to them fails
+
 static void
 test_same_nid_diff_type()
 {
   testing_node_id_source nis;
+
   roster_t dir_roster; MM(dir_roster);
+  marking_map dir_markings; MM(dir_markings);
   dir_roster.attach_node(dir_roster.create_dir_node(nis), split(""));
+  marking_t marking;
+  marking.birth_revision = old_rid;
+  marking.parent_name = singleton(old_rid);
+  safe_insert(dir_markings, make_pair(dir_roster.get_node(split(""))->self,
+                                      marking));
+
   roster_t file_roster; MM(file_roster);
+  marking_map file_markings; MM(file_markings);
   file_roster = dir_roster;
+  file_markings = dir_markings;
 
   // okay, they both have the root dir
   node_id nid = nis.next();
   dir_roster.create_dir_node(nid);
   dir_roster.attach_node(nid, split("foo"));
+  safe_insert(dir_markings, make_pair(nid, marking));
+
   file_roster.create_file_node(new_ident(), nid);
   file_roster.attach_node(nid, split("foo"));
+  marking.file_content = singleton(old_rid);
+  safe_insert(file_markings, make_pair(nid, marking));
+
+  dir_roster.check_sane_against(dir_markings);
+  file_roster.check_sane_against(file_markings);
 
   cset cs; MM(cs);
   BOOST_CHECK_THROW(make_cset(dir_roster, file_roster, cs), std::logic_error);
   BOOST_CHECK_THROW(make_cset(file_roster, dir_roster, cs), std::logic_error);
+
+  cset left_cs; MM(left_cs);
+  cset right_cs; MM(right_cs);
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+  BOOST_CHECK_THROW(
+     make_roster_for_merge(left_rid, dir_roster, dir_markings, left_cs,
+                           singleton(left_rid),
+                           right_rid, file_roster, file_markings, right_cs,
+                           singleton(right_rid),
+                           new_rid, new_roster, new_markings,
+                           nis),
+     std::logic_error);
+  BOOST_CHECK_THROW(
+     make_roster_for_merge(left_rid, file_roster, file_markings, left_cs,
+                           singleton(left_rid),
+                           right_rid, dir_roster, dir_markings, right_cs,
+                           singleton(right_rid),
+                           new_rid, new_roster, new_markings,
+                           nis),
+     std::logic_error);
+  
 }
 
-//    merging a file and a dir with the same nid and no mention of what should
-//      happen to them fails
 
 static void
 write_roster_test()
