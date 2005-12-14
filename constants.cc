@@ -145,7 +145,7 @@ namespace constants
   BOOST_STATIC_ASSERT(merkle_bitmap_length_in_bits > 0);
   BOOST_STATIC_ASSERT((merkle_bitmap_length_in_bits % 8) == 0);
 
-  u8 const netcmd_current_protocol_version = 5;
+  u8 const netcmd_current_protocol_version = 6;
   
   // allow payloads up to 256 megs (this sets the in-practice maximum size of
   // a compressed file/manifest).
