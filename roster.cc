@@ -4287,7 +4287,69 @@ check_sane_against_test()
     BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
   }
 
-  // TODO: matching up attr marks, etc.
+  {
+    L(F("TEST: check_sane_against_test, extra content mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].file_content.insert(rid);
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, missing attr mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    // NB: mark and _then_ add attr
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    r.set_attr(root, attr_key("my_key"), attr_value("my_value"));
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, empty attr mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    r.set_attr(root, attr_key("my_key"), attr_value("my_value"));
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].attrs[attr_key("my_key")].clear();
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, extra attr mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    r.set_attr(root, attr_key("my_key"), attr_value("my_value"));
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].attrs[attr_key("my_second_key")].insert(rid);
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
 }
 
 static void
