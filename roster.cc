@@ -2941,18 +2941,94 @@ bad_attr_test()
   BOOST_CHECK_THROW(r.check_sane(true), std::logic_error);
 }
 
+// FIXME_ROSTERS:
+// nodes can't survive dying on one side of a merge
+//    have a node that exists on the left, and not the right, and the
+//      right_uncommon_ancestors set has its birth_revision in it
+//      and we put an add on the right and nothing on the left and it should
+//      fail
+// nodes can't change type file->dir or dir->file
+//    make_cset fails
+//    merging a file and a dir with the same nid and no mention of what should
+//      happen to them fails
+
 ////////////////////////////////////////////////////////////////////////
 // exhaustive marking tests
 ////////////////////////////////////////////////////////////////////////
 
-// we always have the topology:
+// The marking/roster generation code is extremely critical.  It is the very
+// core of monotone's versioning technology, very complex, and bugs can result
+// in corrupt and nonsensical histories (not to mention erroneous merges and
+// the like).  Furthermore, the code that implements it is littered with
+// case-by-case analysis, where copy-paste errors could easily occur.  So the
+// purpose of this section is to systematically and exhaustively test every
+// possible case.
+//
+// Our underlying merger, *-merge, works on scalars, case-by-case.  The cases are:
+//   0 parent:
+//       a*
+//   1 parent:
+//       a     a
+//       |     |
+//       a     b*
+//   2 parents:
+//       a   a  a   a  a   b  a   b
+//        \ /    \ /    \ /    \ /
+//         a      b*     c*     a?
+// 
+// Each node has a number of scalars associated with it:
+//   * basename+parent
+//   * file content (iff a file)
+//   * attributes
+//
+// So for each scalar, we want to test each way it can appear in each of the
+// above shapes.  This is made more complex by lifecycles.  We can achieve a 0
+// parent node as:
+//   * a node in a 0-parent roster (root revision)
+//   * a newly added node in a 1-parent roster
+//   * a newly added node in a 2-parent roster
+// a 1 parent node as:
+//   * a pre-existing node in a 1-parent roster
+//   * a node in a 2-parent roster that only existed in one of the parents
+// a 2 parent node as:
+//   * a pre-existing node in a 2-parent roster
+//
+// Because the basename+parent and file_content scalars have lifetimes that
+// exactly match the lifetime of the node they are on, those are all the cases
+// for these scalars.  However, attrs make things a bit more complicated,
+// because they can be added.  An attr can have 0 parents:
+//   * in any of the above cases, with an attribute newly added on the node
+// And one parent:
+//   * in any of the cases above with one node parent and the attr pre-existing
+//   * in a 2-parent node where the attr exists in only one of the parents
+//   
+// Plus, just to be sure, in the merge cases we check both the given example
+// and the mirror-reversed one, since the code implementing this could
+// conceivably mark merge(A, B) right but get merge(B, A) wrong.  And for the
+// scalars that can appear on either files or dirs, we check both.
+
+// The following somewhat elaborate code implements all these checks.  The
+// most important background assumption to know, is that it always assumes
+// (and this assumption is hard-coded in various places) that it is looking at
+// one of the following topologies:
+//
+//     old
+//
+//     old
+//      |
+//     new
+//
 //     old
 //     / \.
 // left   right
 //     \ /
 //     new
-// FIXME ROSTERS: explainify how this stuff works, and why it is exhaustive,
-// so future changes can be made
+//
+// There is various tricksiness in making sure that the root directory always
+// has the right birth_revision, that nodes are created with good birth
+// revisions and sane markings on the scalars we are not interested in, etc.
+// This code is ugly and messy and could use refactoring, but it seems to
+// work.
 
 ////////////////
 // These are some basic utility pieces handy for the exhaustive mark tests
@@ -3558,14 +3634,6 @@ run_a_0_scalar_parent_mark_scenario()
 // These functions contain the actual list of *-merge cases that we would like
 // to test.
 
-// FIXME ROSTERS:
-// we are missing attr case:
-//   +   .
-//    \ /
-//     a*
-// where . means that the node does not exist, and + means it exists but has
-// no attr.
-
 static void
 test_all_0_scalar_parent_mark_scenarios()
 {
@@ -3702,7 +3770,7 @@ test_all_2_scalar_parent_mark_scenarios()
                                       scalar_b, singleton(old_rid),
                                       scalar_a, singleton(left_rid));
 
-  // FIXME ROSTERS:
+  // FIXME: be nice to test:
   //  a*  a*  b
   //   \ /   /
   //    a   /
