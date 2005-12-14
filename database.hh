@@ -114,6 +114,13 @@ class database
              int const want_rows, 
              char const * query, 
              va_list args);
+
+  // this variant is binary transparent
+  void fetch(results & res, 
+             int const want_cols, 
+             int const want_rows, 
+             char const * query, 
+             std::vector<std::string> const& args);
  
   bool exists(hexenc<id> const & ident, 
               std::string const & table);

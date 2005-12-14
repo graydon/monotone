@@ -674,6 +674,48 @@ database::fetch(statement & stmt,
     F("wanted %d rows got %s in query: %s\n") % want_rows % nrow % query);
 }
 
+void 
+database::fetch(results & res, 
+                int const want_cols, 
+                int const want_rows, 
+                char const * query, 
+                std::vector<std::string> const& args)
+{
+  res.clear();
+  res.resize(0);
+
+  statement &stmt = prepare(query);
+  int ncol = sqlite3_column_count(stmt.stmt());
+
+  E(want_cols == any_cols || want_cols == ncol, 
+    F("wanted %d columns got %d in query: %s\n") % want_cols % ncol % query);
+
+  // bind parameters for this execution
+
+  int params = sqlite3_bind_parameter_count(stmt.stmt());
+  
+  I(args.size()==params);
+
+  L(F("binding %d parameters for %s\n") % params % query);
+
+  for (int param = 1; param <= params; param++)
+    {
+      string log = args[param-1];
+
+      if (log.size() > constants::log_line_sz)
+        log = log.substr(0, constants::log_line_sz);
+
+      L(F("binding %d with value '%s'\n") % param % log);
+
+      // we can use SQLITE_STATIC since the array is destructed after
+      // fetching the parameters (and sqlite3_reset)
+      sqlite3_bind_blob(stmt.stmt(), param, args[param-1].data(), args[param-1].size(), SQLITE_STATIC);
+      assert_sqlite3_ok(sql());
+    }
+    
+  fetch(stmt, res, want_rows, query);
+}
+
 // general application-level logic
 
 void 
