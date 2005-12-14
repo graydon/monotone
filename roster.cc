@@ -2941,17 +2941,6 @@ bad_attr_test()
   BOOST_CHECK_THROW(r.check_sane(true), std::logic_error);
 }
 
-// FIXME_ROSTERS:
-// nodes can't survive dying on one side of a merge
-//    have a node that exists on the left, and not the right, and the
-//      right_uncommon_ancestors set has its birth_revision in it
-//      and we put an add on the right and nothing on the left and it should
-//      fail
-// nodes can't change type file->dir or dir->file
-//    make_cset fails
-//    merging a file and a dir with the same nid and no mention of what should
-//      happen to them fails
-
 ////////////////////////////////////////////////////////////////////////
 // exhaustive marking tests
 ////////////////////////////////////////////////////////////////////////
@@ -3056,11 +3045,6 @@ namespace
   revision_id left_rid(string("1111111111111111111111111111111111111111"));
   revision_id right_rid(string("2222222222222222222222222222222222222222"));
   revision_id new_rid(string("4444444444444444444444444444444444444444"));
-
-  void
-  add_old_root_with_id(node_id root_nid, roster_t & roster, marking_map & markings)
-  {
-  }
 
   split_path
   split(std::string const & s)
@@ -3915,6 +3899,80 @@ test_all_mark_scenarios()
 // end of exhaustive tests
 ////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////
+// lifecyle tests
+////////////////////////////////////////////////////////////////////////
+
+// nodes can't survive dying on one side of a merge
+static void
+test_die_die_die_merge()
+{
+  roster_t left_roster; MM(left_roster);
+  marking_map left_markings; MM(left_markings);
+  roster_t right_roster; MM(right_roster);
+  marking_map right_markings; MM(right_markings);
+  testing_node_id_source nis;
+
+  // left roster is empty except for the root
+  left_roster.attach_node(left_roster.create_dir_node(nis), split(""));
+  marking_t an_old_marking;
+  an_old_marking.birth_revision = old_rid;
+  an_old_marking.parent_name = singleton(old_rid);
+  safe_insert(left_markings, make_pair(left_roster.get_node(split(""))->self,
+                                       an_old_marking));
+  // right roster is identical, except for a dir created in the old rev
+  right_roster = left_roster;
+  right_markings = left_markings;
+  right_roster.attach_node(right_roster.create_dir_node(nis), split("foo"));
+  safe_insert(right_markings, make_pair(right_roster.get_node(split("foo"))->self,
+                                        an_old_marking));
+
+  cset left_cs; MM(left_cs);
+  // we add the node
+  left_cs.dirs_added.insert(split("foo"));
+  // we do nothing
+  cset right_cs; MM(right_cs);
+
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+
+  // because the dir was created in the old rev, the left side has logically
+  // seen it and killed it, so it needs to be dead in the result.
+  BOOST_CHECK_THROW(
+     make_roster_for_merge(left_rid, left_roster, left_markings, left_cs,
+                           singleton(left_rid),
+                           right_rid, right_roster, right_markings, right_cs,
+                           singleton(right_rid),
+                           new_rid, new_roster, new_markings,
+                           nis),
+     std::logic_error);
+}
+// nodes can't change type file->dir or dir->file
+//    make_cset fails
+static void
+test_same_nid_diff_type()
+{
+  testing_node_id_source nis;
+  roster_t dir_roster; MM(dir_roster);
+  dir_roster.attach_node(dir_roster.create_dir_node(nis), split(""));
+  roster_t file_roster; MM(file_roster);
+  file_roster = dir_roster;
+
+  // okay, they both have the root dir
+  node_id nid = nis.next();
+  dir_roster.create_dir_node(nid);
+  dir_roster.attach_node(nid, split("foo"));
+  file_roster.create_file_node(new_ident(), nid);
+  file_roster.attach_node(nid, split("foo"));
+
+  cset cs; MM(cs);
+  BOOST_CHECK_THROW(make_cset(dir_roster, file_roster, cs), std::logic_error);
+  BOOST_CHECK_THROW(make_cset(file_roster, dir_roster, cs), std::logic_error);
+}
+
+//    merging a file and a dir with the same nid and no mention of what should
+//      happen to them fails
+
 static void
 write_roster_test()
 {
@@ -4361,6 +4419,8 @@ void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&test_die_die_die_merge));
+  suite->add(BOOST_TEST_CASE(&test_same_nid_diff_type));
   suite->add(BOOST_TEST_CASE(&test_unify_rosters_end_to_end));
   suite->add(BOOST_TEST_CASE(&test_unify_rosters_randomized));
   suite->add(BOOST_TEST_CASE(&test_all_mark_scenarios));
