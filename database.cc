@@ -72,7 +72,7 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("bd86f9a90b5d552f0be1fa9aee847ea0f317778b"),
+  schema("acf96bb0bd230523fe5fa7621864fa252c3cf11c"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -783,9 +783,16 @@ database::get(hexenc<id> const & ident,
   fetch(res, one_col, one_row, query.c_str(), ident().c_str());
 
   // consistency check
-  base64<gzip<data> > rdata(res[0][0]);
   data rdata_unpacked;
+  if (table=="files")
+  { gzip<data> rdata(res[0][0]);
+    decode_gzip(rdata,rdata_unpacked);
+  }
+  else
+  {
+  base64<gzip<data> > rdata(res[0][0]);
   unpack(rdata, rdata_unpacked);
+  }
 
   hexenc<id> tid;
   calculate_ident(rdata_unpacked, tid);
@@ -807,8 +814,15 @@ database::get_delta(hexenc<id> const & ident,
   fetch(res, one_col, one_row, query.c_str(), 
         ident().c_str(), base().c_str());
 
+  if (table=="file_deltas")
+  { gzip<delta> del_packed(res[0][0]);
+    decode_gzip(del_packed, del);
+  }
+  else
+  {
   base64<gzip<delta> > del_packed = res[0][0];
   unpack(del_packed, del);
+  }
 }
 
 void 
