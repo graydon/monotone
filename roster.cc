@@ -3206,13 +3206,15 @@ namespace
     }
   };
 
+  // this scalar represents an attr whose node already exists, and we put an
+  // attr on it.
   template <typename T>
-  struct X_attr_scalar : public a_scalar
+  struct X_attr_existing_node_scalar : public a_scalar
   {
     virtual std::string my_type() const { return "X_attr_scalar"; }
 
     std::map<scalar_val, pair<bool, attr_value> > values;
-    X_attr_scalar(node_id_source & nis)
+    X_attr_existing_node_scalar(node_id_source & nis)
       : a_scalar(nis)
     {
       safe_insert(values, make_pair(scalar_a, make_pair(true, attr_value("a"))));
@@ -3238,6 +3240,39 @@ namespace
       roster.check_sane_against(markings);
     }
   };
+  
+  // this scalar represents an attr whose node does not exist; we create the
+  // node when we create the attr.
+  template <typename T>
+  struct X_attr_new_node_scalar : public a_scalar
+  {
+    virtual std::string my_type() const { return "X_attr_scalar"; }
+
+    std::map<scalar_val, pair<bool, attr_value> > values;
+    X_attr_new_node_scalar(node_id_source & nis)
+      : a_scalar(nis)
+    {
+      safe_insert(values, make_pair(scalar_a, make_pair(true, attr_value("a"))));
+      safe_insert(values, make_pair(scalar_b, make_pair(true, attr_value("b"))));
+      safe_insert(values, make_pair(scalar_c, make_pair(true, attr_value("c"))));
+    }
+    virtual void
+    set(revision_id const & scalar_origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      setup(roster, markings);
+      if (val != scalar_none)
+        {
+          T::make_obj(scalar_origin_rid, obj_under_test_nid, roster, markings);
+          roster.attach_node(obj_under_test_nid, split("foo"));
+          safe_insert(roster.get_node(obj_under_test_nid)->attrs,
+                      make_pair(attr_key("test_key"), safe_get(values, val)));
+          markings[obj_under_test_nid].attrs[attr_key("test_key")] = this_scalar_mark;
+        }
+      roster.check_sane_against(markings);
+    }
+  };
 
   typedef std::vector<boost::shared_ptr<a_scalar> > scalars;
   scalars
@@ -3249,8 +3284,10 @@ namespace
     ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<dir_maker>(nis)));
     ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<file_maker>(nis)));
     ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<dir_maker>(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_scalar<file_maker>(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_scalar<dir_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_existing_node_scalar<file_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_existing_node_scalar<dir_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_new_node_scalar<file_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_new_node_scalar<dir_maker>(nis)));
     return ss;
   }
 }
@@ -3489,6 +3526,8 @@ run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
                                new_val, new_mark_set,
                                nis);
   }
+  // this is an asymmetric, test, so run it via the code that will test it
+  // both ways
   run_a_2_scalar_parent_mark_scenario(left_rid,
                                       parent_val, parent_mark_set,
                                       scalar_none, std::set<revision_id>(),
@@ -3498,21 +3537,23 @@ run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
 static void
 run_a_0_scalar_parent_mark_scenario()
 {
-  testing_node_id_source nis;
-  scalars ss = all_scalars(nis);
-  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
-    {
-      run_with_0_roster_parents(**i, old_rid, scalar_a, singleton(old_rid), nis);
-      run_with_1_roster_parent(**i, new_rid,
-                               scalar_none, std::set<revision_id>(),
-                               scalar_a, singleton(new_rid),
-                               nis);
-      run_with_2_roster_parents(**i, new_rid,
-                                scalar_none, std::set<revision_id>(),
-                                scalar_none, std::set<revision_id>(),
-                                scalar_a, singleton(new_rid),
-                                nis);
-    }
+  {
+    testing_node_id_source nis;
+    scalars ss = all_scalars(nis);
+    for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
+      {
+        run_with_0_roster_parents(**i, old_rid, scalar_a, singleton(old_rid), nis);
+        run_with_1_roster_parent(**i, new_rid,
+                                 scalar_none, std::set<revision_id>(),
+                                 scalar_a, singleton(new_rid),
+                                 nis);
+        run_with_2_roster_parents(**i, new_rid,
+                                  scalar_none, std::set<revision_id>(),
+                                  scalar_none, std::set<revision_id>(),
+                                  scalar_a, singleton(new_rid),
+                                  nis);
+      }
+  }
 }
 
 ////////////////
@@ -3520,17 +3561,12 @@ run_a_0_scalar_parent_mark_scenario()
 // to test.
 
 // FIXME ROSTERS:
-// we are missing attr cases:
-//   a   .
-//    \ /
-//     b*
-//   a*  .
-//    \ /
-//     a
-//   .   .
+// we are missing attr case:
+//   +   .
 //    \ /
 //     a*
-// where . means that the node does not exist.
+// where . means that the node does not exist, and + means it exists but has
+// no attr.
 
 static void
 test_all_0_scalar_parent_mark_scenarios()
