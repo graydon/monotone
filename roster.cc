@@ -812,19 +812,6 @@ dump(roster_t const & val, std::string & out)
 }
 
 void
-roster_t::check_finite_depth() const
-{
-  I(has_root());
-  size_t maxdepth = nodes.size(); 
-  for (dfs_iter i(root_dir); !i.finished(); ++i)
-    {
-      I(*i == get_node((*i)->self));
-      I(maxdepth-- > 0);
-    }
-  I(maxdepth == 0);
-}
-
-void
 roster_t::check_sane(bool temp_nodes_ok) const
 {
   I(has_root());
@@ -864,7 +851,14 @@ roster_t::check_sane(bool temp_nodes_ok) const
 
     }
 
-  check_finite_depth();
+  I(has_root());
+  size_t maxdepth = nodes.size(); 
+  for (dfs_iter i(root_dir); !i.finished(); ++i)
+    {
+      I(*i == get_node((*i)->self));
+      I(maxdepth-- > 0);
+    }
+  I(maxdepth == 0);
 }
 
 void

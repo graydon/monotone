@@ -233,7 +233,6 @@ public:
 
 private:
   void do_deep_copy_from(roster_t const & other);
-  void check_finite_depth() const;
   dir_t root_dir;
   node_map nodes;
   // this attribute holds the previous location of detached nodes.  when
