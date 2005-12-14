@@ -812,16 +812,6 @@ dump(roster_t const & val, std::string & out)
 }
 
 void
-roster_t::check_finite_depth() const
-{
-  I(has_root());
-  size_t maxdepth = nodes.size(); 
-  for (dfs_iter i(root_dir); !i.finished(); ++i)
-    I(maxdepth-- > 0);
-  I(maxdepth == 0);
-}
-
-void
 roster_t::check_sane(bool temp_nodes_ok) const
 {
   I(has_root());
@@ -861,7 +851,14 @@ roster_t::check_sane(bool temp_nodes_ok) const
 
     }
 
-  check_finite_depth();
+  I(has_root());
+  size_t maxdepth = nodes.size(); 
+  for (dfs_iter i(root_dir); !i.finished(); ++i)
+    {
+      I(*i == get_node((*i)->self));
+      I(maxdepth-- > 0);
+    }
+  I(maxdepth == 0);
 }
 
 void
@@ -885,6 +882,16 @@ roster_t::check_sane_against(marking_map const & markings) const
       else
         I(mi->second.file_content.empty());
 
+      full_attr_map_t::const_iterator rai;
+      std::map<attr_key, std::set<revision_id> >::const_iterator mai;
+      for (rai = ri->second->attrs.begin(), mai = mi->second.attrs.begin();
+           rai != ri->second->attrs.end() && mai != mi->second.attrs.end();
+           ++rai, ++mai)
+        {
+          I(rai->first == mai->first);
+          I(!mai->second.empty());
+        }
+      I(rai == ri->second->attrs.end() && mai == mi->second.attrs.end());
       // TODO: attrs
     }
 
@@ -2923,6 +2930,33 @@ check_sane_roster_loop_test()
 }
 
 static void
+check_sane_roster_screwy_dir_map()
+{
+  testing_node_id_source nis;
+  roster_t r; MM(r);
+  split_path root, foo;
+  file_path().split(root);
+  file_path_internal("foo").split(foo);
+  r.attach_node(r.create_dir_node(nis), root);
+  roster_t other; MM(other);
+  node_id other_nid = other.create_dir_node(nis);
+  dir_t root_n = downcast_to_dir_t(r.get_node(root));
+  root_n->children.insert(make_pair(*(foo.end()-1), other.get_node(other_nid)));
+  BOOST_CHECK_THROW(r.check_sane(), std::logic_error);
+  // well, but that one was easy, actually, because a dir traversal will hit
+  // more nodes than actually exist... so let's make it harder, by making sure
+  // that a dir traversal will hit exactly as many nodes as actually exist.
+  node_id distractor_nid = r.create_dir_node(nis);
+  BOOST_CHECK_THROW(r.check_sane(), std::logic_error);
+  // and even harder, by making that node superficially valid too
+  dir_t distractor_n = downcast_to_dir_t(r.get_node(distractor_nid));
+  distractor_n->parent = distractor_nid;
+  distractor_n->name = *(foo.end()-1);
+  distractor_n->children.insert(make_pair(distractor_n->name, distractor_n));
+  BOOST_CHECK_THROW(r.check_sane(), std::logic_error);
+}
+
+static void
 bad_attr_test()
 {
   testing_node_id_source nis;
@@ -2944,14 +2978,79 @@ bad_attr_test()
 // exhaustive marking tests
 ////////////////////////////////////////////////////////////////////////
 
-// we always have the topology:
+// The marking/roster generation code is extremely critical.  It is the very
+// core of monotone's versioning technology, very complex, and bugs can result
+// in corrupt and nonsensical histories (not to mention erroneous merges and
+// the like).  Furthermore, the code that implements it is littered with
+// case-by-case analysis, where copy-paste errors could easily occur.  So the
+// purpose of this section is to systematically and exhaustively test every
+// possible case.
+//
+// Our underlying merger, *-merge, works on scalars, case-by-case.  The cases are:
+//   0 parent:
+//       a*
+//   1 parent:
+//       a     a
+//       |     |
+//       a     b*
+//   2 parents:
+//       a   a  a   a  a   b  a   b
+//        \ /    \ /    \ /    \ /
+//         a      b*     c*     a?
+// 
+// Each node has a number of scalars associated with it:
+//   * basename+parent
+//   * file content (iff a file)
+//   * attributes
+//
+// So for each scalar, we want to test each way it can appear in each of the
+// above shapes.  This is made more complex by lifecycles.  We can achieve a 0
+// parent node as:
+//   * a node in a 0-parent roster (root revision)
+//   * a newly added node in a 1-parent roster
+//   * a newly added node in a 2-parent roster
+// a 1 parent node as:
+//   * a pre-existing node in a 1-parent roster
+//   * a node in a 2-parent roster that only existed in one of the parents
+// a 2 parent node as:
+//   * a pre-existing node in a 2-parent roster
+//
+// Because the basename+parent and file_content scalars have lifetimes that
+// exactly match the lifetime of the node they are on, those are all the cases
+// for these scalars.  However, attrs make things a bit more complicated,
+// because they can be added.  An attr can have 0 parents:
+//   * in any of the above cases, with an attribute newly added on the node
+// And one parent:
+//   * in any of the cases above with one node parent and the attr pre-existing
+//   * in a 2-parent node where the attr exists in only one of the parents
+//   
+// Plus, just to be sure, in the merge cases we check both the given example
+// and the mirror-reversed one, since the code implementing this could
+// conceivably mark merge(A, B) right but get merge(B, A) wrong.  And for the
+// scalars that can appear on either files or dirs, we check both.
+
+// The following somewhat elaborate code implements all these checks.  The
+// most important background assumption to know, is that it always assumes
+// (and this assumption is hard-coded in various places) that it is looking at
+// one of the following topologies:
+//
+//     old
+//
+//     old
+//      |
+//     new
+//
 //     old
 //     / \.
 // left   right
 //     \ /
 //     new
-// FIXME ROSTERS: explainify how this stuff works, and why it is exhaustive,
-// so future changes can be made
+//
+// There is various tricksiness in making sure that the root directory always
+// has the right birth_revision, that nodes are created with good birth
+// revisions and sane markings on the scalars we are not interested in, etc.
+// This code is ugly and messy and could use refactoring, but it seems to
+// work.
 
 ////////////////
 // These are some basic utility pieces handy for the exhaustive mark tests
@@ -2980,11 +3079,6 @@ namespace
   revision_id right_rid(string("2222222222222222222222222222222222222222"));
   revision_id new_rid(string("4444444444444444444444444444444444444444"));
 
-  void
-  add_old_root_with_id(node_id root_nid, roster_t & roster, marking_map & markings)
-  {
-  }
-
   split_path
   split(std::string const & s)
   {
@@ -2992,16 +3086,13 @@ namespace
     file_path_internal(s).split(sp);
     return sp;
   }
-}
-
 
 ////////////////
 // These classes encapsulate information about all the different scalars
 // that *-merge applies to.
 
-namespace
-{
-  typedef enum { scalar_a, scalar_b, scalar_c, scalar_none } scalar_val;
+  typedef enum { scalar_a, scalar_b, scalar_c,
+                 scalar_none, scalar_none_2 } scalar_val;
 
   void
   dump(scalar_val val, std::string & out)
@@ -3012,6 +3103,7 @@ namespace
       case scalar_b: out = "scalar_b"; break;
       case scalar_c: out = "scalar_c"; break;
       case scalar_none: out = "scalar_none"; break;
+      case scalar_none_2: out = "scalar_none_2"; break;
       }
     out += "\n";
   }
@@ -3205,13 +3297,15 @@ namespace
     }
   };
 
+  // this scalar represents an attr whose node already exists, and we put an
+  // attr on it.
   template <typename T>
-  struct X_attr_scalar : public a_scalar
+  struct X_attr_existing_node_scalar : public a_scalar
   {
     virtual std::string my_type() const { return "X_attr_scalar"; }
 
     std::map<scalar_val, pair<bool, attr_value> > values;
-    X_attr_scalar(node_id_source & nis)
+    X_attr_existing_node_scalar(node_id_source & nis)
       : a_scalar(nis)
     {
       safe_insert(values, make_pair(scalar_a, make_pair(true, attr_value("a"))));
@@ -3237,6 +3331,39 @@ namespace
       roster.check_sane_against(markings);
     }
   };
+  
+  // this scalar represents an attr whose node does not exist; we create the
+  // node when we create the attr.
+  template <typename T>
+  struct X_attr_new_node_scalar : public a_scalar
+  {
+    virtual std::string my_type() const { return "X_attr_scalar"; }
+
+    std::map<scalar_val, pair<bool, attr_value> > values;
+    X_attr_new_node_scalar(node_id_source & nis)
+      : a_scalar(nis)
+    {
+      safe_insert(values, make_pair(scalar_a, make_pair(true, attr_value("a"))));
+      safe_insert(values, make_pair(scalar_b, make_pair(true, attr_value("b"))));
+      safe_insert(values, make_pair(scalar_c, make_pair(true, attr_value("c"))));
+    }
+    virtual void
+    set(revision_id const & scalar_origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      setup(roster, markings);
+      if (val != scalar_none)
+        {
+          T::make_obj(scalar_origin_rid, obj_under_test_nid, roster, markings);
+          roster.attach_node(obj_under_test_nid, split("foo"));
+          safe_insert(roster.get_node(obj_under_test_nid)->attrs,
+                      make_pair(attr_key("test_key"), safe_get(values, val)));
+          markings[obj_under_test_nid].attrs[attr_key("test_key")] = this_scalar_mark;
+        }
+      roster.check_sane_against(markings);
+    }
+  };
 
   typedef std::vector<boost::shared_ptr<a_scalar> > scalars;
   scalars
@@ -3248,8 +3375,10 @@ namespace
     ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<dir_maker>(nis)));
     ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<file_maker>(nis)));
     ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<dir_maker>(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_scalar<file_maker>(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_scalar<dir_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_existing_node_scalar<file_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_existing_node_scalar<dir_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_new_node_scalar<file_maker>(nis)));
+    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_new_node_scalar<dir_maker>(nis)));
     return ss;
   }
 }
@@ -3388,60 +3517,19 @@ run_with_2_roster_parents(a_scalar & s,
 // FIXME: have clients just use s.nis instead of passing it separately...?
 
 static void
-run_a_0_scalar_parent_mark_scenario()
+run_a_2_scalar_parent_mark_scenario_exact(revision_id const & scalar_origin_rid,
+                                          scalar_val left_val,
+                                          std::set<revision_id> const & left_mark_set,
+                                          scalar_val right_val,
+                                          std::set<revision_id> const & right_mark_set,
+                                          scalar_val new_val,
+                                          std::set<revision_id> const & new_mark_set)
 {
   testing_node_id_source nis;
   scalars ss = all_scalars(nis);
   for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
     {
-      run_with_0_roster_parents(**i, old_rid, scalar_a, singleton(old_rid), nis);
-      run_with_1_roster_parent(**i, new_rid,
-                               scalar_none, std::set<revision_id>(),
-                               scalar_a, singleton(new_rid),
-                               nis);
-      run_with_2_roster_parents(**i, new_rid,
-                                scalar_none, std::set<revision_id>(),
-                                scalar_none, std::set<revision_id>(),
-                                scalar_a, singleton(new_rid),
-                                nis);
-    }
-}
-
-static void
-run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
-                                    std::set<revision_id> const & parent_mark_set,
-                                    scalar_val new_val,
-                                    std::set<revision_id> const & new_mark_set)
-{
-  testing_node_id_source nis;
-  scalars ss = all_scalars(nis);
-  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
-    {
-      run_with_1_roster_parent(**i, old_rid,
-                               parent_val, parent_mark_set,
-                               new_val, new_mark_set,
-                               nis);
-      run_with_2_roster_parents(**i, left_rid,
-                                parent_val, parent_mark_set,
-                                scalar_none, std::set<revision_id>(),
-                                new_val, new_mark_set,
-                                nis);
-    }
-}
-
-static void
-run_a_2_scalar_parent_scenario_exact(scalar_val left_val,
-                                     std::set<revision_id> const & left_mark_set,
-                                     scalar_val right_val,
-                                     std::set<revision_id> const & right_mark_set,
-                                     scalar_val new_val,
-                                     std::set<revision_id> const & new_mark_set)
-{
-  testing_node_id_source nis;
-  scalars ss = all_scalars(nis);
-  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
-    {
-      run_with_2_roster_parents(**i, old_rid,
+      run_with_2_roster_parents(**i, scalar_origin_rid,
                                 left_val, left_mark_set,
                                 right_val, right_mark_set,
                                 new_val, new_mark_set,
@@ -3449,36 +3537,42 @@ run_a_2_scalar_parent_scenario_exact(scalar_val left_val,
     }
 }
 
+static revision_id
+flip_revision_id(revision_id const & rid)
+{
+  if (rid == old_rid || rid == new_rid)
+    return rid;
+  else if (rid == left_rid)
+    return right_rid;
+  else if (rid == right_rid)
+    return left_rid;
+  else
+    I(false);
+}
+
 static set<revision_id>
 flip_revision_set(set<revision_id> const & rids)
 {
   set<revision_id> flipped_rids;
   for (set<revision_id>::const_iterator i = rids.begin(); i != rids.end(); ++i)
-    {
-      if (*i == old_rid || *i == new_rid)
-        flipped_rids.insert(*i);
-      else if (*i == left_rid)
-        flipped_rids.insert(right_rid);
-      else if (*i == right_rid)
-        flipped_rids.insert(left_rid);
-      else
-        I(false);
-    }
+    flipped_rids.insert(flip_revision_id(*i));
   return flipped_rids;
 }
 
 static void
-run_a_2_scalar_parent_scenario(scalar_val left_val,
-                               std::set<revision_id> const & left_mark_set,
-                               scalar_val right_val,
-                               std::set<revision_id> const & right_mark_set,
-                               scalar_val new_val,
-                               std::set<revision_id> const & new_mark_set)
+run_a_2_scalar_parent_mark_scenario(revision_id const & scalar_origin_rid,
+                                    scalar_val left_val,
+                                    std::set<revision_id> const & left_mark_set,
+                                    scalar_val right_val,
+                                    std::set<revision_id> const & right_mark_set,
+                                    scalar_val new_val,
+                                    std::set<revision_id> const & new_mark_set)
 {
   // run both what we're given...
-  run_a_2_scalar_parent_scenario_exact(left_val, left_mark_set,
-                                       right_val, right_mark_set,
-                                       new_val, new_mark_set);
+  run_a_2_scalar_parent_mark_scenario_exact(scalar_origin_rid,
+                                            left_val, left_mark_set,
+                                            right_val, right_mark_set,
+                                            new_val, new_mark_set);
   // ...and its symmetric reflection.  but we have to flip the mark set,
   // because the exact stuff has hard-coded the names of the various
   // revisions and their uncommon ancestor sets.
@@ -3487,28 +3581,75 @@ run_a_2_scalar_parent_scenario(scalar_val left_val,
     std::set<revision_id> flipped_right_mark_set = flip_revision_set(right_mark_set);
     std::set<revision_id> flipped_new_mark_set = flip_revision_set(new_mark_set);
 
-    run_a_2_scalar_parent_scenario_exact(right_val, flipped_right_mark_set,
-                                         left_val, flipped_left_mark_set,
-                                         new_val, flipped_new_mark_set);
+    run_a_2_scalar_parent_mark_scenario_exact(flip_revision_id(scalar_origin_rid),
+                                              right_val, flipped_right_mark_set,
+                                              left_val, flipped_left_mark_set,
+                                              new_val, flipped_new_mark_set);
+  }
+}
+
+static void
+run_a_2_scalar_parent_mark_scenario(scalar_val left_val,
+                                    std::set<revision_id> const & left_mark_set,
+                                    scalar_val right_val,
+                                    std::set<revision_id> const & right_mark_set,
+                                    scalar_val new_val,
+                                    std::set<revision_id> const & new_mark_set)
+{
+  run_a_2_scalar_parent_mark_scenario(old_rid,
+                                      left_val, left_mark_set,
+                                      right_val, right_mark_set,
+                                      new_val, new_mark_set);
+}
+
+static void
+run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
+                                    std::set<revision_id> const & parent_mark_set,
+                                    scalar_val new_val,
+                                    std::set<revision_id> const & new_mark_set)
+{
+  {
+    testing_node_id_source nis;
+    scalars ss = all_scalars(nis);
+    for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
+      run_with_1_roster_parent(**i, old_rid,
+                               parent_val, parent_mark_set,
+                               new_val, new_mark_set,
+                               nis);
+  }
+  // this is an asymmetric, test, so run it via the code that will test it
+  // both ways
+  run_a_2_scalar_parent_mark_scenario(left_rid,
+                                      parent_val, parent_mark_set,
+                                      scalar_none, std::set<revision_id>(),
+                                      new_val, new_mark_set);
+}
+
+static void
+run_a_0_scalar_parent_mark_scenario()
+{
+  {
+    testing_node_id_source nis;
+    scalars ss = all_scalars(nis);
+    for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
+      {
+        run_with_0_roster_parents(**i, old_rid, scalar_a, singleton(old_rid), nis);
+        run_with_1_roster_parent(**i, new_rid,
+                                 scalar_none, std::set<revision_id>(),
+                                 scalar_a, singleton(new_rid),
+                                 nis);
+        run_with_2_roster_parents(**i, new_rid,
+                                  scalar_none, std::set<revision_id>(),
+                                  scalar_none, std::set<revision_id>(),
+                                  scalar_a, singleton(new_rid),
+                                  nis);
+      }
   }
 }
 
 ////////////////
 // These functions contain the actual list of *-merge cases that we would like
 // to test.
-
-// FIXME ROSTERS:
-// we are missing attr cases:
-//   a   .
-//    \ /
-//     b*
-//   a*  .
-//    \ /
-//     a
-//   .   .
-//    \ /
-//     a*
-// where . means that the node does not exist.
 
 static void
 test_all_0_scalar_parent_mark_scenarios()
@@ -3568,85 +3709,85 @@ test_all_2_scalar_parent_mark_scenarios()
   // a   a
   //  \ /
   //   a
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_a, singleton(old_rid),
-                                 scalar_a, singleton(old_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(old_rid));
   // a   a*
   //  \ /
   //   a
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_a, singleton(right_rid),
-                                 scalar_a, doubleton(old_rid, right_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(right_rid),
+                                      scalar_a, doubleton(old_rid, right_rid));
   // a*  a*
   //  \ /
   //   a
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
-                                 scalar_a, singleton(right_rid),
-                                 scalar_a, doubleton(left_rid, right_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_a, singleton(right_rid),
+                                      scalar_a, doubleton(left_rid, right_rid));
 
   ///////////////////////////////////////////////////////////////////
   // a   a
   //  \ /
   //   b*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_a, singleton(old_rid),
-                                 scalar_b, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(old_rid),
+                                      scalar_b, singleton(new_rid));
   // a   a*
   //  \ /
   //   b*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_a, singleton(right_rid),
-                                 scalar_b, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(right_rid),
+                                      scalar_b, singleton(new_rid));
   // a*  a*
   //  \ /
   //   b*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
-                                 scalar_a, singleton(right_rid),
-                                 scalar_b, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_a, singleton(right_rid),
+                                      scalar_b, singleton(new_rid));
 
   ///////////////////////////////////////////////////////////////////
   //  a*  b*
   //   \ /
   //    c*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
-                                 scalar_b, singleton(right_rid),
-                                 scalar_c, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_b, singleton(right_rid),
+                                      scalar_c, singleton(new_rid));
   //  a   b*
   //   \ /
   //    c*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_b, singleton(right_rid),
-                                 scalar_c, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_b, singleton(right_rid),
+                                      scalar_c, singleton(new_rid));
   // this case cannot actually arise, because if *(a) = *(b) then val(a) =
   // val(b).  but hey.
   //  a   b
   //   \ /
   //    c*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_b, singleton(old_rid),
-                                 scalar_c, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_b, singleton(old_rid),
+                                      scalar_c, singleton(new_rid));
 
   ///////////////////////////////////////////////////////////////////
   //  a*  b*
   //   \ /
   //    a*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
-                                 scalar_b, singleton(right_rid),
-                                 scalar_a, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_b, singleton(right_rid),
+                                      scalar_a, singleton(new_rid));
   //  a   b*
   //   \ /
   //    a*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_b, singleton(right_rid),
-                                 scalar_a, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_b, singleton(right_rid),
+                                      scalar_a, singleton(new_rid));
   //  a*  b
   //   \ /
   //    a
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
-                                 scalar_b, singleton(old_rid),
-                                 scalar_a, singleton(left_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_b, singleton(old_rid),
+                                      scalar_a, singleton(left_rid));
 
-  // FIXME ROSTERS:
+  // FIXME: be nice to test:
   //  a*  a*  b
   //   \ /   /
   //    a   /
@@ -3655,17 +3796,266 @@ test_all_2_scalar_parent_mark_scenarios()
   L(F("TEST: end checking 2-parent marking"));
 }
 
+// there is _one_ remaining case that the above tests miss, because they
+// couple scalar lifetimes and node lifetimes.  Maybe they shouldn't do that,
+// but anyway... until someone decides to refactor, we need this.  The basic
+// issue is that for content and name scalars, the scalar lifetime and the
+// node lifetime are identical.  For attrs, this isn't necessarily true.  This
+// is why we have two different attr scalars.  Let's say that "." means a node
+// that doesn't exist, and "+" means a node that exists but has no roster.
+// The first scalar checks cases like
+//     +
+//     |
+//     a
+//
+//   +   +
+//    \ /
+//     a*
+//     
+//   a*  +
+//    \ /
+//     a
+// and the second one checks cases like
+//     .
+//     |
+//     a
+//
+//   .   .
+//    \ /
+//     a*
+//     
+//   a*  .
+//    \ /
+//     a
+// Between them, they cover _almost_ all possibilities.  The one that they
+// miss is:
+//   .   +
+//    \ /
+//     a*
+// (and its reflection).
+// That is what this test checks.
+// Sorry it's so code-duplication-iferous.  Refactors would be good...
+
+namespace
+{
+  // this scalar represents an attr whose node may or may not already exist
+  template <typename T>
+  struct X_attr_mixed_scalar : public a_scalar
+  {
+    virtual std::string my_type() const { return "X_attr_scalar"; }
+
+    std::map<scalar_val, pair<bool, attr_value> > values;
+    X_attr_mixed_scalar(node_id_source & nis)
+      : a_scalar(nis)
+    {
+      safe_insert(values, make_pair(scalar_a, make_pair(true, attr_value("a"))));
+      safe_insert(values, make_pair(scalar_b, make_pair(true, attr_value("b"))));
+      safe_insert(values, make_pair(scalar_c, make_pair(true, attr_value("c"))));
+    }
+    virtual void
+    set(revision_id const & scalar_origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      setup(roster, markings);
+      // scalar_none is . in the above notation
+      // and scalar_none_2 is +
+      if (val != scalar_none)
+        {
+          T::make_obj(scalar_origin_rid, obj_under_test_nid, roster, markings);
+          roster.attach_node(obj_under_test_nid, split("foo"));
+        }
+      if (val != scalar_none && val != scalar_none_2)
+        {
+          safe_insert(roster.get_node(obj_under_test_nid)->attrs,
+                      make_pair(attr_key("test_key"), safe_get(values, val)));
+          markings[obj_under_test_nid].attrs[attr_key("test_key")] = this_scalar_mark;
+        }
+      roster.check_sane_against(markings);
+    }
+  };
+}
+
+static void
+test_residual_attr_mark_scenario()
+{
+  L(F("TEST: begin checking residual attr marking case"));
+  {
+    testing_node_id_source nis;
+    X_attr_mixed_scalar<file_maker> s(nis);
+    run_with_2_roster_parents(s, left_rid,
+                              scalar_none_2, std::set<revision_id>(),
+                              scalar_none, std::set<revision_id>(),
+                              scalar_a, singleton(new_rid),
+                              nis);
+  }
+  {
+    testing_node_id_source nis;
+    X_attr_mixed_scalar<dir_maker> s(nis);
+    run_with_2_roster_parents(s, left_rid,
+                              scalar_none_2, std::set<revision_id>(),
+                              scalar_none, std::set<revision_id>(),
+                              scalar_a, singleton(new_rid),
+                              nis);
+  }
+  {
+    testing_node_id_source nis;
+    X_attr_mixed_scalar<file_maker> s(nis);
+    run_with_2_roster_parents(s, right_rid,
+                              scalar_none, std::set<revision_id>(),
+                              scalar_none_2, std::set<revision_id>(),
+                              scalar_a, singleton(new_rid),
+                              nis);
+  }
+  {
+    testing_node_id_source nis;
+    X_attr_mixed_scalar<dir_maker> s(nis);
+    run_with_2_roster_parents(s, right_rid,
+                              scalar_none, std::set<revision_id>(),
+                              scalar_none_2, std::set<revision_id>(),
+                              scalar_a, singleton(new_rid),
+                              nis);
+  }
+  L(F("TEST: end checking residual attr marking case"));
+}
+
 static void
 test_all_mark_scenarios()
 {
   test_all_0_scalar_parent_mark_scenarios();
   test_all_1_scalar_parent_mark_scenarios();
   test_all_2_scalar_parent_mark_scenarios();
+  test_residual_attr_mark_scenario();
 }
 
 ////////////////////////////////////////////////////////////////////////
 // end of exhaustive tests
 ////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////
+// lifecyle tests
+////////////////////////////////////////////////////////////////////////
+
+// nodes can't survive dying on one side of a merge
+static void
+test_die_die_die_merge()
+{
+  roster_t left_roster; MM(left_roster);
+  marking_map left_markings; MM(left_markings);
+  roster_t right_roster; MM(right_roster);
+  marking_map right_markings; MM(right_markings);
+  testing_node_id_source nis;
+
+  // left roster is empty except for the root
+  left_roster.attach_node(left_roster.create_dir_node(nis), split(""));
+  marking_t an_old_marking;
+  an_old_marking.birth_revision = old_rid;
+  an_old_marking.parent_name = singleton(old_rid);
+  safe_insert(left_markings, make_pair(left_roster.get_node(split(""))->self,
+                                       an_old_marking));
+  // right roster is identical, except for a dir created in the old rev
+  right_roster = left_roster;
+  right_markings = left_markings;
+  right_roster.attach_node(right_roster.create_dir_node(nis), split("foo"));
+  safe_insert(right_markings, make_pair(right_roster.get_node(split("foo"))->self,
+                                        an_old_marking));
+
+  left_roster.check_sane_against(left_markings);
+  right_roster.check_sane_against(right_markings);
+
+  cset left_cs; MM(left_cs);
+  // we add the node
+  left_cs.dirs_added.insert(split("foo"));
+  // we do nothing
+  cset right_cs; MM(right_cs);
+
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+
+  // because the dir was created in the old rev, the left side has logically
+  // seen it and killed it, so it needs to be dead in the result.
+  BOOST_CHECK_THROW(
+     make_roster_for_merge(left_rid, left_roster, left_markings, left_cs,
+                           singleton(left_rid),
+                           right_rid, right_roster, right_markings, right_cs,
+                           singleton(right_rid),
+                           new_rid, new_roster, new_markings,
+                           nis),
+     std::logic_error);
+  BOOST_CHECK_THROW(
+     make_roster_for_merge(right_rid, right_roster, right_markings, right_cs,
+                           singleton(right_rid),
+                           left_rid, left_roster, left_markings, left_cs,
+                           singleton(left_rid),
+                           new_rid, new_roster, new_markings,
+                           nis),
+     std::logic_error);
+}
+// nodes can't change type file->dir or dir->file
+//    make_cset fails
+//    merging a file and a dir with the same nid and no mention of what should
+//      happen to them fails
+
+static void
+test_same_nid_diff_type()
+{
+  testing_node_id_source nis;
+
+  roster_t dir_roster; MM(dir_roster);
+  marking_map dir_markings; MM(dir_markings);
+  dir_roster.attach_node(dir_roster.create_dir_node(nis), split(""));
+  marking_t marking;
+  marking.birth_revision = old_rid;
+  marking.parent_name = singleton(old_rid);
+  safe_insert(dir_markings, make_pair(dir_roster.get_node(split(""))->self,
+                                      marking));
+
+  roster_t file_roster; MM(file_roster);
+  marking_map file_markings; MM(file_markings);
+  file_roster = dir_roster;
+  file_markings = dir_markings;
+
+  // okay, they both have the root dir
+  node_id nid = nis.next();
+  dir_roster.create_dir_node(nid);
+  dir_roster.attach_node(nid, split("foo"));
+  safe_insert(dir_markings, make_pair(nid, marking));
+
+  file_roster.create_file_node(new_ident(), nid);
+  file_roster.attach_node(nid, split("foo"));
+  marking.file_content = singleton(old_rid);
+  safe_insert(file_markings, make_pair(nid, marking));
+
+  dir_roster.check_sane_against(dir_markings);
+  file_roster.check_sane_against(file_markings);
+
+  cset cs; MM(cs);
+  BOOST_CHECK_THROW(make_cset(dir_roster, file_roster, cs), std::logic_error);
+  BOOST_CHECK_THROW(make_cset(file_roster, dir_roster, cs), std::logic_error);
+
+  cset left_cs; MM(left_cs);
+  cset right_cs; MM(right_cs);
+  roster_t new_roster; MM(new_roster);
+  marking_map new_markings; MM(new_markings);
+  BOOST_CHECK_THROW(
+     make_roster_for_merge(left_rid, dir_roster, dir_markings, left_cs,
+                           singleton(left_rid),
+                           right_rid, file_roster, file_markings, right_cs,
+                           singleton(right_rid),
+                           new_rid, new_roster, new_markings,
+                           nis),
+     std::logic_error);
+  BOOST_CHECK_THROW(
+     make_roster_for_merge(left_rid, file_roster, file_markings, left_cs,
+                           singleton(left_rid),
+                           right_rid, dir_roster, dir_markings, right_cs,
+                           singleton(right_rid),
+                           new_rid, new_roster, new_markings,
+                           nis),
+     std::logic_error);
+  
+}
+
 
 static void
 write_roster_test()
@@ -3930,7 +4320,69 @@ check_sane_against_test()
     BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
   }
 
-  // TODO: matching up attr marks, etc.
+  {
+    L(F("TEST: check_sane_against_test, extra content mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, foo);
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].file_content.insert(rid);
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, missing attr mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    // NB: mark and _then_ add attr
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    r.set_attr(root, attr_key("my_key"), attr_value("my_value"));
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, empty attr mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    r.set_attr(root, attr_key("my_key"), attr_value("my_value"));
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].attrs[attr_key("my_key")].clear();
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
+
+  {
+    L(F("TEST: check_sane_against_test, extra attr mark"));
+    roster_t r; MM(r);
+    marking_map mm; MM(mm);
+
+    nid = nis.next();
+    r.create_dir_node(nid);
+    r.attach_node(nid, root);
+    r.set_attr(root, attr_key("my_key"), attr_value("my_value"));
+    mark_new_node(rid, r.get_node(nid), mm[nid]);
+    mm[nid].attrs[attr_key("my_second_key")].insert(rid);
+
+    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+  }
 }
 
 static void
@@ -4113,6 +4565,9 @@ void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&check_sane_roster_screwy_dir_map));
+  suite->add(BOOST_TEST_CASE(&test_die_die_die_merge));
+  suite->add(BOOST_TEST_CASE(&test_same_nid_diff_type));
   suite->add(BOOST_TEST_CASE(&test_unify_rosters_end_to_end));
   suite->add(BOOST_TEST_CASE(&test_unify_rosters_randomized));
   suite->add(BOOST_TEST_CASE(&test_all_mark_scenarios));
