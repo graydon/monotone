@@ -2993,16 +2993,13 @@ namespace
     file_path_internal(s).split(sp);
     return sp;
   }
-}
-
 
 ////////////////
 // These classes encapsulate information about all the different scalars
 // that *-merge applies to.
 
-namespace
-{
-  typedef enum { scalar_a, scalar_b, scalar_c, scalar_none } scalar_val;
+  typedef enum { scalar_a, scalar_b, scalar_c,
+                 scalar_none, scalar_none_2 } scalar_val;
 
   void
   dump(scalar_val val, std::string & out)
@@ -3013,6 +3010,7 @@ namespace
       case scalar_b: out = "scalar_b"; break;
       case scalar_c: out = "scalar_c"; break;
       case scalar_none: out = "scalar_none"; break;
+      case scalar_none_2: out = "scalar_none_2"; break;
       }
     out += "\n";
   }
@@ -3713,12 +3711,136 @@ test_all_2_scalar_parent_mark_scenarios()
   L(F("TEST: end checking 2-parent marking"));
 }
 
+// there is _one_ remaining case that the above tests miss, because they
+// couple scalar lifetimes and node lifetimes.  Maybe they shouldn't do that,
+// but anyway... until someone decides to refactor, we need this.  The basic
+// issue is that for content and name scalars, the scalar lifetime and the
+// node lifetime are identical.  For attrs, this isn't necessarily true.  This
+// is why we have two different attr scalars.  Let's say that "." means a node
+// that doesn't exist, and "+" means a node that exists but has no roster.
+// The first scalar checks cases like
+//     +
+//     |
+//     a
+//
+//   +   +
+//    \ /
+//     a*
+//     
+//   a*  +
+//    \ /
+//     a
+// and the second one checks cases like
+//     .
+//     |
+//     a
+//
+//   .   .
+//    \ /
+//     a*
+//     
+//   a*  .
+//    \ /
+//     a
+// Between them, they cover _almost_ all possibilities.  The one that they
+// miss is:
+//   .   +
+//    \ /
+//     a*
+// (and its reflection).
+// That is what this test checks.
+// Sorry it's so code-duplication-iferous.  Refactors would be good...
+
+namespace
+{
+  // this scalar represents an attr whose node may or may not already exist
+  template <typename T>
+  struct X_attr_mixed_scalar : public a_scalar
+  {
+    virtual std::string my_type() const { return "X_attr_scalar"; }
+
+    std::map<scalar_val, pair<bool, attr_value> > values;
+    X_attr_mixed_scalar(node_id_source & nis)
+      : a_scalar(nis)
+    {
+      safe_insert(values, make_pair(scalar_a, make_pair(true, attr_value("a"))));
+      safe_insert(values, make_pair(scalar_b, make_pair(true, attr_value("b"))));
+      safe_insert(values, make_pair(scalar_c, make_pair(true, attr_value("c"))));
+    }
+    virtual void
+    set(revision_id const & scalar_origin_rid, scalar_val val,
+        std::set<revision_id> const & this_scalar_mark,
+        roster_t & roster, marking_map & markings)
+    {
+      setup(roster, markings);
+      // scalar_none is . in the above notation
+      // and scalar_none_2 is +
+      if (val != scalar_none)
+        {
+          T::make_obj(scalar_origin_rid, obj_under_test_nid, roster, markings);
+          roster.attach_node(obj_under_test_nid, split("foo"));
+        }
+      if (val != scalar_none && val != scalar_none_2)
+        {
+          safe_insert(roster.get_node(obj_under_test_nid)->attrs,
+                      make_pair(attr_key("test_key"), safe_get(values, val)));
+          markings[obj_under_test_nid].attrs[attr_key("test_key")] = this_scalar_mark;
+        }
+      roster.check_sane_against(markings);
+    }
+  };
+}
+
+static void
+test_residual_attr_mark_scenario()
+{
+  L(F("TEST: begin checking residual attr marking case"));
+  {
+    testing_node_id_source nis;
+    X_attr_mixed_scalar<file_maker> s(nis);
+    run_with_2_roster_parents(s, left_rid,
+                              scalar_none_2, std::set<revision_id>(),
+                              scalar_none, std::set<revision_id>(),
+                              scalar_a, singleton(new_rid),
+                              nis);
+  }
+  {
+    testing_node_id_source nis;
+    X_attr_mixed_scalar<dir_maker> s(nis);
+    run_with_2_roster_parents(s, left_rid,
+                              scalar_none_2, std::set<revision_id>(),
+                              scalar_none, std::set<revision_id>(),
+                              scalar_a, singleton(new_rid),
+                              nis);
+  }
+  {
+    testing_node_id_source nis;
+    X_attr_mixed_scalar<file_maker> s(nis);
+    run_with_2_roster_parents(s, right_rid,
+                              scalar_none, std::set<revision_id>(),
+                              scalar_none_2, std::set<revision_id>(),
+                              scalar_a, singleton(new_rid),
+                              nis);
+  }
+  {
+    testing_node_id_source nis;
+    X_attr_mixed_scalar<dir_maker> s(nis);
+    run_with_2_roster_parents(s, right_rid,
+                              scalar_none, std::set<revision_id>(),
+                              scalar_none_2, std::set<revision_id>(),
+                              scalar_a, singleton(new_rid),
+                              nis);
+  }
+  L(F("TEST: end checking residual attr marking case"));
+}
+
 static void
 test_all_mark_scenarios()
 {
   test_all_0_scalar_parent_mark_scenarios();
   test_all_1_scalar_parent_mark_scenarios();
   test_all_2_scalar_parent_mark_scenarios();
+  test_residual_attr_mark_scenario();
 }
 
 ////////////////////////////////////////////////////////////////////////
