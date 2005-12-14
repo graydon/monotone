@@ -96,7 +96,13 @@ class database
   typedef std::vector< std::vector<std::string> > results;
  
   void execute(char const * query, ...);
- 
+
+  statement& prepare(char const * query);
+
+  void fetch(statement & stmt, 
+             results & res, 
+             int const want_rows);
+  
   void fetch(results & res, 
              int const want_cols, 
              int const want_rows, 
