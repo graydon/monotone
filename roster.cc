@@ -2947,6 +2947,17 @@ check_sane_roster_screwy_dir_map()
   dir_t root_n = downcast_to_dir_t(r.get_node(root));
   root_n->children.insert(make_pair(*(foo.end()-1), other.get_node(other_nid)));
   BOOST_CHECK_THROW(r.check_sane(), std::logic_error);
+  // well, but that one was easy, actually, because a dir traversal will hit
+  // more nodes than actually exist... so let's make it harder, by making sure
+  // that a dir traversal will hit exactly as many nodes as actually exist.
+  node_id distractor_nid = r.create_dir_node(nis);
+  BOOST_CHECK_THROW(r.check_sane(), std::logic_error);
+  // and even harder, by making that node superficially valid too
+  dir_t distractor_n = downcast_to_dir_t(r.get_node(distractor_nid));
+  distractor_n->parent = distractor_nid;
+  distractor_n->name = *(foo.end()-1);
+  distractor_n->children.insert(make_pair(distractor_n->name, distractor_n));
+  BOOST_CHECK_THROW(r.check_sane(), std::logic_error);
 }
 
 static void
