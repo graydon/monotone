@@ -101,7 +101,8 @@ class database
 
   void fetch(statement & stmt, 
              results & res, 
-             int const want_rows);
+             int const want_rows,
+             const char *query);
   
   void fetch(results & res, 
              int const want_cols, 

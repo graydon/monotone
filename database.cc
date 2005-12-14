@@ -567,7 +567,7 @@ database::fetch(results & res,
   va_end(args);
 }
 
-statement &
+database::statement &
 database::prepare(char const * query)
 {
   map<string, statement>::iterator i = statement_cache.find(query);
@@ -586,7 +586,7 @@ database::prepare(char const * query)
       E(*tail == 0, 
         F("multiple statements in query: %s\n") % query);
     }
-  return i->second.stmt();
+  return i->second;
 }
 
 // we need a vector<string> variant for binary transparency
@@ -601,14 +601,14 @@ database::fetch(results & res,
   res.resize(0);
 
   statement &stmt = prepare(query);
-  int ncol = sqlite3_column_count(stmt);
+  int ncol = sqlite3_column_count(stmt.stmt());
 
   E(want_cols == any_cols || want_cols == ncol, 
     F("wanted %d columns got %d in query: %s\n") % want_cols % ncol % query);
 
   // bind parameters for this execution
 
-  int params = sqlite3_bind_parameter_count(stmt);
+  int params = sqlite3_bind_parameter_count(stmt.stmt());
 
   L(F("binding %d parameters for %s\n") % params % query);
 
@@ -626,32 +626,33 @@ database::fetch(results & res,
 
       L(F("binding %d with value '%s'\n") % param % log);
 
-      sqlite3_bind_text(stmt, param, value, -1, SQLITE_TRANSIENT);
+      sqlite3_bind_text(stmt.stmt(), param, value, -1, SQLITE_TRANSIENT);
       assert_sqlite3_ok(sql());
     }
     
-  fetch(stmt, results, want_rows);
+  fetch(stmt, res, want_rows, query);
 }
 
 void 
 database::fetch(statement & stmt,
-                results & res, 
-                int const want_rows)
+                results & res,
+                int const want_rows,
+                const char *query)
 {
   // execute and process results
 
   int nrow = 0;
-  int ncol = sqlite3_column_count(stmt);
+  int ncol = sqlite3_column_count(stmt.stmt());
   int rescode;
 
-  for (rescode = sqlite3_step(stmt); rescode == SQLITE_ROW; 
-       rescode = sqlite3_step(stmt))
+  for (rescode = sqlite3_step(stmt.stmt()); rescode == SQLITE_ROW; 
+       rescode = sqlite3_step(stmt.stmt()))
     {
       vector<string> row;
       for (int col = 0; col < ncol; col++) 
         {
-          const char * value = (const char*)sqlite3_column_blob(stmt, col);
-          int bytes = sqlite3_column_bytes(stmt, col);
+          const char * value = (const char*)sqlite3_column_blob(stmt.stmt(), col);
+          int bytes = sqlite3_column_bytes(stmt.stmt(), col);
           E(value, F("null result in query: %s\n") % query);
           row.push_back(std::string(value,value+bytes));
           //L(F("row %d col %d value='%s'\n") % nrow % col % value);
@@ -662,12 +663,12 @@ database::fetch(statement & stmt,
   if (rescode != SQLITE_DONE)
     assert_sqlite3_ok(sql());
 
-  sqlite3_reset(stmt);
+  sqlite3_reset(stmt.stmt());
   assert_sqlite3_ok(sql());
 
   nrow = res.size();
 
-  i->second.count++;
+  stmt.count++;
 
   E(want_rows == any_rows || want_rows == nrow,
     F("wanted %d rows got %s in query: %s\n") % want_rows % nrow % query);
