@@ -2934,6 +2934,22 @@ check_sane_roster_loop_test()
 }
 
 static void
+check_sane_roster_screwy_dir_map()
+{
+  testing_node_id_source nis;
+  roster_t r; MM(r);
+  split_path root, foo;
+  file_path().split(root);
+  file_path_internal("foo").split(foo);
+  r.attach_node(r.create_dir_node(nis), root);
+  roster_t other; MM(other);
+  node_id other_nid = other.create_dir_node(nis);
+  dir_t root_n = downcast_to_dir_t(r.get_node(root));
+  root_n->children.insert(make_pair(*(foo.end()-1), other.get_node(other_nid)));
+  BOOST_CHECK_THROW(r.check_sane(), std::logic_error);
+}
+
+static void
 bad_attr_test()
 {
   testing_node_id_source nis;
@@ -4542,6 +4558,7 @@ void
 add_roster_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&check_sane_roster_screwy_dir_map));
   suite->add(BOOST_TEST_CASE(&test_die_die_die_merge));
   suite->add(BOOST_TEST_CASE(&test_same_nid_diff_type));
   suite->add(BOOST_TEST_CASE(&test_unify_rosters_end_to_end));
