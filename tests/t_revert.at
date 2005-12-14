@@ -102,7 +102,7 @@ AT_CHECK(grep sub stdout, [1], [ignore])
 AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
 AT_CHECK(rm testfile0)
 AT_CHECK(MONOTONE status, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE revert testfile0, [], [stdout])
+AT_CHECK(MONOTONE revert testfile0, [], [stdout], [ignore])
 AT_CHECK(MONOTONE status, [], [ignore], [ignore])
 
 # check reverting some changes and leaving others

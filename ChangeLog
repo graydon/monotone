@@ -1,3 +1,9 @@
+2005-12-13  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (update): remove \n from F() string
+	(revert): display "reverting..." messages similar to update
+	* tests/t_revert.at: allow output from revert
+
 2005-12-13  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* testsuite.at: Use SIGTERM rather than SIGSEGV to close down

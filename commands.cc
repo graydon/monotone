@@ -2856,7 +2856,7 @@ write_file_targets(change_set const & cs,
             continue;
         }
       
-      P(F("updating %s to %s\n") % pth % ident);
+      P(F("updating %s to %s") % pth % ident);
       
       I(app.db.file_version_exists(ident)
         || merger.temporary_store.find(ident) != merger.temporary_store.end());
@@ -3471,8 +3471,8 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
           if (manifest_entry_id(i) == ident) continue;
       }
       
-      L(F("reverting %s from %s to %s\n") %
-        manifest_entry_path(i) % ident % manifest_entry_id(i));
+      P(F("reverting %s to %s") %
+        manifest_entry_path(i) % manifest_entry_id(i));
 
       N(app.db.file_version_exists(manifest_entry_id(i)),
         F("no file version %s found in database for %s")
