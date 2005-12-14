@@ -658,7 +658,8 @@ msgstr "chave pública ou privada '%s' não existe no repositório de chaves nem
 msgid ""
 "public or private key '%s' does not exist in keystore, and no database was "
 "specified"
-msgstr "chave pública ou privada '%s' não existe no repositório de chaves, e nenhum banco de dados foi especificado"
+msgstr "chave pública ou privada '%s' não existe no repositório de chaves, "
+"e nenhum banco de dados foi especificado"
 
 #: commands.cc:913
 msgid "change passphrase of a private RSA key"
@@ -879,11 +880,11 @@ msgstr ""
 #: commands.cc:1397 commands.cc:1505 commands.cc:3158 commands.cc:3207
 #: commands.cc:3292 commands.cc:3299 commands.cc:3780
 msgid "tree"
-msgstr ""
+msgstr "árvore"
 
 #: commands.cc:1397
 msgid "[DIRECTORY]\n"
-msgstr ""
+msgstr "[DIRETÓRIO]\n"
 
 #: commands.cc:1398
 msgid ""
@@ -907,22 +908,22 @@ msgstr ""
 #: commands.cc:3244
 #, c-format
 msgid "branch '%s' is empty\n"
-msgstr ""
+msgstr "ramo '%s' está vazio\n"
 
 #: commands.cc:1438
 #, c-format
 msgid "branch %s has multiple heads"
-msgstr ""
+msgstr "ramo %s tem frentes múltiplas"
 
 #: commands.cc:1459
 #, c-format
 msgid "found %d %s branch certs on revision %s\n"
-msgstr ""
+msgstr "foram encontrados %d %s certificados de ramo sobre versão %s\n"
 
 #: commands.cc:1464
 #, c-format
 msgid "revision %s is not a member of branch %s\n"
-msgstr ""
+msgstr "versão %s não é um membro do ramo %s\n"
 
 #: commands.cc:1480
 #, c-format
@@ -937,31 +938,31 @@ msgstr ""
 #: commands.cc:1488
 #, c-format
 msgid "no file %s found in database for %s"
-msgstr ""
+msgstr "nenhum arquivo %s encontrado no banco de dados para %s"
 
 #: commands.cc:1492 commands.cc:3482
 #, c-format
 msgid "writing file %s to %s\n"
-msgstr ""
+msgstr "escrevendo arquivo %s em %s\n"
 
 #: commands.cc:1505
 msgid "show unmerged head revisions of branch"
-msgstr ""
+msgstr "mostra frentes não combinadas do ramo"
 
 #: commands.cc:1513 commands.cc:3167
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
-msgstr ""
+msgstr "por favor especifique um ramo com --branch=RAMO"
 
 #: commands.cc:1520
 #, c-format
 msgid "branch '%s' is currently merged:\n"
-msgstr ""
+msgstr "ramo '%s' está atualmente combinado:\n"
 
 #: commands.cc:1522
 #, c-format
 msgid "branch '%s' is currently unmerged:\n"
-msgstr ""
+msgstr "ramo '%s' não está combinado atualmente:\n"
 
 #: commands.cc:1561
 #, c-format
@@ -981,6 +982,16 @@ msgid ""
 "ignored\n"
 "missing"
 msgstr ""
+"certs ID\n"
+"keys [PADRÃO]\n"
+"branches\n"
+"epochs [RAMO [...]]\n"
+"tags\n"
+"vars [DOMÍNIO]\n"
+"known\n"
+"unknown\n"
+"ignored\n"
+"missing"
 
 #: commands.cc:1731
 msgid ""
@@ -992,11 +1003,11 @@ msgstr ""
 #: commands.cc:1855 commands.cc:1874 commands.cc:1892 commands.cc:1920
 #: commands.cc:1938
 msgid "packet i/o"
-msgstr ""
+msgstr "E/S de pacotes"
 
 #: commands.cc:1768 commands.cc:1794
 msgid "OLDID NEWID"
-msgstr ""
+msgstr "VELHO-ID NOVO-ID"
 
 #: commands.cc:1769
 msgid "write manifest delta packet to stdout"
@@ -1009,21 +1020,21 @@ msgstr ""
 
 #: commands.cc:1795
 msgid "write file delta packet to stdout"
-msgstr ""
+msgstr "escreve pacote de delta de arquivo em stdout"
 
 #: commands.cc:1809 commands.cc:1811 commands.cc:1868 commands.cc:2219
 #, c-format
 msgid "no such file '%s'"
-msgstr ""
+msgstr "não há arquivo '%s'"
 
 #: commands.cc:1818 commands.cc:1836 commands.cc:1855 commands.cc:1874
 #: commands.cc:1892 commands.cc:1920
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: commands.cc:1818
 msgid "write revision data packet to stdout"
-msgstr ""
+msgstr "escreve pacote de dados da versão em stdout"
 
 #: commands.cc:1836
 msgid "write manifest data packet to stdout"
@@ -1031,38 +1042,38 @@ msgstr ""
 
 #: commands.cc:1855
 msgid "write file data packet to stdout"
-msgstr ""
+msgstr "escreve pacote de dados do arquivo em stdout"
 
 #: commands.cc:1874
 msgid "write cert packets to stdout"
-msgstr ""
+msgstr "escreve pacotes de certificado em stdout"
 
 #: commands.cc:1892
 msgid "write public key packet to stdout"
-msgstr ""
+msgstr "escreve pacote de chave pública em stdout"
 
 #: commands.cc:1914
 #, c-format
 msgid "public key '%s' does not exist"
-msgstr ""
+msgstr "chave pública '%s' não existe"
 
 #: commands.cc:1920
 msgid "write private key packet to stdout"
-msgstr ""
+msgstr "escreve pacote de chave privada em stdout"
 
 #: commands.cc:1928
 #, c-format
 msgid "public and private key '%s' do not exist in keystore"
-msgstr ""
+msgstr "chaves pública e privada '%s' não existem no repositório de chaves"
 
 #: commands.cc:1939
 msgid "read packets from files or stdin"
-msgstr ""
+msgstr "lê pacotes de arquivos ou de stdin"
 
 #: commands.cc:1947
 #, c-format
 msgid "no packets found on stdin"
-msgstr ""
+msgstr "nenhum pacote encontrado em stdin"
 
 #: commands.cc:1958
 #, c-format
