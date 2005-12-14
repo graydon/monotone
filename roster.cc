@@ -1119,6 +1119,14 @@ namespace
     bool diff_from_left = !(new_val == left_val);
     bool diff_from_right = !(new_val == right_val);
 
+    // some quick sanity checks
+    for (set<revision_id>::const_iterator i = left_marks.begin();
+         i != left_marks.end(); ++i)
+      I(right_uncommon_ancestors.find(*i) == right_uncommon_ancestors.end());
+    for (set<revision_id>::const_iterator i = right_marks.begin();
+         i != right_marks.end(); ++i)
+      I(left_uncommon_ancestors.find(*i) == left_uncommon_ancestors.end());
+
     if (diff_from_left && diff_from_right)
       new_marks.insert(new_rid);
 
@@ -1487,6 +1495,10 @@ namespace
                         node_id_source & nis)
   {
     I(!null_id(left_rid) && !null_id(right_rid));
+    I(left_uncommon_ancestors.find(left_rid) != left_uncommon_ancestors.end());
+    I(left_uncommon_ancestors.find(right_rid) == left_uncommon_ancestors.end());
+    I(right_uncommon_ancestors.find(right_rid) != right_uncommon_ancestors.end());
+    I(right_uncommon_ancestors.find(left_rid) == right_uncommon_ancestors.end());
     {
       temp_node_id_source temp_nis;
       // SPEEDUP?: the copies on the next two lines are probably the main
@@ -2967,7 +2979,6 @@ namespace
   revision_id old_rid(string("0000000000000000000000000000000000000000"));
   revision_id left_rid(string("1111111111111111111111111111111111111111"));
   revision_id right_rid(string("2222222222222222222222222222222222222222"));
-  revision_id parent_rid(string("3333333333333333333333333333333333333333"));
   revision_id new_rid(string("4444444444444444444444444444444444444444"));
 
   void
@@ -2993,9 +3004,22 @@ namespace
 {
   typedef enum { scalar_a, scalar_b, scalar_c, scalar_none } scalar_val;
 
+  void
+  dump(scalar_val val, std::string & out)
+  {
+    switch (val)
+      {
+      case scalar_a: out = "scalar_a"; break;
+      case scalar_b: out = "scalar_b"; break;
+      case scalar_c: out = "scalar_c"; break;
+      case scalar_none: out = "scalar_none"; break;
+      }
+    out += "\n";
+  }
+
   struct a_scalar
   {
-    virtual void set(revision_id const & origin_rid,
+    virtual void set(revision_id const & scalar_origin_rid,
                      scalar_val val, std::set<revision_id> const & this_scalar_mark,
                      roster_t & roster, marking_map & markings)
       = 0;
@@ -3017,44 +3041,63 @@ namespace
       marking.parent_name.insert(old_rid);
       safe_insert(markings, make_pair(root_nid, marking));
     }
+
+    virtual std::string my_type() const = 0;
+
+    virtual void dump(std::string & out) const
+    {
+      std::ostringstream oss;
+      oss << "type: " << my_type() << "\n"
+          << "root_nid: " << root_nid << "\n"
+          << "obj_under_test_nid: " << obj_under_test_nid << "\n";
+      out = oss.str();
+    }
   };
+
+  void
+  dump(a_scalar const & s, std::string & out)
+  {
+    s.dump(out);
+  }
 
   struct file_maker
   {
-    static void make_obj(revision_id const & origin_rid, node_id nid,
+    static void make_obj(revision_id const & scalar_origin_rid, node_id nid,
                          roster_t & roster, marking_map & markings)
     {
-      make_file(origin_rid, nid,
+      make_file(scalar_origin_rid, nid,
                 file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
                 roster, markings);
     }
-    static void make_file(revision_id const & origin_rid, node_id nid,
+    static void make_file(revision_id const & scalar_origin_rid, node_id nid,
                           file_id const & fid,
                           roster_t & roster, marking_map & markings)
     {
       roster.create_file_node(fid, nid);
       marking_t marking;
-      marking.birth_revision = origin_rid;
-      marking.parent_name = marking.file_content = singleton(origin_rid);
+      marking.birth_revision = scalar_origin_rid;
+      marking.parent_name = marking.file_content = singleton(scalar_origin_rid);
       safe_insert(markings, make_pair(nid, marking));
     }
   };
   
   struct dir_maker
   {
-    static void make_obj(revision_id const & origin_rid, node_id nid,
+    static void make_obj(revision_id const & scalar_origin_rid, node_id nid,
                          roster_t & roster, marking_map & markings)
     {
       roster.create_dir_node(nid);
       marking_t marking;
-      marking.birth_revision = origin_rid;
-      marking.parent_name = singleton(origin_rid);
+      marking.birth_revision = scalar_origin_rid;
+      marking.parent_name = singleton(scalar_origin_rid);
       safe_insert(markings, make_pair(nid, marking));
     }
   };
   
   struct file_content_scalar : public a_scalar
   {
+    virtual std::string my_type() const { return "file_content_scalar"; }
+    
     std::map<scalar_val, file_id> values;
     file_content_scalar(node_id_source & nis)
       : a_scalar(nis)
@@ -3070,14 +3113,14 @@ namespace
                             file_id(string("cccccccccccccccccccccccccccccccccccccccc"))));
     }
     virtual void
-    set(revision_id const & origin_rid, scalar_val val,
+    set(revision_id const & scalar_origin_rid, scalar_val val,
         std::set<revision_id> const & this_scalar_mark,
         roster_t & roster, marking_map & markings)
     {
       setup(roster, markings);
       if (val != scalar_none)
         {
-          file_maker::make_file(origin_rid, obj_under_test_nid,
+          file_maker::make_file(scalar_origin_rid, obj_under_test_nid,
                                 safe_get(values, val),
                                 roster, markings);
           roster.attach_node(obj_under_test_nid, split("foo"));
@@ -3090,6 +3133,8 @@ namespace
   template <typename T>
   struct X_basename_scalar : public a_scalar
   {
+    virtual std::string my_type() const { return "X_basename_scalar"; }
+
     std::map<scalar_val, split_path> values;
     X_basename_scalar(node_id_source & nis)
       : a_scalar(nis)
@@ -3099,14 +3144,14 @@ namespace
       safe_insert(values, make_pair(scalar_c, split("c")));
     }
     virtual void
-    set(revision_id const & origin_rid, scalar_val val,
+    set(revision_id const & scalar_origin_rid, scalar_val val,
         std::set<revision_id> const & this_scalar_mark,
         roster_t & roster, marking_map & markings)
     {
       setup(roster, markings);
       if (val != scalar_none)
         {
-          T::make_obj(origin_rid, obj_under_test_nid, roster, markings);
+          T::make_obj(scalar_origin_rid, obj_under_test_nid, roster, markings);
           roster.attach_node(obj_under_test_nid, safe_get(values, val));
           markings[obj_under_test_nid].parent_name = this_scalar_mark;
         }
@@ -3117,6 +3162,8 @@ namespace
   template <typename T>
   struct X_parent_scalar : public a_scalar
   {
+    virtual std::string my_type() const { return "X_parent_scalar"; }
+
     std::map<scalar_val, split_path> values;
     node_id const a_nid, b_nid, c_nid;
     X_parent_scalar(node_id_source & nis)
@@ -3143,7 +3190,7 @@ namespace
       safe_insert(markings, make_pair(c_nid, marking));
     }
     virtual void
-    set(revision_id const & origin_rid, scalar_val val,
+    set(revision_id const & scalar_origin_rid, scalar_val val,
         std::set<revision_id> const & this_scalar_mark,
         roster_t & roster, marking_map & markings)
     {
@@ -3151,7 +3198,7 @@ namespace
       setup_dirs(roster, markings);
       if (val != scalar_none)
         {
-          T::make_obj(origin_rid, obj_under_test_nid, roster, markings);
+          T::make_obj(scalar_origin_rid, obj_under_test_nid, roster, markings);
           roster.attach_node(obj_under_test_nid, safe_get(values, val));
           markings[obj_under_test_nid].parent_name = this_scalar_mark;
         }
@@ -3162,6 +3209,8 @@ namespace
   template <typename T>
   struct X_attr_scalar : public a_scalar
   {
+    virtual std::string my_type() const { return "X_attr_scalar"; }
+
     std::map<scalar_val, pair<bool, attr_value> > values;
     X_attr_scalar(node_id_source & nis)
       : a_scalar(nis)
@@ -3171,12 +3220,14 @@ namespace
       safe_insert(values, make_pair(scalar_c, make_pair(true, attr_value("c"))));
     }
     virtual void
-    set(revision_id const & origin_rid, scalar_val val,
+    set(revision_id const & scalar_origin_rid, scalar_val val,
         std::set<revision_id> const & this_scalar_mark,
         roster_t & roster, marking_map & markings)
     {
       setup(roster, markings);
-      T::make_obj(origin_rid, obj_under_test_nid, roster, markings);
+      // _not_ scalar_origin_rid, because our object exists everywhere, regardless of
+      // when the attr shows up
+      T::make_obj(old_rid, obj_under_test_nid, roster, markings);
       roster.attach_node(obj_under_test_nid, split("foo"));
       if (val != scalar_none)
         {
@@ -3209,15 +3260,19 @@ namespace
 // scenario with a particular scalar with 0, 1, or 2 roster parents.
 
 static void
-run_with_0_roster_parents(a_scalar & s, revision_id origin_rid,
+run_with_0_roster_parents(a_scalar & s, revision_id scalar_origin_rid,
                           scalar_val new_val,
                           std::set<revision_id> const & new_mark_set,
                           node_id_source & nis)
 {
+  MM(s);
+  MM(scalar_origin_rid);
+  MM(new_val);
+  MM(new_mark_set);
   roster_t expected_roster; MM(expected_roster);
   marking_map expected_markings; MM(expected_markings);
 
-  s.set(origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
+  s.set(scalar_origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
 
   roster_t empty_roster;
   cset cs; MM(cs);
@@ -3236,20 +3291,26 @@ run_with_0_roster_parents(a_scalar & s, revision_id origin_rid,
 
 static void
 run_with_1_roster_parent(a_scalar & s,
-                         revision_id origin_rid,
+                         revision_id scalar_origin_rid,
                          scalar_val parent_val,
                          std::set<revision_id> const & parent_mark_set,
                          scalar_val new_val,
                          std::set<revision_id> const & new_mark_set,
                          node_id_source & nis)
 {
+  MM(s);
+  MM(scalar_origin_rid);
+  MM(parent_val);
+  MM(parent_mark_set);
+  MM(new_val);
+  MM(new_mark_set);
   roster_t parent_roster; MM(parent_roster);
   marking_map parent_markings; MM(parent_markings);
   roster_t expected_roster; MM(expected_roster);
   marking_map expected_markings; MM(expected_markings);
 
-  s.set(origin_rid, parent_val, parent_mark_set, parent_roster, parent_markings);
-  s.set(origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
+  s.set(scalar_origin_rid, parent_val, parent_mark_set, parent_roster, parent_markings);
+  s.set(scalar_origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
 
   cset cs; MM(cs);
   make_cset(parent_roster, expected_roster, cs);
@@ -3266,7 +3327,7 @@ run_with_1_roster_parent(a_scalar & s,
 
 static void
 run_with_2_roster_parents(a_scalar & s,
-                          revision_id origin_rid,
+                          revision_id scalar_origin_rid,
                           scalar_val left_val,
                           std::set<revision_id> const & left_mark_set,
                           scalar_val right_val,
@@ -3275,6 +3336,14 @@ run_with_2_roster_parents(a_scalar & s,
                           std::set<revision_id> const & new_mark_set,
                           node_id_source & nis)
 {
+  MM(s);
+  MM(scalar_origin_rid);
+  MM(left_val);
+  MM(left_mark_set);
+  MM(right_val);
+  MM(right_mark_set);
+  MM(new_val);
+  MM(new_mark_set);
   roster_t left_roster; MM(left_roster);
   roster_t right_roster; MM(right_roster);
   roster_t expected_roster; MM(expected_roster);
@@ -3282,17 +3351,18 @@ run_with_2_roster_parents(a_scalar & s,
   marking_map right_markings; MM(right_markings);
   marking_map expected_markings; MM(expected_markings);
 
-  s.set(origin_rid, left_val, left_mark_set, left_roster, left_markings);
-  s.set(origin_rid, right_val, right_mark_set, right_roster, right_markings);
-  s.set(origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
+  s.set(scalar_origin_rid, left_val, left_mark_set, left_roster, left_markings);
+  s.set(scalar_origin_rid, right_val, right_mark_set, right_roster, right_markings);
+  s.set(scalar_origin_rid, new_val, new_mark_set, expected_roster, expected_markings);
 
   cset left_cs; MM(left_cs);
   cset right_cs; MM(right_cs);
   make_cset(left_roster, expected_roster, left_cs);
   make_cset(right_roster, expected_roster, right_cs);
 
-  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  std::set<revision_id> left_uncommon_ancestors; MM(left_uncommon_ancestors);
   left_uncommon_ancestors.insert(left_rid);
+  std::set<revision_id> right_uncommon_ancestors; MM(right_uncommon_ancestors);
   right_uncommon_ancestors.insert(right_rid);
 
   roster_t new_roster; MM(new_roster);
@@ -3348,7 +3418,7 @@ run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
   scalars ss = all_scalars(nis);
   for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
     {
-      run_with_1_roster_parent(**i, parent_rid,
+      run_with_1_roster_parent(**i, old_rid,
                                parent_val, parent_mark_set,
                                new_val, new_mark_set,
                                nis);
@@ -3380,6 +3450,24 @@ run_a_2_scalar_parent_scenario_exact(scalar_val left_val,
     }
 }
 
+static set<revision_id>
+flip_revision_set(set<revision_id> const & rids)
+{
+  set<revision_id> flipped_rids;
+  for (set<revision_id>::const_iterator i = rids.begin(); i != rids.end(); ++i)
+    {
+      if (*i == old_rid || *i == new_rid)
+        flipped_rids.insert(*i);
+      else if (*i == left_rid)
+        flipped_rids.insert(right_rid);
+      else if (*i == right_rid)
+        flipped_rids.insert(left_rid);
+      else
+        I(false);
+    }
+  return flipped_rids;
+}
+
 static void
 run_a_2_scalar_parent_scenario(scalar_val left_val,
                                std::set<revision_id> const & left_mark_set,
@@ -3392,10 +3480,18 @@ run_a_2_scalar_parent_scenario(scalar_val left_val,
   run_a_2_scalar_parent_scenario_exact(left_val, left_mark_set,
                                        right_val, right_mark_set,
                                        new_val, new_mark_set);
-  // ...and its symmetric reflection
-  run_a_2_scalar_parent_scenario_exact(right_val, right_mark_set,
-                                       left_val, left_mark_set,
-                                       new_val, new_mark_set);
+  // ...and its symmetric reflection.  but we have to flip the mark set,
+  // because the exact stuff has hard-coded the names of the various
+  // revisions and their uncommon ancestor sets.
+  {
+    std::set<revision_id> flipped_left_mark_set = flip_revision_set(left_mark_set);
+    std::set<revision_id> flipped_right_mark_set = flip_revision_set(right_mark_set);
+    std::set<revision_id> flipped_new_mark_set = flip_revision_set(new_mark_set);
+
+    run_a_2_scalar_parent_scenario_exact(right_val, flipped_right_mark_set,
+                                         left_val, flipped_left_mark_set,
+                                         new_val, flipped_new_mark_set);
+  }
 }
 
 ////////////////
@@ -3418,13 +3514,16 @@ run_a_2_scalar_parent_scenario(scalar_val left_val,
 static void
 test_all_0_scalar_parent_mark_scenarios()
 {
+  L(F("TEST: begin checking 0-parent marking"));
   // a*
   run_a_0_scalar_parent_mark_scenario();
+  L(F("TEST: end checking 0-parent marking"));
 }
 
 static void
 test_all_1_scalar_parent_mark_scenarios()
 {
+  L(F("TEST: begin checking 1-parent marking"));
   //  a
   //  |
   //  a
@@ -3459,11 +3558,13 @@ test_all_1_scalar_parent_mark_scenarios()
   //   b*
   run_a_1_scalar_parent_mark_scenario(scalar_a, doubleton(left_rid, right_rid),
                                       scalar_b, singleton(new_rid));
+  L(F("TEST: end checking 1-parent marking"));
 }
 
 static void
 test_all_2_scalar_parent_mark_scenarios()
 {
+  L(F("TEST: begin checking 2-parent marking"));
   ///////////////////////////////////////////////////////////////////
   // a   a
   //  \ /
@@ -3552,6 +3653,7 @@ test_all_2_scalar_parent_mark_scenarios()
   //    a   /
   //     \ /
   //      a
+  L(F("TEST: end checking 2-parent marking"));
 }
 
 static void
