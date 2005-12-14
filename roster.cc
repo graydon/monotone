@@ -3389,6 +3389,113 @@ run_with_2_roster_parents(a_scalar & s,
 // FIXME: have clients just use s.nis instead of passing it separately...?
 
 static void
+run_a_2_scalar_parent_mark_scenario_exact(revision_id const & scalar_origin_rid,
+                                          scalar_val left_val,
+                                          std::set<revision_id> const & left_mark_set,
+                                          scalar_val right_val,
+                                          std::set<revision_id> const & right_mark_set,
+                                          scalar_val new_val,
+                                          std::set<revision_id> const & new_mark_set)
+{
+  testing_node_id_source nis;
+  scalars ss = all_scalars(nis);
+  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
+    {
+      run_with_2_roster_parents(**i, scalar_origin_rid,
+                                left_val, left_mark_set,
+                                right_val, right_mark_set,
+                                new_val, new_mark_set,
+                                nis);
+    }
+}
+
+static revision_id
+flip_revision_id(revision_id const & rid)
+{
+  if (rid == old_rid || rid == new_rid)
+    return rid;
+  else if (rid == left_rid)
+    return right_rid;
+  else if (rid == right_rid)
+    return left_rid;
+  else
+    I(false);
+}
+
+static set<revision_id>
+flip_revision_set(set<revision_id> const & rids)
+{
+  set<revision_id> flipped_rids;
+  for (set<revision_id>::const_iterator i = rids.begin(); i != rids.end(); ++i)
+    flipped_rids.insert(flip_revision_id(*i));
+  return flipped_rids;
+}
+
+static void
+run_a_2_scalar_parent_mark_scenario(revision_id const & scalar_origin_rid,
+                                    scalar_val left_val,
+                                    std::set<revision_id> const & left_mark_set,
+                                    scalar_val right_val,
+                                    std::set<revision_id> const & right_mark_set,
+                                    scalar_val new_val,
+                                    std::set<revision_id> const & new_mark_set)
+{
+  // run both what we're given...
+  run_a_2_scalar_parent_mark_scenario_exact(scalar_origin_rid,
+                                            left_val, left_mark_set,
+                                            right_val, right_mark_set,
+                                            new_val, new_mark_set);
+  // ...and its symmetric reflection.  but we have to flip the mark set,
+  // because the exact stuff has hard-coded the names of the various
+  // revisions and their uncommon ancestor sets.
+  {
+    std::set<revision_id> flipped_left_mark_set = flip_revision_set(left_mark_set);
+    std::set<revision_id> flipped_right_mark_set = flip_revision_set(right_mark_set);
+    std::set<revision_id> flipped_new_mark_set = flip_revision_set(new_mark_set);
+
+    run_a_2_scalar_parent_mark_scenario_exact(flip_revision_id(scalar_origin_rid),
+                                              right_val, flipped_right_mark_set,
+                                              left_val, flipped_left_mark_set,
+                                              new_val, flipped_new_mark_set);
+  }
+}
+
+static void
+run_a_2_scalar_parent_mark_scenario(scalar_val left_val,
+                                    std::set<revision_id> const & left_mark_set,
+                                    scalar_val right_val,
+                                    std::set<revision_id> const & right_mark_set,
+                                    scalar_val new_val,
+                                    std::set<revision_id> const & new_mark_set)
+{
+  run_a_2_scalar_parent_mark_scenario(old_rid,
+                                      left_val, left_mark_set,
+                                      right_val, right_mark_set,
+                                      new_val, new_mark_set);
+}
+
+static void
+run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
+                                    std::set<revision_id> const & parent_mark_set,
+                                    scalar_val new_val,
+                                    std::set<revision_id> const & new_mark_set)
+{
+  {
+    testing_node_id_source nis;
+    scalars ss = all_scalars(nis);
+    for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
+      run_with_1_roster_parent(**i, old_rid,
+                               parent_val, parent_mark_set,
+                               new_val, new_mark_set,
+                               nis);
+  }
+  run_a_2_scalar_parent_mark_scenario(left_rid,
+                                      parent_val, parent_mark_set,
+                                      scalar_none, std::set<revision_id>(),
+                                      new_val, new_mark_set);
+}
+
+static void
 run_a_0_scalar_parent_mark_scenario()
 {
   testing_node_id_source nis;
@@ -3406,92 +3513,6 @@ run_a_0_scalar_parent_mark_scenario()
                                 scalar_a, singleton(new_rid),
                                 nis);
     }
-}
-
-static void
-run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
-                                    std::set<revision_id> const & parent_mark_set,
-                                    scalar_val new_val,
-                                    std::set<revision_id> const & new_mark_set)
-{
-  testing_node_id_source nis;
-  scalars ss = all_scalars(nis);
-  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
-    {
-      run_with_1_roster_parent(**i, old_rid,
-                               parent_val, parent_mark_set,
-                               new_val, new_mark_set,
-                               nis);
-      run_with_2_roster_parents(**i, left_rid,
-                                parent_val, parent_mark_set,
-                                scalar_none, std::set<revision_id>(),
-                                new_val, new_mark_set,
-                                nis);
-    }
-}
-
-static void
-run_a_2_scalar_parent_scenario_exact(scalar_val left_val,
-                                     std::set<revision_id> const & left_mark_set,
-                                     scalar_val right_val,
-                                     std::set<revision_id> const & right_mark_set,
-                                     scalar_val new_val,
-                                     std::set<revision_id> const & new_mark_set)
-{
-  testing_node_id_source nis;
-  scalars ss = all_scalars(nis);
-  for (scalars::const_iterator i = ss.begin(); i != ss.end(); ++i)
-    {
-      run_with_2_roster_parents(**i, old_rid,
-                                left_val, left_mark_set,
-                                right_val, right_mark_set,
-                                new_val, new_mark_set,
-                                nis);
-    }
-}
-
-static set<revision_id>
-flip_revision_set(set<revision_id> const & rids)
-{
-  set<revision_id> flipped_rids;
-  for (set<revision_id>::const_iterator i = rids.begin(); i != rids.end(); ++i)
-    {
-      if (*i == old_rid || *i == new_rid)
-        flipped_rids.insert(*i);
-      else if (*i == left_rid)
-        flipped_rids.insert(right_rid);
-      else if (*i == right_rid)
-        flipped_rids.insert(left_rid);
-      else
-        I(false);
-    }
-  return flipped_rids;
-}
-
-static void
-run_a_2_scalar_parent_scenario(scalar_val left_val,
-                               std::set<revision_id> const & left_mark_set,
-                               scalar_val right_val,
-                               std::set<revision_id> const & right_mark_set,
-                               scalar_val new_val,
-                               std::set<revision_id> const & new_mark_set)
-{
-  // run both what we're given...
-  run_a_2_scalar_parent_scenario_exact(left_val, left_mark_set,
-                                       right_val, right_mark_set,
-                                       new_val, new_mark_set);
-  // ...and its symmetric reflection.  but we have to flip the mark set,
-  // because the exact stuff has hard-coded the names of the various
-  // revisions and their uncommon ancestor sets.
-  {
-    std::set<revision_id> flipped_left_mark_set = flip_revision_set(left_mark_set);
-    std::set<revision_id> flipped_right_mark_set = flip_revision_set(right_mark_set);
-    std::set<revision_id> flipped_new_mark_set = flip_revision_set(new_mark_set);
-
-    run_a_2_scalar_parent_scenario_exact(right_val, flipped_right_mark_set,
-                                         left_val, flipped_left_mark_set,
-                                         new_val, flipped_new_mark_set);
-  }
 }
 
 ////////////////
@@ -3569,83 +3590,83 @@ test_all_2_scalar_parent_mark_scenarios()
   // a   a
   //  \ /
   //   a
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_a, singleton(old_rid),
-                                 scalar_a, singleton(old_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(old_rid));
   // a   a*
   //  \ /
   //   a
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_a, singleton(right_rid),
-                                 scalar_a, doubleton(old_rid, right_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(right_rid),
+                                      scalar_a, doubleton(old_rid, right_rid));
   // a*  a*
   //  \ /
   //   a
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
-                                 scalar_a, singleton(right_rid),
-                                 scalar_a, doubleton(left_rid, right_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_a, singleton(right_rid),
+                                      scalar_a, doubleton(left_rid, right_rid));
 
   ///////////////////////////////////////////////////////////////////
   // a   a
   //  \ /
   //   b*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_a, singleton(old_rid),
-                                 scalar_b, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(old_rid),
+                                      scalar_b, singleton(new_rid));
   // a   a*
   //  \ /
   //   b*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_a, singleton(right_rid),
-                                 scalar_b, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_a, singleton(right_rid),
+                                      scalar_b, singleton(new_rid));
   // a*  a*
   //  \ /
   //   b*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
-                                 scalar_a, singleton(right_rid),
-                                 scalar_b, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_a, singleton(right_rid),
+                                      scalar_b, singleton(new_rid));
 
   ///////////////////////////////////////////////////////////////////
   //  a*  b*
   //   \ /
   //    c*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
-                                 scalar_b, singleton(right_rid),
-                                 scalar_c, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_b, singleton(right_rid),
+                                      scalar_c, singleton(new_rid));
   //  a   b*
   //   \ /
   //    c*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_b, singleton(right_rid),
-                                 scalar_c, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_b, singleton(right_rid),
+                                      scalar_c, singleton(new_rid));
   // this case cannot actually arise, because if *(a) = *(b) then val(a) =
   // val(b).  but hey.
   //  a   b
   //   \ /
   //    c*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_b, singleton(old_rid),
-                                 scalar_c, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_b, singleton(old_rid),
+                                      scalar_c, singleton(new_rid));
 
   ///////////////////////////////////////////////////////////////////
   //  a*  b*
   //   \ /
   //    a*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
-                                 scalar_b, singleton(right_rid),
-                                 scalar_a, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_b, singleton(right_rid),
+                                      scalar_a, singleton(new_rid));
   //  a   b*
   //   \ /
   //    a*
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(old_rid),
-                                 scalar_b, singleton(right_rid),
-                                 scalar_a, singleton(new_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(old_rid),
+                                      scalar_b, singleton(right_rid),
+                                      scalar_a, singleton(new_rid));
   //  a*  b
   //   \ /
   //    a
-  run_a_2_scalar_parent_scenario(scalar_a, singleton(left_rid),
-                                 scalar_b, singleton(old_rid),
-                                 scalar_a, singleton(left_rid));
+  run_a_2_scalar_parent_mark_scenario(scalar_a, singleton(left_rid),
+                                      scalar_b, singleton(old_rid),
+                                      scalar_a, singleton(left_rid));
 
   // FIXME ROSTERS:
   //  a*  a*  b
