@@ -233,27 +233,27 @@ find_common_ancestor_for_merge(revision_id const & left,
 // FIXME: this algorithm is incredibly inefficient; it's O(n) where n is the
 // size of the entire revision graph.
 
-static bool
-is_ancestor(revision_id const & ancestor_id,
-            revision_id const & descendent_id,
-            std::multimap<revision_id, revision_id> const & graph)
+template<typename T> static bool
+is_ancestor(T const & ancestor_id,
+            T const & descendent_id,
+            std::multimap<T, T> const & graph)
 {
 
-  std::set<revision_id> visited;
-  std::queue<revision_id> queue;
+  std::set<T> visited;
+  std::queue<T> queue;
 
   queue.push(ancestor_id);
 
   while (!queue.empty())
     {
-      revision_id current_id = queue.front();
+      T current_id = queue.front();
       queue.pop();
 
       if (current_id == descendent_id)
         return true;
       else
         {
-          typedef std::multimap<revision_id, revision_id>::const_iterator gi;
+          typedef typename std::multimap<T, T>::const_iterator gi;
           std::pair<gi, gi> children = graph.equal_range(current_id);
           for (gi i = children.first; i != children.second; ++i)
             {
@@ -574,7 +574,7 @@ struct anc_graph
   
   void add_node_ancestry(u64 child, u64 parent);  
   void write_certs();
-  void kluge_for_3_ancestor_nodes();
+  void kluge_for_bogus_merge_edges();
   void rebuild_ancestry();
   void get_node_manifest(u64 node, manifest_id & man);
   u64 add_node_for_old_manifest(manifest_id const & man);
@@ -641,93 +641,88 @@ void anc_graph::write_certs()
 }
 
 void
-anc_graph::kluge_for_3_ancestor_nodes()
+anc_graph::kluge_for_bogus_merge_edges()
 {
-  // This method is, as the name suggests, a kluge.  It exists because in the
-  // 0.17 timeframe, monotone's ancestry graph has several nodes with 3
-  // parents.  This isn't, in principle, necessarily a bad thing; having 3
-  // parents is reasonably well defined, I don't know of much code that is
-  // dependent on revisions having only 2 parents, etc.  But it is a very
-  // weird thing, that we would never under any circumstances create today,
-  // and it only exists as a side-effect of the pre-changeset days.  In the
-  // future we may decide to allow 3+-parent revisions; we may decide to
-  // disallow it.  Right now, I'd rather keep options open.
-  // We remove only edges that are "redundant" (i.e., already weird...).
-  // These are also something that we currently refuse to produce -- when a
-  // node has more than one parent, and one parent is an ancestor of another.
-  // These edges, again, only exist because of weirdnesses in the
-  // pre-changeset days, and are not particularly meaningful.  Again, we may
-  // decide in the future to use them for some things, but...
-  // FIXME: remove this method eventually, since it is (mildly) destructive on
-  // history, and isn't really doing anything that necessarily needs to happen
-  // anyway.
-  P(F("scanning for nodes with 3+ parents\n"));
-  std::set<u64> manyparents;
+  // This kluge exists because in the 0.24-era monotone databases, several
+  // bad merges still existed in which one side of the merge is an ancestor
+  // of the other side of the merge. In other words, graphs which look like
+  // this:
+  //
+  //  a ----------------------> e
+  //   \                       /
+  //    \---> b -> c -> d ----/
+  //
+  // Such merges confuse the roster-building algorithm, because they should
+  // never have occurred in the first place: a was not a head at the time
+  // of the merge, e should simply have been considered an extension of d.
+  //
+  // So... we drop the a->e edges entirely.
+  //
+  // Note: this kluge drops edges which are a struct superset of those
+  // dropped by a previous kluge ("3-ancestor") so we have removed that
+  // code.
+
+  P(F("scanning for bogus merge edges\n"));
+
+  std::multimap<u64,u64> parent_to_child_map;
+    for (std::multimap<u64, u64>::const_iterator i = ancestry.begin();
+         i != ancestry.end(); ++i)
+      parent_to_child_map.insert(std::make_pair(i->second, i->first));
+
+  std::map<u64, u64> edges_to_kill;
   for (std::multimap<u64, u64>::const_iterator i = ancestry.begin();
        i != ancestry.end(); ++i)
     {
-      if (ancestry.count(i->first) > 2)
-        manyparents.insert(i->first);
+      std::multimap<u64, u64>::const_iterator j = i;
+      ++j;
+      u64 child = i->first;
+      // NB: ancestry is a multimap from child->parent(s)
+      if (j != ancestry.end())
+        {
+          if (j->first == i->first)
+            {
+              L(F("considering old merge edge %s\n") % 
+                safe_get(node_to_old_rev, i->first));
+              u64 parent1 = i->second;
+              u64 parent2 = j->second;
+              if (is_ancestor (parent1, parent2, parent_to_child_map))
+                safe_insert(edges_to_kill, std::make_pair(child, parent1));
+              else if (is_ancestor (parent2, parent1, parent_to_child_map))
+                safe_insert(edges_to_kill, std::make_pair(child, parent2));
+            }
+        }
     }
-  for (std::set<u64>::const_iterator i = manyparents.begin();
-       i != manyparents.end(); ++i)
+
+  for (std::map<u64, u64>::const_iterator i = edges_to_kill.begin(); 
+       i != edges_to_kill.end(); ++i)
     {
-      std::set<u64> indirect_ancestors;
-      std::set<u64> parents;
-      std::vector<u64> to_examine;
-      for (std::multimap<u64, u64>::const_iterator j = ancestry.lower_bound(*i);
-           j != ancestry.upper_bound(*i); ++j)
+      u64 child = i->first;
+      u64 parent = i->second;
+      bool killed = false;
+      for (std::multimap<u64, u64>::iterator j = ancestry.lower_bound(child);
+           j->first == child; ++j)
         {
-          to_examine.push_back(j->second);
-          parents.insert(j->second);
-        }
-      I(!to_examine.empty());
-      while (!to_examine.empty())
-        {
-          u64 current = to_examine.back();
-          to_examine.pop_back();
-          for (std::multimap<u64, u64>::const_iterator j = ancestry.lower_bound(current);
-               j != ancestry.upper_bound(current); ++j)
+          if (j->second == parent)
             {
-              if (indirect_ancestors.find(j->second) == indirect_ancestors.end())
-                {
-                  to_examine.push_back(j->second);
-                  indirect_ancestors.insert(j->second);
-                }
+              P(F("optimizing out redundant edge %d -> %d\n") 
+                % parent % child);
+              ancestry.erase(j);
+              killed = true;
+              break;
             }
         }
-      size_t killed = 0;
-      for (std::set<u64>::const_iterator p = parents.begin();
-           p != parents.end(); ++p)
-        {
-          if (indirect_ancestors.find(*p) != indirect_ancestors.end())
-            {
-              P(F("optimizing out redundant edge %i -> %i\n") % (*p) % (*i));
-              // sometimes I hate STL.  or at least my incompetence at using it.
-              size_t old_size = ancestry.size();
-              for (std::multimap<u64, u64>::iterator e = ancestry.lower_bound(*i);
-                   e != ancestry.upper_bound(*i); ++e)
-                {
-                  I(e->first == *i);
-                  if (e->second == *p)
-                    {
-                      ancestry.erase(e);
-                      break;
-                    }
-                }
-              I(old_size - 1 == ancestry.size());
-              ++killed;
-            }
-        }
-      I(killed < parents.size());
-      I(ancestry.find(*i) != ancestry.end());
+      
+      if (!killed)
+        W(F("failed to eliminate edge %d -> %d\n") 
+          % parent % child);
     }
 }
+
 
 void
 anc_graph::rebuild_ancestry()
 {
-  kluge_for_3_ancestor_nodes();
+  kluge_for_bogus_merge_edges();
 
   P(F("rebuilding %d nodes\n") % max_node);
   {
@@ -1140,6 +1135,10 @@ anc_graph::construct_revisions_from_ancestry()
       MM(dbg);
 
       work.pop_front();
+
+      if (done.find(child) != done.end())
+        continue;
+
       std::pair<ci,ci> parent_range = ancestry.equal_range(child);
       std::set<u64> parents;
       bool parents_all_done = true;
@@ -1313,7 +1312,8 @@ anc_graph::construct_revisions_from_ancestry()
             {
               if (i->first != child)
                 continue;
-              work.push_back(i->second);
+              if (done.find(i->second) == done.end())
+                work.push_back(i->second);
             }
         }
     }
