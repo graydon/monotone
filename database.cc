@@ -555,6 +555,13 @@ database::execute(char const * query, ...)
   va_end(args);
 }
 
+void
+database::execute(std::string const& query, std::vector<std::string> const& args)
+{ 
+  results res;
+  fetch(res, 0, 0, query, args);
+}
+
 void 
 database::fetch(results & res, 
                 int const want_cols, 
@@ -568,7 +575,8 @@ database::fetch(results & res,
 }
 
 database::statement &
-database::prepare(char const * query)
+database::prepare(char const * query,
+                  int const want_cols)
 {
   map<string, statement>::iterator i = statement_cache.find(query);
   if (i == statement_cache.end()) 
@@ -586,6 +594,12 @@ database::prepare(char const * query)
       E(*tail == 0, 
         F("multiple statements in query: %s\n") % query);
     }
+
+  int ncol = sqlite3_column_count(i->second.stmt());
+
+  E(want_cols == any_cols || want_cols == ncol, 
+    F("wanted %d columns got %d in query: %s\n") % want_cols % ncol % query);
+
   return i->second;
 }
 
@@ -600,12 +614,7 @@ database::fetch(results & res,
   res.clear();
   res.resize(0);
 
-  statement &stmt = prepare(query);
-  int ncol = sqlite3_column_count(stmt.stmt());
-
-  E(want_cols == any_cols || want_cols == ncol, 
-    F("wanted %d columns got %d in query: %s\n") % want_cols % ncol % query);
-
+  statement &stmt = prepare(query, want_cols);
   // bind parameters for this execution
 
   int params = sqlite3_bind_parameter_count(stmt.stmt());
@@ -678,17 +687,13 @@ void
 database::fetch(results & res, 
                 int const want_cols, 
                 int const want_rows, 
-                char const * query, 
+                std::string const& query, 
                 std::vector<std::string> const& args)
 {
   res.clear();
   res.resize(0);
 
-  statement &stmt = prepare(query);
-  int ncol = sqlite3_column_count(stmt.stmt());
-
-  E(want_cols == any_cols || want_cols == ncol, 
-    F("wanted %d columns got %d in query: %s\n") % want_cols % ncol % query);
+  statement &stmt = prepare(query, want_cols);
 
   // bind parameters for this execution
 

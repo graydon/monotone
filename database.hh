@@ -96,8 +96,10 @@ class database
   typedef std::vector< std::vector<std::string> > results;
  
   void execute(char const * query, ...);
+  void execute(std::string const& query, std::vector<std::string> const& args);
 
-  statement& prepare(char const * query);
+  statement& prepare(char const * query,
+                     int const want_cols);
 
   void fetch(statement & stmt, 
              results & res, 
@@ -119,7 +121,7 @@ class database
   void fetch(results & res, 
              int const want_cols, 
              int const want_rows, 
-             char const * query, 
+             std::string const& query, 
              std::vector<std::string> const& args);
  
   bool exists(hexenc<id> const & ident, 
