@@ -693,13 +693,13 @@ database::fetch(results & res,
   res.clear();
   res.resize(0);
 
-  statement &stmt = prepare(query, want_cols);
+  statement &stmt = prepare(query.c_str(), want_cols);
 
   // bind parameters for this execution
 
   int params = sqlite3_bind_parameter_count(stmt.stmt());
   
-  I(args.size()==params);
+  I(args.size()==size_t(params));
 
   L(F("binding %d parameters for %s\n") % params % query);
 
@@ -718,7 +718,7 @@ database::fetch(results & res,
       assert_sqlite3_ok(sql());
     }
     
-  fetch(stmt, res, want_rows, query);
+  fetch(stmt, res, want_rows, query.c_str());
 }
 
 // general application-level logic
@@ -901,11 +901,25 @@ database::put(hexenc<id> const & ident,
   MM(tid);
   I(tid == ident);
 
+  if (table=="files")
+  {
+    gzip<data> dat_packed;
+    encode_gzip(dat, dat_packed);
+    
+    string insert = "INSERT INTO " + table + " VALUES(?, ?)";
+    std::vector<std::string> args;
+    args.push_back(ident());
+    args.push_back(dat_packed());
+    execute(insert,args);
+  }
+  else
+  {
   base64<gzip<data> > dat_packed;
   pack(dat, dat_packed);
   
   string insert = "INSERT INTO " + table + " VALUES(?, ?)";
   execute(insert.c_str(),ident().c_str(), dat_packed().c_str());
+  }
 }
 void 
 database::put_delta(hexenc<id> const & ident,
