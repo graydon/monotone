@@ -849,6 +849,7 @@ database::get(hexenc<id> const & ident,
   gzip<data> rdata(res[0][0]);
   data rdata_unpacked;
   decode_gzip(rdata,rdata_unpacked);
+
   hexenc<id> tid;
   calculate_ident(rdata_unpacked, tid);
   I(tid == ident);
