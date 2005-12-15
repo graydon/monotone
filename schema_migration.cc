@@ -944,6 +944,82 @@ migrate_files_BLOB(sqlite3 * sql,
   return true;
 }
 
+// we could as well use the fact that uuencoded gzip starts with H4sI
+// but we can not change comments on fields
+static bool
+migrate_manifests_BLOB(sqlite3 * sql,
+                                    char ** errmsg,
+                                    app_state *app)
+{
+  int res;
+//  app->db.install_functions(app);
+  I(sqlite3_create_function(sql, "unbase64", -1, 
+                           SQLITE_UTF8, NULL,
+                           &sqlite3_unbase64_fn, 
+                           NULL, NULL) == 0);
+
+  // change the encoding of manifest(_delta)s
+  if (!move_table(sql, errmsg, 
+                  "manifests", 
+                  "tmp", 
+                  "("
+                  "id primary key,"
+                  "data not null"
+                  ")"))
+    return false;
+
+  res = logged_sqlite3_exec(sql, "CREATE TABLE manifests\n"
+                            "(\n"
+                            "id primary key,   -- strong hash of all the entries in a manifest\n"
+                            "data not null     -- compressed contents of a manifest\n"
+                            ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "INSERT INTO manifests "
+                            "SELECT id, unbase64(data) "
+                            "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  if (!move_table(sql, errmsg, 
+                  "manifest_deltas", 
+                  "tmp", 
+                  "("
+                  "id not null,"
+                  "base not null,"
+                  "delta not null"
+                  ")"))
+    return false;
+
+  res = logged_sqlite3_exec(sql, "CREATE TABLE manifest_deltas\n"
+                            "(\n"
+                            "id not null,      -- strong hash of all the entries in a manifest\n"
+                            "base not null,    -- joins with manifests.id or manifest_deltas.id\n"
+                            "delta not null,   -- compressed rdiff to construct current from base\n"
+                            "unique(id, base)\n"
+                            ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "INSERT INTO manifest_deltas "
+                            "SELECT id, base, unbase64(delta) "
+                            "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  // change comment
+  return true;
+}
+
 void 
 migrate_monotone_schema(sqlite3 *sql, app_state *app)
 {
@@ -975,9 +1051,12 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
   m.add("bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
         &migrate_files_BLOB);
 
+  m.add("acf96bb0bd230523fe5fa7621864fa252c3cf11c",
+        &migrate_manifests_BLOB);
+
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "acf96bb0bd230523fe5fa7621864fa252c3cf11c");
+  m.migrate(sql, "d19b106aaabbf31c89420a27224766eab10b6783");
 }

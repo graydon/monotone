@@ -72,7 +72,7 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("acf96bb0bd230523fe5fa7621864fa252c3cf11c"),
+  schema("d19b106aaabbf31c89420a27224766eab10b6783"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -847,16 +847,8 @@ database::get(hexenc<id> const & ident,
 
   // consistency check
   data rdata_unpacked;
-  if (table=="files")
-  { gzip<data> rdata(res[0][0]);
-    decode_gzip(rdata,rdata_unpacked);
-  }
-  else
-  {
-  base64<gzip<data> > rdata(res[0][0]);
-  unpack(rdata, rdata_unpacked);
-  }
-
+  gzip<data> rdata(res[0][0]);
+  decode_gzip(rdata,rdata_unpacked);
   hexenc<id> tid;
   calculate_ident(rdata_unpacked, tid);
   I(tid == ident);
@@ -877,15 +869,8 @@ database::get_delta(hexenc<id> const & ident,
   fetch(res, one_col, one_row, query.c_str(), 
         ident().c_str(), base().c_str());
 
-  if (table=="file_deltas")
-  { gzip<delta> del_packed(res[0][0]);
-    decode_gzip(del_packed, del);
-  }
-  else
-  {
-  base64<gzip<delta> > del_packed = res[0][0];
-  unpack(del_packed, del);
-  }
+  gzip<delta> del_packed(res[0][0]);
+  decode_gzip(del_packed, del);
 }
 
 void 
@@ -901,25 +886,14 @@ database::put(hexenc<id> const & ident,
   MM(tid);
   I(tid == ident);
 
-  if (table=="files")
-  {
-    gzip<data> dat_packed;
-    encode_gzip(dat, dat_packed);
-    
-    string insert = "INSERT INTO " + table + " VALUES(?, ?)";
-    std::vector<std::string> args;
-    args.push_back(ident());
-    args.push_back(dat_packed());
-    execute(insert,args);
-  }
-  else
-  {
-  base64<gzip<data> > dat_packed;
-  pack(dat, dat_packed);
+  gzip<data> dat_packed;
+  encode_gzip(dat, dat_packed);
   
   string insert = "INSERT INTO " + table + " VALUES(?, ?)";
-  execute(insert.c_str(),ident().c_str(), dat_packed().c_str());
-  }
+  std::vector<std::string> args;
+  args.push_back(ident());
+  args.push_back(dat_packed());
+  execute(insert,args);
 }
 void 
 database::put_delta(hexenc<id> const & ident,
@@ -931,26 +905,15 @@ database::put_delta(hexenc<id> const & ident,
   I(ident() != "");
   I(base() != "");
 
-  if (table=="file_deltas")
-  {
-    gzip<delta> del_packed;
-    encode_gzip(del, del_packed);
+  gzip<delta> del_packed;
+  encode_gzip(del, del_packed);
 
-    std::vector<std::string> args;
-    args.push_back(ident());
-    args.push_back(base());
-    args.push_back(del_packed());
-    string insert = "INSERT INTO "+table+" VALUES(?, ?, ?)";
-    execute(insert, args);
-  }
-  else
-  {
-  base64<gzip<delta> > del_packed;
-  pack(del, del_packed);
-  
+  std::vector<std::string> args;
+  args.push_back(ident());
+  args.push_back(base());
+  args.push_back(del_packed());
   string insert = "INSERT INTO "+table+" VALUES(?, ?, ?)";
-  execute(insert.c_str(), ident().c_str(), base().c_str(), del_packed().c_str());
-  }
+  execute(insert, args);
 }
 
 // static ticker cache_hits("vcache hits", "h", 1);
