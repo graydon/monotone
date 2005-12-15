@@ -931,11 +931,26 @@ database::put_delta(hexenc<id> const & ident,
   I(ident() != "");
   I(base() != "");
 
+  if (table=="file_deltas")
+  {
+    gzip<delta> del_packed;
+    encode_gzip(del, del_packed);
+
+    std::vector<std::string> args;
+    args.push_back(ident());
+    args.push_back(base());
+    args.push_back(del_packed());
+    string insert = "INSERT INTO "+table+" VALUES(?, ?, ?)";
+    execute(insert, args);
+  }
+  else
+  {
   base64<gzip<delta> > del_packed;
   pack(del, del_packed);
   
   string insert = "INSERT INTO "+table+" VALUES(?, ?, ?)";
   execute(insert.c_str(), ident().c_str(), base().c_str(), del_packed().c_str());
+  }
 }
 
 // static ticker cache_hits("vcache hits", "h", 1);
