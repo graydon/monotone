@@ -17,6 +17,7 @@
 #include <map>
 
 #include "paths.hh"
+#include "sanity.hh"
 
 namespace basic_io
 {
@@ -73,27 +74,30 @@ namespace basic_io
     input_source(std::string const & in, std::string const & nm)
       : line(1), col(1), in(in), curr(in.begin()), name(nm), lookahead(0), c('\0')
     {}
+
     inline void peek() 
     { 
-      if (curr == in.end())
-	lookahead = EOF;
-      else
+      if (LIKELY(curr != in.end()))
 	lookahead = *curr; 
+      else
+	lookahead = EOF;
     }
-    inline void eat()
-    {      
-      if (curr == in.end())
-	return;
-      c = *curr;
-      ++curr;
-      ++col;
-      if (c == '\n')
+
+    inline void advance() 
+    { 
+      if (LIKELY(curr != in.end()))
         {
-          col = 1;
-          ++line;
+          c = *curr;
+          ++curr;
+          ++col;
+          if (c == '\n')
+            {
+              col = 1;
+              ++line;
+            }
         }
+      peek(); 
     }
-    inline void advance() { eat(); peek(); }
     void err(std::string const & s);
   };
 
@@ -130,7 +134,7 @@ namespace basic_io
   
       while (true)
         {
-          if (in.lookahead == EOF)
+          if (UNLIKELY(in.lookahead == EOF))
             return TOK_NONE;
           if (!is_space(in.lookahead))
             break;
@@ -151,48 +155,83 @@ namespace basic_io
 	  mark();
 	  while (static_cast<char>(in.lookahead) != ']')
 	    {
-	      if (in.lookahead == EOF)
+	      if (UNLIKELY(in.lookahead == EOF))
 		in.err("input stream ended in hex string");
-                if (!is_xdigit(in.lookahead))
-                  in.err("non-hex character in hex string");
-		advance();
+              if (UNLIKELY(!is_xdigit(in.lookahead)))
+                in.err("non-hex character in hex string");
+              advance();
 	    }
 	  
-	  if (static_cast<char>(in.lookahead) != ']')
-	    in.err("hex string did not end with ']'");
-	  in.eat();
-
 	  store(val);
+
+	  if (UNLIKELY(static_cast<char>(in.lookahead) != ']'))
+	    in.err("hex string did not end with ']'");
+	  in.advance();
+
 	  return basic_io::TOK_HEX;
 	}
       else if (in.lookahead == '"')
 	{
-	  // We can't use mark/store here, because there might
-	  // be escaping in the string which we have to convert.
-	  val.clear();
 	  in.advance();
+	  mark();
 	  while (static_cast<char>(in.lookahead) != '"')
 	    {
-	      if (in.lookahead == EOF)
+	      if (UNLIKELY(in.lookahead == EOF))
 		in.err("input stream ended in string");
-	      if (static_cast<char>(in.lookahead) == '\\')
+	      if (UNLIKELY(static_cast<char>(in.lookahead) == '\\'))
 		{
-		  // possible escape: we understand escaped quotes
-		  // and escaped backslashes. nothing else.
+		  // Possible escape: we understand escaped quotes and
+		  // escaped backslashes. Nothing else. If we // happen to
+		  // hit an escape, we stop doing the mark/store // thing
+		  // and switch to copying and appending per-character
+		  // until the // end of the token.
+
+                  // So first, store what we have *before* the escape.
+                  store(val);
+                  
+                  // Then skip over the escape backslash.
 		  in.advance();
-		  if (!(static_cast<char>(in.lookahead) == '"' 
-			|| static_cast<char>(in.lookahead) == '\\'))
-		    {
-		      in.err("unrecognized character escape");
-		    }
+
+                  // Make sure it's an escape we recognize.
+		  if (UNLIKELY(!(static_cast<char>(in.lookahead) == '"' 
+                                 || static_cast<char>(in.lookahead) == '\\')))
+                    in.err("unrecognized character escape");
+
+                  // Add the escaped character onto the accumulating token.
+		  in.advance();
+                  val += in.c;
+
+                  // Now enter special slow loop for remainder.
+                  while (static_cast<char>(in.lookahead) != '"')
+                    {
+                      if (UNLIKELY(in.lookahead == EOF))
+                        in.err("input stream ended in string");
+                      if (UNLIKELY(static_cast<char>(in.lookahead) == '\\'))
+                        {
+                          // Skip over any further escape marker.
+                          in.advance();                          
+                          if (UNLIKELY(!(static_cast<char>(in.lookahead) == '"' 
+                                         || static_cast<char>(in.lookahead) == '\\')))
+                            in.err("unrecognized character escape");
+                        }
+                      in.advance();
+                      val += in.c;
+                    }
+                  // When slow loop completes, return early.
+                  if (static_cast<char>(in.lookahead) != '"')
+                    in.err("string did not end with '\"'");
+                  in.advance();
+                  
+                  return basic_io::TOK_STRING;
 		}
-	      in.advance();
-	      val += in.c;
+	      advance();
 	    }
 	  
-	  if (static_cast<char>(in.lookahead) != '"')
+	  store(val);
+
+	  if (UNLIKELY(static_cast<char>(in.lookahead) != '"'))
 	    in.err("string did not end with '\"'");
-	  in.eat();
+	  in.advance();
 	  
 	  return basic_io::TOK_STRING;
 	}
