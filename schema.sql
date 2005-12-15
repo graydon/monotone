@@ -23,10 +23,10 @@ CREATE TABLE files
 	(
 	id primary key,   -- strong hash of file contents
 	data not null     -- compressed contents of a file
-	); 
+	);
 
 CREATE TABLE file_deltas
-	(	
+	(
 	id not null,      -- strong hash of file contents
 	base not null,    -- joins with files.id or file_deltas.id
 	delta not null,   -- compressed rdiff to construct current from base
@@ -42,7 +42,7 @@ CREATE TABLE manifests
 CREATE TABLE manifest_deltas
 	(
 	id not null,         -- strong hash of all the entries in a manifest
-	base not null,       -- joins with either manifest.id or manifest_deltas.id
+	base not null,       -- joins with either manifests.id or manifest_deltas.id
 	delta not null,      -- compressed rdiff to construct current from base
 	unique(id, base)
 	);

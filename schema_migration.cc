@@ -951,12 +951,10 @@ migrate_manifests_BLOB(sqlite3 * sql,
                                     char ** errmsg,
                                     app_state *app)
 {
+  if (!migrate_files_BLOB(sql,errmsg,app)) 
+    return false;
+    
   int res;
-//  app->db.install_functions(app);
-  I(sqlite3_create_function(sql, "unbase64", -1, 
-                           SQLITE_UTF8, NULL,
-                           &sqlite3_unbase64_fn, 
-                           NULL, NULL) == 0);
 
   // change the encoding of manifest(_delta)s
   if (!move_table(sql, errmsg, 
@@ -999,7 +997,7 @@ migrate_manifests_BLOB(sqlite3 * sql,
   res = logged_sqlite3_exec(sql, "CREATE TABLE manifest_deltas\n"
                             "(\n"
                             "id not null,      -- strong hash of all the entries in a manifest\n"
-                            "base not null,    -- joins with manifests.id or manifest_deltas.id\n"
+                            "base not null,    -- joins with either manifests.id or manifest_deltas.id\n"
                             "delta not null,   -- compressed rdiff to construct current from base\n"
                             "unique(id, base)\n"
                             ")", NULL, NULL, errmsg);
@@ -1049,14 +1047,11 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
         &migrate_client_to_external_privkeys);
         
   m.add("bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
-        &migrate_files_BLOB);
-
-  m.add("acf96bb0bd230523fe5fa7621864fa252c3cf11c",
         &migrate_manifests_BLOB);
 
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "2d7ffb7c3d2975b52d2c799d511b7aea196c7adf");
+  m.migrate(sql, "a83f7d2b5e1118f676011706f4e269796c9d17c7");
 }
