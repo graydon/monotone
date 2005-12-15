@@ -1058,5 +1058,5 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "d19b106aaabbf31c89420a27224766eab10b6783");
+  m.migrate(sql, "2d7ffb7c3d2975b52d2c799d511b7aea196c7adf");
 }
