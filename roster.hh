@@ -178,6 +178,7 @@ public:
   bool has_root() const;
   bool has_node(split_path const & sp) const;
   bool has_node(node_id nid) const;
+  bool is_root(node_id nid) const;
   node_t get_node(split_path const & sp) const;
   node_t get_node(node_id nid) const;
   void get_name(node_id nid, split_path & sp) const;

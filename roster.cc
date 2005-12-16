@@ -531,6 +531,12 @@ roster_t::has_node(node_id n) const
 }
 
 bool
+roster_t::is_root(node_id n) const
+{
+  return has_root() && root_dir->self == n;
+}
+
+bool
 roster_t::has_node(split_path const & sp) const
 {
   split_path dirname;

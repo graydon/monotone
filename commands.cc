@@ -1160,8 +1160,9 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 }
 
 
-static void find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const & args, 
-                                      path_set & unknown, path_set & ignored);
+static void find_unknown_and_ignored(app_state & app, bool want_ignored, 
+                                     vector<utf8> const & args, 
+                                     path_set & unknown, path_set & ignored);
 
 
 CMD(add, N_("working copy"), N_("[PATH]..."),
@@ -1189,8 +1190,8 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
   perform_additions(paths, app);
 }
 
-static void find_missing (app_state & app,
-                          vector<utf8> const & args, path_set & missing);
+static void find_missing(app_state & app,
+                         vector<utf8> const & args, path_set & missing);
 
 CMD(drop, N_("working copy"), N_("[PATH]..."),
     N_("drop files from working copy"), OPT_EXECUTE % OPT_MISSING)
@@ -1636,31 +1637,47 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_known (app_state & app, vector<utf8> const & args)
+ls_known(app_state & app, vector<utf8> const & args)
 {
-  revision_set rs;
+  path_set paths;
   roster_t old_roster, new_roster;
-  data tmp;
+  temp_node_id_source nis;
+  restriction mask;
 
   app.require_working_copy();
 
-  path_set paths;
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
-  new_roster.extract_path_set(paths);
-  
-  // FIXME_RESTRICTIONS: this looks ok for roster restriction
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  for (path_set::const_iterator p = paths.begin(); p != paths.end(); ++p)
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      if (app.restriction_includes(*p))
-        cout << file_path(*p) << endl;
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
     }
+
+  mask.add_nodes(new_roster, paths);
+
+  // TODO: check for invalid paths that don't exist in either roster
+
+  node_map const & nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_id nid = i->first;
+
+      if (!new_roster.is_root(nid) && mask.includes(new_roster, nid))
+        {
+          split_path sp;
+          new_roster.get_name(nid, sp);
+          cout << file_path(sp) << endl;
+        }
+    }
+
 }
 
 
 static void
-find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const & args, 
-                          path_set & unknown, path_set & ignored)
+find_unknown_and_ignored(app_state & app, bool want_ignored, vector<utf8> const & args, 
+                         path_set & unknown, path_set & ignored)
 {
   revision_set rev;
   roster_t old_roster, new_roster;
@@ -1675,7 +1692,7 @@ find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const
 
 
 static void
-ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & args)
+ls_unknown_or_ignored(app_state & app, bool want_ignored, vector<utf8> const & args)
 {
   app.require_working_copy();
 
@@ -1692,36 +1709,46 @@ ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & 
 
 
 static void
-find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
+find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
 {
-  revision_id base_rid;
-  roster_t base_roster;
-  cset included_work, excluded_work;
-  path_set old_paths, new_paths;
+  path_set paths;
+  roster_t old_roster, new_roster;
+  temp_node_id_source nis;
+  restriction mask;
 
-  app.require_working_copy();
-  get_base_roster_and_working_cset(app, args, base_rid, base_roster,
-                                   old_paths, new_paths,
-                                   included_work, excluded_work);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  // FIXME_RESTRICTIONS: this looks ok for roster restriction
-
-  for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      if (i->size() == 1)
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+    }
+
+  mask.add_nodes(new_roster, paths);
+
+  // TODO: check for invalid paths that don't exist in either roster
+
+  node_map const & nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_id nid = i->first;
+
+      if (!new_roster.is_root(nid) && mask.includes(new_roster, nid))
         {
-          I(null_name(idx(*i, 0)));
-          continue;
+          split_path sp;
+          new_roster.get_name(nid, sp);
+          file_path fp(sp);      
+
+          if (!path_exists(fp))
+            missing.insert(sp);
         }
-      file_path fp(*i);      
-      if (app.restriction_includes(*i) && !path_exists(fp))
-        missing.insert(*i);
     }
 }
 
 
 static void
-ls_missing (app_state & app, vector<utf8> const & args)
+ls_missing(app_state & app, vector<utf8> const & args)
 {
   path_set missing;
   find_missing(app, args, missing);
@@ -3563,6 +3590,9 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                                            nodes_changed, 
                                            nodes_born,
                                            app);
+
+          // FIXME_RESTRICTIONS: this looks ok for roster restriction
+
               for (set<node_id>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
                 {
                   if (nodes_changed.find(*n) != nodes_changed.end()
