@@ -96,7 +96,18 @@ class database
   typedef std::vector< std::vector<std::string> > results;
  
   void execute(char const * query, ...);
-  void execute(std::string const& query, std::vector<std::string> const& args);
+  
+  // structure to distinguish between blob and string arguments
+  // in sqlite3 a blob never equals a string even when binary identical
+  // so we need to remember which type to pass to the query
+  struct queryarg : public std::string
+  {
+    bool binary;
+    queryarg(std::string const& s=std::string(), bool b=false)
+      : std::string(s), binary(b) {}
+  };
+  
+  void execute(std::string const& query, std::vector<queryarg> const& args);
 
   statement& prepare(char const * query,
                      int const want_cols);
@@ -122,7 +133,7 @@ class database
              int const want_cols, 
              int const want_rows, 
              std::string const& query, 
-             std::vector<std::string> const& args);
+             std::vector<queryarg> const& args);
  
   bool exists(hexenc<id> const & ident, 
               std::string const & table);

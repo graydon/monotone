@@ -556,7 +556,7 @@ database::execute(char const * query, ...)
 }
 
 void
-database::execute(std::string const& query, std::vector<std::string> const& args)
+database::execute(std::string const& query, std::vector<queryarg> const& args)
 { 
   results res;
   fetch(res, 0, 0, query, args);
@@ -668,6 +668,7 @@ database::fetch(statement & stmt,
         }
       res.push_back(row);
     }
+L(F("got %d lines %d cols\n") % res.size() % ncol);
   
   if (rescode != SQLITE_DONE)
     assert_sqlite3_ok(sql());
@@ -688,7 +689,7 @@ database::fetch(results & res,
                 int const want_cols, 
                 int const want_rows, 
                 std::string const& query, 
-                std::vector<std::string> const& args)
+                std::vector<queryarg> const& args)
 {
   res.clear();
   res.resize(0);
@@ -714,7 +715,10 @@ database::fetch(results & res,
 
       // we can use SQLITE_STATIC since the array is destructed after
       // fetching the parameters (and sqlite3_reset)
-      sqlite3_bind_blob(stmt.stmt(), param, args[param-1].data(), args[param-1].size(), SQLITE_STATIC);
+      if (args[param-1].binary)
+        sqlite3_bind_blob(stmt.stmt(), param, args[param-1].data(), args[param-1].size(), SQLITE_STATIC);
+      else
+        sqlite3_bind_text(stmt.stmt(), param, args[param-1].c_str(), -1, SQLITE_STATIC);
       assert_sqlite3_ok(sql());
     }
     
@@ -891,9 +895,9 @@ database::put(hexenc<id> const & ident,
   encode_gzip(dat, dat_packed);
   
   string insert = "INSERT INTO " + table + " VALUES(?, ?)";
-  std::vector<std::string> args;
+  std::vector<queryargs> args;
   args.push_back(ident());
-  args.push_back(dat_packed());
+  args.push_back(queryarg(dat_packed(),true));
   execute(insert,args);
 }
 void 
@@ -909,10 +913,10 @@ database::put_delta(hexenc<id> const & ident,
   gzip<delta> del_packed;
   encode_gzip(del, del_packed);
 
-  std::vector<std::string> args;
+  std::vector<queryargs> args;
   args.push_back(ident());
   args.push_back(base());
-  args.push_back(del_packed());
+  args.push_back(queryarg(del_packed(),true));
   string insert = "INSERT INTO "+table+" VALUES(?, ?, ?)";
   execute(insert, args);
 }
