@@ -3272,29 +3272,22 @@ CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
 }
 
 CMD(revert, N_("working copy"), N_("[PATH]..."), 
-    N_("revert file(s), dir(s) or entire working copy"), OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
+    N_("revert file(s), dir(s) or entire working copy"), 
+    OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
-  roster_t old_roster;
-  revision_id old_revision_id;
-  cset work, included_work, excluded_work;
-  path_set old_paths;
- 
+  path_set paths;
+  roster_t old_roster, new_roster;
+  temp_node_id_source nis;
+  restriction mask;
+  cset included, excluded;
+
   app.require_working_copy();
-
-  get_base_revision(app, old_revision_id, old_roster);
-
-  get_work_cset(work);
-  old_roster.extract_path_set(old_paths);
-
-  path_set valid_paths(old_paths);
-
-  extract_rearranged_paths(work, valid_paths);
-  add_intermediate_paths(valid_paths);
 
   vector<utf8> args_copy(args);
   if (app.missing)
     {
-      L(F("revert adding find_missing entries to %d original args elements\n") % args_copy.size());
+      L(F("revert adding find_missing entries to %d original args elements\n") 
+        % args_copy.size());
       path_set missing;
       find_missing(app, args_copy, missing);
 
@@ -3303,7 +3296,8 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
         args_copy.push_back(file_path(*i).as_external());
 
-      L(F("after adding everything from find_missing, revert args_copy has %d elements\n") % args_copy.size());
+      L(F("after adding everything from find_missing, revert args_copy has %d elements\n") 
+        % args_copy.size());
 
       // when given --missing, never revert if there's nothing missing and no 
       // specific files were specified.
@@ -3311,11 +3305,20 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
         return;
     }
 
-  app.set_restriction(valid_paths, args_copy, false);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  restrict_cset(work, included_work, excluded_work, app);
+  for (vector<utf8>::const_iterator i = args_copy.begin(); i != args_copy.end(); ++i)
+    {
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+    }
 
-  // FIXME_RESTRICTIONS: this looks ok for roster restriction
+  mask.add_nodes(old_roster, paths);
+  mask.add_nodes(new_roster, paths);
+  make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+
+  // TODO: check for invalid paths that don't exist in either roster
 
   node_map const & nodes = old_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
@@ -3323,15 +3326,14 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       node_id nid = i->first;
       node_t node = i->second;
 
-      if (null_node(node->parent))
+      if (old_roster.is_root(nid))
         continue;
 
       split_path sp;
       old_roster.get_name(nid, sp);
       file_path fp(sp);
       
-      // Only revert restriction-included files.
-      if (!app.restriction_includes(sp))
+      if (!mask.includes(old_roster, nid))
         continue;
 
       if (is_file_t(node))
@@ -3346,15 +3348,14 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
                 continue;
             }
       
-          L(F("reverting %s to [%s]\n") % fp % f->content);
+          P(F("reverting %s to [%s]\n") % fp % f->content);
           
           N(app.db.file_version_exists(f->content),
             F("no file version %s found in database for %s")
             % f->content % fp);
           
           file_data dat;
-          L(F("writing file %s to %s\n")
-            % f->content % fp);
+          L(F("writing file %s to %s\n") % f->content % fp);
           app.db.get_file_version(f->content, dat);
           write_localized_data(fp, dat.inner(), app.lua);
         }
@@ -3364,8 +3365,12 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
         }
     }
 
+  // included_work is thrown away which effectively reverts any adds, drops and
+  // renames it contains. drops and rename sources will have been rewritten
+  // above but this may leave rename targets laying around.
+
   // race
-  put_work_cset(excluded_work);
+  put_work_cset(excluded);
   update_any_attrs(app);
   maybe_update_inodeprints(app);
 }
