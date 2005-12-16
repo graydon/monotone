@@ -895,7 +895,7 @@ database::put(hexenc<id> const & ident,
   encode_gzip(dat, dat_packed);
   
   string insert = "INSERT INTO " + table + " VALUES(?, ?)";
-  std::vector<queryargs> args;
+  std::vector<queryarg> args;
   args.push_back(ident());
   args.push_back(queryarg(dat_packed(),true));
   execute(insert,args);
@@ -913,7 +913,7 @@ database::put_delta(hexenc<id> const & ident,
   gzip<delta> del_packed;
   encode_gzip(del, del_packed);
 
-  std::vector<queryargs> args;
+  std::vector<queryarg> args;
   args.push_back(ident());
   args.push_back(base());
   args.push_back(queryarg(del_packed(),true));
