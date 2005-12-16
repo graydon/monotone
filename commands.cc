@@ -1161,8 +1161,9 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 }
 
 
-static void find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const & args, 
-                                      path_set & unknown, path_set & ignored);
+static void find_unknown_and_ignored(app_state & app, bool want_ignored, 
+                                     vector<utf8> const & args, 
+                                     path_set & unknown, path_set & ignored);
 
 
 CMD(add, N_("working copy"), N_("[PATH]..."),
@@ -1190,8 +1191,8 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
   perform_additions(paths, app);
 }
 
-static void find_missing (app_state & app,
-                          vector<utf8> const & args, path_set & missing);
+static void find_missing(app_state & app,
+                         vector<utf8> const & args, path_set & missing);
 
 CMD(drop, N_("working copy"), N_("[PATH]..."),
     N_("drop files from working copy"), OPT_EXECUTE % OPT_MISSING)
@@ -1637,29 +1638,47 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_known (app_state & app, vector<utf8> const & args)
+ls_known(app_state & app, vector<utf8> const & args)
 {
-  revision_set rs;
+  path_set paths;
   roster_t old_roster, new_roster;
-  data tmp;
+  temp_node_id_source nis;
+  restriction mask;
 
   app.require_working_copy();
 
-  path_set paths;
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
-  new_roster.extract_path_set(paths);
-  
-  for (path_set::const_iterator p = paths.begin(); p != paths.end(); ++p)
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      if (app.restriction_includes(*p))
-        cout << file_path(*p) << endl;
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
     }
+
+  mask.add_nodes(new_roster, paths);
+
+  // TODO: check for invalid paths that don't exist in either roster
+
+  node_map const & nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_id nid = i->first;
+
+      if (!new_roster.is_root(nid) && mask.includes(new_roster, nid))
+        {
+          split_path sp;
+          new_roster.get_name(nid, sp);
+          cout << file_path(sp) << endl;
+        }
+    }
+
 }
 
 
 static void
-find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const & args, 
-                          path_set & unknown, path_set & ignored)
+find_unknown_and_ignored(app_state & app, bool want_ignored, vector<utf8> const & args, 
+                         path_set & unknown, path_set & ignored)
 {
   revision_set rev;
   roster_t old_roster, new_roster;
@@ -1674,7 +1693,7 @@ find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const
 
 
 static void
-ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & args)
+ls_unknown_or_ignored(app_state & app, bool want_ignored, vector<utf8> const & args)
 {
   app.require_working_copy();
 
@@ -1691,34 +1710,46 @@ ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & 
 
 
 static void
-find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
+find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
 {
-  revision_id base_rid;
-  roster_t base_roster;
-  cset included_work, excluded_work;
-  path_set old_paths, new_paths;
+  path_set paths;
+  roster_t old_roster, new_roster;
+  temp_node_id_source nis;
+  restriction mask;
 
-  app.require_working_copy();
-  get_base_roster_and_working_cset(app, args, base_rid, base_roster,
-                                   old_paths, new_paths,
-                                   included_work, excluded_work);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      if (i->size() == 1)
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+    }
+
+  mask.add_nodes(new_roster, paths);
+
+  // TODO: check for invalid paths that don't exist in either roster
+
+  node_map const & nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_id nid = i->first;
+
+      if (!new_roster.is_root(nid) && mask.includes(new_roster, nid))
         {
-          I(null_name(idx(*i, 0)));
-          continue;
+          split_path sp;
+          new_roster.get_name(nid, sp);
+          file_path fp(sp);      
+
+          if (!path_exists(fp))
+            missing.insert(sp);
         }
-      file_path fp(*i);      
-      if (app.restriction_includes(*i) && !path_exists(fp))
-        missing.insert(*i);
     }
 }
 
 
 static void
-ls_missing (app_state & app, vector<utf8> const & args)
+ls_missing(app_state & app, vector<utf8> const & args)
 {
   path_set missing;
   find_missing(app, args, missing);
@@ -3242,29 +3273,22 @@ CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
 }
 
 CMD(revert, N_("working copy"), N_("[PATH]..."), 
-    N_("revert file(s), dir(s) or entire working copy"), OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
+    N_("revert file(s), dir(s) or entire working copy"), 
+    OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
-  roster_t old_roster;
-  revision_id old_revision_id;
-  cset work, included_work, excluded_work;
-  path_set old_paths;
- 
+  path_set paths;
+  roster_t old_roster, new_roster;
+  temp_node_id_source nis;
+  restriction mask;
+  cset included, excluded;
+
   app.require_working_copy();
-
-  get_base_revision(app, old_revision_id, old_roster);
-
-  get_work_cset(work);
-  old_roster.extract_path_set(old_paths);
-
-  path_set valid_paths(old_paths);
-
-  extract_rearranged_paths(work, valid_paths);
-  add_intermediate_paths(valid_paths);
 
   vector<utf8> args_copy(args);
   if (app.missing)
     {
-      L(F("revert adding find_missing entries to %d original args elements\n") % args_copy.size());
+      L(F("revert adding find_missing entries to %d original args elements\n") 
+        % args_copy.size());
       path_set missing;
       find_missing(app, args_copy, missing);
 
@@ -3273,7 +3297,8 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
         args_copy.push_back(file_path(*i).as_external());
 
-      L(F("after adding everything from find_missing, revert args_copy has %d elements\n") % args_copy.size());
+      L(F("after adding everything from find_missing, revert args_copy has %d elements\n") 
+        % args_copy.size());
 
       // when given --missing, never revert if there's nothing missing and no 
       // specific files were specified.
@@ -3281,9 +3306,20 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
         return;
     }
 
-  app.set_restriction(valid_paths, args_copy, false);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  restrict_cset(work, included_work, excluded_work, app);
+  for (vector<utf8>::const_iterator i = args_copy.begin(); i != args_copy.end(); ++i)
+    {
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+    }
+
+  mask.add_nodes(old_roster, paths);
+  mask.add_nodes(new_roster, paths);
+  make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+
+  // TODO: check for invalid paths that don't exist in either roster
 
   node_map const & nodes = old_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
@@ -3291,15 +3327,14 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       node_id nid = i->first;
       node_t node = i->second;
 
-      if (null_node(node->parent))
+      if (old_roster.is_root(nid))
         continue;
 
       split_path sp;
       old_roster.get_name(nid, sp);
       file_path fp(sp);
       
-      // Only revert restriction-included files.
-      if (!app.restriction_includes(sp))
+      if (!mask.includes(old_roster, nid))
         continue;
 
       if (is_file_t(node))
@@ -3314,15 +3349,14 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
                 continue;
             }
       
-          L(F("reverting %s to [%s]\n") % fp % f->content);
+          P(F("reverting %s to [%s]\n") % fp % f->content);
           
           N(app.db.file_version_exists(f->content),
             F("no file version %s found in database for %s")
             % f->content % fp);
           
           file_data dat;
-          L(F("writing file %s to %s\n")
-            % f->content % fp);
+          L(F("writing file %s to %s\n") % f->content % fp);
           app.db.get_file_version(f->content, dat);
           write_localized_data(fp, dat.inner(), app.lua);
         }
@@ -3332,8 +3366,12 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
         }
     }
 
+  // included_work is thrown away which effectively reverts any adds, drops and
+  // renames it contains. drops and rename sources will have been rewritten
+  // above but this may leave rename targets laying around.
+
   // race
-  put_work_cset(excluded_work);
+  put_work_cset(excluded);
   update_any_attrs(app);
   maybe_update_inodeprints(app);
 }
@@ -3467,7 +3505,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   if (app.revision_selectors.size() == 0)
     app.require_working_copy("try passing a --revision to start at");
 
-  set<node_id> nodes;
+  restriction mask;
 
   set<revision_id> frontier;
 
@@ -3494,24 +3532,36 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     {
       // User wants to trace only specific files
       roster_t old_roster, new_roster;
-      revision_set rev;
+      temp_node_id_source nis;
 
       if (app.revision_selectors.size() == 0)
-        get_unrestricted_working_revision_and_rosters(app, rev, old_roster, new_roster);
+        get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       else
         app.db.get_roster(first_rid, new_roster);          
 
-      for (size_t i = 0; i < args.size(); ++i)
-        {
-          file_path fp = file_path_external(idx(args, i));
-          split_path sp;
-          fp.split(sp);
-          N(new_roster.has_node(sp),
-            F("Unknown file '%s' for log command") % fp);
-          nodes.insert(new_roster.get_node(sp)->self);
-        }
-    }
+      path_set paths;
 
+      for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+        {
+          split_path sp;
+          file_path_external(*i).split(sp);
+          paths.insert(sp);
+        }
+
+      // FIXME: should this add paths from the roster all selected revs?
+
+      mask.add_nodes(old_roster, paths);
+      mask.add_nodes(new_roster, paths);
+      
+      for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+        {
+          file_path fp(*i);
+          N(old_roster.has_node(*i) || new_roster.has_node(*i),
+            F("Unknown file '%s' for log command") % fp);
+        }
+
+      // TODO: check for invalid paths that don't exist in either roster
+    }
 
   cert_name author_name(author_cert_name);
   cert_name date_name(date_cert_name);
@@ -3524,6 +3574,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   long last = app.last;
 
   revision_set rev;
+  roster_t roster;
+
   while(! frontier.empty() && (last == -1 || last > 0))
     {
       set<revision_id> next_frontier;
@@ -3533,7 +3585,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
         { 
           revision_id rid = *i;
 
-          bool print_this = nodes.empty();
+          bool print_this = mask.empty();
           set<  revision<id> > parents;
           vector< revision<cert> > tmp;
 
@@ -3548,28 +3600,26 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
           seen.insert(rid);
           app.db.get_revision(rid, rev);
+          app.db.get_roster(rid, roster); 
 
-          if (!nodes.empty())
+          if (!mask.empty())
             {
-              set<node_id> nodes_changed;
-              set<node_id> nodes_born;
+              set<node_id> nodes_modified;
               bool any_node_hit = false;
-              select_nodes_modified_by_rev(rid, rev, 
-                                           nodes_changed, 
-                                           nodes_born,
+              select_nodes_modified_by_rev(rid, rev, roster,
+                                           nodes_modified, 
                                            app);
-              for (set<node_id>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
+              
+              for (set<node_id>::const_iterator n = nodes_modified.begin(); 
+                   n != nodes_modified.end(); ++n)
                 {
-                  if (nodes_changed.find(*n) != nodes_changed.end()
-                      || nodes_born.find(*n) != nodes_born.end())
+                  // the current roster won't have deleted nodes
+                  if (!roster.has_node(*n) || mask.includes(roster, *n)) 
                     {
                       any_node_hit = true;
                       break;
                     }
                 }
-              for (set<node_id>::const_iterator n = nodes_born.begin(); n != nodes_born.end();
-                   ++n)
-                nodes.erase(*n);
 
               if (any_node_hit)
                 print_this = true;
@@ -3583,6 +3633,11 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                e != rev.edges.end(); ++e)
             {
               ancestors.insert(edge_old_revision(e));
+
+              // TODO: limit the frontier to revisions that still contain nodes
+              // in the current restriction so this stops when none of the
+              // specified files have been born
+
               next_frontier.insert(edge_old_revision(e));
               csum.add_change_set(edge_changes(e));
             }

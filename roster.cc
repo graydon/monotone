@@ -20,6 +20,7 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "parallel_iter.hh"
+#include "restrictions.hh"
 #include "safe_map.hh"
 
 #include <boost/lexical_cast.hpp>
@@ -528,6 +529,12 @@ bool
 roster_t::has_node(node_id n) const
 {
   return nodes.find(n) != nodes.end();
+}
+
+bool
+roster_t::is_root(node_id n) const
+{
+  return has_root() && root_dir->self == n;
 }
 
 bool
@@ -1336,7 +1343,7 @@ namespace
                     roster_t const & merge, 
                     marking_map & new_markings)
   {
-    for (map<node_id, node_t>::const_iterator i = merge.all_nodes().begin();
+    for (node_map::const_iterator i = merge.all_nodes().begin();
          i != merge.all_nodes().end(); ++i)
       {
         node_t const & n = i->second;
@@ -1750,7 +1757,7 @@ void
 make_cset(roster_t const & from, roster_t const & to, cset & cs)
 {
   cs.clear();
-  parallel::iter<map<node_id, node_t> > i(from.all_nodes(), to.all_nodes());
+  parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
   while (i.next())
     {
       MM(i);
@@ -1810,15 +1817,57 @@ equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
 }
 
 
+void make_restricted_csets(roster_t const & from, roster_t const & to,
+                           cset & included, cset & excluded,
+                           restriction const & mask)
+{
+  included.clear();
+  excluded.clear();
+  L(F("building restricted csets\n"));
+  parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
+  while (i.next())
+    {
+      MM(i);
+      switch (i.state())
+        {
+        case parallel::invalid:
+          I(false);
+
+        case parallel::in_left:
+          L(F("in left %d\n") % i.left_key());
+          if (mask.includes(from, i.left_key()))
+              delta_only_in_from(from, i.left_key(), i.left_data(), included);
+          else
+              delta_only_in_from(from, i.left_key(), i.left_data(), excluded);
+          break;
+ 
+        case parallel::in_right:
+          L(F("in right %d\n") % i.right_key());
+          if (mask.includes(to, i.right_key()))
+              delta_only_in_to(to, i.right_key(), i.right_data(), included);
+          else
+              delta_only_in_to(to, i.right_key(), i.right_data(), excluded);
+          break;
+
+        case parallel::in_both:
+          L(F("in both %d %d\n") % i.left_key() % i.right_key());
+          if (mask.includes(from, i.left_key()) || mask.includes(to, i.right_key()))
+              delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), included);
+          else
+              delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), excluded);
+          break;
+        }
+    }
+}
+
+
 void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
                               roster_t const & new_roster,
-                              std::set<node_id> & nodes_changed,
-                              std::set<node_id> & nodes_born)
+                              std::set<node_id> & nodes_modified)
 {
-  nodes_changed.clear();
-  nodes_born.clear();
+  nodes_modified.clear();
 
   path_set modified_prestate_nodes;
   path_set modified_poststate_nodes;
@@ -1863,29 +1912,16 @@ select_nodes_modified_by_cset(cset const & cs,
        i != modified_prestate_nodes.end(); ++i)
     {
       I(old_roster.has_node(*i));
-      nodes_changed.insert(old_roster.get_node(*i)->self);
+      nodes_modified.insert(old_roster.get_node(*i)->self);
     }
 
   for (path_set::const_iterator i = modified_poststate_nodes.begin();
        i != modified_poststate_nodes.end(); ++i)
     {
       I(new_roster.has_node(*i));
-      nodes_changed.insert(new_roster.get_node(*i)->self);
+      nodes_modified.insert(new_roster.get_node(*i)->self);
     }
 
-  for (path_set::const_iterator i = cs.dirs_added.begin();
-       i != cs.dirs_added.end(); ++i)
-    {
-      I(new_roster.has_node(*i));
-      nodes_born.insert(new_roster.get_node(*i)->self);
-    }
-
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-       i != cs.files_added.end(); ++i)
-    {
-      I(new_roster.has_node(i->first));
-      nodes_born.insert(new_roster.get_node(i->first)->self);
-    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1941,6 +1977,8 @@ classify_roster_paths(roster_t const & ros,
       ros.get_name(nid, sp);
       file_path fp(sp);
 
+      // FIXME_RESTRICTIONS: this looks ok for roster restriction
+
       // Only analyze restriction-included files.
       if (app.restriction_includes(sp))
         {
@@ -1995,6 +2033,8 @@ update_restricted_roster_from_filesystem(roster_t & ros,
 
   if (!ros.has_root())
     return;
+
+  // FIXME_RESTRICTIONS: this looks ok for roster restriction
 
   node_map const & nodes = ros.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
