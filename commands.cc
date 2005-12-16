@@ -766,7 +766,7 @@ changes_summary::changes_summary(void)
 void
 changes_summary::add_change_set(cset const & c)
 {
-  if (cs.empty())
+  if (c.empty())
     return;
 
   // FIXME: not sure whether it matters for an informal summary
