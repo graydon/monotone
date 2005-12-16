@@ -248,31 +248,41 @@ dump_request
 };
 
 static int 
-dump_row_cb(void *data, int n, char **vals, char **cols)
+dump_row_cb(dump_request *dump, sqlite3_stmt *stmt)
 {
-  dump_request *dump = reinterpret_cast<dump_request *>(data);
-  I(dump != NULL);
-  I(vals != NULL);
   I(dump->out != NULL);
   *(dump->out) << boost::format("INSERT INTO %s VALUES(") % dump->table_name;
-  for (int i = 0; i < n; ++i)
+  unsigned n = sqlite3_data_count(stmt);
+  for (unsigned i = 0; i < n; ++i)
     {
       if (i != 0)
         *(dump->out) << ',';
 
-      if (vals[i] == NULL)
-        *(dump->out) << "NULL";
-      else
+      if (sqlite3_column_type(stmt, i) == SQLITE_BLOB)
         {
+          *(dump->out) << "X'";
+          const char *val = (const char*) sqlite3_column_blob(stmt, i);
+          int bytes = sqlite3_column_bytes(stmt, i);
+          *(dump->out) << encode_hexenc(std::string(val,val+bytes));
           *(dump->out) << "'";
-          for (char *cp = vals[i]; *cp; ++cp)
+        }
+      else 
+        {
+          const unsigned char *val = sqlite3_column_text(stmt, i);
+          if (val == NULL)
+            *(dump->out) << "NULL";
+          else
             {
-              if (*cp == '\'')
-                *(dump->out) << "''";
-              else
-                *(dump->out) << *cp;
+              *(dump->out) << "'";
+              for (const unsigned char *cp = val; *cp; ++cp)
+                {
+                  if (*cp == '\'')
+                    *(dump->out) << "''";
+                  else
+                    *(dump->out) << *cp;
+                }
+              *(dump->out) << "'";
             }
-          *(dump->out) << "'";
         }
     }
   *(dump->out) << ");\n";  
@@ -294,7 +304,18 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
   *(dump->out) << vals[2] << ";\n";
   dump->table_name = string(vals[0]);
   string query = "SELECT * FROM " + string(vals[0]);
-  sqlite3_exec(dump->sql, query.c_str(), dump_row_cb, data, NULL);
+  sqlite3_stmt *stmt=0;
+  sqlite3_prepare(dump->sql, query.c_str(), -1, &stmt, NULL);
+  assert_sqlite3_ok(dump->sql);
+
+  int stepresult=SQLITE_DONE;
+  do
+  { stepresult=sqlite3_step(stmt);
+    I(stepresult==SQLITE_DONE || stepresult==SQLITE_ROW);
+    dump_row_cb(dump, stmt);
+  } while (stepresult==SQLITE_ROW);
+
+  sqlite3_finalize(stmt);
   assert_sqlite3_ok(dump->sql);
   return 0;
 }
