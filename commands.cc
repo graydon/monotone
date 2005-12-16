@@ -1648,6 +1648,8 @@ ls_known (app_state & app, vector<utf8> const & args)
   get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
   new_roster.extract_path_set(paths);
   
+  // FIXME_RESTRICTIONS: this looks ok for roster restriction
+
   for (path_set::const_iterator p = paths.begin(); p != paths.end(); ++p)
     {
       if (app.restriction_includes(*p))
@@ -1701,6 +1703,8 @@ find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
   get_base_roster_and_working_cset(app, args, base_rid, base_roster,
                                    old_paths, new_paths,
                                    included_work, excluded_work);
+
+  // FIXME_RESTRICTIONS: this looks ok for roster restriction
 
   for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
     {
@@ -3283,6 +3287,8 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
   app.set_restriction(valid_paths, args_copy, false);
 
   restrict_cset(work, included_work, excluded_work, app);
+
+  // FIXME_RESTRICTIONS: this looks ok for roster restriction
 
   node_map const & nodes = old_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)

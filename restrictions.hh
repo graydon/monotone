@@ -11,11 +11,38 @@
 #include "roster.hh"
 #include "vocab.hh"
 
-struct restriction
+using std::map;
+
+// between any two related revisions, A and B, there is a set of changes (a
+// cset) that describes the operations required to get from A to B. for example:
+//
+// revision A ... changes ... revision B
+//
+// a restriction is a means of masking off some of these changes to produce a
+// third revision, X that lies somewhere between A and B.  changes included by
+// the restriction when applied to revision A would produce revision X.  changes
+// excluded by the restriction when applied to revision X would produce revision
+// B.
+//
+// conceptually, a restriction allows for something like a sliding control for
+// selecting the changes between revisions A and B. when the control is "all the
+// way to the right" all changes are included and X == B. when then control is
+// "all the way to the left" no changes are included and X == A. when the
+// control is somewhere between these extremes X is a new revision.
+//
+// revision A ... included ... revision X ... excluded ... revision B
+
+class restriction
 {
-  roster_t base_roster;
-  roster_t current_roster;
-  roster_t restricted_roster;
+ public:
+  void add_nodes(roster_t const & roster, path_set const & paths);
+  bool includes(roster_t const & roster, node_id nid) const;
+  
+ private:
+  typedef map<node_id, bool> restriction_map;
+  restriction_map restricted_node_map;
+  
+  void insert(node_id nid, bool recursive);
 };
 
 void 

@@ -289,6 +289,15 @@ make_cset(roster_t const & from,
           roster_t const & to, 
           cset & cs);
 
+
+// various (circular?) dependencies prevent inclusion of restrictions.hh
+class restriction;
+
+void 
+make_restricted_csets(roster_t const & from, roster_t const & to,
+                      cset & included, cset & excluded,
+                      restriction const & mask);
+
 void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,

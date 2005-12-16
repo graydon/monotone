@@ -20,6 +20,7 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "parallel_iter.hh"
+#include "restrictions.hh"
 #include "safe_map.hh"
 
 #include <boost/lexical_cast.hpp>
@@ -1311,14 +1312,14 @@ namespace
                     roster_t const & merge, 
                     marking_map & marking)
   {
-    for (map<node_id, node_t>::const_iterator i = merge.all_nodes().begin();
+    for (node_map::const_iterator i = merge.all_nodes().begin();
          i != merge.all_nodes().end(); ++i)
       {
         node_t const & n = i->second;
         // SPEEDUP?: instead of using find repeatedly, iterate everything in
         // parallel
-        map<node_id, node_t>::const_iterator lni = left_r.all_nodes().find(i->first);
-        map<node_id, node_t>::const_iterator rni = right_r.all_nodes().find(i->first);
+        node_map::const_iterator lni = left_r.all_nodes().find(i->first);
+        node_map::const_iterator rni = right_r.all_nodes().find(i->first);
 
         bool exists_in_left = (lni != left_r.all_nodes().end());
         bool exists_in_right = (rni != right_r.all_nodes().end());
@@ -1667,7 +1668,7 @@ void
 make_cset(roster_t const & from, roster_t const & to, cset & cs)
 {
   cs.clear();
-  parallel::iter<map<node_id, node_t> > i(from.all_nodes(), to.all_nodes());
+  parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
   while (i.next())
     {
       MM(i);
@@ -1686,6 +1687,50 @@ make_cset(roster_t const & from, roster_t const & to, cset & cs)
 
         case parallel::in_both:
           delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), cs);
+          break;
+        }
+    }
+}
+
+
+void make_restricted_csets(roster_t const & from, roster_t const & to,
+                           cset & included, cset & excluded,
+                           restriction const & mask)
+{
+  included.clear();
+  excluded.clear();
+  L(F("building restricted csets\n"));
+  parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
+  while (i.next())
+    {
+      MM(i);
+      switch (i.state())
+        {
+        case parallel::invalid:
+          I(false);
+
+        case parallel::in_left:
+          L(F("in left %d\n") % i.left_key());
+          if (mask.includes(from, i.left_key()))
+              delta_only_in_from(from, i.left_key(), i.left_data(), included);
+          else
+              delta_only_in_from(from, i.left_key(), i.left_data(), excluded);
+          break;
+ 
+        case parallel::in_right:
+          L(F("in right %d\n") % i.right_key());
+          if (mask.includes(to, i.right_key()))
+              delta_only_in_to(to, i.right_key(), i.right_data(), included);
+          else
+              delta_only_in_to(to, i.right_key(), i.right_data(), excluded);
+          break;
+
+        case parallel::in_both:
+          L(F("in both %d %d\n") % i.left_key() % i.right_key());
+          if (mask.includes(from, i.left_key()) || mask.includes(to, i.right_key()))
+              delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), included);
+          else
+              delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), excluded);
           break;
         }
     }
@@ -1823,6 +1868,8 @@ classify_roster_paths(roster_t const & ros,
       ros.get_name(nid, sp);
       file_path fp(sp);
 
+      // FIXME_RESTRICTIONS: this looks ok for roster restriction
+
       // Only analyze restriction-included files.
       if (app.restriction_includes(sp))
         {
@@ -1877,6 +1924,8 @@ update_restricted_roster_from_filesystem(roster_t & ros,
 
   if (!ros.has_root())
     return;
+
+  // FIXME_RESTRICTIONS: this looks ok for roster restriction
 
   node_map const & nodes = ros.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
