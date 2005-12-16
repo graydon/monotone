@@ -312,7 +312,8 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
   do
   { stepresult=sqlite3_step(stmt);
     I(stepresult==SQLITE_DONE || stepresult==SQLITE_ROW);
-    dump_row_cb(dump, stmt);
+    if (stepresult==SQLITE_ROW) 
+      dump_row_cb(dump, stmt);
   } while (stepresult==SQLITE_ROW);
 
   sqlite3_finalize(stmt);
