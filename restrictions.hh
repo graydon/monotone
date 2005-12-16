@@ -37,6 +37,7 @@ class restriction
  public:
   void add_nodes(roster_t const & roster, path_set const & paths);
   bool includes(roster_t const & roster, node_id nid) const;
+  bool empty() const { return restricted_node_map.empty(); }
   
  private:
   typedef map<node_id, bool> restriction_map;

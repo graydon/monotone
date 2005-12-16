@@ -73,6 +73,10 @@ restriction::includes(roster_t const & roster, node_id nid) const
 
   node_id current = nid;
 
+  MM(roster);
+
+  I(roster.has_node(nid));
+
   while (!null_node(current)) 
     {
       split_path sp;

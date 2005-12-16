@@ -1747,11 +1747,9 @@ void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
                               roster_t const & new_roster,
-                              std::set<node_id> & nodes_changed,
-                              std::set<node_id> & nodes_born)
+                              std::set<node_id> & nodes_modified)
 {
-  nodes_changed.clear();
-  nodes_born.clear();
+  nodes_modified.clear();
 
   path_set modified_prestate_nodes;
   path_set modified_poststate_nodes;
@@ -1796,29 +1794,16 @@ select_nodes_modified_by_cset(cset const & cs,
        i != modified_prestate_nodes.end(); ++i)
     {
       I(old_roster.has_node(*i));
-      nodes_changed.insert(old_roster.get_node(*i)->self);
+      nodes_modified.insert(old_roster.get_node(*i)->self);
     }
 
   for (path_set::const_iterator i = modified_poststate_nodes.begin();
        i != modified_poststate_nodes.end(); ++i)
     {
       I(new_roster.has_node(*i));
-      nodes_changed.insert(new_roster.get_node(*i)->self);
+      nodes_modified.insert(new_roster.get_node(*i)->self);
     }
 
-  for (path_set::const_iterator i = cs.dirs_added.begin();
-       i != cs.dirs_added.end(); ++i)
-    {
-      I(new_roster.has_node(*i));
-      nodes_born.insert(new_roster.get_node(*i)->self);
-    }
-
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-       i != cs.files_added.end(); ++i)
-    {
-      I(new_roster.has_node(i->first));
-      nodes_born.insert(new_roster.get_node(i->first)->self);
-    }
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -3504,7 +3504,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   if (app.revision_selectors.size() == 0)
     app.require_working_copy("try passing a --revision to start at");
 
-  set<node_id> nodes;
+  restriction mask;
 
   set<revision_id> frontier;
 
@@ -3531,24 +3531,36 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     {
       // User wants to trace only specific files
       roster_t old_roster, new_roster;
-      revision_set rev;
+      temp_node_id_source nis;
 
       if (app.revision_selectors.size() == 0)
-        get_unrestricted_working_revision_and_rosters(app, rev, old_roster, new_roster);
+        get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       else
         app.db.get_roster(first_rid, new_roster);          
 
-      for (size_t i = 0; i < args.size(); ++i)
-        {
-          file_path fp = file_path_external(idx(args, i));
-          split_path sp;
-          fp.split(sp);
-          N(new_roster.has_node(sp),
-            F("Unknown file '%s' for log command") % fp);
-          nodes.insert(new_roster.get_node(sp)->self);
-        }
-    }
+      path_set paths;
 
+      for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+        {
+          split_path sp;
+          file_path_external(*i).split(sp);
+          paths.insert(sp);
+        }
+
+      // FIXME: should this add paths from the roster all selected revs?
+
+      mask.add_nodes(old_roster, paths);
+      mask.add_nodes(new_roster, paths);
+      
+      for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+        {
+          file_path fp(*i);
+          N(old_roster.has_node(*i) || new_roster.has_node(*i),
+            F("Unknown file '%s' for log command") % fp);
+        }
+
+      // TODO: check for invalid paths that don't exist in either roster
+    }
 
   cert_name author_name(author_cert_name);
   cert_name date_name(date_cert_name);
@@ -3561,6 +3573,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   long last = app.last;
 
   revision_set rev;
+  roster_t roster;
+
   while(! frontier.empty() && (last == -1 || last > 0))
     {
       set<revision_id> next_frontier;
@@ -3570,7 +3584,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
         { 
           revision_id rid = *i;
 
-          bool print_this = nodes.empty();
+          bool print_this = mask.empty();
           set<  revision<id> > parents;
           vector< revision<cert> > tmp;
 
@@ -3585,31 +3599,26 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
           seen.insert(rid);
           app.db.get_revision(rid, rev);
+          app.db.get_roster(rid, roster); 
 
-          if (!nodes.empty())
+          if (!mask.empty())
             {
-              set<node_id> nodes_changed;
-              set<node_id> nodes_born;
+              set<node_id> nodes_modified;
               bool any_node_hit = false;
-              select_nodes_modified_by_rev(rid, rev, 
-                                           nodes_changed, 
-                                           nodes_born,
+              select_nodes_modified_by_rev(rid, rev, roster,
+                                           nodes_modified, 
                                            app);
-
-          // FIXME_RESTRICTIONS: this looks ok for roster restriction
-
-              for (set<node_id>::const_iterator n = nodes.begin(); n != nodes.end(); ++n)
+              
+              for (set<node_id>::const_iterator n = nodes_modified.begin(); 
+                   n != nodes_modified.end(); ++n)
                 {
-                  if (nodes_changed.find(*n) != nodes_changed.end()
-                      || nodes_born.find(*n) != nodes_born.end())
+                  // the current roster won't have deleted nodes
+                  if (!roster.has_node(*n) || mask.includes(roster, *n)) 
                     {
                       any_node_hit = true;
                       break;
                     }
                 }
-              for (set<node_id>::const_iterator n = nodes_born.begin(); n != nodes_born.end();
-                   ++n)
-                nodes.erase(*n);
 
               if (any_node_hit)
                 print_this = true;
@@ -3623,6 +3632,11 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                e != rev.edges.end(); ++e)
             {
               ancestors.insert(edge_old_revision(e));
+
+              // TODO: limit the frontier to revisions that still contain nodes
+              // in the current restriction so this stops when none of the
+              // specified files have been born
+
               next_frontier.insert(edge_old_revision(e));
               csum.add_change_set(edge_changes(e));
             }

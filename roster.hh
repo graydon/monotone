@@ -303,8 +303,7 @@ void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
                               roster_t const & new_roster,
-                              std::set<node_id> & nodes_changed,
-                              std::set<node_id> & nodes_born);
+                              std::set<node_id> & nodes_modified);
 
 void 
 classify_roster_paths(roster_t const & ros,

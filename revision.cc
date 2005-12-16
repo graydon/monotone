@@ -516,32 +516,25 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
 void
 select_nodes_modified_by_rev(revision_id const & rid,
                              revision_set const & rev,
-                             std::set<node_id> & nodes_changed,
-                             std::set<node_id> & nodes_born,
+                             roster_t const new_roster,
+                             std::set<node_id> & nodes_modified,
                              app_state & app)
 {
-  roster_t new_roster;
-  marking_map mm;
-  nodes_changed.clear();
-  nodes_born.clear();
-  app.db.get_roster(rid, new_roster, mm); 
+  nodes_modified.clear();
 
   for (edge_map::const_iterator i = rev.edges.begin();
        i != rev.edges.end(); ++i)
     {
-      std::set<node_id> edge_nodes_changed, edge_nodes_born;
+      std::set<node_id> edge_nodes_modified;
       roster_t old_roster;
-      marking_map mm2;
-      app.db.get_roster(edge_old_revision(i), old_roster, mm2);
+      app.db.get_roster(edge_old_revision(i), old_roster);
       select_nodes_modified_by_cset(edge_changes(i), 
                                     old_roster, 
                                     new_roster, 
-                                    edge_nodes_changed,
-                                    edge_nodes_born);
-      std::copy(edge_nodes_changed.begin(), edge_nodes_changed.end(), 
-                inserter(nodes_changed, nodes_changed.begin()));
-      std::copy(edge_nodes_born.begin(), edge_nodes_born.end(), 
-                inserter(nodes_born, nodes_born.begin()));
+                                    edge_nodes_modified);
+
+      std::copy(edge_nodes_modified.begin(), edge_nodes_modified.end(), 
+                inserter(nodes_modified, nodes_modified.begin()));
     }
 }
 

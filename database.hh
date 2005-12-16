@@ -282,10 +282,10 @@ public:
   void deltify_revision(revision_id const & rid);
 
   void get_revision(revision_id const & id,
-                   revision_set & cs);
+                    revision_set & cs);
 
   void get_revision(revision_id const & id,
-                   revision_data & dat);
+                    revision_data & dat);
 
   void put_revision(revision_id const & new_id,
                     revision_set const & rev);
