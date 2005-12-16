@@ -1427,7 +1427,6 @@ void
 database::get_revision_children(revision_id const & id,
                                 set<revision_id> & children)
 {
-  I(!null_id(id));
   results res;
   children.clear();
   fetch(res, one_col, any_rows, 
@@ -2075,6 +2074,22 @@ database::get_revision_certs(revision_id const & id,
   get_certs(id.inner(), certs, "revision_certs"); 
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+}
+
+void 
+database::get_revision_certs(revision_id const & ident, 
+                             vector< hexenc<id> > & ts)
+{ 
+  results res;
+  vector<cert> certs;
+  fetch(res, one_col, any_rows, 
+        "SELECT hash "
+        "FROM revision_certs "
+        "WHERE id = ?", 
+        ident.inner()().c_str());
+  ts.clear();
+  for (size_t i = 0; i < res.size(); ++i)
+    ts.push_back(hexenc<id>(res[i][0]));
 }
 
 void 
@@ -2935,7 +2950,14 @@ database::close()
 
 // transaction guards
 
-transaction_guard::transaction_guard(database & d, bool exclusive) : committed(false), db(d) 
+transaction_guard::transaction_guard(database & d, bool exclusive,
+                                     size_t checkpoint_batch_size,
+                                     size_t checkpoint_batch_bytes) 
+  : committed(false), db(d), exclusive(exclusive),
+    checkpoint_batch_size(checkpoint_batch_size),
+    checkpoint_batch_bytes(checkpoint_batch_bytes),
+    checkpointed_calls(0),
+    checkpointed_bytes(0)
 {
   db.begin_transaction(exclusive);
 }
@@ -2946,6 +2968,25 @@ transaction_guard::~transaction_guard()
     db.commit_transaction();
   else
     db.rollback_transaction();
+}
+
+void 
+transaction_guard::do_checkpoint()
+{
+  db.commit_transaction();
+  db.begin_transaction(exclusive);
+  checkpointed_calls = 0;
+  checkpointed_bytes = 0;
+}
+
+void 
+transaction_guard::maybe_checkpoint(size_t nbytes)
+{
+  checkpointed_calls += 1;
+  checkpointed_bytes += nbytes;
+  if (checkpointed_calls >= checkpoint_batch_size
+      || checkpointed_bytes >= checkpoint_batch_bytes)
+    do_checkpoint();
 }
 
 void 

@@ -1,3 +1,8 @@
+2005-12-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* constants.cc: New netsync is incompatible, bump protocol version.
+	* constants.hh: Change default port to the one IANA assigned us.
+
 2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* roster.cc (make_roster_for_merge): unshadow the node_id_source
