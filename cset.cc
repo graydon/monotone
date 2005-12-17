@@ -256,43 +256,63 @@ void
 print_cset(basic_io::printer & printer,
            cset const & cs)
 {
+  string prev;
   for (path_set::const_iterator i = cs.nodes_deleted.begin();
        i != cs.nodes_deleted.end(); ++i)
     {
+      file_path p(*i);
+      I(prev.empty() || p.as_internal() > prev);
+      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::delete_node, file_path(*i));
       printer.print_stanza(st);
     }
 
+  prev.clear();
   for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     {
+      file_path p(i->first);
+      I(prev.empty() || p.as_internal() > prev);
+      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::rename_node, file_path(i->first));
       st.push_file_pair(syms::to, file_path(i->second));
       printer.print_stanza(st);
     }
 
+  prev.clear();
   for (path_set::const_iterator i = cs.dirs_added.begin();
        i != cs.dirs_added.end(); ++i)
     {
+      file_path p(*i);
+      I(prev.empty() || p.as_internal() > prev);
+      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::add_dir, file_path(*i));
       printer.print_stanza(st);
     }
 
+  prev.clear();
   for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     {
+      file_path p(i->first);
+      I(prev.empty() || p.as_internal() > prev);
+      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::add_file, file_path(i->first));
       st.push_hex_pair(syms::content, i->second.inner()());
       printer.print_stanza(st);
     }
 
+  prev.clear();
   for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
+      file_path p(i->first);
+      I(prev.empty() || p.as_internal() > prev);
+      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::patch, file_path(i->first));
       st.push_hex_pair(syms::from, i->second.first.inner()());
@@ -300,18 +320,29 @@ print_cset(basic_io::printer & printer,
       printer.print_stanza(st);
     }
 
+  pair<string, string> prev_pair;
   for (set<pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
        i != cs.attrs_cleared.end(); ++i)
     {
+      pair<string, string> new_pair(file_path(i->first).as_internal(),
+                                    i->second());
+      I(new_pair > prev_pair);
+      prev_pair = new_pair;
       basic_io::stanza st;
       st.push_file_pair(syms::clear, file_path(i->first));
       st.push_str_pair(syms::attr, i->second());
       printer.print_stanza(st);
     }
 
+  prev_pair.first.clear(); 
+  prev_pair.second.clear();
   for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
        i != cs.attrs_set.end(); ++i)
     {
+      pair<string, string> new_pair(file_path(i->first.first).as_internal(),
+                                    i->first.second());
+      I(new_pair > prev_pair);
+      prev_pair = new_pair;
       basic_io::stanza st;
       st.push_file_pair(syms::set, file_path(i->first.first));
       st.push_str_pair(syms::attr, i->first.second());
@@ -327,9 +358,14 @@ parse_cset(basic_io::parser & parser,
 {
   cs.clear();
   string t1, t2, t3;
+  MM(t1);
+  MM(t2);
+  MM(t3);
   // prev is used to enforce monotonically increasing filename ordering
   string prev; MM(prev);
   pair<string, string> prev_pair;
+  MM(prev_pair.first);
+  MM(prev_pair.second);
 
   while (parser.symp(syms::delete_node))
     {
@@ -441,8 +477,7 @@ read_cset(data const & dat, cset & cs)
 {
   MM(dat);
   MM(cs);
-  std::istringstream iss(dat());
-  basic_io::input_source src(iss, "cset");
+  basic_io::input_source src(dat(), "cset");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   parse_cset(pars, cs);
@@ -577,20 +612,76 @@ cset_written_test()
     cset cs;
     BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
   }
+
+  {
+    L(F("TEST: cset writing - normalisation"));
+    cset cs; MM(cs);
+    split_path foo, bar, quux, foo_quux, idle, fish, womble, policeman;
+    file_id f1(std::string("1234567800000000000000000000000000000000"));
+    file_id f2(std::string("9876543212394657263900000000000000000000"));
+    file_id f3(std::string("0000000000011111111000000000000000000000"));
+    file_path_internal("foo").split(foo);
+    file_path_internal("foo/quux").split(foo_quux);
+    file_path_internal("bar").split(bar);
+    file_path_internal("quux").split(quux);
+    file_path_internal("idle").split(idle);
+    file_path_internal("fish").split(fish);
+    file_path_internal("womble").split(womble);
+    file_path_internal("policeman").split(policeman);
+
+    cs.dirs_added.insert(foo_quux);
+    cs.dirs_added.insert(foo);
+    cs.files_added.insert(make_pair(bar, f1));
+    cs.nodes_deleted.insert(quux);
+    cs.nodes_deleted.insert(idle);
+    cs.nodes_renamed.insert(make_pair(fish, womble));
+    cs.deltas_applied.insert(make_pair(womble, make_pair(f2, f3)));
+    cs.attrs_cleared.insert(make_pair(policeman, attr_key("yodel")));
+    cs.attrs_set.insert(make_pair(make_pair(policeman, 
+                        attr_key("axolotyl")), attr_value("fruitily")));
+    cs.attrs_set.insert(make_pair(make_pair(policeman, 
+                        attr_key("spin")), attr_value("capybara")));
+
+    data dat; MM(dat);
+    write_cset(cs, dat);
+    data expected("delete \"idle\"\n"
+                  "\n"
+                  "delete \"quux\"\n"
+                  "\n"
+                  "rename \"fish\"\n"
+                  "    to \"womble\"\n"
+                  "\n"
+                  "add_dir \"foo\"\n"
+                  "\n"
+                  "add_dir \"foo/quux\"\n"
+                  "\n"
+                  "add_file \"bar\"\n"
+                  " content [1234567800000000000000000000000000000000]\n"
+                  "\n"
+                  "patch \"womble\"\n"
+                  " from [9876543212394657263900000000000000000000]\n"
+                  "   to [0000000000011111111000000000000000000000]\n"
+                  "\n"
+                  "clear \"policeman\"\n"
+                  " attr \"yodel\"\n"
+                  "\n"
+                  "  set \"policeman\"\n"
+                  " attr \"axolotyl\"\n"
+                  "value \"fruitily\"\n"
+                  "\n"
+                  "  set \"policeman\"\n"
+                  " attr \"spin\"\n"
+                  "value \"capybara\"\n"
+                 );
+    MM(expected);
+    // I() so that it'll dump on failure
+    BOOST_CHECK_NOT_THROW(I(expected == dat), std::logic_error);
+  }
 }
 
 static void
 basic_csets_test()
 {
-  // FIXME_ROSTERS: write some tests here
-  // some things to test:
-  //   each cset thingie sets what it's supposed to
-  //   the topdown/bottomup stuff works
-  // don't forget to check normalization of written form, either...
-  //   no duplicate entries (as would be silently ignored, if we don't use
-  //     safe_insert in the parser!)
-  //   ordering
-  //   whitespace normalization
 
   temp_node_id_source nis;
   roster_t r;

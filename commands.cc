@@ -1108,14 +1108,15 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   N(app.branch_name() != "", F("need --branch argument for disapproval"));  
   
   edge_entry const & old_edge (*rev.edges.begin());
-  rev_inverse.new_manifest = edge_old_manifest(old_edge);
+  app.db.get_revision_manifest(edge_old_revision(old_edge),
+                               rev_inverse.new_manifest);
   {
     roster_t old_roster, new_roster;
     app.db.get_roster(edge_old_revision(old_edge), old_roster);
     app.db.get_roster(r, new_roster);
     make_cset(new_roster, old_roster, *cs_inverse);
   }
-  rev_inverse.edges.insert(make_pair(r, make_pair(rev.new_manifest, cs_inverse)));
+  rev_inverse.edges.insert(make_pair(r, cs_inverse));
 
   {
     transaction_guard guard(app.db);

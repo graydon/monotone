@@ -1,3 +1,19 @@
+2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* roster.cc (make_roster_for_merge): unshadow the node_id_source
+	argument. Resolve usages to the argument or the local by educated guess.
+
+2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* paths.{cc,hh}: operator<() for split_path's
+
+2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* sanity.{cc,hh}: Fix musing dumps so that the header line always gets
+	printed, even if printing the body throws an exception.
+	* database.cc, packet,cc, revision.cc: sprinkle MMs
+	* cset.cc: sanity check print_cset to match parse_cset
+
 2005-12-02  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* Makefile.am: Make Win32 build link against shfolder.lib to get

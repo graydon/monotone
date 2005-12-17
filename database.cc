@@ -93,6 +93,25 @@ database::check_schema()
      % filename % schema % db_schema_id);
 }
 
+void
+database::check_rosterified()
+{
+  results res;
+  string rosters_query = "SELECT 1 FROM rosters LIMIT 1";
+  string revisions_query = "SELECT 1 FROM revisions LIMIT 1";
+
+  fetch(res, one_col, any_rows, revisions_query.c_str());
+  if (res.size() > 0)
+    {
+      fetch(res, one_col, any_rows, rosters_query.c_str());
+      N (res.size() != 0,
+         F("database %s contains revisions but no rosters\n"
+           "try 'monotone db rosterify' to add rosters\n"
+           "(this is irreversible; you may want to make a backup copy first)")
+         % filename);
+    }
+}
+
 // sqlite3_value_text gives a const unsigned char * but most of the time
 // we need a signed char
 const char *
@@ -1466,6 +1485,8 @@ database::deltify_revision(revision_id const & rid)
 {
   transaction_guard guard(*this);
   revision_set rev;
+  MM(rev);
+  MM(rid);
   get_revision(rid, rev);
   // Make sure that all parent revs have their files replaced with deltas
   // from this rev's files.
@@ -1510,6 +1531,7 @@ database::put_revision(revision_id const & new_id,
 
   rev.check_sane();
   revision_data d;
+  MM(d.inner());
   write_revision_set(rev, d);
 
   // Phase 1: confirm the revision makes sense
@@ -1523,30 +1545,15 @@ database::put_revision(revision_id const & new_id,
   transaction_guard guard(*this);
   
   // Phase 2: construct a new roster and sanity-check its manifest_id
-  // against the manifest_id of the revision you're writing. Also, to be
-  // *totally* thorough, check the manifest_ids of the parents of the new
-  // rev you're making and make sure they match the calculated manifest_id
-  // of their associated rosters.
+  // against the manifest_id of the revision you're writing.
   roster_t ros;
   marking_map mm;
   {
     manifest_id roster_manifest_id;
+    MM(roster_manifest_id);
     make_roster_for_revision(rev, new_id, ros, mm, *__app);
     calculate_ident(ros, roster_manifest_id);
     I(rev.new_manifest == roster_manifest_id);
-    for (edge_map::const_iterator i = rev.edges.begin();
-         i != rev.edges.end(); ++i)
-      {
-        roster_t parent_roster;
-        marking_map ignored;
-        manifest_id parent_mid;
-        if (!edge_old_revision(i).inner()().empty())
-          {
-            get_roster(edge_old_revision(i), parent_roster, ignored);
-            calculate_ident(parent_roster, parent_mid);
-            I(edge_old_manifest(i) == parent_mid);
-          }
-      }
   }
 
   // Phase 3: Write the revision data
@@ -2660,8 +2667,13 @@ database::get_roster_id_for_revision(revision_id const & rev_id,
 
   results res;
   string query = ("SELECT roster_id FROM revision_roster WHERE rev_id = ? ");  
-  fetch(res, one_col, one_row, query.c_str(),
+  fetch(res, one_col, any_rows, query.c_str(),
         rev_id.inner()().c_str());
+  if (res.size() == 0)
+    {
+      check_rosterified();
+    }
+  I(res.size() == 1);
   roster_id = hexenc<id>(res[0][0]);
 }
 
@@ -2709,6 +2721,7 @@ database::put_roster(revision_id const & rev_id,
                      roster_t & roster,
                      marking_map & marks)
 {
+  MM(rev_id);
   data old_data, new_data;
   delta reverse_delta;
   hexenc<id> old_id, new_id;

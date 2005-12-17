@@ -45,7 +45,7 @@
 //  from [95b50ede90037557fd0fbbfad6a9fdd67b0bf413]
 //    to [bd39086b9da776fc22abd45734836e8afb59c8c0]
 
-typedef std::map<revision_id, std::pair<manifest_id, boost::shared_ptr<cset> > > 
+typedef std::map<revision_id, boost::shared_ptr<cset> >
 edge_map;
 
 typedef edge_map::value_type
@@ -78,28 +78,16 @@ edge_old_revision(edge_map::const_iterator i)
   return i->first; 
 }
 
-inline manifest_id const & 
-edge_old_manifest(edge_entry const & e) 
-{ 
-  return e.second.first; 
-}
-
-inline manifest_id const & 
-edge_old_manifest(edge_map::const_iterator i) 
-{ 
-  return i->second.first; 
-}
-
 inline cset const & 
 edge_changes(edge_entry const & e) 
 { 
-  return *(e.second.second); 
+  return *(e.second); 
 }
 
 inline cset const & 
 edge_changes(edge_map::const_iterator i) 
 { 
-  return *(i->second.second); 
+  return *(i->second); 
 }
 
 void

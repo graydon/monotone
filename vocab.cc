@@ -48,6 +48,13 @@ verify(path_component & val)
   val.ok = true;
 }
 
+inline bool is_xdigit(char x) 
+{ 
+  return ((x >= '0' && x <= '9')
+	  || (x >= 'a' && x <= 'f')
+	  || (x >= 'A' && x <= 'F'));
+}
+
 inline void 
 verify(hexenc<id> & val)
 {
@@ -59,10 +66,11 @@ verify(hexenc<id> & val)
 
   N(val().size() == constants::idlen,
     F("hex encoded ID '%s' size != %d") % val % constants::idlen);
-  string::size_type pos = val().find_first_not_of(constants::legal_id_bytes);
-  N(pos == string::npos,
-    F("bad character '%c' in id name '%s'") % val().at(pos) % val);
-
+  for (string::const_iterator i = val().begin(); i != val().end(); ++i)
+    {
+      N(is_xdigit(*i),
+	F("bad character '%c' in id name '%s'") % *i % val);
+    }
   val.ok = true;
 }
 

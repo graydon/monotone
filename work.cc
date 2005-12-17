@@ -523,8 +523,7 @@ get_options_path(bookkeeping_path & o_path)
 void 
 read_options_map(data const & dat, options_map & options)
 {
-  std::istringstream iss(dat());
-  basic_io::input_source src(iss, "MT/options");
+  basic_io::input_source src(dat(), "MT/options");
   basic_io::tokenizer tok(src);
   basic_io::parser parser(tok);
 
@@ -720,11 +719,9 @@ editable_working_tree::create_file_node(file_id const & content)
   bookkeeping_path pth = path_for_nid(nid);
   require_path_is_nonexistent(pth,
                               F("path %s already exists") % pth);
-  file_data dat;
-  source.get_file_content(content, dat);
-  // FIXME_ROSTERS: what about charset conversion etc.?
-  write_data(pth, dat.inner());
   safe_insert(written_content, make_pair(pth, content));
+  // Defer actual write to moment of attachment, when we know the path
+  // and can thus determine encoding / linesep convention.
   return nid;
 }
 
@@ -733,22 +730,39 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
 {
   bookkeeping_path src_pth = path_for_nid(nid);
   file_path dst_pth(dst);
+
+  // Possibly just write data out into the working copy, if we're doing
+  // a file-create (not a dir-create or file/dir rename).
+  if (!file_exists(src_pth))
+    {
+      std::map<bookkeeping_path, file_id>::const_iterator i 
+        = written_content.find(src_pth);
+      if (i != written_content.end())
+        {
+          if (file_exists(dst_pth))
+            {
+              file_id dst_id;
+              ident_existing_file(dst_pth, dst_id, app.lua);
+              if (i->second == dst_id)
+                return;
+            }
+          file_data dat;
+          source.get_file_content(i->second, dat);
+          write_localized_data(dst_pth, dat.inner(), app.lua);
+          return;
+        }
+    }
+
+  // If we get here, we're doing a file/dir rename, or a dir-create.
   switch (get_path_status(src_pth))
     {
     case path::nonexistent:
       I(false);
       break;
     case path::file:
-      if (file_exists(dst_pth))
-        {
-          std::map<bookkeeping_path, file_id>::const_iterator i 
-            = written_content.find(src_pth);
-          I(i != written_content.end());
-          file_id dst_id;
-          ident_existing_file(dst_pth, dst_id, app.lua);
-          if (i->second == dst_id)
-            return;
-        }
+      E(!file_exists(dst_pth),
+        F("renaming '%s' onto existing file: '%s'\n") 
+        % src_pth % dst_pth);
       break;
     case path::directory:
       if (directory_exists(dst_pth))
