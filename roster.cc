@@ -1810,6 +1810,10 @@ select_nodes_modified_by_cset(cset const & cs,
 //   getting rosters from the working copy
 ////////////////////////////////////////////////////////////////////
 
+// TODO: doesn't that mean they should go in work.cc ? 
+// perhaps do that after propagating back to n.v.m.experiment.rosters
+// or to mainline so that diffs are more informative
+
 inline static bool
 inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path) 
 {
@@ -1825,6 +1829,12 @@ inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
   else
     return false; // unavailable
 }
+
+// TODO: unchanged, changed, missing might be better as set<node_id>
+
+// note that this does not take a restriction because it is used only by
+// automate_inventory which operates on the entire, unrestricted, working
+// directory.
 
 void 
 classify_roster_paths(roster_t const & ros,
@@ -1857,46 +1867,37 @@ classify_roster_paths(roster_t const & ros,
 
       split_path sp;
       ros.get_name(nid, sp);
+
       file_path fp(sp);
 
-      // FIXME_RESTRICTIONS: this looks ok for roster restriction
-
-      // Only analyze restriction-included files.
-      if (app.restriction_includes(sp))
+      if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
         {
-          if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
-            {
-              // dirs don't have content changes
-              unchanged.insert(sp);
-            }
-          else 
-            {
-              file_t file = downcast_to_file_t(node);
-              file_id fid;
-              if (ident_existing_file(fp, fid, app.lua))
-                {
-                  if (file->content == fid)
-                    unchanged.insert(sp);
-                  else
-                    changed.insert(sp);
-                }
-              else
-                {
-                  missing.insert(sp);
-                }
-            }
-        }
-      else
-        {
-          // changes to excluded files are ignored
+          // dirs don't have content changes
           unchanged.insert(sp);
+        }
+      else 
+        {
+          file_t file = downcast_to_file_t(node);
+          file_id fid;
+          if (ident_existing_file(fp, fid, app.lua))
+            {
+              if (file->content == fid)
+                unchanged.insert(sp);
+              else
+                changed.insert(sp);
+            }
+          else
+            {
+              missing.insert(sp);
+            }
         }
     }
 }
 
 void 
-update_restricted_roster_from_filesystem(roster_t & ros, 
-                                         app_state & app)
+update_working_roster_from_filesystem(roster_t & ros, 
+                                      restriction const & mask,
+                                      app_state & app)
 {
   temp_node_id_source nis;
   inodeprint_map ipm;
@@ -1916,8 +1917,6 @@ update_restricted_roster_from_filesystem(roster_t & ros,
   if (!ros.has_root())
     return;
 
-  // FIXME_RESTRICTIONS: this looks ok for roster restriction
-
   node_map const & nodes = ros.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
     {
@@ -1928,13 +1927,13 @@ update_restricted_roster_from_filesystem(roster_t & ros,
       if (! is_file_t(node))
         continue;
 
+      // Only analyze restriction-included files.
+      if (!mask.includes(ros, nid))
+        continue;
+
       split_path sp;
       ros.get_name(nid, sp);
       file_path fp(sp);
-
-      // Only analyze restriction-included files.
-      if (!app.restriction_includes(sp))
-        continue;
 
       // Only analyze changed files (or all files if inodeprints mode
       // is disabled).

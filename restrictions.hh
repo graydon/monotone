@@ -47,35 +47,6 @@ class restriction
 };
 
 void 
-extract_rearranged_paths(cset const & rearrangement, 
-                         path_set & paths);
-
-void 
-add_intermediate_paths(path_set & paths);
-
-void 
-restrict_cset(cset const & work, 
-              cset & included,
-              cset & excluded,
-              app_state & app);
-
-void
-remap_paths(path_set const & old_paths,
-            roster_t const & r_old,
-            cset const & work,
-            path_set & new_paths);
-
-void 
-get_base_roster_and_working_cset(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_id & old_revision_id,
-                                 roster_t & old_roster,
-                                 path_set & old_paths, 
-                                 path_set & new_paths,
-                                 cset & included,
-                                 cset & excluded);
-
-void 
 get_working_revision_and_rosters(app_state & app, 
                                  std::vector<utf8> const & args,
                                  revision_set & rev,
@@ -96,12 +67,5 @@ get_unrestricted_working_revision_and_rosters(app_state & app,
                                               revision_set & rev,
                                               roster_t & old_roster,
                                               roster_t & new_roster);
-
-void
-calculate_restricted_cset(app_state & app, 
-                          std::vector<utf8> const & args,
-                          cset const & cs,
-                          cset & included,
-                          cset & excluded);
 
 #endif  // header guard

@@ -13,6 +13,8 @@
 #include "safe_map.hh"
 #include "transforms.hh"
 
+using std::vector;
+
 void
 restriction::add_nodes(roster_t const & roster, path_set const & paths)
 {
@@ -118,7 +120,7 @@ restriction::insert(node_id nid, bool recursive)
   restricted_node_map[nid] |= recursive;
 }
 
-void
+static void
 extract_rearranged_paths(cset const & cs, path_set & paths)
 {
   paths.insert(cs.nodes_deleted.begin(), cs.nodes_deleted.end());
@@ -139,7 +141,7 @@ extract_rearranged_paths(cset const & cs, path_set & paths)
 }
 
 
-void 
+static void 
 add_intermediate_paths(path_set & paths)
 {
   path_set intermediate_paths;
@@ -156,7 +158,7 @@ add_intermediate_paths(path_set & paths)
   paths.insert(intermediate_paths.begin(), intermediate_paths.end());
 }
 
-void
+static void
 restrict_cset(cset const & cs, 
               cset & included,
               cset & excluded,
@@ -245,7 +247,7 @@ restrict_cset(cset const & cs,
 // Project the old_paths through r_old + work, to find the new names of the
 // paths (if they survived work)
 
-void
+static void
 remap_paths(path_set const & old_paths,
             roster_t const & r_old,
             cset const & work,
@@ -269,9 +271,9 @@ remap_paths(path_set const & old_paths,
     }
 }
 
-void
+static void
 get_base_roster_and_working_cset(app_state & app, 
-                                 std::vector<utf8> const & args,
+                                 vector<utf8> const & args,
                                  revision_id & old_revision_id,
                                  roster_t & old_roster,
                                  path_set & old_paths, 
@@ -307,9 +309,11 @@ get_base_roster_and_working_cset(app_state & app,
     new_paths.insert(i->second);
 }
 
+// commands.cc
+
 void
 get_working_revision_and_rosters(app_state & app, 
-                                 std::vector<utf8> const & args,
+                                 vector<utf8> const & args,
                                  revision_set & rev,
                                  roster_t & old_roster,
                                  roster_t & new_roster,
@@ -321,6 +325,7 @@ get_working_revision_and_rosters(app_state & app,
   path_set old_paths, new_paths;
 
   rev.edges.clear();
+
   get_base_roster_and_working_cset(app, args, 
                                    old_revision_id,
                                    old_roster,
@@ -335,8 +340,21 @@ get_working_revision_and_rosters(app_state & app,
   editable_roster_base er(new_roster, nis);
   cs->apply_to(er);
 
+  path_set paths;
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    {
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+    }
+
+  restriction mask;
+  mask.add_nodes(old_roster, paths);
+  mask.add_nodes(new_roster, paths);
+
   // Now update any idents in the new roster
-  update_restricted_roster_from_filesystem(new_roster, app);
+  update_working_roster_from_filesystem(new_roster, mask, app);
 
   calculate_ident(new_roster, rev.new_manifest);
   L(F("new manifest_id is %s\n") % rev.new_manifest);
@@ -370,9 +388,11 @@ get_working_revision_and_rosters(app_state & app,
                                         std::make_pair(old_manifest_id, cs)));
 }
 
+// commands.cc
+
 void
 get_working_revision_and_rosters(app_state & app, 
-                                 std::vector<utf8> const & args,
+                                 vector<utf8> const & args,
                                  revision_set & rev,
                                  roster_t & old_roster,
                                  roster_t & new_roster)
@@ -382,50 +402,17 @@ get_working_revision_and_rosters(app_state & app,
                                    old_roster, new_roster, excluded);
 }
 
+// commands.cc automate.cc
+
 void
 get_unrestricted_working_revision_and_rosters(app_state & app, 
                                               revision_set & rev,
                                               roster_t & old_roster,
                                               roster_t & new_roster)
 {
-  std::vector<utf8> empty_args;
+  vector<utf8> empty_args;
   std::set<utf8> saved_exclude_patterns(app.exclude_patterns);
   app.exclude_patterns.clear();
   get_working_revision_and_rosters(app, empty_args, rev, old_roster, new_roster);
   app.exclude_patterns = saved_exclude_patterns;
-}
-
-
-static void
-extract_changed_paths(cset const & cs, path_set & paths)
-{
-  extract_rearranged_paths(cs, paths);
-
-  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i 
-         = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-    paths.insert(i->first);
-  
-  for (std::set<std::pair<split_path, attr_key> >::const_iterator i =
-         cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
-    paths.insert(i->first);
-
-  for (std::map<std::pair<split_path, attr_key>, attr_value>::const_iterator i =
-         cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
-    paths.insert(i->first.first);
-}
-
-void
-calculate_restricted_cset(app_state & app, 
-                          std::vector<utf8> const & args,
-                          cset const & cs,
-                          cset & included,
-                          cset & excluded)
-{
-  path_set valid_paths;
-
-  extract_changed_paths(cs, valid_paths);
-  add_intermediate_paths(valid_paths);
-
-  app.set_restriction(valid_paths, args); 
-  restrict_cset(cs, included, excluded, app);
 }

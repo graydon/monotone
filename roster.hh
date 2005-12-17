@@ -313,8 +313,9 @@ classify_roster_paths(roster_t const & ros,
                       app_state & app);
 
 void 
-update_restricted_roster_from_filesystem(roster_t & ros, 
-                                         app_state & app);
+update_working_roster_from_filesystem(roster_t & ros, 
+                                      restriction const & mask,
+                                      app_state & app);
 
 void
 extract_roster_path_set(roster_t const & ros, 

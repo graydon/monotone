@@ -425,12 +425,14 @@ get_current_roster_shape(roster_t & ros, node_id_source & nis, app_state & app)
   cs.apply_to(er);
 }
 
+/**
 void
 get_current_restricted_roster(roster_t & ros, node_id_source & nis, app_state & app)
 {
   get_current_roster_shape(ros, nis, app);
   update_restricted_roster_from_filesystem(ros, app);
 }
+**/
 
 void
 get_base_and_current_roster_shape(roster_t & base_roster,
@@ -446,6 +448,7 @@ get_base_and_current_roster_shape(roster_t & base_roster,
   cs.apply_to(er);
 }
 
+/**
 void
 get_base_and_current_restricted_roster(roster_t & base_roster,
                                        roster_t & current_roster,
@@ -455,6 +458,7 @@ get_base_and_current_restricted_roster(roster_t & base_roster,
   get_base_and_current_roster_shape(base_roster, current_roster, nis, app);
   update_restricted_roster_from_filesystem(current_roster, app);
 }
+**/
 
 // user log file
 

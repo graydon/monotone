@@ -2682,8 +2682,9 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
     OPT_EXTERNAL_DIFF_ARGS)
 {
-  revision_set r_old, r_new;
+  path_set paths;
   roster_t new_roster, old_roster;
+  temp_node_id_source nis;
   bool new_is_archived;
   diff_type type = app.diff_format;
   ostringstream header;
@@ -2693,7 +2694,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       F("--diff-args requires --external\n"
         "try adding --external or removing --diff-args?"));
 
-  cset composite;
+  cset included;
   cset excluded;
 
   // initialize before transaction so we have a database to work with
@@ -2703,19 +2704,29 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   else if (app.revision_selectors.size() == 1)
     app.require_working_copy();
 
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    {
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+    }
+
   if (app.revision_selectors.size() == 0)
     {
-      get_working_revision_and_rosters(app, args, r_new,
-                                       old_roster, 
-                                       new_roster,
-                                       excluded);
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-      I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
-      if (r_new.edges.size() == 1)
-        composite = edge_changes(r_new.edges.begin());
-      new_is_archived = false;
       revision_id old_rid;
       get_revision_id(old_rid);
+
+      restriction mask;
+      mask.add_nodes(old_roster, paths);
+      mask.add_nodes(new_roster, paths);
+
+      update_working_roster_from_filesystem(new_roster, mask, app);
+
+      make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+
+      new_is_archived = false;
       header << "# old_revision [" << old_rid << "]" << endl;
     }
   else if (app.revision_selectors.size() == 1)
@@ -2724,56 +2735,69 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
-      get_working_revision_and_rosters(app, args, r_new,
-                                       old_roster, 
-                                       new_roster,
-                                       excluded);
+
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       // Clobber old_roster with the one specified
-      app.db.get_revision(r_old_id, r_old);
       app.db.get_roster(r_old_id, old_roster);
-      I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
-      N(r_new.edges.size() == 1, F("current revision has no ancestor"));
+
+      // FIXME: handle no ancestor case
+      // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
+
+      restriction mask;
+      mask.add_nodes(old_roster, paths);
+      mask.add_nodes(new_roster, paths);
+      
+      update_working_roster_from_filesystem(new_roster, mask, app);
+
+      make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+
       new_is_archived = false;
       header << "# old_revision [" << r_old_id << "]" << endl;
-      {
-        // Calculate a cset from old->new, then re-restrict it (using the
-        // one from get_working_revision_and_rosters doesn't work here,
-        // since it only restricts the edge base->new, and there might be
-        // changes outside the restriction in old->base)
-        cset tmp1, tmp2;
-        make_cset (old_roster, new_roster, tmp1);
-        calculate_restricted_cset (app, args, tmp1, composite, tmp2);
-      }
     }
   else if (app.revision_selectors.size() == 2)
     {
       revision_id r_old_id, r_new_id;
+
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       complete(app, idx(app.revision_selectors, 1)(), r_new_id);
+
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
-      app.db.get_revision(r_old_id, r_old);
       N(app.db.revision_exists(r_new_id),
         F("no such revision '%s'") % r_new_id);
-      app.db.get_revision(r_new_id, r_new);
+
       app.db.get_roster(r_old_id, old_roster);
       app.db.get_roster(r_new_id, new_roster);
+
+      restriction mask;
+      mask.add_nodes(old_roster, paths);
+      mask.add_nodes(new_roster, paths);
+      
+      // FIXME: this is *possibly* a UI bug, insofar as we
+      // look at the restriction name(s) you provided on the command
+      // line in the context of new and old, *not* the working copy.
+      // One way of "fixing" this is to map the filenames on the command
+      // line to node_ids, and then restrict based on those. This 
+      // might be more intuitive; on the other hand it would make it
+      // impossible to restrict to paths which are dead in the working
+      // copy but live between old and new. So ... no rush to "fix" it;
+      // discuss implications first.
+      //
+      // let the discussion begin...
+      //
+      // - "map filenames on the command line to node_ids" needs to be done 
+      //   in the context of some roster, possibly the working copy base or
+      //   the current working copy (or both)
+      // - diff with two --revision's may be done with no working copy 
+      // - some form of "peg" revision syntax for paths that would allow 
+      //   for each path to specify which revision it is relevant to is
+      //   probably the "right" way to go eventually. something like file@rev
+      //   (which fails for paths with @'s in them) or possibly //rev/file 
+      //   since versioned paths are required to be relative.
+
+      make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+
       new_is_archived = true;
-      {
-        // Calculate a cset from old->new, then re-restrict it. 
-        // FIXME: this is *possibly* a UI bug, insofar as we
-        // look at the restriction name(s) you provided on the command
-        // line in the context of new and old, *not* the working copy.
-        // One way of "fixing" this is to map the filenames on the command
-        // line to node_ids, and then restrict based on those. This 
-        // might be more intuitive; on the other hand it would make it
-        // impossible to restrict to paths which are dead in the working
-        // copy but live between old and new. So ... no rush to "fix" it;
-        // discuss implications first.
-        cset tmp1, tmp2;
-        make_cset (old_roster, new_roster, tmp1);
-        calculate_restricted_cset (app, args, tmp1, composite, tmp2);
-      }
     }
   else
     {
@@ -2782,7 +2806,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
   
   data summary;
-  write_cset(composite, summary);
+  write_cset(included, summary);
 
   vector<string> lines;
   split_into_lines(summary(), lines);
@@ -2800,9 +2824,9 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   cout << "# " << endl;
 
   if (type == external_diff) {
-    do_external_diff(composite, app, new_is_archived);
+    do_external_diff(included, app, new_is_archived);
   } else
-    dump_diffs(composite, app, new_is_archived, type);
+    dump_diffs(included, app, new_is_archived, type);
 }
 
 
