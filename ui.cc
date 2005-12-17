@@ -27,7 +27,9 @@ ticker::ticker(string const & tickname, std::string const & s, size_t mod,
     bool kilocount) :
   ticks(0),
   mod(mod),
+  total(0),
   kilocount(kilocount),
+  use_total(false),
   name(tickname),
   shortname(s)
 {
@@ -126,6 +128,11 @@ void tick_write_count::write_ticks()
           // we reset the mod to the divider, to avoid spurious screen updates
           i->second->mod = static_cast<int>(div / 10.0);
           count = (F(message) % (i->second->ticks / div)).str();
+        }
+      else if (i->second->use_total)
+        {
+          // xgettext: bytes
+          count = (F("%d/%d") % i->second->ticks % i->second->total).str();
         }
       else
         {

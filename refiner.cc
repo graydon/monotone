@@ -178,12 +178,9 @@ refiner::process_done_command(size_t n_items)
 
   calculate_items_to_send();
   items_to_receive = n_items;
-  
-  if (type == revision_item || type == cert_item)
-    {
-      P(F("finished %s refinement: %d to send, %d to receive")
-	% typestr % items_to_send.size() % items_to_receive);
-    }
+
+  L(F("finished %s refinement: %d to send, %d to receive")
+    % typestr % items_to_send.size() % items_to_receive);
 
   if (voice == server_voice)
     cb.queue_done_cmd(type, items_to_send.size());

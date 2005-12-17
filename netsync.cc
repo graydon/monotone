@@ -307,6 +307,7 @@ session:
     }
     protocol_state;  
   bool encountered_error;
+  bool set_totals;
 
   // Interface to refinement.
   refiner epoch_refiner;
@@ -477,6 +478,7 @@ session::session(protocol_role role,
   dbw(app, true),
   protocol_state(working_state),
   encountered_error(false),
+  set_totals(false),
   epoch_refiner(epoch_item, voice, *this),
   key_refiner(key_item, voice, *this),
   cert_refiner(cert_item, voice, *this),
@@ -719,6 +721,23 @@ session::done_all_refinements()
     && cert_refiner.done
     && key_refiner.done
     && epoch_refiner.done;
+
+  if (all && !set_totals)
+    {
+      if (cert_out_ticker.get())
+	cert_out_ticker->set_total(cert_refiner.items_to_send.size());
+
+      if (revision_out_ticker.get())
+	revision_out_ticker->set_total(rev_refiner.items_to_send.size());
+
+      if (cert_in_ticker.get())
+	cert_in_ticker->set_total(cert_refiner.items_to_receive);
+
+      if (revision_in_ticker.get())
+	revision_in_ticker->set_total(rev_refiner.items_to_receive);
+	
+      set_totals = true;
+    }
   return all;  
 }
 
