@@ -15,20 +15,41 @@
 #include "vocab.hh"
 #include "merkle_tree.hh"
 #include "netcmd.hh"
+#include "netsync.hh"
 
 using std::string;
 using std::set;
 using std::make_pair;
 
-// The previous incarnation of this algorithm had code related to sending
-// decisions (and skippable transmissions) mixed in with the refinement
-// actions.
+// Our goal is to learn the complete set of items to send. To do this
+// we exchange two types of refinement commands: queries and responses.
 //
-// This incarnation is much simpler: our goal is only to learn the complete
-// set of items in our peer's tree, and inform our peer of every item we
-// have in our tree. To do this we must perform a complete refinement, and
-// record the results in an in-memory table. We will decide what to send
-// elsewhere, based on this knowledge.
+//  - On receiving a 'query' refinement for a node (p,l) you have:
+//    - Compare the query node to your node (p,l), noting all the leaves
+//      you must send as a result of what you learn in comparison.
+//    - For each slot, if you have a subtree where the peer does not
+//      (or you both do, and yours differs) send a sub-query for that
+//      node, incrementing your query-in-flight counter.
+//    - Send a 'response' refinement carrying your node (p,l)
+//
+//  - On receiving a 'query' refinement for a node (p,l) you don't have:
+//    - Send a 'response' refinement carrying an empty synthetic node (p,l)
+//
+//  - On receiving a 'response' refinement for (p,l)
+//    - Compare the query node to your node (p,l), noting all the leaves
+//      you must send as a result of what you learn in comparison.
+//    - Decrement your query-in-flight counter.
+//
+// The client kicks the process off by sending a query refinement for the
+// root node. When the client's query-in-flight counter drops to zero,
+// the client sends a done command, stating how many items it will be
+// sending.
+//
+// When the server receives a done command, it echoes it back stating how 
+// many items *it* is going to send. 
+//
+// When either side receives a done command, it transitions to
+// streaming send mode, sending all the items it's calculated.
 
 void 
 refiner::note_local_item(id const & item)
@@ -37,71 +58,17 @@ refiner::note_local_item(id const & item)
   insert_into_merkle_tree(table, type, item, 0);
 }
 
-
 void
 refiner::reindex_local_items()
 {
   recalculate_merkle_codes(table, prefix(""), 0);
 }
 
-
-void
-refiner::refine_synthetic_empty_subtree(merkle_node const & their_node,
-                                        size_t slot)
-{
-  // Our peer has a subtree, we have nothing. We want to explore their
-  // subtree but we have nothing real to send, so we synthesize an empty
-  // node and send it as a refinement request.
-  merkle_node our_fake_node;
-  their_node.extended_prefix(slot, our_fake_node.pref);
-  our_fake_node.level = their_node.level + 1;
-  our_fake_node.type = their_node.type;
-  cb.queue_refine_cmd(our_fake_node);
-  exchanged_data_since_last_done_cmd = true;
-}
-
-
-void
-refiner::refine_synthetic_singleton_subtree(merkle_node const & their_node,
-                                            merkle_node const & our_node,
-                                            size_t slot)
-{
-  // Our peer has a subtree, we have a single leaf. We want to explore
-  // their subtree but we have nothing real to send, so we synthesize an
-  // empty subtree and push our leaf into it, sending a refinement request
-  // on the new (fake) subtree.
-  size_t subslot;
-  id our_slotval;
-  merkle_node our_fake_subtree;
-  our_node.get_raw_slot(slot, our_slotval);  
-  pick_slot_and_prefix_for_value(our_slotval, our_node.level + 1, 
-                                 subslot, our_fake_subtree.pref);
-  our_fake_subtree.type = their_node.type;
-  our_fake_subtree.level = our_node.level + 1;
-  our_fake_subtree.set_raw_slot(subslot, our_slotval);
-  our_fake_subtree.set_slot_state(subslot, our_node.get_slot_state(slot));
-  cb.queue_refine_cmd(our_fake_subtree);
-  exchanged_data_since_last_done_cmd = true;
-}
-
-
-void
-refiner::inform_peer_of_item_in_slot(merkle_node const & our_node,
-                                     size_t slot)
-{
-  id slotval;
-  string tmp;
-  our_node.get_raw_slot(slot, slotval);
-  cb.queue_note_item_cmd(type, slotval);
-  exchanged_data_since_last_done_cmd = true;
-}
-
-
 void 
 refiner::load_merkle_node(size_t level, prefix const & pref,
                           merkle_ptr & node)
 {
-  merkle_table::const_iterator j = table.find(std::make_pair(pref, level));
+  merkle_table::const_iterator j = table.find(std::make_pair(pref, level));  
   I(j != table.end());
   node = j->second;
 }
@@ -115,105 +82,52 @@ refiner::merkle_node_exists(size_t level,
 }
 
 void 
-refiner::calculate_items_to_send_and_receive()
+refiner::calculate_items_to_send()
 {
-  if (calculated_items_to_send_and_receive)
+  if (calculated_items_to_send)
     return;
 
   items_to_send.clear();
-  items_to_receive.clear();
+  items_to_receive = 0;
 
   std::set_difference(local_items.begin(), local_items.end(),
                       peer_items.begin(), peer_items.end(),
                       std::inserter(items_to_send, items_to_send.begin()));
 
-  std::set_difference(peer_items.begin(), peer_items.end(),
-                      local_items.begin(), local_items.end(),
-                      std::inserter(items_to_receive, items_to_receive.begin()));
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   
-  L(F("pid %d determined %d %s items to send\n") 
-    % getpid() % items_to_send.size() % typestr);
-  L(F("pid %d determined %d %s items to receive\n") 
-    % getpid() % items_to_receive.size() % typestr);
-  calculated_items_to_send_and_receive = true;
+  L(F("determined %d %s items to send") % items_to_send.size() % typestr);  
+  calculated_items_to_send = true;
 }
 
 
 void
-refiner::inform_peer_of_subtree_in_slot(merkle_node const & our_node,
-                                        size_t slot)
+refiner::send_subquery(merkle_node const & our_node, size_t slot)
 {
   prefix subprefix;
   our_node.extended_raw_prefix(slot, subprefix);
   merkle_ptr our_subtree;
   load_merkle_node(our_node.level + 1, subprefix, our_subtree);
-  cb.queue_refine_cmd(*our_subtree);
-  exchanged_data_since_last_done_cmd = true;
+  cb.queue_refine_cmd(refinement_query, *our_subtree);
+  ++queries_in_flight;
 }
 
 void
-refiner::note_subtree_shared_with_peer(merkle_node const & our_subtree)
+refiner::note_subtree_shared_with_peer(merkle_node const & our_node, size_t slot)
 {
-  prefix pref;
-  our_subtree.get_raw_prefix(pref);
-  collect_items_in_subtree(table, pref, our_subtree.level, peer_items);
-  exchanged_data_since_last_done_cmd = true;
-}
-
-void 
-refiner::note_subtree_shared_with_peer(prefix const & pref, size_t lev)
-{
-  collect_items_in_subtree(table, pref, lev, peer_items);
-  exchanged_data_since_last_done_cmd = true;
-}
-
-
-void
-refiner::compare_subtrees_and_maybe_refine(merkle_node const & their_node,
-                                           merkle_node const & our_node,
-                                           size_t slot)
-{
-  // Our peer has a subtree at slot, and so do we.
-  //
-  // There are three things to do here:
-  //
-  //  1. If we have the same subtree as the peer, for every item in our
-  //     subtree, make a note to ourself that the peer has that item too.
-  //
-  //  2. If we have the same subtree, make sure our peer knows it, so 
-  //     they can perform #1 for themselves.
-  //
-  //  3. If we have different subtrees, refine.
-
-  id our_slotval, their_slotval;
-  their_node.get_raw_slot(slot, their_slotval);
-  our_node.get_raw_slot(slot, our_slotval);
-
   prefix pref;
   our_node.extended_raw_prefix(slot, pref);
-  merkle_ptr our_subtree;
-  size_t level = our_node.level + 1;
-  load_merkle_node(level, pref, our_subtree);
-  
-  if (their_slotval == our_slotval)
-    {
-      cb.queue_note_shared_subtree_cmd(type, pref, level);
-      note_subtree_shared_with_peer(*our_subtree);
-    }
-  else
-    cb.queue_refine_cmd(*our_subtree);
-
-  exchanged_data_since_last_done_cmd = true;
+  collect_items_in_subtree(table, pref, our_node.level+1, peer_items);
 }
 
-
-refiner::refiner(netcmd_item_type type, refiner_callbacks & cb) 
-  : type(type), cb(cb), 
-    exchanged_data_since_last_done_cmd(false), 
-    finished_refinement(0),
-    calculated_items_to_send_and_receive(false)
+refiner::refiner(netcmd_item_type type, protocol_voice voice, refiner_callbacks & cb) 
+  : type(type), voice (voice), cb(cb), 
+    sent_initial_query(false),
+    queries_in_flight(0),
+    calculated_items_to_send(false),
+    done(false),
+    items_to_receive(0)
 {
   merkle_ptr root = merkle_ptr(new merkle_node());
   root->type = type;
@@ -221,30 +135,18 @@ refiner::refiner(netcmd_item_type type, refiner_callbacks & cb)
 }
 
 void
-refiner::note_item_in_peer(id const & item)
-{
-  peer_items.insert(item);
-  exchanged_data_since_last_done_cmd = true;
-}
-
-
-void
-refiner::note_item_in_peer(merkle_node const & their_node,
-                           size_t slot)
+refiner::note_item_in_peer(merkle_node const & their_node, size_t slot)
 {
   I(slot < constants::merkle_num_slots);
   id slotval;
-  their_node.get_raw_slot(slot, slotval);  
-
-  note_item_in_peer(slotval);
+  their_node.get_raw_slot(slot, slotval);
+  peer_items.insert(slotval);
 
   // Write a debug message
   {
     hexenc<id> hslotval;
     their_node.get_hex_slot(slot, hslotval);
-    
-    size_t lev = static_cast<size_t>(their_node.level);
-    
+        
     hexenc<prefix> hpref;
     their_node.get_hex_prefix(hpref);
     
@@ -253,9 +155,8 @@ refiner::note_item_in_peer(merkle_node const & their_node,
     
     L(boost::format("peer has %s '%s' at slot %d "
                     "(in node '%s', level %d)\n")
-      % typestr % hslotval % slot % hpref % lev);
+      % typestr % hslotval % slot % hpref % their_node.level);
   }
-  exchanged_data_since_last_done_cmd = true;
 }
 
 
@@ -264,66 +165,36 @@ refiner::begin_refinement()
 {
   merkle_ptr root;
   load_merkle_node(0, prefix(""), root);
-  cb.queue_refine_cmd(*root);
-  cb.queue_done_cmd(0, type);
+  cb.queue_refine_cmd(refinement_query, *root);
+  ++queries_in_flight;
+  sent_initial_query = true;
 }
 
-
 void 
-refiner::process_done_command(size_t level)
+refiner::process_done_command(size_t n_items)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
 
-  L(F("pid %d processing 'done' command on %s level %d\n")
-    % getpid() % typestr % level);
-
-  if (!exchanged_data_since_last_done_cmd 
-      || level >= 0xff)
-    {
-      // Echo 'done' if we're shutting down
-      if (finished_refinement < 3)
-        {
-          L(F("pid %d processing 'done' command => echoing shut down of %s refinement\n")
-            % getpid() % typestr);
-          cb.queue_done_cmd(level+1, type);
-        }
-      L(F("pid %d processing 'done' command => shut down %s refinement\n")
-        % getpid() % typestr);
-      
-      // Mark ourselves shut down
-      finished_refinement++;
-
-      // And prepare for queries from our host
-      calculate_items_to_send_and_receive();
-    }
-  else if (exchanged_data_since_last_done_cmd 
-           && finished_refinement < 2)
-    {
-      // Echo 'done', we're still active.
-      L(F("pid %d processing 'done' command => continuing to %s level %d\n")
-        % getpid() % typestr % (level+1));
-      cb.queue_done_cmd(level+1, type);
-    }
+  calculate_items_to_send();
+  items_to_receive = n_items;
   
-  // Reset exchanged_data_since_last_done_cmd
-  exchanged_data_since_last_done_cmd = false;
-}
+  if (type == revision_item || type == cert_item)
+    {
+      P(F("finished %s refinement: %d to send, %d to receive")
+	% typestr % items_to_send.size() % items_to_receive);
+    }
 
-bool 
-refiner::done() const
-{
-  string typestr;
-  netcmd_item_type_to_string(type, typestr);
+  if (voice == server_voice)
+    cb.queue_done_cmd(type, items_to_send.size());
 
-  L(F("%s refiner %s done\n") 
-    % typestr % (finished_refinement >= 2 ? "is" : "is not"));
-  return finished_refinement >= 2;
+  done = true;
 }
 
 
 void 
-refiner::process_peer_node(merkle_node const & their_node)
+refiner::process_refinement_command(refinement_type ty, 
+				    merkle_node const & their_node)
 {
   prefix pref;
   hexenc<prefix> hpref;
@@ -334,115 +205,71 @@ refiner::process_peer_node(merkle_node const & their_node)
   netcmd_item_type_to_string(their_node.type, typestr);
   size_t lev = static_cast<size_t>(their_node.level);
   
-  L(F("received 'refine' netcmd on %s node '%s', level %d\n") 
-    % typestr % hpref % lev);
+  L(F("received refinement %s netcmd on %s node '%s', level %d") 
+    % (ty == refinement_query ? "query" : "response") % typestr % hpref % lev);
   
-  if (!merkle_node_exists(their_node.level, pref))
+  merkle_ptr our_node;
+
+  if (merkle_node_exists(their_node.level, pref))
+    load_merkle_node(their_node.level, pref, our_node);
+  else
     {
-      L(F("no corresponding %s merkle node for prefix '%s', level %d\n")
-        % typestr % hpref % lev);
+      // Synthesize empty node if we don't have one.
+      our_node = merkle_ptr(new merkle_node);
+      our_node->pref = their_node.pref;
+      our_node->level = their_node.level;
+      our_node->type = their_node.type;
+    }
+
+  for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
+    {
+      // Note any leaves they have.
+      if (their_node.get_slot_state(slot) == leaf_state)
+	note_item_in_peer(their_node, slot);
       
-      for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
-        {
-          switch (their_node.get_slot_state(slot))
-            {
-            case empty_state:
-              // We agree, this slot is empty.
-              break;
+      // Compare any subtrees, if we both have subtrees.
+      if (our_node->get_slot_state(slot) == subtree_state
+	  && their_node.get_slot_state(slot) == subtree_state)
+	{
+	  id our_slotval, their_slotval;
+	  their_node.get_raw_slot(slot, their_slotval);
+	  our_node->get_raw_slot(slot, our_slotval);
+	  
+	  // Always note when you share a subtree.
+	  if (their_slotval == our_slotval)
+	    note_subtree_shared_with_peer(*our_node, slot);
+	  
+	  // Send subqueries when you have a different subtree
+	  // and you're answering a query message.
+	  else if (ty == refinement_query)
+	    send_subquery(*our_node, slot);
+	}
 
-            case leaf_state:
-              note_item_in_peer(their_node, slot);
-              break;
+      // Note: if they had a leaf (or empty) where I had a subtree, I
+      // will have noted the leaf and will not send it. They will not
+      // have any of the *other* parts of my subtree, so it's ok if I
+      // eventually wind up sending the subtree-minus-their-leaf.
+    }
+  
+  if (ty == refinement_response)
+    {
+      E((queries_in_flight > 0),
+	F("underflow on query-in-flight counter"));
+      --queries_in_flight;
 
-            case subtree_state:
-              refine_synthetic_empty_subtree(their_node, slot);
-              break;
-            }
-        }
+      // Possibly this signals the end of refinement.
+      if (voice == client_voice && queries_in_flight == 0)
+	{
+	  calculate_items_to_send();
+	  cb.queue_done_cmd(type, items_to_send.size());
+	}
     }
   else
     {
-      // We have a corresponding merkle node. There are 9 branches
-      // to the following switch condition. It is awful. Sorry.
-      L(F("found corresponding %s merkle node for prefix '%s', level %d\n")
-        % typestr % hpref % lev);
-      merkle_ptr our_node;
-      load_merkle_node(their_node.level, pref, our_node);
-
-      for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
-        {         
-          switch (their_node.get_slot_state(slot))
-            {
-            case empty_state:
-              switch (our_node->get_slot_state(slot))
-                {
-
-                case empty_state:
-                  // 1: theirs == empty, ours == empty 
-                  break;
-
-                case leaf_state:
-                  // 2: theirs == empty, ours == leaf 
-                  inform_peer_of_item_in_slot(*our_node, slot);
-                  break;
-
-                case subtree_state:
-                  // 3: theirs == empty, ours == subtree 
-                  inform_peer_of_subtree_in_slot(*our_node, slot);
-                  break;
-
-                }
-              break;
-
-
-            case leaf_state:
-              switch (our_node->get_slot_state(slot))
-                {
-
-                case empty_state:
-                  // 4: theirs == leaf, ours == empty
-                  note_item_in_peer(their_node, slot);
-                  break;
-
-                case leaf_state:
-                  // 5: theirs == leaf, ours == leaf
-                  note_item_in_peer(their_node, slot);
-                  inform_peer_of_item_in_slot(*our_node, slot);
-                  break;
-
-                case subtree_state:
-                  // 6: theirs == leaf, ours == subtree
-                  note_item_in_peer(their_node, slot);
-                  inform_peer_of_subtree_in_slot(*our_node, slot);
-                  break;
-                }
-              break;
-
-            case subtree_state:
-              switch (our_node->get_slot_state(slot))
-                {
-                case empty_state:                  
-                  // 7: theirs == subtree, ours == empty 
-                  refine_synthetic_empty_subtree(their_node, slot);
-                  break;
-
-                case leaf_state:
-                  // 14: theirs == subtree, ours == leaf 
-                  refine_synthetic_singleton_subtree(their_node, 
-                                                     *our_node, slot);
-                  break;
-                  
-                case subtree_state:
-                  // 16: theirs == subtree, ours == subtree 
-                  compare_subtrees_and_maybe_refine(their_node, 
-                                                    *our_node, slot);
-                  break;                  
-                }
-              break;
-            }
-        }
+      // Always reply to every query with the current node.
+      I(ty == refinement_query);
+      cb.queue_refine_cmd(refinement_response, *our_node);
     }
-  exchanged_data_since_last_done_cmd = true;
 }
 
 

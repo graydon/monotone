@@ -11,6 +11,7 @@
 #include "vocab.hh"
 #include "merkle_tree.hh"
 #include "netcmd.hh"
+#include "netsync.hh"
 
 // This file defines the "refiner" class, which is a helper encapsulating
 // the main tricky part of the netsync algorithm. You must construct a
@@ -31,17 +32,13 @@
 // 5. When done, stop refining and examine the sets of local and peer
 //    items you've determined the existence of during refinement.
 
-
 struct
 refiner_callbacks
 {
-  virtual void queue_refine_cmd(merkle_node const & our_node) = 0;
-  virtual void queue_note_item_cmd(netcmd_item_type ty, id item) = 0;
-  virtual void queue_note_shared_subtree_cmd(netcmd_item_type ty, 
-                                             prefix const & pref,
-                                             size_t level) = 0;                              
-  virtual void queue_done_cmd(size_t level,
-                              netcmd_item_type ty) = 0;
+  virtual void queue_refine_cmd(refinement_type ty, 
+				merkle_node const & our_node) = 0;
+  virtual void queue_done_cmd(netcmd_item_type ty,
+			      size_t n_items) = 0;
   virtual ~refiner_callbacks() {}
 };
 
@@ -49,10 +46,12 @@ class
 refiner
 {
   netcmd_item_type type;
+  protocol_voice voice;
   refiner_callbacks & cb;
-  bool exchanged_data_since_last_done_cmd;
-  size_t finished_refinement;
-  bool calculated_items_to_send_and_receive;
+
+  bool sent_initial_query;
+  size_t queries_in_flight;
+  bool calculated_items_to_send;
 
   std::set<id> local_items;
   std::set<id> peer_items;
@@ -63,33 +62,27 @@ refiner
   void refine_synthetic_singleton_subtree(merkle_node const & their_node,
                                           merkle_node const & our_node,
                                           size_t slot);
-  void inform_peer_of_item_in_slot(merkle_node const & our_node, size_t slot);
-  void inform_peer_of_subtree_in_slot(merkle_node const & our_node, size_t slot);
-  void note_subtree_shared_with_peer(merkle_node const & our_subtree);
-  void compare_subtrees_and_maybe_refine(merkle_node const & their_node,
-                                         merkle_node const & our_node,
-                                         size_t slot);
+  void note_subtree_shared_with_peer(merkle_node const & our_node, size_t slot);
+  void send_subquery(merkle_node const & our_node, size_t slot);
   void note_item_in_peer(merkle_node const & their_node, size_t slot);
   void load_merkle_node(size_t level, prefix const & pref,
                         merkle_ptr & node);
   bool merkle_node_exists(size_t level, prefix const & pref);
-  void calculate_items_to_send_and_receive();
+  void calculate_items_to_send();
 
 public:
 
-  refiner(netcmd_item_type type, refiner_callbacks & cb);
-  void note_item_in_peer(id const & item);
-  void note_subtree_shared_with_peer(prefix const & pref, size_t lev);
+  refiner(netcmd_item_type type, protocol_voice voice, refiner_callbacks & cb);
   void note_local_item(id const & item);
   void reindex_local_items();
   void begin_refinement();
-  bool done() const;
-  void process_done_command(size_t level);
-  void process_peer_node(merkle_node const & their_node);
+  void process_done_command(size_t n_items);
+  void process_refinement_command(refinement_type ty, merkle_node const & their_node);
 
   // These are populated as the 'done' packets arrive.
+  bool done;
   std::set<id> items_to_send;
-  std::set<id> items_to_receive;  
+  size_t items_to_receive;  
 };
 
 

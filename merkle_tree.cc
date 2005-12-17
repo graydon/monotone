@@ -258,16 +258,17 @@ write_node(merkle_node const & in, string & outbuf)
     }
   string hash = raw_sha1(oss.str());
   I(hash.size() == constants::merkle_hash_length_in_bytes);
-  outbuf = hash + oss.str();
+  outbuf.append(hash);
+  outbuf.append(oss.str());
 }
     
 void 
-read_node(string const & inbuf, merkle_node & out)
+read_node(string const & inbuf, size_t & pos, merkle_node & out)
 {
-  size_t pos = 0;
   string hash = extract_substring(inbuf, pos, 
                                   constants::merkle_hash_length_in_bytes, 
                                   "node hash");
+  size_t begin_pos = pos;
   out.type = static_cast<netcmd_item_type>(extract_datum_lsb<u8>(inbuf, pos, "node type"));
   out.level = extract_datum_uleb128<size_t>(inbuf, pos, "node level");
 
@@ -303,9 +304,8 @@ read_node(string const & inbuf, merkle_node & out)
           out.set_raw_slot(slot, slot_val);
         }
     }
-    
-  assert_end_of_buffer(inbuf, pos, "node");
-  string checkhash = raw_sha1(inbuf.substr(constants::merkle_hash_length_in_bytes));
+      
+  string checkhash = raw_sha1(inbuf.substr(begin_pos, pos - begin_pos));
   out.check_invariants();
   if (hash != checkhash)
     throw bad_decode(F("mismatched node hash value %s, expected %s") 

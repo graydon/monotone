@@ -23,6 +23,13 @@ typedef enum
   }
 protocol_role;
 
+typedef enum
+  {
+    refinement_query = 0,
+    refinement_response = 1
+  }
+refinement_type;
+
 typedef enum 
   { 
     // general commands
@@ -37,13 +44,11 @@ typedef enum
       
     // refinement commands
     refine_cmd = 6,
-    note_item_cmd = 7,
-    note_shared_subtree_cmd = 8,
-    done_cmd = 9,
+    done_cmd = 7,
       
     // transmission commands
-    data_cmd = 10,
-    delta_cmd = 11,
+    data_cmd = 8,
+    delta_cmd = 9,
 
     // usher commands
     // usher_cmd is sent by a server farm (or anyone else who wants to serve
@@ -129,21 +134,11 @@ public:
   void read_confirm_cmd() const;
   void write_confirm_cmd();
 
-  void read_refine_cmd(merkle_node & node) const;
-  void write_refine_cmd(merkle_node const & node);
+  void read_refine_cmd(refinement_type & ty, merkle_node & node) const;
+  void write_refine_cmd(refinement_type ty, merkle_node const & node);
 
-  void read_note_item_cmd(netcmd_item_type & type, id & item) const;
-  void write_note_item_cmd(netcmd_item_type type, id const & item);
-
-  void read_note_shared_subtree_cmd(netcmd_item_type & type, 
-                                    prefix & pref, 
-                                    size_t & level) const;
-  void write_note_shared_subtree_cmd(netcmd_item_type type,
-                                     prefix const & pref, 
-                                     size_t level);
-
-  void read_done_cmd(size_t & level, netcmd_item_type & type) const;
-  void write_done_cmd(size_t level, netcmd_item_type type);
+  void read_done_cmd(netcmd_item_type & type, size_t & n_items) const;
+  void write_done_cmd(netcmd_item_type type, size_t n_items);
 
   void read_data_cmd(netcmd_item_type & type,
                      id & item,

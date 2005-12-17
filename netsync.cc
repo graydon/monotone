@@ -67,13 +67,6 @@
 //      its merkle trie.
 //   -- add some sort of vhost field to the client's first packet, saying who
 //      they expect to talk to
-//   -- connection teardown is still a bit unpleasant:
-//      -- subtle misdesign: "goodbye" packets indicate completion of data
-//         transfer.  they do not indicate that data has been written to
-//         disk.  there should be some way to indicate that data has been
-//         successfully written to disk.  See message (and thread)
-//         <E0420553-34F3-45E8-9DA4-D8A5CB9B0600@hsdev.com> on
-//         monotone-devel.
 //   -- apparently we have a IANA approved port: 4691.  I guess we should
 //      switch to using that.
 
@@ -188,25 +181,12 @@
 //
 // Refinement is executed by "refiners"; there is a refiner for each
 // set of 'items' being exchanged: epochs, keys, certs, and revisions.
-// When refinement starts, each party knows only their own set of items;
-// when refinement completes, each party has learned of the complete set
-// of items in its peer. The self-set and peer-set can then be used to
-// calculate the set of items to send during the following transmission 
-// phase.
+// When refinement starts, each party knows only their own set of
+// items; when refinement completes, each party has learned of the
+// complete set of items it needs to send, and a count of items it's
+// expecting to receive.
 //
-// Each refinement phase begins with a tramsission of the root merkle node
-// in each refiner. When a refiner receives a node, it compares the
-// corresponding node in its tree to the node received. Depending on the
-// slot-by-slot comparisons (there are 12 cases, see refiner.cc), the
-// refiner will respond with either a sub-node, a note about a leaf, a note
-// about a shared subtree, or nothing.
-//
-// Detecting the end of refinement is a bit subtle: after sending the
-// refinement of the root node, a refiner sends a "done 0" command (queued
-// behind all the other refinement traffic). When either peer receives a
-// "done N" command it immediately responds with a "done N+1" command. When
-// two done commands for a given merkle tree arrive with no interveining
-// refinements, the entire merkle tree is considered complete.
+// For more details on the refinement process, see refiner.cc.
 //
 // 
 // Transmission
@@ -391,7 +371,7 @@ session:
   // Outgoing queue-writers.
   void queue_bye_cmd(u8 phase);
   void queue_error_cmd(string const & errmsg);
-  void queue_done_cmd(size_t level, netcmd_item_type type);
+  void queue_done_cmd(netcmd_item_type type, size_t n_items);
   void queue_hello_cmd(rsa_keypair_id const & key_name,
                        base64<rsa_pub_key> const & pub_encoded, 
                        id const & nonce);
@@ -409,11 +389,7 @@ session:
                       string const & signature,
                       base64<rsa_pub_key> server_key_encoded);
   void queue_confirm_cmd();
-  void queue_refine_cmd(merkle_node const & node);
-  void queue_note_item_cmd(netcmd_item_type ty, id item);
-  void queue_note_shared_subtree_cmd(netcmd_item_type ty, 
-                                     prefix const & pref,
-                                     size_t level);
+  void queue_refine_cmd(refinement_type ty, merkle_node const & node);
   void queue_data_cmd(netcmd_item_type type, 
                       id const & item,
                       string const & dat);
@@ -438,13 +414,8 @@ session:
                         id const & nonce1, 
                         string const & signature);
   bool process_confirm_cmd(string const & signature);
-  bool process_refine_cmd(merkle_node const & node);
-  bool process_done_cmd(size_t level, netcmd_item_type type);
-  bool process_note_item_cmd(netcmd_item_type ty, 
-                             id const & item);
-  bool process_note_shared_subtree_cmd(netcmd_item_type ty,
-                                       prefix const & pref,
-                                       size_t lev);
+  bool process_refine_cmd(refinement_type ty, merkle_node const & node);
+  bool process_done_cmd(netcmd_item_type type, size_t n_items);
   bool process_data_cmd(netcmd_item_type type,
                         id const & item, 
                         string const & dat);
@@ -506,10 +477,10 @@ session::session(protocol_role role,
   dbw(app, true),
   protocol_state(working_state),
   encountered_error(false),
-  epoch_refiner(epoch_item, *this),
-  key_refiner(key_item, *this),
-  cert_refiner(cert_item, *this),
-  rev_refiner(revision_item, *this),
+  epoch_refiner(epoch_item, voice, *this),
+  key_refiner(key_item, voice, *this),
+  cert_refiner(cert_item, voice, *this),
+  rev_refiner(revision_item, voice, *this),
   rev_enumerator(*this, app)
 {
   dbw.set_on_revision_written(boost::bind(&session::rev_written_callback,
@@ -744,10 +715,10 @@ session::setup_client_tickers()
 bool 
 session::done_all_refinements()
 {
-  bool all = rev_refiner.done()
-    && cert_refiner.done() 
-    && key_refiner.done()
-    && epoch_refiner.done();
+  bool all = rev_refiner.done
+    && cert_refiner.done
+    && key_refiner.done
+    && epoch_refiner.done;
   return all;  
 }
 
@@ -758,10 +729,10 @@ session::received_all_items()
 {
   if (role == source_role)
     return true;
-  bool all = rev_refiner.items_to_receive.empty()
-    && cert_refiner.items_to_receive.empty()
-    && key_refiner.items_to_receive.empty()
-    && epoch_refiner.items_to_receive.empty();
+  bool all = rev_refiner.items_to_receive == 0
+    && cert_refiner.items_to_receive == 0
+    && key_refiner.items_to_receive == 0
+    && epoch_refiner.items_to_receive == 0;
   return all;
 }
 
@@ -792,11 +763,11 @@ void
 session::maybe_note_epochs_finished()
 {
   // Maybe there are outstanding epoch requests.
-  if (!epoch_refiner.items_to_receive.empty())
+  if (!epoch_refiner.items_to_receive == 0)
     return;
 
   // And maybe we haven't even finished the refinement.
-  if (!epoch_refiner.done())
+  if (!epoch_refiner.done)
     return;
 
   // If we ran into an error -- say a mismatched epoch -- don't do any
@@ -811,26 +782,39 @@ session::maybe_note_epochs_finished()
   rev_refiner.begin_refinement();
 }
 
+static void
+decrement_if_nonzero(netcmd_item_type ty,
+		     size_t & n)
+{
+  if (n == 0)
+    {
+      string typestr;
+      netcmd_item_type_to_string(ty, typestr);
+      E(false, F("underflow on count of %s items to receive") % typestr);
+    }
+  --n;
+}
+
 void
 session::note_item_arrived(netcmd_item_type ty, id const & ident)
 {
   switch (ty)
     {
     case cert_item:
-      cert_refiner.items_to_receive.erase(ident);
+      decrement_if_nonzero(ty, cert_refiner.items_to_receive);
       if (cert_in_ticker.get() != NULL)
         ++(*cert_in_ticker);
       break;
     case revision_item:
-      rev_refiner.items_to_receive.erase(ident);
+      decrement_if_nonzero(ty, rev_refiner.items_to_receive);
       if (revision_in_ticker.get() != NULL)
         ++(*revision_in_ticker);
       break;
     case key_item:
-      key_refiner.items_to_receive.erase(ident);
+      decrement_if_nonzero(ty, key_refiner.items_to_receive);
       break;
     case epoch_item:
-      epoch_refiner.items_to_receive.erase(ident);
+      decrement_if_nonzero(ty, epoch_refiner.items_to_receive);
       break;
     default:
       // No ticker for other things.
@@ -999,15 +983,15 @@ session::queue_bye_cmd(u8 phase)
 }
 
 void 
-session::queue_done_cmd(size_t level, 
-                        netcmd_item_type type) 
+session::queue_done_cmd(netcmd_item_type type,
+			size_t n_items) 
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
-  L(F("queueing 'done' command for %s level %s\n") 
-    % typestr % level);
+  L(F("queueing 'done' command for %s (%d items)\n") 
+    % typestr % n_items);
   netcmd cmd;
-  cmd.write_done_cmd(level, type);
+  cmd.write_done_cmd(type, n_items);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1068,44 +1052,18 @@ session::queue_confirm_cmd()
 }
 
 void 
-session::queue_refine_cmd(merkle_node const & node)
+session::queue_refine_cmd(refinement_type ty, merkle_node const & node)
 {
   string typestr;
   hexenc<prefix> hpref;
   node.get_hex_prefix(hpref);
   netcmd_item_type_to_string(node.type, typestr);
-  L(F("queueing request for refinement of %s node '%s', level %d\n")
+  L(F("queueing refinement %s of %s node '%s', level %d\n")
+    % (ty == refinement_query ? "query" : "response")
     % typestr % hpref % static_cast<int>(node.level));
   netcmd cmd;
-  cmd.write_refine_cmd(node);
+  cmd.write_refine_cmd(ty, node);
   write_netcmd_and_try_flush(cmd);
-}
-
-void 
-session::queue_note_item_cmd(netcmd_item_type ty, id item)
-{
-  string typestr;
-  hexenc<id> hitem;
-  encode_hexenc(item, hitem);
-  netcmd_item_type_to_string(ty, typestr);
-  L(F("queueing note about %s item '%s'") % typestr % hitem);
-  netcmd cmd;
-  cmd.write_note_item_cmd(ty, item);
-  write_netcmd_and_try_flush(cmd);  
-}
-
-void 
-session::queue_note_shared_subtree_cmd(netcmd_item_type ty, 
-                                       prefix const & pref,
-                                       size_t level)
-{
-  string typestr;
-  netcmd_item_type_to_string(ty, typestr);
-  L(F("queueing note about shared %s subtree at level %d") 
-    % typestr % level);
-  netcmd cmd;
-  cmd.write_note_shared_subtree_cmd(ty, pref, level);
-  write_netcmd_and_try_flush(cmd);  
 }
 
 void 
@@ -1556,7 +1514,7 @@ session::process_confirm_cmd(string const & signature)
 }
 
 bool
-session::process_refine_cmd(merkle_node const & node)
+session::process_refine_cmd(refinement_type ty, merkle_node const & node)
 {
   string typestr;
   netcmd_item_type_to_string(node.type, typestr);
@@ -1570,19 +1528,19 @@ session::process_refine_cmd(merkle_node const & node)
       break;
       
     case key_item:
-      key_refiner.process_peer_node(node);
+      key_refiner.process_refinement_command(ty, node);
       break;
       
     case revision_item:
-      rev_refiner.process_peer_node(node);
+      rev_refiner.process_refinement_command(ty, node);
       break;
       
     case cert_item:
-      cert_refiner.process_peer_node(node);
+      cert_refiner.process_refinement_command(ty, node);
       break;
       
     case epoch_item:
-      epoch_refiner.process_peer_node(node);
+      epoch_refiner.process_refinement_command(ty, node);
       break;
     }
   return true;
@@ -1670,7 +1628,7 @@ session::process_bye_cmd(u8 phase,
 }
 
 bool 
-session::process_done_cmd(size_t level, netcmd_item_type type)
+session::process_done_cmd(netcmd_item_type type, size_t n_items)
 {
   switch (type)
     {    
@@ -1679,84 +1637,26 @@ session::process_done_cmd(size_t level, netcmd_item_type type)
       break;
       
     case key_item:
-      key_refiner.process_done_command(level);
-      if (key_refiner.done() && role != sink_role)
+      key_refiner.process_done_command(n_items);
+      if (key_refiner.done && role != sink_role)
         send_all_data(key_item, key_refiner.items_to_send);
       break;
       
     case revision_item:
-      rev_refiner.process_done_command(level);
+      rev_refiner.process_done_command(n_items);
       break;
       
     case cert_item:
-      cert_refiner.process_done_command(level);
+      cert_refiner.process_done_command(n_items);
       break;
       
     case epoch_item:
-      epoch_refiner.process_done_command(level);
-      if (epoch_refiner.done())
+      epoch_refiner.process_done_command(n_items);
+      if (epoch_refiner.done)
         {
           send_all_data(epoch_item, epoch_refiner.items_to_send);
           maybe_note_epochs_finished();
         }
-      break;
-    }
-  return true;
-}
-
-bool
-session::process_note_item_cmd(netcmd_item_type ty, id const & item)
-{
-  switch (ty)
-    {    
-    case file_item:
-      W(F("Unexpected 'note_item' command on non-refined item type\n"));
-      break;
-      
-    case key_item:
-      key_refiner.note_item_in_peer(item);
-      break;
-      
-    case revision_item:
-      rev_refiner.note_item_in_peer(item);
-      break;
-      
-    case cert_item:
-      cert_refiner.note_item_in_peer(item);
-      break;
-      
-    case epoch_item:
-      epoch_refiner.note_item_in_peer(item);
-      break;
-    }
-  return true;
-}
-
-bool
-session::process_note_shared_subtree_cmd(netcmd_item_type ty,
-                                         prefix const & pref,
-                                         size_t lev)
-{
-  switch (ty)
-    {    
-    case file_item:
-      W(F("Unexpected 'note_item' command on non-refined item type\n"));
-      break;
-      
-    case key_item:
-      key_refiner.note_subtree_shared_with_peer(pref, lev);
-      break;
-      
-    case revision_item:
-      rev_refiner.note_subtree_shared_with_peer(pref, lev);
-      break;
-      
-    case cert_item:
-      cert_refiner.note_subtree_shared_with_peer(pref, lev);
-      break;
-      
-    case epoch_item:
-      epoch_refiner.note_subtree_shared_with_peer(pref, lev);
       break;
     }
   return true;
@@ -2182,39 +2082,19 @@ session::dispatch_payload(netcmd const & cmd,
       require(authenticated, "refine netcmd received when authenticated");
       {
         merkle_node node;
-        cmd.read_refine_cmd(node);
-        return process_refine_cmd(node);
+	refinement_type ty;
+        cmd.read_refine_cmd(ty, node);
+        return process_refine_cmd(ty, node);
       }
       break;
 
     case done_cmd:
       require(authenticated, "done netcmd received when not authenticated");
       {
-        size_t level;
+        size_t n_items;
         netcmd_item_type type;
-        cmd.read_done_cmd(level, type);
-        return process_done_cmd(level, type);
-      }
-      break;
-
-    case note_item_cmd:
-      require(authenticated, "note_item netcmd received when not authenticated");
-      {
-        netcmd_item_type ty;
-        id item;
-        cmd.read_note_item_cmd(ty, item);
-        return process_note_item_cmd(ty, item);
-      }
-      break;
-
-    case note_shared_subtree_cmd:
-      require(authenticated, "note_shared_subtree netcmd received when not authenticated");
-      {
-        netcmd_item_type ty;
-        prefix pref;
-        size_t lev;
-        cmd.read_note_shared_subtree_cmd(ty, pref, lev);
-        return process_note_shared_subtree_cmd(ty, pref, lev);
+        cmd.read_done_cmd(type, n_items);
+        return process_done_cmd(type, n_items);
       }
       break;
 

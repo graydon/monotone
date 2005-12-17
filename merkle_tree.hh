@@ -88,7 +88,7 @@ typedef std::map<std::pair<prefix,size_t>, merkle_ptr> merkle_table;
 size_t prefix_length_in_bits(size_t level);
 size_t prefix_length_in_bytes(size_t level);
 void write_node(merkle_node const & in, std::string & outbuf);
-void read_node(std::string const & inbuf, merkle_node & out);
+void read_node(std::string const & inbuf, size_t & pos, merkle_node & out);
 
 std::string raw_sha1(std::string const & in);
 
