@@ -141,8 +141,8 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
 void
 select_nodes_modified_by_rev(revision_id const & rid,
                              revision_set const & rev,
-                             std::set<node_id> & nodes_changed,
-                             std::set<node_id> & nodes_born,
+                             roster_t const roster,
+                             std::set<node_id> & nodes_modified,
                              app_state & app);
 
 /*
