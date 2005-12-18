@@ -528,6 +528,25 @@ select_nodes_modified_by_rev(revision_id const & rid,
     }
 }
 
+
+void
+make_revision_set(revision_id const & old_rev_id, 
+                  roster_t const & old_roster,
+                  roster_t const & new_roster,
+                  revision_set & rev)
+{
+  boost::shared_ptr<cset> cs(new cset());
+
+  rev.edges.clear();
+  make_cset(old_roster, new_roster, *cs);
+  
+  calculate_ident(new_roster, rev.new_manifest);
+  L(F("new manifest_id is %s\n") % rev.new_manifest);
+  
+  safe_insert(rev.edges, std::make_pair(old_rev_id, cs));
+}
+
+
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
 

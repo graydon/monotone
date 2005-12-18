@@ -24,18 +24,14 @@
 // new_manifest [16afa28e8783987223993d67f54700f0ecfedfaa]
 //
 // old_revision [d023242b16cbdfd46686a5d217af14e3c339f2b4]
-// old_manifest [2dc4a99e27a0026395fbd4226103614928c55c77]
 //
-// delete_file "deleted-file.cc"
+// delete "deleted-file.cc"
 //
-// rename_file "old-file.cc"
-//          to "new-file.cc"
+// rename "old-file.cc"
+//     to "new-file.cc"
 //
 // add_file "added-file.cc"
-//
-// patch "added-file.cc"
-//  from []
-//    to [da39a3ee5e6b4b0d3255bfef95601890afd80709]
+//  content [da39a3ee5e6b4b0d3255bfef95601890afd80709]
 //
 // patch "changed-file.cc"
 //  from [588fd8a7bcde43a46f0bde1dd1d13e9e77cf25a1]
@@ -144,6 +140,12 @@ select_nodes_modified_by_rev(revision_id const & rid,
                              roster_t const roster,
                              std::set<node_id> & nodes_modified,
                              app_state & app);
+
+void
+make_revision_set(revision_id const & old_rev_id, 
+                  roster_t const & old_roster,
+                  roster_t const & new_roster,
+                  revision_set & rev);
 
 /*
 void 

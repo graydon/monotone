@@ -351,7 +351,7 @@ get_working_revision_and_rosters(app_state & app,
   mask.add_nodes(new_roster, paths);
 
   // Now update any idents in the new roster
-  update_working_roster_from_filesystem(new_roster, mask, app);
+  update_current_roster_from_filesystem(new_roster, mask, app);
 
   calculate_ident(new_roster, rev.new_manifest);
   L(F("new manifest_id is %s\n") % rev.new_manifest);

@@ -342,6 +342,7 @@ maybe_update_inodeprints(app_state & app)
   inodeprint_map ipm_new;
   revision_set rev;
   roster_t old_roster, new_roster;
+  
   get_unrestricted_working_revision_and_rosters(app, rev, 
                                                 old_roster, 
                                                 new_roster);
@@ -2201,11 +2202,14 @@ CMD(attr, N_("working copy"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PAT
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
 
-  revision_set rs;
   roster_t old_roster, new_roster;
+  temp_node_id_source nis;
 
   app.require_working_copy();
-  get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+
+  // FIXME_RESTRICTIONS: is there any reason to update content hashes here?
+  update_current_roster_from_filesystem(new_roster, app);
   
   file_path path = file_path_external(idx(args,1));
   split_path sp;
@@ -2723,7 +2727,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       mask.add_nodes(old_roster, paths);
       mask.add_nodes(new_roster, paths);
 
-      update_working_roster_from_filesystem(new_roster, mask, app);
+      update_current_roster_from_filesystem(new_roster, mask, app);
 
       make_restricted_csets(old_roster, new_roster, included, excluded, mask);
 
@@ -2748,7 +2752,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       mask.add_nodes(old_roster, paths);
       mask.add_nodes(new_roster, paths);
       
-      update_working_roster_from_filesystem(new_roster, mask, app);
+      update_current_roster_from_filesystem(new_roster, mask, app);
 
       make_restricted_csets(old_roster, new_roster, included, excluded, mask);
 

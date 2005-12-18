@@ -2013,7 +2013,7 @@ classify_roster_paths(roster_t const & ros,
 }
 
 void 
-update_working_roster_from_filesystem(roster_t & ros, 
+update_current_roster_from_filesystem(roster_t & ros, 
                                       restriction const & mask,
                                       app_state & app)
 {
@@ -2072,6 +2072,14 @@ update_working_roster_from_filesystem(roster_t & ros,
       "'monotone drop FILE' to remove it permanently, or\n"
       "'monotone revert FILE' to restore it\n")
     % missing_files);
+}
+
+void 
+update_current_roster_from_filesystem(roster_t & ros, 
+                                      app_state & app)
+{
+  restriction tmp;
+  update_current_roster_from_filesystem(ros, tmp, app);
 }
 
 void

@@ -939,13 +939,18 @@ automate_get_revision(std::vector<utf8> args,
 
   if (args.size() == 0)
     {
-      revision_set rev;
       roster_t old_roster, new_roster;
+      temp_node_id_source nis;
+      revision_id old_revision_id;
+      revision_set rev;
 
       app.require_working_copy(); 
-      get_unrestricted_working_revision_and_rosters(app, rev, 
-                                                    old_roster, 
-                                                    new_roster);
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      update_current_roster_from_filesystem(new_roster, app);
+
+      get_revision_id(old_revision_id);
+      make_revision_set(old_revision_id, old_roster, new_roster, rev);
+
       calculate_ident(rev, ident);
       write_revision_set(rev, dat);
     }
