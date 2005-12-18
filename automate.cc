@@ -991,9 +991,12 @@ automate_get_manifest_of(std::vector<utf8> args,
 
   if (args.size() == 0)
     {
-      revision_set rs;
-      app.require_working_copy();
-      get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster);
+      temp_node_id_source nis;
+      revision_id old_revision_id;
+
+      app.require_working_copy(); 
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      update_current_roster_from_filesystem(new_roster, app);
     }
   else
     {

@@ -62,10 +62,4 @@ get_working_revision_and_rosters(app_state & app,
                                  roster_t & old_roster,
                                  roster_t & new_roster);
 
-void
-get_unrestricted_working_revision_and_rosters(app_state & app, 
-                                              revision_set & rev,
-                                              roster_t & old_roster,
-                                              roster_t & new_roster);
-
 #endif  // header guard

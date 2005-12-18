@@ -340,13 +340,12 @@ maybe_update_inodeprints(app_state & app)
   if (!in_inodeprints_mode())
     return;
   inodeprint_map ipm_new;
-  revision_set rev;
   roster_t old_roster, new_roster;
-  
-  get_unrestricted_working_revision_and_rosters(app, rev, 
-                                                old_roster, 
-                                                new_roster);
-  
+  temp_node_id_source nis;
+
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  update_current_roster_from_filesystem(new_roster, app);
+
   node_map const & new_nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
     {
@@ -2861,11 +2860,12 @@ CMD(update, N_("working copy"), "",
     "base the update on the head of the branch (given or implicit)."),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
-  revision_set r_old, r_working, r_new;
+  revision_set r_working;
   roster_t working_roster, chosen_roster;
   boost::shared_ptr<roster_t> old_roster = boost::shared_ptr<roster_t>(new roster_t());
   marking_map working_mm, chosen_mm, merged_mm;
   revision_id r_old_id, r_working_id, r_chosen_id;
+  temp_node_id_source nis;
 
   if (args.size() > 0)
     throw usage(name);
@@ -2880,9 +2880,12 @@ CMD(update, N_("working copy"), "",
   // such. But it should work for now; revisit if performance is
   // intolerable.
 
-  get_unrestricted_working_revision_and_rosters(app, r_working,
-                                                *old_roster, 
-                                                working_roster);
+  get_base_and_current_roster_shape(*old_roster, working_roster, nis, app);
+  update_current_roster_from_filesystem(working_roster, app);
+
+  get_revision_id(r_old_id);
+  make_revision_set(r_old_id, *old_roster, working_roster, r_working);
+
   calculate_ident(r_working, r_working_id);
   I(r_working.edges.size() == 1);
   r_old_id = edge_old_revision(r_working.edges.begin());
@@ -2980,7 +2983,7 @@ CMD(update, N_("working copy"), "",
                                 chosen_uncommon_ancestors);
 
   // Note that under the definition of mark-merge, the working copy is an
-  // "uncommon ancestor" if itself too, even though it was not present in
+  // "uncommon ancestor" of itself too, even though it was not present in
   // the database (hence not returned by the query above).
 
   working_uncommon_ancestors.insert(r_working_id);

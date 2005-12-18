@@ -397,18 +397,3 @@ get_working_revision_and_rosters(app_state & app,
   get_working_revision_and_rosters(app, args, rev, 
                                    old_roster, new_roster, excluded);
 }
-
-// commands.cc automate.cc
-
-void
-get_unrestricted_working_revision_and_rosters(app_state & app, 
-                                              revision_set & rev,
-                                              roster_t & old_roster,
-                                              roster_t & new_roster)
-{
-  vector<utf8> empty_args;
-  std::set<utf8> saved_exclude_patterns(app.exclude_patterns);
-  app.exclude_patterns.clear();
-  get_working_revision_and_rosters(app, empty_args, rev, old_roster, new_roster);
-  app.exclude_patterns = saved_exclude_patterns;
-}
