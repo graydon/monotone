@@ -1,3 +1,14 @@
+2005-12-18  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Add Roland.
+
+2005-12-17  Roland McGrath  <roland@redhat.com>
+
+	* work.hh (struct file_itemizer): Remove extraneous qualifier on
+	visit_file declaration.
+	* app_state.hh (class app_state): Remove extraneous qualifier on
+	set_restriction declaration.
+
 2005-12-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/fs.cc: Handle the fact that the MoveFileEx symbol might
