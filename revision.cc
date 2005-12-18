@@ -1395,7 +1395,6 @@ namespace
   {
     std::string const old_revision("old_revision");
     std::string const new_manifest("new_manifest");
-    std::string const old_manifest("old_manifest");
   }
 }
 

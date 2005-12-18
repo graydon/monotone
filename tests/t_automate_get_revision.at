@@ -7,7 +7,6 @@ MONOTONE_SETUP
 AT_DATA(expected, [new_manifest @<:@ee4a0fb04b83aaa7dc91fa796dd4d0feddc9f502@:>@
 
 old_revision @<:@@:>@
-old_manifest @<:@@:>@
 
 add_dir ""
 
@@ -17,8 +16,7 @@ add_file "foo"
 
 AT_DATA(expected2, [new_manifest @<:@ee4a0fb04b83aaa7dc91fa796dd4d0feddc9f502@:>@
 
-old_revision @<:@3cf83369cfadbf5ba4ea3a50796fba18ec245489@:>@
-old_manifest @<:@ee4a0fb04b83aaa7dc91fa796dd4d0feddc9f502@:>@
+old_revision @<:@9512c44fd577a6eff2a836d3ec2714386677a56c@:>@
 ])
 
 AT_DATA(empty, [])

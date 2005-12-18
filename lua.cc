@@ -685,7 +685,7 @@ extern "C"
   {
     vector<pair<string, vector<string> > > res;
     const char *str = lua_tostring(L, -1);
-    basic_io::input_source in(string(str), string("monotone_parse_basic_io_for_lua"));
+    basic_io::input_source in(str, "monotone_parse_basic_io_for_lua");
     basic_io::tokenizer tok(in);
     try
       {
