@@ -65,6 +65,12 @@ void
 packet_db_writer::consume_file_data(file_id const & ident, 
                                     file_data const & dat)
 {
+  if (app.db.file_version_exists(ident))
+    {
+      L(F("file version '%s' already exists in db\n") % ident);
+      return;
+    }
+
   transaction_guard guard(app.db);
   app.db.put_file(ident, dat);
   guard.commit();
