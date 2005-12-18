@@ -21,9 +21,9 @@ dir "t/libelf-po"
 content @<:@411cfd008f4a72e433b48d6421733b6a792ca3b7@:>@
 ])
 
-AT_DATA(test.tags, [initial 8e6facbf8211cdff0c885e38e1f87ec2386bfe4d tester@test.net
-portable-branch-base ed6faa22e4e06d575189a2771959350b56dbc594 tester@test.net
-portable-branch-fork-20050601T0139 ed6faa22e4e06d575189a2771959350b56dbc594 tester@test.net
+AT_DATA(test.tags, [initial c636cbf42f8aa6640a0463a590045f52f333765b tester@test.net
+portable-branch-base 8e722e716b7939700dd17e30341b7352d62e117f tester@test.net
+portable-branch-fork-20050601T0139 8e722e716b7939700dd17e30341b7352d62e117f tester@test.net
 ])
 
 AT_DATA(e.tar.gz.enc, [H4sIAEJyw0IAA+1YbW/bOBLOV+tXEOiHSw+xqhdKTuq9g4u03SuQbIumub1vAS3R
