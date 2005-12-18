@@ -132,7 +132,7 @@ namespace constants
   extern size_t const netcmd_minimum_bytes_to_bother_with_gzip;
 
   // TCP port to listen on / connect to when doing netsync
-  static size_t const netsync_default_port = 5253;
+  static size_t const netsync_default_port = 4691;
 
   // maximum number of simultaneous clients on a server
   static size_t const netsync_connection_limit = 1024;
