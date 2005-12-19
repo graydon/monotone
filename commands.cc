@@ -1161,8 +1161,7 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 }
 
 
-static void find_unknown_and_ignored(app_state & app, bool want_ignored, 
-                                     vector<utf8> const & args, 
+static void find_unknown_and_ignored(app_state & app, vector<utf8> const & args, 
                                      path_set & unknown, path_set & ignored);
 
 
@@ -1178,7 +1177,7 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
   if (app.unknown)
     {
       path_set ignored;
-      find_unknown_and_ignored(app, false, args, paths, ignored);
+      find_unknown_and_ignored(app, args, paths, ignored);
     }
   else
     for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -1289,22 +1288,48 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"),
     OPT_DEPTH % OPT_BRIEF)
 {
-  revision_set rs;
-  roster_t old_roster, new_roster;
+  path_set paths;
+  roster_t old_roster, new_roster, restricted_roster;
+  temp_node_id_source nis;
+  cset included, excluded;
+  revision_id old_rev_id;
+  revision_set rev;
   data tmp;
 
   app.require_working_copy();
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
+
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    {
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+    }
+
+  restriction mask;
+  mask.add_nodes(old_roster, paths);
+  mask.add_nodes(new_roster, paths);
+
+  update_current_roster_from_filesystem(new_roster, mask, app);
+  make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+
+  restricted_roster = old_roster;
+  editable_roster_base er(restricted_roster, nis);
+  included.apply_to(er);
+
+  get_revision_id(old_rev_id);
+  make_revision_set(old_rev_id, old_roster, restricted_roster, rev);
 
   if (global_sanity.brief)
     {
-      I(rs.edges.size() == 1);
-      cset const & cs = edge_changes(rs.edges.begin());
+      I(rev.edges.size() == 1);
+      cset const & cs = edge_changes(rev.edges.begin());
       
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
            i != cs.nodes_deleted.end(); ++i) 
         cout << "dropped " << *i << endl;
-
+      
       for (std::map<split_path, split_path>::const_iterator 
            i = cs.nodes_renamed.begin();
            i != cs.nodes_renamed.end(); ++i) 
@@ -1321,13 +1346,11 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
 
       for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
              i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i) 
-        {
-          cout << "patched " << i->first << endl;
-        }
+        cout << "patched " << i->first << endl;
     }
   else
     {
-      write_revision_set(rs, tmp);
+      write_revision_set(rev, tmp);
       cout << endl << tmp << endl;
     }
 }
@@ -1677,7 +1700,7 @@ ls_known(app_state & app, vector<utf8> const & args)
 
 
 static void
-find_unknown_and_ignored(app_state & app, bool want_ignored, vector<utf8> const & args, 
+find_unknown_and_ignored(app_state & app, vector<utf8> const & args, 
                          path_set & unknown, path_set & ignored)
 {
   revision_set rev;
@@ -1698,7 +1721,7 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored, vector<utf8> const & a
   app.require_working_copy();
 
   path_set unknown, ignored;
-  find_unknown_and_ignored(app, want_ignored, args, unknown, ignored);
+  find_unknown_and_ignored(app, args, unknown, ignored);
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin(); i != ignored.end(); ++i)
@@ -2326,13 +2349,14 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   revision_set rs;
   revision_id rid;
   roster_t old_roster, new_roster;
-  
+
   app.make_branch_sticky();
   app.require_working_copy();
 
   // preserve excluded work for future commmits
   cset excluded_work;
   get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, excluded_work);
+
   calculate_ident(rs, rid);
 
   N(rs.is_nontrivial(), F("no changes to commit\n"));
@@ -2687,8 +2711,6 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     OPT_EXTERNAL_DIFF_ARGS)
 {
   path_set paths;
-  roster_t new_roster, old_roster;
-  temp_node_id_source nis;
   bool new_is_archived;
   diff_type type = app.diff_format;
   ostringstream header;
@@ -2717,9 +2739,12 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
   if (app.revision_selectors.size() == 0)
     {
+      roster_t new_roster, old_roster;
+      temp_node_id_source nis;
+      revision_id old_rid;
+
       get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-      revision_id old_rid;
       get_revision_id(old_rid);
 
       restriction mask;
@@ -2735,7 +2760,10 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
   else if (app.revision_selectors.size() == 1)
     {
+      roster_t new_roster, old_roster;
+      temp_node_id_source nis;
       revision_id r_old_id;
+
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
@@ -2760,6 +2788,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
   else if (app.revision_selectors.size() == 2)
     {
+      roster_t new_roster, old_roster;
+      temp_node_id_source nis;
       revision_id r_old_id, r_new_id;
 
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
@@ -3022,8 +3052,8 @@ CMD(update, N_("working copy"), "",
   // and write the cset from chosen to merged changeset in MT/work
   
   cset update, remaining;
-  make_cset (working_roster, merged_roster, update);
-  make_cset (chosen_roster, merged_roster, remaining);
+  make_cset(working_roster, merged_roster, update);
+  make_cset(chosen_roster, merged_roster, remaining);
 
   //   {
   //     data t1, t2, t3;
