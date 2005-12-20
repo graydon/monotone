@@ -7,6 +7,7 @@
 #define BOTAN_EXT_ENTROPY_SRC_WIN32_CAPI_H__
 
 #include <botan/base.h>
+#include <vector>
 
 namespace Botan {
 
