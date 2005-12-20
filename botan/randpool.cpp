@@ -5,6 +5,8 @@
 
 #include <botan/randpool.h>
 #include <botan/lookup.h>
+#include <botan/bit_ops.h>
+#include <botan/util.h>
 
 namespace Botan {
 
@@ -36,15 +38,14 @@ void Randpool::update_buffer()
    counter++;
 
    for(u32bit j = 0; j != 4; j++)
-      hash->update(get_byte(j, counter));
+      mac->update(get_byte(j, counter));
    for(u32bit j = 0; j != 8; j++)
-      hash->update(get_byte(j, timestamp));
-   hash->update(poolhash);
+      mac->update(get_byte(j, timestamp));
 
-   SecureVector<byte> outerhash = hash->final();
+   SecureVector<byte> mac_val = mac->final();
 
-   for(u32bit j = 0; j != outerhash.size(); j++)
-      buffer[j % buffer.size()] ^= outerhash[j];
+   for(u32bit j = 0; j != mac_val.size(); j++)
+      buffer[j % buffer.size()] ^= mac_val[j];
    cipher->encrypt(buffer);
 
    if(counter % ITERATIONS_BEFORE_RESEED == 0)
@@ -61,7 +62,8 @@ void Randpool::mix_pool()
    {
    const u32bit BLOCK_SIZE = cipher->BLOCK_SIZE;
 
-   cipher->set_key(poolhash);
+   mac->set_key(mac->process(pool));
+   cipher->set_key(mac->process(pool));
 
    xor_buf(pool, buffer, BLOCK_SIZE);
    cipher->encrypt(pool);
@@ -72,8 +74,6 @@ void Randpool::mix_pool()
       xor_buf(this_block, previous_block, BLOCK_SIZE);
       cipher->encrypt(this_block);
       }
-
-   poolhash = hash->process(pool);
    }
 
 /*************************************************
@@ -82,20 +82,12 @@ void Randpool::mix_pool()
 void Randpool::add_randomness(const byte data[], u32bit length)
    {
    u32bit this_entropy = entropy_estimate(data, length);
-   entropy += std::min(this_entropy, 8*hash->OUTPUT_LENGTH);
+   entropy += std::min(this_entropy, 8*mac->OUTPUT_LENGTH);
    entropy = std::min(entropy, 8 * pool.size());
 
-   while(length)
-      {
-      u32bit added = std::min(pool.size() / 2, length);
-
-      xor_buf(pool, data, added);
-      poolhash = hash->process(pool);
-      mix_pool();
-
-      length -= added;
-      data += added;
-      }
+   SecureVector<byte> mac_val = mac->process(data, length);
+   xor_buf(pool, mac_val, mac_val.size());
+   mix_pool();
    }
 
 /*************************************************
@@ -112,9 +104,8 @@ bool Randpool::is_seeded() const
 void Randpool::clear() throw()
    {
    cipher->clear();
-   hash->clear();
+   mac->clear();
    pool.clear();
-   poolhash.clear();
    buffer.clear();
    entropy = counter = 0;
    }
@@ -124,7 +115,7 @@ void Randpool::clear() throw()
 *************************************************/
 std::string Randpool::name() const
    {
-   return "Randpool(" + cipher->name() + "," + hash->name() + ")";
+   return "Randpool(" + cipher->name() + "," + mac->name() + ")";
    }
 
 /*************************************************
@@ -133,23 +124,24 @@ std::string Randpool::name() const
 Randpool::Randpool() : ITERATIONS_BEFORE_RESEED(8), POOL_BLOCKS(32)
    {
    const std::string CIPHER_NAME = "AES-256";
-   const std::string HASH_NAME = "SHA-256";
+   const std::string MAC_NAME = "HMAC(SHA-256)";
 
    cipher = get_block_cipher(CIPHER_NAME);
-   hash = get_hash(HASH_NAME);
+   mac = get_mac(MAC_NAME);
 
    const u32bit BLOCK_SIZE = cipher->BLOCK_SIZE;
-   const u32bit OUTPUT_LENGTH = hash->OUTPUT_LENGTH;
+   const u32bit OUTPUT_LENGTH = mac->OUTPUT_LENGTH;
 
-   if(OUTPUT_LENGTH < BLOCK_SIZE || !cipher->valid_keylength(OUTPUT_LENGTH))
+   if(OUTPUT_LENGTH < BLOCK_SIZE ||
+      !cipher->valid_keylength(OUTPUT_LENGTH) ||
+      !mac->valid_keylength(OUTPUT_LENGTH))
       {
       delete cipher;
-      delete hash;
+      delete mac;
       throw Internal_Error("Randpool: Invalid algorithm combination " +
-                           CIPHER_NAME + "/" + HASH_NAME);
+                           CIPHER_NAME + "/" + MAC_NAME);
       }
 
-   poolhash = hash->process(pool);
    buffer.create(BLOCK_SIZE);
    pool.create(POOL_BLOCKS * BLOCK_SIZE);
    entropy = counter = 0;
@@ -163,7 +155,7 @@ Randpool::Randpool() : ITERATIONS_BEFORE_RESEED(8), POOL_BLOCKS(32)
 Randpool::~Randpool()
    {
    delete cipher;
-   delete hash;
+   delete mac;
    entropy = counter = 0;
    }
 

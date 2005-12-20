@@ -28,24 +28,40 @@ class Filter
       virtual void send(const byte[], u32bit);
       void send(byte input) { send(&input, 1); }
       void send(const MemoryRegion<byte>& in) { send(in.begin(), in.size()); }
-
-      void attach(Filter*);
-      u32bit total_ports() const;
-      u32bit current_port() const { return port_num; }
-      void set_port_count(u32bit);
-      void set_port(u32bit);
-      u32bit owns() const { return filter_owns; }
-      void incr_owns() { filter_owns++; }
-      Filter(u32bit = 1);
+      Filter();
    private:
-      friend class Pipe;
-      friend class Fork;
       Filter(const Filter&) {}
       Filter& operator=(const Filter&) { return (*this); }
+
+      friend class Pipe;
+      friend class Fanout_Filter;
+
+      u32bit total_ports() const;
+      u32bit current_port() const { return port_num; }
+      void set_port(u32bit);
+
+      u32bit owns() const { return filter_owns; }
+
+      void attach(Filter*);
+      void set_next(Filter*[], u32bit);
       Filter* get_next() const;
+
       SecureVector<byte> write_queue;
       std::vector<Filter*> next;
       u32bit port_num, filter_owns;
+   };
+
+/*************************************************
+* Fanout Filter Base Class                       *
+*************************************************/
+class Fanout_Filter : public Filter
+   {
+   protected:
+      void incr_owns() { filter_owns++; }
+
+      void set_port(u32bit n) { Filter::set_port(n); }
+      void set_next(Filter* f[], u32bit n) { Filter::set_next(f, n); }
+      void attach(Filter* f) { Filter::attach(f); }
    };
 
 }

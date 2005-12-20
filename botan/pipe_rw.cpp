@@ -4,28 +4,25 @@
 *************************************************/
 
 #include <botan/pipe.h>
+#include <botan/out_buf.h>
 #include <botan/secqueue.h>
 
 namespace Botan {
 
 /*************************************************
-* Write into a Pipe                              *
+* Look up the canonical ID for a queue           *
 *************************************************/
-SecureQueue* Pipe::get_message(const std::string& func_name, u32bit msg) const
+u32bit Pipe::get_message_no(const std::string& func_name, u32bit msg) const
    {
-   if(msg == MAX_MESSAGES)
-      throw Invalid_State("Pipe::get_message: overflow of message counter");
+   if(msg == DEFAULT_MESSAGE)
+      msg = default_msg();
+   else if(msg == LAST_MESSAGE)
+      msg = message_count() - 1;
 
-   if(msg == DEFAULT_MESSAGE)   msg = default_msg();
-   else if(msg == LAST_MESSAGE) msg = message_count() - 1;
-
-   if(msg >= messages.size())
+   if(msg >= message_count())
       throw Invalid_Message_Number(func_name, msg);
-   if(messages[msg])
-      return messages[msg];
-   else
-      throw Internal_Error("Pipe:get_message: got NULL for message #" +
-                           to_string(msg));
+
+   return msg;
    }
 
 /*************************************************
@@ -33,8 +30,8 @@ SecureQueue* Pipe::get_message(const std::string& func_name, u32bit msg) const
 *************************************************/
 void Pipe::write(const byte input[], u32bit length)
    {
-   if(!locked)
-      throw Exception("Cannot write to a Pipe while it is unlocked");
+   if(!inside_msg)
+      throw Exception("Cannot write to a Pipe while it is not processing");
    pipe->write(input, length);
    }
 
@@ -80,11 +77,7 @@ void Pipe::write(DataSource& source)
 *************************************************/
 u32bit Pipe::read(byte output[], u32bit length, u32bit msg)
    {
-   SecureQueue* msg_queue = get_message("read", msg);
-   if(msg_queue)
-      return msg_queue->read(output, length);
-   else
-      return 0;
+   return outputs->read(output, length, get_message_no("read", msg));
    }
 
 /*************************************************
@@ -140,11 +133,7 @@ std::string Pipe::read_all_as_string(u32bit msg)
 *************************************************/
 u32bit Pipe::remaining(u32bit msg) const
    {
-   SecureQueue* msg_queue = get_message("remaining", msg);
-   if(msg_queue)
-      return msg_queue->size();
-   else
-      return 0;
+   return outputs->remaining(get_message_no("remaining", msg));
    }
 
 /*************************************************
@@ -153,11 +142,7 @@ u32bit Pipe::remaining(u32bit msg) const
 u32bit Pipe::peek(byte output[], u32bit length,
                   u32bit offset, u32bit msg) const
    {
-   SecureQueue* msg_queue = get_message("peek", msg);
-   if(msg_queue)
-      return msg_queue->peek(output, length, offset);
-   else
-      return 0;
+   return outputs->peek(output, length, offset, get_message_no("peek", msg));
    }
 
 /*************************************************

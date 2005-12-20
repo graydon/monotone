@@ -17,8 +17,7 @@ namespace Botan {
 *************************************************/
 struct BER_Decoding_Error : public Decoding_Error
    {
-   BER_Decoding_Error(const std::string& str) :
-      Decoding_Error("BER: " + str) {}
+   BER_Decoding_Error(const std::string&);
    };
 
 /*************************************************
@@ -26,11 +25,8 @@ struct BER_Decoding_Error : public Decoding_Error
 *************************************************/
 struct BER_Bad_Tag : public BER_Decoding_Error
    {
-   BER_Bad_Tag(const std::string& str, ASN1_Tag tag) :
-      BER_Decoding_Error(str + ": " + to_string(tag)) {}
-   BER_Bad_Tag(const std::string& str, ASN1_Tag tag1, ASN1_Tag tag2) :
-      BER_Decoding_Error(str + ": " + to_string(tag1) + "/" +
-                                      to_string(tag2)) {}
+   BER_Bad_Tag(const std::string&, ASN1_Tag);
+   BER_Bad_Tag(const std::string&, ASN1_Tag, ASN1_Tag);
    };
 
 }

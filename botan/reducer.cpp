@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/reducer.h>
+#include <botan/bit_ops.h>
 
 namespace Botan {
 

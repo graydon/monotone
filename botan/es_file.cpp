@@ -5,6 +5,7 @@
 
 #include <botan/es_file.h>
 #include <botan/conf.h>
+#include <botan/parsing.h>
 #include <fstream>
 
 namespace Botan {

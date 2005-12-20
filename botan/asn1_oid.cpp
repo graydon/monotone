@@ -4,7 +4,8 @@
 *************************************************/
 
 #include <botan/asn1.h>
-#include <botan/util.h>
+#include <botan/bit_ops.h>
+#include <botan/parsing.h>
 
 namespace Botan {
 

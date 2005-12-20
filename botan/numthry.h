@@ -45,7 +45,6 @@ BigInt power_mod(const BigInt&, const BigInt&, const BigInt&);
 * Utility Functions                              *
 *************************************************/
 u32bit low_zero_bits(const BigInt&);
-u32bit power_of_2(const BigInt&);
 
 /*************************************************
 * Primality Testing                              *

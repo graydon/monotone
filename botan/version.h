@@ -7,7 +7,6 @@
 #define BOTAN_VERSION_H__
 
 #include <botan/types.h>
-#include <botan/config.h>
 #include <string>
 
 namespace Botan {

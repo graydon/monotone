@@ -4,7 +4,8 @@
 *************************************************/
 
 #include <botan/mp_core.h>
-#include <botan/util.h>
+#include <botan/mem_ops.h>
+#include <botan/parsing.h>
 #include <botan/exceptn.h>
 
 namespace Botan {

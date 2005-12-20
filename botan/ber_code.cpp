@@ -4,8 +4,22 @@
 *************************************************/
 
 #include <botan/asn1.h>
+#include <botan/parsing.h>
 
 namespace Botan {
+
+/*************************************************
+* BER Decoding Exceptions                        *
+*************************************************/
+BER_Decoding_Error::BER_Decoding_Error(const std::string& str) :
+   Decoding_Error("BER: " + str) {}
+
+BER_Bad_Tag::BER_Bad_Tag(const std::string& str, ASN1_Tag tag) :
+      BER_Decoding_Error(str + ": " + to_string(tag)) {}
+
+BER_Bad_Tag::BER_Bad_Tag(const std::string& str,
+                         ASN1_Tag tag1, ASN1_Tag tag2) :
+   BER_Decoding_Error(str + ": " + to_string(tag1) + "/" + to_string(tag2)) {}
 
 namespace {
 

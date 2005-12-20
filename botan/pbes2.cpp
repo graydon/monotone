@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/pbe_pkcs.h>
+#include <botan/parsing.h>
 #include <botan/lookup.h>
 #include <botan/rng.h>
 #include <botan/asn1_obj.h>
@@ -173,11 +174,11 @@ OID PBE_PKCS5v20::get_oid() const
 /*************************************************
 * Check if this is a known PBES2 cipher          *
 *************************************************/
-bool PBE_PKCS5v20::known_cipher(const std::string& cipher) const
+bool PBE_PKCS5v20::known_cipher(const std::string& algo) const
    {
-   if(cipher == "AES-128" || cipher == "AES-192" || cipher == "AES-256")
+   if(algo == "AES-128" || algo == "AES-192" || algo == "AES-256")
       return true;
-   if(cipher == "DES" || cipher == "TripleDES")
+   if(algo == "DES" || algo == "TripleDES")
       return true;
    return false;
    }

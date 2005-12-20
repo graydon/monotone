@@ -14,6 +14,7 @@
 
 #include <botan/gzip.h>
 #include <botan/filters.h>
+#include <botan/bit_ops.h>
 #include <cstring>
 #include <map>
 #include <zlib.h>

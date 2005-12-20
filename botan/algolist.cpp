@@ -4,10 +4,9 @@
 *************************************************/
 
 #include <botan/lookup.h>
-
+#include <botan/parsing.h>
 #include <botan/mode_pad.h>
 #include <botan/pkcs5.h>
-
 
 namespace Botan {
 
@@ -26,8 +25,6 @@ S2K* get_s2k(const std::string& algo_spec)
 
    const std::string algo_name = deref_alias(name[0]);
 
-   // removed in monotone
-   //if(algo_name == "OpenPGP-S2K") return new OpenPGP_S2K(name[1]);
    if(algo_name == "PBKDF1") return new PKCS5_PBKDF1(name[1]);
    if(algo_name == "PBKDF2") return new PKCS5_PBKDF2(name[1]);
 

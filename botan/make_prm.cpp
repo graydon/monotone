@@ -5,6 +5,8 @@
 
 #include <botan/numthry.h>
 #include <botan/lookup.h>
+#include <botan/bit_ops.h>
+#include <botan/parsing.h>
 #include <botan/rng.h>
 #include <botan/ui.h>
 #include <memory>

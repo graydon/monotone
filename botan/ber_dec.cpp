@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/asn1.h>
+#include <botan/bit_ops.h>
 
 namespace Botan {
 
