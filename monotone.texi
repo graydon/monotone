@@ -2235,7 +2235,7 @@ arbitrary branches, and so on; monotone will track all of it, and do
 something sensible for each merge.  Of course, it is still probably a
 good idea to come up with some organization of branches and a plan for
 which should be merged to which other ones.  Monotone may keep track of
-graphs of arbitrary complexity; but, you will have more trouble.
+graphs of arbitrary complexity --- but you will have more trouble.
 Whatever arrangement of branches you come up with, though, monotone
 should be able to handle it.
 
@@ -2346,7 +2346,28 @@ history currently on his laptop; it will catch up with Abe and Beth's
 latest work when they next sync, too.
 
 All of the team members now want to sync with the new monotone server by
-default, so they reset their local database variables accordingly.
+default.  Previously, they had been syncing with Jim's laptop by
+default, because monotone had remembered the first server used in a
+database variable.  These variables can be seen as follows:
+
+@smallexample
+@group
+$ monotone list vars
+database: default-exclude-pattern 
+database: default-include-pattern au.com.geek.*
+database: default-server jim-laptop.juicebot.co.jp
+known-servers: jim-laptop.juicebot.co.jp 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
+known-servers: abe-laptop.juicebot.co.jp a2bb16a183247af4133621f7f5aefb21a9d13855
+@end group
+@end smallexample
+
+The team members can reset their local database variables accordingly:
+
+@smallexample
+@group
+$ monotone set database default-server www.juicebot.co.jp
+@end group
+@end smallexample
 
 Jim knows he doesn't have to keep a special backup of the new server's
 contents; if the server should fail, all the contents of its database
