@@ -341,9 +341,8 @@ maybe_update_inodeprints(app_state & app)
     return;
   inodeprint_map ipm_new;
   roster_t old_roster, new_roster;
-  temp_node_id_source nis;
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, app);
   update_current_roster_from_filesystem(new_roster, app);
 
   node_map const & new_nodes = new_roster.all_nodes();
@@ -1290,7 +1289,6 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
 {
   path_set paths;
   roster_t old_roster, new_roster, restricted_roster;
-  temp_node_id_source nis;
   cset included, excluded;
   revision_id old_rev_id;
   revision_set rev;
@@ -1298,7 +1296,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
 
   app.require_working_copy();
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, app);
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
@@ -1315,6 +1313,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
 
   restricted_roster = old_roster;
+  temp_node_id_source nis;
   editable_roster_base er(restricted_roster, nis);
   included.apply_to(er);
 
@@ -1665,12 +1664,11 @@ ls_known(app_state & app, vector<utf8> const & args)
 {
   path_set paths;
   roster_t old_roster, new_roster;
-  temp_node_id_source nis;
   restriction mask;
 
   app.require_working_copy();
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, app);
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
@@ -1706,10 +1704,23 @@ find_unknown_and_ignored(app_state & app, vector<utf8> const & args,
   revision_set rev;
   roster_t old_roster, new_roster;
   path_set known;
+  path_set paths;
+  restriction mask;
 
-  get_working_revision_and_rosters(app, args, rev, old_roster, new_roster);
+  get_base_and_current_roster_shape(old_roster, new_roster, app);
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    {
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+    }
+  
+  mask.add_nodes(new_roster, paths);
+
   new_roster.extract_path_set(known);
 
+  // FIXME_RESTRICTIONS: use mask to restrict paths instead of nids
   file_itemizer u(app, known, unknown, ignored);
   walk_tree(file_path(), u);
 }
@@ -1737,10 +1748,9 @@ find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
 {
   path_set paths;
   roster_t old_roster, new_roster;
-  temp_node_id_source nis;
   restriction mask;
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, app);
 
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
@@ -2225,10 +2235,9 @@ CMD(attr, N_("working copy"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PAT
     throw usage(name);
 
   roster_t old_roster, new_roster;
-  temp_node_id_source nis;
 
   app.require_working_copy();
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, app);
 
   // FIXME_RESTRICTIONS: is there any reason to update content hashes here?
   update_current_roster_from_filesystem(new_roster, app);
@@ -2346,23 +2355,45 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
 {
   string log_message("");
   bool log_message_given;
-  revision_set rs;
-  revision_id rid;
-  roster_t old_roster, new_roster;
+  revision_set restricted_rev;
+  revision_id old_rev_id, restricted_rev_id;
+  roster_t old_roster, new_roster, restricted_roster;
+  path_set paths;
+  cset included, excluded;
 
   app.make_branch_sticky();
   app.require_working_copy();
 
-  // preserve excluded work for future commmits
-  cset excluded_work;
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, excluded_work);
+  get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  calculate_ident(rs, rid);
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    {
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+    }
 
-  N(rs.is_nontrivial(), F("no changes to commit\n"));
+  restriction mask;
+  mask.add_nodes(old_roster, paths);
+  mask.add_nodes(new_roster, paths);
+
+  update_current_roster_from_filesystem(new_roster, mask, app);
+  make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+
+  restricted_roster = old_roster;
+  temp_node_id_source nis;
+  editable_roster_base er(restricted_roster, nis);
+  included.apply_to(er);
+
+  get_revision_id(old_rev_id);
+  make_revision_set(old_rev_id, old_roster, restricted_roster, restricted_rev);
+
+  calculate_ident(restricted_rev, restricted_rev_id);
+
+  N(restricted_rev.is_nontrivial(), F("no changes to commit\n"));
     
   cert_value branchname;
-  I(rs.edges.size() == 1);
+  I(restricted_rev.edges.size() == 1);
 
   set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
@@ -2371,13 +2402,13 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   if (app.branch_name() != "") 
     branchname = app.branch_name();
   else 
-    guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
+    guess_branch(edge_old_revision(restricted_rev.edges.begin()), app, branchname);
 
   P(F("beginning commit on branch '%s'\n") % branchname);
   L(F("new manifest '%s'\n"
       "new revision '%s'\n")
-    % rs.new_manifest
-    % rid);
+    % restricted_rev.new_manifest
+    % restricted_rev_id);
 
   process_commit_message_args(log_message_given, log_message, app);
   
@@ -2389,7 +2420,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   if (!log_message_given)
     {
       // this call handles MT/log
-      get_log_message_interactively(rs, app, log_message);
+      get_log_message_interactively(restricted_rev, app, log_message);
       // we only check for empty log messages when the user entered them
       // interactively.  Consensus was that if someone wanted to explicitly
       // type --message="", then there wasn't any reason to stop them.
@@ -2409,18 +2440,18 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
     transaction_guard guard(app.db);
     packet_db_writer dbw(app);
 
-    if (app.db.revision_exists(rid))
+    if (app.db.revision_exists(restricted_rev_id))
       {
-        W(F("revision %s already in database\n") % rid);
+        W(F("revision %s already in database\n") % restricted_rev_id);
       }
     else
       {
         // new revision
-        L(F("inserting new revision %s\n") % rid);
+        L(F("inserting new revision %s\n") % restricted_rev_id);
 
-        I(rs.edges.size() == 1);
-        edge_map::const_iterator edge = rs.edges.begin();
-        I(edge != rs.edges.end());
+        I(restricted_rev.edges.size() == 1);
+        edge_map::const_iterator edge = restricted_rev.edges.begin();
+        I(edge != restricted_rev.edges.end());
 
         // process file deltas or new files
         cset const & cs = edge_changes(edge);
@@ -2492,26 +2523,26 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
       }
 
     revision_data rdat;
-    write_revision_set(rs, rdat);
-    dbw.consume_revision_data(rid, rdat);
+    write_revision_set(restricted_rev, rdat);
+    dbw.consume_revision_data(restricted_rev_id, rdat);
   
-    cert_revision_in_branch(rid, branchname, app, dbw); 
+    cert_revision_in_branch(restricted_rev_id, branchname, app, dbw); 
     if (app.date_set)
-      cert_revision_date_time(rid, app.date, app, dbw);
+      cert_revision_date_time(restricted_rev_id, app.date, app, dbw);
     else
-      cert_revision_date_now(rid, app, dbw);
+      cert_revision_date_now(restricted_rev_id, app, dbw);
     if (app.author().length() > 0)
-      cert_revision_author(rid, app.author(), app, dbw);
+      cert_revision_author(restricted_rev_id, app.author(), app, dbw);
     else
-      cert_revision_author_default(rid, app, dbw);
-    cert_revision_changelog(rid, log_message, app, dbw);
+      cert_revision_author_default(restricted_rev_id, app, dbw);
+    cert_revision_changelog(restricted_rev_id, log_message, app, dbw);
     guard.commit();
   }
   
   // small race condition here...
-  put_work_cset(excluded_work);
-  put_revision_id(rid);
-  P(F("committed revision %s\n") % rid);
+  put_work_cset(excluded);
+  put_revision_id(restricted_rev_id);
+  P(F("committed revision %s\n") % restricted_rev_id);
   
   blank_user_log();
 
@@ -2531,7 +2562,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
     // with same name, etc.  they can inquire further, later.
     map<cert_name, cert_value> certs;
     vector< revision<cert> > ctmp;
-    app.db.get_revision_certs(rid, ctmp);
+    app.db.get_revision_certs(restricted_rev_id, ctmp);
     for (vector< revision<cert> >::const_iterator i = ctmp.begin();
          i != ctmp.end(); ++i)
       {
@@ -2540,8 +2571,8 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
         certs.insert(make_pair(i->inner().name, vtmp));
       }
     revision_data rdat;
-    app.db.get_revision(rid, rdat);
-    app.lua.hook_note_commit(rid, rdat, certs);
+    app.db.get_revision(restricted_rev_id, rdat);
+    app.lua.hook_note_commit(restricted_rev_id, rdat, certs);
   }
 }
 
@@ -2720,8 +2751,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       F("--diff-args requires --external\n"
         "try adding --external or removing --diff-args?"));
 
-  cset included;
-  cset excluded;
+  cset included, excluded;
 
   // initialize before transaction so we have a database to work with
 
@@ -2740,10 +2770,9 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   if (app.revision_selectors.size() == 0)
     {
       roster_t new_roster, old_roster;
-      temp_node_id_source nis;
       revision_id old_rid;
 
-      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      get_base_and_current_roster_shape(old_roster, new_roster, app);
 
       get_revision_id(old_rid);
 
@@ -2761,14 +2790,13 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   else if (app.revision_selectors.size() == 1)
     {
       roster_t new_roster, old_roster;
-      temp_node_id_source nis;
       revision_id r_old_id;
 
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
-      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      get_base_and_current_roster_shape(old_roster, new_roster, app);
       // Clobber old_roster with the one specified
       app.db.get_roster(r_old_id, old_roster);
 
@@ -2789,7 +2817,6 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   else if (app.revision_selectors.size() == 2)
     {
       roster_t new_roster, old_roster;
-      temp_node_id_source nis;
       revision_id r_old_id, r_new_id;
 
       complete(app, idx(app.revision_selectors, 0)(), r_old_id);
@@ -2895,7 +2922,6 @@ CMD(update, N_("working copy"), "",
   boost::shared_ptr<roster_t> old_roster = boost::shared_ptr<roster_t>(new roster_t());
   marking_map working_mm, chosen_mm, merged_mm;
   revision_id r_old_id, r_working_id, r_chosen_id;
-  temp_node_id_source nis;
 
   if (args.size() > 0)
     throw usage(name);
@@ -2910,7 +2936,7 @@ CMD(update, N_("working copy"), "",
   // such. But it should work for now; revisit if performance is
   // intolerable.
 
-  get_base_and_current_roster_shape(*old_roster, working_roster, nis, app);
+  get_base_and_current_roster_shape(*old_roster, working_roster, app);
   update_current_roster_from_filesystem(working_roster, app);
 
   get_revision_id(r_old_id);
@@ -3339,7 +3365,6 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
 {
   path_set paths;
   roster_t old_roster, new_roster;
-  temp_node_id_source nis;
   restriction mask;
   cset included, excluded;
 
@@ -3353,8 +3378,6 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       path_set missing;
       find_missing(app, args_copy, missing);
 
-      // chose as_external because app_state::set_restriction turns utf8s into file_paths
-      // using file_path_external()...
       for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
         args_copy.push_back(file_path(*i).as_external());
 
@@ -3367,7 +3390,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
         return;
     }
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, app);
 
   for (vector<utf8>::const_iterator i = args_copy.begin(); i != args_copy.end(); ++i)
     {
@@ -3593,10 +3616,9 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     {
       // User wants to trace only specific files
       roster_t old_roster, new_roster;
-      temp_node_id_source nis;
 
       if (app.revision_selectors.size() == 0)
-        get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+        get_base_and_current_roster_shape(old_roster, new_roster, app);
       else
         app.db.get_roster(first_rid, new_roster);          
 

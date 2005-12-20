@@ -97,12 +97,7 @@ void get_base_roster(app_state & app, roster_t & ros);
 // and under the correct names -- but do not trust file content hashes.
 void get_current_roster_shape(roster_t & ros, node_id_source & nis, app_state & app);
 
-/**
-// This does update hashes, but only those that match the current restriction
-void get_current_restricted_roster(roster_t & ros, node_id_source & nis, app_state & app);
-**/
-
-// This returns the current roster, except it does not bother updating the
+// These returns the current roster, except they do not bother updating the
 // hashes in that roster -- the "shape" is correct, all files and dirs exist
 // and under the correct names -- but do not trust file content hashes.
 void get_base_and_current_roster_shape(roster_t & base_roster,
@@ -110,13 +105,9 @@ void get_base_and_current_roster_shape(roster_t & base_roster,
                                        node_id_source & nis,
                                        app_state & app);
 
-/**
-// This does update hashes, but only those that match the current restriction
-void get_base_and_current_restricted_roster(roster_t & base_roster,
-                                            roster_t & current_roster,
-                                            node_id_source & nis,
-                                            app_state & app);
-**/
+void get_base_and_current_roster_shape(roster_t & base_roster,
+                                       roster_t & current_roster,
+                                       app_state & app);
 
 // the "user log" is a file the user can edit as they program to record
 // changes they make to their source code. Upon commit the file is read
