@@ -2299,7 +2299,7 @@ Beth and Abe start to experience the database locking issues too. They
 don't always have reliable network connectivity, so sometimes Jim finds
 that neither of them is online to sync with when he has the chance.  Jim
 now also has several customers interested in beta-testing the new code,
-and following updates as the bugs and issues they report are addressed.
+and following changes as the bugs and issues they report are addressed.
 
 Jim decides it's time for a permanent server they can all sync with;
 this way, everyone always knows where to go to get the latest changes,
@@ -2312,7 +2312,7 @@ he thinks this server will be a good place to host the central monotone
 server too. He sets up a new monotone database on the server,
 generates a new key specially for the server (so he doesn't have to
 expose his own development private key on the shared system), and loads
-in the team-members's keys:  
+in the team-members' keys:  
 
 @smallexample
 @group
@@ -2372,21 +2372,22 @@ port 1234 by leaving out the address part like @code{--bind=:1234}.
 
 When he's satisified the server is set up correctly, Jim does an initial
 @command{sync} with the new database, filling it with all the revision
-history currently on his laptop; it will catch up with Abe and Beth's
-latest work when they next sync, too.
+history currently on his laptop. While Jim has been busy setting up the
+server, Abe and Beth have kept working; the server will catch up with
+their latest changes when they next sync, too.
 
 All of the team members now want to sync with the new monotone server by
 default.  Previously, they had been syncing with Jim's laptop by
 default, even if they occasionally specified another team-member's
 server on the command line when Jim was away, because monotone had
-remembered the first server used in a database variable.  These
-variables can be seen as follows:
+remembered the first server and branch patterns used in database
+@ref{Vars}.  These vars can be seen as follows:
 
 @smallexample
 @group
 $ monotone list vars
 database: default-exclude-pattern 
-database: default-include-pattern au.com.geek.*
+database: default-include-pattern jp.co.juicebot.jb7*
 database: default-server jim-laptop.juicebot.co.jp
 known-servers: jim-laptop.juicebot.co.jp 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
 known-servers: abe-laptop.juicebot.co.jp a2bb16a183247af4133621f7f5aefb21a9d13855
@@ -2394,7 +2395,7 @@ known-servers: www.juicebot.co.jp 120a99ch93b4f174432c13d3e3e9f2234aa92612
 @end group
 @end smallexample
 
-The team members can reset their local database variables accordingly:
+The team members can reset their local database vars accordingly:
 
 @smallexample
 @group
@@ -2402,15 +2403,60 @@ $ monotone set database default-server www.juicebot.co.jp
 @end group
 @end smallexample
 
+With their new server, the juicebot team have gained the convenience of
+a readily available common point of reference for syncs.  However, they
+also know that this is there only as a convenience, and doesn't prevent
+them working as they did before:
+@itemize
+@item
+The team members can still sync with each other if needed.  Hopefully,
+their new server won't ever be down, but sometimes they might be working
+together while away from ready network access --- fixing up the last few
+issues and finalising presentation materials while travelling to a sales
+conference, for example.  The server will learn of these changes on the
+next sync.
+@item
+The team members continue to discover multiple heads and changes that
+need merging, as before. Each team member can merge the heads, and will
+produce the same revision id if they merge to the same result. They now
+develop a new habit out of courtesy, though --- they try not to leave
+multiple heads and unmerged changes on the server, at least not for
+long. This saves them from repeated work, and also helps prevent
+confusion for the beta-testers.  When each team member is ready to
+@command{sync}, they develop the habit of doing a @command{pull} from
+the server first.  If new revisions were received from the server, they
+first @command{merge} their new revisions with the head(s) from the
+server, and finally @command{sync} to publish their merged changes as
+one.  If the last @command{sync} happens to pull in new revisions again
+from the server, it means someone else has deposited new work at the
+same time, and another @command{merge} and @command{sync} would probably
+be polite.
+@item
 Jim knows he doesn't have to keep a special backup of the new server's
 contents; if the server should fail, all the contents of its database
-can be found amongst the other team members.  He does, however, take a
-copy of the server's private key, so he can restore that if necessary.
+can be found amongst the other team members (because no commits are done
+on the server itself).  He does, however, take a copy of the server's
+private key, so he can restore that if necessary.
+@item
+In fact, Jim realises that he can now commit a copy of the web site's
+current contents into monotone on a new branch,
+@code{jp.co.juicebot.www}, and keep a backup of that content too. Now he
+can use monotone to work on the website offline, and let other team
+members add and edit the content; he can also preview changes locally
+before updating the production content.  He keeps a working directory
+checkout of this content in the webroot on the server, and runs a
+monotone @command{update} in there when he wants to bring the public web
+site up to date.
+@item
 Jim also knows that even if someone should break into the shared hosting
 server and tamper with the database, they won't be able to inject
 malicious code into the project, because all revisions are signed by the
-team members, and he doesn't trust the server key for signing revisions.
-
+team members, and he has set his @ref{Trust Evaluation Hooks} so he
+doesn't trust the server key for signing revisions.  In monotone, the
+important trust consideration is on the @emph{signed content}, rather
+than on the @emph{replication path} by which that content arrived in
+your database.
+@end itemize
 
 @node    Advanced Uses
 @chapter Advanced Uses
