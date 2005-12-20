@@ -2253,6 +2253,8 @@ connected and running all the time, while his employees in different
 time-zones work and sync their databases.  This is now starting to
 change, and two problems are starting to cause occasional difficulties.
 
+@itemize
+@item
 Firstly, Jim is finding that he has to spend more of his time
 travelling, demonstrating the new juicebot features to customers; thus
 his laptop is spending more time disconnected from the network, or
@@ -2265,15 +2267,17 @@ bug in the meantime, and they're more exposed to loss of work if one of
 them suffers a disk failure before they've had a chance to sync that
 work with another database.
 
+@item
 Secondly, the level of project activity is picking up, and there are
 more and more changes to be synced in the narrower window of time while
 Jim is connected. Because Jim has been using the one database file both
-for his own local work, and for serving to the others in the team, Jim
+for his own local work, and for serving to the others in the team, he
 occasionally finds that the monotone serve process (busy syncing with
 Abe or Beth) has a lock on the database, while he's trying to do local
 work like updates or commits.  He finds he sometimes needs to take down
 the server process to do this local work, further exacerbating the first
 problem.
+@end itemize
 
 The juicebot team are resourceful, and by now quite used to working
 independently.  While Jim has been away travelling, Abe and Beth have
@@ -2290,12 +2294,12 @@ moment and dynamic connectivity from a hotel room or airport.  Changes
 will flow between servers automatically as clients access them and trade
 with one another.
 
-This gets them by for a while, but now Beth and Abe start to experience
-the database locking issues too. They don't always have reliable network
-connectivity, so sometimes Jim finds that neither of them is online to
-sync with when he has the chance.  Jim now also has several customers
-interested in beta-testing the new code, and following updates as the
-bugs and issues they report are addressed.
+This gets them by for a while, but doesn't solve the second problem: now
+Beth and Abe start to experience the database locking issues too. They
+don't always have reliable network connectivity, so sometimes Jim finds
+that neither of them is online to sync with when he has the chance.  Jim
+now also has several customers interested in beta-testing the new code,
+and following updates as the bugs and issues they report are addressed.
 
 Jim decides it's time for a permanent server they can all sync with;
 this way, everyone always knows where to go to get the latest changes,
@@ -2303,13 +2307,39 @@ and people can push their changes out without first calling their
 friends and making sure that they have their servers running.  
 
 Jim has rented some web server space on a service provider's shared
-system for the JuiceBot, Inc public website; he thinks this server will
-be a good place to host the central monotone server too. He sets up a
-new monotone database on the server, and generates a new key specially
-for the server (so he doesn't have to expose his own development private
-key on the shared system).  He sets up the permissions files, and
-arranges for the monotone @command{serve} command to be started each
-time the server reboots.
+system for the JuiceBot, Inc public website, @code{www.juicebot.co.jp};
+he thinks this server will be a good place to host the central monotone
+server too. He sets up a new monotone database on the server,
+generates a new key specially for the server (so he doesn't have to
+expose his own development private key on the shared system), and loads
+in the team-members's keys:  
+
+@smallexample
+@group
+$ monotone --db=server.db db init
+$ monotone --db=server.db genkey monotone-server@@www.juicebot.co.jp
+monotone: generating key-pair 'monotone-server@@www.juicebot.co.jp'
+enter passphrase for key ID [monotone-server@@www.juicebot.co.jp] : @i{<Jim enters a new passphrase>}
+confirm passphrase for key ID [monotone-server@@www.juicebot.co.jp]: @i{<Jim confirms the passphrase>}
+monotone: storing key-pair 'monotone-server@@www.juicebot.co.jp' in keystore
+$ cat abe.pubkey beth.pubkey jim.pubkey | monotone --db=server.db read
+monotone: read 3 packets
+@end group
+@end smallexample
+
+He sets up the permissions files much like before, except that of course
+he needs to also grant his @code{jim@@juicebot.co.jp} key permission to
+access the new server.
+
+Jim could log in and start the monotone process manually from his shell
+account on the server, perhaps under a program like screen to let it
+stay running while he's away. This would be one way of giving it the
+server-key's passphrase each startup, but he wants to make sure that the
+server is up all the time; if it reboots while he's travelling and is
+down until he next logs in, things aren't much better than before.  For
+the server to start automatically each time, he'll need to use the
+@code{get_passphrase} hook in the server's @file{.monotonerc} file
+again.
 
 Because he's running on a shared server, Jim needs to be a little more
 restrictive about which interfaces and addresses his new server process
@@ -2325,11 +2355,11 @@ $ monotone --db=server.db --bind=www.juicebot.co.jp "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
-The example above will start monotone listening on the default port
-(5253), but only on the IP address associated with www.juicebot.co.jp.
-Jim can do this because his hosting provider has given him a dedicated
-IP address.  If the hosting provider offered only a single shared IP
-address belonging to the server, each customer could bind a different
+This will start monotone listening on the default port (5253), but only
+on the IP address associated with @code{www.juicebot.co.jp}.  Jim can do
+this because his hosting provider has given him a dedicated IP address
+for his website.  If the hosting provider offered only a single shared
+IP address belonging to the server, each customer could bind a different
 port number on that address.
 
 While he's first testing the setup, Jim uses
@@ -2347,8 +2377,10 @@ latest work when they next sync, too.
 
 All of the team members now want to sync with the new monotone server by
 default.  Previously, they had been syncing with Jim's laptop by
-default, because monotone had remembered the first server used in a
-database variable.  These variables can be seen as follows:
+default, even if they occasionally specified another team-member's
+server on the command line when Jim was away, because monotone had
+remembered the first server used in a database variable.  These
+variables can be seen as follows:
 
 @smallexample
 @group
@@ -2358,6 +2390,7 @@ database: default-include-pattern au.com.geek.*
 database: default-server jim-laptop.juicebot.co.jp
 known-servers: jim-laptop.juicebot.co.jp 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
 known-servers: abe-laptop.juicebot.co.jp a2bb16a183247af4133621f7f5aefb21a9d13855
+known-servers: www.juicebot.co.jp 120a99ch93b4f174432c13d3e3e9f2234aa92612
 @end group
 @end smallexample
 
