@@ -39,10 +39,12 @@ namespace legacy
 
   ///////
   // parsing old-style manifests, for 'rosterify' and 'changesetify' commands
-  typedef std::pair<file_path const, file_id> manifest_entry;
   typedef std::map<file_path, file_id, 
-                   std::less<file_path>, 
-                   QA(manifest_entry) > manifest_map;
+                   std::less<file_path> > manifest_map;
+  void read_manifest_map(data const & dat,
+                         manifest_map & man);
+  void read_manifest_map(manifest_data const & dat,
+                         manifest_map & man);
 
 }
 

@@ -6,6 +6,7 @@
 #include "legacy.hh"
 #include "basic_io.hh"
 #include "app_state.hh"
+#include "constants.hh"
 
 namespace legacy
 {
@@ -70,4 +71,40 @@ namespace legacy
       }
     I(false);
   }
+
+
+  void 
+  read_manifest_map(data const & dat,
+                    manifest_map & man)
+  {
+    std::string::size_type pos = 0;
+    while (pos != dat().size())
+      {
+        // whenever we get here, pos points to the beginning of a manifest
+        // line
+        // manifest file has 40 characters hash, then 2 characters space, then
+        // everything until next \n is filename.
+        std::string ident = dat().substr(pos, constants::idlen);
+        std::string::size_type file_name_begin = pos + constants::idlen + 2;
+        pos = dat().find('\n', file_name_begin);
+        std::string file_name;
+        if (pos == std::string::npos)
+          file_name = dat().substr(file_name_begin);
+        else
+          file_name = dat().substr(file_name_begin, pos - file_name_begin);
+        man.insert(std::make_pair(file_path_internal(file_name),
+                                  hexenc<id>(ident)));
+        // skip past the '\n'
+        ++pos;
+      }
+    return;
+  }
+  
+  void 
+  read_manifest_map(manifest_data const & dat,
+                    manifest_map & man)
+  {  
+    read_manifest_map(dat.inner(), man);
+  }
+  
 }

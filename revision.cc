@@ -1128,10 +1128,12 @@ anc_graph::construct_revisions_from_ancestry()
           L(F("processing node %d\n") % child);
 
           manifest_id old_child_mid;
-          manifest_map old_child_man;
+          legacy::manifest_map old_child_man;
 
           get_node_manifest(child, old_child_mid);
-          app.db.get_manifest(old_child_mid, old_child_man);
+          manifest_data mdat;
+          app.db.get_manifest_version(old_child_mid, mdat);
+          legacy::read_manifest_map(mdat, old_child_man);
 
           // Load all the parent rosters into a temporary roster map
           parent_roster_map parent_rosters;
@@ -1156,7 +1158,7 @@ anc_graph::construct_revisions_from_ancestry()
           roster_t child_roster;
           MM(child_roster);
           temp_node_id_source nis;
-          for (manifest_map::const_iterator i = old_child_man.begin();
+          for (legacy::manifest_map::const_iterator i = old_child_man.begin();
                i != old_child_man.end(); ++i)
             {
               if (!(i->first == attr_path))
@@ -1169,7 +1171,7 @@ anc_graph::construct_revisions_from_ancestry()
           
           // migrate attributes out of .mt-attrs
           {
-            manifest_map::const_iterator i = old_child_man.find(attr_path);
+            legacy::manifest_map::const_iterator i = old_child_man.find(attr_path);
             if (i != old_child_man.end())
               {
                 file_data dat;

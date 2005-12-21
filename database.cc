@@ -1363,15 +1363,6 @@ database::get_manifest_version(manifest_id const & id,
 }
 
 void 
-database::get_manifest(manifest_id const & id,
-                       manifest_map & mm)
-{
-  manifest_data mdat;
-  get_manifest_version(id, mdat);
-  read_manifest_map(mdat, mm);
-}
-
-void 
 database::put_file(file_id const & id,
                    file_data const & dat)
 {
@@ -2188,32 +2179,6 @@ database::complete(string const & partial,
     completions.insert(revision_id(res[i][0]));  
 }
 
-
-void 
-database::complete(string const & partial,
-                   set<manifest_id> & completions)
-{
-  results res;
-  completions.clear();
-
-  string pattern = partial + "*";
-
-  fetch(res, 1, any_rows,
-        "SELECT id FROM manifests WHERE id GLOB ?",
-        pattern.c_str());
-
-  for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(manifest_id(res[i][0]));  
-  
-  res.clear();
-
-  fetch(res, 1, any_rows,
-        "SELECT id FROM manifest_deltas WHERE id GLOB ?",
-        pattern.c_str());
-
-  for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(manifest_id(res[i][0]));  
-}
 
 void 
 database::complete(string const & partial,
