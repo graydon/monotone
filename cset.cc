@@ -24,11 +24,10 @@ check_normalized(cset const & cs)
 {
   MM(cs);
 
-  // FIXME -- normalize:
+  // normalize:
   //
   //   add_file foo@id1 + apply_delta id1->id2
   //   clear_attr foo:bar + set_attr foo:bar=baz
-  //   rename foo -> foo
   //
   // possibly more?
 

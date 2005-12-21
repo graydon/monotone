@@ -990,9 +990,48 @@ static void test_access_tracker()
   BOOST_CHECK_THROW(a.may_not_initialize(), std::logic_error);
 }
 
+static void test_a_path_ordering(std::string const & left, std::string const & right)
+{
+  MM(left);
+  MM(right);
+  split_path left_sp, right_sp;
+  file_path_internal(left).split(left_sp);
+  file_path_internal(right).split(right_sp);
+  I(left_sp < right_sp);
+}
+
+static void test_path_ordering()
+{
+  // this ordering is very important:
+  //   -- it is used to determine the textual form of csets and manifests
+  //      (in particular, it cannot be changed)
+  //   -- it is used to determine in what order cset operations can be applied
+  //      (in particular, foo must sort before foo/bar, so that we can use it
+  //      to do top-down and bottom-up traversals of a set of paths).
+  test_a_path_ordering("a", "b");
+  test_a_path_ordering("a", "c");
+  test_a_path_ordering("ab", "ac");
+  test_a_path_ordering("a", "ab");
+  test_a_path_ordering("", "a");
+  test_a_path_ordering("", ".foo");
+  test_a_path_ordering("foo", "foo/bar");
+  // . is before / asciibetically, so sorting by strings will give the wrong
+  // answer on this:
+  test_a_path_ordering("foo/bar", "foo.bar");
+
+  // path_components used to be interned strings, and we used the default sort
+  // order, which meant that in practice path components would sort in the
+  // _order they were first used in the program_.  So let's put in a test that
+  // would catch this sort of brokenness.
+  test_a_path_ordering("fallanopic_not_otherwise_mentioned", "xyzzy");
+  test_a_path_ordering("fallanoooo_not_otherwise_mentioned_and_smaller", "fallanopic_not_otherwise_mentioned");
+}
+
+
 void add_paths_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&test_path_ordering));
   suite->add(BOOST_TEST_CASE(&test_null_name));
   suite->add(BOOST_TEST_CASE(&test_file_path_internal));
   suite->add(BOOST_TEST_CASE(&test_file_path_external_null_prefix));
