@@ -2366,13 +2366,12 @@ Because he's running on a shared server, Jim needs to be a little more
 restrictive about which interfaces and addresses his new server process
 will listen on. He should only accept connections at the address used
 for his website, because some of the provider's other customers might
-also want to publish their own monotone projects on this server.  In the
-startup script for the server, Jim uses the @code{--bind=address:port}
-argument like so:
+also want to publish their own monotone projects on this host.  Jim uses
+the @code{--bind=address:port} argument like so:
 
 @smallexample
 @group
-$ monotone --db=server.db --bind=www.juicebot.co.jp "jp.co.juicebot.jb7*"
+$ monotone --db=server.db --bind=www.juicebot.co.jp serve "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
