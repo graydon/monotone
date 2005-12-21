@@ -256,63 +256,48 @@ void
 print_cset(basic_io::printer & printer,
            cset const & cs)
 {
-  string prev;
   for (path_set::const_iterator i = cs.nodes_deleted.begin();
        i != cs.nodes_deleted.end(); ++i)
     {
       file_path p(*i);
-      I(prev.empty() || p.as_internal() > prev);
-      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::delete_node, file_path(*i));
       printer.print_stanza(st);
     }
 
-  prev.clear();
   for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     {
       file_path p(i->first);
-      I(prev.empty() || p.as_internal() > prev);
-      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::rename_node, file_path(i->first));
       st.push_file_pair(syms::to, file_path(i->second));
       printer.print_stanza(st);
     }
 
-  prev.clear();
   for (path_set::const_iterator i = cs.dirs_added.begin();
        i != cs.dirs_added.end(); ++i)
     {
       file_path p(*i);
-      I(prev.empty() || p.as_internal() > prev);
-      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::add_dir, file_path(*i));
       printer.print_stanza(st);
     }
 
-  prev.clear();
   for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     {
       file_path p(i->first);
-      I(prev.empty() || p.as_internal() > prev);
-      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::add_file, file_path(i->first));
       st.push_hex_pair(syms::content, i->second.inner()());
       printer.print_stanza(st);
     }
 
-  prev.clear();
   for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
       file_path p(i->first);
-      I(prev.empty() || p.as_internal() > prev);
-      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::patch, file_path(i->first));
       st.push_hex_pair(syms::from, i->second.first.inner()());
@@ -320,29 +305,18 @@ print_cset(basic_io::printer & printer,
       printer.print_stanza(st);
     }
 
-  pair<string, string> prev_pair;
   for (set<pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
        i != cs.attrs_cleared.end(); ++i)
     {
-      pair<string, string> new_pair(file_path(i->first).as_internal(),
-                                    i->second());
-      I(new_pair > prev_pair);
-      prev_pair = new_pair;
       basic_io::stanza st;
       st.push_file_pair(syms::clear, file_path(i->first));
       st.push_str_pair(syms::attr, i->second());
       printer.print_stanza(st);
     }
 
-  prev_pair.first.clear(); 
-  prev_pair.second.clear();
   for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
        i != cs.attrs_set.end(); ++i)
     {
-      pair<string, string> new_pair(file_path(i->first.first).as_internal(),
-                                    i->first.second());
-      I(new_pair > prev_pair);
-      prev_pair = new_pair;
       basic_io::stanza st;
       st.push_file_pair(syms::set, file_path(i->first.first));
       st.push_str_pair(syms::attr, i->first.second());

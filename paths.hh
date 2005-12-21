@@ -107,8 +107,6 @@
 
 typedef std::vector<path_component> split_path;
 
-bool operator<(split_path const & l, split_path const & r);
-
 const path_component the_null_component;
 
 inline bool

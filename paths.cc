@@ -17,11 +17,6 @@
 #include "interner.hh"
 #include "transforms.hh"
 
-bool operator<(split_path const & l, split_path const & r)
-{
-  return file_path(l).as_internal() < file_path(r).as_internal();
-}
-
 // some structure to ensure we aren't doing anything broken when resolving
 // filenames.  the idea is to make sure
 //   -- we don't depend on the existence of something before it has been set
