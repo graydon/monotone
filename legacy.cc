@@ -5,6 +5,7 @@
 
 #include "legacy.hh"
 #include "basic_io.hh"
+#include "app_state.hh"
 
 namespace legacy
 {
@@ -33,5 +34,40 @@ namespace legacy
             attr[fp][name] = value;
           }
       }
+  }
+
+  namespace 
+  {
+    namespace syms
+    {
+      std::string const old_revision("old_revision");
+      std::string const new_manifest("new_manifest");
+    }
+  }
+  
+  void 
+  get_manifest_for_rev(app_state & app,
+                       revision_id const & ident,
+                       manifest_id & mid)
+  {
+    revision_data dat;
+    app.db.get_revision(ident,dat);
+    basic_io::input_source src(dat.inner()(), "revision");
+    basic_io::tokenizer tok(src);
+    basic_io::parser pars(tok);
+    while (pars.symp())
+      {
+        if (pars.symp(syms::new_manifest))
+          {
+            std::string tmp;
+            pars.sym();
+            pars.hex(tmp);
+            mid = manifest_id(tmp);
+            return;
+          }
+        else
+          pars.sym();
+      }
+    I(false);
   }
 }

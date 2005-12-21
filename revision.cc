@@ -773,11 +773,6 @@ anc_graph::add_node_for_old_manifest(manifest_id const & man)
   return node;
 }
 
-static void 
-get_manifest_for_rev(app_state & app,
-                     revision_id const & ident,
-                     manifest_id & mid);
-
 u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
 {
   I(existing_graph);
@@ -789,7 +784,7 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
       ++n_nodes;
       
       manifest_id man;
-      get_manifest_for_rev(app, rev, man);
+      legacy::get_manifest_for_rev(app, rev, man);
       
       L(F("node %d = revision %s = manifest %s\n") % node % rev % man);
       old_rev_to_node.insert(std::make_pair(rev, node));
@@ -1181,7 +1176,7 @@ anc_graph::construct_revisions_from_ancestry()
                 app.db.get_file_version(i->second, dat);
                 legacy::dot_mt_attrs_map attrs;
                 legacy::read_dot_mt_attrs(dat.inner(), attrs);
-                for (oldstyle_attr_map::const_iterator j = attrs.begin();
+                for (legacy::dot_mt_attrs_map::const_iterator j = attrs.begin();
                      j != attrs.end(); ++j)
                   {
                     split_path sp;
@@ -1368,41 +1363,6 @@ namespace
     std::string const new_manifest("new_manifest");
   }
 }
-
-
-// HACK: this is a special reader which picks out the new_manifest field in
-// a revision; it ignores all other symbols. This is because, in the
-// pre-roster database, we have revisions holding change_sets, not
-// csets. If we apply the cset reader to them, they fault. We need to
-// *partially* read them, however, in order to get the manifest IDs out of
-// the old revisions (before we delete the revs and rebuild them)
-
-static void 
-get_manifest_for_rev(app_state & app,
-                     revision_id const & ident,
-                     manifest_id & mid)
-{
-  revision_data dat;
-  app.db.get_revision(ident,dat);
-  basic_io::input_source src(dat.inner()(), "revision");
-  basic_io::tokenizer tok(src);
-  basic_io::parser pars(tok);
-  while (pars.symp())
-    {
-      if (pars.symp(syms::new_manifest))
-        {
-          std::string tmp;
-          pars.sym();
-          pars.hex(tmp);
-          mid = manifest_id(tmp);
-          return;
-        }
-      else
-        pars.sym();
-    }
-  I(false);
-}
-
 
 void 
 print_edge(basic_io::printer & printer,

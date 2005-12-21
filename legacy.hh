@@ -19,6 +19,18 @@ namespace legacy
 
   void 
   read_dot_mt_attrs(data const & dat, dot_mt_attrs_map & attr);
+
+  // HACK: this is a special reader which picks out the new_manifest field in
+  // a revision; it ignores all other symbols. This is because, in the
+  // pre-roster database, we have revisions holding change_sets, not
+  // csets. If we apply the cset reader to them, they fault. We need to
+  // *partially* read them, however, in order to get the manifest IDs out of
+  // the old revisions (before we delete the revs and rebuild them)
+
+  void 
+  get_manifest_for_rev(app_state & app,
+                       revision_id const & ident,
+                       manifest_id & mid);
 }
 
 #endif
