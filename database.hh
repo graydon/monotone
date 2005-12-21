@@ -19,7 +19,6 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include <string>
 
 #include "cset.hh"
-#include "manifest.hh"
 #include "numeric_vocab.hh"
 #include "paths.hh"
 #include "cleanup.hh"
@@ -266,9 +265,6 @@ public:
   void get_manifest_version(manifest_id const & id,
                             manifest_data & dat);
 
-  void get_manifest(manifest_id const & id,
-                    manifest_map & mm);
-
   void get_revision_ancestry(std::multimap<revision_id, revision_id> & graph);
 
   void get_revision_parents(revision_id const & id,
@@ -432,9 +428,6 @@ public:
   void complete(std::string const & partial,
                 std::set<revision_id> & completions);
 
-  void complete(std::string const & partial,
-                std::set<manifest_id> & completions);
-  
   void complete(std::string const & partial,
                 std::set<file_id> & completions);
 

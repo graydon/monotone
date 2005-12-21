@@ -16,7 +16,6 @@
 #include "cset.hh"
 #include "interner.hh"
 #include "lcs.hh"
-#include "manifest.hh"
 #include "platform.hh"
 #include "revision.hh"
 #include "sanity.hh"

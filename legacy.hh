@@ -15,10 +15,15 @@
 
 namespace legacy
 {
+  ////////
+  // parser for old .mt-attrs file format
   typedef std::map<file_path, std::map<std::string, std::string> > dot_mt_attrs_map;
 
   void 
   read_dot_mt_attrs(data const & dat, dot_mt_attrs_map & attr);
+
+  ///////
+  // parsing old-style revisions, for 'rosterify' command
 
   // HACK: this is a special reader which picks out the new_manifest field in
   // a revision; it ignores all other symbols. This is because, in the
@@ -31,6 +36,14 @@ namespace legacy
   get_manifest_for_rev(app_state & app,
                        revision_id const & ident,
                        manifest_id & mid);
+
+  ///////
+  // parsing old-style manifests, for 'rosterify' and 'changesetify' commands
+  typedef std::pair<file_path const, file_id> manifest_entry;
+  typedef std::map<file_path, file_id, 
+                   std::less<file_path>, 
+                   QA(manifest_entry) > manifest_map;
+
 }
 
 #endif

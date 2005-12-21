@@ -28,7 +28,6 @@
 #include "diff_patch.hh"
 #include "file_io.hh"
 #include "keys.hh"
-#include "manifest.hh"
 #include "netsync.hh"
 #include "packet.hh"
 #include "rcs_import.hh"
@@ -3185,7 +3184,7 @@ CMD(explicit_merge, N_("tree"),
   P(F("[merged] %s\n") % merged);
 }
 
-CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
+CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     N_("complete partial id"),
     OPT_VERBOSE)
 {
@@ -3207,14 +3206,6 @@ CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
           if (!verbose) cout << i->inner()() << endl;
           else cout << describe_revision(app, i->inner()) << endl;
         }
-    }
-  else if (idx(args, 0)() == "manifest")
-    {      
-      set<manifest_id> completions;
-      app.db.complete(idx(args, 1)(), completions);
-      for (set<manifest_id>::const_iterator i = completions.begin();
-           i != completions.end(); ++i)
-        cout << i->inner()() << endl;
     }
   else if (idx(args, 0)() == "file")
     {

@@ -69,22 +69,10 @@ manifest_entry_id(manifest_map::const_iterator i)
   return i->second;
 }
 
-std::ostream & operator<<(std::ostream & out, manifest_entry const & e);
-
-class app_state;
-
 void read_manifest_map(data const & dat,
                        manifest_map & man);
 
 void read_manifest_map(manifest_data const & dat,
                        manifest_map & man);
-
-void write_manifest_map(manifest_map const & man, 
-                        manifest_data & dat);
-
-void write_manifest_map(manifest_map const & man, 
-                        data & dat);
-
-void dump(manifest_map const & man, std::string & out);
 
 #endif // __MANIFEST_HH__

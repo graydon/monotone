@@ -3922,7 +3922,6 @@ is the revision in which that line of the file was last edited.
 
 @item monotone complete file @var{partial-id}
 @itemx monotone complete [--brief] key @var{partial-id}
-@itemx monotone complete manifest @var{partial-id}
 @itemx monotone complete [--brief] revision @var{partial-id}
 
 These commands print out all known completions of a partial @sc{sha1}
@@ -3932,14 +3931,14 @@ example, suppose you enter this command and get this result:
 
 @smallexample
 @group
-$ monotone complete manifest fa36
+$ monotone complete revision fa36
 fa36deead87811b0e15208da2853c39d2f6ebe90
 fa36b76dd0139177b28b379fe1d56b22342e5306
 fa36965ec190bee14c5afcac235f1b8e2239bb2a
 @end group
 @end smallexample
 
-Then monotone is telling you that there are 3 manifests it knows
+Then monotone is telling you that there are 3 revisions it knows
 about, in its database, which begin with the 4 hex digits
 @code{fa36}. This command is intended to be used by programmable
 completion systems, such as those in @command{bash} and @command{zsh}.

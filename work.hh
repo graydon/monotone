@@ -12,7 +12,6 @@
 #include <map>
 
 #include "cset.hh"
-#include "manifest.hh"
 #include "paths.hh"
 #include "roster.hh"
 #include "vocab.hh"
