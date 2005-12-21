@@ -2585,13 +2585,17 @@ static void
 dump_diffs(change_set::delta_map const & deltas,
            app_state & app,
            bool new_is_archived,
-           diff_type type)
+           diff_type type,
+           file_path restrict_file = file_path())
 {
   // 60 is somewhat arbitrary, but less than 80
   std::string patch_sep = std::string(60, '=');
   for (change_set::delta_map::const_iterator i = deltas.begin();
        i != deltas.end(); ++i)
     {
+      if (!restrict_file.empty() && !(restrict_file == delta_entry_path(i)))
+        continue;
+
       cout << patch_sep << "\n";
       if (null_id(delta_entry_src(i)))
         {
@@ -3763,7 +3767,7 @@ CMD(log, N_("informative"), N_("[FILE]"),
                      e != rev.edges.end(); ++e)
                   {
                     dump_diffs(edge_changes(e).deltas,
-                               app, true, unified_diff);
+                               app, true, unified_diff, file);
                   }
               }
 
