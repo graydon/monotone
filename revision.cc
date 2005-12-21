@@ -1063,36 +1063,6 @@ dump(current_rev_debugger const & d, std::string & out)
 }
 
 
-typedef std::map<file_path, std::map<std::string, std::string> > oldstyle_attr_map;
-
-static void 
-read_oldstyle_dot_mt_attrs(data const & dat, oldstyle_attr_map & attr)
-{
-  basic_io::input_source src(dat(), ".mt-attrs");
-  basic_io::tokenizer tok(src);
-  basic_io::parser parser(tok);
-
-  std::string file, name, value;
-
-  attr.clear();
-
-  while (parser.symp("file"))
-    {
-      parser.sym();
-      parser.str(file);
-      file_path fp = file_path_internal(file);
-
-      while (parser.symp() && 
-             !parser.symp("file"))
-        {
-          parser.sym(name);
-          parser.str(value);
-          attr[fp][name] = value;
-        }
-    }
-}
-
-
 void 
 anc_graph::construct_revisions_from_ancestry()
 {
