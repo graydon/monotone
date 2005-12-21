@@ -36,6 +36,7 @@
 #include "ui.hh"
 #include "vocab.hh"
 #include "safe_map.hh"
+#include "legacy.hh"
 
 
 void revision_set::check_sane() const
@@ -1208,8 +1209,8 @@ anc_graph::construct_revisions_from_ancestry()
               {
                 file_data dat;
                 app.db.get_file_version(i->second, dat);
-                oldstyle_attr_map attrs;
-                read_oldstyle_dot_mt_attrs(dat.inner(), attrs);
+                legacy::dot_mt_attrs_map attrs;
+                legacy::read_dot_mt_attrs(dat.inner(), attrs);
                 for (oldstyle_attr_map::const_iterator j = attrs.begin();
                      j != attrs.end(); ++j)
                   {
