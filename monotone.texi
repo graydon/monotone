@@ -2259,24 +2259,27 @@ Firstly, Jim is finding that he has to spend more of his time
 travelling, demonstrating the new juicebot features to customers; thus
 his laptop is spending more time disconnected from the network, or
 connected at dynamic addresses where it's not convenient for Abe and
-Beth to find him and sync. This doesn't prevent them doing any work, but
-it does have some uncomfortable consequences: they're more likely to
-have to manually merge conflicting changes when they finally sync up and
-discover they've both come up with slightly different fixes for the same
-bug in the meantime, and they're more exposed to loss of work if one of
-them suffers a disk failure before they've had a chance to sync that
-work with another database.
+Beth to find him and sync. 
+
+This doesn't prevent them doing any work, but it does have some
+uncomfortable consequences: they're more likely to have to manually
+merge conflicting changes when they finally sync up and discover they've
+both come up with slightly different fixes for the same bug in the
+meantime, and they're more exposed to loss of work if one of them
+suffers a disk failure before they've had a chance to sync that work
+with another database.
 
 @item
-Secondly, the level of project activity is picking up, and there are
-more and more changes to be synced in the narrower window of time while
-Jim is connected. Because Jim has been using the one database file both
+Secondly, because Jim has been using the one database file both
 for his own local work, and for serving to the others in the team, he
 occasionally finds that the monotone serve process (busy syncing with
 Abe or Beth) has a lock on the database, while he's trying to do local
-work like updates or commits.  He finds he sometimes needs to take down
-the server process to do this local work, further exacerbating the first
-problem.
+work like updates or commits.  
+
+The level of project activity is picking up, and there are more and more
+changes to be synced in the narrower window of time while Jim is
+connected. He finds he sometimes needs to take down the server process
+to do this local work, further exacerbating the first problem.
 @end itemize
 
 The juicebot team are resourceful, and by now quite used to working
@@ -2285,17 +2288,21 @@ come up with their own solution to the first problem: they'll run
 servers from their databases, setting them up just like Jim did
 previously.  That way, if Jim's database is offline, either Beth or Abe
 can run the @command{serve} command and provide access for the other to
-@command{sync} with.  When Jim reappears, the next person to
-@command{sync} with him will often pass him information about both
-employees' work that they've sync'ed with eachother in the meantime,
-just as he used to do. In fact, Jim now finds it more convenient to
-initiate the sync with one of the other servers when he has a spare
-moment and dynamic connectivity from a hotel room or airport.  Changes
-will flow between servers automatically as clients access them and trade
-with one another.
+@command{sync} with.  Beth also has the idea to create a second database
+for the @command{serve} process, and to @command{sync} her development
+database with that server locally, avoiding locking contention between
+multiple monotone processes on the one database file.
 
-This gets them by for a while, but doesn't solve the second problem: now
-Beth and Abe start to experience the database locking issues too. They
+When Jim reappears, the next person to @command{sync} with him will
+often pass him information about both employees' work that they've
+sync'ed with eachother in the meantime, just as he used to do. In fact,
+Jim now finds it more convenient to initiate the sync with one of the
+other servers when he has a spare moment and dynamic connectivity from a
+hotel room or airport.  Changes will flow between servers automatically
+as clients access them and trade with one another.
+
+This gets them by for a while, but there are still occasional
+inconveniences.  Abe and Beth live in very different time-zones, and
 don't always have reliable network connectivity, so sometimes Jim finds
 that neither of them is online to sync with when he has the chance.  Jim
 now also has several customers interested in beta-testing the new code,
@@ -2307,7 +2314,7 @@ and people can push their changes out without first calling their
 friends and making sure that they have their servers running.  
 
 Jim has rented some web server space on a service provider's shared
-system for the JuiceBot, Inc public website, @code{www.juicebot.co.jp};
+system for the JuiceBot Inc. public website, @code{www.juicebot.co.jp};
 he thinks this server will be a good place to host the central monotone
 server too. He sets up a new monotone database on the server,
 generates a new key specially for the server (so he doesn't have to
@@ -2327,19 +2334,33 @@ monotone: read 3 packets
 @end group
 @end smallexample
 
-He sets up the permissions files much like before, except that of course
-he needs to also grant his @code{jim@@juicebot.co.jp} key permission to
-access the new server.
+For the team members, he sets up the permissions files on the server
+much like before --- except that of course he needs to also grant his
+@code{jim@@juicebot.co.jp} key permission to access the new server.  For
+the beta-testers, Jim wants to allow them read-only access just to the
+main JuiceBot 7 development line, but not to any of the sub-branches
+where other experimental development is going on.
+
+@smallexample
+@group
+$ cat >>~/.monotone/read-permissions
+pattern "jp.co.juicebot.jb7"
+allow "beta1@@juicebot.co.jp"
+allow "beta2@@juicebot.co.jp"
+^D
+@end group
+@end smallexample
+
 
 Jim could log in and start the monotone process manually from his shell
 account on the server, perhaps under a program like screen to let it
 stay running while he's away. This would be one way of giving it the
 server-key's passphrase each startup, but he wants to make sure that the
-server is up all the time; if it reboots while he's travelling and is
-down until he next logs in, things aren't much better than before.  For
-the server to start automatically each time, he'll need to use the
-@code{get_passphrase} hook in the server's @file{.monotonerc} file
-again.
+server is up all the time; if the host reboots while he's travelling and
+the monotone server is down until he next logs in, things aren't much
+better than before.  For the server to start automatically each time,
+he'll need to use the @code{get_passphrase} hook in the server's
+@file{.monotonerc} file again.
 
 Because he's running on a shared server, Jim needs to be a little more
 restrictive about which interfaces and addresses his new server process
@@ -2409,19 +2430,21 @@ also know that this is there only as a convenience, and doesn't prevent
 them working as they did before:
 @itemize
 @item
-The team members can still sync with each other if needed.  Hopefully,
-their new server won't ever be down, but sometimes they might be working
-together while away from ready network access --- fixing up the last few
-issues and finalising presentation materials while travelling to a sales
-conference, for example.  The server will learn of these changes on the
-next sync.
+The team members can still sync with each other if needed. 
+
+Hopefully, their new server won't ever be down, but sometimes they might
+be working together while away from ready network access --- fixing up
+the last few issues and finalising presentation materials while
+travelling to a sales conference, for example.  The server will learn of
+these changes on the next sync.
 @item
 The team members continue to discover multiple heads and changes that
 need merging, as before. Each team member can merge the heads, and will
-produce the same revision id if they merge to the same result. They now
-develop a new habit out of courtesy, though --- they try not to leave
-multiple heads and unmerged changes on the server, at least not for
-long. This saves them from repeated work, and also helps prevent
+produce the same revision id if they merge to the same result. 
+
+They now develop a new habit out of courtesy, though --- they try not to
+leave multiple heads and unmerged changes on the server, at least not
+for long. This saves them from repeating work, and also helps prevent
 confusion for the beta-testers.  When each team member is ready to
 @command{sync}, they develop the habit of doing a @command{pull} from
 the server first.  If new revisions were received from the server, they
@@ -2434,28 +2457,35 @@ be polite.
 @item
 Jim knows he doesn't have to keep a special backup of the new server's
 contents; if the server should fail, all the contents of its database
-can be found amongst the other team members (because no commits are done
-on the server itself).  He does, however, take a copy of the server's
-private key, so he can restore that if necessary.
+can be found amongst the other team members (especially because no
+commits are done on the server itself).
+
+He does, however, take a copy of the server's private key, so he can
+restore that if necessary.
 @item
 In fact, Jim realises that he can now commit a copy of the web site's
 current contents into monotone on a new branch,
-@code{jp.co.juicebot.www}, and keep a backup of that content too. Now he
-can use monotone to work on the website offline, and let other team
-members add and edit the content; he can also preview changes locally
-before updating the production content.  He keeps a working directory
-checkout of this content in the webroot on the server, and runs a
-monotone @command{update} in there when he wants to bring the public web
-site up to date.
+@code{jp.co.juicebot.www}, and keep a backup of that content too. 
+
+Now he can use monotone to work on the website offline, and let other
+team members add and edit the content; he can also preview changes
+locally before updating the production content.  He keeps a working
+directory checkout of this content in the webroot on the server, and
+runs a monotone @command{update} in there when he wants to bring the
+public web site up to date. Later, he'll think about using monotone's
+@ref{Quality Assurance} mechanisms and Event Notification @ref{Hooks},
+so that the web server can update itself automatically when appropriate
+new revisions are received.
 @item
 Jim also knows that even if someone should break into the shared hosting
 server and tamper with the database, they won't be able to inject
 malicious code into the project, because all revisions are signed by the
 team members, and he has set his @ref{Trust Evaluation Hooks} so he
-doesn't trust the server key for signing revisions.  In monotone, the
-important trust consideration is on the @emph{signed content}, rather
-than on the @emph{replication path} by which that content arrived in
-your database.
+doesn't trust the server key for signing revisions.  
+
+In monotone, the important trust consideration is on the @emph{signed
+content}, rather than on the @emph{replication path} by which that
+content arrived in your database.
 @end itemize
 
 @node    Advanced Uses
