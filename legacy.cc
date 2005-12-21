@@ -74,9 +74,10 @@ namespace legacy
 
 
   void 
-  read_manifest_map(data const & dat,
+  read_manifest_map(manifest_data const & mdat,
                     manifest_map & man)
   {
+    data const & dat = mdat.inner();
     std::string::size_type pos = 0;
     while (pos != dat().size())
       {
@@ -98,13 +99,6 @@ namespace legacy
         ++pos;
       }
     return;
-  }
-  
-  void 
-  read_manifest_map(manifest_data const & dat,
-                    manifest_map & man)
-  {  
-    read_manifest_map(dat.inner(), man);
   }
   
 }

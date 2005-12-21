@@ -14,7 +14,6 @@ MOST_SOURCES =								\
          key_store.cc key_store.hh					\
          file_io.cc file_io.hh						\
          keys.cc keys.hh						\
-         manifest.cc manifest.hh					\
          packet.cc packet.hh						\
          sanity.cc sanity.hh						\
          vocab.cc vocab.hh vocab_terms.hh numeric_vocab.hh		\
