@@ -539,6 +539,33 @@ select_nodes_modified_by_rev(revision_id const & rid,
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
 
+typedef std::map<u64, 
+                 std::pair<boost::shared_ptr<roster_t>, 
+                           boost::shared_ptr<marking_map>
+                 > > 
+parent_roster_map;
+
+void
+dump(parent_roster_map const & prm, std::string & out)
+{
+  std::ostringstream oss;
+  for (parent_roster_map::const_iterator i = prm.begin(); i != prm.end(); ++i)
+    {
+      oss << "roster: " << i->first << "\n";
+      std::string roster_str, indented_roster_str;
+      dump(*i->second.first, roster_str);
+      prefix_lines_with("    ", roster_str, indented_roster_str);
+      oss << indented_roster_str;
+      oss << "\nroster's marking:\n";
+      std::string marking_str, indented_marking_str;
+      dump(*i->second.second, marking_str);
+      prefix_lines_with("    ", marking_str, indented_marking_str);
+      oss << indented_marking_str;
+      oss << "\n\n";
+    }
+  out = oss.str();
+}
+
 struct anc_graph
 {
   anc_graph(bool existing, app_state & a) : 
@@ -581,6 +608,13 @@ struct anc_graph
   u64 add_node_for_old_manifest(manifest_id const & man);
   u64 add_node_for_oldstyle_revision(revision_id const & rev);                     
   void construct_revisions_from_ancestry();
+
+  void insert_into_roster_reusing_parent_entries(file_path const & pth,
+                                                 bool is_file,  // as opposed to dir
+                                                 file_id const & fid,
+                                                 parent_roster_map const & parent_rosters,
+                                                 temp_node_id_source & nis,
+                                                 roster_t & child_roster);
 };
 
 
@@ -817,33 +851,6 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
   return node;
 }
 
-typedef std::map<u64, 
-                 std::pair<boost::shared_ptr<roster_t>, 
-                           boost::shared_ptr<marking_map>
-                 > > 
-parent_roster_map;
-
-void
-dump(parent_roster_map const & prm, std::string & out)
-{
-  std::ostringstream oss;
-  for (parent_roster_map::const_iterator i = prm.begin(); i != prm.end(); ++i)
-    {
-      oss << "roster: " << i->first << "\n";
-      std::string roster_str, indented_roster_str;
-      dump(*i->second.first, roster_str);
-      prefix_lines_with("    ", roster_str, indented_roster_str);
-      oss << indented_roster_str;
-      oss << "\nroster's marking:\n";
-      std::string marking_str, indented_marking_str;
-      dump(*i->second.second, marking_str);
-      prefix_lines_with("    ", marking_str, indented_marking_str);
-      oss << indented_marking_str;
-      oss << "\n\n";
-    }
-  out = oss.str();
-}
-
 static bool
 viable_replacement(std::map<node_id, u64> const & birth_revs, 
                    parent_roster_map const & parent_rosters,
@@ -916,15 +923,13 @@ viable_replacement(std::map<node_id, u64> const & birth_revs,
 }
 
 
-static void 
-insert_into_roster_reusing_parent_entries(file_path const & pth,
-                                          bool is_file,  // as opposed to dir
-                                          file_id const & fid,
-                                          parent_roster_map const & parent_rosters,
-                                          temp_node_id_source & nis,
-                                          roster_t & child_roster,
-                                          std::map<revision_id, u64> const & new_rev_to_node,
-                                          std::multimap<u64, u64> const & child_to_parents)
+void 
+anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
+                                                     bool is_file,  // as opposed to dir
+                                                     file_id const & fid,
+                                                     parent_roster_map const & parent_rosters,
+                                                     temp_node_id_source & nis,
+                                                     roster_t & child_roster)
 {
 
   split_path sp, dirname;
@@ -956,9 +961,7 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
                                                     file_id(),
                                                     parent_rosters,
                                                     nis,
-                                                    child_roster,
-                                                    new_rev_to_node,
-                                                    child_to_parents);
+                                                    child_roster);
       }
   }
 
@@ -1017,8 +1020,7 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
                                                    safe_get(new_rev_to_node,
                                                             birth_rev)));
                   replace_this_node = 
-                    viable_replacement(birth_revs, parent_rosters, 
-                                       child_to_parents);
+                    viable_replacement(birth_revs, parent_rosters, ancestry);
                 }
                   
               if (replace_this_node)
@@ -1164,9 +1166,7 @@ anc_graph::construct_revisions_from_ancestry()
               if (!(i->first == attr_path))
                 insert_into_roster_reusing_parent_entries(i->first, true, i->second,
                                                           parent_rosters,
-                                                          nis, child_roster,
-                                                          new_rev_to_node,
-                                                          ancestry);
+                                                          nis, child_roster);
             }
           
           // migrate attributes out of .mt-attrs
