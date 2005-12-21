@@ -532,11 +532,95 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - misordered files"));
+    L(F("TEST: cset reading - misordered files in delete"));
     // bad cset, bar should be before foo
     data dat("delete \"foo\"\n"
              "\n"
              "delete \"bar\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in rename"));
+    // bad cset, bar should be before foo
+    data dat("rename \"foo\" \"foonew\"\n"
+             "\n"
+             "rename \"bar\" \"barnew\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in add_dir"));
+    // bad cset, bar should be before foo
+    data dat("add_dir \"foo\"\n"
+             "\n"
+             "add_dir \"bar\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in add_file"));
+    // bad cset, bar should be before foo
+    data dat("add_file \"foo\"\n"
+             " content [0000000000000000000000000000000000000000]\n"
+             "\n"
+             "add_file \"bar\"\n"
+             " content [0000000000000000000000000000000000000000]\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in add_file"));
+    // bad cset, bar should be before foo
+    data dat("add_file \"foo\"\n"
+             " content [0000000000000000000000000000000000000000]\n"
+             "\n"
+             "add_file \"bar\"\n"
+             " content [0000000000000000000000000000000000000000]\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in patch"));
+    // bad cset, bar should be before foo
+    data dat("patch \"foo\"\n"
+             " from [0000000000000000000000000000000000000000]\n"
+             "   to [1000000000000000000000000000000000000000]\n"
+             "\n"
+             "patch \"bar\"\n"
+             " from [0000000000000000000000000000000000000000]\n"
+             "   to [1000000000000000000000000000000000000000]\n")
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in clear"));
+    // bad cset, bar should be before foo
+    data dat("clear \"foo\"\n"
+             " attr \"flavoursome\"\n"
+             "\n"
+             "clear \"bar\"\n"
+             " attr \"flavoursome\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in set"));
+    // bad cset, bar should be before foo
+    data dat("  set \"foo\"\n"
+             " attr \"flavoursome\"\n"
+             "value \"yes\"\n"
+             "\n"
+             "  set \"bar\"\n"
+             " attr \"flavoursome\"\n"
+             "value \"yes\"\n");
     cset cs;
     BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
   }
@@ -565,7 +649,19 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - wrong attr ordering"));
+    L(F("TEST: cset reading - wrong attr ordering in clear"));
+    // fooish should be before quuxy
+    data dat( "clear \"bar\"\n"
+              " attr \"quuxy\"\n"
+              "\n"
+              "clear \"bar\"\n"
+              " attr \"fooish\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - wrong attr ordering in set"));
     // fooish should be before quuxy
     data dat( "  set \"bar\"\n"
               " attr \"quuxy\"\n"
@@ -588,6 +684,28 @@ cset_written_test()
               "  set \"bar\"\n"
               " attr \"flavoursome\"\n"
               "value \"sometimes\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - attr set+clear"));
+    // can't have dups.
+    data dat( "clear \"bar\"\n"
+              " attr \"flavoursome\"\n"
+              "\n"
+              "  set \"bar\"\n"
+              " attr \"flavoursome\"\n"
+              "value \"sometimes\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - no-op patch"));
+    data dat( "patch \"bar\"\n"
+              " from [0000000000000000000000000000000000000000]\n"
+              "   to [0000000000000000000000000000000000000000]\n");
     cset cs;
     BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
   }
