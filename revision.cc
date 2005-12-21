@@ -1001,13 +1001,12 @@ anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
               //
               // child_roster.replace_node_id(r,z)
 
-              // Before we perform this, however, we want to ensure that
-              // the existing target nodes z is not killed in
-              // any of the parent rosters. If it is killed -- defined
-              // by saying that its birth revision fails to dominate one
-              // of the parent rosters -- then we want to *avoid* making
-              // the replacement, and leave this node as its 'new' in the
-              // child.
+              // Before we perform this, however, we want to ensure that the
+              // existing target node z is not killed in any of the parent
+              // rosters. If it is killed -- defined by saying that its birth
+              // revision dominates one of the parent rosters in which this
+              // node does not exist -- then we want to *avoid* making the
+              // replacement, and leave this node as 'new' in the child.
 
               bool replace_this_node = true;
               if (parent_rosters.size() > 1)
