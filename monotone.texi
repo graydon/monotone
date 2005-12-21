@@ -2339,15 +2339,25 @@ much like before --- except that of course he needs to also grant his
 @code{jim@@juicebot.co.jp} key permission to access the new server.  For
 the beta-testers, Jim wants to allow them read-only access just to the
 main JuiceBot 7 development line, but not to any of the sub-branches
-where other experimental development is going on.
+where other experimental development is going on. He adds some lines at
+the top of the @file{~/.monotone/read-permissions} on the server, above
+the broader permissions given to team-members. See the @ref{Hook
+Reference} for @code{get_netsync_read_permitted} for more details; the
+resulting file looks like this:
 
 @smallexample
 @group
-$ cat >>~/.monotone/read-permissions
+comment "Provide beta-testers with specific read-only access"
 pattern "jp.co.juicebot.jb7"
 allow "beta1@@juicebot.co.jp"
 allow "beta2@@juicebot.co.jp"
-^D
+continue "true"
+
+comment "Fall-through, and allow staff access to all branches"
+pattern "*"
+allow "abe@@juicebot.co.jp"
+allow "beth@@juicebot.co.jp"
+allow "jim@@juicebot.co.jp"
 @end group
 @end smallexample
 
