@@ -338,10 +338,9 @@ parse_cset(basic_io::parser & parser,
            cset & cs)
 {
   cs.clear();
-  string t1, t2, t3;
+  string t1, t2;
   MM(t1);
   MM(t2);
-  MM(t3);
   split_path p1, p2;
   MM(p1);
   MM(p2);
@@ -371,7 +370,6 @@ parse_cset(basic_io::parser & parser,
       I(prev_path.empty() || p1 > prev_path);
       prev_path = p1;
       parser.esym(syms::to);
-      parser.str(t2);
       parse_path(parser, p2);
       safe_insert(cs.nodes_renamed, make_pair(p1, p2));
     }
@@ -544,9 +542,11 @@ cset_written_test()
   {
     L(F("TEST: cset reading - misordered files in rename"));
     // bad cset, bar should be before foo
-    data dat("rename \"foo\" \"foonew\"\n"
+    data dat("rename \"foo\"\n"
+             "    to \"foonew\"\n"
              "\n"
-             "rename \"bar\" \"barnew\"\n");
+             "rename \"bar\"\n"
+             "    to \"barnew\"\n");
     cset cs;
     BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
   }
@@ -594,7 +594,7 @@ cset_written_test()
              "\n"
              "patch \"bar\"\n"
              " from [0000000000000000000000000000000000000000]\n"
-             "   to [1000000000000000000000000000000000000000]\n")
+             "   to [1000000000000000000000000000000000000000]\n");
     cset cs;
     BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
   }
@@ -684,28 +684,6 @@ cset_written_test()
               "  set \"bar\"\n"
               " attr \"flavoursome\"\n"
               "value \"sometimes\"\n");
-    cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
-  }
-
-  {
-    L(F("TEST: cset reading - attr set+clear"));
-    // can't have dups.
-    data dat( "clear \"bar\"\n"
-              " attr \"flavoursome\"\n"
-              "\n"
-              "  set \"bar\"\n"
-              " attr \"flavoursome\"\n"
-              "value \"sometimes\"\n");
-    cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
-  }
-
-  {
-    L(F("TEST: cset reading - no-op patch"));
-    data dat( "patch \"bar\"\n"
-              " from [0000000000000000000000000000000000000000]\n"
-              "   to [0000000000000000000000000000000000000000]\n");
     cset cs;
     BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
   }
