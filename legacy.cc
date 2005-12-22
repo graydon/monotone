@@ -10,6 +10,7 @@
 
 namespace legacy
 {
+  // cf. work.cc:read_attr_map in the pre-roster code.
   void
   read_dot_mt_attrs(data const & dat, dot_mt_attrs_map & attr)
   {
@@ -41,38 +42,92 @@ namespace legacy
   {
     namespace syms
     {
-      std::string const old_revision("old_revision");
       std::string const new_manifest("new_manifest");
+      std::string const old_revision("old_revision");
+      std::string const old_manifest("old_manifest");
+      std::string const patch("patch");
+      std::string const from("from");
+      std::string const to("to");
+      std::string const add_file("add_file");
+      std::string const delete_file("delete_file");
+      std::string const delete_dir("delete_dir");
+      std::string const rename_file("rename_file");
+      std::string const rename_dir("rename_dir");
     }
   }
   
+  // cf. revision.cc:parse_edge and change_set.cc:parse_change_set and
+  // change_set.cc:parse_path_rearrangement in the pre-roster code.
+  static void
+  extract_renames(basic_io::parser & parser, renames_map & renames)
+  {
+    revision_id old_rev;
+    std::string tmp;
+    parser.esym(syms::old_revision);
+    parser.hex(tmp);
+    old_rev = revision_id(tmp);
+    parser.esym(syms::old_manifest);
+    parser.hex();
+
+    while (parser.symp())
+      {
+        // things that take a single string argument
+        if (parser.symp(syms::add_file)
+            || parser.symp(syms::delete_file)
+            || parser.symp(syms::delete_dir))
+          {
+            parser.sym();
+            parser.str();
+          }
+        else if (parser.symp(syms::rename_file)
+                 || parser.symp(syms::rename_dir))
+          {
+            std::string from_str, to_str;
+            parser.sym();
+            parser.str(from_str);
+            parser.esym(syms::to);
+            parser.str(to_str);
+            split_path from, to;
+            file_path_internal(from_str).split(from);
+            file_path_internal(to_str).split(to);
+            renames[old_rev][to] = from;
+          }
+        else if (parser.symp(syms::patch))
+          {
+            parser.sym();
+            parser.str();
+            parser.esym(syms::from);
+            parser.hex();
+            parser.esym(syms::to);
+            parser.hex();
+          }
+        else
+          break;
+      }
+  }
+
+  // cf. revision.cc:parse_revision in the pre-roster code.
   void 
-  get_manifest_for_rev(app_state & app,
-                       revision_id const & ident,
-                       manifest_id & mid)
+  get_manifest_and_renames_for_rev(app_state & app,
+                                   revision_id const & ident,
+                                   manifest_id & mid,
+                                   renames_map & renames)
   {
     revision_data dat;
-    app.db.get_revision(ident,dat);
+    app.db.get_revision(ident, dat);
     basic_io::input_source src(dat.inner()(), "revision");
     basic_io::tokenizer tok(src);
     basic_io::parser pars(tok);
-    while (pars.symp())
-      {
-        if (pars.symp(syms::new_manifest))
-          {
-            std::string tmp;
-            pars.sym();
-            pars.hex(tmp);
-            mid = manifest_id(tmp);
-            return;
-          }
-        else
-          pars.sym();
-      }
-    I(false);
+
+    pars.esym(syms::new_manifest);
+    std::string tmp;
+    pars.hex(tmp);
+    mid = manifest_id(tmp);
+    while (pars.symp(syms::old_revision))
+      extract_renames(pars, renames);
   }
 
-
+  // cf. manifest.cc:read_manifest_map in the pre-roster code.
   void 
   read_manifest_map(manifest_data const & mdat,
                     manifest_map & man)

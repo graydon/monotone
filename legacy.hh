@@ -32,10 +32,13 @@ namespace legacy
   // *partially* read them, however, in order to get the manifest IDs out of
   // the old revisions (before we delete the revs and rebuild them)
 
+  typedef std::map<revision_id, std::map<split_path, split_path> > renames_map;
+
   void 
   get_manifest_for_rev(app_state & app,
                        revision_id const & ident,
-                       manifest_id & mid);
+                       manifest_id & mid,
+                       renames_map & renames);
 
   ///////
   // parsing old-style manifests, for 'rosterify' and 'changesetify' commands

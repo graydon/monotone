@@ -818,7 +818,8 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
       ++n_nodes;
       
       manifest_id man;
-      legacy::get_manifest_for_rev(app, rev, man);
+      legacy::renames_map renames;
+      legacy::get_manifest_for_rev(app, rev, man, renames);
       
       L(F("node %d = revision %s = manifest %s\n") % node % rev % man);
       old_rev_to_node.insert(std::make_pair(rev, node));
