@@ -852,73 +852,66 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
 }
 
 static bool
-viable_replacement(std::map<node_id, u64> const & birth_revs, 
-                   parent_roster_map const & parent_rosters,
-                   std::multimap<u64, u64> const & child_to_parents)
+not_dead_yet(node_id nid, u64 birth_rev,
+             parent_roster_map const & parent_rosters,
+             std::multimap<u64, u64> const & child_to_parents)
 {
-  // This is a somewhat crazy function. Conceptually, we have a set NS of
-  // node_t values (representing all the elements of a path) and a set RS
-  // of rosters. We want to know whether there is an N in NS and an R in RS
-  // satisfying:
-  //
-  //       N is not present in R 
-  // *and*
-  //       N's birth_revision is an ancestor of R
-  //
-  // If we find such a pair, then the set is considered "non viable" for
-  // replacement.
+  // Any given node, at each point in the revision graph, is in one of the
+  // states "alive", "unborn", "dead".  The invariant we must maintain in
+  // constructing our revision graph is that if a node is dead in any parent,
+  // then it must also be dead in the child.  The purpose of this function is
+  // to take a node, and a list of parents, and determine whether that node is
+  // allowed to be alive in a child of the given parents.
+
+  // "Alive" means, the node currently exists in the revision's tree.
+  // "Unborn" means, the node does not exist in the revision's tree, and the
+  // node's birth revision is _not_ an ancestor of the revision.
+  // "Dead" means, the node does not exist in the revision's tree, and the
+  // node's birth revision _is_ an ancestor of the revision.
     
-  //   L(F("beginning viability comparison for %d path nodes, %d parents\n") 
-  //     % birth_revs.size() % parent_rosters.size());
-
-  for (std::map<node_id, u64>::const_iterator n = birth_revs.begin();
-       n != birth_revs.end(); ++n)
+  // L(F("testing liveliness of node %d, born in rev %d\n") % nid % birth_rev);
+  for (parent_roster_map::const_iterator r = parent_rosters.begin();
+       r != parent_rosters.end(); ++r)
     {
-      // L(F("testing viability of node %d, born in rev %d\n") % n->first % n->second);
-      for (parent_roster_map::const_iterator r = parent_rosters.begin();
-           r != parent_rosters.end(); ++r)
+      boost::shared_ptr<roster_t> parent = r->second.first;
+      // L(F("node %d %s in parent roster %d\n") 
+      //             % nid
+      //             % (parent->has_node(n->first) ? "exists" : "does not exist" ) 
+      //             % r->first);
+      
+      if (!parent->has_node(nid))
         {
-          boost::shared_ptr<roster_t> parent = r->second.first;
-          // L(F("node %d %s in parent roster %d\n") 
-          //             % n->first
-          //             % (parent->has_node(n->first) ? "exists" : "does not exist" ) 
-          //             % r->first);
-
-          if (!parent->has_node(n->first))
+          std::deque<u64> work;
+          std::set<u64> seen;
+          work.push_back(r->first);
+          while (!work.empty())
             {
-              u64 birth_rev = n->second;
-              std::deque<u64> work;
-              std::set<u64> seen;
-              work.push_back(r->first);
-              while (!work.empty())
+              u64 curr = work.front();
+              work.pop_front();
+              // L(F("examining ancestor %d of parent roster %d, looking for anc=%d\n")
+              //                     % curr % r->first % birth_rev);
+              
+              if (seen.find(curr) != seen.end())
+                continue;
+              seen.insert(curr);
+              
+              if (curr == birth_rev)
                 {
-                  u64 curr = work.front();
-                  work.pop_front();
-                  // L(F("examining ancestor %d of parent roster %d, looking for anc=%d\n")
-                  //                     % curr % r->first % birth_rev);
-
-                  if (seen.find(curr) != seen.end())
+                  // L(F("node is dead in %d") % r->first);
+                  return false;
+                }
+              typedef std::multimap<u64, u64>::const_iterator ci;
+              std::pair<ci,ci> range = child_to_parents.equal_range(curr);
+              for (ci i = range.first; i != range.second; ++i)
+                {
+                  if (i->first != curr)
                     continue;
-                  seen.insert(curr);
-
-                  if (curr == birth_rev)
-                    {
-                      // L(F("determined non-viability, returning\n"));
-                      return false;
-                    }
-                  typedef std::multimap<u64, u64>::const_iterator ci;
-                  std::pair<ci,ci> range = child_to_parents.equal_range(curr);
-                  for (ci i = range.first; i != range.second; ++i)
-                    {
-                      if (i->first != curr)
-                        continue;
-                      work.push_back(i->second);
-                    }
+                  work.push_back(i->second);
                 }
             }
-        }  
-    }
-  // L(F("exhausted possibilities for non-viability, returning\n"));
+        }
+    }  
+  // L(F("node is alive in all parents, returning true"));
   return true;
 }
 
@@ -1011,15 +1004,11 @@ anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
               bool replace_this_node = true;
               if (parent_rosters.size() > 1)
                 {
-                  std::map<node_id, u64> birth_revs;
-                  
                   revision_id birth_rev = safe_get(*parent_marking, 
                                                    other_id).birth_revision;
-                  birth_revs.insert(std::make_pair(other_id, 
-                                                   safe_get(new_rev_to_node,
-                                                            birth_rev)));
-                  replace_this_node = 
-                    viable_replacement(birth_revs, parent_rosters, ancestry);
+                  u64 birth_node = safe_get(new_rev_to_node, birth_rev);
+                  replace_this_node = not_dead_yet(other_id, birth_node,
+                                                   parent_rosters, ancestry);
                 }
                   
               if (replace_this_node)
