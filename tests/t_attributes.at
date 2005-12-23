@@ -35,6 +35,6 @@ AT_CHECK(grep "test:test_attr:foo" stdout, [1], [ignore])
 AT_CHECK(grep "test:test_attr:a:2" stdout, [], [ignore])
 
 # check that files must exist to have attributes set
-AT_CHECK(MONOTONE attr set missing execute, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE attr set missing mtn:execute, [1], [ignore], [ignore])
 
 AT_CLEANUP
