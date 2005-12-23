@@ -223,12 +223,12 @@ UNB64(right.bmp.b64, right.bmp)
 
 # hook forces all files binary
 AT_DATA(binary.lua, [if (attr_init_functions == nil) then attr_init_functions = {} end
-attr_init_functions[["manual_merge"]] = function(filename) return "true" end 
+attr_init_functions[["mtn:manual_merge"]] = function(filename) return "true" end 
 ])
 
 # hook forces all files text
 AT_DATA(text.lua, [if (attr_init_functions == nil) then attr_init_functions = {} end
-attr_init_functions[["manual_merge"]] = function(filename) return "false" end 
+attr_init_functions[["mtn:manual_merge"]] = function(filename) return "false" end 
 ])
 
 # --- first: auto add as binary 

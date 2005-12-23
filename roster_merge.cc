@@ -384,7 +384,7 @@ roster_merge(roster_t const & left_parent,
                       safe_insert(new_n->attrs, attr_i.left_value());
                       break;
                     case parallel::in_right:
-                      safe_insert(new_n->attrs, attr_i.left_value());
+                      safe_insert(new_n->attrs, attr_i.right_value());
                       break;
                     case parallel::in_both:
                       std::pair<bool, attr_value> new_value;
