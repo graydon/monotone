@@ -41,7 +41,7 @@ if (attr_init_functions == nil) then
    attr_init_functions = {}
 end
 
-attr_init_functions["execute"] = 
+attr_init_functions["mtn:execute"] = 
    function(filename)
       if (is_executable(filename)) then 
         return "true" 
@@ -50,7 +50,7 @@ attr_init_functions["execute"] =
       end 
    end
 
-attr_init_functions["manual_merge"] = 
+attr_init_functions["mtn:manual_merge"] = 
    function(filename)
       if (binary_file(filename)) then 
         return "true" -- binary files must merged manually
@@ -63,7 +63,7 @@ if (attr_functions == nil) then
    attr_functions = {}
 end
 
-attr_functions["execute"] = 
+attr_functions["mtn:execute"] = 
    function(filename, value) 
       if (value == "true") then
          make_executable(filename)
