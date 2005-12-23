@@ -1514,6 +1514,21 @@ write_revision_set(revision_set const & rev,
 static void
 test_find_old_path_for()
 {
+  std::map<split_path, split_path> renames;
+  split_path foo, foo_bar, foo_baz, quux, quux_baz;
+  file_path_internal("foo").split(foo);
+  file_path_internal("foo/bar").split(foo_bar);
+  file_path_internal("foo/baz").split(foo_baz);
+  file_path_internal("quux").split(quux);
+  file_path_internal("quux/baz").split(quux_baz);
+  I(foo == find_old_path_for(renames, foo));
+  I(foo_bar == find_old_path_for(renames, foo_bar));
+  I(quux == find_old_path_for(renames, quux));
+  renames.insert(make_pair(foo, quux));
+  renames.insert(make_pair(foo_bar, foo_baz));
+  I(quux == find_old_path_for(renames, foo));
+  I(quux_baz == find_old_path_for(renames, foo_baz));
+  I(foo_baz == find_old_path_for(renames, foo_bar));
 }
 
 void 
