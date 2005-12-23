@@ -922,7 +922,8 @@ not_dead_yet(node_id nid, u64 birth_rev,
 
 
 static split_path
-find_old_path_for(std::map<split_path, split_path> renames, split_path const & new_path)
+find_old_path_for(std::map<split_path, split_path> const & renames,
+                  split_path const & new_path)
 {
   split_path leader, trailer;
   leader = new_path;
@@ -941,6 +942,18 @@ find_old_path_for(std::map<split_path, split_path> renames, split_path const & n
   std::copy(leader.begin(), leader.end(), std::back_inserter(result));
   std::copy(trailer.begin(), trailer.end(), std::back_inserter(result));
   return result;
+}
+
+static split_path
+find_new_path_for(std::map<split_path, split_path> const & renames,
+                  split_path const & old_path)
+{
+  std::map<split_path, split_path> reversed;
+  for (std::map<split_path, split_path>::const_iterator i = renames.begin();
+       i != reversed.end(); ++i)
+    reversed.insert(std::make_pair(i->second, i->first));
+  // this is a hackish kluge.  seems to work, though.
+  return find_old_path_for(reversed, old_path);
 }
 
 void 
@@ -1009,7 +1022,20 @@ anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
         {
           revision_id old_rid = safe_get(node_to_old_rev, j->first);
           if (renames.find(old_rid) != renames.end())
-            old_sp = find_old_path_for(safe_get(renames, old_rid), sp);
+            {
+              // provisionally choose to look under the name with renames
+              // reversed
+              old_sp = find_old_path_for(safe_get(renames, old_rid), sp);
+              // but if the name doesn't round-trip, then never mind. (case I
+              // am thinking of: when find_old_path_for failed to find any
+              // applicable renames, so it simply returned the new name.  in
+              // particular, consider a revisions that has <rename foo bar;
+              // add foo> -- without some sort of check we will try and copy
+              // the new foo and the new bar's identities both from the old
+              // foo's identity, which isn't going to work out so well.)
+              if (find_new_path_for(safe_get(renames, old_rid), old_sp) != sp)
+                old_sp = sp;
+            }
         }
 
       // We use a stupid heuristic: first parent who has
@@ -1512,7 +1538,7 @@ write_revision_set(revision_set const & rev,
 #include "sanity.hh"
 
 static void
-test_find_old_path_for()
+test_find_old_new_path_for()
 {
   std::map<split_path, split_path> renames;
   split_path foo, foo_bar, foo_baz, quux, quux_baz;
@@ -1522,20 +1548,26 @@ test_find_old_path_for()
   file_path_internal("quux").split(quux);
   file_path_internal("quux/baz").split(quux_baz);
   I(foo == find_old_path_for(renames, foo));
+  I(foo == find_new_path_for(renames, foo));
   I(foo_bar == find_old_path_for(renames, foo_bar));
+  I(foo_bar == find_new_path_for(renames, foo_bar));
   I(quux == find_old_path_for(renames, quux));
+  I(quux == find_new_path_for(renames, quux));
   renames.insert(make_pair(foo, quux));
   renames.insert(make_pair(foo_bar, foo_baz));
   I(quux == find_old_path_for(renames, foo));
+  I(foo == find_new_path_for(renames, quux));
   I(quux_baz == find_old_path_for(renames, foo_baz));
+  I(foo_baz == find_new_path_for(renames, quux_baz));
   I(foo_baz == find_old_path_for(renames, foo_bar));
+  I(foo_bar == find_new_path_for(renames, foo_baz));
 }
 
 void 
 add_revision_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&test_find_old_path_for));
+  suite->add(BOOST_TEST_CASE(&test_find_old_new_path_for));
 }
 
 
