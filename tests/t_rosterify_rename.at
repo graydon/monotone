@@ -79,7 +79,8 @@ AT_CHECK(MONOTONE db migrate, [], [ignore], [ignore])
 AT_CHECK(MONOTONE db rosterify, [], [ignore], [ignore])
 
 # check the second revision
-AT_DATA([expout], [new_manifest @<:@274cc1314b1218394f058f9174faa062aaf08531@:>@
+AT_DATA([expout], [format_version "1"
+new_manifest @<:@274cc1314b1218394f058f9174faa062aaf08531@:>@
 
 old_revision @<:@e9f446845505167b1b939cbcf1f5797372fe96f0@:>@
 

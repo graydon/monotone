@@ -1413,6 +1413,7 @@ namespace
 {
   namespace syms
   {
+    std::string const format_version("format_version");
     std::string const old_revision("old_revision");
     std::string const new_manifest("new_manifest");
   }
@@ -1435,6 +1436,7 @@ print_revision(basic_io::printer & printer,
 {
   rev.check_sane();
   basic_io::stanza st; 
+  st.push_str_pair(syms::format_version, "1");
   st.push_hex_pair(syms::new_manifest, rev.new_manifest.inner()());
   printer.print_stanza(st);
   for (edge_map::const_iterator edge = rev.edges.begin();
@@ -1470,6 +1472,9 @@ parse_revision(basic_io::parser & parser,
   MM(rev);
   rev.edges.clear();
   std::string tmp;
+  parser.esym(syms::format_version);
+  parser.str(tmp);
+  I(tmp == "1");
   parser.esym(syms::new_manifest);
   parser.hex(tmp);
   rev.new_manifest = manifest_id(tmp);

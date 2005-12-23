@@ -98,7 +98,9 @@ AT_CHECK(MONOTONE db migrate, [], [ignore], [ignore])
 AT_CHECK(MONOTONE db rosterify, [], [ignore], [ignore])
 
 # check the first manifest
-AT_DATA([first_manifest_good], [dir ""
+AT_DATA([first_manifest_good], [format_version "1"
+
+dir ""
 
  dir "testdir"
 attr "dir_foo" "bar"
@@ -114,7 +116,9 @@ AT_CHECK(cp -f first_manifest_good expout)
 AT_CHECK(MONOTONE automate select i: | monotone automate toposort -@- | head -1 | monotone automate get_manifest_of -@-, [], [expout], [ignore])
 
 # check the second manifest
-AT_DATA([second_manifest_good], [dir ""
+AT_DATA([second_manifest_good], [format_version "1"
+
+dir ""
 
  dir "testdir"
 attr "dir_foo" "baz"

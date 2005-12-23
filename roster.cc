@@ -2065,6 +2065,7 @@ namespace
   namespace syms
   {
     // roster symbols
+    string const format_version("format_version");
     string const dir("dir");
     string const file("file");
     string const content("content");
@@ -2167,6 +2168,11 @@ roster_t::print_to(basic_io::printer & pr,
                    bool print_local_parts) const
 {
   I(has_root());
+  {
+    basic_io::stanza st;
+    st.push_str_pair(syms::format_version, "1");
+    pr.print_stanza(st);
+  }
   for (dfs_iter i(root_dir); !i.finished(); ++i)
     {
       node_t curr = *i;
@@ -2249,6 +2255,13 @@ roster_t::parse_from(basic_io::parser & pa,
   nodes.clear();
   root_dir.reset();
   mm.clear();
+  
+  {
+    pa.esym(syms::format_version);
+    std::string vers;
+    pa.str(vers);
+    I(vers == "1");
+  }
 
   while(pa.symp())
     {
@@ -4125,7 +4138,9 @@ write_roster_test()
     data mdat; MM(mdat);
     write_manifest_of_roster(r, mdat);
 
-    data expected("dir \"\"\n"
+    data expected("format_version \"1\"\n"
+                  "\n"
+                  "dir \"\"\n"
                   "\n"
                   "dir \"fo\"\n"
                   "\n"
@@ -4154,7 +4169,9 @@ write_roster_test()
 
     // node_id order is a hassle.
     // root 1, foo 2, xx 3, fo 4, foo_bar 5, foo_ang 6, foo_zoo 7
-    data expected("      dir \"\"\n"
+    data expected("format_version \"1\"\n"
+                  "\n"
+                  "      dir \"\"\n"
                   "    ident \"1\"\n"
                   "    birth [1234123412341234123412341234123412341234]\n"
                   "path_mark [1234123412341234123412341234123412341234]\n"

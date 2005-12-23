@@ -4,7 +4,8 @@ AT_SETUP([automate get_revision])
 NEED_UNB64
 MONOTONE_SETUP
 
-AT_DATA(expected, [new_manifest @<:@ee4a0fb04b83aaa7dc91fa796dd4d0feddc9f502@:>@
+AT_DATA(expected, [format_version "1"
+new_manifest @<:@ee4a0fb04b83aaa7dc91fa796dd4d0feddc9f502@:>@
 
 old_revision @<:@@:>@
 

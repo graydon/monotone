@@ -6,7 +6,9 @@ MONOTONE_SETUP
 
 NEED_UNGZB64
 
-AT_DATA(test.manifest, [dir ""
+AT_DATA(test.manifest, [format_version "1"
+
+dir ""
 
 dir "t"
 

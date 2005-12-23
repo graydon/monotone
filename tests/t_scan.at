@@ -19,7 +19,9 @@ AT_DATA(foo/bar/testfile2, [version 0 of third test file
 ])
 AT_CHECK(CANONICALISE(foo/bar/testfile2))
 
-AT_DATA(manifest, [dir ""
+AT_DATA(manifest, [format_version "1"
+
+dir ""
 
 dir "foo"
 
