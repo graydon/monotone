@@ -15,7 +15,8 @@ add_file "foo"
  content @<:@4cbd040533a2f43fc6691d773d510cda70f4126a@:>@
 ])
 
-AT_DATA(expected2, [new_manifest @<:@ee4a0fb04b83aaa7dc91fa796dd4d0feddc9f502@:>@
+AT_DATA(expected2, [format_version "1"
+new_manifest @<:@ee4a0fb04b83aaa7dc91fa796dd4d0feddc9f502@:>@
 
 old_revision @<:@9512c44fd577a6eff2a836d3ec2714386677a56c@:>@
 ])
