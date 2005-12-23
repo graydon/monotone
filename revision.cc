@@ -982,6 +982,18 @@ anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
   for (parent_roster_map::const_iterator j = parent_rosters.begin();
        j != parent_rosters.end(); ++j)
     {
+      split_path old_sp = sp;
+      if (node_to_old_rev.find(j->first) != node_to_old_rev.end())
+        {
+          revision_id old_rid = safe_get(node_to_old_rev, j->first);
+          if (renames.find(old_rid) != renames.end())
+            {
+              std::map<split_path, split_path> const & new_to_old = safe_get(renames, old_rid);
+              if (new_to_old.find(sp) != new_to_old.end())
+                old_sp = safe_get(new_to_old, sp);
+            }
+        }
+
       // We use a stupid heuristic: first parent who has
       // a node with the same name gets the node
       // identity copied forward. 
