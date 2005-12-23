@@ -1242,9 +1242,18 @@ anc_graph::construct_revisions_from_ancestry()
                         for (std::map<std::string, std::string>::const_iterator
                                k = fattrs.begin();
                              k != fattrs.end(); ++k)
-                          child_roster.set_attr(sp,
-                                                attr_key(k->first),
-                                                attr_value(k->second));
+                          {
+                            std::string key = k->first;
+                            if (key == "execute" || key == "manual_merge")
+                              key = "mtn:" + key;
+                            else
+                              E(F("unknown attribute %s on path %s\n"
+                                  "please contact %s so we can work out the right way to migrate this")
+                                key % file_path(sp) % PACKAGE_BUGREPORT);
+                            child_roster.set_attr(sp,
+                                                  attr_key(key),
+                                                  attr_value(k->second));
+                          }
                       }
                   }
               }
