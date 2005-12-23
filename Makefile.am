@@ -22,6 +22,8 @@ MOST_SOURCES =								\
          ui.cc ui.hh							\
          schema_migration.cc schema_migration.hh			\
          constants.cc constants.hh					\
+         refiner.cc refiner.hh						\
+         enumerator.cc enumerator.hh					\
          netsync.cc netsync.hh						\
          netcmd.cc netcmd.hh						\
          merkle_tree.cc merkle_tree.hh					\
@@ -52,7 +54,7 @@ MOST_SOURCES =								\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
 	 netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
-         package_full_revision.c package_full_revision.h options.hh     \
+         package_full_revision.c package_full_revision.h options.hh	\
          i18n.h hash_map.hh parallel_iter.hh safe_map.hh
 
 NETXX_SOURCES =									\
