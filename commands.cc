@@ -1287,7 +1287,6 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"),
     OPT_DEPTH % OPT_BRIEF)
 {
-  path_set paths;
   roster_t old_roster, new_roster, restricted_roster;
   cset included, excluded;
   revision_id old_rev_id;
@@ -1295,19 +1294,9 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
   data tmp;
 
   app.require_working_copy();
-
   get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    {
-      split_path sp;
-      file_path_external(*i).split(sp);
-      paths.insert(sp);
-    }
-
-  restriction mask;
-  mask.add_nodes(old_roster, paths);
-  mask.add_nodes(new_roster, paths);
+  restriction mask(args, old_roster, new_roster);
 
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
@@ -1662,24 +1651,12 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
 static void
 ls_known(app_state & app, vector<utf8> const & args)
 {
-  path_set paths;
   roster_t old_roster, new_roster;
-  restriction mask;
 
   app.require_working_copy();
-
   get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    {
-      split_path sp;
-      file_path_external(*i).split(sp);
-      paths.insert(sp);
-    }
-
-  mask.add_nodes(new_roster, paths);
-
-  // TODO: check for invalid paths that don't exist in either roster
+  restriction mask(args, new_roster);
 
   node_map const & nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
@@ -1704,19 +1681,10 @@ find_unknown_and_ignored(app_state & app, vector<utf8> const & args,
   revision_set rev;
   roster_t old_roster, new_roster;
   path_set known;
-  path_set paths;
-  restriction mask;
 
   get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    {
-      split_path sp;
-      file_path_external(*i).split(sp);
-      paths.insert(sp);
-    }
-  
-  mask.add_nodes(new_roster, paths);
+  restriction mask(args, new_roster);
 
   new_roster.extract_path_set(known);
 
@@ -1746,22 +1714,11 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored, vector<utf8> const & a
 static void
 find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
 {
-  path_set paths;
   roster_t old_roster, new_roster;
-  restriction mask;
 
   get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    {
-      split_path sp;
-      file_path_external(*i).split(sp);
-      paths.insert(sp);
-    }
-
-  mask.add_nodes(new_roster, paths);
-
-  // TODO: check for invalid paths that don't exist in either roster
+  restriction mask(args, new_roster);
 
   node_map const & nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
@@ -2358,24 +2315,13 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   revision_set restricted_rev;
   revision_id old_rev_id, restricted_rev_id;
   roster_t old_roster, new_roster, restricted_roster;
-  path_set paths;
   cset included, excluded;
 
   app.make_branch_sticky();
   app.require_working_copy();
-
   get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    {
-      split_path sp;
-      file_path_external(*i).split(sp);
-      paths.insert(sp);
-    }
-
-  restriction mask;
-  mask.add_nodes(old_roster, paths);
-  mask.add_nodes(new_roster, paths);
+  restriction mask(args, old_roster, new_roster);
 
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
@@ -2741,7 +2687,6 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
     OPT_EXTERNAL_DIFF_ARGS)
 {
-  path_set paths;
   bool new_is_archived;
   diff_type type = app.diff_format;
   ostringstream header;
@@ -2760,28 +2705,17 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   else if (app.revision_selectors.size() == 1)
     app.require_working_copy();
 
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    {
-      split_path sp;
-      file_path_external(*i).split(sp);
-      paths.insert(sp);
-    }
-
   if (app.revision_selectors.size() == 0)
     {
       roster_t new_roster, old_roster;
       revision_id old_rid;
 
       get_base_and_current_roster_shape(old_roster, new_roster, app);
-
       get_revision_id(old_rid);
 
-      restriction mask;
-      mask.add_nodes(old_roster, paths);
-      mask.add_nodes(new_roster, paths);
+      restriction mask(args, old_roster, new_roster);
 
       update_current_roster_from_filesystem(new_roster, mask, app);
-
       make_restricted_csets(old_roster, new_roster, included, excluded, mask);
 
       new_is_archived = false;
@@ -2803,12 +2737,9 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       // FIXME: handle no ancestor case
       // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
 
-      restriction mask;
-      mask.add_nodes(old_roster, paths);
-      mask.add_nodes(new_roster, paths);
+      restriction mask(args, old_roster, new_roster);
       
       update_current_roster_from_filesystem(new_roster, mask, app);
-
       make_restricted_csets(old_roster, new_roster, included, excluded, mask);
 
       new_is_archived = false;
@@ -2830,9 +2761,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.db.get_roster(r_old_id, old_roster);
       app.db.get_roster(r_new_id, new_roster);
 
-      restriction mask;
-      mask.add_nodes(old_roster, paths);
-      mask.add_nodes(new_roster, paths);
+      restriction mask(args, old_roster, new_roster);
       
       // FIXME: this is *possibly* a UI bug, insofar as we
       // look at the restriction name(s) you provided on the command
@@ -3363,13 +3292,11 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
     N_("revert file(s), dir(s) or entire working copy"), 
     OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
-  path_set paths;
   roster_t old_roster, new_roster;
-  restriction mask;
   cset included, excluded;
 
   app.require_working_copy();
-
+  
   vector<utf8> args_copy(args);
   if (app.missing)
     {
@@ -3391,19 +3318,9 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
     }
 
   get_base_and_current_roster_shape(old_roster, new_roster, app);
+  restriction mask(args_copy, old_roster, new_roster);
 
-  for (vector<utf8>::const_iterator i = args_copy.begin(); i != args_copy.end(); ++i)
-    {
-      split_path sp;
-      file_path_external(*i).split(sp);
-      paths.insert(sp);
-    }
-
-  mask.add_nodes(old_roster, paths);
-  mask.add_nodes(new_roster, paths);
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
-
-  // TODO: check for invalid paths that don't exist in either roster
 
   node_map const & nodes = old_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
@@ -3589,11 +3506,9 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   if (app.revision_selectors.size() == 0)
     app.require_working_copy("try passing a --revision to start at");
 
-  restriction mask;
-
   set<revision_id> frontier;
-
   revision_id first_rid;
+
   if (app.revision_selectors.size() == 0)
     {
       get_revision_id(first_rid);
@@ -3612,6 +3527,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
         }
     }
 
+  restriction mask;
+  
   if (args.size() > 0)
     {
       // User wants to trace only specific files
@@ -3622,28 +3539,9 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       else
         app.db.get_roster(first_rid, new_roster);          
 
-      path_set paths;
+      // FIXME_RESTRICTIONS: should this add paths from the rosters of all selected revs?
 
-      for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-        {
-          split_path sp;
-          file_path_external(*i).split(sp);
-          paths.insert(sp);
-        }
-
-      // FIXME: should this add paths from the roster all selected revs?
-
-      mask.add_nodes(old_roster, paths);
-      mask.add_nodes(new_roster, paths);
-      
-      for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
-        {
-          file_path fp(*i);
-          N(old_roster.has_node(*i) || new_roster.has_node(*i),
-            F("Unknown file '%s' for log command") % fp);
-        }
-
-      // TODO: check for invalid paths that don't exist in either roster
+      mask = restriction(args, old_roster, new_roster);
     }
 
   cert_name author_name(author_cert_name);

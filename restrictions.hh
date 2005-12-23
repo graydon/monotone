@@ -12,6 +12,7 @@
 #include "vocab.hh"
 
 using std::map;
+using std::vector;
 
 // between any two related revisions, A and B, there is a set of changes (a
 // cset) that describes the operations required to get from A to B. for example:
@@ -35,15 +36,29 @@ using std::map;
 class restriction
 {
  public:
-  void add_nodes(roster_t const & roster, path_set const & paths);
+  restriction() {}
+
+  restriction(vector<utf8> const & args,
+              roster_t const & roster);
+
+  restriction(vector<utf8> const & args,
+              roster_t const & roster1,
+              roster_t const & roster2);
+
   bool includes(roster_t const & roster, node_id nid) const;
   bool empty() const { return restricted_node_map.empty(); }
-  
+
  private:
   typedef map<node_id, bool> restriction_map;
   restriction_map restricted_node_map;
-  
+
+  path_set paths;
+  path_set valid_paths;
+
+  void set_paths(vector<utf8> const & args);
+  void add_nodes(roster_t const & roster);
   void insert(node_id nid, bool recursive);
+  void check_paths();
 };
 
 void 

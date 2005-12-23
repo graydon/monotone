@@ -13,10 +13,40 @@
 #include "safe_map.hh"
 #include "transforms.hh"
 
-using std::vector;
+restriction::restriction(vector<utf8> const & args,
+                         roster_t const & roster)
+{
+  set_paths(args);
+  add_nodes(roster);
+  check_paths();
+}
+
+restriction::restriction(vector<utf8> const & args,
+                         roster_t const & roster1,
+                         roster_t const & roster2)
+{
+  set_paths(args);
+  add_nodes(roster1);
+  add_nodes(roster2);
+  check_paths();
+}
 
 void
-restriction::add_nodes(roster_t const & roster, path_set const & paths)
+restriction::set_paths(vector<utf8> const & args)
+{
+  L(F("setting paths with %d args") % args.size());
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    {
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+      L(F("added path '%s'") % *i);
+    }
+}
+
+void
+restriction::add_nodes(roster_t const & roster)
 {
   L(F("adding nodes\n"));
 
@@ -31,6 +61,8 @@ restriction::add_nodes(roster_t const & roster, path_set const & paths)
           node_t node = roster.get_node(*i);
           bool recursive = is_dir_t(node);
           node_id nid = node->self;
+
+          valid_paths.insert(*i);
 
           // TODO: proper wildcard paths like foo/... 
           // for now we always add directories recursively and files exactly
@@ -61,6 +93,10 @@ restriction::add_nodes(roster_t const & roster, path_set const & paths)
           // TODO: consider keeping a list of valid paths here that we can use
           // for doing a set-difference against with the full list of paths to
           // find those that are not legal in any roster of this restriction
+        }
+      else
+        {
+          L(F("missed path '%s'") % *i);
         }
     }
 
@@ -119,6 +155,26 @@ restriction::insert(node_id nid, bool recursive)
 
   restricted_node_map[nid] |= recursive;
 }
+
+void
+restriction::check_paths()
+{
+  int bad = 0;
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      if (valid_paths.find(*i) == valid_paths.end())
+        {
+          bad++;
+          W(F("unknown path %s") % *i);
+        }
+    }
+
+  E(bad == 0, F("%d unknown paths") % bad);
+}
+
+
+// kill everything below this line //
+
 
 static void
 extract_rearranged_paths(cset const & cs, path_set & paths)
@@ -337,18 +393,7 @@ get_working_revision_and_rosters(app_state & app,
   editable_roster_base er(new_roster, nis);
   cs->apply_to(er);
 
-  path_set paths;
-
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    {
-      split_path sp;
-      file_path_external(*i).split(sp);
-      paths.insert(sp);
-    }
-
-  restriction mask;
-  mask.add_nodes(old_roster, paths);
-  mask.add_nodes(new_roster, paths);
+  restriction mask(args, old_roster, new_roster);
 
   // Now update any idents in the new roster
   update_current_roster_from_filesystem(new_roster, mask, app);
