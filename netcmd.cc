@@ -638,7 +638,7 @@ test_netcmd_functions()
 
         out_cmd.write_bye_cmd(out_phase);
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
-        in_cmd.read_done_cmd(in_phase);
+        in_cmd.read_bye_cmd(in_phase);
         BOOST_CHECK(in_phase == out_phase);
         L(boost::format("bye_cmd test done, buffer was %d bytes\n") % buf.size()); 
       }
@@ -720,6 +720,7 @@ test_netcmd_functions()
         out_node.set_raw_slot(15, id(raw_sha1("He was whisked away to jail")));
         out_node.set_slot_state(0, subtree_state);
         out_node.set_slot_state(3, leaf_state);
+        out_node.set_slot_state(8, leaf_state);
         out_node.set_slot_state(15, subtree_state);
 
         out_cmd.write_refine_cmd(out_ty, out_node);
