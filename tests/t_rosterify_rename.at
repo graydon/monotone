@@ -80,9 +80,9 @@ AT_CHECK(MONOTONE db rosterify, [], [ignore], [ignore])
 
 # check the second revision
 AT_DATA([expout], [format_version "1"
-new_manifest @<:@274cc1314b1218394f058f9174faa062aaf08531@:>@
+new_manifest @<:@0ee54a587bc4465f17eaf5de2807fbd7d9f46c75@:>@
 
-old_revision @<:@e9f446845505167b1b939cbcf1f5797372fe96f0@:>@
+old_revision @<:@0e2ccc951f2ccc0f2b5c45bfce33af6095be56d7@:>@
 
 rename "testdir_start"
     to "testdir_end"

@@ -601,11 +601,11 @@ enable_inodeprints()
   write_data(ip_path, dat);
 }
 
-string const encoding_attribute("encoding");
+string const encoding_attribute("mtn:encoding");
 string const binary_encoding("binary");
 string const default_encoding("default");
 
-string const manual_merge_attribute("manual_merge");
+string const manual_merge_attribute("mtn:manual_merge");
 
 bool 
 get_attribute_from_roster(roster_t const & ros,                               
