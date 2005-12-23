@@ -6,88 +6,91 @@ NEED_UNGZB64
 # "testfile" and "testdir/otherfile".  The first has a .mt-attrs file
 # that contains:
 ###
-#    file "testfile"
-#file_foo "bar"
+#   file "testfile"
+#execute "true"
 #
-#   file "testdir"
-#dir_foo "bar"
+#        file "testdir"
+#manual_merge "yes"
 #
-# file "nonexistent"
-#stray "attr"
+#   file "nonexistent"
+#execute "true"
 ###
-# The second is the same, except that the two attrs with value "bar"
-# now have value "baz".
+# The second is the same, except that "yes" and "true" have been
+# swapped in all places.
+# (I know it makes no sense to have manual_merge on a directory, but
+# we want to test attrs on directories, and manual_merge and execute
+# are the only two attrs that get migrated directly...)
 
-AT_DATA([test.db.dump.gz.b64], [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
-vzx2/K/IP/bYD6/vipamqW3+Ofo3hueynoUfAAA=
+AT_DATA([test.db.dump.gz.b64], [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
 ])
 
 AT_CHECK(rm -f test.db)
@@ -103,14 +106,14 @@ AT_DATA([first_manifest_good], [format_version "1"
 dir ""
 
  dir "testdir"
-attr "dir_foo" "bar"
+attr "mtn:manual_merge" "yes"
 
    file "testdir/otherfile"
 content @<:@ee9e51458f4642f48efe956962058245ee7127b1@:>@
 
    file "testfile"
 content @<:@55ca6286e3e4f4fba5d0448333fa99fc5a404a73@:>@
-   attr "file_foo" "bar"
+   attr "mtn:execute" "true"
 ])
 AT_CHECK(cp -f first_manifest_good expout)
 AT_CHECK(MONOTONE automate select i: | monotone automate toposort -@- | head -1 | monotone automate get_manifest_of -@-, [], [expout], [ignore])
@@ -121,14 +124,14 @@ AT_DATA([second_manifest_good], [format_version "1"
 dir ""
 
  dir "testdir"
-attr "dir_foo" "baz"
+attr "mtn:manual_merge" "true"
 
    file "testdir/otherfile"
 content @<:@ee9e51458f4642f48efe956962058245ee7127b1@:>@
 
    file "testfile"
 content @<:@55ca6286e3e4f4fba5d0448333fa99fc5a404a73@:>@
-   attr "file_foo" "baz"
+   attr "mtn:execute" "yes"
 ])
 AT_CHECK(cp -f second_manifest_good expout)
 AT_CHECK(MONOTONE automate select i: | monotone automate toposort -@- | tail -1 | monotone automate get_manifest_of -@-, [], [expout], [ignore])
