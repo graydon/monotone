@@ -35,10 +35,10 @@ namespace legacy
   typedef std::map<revision_id, std::map<split_path, split_path> > renames_map;
 
   void 
-  get_manifest_for_rev(app_state & app,
-                       revision_id const & ident,
-                       manifest_id & mid,
-                       renames_map & renames);
+  get_manifest_and_renames_for_rev(app_state & app,
+                                   revision_id const & ident,
+                                   manifest_id & mid,
+                                   renames_map & renames);
 
   ///////
   // parsing old-style manifests, for 'rosterify' and 'changesetify' commands

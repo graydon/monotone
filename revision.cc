@@ -596,6 +596,8 @@ struct anc_graph
   std::map<u64,revision_id> node_to_new_rev;
   std::map<revision_id,u64> new_rev_to_node;
 
+  std::map<u64, legacy::renames_map> node_to_renames;
+
   std::multimap<u64, std::pair<cert_name, cert_value> > certs;
   std::multimap<u64, u64> ancestry;
   std::set<std::string> branches;
@@ -614,7 +616,8 @@ struct anc_graph
                                                  file_id const & fid,
                                                  parent_roster_map const & parent_rosters,
                                                  temp_node_id_source & nis,
-                                                 roster_t & child_roster);
+                                                 roster_t & child_roster,
+                                                 legacy::renames_map const & renames);
 };
 
 
@@ -819,12 +822,13 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
       
       manifest_id man;
       legacy::renames_map renames;
-      legacy::get_manifest_for_rev(app, rev, man, renames);
+      legacy::get_manifest_and_renames_for_rev(app, rev, man, renames);
       
       L(F("node %d = revision %s = manifest %s\n") % node % rev % man);
       old_rev_to_node.insert(std::make_pair(rev, node));
       node_to_old_rev.insert(std::make_pair(node, rev));
       node_to_old_man.insert(std::make_pair(node, man));
+      node_to_renames.insert(std::make_pair(node, renames));
 
       // load certs
       std::vector< revision<cert> > rcerts;
@@ -923,7 +927,8 @@ anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
                                                      file_id const & fid,
                                                      parent_roster_map const & parent_rosters,
                                                      temp_node_id_source & nis,
-                                                     roster_t & child_roster)
+                                                     roster_t & child_roster,
+                                                     legacy::renames_map const & renames)
 {
 
   split_path sp, dirname;
@@ -955,7 +960,8 @@ anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
                                                     file_id(),
                                                     parent_rosters,
                                                     nis,
-                                                    child_roster);
+                                                    child_roster,
+                                                    renames);
       }
   }
 
@@ -1155,7 +1161,8 @@ anc_graph::construct_revisions_from_ancestry()
               if (!(i->first == attr_path))
                 insert_into_roster_reusing_parent_entries(i->first, true, i->second,
                                                           parent_rosters,
-                                                          nis, child_roster);
+                                                          nis, child_roster,
+                                                          node_to_renames[child]);
             }
           
           // migrate attributes out of .mt-attrs
