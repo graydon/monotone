@@ -1247,9 +1247,9 @@ anc_graph::construct_revisions_from_ancestry()
                             if (key == "execute" || key == "manual_merge")
                               key = "mtn:" + key;
                             else
-                              E(F("unknown attribute %s on path %s\n"
-                                  "please contact %s so we can work out the right way to migrate this")
-                                key % file_path(sp) % PACKAGE_BUGREPORT);
+                              E(false, F("unknown attribute %s on path %s\n"
+                                         "please contact %s so we can work out the right way to migrate this")
+                                % key % file_path(sp) % PACKAGE_BUGREPORT);
                             child_roster.set_attr(sp,
                                                   attr_key(key),
                                                   attr_value(k->second));
