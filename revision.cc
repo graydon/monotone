@@ -921,6 +921,28 @@ not_dead_yet(node_id nid, u64 birth_rev,
 }
 
 
+static split_path
+find_old_path_for(std::map<split_path, split_path> renames, split_path const & new_path)
+{
+  split_path leader, trailer;
+  leader = new_path;
+  while (!leader.empty())
+    {
+      if (renames.find(leader) != renames.end())
+        {
+          leader = safe_get(renames, leader);
+          break;
+        }
+      path_component pc = leader.back();
+      leader.pop_back();
+      trailer.insert(trailer.begin(), pc);
+    }
+  split_path result;
+  std::copy(leader.begin(), leader.end(), std::back_inserter(result));
+  std::copy(trailer.begin(), trailer.end(), std::back_inserter(result));
+  return result;
+}
+
 void 
 anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
                                                      bool is_file,  // as opposed to dir
@@ -987,11 +1009,7 @@ anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
         {
           revision_id old_rid = safe_get(node_to_old_rev, j->first);
           if (renames.find(old_rid) != renames.end())
-            {
-              std::map<split_path, split_path> const & new_to_old = safe_get(renames, old_rid);
-              if (new_to_old.find(sp) != new_to_old.end())
-                old_sp = safe_get(new_to_old, sp);
-            }
+            old_sp = find_old_path_for(safe_get(renames, old_rid), sp);
         }
 
       // We use a stupid heuristic: first parent who has
@@ -1493,8 +1511,8 @@ write_revision_set(revision_set const & rev,
 #include "unit_tests.hh"
 #include "sanity.hh"
 
-static void 
-revision_test()
+static void
+test_find_old_path_for()
 {
 }
 
@@ -1502,7 +1520,7 @@ void
 add_revision_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&revision_test));
+  suite->add(BOOST_TEST_CASE(&test_find_old_path_for));
 }
 
 

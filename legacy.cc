@@ -91,7 +91,6 @@ namespace legacy
             file_path_internal(from_str).split(from);
             file_path_internal(to_str).split(to);
             renames[old_rev][to] = from;
-            P(F("found a rename in %s: %s -> %s") % old_rev % from % to);
           }
         else if (parser.symp(syms::patch))
           {
