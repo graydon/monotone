@@ -14,7 +14,6 @@ MOST_SOURCES =								\
          key_store.cc key_store.hh					\
          file_io.cc file_io.hh						\
          keys.cc keys.hh						\
-         manifest.cc manifest.hh					\
          packet.cc packet.hh						\
          sanity.cc sanity.hh						\
          vocab.cc vocab.hh vocab_terms.hh numeric_vocab.hh		\
@@ -43,13 +42,14 @@ MOST_SOURCES =								\
          selectors.cc selectors.hh					\
          annotate.cc annotate.hh					\
          restrictions.cc restrictions.hh				\
-         hmac.cc hmac.hh						\
-         globish.cc globish.hh						\
-         string_queue.cc string_queue.hh				\
-         paths.cc paths.hh						\
-         roster_merge.cc roster_merge.hh				\
-         merge.cc merge.hh						\
-									\
+         hmac.cc hmac.hh                                                \
+         globish.cc globish.hh                                          \
+         string_queue.cc string_queue.hh                                \
+         paths.cc paths.hh                                              \
+         roster_merge.cc roster_merge.hh                                \
+         merge.cc merge.hh                                              \
+         legacy.cc legacy.hh                                            \
+                                                                        \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
 	 netio.hh smap.hh gettext.h					\

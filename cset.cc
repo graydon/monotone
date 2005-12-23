@@ -24,11 +24,10 @@ check_normalized(cset const & cs)
 {
   MM(cs);
 
-  // FIXME -- normalize:
+  // normalize:
   //
   //   add_file foo@id1 + apply_delta id1->id2
   //   clear_attr foo:bar + set_attr foo:bar=baz
-  //   rename foo -> foo
   //
   // possibly more?
 
@@ -256,63 +255,48 @@ void
 print_cset(basic_io::printer & printer,
            cset const & cs)
 {
-  string prev;
   for (path_set::const_iterator i = cs.nodes_deleted.begin();
        i != cs.nodes_deleted.end(); ++i)
     {
       file_path p(*i);
-      I(prev.empty() || p.as_internal() > prev);
-      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::delete_node, file_path(*i));
       printer.print_stanza(st);
     }
 
-  prev.clear();
   for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     {
       file_path p(i->first);
-      I(prev.empty() || p.as_internal() > prev);
-      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::rename_node, file_path(i->first));
       st.push_file_pair(syms::to, file_path(i->second));
       printer.print_stanza(st);
     }
 
-  prev.clear();
   for (path_set::const_iterator i = cs.dirs_added.begin();
        i != cs.dirs_added.end(); ++i)
     {
       file_path p(*i);
-      I(prev.empty() || p.as_internal() > prev);
-      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::add_dir, file_path(*i));
       printer.print_stanza(st);
     }
 
-  prev.clear();
   for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     {
       file_path p(i->first);
-      I(prev.empty() || p.as_internal() > prev);
-      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::add_file, file_path(i->first));
       st.push_hex_pair(syms::content, i->second.inner()());
       printer.print_stanza(st);
     }
 
-  prev.clear();
   for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
       file_path p(i->first);
-      I(prev.empty() || p.as_internal() > prev);
-      prev = p.as_internal();
       basic_io::stanza st;
       st.push_file_pair(syms::patch, file_path(i->first));
       st.push_hex_pair(syms::from, i->second.first.inner()());
@@ -320,29 +304,18 @@ print_cset(basic_io::printer & printer,
       printer.print_stanza(st);
     }
 
-  pair<string, string> prev_pair;
   for (set<pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
        i != cs.attrs_cleared.end(); ++i)
     {
-      pair<string, string> new_pair(file_path(i->first).as_internal(),
-                                    i->second());
-      I(new_pair > prev_pair);
-      prev_pair = new_pair;
       basic_io::stanza st;
       st.push_file_pair(syms::clear, file_path(i->first));
       st.push_str_pair(syms::attr, i->second());
       printer.print_stanza(st);
     }
 
-  prev_pair.first.clear(); 
-  prev_pair.second.clear();
   for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
        i != cs.attrs_set.end(); ++i)
     {
-      pair<string, string> new_pair(file_path(i->first.first).as_internal(),
-                                    i->first.second());
-      I(new_pair > prev_pair);
-      prev_pair = new_pair;
       basic_io::stanza st;
       st.push_file_pair(syms::set, file_path(i->first.first));
       st.push_str_pair(syms::attr, i->first.second());
@@ -352,114 +325,118 @@ print_cset(basic_io::printer & printer,
 }
 
 
+static inline void
+parse_path(basic_io::parser & parser, split_path & sp)
+{
+  std::string s;
+  parser.str(s);
+  file_path_internal(s).split(sp);
+}
+
 void 
 parse_cset(basic_io::parser & parser,
            cset & cs)
 {
   cs.clear();
-  string t1, t2, t3;
+  string t1, t2;
   MM(t1);
   MM(t2);
-  MM(t3);
-  // prev is used to enforce monotonically increasing filename ordering
-  string prev; MM(prev);
-  pair<string, string> prev_pair;
+  split_path p1, p2;
+  MM(p1);
+  MM(p2);
+  
+  split_path prev_path;
+  MM(prev_path);
+  pair<split_path, attr_key> prev_pair;
   MM(prev_pair.first);
   MM(prev_pair.second);
-
+  
+  // we make use of the fact that a valid split_path is never empty
+  prev_path.clear();
   while (parser.symp(syms::delete_node))
     {
       parser.sym();
-      parser.str(t1);
-      I(prev.empty() || t1 > prev);
-      prev = t1;
-      safe_insert(cs.nodes_deleted, internal_string_to_split_path(t1));
+      parse_path(parser, p1);
+      I(prev_path.empty() || p1 > prev_path);
+      prev_path = p1;
+      safe_insert(cs.nodes_deleted, p1);
     }
 
-  prev.clear();
+  prev_path.clear();
   while (parser.symp(syms::rename_node))
     {
       parser.sym();
-      parser.str(t1);
-      I(prev.empty() || t1 > prev);
-      prev = t1;
+      parse_path(parser, p1);
+      I(prev_path.empty() || p1 > prev_path);
+      prev_path = p1;
       parser.esym(syms::to);
-      parser.str(t2);
-      safe_insert(cs.nodes_renamed, make_pair(internal_string_to_split_path(t1),
-                                              internal_string_to_split_path(t2)));
+      parse_path(parser, p2);
+      safe_insert(cs.nodes_renamed, make_pair(p1, p2));
     }
 
-  prev.clear();
+  prev_path.clear();
   while (parser.symp(syms::add_dir))
     {
       parser.sym();
-      parser.str(t1);
-      I(prev.empty() || t1 > prev);
-      prev = t1;
-      safe_insert(cs.dirs_added, internal_string_to_split_path(t1));
+      parse_path(parser, p1);
+      I(prev_path.empty() || p1 > prev_path);
+      prev_path = p1;
+      safe_insert(cs.dirs_added, p1);
     }
 
-  prev.clear();
+  prev_path.clear();
   while (parser.symp(syms::add_file))
     {
       parser.sym();
-      parser.str(t1);
-      I(prev.empty() || t1 > prev);
-      prev = t1;
+      parse_path(parser, p1);
+      I(prev_path.empty() || p1 > prev_path);
+      prev_path = p1;
       parser.esym(syms::content);
-      parser.hex(t2);
-      safe_insert(cs.files_added, make_pair(internal_string_to_split_path(t1),
-                                            file_id(t2)));
+      parser.hex(t1);
+      safe_insert(cs.files_added, make_pair(p1, file_id(t1)));
     }
 
-  prev.clear();
+  prev_path.clear();
   while (parser.symp(syms::patch))
     {
       parser.sym();
-      parser.str(t1);
-      I(prev.empty() || t1 > prev);
-      prev = t1;
+      parse_path(parser, p1);
+      I(prev_path.empty() || p1 > prev_path);
+      prev_path = p1;
       parser.esym(syms::from);
-      parser.hex(t2);
+      parser.hex(t1);
       parser.esym(syms::to);
-      parser.hex(t3);
+      parser.hex(t2);
       safe_insert(cs.deltas_applied, 
-                  make_pair(internal_string_to_split_path(t1),
-                            make_pair(file_id(t2), 
-                                      file_id(t3))));
-    }
-
-  while (parser.symp(syms::clear))
-    {
-      parser.sym();
-      parser.str(t1);
-      parser.esym(syms::attr);
-      parser.str(t2);
-      pair<string, string> new_pair(t1, t2);
-      I(new_pair > prev_pair);
-      prev_pair = new_pair;
-      safe_insert(cs.attrs_cleared, 
-                  make_pair(internal_string_to_split_path(t1), 
-                            attr_key(t2)));
+                  make_pair(p1, make_pair(file_id(t1), file_id(t2))));
     }
 
   prev_pair.first.clear(); 
-  prev_pair.second.clear();
+  while (parser.symp(syms::clear))
+    {
+      parser.sym();
+      parse_path(parser, p1);
+      parser.esym(syms::attr);
+      parser.str(t1);
+      pair<split_path, attr_key> new_pair(p1, t1);
+      I(prev_pair.first.empty() || new_pair > prev_pair);
+      prev_pair = new_pair;
+      safe_insert(cs.attrs_cleared, new_pair);
+    }
+
+  prev_pair.first.clear(); 
   while (parser.symp(syms::set))
     {
       parser.sym();
-      parser.str(t1);
+      parse_path(parser, p1);
       parser.esym(syms::attr);
-      parser.str(t2);
-      pair<string, string> new_pair(t1, t2);
-      I(new_pair > prev_pair);
+      parser.str(t1);
+      pair<split_path, attr_key> new_pair(p1, t1);
+      I(prev_pair.first.empty() || new_pair > prev_pair);
       prev_pair = new_pair;
       parser.esym(syms::value);
-      parser.str(t3);
-      safe_insert(cs.attrs_set, 
-                  make_pair(make_pair(internal_string_to_split_path(t1),
-                                      attr_key(t2)),
-                            attr_value(t3)));
+      parser.str(t2);
+      safe_insert(cs.attrs_set, make_pair(new_pair, attr_value(t2)));
     }
 }
 
@@ -553,11 +530,97 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - misordered files"));
+    L(F("TEST: cset reading - misordered files in delete"));
     // bad cset, bar should be before foo
     data dat("delete \"foo\"\n"
              "\n"
              "delete \"bar\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in rename"));
+    // bad cset, bar should be before foo
+    data dat("rename \"foo\"\n"
+             "    to \"foonew\"\n"
+             "\n"
+             "rename \"bar\"\n"
+             "    to \"barnew\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in add_dir"));
+    // bad cset, bar should be before foo
+    data dat("add_dir \"foo\"\n"
+             "\n"
+             "add_dir \"bar\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in add_file"));
+    // bad cset, bar should be before foo
+    data dat("add_file \"foo\"\n"
+             " content [0000000000000000000000000000000000000000]\n"
+             "\n"
+             "add_file \"bar\"\n"
+             " content [0000000000000000000000000000000000000000]\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in add_file"));
+    // bad cset, bar should be before foo
+    data dat("add_file \"foo\"\n"
+             " content [0000000000000000000000000000000000000000]\n"
+             "\n"
+             "add_file \"bar\"\n"
+             " content [0000000000000000000000000000000000000000]\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in patch"));
+    // bad cset, bar should be before foo
+    data dat("patch \"foo\"\n"
+             " from [0000000000000000000000000000000000000000]\n"
+             "   to [1000000000000000000000000000000000000000]\n"
+             "\n"
+             "patch \"bar\"\n"
+             " from [0000000000000000000000000000000000000000]\n"
+             "   to [1000000000000000000000000000000000000000]\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in clear"));
+    // bad cset, bar should be before foo
+    data dat("clear \"foo\"\n"
+             " attr \"flavoursome\"\n"
+             "\n"
+             "clear \"bar\"\n"
+             " attr \"flavoursome\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - misordered files in set"));
+    // bad cset, bar should be before foo
+    data dat("  set \"foo\"\n"
+             " attr \"flavoursome\"\n"
+             "value \"yes\"\n"
+             "\n"
+             "  set \"bar\"\n"
+             " attr \"flavoursome\"\n"
+             "value \"yes\"\n");
     cset cs;
     BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
   }
@@ -586,7 +649,19 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - wrong attr ordering"));
+    L(F("TEST: cset reading - wrong attr ordering in clear"));
+    // fooish should be before quuxy
+    data dat( "clear \"bar\"\n"
+              " attr \"quuxy\"\n"
+              "\n"
+              "clear \"bar\"\n"
+              " attr \"fooish\"\n");
+    cset cs;
+    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+  }
+
+  {
+    L(F("TEST: cset reading - wrong attr ordering in set"));
     // fooish should be before quuxy
     data dat( "  set \"bar\"\n"
               " attr \"quuxy\"\n"

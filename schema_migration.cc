@@ -202,6 +202,8 @@ migrator
             &sqlite_sha1_fn, NULL, NULL))
       throw runtime_error("error registering sha1 function with sqlite");
 
+    P(F("calculating necessary migration steps"));
+
     bool migrating = false;
     for (vector< pair<string, migrator_cb> >::const_iterator i = migration_events.begin();
          i != migration_events.end(); ++i)
@@ -852,23 +854,23 @@ migrate_client_to_add_rosters(sqlite3 * sql,
   int res;
   
   res = sqlite3_exec(sql,
-		     "CREATE TABLE rosters\n"
-		     "(\n"
-		     "id primary key,         -- strong hash of the roster\n"
-		     "data not null           -- compressed, encoded contents of the roster\n"
-		     ");",
+                     "CREATE TABLE rosters\n"
+                     "(\n"
+                     "id primary key,         -- strong hash of the roster\n"
+                     "data not null           -- compressed, encoded contents of the roster\n"
+                     ");",
                      NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
   res = sqlite3_exec(sql,
-		     "CREATE TABLE roster_deltas\n"
-		     "(\n"
-		     "id not null,            -- strong hash of the roster\n"
-		     "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
-		     "delta not null,         -- rdiff to construct current from base\n"
-		     "unique(id, base)\n"
-		     ");",
+                     "CREATE TABLE roster_deltas\n"
+                     "(\n"
+                     "id not null,            -- strong hash of the roster\n"
+                     "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
+                     "delta not null,         -- rdiff to construct current from base\n"
+                     "unique(id, base)\n"
+                     ");",
                      NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;

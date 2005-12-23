@@ -31,7 +31,6 @@
 #include "file_io.hh"
 #include "interner.hh"
 #include "keys.hh"
-#include "manifest.hh"
 #include "packet.hh"
 #include "paths.hh"
 #include "platform.hh"

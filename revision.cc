@@ -36,6 +36,7 @@
 #include "ui.hh"
 #include "vocab.hh"
 #include "safe_map.hh"
+#include "legacy.hh"
 
 
 void revision_set::check_sane() const
@@ -538,6 +539,33 @@ select_nodes_modified_by_rev(revision_id const & rid,
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
 
+typedef std::map<u64, 
+                 std::pair<boost::shared_ptr<roster_t>, 
+                           boost::shared_ptr<marking_map>
+                 > > 
+parent_roster_map;
+
+void
+dump(parent_roster_map const & prm, std::string & out)
+{
+  std::ostringstream oss;
+  for (parent_roster_map::const_iterator i = prm.begin(); i != prm.end(); ++i)
+    {
+      oss << "roster: " << i->first << "\n";
+      std::string roster_str, indented_roster_str;
+      dump(*i->second.first, roster_str);
+      prefix_lines_with("    ", roster_str, indented_roster_str);
+      oss << indented_roster_str;
+      oss << "\nroster's marking:\n";
+      std::string marking_str, indented_marking_str;
+      dump(*i->second.second, marking_str);
+      prefix_lines_with("    ", marking_str, indented_marking_str);
+      oss << indented_marking_str;
+      oss << "\n\n";
+    }
+  out = oss.str();
+}
+
 struct anc_graph
 {
   anc_graph(bool existing, app_state & a) : 
@@ -568,6 +596,8 @@ struct anc_graph
   std::map<u64,revision_id> node_to_new_rev;
   std::map<revision_id,u64> new_rev_to_node;
 
+  std::map<u64, legacy::renames_map> node_to_renames;
+
   std::multimap<u64, std::pair<cert_name, cert_value> > certs;
   std::multimap<u64, u64> ancestry;
   std::set<std::string> branches;
@@ -580,6 +610,14 @@ struct anc_graph
   u64 add_node_for_old_manifest(manifest_id const & man);
   u64 add_node_for_oldstyle_revision(revision_id const & rev);                     
   void construct_revisions_from_ancestry();
+
+  void insert_into_roster_reusing_parent_entries(file_path const & pth,
+                                                 bool is_file,  // as opposed to dir
+                                                 file_id const & fid,
+                                                 parent_roster_map const & parent_rosters,
+                                                 temp_node_id_source & nis,
+                                                 roster_t & child_roster,
+                                                 legacy::renames_map const & renames);
 };
 
 
@@ -772,11 +810,6 @@ anc_graph::add_node_for_old_manifest(manifest_id const & man)
   return node;
 }
 
-static void 
-get_manifest_for_rev(app_state & app,
-                     revision_id const & ident,
-                     manifest_id & mid);
-
 u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
 {
   I(existing_graph);
@@ -788,12 +821,14 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
       ++n_nodes;
       
       manifest_id man;
-      get_manifest_for_rev(app, rev, man);
+      legacy::renames_map renames;
+      legacy::get_manifest_and_renames_for_rev(app, rev, man, renames);
       
       L(F("node %d = revision %s = manifest %s\n") % node % rev % man);
       old_rev_to_node.insert(std::make_pair(rev, node));
       node_to_old_rev.insert(std::make_pair(node, rev));
       node_to_old_man.insert(std::make_pair(node, man));
+      node_to_renames.insert(std::make_pair(node, renames));
 
       // load certs
       std::vector< revision<cert> > rcerts;
@@ -821,114 +856,114 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
   return node;
 }
 
-typedef std::map<u64, 
-                 std::pair<boost::shared_ptr<roster_t>, 
-                           boost::shared_ptr<marking_map>
-                 > > 
-parent_roster_map;
-
-void
-dump(parent_roster_map const & prm, std::string & out)
-{
-  std::ostringstream oss;
-  for (parent_roster_map::const_iterator i = prm.begin(); i != prm.end(); ++i)
-    {
-      oss << "roster: " << i->first << "\n";
-      std::string roster_str, indented_roster_str;
-      dump(*i->second.first, roster_str);
-      prefix_lines_with("    ", roster_str, indented_roster_str);
-      oss << indented_roster_str;
-      oss << "\nroster's marking:\n";
-      std::string marking_str, indented_marking_str;
-      dump(*i->second.second, marking_str);
-      prefix_lines_with("    ", marking_str, indented_marking_str);
-      oss << indented_marking_str;
-      oss << "\n\n";
-    }
-  out = oss.str();
-}
-
 static bool
-viable_replacement(std::map<node_id, u64> const & birth_revs, 
-                   parent_roster_map const & parent_rosters,
-                   std::multimap<u64, u64> const & child_to_parents)
+not_dead_yet(node_id nid, u64 birth_rev,
+             parent_roster_map const & parent_rosters,
+             std::multimap<u64, u64> const & child_to_parents)
 {
-  // This is a somewhat crazy function. Conceptually, we have a set NS of
-  // node_t values (representing all the elements of a path) and a set RS
-  // of rosters. We want to know whether there is an N in NS and an R in RS
-  // satisfying:
-  //
-  //       N is not present in R 
-  // *and*
-  //       N's birth_revision is an ancestor of R
-  //
-  // If we find such a pair, then the set is considered "non viable" for
-  // replacement.
+  // Any given node, at each point in the revision graph, is in one of the
+  // states "alive", "unborn", "dead".  The invariant we must maintain in
+  // constructing our revision graph is that if a node is dead in any parent,
+  // then it must also be dead in the child.  The purpose of this function is
+  // to take a node, and a list of parents, and determine whether that node is
+  // allowed to be alive in a child of the given parents.
+
+  // "Alive" means, the node currently exists in the revision's tree.
+  // "Unborn" means, the node does not exist in the revision's tree, and the
+  // node's birth revision is _not_ an ancestor of the revision.
+  // "Dead" means, the node does not exist in the revision's tree, and the
+  // node's birth revision _is_ an ancestor of the revision.
     
-  //   L(F("beginning viability comparison for %d path nodes, %d parents\n") 
-  //     % birth_revs.size() % parent_rosters.size());
-
-  for (std::map<node_id, u64>::const_iterator n = birth_revs.begin();
-       n != birth_revs.end(); ++n)
+  // L(F("testing liveliness of node %d, born in rev %d\n") % nid % birth_rev);
+  for (parent_roster_map::const_iterator r = parent_rosters.begin();
+       r != parent_rosters.end(); ++r)
     {
-      // L(F("testing viability of node %d, born in rev %d\n") % n->first % n->second);
-      for (parent_roster_map::const_iterator r = parent_rosters.begin();
-           r != parent_rosters.end(); ++r)
+      boost::shared_ptr<roster_t> parent = r->second.first;
+      // L(F("node %d %s in parent roster %d\n") 
+      //             % nid
+      //             % (parent->has_node(n->first) ? "exists" : "does not exist" ) 
+      //             % r->first);
+      
+      if (!parent->has_node(nid))
         {
-          boost::shared_ptr<roster_t> parent = r->second.first;
-          // L(F("node %d %s in parent roster %d\n") 
-          //             % n->first
-          //             % (parent->has_node(n->first) ? "exists" : "does not exist" ) 
-          //             % r->first);
-
-          if (!parent->has_node(n->first))
+          std::deque<u64> work;
+          std::set<u64> seen;
+          work.push_back(r->first);
+          while (!work.empty())
             {
-              u64 birth_rev = n->second;
-              std::deque<u64> work;
-              std::set<u64> seen;
-              work.push_back(r->first);
-              while (!work.empty())
+              u64 curr = work.front();
+              work.pop_front();
+              // L(F("examining ancestor %d of parent roster %d, looking for anc=%d\n")
+              //                     % curr % r->first % birth_rev);
+              
+              if (seen.find(curr) != seen.end())
+                continue;
+              seen.insert(curr);
+              
+              if (curr == birth_rev)
                 {
-                  u64 curr = work.front();
-                  work.pop_front();
-                  // L(F("examining ancestor %d of parent roster %d, looking for anc=%d\n")
-                  //                     % curr % r->first % birth_rev);
-
-                  if (seen.find(curr) != seen.end())
+                  // L(F("node is dead in %d") % r->first);
+                  return false;
+                }
+              typedef std::multimap<u64, u64>::const_iterator ci;
+              std::pair<ci,ci> range = child_to_parents.equal_range(curr);
+              for (ci i = range.first; i != range.second; ++i)
+                {
+                  if (i->first != curr)
                     continue;
-                  seen.insert(curr);
-
-                  if (curr == birth_rev)
-                    {
-                      // L(F("determined non-viability, returning\n"));
-                      return false;
-                    }
-                  typedef std::multimap<u64, u64>::const_iterator ci;
-                  std::pair<ci,ci> range = child_to_parents.equal_range(curr);
-                  for (ci i = range.first; i != range.second; ++i)
-                    {
-                      if (i->first != curr)
-                        continue;
-                      work.push_back(i->second);
-                    }
+                  work.push_back(i->second);
                 }
             }
-        }  
-    }
-  // L(F("exhausted possibilities for non-viability, returning\n"));
+        }
+    }  
+  // L(F("node is alive in all parents, returning true"));
   return true;
 }
 
 
-static void 
-insert_into_roster_reusing_parent_entries(file_path const & pth,
-                                          bool is_file,  // as opposed to dir
-                                          file_id const & fid,
-                                          parent_roster_map const & parent_rosters,
-                                          temp_node_id_source & nis,
-                                          roster_t & child_roster,
-                                          std::map<revision_id, u64> const & new_rev_to_node,
-                                          std::multimap<u64, u64> const & child_to_parents)
+static split_path
+find_old_path_for(std::map<split_path, split_path> const & renames,
+                  split_path const & new_path)
+{
+  split_path leader, trailer;
+  leader = new_path;
+  while (!leader.empty())
+    {
+      if (renames.find(leader) != renames.end())
+        {
+          leader = safe_get(renames, leader);
+          break;
+        }
+      path_component pc = leader.back();
+      leader.pop_back();
+      trailer.insert(trailer.begin(), pc);
+    }
+  split_path result;
+  std::copy(leader.begin(), leader.end(), std::back_inserter(result));
+  std::copy(trailer.begin(), trailer.end(), std::back_inserter(result));
+  return result;
+}
+
+static split_path
+find_new_path_for(std::map<split_path, split_path> const & renames,
+                  split_path const & old_path)
+{
+  std::map<split_path, split_path> reversed;
+  for (std::map<split_path, split_path>::const_iterator i = renames.begin();
+       i != renames.end(); ++i)
+    reversed.insert(std::make_pair(i->second, i->first));
+  // this is a hackish kluge.  seems to work, though.
+  return find_old_path_for(reversed, old_path);
+}
+
+void 
+anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
+                                                     bool is_file,  // as opposed to dir
+                                                     file_id const & fid,
+                                                     parent_roster_map const & parent_rosters,
+                                                     temp_node_id_source & nis,
+                                                     roster_t & child_roster,
+                                                     legacy::renames_map const & renames)
 {
 
   split_path sp, dirname;
@@ -961,8 +996,7 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
                                                     parent_rosters,
                                                     nis,
                                                     child_roster,
-                                                    new_rev_to_node,
-                                                    child_to_parents);
+                                                    renames);
       }
   }
 
@@ -983,15 +1017,36 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
   for (parent_roster_map::const_iterator j = parent_rosters.begin();
        j != parent_rosters.end(); ++j)
     {
+      split_path old_sp = sp;
+      if (node_to_old_rev.find(j->first) != node_to_old_rev.end())
+        {
+          revision_id old_rid = safe_get(node_to_old_rev, j->first);
+          if (renames.find(old_rid) != renames.end())
+            {
+              // provisionally choose to look under the name with renames
+              // reversed
+              old_sp = find_old_path_for(safe_get(renames, old_rid), sp);
+              // but if the name doesn't round-trip, then never mind. (case I
+              // am thinking of: when find_old_path_for failed to find any
+              // applicable renames, so it simply returned the new name.  in
+              // particular, consider a revisions that has <rename foo bar;
+              // add foo> -- without some sort of check we will try and copy
+              // the new foo and the new bar's identities both from the old
+              // foo's identity, which isn't going to work out so well.)
+              if (find_new_path_for(safe_get(renames, old_rid), old_sp) != sp)
+                old_sp = sp;
+            }
+        }
+
       // We use a stupid heuristic: first parent who has
       // a node with the same name gets the node
       // identity copied forward. 
       boost::shared_ptr<roster_t> parent_roster = j->second.first;
       boost::shared_ptr<marking_map> parent_marking = j->second.second;
 
-      if (parent_roster->has_node(sp))
+      if (parent_roster->has_node(old_sp))
         {
-          node_t other_node = parent_roster->get_node(sp);
+          node_t other_node = parent_roster->get_node(old_sp);
           node_id other_id = other_node->self;
           if (is_file_t(other_node) == is_file)
             {
@@ -1002,27 +1057,21 @@ insert_into_roster_reusing_parent_entries(file_path const & pth,
               //
               // child_roster.replace_node_id(r,z)
 
-              // Before we perform this, however, we want to ensure that
-              // the existing target nodes z is not killed in
-              // any of the parent rosters. If it is killed -- defined
-              // by saying that its birth revision fails to dominate one
-              // of the parent rosters -- then we want to *avoid* making
-              // the replacement, and leave this node as its 'new' in the
-              // child.
+              // Before we perform this, however, we want to ensure that the
+              // existing target node z is not killed in any of the parent
+              // rosters. If it is killed -- defined by saying that its birth
+              // revision dominates one of the parent rosters in which this
+              // node does not exist -- then we want to *avoid* making the
+              // replacement, and leave this node as 'new' in the child.
 
               bool replace_this_node = true;
               if (parent_rosters.size() > 1)
                 {
-                  std::map<node_id, u64> birth_revs;
-                  
                   revision_id birth_rev = safe_get(*parent_marking, 
                                                    other_id).birth_revision;
-                  birth_revs.insert(std::make_pair(other_id, 
-                                                   safe_get(new_rev_to_node,
-                                                            birth_rev)));
-                  replace_this_node = 
-                    viable_replacement(birth_revs, parent_rosters, 
-                                       child_to_parents);
+                  u64 birth_node = safe_get(new_rev_to_node, birth_rev);
+                  replace_this_node = not_dead_yet(other_id, birth_node,
+                                                   parent_rosters, ancestry);
                 }
                   
               if (replace_this_node)
@@ -1057,36 +1106,6 @@ dump(current_rev_debugger const & d, std::string & out)
         {
           out += "cert '" + i->second.first() + "'";
           out += "= '" + i->second.second() + "'\n";
-        }
-    }
-}
-
-
-typedef std::map<file_path, std::map<std::string, std::string> > oldstyle_attr_map;
-
-static void 
-read_oldstyle_dot_mt_attrs(data const & dat, oldstyle_attr_map & attr)
-{
-  basic_io::input_source src(dat(), ".mt-attrs");
-  basic_io::tokenizer tok(src);
-  basic_io::parser parser(tok);
-
-  std::string file, name, value;
-
-  attr.clear();
-
-  while (parser.symp("file"))
-    {
-      parser.sym();
-      parser.str(file);
-      file_path fp = file_path_internal(file);
-
-      while (parser.symp() && 
-             !parser.symp("file"))
-        {
-          parser.sym(name);
-          parser.str(value);
-          attr[fp][name] = value;
         }
     }
 }
@@ -1162,10 +1181,12 @@ anc_graph::construct_revisions_from_ancestry()
           L(F("processing node %d\n") % child);
 
           manifest_id old_child_mid;
-          manifest_map old_child_man;
+          legacy::manifest_map old_child_man;
 
           get_node_manifest(child, old_child_mid);
-          app.db.get_manifest(old_child_mid, old_child_man);
+          manifest_data mdat;
+          app.db.get_manifest_version(old_child_mid, mdat);
+          legacy::read_manifest_map(mdat, old_child_man);
 
           // Load all the parent rosters into a temporary roster map
           parent_roster_map parent_rosters;
@@ -1190,27 +1211,26 @@ anc_graph::construct_revisions_from_ancestry()
           roster_t child_roster;
           MM(child_roster);
           temp_node_id_source nis;
-          for (manifest_map::const_iterator i = old_child_man.begin();
+          for (legacy::manifest_map::const_iterator i = old_child_man.begin();
                i != old_child_man.end(); ++i)
             {
               if (!(i->first == attr_path))
                 insert_into_roster_reusing_parent_entries(i->first, true, i->second,
                                                           parent_rosters,
                                                           nis, child_roster,
-                                                          new_rev_to_node,
-                                                          ancestry);
+                                                          node_to_renames[child]);
             }
           
           // migrate attributes out of .mt-attrs
           {
-            manifest_map::const_iterator i = old_child_man.find(attr_path);
+            legacy::manifest_map::const_iterator i = old_child_man.find(attr_path);
             if (i != old_child_man.end())
               {
                 file_data dat;
                 app.db.get_file_version(i->second, dat);
-                oldstyle_attr_map attrs;
-                read_oldstyle_dot_mt_attrs(dat.inner(), attrs);
-                for (oldstyle_attr_map::const_iterator j = attrs.begin();
+                legacy::dot_mt_attrs_map attrs;
+                legacy::read_dot_mt_attrs(dat.inner(), attrs);
+                for (legacy::dot_mt_attrs_map::const_iterator j = attrs.begin();
                      j != attrs.end(); ++j)
                   {
                     split_path sp;
@@ -1398,41 +1418,6 @@ namespace
   }
 }
 
-
-// HACK: this is a special reader which picks out the new_manifest field in
-// a revision; it ignores all other symbols. This is because, in the
-// pre-roster database, we have revisions holding change_sets, not
-// csets. If we apply the cset reader to them, they fault. We need to
-// *partially* read them, however, in order to get the manifest IDs out of
-// the old revisions (before we delete the revs and rebuild them)
-
-static void 
-get_manifest_for_rev(app_state & app,
-                     revision_id const & ident,
-                     manifest_id & mid)
-{
-  revision_data dat;
-  app.db.get_revision(ident,dat);
-  basic_io::input_source src(dat.inner()(), "revision");
-  basic_io::tokenizer tok(src);
-  basic_io::parser pars(tok);
-  while (pars.symp())
-    {
-      if (pars.symp(syms::new_manifest))
-        {
-          std::string tmp;
-          pars.sym();
-          pars.hex(tmp);
-          mid = manifest_id(tmp);
-          return;
-        }
-      else
-        pars.sym();
-    }
-  I(false);
-}
-
-
 void 
 print_edge(basic_io::printer & printer,
            edge_entry const & e)
@@ -1552,16 +1537,37 @@ write_revision_set(revision_set const & rev,
 #include "unit_tests.hh"
 #include "sanity.hh"
 
-static void 
-revision_test()
+static void
+test_find_old_new_path_for()
 {
+  std::map<split_path, split_path> renames;
+  split_path foo, foo_bar, foo_baz, quux, quux_baz;
+  file_path_internal("foo").split(foo);
+  file_path_internal("foo/bar").split(foo_bar);
+  file_path_internal("foo/baz").split(foo_baz);
+  file_path_internal("quux").split(quux);
+  file_path_internal("quux/baz").split(quux_baz);
+  I(foo == find_old_path_for(renames, foo));
+  I(foo == find_new_path_for(renames, foo));
+  I(foo_bar == find_old_path_for(renames, foo_bar));
+  I(foo_bar == find_new_path_for(renames, foo_bar));
+  I(quux == find_old_path_for(renames, quux));
+  I(quux == find_new_path_for(renames, quux));
+  renames.insert(make_pair(foo, quux));
+  renames.insert(make_pair(foo_bar, foo_baz));
+  I(quux == find_old_path_for(renames, foo));
+  I(foo == find_new_path_for(renames, quux));
+  I(quux_baz == find_old_path_for(renames, foo_baz));
+  I(foo_baz == find_new_path_for(renames, quux_baz));
+  I(foo_baz == find_old_path_for(renames, foo_bar));
+  I(foo_bar == find_new_path_for(renames, foo_baz));
 }
 
 void 
 add_revision_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&revision_test));
+  suite->add(BOOST_TEST_CASE(&test_find_old_new_path_for));
 }
 
 

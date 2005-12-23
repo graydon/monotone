@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "manifest.hh"
 #include "restrictions.hh"
 #include "revision.hh"
 #include "safe_map.hh"
