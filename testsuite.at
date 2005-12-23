@@ -146,9 +146,9 @@ end
 if (attr_functions == nil) then
   attr_functions = {}
 end
-attr_functions[["test_attr"]] =
+attr_functions[["test:test_attr"]] =
   function(filename, value)
-    io.write(string.format("test_attr:%s:%s\n", filename, value))
+    io.write(string.format("test:test_attr:%s:%s\n", filename, value))
   end
 
 ])
