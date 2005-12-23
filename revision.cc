@@ -950,7 +950,7 @@ find_new_path_for(std::map<split_path, split_path> const & renames,
 {
   std::map<split_path, split_path> reversed;
   for (std::map<split_path, split_path>::const_iterator i = renames.begin();
-       i != reversed.end(); ++i)
+       i != renames.end(); ++i)
     reversed.insert(std::make_pair(i->second, i->first));
   // this is a hackish kluge.  seems to work, though.
   return find_old_path_for(reversed, old_path);
