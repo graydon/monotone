@@ -61,20 +61,4 @@ class restriction
   void check_paths();
 };
 
-void 
-get_working_revision_and_rosters(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_set & rev,
-                                 roster_t & old_roster,
-                                 roster_t & new_roster,
-                                 cset & excluded);
-
-// Same as above, only without the "excluded" out-parameter.
-void
-get_working_revision_and_rosters(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_set & rev,
-                                 roster_t & old_roster,
-                                 roster_t & new_roster);
-
 #endif  // header guard
