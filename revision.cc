@@ -1000,9 +1000,9 @@ anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
       boost::shared_ptr<roster_t> parent_roster = j->second.first;
       boost::shared_ptr<marking_map> parent_marking = j->second.second;
 
-      if (parent_roster->has_node(sp))
+      if (parent_roster->has_node(old_sp))
         {
-          node_t other_node = parent_roster->get_node(sp);
+          node_t other_node = parent_roster->get_node(old_sp);
           node_id other_id = other_node->self;
           if (is_file_t(other_node) == is_file)
             {
