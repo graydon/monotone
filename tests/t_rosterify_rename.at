@@ -91,6 +91,6 @@ rename "testfile_start"
     to "testfile_end"
 ])
 
-AT_CHECK(MONOTONE automate select i: | monotone automate toposort -@- | tail -1 | monotone automate get_revision -@-, [], [expout], [ignore])
+CHECK_SAME_CANONICALISED_STDOUT(cat expout, MONOTONE automate select i: | monotone automate toposort -@- | tail -1 | monotone automate get_revision -@-)
 
 AT_CLEANUP
