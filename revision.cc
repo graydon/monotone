@@ -610,14 +610,9 @@ struct anc_graph
   u64 add_node_for_old_manifest(manifest_id const & man);
   u64 add_node_for_oldstyle_revision(revision_id const & rev);                     
   void construct_revisions_from_ancestry();
-
-  void insert_into_roster_reusing_parent_entries(file_path const & pth,
-                                                 bool is_file,  // as opposed to dir
-                                                 file_id const & fid,
-                                                 parent_roster_map const & parent_rosters,
-                                                 temp_node_id_source & nis,
-                                                 roster_t & child_roster,
-                                                 legacy::renames_map const & renames);
+  void fixup_node_identities(parent_roster_map const & parent_rosters,
+                             roster_t & child_roster,
+                             legacy::renames_map const & renames);
 };
 
 
@@ -956,16 +951,12 @@ find_new_path_for(std::map<split_path, split_path> const & renames,
   return find_old_path_for(reversed, old_path);
 }
 
-void 
-anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
-                                                     bool is_file,  // as opposed to dir
-                                                     file_id const & fid,
-                                                     parent_roster_map const & parent_rosters,
-                                                     temp_node_id_source & nis,
-                                                     roster_t & child_roster,
-                                                     legacy::renames_map const & renames)
+static void
+insert_into_roster(roster_t & child_roster, 
+                   temp_node_id_source & nis, 
+                   file_path const & pth,
+                   file_id const & fid)
 {
-
   split_path sp, dirname;
   path_component basename;
   pth.split(sp);
@@ -975,9 +966,6 @@ anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
 
   dirname_basename(sp, dirname, basename);
 
-  // First, we make sure the entire dir containing the file in question has
-  // been inserted into the child roster, with proper identity fixups and all
-  // applied.
   {
     split_path tmp_pth;
     for (split_path::const_iterator i = dirname.begin(); i != dirname.end();
@@ -990,95 +978,112 @@ anc_graph::insert_into_roster_reusing_parent_entries(file_path const & pth,
               F("Directory for path %s cannot be added, as there is a file in the way\n") % pth);
           }
         else
-          insert_into_roster_reusing_parent_entries(file_path(tmp_pth),
-                                                    false,
-                                                    file_id(),
-                                                    parent_rosters,
-                                                    nis,
-                                                    child_roster,
-                                                    renames);
+          child_roster.attach_node(child_roster.create_dir_node(nis), tmp_pth);
       }
   }
 
-  // okay, now all we have to do is add the single leaf node, and maybe fixup
-  // its identity.
-
-  node_id nid;
-  if (is_file)
-    nid = child_roster.create_file_node(fid, nis);
+  if (child_roster.has_node(sp))
+    {      
+      node_t n = child_roster.get_node(sp);
+      E(is_file_t(n),
+        F("Path %s cannot be added, as there is a directory in the way\n") % sp);
+      file_t f = downcast_to_file_t(n);
+      E(f->content == fid,
+        F("Path %s added twice with differing content\n") % sp);
+    }
   else
-    nid = child_roster.create_dir_node(nis);
-  child_roster.attach_node(nid, sp);
+    child_roster.attach_node(child_roster.create_file_node(fid, nis), sp);
+}
 
-  // Try to find a node in one of the parents which has the same name;
-  // if such a file is found, replace the temporary node ID we've assigned
-  // with the node ID found in the parent.
+void
+anc_graph::fixup_node_identities(parent_roster_map const & parent_rosters,
+                                 roster_t & child_roster,
+                                 legacy::renames_map const & renames)
+{
+  // Our strategy here is to iterate over every node in every parent, and
+  // for each parent node P find zero or one tmp nodes in the child which
+  // represents the fate of P:
+  //
+  //   - If any of the parents thinks that P has died, we do not search for
+  //     it in the child; we leave it as "dropped".
+  //
+  //   - We fetch the name N of the parent node P, and apply the rename map
+  //     to N, getting "remapped name" M.  If we find a child node C with
+  //     name M in the child roster, with the same type as P, we identify P
+  //     and C, and swap P for C in the child.
 
-  for (parent_roster_map::const_iterator j = parent_rosters.begin();
-       j != parent_rosters.end(); ++j)
+
+  // Map node_id -> birth rev
+  std::map<node_id, u64> nodes_in_any_parent;
+
+  // Stage 1: collect all nodes (and their birth revs) in any parent.
+  for (parent_roster_map::const_iterator i = parent_rosters.begin(); 
+       i != parent_rosters.end(); ++i)
     {
-      split_path old_sp = sp;
-      if (node_to_old_rev.find(j->first) != node_to_old_rev.end())
+      boost::shared_ptr<roster_t> parent_roster = i->second.first;
+      boost::shared_ptr<marking_map> parent_marking = i->second.second;
+
+      node_map const & nodes = parent_roster->all_nodes();
+      for (node_map::const_iterator j = nodes.begin(); j != nodes.end(); ++j)
         {
-          revision_id old_rid = safe_get(node_to_old_rev, j->first);
-          if (renames.find(old_rid) != renames.end())
-            {
-              // provisionally choose to look under the name with renames
-              // reversed
-              old_sp = find_old_path_for(safe_get(renames, old_rid), sp);
-              // but if the name doesn't round-trip, then never mind. (case I
-              // am thinking of: when find_old_path_for failed to find any
-              // applicable renames, so it simply returned the new name.  in
-              // particular, consider a revisions that has <rename foo bar;
-              // add foo> -- without some sort of check we will try and copy
-              // the new foo and the new bar's identities both from the old
-              // foo's identity, which isn't going to work out so well.)
-              if (find_new_path_for(safe_get(renames, old_rid), old_sp) != sp)
-                old_sp = sp;
-            }
+          node_id n = j->first;
+          revision_id birth_rev = safe_get(*parent_marking, n).birth_revision;
+          u64 birth_node = safe_get(new_rev_to_node, birth_rev);
+          std::map<node_id, u64>::const_iterator i = nodes_in_any_parent.find(n);
+          if (i != nodes_in_any_parent.end())
+            I(i->second == birth_node);
+          else
+            safe_insert(nodes_in_any_parent,
+                        std::make_pair(n, birth_node));
         }
+    }
 
-      // We use a stupid heuristic: first parent who has
-      // a node with the same name gets the node
-      // identity copied forward. 
-      boost::shared_ptr<roster_t> parent_roster = j->second.first;
-      boost::shared_ptr<marking_map> parent_marking = j->second.second;
+  // Stage 2: For any node which is actually live, try to locate a mapping
+  // from a parent instance of it to a child node.
+  for (std::map<node_id, u64>::const_iterator i = nodes_in_any_parent.begin();
+       i != nodes_in_any_parent.end(); ++i)
+    {
+      node_id n = i->first;
+      u64 birth_rev = i->second;
 
-      if (parent_roster->has_node(old_sp))
+      if (child_roster.has_node(n))
+        continue;
+
+      if (not_dead_yet(n, birth_rev, parent_rosters, ancestry))
         {
-          node_t other_node = parent_roster->get_node(old_sp);
-          node_id other_id = other_node->self;
-          if (is_file_t(other_node) == is_file)
+          for (parent_roster_map::const_iterator j = parent_rosters.begin(); 
+               j != parent_rosters.end(); ++j)
             {
-              // Here we've found an existing node for our node in a parent
-              // roster; For example, we have foo1/foo2/foo3=r in our
-              // child roster, and we've found foo1/foo2/foo3=z in a
-              // parent roster. We want to perform:
-              //
-              // child_roster.replace_node_id(r,z)
+              boost::shared_ptr<roster_t> parent_roster = j->second.first;
 
-              // Before we perform this, however, we want to ensure that the
-              // existing target node z is not killed in any of the parent
-              // rosters. If it is killed -- defined by saying that its birth
-              // revision dominates one of the parent rosters in which this
-              // node does not exist -- then we want to *avoid* making the
-              // replacement, and leave this node as 'new' in the child.
+              if (!parent_roster->has_node(n))
+                continue;
 
-              bool replace_this_node = true;
-              if (parent_rosters.size() > 1)
+              split_path sp;
+              parent_roster->get_name(n, sp);
+
+              // Try remapping the name.
+              if (node_to_old_rev.find(j->first) != node_to_old_rev.end())
                 {
-                  revision_id birth_rev = safe_get(*parent_marking, 
-                                                   other_id).birth_revision;
-                  u64 birth_node = safe_get(new_rev_to_node, birth_rev);
-                  replace_this_node = not_dead_yet(other_id, birth_node,
-                                                   parent_rosters, ancestry);
+                  legacy::renames_map::const_iterator rmap;
+                  revision_id parent_rid = safe_get(node_to_old_rev, j->first);
+                  rmap = renames.find(parent_rid);
+                  if (rmap != renames.end())
+                    sp = find_new_path_for(rmap->second, sp);
                 }
-                  
-              if (replace_this_node)
+
+              // See if we can match this node against a child.
+              if ((!child_roster.has_node(n))
+                  && child_roster.has_node(sp))
                 {
-                  child_roster.replace_node_id(nid, other_id);
-                  break;
-                }              
+                  node_t pn = parent_roster->get_node(n);
+                  node_t cn = child_roster.get_node(sp);
+                  if (is_file_t(pn) == is_file_t(cn))
+                    {
+                      child_roster.replace_node_id(cn->self, n);
+                      break;
+                    }                  
+                }
             }
         }
     }
@@ -1215,10 +1220,7 @@ anc_graph::construct_revisions_from_ancestry()
                i != old_child_man.end(); ++i)
             {
               if (!(i->first == attr_path))
-                insert_into_roster_reusing_parent_entries(i->first, true, i->second,
-                                                          parent_rosters,
-                                                          nis, child_roster,
-                                                          node_to_renames[child]);
+                insert_into_roster(child_roster, nis, i->first, i->second);
             }
           
           // migrate attributes out of .mt-attrs
@@ -1258,7 +1260,10 @@ anc_graph::construct_revisions_from_ancestry()
                   }
               }
           }
-                    
+
+          // Now knit the parent node IDs into child node IDs (which are currently all
+          // tmpids), wherever possible.
+          fixup_node_identities(parent_rosters, child_roster, node_to_renames[child]);
 
           revision_set rev;
           MM(rev);
