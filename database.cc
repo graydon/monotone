@@ -935,7 +935,7 @@ static void
 extend_path_if_not_cycle(string table_name, 
                          shared_ptr<version_path> p, 
                          hexenc<id> const & ext,
-                         set< hexenc<id> > seen_nodes,
+                         set< hexenc<id> > & seen_nodes,
                          vector< shared_ptr<version_path> > & next_paths)
 {
   for (version_path::const_iterator i = p->begin(); i != p->end(); ++i)
@@ -1060,6 +1060,7 @@ database::get_version(hexenc<id> const & ident,
                 }
             }
 
+          I(selected_path || !next_paths.empty());
           live_paths = next_paths;
         }
 

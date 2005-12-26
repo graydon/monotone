@@ -51,6 +51,7 @@ public:
   void write_ticks();
   void clear_line();
 private:
+  std::vector<size_t> last_tick_widths;
   size_t last_tick_len;
 };
 

@@ -492,25 +492,29 @@ system_to_utf8(external const & ext, utf8 & utf)
 size_t
 display_width(utf8 const & utf)
 {
-  // this function is called many thousands of times by the tickers, so we
-  // try and avoid performing heap allocations by starting with a reasonable
-  // size buffer, and only ever growing the buffer if needed.
-  static size_t widebuf_sz = 128;
-  static boost::scoped_array<wchar_t> widebuf(new wchar_t[widebuf_sz]);
-
-  size_t len = mbstowcs(0, utf().c_str(), 0) + 1;
-
-  if (len == static_cast<size_t>(-1))
-    return utf().length(); // conversion failed; punt and return original length
-
-  if (len > widebuf_sz) {
-    widebuf.reset(new wchar_t[len]);
-    widebuf_sz = len;
-  }
-
-  mbstowcs(widebuf.get(), utf().c_str(), widebuf_sz);
-
-  return wcswidth(widebuf.get(), widebuf_sz);
+  std::string const & u = utf();
+  size_t sz = 0;
+  std::string::const_iterator i = u.begin();
+  while (i != u.end())
+    {
+      if (UNLIKELY(static_cast<u8>(*i) & static_cast<u8>(0x80)))
+        {
+          // A UTF-8 escape: consume the full escape.
+          ++i;
+          ++sz;
+          while (i != u.end() 
+                 && (static_cast<u8>(*i) & static_cast<u8>(0x80))
+                 && (!(static_cast<u8>(*i) & static_cast<u8>(0x40))))
+            ++i;
+        }
+      else
+        {
+          // An ASCII-like character in the range 0..0x7F.
+          ++i;
+          ++sz;
+        }
+    }
+  return sz;
 }
 
 // Lots of gunk to avoid charset conversion as much as possible.  Running
