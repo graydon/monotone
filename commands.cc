@@ -3425,7 +3425,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
   change_set::path_rearrangement work, included, excluded;
   path_set old_paths;
 
-  if (args.size() < 1)
+  if (args.size() < 1 && !app.missing)
       throw usage(name);
  
   app.require_working_copy();
