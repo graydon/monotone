@@ -14,7 +14,6 @@ MOST_SOURCES =								\
          key_store.cc key_store.hh					\
          file_io.cc file_io.hh						\
          keys.cc keys.hh						\
-         manifest.cc manifest.hh					\
          packet.cc packet.hh						\
          sanity.cc sanity.hh						\
          vocab.cc vocab.hh vocab_terms.hh numeric_vocab.hh		\
@@ -23,6 +22,8 @@ MOST_SOURCES =								\
          ui.cc ui.hh							\
          schema_migration.cc schema_migration.hh			\
          constants.cc constants.hh					\
+         refiner.cc refiner.hh						\
+         enumerator.cc enumerator.hh					\
          netsync.cc netsync.hh						\
          netcmd.cc netcmd.hh						\
          merkle_tree.cc merkle_tree.hh					\
@@ -31,7 +32,8 @@ MOST_SOURCES =								\
          lcs.cc lcs.hh							\
          rcs_import.cc rcs_import.hh					\
          revision.cc revision.hh					\
-	 change_set.cc change_set.hh					\
+	 cset.cc cset.hh						\
+	 roster.cc roster.hh						\
          mt_version.cc mt_version.hh					\
          automate.cc automate.hh					\
          database_check.cc database_check.hh				\
@@ -44,13 +46,16 @@ MOST_SOURCES =								\
          globish.cc globish.hh                                          \
          string_queue.cc string_queue.hh                                \
          paths.cc paths.hh                                              \
+         roster_merge.cc roster_merge.hh                                \
+         merge.cc merge.hh                                              \
+         legacy.cc legacy.hh                                            \
                                                                         \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
 	 netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
-         package_full_revision.c package_full_revision.h options.hh     \
-         i18n.h hash_map.hh
+         package_full_revision.c package_full_revision.h options.hh	\
+         i18n.h hash_map.hh parallel_iter.hh safe_map.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\

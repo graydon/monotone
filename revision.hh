@@ -12,7 +12,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "app_state.hh"
-#include "change_set.hh"
+#include "cset.hh"
 #include "vocab.hh"
 
 // a revision is a text object. It has a precise, normalizable serial form
@@ -45,7 +45,7 @@
 //  from [95b50ede90037557fd0fbbfad6a9fdd67b0bf413]
 //    to [bd39086b9da776fc22abd45734836e8afb59c8c0]
 
-typedef std::map<revision_id, std::pair<manifest_id, boost::shared_ptr<change_set> > > 
+typedef std::map<revision_id, boost::shared_ptr<cset> >
 edge_map;
 
 typedef edge_map::value_type
@@ -56,6 +56,9 @@ revision_set
 {
   void check_sane() const;
   bool is_merge_node() const;
+  // trivial revisions are ones that have no effect -- e.g., commit should
+  // refuse to commit them, saying that there are no changes to commit.
+  bool is_nontrivial() const;
   revision_set() {}
   revision_set(revision_set const & other);
   revision_set const & operator=(revision_set const & other);
@@ -75,29 +78,20 @@ edge_old_revision(edge_map::const_iterator i)
   return i->first; 
 }
 
-inline manifest_id const & 
-edge_old_manifest(edge_entry const & e) 
-{ 
-  return e.second.first; 
-}
-
-inline manifest_id const & 
-edge_old_manifest(edge_map::const_iterator i) 
-{ 
-  return i->second.first; 
-}
-
-inline change_set const & 
+inline cset const & 
 edge_changes(edge_entry const & e) 
 { 
-  return *(e.second.second); 
+  return *(e.second); 
 }
 
-inline change_set const & 
+inline cset const & 
 edge_changes(edge_map::const_iterator i) 
 { 
-  return *(i->second.second); 
+  return *(i->second); 
 }
+
+void
+dump(revision_set const & rev, std::string & out);
 
 void 
 read_revision_set(data const & dat,
@@ -118,21 +112,10 @@ write_revision_set(revision_set const & rev,
 // sanity checking
 
 void
-check_sane_history(revision_id const & child_id, int depth, app_state & app);
-
-// graph walking
-
-bool 
 find_common_ancestor_for_merge(revision_id const & left,
                                revision_id const & right,
                                revision_id & anc,
                                app_state & app);
-
-bool 
-find_least_common_ancestor(revision_id const & left,
-                           revision_id const & right,
-                           revision_id & anc,
-                           app_state & app);
 
 bool
 is_ancestor(revision_id const & ancestor,
@@ -152,23 +135,36 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
                     std::set<revision_id> & new_stuff,
                     app_state & app);
 
+
+// FIXME: can probably optimize this passing a lookaside cache of the active 
+// frontier set of shared_ptr<roster_t>s, while traversing history.
+void
+select_nodes_modified_by_rev(revision_id const & rid,
+                             revision_set const & rev,
+                             std::set<node_id> & nodes_changed,
+                             std::set<node_id> & nodes_born,
+                             app_state & app);
+
+/*
 void 
-calculate_composite_change_set(revision_id const & ancestor,
-                               revision_id const & child,
-                               app_state & app,
-                               change_set & composed);
+calculate_composite_cset(revision_id const & ancestor,
+                         revision_id const & child,
+                         app_state & app,
+                         cset & composed);
 
 void
-calculate_arbitrary_change_set(revision_id const & start,
-                               revision_id const & end,
-                               app_state & app,
-                               change_set & composed);
+calculate_arbitrary_cset(revision_id const & start,
+                         revision_id const & end,
+                         app_state & app,
+                         cset & composed);
+
+*/
 
 void 
 build_changesets_from_manifest_ancestry(app_state & app);
 
 void 
-build_changesets_from_existing_revs(app_state & app);
+build_roster_style_revs_from_manifest_style_revs(app_state & app);
 
 // basic_io access to printers and parsers
 

@@ -4,6 +4,10 @@ MONOTONE_SETUP
 # --lca is a temporary workaround for 3-way merge suckiness.  So this
 # test should go away eventually.
 
+# arguably the issue is now fixed with mark-merge. I've changed 
+# the test to do a successful merge of E and F, since, well,
+# extra merge cases never hurt. 
+
 #    A
 #   / \
 #  B   C
@@ -46,6 +50,7 @@ E=`BASE_REVISION`
 
 AT_CHECK(MONOTONE merge --lca, [], [ignore], [stderr])
 AT_CHECK(QGREP($A stderr), [1])
-AT_CHECK(QGREP($B stderr) || QGREP($C stderr), [])
+AT_CHECK(QGREP($E stderr), [])
+AT_CHECK(QGREP($F stderr), [])
 
 AT_CLEANUP

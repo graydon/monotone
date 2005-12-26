@@ -1,6 +1,6 @@
 #ifndef __MERKLE_TREE_HH__
 #define __MERKLE_TREE_HH__
-// copyright (C) 2004 graydon hoare <graydon@pobox.com>
+// copyright (C) 2004, 2005 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
@@ -15,26 +15,25 @@
 #include "vocab.hh"
 #include "transforms.hh"
 
-// this file contains data structures and functions for managing merkle
-// trees. a merkle tree is a general construction whereby a range of K data
-// elements is divided up into buckets, the buckets are stored on disk,
-// then hashed, and the hash values of the buckets are used as data
-// elements for another iteration of the process. this terminates when you
-// only have 1 bucket left.
+// This file contains data structures and functions for managing merkle
+// trees. A merkle tree is, conceptually, a general recursive construction
+// whereby a range of K data elements is divided up into buckets. Each
+// bucket is then hashed, and the hash values of the buckets at level N of
+// the tree are used as data elements held in buckets at level N-1. At
+// level 0 there is only one bucket.
 //
-// the result is a tree in which each node has N "slots", each of which
+// The result is a tree in which each node has J "slots", each of which
 // summarizes (as a hashcode) the entire subtree beneath it. this makes a
 // pair of merkle trees amenable to setwise operations such as union or
-// difference while only inspecting D*log(K) nodes where D is the number of
-// differences between trees.
+// difference while only inspecting D*log_base_J(K) nodes where D is the
+// number of differences between trees.
 //
-// we build merkle trees over a few collections of objects in our database
-// and use these to synchronize with remote hosts. see netsync.{cc,hh} for
-// more details.
+// We build merkle trees over a few collections of objects in our database
+// and use these to synchronize with remote hosts. See netsync.{cc,hh} and
+// refiner.{cc,hh} for more details.
 
 typedef enum
   {
-    manifest_item = 1,
     file_item = 2,
     key_item = 3,    
     revision_item = 4,
@@ -48,8 +47,7 @@ void netcmd_item_type_to_string(netcmd_item_type t, std::string & typestr);
 typedef enum
   {
     empty_state,
-    live_leaf_state,
-    dead_leaf_state,
+    leaf_state,
     subtree_state
   }
 slot_state;
@@ -90,35 +88,44 @@ typedef std::map<std::pair<prefix,size_t>, merkle_ptr> merkle_table;
 size_t prefix_length_in_bits(size_t level);
 size_t prefix_length_in_bytes(size_t level);
 void write_node(merkle_node const & in, std::string & outbuf);
-void read_node(std::string const & inbuf, merkle_node & out);
+void read_node(std::string const & inbuf, size_t & pos, merkle_node & out);
 
 std::string raw_sha1(std::string const & in);
 
-void pick_slot_and_prefix_for_value(id const & val, size_t level, 
-                                    size_t & slotnum, boost::dynamic_bitset<unsigned char> & pref);
+void 
+pick_slot_and_prefix_for_value(id const & val, 
+                               size_t level, 
+                               size_t & slotnum, 
+                               boost::dynamic_bitset<unsigned char> & pref);
 
-// inserts an item into a tree
+// Collect the items inside a subtree.
+
+void
+collect_items_in_subtree(merkle_table & tab,
+                         prefix const & pref,
+                         size_t level,
+                         std::set<id> & items);
+
+// Insert an item into a tree.
 
 void 
 insert_into_merkle_tree(merkle_table & tab,
                         netcmd_item_type type,
-                        bool live_p,
                         id const & leaf,
                         size_t level);
 
 inline void
 insert_into_merkle_tree(merkle_table & tab,
                         netcmd_item_type type,
-                        bool live_p,
                         hexenc<id> const & hex_leaf,
                         size_t level)
 {
   id leaf;
   decode_hexenc(hex_leaf, leaf);
-  insert_into_merkle_tree(tab, type, live_p, leaf, level);
+  insert_into_merkle_tree(tab, type, leaf, level);
 }
 
-// recalculates the hashes in the given tree.  must be called after
+// Recalculate the hashes in the given tree. Must be called after
 // insert_into_merkle_tree, and before using tree (but you can batch up
 // multiple calls to insert_into_merkle_tree and then only call this once).
 

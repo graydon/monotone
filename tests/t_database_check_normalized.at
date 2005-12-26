@@ -104,6 +104,5 @@ AT_CHECK(MONOTONE db migrate -d bad.db, [0], [ignore], [ignore])
 AT_CHECK(MONOTONE db check -d bad.db, [1], [ignore], [stderr])
 
 AT_CHECK(grep 'revisions not parseable' stderr, [], [ignore], [ignore])
-AT_CHECK(grep 'manifests not parseable' stderr, [], [ignore], [ignore])
 
 AT_CLEANUP

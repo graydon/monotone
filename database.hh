@@ -18,14 +18,13 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include <map>
 #include <string>
 
-#include "selectors.hh"
-#include "manifest.hh"
+#include "cset.hh"
 #include "numeric_vocab.hh"
-#include "vocab.hh"
 #include "paths.hh"
 #include "cleanup.hh"
-
-struct revision_set;
+#include "roster.hh"
+#include "selectors.hh"
+#include "vocab.hh"
 
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
@@ -69,12 +68,14 @@ struct revision_set;
 class transaction_guard;
 struct posting;
 struct app_state;
+struct revision_set;
 
 class database
 {
   system_path filename;
   std::string const schema;
   void check_schema();
+  void check_rosterified();
 
   struct statement {
     statement() : count(0), stmt(0, sqlite3_finalize) {}
@@ -148,6 +149,9 @@ class database
                    delta const & del,
                    std::string const & data_table,
                    std::string const & delta_table);
+  void remove_version(hexenc<id> const & target_id,
+                      std::string const & data_table,
+                      std::string const & delta_table);
   void put_reverse_version(hexenc<id> const & new_id,
                            hexenc<id> const & old_id,
                            delta const & reverse_del,
@@ -197,10 +201,10 @@ class database
                                     hexenc<id> const & new_id,
                                     delta const & del,
                                     database & db);
-  friend void rcs_put_raw_manifest_edge(hexenc<id> const & old_id,
-                                        hexenc<id> const & new_id,
-                                        delta const & del,
-                                        database & db);
+
+  void put_roster(revision_id const & rev_id,
+                  roster_t & roster,
+                  marking_map & marks);
 
   void check_filename();
   void check_db_exists();
@@ -224,12 +228,15 @@ public:
   bool database_specified();
   
   bool file_version_exists(file_id const & id);
-  bool manifest_version_exists(manifest_id const & id);
+  bool roster_version_exists(hexenc<id> const & id);
   bool revision_exists(revision_id const & id);
+  bool roster_link_exists_for_revision(revision_id const & id);
+  bool roster_exists_for_revision(revision_id const & id);
 
+  void get_roster_links(std::map<revision_id, hexenc<id> > & links);
   void get_file_ids(std::set<file_id> & ids);
-  void get_manifest_ids(std::set<manifest_id> & ids);
   void get_revision_ids(std::set<revision_id> & ids);
+  void get_roster_ids(std::set< hexenc<id> > & ids) ;
 
   void set_app(app_state * app);
   
@@ -237,12 +244,6 @@ public:
   // from deltas (if they exist)
   void get_file_version(file_id const & id,
                         file_data & dat);
-
-  // get file delta if it exists, else calculate it.
-  // both manifests must exist.
-  void get_file_delta(file_id const & src,
-                      file_id const & dst,
-                      file_delta & del);
 
   // put file w/o predecessor into db
   void put_file(file_id const & new_id,
@@ -264,32 +265,6 @@ public:
   void get_manifest_version(manifest_id const & id,
                             manifest_data & dat);
 
-  // get a constructed manifest
-  void get_manifest(manifest_id const & id,
-                    manifest_map & mm);
-
-  // get manifest delta if it exists, else calculate it.
-  // both manifests must exist.
-  void get_manifest_delta(manifest_id const & src,
-                          manifest_id const & dst,
-                          manifest_delta & del);
-
-  // put manifest w/o predecessor into db
-  void put_manifest(manifest_id const & new_id,
-                    manifest_data const & dat);
-
-  // store new version and update old version to be a delta
-  void put_manifest_version(manifest_id const & old_id,
-                            manifest_id const & new_id,
-                            manifest_delta const & del);
-
-  // load in a "direct" new -> old reverse edge (used during
-  // netsync and CVS load-in)
-  void put_manifest_reverse_version(manifest_id const & old_id,
-                                    manifest_id const & new_id,
-                                    manifest_delta const & del);
-
-
   void get_revision_ancestry(std::multimap<revision_id, revision_id> & graph);
 
   void get_revision_parents(revision_id const & id,
@@ -310,12 +285,14 @@ public:
                    revision_data & dat);
 
   void put_revision(revision_id const & new_id,
-                   revision_set const & cs);
+                    revision_set const & rev);
 
   void put_revision(revision_id const & new_id,
                     revision_data const & dat);
   
   void delete_existing_revs_and_certs();
+
+  void delete_existing_manifests();
 
   void delete_existing_rev_and_certs(revision_id const & rid);
   
@@ -382,8 +359,11 @@ public:
   void get_revision_certs(revision_id const & id, 
                           std::vector< revision<cert> > & certs);
 
+  void get_revision_certs(revision_id const & id, 
+                          std::vector< hexenc<id> > & hashes);
+
   void get_revision_cert(hexenc<id> const & hash,
-                         revision<cert> & cert);
+                         revision<cert> & c);
   
   void get_manifest_certs(manifest_id const & id, 
                           std::vector< manifest<cert> > & certs);
@@ -424,15 +404,33 @@ public:
 
   // branches
   void get_branches(std::vector<std::string> & names);
+
+  // roster and node_id stuff
+  void get_roster_id_for_revision(revision_id const & rev_id,
+                                  hexenc<id> & roster_id);
+
+  void get_roster(revision_id const & rid, 
+                  roster_t & roster);
+
+  void get_roster(revision_id const & rid, 
+                  roster_t & roster,
+                  marking_map & marks);
+
+  void get_roster(hexenc<id> const & roster_id,
+                  data & dat);
+
+  void get_uncommon_ancestors(revision_id const & a,
+                              revision_id const & b,
+                              std::set<revision_id> & a_uncommon_ancs,
+                              std::set<revision_id> & b_uncommon_ancs);
+                              
+  node_id next_node_id();
   
   // completion stuff
 
   void complete(std::string const & partial,
                 std::set<revision_id> & completions);
 
-  void complete(std::string const & partial,
-                std::set<manifest_id> & completions);
-  
   void complete(std::string const & partial,
                 std::set<file_id> & completions);
 
@@ -449,28 +447,70 @@ public:
 
 };
 
-// transaction guards nest. acquire one in any scope you'd like
-// transaction-protected, and it'll make sure the db aborts a
-// txn if there's any exception before you call commit()
-
-// by default, locks the database exclusively.
-// if the transaction is intended to be read-only, call with exclusive=False
-// in this case, if a database update is attempted and another process is accessing
-// the database an exception will be thrown - uglier and more confusing for the user -
-// however no data inconsistency should result.
+// Transaction guards nest. Acquire one in any scope you'd like
+// transaction-protected, and it'll make sure the db aborts a transaction
+// if there's any exception before you call commit().
+//
+// By default, transaction_guard locks the database exclusively. If the
+// transaction is intended to be read-only, construct the guard with
+// exclusive=false. In this case, if a database update is attempted and
+// another process is accessing the database an exception will be thrown -
+// uglier and more confusing for the user - however no data inconsistency
+// should result.
 // 
-// an exception is thrown if an exclusive transaction_guard is created while 
-// a non-exclusive transaction_guard exists.
+// An exception is thrown if an exclusive transaction_guard is created
+// while a non-exclusive transaction_guard exists.
+//
+// Transaction guards also support splitting long transactions up into
+// checkpoints. Any time you feel the database is in an
+// acceptably-consistent state, you can call maybe_checkpoint(nn) with a
+// given number of bytes. When the number of bytes and number of
+// maybe_checkpoint() calls exceeds the guard's parameters, the transaction
+// is committed and reopened. Any time you feel the database has reached a
+// point where want to ensure a transaction commit, without destructing the
+// object, you can call do_checkpoint().
+//
+// This does *not* free you from having to call .commit() on the guard when
+// it "completes" its lifecycle. Here's a way to think of checkpointing: a
+// normal transaction guard is associated with a program-control
+// scope. Sometimes (notably in netsync) it is not convenient to create a
+// scope which exactly matches the size of work-unit you want to commit (a
+// bunch of packets, or a session-close, whichever comes first) so
+// checkpointing allows you to use a long-lived transaction guard and mark
+// off the moments where commits are desired, without destructing the
+// guard. The guard still performs an error-management task in case of an
+// exception, so you still have to clean it before destruction using
+// .commit().
+//
+// Checkpointing also does not override the transaction guard nesting: if
+// there's an enclosing transaction_guard, your checkpointing calls have no
+// affect.
+//
+// The purpose of checkpointing is to provide an alternative to "many short
+// transactions" on platforms (OSX in particular) where the overhead of
+// full commits at high frequency is too high. The solution for these
+// platforms is to run inside a longer-lived transaction (session-length),
+// and checkpoint at higher granularity (every megabyte or so).
 
 class transaction_guard
 {
   bool committed;
   database & db;
+  bool exclusive;
+  size_t const checkpoint_batch_size;
+  size_t const checkpoint_batch_bytes;
+  size_t checkpointed_calls;
+  size_t checkpointed_bytes;
 public:
-  transaction_guard(database & d, bool exclusive=true);
+  transaction_guard(database & d, bool exclusive=true,
+                    size_t checkpoint_batch_size=100,
+                    size_t checkpoint_batch_bytes=0xfffff);
   ~transaction_guard();
+  void do_checkpoint();
+  void maybe_checkpoint(size_t nbytes);
   void commit();
 };
+
 
 void
 close_all_databases();

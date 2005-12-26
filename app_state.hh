@@ -12,6 +12,7 @@ class lua_hooks;
 #include <boost/shared_ptr.hpp>
 #include <botan/pubkey.h>
 #include <botan/rsa.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <vector>
 
@@ -45,7 +46,8 @@ public:
   options_map options;
   utf8 message;
   utf8 message_file;
-  utf8 date;
+  bool date_set;
+  boost::posix_time::ptime date;
   utf8 author;
   system_path search_root;
   std::vector<utf8> revision_selectors;
@@ -91,7 +93,8 @@ public:
   void set_restriction(path_set const & valid_paths, 
                        std::vector<utf8> const & paths,
                        bool respect_ignore = true);
-  bool restriction_includes(file_path const & path);
+  bool restriction_requires_parent(split_path const & path);
+  bool restriction_includes(split_path const & path);
 
   // Set the branch name.  If you only invoke set_branch, the branch
   // name is not sticky (and won't be written to the working copy and

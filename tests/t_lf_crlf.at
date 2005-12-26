@@ -30,7 +30,8 @@ AT_CHECK(cp foofoo.crlf foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --rcfile=linesep.lua commit -m foofoo, [], [ignore], [ignore])
 FOO_FOO_REV=`BASE_REVISION`
 
-AT_CHECK(MONOTONE --rcfile=linesep.lua update --revision=$FOO_REV, [], [ignore], [ignore])
+rm -Rf MT
+AT_CHECK(MONOTONE --rcfile=linesep.lua co --revision=$FOO_REV ., [], [ignore], [ignore])
 AT_CHECK(cmp foo foo.crlf, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE --rcfile=linesep.lua checkout --revision=$FOO_REV foo_crlf, [], [ignore], [ignore])

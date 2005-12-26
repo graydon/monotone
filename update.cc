@@ -11,7 +11,6 @@
 
 #include "app_state.hh"
 #include "database.hh"
-#include "manifest.hh"
 #include "sanity.hh"
 #include "cert.hh"
 #include "transforms.hh"

@@ -23,6 +23,13 @@ typedef enum
   }
 protocol_role;
 
+typedef enum
+  {
+    refinement_query = 0,
+    refinement_response = 1
+  }
+refinement_type;
+
 typedef enum 
   { 
     // general commands
@@ -40,11 +47,8 @@ typedef enum
     done_cmd = 7,
       
     // transmission commands
-    send_data_cmd = 8,
-    send_delta_cmd = 9,
-    data_cmd = 10,
-    delta_cmd = 11,
-    nonexistant_cmd = 12,
+    data_cmd = 8,
+    delta_cmd = 9,
 
     // usher commands
     // usher_cmd is sent by a server farm (or anyone else who wants to serve
@@ -93,15 +97,15 @@ public:
   void read_error_cmd(std::string & errmsg) const;
   void write_error_cmd(std::string const & errmsg);
 
-//void read_bye_cmd() {}
-  void write_bye_cmd() {cmd_code = bye_cmd;}
-
   void read_hello_cmd(rsa_keypair_id & server_keyname,
                       rsa_pub_key & server_key,
                       id & nonce) const;
   void write_hello_cmd(rsa_keypair_id const & server_keyname,
                        rsa_pub_key const & server_key,
                        id const & nonce);
+
+  void read_bye_cmd(u8 & phase) const;
+  void write_bye_cmd(u8 phase);
 
   void read_anonymous_cmd(protocol_role & role,
                           utf8 & include_pattern,
@@ -130,23 +134,11 @@ public:
   void read_confirm_cmd() const;
   void write_confirm_cmd();
 
-  void read_refine_cmd(merkle_node & node) const;
-  void write_refine_cmd(merkle_node const & node);
+  void read_refine_cmd(refinement_type & ty, merkle_node & node) const;
+  void write_refine_cmd(refinement_type ty, merkle_node const & node);
 
-  void read_done_cmd(size_t & level, netcmd_item_type & type) const;
-  void write_done_cmd(size_t level, netcmd_item_type type);
-
-  void read_send_data_cmd(netcmd_item_type & type,
-                          id & item) const;
-  void write_send_data_cmd(netcmd_item_type type,
-                           id const & item);
-
-  void read_send_delta_cmd(netcmd_item_type & type,
-                           id & base,
-                           id & ident) const;
-  void write_send_delta_cmd(netcmd_item_type type,
-                            id const & base,
-                            id const & ident);
+  void read_done_cmd(netcmd_item_type & type, size_t & n_items) const;
+  void write_done_cmd(netcmd_item_type type, size_t n_items);
 
   void read_data_cmd(netcmd_item_type & type,
                      id & item,
@@ -161,11 +153,6 @@ public:
   void write_delta_cmd(netcmd_item_type & type,
                        id const & base, id const & ident, 
                        delta const & del);
-
-  void read_nonexistant_cmd(netcmd_item_type & type,
-                            id & item) const;
-  void write_nonexistant_cmd(netcmd_item_type type,
-                             id const & item);
 
   void read_usher_cmd(utf8 & greeting) const;
   void write_usher_reply_cmd(utf8 const & server, utf8 const & pattern);

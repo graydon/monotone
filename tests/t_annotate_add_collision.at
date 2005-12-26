@@ -1,6 +1,9 @@
 AT_SETUP([annotate file added on different forks])
 MONOTONE_SETUP
 
+# This test relies on file-suturing
+AT_XFAIL_IF(true)
+
 AT_DATA(foo.left, [z
 a
 b

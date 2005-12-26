@@ -6,10 +6,13 @@
 #ifdef HAVE_GNUCXX_HASHMAP
 #define HASHMAP_PRESENT
 #include <ext/hash_map>
+#include <ext/hash_set>
 #include <string>
 
 namespace hashmap {
  using __gnu_cxx::hash_map;
+ using __gnu_cxx::hash_set;
+ using __gnu_cxx::hash_multimap;
 
  struct string_hash
  {
@@ -26,10 +29,13 @@ namespace hashmap {
 #ifdef HAVE_STLPORT_HASHMAP
 #define HASHMAP_PRESENT
 #include <hash_map>
+#include <hash_set>
 #include <string>
 
 namespace hashmap {
  using std::hash_map;
+ using std::hash_set;
+ using std::hash_multimap;
 
  struct string_hash
  {

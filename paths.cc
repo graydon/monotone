@@ -235,35 +235,34 @@ bookkeeping_path::is_bookkeeping_path(std::string const & path)
 // normalized, relative, paths.
 ///////////////////////////////////////////////////////////////////////////
 
-static interner<path_component> pc_interner("", the_null_component);
-
 // This function takes a vector of path components and joins them into a
-// single file_path.  Valid input may be a single-element vector whose sole
-// element is the empty path component (""); this represents the null path,
-// which we use to represent non-existent files.  Alternatively, input may be
-// a multi-element vector, in which case all elements of the vector are
-// required to be non-null.  The following are valid inputs (with strings
-// replaced by their interned version, of course):
-//    - [""]
-//    - ["foo"]
-//    - ["foo", "bar"]
-// The following are not:
-//    - []
-//    - ["foo", ""]
-//    - ["", "bar"]
+// single file_path.  This is the inverse to file_path::split.  It takes a
+// vector of the form:
+// 
+//   ["", p[0], p[1], ..., p[n]]
+//   
+// and constructs the path:
+// 
+//   p[0]/p[1]/.../p[n]
+//   
 file_path::file_path(split_path const & sp)
 {
   split_path::const_iterator i = sp.begin();
   I(i != sp.end());
-  if (sp.size() > 1)
-    I(!null_name(*i));
-  std::string tmp = pc_interner.lookup(*i);
-  I(tmp != bookkeeping_root.as_internal());
+  I(null_name(*i));
+  std::string tmp;
+  bool start = true;
   for (++i; i != sp.end(); ++i)
     {
       I(!null_name(*i));
-      tmp += "/";
-      tmp += pc_interner.lookup(*i);
+      if (!start)
+        tmp += "/";
+      tmp += (*i)();
+      if (start)
+        {
+          I(tmp != bookkeeping_root.as_internal());
+          start = false;
+        }
     }
   data = tmp;
 }
@@ -273,25 +272,18 @@ file_path::file_path(split_path const & sp)
 //
 //  "p[0]/p[1]/.../p[n-1]/p[n]"
 //
-// and fills in a vector of paths corresponding to p[0] ... p[n-1]
+// and fills in a vector of paths corresponding to p[0] ... p[n].  This is the
+// inverse to the file_path::file_path(split_path) constructor.
 //
-// FIXME: this code carefully duplicates the behavior of the old path
-// splitting functions, in that it is _not_ the inverse to the above joining
-// function.  The difference is that if you pass a null path (the one
-// represented by the empty string, or 'file_path()'), then it will return an
-// _empty_ vector.  This vector will not be suitable to pass to the above path
-// joiner; to get the null path back again, you have to pass the above
-// function a single-element vector containing a the null component.
-//
-// Why does it work this way?  Because that's what the old code did, and
-// that's what change_set.cc was written around; and it's much much easier to
-// make this code do something weird than to try and fix change_set.cc.  When
-// change_set.cc is rewritten, however, you should revisit the semantics of
-// this function.
+// The first entry in this vector is always the null component, "".  This path
+// is the root of the tree.  So we actually output a vector like:
+//   ["", p[0], p[1], ..., p[n]]
+// with n+1 members.
 void
 file_path::split(split_path & sp) const
 {
   sp.clear();
+  sp.push_back(the_null_component);
   if (empty())
     return;
   std::string::size_type start, stop;
@@ -302,13 +294,31 @@ file_path::split(split_path & sp) const
       stop = s.find('/', start);
       if (stop < 0 || stop > s.length())
         {
-          sp.push_back(pc_interner.intern(s.substr(start)));
+          sp.push_back(s.substr(start));
           break;
         }
-      sp.push_back(pc_interner.intern(s.substr(start, stop - start)));
+      sp.push_back(s.substr(start, stop - start));
       start = stop + 1;
     }
 }
+
+void dump(split_path const & sp, std::string & out)
+{
+  std::ostringstream oss;
+
+  for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
+    {
+      if (null_name(*i)) 
+        oss << ".";
+      else
+        oss << "/" << *i;
+    }
+
+  oss << "\n";
+
+  out = oss.str();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////
 // localizing file names (externalizing them)
@@ -341,6 +351,13 @@ operator <<(std::ostream & o, any_path const & a)
 {
   o << a.as_internal();
   return o;
+}
+
+std::ostream &
+operator <<(std::ostream & o, split_path const & sp)
+{
+  file_path tmp(sp);
+  return o << tmp;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -589,18 +606,14 @@ static void test_file_path_internal()
           file_path fp = file_path_internal(*c);
           BOOST_CHECK(fp.as_internal() == *c);
           BOOST_CHECK(file_path_internal(fp.as_internal()) == fp);
-          std::vector<path_component> split_test;
+          split_path split_test;
           fp.split(split_test);
-          if (fp.empty())
-            BOOST_CHECK(split_test.empty());
-          else
-            {
-              BOOST_CHECK(!split_test.empty());
-              file_path fp2(split_test);
-              BOOST_CHECK(fp == fp2);
-            }
-          for (std::vector<path_component>::const_iterator i = split_test.begin();
-               i != split_test.end(); ++i)
+          BOOST_CHECK(!split_test.empty());
+          file_path fp2(split_test);
+          BOOST_CHECK(fp == fp2);
+          BOOST_CHECK(null_name(split_test[0]));
+          for (split_path::const_iterator
+                 i = split_test.begin() + 1; i != split_test.end(); ++i)
             BOOST_CHECK(!null_name(*i));
         }
     }
@@ -618,18 +631,14 @@ static void check_fp_normalizes_to(char * before, char * after)
   // we compare after to the external form too, since as far as we know
   // relative normalized posix paths are always good win32 paths too
   BOOST_CHECK(fp.as_external() == after);
-  std::vector<path_component> split_test;
+  split_path split_test;
   fp.split(split_test);
-  if (fp.empty())
-    BOOST_CHECK(split_test.empty());
-  else
-    {
-      BOOST_CHECK(!split_test.empty());
-      file_path fp2(split_test);
-      BOOST_CHECK(fp == fp2);
-    }
-  for (std::vector<path_component>::const_iterator i = split_test.begin();
-       i != split_test.end(); ++i)
+  BOOST_CHECK(!split_test.empty());
+  file_path fp2(split_test);
+  BOOST_CHECK(fp == fp2);
+  BOOST_CHECK(null_name(split_test[0]));
+  for (split_path::const_iterator
+         i = split_test.begin() + 1; i != split_test.end(); ++i)
     BOOST_CHECK(!null_name(*i));
 }
   
@@ -762,54 +771,65 @@ static void test_split_join()
 {
   file_path fp1 = file_path_internal("foo/bar/baz");
   file_path fp2 = file_path_internal("bar/baz/foo");
-  typedef std::vector<path_component> pcv;
-  pcv split1, split2;
+  split_path split1, split2;
   fp1.split(split1);
   fp2.split(split2);
   BOOST_CHECK(fp1 == file_path(split1));
   BOOST_CHECK(fp2 == file_path(split2));
   BOOST_CHECK(!(fp1 == file_path(split2)));
   BOOST_CHECK(!(fp2 == file_path(split1)));
-  BOOST_CHECK(split1.size() == 3);
-  BOOST_CHECK(split2.size() == 3);
-  BOOST_CHECK(split1[0] != split1[1]);
-  BOOST_CHECK(split1[0] != split1[2]);
+  BOOST_CHECK(split1.size() == 4);
+  BOOST_CHECK(split2.size() == 4);
   BOOST_CHECK(split1[1] != split1[2]);
-  BOOST_CHECK(!null_name(split1[0])
+  BOOST_CHECK(split1[1] != split1[3]);
+  BOOST_CHECK(split1[2] != split1[3]);
+  BOOST_CHECK(null_name(split1[0])
               && !null_name(split1[1])
-              && !null_name(split1[2]));
-  BOOST_CHECK(split1[0] == split2[2]);
-  BOOST_CHECK(split1[1] == split2[0]);
+              && !null_name(split1[2])
+              && !null_name(split1[3]));
+  BOOST_CHECK(split1[1] == split2[3]);
   BOOST_CHECK(split1[2] == split2[1]);
+  BOOST_CHECK(split1[3] == split2[2]);
 
   file_path fp3 = file_path_internal("");
-  pcv split3;
+  split_path split3;
   fp3.split(split3);
-  BOOST_CHECK(split3.empty());
+  BOOST_CHECK(split3.size() == 1 && null_name(split3[0]));
 
-  pcv split4;
+  // empty split_path is invalid
+  split_path split4;
   // this comparison tricks the compiler into not completely eliminating this
   // code as dead...
   BOOST_CHECK_THROW(file_path(split4) == file_path(), std::logic_error);
   split4.push_back(the_null_component);
   BOOST_CHECK(file_path(split4) == file_path());
+
+  // split_path without null first item is invalid
   split4.clear();
-  split4.push_back(split1[0]);
+  split4.push_back(split1[1]);
+  // this comparison tricks the compiler into not completely eliminating this
+  // code as dead...
+  BOOST_CHECK_THROW(file_path(split4) == file_path(), std::logic_error);
+
+  // split_path with non-first item item null is invalid
+  split4.clear();
   split4.push_back(the_null_component);
   split4.push_back(split1[0]);
+  split4.push_back(the_null_component);
   // this comparison tricks the compiler into not completely eliminating this
   // code as dead...
   BOOST_CHECK_THROW(file_path(split4) == file_path(), std::logic_error);
 
   // Make sure that we can't use joining to create a path into the bookkeeping
   // dir
-  pcv split_mt1, split_mt2;
+  split_path split_mt1, split_mt2;
   file_path_internal("foo/MT").split(split_mt1);
-  BOOST_CHECK(split_mt1.size() == 2);
-  split_mt2.push_back(split_mt1[1]);
+  BOOST_CHECK(split_mt1.size() == 3);
+  split_mt2.push_back(the_null_component);
+  split_mt2.push_back(split_mt1[2]);
   // split_mt2 now contains the component "MT"
   BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
-  split_mt2.push_back(split_mt1[0]);
+  split_mt2.push_back(split_mt1[1]);
   // split_mt2 now contains the components "MT", "foo" in that order
   // this comparison tricks the compiler into not completely eliminating this
   // code as dead...
@@ -971,9 +991,48 @@ static void test_access_tracker()
   BOOST_CHECK_THROW(a.may_not_initialize(), std::logic_error);
 }
 
+static void test_a_path_ordering(std::string const & left, std::string const & right)
+{
+  MM(left);
+  MM(right);
+  split_path left_sp, right_sp;
+  file_path_internal(left).split(left_sp);
+  file_path_internal(right).split(right_sp);
+  I(left_sp < right_sp);
+}
+
+static void test_path_ordering()
+{
+  // this ordering is very important:
+  //   -- it is used to determine the textual form of csets and manifests
+  //      (in particular, it cannot be changed)
+  //   -- it is used to determine in what order cset operations can be applied
+  //      (in particular, foo must sort before foo/bar, so that we can use it
+  //      to do top-down and bottom-up traversals of a set of paths).
+  test_a_path_ordering("a", "b");
+  test_a_path_ordering("a", "c");
+  test_a_path_ordering("ab", "ac");
+  test_a_path_ordering("a", "ab");
+  test_a_path_ordering("", "a");
+  test_a_path_ordering("", ".foo");
+  test_a_path_ordering("foo", "foo/bar");
+  // . is before / asciibetically, so sorting by strings will give the wrong
+  // answer on this:
+  test_a_path_ordering("foo/bar", "foo.bar");
+
+  // path_components used to be interned strings, and we used the default sort
+  // order, which meant that in practice path components would sort in the
+  // _order they were first used in the program_.  So let's put in a test that
+  // would catch this sort of brokenness.
+  test_a_path_ordering("fallanopic_not_otherwise_mentioned", "xyzzy");
+  test_a_path_ordering("fallanoooo_not_otherwise_mentioned_and_smaller", "fallanopic_not_otherwise_mentioned");
+}
+
+
 void add_paths_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&test_path_ordering));
   suite->add(BOOST_TEST_CASE(&test_null_name));
   suite->add(BOOST_TEST_CASE(&test_file_path_internal));
   suite->add(BOOST_TEST_CASE(&test_file_path_external_null_prefix));

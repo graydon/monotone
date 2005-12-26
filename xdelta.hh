@@ -9,16 +9,9 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
-#include "manifest.hh"
-
 void 
 compute_delta(std::string const & a,
               std::string const & b,
-              std::string & delta);
-
-void
-compute_delta(manifest_map const & a,
-              manifest_map const & b,
               std::string & delta);
 
 void

@@ -5,7 +5,7 @@ AT_DATA(hook.lua, [
 if (attr_init_functions == nil) then
   attr_init_functions = {}
 end
-attr_init_functions[["test_attr"]] =
+attr_init_functions[["test:test_attr"]] =
   function(filename)
      if filename == "magic" then
         return "bob"
@@ -23,11 +23,11 @@ AT_DATA(magic, [stuff
 AT_CHECK(MONOTONE --rcfile=hook.lua add magic, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE attr get testfile, [], [stdout], [ignore])
-AT_CHECK(QGREP(test_attr stdout), [1])
+AT_CHECK(QGREP(test:test_attr stdout), [1])
 AT_CHECK(QGREP(bob stdout), [1])
 
 AT_CHECK(MONOTONE attr get magic, [], [stdout], [ignore])
-AT_CHECK(QGREP(test_attr stdout), [])
+AT_CHECK(QGREP(test:test_attr stdout), [])
 AT_CHECK(QGREP(bob stdout), [])
 
 AT_CLEANUP

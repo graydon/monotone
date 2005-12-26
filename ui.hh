@@ -21,11 +21,14 @@ struct ticker
 {
   size_t ticks;
   size_t mod;
+  size_t total;
   bool kilocount;
+  bool use_total;
   std::string name;
   std::string shortname;
   ticker(std::string const & n, std::string const & s, size_t mod = 64, 
       bool kilocount=false);
+  void set_total(size_t tot) { use_total = true; total = tot; }
   void operator++();
   void operator+=(size_t t);
   ~ticker();
@@ -48,6 +51,7 @@ public:
   void write_ticks();
   void clear_line();
 private:
+  std::vector<size_t> last_tick_widths;
   size_t last_tick_len;
 };
 

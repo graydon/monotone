@@ -17,9 +17,42 @@
 #include <map>
 
 #include "paths.hh"
+#include "sanity.hh"
 
 namespace basic_io
 {
+
+  inline bool is_xdigit(char x) 
+  { 
+    return ((x >= '0' && x <= '9')
+	    || (x >= 'a' && x <= 'f')
+	    || (x >= 'A' && x <= 'F'));
+  }
+
+  inline bool is_alpha(char x)
+  {
+    return ((x >= 'a' && x <= 'z')
+	    || (x >= 'A' && x <= 'Z'));
+  }
+
+  inline bool is_alnum(char x)
+  {
+    return ((x >= '0' && x <= '9')
+	    || (x >= 'a' && x <= 'z')
+	    || (x >= 'A' && x <= 'Z'));
+  }
+
+  inline bool is_space(char x)
+  {
+    return (x == ' ') 
+      || (x == '\n')
+      || (x == '\t')
+      || (x == '\r')
+      || (x == '\v')
+      || (x == '\f');
+  }
+	    
+      
 
   typedef enum
     {
@@ -33,25 +66,38 @@ namespace basic_io
   input_source
   {
     size_t line, col;
-    std::istream & in;
+    std::string const & in;
+    std::string::const_iterator curr;
     std::string name;
     int lookahead;
     char c;
-    input_source(std::istream & i, std::string const & nm)
-      : line(1), col(1), in(i), name(nm), lookahead(0), c('\0')
+    input_source(std::string const & in, std::string const & nm)
+      : line(1), col(1), in(in), curr(in.begin()), name(nm), lookahead(0), c('\0')
     {}
-    inline void peek() { lookahead = in.peek(); }
-    inline void eat()
-    {
-      in.get(c);
-      ++col;
-      if (c == '\n')
-        {
-          col = 1;
-          ++line;
-        }
+
+    inline void peek() 
+    { 
+      if (LIKELY(curr != in.end()))
+	lookahead = *curr; 
+      else
+	lookahead = EOF;
     }
-    inline void advance() { eat(); peek(); }
+
+    inline void advance() 
+    { 
+      if (LIKELY(curr != in.end()))
+        {
+          c = *curr;
+          ++curr;
+          ++col;
+          if (c == '\n')
+            {
+              col = 1;
+              ++line;
+            }
+        }
+      peek(); 
+    }
     void err(std::string const & s);
   };
 
@@ -59,86 +105,138 @@ namespace basic_io
   tokenizer
   {  
     input_source & in;
-    tokenizer(input_source & i) : in(i) {}
+    std::string::const_iterator begin;
+    std::string::const_iterator end;
+
+    tokenizer(input_source & i) : in(i), begin(in.curr), end(in.curr)
+    {}
+
+    inline void mark()
+    {
+      begin = in.curr;
+      end = begin;
+    }
+    
+    inline void advance()
+    {
+      in.advance();
+      end = in.curr;
+    }
+
+    inline void store(std::string & val)
+    {
+      val.assign(begin, end);
+    }
 
     inline token_type get_token(std::string & val)
     {
-      val.clear();
-      val.reserve(80);
       in.peek();
   
       while (true)
         {
-          if (in.lookahead == EOF)
+          if (UNLIKELY(in.lookahead == EOF))
             return TOK_NONE;
-          if (!std::isspace(in.lookahead))
+          if (!is_space(in.lookahead))
             break;
           in.advance();
         }
-  
-      switch (in.lookahead)
-        {
 
-        case '"':
-          {
-            in.advance();
-            while (static_cast<char>(in.lookahead) != '"')
-              {
-                if (in.lookahead == EOF)
-                  in.err("input stream ended in string");
-                if (static_cast<char>(in.lookahead) == '\\')
-                  {
-                    // possible escape: we understand escaped quotes
-                    // and escaped backslashes. nothing else.
-                    in.advance();
-                    if (!(static_cast<char>(in.lookahead) == '"' 
-                          || static_cast<char>(in.lookahead) == '\\'))
-                      {
-                        in.err("unrecognized character escape");
-                      }
-                  }
-                in.advance();
-                val += in.c;
-              }
+      if (is_alpha(in.lookahead))
+	{
+	  mark();
+	  while (is_alnum(in.lookahead) || in.lookahead == '_')
+	    advance();
+	  store(val);
+	  return basic_io::TOK_SYMBOL;
+	}
+      else if (in.lookahead == '[')
+	{
+	  in.advance();
+	  mark();
+	  while (static_cast<char>(in.lookahead) != ']')
+	    {
+	      if (UNLIKELY(in.lookahead == EOF))
+		in.err("input stream ended in hex string");
+              if (UNLIKELY(!is_xdigit(in.lookahead)))
+                in.err("non-hex character in hex string");
+              advance();
+	    }
+	  
+	  store(val);
 
-            if (static_cast<char>(in.lookahead) != '"')
-              in.err("string did not end with '\"'");
-            in.eat();
-        
-            return basic_io::TOK_STRING;
-          }
+	  if (UNLIKELY(static_cast<char>(in.lookahead) != ']'))
+	    in.err("hex string did not end with ']'");
+	  in.advance();
 
-        case '[':
-          {
-            in.advance();
-            while (static_cast<char>(in.lookahead) != ']')
-              {
-                if (in.lookahead == EOF)
-                  in.err("input stream ended in hex string");
-                if (!std::isxdigit(in.lookahead))
-                  in.err("non-hex character in hex string");
-                in.advance();
-                val += in.c;
-              }
+	  return basic_io::TOK_HEX;
+	}
+      else if (in.lookahead == '"')
+	{
+	  in.advance();
+	  mark();
+	  while (static_cast<char>(in.lookahead) != '"')
+	    {
+	      if (UNLIKELY(in.lookahead == EOF))
+		in.err("input stream ended in string");
+	      if (UNLIKELY(static_cast<char>(in.lookahead) == '\\'))
+		{
+		  // Possible escape: we understand escaped quotes and
+		  // escaped backslashes. Nothing else. If we // happen to
+		  // hit an escape, we stop doing the mark/store // thing
+		  // and switch to copying and appending per-character
+		  // until the // end of the token.
 
-            if (static_cast<char>(in.lookahead) != ']')
-              in.err("hex string did not end with ']'");
-            in.eat();
-        
-            return basic_io::TOK_HEX;
-          }
-        default:
-          if (std::isalpha(in.lookahead))
-            {
-              while (std::isalnum(in.lookahead) || in.lookahead == '_')
-                {
-                  in.advance();
+                  // So first, store what we have *before* the escape.
+                  store(val);
+                  
+                  // Then skip over the escape backslash.
+		  in.advance();
+
+                  // Make sure it's an escape we recognize.
+		  if (UNLIKELY(!(static_cast<char>(in.lookahead) == '"' 
+                                 || static_cast<char>(in.lookahead) == '\\')))
+                    in.err("unrecognized character escape");
+
+                  // Add the escaped character onto the accumulating token.
+		  in.advance();
                   val += in.c;
-                }
-              return basic_io::TOK_SYMBOL;
-            }
-        }
-      return basic_io::TOK_NONE;
+
+                  // Now enter special slow loop for remainder.
+                  while (static_cast<char>(in.lookahead) != '"')
+                    {
+                      if (UNLIKELY(in.lookahead == EOF))
+                        in.err("input stream ended in string");
+                      if (UNLIKELY(static_cast<char>(in.lookahead) == '\\'))
+                        {
+                          // Skip over any further escape marker.
+                          in.advance();                          
+                          if (UNLIKELY(!(static_cast<char>(in.lookahead) == '"' 
+                                         || static_cast<char>(in.lookahead) == '\\')))
+                            in.err("unrecognized character escape");
+                        }
+                      in.advance();
+                      val += in.c;
+                    }
+                  // When slow loop completes, return early.
+                  if (static_cast<char>(in.lookahead) != '"')
+                    in.err("string did not end with '\"'");
+                  in.advance();
+                  
+                  return basic_io::TOK_STRING;
+		}
+	      advance();
+	    }
+	  
+	  store(val);
+
+	  if (UNLIKELY(static_cast<char>(in.lookahead) != '"'))
+	    in.err("string did not end with '\"'");
+	  in.advance();
+	  
+	  return basic_io::TOK_STRING;
+	}
+      else
+	return basic_io::TOK_NONE;
     }
    void err(std::string const & s);
   };
@@ -152,7 +250,9 @@ namespace basic_io
     size_t indent;  
     std::vector<std::pair<std::string, std::string> > entries;
     void push_hex_pair(std::string const & k, std::string const & v);
+    void push_hex_triple(std::string const & k, std::string const & n, std::string const & v);
     void push_str_pair(std::string const & k, std::string const & v);
+    void push_str_triple(std::string const & k, std::string const & n, std::string const & v);
     void push_file_pair(std::string const & k, file_path const & v);
     void push_str_multi(std::string const & k,
                         std::vector<std::string> const & v);
@@ -171,8 +271,9 @@ namespace basic_io
   parser
   {
     tokenizer & tok;
-    parser(tokenizer & t) : tok(t) 
+    parser(tokenizer & t) : tok(t)
     {
+      token.reserve(128);
       advance();
     }
     

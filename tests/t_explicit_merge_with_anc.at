@@ -1,6 +1,10 @@
 AT_SETUP([explicit_merge LEFT RIGHT ANC BRANCH])
 MONOTONE_SETUP
 
+# This test relies on a command-line mode which has, for the time
+# being, been disabled. Possibly no need to revive it.
+AT_XFAIL_IF(true)
+
 ADD_FILE(testfile, [a
 OLD
 c

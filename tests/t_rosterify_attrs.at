@@ -1,0 +1,139 @@
+AT_SETUP([rosterify migrates file/dir attrs])
+MONOTONE_SETUP
+NEED_UNGZB64
+
+# This is a db containing two revisions.  Both contain the files
+# "testfile" and "testdir/otherfile".  The first has a .mt-attrs file
+# that contains:
+###
+#   file "testfile"
+#execute "true"
+#
+#        file "testdir"
+#manual_merge "yes"
+#
+#   file "nonexistent"
+#execute "true"
+###
+# The second is the same, except that "yes" and "true" have been
+# swapped in all places.
+# (I know it makes no sense to have manual_merge on a directory, but
+# we want to test attrs on directories, and manual_merge and execute
+# are the only two attrs that get migrated directly...)
+
+AT_DATA([test.db.dump.gz.b64], [H4sICAbXq0MCA3Rlc3QuZGIuZHVtcADtWVmvm8i6fY5/hdUvScvpNvNwjlo6gDE2NmDAxuCr
+q4ihCjDzZIx//cF7JzvJHnKTvke6L9fS3rJxfUOtVd+q+sq8KK3VqWgL24O5tsR/TgRD5Pbi
+dM/xW3Hq1W7uR59AWfhRM3n3YfIucptomhftNO/SdNrlcdWBj9Mvrz/+mD4MKOC0Bpkb53Ee
+TmEM0qCZNqB0a7cFwdQbpr/947fJu0fvb3kbfZ2LOG+mfdxGo7tL3MRF/skHddv8eXHTDkze
+PST21cGz1+hhjBAU2TQC1z9A7hfBGD0OJu9+fzbPwPt0cetm8sXyw9O70XqcxlOIj0+eG78o
+wX2iblmmse+2Y3IPH6ejpyfz3M3Ac+MH83HQNAHD08CHCb0Y+Xng42y/DH2E6cNjZh8fQvz+
+9OXzmcE4BZ8CkLbunb93k3dx8Npk2roYmfrC3d1o6hd5C/J2NPPc5llq33NzH978OTou6m/j
+/XlH+uHtd8Z3VoIYwmlb3GOMoTu/nfpdXY/RprAe6boHnLz7PM84+Pjw4PcH2taqKRr76Vrd
+a9/Gmlrc9iCaH96TJE35DOl70GVoGmFxzHddJkBQAkUxhoIUjaA4xMH7j+8RHMEIjKGBj9EU
+hBTD4gHreTQEkKZIzPcQSHkeSo5DV0Sz5j6/5nP1oCx0hLRk/SCetzcxtQ5CKW9Ngm9OJnGI
+WzNB2q0uysvywHUmlzhj1umJd8qJDw4ZWY5/zT4vIzfliEN9IJrIjKWKuWxvh7gZYqQ1GaTo
+F7rOpQyBDnZxj/vX5P1r5D6W5Qh+WceZWw/3VfXxZ1gN3G+I+bIQ/CIra9A0YAT9S8F8MXlc
+3XcvrzLxlQMAWECiBMlAgiIwSDAAApakWApDSAYjSABoFKM99DmwSFfttYPAbeFyySvi/dnD
+nN+ORJK+S420AhwQkICeSwYIQTA4jkOXZaFPugRCuDT+PBJzWZPcmgN5eaF15Su6b0f6u4sF
+xRRdrziF60UaT5eDAhJKqHg12Xj6DmPTsBLAtZKcU0qifX805iqvd5HTX1l0UuiJcZl3w95t
+ddNwym1vo9K2kE7n5qb1aJAxOwbi4eKGzjhptX5jkWRuHkPQtI/K+UMR/zX5fqkkrwn3l/Bf
+BOIpnW9E4nWVfPBUlO6Y3H0p33Pxo6IB+T2DrgH15N3rqvmtoZcW3uTdWBOlG9ev6es3qZad
+Nyr5p3HwY1pNHOZu29XPI4xWhsnNzRWHTr+OGUH77b/uM/lXHPxjTOy/f3uSsPvTj9O7kD0k
+/HH6OZ+PX81/f7kpPUPqS52/Ottnpe6OtLYRGEt4xG1cxeMO5j75e03QX2ABxn/gK1s/IO+l
+wv9HRf5ZyKeCdF10rHYfcVGShC5BQJRCWIpASIJBKZKkfBwwLgzuBUmyTOAzFOFClEFRfNwS
+cBgQAGAE67tBEHguA7zAD57Xbo9vOl3idC4Ue7mv6lA/nhvoDIu1XkLGDLQNiWbOIMxmyKXy
+hzCcWXVTrRp9KU9W/Uw61yQyz1s+XZAGIe14tX8o0R/U6Fti/ndIfqnvPyvxX328wcU3Avw3
+oR3s7dDjwiiLHLLq8oGTOSKdNz7YHpalxZkSji2vG2ZGtU544Om9FpubY0Vk+GU3GQRCQbBu
+A2aqSXcsKmFdgF5PUe+gTkLooWnuFkdxCJtQvhrSXL+cjgOR1rS/J2bUNc1X1dzJNF+fHLhE
+MZMCXpZ+bPi6fzqn5GFjG4zNzkm9tXC/1os3OftGLf6zovqS+0cv4+dRQ0aa4tG6fqGF49dv
+UT6q1ed0p/d4WfOC2W8m88RtABjCI2kyIAFBYySBszjwXIINfDD+EYHHMiAgsDu3+bn5V1l4
+xfXPcXWNn5W1FCgcIglmJZlrD1/oIs/pB44jpC23EPio3/ChLpDExTrXdeUUe7jbh8eMkstu
+O0s00fBVTDP9Cd8cK8r3iGOG5+mQ9VYly0N/fwSH8OD0WTXExnZ3NYoGbqUOwxguEm+uQsge
+t0LLMKSF/nKxgglcGbbK2aISagwb8uckAf51GxOH+Z6iF/X2nBg7Lk6F8Lg9qRfGAZrE2twO
+hMehpiOVY/s1L+p//fViGTw1JmMvM5ZGPTwshhHmu9C92Dde6WgeVdSP4vS1k/mbBp+F8zHQ
+x+mD/Uv1fJHdE7sjSx6gcIwNXA8wpId447EZgRiL4ShFBcRYwB6KBATL0u9/2ulPe/z4nkC8
+8SlDByyDQ9JzoQsJDCMD14ceYD0CowKUHj29Dfj/zXnmexb+/+QCfrDoHhh6Whw+TjIBheMe
+zSJuQPss8GnGoymcHQ/WCO15zLil0wH+KytzHPpwiTC+CSTrFkjy4BzJs/ug2C91aV002mU2
+u+a97B1gg7hXRSCRqMlXqWF2ihEgTHmcob3UubB3SBWQIeHGEK2PxbVl18Z8EJxDgu4nsTWT
+FrnNqRlv6IwQFcvVstDGLDOH6P0T4wltIxw6Mx4nNkcOVckoPa8yszZfX7glKexTJLeLUp8U
+s/VpsKrEJ6sd26wvPXLKygFboK7ysiV5A1gMDWgSAQwz9kAYDcmAcV0cooCgUAoQpO8j4H5O
++kVgx83k3iUrZ65XTeSqxMigoPpVWRSoci4G7Q2IUzk8wVBpLxeXn+3XbLjQrtvhZm9Ocqjt
+Z2QeSRy0rqvtTsmhqBoHUhsWRyXrsUjm3dPCHginPp+EyWk7NJl+pnBpHpDHDX+QL2e1969s
+Mog7lLar7aLbXuYgCW48t9tv+F0auGfNOJSh5ZiO31v+0asu4oTet+CkR1vpdNAMe6FzFedz
+CCFaZfHTEI80kiCgEIBASODjuXJsNRk3wDAU8UjMgzg9nj/HtvPXIHa7Nirqu01W3vQVf3Ey
+lthm6sXTXwd3F51dC4mJYy1Tm1PC0qmqEMu827D51r4UYCNghqOHcXJdY7zLH1sj79mrzoa6
+quznmmNgR+domNsJumqOfBeJ1G2vWbjoGXi2We6w8HLEEA+P9NltmQYiJJb+bF0qTF4FCtFK
++fYGN2ERXWcXlx6sowYn1QGjL8UgFauD0mGVrfhGz8mKJlM/D+5Y+DiK0i6CkMBlMI8ZzxoA
+xcamnnU9hKEJyHg+C5lfA9eP3DwEaRGO708Ze3kNT6GDEEsymQS105OSzplFApBCRBJeN7JG
+52ORTpwAURM73K2Fquvbxphh1jYSVSyQ1KDjouNA7SdBweSgAqRDE7YMAuwYryKe5ap4v6/5
+vKdnF79YWJySdHyyiWUeF4NNHwbysj8bVFvQNaTPvLeJJhi26nkYkw7nWBnjeWfZ13JC3psy
+99N4IhQLWWIUUw8A0gWAYoiAYTGE8Gh0PL+5LulTpIsiv7IL/6LQinFCXFXitPO8Ha3eDP5i
++xJGnNWQMWrU2sAcmPPCPccZdW6v69V5ASzSLm7iXDLxqMxbs3AvzIacNLaVnDd60iDpjewS
+1C4v7oUvAx2qUpycl/jBMENOQ0Kb9fNF6jEVvpFi5ARoISFEk8XmTn5qDpuJfMo3Io9RWhK2
+tIgEC6/UT+dsHuz8nwY2oCmIsiSAPoQjqghGuC5DojiLjI+Y+3PPxaBL/xqwPxZaRA1fh7jI
+cO5Mdv3t2AdSTx4jltvncMiAbZRrrJ0zV6sRhG0+tFhSCFnuUKqzi+wuNqt8aKRwRxvQZ/Vi
+Eu4wEJkhOWSpVkoMnTtz3tJ0luwrY+yXYowRXfuGR0J4tY0q7q97dSYotBkWKOnvZGqdJTNN
+NsMJUvOyMI+OXAVqfXHeg7WrHQZKd2Ln54UWGzcyFiL0iPMIEuVhLk2zOOkFqA9xihoFAvUD
+ivk1iH9ZaGuE5bgdyqi0F41VP9dyoZaxuRlh/mzmknV+k9leJVSW6fdhnc+xNOW8TVNow3Hv
+bQJkFQ+yYWr9xOKv/Ab36RyjluLgNIeEosPZ3I4aUg76pmsrqbar2Zwvl6e5IhwqdhEY8gGu
+Q7NeAPsM8rNXD0k2gTcbtxulU8uFuYC9ue1VGOkZgrjiT4MLMRoDxNjIoeh4ZsAwGvExnEEZ
+BKKj7CMsiqOjXvi/KAw/I7R6RwtFXF4DUEVHnZLQC4OK/Cws5EZCodUJ60EK9SotM8W7wVlt
++6pUYlC8pQmrJ4V88zaqddOjyTHEPCHy9h1JMLl9umouUeiBGEtFecRVLRxMge5PsL81st1B
+jMSFpW20piJY1DYXbuoyPPJatltMDuy5ErZnwqIorXR2SBknLk4zQCv6V5r9p1P/Dy9o7ufq
+Dy24to8dx6PJ7/+bq5gvTt48Yzd/p/f67ioGw3T8QC8U7irR8+aAAIrXtqsbM1wty8vk2rJc
+izUkZlciAictbFgTyDxp7JnFTuxdSFWzm8oqN85at+l6KUsWF2I8bYqCLhubJWG61DGi2NN2
+tQ/IUW7Jy6mczeTr3BAB515R9FKE5GRnztvYunhsq16wggxzD9jtCU07ajnHhjkxVJhPD1ep
+xY9kakRnLCupIoo2xXldlteoZSuiL7GCn3BWv5Gq9bJGKcljswVTs2Zi9qIpJtdiqSpFuS5J
+jWtkx0/EZrUUAJWeUVSMfPUa2xFvnDBNRsdTI7lF7XH1bRWrTqg17LibvNpXps7pr/wq8ZKN
+X6if738DsbX9sRZHNjjCRjXn6EHnkq7ShjH7mD8tQwRJyI3DXgoUhzp3ns3YWTO/EeNRZDI3
+yO52OiKi6WDrNefoRJdVEOhuplpL1+mw3PDSi7rPUTjHuzkLt6mlNSc9da39Mp6pTR3oem+I
+k/1eOTJyWW2DFrI9M3BY0ObxMidIXUGWgbKLfeHGpx6tmBlwZLhTqxWgezhKy6rT6BXR9dT5
+lgUTAaH6eC9ZRNcxp9hDE44TiuPqKgo45tkr7Rxo7e5S6VxpAz0RbyVfoXG0r62zsJJbUucF
+jxIIaTPByQI8If+5MtfqQrRfXkZ8+vR4l6Kpr1xUfHi8J3nLx4NcfvoUf2/9KKIf4v/R7t4t
+f3rs7F+xf+ylH76+O9IUZb3/5+TfztiAQYEfAAA=
+])
+
+AT_CHECK(rm -f test.db)
+
+UNGZB64(test.db.dump.gz.b64, test.db.dump)
+AT_CHECK(MONOTONE db load < test.db.dump, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db migrate, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db rosterify, [], [ignore], [ignore])
+
+# check the first manifest
+AT_DATA([first_manifest_good], [format_version "1"
+
+dir ""
+
+ dir "testdir"
+attr "mtn:manual_merge" "yes"
+
+   file "testdir/otherfile"
+content @<:@ee9e51458f4642f48efe956962058245ee7127b1@:>@
+
+   file "testfile"
+content @<:@55ca6286e3e4f4fba5d0448333fa99fc5a404a73@:>@
+   attr "mtn:execute" "true"
+])
+AT_CHECK(cp -f first_manifest_good expout)
+CHECK_SAME_CANONICALISED_STDOUT(cat expout, MONOTONE automate select i: | monotone automate toposort -@- | head -1 | monotone automate get_manifest_of -@-)
+
+# check the second manifest
+AT_DATA([second_manifest_good], [format_version "1"
+
+dir ""
+
+ dir "testdir"
+attr "mtn:manual_merge" "true"
+
+   file "testdir/otherfile"
+content @<:@ee9e51458f4642f48efe956962058245ee7127b1@:>@
+
+   file "testfile"
+content @<:@55ca6286e3e4f4fba5d0448333fa99fc5a404a73@:>@
+   attr "mtn:execute" "yes"
+])
+AT_CHECK(cp -f second_manifest_good expout)
+CHECK_SAME_CANONICALISED_STDOUT(cat expout, MONOTONE automate select i: | monotone automate toposort -@- | tail -1 | monotone automate get_manifest_of -@-)
+
+AT_CLEANUP

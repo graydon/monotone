@@ -32,9 +32,6 @@ netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
     case revision_item:
       typestr = "revision";
       break;
-    case manifest_item:
-      typestr = "manifest";
-      break;
     case file_item:
       typestr = "file";
       break;
@@ -73,7 +70,7 @@ merkle_node::merkle_node() : level(0), pref(0),
                              total_num_leaves(0), 
                              bitmap(constants::merkle_bitmap_length_in_bits),
                              slots(constants::merkle_num_slots),
-                             type(manifest_item) 
+                             type(revision_item) 
 {}
 
 bool 
@@ -187,14 +184,11 @@ merkle_node::get_slot_state(size_t n) const
       if (bitmap[2*n+1])
         return subtree_state;
       else
-        return live_leaf_state;
+        return leaf_state;
     }
   else
     {
-      if (bitmap[2*n+1])
-        return dead_leaf_state;
-      else
-        return empty_state;
+      return empty_state;
     }      
 }
 
@@ -206,9 +200,9 @@ merkle_node::set_slot_state(size_t n, slot_state st)
   I(2*n + 1 < bitmap.size());
   bitmap.reset(2*n);
   bitmap.reset(2*n+1);
-  if (st == subtree_state || st == live_leaf_state)
+  if (st == subtree_state || st == leaf_state)
     bitmap.set(2*n);
-  if (st == subtree_state || st == dead_leaf_state)
+  if (st == subtree_state)
     bitmap.set(2*n+1);
 }    
 
@@ -264,16 +258,17 @@ write_node(merkle_node const & in, string & outbuf)
     }
   string hash = raw_sha1(oss.str());
   I(hash.size() == constants::merkle_hash_length_in_bytes);
-  outbuf = hash + oss.str();
+  outbuf.append(hash);
+  outbuf.append(oss.str());
 }
     
 void 
-read_node(string const & inbuf, merkle_node & out)
+read_node(string const & inbuf, size_t & pos, merkle_node & out)
 {
-  size_t pos = 0;
   string hash = extract_substring(inbuf, pos, 
                                   constants::merkle_hash_length_in_bytes, 
                                   "node hash");
+  size_t begin_pos = pos;
   out.type = static_cast<netcmd_item_type>(extract_datum_lsb<u8>(inbuf, pos, "node type"));
   out.level = extract_datum_uleb128<size_t>(inbuf, pos, "node level");
 
@@ -309,9 +304,8 @@ read_node(string const & inbuf, merkle_node & out)
           out.set_raw_slot(slot, slot_val);
         }
     }
-    
-  assert_end_of_buffer(inbuf, pos, "node");
-  string checkhash = raw_sha1(inbuf.substr(constants::merkle_hash_length_in_bytes));
+      
+  string checkhash = raw_sha1(inbuf.substr(begin_pos, pos - begin_pos));
   out.check_invariants();
   if (hash != checkhash)
     throw bad_decode(F("mismatched node hash value %s, expected %s") 
@@ -383,20 +377,50 @@ recalculate_merkle_codes(merkle_table & tab,
   return hash_merkle_node(*node);
 }
 
+void
+collect_items_in_subtree(merkle_table & tab,
+                         prefix const & pref,
+                         size_t level,
+                         set<id> & items)
+{
+  merkle_table::const_iterator i = tab.find(make_pair(pref, level));
+  merkle_ptr node;
+  prefix ext;
+  id item;
+  if (i != tab.end())
+    {
+      node = i->second;
+      for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
+        {
+          switch (node->get_slot_state(slot))
+            {
+            case empty_state:
+              break;
+
+            case leaf_state:              
+              node->get_raw_slot(slot, item);
+              items.insert(item);
+              break;
+
+            case subtree_state:
+              node->extended_raw_prefix(slot, ext);
+              collect_items_in_subtree(tab, ext, level+1, items);
+              break;
+            }
+        }
+    }
+}
+
 
 void
 insert_into_merkle_tree(merkle_table & tab,
                         netcmd_item_type type,
-                        bool live_p,
                         id const & leaf,
                         size_t level)
 {
   I(constants::merkle_hash_length_in_bytes == leaf().size());
   I(constants::merkle_fanout_bits * (level + 1) 
     <= constants::merkle_hash_length_in_bits);
-  
-  //hexenc<id> hleaf;
-  //encode_hexenc(leaf, hleaf);
 
   size_t slotnum;
   dynamic_bitset<unsigned char> pref;
@@ -404,15 +428,7 @@ insert_into_merkle_tree(merkle_table & tab,
 
   ostringstream oss;
   to_block_range(pref, ostream_iterator<char>(oss));
-  //   hexenc<prefix> hpref;
   prefix rawpref(oss.str());
-  //   encode_hexenc(rawpref, hpref);
-
-  //   if (level == 0)
-  //     L(F("-- beginning top level insert --\n"));
-  
-  //   L(F("inserting %s leaf %s into slot 0x%x at node with prefix %s, level %d\n") 
-  //     % (live_p ? "live" : "dead") % hleaf % slotnum % hpref % level);
   
   merkle_table::const_iterator i = tab.find(make_pair(rawpref, level));
   merkle_ptr node;
@@ -423,38 +439,20 @@ insert_into_merkle_tree(merkle_table & tab,
       slot_state st = node->get_slot_state(slotnum);
       switch (st)
         {
-        case live_leaf_state:
-        case dead_leaf_state:
+        case leaf_state:
           {
             id slotval;
             node->get_raw_slot(slotnum, slotval);
             if (slotval == leaf)
               {
-                //                 L(F("found existing entry for %s at slot 0x%x of node %s, level %d\n") 
-                //                   % hleaf % slotnum % hpref % level);
-                if (st == dead_leaf_state && live_p)
-                  {
-                    //                     L(F("changing setting from dead to live, for %s at slot 0x%x of node %s, level %d\n") 
-                    //                       % hleaf % slotnum % hpref % level);
-                    node->set_slot_state(slotnum, live_leaf_state);
-                  }
-                else if (st == live_leaf_state && !live_p)
-                  {
-                    //                     L(F("changing setting from live to dead, for %s at slot 0x%x of node %s, level %d\n") 
-                    //                       % hleaf % slotnum % hpref % level);
-                    node->set_slot_state(slotnum, dead_leaf_state);
-                  }
+                // Do nothing, it's already present
               }
             else
               {
                 hexenc<id> existing_hleaf;
                 encode_hexenc(slotval, existing_hleaf);
-                //                 L(F("pushing existing leaf %s in slot 0x%x of node %s, level %d into subtree\n")
-                //                   % existing_hleaf % slotnum % hpref % level);
-                insert_into_merkle_tree(tab, type, (st == live_leaf_state ? true : false), slotval, level+1);
-                insert_into_merkle_tree(tab, type, live_p, leaf, level+1);
-                //                 L(F("changing setting to subtree, empty hash at slot 0x%x of node %s, level %d\n") 
-                //                   % slotnum % hpref % level);
+                insert_into_merkle_tree(tab, type, slotval, level+1);
+                insert_into_merkle_tree(tab, type, leaf, level+1);
                 id empty_subtree_hash;
                 node->set_raw_slot(slotnum, empty_subtree_hash);
                 node->set_slot_state(slotnum, subtree_state);      
@@ -463,21 +461,15 @@ insert_into_merkle_tree(merkle_table & tab,
           break;
 
         case empty_state:
-          //           L(F("placing leaf %s in previously empty slot 0x%x of node %s, level %d\n")
-          //             % hleaf % slotnum % hpref % level);
           node->total_num_leaves++;
-          node->set_slot_state(slotnum, (live_p ? live_leaf_state : dead_leaf_state));
+          node->set_slot_state(slotnum, leaf_state);
           node->set_raw_slot(slotnum, leaf);
           break;
 
         case subtree_state:
           {
-            //             L(F("taking %s to subtree in slot 0x%x of node %s, level %d\n")
-            //               % hleaf % slotnum % hpref % level);
-            insert_into_merkle_tree(tab, type, live_p, leaf, level+1);
+            insert_into_merkle_tree(tab, type, leaf, level+1);
             id empty_subtree_hash;
-            //             L(F("updating subtree, setting to empty hash at slot 0x%x of node %s, level %d\n") 
-            //               % slotnum % hpref % level);
             node->set_raw_slot(slotnum, empty_subtree_hash);
             node->set_slot_state(slotnum, subtree_state);
           }
@@ -486,18 +478,13 @@ insert_into_merkle_tree(merkle_table & tab,
     }
   else
     {
-      //       L(F("creating new node with prefix %s, level %d, holding %s at slot 0x%x\n")
-      //         % hpref % level % hleaf % slotnum);
       node = merkle_ptr(new merkle_node());
       node->type = type;
       node->level = level;
       node->pref = pref;
       node->total_num_leaves = 1;
-      node->set_slot_state(slotnum, (live_p ? live_leaf_state : dead_leaf_state));
+      node->set_slot_state(slotnum, leaf_state);
       node->set_raw_slot(slotnum, leaf);
       tab.insert(std::make_pair(std::make_pair(rawpref, level), node));
     }
-
-  //   if (level == 0)
-  //       L(F("-- finished top level insert --\n"));
 }
