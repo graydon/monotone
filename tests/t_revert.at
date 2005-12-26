@@ -29,7 +29,7 @@ AT_DATA(testfile0, [squirrils monkeys dingos
 ])
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep testfile0 stdout, [0], [ignore])
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 AT_CHECK(test ! -e MT/work, [], [ignore])
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep testfile0 stdout, [1], [ignore])
@@ -41,7 +41,7 @@ AT_CHECK(MONOTONE drop testfile0, [0], [ignore], [ignore])
 AT_CHECK(grep testfile0 MT/work, [0], [ignore])
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep testfile0 stdout, [0], [ignore])
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 AT_CHECK(test ! -e MT/work, [], [ignore])
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep testfile0 stdout, [1], [ignore])
@@ -69,7 +69,7 @@ AT_CHECK(MONOTONE add testfile1, [0], [ignore], [ignore])
 AT_CHECK(grep testfile1 MT/work, [0], [ignore])
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep testfile1 stdout, [0], [ignore])
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 AT_CHECK(test ! -e MT/work, [], [ignore])
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep testfile1 stdout, [1], [ignore])
@@ -99,7 +99,7 @@ AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep sub stdout, [1], [ignore])
 
 # check reverting a missing file
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 AT_CHECK(rm testfile0)
 AT_CHECK(MONOTONE status, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE revert testfile0, [], [stdout], [ignore])
@@ -107,7 +107,7 @@ AT_CHECK(MONOTONE status, [], [ignore], [ignore])
 
 # check reverting some changes and leaving others
 
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 AT_CHECK(MONOTONE status, [], [stdout])
 
 AT_CHECK(cp testfile0 foofile0, [])
@@ -132,5 +132,12 @@ AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep foofile0 stdout, [1], [ignore])
 AT_CHECK(grep foofile2 stdout, [1], [ignore])
 AT_CHECK(test ! -e MT/work, [], [ignore])
+
+# check that "revert" by itself just prints usage.
+AT_CHECK(echo blah > foofile0, [])
+V1=`SHA1(foofile0)`
+AT_CHECK(MONOTONE revert, [2], [ignore], [ignore])
+V2=`SHA1(foofile0)`
+AT_CHECK(test $V1 = $V2)
 
 AT_CLEANUP

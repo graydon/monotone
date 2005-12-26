@@ -55,7 +55,7 @@ AT_CHECK(grep '^  I 0 0 ignored~$' stdout, [], [ignore], [ignore])
 
 # swapped but not moved
 
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE rename unchanged temporary, [], [ignore], [ignore])
 AT_CHECK(MONOTONE rename original unchanged, [], [ignore], [ignore])
@@ -77,7 +77,7 @@ AT_CHECK(grep '^RR  2 1 unchanged$' stdout, [], [ignore], [ignore])
 
 # rename foo bar; add foo
 
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE rename original renamed, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add original, [], [ignore], [ignore])
@@ -90,7 +90,7 @@ AT_CHECK(grep '^ R  0 1 renamed$' stdout, [], [ignore], [ignore])
 # - note that things are listed and numbered in path collating order
 #   dropped -> missing -> original -> dropped
 
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE rename original temporary, [], [ignore], [ignore])
 AT_CHECK(MONOTONE rename missing original, [], [ignore], [ignore])
@@ -116,7 +116,7 @@ AT_CHECK(grep '^RR  3 2 original$' stdout, [], [ignore], [ignore])
 
 # dropped but not removed and thus unknown
 
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE drop dropped, [], [ignore], [ignore])
 
@@ -125,7 +125,7 @@ AT_CHECK(grep '^D U 0 0 dropped$' stdout, [], [ignore], [ignore])
 
 # added but removed and thus missing
 
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE add added, [], [ignore], [ignore])
 AT_CHECK(rm added, [], [ignore], [ignore])
@@ -135,7 +135,7 @@ AT_CHECK(grep '^ AM 0 0 added$' stdout, [], [ignore], [ignore])
 
 # renamed but not moved and thus unknown source and  missing target
 
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 
 AT_CHECK(rm renamed)
 AT_CHECK(MONOTONE rename original renamed, [], [ignore], [ignore])
@@ -146,7 +146,7 @@ AT_CHECK(grep '^ RM 0 1 renamed$' stdout, [], [ignore], [ignore])
 
 # moved but not renamed and thus missing source and unknown target
 
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 
 AT_CHECK(mv original renamed, [], [ignore], [ignore])
 
@@ -156,7 +156,7 @@ AT_CHECK(grep '^  U 0 0 renamed$' stdout, [], [ignore], [ignore])
 
 # renamed and patched
 
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 
 AT_DATA(renamed, [renamed and patched
 ])
