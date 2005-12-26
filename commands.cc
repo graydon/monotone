@@ -2538,7 +2538,7 @@ dump_diffs(cset const & cs,
            app_state & app,
            bool new_is_archived,
            diff_type type,
-           file_path restrict_file = file_path())
+           set<split_path> restrict_paths = set<split_path>())
 {
   // 60 is somewhat arbitrary, but less than 80
   std::string patch_sep = std::string(60, '=');
@@ -2547,6 +2547,10 @@ dump_diffs(cset const & cs,
          i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     {
+      if (!restrict_paths.empty() 
+          && restrict_paths.find(i->first) == restrict_paths.end())
+        continue;
+
       cout << patch_sep << "\n";
       data unpacked;
       vector<string> lines;
@@ -2595,6 +2599,10 @@ dump_diffs(cset const & cs,
          i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
+      if (!restrict_paths.empty() 
+          && restrict_paths.find(i->first) == restrict_paths.end())
+        continue;
+
       file_data f_old;
       data data_old, data_new;
       vector<string> old_lines, new_lines;
@@ -3241,7 +3249,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
   cset work, included_work, excluded_work;
   path_set old_paths;
 
-  if (args.size() < 1)
+  if (args.size() < 1 && !app.missing)
       throw usage(name);
  
   app.require_working_copy();
@@ -3309,7 +3317,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
                 continue;
             }
       
-          L(F("reverting %s to [%s]\n") % fp % f->content);
+          P(F("reverting %s to [%s]\n") % fp % f->content);
           
           N(app.db.file_version_exists(f->content),
             F("no file version %s found in database for %s")
@@ -3626,7 +3634,23 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 for (edge_map::const_iterator e = rev.edges.begin();
                      e != rev.edges.end(); ++e)
                   {
-                    dump_diffs(edge_changes(e), app, true, unified_diff);
+                    // limit to selected nodes
+                    set<split_path> node_names;
+                    if (!nodes.empty())
+                      {
+                        roster_t ros;
+                        app.db.get_roster(rid, ros);
+
+                        for (set<node_id>::const_iterator n = nodes.begin();
+                             n != nodes.end(); n++)
+                          {
+                            split_path sp;
+                            ros.get_name(*n, sp);
+                            node_names.insert(sp);
+                          }
+                      }
+                    dump_diffs(edge_changes(e), app, true, unified_diff,
+                               node_names);
                   }
               }
 

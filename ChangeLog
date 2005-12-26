@@ -50,6 +50,27 @@
 	* HACKING, tests/README: Remove references to use of SEGV for
 	terminating monotone servers.
 
+2005-12-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* constants.cc: New netsync is incompatible, bump protocol version.
+	* constants.hh: Change default port to the one IANA assigned us.
+
+2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* roster.cc (make_roster_for_merge): unshadow the node_id_source
+	argument. Resolve usages to the argument or the local by educated guess.
+
+2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* paths.{cc,hh}: operator<() for split_path's
+
+2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* sanity.{cc,hh}: Fix musing dumps so that the header line always gets
+	printed, even if printing the body throws an exception.
+	* database.cc, packet,cc, revision.cc: sprinkle MMs
+	* cset.cc: sanity check print_cset to match parse_cset
+
 2005-12-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* po/pt_BR.po: Add missing newline.
@@ -158,27 +179,6 @@
 	* Makefile.am: add PCH_FLAGS only when compiling monotone and
 	unit_tests objects, not for libs.
 	* pch.hh: define __STDC_CONSTANT_MACROS as required for UINT32_C.
-
-2005-12-13  Timothy Brownawell  <tbrownaw@gmail.com>
-
-	* constants.cc: New netsync is incompatible, bump protocol version.
-	* constants.hh: Change default port to the one IANA assigned us.
-
-2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
-
-	* roster.cc (make_roster_for_merge): unshadow the node_id_source
-	argument. Resolve usages to the argument or the local by educated guess.
-
-2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
-
-	* paths.{cc,hh}: operator<() for split_path's
-
-2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
-
-	* sanity.{cc,hh}: Fix musing dumps so that the header line always gets
-	printed, even if printing the body throws an exception.
-	* database.cc, packet,cc, revision.cc: sprinkle MMs
-	* cset.cc: sanity check print_cset to match parse_cset
 
 2005-11-28  Nathaniel Smith  <njs@pobox.com>
 

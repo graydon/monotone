@@ -172,8 +172,8 @@ void tick_write_count::write_ticks()
       write_tickline1 = true;
     }
 
-  // Always reissue the counts, with a \r to clear.
-  string tickline2 = "\rmonotone: ";
+  // Always reissue the counts.
+  string tickline2 = "monotone: ";
   for (size_t i = 0; i < tick_widths.size(); ++i)
     {
       if (i != 0)

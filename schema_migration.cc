@@ -864,44 +864,44 @@ migrate_client_to_add_rosters(sqlite3 * sql,
 {
   int res;
   
-  res = sqlite3_exec(sql,
-                     "CREATE TABLE rosters\n"
-                     "(\n"
-                     "id primary key,         -- strong hash of the roster\n"
-                     "data not null           -- compressed, encoded contents of the roster\n"
-                     ");",
-                     NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE rosters\n"
+                            "(\n"
+                            "id primary key,         -- strong hash of the roster\n"
+                            "data not null           -- compressed, encoded contents of the roster\n"
+                            ");",
+                            NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite3_exec(sql,
-                     "CREATE TABLE roster_deltas\n"
-                     "(\n"
-                     "id not null,            -- strong hash of the roster\n"
-                     "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
-                     "delta not null,         -- rdiff to construct current from base\n"
-                     "unique(id, base)\n"
-                     ");",
-                     NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE roster_deltas\n"
+                            "(\n"
+                            "id not null,            -- strong hash of the roster\n"
+                            "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
+                            "delta not null,         -- rdiff to construct current from base\n"
+                            "unique(id, base)\n"
+                            ");",
+                            NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite3_exec(sql,
-                     "CREATE TABLE revision_roster\n"
-                     "(\n"
-                     "rev_id primary key,     -- joins with revisions.id\n"
-                     "roster_id not null      -- joins with either rosters.id or roster_deltas.id\n"
-                     ");",
-                     NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE revision_roster\n"
+                            "(\n"
+                            "rev_id primary key,     -- joins with revisions.id\n"
+                            "roster_id not null      -- joins with either rosters.id or roster_deltas.id\n"
+                            ");",
+                            NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = sqlite3_exec(sql,
-                     "CREATE TABLE next_roster_node_number\n"
-                     "(\n"
-                     "node primary key        -- only one entry in this table, ever\n"
-                     ");",
-                     NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE next_roster_node_number\n"
+                            "(\n"
+                            "node primary key        -- only one entry in this table, ever\n"
+                            ");",
+                            NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
