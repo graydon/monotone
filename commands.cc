@@ -3552,6 +3552,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
           seen.insert(rid);
           app.db.get_revision(rid, rev);
 
+          set<node_id> next_nodes;
+
           if (!nodes.empty())
             {
               set<node_id> nodes_changed;
@@ -3570,9 +3572,11 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                       break;
                     }
                 }
+
+              next_nodes = nodes;
               for (set<node_id>::const_iterator n = nodes_born.begin(); n != nodes_born.end();
                    ++n)
-                nodes.erase(*n);
+                next_nodes.erase(*n);
 
               if (any_node_hit)
                 print_this = true;
@@ -3659,6 +3663,11 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 last--;
               }
           }
+        // when we had a restriction and run out of nodes, stop.
+        if (!nodes.empty() && next_nodes.empty())
+          return;
+
+        nodes = next_nodes;
         }
       frontier = next_frontier;
     }

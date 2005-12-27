@@ -531,8 +531,10 @@ select_nodes_modified_by_rev(revision_id const & rid,
                                     edge_nodes_born);
       std::copy(edge_nodes_changed.begin(), edge_nodes_changed.end(), 
                 inserter(nodes_changed, nodes_changed.begin()));
-      std::copy(edge_nodes_born.begin(), edge_nodes_born.end(), 
-                inserter(nodes_born, nodes_born.begin()));
+      // edges don't really get "born" in merges.
+      if (rev.edges.size() == 1)
+        std::copy(edge_nodes_born.begin(), edge_nodes_born.end(), 
+                  inserter(nodes_born, nodes_born.begin()));
     }
 }
 
