@@ -3279,36 +3279,45 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
 }
 
 CMD(revert, N_("working copy"), N_("[PATH]..."), 
-    N_("revert file(s), dir(s) or entire working copy"), 
+    N_("revert file(s), dir(s) or entire working copy (\".\")"), 
     OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
   roster_t old_roster, new_roster;
   cset included, excluded;
 
+  if (args.size() < 1)
+    throw usage(name);
+
   app.require_working_copy();
   
-  vector<utf8> args_copy(args);
+  vector<utf8> restricted_args;
   if (app.missing)
     {
-      L(F("revert adding find_missing entries to %d original args elements\n") 
-        % args_copy.size());
+      // --missing is a further filter on the files included by a restriction
+      // we first find all missing files included by the specified args
+      // and then make a restriction that includes only these missing files
       path_set missing;
-      find_missing(app, args_copy, missing);
-
+      find_missing(app, args, missing);
+      if (missing.empty())
+        {
+          W(F("no missing files in restriction."));
+          return;
+        }
+      
       for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
-        args_copy.push_back(file_path(*i).as_external());
-
-      L(F("after adding everything from find_missing, revert args_copy has %d elements\n") 
-        % args_copy.size());
-
-      // when given --missing, never revert if there's nothing missing and no 
-      // specific files were specified.
-      if (args_copy.size() == 0)
-        return;
+        {
+          file_path fp(*i);
+          L(F("missing files are '%s'") % fp);
+          restricted_args.push_back(fp.as_external());
+        }
+    }
+  else
+    {
+      restricted_args = args;
     }
 
   get_base_and_current_roster_shape(old_roster, new_roster, app);
-  restriction mask(args_copy, old_roster, new_roster);
+  restriction mask(restricted_args, old_roster, new_roster);
 
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
 
