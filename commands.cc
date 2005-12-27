@@ -3575,6 +3575,9 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
           if (!mask.empty())
             {
+              // TODO: stop if the restriction is pre-dated by the current roster
+              // i.e. the restriction's nodes are not born in the current roster
+
               set<node_id> nodes_modified;
               bool any_node_hit = false;
               select_nodes_modified_by_rev(rid, rev, roster,
@@ -3604,11 +3607,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                e != rev.edges.end(); ++e)
             {
               ancestors.insert(edge_old_revision(e));
-
-              // TODO: limit the frontier to revisions that still contain nodes
-              // in the current restriction so this stops when none of the
-              // specified files have been born
-
               next_frontier.insert(edge_old_revision(e));
               csum.add_change_set(edge_changes(e));
             }

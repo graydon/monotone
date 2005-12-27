@@ -12,6 +12,14 @@
 #include "safe_map.hh"
 #include "transforms.hh"
 
+// TODO: add support for --depth (replace recursive boolean with depth value)
+// TODO: add support for --exclude
+// TODO: add check for relevant rosters to be used by log
+// i.e.  as log goes back through older and older rosters it may hit one that
+// pre-dates any of the nodes in the restriction. the nodes that the restriction
+// includes or excludes may not have been born in a sufficiently old roster. at
+// this point log should stop because no earlier roster will include these nodes.
+
 restriction::restriction(vector<utf8> const & args,
                          roster_t const & roster)
 {

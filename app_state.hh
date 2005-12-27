@@ -53,7 +53,6 @@ public:
   std::vector<utf8> revision_selectors;
   std::set<utf8> exclude_patterns;
   std::vector<utf8> extra_rcfiles;
-  path_set restrictions;
   path_set excludes;
   bool found_working_copy;
   long depth;
@@ -89,12 +88,6 @@ public:
   void allow_working_copy();
   void require_working_copy(std::string const & explanation = "");
   void create_working_copy(system_path const & dir);
-
-  void set_restriction(path_set const & valid_paths, 
-                       std::vector<utf8> const & paths,
-                       bool respect_ignore = true);
-  bool restriction_requires_parent(split_path const & path);
-  bool restriction_includes(split_path const & path);
 
   // Set the branch name.  If you only invoke set_branch, the branch
   // name is not sticky (and won't be written to the working copy and
