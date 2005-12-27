@@ -20,6 +20,7 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "parallel_iter.hh"
+#include "restrictions.hh"
 #include "safe_map.hh"
 
 #include <boost/lexical_cast.hpp>
@@ -528,6 +529,12 @@ bool
 roster_t::has_node(node_id n) const
 {
   return nodes.find(n) != nodes.end();
+}
+
+bool
+roster_t::is_root(node_id n) const
+{
+  return has_root() && root_dir->self == n;
 }
 
 bool
@@ -1336,7 +1343,7 @@ namespace
                     roster_t const & merge, 
                     marking_map & new_markings)
   {
-    for (map<node_id, node_t>::const_iterator i = merge.all_nodes().begin();
+    for (node_map::const_iterator i = merge.all_nodes().begin();
          i != merge.all_nodes().end(); ++i)
       {
         node_t const & n = i->second;
@@ -1750,7 +1757,7 @@ void
 make_cset(roster_t const & from, roster_t const & to, cset & cs)
 {
   cs.clear();
-  parallel::iter<map<node_id, node_t> > i(from.all_nodes(), to.all_nodes());
+  parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
   while (i.next())
     {
       MM(i);
@@ -1810,15 +1817,72 @@ equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
 }
 
 
+void make_restricted_csets(roster_t const & from, roster_t const & to,
+                           cset & included, cset & excluded,
+                           restriction const & mask)
+{
+  included.clear();
+  excluded.clear();
+  L(F("building restricted csets\n"));
+  parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
+  while (i.next())
+    {
+      MM(i);
+      switch (i.state())
+        {
+        case parallel::invalid:
+          I(false);
+
+        case parallel::in_left:
+          if (mask.includes(from, i.left_key()))
+            {
+              delta_only_in_from(from, i.left_key(), i.left_data(), included);
+              L(F("included left %d\n") % i.left_key());
+            }
+          else
+            {
+              delta_only_in_from(from, i.left_key(), i.left_data(), excluded);
+              L(F("excluded left %d\n") % i.left_key());
+            }
+          break;
+ 
+        case parallel::in_right:
+          if (mask.includes(to, i.right_key()))
+            {
+              delta_only_in_to(to, i.right_key(), i.right_data(), included);
+              L(F("included right %d\n") % i.right_key());
+            }
+          else
+            {
+              delta_only_in_to(to, i.right_key(), i.right_data(), excluded);
+              L(F("excluded right %d\n") % i.right_key());
+            }
+          break;
+
+        case parallel::in_both:
+          if (mask.includes(from, i.left_key()) || mask.includes(to, i.right_key()))
+            {
+              delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), included);
+              L(F("in both %d %d\n") % i.left_key() % i.right_key());
+            }
+          else
+            {
+              delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), excluded);
+              L(F("in both %d %d\n") % i.left_key() % i.right_key());
+            }
+          break;
+        }
+    }
+}
+
+
 void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
                               roster_t const & new_roster,
-                              std::set<node_id> & nodes_changed,
-                              std::set<node_id> & nodes_born)
+                              std::set<node_id> & nodes_modified)
 {
-  nodes_changed.clear();
-  nodes_born.clear();
+  nodes_modified.clear();
 
   path_set modified_prestate_nodes;
   path_set modified_poststate_nodes;
@@ -1863,34 +1927,25 @@ select_nodes_modified_by_cset(cset const & cs,
        i != modified_prestate_nodes.end(); ++i)
     {
       I(old_roster.has_node(*i));
-      nodes_changed.insert(old_roster.get_node(*i)->self);
+      nodes_modified.insert(old_roster.get_node(*i)->self);
     }
 
   for (path_set::const_iterator i = modified_poststate_nodes.begin();
        i != modified_poststate_nodes.end(); ++i)
     {
       I(new_roster.has_node(*i));
-      nodes_changed.insert(new_roster.get_node(*i)->self);
+      nodes_modified.insert(new_roster.get_node(*i)->self);
     }
 
-  for (path_set::const_iterator i = cs.dirs_added.begin();
-       i != cs.dirs_added.end(); ++i)
-    {
-      I(new_roster.has_node(*i));
-      nodes_born.insert(new_roster.get_node(*i)->self);
-    }
-
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-       i != cs.files_added.end(); ++i)
-    {
-      I(new_roster.has_node(i->first));
-      nodes_born.insert(new_roster.get_node(i->first)->self);
-    }
 }
 
 ////////////////////////////////////////////////////////////////////
 //   getting rosters from the working copy
 ////////////////////////////////////////////////////////////////////
+
+// TODO: doesn't that mean they should go in work.cc ? 
+// perhaps do that after propagating back to n.v.m.experiment.rosters
+// or to mainline so that diffs are more informative
 
 inline static bool
 inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path) 
@@ -1907,6 +1962,12 @@ inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
   else
     return false; // unavailable
 }
+
+// TODO: unchanged, changed, missing might be better as set<node_id>
+
+// note that this does not take a restriction because it is used only by
+// automate_inventory which operates on the entire, unrestricted, working
+// directory.
 
 void 
 classify_roster_paths(roster_t const & ros,
@@ -1939,44 +2000,37 @@ classify_roster_paths(roster_t const & ros,
 
       split_path sp;
       ros.get_name(nid, sp);
+
       file_path fp(sp);
 
-      // Only analyze restriction-included files.
-      if (app.restriction_includes(sp))
+      if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
         {
-          if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
-            {
-              // dirs don't have content changes
-              unchanged.insert(sp);
-            }
-          else 
-            {
-              file_t file = downcast_to_file_t(node);
-              file_id fid;
-              if (ident_existing_file(fp, fid, app.lua))
-                {
-                  if (file->content == fid)
-                    unchanged.insert(sp);
-                  else
-                    changed.insert(sp);
-                }
-              else
-                {
-                  missing.insert(sp);
-                }
-            }
-        }
-      else
-        {
-          // changes to excluded files are ignored
+          // dirs don't have content changes
           unchanged.insert(sp);
+        }
+      else 
+        {
+          file_t file = downcast_to_file_t(node);
+          file_id fid;
+          if (ident_existing_file(fp, fid, app.lua))
+            {
+              if (file->content == fid)
+                unchanged.insert(sp);
+              else
+                changed.insert(sp);
+            }
+          else
+            {
+              missing.insert(sp);
+            }
         }
     }
 }
 
 void 
-update_restricted_roster_from_filesystem(roster_t & ros, 
-                                         app_state & app)
+update_current_roster_from_filesystem(roster_t & ros, 
+                                      restriction const & mask,
+                                      app_state & app)
 {
   temp_node_id_source nis;
   inodeprint_map ipm;
@@ -2006,13 +2060,13 @@ update_restricted_roster_from_filesystem(roster_t & ros,
       if (! is_file_t(node))
         continue;
 
+      // Only analyze restriction-included files.
+      if (!mask.includes(ros, nid))
+        continue;
+
       split_path sp;
       ros.get_name(nid, sp);
       file_path fp(sp);
-
-      // Only analyze restriction-included files.
-      if (!app.restriction_includes(sp))
-        continue;
 
       // Only analyze changed files (or all files if inodeprints mode
       // is disabled).
@@ -2033,6 +2087,14 @@ update_restricted_roster_from_filesystem(roster_t & ros,
       "'monotone drop FILE' to remove it permanently, or\n"
       "'monotone revert FILE' to restore it\n")
     % missing_files);
+}
+
+void 
+update_current_roster_from_filesystem(roster_t & ros, 
+                                      app_state & app)
+{
+  restriction tmp;
+  update_current_roster_from_filesystem(ros, tmp, app);
 }
 
 void
