@@ -28,7 +28,6 @@
 #include "diff_patch.hh"
 #include "file_io.hh"
 #include "keys.hh"
-#include "manifest.hh"
 #include "netsync.hh"
 #include "packet.hh"
 #include "rcs_import.hh"
@@ -1931,7 +1930,7 @@ CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
   size_t count = 0;
   if (args.empty())
     {
-      count += read_packets(cin, dbw);
+      count += read_packets(cin, dbw, app);
       N(count != 0, F("no packets found on stdin"));
     }
   else
@@ -1941,7 +1940,7 @@ CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
           data dat;
           read_data(system_path(*i), dat);
           istringstream ss(dat());
-          count += read_packets(ss, dbw);
+          count += read_packets(ss, dbw, app);
         }
       N(count != 0, FP("no packets found in given file",
                        "no packets found in given files",
@@ -3231,7 +3230,7 @@ CMD(explicit_merge, N_("tree"),
   P(F("[merged] %s\n") % merged);
 }
 
-CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
+CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     N_("complete partial id"),
     OPT_VERBOSE)
 {
@@ -3253,14 +3252,6 @@ CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
           if (!verbose) cout << i->inner()() << endl;
           else cout << describe_revision(app, i->inner()) << endl;
         }
-    }
-  else if (idx(args, 0)() == "manifest")
-    {      
-      set<manifest_id> completions;
-      app.db.complete(idx(args, 1)(), completions);
-      for (set<manifest_id>::const_iterator i = completions.begin();
-           i != completions.end(); ++i)
-        cout << i->inner()() << endl;
     }
   else if (idx(args, 0)() == "file")
     {

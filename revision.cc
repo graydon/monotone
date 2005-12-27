@@ -551,9 +551,6 @@ make_revision_set(revision_id const & old_rev_id,
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
 
-// Stuff related to rebuilding the revision graph. Unfortunately this is a
-// real enough error case that we need support code for it.
-
 typedef std::map<u64, 
                  std::pair<boost::shared_ptr<roster_t>, 
                            boost::shared_ptr<marking_map>
