@@ -41,15 +41,12 @@ restriction::set_paths(vector<utf8> const & args)
       split_path sp;
       file_path_external(*i).split(sp);
       paths.insert(sp);
-      L(F("added path '%s'") % *i);
     }
 }
 
 void
 restriction::add_nodes(roster_t const & roster)
 {
-  L(F("adding nodes\n"));
-
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       // TODO: (future) handle some sort of peg revision path syntax here.
@@ -58,41 +55,38 @@ restriction::add_nodes(roster_t const & roster)
 
       if (roster.has_node(*i)) 
         {
-          node_t node = roster.get_node(*i);
-          bool recursive = is_dir_t(node);
-          node_id nid = node->self;
-
-          valid_paths.insert(*i);
-
-          // TODO: proper wildcard paths like foo/... 
-          // for now we always add directories recursively and files exactly
+          // TODO: proper recursive wildcard paths like foo/...  
+          // for now explicit paths are recursive
+          // and implicit parents are non-recursive
 
           // TODO: possibly fail with nice error if path is already explicitly
           // in the map?
-
-          L(F("adding nid %d '%s'\n") % nid % file_path(*i));
-          insert(nid, recursive);
 
           // currently we need to insert the parents of included nodes so that
           // the included nodes are not orphaned in a restricted roster.  this
           // happens in cases like add "a" + add "a/b" when only "a/b" is
           // included. i.e. "a" must be included for "a/b" to be valid. this
-          // isn't entirely sensible and should probably be revisited.
+          // isn't entirely sensible and should probably be revisited. it does
+          // match the current (old restrictions) semantics though.
 
-          node_id parent = node->parent;
-          while (!null_node(parent))
+          valid_paths.insert(*i);
+
+          bool recursive = true;
+          node_id nid = roster.get_node(*i)->self;
+
+          while (!null_node(nid))
             {
               split_path sp;
-              roster.get_name(parent, sp);
-              L(F("adding parent %d '%s'\n") % parent % file_path(sp));
-              insert(parent, false);
-              node = roster.get_node(parent);
-              parent = node->parent;
-            }
+              roster.get_name(nid, sp);
+              L(F("adding nid %d path '%s' recursive %s") % nid % file_path(sp) % recursive);
 
-          // TODO: consider keeping a list of valid paths here that we can use
-          // for doing a set-difference against with the full list of paths to
-          // find those that are not legal in any roster of this restriction
+              restricted_node_map[nid] |= recursive;
+              restricted_path_map[sp] |= recursive;
+
+              recursive = false;
+
+              nid = roster.get_node(nid)->parent;
+            }
         }
       else
         {
@@ -105,30 +99,33 @@ restriction::add_nodes(roster_t const & roster)
 bool
 restriction::includes(roster_t const & roster, node_id nid) const
 {
+  MM(roster);
+  I(roster.has_node(nid));
+
   // empty restriction includes everything
   if (restricted_node_map.empty()) 
-    return true;
+    {
+      split_path sp;
+      roster.get_name(nid, sp);
+      L(F("included nid %d path '%s'") % nid % file_path(sp));
+      return true;
+    }
 
   node_id current = nid;
-
-  MM(roster);
-
-  I(roster.has_node(nid));
 
   while (!null_node(current)) 
     {
       split_path sp;
       roster.get_name(current, sp);
-      L(F("checking nid %d '%s'\n") % current % file_path(sp));
 
-      restriction_map::const_iterator r = restricted_node_map.find(current);
+      map<node_id, bool>::const_iterator r = restricted_node_map.find(current);
 
       if (r != restricted_node_map.end()) 
         {
-          // found exact node or a recursive parent
+          // found exact node or a explicit/recusrive parent
           if (r->second || current == nid) 
             {
-              L(F("included nid %d '%s'\n") % current % file_path(sp));
+              L(F("included nid %d path '%s'") % current % file_path(sp));
               return true;
             }
         }
@@ -139,21 +136,42 @@ restriction::includes(roster_t const & roster, node_id nid) const
 
   split_path sp;
   roster.get_name(nid, sp);
-  L(F("excluded nid %d '%s'\n") % nid % file_path(sp));
+  L(F("excluded nid %d path '%s'\n") % nid % file_path(sp));
   
   return false;
 }
 
-void
-restriction::insert(node_id nid, bool recursive)
+bool
+restriction::includes(split_path const & sp) const
 {
-  // we (mistakenly) allow multiple settings of the recursive include flag on a
-  // nid. this needs to be fixed but we need to track more than a simple boolean
-  // to do it. nids can be added non-recursively as parents of included nids, or
-  // explicitly. we should probably prevent explicit inclusion of foo/bar and
-  // foo/bar/... though.
+  if (restricted_path_map.empty()) 
+    {
+      L(F("included path '%s'") % file_path(sp));
+      return true;
+    }
 
-  restricted_node_map[nid] |= recursive;
+  split_path current(sp);
+
+  while (!current.empty())
+    {
+      L(F("checking path '%s'\n") % current);
+      map<split_path, bool>::const_iterator r = restricted_path_map.find(current);
+
+      if (r != restricted_path_map.end())
+        {
+          if (r->second || current == sp)
+            {
+              L(F("included path '%s'") % file_path(sp));
+              return true;
+            }
+        }
+
+      current.pop_back();
+    }
+
+  L(F("excluded path '%s'") % file_path(sp));
+  return false;
+
 }
 
 void
@@ -171,3 +189,162 @@ restriction::check_paths()
 
   E(bad == 0, F("%d unknown paths") % bad);
 }
+
+////////////////////////////////////////////////////////////////////
+//   testing
+////////////////////////////////////////////////////////////////////
+
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+#include "roster.hh"
+#include "sanity.hh"
+
+using std::string;
+
+file_id file1_id(string("1000000000000000000000000000000000000000"));
+file_id file2_id(string("2000000000000000000000000000000000000000"));
+file_id file3_id(string("3000000000000000000000000000000000000000"));
+
+static void
+test_basic_restrictions()
+{
+  temp_node_id_source nis;
+  roster_t roster;
+
+  node_id root_nid = roster.create_dir_node(nis);
+  node_id file1_nid = roster.create_file_node(file1_id, nis);
+  node_id file2_nid = roster.create_file_node(file2_id, nis);
+  node_id file3_nid = roster.create_file_node(file3_id, nis);
+
+  split_path root_path, file1_path, file2_path, file3_path;
+  file_path().split(root_path);
+  file_path_internal("file1").split(file1_path);
+  file_path_internal("file2").split(file2_path);
+  file_path_internal("file3").split(file3_path);
+
+  roster.attach_node(root_nid, root_path);
+  roster.attach_node(file1_nid, file1_path);
+  roster.attach_node(file2_nid, file2_path);
+  roster.attach_node(file3_nid, file3_path);
+
+  {
+    // empty restriction
+    restriction mask;
+
+    BOOST_CHECK(mask.empty());
+
+    // check restricted nodes
+    BOOST_CHECK(mask.includes(roster, root_nid));
+    BOOST_CHECK(mask.includes(roster, file1_nid));
+    BOOST_CHECK(mask.includes(roster, file2_nid));
+    BOOST_CHECK(mask.includes(roster, file3_nid));
+
+    // check restricted paths
+    BOOST_CHECK(mask.includes(root_path));
+    BOOST_CHECK(mask.includes(file1_path));
+    BOOST_CHECK(mask.includes(file2_path));
+    BOOST_CHECK(mask.includes(file3_path));
+  }
+
+  {
+    // non-empty restriction
+    vector<utf8> args;
+    args.push_back(utf8(string("file1")));
+
+    restriction mask(args, roster);
+
+    BOOST_CHECK(!mask.empty());
+
+    // check restricted nodes
+    BOOST_CHECK(mask.includes(roster, root_nid));
+    BOOST_CHECK(mask.includes(roster, file1_nid));
+    BOOST_CHECK(!mask.includes(roster, file2_nid));
+    BOOST_CHECK(!mask.includes(roster, file3_nid));
+
+    // check restricted paths
+    BOOST_CHECK(mask.includes(root_path));
+    BOOST_CHECK(mask.includes(file1_path));
+    BOOST_CHECK(!mask.includes(file2_path));
+    BOOST_CHECK(!mask.includes(file3_path));
+  }
+
+  {
+    // invalid paths
+    // non-empty restriction
+    vector<utf8> args;
+    args.push_back(utf8(string("file4")));
+
+    BOOST_CHECK_THROW(restriction(args, roster), informative_failure);
+  }
+
+}
+
+static void
+test_recursive_nonrecursive()
+{
+  temp_node_id_source nis;
+  roster_t roster;
+
+  node_id root_nid = roster.create_dir_node(nis);
+
+  node_id dir1_nid = roster.create_dir_node(nis);
+  node_id dir2_nid = roster.create_dir_node(nis);
+
+  node_id file1_nid = roster.create_file_node(file1_id, nis);
+  node_id file2_nid = roster.create_file_node(file2_id, nis);
+  node_id file3_nid = roster.create_file_node(file3_id, nis);
+
+  // root/file1
+  // root/dir1
+  // root/dir1/file2
+  // root/dir1/dir2
+  // root/dir1/dir2/file3
+
+  split_path root_path, file1_path, dir1_path, file2_path, dir2_path, file3_path;
+
+  file_path().split(root_path);
+  file_path_internal("file1").split(file1_path);
+  file_path_internal("dir1").split(dir1_path);
+  file_path_internal("dir1/file2").split(file2_path);
+  file_path_internal("dir1/dir2").split(dir2_path);
+  file_path_internal("dir1/dir2/file3").split(file3_path);
+
+  roster.attach_node(root_nid, root_path);
+  roster.attach_node(file1_nid, file1_path);
+  roster.attach_node(dir1_nid, dir1_path);
+  roster.attach_node(file2_nid, file2_path);
+  roster.attach_node(dir2_nid, dir2_path);
+  roster.attach_node(file3_nid, file3_path);
+
+  vector<utf8> args;
+  args.push_back(utf8(string("dir1/dir2")));
+
+  restriction mask(args, roster);
+
+  BOOST_CHECK(!mask.empty());
+
+  // check restricted nodes
+  BOOST_CHECK(mask.includes(roster, root_nid));
+  BOOST_CHECK(!mask.includes(roster, file1_nid));
+  BOOST_CHECK(mask.includes(roster, dir1_nid));
+  BOOST_CHECK(!mask.includes(roster, file2_nid));
+  BOOST_CHECK(mask.includes(roster, dir2_nid));
+  BOOST_CHECK(mask.includes(roster, file3_nid));
+
+  // check restricted paths
+  BOOST_CHECK(mask.includes(root_path));
+  BOOST_CHECK(!mask.includes(file1_path));
+  BOOST_CHECK(mask.includes(dir1_path));
+  BOOST_CHECK(!mask.includes(file2_path));
+  BOOST_CHECK(mask.includes(dir2_path));
+  BOOST_CHECK(mask.includes(file3_path));
+}
+
+void
+add_restrictions_tests(test_suite * suite)
+{
+  I(suite);
+  suite->add(BOOST_TEST_CASE(&test_basic_restrictions));
+  suite->add(BOOST_TEST_CASE(&test_recursive_nonrecursive));
+}
+#endif // BUILD_UNIT_TESTS

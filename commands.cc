@@ -1688,8 +1688,7 @@ find_unknown_and_ignored(app_state & app, vector<utf8> const & args,
 
   new_roster.extract_path_set(known);
 
-  // FIXME_RESTRICTIONS: use mask to restrict paths instead of nids
-  file_itemizer u(app, known, unknown, ignored);
+  file_itemizer u(app, known, unknown, ignored, mask);
   walk_tree(file_path(), u);
 }
 

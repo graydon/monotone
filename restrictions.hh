@@ -46,18 +46,25 @@ class restriction
               roster_t const & roster2);
 
   bool includes(roster_t const & roster, node_id nid) const;
+  bool includes(split_path const & sp) const;
   bool empty() const { return restricted_node_map.empty(); }
 
  private:
-  typedef map<node_id, bool> restriction_map;
-  restriction_map restricted_node_map;
+  // true in these two maps indicates an explicitly included node or path and
+  // explicitly included directories are recursive. alternatively, false in
+  // these maps indicated an implicitly included parent directory which is
+  // specifically required for the restriction but does not include any of its
+  // children
+ 
+  map<node_id, bool> restricted_node_map;
+  map<split_path, bool> restricted_path_map;
 
   path_set paths;
+
   path_set valid_paths;
 
   void set_paths(vector<utf8> const & args);
   void add_nodes(roster_t const & roster);
-  void insert(node_id nid, bool recursive);
   void check_paths();
 };
 

@@ -14,6 +14,7 @@
 #include "cset.hh"
 #include "file_io.hh"
 #include "platform.hh"
+#include "restrictions.hh"
 #include "sanity.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
@@ -40,12 +41,7 @@ file_itemizer::visit_file(file_path const & path)
   split_path sp;
   path.split(sp);
 
-  // FIXME_RESTRICTIONS: this doesn't look so good for roster restrictions
-
-  // unknown and ignored will never have nodes in the rosters so some other form
-  // of restriction is going to be needed here
-
-  if (app.restriction_includes(sp) && known.find(sp) == known.end())
+  if (mask.includes(sp) && known.find(sp) == known.end())
     {
       if (app.lua.hook_ignore_file(path))
         ignored.insert(sp);

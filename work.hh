@@ -54,8 +54,9 @@ struct file_itemizer : public tree_walker
   path_set & known;
   path_set & unknown;
   path_set & ignored;
-  file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i) 
-    : app(a), known(k), unknown(u), ignored(i) {}
+  restriction const & mask;
+  file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i, restriction const & r) 
+    : app(a), known(k), unknown(u), ignored(i), mask(r) {}
   virtual void visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
 };
