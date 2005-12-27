@@ -3249,7 +3249,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
   cset work, included_work, excluded_work;
   path_set old_paths;
 
-  if (args.size() < 1 && !app.missing)
+  if (args.size() < 1)
       throw usage(name);
  
   app.require_working_copy();
@@ -3264,27 +3264,28 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
   extract_rearranged_paths(work, valid_paths);
   add_intermediate_paths(valid_paths);
 
-  vector<utf8> args_copy(args);
   if (app.missing)
     {
-      L(F("revert adding find_missing entries to %d original args elements\n") % args_copy.size());
       path_set missing;
-      find_missing(app, args_copy, missing);
+      find_missing(app, args, missing);
+      if (missing.empty())
+        {
+          L(F("no missing files in restriction."));
+          return;
+        }
 
-      // chose as_external because app_state::set_restriction turns utf8s into file_paths
-      // using file_path_external()...
+      vector<utf8> missing_args;
       for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
-        args_copy.push_back(file_path(*i).as_external());
-
-      L(F("after adding everything from find_missing, revert args_copy has %d elements\n") % args_copy.size());
-
-      // when given --missing, never revert if there's nothing missing and no 
-      // specific files were specified.
-      if (args_copy.size() == 0)
-        return;
+      {
+        L(F("missing files are '%s'") % file_path(*i));
+        missing_args.push_back(file_path(*i).as_external());
+      }
+      app.set_restriction(valid_paths, missing_args, false);
     }
-
-  app.set_restriction(valid_paths, args_copy, false);
+  else
+    {
+      app.set_restriction(valid_paths, args, false);
+    }
 
   restrict_cset(work, included_work, excluded_work, app);
 
@@ -3317,7 +3318,8 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
                 continue;
             }
       
-          P(F("reverting %s to [%s]\n") % fp % f->content);
+          P(F("reverting %s") % fp);
+          L(F("reverting %s to [%s]\n") % fp % f->content);
           
           N(app.db.file_version_exists(f->content),
             F("no file version %s found in database for %s")

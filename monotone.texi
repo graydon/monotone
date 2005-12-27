@@ -3693,33 +3693,19 @@ typically invokes an external editor program, in which you can compose
 and/or review your log message for the change.
 @end itemize
 
-
-@item monotone revert
-@itemx monotone revert @var{pathname...}
-@itemx monotone revert --missing
+@item monotone revert @var{pathname...}
 @itemx monotone revert --missing @var{pathname...}
-With no files given, this command changes your working copy, so that
-changes you have made since the last checkout or update are discarded.
-It does this by changing every file listed in the working copy's base
-manifest to have contents equal to the @sc{sha1} value listed in the
-manifest, and by erasing the @file{MT/work} file.
+This command changes your working copy, so that changes you have made
+since the last checkout or update are discarded. The command is
+restricted the set of files or directories given as arguments.  To
+revert the entire working copy, use @command{revert} "." in the
+top-level directory. Specifying "." in a subdirectory will restrict
+@command{revert} to files changed within the current subdirectory.
 
-If files or directories are given as arguments, only those files and
-directories are affected instead of the entirety of your working copy.
-
-If the flag @option{--missing} is given, in addition to files or
-directories given as arguments, it reverts (ie, restores) any files
-which monotone has listed in its manifest, but which have been deleted
-from the working copy.  If you specify @option{--missing} with no
-additional path arguments, and there are no files missing from the
-working copy, revert is conservative and does nothing.
-
-From within a subdirectory of the working copy the @command{revert}
-command will, by default, revert @emph{all changes} in the working copy.
-Specifying only the pathname "." will restrict @command{revert} to files
-changed within the current subdirectory of the working copy. @i{Caution
-should be used when reverting files to ensure that the correct set of
-files is reverted.}
+If the flag @option{--missing} is given it reverts (ie, restores) any
+files which monotone has listed in its manifest, but which have been
+deleted from the working copy.  Only missing files matching the given
+file or directory arguments are reverted.
 
 @item monotone update
 @itemx monotone update --revision=@var{revision}
