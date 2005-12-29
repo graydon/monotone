@@ -1,3 +1,7 @@
+2005-12-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/{pager.c,sqlite3.h}: Upgrade to SQLite 3.2.8.
+
 2005-12-29  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Notes on what to write up for 0.25.
