@@ -1,3 +1,20 @@
+????????????????????????????
+
+        0.25 release.
+
+        ipv6 now supported.
+        revert now requires an argument.
+        'revert' gives feedback while running
+        database locking was further tweaked, to allow more concurrent
+          access when safe
+        bug fix: don't print out hundreds of lines of tickers on win32.
+        bug fix: can now import 0.23-and-earlier private key packets
+        bug fix: log --diffs restricted to some files now only prints
+          diffs for those files.
+        win9x support?
+
+        new translations: pt_BR
+
 Sat Nov 27 22:29:38 PST 2005
 
         0.24 release.

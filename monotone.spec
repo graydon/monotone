@@ -63,6 +63,9 @@ fi
 
 
 %changelog
+* Thu Dec 29 2005 nathaniel smith <njs@pobox.com>
+- 0.25 release
+
 * Sat Nov 26 2005 nathaniel smith <njs@pobox.com>
 - 0.24 release
 
