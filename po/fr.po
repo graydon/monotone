@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-28 19:39+0100\n"
-"PO-Revision-Date: 2005-11-28 21:12+0100\n"
+"POT-Creation-Date: 2005-12-06 15:24+0100\n"
+"PO-Revision-Date: 2005-12-01 14:35+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -260,7 +260,8 @@ msgid ""
 "If no directory is given, the branch name will be used as directory"
 msgstr ""
 "récupère une révision depuis une base de données dans un dossier. Si une\n"
-"révision est spécifiée, c'est celle-ci qui sera récupérée. Sinon, il s'agira\n"
+"révision est spécifiée, c'est celle-ci qui sera récupérée. Sinon, il "
+"s'agira\n"
 "que la versionde de tête (spécifiée ou implicite).\n"
 "Si aucun nom de dossier n'est fourni, le nom de la branche sera utilisé\n"
 "comme nom de dossier"
@@ -297,7 +298,7 @@ msgstr ""
 
 #: ../commands.cc:1768 ../commands.cc:1794
 msgid "OLDID NEWID"
-msgstr ""
+msgstr "ANCIENID NOUVELID"
 
 #: ../commands.cc:1769
 msgid "write manifest delta packet to stdout"
@@ -373,7 +374,8 @@ msgstr "CHEMIN ..."
 
 #: ../commands.cc:2105
 msgid "serve the branches specified by PATTERNs to connecting clients"
-msgstr "servir les branches spécifiées par les MOTIFs aux clients qui se connectent"
+msgstr ""
+"servir les branches spécifiées par les MOTIFs aux clients qui se connectent"
 
 #: ../commands.cc:2130
 msgid "database"
@@ -496,7 +498,7 @@ msgstr ""
 
 #: ../commands.cc:3495
 msgid "RCSFILE..."
-msgstr ""
+msgstr "FICHIER_RCS..."
 
 #: ../commands.cc:3496
 msgid ""
@@ -507,15 +509,15 @@ msgstr ""
 
 #: ../commands.cc:3512
 msgid "rcs"
-msgstr ""
+msgstr "rcs"
 
 #: ../commands.cc:3512
 msgid "CVSROOT"
-msgstr ""
+msgstr "CVSROOT"
 
 #: ../commands.cc:3512
 msgid "import all versions in CVS repository"
-msgstr ""
+msgstr "importer toutes les versions d'un dépôt CVS"
 
 #: ../commands.cc:3575
 msgid "PATH"
@@ -594,6 +596,7 @@ msgstr "DOMAINE NOM VALEUR"
 #: ../commands.cc:3847
 msgid "remove the database variable NAME in domain DOMAIN"
 msgstr ""
+"supprimer la variable NOM de la base de données dans le domaine DOMAINE"
 
 #: ../database_check.cc:111
 msgid "files"
@@ -623,21 +626,21 @@ msgstr "clefs"
 msgid "certs"
 msgstr "certs"
 
-#: ../database.cc:185
+#: ../database.cc:181
 msgid "make sure database and containing directory are writeable"
 msgstr ""
 
-#: ../database.cc:494
+#: ../database.cc:490
 #, fuzzy
 msgid "mcerts"
 msgstr "mcerts"
 
-#: ../database.cc:495
+#: ../database.cc:491
 #, fuzzy
 msgid "pubkeys"
 msgstr "clefs"
 
-#: ../database.cc:496
+#: ../database.cc:492
 #, fuzzy
 msgid "privkeys"
 msgstr "clefs"
@@ -871,11 +874,11 @@ msgstr "source"
 msgid "tags"
 msgstr ""
 
-#: ../sanity.cc:182
+#: ../sanity.cc:184
 msgid "misuse: "
 msgstr "mauvais usage : "
 
-#: ../sanity.cc:194
+#: ../sanity.cc:196
 msgid "error: "
 msgstr "erreur :"
 
@@ -883,33 +886,33 @@ msgstr "erreur :"
 msgid "Press enter when the subprocess has completed"
 msgstr "Appuyez sur [Entrée] quand le sous-processus s'est terminé"
 
-#: ../std_hooks.lua:221
+#: ../std_hooks.lua:226
 #, c-format
 msgid "Error running editor '%s' to enter log message\n"
 msgstr ""
 "Erreur pendant l'exécution de « %s » pour saisir le message du journal\n"
 
-#: ../std_hooks.lua:563
+#: ../std_hooks.lua:568
 msgid "executing external 2-way merge command\n"
 msgstr ""
 
-#: ../std_hooks.lua:671
+#: ../std_hooks.lua:676
 msgid "executing external 3-way merge command\n"
 msgstr ""
 
 #. xgettext: mebibytes (2^20 bytes)
-#: ../ui.cc:119
+#: ../ui.cc:120
 #, c-format
 msgid "%.1f M"
 msgstr "%.1f Mi"
 
 #. xgettext: kibibytes (2^10 bytes)
-#: ../ui.cc:124
+#: ../ui.cc:125
 #, c-format
 msgid "%.1f k"
 msgstr "%.1f ki"
 
-#: ../ui.cc:369
+#: ../ui.cc:371
 msgid "monotone: "
 msgstr "monotone: "
 
