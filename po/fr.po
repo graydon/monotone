@@ -626,21 +626,21 @@ msgstr "clefs"
 msgid "certs"
 msgstr "certs"
 
-#: ../database.cc:181
+#: ../database.cc:185
 msgid "make sure database and containing directory are writeable"
 msgstr ""
 
-#: ../database.cc:490
+#: ../database.cc:494
 #, fuzzy
 msgid "mcerts"
 msgstr "mcerts"
 
-#: ../database.cc:491
+#: ../database.cc:495
 #, fuzzy
 msgid "pubkeys"
 msgstr "clefs"
 
-#: ../database.cc:492
+#: ../database.cc:496
 #, fuzzy
 msgid "privkeys"
 msgstr "clefs"
@@ -874,11 +874,11 @@ msgstr "source"
 msgid "tags"
 msgstr ""
 
-#: ../sanity.cc:184
+#: ../sanity.cc:182
 msgid "misuse: "
 msgstr "mauvais usage : "
 
-#: ../sanity.cc:196
+#: ../sanity.cc:194
 msgid "error: "
 msgstr "erreur :"
 
@@ -886,33 +886,33 @@ msgstr "erreur :"
 msgid "Press enter when the subprocess has completed"
 msgstr "Appuyez sur [Entrée] quand le sous-processus s'est terminé"
 
-#: ../std_hooks.lua:226
+#: ../std_hooks.lua:221
 #, c-format
 msgid "Error running editor '%s' to enter log message\n"
 msgstr ""
 "Erreur pendant l'exécution de « %s » pour saisir le message du journal\n"
 
-#: ../std_hooks.lua:568
+#: ../std_hooks.lua:563
 msgid "executing external 2-way merge command\n"
 msgstr ""
 
-#: ../std_hooks.lua:676
+#: ../std_hooks.lua:671
 msgid "executing external 3-way merge command\n"
 msgstr ""
 
 #. xgettext: mebibytes (2^20 bytes)
-#: ../ui.cc:120
+#: ../ui.cc:119
 #, c-format
 msgid "%.1f M"
 msgstr "%.1f Mi"
 
 #. xgettext: kibibytes (2^10 bytes)
-#: ../ui.cc:125
+#: ../ui.cc:124
 #, c-format
 msgid "%.1f k"
 msgstr "%.1f ki"
 
-#: ../ui.cc:371
+#: ../ui.cc:369
 msgid "monotone: "
 msgstr "monotone: "
 

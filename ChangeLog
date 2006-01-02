@@ -1,3 +1,17 @@
+2005-12-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Write up for 0.25.
+
+2005-12-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/{pager.c,sqlite3.h}: Upgrade to SQLite 3.2.8.
+
+2005-12-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Notes on what to write up for 0.25.
+	* win32/monotone.iss, monotone.spec, debian/changelog:
+	* configure.ac, UPGRADE: Bump.
+
 2005-12-26  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc (CMD(revert)): revert with no args prints usage,
