@@ -6,7 +6,6 @@
 #ifndef BOTAN_MPI_TYPES_H__
 #define BOTAN_MPI_TYPES_H__
 
-#include <botan/config.h>
 #include <botan/types.h>
 
 namespace Botan {

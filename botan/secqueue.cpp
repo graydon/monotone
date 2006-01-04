@@ -48,16 +48,20 @@ class SecureQueueNode
 /*************************************************
 * Create a SecureQueue                           *
 *************************************************/
-SecureQueue::SecureQueue() : Filter(0)
+SecureQueue::SecureQueue()
    {
+   set_next(0, 0);
    head = tail = new SecureQueueNode;
    }
 
 /*************************************************
 * Copy a SecureQueue                             *
 *************************************************/
-SecureQueue::SecureQueue(const SecureQueue& input) : Filter(0), DataSource()
+SecureQueue::SecureQueue(const SecureQueue& input) :
+   Fanout_Filter(), DataSource()
    {
+   set_next(0, 0);
+
    head = tail = new SecureQueueNode;
    SecureQueueNode* temp = input.head;
    while(temp)

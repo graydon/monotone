@@ -166,7 +166,7 @@ bool good_edc(const std::string& filename, const std::string& edc)
    Pipe pipe1(new Hash_Filter("SHA-1"));
    Pipe pipe2(new Hex_Decoder);
 
-   DataSource_Stream in(filename);
+   DataSource_Stream in(filename, true);
    pipe1.process_msg(in);
    pipe2.process_msg(edc);
 

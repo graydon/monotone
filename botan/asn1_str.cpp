@@ -4,6 +4,8 @@
 *************************************************/
 
 #include <botan/asn1_obj.h>
+#include <botan/charset.h>
+#include <botan/parsing.h>
 #include <botan/conf.h>
 
 namespace Botan {

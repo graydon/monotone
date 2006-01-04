@@ -4,8 +4,9 @@
 *************************************************/
 
 #include <botan/def_eng.h>
-#include <botan/lookup.h>
+#include <botan/parsing.h>
 #include <botan/filters.h>
+#include <botan/lookup.h>
 #include <botan/ecb.h>
 #include <botan/cbc.h>
 #include <botan/cts.h>
@@ -13,7 +14,6 @@
 #include <botan/ofb.h>
 #include <botan/ctr.h>
 #include <botan/eax.h>
-#include <botan/util.h>
 
 namespace Botan {
 

@@ -58,7 +58,7 @@ AT_CHECK(MONOTONE status, [], [ignore], [ignore])
 
 # move file to wrong place before renaming it
 AT_CHECK(mv barfoo bar)
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 AT_CHECK(MONOTONE status, [], [ignore], [ignore])
 AT_CHECK(mv bar barfoofoo)
 AT_CHECK(MONOTONE rename bar barfoo, [], [ignore], [stderr])

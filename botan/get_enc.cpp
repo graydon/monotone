@@ -4,10 +4,12 @@
 *************************************************/
 
 #include <botan/lookup.h>
+#include <botan/parsing.h>
 #include <botan/emsa.h>
 #include <botan/eme.h>
 #include <botan/kdf.h>
 #include <botan/mgf1.h>
+#include <botan/util.h>
 
 namespace Botan {
 

@@ -5,7 +5,10 @@
 
 #include <botan/es_egd.h>
 #include <botan/conf.h>
+#include <botan/bit_ops.h>
+#include <botan/parsing.h>
 #include <cstring>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>

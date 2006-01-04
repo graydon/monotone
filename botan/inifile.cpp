@@ -7,6 +7,8 @@
 #include <botan/lookup.h>
 #include <botan/look_add.h>
 #include <botan/oids.h>
+#include <botan/charset.h>
+#include <botan/parsing.h>
 #include <fstream>
 #include <map>
 

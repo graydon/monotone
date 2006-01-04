@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone 0.24\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-12-11 15:12-0300\n"
+"POT-Creation-Date: 2005-12-29 14:41-0800\n"
 "PO-Revision-Date: 2005-11-30 13:45-0200\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
@@ -471,7 +471,7 @@ msgid "pid file '%s' already exists"
 msgstr "arquivo pid '%s' já existe"
 
 #: commands.cc:323 commands.cc:1275 commands.cc:1355 commands.cc:1720
-#: commands.cc:2670 commands.cc:3358 commands.cc:3575 commands.cc:3612
+#: commands.cc:2674 commands.cc:3362 commands.cc:3582 commands.cc:3619
 msgid "informative"
 msgstr "informativo"
 
@@ -510,8 +510,8 @@ msgstr ""
 "considere usar 'monotone merge'"
 
 #: commands.cc:459 commands.cc:715 commands.cc:1374 commands.cc:1446
-#: commands.cc:1831 commands.cc:2717 commands.cc:2732 commands.cc:2735
-#: commands.cc:2933 commands.cc:3594
+#: commands.cc:1831 commands.cc:2721 commands.cc:2736 commands.cc:2739
+#: commands.cc:2937 commands.cc:3601
 #, c-format
 msgid "no such revision '%s'"
 msgstr "versão '%s' não existe"
@@ -651,15 +651,18 @@ msgstr "removendo par de chaves '%s' do repositório de chaves\n"
 #: commands.cc:906
 #, c-format
 msgid "public or private key '%s' does not exist in keystore or database"
-msgstr "chave pública ou privada '%s' não existe no repositório de chaves nem no banco de dados"
+msgstr ""
+"chave pública ou privada '%s' não existe no repositório de chaves nem no "
+"banco de dados"
 
 #: commands.cc:908
 #, c-format
 msgid ""
 "public or private key '%s' does not exist in keystore, and no database was "
 "specified"
-msgstr "chave pública ou privada '%s' não existe no repositório de chaves, "
-"e nenhum banco de dados foi especificado"
+msgstr ""
+"chave pública ou privada '%s' não existe no repositório de chaves, e nenhum "
+"banco de dados foi especificado"
 
 #: commands.cc:913
 msgid "change passphrase of a private RSA key"
@@ -785,12 +788,12 @@ msgid "empty comment"
 msgstr "comentário vazio"
 
 #: commands.cc:1129 commands.cc:1166 commands.cc:1200 commands.cc:1332
-#: commands.cc:2198 commands.cc:2321 commands.cc:2882 commands.cc:3415
+#: commands.cc:2198 commands.cc:2321 commands.cc:2886 commands.cc:3419
 msgid "working copy"
 msgstr "cópia de trabalho"
 
 #: commands.cc:1129 commands.cc:1166 commands.cc:1275 commands.cc:2321
-#: commands.cc:2670 commands.cc:3415
+#: commands.cc:2674 commands.cc:3419
 msgid "[PATH]..."
 msgstr "[CAMINHO]..."
 
@@ -810,8 +813,8 @@ msgstr "ORIGEM DESTINO"
 msgid "rename entries in the working copy"
 msgstr "renomeia entradas na cópia de trabalho"
 
-#: commands.cc:1229 commands.cc:1242 commands.cc:2803 commands.cc:2820
-#: commands.cc:3495
+#: commands.cc:1229 commands.cc:1242 commands.cc:2807 commands.cc:2824
+#: commands.cc:3502
 msgid "debug"
 msgstr "depuração"
 
@@ -877,8 +880,8 @@ msgstr "nenhum arquivo '%s' encontrado na versão '%s'\n"
 msgid "dumping file '%s'\n"
 msgstr ""
 
-#: commands.cc:1397 commands.cc:1505 commands.cc:3158 commands.cc:3207
-#: commands.cc:3292 commands.cc:3299 commands.cc:3780
+#: commands.cc:1397 commands.cc:1505 commands.cc:3162 commands.cc:3211
+#: commands.cc:3296 commands.cc:3303 commands.cc:3787
 msgid "tree"
 msgstr "árvore"
 
@@ -904,8 +907,8 @@ msgstr ""
 msgid "checkout directory '%s' already exists"
 msgstr ""
 
-#: commands.cc:1437 commands.cc:1518 commands.cc:3171 commands.cc:3241
-#: commands.cc:3244
+#: commands.cc:1437 commands.cc:1518 commands.cc:3175 commands.cc:3245
+#: commands.cc:3248
 #, c-format
 msgid "branch '%s' is empty\n"
 msgstr "ramo '%s' está vazio\n"
@@ -940,7 +943,7 @@ msgstr ""
 msgid "no file %s found in database for %s"
 msgstr "nenhum arquivo %s encontrado no banco de dados para %s"
 
-#: commands.cc:1492 commands.cc:3482
+#: commands.cc:1492 commands.cc:3489
 #, c-format
 msgid "writing file %s to %s\n"
 msgstr "escrevendo arquivo %s em %s\n"
@@ -949,7 +952,7 @@ msgstr "escrevendo arquivo %s em %s\n"
 msgid "show unmerged head revisions of branch"
 msgstr "mostra frentes não combinadas do ramo"
 
-#: commands.cc:1513 commands.cc:3167
+#: commands.cc:1513 commands.cc:3171
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "por favor especifique um ramo com --branch=RAMO"
@@ -1334,7 +1337,7 @@ msgid ""
 "note: you may (or may not) wish to run 'monotone merge'"
 msgstr ""
 
-#: commands.cc:2671
+#: commands.cc:2675
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the working directory and\n"
@@ -1342,66 +1345,66 @@ msgid ""
 "them is given.  If no format is specified, unified is used by default."
 msgstr ""
 
-#: commands.cc:2687
+#: commands.cc:2691
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
 "try adding --external or removing --diff-args?"
 msgstr ""
 
-#: commands.cc:2721
+#: commands.cc:2725
 #, c-format
 msgid "current revision has no ancestor"
 msgstr ""
 
-#: commands.cc:2760
+#: commands.cc:2764
 #, c-format
 msgid "no common ancestor for %s and %s"
 msgstr ""
 
-#: commands.cc:2766
+#: commands.cc:2770
 #, c-format
 msgid "concatenating un-committed changeset to composite\n"
 msgstr ""
 
-#: commands.cc:2803 commands.cc:2820
+#: commands.cc:2807 commands.cc:2824
 msgid "LEFT RIGHT"
 msgstr ""
 
-#: commands.cc:2803
+#: commands.cc:2807
 msgid "print least common ancestor"
 msgstr ""
 
-#: commands.cc:2816
+#: commands.cc:2820
 msgid "no common ancestor found"
 msgstr ""
 
-#: commands.cc:2820
+#: commands.cc:2824
 msgid "print least common ancestor / dominator"
 msgstr ""
 
-#: commands.cc:2834
+#: commands.cc:2838
 msgid "no common ancestor/dominator found"
 msgstr ""
 
-#: commands.cc:2859
-#, c-format
-msgid "updating %s to %s\n"
-msgstr ""
+#: commands.cc:2863
+#, fuzzy, c-format
+msgid "updating %s to %s"
+msgstr "escrevendo arquivo %s em %s\n"
 
-#: commands.cc:2883
+#: commands.cc:2887
 msgid ""
 "update working copy.\n"
 "If a revision is given, base the update on that revision.  If not,\n"
 "base the update on the head of the branch (given or implicit)."
 msgstr ""
 
-#: commands.cc:2908
+#: commands.cc:2912
 #, c-format
 msgid "this working directory is a new project; cannot update"
 msgstr ""
 
-#: commands.cc:2915
+#: commands.cc:2919
 #, c-format
 msgid ""
 "your request matches no descendents of the current revision\n"
@@ -1409,294 +1412,294 @@ msgid ""
 "maybe you want --revision=<rev on other branch>"
 msgstr ""
 
-#: commands.cc:2920
+#: commands.cc:2924
 #, c-format
 msgid "multiple update candidates:\n"
 msgstr ""
 
-#: commands.cc:2924
+#: commands.cc:2928
 #, c-format
 msgid "choose one with 'monotone update -r<id>'\n"
 msgstr ""
 
-#: commands.cc:2925
+#: commands.cc:2929
 #, c-format
 msgid "multiple candidates remain after selection"
 msgstr ""
 
-#: commands.cc:2940
+#: commands.cc:2944
 #, c-format
 msgid "already up to date at %s\n"
 msgstr ""
 
-#: commands.cc:2948
+#: commands.cc:2952
 #, c-format
 msgid "selected update target %s\n"
 msgstr ""
 
-#: commands.cc:2960
+#: commands.cc:2964
 #, c-format
 msgid ""
 "revision %s is not a member of branch %s\n"
 "try again with explicit --branch\n"
 msgstr ""
 
-#: commands.cc:2975
+#: commands.cc:2979
 #, c-format
 msgid "updating along chosen edge %s -> %s\n"
 msgstr ""
 
-#: commands.cc:2986
+#: commands.cc:2990
 #, c-format
 msgid "merging working copy with chosen edge %s -> %s\n"
 msgstr ""
 
-#: commands.cc:3035
+#: commands.cc:3039
 #, c-format
 msgid "updated to base revision %s\n"
 msgstr ""
 
-#: commands.cc:3101
+#: commands.cc:3105
 #, c-format
 msgid ""
 "common ancestor %s found\n"
 "trying 3-way merge\n"
 msgstr ""
 
-#: commands.cc:3112
+#: commands.cc:3116
 #, c-format
 msgid "no common ancestor found, synthesizing edges\n"
 msgstr ""
 
-#: commands.cc:3158
+#: commands.cc:3162
 msgid "merge unmerged heads of branch"
 msgstr ""
 
-#: commands.cc:3172
+#: commands.cc:3176
 #, c-format
 msgid "branch '%s' is merged\n"
 msgstr ""
 
-#: commands.cc:3178
+#: commands.cc:3182
 #, c-format
 msgid "starting with revision 1 / %d\n"
 msgstr ""
 
-#: commands.cc:3182
+#: commands.cc:3186
 #, c-format
 msgid "merging with revision %d / %d\n"
 msgstr ""
 
-#: commands.cc:3183 commands.cc:3184 commands.cc:3251 commands.cc:3335
-#: commands.cc:3336
+#: commands.cc:3187 commands.cc:3188 commands.cc:3255 commands.cc:3339
+#: commands.cc:3340
 #, c-format
 msgid "[source] %s\n"
 msgstr ""
 
-#: commands.cc:3201 commands.cc:3288 commands.cc:3355
+#: commands.cc:3205 commands.cc:3292 commands.cc:3359
 #, c-format
 msgid "[merged] %s\n"
 msgstr ""
 
-#: commands.cc:3204
+#: commands.cc:3208
 #, c-format
 msgid "note: your working copies have not been updated\n"
 msgstr ""
 
-#: commands.cc:3207
+#: commands.cc:3211
 msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr ""
 
-#: commands.cc:3208
+#: commands.cc:3212
 msgid "merge from one branch to another asymmetrically"
 msgstr ""
 
-#: commands.cc:3242 commands.cc:3245
+#: commands.cc:3246 commands.cc:3249
 #, c-format
 msgid "branch '%s' is not merged\n"
 msgstr ""
 
-#: commands.cc:3250
+#: commands.cc:3254
 #, c-format
 msgid "propagating %s -> %s\n"
 msgstr ""
 
-#: commands.cc:3252
+#: commands.cc:3256
 #, c-format
 msgid "[target] %s\n"
 msgstr ""
 
-#: commands.cc:3257
+#: commands.cc:3261
 #, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'\n"
 msgstr ""
 
-#: commands.cc:3259
+#: commands.cc:3263
 #, c-format
 msgid "no action taken\n"
 msgstr ""
 
-#: commands.cc:3263
+#: commands.cc:3267
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'\n"
 msgstr ""
 
-#: commands.cc:3292
+#: commands.cc:3296
 msgid "refresh the inodeprint cache"
 msgstr ""
 
-#: commands.cc:3300
+#: commands.cc:3304
 msgid ""
 "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
 "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"
 msgstr ""
 
-#: commands.cc:3302
+#: commands.cc:3306
 msgid "merge two explicitly given revisions, placing result in given branch"
 msgstr ""
 
-#: commands.cc:3317 commands.cc:3319
+#: commands.cc:3321 commands.cc:3323
 #, c-format
 msgid "%s is not an ancestor of %s"
 msgstr ""
 
-#: commands.cc:3328
+#: commands.cc:3332
 #, c-format
 msgid "%s and %s are the same revision, aborting"
 msgstr ""
 
-#: commands.cc:3330 commands.cc:3332
+#: commands.cc:3334 commands.cc:3336
 #, c-format
 msgid "%s is already an ancestor of %s"
 msgstr ""
 
-#: commands.cc:3358
+#: commands.cc:3362
 msgid "(revision|manifest|file|key) PARTIAL-ID"
 msgstr ""
 
-#: commands.cc:3359
+#: commands.cc:3363
 msgid "complete partial id"
 msgstr ""
 
-#: commands.cc:3368
+#: commands.cc:3372
 #, c-format
 msgid "non-hex digits in partial id"
 msgstr ""
 
-#: commands.cc:3416
-msgid "revert file(s), dir(s) or entire working copy"
+#: commands.cc:3420
+msgid "revert file(s), dir(s) or entire working copy (\".\")"
 msgstr ""
 
-#: commands.cc:3441
+#: commands.cc:3448
 #, c-format
 msgid "revert adding find_missing entries to %d original args elements\n"
 msgstr ""
 
-#: commands.cc:3450
+#: commands.cc:3457
 #, c-format
 msgid ""
 "after adding everything from find_missing, revert args_copy has %d elements\n"
 msgstr ""
 
-#: commands.cc:3474
-#, c-format
-msgid "reverting %s from %s to %s\n"
-msgstr ""
+#: commands.cc:3481
+#, fuzzy, c-format
+msgid "reverting %s to %s"
+msgstr "escrevendo arquivo %s em %s\n"
 
-#: commands.cc:3478
+#: commands.cc:3485
 #, c-format
 msgid "no file version %s found in database for %s"
 msgstr ""
 
-#: commands.cc:3495
+#: commands.cc:3502
 msgid "RCSFILE..."
 msgstr ""
 
-#: commands.cc:3496
+#: commands.cc:3503
 msgid ""
 "parse versions in RCS files\n"
 "this command doesn't reconstruct or import revisions.you probably want "
 "cvs_import"
 msgstr ""
 
-#: commands.cc:3512
+#: commands.cc:3519
 msgid "rcs"
 msgstr ""
 
-#: commands.cc:3512
+#: commands.cc:3519
 msgid "CVSROOT"
 msgstr ""
 
-#: commands.cc:3512
+#: commands.cc:3519
 msgid "import all versions in CVS repository"
 msgstr ""
 
-#: commands.cc:3575
+#: commands.cc:3582
 msgid "PATH"
 msgstr ""
 
-#: commands.cc:3576
+#: commands.cc:3583
 msgid "print annotated copy of the file from REVISION"
 msgstr ""
 
-#: commands.cc:3593
+#: commands.cc:3600
 #, c-format
 msgid "no revision for file '%s' in database"
 msgstr ""
 
-#: commands.cc:3596
+#: commands.cc:3603
 #, c-format
 msgid "annotate file file_path '%s'\n"
 msgstr ""
 
-#: commands.cc:3605
+#: commands.cc:3612
 #, c-format
 msgid "no such file '%s' in revision '%s'\n"
 msgstr ""
 
-#: commands.cc:3607
+#: commands.cc:3614
 #, c-format
 msgid "annotate for file_id %s\n"
 msgstr ""
 
-#: commands.cc:3612
+#: commands.cc:3619
 msgid "[FILE]"
 msgstr ""
 
-#: commands.cc:3613
+#: commands.cc:3620
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
 msgstr ""
 
-#: commands.cc:3673
+#: commands.cc:3680
 #, c-format
 msgid "revision %s does not exist in db, skipping\n"
 msgstr ""
 
-#: commands.cc:3706
+#: commands.cc:3713
 #, c-format
 msgid "revision '%s' in '%s' maps to '%s' in %s\n"
 msgstr ""
 
-#: commands.cc:3780
+#: commands.cc:3787
 msgid "DIRECTORY"
 msgstr ""
 
-#: commands.cc:3780
+#: commands.cc:3787
 msgid "setup a new working copy directory"
 msgstr ""
 
-#: commands.cc:3786
+#: commands.cc:3793
 #, c-format
 msgid "need --branch argument for setup"
 msgstr ""
 
-#: commands.cc:3795
+#: commands.cc:3802
 msgid "automation"
 msgstr ""
 
-#: commands.cc:3796
+#: commands.cc:3803
 msgid ""
 "interface_version\n"
 "heads [BRANCH]\n"
@@ -1720,31 +1723,31 @@ msgid ""
 "keys\n"
 msgstr ""
 
-#: commands.cc:3816
+#: commands.cc:3823
 msgid "automation interface"
 msgstr ""
 
-#: commands.cc:3830 commands.cc:3846
+#: commands.cc:3837 commands.cc:3853
 msgid "vars"
 msgstr ""
 
-#: commands.cc:3830
+#: commands.cc:3837
 msgid "DOMAIN NAME VALUE"
 msgstr ""
 
-#: commands.cc:3831
+#: commands.cc:3838
 msgid "set the database variable NAME to VALUE, in domain DOMAIN"
 msgstr ""
 
-#: commands.cc:3846
+#: commands.cc:3853
 msgid "DOMAIN NAME"
 msgstr ""
 
-#: commands.cc:3847
+#: commands.cc:3854
 msgid "remove the database variable NAME in domain DOMAIN"
 msgstr ""
 
-#: commands.cc:3858
+#: commands.cc:3865
 #, c-format
 msgid "no var with name %s in domain %s"
 msgstr ""

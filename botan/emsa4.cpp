@@ -6,6 +6,7 @@
 #include <botan/emsa.h>
 #include <botan/lookup.h>
 #include <botan/look_pk.h>
+#include <botan/bit_ops.h>
 #include <botan/rng.h>
 
 namespace Botan {
@@ -37,7 +38,7 @@ SecureVector<byte> EMSA4::encoding_of(const MemoryRegion<byte>& msg,
    if(msg.size() != HASH_SIZE)
       throw Invalid_Argument("EMSA4::encoding_of: Bad input length");
    if(output_bits < 8*HASH_SIZE + 8*SALT_SIZE + 9)
-      throw Invalid_Argument("EMSA4::pad: Output length is too small");
+      throw Invalid_Argument("EMSA4::encoding_of: Output length is too small");
 
    const u32bit output_length = (output_bits + 7) / 8;
 

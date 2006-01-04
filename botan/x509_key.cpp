@@ -140,7 +140,7 @@ X509_PublicKey* load_key(DataSource& source)
 *************************************************/
 X509_PublicKey* load_key(const std::string& fsname)
    {
-   DataSource_Stream source(fsname);
+   DataSource_Stream source(fsname, true);
    return X509::load_key(source);
    }
 

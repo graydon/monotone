@@ -43,6 +43,7 @@ void add_default_oids()
 
    add_oid("1.2.840.113549.2.5", "MD5");
    add_oid("1.3.14.3.2.26", "SHA-160");
+   add_oid("1.3.6.1.4.1.11591.12.2", "Tiger(24,3)");
 
    add_oid("1.2.840.113549.1.9.16.3.6", "KeyWrap.TripleDES");
    add_oid("1.2.840.113549.1.9.16.3.7", "KeyWrap.RC2");

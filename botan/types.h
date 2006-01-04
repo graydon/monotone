@@ -6,6 +6,8 @@
 #ifndef BOTAN_TYPES_H__
 #define BOTAN_TYPES_H__
 
+#include <botan/config.h>
+
 namespace Botan {
 
 typedef unsigned char byte;

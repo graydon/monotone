@@ -1,3 +1,35 @@
+2005-12-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Write up for 0.25.
+
+2005-12-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/{pager.c,sqlite3.h}: Upgrade to SQLite 3.2.8.
+
+2005-12-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Notes on what to write up for 0.25.
+	* win32/monotone.iss, monotone.spec, debian/changelog:
+	* configure.ac, UPGRADE: Bump.
+
+2005-12-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(revert)): revert with no args prints usage,
+	mention "." for entire working copy.
+
+2005-12-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (dump_difs, CMD(log)): only print --diffs for the file
+	of interest.
+
+2005-12-21  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* botan/es_capi.{cpp,h}: Windows compile fixes for Botan 1.4.10.
+
+2005-12-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* upgrade to Botan 1.4.10
+
 2005-12-20  Daniel Carosone  <dan@geek.com.au>
 
 	* monotone.texi: Rearrange the description of monotone serve into
@@ -6,6 +38,17 @@
 	more advanced section that discusses some of the subleties and
 	choices and moves them on to running a dedicated server.  Other
 	small tweaks in nearby sections while here.
+
+2005-12-18  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Add Roland.
+
+2005-12-17  Roland McGrath  <roland@redhat.com>
+
+	* work.hh (struct file_itemizer): Remove extraneous qualifier on
+	visit_file declaration.
+	* app_state.hh (class app_state): Remove extraneous qualifier on
+	set_restriction declaration.
 
 2005-12-14  Matthew Gregan  <kinetik@orcon.net.nz>
 

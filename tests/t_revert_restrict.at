@@ -43,7 +43,7 @@ AT_CHECK(cmp testfile modified1, [0], [ignore], [ignore])
 AT_CHECK(cmp file.ignore orig.ignore, [0], [ignore], [ignore])
 
 # now run it again with two paths, one in the ignorehook list, the other normal
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 AT_CHECK(cp modified1 testfile)
 AT_CHECK(cp modified2 file.ignore)
 AT_CHECK(cp modified3 file2)

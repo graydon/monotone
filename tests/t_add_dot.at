@@ -24,7 +24,7 @@ AT_CHECK(cd subdir && MONOTONE commit --message="foo", [], [ignore], [ignore])
 AT_CHECK(rm subdir/testfile1)
 AT_CHECK(rm subdir/testfile2)
 AT_CHECK(rm -r subdir/testdir1)
-AT_CHECK(cd subdir && MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(cd subdir && MONOTONE revert ., [], [ignore], [ignore])
 
 AT_CHECK(test -f subdir/testfile1)
 AT_CHECK(test -f subdir/testfile2)

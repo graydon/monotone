@@ -5,6 +5,8 @@
 
 #include <botan/eax.h>
 #include <botan/lookup.h>
+#include <botan/bit_ops.h>
+#include <botan/parsing.h>
 
 namespace Botan {
 

@@ -4,8 +4,9 @@
 *************************************************/
 
 #include <botan/pubkey.h>
+#include <botan/parsing.h>
+#include <botan/bit_ops.h>
 #include <botan/lookup.h>
-#include <botan/util.h>
 #include <botan/asn1.h>
 #include <memory>
 

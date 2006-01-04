@@ -2585,13 +2585,17 @@ static void
 dump_diffs(change_set::delta_map const & deltas,
            app_state & app,
            bool new_is_archived,
-           diff_type type)
+           diff_type type,
+           file_path restrict_file = file_path())
 {
   // 60 is somewhat arbitrary, but less than 80
   std::string patch_sep = std::string(60, '=');
   for (change_set::delta_map::const_iterator i = deltas.begin();
        i != deltas.end(); ++i)
     {
+      if (!restrict_file.empty() && !(restrict_file == delta_entry_path(i)))
+        continue;
+
       cout << patch_sep << "\n";
       if (null_id(delta_entry_src(i)))
         {
@@ -3413,13 +3417,16 @@ CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
 
 
 CMD(revert, N_("working copy"), N_("[PATH]..."), 
-    N_("revert file(s), dir(s) or entire working copy"), OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
+    N_("revert file(s), dir(s) or entire working copy (\".\")"), OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
   manifest_map m_old;
   revision_id old_revision_id;
   manifest_id old_manifest_id;
   change_set::path_rearrangement work, included, excluded;
   path_set old_paths;
+
+  if (args.size() < 1 && !app.missing)
+      throw usage(name);
  
   app.require_working_copy();
 
@@ -3763,7 +3770,7 @@ CMD(log, N_("informative"), N_("[FILE]"),
                      e != rev.edges.end(); ++e)
                   {
                     dump_diffs(edge_changes(e).deltas,
-                               app, true, unified_diff);
+                               app, true, unified_diff, file);
                   }
               }
 

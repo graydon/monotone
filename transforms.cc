@@ -350,7 +350,7 @@ calculate_ident(file_path const & file,
       // Best to be safe and check it isn't a dir.
       assert_path_is_file(file);
       Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
-      Botan::DataSource_Stream infile(file.as_external());
+      Botan::DataSource_Stream infile(file.as_external(), true);
       p.process_msg(infile);
 
       ident = lowercase(p.read_all_as_string());

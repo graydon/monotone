@@ -101,7 +101,7 @@ BOTAN_SOURCES =                                                                 
         botan/mp_comba.cpp botan/mp_core.cpp botan/mp_fkmul.cpp		\
         botan/mp_misc.cpp botan/mp_mul.cpp botan/mp_shift.cpp		\
         botan/mp_smul.cpp botan/mutex.cpp botan/numthry.cpp		\
-        botan/ofb.cpp botan/oids.cpp botan/parse.cpp botan/pbes1.cpp	\
+        botan/ofb.cpp botan/oids.cpp botan/parsing.cpp botan/pbes1.cpp	\
         botan/pbes2.cpp botan/pem.cpp botan/pipe.cpp botan/pipe_io.cpp	\
         botan/pipe_rw.cpp botan/pk_algs.cpp botan/pk_core.cpp		\
         botan/pk_filts.cpp botan/pk_keys.cpp botan/pk_util.cpp		\
@@ -117,6 +117,7 @@ BOTAN_SOURCES =                                                                 
         botan/des.cpp botan/des_tab.cpp botan/pkcs5.cpp 		\
         botan/x509self.cpp botan/x509stor.cpp 				\
         botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp 		\
+        botan/x931_rng.cpp botan/out_buf.cpp botan/bit_ops.cpp \
         \
         botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h	\
         botan/lookup.h botan/randpool.h botan/version.h	\
@@ -138,7 +139,7 @@ BOTAN_SOURCES =                                                                 
         botan/x509stor.h botan/base64.h botan/crc32.h botan/eme.h	\
         botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h	\
         botan/crl_ent.h botan/emsa.h	\
-        botan/if_algo.h botan/mp_madd.h botan/pkcs8.h botan/socket.h	\
+        botan/if_algo.h botan/mp_madd.h botan/pkcs8.h \
         botan/x919_mac.h botan/basefilt.h botan/ctr.h botan/engine.h	\
         botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h	\
         botan/base.h botan/cts.h botan/enums.h botan/kdf.h		\
@@ -150,7 +151,9 @@ BOTAN_SOURCES =                                                                 
         botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h	\
         botan/util.h botan/charset.h botan/hash_id.h 			\
         botan/des.h botan/pkcs5.h					\
-	botan/x931_rng.cpp botan/x931_rng.h botan/sha256.h
+        botan/x931_rng.h botan/sha256.h \
+        botan/parsing.h botan/out_buf.h botan/bit_ops.h
+
 
 
 BOOST_SANDBOX_SOURCES = \

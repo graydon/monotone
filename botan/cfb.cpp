@@ -5,6 +5,8 @@
 
 #include <botan/cfb.h>
 #include <botan/lookup.h>
+#include <botan/parsing.h>
+#include <botan/bit_ops.h>
 
 namespace Botan {
 

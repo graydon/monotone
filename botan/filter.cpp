@@ -12,18 +12,9 @@ namespace Botan {
 /*************************************************
 * Filter Constructor                             *
 *************************************************/
-Filter::Filter(u32bit count)
+Filter::Filter()
    {
-   set_port_count(count);
-   }
-
-/*************************************************
-* Set/Reset next                                 *
-*************************************************/
-void Filter::set_port_count(u32bit n)
-   {
-   next.clear();
-   next.resize(n);
+   next.resize(1);
    port_num = 0;
    filter_owns = 0;
    }
@@ -104,6 +95,24 @@ Filter* Filter::get_next() const
    if(port_num < next.size())
       return next[port_num];
    return 0;
+   }
+
+/*************************************************
+* Set the next Filters                           *
+*************************************************/
+void Filter::set_next(Filter* filters[], u32bit size)
+   {
+   while(size && filters && filters[size-1] == 0)
+      size--;
+
+   next.clear();
+   next.resize(size);
+
+   port_num = 0;
+   filter_owns = 0;
+
+   for(u32bit j = 0; j != size; j++)
+      next[j] = filters[j];
    }
 
 /*************************************************
