@@ -1273,7 +1273,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"),
-    OPT_DEPTH % OPT_BRIEF)
+    OPT_DEPTH % OPT_EXCLUDE % OPT_BRIEF)
 {
   revision_set rs;
   manifest_map m_old, m_new;
@@ -1645,7 +1645,6 @@ find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const
 {
   revision_set rev;
   manifest_map m_old, m_new;
-  //path_set known, unknown, ignored;
   path_set known;
 
   calculate_restricted_revision(app, args, rev, m_old, m_new);
@@ -1730,7 +1729,7 @@ CMD(list, N_("informative"),
       "missing"),
     N_("show database objects, or the current working copy manifest,\n"
       "or unknown, intentionally ignored, or missing state files"),
-    OPT_DEPTH)
+    OPT_DEPTH % OPT_EXCLUDE)
 {
   if (args.size() == 0)
     throw usage(name);
@@ -2320,7 +2319,8 @@ string_to_datetime(std::string const & s)
 
 CMD(commit, N_("working copy"), N_("[PATH]..."), 
     N_("commit working copy to database"),
-    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR % OPT_DEPTH % OPT_EXCLUDE)
+    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % OPT_AUTHOR % 
+    OPT_DEPTH % OPT_EXCLUDE)
 {
   string log_message("");
   revision_set rs;
@@ -2676,7 +2676,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     "If one revision is given, the diff between the working directory and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.  If no format is specified, unified is used by default."),
-    OPT_REVISION % OPT_DEPTH %
+    OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE %
     OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
     OPT_EXTERNAL_DIFF_ARGS)
 {
@@ -3417,7 +3417,8 @@ CMD(complete, N_("informative"), N_("(revision|manifest|file|key) PARTIAL-ID"),
 
 
 CMD(revert, N_("working copy"), N_("[PATH]..."), 
-    N_("revert file(s), dir(s) or entire working copy (\".\")"), OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
+    N_("revert file(s), dir(s) or entire working copy (\".\")"), 
+    OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
   manifest_map m_old;
   revision_id old_revision_id;
@@ -3461,7 +3462,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       if (args_copy.size() == 0)
         return;
     }
-  app.set_restriction(valid_paths, args_copy, false);
+  app.set_restriction(valid_paths, args_copy);
 
   restrict_path_rearrangement(work, included, excluded, app);
 

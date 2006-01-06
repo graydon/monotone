@@ -1,3 +1,15 @@
+2006-01-05  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (set_restriction): remove "respect_ignore"
+	flag and don't complain about ignored files
+	* commands.cc (status, list, diff): allow --exclude option for
+	restrictions
+	* restrictions.hh: add a comment about restricted command
+	consistency
+	* tests/t_restricted_commands_consistent.at: new test to give that
+	bark some bite
+	* testsuite.at: call it
+	
 2005-12-29  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Write up for 0.25.

@@ -89,8 +89,7 @@ public:
   void create_working_copy(system_path const & dir);
 
   void set_restriction(path_set const & valid_paths, 
-                       std::vector<utf8> const & paths,
-                       bool respect_ignore = true);
+                       std::vector<utf8> const & paths);
   bool restriction_includes(file_path const & path);
 
   // Set the branch name.  If you only invoke set_branch, the branch
