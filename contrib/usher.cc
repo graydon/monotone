@@ -157,7 +157,7 @@ using std::pair;
 using std::make_pair;
 
 // defaults, overridden by command line
-int listenport = 5253;
+int listenport = 4691;
 string listenaddr = "0.0.0.0";
 
 // keep local servers around for this many seconds after the last
@@ -172,7 +172,7 @@ int const maxaddr[] = {127, 254, 254, 254};
 int currport = 0;
 int curraddr[] = {0, 0, 0, 0};
 
-char const netsync_version = 5;
+char const netsync_version = 6;
 
 string const greeting = " Hello! This is the monotone usher at localhost. What would you like?";
 
@@ -1209,7 +1209,7 @@ struct administrator
         if (cs.auth == true)
           return false;
         cs.auth = true;
-        process(cs);
+        return process(cs);
       }
     } else if (cmd == "STATUS") {
       string srv;
@@ -1286,6 +1286,8 @@ struct administrator
     } else if (cmd == "STARTUP") {
       connections_allowed = true;
       cs.buf = "ok\n";
+    } else {
+      return true;
     }
     cs.rdone = true;
     return true;
@@ -1311,10 +1313,10 @@ struct administrator
     for (list<pair<cstate, sock> >::iterator i = conns.begin();
          i != conns.end(); ++i) {
       int c = i->second;
-      if (i->first.rdone)
-        FD_SET(c, &wr);
-      else
+      if (!i->first.rdone)
         FD_SET(c, &rd);
+      else
+        FD_SET(c, &wr);
       maxfd = max(maxfd, int(c));
     }
   }
@@ -1334,34 +1336,45 @@ struct administrator
         cerr<<"During new admin connection: "<<s.name<<"\n";
       }
     }
+    list<list<pair<cstate, sock> >::iterator> del;
     for (list<pair<cstate, sock> >::iterator i = conns.begin();
          i != conns.end(); ++i) {
       int c = i->second;
-      if (c <= 0)
-        conns.erase(i);
-      else if (FD_ISSET(c, &rd)) {
+      if (c <= 0) {
+//        cerr<<"Bad socket.\n";
+        del.push_back(i);
+      } else if (FD_ISSET(c, &rd)) {
         char buf[120];
         int n;
         n = read(c, buf, 120);
-        if (n < 1)
-          conns.erase(i);
+        if (n < 1) {
+ //         cerr<<"Read failed.\n";
+          del.push_back(i);
+        }
         i->first.buf.append(buf, n);
         if (!process(i->first)) {
-          cerr<<"Closing connection...\n";
+//          cerr<<"Closing connection...\n";
 //          i->second.close();
-          conns.erase(i);
+          del.push_back(i);
         }
       }
       else if (FD_ISSET(c, &wr)) {
         int n = write(c, i->first.buf.c_str(), i->first.buf.size());
-        if (n < 1)
-          conns.erase(i);
-        else {
+        if (n < 1) {
+//          cerr<<"Write failed.\n";
+          del.push_back(i);
+        } else {
           i->first.buf.erase(0, n);
-          if (i->first.buf.empty())
-            conns.erase(i);
+          if (i->first.buf.empty() && i->first.rdone) {
+//            cerr<<"Done.\n";
+            del.push_back(i);
+          }
         }
       }
+    }
+    for (list<list<pair<cstate, sock> >::iterator>::iterator i = del.begin();
+         i != del.end(); ++i) {
+      conns.erase(*i);
     }
   }
 };
