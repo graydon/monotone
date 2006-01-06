@@ -15,6 +15,7 @@ This edition documents version @value{VERSION}.
 Copyright 2003, 2004 Graydon Hoare
 Copyright 2004, 2005 Nathaniel Smith
 Copyright 2005 Derek Scherger
+Copyright 2005 Daniel Carosone
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -33,7 +34,9 @@ See the file COPYING for details
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 2003, 2004 Graydon Hoare
-Copyright @copyright{} 2004 Nathaniel Smith
+Copyright @copyright{} 2004, 2005 Nathaniel Smith
+Copyright @copyright{} 2005 Derek Scherger
+Copyright @copyright{} 2005 Daniel Carosone
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -62,7 +65,7 @@ you receive from others.
 @end itemize
 
 Please be aware that monotone is a slightly unorthodox version control
-tool, and many of its concepts are slightly similar --- but
+tool, and many of its concepts are similar --- but subtly or 
 significantly different --- from concepts with similar names in other
 version control tools.
 
@@ -1086,10 +1089,12 @@ example team; other tasks involve only one member.
 * Starting a New Project::
 * Adding Files::
 * Committing Work::
-* Network Service::
+* Basic Network Service::
+* Synchronising Databases::
 * Making Changes::
 * Dealing with a Fork::
 * Branching and Merging::
+* Network Service Revisited::
 @end menu
 
 
@@ -1567,14 +1572,17 @@ descendents. Since Jim has not committed any changes to this revision
 yet, it has no descendents.
 
 @page
-@node    Network Service
-@section Network Service
+@node    Basic Network Service
+@section Basic Network Service
 
 Jim now decides he will make his base revision available to his
-employees. To do this he gives Abe and Beth permission to access his
-database.  There are two parts to this: first, he has to get a copy of
-each of their public keys; then, he has to tell monotone that the
-holders of those keys are permitted to access his database.
+employees.  To do this, he arranges for Abe and Beth to synchronise
+their databases with his, over the network.  There are two
+pre-requisites for this: first, he has to get a copy of each of their
+public keys; then, he has to tell monotone that the holders of those
+keys are permitted to access his database. Finally, with these
+pre-requisites in place, he needs to tell monotone to provide network
+access to his database.
 
 First, Abe exports his public key:
 
@@ -1606,13 +1614,13 @@ $ monotone --db=~/beth.db pubkey beth@@juicebot.co.jp >~/beth.pubkey
 @end smallexample
 
 Then Abe and Beth both send their keys to Jim.  The keys are not secret,
-but the team members must be relatively certain that they are
-communicating with the person they intend to trust, when exchanging
-keys, and not some malicious person pretending to be a team
-member. Key exchange may involve sending keys over an encrypted
-medium, or meeting in person to exchange physical copies, or any
-number of techniques. All that matters, ultimately, is that Jim receives
-both Abe's and Beth's key.
+but the team members must be relatively certain that they are exchanging
+keys with the person they intend to trust, and not some malicious person
+pretending to be a team member. Key exchange may involve sending keys
+over an encrypted medium, or meeting in person to exchange physical
+copies, or any number of techniques. All that matters, ultimately, is
+that Jim receives both Abe's and Beth's key in a way that he can be sure
+of.
 
 So eventually, after key exchange, Jim has the public key files in his
 home directory. He tells monotone to read the associated key packets
@@ -1644,7 +1652,11 @@ beth@@juicebot.co.jp
 @end group
 @end smallexample
 
-He then makes sure that his TCP port 5253 is open to incoming
+These files are read by the default monotone hooks that will decide
+whether remote monotone users will be allowed access to Jim's database,
+identified by the named keys.
+
+Jim then makes sure that his TCP port 5253 is open to incoming
 connections, adjusting his firewall settings as necessary, and runs
 the monotone @command{serve} command:
 
@@ -1661,25 +1673,12 @@ his laptop on the default port 5253, serving any branch matching
 around @code{"jp.co.juicebot.jb7*"} are there to protect the @code{*}
 from expansion by the shell; they have no meaning to monotone.
 
-If you want to be more 
-restrictive in which interfaces you listen on, or use a non-standard port, 
-you can use the @code{--bind=address:port} argument like so:
+@page
+@node    Synchronising Databases
+@section Synchronising Databases
 
-@smallexample
-@group
-$ monotone --db=jim.db --bind=localhost:1234 "jp.co.juicebot.jb7*"
-@end group
-@end smallexample
-
-The example above will start monotone listening on port 1234 only 
-on the loopback interface 127.0.0.1 (which is not accessible 
-from the network, so you can use it for testing without 
-exposing an open port to the rest of the world).  
-You can cause monotone to listen on all interfaces on 
-port 1234 by leaving out the address part like @code{--bind=:1234}.
-
-Now Abe decides he wishes to fetch Jim's code. To do this he issues
-the monotone @code{sync} command:
+With Jim's server preparations done, now Abe is ready to fetch Jim's
+code. To do this he issues the monotone @code{sync} command:
 
 @smallexample
 @group
@@ -1701,29 +1700,27 @@ monotone: successful exchange with jim-laptop.juicebot.co.jp
 
 Abe now has, in his database, a copy of everything Jim put in the
 branch. Therefore Abe can disconnect from the expensive network
-connection he's on and work locally for a while. When Abe wants to
-send work back to Jim, or get new work Jim has added, all he needs to
-do is run the @command{sync} command again and work will flow both
-ways, bringing each party up to date with the work of the other.
+connection he's on and work locally for a while. Remember that, in
+monotone, work is done between working directories in the filesystem and
+the local database; network connectivity is necessary only when that
+work is to be shared with others.
 
-At this point Jim is operating as a sort of ``central server'' for the
-company. If Jim wants to, he can leave his server running forever, or
-even put his server on a dedicated computer with better network
-connectivity.  But if Jim is ever unable to play this role of ``central
-server'', perhaps due to a network failure, either Beth or Abe can run
-the @command{serve} command and provide access for the other to
-@command{sync} with.  In fact, each employee can run a server if they
-like, concurrently, to help minimize the risk of service disruption from
-hardware failures.  Changes will flow between servers automatically as
-clients access them and trade with one another.
+As we follow the juicebot team through the next several steps, we'll see
+them run the @command{sync} command again with Jim, and work will flow
+both ways. The first time you @command{sync} a new database, monotone
+remembers the server and branch patterns you use, and makes them the
+default for future operations.
 
-In practice, most people like to use at least one central server that is
-always running; this way, everyone always knows where to go to get the
-latest changes, and people can push their changes out without first
-calling their friends and making sure that they have their servers
-running.  To make this style of working more convenient, monotone
-remembers the first server you use, and makes that the default for
-future operations.
+At the end of each exchange, information about all changes in the branch
+known to each database have been sent to the other party - including the
+work of the third team member that had previously been exchanged. As
+well as allowing each team member to learn about the others' work, this
+also means that each party's laptop contains a @emph{backup} of the
+others' work too.
+
+Jim, Abe and Beth will continue working like this while they're getting
+started, and we'll revisit the issue of network service with them a
+little later as the project grows.
 
 @page
 @node    Making Changes
@@ -2241,9 +2238,267 @@ arbitrary branches, and so on; monotone will track all of it, and do
 something sensible for each merge.  Of course, it is still probably a
 good idea to come up with some organization of branches and a plan for
 which should be merged to which other ones.  Monotone may keep track of
-graphs of arbitrary complexity; but, you will have more trouble.
+graphs of arbitrary complexity --- but you will have more trouble.
 Whatever arrangement of branches you come up with, though, monotone
 should be able to handle it.
+
+@page
+@node    Network Service Revisited
+@section Network Service Revisited
+
+Up until now, Jim has been using his laptop and database as a sort of
+``central server'' for the company; Abe and Beth have been syncing with
+Jim, and learning of each other's work via Jim's database.  This has
+worked fine while the product has been in early development; Jim has
+good network connectivity in Japan, and has been staying home
+concentrating on programming.  He has been able to leave his laptop
+connected and running all the time, while his employees in different
+time-zones work and sync their databases.  This is now starting to
+change, and two problems are starting to cause occasional difficulties.
+
+@itemize
+@item
+Firstly, Jim is finding that he has to spend more of his time
+travelling, demonstrating the new juicebot features to customers; thus
+his laptop is spending more time disconnected from the network, or
+connected at dynamic addresses where it's not convenient for Abe and
+Beth to find him and sync. 
+
+This doesn't prevent them doing any work, but it does have some
+uncomfortable consequences: they're more likely to have to manually
+merge conflicting changes when they finally sync up and discover they've
+both come up with slightly different fixes for the same bug in the
+meantime, and they're more exposed to loss of work if one of them
+suffers a disk failure before they've had a chance to sync that work
+with another database.
+
+@item
+Secondly, because Jim has been using the one database file both
+for his own local work, and for serving to the others in the team, he
+occasionally finds that the monotone serve process (busy syncing with
+Abe or Beth) has a lock on the database, while he's trying to do local
+work like updates or commits.  
+
+The level of project activity is picking up, and there are more and more
+changes to be synced in the narrower window of time while Jim is
+connected. He finds he sometimes needs to take down the server process
+to do this local work, further exacerbating the first problem.
+@end itemize
+
+The juicebot team are resourceful, and by now quite used to working
+independently.  While Jim has been away travelling, Abe and Beth have
+come up with their own solution to the first problem: they'll run
+servers from their databases, setting them up just like Jim did
+previously.  That way, if Jim's database is offline, either Beth or Abe
+can run the @command{serve} command and provide access for the other to
+@command{sync} with.  Beth also has the idea to create a second database
+for the @command{serve} process, and to @command{sync} her development
+database with that server locally, avoiding locking contention between
+multiple monotone processes on the one database file.
+
+When Jim reappears, the next person to @command{sync} with him will
+often pass him information about both employees' work that they've
+sync'ed with eachother in the meantime, just as he used to do. In fact,
+Jim now finds it more convenient to initiate the sync with one of the
+other servers when he has a spare moment and dynamic connectivity from a
+hotel room or airport.  Changes will flow between servers automatically
+as clients access them and trade with one another.
+
+This gets them by for a while, but there are still occasional
+inconveniences.  Abe and Beth live in very different time-zones, and
+don't always have reliable network connectivity, so sometimes Jim finds
+that neither of them is online to sync with when he has the chance.  Jim
+now also has several customers interested in beta-testing the new code,
+and following changes as the bugs and issues they report are addressed.
+
+Jim decides it's time for a permanent server they can all sync with;
+this way, everyone always knows where to go to get the latest changes,
+and people can push their changes out without first calling their
+friends and making sure that they have their servers running.  
+
+Jim has rented some web server space on a service provider's shared
+system for the JuiceBot Inc. public website, @code{www.juicebot.co.jp};
+he thinks this server will be a good place to host the central monotone
+server too. He sets up a new monotone database on the server,
+generates a new key specially for the server (so he doesn't have to
+expose his own development private key on the shared system), and loads
+in the team-members' keys:  
+
+@smallexample
+@group
+$ monotone --db=server.db db init
+$ monotone --db=server.db genkey monotone-server@@www.juicebot.co.jp
+monotone: generating key-pair 'monotone-server@@www.juicebot.co.jp'
+enter passphrase for key ID [monotone-server@@www.juicebot.co.jp] : @i{<Jim enters a new passphrase>}
+confirm passphrase for key ID [monotone-server@@www.juicebot.co.jp]: @i{<Jim confirms the passphrase>}
+monotone: storing key-pair 'monotone-server@@www.juicebot.co.jp' in keystore
+$ cat abe.pubkey beth.pubkey jim.pubkey | monotone --db=server.db read
+monotone: read 3 packets
+@end group
+@end smallexample
+
+For the team members, he sets up the permissions files on the server
+much like before --- except that of course he needs to also grant his
+@code{jim@@juicebot.co.jp} key permission to access the new server.  For
+the beta-testers, Jim wants to allow them read-only access just to the
+main JuiceBot 7 development line, but not to any of the sub-branches
+where other experimental development is going on. He adds some lines at
+the top of the @file{~/.monotone/read-permissions} on the server, above
+the broader permissions given to team-members. See the @ref{Hook
+Reference} for @code{get_netsync_read_permitted} for more details; the
+resulting file looks like this:
+
+@smallexample
+@group
+comment "Provide beta-testers with specific read-only access"
+pattern "jp.co.juicebot.jb7"
+allow "beta1@@juicebot.co.jp"
+allow "beta2@@juicebot.co.jp"
+continue "true"
+
+comment "Fall-through, and allow staff access to all branches"
+pattern "*"
+allow "abe@@juicebot.co.jp"
+allow "beth@@juicebot.co.jp"
+allow "jim@@juicebot.co.jp"
+@end group
+@end smallexample
+
+
+Jim could log in and start the monotone process manually from his shell
+account on the server, perhaps under a program like screen to let it
+stay running while he's away. This would be one way of giving it the
+server-key's passphrase each startup, but he wants to make sure that the
+server is up all the time; if the host reboots while he's travelling and
+the monotone server is down until he next logs in, things aren't much
+better than before.  For the server to start automatically each time,
+he'll need to use the @code{get_passphrase} hook in the server's
+@file{.monotonerc} file again.
+
+Because he's running on a shared server, Jim needs to be a little more
+restrictive about which interfaces and addresses his new server process
+will listen on. He should only accept connections at the address used
+for his website, because some of the provider's other customers might
+also want to publish their own monotone projects on this host.  Jim uses
+the @code{--bind=address:port} argument like so:
+
+@smallexample
+@group
+$ monotone --db=server.db --bind=www.juicebot.co.jp serve "jp.co.juicebot.jb7*"
+@end group
+@end smallexample
+
+This will start monotone listening on the default port (5253), but only
+on the IP address associated with @code{www.juicebot.co.jp}.  Jim can do
+this because his hosting provider has given him a dedicated IP address
+for his website.  If the hosting provider offered only a single shared
+IP address belonging to the server, each customer could bind a different
+port number on that address.
+
+While he's first testing the setup, Jim uses
+@code{--bind=localhost:1234}. This causes the monotone process to listen
+only to port 1234 on the loopback interface 127.0.0.1, which is not
+accessible from the network, so Jim doesn't expose an open port to the
+rest of the world until he's satisifed with the permissions
+configuration.  You can cause monotone to listen on all interfaces on
+port 1234 by leaving out the address part like @code{--bind=:1234}.
+
+When he's satisified the server is set up correctly, Jim does an initial
+@command{sync} with the new database, filling it with all the revision
+history currently on his laptop. While Jim has been busy setting up the
+server, Abe and Beth have kept working; the server will catch up with
+their latest changes when they next sync, too.
+
+All of the team members now want to sync with the new monotone server by
+default.  Previously, they had been syncing with Jim's laptop by
+default, even if they occasionally specified another team-member's
+server on the command line when Jim was away, because monotone had
+remembered the first server and branch patterns used in database
+@ref{Vars}.  These vars can be seen as follows:
+
+@smallexample
+@group
+$ monotone list vars
+database: default-exclude-pattern 
+database: default-include-pattern jp.co.juicebot.jb7*
+database: default-server jim-laptop.juicebot.co.jp
+known-servers: jim-laptop.juicebot.co.jp 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
+known-servers: abe-laptop.juicebot.co.jp a2bb16a183247af4133621f7f5aefb21a9d13855
+known-servers: www.juicebot.co.jp 120a99ch93b4f174432c13d3e3e9f2234aa92612
+@end group
+@end smallexample
+
+The team members can reset their local database vars accordingly:
+
+@smallexample
+@group
+$ monotone set database default-server www.juicebot.co.jp
+@end group
+@end smallexample
+
+With their new server, the juicebot team have gained the convenience of
+a readily available common point of reference for syncs.  However, they
+also know that this is there only as a convenience, and doesn't prevent
+them working as they did before:
+@itemize
+@item
+The team members can still sync with each other if needed. 
+
+Hopefully, their new server won't ever be down, but sometimes they might
+be working together while away from ready network access --- fixing up
+the last few issues and finalising presentation materials while
+travelling to a sales conference, for example.  The server will learn of
+these changes on the next sync.
+@item
+The team members continue to discover multiple heads and changes that
+need merging, as before. Each team member can merge the heads, and will
+produce the same revision id if they merge to the same result. 
+
+They now develop a new habit out of courtesy, though --- they try not to
+leave multiple heads and unmerged changes on the server, at least not
+for long. This saves them from repeating work, and also helps prevent
+confusion for the beta-testers.  When each team member is ready to
+@command{sync}, they develop the habit of doing a @command{pull} from
+the server first.  If new revisions were received from the server, they
+first @command{merge} their new revisions with the head(s) from the
+server, and finally @command{sync} to publish their merged changes as
+one.  If the last @command{sync} happens to pull in new revisions again
+from the server, it means someone else has deposited new work at the
+same time, and another @command{merge} and @command{sync} would probably
+be polite.
+@item
+Jim knows he doesn't have to keep a special backup of the new server's
+contents; if the server should fail, all the contents of its database
+can be found amongst the other team members (especially because no
+commits are done on the server itself).
+
+He does, however, take a copy of the server's private key, so he can
+restore that if necessary.
+@item
+In fact, Jim realises that he can now commit a copy of the web site's
+current contents into monotone on a new branch,
+@code{jp.co.juicebot.www}, and keep a backup of that content too. 
+
+Now he can use monotone to work on the website offline, and let other
+team members add and edit the content; he can also preview changes
+locally before updating the production content.  He keeps a working
+directory checkout of this content in the webroot on the server, and
+runs a monotone @command{update} in there when he wants to bring the
+public web site up to date. Later, he'll think about using monotone's
+@ref{Quality Assurance} mechanisms and Event Notification @ref{Hooks},
+so that the web server can update itself automatically when appropriate
+new revisions are received.
+@item
+Jim also knows that even if someone should break into the shared hosting
+server and tamper with the database, they won't be able to inject
+malicious code into the project, because all revisions are signed by the
+team members, and he has set his @ref{Trust Evaluation Hooks} so he
+doesn't trust the server key for signing revisions.  
+
+In monotone, the important trust consideration is on the @emph{signed
+content}, rather than on the @emph{replication path} by which that
+content arrived in your database.
+@end itemize
 
 @node    Advanced Uses
 @chapter Advanced Uses

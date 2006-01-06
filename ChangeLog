@@ -42,6 +42,15 @@
 
 	* upgrade to Botan 1.4.10
 
+2005-12-20  Daniel Carosone  <dan@geek.com.au>
+
+	* monotone.texi: Rearrange the description of monotone serve into
+	two sections; the first one describing basic steps necessary to
+	get Jim and the reader through to the next sections, and a later
+	more advanced section that discusses some of the subleties and
+	choices and moves them on to running a dedicated server.  Other
+	small tweaks in nearby sections while here.
+
 2005-12-18  graydon hoare  <graydon@pobox.com>
 
 	* AUTHORS: Add Roland.
