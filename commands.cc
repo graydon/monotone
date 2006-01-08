@@ -3281,11 +3281,11 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
         L(F("missing files are '%s'") % file_path(*i));
         missing_args.push_back(file_path(*i).as_external());
       }
-      app.set_restriction(valid_paths, missing_args, false);
+      app.set_restriction(valid_paths, missing_args);
     }
   else
     {
-      app.set_restriction(valid_paths, args, false);
+      app.set_restriction(valid_paths, args);
     }
 
   restrict_cset(work, included_work, excluded_work, app);

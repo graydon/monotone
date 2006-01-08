@@ -143,9 +143,8 @@ app_state::create_working_copy(system_path const & new_dir)
 }
 
 void 
-app_state::set_restriction(path_set const & valid_paths, 
-                           vector<utf8> const & paths,
-                           bool respect_ignore)
+app_state::set_restriction(path_set const & valid_paths,
+                           vector<utf8> const & paths)
 {
   // FIXME: this was written before split_path, and only later kludged to
   // work with it. Could be much tidier if written with knowledge of
@@ -160,13 +159,8 @@ app_state::set_restriction(path_set const & valid_paths,
       split_path sp;
       p.split(sp);
 
-      if (respect_ignore && lua.hook_ignore_file(p)) 
-        {
-          L(F("'%s' ignored by restricted path set\n") % p);
-          continue;
-        }
-
-      N(p == root || valid_paths.find(sp) != valid_paths.end(),
+      N(lua.hook_ignore_file(p) ||
+        p == root || valid_paths.find(sp) != valid_paths.end(),
         F("unknown path '%s'\n") % p);
 
       L(F("'%s' added to restricted path set\n") % p);
@@ -180,13 +174,8 @@ app_state::set_restriction(path_set const & valid_paths,
       split_path sp;
       p.split(sp);
 
-      if (respect_ignore && lua.hook_ignore_file(p)) 
-        {
-          L(F("'%s' ignored by excluded path set\n") % p);
-          continue;
-        }
-
-      N(p == root || valid_paths.find(sp) != valid_paths.end(),
+      N(lua.hook_ignore_file(p) ||
+        p == root || valid_paths.find(sp) != valid_paths.end(),
         F("unknown path '%s'\n") % p);
 
       L(F("'%s' added to excluded path set\n") % p);
