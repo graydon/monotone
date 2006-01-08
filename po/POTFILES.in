@@ -28,8 +28,6 @@ lcs.hh
 lua.cc
 lua.hh
 main.cc
-manifest.cc
-manifest.hh
 merkle_tree.cc
 merkle_tree.hh
 mkstemp.cc
