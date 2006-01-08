@@ -1,3 +1,34 @@
+2006-01-07  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* schema_migration.cc: add safe-guard against passing a null pointer
+	into string handling. (necessary with sun studio)
+
+2006-01-05  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (set_restriction): remove "respect_ignore"
+	flag and don't complain about ignored files
+	* commands.cc (status, list, diff): allow --exclude option for
+	restrictions
+	* restrictions.hh: add a comment about restricted command
+	consistency
+	* tests/t_restricted_commands_consistent.at: new test to give that
+	bark some bite
+	* testsuite.at: call it
+	
+2005-12-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Write up for 0.25.
+
+2005-12-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/{pager.c,sqlite3.h}: Upgrade to SQLite 3.2.8.
+
+2005-12-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Notes on what to write up for 0.25.
+	* win32/monotone.iss, monotone.spec, debian/changelog:
+	* configure.ac, UPGRADE: Bump.
+
 2005-12-26  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc (CMD(revert)): revert with no args prints usage,
@@ -15,6 +46,15 @@
 2005-12-21  Matt Johnston  <matt@ucc.asn.au>
 
 	* upgrade to Botan 1.4.10
+
+2005-12-20  Daniel Carosone  <dan@geek.com.au>
+
+	* monotone.texi: Rearrange the description of monotone serve into
+	two sections; the first one describing basic steps necessary to
+	get Jim and the reader through to the next sections, and a later
+	more advanced section that discusses some of the subleties and
+	choices and moves them on to running a dedicated server.  Other
+	small tweaks in nearby sections while here.
 
 2005-12-18  graydon hoare  <graydon@pobox.com>
 

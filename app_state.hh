@@ -91,8 +91,7 @@ public:
   void create_working_copy(system_path const & dir);
 
   void set_restriction(path_set const & valid_paths, 
-                       std::vector<utf8> const & paths,
-                       bool respect_ignore = true);
+                       std::vector<utf8> const & paths);
   bool restriction_requires_parent(split_path const & path);
   bool restriction_includes(split_path const & path);
 

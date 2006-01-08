@@ -1285,7 +1285,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"),
-    OPT_DEPTH % OPT_BRIEF)
+    OPT_DEPTH % OPT_EXCLUDE % OPT_BRIEF)
 {
   revision_set rs;
   roster_t old_roster, new_roster;
@@ -1742,7 +1742,7 @@ CMD(list, N_("informative"),
       "missing"),
     N_("show database objects, or the current working copy manifest,\n"
       "or unknown, intentionally ignored, or missing state files"),
-    OPT_DEPTH)
+    OPT_DEPTH % OPT_EXCLUDE)
 {
   if (args.size() == 0)
     throw usage(name);
@@ -2656,7 +2656,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     "If one revision is given, the diff between the working directory and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.  If no format is specified, unified is used by default."),
-    OPT_REVISION % OPT_DEPTH %
+    OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE %
     OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
     OPT_EXTERNAL_DIFF_ARGS)
 {
@@ -3242,14 +3242,15 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
 }
 
 CMD(revert, N_("working copy"), N_("[PATH]..."), 
-    N_("revert file(s), dir(s) or entire working copy (\".\")"), OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
+    N_("revert file(s), dir(s) or entire working copy (\".\")"), 
+    OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
   roster_t old_roster;
   revision_id old_revision_id;
   cset work, included_work, excluded_work;
   path_set old_paths;
 
-  if (args.size() < 1)
+  if (args.size() < 1 && !app.missing)
       throw usage(name);
  
   app.require_working_copy();
