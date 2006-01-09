@@ -5,7 +5,8 @@ NEED_UNB64
 MONOTONE_SETUP
 
 AT_DATA(expected, [format_version "1"
-  new_manifest @<:@407ad1469e65feae6dcecc268e129d9369b69675@:>@
+
+new_manifest @<:@407ad1469e65feae6dcecc268e129d9369b69675@:>@
 
 old_revision @<:@@:>@
 
@@ -16,9 +17,10 @@ add_file "foo"
 ])
 
 AT_DATA(expected2, [format_version "1"
-  new_manifest @<:@407ad1469e65feae6dcecc268e129d9369b69675@:>@
 
-old_revision @<:@0759eb3b74adab56b0fcb2fe446f07da1d965c89@:>@
+new_manifest @<:@407ad1469e65feae6dcecc268e129d9369b69675@:>@
+
+old_revision @<:@dae0d8e3f944c82a9688bcd6af99f5b837b41968@:>@
 ])
 
 AT_DATA(empty, [])

@@ -1451,10 +1451,15 @@ print_revision(basic_io::printer & printer,
                revision_set const & rev)
 {
   rev.check_sane();
-  basic_io::stanza st; 
-  st.push_str_pair(syms::format_version, "1");
-  st.push_hex_pair(syms::new_manifest, rev.new_manifest.inner()());
-  printer.print_stanza(st);
+
+  basic_io::stanza format_stanza; 
+  format_stanza.push_str_pair(syms::format_version, "1");
+  printer.print_stanza(format_stanza);
+
+  basic_io::stanza manifest_stanza; 
+  manifest_stanza.push_hex_pair(syms::new_manifest, rev.new_manifest.inner()());
+  printer.print_stanza(manifest_stanza);
+
   for (edge_map::const_iterator edge = rev.edges.begin();
        edge != rev.edges.end(); ++edge)
     print_edge(printer, *edge);
