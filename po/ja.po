@@ -3018,7 +3018,7 @@ msgid "perform the associated file operation"
 msgstr "関連付けられたファイル操作を実行"
 
 #: monotone.cc:71
-msgid "address:port to listen on (default :5253)"
+msgid "address:port to listen on (default :4691)"
 msgstr ""
 
 #: monotone.cc:72

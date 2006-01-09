@@ -735,8 +735,8 @@ msgid "perform the associated file operation"
 msgstr ""
 
 #: ../monotone.cc:71
-msgid "address:port to listen on (default :5253)"
-msgstr "écouteur sur adresse:port (défaut :5233)"
+msgid "address:port to listen on (default :4691)"
+msgstr "écouteur sur adresse:port (défaut :4691)"
 
 #: ../monotone.cc:72
 msgid "perform the operations for files missing from working directory"

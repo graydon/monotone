@@ -447,7 +447,7 @@ m4_define([TAIL], [(tail -n $1 2>/dev/null || tail -$1)])
 # run as LARGISH_FILE_CREATE(filename, size) to create a <size> MB file of
 # uncompressible data
 m4_define([LARGISH_FILE_CREATE], [
-awk -- 'BEGIN{srand(5253);for(a=0;a<1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish.tmp
+awk -- 'BEGIN{srand(4691);for(a=0;a<1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish.tmp
 i=$2
 while test $i -gt 0; do
 	cat largish.tmp >> $1

@@ -15,7 +15,7 @@
 // Usage: usher [-l address[:port]] [-a address:port] [-p pidfile] <server-file>
 //
 // options:
-// -l   address and port to listen on, defaults to 0.0.0.0:5253
+// -l   address and port to listen on, defaults to 0.0.0.0:4691
 // -a   address and port to listen for admin commands
 // -p   a file (deleted on program exit) to record the pid of the usher in
 // <server-file>   a file that looks like
@@ -24,7 +24,7 @@
 //   server monotone
 //   host localhost
 //   pattern net.venge.monotone
-//   remote 66.96.28.3:5253
+//   remote 66.96.28.3:4691
 //   
 //   server local
 //   host 127.0.0.1
@@ -882,7 +882,7 @@ string read_server_record(std::istream & in)
       srv->port = lexical_cast<int>(desc.substr(c+1));
     } else {
       srv->addr = desc;
-      srv->port = 5253;
+      srv->port = 4691;
     }
   }
   return name;
