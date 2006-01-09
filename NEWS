@@ -34,24 +34,28 @@ Sun Jan  8 01:08:56 PST 2006
         experiences.
 
         Some of the many changes:
-        - New textual format for revisions and manifests.  They remain
-          conceptually the same, but have been tweaked -- manifests
+        - New textual format for revisions and manifests; they remain
+          conceptually the same, but have been tweaked. Manifests
           now use the same "basic_io" format as everything else in
           monotone, and contain entries for directories, revisions
           record file adds slightly differently and record directory
-          adds for the first time, etc.
+          adds for the first time, etc.  Because of this format
+          change, revision hashes are now different; converting
+          rosters requires a full history rebuild and reissue of certs.
         - Directories are now first class.  To get rid of a directory
           you must remove it; to create a directory, you must add it.
           You can add an empty directory.
         - Attrs are now first class.  The .mt-attrs file is gone;
           attributes are now stored directly in the manifest.
-        - New merge algorithm, based on "multi-*-merge".
-          - And, more aggressive (and less buggy) merge
-            ancestor selection code
+        - New merge algorithm, based on "multi-*-merge", and more
+          aggressive, less buggy merge ancestor selection code
         - Netsync's core has been largely rewritten.  Code is now much
-          clearer and reliable (though functionally very similar).
+          clearer and more reliable, and now includes the ability to
+          resume interrupted partial transfers. The netsync protocol
+          version number has been bumped, and netsync now runs on the
+          IANA-assigned port 4691 by default.
         - 100% fewer change_set.cc related bugs.  100% more roster.cc
-          related bugs.  But, the idea of touching roster.cc does not
+          related bugs.  But the idea of touching roster.cc does not
           terrify people.
 
 Thu Dec 29 23:10:03 PST 2005

@@ -1656,7 +1656,7 @@ These files are read by the default monotone hooks that will decide
 whether remote monotone users will be allowed access to Jim's database,
 identified by the named keys.
 
-Jim then makes sure that his TCP port 5253 is open to incoming
+Jim then makes sure that his TCP port 4691 is open to incoming
 connections, adjusting his firewall settings as necessary, and runs
 the monotone @command{serve} command:
 
@@ -1667,7 +1667,7 @@ $ monotone --db=jim.db serve "jp.co.juicebot.jb7*"
 @end smallexample
 
 This command starts monotone listening on all network interfaces of 
-his laptop on the default port 5253, serving any branch matching
+his laptop on the default port 4691, serving any branch matching
 @code{jp.co.juicebot.jb7*}. This will naturally include the
 @code{jp.co.juicebot.jb7} branch, and any sub-branches.  The quotes
 around @code{"jp.co.juicebot.jb7*"} are there to protect the @code{*}
@@ -1687,7 +1687,7 @@ monotone: setting default server to jim-laptop.juicebot.co.jp
 monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
 monotone: setting default branch exclude pattern to ''
 monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: first time connecting to server jim-laptop.juicebot.co.jp:5253
+monotone: first time connecting to server jim-laptop.juicebot.co.jp:4691
 monotone: I'll assume it's really them, but you might want to double-check
 monotone: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
 monotone: warning: saving public key for jim@@juicebot.co.jp to database
@@ -1855,7 +1855,7 @@ monotone: setting default server to jim-laptop.juicebot.co.jp
 monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
 monotone: setting default branch exclude pattern to ''
 monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: first time connecting to server jim-laptop.juicebot.co.jp:5253
+monotone: first time connecting to server jim-laptop.juicebot.co.jp:4691
 monotone: I'll assume it's really them, but you might want to double-check
 monotone: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
 monotone: warning: saving public key for jim@@juicebot.co.jp to database
@@ -2388,7 +2388,7 @@ $ monotone --db=server.db --bind=www.juicebot.co.jp serve "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
-This will start monotone listening on the default port (5253), but only
+This will start monotone listening on the default port (4691), but only
 on the IP address associated with @code{www.juicebot.co.jp}.  Jim can do
 this because his hosting provider has given him a dedicated IP address
 for his website.  If the hosting provider offered only a single shared
@@ -4029,7 +4029,7 @@ server) and the other peer (the client) to connect to the server.
 
 The network @var{address} specified in each case should be the same: a
 host name to listen on, or connect to, optionally followed by a colon
-and a port number.  The default port number is 5253. The @var{glob}
+and a port number.  The default port number is 4691. The @var{glob}
 parameters indicate a set of branches to exchange.  Multiple @var{glob}
 and @option{--exclude} options can be specified; every branch which
 matches a @var{glob} exactly, and does not match an @var{exclude-glob},
