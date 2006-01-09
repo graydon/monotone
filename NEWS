@@ -1,33 +1,37 @@
 Sun Jan  8 01:08:56 PST 2006
 
-        0.26pre1 release.
+        0.26pre1 release.  Massive rewrites, released for shakedown.
+        This release is also dedicated to Shweta Narayan.
 
-        This release includes massive changes compared to 0.25; the
+        This release includes massive changes compared to 0.25.  The
         core versioning code has all been replaced with a completely
-        different mechanism.  If you have been following the
-        development list for the last few months, you may have heard
-        about "rosters" -- this is the name for the new core data
-        structure we use.  While the code is completely different, the
-        user experience should not be very different.  You will never
-        see a roster, unless you are debugging monotone itself;
-        everything still revolves around revisions, manifests, and
-        certs.
+        different mechanism.  Data formats and the netsync protocol
+        have changed in incompatible ways.
 
-        While this new code has extensive tests, it has never been
-        used for real work.  The purpose of this release is to make a
-        version available for the monotone developers to begin using
-        for day-to-day work, to shake out bugs.
+        Migration to 0.26pre1 or later is irreversible and requires a
+        flag day for your project.  See UPGRADE for details.  Note
+        that we DO NOT recommend upgrading at this time; see below.
+
+        If you have been following the development list for the last
+        few months, you may have heard about "rosters" -- this is the
+        name for the new core data structure we use.  While the code
+        is completely different, the user experience should not be
+        very different.  You will never see a roster, unless you are
+        debugging monotone itself; everything still revolves around
+        revisions, manifests, and certs.
+
+        While this new code has extensive tests, because of these
+        incompatibilities, it has never been used for real work.  The
+        purpose of this release is to make a version available for the
+        monotone developers to begin using for day-to-day work, to
+        shake out bugs.
 
         Let's say that again in caps: THIS CODE IS PROBABLY BUGGY, DO
-        NOT USE IT UNLESS YOU WANT TO BE A DAREDEVIL.
-
-        Data formats and the netsync protocol have changed in
-        incompatible ways.  Migration to 0.26pre1 or later is
-        irreversible and requires a flag day for your project.  See
-        UPGRADE for details.
-
-        Testing of this version on real databases is a good idea, and
-        we'd very much appreciate hearing about your experiences.
+        NOT USE IT IN PRODUCTION UNLESS YOU WANT TO BE A DAREDEVIL.
+        
+        However, testing of this version with real databases is a good
+        idea, and we'd very much appreciate hearing about your
+        experiences.
 
         Some of the many changes:
         - New textual format for revisions and manifests.  They remain
@@ -49,10 +53,6 @@ Sun Jan  8 01:08:56 PST 2006
         - 100% fewer change_set.cc related bugs.  100% more roster.cc
           related bugs.  But, the idea of touching roster.cc does not
           terrify people.
-          - Example: if anyone wants to implement merge into
-            working directory (the interface to merging that most
-            systems use), this was previously prohibitively
-            complicated, but is now quite a straightforward task.
 
 Thu Dec 29 23:10:03 PST 2005
 

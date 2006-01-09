@@ -3,16 +3,16 @@ upgrading monotone to 0.26pre1
 
 if you are upgrading from:
   - 0.25 or earlier: we have modified the textual format of revisions
-    and manifests.  Your project must rebuild its history; this is
-    irreversible and creates a flag day.  You should probably do some
-    test migrations locally first to make sure everything seems to be
-    working, before running your real migration.  To run the real
-    migration:
+    and manifests.  See NEWS before upgrading.  Your project must
+    rebuild its history; this is irreversible and creates a flag day.
+    You should probably do some test migrations locally first to make
+    sure everything seems to be working, before running your real
+    migration.  To run the real migration:
       1) get everyone to commit and push their changes to the server;
          local dbs and working copies will be broken by this
          migration.
       2) shut down the server
-      3) make a backup copy of the server db
+      3) run 'cp server.db server.db.backup'
       4) run 'monotone db migrate --db server.db'
       5) run 'monotone db rosterify --db server.db'
       6) do whatever tests you like to make sure things look reasonable
