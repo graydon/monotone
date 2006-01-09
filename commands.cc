@@ -2110,7 +2110,7 @@ CMD(db, N_("database"),
       "rosterify\n"
       "set_epoch BRANCH EPOCH\n"), 
     N_("manipulate database state"),
-    OPT_NONE)
+    OPT_DROP_ATTR)
 {
   if (args.size() == 1)
     {

@@ -1248,15 +1248,18 @@ anc_graph::construct_revisions_from_ancestry()
                              k != fattrs.end(); ++k)
                           {
                             std::string key = k->first;
-                            if (key == "execute" || key == "manual_merge")
-                              key = "mtn:" + key;
+                            if (app.attrs_to_drop.find(key) != app.attrs_to_drop.end())
+                              {
+                                // ignore it
+                              }
+                            else if (key == "execute" || key == "manual_merge")
+                              child_roster.set_attr(sp,
+                                                    attr_key("mtn:" + key),
+                                                    attr_value(k->second));
                             else
                               E(false, F("unknown attribute %s on path %s\n"
                                          "please contact %s so we can work out the right way to migrate this")
                                 % key % file_path(sp) % PACKAGE_BUGREPORT);
-                            child_roster.set_attr(sp,
-                                                  attr_key(key),
-                                                  attr_value(k->second));
                           }
                       }
                   }
@@ -1371,17 +1374,32 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
     require_password(key, app);
   }
 
+  // cross-check that we're getting everything
+  // in fact the code in this function is wrong, because if a revision has no
+  // parents and no children (it is a root revision, and no children have been
+  // committed under it), then we will simply drop it!
+  // This code at least causes this case to throw an assertion; FIXME: make
+  // this case actually work.
+  std::set<revision_id> all_rev_ids;
+  app.db.get_revision_ids(all_rev_ids);
+
   app.db.get_revision_ancestry(existing_graph);
   for (std::multimap<revision_id, revision_id>::const_iterator i = existing_graph.begin();
        i != existing_graph.end(); ++i)
     {
+      // FIXME: insert for the null id as well, and do the same for the
+      // changesetify code, and then reach rebuild_ancestry how to deal with
+      // such things.  (I guess u64(0) should represent the null parent?)
       if (!null_id(i->first))
         {
           u64 parent_node = graph.add_node_for_oldstyle_revision(i->first);
+          all_rev_ids.erase(i->first);
           u64 child_node = graph.add_node_for_oldstyle_revision(i->second);
+          all_rev_ids.erase(i->second);
           graph.add_node_ancestry(child_node, parent_node);
         }
     }
+  I(all_rev_ids.empty());
 
   global_sanity.set_relaxed(false);
   graph.rebuild_ancestry();
