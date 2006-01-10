@@ -725,17 +725,17 @@ session::done_all_refinements()
   if (all && !set_totals)
     {
       if (cert_out_ticker.get())
-	cert_out_ticker->set_total(cert_refiner.items_to_send.size());
+        cert_out_ticker->set_total(cert_refiner.items_to_send.size());
 
       if (revision_out_ticker.get())
-	revision_out_ticker->set_total(rev_refiner.items_to_send.size());
+        revision_out_ticker->set_total(rev_refiner.items_to_send.size());
 
       if (cert_in_ticker.get())
-	cert_in_ticker->set_total(cert_refiner.items_to_receive);
+        cert_in_ticker->set_total(cert_refiner.items_to_receive);
 
       if (revision_in_ticker.get())
-	revision_in_ticker->set_total(rev_refiner.items_to_receive);
-	
+        revision_in_ticker->set_total(rev_refiner.items_to_receive);
+        
       set_totals = true;
     }
   return all;  
@@ -803,7 +803,7 @@ session::maybe_note_epochs_finished()
 
 static void
 decrement_if_nonzero(netcmd_item_type ty,
-		     size_t & n)
+                     size_t & n)
 {
   if (n == 0)
     {
@@ -1003,7 +1003,7 @@ session::queue_bye_cmd(u8 phase)
 
 void 
 session::queue_done_cmd(netcmd_item_type type,
-			size_t n_items) 
+                        size_t n_items) 
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -1188,14 +1188,14 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       if (expected_key_hash() != their_key_hash())
         {
           P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-	      "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
-	      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-	      "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"
-	      "it is also possible that the server key has just been changed\n"
-	      "remote host sent key %s\n"
-	      "I expected %s\n"
-	      "'monotone unset %s %s' overrides this check\n")
-	    % their_key_hash % expected_key_hash
+              "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
+              "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+              "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"
+              "it is also possible that the server key has just been changed\n"
+              "remote host sent key %s\n"
+              "I expected %s\n"
+              "'monotone unset %s %s' overrides this check\n")
+            % their_key_hash % expected_key_hash
             % their_key_key.first % their_key_key.second);
           E(false, F("server key changed"));
         }
@@ -1203,8 +1203,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   else
     {
       P(F("first time connecting to server %s\n"
-	  "I'll assume it's really them, but you might want to double-check\n"
-	  "their key's fingerprint: %s\n") % peer_id % their_key_hash);
+          "I'll assume it's really them, but you might want to double-check\n"
+          "their key's fingerprint: %s\n") % peer_id % their_key_hash);
       app.db.set_var(their_key_key, var_value(their_key_hash()));
     }
   if (!app.db.public_key_exists(their_key_hash))
@@ -1891,7 +1891,7 @@ session::process_data_cmd(netcmd_item_type type,
           L(F("revision '%s' already exists in our database\n") % hitem);
         else
           {
-	    L(F("received revision '%s'\n") % hitem);
+            L(F("received revision '%s'\n") % hitem);
             this->dbw.consume_revision_data(rid, revision_data(dat));
           }
       }
@@ -1904,7 +1904,7 @@ session::process_data_cmd(netcmd_item_type type,
           L(F("file version '%s' already exists in our database\n") % hitem);
         else
           {
-	    L(F("received file '%s'\n") % hitem);
+            L(F("received file '%s'\n") % hitem);
             this->dbw.consume_file_data(fid, file_data(dat));
           }
       }
@@ -2101,7 +2101,7 @@ session::dispatch_payload(netcmd const & cmd,
       require(authenticated, "refine netcmd received when authenticated");
       {
         merkle_node node;
-	refinement_type ty;
+        refinement_type ty;
         cmd.read_refine_cmd(ty, node);
         return process_refine_cmd(ty, node);
       }
