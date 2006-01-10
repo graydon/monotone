@@ -1826,7 +1826,6 @@ session::process_data_cmd(netcmd_item_type type,
             {
               L(F("branch %s has no epoch; setting epoch to %s\n") % branch % epoch);
               app.db.set_epoch(branch, epoch);
-              maybe_note_epochs_finished();
             }
           else
             {
@@ -1849,6 +1848,7 @@ session::process_data_cmd(netcmd_item_type type,
                      % (voice == server_voice ? epoch : i->second)).str());
             }
         }
+      maybe_note_epochs_finished();
       break;
       
     case key_item:
