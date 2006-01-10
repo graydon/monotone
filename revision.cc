@@ -1138,16 +1138,20 @@ anc_graph::construct_revisions_from_ancestry()
   {
     // Set up the parent->child mapping and prime the work queue
 
-    std::set<u64> parents, children;
+    std::set<u64> children, all;
     for (std::multimap<u64, u64>::const_iterator i = ancestry.begin();
          i != ancestry.end(); ++i)
       {
         parent_to_child_map.insert(std::make_pair(i->second, i->first));
         children.insert(i->first);
-        parents.insert(i->second);
+      }
+    for (std::map<u64,manifest_id>::const_iterator i = node_to_old_man.begin();
+         i != node_to_old_man.end(); ++i)
+      {
+        all.insert(i->first);
       }
     
-    set_difference(parents.begin(), parents.end(),
+    set_difference(all.begin(), all.end(),
                    children.begin(), children.end(),
                    std::back_inserter(work));
   }
@@ -1399,7 +1403,12 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
           graph.add_node_ancestry(child_node, parent_node);
         }
     }
-  I(all_rev_ids.empty());
+
+  for (std::set<revision_id>::const_iterator i = all_rev_ids.begin();
+       i != all_rev_ids.end(); ++i)
+    {
+      u64 node = graph.add_node_for_oldstyle_revision(*i);
+    }
 
   global_sanity.set_relaxed(false);
   graph.rebuild_ancestry();
