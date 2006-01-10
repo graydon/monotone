@@ -684,7 +684,7 @@ extern "C"
   monotone_parse_basic_io_for_lua(lua_State *L)
   {
     vector<pair<string, vector<string> > > res;
-    const char *str = lua_tostring(L, -1);
+    const string str(lua_tostring(L, -1), lua_strlen(L, -1));
     basic_io::input_source in(str, "monotone_parse_basic_io_for_lua");
     basic_io::tokenizer tok(in);
     try

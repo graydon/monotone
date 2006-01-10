@@ -1,3 +1,12 @@
+2006-01-10  Richard Levitte  <richard@levitte.org>
+
+	* lua.cc (monotone_parse_basic_io_for_lua): Don't trust the
+	returned value from lua_tostring() to stick around.  Instead, copy
+	it into a regular std::string.
+	* std_hooks.lua (get_netsync_read_permissions,
+	get_netsync_write_permissions): Make sure to properly close the
+	permission files.
+
 2006-01-09  Richard Levitte  <richard@levitte.org>
 
 	* contrib/usher.cc, monotone.1, monotone.cc, po/fr.po, po/ja.po,

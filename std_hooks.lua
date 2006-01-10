@@ -810,6 +810,7 @@ function get_netsync_read_permitted(branch, ident)
    local permfile = io.open(get_confdir() .. "/read-permissions", "r")
    if (permfile == nil) then return false end
    local dat = permfile:read("*a")
+   io.close(permfile)
    local res = parse_basic_io(dat)
    if res == nil then
       io.stderr:write("file read-permissions cannot be parsed\n")
@@ -853,13 +854,14 @@ function get_netsync_write_permitted(ident)
    if (permfile == nil) then
       return false
    end
+   local matches = false
    local line = permfile:read()
-   while (line ~= nil) do
+   while (not matches and line ~= nil) do
       local _, _, ln = string.find(line, "%s*([^%s]*)%s*")
-      if ln == "*" then return true end
-      if globish_match(ln, ident) then return true end
+      if ln == "*" then matches = true end
+      if globish_match(ln, ident) then matches = true end
       line = permfile:read()
    end
    io.close(permfile)
-   return false
+   return matches
 end
