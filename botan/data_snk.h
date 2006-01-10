@@ -33,7 +33,7 @@ class DataSink_Stream : public DataSink
    public:
       void write(const byte[], u32bit);
       DataSink_Stream(std::ostream&);
-      DataSink_Stream(const std::string&);
+      DataSink_Stream(const std::string&, bool = false);
       ~DataSink_Stream();
    private:
       const std::string fsname;

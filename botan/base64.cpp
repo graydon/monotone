@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/base64.h>
+#include <botan/charset.h>
 
 namespace Botan {
 

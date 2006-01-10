@@ -43,7 +43,7 @@ CHECK_SAME_CANONICALISED_STDOUT(cat first, RAW_MONOTONE automate select "e:2005-
 CHECK_SAME_CANONICALISED_STDOUT(cat first, RAW_MONOTONE automate select "e:2005-03-11T20:33:02")
 
 # now the first two
-CHECK_SAME_CANONICALISED_STDOUT(cat second first, RAW_MONOTONE automate select "e:2005-04-23")
+CHECK_SAME_CANONICALISED_STDOUT(sort second first, RAW_MONOTONE automate select "e:2005-04-23")
 
 # finally, all the files
 AT_CHECK(RAW_MONOTONE automate select "e:2005-04-30", [], [stdout], [ignore])
@@ -79,7 +79,7 @@ CHECK_SAME_CANONICALISED_STDOUT(cat third, RAW_MONOTONE automate select "l:2005-
 CHECK_SAME_CANONICALISED_STDOUT(cat third, RAW_MONOTONE automate select "l:2005-04-24T07:44:38")
 
 # now we match the second and third commit
-CHECK_SAME_CANONICALISED_STDOUT(cat third second, RAW_MONOTONE automate select "l:2005-04-21")
+CHECK_SAME_CANONICALISED_STDOUT(sort third second, RAW_MONOTONE automate select "l:2005-04-21")
 
 # finally, all the files
 AT_CHECK(RAW_MONOTONE automate select "l:2005-03", [], [stdout], [ignore])

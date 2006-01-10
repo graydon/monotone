@@ -58,7 +58,7 @@ AT_CHECK(cp clean.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 UNKNOWN=unknown@test.net
 AT_CHECK((echo $UNKNOWN; echo $UNKNOWN) | MONOTONE2 genkey $UNKNOWN, [], [ignore], [ignore])
-NETSYNC_CLIENT_RUN(pull --key=$UNKNOWN, testbranch)
+NETSYNC_CLIENT_RUN(pull --key=$UNKNOWN, testbranch, [1])
 AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 # push with default key
@@ -89,7 +89,7 @@ ADD_FILE(unknown, [unknown
 AT_CHECK(MONOTONE2 commit --message unknown, [], [ignore], [ignore])
 UNKNOWN_REV=`BASE_REVISION`
 AT_CHECK((echo $UNKNOWN; echo $UNKNOWN) | MONOTONE2 genkey $UNKNOWN, [], [ignore], [ignore])
-NETSYNC_CLIENT_RUN(push --key=$UNKNOWN, testbranch)
+NETSYNC_CLIENT_RUN(push --key=$UNKNOWN, testbranch, [1])
 
 NETSYNC_SERVE_STOP
 
@@ -123,7 +123,7 @@ MINHOOKS_NETSYNC_SERVE_START(testbranch --confdir closed)
 
 AT_CHECK(cp clean.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
-NETSYNC_CLIENT_RUN(pull --key="", testbranch)
+NETSYNC_CLIENT_RUN(pull --key="", testbranch, [1])
 AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 # pull with default key
@@ -137,7 +137,7 @@ AT_CHECK(MONOTONE2 automate get_revision $BASE, [0], [stdout], [stderr])
 
 AT_CHECK(cp clean.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
-NETSYNC_CLIENT_RUN(pull --key=$OTHER, testbranch)
+NETSYNC_CLIENT_RUN(pull --key=$OTHER, testbranch, [1])
 AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 # pull with unknown key fails
@@ -146,7 +146,7 @@ AT_CHECK(cp clean.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 UNKNOWN=unknown@test.net
 AT_CHECK((echo $UNKNOWN; echo $UNKNOWN) | MONOTONE2 genkey $UNKNOWN, [], [ignore], [ignore])
-NETSYNC_CLIENT_RUN(pull --key=$UNKNOWN, testbranch)
+NETSYNC_CLIENT_RUN(pull --key=$UNKNOWN, testbranch, [1])
 AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 # push with default key
@@ -167,7 +167,7 @@ ADD_FILE(other, [other
 ])
 AT_CHECK(MONOTONE2 commit --message other, [], [ignore], [ignore])
 OTHER_REV=`BASE_REVISION`
-NETSYNC_CLIENT_RUN(push --key=$OTHER, testbranch)
+NETSYNC_CLIENT_RUN(push --key=$OTHER, testbranch, [1])
 
 # push with unknown key fails
 
@@ -177,7 +177,7 @@ ADD_FILE(unknown, [unknown
 AT_CHECK(MONOTONE2 commit --message unknown, [], [ignore], [ignore])
 UNKNOWN_REV=`BASE_REVISION`
 AT_CHECK((echo $UNKNOWN; echo $UNKNOWN) | MONOTONE2 genkey $UNKNOWN, [], [ignore], [ignore])
-NETSYNC_CLIENT_RUN(push --key=$UNKNOWN, testbranch)
+NETSYNC_CLIENT_RUN(push --key=$UNKNOWN, testbranch, [1])
 
 NETSYNC_SERVE_STOP
 

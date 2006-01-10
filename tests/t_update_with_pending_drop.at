@@ -16,10 +16,12 @@ AT_CHECK(MONOTONE drop file, [], [ignore], [ignore])
 
 COMMIT(testbranch)
 
+REV=`BASE_REVISION`
+
 AT_CHECK(cd codir && MONOTONE drop file, [], [ignore], [ignore])
 AT_CHECK(cd codir && MONOTONE update, [], [ignore], [ignore])
 
-AT_CHECK(cd codir && MONOTONE automate get_revision a12d8ad50bf5861310c22979ef6c3a8b8a686522, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE automate get_revision $REV, [], [ignore], [ignore])
 
 # make sure there are no changes in the working copy
 

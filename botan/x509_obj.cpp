@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/x509_obj.h>
+#include <botan/parsing.h>
 #include <botan/pem.h>
 
 namespace Botan {
@@ -21,7 +22,7 @@ X509_Object::X509_Object(DataSource& stream, const std::string& labels)
 *************************************************/
 X509_Object::X509_Object(const std::string& file, const std::string& labels)
    {
-   DataSource_Stream stream(file);
+   DataSource_Stream stream(file, true);
    init(stream, labels);
    }
 

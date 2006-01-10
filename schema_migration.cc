@@ -47,7 +47,7 @@ static int logged_sqlite3_exec(sqlite3* db,
   L(F("executing SQL '%s'") % sql);
   int res = sqlite3_exec(db, sql, cb, data, errmsg);
   L(F("result: %i (%s)") % res % sqlite3_errmsg(db));
-  if (errmsg)
+  if (errmsg && ((*errmsg)!=0))
     L(F("errmsg: %s") % *errmsg);
   return res;
 }
@@ -215,6 +215,9 @@ migrator
 
     I(!sqlite3_create_function(sql, "sha1", -1, SQLITE_UTF8, NULL,
                                &sqlite_sha1_fn, NULL, NULL));
+
+
+    P(F("calculating necessary migration steps"));
 
     bool migrating = false;
     for (vector< pair<string, migrator_cb> >::const_iterator i = migration_events.begin();
@@ -872,6 +875,57 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 }
 
 static bool
+migrate_client_to_add_rosters(sqlite3 * sql,
+                              char ** errmsg,
+                              app_state *)
+{
+  int res;
+  
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE rosters\n"
+                            "(\n"
+                            "id primary key,         -- strong hash of the roster\n"
+                            "data not null           -- compressed, encoded contents of the roster\n"
+                            ");",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE roster_deltas\n"
+                            "(\n"
+                            "id not null,            -- strong hash of the roster\n"
+                            "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
+                            "delta not null,         -- rdiff to construct current from base\n"
+                            "unique(id, base)\n"
+                            ");",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE revision_roster\n"
+                            "(\n"
+                            "rev_id primary key,     -- joins with revisions.id\n"
+                            "roster_id not null      -- joins with either rosters.id or roster_deltas.id\n"
+                            ");",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE next_roster_node_number\n"
+                            "(\n"
+                            "node primary key        -- only one entry in this table, ever\n"
+                            ");",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  return true;
+}
+
+static bool
 migrate_files_BLOB(sqlite3 * sql,
                                     char ** errmsg,
                                     app_state *app)
@@ -1047,11 +1101,11 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
         &migrate_client_to_external_privkeys);
         
   m.add("bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
-        &migrate_manifests_BLOB);
+        &migrate_client_to_add_rosters);
 
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "a83f7d2b5e1118f676011706f4e269796c9d17c7");
+  m.migrate(sql, "1db80c7cee8fa966913db1a463ed50bf1b0e5b0e");
 }

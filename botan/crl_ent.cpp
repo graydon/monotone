@@ -8,6 +8,7 @@
 #include <botan/conf.h>
 #include <botan/oids.h>
 #include <botan/x509_crl.h>
+#include <botan/util.h>
 
 namespace Botan {
 

@@ -11,10 +11,10 @@
 #include <set>
 #include <map>
 
-#include "change_set.hh"
-#include "manifest.hh"
-#include "vocab.hh"
+#include "cset.hh"
 #include "paths.hh"
+#include "roster.hh"
+#include "vocab.hh"
 
 //
 // this file defines structures to deal with the "working copy" of a tree
@@ -28,7 +28,7 @@
 //
 // MT/revision       -- contains the id of the checked out revision
 // MT/work           -- (optional) a set of added, deleted or moved pathnames
-//                      this file is, syntactically, a path_rearrangement
+//                      this file is, syntactically, a cset
 // MT/options        -- the database, branch and key options currently in use
 // MT/log            -- user edited log file
 // MT/inodeprints    -- file fingerprint cache, presence turns on "reckless"
@@ -39,14 +39,13 @@
 // added or deleted or renamed (and the paths of those changes recorded in
 // 'MT/work').
 // 
-// when it comes time to commit, the change_set is calculated by applying
-// the path_rearrangement to the manifest and then calculating the
-// delta_set between the modified manifest and the files in the working
-// copy.
+// when it comes time to commit, the cset in MT/work (which can have no
+// deltas) is applied to the base roster, then a new roster is built by
+// analyzing the content of every file in the roster, as it appears in the
+// working copy. a final cset is calculated which contains the requisite
+// deltas, and placed in a rev, which is written to the db.
 //
 // MT/inodes, if present, can be used to speed up this last step.
-
-typedef std::set<file_path> path_set;
 
 struct file_itemizer : public tree_walker
 {
@@ -56,35 +55,27 @@ struct file_itemizer : public tree_walker
   path_set & ignored;
   file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i) 
     : app(a), known(k), unknown(u), ignored(i) {}
-  virtual void file_itemizer::visit_file(file_path const & path);
+  virtual void visit_dir(file_path const & path);
+  virtual void visit_file(file_path const & path);
 };
 
-void 
-build_additions(std::vector<file_path> const & args,
-               manifest_map const & m_old,
-               app_state & app,
-               change_set::path_rearrangement & pr);
+void
+perform_additions(path_set const & targets, app_state & app);
 
-void 
-build_deletions(std::vector<file_path> const & args,
-               manifest_map const & m_old,
-                app_state & app,
-               change_set::path_rearrangement & pr);
+void
+perform_deletions(path_set const & targets, app_state & app);
 
-void 
-build_rename(file_path const & src,
-             file_path const & dst,
-             manifest_map const & m_old,
-             app_state & app,
-             change_set::path_rearrangement & pr);
+void
+perform_rename(file_path const & src_path,
+               file_path const & dst_path,
+               app_state & app);
 
+// the "work" file contains the current cset representing uncommitted
+// add/drop/rename operations (not deltas)
 
-// the "work" file contains the current path rearrangement representing
-// uncommitted add/drop/rename operations in the serialized change set format
-
-void get_path_rearrangement(change_set::path_rearrangement & w);
-void remove_path_rearrangement();
-void put_path_rearrangement(change_set::path_rearrangement & w);
+void get_work_cset(cset & w);
+void remove_work_cset();
+void put_work_cset(cset & w);
 
 // the "revision" file contains the base revision id that the current working
 // copy was checked out from
@@ -93,9 +84,32 @@ void get_revision_id(revision_id & c);
 void put_revision_id(revision_id const & rev);
 void get_base_revision(app_state & app, 
                        revision_id & rid,
-                       manifest_id & mid,
-                       manifest_map & man);
-void get_base_manifest(app_state & app, manifest_map & man);
+                       roster_t & ros,
+                       marking_map & mm);
+void get_base_revision(app_state & app,
+                       revision_id & rid,
+                       roster_t & ros);
+void get_base_roster(app_state & app, roster_t & ros);
+
+// This returns the current roster, except it does not bother updating the
+// hashes in that roster -- the "shape" is correct, all files and dirs exist
+// and under the correct names -- but do not trust file content hashes.
+void get_current_roster_shape(roster_t & ros, node_id_source & nis, app_state & app);
+// This does update hashes, but only those that match the current restriction
+void get_current_restricted_roster(roster_t & ros, node_id_source & nis, app_state & app);
+
+// This returns the current roster, except it does not bother updating the
+// hashes in that roster -- the "shape" is correct, all files and dirs exist
+// and under the correct names -- but do not trust file content hashes.
+void get_base_and_current_roster_shape(roster_t & base_roster,
+                                       roster_t & current_roster,
+                                       node_id_source & nis,
+                                       app_state & app);
+// This does update hashes, but only those that match the current restriction
+void get_base_and_current_restricted_roster(roster_t & base_roster,
+                                            roster_t & current_roster,
+                                            node_id_source & nis,
+                                            app_state & app);
 
 // the "user log" is a file the user can edit as they program to record
 // changes they make to their source code. Upon commit the file is read
@@ -145,44 +159,52 @@ void write_inodeprints(data const & dat);
 
 void enable_inodeprints();
 
-// the "attribute map" is part of a working copy. it is *not* stored in MT,
-// because its contents are considered part of the "content" of a tree of
-// files. it is therefore stored in .mt-attrs, in the root of your
-// tree. you do not need a .mt-attrs file, it's just an extension
-// mechanism.
-//
-// the contents of the .mt-attrs file is a list of [file, name, value]
-// triples, each of which assigns a particular "extended attribute" to a
-// file in your manifest. example "extended attributes" are things like
-// "set the execute bit" or "this file is read-only" or whatnot. they are
-// intrinsic properties of the files, but not actually part of the file's
-// data stream. so they're kept here.
-
-typedef std::map<file_path, std::map<std::string, std::string> > attr_map;
-
-void get_attr_path(file_path & a_path);
-
-void read_attr_map(data const & dat, attr_map & attrs);
-
-void write_attr_map(data & dat,
-                    attr_map const & options);
-
 extern std::string const encoding_attribute;
 extern std::string const manual_merge_attribute;
 
-bool get_attribute_from_db(file_path const & file,
-                           std::string const & attr_key,
-                           manifest_map const & man,
-                           std::string & attr_val,
-                           app_state & app); 
-
-bool get_attribute_from_working_copy(file_path const & file,
-                                     std::string const & attr_key,
-                                     std::string & attr_val); 
+bool get_attribute_from_roster(roster_t const & ros,                               
+                               file_path const & path,
+                               attr_key const & key,
+                               attr_value & val);
 
 void update_any_attrs(app_state & app);
 
 extern std::string const binary_encoding;
 extern std::string const default_encoding;
+
+struct file_content_source
+{
+  virtual void get_file_content(file_id const & fid,
+                                file_data & dat) const = 0;
+  virtual ~file_content_source() {};
+};
+
+struct editable_working_tree : public editable_tree
+{
+  std::map<bookkeeping_path, file_id> written_content;
+  editable_working_tree(app_state & app, file_content_source const & source);
+
+  virtual node_id detach_node(split_path const & src);
+  virtual void drop_detached_node(node_id nid);
+
+  virtual node_id create_dir_node();
+  virtual node_id create_file_node(file_id const & content);
+  virtual void attach_node(node_id nid, split_path const & dst);
+
+  virtual void apply_delta(split_path const & pth, 
+                           file_id const & old_id, 
+                           file_id const & new_id);
+  virtual void clear_attr(split_path const & pth,
+                          attr_key const & name);
+  virtual void set_attr(split_path const & pth,
+                        attr_key const & name,
+                        attr_value const & val);
+
+  virtual ~editable_working_tree();
+private:
+  app_state & app;
+  file_content_source const & source;
+  node_id next_nid;
+};
 
 #endif // __WORK_HH__

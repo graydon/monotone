@@ -31,7 +31,8 @@ static string const keydir_option("keydir");
 app_state::app_state() 
   : branch_name(""), db(system_path()), keys(this), stdhooks(true),
     rcfiles(true), diffs(false),
-    no_merges(false), set_default(false), verbose(false), search_root("/"),
+    no_merges(false), set_default(false), verbose(false), date_set(false),
+    search_root("/"),
     depth(-1), last(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false), bind_address(""), bind_port(""), 
     missing(false), unknown(false),
@@ -142,84 +143,114 @@ app_state::create_working_copy(system_path const & new_dir)
 }
 
 void 
-app_state::set_restriction(path_set const & valid_paths, 
-                           vector<utf8> const & paths,
-                           bool respect_ignore)
+app_state::set_restriction(path_set const & valid_paths,
+                           vector<utf8> const & paths)
 {
+  // FIXME: this was written before split_path, and only later kludged to
+  // work with it. Could be much tidier if written with knowledge of
+  // split_path.
+
   static file_path root = file_path_internal("");
   restrictions.clear();
   excludes.clear();
   for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       file_path p = file_path_external(*i);
+      split_path sp;
+      p.split(sp);
 
-      if (respect_ignore && lua.hook_ignore_file(p)) 
-        {
-          L(F("'%s' ignored by restricted path set\n") % p);
-          continue;
-        }
-
-      N(p == root || valid_paths.find(p) != valid_paths.end(),
+      N(lua.hook_ignore_file(p) ||
+        p == root || valid_paths.find(sp) != valid_paths.end(),
         F("unknown path '%s'\n") % p);
 
       L(F("'%s' added to restricted path set\n") % p);
-      restrictions.insert(p);
+      restrictions.insert(sp);
     }
 
   for (std::set<utf8>::const_iterator i = exclude_patterns.begin();
        i != exclude_patterns.end(); ++i)
     {
       file_path p = file_path_external(*i);
+      split_path sp;
+      p.split(sp);
 
-      if (respect_ignore && lua.hook_ignore_file(p)) 
-        {
-          L(F("'%s' ignored by excluded path set\n") % p);
-          continue;
-        }
-
-      N(p == root || valid_paths.find(p) != valid_paths.end(),
+      N(lua.hook_ignore_file(p) ||
+        p == root || valid_paths.find(sp) != valid_paths.end(),
         F("unknown path '%s'\n") % p);
 
       L(F("'%s' added to excluded path set\n") % p);
-      excludes.insert(p);
+      excludes.insert(sp);
     }
 
   // if user supplied a depth but provided no paths 
   // assume current directory
   if ((depth != -1) && restrictions.empty()) 
     {
-      restrictions.insert(file_path_external(utf8(".")));
+      file_path fp = file_path_external(utf8("."));
+      split_path sp;
+      fp.split(sp);
+      restrictions.insert(sp);
     }
 }
 
 bool
-app_state::restriction_includes(file_path const & path)
+app_state::restriction_requires_parent(split_path const & sp)
 {
+  file_path path(sp);
+  if (restrictions.empty())
+    return false;
+
+  for (path_set::const_iterator i = restrictions.begin();
+       i != restrictions.end(); ++i)
+    {
+      // If sp is a parent of any member rs of the restriction,
+      // we want to return true.
+      split_path rs = *i;
+      if (rs.size() < sp.size())
+        continue;
+      rs.resize(sp.size());
+      if (rs == sp)
+        return true;
+    }
+  return false;
+}
+
+bool
+app_state::restriction_includes(split_path const & sp)
+{
+  // FIXME: this was written before split_path, and only later kludged to
+  // work with it. Could be much tidier if written with knowledge of
+  // split_path.
+
+  file_path path(sp);
+
   static file_path root = file_path_internal("");
+  split_path sp_root;
+  root.split(sp_root);
 
   if (restrictions.empty())
     {
       if (!excludes.empty())
         {
-          if (excludes.find(root) != excludes.end())
+          if (excludes.find(sp_root) != excludes.end())
             return false;
-          fs::path test = fs::path(path.as_external(), fs::native);
+
+          split_path test = sp;
 
           while (!test.empty()) 
             {
-              L(F("checking excluded path set for '%s'\n") % test.string());
+              L(F("checking excluded path set for '%s'\n") % file_path(test));
 
-              file_path p = file_path_internal(test.string());
-              path_set::const_iterator i = excludes.find(p);
+              path_set::const_iterator i = excludes.find(test);
 
               if (i != excludes.end()) 
                 {
                   L(F("path '%s' found in excluded path set; '%s' excluded\n") 
-                    % test.string() % path);
+                    % file_path(test) % path);
                   return false;
                 }
 
-              test = test.branch_path();
+              test.pop_back();
             }
         }
       return true;
@@ -227,33 +258,32 @@ app_state::restriction_includes(file_path const & path)
 
   bool user_supplied_depth = (depth != -1);
 
-  fs::path test = fs::path(path.as_external(), fs::native);
+  split_path test = sp;
   long branch_depth = 0;
   long max_depth = depth + 1;
 
   while (!test.empty()) 
     {
-      L(F("checking restricted path set for '%s'\n") % test.string());
+      L(F("checking restricted path set for '%s'\n") % file_path(test));
 
-      file_path p = file_path_internal(test.string());
-      path_set::const_iterator i = restrictions.find(p);
-      path_set::const_iterator j = excludes.find(p);
+      path_set::const_iterator i = restrictions.find(test);
+      path_set::const_iterator j = excludes.find(test);
 
       if (i != restrictions.end()) 
         {
           L(F("path '%s' found in restricted path set; '%s' included\n") 
-            % test.string() % path);
+            % file_path(test) % path);
           return true;
         }
       else if (j != excludes.end())
         {
           L(F("path '%s' found in excluded path set; '%s' excluded\n") 
-            % test.string() % path);
+            % file_path(test) % path);
           return false;
         }
 
       if (user_supplied_depth && (max_depth == branch_depth)) return false;
-      test = test.branch_path();
+      test.pop_back();
       ++branch_depth;
     }
 
@@ -261,7 +291,7 @@ app_state::restriction_includes(file_path const & path)
   // essentially cleared (all files are included). rather than be
   // careful about what goes in to the restricted path set we just
   // check for this special case here.
-  if (restrictions.find(root) != restrictions.end())
+  if (restrictions.find(sp_root) != restrictions.end())
     {
       return (!user_supplied_depth) || (branch_depth <= max_depth);
     }
@@ -350,7 +380,23 @@ app_state::set_message_file(utf8 const & m)
 void
 app_state::set_date(utf8 const & d)
 {
-  date = d;
+  try
+    {
+      // boost::posix_time is lame: it can parse "basic" ISO times, of the
+      // form 20000101T120000, but not "extended" ISO times, of the form
+      // 2000-01-01T12:00:00.  So do something stupid to convert one to the
+      // other.
+      std::string tmp = d();
+      std::string::size_type pos = 0;
+      while ((pos = tmp.find_first_of("-:")) != string::npos)
+        tmp.erase(pos, 1);
+      date = boost::posix_time::from_iso_string(tmp);
+      date_set = true;
+    }
+  catch (std::exception &e)
+    {
+      N(false, F("failed to parse date string '%s': %s") % d % e.what());
+    }
 }
 
 void

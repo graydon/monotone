@@ -6,6 +6,7 @@
 #include <botan/oids.h>
 #include <botan/lookup.h>
 #include <botan/pbe_pkcs.h>
+#include <botan/parsing.h>
 
 namespace Botan {
 

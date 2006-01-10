@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/x509stor.h>
+#include <botan/charset.h>
 #include <algorithm>
 #include <memory>
 

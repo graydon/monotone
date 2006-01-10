@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone 0.24\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-12-11 15:12-0300\n"
+"POT-Creation-Date: 2005-12-18 21:09-0300\n"
 "PO-Revision-Date: 2005-11-30 13:45-0200\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
@@ -16,122 +16,127 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
 
-#: app_state.cc:66
+#: app_state.cc:67
 #, c-format
 msgid "initializing from directory %s\n"
 msgstr "inicializando do diretório %s\n"
 
-#: app_state.cc:87
+#: app_state.cc:82
 #, c-format
 msgid "branch name is '%s'\n"
 msgstr "nome do ramo é '%s'\n"
 
-#: app_state.cc:94
+#: app_state.cc:89
 #, c-format
 msgid "setting dump path to %s\n"
 msgstr "configurando caminho de dump para %s\n"
 
-#: app_state.cc:108
+#: app_state.cc:103
 #, c-format
 msgid "working copy directory required but not found%s%s"
 msgstr "caminho da cópia de trabalho necessário mas não encontrado%s%s"
 
-#: app_state.cc:116
+#: app_state.cc:111
 #, c-format
 msgid "invalid directory ''"
 msgstr "diretório inválido ''"
 
-#: app_state.cc:118
+#: app_state.cc:113
 #, c-format
 msgid "creating working copy in %s\n"
 msgstr "criando cópia de trabalho em %s\n"
 
-#: app_state.cc:124
+#: app_state.cc:119
 #, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'\n"
 msgstr ""
 
-#: app_state.cc:127
+#: app_state.cc:122
 #, c-format
 msgid "creating bookkeeping directory '%s' for working copy in '%s'\n"
 msgstr ""
 
-#: app_state.cc:158
+#: app_state.cc:159
 #, c-format
 msgid "'%s' ignored by restricted path set\n"
 msgstr "'%s' ignorado pelo conjunto de caminhos restritos\n"
 
-#: app_state.cc:163 app_state.cc:181
+#: app_state.cc:164 app_state.cc:184
 #, c-format
 msgid "unknown path '%s'\n"
 msgstr "caminho desconhecido '%s'\n"
 
-#: app_state.cc:165
+#: app_state.cc:166
 #, c-format
 msgid "'%s' added to restricted path set\n"
 msgstr "'%s' adicionado ao conjunto de caminhos restritos\n"
 
-#: app_state.cc:176
+#: app_state.cc:179
 #, c-format
 msgid "'%s' ignored by excluded path set\n"
 msgstr "'%s' ignorado pelo conjunto de caminhos excluídos\n"
 
-#: app_state.cc:183
+#: app_state.cc:186
 #, c-format
 msgid "'%s' added to excluded path set\n"
 msgstr "'%s' adicionado ao conjunto de caminhos excluídos\n"
 
-#: app_state.cc:210
+#: app_state.cc:247
 #, c-format
 msgid "checking excluded path set for '%s'\n"
 msgstr "verificando conjunto de caminhos excluídos para '%s'\n"
 
-#: app_state.cc:217 app_state.cc:250
+#: app_state.cc:253 app_state.cc:285
 #, c-format
 msgid "path '%s' found in excluded path set; '%s' excluded\n"
 msgstr "caminho '%s' achado em conjunto de caminhos excluídos; '%s' excluído\n"
 
-#: app_state.cc:236
+#: app_state.cc:272
 #, c-format
 msgid "checking restricted path set for '%s'\n"
 msgstr "verificando conjunto de caminhos restritos para '%s'\n"
 
-#: app_state.cc:244
+#: app_state.cc:279
 #, c-format
 msgid "path '%s' found in restricted path set; '%s' included\n"
 msgstr "caminho '%s' achado em conjunto de caminhos restritos; '%s' incluído\n"
 
-#: app_state.cc:332
+#: app_state.cc:367
 #, c-format
 msgid "search root '%s' does not exist"
 msgstr "raiz de procura '%s' não existe"
 
-#: app_state.cc:333
+#: app_state.cc:368
 #, c-format
 msgid "search root '%s' is not a directory\n"
 msgstr "raiz de procura '%s' não é um diretório\n"
 
-#: app_state.cc:335
+#: app_state.cc:370
 #, c-format
 msgid "set search root to %s\n"
 msgstr "raiz de procura configurada para %s\n"
 
-#: app_state.cc:366
+#: app_state.cc:403
+#, c-format
+msgid "failed to parse date string '%s': %s"
+msgstr ""
+
+#: app_state.cc:417
 #, c-format
 msgid "negative depth not allowed\n"
 msgstr "profundidade negativa não permitida\n"
 
-#: app_state.cc:374
+#: app_state.cc:425
 #, c-format
 msgid "negative or zero last not allowed\n"
 msgstr "last negativo ou zero não permitido\n"
 
-#: app_state.cc:497
+#: app_state.cc:548
 #, c-format
 msgid "Failed to read options file %s"
 msgstr "Impossível ler arquivo de opções %s"
 
-#: app_state.cc:514
+#: app_state.cc:565
 #, c-format
 msgid "Failed to write options file %s"
 msgstr "Impossível escrever arquivo de opções %s"
@@ -436,54 +441,54 @@ msgstr ""
 msgid "moving dir %s -> %s\n"
 msgstr ""
 
-#: commands.cc:136
+#: commands.cc:138
 #, c-format
 msgid "expanding command '%s'\n"
 msgstr "expandindo comando '%s'\n"
 
-#: commands.cc:153
+#: commands.cc:155
 #, c-format
 msgid "expanded command to '%s'\n"
 msgstr "comando expandido para '%s'\n"
 
-#: commands.cc:158
+#: commands.cc:160
 #, c-format
 msgid "command '%s' has multiple ambiguous expansions:\n"
 msgstr "comando '%s' tem várias expansões possíveis:\n"
 
-#: commands.cc:201
+#: commands.cc:203
 msgid "commands:"
 msgstr "comandos:"
 
-#: commands.cc:246
+#: commands.cc:248
 #, c-format
 msgid "executing command '%s'\n"
 msgstr "executando comando '%s'\n"
 
-#: commands.cc:252
+#: commands.cc:254
 #, c-format
 msgid "unknown command '%s'\n"
 msgstr "comando desconhecido '%s'\n"
 
-#: commands.cc:299
+#: commands.cc:301
 #, c-format
 msgid "pid file '%s' already exists"
 msgstr "arquivo pid '%s' já existe"
 
-#: commands.cc:323 commands.cc:1275 commands.cc:1355 commands.cc:1720
-#: commands.cc:2670 commands.cc:3358 commands.cc:3575 commands.cc:3612
+#: commands.cc:325 commands.cc:1288 commands.cc:1358 commands.cc:1733
+#: commands.cc:2646 commands.cc:3188 commands.cc:3421 commands.cc:3462
 msgid "informative"
 msgstr "informativo"
 
-#: commands.cc:323
+#: commands.cc:325
 msgid "command [ARGS...]"
 msgstr "comando [ARGS...]"
 
-#: commands.cc:323
+#: commands.cc:325
 msgid "display command help"
 msgstr "exibe ajuda de comando"
 
-#: commands.cc:382
+#: commands.cc:404
 msgid ""
 "Enter a description of this change.\n"
 "Lines beginning with `MT:' are removed automatically.\n"
@@ -491,16 +496,16 @@ msgstr ""
 "Entre a descrição desta mudança.\n"
 "Linhas que iniciam com `MT:' serão removidas automaticamente.\n"
 
-#: commands.cc:389
+#: commands.cc:411
 #, c-format
 msgid "edit of log message failed"
 msgstr "edição de mensagem de registro falhou"
 
-#: commands.cc:398
+#: commands.cc:420
 msgid "note: "
 msgstr "nota: "
 
-#: commands.cc:399
+#: commands.cc:421
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -509,59 +514,59 @@ msgstr ""
 "ramo '%s' tem múltiplas frentes\n"
 "considere usar 'monotone merge'"
 
-#: commands.cc:459 commands.cc:715 commands.cc:1374 commands.cc:1446
-#: commands.cc:1831 commands.cc:2717 commands.cc:2732 commands.cc:2735
-#: commands.cc:2933 commands.cc:3594
+#: commands.cc:481 commands.cc:737 commands.cc:1376 commands.cc:1451
+#: commands.cc:1817 commands.cc:2696 commands.cc:2724 commands.cc:2727
+#: commands.cc:2861 commands.cc:3445
 #, c-format
 msgid "no such revision '%s'"
 msgstr "versão '%s' não existe"
 
-#: commands.cc:466
+#: commands.cc:488
 #, c-format
 msgid "expanding selection '%s'\n"
 msgstr "expandindo seleção '%s'\n"
 
-#: commands.cc:474
+#: commands.cc:496
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "sem equivalente para seleção '%s'"
 
-#: commands.cc:477
+#: commands.cc:499
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions: \n"
 msgstr "seleção '%s' tem múltiplas expansões possíveis: \n"
 
-#: commands.cc:484
+#: commands.cc:506
 #, c-format
 msgid "expanded to '%s'\n"
 msgstr "expandido para '%s'\n"
 
-#: commands.cc:495
+#: commands.cc:517
 #, c-format
 msgid "non-hex digits in id"
 msgstr "dígitos não-hexadecimais em id"
 
-#: commands.cc:504
+#: commands.cc:526
 #, c-format
 msgid "partial id '%s' does not have an expansion"
 msgstr "id parcial '%s' não tem uma expansão"
 
-#: commands.cc:507
+#: commands.cc:529
 #, c-format
 msgid "partial id '%s' has multiple ambiguous expansions:\n"
 msgstr "id parcial '%s' tem múltiplas expansões possíveis:\n"
 
-#: commands.cc:514
+#: commands.cc:536
 #, c-format
 msgid "expanded partial id '%s' to '%s'\n"
 msgstr "id parcial '%s' expandido para '%s'\n"
 
-#: commands.cc:541 netsync.cc:1942
+#: commands.cc:563 netsync.cc:1907
 #, c-format
 msgid "no public key '%s' found in database"
 msgstr "chave pública '%s' não encontrada no banco de dados"
 
-#: commands.cc:551
+#: commands.cc:573
 #, c-format
 msgid ""
 "Key   : %s\n"
@@ -574,120 +579,123 @@ msgstr ""
 "Nome  : %s\n"
 "Valor : %s\n"
 
-#: commands.cc:585
+#: commands.cc:607
 msgid "ok"
 msgstr "ok"
 
-#: commands.cc:588
+#: commands.cc:610
 msgid "bad"
 msgstr "ruim"
 
-#: commands.cc:591
+#: commands.cc:613
 msgid "unknown"
 msgstr "desconhecido"
 
-#: commands.cc:678
+#: commands.cc:700
 #, c-format
 msgid "(*) - only in %s/"
 msgstr "(*) - apenas em %s/"
 
-#: commands.cc:701
+#: commands.cc:723
 #, c-format
 msgid "no keys found\n"
 msgstr "nenhuma chave encontrada\n"
 
-#: commands.cc:703
+#: commands.cc:725
 #, c-format
 msgid "no keys found matching '%s'\n"
 msgstr "nenhuma chave de '%s' encontrada\n"
 
-#: commands.cc:721
+#: commands.cc:743
 #, c-format
 msgid "revision %s already has children. We cannot kill it."
 msgstr "versão %s já tem filhos. Não podemos matá-la."
 
-#: commands.cc:851 commands.cc:875 commands.cc:912 commands.cc:933
-#: commands.cc:969
+#: commands.cc:883 commands.cc:907 commands.cc:944 commands.cc:965
+#: commands.cc:1001
 msgid "key and cert"
 msgstr "chave e certificado"
 
-#: commands.cc:851 commands.cc:875 commands.cc:912
+#: commands.cc:883 commands.cc:907 commands.cc:944
 msgid "KEYID"
 msgstr "CHAVEID"
 
-#: commands.cc:851
+#: commands.cc:883
 msgid "generate an RSA key-pair"
 msgstr "gera um par de chaves RSA"
 
-#: commands.cc:866
+#: commands.cc:898
 #, c-format
 msgid "key '%s' already exists"
 msgstr "chave '%s' já existe"
 
-#: commands.cc:869
+#: commands.cc:901
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "gerando par de chaves '%s'"
 
-#: commands.cc:871
+#: commands.cc:903
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "salvando par de chaves '%s' em %s/"
 
-#: commands.cc:875
+#: commands.cc:907
 msgid "drop a public and private key"
 msgstr "remove chaves pública e privada"
 
-#: commands.cc:889
+#: commands.cc:921
 #, c-format
 msgid "dropping public key '%s' from database\n"
 msgstr "removendo chave pública '%s' do banco de dados\n"
 
-#: commands.cc:899
+#: commands.cc:931
 #, c-format
 msgid "dropping key pair '%s' from keystore\n"
 msgstr "removendo par de chaves '%s' do repositório de chaves\n"
 
-#: commands.cc:906
+#: commands.cc:938
 #, c-format
 msgid "public or private key '%s' does not exist in keystore or database"
-msgstr "chave pública ou privada '%s' não existe no repositório de chaves nem no banco de dados"
+msgstr ""
+"chave pública ou privada '%s' não existe no repositório de chaves nem no "
+"banco de dados"
 
-#: commands.cc:908
+#: commands.cc:940
 #, c-format
 msgid ""
 "public or private key '%s' does not exist in keystore, and no database was "
 "specified"
-msgstr "chave pública ou privada '%s' não existe no repositório de chaves, "
-"e nenhum banco de dados foi especificado"
+msgstr ""
+"chave pública ou privada '%s' não existe no repositório de chaves, e nenhum "
+"banco de dados foi especificado"
 
-#: commands.cc:913
+#: commands.cc:945
 msgid "change passphrase of a private RSA key"
 msgstr "muda frase secreta de uma chave RSA privada"
 
-#: commands.cc:923
+#: commands.cc:955
 #, c-format
 msgid "key '%s' does not exist in the keystore"
 msgstr "chave '%s' não existe no repositório de chaves"
 
-#: commands.cc:930
+#: commands.cc:962
 #, c-format
 msgid "passphrase changed\n"
 msgstr "frase secreta mudada\n"
 
-#: commands.cc:933
+#: commands.cc:965
 msgid "REVISION CERTNAME [CERTVAL]"
 msgstr "VERSÃO NOME-CERTIFICADO [VALOR-CERTIFICADO]"
 
-#: commands.cc:934
+#: commands.cc:966
 msgid "create a cert for a revision"
 msgstr "cria um certificado para uma versão"
 
-#: commands.cc:969
+#: commands.cc:1001
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 msgstr "VERSÃO NOME VALOR ASSINANTE1 [ASSINANTE2 [...]]"
 
-#: commands.cc:970
+#: commands.cc:1002
 msgid ""
 "test whether a hypothetical cert would be trusted\n"
 "by current settings"
@@ -695,7 +703,7 @@ msgstr ""
 "testa se um certificado hipotético teria confiança\n"
 "baseado nos parâmetros atuais"
 
-#: commands.cc:1003
+#: commands.cc:1035
 #, c-format
 msgid ""
 "if a cert on: %s\n"
@@ -710,183 +718,182 @@ msgstr ""
 "fosse assinado por: %s\n"
 "ele seria: %s\n"
 
-#: commands.cc:1012
+#: commands.cc:1044
 msgid "trusted"
 msgstr "confiável"
 
-#: commands.cc:1012
+#: commands.cc:1044
 msgid "UNtrusted"
 msgstr "NÃO-confiável"
 
-#: commands.cc:1015 commands.cc:1028 commands.cc:1040 commands.cc:1057
-#: commands.cc:1103
+#: commands.cc:1047 commands.cc:1060 commands.cc:1073 commands.cc:1090
+#: commands.cc:1141
 msgid "review"
 msgstr "revisão"
 
-#: commands.cc:1015
+#: commands.cc:1047
 msgid "REVISION TAGNAME"
 msgstr "VERSÃO ETIQUETA"
 
-#: commands.cc:1016
+#: commands.cc:1048
 msgid "put a symbolic tag cert on a revision version"
 msgstr "põe uma etiqueta simbólica em uma versão"
 
-#: commands.cc:1028
+#: commands.cc:1060
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
 msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 
-#: commands.cc:1029
+#: commands.cc:1061
 msgid "note the results of running a test on a revision"
 msgstr "anota os resultados de executar um teste sobre uma versão"
 
-#: commands.cc:1040 commands.cc:1057
+#: commands.cc:1073 commands.cc:1090
 msgid "REVISION"
 msgstr "VERSÂO"
 
-#: commands.cc:1041
+#: commands.cc:1074
 msgid "approve of a particular revision"
 msgstr "aprova a versão especificada"
 
-#: commands.cc:1052
+#: commands.cc:1085
 #, c-format
 msgid "need --branch argument for approval"
 msgstr "argumento --branch necessário para aprovação"
 
-#: commands.cc:1058
+#: commands.cc:1091
 msgid "disapprove of a particular revision"
 msgstr "desaprova a versão especificada"
 
-#: commands.cc:1071
+#: commands.cc:1104
 #, c-format
 msgid "revision '%s' has %d changesets, cannot invert\n"
 msgstr "versão '%s' tem %d mudanças, não é possível inverter\n"
 
-#: commands.cc:1075
+#: commands.cc:1108
 #, c-format
 msgid "need --branch argument for disapproval"
 msgstr "argumento --branch necessário para desaprovação"
 
-#: commands.cc:1103
+#: commands.cc:1141
 msgid "REVISION [COMMENT]"
 msgstr "VERSÃO [COMENTÁRIO]"
 
-#: commands.cc:1104
+#: commands.cc:1142
 msgid "comment on a particular revision"
 msgstr "comenta a versão especificada"
 
-#: commands.cc:1114
+#: commands.cc:1152
 #, c-format
 msgid "edit comment failed"
 msgstr "edição de comentário falhou"
 
-#: commands.cc:1117
+#: commands.cc:1155
 #, c-format
 msgid "empty comment"
 msgstr "comentário vazio"
 
-#: commands.cc:1129 commands.cc:1166 commands.cc:1200 commands.cc:1332
-#: commands.cc:2198 commands.cc:2321 commands.cc:2882 commands.cc:3415
+#: commands.cc:1168 commands.cc:1196 commands.cc:1221 commands.cc:1335
+#: commands.cc:2166 commands.cc:2285 commands.cc:2799 commands.cc:3244
 msgid "working copy"
 msgstr "cópia de trabalho"
 
-#: commands.cc:1129 commands.cc:1166 commands.cc:1275 commands.cc:2321
-#: commands.cc:2670 commands.cc:3415
+#: commands.cc:1168 commands.cc:1196 commands.cc:1288 commands.cc:2285
+#: commands.cc:2646 commands.cc:3244
 msgid "[PATH]..."
 msgstr "[CAMINHO]..."
 
-#: commands.cc:1130
+#: commands.cc:1169
 msgid "add files to working copy"
 msgstr "adiciona arquivos à cópia de trabalho"
 
-#: commands.cc:1167
+#: commands.cc:1197
 msgid "drop files from working copy"
 msgstr "remove arquivos da cópia de trabalho"
 
-#: commands.cc:1200
+#: commands.cc:1221
 msgid "SRC DST"
 msgstr "ORIGEM DESTINO"
 
-#: commands.cc:1201
+#: commands.cc:1222
 msgid "rename entries in the working copy"
 msgstr "renomeia entradas na cópia de trabalho"
 
-#: commands.cc:1229 commands.cc:1242 commands.cc:2803 commands.cc:2820
-#: commands.cc:3495
+#: commands.cc:1242 commands.cc:1255 commands.cc:3341 commands.cc:3730
 msgid "debug"
 msgstr "depuração"
 
-#: commands.cc:1229
+#: commands.cc:1242
 msgid "load file contents into db"
 msgstr "carrega o conteúdo do arquivo no banco de dados"
 
-#: commands.cc:1242
+#: commands.cc:1255
 msgid "<parent> <left> <right>"
 msgstr "<pai> <esquerda> <direita>"
 
-#: commands.cc:1243
+#: commands.cc:1256
 msgid "merge 3 files and output result"
 msgstr "combina 3 arquivos e retorna resultado"
 
-#: commands.cc:1253
+#: commands.cc:1266
 #, c-format
 msgid "ancestor file id does not exist"
 msgstr "id do arquivo ancestral não existe"
 
-#: commands.cc:1256
+#: commands.cc:1269
 #, c-format
 msgid "left file id does not exist"
 msgstr "id do arquivo esquerdo não existe"
 
-#: commands.cc:1259
+#: commands.cc:1272
 #, c-format
 msgid "right file id does not exist"
 msgstr "id do arquivo direito não existe"
 
-#: commands.cc:1270
+#: commands.cc:1283
 #, c-format
 msgid "merge failed"
 msgstr "combinação falhou"
 
-#: commands.cc:1275
+#: commands.cc:1288
 msgid "show status of working copy"
 msgstr "mostra status da cópia de trabalho"
 
-#: commands.cc:1332
+#: commands.cc:1335
 msgid "[PATH]"
 msgstr "[CAMINHO]"
 
-#: commands.cc:1333
+#: commands.cc:1336
 msgid "calculate identity of PATH or stdin"
 msgstr "calcula identidade do CAMINHO ou stdin"
 
-#: commands.cc:1356
+#: commands.cc:1359
 msgid "FILENAME"
 msgstr "ARQUIVO"
 
-#: commands.cc:1357
+#: commands.cc:1360
 msgid "write file from database to stdout"
 msgstr "escreve arquivo do banco de dados em stdout"
 
-#: commands.cc:1385
+#: commands.cc:1388 commands.cc:1390 commands.cc:3454
 #, c-format
 msgid "no file '%s' found in revision '%s'\n"
 msgstr "nenhum arquivo '%s' encontrado na versão '%s'\n"
 
-#: commands.cc:1389
+#: commands.cc:1395
 #, c-format
 msgid "dumping file '%s'\n"
 msgstr ""
 
-#: commands.cc:1397 commands.cc:1505 commands.cc:3158 commands.cc:3207
-#: commands.cc:3292 commands.cc:3299 commands.cc:3780
+#: commands.cc:1402 commands.cc:1521 commands.cc:2998 commands.cc:3047
+#: commands.cc:3136 commands.cc:3143 commands.cc:3648
 msgid "tree"
 msgstr "árvore"
 
-#: commands.cc:1397
+#: commands.cc:1402
 msgid "[DIRECTORY]\n"
 msgstr "[DIRETÓRIO]\n"
 
-#: commands.cc:1398
+#: commands.cc:1403
 msgid ""
 "check out a revision from database into directory.\n"
 "If a revision is given, that's the one that will be checked out.\n"
@@ -894,82 +901,77 @@ msgid ""
 "If no directory is given, the branch name will be used as directory"
 msgstr ""
 
-#: commands.cc:1415 commands.cc:1434
+#: commands.cc:1420 commands.cc:1439
 #, c-format
 msgid "need --branch argument for branch-based checkout"
 msgstr ""
 
-#: commands.cc:1428
+#: commands.cc:1433
 #, c-format
 msgid "checkout directory '%s' already exists"
 msgstr ""
 
-#: commands.cc:1437 commands.cc:1518 commands.cc:3171 commands.cc:3241
-#: commands.cc:3244
+#: commands.cc:1442 commands.cc:1534 commands.cc:3011 commands.cc:3081
+#: commands.cc:3084
 #, c-format
 msgid "branch '%s' is empty\n"
 msgstr "ramo '%s' está vazio\n"
 
-#: commands.cc:1438
+#: commands.cc:1443
 #, c-format
 msgid "branch %s has multiple heads"
 msgstr "ramo %s tem frentes múltiplas"
 
-#: commands.cc:1459
+#: commands.cc:1464
 #, c-format
 msgid "found %d %s branch certs on revision %s\n"
 msgstr "foram encontrados %d %s certificados de ramo sobre versão %s\n"
 
-#: commands.cc:1464
+#: commands.cc:1469
 #, c-format
 msgid "revision %s is not a member of branch %s\n"
 msgstr "versão %s não é um membro do ramo %s\n"
 
-#: commands.cc:1480
-#, c-format
-msgid "no manifest %s found in database"
-msgstr ""
-
-#: commands.cc:1482
+#: commands.cc:1481
 #, c-format
 msgid "checking out revision %s to directory %s\n"
 msgstr ""
 
-#: commands.cc:1488
+#: commands.cc:1503
 #, c-format
 msgid "no file %s found in database for %s"
 msgstr "nenhum arquivo %s encontrado no banco de dados para %s"
 
-#: commands.cc:1492 commands.cc:3482
+#: commands.cc:1507 commands.cc:3324
 #, c-format
 msgid "writing file %s to %s\n"
 msgstr "escrevendo arquivo %s em %s\n"
 
-#: commands.cc:1505
+#: commands.cc:1521
 msgid "show unmerged head revisions of branch"
 msgstr "mostra frentes não combinadas do ramo"
 
-#: commands.cc:1513 commands.cc:3167
+#: commands.cc:1529 commands.cc:3007
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "por favor especifique um ramo com --branch=RAMO"
 
-#: commands.cc:1520
+#: commands.cc:1536
 #, c-format
 msgid "branch '%s' is currently merged:\n"
 msgstr "ramo '%s' está atualmente combinado:\n"
 
-#: commands.cc:1522
+#: commands.cc:1538
 #, c-format
 msgid "branch '%s' is currently unmerged:\n"
 msgstr "ramo '%s' não está combinado atualmente:\n"
 
-#: commands.cc:1561
+#: commands.cc:1577
 #, c-format
 msgid "no epoch for branch %s\n"
 msgstr ""
 
-#: commands.cc:1721
+#: commands.cc:1734
 msgid ""
 "certs ID\n"
 "keys [PATTERN]\n"
@@ -993,201 +995,187 @@ msgstr ""
 "ignored\n"
 "missing"
 
-#: commands.cc:1731
+#: commands.cc:1744
 msgid ""
 "show database objects, or the current working copy manifest,\n"
 "or unknown, intentionally ignored, or missing state files"
 msgstr ""
 
-#: commands.cc:1768 commands.cc:1794 commands.cc:1818 commands.cc:1836
-#: commands.cc:1855 commands.cc:1874 commands.cc:1892 commands.cc:1920
-#: commands.cc:1938
+#: commands.cc:1780 commands.cc:1804 commands.cc:1823 commands.cc:1842
+#: commands.cc:1860 commands.cc:1888 commands.cc:1906
 msgid "packet i/o"
 msgstr "E/S de pacotes"
 
-#: commands.cc:1768 commands.cc:1794
+#: commands.cc:1780
 msgid "OLDID NEWID"
 msgstr "VELHO-ID NOVO-ID"
 
-#: commands.cc:1769
-msgid "write manifest delta packet to stdout"
-msgstr ""
-
-#: commands.cc:1783 commands.cc:1785 commands.cc:1849
-#, c-format
-msgid "no such manifest '%s'"
-msgstr ""
-
-#: commands.cc:1795
+#: commands.cc:1781
 msgid "write file delta packet to stdout"
 msgstr "escreve pacote de delta de arquivo em stdout"
 
-#: commands.cc:1809 commands.cc:1811 commands.cc:1868 commands.cc:2219
+#: commands.cc:1795 commands.cc:1797 commands.cc:1836
 #, c-format
 msgid "no such file '%s'"
 msgstr "não há arquivo '%s'"
 
-#: commands.cc:1818 commands.cc:1836 commands.cc:1855 commands.cc:1874
-#: commands.cc:1892 commands.cc:1920
+#: commands.cc:1804 commands.cc:1823 commands.cc:1842 commands.cc:1860
+#: commands.cc:1888
 msgid "ID"
 msgstr "ID"
 
-#: commands.cc:1818
+#: commands.cc:1804
 msgid "write revision data packet to stdout"
 msgstr "escreve pacote de dados da versão em stdout"
 
-#: commands.cc:1836
-msgid "write manifest data packet to stdout"
-msgstr ""
-
-#: commands.cc:1855
+#: commands.cc:1823
 msgid "write file data packet to stdout"
 msgstr "escreve pacote de dados do arquivo em stdout"
 
-#: commands.cc:1874
+#: commands.cc:1842
 msgid "write cert packets to stdout"
 msgstr "escreve pacotes de certificado em stdout"
 
-#: commands.cc:1892
+#: commands.cc:1860
 msgid "write public key packet to stdout"
 msgstr "escreve pacote de chave pública em stdout"
 
-#: commands.cc:1914
+#: commands.cc:1882
 #, c-format
 msgid "public key '%s' does not exist"
 msgstr "chave pública '%s' não existe"
 
-#: commands.cc:1920
+#: commands.cc:1888
 msgid "write private key packet to stdout"
 msgstr "escreve pacote de chave privada em stdout"
 
-#: commands.cc:1928
+#: commands.cc:1896
 #, c-format
 msgid "public and private key '%s' do not exist in keystore"
 msgstr "chaves pública e privada '%s' não existem no repositório de chaves"
 
-#: commands.cc:1939
+#: commands.cc:1907
 msgid "read packets from files or stdin"
 msgstr "lê pacotes de arquivos ou de stdin"
 
-#: commands.cc:1947
+#: commands.cc:1915
 #, c-format
 msgid "no packets found on stdin"
 msgstr "nenhum pacote encontrado em stdin"
 
-#: commands.cc:1958
+#: commands.cc:1926
 #, c-format
 msgid "no packets found in given file"
 msgid_plural "no packets found in given files"
 msgstr[0] ""
 msgstr[1] ""
 
-#: commands.cc:1962
+#: commands.cc:1930
 #, c-format
 msgid "read %d packet"
 msgid_plural "read %d packets"
 msgstr[0] ""
 msgstr[1] ""
 
-#: commands.cc:1966 commands.cc:2060 commands.cc:2075 commands.cc:2089
-#: commands.cc:2104
+#: commands.cc:1934 commands.cc:2028 commands.cc:2043 commands.cc:2057
+#: commands.cc:2072
 msgid "network"
 msgstr ""
 
-#: commands.cc:1967
+#: commands.cc:1935
 msgid "rebuild the indices used to sync over the network"
 msgstr ""
 
-#: commands.cc:2004
+#: commands.cc:1972
 #, c-format
 msgid "setting default server to %s\n"
 msgstr ""
 
-#: commands.cc:2010
+#: commands.cc:1978
 #, c-format
 msgid "no hostname given"
 msgstr ""
 
-#: commands.cc:2012
+#: commands.cc:1980
 #, c-format
 msgid "no server given and no default server set"
 msgstr ""
 
-#: commands.cc:2016
+#: commands.cc:1984
 #, c-format
 msgid "using default server address: %s\n"
 msgstr ""
 
-#: commands.cc:2030
+#: commands.cc:1998
 #, c-format
 msgid "setting default branch include pattern to '%s'\n"
 msgstr ""
 
-#: commands.cc:2036
+#: commands.cc:2004
 #, c-format
 msgid "setting default branch exclude pattern to '%s'\n"
 msgstr ""
 
-#: commands.cc:2042
+#: commands.cc:2010
 #, c-format
 msgid "no branch pattern given"
 msgstr ""
 
-#: commands.cc:2044
+#: commands.cc:2012
 #, c-format
 msgid "no branch pattern given and no default pattern set"
 msgstr ""
 
-#: commands.cc:2048
+#: commands.cc:2016
 #, c-format
 msgid "using default branch include pattern: '%s'\n"
 msgstr ""
 
-#: commands.cc:2056
+#: commands.cc:2024
 #, c-format
 msgid "excluding: %s\n"
 msgstr ""
 
-#: commands.cc:2060 commands.cc:2075 commands.cc:2089
+#: commands.cc:2028 commands.cc:2043 commands.cc:2057
 msgid "[ADDRESS[:PORTNUMBER] [PATTERN]]"
 msgstr ""
 
-#: commands.cc:2061
+#: commands.cc:2029
 msgid "push branches matching PATTERN to netsync server at ADDRESS"
 msgstr ""
 
-#: commands.cc:2076
+#: commands.cc:2044
 msgid "pull branches matching PATTERN from netsync server at ADDRESS"
 msgstr ""
 
-#: commands.cc:2083
+#: commands.cc:2051
 #, c-format
 msgid "doing anonymous pull; use -kKEYNAME if you need authentication\n"
 msgstr ""
 
-#: commands.cc:2090
+#: commands.cc:2058
 msgid "sync branches matching PATTERN with netsync server at ADDRESS"
 msgstr ""
 
-#: commands.cc:2104
+#: commands.cc:2072
 msgid "PATTERN ..."
 msgstr ""
 
-#: commands.cc:2105
+#: commands.cc:2073
 msgid "serve the branches specified by PATTERNs to connecting clients"
 msgstr ""
 
-#: commands.cc:2118
+#: commands.cc:2086
 #, c-format
 msgid ""
 "need permission to store persistent passphrase (see hook persist_phrase_ok())"
 msgstr ""
 
-#: commands.cc:2130
+#: commands.cc:2098
 msgid "database"
 msgstr ""
 
-#: commands.cc:2131
+#: commands.cc:2099
 msgid ""
 "init\n"
 "info\n"
@@ -1201,140 +1189,117 @@ msgid ""
 "kill_tag_locally TAG\n"
 "check\n"
 "changesetify\n"
-"rebuild\n"
+"rosterify\n"
 "set_epoch BRANCH EPOCH\n"
 msgstr ""
 
-#: commands.cc:2145
+#: commands.cc:2113
 msgid "manipulate database state"
 msgstr ""
 
-#: commands.cc:2198
+#: commands.cc:2166
 msgid ""
-"set FILE ATTR VALUE\n"
-"get FILE [ATTR]\n"
-"drop FILE"
+"set PATH ATTR VALUE\n"
+"get PATH [ATTR]\n"
+"drop PATH [ATTR]"
 msgstr ""
 
-#: commands.cc:2199
+#: commands.cc:2167
 msgid "set, get or drop file attributes"
 msgstr ""
 
-#: commands.cc:2287 work.cc:113
+#: commands.cc:2183
 #, c-format
-msgid "registering %s file in working copy\n"
+msgid "Unknown path '%s'"
+msgstr "caminho desconhecido '%s'"
+
+#: commands.cc:2212
+#, c-format
+msgid "Path '%s' does not have attribute '%s'\n"
+msgstr "caminho '%s' não tem atributo '%s'\n"
+
+#: commands.cc:2266
+#, c-format
+msgid "--message and --message-file are mutually exclusive"
 msgstr ""
 
-#: commands.cc:2316
-#, c-format
-msgid "failed to parse date string '%s': %s"
-msgstr ""
-
-#: commands.cc:2322
+#: commands.cc:2286
 msgid "commit working copy to database"
 msgstr ""
 
-#: commands.cc:2340
+#: commands.cc:2304
 #, c-format
 msgid "no changes to commit\n"
 msgstr ""
 
-#: commands.cc:2354
+#: commands.cc:2318
 #, c-format
 msgid "beginning commit on branch '%s'\n"
 msgstr ""
 
-#: commands.cc:2355
+#: commands.cc:2319
 #, c-format
 msgid ""
 "new manifest '%s'\n"
 "new revision '%s'\n"
 msgstr ""
 
-#: commands.cc:2362
-#, c-format
-msgid "--message and --message-file are mutually exclusive"
-msgstr ""
-
-#: commands.cc:2365
+#: commands.cc:2327
 #, c-format
 msgid ""
-"MT/log is non-empty and --message supplied\n"
+"MT/log is non-empty and log message was specified on command line\n"
 "perhaps move or delete MT/log,\n"
-"or remove --message from the command line?"
+"or remove --message/--message-file from the command line?"
 msgstr ""
 
-#: commands.cc:2370
-#, c-format
-msgid ""
-"MT/log is non-empty and --message-file supplied\n"
-"perhaps move or delete MT/log,\n"
-"or remove --message-file from the command line?"
-msgstr ""
-
-#: commands.cc:2388
+#: commands.cc:2339
 #, c-format
 msgid "empty log message; commit canceled"
 msgstr ""
 
-#: commands.cc:2400
+#: commands.cc:2356
 #, c-format
 msgid "revision %s already in database\n"
 msgstr ""
 
-#: commands.cc:2405
+#: commands.cc:2361
 #, c-format
 msgid "inserting new revision %s\n"
 msgstr ""
 
-#: commands.cc:2414
-#, c-format
-msgid "skipping manifest %s, already in database\n"
-msgstr ""
-
-#: commands.cc:2418
-#, c-format
-msgid "inserting manifest delta %s -> %s\n"
-msgstr ""
-
-#: commands.cc:2429
-#, c-format
-msgid "inserting full manifest %s\n"
-msgstr ""
-
-#: commands.cc:2442
+#: commands.cc:2379
 #, c-format
 msgid "skipping file delta %s, already in database\n"
 msgstr ""
 
-#: commands.cc:2448
+#: commands.cc:2384
 #, c-format
 msgid "inserting delta %s -> %s\n"
 msgstr ""
 
-#: commands.cc:2458 commands.cc:2475
+#: commands.cc:2394 commands.cc:2411 commands.cc:2430
 #, c-format
 msgid "file '%s' modified during commit, aborting"
 msgstr ""
 
-#: commands.cc:2468
+#: commands.cc:2404 commands.cc:2423
 #, c-format
 msgid "inserting full version %s\n"
 msgstr ""
 
-#: commands.cc:2502
+#: commands.cc:2456
 #, c-format
 msgid "committed revision %s\n"
 msgstr ""
 
-#: commands.cc:2508
+#: commands.cc:2462
 #, c-format
 msgid ""
 "note: this revision creates divergence\n"
 "note: you may (or may not) wish to run 'monotone merge'"
 msgstr ""
 
-#: commands.cc:2671
+#: commands.cc:2647
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the working directory and\n"
@@ -1342,66 +1307,31 @@ msgid ""
 "them is given.  If no format is specified, unified is used by default."
 msgstr ""
 
-#: commands.cc:2687
+#: commands.cc:2663
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
 "try adding --external or removing --diff-args?"
 msgstr ""
 
-#: commands.cc:2721
+#: commands.cc:2705
 #, c-format
 msgid "current revision has no ancestor"
 msgstr ""
 
-#: commands.cc:2760
-#, c-format
-msgid "no common ancestor for %s and %s"
-msgstr ""
-
-#: commands.cc:2766
-#, c-format
-msgid "concatenating un-committed changeset to composite\n"
-msgstr ""
-
-#: commands.cc:2803 commands.cc:2820
-msgid "LEFT RIGHT"
-msgstr ""
-
-#: commands.cc:2803
-msgid "print least common ancestor"
-msgstr ""
-
-#: commands.cc:2816
-msgid "no common ancestor found"
-msgstr ""
-
-#: commands.cc:2820
-msgid "print least common ancestor / dominator"
-msgstr ""
-
-#: commands.cc:2834
-msgid "no common ancestor/dominator found"
-msgstr ""
-
-#: commands.cc:2859
-#, c-format
-msgid "updating %s to %s\n"
-msgstr ""
-
-#: commands.cc:2883
+#: commands.cc:2800
 msgid ""
 "update working copy.\n"
 "If a revision is given, base the update on that revision.  If not,\n"
 "base the update on the head of the branch (given or implicit)."
 msgstr ""
 
-#: commands.cc:2908
+#: commands.cc:2836
 #, c-format
 msgid "this working directory is a new project; cannot update"
 msgstr ""
 
-#: commands.cc:2915
+#: commands.cc:2843
 #, c-format
 msgid ""
 "your request matches no descendents of the current revision\n"
@@ -1409,294 +1339,265 @@ msgid ""
 "maybe you want --revision=<rev on other branch>"
 msgstr ""
 
-#: commands.cc:2920
+#: commands.cc:2848
 #, c-format
 msgid "multiple update candidates:\n"
 msgstr ""
 
-#: commands.cc:2924
+#: commands.cc:2852
 #, c-format
 msgid "choose one with 'monotone update -r<id>'\n"
 msgstr ""
 
-#: commands.cc:2925
+#: commands.cc:2853
 #, c-format
 msgid "multiple candidates remain after selection"
 msgstr ""
 
-#: commands.cc:2940
+#: commands.cc:2868
 #, c-format
 msgid "already up to date at %s\n"
 msgstr ""
 
-#: commands.cc:2948
+#: commands.cc:2876
 #, c-format
 msgid "selected update target %s\n"
 msgstr ""
 
-#: commands.cc:2960
+#: commands.cc:2888
 #, c-format
 msgid ""
 "revision %s is not a member of branch %s\n"
 "try again with explicit --branch\n"
 msgstr ""
 
-#: commands.cc:2975
+#: commands.cc:2911
 #, c-format
-msgid "updating along chosen edge %s -> %s\n"
+msgid "Update target is not a descendent of working copy base revision\n"
 msgstr ""
 
-#: commands.cc:2986
-#, c-format
-msgid "merging working copy with chosen edge %s -> %s\n"
-msgstr ""
-
-#: commands.cc:3035
+#: commands.cc:2988
 #, c-format
 msgid "updated to base revision %s\n"
 msgstr ""
 
-#: commands.cc:3101
-#, c-format
-msgid ""
-"common ancestor %s found\n"
-"trying 3-way merge\n"
-msgstr ""
-
-#: commands.cc:3112
-#, c-format
-msgid "no common ancestor found, synthesizing edges\n"
-msgstr ""
-
-#: commands.cc:3158
+#: commands.cc:2998
 msgid "merge unmerged heads of branch"
 msgstr ""
 
-#: commands.cc:3172
+#: commands.cc:3012
 #, c-format
 msgid "branch '%s' is merged\n"
 msgstr ""
 
-#: commands.cc:3178
+#: commands.cc:3018
 #, c-format
 msgid "starting with revision 1 / %d\n"
 msgstr ""
 
-#: commands.cc:3182
+#: commands.cc:3022
 #, c-format
 msgid "merging with revision %d / %d\n"
 msgstr ""
 
-#: commands.cc:3183 commands.cc:3184 commands.cc:3251 commands.cc:3335
-#: commands.cc:3336
+#: commands.cc:3023 commands.cc:3024 commands.cc:3091 commands.cc:3166
+#: commands.cc:3167
 #, c-format
 msgid "[source] %s\n"
 msgstr ""
 
-#: commands.cc:3201 commands.cc:3288 commands.cc:3355
+#: commands.cc:3041 commands.cc:3132 commands.cc:3185
 #, c-format
 msgid "[merged] %s\n"
 msgstr ""
 
-#: commands.cc:3204
+#: commands.cc:3044
 #, c-format
 msgid "note: your working copies have not been updated\n"
 msgstr ""
 
-#: commands.cc:3207
+#: commands.cc:3047
 msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr ""
 
-#: commands.cc:3208
+#: commands.cc:3048
 msgid "merge from one branch to another asymmetrically"
 msgstr ""
 
-#: commands.cc:3242 commands.cc:3245
+#: commands.cc:3082 commands.cc:3085
 #, c-format
 msgid "branch '%s' is not merged\n"
 msgstr ""
 
-#: commands.cc:3250
+#: commands.cc:3090
 #, c-format
 msgid "propagating %s -> %s\n"
 msgstr ""
 
-#: commands.cc:3252
+#: commands.cc:3092
 #, c-format
 msgid "[target] %s\n"
 msgstr ""
 
-#: commands.cc:3257
+#: commands.cc:3097
 #, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'\n"
 msgstr ""
 
-#: commands.cc:3259
+#: commands.cc:3099
 #, c-format
 msgid "no action taken\n"
 msgstr ""
 
-#: commands.cc:3263
+#: commands.cc:3103
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'\n"
 msgstr ""
 
-#: commands.cc:3292
+#: commands.cc:3136
 msgid "refresh the inodeprint cache"
 msgstr ""
 
-#: commands.cc:3300
-msgid ""
-"LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
-"LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"
+#: commands.cc:3144
+msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
 msgstr ""
 
-#: commands.cc:3302
+#: commands.cc:3145
 msgid "merge two explicitly given revisions, placing result in given branch"
 msgstr ""
 
-#: commands.cc:3317 commands.cc:3319
-#, c-format
-msgid "%s is not an ancestor of %s"
-msgstr ""
-
-#: commands.cc:3328
+#: commands.cc:3159
 #, c-format
 msgid "%s and %s are the same revision, aborting"
 msgstr ""
 
-#: commands.cc:3330 commands.cc:3332
+#: commands.cc:3161 commands.cc:3163
 #, c-format
 msgid "%s is already an ancestor of %s"
 msgstr ""
 
-#: commands.cc:3358
+#: commands.cc:3188
 msgid "(revision|manifest|file|key) PARTIAL-ID"
 msgstr ""
 
-#: commands.cc:3359
+#: commands.cc:3189
 msgid "complete partial id"
 msgstr ""
 
-#: commands.cc:3368
+#: commands.cc:3198
 #, c-format
 msgid "non-hex digits in partial id"
 msgstr ""
 
-#: commands.cc:3416
+#: commands.cc:3245
 msgid "revert file(s), dir(s) or entire working copy"
 msgstr ""
 
-#: commands.cc:3441
+#: commands.cc:3267
 #, c-format
 msgid "revert adding find_missing entries to %d original args elements\n"
 msgstr ""
 
-#: commands.cc:3450
+#: commands.cc:3276
 #, c-format
 msgid ""
 "after adding everything from find_missing, revert args_copy has %d elements\n"
 msgstr ""
 
-#: commands.cc:3474
+#: commands.cc:3317
 #, c-format
-msgid "reverting %s from %s to %s\n"
-msgstr ""
+msgid "reverting %s to [%s]\n"
+msgstr "revertendo %s para [%s]\n"
 
-#: commands.cc:3478
+#: commands.cc:3320
 #, c-format
 msgid "no file version %s found in database for %s"
 msgstr ""
 
-#: commands.cc:3495
+#: commands.cc:3341
 msgid "RCSFILE..."
 msgstr ""
 
-#: commands.cc:3496
+#: commands.cc:3342
 msgid ""
 "parse versions in RCS files\n"
 "this command doesn't reconstruct or import revisions.you probably want "
 "cvs_import"
 msgstr ""
 
-#: commands.cc:3512
+#: commands.cc:3358
 msgid "rcs"
 msgstr ""
 
-#: commands.cc:3512
+#: commands.cc:3358
 msgid "CVSROOT"
 msgstr ""
 
-#: commands.cc:3512
+#: commands.cc:3358
 msgid "import all versions in CVS repository"
 msgstr ""
 
-#: commands.cc:3575
+#: commands.cc:3421
 msgid "PATH"
 msgstr ""
 
-#: commands.cc:3576
+#: commands.cc:3422
 msgid "print annotated copy of the file from REVISION"
 msgstr ""
 
-#: commands.cc:3593
+#: commands.cc:3444
 #, c-format
 msgid "no revision for file '%s' in database"
 msgstr ""
 
-#: commands.cc:3596
+#: commands.cc:3447
 #, c-format
 msgid "annotate file file_path '%s'\n"
 msgstr ""
 
-#: commands.cc:3605
-#, c-format
-msgid "no such file '%s' in revision '%s'\n"
-msgstr ""
-
-#: commands.cc:3607
+#: commands.cc:3457
 #, c-format
 msgid "annotate for file_id %s\n"
 msgstr ""
 
-#: commands.cc:3612
-msgid "[FILE]"
+#: commands.cc:3462
+msgid "[FILE] ..."
 msgstr ""
 
-#: commands.cc:3613
+#: commands.cc:3463
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
 msgstr ""
 
-#: commands.cc:3673
+#: commands.cc:3510
+#, c-format
+msgid "Unknown file '%s' for log command"
+msgstr ""
+
+#: commands.cc:3542
 #, c-format
 msgid "revision %s does not exist in db, skipping\n"
 msgstr ""
 
-#: commands.cc:3706
-#, c-format
-msgid "revision '%s' in '%s' maps to '%s' in %s\n"
-msgstr ""
-
-#: commands.cc:3780
+#: commands.cc:3648
 msgid "DIRECTORY"
 msgstr ""
 
-#: commands.cc:3780
+#: commands.cc:3648
 msgid "setup a new working copy directory"
 msgstr ""
 
-#: commands.cc:3786
+#: commands.cc:3654
 #, c-format
 msgid "need --branch argument for setup"
 msgstr ""
 
-#: commands.cc:3795
+#: commands.cc:3663
 msgid "automation"
 msgstr ""
 
-#: commands.cc:3796
+#: commands.cc:3664
 msgid ""
 "interface_version\n"
 "heads [BRANCH]\n"
@@ -1714,364 +1615,402 @@ msgid ""
 "stdio\n"
 "certs REV\n"
 "select SELECTOR\n"
-"get_file ID\n"
-"get_manifest [ID]\n"
-"get_revision [ID]\n"
+"get_file FILEID\n"
+"get_manifest_of [REVID]\n"
+"get_revision [REVID]\n"
 "keys\n"
 msgstr ""
 
-#: commands.cc:3816
+#: commands.cc:3684
 msgid "automation interface"
 msgstr ""
 
-#: commands.cc:3830 commands.cc:3846
+#: commands.cc:3698 commands.cc:3714
 msgid "vars"
 msgstr ""
 
-#: commands.cc:3830
+#: commands.cc:3698
 msgid "DOMAIN NAME VALUE"
 msgstr ""
 
-#: commands.cc:3831
+#: commands.cc:3699
 msgid "set the database variable NAME to VALUE, in domain DOMAIN"
 msgstr ""
 
-#: commands.cc:3846
+#: commands.cc:3714
 msgid "DOMAIN NAME"
 msgstr ""
 
-#: commands.cc:3847
+#: commands.cc:3715
 msgid "remove the database variable NAME in domain DOMAIN"
 msgstr ""
 
-#: commands.cc:3858
+#: commands.cc:3726
 #, c-format
 msgid "no var with name %s in domain %s"
 msgstr ""
 
-#: database_check.cc:109
+#: commands.cc:3730
+msgid "REVID"
+msgstr "ID-VERSÂO"
+
+#: commands.cc:3731
+msgid "dump the roster associated with the given REVID"
+msgstr ""
+
+#: database_check.cc:123
 #, c-format
 msgid "checking %d files\n"
 msgstr ""
 
-#: database_check.cc:111
+#: database_check.cc:125
 msgid "files"
 msgstr ""
 
-#: database_check.cc:116
+#: database_check.cc:130
 #, c-format
 msgid "checking file %s\n"
 msgstr ""
 
-#: database_check.cc:134
+#: database_check.cc:152
 #, c-format
-msgid "checking %d manifests\n"
+msgid "checking %d rosters, manifest pass\n"
 msgstr ""
 
-#: database_check.cc:136 rcs_import.cc:1258
-msgid "manifests"
+#: database_check.cc:154
+msgid "rosters"
 msgstr ""
 
-#: database_check.cc:141
+#: database_check.cc:160 database_check.cc:227
 #, c-format
-msgid "checking manifest %s\n"
-msgstr ""
+msgid "checking roster %s\n"
+msgstr "verificando roster %s\n"
 
-#: database_check.cc:153
+#: database_check.cc:173
 #, c-format
-msgid "error parsing manifest %s: %s"
+msgid "error parsing roster %s: %s"
+msgstr "erro lendo roster %s: %s"
+
+#: database_check.cc:219
+#, c-format
+msgid "checking %d rosters, marking pass\n"
 msgstr ""
 
-#: database_check.cc:190
+#: database_check.cc:221
+msgid "markings"
+msgstr ""
+
+#: database_check.cc:317
 #, c-format
 msgid "checking %d revisions\n"
 msgstr ""
 
-#: database_check.cc:192 database_check.cc:380 netsync.cc:3497
-#: rcs_import.cc:1257
+#: database_check.cc:319 database_check.cc:507 netsync.cc:3387
+#: rcs_import.cc:1227
 msgid "revisions"
 msgstr ""
 
-#: database_check.cc:197
+#: database_check.cc:324
 #, c-format
 msgid "checking revision %s\n"
 msgstr ""
 
-#: database_check.cc:209
+#: database_check.cc:336
 #, c-format
 msgid "error parsing revision %s: %s"
 msgstr ""
 
-#: database_check.cc:277
+#: database_check.cc:404
 #, c-format
 msgid "checked %d revisions after starting with %d\n"
 msgstr ""
 
-#: database_check.cc:289
+#: database_check.cc:416
 #, c-format
 msgid "checking %d ancestry edges\n"
 msgstr ""
 
-#: database_check.cc:291
+#: database_check.cc:418
 msgid "ancestry"
-msgstr ""
-
-#: database_check.cc:322
-#, c-format
-msgid "checking %d public keys\n"
-msgstr ""
-
-#: database_check.cc:324 netsync.cc:3501
-msgid "keys"
-msgstr ""
-
-#: database_check.cc:348
-#, c-format
-msgid "checking %d revision certs\n"
-msgstr ""
-
-#: database_check.cc:350 netsync.cc:3499
-msgid "certs"
-msgstr ""
-
-#: database_check.cc:378
-#, c-format
-msgid "checking local history of %d revisions\n"
-msgstr ""
-
-#: database_check.cc:413
-#, c-format
-msgid "file %s missing (%d manifest references)\n"
-msgstr ""
-
-#: database_check.cc:420
-#, c-format
-msgid "file %s unreferenced\n"
-msgstr ""
-
-#: database_check.cc:442
-#, c-format
-msgid "manifest %s missing (%d revision references)\n"
 msgstr ""
 
 #: database_check.cc:449
 #, c-format
-msgid "manifest %s unreferenced\n"
+msgid "checking %d public keys\n"
 msgstr ""
 
-#: database_check.cc:455
+#: database_check.cc:451 netsync.cc:3391
+msgid "keys"
+msgstr ""
+
+#: database_check.cc:475
 #, c-format
-msgid "manifest %s incomplete (%d missing files)\n"
+msgid "checking %d revision certs\n"
 msgstr ""
 
-#: database_check.cc:462
+#: database_check.cc:477 netsync.cc:3389
+msgid "certs"
+msgstr ""
+
+#: database_check.cc:505
 #, c-format
-msgid "manifest %s is not parseable (perhaps with unnormalized paths?)\n"
+msgid "checking local history of %d revisions\n"
 msgstr ""
 
-#: database_check.cc:469
+#: database_check.cc:543
 #, c-format
-msgid "manifest %s is not in normalized form\n"
+msgid "file %s missing (%d manifest references)\n"
 msgstr ""
 
-#: database_check.cc:493
+#: database_check.cc:550
 #, c-format
-msgid "revision %s missing (%d revision references; %d cert references)\n"
+msgid "file %s unreferenced\n"
 msgstr ""
 
-#: database_check.cc:500
+#: database_check.cc:571
+#, c-format
+msgid "roster %s unreferenced\n"
+msgstr ""
+
+#: database_check.cc:577
+#, c-format
+msgid "roster %s incomplete (%d missing files)\n"
+msgstr ""
+
+#: database_check.cc:584
+#, c-format
+msgid "roster %s incomplete (%d missing revisions)\n"
+msgstr ""
+
+#: database_check.cc:591
+#, c-format
+msgid "roster %s is not parseable (perhaps with unnormalized paths?)\n"
+msgstr ""
+
+#: database_check.cc:598
+#, c-format
+msgid "roster %s is not in normalized form\n"
+msgstr ""
+
+#: database_check.cc:623
+#, c-format
+msgid ""
+"revision %s missing (%d revision references; %d cert references; %d parent "
+"references; %d child references; %d roster references)\n"
+msgstr ""
+
+#: database_check.cc:631
 #, c-format
 msgid "revision %s incomplete (%d missing manifests)\n"
 msgstr ""
 
-#: database_check.cc:507
+#: database_check.cc:638
 #, c-format
 msgid "revision %s incomplete (%d missing revisions)\n"
 msgstr ""
 
-#: database_check.cc:514
+#: database_check.cc:645
 #, c-format
-msgid "revision %s incomplete (%d incomplete manifests)\n"
+msgid "revision %s incomplete (missing roster link)\n"
 msgstr ""
 
-#: database_check.cc:521
+#: database_check.cc:651
+#, c-format
+msgid "revision %s incomplete (missing roster)\n"
+msgstr ""
+
+#: database_check.cc:657
+#, c-format
+msgid "revision %s mismatched roster and manifest\n"
+msgstr ""
+
+#: database_check.cc:663
+#, c-format
+msgid "revision %s incomplete (incomplete roster)\n"
+msgstr ""
+
+#: database_check.cc:669
 #, c-format
 msgid ""
 "revision %s mismatched parents (%d ancestry parents; %d revision refs)\n"
 msgstr ""
 
-#: database_check.cc:530
+#: database_check.cc:678
 #, c-format
 msgid "revision %s mismatched children (%d ancestry children; %d parents)\n"
 msgstr ""
 
-#: database_check.cc:542
+#: database_check.cc:690
 #, c-format
 msgid "revision %s has bad history (%s)\n"
 msgstr ""
 
-#: database_check.cc:549
+#: database_check.cc:697
 #, c-format
 msgid "revision %s is not parseable (perhaps with unnormalized paths?)\n"
 msgstr ""
 
-#: database_check.cc:556
+#: database_check.cc:704
 #, c-format
 msgid "revision %s is not in normalized form\n"
 msgstr ""
 
-#: database_check.cc:573
+#: database_check.cc:721
 #, c-format
 msgid "key %s signed %d certs\n"
 msgstr ""
 
-#: database_check.cc:580
+#: database_check.cc:728
 #, c-format
 msgid "key %s missing (signed %d certs)\n"
 msgstr ""
 
-#: database_check.cc:613
+#: database_check.cc:761
 #, c-format
 msgid "revision %s unchecked signature in %s cert from missing key %s\n"
 msgstr ""
 
-#: database_check.cc:621
+#: database_check.cc:769
 #, c-format
 msgid "revision %s bad signature in %s cert from key %s\n"
 msgstr ""
 
-#: database_check.cc:636
+#: database_check.cc:784
 #, c-format
 msgid "revision %s missing %s cert\n"
 msgstr ""
 
-#: database_check.cc:645
+#: database_check.cc:793
 #, c-format
 msgid "revision %s mismatched certs (%d authors %d dates %d changelogs)\n"
 msgstr ""
 
-#: database_check.cc:717
+#: database_check.cc:874
 #, c-format
 msgid "%d missing files\n"
 msgstr ""
 
-#: database_check.cc:719
+#: database_check.cc:876
 #, c-format
 msgid "%d unreferenced files\n"
 msgstr ""
 
-#: database_check.cc:722
+#: database_check.cc:879
 #, c-format
-msgid "%d missing manifests\n"
+msgid "%d unreferenced rosters\n"
 msgstr ""
 
-#: database_check.cc:724
+#: database_check.cc:881
 #, c-format
-msgid "%d unreferenced manifests\n"
+msgid "%d incomplete rosters\n"
 msgstr ""
 
-#: database_check.cc:726
+#: database_check.cc:883
 #, c-format
-msgid "%d incomplete manifests\n"
+msgid "%d rosters not parseable (perhaps with invalid paths)\n"
 msgstr ""
 
-#: database_check.cc:728
+#: database_check.cc:886
 #, c-format
-msgid "%d manifests not parseable (perhaps with invalid paths)\n"
+msgid "%d rosters not in normalized form\n"
 msgstr ""
 
-#: database_check.cc:731
-#, c-format
-msgid "%d manifests not in normalized form\n"
-msgstr ""
-
-#: database_check.cc:734
+#: database_check.cc:889
 #, c-format
 msgid "%d missing revisions\n"
 msgstr ""
 
-#: database_check.cc:736
+#: database_check.cc:891
 #, c-format
 msgid "%d incomplete revisions\n"
 msgstr ""
 
-#: database_check.cc:738
+#: database_check.cc:893
 #, c-format
 msgid "%d mismatched parents\n"
 msgstr ""
 
-#: database_check.cc:740
+#: database_check.cc:895
 #, c-format
 msgid "%d mismatched children\n"
 msgstr ""
 
-#: database_check.cc:742
+#: database_check.cc:897
 #, c-format
 msgid "%d revisions with bad history\n"
 msgstr ""
 
-#: database_check.cc:744
+#: database_check.cc:899
 #, c-format
 msgid "%d revisions not parseable (perhaps with invalid paths)\n"
 msgstr ""
 
-#: database_check.cc:747
+#: database_check.cc:902
 #, c-format
 msgid "%d revisions not in normalized form\n"
 msgstr ""
 
-#: database_check.cc:750
+#: database_check.cc:906
+#, c-format
+msgid "%d unreferenced roster links\n"
+msgstr ""
+
+#: database_check.cc:909
+#, c-format
+msgid "%d missing rosters\n"
+msgstr ""
+
+#: database_check.cc:913
 #, c-format
 msgid "%d missing keys\n"
 msgstr ""
 
-#: database_check.cc:753
+#: database_check.cc:916
 #, c-format
 msgid "%d missing certs\n"
 msgstr ""
 
-#: database_check.cc:755
+#: database_check.cc:918
 #, c-format
 msgid "%d mismatched certs\n"
 msgstr ""
 
-#: database_check.cc:757
+#: database_check.cc:920
 #, c-format
 msgid "%d unchecked signatures due to missing keys\n"
 msgstr ""
 
-#: database_check.cc:759
+#: database_check.cc:922
 #, c-format
 msgid "%d bad signatures\n"
 msgstr ""
 
-#: database_check.cc:784
+#: database_check.cc:948
 #, c-format
-msgid ""
-"check complete: %d files; %d manifests; %d revisions; %d keys; %d certs\n"
+msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs\n"
 msgstr ""
 
-#: database_check.cc:790
+#: database_check.cc:954
 #, c-format
 msgid "total problems detected: %d (%d serious)\n"
 msgstr ""
 
-#: database_check.cc:792
+#: database_check.cc:956
 #, c-format
 msgid "serious problems detected"
 msgstr ""
 
-#: database_check.cc:794
+#: database_check.cc:958
 #, c-format
 msgid "minor problems detected\n"
 msgstr ""
 
-#: database_check.cc:796
+#: database_check.cc:960
 #, c-format
 msgid "database is good\n"
 msgstr ""
 
-#: database.cc:86
+#: database.cc:89
 #, c-format
 msgid ""
 "layout of database %s doesn't match this version of monotone\n"
@@ -2080,31 +2019,39 @@ msgid ""
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
 
-#: database.cc:147
+#: database.cc:108
+#, c-format
+msgid ""
+"database %s contains revisions but no rosters\n"
+"try 'monotone db rosterify' to add rosters\n"
+"(this is irreversible; you may want to make a backup copy first)"
+msgstr ""
+
+#: database.cc:169
 #, c-format
 msgid "unable to probe database version in file %s"
 msgstr ""
 
-#: database.cc:154
+#: database.cc:176
 #, c-format
 msgid "database %s is not an sqlite version 3 file, try dump and reload"
 msgstr ""
 
-#: database.cc:176 database.cc:187
+#: database.cc:198 database.cc:209
 #, c-format
 msgid "sqlite error: %d: %s"
 msgstr ""
 
-#: database.cc:181
+#: database.cc:203
 msgid "make sure database and containing directory are writeable"
 msgstr ""
 
-#: database.cc:226
+#: database.cc:248
 #, c-format
 msgid "could not initialize database: %s: already exists"
 msgstr ""
 
-#: database.cc:231
+#: database.cc:253
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -2112,26 +2059,26 @@ msgid ""
 "cancelling database creation"
 msgstr ""
 
-#: database.cc:353
+#: database.cc:375
 #, c-format
 msgid "cannot create %s; it already exists"
 msgstr ""
 
-#: database.cc:417
+#: database.cc:439
 #, c-format
 msgid ""
 "schema version    : %s\n"
 "counts:\n"
-"  full manifests  : %u\n"
-"  manifest deltas : %u\n"
+"  full rosters    : %u\n"
+"  roster deltas   : %u\n"
 "  full files      : %u\n"
 "  file deltas     : %u\n"
 "  revisions       : %u\n"
 "  ancestry edges  : %u\n"
 "  certs           : %u\n"
 "bytes:\n"
-"  full manifests  : %u\n"
-"  manifest deltas : %u\n"
+"  full rosters    : %u\n"
+"  roster deltas   : %u\n"
 "  full files      : %u\n"
 "  file deltas     : %u\n"
 "  revisions       : %u\n"
@@ -2140,255 +2087,275 @@ msgid ""
 "  total           : %u\n"
 msgstr ""
 
-#: database.cc:471
+#: database.cc:493
 #, c-format
 msgid "database schema version: %s"
 msgstr ""
 
-#: database.cc:490
+#: database.cc:512
 msgid "mcerts"
 msgstr ""
 
-#: database.cc:491
+#: database.cc:513
 msgid "pubkeys"
 msgstr ""
 
-#: database.cc:492
+#: database.cc:514
 msgid "privkeys"
 msgstr ""
 
-#: database.cc:536
+#: database.cc:558
 #, c-format
 msgid "statement cache statistics\n"
 msgstr ""
 
-#: database.cc:537
+#: database.cc:559
 #, c-format
 msgid "prepared %d statements\n"
 msgstr ""
 
-#: database.cc:541
+#: database.cc:563
 #, c-format
 msgid "%d executions of %s\n"
 msgstr ""
 
-#: database.cc:594
+#: database.cc:616
 #, c-format
 msgid "prepared statement %s\n"
 msgstr ""
 
-#: database.cc:598
+#: database.cc:620
 #, c-format
 msgid "multiple statements in query: %s\n"
 msgstr ""
 
-#: database.cc:604
+#: database.cc:626
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
 msgstr ""
 
-#: database.cc:610
+#: database.cc:632
 #, c-format
 msgid "binding %d parameters for %s\n"
 msgstr ""
 
-#: database.cc:624
+#: database.cc:646
 #, c-format
 msgid "binding %d with value '%s'\n"
 msgstr ""
 
-#: database.cc:640
+#: database.cc:662
 #, c-format
 msgid "null result in query: %s\n"
 msgstr ""
 
-#: database.cc:658
+#: database.cc:680
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
 msgstr ""
 
-#: database.cc:668
+#: database.cc:690
 #, c-format
 msgid "cannot change filename to %s while db is open"
 msgstr ""
 
-#: database.cc:686
+#: database.cc:708
 #, c-format
 msgid ""
 "Attempt to start exclusive transaction within non-exclusive transaction."
 msgstr ""
 
-#: database.cc:880
+#: database.cc:902
 #, c-format
 msgid "version cache expiring %s\n"
 msgstr ""
 
-#: database.cc:902
+#: database.cc:924
 #, c-format
 msgid "version cache hit on %s\n"
 msgstr ""
 
-#: database.cc:971
+#: database.cc:993
 #, c-format
 msgid "reconstructing %s in %s\n"
 msgstr ""
 
-#: database.cc:1077
+#: database.cc:1099
 #, c-format
 msgid "following delta %s -> %s\n"
 msgstr ""
 
-#: database.cc:1499
+#: database.cc:1624
 #, c-format
 msgid "Killing revision %s locally\n"
 msgstr ""
 
-#: database.cc:1511
+#: database.cc:1660
 #, c-format
 msgid "Deleting all references to branch %s\n"
 msgstr ""
 
-#: database.cc:1524
+#: database.cc:1673
 #, c-format
 msgid "Deleting all references to tag %s\n"
 msgstr ""
 
-#: database.cc:1625
+#: database.cc:1774
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr ""
 
-#: database.cc:2253
+#: database.cc:2402
 #, c-format
 msgid "after get_branch_heads for %s, heads has %d entries\n"
 msgstr ""
 
-#: database.cc:2276
+#: database.cc:2425
 #, c-format
 msgid "processing selector type %d with i->second '%s'\n"
 msgstr ""
 
-#: database.cc:2283
+#: database.cc:2432
 #, c-format
 msgid "limiting to current branch '%s'\n"
 msgstr ""
 
-#: database.cc:2513
+#: database.cc:2885
 #, c-format
 msgid "no database specified"
 msgstr ""
 
-#: database.cc:2521
+#: database.cc:2893
 #, c-format
 msgid "database %s does not exist"
 msgstr ""
 
-#: database.cc:2522
+#: database.cc:2894
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr ""
 
-#: database.cc:2547
+#: database.cc:2919
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr ""
 
-#: database.cc:2592
+#: database.cc:2964
 #, c-format
 msgid "attempting to rollback and close %d databases"
 msgstr ""
 
-#: database.cc:2601
+#: database.cc:2973
 #, c-format
 msgid "exec_err = %d, close_err = %d"
 msgstr ""
 
-#: diff_patch.cc:209
+#: diff_patch.cc:214
 #, c-format
 msgid "exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n"
 msgstr ""
 
-#: diff_patch.cc:300
+#: diff_patch.cc:305
 #, c-format
 msgid "conflicting edits: %s %d[%d] '%s' vs. %s %d[%d] '%s'\n"
 msgstr ""
 
-#: diff_patch.cc:328
+#: diff_patch.cc:333
 #, c-format
 msgid "conflicting edits: [%s %d %d] vs. [%s %d %d]\n"
 msgstr ""
 
-#: diff_patch.cc:376
+#: diff_patch.cc:381
 #, c-format
 msgid "calculating left edit script on %d -> %d lines\n"
 msgstr ""
 
-#: diff_patch.cc:384
+#: diff_patch.cc:389
 #, c-format
 msgid "calculating right edit script on %d -> %d lines\n"
 msgstr ""
 
-#: diff_patch.cc:392
+#: diff_patch.cc:397
 #, c-format
 msgid "calculating left extents on %d edits\n"
 msgstr ""
 
-#: diff_patch.cc:397
+#: diff_patch.cc:402
 #, c-format
 msgid "calculating right extents on %d edits\n"
 msgstr ""
 
-#: diff_patch.cc:402
+#: diff_patch.cc:407
 #, c-format
 msgid "normalizing %d right extents\n"
 msgstr ""
 
-#: diff_patch.cc:405
+#: diff_patch.cc:410
 #, c-format
 msgid "normalizing %d left extents\n"
 msgstr ""
 
-#: diff_patch.cc:411
+#: diff_patch.cc:416
 #, c-format
 msgid "conflicting prefixes\n"
 msgstr ""
 
-#: diff_patch.cc:417
+#: diff_patch.cc:422
 #, c-format
 msgid "conflicting suffixes\n"
 msgstr ""
 
-#: diff_patch.cc:421
+#: diff_patch.cc:426
 #, c-format
 msgid "merging %d left, %d right extents\n"
 msgstr ""
 
-#: diff_patch.cc:452
+#: diff_patch.cc:457
 #, c-format
 msgid "conflict detected. no merge.\n"
 msgstr ""
 
-#: diff_patch.cc:472
+#: diff_patch.cc:488
 #, c-format
 msgid "recording successful merge of %s <-> %s into %s\n"
 msgstr ""
 
-#: diff_patch.cc:530
+#: diff_patch.cc:561
+#, c-format
+msgid "temporarily recording merge of %s <-> %s into %s\n"
+msgstr ""
+
+#: diff_patch.cc:588
+#, c-format
+msgid "file '%s' does not exist in working copy"
+msgstr ""
+
+#: diff_patch.cc:589
+#, c-format
+msgid "'%s' in working copy is a directory, not a file"
+msgstr ""
+
+#: diff_patch.cc:593
+#, c-format
+msgid "file %s in working copy has id %s, wanted %s"
+msgstr ""
+
+#: diff_patch.cc:653
 #, c-format
 msgid "trying to merge %s <-> %s (ancestor: %s)\n"
 msgstr ""
 
-#: diff_patch.cc:535 diff_patch.cc:640
+#: diff_patch.cc:658 diff_patch.cc:764
 #, c-format
 msgid "files are identical\n"
 msgstr ""
 
-#: diff_patch.cc:577
+#: diff_patch.cc:700
 #, c-format
 msgid "internal 3-way merged ok\n"
 msgstr ""
 
-#: diff_patch.cc:591
+#: diff_patch.cc:714
 #, c-format
 msgid ""
 "help required for 3-way merge\n"
@@ -2398,17 +2365,17 @@ msgid ""
 "[  merged] %s\n"
 msgstr ""
 
-#: diff_patch.cc:608
+#: diff_patch.cc:731
 #, c-format
 msgid "lua merge3 hook merged ok\n"
 msgstr ""
 
-#: diff_patch.cc:635
+#: diff_patch.cc:759
 #, c-format
 msgid "trying to merge %s <-> %s\n"
 msgstr ""
 
-#: diff_patch.cc:651
+#: diff_patch.cc:775
 #, c-format
 msgid ""
 "help required for 2-way merge\n"
@@ -2417,29 +2384,9 @@ msgid ""
 "[  merged] %s\n"
 msgstr ""
 
-#: diff_patch.cc:665
+#: diff_patch.cc:789
 #, c-format
 msgid "lua merge2 hook merged ok\n"
-msgstr ""
-
-#: diff_patch.cc:696
-#, c-format
-msgid "temporarily recording merge of %s <-> %s into %s\n"
-msgstr ""
-
-#: diff_patch.cc:713
-#, c-format
-msgid "file '%s' does not exist in working copy"
-msgstr ""
-
-#: diff_patch.cc:714
-#, c-format
-msgid "'%s' in working copy is a directory, not a file"
-msgstr ""
-
-#: diff_patch.cc:718
-#, c-format
-msgid "file %s in working copy has id %s, wanted %s"
 msgstr ""
 
 #: file_io.cc:116
@@ -2471,97 +2418,119 @@ msgstr ""
 msgid "failed to create directory '%s' for '%s'"
 msgstr ""
 
-#: file_io.cc:213
+#: file_io.cc:219
+#, c-format
+msgid ""
+"could not remove '%s'\n"
+"%s"
+msgstr ""
+
+#: file_io.cc:229
 #, c-format
 msgid "file to delete '%s' does not exist"
 msgstr ""
 
-#: file_io.cc:214
+#: file_io.cc:230
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
 msgstr ""
 
-#: file_io.cc:222
+#: file_io.cc:238
+#, c-format
+msgid "directory to delete '%s' does not exist"
+msgstr "diretório '%s' a ser apagado não existe"
+
+#: file_io.cc:239
+#, c-format
+msgid "directory to delete, '%s', is not a directory but a file"
+msgstr "diretório '%s' a ser apagado não é um diretório, mas um arquivo"
+
+#: file_io.cc:246
+#, c-format
+msgid "object to delete, '%s', does not exist"
+msgstr "objeto '%s' a ser apagado não existe"
+
+#: file_io.cc:254
 #, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr ""
 
-#: file_io.cc:223
+#: file_io.cc:255
 #, c-format
 msgid "directory to delete, '%s', is a file"
 msgstr ""
 
-#: file_io.cc:232
+#: file_io.cc:264
 #, c-format
 msgid "rename source file '%s' does not exist"
 msgstr ""
 
-#: file_io.cc:233
+#: file_io.cc:265
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
 msgstr ""
 
-#: file_io.cc:236 file_io.cc:249
+#: file_io.cc:268 file_io.cc:281
 #, c-format
 msgid "rename target '%s' already exists"
 msgstr ""
 
-#: file_io.cc:245
+#: file_io.cc:277
 #, c-format
 msgid "rename source dir '%s' does not exist"
 msgstr ""
 
-#: file_io.cc:246
+#: file_io.cc:278
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr ""
 
-#: file_io.cc:260
+#: file_io.cc:292
 #, c-format
 msgid "rename source path '%s' does not exist"
 msgstr ""
 
-#: file_io.cc:275
+#: file_io.cc:307
 #, c-format
 msgid "file %s does not exist"
 msgstr ""
 
-#: file_io.cc:276
+#: file_io.cc:308
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
 msgstr ""
 
-#: file_io.cc:280
+#: file_io.cc:312
 #, c-format
 msgid "cannot open file %s for reading"
 msgstr ""
 
-#: file_io.cc:347
+#: file_io.cc:379
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr ""
 
-#: file_io.cc:378
+#: file_io.cc:410
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr ""
 
-#: file_io.cc:386
+#: file_io.cc:418
 #, c-format
 msgid "cannot open file %s for writing"
 msgstr ""
 
-#: file_io.cc:477
+#: file_io.cc:509
 #, c-format
 msgid "ignoring book keeping entry %s\n"
 msgstr ""
 
-#: file_io.cc:497
+#: file_io.cc:530
 #, c-format
 msgid "caught runtime error %s constructing file path for %s\n"
 msgstr ""
 
-#: file_io.cc:521
+#: file_io.cc:569
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr ""
@@ -2708,57 +2677,57 @@ msgstr ""
 msgid "Directory '%s' does not exists"
 msgstr ""
 
-#: lua.cc:586 rcs_import.cc:1248
+#: lua.cc:586 rcs_import.cc:1218
 #, c-format
 msgid "'%s' is not a directory"
 msgstr ""
 
-#: lua.cc:605 lua.cc:900
+#: lua.cc:605 lua.cc:907
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr ""
 
-#: lua.cc:897 lua.cc:910
+#: lua.cc:904 lua.cc:917
 #, c-format
 msgid "opening rcfile '%s' ...\n"
 msgstr ""
 
-#: lua.cc:901 lua.cc:913
+#: lua.cc:908 lua.cc:920
 #, c-format
 msgid "'%s' is ok\n"
 msgstr ""
 
-#: lua.cc:912
+#: lua.cc:919
 #, c-format
 msgid "lua error while loading '%s'"
 msgstr ""
 
-#: lua.cc:917
+#: lua.cc:924
 #, c-format
 msgid "rcfile '%s' does not exist"
 msgstr ""
 
-#: lua.cc:918
+#: lua.cc:925
 #, c-format
 msgid "skipping nonexistent rcfile '%s'\n"
 msgstr ""
 
-#: lua.cc:1363
+#: lua.cc:1370
 #, c-format
 msgid "calling attr_init_function for %s"
 msgstr ""
 
-#: lua.cc:1367
+#: lua.cc:1374
 #, c-format
 msgid "  calling an attr_init_function for %s"
 msgstr ""
 
-#: lua.cc:1380
+#: lua.cc:1387
 #, c-format
 msgid "  added attr %s = %s"
 msgstr ""
 
-#: lua.cc:1384
+#: lua.cc:1391
 #, c-format
 msgid "  no attr added"
 msgstr ""
@@ -2771,33 +2740,17 @@ msgstr ""
 msgid "terminated by signal"
 msgstr ""
 
-#: manifest.cc:55
+#: manifest.cc:56
 #, c-format
 msgid "scanning file %s\n"
 msgstr ""
 
-#: manifest.cc:188
-#, c-format
-msgid "missing %s"
-msgstr ""
-
-#: manifest.cc:201
-#, c-format
-msgid ""
-"%d missing files\n"
-"to restore consistency, on each missing file run either\n"
-"'monotone drop FILE' to remove it permanently, or\n"
-"'monotone revert FILE' to restore it\n"
-"or to handle all at once, simple 'monotone drop --missing'\n"
-"or 'monotone revert --missing'"
-msgstr ""
-
-#: merkle_tree.cc:281
+#: merkle_tree.cc:278
 #, c-format
 msgid "node level is %d, exceeds maximum %d"
 msgstr ""
 
-#: merkle_tree.cc:317
+#: merkle_tree.cc:314
 #, c-format
 msgid "mismatched node hash value %s, expected %s"
 msgstr ""
@@ -2883,7 +2836,7 @@ msgid "perform the associated file operation"
 msgstr ""
 
 #: monotone.cc:71
-msgid "address:port to listen on (default :5253)"
+msgid "address:port to listen on (default :4691)"
 msgstr ""
 
 #: monotone.cc:72
@@ -3027,34 +2980,34 @@ msgid ""
 "Changes since base revision: %s\n"
 msgstr ""
 
-#: netcmd.cc:42
+#: netcmd.cc:40
 #, c-format
 msgid "unknown item type 0x%x for '%s'"
 msgstr ""
 
-#: netcmd.cc:94
+#: netcmd.cc:92
 #, c-format
 msgid "protocol version mismatch: wanted '%d' got '%d'"
 msgstr ""
 
-#: netcmd.cc:119
+#: netcmd.cc:117
 #, c-format
 msgid "unknown netcmd code 0x%x"
 msgstr ""
 
-#: netcmd.cc:130
+#: netcmd.cc:128
 #, c-format
 msgid "oversized payload of '%d' bytes"
 msgstr ""
 
-#: netcmd.cc:159
+#: netcmd.cc:157
 #, c-format
 msgid ""
 "bad HMAC checksum (got %s, wanted %s)\n"
 "this suggests data was corrupted in transit\n"
 msgstr ""
 
-#: netcmd.cc:235 netcmd.cc:281
+#: netcmd.cc:233 netcmd.cc:279
 #, c-format
 msgid "unknown role specifier %d"
 msgstr ""
@@ -3089,233 +3042,223 @@ msgstr ""
 msgid "check of '%s' failed"
 msgstr ""
 
-#: netsync.cc:696
+#: netsync.cc:689
 msgid "bytes in"
 msgstr ""
 
-#: netsync.cc:698
+#: netsync.cc:691
 msgid "bytes out"
 msgstr ""
 
-#: netsync.cc:702 netsync.cc:719
+#: netsync.cc:695 netsync.cc:712
 msgid "revs written"
 msgstr ""
 
-#: netsync.cc:704
+#: netsync.cc:697
 msgid "certs in"
 msgstr ""
 
-#: netsync.cc:706 netsync.cc:721
+#: netsync.cc:699 netsync.cc:714
 msgid "revs in"
 msgstr ""
 
-#: netsync.cc:711
+#: netsync.cc:704
 msgid "certs out"
 msgstr ""
 
-#: netsync.cc:713 netsync.cc:723
+#: netsync.cc:706 netsync.cc:716
 msgid "revs out"
 msgstr ""
 
-#: netsync.cc:781
+#: netsync.cc:774
 #, c-format
 msgid "all epochs processed, opening database valve\n"
 msgstr ""
 
-#: netsync.cc:878
+#: netsync.cc:871
 #, c-format
 msgid "dropping outgoing netcmd (because we're in error unwind mode)\n"
 msgstr ""
 
-#: netsync.cc:902
-#, c-format
-msgid "error: %s\n"
-msgstr ""
-
-#: netsync.cc:910
-#, c-format
-msgid "analyzing %d entries in manifest\n"
-msgstr ""
-
-#: netsync.cc:949
+#: netsync.cc:916
 #, c-format
 msgid "analyzing %d ancestry edges\n"
 msgstr ""
 
-#: netsync.cc:971
+#: netsync.cc:938
 #, c-format
 msgid "intermediate set_difference heads size %d"
 msgstr ""
 
-#: netsync.cc:1007
+#: netsync.cc:974
 #, c-format
 msgid "Dropping branch certs for unwanted branch %s"
 msgstr ""
 
-#: netsync.cc:1024
+#: netsync.cc:991
 #, c-format
 msgid "after step 2, heads size %d"
 msgstr ""
 
-#: netsync.cc:1048
+#: netsync.cc:1015
 #, c-format
 msgid "after step 3, heads size %d"
 msgstr ""
 
-#: netsync.cc:1068
+#: netsync.cc:1035
 #, c-format
 msgid "analyze_ancestry_graph"
 msgstr ""
 
-#: netsync.cc:1071
+#: netsync.cc:1038
 #, c-format
 msgid "not all done in analyze_ancestry_graph"
 msgstr ""
 
-#: netsync.cc:1077
+#: netsync.cc:1044
 #, c-format
 msgid "already analyzed_ancestry in analyze_ancestry_graph"
 msgstr ""
 
-#: netsync.cc:1081
+#: netsync.cc:1048
 #, c-format
 msgid "analyze_ancestry_graph fetching"
 msgstr ""
 
-#: netsync.cc:1116
+#: netsync.cc:1083
 #, c-format
 msgid "read %d bytes from fd %d (peer %s)\n"
 msgstr ""
 
-#: netsync.cc:1119
+#: netsync.cc:1086
 #, c-format
 msgid "in error unwind mode, so throwing them into the bit bucket\n"
 msgstr ""
 
-#: netsync.cc:1151
+#: netsync.cc:1118
 #, c-format
 msgid "wrote %d bytes to fd %d (peer %s)\n"
 msgstr ""
 
-#: netsync.cc:1159
+#: netsync.cc:1126
 #, c-format
 msgid "finished flushing output queue in error unwind mode, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:1173
+#: netsync.cc:1140
 #, c-format
 msgid "queueing 'bye' command\n"
 msgstr ""
 
-#: netsync.cc:1183
+#: netsync.cc:1150
 #, c-format
 msgid "queueing 'error' command\n"
 msgstr ""
 
-#: netsync.cc:1196
+#: netsync.cc:1163
 #, c-format
 msgid "queueing 'done' command for %s level %s\n"
 msgstr ""
 
-#: netsync.cc:1265
+#: netsync.cc:1232
 #, c-format
 msgid "queueing request for refinement of %s node '%s', level %d\n"
 msgstr ""
 
-#: netsync.cc:1283
+#: netsync.cc:1250
 #, c-format
 msgid "not queueing request for %s '%s' as we are in pure source role\n"
 msgstr ""
 
-#: netsync.cc:1290
+#: netsync.cc:1257
 #, c-format
 msgid "not queueing request for %s '%s' as we already requested it\n"
 msgstr ""
 
-#: netsync.cc:1295
+#: netsync.cc:1262
 #, c-format
 msgid "queueing request for data of %s item '%s'\n"
 msgstr ""
 
-#: netsync.cc:1319
+#: netsync.cc:1286
 #, c-format
 msgid ""
 "not queueing request for %s delta '%s' -> '%s' as we are in pure source "
 "role\n"
 msgstr ""
 
-#: netsync.cc:1326
+#: netsync.cc:1293
 #, c-format
 msgid ""
 "not queueing request for %s delta '%s' -> '%s' as we already requested the "
 "target\n"
 msgstr ""
 
-#: netsync.cc:1331
+#: netsync.cc:1298
 #, c-format
 msgid "queueing request for contents of %s delta '%s' -> '%s'\n"
 msgstr ""
 
-#: netsync.cc:1351
+#: netsync.cc:1318
 #, c-format
 msgid "not queueing %s data for '%s' as we are in pure sink role\n"
 msgstr ""
 
-#: netsync.cc:1356
+#: netsync.cc:1323
 #, c-format
 msgid "queueing %d bytes of data for %s item '%s'\n"
 msgstr ""
 
-#: netsync.cc:1390
+#: netsync.cc:1357
 #, c-format
 msgid "not queueing %s delta '%s' -> '%s' as we are in pure sink role\n"
 msgstr ""
 
-#: netsync.cc:1395
+#: netsync.cc:1362
 #, c-format
 msgid "queueing %s delta '%s' -> '%s'\n"
 msgstr ""
 
-#: netsync.cc:1413
+#: netsync.cc:1380
 #, c-format
 msgid ""
 "not queueing note of nonexistence of %s item '%s' as we are in pure sink "
 "role\n"
 msgstr ""
 
-#: netsync.cc:1418
+#: netsync.cc:1385
 #, c-format
 msgid "queueing note of nonexistance of %s item '%s'\n"
 msgstr ""
 
-#: netsync.cc:1430
+#: netsync.cc:1397
 #, c-format
 msgid "received 'bye' netcmd\n"
 msgstr ""
 
-#: netsync.cc:1438
+#: netsync.cc:1405
 #, c-format
 msgid "received network error: %s"
 msgstr ""
 
-#: netsync.cc:1455
+#: netsync.cc:1422
 #, c-format
 msgid "received 'done' for empty %s level %d, marking as complete\n"
 msgstr ""
 
-#: netsync.cc:1477
+#: netsync.cc:1444
 #, c-format
 msgid ""
 "received 'done' for %s level %d, which had refinements; sending echo of done "
 "for level %d\n"
 msgstr ""
 
-#: netsync.cc:1510
+#: netsync.cc:1477
 #, c-format
 msgid "server key has name %s, hash %s\n"
 msgstr ""
 
-#: netsync.cc:1518
+#: netsync.cc:1485
 #, c-format
 msgid ""
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
@@ -3328,12 +3271,12 @@ msgid ""
 "'monotone unset %s %s' overrides this check\n"
 msgstr ""
 
-#: netsync.cc:1528
+#: netsync.cc:1495
 #, c-format
 msgid "server key changed"
 msgstr ""
 
-#: netsync.cc:1533
+#: netsync.cc:1500
 #, c-format
 msgid ""
 "first time connecting to server %s\n"
@@ -3341,736 +3284,665 @@ msgid ""
 "their key's fingerprint: %s\n"
 msgstr ""
 
-#: netsync.cc:1540
+#: netsync.cc:1507
 #, c-format
 msgid "saving public key for %s to database\n"
 msgstr ""
 
-#: netsync.cc:1547
+#: netsync.cc:1514
 #, c-format
 msgid "received 'hello' netcmd from server '%s' with nonce '%s'\n"
 msgstr ""
 
-#: netsync.cc:1628
+#: netsync.cc:1595
 #, c-format
 msgid "rejected attempt at anonymous connection for write\n"
 msgstr ""
 
-#: netsync.cc:1635
+#: netsync.cc:1602
 #, c-format
 msgid "rejected attempt at anonymous connection while running as sink\n"
 msgstr ""
 
-#: netsync.cc:1652
+#: netsync.cc:1619
 #, c-format
 msgid "anonymous access to branch '%s' denied by server"
 msgstr ""
 
-#: netsync.cc:1657
+#: netsync.cc:1624
 #, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'\n"
 msgstr ""
 
-#: netsync.cc:1689
+#: netsync.cc:1656
 #, c-format
 msgid "detected replay attack in auth netcmd\n"
 msgstr ""
 
-#: netsync.cc:1714
+#: netsync.cc:1681
 #, c-format
 msgid "remote public key hash '%s' is unknown\n"
 msgstr ""
 
-#: netsync.cc:1731
+#: netsync.cc:1698
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' while running as pure "
 "sink\n"
 msgstr ""
 
-#: netsync.cc:1747
+#: netsync.cc:1714
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'\n"
 msgstr ""
 
-#: netsync.cc:1749
+#: netsync.cc:1716
 #, c-format
 msgid "access to branch '%s' denied by server"
 msgstr ""
 
-#: netsync.cc:1757
+#: netsync.cc:1724
 #, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'\n"
 msgstr ""
 
-#: netsync.cc:1766
+#: netsync.cc:1733
 #, c-format
 msgid ""
 "denied '%s' write permission for '%s' excluding '%s' while running as pure "
 "source\n"
 msgstr ""
 
-#: netsync.cc:1774
+#: netsync.cc:1741
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'\n"
 msgstr ""
 
-#: netsync.cc:1780
+#: netsync.cc:1747
 #, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'\n"
 msgstr ""
 
-#: netsync.cc:1795
+#: netsync.cc:1762
 #, c-format
 msgid "client signature OK, accepting authentication\n"
 msgstr ""
 
-#: netsync.cc:1817
+#: netsync.cc:1784
 #, c-format
 msgid "bad client signature\n"
 msgstr ""
 
-#: netsync.cc:1832
+#: netsync.cc:1799
 #, c-format
 msgid ""
 "received 'confirm' netcmd from server '%s' for pattern '%s' exclude '%s' in %"
 "s mode\n"
 msgstr ""
 
-#: netsync.cc:1834 netsync.cc:2831 netsync.cc:2862
+#: netsync.cc:1801 netsync.cc:2716 netsync.cc:2747
 msgid "source and sink"
 msgstr ""
 
-#: netsync.cc:1835 netsync.cc:2832 netsync.cc:2863
+#: netsync.cc:1802 netsync.cc:2717 netsync.cc:2748
 msgid "sink"
 msgstr ""
 
-#: netsync.cc:1835 netsync.cc:2832 netsync.cc:2863
+#: netsync.cc:1802 netsync.cc:2717 netsync.cc:2748
 msgid "source"
 msgstr ""
 
-#: netsync.cc:1848
+#: netsync.cc:1815
 #, c-format
 msgid "server signature OK, accepting authentication\n"
 msgstr ""
 
-#: netsync.cc:1853
+#: netsync.cc:1820
 #, c-format
 msgid "bad server signature\n"
 msgstr ""
 
-#: netsync.cc:1858
+#: netsync.cc:1825
 #, c-format
 msgid "unknown server key\n"
 msgstr ""
 
-#: netsync.cc:1927
+#: netsync.cc:1892
 #, c-format
 msgid "epoch with hash '%s' does not exist in our database"
 msgstr ""
 
-#: netsync.cc:1937
+#: netsync.cc:1902
 #, c-format
 msgid "public key '%s' is also called '%s'\n"
 msgstr ""
 
-#: netsync.cc:1956
+#: netsync.cc:1921
 #, c-format
 msgid "revision '%s' does not exist in our database"
 msgstr ""
 
-#: netsync.cc:1970
-#, c-format
-msgid "manifest '%s' does not exist in our database"
-msgstr ""
-
-#: netsync.cc:1984
+#: netsync.cc:1935
 #, c-format
 msgid "file '%s' does not exist in our database"
 msgstr ""
 
-#: netsync.cc:1998
+#: netsync.cc:1949
 #, c-format
 msgid "cert '%s' does not exist in our database"
 msgstr ""
 
-#: netsync.cc:2017
+#: netsync.cc:1968
 #, c-format
 msgid "received 'refine' netcmd on %s node '%s', level %d\n"
 msgstr ""
 
-#: netsync.cc:2022
+#: netsync.cc:1973
 #, c-format
 msgid "no corresponding %s merkle node for prefix '%s', level %d\n"
 msgstr ""
 
-#: netsync.cc:2077
+#: netsync.cc:2028
 #, c-format
 msgid "found corresponding %s merkle node for prefix '%s', level %d\n"
 msgstr ""
 
-#: netsync.cc:2408
+#: netsync.cc:2359
 #, c-format
 msgid "received 'send_data' netcmd requesting %s '%s'\n"
 msgstr ""
 
-#: netsync.cc:2436
+#: netsync.cc:2387
 #, c-format
 msgid "received 'send_delta' netcmd requesting %s edge '%s' -> '%s'\n"
 msgstr ""
 
-#: netsync.cc:2490
+#: netsync.cc:2417
 #, c-format
 msgid "delta requested for item type %s\n"
 msgstr ""
 
-#: netsync.cc:2513
+#: netsync.cc:2440
 #, c-format
 msgid "epoch '%s' already exists in our database\n"
 msgstr ""
 
-#: netsync.cc:2520
+#: netsync.cc:2447
 #, c-format
 msgid "received epoch %s for branch %s\n"
 msgstr ""
 
-#: netsync.cc:2527
+#: netsync.cc:2454
 #, c-format
 msgid "branch %s has no epoch; setting epoch to %s\n"
 msgstr ""
 
-#: netsync.cc:2533
+#: netsync.cc:2460
 #, c-format
 msgid "branch %s already has an epoch; checking\n"
 msgstr ""
 
-#: netsync.cc:2544
+#: netsync.cc:2471
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
 msgstr ""
 
-#: netsync.cc:2555
+#: netsync.cc:2482
 #, c-format
 msgid "public key '%s' already exists in our database\n"
 msgstr ""
 
-#: netsync.cc:2564
+#: netsync.cc:2491
 #, c-format
 msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
 msgstr ""
 
-#: netsync.cc:2573
+#: netsync.cc:2500
 #, c-format
 msgid "cert '%s' already exists in our database\n"
 msgstr ""
 
-#: netsync.cc:2581
+#: netsync.cc:2508
 #, c-format
 msgid "hash check failed for revision cert '%s'"
 msgstr ""
 
-#: netsync.cc:2597
+#: netsync.cc:2524
 #, c-format
 msgid "revision '%s' already exists in our database\n"
 msgstr ""
 
-#: netsync.cc:2600
+#: netsync.cc:2527
 #, c-format
 msgid "received revision '%s'\n"
 msgstr ""
 
-#: netsync.cc:2619
-#, c-format
-msgid "manifest version '%s' already exists in our database\n"
-msgstr ""
-
-#: netsync.cc:2634
+#: netsync.cc:2546
 #, c-format
 msgid "file version '%s' already exists in our database\n"
 msgstr ""
 
-#: netsync.cc:2720
+#: netsync.cc:2605
 #, c-format
 msgid "ignoring delta received for item type %s\n"
 msgstr ""
 
-#: netsync.cc:2734
+#: netsync.cc:2619
 #, c-format
 msgid "received 'nonexistant' netcmd for %s '%s'\n"
 msgstr ""
 
-#: netsync.cc:2746
+#: netsync.cc:2631
 #, c-format
 msgid "Received warning from usher: %s"
 msgstr ""
 
-#: netsync.cc:2748
+#: netsync.cc:2633
 #, c-format
 msgid "Received greeting from usher: %s"
 msgstr ""
 
-#: netsync.cc:2753
+#: netsync.cc:2638
 #, c-format
 msgid "Sent reply."
 msgstr ""
 
-#: netsync.cc:2828
+#: netsync.cc:2713
 #, c-format
 msgid ""
 "received 'anonymous' netcmd from client for pattern '%s' excluding '%s' in %"
 "s mode\n"
 msgstr ""
 
-#: netsync.cc:2859
+#: netsync.cc:2744
 #, c-format
 msgid ""
 "received 'auth(hmac)' netcmd from client '%s' for pattern '%s' exclude '%s' "
 "in %s mode with nonce1 '%s'\n"
 msgstr ""
 
-#: netsync.cc:3031
+#: netsync.cc:2918
 #, c-format
 msgid "processing %d byte input buffer from peer %s\n"
 msgstr ""
 
-#: netsync.cc:3034
+#: netsync.cc:2921
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch\n"
 msgstr ""
 
-#: netsync.cc:3038
+#: netsync.cc:2925
 #, c-format
 msgid "failed to process '%s' packet"
 msgstr ""
 
-#: netsync.cc:3043 netsync.cc:3083 netsync.cc:3110
+#: netsync.cc:2930 netsync.cc:2977 netsync.cc:3002
 #, c-format
 msgid "protocol error while processing peer %s: '%s'\n"
 msgstr ""
 
-#: netsync.cc:3068
+#: netsync.cc:2935
+#, c-format
+msgid "error: %s\n"
+msgstr ""
+
+#: netsync.cc:2962
 #, c-format
 msgid "connecting to %s\n"
 msgstr ""
 
-#: netsync.cc:3096
+#: netsync.cc:2989
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:3118
+#: netsync.cc:3009
 #, c-format
 msgid "read from fd %d (peer %s) closed OK after goodbye\n"
 msgstr ""
 
-#: netsync.cc:3120
+#: netsync.cc:3011
 #, c-format
 msgid "read from fd %d (peer %s) failed, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:3130
+#: netsync.cc:3021
 #, c-format
 msgid "write on fd %d (peer %s) closed OK after goodbye\n"
 msgstr ""
 
-#: netsync.cc:3132
+#: netsync.cc:3023
 #, c-format
 msgid "write on fd %d (peer %s) failed, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:3139
+#: netsync.cc:3030
 #, c-format
 msgid "got OOB data on fd %d (peer %s), disconnecting\n"
 msgstr ""
 
-#: netsync.cc:3148
+#: netsync.cc:3038
 #, c-format
 msgid "terminated exchange with %s\n"
 msgstr ""
 
-#: netsync.cc:3156
+#: netsync.cc:3046
 #, c-format
 msgid "successful exchange with %s\n"
 msgstr ""
 
-#: netsync.cc:3177
+#: netsync.cc:3067
 #, c-format
 msgid "fd %d is armed\n"
 msgstr ""
 
-#: netsync.cc:3184
+#: netsync.cc:3074
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad\n"
 msgstr ""
 
-#: netsync.cc:3206
+#: netsync.cc:3096
 #, c-format
 msgid "accepting new connection on %s : %s\n"
 msgstr ""
 
-#: netsync.cc:3212
+#: netsync.cc:3102
 #, c-format
 msgid "accept() returned a dead client\n"
 msgstr ""
 
-#: netsync.cc:3216
+#: netsync.cc:3106
 #, c-format
 msgid "accepted new client connection from %s : %s\n"
 msgstr ""
 
-#: netsync.cc:3244
+#: netsync.cc:3134
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting\n"
 msgstr ""
 
-#: netsync.cc:3252
+#: netsync.cc:3142
 #, c-format
 msgid "fd %d (peer %s) read failed, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:3268
+#: netsync.cc:3158
 #, c-format
 msgid "fd %d (peer %s) write failed, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:3292
+#: netsync.cc:3182
 #, c-format
 msgid "fd %d (peer %s) processing finished, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:3314
+#: netsync.cc:3204
 #, c-format
 msgid "fd %d (peer %s) has been idle too long, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:3320
+#: netsync.cc:3210
 #, c-format
 msgid "fd %d (peer %s) exchanged goodbyes and flushed output, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:3366
+#: netsync.cc:3256
 #, c-format
 msgid "beginning service on %s : %s\n"
 msgstr ""
 
-#: netsync.cc:3378
+#: netsync.cc:3268
 #, c-format
 msgid "session limit %d reached, some connections will be refused\n"
 msgstr ""
 
-#: netsync.cc:3384
+#: netsync.cc:3274
 #, c-format
 msgid "i/o probe with %d armed\n"
 msgstr ""
 
-#: netsync.cc:3394
+#: netsync.cc:3284
 #, c-format
 msgid "timed out waiting for I/O (listening on %s : %s)\n"
 msgstr ""
 
-#: netsync.cc:3410
+#: netsync.cc:3300
 #, c-format
 msgid "got woken up for action on unknown fd %d\n"
 msgstr ""
 
-#: netsync.cc:3425
+#: netsync.cc:3315
 #, c-format
 msgid "got some OOB data on fd %d (peer %s), disconnecting\n"
 msgstr ""
 
-#: netsync.cc:3487
+#: netsync.cc:3377
 #, c-format
 msgid "finding items to synchronize:\n"
 msgstr ""
 
-#: netsync.cc:3490
+#: netsync.cc:3380
 #, c-format
 msgid "including branch %s"
 msgstr ""
 
-#: netsync.cc:3549
+#: netsync.cc:3439
 #, c-format
 msgid "setting epoch on %s to zero\n"
 msgstr ""
 
-#: netsync.cc:3598
+#: netsync.cc:3488
 #, c-format
 msgid "Cannot find key '%s'"
 msgstr ""
 
-#: netsync.cc:3652 netsync.cc:3656
+#: netsync.cc:3542 netsync.cc:3546
 #, c-format
 msgid "network error: %s"
 msgstr ""
 
-#: netsync.cc:3710
+#: netsync.cc:3600
 #, c-format
 msgid "ancestry_fetcher: got %d heads"
 msgstr ""
 
-#: netsync.cc:3820
+#: netsync.cc:3686
 #, c-format
 msgid "traversing head %s"
 msgstr ""
 
-#: packet.cc:330
+#: packet.cc:295
 #, c-format
 msgid "writing delayed revision data packet for %s\n"
 msgstr ""
 
-#: packet.cc:337
+#: packet.cc:302
 #, c-format
 msgid "discarding revision data packet %s with unmet dependencies\n"
 msgstr ""
 
-#: packet.cc:343
-#, c-format
-msgid "writing delayed manifest data packet for %s\n"
-msgstr ""
-
-#: packet.cc:350
-#, c-format
-msgid "discarding manifest data packet %s with unmet dependencies\n"
-msgstr ""
-
-#: packet.cc:356
+#: packet.cc:309
 #, c-format
 msgid "writing delayed file data packet for %s\n"
 msgstr ""
 
-#: packet.cc:369
-#, c-format
-msgid "writing delayed manifest %s packet for %s -> %s%s\n"
-msgstr ""
-
-#: packet.cc:383
-#, c-format
-msgid "discarding manifest delta packet %s -> %s with unmet dependencies\n"
-msgstr ""
-
-#: packet.cc:390
+#: packet.cc:323
 #, c-format
 msgid "writing delayed file %s packet for %s -> %s%s\n"
 msgstr ""
 
-#: packet.cc:404
+#: packet.cc:337
 #, c-format
 msgid "discarding file delta packet %s -> %s with unmet dependencies\n"
 msgstr ""
 
-#: packet.cc:411
+#: packet.cc:344
 #, c-format
 msgid "writing delayed revision cert on %s\n"
 msgstr ""
 
-#: packet.cc:418
+#: packet.cc:351
 #, c-format
 msgid "discarding revision cert packet %s with unmet dependencies\n"
 msgstr ""
 
-#: packet.cc:425
+#: packet.cc:358
 #, c-format
 msgid "writing delayed public key %s\n"
 msgstr ""
 
-#: packet.cc:438
+#: packet.cc:371
 #, c-format
 msgid "writing delayed private key %s\n"
 msgstr ""
 
-#: packet.cc:608
+#: packet.cc:513
 #, c-format
 msgid "noting acceptence of revision %s\n"
 msgstr ""
 
-#: packet.cc:621
-#, c-format
-msgid "noting acceptence of manifest %s\n"
-msgstr ""
-
-#: packet.cc:634
+#: packet.cc:527
 #, c-format
 msgid "noting acceptence of file %s\n"
 msgstr ""
 
-#: packet.cc:656
+#: packet.cc:549
 #, c-format
 msgid "skipping existing file version %s\n"
 msgstr ""
 
-#: packet.cc:696
+#: packet.cc:589
 #, c-format
 msgid "reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n"
 msgstr ""
 
-#: packet.cc:702
+#: packet.cc:595
 #, c-format
 msgid "delaying file delta %s -> %s for preimage\n"
 msgstr ""
 
-#: packet.cc:712
+#: packet.cc:605
 #, c-format
 msgid "skipping delta to existing file version %s\n"
 msgstr ""
 
-#: packet.cc:740
+#: packet.cc:633
 #, c-format
 msgid "reconstructed file from reverse delta '%s' -> '%s' has wrong id '%s'\n"
 msgstr ""
 
-#: packet.cc:746
+#: packet.cc:639
 #, c-format
 msgid "delaying reverse file delta %s -> %s for preimage\n"
 msgstr ""
 
-#: packet.cc:756
+#: packet.cc:649
 #, c-format
 msgid "skipping reverse delta to existing file version %s\n"
 msgstr ""
 
-#: packet.cc:773
-#, c-format
-msgid "skipping existing manifest version %s\n"
-msgstr ""
-
-#: packet.cc:814
-#, c-format
-msgid "reconstructed manifest from delta '%s' -> '%s' has wrong id '%s'\n"
-msgstr ""
-
-#: packet.cc:820
-#, c-format
-msgid "delaying manifest delta %s -> %s for preimage\n"
-msgstr ""
-
-#: packet.cc:830
-#, c-format
-msgid "skipping delta to existing manifest version %s\n"
-msgstr ""
-
-#: packet.cc:858
-#, c-format
-msgid ""
-"reconstructed manifest from reverse delta '%s' -> '%s' has wrong id '%s'\n"
-msgstr ""
-
-#: packet.cc:864
-#, c-format
-msgid "delaying manifest reverse delta %s -> %s for preimage\n"
-msgstr ""
-
-#: packet.cc:874
-#, c-format
-msgid "skipping reverse delta to existing manifest version %s\n"
-msgstr ""
-
-#: packet.cc:896
-#, c-format
-msgid "delaying revision %s for new manifest %s\n"
-msgstr ""
-
-#: packet.cc:910
-#, c-format
-msgid "delaying revision %s for old manifest %s\n"
-msgstr ""
-
-#: packet.cc:920
+#: packet.cc:676
 #, c-format
 msgid "delaying revision %s for old revision %s\n"
 msgstr ""
 
-#: packet.cc:933
+#: packet.cc:690
+#, c-format
+msgid "delaying revision %s for added file %s\n"
+msgstr ""
+
+#: packet.cc:707
 #, c-format
 msgid "delaying revision %s for old file %s\n"
 msgstr ""
 
-#: packet.cc:943
+#: packet.cc:716
 #, c-format
 msgid "delaying revision %s for new file %s\n"
 msgstr ""
 
-#: packet.cc:961
+#: packet.cc:734
 #, c-format
 msgid "skipping existing revision %s\n"
 msgstr ""
 
-#: packet.cc:979
+#: packet.cc:752
 #, c-format
 msgid "delaying revision cert on %s\n"
 msgstr ""
 
-#: packet.cc:992
+#: packet.cc:765
 #, c-format
 msgid "skipping existing revision cert %s\n"
 msgstr ""
 
-#: packet.cc:1006
+#: packet.cc:779
 #, c-format
 msgid "skipping prohibited public key %s\n"
 msgstr ""
 
-#: packet.cc:1019
+#: packet.cc:792
 #, c-format
 msgid "key '%s' is not equal to key '%s' in database\n"
 msgstr ""
 
-#: packet.cc:1020
+#: packet.cc:793
 #, c-format
 msgid "skipping existing public key %s\n"
 msgstr ""
 
-#: packet.cc:1033
+#: packet.cc:806
 #, c-format
 msgid "skipping prohibited key pair %s\n"
 msgstr ""
 
-#: packet.cc:1042
+#: packet.cc:815
 #, c-format
 msgid "skipping existing key pair %s\n"
 msgstr ""
 
-#: packet.cc:1078
+#: packet.cc:851
 #, c-format
 msgid "packet valve opened\n"
 msgstr ""
 
-#: packet.cc:1090
+#: packet.cc:863
 #, c-format
 msgid "wrote %i queued packets\n"
 msgstr ""
 
-#: packet.cc:1362
+#: packet.cc:1065
 #, c-format
 msgid "malformed packet"
 msgstr ""
 
-#: packet.cc:1378
+#: packet.cc:1081
 #, c-format
 msgid "read data packet"
 msgstr ""
 
-#: packet.cc:1398
+#: packet.cc:1098
 #, c-format
 msgid "read delta packet"
 msgstr ""
 
-#: packet.cc:1429
+#: packet.cc:1121
 #, c-format
 msgid "read cert packet"
 msgstr ""
 
-#: packet.cc:1449 packet.cc:1468
+#: packet.cc:1141
 #, c-format
 msgid "read pubkey data packet"
 msgstr ""
 
-#: packet.cc:1458
+#: packet.cc:1150
 #, c-format
 msgid "read keypair data packet"
 msgstr ""
 
-#: packet.cc:1481
+#: packet.cc:1160
 #, c-format
 msgid "unknown packet type: '%s'"
 msgstr ""
@@ -4090,478 +3962,288 @@ msgstr ""
 msgid "parse failure %d:%d: expecting word\n"
 msgstr ""
 
-#: rcs_import.cc:247
+#: rcs_import.cc:245
 #, c-format
 msgid "Calculating time of %s\n"
 msgstr ""
 
-#: rcs_import.cc:281
+#: rcs_import.cc:279
 #, c-format
 msgid "version %s -> tag %s\n"
 msgstr ""
 
-#: rcs_import.cc:448
+#: rcs_import.cc:446
 #, c-format
 msgid "skipping identity file edge\n"
 msgstr ""
 
-#: rcs_import.cc:456 rcs_import.cc:482
+#: rcs_import.cc:454
 #, c-format
 msgid "existing path to %s found, skipping\n"
 msgstr ""
 
-#: rcs_import.cc:474
-#, c-format
-msgid "skipping identity manifest edge\n"
-msgstr ""
-
-#: rcs_import.cc:592
+#: rcs_import.cc:566
 #, c-format
 msgid "version %s has %d lines\n"
 msgstr ""
 
-#: rcs_import.cc:605
+#: rcs_import.cc:579
 #, c-format
 msgid "following RCS edge %s -> %s\n"
 msgstr ""
 
-#: rcs_import.cc:608
+#: rcs_import.cc:582
 #, c-format
 msgid "constructed RCS version %s, inserting into database\n"
 msgstr ""
 
-#: rcs_import.cc:651
+#: rcs_import.cc:625
 #, c-format
 msgid "following RCS branch %s = '%s'\n"
 msgstr ""
 
-#: rcs_import.cc:661
+#: rcs_import.cc:635
 #, c-format
 msgid "finished RCS branch %s = '%s'\n"
 msgstr ""
 
-#: rcs_import.cc:682 rcs_import.cc:730
+#: rcs_import.cc:656 rcs_import.cc:704
 #, c-format
 msgid "parsing RCS file %s\n"
 msgstr ""
 
-#: rcs_import.cc:684 rcs_import.cc:733
+#: rcs_import.cc:658 rcs_import.cc:707
 #, c-format
 msgid "parsed RCS file %s OK\n"
 msgstr ""
 
-#: rcs_import.cc:773
+#: rcs_import.cc:747
 #, c-format
 msgid "importing file '%s'\n"
 msgstr ""
 
-#: rcs_import.cc:845
+#: rcs_import.cc:819
 #, c-format
 msgid "first version in branch %s would be %s\n"
 msgstr ""
 
-#: rcs_import.cc:852
+#: rcs_import.cc:826
 #, c-format
 msgid "file branchpoint for %s at %s\n"
 msgstr ""
 
-#: rcs_import.cc:922
+#: rcs_import.cc:896
 #, c-format
 msgid "error reading RCS file %s: %s\n"
 msgstr ""
 
-#: rcs_import.cc:926
+#: rcs_import.cc:900
 #, c-format
 msgid "skipping non-RCS file %s\n"
 msgstr ""
 
-#: rcs_import.cc:1105
+#: rcs_import.cc:1076
 #, c-format
 msgid "examining next commit [t:%d] [p:%s] [a:%s] [c:%s]\n"
 msgstr ""
 
-#: rcs_import.cc:1118
+#: rcs_import.cc:1089
 #, c-format
 msgid "expiring cluster\n"
 msgstr ""
 
-#: rcs_import.cc:1134
+#: rcs_import.cc:1105
 #, c-format
 msgid "examining cluster %d to see if it touched %d\n"
 msgstr ""
 
-#: rcs_import.cc:1142
+#: rcs_import.cc:1113
 #, c-format
 msgid "found cluster touching %d: [t:%d] [a:%d] [c:%d]\n"
 msgstr ""
 
-#: rcs_import.cc:1150
+#: rcs_import.cc:1121
 #, c-format
 msgid "last modification time is %d\n"
 msgstr ""
 
-#: rcs_import.cc:1166
+#: rcs_import.cc:1137
 #, c-format
 msgid "picked existing cluster [t:%d] [a:%d] [c:%d]\n"
 msgstr ""
 
-#: rcs_import.cc:1180
+#: rcs_import.cc:1151
 #, c-format
 msgid "building new cluster [t:%d] [a:%d] [c:%d]\n"
 msgstr ""
 
-#: rcs_import.cc:1205
+#: rcs_import.cc:1176
 #, c-format
 msgid "finished branch commits, writing all pending clusters\n"
 msgstr ""
 
-#: rcs_import.cc:1211
+#: rcs_import.cc:1182
 #, c-format
 msgid "finished writing pending clusters\n"
 msgstr ""
 
-#: rcs_import.cc:1223
+#: rcs_import.cc:1193
 #, c-format
 msgid ""
 "%s appears to be a CVS repository root directory\n"
 "try importing a module instead, with 'cvs_import %s/<module_name>"
 msgstr ""
 
-#: rcs_import.cc:1235
+#: rcs_import.cc:1205
 #, c-format
 msgid "need base --branch argument for importing"
 msgstr ""
 
-#: rcs_import.cc:1247
+#: rcs_import.cc:1217
 #, c-format
 msgid "path %s does not exist"
 msgstr ""
 
-#: rcs_import.cc:1266
+#: rcs_import.cc:1235
 #, c-format
 msgid "branch %s has %d entries\n"
 msgstr ""
 
-#: rcs_import.cc:1276
+#: rcs_import.cc:1245
 #, c-format
 msgid "trunk has %d entries\n"
 msgstr ""
 
-#: rcs_import.cc:1283
+#: rcs_import.cc:1252
 msgid "tags"
 msgstr ""
 
-#: rcs_import.cc:1329
+#: rcs_import.cc:1296
 #, c-format
 msgid "initial cluster on branch %s has %d live entries\n"
 msgstr ""
 
-#: rcs_import.cc:1336
+#: rcs_import.cc:1303
 #, c-format
 msgid "initial cluster contains %s at %s\n"
 msgstr ""
 
-#: rcs_import.cc:1382
-#, c-format
-msgid "storing manifest '%s' (base %s)\n"
-msgstr ""
-
-#: rcs_import.cc:1387
-#, c-format
-msgid "storing head %s\n"
-msgstr ""
-
-#: rcs_import.cc:1402
-#, c-format
-msgid "skipping delta to null manifest\n"
-msgstr ""
-
 #: rcs_import.cc:1414
-#, c-format
-msgid "skipping cyclical manifest delta %s -> %s\n"
-msgstr ""
-
-#: rcs_import.cc:1420
-#, c-format
-msgid "writing full manifest %s\n"
-msgstr ""
-
-#: rcs_import.cc:1430
-#, c-format
-msgid "storing manifest delta %s -> %s\n"
-msgstr ""
-
-#: rcs_import.cc:1492
 #, c-format
 msgid "adding entry state '%s' on '%s'\n"
 msgstr ""
 
-#: rcs_import.cc:1499
+#: rcs_import.cc:1421
 #, c-format
 msgid "applying state delta on '%s' : '%s' -> '%s'\n"
 msgstr ""
 
-#: rcs_import.cc:1510
+#: rcs_import.cc:1433
 #, c-format
 msgid "deleting entry state '%s' on '%s'\n"
 msgstr ""
 
-#: rcs_import.cc:1529
-#, c-format
-msgid "BEGIN consume_cluster()\n"
-msgstr ""
-
-#: rcs_import.cc:1549
-#, c-format
-msgid "END consume_cluster('%s') (parent '%s')\n"
-msgstr ""
-
-#: revision.cc:126
-#, c-format
-msgid "verifying new revisions (this may take a while)\n"
-msgstr ""
-
-#: revision.cc:128
-#, c-format
-msgid "Verifying revision %s has sane history (to depth %i)\n"
-msgstr ""
-
-#: revision.cc:166
-#, c-format
-msgid "Examining %s -> %s\n"
-msgstr ""
-
-#: revision.cc:243
-#, c-format
-msgid "%s and %s have no common ancestor, so done\n"
-msgstr ""
-
-#: revision.cc:249
-#, c-format
-msgid "already checked common ancestor, so done\n"
-msgstr ""
-
-#: revision.cc:252
-#, c-format
-msgid "%s is a merge; verifying paths to common ancestor %s are sane\n"
-msgstr ""
-
-#: revision.cc:310
-#, c-format
-msgid "loading parents for node %d\n"
-msgstr ""
-
-#: revision.cc:332
-#, c-format
-msgid "parent %s -> node %d\n"
-msgstr ""
-
-#: revision.cc:482
-#, c-format
-msgid "found %d intersecting nodes\n"
-msgstr ""
-
-#: revision.cc:535
-#, c-format
-msgid "searching for common ancestor, left=%s right=%s\n"
-msgstr ""
-
-#: revision.cc:540
-#, c-format
-msgid "common ancestor scan [par=%d,anc=%d,dom=%d]\n"
-msgstr ""
-
-#: revision.cc:545
-#, c-format
-msgid "found node %d, ancestor of left %s and dominating right %s\n"
-msgstr ""
-
-#: revision.cc:552
-#, c-format
-msgid "found node %d, ancestor of right %s and dominating left %s\n"
-msgstr ""
-
-#: revision.cc:589
-#, c-format
-msgid "searching for least common ancestor, left=%s right=%s\n"
-msgstr ""
-
-#: revision.cc:593
-#, c-format
-msgid "least common ancestor scan [par=%d,anc=%d]\n"
-msgstr ""
-
-#: revision.cc:598
-#, c-format
-msgid "found node %d, ancestor of left %s and right %s\n"
-msgstr ""
-
-#: revision.cc:652
+#: revision.cc:276
 #, c-format
 msgid "checking whether %s is an ancestor of %s\n"
 msgstr ""
 
-#: revision.cc:764
+#: revision.cc:388
 #, c-format
 msgid "new root: %s\n"
 msgstr ""
 
-#: revision.cc:779
+#: revision.cc:403
 #, c-format
 msgid "new leaf: %s\n"
 msgstr ""
 
-#: revision.cc:921
-#, c-format
-msgid "exploring changesets from parents of %s, seeking towards %s\n"
-msgstr ""
-
-#: revision.cc:934
-#, c-format
-msgid "considering parent %s of %s\n"
-msgstr ""
-
-#: revision.cc:960
-#, c-format
-msgid "revision %s is relevant, composing with edge to %s\n"
-msgstr ""
-
-#: revision.cc:967
-#, c-format
-msgid "parent %s of %s is not relevant\n"
-msgstr ""
-
-#: revision.cc:1003
-#, c-format
-msgid "adding parents of %s to subgraph\n"
-msgstr ""
-
-#: revision.cc:1013
-#, c-format
-msgid "found parent %s of %s\n"
-msgstr ""
-
-#: revision.cc:1017
-#, c-format
-msgid "adding parent %s to next frontier\n"
-msgstr ""
-
-#: revision.cc:1032
-#, c-format
-msgid "calculating composite changeset between %s and %s\n"
-msgstr ""
-
-#: revision.cc:1050
-#, c-format
-msgid "calculating changeset from %s to %s\n"
-msgstr ""
-
-#: revision.cc:1054
-#, c-format
-msgid "no common ancestor for %s and %s\n"
-msgstr ""
-
-#: revision.cc:1055
-#, c-format
-msgid "common ancestor is %s\n"
-msgstr ""
-
-#: revision.cc:1086
-#, c-format
-msgid "analyzing manifest changes from '%s' -> '%s'\n"
-msgstr ""
-
-#: revision.cc:1099
-#, c-format
-msgid "splitting ancestry for file %s\n"
-msgstr ""
-
-#: revision.cc:1166
+#: revision.cc:588
 #, c-format
 msgid "noting ancestry from child %d -> parent %d\n"
 msgstr ""
 
-#: revision.cc:1199
+#: revision.cc:611
 #, c-format
 msgid "setting epoch for %s to %s\n"
 msgstr ""
 
-#: revision.cc:1255
+#: revision.cc:665
 #, c-format
-msgid "scanning for nodes with 3+ parents\n"
+msgid "scanning for bogus merge edges\n"
 msgstr ""
 
-#: revision.cc:1296
+#: revision.cc:684
 #, c-format
-msgid "optimizing out redundant edge %i -> %i\n"
+msgid "considering old merge edge %s\n"
 msgstr ""
 
-#: revision.cc:1323
+#: revision.cc:707
+#, c-format
+msgid "optimizing out redundant edge %d -> %d\n"
+msgstr ""
+
+#: revision.cc:716
+#, c-format
+msgid "failed to eliminate edge %d -> %d\n"
+msgstr "falha na eliminação da aresta %d -> %d\n"
+
+#: revision.cc:727
 #, c-format
 msgid "rebuilding %d nodes\n"
 msgstr ""
 
-#: revision.cc:1360
+#: revision.cc:749
 #, c-format
 msgid "node %d = manifest %s\n"
 msgstr ""
 
-#: revision.cc:1371
+#: revision.cc:760
 #, c-format
 msgid "loaded '%s' manifest cert for node %s\n"
 msgstr ""
 
-#: revision.cc:1399
+#: revision.cc:793
 #, c-format
 msgid "node %d = revision %s = manifest %s\n"
 msgstr ""
 
-#: revision.cc:1411
+#: revision.cc:805
 #, c-format
 msgid "loaded '%s' revision cert for node %s\n"
 msgstr ""
 
-#: revision.cc:1435
+#: revision.cc:939
+#, c-format
+msgid "Path %s added to child roster multiple times\n"
+msgstr ""
+
+#: revision.cc:955
+#, c-format
+msgid "Directory for path %s cannot be added, as there is a file in the way\n"
+msgstr ""
+
+#: revision.cc:1162
 #, c-format
 msgid "processing node %d\n"
 msgstr ""
 
-#: revision.cc:1439
-#, c-format
-msgid "node %d already processed, skipping\n"
-msgstr ""
-
-#: revision.cc:1453
-#, c-format
-msgid "node %d is a root node\n"
-msgstr ""
-
-#: revision.cc:1469 revision.cc:1552
-#, c-format
-msgid "parent node %d = revision %s\n"
-msgstr ""
-
-#: revision.cc:1531
-#, c-format
-msgid "processing edge from child %d -> parent %d\n"
-msgstr ""
-
-#: revision.cc:1569
+#: revision.cc:1296
 #, c-format
 msgid "mapped node %d to revision %s\n"
 msgstr ""
 
-#: revision.cc:1575
+#: revision.cc:1302
 #, c-format
 msgid "skipping already existing revision %s\n"
 msgstr ""
 
-#: revision.cc:1587
+#: revision.cc:1328
 #, c-format
-msgid "rebuilding revision graph from existing graph\n"
+msgid "converting existing revision graph to new roster-style revisions\n"
 msgstr ""
 
-#: revision.cc:1619
+#: revision.cc:1360
 #, c-format
 msgid "rebuilding revision graph from manifest certs\n"
 msgstr ""
@@ -4573,128 +4255,78 @@ msgstr ""
 
 #: sanity.cc:54
 #, c-format
-msgid "wrote debugging log to %sif reporting a bug, please include this file"
-msgstr ""
+msgid "wrote debugging log to %s"
+msgstr "registro de depuração escrito em %s"
 
-#: sanity.cc:59
+#: sanity.cc:57
 #, c-format
-msgid "failed to write debugging log to %s\n"
-msgstr "erro escrevendo registro de depuração para %s\n"
+msgid "failed to write debugging log to %s"
+msgstr "erro escrevendo registro de depuração para %s"
 
-#: sanity.cc:110
+#: sanity.cc:108
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
 msgstr ""
 
-#: sanity.cc:184
+#: sanity.cc:182
 msgid "misuse: "
 msgstr ""
 
-#: sanity.cc:196
+#: sanity.cc:194
 msgid "error: "
 msgstr ""
 
-#: sanity.cc:234
+#: sanity.cc:232
 #, c-format
 msgid "ignoring request to give last gasp; already in process of dumping\n"
 msgstr ""
 
-#: sanity.cc:238
+#: sanity.cc:236
 #, c-format
 msgid "saving current work set: %i items"
 msgstr ""
 
-#: sanity.cc:240
+#: sanity.cc:238
 #, c-format
 msgid "Current work set: %i items\n"
 msgstr ""
 
-#: sanity.cc:254 sanity.cc:260
+#: sanity.cc:252 sanity.cc:258
 #, c-format
 msgid "ignoring error trigged by saving work set to debug log"
 msgstr ""
 
-#: sanity.cc:264
+#: sanity.cc:262
 #, c-format
 msgid "finished saving work set"
 msgstr ""
 
-#: schema_migration.cc:47
-#, c-format
-msgid "executing SQL '%s'"
-msgstr "executando comando SQL '%s'"
-
-#: schema_migration.cc:49
-#, c-format
-msgid "result: %i (%s)"
-msgstr ""
-
-#: schema_migration.cc:51
-#, c-format
-msgid "errmsg: %s"
-msgstr ""
-
-#: schema_migration.cc:184
-#, c-format
-msgid "failure extracting schema from sqlite_master"
-msgstr ""
-
-#: schema_migration.cc:227
-#, c-format
-msgid "error at transaction BEGIN statement"
-msgstr ""
-
-#: schema_migration.cc:254
-#, c-format
-msgid "migration step failed: %s"
-msgstr ""
-
-#: schema_migration.cc:268
-#, c-format
-msgid "mismatched result of migration, got %s, wanted %s"
-msgstr ""
-
-#: schema_migration.cc:271
+#: schema_migration.cc:259
 #, c-format
 msgid "committing changes to database"
 msgstr ""
 
-#: schema_migration.cc:273
-#, c-format
-msgid "failure on COMMIT"
-msgstr ""
-
-#: schema_migration.cc:275
+#: schema_migration.cc:265
 #, c-format
 msgid "optimizing database"
 msgstr ""
 
 #: schema_migration.cc:277
 #, c-format
-msgid "error vacuuming after migration"
-msgstr ""
-
-#: schema_migration.cc:280
-#, c-format
-msgid "error running analyze after migration"
-msgstr ""
-
-#: schema_migration.cc:287
-#, c-format
 msgid "database schema %s is unknown; cannot perform migration"
 msgstr ""
 
-#: schema_migration.cc:292
+#: schema_migration.cc:282
 #, c-format
 msgid "no migration performed; database schema already up-to-date at %s\n"
 msgstr ""
 
-#: schema_migration.cc:842
+#: schema_migration.cc:832
 #, c-format
 msgid "public and private keys for %s don't match"
 msgstr ""
 
-#: schema_migration.cc:845
+#: schema_migration.cc:835
 #, c-format
 msgid "moving key '%s' from database to %s"
 msgstr ""
@@ -4716,47 +4348,47 @@ msgstr ""
 msgid "executing external 3-way merge command\n"
 msgstr ""
 
-#: transforms.cc:521
+#: transforms.cc:471
 #, c-format
 msgid "converting %d bytes from %s to %s\n"
 msgstr ""
 
-#: transforms.cc:527
+#: transforms.cc:477
 #, c-format
 msgid "failed to convert string from %s to %s: '%s'"
 msgstr ""
 
-#: transforms.cc:667
+#: transforms.cc:617
 #, c-format
 msgid "converting %d bytes from IDNA ACE to UTF-8\n"
 msgstr ""
 
-#: transforms.cc:670 transforms.cc:684
+#: transforms.cc:620 transforms.cc:634
 #, c-format
 msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
 msgstr ""
 
-#: transforms.cc:681
+#: transforms.cc:631
 #, c-format
 msgid "converting %d bytes from UTF-8 to IDNA ACE\n"
 msgstr ""
 
-#: transforms.cc:829
+#: transforms.cc:779
 #, c-format
 msgid "doing linesep conversion to %s\n"
 msgstr ""
 
-#: ui.cc:120
+#: ui.cc:119
 #, c-format
 msgid "%.1f M"
 msgstr ""
 
-#: ui.cc:125
+#: ui.cc:124
 #, c-format
 msgid "%.1f k"
 msgstr ""
 
-#: ui.cc:134
+#: ui.cc:133
 #, c-format
 msgid "%d"
 msgstr ""
@@ -4804,219 +4436,200 @@ msgstr ""
 msgid "cannot determine branch for update"
 msgstr ""
 
-#: vocab.cc:53
+#: vocab.cc:68
 #, c-format
 msgid "hex encoded ID '%s' size != %d"
 msgstr ""
 
-#: vocab.cc:56
+#: vocab.cc:72
 #, c-format
 msgid "bad character '%c' in id name '%s'"
 msgstr ""
 
-#: vocab.cc:69
+#: vocab.cc:85
 #, c-format
 msgid "bad character '%c' in ace string '%s'"
 msgstr ""
 
-#: vocab.cc:83
+#: vocab.cc:99
 #, c-format
 msgid "bad character '%c' in cert name '%s'"
 msgstr ""
 
-#: vocab.cc:96
+#: vocab.cc:112
 #, c-format
 msgid "bad character '%c' in key name '%s'"
 msgstr ""
 
-#: vocab.cc:114
+#: vocab.cc:130
 #, c-format
 msgid "Invalid key length of %d bytes"
 msgstr ""
 
-#: vocab.cc:132
+#: vocab.cc:148
 #, c-format
 msgid "Invalid hmac length of %d bytes"
 msgstr ""
 
-#: work.cc:64
+#: work.cc:117
 #, c-format
 msgid "skipping ignorable file %s\n"
 msgstr ""
 
-#: work.cc:70
+#: work.cc:125
 #, c-format
 msgid "skipping %s, already accounted for in working copy\n"
 msgstr ""
 
-#: work.cc:74
+#: work.cc:129
 #, c-format
 msgid "adding %s to working copy add set\n"
 msgstr ""
 
-#: work.cc:136
-#, c-format
-msgid "adding attribute '%s' on file %s to %s\n"
-msgstr ""
-
-#: work.cc:203
-#, c-format
-msgid "invalid path ''"
-msgstr ""
-
-#: work.cc:207
+#: work.cc:202
 #, c-format
 msgid "skipping %s, not currently tracked\n"
 msgstr ""
 
-#: work.cc:211
+#: work.cc:210
+#, c-format
+msgid "cannot remove %s/, it is not empty"
+msgstr ""
+
+#: work.cc:212
 #, c-format
 msgid "adding %s to working copy delete set\n"
 msgstr ""
 
-#: work.cc:215
-#, c-format
-msgid ""
-"sorry -- 'drop <directory>' is currently broken.\n"
-"try 'find %s -type f | monotone drop -@-'\n"
-msgstr ""
-
-#: work.cc:227
-#, c-format
-msgid "dropped attributes for file %s from %s\n"
-msgstr ""
-
-#: work.cc:253
-#, c-format
-msgid "invalid source path ''"
-msgstr ""
-
-#: work.cc:254
-#, c-format
-msgid "invalid destination path ''"
-msgstr ""
-
-#: work.cc:265
+#: work.cc:255
 #, c-format
 msgid "%s does not exist in current revision\n"
 msgstr ""
 
-#: work.cc:268
+#: work.cc:258
 #, c-format
 msgid "%s already exists in current revision\n"
 msgstr ""
 
-#: work.cc:270
+#: work.cc:262
 #, c-format
 msgid "adding %s -> %s to working copy rename set\n"
 msgstr ""
 
-#: work.cc:293
-#, c-format
-msgid "%s has existing attributes in %s; clean them up first"
-msgstr ""
-
-#: work.cc:302
-#, c-format
-msgid "moving attributes for %s to %s\n"
-msgstr ""
-
-#: work.cc:321
+#: work.cc:285
 #, c-format
 msgid "work path is %s\n"
 msgstr ""
 
-#: work.cc:330
+#: work.cc:294
 #, c-format
 msgid "checking for un-committed work file %s\n"
 msgstr ""
 
-#: work.cc:334
+#: work.cc:298
 #, c-format
-msgid "read rearrangement from %s\n"
-msgstr ""
+msgid "read cset from %s\n"
+msgstr "modificações lidas de %s\n"
 
-#: work.cc:338
+#: work.cc:302
 #, c-format
 msgid "no un-committed work file %s\n"
 msgstr ""
 
-#: work.cc:375
+#: work.cc:339
 #, c-format
 msgid "revision path is %s\n"
 msgstr ""
 
-#: work.cc:385
+#: work.cc:349
 #, c-format
 msgid "working copy is corrupt: %s does not exist"
 msgstr ""
 
-#: work.cc:386
+#: work.cc:350
 #, c-format
 msgid "working copy is corrupt: %s is a directory"
 msgstr ""
 
-#: work.cc:389
+#: work.cc:353
 #, c-format
 msgid "loading revision id from %s\n"
 msgstr ""
 
-#: work.cc:396
+#: work.cc:360
 #, c-format
 msgid "Problem with working directory: %s is unreadable"
 msgstr ""
 
-#: work.cc:405
+#: work.cc:369
 #, c-format
 msgid "writing revision id to %s\n"
 msgstr ""
 
-#: work.cc:424
+#: work.cc:386
 #, c-format
 msgid "base revision %s does not exist in database\n"
 msgstr ""
 
-#: work.cc:427
+#: work.cc:391
 #, c-format
-msgid "old manifest is %s\n"
+msgid "base roster has %d entries\n"
 msgstr ""
 
-#: work.cc:430
-#, c-format
-msgid "base manifest %s does not exist in database\n"
-msgstr ""
-
-#: work.cc:435
-#, c-format
-msgid "old manifest has %d entries\n"
-msgstr ""
-
-#: work.cc:456
+#: work.cc:461
 #, c-format
 msgid "user log path is %s\n"
 msgstr ""
 
-#: work.cc:505
+#: work.cc:510
 #, c-format
 msgid "options path is %s\n"
 msgstr ""
 
-#: work.cc:552
+#: work.cc:556
 #, c-format
 msgid "local dump path is %s\n"
 msgstr ""
 
-#: work.cc:604
+#: work.cc:700 work.cc:711
 #, c-format
-msgid "attribute map path is %s\n"
+msgid "path %s already exists"
+msgstr "caminho '%s' já existe"
+
+#: work.cc:754
+#, c-format
+msgid "renaming '%s' onto existing file: '%s'\n"
 msgstr ""
 
-#: xdelta.cc:345
+#: work.cc:773
+#, c-format
+msgid "file '%s' does not exist"
+msgstr "arquivo '%s' não existe"
+
+#: work.cc:774
+#, c-format
+msgid "file '%s' is a directory"
+msgstr "arquivo '%s' é um diretório"
+
+#: work.cc:779
+#, c-format
+msgid "content of file '%s' has changed, not overwriting"
+msgstr ""
+
+#: work.cc:780
+#, c-format
+msgid "updating %s to %s"
+msgstr "atualizando %s para %s"
+
+#: xdelta.cc:261
 #, c-format
 msgid "computing binary delta instructions\n"
 msgstr ""
 
-#: xdelta.cc:347
+#: xdelta.cc:263
 #, c-format
 msgid "computed binary delta instructions\n"
 msgstr ""
+
+#~ msgid "executing SQL '%s'"
+#~ msgstr "executando comando SQL '%s'"

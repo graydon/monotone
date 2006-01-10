@@ -4,9 +4,6 @@ AT_SETUP([renaming a directory and then adding a new with the old name])
 
 MONOTONE_SETUP
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
-
 # add 'foo/test' file
 AT_CHECK(mkdir foo)
 AT_DATA(foo/test, [test file in foo dir

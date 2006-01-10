@@ -30,6 +30,7 @@ AT_CHECK(MONOTONE add dir/foo dir/bar, [], [ignore], [ignore])
 AT_CHECK(MONOTONE ls known | sort, [], [stdout], [])
 AT_CHECK(CANONICALISE(stdout))
 AT_DATA(ls_foobar_dir, [bar
+dir
 dir/bar
 dir/foo
 foo
@@ -51,6 +52,7 @@ AT_CHECK(MONOTONE rename bar baz, [], [ignore], [ignore])
 AT_CHECK(MONOTONE ls known | sort, [], [stdout], [])
 AT_CHECK(CANONICALISE(stdout))
 AT_DATA(ls_baz_dir, [baz
+dir2
 dir2/bar
 dir2/foo
 ])

@@ -1,3 +1,92 @@
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* contrib/ciabot_monotone.py (Monotone.get_revision): Update to
+	use 'automate get_revision' instead of 'cat revision'.
+
+2006-01-10  Richard Levitte  <richard@levitte.org>
+
+	* lua.cc (monotone_parse_basic_io_for_lua): Don't trust the
+	returned value from lua_tostring() to stick around.  Instead, copy
+	it into a regular std::string.
+	* std_hooks.lua (get_netsync_read_permissions,
+	get_netsync_write_permissions): Make sure to properly close the
+	permission files.
+
+2006-01-09  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc, monotone.1, monotone.cc, po/fr.po, po/ja.po,
+	po/pt_BR.po, testsuite.at: Change the default port from 5253 to
+	4691 (assigned to us by IANA).
+
+2006-01-07  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* schema_migration.cc: add safe-guard against passing a null pointer
+	into string handling. (necessary with sun studio)
+
+2006-01-05  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (set_restriction): remove "respect_ignore"
+	flag and don't complain about ignored files
+	* commands.cc (status, list, diff): allow --exclude option for
+	restrictions
+	* restrictions.hh: add a comment about restricted command
+	consistency
+	* tests/t_restricted_commands_consistent.at: new test to give that
+	bark some bite
+	* testsuite.at: call it
+	
+2005-12-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Write up for 0.25.
+
+2005-12-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/{pager.c,sqlite3.h}: Upgrade to SQLite 3.2.8.
+
+2005-12-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Notes on what to write up for 0.25.
+	* win32/monotone.iss, monotone.spec, debian/changelog:
+	* configure.ac, UPGRADE: Bump.
+
+2005-12-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(revert)): revert with no args prints usage,
+	mention "." for entire working copy.
+
+2005-12-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (dump_difs, CMD(log)): only print --diffs for the file
+	of interest.
+
+2005-12-21  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* botan/es_capi.{cpp,h}: Windows compile fixes for Botan 1.4.10.
+
+2005-12-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* upgrade to Botan 1.4.10
+
+2005-12-20  Daniel Carosone  <dan@geek.com.au>
+
+	* monotone.texi: Rearrange the description of monotone serve into
+	two sections; the first one describing basic steps necessary to
+	get Jim and the reader through to the next sections, and a later
+	more advanced section that discusses some of the subleties and
+	choices and moves them on to running a dedicated server.  Other
+	small tweaks in nearby sections while here.
+
+2005-12-18  graydon hoare  <graydon@pobox.com>
+
+	* AUTHORS: Add Roland.
+
+2005-12-17  Roland McGrath  <roland@redhat.com>
+
+	* work.hh (struct file_itemizer): Remove extraneous qualifier on
+	visit_file declaration.
+	* app_state.hh (class app_state): Remove extraneous qualifier on
+	set_restriction declaration.
+
 2005-12-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/fs.cc: Handle the fact that the MoveFileEx symbol might
@@ -20,6 +109,27 @@
 	monotone servers.
 	* HACKING, tests/README: Remove references to use of SEGV for
 	terminating monotone servers.
+
+2005-12-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* constants.cc: New netsync is incompatible, bump protocol version.
+	* constants.hh: Change default port to the one IANA assigned us.
+
+2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* roster.cc (make_roster_for_merge): unshadow the node_id_source
+	argument. Resolve usages to the argument or the local by educated guess.
+
+2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* paths.{cc,hh}: operator<() for split_path's
+
+2005-12-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* sanity.{cc,hh}: Fix musing dumps so that the header line always gets
+	printed, even if printing the body throws an exception.
+	* database.cc, packet,cc, revision.cc: sprinkle MMs
+	* cset.cc: sanity check print_cset to match parse_cset
 
 2005-12-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
@@ -316,6 +426,12 @@
 	Buffer was added to free_list in allocate() (it's not safe to
 	assume that the address of a newly allocated Buffer will always be
 	greated than existing Buffers).
+
+2005-11-25  graydon hoare  <graydon@pobox.com>
+
+	* database.cc (get_version): Another important fix: make sure to
+	cancel overlapping paths, to avoid exponential memory requirement
+	in deep, heavily-forked-and-merged storage paths.
 
 2005-11-25  graydon hoare  <graydon@pobox.com>
 
@@ -703,6 +819,34 @@
 	* selectors.{cc,hh}: add sel_head with selector character 'h'.
 	* monotone.texi: document it.
 	
+2005-10-12  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.hh: Oops, missed a bit.
+
+2005-10-12  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (add_node_for_old_revision): Rename to...
+	(add_node_for_oldstyle_revision): ...this.
+	(build_changesets_from_existing_revs): Rename to...
+	(build_roster_style_revs_from_manifest_style_revs): ...this.
+	* commands.cc (db): Rename "rebuild" to "rosterify".
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (analyze_manifest_changes): Remove.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (calculate_change_sets_recursive):
+	(find_subgraph_for_composite_search) 
+	(calculate_composite_change_set, calculate_arbitrary_change_set):
+	Remove.
+	(construct_revision_from_ancestry): Likewise.
+
+2005-10-08  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (check_sane_history): Remove.
+
 2005-10-13  Matt Johnston  <matt@ucc.asn.au>
 
 	* botan/mem_pool.cpp: fix bug preventing remove_empty_buffers()

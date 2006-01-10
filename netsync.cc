@@ -21,6 +21,7 @@
 #include "app_state.hh"
 #include "cert.hh"
 #include "constants.hh"
+#include "enumerator.hh"
 #include "keys.hh"
 #include "merkle_tree.hh"
 #include "netcmd.hh"
@@ -28,6 +29,7 @@
 #include "netsync.hh"
 #include "numeric_vocab.hh"
 #include "packet.hh"
+#include "refiner.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"
@@ -65,71 +67,53 @@
 //      its merkle trie.
 //   -- add some sort of vhost field to the client's first packet, saying who
 //      they expect to talk to
-//   -- connection teardown is flawed:
-//      -- simple bug: often connections "fail" even though they succeeded.
-//         should figure out why.  (Possibly one side doesn't wait for their
-//         goodbye packet to drain before closing the socket?)
-//      -- subtle misdesign: "goodbye" packets indicate completion of data
-//         transfer.  they do not indicate that data has been written to
-//         disk.  there should be some way to indicate that data has been
-//         successfully written to disk.  See message (and thread)
-//         <E0420553-34F3-45E8-9DA4-D8A5CB9B0600@hsdev.com> on
-//         monotone-devel.
 //   -- apparently we have a IANA approved port: 4691.  I guess we should
 //      switch to using that.
 
 //
-// this is the "new" network synchronization (netsync) system in
-// monotone. it is based on synchronizing a pair of merkle trees over an
+// This is the "new" network synchronization (netsync) system in
+// monotone. It is based on synchronizing pairs of merkle trees over an
 // interactive connection.
 //
-// a netsync process between peers treats each peer as either a source, a
-// sink, or both. when a peer is only a source, it will not write any new
+// A netsync process between peers treats each peer as either a source, a
+// sink, or both. When a peer is only a source, it will not write any new
 // items to its database. when a peer is only a sink, it will not send any
-// items from its database. when a peer is both a source and sink, it may
+// items from its database. When a peer is both a source and sink, it may
 // send and write items freely.
 //
-// the post-state of a netsync is that each sink contains a superset of the
+// The post-state of a netsync is that each sink contains a superset of the
 // items in its corresponding source; when peers are behaving as both
 // source and sink, this means that the post-state of the sync is for the
 // peers to have identical item sets.
 //
-// a peer can be a sink in at most one netsync process at a time; it can
-// however be a source for multiple netsyncs simultaneously.
 //
-//
-// data structure
+// Data structure
 // --------------
 //
-// each node in a merkle tree contains a fixed number of slots. this number
+// Each node in a merkle tree contains a fixed number of slots. this number
 // is derived from a global parameter of the protocol -- the tree fanout --
-// such that the number of slots is 2^fanout. for now we will assume that
+// such that the number of slots is 2^fanout. For now we will assume that
 // fanout is 4 thus there are 16 slots in a node, because this makes
-// illustration easier. the other parameter of the protocol is the size of
+// illustration easier. The other parameter of the protocol is the size of
 // a hash; we use SHA1 so the hash is 20 bytes (160 bits) long.
 //
-// each slot in a merkle tree node is in one of 4 states:
+// Each slot in a merkle tree node is in one of 3 states:
 //
 //   - empty
-//   - live leaf
-//   - dead leaf
+//   - leaf
 //   - subtree
 //   
-// in addition, each live or dead leaf contains a hash code which
-// identifies an element of the set being synchronized. each subtree slot
-// contains a hash code of the node immediately beneath it in the merkle
-// tree. empty slots contain no hash codes.
+// In addition, each leaf contains a hash code which identifies an element
+// of the set being synchronized. Each subtree slot contains a hash code of
+// the node immediately beneath it in the merkle tree. Empty slots contain
+// no hash codes.
 //
-// each node also summarizes, for sake of statistic-gathering, the number
-// of set elements and total number of bytes in all of its subtrees, each
-// stored as a size_t and sent as a uleb128.
-//
-// since empty slots have no hash code, they are represented implicitly by
-// a bitmap at the head of each merkle tree node. as an additional
+// Since empty slots have no hash code, they are represented implicitly by
+// a bitmap at the head of each merkle tree node. As an additional
 // integrity check, each merkle tree node contains a label indicating its
 // prefix in the tree, and a hash of its own contents.
 //
-// in total, then, the byte-level representation of a <160,4> merkle tree
+// In total, then, the byte-level representation of a <160,4> merkle tree
 // node is as follows:
 //
 //      20 bytes       - hash of the remaining bytes in the node
@@ -141,35 +125,31 @@
 //       4 bytes       - slot-state bitmap of the node
 //   0-320 bytes       - between 0 and 16 live slots in the node
 //
-// so, in the worst case such a node is 367 bytes, with these parameters.
+// So, in the worst case such a node is 367 bytes, with these parameters.
 //
 //
-// protocol
+// Protocol
 // --------
 //
-// The protocol is a simple binary command-packet system over TCP;
-// each packet consists of a single byte which identifies the protocol
-// version, a byte which identifies the command name inside that
-// version, a size_t sent as a uleb128 indicating the length of the
-// packet, that many bytes of payload, and finally 20 bytes of SHA-1
-// HMAC calculated over the payload.  The key for the SHA-1 HMAC is 20
-// bytes of 0 during authentication, and a 20-byte random key chosen
-// by the client after authentication (discussed below).
-// decoding involves simply buffering until a sufficient number of bytes are
-// received, then advancing the buffer pointer. any time an integrity check
-// (the HMAC) fails, the protocol is assumed to have lost synchronization, and
-// the connection is dropped. the parties are free to drop the tcp stream at
-// any point, if too much data is received or too much idle time passes; no
-// commitments or transactions are made.
+// The protocol is a binary command-packet system over TCP; each packet
+// consists of a single byte which identifies the protocol version, a byte
+// which identifies the command name inside that version, a size_t sent as
+// a uleb128 indicating the length of the packet, that many bytes of
+// payload, and finally 20 bytes of SHA-1 HMAC calculated over the payload.
+// The key for the SHA-1 HMAC is 20 bytes of 0 during authentication, and a
+// 20-byte random key chosen by the client after authentication (discussed
+// below). Decoding involves simply buffering until a sufficient number of
+// bytes are received, then advancing the buffer pointer. Any time an
+// integrity check (the HMAC) fails, the protocol is assumed to have lost
+// synchronization, and the connection is dropped. The parties are free to
+// drop the TCP stream at any point, if too much data is received or too
+// much idle time passes; no commitments or transactions are made.
 //
-// one special command, "bye", is used to shut down a connection
-// gracefully.  once each side has received all the data they want, they
-// can send a "bye" command to the other side. as soon as either side has
-// both sent and received a "bye" command, they drop the connection. if
-// either side sees an i/o failure (dropped connection) after they have
-// sent a "bye" command, they consider the shutdown successful.
 //
-// the exchange begins in a non-authenticated state. the server sends a
+// Authentication and setup
+// ------------------------
+//
+// The exchange begins in a non-authenticated state. The server sends a
 // "hello <id> <nonce>" command, which identifies the server's RSA key and
 // issues a nonce which must be used for a subsequent authentication.
 //
@@ -189,47 +169,67 @@
 // key).
 //
 // The server then replies with a "confirm" command, which contains no
-// other data but will only have the correct HMAC integrity code if
-// the server received and properly decrypted the HMAC key offered by
-// the client.  This transitions the peers into an authenticated state
-// and begins refinement.
+// other data but will only have the correct HMAC integrity code if the
+// server received and properly decrypted the HMAC key offered by the
+// client. This transitions the peers into an authenticated state and
+// begins epoch refinement. If epoch refinement and epoch transmission
+// succeed, the peers switch to data refinement and data transmission.
 //
-// refinement begins with the client sending its root public key and
-// manifest certificate merkle nodes to the server. the server then
-// compares the root to each slot in *its* root node, and for each slot
-// either sends refined subtrees to the client, or (if it detects a missing
-// item in one pattern or the other) sends either "data" or "send_data"
-// commands corresponding to the role of the missing item (source or
-// sink). the client then receives each refined subtree and compares it
-// with its own, performing similar description/request behavior depending
-// on role, and the cycle continues.
 //
-// detecting the end of refinement is subtle: after sending the refinement
-// of the root node, the server sends a "done 0" command (queued behind all
-// the other refinement traffic). when either peer receives a "done N"
-// command it immediately responds with a "done N+1" command. when two done
-// commands for a given merkle tree arrive with no interveining refinements,
-// the entire merkle tree is considered complete.
+// Refinement
+// ----------
 //
-// any "send_data" command received prompts a "data" command in response,
-// if the requested item exists. if an item does not exist, a "nonexistant"
-// response command is sent. 
+// Refinement is executed by "refiners"; there is a refiner for each
+// set of 'items' being exchanged: epochs, keys, certs, and revisions.
+// When refinement starts, each party knows only their own set of
+// items; when refinement completes, each party has learned of the
+// complete set of items it needs to send, and a count of items it's
+// expecting to receive.
 //
-// once a response is received for each requested key and revision cert
-// (either data or nonexistant) the requesting party walks the graph of
-// received revision certs and transmits send_data or send_delta commands
-// for all the revisions mentionned in the certs which it does not already
-// have in its database.
+// For more details on the refinement process, see refiner.cc.
 //
-// for each revision it receives, the recipient requests all the file data or
-// deltas described in that revision.
+// 
+// Transmission
+// ------------
 //
-// once all requested files, manifests, revisions and certs are received (or
-// noted as nonexistant), the recipient closes its connection.
+// Once the set of items to send has been determined (for keys, certs, and
+// revisions) each peer switches into a transmission mode. This mode
+// involves walking the revision graph in ancestry-order and sending all
+// the items the local peer has which the remote one does not. Since the
+// remote and local peers both know all the items which need to be
+// transferred (they learned during refinement) they know what to wait for
+// and what to send.  The mechanisms of the transmission phase (notably,
+// enumerator.cc) simply ensure that things are sent in the proper order,
+// and without over-filling the output buffer too much.
 //
-// (aside: this protocol is raw binary because coding density is actually
-// important here, and each packet consists of very information-dense
-// material that you wouldn't have a hope of typing in manually anyways)
+//
+// Shutdown
+// --------
+//
+// After transmission completes, one special command, "bye", is used to
+// shut down a connection gracefully. The shutdown sequence based on "bye"
+// commands is documented below in session::process_bye_cmd.
+//
+//
+// Note on epochs
+// --------------
+//
+// One refinement and transmission phase preceeds all the others: epochs.
+// Epochs are exchanged and compared in order to be sure that further
+// refinement and transmission (on certs and revisions) makes sense; they
+// are a sort of "immune system" to prevent incompatible databases (say
+// between rebuilds due to bugs in monotone) from cross-contaminating.  The
+// later refinements are only kicked off *after* all epochs are received
+// and compare correctly.
+//
+//
+// Note on dense coding
+// --------------------
+//
+// This protocol is "raw binary" (non-text) because coding density is
+// actually important here, and each packet consists of very
+// information-dense material that you wouldn't have a hope of typing in,
+// interpreting manually anyways.
 //
 
 using namespace std;
@@ -243,19 +243,16 @@ require(bool check, string const & context)
     throw bad_decode(F("check of '%s' failed") % context);
 }
 
-struct 
-done_marker
+struct netsync_error
 {
-  bool current_level_had_refinements;
-  bool tree_is_done;
-  done_marker() : 
-    current_level_had_refinements(false), 
-    tree_is_done(false) 
-  {}
+  string msg;
+  netsync_error(string const & s): msg(s) {}
 };
 
 struct 
-session
+session:
+  public refiner_callbacks,
+  public enumerator_callbacks
 {
   protocol_role role;
   protocol_voice const voice;
@@ -294,28 +291,42 @@ session
   auto_ptr<ticker> cert_out_ticker;
   auto_ptr<ticker> revision_in_ticker;
   auto_ptr<ticker> revision_out_ticker;
-  auto_ptr<ticker> revision_checked_ticker;
   
   vector<revision_id> written_revisions;
   vector<rsa_keypair_id> written_keys;
   vector<cert> written_certs;
 
-  map<netcmd_item_type, boost::shared_ptr<merkle_table> > merkle_tables;
-
-  map<netcmd_item_type, done_marker> done_refinements;
-  map<netcmd_item_type, boost::shared_ptr< set<id> > > requested_items;
-  map<netcmd_item_type, boost::shared_ptr< set<id> > > received_items;
-  map<netcmd_item_type, boost::shared_ptr< set<id> > > full_delta_items;
-  map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestry;
-  map<revision_id, map<cert_name, vector<cert> > > received_certs;
-  set< pair<id, id> > reverse_delta_requests;
-  bool analyzed_ancestry;
-
   id saved_nonce;
-  bool received_goodbye;
-  bool sent_goodbye;
+  packet_db_writer dbw;
 
-  packet_db_valve dbw;
+  enum 
+    { 
+      working_state,
+      shutdown_state,
+      confirmed_state
+    }
+    protocol_state;  
+  bool encountered_error;
+  bool set_totals;
+
+  // Interface to refinement.
+  refiner epoch_refiner;
+  refiner key_refiner;
+  refiner cert_refiner;
+  refiner rev_refiner;
+
+  // Interface to ancestry grovelling.
+  revision_enumerator rev_enumerator;
+
+  // Enumerator_callbacks methods.
+  set<file_id> file_items_sent;
+  bool process_this_rev(revision_id const & rev);
+  bool queue_this_cert(hexenc<id> const & c);
+  bool queue_this_file(hexenc<id> const & f);
+  void note_file_data(file_id const & f);
+  void note_file_delta(file_id const & src, file_id const & dst);
+  void note_rev(revision_id const & rev);
+  void note_cert(hexenc<id> const & c);
 
   session(protocol_role role,
           protocol_voice voice,
@@ -339,39 +350,29 @@ session
   void set_session_key(rsa_oaep_sha_data const & key_encrypted);
 
   void setup_client_tickers();
-
   bool done_all_refinements();
-  bool cert_refinement_done();
-  bool all_requested_revisions_received();
+  bool queued_all_items();
+  bool received_all_items();
+  bool finished_working();
+  void maybe_step();
+  void maybe_say_goodbye(transaction_guard & guard);
 
-  void note_item_requested(netcmd_item_type ty, id const & i);
-  void note_item_full_delta(netcmd_item_type ty, id const & ident);
-  bool item_already_requested(netcmd_item_type ty, id const & i);
   void note_item_arrived(netcmd_item_type ty, id const & i);
-
   void maybe_note_epochs_finished();
-
   void note_item_sent(netcmd_item_type ty, id const & i);
-
-  bool got_all_data();
-  void maybe_say_goodbye();
-
-  void get_heads_and_consume_certs(set<revision_id> & heads);
-
-  void analyze_ancestry_graph();
-  void analyze_manifest(manifest_map const & man);
 
   Netxx::Probe::ready_type which_events() const;
   bool read_some();
   bool write_some();
 
-  bool encountered_error;
   void error(string const & errmsg);
 
   void write_netcmd_and_try_flush(netcmd const & cmd);
-  void queue_bye_cmd();
+
+  // Outgoing queue-writers.
+  void queue_bye_cmd(u8 phase);
   void queue_error_cmd(string const & errmsg);
-  void queue_done_cmd(size_t level, netcmd_item_type type);
+  void queue_done_cmd(netcmd_item_type type, size_t n_items);
   void queue_hello_cmd(rsa_keypair_id const & key_name,
                        base64<rsa_pub_key> const & pub_encoded, 
                        id const & nonce);
@@ -389,12 +390,7 @@ session
                       string const & signature,
                       base64<rsa_pub_key> server_key_encoded);
   void queue_confirm_cmd();
-  void queue_refine_cmd(merkle_node const & node);
-  void queue_send_data_cmd(netcmd_item_type type, 
-                           id const & item);
-  void queue_send_delta_cmd(netcmd_item_type type, 
-                            id const & base, 
-                            id const & ident);
+  void queue_refine_cmd(refinement_type ty, merkle_node const & node);
   void queue_data_cmd(netcmd_item_type type, 
                       id const & item,
                       string const & dat);
@@ -402,15 +398,13 @@ session
                        id const & base, 
                        id const & ident, 
                        delta const & del);
-  void queue_nonexistant_cmd(netcmd_item_type type, 
-                             id const & item);
 
-  bool process_bye_cmd();
+  // Incoming dispatch-called methods.
   bool process_error_cmd(string const & errmsg);
-  bool process_done_cmd(size_t level, netcmd_item_type type);
   bool process_hello_cmd(rsa_keypair_id const & server_keyname,
                          rsa_pub_key const & server_key,
                          id const & nonce);
+  bool process_bye_cmd(u8 phase, transaction_guard & guard);
   bool process_anonymous_cmd(protocol_role role, 
                              utf8 const & their_include_pattern,
                              utf8 const & their_exclude_pattern);
@@ -421,13 +415,8 @@ session
                         id const & nonce1, 
                         string const & signature);
   bool process_confirm_cmd(string const & signature);
-  void respond_to_confirm_cmd();
-  bool process_refine_cmd(merkle_node const & node);
-  bool process_send_data_cmd(netcmd_item_type type,
-                             id const & item);
-  bool process_send_delta_cmd(netcmd_item_type type,
-                              id const & base, 
-                              id const & ident);
+  bool process_refine_cmd(refinement_type ty, merkle_node const & node);
+  bool process_done_cmd(netcmd_item_type type, size_t n_items);
   bool process_data_cmd(netcmd_item_type type,
                         id const & item, 
                         string const & dat);
@@ -435,82 +424,22 @@ session
                          id const & base, 
                          id const & ident, 
                          delta const & del);
-  bool process_nonexistant_cmd(netcmd_item_type type,
-                               id const & item);
   bool process_usher_cmd(utf8 const & msg);
 
-  bool merkle_node_exists(netcmd_item_type type,
-                          size_t level,
-                          prefix const & pref);
+  // The incoming dispatcher.
+  bool dispatch_payload(netcmd const & cmd,
+                        transaction_guard & guard);
 
-  void load_merkle_node(netcmd_item_type type,
-                        size_t level,
-                        prefix const & pref,
-                        merkle_ptr & node);
-
+  // Various helpers.
+  void respond_to_confirm_cmd();
   void rebuild_merkle_trees(app_state & app,
                             set<utf8> const & branches);
 
-  bool dispatch_payload(netcmd const & cmd);
+  void send_all_data(netcmd_item_type ty, set<id> const & items);
   void begin_service();
-  bool process();
+  bool process(transaction_guard & guard);
 };
 
-struct
-ancestry_fetcher
-{
-  session & sess;
-
-  // map children to parents
-  multimap< file_id, file_id > rev_file_deltas;
-  multimap< manifest_id, manifest_id > rev_manifest_deltas;
-  // map an ancestor to a child
-  multimap< file_id, file_id > fwd_file_deltas;
-  multimap< manifest_id, manifest_id > fwd_manifest_deltas;
-
-  set< file_id > seen_files;
-
-  ancestry_fetcher(session & s);
-  // analysing the ancestry graph
-  void traverse_files(change_set const & cset);
-  void traverse_manifest(manifest_id const & child_man,
-                         manifest_id const & parent_man);
-  void traverse_ancestry(set<revision_id> const & heads);
-
-  // requesting the data
-  void request_rev_file_deltas(file_id const & start, 
-                               set<file_id> & done_files);
-  void request_files();
-  void request_rev_manifest_deltas(manifest_id const & start,
-                                   set<manifest_id> & done_manifests);
-  void request_manifests();
-
-
-};
-
-
-struct 
-root_prefix
-{
-  prefix val;
-  root_prefix() : val("")
-  {}
-};
-
-static root_prefix const & 
-get_root_prefix()
-{ 
-  // this is not a static variable for a bizarre reason: mac OSX runs
-  // static initializers in the "wrong" order (application before
-  // libraries), so the initializer for a static string in cryptopp runs
-  // after the initializer for a static variable outside a function
-  // here. therefore encode_hexenc() fails in the static initializer here
-  // and the program crashes. curious, eh?
-  static root_prefix ROOT_PREFIX;
-  return ROOT_PREFIX;
-}
-
-static file_id null_ident;
   
 session::session(protocol_role role,
                  protocol_voice voice,
@@ -545,41 +474,23 @@ session::session(protocol_role role,
   cert_out_ticker(NULL),
   revision_in_ticker(NULL),
   revision_out_ticker(NULL),
-  revision_checked_ticker(NULL),
-  analyzed_ancestry(false),
   saved_nonce(""),
-  received_goodbye(false),
-  sent_goodbye(false),
   dbw(app, true),
-  encountered_error(false)
+  protocol_state(working_state),
+  encountered_error(false),
+  set_totals(false),
+  epoch_refiner(epoch_item, voice, *this),
+  key_refiner(key_item, voice, *this),
+  cert_refiner(cert_item, voice, *this),
+  rev_refiner(revision_item, voice, *this),
+  rev_enumerator(*this, app)
 {
   dbw.set_on_revision_written(boost::bind(&session::rev_written_callback,
                                           this, _1));
   dbw.set_on_cert_written(boost::bind(&session::cert_written_callback,
-                                          this, _1));
+                                      this, _1));
   dbw.set_on_pubkey_written(boost::bind(&session::key_written_callback,
-                                          this, _1));
-
-  done_refinements.insert(make_pair(cert_item, done_marker()));
-  done_refinements.insert(make_pair(key_item, done_marker()));
-  done_refinements.insert(make_pair(epoch_item, done_marker()));
-  
-  requested_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
-  requested_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
-
-  received_items.insert(make_pair(cert_item, boost::shared_ptr< set<id> >(new set<id>())));
-  received_items.insert(make_pair(key_item, boost::shared_ptr< set<id> >(new set<id>())));
-  received_items.insert(make_pair(revision_item, boost::shared_ptr< set<id> >(new set<id>())));
-  received_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
-  received_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
-  received_items.insert(make_pair(epoch_item, boost::shared_ptr< set<id> >(new set<id>())));
-
-  full_delta_items.insert(make_pair(manifest_item, boost::shared_ptr< set<id> >(new set<id>())));
-  full_delta_items.insert(make_pair(file_item, boost::shared_ptr< set<id> >(new set<id>())));
+                                        this, _1));
 }
 
 session::~session()
@@ -606,6 +517,7 @@ session::~session()
     {
       app.lua.hook_note_netsync_pubkey_received(*i);
     }
+
   //Revisions
   for (vector<revision_id>::iterator i = written_revisions.begin();
       i != written_revisions.end(); ++i)
@@ -623,6 +535,7 @@ session::~session()
       app.db.get_revision(*i, rdat);
       app.lua.hook_note_netsync_revision_received(*i, rdat, certs);
     }
+
   //Certs (not attached to a new revision)
   for (vector<cert>::iterator i = unattached_certs.begin();
       i != unattached_certs.end(); ++i)
@@ -635,10 +548,91 @@ session::~session()
     }
 }
 
+bool 
+session::process_this_rev(revision_id const & rev)
+{
+  id item;
+  decode_hexenc(rev.inner(), item);
+  return (rev_refiner.items_to_send.find(item)
+          != rev_refiner.items_to_send.end());
+}
+
+bool 
+session::queue_this_cert(hexenc<id> const & c)
+{
+  id item;
+  decode_hexenc(c, item);
+  return (cert_refiner.items_to_send.find(item)
+          != cert_refiner.items_to_send.end());
+}
+
+bool 
+session::queue_this_file(hexenc<id> const & f)
+{
+  return file_items_sent.find(f) == file_items_sent.end();
+}
+
+void 
+session::note_file_data(file_id const & f)
+{
+  if (role == sink_role)
+    return;
+  file_data fd;
+  id item;
+  decode_hexenc(f.inner(), item);
+  app.db.get_file_version(f, fd);
+  queue_data_cmd(file_item, item, fd.inner()());
+  file_items_sent.insert(f);
+}
+
+void 
+session::note_file_delta(file_id const & src, file_id const & dst)
+{
+  if (role == sink_role)
+    return;
+  file_data fd1, fd2;
+  delta del;
+  id fid1, fid2;
+  decode_hexenc(src.inner(), fid1);
+  decode_hexenc(dst.inner(), fid2);  
+  app.db.get_file_version(src, fd1);
+  app.db.get_file_version(dst, fd2);
+  diff(fd1.inner(), fd2.inner(), del);
+  queue_delta_cmd(file_item, fid1, fid2, del);
+  file_items_sent.insert(dst);
+}
+
+void 
+session::note_rev(revision_id const & rev)
+{
+  if (role == sink_role)
+    return;
+  revision_set rs;
+  id item;
+  decode_hexenc(rev.inner(), item);
+  app.db.get_revision(rev, rs);
+  data tmp;
+  write_revision_set(rs, tmp);
+  queue_data_cmd(revision_item, item, tmp());
+}
+
+void 
+session::note_cert(hexenc<id> const & c)
+{
+  if (role == sink_role)
+    return;
+  id item;
+  decode_hexenc(c, item);
+  revision<cert> cert;
+  string str;
+  app.db.get_revision_cert(c, cert);
+  write_cert(cert.inner(), str);
+  queue_data_cmd(cert_item, item, str);
+}
+
+
 void session::rev_written_callback(revision_id rid)
 {
-  if (revision_checked_ticker.get())
-    ++(*revision_checked_ticker);
   written_revisions.push_back(rid);
 }
 
@@ -699,8 +693,6 @@ session::setup_client_tickers()
   if (role == sink_role)
     {
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_checked_ticker.reset(new ticker(_("revs written"), "w", 1));
-      // xgettext: please use short message and try to avoid multibytes chars
       cert_in_ticker.reset(new ticker(_("certs in"), "c", 3));
       // xgettext: please use short message and try to avoid multibytes chars
       revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
@@ -716,8 +708,6 @@ session::setup_client_tickers()
     {
       I(role == source_and_sink_role);
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_checked_ticker.reset(new ticker(_("revs written"), "w", 1));
-      // xgettext: please use short message and try to avoid multibytes chars
       revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
       // xgettext: please use short message and try to avoid multibytes chars
       revision_out_ticker.reset(new ticker(_("revs out"), "R", 1));
@@ -727,101 +717,123 @@ session::setup_client_tickers()
 bool 
 session::done_all_refinements()
 {
-  bool all = true;
-  for (map<netcmd_item_type, done_marker>::const_iterator j =
-         done_refinements.begin(); j != done_refinements.end(); ++j)
+  bool all = rev_refiner.done
+    && cert_refiner.done
+    && key_refiner.done
+    && epoch_refiner.done;
+
+  if (all && !set_totals)
     {
-      if (j->second.tree_is_done == false)
-        all = false;
+      if (cert_out_ticker.get())
+        cert_out_ticker->set_total(cert_refiner.items_to_send.size());
+
+      if (revision_out_ticker.get())
+        revision_out_ticker->set_total(rev_refiner.items_to_send.size());
+
+      if (cert_in_ticker.get())
+        cert_in_ticker->set_total(cert_refiner.items_to_receive);
+
+      if (revision_in_ticker.get())
+        revision_in_ticker->set_total(rev_refiner.items_to_receive);
+        
+      set_totals = true;
     }
+  return all;  
+}
+
+
+
+bool 
+session::received_all_items()
+{
+  if (role == source_role)
+    return true;
+  bool all = rev_refiner.items_to_receive == 0
+    && cert_refiner.items_to_receive == 0
+    && key_refiner.items_to_receive == 0
+    && epoch_refiner.items_to_receive == 0;
+  return all;
+}
+
+bool 
+session::finished_working()
+{
+  bool all = done_all_refinements() 
+    && received_all_items()
+    && queued_all_items()
+    && rev_enumerator.done();
+  return all;
+}
+
+bool 
+session::queued_all_items()
+{  
+  if (role == sink_role)
+    return true;
+  bool all = rev_refiner.items_to_send.empty()
+    && cert_refiner.items_to_send.empty()
+    && key_refiner.items_to_send.empty()
+    && epoch_refiner.items_to_send.empty();
   return all;
 }
 
 
-bool 
-session::cert_refinement_done()
-{
-  return done_refinements[cert_item].tree_is_done;
-}
-
-bool 
-session::got_all_data()
-{
-  for (map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator i =
-         requested_items.begin(); i != requested_items.end(); ++i)
-    {
-      if (! i->second->empty())
-        return false;
-    }
-  return true;
-}
-
-bool 
-session::all_requested_revisions_received()
-{
-  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
-    i = requested_items.find(revision_item);
-  I(i != requested_items.end());
-  return i->second->empty();
-}
-
 void
 session::maybe_note_epochs_finished()
 {
-  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
-    i = requested_items.find(epoch_item);
-  I(i != requested_items.end());
   // Maybe there are outstanding epoch requests.
-  if (!i->second->empty())
+  if (!epoch_refiner.items_to_receive == 0)
     return;
+
   // And maybe we haven't even finished the refinement.
-  if (!done_refinements[epoch_item].tree_is_done)
+  if (!epoch_refiner.done)
     return;
-  // But otherwise, we're ready to go!
-  L(F("all epochs processed, opening database valve\n"));
-  this->dbw.open_valve();
+
+  // If we ran into an error -- say a mismatched epoch -- don't do any
+  // further refinements.
+  if (encountered_error)
+    return;
+
+  // But otherwise, we're ready to go. Start the next
+  // set of refinements.
+  key_refiner.begin_refinement();
+  cert_refiner.begin_refinement();
+  rev_refiner.begin_refinement();
 }
 
-void
-session::note_item_requested(netcmd_item_type ty, id const & ident)
+static void
+decrement_if_nonzero(netcmd_item_type ty,
+                     size_t & n)
 {
-  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
-    i = requested_items.find(ty);
-  I(i != requested_items.end());
-  i->second->insert(ident);
-}
-
-void
-session::note_item_full_delta(netcmd_item_type ty, id const & ident)
-{
-  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
-    i = full_delta_items.find(ty);
-  I(i != full_delta_items.end());
-  i->second->insert(ident);
+  if (n == 0)
+    {
+      string typestr;
+      netcmd_item_type_to_string(ty, typestr);
+      E(false, F("underflow on count of %s items to receive") % typestr);
+    }
+  --n;
 }
 
 void
 session::note_item_arrived(netcmd_item_type ty, id const & ident)
 {
-  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
-    i = requested_items.find(ty);
-  I(i != requested_items.end());
-  i->second->erase(ident);
-  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator 
-    j = received_items.find(ty);
-  I(j != received_items.end());
-  j->second->insert(ident);
-  
-
   switch (ty)
     {
     case cert_item:
+      decrement_if_nonzero(ty, cert_refiner.items_to_receive);
       if (cert_in_ticker.get() != NULL)
         ++(*cert_in_ticker);
       break;
     case revision_item:
+      decrement_if_nonzero(ty, rev_refiner.items_to_receive);
       if (revision_in_ticker.get() != NULL)
         ++(*revision_in_ticker);
+      break;
+    case key_item:
+      decrement_if_nonzero(ty, key_refiner.items_to_receive);
+      break;
+    case epoch_item:
+      decrement_if_nonzero(ty, epoch_refiner.items_to_receive);
       break;
     default:
       // No ticker for other things.
@@ -829,20 +841,6 @@ session::note_item_arrived(netcmd_item_type ty, id const & ident)
     }
 }
 
-bool 
-session::item_already_requested(netcmd_item_type ty, id const & ident)
-{
-  map<netcmd_item_type, boost::shared_ptr< set<id> > >::const_iterator i;
-  i = requested_items.find(ty);
-  I(i != requested_items.end());
-  if (i->second->find(ident) != i->second->end())
-    return true;
-  i = received_items.find(ty);
-  I(i != received_items.end());
-  if (i->second->find(ident) != i->second->end())
-    return true;
-  return false;
-}
 
 
 void
@@ -851,12 +849,20 @@ session::note_item_sent(netcmd_item_type ty, id const & ident)
   switch (ty)
     {
     case cert_item:
+      cert_refiner.items_to_send.erase(ident);
       if (cert_out_ticker.get() != NULL)
         ++(*cert_out_ticker);
       break;
     case revision_item:
+      rev_refiner.items_to_send.erase(ident);
       if (revision_out_ticker.get() != NULL)
         ++(*revision_out_ticker);
+      break;
+    case key_item:
+      key_refiner.items_to_send.erase(ident);
+      break;
+    case epoch_item:
+      epoch_refiner.items_to_send.erase(ident);
       break;
     default:
       // No ticker for other things.
@@ -886,204 +892,13 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
 // mode, all received data is ignored, and no new data is queued.  We simply
 // stay connected long enough for the current write buffer to be flushed, to
 // ensure that our peer receives the error message.
-// WARNING WARNING WARNING (FIXME): this does _not_ throw an exception.  if
-// while processing any given netcmd packet you encounter an error, you can
-// _only_ call this method if you have not touched the database, because if
-// you have touched the database then you need to throw an exception to
-// trigger a rollback.
-// you could, of course, call this method and then throw an exception, but
-// there is no point in doing that, because throwing the exception will cause
-// the connection to be immediately terminated, so your call to error() will
-// actually have no effect (except to cause your error message to be printed
-// twice).
+// Affects read_some, write_some, and process .
 void
 session::error(std::string const & errmsg)
 {
-  W(F("error: %s\n") % errmsg);
-  queue_error_cmd(errmsg);
-  encountered_error = true;
+  throw netsync_error(errmsg);
 }
 
-void 
-session::analyze_manifest(manifest_map const & man)
-{
-  L(F("analyzing %d entries in manifest\n") % man.size());
-  for (manifest_map::const_iterator i = man.begin();
-       i != man.end(); ++i)
-    {
-      if (! this->app.db.file_version_exists(manifest_entry_id(i)))
-        {
-          id tmp;
-          decode_hexenc(manifest_entry_id(i).inner(), tmp);
-          queue_send_data_cmd(file_item, tmp);
-        }
-    }
-}
-
-inline static id
-plain_id(manifest_id const & i)
-{
-  id tmp;
-  hexenc<id> htmp(i.inner());
-  decode_hexenc(htmp, tmp);
-  return tmp;
-}
-
-inline static id
-plain_id(file_id const & i)
-{
-  id tmp;
-  hexenc<id> htmp(i.inner());
-  decode_hexenc(htmp, tmp);
-  return tmp;
-}
-
-void
-session::get_heads_and_consume_certs( set<revision_id> & heads )
-{
-  typedef map<revision_id, boost::shared_ptr< pair<revision_data, revision_set> > > ancestryT;
-  typedef map<cert_name, vector<cert> > cert_map;
-
-  set<revision_id> nodes, parents;
-  map<revision_id, int> chld_num;
-  L(F("analyzing %d ancestry edges\n") % ancestry.size());
-
-  for (ancestryT::const_iterator i = ancestry.begin(); i != ancestry.end(); ++i)
-    {
-      nodes.insert(i->first);
-      for (edge_map::const_iterator j = i->second->second.edges.begin();
-           j != i->second->second.edges.end(); ++j)
-        {
-          parents.insert(edge_old_revision(j));
-          map<revision_id, int>::iterator n;
-          n = chld_num.find(edge_old_revision(j));
-          if (n == chld_num.end())
-            chld_num.insert(make_pair(edge_old_revision(j), 1));
-          else
-            ++(n->second);
-        }
-    }
-  
-  set_difference(nodes.begin(), nodes.end(),
-                 parents.begin(), parents.end(),
-                 inserter(heads, heads.begin()));
-
-  L(F("intermediate set_difference heads size %d") % heads.size());
-
-  // Write permissions checking:
-  // remove heads w/o proper certs, add their children to heads
-  // 1) remove unwanted branch certs from consideration
-  // 2) remove heads w/o a branch tag, process new exposed heads
-  // 3) repeat 2 until no change
-
-  //1
-  set<string> ok_branches, bad_branches;
-  cert_name bcert_name(branch_cert_name);
-  cert_name tcert_name(tag_cert_name);
-  for (map<revision_id, cert_map>::iterator i = received_certs.begin();
-      i != received_certs.end(); ++i)
-    {
-      //branches
-      vector<cert> & bcerts(i->second[bcert_name]);
-      vector<cert> keeping;
-      for (vector<cert>::iterator j = bcerts.begin(); j != bcerts.end(); ++j)
-        {
-          cert_value name;
-          decode_base64(j->value, name);
-          if (ok_branches.find(name()) != ok_branches.end())
-            keeping.push_back(*j);
-          else if (bad_branches.find(name()) != bad_branches.end())
-            ;
-          else
-            {
-              if (our_matcher(name()))
-                {
-                  ok_branches.insert(name());
-                  keeping.push_back(*j);
-                }
-              else
-                {
-                  bad_branches.insert(name());
-                  W(F("Dropping branch certs for unwanted branch %s")
-                    % name);
-                }
-            }
-        }
-      bcerts = keeping;
-    }
-  //2
-  list<revision_id> tmp;
-  for (set<revision_id>::iterator i = heads.begin(); i != heads.end(); ++i)
-    {
-      if (!received_certs[*i][bcert_name].size())
-        tmp.push_back(*i);
-    }
-  for (list<revision_id>::iterator i = tmp.begin(); i != tmp.end(); ++i)
-    heads.erase(*i);
-
-  L(F("after step 2, heads size %d") % heads.size());
-  //3
-  while (tmp.size())
-    {
-      ancestryT::const_iterator i = ancestry.find(tmp.front());
-      if (i != ancestry.end())
-        {
-          for (edge_map::const_iterator j = i->second->second.edges.begin();
-               j != i->second->second.edges.end(); ++j)
-            {
-              if (!--chld_num[edge_old_revision(j)])
-                {
-                  if (received_certs[i->first][bcert_name].size())
-                    heads.insert(i->first);
-                  else
-                    tmp.push_back(edge_old_revision(j));
-                }
-            }
-          // since we don't want this rev, we don't want it's certs either
-          received_certs[tmp.front()] = cert_map();
-        }
-        tmp.pop_front();
-    }
-
-  L(F("after step 3, heads size %d") % heads.size());
-  // We've reduced the certs to those we want now, send them to dbw.
-  for (map<revision_id, cert_map>::iterator i = received_certs.begin();
-      i != received_certs.end(); ++i)
-    {
-      for (cert_map::iterator j = i->second.begin();
-          j != i->second.end(); ++j)
-        {
-          for (vector<cert>::iterator k = j->second.begin();
-              k != j->second.end(); ++k)
-            {
-              this->dbw.consume_revision_cert(revision<cert>(*k));
-            }
-        }
-    }
-}
-
-void
-session::analyze_ancestry_graph()
-{
-  L(F("analyze_ancestry_graph"));
-  if (! (all_requested_revisions_received() && cert_refinement_done()))
-    {
-      L(F("not all done in analyze_ancestry_graph"));
-      return;
-    }
-
-  if (analyzed_ancestry)
-    {
-      L(F("already analyzed_ancestry in analyze_ancestry_graph"));
-      return;
-    }
-
-  L(F("analyze_ancestry_graph fetching"));
-
-  ancestry_fetcher fetch(*this);
-
-  analyzed_ancestry = true;
-}
 
 Netxx::Probe::ready_type 
 session::which_events() const
@@ -1168,34 +983,34 @@ session::write_some()
 // senders
 
 void 
-session::queue_bye_cmd() 
-{
-  L(F("queueing 'bye' command\n"));
-  netcmd cmd;
-  cmd.write_bye_cmd();
-  write_netcmd_and_try_flush(cmd);
-  this->sent_goodbye = true;
-}
-
-void 
 session::queue_error_cmd(string const & errmsg)
 {
   L(F("queueing 'error' command\n"));
   netcmd cmd;
   cmd.write_error_cmd(errmsg);
   write_netcmd_and_try_flush(cmd);
-  this->sent_goodbye = true;
 }
 
 void 
-session::queue_done_cmd(size_t level, 
-                        netcmd_item_type type) 
+session::queue_bye_cmd(u8 phase) 
+{
+  L(F("queueing 'bye' command, phase %d\n") 
+    % static_cast<size_t>(phase));
+  netcmd cmd;
+  cmd.write_bye_cmd(phase);
+  write_netcmd_and_try_flush(cmd);
+}
+
+void 
+session::queue_done_cmd(netcmd_item_type type,
+                        size_t n_items) 
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
-  L(F("queueing 'done' command for %s level %s\n") % typestr % level);
+  L(F("queueing 'done' command for %s (%d items)\n") 
+    % typestr % n_items);
   netcmd cmd;
-  cmd.write_done_cmd(level, type);
+  cmd.write_done_cmd(type, n_items);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1256,84 +1071,18 @@ session::queue_confirm_cmd()
 }
 
 void 
-session::queue_refine_cmd(merkle_node const & node)
+session::queue_refine_cmd(refinement_type ty, merkle_node const & node)
 {
   string typestr;
   hexenc<prefix> hpref;
   node.get_hex_prefix(hpref);
   netcmd_item_type_to_string(node.type, typestr);
-  L(F("queueing request for refinement of %s node '%s', level %d\n")
+  L(F("queueing refinement %s of %s node '%s', level %d\n")
+    % (ty == refinement_query ? "query" : "response")
     % typestr % hpref % static_cast<int>(node.level));
   netcmd cmd;
-  cmd.write_refine_cmd(node);
+  cmd.write_refine_cmd(ty, node);
   write_netcmd_and_try_flush(cmd);
-}
-
-void 
-session::queue_send_data_cmd(netcmd_item_type type,
-                             id const & item)
-{
-  string typestr;
-  netcmd_item_type_to_string(type, typestr);
-  hexenc<id> hid;
-  encode_hexenc(item, hid);
-
-  if (role == source_role)
-    {
-      L(F("not queueing request for %s '%s' as we are in pure source role\n") 
-        % typestr % hid);
-      return;
-    }
-
-  if (item_already_requested(type, item))
-    {
-      L(F("not queueing request for %s '%s' as we already requested it\n") 
-        % typestr % hid);
-      return;
-    }
-
-  L(F("queueing request for data of %s item '%s'\n")
-    % typestr % hid);
-  netcmd cmd;
-  cmd.write_send_data_cmd(type, item);
-  write_netcmd_and_try_flush(cmd);
-  note_item_requested(type, item);
-}
-    
-void 
-session::queue_send_delta_cmd(netcmd_item_type type,
-                              id const & base, 
-                              id const & ident)
-{
-  I(type == manifest_item || type == file_item);
-
-  string typestr;
-  netcmd_item_type_to_string(type, typestr);
-  hexenc<id> base_hid;
-  encode_hexenc(base, base_hid);
-  hexenc<id> ident_hid;
-  encode_hexenc(ident, ident_hid);
-  
-  if (role == source_role)
-    {
-      L(F("not queueing request for %s delta '%s' -> '%s' as we are in pure source role\n") 
-        % typestr % base_hid % ident_hid);
-      return;
-    }
-
-  if (item_already_requested(type, ident))
-    {
-      L(F("not queueing request for %s delta '%s' -> '%s' as we already requested the target\n") 
-        % typestr % base_hid % ident_hid);
-      return;
-    }
-
-  L(F("queueing request for contents of %s delta '%s' -> '%s'\n")
-    % typestr % base_hid % ident_hid);
-  netcmd cmd;
-  cmd.write_send_delta_cmd(type, base, ident);
-  write_netcmd_and_try_flush(cmd);
-  note_item_requested(type, ident);
 }
 
 void 
@@ -1376,7 +1125,7 @@ session::queue_delta_cmd(netcmd_item_type type,
                          id const & ident, 
                          delta const & del)
 {
-  I(type == manifest_item || type == file_item);
+  I(type == file_item);
   I(! del().empty() || ident == base);
   string typestr;
   netcmd_item_type_to_string(type, typestr);
@@ -1400,90 +1149,13 @@ session::queue_delta_cmd(netcmd_item_type type,
   note_item_sent(type, ident);
 }
 
-void 
-session::queue_nonexistant_cmd(netcmd_item_type type,
-                               id const & item)
-{
-  string typestr;
-  netcmd_item_type_to_string(type, typestr);
-  hexenc<id> hid;
-  encode_hexenc(item, hid);
-  if (role == sink_role)
-    {
-      L(F("not queueing note of nonexistence of %s item '%s' as we are in pure sink role\n") 
-        % typestr % hid);
-      return;
-    }
-
-  L(F("queueing note of nonexistance of %s item '%s'\n")
-    % typestr % hid);
-  netcmd cmd;
-  cmd.write_nonexistant_cmd(type, item);
-  write_netcmd_and_try_flush(cmd);
-}
 
 // processors
-
-bool 
-session::process_bye_cmd() 
-{
-  L(F("received 'bye' netcmd\n"));
-  this->received_goodbye = true;
-  return true;
-}
 
 bool 
 session::process_error_cmd(string const & errmsg) 
 {
   throw bad_decode(F("received network error: %s") % errmsg);
-}
-
-bool 
-session::process_done_cmd(size_t level, netcmd_item_type type) 
-{
-
-  map< netcmd_item_type, done_marker>::iterator i = done_refinements.find(type);
-  I(i != done_refinements.end());
-
-  string typestr;
-  netcmd_item_type_to_string(type, typestr);
-
-  if ((! i->second.current_level_had_refinements) || (level >= 0xff))
-    {
-      // we received *no* refinements on this level -- or we ran out of
-      // levels -- so refinement for this type is finished.
-      L(F("received 'done' for empty %s level %d, marking as complete\n") 
-        % typestr % static_cast<int>(level));
-
-      // possibly echo it back one last time, for shutdown purposes
-      if (!i->second.tree_is_done)
-        queue_done_cmd(level + 1, type);
-
-      // tombstone it
-      i->second.current_level_had_refinements = false;
-      i->second.tree_is_done = true;
-
-      if (all_requested_revisions_received())
-        analyze_ancestry_graph();      
-
-      maybe_note_epochs_finished();
-    }
-
-  else if (i->second.current_level_had_refinements 
-      && (! i->second.tree_is_done))
-    {
-      // we *did* receive some refinements on this level, reset to zero and
-      // queue an echo of the 'done' marker.
-      L(F("received 'done' for %s level %d, which had refinements; "
-          "sending echo of done for level %d\n") 
-        % typestr 
-        % static_cast<int>(level) 
-        % static_cast<int>(level + 1));
-      i->second.current_level_had_refinements = false;
-      queue_done_cmd(level + 1, type);
-      return true;
-    }
-  return true;
 }
 
 void
@@ -1516,14 +1188,14 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       if (expected_key_hash() != their_key_hash())
         {
           P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-	      "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
-	      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-	      "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"
-	      "it is also possible that the server key has just been changed\n"
-	      "remote host sent key %s\n"
-	      "I expected %s\n"
-	      "'monotone unset %s %s' overrides this check\n")
-	    % their_key_hash % expected_key_hash
+              "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
+              "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+              "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"
+              "it is also possible that the server key has just been changed\n"
+              "remote host sent key %s\n"
+              "I expected %s\n"
+              "'monotone unset %s %s' overrides this check\n")
+            % their_key_hash % expected_key_hash
             % their_key_key.first % their_key_key.second);
           E(false, F("server key changed"));
         }
@@ -1531,8 +1203,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   else
     {
       P(F("first time connecting to server %s\n"
-	  "I'll assume it's really them, but you might want to double-check\n"
-	  "their key's fingerprint: %s\n") % peer_id % their_key_hash);
+          "I'll assume it's really them, but you might want to double-check\n"
+          "their key's fingerprint: %s\n") % peer_id % their_key_hash);
       app.db.set_var(their_key_key, var_value(their_key_hash()));
     }
   if (!app.db.public_key_exists(their_key_hash))
@@ -1608,20 +1280,20 @@ session::process_anonymous_cmd(protocol_role role,
                                utf8 const & their_include_pattern,
                                utf8 const & their_exclude_pattern)
 {
-  //
-  // internally netsync thinks in terms of sources and sinks. users like
+  // Internally netsync thinks in terms of sources and sinks. Users like
   // thinking of repositories as "readonly", "readwrite", or "writeonly".
   //
-  // we therefore use the read/write terminology when dealing with the UI:
+  // We therefore use the read/write terminology when dealing with the UI:
   // if the user asks to run a "read only" service, this means they are
   // willing to be a source but not a sink.
   //
-  // nb: the "role" here is the role the *client* wants to play
+  // nb: The "role" here is the role the *client* wants to play
   //     so we need to check that the opposite role is allowed for us,
   //     in our this->role field.
   //
 
-  // client must be a sink and server must be a source (anonymous read-only)
+  // Client must be a sink and server must be a source (anonymous
+  // read-only).
 
   if (role != sink_role)
     {
@@ -1683,7 +1355,7 @@ session::process_auth_cmd(protocol_role their_role,
   get_branches(app, branchnames);
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
   
-  // check that they replied with the nonce we asked for
+  // Check that they replied with the nonce we asked for.
   if (!(nonce1 == this->saved_nonce))
     {
       W(F("detected replay attack in auth netcmd\n"));
@@ -1691,24 +1363,21 @@ session::process_auth_cmd(protocol_role their_role,
       return false;
     }
 
-
-  //
-  // internally netsync thinks in terms of sources and sinks. users like
+  // Internally netsync thinks in terms of sources and sinks. users like
   // thinking of repositories as "readonly", "readwrite", or "writeonly".
   //
-  // we therefore use the read/write terminology when dealing with the UI:
+  // We therefore use the read/write terminology when dealing with the UI:
   // if the user asks to run a "read only" service, this means they are
   // willing to be a source but not a sink.
   //
-  // nb: the "their_role" here is the role the *client* wants to play
+  // nb: The "their_role" here is the role the *client* wants to play
   //     so we need to check that the opposite role is allowed for us,
   //     in our this->role field.
-  //
 
   if (!app.db.public_key_exists(their_key_hash))
     {
-      // if it's not in the db, it still could be in the keystore if we
-      // have the private key that goes with it
+      // If it's not in the db, it still could be in the keystore if we
+      // have the private key that goes with it.
       if (!app.keys.try_ensure_in_db(their_key_hash))
         {
           W(F("remote public key hash '%s' is unknown\n") % their_key_hash);
@@ -1717,12 +1386,12 @@ session::process_auth_cmd(protocol_role their_role,
         }
     }
   
-  // get their public key
+  // Get their public key.
   rsa_keypair_id their_id;
   base64<rsa_pub_key> their_key;
   app.db.get_pubkey(their_key_hash, their_id, their_key);
 
-  // client as sink, server as source (reading)
+  // Client as sink, server as source (reading).
 
   if (their_role == sink_role || their_role == source_and_sink_role)
     {
@@ -1752,12 +1421,12 @@ session::process_auth_cmd(protocol_role their_role,
         }
     }
 
-  //if we're source_and_sink_role, continue even with no branches readable
-  //ex: serve --db=empty.db
+  // If we're source_and_sink_role, continue even with no branches readable
+  // eg. serve --db=empty.db
   P(F("allowed '%s' read permission for '%s' excluding '%s'\n")
     % their_id % their_include_pattern % their_exclude_pattern);
 
-  // client as source, server as sink (writing)
+  // Client as source, server as sink (writing).
 
   if (their_role == source_role || their_role == source_and_sink_role)
     {
@@ -1783,28 +1452,31 @@ session::process_auth_cmd(protocol_role their_role,
 
   rebuild_merkle_trees(app, ok_branches);
 
-  // save their identity 
+  // Save their identity.
   this->remote_peer_key_hash = client;
 
-  // check the signature
+  // Check the signature.
   base64<rsa_sha1_signature> sig;
   encode_base64(rsa_sha1_signature(signature), sig);
   if (check_signature(app, their_id, their_key, nonce1(), sig))
     {
-      // get our private key and sign back
+      // Get our private key and sign back.
       L(F("client signature OK, accepting authentication\n"));
       this->authenticated = true;
       this->remote_peer_key_name = their_id;
-      // assume the (possibly degraded) opposite role
+
+      // Assume the (possibly degraded) opposite role.
       switch (their_role)
         {
         case source_role:
           I(this->role != source_role);
           this->role = sink_role;
           break;
+
         case source_and_sink_role:
           I(this->role == source_and_sink_role);
           break;
+
         case sink_role:
           I(this->role != sink_role);
           this->role = source_role;
@@ -1828,16 +1500,16 @@ session::process_confirm_cmd(string const & signature)
   hexenc<id> their_key_hash;
   encode_hexenc(id(remote_peer_key_hash), their_key_hash);
   
-  // nb. this->role is our role, the server is in the opposite role
+  // nb. this->role is our role, the server is in the opposite role.
   L(F("received 'confirm' netcmd from server '%s' for pattern '%s' exclude '%s' in %s mode\n")
     % their_key_hash % our_include_pattern % our_exclude_pattern
     % (this->role == source_and_sink_role ? _("source and sink") :
        (this->role == source_role ? _("sink") : _("source"))));
   
-  // check their signature
+  // Check their signature.
   if (app.db.public_key_exists(their_key_hash))
     {
-      // get their public key and check the signature
+      // Get their public key and check the signature.
       rsa_keypair_id their_id;
       base64<rsa_pub_key> their_key;
       app.db.get_pubkey(their_key_hash, their_id, their_key);
@@ -1860,21 +1532,159 @@ session::process_confirm_cmd(string const & signature)
   return false;
 }
 
+bool
+session::process_refine_cmd(refinement_type ty, merkle_node const & node)
+{
+  string typestr;
+  netcmd_item_type_to_string(node.type, typestr);
+  L(F("processing refine cmd for %s node at level %d\n")
+    % typestr % node.level);
+
+  switch (node.type)
+    {    
+    case file_item:
+      W(F("Unexpected 'refine' command on non-refined item type\n"));
+      break;
+      
+    case key_item:
+      key_refiner.process_refinement_command(ty, node);
+      break;
+      
+    case revision_item:
+      rev_refiner.process_refinement_command(ty, node);
+      break;
+      
+    case cert_item:
+      cert_refiner.process_refinement_command(ty, node);
+      break;
+      
+    case epoch_item:
+      epoch_refiner.process_refinement_command(ty, node);
+      break;
+    }
+  return true;
+}
+
+bool 
+session::process_bye_cmd(u8 phase, 
+                         transaction_guard & guard)
+{
+
+// Ideal shutdown
+// ~~~~~~~~~~~~~~~
+//
+//             I/O events                 state transitions
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   ~~~~~~~~~~~~~~~~~~~
+//                                        client: C_WORKING
+//                                        server: S_WORKING
+// 0. [refinement, data, deltas, etc.]
+//                                        client: C_SHUTDOWN
+//                                        (client checkpoints here)
+// 1. client -> "bye 0"                   
+// 2.           "bye 0"  -> server
+//                                        server: S_SHUTDOWN
+//                                        (server checkpoints here)
+// 3.           "bye 1"  <- server        
+// 4. client <- "bye 1"              
+//                                        client: C_CONFIRMED
+// 5. client -> "bye 2"                   
+// 6.           "bye 2"  -> server
+//                                        server: S_CONFIRMED     
+// 7. [server drops connection]
+//
+//
+// Affects of I/O errors or disconnections
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//   C_WORKING: report error and fault
+//   S_WORKING: report error and recover
+//  C_SHUTDOWN: report error and fault
+//  S_SHUTDOWN: report success and recover
+//              (and warn that client might falsely see error)
+// C_CONFIRMED: report success
+// S_CONFIRMED: report success
+
+  switch (phase)
+    {
+    case 0:
+      if (voice == server_voice && 
+          protocol_state == working_state)
+        {
+          protocol_state = shutdown_state;
+          guard.do_checkpoint();
+          queue_bye_cmd(1);
+        }
+      else
+        error("unexpected bye phase 0 received");
+      break;
+
+    case 1:
+      if (voice == client_voice && 
+          protocol_state == shutdown_state)
+        {
+          protocol_state = confirmed_state;
+          queue_bye_cmd(2);
+        }
+      else
+        error("unexpected bye phase 1 received");
+      break;
+
+    case 2:
+      if (voice == server_voice && 
+          protocol_state == shutdown_state)
+        {
+          protocol_state = confirmed_state;
+          return false;
+        }
+      else
+        error("unexpected bye phase 2 received");
+      break;
+
+    default:
+      error((F("unknown bye phase %d received") % phase).str());
+    }
+
+  return true;
+}
+
+bool 
+session::process_done_cmd(netcmd_item_type type, size_t n_items)
+{
+  switch (type)
+    {    
+    case file_item:
+      W(F("Unexpected 'done' command on non-refined item type\n"));
+      break;
+      
+    case key_item:
+      key_refiner.process_done_command(n_items);
+      if (key_refiner.done && role != sink_role)
+        send_all_data(key_item, key_refiner.items_to_send);
+      break;
+      
+    case revision_item:
+      rev_refiner.process_done_command(n_items);
+      break;
+      
+    case cert_item:
+      cert_refiner.process_done_command(n_items);
+      break;
+      
+    case epoch_item:
+      epoch_refiner.process_done_command(n_items);
+      if (epoch_refiner.done)
+        {
+          send_all_data(epoch_item, epoch_refiner.items_to_send);
+          maybe_note_epochs_finished();
+        }
+      break;
+    }
+  return true;
+}
+
 void
 session::respond_to_confirm_cmd()
 {
-  merkle_ptr root;
-  load_merkle_node(epoch_item, 0, get_root_prefix().val, root);
-  queue_refine_cmd(*root);
-  queue_done_cmd(0, epoch_item);
-
-  load_merkle_node(key_item, 0, get_root_prefix().val, root);
-  queue_refine_cmd(*root);
-  queue_done_cmd(0, key_item);
-
-  load_merkle_node(cert_item, 0, get_root_prefix().val, root);
-  queue_refine_cmd(*root);
-  queue_done_cmd(0, cert_item);
+  epoch_refiner.begin_refinement();
 }
 
 static bool 
@@ -1888,8 +1698,6 @@ data_exists(netcmd_item_type type,
     {
     case key_item:
       return app.db.public_key_exists(hitem);
-    case manifest_item:
-      return app.db.manifest_version_exists(manifest_id(hitem));
     case file_item:
       return app.db.file_version_exists(file_id(hitem));
     case revision_item:
@@ -1957,20 +1765,6 @@ load_data(netcmd_item_type type,
         }
       break;
 
-    case manifest_item:
-      if (app.db.manifest_version_exists(manifest_id(hitem)))
-        {
-          manifest_data mdat;
-          data dat;
-          app.db.get_manifest_version(manifest_id(hitem), mdat);
-          out = mdat.inner()();
-        }
-      else
-        {
-          throw bad_decode(F("manifest '%s' does not exist in our database") % hitem);
-        }
-      break;
-
     case file_item:
       if (app.db.file_version_exists(file_id(hitem)))
         {
@@ -2001,498 +1795,6 @@ load_data(netcmd_item_type type,
     }
 }
 
-
-bool 
-session::process_refine_cmd(merkle_node const & their_node)
-{
-  prefix pref;
-  hexenc<prefix> hpref;
-  their_node.get_raw_prefix(pref);
-  their_node.get_hex_prefix(hpref);
-  string typestr;
-
-  netcmd_item_type_to_string(their_node.type, typestr);
-  size_t lev = static_cast<size_t>(their_node.level);
-  
-  L(F("received 'refine' netcmd on %s node '%s', level %d\n") 
-    % typestr % hpref % lev);
-  
-  if (!merkle_node_exists(their_node.type, their_node.level, pref))
-    {
-      L(F("no corresponding %s merkle node for prefix '%s', level %d\n")
-        % typestr % hpref % lev);
-
-      for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
-        {
-          switch (their_node.get_slot_state(slot))
-            {
-            case empty_state:
-              {
-                // we agree, this slot is empty
-                L(boost::format("(#0) they have an empty slot %d (in a %s node '%s', level %d, we do not have)\n")
-                  % slot % typestr % hpref % lev);
-                continue;
-              }
-              break;
-            case live_leaf_state:
-              {
-                // we want what *they* have
-                id slotval;
-                hexenc<id> hslotval;
-                their_node.get_raw_slot(slot, slotval);
-                their_node.get_hex_slot(slot, hslotval);
-                L(boost::format("(#0) they have a live leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
-                  % slot % typestr % hpref % lev);
-                L(boost::format("(#0) requesting their %s leaf %s\n") % typestr % hslotval);
-                queue_send_data_cmd(their_node.type, slotval);
-              }
-              break;
-            case dead_leaf_state:
-              {
-                // we cannot ask for what they have, it is dead
-                L(boost::format("(#0) they have a dead leaf at slot %d (in a %s node '%s', level %d, we do not have)\n")
-                  % slot % typestr % hpref % lev);
-                continue;
-              }
-              break;
-            case subtree_state:
-              {
-                // they have a subtree; might as well ask for that
-                L(boost::format("(#0) they have a subtree at slot %d (in a %s node '%s', level %d, we do not have)\n")
-                  % slot % typestr % hpref % lev);
-                merkle_node our_fake_subtree;
-                their_node.extended_prefix(slot, our_fake_subtree.pref);
-                our_fake_subtree.level = their_node.level + 1;
-                our_fake_subtree.type = their_node.type;
-                queue_refine_cmd(our_fake_subtree);
-              }
-              break;
-            }
-        }
-    }
-  else
-    {
-      // we have a corresponding merkle node. there are 16 branches
-      // to the following switch condition. it is awful. sorry.
-      L(F("found corresponding %s merkle node for prefix '%s', level %d\n")
-        % typestr % hpref % lev);
-      merkle_ptr our_node;
-      load_merkle_node(their_node.type, their_node.level, pref, our_node);
-      for (size_t slot = 0; slot < constants::merkle_num_slots; ++slot)
-        {         
-          switch (their_node.get_slot_state(slot))
-            {
-            case empty_state:
-              switch (our_node->get_slot_state(slot))
-                {
-
-                case empty_state:
-                  // 1: theirs == empty, ours == empty 
-                  L(boost::format("(#1) they have an empty slot %d in %s node '%s', level %d, and so do we\n")
-                    % slot % typestr % hpref % lev);
-                  continue;
-                  break;
-
-                case live_leaf_state:
-                  // 2: theirs == empty, ours == live 
-                  L(boost::format("(#2) they have an empty slot %d in %s node '%s', level %d, we have a live leaf\n")
-                    % slot % typestr % hpref % lev);
-                  {
-                    I(their_node.type == our_node->type);
-                    string tmp;
-                    id slotval;
-                    our_node->get_raw_slot(slot, slotval);
-                    load_data(their_node.type, slotval, this->app, tmp);
-                    queue_data_cmd(their_node.type, slotval, tmp);
-                  }
-                  break;
-
-                case dead_leaf_state:
-                  // 3: theirs == empty, ours == dead 
-                  L(boost::format("(#3) they have an empty slot %d in %s node '%s', level %d, we have a dead leaf\n")
-                    % slot % typestr % hpref % lev);
-                  continue;
-                  break;
-
-                case subtree_state:
-                  // 4: theirs == empty, ours == subtree 
-                  L(boost::format("(#4) they have an empty slot %d in %s node '%s', level %d, we have a subtree\n")
-                    % slot % typestr % hpref % lev);
-                  {
-                    prefix subprefix;
-                    our_node->extended_raw_prefix(slot, subprefix);
-                    merkle_ptr our_subtree;
-                    I(our_node->type == their_node.type);
-                    load_merkle_node(their_node.type, our_node->level + 1,
-                                     subprefix, our_subtree);
-                    I(our_node->type == our_subtree->type);
-                    // FIXME: it would be more efficient here, to instead of
-                    // sending our subtree, just send the data for everything
-                    // in the subtree.
-                    queue_refine_cmd(*our_subtree);
-                  }
-                  break;
-
-                }
-              break;
-
-
-            case live_leaf_state:
-              switch (our_node->get_slot_state(slot))
-                {
-
-                case empty_state:
-                  // 5: theirs == live, ours == empty 
-                  L(boost::format("(#5) they have a live leaf at slot %d in %s node '%s', level %d, we have nothing\n")
-                    % slot % typestr % hpref % lev);
-                  {
-                    id slotval;
-                    their_node.get_raw_slot(slot, slotval);
-                    queue_send_data_cmd(their_node.type, slotval);
-                  }
-                  break;
-
-                case live_leaf_state:
-                  // 6: theirs == live, ours == live 
-                  L(boost::format("(#6) they have a live leaf at slot %d in %s node '%s', and so do we\n")
-                    % slot % typestr % hpref);
-                  {
-                    id our_slotval, their_slotval;
-                    their_node.get_raw_slot(slot, their_slotval);
-                    our_node->get_raw_slot(slot, our_slotval);               
-                    if (their_slotval == our_slotval)
-                      {
-                        hexenc<id> hslotval;
-                        their_node.get_hex_slot(slot, hslotval);
-                        L(boost::format("(#6) we both have live %s leaf '%s'\n") % typestr % hslotval);
-                        continue;
-                      }
-                    else
-                      {
-                        I(their_node.type == our_node->type);
-                        string tmp;
-                        load_data(our_node->type, our_slotval, this->app, tmp);
-                        queue_send_data_cmd(their_node.type, their_slotval);
-                        queue_data_cmd(our_node->type, our_slotval, tmp);
-                      }
-                  }
-                  break;
-
-                case dead_leaf_state:
-                  // 7: theirs == live, ours == dead 
-                  L(boost::format("(#7) they have a live leaf at slot %d in %s node %s, level %d, we have a dead one\n")
-                    % slot % typestr % hpref % lev);
-                  {
-                    id our_slotval, their_slotval;
-                    our_node->get_raw_slot(slot, our_slotval);
-                    their_node.get_raw_slot(slot, their_slotval);
-                    if (their_slotval == our_slotval)
-                      {
-                        hexenc<id> hslotval;
-                        their_node.get_hex_slot(slot, hslotval);
-                        L(boost::format("(#7) it's the same %s leaf '%s', but ours is dead\n") 
-                          % typestr % hslotval);
-                        continue;
-                      }
-                    else
-                      {
-                        queue_send_data_cmd(their_node.type, their_slotval);
-                      }
-                  }
-                  break;
-
-                case subtree_state:
-                  // 8: theirs == live, ours == subtree 
-                  L(boost::format("(#8) they have a live leaf in slot %d of %s node '%s', level %d, we have a subtree\n")
-                    % slot % typestr % hpref % lev);
-                  {
-
-                    id their_slotval;
-                    hexenc<id> their_hval;
-                    their_node.get_raw_slot(slot, their_slotval);
-                    encode_hexenc(their_slotval, their_hval);
-                    if (data_exists(their_node.type, their_slotval, app))
-                      L(boost::format("(#8) we have a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
-                        % their_hval % slot % typestr % hpref % lev);
-                    else
-                      {
-                        L(boost::format("(#8) requesting a copy of their live leaf '%s' in slot %d of %s node '%s', level %d\n")
-                          % their_hval % slot % typestr % hpref % lev);
-                        queue_send_data_cmd(their_node.type, their_slotval);
-                      }
-                    
-                    L(boost::format("(#8) sending our subtree for refinement, in slot %d of %s node '%s', level %d\n")
-                      % slot % typestr % hpref % lev);
-                    prefix subprefix;
-                    our_node->extended_raw_prefix(slot, subprefix);
-                    merkle_ptr our_subtree;
-                    load_merkle_node(our_node->type, our_node->level + 1,
-                                     subprefix, our_subtree);
-                    // FIXME: it would be more efficient here, to instead of
-                    // sending our subtree, just send the data for everything
-                    // in the subtree (except, possibly, the item they already
-                    // have).
-                    queue_refine_cmd(*our_subtree);
-                  }
-                  break;
-                }
-              break;
-
-
-            case dead_leaf_state:
-              switch (our_node->get_slot_state(slot))
-                {
-                case empty_state:
-                  // 9: theirs == dead, ours == empty 
-                  L(boost::format("(#9) they have a dead leaf at slot %d in %s node '%s', level %d, we have nothing\n")
-                    % slot % typestr % hpref % lev);
-                  continue;
-                  break;
-
-                case live_leaf_state:
-                  // 10: theirs == dead, ours == live 
-                  L(boost::format("(#10) they have a dead leaf at slot %d in %s node '%s', level %d, we have a live one\n")
-                    % slot % typestr % hpref % lev);
-                  {
-                    id our_slotval, their_slotval;
-                    their_node.get_raw_slot(slot, their_slotval);
-                    our_node->get_raw_slot(slot, our_slotval);
-                    hexenc<id> hslotval;
-                    our_node->get_hex_slot(slot, hslotval);
-                    if (their_slotval == our_slotval)
-                      {
-                        L(boost::format("(#10) we both have %s leaf %s, theirs is dead\n") 
-                          % typestr % hslotval);
-                        continue;
-                      }
-                    else
-                      {
-                        I(their_node.type == our_node->type);
-                        string tmp;
-                        load_data(our_node->type, our_slotval, this->app, tmp);
-                        queue_data_cmd(our_node->type, our_slotval, tmp);
-                      }
-                  }
-                  break;
-
-                case dead_leaf_state:
-                  // 11: theirs == dead, ours == dead 
-                  L(boost::format("(#11) they have a dead leaf at slot %d in %s node '%s', level %d, so do we\n")
-                    % slot % typestr % hpref % lev);
-                  continue;
-                  break;
-
-                case subtree_state:
-                  // theirs == dead, ours == subtree 
-                  L(boost::format("(#12) they have a dead leaf in slot %d of %s node '%s', we have a subtree\n")
-                    % slot % typestr % hpref % lev);
-                  {
-                    prefix subprefix;
-                    our_node->extended_raw_prefix(slot, subprefix);
-                    merkle_ptr our_subtree;
-                    load_merkle_node(our_node->type, our_node->level + 1,
-                                     subprefix, our_subtree);
-                    // FIXME: it would be more efficient here, to instead of
-                    // sending our subtree, just send the data for everything
-                    // in the subtree (except, possibly, the dead thing).
-                    queue_refine_cmd(*our_subtree);
-                  }
-                  break;
-                }
-              break;
-
-
-            case subtree_state:
-              switch (our_node->get_slot_state(slot))
-                {
-                case empty_state:
-                  // 13: theirs == subtree, ours == empty 
-                  L(boost::format("(#13) they have a subtree at slot %d in %s node '%s', level %d, we have nothing\n")
-                    % slot % typestr % hpref % lev);
-                  {
-                    merkle_node our_fake_subtree;
-                    their_node.extended_prefix(slot, our_fake_subtree.pref);
-                    our_fake_subtree.level = their_node.level + 1;
-                    our_fake_subtree.type = their_node.type;
-                    queue_refine_cmd(our_fake_subtree);
-                  }
-                  break;
-
-                case live_leaf_state:
-                  // 14: theirs == subtree, ours == live 
-                  L(boost::format("(#14) they have a subtree at slot %d in %s node '%s', level %d, we have a live leaf\n")
-                    % slot % typestr % hpref % lev);
-                  {
-                    size_t subslot;
-                    id our_slotval;
-                    merkle_node our_fake_subtree;
-                    our_node->get_raw_slot(slot, our_slotval);
-                    hexenc<id> hslotval;
-                    encode_hexenc(our_slotval, hslotval);
-                    
-                    pick_slot_and_prefix_for_value(our_slotval, our_node->level + 1, subslot, 
-                                                   our_fake_subtree.pref);
-                    L(boost::format("(#14) pushed our leaf '%s' into fake subtree slot %d, level %d\n")
-                      % hslotval % subslot % (lev + 1));
-                    our_fake_subtree.type = their_node.type;
-                    our_fake_subtree.level = our_node->level + 1;
-                    our_fake_subtree.set_raw_slot(subslot, our_slotval);
-                    our_fake_subtree.set_slot_state(subslot, our_node->get_slot_state(slot));
-                    queue_refine_cmd(our_fake_subtree);
-                  }
-                  break;
-
-                case dead_leaf_state:
-                  // 15: theirs == subtree, ours == dead 
-                  L(boost::format("(#15) they have a subtree at slot %d in %s node '%s', level %d, we have a dead leaf\n")
-                    % slot % typestr % hpref % lev);
-                  {
-                    size_t subslot;
-                    id our_slotval;
-                    merkle_node our_fake_subtree;
-                    our_node->get_raw_slot(slot, our_slotval);
-                    pick_slot_and_prefix_for_value(our_slotval, our_node->level + 1, subslot, 
-                                                   our_fake_subtree.pref);
-                    our_fake_subtree.type = their_node.type;
-                    our_fake_subtree.level = our_node->level + 1;
-                    our_fake_subtree.set_raw_slot(subslot, our_slotval);
-                    our_fake_subtree.set_slot_state(subslot, our_node->get_slot_state(slot));
-                    queue_refine_cmd(our_fake_subtree);    
-                  }
-                  break;
-
-                case subtree_state:
-                  // 16: theirs == subtree, ours == subtree 
-                  L(boost::format("(#16) they have a subtree at slot %d in %s node '%s', level %d, and so do we\n")
-                    % slot % typestr % hpref % lev);
-                  {
-                    id our_slotval, their_slotval;
-                    hexenc<id> hslotval;
-                    their_node.get_raw_slot(slot, their_slotval);
-                    our_node->get_raw_slot(slot, our_slotval);
-                    our_node->get_hex_slot(slot, hslotval);
-                    if (their_slotval == our_slotval)
-                      {
-                        L(boost::format("(#16) we both have %s subtree '%s'\n") % typestr % hslotval);
-                        continue;
-                      }
-                    else
-                      {
-                        L(boost::format("(#16) %s subtrees at slot %d differ, refining ours\n") % typestr % slot);
-                        prefix subprefix;
-                        our_node->extended_raw_prefix(slot, subprefix);
-                        merkle_ptr our_subtree;
-                        load_merkle_node(our_node->type, our_node->level + 1,
-                                         subprefix, our_subtree);
-                        queue_refine_cmd(*our_subtree);
-                      }
-                  }
-                  break;
-                }
-              break;
-            }
-        }
-    }
-  return true;
-}
-
-
-bool 
-session::process_send_data_cmd(netcmd_item_type type,
-                               id const & item)
-{
-  string typestr;
-  netcmd_item_type_to_string(type, typestr);
-  hexenc<id> hitem;
-  encode_hexenc(item, hitem);
-  L(F("received 'send_data' netcmd requesting %s '%s'\n") 
-    % typestr % hitem);
-  if (data_exists(type, item, this->app))
-    {
-      string out;
-      load_data(type, item, this->app, out);
-      queue_data_cmd(type, item, out);
-    }
-  else
-    {
-      queue_nonexistant_cmd(type, item);
-    }
-  return true;
-}
-
-bool 
-session::process_send_delta_cmd(netcmd_item_type type,
-                                id const & base,
-                                id const & ident)
-{
-  string typestr;
-  netcmd_item_type_to_string(type, typestr);
-  delta del;
-
-  hexenc<id> hbase, hident;
-  encode_hexenc(base, hbase);
-  encode_hexenc(ident, hident);
-
-  L(F("received 'send_delta' netcmd requesting %s edge '%s' -> '%s'\n") 
-    % typestr % hbase % hident);
-
-  switch (type)
-    {
-    case file_item:
-      {
-        file_id fbase(hbase), fident(hident);
-        file_delta fdel;
-        if (this->app.db.file_version_exists(fbase) 
-            && this->app.db.file_version_exists(fident))
-          {
-            file_data base_fdat, ident_fdat;
-            data base_dat, ident_dat;
-            this->app.db.get_file_version(fbase, base_fdat);
-            this->app.db.get_file_version(fident, ident_fdat);      
-            string tmp;     
-            base_dat = base_fdat.inner();
-            ident_dat = ident_fdat.inner();
-            compute_delta(base_dat(), ident_dat(), tmp);
-            del = delta(tmp);
-          }
-        else
-          {
-            return process_send_data_cmd(type, ident);
-          }
-      }
-      break;
-
-    case manifest_item:
-      {
-        manifest_id mbase(hbase), mident(hident);
-        manifest_delta mdel;
-        if (this->app.db.manifest_version_exists(mbase) 
-            && this->app.db.manifest_version_exists(mident))
-          {
-            manifest_data base_mdat, ident_mdat;
-            data base_dat, ident_dat;
-            this->app.db.get_manifest_version(mbase, base_mdat);
-            this->app.db.get_manifest_version(mident, ident_mdat);
-            string tmp;
-            base_dat = base_mdat.inner();
-            ident_dat = ident_mdat.inner();
-            compute_delta(base_dat(), ident_dat(), tmp);
-            del = delta(tmp);
-          }
-        else
-          {
-            return process_send_data_cmd(type, ident);
-          }
-      }
-      break;
-      
-    default:
-      throw bad_decode(F("delta requested for item type %s\n") % typestr);
-    }
-  queue_delta_cmd(type, base, ident, del);
-  return true;
-}
-
 bool 
 session::process_data_cmd(netcmd_item_type type,
                           id const & item, 
@@ -2501,8 +1803,6 @@ session::process_data_cmd(netcmd_item_type type,
   hexenc<id> hitem;
   encode_hexenc(item, hitem);
 
-  // it's ok if we received something we didn't ask for; it might
-  // be a spontaneous transmission from refinement
   note_item_arrived(type, item);
 
   switch (type)
@@ -2526,16 +1826,16 @@ session::process_data_cmd(netcmd_item_type type,
             {
               L(F("branch %s has no epoch; setting epoch to %s\n") % branch % epoch);
               app.db.set_epoch(branch, epoch);
-              maybe_note_epochs_finished();
             }
           else
             {
               L(F("branch %s already has an epoch; checking\n") % branch);
-              // if we get here, then we know that the epoch must be
+              // If we get here, then we know that the epoch must be
               // different, because if it were the same then the
-              // if(epoch_exists()) branch up above would have been taken.  if
-              // somehow this is wrong, then we have broken epoch hashing or
-              // something, which is very dangerous, so play it safe...
+              // if (epoch_exists()) branch up above would have been taken.
+              // if somehow this is wrong, then we have broken epoch
+              // hashing or something, which is very dangerous, so play it
+              // safe...
               I(!(i->second == epoch));
 
               // It is safe to call 'error' here, because if we get here,
@@ -2548,6 +1848,7 @@ session::process_data_cmd(netcmd_item_type type,
                      % (voice == server_voice ? epoch : i->second)).str());
             }
         }
+      maybe_note_epochs_finished();
       break;
       
     case key_item:
@@ -2579,14 +1880,7 @@ session::process_data_cmd(netcmd_item_type type,
           cert_hash_code(c, tmp);
           if (! (tmp == hitem))
             throw bad_decode(F("hash check failed for revision cert '%s'")  % hitem);
-//          this->dbw.consume_revision_cert(revision<cert>(c));
-          received_certs[revision_id(c.ident)][c.name].push_back(c);
-          if (!app.db.revision_exists(revision_id(c.ident)))
-            {
-              id rid;
-              decode_hexenc(c.ident, rid);
-              queue_send_data_cmd(revision_item, rid);
-            }
+          this->dbw.consume_revision_cert(revision<cert>(c));
         }
       break;
 
@@ -2597,32 +1891,8 @@ session::process_data_cmd(netcmd_item_type type,
           L(F("revision '%s' already exists in our database\n") % hitem);
         else
           {
-	    L(F("received revision '%s'\n") % hitem);
-            boost::shared_ptr< pair<revision_data, revision_set > > 
-              rp(new pair<revision_data, revision_set>());
-            
-            rp->first = revision_data(dat);
-            read_revision_set(dat, rp->second);
-            ancestry.insert(std::make_pair(rid, rp));
-            if (cert_refinement_done())
-              {
-                analyze_ancestry_graph();
-              }
-          }
-      }
-      break;
-
-    case manifest_item:
-      {
-        manifest_id mid(hitem);
-        if (this->app.db.manifest_version_exists(mid))
-          L(F("manifest version '%s' already exists in our database\n") % hitem);
-        else
-          {
-            this->dbw.consume_manifest_data(mid, manifest_data(dat));
-            manifest_map man;
-            read_manifest_map(data(dat), man);
-            analyze_manifest(man);
+            L(F("received revision '%s'\n") % hitem);
+            this->dbw.consume_revision_data(rid, revision_data(dat));
           }
       }
       break;
@@ -2634,6 +1904,7 @@ session::process_data_cmd(netcmd_item_type type,
           L(F("file version '%s' already exists in our database\n") % hitem);
         else
           {
+            L(F("received file '%s'\n") % hitem);
             this->dbw.consume_file_data(fid, file_data(dat));
           }
       }
@@ -2657,62 +1928,16 @@ session::process_delta_cmd(netcmd_item_type type,
 
   pair<id,id> id_pair = make_pair(base, ident);
 
-  // it's ok if we received something we didn't ask for; it might
-  // be a spontaneous transmission from refinement
   note_item_arrived(type, ident);
 
   switch (type)
     {
-    case manifest_item:
-      {
-        manifest_id src_manifest(hbase), dst_manifest(hident);
-        if (full_delta_items[manifest_item]->find(ident)
-            != full_delta_items[manifest_item]->end())
-          {
-            this->dbw.consume_manifest_delta(src_manifest, 
-                                             dst_manifest,
-                                             manifest_delta(del),
-                                             true);
-          }
-        else if (reverse_delta_requests.find(id_pair)
-            != reverse_delta_requests.end())
-          {
-            reverse_delta_requests.erase(id_pair);
-            this->dbw.consume_manifest_reverse_delta(src_manifest, 
-                                                     dst_manifest,
-                                                     manifest_delta(del));
-          }
-        else
-          this->dbw.consume_manifest_delta(src_manifest, 
-                                           dst_manifest,
-                                           manifest_delta(del));
-        
-      }
-      break;
-
     case file_item:
       {
         file_id src_file(hbase), dst_file(hident);
-        if (full_delta_items[file_item]->find(ident) 
-            != full_delta_items[file_item]->end())
-          {
-            this->dbw.consume_file_delta(src_file, 
-                                             dst_file,
-                                             file_delta(del),
-                                             true);
-          }
-        else if (reverse_delta_requests.find(id_pair)
-            != reverse_delta_requests.end())
-          {
-            reverse_delta_requests.erase(id_pair);
-            this->dbw.consume_file_reverse_delta(src_file, 
-                                                 dst_file,
-                                                 file_delta(del));
-          }
-        else
-          this->dbw.consume_file_delta(src_file, 
-                                       dst_file,
-                                       file_delta(del));
+        this->dbw.consume_file_delta(src_file, 
+                                     dst_file,
+                                     file_delta(del));
       }
       break;
       
@@ -2720,20 +1945,6 @@ session::process_delta_cmd(netcmd_item_type type,
       L(F("ignoring delta received for item type %s\n") % typestr);
       break;
     }
-  return true;
-}
-
-bool 
-session::process_nonexistant_cmd(netcmd_item_type type,
-                                 id const & item)
-{
-  string typestr;
-  netcmd_item_type_to_string(type, typestr);
-  hexenc<id> hitem;
-  encode_hexenc(item, hitem);
-  L(F("received 'nonexistant' netcmd for %s '%s'\n") 
-    % typestr % hitem);
-  note_item_arrived(type, item);
   return true;
 }
 
@@ -2754,45 +1965,38 @@ session::process_usher_cmd(utf8 const & msg)
   return true;
 }
 
-bool
-session::merkle_node_exists(netcmd_item_type type,
-                            size_t level,
-                            prefix const & pref)
+
+void
+session::send_all_data(netcmd_item_type ty, set<id> const & items)
 {
-  map<netcmd_item_type, boost::shared_ptr<merkle_table> >::const_iterator i = 
-    merkle_tables.find(type);
-  
-  I(i != merkle_tables.end());
-  merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
-  return (j != i->second->end());
+  string typestr;
+  netcmd_item_type_to_string(ty, typestr);
+
+  // Use temporary; passed arg will be invalidated during iteration.
+  set<id> tmp = items;
+
+  for (set<id>::const_iterator i = tmp.begin(); 
+       i != tmp.end(); ++i)
+    {  
+      hexenc<id> hitem;
+      encode_hexenc(*i, hitem);
+
+      if (data_exists(ty, *i, this->app))
+        {
+          string out;
+          load_data(ty, *i, this->app, out);
+          queue_data_cmd(ty, *i, out);
+        }
+    }
 }
-
-void 
-session::load_merkle_node(netcmd_item_type type,
-                          size_t level,
-                          prefix const & pref,
-                          merkle_ptr & node)
-{
-  map<netcmd_item_type, boost::shared_ptr<merkle_table> >::const_iterator i = 
-    merkle_tables.find(type);
-
-  I(i != merkle_tables.end());
-  merkle_table::const_iterator j = i->second->find(std::make_pair(pref, level));
-  I(j != i->second->end());
-  node = j->second;
-}
-
 
 bool 
-session::dispatch_payload(netcmd const & cmd)
+session::dispatch_payload(netcmd const & cmd,
+                          transaction_guard & guard)
 {
   
   switch (cmd.get_cmd_code())
     {
-      
-    case bye_cmd:
-      return process_bye_cmd();
-      break;
 
     case error_cmd:
       {
@@ -2811,6 +2015,15 @@ session::dispatch_payload(netcmd const & cmd)
         id nonce;
         cmd.read_hello_cmd(server_keyname, server_key, nonce);
         return process_hello_cmd(server_keyname, server_key, nonce);
+      }
+      break;
+
+    case bye_cmd:
+      require(authenticated, "bye netcmd received when not authenticated");
+      {
+        u8 phase;
+        cmd.read_bye_cmd(phase);
+        return process_bye_cmd(phase, guard);
       }
       break;
 
@@ -2888,52 +2101,24 @@ session::dispatch_payload(netcmd const & cmd)
       require(authenticated, "refine netcmd received when authenticated");
       {
         merkle_node node;
-        cmd.read_refine_cmd(node);
-        map< netcmd_item_type, done_marker>::iterator i = done_refinements.find(node.type);
-        require(i != done_refinements.end(), "refinement netcmd refers to valid type");
-        require(i->second.tree_is_done == false, "refinement netcmd received when tree is live");
-        i->second.current_level_had_refinements = true;
-        return process_refine_cmd(node);
+        refinement_type ty;
+        cmd.read_refine_cmd(ty, node);
+        return process_refine_cmd(ty, node);
       }
       break;
 
     case done_cmd:
-      require(authenticated, "done netcmd received when authenticated");
+      require(authenticated, "done netcmd received when not authenticated");
       {
-        size_t level;
+        size_t n_items;
         netcmd_item_type type;
-        cmd.read_done_cmd(level, type);
-        return process_done_cmd(level, type);
+        cmd.read_done_cmd(type, n_items);
+        return process_done_cmd(type, n_items);
       }
       break;
-
-    case send_data_cmd:
-      require(authenticated, "send_data netcmd received when authenticated");
-      require(role == source_role ||
-              role == source_and_sink_role, 
-              "send_data netcmd received in source or source/sink role");
-      {
-        netcmd_item_type type;
-        id item;
-        cmd.read_send_data_cmd(type, item);
-        return process_send_data_cmd(type, item);
-      }
-      break;
-
-    case send_delta_cmd:
-      require(authenticated, "send_delta netcmd received when authenticated");
-      require(role == source_role ||
-              role == source_and_sink_role, 
-              "send_delta netcmd received in source or source/sink role");
-      {
-        netcmd_item_type type;
-        id base, ident;
-        cmd.read_send_delta_cmd(type, base, ident);
-        return process_send_delta_cmd(type, base, ident);
-      }
 
     case data_cmd:
-      require(authenticated, "data netcmd received when authenticated");
+      require(authenticated, "data netcmd received when not authenticated");
       require(role == sink_role ||
               role == source_and_sink_role, 
               "data netcmd received in source or source/sink role");
@@ -2947,7 +2132,7 @@ session::dispatch_payload(netcmd const & cmd)
       break;
 
     case delta_cmd:
-      require(authenticated, "delta netcmd received when authenticated");
+      require(authenticated, "delta netcmd received when not authenticated");
       require(role == sink_role ||
               role == source_and_sink_role, 
               "delta netcmd received in source or source/sink role");
@@ -2960,18 +2145,6 @@ session::dispatch_payload(netcmd const & cmd)
       }
       break;      
 
-    case nonexistant_cmd:
-      require(authenticated, "nonexistant netcmd received when authenticated");
-      require(role == sink_role ||
-              role == source_and_sink_role, 
-              "nonexistant netcmd received in sink or source/sink role");
-      {
-        netcmd_item_type type;
-        id item;
-        cmd.read_nonexistant_cmd(type, item);
-        return process_nonexistant_cmd(type, item);
-      }
-      break;
     case usher_cmd:
       {
         utf8 greeting;
@@ -2979,14 +2152,15 @@ session::dispatch_payload(netcmd const & cmd)
         return process_usher_cmd(greeting);
       }
       break;
+
     case usher_reply_cmd:
-      return false;// should not happen
+      return false; // Should not happen.
       break;
     }
   return false;
 }
 
-// this kicks off the whole cascade starting from "hello"
+// This kicks off the whole cascade starting from "hello".
 void 
 session::begin_service()
 {
@@ -2996,11 +2170,27 @@ session::begin_service()
 }
 
 void 
-session::maybe_say_goodbye()
+session::maybe_step()
 {
-  if (done_all_refinements() &&
-      got_all_data() && !sent_goodbye)
-    queue_bye_cmd();
+  while (done_all_refinements()
+         && !rev_enumerator.done()
+         && outbuf_size < constants::bufsz * 10)
+    {
+      rev_enumerator.step();
+    }
+}
+
+void 
+session::maybe_say_goodbye(transaction_guard & guard)
+{
+  if (voice == client_voice
+      && protocol_state == working_state
+      && finished_working())
+    {
+      protocol_state = shutdown_state;
+      guard.do_checkpoint();
+      queue_bye_cmd(0);
+    }
 }
 
 bool 
@@ -3008,8 +2198,9 @@ session::arm()
 {
   if (!armed)
     {
+      // Don't pack the buffer unnecessarily.
       if (outbuf_size > constants::bufsz * 10)
-        return false; // don't pack the buffer unnecessarily
+        return false; 
 
       if (cmd.read(inbuf, read_hmac))
         {
@@ -3019,29 +2210,45 @@ session::arm()
   return armed;
 }      
 
-bool session::process()
+bool session::process(transaction_guard & guard)
 {
+  if (encountered_error)
+    return true;
   try 
-    {      
+    {
       if (!arm())
         return true;
       
-      transaction_guard guard(app.db);
       armed = false;
-      L(F("processing %d byte input buffer from peer %s\n") % inbuf.size() % peer_id);
-      bool ret = dispatch_payload(cmd);
+      L(F("processing %d byte input buffer from peer %s\n") 
+        % inbuf.size() % peer_id);
+
+      size_t sz = cmd.encoded_size();
+      bool ret = dispatch_payload(cmd, guard);
+
       if (inbuf.size() >= constants::netcmd_maxsz)
-        W(F("input buffer for peer %s is overfull after netcmd dispatch\n") % peer_id);
-      guard.commit();
-      maybe_say_goodbye();
+        W(F("input buffer for peer %s is overfull "
+            "after netcmd dispatch\n") % peer_id);
+
+      guard.maybe_checkpoint(sz);
+      
       if (!ret)
-        P(F("failed to process '%s' packet") % cmd.get_cmd_code());
+        L(F("finishing processing with '%d' packet") 
+          % cmd.get_cmd_code());
       return ret;
     }
   catch (bad_decode & bd)
     {
-      W(F("protocol error while processing peer %s: '%s'\n") % peer_id % bd.what);
+      W(F("protocol error while processing peer %s: '%s'\n") 
+        % peer_id % bd.what);
       return false;
+    }
+  catch (netsync_error & err)
+    {
+      W(F("error: %s\n") % err.msg);
+      queue_error_cmd(err.msg);
+      encountered_error = true;
+      return true; // Don't terminate until we've send the error_cmd.
     }
 }
 
@@ -3055,6 +2262,9 @@ call_server(protocol_role role,
             Netxx::port_type default_port,
             unsigned long timeout_seconds)
 {
+
+  transaction_guard guard(app.db);
+
   Netxx::Probe probe;
   Netxx::Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
 #ifdef USE_IPV6
@@ -3080,10 +2290,12 @@ call_server(protocol_role role,
         }
       catch (bad_decode & bd)
         {
-          W(F("protocol error while processing peer %s: '%s'\n") 
+          E(false, F("protocol error while processing peer %s: '%s'\n") 
             % sess.peer_id % bd.what);
-          return;         
         }
+
+      sess.maybe_step();
+      sess.maybe_say_goodbye(guard);
 
       probe.clear();
       probe.add(sess.str, sess.which_events());
@@ -3093,69 +2305,67 @@ call_server(protocol_role role,
       
       if (fd == -1 && !armed) 
         {
-          P(F("timed out waiting for I/O with peer %s, disconnecting\n") % sess.peer_id);
-          return;
+          E(false, (F("timed out waiting for I/O with "
+                      "peer %s, disconnecting\n") 
+                    % sess.peer_id));
         }
-      
+
+      bool all_io_clean = true;
+
       if (event & Netxx::Probe::ready_read)
-        {
-          if (sess.read_some())
-            {
-              try 
-                {
-                  armed = sess.arm();
-                }
-              catch (bad_decode & bd)
-                {
-                  W(F("protocol error while processing peer %s: '%s'\n") 
-                    % sess.peer_id % bd.what);
-                  return;         
-                }
-            }
-          else
-            {         
-              if (sess.sent_goodbye)
-                P(F("read from fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
-              else
-                P(F("read from fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
-              return;
-            }
-        }
+        all_io_clean = all_io_clean && sess.read_some();
       
       if (event & Netxx::Probe::ready_write)
-        {
-          if (! sess.write_some())
-            {
-              if (sess.sent_goodbye)
-                P(F("write on fd %d (peer %s) closed OK after goodbye\n") % fd % sess.peer_id);
-              else
-                P(F("write on fd %d (peer %s) failed, disconnecting\n") % fd % sess.peer_id);
-              return;
-            }
-        }
+        all_io_clean = all_io_clean && sess.write_some();
       
       if (event & Netxx::Probe::ready_oobd)
         {
-          P(F("got OOB data on fd %d (peer %s), disconnecting\n") 
-            % fd % sess.peer_id);
-          return;
+          E(false, (F("got OOB data from "
+                      "peer %s, disconnecting\n") 
+                    % sess.peer_id));
         }
 
       if (armed)
+        if (!sess.process(guard))
+          {
+            // Commit whatever work we managed to accomplish anyways.
+            guard.commit();
+            
+            // We failed during processing. This should only happen in
+            // client voice when we have a decode exception, or received an
+            // error from our server (which is translated to a decode
+            // exception). We call these cases E() errors.
+            E(false, F("processing failure while talking to "
+                       "peer %s, disconnecting\n") 
+              % sess.peer_id);
+            return;
+          }
+
+      if (!all_io_clean)
         {
-          if (!sess.process())
-            {
-              P(F("terminated exchange with %s\n") 
+          // Commit whatever work we managed to accomplish anyways.
+          guard.commit();
+
+          // We had an I/O error. We must decide if this represents a
+          // user-reported error or a clean disconnect. See protocol
+          // state diagram in session::process_bye_cmd.
+          
+          if (sess.protocol_state == session::confirmed_state)
+            {          
+              P(F("successful exchange with %s\n") 
                 % sess.peer_id);
               return;
             }
-        }
-
-      if (sess.sent_goodbye && sess.outbuf.empty() && sess.received_goodbye)
-        {
-          P(F("successful exchange with %s\n") 
-            % sess.peer_id);
-          return;
+          else if (sess.encountered_error)
+            {
+              P(F("peer %s disconnected after we informed them of error\n") 
+                % sess.peer_id);
+              return;
+            }
+          else
+            E(false, (F("I/O failure while talking to "
+                        "peer %s, disconnecting\n") 
+                      % sess.peer_id));
         }
     }
 }
@@ -3170,6 +2380,7 @@ arm_sessions_and_calculate_probe(Netxx::Probe & probe,
          shared_ptr<session> >::const_iterator i = sessions.begin();
        i != sessions.end(); ++i)
     {
+      i->second->maybe_step();
       try 
         {
           if (i->second->arm())
@@ -3249,8 +2460,24 @@ handle_read_available(Netxx::socket_type fd,
     }
   else
     {
-      P(F("fd %d (peer %s) read failed, disconnecting\n") 
-        % fd % sess->peer_id);
+      switch (sess->protocol_state)
+        {
+        case session::working_state:
+          P(F("peer %s read failed in working state (error)\n") 
+            % sess->peer_id);
+          break;
+
+        case session::shutdown_state:
+          P(F("peer %s read failed in shutdown state "
+              "(possibly client misreported error)\n") 
+            % sess->peer_id);
+          break;
+
+        case session::confirmed_state:
+          P(F("peer %s read failed in confirmed state (success)\n") 
+            % sess->peer_id);
+          break;
+        }
       sessions.erase(fd);
       live_p = false;
     }
@@ -3263,10 +2490,27 @@ handle_write_available(Netxx::socket_type fd,
                        map<Netxx::socket_type, shared_ptr<session> > & sessions,
                        bool & live_p)
 {
-  if (! sess->write_some())
+  if (!sess->write_some())
     {
-      P(F("fd %d (peer %s) write failed, disconnecting\n") 
-        % fd % sess->peer_id);
+      switch (sess->protocol_state)
+        {
+        case session::working_state:
+          P(F("peer %s write failed in working state (error)\n") 
+            % sess->peer_id);
+          break;
+
+        case session::shutdown_state:
+          P(F("peer %s write failed in shutdown state "
+              "(possibly client misreported error)\n") 
+            % sess->peer_id);
+          break;
+
+        case session::confirmed_state:
+          P(F("peer %s write failed in confirmed state (success)\n") 
+            % sess->peer_id);
+          break;
+        }
+
       sessions.erase(fd);
       live_p = false;
     }
@@ -3274,7 +2518,8 @@ handle_write_available(Netxx::socket_type fd,
 
 static void
 process_armed_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
-                       set<Netxx::socket_type> & armed_sessions)
+                       set<Netxx::socket_type> & armed_sessions,
+                       transaction_guard & guard)
 {
   for (set<Netxx::socket_type>::const_iterator i = armed_sessions.begin();
        i != armed_sessions.end(); ++i)
@@ -3285,12 +2530,11 @@ process_armed_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
         continue;
       else
         {
-          Netxx::socket_type fd = j->first;
           shared_ptr<session> sess = j->second;
-          if (!sess->process())
+          if (!sess->process(guard))
             {
-              P(F("fd %d (peer %s) processing finished, disconnecting\n") 
-                % fd % sess->peer_id);
+              P(F("peer %s processing finished, disconnecting\n") 
+                % sess->peer_id);
               sessions.erase(j);
             }
         }
@@ -3301,23 +2545,17 @@ static void
 reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
                    unsigned long timeout_seconds)
 {
-  // kill any clients which haven't done any i/o inside the timeout period
-  // or who have said goodbye and flushed their output buffers
+  // Kill any clients which haven't done any i/o inside the timeout period
+  // or who have exchanged all items and flushed their output buffers.
   set<Netxx::socket_type> dead_clients;
   time_t now = ::time(NULL);
-  for (map<Netxx::socket_type, shared_ptr<session> >::const_iterator i = sessions.begin();
-       i != sessions.end(); ++i)
+  for (map<Netxx::socket_type, shared_ptr<session> >::const_iterator 
+         i = sessions.begin(); i != sessions.end(); ++i)
     {
       if (static_cast<unsigned long>(i->second->last_io_time + timeout_seconds) 
           < static_cast<unsigned long>(now))
         {
           P(F("fd %d (peer %s) has been idle too long, disconnecting\n") 
-            % i->first % i->second->peer_id);
-          dead_clients.insert(i->first);
-        }
-      if (i->second->sent_goodbye && i->second->outbuf.empty() && i->second->received_goodbye)
-        {
-          P(F("fd %d (peer %s) exchanged goodbyes and flushed output, disconnecting\n") 
             % i->first % i->second->peer_id);
           dead_clients.insert(i->first);
         }
@@ -3364,18 +2602,22 @@ serve_connections(protocol_role role,
   Netxx::StreamServer server(addr, timeout);
   const char *name = addr.get_name();
   P(F("beginning service on %s : %s\n") 
-    % (name != NULL ? name : "all interfaces") % lexical_cast<string>(addr.get_port()));
+    % (name != NULL ? name : "all interfaces") 
+    % lexical_cast<string>(addr.get_port()));
   
   map<Netxx::socket_type, shared_ptr<session> > sessions;
   set<Netxx::socket_type> armed_sessions;
   
+  shared_ptr<transaction_guard> guard;
+
   while (true)
     {      
       probe.clear();
       armed_sessions.clear();
 
       if (sessions.size() >= session_limit)
-        W(F("session limit %d reached, some connections will be refused\n") % session_limit);
+        W(F("session limit %d reached, some connections "
+            "will be refused\n") % session_limit);
       else
         probe.add(server);
 
@@ -3387,6 +2629,11 @@ serve_connections(protocol_role role,
                                               : instant));
       Netxx::Probe::ready_type event = res.second;
       Netxx::socket_type fd = res.first;
+
+      if (!guard)
+        guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
+
+      I(guard);
       
       if (fd == -1)
         {
@@ -3398,7 +2645,8 @@ serve_connections(protocol_role role,
       // we either got a new connection
       else if (fd == server)
         handle_new_connection(addr, server, timeout, role, 
-                              include_pattern, exclude_pattern, sessions, app);
+                              include_pattern, exclude_pattern, 
+                              sessions, app);
       
       // or an existing session woke up
       else
@@ -3415,66 +2663,60 @@ serve_connections(protocol_role role,
               bool live_p = true;
 
               if (event & Netxx::Probe::ready_read)
-                handle_read_available(fd, sess, sessions, armed_sessions, live_p);
+                handle_read_available(fd, sess, sessions, 
+                                      armed_sessions, live_p);
                 
               if (live_p && (event & Netxx::Probe::ready_write))
                 handle_write_available(fd, sess, sessions, live_p);
                 
               if (live_p && (event & Netxx::Probe::ready_oobd))
                 {
-                  P(F("got some OOB data on fd %d (peer %s), disconnecting\n") 
-                    % fd % sess->peer_id);
+                  P(F("got OOB from peer %s, disconnecting\n") 
+                    % sess->peer_id);
                   sessions.erase(i);
                 }
             }
         }
-      process_armed_sessions(sessions, armed_sessions);
+      process_armed_sessions(sessions, armed_sessions, *guard);
       reap_dead_sessions(sessions, timeout_seconds);
+
+      if (sessions.empty())
+        {
+          // Let the guard die completely if everything's gone quiet.
+          guard->commit();
+          guard.reset();
+        }
     }
 }
 
 
-/////////////////////////////////////////////////
-//
-// layer 4: monotone interface layer
-//
-/////////////////////////////////////////////////
-
-static boost::shared_ptr<merkle_table>
-make_root_node(session & sess,
-               netcmd_item_type ty)
-{
-  boost::shared_ptr<merkle_table> tab = 
-    boost::shared_ptr<merkle_table>(new merkle_table());
-  
-  merkle_ptr tmp = merkle_ptr(new merkle_node());
-  tmp->type = ty;
-
-  tab->insert(std::make_pair(std::make_pair(get_root_prefix().val, 0), tmp));
-
-  sess.merkle_tables[ty] = tab;
-  return tab;
-}
-
 void
-insert_with_parents(revision_id rev, set<revision_id> & col, app_state & app, ticker & revisions_ticker)
+insert_with_parents(revision_id rev, 
+                    refiner & ref, 
+                    set<revision_id> & revs,
+                    app_state & app, 
+                    ticker & revisions_ticker)
 {
-  vector<revision_id> frontier;
-  frontier.push_back(rev);
-  while (!frontier.empty())
+  deque<revision_id> work;
+  work.push_back(rev);
+  while (!work.empty())
     {
-      revision_id rid = frontier.back();
-      frontier.pop_back();
-      if (!null_id(rid) && col.find(rid) == col.end())
+      revision_id rid = work.front();
+      work.pop_front();
+
+      if (!null_id(rid) && revs.find(rid) == revs.end())
         {
+          revs.insert(rid);
           ++revisions_ticker;
-          col.insert(rid);
+          id rev_item;
+          decode_hexenc(rid.inner(), rev_item);
+          ref.note_local_item(rev_item);
           std::set<revision_id> parents;
           app.db.get_revision_parents(rid, parents);
           for (std::set<revision_id>::const_iterator i = parents.begin();
                i != parents.end(); ++i)
             {
-              frontier.push_back(*i);
+              work.push_back(*i);
             }
         }
     }
@@ -3488,10 +2730,6 @@ session::rebuild_merkle_trees(app_state & app,
   for (set<utf8>::const_iterator i = branchnames.begin();
       i != branchnames.end(); ++i)
     L(F("including branch %s") % *i);
-
-  boost::shared_ptr<merkle_table> ctab = make_root_node(*this, cert_item);
-  boost::shared_ptr<merkle_table> ktab = make_root_node(*this, key_item);
-  boost::shared_ptr<merkle_table> etab = make_root_node(*this, epoch_item);
 
   // xgettext: please use short message and try to avoid multibytes chars
   ticker revisions_ticker(_("revisions"), "r", 64);
@@ -3511,7 +2749,7 @@ session::rebuild_merkle_trees(app_state & app,
       {
         if(branchnames.find(names[i]) != branchnames.end())
           {
-            // branch matches, get its certs
+            // Branch matches, get its certs.
             vector< revision<cert> > certs;
             base64<cert_value> encoded_name;
             encode_base64(cert_value(names[i]),encoded_name);
@@ -3520,11 +2758,13 @@ session::rebuild_merkle_trees(app_state & app,
                  j != certs.end(); j++)
               {
                 insert_with_parents(revision_id(j->inner().ident),
-                                    revision_ids, app, revisions_ticker);
-                // branch certs go in here, others later on
-                hexenc<id> hash;
-                cert_hash_code(j->inner(), hash);
-                insert_into_merkle_tree(*ctab, cert_item, true, hash, 0);
+                                    rev_refiner, revision_ids, app, revisions_ticker);
+                // Granch certs go in here, others later on.
+                hexenc<id> tmp;
+                id item;
+                cert_hash_code(j->inner(), tmp);
+                decode_hexenc(tmp, item);
+                cert_refiner.note_local_item(item);
                 if (inserted_keys.find(j->inner().key) == inserted_keys.end())
                     inserted_keys.insert(j->inner().key);
               }
@@ -3543,19 +2783,23 @@ session::rebuild_merkle_trees(app_state & app,
         cert_value branch((*i)());
         std::map<cert_value, epoch_data>::const_iterator j;
         j = epochs.find(branch);
-        // set to zero any epoch which is not yet set    
+
+        // Set to zero any epoch which is not yet set.
         if (j == epochs.end())
           {
             L(F("setting epoch on %s to zero\n") % branch);
             epochs.insert(std::make_pair(branch, epoch_zero));
             app.db.set_epoch(branch, epoch_zero);
           }
-        // then insert all epochs into merkle tree
+
+        // Then insert all epochs into merkle tree.
         j = epochs.find(branch);
         I(j != epochs.end());
         epoch_id eid;
+        id epoch_item;
         epoch_hash_code(j->first, j->second, eid);
-        insert_into_merkle_tree(*etab, epoch_item, true, eid.inner(), 0);
+        decode_hexenc(eid.inner(), epoch_item);
+        epoch_refiner.note_local_item(epoch_item);
       }
   }
   
@@ -3566,8 +2810,9 @@ session::rebuild_merkle_trees(app_state & app,
     cert_idx idx;
     app.db.get_revision_cert_nobranch_index(idx);
     
-    // insert all non-branch certs reachable via these revisions
-    // (branch certs were inserted earlier)
+    // Insert all non-branch certs reachable via these revisions
+    // (branch certs were inserted earlier).
+
     for (cert_idx::const_iterator i = idx.begin(); i != idx.end(); ++i)
       {
         hexenc<id> const & hash = i->first;
@@ -3577,15 +2822,18 @@ session::rebuild_merkle_trees(app_state & app,
         if (revision_ids.find(ident) == revision_ids.end())
           continue;
         
-        insert_into_merkle_tree(*ctab, cert_item, true, hash, 0);
+        id item;
+        decode_hexenc(hash, item);
+        cert_refiner.note_local_item(item);
         ++certs_ticker;
         if (inserted_keys.find(key) == inserted_keys.end())
             inserted_keys.insert(key);
       }
   }
 
-  // add any keys specified on the command line
-  for (vector<rsa_keypair_id>::const_iterator key = app.keys_to_push.begin();
+  // Add any keys specified on the command line.
+  for (vector<rsa_keypair_id>::const_iterator key 
+         = app.keys_to_push.begin(); 
        key != app.keys_to_push.end(); ++key)
     {
       if (inserted_keys.find(*key) == inserted_keys.end())
@@ -3600,7 +2848,8 @@ session::rebuild_merkle_trees(app_state & app,
           inserted_keys.insert(*key);
         }
     }
-  // insert all the keys
+
+  // Insert all the keys.
   for (set<rsa_keypair_id>::const_iterator key = inserted_keys.begin();
        key != inserted_keys.end(); key++)
     {
@@ -3610,14 +2859,18 @@ session::rebuild_merkle_trees(app_state & app,
           app.db.get_key(*key, pub_encoded);
           hexenc<id> keyhash;
           key_hash_code(*key, pub_encoded, keyhash);
-          insert_into_merkle_tree(*ktab, key_item, true, keyhash, 0);
+          L(F("noting key '%s' = '%s' to send\n") % *key % keyhash);
+          id key_item;
+          decode_hexenc(keyhash, key_item);
+          key_refiner.note_local_item(key_item);
           ++keys_ticker;
         }
     }
 
-  recalculate_merkle_codes(*etab, get_root_prefix().val, 0);
-  recalculate_merkle_codes(*ktab, get_root_prefix().val, 0);
-  recalculate_merkle_codes(*ctab, get_root_prefix().val, 0);
+  rev_refiner.reindex_local_items();
+  cert_refiner.reindex_local_items();
+  key_refiner.reindex_local_items();
+  epoch_refiner.reindex_local_items();
 }
 
 void 
@@ -3640,11 +2893,9 @@ run_netsync_protocol(protocol_voice voice,
       else    
         {
           I(voice == client_voice);
-          transaction_guard guard(app.db);
           call_server(role, include_pattern, exclude_pattern, app,
                       addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
-          guard.commit();
         }
     }
   catch (Netxx::NetworkException & e)
@@ -3654,349 +2905,5 @@ run_netsync_protocol(protocol_voice voice,
   catch (Netxx::Exception & e)
     {      
       throw oops((F("network error: %s") % e.what()).str());;
-    }
-}
-
-
-// Steps for determining files/manifests to request, from 
-// a given revision ancestry:
-//
-// 1) find the new heads, consume valid branch certs etc.
-//
-// 2) foreach new head, traverse up the revision ancestry, building
-// a set of reverse file/manifest deltas (we stop when we hit an
-// already-seen or existing-in-db rev). 
-//
-// at the same time, build a (smaller) set of forward deltas (files and
-// manifests). these have a file/manifest in the new head as the
-// destination, and end up having an item already existing in the
-// database as the source (or null, in which case full data is
-// requested).
-//
-// 3) For each file/manifest in head, first request the forward delta
-// (or full data if there is no path back to existing data). Then
-// traverse up the set of reverse deltas, daisychaining our way until
-// we get to existing revisions.
-//
-// Notes:
-//
-// - The database stores reverse deltas, so preferring these allows
-// a server to send pre-computed deltas straight from the database
-// (this isn't done yet). In order to bootstrap the tip-most data,
-// forward deltas from a close(est?)-ancestor are used, or full data
-// is requested if there is no existing ancestor.
-//
-// eg, if we have the (manifest) ancestry
-// A -> B -> C -> D
-// where A is existing, {B,C,D} are new, then we will request deltas
-// A->D (fwd)
-// D->C (rev)
-// C->B (rev)
-// This may result in slightly larger deltas than using all forward
-// deltas, however it should be more efficient.
-//
-// - in order to keep a good hit ratio with the reconstructed version
-// cache in database, we'll request deltas for a single file/manifest
-// all at once, rather than requesting deltas per-revision. This
-// requires a bit more memory usage, though it will be less memory
-// than would be required to store all the outgoing delta requests
-// anyway.
-ancestry_fetcher::ancestry_fetcher(session & s)
-    : sess(s)
-{
-  set<revision_id> new_heads;
-  sess.get_heads_and_consume_certs( new_heads );
-
-  L(F("ancestry_fetcher: got %d heads") % new_heads.size());
- 
-  traverse_ancestry(new_heads);
-
-  request_files();
-  request_manifests();
-}
-
-// adds file deltas from the given changeset into the sets of forward
-// and reverse deltas
-void
-ancestry_fetcher::traverse_files(change_set const & cset)
-{
-  for (change_set::delta_map::const_iterator d = cset.deltas.begin(); 
-       d != cset.deltas.end(); ++d)
-    {
-      file_id parent_file (delta_entry_src(d));
-      file_id child_file (delta_entry_dst(d));
-      MM(parent_file);
-      MM(child_file);
-
-      I(!(parent_file == child_file));
-      // when changeset format is altered to have [...]->[] deltas on deletion,
-      // this assertion needs revisiting
-      I(!null_id(child_file));
-
-      // request the reverse delta
-      if (!null_id(parent_file))
-        {
-          rev_file_deltas.insert(make_pair(child_file, parent_file));
-        }
-
-      // add any new forward deltas
-      if (seen_files.find(child_file) == seen_files.end())
-        {
-          fwd_file_deltas.insert( make_pair( parent_file, child_file ) );
-        }
-
-      // update any forward deltas. no point updating if it already
-      // points to something we have.
-      if (!null_id(parent_file)
-          && fwd_file_deltas.find(child_file) != fwd_file_deltas.end())
-        {
-          // We're traversing with child->parent of A->B.
-          // Update any forward deltas with a parent of B to 
-          // have A as a parent, ie B->C becomes A->C.
-          for (multimap<file_id,file_id>::iterator d = 
-               fwd_file_deltas.lower_bound(child_file);
-               d != fwd_file_deltas.upper_bound(child_file);
-               d++)
-            {
-              fwd_file_deltas.insert(make_pair(parent_file, d->second));
-            }
-
-            fwd_file_deltas.erase(fwd_file_deltas.lower_bound(child_file),
-                                  fwd_file_deltas.upper_bound(child_file));
-        }
-
-      seen_files.insert(child_file);
-      seen_files.insert(parent_file);
-    }
-}
-
-// adds the given manifest deltas to the sets of forward and reverse deltas
-void
-ancestry_fetcher::traverse_manifest(manifest_id const & child_man,
-                                    manifest_id const & parent_man)
-{
-  MM(child_man);
-  MM(parent_man);
-  I(!null_id(child_man));
-  // add reverse deltas
-  if (!null_id(parent_man))
-    {
-      rev_manifest_deltas.insert(make_pair(child_man, parent_man));
-    }
-  
-  // handle the manifest forward-deltas
-  if (!null_id(parent_man)
-      // don't update child to itself, it makes the loop iterate infinitely.
-      && !(parent_man == child_man)
-      && fwd_manifest_deltas.find(child_man) != fwd_manifest_deltas.end())
-    {
-      // We're traversing with child->parent of A->B.
-      // Update any forward deltas with a parent of B to 
-      // have A as a parent, ie B->C becomes A->C.
-      for (multimap<manifest_id,manifest_id>::iterator d = 
-           fwd_manifest_deltas.lower_bound(child_man);
-           d != fwd_manifest_deltas.upper_bound(child_man);
-           d++)
-        {
-          fwd_manifest_deltas.insert(make_pair(parent_man, d->second));
-        }
-
-      fwd_manifest_deltas.erase(fwd_manifest_deltas.lower_bound(child_man),
-                                fwd_manifest_deltas.upper_bound(child_man));
-    }
-}
-
-// traverse up the ancestry for each of the given new head revisions,
-// storing sets of file and manifest deltas
-void
-ancestry_fetcher::traverse_ancestry(set<revision_id> const & heads)
-{
-  deque<revision_id> frontier;
-  set<revision_id> seen_revs;
-
-  for (set<revision_id>::const_iterator h = heads.begin(); 
-       h != heads.end(); h++)
-    {
-      L(F("traversing head %s") % *h);
-      frontier.push_back(*h);
-      seen_revs.insert(*h);
-      manifest_id const & m = sess.ancestry[*h]->second.new_manifest;
-      fwd_manifest_deltas.insert(make_pair(m,m));
-    }
-
-  // breadth first up the ancestry
-  while (!frontier.empty())
-    {
-      revision_id const & rev = frontier.front();
-      MM(rev);
-
-      I(sess.ancestry.find(rev) != sess.ancestry.end());
-
-      for (edge_map::const_iterator e = sess.ancestry[rev]->second.edges.begin();
-           e != sess.ancestry[rev]->second.edges.end(); e++)
-        {
-          revision_id const & par = edge_old_revision(e);
-          MM(par);
-          if (seen_revs.find(par) == seen_revs.end())
-            {
-              if (sess.ancestry.find(par) != sess.ancestry.end())
-                {
-                  frontier.push_back(par);
-                }
-              seen_revs.insert(par);
-            }
-
-          traverse_manifest(sess.ancestry[rev]->second.new_manifest,
-                            edge_old_manifest(e));
-          traverse_files(edge_changes(e));
-
-        }
-
-      sess.dbw.consume_revision_data(rev, sess.ancestry[rev]->first);
-      frontier.pop_front();
-    }
-}
-
-void
-ancestry_fetcher::request_rev_file_deltas(file_id const & start, 
-                                          set<file_id> & done_files)
-{
-  stack< file_id > frontier;
-  frontier.push(start);
-
-  while (!frontier.empty())
-    {
-      file_id const child = frontier.top();
-      MM(child);
-      I(!null_id(child));
-      frontier.pop();
-
-      for (multimap< file_id, file_id>::const_iterator
-           d = rev_file_deltas.lower_bound(child);
-           d != rev_file_deltas.upper_bound(child);
-           d++)
-        {
-          file_id const & parent = d->second;
-          MM(parent);
-          I(!null_id(parent));
-          if (done_files.find(parent) == done_files.end())
-            {
-              done_files.insert(parent);
-              if (!sess.app.db.file_version_exists(parent))
-                {
-                  sess.queue_send_delta_cmd(file_item,
-                                            plain_id(child), plain_id(parent));
-                  sess.reverse_delta_requests.insert(make_pair(plain_id(child),
-                                                               plain_id(parent)));
-                }
-              frontier.push(parent);
-            }
-        }
-    }
-}
-
-void
-ancestry_fetcher::request_files()
-{
-  // just a cache to avoid checking db.foo_version_exists() too much
-  set<file_id> done_files;
-
-  for (multimap<file_id,file_id>::const_iterator d = fwd_file_deltas.begin();
-       d != fwd_file_deltas.end(); d++)
-    {
-      file_id const & anc = d->first;
-      file_id const & child = d->second;
-      MM(anc);
-      MM(child);
-      if (!sess.app.db.file_version_exists(child))
-        {
-          if (null_id(anc)
-              || !sess.app.db.file_version_exists(anc))
-            {
-              sess.queue_send_data_cmd(file_item, plain_id(child));
-            }
-          else
-            {
-              sess.queue_send_delta_cmd(file_item, 
-                                        plain_id(anc), plain_id(child));
-              sess.note_item_full_delta(file_item, plain_id(child));
-            }
-        }
-
-      // traverse up the reverse deltas
-      request_rev_file_deltas(child, done_files);
-    }
-}
-
-void
-ancestry_fetcher::request_rev_manifest_deltas(manifest_id const & start,
-                                              set<manifest_id> & done_manifests)
-{
-  stack< manifest_id > frontier;
-  frontier.push(start);
-
-  while (!frontier.empty())
-    {
-      manifest_id const child = frontier.top();
-      MM(child);
-      I(!null_id(child));
-      frontier.pop();
-
-      for (multimap< manifest_id, manifest_id>::const_iterator
-           d = rev_manifest_deltas.lower_bound(child);
-           d != rev_manifest_deltas.upper_bound(child);
-           d++)
-        {
-          manifest_id const & parent = d->second;
-          MM(parent);
-          I(!null_id(parent));
-          if (done_manifests.find(parent) == done_manifests.end())
-            {
-              done_manifests.insert(parent);
-              if (!sess.app.db.manifest_version_exists(parent))
-                {
-                  sess.queue_send_delta_cmd(manifest_item,
-                                            plain_id(child), plain_id(parent));
-                  sess.reverse_delta_requests.insert(make_pair(plain_id(child),
-                                                               plain_id(parent)));
-                }
-              frontier.push(parent);
-            }
-        }
-    }
-}
-
-// could try and make this a template function, is the same as request_files(),
-// though it calls non-template functions
-void
-ancestry_fetcher::request_manifests()
-{
-  // just a cache to avoid checking db.foo_version_exists() too much
-  set<manifest_id> done_manifests;
-
-  for (multimap<manifest_id,manifest_id>::const_iterator d = fwd_manifest_deltas.begin();
-       d != fwd_manifest_deltas.end(); d++)
-    {
-      manifest_id const & anc = d->first;
-      manifest_id const & child = d->second;
-      MM(anc);
-      MM(child);
-      if (!sess.app.db.manifest_version_exists(child))
-        {
-          if (null_id(anc)
-              || !sess.app.db.manifest_version_exists(anc))
-            {
-              sess.queue_send_data_cmd(manifest_item, plain_id(child));
-            }
-          else
-            {
-              sess.queue_send_delta_cmd(manifest_item, 
-                                        plain_id(anc), plain_id(child));
-              sess.note_item_full_delta(manifest_item, plain_id(child));
-            }
-        }
-
-      // traverse up the reverse deltas
-      request_rev_manifest_deltas(child, done_manifests);
     }
 }

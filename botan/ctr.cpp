@@ -5,6 +5,7 @@
 
 #include <botan/ctr.h>
 #include <botan/lookup.h>
+#include <botan/bit_ops.h>
 
 namespace Botan {
 

@@ -61,7 +61,7 @@ class DataSource_Stream : public DataSource
       bool end_of_data() const;
       std::string id() const;
 
-      DataSource_Stream(const std::string&);
+      DataSource_Stream(const std::string&, bool = false);
       ~DataSource_Stream();
    private:
       const std::string fsname;

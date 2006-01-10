@@ -1,7 +1,39 @@
-upgrading monotone to 0.24
-==========================
+upgrading monotone to 0.26pre1
+==============================
 
 if you are upgrading from:
+  - 0.25 or earlier: we have modified the textual format of revisions
+    and manifests.  See NEWS before upgrading.  Your project must
+    rebuild its history; this is irreversible and creates a flag day.
+    You will not be able to sync revisions between pre- and post-
+    migration databases, and you should migrate only one database for
+    a project and re-fetch working databases from there.
+
+    You should probably do some test migrations locally first to make
+    sure everything seems to be working, before running your real
+    migration.  To run the real migration:
+      1) get everyone to commit and push their changes to the database
+         chosen for migration (such as a central server if you use
+         one); local dbs and working copies will be broken by this
+         migration.
+      2) shut down the server
+      3) run 'cp server.db server.db.backup'
+      4) run 'monotone db migrate --db server.db'
+      5) run 'monotone db rosterify --db server.db'
+      6) do whatever tests you like to make sure things look reasonable
+      7) start up the server
+      8) tell everyone to do a new pull into a fresh database, using
+         the new version of monotone.
+    This migration is "best effort"; bugs in rename handling in the
+    old code mean that some histories contain bogosities that cannot
+    be migrated.  However, it makes an effort to preserve everything
+    it can (including renames), and does guarantee that at each
+    entry in the history graph, the tree layout and file contents are
+    entirely preserved.
+
+    We tentatively hope that this is the last time we will have to
+    change the revision/manifest formats and have a flag day of this
+    magnitude; but only experience will let us know for certain.
   - 0.23 or earlier: keys are now stored in ~/.monotone/keys (Unix,
     OS X), or %APPDATA%\Monotone\keys (Windows).  You must run 'db
     migrate' against each of your databases; this will automatically

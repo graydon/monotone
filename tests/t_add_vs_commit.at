@@ -1,6 +1,9 @@
 AT_SETUP([add working copy commit in another])
 MONOTONE_SETUP
 
+# This test relies on file-suturing
+AT_XFAIL_IF(true)
+
 # 1. Alice writes a file, does an add, *doesn't* do a commit, and sends patch
 # 2. Bob applies (modified) patch to tree, does the add, then a commit.
 # 3. Now Alice does an update (resolves the merge conflict, choosing Bob's changes).

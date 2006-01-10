@@ -79,27 +79,6 @@ u32bit low_zero_bits(const BigInt& n)
    }
 
 /*************************************************
-* If this number is of the form 2^n, return n    *
-*************************************************/
-u32bit power_of_2(const BigInt& n)
-   {
-   if(n <= 1 || n % 2 == 1) return 0;
-   if(n == 2) return 1;
-
-   u32bit bit_set = 0;
-
-   const u32bit n_bits = n.bits();
-   for(u32bit j = 1; j != n_bits; j++)
-      if(n.get_bit(j))
-         {
-         if(bit_set) return 0;
-         bit_set = j;
-         }
-
-   return bit_set;
-   }
-
-/*************************************************
 * Calculate the GCD                              *
 *************************************************/
 BigInt gcd(const BigInt& a, const BigInt& b)

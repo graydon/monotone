@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/pbe_pkcs.h>
+#include <botan/parsing.h>
 #include <botan/lookup.h>
 #include <botan/rng.h>
 #include <botan/asn1.h>

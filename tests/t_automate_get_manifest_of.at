@@ -1,10 +1,15 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([automate get_manifest])
+AT_SETUP([automate get_manifest_of])
 NEED_UNB64
 MONOTONE_SETUP
 
-AT_DATA(expected, [4cbd040533a2f43fc6691d773d510cda70f4126a  foo
+AT_DATA(expected, [format_version "1"
+
+dir ""
+
+   file "foo"
+content @<:@4cbd040533a2f43fc6691d773d510cda70f4126a@:>@
 ])
 
 AT_DATA(empty, [])
@@ -13,28 +18,27 @@ ADD_FILE(foo, [blah
 ])
 AT_CHECK(MONOTONE commit --date=2005-05-21T12:30:51 --branch=testbranch --message=blah-blah, [], [ignore], [ignore])
 BASE_R=`BASE_REVISION`
-MANIFEST_R=095e136cd6e47e3519869fb0f07dcce183780b6e
 
 # check that a correct usage produces correctly formatted output
-AT_CHECK(MONOTONE automate get_manifest $MANIFEST_R, [], [stdout], [ignore])
+AT_CHECK(MONOTONE automate get_manifest_of $BASE_R, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp expected stdout)
 
 # should work even if we don't specify the manifest ID
-AT_CHECK(MONOTONE automate get_manifest, [], [stdout], [ignore])
+AT_CHECK(MONOTONE automate get_manifest_of, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp expected stdout)
 
 # ensure that missing revisions fail
 NOSUCHREV=0000000000000000000000000000000000000000
-AT_CHECK(MONOTONE automate get_file $NOSUCHREV, [1], [stdout], [ignore])
+AT_CHECK(MONOTONE automate get_manifest_of $NOSUCHREV, [1], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp empty stdout)
 
 # ensure that revisions are not being completed
-# (the above commit will have created rev 306c506078df4b58470f75c845ccd11c2ea8cb26)
-TRUNCATEDREV=306c506078df4b58470f75c845ccd1
-AT_CHECK(MONOTONE automate get_file $TRUNCATEDREV, [1], [stdout], [ignore])
+# (the above commit will have created rev 3cf83369cfadbf5ba4ea3a50796fba18ec245489)
+TRUNCATEDREV=3cf83369cfadbf5ba4ea3a50796fba18ec2454
+AT_CHECK(MONOTONE automate get_revision $TRUNCATEDREV, [1], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp empty stdout)
 

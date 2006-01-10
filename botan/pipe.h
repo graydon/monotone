@@ -18,7 +18,6 @@ namespace Botan {
 class Pipe : public DataSource
    {
    public:
-      static const u32bit MAX_MESSAGES    = 0xFFFFFFF0;
       static const u32bit LAST_MESSAGE    = 0xFFFFFFFE;
       static const u32bit DEFAULT_MESSAGE = 0xFFFFFFFF;
 
@@ -69,11 +68,13 @@ class Pipe : public DataSource
       void destruct(Filter*);
       void find_endpoints(Filter*);
       void clear_endpoints(Filter*);
-      class SecureQueue* get_message(const std::string&, u32bit) const;
-      std::vector<class SecureQueue*> messages;
+
+      u32bit get_message_no(const std::string&, u32bit) const;
+
       Filter* pipe;
-      bool locked;
+      class Output_Buffers* outputs;
       u32bit default_read;
+      bool inside_msg;
    };
 
 /*************************************************

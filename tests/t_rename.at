@@ -31,7 +31,7 @@ AT_CHECK(MONOTONE commit --message=blah-blah, [], [ignore], [ignore])
 # merge the add and the rename
 AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
 AT_CHECK(MONOTONE update, [], [ignore], [ignore])
-AT_CHECK(MONOTONE automate get_manifest, [ignore], [stdout])
+AT_CHECK(MONOTONE automate get_manifest_of, [ignore], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep bar manifest, [0], [ignore], [ignore])
 AT_CHECK(grep bleh manifest, [0], [ignore], [ignore])
@@ -58,7 +58,7 @@ AT_CHECK(MONOTONE status, [], [ignore], [ignore])
 
 # move file to wrong place before renaming it
 AT_CHECK(mv barfoo bar)
-AT_CHECK(MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
 AT_CHECK(MONOTONE status, [], [ignore], [ignore])
 AT_CHECK(mv bar barfoofoo)
 AT_CHECK(MONOTONE rename bar barfoo, [], [ignore], [stderr])

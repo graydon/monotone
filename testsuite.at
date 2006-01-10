@@ -146,9 +146,9 @@ end
 if (attr_functions == nil) then
   attr_functions = {}
 end
-attr_functions[["test_attr"]] =
+attr_functions[["test:test_attr"]] =
   function(filename, value)
-    io.write(string.format("test_attr:%s:%s\n", filename, value))
+    io.write(string.format("test:test_attr:%s:%s\n", filename, value))
   end
 
 ])
@@ -192,14 +192,9 @@ CHECK_SAME_STDOUT(MONOTONE --db=$1 ls keys, MONOTONE --db=$2 ls keys)
 
 REVS=`MONOTONE --db=$1 complete revision ""`
 for R in $REVS; do
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 ls certs $R, MONOTONE --db=$2 ls certs $R)
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate certs $R, MONOTONE --db=$2 automate certs $R)
   CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_revision $R, MONOTONE --db=$2 automate get_revision $R)
-done
-
-CHECK_SAME_STDOUT(MONOTONE --db=$1 complete manifest "", MONOTONE --db=$2 complete manifest "")
-MANIFESTS=`MONOTONE --db=$1 complete manifest ""`
-for M in $MANIFESTS; do
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_manifest $M, MONOTONE --db=$2 automate get_manifest $M)
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_manifest_of $R, MONOTONE --db=$2 automate get_manifest_of $R)
 done
 
 CHECK_SAME_STDOUT(MONOTONE --db=$1 complete file "", MONOTONE --db=$2 complete file "")
@@ -452,7 +447,7 @@ m4_define([TAIL], [(tail -n $1 2>/dev/null || tail -$1)])
 # run as LARGISH_FILE_CREATE(filename, size) to create a <size> MB file of
 # uncompressible data
 m4_define([LARGISH_FILE_CREATE], [
-awk -- 'BEGIN{srand(5253);for(a=0;a<1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish.tmp
+awk -- 'BEGIN{srand(4691);for(a=0;a<1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish.tmp
 i=$2
 while test $i -gt 0; do
 	cat largish.tmp >> $1
@@ -573,7 +568,6 @@ m4_include(tests/t_no_rename_overwrite.at)
 m4_include(tests/t_checkout_noop_on_fail.at)
 m4_include(tests/t_monotone_agent.at)
 m4_include(tests/t_approval_semantics.at)
-m4_include(tests/t_rebuild.at)
 m4_include(tests/t_lua_privkey.at)
 m4_include(tests/t_i18n_changelog.at)
 m4_include(tests/t_restrictions_warn_on_unknown.at)
@@ -737,7 +731,7 @@ m4_include(tests/t_read_from_file.at)
 m4_include(tests/t_setup_existing_path.at)
 m4_include(tests/t_mt_ignore.at)
 m4_include(tests/t_automate_get_file.at)
-m4_include(tests/t_automate_get_manifest.at)
+m4_include(tests/t_automate_get_manifest_of.at)
 m4_include(tests/t_automate_get_revision.at)
 m4_include(tests/t_unreadable_db.at)
 m4_include(tests/t_restriction_with_exclude.at)
@@ -752,5 +746,11 @@ m4_include(tests/t_annotate_renames.at)
 m4_include(tests/t_config_confdir.at)
 m4_include(tests/t_database_sig_cleanup.at)
 m4_include(tests/t_update_switch_branch.at)
+m4_include(tests/t_migrate_rosterify.at)
+m4_include(tests/t_rosterify_attrs.at)
+m4_include(tests/t_rosterify_rename.at)
 m4_include(tests/t_mixed_case_pwd.at)
 m4_include(tests/t_read_privkey.at)
+m4_include(tests/t_restricted_commands_consistent.at)
+m4_include(tests/t_rosterify_drop_attrs.at)
+m4_include(tests/t_rosterify_one_rev.at)

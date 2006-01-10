@@ -9,7 +9,6 @@
 #include <set>
 
 #include "app_state.hh"
-#include "manifest.hh"
 #include "vocab.hh"
 
 // this function just encapsulates the (somewhat complex) logic 

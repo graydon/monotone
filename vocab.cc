@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "constants.hh"
+#include "hash_map.hh"
 #include "sanity.hh"
 #include "vocab.hh"
 
@@ -41,6 +42,20 @@ verify(T & val)
 {}
 
 inline void 
+verify(path_component & val)
+{
+  // FIXME: probably ought to do something here?
+  val.ok = true;
+}
+
+inline bool is_xdigit(char x) 
+{ 
+  return ((x >= '0' && x <= '9')
+	  || (x >= 'a' && x <= 'f')
+	  || (x >= 'A' && x <= 'F'));
+}
+
+inline void 
 verify(hexenc<id> & val)
 {
   if (val.ok)
@@ -51,10 +66,11 @@ verify(hexenc<id> & val)
 
   N(val().size() == constants::idlen,
     F("hex encoded ID '%s' size != %d") % val % constants::idlen);
-  string::size_type pos = val().find_first_not_of(constants::legal_id_bytes);
-  N(pos == string::npos,
-    F("bad character '%c' in id name '%s'") % val().at(pos) % val);
-
+  for (string::const_iterator i = val().begin(); i != val().end(); ++i)
+    {
+      N(is_xdigit(*i),
+	F("bad character '%c' in id name '%s'") % *i % val);
+    }
   val.ok = true;
 }
 
@@ -135,12 +151,42 @@ verify(netsync_hmac_value & val)
 }
 
 
+// Note that ATOMIC types each keep a static symbol-table object and a
+// counter of activations, and when there is an activation, the
+// members of the ATOMIC type initialize their internal string using a
+// copy of the string found in the symtab. Since some (all?) C++
+// std::string implementations are copy-on-write, this has the affect
+// of making the ATOMIC(foo) values constructed within a symbol table
+// scope share string storage.
+struct 
+symtab_impl 
+{
+  typedef hashmap::hash_set<std::string, hashmap::string_hash> hset;
+  hset vals;
+  symtab_impl() : vals(1024) {}
+  void clear() { vals.clear(); }
+  std::string const & unique(std::string const & in) 
+  {
+    // This produces a pair <iter,bool> where iter points to an
+    // element of the table; the bool indicates whether the element is
+    // new, but we don't actually care. We just want the iter.
+    return *(vals.insert(in).first);
+  }
+};
+
+
 // instantiation of various vocab functions
 
 #define ATOMIC(ty)                           \
                                              \
+static symtab_impl ty ## _tab;               \
+static size_t ty ## _tab_active = 0;         \
+                                             \
 ty::ty(string const & str) :                 \
-     s(str), ok(false)                       \
+  s((ty ## _tab_active > 0)                  \
+    ? (ty ## _tab.unique(str))               \
+    : str),                                  \
+  ok(false)                                  \
 { verify(*this); }                           \
                                              \
 ty::ty(ty const & other) :                   \
@@ -156,7 +202,19 @@ ostream & operator<<(ostream & o,            \
 { return (o << a.s); }                       \
                                              \
 void dump(ty const & obj, std::string & out) \
-{ out = obj(); }
+{ out = obj(); }                             \
+                                             \
+ty::symtab::symtab()                         \
+{ ty ## _tab_active++; }                     \
+                                             \
+ty::symtab::~symtab()                        \
+{                                            \
+  I(ty ## _tab_active > 0);                  \
+  ty ## _tab_active--;                       \
+  if (ty ## _tab_active == 0)                \
+    ty ## _tab.clear();                      \
+}
+
 
 #define ATOMIC_NOVERIFY(ty) ATOMIC(ty)
 

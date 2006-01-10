@@ -6,8 +6,8 @@
 #ifndef BOTAN_SYMKEY_H__
 #define BOTAN_SYMKEY_H__
 
-#include <botan/enums.h>
 #include <botan/secmem.h>
+#include <botan/enums.h>
 #include <string>
 
 namespace Botan {

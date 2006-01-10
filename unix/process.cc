@@ -52,7 +52,7 @@ bool is_executable(const char *path)
         int rc = stat(path, &s);
         N(rc != -1, F("error getting status of file %s: %s") % path % strerror(errno));
 
-        return s.st_mode & S_IXUSR;
+        return (s.st_mode & S_IXUSR) && !(s.st_mode & S_IFDIR);
 }
 
 int make_executable(const char *path)

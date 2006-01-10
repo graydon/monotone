@@ -119,10 +119,6 @@ namespace constants
   illegal_path_bytes_arr
   ;
 
-  // how many revisions back to verify the sanity of revisions before allowing
-  // them into the database
-  int const verify_depth = 4;
-
   // merkle tree / netcmd / netsync related stuff
 
   size_t const merkle_fanout_bits = 4;
@@ -145,10 +141,8 @@ namespace constants
   BOOST_STATIC_ASSERT(merkle_bitmap_length_in_bits > 0);
   BOOST_STATIC_ASSERT((merkle_bitmap_length_in_bits % 8) == 0);
 
-  u8 const netcmd_current_protocol_version = 5;
+  u8 const netcmd_current_protocol_version = 6;
   
-  // allow payloads up to 256 megs (this sets the in-practice maximum size of
-  // a compressed file/manifest).
   size_t const netcmd_minimum_bytes_to_bother_with_gzip = 0xfff;
 
   size_t const netsync_session_key_length_in_bytes = 20;     // 160 bits

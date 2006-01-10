@@ -1,12 +1,58 @@
 /*************************************************
-* Parsing Functions Source File                  *
+* Parser Functions Source File                   *
 * (C) 1999-2005 The Botan Project                *
 *************************************************/
 
+#include <botan/parsing.h>
 #include <botan/exceptn.h>
-#include <botan/util.h>
+#include <botan/charset.h>
 
 namespace Botan {
+
+/*************************************************
+* Convert a string into an integer               *
+*************************************************/
+u32bit to_u32bit(const std::string& number)
+   {
+   u32bit n = 0;
+
+   for(std::string::const_iterator j = number.begin(); j != number.end(); j++)
+      {
+      const u32bit OVERFLOW_MARK = 0xFFFFFFFF / 10;
+
+      byte digit = char2digit(*j);
+
+      if((n > OVERFLOW_MARK) || (n == OVERFLOW_MARK && digit > 5))
+         throw Decoding_Error("to_u32bit: Integer overflow");
+      n *= 10;
+      n += digit;
+      }
+   return n;
+   }
+
+
+/*************************************************
+* Convert an integer into a string               *
+*************************************************/
+std::string to_string(u64bit n, u32bit min_len)
+   {
+   std::string lenstr;
+   if(n)
+      {
+      while(n > 0)
+         {
+         lenstr = digit2char(n % 10) + lenstr;
+         n /= 10;
+         }
+      }
+   else
+      lenstr = "0";
+
+   while(lenstr.size() < min_len)
+      lenstr = "0" + lenstr;
+
+   return lenstr;
+   }
 
 /*************************************************
 * Parse a SCAN-style algorithm name              *

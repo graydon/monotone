@@ -41,7 +41,7 @@ if (attr_init_functions == nil) then
    attr_init_functions = {}
 end
 
-attr_init_functions["execute"] = 
+attr_init_functions["mtn:execute"] = 
    function(filename)
       if (is_executable(filename)) then 
         return "true" 
@@ -50,7 +50,7 @@ attr_init_functions["execute"] =
       end 
    end
 
-attr_init_functions["manual_merge"] = 
+attr_init_functions["mtn:manual_merge"] = 
    function(filename)
       if (binary_file(filename)) then 
         return "true" -- binary files must merged manually
@@ -63,7 +63,7 @@ if (attr_functions == nil) then
    attr_functions = {}
 end
 
-attr_functions["execute"] = 
+attr_functions["mtn:execute"] = 
    function(filename, value) 
       if (value == "true") then
          make_executable(filename)
@@ -810,6 +810,7 @@ function get_netsync_read_permitted(branch, ident)
    local permfile = io.open(get_confdir() .. "/read-permissions", "r")
    if (permfile == nil) then return false end
    local dat = permfile:read("*a")
+   io.close(permfile)
    local res = parse_basic_io(dat)
    if res == nil then
       io.stderr:write("file read-permissions cannot be parsed\n")
@@ -853,13 +854,14 @@ function get_netsync_write_permitted(ident)
    if (permfile == nil) then
       return false
    end
+   local matches = false
    local line = permfile:read()
-   while (line ~= nil) do
+   while (not matches and line ~= nil) do
       local _, _, ln = string.find(line, "%s*([^%s]*)%s*")
-      if ln == "*" then return true end
-      if globish_match(ln, ident) then return true end
+      if ln == "*" then matches = true end
+      if globish_match(ln, ident) then matches = true end
       line = permfile:read()
    end
    io.close(permfile)
-   return false
+   return matches
 end

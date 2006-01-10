@@ -11,6 +11,8 @@ ATOMIC_NOVERIFY(external);    // "external" string in unknown system charset
 ATOMIC_NOVERIFY(utf8);        // unknown string in UTF8 charset
 ATOMIC(ace);                  // unknown string in ACE form
 
+ATOMIC(path_component);       // piece of a path (see paths.hh)
+
 ATOMIC_NOVERIFY(id);          // hash of data
 ATOMIC_NOVERIFY(data);        // meaningless blob
 ATOMIC_NOVERIFY(delta);       // xdelta between 2 datas
@@ -35,6 +37,9 @@ ATOMIC_NOVERIFY(rsa_oaep_sha_data);
 
 ATOMIC(netsync_session_key);  // key for netsync session HMAC
 ATOMIC(netsync_hmac_value);   // 160-bit SHA-1 HMAC
+
+ATOMIC_NOVERIFY(attr_key);
+ATOMIC_NOVERIFY(attr_value);
 
 DECORATE(revision);           // thing associated with a revision
 DECORATE(manifest);           // thing associated with a manifest

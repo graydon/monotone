@@ -27,7 +27,9 @@ ticker::ticker(string const & tickname, std::string const & s, size_t mod,
     bool kilocount) :
   ticks(0),
   mod(mod),
+  total(0),
   kilocount(kilocount),
+  use_total(false),
   name(tickname),
   shortname(s)
 {
@@ -82,71 +84,101 @@ tick_write_count::~tick_write_count()
 
 void tick_write_count::write_ticks()
 {
-  string tickline1, tickline2;
-  bool first_tick = true;
+  vector<size_t> tick_widths;
+  vector<string> tick_title_strings;
+  vector<string> tick_count_strings;
 
-  tickline1 = "monotone: ";
-  tickline2 = "monotone:";
-  
-  unsigned int width;
-  unsigned int minwidth = 7;
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
        i != ui.tickers.end(); ++i)
     {
-      size_t dwidth = display_width(utf8(i->second->name));
-      width = 1 + dwidth;
-      if (!first_tick)
-        {
-          tickline1 += " | ";
-          tickline2 += " |";
-        }
-      first_tick = false;
-      if (dwidth < minwidth)
-        {
-          tickline1.append(minwidth - dwidth, ' ');
-          width += minwidth - dwidth;
-        }
-      tickline1 += i->second->name;
-      
       string count;
-      if (i->second->kilocount && i->second->ticks >= 10000)
-        { // automatic unit conversion is enabled
-          float div;
+      if (i->second->kilocount)
+        { 
+          // automatic unit conversion is enabled
+          float div = 1.0;
           const char *message;
-          if (i->second->ticks >= 1048576) {
-          // ticks >=1MB, use Mb
-            div = 1048576;
-          // xgettext: mebibytes (2^20 bytes)
-            message = N_("%.1f M");
-          } else {
-          // ticks <1MB, use kb
-            div = 1024;
-          // xgettext: kibibytes (2^10 bytes)
-            message = N_("%.1f k");
-          }
-          // we reset the mod to the divider, to avoid spurious screen updates
+
+          if (i->second->ticks >= 1073741824/10) 
+            {
+              div = 1073741824;
+              // xgettext: gibibytes (2^30 bytes)
+              message = N_("%.1f G");
+            } 
+          else if (i->second->ticks >= 1048576/10) 
+            {
+              div = 1048576;
+              // xgettext: mebibytes (2^20 bytes)
+              message = N_("%.1f M");
+            } 
+          else
+            {
+              div = 1024;
+              // xgettext: kibibytes (2^10 bytes)
+              message = N_("%.1f k");
+            }
+          // We reset the mod to the divider, to avoid spurious screen updates.
           i->second->mod = static_cast<int>(div / 10.0);
           count = (F(message) % (i->second->ticks / div)).str();
+        }
+      else if (i->second->use_total)
+        {
+          // We know that we're going to eventually have 'total' displayed
+          // twice on screen, plus a slash. So we should pad out this field
+          // to that eventual size to avoid spurious re-issuing of the 
+          // tick titles as we expand to the goal.
+          string complete = (F("%d/%d") % i->second->total % i->second->total).str();          
+          // xgettext: bytes
+          string current = (F("%d/%d") % i->second->ticks % i->second->total).str();
+          count.append(complete.size() - current.size(),' ');
+          count.append(current);
         }
       else
         {
           // xgettext: bytes
           count = (F("%d") % i->second->ticks).str();
         }
-        
-      dwidth = display_width(utf8(count));
-      if (dwidth < width)
+      
+      size_t title_width = display_width(utf8(i->second->name));
+      size_t count_width = display_width(utf8(count));
+      size_t max_width = title_width > count_width ? title_width : count_width;
+
+      string name;
+      name.append(max_width - i->second->name.size(), ' ');
+      name.append(i->second->name);
+
+      string count2;
+      count2.append(max_width - count.size(), ' ');
+      count2.append(count);
+
+      tick_title_strings.push_back(name);
+      tick_count_strings.push_back(count2);
+      tick_widths.push_back(max_width);
+    }
+
+  string tickline1;
+  bool write_tickline1 = !(ui.last_write_was_a_tick 
+                           && (tick_widths == last_tick_widths));
+  if (write_tickline1)
+    {
+      // Reissue the titles if the widths have changed.
+      tickline1 = "monotone: ";
+      for (size_t i = 0; i < tick_widths.size(); ++i)
         {
-          tickline2.append(width - dwidth, ' ');
+          if (i != 0)
+            tickline1.append(" | ");
+          tickline1.append(idx(tick_title_strings, i));
         }
-      else if (dwidth > width)
-        {
-          // FIXME: not quite right, because substr acts on bytes rather than
-          // characters; but there are always more bytes than characters, so
-          // at worst this will just chop off a little too much.
-          count = count.substr(dwidth - width);
-        }
-      tickline2 += count;
+      last_tick_widths = tick_widths;
+      write_tickline1 = true;
+    }
+
+  // Always reissue the counts.
+  string tickline2 = "monotone: ";
+  for (size_t i = 0; i < tick_widths.size(); ++i)
+    {
+      if (i != 0)
+        tickline2.append(" | ");
+      tickline2.append(idx(tick_count_strings, i));
     }
 
   if (!ui.tick_trailer.empty())
@@ -161,8 +193,11 @@ void tick_write_count::write_ticks()
   last_tick_len = curr_sz;
 
   unsigned int tw = terminal_width();
-  if(!ui.last_write_was_a_tick)
+  if(write_tickline1)
     {
+      if (ui.last_write_was_a_tick)
+        clog << "\n";
+
       if (tw && display_width(utf8(tickline1)) > tw)
         {
           // FIXME: may chop off more than necessary (because we chop by

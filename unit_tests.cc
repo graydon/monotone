@@ -59,8 +59,8 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   if (t.empty() || t.find("revision") != t.end())
     add_revision_tests(suite);  
 
-  if (t.empty() || t.find("change_set") != t.end())
-    add_change_set_tests(suite);  
+  if (t.empty() || t.find("cset") != t.end())
+    add_cset_tests(suite);  
 
   if (t.empty() || t.find("diff_patch") != t.end())
     add_diff_patch_tests(suite);
@@ -85,6 +85,9 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   
   if (t.empty() || t.find("paths") != t.end())
     add_paths_tests(suite);  
+
+  if (t.empty() || t.find("roster") != t.end())
+    add_roster_tests(suite);  
   
   // all done, add our clean-shutdown-indicator
   suite->add(BOOST_TEST_CASE(&clean_shutdown_dummy_test));

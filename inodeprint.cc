@@ -12,14 +12,13 @@
 #include <iterator>
 
 #include "app_state.hh"
-#include "manifest.hh"
 #include "inodeprint.hh"
 #include "sanity.hh"
 #include "platform.hh"
 #include "constants.hh"
 
 // this file defines the inodeprint_map structure, and some operations on it.
-// it is currently heavily based on manifest.cc.
+// it is currently heavily based on the old manifest.cc.
 
 // reading inodeprint_maps
 

@@ -6,10 +6,8 @@
 #ifndef BOTAN_BASE_H__
 #define BOTAN_BASE_H__
 
-#include <botan/config.h>
 #include <botan/exceptn.h>
 #include <botan/symkey.h>
-#include <botan/util.h>
 
 namespace Botan {
 
@@ -36,7 +34,7 @@ class Algorithm
 /*************************************************
 * Symmetric Algorithm                            *
 *************************************************/
-class SymmetricAlgorithm : public Algorithm
+class SymmetricAlgorithm : public virtual Algorithm
    {
    public:
       const u32bit MAXIMUM_KEYLENGTH, MINIMUM_KEYLENGTH, KEYLENGTH_MULTIPLE;
@@ -93,7 +91,7 @@ class StreamCipher : public SymmetricAlgorithm
 /*************************************************
 * Buffered Computation                           *
 *************************************************/
-class BufferedComputation : public Algorithm
+class BufferedComputation : public virtual Algorithm
    {
    public:
       const u32bit OUTPUT_LENGTH;

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-28 19:39+0100\n"
-"PO-Revision-Date: 2005-11-28 21:12+0100\n"
+"POT-Creation-Date: 2005-12-06 15:24+0100\n"
+"PO-Revision-Date: 2005-12-01 14:35+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -260,7 +260,8 @@ msgid ""
 "If no directory is given, the branch name will be used as directory"
 msgstr ""
 "récupère une révision depuis une base de données dans un dossier. Si une\n"
-"révision est spécifiée, c'est celle-ci qui sera récupérée. Sinon, il s'agira\n"
+"révision est spécifiée, c'est celle-ci qui sera récupérée. Sinon, il "
+"s'agira\n"
 "que la versionde de tête (spécifiée ou implicite).\n"
 "Si aucun nom de dossier n'est fourni, le nom de la branche sera utilisé\n"
 "comme nom de dossier"
@@ -297,7 +298,7 @@ msgstr ""
 
 #: ../commands.cc:1768 ../commands.cc:1794
 msgid "OLDID NEWID"
-msgstr ""
+msgstr "ANCIENID NOUVELID"
 
 #: ../commands.cc:1769
 msgid "write manifest delta packet to stdout"
@@ -373,7 +374,8 @@ msgstr "CHEMIN ..."
 
 #: ../commands.cc:2105
 msgid "serve the branches specified by PATTERNs to connecting clients"
-msgstr "servir les branches spécifiées par les MOTIFs aux clients qui se connectent"
+msgstr ""
+"servir les branches spécifiées par les MOTIFs aux clients qui se connectent"
 
 #: ../commands.cc:2130
 msgid "database"
@@ -496,7 +498,7 @@ msgstr ""
 
 #: ../commands.cc:3495
 msgid "RCSFILE..."
-msgstr ""
+msgstr "FICHIER_RCS..."
 
 #: ../commands.cc:3496
 msgid ""
@@ -507,15 +509,15 @@ msgstr ""
 
 #: ../commands.cc:3512
 msgid "rcs"
-msgstr ""
+msgstr "rcs"
 
 #: ../commands.cc:3512
 msgid "CVSROOT"
-msgstr ""
+msgstr "CVSROOT"
 
 #: ../commands.cc:3512
 msgid "import all versions in CVS repository"
-msgstr ""
+msgstr "importer toutes les versions d'un dépôt CVS"
 
 #: ../commands.cc:3575
 msgid "PATH"
@@ -594,6 +596,7 @@ msgstr "DOMAINE NOM VALEUR"
 #: ../commands.cc:3847
 msgid "remove the database variable NAME in domain DOMAIN"
 msgstr ""
+"supprimer la variable NOM de la base de données dans le domaine DOMAINE"
 
 #: ../database_check.cc:111
 msgid "files"
@@ -732,8 +735,8 @@ msgid "perform the associated file operation"
 msgstr ""
 
 #: ../monotone.cc:71
-msgid "address:port to listen on (default :5253)"
-msgstr "écouteur sur adresse:port (défaut :5233)"
+msgid "address:port to listen on (default :4691)"
+msgstr "écouteur sur adresse:port (défaut :4691)"
 
 #: ../monotone.cc:72
 msgid "perform the operations for files missing from working directory"

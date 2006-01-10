@@ -684,9 +684,8 @@ extern "C"
   monotone_parse_basic_io_for_lua(lua_State *L)
   {
     vector<pair<string, vector<string> > > res;
-    const char *str = lua_tostring(L, -1);
-    std::istringstream iss(str);
-    basic_io::input_source in(iss, "monotone_parse_basic_io_for_lua");
+    const string str(lua_tostring(L, -1), lua_strlen(L, -1));
+    basic_io::input_source in(str, "monotone_parse_basic_io_for_lua");
     basic_io::tokenizer tok(in);
     try
       {
@@ -743,6 +742,27 @@ extern "C"
   }
 }
 
+static bool 
+run_string(lua_State * st, string const &str, string const & identity)
+{
+  I(st);
+  return 
+    Lua(st)
+    .loadstring(str, identity)
+    .call(0,1)
+    .ok();
+}
+
+static bool 
+run_file(lua_State * st, string const &filename)
+{
+  I(st);
+  return 
+    Lua(st)
+    .loadfile(filename)
+    .call(0,1)
+    .ok();
+}
 
 lua_hooks::lua_hooks()
 {
@@ -795,6 +815,14 @@ lua_hooks::lua_hooks()
   lua_settable(st, -3);
 
   lua_pop(st, 1);
+
+  // Disable any functions we don't want. This is easiest
+  // to do just by running a lua string.
+  if (!run_string(st, 
+                  "os.execute = nil "
+                  "io.popen = nil ", 
+                  string("<disabled dangerous functions>")))
+    throw oops("lua error while disabling existing functions");
 }
 
 lua_hooks::~lua_hooks()
@@ -812,27 +840,6 @@ lua_hooks::set_app(app_state *_app)
   map_of_lua_to_app.insert(make_pair(st, _app));
 }
 
-static bool 
-run_string(lua_State * st, string const &str, string const & identity)
-{
-  I(st);
-  return 
-    Lua(st)
-    .loadstring(str, identity)
-    .call(0,1)
-    .ok();
-}
-
-static bool 
-run_file(lua_State * st, string const &filename)
-{
-  I(st);
-  return 
-    Lua(st)
-    .loadfile(filename)
-    .call(0,1)
-    .ok();
-}
 
 
 #ifdef BUILD_UNIT_TESTS

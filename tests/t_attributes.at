@@ -9,39 +9,32 @@ AT_DATA(foo, [some data
 # Check a single character filename too, because those have had bugs.
 AT_DATA(a, [some data
 ])
-AT_DATA(.mt-attrs,
-[file "foo"
- test_attr "true"
-
- file "a"
- test_attr "1"
-])
 
 AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE add .mt-attrs, [], [ignore], [ignore])
+AT_CHECK(MONOTONE add a, [], [ignore], [ignore])
+AT_CHECK(MONOTONE attr set foo test:test_attr true, [], [ignore], [ignore])
+AT_CHECK(MONOTONE attr set a test:test_attr 1, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 CO_R_SHA1=`BASE_REVISION`
 
-AT_DATA(.mt-attrs, [
-file "a"
-test_attr "2"
-])
+AT_CHECK(MONOTONE attr drop foo test:test_attr, [], [ignore], [ignore])
+AT_CHECK(MONOTONE attr set a test:test_attr 2, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 UPDATE_R_SHA1=`BASE_REVISION`
 
 # Check checkouts.
 AT_CHECK(rm -rf co-dir)
 AT_CHECK(MONOTONE checkout --revision=$CO_R_SHA1 co-dir, [], [stdout])
-AT_CHECK(grep "test_attr:foo:true" stdout, [], [ignore])
-AT_CHECK(grep "test_attr:a:1" stdout, [], [ignore])
+AT_CHECK(grep "test:test_attr:foo:true" stdout, [], [ignore])
+AT_CHECK(grep "test:test_attr:a:1" stdout, [], [ignore])
 
 # Check updates.
 AT_CHECK(rm -rf co-dir)
 AT_CHECK(MONOTONE checkout --revision=$UPDATE_R_SHA1 co-dir, [], [stdout])
-AT_CHECK(grep "test_attr:foo" stdout, [1], [ignore])
-AT_CHECK(grep "test_attr:a:2" stdout, [], [ignore])
+AT_CHECK(grep "test:test_attr:foo" stdout, [1], [ignore])
+AT_CHECK(grep "test:test_attr:a:2" stdout, [], [ignore])
 
 # check that files must exist to have attributes set
-AT_CHECK(MONOTONE attr set missing execute, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE attr set missing mtn:execute, [1], [ignore], [ignore])
 
 AT_CLEANUP

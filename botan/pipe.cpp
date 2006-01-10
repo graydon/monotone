@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/pipe.h>
+#include <botan/out_buf.h>
 #include <botan/secqueue.h>
 
 namespace Botan {
@@ -50,8 +51,7 @@ Pipe::Pipe(Filter* filter_array[], u32bit count)
 Pipe::~Pipe()
    {
    destruct(pipe);
-   for(u32bit j = 0; j != messages.size(); j++)
-      delete messages[j];
+   delete outputs;
    }
 
 /*************************************************
@@ -59,9 +59,10 @@ Pipe::~Pipe()
 *************************************************/
 void Pipe::init()
    {
+   outputs = new Output_Buffers;
    pipe = 0;
    default_read = 0;
-   locked = false;
+   inside_msg = false;
    }
 
 /*************************************************
@@ -69,11 +70,11 @@ void Pipe::init()
 *************************************************/
 void Pipe::reset()
    {
-   if(locked)
-      throw Invalid_State("Pipe cannot be reset while it is locked");
+   if(inside_msg)
+      throw Invalid_State("Pipe cannot be reset while it is processing");
    destruct(pipe);
    pipe = 0;
-   locked = false;
+   inside_msg = false;
    }
 
 /*************************************************
@@ -101,7 +102,7 @@ bool Pipe::end_of_data() const
 *************************************************/
 void Pipe::set_default_msg(u32bit msg)
    {
-   if(msg >= messages.size())
+   if(msg >= message_count())
       throw Invalid_Argument("Pipe::set_default_msg: msg number is too high");
    default_read = msg;
    }
@@ -147,13 +148,13 @@ void Pipe::process_msg(DataSource& input)
 *************************************************/
 void Pipe::start_msg()
    {
-   if(locked)
+   if(inside_msg)
       throw Invalid_State("Pipe::start_msg: Message was already started");
    if(pipe == 0)
       pipe = new Null_Filter;
    find_endpoints(pipe);
    pipe->new_msg();
-   locked = true;
+   inside_msg = true;
    }
 
 /*************************************************
@@ -161,7 +162,7 @@ void Pipe::start_msg()
 *************************************************/
 void Pipe::end_msg()
    {
-   if(!locked)
+   if(!inside_msg)
       throw Invalid_State("Pipe::end_msg: Message was already ended");
    pipe->finish_msg();
    clear_endpoints(pipe);
@@ -170,7 +171,9 @@ void Pipe::end_msg()
       delete pipe;
       pipe = 0;
       }
-   locked = false;
+   inside_msg = false;
+
+   outputs->retire();
    }
 
 /*************************************************
@@ -185,7 +188,7 @@ void Pipe::find_endpoints(Filter* f)
          {
          SecureQueue* q = new SecureQueue;
          f->next[j] = q;
-         messages.push_back(q);
+         outputs->add(q);
          }
    }
 
@@ -199,8 +202,7 @@ void Pipe::clear_endpoints(Filter* f)
       {
       if(f->next[j] && dynamic_cast<SecureQueue*>(f->next[j]))
          f->next[j] = 0;
-      if(f->next[j])
-         clear_endpoints(f->next[j]);
+      clear_endpoints(f->next[j]);
       }
    }
 
@@ -209,8 +211,8 @@ void Pipe::clear_endpoints(Filter* f)
 *************************************************/
 void Pipe::append(Filter* filter)
    {
-   if(locked)
-      throw Invalid_State("Cannot append to a Pipe while it is locked");
+   if(inside_msg)
+      throw Invalid_State("Cannot append to a Pipe while it is processing");
    if(!filter)
       return;
    if(dynamic_cast<SecureQueue*>(filter))
@@ -225,8 +227,8 @@ void Pipe::append(Filter* filter)
 *************************************************/
 void Pipe::prepend(Filter* filter)
    {
-   if(locked)
-      throw Invalid_State("Cannot prepend to a Pipe while it is locked");
+   if(inside_msg)
+      throw Invalid_State("Cannot prepend to a Pipe while it is processing");
    if(!filter)
       return;
    if(dynamic_cast<SecureQueue*>(filter))
@@ -241,11 +243,15 @@ void Pipe::prepend(Filter* filter)
 *************************************************/
 void Pipe::pop()
    {
-   if(locked)
-      throw Invalid_State("Cannot pop off a Pipe while it is locked");
-   if(!pipe) return;
+   if(inside_msg)
+      throw Invalid_State("Cannot pop off a Pipe while it is processing");
+
+   if(!pipe)
+      return;
+
    if(pipe->total_ports() > 1)
       throw Invalid_State("Cannot pop off a Filter with multiple ports");
+
    Filter* f = pipe;
    u32bit owns = f->owns();
    pipe = pipe->next[0];
@@ -264,7 +270,7 @@ void Pipe::pop()
 *************************************************/
 u32bit Pipe::message_count() const
    {
-   return messages.size();
+   return outputs->message_count();
    }
 
 }

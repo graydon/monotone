@@ -6,6 +6,8 @@
 #include <botan/conf.h>
 #include <botan/lookup.h>
 #include <botan/mutex.h>
+#include <botan/charset.h>
+#include <botan/parsing.h>
 #include <string>
 #include <map>
 

@@ -4,6 +4,8 @@
 *************************************************/
 
 #include <botan/aes.h>
+#include <botan/bit_ops.h>
+#include <botan/parsing.h>
 
 namespace Botan {
 

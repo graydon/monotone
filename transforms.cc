@@ -206,16 +206,6 @@ patch(data const & olddata,
   newdata = result;
 }
 
-void 
-diff(manifest_map const & oldman,
-     manifest_map const & newman,
-     delta & del)
-{
-  string xd;
-  compute_delta(oldman, newman, xd);
-  del = delta(xd);
-}
-
 // identifier (a.k.a. sha1 signature) calculation
 
 void 
@@ -249,62 +239,6 @@ calculate_ident(file_data const & dat,
   ident = tmp;
 }
 
-void 
-calculate_ident(manifest_map const & m,
-                manifest_id & ident)
-{
-  size_t sz = 0;
-  static size_t bufsz = 0;
-  static char *buf = NULL;
-
-  for (manifest_map::const_iterator i = m.begin();
-       i != m.end(); ++i)
-    {
-      sz += i->second.inner()().size();
-      sz += i->first.as_internal().size();
-      sz += 3;      
-    }
-
-  if (sz > bufsz)
-    {
-      bufsz = sz;
-      buf = static_cast<char *>(realloc(buf, bufsz));
-      I(buf);
-    }
-  
-  // this has to go quite fast, for cvs importing
-  char *c = buf;
-  for (manifest_map::const_iterator i = m.begin();
-       i != m.end(); ++i)
-    {
-      memcpy(c, i->second.inner()().data(), i->second.inner()().size());
-      c += i->second.inner()().size();
-      *c++ = ' '; 
-      *c++ = ' '; 
-      memcpy(c, i->first.as_internal().data(), i->first.as_internal().size());
-      c += i->first.as_internal().size();
-      *c++ = '\n'; 
-    }
-  
-  Botan::Pipe p(new Botan::Hash_Filter("SHA-1"));
-  p.process_msg(reinterpret_cast<Botan::byte const*>(buf), sz);
-
-  id ident_decoded(p.read_all_as_string());
-  hexenc<id> raw_ident;
-  encode_hexenc(ident_decoded, raw_ident);  
-  ident = manifest_id(raw_ident);    
-}
-
-void 
-calculate_ident(manifest_data const & dat,
-                manifest_id & ident)
-{
-  hexenc<id> tmp;
-  calculate_ident(dat.inner(), tmp);
-  ident = tmp;
-}
-
-
 void calculate_ident(revision_data const & dat,
                      revision_id & ident)
 {
@@ -320,6 +254,22 @@ void calculate_ident(revision_set const & cs,
   hexenc<id> tid;
   write_revision_set(cs, tmp);
   calculate_ident(tmp, tid);
+  ident = tid;
+}
+
+// Variant which calculates the "manifest part" of a roster; this does
+// not include the local sequence numbers or markings, but produces
+// the manifest_id which is stored in the public revision_set object.
+void calculate_ident(roster_t const & ros,
+                     manifest_id & ident)
+{
+  data tmp;
+  hexenc<id> tid;
+  if (!ros.all_nodes().empty())
+    {
+      write_manifest_of_roster(ros, tmp);
+      calculate_ident(tmp, tid);
+    }
   ident = tid;
 }
 
@@ -350,7 +300,7 @@ calculate_ident(file_path const & file,
       // Best to be safe and check it isn't a dir.
       assert_path_is_file(file);
       Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
-      Botan::DataSource_Stream infile(file.as_external());
+      Botan::DataSource_Stream infile(file.as_external(), true);
       p.process_msg(infile);
 
       ident = lowercase(p.read_all_as_string());
@@ -542,25 +492,29 @@ system_to_utf8(external const & ext, utf8 & utf)
 size_t
 display_width(utf8 const & utf)
 {
-  // this function is called many thousands of times by the tickers, so we
-  // try and avoid performing heap allocations by starting with a reasonable
-  // size buffer, and only ever growing the buffer if needed.
-  static size_t widebuf_sz = 128;
-  static boost::scoped_array<wchar_t> widebuf(new wchar_t[widebuf_sz]);
-
-  size_t len = mbstowcs(0, utf().c_str(), 0) + 1;
-
-  if (len == static_cast<size_t>(-1))
-    return utf().length(); // conversion failed; punt and return original length
-
-  if (len > widebuf_sz) {
-    widebuf.reset(new wchar_t[len]);
-    widebuf_sz = len;
-  }
-
-  mbstowcs(widebuf.get(), utf().c_str(), widebuf_sz);
-
-  return wcswidth(widebuf.get(), widebuf_sz);
+  std::string const & u = utf();
+  size_t sz = 0;
+  std::string::const_iterator i = u.begin();
+  while (i != u.end())
+    {
+      if (UNLIKELY(static_cast<u8>(*i) & static_cast<u8>(0x80)))
+        {
+          // A UTF-8 escape: consume the full escape.
+          ++i;
+          ++sz;
+          while (i != u.end() 
+                 && (static_cast<u8>(*i) & static_cast<u8>(0x80))
+                 && (!(static_cast<u8>(*i) & static_cast<u8>(0x40))))
+            ++i;
+        }
+      else
+        {
+          // An ASCII-like character in the range 0..0x7F.
+          ++i;
+          ++sz;
+        }
+    }
+  return sz;
 }
 
 // Lots of gunk to avoid charset conversion as much as possible.  Running

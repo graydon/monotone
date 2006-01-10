@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * Chain                                          *
 *************************************************/
-class Chain : public Filter
+class Chain : public Fanout_Filter
    {
    public:
       void write(const byte input[], u32bit length) { send(input, length); }
@@ -25,11 +25,11 @@ class Chain : public Filter
 /*************************************************
 * Fork                                           *
 *************************************************/
-class Fork : public Filter
+class Fork : public Fanout_Filter
    {
    public:
       void write(const byte input[], u32bit length) { send(input, length); }
-      void set_port(u32bit n) { set_port(n); }
+      void set_port(u32bit n) { Fanout_Filter::set_port(n); }
 
       Fork(Filter*, Filter*, Filter* = 0, Filter* = 0);
       Fork(Filter*[], u32bit);
