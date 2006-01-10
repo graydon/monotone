@@ -1,0 +1,77 @@
+AT_SETUP([rosterify on a db with 1 rev])
+MONOTONE_SETUP
+NEED_UNGZB64
+
+# This is a db containing only one revision.  The revision contains
+# two files; "testfile" and "testdir/otherfile".
+
+AT_DATA([test.db.dump.gz.b64], [H4sICFkQw0MCA3Rlc3QuZGIuZHVtcADtWFmPm0oWfm5+BcpLEnUnZl/uVaSLbYwXwAsY7B6N
+WgUUi81mFhv710/ZTjvdbXcmmbnSvAxSWwXUWb9zvjp0W1YGOi4vOurcGFjyn1hnJkumjJtS
+W5VxpwCpGz7BPHPDErv7hN2FoAzxNKvwtI5jvE6jTQ0f8Ofryxf8tCHz8QImIEqjNMD9CMZe
+iZcwBwWooIc7e/zDHx+wu7P297QhXassSkt8F1UhUreNyihLn1xYVOXXLYhriN2dHPuh4M2F
+NCALXpbgIWy+wNTNPGQ98rC7z2/i9JynLShK7Fny02WFpFEYFxMPF82lm+XwGCjI8zhyQYWc
+O93iSNNFPAUJfCt8Ekeb8DXcXzaeArra+X3jOdrnrec0fTp79nAy8fny8m1kfhTDJw/GFTji
+d4fdRd6tYKoiQ0g9Y3cUwt0srWBaITEHlG9ce43NcXv5FSnOipf2vh4zfVq+Ej6i4kW+j1fZ
+0QYyXbsV7tZFgazhfoHgOhrE7r7HGXkPpwefr2E7GT6VJTKeF1ECiv0xqw+/EpUHXjj2nAg3
+S/ICliVERp8L5lnkjO5Ry8mTgW7IMxMf6Ob47AhuSepcNj59BKwHSYdjfZZxSIrwWVHgCEoA
+Pu0LNEdTPuNyLMMTHx8+9plyIH2/WkKlzbmVppLWwCwbcyTnutmTs70blGQsZwciKOfLcKLK
+G70t1Amr+EnuVQdpKilY7aw76knNt2/Yx5+65xLQ93mCIThAAwg9BrAEJHieQi8g6QsiKXqi
+KAhv3dtXY9NgR6rVH5gGUZvrZmLBaUfSHaLDz6fHPSfLryBKQBr5sKzOfftTCvk98riu41u0
+8Wz+uTwv7rwo0ds9etKU5QA5dyykoy9umJUwPXpQl7DA7m737EtBJ84c7A5VZA6i4lZ3v3A1
+rx3EI09o89mtMgpSUNXFWwtIamZILaMvkfiPPShpH/5xjOSvyPsDOfbPD5cGOj59wI9tdHL4
+Af/uz8MP8Ru99SZTz112M9o3jQYQrFUIUQOhvKHCQ/wJLvpu0clVLiD6gT/Q+gl41/zy91LM
+pYDeoZn/JAHXzPOr5PNDx5sOv7h56XKKdwiWYjmSd0WRF2mXYR0e8D5JsxzPuYRIohUleFdd
+vlB307SrSbse0a/TvQQsZ57YTdwv1SbLej11axJD3i/208gZFfmkDUcbmxlZtoo5SqzbBAFH
+VZNTDbgHDZ8KvA7HE51hDvIgeaSWei+T1oQ2IPu1KBkLPSJEumy1xHha6/TjeOTsEI1cWOwV
+Fi865O8lkmtMz1rQPeoblP4ISRdX/Y9evwcl6tDv7uJHe0l5hdiLYC6YeVBgHJZnPRYyPMUy
+tEhDBzCi50L0x3iOKCC6po6YpavyrzxzsuYrqhp0rw0UT5MIpWNsFGPg0N2p3Jamc0liFFXq
+dtrhbtQOph2W2VqrotgsM9OfmIGdcMO8Vu/XY3nm6tTYcLF2aW8412HshE7jfbKzNsPhfnd8
+5O+D+XKXbPbRTJ00s6z0VaWmKEEK5QPQmKEj9ck8CPjObru1PMzvzxa6tJC1YCyIQXu1XkO3
+USNm3jI5vluoq/VsIkVxJ7DVR30rLOFYERfSBAb2vuBDXRJ3g7Y8/fbtqgwuoyCaHlHJF/tT
+MaA0H5v7iitvzJBn5nDDKL41C70r8J0szoYe8JP85ytcr7y7oItQ4gl07vKQ5CjeoxGmgKAc
+SDO+wDMU5FgadSfp0p77fsz/m2P0dSL+f2DCn+B+QugCOqR80SM5wXNpyPOcwAlApNCP60KW
+IwiadXlR8Ennd4rj4eP5ywktPMU6eMpwv7TZFTiR5jU19Dpdeqs4PbE1U8KWlQUpUSyjZMms
+iUXRYZ0hMLpMm6vDyWOZzfR+bNybjukAH7CaPIVBArTehspprLNYrzgdEuXB9RSl1801fsFO
+qUPPm06GU8vvGCuOpjthc+hxCe2aOhu7luwsmllYBtQ6MWF931V4FuttAOEVTi81KBI0/UUa
+9pWeNqUG7en18PpOYnkAKRKiEZalIWQhxfEsBQQeja6ewNMcOvd43/dJ4fcSi/gcHtl0Je3Q
+ybTTDKLRetOdZmaHsZk1+vR2ioOot8yI2lvONc8U5J4xnNBkvIn5UbKeOQtb6jzOi741WU/E
+x3pGE3nPHLXXIlLu0EOumzA7xwioLYvZ1c4X1DG6EbskI1EBedgFfC0oe71ReLslNiTqE30h
+xSrrzLdGp++Ml46fZ9HGopVEVzt6EsLZHiuYCctVI6aeEMsmOUh6ZW9JNeKXjfbLKXZdmkYf
+AozDiALJiKLPQtrxCZYnPQ66ANIU7UKPcH8vxaCuwqw4FnGSH6b99naZiIya6FvnneTq4miv
+C9peCEc+2B92UVHmotgd9Hf3hcCMWNAacIWYdO5HjKcBd2+Mq8laU0yxzuf1vblNZmJPsow2
+Zo8itRMf5rKLTpdkqtkF1RUUsIvCuiGjIDiYrtMIW4HSbclnnPHIKO1lt91ZW3G61FuTUZuu
+bWfVYIpNzxZ9Lq0Wy5LaDSjUE/lCbq9sffnLyeUYDkLCY6DnMT7NcALLAlHkAMWKQBAolHI0
+vtGs93vJdUOQBjDOArReJk0IlGG5tIObeV3pOWuIE0WLi+XUHeg8uRq2mOTezae0Ncp6sndv
+unXv0QxoS2ND07YkN7KkyhuXeqDMutm+tdcnfQPb+8Vyud+KdnA/H5QBJ5Nx2ETTjafyU7/V
+aRjCcg3epvuut9ho+2DlkfKcrNzNJvDH93m5WY7Dthl4WD+e7riKGR02610tbInHWo2kelfS
+dnZjHLwcSj8dzY+0/6mCTXU+EM8in/+bIfxZybtHwAuS+nXkXg3hFKU5dtHV2m251Srng9DP
+uGRMEnGiaXaVx7vA2ByiaLvgvHkUVPemf3hMI94fsTRG59vRkl09ElMn03rZZmxNqCFsK6aS
+iTM0wJcryjRo+zFPuYLbyz7v9TkHHaV16350CCaLOtnwkZNomCxa1HZiNTEcD9Vta9FvrcYZ
+2fitjIAtn58julH0g77qOVXPkvaOBzrL+c5Y2CqR9HnanHcGSlDbE0xU7SIYBUZ7sCptMFVm
+oRS4tRtY8ZiqIXCJ1VCULK2ilGUlTV//F2Ggd+XF9VD19HQe38b6jYHr03k0e0/HqQ+fnqLX
+0ufuRJ+C/07uOB08nSeZG/Ln2eH0+qhorGkD80/sX04nDmdmFQAA
+])
+
+AT_CHECK(rm -f test.db)
+
+UNGZB64(test.db.dump.gz.b64, test.db.dump)
+AT_CHECK(MONOTONE db load < test.db.dump, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db migrate, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE db rosterify, [], [ignore], [ignore])
+
+AT_DATA([manifest_good], [format_version "1"
+
+dir ""
+
+dir "testdir"
+
+   file "testdir/otherfile"
+content @<:@a5de1b65f54b120f5986028af3f83632f4c65470@:>@
+
+   file "testfile"
+content @<:@c0eff70406a3aeed4a50e0772c0ee1f8919d9988@:>@
+])
+CHECK_SAME_CANONICALISED_STDOUT(cat manifest_good, MONOTONE automate select i: | monotone automate get_manifest_of -@-)
+
+AT_CLEANUP

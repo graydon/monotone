@@ -1,4 +1,4 @@
-AT_SETUP([migrate+rosterify])
+AT_SETUP([migrate + rosterify])
 MONOTONE_SETUP
 NEED_UNGZB64
 
