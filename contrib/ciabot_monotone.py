@@ -128,7 +128,7 @@ class Monotone:
         return self._split_revs(self._run_monotone(args))
 
     def get_revision(self, rid):
-        return self._run_monotone(["cat", "revision", rid])
+        return self._run_monotone(["automate", "get_revision", rid])
 
 class LeafFile:
     def __init__(self, path):

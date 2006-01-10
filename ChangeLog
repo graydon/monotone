@@ -1,3 +1,8 @@
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* contrib/ciabot_monotone.py (Monotone.get_revision): Update to
+	use 'automate get_revision' instead of 'cat revision'.
+
 2006-01-10  Richard Levitte  <richard@levitte.org>
 
 	* lua.cc (monotone_parse_basic_io_for_lua): Don't trust the
