@@ -1,3 +1,9 @@
+2006-01-09  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc, monotone.1, monotone.cc, po/fr.po, po/ja.po,
+	po/pt_BR.po, testsuite.at: Change the default port from 5253 to
+	4691 (assigned to us by IANA).
+
 2006-01-07  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
 	* schema_migration.cc: add safe-guard against passing a null pointer
