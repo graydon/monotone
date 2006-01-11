@@ -259,7 +259,7 @@ public:
                              std::set<revision_id> & children);
 
   void get_revision_manifest(revision_id const & cid,
-                            manifest_id & mid);
+                             manifest_id & mid);
 
   void deltify_revision(revision_id const & rid);
 
@@ -310,10 +310,6 @@ public:
   
   // note: this section is ridiculous. please do something about it.
 
-  bool manifest_cert_exists(manifest<cert> const & cert);
-  bool manifest_cert_exists(hexenc<id> const & hash);
-  void put_manifest_cert(manifest<cert> const & cert);
-
   bool revision_cert_exists(revision<cert> const & cert);
   bool revision_cert_exists(hexenc<id> const & hash);
 
@@ -355,13 +351,6 @@ public:
 
   void get_manifest_certs(cert_name const & name, 
                           std::vector< manifest<cert> > & certs);
-
-  void get_manifest_certs(manifest_id const & id, 
-                          cert_name const & name, 
-                          std::vector< manifest<cert> > & certs);
-  
-  void get_manifest_cert(hexenc<id> const & hash,
-                         manifest<cert> & cert);
 
   // epochs 
 

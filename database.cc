@@ -1881,18 +1881,6 @@ database::revision_cert_exists(revision<cert> const & cert)
   return cert_exists(cert.inner(), "revision_certs"); 
 }
 
-bool 
-database::manifest_cert_exists(manifest<cert> const & cert)
-{ 
-  return cert_exists(cert.inner(), "manifest_certs"); 
-}
-
-void 
-database::put_manifest_cert(manifest<cert> const & cert)
-{ 
-  put_cert(cert.inner(), "manifest_certs"); 
-}
-
 void 
 database::put_revision_cert(revision<cert> const & cert)
 { 
@@ -2026,36 +2014,6 @@ database::revision_cert_exists(hexenc<id> const & hash)
   return (res.size() == 1);
 }
 
-bool 
-database::manifest_cert_exists(hexenc<id> const & hash)
-{
-  results res;
-  vector<cert> certs;
-  fetch(res, one_col, any_rows, 
-        "SELECT id "
-        "FROM manifest_certs "
-        "WHERE hash = ?", 
-        hash().c_str());
-  I(res.size() == 0 || res.size() == 1);
-  return (res.size() == 1);
-}
-
-void 
-database::get_manifest_cert(hexenc<id> const & hash,
-                            manifest<cert> & c)
-{
-  results res;
-  vector<cert> certs;
-  fetch(res, 5, one_row, 
-        "SELECT id, name, value, keypair, signature "
-        "FROM manifest_certs "
-        "WHERE hash = ?", 
-        hash().c_str());
-  results_to_certs(res, certs);
-  I(certs.size() == 1);
-  c = manifest<cert>(certs[0]);
-}
-
 void 
 database::get_manifest_certs(manifest_id const & id, 
                              vector< manifest<cert> > & ts)
@@ -2073,17 +2031,6 @@ database::get_manifest_certs(cert_name const & name,
 {
   vector<cert> certs;
   get_certs(name, certs, "manifest_certs");
-  ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));  
-}
-
-void 
-database::get_manifest_certs(manifest_id const & id, 
-                             cert_name const & name, 
-                             vector< manifest<cert> > & ts)
-{
-  vector<cert> certs;
-  get_certs(id.inner(), name, certs, "manifest_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
