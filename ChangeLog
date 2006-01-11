@@ -1,5 +1,10 @@
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
+	* diff_patch.hh (struct content_merger): Oops, forgot to remove
+	the merge2 prototype.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
 	* std_hooks.lua: 
 	* lua.cc (hook_merge2): 
 	* diff_patch.cc (try_to_merge_files): Remove merge2 code, since we
