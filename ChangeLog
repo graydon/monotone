@@ -1,5 +1,13 @@
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
+	* std_hooks.lua: 
+	* lua.cc (hook_merge2): 
+	* diff_patch.cc (try_to_merge_files): Remove merge2 code, since we
+	no longer do merge2's.  (We can always revive it if we add suture
+	support.)
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
 	* packet.cc (consume_file_delta): Remove unused 4-argument form.
 
 2006-01-10  Nathaniel Smith  <njs@pobox.com>

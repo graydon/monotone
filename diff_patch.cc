@@ -501,9 +501,9 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
 
 static void
 load_and_cache_roster(revision_id const & rid,
-		      map<revision_id, shared_ptr<roster_t> > & rmap,
-		      shared_ptr<roster_t> & rout,
-		      app_state & app)
+                      map<revision_id, shared_ptr<roster_t> > & rmap,
+                      shared_ptr<roster_t> & rout,
+                      app_state & app)
 {
   map<revision_id, shared_ptr<roster_t> >::const_iterator i = rmap.find(rid);
   if (i != rmap.end())
@@ -741,65 +741,6 @@ content_merger::try_to_merge_files(file_path const & anc_path,
 
   return false;
 }
-
-bool 
-content_merger::try_to_merge_files(file_path const & left_path,
-                                   file_path const & right_path,
-                                   file_path const & merged_path,
-                                   file_id const & left_id,
-                                   file_id const & right_id,
-                                   file_id & merged_id)
-{
-  I(!null_id(left_id));
-  I(!null_id(right_id));
-
-  file_data left_data, right_data;
-  data left_unpacked, right_unpacked, merged_unpacked;
-
-  L(F("trying to merge %s <-> %s\n")
-    % left_id % right_id);
-
-  if (left_id == right_id)
-    {
-      L(F("files are identical\n"));
-      merged_id = left_id;
-      return true;      
-    }  
-
-  adaptor.get_version(left_path, left_id, left_data);
-  adaptor.get_version(right_path, right_id, right_data);
-    
-  left_unpacked = left_data.inner();
-  right_unpacked = right_data.inner();
-
-  P(F("help required for 2-way merge\n"
-      "[    left] %s\n"
-      "[   right] %s\n"
-      "[  merged] %s\n")
-    % left_path
-    % right_path
-    % merged_path);
-
-  if (app.lua.hook_merge2(left_path, right_path, merged_path, 
-                          left_unpacked, right_unpacked, merged_unpacked))
-    {
-      hexenc<id> tmp_id;
-      file_data merge_data;
-      
-      L(F("lua merge2 hook merged ok\n"));
-      calculate_ident(merged_unpacked, tmp_id);
-      file_id merged_fid(tmp_id);
-      merge_data = file_data(merged_unpacked);
-      
-      merged_id = merged_fid;
-      adaptor.record_merge(left_id, right_id, merged_fid, 
-                           left_data, merge_data);
-      return true;
-    }
-  
-  return false;
-}
-
 
 // the remaining part of this file just handles printing out various
 // diff formats for the case where someone wants to *read* a diff

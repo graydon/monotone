@@ -1172,29 +1172,6 @@ lua_hooks::hook_accept_testresult_change(map<rsa_keypair_id, bool> const & old_r
 
 
 bool 
-lua_hooks::hook_merge2(file_path const & left_path,
-                       file_path const & right_path,
-                       file_path const & merged_path,
-                       data const & left, 
-                       data const & right, 
-                       data & result)
-{
-  string res;
-  bool ok = Lua(st)
-    .func("merge2")
-    .push_str(left_path.as_external())
-    .push_str(right_path.as_external())
-    .push_str(merged_path.as_external())
-    .push_str(left())
-    .push_str(right())
-    .call(5,1)
-    .extract_str(res)
-    .ok();
-  result = res;
-  return ok;
-}
-
-bool 
 lua_hooks::hook_merge3(file_path const & anc_path,
                        file_path const & left_path,
                        file_path const & right_path,

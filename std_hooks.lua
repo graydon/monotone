@@ -290,27 +290,10 @@ end
 
 -- merger support
 
-function merge2_meld_cmd(lfile, rfile)
-   return 
-   function()
-      return execute("meld", lfile, rfile)
-   end
-end
-
 function merge3_meld_cmd(lfile, afile, rfile)
    return 
    function()
       return execute("meld", lfile, afile, rfile)
-   end
-end
-
-function merge2_tortoise_cmd(lfile, rfile, outfile)
-   return
-   function()
-      return execute("tortoisemerge",
-                     string.format("/theirs:%s", lfile),
-                     string.format("/mine:%s", rfile),
-                     string.format("/merged:%s", outfile))
    end
 end
 
@@ -322,14 +305,6 @@ function merge3_tortoise_cmd(lfile, afile, rfile, outfile)
                      string.format("/theirs:%s", lfile),
                      string.format("/mine:%s", rfile),
                      string.format("/merged:%s", outfile))
-   end
-end
-
-function merge2_vim_cmd(vim, lfile, rfile, outfile)
-   return
-   function()
-      return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
-                     lfile, rfile)
    end
 end
 
@@ -357,32 +332,12 @@ function merge3_rcsmerge_vim_cmd(merge, vim, lfile, afile, rfile, outfile)
    end
 end
 
-function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
-   local elisp = "(ediff-merge-files \"%s\" \"%s\" nil \"%s\")"
-   return 
-   function()
-      return execute(emacs, "--eval", 
-                     string.format(elisp, lfile, rfile, outfile))
-   end
-end
-
 function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
    local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
    return 
    function()
       return execute(emacs, "--eval", 
                      string.format(elisp, lfile, rfile, afile, outfile))
-   end
-end
-
-function merge2_xxdiff_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
-   return 
-   function()
-      return execute("xxdiff", 
-                     "--title1", left_path,
-                     "--title2", right_path,
-                     lfile, rfile, 
-                     "--merged-filename", outfile)
    end
 end
 
@@ -400,17 +355,6 @@ function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path,
    end
 end
    
-function merge2_kdiff3_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
-   return 
-   function()
-      return execute("kdiff3", 
-                     "--L1", left_path,
-                     "--L2", right_path,
-                     lfile, rfile, 
-                     "-o", outfile)
-   end
-end
-
 function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path, 
                            lfile, afile, rfile, outfile)
    return 
@@ -423,14 +367,6 @@ function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path,
                      "--merge", 
                      "--o", outfile)
    end
-end
-
-function merge2_opendiff_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
-   return 
-   function()
-      -- As opendiff immediately returns, let user confirm manually
-      return execute_confirm("opendiff",lfile,rfile,"-merge",outfile) 
-  end
 end
 
 function merge3_opendiff_cmd(left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile)
@@ -479,102 +415,6 @@ end
 
 function program_exists_in_path(program)
    return existsonpath(program) == 0
-end
-
-function get_preferred_merge2_command (tbl)
-   local cmd = nil
-   local left_path = tbl.left_path
-   local right_path = tbl.right_path
-   local merged_path = tbl.merged_path
-   local lfile = tbl.lfile
-   local rfile = tbl.rfile
-   local outfile = tbl.outfile 
-
-   local editor = os.getenv("EDITOR")
-   if editor ~= nil then editor = string.lower(editor) else editor = "" end
-
-   
-   if program_exists_in_path("kdiff3") then
-      cmd =   merge2_kdiff3_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
-   elseif program_exists_in_path ("xxdiff") then 
-      cmd = merge2_xxdiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
-   elseif program_exists_in_path ("opendiff") then 
-      cmd = merge2_opendiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
-   elseif program_exists_in_path ("TortoiseMerge") then
-      cmd = merge2_tortoise_cmd(lfile, rfile, outfile)
-   elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
-      if string.find(editor, "xemacs") and program_exists_in_path("xemacs") then
-         cmd = merge2_emacs_cmd ("xemacs", lfile, rfile, outfile) 
-      elseif program_exists_in_path("emacs") then
-         cmd = merge2_emacs_cmd ("emacs", lfile, rfile, outfile) 
-      end
-   elseif string.find(editor, "vim") ~= nil then
-      io.write (string.format("\nWARNING: 'vim' was choosen to perform external 2-way merge.\n"..
-          "You should merge all changes to *LEFT* file due to limitation of program\n"..
-          "arguments.\n\n")) 
-      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then
-         cmd = merge2_vim_cmd ("gvim", lfile, rfile, outfile) 
-      elseif program_exists_in_path ("vim") then 
-         cmd = merge2_vim_cmd ("vim", lfile, rfile, outfile) 
-      end
-   elseif program_exists_in_path ("meld") then 
-      tbl.meld_exists = true 
-      io.write (string.format("\nWARNING: 'meld' was choosen to perform external 2-way merge.\n"..
-          "You should merge all changes to *LEFT* file due to limitation of program\n"..
-          "arguments.\n\n")) 
-      cmd = merge2_meld_cmd (lfile, rfile) 
-   end 
-   return cmd 
-end 
-
-function merge2 (left_path, right_path, merged_path, left, right) 
-   local ret = nil 
-   local tbl = {}
-
-   tbl.lfile = nil 
-   tbl.rfile = nil 
-   tbl.outfile = nil 
-   tbl.meld_exists = false
- 
-   tbl.lfile = write_to_temporary_file (left) 
-   tbl.rfile = write_to_temporary_file (right) 
-   tbl.outfile = write_to_temporary_file ("") 
-
-   if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.outfile ~= nil 
-   then 
-      tbl.left_path = left_path 
-      tbl.right_path = right_path 
-      tbl.merged_path = merged_path 
-
-      local cmd = get_preferred_merge2_command (tbl) 
-
-      if cmd ~=nil 
-      then 
-         io.write (string.format(gettext("executing external 2-way merge command\n")))
-         cmd ()
-         if tbl.meld_exists 
-         then 
-            ret = read_contents_of_file (tbl.lfile, "r")
-         else
-            ret = read_contents_of_file (tbl.outfile, "r") 
-         end 
-         if string.len (ret) == 0 
-         then 
-            ret = nil 
-         end
-      else
-         io.write (string.format("No external 2-way merge command found.\n"..
-            "You may want to check that $EDITOR is set to an editor that supports 2-way merge,\n"..
-            "set this explicitly in your get_preferred_merge2_command hook,\n"..
-            "or add a 2-way merge program to your path.\n\n"))
-      end
-   end
-
-   os.remove (tbl.lfile)
-   os.remove (tbl.rfile)
-   os.remove (tbl.outfile)
-   
-   return ret
 end
 
 function get_preferred_merge3_command (tbl)
