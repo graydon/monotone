@@ -1,5 +1,9 @@
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/t_selectors_b_h.at, testsuite.at: New test.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
 	* database.cc (manifest_cert_exists, put_manifest_cert): 
 	(get_manifest_cert, get_manifest_certs): Remove unused methods.
 
