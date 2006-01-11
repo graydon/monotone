@@ -58,10 +58,6 @@ public:
   virtual void consume_file_delta(file_id const & id_old, 
                                   file_id const & id_new,
                                   file_delta const & del) = 0;
-  virtual void consume_file_reverse_delta(file_id const & id_new,
-                                          file_id const & id_old,                                         
-                                          file_delta const & del) = 0;
-  
 
   virtual void consume_revision_data(revision_id const & ident, 
                                      revision_data const & dat) = 0;
@@ -86,9 +82,6 @@ struct packet_writer : public packet_consumer
   virtual void consume_file_delta(file_id const & id_old, 
                                   file_id const & id_new,
                                   file_delta const & del);
-  virtual void consume_file_reverse_delta(file_id const & id_new,
-                                          file_id const & id_old,                                         
-                                          file_delta const & del);
   
   virtual void consume_revision_data(revision_id const & ident, 
                                      revision_data const & dat);
@@ -119,9 +112,6 @@ public:
                                   file_id const & id_new,
                                   file_delta const & del,
                                   bool write_full);
-  virtual void consume_file_reverse_delta(file_id const & id_new,
-                                          file_id const & id_old,
-                                          file_delta const & del);
   
   virtual void consume_revision_data(revision_id const & ident, 
                                      revision_data const & dat);

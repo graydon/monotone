@@ -127,44 +127,6 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
   guard.commit();
 }
 
-void 
-packet_db_writer::consume_file_reverse_delta(file_id const & new_id,
-                                             file_id const & old_id,
-                                             file_delta const & del)
-{
-  transaction_guard guard(app.db);
-
-  if (app.db.file_version_exists(old_id))
-    {
-      L(F("file version '%s' already exists in db\n") % old_id);
-      return;
-    }
-
-  if (!app.db.file_version_exists(new_id))
-    {
-      W(F("file reverse-preimage '%s' missing in db") % new_id);
-      W(F("dropping reverse-delta '%s' -> '%s'") % new_id % old_id);
-      return;
-    }
-
-  file_id confirm;
-  file_data new_dat;
-  data old_dat;
-  app.db.get_file_version(new_id, new_dat);
-  patch(new_dat.inner(), del.inner(), old_dat);
-  calculate_ident(file_data(old_dat), confirm);
-  if (confirm == old_id)
-    {
-      app.db.put_file_reverse_version(new_id, old_id, del);
-    }
-  else
-    {
-      W(F("reconstructed file from reverse delta '%s' -> '%s' has wrong id '%s'\n") 
-        % new_id % old_id % confirm);
-    }
-  guard.commit();
-}
-
 void
 packet_db_writer::consume_revision_data(revision_id const & ident, 
                                         revision_data const & dat)
@@ -194,7 +156,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
       
       for (std::map<split_path, file_id>::const_iterator a 
              = edge_changes(i).files_added.begin(); 
-           a != edge_changes(i).files_added.end(); ++a)		 
+           a != edge_changes(i).files_added.end(); ++a)          
         {
           if (! app.db.file_version_exists(a->second))
             {
@@ -346,19 +308,6 @@ packet_writer::consume_file_delta(file_id const & old_id,
 }
 
 void 
-packet_writer::consume_file_reverse_delta(file_id const & new_id, 
-                                          file_id const & old_id,
-                                          file_delta const & del)
-{
-  base64<gzip<delta> > packed;
-  pack(del.inner(), packed);
-  ost << "[frdelta " << new_id.inner()() << endl 
-      << "         " << old_id.inner()() << "]" << endl 
-      << trim_ws(packed()) << endl
-      << "[end]" << endl;
-}
-
-void 
 packet_writer::consume_revision_data(revision_id const & ident, 
                                      revision_data const & dat)
 {
@@ -453,7 +402,7 @@ feed_packet_consumer
         else
           throw oops("matched impossible data packet with head '" + type + "'");
       }
-    else if (regex_match(type, regex("fr?delta")))
+    else if (type == "fdelta")
       {
         L(F("read delta packet"));
         match_results<std::string::const_iterator> matches;
@@ -464,17 +413,9 @@ feed_packet_consumer
         base64<gzip<delta> > body_packed(trim_ws(body));
         delta contents;
         unpack(body_packed, contents);
-        if (type == "fdelta")
-          cons.consume_file_delta(file_id(hexenc<id>(src_id)), 
-                                  file_id(hexenc<id>(dst_id)), 
-                                  file_delta(contents));
-        else if (type == "frdelta")
-          cons.consume_file_reverse_delta(file_id(hexenc<id>(src_id)), 
-                                          file_id(hexenc<id>(dst_id)), 
-                                          file_delta(contents));
-        else
-          throw oops("matched impossible delta packet with head '"
-                     + type + "'");
+        cons.consume_file_delta(file_id(hexenc<id>(src_id)), 
+                                file_id(hexenc<id>(dst_id)), 
+                                file_delta(contents));
       }
     else if (type == "rcert")
       {

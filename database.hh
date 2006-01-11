@@ -149,11 +149,6 @@ class database
   void remove_version(hexenc<id> const & target_id,
                       std::string const & data_table,
                       std::string const & delta_table);
-  void put_reverse_version(hexenc<id> const & new_id,
-                           hexenc<id> const & old_id,
-                           delta const & reverse_del,
-                           std::string const & data_table,
-                           std::string const & delta_table);
 
   void get_keys(std::string const & table, std::vector<rsa_keypair_id> & keys);
 
@@ -249,12 +244,6 @@ public:
   void put_file_version(file_id const & old_id,
                         file_id const & new_id,
                         file_delta const & del);
-
-  // load in a "direct" new -> old reverse edge (used during
-  // netsync and CVS load-in)
-  void put_file_reverse_version(file_id const & old_id,
-                                file_id const & new_id,
-                                file_delta const & del);
 
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist). 

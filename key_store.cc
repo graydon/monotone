@@ -18,24 +18,6 @@ struct keyreader : public packet_consumer
                                   file_id const & id_new,
                                   file_delta const & del)
   {E(false, F("Extraneous data in key store."));}
-  virtual void consume_file_reverse_delta(file_id const & id_new,
-                                          file_id const & id_old,
-                                          file_delta const & del)
-  {E(false, F("Extraneous data in key store."));}
-  
-
-  virtual void consume_manifest_data(manifest_id const & ident, 
-                                     manifest_data const & dat)
-  {E(false, F("Extraneous data in key store."));}
-  virtual void consume_manifest_delta(manifest_id const & id_old, 
-                                      manifest_id const & id_new,
-                                      manifest_delta const & del)
-  {E(false, F("Extraneous data in key store."));}
-  virtual void consume_manifest_reverse_delta(manifest_id const & id_new,
-                                              manifest_id const & id_old,
-                                              manifest_delta const & del)
-  {E(false, F("Extraneous data in key store."));}
-
 
   virtual void consume_revision_data(revision_id const & ident, 
                                      revision_data const & dat)

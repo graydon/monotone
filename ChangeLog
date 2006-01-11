@@ -1,5 +1,14 @@
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
+	* packet.cc (consume_file_reverse_delta) 
+	(struct feed_packet_consumer): Remove support for nonexistent
+	"frdelta" packet type.
+	* database.{hh,cc} (put_reverse_version)
+	(put_file_reverse_version): Remove unused methods.
+	* key_store.cc (struct keyreader): Remove obsolete methods.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
 	* database.cc (set_filename): Simplify slightly.
 	(delta_exists): Remove unused 3-argument version.
 
