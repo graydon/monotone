@@ -1,3 +1,8 @@
+2006-01-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* platform.hh, win32/wcwidth.c: Remove local wcswidth
+	implementation--it's no longer needed.
+
 2006-01-10  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_revert_unchanged.at: new test to check that reverting
