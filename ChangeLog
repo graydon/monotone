@@ -1,5 +1,9 @@
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
+	* packet.cc (consume_file_delta): Remove unused 4-argument form.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
 	* lua.{cc,hh} (hook_resolve_file_conflict)
 	(hook_resolve_dir_conflict): Remove dead code.
 

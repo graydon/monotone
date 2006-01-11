@@ -81,15 +81,6 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
                                      file_id const & new_id,
                                      file_delta const & del)
 {
-  consume_file_delta(old_id, new_id, del, false);
-}
-
-void 
-packet_db_writer::consume_file_delta(file_id const & old_id, 
-                                     file_id const & new_id,
-                                     file_delta const & del,
-                                     bool write_full)
-{
   transaction_guard guard(app.db);
 
   if (app.db.file_version_exists(new_id))
@@ -112,12 +103,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
   patch(old_dat.inner(), del.inner(), new_dat);
   calculate_ident(file_data(new_dat), confirm);
   if (confirm == new_id)
-    {
-      if (!write_full)
-        app.db.put_file_version(old_id, new_id, del);
-      else
-        app.db.put_file(new_id, file_data(new_dat));
-    }
+    app.db.put_file_version(old_id, new_id, del);
   else
     {
       W(F("reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n") 

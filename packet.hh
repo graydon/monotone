@@ -108,10 +108,6 @@ public:
   virtual void consume_file_delta(file_id const & id_old, 
                                   file_id const & id_new,
                                   file_delta const & del);
-  virtual void consume_file_delta(file_id const & id_old, 
-                                  file_id const & id_new,
-                                  file_delta const & del,
-                                  bool write_full);
   
   virtual void consume_revision_data(revision_id const & ident, 
                                      revision_data const & dat);
