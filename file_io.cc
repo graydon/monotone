@@ -44,15 +44,15 @@ assert_path_is_directory(any_path const & path)
 
 void
 require_path_is_nonexistent(any_path const & path,
-                            boost::format const & message)
+                            i18n_format const & message)
 {
   N(!path_exists(path), message);
 }
 
 void
 require_path_is_file(any_path const & path,
-                     boost::format const & message_if_nonexistent,
-                     boost::format const & message_if_directory)
+                     i18n_format const & message_if_nonexistent,
+                     i18n_format const & message_if_directory)
 {
   switch (get_path_status(path))
     {
@@ -69,8 +69,8 @@ require_path_is_file(any_path const & path,
 
 void
 require_path_is_directory(any_path const & path,
-                          boost::format const & message_if_nonexistent,
-                          boost::format const & message_if_file)
+                          i18n_format const & message_if_nonexistent,
+                          i18n_format const & message_if_file)
 {
   switch (get_path_status(path))
     {
@@ -506,7 +506,7 @@ walk_tree_recursive(fs::path const & absolute,
       
       if (bookkeeping_path::is_bookkeeping_path(rel_entry.normalize().string()))
         {
-          L(F("ignoring book keeping entry %s\n") % rel_entry.string());
+          L(FL("ignoring book keeping entry %s\n") % rel_entry.string());
           continue;
         }
       

@@ -258,9 +258,9 @@ compute_delta(string const & a,
       I(a.size() > 0);
       I(b.size() > 0);
       
-      L(F("computing binary delta instructions\n"));
+      L(FL("computing binary delta instructions\n"));
       compute_delta_insns(a, b, delta_insns);
-      L(F("computed binary delta instructions\n"));
+      L(FL("computed binary delta instructions\n"));
     }
 
   ostringstream oss;  

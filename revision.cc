@@ -274,7 +274,7 @@ is_ancestor(revision_id const & ancestor_id,
             revision_id const & descendent_id,
             app_state & app)
 {
-  L(F("checking whether %s is an ancestor of %s\n") % ancestor_id % descendent_id);
+  L(FL("checking whether %s is an ancestor of %s\n") % ancestor_id % descendent_id);
 
   std::multimap<revision_id, revision_id> graph;
   app.db.get_revision_ancestry(graph);
@@ -386,7 +386,7 @@ toposort(std::set<revision_id> const & revisions,
     {
       // now stick them in our ordering (if wanted) and remove them from the
       // graph, calculating the new roots as we go
-      L(F("new root: %s\n") % (roots.front()));
+      L(FL("new root: %s\n") % (roots.front()));
       if (revisions.find(roots.front()) != revisions.end())
         sorted.push_back(roots.front());
       for(gi i = graph.lower_bound(roots.front());
@@ -401,7 +401,7 @@ toposort(std::set<revision_id> const & revisions,
   for (std::set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
     {
-      L(F("new leaf: %s\n") % (*i));
+      L(FL("new leaf: %s\n") % (*i));
       if (revisions.find(*i) != revisions.end())
         sorted.push_back(*i);
     }
@@ -620,7 +620,7 @@ struct anc_graph
 
 void anc_graph::add_node_ancestry(u64 child, u64 parent)
 {
-  L(F("noting ancestry from child %d -> parent %d\n") % child % parent);
+  L(FL("noting ancestry from child %d -> parent %d\n") % child % parent);
   ancestry.insert(std::make_pair(child, parent));
 }
 
@@ -643,7 +643,7 @@ void anc_graph::write_certs()
         hexenc<data> hexdata;
         encode_hexenc(data(std::string(buf, buf + constants::epochlen_bytes)), hexdata);
         epoch_data new_epoch(hexdata);
-        L(F("setting epoch for %s to %s\n") % *i % new_epoch);
+        L(FL("setting epoch for %s to %s\n") % *i % new_epoch);
         app.db.set_epoch(cert_value(*i), new_epoch);
       }
   }
@@ -716,7 +716,7 @@ anc_graph::kluge_for_bogus_merge_edges()
         {
           if (j->first == i->first)
             {
-              L(F("considering old merge edge %s\n") % 
+              L(FL("considering old merge edge %s\n") % 
                 safe_get(node_to_old_rev, i->first));
               u64 parent1 = i->second;
               u64 parent2 = j->second;
@@ -781,7 +781,7 @@ anc_graph::add_node_for_old_manifest(manifest_id const & man)
     {
       node = max_node++;
       ++n_nodes;
-      L(F("node %d = manifest %s\n") % node % man);
+      L(FL("node %d = manifest %s\n") % node % man);
       old_man_to_node.insert(std::make_pair(man, node));
       node_to_old_man.insert(std::make_pair(node, man));
       
@@ -792,7 +792,7 @@ anc_graph::add_node_for_old_manifest(manifest_id const & man)
       for(std::vector< manifest<cert> >::const_iterator i = mcerts.begin();
           i != mcerts.end(); ++i)
         {
-          L(F("loaded '%s' manifest cert for node %s\n") % i->inner().name % node);
+          L(FL("loaded '%s' manifest cert for node %s\n") % i->inner().name % node);
           cert_value tv;
           decode_base64(i->inner().value, tv);
           ++n_certs_in;
@@ -821,7 +821,7 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
       legacy::renames_map renames;
       legacy::get_manifest_and_renames_for_rev(app, rev, man, renames);
       
-      L(F("node %d = revision %s = manifest %s\n") % node % rev % man);
+      L(FL("node %d = revision %s = manifest %s\n") % node % rev % man);
       old_rev_to_node.insert(std::make_pair(rev, node));
       node_to_old_rev.insert(std::make_pair(node, rev));
       node_to_old_man.insert(std::make_pair(node, man));
@@ -834,7 +834,7 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
       for(std::vector< revision<cert> >::const_iterator i = rcerts.begin();
           i != rcerts.end(); ++i)
         {
-          L(F("loaded '%s' revision cert for node %s\n") % i->inner().name % node);
+          L(FL("loaded '%s' revision cert for node %s\n") % i->inner().name % node);
           cert_value tv;
           decode_base64(i->inner().value, tv);
           ++n_certs_in;
@@ -871,12 +871,12 @@ not_dead_yet(node_id nid, u64 birth_rev,
   // "Dead" means, the node does not exist in the revision's tree, and the
   // node's birth revision _is_ an ancestor of the revision.
     
-  // L(F("testing liveliness of node %d, born in rev %d\n") % nid % birth_rev);
+  // L(FL("testing liveliness of node %d, born in rev %d\n") % nid % birth_rev);
   for (parent_roster_map::const_iterator r = parent_rosters.begin();
        r != parent_rosters.end(); ++r)
     {
       boost::shared_ptr<roster_t> parent = r->second.first;
-      // L(F("node %d %s in parent roster %d\n") 
+      // L(FL("node %d %s in parent roster %d\n") 
       //             % nid
       //             % (parent->has_node(n->first) ? "exists" : "does not exist" ) 
       //             % r->first);
@@ -890,7 +890,7 @@ not_dead_yet(node_id nid, u64 birth_rev,
             {
               u64 curr = work.front();
               work.pop_front();
-              // L(F("examining ancestor %d of parent roster %d, looking for anc=%d\n")
+              // L(FL("examining ancestor %d of parent roster %d, looking for anc=%d\n")
               //                     % curr % r->first % birth_rev);
               
               if (seen.find(curr) != seen.end())
@@ -899,7 +899,7 @@ not_dead_yet(node_id nid, u64 birth_rev,
               
               if (curr == birth_rev)
                 {
-                  // L(F("node is dead in %d") % r->first);
+                  // L(FL("node is dead in %d") % r->first);
                   return false;
                 }
               typedef std::multimap<u64, u64>::const_iterator ci;
@@ -913,7 +913,7 @@ not_dead_yet(node_id nid, u64 birth_rev,
             }
         }
     }  
-  // L(F("node is alive in all parents, returning true"));
+  // L(FL("node is alive in all parents, returning true"));
   return true;
 }
 
@@ -1189,7 +1189,7 @@ anc_graph::construct_revisions_from_ancestry()
       if (parents_all_done 
           && (node_to_new_rev.find(child) == node_to_new_rev.end()))
         {          
-          L(F("processing node %d\n") % child);
+          L(FL("processing node %d\n") % child);
 
           manifest_id old_child_mid;
           legacy::manifest_map old_child_man;
@@ -1336,13 +1336,13 @@ anc_graph::construct_revisions_from_ancestry()
 
           if (!app.db.revision_exists (new_rid))
             {
-              L(F("mapped node %d to revision %s\n") % child % new_rid);
+              L(FL("mapped node %d to revision %s\n") % child % new_rid);
               app.db.put_revision(new_rid, rev);
               ++n_revs_out;
             }
           else
             {
-              L(F("skipping already existing revision %s\n") % new_rid);
+              L(FL("skipping already existing revision %s\n") % new_rid);
             }
           
           // Mark this child as done, hooray!

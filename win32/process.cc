@@ -117,23 +117,23 @@ pid_t process_spawn(const char * const argv[])
   realexelen = strlen(argv[0])+1+MAX_PATH;
   realexe = (char*)malloc(realexelen);
   if (realexe==NULL) return 0;
-  L(F("searching for exe: %s\n") % argv[0]);
+  L(FL("searching for exe: %s\n") % argv[0]);
   if (SearchPath(NULL, argv[0], ".exe", realexelen, realexe, &filepart)==0)
     {
-      L(F("SearchPath failed, err=%d\n") % GetLastError());
+      L(FL("SearchPath failed, err=%d\n") % GetLastError());
       free(realexe);
       return -1;
     }
 
   cmd = munge_argv_into_cmdline(argv);
-  L(F("spawning command: '%s' '%s'\n") % realexe % cmd);
+  L(FL("spawning command: '%s' '%s'\n") % realexe % cmd);
 
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(STARTUPINFO);
   /* We don't need to set any of the STARTUPINFO members */
   if (CreateProcess(realexe, (char*)cmd.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)==0)
     {
-      L(F("CreateProcess failed, err=%d\n") % GetLastError());
+      L(FL("CreateProcess failed, err=%d\n") % GetLastError());
       free(realexe);
       return -1;
     }

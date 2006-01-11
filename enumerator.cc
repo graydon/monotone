@@ -115,7 +115,7 @@ revision_enumerator::step()
 
           if (cb.process_this_rev(r))
             {
-              L(F("revision_enumerator::step expanding "
+              L(FL("revision_enumerator::step expanding "
                   "contents of rev '%d'\n") % r);
 
               revision_set rs;
@@ -181,7 +181,7 @@ revision_enumerator::step()
 
       if (!items.empty())
         {
-          L(F("revision_enumerator::step extracting item\n"));
+          L(FL("revision_enumerator::step extracting item\n"));
 
           enumerator_item i = items.front();
           items.pop_front();

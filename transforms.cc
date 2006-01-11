@@ -468,7 +468,7 @@ charset_convert(string const & src_charset,
     dst = src;
   else
     {
-      L(F("converting %d bytes from %s to %s\n") % src.size() 
+      L(FL("converting %d bytes from %s to %s\n") % src.size() 
         % src_charset % dst_charset);
       char * converted = stringprep_convert(src.c_str(),
                                             dst_charset.c_str(),
@@ -618,7 +618,7 @@ void
 ace_to_utf8(ace const & a, utf8 & utf)
 {
   char *out = NULL;
-  L(F("converting %d bytes from IDNA ACE to UTF-8\n") % a().size());
+  L(FL("converting %d bytes from IDNA ACE to UTF-8\n") % a().size());
   int res = idna_to_unicode_8z8z(a().c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
   N(res == IDNA_SUCCESS || res == IDNA_NO_ACE_PREFIX,
     F("error converting %d UTF-8 bytes to IDNA ACE: %s")
@@ -632,7 +632,7 @@ void
 utf8_to_ace(utf8 const & utf, ace & a)
 {
   char *out = NULL;
-  L(F("converting %d bytes from UTF-8 to IDNA ACE\n") % utf().size());
+  L(FL("converting %d bytes from UTF-8 to IDNA ACE\n") % utf().size());
   int res = idna_to_ascii_8z(utf().c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
   N(res == IDNA_SUCCESS,
     F("error converting %d UTF-8 bytes to IDNA ACE: %s")
@@ -780,7 +780,7 @@ line_end_convert(string const & linesep, string const & src, string & dst)
   else if (linesep == "LF"|| linesep == "\n")
     linesep_str = "\n";
 
-  L(F("doing linesep conversion to %s\n") % linesep);  
+  L(FL("doing linesep conversion to %s\n") % linesep);  
   vector<string> tmp;
   split_into_lines(src, tmp);
   join_lines(tmp, dst, linesep_str);

@@ -506,7 +506,7 @@ static void
 cset_written_test()
 {
   { 
-    L(F("TEST: cset reading - operation misordering"));
+    L(FL("TEST: cset reading - operation misordering"));
     // bad cset, add_dir should be before add_file
     string s("delete \"foo\"\n"
              "\n"
@@ -530,7 +530,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - misordered files in delete"));
+    L(FL("TEST: cset reading - misordered files in delete"));
     // bad cset, bar should be before foo
     data dat("delete \"foo\"\n"
              "\n"
@@ -540,7 +540,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - misordered files in rename"));
+    L(FL("TEST: cset reading - misordered files in rename"));
     // bad cset, bar should be before foo
     data dat("rename \"foo\"\n"
              "    to \"foonew\"\n"
@@ -552,7 +552,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - misordered files in add_dir"));
+    L(FL("TEST: cset reading - misordered files in add_dir"));
     // bad cset, bar should be before foo
     data dat("add_dir \"foo\"\n"
              "\n"
@@ -562,7 +562,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - misordered files in add_file"));
+    L(FL("TEST: cset reading - misordered files in add_file"));
     // bad cset, bar should be before foo
     data dat("add_file \"foo\"\n"
              " content [0000000000000000000000000000000000000000]\n"
@@ -574,7 +574,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - misordered files in add_file"));
+    L(FL("TEST: cset reading - misordered files in add_file"));
     // bad cset, bar should be before foo
     data dat("add_file \"foo\"\n"
              " content [0000000000000000000000000000000000000000]\n"
@@ -586,7 +586,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - misordered files in patch"));
+    L(FL("TEST: cset reading - misordered files in patch"));
     // bad cset, bar should be before foo
     data dat("patch \"foo\"\n"
              " from [0000000000000000000000000000000000000000]\n"
@@ -600,7 +600,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - misordered files in clear"));
+    L(FL("TEST: cset reading - misordered files in clear"));
     // bad cset, bar should be before foo
     data dat("clear \"foo\"\n"
              " attr \"flavoursome\"\n"
@@ -612,7 +612,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - misordered files in set"));
+    L(FL("TEST: cset reading - misordered files in set"));
     // bad cset, bar should be before foo
     data dat("  set \"foo\"\n"
              " attr \"flavoursome\"\n"
@@ -626,7 +626,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - duplicate entries"));
+    L(FL("TEST: cset reading - duplicate entries"));
     data dat("delete \"foo\"\n"
              "\n"
              "delete \"foo\"\n");
@@ -635,7 +635,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - multiple different attrs"));
+    L(FL("TEST: cset reading - multiple different attrs"));
     // should succeed
     data dat( "  set \"bar\"\n"
               " attr \"flavoursome\"\n"
@@ -649,7 +649,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - wrong attr ordering in clear"));
+    L(FL("TEST: cset reading - wrong attr ordering in clear"));
     // fooish should be before quuxy
     data dat( "clear \"bar\"\n"
               " attr \"quuxy\"\n"
@@ -661,7 +661,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - wrong attr ordering in set"));
+    L(FL("TEST: cset reading - wrong attr ordering in set"));
     // fooish should be before quuxy
     data dat( "  set \"bar\"\n"
               " attr \"quuxy\"\n"
@@ -675,7 +675,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset reading - duplicate attrs"));
+    L(FL("TEST: cset reading - duplicate attrs"));
     // can't have dups.
     data dat( "  set \"bar\"\n"
               " attr \"flavoursome\"\n"
@@ -689,7 +689,7 @@ cset_written_test()
   }
 
   {
-    L(F("TEST: cset writing - normalisation"));
+    L(FL("TEST: cset writing - normalisation"));
     cset cs; MM(cs);
     split_path foo, bar, quux, foo_quux, idle, fish, womble, policeman;
     file_id f1(std::string("1234567800000000000000000000000000000000"));
@@ -776,7 +776,7 @@ basic_csets_test()
 
   // some basic tests that should succeed
   {
-    L(F("TEST: cset add file"));
+    L(FL("TEST: cset add file"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.files_added.insert(make_pair(baz, f2));
@@ -787,7 +787,7 @@ basic_csets_test()
   }
 
   {
-    L(F("TEST: cset add dir"));
+    L(FL("TEST: cset add dir"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.dirs_added.insert(quux);
@@ -797,7 +797,7 @@ basic_csets_test()
   }
 
   {
-    L(F("TEST: cset delete"));
+    L(FL("TEST: cset delete"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo_bar);
@@ -807,7 +807,7 @@ basic_csets_test()
   }
 
   {
-    L(F("TEST: cset rename file"));
+    L(FL("TEST: cset rename file"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo_bar, quux));
@@ -819,7 +819,7 @@ basic_csets_test()
   }
 
   {
-    L(F("TEST: cset rename dir"));
+    L(FL("TEST: cset rename dir"));
     split_path quux_bar;
     file_path_internal("quux/bar").split(quux_bar);
     setup_roster(r, f1, nis);
@@ -833,7 +833,7 @@ basic_csets_test()
   }
 
   {
-    L(F("TEST: patch file"));
+    L(FL("TEST: patch file"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.deltas_applied.insert(make_pair(foo_bar, make_pair(f1, f2)));
@@ -845,7 +845,7 @@ basic_csets_test()
   }
 
   {
-    L(F("TEST: set attr"));
+    L(FL("TEST: set attr"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")), 
@@ -862,7 +862,7 @@ basic_csets_test()
   }
 
   {
-    L(F("TEST: clear attr file"));
+    L(FL("TEST: clear attr file"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")), 
@@ -876,7 +876,7 @@ basic_csets_test()
 
   // some renaming tests
   {
-    L(F("TEST: renaming at different levels"));
+    L(FL("TEST: renaming at different levels"));
     setup_roster(r, f1, nis);
     split_path quux_sub, foo_sub, foo_sub_deep, foo_subsub, 
                foo_subsub_deep, quux_bar, foo_bar,
@@ -925,7 +925,7 @@ basic_csets_test()
   }
 
   {
-    L(F("delete targets pre-renamed nodes"));
+    L(FL("delete targets pre-renamed nodes"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo_bar, foo));
@@ -955,7 +955,7 @@ invalid_csets_test()
   file_path_internal("quux").split(quux);
 
   {
-    L(F("TEST: can't double-delete"));
+    L(FL("TEST: can't double-delete"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo_bar);
@@ -963,7 +963,7 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't double-add file"));
+    L(FL("TEST: can't double-add file"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.files_added.insert(std::make_pair(baz, f2));
@@ -971,14 +971,14 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't add file on top of dir"));
+    L(FL("TEST: can't add file on top of dir"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.files_added.insert(std::make_pair(foo, f2));
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't delete+rename"));
+    L(FL("TEST: can't delete+rename"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo_bar);
@@ -986,7 +986,7 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't add+rename"));
+    L(FL("TEST: can't add+rename"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.dirs_added.insert(baz);
@@ -994,14 +994,14 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't rename 'a' 'a'"));
+    L(FL("TEST: can't rename 'a' 'a'"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_renamed.insert(std::make_pair(foo_bar, foo_bar));
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't rename 'a' 'b'; rename 'a/foo' 'b/foo'"));
+    L(FL("TEST: can't rename 'a' 'b'; rename 'a/foo' 'b/foo'"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     split_path baz_bar;
@@ -1011,7 +1011,7 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't attr_set + attr_cleared"));
+    L(FL("TEST: can't attr_set + attr_cleared"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.attrs_set.insert(std::make_pair(std::make_pair(foo_bar, attr_key("blah")),
@@ -1020,7 +1020,7 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't no-op attr_set"));
+    L(FL("TEST: can't no-op attr_set"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.attrs_set.insert(std::make_pair(std::make_pair(foo_bar, attr_key("attr_file")),
@@ -1028,14 +1028,14 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't clear non-existent attr"));
+    L(FL("TEST: can't clear non-existent attr"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.attrs_cleared.insert(std::make_pair(foo_bar, attr_key("blah")));
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't clear non-existent attr that once existed"));
+    L(FL("TEST: can't clear non-existent attr that once existed"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.attrs_cleared.insert(std::make_pair(foo_bar, attr_key("attr_file")));
@@ -1045,7 +1045,7 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't have no-op deltas"));
+    L(FL("TEST: can't have no-op deltas"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.deltas_applied.insert(std::make_pair(foo_bar,
@@ -1053,7 +1053,7 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't have add+delta"));
+    L(FL("TEST: can't have add+delta"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.files_added.insert(std::make_pair(baz, f1));
@@ -1062,7 +1062,7 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't delta a directory"));
+    L(FL("TEST: can't delta a directory"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.deltas_applied.insert(std::make_pair(foo,
@@ -1070,7 +1070,7 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't rename root (for now)"));
+    L(FL("TEST: can't rename root (for now)"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     split_path sp1, sp2;
@@ -1079,14 +1079,14 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't delete non-empty directory"));
+    L(FL("TEST: can't delete non-empty directory"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo);
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't delete root"));
+    L(FL("TEST: can't delete root"));
     // for this test, make sure root has no contents
     r = roster_t();
     cset cs; MM(cs);
@@ -1094,7 +1094,7 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't delete and replace root"));
+    L(FL("TEST: can't delete and replace root"));
     // for this test, make sure root has no contents
     r = roster_t();
     cset cs; MM(cs);
@@ -1103,7 +1103,7 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: attach node with no root directory present"));
+    L(FL("TEST: attach node with no root directory present"));
     // for this test, make sure root has no contents
     r = roster_t();
     cset cs; MM(cs);
@@ -1113,7 +1113,7 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(F("TEST: can't move a directory underneath itself"));
+    L(FL("TEST: can't move a directory underneath itself"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     split_path foo_blah;

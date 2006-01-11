@@ -67,7 +67,7 @@ get_homedir()
   home = getenv("HOME");
   if (home != NULL)
     {
-      L(F("Home directory from HOME\n"));
+      L(FL("Home directory from HOME\n"));
       return std::string(home);
     }
   // Otherwise, try USERPROFILE.  We could also use SHGetFolderPath() to get
@@ -76,7 +76,7 @@ get_homedir()
   char * userprofile = getenv("USERPROFILE");
   if (userprofile != NULL)
     {
-      L(F("Home directory from USERPROFILE\n"));
+      L(FL("Home directory from USERPROFILE\n"));
       return std::string(userprofile);
     }
   // Try concatenating HOMEDRIVE and HOMEPATH
@@ -84,13 +84,13 @@ get_homedir()
   char * homepath = getenv("HOMEPATH");
   if (homedrive != NULL && homepath != NULL)
     {
-      L(F("Home directory from HOMEDRIVE+HOMEPATH\n"));
+      L(FL("Home directory from HOMEDRIVE+HOMEPATH\n"));
       return std::string(homedrive) + std::string(homepath);
     }
   char * systemdrive = getenv("SystemDrive");
   if (systemdrive != NULL)
     {
-      L(F("Home directory from SystemDrive\n"));
+      L(FL("Home directory from SystemDrive\n"));
       return std::string(systemdrive);
     }
   return std::string("C:");
@@ -146,10 +146,10 @@ rename_clobberingly_impl(const char* from, const char* to)
       MoveFileEx = reinterpret_cast<MoveFileExFun>
         (GetProcAddress(hModule, "MoveFileExA"));
     if (MoveFileEx) {
-      L(F("using MoveFileEx for renames"));
+      L(FL("using MoveFileEx for renames"));
       MoveFileExAvailable = true;
     } else
-      L(F("using DeleteFile/MoveFile fallback for renames"));
+      L(FL("using DeleteFile/MoveFile fallback for renames"));
   }
 
   if (MoveFileExAvailable) {
@@ -157,7 +157,7 @@ rename_clobberingly_impl(const char* from, const char* to)
       return true;
     else if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
       MoveFileExAvailable = false;
-      L(F("MoveFileEx failed with CALL_NOT_IMPLEMENTED, using fallback"));
+      L(FL("MoveFileEx failed with CALL_NOT_IMPLEMENTED, using fallback"));
     }
   } else {
     // This is not even remotely atomic, but what can you do?
@@ -185,7 +185,7 @@ rename_clobberingly(any_path const & from, any_path const & to)
     if (rename_clobberingly_impl(szFrom, szTo))
       return;
     lastError = GetLastError();
-    L(F("attempted rename of '%s' to '%s' failed: %d")
+    L(FL("attempted rename of '%s' to '%s' failed: %d")
       % szFrom % szTo % lastError);
     Sleep(sleepTime);
     if (sleepTime < 250)

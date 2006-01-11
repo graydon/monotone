@@ -1,5 +1,15 @@
 2006-01-11  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.hh (struct i18n_format): Make internationalized format
+	strings and non-internationalized format strings type-distinct.
+	(This hopefully sets up for fixing some of the charset mess later
+	down the road.)
+	(FL): New macro; like F but without the i18n glue.
+	Use FL with L, and F/FP with everything else.
+	* *.hh, *.cc: Adjust existing F/L/etc. usage accordingly.
+
+2006-01-11  Nathaniel Smith  <njs@pobox.com>
+
 	* database.cc (fetch): Don't log all SQL unless requested by
 	user.
 

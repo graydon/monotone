@@ -116,14 +116,14 @@ Lua
 
   void fail(std::string const & reason)
   {
-    L(F("lua failure: %s; stack = %s\n") % reason % dump_stack(st));
+    L(FL("lua failure: %s; stack = %s\n") % reason % dump_stack(st));
     failed = true;
   }
 
   bool ok() 
   {
     if (failed) 
-      L(F("Lua::ok(): failed"));
+      L(FL("Lua::ok(): failed"));
     return !failed; 
   }
 
@@ -131,8 +131,8 @@ Lua
   {
     I(lua_isstring(st, -1));
     string err = string(lua_tostring(st, -1), lua_strlen(st, -1));
-    W(boost::format("%s\n") % err);
-    L(F("lua stack: %s") % dump_stack(st));
+    W(i18n_format("%s\n") % err);
+    L(FL("lua stack: %s") % dump_stack(st));
     lua_pop(st, 1);
     failed = true;
   }
@@ -212,7 +212,7 @@ Lua
         return *this;
       }
     str = string(lua_tostring(st, -1), lua_strlen(st, -1));
-    L(F("lua: extracted string = %s") % str);
+    L(FL("lua: extracted string = %s") % str);
     return *this;
   }
 
@@ -225,7 +225,7 @@ Lua
         return *this;
       }
     i = static_cast<int>(lua_tonumber(st, -1));
-    L(F("lua: extracted int = %i") % i);
+    L(FL("lua: extracted int = %i") % i);
     return *this;
   }
 
@@ -238,7 +238,7 @@ Lua
         return *this;
       }
     i = lua_tonumber(st, -1);
-    L(F("lua: extracted double = %i") % i);
+    L(FL("lua: extracted double = %i") % i);
     return *this;
   }
 
@@ -252,7 +252,7 @@ Lua
         return *this;
       }
     i = (lua_toboolean(st, -1) == 1);
-    L(F("lua: extracted bool = %i") % i);
+    L(FL("lua: extracted bool = %i") % i);
     return *this;
   }
 
@@ -372,7 +372,7 @@ Lua
 
   Lua & func(string const & fname)
   {
-    L(F("loading lua hook %s") % fname);
+    L(FL("loading lua hook %s") % fname);
     if (!failed) 
       {
         if (missing_functions.find(fname) != missing_functions.end())
@@ -701,7 +701,7 @@ extern "C"
                 break;
               case basic_io::TOK_STRING:
               case basic_io::TOK_HEX:
-                E(!res.empty(), boost::format("bad input to parse_basic_io"));
+                E(!res.empty(), F("bad input to parse_basic_io"));
                 res.back().second.push_back(got);
                 break;
               default:
@@ -901,11 +901,11 @@ lua_hooks::load_rcfile(utf8 const & rc)
         }
     }
   data dat;
-  L(F("opening rcfile '%s' ...\n") % rc);
+  L(FL("opening rcfile '%s' ...\n") % rc);
   read_data_for_command_line(rc, dat);
   N(run_string(st, dat(), rc().c_str()),
     F("lua error while loading rcfile '%s'") % rc);
-  L(F("'%s' is ok\n") % rc);
+  L(FL("'%s' is ok\n") % rc);
 }
 
 void 
@@ -914,15 +914,15 @@ lua_hooks::load_rcfile(any_path const & rc, bool required)
   I(st);  
   if (path_exists(rc))
     {
-      L(F("opening rcfile '%s' ...\n") % rc);
+      L(FL("opening rcfile '%s' ...\n") % rc);
       N(run_file(st, rc.as_external()),
         F("lua error while loading '%s'") % rc);
-      L(F("'%s' is ok\n") % rc);
+      L(FL("'%s' is ok\n") % rc);
     }
   else
     {
       N(!required, F("rcfile '%s' does not exist") % rc);
-      L(F("skipping nonexistent rcfile '%s'\n") % rc);
+      L(FL("skipping nonexistent rcfile '%s'\n") % rc);
     }
 }
 
@@ -1306,11 +1306,11 @@ lua_hooks::hook_init_attributes(file_path const & filename,
     .push_str("attr_init_functions")
     .get_tab();
   
-  L(F("calling attr_init_function for %s") % filename);
+  L(FL("calling attr_init_function for %s") % filename);
   ll.begin();
   while (ll.next())
     {
-      L(F("  calling an attr_init_function for %s") % filename);
+      L(FL("  calling an attr_init_function for %s") % filename);
       ll.push_str(filename.as_external());
       ll.call(1, 1);
 
@@ -1323,11 +1323,11 @@ lua_hooks::hook_init_attributes(file_path const & filename,
           ll.extract_str(key);
 
           attrs[key] = value;
-          L(F("  added attr %s = %s") % key % value);
+          L(FL("  added attr %s = %s") % key % value);
         }
       else
         {
-          L(F("  no attr added"));
+          L(FL("  no attr added"));
           ll.pop();
         }
     }

@@ -35,7 +35,7 @@ sanity::sanity() :
 {
   std::string flavour;
   get_system_flavour(flavour);
-  L(F("started up on %s\n") % flavour);
+  L(FL("started up on %s\n") % flavour);
 }
 
 sanity::~sanity()
@@ -99,6 +99,12 @@ sanity::set_relaxed(bool rel)
 }
 
 string
+sanity::do_format(i18n_format const & i18nfmt, char const * file, int line)
+{
+  return do_format(i18nfmt.fmt, file, line);
+}
+
+string
 sanity::do_format(format const & fmt, char const * file, int line)
 {
   try
@@ -136,10 +142,10 @@ sanity::log(format const & fmt,
 }
 
 void 
-sanity::progress(format const & fmt, 
+sanity::progress(i18n_format const & i18nfmt, 
                  char const * file, int line)
 {
-  string str = do_format(fmt, file, line);
+  string str = do_format(i18nfmt, file, line);
 
   if (str.size() > constants::log_line_sz)
     {
@@ -155,10 +161,10 @@ sanity::progress(format const & fmt,
 }
 
 void 
-sanity::warning(format const & fmt, 
+sanity::warning(i18n_format const & i18nfmt, 
                 char const * file, int line)
 {
-  string str = do_format(fmt, file, line);
+  string str = do_format(i18nfmt, file, line);
 
   if (str.size() > constants::log_line_sz)
     {
@@ -175,25 +181,25 @@ sanity::warning(format const & fmt,
 }
 
 void 
-sanity::naughty_failure(string const & expr, format const & explain, 
+sanity::naughty_failure(string const & expr, i18n_format const & explain, 
                         string const & file, int line)
 {
   string message;
-  log(format("%s:%d: usage constraint '%s' violated\n") % file % line % expr,
+  log(FL("%s:%d: usage constraint '%s' violated\n") % file % line % expr,
       file.c_str(), line);
-  prefix_lines_with(_("misuse: "), explain.str(), message);
+  prefix_lines_with(_("misuse: "), do_format(explain, file.c_str(), line), message);
   gasp();
   throw informative_failure(message);
 }
 
 void 
-sanity::error_failure(string const & expr, format const & explain, 
-                        string const & file, int line)
+sanity::error_failure(string const & expr, i18n_format const & explain, 
+                      string const & file, int line)
 {
   string message;
-  log(format("%s:%d: detected error '%s' violated\n") % file % line % expr,
+  log(FL("%s:%d: detected error '%s' violated\n") % file % line % expr,
       file.c_str(), line);
-  prefix_lines_with(_("error: "), explain.str(), message);
+  prefix_lines_with(_("error: "), do_format(explain, file.c_str(), line), message);
   throw informative_failure(message);
 }
 
@@ -201,12 +207,10 @@ void
 sanity::invariant_failure(string const & expr, 
                           string const & file, int line)
 {
-  format fmt = 
-    format("%s:%d: invariant '%s' violated\n") 
-    % file % line % expr;
-  log(fmt, file.c_str(), line);
+  char const * pattern = N_("%s:%d: invariant '%s' violated");
+  log(FL(pattern) % file % line % expr, file.c_str(), line);
   gasp();
-  throw logic_error(fmt.str());
+  throw logic_error((F(pattern) % file % line % expr).str());
 }
 
 void 
@@ -216,12 +220,12 @@ sanity::index_failure(string const & vec_expr,
                       unsigned long idx,
                       string const & file, int line)
 {
-  format fmt = 
-    format("%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n")
-    % file % line % idx_expr % idx % vec_expr % sz;
-  log(fmt, file.c_str(), line);
+  char const * pattern = N_("%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n");
+  log(FL(pattern) % file % line % idx_expr % idx % vec_expr % sz,
+      file.c_str(), line);
   gasp();
-  throw logic_error(fmt.str());
+  throw logic_error((F(pattern)
+                     % file % line % idx_expr % idx % vec_expr % sz).str());
 }
 
 // Last gasp dumps
@@ -231,11 +235,11 @@ sanity::gasp()
 {
   if (already_dumping)
     {
-      L(F("ignoring request to give last gasp; already in process of dumping\n"));
+      L(FL("ignoring request to give last gasp; already in process of dumping\n"));
       return;
     }
   already_dumping = true;
-  L(F("saving current work set: %i items") % musings.size());
+  L(FL("saving current work set: %i items") % musings.size());
   std::ostringstream out;
   out << F("Current work set: %i items\n") % musings.size();
   for (std::vector<MusingI const *>::const_iterator
@@ -251,17 +255,17 @@ sanity::gasp()
         {
           out << tmp;
           out << "<caught logic_error>\n";
-          L(F("ignoring error trigged by saving work set to debug log"));
+          L(FL("ignoring error trigged by saving work set to debug log"));
         }
       catch (informative_failure)
         {
           out << tmp;
           out << "<caught informative_failure>\n";
-          L(F("ignoring error trigged by saving work set to debug log"));
+          L(FL("ignoring error trigged by saving work set to debug log"));
         }
     }
   gasp_dump = out.str();
-  L(F("finished saving work set"));
+  L(FL("finished saving work set"));
   if (debug)
     {
       ui.inform("contents of work set:");
@@ -310,14 +314,40 @@ void MusingBase::gasp_body(const std::string & objstr, std::string & out) const
 }
 
 
-boost::format F(const char * str)
+i18n_format::i18n_format(const char * localized_pattern)
+  : fmt(localized_pattern, get_user_locale())
 {
-  return boost::format(gettext(str), get_user_locale());
+}
+
+i18n_format::i18n_format(std::string const & localized_pattern)
+  : fmt(localized_pattern, get_user_locale())
+{
+}
+
+std::string
+i18n_format::str() const
+{
+  return fmt.str();
+}
+
+std::ostream &
+operator<<(std::ostream & os, i18n_format const & fmt)
+{
+  return os << fmt.str();
+}
+
+i18n_format F(const char * str)
+{
+  return i18n_format(gettext(str));
 }
 
 
-boost::format FP(const char * str1, const char * strn, unsigned long count)
+i18n_format FP(const char * str1, const char * strn, unsigned long count)
 {
-  return boost::format(ngettext(str1, strn, count), get_user_locale());
+  return i18n_format(ngettext(str1, strn, count));
 }
 
+boost::format FL(const char * str)
+{
+  return boost::format(str);
+}
