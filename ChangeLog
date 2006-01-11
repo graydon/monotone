@@ -1,5 +1,10 @@
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
+	* netsync.cc (session): 
+	* commands.cc (read): Adjust to match previous change.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
 	* packet.{hh,cc} (struct packet_db_writer): Remove old guard
 	against accidentally ingesting public keys -- this has not been
 	useful for some years.

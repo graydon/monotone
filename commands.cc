@@ -1906,7 +1906,7 @@ CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
     N_("read packets from files or stdin"),
     OPT_NONE)
 {
-  packet_db_writer dbw(app, true);
+  packet_db_writer dbw(app);
   size_t count = 0;
   if (args.empty())
     {
