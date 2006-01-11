@@ -1,5 +1,10 @@
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc (set_filename): Simplify slightly.
+	(delta_exists): Remove unused 3-argument version.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (reindex): Remove.
 	* database.cc (database::rehash): Likewise.
 

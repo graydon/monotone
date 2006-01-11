@@ -644,10 +644,7 @@ database::fetch(results & res,
 void 
 database::set_filename(system_path const & file)
 {
-  if (__sql)
-    {
-      throw oops((F("cannot change filename to %s while db is open") % file).str());
-    }
+  I(!__sql);
   filename = file;
 }
 
@@ -706,19 +703,6 @@ database::delta_exists(hexenc<id> const & ident,
   string query = "SELECT id FROM " + table + " WHERE id = ?";
   fetch(res, one_col, any_rows, query.c_str(), ident().c_str());
   return res.size() > 0;
-}
-
-bool 
-database::delta_exists(hexenc<id> const & ident,
-                       hexenc<id> const & base,
-                       string const & table)
-{
-  results res;
-  string query = "SELECT id FROM " + table + " WHERE id = ? AND base = ?";
-  fetch(res, one_col, any_rows, query.c_str(), 
-        ident().c_str(), base().c_str());
-  I((res.size() == 1) || (res.size() == 0));
-  return res.size() == 1;
 }
 
 unsigned long

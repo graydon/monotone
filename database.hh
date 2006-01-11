@@ -113,9 +113,6 @@ class database
               std::string const & table);
   bool delta_exists(hexenc<id> const & ident,
                     std::string const & table);
-  bool delta_exists(hexenc<id> const & ident,
-                    hexenc<id> const & base,
-                    std::string const & table);
 
   unsigned long count(std::string const & table);
   unsigned long space_usage(std::string const & table,
