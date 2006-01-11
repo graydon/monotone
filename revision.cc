@@ -1407,7 +1407,7 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
   for (std::set<revision_id>::const_iterator i = all_rev_ids.begin();
        i != all_rev_ids.end(); ++i)
     {
-      u64 node = graph.add_node_for_oldstyle_revision(*i);
+      graph.add_node_for_oldstyle_revision(*i);
     }
 
   global_sanity.set_relaxed(false);
