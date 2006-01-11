@@ -588,21 +588,24 @@ database::fetch(results & res,
 
   int params = sqlite3_bind_parameter_count(i->second.stmt());
 
-  L(F("binding %d parameters for %s\n") % params % query);
+  // profiling finds this logging to be quite expensive
+  if (global_sanity.debug)
+    L(F("binding %d parameters for %s\n") % params % query);
 
   for (int param = 1; param <= params; param++)
     {
       char *value = va_arg(args, char *);
-      // nb: transient will not be good for inserts with large data blobs
-      // however, it's no worse than the previous '%q' stuff in this regard
-      // might want to wrap this logging with --debug or --verbose to limit it
 
-      string log = string(value);
-
-      if (log.size() > constants::log_line_sz)
-        log = log.substr(0, constants::log_line_sz);
-
-      L(F("binding %d with value '%s'\n") % param % log);
+      // profiling finds this logging to be quite expensive
+      if (global_sanity.debug)
+        {
+          string log = string(value);
+          
+          if (log.size() > constants::log_line_sz)
+            log = log.substr(0, constants::log_line_sz);
+          
+          L(F("binding %d with value '%s'\n") % param % log);
+        }
 
       sqlite3_bind_text(i->second.stmt(), param, value, -1, SQLITE_TRANSIENT);
       assert_sqlite3_ok(sql());
