@@ -1,5 +1,9 @@
 2006-01-11  Richard Levitte  <richard@levitte.org>
 
+	* Makefile.am: Add contrib/usher as an extra program.  This works
+	as a reminder that this program exists, and provides supported
+	ways to build it.
+
 	* contrib/usher.cc: Add a -m switch, to be able to specify the
 	name or complete path of/to the monotone binary, in case there
 	are several floating around on the system.
