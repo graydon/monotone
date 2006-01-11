@@ -1,3 +1,7 @@
+2006-01-11  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (process_confirm_cmd): Remove.
+
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
 	* packet.cc (packet_roundabout_test): Test rdata packets too.

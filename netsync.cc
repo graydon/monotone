@@ -414,7 +414,6 @@ session:
                         id const & client, 
                         id const & nonce1, 
                         string const & signature);
-  bool process_confirm_cmd(string const & signature);
   bool process_refine_cmd(refinement_type ty, merkle_node const & node);
   bool process_done_cmd(netcmd_item_type type, size_t n_items);
   bool process_data_cmd(netcmd_item_type type,
@@ -1488,47 +1487,6 @@ session::process_auth_cmd(protocol_role their_role,
     {
       W(F("bad client signature\n"));         
     }  
-  return false;
-}
-
-bool 
-session::process_confirm_cmd(string const & signature)
-{
-  I(this->remote_peer_key_hash().size() == constants::merkle_hash_length_in_bytes);
-  I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
-  
-  hexenc<id> their_key_hash;
-  encode_hexenc(id(remote_peer_key_hash), their_key_hash);
-  
-  // nb. this->role is our role, the server is in the opposite role.
-  L(F("received 'confirm' netcmd from server '%s' for pattern '%s' exclude '%s' in %s mode\n")
-    % their_key_hash % our_include_pattern % our_exclude_pattern
-    % (this->role == source_and_sink_role ? _("source and sink") :
-       (this->role == source_role ? _("sink") : _("source"))));
-  
-  // Check their signature.
-  if (app.db.public_key_exists(their_key_hash))
-    {
-      // Get their public key and check the signature.
-      rsa_keypair_id their_id;
-      base64<rsa_pub_key> their_key;
-      app.db.get_pubkey(their_key_hash, their_id, their_key);
-      base64<rsa_sha1_signature> sig;
-      encode_base64(rsa_sha1_signature(signature), sig);
-      if (check_signature(app, their_id, their_key, this->saved_nonce(), sig))
-        {
-          L(F("server signature OK, accepting authentication\n"));
-          return true;
-        }
-      else
-        {
-          W(F("bad server signature\n"));             
-        }
-    }
-  else
-    {
-      W(F("unknown server key\n"));
-    }
   return false;
 }
 
