@@ -12,310 +12,346 @@
 #include "safe_map.hh"
 #include "transforms.hh"
 
-void
-extract_rearranged_paths(cset const & cs, path_set & paths)
+// TODO: add support for --depth (replace recursive boolean with depth value)
+// TODO: add support for --exclude
+// TODO: add check for relevant rosters to be used by log
+// i.e.  as log goes back through older and older rosters it may hit one that
+// pre-dates any of the nodes in the restriction. the nodes that the restriction
+// includes or excludes may not have been born in a sufficiently old roster. at
+// this point log should stop because no earlier roster will include these nodes.
+
+restriction::restriction(vector<utf8> const & args,
+                         roster_t const & roster)
 {
-  paths.insert(cs.nodes_deleted.begin(), cs.nodes_deleted.end());
-  paths.insert(cs.dirs_added.begin(), cs.dirs_added.end());
-
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-       i != cs.files_added.end(); ++i)
-    {
-      paths.insert(i->first);
-    }
-
-  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin(); 
-       i != cs.nodes_renamed.end(); ++i) 
-    {
-      paths.insert(i->first); 
-      paths.insert(i->second); 
-    }
+  set_paths(args);
+  add_nodes(roster);
+  check_paths();
 }
 
-
-void 
-add_intermediate_paths(path_set & paths)
+restriction::restriction(vector<utf8> const & args,
+                         roster_t const & roster1,
+                         roster_t const & roster2)
 {
-  path_set intermediate_paths;
+  set_paths(args);
+  add_nodes(roster1);
+  add_nodes(roster2);
+  check_paths();
+}
 
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+void
+restriction::set_paths(vector<utf8> const & args)
+{
+  L(F("setting paths with %d args") % args.size());
+
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       split_path sp;
-      for (split_path::const_iterator j = i->begin(); j != i->end(); ++j)
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+    }
+}
+
+void
+restriction::add_nodes(roster_t const & roster)
+{
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      // TODO: (future) handle some sort of peg revision path syntax here.
+      // note that the idea of a --peg option doesn't work because each
+      // path may be relative to a different revision.
+
+      if (roster.has_node(*i)) 
         {
-          sp.push_back(*j);
-          intermediate_paths.insert(sp);
+          // TODO: proper recursive wildcard paths like foo/...  
+          // for now explicit paths are recursive
+          // and implicit parents are non-recursive
+
+          // TODO: possibly fail with nice error if path is already explicitly
+          // in the map?
+
+          // currently we need to insert the parents of included nodes so that
+          // the included nodes are not orphaned in a restricted roster.  this
+          // happens in cases like add "a" + add "a/b" when only "a/b" is
+          // included. i.e. "a" must be included for "a/b" to be valid. this
+          // isn't entirely sensible and should probably be revisited. it does
+          // match the current (old restrictions) semantics though.
+
+          valid_paths.insert(*i);
+
+          bool recursive = true;
+          node_id nid = roster.get_node(*i)->self;
+
+          while (!null_node(nid))
+            {
+              split_path sp;
+              roster.get_name(nid, sp);
+              L(F("adding nid %d path '%s' recursive %s") % nid % file_path(sp) % recursive);
+
+              restricted_node_map[nid] |= recursive;
+              restricted_path_map[sp] |= recursive;
+
+              recursive = false;
+
+              nid = roster.get_node(nid)->parent;
+            }
+        }
+      else
+        {
+          L(F("missed path '%s'") % *i);
         }
     }
-  paths.insert(intermediate_paths.begin(), intermediate_paths.end());
+
 }
 
-void
-restrict_cset(cset const & cs, 
-              cset & included,
-              cset & excluded,
-              app_state & app)
+bool
+restriction::includes(roster_t const & roster, node_id nid) const
 {
-  included.clear();
-  excluded.clear();
+  MM(roster);
+  I(roster.has_node(nid));
 
-  for (path_set::const_iterator i = cs.nodes_deleted.begin();
-       i != cs.nodes_deleted.end(); ++i)
+  // empty restriction includes everything
+  if (restricted_node_map.empty()) 
     {
-      if (app.restriction_includes(*i)) 
-        safe_insert(included.nodes_deleted, *i);
-      else
-        safe_insert(excluded.nodes_deleted, *i);
+      split_path sp;
+      roster.get_name(nid, sp);
+      L(F("included nid %d path '%s'") % nid % file_path(sp));
+      return true;
     }
 
-  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin(); 
-       i != cs.nodes_renamed.end(); ++i) 
-    {
-      if (app.restriction_includes(i->first) ||
-          app.restriction_includes(i->second)) 
-        safe_insert(included.nodes_renamed, *i);
-      else
-        safe_insert(excluded.nodes_renamed, *i);
-    }
+  node_id current = nid;
 
-  for (path_set::const_iterator i = cs.dirs_added.begin();
-       i != cs.dirs_added.end(); ++i)
+  while (!null_node(current)) 
     {
-      // Here is a trick: when you're dealing with restrictions, you need
-      // to make sure that any added parents required to make the
-      // restriction-affected files exist come along for the ride.
-      bool include_it = app.restriction_includes(*i);
-      if (!include_it)
+      split_path sp;
+      roster.get_name(current, sp);
+
+      map<node_id, bool>::const_iterator r = restricted_node_map.find(current);
+
+      if (r != restricted_node_map.end()) 
         {
-          include_it = app.restriction_requires_parent(*i);
-          if (include_it)
-            W(F("Included required parent path '%s'\n") % *i);
+          // found exact node or a explicit/recusrive parent
+          if (r->second || current == nid) 
+            {
+              L(F("included nid %d path '%s'") % current % file_path(sp));
+              return true;
+            }
         }
-            
-      if (include_it) 
-        safe_insert(included.dirs_added, *i);
-      else
-        safe_insert(excluded.dirs_added, *i);
+
+      node_t node = roster.get_node(current);
+      current = node->parent;
     }
 
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-       i != cs.files_added.end(); ++i)
-    {
-      if (app.restriction_includes(i->first)) 
-        safe_insert(included.files_added, *i);
-      else
-        safe_insert(excluded.files_added, *i);
-    }
-
-  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i = 
-         cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-    {
-      if (app.restriction_includes(i->first)) 
-        safe_insert(included.deltas_applied, *i);
-      else
-        safe_insert(excluded.deltas_applied, *i);
-    }
-
-  for (std::set<std::pair<split_path, attr_key> >::const_iterator i = 
-         cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
-    {
-      if (app.restriction_includes(i->first)) 
-        safe_insert(included.attrs_cleared, *i);
-      else
-        safe_insert(excluded.attrs_cleared, *i);
-    }
-
-  for (std::map<std::pair<split_path, attr_key>, attr_value>::const_iterator i =
-         cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
-    {
-      if (app.restriction_includes(i->first.first)) 
-        safe_insert(included.attrs_set, *i);
-      else
-        safe_insert(excluded.attrs_set, *i);
-    }
+  split_path sp;
+  roster.get_name(nid, sp);
+  L(F("excluded nid %d path '%s'\n") % nid % file_path(sp));
+  
+  return false;
 }
 
+bool
+restriction::includes(split_path const & sp) const
+{
+  if (restricted_path_map.empty()) 
+    {
+      L(F("included path '%s'") % file_path(sp));
+      return true;
+    }
 
-// Project the old_paths through r_old + work, to find the new names of the
-// paths (if they survived work)
+  split_path current(sp);
+
+  while (!current.empty())
+    {
+      L(F("checking path '%s'\n") % current);
+      map<split_path, bool>::const_iterator r = restricted_path_map.find(current);
+
+      if (r != restricted_path_map.end())
+        {
+          if (r->second || current == sp)
+            {
+              L(F("included path '%s'") % file_path(sp));
+              return true;
+            }
+        }
+
+      current.pop_back();
+    }
+
+  L(F("excluded path '%s'") % file_path(sp));
+  return false;
+
+}
 
 void
-remap_paths(path_set const & old_paths,
-            roster_t const & r_old,
-            cset const & work,
-            path_set & new_paths)
+restriction::check_paths()
 {
-  new_paths.clear();
-  temp_node_id_source nis;
-  roster_t r_tmp = r_old;
-  editable_roster_base er(r_tmp, nis);
-  work.apply_to(er);
-  for (path_set::const_iterator i = old_paths.begin();
-       i != old_paths.end(); ++i)
+  int bad = 0;
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      node_t n_old = r_old.get_node(*i);
-      if (r_tmp.has_node(n_old->self))
+      if (valid_paths.find(*i) == valid_paths.end())
         {
-          split_path new_sp;
-          r_tmp.get_name(n_old->self, new_sp);
-          new_paths.insert(new_sp);
+          bad++;
+          W(F("unknown path %s") % *i);
         }
     }
+
+  E(bad == 0, F("%d unknown paths") % bad);
 }
 
-void
-get_base_roster_and_working_cset(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_id & old_revision_id,
-                                 roster_t & old_roster,
-                                 path_set & old_paths, 
-                                 path_set & new_paths,
-                                 cset & included,
-                                 cset & excluded)
-{
-  cset work;
+////////////////////////////////////////////////////////////////////
+//   testing
+////////////////////////////////////////////////////////////////////
 
-  get_base_revision(app, old_revision_id, old_roster);
-  get_work_cset(work);
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+#include "roster.hh"
+#include "sanity.hh"
 
-  old_roster.extract_path_set(old_paths);
+using std::string;
 
-  path_set valid_paths(old_paths);
-  extract_rearranged_paths(work, valid_paths);
-  add_intermediate_paths(valid_paths);
-  app.set_restriction(valid_paths, args); 
-
-  restrict_cset(work, included, excluded, app);  
-  remap_paths(old_paths, old_roster, work, new_paths);
-
-  for (path_set::const_iterator i = included.dirs_added.begin();
-       i != included.dirs_added.end(); ++i)
-    new_paths.insert(*i);
-  
-  for (std::map<split_path, file_id>::const_iterator i = included.files_added.begin();
-       i != included.files_added.end(); ++i)
-    new_paths.insert(i->first);
-  
-  for (std::map<split_path, split_path>::const_iterator i = included.nodes_renamed.begin(); 
-       i != included.nodes_renamed.end(); ++i) 
-    new_paths.insert(i->second);
-}
-
-void
-get_working_revision_and_rosters(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_set & rev,
-                                 roster_t & old_roster,
-                                 roster_t & new_roster,
-                                 cset & excluded)
-{
-  revision_id old_revision_id;
-  boost::shared_ptr<cset> cs(new cset());
-  path_set old_paths, new_paths;
-
-  rev.edges.clear();
-  get_base_roster_and_working_cset(app, args, 
-                                   old_revision_id,
-                                   old_roster,
-                                   old_paths,
-                                   new_paths, 
-                                   *cs, excluded);
-
-  temp_node_id_source nis;
-  new_roster = old_roster;
-  editable_roster_base er(new_roster, nis);
-  cs->apply_to(er);
-
-  // Now update any idents in the new roster
-  update_restricted_roster_from_filesystem(new_roster, app);
-
-  calculate_ident(new_roster, rev.new_manifest);
-  L(F("new manifest_id is %s\n") % rev.new_manifest);
-  
-  {
-    // We did the following:
-    //
-    //  - restrict the working cset (MT/work)
-    //  - apply the working cset to the new roster,
-    //    giving us a rearranged roster (with incorrect content hashes)
-    //  - re-scan file contents, updating content hashes
-    // 
-    // Alas, this is not enough: we must now re-calculate the cset
-    // such that it contains the content deltas we found, and 
-    // re-restrict that cset.
-    //
-    // FIXME: arguably, this *could* be made faster by doing a
-    // "make_restricted_cset" (or "augment_restricted_cset_deltas_only" 
-    // call, for maximum speed) but it's worth profiling before 
-    // spending time on it.
-
-    cset tmp_full, tmp_excluded;
-    // We ignore excluded stuff, our 'excluded' argument is only really
-    // supposed to have tree rearrangement stuff in it, and it already has
-    // that
-    make_cset(old_roster, new_roster, tmp_full);
-    restrict_cset(tmp_full, *cs, tmp_excluded, app);
-  }
-
-  safe_insert(rev.edges, std::make_pair(old_revision_id, cs));
-}
-
-void
-get_working_revision_and_rosters(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_set & rev,
-                                 roster_t & old_roster,
-                                 roster_t & new_roster)
-{
-  cset excluded;
-  get_working_revision_and_rosters(app, args, rev, 
-                                   old_roster, new_roster, excluded);
-}
-
-void
-get_unrestricted_working_revision_and_rosters(app_state & app, 
-                                              revision_set & rev,
-                                              roster_t & old_roster,
-                                              roster_t & new_roster)
-{
-  std::vector<utf8> empty_args;
-  std::set<utf8> saved_exclude_patterns(app.exclude_patterns);
-  app.exclude_patterns.clear();
-  get_working_revision_and_rosters(app, empty_args, rev, old_roster, new_roster);
-  app.exclude_patterns = saved_exclude_patterns;
-}
-
+file_id file1_id(string("1000000000000000000000000000000000000000"));
+file_id file2_id(string("2000000000000000000000000000000000000000"));
+file_id file3_id(string("3000000000000000000000000000000000000000"));
 
 static void
-extract_changed_paths(cset const & cs, path_set & paths)
+test_basic_restrictions()
 {
-  extract_rearranged_paths(cs, paths);
+  temp_node_id_source nis;
+  roster_t roster;
 
-  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i 
-         = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-    paths.insert(i->first);
-  
-  for (std::set<std::pair<split_path, attr_key> >::const_iterator i =
-         cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
-    paths.insert(i->first);
+  node_id root_nid = roster.create_dir_node(nis);
+  node_id file1_nid = roster.create_file_node(file1_id, nis);
+  node_id file2_nid = roster.create_file_node(file2_id, nis);
+  node_id file3_nid = roster.create_file_node(file3_id, nis);
 
-  for (std::map<std::pair<split_path, attr_key>, attr_value>::const_iterator i =
-         cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
-    paths.insert(i->first.first);
+  split_path root_path, file1_path, file2_path, file3_path;
+  file_path().split(root_path);
+  file_path_internal("file1").split(file1_path);
+  file_path_internal("file2").split(file2_path);
+  file_path_internal("file3").split(file3_path);
+
+  roster.attach_node(root_nid, root_path);
+  roster.attach_node(file1_nid, file1_path);
+  roster.attach_node(file2_nid, file2_path);
+  roster.attach_node(file3_nid, file3_path);
+
+  {
+    // empty restriction
+    restriction mask;
+
+    BOOST_CHECK(mask.empty());
+
+    // check restricted nodes
+    BOOST_CHECK(mask.includes(roster, root_nid));
+    BOOST_CHECK(mask.includes(roster, file1_nid));
+    BOOST_CHECK(mask.includes(roster, file2_nid));
+    BOOST_CHECK(mask.includes(roster, file3_nid));
+
+    // check restricted paths
+    BOOST_CHECK(mask.includes(root_path));
+    BOOST_CHECK(mask.includes(file1_path));
+    BOOST_CHECK(mask.includes(file2_path));
+    BOOST_CHECK(mask.includes(file3_path));
+  }
+
+  {
+    // non-empty restriction
+    vector<utf8> args;
+    args.push_back(utf8(string("file1")));
+
+    restriction mask(args, roster);
+
+    BOOST_CHECK(!mask.empty());
+
+    // check restricted nodes
+    BOOST_CHECK(mask.includes(roster, root_nid));
+    BOOST_CHECK(mask.includes(roster, file1_nid));
+    BOOST_CHECK(!mask.includes(roster, file2_nid));
+    BOOST_CHECK(!mask.includes(roster, file3_nid));
+
+    // check restricted paths
+    BOOST_CHECK(mask.includes(root_path));
+    BOOST_CHECK(mask.includes(file1_path));
+    BOOST_CHECK(!mask.includes(file2_path));
+    BOOST_CHECK(!mask.includes(file3_path));
+  }
+
+  {
+    // invalid paths
+    // non-empty restriction
+    vector<utf8> args;
+    args.push_back(utf8(string("file4")));
+
+    BOOST_CHECK_THROW(restriction(args, roster), informative_failure);
+  }
+
+}
+
+static void
+test_recursive_nonrecursive()
+{
+  temp_node_id_source nis;
+  roster_t roster;
+
+  node_id root_nid = roster.create_dir_node(nis);
+
+  node_id dir1_nid = roster.create_dir_node(nis);
+  node_id dir2_nid = roster.create_dir_node(nis);
+
+  node_id file1_nid = roster.create_file_node(file1_id, nis);
+  node_id file2_nid = roster.create_file_node(file2_id, nis);
+  node_id file3_nid = roster.create_file_node(file3_id, nis);
+
+  // root/file1
+  // root/dir1
+  // root/dir1/file2
+  // root/dir1/dir2
+  // root/dir1/dir2/file3
+
+  split_path root_path, file1_path, dir1_path, file2_path, dir2_path, file3_path;
+
+  file_path().split(root_path);
+  file_path_internal("file1").split(file1_path);
+  file_path_internal("dir1").split(dir1_path);
+  file_path_internal("dir1/file2").split(file2_path);
+  file_path_internal("dir1/dir2").split(dir2_path);
+  file_path_internal("dir1/dir2/file3").split(file3_path);
+
+  roster.attach_node(root_nid, root_path);
+  roster.attach_node(file1_nid, file1_path);
+  roster.attach_node(dir1_nid, dir1_path);
+  roster.attach_node(file2_nid, file2_path);
+  roster.attach_node(dir2_nid, dir2_path);
+  roster.attach_node(file3_nid, file3_path);
+
+  vector<utf8> args;
+  args.push_back(utf8(string("dir1/dir2")));
+
+  restriction mask(args, roster);
+
+  BOOST_CHECK(!mask.empty());
+
+  // check restricted nodes
+  BOOST_CHECK(mask.includes(roster, root_nid));
+  BOOST_CHECK(!mask.includes(roster, file1_nid));
+  BOOST_CHECK(mask.includes(roster, dir1_nid));
+  BOOST_CHECK(!mask.includes(roster, file2_nid));
+  BOOST_CHECK(mask.includes(roster, dir2_nid));
+  BOOST_CHECK(mask.includes(roster, file3_nid));
+
+  // check restricted paths
+  BOOST_CHECK(mask.includes(root_path));
+  BOOST_CHECK(!mask.includes(file1_path));
+  BOOST_CHECK(mask.includes(dir1_path));
+  BOOST_CHECK(!mask.includes(file2_path));
+  BOOST_CHECK(mask.includes(dir2_path));
+  BOOST_CHECK(mask.includes(file3_path));
 }
 
 void
-calculate_restricted_cset(app_state & app, 
-                          std::vector<utf8> const & args,
-                          cset const & cs,
-                          cset & included,
-                          cset & excluded)
+add_restrictions_tests(test_suite * suite)
 {
-  path_set valid_paths;
-
-  extract_changed_paths(cs, valid_paths);
-  add_intermediate_paths(valid_paths);
-
-  app.set_restriction(valid_paths, args); 
-  restrict_cset(cs, included, excluded, app);
+  I(suite);
+  suite->add(BOOST_TEST_CASE(&test_basic_restrictions));
+  suite->add(BOOST_TEST_CASE(&test_recursive_nonrecursive));
 }
+#endif // BUILD_UNIT_TESTS

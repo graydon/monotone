@@ -14,6 +14,7 @@
 #include "cset.hh"
 #include "file_io.hh"
 #include "platform.hh"
+#include "restrictions.hh"
 #include "sanity.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
@@ -39,7 +40,8 @@ file_itemizer::visit_file(file_path const & path)
 {
   split_path sp;
   path.split(sp);
-  if (app.restriction_includes(sp) && known.find(sp) == known.end())
+
+  if (mask.includes(sp) && known.find(sp) == known.end())
     {
       if (app.lua.hook_ignore_file(path))
         ignored.insert(sp);
@@ -183,9 +185,8 @@ perform_deletions(path_set const & paths, app_state & app)
   if (paths.empty())
     return;
   
-  temp_node_id_source nis;
   roster_t base_roster, new_roster;
-  get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(base_roster, new_roster, app);
 
   // we traverse the the paths backwards, so that we always hit deep paths
   // before shallow paths (because path_set is lexicographically sorted).
@@ -420,13 +421,6 @@ get_current_roster_shape(roster_t & ros, node_id_source & nis, app_state & app)
 }
 
 void
-get_current_restricted_roster(roster_t & ros, node_id_source & nis, app_state & app)
-{
-  get_current_roster_shape(ros, nis, app);
-  update_restricted_roster_from_filesystem(ros, app);
-}
-
-void
 get_base_and_current_roster_shape(roster_t & base_roster,
                                   roster_t & current_roster,
                                   node_id_source & nis,
@@ -441,13 +435,12 @@ get_base_and_current_roster_shape(roster_t & base_roster,
 }
 
 void
-get_base_and_current_restricted_roster(roster_t & base_roster,
-                                       roster_t & current_roster,
-                                       node_id_source & nis,
-                                       app_state & app)
+get_base_and_current_roster_shape(roster_t & base_roster,
+                                  roster_t & current_roster,
+                                  app_state & app)
 {
+  temp_node_id_source nis;
   get_base_and_current_roster_shape(base_roster, current_roster, nis, app);
-  update_restricted_roster_from_filesystem(current_roster, app);
 }
 
 // user log file
@@ -640,8 +633,10 @@ void update_any_attrs(app_state & app)
     {
       split_path sp;
       new_roster.get_name(i->first, sp);
-      if (!app.restriction_includes(sp))
-        continue;
+
+      // FIXME_RESTRICTIONS: do we need this check?
+      // if (!app.restriction_includes(sp))
+      //  continue;
 
       node_t n = i->second;
       for (full_attr_map_t::const_iterator j = n->attrs.begin();
