@@ -1175,27 +1175,6 @@ database::remove_version(hexenc<id> const & target_id,
   guard.commit();
 }
 
-void 
-database::put_reverse_version(hexenc<id> const & new_id,
-                              hexenc<id> const & old_id,
-                              delta const & reverse_del,
-                              string const & data_table,
-                              string const & delta_table)
-{
-  data old_data, new_data;
-  
-  get_version(new_id, new_data, data_table, delta_table);
-  patch(new_data, reverse_del, old_data);
-  hexenc<id> check;
-  calculate_ident(old_data, check);
-  I(old_id == check);
-      
-  transaction_guard guard(*this);
-  put_delta(old_id, new_id, reverse_del, delta_table);
-  guard.commit();
-}
-
-
 
 // ------------------------------------------------------------
 // --                                                        --
@@ -1321,16 +1300,6 @@ database::put_file_version(file_id const & old_id,
   put_version(old_id.inner(), new_id.inner(), del.inner(), 
               "files", "file_deltas");
 }
-
-void 
-database::put_file_reverse_version(file_id const & new_id,
-                                   file_id const & old_id,                                 
-                                   file_delta const & del)
-{
-  put_reverse_version(new_id.inner(), old_id.inner(), del.inner(), 
-                      "files", "file_deltas");
-}
-
 
 void 
 database::get_revision_ancestry(std::multimap<revision_id, revision_id> & graph)

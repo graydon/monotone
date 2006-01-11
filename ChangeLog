@@ -1,5 +1,10 @@
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc (put_reverse_version, put_file_reverse_version):
+	Whoops, missed some dead code.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
 	* revision.cc (build_roster_style_revs_from_manifest_style_revs):
 	Remove unused variable; silence gcc warning.
 
