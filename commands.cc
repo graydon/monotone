@@ -1930,19 +1930,6 @@ CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
 }
 
 
-CMD(reindex, N_("network"), "",
-    N_("rebuild the indices used to sync over the network"),
-    OPT_NONE)
-{
-  if (args.size() > 0)
-    throw usage(name);
-
-  transaction_guard guard(app.db);
-  ui.set_tick_trailer("rehashing db");
-  app.db.rehash();
-  guard.commit();
-}
-
 static const var_key default_server_key(var_domain("database"),
                                         var_name("default-server"));
 static const var_key default_include_pattern_key(var_domain("database"),

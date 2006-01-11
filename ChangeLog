@@ -1,5 +1,10 @@
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (reindex): Remove.
+	* database.cc (database::rehash): Likewise.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
 	* change_set.{cc,hh}: Remove.
 
 2006-01-10  Nathaniel Smith  <njs@pobox.com>

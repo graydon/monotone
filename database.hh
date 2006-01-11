@@ -223,7 +223,6 @@ public:
   void info(std::ostream &);
   void version(std::ostream &);
   void migrate();
-  void rehash();
   void ensure_open();
   bool database_specified();
   

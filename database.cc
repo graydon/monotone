@@ -505,47 +505,6 @@ database::migrate()
   close();
 }
 
-void
-database::rehash()
-{
-  transaction_guard guard(*this);
-  ticker mcerts(_("mcerts"), "m", 1);
-  ticker pubkeys(_("pubkeys"), "+", 1);
-  ticker privkeys(_("privkeys"), "!", 1);
-  
-  {
-    // rehash all mcerts
-    results res;
-    vector<cert> certs;
-    fetch(res, 5, any_rows, 
-          "SELECT id, name, value, keypair, signature "
-          "FROM manifest_certs");
-    results_to_certs(res, certs);
-    execute("DELETE FROM manifest_certs");
-    for(vector<cert>::const_iterator i = certs.begin(); i != certs.end(); ++i)
-      {
-        put_cert(*i, "manifest_certs");
-        ++mcerts;
-      }
-  }
-
-  {
-    // rehash all pubkeys
-    results res;
-    fetch(res, 2, any_rows, "SELECT id, keydata FROM public_keys");
-    execute("DELETE FROM public_keys");
-    for (size_t i = 0; i < res.size(); ++i)
-      {
-        hexenc<id> tmp;
-        key_hash_code(rsa_keypair_id(res[i][0]), base64<rsa_pub_key>(res[i][1]), tmp);
-        execute("INSERT INTO public_keys VALUES(?, ?, ?)", 
-                tmp().c_str(), res[i][0].c_str(), res[i][1].c_str());
-        ++pubkeys;
-      }
-  }
-  guard.commit();
-}
-
 void 
 database::ensure_open()
 {
