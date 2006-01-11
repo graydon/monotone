@@ -1221,44 +1221,6 @@ lua_hooks::hook_merge3(file_path const & anc_path,
   return ok;
 }
 
-bool 
-lua_hooks::hook_resolve_file_conflict(file_path const & anc,
-                                      file_path const & a,
-                                      file_path const & b,
-                                      file_path & res)
-{
-  string tmp;
-  bool ok = Lua(st)
-    .func("resolve_file_conflict")
-    .push_str(anc.as_external())
-    .push_str(a.as_external())
-    .push_str(b.as_external())
-    .call(3,1)
-    .extract_str(tmp)
-    .ok();
-  res = file_path_internal(tmp);
-  return ok;
-}
-
-bool 
-lua_hooks::hook_resolve_dir_conflict(file_path const & anc,
-                                     file_path const & a,
-                                     file_path const & b,
-                                     file_path & res)
-{
-  string tmp;
-  bool ok = Lua(st)
-    .func("resolve_dir_conflict")
-    .push_str(anc.as_external())
-    .push_str(a.as_external())
-    .push_str(b.as_external())
-    .call(3,1)
-    .extract_str(tmp)
-    .ok();
-  res = file_path_internal(tmp);
-  return ok;  
-}
-
 bool
 lua_hooks::hook_external_diff(file_path const & path,
                               data const & data_old,

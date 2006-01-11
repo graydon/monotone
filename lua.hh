@@ -88,16 +88,6 @@ public:
                    data const & right, 
                    data & result);
 
-  bool hook_resolve_file_conflict(file_path const & anc,
-                                  file_path const & a,
-                                  file_path const & b,
-                                  file_path & res);
-
-  bool hook_resolve_dir_conflict(file_path const & anc,
-                                 file_path const & a,
-                                 file_path const & b,
-                                 file_path & res);
-
   bool hook_external_diff(file_path const & path,
                           data const & data_old,
                           data const & data_new,
