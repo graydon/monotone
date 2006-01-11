@@ -1,5 +1,9 @@
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
+	* packet.cc (packet_roundabout_test): Test rdata packets too.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
 	* netsync.cc (session): 
 	* commands.cc (read): Adjust to match previous change.
 

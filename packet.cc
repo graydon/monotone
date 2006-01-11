@@ -524,6 +524,21 @@ packet_roundabout_test()
     diff(fdata.inner(), fdata2.inner(), del);
     pw.consume_file_delta(fid, fid2, file_delta(del));
 
+    // a rdata packet
+    revision_set rev;
+    rev.new_manifest = manifest_id(std::string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+    split_path sp;
+    file_path_internal("").split(sp);
+    shared_ptr<cset> cs(new cset);
+    cs->dirs_added.insert(sp);
+    rev.edges.insert(std::make_pair(revision_id(std::string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
+                                    cs));
+    revision_data rdat;
+    write_revision_set(rev, rdat);
+    revision_id rid;
+    calculate_ident(rdat, rid);
+    pw.consume_revision_data(rid, rdat);
+
     // a cert packet
     base64<cert_value> val;
     encode_base64(cert_value("peaches"), val);
@@ -540,7 +555,7 @@ packet_roundabout_test()
     encode_base64(rsa_pub_key("this is not a real rsa key"), kp.pub);
     pw.consume_public_key(rsa_keypair_id("test@lala.com"), kp.pub);
 
-    // a private key packet
+    // a keypair packet
     encode_base64(rsa_priv_key("this is not a real rsa key either!"), kp.priv);
     
     pw.consume_key_pair(rsa_keypair_id("test@lala.com"), kp);
