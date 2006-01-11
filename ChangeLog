@@ -1,5 +1,9 @@
 2006-01-11  Nathaniel Smith  <njs@pobox.com>
 
+	* HACKING: Add section listing all the single-character macros.
+
+2006-01-11  Nathaniel Smith  <njs@pobox.com>
+
 	* database.cc (fetch): Don't log all SQL unless requested by
 	user.
 
