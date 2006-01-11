@@ -1,3 +1,10 @@
+2006-01-10  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_revert_unchanged.at: new test to check that reverting
+	nothing but unchanged files doesn't end up with an empty
+	restriction and revert everything
+	* testsuite.at: call it
+
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
 	* database.cc (set_filename): Simplify slightly.
