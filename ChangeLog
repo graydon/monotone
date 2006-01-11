@@ -1,3 +1,9 @@
+2006-01-11  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc: Add a -m switch, to be able to specify the
+	name or complete path of/to the monotone binary, in case there
+	are several floating around on the system.
+
 2006-01-11  Matt Johnston  <matt@ucc.asn.au>
 
 	* Makefile.am: pch.hh should be included
