@@ -2,6 +2,18 @@
 
 	* netsync.cc (process_confirm_cmd): Remove.
 
+2006-01-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* platform.hh, win32/wcwidth.c: Remove local wcswidth
+	implementation--it's no longer needed.
+
+2006-01-10  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_revert_unchanged.at: new test to check that reverting
+	nothing but unchanged files doesn't end up with an empty
+	restriction and revert everything
+	* testsuite.at: call it
+
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
 	* packet.cc (packet_roundabout_test): Test rdata packets too.
