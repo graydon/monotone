@@ -737,7 +737,7 @@ struct server
         if (i > 0 || port == 0)
           find_addr(addr, port);
         vector<string> args;
-        args.push_back("monotone");
+        args.push_back(monotone);
         args.push_back("serve");
         args.push_back("--bind=" + addr + ":" + lexical_cast<string>(port));
         unsigned int n = 0, m = 0;
