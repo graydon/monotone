@@ -1,5 +1,11 @@
 2006-01-11  Nathaniel Smith  <njs@pobox.com>
 
+	* po/Makevars (XGETTEXT_OPTIONS):
+	* configure.ac: Tweak xgettext configuration to make intltool
+	happier.
+
+2006-01-11  Nathaniel Smith  <njs@pobox.com>
+
 	* netsync.cc (process_confirm_cmd): Remove.
 
 2006-01-11  Matthew Gregan  <kinetik@orcon.net.nz>
