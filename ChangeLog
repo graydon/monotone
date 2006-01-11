@@ -1,5 +1,11 @@
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
+	* packet.{hh,cc} (struct packet_db_writer): Remove old guard
+	against accidentally ingesting public keys -- this has not been
+	useful for some years.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
 	* diff_patch.hh (struct content_merger): Oops, forgot to remove
 	the merge2 prototype.
 

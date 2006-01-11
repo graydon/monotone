@@ -54,8 +54,8 @@ packet_consumer::set_on_keypair_written(boost::function1<void, rsa_keypair_id>
 }
 
 
-packet_db_writer::packet_db_writer(app_state & app, bool take_keys) 
-  : app(app), take_keys(take_keys)
+packet_db_writer::packet_db_writer(app_state & app) 
+  : app(app)
 {}
 
 packet_db_writer::~packet_db_writer() 
@@ -217,12 +217,6 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
 {
   transaction_guard guard(app.db);
 
-  if (! take_keys) 
-    {
-      W(F("skipping prohibited public key %s\n") % ident);
-      return;
-    }
-
   if (app.db.public_key_exists(ident))
     {
       base64<rsa_pub_key> tmp;
@@ -246,11 +240,6 @@ packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
                                    keypair const & kp)
 {
   transaction_guard guard(app.db);
-  if (! take_keys) 
-    {
-      W(F("skipping prohibited key pair %s\n") % ident);
-      return;
-    }
 
   if (app.keys.key_pair_exists(ident))
     {

@@ -98,10 +98,8 @@ struct packet_writer : public packet_consumer
 struct packet_db_writer : public packet_consumer
 {
   app_state & app;
-  bool take_keys;
 public:
-  packet_db_writer(app_state & app, 
-                   bool take_keys = false);
+  packet_db_writer(app_state & app);
   virtual ~packet_db_writer();
   virtual void consume_file_data(file_id const & ident, 
                                  file_data const & dat);
