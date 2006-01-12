@@ -23,7 +23,7 @@
 
 void basic_io::input_source::err(std::string const & s)
 {
-  L(F("error in %s:%d:%d:E: %s") % name % line % col % s);
+  L(FL("error in %s:%d:%d:E: %s") % name % line % col % s);
   throw std::logic_error((F("error in %s:%d:%d:E: %s") 
                           % name % line % col % s).str());
 }

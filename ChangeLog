@@ -1,3 +1,149 @@
+2006-01-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* contrib/{color-logs.{conf,sh},monotone.el}: Changes to handle
+	renaming of --no-merges.
+	* app_state.{cc,hh}, commands.cc, monotone.cc, options.hh: Make
+	'log' default to not displaying merges.  Rename '--no-merges'
+	option to '--merges'.
+
+2006-01-11  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (diff): gettext'ify the "no changes" tag.
+
+2006-01-11  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am: Add contrib/usher as an extra program.  This works
+	as a reminder that this program exists, and provides supported
+	ways to build it.
+
+	* contrib/usher.cc: Add a -m switch, to be able to specify the
+	name or complete path of/to the monotone binary, in case there
+	are several floating around on the system.
+
+2006-01-11  Matt Johnston  <matt@ucc.asn.au>
+
+	* Makefile.am: pch.hh should be included
+
+2006-01-11  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.hh (struct i18n_format): Make internationalized format
+	strings and non-internationalized format strings type-distinct.
+	(This hopefully sets up for fixing some of the charset mess later
+	down the road.)
+	(FL): New macro; like F but without the i18n glue.
+	Use FL with L, and F/FP with everything else.
+	* *.hh, *.cc: Adjust existing F/L/etc. usage accordingly.
+
+2006-01-11  Nathaniel Smith  <njs@pobox.com>
+
+	* HACKING: Add section listing all the single-character macros.
+
+2006-01-11  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (fetch): Don't log all SQL unless requested by
+	user.
+
+2006-01-11  Nathaniel Smith  <njs@pobox.com>
+
+	* po/Makevars (XGETTEXT_OPTIONS):
+	* configure.ac: Tweak xgettext configuration to make intltool
+	happier.
+
+2006-01-11  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (process_confirm_cmd): Remove.
+
+2006-01-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* platform.hh, win32/wcwidth.c: Remove local wcswidth
+	implementation--it's no longer needed.
+
+2006-01-10  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_revert_unchanged.at: new test to check that reverting
+	nothing but unchanged files doesn't end up with an empty
+	restriction and revert everything
+	* testsuite.at: call it
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* packet.cc (packet_roundabout_test): Test rdata packets too.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (session): 
+	* commands.cc (read): Adjust to match previous change.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* packet.{hh,cc} (struct packet_db_writer): Remove old guard
+	against accidentally ingesting public keys -- this has not been
+	useful for some years.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* diff_patch.hh (struct content_merger): Oops, forgot to remove
+	the merge2 prototype.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua: 
+	* lua.cc (hook_merge2): 
+	* diff_patch.cc (try_to_merge_files): Remove merge2 code, since we
+	no longer do merge2's.  (We can always revive it if we add suture
+	support.)
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* packet.cc (consume_file_delta): Remove unused 4-argument form.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* lua.{cc,hh} (hook_resolve_file_conflict)
+	(hook_resolve_dir_conflict): Remove dead code.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_selectors_b_h.at, testsuite.at: New test.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (manifest_cert_exists, put_manifest_cert): 
+	(get_manifest_cert, get_manifest_certs): Remove unused methods.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (put_reverse_version, put_file_reverse_version):
+	Whoops, missed some dead code.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (build_roster_style_revs_from_manifest_style_revs):
+	Remove unused variable; silence gcc warning.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* packet.cc (consume_file_reverse_delta) 
+	(struct feed_packet_consumer): Remove support for nonexistent
+	"frdelta" packet type.
+	* database.{hh,cc} (put_reverse_version)
+	(put_file_reverse_version): Remove unused methods.
+	* key_store.cc (struct keyreader): Remove obsolete methods.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (set_filename): Simplify slightly.
+	(delta_exists): Remove unused 3-argument version.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (reindex): Remove.
+	* database.cc (database::rehash): Likewise.
+
+2006-01-10  Nathaniel Smith  <njs@pobox.com>
+
+	* change_set.{cc,hh}: Remove.
+
 2006-01-10  Nathaniel Smith  <njs@pobox.com>
 
 	* contrib/ciabot_monotone.py (Monotone.get_revision): Update to

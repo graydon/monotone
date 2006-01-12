@@ -48,7 +48,7 @@ bogus_cert_p
     cert_status status = check_cert(app, c);
     if (status == cert_ok)
       {
-        L(F("cert ok\n"));
+        L(FL("cert ok\n"));
         return false;
       }
     else if (status == cert_bad)
@@ -120,7 +120,7 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
                                                get<1>(i->first),
                                                decoded_value))
         {
-          L(F("trust function liked %d signers of %s cert on manifest %s\n")
+          L(FL("trust function liked %d signers of %s cert on manifest %s\n")
             % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
           tmp_certs.push_back(*(i->second.second));
         }
@@ -173,7 +173,7 @@ erase_bogus_certs(vector< revision<cert> > & certs,
                                                get<1>(i->first),
                                                decoded_value))
         {
-          L(F("trust function liked %d signers of %s cert on revision %s\n")
+          L(FL("trust function liked %d signers of %s cert on revision %s\n")
             % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
           tmp_certs.push_back(*(i->second.second));
         }
@@ -302,7 +302,7 @@ cert_signable_text(cert const & t,
                        string & out)
 {
   out = (boost::format("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
-  L(F("cert: signable text %s\n") % out);
+  L(FL("cert: signable text %s\n") % out);
 }
 
 void 

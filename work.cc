@@ -282,7 +282,7 @@ std::string const work_file_name("work");
 static void get_work_path(bookkeeping_path & w_path)
 {
   w_path = bookkeeping_root / work_file_name;
-  L(F("work path is %s\n") % w_path);
+  L(FL("work path is %s\n") % w_path);
 }
 
 void get_work_cset(cset & w)
@@ -291,15 +291,15 @@ void get_work_cset(cset & w)
   get_work_path(w_path);
   if (path_exists(w_path))
     {
-      L(F("checking for un-committed work file %s\n") % w_path);
+      L(FL("checking for un-committed work file %s\n") % w_path);
       data w_data;
       read_data(w_path, w_data);
       read_cset(w_data, w);
-      L(F("read cset from %s\n") % w_path);
+      L(FL("read cset from %s\n") % w_path);
     }
   else
     {
-      L(F("no un-committed work file %s\n") % w_path);
+      L(FL("no un-committed work file %s\n") % w_path);
     }
 }
 
@@ -336,7 +336,7 @@ std::string revision_file_name("revision");
 static void get_revision_path(bookkeeping_path & m_path)
 {
   m_path = bookkeeping_root / revision_file_name;
-  L(F("revision path is %s\n") % m_path);
+  L(FL("revision path is %s\n") % m_path);
 }
 
 void get_revision_id(revision_id & c)
@@ -350,7 +350,7 @@ void get_revision_id(revision_id & c)
                        F("working copy is corrupt: %s is a directory") % c_path);
 
   data c_data;
-  L(F("loading revision id from %s\n") % c_path);
+  L(FL("loading revision id from %s\n") % c_path);
   try
     {
       read_data(c_path, c_data);
@@ -366,7 +366,7 @@ void put_revision_id(revision_id const & rev)
 {
   bookkeeping_path c_path;
   get_revision_path(c_path);
-  L(F("writing revision id to %s\n") % c_path);
+  L(FL("writing revision id to %s\n") % c_path);
   data c_data(rev.inner()() + "\n");
   write_data(c_path, c_data);
 }
@@ -388,7 +388,7 @@ get_base_revision(app_state & app,
       app.db.get_roster(rid, ros, mm);
     }
 
-  L(F("base roster has %d entries\n") % ros.all_nodes().size());
+  L(FL("base roster has %d entries\n") % ros.all_nodes().size());
 }
 
 void
@@ -458,7 +458,7 @@ void
 get_user_log_path(bookkeeping_path & ul_path)
 {
   ul_path = bookkeeping_root / user_log_file_name;
-  L(F("user log path is %s\n") % ul_path);
+  L(FL("user log path is %s\n") % ul_path);
 }
 
 void
@@ -507,7 +507,7 @@ void
 get_options_path(bookkeeping_path & o_path)
 {
   o_path = bookkeeping_root / options_file_name;
-  L(F("options path is %s\n") % o_path);
+  L(FL("options path is %s\n") % o_path);
 }
 
 void 
@@ -553,7 +553,7 @@ static string const local_dump_file_name("debug");
 void get_local_dump_path(bookkeeping_path & d_path)
 {
   d_path = bookkeeping_root / local_dump_file_name;
-  L(F("local dump path is %s\n") % d_path);
+  L(FL("local dump path is %s\n") % d_path);
 }
 
 // inodeprint file

@@ -195,19 +195,17 @@ assert_sqlite3_ok(sqlite3 *s)
       // first log the code so we can find _out_ what the confusing code
       // was... note that code does not uniquely identify the errmsg, unlike
       // errno's.
-      L(F("sqlite error: %d: %s") % errcode % errmsg);
+      L(FL("sqlite error: %d: %s") % errcode % errmsg);
     }
   std::string auxiliary_message = "";
   if (errcode == SQLITE_ERROR)
     {
-      auxiliary_message = _("make sure database and containing directory are writeable");
+      auxiliary_message += _("make sure database and containing directory are writeable");
     }
   // if the last message is empty, the \n will be stripped off too
   E(errcode == SQLITE_OK,
     // kind of string surgery to avoid ~duplicate strings
-    boost::format("%s\n%s")
-                  % (F("sqlite error: %d: %s") % errcode % errmsg).str()
-                  % auxiliary_message);
+    F("sqlite error: %d: %s\n%s") % errcode % errmsg % auxiliary_message);
 }
 
 struct sqlite3 * 
@@ -527,47 +525,6 @@ database::migrate()
   close();
 }
 
-void
-database::rehash()
-{
-  transaction_guard guard(*this);
-  ticker mcerts(_("mcerts"), "m", 1);
-  ticker pubkeys(_("pubkeys"), "+", 1);
-  ticker privkeys(_("privkeys"), "!", 1);
-  
-  {
-    // rehash all mcerts
-    results res;
-    vector<cert> certs;
-    fetch(res, 5, any_rows, 
-          "SELECT id, name, value, keypair, signature "
-          "FROM manifest_certs");
-    results_to_certs(res, certs);
-    execute("DELETE FROM manifest_certs");
-    for(vector<cert>::const_iterator i = certs.begin(); i != certs.end(); ++i)
-      {
-        put_cert(*i, "manifest_certs");
-        ++mcerts;
-      }
-  }
-
-  {
-    // rehash all pubkeys
-    results res;
-    fetch(res, 2, any_rows, "SELECT id, keydata FROM public_keys");
-    execute("DELETE FROM public_keys");
-    for (size_t i = 0; i < res.size(); ++i)
-      {
-        hexenc<id> tmp;
-        key_hash_code(rsa_keypair_id(res[i][0]), base64<rsa_pub_key>(res[i][1]), tmp);
-        execute("INSERT INTO public_keys VALUES(?, ?, ?)", 
-                tmp().c_str(), res[i][0].c_str(), res[i][1].c_str());
-        ++pubkeys;
-      }
-  }
-  guard.commit();
-}
-
 void 
 database::ensure_open()
 {
@@ -577,12 +534,12 @@ database::ensure_open()
 
 database::~database() 
 {
-  L(F("statement cache statistics\n"));
-  L(F("prepared %d statements\n") % statement_cache.size());
+  L(FL("statement cache statistics\n"));
+  L(FL("prepared %d statements\n") % statement_cache.size());
 
   for (map<string, statement>::const_iterator i = statement_cache.begin(); 
        i != statement_cache.end(); ++i)
-    L(F("%d executions of %s\n") % i->second.count % i->first);
+    L(FL("%d executions of %s\n") % i->second.count % i->first);
   // trigger destructors to finalize cached statements
   statement_cache.clear();
 
@@ -632,7 +589,7 @@ database::prepare(char const * query,
       const char * tail;
       sqlite3_prepare(sql(), query, -1, i->second.stmt.paddr(), &tail);
       assert_sqlite3_ok(sql());
-      L(F("prepared statement %s\n") % query);
+      L(FL("prepared statement %s\n") % query);
 
       // no support for multiple statements here
       E(*tail == 0, 
@@ -663,21 +620,24 @@ database::fetch(results & res,
 
   int params = sqlite3_bind_parameter_count(stmt.stmt());
 
-  L(F("binding %d parameters for %s\n") % params % query);
+  // profiling finds this logging to be quite expensive
+  if (global_sanity.debug)
+    L(FL("binding %d parameters for %s\n") % params % query);
 
   for (int param = 1; param <= params; param++)
     {
       char *value = va_arg(args, char *);
-      // nb: transient will not be good for inserts with large data blobs
-      // however, it's no worse than the previous '%q' stuff in this regard
-      // might want to wrap this logging with --debug or --verbose to limit it
 
-      string log = string(value);
-
-      if (log.size() > constants::log_line_sz)
-        log = log.substr(0, constants::log_line_sz);
-
-      L(F("binding %d with value '%s'\n") % param % log);
+      // profiling finds this logging to be quite expensive
+      if (global_sanity.debug)
+        {
+          string log = string(value);
+          
+          if (log.size() > constants::log_line_sz)
+            log = log.substr(0, constants::log_line_sz);
+          
+          L(FL("binding %d with value '%s'\n") % param % log);
+        }
 
       sqlite3_bind_text(stmt.stmt(), param, value, -1, SQLITE_TRANSIENT);
       assert_sqlite3_ok(sql());
@@ -708,7 +668,7 @@ database::fetch(statement & stmt,
           int bytes = sqlite3_column_bytes(stmt.stmt(), col);
           E(value, F("null result in query: %s\n") % query);
           row.push_back(std::string(value,value+bytes));
-          //L(F("row %d col %d value='%s'\n") % nrow % col % value);
+          //L(FL("row %d col %d value='%s'\n") % nrow % col % value);
         }
       res.push_back(row);
     }
@@ -774,10 +734,7 @@ database::fetch(results & res,
 void 
 database::set_filename(system_path const & file)
 {
-  if (__sql)
-    {
-      throw oops((F("cannot change filename to %s while db is open") % file).str());
-    }
+  I(!__sql);
   filename = file;
 }
 
@@ -836,19 +793,6 @@ database::delta_exists(hexenc<id> const & ident,
   string query = "SELECT id FROM " + table + " WHERE id = ?";
   fetch(res, one_col, any_rows, query.c_str(), ident().c_str());
   return res.size() > 0;
-}
-
-bool 
-database::delta_exists(hexenc<id> const & ident,
-                       hexenc<id> const & base,
-                       string const & table)
-{
-  results res;
-  string query = "SELECT id FROM " + table + " WHERE id = ? AND base = ?";
-  fetch(res, one_col, any_rows, query.c_str(), 
-        ident().c_str(), base().c_str());
-  I((res.size() == 1) || (res.size() == 0));
-  return res.size() == 1;
 }
 
 unsigned long
@@ -995,7 +939,7 @@ struct version_cache
           }
         I(i != cache.end());
         I(use >= i->second().size());
-        L(F("version cache expiring %s\n") % i->first);
+        L(FL("version cache expiring %s\n") % i->first);
         use -= i->second().size();          
         cache.erase(i->first);
       }
@@ -1017,7 +961,7 @@ struct version_cache
     if (i == cache.end())
       return false;
     // ++cache_hits;
-    L(F("version cache hit on %s\n") % ident);
+    L(FL("version cache hit on %s\n") % ident);
     dat = i->second;
     return true;
   }
@@ -1086,7 +1030,7 @@ database::get_version(hexenc<id> const & ident,
       //
       // we also maintain a cycle-detecting set, just to be safe
       
-      L(F("reconstructing %s in %s\n") % ident % delta_table);
+      L(FL("reconstructing %s in %s\n") % ident % delta_table);
       I(delta_exists(ident, delta_table));
 
       // Our reconstruction algorithm involves keeping a set of parallel
@@ -1193,7 +1137,7 @@ database::get_version(hexenc<id> const & ident,
               vcache.put(curr, tmp);
             }
 
-          L(F("following delta %s -> %s\n") % curr % nxt);
+          L(FL("following delta %s -> %s\n") % curr % nxt);
           delta del;
           get_delta(nxt, curr, del, delta_table);
           apply_delta (app, del());
@@ -1328,27 +1272,6 @@ database::remove_version(hexenc<id> const & target_id,
   guard.commit();
 }
 
-void 
-database::put_reverse_version(hexenc<id> const & new_id,
-                              hexenc<id> const & old_id,
-                              delta const & reverse_del,
-                              string const & data_table,
-                              string const & delta_table)
-{
-  data old_data, new_data;
-  
-  get_version(new_id, new_data, data_table, delta_table);
-  patch(new_data, reverse_del, old_data);
-  hexenc<id> check;
-  calculate_ident(old_data, check);
-  I(old_id == check);
-      
-  transaction_guard guard(*this);
-  put_delta(old_id, new_id, reverse_del, delta_table);
-  guard.commit();
-}
-
-
 
 // ------------------------------------------------------------
 // --                                                        --
@@ -1474,16 +1397,6 @@ database::put_file_version(file_id const & old_id,
   put_version(old_id.inner(), new_id.inner(), del.inner(), 
               "files", "file_deltas");
 }
-
-void 
-database::put_file_reverse_version(file_id const & new_id,
-                                   file_id const & old_id,                                 
-                                   file_delta const & del)
-{
-  put_reverse_version(new_id.inner(), old_id.inner(), del.inner(), 
-                      "files", "file_deltas");
-}
-
 
 void 
 database::get_revision_ancestry(std::multimap<revision_id, revision_id> & graph)
@@ -1708,7 +1621,7 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
   I(!children.size());
   
 
-  L(F("Killing revision %s locally\n") % rid);
+  L(FL("Killing revision %s locally\n") % rid);
 
   // Kill the certs, ancestry, and rev itself.
   execute("DELETE from revision_certs WHERE id = ?",rid.inner()().c_str());
@@ -1744,7 +1657,7 @@ database::delete_branch_named(cert_value const & branch)
 {
   base64<cert_value> encoded;
   encode_base64(branch, encoded);
-  L(F("Deleting all references to branch %s\n") % branch);
+  L(FL("Deleting all references to branch %s\n") % branch);
   execute("DELETE FROM revision_certs WHERE name='branch' AND value =?",
           encoded().c_str());
   execute("DELETE FROM branch_epochs WHERE branch=?",
@@ -1757,7 +1670,7 @@ database::delete_tag_named(cert_value const & tag)
 {
   base64<cert_value> encoded;
   encode_base64(tag, encoded);
-  L(F("Deleting all references to tag %s\n") % tag);
+  L(FL("Deleting all references to tag %s\n") % tag);
   execute("DELETE FROM revision_certs WHERE name='tag' AND value =?",
           encoded().c_str());
 }
@@ -2065,18 +1978,6 @@ database::revision_cert_exists(revision<cert> const & cert)
   return cert_exists(cert.inner(), "revision_certs"); 
 }
 
-bool 
-database::manifest_cert_exists(manifest<cert> const & cert)
-{ 
-  return cert_exists(cert.inner(), "manifest_certs"); 
-}
-
-void 
-database::put_manifest_cert(manifest<cert> const & cert)
-{ 
-  put_cert(cert.inner(), "manifest_certs"); 
-}
-
 void 
 database::put_revision_cert(revision<cert> const & cert)
 { 
@@ -2210,36 +2111,6 @@ database::revision_cert_exists(hexenc<id> const & hash)
   return (res.size() == 1);
 }
 
-bool 
-database::manifest_cert_exists(hexenc<id> const & hash)
-{
-  results res;
-  vector<cert> certs;
-  fetch(res, one_col, any_rows, 
-        "SELECT id "
-        "FROM manifest_certs "
-        "WHERE hash = ?", 
-        hash().c_str());
-  I(res.size() == 0 || res.size() == 1);
-  return (res.size() == 1);
-}
-
-void 
-database::get_manifest_cert(hexenc<id> const & hash,
-                            manifest<cert> & c)
-{
-  results res;
-  vector<cert> certs;
-  fetch(res, 5, one_row, 
-        "SELECT id, name, value, keypair, signature "
-        "FROM manifest_certs "
-        "WHERE hash = ?", 
-        hash().c_str());
-  results_to_certs(res, certs);
-  I(certs.size() == 1);
-  c = manifest<cert>(certs[0]);
-}
-
 void 
 database::get_manifest_certs(manifest_id const & id, 
                              vector< manifest<cert> > & ts)
@@ -2257,17 +2128,6 @@ database::get_manifest_certs(cert_name const & name,
 {
   vector<cert> certs;
   get_certs(name, certs, "manifest_certs");
-  ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));  
-}
-
-void 
-database::get_manifest_certs(manifest_id const & id, 
-                             cert_name const & name, 
-                             vector< manifest<cert> > & ts)
-{
-  vector<cert> certs;
-  get_certs(id.inner(), name, certs, "manifest_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));  
 }
@@ -2378,7 +2238,7 @@ void database::complete(selector_type ty,
                         vector<pair<selector_type, string> > const & limit,
                         set<string> & completions)
 {
-  //L(F("database::complete for partial '%s'\n") % partial);
+  //L(FL("database::complete for partial '%s'\n") % partial);
   completions.clear();
 
   // step 1: the limit is transformed into an SQL select statement which
@@ -2476,7 +2336,7 @@ void database::complete(selector_type ty,
                   set<revision_id> branch_heads;
                   get_branch_heads(*bn, *__app, branch_heads);
                   heads.insert(branch_heads.begin(), branch_heads.end());
-                  L(F("after get_branch_heads for %s, heads has %d entries\n") % (*bn) % heads.size());
+                  L(FL("after get_branch_heads for %s, heads has %d entries\n") % (*bn) % heads.size());
                 }
 
               lim += "SELECT id FROM revision_certs WHERE id IN (";
@@ -2499,14 +2359,14 @@ void database::complete(selector_type ty,
               string prefix;
               string suffix;
               selector_to_certname(i->first, certname, prefix, suffix);
-              L(F("processing selector type %d with i->second '%s'\n") % ty % i->second);
+              L(FL("processing selector type %d with i->second '%s'\n") % ty % i->second);
               if ((i->first == selectors::sel_branch) && (i->second.size() == 0))
                 {
                   __app->require_working_copy("the empty branch selector b: refers to the current branch");
                   // FIXME: why do we have to glob on the unbase64(value), rather than being able to use == ?
                   lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND unbase64(value) glob '%s'")
                           % branch_cert_name % __app->branch_name).str();
-                  L(F("limiting to current branch '%s'\n") % __app->branch_name);
+                  L(FL("limiting to current branch '%s'\n") % __app->branch_name);
                 }
               else
                 {
@@ -2526,7 +2386,7 @@ void database::complete(selector_type ty,
                     }
                 }
             }
-          //L(F("found selector type %d, selecting_head is now %d\n") % i->first % selecting_head);
+          //L(FL("found selector type %d, selecting_head is now %d\n") % i->first % selecting_head);
         }
     }
   lim += ")";
@@ -3064,7 +2924,7 @@ transaction_guard::commit()
 void
 close_all_databases()
 {
-  L(F("attempting to rollback and close %d databases") % sql_contexts.size());
+  L(FL("attempting to rollback and close %d databases") % sql_contexts.size());
   for (set<sqlite3*>::iterator i = sql_contexts.begin();
        i != sql_contexts.end(); i++)
     {
@@ -3073,7 +2933,7 @@ close_all_databases()
       int exec_err = sqlite3_exec(*i, "ROLLBACK", NULL, NULL, NULL);
       int close_err = sqlite3_close(*i);
 
-      L(F("exec_err = %d, close_err = %d") % exec_err % close_err);
+      L(FL("exec_err = %d, close_err = %d") % exec_err % close_err);
     }
   sql_contexts.clear();
 }

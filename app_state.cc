@@ -31,7 +31,7 @@ static string const keydir_option("keydir");
 app_state::app_state() 
   : branch_name(""), db(system_path()), keys(this), stdhooks(true),
     rcfiles(true), diffs(false),
-    no_merges(false), set_default(false), verbose(false), date_set(false),
+    merges(false), set_default(false), verbose(false), date_set(false),
     search_root("/"),
     depth(-1), last(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false), bind_address(""), bind_port(""), 
@@ -64,7 +64,7 @@ app_state::is_explicit_option(int option_id) const
 void
 app_state::allow_working_copy()
 {
-  L(F("initializing from directory %s\n") % fs::initial_path().string());
+  L(FL("initializing from directory %s\n") % fs::initial_path().string());
   found_working_copy = find_and_go_to_working_copy(search_root);
 
   if (found_working_copy) 
@@ -85,14 +85,14 @@ app_state::allow_working_copy()
 
       if (branch_name().empty())
         branch_name = options[branch_option];
-      L(F("branch name is '%s'\n") % branch_name());
+      L(FL("branch name is '%s'\n") % branch_name());
       internalize_rsa_keypair_id(options[key_option], signing_key);
 
       if (global_sanity.filename.empty())
         {
           bookkeeping_path dump_path;
           get_local_dump_path(dump_path);
-          L(F("setting dump path to %s\n") % dump_path);
+          L(FL("setting dump path to %s\n") % dump_path);
           // the 'true' means that, e.g., if we're running checkout, then it's
           // okay for dumps to go into our starting working dir's MT rather
           // than the checked-out dir's MT.
@@ -116,7 +116,7 @@ app_state::create_working_copy(system_path const & new_dir)
 {
   N(!new_dir.empty(), F("invalid directory ''"));
 
-  L(F("creating working copy in %s\n") % new_dir);
+  L(FL("creating working copy in %s\n") % new_dir);
   
   mkdir_p(new_dir);
   go_to_working_copy(new_dir);
@@ -125,7 +125,7 @@ app_state::create_working_copy(system_path const & new_dir)
     F("monotone bookkeeping directory '%s' already exists in '%s'\n") 
     % bookkeeping_root % new_dir);
 
-  L(F("creating bookkeeping directory '%s' for working copy in '%s'\n")
+  L(FL("creating bookkeeping directory '%s' for working copy in '%s'\n")
     % bookkeeping_root % new_dir);
 
   mkdir_p(bookkeeping_root);
@@ -163,7 +163,7 @@ app_state::set_restriction(path_set const & valid_paths,
         p == root || valid_paths.find(sp) != valid_paths.end(),
         F("unknown path '%s'\n") % p);
 
-      L(F("'%s' added to restricted path set\n") % p);
+      L(FL("'%s' added to restricted path set\n") % p);
       restrictions.insert(sp);
     }
 
@@ -178,7 +178,7 @@ app_state::set_restriction(path_set const & valid_paths,
         p == root || valid_paths.find(sp) != valid_paths.end(),
         F("unknown path '%s'\n") % p);
 
-      L(F("'%s' added to excluded path set\n") % p);
+      L(FL("'%s' added to excluded path set\n") % p);
       excludes.insert(sp);
     }
 
@@ -239,13 +239,13 @@ app_state::restriction_includes(split_path const & sp)
 
           while (!test.empty()) 
             {
-              L(F("checking excluded path set for '%s'\n") % file_path(test));
+              L(FL("checking excluded path set for '%s'\n") % file_path(test));
 
               path_set::const_iterator i = excludes.find(test);
 
               if (i != excludes.end()) 
                 {
-                  L(F("path '%s' found in excluded path set; '%s' excluded\n") 
+                  L(FL("path '%s' found in excluded path set; '%s' excluded\n") 
                     % file_path(test) % path);
                   return false;
                 }
@@ -264,20 +264,20 @@ app_state::restriction_includes(split_path const & sp)
 
   while (!test.empty()) 
     {
-      L(F("checking restricted path set for '%s'\n") % file_path(test));
+      L(FL("checking restricted path set for '%s'\n") % file_path(test));
 
       path_set::const_iterator i = restrictions.find(test);
       path_set::const_iterator j = excludes.find(test);
 
       if (i != restrictions.end()) 
         {
-          L(F("path '%s' found in restricted path set; '%s' included\n") 
+          L(FL("path '%s' found in restricted path set; '%s' included\n") 
             % file_path(test) % path);
           return true;
         }
       else if (j != excludes.end())
         {
-          L(F("path '%s' found in excluded path set; '%s' excluded\n") 
+          L(FL("path '%s' found in excluded path set; '%s' excluded\n") 
             % file_path(test) % path);
           return false;
         }
@@ -362,7 +362,7 @@ app_state::set_root(system_path const & path)
                             F("search root '%s' does not exist") % path,
                             F("search root '%s' is not a directory\n") % path);
   search_root = path;
-  L(F("set search root to %s\n") % search_root);
+  L(FL("set search root to %s\n") % search_root);
 }
 
 void

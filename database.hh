@@ -140,9 +140,6 @@ class database
               std::string const & table);
   bool delta_exists(hexenc<id> const & ident,
                     std::string const & table);
-  bool delta_exists(hexenc<id> const & ident,
-                    hexenc<id> const & base,
-                    std::string const & table);
 
   unsigned long count(std::string const & table);
   unsigned long space_usage(std::string const & table,
@@ -179,11 +176,6 @@ class database
   void remove_version(hexenc<id> const & target_id,
                       std::string const & data_table,
                       std::string const & delta_table);
-  void put_reverse_version(hexenc<id> const & new_id,
-                           hexenc<id> const & old_id,
-                           delta const & reverse_del,
-                           std::string const & data_table,
-                           std::string const & delta_table);
 
   void get_keys(std::string const & table, std::vector<rsa_keypair_id> & keys);
 
@@ -250,7 +242,6 @@ public:
   void info(std::ostream &);
   void version(std::ostream &);
   void migrate();
-  void rehash();
   void ensure_open();
   bool database_specified();
   
@@ -281,12 +272,6 @@ public:
                         file_id const & new_id,
                         file_delta const & del);
 
-  // load in a "direct" new -> old reverse edge (used during
-  // netsync and CVS load-in)
-  void put_file_reverse_version(file_id const & old_id,
-                                file_id const & new_id,
-                                file_delta const & del);
-
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist). 
   void get_manifest_version(manifest_id const & id,
@@ -301,7 +286,7 @@ public:
                              std::set<revision_id> & children);
 
   void get_revision_manifest(revision_id const & cid,
-                            manifest_id & mid);
+                             manifest_id & mid);
 
   void deltify_revision(revision_id const & rid);
 
@@ -352,10 +337,6 @@ public:
   
   // note: this section is ridiculous. please do something about it.
 
-  bool manifest_cert_exists(manifest<cert> const & cert);
-  bool manifest_cert_exists(hexenc<id> const & hash);
-  void put_manifest_cert(manifest<cert> const & cert);
-
   bool revision_cert_exists(revision<cert> const & cert);
   bool revision_cert_exists(hexenc<id> const & hash);
 
@@ -397,13 +378,6 @@ public:
 
   void get_manifest_certs(cert_name const & name, 
                           std::vector< manifest<cert> > & certs);
-
-  void get_manifest_certs(manifest_id const & id, 
-                          cert_name const & name, 
-                          std::vector< manifest<cert> > & certs);
-  
-  void get_manifest_cert(hexenc<id> const & hash,
-                         manifest<cert> & cert);
 
   // epochs 
 

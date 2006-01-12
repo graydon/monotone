@@ -54,8 +54,8 @@ packet_consumer::set_on_keypair_written(boost::function1<void, rsa_keypair_id>
 }
 
 
-packet_db_writer::packet_db_writer(app_state & app, bool take_keys) 
-  : app(app), take_keys(take_keys)
+packet_db_writer::packet_db_writer(app_state & app) 
+  : app(app)
 {}
 
 packet_db_writer::~packet_db_writer() 
@@ -67,7 +67,7 @@ packet_db_writer::consume_file_data(file_id const & ident,
 {
   if (app.db.file_version_exists(ident))
     {
-      L(F("file version '%s' already exists in db\n") % ident);
+      L(FL("file version '%s' already exists in db\n") % ident);
       return;
     }
 
@@ -81,20 +81,11 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
                                      file_id const & new_id,
                                      file_delta const & del)
 {
-  consume_file_delta(old_id, new_id, del, false);
-}
-
-void 
-packet_db_writer::consume_file_delta(file_id const & old_id, 
-                                     file_id const & new_id,
-                                     file_delta const & del,
-                                     bool write_full)
-{
   transaction_guard guard(app.db);
 
   if (app.db.file_version_exists(new_id))
     {
-      L(F("file version '%s' already exists in db\n") % new_id);
+      L(FL("file version '%s' already exists in db\n") % new_id);
       return;
     }
 
@@ -112,56 +103,13 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
   patch(old_dat.inner(), del.inner(), new_dat);
   calculate_ident(file_data(new_dat), confirm);
   if (confirm == new_id)
-    {
-      if (!write_full)
-        app.db.put_file_version(old_id, new_id, del);
-      else
-        app.db.put_file(new_id, file_data(new_dat));
-    }
+    app.db.put_file_version(old_id, new_id, del);
   else
     {
       W(F("reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n") 
         % old_id % new_id % confirm);
     }
 
-  guard.commit();
-}
-
-void 
-packet_db_writer::consume_file_reverse_delta(file_id const & new_id,
-                                             file_id const & old_id,
-                                             file_delta const & del)
-{
-  transaction_guard guard(app.db);
-
-  if (app.db.file_version_exists(old_id))
-    {
-      L(F("file version '%s' already exists in db\n") % old_id);
-      return;
-    }
-
-  if (!app.db.file_version_exists(new_id))
-    {
-      W(F("file reverse-preimage '%s' missing in db") % new_id);
-      W(F("dropping reverse-delta '%s' -> '%s'") % new_id % old_id);
-      return;
-    }
-
-  file_id confirm;
-  file_data new_dat;
-  data old_dat;
-  app.db.get_file_version(new_id, new_dat);
-  patch(new_dat.inner(), del.inner(), old_dat);
-  calculate_ident(file_data(old_dat), confirm);
-  if (confirm == old_id)
-    {
-      app.db.put_file_reverse_version(new_id, old_id, del);
-    }
-  else
-    {
-      W(F("reconstructed file from reverse delta '%s' -> '%s' has wrong id '%s'\n") 
-        % new_id % old_id % confirm);
-    }
   guard.commit();
 }
 
@@ -173,7 +121,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
   transaction_guard guard(app.db);
   if (app.db.revision_exists(ident))
     {
-      L(F("revision '%s' already exists in db\n") % ident);
+      L(FL("revision '%s' already exists in db\n") % ident);
       return;
     }
 
@@ -194,7 +142,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
       
       for (std::map<split_path, file_id>::const_iterator a 
              = edge_changes(i).files_added.begin(); 
-           a != edge_changes(i).files_added.end(); ++a)		 
+           a != edge_changes(i).files_added.end(); ++a)          
         {
           if (! app.db.file_version_exists(a->second))
             {
@@ -242,7 +190,7 @@ packet_db_writer::consume_revision_cert(revision<cert> const & t)
 
   if (app.db.revision_cert_exists(t))
     {
-      L(F("revision cert on '%s' already exists in db\n") 
+      L(FL("revision cert on '%s' already exists in db\n") 
         % t.inner().ident);
       return;
     }
@@ -269,23 +217,17 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
 {
   transaction_guard guard(app.db);
 
-  if (! take_keys) 
-    {
-      W(F("skipping prohibited public key %s\n") % ident);
-      return;
-    }
-
   if (app.db.public_key_exists(ident))
     {
       base64<rsa_pub_key> tmp;
       app.db.get_key(ident, tmp);
       if (!keys_match(ident, tmp, ident, k))
         W(F("key '%s' is not equal to key '%s' in database\n") % ident % ident);
-      L(F("skipping existing public key %s\n") % ident);
+      L(FL("skipping existing public key %s\n") % ident);
       return;
     }
 
-  L(F("putting public key %s\n") % ident);
+  L(FL("putting public key %s\n") % ident);
   app.db.put_key(ident, k);
   if (on_pubkey_written) 
     on_pubkey_written(ident);
@@ -298,15 +240,10 @@ packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
                                    keypair const & kp)
 {
   transaction_guard guard(app.db);
-  if (! take_keys) 
-    {
-      W(F("skipping prohibited key pair %s\n") % ident);
-      return;
-    }
 
   if (app.keys.key_pair_exists(ident))
     {
-      L(F("skipping existing key pair %s\n") % ident);
+      L(FL("skipping existing key pair %s\n") % ident);
       return;
     }
 
@@ -341,19 +278,6 @@ packet_writer::consume_file_delta(file_id const & old_id,
   pack(del.inner(), packed);
   ost << "[fdelta " << old_id.inner()() << endl 
       << "        " << new_id.inner()() << "]" << endl 
-      << trim_ws(packed()) << endl
-      << "[end]" << endl;
-}
-
-void 
-packet_writer::consume_file_reverse_delta(file_id const & new_id, 
-                                          file_id const & old_id,
-                                          file_delta const & del)
-{
-  base64<gzip<delta> > packed;
-  pack(del.inner(), packed);
-  ost << "[frdelta " << new_id.inner()() << endl 
-      << "         " << old_id.inner()() << "]" << endl 
       << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
@@ -438,7 +362,7 @@ feed_packet_consumer
     std::string body(res[3].first, res[3].second);
     if (regex_match(type, regex("[fr]data")))
       {
-        L(F("read data packet"));
+        L(FL("read data packet"));
         require(regex_match(args, regex(ident)));
         require(regex_match(body, regex(base)));
         base64<gzip<data> > body_packed(trim_ws(body));
@@ -453,9 +377,9 @@ feed_packet_consumer
         else
           throw oops("matched impossible data packet with head '" + type + "'");
       }
-    else if (regex_match(type, regex("fr?delta")))
+    else if (type == "fdelta")
       {
-        L(F("read delta packet"));
+        L(FL("read delta packet"));
         match_results<std::string::const_iterator> matches;
         require(regex_match(args, matches, regex(ident + sp + ident)));
         string src_id(matches[1].first, matches[1].second);
@@ -464,21 +388,13 @@ feed_packet_consumer
         base64<gzip<delta> > body_packed(trim_ws(body));
         delta contents;
         unpack(body_packed, contents);
-        if (type == "fdelta")
-          cons.consume_file_delta(file_id(hexenc<id>(src_id)), 
-                                  file_id(hexenc<id>(dst_id)), 
-                                  file_delta(contents));
-        else if (type == "frdelta")
-          cons.consume_file_reverse_delta(file_id(hexenc<id>(src_id)), 
-                                          file_id(hexenc<id>(dst_id)), 
-                                          file_delta(contents));
-        else
-          throw oops("matched impossible delta packet with head '"
-                     + type + "'");
+        cons.consume_file_delta(file_id(hexenc<id>(src_id)), 
+                                file_id(hexenc<id>(dst_id)), 
+                                file_delta(contents));
       }
     else if (type == "rcert")
       {
-        L(F("read cert packet"));
+        L(FL("read cert packet"));
         match_results<std::string::const_iterator> matches;
         require(regex_match(args, matches, regex(ident + sp + certname
                                                  + sp + key + sp + base)));
@@ -498,7 +414,7 @@ feed_packet_consumer
       } 
     else if (type == "pubkey")
       {
-        L(F("read pubkey data packet"));
+        L(FL("read pubkey data packet"));
         require(regex_match(args, regex(key)));
         require(regex_match(body, regex(base)));
         string contents(trim_ws(body));
@@ -507,7 +423,7 @@ feed_packet_consumer
       }
     else if (type == "keypair")
       {
-        L(F("read keypair data packet"));
+        L(FL("read keypair data packet"));
         require(regex_match(args, regex(key)));
         match_results<std::string::const_iterator> matches;
         require(regex_match(body, matches, regex(base + "#" + base)));
@@ -517,7 +433,7 @@ feed_packet_consumer
       }
     else if (type == "privkey")
       {
-        L(F("read pubkey data packet"));
+        L(FL("read pubkey data packet"));
         require(regex_match(args, regex(key)));
         require(regex_match(body, regex(base)));
         string contents(trim_ws(body));
@@ -608,6 +524,21 @@ packet_roundabout_test()
     diff(fdata.inner(), fdata2.inner(), del);
     pw.consume_file_delta(fid, fid2, file_delta(del));
 
+    // a rdata packet
+    revision_set rev;
+    rev.new_manifest = manifest_id(std::string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+    split_path sp;
+    file_path_internal("").split(sp);
+    shared_ptr<cset> cs(new cset);
+    cs->dirs_added.insert(sp);
+    rev.edges.insert(std::make_pair(revision_id(std::string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
+                                    cs));
+    revision_data rdat;
+    write_revision_set(rev, rdat);
+    revision_id rid;
+    calculate_ident(rdat, rid);
+    pw.consume_revision_data(rid, rdat);
+
     // a cert packet
     base64<cert_value> val;
     encode_base64(cert_value("peaches"), val);
@@ -624,7 +555,7 @@ packet_roundabout_test()
     encode_base64(rsa_pub_key("this is not a real rsa key"), kp.pub);
     pw.consume_public_key(rsa_keypair_id("test@lala.com"), kp.pub);
 
-    // a private key packet
+    // a keypair packet
     encode_base64(rsa_priv_key("this is not a real rsa key either!"), kp.priv);
     
     pw.consume_key_pair(rsa_keypair_id("test@lala.com"), kp);

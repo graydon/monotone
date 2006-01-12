@@ -18,24 +18,6 @@ struct keyreader : public packet_consumer
                                   file_id const & id_new,
                                   file_delta const & del)
   {E(false, F("Extraneous data in key store."));}
-  virtual void consume_file_reverse_delta(file_id const & id_new,
-                                          file_id const & id_old,
-                                          file_delta const & del)
-  {E(false, F("Extraneous data in key store."));}
-  
-
-  virtual void consume_manifest_data(manifest_id const & ident, 
-                                     manifest_data const & dat)
-  {E(false, F("Extraneous data in key store."));}
-  virtual void consume_manifest_delta(manifest_id const & id_old, 
-                                      manifest_id const & id_new,
-                                      manifest_delta const & del)
-  {E(false, F("Extraneous data in key store."));}
-  virtual void consume_manifest_reverse_delta(manifest_id const & id_new,
-                                              manifest_id const & id_old,
-                                              manifest_delta const & del)
-  {E(false, F("Extraneous data in key store."));}
-
 
   virtual void consume_revision_data(revision_id const & ident, 
                                      revision_data const & dat)
@@ -57,7 +39,7 @@ struct keyreader : public packet_consumer
     hexenc<id> hash;
     key_hash_code(ident, kp.pub, hash);
     ks->hashes.insert(std::make_pair(hash, ident));
-    L(F("Read key pair '%s' from key store.") % ident);
+    L(FL("Read key pair '%s' from key store.") % ident);
   } 
 };
 
@@ -213,7 +195,7 @@ key_store::put_key_pair(rsa_keypair_id const & ident,
                         keypair const & kp)
 {
   maybe_read_key_dir();
-  L(F("putting key pair '%s'") % ident);
+  L(FL("putting key pair '%s'") % ident);
   std::pair<std::map<rsa_keypair_id, keypair>::iterator, bool> res;
   res = keys.insert(std::make_pair(ident, kp));
   if (res.second)

@@ -59,7 +59,7 @@ struct poptOption coptions[] =
     {"pid-file", 0, POPT_ARG_STRING, &argstr, OPT_PIDFILE, gettext_noop("record process id of server"), NULL},
     {"brief", 0, POPT_ARG_NONE, NULL, OPT_BRIEF, gettext_noop("print a brief version of the normal output"), NULL},
     {"diffs", 0, POPT_ARG_NONE, NULL, OPT_DIFFS, gettext_noop("print diffs along with logs"), NULL},
-    {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, gettext_noop("skip merges when printing logs"), NULL},
+    {"merges", 0, POPT_ARG_NONE, NULL, OPT_MERGES, gettext_noop("include merges when printing logs"), NULL},
     {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, gettext_noop("use the current arguments as the future default"), NULL},
     {"exclude", 0, POPT_ARG_STRING, &argstr, OPT_EXCLUDE, gettext_noop("leave out anything described by its argument"), NULL},
     {"unified", 0, POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("use unified diff format"), NULL},
@@ -259,10 +259,10 @@ cpp_main(int argc, char ** argv)
           cmdline_ss << ", ";
         cmdline_ss << "'" << argv[i] << "'";
       }
-    L(F("command line: %s\n") % cmdline_ss.str());
+    L(FL("command line: %s\n") % cmdline_ss.str());
   }
 
-  L(F("set locale: LC_ALL=%s\n")
+  L(FL("set locale: LC_ALL=%s\n")
     % (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL)));
 
   // Set up secure memory allocation etc
@@ -415,8 +415,8 @@ cpp_main(int argc, char ** argv)
               app.diffs = true;
               break;
 
-            case OPT_NO_MERGES:
-              app.no_merges = true;
+            case OPT_MERGES:
+              app.merges = true;
               break;
 
             case OPT_SET_DEFAULT:
@@ -585,13 +585,13 @@ cpp_main(int argc, char ** argv)
           if (command_options.find(o->val) != command_options.end())
             {
               o->argInfo &= ~POPT_ARGFLAG_DOC_HIDDEN;
-              L(F("Removed 'hidden' from option # %d\n") % o->argInfo);
+              L(FL("Removed 'hidden' from option # %d\n") % o->argInfo);
               count++;
             }
           else
             {
               o->argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
-              L(F("Added 'hidden' to option # %d\n") % o->argInfo);
+              L(FL("Added 'hidden' to option # %d\n") % o->argInfo);
             }
         }
       free((void *)options[0].descrip); options[0].descrip = NULL;
@@ -602,7 +602,7 @@ cpp_main(int argc, char ** argv)
           options[0].descrip = strdup(sstr.str().c_str());
 
           options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
-          L(F("Added 'hidden' to option # %d\n") % options[0].argInfo);
+          L(FL("Added 'hidden' to option # %d\n") % options[0].argInfo);
         }
 
       poptPrintHelp(ctx(), stdout, 0);

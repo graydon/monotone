@@ -116,6 +116,68 @@ test case exists, it is strongly recommended to write a test case before
 attempting to fix the bug.
 
 
+Single-character macros
+-----------------------
+
+These are very convenient once you get used to them, but when you
+first look at the code, it can be a bit of a shock to see all these
+bare capital letters scattered around.  Here's a quick guide.
+
+   Formatting macros:
+      F("foo %s"): create a formatting object, for display to the user.
+         Translators will translate this string, and F() runs
+         gettext() on its argument.  NB: this string should usually
+         _not_ end in a newline.
+      FP("%d foo", "%d foos", n) % n: create a formatting object, with
+         plural handling.  Same comments apply as to F().
+      FL("foo %s"): create a raw ("literal") formatting object, mostly for
+         use in logging.  This string will _not_ be translated, and
+         gettext() is _not_ called.  This is almost always an argument
+         to the L() macro:
+
+   Informational macros:
+      L(FL("foo")): log "foo".  Log messages are generally not seen by the
+         user, and are used to debug problems with monotone.
+      P(F("foo")): print "foo".  For generic informative messages to the
+         user.
+      W(F("foo")): warn "foo".  For warnings to the user.
+      
+   Assertion macros (see also the next section).  These all cause
+   monotone to exit if their condition is false:
+      I(x != y): "invariant" -- if the condition is not true, then there
+         is a bug in monotone.
+      N(x != y, F("make x and y equal")): "naughty" -- the user
+         requested something that doesn't make sense, they should fix
+         that.
+      E(x != y, F("x and y are not equal")): "error" -- not a bug in
+         monotone, not necessarily the users fault... dunno boss, it
+         just isn't working!
+
+   Tracing macros:
+      MM(x): Mark the given variable as one of the things we are looking
+         at right now.  On its own, this statement has no visible
+         effect; but if monotone crashes (that is, an I() check fails)
+         while MM(x) is in scope, then the value of x will be printed
+         to the debug log.  This is quite cheap, so feel free to
+         scatter them through your code; this information is _very_
+         useful when trying to understand crashes, especially ones
+         reported by users, that cannot necessarily be reproduced.
+         There are some limitations:
+          -- the object passed to MM must remain in scope as long as the
+             MM does.  Code like
+                MM(get_cool_value())
+             will probably crash!  Instead say 
+                cool_t my_cool_value = get_cool_value();
+                MM(my_cool_value);"
+          -- You can only use MM() once per line.  If you say
+                MM(x); MM(y);
+             you will get a compile error.  Instead say
+                MM(x);
+                MM(y);
+          -- The object passed to MM() must have a defined "dump"
+             function.  You can easily add an overload to "dump" to
+             support new types.
+
 Reporting errors to the user
 ----------------------------
 

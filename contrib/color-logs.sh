@@ -1,5 +1,5 @@
 #!/bin/sh
 
-./monotone log --diffs --no-merges $@    \
+./monotone log --diffs $@    \
   | ./contrib/colorize -c contrib/color-logs.conf  \
   | less -r -p -----------------------------------------------------------------

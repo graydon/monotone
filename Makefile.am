@@ -55,7 +55,7 @@ MOST_SOURCES =								\
 	 netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
          package_full_revision.c package_full_revision.h options.hh	\
-         i18n.h hash_map.hh parallel_iter.hh safe_map.hh
+         i18n.h hash_map.hh parallel_iter.hh safe_map.hh pch.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -223,8 +223,10 @@ WIN32_PLATFORM_SOURCES = \
 bin_PROGRAMS = monotone
 check_PROGRAMS = unit_tests
 noinst_PROGRAMS = txt2c 
+EXTRA_PROGRAMS = usher 
 
 monotone_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
+usher_SOURCES = contrib/usher.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
 
 txt2c_SOURCES = txt2c.cc

@@ -46,7 +46,7 @@ checked_globish_to_regex(std::string const & glob, std::string & regex)
   regex.clear();
   regex.reserve(glob.size() * 2);
 
-  L(F("checked_globish_to_regex: input = '%s'\n") % glob);
+  L(FL("checked_globish_to_regex: input = '%s'\n") % glob);
 
   if (glob == "")
     {
@@ -96,7 +96,7 @@ checked_globish_to_regex(std::string const & glob, std::string & regex)
   N(in_braces == 0,
     F("run-away brace expression in pattern '%s'") % glob);
 
-  L(F("checked_globish_to_regex: output = '%s'\n") % regex);
+  L(FL("checked_globish_to_regex: output = '%s'\n") % regex);
 }
 
 void
@@ -138,7 +138,7 @@ globish_matcher::operator()(std::string const & s)
   bool inc_match = boost::regex_match(s, r_inc);
   bool exc_match = boost::regex_match(s, r_exc);
   bool result = inc_match && !exc_match;
-  L(F("matching '%s' against '%s' excluding '%s': %s, %s: %s\n")
+  L(FL("matching '%s' against '%s' excluding '%s': %s, %s: %s\n")
     % s % r_inc % r_exc
     % (inc_match ? "included" : "not included")
     % (exc_match ? "excluded" : "not excluded")

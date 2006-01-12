@@ -97,7 +97,7 @@ refiner::calculate_items_to_send()
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   
-  L(F("determined %d %s items to send") % items_to_send.size() % typestr);  
+  L(FL("determined %d %s items to send") % items_to_send.size() % typestr);  
   calculated_items_to_send = true;
 }
 
@@ -153,8 +153,7 @@ refiner::note_item_in_peer(merkle_node const & their_node, size_t slot)
     string typestr;
     netcmd_item_type_to_string(their_node.type, typestr);
     
-    L(boost::format("peer has %s '%s' at slot %d "
-                    "(in node '%s', level %d)\n")
+    L(FL("peer has %s '%s' at slot %d (in node '%s', level %d)\n")
       % typestr % hslotval % slot % hpref % their_node.level);
   }
 }
@@ -179,7 +178,7 @@ refiner::process_done_command(size_t n_items)
   calculate_items_to_send();
   items_to_receive = n_items;
 
-  L(F("finished %s refinement: %d to send, %d to receive")
+  L(FL("finished %s refinement: %d to send, %d to receive")
     % typestr % items_to_send.size() % items_to_receive);
 
   if (voice == server_voice)
@@ -191,7 +190,7 @@ refiner::process_done_command(size_t n_items)
 
 void 
 refiner::process_refinement_command(refinement_type ty, 
-				    merkle_node const & their_node)
+                                    merkle_node const & their_node)
 {
   prefix pref;
   hexenc<prefix> hpref;
@@ -202,7 +201,7 @@ refiner::process_refinement_command(refinement_type ty,
   netcmd_item_type_to_string(their_node.type, typestr);
   size_t lev = static_cast<size_t>(their_node.level);
   
-  L(F("received refinement %s netcmd on %s node '%s', level %d") 
+  L(FL("received refinement %s netcmd on %s node '%s', level %d") 
     % (ty == refinement_query ? "query" : "response") % typestr % hpref % lev);
   
   merkle_ptr our_node;
@@ -222,25 +221,25 @@ refiner::process_refinement_command(refinement_type ty,
     {
       // Note any leaves they have.
       if (their_node.get_slot_state(slot) == leaf_state)
-	note_item_in_peer(their_node, slot);
+        note_item_in_peer(their_node, slot);
       
       // Compare any subtrees, if we both have subtrees.
       if (our_node->get_slot_state(slot) == subtree_state
-	  && their_node.get_slot_state(slot) == subtree_state)
-	{
-	  id our_slotval, their_slotval;
-	  their_node.get_raw_slot(slot, their_slotval);
-	  our_node->get_raw_slot(slot, our_slotval);
-	  
-	  // Always note when you share a subtree.
-	  if (their_slotval == our_slotval)
-	    note_subtree_shared_with_peer(*our_node, slot);
-	  
-	  // Send subqueries when you have a different subtree
-	  // and you're answering a query message.
-	  else if (ty == refinement_query)
-	    send_subquery(*our_node, slot);
-	}
+          && their_node.get_slot_state(slot) == subtree_state)
+        {
+          id our_slotval, their_slotval;
+          their_node.get_raw_slot(slot, their_slotval);
+          our_node->get_raw_slot(slot, our_slotval);
+          
+          // Always note when you share a subtree.
+          if (their_slotval == our_slotval)
+            note_subtree_shared_with_peer(*our_node, slot);
+          
+          // Send subqueries when you have a different subtree
+          // and you're answering a query message.
+          else if (ty == refinement_query)
+            send_subquery(*our_node, slot);
+        }
 
       // Note: if they had a leaf (or empty) where I had a subtree, I
       // will have noted the leaf and will not send it. They will not
@@ -251,15 +250,15 @@ refiner::process_refinement_command(refinement_type ty,
   if (ty == refinement_response)
     {
       E((queries_in_flight > 0),
-	F("underflow on query-in-flight counter"));
+        F("underflow on query-in-flight counter"));
       --queries_in_flight;
 
       // Possibly this signals the end of refinement.
       if (voice == client_voice && queries_in_flight == 0)
-	{
-	  calculate_items_to_send();
-	  cb.queue_done_cmd(type, items_to_send.size());
-	}
+        {
+          calculate_items_to_send();
+          cb.queue_done_cmd(type, items_to_send.size());
+        }
     }
   else
     {

@@ -134,7 +134,7 @@ namespace commands
   {
     if (cmd.length() == 0 || cmds.find(cmd) != cmds.end()) return cmd;
 
-    L(F("expanding command '%s'\n") % cmd);
+    L(FL("expanding command '%s'\n") % cmd);
 
     vector<string> matched;
 
@@ -151,7 +151,7 @@ namespace commands
     if (matched.size() == 1) 
       {
       string completed = *matched.begin();
-      L(F("expanded command to '%s'\n") %  completed);  
+      L(FL("expanded command to '%s'") %  completed);  
       return completed;
       }
     else if (matched.size() > 1) 
@@ -160,7 +160,7 @@ namespace commands
       for (vector<string>::iterator i = matched.begin();
            i != matched.end(); ++i)
         err += (*i + "\n");
-      W(boost::format(err));
+      W(i18n_format(err));
     }
 
     return cmd;
@@ -244,13 +244,13 @@ namespace commands
   {
     if (cmds.find(cmd) != cmds.end())
       {
-        L(F("executing command '%s'\n") % cmd);
+        L(FL("executing command '%s'\n") % cmd);
         cmds[cmd]->exec(app, args);
         return 0;
       }
     else
       {
-        ui.inform(F("unknown command '%s'\n") % cmd);
+        P(F("unknown command '%s'\n") % cmd);
         return 1;
       }
   }
@@ -420,7 +420,7 @@ notify_if_multiple_heads(app_state & app) {
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider 'monotone merge'"),
                       prefixedline);
-    P(boost::format(prefixedline) % app.branch_name);
+    P(i18n_format(prefixedline) % app.branch_name);
   }
 }
 
@@ -499,7 +499,7 @@ complete(app_state & app,
       for (set<string>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         err += (describe_revision(app, revision_id(*i)) + "\n");
-      N(completions.size() == 1, boost::format(err));
+      N(completions.size() == 1, i18n_format(err));
     }
   completion = revision_id(*(completions.begin()));  
   P(F("expanded to '%s'\n") %  completion);  
@@ -529,7 +529,7 @@ complete(app_state & app,
       for (typename set<ID>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         err += (i->inner()() + "\n");
-      N(completions.size() == 1, boost::format(err));
+      N(completions.size() == 1, i18n_format(err));
     }
   completion = *(completions.begin());  
   P(F("expanded partial id '%s' to '%s'\n")
@@ -618,14 +618,14 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       I(lines.size() > 0);
 
       cout << std::string(guess_terminal_width(), '-') << '\n'
-           << boost::format(str)
-        % idx(certs, i).key()
-        % stat
-        % idx(certs, i).name()
-        % idx(lines, 0);
+           << (i18n_format(str)
+               % idx(certs, i).key()
+               % stat
+               % idx(certs, i).name()
+               % idx(lines, 0));
       
       for (size_t i = 1; i < lines.size(); ++i)
-        cout << boost::format(extra_str) % idx(lines, i);
+        cout << (i18n_format(extra_str) % idx(lines, i));
     }  
 
   if (certs.size() > 0)
@@ -932,7 +932,7 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"
       key_deleted = true;
     }
 
-  boost::format fmt;
+  i18n_format fmt;
   if (checked_db)
     fmt = F("public or private key '%s' does not exist in keystore or database");
   else
@@ -1391,7 +1391,7 @@ CMD(cat, N_("informative"),
   file_t file_node = downcast_to_file_t(node);
   file_id ident = file_node->content;  
   file_data dat;
-  L(F("dumping file '%s'\n") % ident);
+  L(FL("dumping file '%s'\n") % ident);
   app.db.get_file_version(ident, dat);
   cout.write(dat.inner()().data(), dat.inner()().size());
 
@@ -1460,7 +1460,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
       vector< revision<cert> > certs;
       app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
           
-      L(F("found %d %s branch certs on revision %s\n") 
+      L(FL("found %d %s branch certs on revision %s\n") 
         % certs.size()
         % app.branch_name
         % ident);
@@ -1477,7 +1477,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   
   put_revision_id(ident);
   
-  L(F("checking out revision %s to directory %s\n") % ident % dir);
+  L(FL("checking out revision %s to directory %s\n") % ident % dir);
   app.db.get_roster(ident, ros, mm);
   
   node_map const & nodes = ros.all_nodes();
@@ -1503,7 +1503,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
             % file->content % path);
       
           file_data dat;
-          L(F("writing file %s to %s\n")
+          L(FL("writing file %s to %s\n")
             % file->content % path);
           app.db.get_file_version(file->content, dat);
           write_localized_data(path, dat.inner(), app.lua);
@@ -1906,7 +1906,7 @@ CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
     N_("read packets from files or stdin"),
     OPT_NONE)
 {
-  packet_db_writer dbw(app, true);
+  packet_db_writer dbw(app);
   size_t count = 0;
   if (args.empty())
     {
@@ -1929,19 +1929,6 @@ CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
   P(FP("read %d packet", "read %d packets", count) % count);
 }
 
-
-CMD(reindex, N_("network"), "",
-    N_("rebuild the indices used to sync over the network"),
-    OPT_NONE)
-{
-  if (args.size() > 0)
-    throw usage(name);
-
-  transaction_guard guard(app.db);
-  ui.set_tick_trailer("rehashing db");
-  app.db.rehash();
-  guard.commit();
-}
 
 static const var_key default_server_key(var_domain("database"),
                                         var_name("default-server"));
@@ -1980,7 +1967,7 @@ process_netsync_args(std::string const & name,
           var_value addr_value;
           app.db.get_var(default_server_key, addr_value);
           addr = utf8(addr_value());
-          L(F("using default server address: %s\n") % addr);
+          L(FL("using default server address: %s\n") % addr);
         }
     }
 
@@ -2012,7 +1999,7 @@ process_netsync_args(std::string const & name,
       var_value pattern_value;
       app.db.get_var(default_include_pattern_key, pattern_value);
       include_pattern = utf8(pattern_value());
-      L(F("using default branch include pattern: '%s'\n") % include_pattern);
+      L(FL("using default branch include pattern: '%s'\n") % include_pattern);
       if (app.db.var_exists(default_exclude_pattern_key))
         {
           app.db.get_var(default_exclude_pattern_key, pattern_value);
@@ -2020,7 +2007,7 @@ process_netsync_args(std::string const & name,
         }
       else
         exclude_pattern = utf8("");
-      L(F("excluding: %s\n") % exclude_pattern);
+      L(FL("excluding: %s\n") % exclude_pattern);
     }
 }
 
@@ -2315,7 +2302,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
     guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
 
   P(F("beginning commit on branch '%s'\n") % branchname);
-  L(F("new manifest '%s'\n"
+  L(FL("new manifest '%s'\n"
       "new revision '%s'\n")
     % rs.new_manifest
     % rid);
@@ -2357,7 +2344,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
     else
       {
         // new revision
-        L(F("inserting new revision %s\n") % rid);
+        L(FL("inserting new revision %s\n") % rid);
 
         I(rs.edges.size() == 1);
         edge_map::const_iterator edge = rs.edges.begin();
@@ -2375,12 +2362,12 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
 
             if (app.db.file_version_exists(new_content))
               {
-                L(F("skipping file delta %s, already in database\n")
+                L(FL("skipping file delta %s, already in database\n")
                   % delta_entry_dst(i));
               }
             else if (app.db.file_version_exists(old_content))
               {
-                L(F("inserting delta %s -> %s\n")
+                L(FL("inserting delta %s -> %s\n")
                   % old_content % new_content);
                 file_data old_data;
                 data new_data;
@@ -2400,7 +2387,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
               }
             else
               {
-                L(F("inserting full version %s\n") % new_content);
+                L(FL("inserting full version %s\n") % new_content);
                 data new_data;
                 read_localized_data(path, new_data, app.lua);
                 // sanity check
@@ -2419,7 +2406,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
             file_path path(i->first);
             file_id new_content = i->second;
 
-            L(F("inserting full version %s\n") % new_content);
+            L(FL("inserting full version %s\n") % new_content);
             data new_data;
             read_localized_data(path, new_data, app.lua);
             // sanity check
@@ -2773,7 +2760,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
   else
     {
-      cout << "# no changes" << endl;
+      cout << "# " << _("no changes") << endl;
     }
   cout << "# " << endl;
 
@@ -2856,7 +2843,7 @@ CMD(update, N_("working copy"), "",
           P(F("multiple update candidates:\n"));
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
-            P(boost::format("  %s\n") % describe_revision(app, *i));
+            P(i18n_format("  %s\n") % describe_revision(app, *i));
           P(F("choose one with 'monotone update -r<id>'\n"));
           N(false, F("multiple candidates remain after selection"));
         }
@@ -3271,14 +3258,14 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
       find_missing(app, args, missing);
       if (missing.empty())
         {
-          L(F("no missing files in restriction."));
+          L(FL("no missing files in restriction."));
           return;
         }
 
       vector<utf8> missing_args;
       for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
       {
-        L(F("missing files are '%s'") % file_path(*i));
+        L(FL("missing files are '%s'") % file_path(*i));
         missing_args.push_back(file_path(*i).as_external());
       }
       app.set_restriction(valid_paths, missing_args);
@@ -3320,14 +3307,14 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
             }
       
           P(F("reverting %s") % fp);
-          L(F("reverting %s to [%s]\n") % fp % f->content);
+          L(FL("reverting %s to [%s]\n") % fp % f->content);
           
           N(app.db.file_version_exists(f->content),
             F("no file version %s found in database for %s")
             % f->content % fp);
           
           file_data dat;
-          L(F("writing file %s to %s\n")
+          L(FL("writing file %s to %s\n")
             % f->content % fp);
           app.db.get_file_version(f->content, dat);
           write_localized_data(fp, dat.inner(), app.lua);
@@ -3450,7 +3437,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
   N(!null_id(rid), F("no revision for file '%s' in database") % file);
   N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
 
-  L(F("annotate file file_path '%s'\n") % file);
+  L(FL("annotate file file_path '%s'\n") % file);
 
   // find the version of the file requested
   roster_t roster;
@@ -3460,7 +3447,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
   N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'\n") % file % rid);
 
   file_t file_node = downcast_to_file_t(node);
-  L(F("annotate for file_id %s\n") % file_node->self);
+  L(FL("annotate for file_id %s\n") % file_node->self);
   do_annotate(app, file_node, rid);
 }
 
@@ -3468,7 +3455,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
-    OPT_LAST % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES)
+    OPT_LAST % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_MERGES)
 {
   if (app.revision_selectors.size() == 0)
     app.require_working_copy("try passing a --revision to start at");
@@ -3545,7 +3532,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
           if (!app.db.revision_exists(rid))
             {
-              L(F("revision %s does not exist in db, skipping\n") % rid);
+              L(FL("revision %s does not exist in db, skipping\n") % rid);
               continue;
             }
 
@@ -3597,7 +3584,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               csum.add_change_set(edge_changes(e));
             }
 
-          if (app.no_merges && rev.is_merge_node())
+          if (!app.merges && rev.is_merge_node())
             print_this = false;
           
           if (print_this)

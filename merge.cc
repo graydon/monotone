@@ -51,7 +51,7 @@ resolve_merge_conflicts(revision_id const & left_rid,
   
   if (!result.is_clean())
     {
-      L(F("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
+      L(FL("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
           "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
         % result.node_name_conflicts.size()
         % result.file_content_conflicts.size()
@@ -61,7 +61,7 @@ resolve_merge_conflicts(revision_id const & left_rid,
         % result.directory_loop_conflicts.size());
 
       for (size_t i = 0; i < result.node_name_conflicts.size(); ++i)
-        L(F("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
+        L(FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
           % result.node_name_conflicts[i].nid 
           % result.node_name_conflicts[i].left.first 
           % result.node_name_conflicts[i].left.second
@@ -69,13 +69,13 @@ resolve_merge_conflicts(revision_id const & left_rid,
           % result.node_name_conflicts[i].right.second);
 
       for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
-        L(F("content conflict on node %d: [%s] vs. [%s]\n") 
+        L(FL("content conflict on node %d: [%s] vs. [%s]\n") 
           % result.file_content_conflicts[i].nid
           % result.file_content_conflicts[i].left
           % result.file_content_conflicts[i].right);
 
       for (size_t i = 0; i < result.node_attr_conflicts.size(); ++i)
-        L(F("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
+        L(FL("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
           % result.node_attr_conflicts[i].nid
           % result.node_attr_conflicts[i].key
           % result.node_attr_conflicts[i].left.first
@@ -84,20 +84,20 @@ resolve_merge_conflicts(revision_id const & left_rid,
           % result.node_attr_conflicts[i].right.second);
 
       for (size_t i = 0; i < result.orphaned_node_conflicts.size(); ++i)
-        L(F("orphaned node conflict on node %d, dead parent %d, name %s")
+        L(FL("orphaned node conflict on node %d, dead parent %d, name %s")
           % result.orphaned_node_conflicts[i].nid
           % result.orphaned_node_conflicts[i].parent_name.first
           % result.orphaned_node_conflicts[i].parent_name.second);
 
       for (size_t i = 0; i < result.rename_target_conflicts.size(); ++i)
-        L(F("rename target conflict: nodes %d, %d, both want parent %d, name %s")
+        L(FL("rename target conflict: nodes %d, %d, both want parent %d, name %s")
           % result.rename_target_conflicts[i].nid1
           % result.rename_target_conflicts[i].nid2
           % result.rename_target_conflicts[i].parent_name.first
           % result.rename_target_conflicts[i].parent_name.second);
 
       for (size_t i = 0; i < result.directory_loop_conflicts.size(); ++i)
-        L(F("directory loop conflict: node %d, wanted parent %d, name %s")
+        L(FL("directory loop conflict: node %d, wanted parent %d, name %s")
           % result.directory_loop_conflicts[i].nid
           % result.directory_loop_conflicts[i].parent_name.first
           % result.directory_loop_conflicts[i].parent_name.second);
@@ -107,7 +107,7 @@ resolve_merge_conflicts(revision_id const & left_rid,
       if (!result.file_content_conflicts.empty())
         {
 
-          L(F("examining content conflicts\n"));
+          L(FL("examining content conflicts\n"));
           std::vector<file_content_conflict> residual_conflicts;
 
           for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
@@ -136,7 +136,7 @@ resolve_merge_conflicts(revision_id const & left_rid,
               if (cm.try_to_merge_files(anc_path, left_path, right_path, right_path,
                                         anc_id, left_id, right_id, merged_id))
                 {
-                  L(F("resolved content conflict %d / %d\n") 
+                  L(FL("resolved content conflict %d / %d\n") 
                     % (i+1) % result.file_content_conflicts.size());
                   file_t f = downcast_to_file_t(result.roster.get_node(conflict.nid));
                   f->content = merged_id;

@@ -105,7 +105,7 @@ void calculate_extents(vector<long, QA(long)> const & a_b_edits,
   for (vector<long, QA(long)>::const_iterator i = a_b_edits.begin(); 
        i != a_b_edits.end(); ++i)
     {
-      // L(F("edit: %d") % *i);
+      // L(FL("edit: %d") % *i);
       if (*i < 0)
         {
           // negative elements code the negation of the one-based index into A
@@ -119,7 +119,7 @@ void calculate_extents(vector<long, QA(long)> const & a_b_edits,
               extents.push_back(extent(b_pos++, 1, preserved));
             }
 
-          // L(F(" -- delete at A-pos %d (B-pos = %d)\n") % a_deleted % b_pos);
+          // L(FL(" -- delete at A-pos %d (B-pos = %d)\n") % a_deleted % b_pos);
 
           // skip the deleted line
           a_pos++;
@@ -138,7 +138,7 @@ void calculate_extents(vector<long, QA(long)> const & a_b_edits,
               extents.push_back(extent(b_pos++, 1, preserved));
             }
 
-          // L(F(" -- insert at B-pos %d (A-pos = %d) : '%s'\n") 
+          // L(FL(" -- insert at B-pos %d (A-pos = %d) : '%s'\n") 
           //   % b_inserted % a_pos % intern.lookup(b.at(b_inserted)));
           
           // record that there was an insertion, but a_pos did not move.
@@ -211,7 +211,7 @@ void normalize_extents(vector<extent> & a_b_map,
             // Now all the 'changed' extents are normalised to the
             // earliest possible position.
 
-            L(F("exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n")
+            L(FL("exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n")
               % a_b_map.at(j-1).pos
               % a_b_map.at(j-1).len
               % a_b_map.at(j).pos
@@ -238,7 +238,7 @@ void normalize_extents(vector<extent> & a_b_map,
             // step 1: move a chunk from this insert extent to its
             // predecessor
             size_t piece = a_b_map.at(j).len - 1;
-            //      L(F("moving change piece of len %d from pos %d to pos %d\n")
+            //      L(FL("moving change piece of len %d from pos %d to pos %d\n")
             //        % piece
             //        % a_b_map.at(j).pos
             //        % a_b_map.at(j-1).pos);
@@ -251,7 +251,7 @@ void normalize_extents(vector<extent> & a_b_map,
             // extent.
             if (b.at(a_b_map.at(j).pos) == a.at(j))
               {
-                //              L(F("changing normalized 'changed' extent at %d to 'preserved'\n")
+                //              L(FL("changing normalized 'changed' extent at %d to 'preserved'\n")
                 //                % a_b_map.at(j).pos);
                 a_b_map.at(j).type = preserved;
               }
@@ -278,7 +278,7 @@ void merge_extents(vector<extent> const & a_b_map,
   //   for (; i != a_b_map.end(); ++i, ++j)
   //     {
   
-  //       L(F("trying to merge: [%s %d %d] vs. [%s %d %d] \n")
+  //       L(FL("trying to merge: [%s %d %d] vs. [%s %d %d] \n")
   //            % etab[i->type] % i->pos % i->len 
   //            % etab[j->type] % j->pos % j->len);
   //     }
@@ -289,7 +289,7 @@ void merge_extents(vector<extent> const & a_b_map,
   for (; i != a_b_map.end(); ++i, ++j)
     {
 
-      //       L(F("trying to merge: [%s %d %d] vs. [%s %d %d] \n")
+      //       L(FL("trying to merge: [%s %d %d] vs. [%s %d %d] \n")
       //                % etab[i->type] % i->pos % i->len 
       //                % etab[j->type] % j->pos % j->len);
       
@@ -302,7 +302,7 @@ void merge_extents(vector<extent> const & a_b_map,
             {
               if (b.at(i->pos + k) != c.at(j->pos + k))
                 {
-                  L(F("conflicting edits: %s %d[%d] '%s' vs. %s %d[%d] '%s'\n")
+                  L(FL("conflicting edits: %s %d[%d] '%s' vs. %s %d[%d] '%s'\n")
                     % etab[i->type] % i->pos % k % in.lookup(b.at(i->pos + k)) 
                     % etab[j->type] % j->pos % k % in.lookup(c.at(j->pos + k)));
                   throw conflict();
@@ -330,16 +330,16 @@ void merge_extents(vector<extent> const & a_b_map,
       
       else
         {
-          L(F("conflicting edits: [%s %d %d] vs. [%s %d %d]\n")
+          L(FL("conflicting edits: [%s %d %d] vs. [%s %d %d]\n")
             % etab[i->type] % i->pos % i->len 
             % etab[j->type] % j->pos % j->len);
           throw conflict();       
         }      
       
       //       if (merged.empty())
-      //        L(F(" --> EMPTY\n"));
+      //        L(FL(" --> EMPTY\n"));
       //       else
-      //                L(F(" --> [%d]: %s\n") % (merged.size() - 1) % in.lookup(merged.back()));
+      //                L(FL(" --> [%d]: %s\n") % (merged.size() - 1) % in.lookup(merged.back()));
     }
 }
 
@@ -378,7 +378,7 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
        i != right.end(); ++i)
     right_interned.push_back(in.intern(*i));
 
-  L(F("calculating left edit script on %d -> %d lines\n")
+  L(FL("calculating left edit script on %d -> %d lines\n")
     % anc_interned.size() % left_interned.size());
 
   edit_script(anc_interned.begin(), anc_interned.end(),
@@ -386,7 +386,7 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
               std::min(ancestor.size(), left.size()),
               left_edits);
   
-  L(F("calculating right edit script on %d -> %d lines\n")
+  L(FL("calculating right edit script on %d -> %d lines\n")
     % anc_interned.size() % right_interned.size());
 
   edit_script(anc_interned.begin(), anc_interned.end(),
@@ -394,36 +394,36 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
               std::min(ancestor.size(), right.size()),
               right_edits);
 
-  L(F("calculating left extents on %d edits\n") % left_edits.size());
+  L(FL("calculating left extents on %d edits\n") % left_edits.size());
   calculate_extents(left_edits, left_interned, 
                     left_prefix, left_extents, left_suffix, 
                     anc_interned.size(), in);
 
-  L(F("calculating right extents on %d edits\n") % right_edits.size());
+  L(FL("calculating right extents on %d edits\n") % right_edits.size());
   calculate_extents(right_edits, right_interned, 
                     right_prefix, right_extents, right_suffix, 
                     anc_interned.size(), in);
 
-  L(F("normalizing %d right extents\n") % right_extents.size());
+  L(FL("normalizing %d right extents\n") % right_extents.size());
   normalize_extents(right_extents, anc_interned, right_interned);
 
-  L(F("normalizing %d left extents\n") % left_extents.size());
+  L(FL("normalizing %d left extents\n") % left_extents.size());
   normalize_extents(left_extents, anc_interned, left_interned);
 
 
   if ((!right_prefix.empty()) && (!left_prefix.empty()))
     {
-      L(F("conflicting prefixes\n"));
+      L(FL("conflicting prefixes\n"));
       throw conflict();
     }
 
   if ((!right_suffix.empty()) && (!left_suffix.empty()))
     {
-      L(F("conflicting suffixes\n"));
+      L(FL("conflicting suffixes\n"));
       throw conflict();
     }
 
-  L(F("merging %d left, %d right extents\n") 
+  L(FL("merging %d left, %d right extents\n") 
     % left_extents.size() % right_extents.size());
 
   copy(left_prefix.begin(), left_prefix.end(), back_inserter(merged_interned));
@@ -454,7 +454,7 @@ bool merge3(vector<string> const & ancestor,
     }
   catch(conflict & c)
     {
-      L(F("conflict detected. no merge.\n"));
+      L(FL("conflict detected. no merge.\n"));
       return false;
     }
   return true;
@@ -485,7 +485,7 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
                                              file_data const & left_data, 
                                              file_data const & merged_data)
 {  
-  L(F("recording successful merge of %s <-> %s into %s\n")
+  L(FL("recording successful merge of %s <-> %s into %s\n")
     % left_ident % right_ident % merged_ident);
 
   delta left_delta, right_delta;
@@ -501,9 +501,9 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
 
 static void
 load_and_cache_roster(revision_id const & rid,
-		      map<revision_id, shared_ptr<roster_t> > & rmap,
-		      shared_ptr<roster_t> & rout,
-		      app_state & app)
+                      map<revision_id, shared_ptr<roster_t> > & rmap,
+                      shared_ptr<roster_t> & rout,
+                      app_state & app)
 {
   map<revision_id, shared_ptr<roster_t> >::const_iterator i = rmap.find(rid);
   if (i != rmap.end())
@@ -558,7 +558,7 @@ content_merge_working_copy_adaptor::record_merge(file_id const & left_id,
                                                  file_data const & left_data, 
                                                  file_data const & merged_data)
 {  
-  L(F("temporarily recording merge of %s <-> %s into %s\n")
+  L(FL("temporarily recording merge of %s <-> %s into %s\n")
     % left_id % right_id % merged_id);
   I(temporary_store.find(merged_id) == temporary_store.end());
   temporary_store.insert(make_pair(merged_id, merged_data));
@@ -650,12 +650,12 @@ content_merger::try_to_merge_files(file_path const & anc_path,
   I(!null_id(left_id));
   I(!null_id(right_id));
   
-  L(F("trying to merge %s <-> %s (ancestor: %s)\n")
+  L(FL("trying to merge %s <-> %s (ancestor: %s)\n")
     % left_id % right_id % ancestor_id);
 
   if (left_id == right_id)
     {
-      L(F("files are identical\n"));
+      L(FL("files are identical\n"));
       merged_id = left_id;
       return true;      
     }  
@@ -697,7 +697,7 @@ content_merger::try_to_merge_files(file_path const & anc_path,
           file_data merge_data;
           string tmp;
           
-          L(F("internal 3-way merged ok\n"));
+          L(FL("internal 3-way merged ok\n"));
           join_lines(merged_lines, tmp);
           calculate_ident(data(tmp), tmp_id);
           file_id merged_fid(tmp_id);
@@ -728,7 +728,7 @@ content_merger::try_to_merge_files(file_path const & anc_path,
       hexenc<id> tmp_id;
       file_data merge_data;
 
-      L(F("lua merge3 hook merged ok\n"));
+      L(FL("lua merge3 hook merged ok\n"));
       calculate_ident(merged_unpacked, tmp_id);
       file_id merged_fid(tmp_id);
       merge_data = file_data(merged_unpacked);
@@ -741,65 +741,6 @@ content_merger::try_to_merge_files(file_path const & anc_path,
 
   return false;
 }
-
-bool 
-content_merger::try_to_merge_files(file_path const & left_path,
-                                   file_path const & right_path,
-                                   file_path const & merged_path,
-                                   file_id const & left_id,
-                                   file_id const & right_id,
-                                   file_id & merged_id)
-{
-  I(!null_id(left_id));
-  I(!null_id(right_id));
-
-  file_data left_data, right_data;
-  data left_unpacked, right_unpacked, merged_unpacked;
-
-  L(F("trying to merge %s <-> %s\n")
-    % left_id % right_id);
-
-  if (left_id == right_id)
-    {
-      L(F("files are identical\n"));
-      merged_id = left_id;
-      return true;      
-    }  
-
-  adaptor.get_version(left_path, left_id, left_data);
-  adaptor.get_version(right_path, right_id, right_data);
-    
-  left_unpacked = left_data.inner();
-  right_unpacked = right_data.inner();
-
-  P(F("help required for 2-way merge\n"
-      "[    left] %s\n"
-      "[   right] %s\n"
-      "[  merged] %s\n")
-    % left_path
-    % right_path
-    % merged_path);
-
-  if (app.lua.hook_merge2(left_path, right_path, merged_path, 
-                          left_unpacked, right_unpacked, merged_unpacked))
-    {
-      hexenc<id> tmp_id;
-      file_data merge_data;
-      
-      L(F("lua merge2 hook merged ok\n"));
-      calculate_ident(merged_unpacked, tmp_id);
-      file_id merged_fid(tmp_id);
-      merge_data = file_data(merged_unpacked);
-      
-      merged_id = merged_fid;
-      adaptor.record_merge(left_id, right_id, merged_fid, 
-                           left_data, merge_data);
-      return true;
-    }
-  
-  return false;
-}
-
 
 // the remaining part of this file just handles printing out various
 // diff formats for the case where someone wants to *read* a diff
