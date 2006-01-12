@@ -39,7 +39,7 @@ static void
 do_arc4(SecureVector<byte> & sym_key,
         SecureVector<byte> & payload)
 {
-  L(F("running arc4 process on %d bytes of data\n") % payload.size());
+  L(FL("running arc4 process on %d bytes of data\n") % payload.size());
   Pipe enc(get_cipher("ARC4", sym_key, ENCRYPTION));
   enc.process_msg(payload);
   payload = enc.read_all();
@@ -174,7 +174,7 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
   // if all that worked, we can return our results to caller
   encode_base64(raw_priv_key, kp_out.priv);
   encode_base64(raw_pub_key, kp_out.pub);
-  L(F("generated %d-byte public key\n"
+  L(FL("generated %d-byte public key\n"
       "generated %d-byte (encrypted) private key\n")
     % kp_out.pub().size()
     % kp_out.priv().size());
@@ -191,12 +191,12 @@ get_private_key(lua_hooks & lua,
   string phrase;
   bool force = force_from_user;
 
-  L(F("base64-decoding %d-byte private key\n") % priv().size());
+  L(FL("base64-decoding %d-byte private key\n") % priv().size());
   decode_base64(priv, decoded_key);
   for (int i = 0; i < 3; ++i)
     {
       get_passphrase(lua, id, phrase, false, force);
-      L(F("have %d-byte encrypted private key\n") % decoded_key().size());
+      L(FL("have %d-byte encrypted private key\n") % decoded_key().size());
 
       shared_ptr<PKCS8_PrivateKey> pkcs8_key;
       try 
@@ -241,7 +241,7 @@ migrate_private_key(app_state & app,
 
   // need to decrypt the old key
   shared_ptr<RSA_PrivateKey> priv_key;
-  L(F("base64-decoding %d-byte old private key\n") % old_priv().size());
+  L(FL("base64-decoding %d-byte old private key\n") % old_priv().size());
   decode_base64(old_priv, decoded_key);
   for (int i = 0; i < 3; ++i)
     {
@@ -252,7 +252,7 @@ migrate_private_key(app_state & app,
       sym_key.set(reinterpret_cast<byte const *>(phrase.data()), phrase.size());
       do_arc4(sym_key, decrypted_key);
 
-      L(F("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
+      L(FL("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
 
       shared_ptr<PKCS8_PrivateKey> pkcs8_key;
       try 
@@ -352,7 +352,7 @@ make_signature(app_state & app,           // to hook for phrase
   sig = signer->sign_message(reinterpret_cast<byte const *>(tosign.data()), tosign.size());
   sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
   
-  L(F("produced %d-byte signature\n") % sig_string.size());
+  L(FL("produced %d-byte signature\n") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
 }
 
@@ -380,7 +380,7 @@ check_signature(app_state &app,
       SecureVector<byte> pub_block;
       pub_block.set(reinterpret_cast<byte const *>(pub().data()), pub().size());
 
-      L(F("building verifier for %d-byte pub key\n") % pub_block.size());
+      L(FL("building verifier for %d-byte pub key\n") % pub_block.size());
       shared_ptr<X509_PublicKey> x509_key =
           shared_ptr<X509_PublicKey>(X509::load_key(pub_block));
       pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
@@ -402,7 +402,7 @@ check_signature(app_state &app,
   decode_base64(signature, sig_decoded);
 
   // check the text+sig against the key
-  L(F("checking %d-byte (%d decoded) signature\n") % 
+  L(FL("checking %d-byte (%d decoded) signature\n") % 
     signature().size() % sig_decoded().size());
 
   bool valid_sig = verifier->verify_message(

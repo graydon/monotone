@@ -10,6 +10,7 @@
 
 #include "vocab.hh"
 #include "paths.hh"
+#include "sanity.hh"
 
 // this layer deals with talking to the filesystem, loading and saving
 // files, walking trees, etc.
@@ -27,13 +28,13 @@ void assert_path_is_directory(any_path const & path);
 
 // use N()
 void require_path_is_nonexistent(any_path const & path,
-                                 boost::format const & message);
+                                 i18n_format const & message);
 void require_path_is_file(any_path const & path,
-                          boost::format const & message_if_nonexistent,
-                          boost::format const & message_if_directory);
+                          i18n_format const & message_if_nonexistent,
+                          i18n_format const & message_if_directory);
 void require_path_is_directory(any_path const & path,
-                               boost::format const & message_if_nonexistent,
-                               boost::format const & message_if_file);
+                               i18n_format const & message_if_nonexistent,
+                               i18n_format const & message_if_file);
 
 // returns true if there is a file or directory at 'path'
 bool path_exists(any_path const & path);

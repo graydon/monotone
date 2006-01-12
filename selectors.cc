@@ -20,14 +20,14 @@ namespace selectors
   {
     sel = orig_sel;
 
-    L(F("decoding selector '%s'\n") % sel);
+    L(FL("decoding selector '%s'\n") % sel);
 
     std::string tmp;
     if (sel.size() < 2 || sel[1] != ':')
       {
         if (!app.lua.hook_expand_selector(sel, tmp))
           {
-            L(F("expansion of selector '%s' failed\n") % sel);
+            L(FL("expansion of selector '%s' failed\n") % sel);
           }
         else
           {

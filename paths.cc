@@ -85,7 +85,7 @@ save_initial_path()
   // We still use boost::fs, so let's continue to initialize it properly.
   fs::initial_path();
   fs::path::default_name_check(fs::native);
-  L(F("initial abs path is: %s") % initial_abs_path.get_but_unused());
+  L(FL("initial abs path is: %s") % initial_abs_path.get_but_unused());
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -480,7 +480,7 @@ find_and_go_to_working_copy(system_path const & search_root)
   fs::path removed;
   fs::path check = current / bookdir;
 
-  L(F("searching for '%s' directory with root '%s'\n") 
+  L(FL("searching for '%s' directory with root '%s'\n") 
     % bookdir.string()
     % root.string());
 
@@ -489,40 +489,40 @@ find_and_go_to_working_copy(system_path const & search_root)
          && current.has_leaf()
          && !fs::exists(check))
     {
-      L(F("'%s' not found in '%s' with '%s' removed\n")
+      L(FL("'%s' not found in '%s' with '%s' removed\n")
         % bookdir.string() % current.string() % removed.string());
       removed = fs::path(current.leaf(), fs::native) / removed;
       current = current.branch_path();
       check = current / bookdir;
     }
 
-  L(F("search for '%s' ended at '%s' with '%s' removed\n") 
+  L(FL("search for '%s' ended at '%s' with '%s' removed\n") 
     % bookdir.string() % current.string() % removed.string());
 
   if (!fs::exists(check))
     {
-      L(F("'%s' does not exist\n") % check.string());
+      L(FL("'%s' does not exist\n") % check.string());
       return false;
     }
 
   if (!fs::is_directory(check))
     {
-      L(F("'%s' is not a directory\n") % check.string());
+      L(FL("'%s' is not a directory\n") % check.string());
       return false;
     }
 
   // check for MT/. and MT/.. to see if mt dir is readable
   if (!fs::exists(check / ".") || !fs::exists(check / ".."))
     {
-      L(F("problems with '%s' (missing '.' or '..')\n") % check.string());
+      L(FL("problems with '%s' (missing '.' or '..')\n") % check.string());
       return false;
     }
 
   working_root.set(current.native_file_string(), true);
   initial_rel_path.set(removed, true);
 
-  L(F("working root is '%s'") % working_root.get_but_unused());
-  L(F("initial relative path is '%s'") % initial_rel_path.get_but_unused().string());
+  L(FL("working root is '%s'") % working_root.get_but_unused());
+  L(FL("initial relative path is '%s'") % initial_rel_path.get_but_unused().string());
 
   change_current_working_dir(working_root.get_but_unused());
 
@@ -623,9 +623,9 @@ static void test_file_path_internal()
 
 static void check_fp_normalizes_to(char * before, char * after)
 {
-  L(F("check_fp_normalizes_to: '%s' -> '%s'") % before % after);
+  L(FL("check_fp_normalizes_to: '%s' -> '%s'") % before % after);
   file_path fp = file_path_external(std::string(before));
-  L(F("  (got: %s)") % fp);
+  L(FL("  (got: %s)") % fp);
   BOOST_CHECK(fp.as_internal() == after);
   BOOST_CHECK(file_path_internal(fp.as_internal()) == fp);
   // we compare after to the external form too, since as far as we know
@@ -661,7 +661,7 @@ static void test_file_path_external_null_prefix()
                             0 };
   for (char const ** c = baddies; *c; ++c)
     {
-      L(F("test_file_path_external_null_prefix: trying baddie: %s") % *c);
+      L(FL("test_file_path_external_null_prefix: trying baddie: %s") % *c);
       BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
     }
   
@@ -726,7 +726,7 @@ static void test_file_path_external_prefix_a_b()
                             0 };
   for (char const ** c = baddies; *c; ++c)
     {
-      L(F("test_file_path_external_prefix_a_b: trying baddie: %s") % *c);
+      L(FL("test_file_path_external_prefix_a_b: trying baddie: %s") % *c);
       BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
     }
   
@@ -839,7 +839,7 @@ static void test_split_join()
 static void check_bk_normalizes_to(char * before, char * after)
 {
   bookkeeping_path bp(bookkeeping_root / before);
-  L(F("normalizing %s to %s (got %s)") % before % after % bp);
+  L(FL("normalizing %s to %s (got %s)") % before % after % bp);
   BOOST_CHECK(bp.as_external() == after);
   BOOST_CHECK(bookkeeping_path(bp.as_internal()).as_internal() == bp.as_internal());
 }
@@ -865,7 +865,7 @@ static void test_bookkeeping_path()
 
   for (char const ** c = baddies; *c; ++c)
     {
-      L(F("test_bookkeeping_path baddie: trying '%s'") % *c);
+      L(FL("test_bookkeeping_path baddie: trying '%s'") % *c);
             BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign(*c)), std::logic_error);
             BOOST_CHECK_THROW(bookkeeping_root / tmp_path_string.assign(*c), std::logic_error);
     }
@@ -881,7 +881,7 @@ static void test_bookkeeping_path()
 static void check_system_normalizes_to(char * before, char * after)
 {
   system_path sp(before);
-  L(F("normalizing '%s' to '%s' (got '%s')") % before % after % sp);
+  L(FL("normalizing '%s' to '%s' (got '%s')") % before % after % sp);
   BOOST_CHECK(sp.as_external() == after);
   BOOST_CHECK(system_path(sp.as_internal()).as_internal() == sp.as_internal());
 }

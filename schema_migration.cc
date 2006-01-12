@@ -44,11 +44,11 @@ static int logged_sqlite3_exec(sqlite3* db,
                                void* data,
                                char** errmsg)
 {
-  L(F("executing SQL '%s'") % sql);
+  L(FL("executing SQL '%s'") % sql);
   int res = sqlite3_exec(db, sql, cb, data, errmsg);
-  L(F("result: %i (%s)") % res % sqlite3_errmsg(db));
+  L(FL("result: %i (%s)") % res % sqlite3_errmsg(db));
   if (errmsg && ((*errmsg)!=0))
-    L(F("errmsg: %s") % *errmsg);
+    L(FL("errmsg: %s") % *errmsg);
   return res;
 }
 

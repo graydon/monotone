@@ -557,7 +557,7 @@ inventory_pre_state(inventory_map & inventory,
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(F("%d %d %s\n") % inventory[*i].pre_state % pre_state % file_path(*i));
+      L(FL("%d %d %s\n") % inventory[*i].pre_state % pre_state % file_path(*i));
       I(inventory[*i].pre_state == inventory_item::UNCHANGED_PATH);
       inventory[*i].pre_state = pre_state;
       if (rename_id != 0) 
@@ -576,7 +576,7 @@ inventory_post_state(inventory_map & inventory,
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(F("%d %d %s\n") % inventory[*i].post_state % post_state % file_path(*i));
+      L(FL("%d %d %s\n") % inventory[*i].post_state % post_state % file_path(*i));
       I(inventory[*i].post_state == inventory_item::UNCHANGED_PATH);
       inventory[*i].post_state = post_state;
       if (rename_id != 0) 
@@ -594,7 +594,7 @@ inventory_node_state(inventory_map & inventory,
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(F("%d %d %s\n") % inventory[*i].node_state % node_state % file_path(*i));
+      L(FL("%d %d %s\n") % inventory[*i].node_state % node_state % file_path(*i));
       I(inventory[*i].node_state == inventory_item::UNCHANGED_NODE);
       inventory[*i].node_state = node_state;
     }
@@ -957,7 +957,7 @@ automate_get_revision(std::vector<utf8> args,
       app.db.get_revision(ident, dat);
     }
 
-  L(F("dumping revision %s\n") % ident);
+  L(FL("dumping revision %s\n") % ident);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
@@ -1000,7 +1000,7 @@ automate_get_manifest_of(std::vector<utf8> args,
 
   calculate_ident(new_roster, mid);
   write_manifest_of_roster(new_roster, dat);
-  L(F("dumping manifest %s\n") % mid);
+  L(FL("dumping manifest %s\n") % mid);
   output.write(dat().data(), dat().size());
 }
 
@@ -1029,7 +1029,7 @@ automate_get_file(std::vector<utf8> args,
     F("no file version %s found in database") % ident);
 
   file_data dat;
-  L(F("dumping file %s\n") % ident);
+  L(FL("dumping file %s\n") % ident);
   app.db.get_file_version(ident, dat);
   output.write(dat.inner()().data(), dat.inner()().size());
 }

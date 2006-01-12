@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <iosfwd>
 
 #include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
@@ -17,7 +18,6 @@
 
 #include <config.h> // Required for ENABLE_NLS
 #include "i18n.h"
-#include "ui.hh"
 
 #include "quick_alloc.hh" // to get the QA() macro
 
@@ -44,6 +44,8 @@ struct informative_failure {
 
 class MusingI;
 
+struct i18n_format;
+
 struct sanity {
   sanity();
   ~sanity();
@@ -66,24 +68,26 @@ struct sanity {
 
   void log(boost::format const & fmt, 
            char const * file, int line);
-  void progress(boost::format const & fmt,
+  void progress(i18n_format const & fmt,
                 char const * file, int line);
-  void warning(boost::format const & fmt, 
+  void warning(i18n_format const & fmt, 
                char const * file, int line);
-  void naughty_failure(std::string const & expr, boost::format const & explain, 
+  void naughty_failure(std::string const & expr, i18n_format const & explain, 
                        std::string const & file, int line) NORETURN;
-  void error_failure(std::string const & expr, boost::format const & explain, 
+  void error_failure(std::string const & expr, i18n_format const & explain, 
                      std::string const & file, int line) NORETURN;
   void invariant_failure(std::string const & expr, 
                          std::string const & file, int line) NORETURN;
-  void index_failure(std::string const & vec_expr, 
-                     std::string const & idx_expr, 
+  void index_failure(std::string const & vec_expr,
+                     std::string const & idx_expr,
                      unsigned long sz, 
                      unsigned long idx,
                      std::string const & file, int line) NORETURN;
   void gasp();
 
 private:
+  std::string do_format(i18n_format const & fmt,
+                        char const * file, int line);
   std::string do_format(boost::format const & fmt,
                         char const * file, int line);
 };
@@ -92,11 +96,36 @@ typedef std::runtime_error oops;
 
 extern sanity global_sanity;
 
+struct i18n_format
+{
+  boost::format fmt;
+  i18n_format() {}
+  explicit i18n_format(const char * localized_pattern);
+  explicit i18n_format(std::string const & localized_pattern);
+  std::string str() const;
+  template <typename T> i18n_format & operator%(T const & t)
+  {
+    fmt % t;
+    return *this;
+  }
+  template <typename T> i18n_format & operator%(T & t)
+  {
+    fmt % t;
+    return *this;
+  }
+};
+
+std::ostream & operator<<(std::ostream & os, i18n_format const & fmt);
+
 // F is for when you want to build a boost formatter for display
-boost::format F(const char * str);
+i18n_format F(const char * str);
 
 // FP is for when you want to build a boost formatter for displaying a plural
-boost::format FP(const char * str1, const char * strn, unsigned long count);
+i18n_format FP(const char * str1, const char * strn, unsigned long count);
+
+// FL is for when you want to build a boost formatter for the developers -- it
+// is not gettextified.  Think of the L as "literal" or "log".
+boost::format FL(const char * str);
 
 // L is for logging, you can log all you want
 #define L(fmt) global_sanity.log(fmt, __FILE__, __LINE__)

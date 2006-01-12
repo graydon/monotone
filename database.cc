@@ -195,19 +195,17 @@ assert_sqlite3_ok(sqlite3 *s)
       // first log the code so we can find _out_ what the confusing code
       // was... note that code does not uniquely identify the errmsg, unlike
       // errno's.
-      L(F("sqlite error: %d: %s") % errcode % errmsg);
+      L(FL("sqlite error: %d: %s") % errcode % errmsg);
     }
   std::string auxiliary_message = "";
   if (errcode == SQLITE_ERROR)
     {
-      auxiliary_message = _("make sure database and containing directory are writeable");
+      auxiliary_message += _("make sure database and containing directory are writeable");
     }
   // if the last message is empty, the \n will be stripped off too
   E(errcode == SQLITE_OK,
     // kind of string surgery to avoid ~duplicate strings
-    boost::format("%s\n%s")
-                  % (F("sqlite error: %d: %s") % errcode % errmsg).str()
-                  % auxiliary_message);
+    F("sqlite error: %d: %s\n%s") % errcode % errmsg % auxiliary_message);
 }
 
 struct sqlite3 * 
@@ -514,12 +512,12 @@ database::ensure_open()
 
 database::~database() 
 {
-  L(F("statement cache statistics\n"));
-  L(F("prepared %d statements\n") % statement_cache.size());
+  L(FL("statement cache statistics\n"));
+  L(FL("prepared %d statements\n") % statement_cache.size());
 
   for (map<string, statement>::const_iterator i = statement_cache.begin(); 
        i != statement_cache.end(); ++i)
-    L(F("%d executions of %s\n") % i->second.count % i->first);
+    L(FL("%d executions of %s\n") % i->second.count % i->first);
   // trigger destructors to finalize cached statements
   statement_cache.clear();
 
@@ -572,7 +570,7 @@ database::fetch(results & res,
       const char * tail;
       sqlite3_prepare(sql(), query, -1, i->second.stmt.paddr(), &tail);
       assert_sqlite3_ok(sql());
-      L(F("prepared statement %s\n") % query);
+      L(FL("prepared statement %s\n") % query);
 
       // no support for multiple statements here
       E(*tail == 0, 
@@ -590,7 +588,7 @@ database::fetch(results & res,
 
   // profiling finds this logging to be quite expensive
   if (global_sanity.debug)
-    L(F("binding %d parameters for %s\n") % params % query);
+    L(FL("binding %d parameters for %s\n") % params % query);
 
   for (int param = 1; param <= params; param++)
     {
@@ -604,7 +602,7 @@ database::fetch(results & res,
           if (log.size() > constants::log_line_sz)
             log = log.substr(0, constants::log_line_sz);
           
-          L(F("binding %d with value '%s'\n") % param % log);
+          L(FL("binding %d with value '%s'\n") % param % log);
         }
 
       sqlite3_bind_text(i->second.stmt(), param, value, -1, SQLITE_TRANSIENT);
@@ -623,7 +621,7 @@ database::fetch(results & res,
           const char * value = sqlite3_column_text_s(i->second.stmt(), col);
           E(value, F("null result in query: %s\n") % query);
           row.push_back(value);
-          //L(F("row %d col %d value='%s'\n") % nrow % col % value);
+          //L(FL("row %d col %d value='%s'\n") % nrow % col % value);
         }
       res.push_back(row);
     }
@@ -845,7 +843,7 @@ struct version_cache
           }
         I(i != cache.end());
         I(use >= i->second().size());
-        L(F("version cache expiring %s\n") % i->first);
+        L(FL("version cache expiring %s\n") % i->first);
         use -= i->second().size();          
         cache.erase(i->first);
       }
@@ -867,7 +865,7 @@ struct version_cache
     if (i == cache.end())
       return false;
     // ++cache_hits;
-    L(F("version cache hit on %s\n") % ident);
+    L(FL("version cache hit on %s\n") % ident);
     dat = i->second;
     return true;
   }
@@ -936,7 +934,7 @@ database::get_version(hexenc<id> const & ident,
       //
       // we also maintain a cycle-detecting set, just to be safe
       
-      L(F("reconstructing %s in %s\n") % ident % delta_table);
+      L(FL("reconstructing %s in %s\n") % ident % delta_table);
       I(delta_exists(ident, delta_table));
 
       // Our reconstruction algorithm involves keeping a set of parallel
@@ -1043,7 +1041,7 @@ database::get_version(hexenc<id> const & ident,
               vcache.put(curr, tmp);
             }
 
-          L(F("following delta %s -> %s\n") % curr % nxt);
+          L(FL("following delta %s -> %s\n") % curr % nxt);
           delta del;
           get_delta(nxt, curr, del, delta_table);
           apply_delta (app, del());
@@ -1527,7 +1525,7 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
   I(!children.size());
   
 
-  L(F("Killing revision %s locally\n") % rid);
+  L(FL("Killing revision %s locally\n") % rid);
 
   // Kill the certs, ancestry, and rev itself.
   execute("DELETE from revision_certs WHERE id = ?",rid.inner()().c_str());
@@ -1563,7 +1561,7 @@ database::delete_branch_named(cert_value const & branch)
 {
   base64<cert_value> encoded;
   encode_base64(branch, encoded);
-  L(F("Deleting all references to branch %s\n") % branch);
+  L(FL("Deleting all references to branch %s\n") % branch);
   execute("DELETE FROM revision_certs WHERE name='branch' AND value =?",
           encoded().c_str());
   execute("DELETE FROM branch_epochs WHERE branch=?",
@@ -1576,7 +1574,7 @@ database::delete_tag_named(cert_value const & tag)
 {
   base64<cert_value> encoded;
   encode_base64(tag, encoded);
-  L(F("Deleting all references to tag %s\n") % tag);
+  L(FL("Deleting all references to tag %s\n") % tag);
   execute("DELETE FROM revision_certs WHERE name='tag' AND value =?",
           encoded().c_str());
 }
@@ -2144,7 +2142,7 @@ void database::complete(selector_type ty,
                         vector<pair<selector_type, string> > const & limit,
                         set<string> & completions)
 {
-  //L(F("database::complete for partial '%s'\n") % partial);
+  //L(FL("database::complete for partial '%s'\n") % partial);
   completions.clear();
 
   // step 1: the limit is transformed into an SQL select statement which
@@ -2242,7 +2240,7 @@ void database::complete(selector_type ty,
                   set<revision_id> branch_heads;
                   get_branch_heads(*bn, *__app, branch_heads);
                   heads.insert(branch_heads.begin(), branch_heads.end());
-                  L(F("after get_branch_heads for %s, heads has %d entries\n") % (*bn) % heads.size());
+                  L(FL("after get_branch_heads for %s, heads has %d entries\n") % (*bn) % heads.size());
                 }
 
               lim += "SELECT id FROM revision_certs WHERE id IN (";
@@ -2265,14 +2263,14 @@ void database::complete(selector_type ty,
               string prefix;
               string suffix;
               selector_to_certname(i->first, certname, prefix, suffix);
-              L(F("processing selector type %d with i->second '%s'\n") % ty % i->second);
+              L(FL("processing selector type %d with i->second '%s'\n") % ty % i->second);
               if ((i->first == selectors::sel_branch) && (i->second.size() == 0))
                 {
                   __app->require_working_copy("the empty branch selector b: refers to the current branch");
                   // FIXME: why do we have to glob on the unbase64(value), rather than being able to use == ?
                   lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND unbase64(value) glob '%s'")
                           % branch_cert_name % __app->branch_name).str();
-                  L(F("limiting to current branch '%s'\n") % __app->branch_name);
+                  L(FL("limiting to current branch '%s'\n") % __app->branch_name);
                 }
               else
                 {
@@ -2292,7 +2290,7 @@ void database::complete(selector_type ty,
                     }
                 }
             }
-          //L(F("found selector type %d, selecting_head is now %d\n") % i->first % selecting_head);
+          //L(FL("found selector type %d, selecting_head is now %d\n") % i->first % selecting_head);
         }
     }
   lim += ")";
@@ -2830,7 +2828,7 @@ transaction_guard::commit()
 void
 close_all_databases()
 {
-  L(F("attempting to rollback and close %d databases") % sql_contexts.size());
+  L(FL("attempting to rollback and close %d databases") % sql_contexts.size());
   for (set<sqlite3*>::iterator i = sql_contexts.begin();
        i != sql_contexts.end(); i++)
     {
@@ -2839,7 +2837,7 @@ close_all_databases()
       int exec_err = sqlite3_exec(*i, "ROLLBACK", NULL, NULL, NULL);
       int close_err = sqlite3_close(*i);
 
-      L(F("exec_err = %d, close_err = %d") % exec_err % close_err);
+      L(FL("exec_err = %d, close_err = %d") % exec_err % close_err);
     }
   sql_contexts.clear();
 }

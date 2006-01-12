@@ -310,13 +310,13 @@ dirname_basename(split_path const & sp,
                  split_path & dirname, path_component & basename)
 {
   I(!sp.empty());
-  // L(F("dirname_basename('%s' [%d components],...)\n") % file_path(sp) % sp.size());
+  // L(FL("dirname_basename('%s' [%d components],...)\n") % file_path(sp) % sp.size());
   split_path::const_iterator penultimate = sp.begin() + (sp.size()-1);
   dirname = split_path(sp.begin(), penultimate);
   basename = *penultimate;
   if (dirname.empty())
     {
-      // L(F("basename %d vs. null component %d\n") % basename % the_null_component);
+      // L(FL("basename %d vs. null component %d\n") % basename % the_null_component);
       I(null_name(basename));
     }
 }
@@ -918,39 +918,39 @@ editable_roster_base::editable_roster_base(roster_t & r, node_id_source & nis)
 node_id 
 editable_roster_base::detach_node(split_path const & src)
 {
-  // L(F("detach_node('%s')") % file_path(src)); 
+  // L(FL("detach_node('%s')") % file_path(src)); 
   return r.detach_node(src);
 }
 
 void 
 editable_roster_base::drop_detached_node(node_id nid)
 {
-  // L(F("drop_detached_node(%d)") % nid); 
+  // L(FL("drop_detached_node(%d)") % nid); 
   r.drop_detached_node(nid);
 }
 
 node_id 
 editable_roster_base::create_dir_node()
 {
-  // L(F("create_dir_node()\n")); 
+  // L(FL("create_dir_node()\n")); 
   node_id n = r.create_dir_node(nis);
-  // L(F("create_dir_node() -> %d\n") % n); 
+  // L(FL("create_dir_node() -> %d\n") % n); 
   return n;
 }
 
 node_id 
 editable_roster_base::create_file_node(file_id const & content)
 {
-  // L(F("create_file_node('%s')\n") % content); 
+  // L(FL("create_file_node('%s')\n") % content); 
   node_id n = r.create_file_node(content, nis);
-  // L(F("create_file_node('%s') -> %d\n") % content % n); 
+  // L(FL("create_file_node('%s') -> %d\n") % content % n); 
   return n;
 }
 
 void 
 editable_roster_base::attach_node(node_id nid, split_path const & dst)
 {
-  // L(F("attach_node(%d, '%s')") % nid % file_path(dst));
+  // L(FL("attach_node(%d, '%s')") % nid % file_path(dst));
   MM(dst);
   MM(this->r);
   r.attach_node(nid, dst);
@@ -961,7 +961,7 @@ editable_roster_base::apply_delta(split_path const & pth,
                                   file_id const & old_id, 
                                   file_id const & new_id)
 {
-  // L(F("clear_attr('%s', '%s', '%s')") % file_path(pth) % old_id % new_id);
+  // L(FL("clear_attr('%s', '%s', '%s')") % file_path(pth) % old_id % new_id);
   r.apply_delta(pth, old_id, new_id);
 }
 
@@ -969,7 +969,7 @@ void
 editable_roster_base::clear_attr(split_path const & pth,
                                  attr_key const & name)
 {
-  // L(F("clear_attr('%s', '%s')") % file_path(pth) % name);
+  // L(FL("clear_attr('%s', '%s')") % file_path(pth) % name);
   r.clear_attr(pth, name);
 }
 
@@ -978,7 +978,7 @@ editable_roster_base::set_attr(split_path const & pth,
                                attr_key const & name,
                                attr_value const & val)
 {
-  // L(F("set_attr('%s', '%s', '%s')") % file_path(pth) % name % val);
+  // L(FL("set_attr('%s', '%s', '%s')") % file_path(pth) % name % val);
   r.set_attr(pth, name, val);
 }
 
@@ -2184,7 +2184,7 @@ roster_t::print_to(basic_io::printer & pr,
       basic_io::stanza st;
       if (is_dir_t(curr))
         {
-          // L(F("printing dir %s\n") % fp);
+          // L(FL("printing dir %s\n") % fp);
           st.push_file_pair(syms::dir, fp);
         }
       else
@@ -2192,7 +2192,7 @@ roster_t::print_to(basic_io::printer & pr,
           file_t ftmp = downcast_to_file_t(curr);
           st.push_file_pair(syms::file, fp);
           st.push_hex_pair(syms::content, ftmp->content.inner()());
-          // L(F("printing file %s\n") % fp);
+          // L(FL("printing file %s\n") % fp);
         }
 
       if (print_local_parts)
@@ -2208,7 +2208,7 @@ roster_t::print_to(basic_io::printer & pr,
           if (j->second.first)
             {
               I(!j->second.second().empty());
-              // L(F("printing attr %s : %s = %s\n") % fp % j->first % j->second);
+              // L(FL("printing attr %s : %s = %s\n") % fp % j->first % j->second);
               st.push_str_triple(syms::attr, j->first(), j->second.second());
             }
         }
@@ -2642,7 +2642,7 @@ bool parent_of(split_path const & p,
       is_parent = (c_anchor == c.begin());
     }
 
-  //     L(F("path '%s' is%s parent of '%s'")
+  //     L(FL("path '%s' is%s parent of '%s'")
   //       % file_path(p)
   //       % (is_parent ? "" : " not")
   //       % file_path(c));
@@ -2676,7 +2676,7 @@ change_automaton
             node_t n = random_element(r.all_nodes())->second;
             split_path pth;
             r.get_name(n->self, pth);
-            // L(F("considering acting on '%s'\n") % file_path(pth));
+            // L(FL("considering acting on '%s'\n") % file_path(pth));
 
             switch (rand() % 7)
               {
@@ -2694,12 +2694,12 @@ change_automaton
                 
                 if (flip())
                   {
-                    // L(F("adding dir '%s'\n") % file_path(pth));
+                    // L(FL("adding dir '%s'\n") % file_path(pth));
                     safe_insert(c.dirs_added, pth);
                   }
                 else
                   {
-                    // L(F("adding file '%s'\n") % file_path(pth));
+                    // L(FL("adding file '%s'\n") % file_path(pth));
                     safe_insert(c.files_added, make_pair(pth, new_ident()));
                   }
                 break;
@@ -2725,21 +2725,21 @@ change_automaton
                   
                   if (is_file_t(n2) || (pth2.size() > 1 && flip()))
                     {
-                      // L(F("renaming to a sibling of an existing entry '%s'\n") % file_path(pth2));
+                      // L(FL("renaming to a sibling of an existing entry '%s'\n") % file_path(pth2));
                       // Move to a sibling of an existing entry.
                       pth2[pth2.size() - 1] = new_component();
                     }
                   
                   else
                     {
-                      // L(F("renaming to a child of an existing entry '%s'\n") % file_path(pth2));
+                      // L(FL("renaming to a child of an existing entry '%s'\n") % file_path(pth2));
                       // Move to a child of an existing entry.
                       pth2.push_back(new_component());
                     }
                   
                   if (!parent_of(pth, pth2))
                     {
-                      // L(F("renaming '%s' -> '%s\n") % file_path(pth) % file_path(pth2));
+                      // L(FL("renaming '%s' -> '%s\n") % file_path(pth) % file_path(pth2));
                       safe_insert(c.nodes_renamed, make_pair(pth, pth2));
                     }
                 }
@@ -2749,7 +2749,7 @@ change_automaton
                 if (!null_node(n->parent) && 
                     (is_file_t(n) || downcast_to_dir_t(n)->children.empty()))
                   {
-                    // L(F("deleting '%s'\n") % file_path(pth));
+                    // L(FL("deleting '%s'\n") % file_path(pth));
                     safe_insert(c.nodes_deleted, pth);
                   }
                 break;
@@ -2762,24 +2762,24 @@ change_automaton
                       {
                         if (flip())
                           {
-                            // L(F("clearing attr on '%s'\n") % file_path(pth));
+                            // L(FL("clearing attr on '%s'\n") % file_path(pth));
                             safe_insert(c.attrs_cleared, make_pair(pth, k));
                           }
                         else
                           {
-                            // L(F("changing attr on '%s'\n) % file_path(pth));
+                            // L(FL("changing attr on '%s'\n) % file_path(pth));
                             safe_insert(c.attrs_set, make_pair(make_pair(pth, k), new_word()));
                           }
                       }
                     else
                       {
-                        // L(F("setting previously set attr on '%s'\n") % file_path(pth));
+                        // L(FL("setting previously set attr on '%s'\n") % file_path(pth));
                         safe_insert(c.attrs_set, make_pair(make_pair(pth, k), new_word()));
                       }
                   }
                 else
                   {
-                    // L(F("setting attr on '%s'\n") % file_path(pth));
+                    // L(FL("setting attr on '%s'\n") % file_path(pth));
                     safe_insert(c.attrs_set, make_pair(make_pair(pth, new_word()), new_word()));
                   }
                 break;                
@@ -2797,7 +2797,7 @@ struct testing_node_id_source
   testing_node_id_source() : curr(first_node) {}
   virtual node_id next()
   {
-    // L(F("creating node %x\n") % curr);
+    // L(FL("creating node %x\n") % curr);
     node_id n = curr++;
     I(!temp_node(n));
     return n;
@@ -2853,7 +2853,7 @@ automaton_roster_test()
 // bunch of times, and each time we do only one of these potentially
 // corrupting tests.  Test numbers are in the range [0, total).
 
-#define MAYBE(code) if (total == to_run) { L(F(#code)); code; return; } ++total
+#define MAYBE(code) if (total == to_run) { L(FL(#code)); code; return; } ++total
 
 static void
 check_sane_roster_do_tests(int to_run, int& total)
@@ -2920,7 +2920,7 @@ check_sane_roster_test()
   check_sane_roster_do_tests(-1, total);
   for (int to_run = 0; to_run < total; ++to_run)
     {
-      L(F("check_sane_roster_test: loop = %i (of %i)") % to_run % (total - 1));
+      L(FL("check_sane_roster_test: loop = %i (of %i)") % to_run % (total - 1));
       int tmp;
       check_sane_roster_do_tests(to_run, tmp);
     }
@@ -3667,16 +3667,16 @@ run_a_0_scalar_parent_mark_scenario()
 static void
 test_all_0_scalar_parent_mark_scenarios()
 {
-  L(F("TEST: begin checking 0-parent marking"));
+  L(FL("TEST: begin checking 0-parent marking"));
   // a*
   run_a_0_scalar_parent_mark_scenario();
-  L(F("TEST: end checking 0-parent marking"));
+  L(FL("TEST: end checking 0-parent marking"));
 }
 
 static void
 test_all_1_scalar_parent_mark_scenarios()
 {
-  L(F("TEST: begin checking 1-parent marking"));
+  L(FL("TEST: begin checking 1-parent marking"));
   //  a
   //  |
   //  a
@@ -3711,13 +3711,13 @@ test_all_1_scalar_parent_mark_scenarios()
   //   b*
   run_a_1_scalar_parent_mark_scenario(scalar_a, doubleton(left_rid, right_rid),
                                       scalar_b, singleton(new_rid));
-  L(F("TEST: end checking 1-parent marking"));
+  L(FL("TEST: end checking 1-parent marking"));
 }
 
 static void
 test_all_2_scalar_parent_mark_scenarios()
 {
-  L(F("TEST: begin checking 2-parent marking"));
+  L(FL("TEST: begin checking 2-parent marking"));
   ///////////////////////////////////////////////////////////////////
   // a   a
   //  \ /
@@ -3806,7 +3806,7 @@ test_all_2_scalar_parent_mark_scenarios()
   //    a   /
   //     \ /
   //      a
-  L(F("TEST: end checking 2-parent marking"));
+  L(FL("TEST: end checking 2-parent marking"));
 }
 
 // there is _one_ remaining case that the above tests miss, because they
@@ -3892,7 +3892,7 @@ namespace
 static void
 test_residual_attr_mark_scenario()
 {
-  L(F("TEST: begin checking residual attr marking case"));
+  L(FL("TEST: begin checking residual attr marking case"));
   {
     testing_node_id_source nis;
     X_attr_mixed_scalar<file_maker> s(nis);
@@ -3929,7 +3929,7 @@ test_residual_attr_mark_scenario()
                               scalar_a, singleton(new_rid),
                               nis);
   }
-  L(F("TEST: end checking residual attr marking case"));
+  L(FL("TEST: end checking residual attr marking case"));
 }
 
 static void
@@ -4073,7 +4073,7 @@ test_same_nid_diff_type()
 static void
 write_roster_test()
 {
-  L(F("TEST: write_roster_test"));
+  L(FL("TEST: write_roster_test"));
   roster_t r; MM(r);
   marking_map mm; MM(mm);
 
@@ -4234,7 +4234,7 @@ check_sane_against_test()
   node_id nid;
 
   {
-    L(F("TEST: check_sane_against_test, no extra nodes in rosters"));
+    L(FL("TEST: check_sane_against_test, no extra nodes in rosters"));
     roster_t r; MM(r);
     marking_map mm; MM(mm);
 
@@ -4257,7 +4257,7 @@ check_sane_against_test()
   }
 
   {
-    L(F("TEST: check_sane_against_test, no extra nodes in markings"));
+    L(FL("TEST: check_sane_against_test, no extra nodes in markings"));
     roster_t r; MM(r);
     marking_map mm; MM(mm);
 
@@ -4281,7 +4281,7 @@ check_sane_against_test()
   }
 
   {
-    L(F("TEST: check_sane_against_test, missing birth rev"));
+    L(FL("TEST: check_sane_against_test, missing birth rev"));
     roster_t r; MM(r);
     marking_map mm; MM(mm);
 
@@ -4300,7 +4300,7 @@ check_sane_against_test()
   }
 
   {
-    L(F("TEST: check_sane_against_test, missing path mark"));
+    L(FL("TEST: check_sane_against_test, missing path mark"));
     roster_t r; MM(r);
     marking_map mm; MM(mm);
 
@@ -4319,7 +4319,7 @@ check_sane_against_test()
   }
 
   {
-    L(F("TEST: check_sane_against_test, missing content mark"));
+    L(FL("TEST: check_sane_against_test, missing content mark"));
     roster_t r; MM(r);
     marking_map mm; MM(mm);
 
@@ -4338,7 +4338,7 @@ check_sane_against_test()
   }
 
   {
-    L(F("TEST: check_sane_against_test, extra content mark"));
+    L(FL("TEST: check_sane_against_test, extra content mark"));
     roster_t r; MM(r);
     marking_map mm; MM(mm);
 
@@ -4357,7 +4357,7 @@ check_sane_against_test()
   }
 
   {
-    L(F("TEST: check_sane_against_test, missing attr mark"));
+    L(FL("TEST: check_sane_against_test, missing attr mark"));
     roster_t r; MM(r);
     marking_map mm; MM(mm);
 
@@ -4372,7 +4372,7 @@ check_sane_against_test()
   }
 
   {
-    L(F("TEST: check_sane_against_test, empty attr mark"));
+    L(FL("TEST: check_sane_against_test, empty attr mark"));
     roster_t r; MM(r);
     marking_map mm; MM(mm);
 
@@ -4387,7 +4387,7 @@ check_sane_against_test()
   }
 
   {
-    L(F("TEST: check_sane_against_test, extra attr mark"));
+    L(FL("TEST: check_sane_against_test, extra attr mark"));
     roster_t r; MM(r);
     marking_map mm; MM(mm);
 
@@ -4481,7 +4481,7 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
 static void
 test_unify_rosters_randomized()
 {
-  L(F("TEST: begin checking unification of rosters (randomly)"));
+  L(FL("TEST: begin checking unification of rosters (randomly)"));
   temp_node_id_source tmp_nis;
   testing_node_id_source test_nis;  
   roster_t left, right;
@@ -4493,13 +4493,13 @@ test_unify_rosters_randomized()
       unify_rosters(left, left_new, right, right_new, resolved_new, test_nis);
       check_post_roster_unification_ok(left, right);
     }
-  L(F("TEST: end checking unification of rosters (randomly)"));
+  L(FL("TEST: end checking unification of rosters (randomly)"));
 }
 
 static void
 test_unify_rosters_end_to_end()
 {
-  L(F("TEST: begin checking unification of rosters (end to end)"));
+  L(FL("TEST: begin checking unification of rosters (end to end)"));
   revision_id has_rid = left_rid;
   revision_id has_not_rid = right_rid;
   file_id my_fid(std::string("9012901290129012901290129012901290129012"));
@@ -4574,7 +4574,7 @@ test_unify_rosters_end_to_end()
     I(new_roster.get_node(split("foo"))->self
       != has_roster.get_node(split("foo"))->self);
   }
-  L(F("TEST: end checking unification of rosters (end to end)"));
+  L(FL("TEST: end checking unification of rosters (end to end)"));
 }
 
 
