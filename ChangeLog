@@ -1,5 +1,9 @@
 2006-01-12  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.cc (dump_buffer): Add forgotten newline.
+
+2006-01-12  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.cc (make_roster_for_merge): Add more MM()'s.
 
 2006-01-12  Matthew Gregan  <kinetik@orcon.net.nz>

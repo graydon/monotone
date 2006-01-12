@@ -51,7 +51,7 @@ sanity::dump_buffer()
         {
           copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
           copy(gasp_dump.begin(), gasp_dump.end(), ostream_iterator<char>(out));
-          ui.inform((F("wrote debugging log to %s"
+          ui.inform((F("wrote debugging log to %s\n"
                        "if reporting a bug, please include this file")
                      % filename).str());
         }
