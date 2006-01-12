@@ -1,3 +1,7 @@
+2006-01-11  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (diff): gettext'ify the "no changes" tag.
+
 2006-01-11  Richard Levitte  <richard@levitte.org>
 
 	* Makefile.am: Add contrib/usher as an extra program.  This works

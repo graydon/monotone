@@ -2760,7 +2760,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
   else
     {
-      cout << "# no changes" << endl;
+      cout << "# " << _("no changes") << endl;
     }
   cout << "# " << endl;
 
