@@ -1506,12 +1506,26 @@ namespace
     I(left_uncommon_ancestors.find(right_rid) == left_uncommon_ancestors.end());
     I(right_uncommon_ancestors.find(right_rid) != right_uncommon_ancestors.end());
     I(right_uncommon_ancestors.find(left_rid) == right_uncommon_ancestors.end());
+    MM(left_rid);
+    MM(left_roster);
+    MM(left_markings);
+    MM(left_cs);
+    MM(left_uncommon_ancestors);
+    MM(right_rid);
+    MM(right_roster);
+    MM(right_markings);
+    MM(right_cs);
+    MM(right_uncommon_ancestors);
+    MM(new_rid);
+    MM(new_roster);
+    MM(new_markings);
     {
       temp_node_id_source temp_nis;
       // SPEEDUP?: the copies on the next two lines are probably the main
       // bottleneck in this code
       new_roster = left_roster;
       roster_t from_right_r(right_roster);
+      MM(from_right_r);
 
       editable_roster_for_merge from_left_er(new_roster, temp_nis);
       editable_roster_for_merge from_right_er(from_right_r, temp_nis);
