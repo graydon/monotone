@@ -1,3 +1,7 @@
+2006-01-12  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (make_roster_for_merge): Add more MM()'s.
+
 2006-01-12  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* contrib/{color-logs.{conf,sh},monotone.el}: Changes to handle
