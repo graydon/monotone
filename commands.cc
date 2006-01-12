@@ -3455,7 +3455,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
-    OPT_LAST % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES)
+    OPT_LAST % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_MERGES)
 {
   if (app.revision_selectors.size() == 0)
     app.require_working_copy("try passing a --revision to start at");
@@ -3584,7 +3584,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               csum.add_change_set(edge_changes(e));
             }
 
-          if (app.no_merges && rev.is_merge_node())
+          if (!app.merges && rev.is_merge_node())
             print_this = false;
           
           if (print_this)

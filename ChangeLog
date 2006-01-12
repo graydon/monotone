@@ -1,3 +1,9 @@
+2006-01-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* app_state.{cc,hh}, commands.cc, monotone.cc, options.hh: Make
+	'log' default to not displaying merges.  Rename '--no-merges'
+	option to '--merges'.
+
 2006-01-11  Richard Levitte  <richard@levitte.org>
 
 	* Makefile.am: Add contrib/usher as an extra program.  This works
