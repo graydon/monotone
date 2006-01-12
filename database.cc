@@ -672,7 +672,6 @@ database::fetch(statement & stmt,
         }
       res.push_back(row);
     }
-L(F("got %d lines %d cols\n") % res.size() % ncol);
   
   if (rescode != SQLITE_DONE)
     assert_sqlite3_ok(sql());
@@ -706,7 +705,7 @@ database::fetch(results & res,
   
   I(args.size()==size_t(params));
 
-  L(F("binding %d parameters for %s\n") % params % query);
+  L(FL("binding %d parameters for %s\n") % params % query);
 
   for (int param = 1; param <= params; param++)
     {
@@ -715,7 +714,7 @@ database::fetch(results & res,
       if (log.size() > constants::log_line_sz)
         log = log.substr(0, constants::log_line_sz);
 
-      L(F("binding %d with value '%s'\n") % param % log);
+      L(FL("binding %d with value '%s'\n") % param % log);
 
       // we can use SQLITE_STATIC since the array is destructed after
       // fetching the parameters (and sqlite3_reset)
