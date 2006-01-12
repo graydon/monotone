@@ -120,14 +120,14 @@ check_files(app_state & app, std::map<file_id, checked_file> & checked_files)
   std::set<file_id> files;
 
   app.db.get_file_ids(files);
-  L(F("checking %d files\n") % files.size());
+  L(FL("checking %d files\n") % files.size());
 
   ticker ticks(_("files"), "f", files.size()/70+1);
 
   for (std::set<file_id>::const_iterator i = files.begin();
        i != files.end(); ++i) 
     {
-      L(F("checking file %s\n") % *i);
+      L(FL("checking file %s\n") % *i);
       file_data data;
       app.db.get_file_version(*i, data);
       checked_files[*i].found = true;
@@ -149,7 +149,7 @@ check_rosters_manifest(app_state & app,
   set< hexenc<id> > rosters;
 
   app.db.get_roster_ids(rosters);
-  L(F("checking %d rosters, manifest pass\n") % rosters.size());
+  L(FL("checking %d rosters, manifest pass\n") % rosters.size());
 
   ticker ticks(_("rosters"), "r", rosters.size()/70+1);
 
@@ -157,7 +157,7 @@ check_rosters_manifest(app_state & app,
        i != rosters.end(); ++i) 
     {
 
-      L(F("checking roster %s\n") % *i);
+      L(FL("checking roster %s\n") % *i);
       data dat;
       app.db.get_roster(*i, dat);
       checked_rosters[*i].found = true;
@@ -170,7 +170,7 @@ check_rosters_manifest(app_state & app,
         }
       catch (std::logic_error & e)
         {
-          L(F("error parsing roster %s: %s") % *i % e.what());
+          L(FL("error parsing roster %s: %s") % *i % e.what());
           checked_rosters[*i].parseable = false;
           continue;
         }
@@ -216,7 +216,7 @@ check_rosters_marking(app_state & app,
               std::map<hexenc<id>, checked_roster> & checked_rosters,
               std::map<revision_id, checked_revision> & checked_revisions)
 {
-  L(F("checking %d rosters, marking pass\n") % checked_rosters.size());
+  L(FL("checking %d rosters, marking pass\n") % checked_rosters.size());
 
   ticker ticks(_("markings"), "m", checked_rosters.size()/70+1);
 
@@ -224,7 +224,7 @@ check_rosters_marking(app_state & app,
        = checked_rosters.begin(); i != checked_rosters.end(); i++)
     {
       hexenc<id> ros_id = i->first;
-      L(F("checking roster %s\n") % i->first);
+      L(FL("checking roster %s\n") % i->first);
       if (!i->second.parseable)
           continue;
 
@@ -314,14 +314,14 @@ check_revisions(app_state & app,
   std::set<revision_id> revisions;
 
   app.db.get_revision_ids(revisions);
-  L(F("checking %d revisions\n") % revisions.size());
+  L(FL("checking %d revisions\n") % revisions.size());
 
   ticker ticks(_("revisions"), "r", revisions.size()/70+1);
 
   for (std::set<revision_id>::const_iterator i = revisions.begin();
        i != revisions.end(); ++i) 
     {
-      L(F("checking revision %s\n") % *i);
+      L(FL("checking revision %s\n") % *i);
       revision_data data;
       app.db.get_revision(*i, data);
       checked_revisions[*i].found = true;
@@ -333,7 +333,7 @@ check_revisions(app_state & app,
         }
       catch (std::logic_error & e)
         {
-          L(F("error parsing revision %s: %s") % *i % e.what());
+          L(FL("error parsing revision %s: %s") % *i % e.what());
           checked_revisions[*i].parseable = false;
           continue;
         }
@@ -401,7 +401,7 @@ check_revisions(app_state & app,
         }
     }
   
-  L(F("checked %d revisions after starting with %d\n") 
+  L(FL("checked %d revisions after starting with %d\n") 
     % checked_revisions.size()
     % revisions.size());
 }
@@ -413,7 +413,7 @@ check_ancestry(app_state & app,
   std::multimap<revision_id, revision_id> graph;
 
   app.db.get_revision_ancestry(graph);
-  L(F("checking %d ancestry edges\n") % graph.size());
+  L(FL("checking %d ancestry edges\n") % graph.size());
 
   ticker ticks(_("ancestry"), "a", graph.size()/70+1);
 
@@ -446,7 +446,7 @@ check_keys(app_state & app,
 
   app.db.get_public_keys(pubkeys);
 
-  L(F("checking %d public keys\n") % pubkeys.size());
+  L(FL("checking %d public keys\n") % pubkeys.size());
 
   ticker ticks(_("keys"), "k", 1);
 
@@ -472,7 +472,7 @@ check_certs(app_state & app,
 
   total_certs = certs.size();
 
-  L(F("checking %d revision certs\n") % certs.size());
+  L(FL("checking %d revision certs\n") % certs.size());
 
   ticker ticks(_("certs"), "c", certs.size()/70+1);
 
@@ -502,7 +502,7 @@ static void
 check_sane(app_state & app, 
            std::map<revision_id, checked_revision> & checked_revisions)
 {
-  L(F("checking local history of %d revisions\n") % checked_revisions.size());
+  L(FL("checking local history of %d revisions\n") % checked_revisions.size());
 
   ticker ticks(_("revisions"), "r", 1);
 
@@ -718,7 +718,7 @@ report_keys(std::map<rsa_keypair_id, checked_key> const & checked_keys,
 
       if (key.found)
         {
-          L(F("key %s signed %d certs\n") 
+          L(FL("key %s signed %d certs\n") 
             % i->first
             % key.sigs);
         }

@@ -880,7 +880,7 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
     outbuf_size += buf.size();
   }
   else
-    L(F("dropping outgoing netcmd (because we're in error unwind mode)\n"));
+    L(FL("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
   // interfere with initial and final sequences. careful with it.
   // write_some();
@@ -927,10 +927,10 @@ session::read_some()
   Netxx::signed_size_type count = str.read(tmp, sizeof(tmp));
   if (count > 0)
     {
-      L(F("read %d bytes from fd %d (peer %s)\n") % count % fd % peer_id);
+      L(FL("read %d bytes from fd %d (peer %s)\n") % count % fd % peer_id);
       if (encountered_error)
         {
-          L(F("in error unwind mode, so throwing them into the bit bucket\n"));
+          L(FL("in error unwind mode, so throwing them into the bit bucket\n"));
           return true;
         }
       inbuf.append(tmp,count);
@@ -962,7 +962,7 @@ session::write_some()
         {
           outbuf.front().second += count;
         }
-      L(F("wrote %d bytes to fd %d (peer %s)\n")
+      L(FL("wrote %d bytes to fd %d (peer %s)\n")
         % count % fd % peer_id);
       mark_recent_io();
       if (byte_out_ticker.get() != NULL)
@@ -970,7 +970,7 @@ session::write_some()
       if (encountered_error && outbuf.empty())
         {
           // we've flushed our error message, so it's time to get out.
-          L(F("finished flushing output queue in error unwind mode, disconnecting\n"));
+          L(FL("finished flushing output queue in error unwind mode, disconnecting\n"));
           return false;
         }
       return true;
@@ -984,7 +984,7 @@ session::write_some()
 void 
 session::queue_error_cmd(string const & errmsg)
 {
-  L(F("queueing 'error' command\n"));
+  L(FL("queueing 'error' command\n"));
   netcmd cmd;
   cmd.write_error_cmd(errmsg);
   write_netcmd_and_try_flush(cmd);
@@ -993,7 +993,7 @@ session::queue_error_cmd(string const & errmsg)
 void 
 session::queue_bye_cmd(u8 phase) 
 {
-  L(F("queueing 'bye' command, phase %d\n") 
+  L(FL("queueing 'bye' command, phase %d\n") 
     % static_cast<size_t>(phase));
   netcmd cmd;
   cmd.write_bye_cmd(phase);
@@ -1006,7 +1006,7 @@ session::queue_done_cmd(netcmd_item_type type,
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
-  L(F("queueing 'done' command for %s (%d items)\n") 
+  L(FL("queueing 'done' command for %s (%d items)\n") 
     % typestr % n_items);
   netcmd cmd;
   cmd.write_done_cmd(type, n_items);
@@ -1076,7 +1076,7 @@ session::queue_refine_cmd(refinement_type ty, merkle_node const & node)
   hexenc<prefix> hpref;
   node.get_hex_prefix(hpref);
   netcmd_item_type_to_string(node.type, typestr);
-  L(F("queueing refinement %s of %s node '%s', level %d\n")
+  L(FL("queueing refinement %s of %s node '%s', level %d\n")
     % (ty == refinement_query ? "query" : "response")
     % typestr % hpref % static_cast<int>(node.level));
   netcmd cmd;
@@ -1096,12 +1096,12 @@ session::queue_data_cmd(netcmd_item_type type,
 
   if (role == sink_role)
     {
-      L(F("not queueing %s data for '%s' as we are in pure sink role\n") 
+      L(FL("not queueing %s data for '%s' as we are in pure sink role\n") 
         % typestr % hid);
       return;
     }
 
-  L(F("queueing %d bytes of data for %s item '%s'\n")
+  L(FL("queueing %d bytes of data for %s item '%s'\n")
     % dat.size() % typestr % hid);
 
   netcmd cmd;
@@ -1135,12 +1135,12 @@ session::queue_delta_cmd(netcmd_item_type type,
 
   if (role == sink_role)
     {
-      L(F("not queueing %s delta '%s' -> '%s' as we are in pure sink role\n") 
+      L(FL("not queueing %s delta '%s' -> '%s' as we are in pure sink role\n") 
         % typestr % base_hid % ident_hid);
       return;
     }
 
-  L(F("queueing %s delta '%s' -> '%s'\n")
+  L(FL("queueing %s delta '%s' -> '%s'\n")
     % typestr % base_hid % ident_hid);
   netcmd cmd;
   cmd.write_delta_cmd(type, base, ident, del);
@@ -1178,7 +1178,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   base64<rsa_pub_key> their_key_encoded;
   encode_base64(their_key, their_key_encoded);
   key_hash_code(their_keyname, their_key_encoded, their_key_hash);
-  L(F("server key has name %s, hash %s\n") % their_keyname % their_key_hash);
+  L(FL("server key has name %s, hash %s\n") % their_keyname % their_key_hash);
   var_key their_key_key(known_servers_domain, var_name(peer_id));
   if (app.db.var_exists(their_key_key))
     {
@@ -1215,7 +1215,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   {
     hexenc<id> hnonce;
     encode_hexenc(nonce, hnonce);
-    L(F("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
+    L(FL("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
       % their_key_hash % hnonce);
   }
   
@@ -1460,7 +1460,7 @@ session::process_auth_cmd(protocol_role their_role,
   if (check_signature(app, their_id, their_key, nonce1(), sig))
     {
       // Get our private key and sign back.
-      L(F("client signature OK, accepting authentication\n"));
+      L(FL("client signature OK, accepting authentication\n"));
       this->authenticated = true;
       this->remote_peer_key_name = their_id;
 
@@ -1495,7 +1495,7 @@ session::process_refine_cmd(refinement_type ty, merkle_node const & node)
 {
   string typestr;
   netcmd_item_type_to_string(node.type, typestr);
-  L(F("processing refine cmd for %s node at level %d\n")
+  L(FL("processing refine cmd for %s node at level %d\n")
     % typestr % node.level);
 
   switch (node.type)
@@ -1700,7 +1700,7 @@ load_data(netcmd_item_type type,
           rsa_keypair_id keyid;
           base64<rsa_pub_key> pub_encoded;
           app.db.get_pubkey(hitem, keyid, pub_encoded);
-          L(F("public key '%s' is also called '%s'\n") % hitem % keyid);
+          L(FL("public key '%s' is also called '%s'\n") % hitem % keyid);
           write_pubkey(keyid, pub_encoded, out);
         }
       else
@@ -1768,26 +1768,26 @@ session::process_data_cmd(netcmd_item_type type,
     case epoch_item:
       if (this->app.db.epoch_exists(epoch_id(hitem)))
         {
-          L(F("epoch '%s' already exists in our database\n") % hitem);
+          L(FL("epoch '%s' already exists in our database\n") % hitem);
         }
       else
         {
           cert_value branch;
           epoch_data epoch;
           read_epoch(dat, branch, epoch);
-          L(F("received epoch %s for branch %s\n") % epoch % branch);
+          L(FL("received epoch %s for branch %s\n") % epoch % branch);
           std::map<cert_value, epoch_data> epochs;
           app.db.get_epochs(epochs);
           std::map<cert_value, epoch_data>::const_iterator i;
           i = epochs.find(branch);
           if (i == epochs.end())
             {
-              L(F("branch %s has no epoch; setting epoch to %s\n") % branch % epoch);
+              L(FL("branch %s has no epoch; setting epoch to %s\n") % branch % epoch);
               app.db.set_epoch(branch, epoch);
             }
           else
             {
-              L(F("branch %s already has an epoch; checking\n") % branch);
+              L(FL("branch %s already has an epoch; checking\n") % branch);
               // If we get here, then we know that the epoch must be
               // different, because if it were the same then the
               // if (epoch_exists()) branch up above would have been taken.
@@ -1811,7 +1811,7 @@ session::process_data_cmd(netcmd_item_type type,
       
     case key_item:
       if (this->app.db.public_key_exists(hitem))
-        L(F("public key '%s' already exists in our database\n")  % hitem);
+        L(FL("public key '%s' already exists in our database\n")  % hitem);
       else
         {
           rsa_keypair_id keyid;
@@ -1829,7 +1829,7 @@ session::process_data_cmd(netcmd_item_type type,
 
     case cert_item:
       if (this->app.db.revision_cert_exists(hitem))
-        L(F("cert '%s' already exists in our database\n")  % hitem);
+        L(FL("cert '%s' already exists in our database\n")  % hitem);
       else
         {
           cert c;
@@ -1846,10 +1846,10 @@ session::process_data_cmd(netcmd_item_type type,
       {
         revision_id rid(hitem);
         if (this->app.db.revision_exists(rid))
-          L(F("revision '%s' already exists in our database\n") % hitem);
+          L(FL("revision '%s' already exists in our database\n") % hitem);
         else
           {
-            L(F("received revision '%s'\n") % hitem);
+            L(FL("received revision '%s'\n") % hitem);
             this->dbw.consume_revision_data(rid, revision_data(dat));
           }
       }
@@ -1859,10 +1859,10 @@ session::process_data_cmd(netcmd_item_type type,
       {
         file_id fid(hitem);
         if (this->app.db.file_version_exists(fid))
-          L(F("file version '%s' already exists in our database\n") % hitem);
+          L(FL("file version '%s' already exists in our database\n") % hitem);
         else
           {
-            L(F("received file '%s'\n") % hitem);
+            L(FL("received file '%s'\n") % hitem);
             this->dbw.consume_file_data(fid, file_data(dat));
           }
       }
@@ -1900,7 +1900,7 @@ session::process_delta_cmd(netcmd_item_type type,
       break;
       
     default:
-      L(F("ignoring delta received for item type %s\n") % typestr);
+      L(FL("ignoring delta received for item type %s\n") % typestr);
       break;
     }
   return true;
@@ -1914,12 +1914,12 @@ session::process_usher_cmd(utf8 const & msg)
       if (msg()[0] == '!')
         P(F("Received warning from usher: %s") % msg().substr(1));
       else
-        L(F("Received greeting from usher: %s") % msg().substr(1));
+        L(FL("Received greeting from usher: %s") % msg().substr(1));
     }
   netcmd cmdout;
   cmdout.write_usher_reply_cmd(peer_id, our_include_pattern);
   write_netcmd_and_try_flush(cmdout);
-  L(F("Sent reply."));
+  L(FL("Sent reply."));
   return true;
 }
 
@@ -1996,7 +1996,7 @@ session::dispatch_payload(netcmd const & cmd,
         utf8 their_include_pattern, their_exclude_pattern;
         rsa_oaep_sha_data hmac_key_encrypted;
         cmd.read_anonymous_cmd(role, their_include_pattern, their_exclude_pattern, hmac_key_encrypted);
-        L(F("received 'anonymous' netcmd from client for pattern '%s' excluding '%s' "
+        L(FL("received 'anonymous' netcmd from client for pattern '%s' excluding '%s' "
             "in %s mode\n")
           % their_include_pattern % their_exclude_pattern
           % (role == source_and_sink_role ? _("source and sink") :
@@ -2027,7 +2027,7 @@ session::dispatch_payload(netcmd const & cmd,
         hexenc<id> hnonce1;
         encode_hexenc(nonce1, hnonce1);
 
-        L(F("received 'auth(hmac)' netcmd from client '%s' for pattern '%s' "
+        L(FL("received 'auth(hmac)' netcmd from client '%s' for pattern '%s' "
             "exclude '%s' in %s mode with nonce1 '%s'\n")
           % their_key_hash % their_include_pattern % their_exclude_pattern
           % (role == source_and_sink_role ? _("source and sink") :
@@ -2178,7 +2178,7 @@ bool session::process(transaction_guard & guard)
         return true;
       
       armed = false;
-      L(F("processing %d byte input buffer from peer %s\n") 
+      L(FL("processing %d byte input buffer from peer %s\n") 
         % inbuf.size() % peer_id);
 
       size_t sz = cmd.encoded_size();
@@ -2191,7 +2191,7 @@ bool session::process(transaction_guard & guard)
       guard.maybe_checkpoint(sz);
       
       if (!ret)
-        L(F("finishing processing with '%d' packet") 
+        L(FL("finishing processing with '%d' packet") 
           % cmd.get_cmd_code());
       return ret;
     }
@@ -2343,7 +2343,7 @@ arm_sessions_and_calculate_probe(Netxx::Probe & probe,
         {
           if (i->second->arm())
             {
-              L(F("fd %d is armed\n") % i->first);
+              L(FL("fd %d is armed\n") % i->first);
               armed_sessions.insert(i->first);
             }
           probe.add(i->second->str, i->second->which_events());
@@ -2372,13 +2372,13 @@ handle_new_connection(Netxx::Address & addr,
                       map<Netxx::socket_type, shared_ptr<session> > & sessions,
                       app_state & app)
 {
-  L(F("accepting new connection on %s : %s\n") 
+  L(FL("accepting new connection on %s : %s\n") 
     % addr.get_name() % lexical_cast<string>(addr.get_port()));
   Netxx::Peer client = server.accept_connection();
   
   if (!client) 
     {
-      L(F("accept() returned a dead client\n"));
+      L(FL("accept() returned a dead client\n"));
     }
   else
     {
@@ -2581,7 +2581,7 @@ serve_connections(protocol_role role,
 
       arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
 
-      L(F("i/o probe with %d armed\n") % armed_sessions.size());      
+      L(FL("i/o probe with %d armed\n") % armed_sessions.size());      
       Netxx::Probe::result_type res = probe.ready(sessions.empty() ? forever 
                                            : (armed_sessions.empty() ? timeout 
                                               : instant));
@@ -2596,7 +2596,7 @@ serve_connections(protocol_role role,
       if (fd == -1)
         {
           if (armed_sessions.empty()) 
-            L(F("timed out waiting for I/O (listening on %s : %s)\n") 
+            L(FL("timed out waiting for I/O (listening on %s : %s)\n") 
               % addr.get_name() % lexical_cast<string>(addr.get_port()));
         }
       
@@ -2613,7 +2613,7 @@ serve_connections(protocol_role role,
           i = sessions.find(fd);
           if (i == sessions.end())
             {
-              L(F("got woken up for action on unknown fd %d\n") % fd);
+              L(FL("got woken up for action on unknown fd %d\n") % fd);
             }
           else
             {
@@ -2687,7 +2687,7 @@ session::rebuild_merkle_trees(app_state & app,
   P(F("finding items to synchronize:\n"));
   for (set<utf8>::const_iterator i = branchnames.begin();
       i != branchnames.end(); ++i)
-    L(F("including branch %s") % *i);
+    L(FL("including branch %s") % *i);
 
   // xgettext: please use short message and try to avoid multibytes chars
   ticker revisions_ticker(_("revisions"), "r", 64);
@@ -2745,7 +2745,7 @@ session::rebuild_merkle_trees(app_state & app,
         // Set to zero any epoch which is not yet set.
         if (j == epochs.end())
           {
-            L(F("setting epoch on %s to zero\n") % branch);
+            L(FL("setting epoch on %s to zero\n") % branch);
             epochs.insert(std::make_pair(branch, epoch_zero));
             app.db.set_epoch(branch, epoch_zero);
           }
@@ -2817,7 +2817,7 @@ session::rebuild_merkle_trees(app_state & app,
           app.db.get_key(*key, pub_encoded);
           hexenc<id> keyhash;
           key_hash_code(*key, pub_encoded, keyhash);
-          L(F("noting key '%s' = '%s' to send\n") % *key % keyhash);
+          L(FL("noting key '%s' = '%s' to send\n") % *key % keyhash);
           id key_item;
           decode_hexenc(keyhash, key_item);
           key_refiner.note_local_item(key_item);

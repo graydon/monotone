@@ -230,7 +230,7 @@ get_working_revision_and_rosters(app_state & app,
   update_restricted_roster_from_filesystem(new_roster, app);
 
   calculate_ident(new_roster, rev.new_manifest);
-  L(F("new manifest_id is %s\n") % rev.new_manifest);
+  L(FL("new manifest_id is %s\n") % rev.new_manifest);
   
   {
     // We did the following:

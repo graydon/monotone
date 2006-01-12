@@ -67,7 +67,7 @@ packet_db_writer::consume_file_data(file_id const & ident,
 {
   if (app.db.file_version_exists(ident))
     {
-      L(F("file version '%s' already exists in db\n") % ident);
+      L(FL("file version '%s' already exists in db\n") % ident);
       return;
     }
 
@@ -85,7 +85,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
 
   if (app.db.file_version_exists(new_id))
     {
-      L(F("file version '%s' already exists in db\n") % new_id);
+      L(FL("file version '%s' already exists in db\n") % new_id);
       return;
     }
 
@@ -121,7 +121,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
   transaction_guard guard(app.db);
   if (app.db.revision_exists(ident))
     {
-      L(F("revision '%s' already exists in db\n") % ident);
+      L(FL("revision '%s' already exists in db\n") % ident);
       return;
     }
 
@@ -190,7 +190,7 @@ packet_db_writer::consume_revision_cert(revision<cert> const & t)
 
   if (app.db.revision_cert_exists(t))
     {
-      L(F("revision cert on '%s' already exists in db\n") 
+      L(FL("revision cert on '%s' already exists in db\n") 
         % t.inner().ident);
       return;
     }
@@ -223,11 +223,11 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
       app.db.get_key(ident, tmp);
       if (!keys_match(ident, tmp, ident, k))
         W(F("key '%s' is not equal to key '%s' in database\n") % ident % ident);
-      L(F("skipping existing public key %s\n") % ident);
+      L(FL("skipping existing public key %s\n") % ident);
       return;
     }
 
-  L(F("putting public key %s\n") % ident);
+  L(FL("putting public key %s\n") % ident);
   app.db.put_key(ident, k);
   if (on_pubkey_written) 
     on_pubkey_written(ident);
@@ -243,7 +243,7 @@ packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
 
   if (app.keys.key_pair_exists(ident))
     {
-      L(F("skipping existing key pair %s\n") % ident);
+      L(FL("skipping existing key pair %s\n") % ident);
       return;
     }
 
@@ -362,7 +362,7 @@ feed_packet_consumer
     std::string body(res[3].first, res[3].second);
     if (regex_match(type, regex("[fr]data")))
       {
-        L(F("read data packet"));
+        L(FL("read data packet"));
         require(regex_match(args, regex(ident)));
         require(regex_match(body, regex(base)));
         base64<gzip<data> > body_packed(trim_ws(body));
@@ -379,7 +379,7 @@ feed_packet_consumer
       }
     else if (type == "fdelta")
       {
-        L(F("read delta packet"));
+        L(FL("read delta packet"));
         match_results<std::string::const_iterator> matches;
         require(regex_match(args, matches, regex(ident + sp + ident)));
         string src_id(matches[1].first, matches[1].second);
@@ -394,7 +394,7 @@ feed_packet_consumer
       }
     else if (type == "rcert")
       {
-        L(F("read cert packet"));
+        L(FL("read cert packet"));
         match_results<std::string::const_iterator> matches;
         require(regex_match(args, matches, regex(ident + sp + certname
                                                  + sp + key + sp + base)));
@@ -414,7 +414,7 @@ feed_packet_consumer
       } 
     else if (type == "pubkey")
       {
-        L(F("read pubkey data packet"));
+        L(FL("read pubkey data packet"));
         require(regex_match(args, regex(key)));
         require(regex_match(body, regex(base)));
         string contents(trim_ws(body));
@@ -423,7 +423,7 @@ feed_packet_consumer
       }
     else if (type == "keypair")
       {
-        L(F("read keypair data packet"));
+        L(FL("read keypair data packet"));
         require(regex_match(args, regex(key)));
         match_results<std::string::const_iterator> matches;
         require(regex_match(body, matches, regex(base + "#" + base)));
@@ -433,7 +433,7 @@ feed_packet_consumer
       }
     else if (type == "privkey")
       {
-        L(F("read pubkey data packet"));
+        L(FL("read pubkey data packet"));
         require(regex_match(args, regex(key)));
         require(regex_match(body, regex(base)));
         string contents(trim_ws(body));

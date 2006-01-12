@@ -15,6 +15,8 @@
 #include <string>
 #include <boost/format.hpp>
 
+#include "sanity.hh"
+
 struct user_interface;
 
 struct ticker
@@ -85,6 +87,7 @@ public:
   void fatal(boost::format const & fmt) { warn(fmt.str()); }
   void inform(std::string const & line);
   void inform(boost::format const & fmt) { inform(fmt.str()); }
+  void inform(i18n_format const & fmt) { inform(fmt.str()); }
   void set_tick_trailer(std::string const & trailer);
   void set_tick_writer(tick_writer * t_writer);
   void ensure_clean_line();
