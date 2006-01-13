@@ -2342,9 +2342,7 @@ void database::complete(selector_type ty,
                   fetch(res, one_col, any_rows, subquery.c_str());
                   for (size_t i = 0; i < res.size(); ++i)
                     {
-                      base64<data> row_encoded(res[i][0]);
-                      data row_decoded;
-                      decode_base64(row_encoded, row_decoded);
+                      data row_decoded(res[i][0]);
                       branch_names.push_back(row_decoded());
                     }
                 }
@@ -2455,9 +2453,7 @@ void database::complete(selector_type ty,
         completions.insert(res[i][0]);
       else
         {
-          base64<data> row_encoded(res[i][0]);
-          data row_decoded;
-          decode_base64(row_encoded, row_decoded);
+          data row_decoded(res[i][0]);
           completions.insert(row_decoded());
         }
     }
