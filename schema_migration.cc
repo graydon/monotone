@@ -1031,9 +1031,12 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
   m.add("bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
         &migrate_client_to_add_rosters);
 
+  m.add("1db80c7cee8fa966913db1a463ed50bf1b0e5b0e",
+        &migrate_files_BLOB);
+
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "1db80c7cee8fa966913db1a463ed50bf1b0e5b0e");
+  m.migrate(sql, "9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df");
 }
