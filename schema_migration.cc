@@ -908,6 +908,98 @@ migrate_client_to_add_rosters(sqlite3 * sql,
   return true;
 }
 
+// I hate to duplicate this from database.cc but install_functions is private
+// and gets called too late
+#include <transforms.hh>
+
+static void 
+sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
+{
+  if (nargs != 1)
+    {
+      sqlite3_result_error(f, "need exactly 1 arg to unbase64()", -1);
+      return;
+    }
+  data decoded;
+  decode_base64(base64<data>(string(sqlite3_value_text_s(args[0]))), decoded);
+  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
+}
+
+// we could as well use the fact that uuencoded gzip starts with H4sI
+// but we can not change comments on fields
+static bool
+migrate_files_BLOB(sqlite3 * sql,
+                                    char ** errmsg,
+                                    app_state *app)
+{
+  int res;
+//  app->db.install_functions(app);
+  I(sqlite3_create_function(sql, "unbase64", -1, 
+                           SQLITE_UTF8, NULL,
+                           &sqlite3_unbase64_fn, 
+                           NULL, NULL) == 0);
+  // change the encoding of file(_delta)s
+  if (!move_table(sql, errmsg, 
+                  "files", 
+                  "tmp", 
+                  "("
+                  "id primary key,"
+                  "data not null"
+                  ")"))
+    return false;
+
+  res = logged_sqlite3_exec(sql, "CREATE TABLE files\n"
+                            "(\n"
+                            "id primary key,   -- strong hash of file contents\n"
+                            "data not null     -- compressed contents of a file\n"
+                            ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "INSERT INTO files "
+                            "SELECT id, unbase64(data) "
+                            "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  if (!move_table(sql, errmsg, 
+                  "file_deltas", 
+                  "tmp", 
+                  "("
+                  "id not null,"
+                  "base not null,"
+                  "delta not null"
+                  ")"))
+    return false;
+
+  res = logged_sqlite3_exec(sql, "CREATE TABLE file_deltas\n"
+                            "(\n"
+                            "id not null,      -- strong hash of file contents\n"
+                            "base not null,    -- joins with files.id or file_deltas.id\n"
+                            "delta not null,   -- compressed rdiff to construct current from base\n"
+                            "unique(id, base)\n"
+                            ")", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "INSERT INTO file_deltas "
+                            "SELECT id, base, unbase64(delta) "
+                            "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  // change comment
+  return true;
+}
+
 void 
 migrate_monotone_schema(sqlite3 *sql, app_state *app)
 {
@@ -939,9 +1031,12 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
   m.add("bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
         &migrate_client_to_add_rosters);
 
+  m.add("1db80c7cee8fa966913db1a463ed50bf1b0e5b0e",
+        &migrate_files_BLOB);
+
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "1db80c7cee8fa966913db1a463ed50bf1b0e5b0e");
+  m.migrate(sql, "9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df");
 }
