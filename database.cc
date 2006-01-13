@@ -106,8 +106,12 @@ database::check_rosterified()
       fetch(res, one_col, any_rows, rosters_query.c_str());
       N (res.size() != 0,
          F("database %s contains revisions but no rosters\n"
-           "try 'monotone db rosterify' to add rosters\n"
-           "(this is irreversible; you may want to make a backup copy first)")
+           "if you are a project leader or doing local testing:\n"
+           "  see the file UPGRADE for instructions on upgrading.\n"
+           "if you are not a project leader:\n"
+           "  wait for a leader to migrate project data, and then\n"
+           "  pull into a fresh database.\n"
+           "sorry about the inconvenience.")
          % filename);
     }
 }
