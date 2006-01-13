@@ -1557,7 +1557,7 @@ database::put_revision(revision_id const & new_id,
   std::vector<queryarg> args;
   args.push_back(new_id.inner()());
   args.push_back(queryarg(d.inner()(),true));
-  execute("INSERT INTO revisions VALUES(?, ?)", args);
+  execute(std::string("INSERT INTO revisions VALUES(?, ?)"), args);
 
   for (edge_map::const_iterator e = rev.edges.begin();
        e != rev.edges.end(); ++e)
@@ -1743,7 +1743,7 @@ database::get_pubkey(hexenc<id> const & hash,
         "SELECT id, keydata FROM public_keys WHERE hash = ?", 
         hash().c_str());
   id = res[0][0];
-  encode_base64(res[0][1], pub_encoded);
+  encode_base64(rsa_pub_key(res[0][1]), pub_encoded);
 }
 
 void 
@@ -1754,7 +1754,7 @@ database::get_key(rsa_keypair_id const & pub_id,
   fetch(res, one_col, one_row, 
         "SELECT keydata FROM public_keys WHERE id = ?", 
         pub_id().c_str());
-  encode_base64(res[0][0], pub_encoded);
+  encode_base64(rsa_pub_key(res[0][0]), pub_encoded);
 }
 
 void 
@@ -1772,7 +1772,7 @@ database::put_key(rsa_keypair_id const & pub_id,
   args.push_back(thash());
   args.push_back(pub_id());
   args.push_back(queryarg(pub_key(),true));
-  execute("INSERT INTO public_keys VALUES(?, ?, ?)", args);
+  execute(std::string("INSERT INTO public_keys VALUES(?, ?, ?)"), args);
 }
 
 void
@@ -2570,7 +2570,7 @@ database::set_var(var_key const & key, var_value const & value)
   args.push_back(key.first());
   args.push_back(queryarg(key.second(),true));
   args.push_back(queryarg(value(),true));
-  execute("INSERT OR REPLACE INTO db_vars VALUES(?, ?, ?)", args);
+  execute(std::string("INSERT OR REPLACE INTO db_vars VALUES(?, ?, ?)"), args);
 }
 
 void
@@ -2579,7 +2579,7 @@ database::clear_var(var_key const & key)
   std::vector<queryarg> args;
   args.push_back(key.first());
   args.push_back(queryarg(key.second(),true));
-  execute("DELETE FROM db_vars WHERE domain = ? AND name = ?", args);
+  execute(std::string("DELETE FROM db_vars WHERE domain = ? AND name = ?"), args);
 }
 
 // branches
