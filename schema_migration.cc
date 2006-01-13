@@ -1036,6 +1036,10 @@ migrate_files_BLOB(sqlite3 * sql,
       "SET data=unbase64(data) WHERE data like 'H4sI%'", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
+  res = logged_sqlite3_exec(sql, "UPDATE branch_epochs "
+      "SET branch=unbase64(branch)", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
   return true;
 }
 

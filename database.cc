@@ -1653,24 +1653,22 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
 void
 database::delete_branch_named(cert_value const & branch)
 {
-  base64<cert_value> encoded;
-  encode_base64(branch, encoded);
   L(FL("Deleting all references to branch %s\n") % branch);
-  execute("DELETE FROM revision_certs WHERE name='branch' AND value =?",
-          encoded().c_str());
-  execute("DELETE FROM branch_epochs WHERE branch=?",
-          encoded().c_str());
+  
+  std::vector<queryarg> args;
+  args.push_back(queryarg(branch(),true));
+  execute(std::string("DELETE FROM revision_certs WHERE name='branch' AND value =?"), args);
+  execute(std::string("DELETE FROM branch_epochs WHERE branch=?"), args);
 }
 
 /// Deletes all certs referring to a particular tag. 
 void
 database::delete_tag_named(cert_value const & tag)
 {
-  base64<cert_value> encoded;
-  encode_base64(tag, encoded);
   L(FL("Deleting all references to tag %s\n") % tag);
-  execute("DELETE FROM revision_certs WHERE name='tag' AND value =?",
-          encoded().c_str());
+  std::vector<queryarg> args;
+  args.push_back(queryarg(tag(),true));
+  execute(std::string("DELETE FROM revision_certs WHERE name='tag' AND value =?"), args);
 }
 
 // crypto key management
@@ -2475,9 +2473,7 @@ database::get_epochs(std::map<cert_value, epoch_data> & epochs)
   fetch(res, 2, any_rows, "SELECT branch, epoch FROM branch_epochs");
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {      
-      base64<cert_value> encoded(idx(*i, 0));
-      cert_value decoded;
-      decode_base64(encoded, decoded);
+      cert_value decoded(idx(*i, 0));
       I(epochs.find(decoded) == epochs.end());
       epochs.insert(std::make_pair(decoded, epoch_data(idx(*i, 1))));
     }
@@ -2494,8 +2490,7 @@ database::get_epoch(epoch_id const & eid,
         " WHERE hash = ?",
         eid.inner()().c_str());
   I(res.size() == 1);
-  base64<cert_value> encoded(idx(idx(res, 0), 0));
-  decode_base64(encoded, branch);
+  branch = cert_value(idx(idx(res, 0), 0));
   epo = epoch_data(idx(idx(res, 0), 1));
 }
 
@@ -2514,20 +2509,21 @@ void
 database::set_epoch(cert_value const & branch, epoch_data const & epo)
 {
   epoch_id eid;
-  base64<cert_value> encoded;
-  encode_base64(branch, encoded);
   epoch_hash_code(branch, epo, eid);
   I(epo.inner()().size() == constants::epochlen);
-  execute("INSERT OR REPLACE INTO branch_epochs VALUES(?, ?, ?)", 
-          eid.inner()().c_str(), encoded().c_str(), epo.inner()().c_str());
+  std::vector<queryarg> args;
+  args.push_back(eid.inner()());
+  args.push_back(queryarg(branch(),true));
+  args.push_back(epo.inner()());
+  execute(std::string("INSERT OR REPLACE INTO branch_epochs VALUES(?, ?, ?)"), args);
 }
 
 void 
 database::clear_epoch(cert_value const & branch)
 {
-  base64<cert_value> encoded;
-  encode_base64(branch, encoded);
-  execute("DELETE FROM branch_epochs WHERE branch = ?", encoded().c_str());
+  std::vector<queryarg> args;
+  args.push_back(queryarg(branch(),true));
+  execute(std::string("DELETE FROM branch_epochs WHERE branch = ?"), args);
 }
 
 // vars
