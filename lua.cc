@@ -1089,7 +1089,7 @@ shared_trust_function_body(Lua & ll,
 {
   ll.push_table();
   
-  int k = 0;
+  int k = 1;
   for (set<rsa_keypair_id>::const_iterator v = signers.begin();
        v != signers.end(); ++v)
     {

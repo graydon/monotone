@@ -1,3 +1,8 @@
+2006-01-13  Bruce Stephans  <monotone@cenderis.demon.co.uk>
+
+	* lua.cc (shared_trust_function_body): Index lua arrays
+	from 1, not 0.
+
 2006-01-12  Nathaniel Smith  <njs@pobox.com>
 
 	* sanity.cc (dump_buffer): Add forgotten newline.
