@@ -36,14 +36,14 @@ CREATE TABLE file_deltas
 CREATE TABLE manifests
 	(
 	id primary key,      -- strong hash of all the entries in a manifest
-	data not null        -- compressed contents of a manifest
+	data not null        -- compressed, encoded contents of a manifest
 	);
 
 CREATE TABLE manifest_deltas
 	(
 	id not null,         -- strong hash of all the entries in a manifest
-	base not null,       -- joins with either manifests.id or manifest_deltas.id
-	delta not null,      -- compressed rdiff to construct current from base
+	base not null,       -- joins with either manifest.id or manifest_deltas.id
+	delta not null,      -- rdiff to construct current from base
 	unique(id, base)
 	);
 

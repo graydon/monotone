@@ -97,7 +97,7 @@ class database
   typedef std::vector< std::vector<std::string> > results;
  
   void execute(char const * query, ...);
-  
+
   // structure to distinguish between blob and string arguments
   // in sqlite3 a blob never equals a string even when binary identical
   // so we need to remember which type to pass to the query

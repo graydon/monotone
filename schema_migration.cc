@@ -857,23 +857,6 @@ migrate_client_to_external_privkeys(sqlite3 * sql,
   return true;
 }
 
-// I hate to duplicate this from database.cc but install_functions is private
-// and gets called too late
-#include <transforms.hh>
-
-static void 
-sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
-{
-  if (nargs != 1)
-    {
-      sqlite3_result_error(f, "need exactly 1 arg to unbase64()", -1);
-      return;
-    }
-  data decoded;
-  decode_base64(base64<data>(string(sqlite3_value_text_s(args[0]))), decoded);
-  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
-}
-
 static bool
 migrate_client_to_add_rosters(sqlite3 * sql,
                               char ** errmsg,
@@ -925,6 +908,25 @@ migrate_client_to_add_rosters(sqlite3 * sql,
   return true;
 }
 
+// I hate to duplicate this from database.cc but install_functions is private
+// and gets called too late
+#include <transforms.hh>
+
+static void 
+sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
+{
+  if (nargs != 1)
+    {
+      sqlite3_result_error(f, "need exactly 1 arg to unbase64()", -1);
+      return;
+    }
+  data decoded;
+  decode_base64(base64<data>(string(sqlite3_value_text_s(args[0]))), decoded);
+  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
+}
+
+// we could as well use the fact that uuencoded gzip starts with H4sI
+// but we can not change comments on fields
 static bool
 migrate_files_BLOB(sqlite3 * sql,
                                     char ** errmsg,
@@ -998,80 +1000,6 @@ migrate_files_BLOB(sqlite3 * sql,
   return true;
 }
 
-// we could as well use the fact that uuencoded gzip starts with H4sI
-// but we can not change comments on fields
-static bool
-migrate_manifests_BLOB(sqlite3 * sql,
-                                    char ** errmsg,
-                                    app_state *app)
-{
-  if (!migrate_files_BLOB(sql,errmsg,app)) 
-    return false;
-    
-  int res;
-
-  // change the encoding of manifest(_delta)s
-  if (!move_table(sql, errmsg, 
-                  "manifests", 
-                  "tmp", 
-                  "("
-                  "id primary key,"
-                  "data not null"
-                  ")"))
-    return false;
-
-  res = logged_sqlite3_exec(sql, "CREATE TABLE manifests\n"
-                            "(\n"
-                            "id primary key,   -- strong hash of all the entries in a manifest\n"
-                            "data not null     -- compressed contents of a manifest\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(sql, "INSERT INTO manifests "
-                            "SELECT id, unbase64(data) "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  if (!move_table(sql, errmsg, 
-                  "manifest_deltas", 
-                  "tmp", 
-                  "("
-                  "id not null,"
-                  "base not null,"
-                  "delta not null"
-                  ")"))
-    return false;
-
-  res = logged_sqlite3_exec(sql, "CREATE TABLE manifest_deltas\n"
-                            "(\n"
-                            "id not null,      -- strong hash of all the entries in a manifest\n"
-                            "base not null,    -- joins with either manifests.id or manifest_deltas.id\n"
-                            "delta not null,   -- compressed rdiff to construct current from base\n"
-                            "unique(id, base)\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(sql, "INSERT INTO manifest_deltas "
-                            "SELECT id, base, unbase64(delta) "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  // change comment
-  return true;
-}
-
 void 
 migrate_monotone_schema(sqlite3 *sql, app_state *app)
 {
@@ -1099,7 +1027,7 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
 
   m.add("1509fd75019aebef5ac3da3a5edf1312393b70e9",
         &migrate_client_to_external_privkeys);
-        
+
   m.add("bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
         &migrate_client_to_add_rosters);
 
