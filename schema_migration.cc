@@ -1014,7 +1014,8 @@ migrate_files_BLOB(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "UPDATE db_vars SET value=unbase64(value)", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(sql, "UPDATE db_vars "
+      "SET value=unbase64(value),name=unbase64(name)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
   res = logged_sqlite3_exec(sql, "UPDATE public_keys "

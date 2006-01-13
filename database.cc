@@ -1464,10 +1464,7 @@ database::get_revision(revision_id const & id,
         "SELECT data FROM revisions WHERE id = ?",
         id.inner()().c_str());
 
-  base64<gzip<data> > rdat_packed;
-  rdat_packed = base64<gzip<data> >(res[0][0]);
-  data rdat;
-  unpack(rdat_packed, rdat);
+  data rdat(res[0][0]);
 
   // verify that we got a revision with the right id
   {
@@ -1557,12 +1554,10 @@ database::put_revision(revision_id const & new_id,
 
   // Phase 3: Write the revision data
 
-  base64<gzip<data> > d_packed;
-  pack(d.inner(), d_packed);
-
-  execute("INSERT INTO revisions VALUES(?, ?)", 
-          new_id.inner()().c_str(), 
-          d_packed().c_str());
+  std::vector<queryarg> args;
+  args.push_back(new_id.inner()());
+  args.push_back(queryarg(d.inner()(),true));
+  execute("INSERT INTO revisions VALUES(?, ?)", args);
 
   for (edge_map::const_iterator e = rev.edges.begin();
        e != rev.edges.end(); ++e)
@@ -1748,7 +1743,7 @@ database::get_pubkey(hexenc<id> const & hash,
         "SELECT id, keydata FROM public_keys WHERE hash = ?", 
         hash().c_str());
   id = res[0][0];
-  pub_encoded = res[0][1];
+  encode_base64(res[0][1], pub_encoded);
 }
 
 void 
@@ -1759,7 +1754,7 @@ database::get_key(rsa_keypair_id const & pub_id,
   fetch(res, one_col, one_row, 
         "SELECT keydata FROM public_keys WHERE id = ?", 
         pub_id().c_str());
-  pub_encoded = res[0][0];
+  encode_base64(res[0][0], pub_encoded);
 }
 
 void 
@@ -1771,8 +1766,13 @@ database::put_key(rsa_keypair_id const & pub_id,
   I(!public_key_exists(thash));
   E(!public_key_exists(pub_id),
     F("another key with name '%s' already exists") % pub_id);
-  execute("INSERT INTO public_keys VALUES(?, ?, ?)", 
-          thash().c_str(), pub_id().c_str(), pub_encoded().c_str());
+  rsa_pub_key pub_key;
+  decode_base64(pub_encoded, pub_key);
+  std::vector<queryarg> args;
+  args.push_back(thash());
+  args.push_back(pub_id());
+  args.push_back(queryarg(pub_key(),true));
+  execute("INSERT INTO public_keys VALUES(?, ?, ?)", args);
 }
 
 void
@@ -1795,13 +1795,18 @@ database::cert_exists(cert const & t,
     "AND value = ? " 
     "AND keypair = ? "
     "AND signature = ?";
-    
-  fetch(res, 1, any_rows, query.c_str(),
-        t.ident().c_str(),
-        t.name().c_str(),
-        t.value().c_str(),
-        t.key().c_str(),
-        t.sig().c_str());
+  std::vector<queryarg> args;
+  args.push_back(t.ident());
+  args.push_back(t.name());
+  cert_value value;
+  decode_base64(t.value, value);
+  args.push_back(queryarg(value(),true));
+  args.push_back(t.key());
+  rsa_sha1_signature sig;
+  decode_base64(t.sig, sig);
+  args.push_back(queryarg(sig(),true));
+  
+  fetch(res, 1, any_rows, query, args);
   I(res.size() == 0 || res.size() == 1);
   return res.size() == 1;
 }
@@ -1810,18 +1815,22 @@ void
 database::put_cert(cert const & t,
                    string const & table)
 {
+  std::vector<queryarg> args;
   hexenc<id> thash;
   cert_hash_code(t, thash);
+  args.push_back(thash());
+  args.push_back(t.ident());
+  args.push_back(t.name());
+  cert_value value;
+  decode_base64(t.value, value);
+  args.push_back(queryarg(value(),true));
+  args.push_back(t.key());
+  rsa_sha1_signature sig;
+  decode_base64(t.sig, sig);
+  args.push_back(queryarg(sig(),true));
 
   string insert = "INSERT INTO " + table + " VALUES(?, ?, ?, ?, ?, ?)";
-
-  execute(insert.c_str(), 
-          thash().c_str(),
-          t.ident().c_str(),
-          t.name().c_str(), 
-          t.value().c_str(),
-          t.key().c_str(),
-          t.sig().c_str());
+  execute(insert, args);
 }
 
 void 
@@ -1832,11 +1841,15 @@ database::results_to_certs(results const & res,
   for (size_t i = 0; i < res.size(); ++i)
     {
       cert t;
+      base64<cert_value> value;
+      encode_base64(cert_value(res[i][2]), value);
+      base64<rsa_sha1_signature> sig;
+      encode_base64(rsa_sha1_signature(res[i][4]), sig);
       t = cert(hexenc<id>(res[i][0]), 
               cert_name(res[i][1]),
-              base64<cert_value>(res[i][2]),
+              value,
               rsa_keypair_id(res[i][3]),
-              base64<rsa_sha1_signature>(res[i][4]));
+              sig);
       certs.push_back(t);
     }
 }
@@ -1962,10 +1975,13 @@ database::get_certs(hexenc<id> const & ident,
     "SELECT id, name, value, keypair, signature FROM " + table + 
     " WHERE id = ? AND name = ? AND value = ?";
 
-  fetch(res, 5, any_rows, query.c_str(),
-        ident().c_str(),
-        name().c_str(),
-        value().c_str());
+  std::vector<queryarg> args;
+  args.push_back(ident());
+  args.push_back(name());
+  cert_value binvalue;
+  decode_base64(value, binvalue);
+  args.push_back(queryarg(binvalue(),true));
+  fetch(res, 5, any_rows, query, args);
   results_to_certs(res, certs);
 }
 
@@ -2519,12 +2535,8 @@ database::get_vars(std::map<var_key, var_value> & vars)
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {
       var_domain domain(idx(*i, 0));
-      base64<var_name> name_encoded(idx(*i, 1));
-      var_name name;
-      decode_base64(name_encoded, name);
-      base64<var_value> value_encoded(idx(*i, 2));
-      var_value value;
-      decode_base64(value_encoded, value);
+      var_name name(idx(*i, 1));
+      var_value value(idx(*i, 2));
       I(vars.find(std::make_pair(domain, name)) == vars.end());
       vars.insert(std::make_pair(std::make_pair(domain, name), value));
     }
@@ -2554,23 +2566,20 @@ database::var_exists(var_key const & key)
 void
 database::set_var(var_key const & key, var_value const & value)
 {
-  base64<var_name> name_encoded;
-  encode_base64(key.second, name_encoded);
-  base64<var_value> value_encoded;
-  encode_base64(value, value_encoded);
-  execute("INSERT OR REPLACE INTO db_vars VALUES(?, ?, ?)",
-          key.first().c_str(),
-          name_encoded().c_str(),
-          value_encoded().c_str());
+  std::vector<queryarg> args;
+  args.push_back(key.first());
+  args.push_back(queryarg(key.second(),true));
+  args.push_back(queryarg(value(),true));
+  execute("INSERT OR REPLACE INTO db_vars VALUES(?, ?, ?)", args);
 }
 
 void
 database::clear_var(var_key const & key)
 {
-  base64<var_name> name_encoded;
-  encode_base64(key.second, name_encoded);
-  execute("DELETE FROM db_vars WHERE domain = ? AND name = ?",
-          key.first().c_str(), name_encoded().c_str());
+  std::vector<queryarg> args;
+  args.push_back(key.first());
+  args.push_back(queryarg(key.second(),true));
+  execute("DELETE FROM db_vars WHERE domain = ? AND name = ?", args);
 }
 
 // branches
