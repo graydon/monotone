@@ -2303,7 +2303,7 @@ void database::complete(selector_type ty,
                       spot++;
                       certvalue = i->second.substr(spot);
                       lim += "SELECT id FROM revision_certs ";
-                      lim += (boost::format("WHERE name='%s' AND value glob '%s'")
+                      lim += (boost::format("WHERE name='%s' AND CAST(value AS TEXT) glob '%s'")
                               % certname % certvalue).str();
                     }
                   else
@@ -2322,7 +2322,7 @@ void database::complete(selector_type ty,
                       % author_cert_name 
                       % tag_cert_name 
                       % branch_cert_name).str();
-              lim += (boost::format(" AND value glob '*%s*'")
+              lim += (boost::format(" AND CAST(value AS TEXT) glob '*%s*'")
                       % i->second).str();     
             }
           else if (i->first == selectors::sel_head) 
@@ -2336,7 +2336,7 @@ void database::complete(selector_type ty,
                 }
               else
                 {
-                  string subquery = (boost::format("SELECT DISTINCT value FROM revision_certs WHERE name='%s' and value glob '%s'") 
+                  string subquery = (boost::format("SELECT DISTINCT value FROM revision_certs WHERE name='%s' and CAST(value AS TEXT) glob '%s'") 
                                      % branch_cert_name % i->second).str();
                   results res;
                   fetch(res, one_col, any_rows, subquery.c_str());
@@ -2383,7 +2383,7 @@ void database::complete(selector_type ty,
               if ((i->first == selectors::sel_branch) && (i->second.size() == 0))
                 {
                   __app->require_working_copy("the empty branch selector b: refers to the current branch");
-                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND value glob '%s'")
+                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND CAST(value AS TEXT) glob '%s'")
                           % branch_cert_name % __app->branch_name).str();
                   L(FL("limiting to current branch '%s'\n") % __app->branch_name);
                 }
@@ -2399,7 +2399,7 @@ void database::complete(selector_type ty,
                       lim += (boost::format("value > X'%s'") % encode_hexenc(i->second)).str();
                       break;
                     default:
-                      lim += (boost::format("value glob '%s%s%s'")
+                      lim += (boost::format("CAST(value AS TEXT) glob '%s%s%s'")
                               % prefix % i->second % suffix).str();
                       break;
                     }
@@ -2440,7 +2440,7 @@ void database::complete(selector_type ty,
             (boost::format(" (name='%s')") % certname).str();
         }
         
-      query += (boost::format(" AND (value GLOB '%s%s%s')")
+      query += (boost::format(" AND (CAST(value AS TEXT) GLOB '%s%s%s')")
                 % prefix % partial % suffix).str();
       query += (boost::format(" AND (id IN %s)") % lim).str();
     }
