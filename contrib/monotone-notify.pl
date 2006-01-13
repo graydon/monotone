@@ -55,6 +55,7 @@ my $since = undef;
 my $workdir = undef;
 my $quiet = 0;
 my $debug = 0;
+my $monotone = "monotone";
 
 GetOptions('help|?' => \$help,
 	   'man' => \$man,
@@ -72,7 +73,8 @@ GetOptions('help|?' => \$help,
 	   'since=s' => \$since,
 	   'workdir=s' => \$workdir,
 	   'quiet' => \$quiet,
-	   'debug' => \$debug) or pod2usage(2);
+	   'debug' => \$debug,
+	   'monotone=s' => \$monotone) or pod2usage(2);
 
 $SIG{HUP} = \&my_exit;
 $SIG{KILL} = \&my_exit;
@@ -103,7 +105,7 @@ if ($mail || $debug) {
 	pod2usage(2);
     }
     if (!defined $difflogs_to && !defined $nodifflogs_to) {
-	my_errlog("You need to specify a To address with --diffslogs-to or --nodiffslogs-to");
+	my_errlog("You need to specify a To address with --difflogs-to or --nodifflogs-to");
 	pod2usage(2);
     }
 }
@@ -182,7 +184,7 @@ my %branches =
     map { $_ => 1 }
 	grep (/$branches_re/,
 	      map { chomp; $_ }
-		  my_backtick("monotone$database list branches"));
+		  my_backtick("$monotone$database list branches"));
 my_debug("collected the following branches:\n",
 	 map { "  $_\n" } keys %branches);
 
@@ -193,7 +195,7 @@ my_log("finding all current leaves.");
 # Format: revision => { branch1 => 1, branch2 => 1, ... }
 my %current_leaves = ();
 foreach my $branch (keys %branches) {
-    foreach my $revision (my_backtick("monotone$database automate heads $branch")) {
+    foreach my $revision (my_backtick("$monotone$database automate heads $branch")) {
 	chomp $revision;
 	$current_leaves{$revision} = {} if !defined $current_leaves{$revision};
 	$current_leaves{$revision}->{$branch} = 1;
@@ -207,7 +209,7 @@ my_debug("found ", list_size(keys %current_leaves)," current leaves");
 #
 my_log("finding all old leaves.");
 my %old_leaves = ();
-foreach my $notify_entry (my_backtick("monotone$database list vars notify")) {
+foreach my $notify_entry (my_backtick("$monotone$database list vars notify")) {
     chomp $notify_entry;
     if ($notify_entry =~ /^notify:\s([0-9a-fA-F]{40})\@([^\s]+)\s1$/) {
 	# Found the new format that keeps track of which branches each
@@ -244,7 +246,7 @@ if ($mail || $debug) {
     my_log("collecting all revision IDs between current and old leaves.");
     my %revisions =
 	map { chomp; $_ => 1 }
-	    map { my_backtick("monotone$database automate ancestry_difference $_ -@ $old_leaves_file") }
+	    map { my_backtick("$monotone$database automate ancestry_difference $_ -@ $old_leaves_file") }
 		keys %current_leaves;
     push @files_to_clean_up, "$old_leaves_file";
     my @revisions_keys = keys %revisions;
@@ -266,7 +268,7 @@ if ($mail || $debug) {
     foreach my $revision (keys %revisions) {
 	$revision_data{$revision} =
 	    [ map { chomp; $_ }
-	      my_backtick("monotone$database log --last=1 --revision=$revision") ];
+	      my_backtick("$monotone$database log --last=1 --merges --revision=$revision") ];
 	my $date = (split(' ', (grep(/^Date:/, @{$revision_data{$revision}}))[0]))[1];
 
 	if (defined $before && $date ge $before) {
@@ -431,7 +433,7 @@ if ($mail || $debug) {
 		#
 		if ($mail) {
 		    $msg->send();
-		} else {
+		} elsif ($debug) {
 		    open MESSAGEDBG,">>$debugfile"
 			|| my_error("Couldn't create $debugfile: $!");
 		    print MESSAGEDBG "======================================================================\n";
@@ -470,12 +472,12 @@ my %old_notifications =
 my_log("updating the table of last logged revisions.");
 
 map { my_conditional_system($update,
-			    "monotone$database set notify $_ 1") }
+			    "$monotone$database set notify $_ 1") }
     grep { !defined $old_notifications{$_} && $_ !~ /\@\*$/ }
 	keys %new_notifications;
 map { s/\@\*$//;
       my_conditional_system($update,
-			    "monotone$database unset notify $_") }
+			    "$monotone$database unset notify $_") }
     grep { !defined $new_notifications{$_} }
 	keys %old_notifications;
 
@@ -503,40 +505,62 @@ sub generate_diff
 	print OUTPUT "Diff [$ancestor] -> [$revision]\n";
     }
     if ($ancestor eq "") {
-	if ($really_show_diffs) {
+	if (!$really_show_diffs) {
 	    print OUTPUT "This is the first commit, and there's no easy way to create a diff\n";
 	    print OUTPUT "These are the commands to view the individual files of that commit instead:\n";
 	    print OUTPUT "\n";
 	}
-	my @status = my_backtick("monotone$db cat revision $revision");
-	shift @status;	# remove "new_manifest ..."
-	shift @status;	# remove ""
-	shift @status;	# remove "old_revision ..."
-	shift @status;	# remove "old_manifest ..."
+	my @status = my_backtick("$monotone$db automate get_revision $revision");
+	my $line;
+	$line = shift @status;
+	if ($line =~ /^format_version\s+"([0-9]+)"\s*$/) {
+	    # New versioned format
+	    my $format_version = $1;
+	    if ($format_version == 1) {
+		while($line =~ /^(\s*
+				  |format_version\s+"[0-9]+"
+				  |new_manifest\s+\[[0-9a-f]{40}\]
+				  |old_revision\s+\[[0-9a-f]{40}\]
+				  )\s*$/x) {
+		    $line = shift @status;
+		}
+	    }
+	} else {
+	    while($line =~ /^(\s*
+			      |(new|old)_manifest\s+\[[0-9a-f]{40}\]
+			      |old_revision\s+\[[0-9a-f]{40}\]
+			      )\s*$/x) {
+		$line = shift @status;
+	    }
+	}
 	foreach (@status) {
 	    chomp;
 	    print OUTPUT ($_ eq "" ? "#" : "# $_"), "\n";
 	}
-	my $patched_file = "";
+	my $added_file = "";
 	foreach my $line (@status) {
 	    my $id = undef;
-	    $patched_file = $1 if $line =~ /^patch\s+"(.*)"\s*$/;
-	    $id = $1 if $line =~ /^\s+to \[([0-9a-fA-F]{40})\]\s*$/;
+	    $added_file = $1 if $line =~ /^add_file\s+"(.*)"\s*$/;
+	    $id = $1 if $line =~ /^\s+content\s\[([0-9a-fA-F]{40})\]\s*$/;
+	    # older format had the add_file just name the file, and having
+	    # the content IDs come much later, preceded by a patch line
+	    $added_file = $1 if $line =~ /^patch\s+"(.*)"\s*$/;
+	    $id = $1 if $line =~ /^\s+to\s\[([0-9a-fA-F]{40})\]\s*$/;
 	    if (defined $id) {
 		if ($really_show_diffs) {
-		    my @file = my_backtick("monotone$db cat file $id");
-		    print OUTPUT "--- $patched_file\n";
-		    print OUTPUT "+++ $patched_file\n";
+		    my @file = my_backtick("$monotone$db automate get_file $id");
+		    print OUTPUT "--- $added_file\n";
+		    print OUTPUT "+++ $added_file\n";
 		    print OUTPUT "\@\@ -0,0 +1,",list_size(@file)," \@\@\n";
 		    map { print OUTPUT "+" . $_ } @file;
 		} else {
-		    print OUTPUT "monotone --db={your.database} cat file $id\n";
+		    print OUTPUT "monotone --db={your.database} automate get_file $id\n";
 		}
 	    }
 	}
     } else {
 	if ($really_show_diffs) {
-	    print OUTPUT my_backtick("monotone$db diff --revision=$ancestor --revision=$revision");
+	    print OUTPUT my_backtick("$monotone$db diff --revision=$ancestor --revision=$revision");
 	} else {
 	    print OUTPUT "monotone --db={your.database} diff --revision=$ancestor --revision=$revision\n";
 	}
@@ -558,7 +582,7 @@ sub revision_is_in_branch
     if (!defined $$revision_data{$revision}) {
 	$$revision_data{$revision} =
 	    [ map { chomp; $_ }
-	      my_backtick("monotone$database log --last=1 --revision=$revision") ];
+	      my_backtick("$monotone$database log --last=1 --merges --revision=$revision") ];
     }
 
     map {
@@ -703,7 +727,7 @@ monotone-notify.pl [--help] [--man]
 [--from=email-sender]
 [--difflogs-to=email-recipient] [--nodifflogs-to=email-recipient]
 [--workdir=path] [--before=yyyy-mm-ddThh:mm:ss] [--since=yyyy-mm-ddThh:mm:ss]
-[--quiet] [--debug]
+[--quiet] [--debug] [--monotone=path]
 
 =head1 DESCRIPTION
 
@@ -833,6 +857,11 @@ Makes B<monotone-notify.pl> really silent.  It will normally produce a
 small log of it's activities, but with B<--quiet>, it will only output
 error messages.  If B<--debug> was given, B<--quiet> is turned off
 unconditionally.
+
+=item B<--monotone>=I<path>
+
+Gives the name or path to monotone or both.  The default is simply
+F<monotone>.
 
 =back
 
