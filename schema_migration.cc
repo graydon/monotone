@@ -996,7 +996,24 @@ migrate_files_BLOB(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  // change comment
+  // migrate other contents which are accessed by get|put_version
+  res = logged_sqlite3_exec(sql, "UPDATE manifests SET data=unbase64(data) "
+              "WHERE data like 'H4sI%'", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE manifest_deltas "
+      "SET delta=unbase64(delta) WHERE delta like 'H4sI%'", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE rosters SET data=unbase64(data) "
+              "WHERE data like 'H4sI%'", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE roster_deltas "
+      "SET delta=unbase64(delta) WHERE delta like 'H4sI%'", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  
   return true;
 }
 
