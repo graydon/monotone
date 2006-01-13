@@ -1,3 +1,9 @@
+2006-01-13  Richard Levitte  <richard@levitte.org>
+
+	* monotone-notify.pl: Make it possible for the user to say what
+	the monotone binary is called or where it is.  Adapt to revision
+	output changes and to changes in the monotone UI.
+
 2006-01-12  Nathaniel Smith  <njs@pobox.com>
 
 	* sanity.cc (dump_buffer): Add forgotten newline.
