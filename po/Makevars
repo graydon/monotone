@@ -17,10 +17,10 @@ top_builddir = ..
 # something -- but we cannot.  XGETTEXT_OPTIONS _must_ literally be
 # defined to contain the best set of xgettext options, because
 # intltool-update reads this file and scans for XGETTEXT_OPTIONS
-# directly.  So... be careful if touching this stuff.
-XGETTEXT_OPTIONS="--keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_ \
-                  --flag=F:1:c-format --flag=FP:1:c-format \
-                  --flag=FP:2:c-format"
+# directly.  Also, intltool-update doesn't seem to grok line
+# continuations, so XGETTEXT_OPTIONS needs to fit all one one line.
+# So... be careful if touching this stuff.
+XGETTEXT_OPTIONS="--keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_ --flag=F:1:c-format --flag=FP:1:c-format --flag=FP:2:c-format"
 XGETTEXT_OPTIONS_NO_FLAG="--keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_"
 
 # This is the copyright holder that gets inserted into the header of the
