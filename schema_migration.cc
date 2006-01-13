@@ -949,10 +949,10 @@ migrate_files_BLOB(sqlite3 * sql,
     return false;
 
   res = logged_sqlite3_exec(sql, "CREATE TABLE files\n"
-                            "(\n"
-                            "id primary key,   -- strong hash of file contents\n"
-                            "data not null     -- compressed contents of a file\n"
-                            ")", NULL, NULL, errmsg);
+                            "\t(\n"
+                            "\tid primary key,   -- strong hash of file contents\n"
+                            "\tdata not null     -- compressed contents of a file\n"
+                            "\t)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -977,12 +977,12 @@ migrate_files_BLOB(sqlite3 * sql,
     return false;
 
   res = logged_sqlite3_exec(sql, "CREATE TABLE file_deltas\n"
-                            "(\n"
-                            "id not null,      -- strong hash of file contents\n"
-                            "base not null,    -- joins with files.id or file_deltas.id\n"
-                            "delta not null,   -- compressed rdiff to construct current from base\n"
-                            "unique(id, base)\n"
-                            ")", NULL, NULL, errmsg);
+                            "\t(\n"
+                            "\tid not null,      -- strong hash of file contents\n"
+                            "\tbase not null,    -- joins with files.id or file_deltas.id\n"
+                            "\tdelta not null,   -- compressed rdiff to construct current from base\n"
+                            "\tunique(id, base)\n"
+                            "\t)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -1013,7 +1013,28 @@ migrate_files_BLOB(sqlite3 * sql,
       "SET delta=unbase64(delta) WHERE delta like 'H4sI%'", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  
+
+  res = logged_sqlite3_exec(sql, "UPDATE db_vars SET value=unbase64(value)", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE public_keys "
+      "SET keydata=unbase64(keydata) WHERE length(keydata)>160", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE revision_certs "
+      "SET value=unbase64(value),signature=unbase64(signature) "
+      "WHERE length(signature)>128", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE manifest_certs "
+      "SET value=unbase64(value),signature=unbase64(signature) "
+      "WHERE length(signature)>128", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE revisions "
+      "SET data=unbase64(data) WHERE data like 'H4sI%'", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
   return true;
 }
 
