@@ -1464,7 +1464,9 @@ database::get_revision(revision_id const & id,
         "SELECT data FROM revisions WHERE id = ?",
         id.inner()().c_str());
 
-  data rdat(res[0][0]);
+  gzip<data> gzdata(res[0][0]);
+  data rdat;
+  decode_gzip(gzdata,rdat);
 
   // verify that we got a revision with the right id
   {
@@ -1556,7 +1558,9 @@ database::put_revision(revision_id const & new_id,
 
   std::vector<queryarg> args;
   args.push_back(new_id.inner()());
-  args.push_back(queryarg(d.inner()(),true));
+  gzip<data> d_packed;
+  encode_gzip(d.inner(), d_packed);
+  args.push_back(queryarg(d_packed(),true));
   execute(std::string("INSERT INTO revisions VALUES(?, ?)"), args);
 
   for (edge_map::const_iterator e = rev.edges.begin();
