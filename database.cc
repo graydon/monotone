@@ -1960,9 +1960,12 @@ database::get_certs(cert_name const & name,
   string query = 
     "SELECT id, name, value, keypair, signature FROM " + table + 
     " WHERE name = ? AND value = ?";
-
-  fetch(res, 5, any_rows, query.c_str(), 
-        name().c_str(), val().c_str());
+  std::vector<queryarg> args;
+  args.push_back(name());
+  cert_value binvalue;
+  decode_base64(val, binvalue);
+  args.push_back(queryarg(binvalue(),true));
+  fetch(res, 5, any_rows, query, args);
   results_to_certs(res, certs);
 }
 
@@ -2597,10 +2600,7 @@ database::get_branches(vector<string> & names)
     fetch(res, one_col, any_rows, query.c_str(), cert_name.c_str());
     for (size_t i = 0; i < res.size(); ++i)
       {
-        base64<data> row_encoded(res[i][0]);
-        data name;
-        decode_base64(row_encoded, name);
-        names.push_back(name());
+        names.push_back(res[i][0]);
       }
 }
 
