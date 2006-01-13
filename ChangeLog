@@ -1,3 +1,7 @@
+2006-01-12  Nathaniel Smith  <njs@pobox.com>
+
+	* po/Makevars (XGETTEXT_OPTIONS): This time for sure!
+
 2006-01-13  Nathaniel Smith  <njs@pobox.com>
 
 	* database.cc (check_rosterified): Clarify message emitted when db
