@@ -1,5 +1,10 @@
 2006-01-14  Richard Levitte  <richard@levitte.org>
 
+	* configure.ac: Make sure there's an empty xgettext.opts
+	when xgettext accepts --flag.  This avoids getting an error
+	message later on when cat can't find it to append to
+	po/Makefile.in.
+
 	* po/LINGUAS, po/sv_SE.po: New Swedish translation.  Needs
 	reviewing at this stage.
 

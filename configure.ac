@@ -61,6 +61,7 @@ if ${XGETTEXT} --flag printf:1:c-format -o conftest.po conftest.c \
     >/dev/null 2>&1
 then
     xgettext_has_flag=yes
+    touch xgettext.opts
 else
     echo 'XGETTEXT_OPTIONS = $(XGETTEXT_OPTIONS_NO_FLAG)' >xgettext.opts
     xgettext_has_flag=no
