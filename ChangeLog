@@ -1,3 +1,14 @@
+2006-01-15  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (test_unify_rosters_end_to_end): Add failing test for
+	unify_roster's handling of attr corpses.
+
+2006-01-15  Nathaniel Smith  <njs@pobox.com>
+
+	* cert.cc (load_key_pair): 
+	* keys.cc (require_password): Use accessor method, so as to
+	actually compile...
+
 2006-01-15  Matt Johnston  <matt@ucc.asn.au>
 
 	* ui.cc: make tickers saner (203 K vs 0.2 M). 
