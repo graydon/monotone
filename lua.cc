@@ -997,26 +997,6 @@ lua_hooks::hook_get_branch_key(cert_value const & branchname,
 }
 
 bool 
-lua_hooks::hook_get_key_pair(rsa_keypair_id const & k,
-                             keypair & kp)
-{
-  string key;
-  bool ok = Lua(st)
-    .func("get_priv_key")
-    .push_str(k())
-    .call(1,1)
-    .extract_str(key)
-    .ok();
-
-  size_t pos = key.find("#");
-  if (pos == std::string::npos)
-    return false;
-  kp.pub = key.substr(0, pos);
-  kp.priv = key.substr(pos+1);
-  return ok;
-}
-
-bool 
 lua_hooks::hook_get_author(cert_value const & branchname, 
                            string & author)
 {

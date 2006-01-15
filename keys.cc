@@ -528,9 +528,8 @@ require_password(rsa_keypair_id const & key,
                  app_state & app)
 {
   N(priv_key_exists(app, key),
-    F("no key pair '%s' found in key store or get_priv_key hook") % key);
-//  N(app.db.public_key_exists(key),
-//    F("no public key '%s' found in database") % key);
+    F("no key pair '%s' found in key store '%s'")
+    % key % app.keys.key_dir);
   keypair kp;
   load_key_pair(app, key, kp);
   if (app.lua.hook_persist_phrase_ok())

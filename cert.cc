@@ -321,15 +321,7 @@ bool
 priv_key_exists(app_state & app, rsa_keypair_id const & id)
 {
 
-  if (app.keys.key_pair_exists(id))
-    return true;
-
-  keypair kp;
-
-  if (app.lua.hook_get_key_pair(id, kp))
-    return true;
-
-  return false;
+  return app.keys.key_pair_exists(id);
 }
 
 // Loads a key pair for a given key id, from either a lua hook
@@ -351,41 +343,11 @@ load_key_pair(app_state & app,
     }
   else
     {
-      keypair kskeys, luakeys;
-      bool haveks = false, havelua = false;
-
-      if (app.keys.key_pair_exists(id))
-        {
-          app.keys.get_key_pair(id, kskeys);
-          haveks = true;
-        }
-      havelua = app.lua.hook_get_key_pair(id, luakeys);
-
-      N(haveks || havelua,
-        F("no private key '%s' found in key store or get_priv_key hook") % id);
-
-      if (havelua)
-        {
-          if (haveks)
-            {
-              // We really don't want the database key and the rcfile key
-              // to differ.
-              N(/*keys_match(id, kskeys.priv, id, luakeys.priv)
-                && */keys_match(id, kskeys.pub, id, luakeys.pub),
-                  F("mismatch between key '%s' in key store"
-                    " and get_key_pair hook") % id);
-            }
-          kp = luakeys;
-        }
-      else if (haveks)
-        {
-          kp = kskeys;
-        }
-
+      N(app.keys.key_pair_exists(id),
+        F("no key pair '%s' found in key store '%s'") % id % app.keys.key_dir);
+      app.keys.get_key_pair(id, kp);
       if (persist_ok)
-        {
-          keys.insert(make_pair(id, kp));
-        }
+        keys.insert(make_pair(id, kp));
     }
 }
 

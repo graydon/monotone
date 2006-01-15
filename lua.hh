@@ -43,8 +43,6 @@ public:
   bool hook_expand_selector(std::string const & sel, std::string & exp);
   bool hook_expand_date(std::string const & sel, std::string & exp);
   bool hook_get_branch_key(cert_value const & branchname, rsa_keypair_id & k);
-  bool hook_get_key_pair(rsa_keypair_id const & k,
-                         keypair & kp);
   bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
   bool hook_get_author(cert_value const & branchname, std::string & author);
   bool hook_edit_comment(std::string const & commentary,
