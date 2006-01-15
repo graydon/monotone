@@ -1,3 +1,8 @@
+2006-01-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* ui.cc: make tickers saner (203 K vs 0.2 M). 
+	Print full byte counts below 1 K.
+
 2006-01-14  Nathaniel Smith  <njs@pobox.com>
 
 	* lua.cc (hook_get_key_pair): Remove.

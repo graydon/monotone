@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
@@ -92,59 +93,65 @@ void tick_write_count::write_ticks()
        i != ui.tickers.end(); ++i)
     {
       string count;
-      if (i->second->kilocount)
+      ticker * tick = i->second;
+      if (tick->kilocount && tick->ticks)
         { 
           // automatic unit conversion is enabled
           float div = 1.0;
           const char *message;
 
-          if (i->second->ticks >= 1073741824/10) 
+          if (tick->ticks >= 1073741824) 
             {
               div = 1073741824;
               // xgettext: gibibytes (2^30 bytes)
               message = N_("%.1f G");
             } 
-          else if (i->second->ticks >= 1048576/10) 
+          else if (tick->ticks >= 1048576) 
             {
               div = 1048576;
               // xgettext: mebibytes (2^20 bytes)
               message = N_("%.1f M");
             } 
-          else
+          else if (tick->ticks >= 1024)
             {
               div = 1024;
               // xgettext: kibibytes (2^10 bytes)
               message = N_("%.1f k");
             }
+          else
+            {
+              div = 1;
+              message = "%.0f";
+            }
           // We reset the mod to the divider, to avoid spurious screen updates.
-          i->second->mod = static_cast<int>(div / 10.0);
-          count = (F(message) % (i->second->ticks / div)).str();
+          tick->mod = max(static_cast<int>(div / 10.0), 1);
+          count = (F(message) % (tick->ticks / div)).str();
         }
-      else if (i->second->use_total)
+      else if (tick->use_total)
         {
           // We know that we're going to eventually have 'total' displayed
           // twice on screen, plus a slash. So we should pad out this field
           // to that eventual size to avoid spurious re-issuing of the 
           // tick titles as we expand to the goal.
-          string complete = (F("%d/%d") % i->second->total % i->second->total).str();          
+          string complete = (F("%d/%d") % tick->total % tick->total).str();          
           // xgettext: bytes
-          string current = (F("%d/%d") % i->second->ticks % i->second->total).str();
+          string current = (F("%d/%d") % tick->ticks % tick->total).str();
           count.append(complete.size() - current.size(),' ');
           count.append(current);
         }
       else
         {
           // xgettext: bytes
-          count = (F("%d") % i->second->ticks).str();
+          count = (F("%d") % tick->ticks).str();
         }
       
-      size_t title_width = display_width(utf8(i->second->name));
+      size_t title_width = display_width(utf8(tick->name));
       size_t count_width = display_width(utf8(count));
       size_t max_width = title_width > count_width ? title_width : count_width;
 
       string name;
-      name.append(max_width - i->second->name.size(), ' ');
-      name.append(i->second->name);
+      name.append(max_width - tick->name.size(), ' ');
+      name.append(tick->name);
 
       string count2;
       count2.append(max_width - count.size(), ' ');
