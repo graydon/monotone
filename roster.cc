@@ -1024,7 +1024,6 @@ namespace
   // This handles all the stuff in a_new.
   void unify_roster_oneway(roster_t & a, set<node_id> & a_new,
                            roster_t & b, set<node_id> & b_new,
-                           set<node_id> & new_ids,
                            node_id_source & nis)
   {
     for (set<node_id>::const_iterator i = a_new.begin(); i != a_new.end(); ++i)
@@ -1042,7 +1041,6 @@ namespace
             node_id new_nid = nis.next();
             a.replace_node_id(aid, new_nid);
             b.replace_node_id(bid, new_nid);
-            new_ids.insert(new_nid);
             b_new.erase(bid);
           }
         else
@@ -1053,18 +1051,94 @@ namespace
   }
 
 
+  void
+  union_corpses(roster_t & left, roster_t & right)
+  {
+    // left and right should be equal, except that each may have some attr
+    // corpses that the other does not
+    map<node_id, node_t>::const_iterator left_i = left.all_nodes().begin();
+    map<node_id, node_t>::const_iterator right_i = right.all_nodes().begin();
+    while (left_i != left.all_nodes().end() || right_i != right.all_nodes().end())
+      {
+        I(left_i->second->self == right_i->second->self);
+        parallel::iter<full_attr_map_t> j(left_i->second->attrs,
+                                          right_i->second->attrs);
+        // we batch up the modifications until the end, so as not to be
+        // changing things around under the parallel::iter's feet
+        set<attr_key> left_missing, right_missing;
+        while (j.next())
+          {
+            MM(j);
+            switch (j.state())
+              {
+              case parallel::invalid:
+                I(false);
+
+              case parallel::in_left:
+                // this is a corpse
+                I(!j.left_data().first);
+                right_missing.insert(j.left_key());
+                break;
+
+              case parallel::in_right:
+                // this is a corpse
+                I(!j.right_data().first);
+                left_missing.insert(j.right_key());
+                break;
+
+              case parallel::in_both:
+                break;
+              }
+          }
+        for (set<attr_key>::const_iterator j = left_missing.begin();
+             j != left_missing.end(); ++j)
+          safe_insert(left_i->second->attrs,
+                      make_pair(*j, make_pair(false, attr_value())));
+        for (set<attr_key>::const_iterator j = right_missing.begin();
+             j != right_missing.end(); ++j)
+          safe_insert(right_i->second->attrs,
+                      make_pair(*j, make_pair(false, attr_value())));
+        ++left_i;
+        ++right_i;
+      }
+    I(left_i == left.all_nodes().end());
+    I(right_i == right.all_nodes().end());
+  }
+
   // After this, left should == right, and there should be no temporary ids.
   // Destroys sets, because that's handy (it has to scan over both, but it can
   // skip some double-scanning)
   void
   unify_rosters(roster_t & left, set<node_id> & left_new,
                 roster_t & right, set<node_id> & right_new,
-                // these new_ids all come from the given node_id_source
-                set<node_id> & new_ids,
                 node_id_source & nis)
   {
-    unify_roster_oneway(left, left_new, right, right_new, new_ids, nis);
-    unify_roster_oneway(right, right_new, left, left_new, new_ids, nis);
+    // Our basic problem is this: when interpreting a revision with multiple
+    // csets, those csets all give enough information for us to get the same
+    // manifest, and even a bit more than that.  However, there is some
+    // information that is not exposed at the manifest level, and csets alone
+    // do not give us all we need.  This function is responsible taking the
+    // two rosters that we get from pure cset application, and fixing them up
+    // so that they are wholly identical.
+
+    // The first thing that is missing is identification of files.  If one
+    // cset says "add_file" and the other says nothing, then the add_file is
+    // not really an add_file.  One of our rosters will have a temp id for
+    // this file, and the other will not.  In this case, we replace the temp
+    // id with the other side's permanent id.  However, if both csets say
+    // "add_file", then this really is a new id; both rosters will have temp
+    // ids, and we replace both of them with a newly allocated id.  After
+    // this, the two rosters will have identical node_ids at every path.
+    unify_roster_oneway(left, left_new, right, right_new, nis);
+    unify_roster_oneway(right, right_new, left, left_new, nis);
+
+    // The other thing we need to fix up is attr corpses.  Live attrs are made
+    // identical by the csets; but if, say, on one side of a fork an attr is
+    // added and then deleted, then one of our incoming merge rosters will
+    // have a corpse for that attr, and the other will not.  We need to make
+    // sure at both of them end up with the corpse.  This function fixes up
+    // that.
+    union_corpses(left, right);
   }
 
   template <typename T> void
@@ -1521,8 +1595,6 @@ namespace
     MM(new_markings);
     {
       temp_node_id_source temp_nis;
-      // SPEEDUP?: the copies on the next two lines are probably the main
-      // bottleneck in this code
       new_roster = left_roster;
       roster_t from_right_r(right_roster);
       MM(from_right_r);
@@ -1536,7 +1608,7 @@ namespace
       set<node_id> new_ids;
       unify_rosters(new_roster, from_left_er.new_nodes,
                     from_right_r, from_right_er.new_nodes,
-                    new_ids, nis);
+                    nis);
       I(new_roster == from_right_r);
     }
     
@@ -4501,19 +4573,19 @@ test_unify_rosters_randomized()
   roster_t left, right;
   for (size_t i = 0; i < 30; ++i)
     {
-      set<node_id> left_new, right_new, resolved_new;
+      set<node_id> left_new, right_new;
       create_some_new_temp_nodes(tmp_nis, left, left_new, right, right_new);
       create_some_new_temp_nodes(tmp_nis, right, right_new, left, left_new);
-      unify_rosters(left, left_new, right, right_new, resolved_new, test_nis);
+      unify_rosters(left, left_new, right, right_new, test_nis);
       check_post_roster_unification_ok(left, right);
     }
   L(FL("TEST: end checking unification of rosters (randomly)"));
 }
 
 static void
-test_unify_rosters_end_to_end()
+test_unify_rosters_end_to_end_ids()
 {
-  L(FL("TEST: begin checking unification of rosters (end to end)"));
+  L(FL("TEST: begin checking unification of rosters (end to end, ids)"));
   revision_id has_rid = left_rid;
   revision_id has_not_rid = right_rid;
   file_id my_fid(std::string("9012901290129012901290129012901290129012"));
@@ -4537,18 +4609,9 @@ test_unify_rosters_end_to_end()
   {
     new_id = has_roster.create_file_node(my_fid, nis);
     has_roster.attach_node(new_id, split("foo"));
-    // a tricky thing that unify_roster has to deal with is making sure that
-    // attr corpses survive.  so let's put in an attr corpse.  (technically
-    // this is not quite a possible graph, since we're claiming that the file
-    // was _just_ created, and just-created files never have attr corpses on
-    // them, but it should still work fine.)
-    safe_insert(has_roster.get_node(new_id)->attrs,
-                make_pair(attr_key("testkey"), make_pair(false, attr_value(""))));
     marking_t file_marking;
     file_marking.birth_revision = has_rid;
     file_marking.parent_name = file_marking.file_content = singleton(has_rid);
-    safe_insert(file_marking.attrs,
-                make_pair(attr_key("testkey"), singleton(has_rid)));
     safe_insert(has_markings, make_pair(new_id, file_marking));
   }
 
@@ -4567,9 +4630,6 @@ test_unify_rosters_end_to_end()
                           new_rid, new_roster, new_markings,
                           nis);
     I(new_roster.get_node(split("foo"))->self == new_id);
-    I(new_roster.get_node(split("foo"))->attrs
-      == has_roster.get_node(split("foo"))->attrs);
-    I(safe_get(new_markings, new_id) == safe_get(new_markings, new_id));
   }
   // added in right, then merged
   {
@@ -4582,9 +4642,6 @@ test_unify_rosters_end_to_end()
                           new_rid, new_roster, new_markings,
                           nis);
     I(new_roster.get_node(split("foo"))->self == new_id);
-    I(new_roster.get_node(split("foo"))->attrs
-      == has_roster.get_node(split("foo"))->attrs);
-    I(safe_get(new_markings, new_id) == safe_get(new_markings, new_id));
   }
   // added in merge
   // this is a little "clever", it uses the same has_not_roster twice, but the
@@ -4601,9 +4658,103 @@ test_unify_rosters_end_to_end()
     I(new_roster.get_node(split("foo"))->self
       != has_roster.get_node(split("foo"))->self);
   }
-  L(FL("TEST: end checking unification of rosters (end to end)"));
+  L(FL("TEST: end checking unification of rosters (end to end, ids)"));
 }
 
+static void
+test_unify_rosters_end_to_end_attr_corpses()
+{
+  L(FL("TEST: begin checking unification of rosters (end to end, attr corpses)"));
+  revision_id first_rid = left_rid;
+  revision_id second_rid = right_rid;
+  file_id my_fid(std::string("9012901290129012901290129012901290129012"));
+
+  testing_node_id_source nis;
+
+  // Both rosters have the file "foo"; in one roster, it has the attr corpse
+  // "testfoo1", and in the other, it has the attr corpse "testfoo2".  Only
+  // the second roster has the file "bar"; it has the attr corpse "testbar".
+
+  roster_t first_roster; MM(first_roster);
+  marking_map first_markings; MM(first_markings);
+  node_id foo_id;
+  {
+    first_roster.attach_node(first_roster.create_dir_node(nis), split(""));
+    marking_t marking;
+    marking.birth_revision = old_rid;
+    marking.parent_name = singleton(old_rid);
+    safe_insert(first_markings, make_pair(first_roster.root()->self, marking));
+
+    foo_id = first_roster.create_file_node(my_fid, nis);
+    first_roster.attach_node(foo_id, split("foo"));
+    marking.file_content = singleton(old_rid);
+    safe_insert(first_markings,
+                make_pair(first_roster.get_node(split("foo"))->self, marking));
+  }
+
+  roster_t second_roster = first_roster; MM(second_roster);
+  marking_map second_markings = first_markings; MM(second_markings);
+  {
+    second_roster.attach_node(second_roster.create_file_node(my_fid, nis),
+                              split("bar"));
+    safe_insert(second_roster.get_node(split("bar"))->attrs,
+                make_pair(attr_key("testbar"), make_pair(false, attr_value())));
+    marking_t marking;
+    marking.birth_revision = second_rid;
+    marking.parent_name = marking.file_content = singleton(second_rid);
+    safe_insert(marking.attrs,
+                make_pair(attr_key("testbar"), singleton(second_rid)));
+    safe_insert(second_markings,
+                make_pair(second_roster.get_node(split("bar"))->self, marking));
+  }
+  
+  // put in the attrs on foo
+  {
+    safe_insert(first_roster.get_node(foo_id)->attrs,
+                make_pair(attr_key("testfoo1"), make_pair(false, attr_value())));
+    safe_insert(first_markings.find(foo_id)->second.attrs,
+                make_pair(attr_key("testfoo1"), singleton(first_rid)));
+    safe_insert(second_roster.get_node(foo_id)->attrs,
+                make_pair(attr_key("testfoo2"), make_pair(false, attr_value())));
+    safe_insert(second_markings.find(foo_id)->second.attrs,
+                make_pair(attr_key("testfoo2"), singleton(second_rid)));
+  }
+  
+  cset add_cs; MM(add_cs);
+  safe_insert(add_cs.files_added, make_pair(split("bar"), my_fid));
+  cset no_add_cs; MM(no_add_cs);
+  
+  {
+    roster_t new_roster; MM(new_roster);
+    marking_map new_markings; MM(new_markings);
+    make_roster_for_merge(first_rid, first_roster, first_markings, add_cs,
+                          singleton(first_rid),
+                          second_rid, second_roster, second_markings, no_add_cs,
+                          singleton(second_rid),
+                          new_rid, new_roster, new_markings,
+                          nis);
+    I(new_roster.get_node(split("foo"))->attrs.size() == 2);
+    I(new_roster.get_node(split("bar"))->attrs
+      == second_roster.get_node(split("bar"))->attrs);
+    I(new_roster.get_node(split("bar"))->attrs.size() == 1);
+  }
+  {
+    roster_t new_roster; MM(new_roster);
+    marking_map new_markings; MM(new_markings);
+    make_roster_for_merge(second_rid, second_roster, second_markings, no_add_cs,
+                          singleton(second_rid),
+                          first_rid, first_roster, first_markings, add_cs,
+                          singleton(first_rid),
+                          new_rid, new_roster, new_markings,
+                          nis);
+    I(new_roster.get_node(split("foo"))->attrs.size() == 2);
+    I(new_roster.get_node(split("bar"))->attrs
+      == second_roster.get_node(split("bar"))->attrs);
+    I(new_roster.get_node(split("bar"))->attrs.size() == 1);
+  }
+
+  L(FL("TEST: end checking unification of rosters (end to end, attr corpses)"));
+}
 
 void
 add_roster_tests(test_suite * suite)
@@ -4612,7 +4763,8 @@ add_roster_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&check_sane_roster_screwy_dir_map));
   suite->add(BOOST_TEST_CASE(&test_die_die_die_merge));
   suite->add(BOOST_TEST_CASE(&test_same_nid_diff_type));
-  suite->add(BOOST_TEST_CASE(&test_unify_rosters_end_to_end));
+  suite->add(BOOST_TEST_CASE(&test_unify_rosters_end_to_end_ids));
+  suite->add(BOOST_TEST_CASE(&test_unify_rosters_end_to_end_attr_corpses));
   suite->add(BOOST_TEST_CASE(&test_unify_rosters_randomized));
   suite->add(BOOST_TEST_CASE(&test_all_mark_scenarios));
   suite->add(BOOST_TEST_CASE(&bad_attr_test));

@@ -1,8 +1,18 @@
 2006-01-15  Nathaniel Smith  <njs@pobox.com>
 
+	* roster.cc (union_corpses): New function.
+	(unify_roster_oneway, unify_rosters): Remove unused new_ids
+	argument.  Add call to union_corpses.  Add big comment explaining
+	what's going on.
+	(test_unify_rosters_end_to_end_ids) 
+	(test_unify_rosters_end_to_end_attr_corpses): Split and improve
+	tests.
+
+2006-01-15  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.cc (test_unify_rosters_end_to_end): Add failing test for
 	unify_roster's handling of attr corpses.
-
+	
 2006-01-15  Nathaniel Smith  <njs@pobox.com>
 
 	* cert.cc (load_key_pair): 
