@@ -580,7 +580,7 @@ function expand_date(str)
       return os.date("%FT%T", t)
    end
    
-         -- today don't uses the time
+   -- today don't uses the time		# for xgettext's sake, an extra quote
    if str == "today"
    then
       local t = os.time(os.date('!*t'))
