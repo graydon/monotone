@@ -1,3 +1,8 @@
+2006-01-15  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua: xgettext whines about a missing quote, so add
+	one.
+
 2006-01-15  Matt Johnston  <matt@ucc.asn.au>
 
 	* ui.cc: make tickers saner (203 K vs 0.2 M). 
