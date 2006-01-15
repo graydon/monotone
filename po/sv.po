@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-01-15 11:12+0100\n"
-"PO-Revision-Date: 2006-01-15 15:11+0100\n"
+"PO-Revision-Date: 2006-01-15 15:54+0100\n"
 "Last-Translator: Richard Levitte <richard@levitte.org>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -2395,209 +2395,209 @@ msgstr "sparar publik nyckel för %s i databasen\n"
 #: netsync.cc:1299
 #, c-format
 msgid "rejected attempt at anonymous connection for write\n"
-msgstr ""
+msgstr "avslår försök att koppla upp anonymt för skrivning"
 
 #: netsync.cc:1306
 #, c-format
 msgid "rejected attempt at anonymous connection while running as sink\n"
-msgstr ""
+msgstr "avslår försök att koppla upp anonymt under körning som \"sink\"\n"
 
 #: netsync.cc:1323
 #, c-format
 msgid "anonymous access to branch '%s' denied by server"
-msgstr ""
+msgstr "anonym åtkomst av grenen '%s' avslogs av servern"
 
 #: netsync.cc:1328
 #, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'\n"
-msgstr ""
+msgstr "tillåter anonym läsning av alla grenar som matchar '%s' och inte '%s'\n"
 
 #: netsync.cc:1360
 #, c-format
 msgid "detected replay attack in auth netcmd\n"
-msgstr ""
+msgstr "upptäckte \"replay\"-attack i ath netcmd\n"
 
 #: netsync.cc:1382
 #, c-format
 msgid "remote public key hash '%s' is unknown\n"
-msgstr ""
+msgstr "publik nyckel med checksumman '%s' som kommer från andra sidan är okänd\n"
 
 #: netsync.cc:1399
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' while running as pure "
 "sink\n"
-msgstr ""
+msgstr "avslår läsning för '%s' av alla grenar som matchar '%s' och inte '%s' under körning som \"pure sink\"\n"
 
 #: netsync.cc:1415
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'\n"
-msgstr ""
+msgstr "avslår läsning för '%s' av alla grenar som matchar '%s' och inte '%s' på grund av grenen '%s'\n"
 
 #: netsync.cc:1417
 #, c-format
 msgid "access to branch '%s' denied by server"
-msgstr ""
+msgstr "access till grenen '%s' nekades av servern"
 
 #: netsync.cc:1425
 #, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'\n"
-msgstr ""
+msgstr "tillåter läsning för '%s' av alla grenar som matchar '%s' och inte '%s'\n"
 
 #: netsync.cc:1434
 #, c-format
 msgid ""
 "denied '%s' write permission for '%s' excluding '%s' while running as pure "
 "source\n"
-msgstr ""
+msgstr "avslår skrivning för '%s' av alla grenar som matchar '%s' och inte '%s' under körning som \"pure source\"\n"
 
 #: netsync.cc:1442
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'\n"
-msgstr ""
+msgstr "avslår skrivning för '%s' av alla grenar som matchar '%s' och inte '%s'\n"
 
 #: netsync.cc:1448
 #, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'\n"
-msgstr ""
+msgstr "tillåter skrivning för '%s' av alla grenar som matchar '%s' och inte '%s'\n"
 
 #: netsync.cc:1488
 #, c-format
 msgid "bad client signature\n"
-msgstr ""
+msgstr "dåligt signatur från klienten"
 
 #: netsync.cc:1504
 #, c-format
 msgid "Unexpected 'refine' command on non-refined item type\n"
-msgstr ""
+msgstr "Överraskande kommando \"refine\" på typer som inte har refine\n"
 
 #: netsync.cc:1601
 #, c-format
 msgid "unknown bye phase %d received"
-msgstr ""
+msgstr "okänd hejdå-fas %d mottagen"
 
 #: netsync.cc:1613
 #, c-format
 msgid "Unexpected 'done' command on non-refined item type\n"
-msgstr ""
+msgstr "Överraskande kommando \"done\" vid denna punkt\n"
 
 #: netsync.cc:1693
 #, c-format
 msgid "epoch with hash '%s' does not exist in our database"
-msgstr ""
+msgstr "epoch med checksumman '%s' finns inte i databasen"
 
 #: netsync.cc:1722
 #, c-format
 msgid "revision '%s' does not exist in our database"
-msgstr ""
+msgstr "revisionen '%s' finns inte i databasen"
 
 #: netsync.cc:1736
 #, c-format
 msgid "file '%s' does not exist in our database"
-msgstr ""
+msgstr "filen '%s' finns inte i databasen"
 
 #: netsync.cc:1750
 #, c-format
 msgid "cert '%s' does not exist in our database"
-msgstr ""
+msgstr "certet '%s' finns inte i databasen"
 
 #: netsync.cc:1802
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
-msgstr ""
+msgstr "I grenen %s har servern epoch '%s', klienten har '$s', som inte stämmer med varandra."
 
 #: netsync.cc:1823
 #, c-format
 msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
-msgstr ""
+msgstr "koll av checksumma misslyckades för publik nyckel '%s' (%s); ville ha '%s' men fick '%s'"
 
 #: netsync.cc:1840
 #, c-format
 msgid "hash check failed for revision cert '%s'"
-msgstr ""
+msgstr "koll av checksumma misslyckades för revisionscertet '%s'"
 
 #: netsync.cc:1915
 #, c-format
 msgid "Received warning from usher: %s"
-msgstr ""
+msgstr "Fick varning från usher: %s"
 
 #: netsync.cc:2002 netsync.cc:2033
 msgid "source and sink"
-msgstr ""
+msgstr "källa och mottagare"
 
 #: netsync.cc:2003 netsync.cc:2034
 msgid "source"
-msgstr ""
+msgstr "källa"
 
 #: netsync.cc:2003 netsync.cc:2034
 msgid "sink"
-msgstr ""
+msgstr "mottagare"
 
 #: netsync.cc:2188
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch\n"
-msgstr ""
+msgstr "input-buffer för %s är överfull"
 
 #: netsync.cc:2200 netsync.cc:2251
 #, c-format
 msgid "protocol error while processing peer %s: '%s'\n"
-msgstr ""
+msgstr "protokollfel i samtal med %s: '%s'\n"
 
 #: netsync.cc:2206
 #, c-format
 msgid "error: %s\n"
-msgstr ""
+msgstr "fel: %s\n"
 
 #: netsync.cc:2236
 #, c-format
 msgid "connecting to %s\n"
-msgstr ""
+msgstr "kopplar upp mot %s\n"
 
 #: netsync.cc:2266
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting\n"
-msgstr ""
+msgstr "att vänta på I/O från %s tog för lång tid, kopplar ut\n"
 
 #: netsync.cc:2281
 #, c-format
 msgid "got OOB data from peer %s, disconnecting\n"
-msgstr ""
+msgstr "fick extra data från %s, kopplar ur\n"
 
 #: netsync.cc:2296
 #, c-format
 msgid "processing failure while talking to peer %s, disconnecting\n"
-msgstr ""
+msgstr "tar hand om misslyckande i samtal med %s, kopplar ur\n"
 
 #: netsync.cc:2313
 #, c-format
 msgid "successful exchange with %s\n"
-msgstr ""
+msgstr "lyckat utbyte med %s\n"
 
 #: netsync.cc:2319
 #, c-format
 msgid "peer %s disconnected after we informed them of error\n"
-msgstr ""
+msgstr "%s kopplade ur efter att vi informerade dem om ett fel\n"
 
 #: netsync.cc:2324
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting\n"
-msgstr ""
+msgstr "I/O-fel i samtal med %s, kopplar ur\n"
 
 #: netsync.cc:2353
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad\n"
-msgstr ""
+msgstr "protokollfel i samtal med %s: '%s', markerar det som dåligt\n"
 
 #: netsync.cc:2385
 #, c-format
 msgid "accepted new client connection from %s : %s\n"
-msgstr ""
+msgstr "tar emot ny uppkoppling från %s: %s\n"
 
 #: netsync.cc:2413
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting\n"
-msgstr ""
+msgstr "protokollfel i samtal med %s: '%s', kopplar ur\n"
 
 #: netsync.cc:2424
 #, c-format
@@ -2644,32 +2644,32 @@ msgstr ""
 #: netsync.cc:2562
 #, c-format
 msgid "beginning service on %s : %s\n"
-msgstr ""
+msgstr "börjar serva på %s : %s\n"
 
 #: netsync.cc:2577
 #, c-format
 msgid "session limit %d reached, some connections will be refused\n"
-msgstr ""
+msgstr "gränsen för antalet sessioner, %d, är nådd, en del uppkopplingar kommer att nekas\n"
 
 #: netsync.cc:2632
 #, c-format
 msgid "got OOB from peer %s, disconnecting\n"
-msgstr ""
+msgstr "fick extra data från %s, kopplar ur\n"
 
 #: netsync.cc:2687
 #, c-format
 msgid "finding items to synchronize:\n"
-msgstr ""
+msgstr "finner saker att synkronisera:\n"
 
 #: netsync.cc:2804
 #, c-format
 msgid "Cannot find key '%s'"
-msgstr ""
+msgstr "Kan inte finns nyckeln '%s'"
 
 #: netsync.cc:2861 netsync.cc:2865
 #, c-format
 msgid "network error: %s"
-msgstr ""
+msgstr "nätverksfel: %s"
 
 #: packet.cc:94
 #, c-format
@@ -2679,92 +2679,92 @@ msgstr ""
 #: packet.cc:95
 #, c-format
 msgid "dropping delta '%s' -> '%s'"
-msgstr ""
+msgstr "kastar deltat '%s' -> '%s'"
 
 #: packet.cc:109
 #, c-format
 msgid "reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n"
-msgstr ""
+msgstr "ombyggd fil från deltat '%s' -> '%s' har fel identitet '%s'\n"
 
 #: packet.cc:138
 #, c-format
 msgid "missing prerequisite revision '%s'\n"
-msgstr ""
+msgstr "saknar nödvändig revision '%s'\n"
 
 #: packet.cc:139 packet.cc:150 packet.cc:166 packet.cc:174
 #, c-format
 msgid "dropping revision '%s'\n"
-msgstr ""
+msgstr "kastar revisionen '%s'\n"
 
 #: packet.cc:149
 #, c-format
 msgid "missing prerequisite file '%s'\n"
-msgstr ""
+msgstr "saknar nödvändig fil '%s'\n"
 
 #: packet.cc:164
 #, c-format
 msgid "missing prerequisite file pre-delta '%s'\n"
-msgstr ""
+msgstr "saknar nödvändigt pre-delta till fil '%s'\n"
 
 #: packet.cc:172
 #, c-format
 msgid "missing prerequisite file post-delta '%s'\n"
-msgstr ""
+msgstr "saknar nödvändigt post-delta till fil '%s'\n"
 
 #: packet.cc:200
 #, c-format
 msgid "cert revision '%s' does not exist in db\n"
-msgstr ""
+msgstr "certrevision '%s' finns inte i databasen\n"
 
 #: packet.cc:202
 #, c-format
 msgid "dropping cert\n"
-msgstr ""
+msgstr "kastar cert\n"
 
 #: packet.cc:225
 #, c-format
 msgid "key '%s' is not equal to key '%s' in database\n"
-msgstr ""
+msgstr "nyckeln '%s' ör inte samma som nyckeln '%s' i databasen\n"
 
 #: packet.cc:349
 #, c-format
 msgid "malformed packet"
-msgstr ""
+msgstr "otydbart paket"
 
 #: packet.cc:449
 #, c-format
 msgid "unknown packet type: '%s'"
-msgstr ""
+msgstr "okänd pakettyp: '%s'"
 
 #: rcs_file.cc:343
 #, c-format
 msgid "parse failure %d:%d: expecting %s, got %s with value '%s'\n"
-msgstr ""
+msgstr "tydning mysslyckades %d:%d: %s förväntad, fick %s med värdet '%s'\n"
 
 #: rcs_file.cc:362
 #, c-format
 msgid "parse failure %d:%d: expecting word '%s'\n"
-msgstr ""
+msgstr "tydning mysslyckades %d:%d: ordet '%s' förväntat\n"
 
 #: rcs_file.cc:377
 #, c-format
 msgid "parse failure %d:%d: expecting word\n"
-msgstr ""
+msgstr "tydning mysslyckades %d:%d: ord förväntat\n"
 
 #: rcs_import.cc:703
 #, c-format
 msgid "parsing RCS file %s\n"
-msgstr ""
+msgstr "tyder RCS-fil %s\n"
 
 #: rcs_import.cc:706
 #, c-format
 msgid "parsed RCS file %s OK\n"
-msgstr ""
+msgstr "tyder RCS-fil %s, OK\n"
 
 #: rcs_import.cc:895
 #, c-format
 msgid "error reading RCS file %s: %s\n"
-msgstr ""
+msgstr "fel vid läsning av RCS-file %s: %s\n"
 
 #: rcs_import.cc:1192
 #, c-format
@@ -2772,6 +2772,8 @@ msgid ""
 "%s appears to be a CVS repository root directory\n"
 "try importing a module instead, with 'cvs_import %s/<module_name>"
 msgstr ""
+"%s verkar vara rotkatalogen till ett CVS-repository\n"
+"försök importera en modul istället, med 'cvs_import %s/<modulnamn>"
 
 #: rcs_import.cc:1204
 #, c-format
@@ -2781,31 +2783,31 @@ msgstr "behöver en gren angiven med --branch att importera till"
 #: rcs_import.cc:1216
 #, c-format
 msgid "path %s does not exist"
-msgstr ""
+msgstr "fil/katalogspecifikationen %s finns inte"
 
 #: rcs_import.cc:1251
 msgid "tags"
-msgstr ""
+msgstr "taggar"
 
 #: revision.cc:700
 #, c-format
 msgid "scanning for bogus merge edges\n"
-msgstr ""
+msgstr "letar efter inkorrekt hoppslagningsdata\n"
 
 #: revision.cc:742
 #, c-format
 msgid "optimizing out redundant edge %d -> %d\n"
-msgstr ""
+msgstr "optimerar bort onödig förändring %d -> %d\n"
 
 #: revision.cc:751
 #, c-format
 msgid "failed to eliminate edge %d -> %d\n"
-msgstr ""
+msgstr "misslyckades med att ta bort förändring %d -> %d\n"
 
 #: revision.cc:762
 #, c-format
 msgid "rebuilding %d nodes\n"
-msgstr ""
+msgstr "bygger om %d noder\n"
 
 #: revision.cc:967
 #, c-format
