@@ -49,7 +49,7 @@ msgstr "raiz de procura '%s' não é um diretório\n"
 #: app_state.cc:398
 #, c-format
 msgid "failed to parse date string '%s': %s"
-msgstr ""
+msgstr "erro lendo string de data '%s': %s"
 
 #: app_state.cc:412
 #, c-format
@@ -59,7 +59,7 @@ msgstr "profundidade negativa não permitida\n"
 #: app_state.cc:420
 #, c-format
 msgid "negative or zero last not allowed\n"
-msgstr "last negativo ou zero não permitido\n"
+msgstr "último negativo ou zero não permitido\n"
 
 #: app_state.cc:543
 #, c-format
@@ -90,11 +90,15 @@ msgstr "ignorando assinatura desconhecida por '%s' sobre '%s'\n"
 #, c-format
 msgid "trust function disliked %d signers of %s cert on manifest %s\n"
 msgstr ""
+"função de confiança rejeitou %d assinantes do certificado %s sobre o "
+"manifesto %s\n"
 
 #: cert.cc:182
 #, c-format
 msgid "trust function disliked %d signers of %s cert on revision %s\n"
 msgstr ""
+"função de confiança rejeitou %d assinantes do certificado %s sobre "
+"a revisão %s\n"
 
 #: cert.cc:271
 #, c-format
@@ -112,6 +116,8 @@ msgid ""
 "you have no private key to make signatures with\n"
 "perhaps you need to 'genkey <your email>'"
 msgstr ""
+"você não tem chave privada para fazer assinaturas\n"
+"talvez você precise fazer 'genkey <seu email>'"
 
 #: cert.cc:427
 #, c-format
@@ -119,22 +125,31 @@ msgid ""
 "you have multiple private keys\n"
 "pick one to use for signatures by adding '-k<keyname>' to your command"
 msgstr ""
+"você tem várias chaves privadas\n"
+"escolha uma para usar na assinatura adicionando '-k<nomedachave>' ao "
+"seu comando"
 
 #: cert.cc:444
 #, c-format
 msgid "no branch found for empty revision, please provide a branch name"
 msgstr ""
+"nenhum ramo encontrado para revisão vazia, por favor "
+"forneça o nome de um ramo"
 
 #: cert.cc:453
 #, c-format
 msgid "no branch certs found for revision %s, please provide a branch name"
 msgstr ""
+"nenhum certificado de ramo encontrado para revisão %s, "
+"por favor forneça o nome de um ramo"
 
 #: cert.cc:457
 #, c-format
 msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
 msgstr ""
+"vários certificados de ramo encontrados para a versão %s, por favor "
+"forneça o nome de um ramo"
 
 #: commands.cc:159
 #, c-format
@@ -289,7 +304,7 @@ msgstr "nenhuma chave de '%s' encontrada\n"
 #: commands.cc:742
 #, c-format
 msgid "revision %s already has children. We cannot kill it."
-msgstr "versão %s já tem filhos. Não podemos matá-la."
+msgstr "versão %s já tem filhos. Não podemos removê-la."
 
 #: commands.cc:882 commands.cc:906 commands.cc:943 commands.cc:964
 #: commands.cc:1000
@@ -345,8 +360,8 @@ msgid ""
 "public or private key '%s' does not exist in keystore, and no database was "
 "specified"
 msgstr ""
-"chave pública ou privada '%s' não existe na coleção, e nenhum "
-"banco de dados foi especificado"
+"chave pública ou privada '%s' não existe na coleção, e nenhum banco de dados "
+"foi especificado"
 
 #: commands.cc:944
 msgid "change passphrase of a private RSA key"
@@ -739,80 +754,87 @@ msgstr[1] ""
 #: commands.cc:1958
 #, c-format
 msgid "setting default server to %s\n"
-msgstr ""
+msgstr "configurando servidor padrão para %s\n"
 
 #: commands.cc:1964
 #, c-format
 msgid "no hostname given"
-msgstr ""
+msgstr "nenhum nome de host dado"
 
 #: commands.cc:1966
 #, c-format
 msgid "no server given and no default server set"
-msgstr ""
+msgstr "nenhum servidor dado e nenhum servidor padrão configurado"
 
 #: commands.cc:1984
 #, c-format
 msgid "setting default branch include pattern to '%s'\n"
-msgstr ""
+msgstr "configurando padrão de inclusão de ramos para '%s'\n"
 
 #: commands.cc:1990
 #, c-format
 msgid "setting default branch exclude pattern to '%s'\n"
-msgstr ""
+msgstr "configurando padrão de exclusão de ramos para '%s'\n"
 
 #: commands.cc:1996
 #, c-format
 msgid "no branch pattern given"
-msgstr ""
+msgstr "nenhum padrão de ramos dado"
 
 #: commands.cc:1998
 #, c-format
 msgid "no branch pattern given and no default pattern set"
-msgstr ""
+msgstr "nenhum padrão de ramo dado e nenhum configurado"
 
 #: commands.cc:2014 commands.cc:2029 commands.cc:2043 commands.cc:2058
 msgid "network"
-msgstr ""
+msgstr "rede"
 
 #: commands.cc:2014 commands.cc:2029 commands.cc:2043
 msgid "[ADDRESS[:PORTNUMBER] [PATTERN]]"
-msgstr ""
+msgstr "[ENDEREÇO[:PORTA] [PADRÃO]]"
 
 #: commands.cc:2015
 msgid "push branches matching PATTERN to netsync server at ADDRESS"
 msgstr ""
+"envia ramos que combinam com PADRÃO para servidor netsync em ENDEREÇO"
 
 #: commands.cc:2030
 msgid "pull branches matching PATTERN from netsync server at ADDRESS"
 msgstr ""
+"recebe ramos que combinam com PADRÃO do servidor netsync em ENDEREÇO"
 
 #: commands.cc:2037
 #, c-format
 msgid "doing anonymous pull; use -kKEYNAME if you need authentication\n"
 msgstr ""
+"recebendo dados anonimamente; user -kNOMEDACHAVE "
+"se for necessária autenticação\n"
 
 #: commands.cc:2044
 msgid "sync branches matching PATTERN with netsync server at ADDRESS"
 msgstr ""
+"sincroniza ramos que combinam com PADRÃO com o servidor netsync em ENDEREÇO"
 
 #: commands.cc:2058
 msgid "PATTERN ..."
-msgstr ""
+msgstr "PADRÂO..."
 
 #: commands.cc:2059
 msgid "serve the branches specified by PATTERNs to connecting clients"
-msgstr ""
+msgstr "serve os ramos especificados por PADRÂO para clientes"
 
 #: commands.cc:2072
 #, c-format
 msgid ""
 "need permission to store persistent passphrase (see hook persist_phrase_ok())"
 msgstr ""
+"é necessária permissão para salvar frase-passe persistentemente "
+"(veja gancho persist_phrase_ok())"
 
 #: commands.cc:2084
 msgid "database"
-msgstr ""
+msgstr "banco de dados"
 
 #: commands.cc:2085
 msgid ""
@@ -831,10 +853,24 @@ msgid ""
 "rosterify\n"
 "set_epoch BRANCH EPOCH\n"
 msgstr ""
+"init\n"
+"info\n"
+"version\n"
+"dump\n"
+"load\n"
+"migrate\n"
+"execute\n"
+"kill_rev_locally ID\n"
+"kill_branch_certs_locally RAMO\n"
+"kill_tag_locally ETIQUETA\n"
+"check\n"
+"changesetify\n"
+"rosterify\n"
+"set_epoch RAMO ERA\n"
 
 #: commands.cc:2099
 msgid "manipulate database state"
-msgstr ""
+msgstr "manipula estado do bando de dados"
 
 #: commands.cc:2152
 msgid ""
@@ -842,10 +878,13 @@ msgid ""
 "get PATH [ATTR]\n"
 "drop PATH [ATTR]"
 msgstr ""
+"set CAMINHO ATIBUTO VALOR\n"
+"get CAMINHO [ATRIBUTO]\n"
+"drop CAMINHO [ATRIBUTO]"
 
 #: commands.cc:2153
 msgid "set, get or drop file attributes"
-msgstr ""
+msgstr "configura, lê ou descarta atributos de arquivos"
 
 #: commands.cc:2169
 #, c-format
@@ -860,7 +899,7 @@ msgstr "caminho '%s' não tem atributo '%s'\n"
 #: commands.cc:2252
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
-msgstr ""
+msgstr "--message e --message-file são mutuamente exclusivos"
 
 #: commands.cc:2272
 msgid "commit working copy to database"
@@ -883,6 +922,10 @@ msgid ""
 "perhaps move or delete MT/log,\n"
 "or remove --message/--message-file from the command line?"
 msgstr ""
+"MT/log não está vazio e uma mensagem de registro foi dada na "
+"linha de comando\n"
+"considere mover ou apagar MT/log,\n"
+"ou remova --message/--message-from-file da linha de comando"
 
 #: commands.cc:2325
 #, c-format
@@ -892,7 +935,7 @@ msgstr ""
 #: commands.cc:2342
 #, c-format
 msgid "revision %s already in database\n"
-msgstr ""
+msgstr "versão %s já está no banco de dados\n"
 
 #: commands.cc:2380 commands.cc:2397 commands.cc:2416
 #, c-format
@@ -910,6 +953,8 @@ msgid ""
 "note: this revision creates divergence\n"
 "note: you may (or may not) wish to run 'monotone merge'"
 msgstr ""
+"nota: esta versão causa divergência\n"
+"nota: talvez você queira executar 'monotone merge'"
 
 #: commands.cc:2642
 msgid ""
@@ -929,7 +974,7 @@ msgstr ""
 #: commands.cc:2700
 #, c-format
 msgid "current revision has no ancestor"
-msgstr ""
+msgstr "versão atual não tem ancestral"
 
 #: commands.cc:2763
 msgid "no changes"
