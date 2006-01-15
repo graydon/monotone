@@ -529,7 +529,7 @@ require_password(rsa_keypair_id const & key,
 {
   N(priv_key_exists(app, key),
     F("no key pair '%s' found in key store '%s'")
-    % key % app.keys.key_dir);
+    % key % app.keys.get_key_dir());
   keypair kp;
   load_key_pair(app, key, kp);
   if (app.lua.hook_persist_phrase_ok())
