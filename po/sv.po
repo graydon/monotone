@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-01-15 11:12+0100\n"
-"PO-Revision-Date: 2006-01-15 15:54+0100\n"
+"PO-Revision-Date: 2006-01-15 17:41+0100\n"
 "Last-Translator: Richard Levitte <richard@levitte.org>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1738,7 +1738,7 @@ msgstr "inga resultat med databasfråga: %s\n"
 #: database.cc:644
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
-msgstr "ville ha %d rader, fick %d i databasfråga: %s\n"
+msgstr "ville ha %d rader, fick %s i databasfråga: %s\n"
 
 #: database.cc:669
 #, c-format
@@ -2395,7 +2395,7 @@ msgstr "sparar publik nyckel för %s i databasen\n"
 #: netsync.cc:1299
 #, c-format
 msgid "rejected attempt at anonymous connection for write\n"
-msgstr "avslår försök att koppla upp anonymt för skrivning"
+msgstr "avslår försök att koppla upp anonymt för skrivning\n"
 
 #: netsync.cc:1306
 #, c-format
@@ -2465,7 +2465,7 @@ msgstr "tillåter skrivning för '%s' av alla grenar som matchar '%s' och inte '
 #: netsync.cc:1488
 #, c-format
 msgid "bad client signature\n"
-msgstr "dåligt signatur från klienten"
+msgstr "dåligt signatur från klienten\n"
 
 #: netsync.cc:1504
 #, c-format
@@ -2505,7 +2505,7 @@ msgstr "certet '%s' finns inte i databasen"
 #: netsync.cc:1802
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
-msgstr "I grenen %s har servern epoch '%s', klienten har '$s', som inte stämmer med varandra."
+msgstr "I grenen %s har servern epoch '%s', klienten har '%s', som inte stämmer med varandra."
 
 #: netsync.cc:1823
 #, c-format
@@ -2537,7 +2537,7 @@ msgstr "mottagare"
 #: netsync.cc:2188
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch\n"
-msgstr "input-buffer för %s är överfull"
+msgstr "input-buffer för %s är överfull\n"
 
 #: netsync.cc:2200 netsync.cc:2251
 #, c-format
@@ -2812,22 +2812,22 @@ msgstr "bygger om %d noder\n"
 #: revision.cc:967
 #, c-format
 msgid "Path %s added to child roster multiple times\n"
-msgstr ""
+msgstr "Fil/katalogspecifikationen %s tillgad till rostern mer än en gång\n"
 
 #: revision.cc:980
 #, c-format
 msgid "Directory for path %s cannot be added, as there is a file in the way\n"
-msgstr ""
+msgstr "Katalogen %s kan inte läggas till, det finns en fil i vägen\n"
 
 #: revision.cc:991
 #, c-format
 msgid "Path %s cannot be added, as there is a directory in the way\n"
-msgstr ""
+msgstr "Filen %s kan inte läggas till, det finns en katalog i vägen\n"
 
 #: revision.cc:994
 #, c-format
 msgid "Path %s added twice with differing content\n"
-msgstr ""
+msgstr "Filen/katalogen %s tillagd två gånger med olika innehåll\n"
 
 #: revision.cc:1264
 #, c-format
@@ -2835,16 +2835,18 @@ msgid ""
 "unknown attribute %s on path %s\n"
 "please contact %s so we can work out the right way to migrate this"
 msgstr ""
+"okänt attribut %s på filen/katalogen %s\n"
+"var god kontakta %s så vi kan komma fram till ett bra sätt att migrera detta"
 
 #: revision.cc:1371
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions\n"
-msgstr ""
+msgstr "konverterar existerande revisionsgraf till nya revisioner i roster-stil\n"
 
 #: revision.cc:1423
 #, c-format
 msgid "rebuilding revision graph from manifest certs\n"
-msgstr ""
+msgstr "bygger om revisionsgrafen från manifest-cert\n"
 
 #: sanity.cc:54
 #, c-format
@@ -2852,6 +2854,8 @@ msgid ""
 "wrote debugging log to %s\n"
 "if reporting a bug, please include this file"
 msgstr ""
+"skrev debuglogg till %s\n"
+"om du rapporterar en bugg, var god ha med den filen"
 
 #: sanity.cc:59
 #, c-format
@@ -2861,55 +2865,55 @@ msgstr "misslyckades med att skriva debugloggen till %s\n"
 #: sanity.cc:116
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
-msgstr ""
+msgstr "allvarligt fel: formatering misslyckades vid %s:%d: %s"
 
 #: sanity.cc:190
 msgid "misuse: "
-msgstr ""
+msgstr "missbruk: "
 
 #: sanity.cc:202
 msgid "error: "
-msgstr ""
+msgstr "fel: "
 
 #: sanity.cc:210
 #, c-format
 msgid "%s:%d: invariant '%s' violated"
-msgstr ""
+msgstr "%s:%d: invariant '%s' kränkt"
 
 #: sanity.cc:223
 #, c-format
 msgid "%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n"
-msgstr ""
+msgstr "%s:%d; index '%s' = %d blev större än vektorn '%s' med storlek %d\n"
 
 #: sanity.cc:244
 #, c-format
 msgid "Current work set: %i items\n"
-msgstr ""
+msgstr "Nuvarande arbetsmängd: %i delar\n"
 
 #: schema_migration.cc:184
 #, c-format
 msgid "failure extracting schema from sqlite_master"
-msgstr ""
+msgstr "kunde inte få ut schemat ur sqlite_master"
 
 #: schema_migration.cc:220
 #, c-format
 msgid "calculating necessary migration steps"
-msgstr ""
+msgstr "beräknar antalet nödvändiga steg för migrering"
 
 #: schema_migration.cc:230
 #, c-format
 msgid "error at transaction BEGIN statement"
-msgstr ""
+msgstr "fel vid transaktionens början (kommandot BEGIN)"
 
 #: schema_migration.cc:257
 #, c-format
 msgid "migration step failed: %s"
-msgstr ""
+msgstr "migrationssteg misslyckades: %s"
 
 #: schema_migration.cc:271
 #, c-format
 msgid "mismatched result of migration, got %s, wanted %s"
-msgstr ""
+msgstr "resultatet av migrationen stämde inte, fick %s, ville ha %s"
 
 #: schema_migration.cc:274
 #, c-format
@@ -2919,42 +2923,42 @@ msgstr "överlämnar ändringar till databasen"
 #: schema_migration.cc:276
 #, c-format
 msgid "failure on COMMIT"
-msgstr ""
+msgstr "misslyckande vid överlämnande av ändringar (COMMIT)"
 
 #: schema_migration.cc:278
 #, c-format
 msgid "optimizing database"
-msgstr ""
+msgstr "optimerar databasen"
 
 #: schema_migration.cc:280
 #, c-format
 msgid "error vacuuming after migration"
-msgstr ""
+msgstr "fel vid damsugning av databasen"
 
 #: schema_migration.cc:283
 #, c-format
 msgid "error running analyze after migration"
-msgstr ""
+msgstr "fel under analys efter migreringen"
 
 #: schema_migration.cc:290
 #, c-format
 msgid "database schema %s is unknown; cannot perform migration"
-msgstr ""
+msgstr "databasschemat %s är okänt; kan inte genomföra migreringen"
 
 #: schema_migration.cc:295
 #, c-format
 msgid "no migration performed; database schema already up-to-date at %s\n"
-msgstr ""
+msgstr "migreringen genomfördes inte; databasschemat redan uppdaterad till %s\n"
 
 #: schema_migration.cc:845
 #, c-format
 msgid "public and private keys for %s don't match"
-msgstr ""
+msgstr "publik och privat nyckel för %s stämmer inte med varandra"
 
 #: schema_migration.cc:848
 #, c-format
 msgid "moving key '%s' from database to %s"
-msgstr ""
+msgstr "flyttar nyckeln '%s' från databasen till %s"
 
 #: std_hooks.lua:28
 msgid "Press enter when the subprocess has completed"
@@ -2963,48 +2967,46 @@ msgstr "Tryck [Enter] när underprocessen är klar"
 #: std_hooks.lua:211
 #, c-format
 msgid "Error running editor '%s' to enter log message\n"
-msgstr ""
-"Något gick fel när editorn '%s' skulle användas för att skriva ett "
-"loggmeddelande\n"
+msgstr "Något gick fel när testredigeraren '%s' skulle användas för att skriva ett loggmeddelande\n"
 
 #: std_hooks.lua:501
 msgid "executing external 3-way merge command\n"
-msgstr "använder extern 3-vägs mergekommando\n"
+msgstr "använder extern 3-vägs hopslagningskommando\n"
 
 #: transforms.cc:477
 #, c-format
 msgid "failed to convert string from %s to %s: '%s'"
-msgstr ""
+msgstr "misslyckades med att konverterar en sträng från %s till %s: '%s'"
 
 #: transforms.cc:624 transforms.cc:638
 #, c-format
 msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
-msgstr ""
+msgstr "fel vid konvertering av %d UTF-8-bytes till IDNA ACE: %s"
 
 #: ui.cc:107
 #, c-format
 msgid "%.1f G"
-msgstr ""
+msgstr "%.1f G"
 
 #: ui.cc:113
 #, c-format
 msgid "%.1f M"
-msgstr ""
+msgstr "%.1f M"
 
 #: ui.cc:119
 #, c-format
 msgid "%.1f k"
-msgstr ""
+msgstr "%.1f k"
 
 #: ui.cc:136 ui.cc:138
 #, c-format
 msgid "%d/%d"
-msgstr ""
+msgstr "%d/%d"
 
 #: ui.cc:145
 #, c-format
 msgid "%d"
-msgstr ""
+msgstr "%d"
 
 #: ui.cc:368
 #, c-format
@@ -3014,147 +3016,151 @@ msgid ""
 "please send this error message, the output of 'monotone --full-version',\n"
 "and a description of what you were doing to %s.\n"
 msgstr ""
+"allvarligt: %s\n"
+"detta är nästan helt säkert en bugg i monotone.\n"
+"Var god skicka detta felmeddelande, utskriften av 'monotone --full-version'\n"
+"och en beskrivning av det du gjorde med %s.\n"
 
 #: ui.cc:411
 msgid "monotone: "
-msgstr ""
+msgstr "monotone: "
 
 #: update.cc:65
 #, c-format
 msgid "failed to decode boolean testresult cert value '%s'\n"
-msgstr ""
+msgstr "misslyckades med att tolka det booelska testresultatets värdet '%s'\n"
 
 #: update.cc:159
 #, c-format
 msgid "cannot determine branch for update"
-msgstr ""
+msgstr "kan inte bestämma grenen för uppdatering"
 
 #: vocab.cc:68
 #, c-format
 msgid "hex encoded ID '%s' size != %d"
-msgstr ""
+msgstr "storleken för den hexadecimalt kodade identiteten '%s' != %d"
 
 #: vocab.cc:72
 #, c-format
 msgid "bad character '%c' in id name '%s'"
-msgstr ""
+msgstr "otillåtet tecken '%c' i identitetsnamnet '%s'"
 
 #: vocab.cc:85
 #, c-format
 msgid "bad character '%c' in ace string '%s'"
-msgstr ""
+msgstr "otillåtet tecken '%c' i ace-strängen '%s'"
 
 #: vocab.cc:99
 #, c-format
 msgid "bad character '%c' in cert name '%s'"
-msgstr ""
+msgstr "otillåtet tecken '%c' i certnamnet '%s'"
 
 #: vocab.cc:112
 #, c-format
 msgid "bad character '%c' in key name '%s'"
-msgstr ""
+msgstr "otillåtet tecken '%c' i nyckelnamnet '%s'"
 
 #: vocab.cc:130
 #, c-format
 msgid "Invalid key length of %d bytes"
-msgstr ""
+msgstr "felaktig nyckellängd, %d bytes"
 
 #: vocab.cc:148
 #, c-format
 msgid "Invalid hmac length of %d bytes"
-msgstr ""
+msgstr "felaktig HMAC-längd, %d bytes"
 
 #: work.cc:117
 #, c-format
 msgid "skipping ignorable file %s\n"
-msgstr ""
+msgstr "hoppar över ignorerbar file %s\n"
 
 #: work.cc:125
 #, c-format
 msgid "skipping %s, already accounted for in working copy\n"
-msgstr ""
+msgstr "hoppar över %s, den finns redan noterad i arbetskopian\n"
 
 #: work.cc:129
 #, c-format
 msgid "adding %s to working copy add set\n"
-msgstr ""
+msgstr "lägger %s i mängden tillgda filer i arbetskopian\n"
 
 #: work.cc:202
 #, c-format
 msgid "skipping %s, not currently tracked\n"
-msgstr ""
+msgstr "hoppar över %s\n"
 
 #: work.cc:210
 #, c-format
 msgid "cannot remove %s/, it is not empty"
-msgstr ""
+msgstr "kan inte ta bort %s/, den är inte tom"
 
 #: work.cc:212
 #, c-format
 msgid "adding %s to working copy delete set\n"
-msgstr ""
+msgstr "lägger %s i mängden borttagna filer i arbetskopian\n"
 
 #: work.cc:255
 #, c-format
 msgid "%s does not exist in current revision\n"
-msgstr ""
+msgstr "%s finns inte i nuvarande revision\n"
 
 #: work.cc:258
 #, c-format
 msgid "%s already exists in current revision\n"
-msgstr ""
+msgstr "%s finns redan i nuvarande revision\n"
 
 #: work.cc:262
 #, c-format
 msgid "adding %s -> %s to working copy rename set\n"
-msgstr ""
+msgstr "lägger %s -> %s i mängden filer med ändrade namn i arbetskopian\n"
 
 #: work.cc:349
 #, c-format
 msgid "working copy is corrupt: %s does not exist"
-msgstr ""
+msgstr "arbetskopian är korrupt: %s finns inte"
 
 #: work.cc:350
 #, c-format
 msgid "working copy is corrupt: %s is a directory"
-msgstr ""
+msgstr "arbetskopian är korrupt: %s är en katalog"
 
 #: work.cc:360
 #, c-format
 msgid "Problem with working directory: %s is unreadable"
-msgstr ""
+msgstr "Problem med arbetskatalogen: %s är oläsbar"
 
 #: work.cc:386
 #, c-format
 msgid "base revision %s does not exist in database\n"
-msgstr ""
+msgstr "grrundrevisionen %s finns inte i databasen\n"
 
 #: work.cc:703 work.cc:714
 #, c-format
 msgid "path %s already exists"
-msgstr ""
+msgstr "filen/katalogen %s finns redan"
 
 #: work.cc:757
 #, c-format
 msgid "renaming '%s' onto existing file: '%s'\n"
-msgstr ""
+msgstr "byter namn på '%s' till redan existerande fil: '%s'\n"
 
 #: work.cc:776
 #, c-format
 msgid "file '%s' does not exist"
-msgstr ""
+msgstr "filen '%s' finns inte"
 
 #: work.cc:777
 #, c-format
 msgid "file '%s' is a directory"
-msgstr ""
+msgstr "filen '%s' är en katalog"
 
 #: work.cc:782
 #, c-format
 msgid "content of file '%s' has changed, not overwriting"
-msgstr ""
+msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 
 #: work.cc:783
 #, c-format
 msgid "updating %s to %s"
-msgstr ""
+msgstr "uppdaterar %s till %s"

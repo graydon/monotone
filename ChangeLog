@@ -1,5 +1,10 @@
 2006-01-15  Richard Levitte  <richard@levitte.org>
 
+	* po/sv.po: Almost all translations done.  I've left a few for
+	lack of inspiration.  Someone, PLEASE REVIEW!
+
+2006-01-15  Richard Levitte  <richard@levitte.org>
+
 	* po/sv.po: More translations done.
 
 2006-01-15  Richard Levitte  <richard@levitte.org>
