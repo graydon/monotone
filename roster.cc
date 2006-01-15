@@ -4533,14 +4533,23 @@ test_unify_rosters_end_to_end()
 
   roster_t has_roster = has_not_roster; MM(has_roster);
   marking_map has_markings = has_not_markings; MM(has_markings);
+  node_id new_id;
   {
-    has_roster.attach_node(has_roster.create_file_node(my_fid, nis),
-                           split("foo"));
+    new_id = has_roster.create_file_node(my_fid, nis);
+    has_roster.attach_node(new_id, split("foo"));
+    // a tricky thing that unify_roster has to deal with is making sure that
+    // attr corpses survive.  so let's put in an attr corpse.  (technically
+    // this is not quite a possible graph, since we're claiming that the file
+    // was _just_ created, and just-created files never have attr corpses on
+    // them, but it should still work fine.)
+    safe_insert(has_roster.get_node(new_id)->attrs,
+                make_pair(attr_key("testkey"), make_pair(false, attr_value(""))));
     marking_t file_marking;
     file_marking.birth_revision = has_rid;
     file_marking.parent_name = file_marking.file_content = singleton(has_rid);
-    safe_insert(has_markings, make_pair(has_roster.get_node(split("foo"))->self,
-                                        file_marking));
+    safe_insert(file_marking.attrs,
+                make_pair(attr_key("testkey"), singleton(has_rid)));
+    safe_insert(has_markings, make_pair(new_id, file_marking));
   }
 
   cset add_cs; MM(add_cs);
@@ -4557,8 +4566,10 @@ test_unify_rosters_end_to_end()
                           singleton(has_not_rid),
                           new_rid, new_roster, new_markings,
                           nis);
-    I(new_roster.get_node(split("foo"))->self
-      == has_roster.get_node(split("foo"))->self);
+    I(new_roster.get_node(split("foo"))->self == new_id);
+    I(new_roster.get_node(split("foo"))->attrs
+      == has_roster.get_node(split("foo"))->attrs);
+    I(safe_get(new_markings, new_id) == safe_get(new_markings, new_id));
   }
   // added in right, then merged
   {
@@ -4570,8 +4581,10 @@ test_unify_rosters_end_to_end()
                           singleton(has_rid),
                           new_rid, new_roster, new_markings,
                           nis);
-    I(new_roster.get_node(split("foo"))->self
-      == has_roster.get_node(split("foo"))->self);
+    I(new_roster.get_node(split("foo"))->self == new_id);
+    I(new_roster.get_node(split("foo"))->attrs
+      == has_roster.get_node(split("foo"))->attrs);
+    I(safe_get(new_markings, new_id) == safe_get(new_markings, new_id));
   }
   // added in merge
   // this is a little "clever", it uses the same has_not_roster twice, but the
