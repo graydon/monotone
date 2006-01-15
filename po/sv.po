@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-01-15 11:12+0100\n"
-"PO-Revision-Date: 2006-01-15 13:42+0100\n"
+"PO-Revision-Date: 2006-01-15 15:11+0100\n"
 "Last-Translator: Richard Levitte <richard@levitte.org>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -176,6 +176,8 @@ msgid ""
 "Enter a description of this change.\n"
 "Lines beginning with `MT:' are removed automatically.\n"
 msgstr ""
+"Mata in en beskrivning av denna ändring.\n"
+"Rader som börjar med `MT:' kommer att tas bort automatiskt.\n"
 
 #: commands.cc:410
 #, c-format
@@ -675,7 +677,7 @@ msgstr "GAMMALID NYID"
 
 #: commands.cc:1780
 msgid "write file delta packet to stdout"
-msgstr ""
+msgstr "skriv ut datapaketet för fildelta till stdout"
 
 #: commands.cc:1794 commands.cc:1796 commands.cc:1835
 #, c-format
@@ -1311,7 +1313,7 @@ msgstr "det finns inga variabler med namnet %s i domänen %s"
 
 #: commands.cc:3748
 msgid "REVID"
-msgstr ""
+msgstr "REVID"
 
 #: commands.cc:3749
 msgid "dump the roster associated with the given REVID"
@@ -1474,97 +1476,97 @@ msgstr ""
 #: database_check.cc:874
 #, c-format
 msgid "%d missing files\n"
-msgstr ""
+msgstr "%d filer saknas\n"
 
 #: database_check.cc:876
 #, c-format
 msgid "%d unreferenced files\n"
-msgstr ""
+msgstr "%d filer utan referenser\n"
 
 #: database_check.cc:879
 #, c-format
 msgid "%d unreferenced rosters\n"
-msgstr ""
+msgstr "%d rosters utan referenser\n"
 
 #: database_check.cc:881
 #, c-format
 msgid "%d incomplete rosters\n"
-msgstr ""
+msgstr "%d rosters är ej kompletta\n"
 
 #: database_check.cc:883
 #, c-format
 msgid "%d rosters not parseable (perhaps with invalid paths)\n"
-msgstr ""
+msgstr "%d rosters går inte att tyda (de kanske har felaktiga filspecifikationer)\n"
 
 #: database_check.cc:886
 #, c-format
 msgid "%d rosters not in normalized form\n"
-msgstr ""
+msgstr "%d rosters ej i normaliserad form\n"
 
 #: database_check.cc:889
 #, c-format
 msgid "%d missing revisions\n"
-msgstr ""
+msgstr "%d revisioner saknas\n"
 
 #: database_check.cc:891
 #, c-format
 msgid "%d incomplete revisions\n"
-msgstr ""
+msgstr "%d revisioner är ej kompletta\n"
 
 #: database_check.cc:893
 #, c-format
 msgid "%d mismatched parents\n"
-msgstr ""
+msgstr "%d föräldrar som inte stämmer med varandra\n"
 
 #: database_check.cc:895
 #, c-format
 msgid "%d mismatched children\n"
-msgstr ""
+msgstr "%d barn som inte stämmer med varandra\n"
 
 #: database_check.cc:897
 #, c-format
 msgid "%d revisions with bad history\n"
-msgstr ""
+msgstr "%d revisioner med dålig historia\n"
 
 #: database_check.cc:899
 #, c-format
 msgid "%d revisions not parseable (perhaps with invalid paths)\n"
-msgstr ""
+msgstr "%d revisioner går inte att tyda (kanske med felaktiga filspecifikationer)\n"
 
 #: database_check.cc:902
 #, c-format
 msgid "%d revisions not in normalized form\n"
-msgstr ""
+msgstr "%d revisioner är ej i normaliserad form\n"
 
 #: database_check.cc:906
 #, c-format
 msgid "%d unreferenced roster links\n"
-msgstr ""
+msgstr "%d rosterlänkar utan referenser\n"
 
 #: database_check.cc:909
 #, c-format
 msgid "%d missing rosters\n"
-msgstr ""
+msgstr "%d rosters saknas\n"
 
 #: database_check.cc:913
 #, c-format
 msgid "%d missing keys\n"
-msgstr ""
+msgstr "%d nycklar saknas\n"
 
 #: database_check.cc:916
 #, c-format
 msgid "%d missing certs\n"
-msgstr ""
+msgstr "%d cert saknas\n"
 
 #: database_check.cc:918
 #, c-format
 msgid "%d mismatched certs\n"
-msgstr ""
+msgstr "%d cert stämmer inte med varandra\n"
 
 #: database_check.cc:920
 #, c-format
 msgid "%d unchecked signatures due to missing keys\n"
-msgstr ""
+msgstr "%d signaturer kunde inte kontrolleras på grund av att nycklar saknas\n"
 
 #: database_check.cc:922
 #, c-format
@@ -1574,27 +1576,27 @@ msgstr "%d dåliga signaturer\n"
 #: database_check.cc:948
 #, c-format
 msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs\n"
-msgstr ""
+msgstr "koll klar: %d filer; %d rosters; %d revisioner; %d nycklar; %d cert\n"
 
 #: database_check.cc:954
 #, c-format
 msgid "total problems detected: %d (%d serious)\n"
-msgstr ""
+msgstr "totalt antal funna problem: %d (varav %d är allvarliga)\n"
 
 #: database_check.cc:956
 #, c-format
 msgid "serious problems detected"
-msgstr ""
+msgstr "allvarliga problem funna"
 
 #: database_check.cc:958
 #, c-format
 msgid "minor problems detected\n"
-msgstr ""
+msgstr "småproblem funna\n"
 
 #: database_check.cc:960
 #, c-format
 msgid "database is good\n"
-msgstr ""
+msgstr "databasen är i gott skick\n"
 
 #: database.cc:89
 #, c-format
@@ -1604,6 +1606,11 @@ msgid ""
 "try 'monotone db migrate' to upgrade\n"
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
+"strukturen i databasen %s stämmer inte med denna version av monotone\n"
+"förväntade schemat %s, fann %s\n"
+"prova 'monotone db migrate' för att uppgradera databasen\n"
+"(detta går inte att gå tillbaka från; du vill nog ta en backup av\n"
+"databasen först)"
 
 #: database.cc:108
 #, c-format
@@ -1616,20 +1623,27 @@ msgid ""
 "  pull into a fresh database.\n"
 "sorry about the inconvenience."
 msgstr ""
+"databasen %s innehåller revisioner men inga rosters.\n"
+"Om du är en projektledare eller gör lokala tester:\n"
+"  läs i filen UPGRADE och följ instruktionerna för uppgradering.\n"
+"Om du inte är en prijektledare:\n"
+"  vänta på att projektledaren migrerar projektets data, och hämta\n"
+"  sedan databasen på nytt.\n"
+"Ursäkta besväret."
 
 #: database.cc:173
 #, c-format
 msgid "unable to probe database version in file %s"
-msgstr ""
+msgstr "kunde inte finna någon databasenversion i filen %s"
 
 #: database.cc:180
 #, c-format
 msgid "database %s is not an sqlite version 3 file, try dump and reload"
-msgstr ""
+msgstr "databasen %s är inte skapad med SQLite versoin 3.  Dumpa och ladda på nytt."
 
 #: database.cc:207
 msgid "make sure database and containing directory are writeable"
-msgstr ""
+msgstr "se till att du har skrivrättigheter databasen och katalogen den ligger i"
 
 #: database.cc:212
 #, c-format
@@ -1637,11 +1651,13 @@ msgid ""
 "sqlite error: %d: %s\n"
 "%s"
 msgstr ""
+"sqlite-fel: %d: %s\n"
+"%s"
 
 #: database.cc:250
 #, c-format
 msgid "could not initialize database: %s: already exists"
-msgstr ""
+msgstr "kunde inte initiera databasen: %s: den finns redan"
 
 #: database.cc:255
 #, c-format
@@ -1650,11 +1666,13 @@ msgid ""
 "s'\n"
 "cancelling database creation"
 msgstr ""
+"det finns en (kanske rutten) journalfil '%s' med samma bas som en ny datas '%s'\n"
+"avbryter skapandet av databasen"
 
 #: database.cc:377
 #, c-format
 msgid "cannot create %s; it already exists"
-msgstr ""
+msgstr "kan inte skapa %s; den finns redan"
 
 #: database.cc:441
 #, c-format
@@ -1678,77 +1696,95 @@ msgid ""
 "  certs           : %u\n"
 "  total           : %u\n"
 msgstr ""
+"schemaversion         : %s\n"
+"antal:\n"
+"  hela rosters        : %u\n"
+"  rosterdeltan        : %u\n"
+"  hela filer          : %u\n"
+"  fildeltan           : %u\n"
+"  revisioner          : %u\n"
+"  föräldrakanter      : %u\n"
+"  cert                : %u\n"
+"bytes:\n"
+"  hela rosters        : %u\n"
+"  rosterdeltan        : %u\n"
+"  hela filer          : %u\n"
+"  filedeltan          : %u\n"
+"  revisioner          : %u\n"
+"  cachad föräldraskap : %u\n"
+"  cert                : %u\n"
+"  total               : %u\n"
 
 #: database.cc:495
 #, c-format
 msgid "database schema version: %s"
-msgstr ""
+msgstr "databasens schemaversion: %s"
 
 #: database.cc:581
 #, c-format
 msgid "multiple statements in query: %s\n"
-msgstr ""
+msgstr "multipla kommandon i databasfråga: %s\n"
 
 #: database.cc:587
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
-msgstr ""
+msgstr "ville ha %d kolumner, fick %d i databasfråga: %s\n"
 
 #: database.cc:626
 #, c-format
 msgid "null result in query: %s\n"
-msgstr ""
+msgstr "inga resultat med databasfråga: %s\n"
 
 #: database.cc:644
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
-msgstr ""
+msgstr "ville ha %d rader, fick %d i databasfråga: %s\n"
 
 #: database.cc:669
 #, c-format
 msgid ""
 "Attempt to start exclusive transaction within non-exclusive transaction."
-msgstr ""
+msgstr "Försökte starta en exklusiv transaktion innanför en icke-exklusiv transaktion."
 
 #: database.cc:1682
 #, c-format
 msgid "another key with name '%s' already exists"
-msgstr ""
+msgstr "det finns redan en annan nyckel med namnet '%s'"
 
 #: database.cc:2730
 #, c-format
 msgid "no database specified"
-msgstr ""
+msgstr "ingen databas angiven"
 
 #: database.cc:2738
 #, c-format
 msgid "database %s does not exist"
-msgstr ""
+msgstr "databasen %s finns inte"
 
 #: database.cc:2739
 #, c-format
 msgid "%s is a directory, not a database"
-msgstr ""
+msgstr "%s är en katalog, inte en databas"
 
 #: database.cc:2764
 #, c-format
 msgid "could not open database '%s': %s"
-msgstr ""
+msgstr "kunde inte öppna databasen '%s': %s"
 
 #: diff_patch.cc:588
 #, c-format
 msgid "file '%s' does not exist in working copy"
-msgstr ""
+msgstr "filen '%s' existerar inte i arbetskopian"
 
 #: diff_patch.cc:589
 #, c-format
 msgid "'%s' in working copy is a directory, not a file"
-msgstr ""
+msgstr "'%s' i arbetskopian är en katalog, inte en fil"
 
 #: diff_patch.cc:593
 #, c-format
 msgid "file %s in working copy has id %s, wanted %s"
-msgstr ""
+msgstr "filen %s i arbetskopian har identiteten %s, %s eftersöktes"
 
 #: diff_patch.cc:714
 #, c-format
@@ -1759,11 +1795,16 @@ msgid ""
 "[   right] %s\n"
 "[  merged] %s\n"
 msgstr ""
+"behöver hjälp med 3-vägs hopslagning\n"
+"[ förälder] %s\n"
+"[  vänster] %s\n"
+"[    höger] %s\n"
+"[hopslagen] %s\n"
 
 #: file_io.cc:116
 #, c-format
 msgid "expected file '%s', but it is a directory."
-msgstr ""
+msgstr "förväntade filen '%s', men det är en katalog."
 
 #: file_io.cc:186 file_io.cc:193
 #, c-format
@@ -1771,6 +1812,8 @@ msgid ""
 "could not create directory '%s'\n"
 "it is a file"
 msgstr ""
+"kunde inte skapa katalogen '%s'\n"
+"det är en fil"
 
 #: file_io.cc:188
 #, c-format
@@ -1778,16 +1821,18 @@ msgid ""
 "could not create directory '%s'\n"
 "%s"
 msgstr ""
+"kunde inte skapa katalogen '%s'\n"
+"%s"
 
 #: file_io.cc:192
 #, c-format
 msgid "could not create directory '%s'"
-msgstr ""
+msgstr "kunde inte skapa katalogen '%s'"
 
 #: file_io.cc:205
 #, c-format
 msgid "failed to create directory '%s' for '%s'"
-msgstr ""
+msgstr "misslyckades med att skapa katalog '%s' för '%s'"
 
 #: file_io.cc:219
 #, c-format
@@ -1795,204 +1840,206 @@ msgid ""
 "could not remove '%s'\n"
 "%s"
 msgstr ""
+"kunde inte ta bort '%s'\n"
+"%s"
 
 #: file_io.cc:229
 #, c-format
 msgid "file to delete '%s' does not exist"
-msgstr ""
+msgstr "filen att ta bort, '%s', finns inte"
 
 #: file_io.cc:230
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
-msgstr ""
+msgstr "filen att ta bort, '%s', är inte en fil, den är en katalog"
 
 #: file_io.cc:238
 #, c-format
 msgid "directory to delete '%s' does not exist"
-msgstr ""
+msgstr "katalogen att ta bort, '%s', finns inte"
 
 #: file_io.cc:239
 #, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
-msgstr ""
+msgstr "katalogen att ta bort, '%s', är inte en katalog, det är en fil"
 
 #: file_io.cc:246
 #, c-format
 msgid "object to delete, '%s', does not exist"
-msgstr ""
+msgstr "objektet att ta bort, '%s', finns inte"
 
 #: file_io.cc:254
 #, c-format
 msgid "directory to delete, '%s', does not exist"
-msgstr ""
+msgstr "katalogen att ta bort, '%s', finns inte"
 
 #: file_io.cc:255
 #, c-format
 msgid "directory to delete, '%s', is a file"
-msgstr ""
+msgstr "katalogen att ta bort, '%s', är en fil"
 
 #: file_io.cc:264
 #, c-format
 msgid "rename source file '%s' does not exist"
-msgstr ""
+msgstr "källfilen att ge nytt namn, '%s', finns inte"
 
 #: file_io.cc:265
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
-msgstr ""
+msgstr "källfilen att ge nytt namn, '%s', är en katalog -- bugg i monotone?"
 
 #: file_io.cc:268 file_io.cc:281
 #, c-format
 msgid "rename target '%s' already exists"
-msgstr ""
+msgstr "målfilen, '%s', finns redan"
 
 #: file_io.cc:277
 #, c-format
 msgid "rename source dir '%s' does not exist"
-msgstr ""
+msgstr "källkatalogen att ge nytt namn, '%s', finns inte"
 
 #: file_io.cc:278
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
-msgstr ""
+msgstr "källkatalogen att ge nytt namn, '%s', är en fil -- bugg i monotone?"
 
 #: file_io.cc:292
 #, c-format
 msgid "rename source path '%s' does not exist"
-msgstr ""
+msgstr "källfilen/katalogen att ge nytt namn, '%s', finns inte"
 
 #: file_io.cc:307
 #, c-format
 msgid "file %s does not exist"
-msgstr ""
+msgstr "filen %s finns inte"
 
 #: file_io.cc:308
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
-msgstr ""
+msgstr "file %s kan inte läsas som data; den är en katalog"
 
 #: file_io.cc:312
 #, c-format
 msgid "cannot open file %s for reading"
-msgstr ""
+msgstr "kan inte öppna filen %s för läsning"
 
 #: file_io.cc:379
 #, c-format
 msgid "Cannot read standard input multiple times"
-msgstr ""
+msgstr "Kan inte läsa från stdin mer än en gång"
 
 #: file_io.cc:410
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
-msgstr ""
+msgstr "file %s kan inte skrivas över som data; den är en katalog"
 
 #: file_io.cc:418
 #, c-format
 msgid "cannot open file %s for writing"
-msgstr ""
+msgstr "kan inte öppna filen %s för skrivning"
 
 #: file_io.cc:530
 #, c-format
 msgid "caught runtime error %s constructing file path for %s\n"
-msgstr ""
+msgstr "fick fel %s när filväg för %s byggdes\n"
 
 #: file_io.cc:569
 #, c-format
 msgid "no such file or directory: '%s'"
-msgstr ""
+msgstr "ingen sådan fil eller katalog: '%s'"
 
 #: keys.cc:76
 #, c-format
 msgid "got empty passphrase from get_passphrase() hook"
-msgstr ""
+msgstr "fick tomt lösen från lua-rutinen get_passphrase()"
 
 #: keys.cc:92
 #, c-format
 msgid "empty passphrase not allowed"
-msgstr ""
+msgstr "tomt lösen ej tillåtet"
 
 #: keys.cc:99
 #, c-format
 msgid "confirm passphrase for key ID [%s]: "
-msgstr ""
+msgstr "bekräfta lösen för nyckelidentitet [%s]:"
 
 #: keys.cc:104
 #, c-format
 msgid "empty passphrases not allowed, try again\n"
-msgstr ""
+msgstr "tomt lösen ej tillåtet, försök igen\n"
 
 #: keys.cc:105 keys.cc:112
 #, c-format
 msgid "too many failed passphrases\n"
-msgstr ""
+msgstr "för många misslyckade försök\n"
 
 #: keys.cc:111
 #, c-format
 msgid "passphrases do not match, try again\n"
-msgstr ""
+msgstr "lösen stämmer inte, försök igen\n"
 
 #: keys.cc:118
 #, c-format
 msgid "no passphrase given"
-msgstr ""
+msgstr "inget lösen givet"
 
 #: keys.cc:541
 #, c-format
 msgid "passphrase for '%s' is incorrect"
-msgstr ""
+msgstr "lösen för '%s' stämmer inte"
 
 #: lua.cc:538 lua.cc:567 lua.cc:582
 #, c-format
 msgid "%s called with an invalid parameter"
-msgstr ""
+msgstr "%s anropades med inkorrekt parameter"
 
 #: lua.cc:585
 #, c-format
 msgid "Directory '%s' does not exists"
-msgstr ""
+msgstr "Katalogen '%s' finns inte"
 
 #: lua.cc:586 rcs_import.cc:1217
 #, c-format
 msgid "'%s' is not a directory"
-msgstr ""
+msgstr "'%s' är inte en katalog"
 
 #: lua.cc:605 lua.cc:907
 #, c-format
 msgid "lua error while loading rcfile '%s'"
-msgstr ""
+msgstr "lua-fel under läsning av rcfilen '%s'"
 
 #: lua.cc:704
 #, c-format
 msgid "bad input to parse_basic_io"
-msgstr ""
+msgstr "otydbara data till basic_io"
 
 #: lua.cc:919
 #, c-format
 msgid "lua error while loading '%s'"
-msgstr ""
+msgstr "lua-fel under läsning av '%s'"
 
 #: lua.cc:924
 #, c-format
 msgid "rcfile '%s' does not exist"
-msgstr ""
+msgstr "rcfilen '%s' finns inte"
 
 #: main.cc:325
 msgid "interrupted"
-msgstr ""
+msgstr "avbruten"
 
 #: main.cc:329
 msgid "terminated by signal"
-msgstr ""
+msgstr "stoppad av signal"
 
 #: merkle_tree.cc:276
 #, c-format
 msgid "node level is %d, exceeds maximum %d"
-msgstr ""
+msgstr "nodnivå är %d, vilket överstiger %d"
 
 #: merkle_tree.cc:311
 #, c-format
 msgid "mismatched node hash value %s, expected %s"
-msgstr ""
+msgstr "nodens checksumma %s stämmer inte, %s förväntad"
 
 #: monotone.cc:51
 msgid "select branch cert for operation"
@@ -2165,36 +2212,36 @@ msgstr "ange i vilken katalog konfigurationsfilerna finns"
 #: monotone.cc:204
 #, c-format
 msgid "problem parsing arguments from file %s: %s"
-msgstr ""
+msgstr "problem att tyda argumenten i filen %s: %s"
 
 #: monotone.cc:213
 #, c-format
 msgid "weird error when stuffing arguments read from %s: %s\n"
-msgstr ""
+msgstr "underligt fel när argument lästa från %s stoppades in: %s\n"
 
 #: monotone.cc:293
 msgid "[OPTION...] command [ARGS...]\n"
-msgstr ""
+msgstr "[OPTIONER...] kommando [ARGUMENT...]\n"
 
 #: monotone.cc:527
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
-msgstr ""
+msgstr "syntaxfel nära optionen \"%s\": %s"
 
 #: monotone.cc:566
 #, c-format
 msgid "monotone %s doesn't use the option %s"
-msgstr ""
+msgstr "monotone %s använder inte optionen %s"
 
 #: monotone.cc:601
 #, c-format
 msgid "Options specific to 'monotone %s':"
-msgstr ""
+msgstr "Specifika optioner för 'monotone %s':"
 
 #: mt_version.cc:23
 #, c-format
 msgid "%s (base revision: %s)"
-msgstr ""
+msgstr "%s (grundrevision: %s)"
 
 #: mt_version.cc:34
 #, c-format
@@ -2202,26 +2249,28 @@ msgid ""
 "Running on: %s\n"
 "Changes since base revision: %s\n"
 msgstr ""
+"Kör på: %s\n"
+"Ändringar sen senaste grundrevisionen: %s\n"
 
 #: netcmd.cc:40
 #, c-format
 msgid "unknown item type 0x%x for '%s'"
-msgstr ""
+msgstr "okänd typ 0x%x för '%s'"
 
 #: netcmd.cc:92
 #, c-format
 msgid "protocol version mismatch: wanted '%d' got '%d'"
-msgstr ""
+msgstr "protokollversionen stämmer inte: ville ha '%d', fick '%d'"
 
 #: netcmd.cc:114
 #, c-format
 msgid "unknown netcmd code 0x%x"
-msgstr ""
+msgstr "okänd netcmd-kod 0x%x"
 
 #: netcmd.cc:125
 #, c-format
 msgid "oversized payload of '%d' bytes"
-msgstr ""
+msgstr "'%d' bytes för mycket data"
 
 #: netcmd.cc:154
 #, c-format
@@ -2229,65 +2278,67 @@ msgid ""
 "bad HMAC checksum (got %s, wanted %s)\n"
 "this suggests data was corrupted in transit\n"
 msgstr ""
+"inkorrekt HMAC-checksumma (fick %s, ville ha %s)\n"
+"detta tyder på att data var korrupt under överföringen\n"
 
 #: netcmd.cc:249 netcmd.cc:295
 #, c-format
 msgid "unknown role specifier %d"
-msgstr ""
+msgstr "okänd rollspecifikation %d"
 
 #: netio.hh:38 netio.hh:56
 #, c-format
 msgid "need %d bytes to decode %s at %d, only have %d"
-msgstr ""
+msgstr "behöver %d bytes för att avkoda %s i position %d, men har bara %d"
 
 #: netio.hh:84 netio.hh:119
 #, c-format
 msgid "uleb128 decode for '%s' into %d-byte datum overflowed"
-msgstr ""
+msgstr "avkodning av '%s' med uleb128 till datum på %d bytes flödade över"
 
 #: netio.hh:139
 #, c-format
 msgid "ran out of bytes reading uleb128 value for '%s' at pos %d"
-msgstr ""
+msgstr "inte tillräckligt många byte under läsning av uleb128-värde för '%s' i position %d"
 
 #: netio.hh:275
 #, c-format
 msgid "decoding variable length string of %d bytes for '%s', maximum is %d"
-msgstr ""
+msgstr "avkodare en sträng med variabel längd på %d bytes för '%s', där %d är maximum"
 
 #: netio.hh:330
 #, c-format
 msgid "expected %s to end at %d, have %d bytes"
-msgstr ""
+msgstr "%s förväntades sluta vid %d, och det finns %d bytes"
 
 #: netsync.cc:243
 #, c-format
 msgid "check of '%s' failed"
-msgstr ""
+msgstr "koll av '%s' misslyckades"
 
 #: netsync.cc:689
 msgid "bytes in"
-msgstr ""
+msgstr "bytes in"
 
 #: netsync.cc:691
 msgid "bytes out"
-msgstr ""
+msgstr "bytes ut"
 
 #: netsync.cc:695
 msgid "certs in"
-msgstr ""
+msgstr "cert in"
 
 #: netsync.cc:697 netsync.cc:710
 msgid "revs in"
-msgstr ""
+msgstr "rev in"
 
 #: netsync.cc:702
 msgid "certs out"
-msgstr ""
+msgstr "cert ut"
 
 #: netsync.cc:704 netsync.cc:712
 msgid "revs out"
-msgstr ""
+msgstr "rev ut"
 
 #: netsync.cc:811
 #, c-format
@@ -2297,7 +2348,7 @@ msgstr ""
 #: netsync.cc:1157
 #, c-format
 msgid "received network error: %s"
-msgstr ""
+msgstr "nätverksfel: %s"
 
 #: netsync.cc:1189
 #, c-format
@@ -2311,11 +2362,19 @@ msgid ""
 "I expected %s\n"
 "'monotone unset %s %s' overrides this check\n"
 msgstr ""
+"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+"@ VARNING: SERVERNS IDENTITET HAR ÄNDRATS                 @\n"
+"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+"DET ÄR MÖJLIGT ATT NÅGON GÖR NÅGOT ELAKT\n"
+"det är också möjligt att serverns nyckel har ändrats legitimt\n"
+"servern skickade nyckeln %s\n"
+"jag väntade mig %s\n"
+"'monotone unset %s %s' åtgärdar denna kolla\n"
 
 #: netsync.cc:1199
 #, c-format
 msgid "server key changed"
-msgstr ""
+msgstr "serverns nyckel ändrad"
 
 #: netsync.cc:1204
 #, c-format
@@ -2324,11 +2383,14 @@ msgid ""
 "I'll assume it's really them, but you might want to double-check\n"
 "their key's fingerprint: %s\n"
 msgstr ""
+"kopplar till server %s för första gången\n"
+"jag antar att det är rätt server, men du kan tänkas vilja dubbelkolla\n"
+"deras nyckels fingeravtryck: %s\n"
 
 #: netsync.cc:1211
 #, c-format
 msgid "saving public key for %s to database\n"
-msgstr ""
+msgstr "sparar publik nyckel för %s i databasen\n"
 
 #: netsync.cc:1299
 #, c-format
