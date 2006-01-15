@@ -1,5 +1,9 @@
 2006-01-15  Richard Levitte  <richard@levitte.org>
 
+	* po/sv_SE.po: Rename ...
+	* po/sv.po: ... to this, as there aren't so many dialects.  Update
+	with more strings to translate.
+
 	* std_hooks.lua: xgettext whines about a missing quote, so add
 	one.
 
