@@ -344,7 +344,8 @@ load_key_pair(app_state & app,
   else
     {
       N(app.keys.key_pair_exists(id),
-        F("no key pair '%s' found in key store '%s'") % id % app.keys.key_dir);
+        F("no key pair '%s' found in key store '%s'")
+        % id % app.keys.get_key_dir());
       app.keys.get_key_pair(id, kp);
       if (persist_ok)
         keys.insert(make_pair(id, kp));

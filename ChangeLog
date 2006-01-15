@@ -1,3 +1,9 @@
+2006-01-15  Nathaniel Smith  <njs@pobox.com>
+
+	* cert.cc (load_key_pair): 
+	* keys.cc (require_password): Use accessor method, so as to
+	actually compile...
+
 2006-01-14  Nathaniel Smith  <njs@pobox.com>
 
 	* lua.cc (hook_get_key_pair): Remove.
