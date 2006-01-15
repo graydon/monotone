@@ -1,5 +1,9 @@
 2006-01-15  Richard Levitte  <richard@levitte.org>
 
+	* po/sv.po: More translations done.
+
+2006-01-15  Richard Levitte  <richard@levitte.org>
+
 	* LINGUAS: Change sv_SE to just sv.
 	* po/sv_SE.po: Rename ...
 	* po/sv.po: ... to this, as there aren't so many dialects.  Update
