@@ -5,6 +5,10 @@
 
 2006-01-15  Nathaniel Smith  <njs@pobox.com>
 
+	* AUTHORS: Add Richard as a translator.
+
+2006-01-15  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.cc (union_corpses): New function.
 	(unify_roster_oneway, unify_rosters): Remove unused new_ids
 	argument.  Add call to union_corpses.  Add big comment explaining
