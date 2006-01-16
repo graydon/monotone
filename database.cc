@@ -75,7 +75,7 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("1db80c7cee8fa966913db1a463ed50bf1b0e5b0e"),
+  schema("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -272,31 +272,41 @@ dump_request
 };
 
 static int 
-dump_row_cb(void *data, int n, char **vals, char **cols)
+dump_row_cb(dump_request *dump, sqlite3_stmt *stmt)
 {
-  dump_request *dump = reinterpret_cast<dump_request *>(data);
-  I(dump != NULL);
-  I(vals != NULL);
   I(dump->out != NULL);
   *(dump->out) << boost::format("INSERT INTO %s VALUES(") % dump->table_name;
-  for (int i = 0; i < n; ++i)
+  unsigned n = sqlite3_data_count(stmt);
+  for (unsigned i = 0; i < n; ++i)
     {
       if (i != 0)
         *(dump->out) << ',';
 
-      if (vals[i] == NULL)
-        *(dump->out) << "NULL";
-      else
+      if (sqlite3_column_type(stmt, i) == SQLITE_BLOB)
         {
+          *(dump->out) << "X'";
+          const char *val = (const char*) sqlite3_column_blob(stmt, i);
+          int bytes = sqlite3_column_bytes(stmt, i);
+          *(dump->out) << encode_hexenc(std::string(val,val+bytes));
           *(dump->out) << "'";
-          for (char *cp = vals[i]; *cp; ++cp)
+        }
+      else 
+        {
+          const unsigned char *val = sqlite3_column_text(stmt, i);
+          if (val == NULL)
+            *(dump->out) << "NULL";
+          else
             {
-              if (*cp == '\'')
-                *(dump->out) << "''";
-              else
-                *(dump->out) << *cp;
+              *(dump->out) << "'";
+              for (const unsigned char *cp = val; *cp; ++cp)
+                {
+                  if (*cp == '\'')
+                    *(dump->out) << "''";
+                  else
+                    *(dump->out) << *cp;
+                }
+              *(dump->out) << "'";
             }
-          *(dump->out) << "'";
         }
     }
   *(dump->out) << ");\n";  
@@ -318,7 +328,19 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
   *(dump->out) << vals[2] << ";\n";
   dump->table_name = string(vals[0]);
   string query = "SELECT * FROM " + string(vals[0]);
-  sqlite3_exec(dump->sql, query.c_str(), dump_row_cb, data, NULL);
+  sqlite3_stmt *stmt=0;
+  sqlite3_prepare(dump->sql, query.c_str(), -1, &stmt, NULL);
+  assert_sqlite3_ok(dump->sql);
+
+  int stepresult=SQLITE_DONE;
+  do
+  { stepresult=sqlite3_step(stmt);
+    I(stepresult==SQLITE_DONE || stepresult==SQLITE_ROW);
+    if (stepresult==SQLITE_ROW) 
+      dump_row_cb(dump, stmt);
+  } while (stepresult==SQLITE_ROW);
+
+  sqlite3_finalize(stmt);
   assert_sqlite3_ok(dump->sql);
   return 0;
 }
@@ -538,6 +560,13 @@ database::execute(char const * query, ...)
   va_end(args);
 }
 
+void
+database::execute(std::string const& query, std::vector<queryarg> const& args)
+{ 
+  results res;
+  fetch(res, 0, 0, query, args);
+}
+
 void 
 database::fetch(results & res, 
                 int const want_cols, 
@@ -550,20 +579,10 @@ database::fetch(results & res,
   va_end(args);
 }
 
-void 
-database::fetch(results & res, 
-                int const want_cols, 
-                int const want_rows, 
-                char const * query, 
-                va_list args)
+database::statement &
+database::prepare(char const * query,
+                  int const want_cols)
 {
-  int nrow;
-  int ncol;
-  int rescode;
-
-  res.clear();
-  res.resize(0);
-
   map<string, statement>::iterator i = statement_cache.find(query);
   if (i == statement_cache.end()) 
     {
@@ -581,14 +600,29 @@ database::fetch(results & res,
         F("multiple statements in query: %s\n") % query);
     }
 
-  ncol = sqlite3_column_count(i->second.stmt());
+  int ncol = sqlite3_column_count(i->second.stmt());
 
   E(want_cols == any_cols || want_cols == ncol, 
     F("wanted %d columns got %d in query: %s\n") % want_cols % ncol % query);
 
+  return i->second;
+}
+
+// we need a vector<string> variant for binary transparency
+void 
+database::fetch(results & res, 
+                int const want_cols, 
+                int const want_rows, 
+                char const * query, 
+                va_list args)
+{
+  res.clear();
+  res.resize(0);
+
+  statement &stmt = prepare(query, want_cols);
   // bind parameters for this execution
 
-  int params = sqlite3_bind_parameter_count(i->second.stmt());
+  int params = sqlite3_bind_parameter_count(stmt.stmt());
 
   // profiling finds this logging to be quite expensive
   if (global_sanity.debug)
@@ -609,22 +643,35 @@ database::fetch(results & res,
           L(FL("binding %d with value '%s'\n") % param % log);
         }
 
-      sqlite3_bind_text(i->second.stmt(), param, value, -1, SQLITE_TRANSIENT);
+      sqlite3_bind_text(stmt.stmt(), param, value, -1, SQLITE_TRANSIENT);
       assert_sqlite3_ok(sql());
     }
+    
+  fetch(stmt, res, want_rows, query);
+}
 
+void 
+database::fetch(statement & stmt,
+                results & res,
+                int const want_rows,
+                const char *query)
+{
   // execute and process results
 
-  nrow = 0;
-  for (rescode = sqlite3_step(i->second.stmt()); rescode == SQLITE_ROW; 
-       rescode = sqlite3_step(i->second.stmt()))
+  int nrow = 0;
+  int ncol = sqlite3_column_count(stmt.stmt());
+  int rescode;
+
+  for (rescode = sqlite3_step(stmt.stmt()); rescode == SQLITE_ROW; 
+       rescode = sqlite3_step(stmt.stmt()))
     {
       vector<string> row;
       for (int col = 0; col < ncol; col++) 
         {
-          const char * value = sqlite3_column_text_s(i->second.stmt(), col);
+          const char * value = (const char*)sqlite3_column_blob(stmt.stmt(), col);
+          int bytes = sqlite3_column_bytes(stmt.stmt(), col);
           E(value, F("null result in query: %s\n") % query);
-          row.push_back(value);
+          row.push_back(std::string(value,value+bytes));
           //L(FL("row %d col %d value='%s'\n") % nrow % col % value);
         }
       res.push_back(row);
@@ -633,15 +680,56 @@ database::fetch(results & res,
   if (rescode != SQLITE_DONE)
     assert_sqlite3_ok(sql());
 
-  sqlite3_reset(i->second.stmt());
+  sqlite3_reset(stmt.stmt());
   assert_sqlite3_ok(sql());
 
   nrow = res.size();
 
-  i->second.count++;
+  stmt.count++;
 
   E(want_rows == any_rows || want_rows == nrow,
     F("wanted %d rows got %s in query: %s\n") % want_rows % nrow % query);
+}
+
+void 
+database::fetch(results & res, 
+                int const want_cols, 
+                int const want_rows, 
+                std::string const& query, 
+                std::vector<queryarg> const& args)
+{
+  res.clear();
+  res.resize(0);
+
+  statement &stmt = prepare(query.c_str(), want_cols);
+
+  // bind parameters for this execution
+
+  int params = sqlite3_bind_parameter_count(stmt.stmt());
+  
+  I(args.size()==size_t(params));
+
+  L(FL("binding %d parameters for %s\n") % params % query);
+
+  for (int param = 1; param <= params; param++)
+    {
+      string log = args[param-1];
+
+      if (log.size() > constants::log_line_sz)
+        log = log.substr(0, constants::log_line_sz);
+
+      L(FL("binding %d with value '%s'\n") % param % log);
+
+      // we can use SQLITE_STATIC since the array is destructed after
+      // fetching the parameters (and sqlite3_reset)
+      if (args[param-1].binary)
+        sqlite3_bind_blob(stmt.stmt(), param, args[param-1].data(), args[param-1].size(), SQLITE_STATIC);
+      else
+        sqlite3_bind_text(stmt.stmt(), param, args[param-1].c_str(), -1, SQLITE_STATIC);
+      assert_sqlite3_ok(sql());
+    }
+    
+  fetch(stmt, res, want_rows, query.c_str());
 }
 
 // general application-level logic
@@ -753,9 +841,9 @@ database::get(hexenc<id> const & ident,
   fetch(res, one_col, one_row, query.c_str(), ident().c_str());
 
   // consistency check
-  base64<gzip<data> > rdata(res[0][0]);
+  gzip<data> rdata(res[0][0]);
   data rdata_unpacked;
-  unpack(rdata, rdata_unpacked);
+  decode_gzip(rdata,rdata_unpacked);
 
   hexenc<id> tid;
   calculate_ident(rdata_unpacked, tid);
@@ -777,8 +865,8 @@ database::get_delta(hexenc<id> const & ident,
   fetch(res, one_col, one_row, query.c_str(), 
         ident().c_str(), base().c_str());
 
-  base64<gzip<delta> > del_packed = res[0][0];
-  unpack(del_packed, del);
+  gzip<delta> del_packed(res[0][0]);
+  decode_gzip(del_packed, del);
 }
 
 void 
@@ -794,11 +882,14 @@ database::put(hexenc<id> const & ident,
   MM(tid);
   I(tid == ident);
 
-  base64<gzip<data> > dat_packed;
-  pack(dat, dat_packed);
+  gzip<data> dat_packed;
+  encode_gzip(dat, dat_packed);
   
   string insert = "INSERT INTO " + table + " VALUES(?, ?)";
-  execute(insert.c_str(),ident().c_str(), dat_packed().c_str());
+  std::vector<queryarg> args;
+  args.push_back(ident());
+  args.push_back(queryarg(dat_packed(),true));
+  execute(insert,args);
 }
 void 
 database::put_delta(hexenc<id> const & ident,
@@ -810,11 +901,15 @@ database::put_delta(hexenc<id> const & ident,
   I(ident() != "");
   I(base() != "");
 
-  base64<gzip<delta> > del_packed;
-  pack(del, del_packed);
-  
+  gzip<delta> del_packed;
+  encode_gzip(del, del_packed);
+
+  std::vector<queryarg> args;
+  args.push_back(ident());
+  args.push_back(base());
+  args.push_back(queryarg(del_packed(),true));
   string insert = "INSERT INTO "+table+" VALUES(?, ?, ?)";
-  execute(insert.c_str(), ident().c_str(), base().c_str(), del_packed().c_str());
+  execute(insert, args);
 }
 
 // static ticker cache_hits("vcache hits", "h", 1);
@@ -1373,10 +1468,9 @@ database::get_revision(revision_id const & id,
         "SELECT data FROM revisions WHERE id = ?",
         id.inner()().c_str());
 
-  base64<gzip<data> > rdat_packed;
-  rdat_packed = base64<gzip<data> >(res[0][0]);
+  gzip<data> gzdata(res[0][0]);
   data rdat;
-  unpack(rdat_packed, rdat);
+  decode_gzip(gzdata,rdat);
 
   // verify that we got a revision with the right id
   {
@@ -1466,12 +1560,12 @@ database::put_revision(revision_id const & new_id,
 
   // Phase 3: Write the revision data
 
-  base64<gzip<data> > d_packed;
-  pack(d.inner(), d_packed);
-
-  execute("INSERT INTO revisions VALUES(?, ?)", 
-          new_id.inner()().c_str(), 
-          d_packed().c_str());
+  std::vector<queryarg> args;
+  args.push_back(new_id.inner()());
+  gzip<data> d_packed;
+  encode_gzip(d.inner(), d_packed);
+  args.push_back(queryarg(d_packed(),true));
+  execute(std::string("INSERT INTO revisions VALUES(?, ?)"), args);
 
   for (edge_map::const_iterator e = rev.edges.begin();
        e != rev.edges.end(); ++e)
@@ -1563,24 +1657,22 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
 void
 database::delete_branch_named(cert_value const & branch)
 {
-  base64<cert_value> encoded;
-  encode_base64(branch, encoded);
   L(FL("Deleting all references to branch %s\n") % branch);
-  execute("DELETE FROM revision_certs WHERE name='branch' AND value =?",
-          encoded().c_str());
-  execute("DELETE FROM branch_epochs WHERE branch=?",
-          encoded().c_str());
+  
+  std::vector<queryarg> args;
+  args.push_back(queryarg(branch(),true));
+  execute(std::string("DELETE FROM revision_certs WHERE name='branch' AND value =?"), args);
+  execute(std::string("DELETE FROM branch_epochs WHERE branch=?"), args);
 }
 
 /// Deletes all certs referring to a particular tag. 
 void
 database::delete_tag_named(cert_value const & tag)
 {
-  base64<cert_value> encoded;
-  encode_base64(tag, encoded);
   L(FL("Deleting all references to tag %s\n") % tag);
-  execute("DELETE FROM revision_certs WHERE name='tag' AND value =?",
-          encoded().c_str());
+  std::vector<queryarg> args;
+  args.push_back(queryarg(tag(),true));
+  execute(std::string("DELETE FROM revision_certs WHERE name='tag' AND value =?"), args);
 }
 
 // crypto key management
@@ -1657,7 +1749,7 @@ database::get_pubkey(hexenc<id> const & hash,
         "SELECT id, keydata FROM public_keys WHERE hash = ?", 
         hash().c_str());
   id = res[0][0];
-  pub_encoded = res[0][1];
+  encode_base64(rsa_pub_key(res[0][1]), pub_encoded);
 }
 
 void 
@@ -1668,7 +1760,7 @@ database::get_key(rsa_keypair_id const & pub_id,
   fetch(res, one_col, one_row, 
         "SELECT keydata FROM public_keys WHERE id = ?", 
         pub_id().c_str());
-  pub_encoded = res[0][0];
+  encode_base64(rsa_pub_key(res[0][0]), pub_encoded);
 }
 
 void 
@@ -1680,8 +1772,13 @@ database::put_key(rsa_keypair_id const & pub_id,
   I(!public_key_exists(thash));
   E(!public_key_exists(pub_id),
     F("another key with name '%s' already exists") % pub_id);
-  execute("INSERT INTO public_keys VALUES(?, ?, ?)", 
-          thash().c_str(), pub_id().c_str(), pub_encoded().c_str());
+  rsa_pub_key pub_key;
+  decode_base64(pub_encoded, pub_key);
+  std::vector<queryarg> args;
+  args.push_back(thash());
+  args.push_back(pub_id());
+  args.push_back(queryarg(pub_key(),true));
+  execute(std::string("INSERT INTO public_keys VALUES(?, ?, ?)"), args);
 }
 
 void
@@ -1704,13 +1801,18 @@ database::cert_exists(cert const & t,
     "AND value = ? " 
     "AND keypair = ? "
     "AND signature = ?";
-    
-  fetch(res, 1, any_rows, query.c_str(),
-        t.ident().c_str(),
-        t.name().c_str(),
-        t.value().c_str(),
-        t.key().c_str(),
-        t.sig().c_str());
+  std::vector<queryarg> args;
+  args.push_back(t.ident());
+  args.push_back(t.name());
+  cert_value value;
+  decode_base64(t.value, value);
+  args.push_back(queryarg(value(),true));
+  args.push_back(t.key());
+  rsa_sha1_signature sig;
+  decode_base64(t.sig, sig);
+  args.push_back(queryarg(sig(),true));
+  
+  fetch(res, 1, any_rows, query, args);
   I(res.size() == 0 || res.size() == 1);
   return res.size() == 1;
 }
@@ -1719,18 +1821,22 @@ void
 database::put_cert(cert const & t,
                    string const & table)
 {
+  std::vector<queryarg> args;
   hexenc<id> thash;
   cert_hash_code(t, thash);
+  args.push_back(thash());
+  args.push_back(t.ident());
+  args.push_back(t.name());
+  cert_value value;
+  decode_base64(t.value, value);
+  args.push_back(queryarg(value(),true));
+  args.push_back(t.key());
+  rsa_sha1_signature sig;
+  decode_base64(t.sig, sig);
+  args.push_back(queryarg(sig(),true));
 
   string insert = "INSERT INTO " + table + " VALUES(?, ?, ?, ?, ?, ?)";
-
-  execute(insert.c_str(), 
-          thash().c_str(),
-          t.ident().c_str(),
-          t.name().c_str(), 
-          t.value().c_str(),
-          t.key().c_str(),
-          t.sig().c_str());
+  execute(insert, args);
 }
 
 void 
@@ -1741,11 +1847,15 @@ database::results_to_certs(results const & res,
   for (size_t i = 0; i < res.size(); ++i)
     {
       cert t;
+      base64<cert_value> value;
+      encode_base64(cert_value(res[i][2]), value);
+      base64<rsa_sha1_signature> sig;
+      encode_base64(rsa_sha1_signature(res[i][4]), sig);
       t = cert(hexenc<id>(res[i][0]), 
               cert_name(res[i][1]),
-              base64<cert_value>(res[i][2]),
+              value,
               rsa_keypair_id(res[i][3]),
-              base64<rsa_sha1_signature>(res[i][4]));
+              sig);
       certs.push_back(t);
     }
 }
@@ -1852,9 +1962,12 @@ database::get_certs(cert_name const & name,
   string query = 
     "SELECT id, name, value, keypair, signature FROM " + table + 
     " WHERE name = ? AND value = ?";
-
-  fetch(res, 5, any_rows, query.c_str(), 
-        name().c_str(), val().c_str());
+  std::vector<queryarg> args;
+  args.push_back(name());
+  cert_value binvalue;
+  decode_base64(val, binvalue);
+  args.push_back(queryarg(binvalue(),true));
+  fetch(res, 5, any_rows, query, args);
   results_to_certs(res, certs);
 }
 
@@ -1871,10 +1984,13 @@ database::get_certs(hexenc<id> const & ident,
     "SELECT id, name, value, keypair, signature FROM " + table + 
     " WHERE id = ? AND name = ? AND value = ?";
 
-  fetch(res, 5, any_rows, query.c_str(),
-        ident().c_str(),
-        name().c_str(),
-        value().c_str());
+  std::vector<queryarg> args;
+  args.push_back(ident());
+  args.push_back(name());
+  cert_value binvalue;
+  decode_base64(value, binvalue);
+  args.push_back(queryarg(binvalue(),true));
+  fetch(res, 5, any_rows, query, args);
   results_to_certs(res, certs);
 }
 
@@ -2191,7 +2307,7 @@ void database::complete(selector_type ty,
                       spot++;
                       certvalue = i->second.substr(spot);
                       lim += "SELECT id FROM revision_certs ";
-                      lim += (boost::format("WHERE name='%s' AND unbase64(value) glob '%s'")
+                      lim += (boost::format("WHERE name='%s' AND CAST(value AS TEXT) glob '%s'")
                               % certname % certvalue).str();
                     }
                   else
@@ -2210,7 +2326,7 @@ void database::complete(selector_type ty,
                       % author_cert_name 
                       % tag_cert_name 
                       % branch_cert_name).str();
-              lim += (boost::format(" AND unbase64(value) glob '*%s*'")
+              lim += (boost::format(" AND CAST(value AS TEXT) glob '*%s*'")
                       % i->second).str();     
             }
           else if (i->first == selectors::sel_head) 
@@ -2224,15 +2340,13 @@ void database::complete(selector_type ty,
                 }
               else
                 {
-                  string subquery = (boost::format("SELECT DISTINCT value FROM revision_certs WHERE name='%s' and unbase64(value) glob '%s'") 
+                  string subquery = (boost::format("SELECT DISTINCT value FROM revision_certs WHERE name='%s' and CAST(value AS TEXT) glob '%s'") 
                                      % branch_cert_name % i->second).str();
                   results res;
                   fetch(res, one_col, any_rows, subquery.c_str());
                   for (size_t i = 0; i < res.size(); ++i)
                     {
-                      base64<data> row_encoded(res[i][0]);
-                      data row_decoded;
-                      decode_base64(row_encoded, row_decoded);
+                      data row_decoded(res[i][0]);
                       branch_names.push_back(row_decoded());
                     }
                 }
@@ -2271,8 +2385,7 @@ void database::complete(selector_type ty,
               if ((i->first == selectors::sel_branch) && (i->second.size() == 0))
                 {
                   __app->require_working_copy("the empty branch selector b: refers to the current branch");
-                  // FIXME: why do we have to glob on the unbase64(value), rather than being able to use == ?
-                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND unbase64(value) glob '%s'")
+                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND CAST(value AS TEXT) glob '%s'")
                           % branch_cert_name % __app->branch_name).str();
                   L(FL("limiting to current branch '%s'\n") % __app->branch_name);
                 }
@@ -2282,13 +2395,13 @@ void database::complete(selector_type ty,
                   switch (i->first)
                     {
                     case selectors::sel_earlier:
-                      lim += (boost::format("unbase64(value) <= X'%s'") % encode_hexenc(i->second)).str();
+                      lim += (boost::format("value <= X'%s'") % encode_hexenc(i->second)).str();
                       break;
                     case selectors::sel_later:
-                      lim += (boost::format("unbase64(value) > X'%s'") % encode_hexenc(i->second)).str();
+                      lim += (boost::format("value > X'%s'") % encode_hexenc(i->second)).str();
                       break;
                     default:
-                      lim += (boost::format("unbase64(value) glob '%s%s%s'")
+                      lim += (boost::format("CAST(value AS TEXT) glob '%s%s%s'")
                               % prefix % i->second % suffix).str();
                       break;
                     }
@@ -2329,7 +2442,7 @@ void database::complete(selector_type ty,
             (boost::format(" (name='%s')") % certname).str();
         }
         
-      query += (boost::format(" AND (unbase64(value) GLOB '%s%s%s')")
+      query += (boost::format(" AND (CAST(value AS TEXT) GLOB '%s%s%s')")
                 % prefix % partial % suffix).str();
       query += (boost::format(" AND (id IN %s)") % lim).str();
     }
@@ -2344,9 +2457,7 @@ void database::complete(selector_type ty,
         completions.insert(res[i][0]);
       else
         {
-          base64<data> row_encoded(res[i][0]);
-          data row_decoded;
-          decode_base64(row_encoded, row_decoded);
+          data row_decoded(res[i][0]);
           completions.insert(row_decoded());
         }
     }
@@ -2362,9 +2473,7 @@ database::get_epochs(std::map<cert_value, epoch_data> & epochs)
   fetch(res, 2, any_rows, "SELECT branch, epoch FROM branch_epochs");
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {      
-      base64<cert_value> encoded(idx(*i, 0));
-      cert_value decoded;
-      decode_base64(encoded, decoded);
+      cert_value decoded(idx(*i, 0));
       I(epochs.find(decoded) == epochs.end());
       epochs.insert(std::make_pair(decoded, epoch_data(idx(*i, 1))));
     }
@@ -2381,8 +2490,7 @@ database::get_epoch(epoch_id const & eid,
         " WHERE hash = ?",
         eid.inner()().c_str());
   I(res.size() == 1);
-  base64<cert_value> encoded(idx(idx(res, 0), 0));
-  decode_base64(encoded, branch);
+  branch = cert_value(idx(idx(res, 0), 0));
   epo = epoch_data(idx(idx(res, 0), 1));
 }
 
@@ -2401,20 +2509,21 @@ void
 database::set_epoch(cert_value const & branch, epoch_data const & epo)
 {
   epoch_id eid;
-  base64<cert_value> encoded;
-  encode_base64(branch, encoded);
   epoch_hash_code(branch, epo, eid);
   I(epo.inner()().size() == constants::epochlen);
-  execute("INSERT OR REPLACE INTO branch_epochs VALUES(?, ?, ?)", 
-          eid.inner()().c_str(), encoded().c_str(), epo.inner()().c_str());
+  std::vector<queryarg> args;
+  args.push_back(eid.inner()());
+  args.push_back(queryarg(branch(),true));
+  args.push_back(epo.inner()());
+  execute(std::string("INSERT OR REPLACE INTO branch_epochs VALUES(?, ?, ?)"), args);
 }
 
 void 
 database::clear_epoch(cert_value const & branch)
 {
-  base64<cert_value> encoded;
-  encode_base64(branch, encoded);
-  execute("DELETE FROM branch_epochs WHERE branch = ?", encoded().c_str());
+  std::vector<queryarg> args;
+  args.push_back(queryarg(branch(),true));
+  execute(std::string("DELETE FROM branch_epochs WHERE branch = ?"), args);
 }
 
 // vars
@@ -2428,12 +2537,8 @@ database::get_vars(std::map<var_key, var_value> & vars)
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {
       var_domain domain(idx(*i, 0));
-      base64<var_name> name_encoded(idx(*i, 1));
-      var_name name;
-      decode_base64(name_encoded, name);
-      base64<var_value> value_encoded(idx(*i, 2));
-      var_value value;
-      decode_base64(value_encoded, value);
+      var_name name(idx(*i, 1));
+      var_value value(idx(*i, 2));
       I(vars.find(std::make_pair(domain, name)) == vars.end());
       vars.insert(std::make_pair(std::make_pair(domain, name), value));
     }
@@ -2463,23 +2568,20 @@ database::var_exists(var_key const & key)
 void
 database::set_var(var_key const & key, var_value const & value)
 {
-  base64<var_name> name_encoded;
-  encode_base64(key.second, name_encoded);
-  base64<var_value> value_encoded;
-  encode_base64(value, value_encoded);
-  execute("INSERT OR REPLACE INTO db_vars VALUES(?, ?, ?)",
-          key.first().c_str(),
-          name_encoded().c_str(),
-          value_encoded().c_str());
+  std::vector<queryarg> args;
+  args.push_back(key.first());
+  args.push_back(queryarg(key.second(),true));
+  args.push_back(queryarg(value(),true));
+  execute(std::string("INSERT OR REPLACE INTO db_vars VALUES(?, ?, ?)"), args);
 }
 
 void
 database::clear_var(var_key const & key)
 {
-  base64<var_name> name_encoded;
-  encode_base64(key.second, name_encoded);
-  execute("DELETE FROM db_vars WHERE domain = ? AND name = ?",
-          key.first().c_str(), name_encoded().c_str());
+  std::vector<queryarg> args;
+  args.push_back(key.first());
+  args.push_back(queryarg(key.second(),true));
+  execute(std::string("DELETE FROM db_vars WHERE domain = ? AND name = ?"), args);
 }
 
 // branches
@@ -2493,10 +2595,7 @@ database::get_branches(vector<string> & names)
     fetch(res, one_col, any_rows, query.c_str(), cert_name.c_str());
     for (size_t i = 0; i < res.size(); ++i)
       {
-        base64<data> row_encoded(res[i][0]);
-        data name;
-        decode_base64(row_encoded, name);
-        names.push_back(name());
+        names.push_back(res[i][0]);
       }
 }
 
