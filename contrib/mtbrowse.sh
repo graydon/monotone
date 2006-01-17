@@ -111,11 +111,16 @@
 # Temp files without tailing dot.
 # New option: Sort by Date/Time with up or down.
 # Fix: Parent of merge, if certs list from cache (ncolor).
+#
+# 2006-01-17 Version 0.1.14 Henry@BigFoot.de
+# One call for getting monotone version.
+# Warn before using "automate ancestor" on big database.
+# (commit/sync with mt 0.26pre1)
 
 # Known Bugs / ToDo-List:
 # * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.1.13"
+VERSION="0.1.14"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
@@ -875,7 +880,7 @@ do_config()
 	    if dialog --default-item "$TOPOSORT" \
 		--menu "Sort revisions by" 0 0 0 \
 		"T" "Toposort, oldest top (from Monotone)" \
-		"D" "Date/Time, oldest top" \
+		"D" "Date/Time, oldest top (internal function)" \
 		"R" "Reverse Date/Time (reverse toposort)" \
 		"N" "None. Simple get from list" \
 		2> $TEMPFILE.input
@@ -983,6 +988,15 @@ do_config()
 		2> $TEMPFILE.input
 	    then
 		ANCESTORS=`cat $TEMPFILE.input`
+
+		if [ "$ANCESTORS" = "A" ]
+		then
+		    # functions don't work with big database
+		    dialog --title " Info " --msgbox \
+"\"automate ancestor\":
+Big database can overflow command line.
+It's save to use internal function (I)." 0 0
+		fi
 	    fi
 	    ;;
 	  C)
@@ -1039,7 +1053,7 @@ Automatic corrected" 0 0
 	    # functions don't work without limit
 	    dialog --title " Info " --msgbox \
 "Certs limit in Select-List:
-negative or zero last not allowed
+negative or zero limit not allowed
 Automatic corrected" 0 0
 	    CERTS_MAX=20
 	fi
@@ -1066,8 +1080,9 @@ then
 fi
 
 # Get monotone version
-MT_MAJOR=`monotone --version | sed -r -e 's/^.+ ([0-9]{1,2})\.([0-9]{1,2}) .+$/\1/'`
-MT_MINOR=`monotone --version | sed -r -e 's/^.+ ([0-9]{1,2})\.([0-9]{1,2}) .+$/\2/'`
+set -- `monotone --version | sed -r -e 's/^.+ ([0-9]{1,2})\.([0-9]{1,2}) .+$/\1 \2/'`
+MT_MAJOR=$1
+MT_MINOR=$2
 
 if [ -z "$MT_MAJOR" -o -z "$MT_MINOR" ]
 then
