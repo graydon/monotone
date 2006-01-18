@@ -3,10 +3,18 @@
 	* po/sv.po: Better translation of "branch".  Inspired from
 	subversion.
 
+2006-01-18  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (begin_transaction): Turn an E() into an I().
+
 2006-01-15  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Almost all translations done.  I've left a few for
 	lack of inspiration.  Someone, PLEASE REVIEW!
+
+2006-01-15  Nathaniel Smith  <njs@pobox.com>
+
+	* AUTHORS: Add Richard as a translator.
 
 2006-01-15  Nathaniel Smith  <njs@pobox.com>
 
@@ -47,17 +55,6 @@
 
 	* ui.cc: make tickers saner (203 K vs 0.2 M). 
 	Print full byte counts below 1 K.
-
-2006-01-15  Matt Johnston  <matt@ucc.asn.au>
-
-	* ui.cc: make tickers saner (203 K vs 0.2 M). 
-	Print full byte counts below 1 K.
-
-2006-01-15  Nathaniel Smith  <njs@pobox.com>
-
-	* cert.cc (load_key_pair): 
-	* keys.cc (require_password): Use accessor method, so as to
-	actually compile...
 
 2006-01-14  Nathaniel Smith  <njs@pobox.com>
 
