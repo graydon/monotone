@@ -922,15 +922,13 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
 }
 
-// we could as well use the fact that uuencoded gzip starts with H4sI
-// but we can not change comments on fields
+// I wish I had a form of ALTER TABLE COMMENT on sqlite3
 static bool
 migrate_files_BLOB(sqlite3 * sql,
                                     char ** errmsg,
                                     app_state *app)
 {
   int res;
-//  app->db.install_functions(app);
   I(sqlite3_create_function(sql, "unbase64", -1, 
                            SQLITE_UTF8, NULL,
                            &sqlite3_unbase64_fn, 
@@ -994,20 +992,20 @@ migrate_files_BLOB(sqlite3 * sql,
     return false;
 
   // migrate other contents which are accessed by get|put_version
-  res = logged_sqlite3_exec(sql, "UPDATE manifests SET data=unbase64(data) "
-              "WHERE data like 'H4sI%'", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(sql, "UPDATE manifests SET data=unbase64(data)", 
+                            NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
   res = logged_sqlite3_exec(sql, "UPDATE manifest_deltas "
-      "SET delta=unbase64(delta) WHERE delta like 'H4sI%'", NULL, NULL, errmsg);
+                            "SET delta=unbase64(delta)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  res = logged_sqlite3_exec(sql, "UPDATE rosters SET data=unbase64(data) "
-              "WHERE data like 'H4sI%'", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(sql, "UPDATE rosters SET data=unbase64(data) ",
+                            NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
   res = logged_sqlite3_exec(sql, "UPDATE roster_deltas "
-      "SET delta=unbase64(delta) WHERE delta like 'H4sI%'", NULL, NULL, errmsg);
+                            "SET delta=unbase64(delta)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -1016,21 +1014,21 @@ migrate_files_BLOB(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
   res = logged_sqlite3_exec(sql, "UPDATE public_keys "
-      "SET keydata=unbase64(keydata) WHERE length(keydata)>160", NULL, NULL, errmsg);
+      "SET keydata=unbase64(keydata)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
   res = logged_sqlite3_exec(sql, "UPDATE revision_certs "
-      "SET value=unbase64(value),signature=unbase64(signature) "
-      "WHERE length(signature)>128", NULL, NULL, errmsg);
+      "SET value=unbase64(value),signature=unbase64(signature)",
+      NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
   res = logged_sqlite3_exec(sql, "UPDATE manifest_certs "
-      "SET value=unbase64(value),signature=unbase64(signature) "
-      "WHERE length(signature)>128", NULL, NULL, errmsg);
+      "SET value=unbase64(value),signature=unbase64(signature) ",
+      NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
   res = logged_sqlite3_exec(sql, "UPDATE revisions "
-      "SET data=unbase64(data) WHERE data like 'H4sI%'", NULL, NULL, errmsg);
+      "SET data=unbase64(data)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
   res = logged_sqlite3_exec(sql, "UPDATE branch_epochs "
