@@ -666,7 +666,9 @@ database::begin_transaction(bool exclusive)
     }
   else
     {
-      E(!exclusive || transaction_exclusive, F("Attempt to start exclusive transaction within non-exclusive transaction."));
+      // You can't start an exclusive transaction within a non-exclusive
+      // transaction
+      I(!exclusive || transaction_exclusive);
     }
   transaction_level++;
 }
