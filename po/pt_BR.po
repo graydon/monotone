@@ -1160,7 +1160,7 @@ msgstr "dígitos não-hexadecimais no id parcial"
 
 #: commands.cc:3232
 msgid "revert file(s), dir(s) or entire working copy (\".\")"
-msgstr ""
+msgstr "reverte arquivo(s), diretório(s) ou a cópia de trabalho inteira (\".\")"
 
 #: commands.cc:3309
 #, c-format
@@ -1170,11 +1170,11 @@ msgstr "revertendo %s"
 #: commands.cc:3313
 #, c-format
 msgid "no file version %s found in database for %s"
-msgstr ""
+msgstr "nenhuma versão %s do arquivo achada no banco de dados para %s"
 
 #: commands.cc:3334
 msgid "RCSFILE..."
-msgstr ""
+msgstr "ARQUIVO-RCS"
 
 #: commands.cc:3335
 msgid ""
@@ -1182,63 +1182,68 @@ msgid ""
 "this command doesn't reconstruct or import revisions.you probably want "
 "cvs_import"
 msgstr ""
+"identifica versões em arquivos RCS\n"
+"este comando não reconstrui ou importa versões. Você provavelmente quer "
+"cvs_import"
 
 #: commands.cc:3351
 msgid "rcs"
-msgstr ""
+msgstr "rcs"
 
 #: commands.cc:3351
 msgid "CVSROOT"
-msgstr ""
+msgstr "CVSROOT"
 
 #: commands.cc:3351
 msgid "import all versions in CVS repository"
-msgstr ""
+msgstr "importa todas as versões do repositório CVS"
 
 #: commands.cc:3414
 msgid "PATH"
-msgstr ""
+msgstr "CAMINHO"
 
 #: commands.cc:3415
 msgid "print annotated copy of the file from REVISION"
-msgstr ""
+msgstr "imprime cópia anotada do arquivo da VERSÃO"
 
 #: commands.cc:3437
 #, c-format
 msgid "no revision for file '%s' in database"
-msgstr ""
+msgstr "nenhuma versão '%s' do arquivo em banco de dados"
 
 #: commands.cc:3455
 msgid "[FILE] ..."
-msgstr ""
+msgstr "[ARQUIVO] ..."
 
 #: commands.cc:3456
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
 msgstr ""
+"imprime histórico em ordem inversa (filtrado por 'ARQUIVO'). Se uma ou\n"
+"mais versões forem dadas, usa-as como ponto de partida."
 
 #: commands.cc:3503
 #, c-format
 msgid "Unknown file '%s' for log command"
-msgstr ""
+msgstr "Arquivo '%s' desconhecido para comando log"
 
 #: commands.cc:3666
 msgid "DIRECTORY"
-msgstr ""
+msgstr "DIRETÓRIO"
 
 #: commands.cc:3666
 msgid "setup a new working copy directory"
-msgstr ""
+msgstr "configura um novo diretório de cópia de trabalho"
 
 #: commands.cc:3672
 #, c-format
 msgid "need --branch argument for setup"
-msgstr ""
+msgstr "argumento --branch é necessário para configuração"
 
 #: commands.cc:3681
 msgid "automation"
-msgstr ""
+msgstr "automação"
 
 #: commands.cc:3682
 msgid ""
@@ -1263,82 +1268,103 @@ msgid ""
 "get_revision [REVID]\n"
 "keys\n"
 msgstr ""
+"interface_version\n"
+"heads [RAMO]\n"
+"ancestors VER1 [VER2 [VER3 [...]]]\n"
+"attributes [FILE]\n"
+"parents VERSÃO\n"
+"descendents VER1 [VER2 [VER3 [...]]]\n"
+"children VERSÃO\n"
+"graph\n"
+"erase_ancestors [VER1 [VER2 [VER3 [...]]]]\n"
+"toposort [VER1 [VER2 [VER3 [...]]]]\n"
+"ancestry_difference NOVA-VER [VELHA-VER1 [VELHA-VER2 [...]]]\n"
+"leaves\n"
+"inventory\n"
+"stdio\n"
+"certs VERSÃO\n"
+"select SELETOR\n"
+"get_file ID-ARQUIVO\n"
+"get_manifest_of [VERSÃO]\n"
+"get_revision [VERSÃO]\n"
+"keys\n"
 
 #: commands.cc:3702
 msgid "automation interface"
-msgstr ""
+msgstr "interface de automação"
 
 #: commands.cc:3716 commands.cc:3732
 msgid "vars"
-msgstr ""
+msgstr "variáveis"
 
 #: commands.cc:3716
 msgid "DOMAIN NAME VALUE"
-msgstr ""
+msgstr "DOMÍNIO NOME VALOR"
 
 #: commands.cc:3717
 msgid "set the database variable NAME to VALUE, in domain DOMAIN"
 msgstr ""
+"configura a variável do banco de dados NOME para VALOR, no domínio DOMÍNIO"
 
 #: commands.cc:3732
 msgid "DOMAIN NAME"
-msgstr ""
+msgstr "DOMÍNIO NOME"
 
 #: commands.cc:3733
 msgid "remove the database variable NAME in domain DOMAIN"
-msgstr ""
+msgstr "remove a variável do banco de dados NOME no domínio DOMAIN"
 
 #: commands.cc:3744
 #, c-format
 msgid "no var with name %s in domain %s"
-msgstr ""
+msgstr "nenhuma variável com nome %s no domínio %s"
 
 #: commands.cc:3748
 msgid "REVID"
-msgstr "ID-VERSÂO"
+msgstr "VERSÂO"
 
 #: commands.cc:3749
 msgid "dump the roster associated with the given REVID"
-msgstr ""
+msgstr "exibe conteúdo do roster associado com VERSÃO"
 
 #: database_check.cc:125
 msgid "files"
-msgstr ""
+msgstr "arquivos"
 
 #: database_check.cc:154
 msgid "rosters"
-msgstr ""
+msgstr "rosters"
 
 #: database_check.cc:221
 msgid "markings"
-msgstr ""
+msgstr "marcas"
 
 #: database_check.cc:319 database_check.cc:507 netsync.cc:2693
 #: rcs_import.cc:1226
 msgid "revisions"
-msgstr ""
+msgstr "versões"
 
 #: database_check.cc:418
 msgid "ancestry"
-msgstr ""
+msgstr "descendência"
 
 #: database_check.cc:451 netsync.cc:2697
 msgid "keys"
-msgstr ""
+msgstr "chaves"
 
 #: database_check.cc:477 netsync.cc:2695
 msgid "certs"
-msgstr ""
+msgstr "certificados"
 
 #: database_check.cc:543
 #, c-format
 msgid "file %s missing (%d manifest references)\n"
-msgstr ""
+msgstr "arquivo %s faltando (%d referências no manifesto)\n"
 
 #: database_check.cc:550
 #, c-format
 msgid "file %s unreferenced\n"
-msgstr ""
+msgstr "arquivo %s não referenciado\n"
 
 #: database_check.cc:571
 #, c-format
