@@ -20,6 +20,7 @@
 #include "botan/botan.h"
 #include "app_state.hh"
 #include "keys.hh"
+#include "transforms.hh"
 
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
@@ -907,10 +908,6 @@ migrate_client_to_add_rosters(sqlite3 * sql,
 
   return true;
 }
-
-// I hate to duplicate this from database.cc but install_functions is private
-// and gets called too late
-#include <transforms.hh>
 
 static void 
 sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)

@@ -328,17 +328,19 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
   *(dump->out) << vals[2] << ";\n";
   dump->table_name = string(vals[0]);
   string query = "SELECT * FROM " + string(vals[0]);
-  sqlite3_stmt *stmt=0;
+  sqlite3_stmt *stmt = 0;
   sqlite3_prepare(dump->sql, query.c_str(), -1, &stmt, NULL);
   assert_sqlite3_ok(dump->sql);
 
-  int stepresult=SQLITE_DONE;
+  int stepresult = SQLITE_DONE;
   do
-  { stepresult=sqlite3_step(stmt);
-    I(stepresult==SQLITE_DONE || stepresult==SQLITE_ROW);
-    if (stepresult==SQLITE_ROW) 
-      dump_row_cb(dump, stmt);
-  } while (stepresult==SQLITE_ROW);
+    {
+      stepresult = sqlite3_step(stmt);
+      I(stepresult == SQLITE_DONE || stepresult == SQLITE_ROW);
+      if (stepresult == SQLITE_ROW) 
+        dump_row_cb(dump, stmt);
+    }
+  while (stepresult == SQLITE_ROW);
 
   sqlite3_finalize(stmt);
   assert_sqlite3_ok(dump->sql);
@@ -561,7 +563,7 @@ database::execute(char const * query, ...)
 }
 
 void
-database::execute(std::string const& query, std::vector<queryarg> const& args)
+database::execute(std::string const& query, std::vector<queryarg> const & args)
 { 
   results res;
   fetch(res, 0, 0, query, args);
@@ -608,7 +610,6 @@ database::prepare(char const * query,
   return i->second;
 }
 
-// we need a vector<string> variant for binary transparency
 void 
 database::fetch(results & res, 
                 int const want_cols, 
@@ -619,7 +620,7 @@ database::fetch(results & res,
   res.clear();
   res.resize(0);
 
-  statement &stmt = prepare(query, want_cols);
+  statement & stmt = prepare(query, want_cols);
   // bind parameters for this execution
 
   int params = sqlite3_bind_parameter_count(stmt.stmt());
@@ -648,6 +649,52 @@ database::fetch(results & res,
     }
     
   fetch(stmt, res, want_rows, query);
+}
+
+// we need a vector<string> variant for binary transparency
+void 
+database::fetch(results & res, 
+                int const want_cols, 
+                int const want_rows, 
+                std::string const & query, 
+                std::vector<queryarg> const & args)
+{
+  res.clear();
+  res.resize(0);
+
+  statement &stmt = prepare(query.c_str(), want_cols);
+
+  // bind parameters for this execution
+
+  int params = sqlite3_bind_parameter_count(stmt.stmt());
+  
+  I(args.size() == size_t(params));
+
+  // profiling finds this logging to be quite expensive
+  if (global_sanity.debug)
+    L(FL("binding %d parameters for %s\n") % params % query);
+
+  for (int param = 1; param <= params; param++)
+    {
+      // profiling finds this logging to be quite expensive
+      if (global_sanity.debug)
+        {
+          string log = args[param-1];
+          if (log.size() > constants::log_line_sz)
+            log = log.substr(0, constants::log_line_sz);
+          L(FL("binding %d with value '%s'\n") % param % log);
+        }
+
+      // we can use SQLITE_STATIC since the array is destructed after
+      // fetching the parameters (and sqlite3_reset)
+      if (args[param-1].binary)
+        sqlite3_bind_blob(stmt.stmt(), param, args[param-1].data(), args[param-1].size(), SQLITE_STATIC);
+      else
+        sqlite3_bind_text(stmt.stmt(), param, args[param-1].c_str(), -1, SQLITE_STATIC);
+      assert_sqlite3_ok(sql());
+    }
+    
+  fetch(stmt, res, want_rows, query.c_str());
 }
 
 void 
@@ -689,47 +736,6 @@ database::fetch(statement & stmt,
 
   E(want_rows == any_rows || want_rows == nrow,
     F("wanted %d rows got %s in query: %s\n") % want_rows % nrow % query);
-}
-
-void 
-database::fetch(results & res, 
-                int const want_cols, 
-                int const want_rows, 
-                std::string const& query, 
-                std::vector<queryarg> const& args)
-{
-  res.clear();
-  res.resize(0);
-
-  statement &stmt = prepare(query.c_str(), want_cols);
-
-  // bind parameters for this execution
-
-  int params = sqlite3_bind_parameter_count(stmt.stmt());
-  
-  I(args.size()==size_t(params));
-
-  L(FL("binding %d parameters for %s\n") % params % query);
-
-  for (int param = 1; param <= params; param++)
-    {
-      string log = args[param-1];
-
-      if (log.size() > constants::log_line_sz)
-        log = log.substr(0, constants::log_line_sz);
-
-      L(FL("binding %d with value '%s'\n") % param % log);
-
-      // we can use SQLITE_STATIC since the array is destructed after
-      // fetching the parameters (and sqlite3_reset)
-      if (args[param-1].binary)
-        sqlite3_bind_blob(stmt.stmt(), param, args[param-1].data(), args[param-1].size(), SQLITE_STATIC);
-      else
-        sqlite3_bind_text(stmt.stmt(), param, args[param-1].c_str(), -1, SQLITE_STATIC);
-      assert_sqlite3_ok(sql());
-    }
-    
-  fetch(stmt, res, want_rows, query.c_str());
 }
 
 // general application-level logic
@@ -888,8 +894,8 @@ database::put(hexenc<id> const & ident,
   string insert = "INSERT INTO " + table + " VALUES(?, ?)";
   std::vector<queryarg> args;
   args.push_back(ident());
-  args.push_back(queryarg(dat_packed(),true));
-  execute(insert,args);
+  args.push_back(queryarg(dat_packed(), true));
+  execute(insert, args);
 }
 void 
 database::put_delta(hexenc<id> const & ident,
@@ -907,7 +913,7 @@ database::put_delta(hexenc<id> const & ident,
   std::vector<queryarg> args;
   args.push_back(ident());
   args.push_back(base());
-  args.push_back(queryarg(del_packed(),true));
+  args.push_back(queryarg(del_packed(), true));
   string insert = "INSERT INTO "+table+" VALUES(?, ?, ?)";
   execute(insert, args);
 }
@@ -1564,7 +1570,7 @@ database::put_revision(revision_id const & new_id,
   args.push_back(new_id.inner()());
   gzip<data> d_packed;
   encode_gzip(d.inner(), d_packed);
-  args.push_back(queryarg(d_packed(),true));
+  args.push_back(queryarg(d_packed(), true));
   execute(std::string("INSERT INTO revisions VALUES(?, ?)"), args);
 
   for (edge_map::const_iterator e = rev.edges.begin();
@@ -1660,7 +1666,7 @@ database::delete_branch_named(cert_value const & branch)
   L(FL("Deleting all references to branch %s\n") % branch);
   
   std::vector<queryarg> args;
-  args.push_back(queryarg(branch(),true));
+  args.push_back(queryarg(branch(), true));
   execute(std::string("DELETE FROM revision_certs WHERE name='branch' AND value =?"), args);
   execute(std::string("DELETE FROM branch_epochs WHERE branch=?"), args);
 }
@@ -1671,7 +1677,7 @@ database::delete_tag_named(cert_value const & tag)
 {
   L(FL("Deleting all references to tag %s\n") % tag);
   std::vector<queryarg> args;
-  args.push_back(queryarg(tag(),true));
+  args.push_back(queryarg(tag(), true));
   execute(std::string("DELETE FROM revision_certs WHERE name='tag' AND value =?"), args);
 }
 
@@ -1777,7 +1783,7 @@ database::put_key(rsa_keypair_id const & pub_id,
   std::vector<queryarg> args;
   args.push_back(thash());
   args.push_back(pub_id());
-  args.push_back(queryarg(pub_key(),true));
+  args.push_back(queryarg(pub_key(), true));
   execute(std::string("INSERT INTO public_keys VALUES(?, ?, ?)"), args);
 }
 
@@ -1806,11 +1812,11 @@ database::cert_exists(cert const & t,
   args.push_back(t.name());
   cert_value value;
   decode_base64(t.value, value);
-  args.push_back(queryarg(value(),true));
+  args.push_back(queryarg(value(), true));
   args.push_back(t.key());
   rsa_sha1_signature sig;
   decode_base64(t.sig, sig);
-  args.push_back(queryarg(sig(),true));
+  args.push_back(queryarg(sig(), true));
   
   fetch(res, 1, any_rows, query, args);
   I(res.size() == 0 || res.size() == 1);
@@ -1829,11 +1835,11 @@ database::put_cert(cert const & t,
   args.push_back(t.name());
   cert_value value;
   decode_base64(t.value, value);
-  args.push_back(queryarg(value(),true));
+  args.push_back(queryarg(value(), true));
   args.push_back(t.key());
   rsa_sha1_signature sig;
   decode_base64(t.sig, sig);
-  args.push_back(queryarg(sig(),true));
+  args.push_back(queryarg(sig(), true));
 
   string insert = "INSERT INTO " + table + " VALUES(?, ?, ?, ?, ?, ?)";
   execute(insert, args);
@@ -1966,7 +1972,7 @@ database::get_certs(cert_name const & name,
   args.push_back(name());
   cert_value binvalue;
   decode_base64(val, binvalue);
-  args.push_back(queryarg(binvalue(),true));
+  args.push_back(queryarg(binvalue(), true));
   fetch(res, 5, any_rows, query, args);
   results_to_certs(res, certs);
 }
@@ -1989,7 +1995,7 @@ database::get_certs(hexenc<id> const & ident,
   args.push_back(name());
   cert_value binvalue;
   decode_base64(value, binvalue);
-  args.push_back(queryarg(binvalue(),true));
+  args.push_back(queryarg(binvalue(), true));
   fetch(res, 5, any_rows, query, args);
   results_to_certs(res, certs);
 }
@@ -2513,7 +2519,7 @@ database::set_epoch(cert_value const & branch, epoch_data const & epo)
   I(epo.inner()().size() == constants::epochlen);
   std::vector<queryarg> args;
   args.push_back(eid.inner()());
-  args.push_back(queryarg(branch(),true));
+  args.push_back(queryarg(branch(), true));
   args.push_back(epo.inner()());
   execute(std::string("INSERT OR REPLACE INTO branch_epochs VALUES(?, ?, ?)"), args);
 }
@@ -2522,7 +2528,7 @@ void
 database::clear_epoch(cert_value const & branch)
 {
   std::vector<queryarg> args;
-  args.push_back(queryarg(branch(),true));
+  args.push_back(queryarg(branch(), true));
   execute(std::string("DELETE FROM branch_epochs WHERE branch = ?"), args);
 }
 
@@ -2570,8 +2576,8 @@ database::set_var(var_key const & key, var_value const & value)
 {
   std::vector<queryarg> args;
   args.push_back(key.first());
-  args.push_back(queryarg(key.second(),true));
-  args.push_back(queryarg(value(),true));
+  args.push_back(queryarg(key.second(), true));
+  args.push_back(queryarg(value(), true));
   execute(std::string("INSERT OR REPLACE INTO db_vars VALUES(?, ?, ?)"), args);
 }
 
@@ -2580,7 +2586,7 @@ database::clear_var(var_key const & key)
 {
   std::vector<queryarg> args;
   args.push_back(key.first());
-  args.push_back(queryarg(key.second(),true));
+  args.push_back(queryarg(key.second(), true));
   execute(std::string("DELETE FROM db_vars WHERE domain = ? AND name = ?"), args);
 }
 

@@ -103,9 +103,9 @@ class database
   // so we need to remember which type to pass to the query
   struct queryarg : public std::string
   {
-    bool binary;
-    queryarg(std::string const& s=std::string(), bool b=false)
-      : std::string(s), binary(b) {}
+    bool blob;
+    queryarg(std::string const & s = std::string(), bool blob = false)
+      : std::string(s), blob(blob) {}
   };
   
   void execute(std::string const& query, std::vector<queryarg> const& args);
