@@ -1,3 +1,8 @@
+2006-01-18  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Better translation of "branch".  Inspired from
+	subversion.
+
 2006-01-15  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Almost all translations done.  I've left a few for

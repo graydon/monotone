@@ -126,18 +126,18 @@ msgstr ""
 #: cert.cc:444
 #, c-format
 msgid "no branch found for empty revision, please provide a branch name"
-msgstr "ingen gren funnen för tom revision, var god ange en gren"
+msgstr "ingen förgrening funnen för tom revision, var god ange en förgrening"
 
 #: cert.cc:453
 #, c-format
 msgid "no branch certs found for revision %s, please provide a branch name"
-msgstr "inget gren-cert funnet för revision %s, var god ange en gren"
+msgstr "inget förgreningscert funnet för revision %s, var god ange en förgrening"
 
 #: cert.cc:457
 #, c-format
 msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
-msgstr "flera gren-cert funna för revision %s, var god ange en gren"
+msgstr "flera förgreningscert funna för revision %s, var god ange en förgrening"
 
 #: commands.cc:159
 #, c-format
@@ -194,7 +194,7 @@ msgid ""
 "branch '%s' has multiple heads\n"
 "perhaps consider 'monotone merge'"
 msgstr ""
-"grenen '%s' har mer än ett löv\n"
+"förgreningen '%s' har mer än ett löv\n"
 "kanske borde du fundera på 'monotone merge'"
 
 #: commands.cc:480 commands.cc:736 commands.cc:1375 commands.cc:1450
@@ -437,7 +437,7 @@ msgstr "godkänn en specifik revision"
 #: commands.cc:1084
 #, c-format
 msgid "need --branch argument for approval"
-msgstr "för att kunna godkänna behöver en gren anges med --branch"
+msgstr "för att kunna godkänna behöver en förgrening anges med --branch"
 
 #: commands.cc:1090
 msgid "disapprove of a particular revision"
@@ -451,7 +451,7 @@ msgstr "revisionen '%s' har %d ändringsmängder, kan inte underkänna\n"
 #: commands.cc:1107
 #, c-format
 msgid "need --branch argument for disapproval"
-msgstr "för att kunna underkänna behöver en gren anges med --branch"
+msgstr "för att kunna underkänna behöver en förgrening anges med --branch"
 
 #: commands.cc:1140
 msgid "REVISION [COMMENT]"
@@ -575,14 +575,14 @@ msgid ""
 "If no directory is given, the branch name will be used as directory"
 msgstr ""
 "hämta en revision ur databasen till den angivna katalogen.\n"
-"Om en revision anges kommer den att hämtas.  Om ingen revision\n"
-"anges kommer lövet i grenen (implicit eller angiven) att hämtas.\n"
-"Om ingen katalog anges kommer grenens namn att användas som katalognamn"
+"Om en revision anges kommer den att hämtas.  Om ingen revision anges\n"
+"kommer lövet i förgreningen (implicit eller angiven) att hämtas.  Om\n"
+"ingen katalog anges kommer förgreningens namn att användas som katalognamn"
 
 #: commands.cc:1419 commands.cc:1438
 #, c-format
 msgid "need --branch argument for branch-based checkout"
-msgstr "--branch behövs för att kunna hämta en revision med given gren"
+msgstr "--branch behövs för att kunna hämta en revision med given förgrening"
 
 #: commands.cc:1432
 #, c-format
@@ -593,17 +593,17 @@ msgstr "arbetskatalogen '%s' finns redan"
 #: commands.cc:3079
 #, c-format
 msgid "branch '%s' is empty\n"
-msgstr "grenen '%s' är tom\n"
+msgstr "förgreningen '%s' är tom\n"
 
 #: commands.cc:1442
 #, c-format
 msgid "branch %s has multiple heads"
-msgstr "grenen %s har flera löv"
+msgstr "förgreningen %s har flera löv"
 
 #: commands.cc:1468
 #, c-format
 msgid "revision %s is not a member of branch %s\n"
-msgstr "revisionen %s är inte med i grenen %s\n"
+msgstr "revisionen %s är inte med i förgreningen %s\n"
 
 #: commands.cc:1502
 #, c-format
@@ -612,27 +612,27 @@ msgstr "det finns ingen fil %s för %s i databasen"
 
 #: commands.cc:1520
 msgid "show unmerged head revisions of branch"
-msgstr "visa ej hopslagna löv-revisioner i grenen (implicit eller angiven)"
+msgstr "visa ej hopslagna löv-revisioner i förgreningen (implicit eller angiven)"
 
 #: commands.cc:1528 commands.cc:3002
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
-msgstr "var god ange en gren med --branch=GREN"
+msgstr "var god ange en förgrening med --branch=FÖRGRENING"
 
 #: commands.cc:1535
 #, c-format
 msgid "branch '%s' is currently merged:\n"
-msgstr "grenen '%s' består just nu av ett löv:\n"
+msgstr "förgreningen '%s' består just nu av ett löv:\n"
 
 #: commands.cc:1537
 #, c-format
 msgid "branch '%s' is currently unmerged:\n"
-msgstr "grenen '%s' består just nu av mer än ett löv:\n"
+msgstr "förgreningen '%s' består just nu av mer än ett löv:\n"
 
 #: commands.cc:1576
 #, c-format
 msgid "no epoch for branch %s\n"
-msgstr "ingn epoch i grenen %s\n"
+msgstr "ingn epoch i förgreningen %s\n"
 
 #: commands.cc:1733
 msgid ""
@@ -650,7 +650,7 @@ msgstr ""
 "certs ID\n"
 "keys [MÖNSTER]\n"
 "branches\n"
-"epochs [GREN [...]]\n"
+"epochs [FÖRGRENING [...]]\n"
 "tags\n"
 "vars [DOMÄN]\n"
 "known\n"
@@ -760,22 +760,22 @@ msgstr "ingen server given och ingen standardserver är satt"
 #: commands.cc:1984
 #, c-format
 msgid "setting default branch include pattern to '%s'\n"
-msgstr "sätter mönstret standardgrenar att tas med till '%s'\n"
+msgstr "sätter mönstret för förgreningar att automatiskt tas med till '%s'\n"
 
 #: commands.cc:1990
 #, c-format
 msgid "setting default branch exclude pattern to '%s'\n"
-msgstr "sätter mönstret standardgrenar att INTE tas med till '%s'\n"
+msgstr "sätter mönstret för förgreningar att INTE tas med till '%s'\n"
 
 #: commands.cc:1996
 #, c-format
 msgid "no branch pattern given"
-msgstr "inget grenmönster angivet"
+msgstr "inget förgreningsmönster angivet"
 
 #: commands.cc:1998
 #, c-format
 msgid "no branch pattern given and no default pattern set"
-msgstr "inget grenmönster angivet och inget standardmönster satt"
+msgstr "inget förgreningsmönster angivet och inget standardmönster satt"
 
 #: commands.cc:2014 commands.cc:2029 commands.cc:2043 commands.cc:2058
 msgid "network"
@@ -787,11 +787,11 @@ msgstr "[ADRESS[:PORTNUMMER] [MÖNSTER]]"
 
 #: commands.cc:2015
 msgid "push branches matching PATTERN to netsync server at ADDRESS"
-msgstr "skicka grenar som stämmer med MÖNSTER till netsync-server på ADRESS"
+msgstr "skicka förgreningar som stämmer med MÖNSTER till netsync-server på ADRESS"
 
 #: commands.cc:2030
 msgid "pull branches matching PATTERN from netsync server at ADDRESS"
-msgstr "hämta grenar som stämmer med MÖNSTER till netsync-server på ADRESS"
+msgstr "hämta förgreningar som stämmer med MÖNSTER till netsync-server på ADRESS"
 
 #: commands.cc:2037
 #, c-format
@@ -800,7 +800,7 @@ msgstr "hämtar anonymt; använd -kNYCKELNAMN om du behöver autentisera\n"
 
 #: commands.cc:2044
 msgid "sync branches matching PATTERN with netsync server at ADDRESS"
-msgstr "hämta och skicka grenar som stämmer med MÖNSTER till netsync-server på ADRESS"
+msgstr "hämta och skicka förgreningar som stämmer med MÖNSTER till netsync-server på ADRESS"
 
 #: commands.cc:2058
 msgid "PATTERN ..."
@@ -808,7 +808,7 @@ msgstr "MÖNSTER ..."
 
 #: commands.cc:2059
 msgid "serve the branches specified by PATTERNs to connecting clients"
-msgstr "servera de grenar som stämmer med alla MÖNSTER"
+msgstr "servera de förgreningar som stämmer med alla MÖNSTER"
 
 #: commands.cc:2072
 #, c-format
@@ -847,12 +847,12 @@ msgstr ""
 "migrate\n"
 "execute\n"
 "kill_rev_locally ID\n"
-"kill_branch_certs_locally GREN\n"
+"kill_branch_certs_locally FÖRGRENING\n"
 "kill_tag_locally TAG\n"
 "check\n"
 "changesetify\n"
 "rosterify\n"
-"set_epoch GREN EPOCH\n"
+"set_epoch FÖRGRENING EPOCH\n"
 
 #: commands.cc:2099
 msgid "manipulate database state"
@@ -899,7 +899,7 @@ msgstr "inga ändringar att överlämna\n"
 #: commands.cc:2304
 #, c-format
 msgid "beginning commit on branch '%s'\n"
-msgstr "börjar överlämning av ändringar i grenen '%s'\n"
+msgstr "börjar överlämning av ändringar i förgreningen '%s'\n"
 
 #: commands.cc:2313
 #, c-format
@@ -980,7 +980,7 @@ msgstr ""
 "uppdatera arbetskopian.\n"
 "Om en revision anges uppdateras arbetskopian med utgång från den.\n"
 "Om ingen revision anges uppdateras arbetskopian med utgång från\n"
-"grenens (implicit eller angiven) löv."
+"förgreningens (implicit eller angiven) löv."
 
 #: commands.cc:2831
 #, c-format
@@ -996,7 +996,7 @@ msgid ""
 msgstr ""
 "din begäran stämmer inte med ättlingar till nuvarande revision\n"
 "faktum är att det inte ens stämmer med nuvarande revision\n"
-"du kanske vill ange --revision=<revision i annan gren>"
+"du kanske vill ange --revision=<revision i annan förgrening>"
 
 #: commands.cc:2843
 #, c-format
@@ -1029,7 +1029,7 @@ msgid ""
 "revision %s is not a member of branch %s\n"
 "try again with explicit --branch\n"
 msgstr ""
-"revisionen %s är inte i grenen %s\n"
+"revisionen %s är inte i förgreningen %s\n"
 "försök igen med en explicit --branch\n"
 
 #: commands.cc:2906
@@ -1044,12 +1044,12 @@ msgstr "uppdaterad till revisionen %s\n"
 
 #: commands.cc:2993
 msgid "merge unmerged heads of branch"
-msgstr "slå ihop ej ihopslagna löv i grenen"
+msgstr "slå ihop ej ihopslagna löv i förgreningen"
 
 #: commands.cc:3007
 #, c-format
 msgid "branch '%s' is merged\n"
-msgstr "löven i grenen '%s' är ihopslagna\n"
+msgstr "löven i förgreningen '%s' är ihopslagna\n"
 
 #: commands.cc:3013
 #, c-format
@@ -1079,16 +1079,16 @@ msgstr "notera: dina arbetskopior har inte uppdaterats\n"
 
 #: commands.cc:3042
 msgid "SOURCE-BRANCH DEST-BRANCH"
-msgstr "KÄLL-GREN MÅL-GREN"
+msgstr "KÄLL-FÖRGRENING MÅL-FÖRGRENING"
 
 #: commands.cc:3043
 msgid "merge from one branch to another asymmetrically"
-msgstr "slå ihop asymmetriskt från en gren till en annan"
+msgstr "slå ihop asymmetriskt från en förgrening till en annan"
 
 #: commands.cc:3077 commands.cc:3080
 #, c-format
 msgid "branch '%s' is not merged\n"
-msgstr "löven i grenen '%s' är inte hopslagna\n"
+msgstr "löven i förgreningen '%s' är inte hopslagna\n"
 
 #: commands.cc:3085
 #, c-format
@@ -1103,7 +1103,7 @@ msgstr "[mål]       %s\n"
 #: commands.cc:3092
 #, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'\n"
-msgstr "grenen '%s' är uppdaterad med avseende på grenen '%s'\n"
+msgstr "förgreningen '%s' är uppdaterad med avseende på förgreningen '%s'\n"
 
 #: commands.cc:3094
 #, c-format
@@ -1113,7 +1113,7 @@ msgstr "inget utfördes\n"
 #: commands.cc:3098
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'\n"
-msgstr "ingen hopslagning behövs; sätter %s i grenen '%s'\n"
+msgstr "ingen hopslagning behövs; sätter %s i förgreningen '%s'\n"
 
 #: commands.cc:3131
 msgid "refresh the inodeprint cache"
@@ -1121,11 +1121,11 @@ msgstr "uppdatera inodeprint-cachen"
 
 #: commands.cc:3139
 msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
-msgstr "VÄNSTER-REVISION HÖGER-REVISION MÅL-GREN"
+msgstr "VÄNSTER-REVISION HÖGER-REVISION MÅL-FÖRGRENING"
 
 #: commands.cc:3140
 msgid "merge two explicitly given revisions, placing result in given branch"
-msgstr "slå ihop två explicit angivna revisioner, placera resultatet i angiven gren"
+msgstr "slå ihop två explicit angivna revisioner, placera resultatet i angiven förgrening"
 
 #: commands.cc:3154
 #, c-format
@@ -1232,7 +1232,7 @@ msgstr "skapar en ny arbetskatalog"
 #: commands.cc:3672
 #, c-format
 msgid "need --branch argument for setup"
-msgstr "du måste ange en gren med --branch för setup"
+msgstr "du måste ange en förgrening med --branch för setup"
 
 #: commands.cc:3681
 msgid "automation"
@@ -1262,7 +1262,7 @@ msgid ""
 "keys\n"
 msgstr ""
 "interface_version\n"
-"heads [GREN]\n"
+"heads [FÖRGRENING]\n"
 "ancestors REV1 [REV2 [REV3 [...]]]\n"
 "attributes [FIL]\n"
 "parents REV\n"
@@ -2043,7 +2043,7 @@ msgstr "nodens checksumma %s stämmer inte, %s förväntad"
 
 #: monotone.cc:51
 msgid "select branch cert for operation"
-msgstr "ange den gren som operationen ska utföras i"
+msgstr "ange den förgrening som operationen ska utföras i"
 
 #: monotone.cc:52
 msgid "select revision id for operation"
@@ -2405,12 +2405,12 @@ msgstr "avslår försök att koppla upp anonymt under körning som \"sink\"\n"
 #: netsync.cc:1323
 #, c-format
 msgid "anonymous access to branch '%s' denied by server"
-msgstr "anonym åtkomst av grenen '%s' avslogs av servern"
+msgstr "anonym åtkomst av förgreningen '%s' avslogs av servern"
 
 #: netsync.cc:1328
 #, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'\n"
-msgstr "tillåter anonym läsning av alla grenar som matchar '%s' och inte '%s'\n"
+msgstr "tillåter anonym läsning av alla förgreningar som matchar '%s' och inte '%s'\n"
 
 #: netsync.cc:1360
 #, c-format
@@ -2427,40 +2427,40 @@ msgstr "publik nyckel med checksumman '%s' som kommer från andra sidan är okä
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' while running as pure "
 "sink\n"
-msgstr "avslår läsning för '%s' av alla grenar som matchar '%s' och inte '%s' under körning som \"pure sink\"\n"
+msgstr "avslår läsning för '%s' av alla förgreningar som matchar '%s' och inte '%s' under körning som \"pure sink\"\n"
 
 #: netsync.cc:1415
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'\n"
-msgstr "avslår läsning för '%s' av alla grenar som matchar '%s' och inte '%s' på grund av grenen '%s'\n"
+msgstr "avslår läsning för '%s' av alla förgreningar som matchar '%s' och inte '%s' på grund av förgreningen '%s'\n"
 
 #: netsync.cc:1417
 #, c-format
 msgid "access to branch '%s' denied by server"
-msgstr "access till grenen '%s' nekades av servern"
+msgstr "access till förgreningen '%s' nekades av servern"
 
 #: netsync.cc:1425
 #, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'\n"
-msgstr "tillåter läsning för '%s' av alla grenar som matchar '%s' och inte '%s'\n"
+msgstr "tillåter läsning för '%s' av alla förgreningar som matchar '%s' och inte '%s'\n"
 
 #: netsync.cc:1434
 #, c-format
 msgid ""
 "denied '%s' write permission for '%s' excluding '%s' while running as pure "
 "source\n"
-msgstr "avslår skrivning för '%s' av alla grenar som matchar '%s' och inte '%s' under körning som \"pure source\"\n"
+msgstr "avslår skrivning för '%s' av alla förgreningar som matchar '%s' och inte '%s' under körning som \"pure source\"\n"
 
 #: netsync.cc:1442
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'\n"
-msgstr "avslår skrivning för '%s' av alla grenar som matchar '%s' och inte '%s'\n"
+msgstr "avslår skrivning för '%s' av alla förgreningar som matchar '%s' och inte '%s'\n"
 
 #: netsync.cc:1448
 #, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'\n"
-msgstr "tillåter skrivning för '%s' av alla grenar som matchar '%s' och inte '%s'\n"
+msgstr "tillåter skrivning för '%s' av alla förgreningar som matchar '%s' och inte '%s'\n"
 
 #: netsync.cc:1488
 #, c-format
@@ -2505,7 +2505,7 @@ msgstr "certet '%s' finns inte i databasen"
 #: netsync.cc:1802
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
-msgstr "I grenen %s har servern epoch '%s', klienten har '%s', som inte stämmer med varandra."
+msgstr "I förgreningen %s har servern epoch '%s', klienten har '%s', som inte stämmer med varandra."
 
 #: netsync.cc:1823
 #, c-format
@@ -2778,7 +2778,7 @@ msgstr ""
 #: rcs_import.cc:1204
 #, c-format
 msgid "need base --branch argument for importing"
-msgstr "behöver en gren angiven med --branch att importera till"
+msgstr "behöver en förgrening angiven med --branch att importera till"
 
 #: rcs_import.cc:1216
 #, c-format
@@ -3033,7 +3033,7 @@ msgstr "misslyckades med att tolka det booelska testresultatets värdet '%s'\n"
 #: update.cc:159
 #, c-format
 msgid "cannot determine branch for update"
-msgstr "kan inte bestämma grenen för uppdatering"
+msgstr "kan inte bestämma förgreningen för uppdatering"
 
 #: vocab.cc:68
 #, c-format
