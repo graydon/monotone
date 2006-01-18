@@ -130,32 +130,6 @@ sqlite3_column_text_s(sqlite3_stmt *stmt, int col)
   return (const char *)(sqlite3_column_text(stmt, col));
 }
 
-static void 
-sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
-{
-  if (nargs != 1)
-    {
-      sqlite3_result_error(f, "need exactly 1 arg to unbase64()", -1);
-      return;
-    }
-  data decoded;
-  decode_base64(base64<data>(string(sqlite3_value_text_s(args[0]))), decoded);
-  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
-}
-
-static void
-sqlite3_unpack_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
-{
-  if (nargs != 1)
-    {
-      sqlite3_result_error(f, "need exactly 1 arg to unpack()", -1);
-      return;
-    }
-  data unpacked;
-  unpack(base64< gzip<data> >(string(sqlite3_value_text_s(args[0]))), unpacked);
-  sqlite3_result_blob(f, unpacked().c_str(), unpacked().size(), SQLITE_TRANSIENT);
-}
-
 void
 database::set_app(app_state * app)
 {
@@ -1872,14 +1846,6 @@ void
 database::install_functions(app_state * app)
 {
   // register any functions we're going to use
-  I(sqlite3_create_function(sql(), "unbase64", -1, 
-                           SQLITE_UTF8, NULL,
-                           &sqlite3_unbase64_fn, 
-                           NULL, NULL) == 0);
-  I(sqlite3_create_function(sql(), "unpack", -1, 
-                           SQLITE_UTF8, NULL,
-                           &sqlite3_unpack_fn, 
-                           NULL, NULL) == 0);
 }
 
 void
