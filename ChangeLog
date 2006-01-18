@@ -1,3 +1,17 @@
+2006-01-18  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac: s/TRY_RUN/TRY_COMPILE/ a few places, for general
+	cleanliness.
+
+2006-01-18  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Better translation of "branch".  Inspired from
+	subversion.
+
+2006-01-18  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (begin_transaction): Turn an E() into an I().
+
 2006-01-15  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Almost all translations done.  I've left a few for

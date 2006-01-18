@@ -287,7 +287,7 @@ fi
 
 AC_CACHE_CHECK([if this is Windows],
        ac_win32, [
-       AC_TRY_RUN([
+       AC_TRY_COMPILE([
 #ifdef WIN32
 #include <windows.h>
 int main(void)
@@ -319,7 +319,7 @@ AC_CACHE_CHECK([presence of IPv6],
       ac_inet6=no
       if test x"${enable_ipv6}" = x"auto" || test x"${enable_ipv6}" = x"yes"
       then
-         AC_TRY_RUN([
+         AC_TRY_COMPILE([
 #if defined(WIN32)
 # include <winsock2.h>
 #else

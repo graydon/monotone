@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone 0.26\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-01-15 15:46-0300\n"
-"PO-Revision-Date: 2005-11-30 13:45-0200\n"
+"POT-Creation-Date: 2006-01-18 09:41-0200\n"
+"PO-Revision-Date: 2006-01-18 13:45-0200\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
 "MIME-Version: 1.0\n"
@@ -97,8 +97,8 @@ msgstr ""
 #, c-format
 msgid "trust function disliked %d signers of %s cert on revision %s\n"
 msgstr ""
-"função de confiança rejeitou %d assinantes do certificado %s sobre "
-"a revisão %s\n"
+"função de confiança rejeitou %d assinantes do certificado %s sobre a revisão "
+"%s\n"
 
 #: cert.cc:271
 #, c-format
@@ -126,30 +126,30 @@ msgid ""
 "pick one to use for signatures by adding '-k<keyname>' to your command"
 msgstr ""
 "você tem várias chaves privadas\n"
-"escolha uma para usar na assinatura adicionando '-k<nomedachave>' ao "
-"seu comando"
+"escolha uma para usar na assinatura adicionando '-k<nomedachave>' ao seu "
+"comando"
 
 #: cert.cc:444
 #, c-format
 msgid "no branch found for empty revision, please provide a branch name"
 msgstr ""
-"nenhum ramo encontrado para revisão vazia, por favor "
-"forneça o nome de um ramo"
+"nenhum ramo encontrado para revisão vazia, por favor forneça o nome de um "
+"ramo"
 
 #: cert.cc:453
 #, c-format
 msgid "no branch certs found for revision %s, please provide a branch name"
 msgstr ""
-"nenhum certificado de ramo encontrado para revisão %s, "
-"por favor forneça o nome de um ramo"
+"nenhum certificado de ramo encontrado para revisão %s, por favor forneça o "
+"nome de um ramo"
 
 #: cert.cc:457
 #, c-format
 msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
 msgstr ""
-"vários certificados de ramo encontrados para a versão %s, por favor "
-"forneça o nome de um ramo"
+"vários certificados de ramo encontrados para a versão %s, por favor forneça "
+"o nome de um ramo"
 
 #: commands.cc:159
 #, c-format
@@ -796,20 +796,18 @@ msgstr "[ENDEREÇO[:PORTA] [PADRÃO]]"
 
 #: commands.cc:2015
 msgid "push branches matching PATTERN to netsync server at ADDRESS"
-msgstr ""
-"envia ramos que combinam com PADRÃO para servidor netsync em ENDEREÇO"
+msgstr "envia ramos que combinam com PADRÃO para servidor netsync em ENDEREÇO"
 
 #: commands.cc:2030
 msgid "pull branches matching PATTERN from netsync server at ADDRESS"
-msgstr ""
-"recebe ramos que combinam com PADRÃO do servidor netsync em ENDEREÇO"
+msgstr "recebe ramos que combinam com PADRÃO do servidor netsync em ENDEREÇO"
 
 #: commands.cc:2037
 #, c-format
 msgid "doing anonymous pull; use -kKEYNAME if you need authentication\n"
 msgstr ""
-"recebendo dados anonimamente; user -kNOMEDACHAVE "
-"se for necessária autenticação\n"
+"recebendo dados anonimamente; user -kNOMEDACHAVE se for necessária "
+"autenticação\n"
 
 #: commands.cc:2044
 msgid "sync branches matching PATTERN with netsync server at ADDRESS"
@@ -829,8 +827,8 @@ msgstr "serve os ramos especificados por PADRÂO para clientes"
 msgid ""
 "need permission to store persistent passphrase (see hook persist_phrase_ok())"
 msgstr ""
-"é necessária permissão para salvar frase-passe persistentemente "
-"(veja gancho persist_phrase_ok())"
+"é necessária permissão para salvar frase-passe persistentemente (veja gancho "
+"persist_phrase_ok())"
 
 #: commands.cc:2084
 msgid "database"
@@ -922,8 +920,8 @@ msgid ""
 "perhaps move or delete MT/log,\n"
 "or remove --message/--message-file from the command line?"
 msgstr ""
-"MT/log não está vazio e uma mensagem de registro foi dada na "
-"linha de comando\n"
+"MT/log não está vazio e uma mensagem de registro foi dada na linha de "
+"comando\n"
 "considere mover ou apagar MT/log,\n"
 "ou remova --message/--message-from-file da linha de comando"
 
@@ -970,6 +968,8 @@ msgid ""
 "--diff-args requires --external\n"
 "try adding --external or removing --diff-args?"
 msgstr ""
+"--diff-args requer --external\n"
+"adicione --external ou remova --diff-args"
 
 #: commands.cc:2700
 #, c-format
@@ -986,11 +986,14 @@ msgid ""
 "If a revision is given, base the update on that revision.  If not,\n"
 "base the update on the head of the branch (given or implicit)."
 msgstr ""
+"atualiza a cópia de trabalho.\n"
+"Se uma versão é dada, baseia a atualização nesta versão. Se não,\n"
+"baseia a atualização na frente do ramo (dado ou implícito)."
 
 #: commands.cc:2831
 #, c-format
 msgid "this working directory is a new project; cannot update"
-msgstr ""
+msgstr "esta cópia de trabalho é um novo projeto; impossível atualizar"
 
 #: commands.cc:2838
 #, c-format
@@ -1003,27 +1006,27 @@ msgstr ""
 #: commands.cc:2843
 #, c-format
 msgid "multiple update candidates:\n"
-msgstr ""
+msgstr "múltiplos candidatos para atualização:\n"
 
 #: commands.cc:2847
 #, c-format
 msgid "choose one with 'monotone update -r<id>'\n"
-msgstr ""
+msgstr "escolha um com 'monotone update -r<id>'\n"
 
 #: commands.cc:2848
 #, c-format
 msgid "multiple candidates remain after selection"
-msgstr ""
+msgstr "ainda há múltiplos candidatos após seleção"
 
 #: commands.cc:2863
 #, c-format
 msgid "already up to date at %s\n"
-msgstr ""
+msgstr "já atualizado em %s\n"
 
 #: commands.cc:2871
 #, c-format
 msgid "selected update target %s\n"
-msgstr ""
+msgstr "selecionado alvo %s para atualização\n"
 
 #: commands.cc:2883
 #, c-format
@@ -1031,128 +1034,133 @@ msgid ""
 "revision %s is not a member of branch %s\n"
 "try again with explicit --branch\n"
 msgstr ""
+"versão %s não é um membro do ramo %s\n"
+"tente de novo com --branch\n"
 
 #: commands.cc:2906
 #, c-format
 msgid "Update target is not a descendent of working copy base revision\n"
 msgstr ""
+"Alvo para atualização não é um descendente da versão-base da cópia de "
+"trabalho\n"
 
 #: commands.cc:2983
 #, c-format
 msgid "updated to base revision %s\n"
-msgstr ""
+msgstr "atualizado para versão-base %s\n"
 
 #: commands.cc:2993
 msgid "merge unmerged heads of branch"
-msgstr ""
+msgstr "combina diferentes frentes do ramo"
 
 #: commands.cc:3007
 #, c-format
 msgid "branch '%s' is merged\n"
-msgstr ""
+msgstr "ramo '%s' está combinado\n"
 
 #: commands.cc:3013
 #, c-format
 msgid "starting with revision 1 / %d\n"
-msgstr ""
+msgstr "iniciando com versão 1 / %d\n"
 
 #: commands.cc:3017
 #, c-format
 msgid "merging with revision %d / %d\n"
-msgstr ""
+msgstr "combinando com versão %d / %d\n"
 
 #: commands.cc:3018 commands.cc:3019 commands.cc:3086 commands.cc:3161
 #: commands.cc:3162
 #, c-format
 msgid "[source] %s\n"
-msgstr ""
+msgstr "[fonte] %s\n"
 
 #: commands.cc:3036 commands.cc:3127 commands.cc:3180
 #, c-format
 msgid "[merged] %s\n"
-msgstr ""
+msgstr "[combinado] %s\n"
 
 #: commands.cc:3039
 #, c-format
 msgid "note: your working copies have not been updated\n"
-msgstr ""
+msgstr "nota: suas cópias de trabalho não foram atualizadas\n"
 
 #: commands.cc:3042
 msgid "SOURCE-BRANCH DEST-BRANCH"
-msgstr ""
+msgstr "RAMO-FONTE RAMO-DESTINO"
 
 #: commands.cc:3043
 msgid "merge from one branch to another asymmetrically"
-msgstr ""
+msgstr "combina dois ramos de forma assimétrica"
 
 #: commands.cc:3077 commands.cc:3080
 #, c-format
 msgid "branch '%s' is not merged\n"
-msgstr ""
+msgstr "ramo '%s' não está combinado\n"
 
 #: commands.cc:3085
 #, c-format
 msgid "propagating %s -> %s\n"
-msgstr ""
+msgstr "propagando %s -> %s\n"
 
 #: commands.cc:3087
 #, c-format
 msgid "[target] %s\n"
-msgstr ""
+msgstr "[alvo] %s\n"
 
 #: commands.cc:3092
 #, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'\n"
-msgstr ""
+msgstr "ramo '%s' está atualizado em relação ao ramo '%s'\n"
 
 #: commands.cc:3094
 #, c-format
 msgid "no action taken\n"
-msgstr ""
+msgstr "nenhuma ação tomada\n"
 
 #: commands.cc:3098
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'\n"
-msgstr ""
+msgstr "não há necessidade de combinação; colocando %s no ramo '%s'\n"
 
 #: commands.cc:3131
 msgid "refresh the inodeprint cache"
-msgstr ""
+msgstr "atualiza o cache de inodeprint"
 
 #: commands.cc:3139
 msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
-msgstr ""
+msgstr "VERSÃO-ESQUERDA VERSÃO-DIREITA RAMO-DESTINO"
 
 #: commands.cc:3140
 msgid "merge two explicitly given revisions, placing result in given branch"
 msgstr ""
+"combina duas versões dadas explicitamente colocando o resuldado no ramo dado"
 
 #: commands.cc:3154
 #, c-format
 msgid "%s and %s are the same revision, aborting"
-msgstr ""
+msgstr "%s e %s são a mesma versão, abortando"
 
 #: commands.cc:3156 commands.cc:3158
 #, c-format
 msgid "%s is already an ancestor of %s"
-msgstr ""
+msgstr "%s já é um ancestral de %s"
 
 #: commands.cc:3183
 msgid "(revision|file|key) PARTIAL-ID"
-msgstr ""
+msgstr "(revision|file|key) ID-PARCIAL"
 
 #: commands.cc:3184
 msgid "complete partial id"
-msgstr ""
+msgstr "id parcial completo"
 
 #: commands.cc:3193
 #, c-format
 msgid "non-hex digits in partial id"
-msgstr ""
+msgstr "dígitos não-hexadecimais no id parcial"
 
 #: commands.cc:3232
 msgid "revert file(s), dir(s) or entire working copy (\".\")"
-msgstr ""
+msgstr "reverte arquivo(s), diretório(s) ou a cópia de trabalho inteira (\".\")"
 
 #: commands.cc:3309
 #, c-format
@@ -1162,11 +1170,11 @@ msgstr "revertendo %s"
 #: commands.cc:3313
 #, c-format
 msgid "no file version %s found in database for %s"
-msgstr ""
+msgstr "nenhuma versão %s do arquivo achada no banco de dados para %s"
 
 #: commands.cc:3334
 msgid "RCSFILE..."
-msgstr ""
+msgstr "ARQUIVO-RCS"
 
 #: commands.cc:3335
 msgid ""
@@ -1174,63 +1182,68 @@ msgid ""
 "this command doesn't reconstruct or import revisions.you probably want "
 "cvs_import"
 msgstr ""
+"identifica versões em arquivos RCS\n"
+"este comando não reconstrui ou importa versões. Você provavelmente quer "
+"cvs_import"
 
 #: commands.cc:3351
 msgid "rcs"
-msgstr ""
+msgstr "rcs"
 
 #: commands.cc:3351
 msgid "CVSROOT"
-msgstr ""
+msgstr "CVSROOT"
 
 #: commands.cc:3351
 msgid "import all versions in CVS repository"
-msgstr ""
+msgstr "importa todas as versões do repositório CVS"
 
 #: commands.cc:3414
 msgid "PATH"
-msgstr ""
+msgstr "CAMINHO"
 
 #: commands.cc:3415
 msgid "print annotated copy of the file from REVISION"
-msgstr ""
+msgstr "imprime cópia anotada do arquivo da VERSÃO"
 
 #: commands.cc:3437
 #, c-format
 msgid "no revision for file '%s' in database"
-msgstr ""
+msgstr "nenhuma versão '%s' do arquivo em banco de dados"
 
 #: commands.cc:3455
 msgid "[FILE] ..."
-msgstr ""
+msgstr "[ARQUIVO] ..."
 
 #: commands.cc:3456
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
 msgstr ""
+"imprime histórico em ordem inversa (filtrado por 'ARQUIVO'). Se uma ou\n"
+"mais versões forem dadas, usa-as como ponto de partida."
 
 #: commands.cc:3503
 #, c-format
 msgid "Unknown file '%s' for log command"
-msgstr ""
+msgstr "Arquivo '%s' desconhecido para comando log"
 
 #: commands.cc:3666
 msgid "DIRECTORY"
-msgstr ""
+msgstr "DIRETÓRIO"
 
 #: commands.cc:3666
 msgid "setup a new working copy directory"
-msgstr ""
+msgstr "configura um novo diretório de cópia de trabalho"
 
 #: commands.cc:3672
 #, c-format
 msgid "need --branch argument for setup"
-msgstr ""
+msgstr "argumento --branch é necessário para configuração"
 
 #: commands.cc:3681
 msgid "automation"
-msgstr ""
+msgstr "automação"
 
 #: commands.cc:3682
 msgid ""
@@ -1255,82 +1268,103 @@ msgid ""
 "get_revision [REVID]\n"
 "keys\n"
 msgstr ""
+"interface_version\n"
+"heads [RAMO]\n"
+"ancestors VER1 [VER2 [VER3 [...]]]\n"
+"attributes [FILE]\n"
+"parents VERSÃO\n"
+"descendents VER1 [VER2 [VER3 [...]]]\n"
+"children VERSÃO\n"
+"graph\n"
+"erase_ancestors [VER1 [VER2 [VER3 [...]]]]\n"
+"toposort [VER1 [VER2 [VER3 [...]]]]\n"
+"ancestry_difference NOVA-VER [VELHA-VER1 [VELHA-VER2 [...]]]\n"
+"leaves\n"
+"inventory\n"
+"stdio\n"
+"certs VERSÃO\n"
+"select SELETOR\n"
+"get_file ID-ARQUIVO\n"
+"get_manifest_of [VERSÃO]\n"
+"get_revision [VERSÃO]\n"
+"keys\n"
 
 #: commands.cc:3702
 msgid "automation interface"
-msgstr ""
+msgstr "interface de automação"
 
 #: commands.cc:3716 commands.cc:3732
 msgid "vars"
-msgstr ""
+msgstr "variáveis"
 
 #: commands.cc:3716
 msgid "DOMAIN NAME VALUE"
-msgstr ""
+msgstr "DOMÍNIO NOME VALOR"
 
 #: commands.cc:3717
 msgid "set the database variable NAME to VALUE, in domain DOMAIN"
 msgstr ""
+"configura a variável do banco de dados NOME para VALOR, no domínio DOMÍNIO"
 
 #: commands.cc:3732
 msgid "DOMAIN NAME"
-msgstr ""
+msgstr "DOMÍNIO NOME"
 
 #: commands.cc:3733
 msgid "remove the database variable NAME in domain DOMAIN"
-msgstr ""
+msgstr "remove a variável do banco de dados NOME no domínio DOMAIN"
 
 #: commands.cc:3744
 #, c-format
 msgid "no var with name %s in domain %s"
-msgstr ""
+msgstr "nenhuma variável com nome %s no domínio %s"
 
 #: commands.cc:3748
 msgid "REVID"
-msgstr "ID-VERSÂO"
+msgstr "VERSÂO"
 
 #: commands.cc:3749
 msgid "dump the roster associated with the given REVID"
-msgstr ""
+msgstr "exibe conteúdo do roster associado com VERSÃO"
 
 #: database_check.cc:125
 msgid "files"
-msgstr ""
+msgstr "arquivos"
 
 #: database_check.cc:154
 msgid "rosters"
-msgstr ""
+msgstr "rosters"
 
 #: database_check.cc:221
 msgid "markings"
-msgstr ""
+msgstr "marcas"
 
 #: database_check.cc:319 database_check.cc:507 netsync.cc:2693
 #: rcs_import.cc:1226
 msgid "revisions"
-msgstr ""
+msgstr "versões"
 
 #: database_check.cc:418
 msgid "ancestry"
-msgstr ""
+msgstr "descendência"
 
 #: database_check.cc:451 netsync.cc:2697
 msgid "keys"
-msgstr ""
+msgstr "chaves"
 
 #: database_check.cc:477 netsync.cc:2695
 msgid "certs"
-msgstr ""
+msgstr "certificados"
 
 #: database_check.cc:543
 #, c-format
 msgid "file %s missing (%d manifest references)\n"
-msgstr ""
+msgstr "arquivo %s faltando (%d referências no manifesto)\n"
 
 #: database_check.cc:550
 #, c-format
 msgid "file %s unreferenced\n"
-msgstr ""
+msgstr "arquivo %s não referenciado\n"
 
 #: database_check.cc:571
 #, c-format
@@ -1678,33 +1712,27 @@ msgstr ""
 msgid "wanted %d rows got %s in query: %s\n"
 msgstr ""
 
-#: database.cc:669
-#, c-format
-msgid ""
-"Attempt to start exclusive transaction within non-exclusive transaction."
-msgstr ""
-
-#: database.cc:1682
+#: database.cc:1684
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr ""
 
-#: database.cc:2730
+#: database.cc:2732
 #, c-format
 msgid "no database specified"
 msgstr ""
 
-#: database.cc:2738
+#: database.cc:2740
 #, c-format
 msgid "database %s does not exist"
 msgstr ""
 
-#: database.cc:2739
+#: database.cc:2741
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr ""
 
-#: database.cc:2764
+#: database.cc:2766
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr ""
