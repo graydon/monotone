@@ -692,7 +692,7 @@ database::fetch(statement & stmt,
           const char * value = (const char*)sqlite3_column_blob(stmt.stmt(), col);
           int bytes = sqlite3_column_bytes(stmt.stmt(), col);
           E(value, F("null result in query: %s\n") % query);
-          row.push_back(std::string(value,value+bytes));
+          row.push_back(std::string(value, value + bytes));
           //L(FL("row %d col %d value='%s'\n") % nrow % col % value);
         }
       res.push_back(row);
