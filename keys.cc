@@ -16,6 +16,7 @@
 #include "lua.hh"
 #include "netio.hh"
 #include "platform.hh"
+#include "safe_map.hh"
 #include "transforms.hh"
 #include "sanity.hh"
 #include "ui.hh"
@@ -124,7 +125,8 @@ get_passphrase(lua_hooks & lua,
           // permit security relaxation. maybe.
           if (persist_phrase)
             {
-              phrases.insert(make_pair(keyid,string(pass1)));
+              phrases.erase(keyid);
+              safe_insert(phrases, make_pair(keyid, string(pass1)));
             }
         } 
       catch (...)
@@ -337,7 +339,6 @@ make_signature(app_state & app,           // to hook for phrase
 
   else
     {
-      shared_ptr<RSA_PrivateKey> priv_key;
       priv_key = get_private_key(app.lua, id, priv);
       signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
       
