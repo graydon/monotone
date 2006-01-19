@@ -1,5 +1,9 @@
 2006-01-19  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc (check_format): Small cleanups to previous change.
+
+2006-01-19  Nathaniel Smith  <njs@pobox.com>
+
 	Fix bug reported by Henry Nestler, where 'serve' did not detect
 	that the user had not run 'db rosterify'.
 	* database.cc (check_rosterified): Rename to...
