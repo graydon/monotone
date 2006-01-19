@@ -1,5 +1,9 @@
 2006-01-18  Nathaniel Smith  <njs@pobox.com>
 
+	* configure.ac: Remove some dead comments.
+
+2006-01-18  Nathaniel Smith  <njs@pobox.com>
+
 	* configure.ac: s/TRY_RUN/TRY_COMPILE/ a few places, for general
 	cleanliness.
 

@@ -8,16 +8,6 @@ AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
 AM_CONFIG_HEADER([config.h])
 
-# we have some sse2 code in cryptopp 
-# currently gcc does some surprising things here, so we disable it
-# completely.
-# AC_CHECK_HEADERS(emmintrin.h, [CXXFLAGS_MSSE2="-msse2"])
-
-# autoconf turns on -g by default unless a user overrides.  this is
-# nice for smallish programs but it makes build times insane for
-# spirit-based programs. we turn it off here unless the user turned it
-# on themselves.
-
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
