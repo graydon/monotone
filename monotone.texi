@@ -4161,11 +4161,18 @@ If one or more files are given, the command will only log the revisions
 where those files are changed.
 
 @item monotone annotate @var{file}
-@itemx monotone annotate --revision=@var{id} @var{file}
+@itemx monotone annotate [--revision=@var{id}] [--brief] @var{file}
 
-Dumps an annotated copy of the file to stdout.  Each line of the file
+Dumps an annotated copy of the file to stdout.  In the absence of the 
+@code{--brief} flag, each line of the file
 is translated to <revision id>: <line> in the output, where <revision id>
 is the revision in which that line of the file was last edited.
+
+If @code{--brief} is specified, the output is in the form
+<short revision id>.. by <author> <date>: <line>
+Only the first 8 characters of the revision id are displayed, the  
+author cert value is truncated at the first @code{@@} or space
+character and the date field is truncated to remove the time of day.
 
 @item monotone complete file @var{partial-id}
 @itemx monotone complete [--brief] key @var{partial-id}

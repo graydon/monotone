@@ -1,3 +1,25 @@
+2006-01-19  Emile Snyder  <emile@alumni.reed.edu>
+
+	Add a --brief mode to the annotate command which prints more
+	informative annotations rather than just the raw revision ids.
+
+	* commands.cc (CMD(annotate)): Add --brief option to the annotate
+	command and remove obsolete comment lines.
+	* annotate.cc (dump): Pass in app_state to allow access to db for 
+	cert lookups on revisions.  Honor new --brief
+	flag by printing <short id>.. by <author> <date>: as the
+	annotation rather than the raw revision id, and only printing the
+	annotation for the first line of each block of lines from the same
+	revision.
+	(cert_string_value): Given a set of certs from a revision, a cert
+	name, and some detail of what part of the value we want, find and
+	return that part of the cert.
+	(build_revisions_to_annotations): After we finish with the
+	annotations pass, build up a mapping of revision id to annotation
+	string.
+	* monotone.texi: Add --brief flag and description to the annotate
+	section of the command reference.
+
 2006-01-19  Matt Johnston  <matt@ucc.asn.au>
 
 	* HACKING: escape the colon in the cino vim modeline option.

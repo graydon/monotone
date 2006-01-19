@@ -3413,10 +3413,8 @@ log_certs(app_state & app, revision_id id, cert_name name)
 
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
-    OPT_REVISION)
+    OPT_REVISION % OPT_BRIEF)
 {
-  // this function compiles, but the do_annotate() stuff in annotate.cc is 
-  // still in flux, so disabling command here.
   revision_id rid;
 
   if (app.revision_selectors.size() == 0)
