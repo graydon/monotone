@@ -66,8 +66,8 @@ void
 perform_deletions(path_set const & targets, app_state & app);
 
 void
-perform_rename(file_path const & src_path,
-               file_path const & dst_path,
+perform_rename(std::set<file_path> const & src_paths,
+               file_path const & dst_dir,
                app_state & app);
 
 // the "work" file contains the current cset representing uncommitted

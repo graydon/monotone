@@ -1,5 +1,14 @@
 2006-01-19  Matt Johnston  <matt@ucc.asn.au>
 
+	* work.{cc,hh}, commands.cc: add "rename src1 [src2 ...] dst/"
+	syntax.
+	* monotone.texi: update
+	* testsuite.at, tests/t_rename_destdir: new test (is incomplete).
+	* tests/t_no_rename_overwrite.at: syntax should now succeed.
+	* vocab.cc: add hexenc<id> dump() instantiation.
+
+2006-01-19  Matt Johnston  <matt@ucc.asn.au>
+
 	* HACKING: escape the colon in the cino vim modeline option.
 
 2006-01-19  Nathaniel Smith  <njs@pobox.com>
