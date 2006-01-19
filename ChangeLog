@@ -1,3 +1,11 @@
+2006-01-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* merkle_tree.{cc,hh}: Add a locate_item() function to find the
+	node and slot in a merkle_table that a given item is in.
+	* refiner.cc (refiner::process_refinement_command): If they have
+	a leaf and we have a subtree then if their leaf is in our subtree,
+	we need to tell them.
+
 2006-01-15  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Almost all translations done.  I've left a few for

@@ -92,10 +92,18 @@ void read_node(std::string const & inbuf, size_t & pos, merkle_node & out);
 
 std::string raw_sha1(std::string const & in);
 
+
+bool
+locate_item(merkle_table & table,
+            id const & val,
+            size_t & slotnum,
+            merkle_ptr & mp);
+
+
 void 
-pick_slot_and_prefix_for_value(id const & val, 
-                               size_t level, 
-                               size_t & slotnum, 
+pick_slot_and_prefix_for_value(id const & val,
+                               size_t level,
+                               size_t & slotnum,
                                boost::dynamic_bitset<unsigned char> & pref);
 
 // Collect the items inside a subtree.
