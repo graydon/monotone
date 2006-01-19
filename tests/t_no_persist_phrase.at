@@ -1,0 +1,39 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([disallowing persistence of passphrase])
+
+MONOTONE_SETUP
+
+AT_DATA(persist.lua, [
+function persist_phrase_ok()
+	return false
+end
+
+get_passphrase = nil
+])
+
+AT_DATA(input.txt, [version 0 of the file
+])
+
+AT_CHECK(MONOTONE add input.txt, [], [ignore], [ignore])
+
+AT_DATA(input.txt, [version 1 of the file
+])
+
+AT_DATA(passphrase, [tester@test.net
+tester@test.net
+tester@test.net
+tester@test.net
+])
+
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=persist.lua commit --message=blah-blah <passphrase, [], [ignore], [ignore])
+
+TSHA=`BASE_REVISION`
+AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout])
+AT_CHECK(mv stdout certs, [], [ignore])
+AT_CHECK(grep branch certs, [], [ignore])
+AT_CHECK(grep author certs, [], [ignore])
+AT_CHECK(grep date certs, [], [ignore])
+AT_CHECK(grep changelog certs, [], [ignore])
+
+AT_CLEANUP

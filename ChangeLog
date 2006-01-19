@@ -13,6 +13,32 @@
 	(build_changesets_from_manifest_ancestry): Adjust accordingly.
 	* tests/t_check_db_format.at, testsuite.at: New test.
 
+2005-01-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_lua_privkey.at: Remove; this tests a hook that was removed.
+	* testsuite: adjust accordingly
+
+2006-01-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* keys.cc (get_passphrase): Update std::map correctly--remove
+	existing cached passphrase for a given keyid, then store the new
+	one using safe_insert().
+	(make_signature): Fix crash when running monotone with persistent
+	passphrases disallowed--remove shared_ptr that was going out of
+	scope too early, and shadowed and existing shared_ptr in the
+	correct scope.
+	* tests/t_no_persist_phrase.at: New test to check that basic no
+	persistent passphrase functionality works.
+	* testsuite.at: Include new test.
+
+2006-01-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* merkle_tree.{cc,hh}: Add a locate_item() function to find the
+	node and slot in a merkle_table that a given item is in.
+	* refiner.cc (refiner::process_refinement_command): If they have
+	a leaf and we have a subtree then if their leaf is in our subtree,
+	we need to tell them.
+
 2006-01-18  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac: Remove some dead comments.
