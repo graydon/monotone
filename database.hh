@@ -75,7 +75,7 @@ class database
   system_path filename;
   std::string const schema;
   void check_schema();
-  void check_rosterified();
+  void check_format();
 
   struct statement {
     statement() : count(0), stmt(0, sqlite3_finalize) {}
@@ -87,7 +87,7 @@ class database
 
   struct app_state * __app;
   struct sqlite3 * __sql;
-  struct sqlite3 * sql(bool init = false);
+  struct sqlite3 * sql(bool init = false, bool migrating_format = false);
   int transaction_level;
   bool transaction_exclusive;
 
@@ -216,6 +216,7 @@ public:
   void version(std::ostream &);
   void migrate();
   void ensure_open();
+  void ensure_open_for_format_changes();
   bool database_specified();
   
   bool file_version_exists(file_id const & id);

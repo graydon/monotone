@@ -1,0 +1,99 @@
+AT_SETUP([db data format checking])
+MONOTONE_SETUP
+NEED_UNGZB64
+
+# A few times in our history we've had to do data migration beyond
+# what the "db migrate" command can handle -- i.e., "db changesetify"
+# and "db rosterify".  We would like for it to be the case, that all
+# other commands give a nice error message if these commands need to
+# be run.  This test makes sure that monotone exits with an error if
+# given a db that appears to be very old.
+
+AT_DATA([changesetify.db.dump.gz.b64], [H4sICA9Nz0MCA2NoYW5nZXNldGlmeS5kYi5kdW1wAO1WW2/aShB+xr9ilZcQlaZcDIRWkWrA
+IlAMCZdcenRkrb3rSwK2YxuI+fWdtcE4tuG0PdV5OpZAsN6Z+Wa++Wa3Lfb6IyQ+dobzaf9e
+/MJ1JqIwE9FMaA9FpLjYUg2ZOrZqeFyhyBUM7BnIsn1krRYLtLLM1xUtof3z8SMKN9gacukS
+m5Zp6Ugz6YJ4yKMOdrFPCVICdPb5jCtE3o95A1/Ptml5aGP6Brhbm55pW7JKXd+7XOPFinKF
+ENjBQeoBDxCB2Etk0LeP1FJtAtFNwhUuUnkSRV5j1+P2lsX4F1hDGnGIUuzZU22HskSx4yxM
+FfsALvyLwFNsbuElTRuH5rAJvdAg3hgmlNm52xhlu98alakYISuFIS7il+nMNHNBZUIXPmb8
+FbiCSfKS8V0bmNpzx4yQals+tXwwU7CXgvaeG7bduwTHtpuMd8kqHf58Z8xYIaamId9mMSD0
+SvWRunJdiIY0F+hiAbnCLk+TlMKFiyxtYeCwLSG445pL7AasqqWfyYrgBLB9IVR76bjU8ygE
+3TfM3iRil3kJkfRHU3EyQ/3RbBwBQffCcC5Oi+eVVrVFWxpfVxrNZlOtVUi50cQtrVap8bhe
+I0q93KB8Uz0vnd/wXl/YPZ8C/3Y7ffsWULUjDKQ1f3t3w9a583TeS2yZGvX8SAwndflrisw2
+R54W9+H3nMdwErznN37oyXYwgGPsMCyqYXvUYghWHnW5Qr4QkobKwla4AtDsYNPNk0wCqrNS
+QJwybI5geaZuYX/lpiOA1WQqfJreCBV02ANFO/uLZfLVJJ8B2N9ncVey1RJivRkCLqEdntLB
+PKdhU5Xat25utqnuxUCrb1DoSqgbNBsMJRz7y9NophYUvuiBrRPkZUX7Z3UbN9AR7f5OAbJy
+/llFH3ykVB3DjJVdbl5R2sDVKgibb/AVTKo1TeNJs6o1sUrUuqpqBN6mlb0dl0fDgeTPN1tp
+Xg6krVqbbZ+qs664kcofyrOuVB11vw9G3fvxdNavSKJXkeath7n4/I2bqltd0Du8W9vcDTfM
+3fV1diRY9M2XXdvzqStbkKRsrZYK6KnIsX/JAicFZS0C+IpqGrCK+obpIR8rC+hougb7dJyE
+oP7s3Mm2QOSFITYJADTB2s2MC3h9jHkQ9A4uYvGWXobgRDIxxYRe8Uq9WSd1GNHVOl9r1aiC
++RZRKXx4orSuKOGrBCi2nr2vjq3Yb5fQZPBf6veIJJR7nelrb9pXat07sS3czQWB7w2Fbqdt
+bL619btOnV/fP7vu65M9025n+sOyMXBWww8vY3Gijqrjqcq1vYfXhqrwD8saMLTc3L8OBsGG
+LWmBPn/aLF8DczK8fZvYnjbsrarVK8EQt1jiB4pwU3F0vdnZrNf3hNNuJo8j4VGU9PFVS28/
+v7xQ9W1o8vNPs0az6w6fXya3grno6A/D76P11RMd91qPwi3VHwK3aYyE1qbfFu+urzPtFl/H
+4AYHCnGDsBmgzGwWZEZrzj0uGjSqYS7y7iNHDXazJQpUQqF9zoB5f1v8zw/I95j/PwrpKYqi
+oQWDClbkvEFwora7gZdg5cTBF23eX1p2podT7xjA04cUK1PRh+EbNVBkcvFvjqO9k5ySJSFD
+wU40Y+rsZOfmrs65F4XfLFnuPeEXrgqZm0J+xrtcj50Qx3PNJeHneEh4OYDqj7riY3b2yXI0
+x8aj7DtUjGbUMR/hgJJZByetw1UEhfknO6Y9OZoTOfaRMsPXzNFYkvqzL9wPFiVsSfMPAAA=
+])
+
+UNGZB64(changesetify.db.dump.gz.b64, changesetify.db.dump)
+AT_CHECK(MONOTONE -d cs-modern.db db load < changesetify.db.dump, [], [ignore], [ignore])
+AT_CHECK(MONOTONE -d cs-modern.db db migrate, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE -d cs-modern.db ls keys, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE -d cs-modern.db serve --bind=127.0.0.1:63219 '*', [1], [ignore], [ignore])
+
+AT_DATA([rosterify.db.dump.gz.b64], [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
+])
+
+UNGZB64(rosterify.db.dump.gz.b64, rosterify.db.dump)
+AT_CHECK(MONOTONE -d ro-modern.db db load < rosterify.db.dump, [], [ignore], [ignore])
+AT_CHECK(MONOTONE -d ro-modern.db db migrate, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE -d ro-modern.db ls keys, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE -d ro-modern.db serve --bind=127.0.0.1:63219 '*', [1], [ignore], [ignore])
+
+AT_CLEANUP

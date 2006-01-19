@@ -1,3 +1,14 @@
+2006-01-19  Nathaniel Smith  <njs@pobox.com>
+
+	Fix bug reported by Henry Nestler, where 'serve' did not detect
+	that the user had not run 'db rosterify'.
+	* database.cc (check_rosterified): Rename to...
+	(check_format): ...this.  Detect unchangesetified dbs too.
+	(sql, ensure_open_for_format_changes, get_roster_id_for_revision): 
+	* revision.cc (build_roster_style_revs_from_manifest_style_revs) 
+	(build_changesets_from_manifest_ancestry): Adjust accordingly.
+	* tests/t_check_db_format.at, testsuite.at: New test.
+
 2006-01-18  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac: Remove some dead comments.
