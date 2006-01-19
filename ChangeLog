@@ -1,3 +1,8 @@
+2005-01-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_lua_privkey.at: Remove; this tests a hook that was removed.
+	* testsuite: adjust accordingly
+
 2006-01-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* keys.cc (get_passphrase): Update std::map correctly--remove
