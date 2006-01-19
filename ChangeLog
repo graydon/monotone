@@ -1,3 +1,7 @@
+2006-01-19  Matt Johnston  <matt@ucc.asn.au>
+
+	* HACKING: escape the colon in the cino vim modeline option.
+
 2006-01-19  Nathaniel Smith  <njs@pobox.com>
 
 	* database.cc (check_format): Small cleanups to previous change.
