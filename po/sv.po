@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-01-15 11:12+0100\n"
-"PO-Revision-Date: 2006-01-15 17:41+0100\n"
+"PO-Revision-Date: 2006-01-20 22:58+0100\n"
 "Last-Translator: Joel <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1451,7 +1451,7 @@ msgstr "revisionen %s är inte i normaliserad form\n"
 #: database_check.cc:728
 #, c-format
 msgid "key %s missing (signed %d certs)\n"
-msgstr "nyckeln %s saknas (har signerat %d cert)"
+msgstr "nyckeln %s saknas (har signerat %d cert)\n"
 
 #: database_check.cc:761
 #, c-format
