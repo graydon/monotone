@@ -1,3 +1,9 @@
+2006-01-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc CMD(setup): default to current dir
+	* monotone.texi: update
+	* t_setup_existing_path.at: add test
+
 2006-01-19  Emile Snyder  <emile@alumni.reed.edu>
 
 	Add a --brief mode to the annotate command which prints more

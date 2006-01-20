@@ -3793,7 +3793,7 @@ common ancestor instead of the default ancestor.
 @section Working Copy
 
 @ftable @command
-@item monotone setup @var{directory}
+@item monotone setup [@var{directory}]
 This command prepares @var{directory} as a monotone working directory,
 by creating and populating the @file{MT} directory with basic
 information.  This information must include at least the branch and the
@@ -3802,7 +3802,8 @@ database to be used, both of which will be placed in the
 
 This can be used with an empty directory to start a new blank project,
 or within an existing directory full of files, prior to using
-@command{monotone commit}.
+@command{monotone commit}. If no directory is specified, the current
+directory is used.
 
 
 @item monotone add @var{pathname...}

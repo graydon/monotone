@@ -3668,16 +3668,21 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
 }
 
-CMD(setup, N_("tree"), N_("DIRECTORY"), N_("setup a new working copy directory"),
+CMD(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new working copy directory, default to current"),
     OPT_BRANCH_NAME)
 {
-  if (args.size() != 1)
+  if (args.size() > 1)
     throw usage(name);
 
   N(!app.branch_name().empty(), F("need --branch argument for setup"));
   app.db.ensure_open();
 
-  string dir = idx(args,0)();
+  string dir;
+  if (args.size() == 1)
+    dir = idx(args,0)();
+  else
+    dir = ".";
+
   app.create_working_copy(dir);
   revision_id null;
   put_revision_id(null);
