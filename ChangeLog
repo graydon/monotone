@@ -1,3 +1,7 @@
+2006-01-20  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc: Make our sockets non-blocking.
+
 2006-01-19  Emile Snyder  <emile@alumni.reed.edu>
 
 	Add a --brief mode to the annotate command which prints more
