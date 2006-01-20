@@ -3793,7 +3793,7 @@ common ancestor instead of the default ancestor.
 @section Working Copy
 
 @ftable @command
-@item monotone setup @var{directory}
+@item monotone setup [@var{directory}]
 This command prepares @var{directory} as a monotone working directory,
 by creating and populating the @file{MT} directory with basic
 information.  This information must include at least the branch and the
@@ -3802,7 +3802,8 @@ database to be used, both of which will be placed in the
 
 This can be used with an empty directory to start a new blank project,
 or within an existing directory full of files, prior to using
-@command{monotone commit}.
+@command{monotone commit}. If no directory is specified, the current
+directory is used.
 
 
 @item monotone add @var{pathname...}
@@ -3848,9 +3849,11 @@ Currently this command does @emph{not} actually delete the file
 you should run @command{drop}, and then perform the actual delete using
 whatever mechanism you normally use to delete files.
 
-@item monotone rename @var{src} @var{dst}
+@item monotone [--execute] rename @var{src} @var{dst}
+@itemx monotone [--execute] rename @var{src1} @var{...} @var{dst/}
 This command places ``rename'' entries for the paths specified in
-@var{src} and @var{dst} in the working copy's ``work list''. The work
+@var{src} and @var{dst} in the working copy's ``work list''. The second form
+renames a number of source paths to the given destination. The work
 list of your working copy is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also moves any
@@ -3864,10 +3867,9 @@ revision, which it will then commit to the database. The new revision
 will have any renamed entries in its manifest adjusted to their new
 names.
 
-Currently this command does @emph{not} actually rename the file
-@var{src} in your filesystem; after you run this command, you should do
-the actual rename, using whatever mechanism you normally use to rename
-files.
+The option @option{--execute} will make ``rename'' perform the actual
+rename operations in the filesystem. It will ignore missing source files
+and will not overwrite existing destination files.
 
 @item monotone commit
 @itemx monotone commit --message=@var{logmsg}

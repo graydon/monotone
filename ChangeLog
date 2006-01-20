@@ -2,6 +2,12 @@
 
 	* netsync.cc: Make our sockets non-blocking.
 
+2006-01-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc CMD(setup): default to current dir
+	* monotone.texi: update
+	* t_setup_existing_path.at: add test
+
 2006-01-19  Emile Snyder  <emile@alumni.reed.edu>
 
 	Add a --brief mode to the annotate command which prints more
@@ -23,6 +29,15 @@
 	string.
 	* monotone.texi: Add --brief flag and description to the annotate
 	section of the command reference.
+
+2006-01-19  Matt Johnston  <matt@ucc.asn.au>
+
+	* work.{cc,hh}, commands.cc: add "rename src1 [src2 ...] dst/"
+	syntax.
+	* monotone.texi: update
+	* testsuite.at, tests/t_rename_destdir: new test (is incomplete).
+	* tests/t_no_rename_overwrite.at: syntax should now succeed.
+	* vocab.cc: add hexenc<id> dump() instantiation.
 
 2006-01-19  Matt Johnston  <matt@ucc.asn.au>
 

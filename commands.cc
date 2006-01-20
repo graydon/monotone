@@ -1217,19 +1217,26 @@ CMD(drop, N_("working copy"), N_("[PATH]..."),
 ALIAS(rm, drop);
 
 
-CMD(rename, N_("working copy"), N_("SRC DST"),
+CMD(rename, N_("working copy"), 
+    N_("SRC DEST\n"
+       "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("rename entries in the working copy"),
     OPT_EXECUTE)
 {
-  if (args.size() != 2)
+  if (args.size() < 2)
     throw usage(name);
   
   app.require_working_copy();
 
-  file_path src_path = file_path_external(idx(args, 0));
-  file_path dst_path = file_path_external(idx(args, 1));
+  file_path dst_path = file_path_external(args.back());
 
-  perform_rename(src_path, dst_path, app);
+  set<file_path> src_paths;
+  for (size_t i = 0; i < args.size()-1; i++)
+    {
+      file_path s = file_path_external(idx(args, i));
+      src_paths.insert(s);
+    }
+  perform_rename(src_paths, dst_path, app);
 }
 
 ALIAS(mv, rename)
@@ -3661,16 +3668,21 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
 }
 
-CMD(setup, N_("tree"), N_("DIRECTORY"), N_("setup a new working copy directory"),
+CMD(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new working copy directory, default to current"),
     OPT_BRANCH_NAME)
 {
-  if (args.size() != 1)
+  if (args.size() > 1)
     throw usage(name);
 
   N(!app.branch_name().empty(), F("need --branch argument for setup"));
   app.db.ensure_open();
 
-  string dir = idx(args,0)();
+  string dir;
+  if (args.size() == 1)
+    dir = idx(args,0)();
+  else
+    dir = ".";
+
   app.create_working_copy(dir);
   revision_id null;
   put_revision_id(null);
