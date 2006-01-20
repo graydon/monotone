@@ -2240,7 +2240,7 @@ call_server(protocol_role role,
 
   // 'false' here means not to revert changes when the SockOpt
   // goes out of scope.
-  SockOpt socket_options(server.get_socketfd(), false);
+  Netxx::SockOpt socket_options(server.get_socketfd(), false);
   socket_options.set_non_blocking();
 
   session sess(role, client_voice, include_pattern, exclude_pattern,
@@ -2394,7 +2394,7 @@ handle_new_connection(Netxx::Address & addr,
 
       // 'false' here means not to revert changes when the SockOpt
       // goes out of scope.
-      SockOpt socket_options(client.get_socketfd(), false);
+      Netxx::SockOpt socket_options(client.get_socketfd(), false);
       socket_options.set_non_blocking();
 
       shared_ptr<session> sess(new session(role, server_voice,
