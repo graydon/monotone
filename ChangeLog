@@ -1,3 +1,9 @@
+2006-01-21  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_db_execute.at: Play with the files table instead of the
+	revisions table, so we don't trigger the has-revisions-but-no-rosters
+	check.
+
 2006-01-21  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Sort the translation guidelines a little more.

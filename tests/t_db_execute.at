@@ -1,7 +1,7 @@
 AT_SETUP([db execute])
 MONOTONE_SETUP
 
-TWO_COL_TABLE=revisions
+TWO_COL_TABLE=files
 COL1=id
 
 AT_CHECK(MONOTONE db execute "INSERT INTO $TWO_COL_TABLE VALUES ('key1', 'value1')", [], [ignore], [ignore])
