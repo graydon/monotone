@@ -1,5 +1,9 @@
 2006-01-21  Joel Rosdahl  <joel@rosdahl.net>
 
+	* po/sv.po: Corrections in translation guidelines.
+
+2006-01-21  Joel Rosdahl  <joel@rosdahl.net>
+
 	* AUTHORS: Added myself as a translation contributor.
 	* po/sv.po: Second round of review of Swedish translation.
 

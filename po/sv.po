@@ -9,12 +9,12 @@
 # address                         adress
 # ancestor                        förfader [eller förälder i vissa fall]
 # ancestry                        föräldraskap
-# approve                         godkänna
 # approval                        godkännande
+# approve                         godkänna
 # argument                        argument
 # authenticate                    autentisera
-# authorize                       auktorisera
 # author                          upphovsman
+# authorize                       auktorisera
 # automation                      automatisering
 # backup                          säkerhetskopia
 # bad                             felaktig
@@ -47,19 +47,19 @@
 # descendent                      ättling
 # destination                     mål
 # directory                       katalog
-# disapprove                      underkänna
 # disapproval                     underkännande
+# disapprove                      underkänna
 # disconnect                      koppla ifrån
 # divergence                      divergens
 # drop                            slänga / ta bort / överge
 # dump                            dumpa
-# edge                            både
+# edge                            båge
 # editor                          textredigerare
 # epoch                           epok
 # exchange                        utbyte
-# file                            file
+# file                            fil
 # find                            leta
-# found                           hittade
+# found                           hittade / hittat
 # get                             hämta
 # graph                           graf
 # (a) hash (value)                kontrollsumma
@@ -83,18 +83,18 @@
 # (a) merge                       ihopslagning
 # (to) merge                      slå ihop
 # (log) message                   loggmeddelande
-# migratation                     migrerering
+# migration                       migrering
 # migrate                         migrera
-# (to) mismatch                   inte matcha/inte stämma överens
+# (to) mismatch                   inte matcha / inte stämma överens
 # mismatched                      inkonsistent
 # node                            nod
 # (to) note                       notera
 # note:                           obs:
 # option                          flagga
+# (an) output                     utdata
 # (an) overflow                   överflöde
 # (to) overflow                   flöda över
 # override                        åsidosätta
-# (an) output                     utdata
 # packet                          paket
 # parent                          förälder
 # parse                           tyda
@@ -114,25 +114,25 @@
 # refined                         raffinerad
 # refuse                          neka
 # reject                          neka
-# request                         begäran
 # repository                      arkiv
+# request                         begäran
 # root                            rot
 # roster(s)                       roster(s)
-# (to) set                        sätta
 # serve                           servera
 # service                         tjänst
+# (to) set                        sätta
+# revision                        revision
+# selector                        väljare
+# server                          server
+# sink                            mottagare
 # source                          källa
 # stale                           trasig
 # state                           tillstånd
 # sync                            synkronisera
 # synchronize                     synkronisera
-# revision                        revision
-# server                          server
-# sink                            mottagare
 # tag                             tagg
 # terminate                       avbryta
 # tree                            träd
-# selector                        väljare
 # (an) underflow                  underflöde
 # (to) underflow                  flöda under
 # usher                           usher
