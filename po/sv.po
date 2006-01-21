@@ -83,8 +83,8 @@
 # (a) merge                       ihopslagning
 # (to) merge                      slå ihop
 # (log) message                   loggmeddelande
-# migration                       migrering
 # migrate                         migrera
+# migration                       migrering
 # (to) mismatch                   inte matcha / inte stämma överens
 # mismatched                      inkonsistent
 # node                            nod
@@ -116,14 +116,14 @@
 # reject                          neka
 # repository                      arkiv
 # request                         begäran
+# revision                        revision
 # root                            rot
 # roster(s)                       roster(s)
+# selector                        väljare
 # serve                           servera
+# server                          server
 # service                         tjänst
 # (to) set                        sätta
-# revision                        revision
-# selector                        väljare
-# server                          server
 # sink                            mottagare
 # source                          källa
 # stale                           trasig
@@ -146,7 +146,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-01-21 16:25+0100\n"
-"PO-Revision-Date: 2006-01-20 22:58+0100\n"
+"PO-Revision-Date: 2006-01-21 17:36+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"

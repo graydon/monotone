@@ -1,3 +1,7 @@
+2006-01-21  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Sort the translation guidelines a little more.
+
 2006-01-21  Joel Rosdahl  <joel@rosdahl.net>
 
 	* po/sv.po: Corrections in translation guidelines.
