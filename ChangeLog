@@ -3,6 +3,13 @@
 	* netcmd.cc (read): Expand the error message we issue on protocol
 	version mismatch to be a bit more informative.
 
+2006-01-21  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Fix up Windows and IPv6 tests after the change
+	from AC_TRY_RUN to AC_TRY_COMPILE.  Also a couple of other minor
+	cleanups.
+	* Makefile.am: Remove win32/wcwidth.c from WIN32_PLATFORM_SOURCES.
+
 2006-01-21  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/t_db_execute.at: Play with the files table instead of the
