@@ -1,6 +1,6 @@
 /*************************************************
 * Basic Filters Source File                      *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/basefilt.h>
@@ -23,7 +23,7 @@ Chain::Chain(Filter* f1, Filter* f2, Filter* f3, Filter* f4)
 *************************************************/
 Chain::Chain(Filter* filters[], u32bit count)
    {
-   for(u32bit j = 0; j != count; j++)
+   for(u32bit j = 0; j != count; ++j)
       if(filters[j])
          {
          attach(filters[j]);

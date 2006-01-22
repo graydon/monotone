@@ -1,3 +1,7 @@
+2006-01-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* merged in Botan 1.5.2 experimental release
+
 2006-01-21  Nathaniel Smith  <njs@pobox.com>
 
 	* netcmd.cc (read): Expand the error message we issue on protocol

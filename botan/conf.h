@@ -1,6 +1,6 @@
 /*************************************************
 * Configuration Handling Header File             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_POLICY_CONF_H__
@@ -13,7 +13,15 @@
 
 namespace Botan {
 
+class Library_State;
+
 namespace Config {
+
+/*************************************************
+* Load a configuration file                      *
+*************************************************/
+void load(const std::string&);
+void load(const std::string&, Library_State&);
 
 /*************************************************
 * Set an option                                  *
@@ -35,11 +43,6 @@ bool                     get_bool(const std::string&);
 void choose_sig_format(const std::string&, std::string&, Signature_Format&);
 void choose_sig_format(const std::string&, std::string&, std::string&,
                        Signature_Format&);
-
-/*************************************************
-* Load a configuration file                      *
-*************************************************/
-void load(const std::string&);
 
 }
 

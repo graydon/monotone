@@ -1,10 +1,12 @@
 /*************************************************
 * Mutex Header File                              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_MUTEX_H__
 #define BOTAN_MUTEX_H__
+
+#include <botan/exceptn.h>
 
 namespace Botan {
 
@@ -16,7 +18,6 @@ class Mutex
    public:
       virtual void lock() = 0;
       virtual void unlock() = 0;
-      virtual Mutex* clone() const = 0;
       virtual ~Mutex() {}
    };
 
@@ -26,17 +27,21 @@ class Mutex
 class Mutex_Holder
    {
    public:
-      Mutex_Holder(Mutex* m) : mux(m) { mux->lock(); }
-      ~Mutex_Holder() { mux->unlock(); }
+      Mutex_Holder(Mutex*);
+      ~Mutex_Holder();
    private:
       Mutex* mux;
    };
 
 /*************************************************
-* Get/set a mutex                                *
+* Mutex Factory                                  *
 *************************************************/
-Mutex* get_mutex();
-void initialize_mutex(Mutex*&);
+class Mutex_Factory
+   {
+   public:
+      virtual Mutex* make();
+      virtual ~Mutex_Factory() {}
+   };
 
 }
 

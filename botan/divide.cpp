@@ -1,6 +1,6 @@
 /*************************************************
 * Division Algorithm Source File                 *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/numthry.h>
@@ -57,7 +57,7 @@ void modifying_divide(BigInt& x, BigInt& y, BigInt& q)
 
    u32bit shifts = 0;
    while(y[y.sig_words()-1] < MP_WORD_TOP_BIT)
-      { x <<= 1; y <<= 1; shifts++; }
+      { x <<= 1; y <<= 1; ++shifts; }
 
    u32bit n = x.sig_words() - 1, t = y.sig_words() - 1;
    q.reg.create(n - t + 1);
@@ -70,7 +70,7 @@ void modifying_divide(BigInt& x, BigInt& y, BigInt& q)
 
    BigInt temp = y << (MP_WORD_BITS * (n-t));
 
-   while(x >= temp) { x -= temp; q[n-t]++; }
+   while(x >= temp) { x -= temp; ++q[n-t]; }
 
    for(u32bit j = n; j != t; j--)
       {

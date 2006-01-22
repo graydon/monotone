@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Authority Source File        *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/x509_ca.h>
@@ -113,7 +113,7 @@ X509_Certificate X509_CA::make_cert(PK_Signer* signer,
    DER::encode(tbs_cert, X509_CERT_VERSION);
    tbs_cert.end_explicit(ASN1_Tag(0));
 
-   DER::encode(tbs_cert, random_integer(SERIAL_BITS, Nonce));
+   DER::encode(tbs_cert, random_integer(SERIAL_BITS));
    DER::encode(tbs_cert, sig_algo);
    DER::encode(tbs_cert, issuer_dn);
    tbs_cert.start_sequence();
@@ -170,7 +170,7 @@ X509_Certificate X509_CA::make_cert(PK_Signer* signer,
    if(ex_constraints.size())
       {
       v3_ext.start_sequence();
-      for(u32bit j = 0; j != ex_constraints.size(); j++)
+      for(u32bit j = 0; j != ex_constraints.size(); ++j)
          DER::encode(v3_ext, ex_constraints[j]);
       v3_ext.end_sequence();
       do_ext(tbs_cert, v3_ext, "X509v3.ExtendedKeyUsage",
@@ -252,7 +252,7 @@ X509_CRL X509_CA::update_crl(const X509_CRL& crl,
       throw Invalid_Argument("X509_CA::update_crl: Invalid CRL provided");
 
    std::set<SecureVector<byte> > removed_from_crl;
-   for(u32bit j = 0; j != new_revoked.size(); j++)
+   for(u32bit j = 0; j != new_revoked.size(); ++j)
       {
       if(new_revoked[j].reason == DELETE_CRL_ENTRY)
          removed_from_crl.insert(new_revoked[j].serial);
@@ -260,7 +260,7 @@ X509_CRL X509_CA::update_crl(const X509_CRL& crl,
          all_revoked.push_back(new_revoked[j]);
       }
 
-   for(u32bit j = 0; j != already_revoked.size(); j++)
+   for(u32bit j = 0; j != already_revoked.size(); ++j)
       {
       std::set<SecureVector<byte> >::const_iterator i;
       i = removed_from_crl.find(already_revoked[j].serial);
@@ -302,7 +302,7 @@ X509_CRL X509_CA::make_crl(const std::vector<CRL_Entry>& revoked,
    if(revoked.size())
       {
       tbs_crl.start_sequence();
-      for(u32bit j = 0; j != revoked.size(); j++)
+      for(u32bit j = 0; j != revoked.size(); ++j)
          DER::encode(tbs_crl, revoked[j]);
       tbs_crl.end_sequence();
       }

@@ -1,6 +1,6 @@
 /*************************************************
 * Base Classes Header File                       *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_BASE_H__
@@ -157,7 +157,7 @@ class RandomNumberGenerator : public Algorithm
       virtual void randomize(byte[], u32bit) throw(PRNG_Unseeded) = 0;
       virtual bool is_seeded() const { return true; }
       void add_entropy(const byte[], u32bit);
-      void add_entropy(EntropySource&, bool = true);
+      u32bit add_entropy(EntropySource&, bool = true);
       virtual ~RandomNumberGenerator() {}
    private:
       virtual void add_randomness(const byte[], u32bit) = 0;

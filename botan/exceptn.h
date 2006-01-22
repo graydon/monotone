@@ -1,6 +1,6 @@
 /*************************************************
 * Exceptions Header File                         *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_EXCEPTION_H__
@@ -196,6 +196,15 @@ struct Self_Test_Failure : public Internal_Error
    {
    Self_Test_Failure(const std::string& err) :
       Internal_Error("Self test failed: " + err) {}
+   };
+
+/*************************************************
+* Memory Allocation Exception                    *
+*************************************************/
+struct Memory_Exhaustion : public Exception
+   {
+   Memory_Exhaustion() :
+      Exception("Ran out of memory, allocation failed") {}
    };
 
 }

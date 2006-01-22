@@ -1,6 +1,6 @@
 /*************************************************
 * Library Initialization Header File             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_INIT_H__
@@ -19,28 +19,6 @@ namespace Init {
 *************************************************/
 void initialize(const std::string& = "");
 void deinitialize();
-
-/*************************************************
-* Internal Initialization/Shutdown Functions     *
-*************************************************/
-void set_mutex_type(Mutex*);
-void set_timer_type(Timer*);
-
-void startup_memory_subsystem();
-void shutdown_memory_subsystem();
-
-void startup_engines();
-void shutdown_engines();
-
-void startup_dl_cache();
-void shutdown_dl_cache();
-
-void startup_oids();
-void shutdown_oids();
-
-void startup_conf();
-void shutdown_conf();
-void set_default_options();
 
 }
 

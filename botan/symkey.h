@@ -1,6 +1,6 @@
 /*************************************************
 * OctetString Header File                        *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_SYMKEY_H__
@@ -30,7 +30,7 @@ class OctetString
 
       void set_odd_parity();
 
-      void change(u32bit, RNG_Quality);
+      void change(u32bit);
       void change(const std::string&);
       void change(const byte[], u32bit);
       void change(const MemoryRegion<byte>& in) { bits = in; }
@@ -56,7 +56,6 @@ OctetString operator^(const OctetString&, const OctetString&);
 class SymmetricKey : public OctetString
    {
    public:
-      void change(u32bit n) { OctetString::change(n, SessionKey); }
       SymmetricKey(u32bit len) { change(len); }
       SymmetricKey(const std::string& str = "") : OctetString(str) {}
       SymmetricKey(const byte in[], u32bit l) : OctetString(in, l) {}
@@ -70,7 +69,6 @@ class SymmetricKey : public OctetString
 class InitializationVector : public OctetString
    {
    public:
-      void change(u32bit n) { OctetString::change(n, Nonce); }
       InitializationVector(u32bit len) { change(len); }
       InitializationVector(const std::string& str = "") : OctetString(str) {}
       InitializationVector(const byte in[], u32bit l) : OctetString(in, l) {}

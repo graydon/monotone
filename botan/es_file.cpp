@@ -1,6 +1,6 @@
 /*************************************************
 * File EntropySource Source File                 *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/es_file.h>
@@ -18,9 +18,9 @@ File_EntropySource::File_EntropySource(const std::string& sources)
    std::vector<std::string> source_list = split_on(sources, ':');
    std::vector<std::string> defaults = Config::get_list("rng/es_files");
 
-   for(u32bit j = 0; j != source_list.size(); j++)
+   for(u32bit j = 0; j != source_list.size(); ++j)
       add_source(source_list[j]);
-   for(u32bit j = 0; j != defaults.size(); j++)
+   for(u32bit j = 0; j != defaults.size(); ++j)
       add_source(defaults[j]);
    }
 
@@ -38,7 +38,7 @@ void File_EntropySource::add_source(const std::string& source)
 u32bit File_EntropySource::slow_poll(byte output[], u32bit length)
    {
    u32bit read = 0;
-   for(u32bit j = 0; j != sources.size(); j++)
+   for(u32bit j = 0; j != sources.size(); ++j)
       {
       std::ifstream random_source(sources[j].c_str(), std::ios::binary);
       if(!random_source) continue;

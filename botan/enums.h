@@ -1,6 +1,6 @@
 /*************************************************
 * Enumerations Header File                       *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_ENUMS_H__
@@ -112,8 +112,6 @@ enum X509_Code {
 /*************************************************
 * Various Other Enumerations                     *
 *************************************************/
-enum RNG_Quality { Nonce = 0, PublicValue = 0, SessionKey, LongTermKey };
-
 enum Decoder_Checking { NONE, IGNORE_WS, FULL_CHECK };
 
 enum X509_Encoding { RAW_BER, PEM };

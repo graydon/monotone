@@ -1,6 +1,6 @@
 /*************************************************
 * EAX Mode Source File                           *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/eax.h>
@@ -19,7 +19,7 @@ SecureVector<byte> eax_prf(byte param, u32bit BLOCK_SIZE,
                            MessageAuthenticationCode* mac,
                            const byte in[], u32bit length)
    {
-   for(u32bit j = 0; j != BLOCK_SIZE - 1; j++)
+   for(u32bit j = 0; j != BLOCK_SIZE - 1; ++j)
       mac->update(0);
    mac->update(param);
    mac->update(in, length);
@@ -76,7 +76,7 @@ void EAX_Base::set_key(const SymmetricKey& key)
 *************************************************/
 void EAX_Base::start_msg()
    {
-   for(u32bit j = 0; j != BLOCK_SIZE - 1; j++)
+   for(u32bit j = 0; j != BLOCK_SIZE - 1; ++j)
       mac->update(0);
    mac->update(2);
    }
@@ -292,7 +292,7 @@ void EAX_Decryption::end_msg()
 
    SecureVector<byte> data_mac = mac->final();
 
-   for(u32bit j = 0; j != TAG_SIZE; j++)
+   for(u32bit j = 0; j != TAG_SIZE; ++j)
       if(queue[queue_start+j] != (data_mac[j] ^ nonce_mac[j] ^ header_mac[j]))
          throw Integrity_Failure(name() + ": Message authentication failure");
 

@@ -1,6 +1,6 @@
 /*************************************************
 * RSA Header File                                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_RSA_H__
@@ -33,8 +33,10 @@ class RSA_PublicKey : public PK_Encrypting_Key,
 /*************************************************
 * RSA Private Key                                *
 *************************************************/
-class RSA_PrivateKey : public RSA_PublicKey, public PK_Decrypting_Key,
-                       public PK_Signing_Key, public IF_Scheme_PrivateKey
+class RSA_PrivateKey : public RSA_PublicKey,
+                       public PK_Decrypting_Key,
+                       public PK_Signing_Key,
+                       public IF_Scheme_PrivateKey
    {
    public:
       SecureVector<byte> decrypt(const byte[], u32bit) const;

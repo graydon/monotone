@@ -1,6 +1,6 @@
 /*************************************************
 * Simple ASN.1 String Types Source File          *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1_obj.h>
@@ -41,7 +41,7 @@ ASN1_Tag choose_encoding(const std::string& str)
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00 };
 
-   for(u32bit j = 0; j != str.size(); j++)
+   for(u32bit j = 0; j != str.size(); ++j)
       if(!IS_PRINTABLE[(byte)str[j]])
          {
          const std::string type = Config::get_string("x509/ca/str_type");

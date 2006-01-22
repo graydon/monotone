@@ -1,12 +1,12 @@
 /*************************************************
 * DL Scheme Header File                          *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_DL_ALGO_H__
 #define BOTAN_DL_ALGO_H__
 
-#include <botan/dl_param.h>
+#include <botan/dl_group.h>
 #include <botan/x509_key.h>
 #include <botan/pkcs8.h>
 

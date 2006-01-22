@@ -1,6 +1,6 @@
 /*************************************************
 * PEM Encoding/Decoding Source File              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pem.h>
@@ -128,7 +128,7 @@ bool matches(DataSource& source, const std::string& extra)
 
    u32bit index = 0;
 
-   for(u32bit j = 0; j != got; j++)
+   for(u32bit j = 0; j != got; ++j)
       {
       if(search_buf[j] == PEM_HEADER[index])
          index++;

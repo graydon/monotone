@@ -1,6 +1,6 @@
 /*************************************************
 * Parser Functions Source File                   *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/parsing.h>
@@ -16,7 +16,7 @@ u32bit to_u32bit(const std::string& number)
    {
    u32bit n = 0;
 
-   for(std::string::const_iterator j = number.begin(); j != number.end(); j++)
+   for(std::string::const_iterator j = number.begin(); j != number.end(); ++j)
       {
       const u32bit OVERFLOW_MARK = 0xFFFFFFFF / 10;
 
@@ -70,12 +70,12 @@ std::vector<std::string> parse_algorithm_name(const std::string& namex)
    elems.push_back(name.substr(0, name.find('(')));
    name = name.substr(name.find('('));
 
-   for(std::string::const_iterator j = name.begin(); j != name.end(); j++)
+   for(std::string::const_iterator j = name.begin(); j != name.end(); ++j)
       {
       char c = *j;
 
       if(c == '(')
-         level++;
+         ++level;
       if(c == ')')
          {
          if(level == 1 && j == name.end() - 1)
@@ -89,7 +89,7 @@ std::vector<std::string> parse_algorithm_name(const std::string& namex)
 
          if(level == 0 || (level == 1 && j != name.end() - 1))
             throw Invalid_Algorithm_Name(namex);
-         level--;
+         --level;
          }
 
       if(c == ',' && level == 1)
@@ -119,7 +119,7 @@ std::vector<std::string> split_on(const std::string& str, char delim)
    if(str == "") return elems;
 
    std::string substr;
-   for(std::string::const_iterator j = str.begin(); j != str.end(); j++)
+   for(std::string::const_iterator j = str.begin(); j != str.end(); ++j)
       {
       if(*j == delim)
          {
@@ -145,7 +145,7 @@ std::vector<u32bit> parse_asn1_oid(const std::string& oid)
    std::string substring;
    std::vector<u32bit> oid_elems;
 
-   for(std::string::const_iterator j = oid.begin(); j != oid.end(); j++)
+   for(std::string::const_iterator j = oid.begin(); j != oid.end(); ++j)
       {
       char c = *j;
 
@@ -178,8 +178,8 @@ bool x500_name_cmp(const std::string& name1, const std::string& name2)
    std::string::const_iterator p1 = name1.begin();
    std::string::const_iterator p2 = name2.begin();
 
-   while((p1 != name1.end()) && is_space(*p1)) p1++;
-   while((p2 != name2.end()) && is_space(*p2)) p2++;
+   while((p1 != name1.end()) && is_space(*p1)) ++p1;
+   while((p2 != name2.end()) && is_space(*p2)) ++p2;
 
    while(p1 != name1.end() && p2 != name2.end())
       {
@@ -188,8 +188,8 @@ bool x500_name_cmp(const std::string& name1, const std::string& name2)
          if(!is_space(*p2))
             return false;
 
-         while((p1 != name1.end()) && is_space(*p1)) p1++;
-         while((p2 != name2.end()) && is_space(*p2)) p2++;
+         while((p1 != name1.end()) && is_space(*p1)) ++p1;
+         while((p2 != name2.end()) && is_space(*p2)) ++p2;
 
          if(p1 == name1.end() && p2 == name2.end())
             return true;
@@ -197,12 +197,12 @@ bool x500_name_cmp(const std::string& name1, const std::string& name2)
 
       if(to_lower(*p1) != to_lower(*p2))
          return false;
-      p1++;
-      p2++;
+      ++p1;
+      ++p2;
       }
 
-   while((p1 != name1.end()) && is_space(*p1)) p1++;
-   while((p2 != name2.end()) && is_space(*p2)) p2++;
+   while((p1 != name1.end()) && is_space(*p1)) ++p1;
+   while((p2 != name2.end()) && is_space(*p2)) ++p2;
 
    if((p1 != name1.end()) || (p2 != name2.end()))
       return false;
@@ -249,7 +249,7 @@ std::string utf2iso(const std::string& utf8)
 std::string iso2utf(const std::string& iso8859)
    {
    std::string utf8;
-   for(u32bit j = 0; j != iso8859.size(); j++)
+   for(u32bit j = 0; j != iso8859.size(); ++j)
       {
       const byte c = (byte)iso8859[j];
 
@@ -276,7 +276,7 @@ u32bit parse_expr(const std::string& expr)
       {
       std::vector<std::string> sub_expr = split_on(expr, '+');
       u32bit result = 0;
-      for(u32bit j = 0; j != sub_expr.size(); j++)
+      for(u32bit j = 0; j != sub_expr.size(); ++j)
          result += parse_expr(sub_expr[j]);
       return result;
       }
@@ -284,7 +284,7 @@ u32bit parse_expr(const std::string& expr)
       {
       std::vector<std::string> sub_expr = split_on(expr, '*');
       u32bit result = 1;
-      for(u32bit j = 0; j != sub_expr.size(); j++)
+      for(u32bit j = 0; j != sub_expr.size(); ++j)
          result *= parse_expr(sub_expr[j]);
       return result;
       }

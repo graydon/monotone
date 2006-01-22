@@ -1,6 +1,6 @@
 /*************************************************
 * X9.42 PRF Source File                          *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/kdf.h>
@@ -20,7 +20,7 @@ namespace {
 MemoryVector<byte> encode_x942_int(u32bit n)
    {
    byte n_buf[4];
-   for(u32bit j = 0; j != 4; j++)
+   for(u32bit j = 0; j != 4; ++j)
       n_buf[j] = get_byte(j, n);
 
    DER_Encoder encoder;
@@ -69,7 +69,7 @@ SecureVector<byte> X942_PRF::derive(u32bit key_len,
       SecureVector<byte> digest = hash->final();
       key.append(digest, std::min(digest.size(), key_len - key.size()));
 
-      counter++;
+      ++counter;
       }
 
    return key;

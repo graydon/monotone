@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Store Source File            *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/x509stor.h>
@@ -166,7 +166,7 @@ X509_Store::X509_Store(const X509_Store& store)
    certs = store.certs;
    revoked = store.revoked;
    revoked_info_valid = store.revoked_info_valid;
-   for(u32bit j = 0; j != store.stores.size(); j++)
+   for(u32bit j = 0; j != store.stores.size(); ++j)
       stores[j] = store.stores[j]->clone();
    }
 
@@ -175,7 +175,7 @@ X509_Store::X509_Store(const X509_Store& store)
 *************************************************/
 X509_Store::~X509_Store()
    {
-   for(u32bit j = 0; j != stores.size(); j++)
+   for(u32bit j = 0; j != stores.size(); ++j)
       delete stores[j];
    }
 
@@ -206,7 +206,7 @@ X509_Code X509_Store::validate_cert(const X509_Certificate& cert,
    if(is_revoked(cert))
       return CERT_IS_REVOKED;
 
-   for(u32bit j = 0; j != indexes.size() - 1; j++)
+   for(u32bit j = 0; j != indexes.size() - 1; ++j)
       {
       const X509_Certificate& current_cert = certs[indexes[j]].cert;
       time_check = validity_check(current_cert.start_time(),
@@ -228,7 +228,7 @@ X509_Code X509_Store::validate_cert(const X509_Certificate& cert,
 u32bit X509_Store::find_cert(const X509_DN& subject_dn,
                              const MemoryRegion<byte>& subject_key_id) const
    {
-   for(u32bit j = 0; j != certs.size(); j++)
+   for(u32bit j = 0; j != certs.size(); ++j)
       {
       const X509_Certificate& this_cert = certs[j].cert;
       if(compare_ids(this_cert.subject_key_id(), subject_key_id) &&
@@ -253,13 +253,13 @@ u32bit X509_Store::find_parent_of(const X509_Certificate& cert)
 
    if(auth_key_id.size())
       {
-      for(u32bit j = 0; j != stores.size(); j++)
+      for(u32bit j = 0; j != stores.size(); ++j)
          {
          std::vector<X509_Certificate> got = stores[j]->by_SKID(auth_key_id);
 
          if(got.size() == 0) continue;
 
-         for(u32bit k = 0; k != got.size(); k++)
+         for(u32bit k = 0; k != got.size(); ++k)
             add_cert(got[k]);
          return find_cert(issuer_dn, auth_key_id);
          }
@@ -407,7 +407,7 @@ void X509_Store::recompute_revoked_info() const
    if(revoked_info_valid)
       return;
 
-   for(u32bit j = 0; j != certs.size(); j++)
+   for(u32bit j = 0; j != certs.size(); ++j)
       {
       if((certs[j].is_verified()) && (certs[j].verify_result() != VERIFIED))
          continue;
@@ -441,7 +441,7 @@ std::vector<X509_Certificate>
 X509_Store::get_certs(const Search_Func& search) const
    {
    std::vector<X509_Certificate> found_certs;
-   for(u32bit j = 0; j != certs.size(); j++)
+   for(u32bit j = 0; j != certs.size(); ++j)
       {
       if(search.match(certs[j].cert))
          found_certs.push_back(certs[j].cert);
@@ -462,7 +462,7 @@ X509_Store::get_cert_chain(const X509_Certificate& cert)
    if(chaining_result != VERIFIED)
       throw Invalid_State("X509_Store::get_cert_chain: Can't construct chain");
 
-   for(u32bit j = 0; j != indexes.size(); j++)
+   for(u32bit j = 0; j != indexes.size(); ++j)
       result.push_back(certs[indexes[j]].cert);
    return result;
    }
@@ -491,7 +491,7 @@ void X509_Store::add_cert(const X509_Certificate& cert, bool trusted)
       }
    else if(trusted)
       {
-      for(u32bit j = 0; j != certs.size(); j++)
+      for(u32bit j = 0; j != certs.size(); ++j)
          {
          const X509_Certificate& this_cert = certs[j].cert;
          if(this_cert == cert)
@@ -544,7 +544,7 @@ X509_Code X509_Store::add_crl(const X509_CRL& crl)
 
    u32bit cert_index = NO_CERT_FOUND;
 
-   for(u32bit j = 0; j != certs.size(); j++)
+   for(u32bit j = 0; j != certs.size(); ++j)
       {
       const X509_Certificate& this_cert = certs[j].cert;
       if(compare_ids(this_cert.subject_key_id(), crl.authority_key_id()))
@@ -569,7 +569,7 @@ X509_Code X509_Store::add_crl(const X509_CRL& crl)
 
    std::vector<CRL_Entry> revoked_certs = crl.get_revoked();
 
-   for(u32bit j = 0; j != revoked_certs.size(); j++)
+   for(u32bit j = 0; j != revoked_certs.size(); ++j)
       {
       CRL_Data revoked_info;
       revoked_info.issuer = crl.issuer_dn();
@@ -603,7 +603,7 @@ X509_Code X509_Store::add_crl(const X509_CRL& crl)
 std::string X509_Store::PEM_encode() const
    {
    std::string cert_store;
-   for(u32bit j = 0; j != certs.size(); j++)
+   for(u32bit j = 0; j != certs.size(); ++j)
       cert_store += certs[j].cert.PEM_encode();
    return cert_store;
    }

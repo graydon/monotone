@@ -1,6 +1,6 @@
 /*************************************************
 * Basic Allocators Source File                   *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/defalloc.h>
@@ -49,7 +49,7 @@ void do_free(void* ptr, u32bit n, bool do_lock)
 /*************************************************
 * Malloc_Allocator's Allocation                  *
 *************************************************/
-void* Malloc_Allocator::alloc_block(u32bit n) const
+void* Malloc_Allocator::alloc_block(u32bit n)
    {
    return do_malloc(n, false);
    }
@@ -57,7 +57,7 @@ void* Malloc_Allocator::alloc_block(u32bit n) const
 /*************************************************
 * Malloc_Allocator's Deallocation                *
 *************************************************/
-void Malloc_Allocator::dealloc_block(void* ptr, u32bit n) const
+void Malloc_Allocator::dealloc_block(void* ptr, u32bit n)
    {
    do_free(ptr, n, false);
    }
@@ -65,7 +65,7 @@ void Malloc_Allocator::dealloc_block(void* ptr, u32bit n) const
 /*************************************************
 * Locking_Allocator's Allocation                 *
 *************************************************/
-void* Locking_Allocator::alloc_block(u32bit n) const
+void* Locking_Allocator::alloc_block(u32bit n)
    {
    return do_malloc(n, true);
    }
@@ -73,7 +73,7 @@ void* Locking_Allocator::alloc_block(u32bit n) const
 /*************************************************
 * Locking_Allocator's Deallocation               *
 *************************************************/
-void Locking_Allocator::dealloc_block(void* ptr, u32bit n) const
+void Locking_Allocator::dealloc_block(void* ptr, u32bit n)
    {
    do_free(ptr, n, true);
    }

@@ -1,6 +1,6 @@
 /*************************************************
 * Character Set Handling Source File             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/charset.h>
@@ -46,7 +46,8 @@ byte char2digit(char c)
    if(c == '7') return 7;
    if(c == '8') return 8;
    if(c == '9') return 9;
-   throw Invalid_Argument("char2digit: Invalid decimal char " + c);
+
+   throw Invalid_Argument("char2digit: Input is not a digit character");
    }
 
 /*************************************************
@@ -64,6 +65,7 @@ char digit2char(byte b)
    if(b == 7) return '7';
    if(b == 8) return '8';
    if(b == 9) return '9';
+
    throw Invalid_Argument("digit2char: Input is not a digit");
    }
 

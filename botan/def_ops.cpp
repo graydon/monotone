@@ -1,12 +1,12 @@
 /*************************************************
 * Default Engine PK Operations Source File       *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/def_eng.h>
-#include <botan/mod_exp.h>
+#include <botan/pow_mod.h>
 #include <botan/numthry.h>
-#include <botan/barrett.h>
+#include <botan/reducer.h>
 
 namespace Botan {
 
@@ -18,32 +18,38 @@ namespace {
 class Default_IF_Op : public IF_Operation
    {
    public:
-      BigInt public_op(const BigInt& i) const { return powermod_e_n(i); }
+      BigInt public_op(const BigInt& i) const
+         { return powermod_e_n(i); }
       BigInt private_op(const BigInt&) const;
 
-      IF_Operation* clone() const { return new Default_IF_Op(*this); }
+      IF_Operation* clone() const;
 
       Default_IF_Op(const BigInt&, const BigInt&, const BigInt&,
                     const BigInt&, const BigInt&, const BigInt&,
                     const BigInt&, const BigInt&);
+      ~Default_IF_Op() { delete reduce_by_p; }
    private:
-      const BigInt q, c;
-      FixedExponent_Exp powermod_e_n, powermod_d1_p, powermod_d2_q;
+      const BigInt p, q, c;
+      Fixed_Exponent_Power_Mod powermod_e_n, powermod_d1_p, powermod_d2_q;
+      ModularReducer* reduce_by_p;
    };
 
 /*************************************************
 * Default_IF_Op Constructor                      *
 *************************************************/
 Default_IF_Op::Default_IF_Op(const BigInt& e, const BigInt& n, const BigInt&,
-                             const BigInt& p, const BigInt& qx,
+                             const BigInt& px, const BigInt& qx,
                              const BigInt& d1, const BigInt& d2,
-                             const BigInt& cx) : q(qx), c(cx)
+                             const BigInt& cx) : p(px), q(qx), c(cx)
    {
-   powermod_e_n = FixedExponent_Exp(e, n);
+   powermod_e_n = Fixed_Exponent_Power_Mod(e, n);
+   reduce_by_p = 0;
+
    if(d1 != 0 && d2 != 0 && p != 0 && q != 0)
       {
-      powermod_d1_p = FixedExponent_Exp(d1, p);
-      powermod_d2_q = FixedExponent_Exp(d2, q);
+      powermod_d1_p = Fixed_Exponent_Power_Mod(d1, p);
+      powermod_d2_q = Fixed_Exponent_Power_Mod(d2, q);
+      reduce_by_p = get_reducer(p);
       }
    }
 
@@ -57,8 +63,24 @@ BigInt Default_IF_Op::private_op(const BigInt& i) const
 
    BigInt j1 = powermod_d1_p(i);
    BigInt j2 = powermod_d2_q(i);
-   return mul_add(powermod_d1_p.reduce(sub_mul(j1, j2, c)), q, j2);
+   j1 = reduce_by_p->reduce(sub_mul(j1, j2, c));
+   return mul_add(j1, q, j2);
    }
+
+/*************************************************
+* Make a copy of this Default_IF_Op              *
+*************************************************/
+IF_Operation* Default_IF_Op::clone() const
+   {
+   Default_IF_Op* copy = new Default_IF_Op(*this);
+   copy->reduce_by_p = 0;
+
+   if(p != 0)
+      copy->reduce_by_p = get_reducer(p);
+
+   return copy;
+   }
+
 
 /*************************************************
 * Default DSA Operation                          *
@@ -75,7 +97,7 @@ class Default_DSA_Op : public DSA_Operation
    private:
       const BigInt x, y;
       const DL_Group group;
-      FixedBase_Exp powermod_g_p, powermod_y_p;
+      Fixed_Base_Power_Mod powermod_g_p, powermod_y_p;
    };
 
 /*************************************************
@@ -84,8 +106,8 @@ class Default_DSA_Op : public DSA_Operation
 Default_DSA_Op::Default_DSA_Op(const DL_Group& grp, const BigInt& y1,
                                const BigInt& x1) : x(x1), y(y1), group(grp)
    {
-   powermod_g_p = FixedBase_Exp(group.get_g(), group.get_p());
-   powermod_y_p = FixedBase_Exp(y, group.get_p());
+   powermod_g_p = Fixed_Base_Power_Mod(group.get_g(), group.get_p());
+   powermod_y_p = Fixed_Base_Power_Mod(y, group.get_p());
    }
 
 /*************************************************
@@ -152,7 +174,7 @@ class Default_NR_Op : public NR_Operation
    private:
       const BigInt x, y;
       const DL_Group group;
-      FixedBase_Exp powermod_g_p, powermod_y_p;
+      Fixed_Base_Power_Mod powermod_g_p, powermod_y_p;
    };
 
 /*************************************************
@@ -161,8 +183,8 @@ class Default_NR_Op : public NR_Operation
 Default_NR_Op::Default_NR_Op(const DL_Group& grp, const BigInt& y1,
                              const BigInt& x1) : x(x1), y(y1), group(grp)
    {
-   powermod_g_p = FixedBase_Exp(group.get_g(), group.get_p());
-   powermod_y_p = FixedBase_Exp(y, group.get_p());
+   powermod_g_p = Fixed_Base_Power_Mod(group.get_g(), group.get_p());
+   powermod_y_p = Fixed_Base_Power_Mod(y, group.get_p());
    }
 
 /*************************************************
@@ -227,8 +249,8 @@ class Default_ELG_Op : public ELG_Operation
       Default_ELG_Op(const DL_Group&, const BigInt&, const BigInt&);
    private:
       const BigInt p;
-      FixedBase_Exp powermod_g_p, powermod_y_p;
-      FixedExponent_Exp powermod_x_p;
+      Fixed_Base_Power_Mod powermod_g_p, powermod_y_p;
+      Fixed_Exponent_Power_Mod powermod_x_p;
    };
 
 /*************************************************
@@ -237,11 +259,11 @@ class Default_ELG_Op : public ELG_Operation
 Default_ELG_Op::Default_ELG_Op(const DL_Group& group, const BigInt& y,
                                const BigInt& x) : p(group.get_p())
    {
-   powermod_g_p = FixedBase_Exp(group.get_g(), p);
-   powermod_y_p = FixedBase_Exp(y, p);
+   powermod_g_p = Fixed_Base_Power_Mod(group.get_g(), p);
+   powermod_y_p = Fixed_Base_Power_Mod(y, p);
 
    if(x != 0)
-      powermod_x_p = FixedExponent_Exp(x, p);
+      powermod_x_p = Fixed_Exponent_Power_Mod(x, p);
    }
 
 /*************************************************
@@ -268,9 +290,6 @@ SecureVector<byte> Default_ELG_Op::encrypt(const byte in[], u32bit length,
 *************************************************/
 BigInt Default_ELG_Op::decrypt(const BigInt& a, const BigInt& b) const
    {
-   if(!powermod_x_p.initialized())
-      throw Internal_Error("Default_ELG_Op::decrypt: No private key");
-
    if(a >= p || b >= p)
       throw Invalid_Argument("Default_ELG_Op: Invalid message");
 
@@ -289,7 +308,7 @@ class Default_DH_Op : public DH_Operation
       Default_DH_Op(const DL_Group& group, const BigInt& x) :
          powermod_x_p(x, group.get_p()) {}
    private:
-      const FixedExponent_Exp powermod_x_p;
+      const Fixed_Exponent_Power_Mod powermod_x_p;
    };
 
 }
@@ -339,14 +358,6 @@ DH_Operation* Default_Engine::dh_op(const DL_Group& group,
                                     const BigInt& x) const
    {
    return new Default_DH_Op(group, x);
-   }
-
-/*************************************************
-* Acquire a ModularReducer                       *
-*************************************************/
-ModularReducer* Default_Engine::reducer(const BigInt& n, bool) const
-   {
-   return new BarrettReducer(n);
    }
 
 }

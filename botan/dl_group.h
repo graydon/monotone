@@ -1,10 +1,10 @@
 /*************************************************
 * Discrete Logarithm Group Header File           *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
-#ifndef BOTAN_DL_PARM_H__
-#define BOTAN_DL_PARM_H__
+#ifndef BOTAN_DL_PARAM_H__
+#define BOTAN_DL_PARAM_H__
 
 #include <botan/bigint.h>
 #include <botan/data_src.h>
@@ -34,6 +34,7 @@ class DL_Group
       static BigInt make_dsa_generator(const BigInt&, const BigInt&);
 
       DL_Group();
+      DL_Group(const std::string&);
       DL_Group(u32bit, PrimeType = Strong);
       DL_Group(const MemoryRegion<byte>&, u32bit = 1024, u32bit = 0);
       DL_Group(const BigInt&, const BigInt&);
@@ -44,16 +45,6 @@ class DL_Group
       bool initialized;
       BigInt p, q, g;
    };
-
-/*************************************************
-* Retrieve a DL group by name                    *
-*************************************************/
-const DL_Group& get_dl_group(const std::string&);
-
-/*************************************************
-* Register a named DL group                      *
-*************************************************/
-void add_dl_group(const std::string&, const DL_Group&);
 
 }
 

@@ -1,6 +1,6 @@
 /*************************************************
 * PKCS #10 Source File                           *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pkcs10.h>
@@ -77,7 +77,7 @@ void PKCS10_Request::force_decode()
    cert_req_info.verify_end();
 
    std::vector<std::string> emails = dn.get_attribute("PKCS9.EmailAddress");
-   for(u32bit j = 0; j != emails.size(); j++)
+   for(u32bit j = 0; j != emails.size(); ++j)
       subject_alt.add_attribute("RFC822", emails[j]);
 
    X509_Code sig_check = X509_Store::check_sig(*this, subject_public_key());

@@ -1,6 +1,6 @@
 /*************************************************
 * PKCS #5 PBES2 Source File                      *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pbe_pkcs.h>
@@ -84,8 +84,8 @@ void PBE_PKCS5v20::new_params()
    key_length = max_keylength_of(cipher_algo);
    salt.create(8);
    iv.create(block_size_of(cipher_algo));
-   Global_RNG::randomize(salt, salt.size(), Nonce);
-   Global_RNG::randomize(iv, iv.size(), Nonce);
+   Global_RNG::randomize(salt, salt.size());
+   Global_RNG::randomize(iv, iv.size());
    }
 
 /*************************************************

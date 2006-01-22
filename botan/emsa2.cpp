@@ -1,6 +1,6 @@
 /*************************************************
 * EMSA2 Source File                              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/emsa.h>
@@ -39,7 +39,7 @@ SecureVector<byte> EMSA2::encoding_of(const MemoryRegion<byte>& msg,
       throw Invalid_Argument("EMSA2::encoding_of: Output length is too small");
 
    bool empty = true;
-   for(u32bit j = 0; j != hash->OUTPUT_LENGTH; j++)
+   for(u32bit j = 0; j != hash->OUTPUT_LENGTH; ++j)
       if(empty_hash[j] != msg[j])
          empty = false;
 

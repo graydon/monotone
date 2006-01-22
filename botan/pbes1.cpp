@@ -1,6 +1,6 @@
 /*************************************************
 * PKCS #5 PBES1 Source File                      *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pbe_pkcs.h>
@@ -84,7 +84,7 @@ void PBE_PKCS5v15::new_params()
    {
    iterations = 2048;
    salt.create(8);
-   Global_RNG::randomize(salt, salt.size(), Nonce);
+   Global_RNG::randomize(salt, salt.size());
    }
 
 /*************************************************

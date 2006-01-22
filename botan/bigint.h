@@ -1,6 +1,6 @@
 /*************************************************
 * BigInt Header File                             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_BIGINT_H__
@@ -57,7 +57,7 @@ class BigInt
       void mask_bits(u32bit);
 
       bool get_bit(u32bit) const;
-      u32bit get_nibble(u32bit, u32bit) const;
+      u32bit get_substring(u32bit, u32bit) const;
       byte byte_at(u32bit) const;
       word word_at(u32bit) const;
 
@@ -84,7 +84,7 @@ class BigInt
       word operator[](u32bit index) const { return reg[index]; }
       void clear() { reg.clear(); }
 
-      void randomize(u32bit = 0, RNG_Quality = SessionKey);
+      void randomize(u32bit = 0);
 
       void binary_encode(byte[]) const;
       void binary_decode(const byte[], u32bit);
@@ -98,7 +98,8 @@ class BigInt
 
       void swap(BigInt&);
 
-      BigInt(u64bit = 0);
+      BigInt() { signedness = Positive; }
+      BigInt(u64bit);
       BigInt(const BigInt&);
       BigInt(const std::string&);
       BigInt(const byte[], u32bit, Base = Binary);
@@ -107,8 +108,8 @@ class BigInt
    private:
       friend void modifying_divide(BigInt&, BigInt&, BigInt&);
       void grow_to(u32bit n) const { reg.grow_to(n); }
-      Sign signedness;
       SecureVector<word> reg;
+      Sign signedness;
    };
 
 /*************************************************

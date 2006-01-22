@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Time Types Source File                   *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1_obj.h>
@@ -47,7 +47,7 @@ X509_Time::X509_Time(const std::string& time_str)
    std::vector<std::string> params;
    std::string current;
 
-   for(u32bit j = 0; j != time_str.size(); j++)
+   for(u32bit j = 0; j != time_str.size(); ++j)
       {
       if(is_digit(time_str[j]))
          current += time_str[j];
@@ -119,12 +119,12 @@ X509_Time::X509_Time(const std::string& t_spec, ASN1_Tag t) : tag(t)
    std::vector<std::string> params;
    std::string current;
 
-   for(u32bit j = 0; j != YEAR_SIZE; j++)
+   for(u32bit j = 0; j != YEAR_SIZE; ++j)
       current += t_spec[j];
    params.push_back(current);
    current = "";
 
-   for(u32bit j = YEAR_SIZE; j != t_spec.size() - 1; j++)
+   for(u32bit j = YEAR_SIZE; j != t_spec.size() - 1; ++j)
       {
       current += t_spec[j];
       if(current.size() == 2)

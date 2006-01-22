@@ -1,85 +1,240 @@
 /*************************************************
-* MP Multiplication Source File                  *
-* (C) 1999-2005 The Botan Project                *
+* Karatsuba Multiplication Source File           *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/mp_core.h>
+#include <botan/mem_ops.h>
+#include <botan/mp_asm.h>
 
 namespace Botan {
+
+/*************************************************
+* Two Operand Linear Multiply                    *
+*************************************************/
+void bigint_linmul2(word x[], u32bit x_size, word y)
+   {
+   const u32bit blocks = x_size - (x_size % 4);
+
+   word carry = 0;
+
+   for(u32bit j = 0; j != blocks; j += 4)
+      {
+      x[j  ] = word_mul(x[j  ], y, &carry);
+      x[j+1] = word_mul(x[j+1], y, &carry);
+      x[j+2] = word_mul(x[j+2], y, &carry);
+      x[j+3] = word_mul(x[j+3], y, &carry);
+      }
+
+   for(u32bit j = blocks; j != x_size; ++j)
+      x[j] = word_mul(x[j], y, &carry);
+
+   x[x_size] = carry;
+   }
+
+/*************************************************
+* Three Operand Linear Multiply                  *
+*************************************************/
+void bigint_linmul3(word z[], const word x[], u32bit x_size, word y)
+   {
+   const u32bit blocks = x_size - (x_size % 4);
+
+   word carry = 0;
+   for(u32bit j = 0; j != blocks; j += 4)
+      {
+      z[j  ] = word_mul(x[j  ], y, &carry);
+      z[j+1] = word_mul(x[j+1], y, &carry);
+      z[j+2] = word_mul(x[j+2], y, &carry);
+      z[j+3] = word_mul(x[j+3], y, &carry);
+      }
+
+   for(u32bit j = blocks; j != x_size; ++j)
+      z[j] = word_mul(x[j], y, &carry);
+   z[x_size] = carry;
+   }
+
+/*************************************************
+* Simple O(N^2) Multiplication                   *
+*************************************************/
+void bigint_simple_mul(word z[], const word x[], u32bit x_size,
+                                 const word y[], u32bit y_size)
+   {
+   const u32bit blocks = y_size - (y_size % 8);
+
+   clear_mem(z, x_size + y_size);
+
+   for(u32bit j = 0; j != x_size; ++j)
+      {
+      const word x_j = x[j];
+
+      word carry = 0;
+
+      for(u32bit k = 0; k != blocks; k += 8)
+         {
+         word_madd(x_j, y[k+0], z[j+k+0], carry, z + (j+k+0), &carry);
+         word_madd(x_j, y[k+1], z[j+k+1], carry, z + (j+k+1), &carry);
+         word_madd(x_j, y[k+2], z[j+k+2], carry, z + (j+k+2), &carry);
+         word_madd(x_j, y[k+3], z[j+k+3], carry, z + (j+k+3), &carry);
+         word_madd(x_j, y[k+4], z[j+k+4], carry, z + (j+k+4), &carry);
+         word_madd(x_j, y[k+5], z[j+k+5], carry, z + (j+k+5), &carry);
+         word_madd(x_j, y[k+6], z[j+k+6], carry, z + (j+k+6), &carry);
+         word_madd(x_j, y[k+7], z[j+k+7], carry, z + (j+k+7), &carry);
+         }
+
+      for(u32bit k = blocks; k != y_size; ++k)
+         word_madd(x_j, y[k], z[j+k], carry, z + (j+k), &carry);
+      z[j+y_size] = carry;
+      }
+   }
 
 namespace {
 
 /*************************************************
-* Length Checking                                *
+* Karatsuba Multiplication Operation             *
 *************************************************/
-bool use_op(u32bit x_sw, u32bit y_sw,
-            u32bit x_size, u32bit y_size, u32bit z_size,
-            u32bit limit, u32bit min = 0)
+void karatsuba_mul(word z[], const word x[], const word y[], u32bit N,
+                   word workspace[])
    {
-   return (x_sw <= limit && y_sw <= limit &&
-           x_size >= limit && y_size >= limit && z_size >= 2*limit &&
-           (x_sw + y_sw) >= min);
+   const u32bit KARATSUBA_MUL_LOWER_SIZE = BOTAN_KARAT_MUL_THRESHOLD;
+
+   if(N == 6)
+      bigint_comba_mul6(z, x, y);
+   else if(N == 8)
+      bigint_comba_mul8(z, x, y);
+   else if(N < KARATSUBA_MUL_LOWER_SIZE || N % 2)
+      bigint_simple_mul(z, x, N, y, N);
+   else
+      {
+      const u32bit N2 = N / 2;
+
+      const word* x0 = x;
+      const word* x1 = x + N2;
+      const word* y0 = y;
+      const word* y1 = y + N2;
+      word* z0 = z;
+      word* z1 = z + N;
+
+      const s32bit cmp0 = bigint_cmp(x0, N2, x1, N2);
+      const s32bit cmp1 = bigint_cmp(y1, N2, y0, N2);
+
+      clear_mem(workspace, 2*N);
+
+      if(cmp0 && cmp1)
+         {
+         if(cmp0 > 0)
+            bigint_sub3(z0, x0, N2, x1, N2);
+         else
+            bigint_sub3(z0, x1, N2, x0, N2);
+
+         if(cmp1 > 0)
+            bigint_sub3(z1, y1, N2, y0, N2);
+         else
+            bigint_sub3(z1, y0, N2, y1, N2);
+
+         karatsuba_mul(workspace, z0, z1, N2, workspace+N);
+         }
+
+      karatsuba_mul(z0, x0, y0, N2, workspace+N);
+      karatsuba_mul(z1, x1, y1, N2, workspace+N);
+
+      word carry = bigint_add3_nc(workspace+N, z0, N, z1, N);
+      carry += bigint_add2_nc(z + N2, N, workspace + N, N);
+      bigint_add2_nc(z + N + N2, N2, &carry, 1);
+
+      if((cmp0 == cmp1) || (cmp0 == 0) || (cmp1 == 0))
+         bigint_add2(z + N2, 2*N-N2, workspace, N);
+      else
+         bigint_sub2(z + N2, 2*N-N2, workspace, N);
+      }
    }
 
 /*************************************************
-* Attempt a Karatsuba multiply                   *
+* Pick a good size for the Karatsuba multiply    *
 *************************************************/
-bool do_karat(word z[], u32bit z_size,
-              const word x[], u32bit x_size, u32bit x_sw,
-              const word y[], u32bit y_size, u32bit y_sw)
+u32bit karatsuba_size(u32bit x_size, u32bit x_sw, u32bit y_size, u32bit y_sw)
    {
-   const u32bit KARAT_12_BOUND = 20;
-   const u32bit KARAT_16_BOUND = 24;
-   const u32bit KARAT_24_BOUND = 38;
-   const u32bit KARAT_32_BOUND = 46;
-   const u32bit KARAT_48_BOUND = 66;
-   const u32bit KARAT_64_BOUND = 80;
-   const u32bit KARAT_96_BOUND = 114;
-   const u32bit KARAT_128_BOUND = 136;
+   if(x_sw > y_size || y_sw > x_size)
+      return 0;
+   if(((x_size == x_sw) && (x_size % 2)) ||
+      ((y_size == y_sw) && (y_size % 2)))
+      return 0;
 
-   if(use_op(x_sw, y_sw, x_size, y_size, z_size, 12, KARAT_12_BOUND))
-      bigint_karat12(z, x, y);
-   else if(use_op(x_sw, y_sw, x_size, y_size, z_size, 16, KARAT_16_BOUND))
-      bigint_karat16(z, x, y);
-   else if(use_op(x_sw, y_sw, x_size, y_size, z_size, 24, KARAT_24_BOUND))
-      bigint_karat24(z, x, y);
-   else if(use_op(x_sw, y_sw, x_size, y_size, z_size, 32, KARAT_32_BOUND))
-      bigint_karat32(z, x, y);
-   else if(use_op(x_sw, y_sw, x_size, y_size, z_size, 48, KARAT_48_BOUND))
-      bigint_karat48(z, x, y);
-   else if(use_op(x_sw, y_sw, x_size, y_size, z_size, 64, KARAT_64_BOUND))
-      bigint_karat64(z, x, y);
-   else if(use_op(x_sw, y_sw, x_size, y_size, z_size, 96, KARAT_96_BOUND))
-      bigint_karat96(z, x, y);
-   else if(use_op(x_sw, y_sw, x_size, y_size, z_size, 128, KARAT_128_BOUND))
-      bigint_karat128(z, x, y);
-   else
-      return false;
+   u32bit start = (x_sw > y_sw) ? x_sw : y_sw;
+   u32bit end = (x_size < y_size) ? x_size : y_size;
 
-   return true;
+   if(end < start)
+      return 0;
+
+   if(start == end)
+      {
+      if(start % 2)
+         return 0;
+      return start;
+      }
+
+   for(u32bit j = start; j <= end; ++j)
+      if(j % 2 == 0 && x_sw <= j && j <= x_size && y_sw <= j && j <= y_size)
+         {
+         if(j % 4 == 2 && (j+2) < x_size && (j+2) < y_size)
+            return (j+2);
+         return j;
+         }
+   return 0;
    }
 
+/*************************************************
+* Handle small operand multiplies                *
+*************************************************/
+void handle_small_mul(word z[], u32bit z_size,
+                      const word x[], u32bit x_size, u32bit x_sw,
+                      const word y[], u32bit y_size, u32bit y_sw)
+   {
+   if(x_sw == 1)        bigint_linmul3(z, y, y_sw, x[0]);
+   else if(y_sw == 1)   bigint_linmul3(z, x, x_sw, y[0]);
+
+   else if(x_sw <= 4 && y_sw <= 4 &&
+           x_size >= 4 && y_size >= 4 && z_size >= 8)
+      bigint_comba_mul4(z, x, y);
+
+   else if(x_sw <= 6 && y_sw <= 6 &&
+           x_size >= 6 && y_size >= 6 && z_size >= 12)
+      bigint_comba_mul6(z, x, y);
+
+   else if(x_sw <= 8 && y_sw <= 8 &&
+           x_size >= 8 && y_size >= 8 && z_size >= 16)
+      bigint_comba_mul8(z, x, y);
+
+   else
+      bigint_simple_mul(z, x, x_sw, y, y_sw);
+   }
 
 }
 
 /*************************************************
-* MP Multiplication Algorithm Dispatcher         *
+* Multiplication Algorithm Dispatcher            *
 *************************************************/
 void bigint_mul3(word z[], u32bit z_size,
                  const word x[], u32bit x_size, u32bit x_sw,
                  const word y[], u32bit y_size, u32bit y_sw)
    {
-   if(x_sw == 1)      bigint_linmul3(z, y, y_sw, x[0]);
-   else if(y_sw == 1) bigint_linmul3(z, x, x_sw, y[0]);
+   if(x_size <= 8 || y_size <= 8)
+      {
+      handle_small_mul(z, z_size, x, x_size, x_sw, y, y_size, y_sw);
+      return;
+      }
 
-   else if(use_op(x_sw, y_sw, x_size, y_size, z_size, 4))
-      bigint_comba4(z, x, y);
-   else if(use_op(x_sw, y_sw, x_size, y_size, z_size, 6))
-      bigint_comba6(z, x, y);
-   else if(use_op(x_sw, y_sw, x_size, y_size, z_size, 8))
-      bigint_comba8(z, x, y);
-   else if(!do_karat(z, z_size, x, x_size, x_sw, y, y_size, y_sw))
-      bigint_smul(z, x, x_sw, y, y_sw);
+   const u32bit N = karatsuba_size(x_size, x_sw, y_size, y_sw);
+
+   if(N)
+      {
+      word* workspace = new word[2*N];
+      clear_mem(workspace, 2*N);
+      karatsuba_mul(z, x, y, N, workspace);
+      clear_mem(workspace, 2*N);
+      delete[] workspace;
+      }
+   else
+      bigint_simple_mul(z, x, x_sw, y, y_sw);
    }
 
 }

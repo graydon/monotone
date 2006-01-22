@@ -1,13 +1,13 @@
 /*************************************************
 * Number Theory Header File                      *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_NUMBTHRY_H__
 #define BOTAN_NUMBTHRY_H__
 
 #include <botan/bigint.h>
-#include <botan/reducer.h>
+#include <botan/pow_mod.h>
 
 namespace Botan {
 
@@ -33,12 +33,8 @@ BigInt lcm(const BigInt&, const BigInt&);
 BigInt square(const BigInt&);
 BigInt inverse_mod(const BigInt&, const BigInt&);
 s32bit jacobi(const BigInt&, const BigInt&);
-BigInt power(const BigInt&, u32bit);
 
-/*************************************************
-* Modular Exponentiation                         *
-*************************************************/
-BigInt power_mod(const BigInt&, const BigInt&, ModularReducer*);
+BigInt power(const BigInt&, u32bit);
 BigInt power_mod(const BigInt&, const BigInt&, const BigInt&);
 
 /*************************************************
@@ -60,11 +56,10 @@ bool run_primality_tests(const BigInt&, u32bit = 1);
 /*************************************************
 * Random Number Generation                       *
 *************************************************/
-BigInt random_integer(u32bit, RNG_Quality = SessionKey);
-BigInt random_integer(const BigInt&, const BigInt&, RNG_Quality = SessionKey);
-BigInt random_prime(u32bit, RNG_Quality = SessionKey, const BigInt& = 1,
-                    u32bit = 1, u32bit = 2);
-BigInt random_safe_prime(u32bit, RNG_Quality = SessionKey);
+BigInt random_integer(u32bit);
+BigInt random_integer(const BigInt&, const BigInt&);
+BigInt random_prime(u32bit, const BigInt& = 1, u32bit = 1, u32bit = 2);
+BigInt random_safe_prime(u32bit);
 
 SecureVector<byte> generate_dsa_primes(BigInt&, BigInt&, u32bit);
 bool generate_dsa_primes(BigInt&, BigInt&, const byte[], u32bit, u32bit,
@@ -88,13 +83,14 @@ class MillerRabin_Test
       bool passes_test(const BigInt&);
 
       MillerRabin_Test(const BigInt&);
-      ~MillerRabin_Test() { delete reducer; }
+      ~MillerRabin_Test();
    private:
       MillerRabin_Test(const MillerRabin_Test&) {}
       MillerRabin_Test& operator=(const MillerRabin_Test&) { return (*this); }
       BigInt n, r, n_minus_1;
       u32bit s;
-      ModularReducer* reducer;
+      Fixed_Exponent_Power_Mod pow_mod;
+      class ModularReducer* reducer;
    };
 
 }

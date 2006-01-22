@@ -1,6 +1,6 @@
 /*************************************************
 * Basic Allocators Header File                   *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_BASIC_ALLOC_H__
@@ -15,9 +15,11 @@ namespace Botan {
 *************************************************/
 class Malloc_Allocator : public Pooling_Allocator
    {
+   public:
+      Malloc_Allocator() : Pooling_Allocator(64*1024, false) {}
    private:
-      void* alloc_block(u32bit) const;
-      void dealloc_block(void*, u32bit) const;
+      void* alloc_block(u32bit);
+      void dealloc_block(void*, u32bit);
    };
 
 /*************************************************
@@ -25,11 +27,11 @@ class Malloc_Allocator : public Pooling_Allocator
 *************************************************/
 class Locking_Allocator : public Pooling_Allocator
    {
+   public:
+      Locking_Allocator() : Pooling_Allocator(64*1024, true) {}
    private:
-      void* alloc_block(u32bit) const;
-      void dealloc_block(void*, u32bit) const;
-      u32bit prealloc_bytes() const { return 256*1024; }
-      u32bit keep_free() const { return 256*1024; }
+      void* alloc_block(u32bit);
+      void dealloc_block(void*, u32bit);
    };
 
 }

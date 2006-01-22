@@ -1,6 +1,6 @@
 /*************************************************
 * Common ASN.1 Objects Header File               *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_ASN1_OBJ_H__
@@ -197,16 +197,6 @@ void decode(BER_Decoder&, AlternativeName&);
 void decode(BER_Decoder&, Key_Constraints&);
 
 }
-
-/*************************************************
-* Insert a key/value pair into a multimap        *
-*************************************************/
-template<typename K, typename V>
-void multimap_insert(std::multimap<K, V>& multimap,
-                     const K& key, const V& value)
-   {
-   multimap.insert(std::make_pair(key, value));
-   }
 
 }
 

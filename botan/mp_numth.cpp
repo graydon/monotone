@@ -1,6 +1,6 @@
 /*************************************************
-* Fused Arithmetic Operations Source File        *
-* (C) 1999-2005 The Botan Project                *
+* Fused and Important MP Algorithms Source File  *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/numthry.h>
@@ -9,7 +9,19 @@
 namespace Botan {
 
 /*************************************************
-* Fused Multiply/Add Operation                   *
+* Square a BigInt                                *
+*************************************************/
+BigInt square(const BigInt& x)
+   {
+   const u32bit x_sw = x.sig_words();
+
+   BigInt z(BigInt::Positive, 2*x_sw);
+   bigint_sqr(z.get_reg(), z.size(), x.data(), x.size(), x_sw);
+   return z;
+   }
+
+/*************************************************
+* Multiply-Add Operation                         *
 *************************************************/
 BigInt mul_add(const BigInt& a, const BigInt& b, const BigInt& c)
    {
@@ -34,7 +46,7 @@ BigInt mul_add(const BigInt& a, const BigInt& b, const BigInt& c)
    }
 
 /*************************************************
-* Fused Subtract/Multiply Operation              *
+* Subtract-Multiply Operation                    *
 *************************************************/
 BigInt sub_mul(const BigInt& a, const BigInt& b, const BigInt& c)
    {
@@ -48,7 +60,7 @@ BigInt sub_mul(const BigInt& a, const BigInt& b, const BigInt& c)
    }
 
 /*************************************************
-* Fused Multiply/Modulo Operation                *
+* Multiply-Modulo Operation                      *
 *************************************************/
 BigInt mul_mod(const BigInt& a, const BigInt& b, const BigInt& m)
    {

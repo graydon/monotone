@@ -1,6 +1,6 @@
 /*************************************************
-* X.509 Certificate Authority Source File        *
-* (C) 1999-2005 The Botan Project                *
+* PKCS #10/Self Signed Cert Creation Source File *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/x509self.h>
@@ -128,7 +128,7 @@ void encode_extensions(DER_Encoder& attr_encoder,
    if(ex_constraints.size())
       {
       v3_ext.start_sequence();
-      for(u32bit j = 0; j != ex_constraints.size(); j++)
+      for(u32bit j = 0; j != ex_constraints.size(); ++j)
          DER::encode(v3_ext, ex_constraints[j]);
       v3_ext.end_sequence();
       do_ext(attr_encoder, v3_ext, "X509v3.ExtendedKeyUsage");

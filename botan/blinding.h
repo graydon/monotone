@@ -1,13 +1,12 @@
 /*************************************************
 * Blinder Header File                            *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_BLINDER_H__
 #define BOTAN_BLINDER_H__
 
 #include <botan/bigint.h>
-#include <botan/reducer.h>
 
 namespace Botan {
 
@@ -29,7 +28,7 @@ class Blinder
    private:
       mutable BigInt e, d;
       BigInt n;
-      ModularReducer* reducer;
+      class ModularReducer* reducer;
    };
 
 }

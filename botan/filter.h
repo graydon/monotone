@@ -1,6 +1,6 @@
 /*************************************************
 * Filter Header File                             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_FILTER_H__
@@ -49,6 +49,7 @@ class Filter
       SecureVector<byte> write_queue;
       std::vector<Filter*> next;
       u32bit port_num, filter_owns;
+      bool owned;
    };
 
 /*************************************************

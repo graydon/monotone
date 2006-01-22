@@ -1,6 +1,6 @@
 /*************************************************
 * PK Algorithm Core Source File                  *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pk_core.h>
@@ -20,7 +20,7 @@ BigInt blinding_factor(u32bit modulus_size)
    const u32bit BLINDING_BITS = Config::get_u32bit("pk/blinder_size");
    if(BLINDING_BITS == 0)
       return 0;
-   return random_integer(std::min(modulus_size - 1, BLINDING_BITS), Nonce);
+   return random_integer(std::min(modulus_size - 1, BLINDING_BITS));
    }
 
 }

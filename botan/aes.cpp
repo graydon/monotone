@@ -1,6 +1,6 @@
 /*************************************************
 * AES Source File                                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/aes.h>
@@ -124,12 +124,12 @@ void AES::key(const byte key[], u32bit length)
    SecureBuffer<u32bit, 64> XEK, XDK;
 
    const u32bit X = length / 4;
-   for(u32bit j = 0; j != X; j++)
+   for(u32bit j = 0; j != X; ++j)
       XEK[j] = make_u32bit(key[4*j], key[4*j+1], key[4*j+2], key[4*j+3]);
    for(u32bit j = X; j < 4*(ROUNDS+1); j += X)
       {
       XEK[j] = XEK[j-X] ^ S(rotate_left(XEK[j-1], 8)) ^ RC[(j-X)/X];
-      for(u32bit k = 1; k != X; k++)
+      for(u32bit k = 1; k != X; ++k)
          {
          if(X == 8 && k == 4)
             XEK[j+k] = XEK[j+k-X] ^ S(XEK[j+k-1]);
@@ -145,12 +145,12 @@ void AES::key(const byte key[], u32bit length)
       XDK[j+2] = XEK[4*ROUNDS-j+2];
       XDK[j+3] = XEK[4*ROUNDS-j+3];
       }
-   for(u32bit j = 4; j != length + 24; j++)
+   for(u32bit j = 4; j != length + 24; ++j)
       XDK[j] = TD0[SE[get_byte(0, XDK[j])]] ^ TD1[SE[get_byte(1, XDK[j])]] ^
                TD2[SE[get_byte(2, XDK[j])]] ^ TD3[SE[get_byte(3, XDK[j])]];
 
-   for(u32bit j = 0; j != 4; j++)
-      for(u32bit k = 0; k != 4; k++)
+   for(u32bit j = 0; j != 4; ++j)
+      for(u32bit k = 0; k != 4; ++k)
          {
          ME[4*j+k   ] = get_byte(k, XEK[j]);
          ME[4*j+k+16] = get_byte(k, XEK[j+4*ROUNDS]);
