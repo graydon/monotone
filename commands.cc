@@ -2800,8 +2800,10 @@ struct update_source
 
 CMD(update, N_("working copy"), "",
     N_("update working copy.\n"
-    "If a revision is given, base the update on that revision.  If not,\n"
-    "base the update on the head of the branch (given or implicit)."),
+       "This command modifies your working copy to be based off of a\n"
+       "different revision, preserving uncommitted changes as it does so.\n"
+       "If a revision is given, update the working copy to that revision.\n"
+       "If not, update the working copy to the head of the branch."),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   revision_set r_old, r_working, r_new;

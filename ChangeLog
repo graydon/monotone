@@ -1,3 +1,7 @@
+2006-01-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Hopefully improve wording of help a bit.
+
 2006-01-21  Nathaniel Smith  <njs@pobox.com>
 
 	* netcmd.cc (read): Expand the error message we issue on protocol
