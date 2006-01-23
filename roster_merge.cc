@@ -18,7 +18,9 @@ roster_merge_result::is_clean()
     && node_attr_conflicts.empty()
     && orphaned_node_conflicts.empty()
     && rename_target_conflicts.empty()
-    && directory_loop_conflicts.empty();
+    && directory_loop_conflicts.empty()
+    && illegal_name_conflicts.empty()
+    && !missing_root_dir;
 }
 
 void
@@ -30,6 +32,8 @@ roster_merge_result::clear()
   orphaned_node_conflicts.clear();
   rename_target_conflicts.clear();
   directory_loop_conflicts.clear();
+  illegal_name_conflicts.clear();
+  missing_root_dir = false;
   roster = roster_t();
 }
 
@@ -234,7 +238,6 @@ roster_merge(roster_t const & left_parent,
              std::set<revision_id> const & right_uncommon_ancestors,
              roster_merge_result & result)
 {
-
   result.clear();
   MM(left_parent);
   MM(left_marking);
