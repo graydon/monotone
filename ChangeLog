@@ -1,3 +1,12 @@
+2006-01-23  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	New ChangeLog utilities in contrib/ .
+	* contrib/ChangeLog.sh: Script that takes the date, author, and
+	changelog certs from the last n revisions and prints them in standard
+	ChangeLog format.
+	* contrib/edit_comment_from_changelog.lua: an edit_comment hook that
+	takes the initial commit message from the most recent ChangeLog entry
+
 2006-01-23  Henry Nestler  <henry@bigfoot.de>
 
 	* monotone.texi, monotone.1: Mode none for --ticker.
