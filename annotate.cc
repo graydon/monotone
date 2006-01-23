@@ -21,6 +21,7 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "vocab.hh"
+#include "cert.hh"
 
 
 
@@ -46,11 +47,13 @@ public:
   /// return true if we have no more unassigned lines
   bool is_complete() const;
 
-  void dump() const;
+  void dump(app_state & app) const;
 
   std::string get_line(int line_index) const { return file_lines[line_index]; }
 
 private:
+  void build_revisions_to_annotations(app_state & app, std::map<revision_id, std::string> & revs_to_notations) const;
+
   std::vector<std::string> file_lines;
   std::vector<revision_id> annotations;
 
@@ -290,22 +293,112 @@ annotate_context::is_complete() const
 }
 
 
+std::string cert_string_value (std::vector< revision<cert> > const & certs,
+                               const std::string & name, 
+                               bool from_start, bool from_end, 
+                               const std::string & sep)
+{
+  for (std::vector < revision < cert > >::const_iterator i = certs.begin ();
+       i != certs.end (); ++i)
+    {
+      if (i->inner ().name () == name)
+        {
+          cert_value tv;
+          decode_base64 (i->inner ().value, tv);
+          std::string::size_type f = 0;
+          std::string::size_type l = std::string::npos;
+          if (from_start)
+            l = tv ().find_first_of (sep);
+          if (from_end)
+            {
+              f = tv ().find_last_of (sep);
+              if (f == std::string::npos)
+                f = 0;
+            }
+          return tv ().substr (f, l);
+        }
+    }
+
+  return "";
+}
+
+
 void
-annotate_context::dump() const
+annotate_context::build_revisions_to_annotations(app_state &app,
+                                                 std::map<revision_id, std::string> &revs_to_notations) const
+{
+  I(annotations.size() == file_lines.size());
+
+  // build set of unique revisions present in annotations
+  std::set<revision_id> seen;
+  for (std::vector<revision_id>::const_iterator i = annotations.begin(); i != annotations.end(); i++)
+    {
+      seen.insert(*i);
+    }
+
+  size_t max_note_length = 0;
+
+  // build revision -> annotation string mapping
+  for (std::set<revision_id>::const_iterator i = seen.begin(); i != seen.end(); i++)
+    {
+      std::vector< revision<cert> > certs;
+      app.db.get_revision_certs(*i, certs);
+      erase_bogus_certs(certs, app);
+
+      std::string author(cert_string_value(certs, author_cert_name, true, false, "@< "));
+      std::string date(cert_string_value(certs, date_cert_name, true, false, "T"));
+
+      std::string result;
+      result.append((*i).inner ()().substr(0, 8));
+      result.append(".. by ");
+      result.append(author);
+      result.append(" ");
+      result.append(date);
+      result.append(": ");
+
+      max_note_length = (result.size() > max_note_length) ? result.size() : max_note_length;
+      revs_to_notations[*i] = result;
+    }
+
+  // justify annotation strings
+  for (std::map<revision_id, std::string>::iterator i = revs_to_notations.begin(); i != revs_to_notations.end(); i++)
+    {
+      size_t l = i->second.size();
+      i->second.insert(std::string::size_type(0), max_note_length - l, ' ');
+    }
+}
+
+
+void
+annotate_context::dump(app_state &app) const
 {
   revision_id nullid;
   I(annotations.size() == file_lines.size());
 
-  revision_id lastid = nullid;
-  for (size_t i=0; i<file_lines.size(); i++) {
-    //I(! (annotations[i] == nullid) );
-    if (false) //(lastid == annotations[i])
-      std::cout << "                                        : " << file_lines[i] << std::endl;
-    else
-      std::cout << annotations[i] << ": " << file_lines[i] << std::endl;
+  std::map<revision_id, std::string> revs_to_notations;
+  std::string empty_note;
+  if (global_sanity.brief) 
+    {
+      build_revisions_to_annotations(app, revs_to_notations);
+      size_t max_note_length = revs_to_notations.begin()->second.size();
+      empty_note.insert(std::string::size_type(0), max_note_length - 2, ' ');
+    }
 
-    lastid = annotations[i];
-  }
+  revision_id lastid = nullid;
+  for (size_t i=0; i<file_lines.size(); i++) 
+    {
+      //I(! (annotations[i] == nullid) );
+      if (global_sanity.brief)
+        {
+          if (lastid == annotations[i])
+            std::cout << empty_note << ": " << file_lines[i] << std::endl;
+          else
+            std::cout << revs_to_notations[annotations[i]] << file_lines[i] << std::endl;
+          lastid = annotations[i];
+        } 
+      else
+        std::cout << annotations[i] << ": " << file_lines[i] << std::endl;
+    }
 }
 
 
@@ -705,5 +798,5 @@ do_annotate (app_state &app, file_t file_node, revision_id rid)
   acp->annotate_equivalent_lines();
   I(acp->is_complete());
 
-  acp->dump();
+  acp->dump(app);
 }

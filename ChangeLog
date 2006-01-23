@@ -1,3 +1,138 @@
+2006-01-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Hopefully improve wording of help a bit.
+
+2006-01-21  Nathaniel Smith  <njs@pobox.com>
+
+	* netcmd.cc (read): Expand the error message we issue on protocol
+	version mismatch to be a bit more informative.
+
+2006-01-21  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Fix up Windows and IPv6 tests after the change
+	from AC_TRY_RUN to AC_TRY_COMPILE.  Also a couple of other minor
+	cleanups.
+	* Makefile.am: Remove win32/wcwidth.c from WIN32_PLATFORM_SOURCES.
+
+2006-01-21  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_db_execute.at: Play with the files table instead of the
+	revisions table, so we don't trigger the has-revisions-but-no-rosters
+	check.
+
+2006-01-21  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Sort the translation guidelines a little more.
+
+2006-01-21  Joel Rosdahl  <joel@rosdahl.net>
+
+	* po/sv.po: Corrections in translation guidelines.
+
+2006-01-21  Joel Rosdahl  <joel@rosdahl.net>
+
+	* AUTHORS: Added myself as a translation contributor.
+	* po/sv.po: Second round of review of Swedish translation.
+
+2006-01-20  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Added a \n at the end of a msgstr that was missing
+	it.
+
+2006-01-20  Joel Rosdahl  <joel@rosdahl.net>
+
+	* po/sv.po: Review and suggested corrections of Swedish
+	translation.
+
+2006-01-20  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc: Make our sockets non-blocking.
+
+2006-01-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc CMD(setup): default to current dir
+	* monotone.texi: update
+	* t_setup_existing_path.at: add test
+
+2006-01-19  Emile Snyder  <emile@alumni.reed.edu>
+
+	Add a --brief mode to the annotate command which prints more
+	informative annotations rather than just the raw revision ids.
+
+	* commands.cc (CMD(annotate)): Add --brief option to the annotate
+	command and remove obsolete comment lines.
+	* annotate.cc (dump): Pass in app_state to allow access to db for 
+	cert lookups on revisions.  Honor new --brief
+	flag by printing <short id>.. by <author> <date>: as the
+	annotation rather than the raw revision id, and only printing the
+	annotation for the first line of each block of lines from the same
+	revision.
+	(cert_string_value): Given a set of certs from a revision, a cert
+	name, and some detail of what part of the value we want, find and
+	return that part of the cert.
+	(build_revisions_to_annotations): After we finish with the
+	annotations pass, build up a mapping of revision id to annotation
+	string.
+	* monotone.texi: Add --brief flag and description to the annotate
+	section of the command reference.
+
+2006-01-19  Matt Johnston  <matt@ucc.asn.au>
+
+	* work.{cc,hh}, commands.cc: add "rename src1 [src2 ...] dst/"
+	syntax.
+	* monotone.texi: update
+	* testsuite.at, tests/t_rename_destdir: new test (is incomplete).
+	* tests/t_no_rename_overwrite.at: syntax should now succeed.
+	* vocab.cc: add hexenc<id> dump() instantiation.
+
+2006-01-19  Matt Johnston  <matt@ucc.asn.au>
+
+	* HACKING: escape the colon in the cino vim modeline option.
+
+2006-01-19  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (check_format): Small cleanups to previous change.
+
+2006-01-19  Nathaniel Smith  <njs@pobox.com>
+
+	Fix bug reported by Henry Nestler, where 'serve' did not detect
+	that the user had not run 'db rosterify'.
+	* database.cc (check_rosterified): Rename to...
+	(check_format): ...this.  Detect unchangesetified dbs too.
+	(sql, ensure_open_for_format_changes, get_roster_id_for_revision): 
+	* revision.cc (build_roster_style_revs_from_manifest_style_revs) 
+	(build_changesets_from_manifest_ancestry): Adjust accordingly.
+	* tests/t_check_db_format.at, testsuite.at: New test.
+
+2005-01-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_lua_privkey.at: Remove; this tests a hook that was removed.
+	* testsuite: adjust accordingly
+
+2006-01-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* keys.cc (get_passphrase): Update std::map correctly--remove
+	existing cached passphrase for a given keyid, then store the new
+	one using safe_insert().
+	(make_signature): Fix crash when running monotone with persistent
+	passphrases disallowed--remove shared_ptr that was going out of
+	scope too early, and shadowed and existing shared_ptr in the
+	correct scope.
+	* tests/t_no_persist_phrase.at: New test to check that basic no
+	persistent passphrase functionality works.
+	* testsuite.at: Include new test.
+
+2006-01-18  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* merkle_tree.{cc,hh}: Add a locate_item() function to find the
+	node and slot in a merkle_table that a given item is in.
+	* refiner.cc (refiner::process_refinement_command): If they have
+	a leaf and we have a subtree then if their leaf is in our subtree,
+	we need to tell them.
+
+2006-01-18  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac: Remove some dead comments.
+
 2006-01-18  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac: s/TRY_RUN/TRY_COMPILE/ a few places, for general

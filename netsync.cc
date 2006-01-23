@@ -45,6 +45,7 @@
 #include "netxx/peer.h"
 #include "netxx/probe.h"
 #include "netxx/socket.h"
+#include "netxx/sockopt.h"
 #include "netxx/stream.h"
 #include "netxx/streamserver.h"
 #include "netxx/timeout.h"
@@ -2236,9 +2237,15 @@ call_server(protocol_role role,
   P(F("connecting to %s\n") % address());
   Netxx::Address addr(address().c_str(), default_port, use_ipv6);
   Netxx::Stream server(addr, timeout);
+
+  // 'false' here means not to revert changes when the SockOpt
+  // goes out of scope.
+  Netxx::SockOpt socket_options(server.get_socketfd(), false);
+  socket_options.set_non_blocking();
+
   session sess(role, client_voice, include_pattern, exclude_pattern,
                app, address(), server.get_socketfd(), timeout);
-  
+
   while (true)
     {       
       bool armed = false;
@@ -2384,6 +2391,12 @@ handle_new_connection(Netxx::Address & addr,
     {
       P(F("accepted new client connection from %s : %s\n")
         % client.get_address() % lexical_cast<string>(client.get_port()));
+
+      // 'false' here means not to revert changes when the SockOpt
+      // goes out of scope.
+      Netxx::SockOpt socket_options(client.get_socketfd(), false);
+      socket_options.set_non_blocking();
+
       shared_ptr<session> sess(new session(role, server_voice,
                                            include_pattern, exclude_pattern,
                                            app,

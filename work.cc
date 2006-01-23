@@ -237,40 +237,112 @@ add_parent_dirs(split_path const & dst, roster_t & ros, node_id_source & nis,
   build.visit_dir(dirname);
 }
 
-void 
-perform_rename(file_path const & src_path,
+void
+perform_rename(set<file_path> const & src_paths,
                file_path const & dst_path,
                app_state & app)
 {
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
-  split_path src, dst;
+  split_path dst;
+  set<split_path> srcs;
+  set< pair<split_path, split_path> > renames;
+
+  I(!src_paths.empty());
 
   get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
 
-  src_path.split(src);
   dst_path.split(dst);
 
-  N(new_roster.has_node(src),
-    F("%s does not exist in current revision\n") % src_path);
+  if (src_paths.size() == 1 && !new_roster.has_node(dst))
+    {
+      // "rename SRC DST" case
+      split_path s;
+      src_paths.begin()->split(s);
+      renames.insert( make_pair(s, dst) );
+      add_parent_dirs(dst, new_roster, nis, app);
+    }
+  else
+    {
+      // "rename SRC1 SRC2 DST" case
+      N(new_roster.has_node(dst),
+        F("destination dir %s/ does not exist in current revision") % dst_path);
 
-  N(!new_roster.has_node(dst),
-    F("%s already exists in current revision\n") % dst_path);
+      N(is_dir_t(new_roster.get_node(dst)),
+        F("destination %s is an existing file in current revision") % dst_path);
 
-  add_parent_dirs(dst, new_roster, nis, app);
+      for (set<file_path>::const_iterator i = src_paths.begin(); 
+           i != src_paths.end(); i++)
+        {
+          split_path s;
+          i->split(s);
+          // TODO "rename . foo/" might be valid? Or should it already have been
+          // normalised..., in which case it might be an I().
+          N(!s.empty(),
+            F("empty path %s is not allowed") % *i);
 
-  P(F("adding %s -> %s to working copy rename set\n") % src_path % dst_path);
+          path_component src_basename = s.back();
+          split_path d(dst);
+          d.push_back(src_basename);
+          renames.insert( make_pair(s, d) );
+        }
+    }
 
-  node_id nid = new_roster.detach_node(src);
-  new_roster.attach_node(nid, dst);
+  // one iteration to check for existing/missing files
+  for (set< pair<split_path, split_path> >::const_iterator i = renames.begin();
+       i != renames.end(); i++)
+    {
+      N(new_roster.has_node(i->first),
+        F("%s does not exist in current revision") % file_path(i->first));
 
-  // this should fail if src doesn't exist or dst does
-  if (app.execute && (path_exists(src_path) || !path_exists(dst_path)))
-    move_path(src_path, dst_path);
+      N(!new_roster.has_node(i->second),
+        F("destination %s already exists in current revision") % file_path(i->second));
+    }
+
+  // do the attach/detaching
+  for (set< pair<split_path, split_path> >::const_iterator i = renames.begin();
+       i != renames.end(); i++)
+    {
+      node_id nid = new_roster.detach_node(i->first);
+      new_roster.attach_node(nid, i->second);
+      P(F("adding %s -> %s to working copy rename set") 
+        % file_path(i->first) 
+        % file_path(i->second));
+    }
 
   cset new_work;
   make_cset(base_roster, new_roster, new_work);
   put_work_cset(new_work);
+
+  if (app.execute)
+    {
+      for (set< pair<split_path, split_path> >::const_iterator i = renames.begin();
+           i != renames.end(); i++)
+        {
+          file_path s(i->first);
+          file_path d(i->second);
+          // silently skip files where src doesn't exist or dst does
+          bool have_src = path_exists(s);
+          bool have_dst = path_exists(d);
+          if (have_src && !have_dst)
+            {
+              move_path(s, d);
+            }
+          else if (!have_src && !have_dst)
+            {
+              W(F("%s doesn't exist in working copy, skipping") % s);
+            }
+          else if (have_src && have_dst)
+            {
+              W(F("destination %s already exists in working copy, skipping") % d);
+            }
+          else
+            {
+              L(FL("skipping move_path %s->%s silently, src doesn't exist, dst does")
+                % s % d);
+            }
+        }
+    }
   update_any_attrs(app);
 }
 

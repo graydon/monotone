@@ -94,25 +94,45 @@ database::check_schema()
 }
 
 void
-database::check_rosterified()
+database::check_format()
 {
-  results res;
-  string rosters_query = "SELECT 1 FROM rosters LIMIT 1";
+  results res_revisions;
+  string manifests_query = "SELECT 1 FROM manifests LIMIT 1";
   string revisions_query = "SELECT 1 FROM revisions LIMIT 1";
+  string rosters_query = "SELECT 1 FROM rosters LIMIT 1";
 
-  fetch(res, one_col, any_rows, revisions_query.c_str());
-  if (res.size() > 0)
+  fetch(res_revisions, one_col, any_rows, revisions_query.c_str());
+
+  if (res_revisions.size() > 0)
     {
-      fetch(res, one_col, any_rows, rosters_query.c_str());
-      N (res.size() != 0,
-         F("database %s contains revisions but no rosters\n"
-           "if you are a project leader or doing local testing:\n"
-           "  see the file UPGRADE for instructions on upgrading.\n"
-           "if you are not a project leader:\n"
-           "  wait for a leader to migrate project data, and then\n"
-           "  pull into a fresh database.\n"
-           "sorry about the inconvenience.")
-         % filename);
+      // they have revisions, so they can't be _ancient_, but they still might
+      // not have rosters
+      results res_rosters;
+      fetch(res_rosters, one_col, any_rows, rosters_query.c_str());
+      N(res_rosters.size() != 0,
+        F("database %s contains revisions but no rosters\n"
+          "if you are a project leader or doing local testing:\n"
+          "  see the file UPGRADE for instructions on upgrading.\n"
+          "if you are not a project leader:\n"
+          "  wait for a leader to migrate project data, and then\n"
+          "  pull into a fresh database.\n"
+          "sorry about the inconvenience.")
+        % filename);
+    }
+  else
+    {
+      // they have no revisions, so they shouldn't have any manifests either.
+      // if they do, their db is probably ancient.  (though I guess you could
+      // trigger this check by taking a pre-roster monotone, doing "db
+      // init; commit; db kill_rev_locally", and then upgrading to a
+      // rosterified monotone.)
+      results res_manifests;
+      fetch(res_manifests, one_col, any_rows, manifests_query.c_str());
+      N(res_manifests.size() == 0,
+        F("database %s contains manifests but no revisions\n"
+          "this is a very old database; it needs to be upgraded\n"
+          "please see README.changesets for details")
+        % filename);
     }
 }
 
@@ -187,7 +207,7 @@ assert_sqlite3_ok(sqlite3 *s)
 }
 
 struct sqlite3 * 
-database::sql(bool init)
+database::sql(bool init, bool migrating_format)
 {
   if (! __sql)
     {
@@ -210,6 +230,14 @@ database::sql(bool init)
       check_schema();
       install_functions(__app);
       install_views();
+
+      if (!migrating_format)
+        check_format();
+    }
+  else
+    {
+      I(!init);
+      I(!migrating_format);
     }
   return __sql;
 }
@@ -509,6 +537,13 @@ void
 database::ensure_open()
 {
   sqlite3 *s = sql();
+  I(s != NULL);
+}
+
+void 
+database::ensure_open_for_format_changes()
+{
+  sqlite3 *s = sql(false, true);
   I(s != NULL);
 }
 
@@ -2587,10 +2622,6 @@ database::get_roster_id_for_revision(revision_id const & rev_id,
   string query = ("SELECT roster_id FROM revision_roster WHERE rev_id = ? ");  
   fetch(res, one_col, any_rows, query.c_str(),
         rev_id.inner()().c_str());
-  if (res.size() == 0)
-    {
-      check_rosterified();
-    }
   I(res.size() == 1);
   roster_id = hexenc<id>(res[0][0]);
 }

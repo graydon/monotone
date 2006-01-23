@@ -221,7 +221,23 @@ refiner::process_refinement_command(refinement_type ty,
     {
       // Note any leaves they have.
       if (their_node.get_slot_state(slot) == leaf_state)
-        note_item_in_peer(their_node, slot);
+        {
+          note_item_in_peer(their_node, slot);
+          // If we have their leaf somewhere in our subtree,
+          // we need to tell them.
+          if (our_node->get_slot_state(slot) == subtree_state)
+            {
+              id their_slotval;
+              their_node.get_raw_slot(slot, their_slotval);
+              size_t snum;
+              merkle_ptr mp;
+              if (locate_item(table, their_slotval, snum, mp))
+                {
+                  cb.queue_refine_cmd(refinement_query, *mp);
+                  ++queries_in_flight;
+                }
+            }
+        }
       
       // Compare any subtrees, if we both have subtrees.
       if (our_node->get_slot_state(slot) == subtree_state

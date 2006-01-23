@@ -1217,19 +1217,26 @@ CMD(drop, N_("working copy"), N_("[PATH]..."),
 ALIAS(rm, drop);
 
 
-CMD(rename, N_("working copy"), N_("SRC DST"),
+CMD(rename, N_("working copy"), 
+    N_("SRC DEST\n"
+       "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("rename entries in the working copy"),
     OPT_EXECUTE)
 {
-  if (args.size() != 2)
+  if (args.size() < 2)
     throw usage(name);
   
   app.require_working_copy();
 
-  file_path src_path = file_path_external(idx(args, 0));
-  file_path dst_path = file_path_external(idx(args, 1));
+  file_path dst_path = file_path_external(args.back());
 
-  perform_rename(src_path, dst_path, app);
+  set<file_path> src_paths;
+  for (size_t i = 0; i < args.size()-1; i++)
+    {
+      file_path s = file_path_external(idx(args, i));
+      src_paths.insert(s);
+    }
+  perform_rename(src_paths, dst_path, app);
 }
 
 ALIAS(mv, rename)
@@ -2793,8 +2800,10 @@ struct update_source
 
 CMD(update, N_("working copy"), "",
     N_("update working copy.\n"
-    "If a revision is given, base the update on that revision.  If not,\n"
-    "base the update on the head of the branch (given or implicit)."),
+       "This command modifies your working copy to be based off of a\n"
+       "different revision, preserving uncommitted changes as it does so.\n"
+       "If a revision is given, update the working copy to that revision.\n"
+       "If not, update the working copy to the head of the branch."),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   revision_set r_old, r_working, r_new;
@@ -3413,10 +3422,8 @@ log_certs(app_state & app, revision_id id, cert_name name)
 
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
-    OPT_REVISION)
+    OPT_REVISION % OPT_BRIEF)
 {
-  // this function compiles, but the do_annotate() stuff in annotate.cc is 
-  // still in flux, so disabling command here.
   revision_id rid;
 
   if (app.revision_selectors.size() == 0)
@@ -3663,16 +3670,21 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
 }
 
-CMD(setup, N_("tree"), N_("DIRECTORY"), N_("setup a new working copy directory"),
+CMD(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new working copy directory, default to current"),
     OPT_BRANCH_NAME)
 {
-  if (args.size() != 1)
+  if (args.size() > 1)
     throw usage(name);
 
   N(!app.branch_name().empty(), F("need --branch argument for setup"));
   app.db.ensure_open();
 
-  string dir = idx(args,0)();
+  string dir;
+  if (args.size() == 1)
+    dir = idx(args,0)();
+  else
+    dir = ".";
+
   app.create_working_copy(dir);
   revision_id null;
   put_revision_id(null);

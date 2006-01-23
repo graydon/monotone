@@ -411,6 +411,42 @@ collect_items_in_subtree(merkle_table & tab,
     }
 }
 
+bool
+locate_item(merkle_table & table,
+            id const & val,
+            size_t & slotnum,
+            merkle_ptr & mp)
+{
+  mp.reset();
+  boost::dynamic_bitset<unsigned char> pref;
+  for (size_t l = 0; l < constants::merkle_num_tree_levels; ++l)
+    {
+      pick_slot_and_prefix_for_value(val, l, slotnum, pref);
+
+      ostringstream oss;
+      to_block_range(pref, ostream_iterator<char>(oss));
+      prefix rawpref(oss.str());
+
+      merkle_table::const_iterator i = table.find(make_pair(rawpref, l));
+      if (i == table.end() ||
+          i->second->get_slot_state(slotnum) == empty_state)
+        return false;
+
+      if (i->second->get_slot_state(slotnum) == leaf_state)
+        {
+          id slotval;
+          i->second->get_raw_slot(slotnum, slotval);
+          if (slotval == val)
+            {
+              mp = i->second;
+              return true;
+            }
+          else
+            return false;
+        }
+    }
+  return false;
+}
 
 void
 insert_into_merkle_tree(merkle_table & tab,

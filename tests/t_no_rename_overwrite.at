@@ -18,16 +18,12 @@ ADD_FILE("rename_dir/file", [bar bar
 
 AT_CHECK(MONOTONE rename unknown_file other_file, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE rename rename_file target_file, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE rename rename_file target_dir, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE rename rename_dir target_file, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE rename rename_dir target_dir, [1], [ignore], [ignore])
 
 COMMIT(testbranch)
 
 AT_CHECK(MONOTONE rename unknown_file other_file, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE rename rename_file target_file, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE rename rename_file target_dir, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE rename rename_dir target_file, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE rename rename_dir target_dir, [1], [ignore], [ignore])
 
 AT_CLEANUP

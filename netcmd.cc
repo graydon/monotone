@@ -89,9 +89,13 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
 
   u8 extracted_ver = extract_datum_lsb<u8>(inbuf, pos, "netcmd protocol number");
   if (extracted_ver != version)
-    throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'") 
+    throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'\n"
+                       "%s")
                      % widen<u32,u8>(version)
-                     % widen<u32,u8>(extracted_ver));
+                     % widen<u32,u8>(extracted_ver)
+                     % ((version < extracted_ver)
+                        ? _("the remote side has a newer, incompatible version of monotone")
+                        : _("the remote side has an older, incompatible version of monotone")));
   version = extracted_ver;
 
   u8 cmd_byte = extract_datum_lsb<u8>(inbuf, pos, "netcmd code");
@@ -380,13 +384,13 @@ netcmd::read_done_cmd(netcmd_item_type & type, size_t & n_items)  const
   // syntax is: <type: 1 byte> <n_items: uleb128> 
   type = read_netcmd_item_type(payload, pos, "done netcmd, item type");
   n_items = extract_datum_uleb128<size_t>(payload, pos,
-					  "done netcmd, item-to-send count");
+                                          "done netcmd, item-to-send count");
   assert_end_of_buffer(payload, pos, "done netcmd payload");
 }
 
 void 
 netcmd::write_done_cmd(netcmd_item_type type,
-		       size_t n_items)
+                       size_t n_items)
 {
   cmd_code = done_cmd;
   payload.clear();
@@ -711,7 +715,7 @@ test_netcmd_functions()
         L(boost::format("checking i/o round trip on refine_cmd\n"));
         netcmd out_cmd, in_cmd;
         string buf;
-	refinement_type out_ty (refinement_query), in_ty(refinement_response);
+        refinement_type out_ty (refinement_query), in_ty(refinement_response);
         merkle_node out_node, in_node;
 
         out_node.set_raw_slot(0, id(raw_sha1("The police pulled Kris Kringle over")));
