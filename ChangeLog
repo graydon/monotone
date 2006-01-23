@@ -1,3 +1,7 @@
+2006-01-23  Henry Nestler  <henry@bigfoot.de>
+
+	* monotone.texi, monotone.1: Mode none for --ticker.
+
 2006-01-23  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (update): Hopefully improve wording of help a bit.

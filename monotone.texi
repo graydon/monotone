@@ -7759,12 +7759,12 @@ Use @i{branchname} for operations on a branch. Default is inferred
 in operations on existing branches (commit, update, etc). 
 @comment TROFF INPUT: .TP
 
-@item @b{--ticker=}[@b{dot}|@b{count}]
+@item @b{--ticker=}[@b{dot}|@b{count}|@b{none}]
 Use the given method to print tickers.  The @b{count} method prints
 the count for each ticker on one line, incrementing the numbers in
 place, while the @b{dot} method prints a continuous string of
 characters (like some programs provide a progress line of dots).
-The default is @b{count}.
+@b{none} prints nothing.  The default is @b{count}.
 
 @item @b{--revision=}@i{<id>}
 @itemx @b{-r} @i{<id>}
