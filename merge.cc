@@ -52,13 +52,16 @@ resolve_merge_conflicts(revision_id const & left_rid,
   if (!result.is_clean())
     {
       L(FL("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
-          "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
+          "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n"
+           "%d illegal name conflicts, %d missing root conflicts") 
         % result.node_name_conflicts.size()
         % result.file_content_conflicts.size()
         % result.node_attr_conflicts.size()
         % result.orphaned_node_conflicts.size()
         % result.rename_target_conflicts.size()
-        % result.directory_loop_conflicts.size());
+        % result.directory_loop_conflicts.size()
+        % result.illegal_name_conflicts.size()
+        % result.missing_root_dir);
 
       for (size_t i = 0; i < result.node_name_conflicts.size(); ++i)
         L(FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
@@ -102,6 +105,15 @@ resolve_merge_conflicts(revision_id const & left_rid,
           % result.directory_loop_conflicts[i].parent_name.first
           % result.directory_loop_conflicts[i].parent_name.second);
         
+      for (size_t i = 0; i < result.illegal_name_conflicts.size(); ++i)
+        L(FL("illegal name conflict: node %d, wanted parent %d, name %s")
+          % result.illegal_name_conflicts[i].nid
+          % result.illegal_name_conflicts[i].parent_name.first
+          % result.illegal_name_conflicts[i].parent_name.second);
+
+      if (result.missing_root_dir)
+        L(FL("additionally, a missing root dir conflict was found"));
+
       // Attempt to auto-resolve any content conflicts using the line-merger.
       // To do this requires finding a merge ancestor.
       if (!result.file_content_conflicts.empty())
