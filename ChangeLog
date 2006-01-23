@@ -1,5 +1,10 @@
 2006-01-23  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/t_database_check_normalized.at: update included database to
+	use rosters
+
+2006-01-23  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	New ChangeLog utilities in contrib/ .
 	* contrib/ChangeLog.sh: Script that takes the date, author, and
 	changelog certs from the last n revisions and prints them in standard
