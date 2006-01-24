@@ -704,9 +704,10 @@ database::fetch(results & res,
       vector<string> row;
       for (int col = 0; col < ncol; col++) 
         {
-          const char * value = sqlite3_column_text_s(i->second.stmt(), col);
+          const char * value = (const char*)sqlite3_column_blob(i->second.stmt(), col);
+          int bytes = sqlite3_column_bytes(i->second.stmt(), col);
           E(value, F("null result in query: %s\n") % query.sql_cmd);
-          row.push_back(value);
+          row.push_back(std::string(value, value + bytes));
           //L(FL("row %d col %d value='%s'\n") % nrow % col % value);
         }
       res.push_back(row);
