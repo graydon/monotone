@@ -224,7 +224,8 @@ assert_sqlite3_ok(sqlite3 *s)
   std::string auxiliary_message = "";
   if (errcode == SQLITE_ERROR)
     {
-      auxiliary_message += _("make sure database and containing directory are writeable");
+      auxiliary_message += _("make sure database and containing directory are writeable\n"
+                             "and you have not run out of disk space");
     }
   // if the last message is empty, the \n will be stripped off too
   E(errcode == SQLITE_OK,

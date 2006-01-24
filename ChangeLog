@@ -1,3 +1,8 @@
+2006-01-23  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (assert_sqlite3_ok): Improve the hint message given
+	for SQLITE_ERROR's.
+
 2006-01-23  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/t_database_check_normalized.at: update included database to
