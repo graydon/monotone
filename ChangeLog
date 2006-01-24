@@ -1,5 +1,9 @@
 2005-01-24  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* commands.cc (update): Remove fixme comment.
+
+2005-01-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* commands.cc (update): Allow backwards/sideways updates.
 	tests/t_update_to_revision.at: remove XFAIL
 

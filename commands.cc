@@ -2894,23 +2894,6 @@ CMD(update, N_("working copy"), "",
         % r_chosen_id % app.branch_name);
     }
 
-  // FIXME_ROSTERS: In the old (pre-roster) code, we supported updating to
-  // any revision in the graph, anywhere; if there was a path to get there,
-  // we'd synthesize a changeset to get there. This was a little easier to
-  // work with in pre-roster monotone because we merged changesets, not
-  // rosters.
-  //
-  // To do this using rosters' default "mark-merge", we'd need to
-  // synthesize a marking map using a fake ancestry graph. It's
-  // conceivable, but it's a fair amount of work, and it's not clear that
-  // many people used it, nor that mark-merge is ideal for the task. It
-  // might make more sense to make a different merger for this
-  // case. 
-  //
-  // Anyways, for the time being we're only implementing "forwards
-  // updates". That is, you can only "update" to new base revisions which
-  // are descendents of the base revision you have in your working copy.
-
   app.db.get_roster(r_chosen_id, chosen_roster, chosen_mm);
 
   std::set<revision_id> 
