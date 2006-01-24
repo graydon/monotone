@@ -1,3 +1,8 @@
+2005-01-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (update): Allow backwards/sideways updates.
+	tests/t_update_to_revision.at: remove XFAIL
+
 2006-01-24  Vinzenz Feenstra <evilissimo@c-plusplus.de>
 	
 	* query_args.hh: Introduced struct query_args and struct

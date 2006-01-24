@@ -2807,10 +2807,10 @@ CMD(update, N_("working copy"), "",
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   revision_set r_old, r_working, r_new;
-  roster_t working_roster, chosen_roster;
+  roster_t working_roster, chosen_roster, target_roster;
   boost::shared_ptr<roster_t> old_roster = boost::shared_ptr<roster_t>(new roster_t());
-  marking_map working_mm, chosen_mm, merged_mm;
-  revision_id r_old_id, r_working_id, r_chosen_id;
+  marking_map working_mm, chosen_mm, merged_mm, target_mm;
+  revision_id r_old_id, r_working_id, r_chosen_id, r_target_id;
 
   if (args.size() > 0)
     throw usage(name);
@@ -2911,18 +2911,34 @@ CMD(update, N_("working copy"), "",
   // updates". That is, you can only "update" to new base revisions which
   // are descendents of the base revision you have in your working copy.
 
-  N(is_ancestor(r_old_id, r_chosen_id, app),
-    F("Update target is not a descendent of working copy base revision\n"));
-
   app.db.get_roster(r_chosen_id, chosen_roster, chosen_mm);
 
   std::set<revision_id> 
     working_uncommon_ancestors, 
     chosen_uncommon_ancestors;
 
-  app.db.get_uncommon_ancestors(r_old_id, r_chosen_id,
-                                working_uncommon_ancestors, 
-                                chosen_uncommon_ancestors);
+  if (is_ancestor(r_old_id, r_chosen_id, app))
+    {
+      target_roster = chosen_roster;
+      target_mm = chosen_mm;
+      r_target_id = r_chosen_id;
+      app.db.get_uncommon_ancestors(r_old_id, r_chosen_id,
+                                    working_uncommon_ancestors, 
+                                    chosen_uncommon_ancestors);
+    }
+  else
+    {
+      cset transplant;
+      make_cset (*old_roster, chosen_roster, transplant);
+      // just pick something, all that's important is that it not
+      // match the work revision or any ancestors of the base revision.
+      r_target_id = revision_id(hexenc<id>("5432100000000000000000000500000000000000"));
+      make_roster_for_base_plus_cset(r_old_id, 
+                                     transplant,
+                                     r_target_id,
+                                     target_roster, target_mm, app);
+      chosen_uncommon_ancestors.insert(r_target_id);
+    }
 
   // Note that under the definition of mark-merge, the working copy is an
   // "uncommon ancestor" if itself too, even though it was not present in
@@ -2934,19 +2950,20 @@ CMD(update, N_("working copy"), "",
 
   roster_merge_result result;  
   roster_merge(working_roster, working_mm, working_uncommon_ancestors,
-               chosen_roster, chosen_mm, chosen_uncommon_ancestors,
+               target_roster, target_mm, chosen_uncommon_ancestors,
                result);
 
   roster_t & merged_roster = result.roster;
 
   content_merge_working_copy_adaptor wca(app, old_roster);
-  resolve_merge_conflicts (r_old_id, r_chosen_id,
-                           working_roster, chosen_roster,
-                           working_mm, chosen_mm,
+  resolve_merge_conflicts (r_old_id, r_target_id,
+                           working_roster, target_roster,
+                           working_mm, target_mm,
                            result, wca, app);
 
   I(result.is_clean());
-  merged_roster.check_sane();
+  // temporary node ids may appear if updating to a non-ancestor
+  merged_roster.check_sane(true);
 
   // we have the following
   //
@@ -2965,7 +2982,7 @@ CMD(update, N_("working copy"), "",
   
   cset update, remaining;
   make_cset (working_roster, merged_roster, update);
-  make_cset (chosen_roster, merged_roster, remaining);
+  make_cset (target_roster, merged_roster, remaining);
 
   //   {
   //     data t1, t2, t3;
