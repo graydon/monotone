@@ -60,7 +60,7 @@ extern "C" {
 }
 
 static string 
-lowercase(string const & in)
+lowercase_facet(string const & in)
 {
   I(40==in.size());
   const int sz=40;
@@ -94,7 +94,7 @@ calculate_id(string const & in,
   Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
   p.process_msg(in);
 
-  ident = lowercase(p.read_all_as_string());
+  ident = lowercase_facet(p.read_all_as_string());
 }
 
 
