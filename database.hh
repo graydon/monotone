@@ -71,7 +71,7 @@ class transaction_guard;
 struct posting;
 struct app_state;
 struct revision_set;
-struct query_args;
+struct query;
 
 class database
 {
@@ -99,12 +99,12 @@ class database
 
   typedef std::vector< std::vector<std::string> > results;
  
-  void execute(query_args const & query);
+  void execute(query const & q);
  
   void fetch(results & res, 
              int const want_cols, 
              int const want_rows, 
-             query_args const & query);
+             query const & q);
  
   bool exists(hexenc<id> const & ident, 
               std::string const & table);
