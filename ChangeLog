@@ -3,6 +3,11 @@
 	* commands.cc (update): Allow backwards/sideways updates.
 	tests/t_update_to_revision.at: remove XFAIL
 
+2006-01-23  Nathaniel Smith  <njs@pobox.com>
+
+	* database.{cc,hh}: Clean up code formatting a bit, rename some
+	variables, rely more on automatic conversion.
+
 2006-01-24  Vinzenz Feenstra <evilissimo@c-plusplus.de>
 	
 	* query_args.hh: Introduced struct query_args and struct
