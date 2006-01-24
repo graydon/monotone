@@ -1,3 +1,11 @@
+2006-01-24  Vinzenz Feenstra <evilissimo@c-plusplus.de>
+	
+	* query_args.hh: Introduced struct query_args and struct
+	query_args_param. Used to typesafe arguments for database::execute
+	and database::fetch
+	* database.cc/.hh: Adjusted database to the new fetch and execute
+	argument style via operator% which is more typesafe.
+
 2006-01-23  Nathaniel Smith  <njs@pobox.com>
 
 	* database.cc (assert_sqlite3_ok): Improve the hint message given
