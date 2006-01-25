@@ -42,7 +42,7 @@ fi
 #
 d_start() {
        if [ "$START" -ne 1 ]; then
-          echo -e "\n$NAME configured in /etc/default/$NAME not to start."
+          echo -ne "\n$NAME configured in /etc/default/$NAME not to start"
           return 0
        fi
 
