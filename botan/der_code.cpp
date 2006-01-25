@@ -131,7 +131,7 @@ void encode(DER_Encoder& encoder, const BigInt& n,
          {
          for(u32bit j = 0; j != contents.size(); ++j)
             contents[j] = ~contents[j];
-         for(u32bit j = contents.size(); j > 0; j--)
+         for(u32bit j = contents.size(); j > 0; --j)
             if(++contents[j-1])
                break;
          }

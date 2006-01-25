@@ -53,7 +53,7 @@ void bigint_shr1(word x[], u32bit x_size, u32bit word_shift, u32bit bit_shift)
    if(bit_shift)
       {
       word carry = 0;
-      for(u32bit j = x_size - word_shift; j > 0; j--)
+      for(u32bit j = x_size - word_shift; j > 0; --j)
          {
          word temp = x[j-1];
          x[j-1] = (temp >> bit_shift) | carry;
@@ -95,7 +95,7 @@ void bigint_shr2(word y[], const word x[], u32bit x_size,
    if(bit_shift)
       {
       word carry = 0;
-      for(u32bit j = x_size - word_shift; j > 0; j--)
+      for(u32bit j = x_size - word_shift; j > 0; --j)
          {
          word temp = y[j-1];
          y[j-1] = (temp >> bit_shift) | carry;

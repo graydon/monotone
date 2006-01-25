@@ -7,6 +7,7 @@
 #include <botan/numthry.h>
 #include <botan/mp_core.h>
 #include <botan/bit_ops.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -91,9 +92,9 @@ BigInt& BigInt::operator*=(const BigInt& n)
       }
 
    BigInt z(sign(), size() + n.size());
-   bigint_mul3(z.get_reg(), z.size(),
-               data(),   size(),   words,
-               n.data(), n.size(), n_words);
+   bigint_mul(z.get_reg(), z.size(),
+              data(),   size(),   words,
+              n.data(), n.size(), n_words);
    (*this) = z;
    return (*this);
    }
@@ -138,7 +139,7 @@ word BigInt::operator%=(word mod)
    word remainder = 0;
    u32bit size = sig_words();
 
-   for(u32bit j = size; j > 0; j--)
+   for(u32bit j = size; j > 0; --j)
       remainder = bigint_modop(remainder, word_at(j-1), mod);
    clear();
    reg.grow_to(2);

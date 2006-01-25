@@ -6,6 +6,7 @@
 #include <botan/hex.h>
 #include <botan/bit_ops.h>
 #include <botan/charset.h>
+#include <algorithm>
 
 namespace Botan {
 

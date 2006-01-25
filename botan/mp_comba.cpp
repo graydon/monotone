@@ -8,35 +8,6 @@
 
 namespace Botan {
 
-namespace {
-
-/*************************************************
-* Multiply-Add Accumulators                      *
-*************************************************/
-inline void word3_muladd(word* w2, word* w1, word* w0, word x, word y)
-   {
-   word t1 = 0;
-   word_madd(x, y, *w0, 0, w0, &t1);
-   *w1 += t1;
-   *w2 += (*w1 < t1) ? 1 : 0;
-   }
-
-inline void word3_muladd_2(word* w2, word* w1, word* w0, word x, word y)
-   {
-   word t0 = 0, t1 = 0;
-   word_madd(x, y, 0, 0, &t0, &t1);
-
-   *w0 += t0;
-   *w1 += t1 + ((*w0 < t0) ? 1 : 0);
-   *w2 += (*w1 < t1) ? 1 : 0;
-
-   *w0 += t0;
-   *w1 += t1 + ((*w0 < t0) ? 1 : 0);
-   *w2 += (*w1 < t1) ? 1 : 0;
-   }
-
-}
-
 extern "C" {
 
 /*************************************************

@@ -7,6 +7,7 @@
 #include <botan/lookup.h>
 #include <botan/bit_ops.h>
 #include <botan/parsing.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -112,7 +113,7 @@ std::string EAX_Base::name() const
 *************************************************/
 void EAX_Base::increment_counter()
    {
-   for(s32bit j = BLOCK_SIZE - 1; j >= 0; j--)
+   for(s32bit j = BLOCK_SIZE - 1; j >= 0; --j)
       if(++state[j])
          break;
    cipher->encrypt(state, buffer);

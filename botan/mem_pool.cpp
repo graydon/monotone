@@ -34,9 +34,15 @@ u32bit choose_pref_size(u32bit provided)
 u32bit emptiness_metric(u64bit bitmap)
    {
    u32bit metric = 0;
+
+#if 0
    for(u32bit j = 0; j != 8; ++j)
       if(get_byte(j, bitmap) == 0)
          metric++;
+#else
+   
+
+#endif
    return metric;
    }
 
@@ -224,7 +230,7 @@ void Pooling_Allocator::deallocate(void* ptr, u32bit n)
       {
       const u32bit block_no = round_up(n, BLOCK_SIZE) / BLOCK_SIZE;
 
-      std::set<Memory_Block>::iterator i = blocks.begin();
+      std::multiset<Memory_Block>::iterator i = blocks.begin();
       while(i != blocks.end())
          {
          if(i->contains(ptr, block_no))
@@ -250,7 +256,7 @@ void Pooling_Allocator::deallocate(void* ptr, u32bit n)
 *************************************************/
 byte* Pooling_Allocator::allocate_blocks(u32bit n)
    {
-   std::set<Memory_Block>::iterator i = blocks.begin();
+   std::multiset<Memory_Block>::iterator i = blocks.begin();
 
    while(i != blocks.end())
       {

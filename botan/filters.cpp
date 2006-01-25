@@ -5,6 +5,7 @@
 
 #include <botan/filters.h>
 #include <botan/lookup.h>
+#include <algorithm>
 
 namespace Botan {
 

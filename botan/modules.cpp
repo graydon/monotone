@@ -9,7 +9,7 @@
 #if defined(BOTAN_EXT_MUTEX_PTHREAD)
   #include <botan/mux_pthr.h>
 #elif defined(BOTAN_EXT_MUTEX_WIN32)
-  #include <botan/mux_win.h>
+  #include <botan/mux_win32.h>
 #elif defined(BOTAN_EXT_MUTEX_QT)
   #include <botan/mux_qt.h>
 #endif

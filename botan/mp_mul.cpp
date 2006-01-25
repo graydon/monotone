@@ -5,87 +5,10 @@
 
 #include <botan/mp_core.h>
 #include <botan/mem_ops.h>
-#include <botan/mp_asm.h>
+
+#include <stdio.h> // remove
 
 namespace Botan {
-
-/*************************************************
-* Two Operand Linear Multiply                    *
-*************************************************/
-void bigint_linmul2(word x[], u32bit x_size, word y)
-   {
-   const u32bit blocks = x_size - (x_size % 4);
-
-   word carry = 0;
-
-   for(u32bit j = 0; j != blocks; j += 4)
-      {
-      x[j  ] = word_mul(x[j  ], y, &carry);
-      x[j+1] = word_mul(x[j+1], y, &carry);
-      x[j+2] = word_mul(x[j+2], y, &carry);
-      x[j+3] = word_mul(x[j+3], y, &carry);
-      }
-
-   for(u32bit j = blocks; j != x_size; ++j)
-      x[j] = word_mul(x[j], y, &carry);
-
-   x[x_size] = carry;
-   }
-
-/*************************************************
-* Three Operand Linear Multiply                  *
-*************************************************/
-void bigint_linmul3(word z[], const word x[], u32bit x_size, word y)
-   {
-   const u32bit blocks = x_size - (x_size % 4);
-
-   word carry = 0;
-   for(u32bit j = 0; j != blocks; j += 4)
-      {
-      z[j  ] = word_mul(x[j  ], y, &carry);
-      z[j+1] = word_mul(x[j+1], y, &carry);
-      z[j+2] = word_mul(x[j+2], y, &carry);
-      z[j+3] = word_mul(x[j+3], y, &carry);
-      }
-
-   for(u32bit j = blocks; j != x_size; ++j)
-      z[j] = word_mul(x[j], y, &carry);
-   z[x_size] = carry;
-   }
-
-/*************************************************
-* Simple O(N^2) Multiplication                   *
-*************************************************/
-void bigint_simple_mul(word z[], const word x[], u32bit x_size,
-                                 const word y[], u32bit y_size)
-   {
-   const u32bit blocks = y_size - (y_size % 8);
-
-   clear_mem(z, x_size + y_size);
-
-   for(u32bit j = 0; j != x_size; ++j)
-      {
-      const word x_j = x[j];
-
-      word carry = 0;
-
-      for(u32bit k = 0; k != blocks; k += 8)
-         {
-         word_madd(x_j, y[k+0], z[j+k+0], carry, z + (j+k+0), &carry);
-         word_madd(x_j, y[k+1], z[j+k+1], carry, z + (j+k+1), &carry);
-         word_madd(x_j, y[k+2], z[j+k+2], carry, z + (j+k+2), &carry);
-         word_madd(x_j, y[k+3], z[j+k+3], carry, z + (j+k+3), &carry);
-         word_madd(x_j, y[k+4], z[j+k+4], carry, z + (j+k+4), &carry);
-         word_madd(x_j, y[k+5], z[j+k+5], carry, z + (j+k+5), &carry);
-         word_madd(x_j, y[k+6], z[j+k+6], carry, z + (j+k+6), &carry);
-         word_madd(x_j, y[k+7], z[j+k+7], carry, z + (j+k+7), &carry);
-         }
-
-      for(u32bit k = blocks; k != y_size; ++k)
-         word_madd(x_j, y[k], z[j+k], carry, z + (j+k), &carry);
-      z[j+y_size] = carry;
-      }
-   }
 
 namespace {
 
@@ -213,10 +136,14 @@ void handle_small_mul(word z[], u32bit z_size,
 /*************************************************
 * Multiplication Algorithm Dispatcher            *
 *************************************************/
-void bigint_mul3(word z[], u32bit z_size,
-                 const word x[], u32bit x_size, u32bit x_sw,
-                 const word y[], u32bit y_size, u32bit y_sw)
+void bigint_mul(word z[], u32bit z_size,
+                const word x[], u32bit x_size, u32bit x_sw,
+                const word y[], u32bit y_size, u32bit y_sw)
    {
+   /*
+   if(x_size % 8 || y_size % 8)
+      printf("%d %d %d %d\n", x_size, x_sw, y_size, y_sw);
+   */
    if(x_size <= 8 || y_size <= 8)
       {
       handle_small_mul(z, z_size, x, x_size, x_sw, y, y_size, y_sw);

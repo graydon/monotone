@@ -5,42 +5,8 @@
 
 #include <botan/mp_core.h>
 #include <botan/mem_ops.h>
-#include <botan/mp_asm.h>
 
 namespace Botan {
-
-/*************************************************
-* Simple O(N^2) Squaring                         *
-*************************************************/
-void bigint_simple_sqr(word z[], const word x[], u32bit x_size)
-   {
-   const u32bit blocks = x_size - (x_size % 8);
-
-   clear_mem(z, 2*x_size);
-
-   for(u32bit j = 0; j != x_size; ++j)
-      {
-      const word x_j = x[j];
-
-      word carry = 0;
-
-      for(u32bit k = 0; k != blocks; k += 8)
-         {
-         word_madd(x_j, x[k+0], z[j+k+0], carry, z + (j+k+0), &carry);
-         word_madd(x_j, x[k+1], z[j+k+1], carry, z + (j+k+1), &carry);
-         word_madd(x_j, x[k+2], z[j+k+2], carry, z + (j+k+2), &carry);
-         word_madd(x_j, x[k+3], z[j+k+3], carry, z + (j+k+3), &carry);
-         word_madd(x_j, x[k+4], z[j+k+4], carry, z + (j+k+4), &carry);
-         word_madd(x_j, x[k+5], z[j+k+5], carry, z + (j+k+5), &carry);
-         word_madd(x_j, x[k+6], z[j+k+6], carry, z + (j+k+6), &carry);
-         word_madd(x_j, x[k+7], z[j+k+7], carry, z + (j+k+7), &carry);
-         }
-
-      for(u32bit k = blocks; k != x_size; ++k)
-         word_madd(x_j, x[k], z[j+k], carry, z + (j+k), &carry);
-      z[j+x_size] = carry;
-      }
-   }
 
 namespace {
 
@@ -56,7 +22,7 @@ void karatsuba_sqr(word z[], const word x[], u32bit N, word workspace[])
    else if(N == 8)
       bigint_comba_sqr8(z, x);
    else if(N < KARATSUBA_SQR_LOWER_SIZE || N % 2)
-      bigint_simple_sqr(z, x, N);
+      bigint_simple_mul(z, x, N, x, N);
    else
       {
       const u32bit N2 = N / 2;
@@ -131,7 +97,7 @@ void handle_small_sqr(word z[], u32bit z_size,
    else if(x_sw <= 8 && x_size >= 8 && z_size >= 16)
       bigint_comba_sqr8(z, x);
    else
-      bigint_simple_sqr(z, x, x_sw);
+      bigint_simple_mul(z, x, x_sw, x, x_sw);
    }
 
 }
@@ -161,7 +127,7 @@ void bigint_sqr(word z[], u32bit z_size,
       delete[] workspace;
       }
    else
-      bigint_simple_sqr(z, x, x_sw);
+      bigint_simple_mul(z, x, x_sw, x, x_sw);
    }
 
 }

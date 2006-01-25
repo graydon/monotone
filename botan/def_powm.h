@@ -45,9 +45,6 @@ class Montgomery_Exponentiator : public Modular_Exponentiator
       Montgomery_Exponentiator(const BigInt&, Power_Mod::Usage_Hints);
    private:
       BigInt reduce(const BigInt&) const;
-      void square_and_reduce(BigInt&, MemoryRegion<word>&) const;
-      void mul_and_reduce(BigInt&, const BigInt&,
-                          MemoryRegion<word>&) const;
 
       BigInt exp, modulus;
       BigInt R2, R_mod;

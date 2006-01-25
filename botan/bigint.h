@@ -78,7 +78,7 @@ class BigInt
 
       const word* data() const { return reg.begin(); }
       SecureVector<word>& get_reg() { return reg; }
-      void grow_reg(u32bit n) const { reg.grow_by(n); }
+      void grow_reg(u32bit) const;
 
       word& operator[](u32bit index) { return reg[index]; }
       word operator[](u32bit index) const { return reg[index]; }

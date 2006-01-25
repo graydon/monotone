@@ -104,7 +104,7 @@ Filter* Filter::get_next() const
 void Filter::set_next(Filter* filters[], u32bit size)
    {
    while(size && filters && filters[size-1] == 0)
-      size--;
+      --size;
 
    next.clear();
    next.resize(size);

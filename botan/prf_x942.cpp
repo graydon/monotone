@@ -8,6 +8,7 @@
 #include <botan/oids.h>
 #include <botan/lookup.h>
 #include <botan/bit_ops.h>
+#include <algorithm>
 #include <memory>
 
 namespace Botan {

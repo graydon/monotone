@@ -7,6 +7,7 @@
 #include <botan/lookup.h>
 #include <botan/parsing.h>
 #include <botan/bit_ops.h>
+#include <algorithm>
 
 namespace Botan {
 

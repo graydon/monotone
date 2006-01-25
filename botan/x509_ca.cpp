@@ -84,7 +84,7 @@ X509_Certificate X509_CA::sign_request(const PKCS10_Request& req,
                     cert.subject_key_id(), not_before, not_after,
                     cert.subject_dn(), req.subject_dn(),
                     req.is_CA(), req.path_limit(), req.subject_alt_name(),
-                    constraints, req.ex_constraints());
+                    AlternativeName(), constraints, req.ex_constraints());
    }
 
 /*************************************************
@@ -100,6 +100,7 @@ X509_Certificate X509_CA::make_cert(PK_Signer* signer,
                                     const X509_DN& subject_dn,
                                     bool is_CA, u32bit path_limit,
                                     const AlternativeName& subject_alt,
+                                    const AlternativeName& issuer_alt,
                                     Key_Constraints constraints,
                                     const std::vector<OID>& ex_constraints)
    {
@@ -161,6 +162,13 @@ X509_Certificate X509_CA::make_cert(PK_Signer* signer,
              "subject_alternative_name");
       }
 
+   if(issuer_alt.has_items())
+      {
+      DER::encode(v3_ext, issuer_alt);
+      do_ext(tbs_cert, v3_ext, "X509v3.IssuerAlternativeName",
+             "issuer_alternative_name");
+      }
+
    if(constraints != NO_CONSTRAINTS)
       {
       DER::encode(v3_ext, constraints);
@@ -213,7 +221,10 @@ void X509_CA::do_ext(DER_Encoder& new_cert, DER_Encoder& extension,
       }
 
    if(EXT_SETTING == "no")
+      {
+      extension = DER_Encoder();
       return;
+      }
    else if(EXT_SETTING == "yes" || EXT_SETTING == "noncritical" ||
            EXT_SETTING == "critical")
       {

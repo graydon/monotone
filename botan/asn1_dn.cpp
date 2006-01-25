@@ -197,7 +197,7 @@ bool operator<(const X509_DN& dn1, const X509_DN& dn2)
    if(attr1.size() < attr2.size()) return true;
    if(attr1.size() > attr2.size()) return false;
 
-   for(rdn_iter p1 = attr1.begin(); p1 != attr1.end(); p1++)
+   for(rdn_iter p1 = attr1.begin(); p1 != attr1.end(); ++p1)
       {
       std::multimap<OID, std::string>::const_iterator p2;
       p2 = attr2.find(p1->first);

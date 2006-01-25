@@ -8,6 +8,7 @@
 #include <botan/lookup.h>
 #include <botan/rng.h>
 #include <botan/asn1.h>
+#include <algorithm>
 #include <memory>
 
 namespace Botan {

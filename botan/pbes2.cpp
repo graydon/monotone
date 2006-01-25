@@ -9,6 +9,7 @@
 #include <botan/rng.h>
 #include <botan/asn1_obj.h>
 #include <botan/oids.h>
+#include <algorithm>
 #include <memory>
 
 namespace Botan {

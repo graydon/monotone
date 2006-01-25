@@ -23,7 +23,7 @@ BigInt::BigInt(u64bit n)
 
    const u32bit limbs_needed = sizeof(u64bit) / sizeof(word);
 
-   reg.create(2*limbs_needed);
+   reg.create(4*limbs_needed);
    for(u32bit j = 0; j != limbs_needed; ++j)
       reg[j] = (word)((n >> (j*MP_WORD_BITS)) & MP_WORD_MASK);
    }
@@ -33,7 +33,7 @@ BigInt::BigInt(u64bit n)
 *************************************************/
 BigInt::BigInt(Sign s, u32bit size)
    {
-   reg.create(round_up(size, 16));
+   reg.create(round_up(size, 8));
    signedness = s;
    }
 
@@ -46,7 +46,7 @@ BigInt::BigInt(const BigInt& b)
 
    if(b_words)
       {
-      reg.create(round_up(b_words, 16));
+      reg.create(round_up(b_words, 8));
       reg.copy(b.data(), b_words);
       set_sign(b.sign());
       }
@@ -96,6 +96,14 @@ void BigInt::swap(BigInt& other)
    {
    std::swap(reg, other.reg);
    std::swap(signedness, other.signedness);
+   }
+
+/*************************************************
+* Grow the internal storage                      *
+*************************************************/
+void BigInt::grow_reg(u32bit n) const
+   {
+   reg.grow_by(round_up(n, 8));
    }
 
 /*************************************************
@@ -302,11 +310,15 @@ u32bit BigInt::bytes() const
 *************************************************/
 u32bit BigInt::bits() const
    {
-   if(sig_words() == 0) return 0;
+   if(sig_words() == 0)
+      return 0;
+
    u32bit full_words = sig_words() - 1, top_bits = MP_WORD_BITS;
    word top_word = word_at(full_words), mask = MP_WORD_TOP_BIT;
+
    while(top_bits && ((top_word & mask) == 0))
       { mask >>= 1; top_bits--; }
+
    return (full_words * MP_WORD_BITS + top_bits);
    }
 
@@ -316,6 +328,7 @@ u32bit BigInt::bits() const
 u32bit BigInt::encoded_size(Base base) const
    {
    static const double LOG_2_BASE_10 = 0.30102999566;
+
    if(base == Binary)
       return bytes();
    else if(base == Hexadecimal)
@@ -403,12 +416,12 @@ void BigInt::binary_encode(byte output[]) const
 void BigInt::binary_decode(const byte buf[], u32bit length)
    {
    const u32bit WORD_BYTES = sizeof(word);
-   reg.create(round_up(length / WORD_BYTES + 1, 4));
+   reg.create(round_up((length / WORD_BYTES) + 1, 8));
 
    for(u32bit j = 0; j != length / WORD_BYTES; ++j)
       {
       u32bit top = length - WORD_BYTES*j;
-      for(u32bit k = WORD_BYTES; k > 0; k--)
+      for(u32bit k = WORD_BYTES; k > 0; --k)
          reg[j] = (reg[j] << 8) | buf[top - k];
       }
    for(u32bit j = 0; j != length % WORD_BYTES; ++j)

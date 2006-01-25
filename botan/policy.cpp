@@ -221,7 +221,7 @@ void set_default_config(Library_State* state)
    state->set_option("conf", "x509/exts/subject_key_id", "yes");
    state->set_option("conf", "x509/exts/authority_key_id", "yes");
    state->set_option("conf", "x509/exts/subject_alternative_name", "yes");
-   state->set_option("conf", "x509/exts/issuer_alternative_name", "yes");
+   state->set_option("conf", "x509/exts/issuer_alternative_name", "no");
    state->set_option("conf", "x509/exts/key_usage", "critical");
    state->set_option("conf", "x509/exts/extended_key_usage", "yes");
    state->set_option("conf", "x509/exts/crl_number", "yes");

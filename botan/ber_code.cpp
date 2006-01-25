@@ -120,7 +120,7 @@ void decode(BER_Decoder& decoder, BigInt& out,
 
    if(negative)
       {
-      for(u32bit j = obj.value.size(); j > 0; j--)
+      for(u32bit j = obj.value.size(); j > 0; --j)
          if(obj.value[j-1]--)
             break;
       for(u32bit j = 0; j != obj.value.size(); ++j)

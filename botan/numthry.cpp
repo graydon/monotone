@@ -6,6 +6,7 @@
 #include <botan/numthry.h>
 #include <botan/reducer.h>
 #include <botan/ui.h>
+#include <algorithm>
 
 namespace Botan {
 

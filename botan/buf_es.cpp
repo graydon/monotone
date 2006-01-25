@@ -6,6 +6,7 @@
 #include <botan/buf_es.h>
 #include <botan/bit_ops.h>
 #include <botan/util.h>
+#include <algorithm>
 
 namespace Botan {
 

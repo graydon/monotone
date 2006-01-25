@@ -7,6 +7,7 @@
 #include <botan/lookup.h>
 #include <botan/bit_ops.h>
 #include <botan/hmac.h>
+#include <algorithm>
 #include <memory>
 
 namespace Botan {

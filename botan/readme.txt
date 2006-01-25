@@ -1,4 +1,4 @@
-Botan: Version 1.5.2, January 15, 2006
+Botan: Version 1.5.3, January 24, 2006
 
 Botan is a C++ class library for performing a wide variety of cryptographic
 operations, including encryption, hashing, authentication, public key

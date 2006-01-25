@@ -123,9 +123,9 @@ BOTAN_SOURCES =                                                                 
         botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp       \
         botan/x931_rng.cpp botan/out_buf.cpp botan/bit_ops.cpp \
         botan/big_rand.cpp botan/def_powm.cpp botan/libstate.cpp \
-        botan/modules.cpp botan/mp_add.cpp botan/mp_numth.cpp \
-        botan/mp_sqr.cpp botan/mp_sub.cpp botan/powm_fw.cpp \
-        botan/powm_mnt.cpp \
+        botan/modules.cpp botan/mp_numth.cpp \
+        botan/mp_sqr.cpp botan/powm_fw.cpp \
+        botan/powm_mnt.cpp botan/mp_asm.cpp \
         \
         botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h  \
         botan/lookup.h botan/randpool.h botan/version.h \
@@ -162,7 +162,7 @@ BOTAN_SOURCES =                                                                 
         botan/x931_rng.h botan/sha256.h \
         botan/parsing.h botan/out_buf.h botan/bit_ops.h \
         botan/def_powm.h botan/dl_group.h botan/libstate.h \
-        botan/modules.h botan/mp_asm.h botan/pow_mod.h
+        botan/modules.h botan/mp_asm.h botan/pow_mod.h botan/mp_asmi.h
 
 
 

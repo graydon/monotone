@@ -5,6 +5,7 @@
 
 #include <botan/data_src.h>
 #include <fstream>
+#include <algorithm>
 
 namespace Botan {
 

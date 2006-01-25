@@ -5,6 +5,7 @@
 
 #include <botan/numthry.h>
 #include <botan/mp_core.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -37,9 +38,9 @@ BigInt mul_add(const BigInt& a, const BigInt& b, const BigInt& c)
    const u32bit c_sw = c.sig_words();
 
    BigInt r(sign, std::max(a.size() + b.size(), c_sw) + 1);
-   bigint_mul3(r.get_reg(), r.size(),
-               a.data(), a.size(), a_sw,
-               b.data(), b.size(), b_sw);
+   bigint_mul(r.get_reg(), r.size(),
+              a.data(), a.size(), a_sw,
+              b.data(), b.size(), b_sw);
    const u32bit r_size = std::max(r.sig_words(), c_sw);
    bigint_add2(r.get_reg(), r_size, c.data(), c_sw);
    return r;

@@ -16,7 +16,7 @@ namespace {
 /*************************************************
 * Try to choose a good window size               *
 *************************************************/
-u32bit choose_window_bits(u32bit exp_bits, u32bit base_bits,
+u32bit choose_window_bits(u32bit exp_bits, u32bit,
                           Power_Mod::Usage_Hints hints)
    {
    static const u32bit wsize[][2] = {
@@ -78,7 +78,7 @@ BigInt Fixed_Window_Exponentiator::execute() const
    const u32bit exp_nibbles = (exp.bits() + window_bits - 1) / window_bits;
 
    BigInt x = 1;
-   for(u32bit j = exp_nibbles; j > 0; j--)
+   for(u32bit j = exp_nibbles; j > 0; --j)
       {
       for(u32bit k = 0; k != window_bits; ++k)
          x = reducer->square(x);

@@ -9,6 +9,7 @@
 #include <botan/parsing.h>
 #include <botan/rng.h>
 #include <botan/ui.h>
+#include <algorithm>
 #include <memory>
 
 namespace Botan {
@@ -20,7 +21,7 @@ namespace {
 *************************************************/
 void increment(SecureVector<byte>& seed)
    {
-   for(u32bit j = seed.size(); j > 0; j--)
+   for(u32bit j = seed.size(); j > 0; --j)
       if(++seed[j-1])
          break;
    }

@@ -6,6 +6,7 @@
 #include <botan/cts.h>
 #include <botan/lookup.h>
 #include <botan/bit_ops.h>
+#include <algorithm>
 
 namespace Botan {
 

@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/secqueue.h>
+#include <algorithm>
 
 namespace Botan {
 

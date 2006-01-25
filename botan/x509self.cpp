@@ -164,7 +164,8 @@ X509_Certificate create_self_signed_cert(const X509_Cert_Options& opts,
                              MemoryVector<byte>(), opts.start, opts.end,
                              subject_dn, subject_dn,
                              opts.is_CA, opts.path_limit,
-                             subject_alt, constraints, opts.ex_constraints);
+                             subject_alt, subject_alt,
+                             constraints, opts.ex_constraints);
    }
 
 /*************************************************

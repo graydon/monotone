@@ -43,7 +43,7 @@ s32bit bigint_cmp(const word x[], u32bit x_size,
          return 1;
       x_size--;
       }
-   for(u32bit j = x_size; j > 0; j--)
+   for(u32bit j = x_size; j > 0; --j)
       {
       if(x[j-1] > y[j-1]) return 1;
       if(x[j-1] < y[j-1]) return -1;

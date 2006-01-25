@@ -72,7 +72,7 @@ void modifying_divide(BigInt& x, BigInt& y, BigInt& q)
 
    while(x >= temp) { x -= temp; ++q[n-t]; }
 
-   for(u32bit j = n; j != t; j--)
+   for(u32bit j = n; j != t; --j)
       {
       const word x_j0  = x.word_at(j);
       const word x_j1 = x.word_at(j-1);
@@ -85,13 +85,13 @@ void modifying_divide(BigInt& x, BigInt& y, BigInt& q)
 
       while(bigint_divcore(q[j-t-1], y_t, y.word_at(t-1),
                            x_j0, x_j1, x.word_at(j-2)))
-         q[j-t-1]--;
+         --q[j-t-1];
 
       x -= (q[j-t-1] * y) << (MP_WORD_BITS * (j-t-1));
       if(x.is_negative())
          {
          x += y << (MP_WORD_BITS * (j-t-1));
-         q[j-t-1]--;
+         --q[j-t-1];
          }
       }
    x >>= shifts;

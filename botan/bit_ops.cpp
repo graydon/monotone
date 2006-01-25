@@ -55,7 +55,7 @@ bool power_of_2(u64bit arg)
 *************************************************/
 u32bit high_bit(u64bit n)
    {
-   for(u32bit count = 64; count > 0; count--)
+   for(u32bit count = 64; count > 0; --count)
       if((n >> (count - 1)) & 0x01)
          return count;
    return 0;
@@ -66,7 +66,7 @@ u32bit high_bit(u64bit n)
 *************************************************/
 u32bit low_bit(u64bit n)
    {
-   for(u32bit count = 0; count != 64; count++)
+   for(u32bit count = 0; count != 64; ++count)
       if((n >> count) & 0x01)
          return (count + 1);
    return 0;

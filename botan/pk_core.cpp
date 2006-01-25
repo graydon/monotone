@@ -7,6 +7,7 @@
 #include <botan/numthry.h>
 #include <botan/engine.h>
 #include <botan/conf.h>
+#include <algorithm>
 
 namespace Botan {
 

@@ -8,6 +8,7 @@
 #include <botan/pipe.h>
 #include <botan/hex.h>
 #include <botan/rng.h>
+#include <algorithm>
 
 namespace Botan {
 
