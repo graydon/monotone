@@ -2705,7 +2705,7 @@ session::rebuild_merkle_trees(app_state & app,
   // xgettext: please use short message and try to avoid multibytes chars
   ticker revisions_ticker(_("revisions"), "r", 64);
   // xgettext: please use short message and try to avoid multibytes chars
-  ticker certs_ticker(_("certs"), "c", 256);
+  ticker certs_ticker(_("certificates"), "c", 256);
   // xgettext: please use short message and try to avoid multibytes chars
   ticker keys_ticker(_("keys"), "k", 1);
 
