@@ -1,5 +1,12 @@
 2005-01-24  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	Make a netsync client crash not hang the testsuite.
+	* tests/t_netsync_single.at: use netsync macros
+	* testsuite.at: Make NETSYNC_SETUP set a trap on exit to kill
+	any servers.
+
+2005-01-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* commands.cc (update): Remove fixme comment.
 
 2005-01-24  Timothy Brownawell  <tbrownaw@gmail.com>
