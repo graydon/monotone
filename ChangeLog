@@ -1,3 +1,9 @@
+2005-01-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* HACKING: add some notes about compiling - precompiled headers,
+	-O0, and ccache.
+	* INSTALL: mention --enable-pch
+
 2005-01-24  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Make a netsync client crash not hang the testsuite.
