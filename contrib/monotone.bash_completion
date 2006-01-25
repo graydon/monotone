@@ -201,7 +201,7 @@ _monotone() {
                 ;;
             esac
           fi
-          if [ -z "$prev2" ] ; then
+          if (( $COMP_CWORD < 2 )) ; then
             COMPREPLY=( $(compgen -W 'automate db agraph fload fmerge lca lcad
                                       rcs_import annotate cat complete diff
                                       list log ls status cert chkeypass dropkey
