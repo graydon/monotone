@@ -450,7 +450,7 @@ roster_merge(roster_t const & left_parent,
           conflict.parent_name.first = n->parent;
           conflict.parent_name.second = n->name;
           I(n->name == bookkeeping_root_component);
-          I(n->self == result.roster.detach_node(split_mt));
+          I(n->self == result.roster.detach_node(bookkeeping_root_split));
           result.illegal_name_conflicts.push_back(conflict);
         }
     }
