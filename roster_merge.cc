@@ -439,22 +439,17 @@ roster_merge(roster_t const & left_parent,
     {
       // we can't have an illegal MT dir unless we have a root node in the
       // first place...
-      // FIXME: this is an ugly hack
-      split_path split_foo_mt;
-      file_path foo_mt = file_path_internal("foo") / bookkeeping_root.as_internal();
-      foo_mt.split(split_foo_mt);
-      I(split_foo_mt.size() == 3);
-      split_path split_mt;
-      split_mt.push_back(idx(split_foo_mt, 0));
-      split_mt.push_back(idx(split_foo_mt, 2));
-      // now split_mt = split("MT")
-      if (result.roster.has_node(split_mt))
+      split_path bookkeeping_root_split;
+      bookkeeping_root_split.push_back(the_null_component);
+      bookkeeping_root_split.push_back(bookkeeping_root_component);
+      if (result.roster.has_node(bookkeeping_root_split))
         {
           illegal_name_conflict conflict;
-          node_t n = result.roster.get_node(split_mt);
+          node_t n = result.roster.get_node(bookkeeping_root_split);
           conflict.nid = n->self;
           conflict.parent_name.first = n->parent;
           conflict.parent_name.second = n->name;
+          I(n->name == bookkeeping_root_component);
           I(n->self == result.roster.detach_node(split_mt));
           result.illegal_name_conflicts.push_back(conflict);
         }
