@@ -1,3 +1,7 @@
+2006-01-27  Stéphane Gimenez <dev@gim.name>
+
+	* sanity.hh: fix scoping issue revealed by gcc-4.1.
+
 2006-01-26  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: One more translation.
