@@ -1,3 +1,7 @@
+2006-01-26  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: One more translation.
+
 2006-01-25  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* netsync.cc (session::rebuild_merkle_trees): Ticker header

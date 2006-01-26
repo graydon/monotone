@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-01-25 09:43+0100\n"
-"PO-Revision-Date: 2006-01-25 09:53+0100\n"
+"POT-Creation-Date: 2006-01-26 20:45+0100\n"
+"PO-Revision-Date: 2006-01-26 20:47+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1490,7 +1490,7 @@ msgstr "föräldraskap"
 msgid "keys"
 msgstr "nycklar"
 
-#: database_check.cc:477 netsync.cc:2708
+#: database_check.cc:477
 msgid "certs"
 msgstr "cert"
 
@@ -1816,7 +1816,8 @@ msgid ""
 "make sure database and containing directory are writeable\n"
 "and you have not run out of disk space"
 msgstr ""
-"se till att du har skrivrättigheter till databasen och katalogen den ligger i\n"
+"se till att du har skrivrättigheter till databasen och katalogen den ligger "
+"i\n"
 "samt att det finns tillräckligt med ledigt utrymme på disken"
 
 #: database.cc:278
@@ -2439,11 +2440,13 @@ msgstr ""
 
 #: netcmd.cc:97
 msgid "the remote side has a newer, incompatible version of monotone"
-msgstr "den monotone som används i andra änden är en nyare, inkompatibel version"
+msgstr ""
+"den monotone som används i andra änden är en nyare, inkompatibel version"
 
 #: netcmd.cc:98
 msgid "the remote side has an older, incompatible version of monotone"
-msgstr "den monotone som används i andra änden är en äldre, inkompatibel version"
+msgstr ""
+"den monotone som används i andra änden är en äldre, inkompatibel version"
 
 #: netcmd.cc:118
 #, c-format
@@ -2866,6 +2869,10 @@ msgstr "fick OOB-data från %s, kopplar ifrån\n"
 #, c-format
 msgid "finding items to synchronize:\n"
 msgstr "letar efter saker att synkronisera:\n"
+
+#: netsync.cc:2708
+msgid "certificates"
+msgstr "certifikat"
 
 #: netsync.cc:2817
 #, c-format
