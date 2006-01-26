@@ -1,3 +1,14 @@
+2006-01-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* netsync.cc (session::rebuild_merkle_trees): Ticker header
+	consistency tweak.
+
+2005-01-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* HACKING: add some notes about compiling - precompiled headers,
+	-O0, and ccache.
+	* INSTALL: mention --enable-pch
+
 2006-01-25  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Fix all fuzzy translations (some needed no fix).
