@@ -2311,7 +2311,7 @@ void database::complete(selector_type ty,
               vector<cert_value> branch_names;
               if (i->second.size() == 0)
                 {
-                  __app->require_working_copy("the empty head selector h: refers to the head of the current branch");
+                  __app->require_workspace("the empty head selector h: refers to the head of the current branch");
                   branch_names.push_back((__app->branch_name)());
                 }
               else
@@ -2362,7 +2362,7 @@ void database::complete(selector_type ty,
               L(FL("processing selector type %d with i->second '%s'\n") % ty % i->second);
               if ((i->first == selectors::sel_branch) && (i->second.size() == 0))
                 {
-                  __app->require_working_copy("the empty branch selector b: refers to the current branch");
+                  __app->require_workspace("the empty branch selector b: refers to the current branch");
                   // FIXME: why do we have to glob on the unbase64(value), rather than being able to use == ?
                   lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND unbase64(value) glob '%s'")
                           % branch_cert_name % __app->branch_name).str();

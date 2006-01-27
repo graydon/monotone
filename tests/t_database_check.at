@@ -58,7 +58,7 @@ AT_CHECK(MONOTONE add fileY, [], [ignore], [ignore])
 AT_CHECK(MONOTONE commit --branch=test --message='to be removed', [], [ignore], [ignore])
 REV4=`BASE_REVISION`
 AT_CHECK(MONOTONE db execute "delete from revisions where id='$REV4'", [0], [ignore], [ignore])
-# revert to the old working copy state
+# revert to the old workspace state
 AT_CHECK(echo $REV3 > MT/revision)
 # remove another file too
 AT_CHECK(MONOTONE db execute "delete from files where id='$FILE3'", [], [ignore], [ignore])

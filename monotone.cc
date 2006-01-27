@@ -70,8 +70,8 @@ struct poptOption coptions[] =
     {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("use least common ancestor as ancestor for merge"), NULL},
     {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
     {"bind", 0, POPT_ARG_STRING, &argstr, OPT_BIND, gettext_noop("address:port to listen on (default :4691)"), NULL},
-    {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from working directory"), NULL},
-    {"unknown", 0, POPT_ARG_NONE, NULL, OPT_UNKNOWN, gettext_noop("perform the operations for unknown files from working directory"), NULL},
+    {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from workspace"), NULL},
+    {"unknown", 0, POPT_ARG_NONE, NULL, OPT_UNKNOWN, gettext_noop("perform the operations for unknown files from workspace"), NULL},
     {"key-to-push", 0, POPT_ARG_STRING, &argstr, OPT_KEY_TO_PUSH, gettext_noop("push the specified key even if it hasn't signed anything"), NULL},
     {"drop-attr", 0, POPT_ARG_STRING, &argstr, OPT_DROP_ATTR, gettext_noop("when rosterifying, drop attrs entries with the given key"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -95,7 +95,7 @@ struct poptOption options[] =
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, gettext_noop("load extra rc file"), NULL},
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, gettext_noop("set key for signatures"), NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, gettext_noop("set name of database"), NULL},
-    {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, gettext_noop("limit search for working copy to specified root"), NULL},
+    {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, gettext_noop("limit search for workspace to specified root"), NULL},
     {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, gettext_noop("verbose completion output"), NULL},
     {"keydir", 0, POPT_ARG_STRING, &argstr, OPT_KEY_DIR, gettext_noop("set location of key store"), NULL},
     {"confdir", 0, POPT_ARG_STRING, &argstr, OPT_CONF_DIR, gettext_noop("set location of configuration directory"), NULL},
@@ -547,11 +547,11 @@ cpp_main(int argc, char ** argv)
           throw usage(cmd);     // cmd may be empty, and that's fine.
         }
 
-      // at this point we allow a working copy (meaning search for it
+      // at this point we allow a workspace (meaning search for it
       // and if found read MT/options) but don't require it. certain
-      // commands may subsequently require a working copy or fail
+      // commands may subsequently require a workspace or fail
 
-      app.allow_working_copy();
+      app.allow_workspace();
 
       // main options processed, now invoke the 
       // sub-command w/ remaining args

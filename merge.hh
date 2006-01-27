@@ -16,7 +16,7 @@
 // Destructively alter a roster_merge_result to attempt to remove any
 // conflicts in it. Takes a content_merge_adaptor to pass on to the content
 // merger; used from both the merge-to-database code (below) and the
-// merge-to-working-copy "update" code in commands.cc.
+// merge-to-workspace "update" code in commands.cc.
 
 struct roster_merge_result;
 

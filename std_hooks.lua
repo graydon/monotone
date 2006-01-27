@@ -33,7 +33,7 @@ end
 -- attributes are persistent metadata about files (such as execute
 -- bit, ACLs, various special flags) which we want to have set and
 -- re-set any time the files are modified. the attributes themselves
--- are stored in a file .mt-attrs, in the working copy (and
+-- are stored in a file .mt-attrs, in the workspace (and
 -- manifest). each (f,k,v) triple in an attribute file turns into a
 -- call to attr_functions[k](f,v) in lua.
 

@@ -91,7 +91,7 @@ DEPTH_ARGS=". --depth 1"
 DEPTH_INCLUDED="file1 file2 foo/foo1 foo/foo2"
 DEPTH_EXCLUDED="foo/bar/bar1 foo/bar/bar2"
 
-# setup working copy
+# setup workspace
 
 AT_CHECK(mkdir foo)
 AT_CHECK(mkdir foo/bar)

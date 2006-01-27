@@ -34,7 +34,7 @@ public:
 #endif
   void set_app(app_state *_app);
   void add_std_hooks();
-  void working_copy_rcfilename(bookkeeping_path & file);
+  void workspace_rcfilename(bookkeeping_path & file);
   void default_rcfilename(system_path & file);
   void load_rcfile(utf8 const & file);
   void load_rcfile(any_path const & file, bool required);
@@ -89,7 +89,7 @@ public:
                           std::string const & oldrev,
                           std::string const & newrev);
 
-  // working copy hooks
+  // workspace hooks
   bool hook_use_inodeprints();
 
   // attribute hooks

@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([listing working copy manifests])
+AT_SETUP([listing workspace manifests])
 
 MONOTONE_SETUP
 

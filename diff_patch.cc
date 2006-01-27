@@ -548,15 +548,15 @@ content_merge_database_adaptor::get_version(file_path const & path,
 
 
 ///////////////////////////////////////////////////////////////////////////
-// content_merge_working_copy_adaptor
+// content_merge_workspace_adaptor
 ///////////////////////////////////////////////////////////////////////////
 
 void 
-content_merge_working_copy_adaptor::record_merge(file_id const & left_id, 
-                                                 file_id const & right_id,
-                                                 file_id const & merged_id,
-                                                 file_data const & left_data, 
-                                                 file_data const & merged_data)
+content_merge_workspace_adaptor::record_merge(file_id const & left_id, 
+                                              file_id const & right_id,
+                                              file_id const & merged_id,
+                                              file_data const & left_data, 
+                                              file_data const & merged_data)
 {  
   L(FL("temporarily recording merge of %s <-> %s into %s\n")
     % left_id % right_id % merged_id);
@@ -565,8 +565,8 @@ content_merge_working_copy_adaptor::record_merge(file_id const & left_id,
 }
 
 void 
-content_merge_working_copy_adaptor::get_ancestral_roster(node_id nid,
-                                                         boost::shared_ptr<roster_t> & anc)
+content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
+                                                      boost::shared_ptr<roster_t> & anc)
 {
   // When doing an update, the base revision is always the ancestor to 
   // use for content merging.
@@ -574,9 +574,9 @@ content_merge_working_copy_adaptor::get_ancestral_roster(node_id nid,
 }
 
 void 
-content_merge_working_copy_adaptor::get_version(file_path const & path,
-                                                file_id const & ident, 
-                                                file_data & dat)
+content_merge_workspace_adaptor::get_version(file_path const & path,
+                                             file_id const & ident, 
+                                             file_data & dat)
 {
   if (app.db.file_version_exists(ident))
     app.db.get_file_version(ident, dat);
@@ -585,12 +585,12 @@ content_merge_working_copy_adaptor::get_version(file_path const & path,
       data tmp;
       file_id fid;
       require_path_is_file(path,
-                           F("file '%s' does not exist in working copy") % path,
-                           F("'%s' in working copy is a directory, not a file") % path);
+                           F("file '%s' does not exist in workspace") % path,
+                           F("'%s' in workspace is a directory, not a file") % path);
       read_localized_data(path, tmp, app.lua);
       calculate_ident(tmp, fid);
       N(fid == ident,
-        F("file %s in working copy has id %s, wanted %s")
+        F("file %s in workspace has id %s, wanted %s")
         % path % fid % ident);
       dat = tmp;
     }

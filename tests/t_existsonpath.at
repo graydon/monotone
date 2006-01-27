@@ -3,7 +3,7 @@ MONOTONE_SETUP
 
 # Need a way to break into the lua interpreter; our strategy is to
 # redefine the use_inodeprints function to run our code, and then
-# create a new working copy.
+# create a new workspace.
 
 AT_DATA(test.lua, [function use_inodeprints()
   if (existsonpath("ls") == 0) then

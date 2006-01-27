@@ -20,7 +20,7 @@
 #include "vocab.hh"
 #include "work.hh"
 
-// working copy / book-keeping file code
+// workspace / book-keeping file code
 
 using namespace std;
 
@@ -122,11 +122,11 @@ addition_builder::visit_file(file_path const & path)
   path.split(sp);
   if (ros.has_node(sp))
     {
-      P(F("skipping %s, already accounted for in working copy\n") % path);
+      P(F("skipping %s, already accounted for in workspace\n") % path);
       return;
     }
 
-  P(F("adding %s to working copy add set\n") % path);
+  P(F("adding %s to workspace add set\n") % path);
 
   split_path dirname, prefix;
   path_component basename;
@@ -209,7 +209,7 @@ perform_deletions(path_set const & paths, app_state & app)
               N(d->children.empty(),
                 F("cannot remove %s/, it is not empty") % name);
             }
-          P(F("adding %s to working copy delete set\n") % name);
+          P(F("adding %s to workspace delete set\n") % name);
           new_roster.drop_detached_node(new_roster.detach_node(*i));
           if (app.execute && path_exists(name))
             delete_file_or_dir_shallow(name);
@@ -305,7 +305,7 @@ perform_rename(set<file_path> const & src_paths,
     {
       node_id nid = new_roster.detach_node(i->first);
       new_roster.attach_node(nid, i->second);
-      P(F("adding %s -> %s to working copy rename set") 
+      P(F("adding %s -> %s to workspace rename set") 
         % file_path(i->first) 
         % file_path(i->second));
     }
@@ -330,11 +330,11 @@ perform_rename(set<file_path> const & src_paths,
             }
           else if (!have_src && !have_dst)
             {
-              W(F("%s doesn't exist in working copy, skipping") % s);
+              W(F("%s doesn't exist in workspace, skipping") % s);
             }
           else if (have_src && have_dst)
             {
-              W(F("destination %s already exists in working copy, skipping") % d);
+              W(F("destination %s already exists in workspace, skipping") % d);
             }
           else
             {
@@ -418,8 +418,8 @@ void get_revision_id(revision_id & c)
   get_revision_path(c_path);
 
   require_path_is_file(c_path,
-                       F("working copy is corrupt: %s does not exist") % c_path,
-                       F("working copy is corrupt: %s is a directory") % c_path);
+                       F("workspace is corrupt: %s does not exist") % c_path,
+                       F("workspace is corrupt: %s is a directory") % c_path);
 
   data c_data;
   L(FL("loading revision id from %s\n") % c_path);
@@ -429,7 +429,7 @@ void get_revision_id(revision_id & c)
     }
   catch(std::exception & e)
     {
-      N(false, F("Problem with working directory: %s is unreadable") % c_path);
+      N(false, F("Problem with workspace: %s is unreadable") % c_path);
     }
   c = revision_id(remove_ws(c_data()));
 }
@@ -796,7 +796,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   bookkeeping_path src_pth = path_for_nid(nid);
   file_path dst_pth(dst);
 
-  // Possibly just write data out into the working copy, if we're doing
+  // Possibly just write data out into the workspace, if we're doing
   // a file-create (not a dir-create or file/dir rename).
   if (!file_exists(src_pth))
     {

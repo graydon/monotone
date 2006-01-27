@@ -29,7 +29,7 @@ AT_CHECK(test -e $CVSROOT)
 AT_CHECK(test -e $CVSROOT/CVSROOT)
 AT_CHECK(test -e $CVSROOT/CVSROOT/history)
 
-# check out the working copy and make some commits
+# check out the workspace and make some commits
 
 AT_CHECK(cvs -d $CVSROOT co ., [], [ignore], [ignore])
 AT_CHECK(mkdir testdir)

@@ -1,4 +1,4 @@
-AT_SETUP([add working copy commit in another])
+AT_SETUP([add workspace commit in another])
 MONOTONE_SETUP
 
 # This test relies on file-suturing

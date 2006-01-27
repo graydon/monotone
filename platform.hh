@@ -34,7 +34,7 @@ bool have_smart_terminal();
 // return value of 0 means "unlimited"
 unsigned int terminal_width();
 
-// for "reckless mode" working copy change detection.
+// for "reckless mode" workspace change detection.
 // returns 'true' if it has generated a valid inodeprint; returns 'false' if
 // there was a problem, in which case we should act as if the inodeprint has
 // changed.

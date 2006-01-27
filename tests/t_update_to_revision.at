@@ -71,7 +71,7 @@ RIGHT_LEAF_R_SHA=`BASE_REVISION`
 AT_CHECK(MONOTONE update --revision=$LEFT_LEAF_R_SHA, [], [ignore], [ignore])
 AT_CHECK(cmp testfile left-leaf, [], [ignore])
 
-# Test that working copy changes are kept while going backward.
+# Test that workspace changes are kept while going backward.
 AT_CHECK(cp modified-left-leaf testfile)
 AT_CHECK(MONOTONE update --revision=$ROOT_R_SHA, [], [ignore], [ignore])
 AT_CHECK(cmp testfile modified-root, [], [ignore])

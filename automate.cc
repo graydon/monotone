@@ -638,7 +638,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 // Name: inventory
 // Arguments: none
 // Added in: 1.0
-// Purpose: Prints a summary of every file found in the working copy or its
+// Purpose: Prints a summary of every file found in the workspace or its
 //   associated base manifest. Each unique path is listed on a line prefixed by
 //   three status characters and two numeric values used for identifying
 //   renames. The three status characters are as follows.
@@ -665,7 +665,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 //   includes the rest of the line. Directory paths are identified as ending with
 //   the "/" character, file paths do not end in this character.
 //
-// Error conditions: If no working copy book keeping MT directory is found,
+// Error conditions: If no workspace book keeping MT directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
 static void
@@ -677,7 +677,7 @@ automate_inventory(std::vector<utf8> args,
   if (args.size() != 0)
     throw usage(help_name);
 
-  app.require_working_copy();
+  app.require_workspace();
 
   temp_node_id_source nis;
   roster_t base, curr;
@@ -890,7 +890,7 @@ automate_certs(std::vector<utf8> args,
 
 // Name: get_revision
 // Arguments:
-//   1: a revision id (optional, determined from working directory if non-existant)
+//   1: a revision id (optional, determined from the workspace if non-existant)
 // Added in: 1.0
 // Purpose: Prints changeset information for the specified revision id.
 //
@@ -942,7 +942,7 @@ automate_get_revision(std::vector<utf8> args,
       revision_set rev;
       roster_t old_roster, new_roster;
 
-      app.require_working_copy(); 
+      app.require_workspace(); 
       get_unrestricted_working_revision_and_rosters(app, rev, 
                                                     old_roster, 
                                                     new_roster);
@@ -963,7 +963,7 @@ automate_get_revision(std::vector<utf8> args,
 
 // Name: get_manifest_of
 // Arguments:
-//   1: a revision id (optional, determined from working directory if non-existant)
+//   1: a revision id (optional, determined from the workspace if non-existant)
 // Added in: 2.0
 // Purpose: Prints the contents of the manifest associated with the given revision ID.
 //
@@ -987,7 +987,7 @@ automate_get_manifest_of(std::vector<utf8> args,
   if (args.size() == 0)
     {
       revision_set rs;
-      app.require_working_copy();
+      app.require_workspace();
       get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster);
     }
   else

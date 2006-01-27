@@ -1164,13 +1164,13 @@ static void find_unknown_and_ignored (app_state & app, bool want_ignored, vector
                                       path_set & unknown, path_set & ignored);
 
 
-CMD(add, N_("working copy"), N_("[PATH]..."),
-    N_("add files to working copy"), OPT_UNKNOWN)
+CMD(add, N_("workspace"), N_("[PATH]..."),
+    N_("add files to workspace"), OPT_UNKNOWN)
 {
   if (!app.unknown && (args.size() < 1))
     throw usage(name);
 
-  app.require_working_copy();
+  app.require_workspace();
 
   path_set paths;
   if (app.unknown)
@@ -1192,13 +1192,13 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
 static void find_missing (app_state & app,
                           vector<utf8> const & args, path_set & missing);
 
-CMD(drop, N_("working copy"), N_("[PATH]..."),
-    N_("drop files from working copy"), OPT_EXECUTE % OPT_MISSING)
+CMD(drop, N_("workspace"), N_("[PATH]..."),
+    N_("drop files from workspace"), OPT_EXECUTE % OPT_MISSING)
 {
   if (!app.missing && (args.size() < 1))
     throw usage(name);
 
-  app.require_working_copy();
+  app.require_workspace();
 
   path_set paths;
   if (app.missing)
@@ -1217,16 +1217,16 @@ CMD(drop, N_("working copy"), N_("[PATH]..."),
 ALIAS(rm, drop);
 
 
-CMD(rename, N_("working copy"), 
+CMD(rename, N_("workspace"), 
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
-    N_("rename entries in the working copy"),
+    N_("rename entries in the workspace"),
     OPT_EXECUTE)
 {
   if (args.size() < 2)
     throw usage(name);
   
-  app.require_working_copy();
+  app.require_workspace();
 
   file_path dst_path = file_path_external(args.back());
 
@@ -1291,14 +1291,14 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
   
 }
 
-CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"),
+CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
     OPT_DEPTH % OPT_EXCLUDE % OPT_BRIEF)
 {
   revision_set rs;
   roster_t old_roster, new_roster;
   data tmp;
 
-  app.require_working_copy();
+  app.require_workspace();
   get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
 
   if (global_sanity.brief)
@@ -1338,7 +1338,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
 }
 
 
-CMD(identify, N_("working copy"), N_("[PATH]"),
+CMD(identify, N_("workspace"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
     OPT_NONE)
 {
@@ -1370,7 +1370,7 @@ CMD(cat, N_("informative"),
     throw usage(name);
 
   if (app.revision_selectors.size() == 0)
-    app.require_working_copy();
+    app.require_workspace();
 
   transaction_guard guard(app.db, false);
 
@@ -1382,7 +1382,7 @@ CMD(cat, N_("informative"),
   N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
 
   // paths are interpreted as standard external ones when we're in a
-  // working copy, but as project-rooted external ones otherwise
+  // workspace, but as project-rooted external ones otherwise
   file_path fp;
   split_path sp;
   fp = file_path_external(idx(args, 0));
@@ -1476,7 +1476,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
         % ident % app.branch_name);
     }
 
-  app.create_working_copy(dir);
+  app.create_workspace(dir);
     
   file_data data;
   roster_t ros;
@@ -1649,7 +1649,7 @@ ls_known (app_state & app, vector<utf8> const & args)
   roster_t old_roster, new_roster;
   data tmp;
 
-  app.require_working_copy();
+  app.require_workspace();
 
   path_set paths;
   get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
@@ -1682,7 +1682,7 @@ find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const
 static void
 ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & args)
 {
-  app.require_working_copy();
+  app.require_workspace();
 
   path_set unknown, ignored;
   find_unknown_and_ignored(app, want_ignored, args, unknown, ignored);
@@ -1704,7 +1704,7 @@ find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
   cset included_work, excluded_work;
   path_set old_paths, new_paths;
 
-  app.require_working_copy();
+  app.require_workspace();
   get_base_roster_and_working_cset(app, args, base_rid, base_roster,
                                    old_paths, new_paths,
                                    included_work, excluded_work);
@@ -1747,7 +1747,7 @@ CMD(list, N_("informative"),
       "unknown\n"
       "ignored\n"
       "missing"),
-    N_("show database objects, or the current working copy manifest,\n"
+    N_("show database objects, or the current workspace manifest,\n"
       "or unknown, intentionally ignored, or missing state files"),
     OPT_DEPTH % OPT_EXCLUDE)
 {
@@ -2156,7 +2156,7 @@ CMD(db, N_("database"),
     throw usage(name);
 }
 
-CMD(attr, N_("working copy"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"), 
+CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"), 
     N_("set, get or drop file attributes"),
     OPT_NONE)
 {
@@ -2166,7 +2166,7 @@ CMD(attr, N_("working copy"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PAT
   revision_set rs;
   roster_t old_roster, new_roster;
 
-  app.require_working_copy();
+  app.require_workspace();
   get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster);
   
   file_path path = file_path_external(idx(args,1));
@@ -2275,8 +2275,8 @@ process_commit_message_args(bool & given, string & log_message, app_state & app)
 }
 
 
-CMD(commit, N_("working copy"), N_("[PATH]..."), 
-    N_("commit working copy to database"),
+CMD(commit, N_("workspace"), N_("[PATH]..."), 
+    N_("commit workspace to database"),
     OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % 
     OPT_AUTHOR % OPT_DEPTH % OPT_EXCLUDE)
 {
@@ -2287,7 +2287,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   roster_t old_roster, new_roster;
   
   app.make_branch_sticky();
-  app.require_working_copy();
+  app.require_workspace();
 
   // preserve excluded work for future commmits
   cset excluded_work;
@@ -2647,7 +2647,7 @@ dump_diffs(cset const & cs,
 
 CMD(diff, N_("informative"), N_("[PATH]..."), 
     N_("show current diffs on stdout.\n"
-    "If one revision is given, the diff between the working directory and\n"
+    "If one revision is given, the diff between the workspace and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.  If no format is specified, unified is used by default."),
     OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE %
@@ -2671,9 +2671,9 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   // initialize before transaction so we have a database to work with
 
   if (app.revision_selectors.size() == 0)
-    app.require_working_copy();
+    app.require_workspace();
   else if (app.revision_selectors.size() == 1)
-    app.require_working_copy();
+    app.require_workspace();
 
   if (app.revision_selectors.size() == 0)
     {
@@ -2735,7 +2735,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
         // Calculate a cset from old->new, then re-restrict it. 
         // FIXME: this is *possibly* a UI bug, insofar as we
         // look at the restriction name(s) you provided on the command
-        // line in the context of new and old, *not* the working copy.
+        // line in the context of new and old, *not* the workspace.
         // One way of "fixing" this is to map the filenames on the command
         // line to node_ids, and then restrict based on those. This 
         // might be more intuitive; on the other hand it would make it
@@ -2798,12 +2798,12 @@ struct update_source
   }
 };
 
-CMD(update, N_("working copy"), "",
-    N_("update working copy.\n"
-       "This command modifies your working copy to be based off of a\n"
+CMD(update, N_("workspace"), "",
+    N_("update workspace.\n"
+       "This command modifies your workspace to be based off of a\n"
        "different revision, preserving uncommitted changes as it does so.\n"
-       "If a revision is given, update the working copy to that revision.\n"
-       "If not, update the working copy to the head of the branch."),
+       "If a revision is given, update the workspace to that revision.\n"
+       "If not, update the workspace to the head of the branch."),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   revision_set r_old, r_working, r_new;
@@ -2818,7 +2818,7 @@ CMD(update, N_("working copy"), "",
   if (app.revision_selectors.size() > 1)
     throw usage(name);
 
-  app.require_working_copy();
+  app.require_workspace();
 
   // FIXME: the next few lines are a little bit expensive insofar as they
   // load the base roster twice. The API could use some factoring or
@@ -2837,7 +2837,7 @@ CMD(update, N_("working copy"), "",
                                  working_roster, working_mm, app);
 
   N(!null_id(r_old_id),
-    F("this working directory is a new project; cannot update"));
+    F("this workspace is a new project; cannot update"));
 
   if (app.revision_selectors.size() == 0)
     {
@@ -2870,7 +2870,7 @@ CMD(update, N_("working copy"), "",
   if (r_old_id == r_chosen_id)
     {
       P(F("already up to date at %s\n") % r_old_id);
-      // do still switch the working copy branch, in case they have used
+      // do still switch the workspace branch, in case they have used
       // update to switch branches.
       if (!app.branch_name().empty())
         app.make_branch_sticky();
@@ -2923,7 +2923,7 @@ CMD(update, N_("working copy"), "",
       chosen_uncommon_ancestors.insert(r_target_id);
     }
 
-  // Note that under the definition of mark-merge, the working copy is an
+  // Note that under the definition of mark-merge, the workspace is an
   // "uncommon ancestor" if itself too, even though it was not present in
   // the database (hence not returned by the query above).
 
@@ -2938,7 +2938,7 @@ CMD(update, N_("working copy"), "",
 
   roster_t & merged_roster = result.roster;
 
-  content_merge_working_copy_adaptor wca(app, old_roster);
+  content_merge_workspace_adaptor wca(app, old_roster);
   resolve_merge_conflicts (r_old_id, r_target_id,
                            working_roster, target_roster,
                            working_mm, target_mm,
@@ -2956,11 +2956,11 @@ CMD(update, N_("working copy"), "",
   //  chosen --> merged
   //
   // - old is the revision specified in MT/revision
-  // - working is based on old and includes the working copy's changes
+  // - working is based on old and includes the workspace's changes
   // - chosen is the revision we're updating to and will end up in MT/revision
   // - merged is the merge of working and chosen
   // 
-  // we apply the working to merged cset to the working copy
+  // we apply the working to merged cset to the workspace 
   // and write the cset from chosen to merged changeset in MT/work
   
   cset update, remaining;
@@ -2972,7 +2972,7 @@ CMD(update, N_("working copy"), "",
   //     write_cset(update, t1);
   //     write_cset(remaining, t2);
   //     write_manifest_of_roster(merged_roster, t3);
-  //     P(F("updating working copy with [[[\n%s\n]]]\n") % t1);
+  //     P(F("updating workspace with [[[\n%s\n]]]\n") % t1);
   //     P(F("leaving residual work [[[\n%s\n]]]\n") % t2);
   //     P(F("merged roster [[[\n%s\n]]]\n") % t3);
   //   }
@@ -2983,7 +2983,7 @@ CMD(update, N_("working copy"), "",
   
   // small race condition here...
   // nb: we write out r_chosen, not r_new, because the revision-on-disk
-  // is the basis of the working copy, not the working copy itself.
+  // is the basis of the workspace, not the workspace itself.
   put_revision_id(r_chosen_id);
   if (!app.branch_name().empty())
     {
@@ -3045,7 +3045,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       P(F("[merged] %s\n") % merged);
       left = merged;
     }
-  P(F("note: your working copies have not been updated\n"));
+  P(F("note: your workspaces have not been updated\n"));
 }
 
 CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"), 
@@ -3237,8 +3237,8 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     throw usage(name);  
 }
 
-CMD(revert, N_("working copy"), N_("[PATH]..."), 
-    N_("revert file(s), dir(s) or entire working copy (\".\")"), 
+CMD(revert, N_("workspace"), N_("[PATH]..."), 
+    N_("revert file(s), dir(s) or entire workspace (\".\")"), 
     OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
   roster_t old_roster;
@@ -3249,7 +3249,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
   if (args.size() < 1 && !app.missing)
       throw usage(name);
  
-  app.require_working_copy();
+  app.require_workspace();
 
   get_base_revision(app, old_revision_id, old_roster);
 
@@ -3427,7 +3427,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
   revision_id rid;
 
   if (app.revision_selectors.size() == 0)
-    app.require_working_copy();
+    app.require_workspace();
 
   if ((args.size() != 1) || (app.revision_selectors.size() > 1))
     throw usage(name);
@@ -3465,7 +3465,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_MERGES)
 {
   if (app.revision_selectors.size() == 0)
-    app.require_working_copy("try passing a --revision to start at");
+    app.require_workspace("try passing a --revision to start at");
 
   set<node_id> nodes;
 
@@ -3693,7 +3693,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
 }
 
-CMD(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new working copy directory, default to current"),
+CMD(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new workspace directory, default to current"),
     OPT_BRANCH_NAME)
 {
   if (args.size() > 1)
@@ -3708,7 +3708,7 @@ CMD(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new working copy directory
   else
     dir = ".";
 
-  app.create_working_copy(dir);
+  app.create_workspace(dir);
   revision_id null;
   put_revision_id(null);
 }

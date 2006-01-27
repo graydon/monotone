@@ -1,3 +1,11 @@
+2006-01-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* *: Use the term 'workspace' consistently throughout monotone for
+	the concept we previously described interchangably using the two
+	terms 'working copy' and 'working directory'.  This change has
+	been made everywhere except in historical documentation (NEWS and
+	ChangeLog).
+
 2006-01-27  Richard Levitte  <richard@levitte.org>
 
 	* monotone.texi (Generating Keys): Correct small type, the keys

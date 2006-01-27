@@ -1,4 +1,4 @@
-AT_SETUP([working copy inventory])
+AT_SETUP([workspace inventory])
 MONOTONE_SETUP
 
 AT_DATA(inventory_hooks.lua, [

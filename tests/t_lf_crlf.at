@@ -3,7 +3,7 @@ MONOTONE_SETUP
 
 # This test excercises the common case of wanting to do newline 
 # character conversion so that win32 users can have native line endings
-# in their working copies.
+# in their workspace.
 
 AT_CHECK(printf "foo\r\n", [], [stdout])
 AT_CHECK(mv stdout foo.crlf)

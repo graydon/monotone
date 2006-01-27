@@ -179,10 +179,10 @@ file_path::file_path(file_path::source_type type, std::string const & path)
     case external:
       if (!initial_rel_path.initialized)
         {
-          // we are not in a working directory; treat this as an internal 
+          // we are not in a workspace; treat this as an internal 
           // path, and set the access_tracker() into a very uninitialised 
           // state so that we will hit an exception if we do eventually 
-          // enter a working directory
+          // enter a workspace
           initial_rel_path.may_not_initialize();
           data = path;
           N(is_valid_internal(path) && !in_bookkeeping_dir(path),
@@ -435,11 +435,11 @@ normalize_out_dots(std::string const & path)
 #endif
 }
 
-system_path::system_path(any_path const & other, bool in_true_working_copy)
+system_path::system_path(any_path const & other, bool in_true_workspace)
 {
   I(!is_absolute_here(other.as_internal()));
   system_path wr;
-  if (in_true_working_copy)
+  if (in_true_workspace)
     wr = working_root.get();
   else
     wr = working_root.get_but_unused();
@@ -467,11 +467,11 @@ system_path::system_path(utf8 const & path)
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// working copy (and path roots) handling
+// workspace (and path root) handling
 ///////////////////////////////////////////////////////////////////////////
 
 bool
-find_and_go_to_working_copy(system_path const & search_root)
+find_and_go_to_workspace(system_path const & search_root)
 {
   // unimplemented
   fs::path root(search_root.as_external(), fs::native);
@@ -530,11 +530,11 @@ find_and_go_to_working_copy(system_path const & search_root)
 }
 
 void
-go_to_working_copy(system_path const & new_working_copy)
+go_to_workspace(system_path const & new_workspace)
 {
-  working_root.set(new_working_copy, true);
+  working_root.set(new_workspace, true);
   initial_rel_path.set(fs::path(), true);
-  change_current_working_dir(new_working_copy);
+  change_current_working_dir(new_workspace);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -916,7 +916,7 @@ static void test_system_path()
   // MT/options
   //   /work/newdir$ cd ..
   //   /work$ mv newdir newerdir  # better name
-  // Oops, now, if we stored the version with ..'s in, this working directory
+  // Oops, now, if we stored the version with ..'s in, this workspace
   // is broken.
   check_system_normalizes_to("../foo", "/a/foo");
   check_system_normalizes_to("foo/..", "/a/b");

@@ -17,12 +17,12 @@
 #include "vocab.hh"
 
 //
-// this file defines structures to deal with the "working copy" of a tree
+// this file defines structures to deal with the "workspace" of a tree
 //
 
 //
-// working copy book-keeping files are stored in a directory called MT, off
-// the root of the working copy source tree (analogous to the CVS or .svn
+// workspace book-keeping files are stored in a directory called MT, off
+// the root of the workspace source tree (analogous to the CVS or .svn
 // directories). there is no hierarchy of MT directories; only one exists,
 // and it is always at the root. it contains the following files:
 //
@@ -34,7 +34,7 @@
 // MT/inodeprints    -- file fingerprint cache, presence turns on "reckless"
 //                      mode
 //
-// as work proceeds, the files in the working directory either change their
+// as work proceeds, the files in the workspace either change their
 // sha1 fingerprints from those listed in the revision's manifest, or else are
 // added or deleted or renamed (and the paths of those changes recorded in
 // 'MT/work').
@@ -42,7 +42,7 @@
 // when it comes time to commit, the cset in MT/work (which can have no
 // deltas) is applied to the base roster, then a new roster is built by
 // analyzing the content of every file in the roster, as it appears in the
-// working copy. a final cset is calculated which contains the requisite
+// workspace. a final cset is calculated which contains the requisite
 // deltas, and placed in a rev, which is written to the db.
 //
 // MT/inodes, if present, can be used to speed up this last step.
@@ -129,7 +129,7 @@ bool has_contents_user_log();
 
 // the "options map" is another administrative file, stored in
 // MT/options. it keeps a list of name/value pairs which are considered
-// "persistent options", associated with a particular the working copy and
+// "persistent options", associated with a particular the workspace and
 // implied unless overridden on the command line. the main ones are
 // --branch and --db, although some others may follow in the future.
 
