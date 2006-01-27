@@ -1,3 +1,10 @@
+2006-01-26  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Generating Keys, Network Service Revisited):
+	Clean up some key-related stuff -- genkey doesn't need a db, so
+	don't confuse the reader by giving it one, and update the sample
+	output too.
+
 2006-01-27  Stéphane Gimenez <dev@gim.name>
 
 	* sanity.hh: fix scoping issue revealed by gcc-4.1.

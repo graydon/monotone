@@ -1158,11 +1158,11 @@ Jim does the following:
 
 @smallexample
 @group
-$ monotone --db=~/jim.db genkey jim@@juicebot.co.jp
+$ monotone genkey jim@@juicebot.co.jp
 monotone: generating key-pair 'jim@@juicebot.co.jp'
 enter passphrase for key ID [jim@@juicebot.co.jp] : @i{<Jim enters his passphrase>}
 confirm passphrase for key ID [jim@@juicebot.co.jp]: @i{<Jim confirms his passphrase>}
-monotone: storing key-pair 'jim@@juicebot.co.jp' in keystore
+monotone: storing key-pair 'jim@@juicebot.co.jp' in /home/jim/.monotone/keys
 @end group
 @end smallexample
 
@@ -1170,11 +1170,11 @@ Abe does something similar:
 
 @smallexample
 @group
-$ monotone --db=~/abe.db genkey abe@@juicebot.co.jp
+$ monotone genkey abe@@juicebot.co.jp
 monotone: generating key-pair 'abe@@juicebot.co.jp'
 enter passphrase for key ID [abe@@juicebot.co.jp] : @i{<Abe enters his passphrase>}
 confirm passphrase for key ID [abe@@juicebot.co.jp]: @i{<Abe confirms his passphrase>}
-monotone: storing key-pair 'abe@@juicebot.co.jp' in keystore
+monotone: storing key-pair 'abe@@juicebot.co.jp' in /home/abe/.monotone/keys
 @end group
 @end smallexample
 
@@ -1182,11 +1182,11 @@ as does Beth:
 
 @smallexample
 @group
-$ monotone --db=~/beth.db genkey beth@@juicebot.co.jp
+$ monotone genkey beth@@juicebot.co.jp
 monotone: generating key-pair 'beth@@juicebot.co.jp'
 enter passphrase for key ID [beth@@juicebot.co.jp] : @i{<Beth enters her passphrase>}
 confirm passphrase for key ID [beth@@juicebot.co.jp]: @i{<Beth confirms her passphrase>}
-monotone: storing key-pair 'beth@@juicebot.co.jp' in keystore
+monotone: storing key-pair 'beth@@juicebot.co.jp' in /home/beth/.monotone/keys
 @end group
 @end smallexample
 
@@ -1200,7 +1200,7 @@ $ monotone list keys
 
 [public keys]
 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c jim@@juicebot.co.jp   (*)
-(*) - only in keystore
+(*) - only in /home/jim/.monotone/monotonerc
 
 
 [private keys]
@@ -2327,11 +2327,11 @@ in the team-members' keys:
 @smallexample
 @group
 $ monotone --db=server.db db init
-$ monotone --db=server.db genkey monotone-server@@www.juicebot.co.jp
+$ monotone genkey monotone-server@@www.juicebot.co.jp
 monotone: generating key-pair 'monotone-server@@www.juicebot.co.jp'
 enter passphrase for key ID [monotone-server@@www.juicebot.co.jp] : @i{<Jim enters a new passphrase>}
 confirm passphrase for key ID [monotone-server@@www.juicebot.co.jp]: @i{<Jim confirms the passphrase>}
-monotone: storing key-pair 'monotone-server@@www.juicebot.co.jp' in keystore
+monotone: storing key-pair 'monotone-server@@www.juicebot.co.jp' in /home/jim/.monotone/keys
 $ cat abe.pubkey beth.pubkey jim.pubkey | monotone --db=server.db read
 monotone: read 3 packets
 @end group
