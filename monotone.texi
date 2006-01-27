@@ -4018,7 +4018,7 @@ to date.
 @section Network
 
 @ftable @command
-@item monotone serve @var{address}[:@var{port}] @var{glob} [...] [--exclude=@var{exclude-glob}]
+@item monotone serve [--bind=[@var{address}][:@var{port}]] @var{glob} [...] [--exclude=@var{exclude-glob}]
 @itemx monotone pull [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
 @itemx monotone push [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
 @itemx monotone sync [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
@@ -4044,7 +4044,7 @@ branches. Supposing Alice's computer has hostname
 
 @smallexample
 @group
-$ monotone serve alice.someisp.com "net.venge.monotone*"
+$ monotone --bind=alice.someisp.com serve "net.venge.monotone*"
 @end group
 @end smallexample
 
