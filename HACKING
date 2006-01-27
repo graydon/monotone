@@ -259,3 +259,20 @@ In a small number of cases, a change made to our local version of the
 third-party code may not make sense to send upstream.  In this case, make a
 note of this in the file you're changing and in the ChangeLog so that this
 permanent deviation is documented.
+
+
+Compiling Hints
+---------------
+
+  - monotone's compilation time can be improved significantly by compiling
+  with 'CXXFLAGS=-O0'. Note that disabling optimisation makes the resultant
+  binary significantly slower - don't bother using it for performance
+  profiling.
+
+  - precompiled headers can be enabled by running 'configure' with --enable-pch
+  This should give shorter compile times, given boost's extensive use of
+  templates.  Some versions of gcc have issues with precompiled headers, so if
+  you get strange compilation errors, try disabling them.
+
+  - ccache (http://ccache.samba.org/) is quite effective for speeding up
+  repeated compiles of the same source.

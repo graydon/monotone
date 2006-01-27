@@ -22,11 +22,11 @@
 #  - Browse in branches, revisions, diff files, view logs ...
 #
 # Needed tools:
-#  monotone 0.19 or compatible
+#  monotone 0.19, 0.23, 0.26 or compatible
 #  dialog (tested Version 0.9b)
-#  bash, sh, ash, dash
+#  bash, sh, dash
 #  less, vi or vim (use $VISUAL or $PAGER)
-#  cat, cut, echo, eval, head, sort, tail, wc, xargs ...
+#  cat, cut, echo, eval, head, sort, tail, tr, wc, xargs ...
 #
 # History:
 # 2005/5/5 Version 0.1.1 Henry@BigFoot.de
@@ -121,11 +121,15 @@
 # Faster brief selection menu, without changelog (do_log_brief_ancestors).
 # Skip merges from more as one person in brief selection.
 # Remove forbitten chars from changelog with tr. added backslash.
+#
+# 2006-01-23 Version 0.1.16 Henry@BigFoot.de
+# More posix shell syntax for dash.
+# do_head_sel: Prints error message from mt (it's first call with db file).
 
 # Known Bugs / ToDo-List:
 # * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.1.15"
+VERSION="0.1.16"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
@@ -253,7 +257,7 @@ do_clear_on_exit()
 {
     rm -f $TEMPFILE.branches $TEMPFILE.ancestors $TEMPFILE.toposort \
       $TEMPFILE.action-select $TEMPFILE.menu $TEMPFILE.input \
-      $TEMPFILE.ncolor $TEMPFILE.tfc
+      $TEMPFILE.ncolor $TEMPFILE.tfc $TEMPFILE.error
 
     if [ "$CACHE" != "1" ]
     then
@@ -316,8 +320,8 @@ fill_date_key()
     do
 	if [ -n "$line_count" ]
 	then
-	    let lineno++
-	    echo "$(( 100*$lineno/line_count ))"
+	    lineno=$(( $lineno+1 ))
+	    echo "$(( 100*$lineno/$line_count ))"
 	else
 	    echo -n "." 1>&2
 	fi
@@ -449,11 +453,11 @@ do_log_brief_ancestors()
     monotone log --brief --last=$CERTS_MAX --revision=$HEAD --db=$DB |\
     while read line
     do
-	let lineno++
+	lineno=$(( $lineno+1 ))
 	# TODO: Why MT give more than "--last"?
 	if [ $lineno -le $CERTS_MAX ]
 	then
-	    echo "$(( 100*lineno/CERTS_MAX ))"
+	    echo "$(( 100*$lineno/$CERTS_MAX ))"
 	fi
 
 	set -- `echo "$line" | sed -n -r -e 's/^([^ ]+) (.+) ([0-9\-]{10})T([0-9:]{8}) (.+)$/\1 \3 \4 \5/p'`
@@ -628,7 +632,12 @@ do_head_sel()
 	return
     fi
 
-    monotone --db=$DB automate heads $BRANCH > $TEMPFILE.heads 2>/dev/null
+    if ! monotone --db=$DB automate heads $BRANCH > $TEMPFILE.heads 2>$TEMPFILE.error
+    then
+	cat $TEMPFILE.error
+	exit -1
+    fi
+
     # Only one head ?
     if [ `wc -l < $TEMPFILE.heads` -eq 1 -a -n "$1" ]
     then
@@ -799,7 +808,7 @@ do_automate_ancestors_depth()
 		return 0
 	fi
 
-	let depth++
+	depth=$(( $depth+1 ))
 	monotone --db=$DB automate parents $head |\
 	while read rev
 	do
@@ -809,7 +818,7 @@ do_automate_ancestors_depth()
 		do_automate_ancestors_depth $depth $rev || return $?
 	    fi
 	done
-	let depth--
+	depth=$(( $depth-1 ))
 
 	return 0
 }
@@ -859,10 +868,10 @@ do_revision_sel()
 	    ;;
 	esac
 
-	if [ "$ANCESTORS" != 'B' ]
+	if [ "$ANCESTORS" != "B" ]
 	then
 	    # Must toposort, if enabled by user, or before tailing
-	    if [ "$TOPOSORT" = "T" -o "$CERTS_MAX" -gt 0 -a "$ANCESTORS" != 'L' ]
+	    if [ "$TOPOSORT" = "T" -o "$CERTS_MAX" -gt 0 -a "$ANCESTORS" != "L" ]
 	    then
 		echo "Toposort..."
 		monotone --db=$DB automate toposort `cat $TEMPFILE.ancestors` \

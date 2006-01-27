@@ -364,7 +364,7 @@ annotate_context::build_revisions_to_annotations(app_state &app,
   for (std::map<revision_id, std::string>::iterator i = revs_to_notations.begin(); i != revs_to_notations.end(); i++)
     {
       size_t l = i->second.size();
-      i->second.insert(0, max_note_length - l, ' ');
+      i->second.insert(std::string::size_type(0), max_note_length - l, ' ');
     }
 }
 
@@ -381,7 +381,7 @@ annotate_context::dump(app_state &app) const
     {
       build_revisions_to_annotations(app, revs_to_notations);
       size_t max_note_length = revs_to_notations.begin()->second.size();
-      empty_note.insert(0, max_note_length - 2, ' ');
+      empty_note.insert(std::string::size_type(0), max_note_length - 2, ' ');
     }
 
   revision_id lastid = nullid;

@@ -342,6 +342,11 @@ function get_netsync_write_permitted(identity)
 end
 ])
 
+foo () {
+	NETSYNC_KILLHARD
+}
+trap foo EXIT
+
 ])
 
 m4_define([MONOTONE2], MONOTONE --db=test2.db --keydir=keys2)

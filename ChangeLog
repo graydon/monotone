@@ -1,3 +1,94 @@
+2006-01-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.texi: Clean up 'serve' syntax in a couple of places.
+
+2006-01-26  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Generating Keys, Network Service Revisited):
+	Clean up some key-related stuff -- genkey doesn't need a db, so
+	don't confuse the reader by giving it one, and update the sample
+	output too.
+
+2006-01-27  Stéphane Gimenez <dev@gim.name>
+
+	* sanity.hh: fix scoping issue revealed by gcc-4.1.
+
+2006-01-26  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: One more translation.
+
+2006-01-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* netsync.cc (session::rebuild_merkle_trees): Ticker header
+	consistency tweak.
+
+2005-01-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* HACKING: add some notes about compiling - precompiled headers,
+	-O0, and ccache.
+	* INSTALL: mention --enable-pch
+
+2006-01-25  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Fix all fuzzy translations (some needed no fix).
+	Translate the last untranslated ones.
+
+2005-01-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make a netsync client crash not hang the testsuite.
+	* tests/t_netsync_single.at: use netsync macros
+	* testsuite.at: Make NETSYNC_SETUP set a trap on exit to kill
+	any servers.
+
+2005-01-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (update): Remove fixme comment.
+
+2005-01-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (update): Allow backwards/sideways updates.
+	tests/t_update_to_revision.at: remove XFAIL
+
+2006-01-23  Nathaniel Smith  <njs@pobox.com>
+
+	* database.{cc,hh}: Clean up code formatting a bit, rename some
+	variables, rely more on automatic conversion.
+
+2006-01-24  Vinzenz Feenstra <evilissimo@c-plusplus.de>
+	
+	* query_args.hh: Introduced struct query_args and struct
+	query_args_param. Used to typesafe arguments for database::execute
+	and database::fetch
+	* database.cc/.hh: Adjusted database to the new fetch and execute
+	argument style via operator% which is more typesafe.
+
+2006-01-23  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (assert_sqlite3_ok): Improve the hint message given
+	for SQLITE_ERROR's.
+
+2006-01-23  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_database_check_normalized.at: update included database to
+	use rosters
+
+2006-01-23  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	New ChangeLog utilities in contrib/ .
+	* contrib/ChangeLog.sh: Script that takes the date, author, and
+	changelog certs from the last n revisions and prints them in standard
+	ChangeLog format.
+	* contrib/edit_comment_from_changelog.lua: an edit_comment hook that
+	takes the initial commit message from the most recent ChangeLog entry
+
+2006-01-23  Henry Nestler  <henry@bigfoot.de>
+
+	* monotone.texi, monotone.1: Mode none for --ticker.
+
+2006-01-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Hopefully improve wording of help a bit.
+
 2006-01-25  Matt Johnston  <matt@ucc.asn.au>
 
 	* merged in Botan 1.5.3 experimental release

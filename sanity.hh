@@ -279,6 +279,8 @@ private:
   T const & obj;
 };
 
+void dump(std::string const & obj, std::string & out);
+
 // The header line must be printed into the "out" string before
 // dump() is called.
 // This is so that even if the call to dump() throws an error,
@@ -313,7 +315,5 @@ Musing<T>::gasp(std::string & out) const
 #else
 #define MM(obj) /* */ 
 #endif
-
-void dump(std::string const & obj, std::string & out);
 
 #endif // __SANITY_HH__

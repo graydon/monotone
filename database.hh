@@ -1,10 +1,12 @@
-#ifndef __DATABASE_HH__
-#define __DATABASE_HH__
-
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
+// copyright (C) 2006 vinzenz feenstra <evilissimo@c-plusplus.de>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
+#ifndef __DATABASE_HH__
+#define __DATABASE_HH__
 
 struct sqlite3;
 struct sqlite3_stmt;
@@ -69,6 +71,7 @@ class transaction_guard;
 struct posting;
 struct app_state;
 struct revision_set;
+struct query;
 
 class database
 {
@@ -96,18 +99,12 @@ class database
 
   typedef std::vector< std::vector<std::string> > results;
  
-  void execute(char const * query, ...);
+  void execute(query const & q);
  
   void fetch(results & res, 
              int const want_cols, 
              int const want_rows, 
-             char const * query, ...);
-  
-  void fetch(results & res, 
-             int const want_cols, 
-             int const want_rows, 
-             char const * query, 
-             va_list args);
+             query const & q);
  
   bool exists(hexenc<id> const & ident, 
               std::string const & table);

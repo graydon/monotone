@@ -245,12 +245,12 @@ in operations on existing branches (commit, update, etc).
 \fB-b\fP \fI<branchname>\fP
 An alias for \fB--branch=\fP\fI<branchname>\fP
 .TP
-\fB--ticket=\fP\fIdot|count\fP
+\fB--ticket=\fP\fIdot|count|none\fP
 Use the given method to print tickers.  The \fBcount\fP method prints
 the count for each ticker on one line, incrementing the numbers in
 place, while the \fBdot\fP method prints a continuous string of
 characters (like some programs provide a progress line of dots).
-The default is \fBcount\fP.
+\fBnone\fP prints nothing.  The default is \fBcount\fP.
 .TP
 \fB--revision=\fP\fI<id>\fP
 Used to specify one or more revision ids to various commands.
