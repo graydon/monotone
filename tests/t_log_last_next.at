@@ -1,10 +1,11 @@
-AT_SETUP([log --last=N])
+AT_SETUP([log --last=N/--next=N])
 MONOTONE_SETUP
 
 ADD_FILE(foo, [foo
 ])
 AT_CHECK(MONOTONE --branch=testbranch commit --message "Addition of foo.",
          [], [ignore], [ignore])
+FOO=`BASE_REVISION`
 
 ADD_FILE(bar, [bar
 ])
@@ -16,6 +17,7 @@ ADD_FILE(baz, [baz
 AT_CHECK(MONOTONE --branch=testbranch commit --message "Addition of baz.",
          [], [ignore], [ignore])
 
+
 AT_CHECK(MONOTONE log --last=0, [1], [], [ignore])
 
 AT_CHECK(MONOTONE log --last=1 | grep '^Revision:', [], [stdout], [ignore])
@@ -23,5 +25,23 @@ AT_CHECK(test 1 -eq "`wc -l <stdout`")
 
 AT_CHECK(MONOTONE log --last=2 | grep '^Revision:', [], [stdout], [ignore])
 AT_CHECK(test 2 -eq "`wc -l <stdout`")
+
+AT_CHECK(MONOTONE log --last=3 | grep '^Revision:', [], [stdout], [ignore])
+AT_CHECK(test 3 -eq "`wc -l <stdout`")
+
+
+REVERT_TO($FOO)
+
+
+AT_CHECK(MONOTONE log --next=0, [1], [], [ignore])
+
+AT_CHECK(MONOTONE log --next=1 | grep '^Revision:', [], [stdout], [ignore])
+AT_CHECK(test 1 -eq "`wc -l <stdout`")
+
+AT_CHECK(MONOTONE log --next=2 | grep '^Revision:', [], [stdout], [ignore])
+AT_CHECK(test 2 -eq "`wc -l <stdout`")
+
+AT_CHECK(MONOTONE log --next=3 | grep '^Revision:', [], [stdout], [ignore])
+AT_CHECK(test 3 -eq "`wc -l <stdout`")
 
 AT_CLEANUP

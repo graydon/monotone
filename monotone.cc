@@ -55,7 +55,8 @@ struct poptOption coptions[] =
     {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, gettext_noop("override date/time for commit"), NULL},
     {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, gettext_noop("override author for commit"), NULL},
     {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, gettext_noop("limit the number of levels of directories to descend"), NULL},
-    {"last", 0, POPT_ARG_LONG, &arglong, OPT_LAST, gettext_noop("limit the log output to the given number of entries"), NULL},
+    {"last", 0, POPT_ARG_LONG, &arglong, OPT_LAST, gettext_noop("limit log output to the last number of entries"), NULL},
+    {"next", 0, POPT_ARG_LONG, &arglong, OPT_NEXT, gettext_noop("limit log output to the next number of entries"), NULL},
     {"pid-file", 0, POPT_ARG_STRING, &argstr, OPT_PIDFILE, gettext_noop("record process id of server"), NULL},
     {"brief", 0, POPT_ARG_NONE, NULL, OPT_BRIEF, gettext_noop("print a brief version of the normal output"), NULL},
     {"diffs", 0, POPT_ARG_NONE, NULL, OPT_DIFFS, gettext_noop("print diffs along with logs"), NULL},
@@ -401,6 +402,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_LAST:
               app.set_last(arglong);
+              break;
+
+            case OPT_NEXT:
+              app.set_next(arglong);
               break;
 
             case OPT_DEPTH:

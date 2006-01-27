@@ -3462,7 +3462,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
-    OPT_LAST % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_MERGES)
+    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_MERGES)
 {
   if (app.revision_selectors.size() == 0)
     app.require_working_copy("try passing a --revision to start at");
@@ -3522,9 +3522,13 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
   set<revision_id> seen;
   long last = app.last;
+  long next = app.next;
+
+  N(last == -1 || next == -1,
+    F("only one of --last/--next allowed"));
 
   revision_set rev;
-  while(! frontier.empty() && (last == -1 || last > 0))
+  while(! frontier.empty() && (last == -1 || last > 0) && (next == -1 || next > 0))
     {
       set<revision_id> next_frontier;
       
@@ -3587,8 +3591,22 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                e != rev.edges.end(); ++e)
             {
               ancestors.insert(edge_old_revision(e));
-              next_frontier.insert(edge_old_revision(e));
               csum.add_change_set(edge_changes(e));
+            }
+
+          if (next > 0)
+            {
+              set<revision_id> children;
+              app.db.get_revision_children(rid, children);
+              copy(children.begin(), children.end(), 
+                   inserter(next_frontier, next_frontier.end()));
+            }
+          else // work backwards by default
+            {
+              set<revision_id> parents;
+              app.db.get_revision_parents(rid, parents);
+              copy(parents.begin(), parents.end(), 
+                   inserter(next_frontier, next_frontier.end()));
             }
 
           if (!app.merges && rev.is_merge_node())
@@ -3655,10 +3673,15 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                   }
               }
 
-            if (last > 0)
+            if (next > 0)
+              {
+                next--;
+              }
+            else if (last > 0)
               {
                 last--;
               }
+
           }
         // when we had a restriction and run out of nodes, stop.
         if (!nodes.empty() && next_nodes.empty())

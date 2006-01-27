@@ -1,3 +1,14 @@
+2006-01-26  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh}: 
+	* commands.cc (log): 
+	* monotone.cc: 
+	* options.hh: allow --next to view upcoming changes
+	* tests/t_log_depth.at: rename to ...
+	* tests/t_log_last_next.at: ... this since log now uses
+	--last/--next and not --depth
+	* testsuite.at: rename t_log_depth.at to t_log_last_next.at
+	
 2005-01-24  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Make a netsync client crash not hang the testsuite.
