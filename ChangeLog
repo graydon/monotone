@@ -1,3 +1,8 @@
+2006-01-27  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Generating Keys): Correct small type, the keys
+	are not stored in /home/jim/.monotone/monotonerc.
+
 2006-01-26  Derek Scherger  <derek@echologic.com>
 
 	* app_state.{cc,hh}: 

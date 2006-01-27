@@ -1200,7 +1200,7 @@ $ monotone list keys
 
 [public keys]
 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c jim@@juicebot.co.jp   (*)
-(*) - only in /home/jim/.monotone/monotonerc
+(*) - only in /home/jim/.monotone/keys/
 
 
 [private keys]
