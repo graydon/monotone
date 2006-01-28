@@ -138,15 +138,14 @@
 # usher                           usher
 # violate                         ej uppfylla
 # work set                        arbetsmängd
-# working copy                    arbetskopia
-# working directory               arbetskatalog
+# workspace                       arbetskopia (el. kanske arbetskatalog, ibland)
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-01-26 20:45+0100\n"
-"PO-Revision-Date: 2006-01-26 20:47+0100\n"
+"POT-Creation-Date: 2006-01-28 23:06+0100\n"
+"PO-Revision-Date: 2006-01-28 23:59+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -156,7 +155,7 @@ msgstr ""
 
 #: app_state.cc:109
 #, c-format
-msgid "working copy directory required but not found%s%s"
+msgid "workspace required but not found%s%s"
 msgstr "arbetskatalog behövs men kunde inte hittas%s%s"
 
 #: app_state.cc:117
@@ -199,12 +198,17 @@ msgstr "negativt djup är inte tillåtet\n"
 msgid "negative or zero last not allowed\n"
 msgstr "talet angett med --last får inte vara negativt eller noll\n"
 
-#: app_state.cc:543
+#: app_state.cc:428
+#, c-format
+msgid "negative or zero next not allowed\n"
+msgstr "talet angett med --next får inte vara negativt eller noll\n"
+
+#: app_state.cc:551
 #, c-format
 msgid "Failed to read options file %s"
 msgstr "Misslyckades med att läsa filen %s"
 
-#: app_state.cc:560
+#: app_state.cc:568
 #, c-format
 msgid "Failed to write options file %s"
 msgstr "Misslyckades med att skriva filen %s"
@@ -616,7 +620,7 @@ msgstr "tom kommentar"
 
 #: commands.cc:1167 commands.cc:1195 commands.cc:1220 commands.cc:1341
 #: commands.cc:2159 commands.cc:2278 commands.cc:2801 commands.cc:3240
-msgid "working copy"
+msgid "workspace"
 msgstr "arbetskopia"
 
 #: commands.cc:1167 commands.cc:1195 commands.cc:1294 commands.cc:2278
@@ -625,11 +629,13 @@ msgid "[PATH]..."
 msgstr "[SÖKVÄG]..."
 
 #: commands.cc:1168
-msgid "add files to working copy"
+#, fuzzy
+msgid "add files to workspace"
 msgstr "lägg till filer i arbetskopian"
 
 #: commands.cc:1196
-msgid "drop files from working copy"
+#, fuzzy
+msgid "drop files from workspace"
 msgstr "överge filer i arbetskopian"
 
 #: commands.cc:1221
@@ -641,10 +647,11 @@ msgstr ""
 "KÄLLA1 [KÄLLA2 [...]] MÅLKATALOG"
 
 #: commands.cc:1223
-msgid "rename entries in the working copy"
+#, fuzzy
+msgid "rename entries in the workspace"
 msgstr "byt namn på filer i arbetskopian"
 
-#: commands.cc:1248 commands.cc:1261 commands.cc:3343 commands.cc:3760
+#: commands.cc:1248 commands.cc:1261 commands.cc:3343 commands.cc:3783
 msgid "debug"
 msgstr "felsökning"
 
@@ -681,7 +688,8 @@ msgid "merge failed"
 msgstr "ihopslagningen misslyckades"
 
 #: commands.cc:1294
-msgid "show status of working copy"
+#, fuzzy
+msgid "show status of workspace"
 msgstr "visa arbetskopians status"
 
 #: commands.cc:1341
@@ -706,7 +714,7 @@ msgid "no file '%s' found in revision '%s'\n"
 msgstr "filen '%s' finns inte i revisionen '%s'\n"
 
 #: commands.cc:1408 commands.cc:1527 commands.cc:3002 commands.cc:3051
-#: commands.cc:3140 commands.cc:3147 commands.cc:3673
+#: commands.cc:3140 commands.cc:3147 commands.cc:3696
 msgid "tree"
 msgstr "träd"
 
@@ -806,8 +814,9 @@ msgstr ""
 "missing"
 
 #: commands.cc:1750
+#, fuzzy
 msgid ""
-"show database objects, or the current working copy manifest,\n"
+"show database objects, or the current workspace manifest,\n"
 "or unknown, intentionally ignored, or missing state files"
 msgstr ""
 "visa databasobjekten, arbetskopians manifest, okända filer, medvetet\n"
@@ -1035,7 +1044,8 @@ msgid "--message and --message-file are mutually exclusive"
 msgstr "--message och --message-file får inte anges samtidigt"
 
 #: commands.cc:2279
-msgid "commit working copy to database"
+#, fuzzy
+msgid "commit workspace to database"
 msgstr "arkivera arbetskopian i databasen"
 
 #: commands.cc:2297
@@ -1089,9 +1099,10 @@ msgstr ""
 "obs: du kan tänkas vilja (eller kanske inte) köra 'monotone merge'"
 
 #: commands.cc:2649
+#, fuzzy
 msgid ""
 "show current diffs on stdout.\n"
-"If one revision is given, the diff between the working directory and\n"
+"If one revision is given, the diff between the workspace and\n"
 "that revision is shown.  If two revisions are given, the diff between\n"
 "them is given.  If no format is specified, unified is used by default."
 msgstr ""
@@ -1119,12 +1130,13 @@ msgid "no changes"
 msgstr "inga ändringar"
 
 #: commands.cc:2802
+#, fuzzy
 msgid ""
-"update working copy.\n"
-"This command modifies your working copy to be based off of a\n"
+"update workspace.\n"
+"This command modifies your workspace to be based off of a\n"
 "different revision, preserving uncommitted changes as it does so.\n"
-"If a revision is given, update the working copy to that revision.\n"
-"If not, update the working copy to the head of the branch."
+"If a revision is given, update the workspace to that revision.\n"
+"If not, update the workspace to the head of the branch."
 msgstr ""
 "uppdaterar arbetskopian.\n"
 "Detta kommando ändrar din arbetskopia så att den baseras på en annan\n"
@@ -1133,8 +1145,8 @@ msgstr ""
 "i annat fall uppdateras den till lövet i grenen."
 
 #: commands.cc:2840
-#, c-format
-msgid "this working directory is a new project; cannot update"
+#, fuzzy, c-format
+msgid "this workspace is a new project; cannot update"
 msgstr "denna arbetskatalog är ett nytt projekt; kan inte uppdatera"
 
 #: commands.cc:2847
@@ -1218,8 +1230,8 @@ msgid "[merged] %s\n"
 msgstr "[ihopslagen] %s\n"
 
 #: commands.cc:3048
-#, c-format
-msgid "note: your working copies have not been updated\n"
+#, fuzzy, c-format
+msgid "note: your workspaces have not been updated\n"
 msgstr "obs: dina arbetskopior har inte uppdaterats\n"
 
 #: commands.cc:3051
@@ -1297,7 +1309,8 @@ msgid "non-hex digits in partial id"
 msgstr "något tecken i den partiella identiteten är inte hexadecimalt"
 
 #: commands.cc:3241
-msgid "revert file(s), dir(s) or entire working copy (\".\")"
+#, fuzzy
+msgid "revert file(s), dir(s) or entire workspace (\".\")"
 msgstr "återställ fil(er), katalog(er) eller hela arbetskopian (\".\")"
 
 #: commands.cc:3318
@@ -1367,24 +1380,30 @@ msgstr ""
 msgid "Unknown file '%s' for log command"
 msgstr "Okänd fil '%s'"
 
-#: commands.cc:3673
+#: commands.cc:3528
+#, c-format
+msgid "only one of --last/--next allowed"
+msgstr "enbart en av --last eller --next tillåten"
+
+#: commands.cc:3696
 msgid "[DIRECTORY]"
 msgstr "[KATALOG]"
 
-#: commands.cc:3673
-msgid "setup a new working copy directory, default to current"
+#: commands.cc:3696
+#, fuzzy
+msgid "setup a new workspace directory, default to current"
 msgstr "initiera en ny arbetskatalog (nuvarande om katalog ej anges)"
 
-#: commands.cc:3679
+#: commands.cc:3702
 #, c-format
 msgid "need --branch argument for setup"
 msgstr "du måste ange en gren med --branch till kommandot \"setup\""
 
-#: commands.cc:3693
+#: commands.cc:3716
 msgid "automation"
 msgstr "automatisering"
 
-#: commands.cc:3694
+#: commands.cc:3717
 msgid ""
 "interface_version\n"
 "heads [BRANCH]\n"
@@ -1428,40 +1447,40 @@ msgstr ""
 "get_revision [REVID]\n"
 "keys\n"
 
-#: commands.cc:3714
+#: commands.cc:3737
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
-#: commands.cc:3728 commands.cc:3744
+#: commands.cc:3751 commands.cc:3767
 msgid "vars"
 msgstr "variabler"
 
-#: commands.cc:3728
+#: commands.cc:3751
 msgid "DOMAIN NAME VALUE"
 msgstr "DOMÄN NAMN VÄRDE"
 
-#: commands.cc:3729
+#: commands.cc:3752
 msgid "set the database variable NAME to VALUE, in domain DOMAIN"
 msgstr "sätt databasvariabeln NAMN till VÄRDE i domänen DOMÄN"
 
-#: commands.cc:3744
+#: commands.cc:3767
 msgid "DOMAIN NAME"
 msgstr "DOMÄN NAMN"
 
-#: commands.cc:3745
+#: commands.cc:3768
 msgid "remove the database variable NAME in domain DOMAIN"
 msgstr "ta bort databasvariabeln NAMN från domänen DOMÄN"
 
-#: commands.cc:3756
+#: commands.cc:3779
 #, c-format
 msgid "no var with name %s in domain %s"
 msgstr "det finns inga variabler med namnet %s i domänen %s"
 
-#: commands.cc:3760
+#: commands.cc:3783
 msgid "REVID"
 msgstr "REVID"
 
-#: commands.cc:3761
+#: commands.cc:3784
 msgid "dump the roster associated with the given REVID"
 msgstr "skriv ut den roster som hör ihop med angivet REVID"
 
@@ -1942,18 +1961,18 @@ msgid "could not open database '%s': %s"
 msgstr "kunde inte öppna databasen '%s': %s"
 
 #: diff_patch.cc:588
-#, c-format
-msgid "file '%s' does not exist in working copy"
+#, fuzzy, c-format
+msgid "file '%s' does not exist in workspace"
 msgstr "filen '%s' existerar inte i arbetskopian"
 
 #: diff_patch.cc:589
-#, c-format
-msgid "'%s' in working copy is a directory, not a file"
+#, fuzzy, c-format
+msgid "'%s' in workspace is a directory, not a file"
 msgstr "'%s' i arbetskopian är en katalog, inte en fil"
 
 #: diff_patch.cc:593
-#, c-format
-msgid "file %s in working copy has id %s, wanted %s"
+#, fuzzy, c-format
+msgid "file %s in workspace has id %s, wanted %s"
 msgstr "filen %s i arbetskopian har identiteten %s, %s eftersöktes"
 
 #: diff_patch.cc:714
@@ -2242,170 +2261,178 @@ msgid "limit the number of levels of directories to descend"
 msgstr "begränsa hur djupt i katalogstrukturen monotone ska gå ned"
 
 #: monotone.cc:58
-msgid "limit the log output to the given number of entries"
-msgstr "begränsa loggutskriften till detta antal poster"
+msgid "limit log output to the last number of entries"
+msgstr "begränsa loggutskriften till detta antal poster bakåt i tiden"
 
 #: monotone.cc:59
+#, fuzzy
+msgid "limit log output to the next number of entries"
+msgstr "begränsa loggutskriften till detta antal poster framåt i tiden"
+
+#: monotone.cc:60
 msgid "record process id of server"
 msgstr "spara serverns process-ID i denna fil"
 
-#: monotone.cc:60
+#: monotone.cc:61
 msgid "print a brief version of the normal output"
 msgstr "låt utskriften vara mer kortfattad än normalt"
 
-#: monotone.cc:61
+#: monotone.cc:62
 msgid "print diffs along with logs"
 msgstr "skriv ut skillnaden mellan denna och tidigare revision i loggen"
 
-#: monotone.cc:62
+#: monotone.cc:63
 msgid "include merges when printing logs"
 msgstr "ta med ihopslagningar i loggen"
 
-#: monotone.cc:63
+#: monotone.cc:64
 msgid "use the current arguments as the future default"
 msgstr "använd de givna argumenten som framtida standardvärden"
 
-#: monotone.cc:64
+#: monotone.cc:65
 msgid "leave out anything described by its argument"
 msgstr "utelämna allt som matchar argumentet"
 
-#: monotone.cc:65
+#: monotone.cc:66
 msgid "use unified diff format"
 msgstr "använd formatet 'unified diff'"
 
-#: monotone.cc:66
+#: monotone.cc:67
 msgid "use context diff format"
 msgstr "använd formatet 'context diff'"
 
-#: monotone.cc:67
+#: monotone.cc:68
 msgid "use external diff hook for generating diffs"
 msgstr "använd extern diff för att framställa skillnad mellan revisioner"
 
-#: monotone.cc:68
+#: monotone.cc:69
 msgid "argument to pass external diff hook"
 msgstr "argument att skicka med till extern diff"
 
-#: monotone.cc:69
+#: monotone.cc:70
 msgid "use least common ancestor as ancestor for merge"
 msgstr "använd den senaste gemensamma förfadern som förfader vid ihopslagning"
 
-#: monotone.cc:70
+#: monotone.cc:71
 msgid "perform the associated file operation"
 msgstr "genomför den tillhörande operationen på filen/filerna"
 
-#: monotone.cc:71
+#: monotone.cc:72
 msgid "address:port to listen on (default :4691)"
 msgstr "adress:port att lyssna på (:4691 om inget anges)"
 
-#: monotone.cc:72
-msgid "perform the operations for files missing from working directory"
+#: monotone.cc:73
+#, fuzzy
+msgid "perform the operations for files missing from workspace"
 msgstr "genomför operationen på filer som saknas i arbetskatalogen"
 
-#: monotone.cc:73
-msgid "perform the operations for unknown files from working directory"
+#: monotone.cc:74
+#, fuzzy
+msgid "perform the operations for unknown files from workspace"
 msgstr "genomför operationen på okända filer i arbetskatalogen"
 
-#: monotone.cc:74
+#: monotone.cc:75
 msgid "push the specified key even if it hasn't signed anything"
 msgstr "skicka med angiven nyckel även om den inte använts för att signera"
 
-#: monotone.cc:75
+#: monotone.cc:76
 msgid "when rosterifying, drop attrs entries with the given key"
 msgstr "släng attribut med den givna nyckeln vid konvertering till 'rosters'"
 
-#: monotone.cc:84
+#: monotone.cc:85
 msgid "print debug log to stderr while running"
 msgstr "skriv ut felsökningslogg till stderr under körning"
 
-#: monotone.cc:85
+#: monotone.cc:86
 msgid "file to dump debugging log to, on failure"
 msgstr "fil att skriva ut felsökningsloggen till om något gick fel"
 
-#: monotone.cc:86
+#: monotone.cc:87
 msgid "suppress log and progress messages"
 msgstr "skriv inte ut loggar eller förloppsmeddelanden"
 
-#: monotone.cc:87
+#: monotone.cc:88
 msgid "display help message"
 msgstr "skriv ut extra hjälptext"
 
-#: monotone.cc:88
+#: monotone.cc:89
 msgid "print version number, then exit"
 msgstr "skriv ut versionsnumret och avsluta sedan omedelbart"
 
-#: monotone.cc:89
+#: monotone.cc:90
 msgid "print detailed version number, then exit"
 msgstr "skriv ut detaljerad versionsinformation och avsluta sedan omedelbart"
 
-#: monotone.cc:90
+#: monotone.cc:91
 msgid "insert command line arguments taken from the given file"
 msgstr "använd kommandoradsargument ur denna fil"
 
-#: monotone.cc:91
+#: monotone.cc:92
 msgid "set ticker style (count|dot|none)"
 msgstr "sätt stilen för förloppsinformationen (count|dot|none)"
 
-#: monotone.cc:92
+#: monotone.cc:93
 msgid "do not load standard lua hooks"
 msgstr "använd inte standard-lua-rutinerna"
 
-#: monotone.cc:93
+#: monotone.cc:94
 msgid "do not load ~/.monotone/monotonerc or MT/monotonerc lua files"
 msgstr "använd inte ~/.monotone/monotonerc eller MT/monotonerc"
 
-#: monotone.cc:94
+#: monotone.cc:95
 msgid "load extra rc file"
 msgstr "använd denna lua-fil"
 
-#: monotone.cc:95
+#: monotone.cc:96
 msgid "set key for signatures"
 msgstr "ange nyckel att signera med"
 
-#: monotone.cc:96
+#: monotone.cc:97
 msgid "set name of database"
 msgstr "ange databasens filnamn"
 
-#: monotone.cc:97
-msgid "limit search for working copy to specified root"
+#: monotone.cc:98
+#, fuzzy
+msgid "limit search for workspace to specified root"
 msgstr "begränsa sökningen efter arbetskatalogen till denna katalog"
 
-#: monotone.cc:98
+#: monotone.cc:99
 msgid "verbose completion output"
 msgstr "ge utförlig information"
 
-#: monotone.cc:99
+#: monotone.cc:100
 msgid "set location of key store"
 msgstr "ange i vilken katalog nycklarna finns"
 
-#: monotone.cc:100
+#: monotone.cc:101
 msgid "set location of configuration directory"
 msgstr "ange i vilken katalog konfigurationsfilerna finns"
 
-#: monotone.cc:204
+#: monotone.cc:205
 #, c-format
 msgid "problem parsing arguments from file %s: %s"
 msgstr "problem att tyda argumenten i filen %s: %s"
 
-#: monotone.cc:213
+#: monotone.cc:214
 #, c-format
 msgid "weird error when stuffing arguments read from %s: %s\n"
 msgstr "underligt fel när argument lästa från %s stoppades in: %s\n"
 
-#: monotone.cc:293
+#: monotone.cc:294
 msgid "[OPTION...] command [ARGS...]\n"
 msgstr "[FLAGGOR...] kommando [ARGUMENT...]\n"
 
-#: monotone.cc:527
+#: monotone.cc:532
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "syntaxfel nära flaggan \"%s\": %s"
 
-#: monotone.cc:566
+#: monotone.cc:571
 #, c-format
 msgid "monotone %s doesn't use the option %s"
 msgstr "monotone %s använder inte flaggan %s"
 
-#: monotone.cc:601
+#: monotone.cc:606
 #, c-format
 msgid "Options specific to 'monotone %s':"
 msgstr "Specifika flaggor för 'monotone %s':"
@@ -3200,32 +3227,32 @@ msgstr "misslyckades med att konvertera en sträng från %s till %s: '%s'"
 msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
 msgstr "fel vid konvertering av %d UTF-8-byte till IDNA ACE: %s"
 
-#: ui.cc:107
+#: ui.cc:108
 #, c-format
 msgid "%.1f G"
 msgstr "%.1f Gi"
 
-#: ui.cc:113
+#: ui.cc:114
 #, c-format
 msgid "%.1f M"
 msgstr "%.1f Mi"
 
-#: ui.cc:119
+#: ui.cc:120
 #, c-format
 msgid "%.1f k"
 msgstr "%.1f Ki"
 
-#: ui.cc:136 ui.cc:138
+#: ui.cc:137 ui.cc:139
 #, c-format
 msgid "%d/%d"
 msgstr "%d/%d"
 
-#: ui.cc:145
+#: ui.cc:146
 #, c-format
 msgid "%d"
 msgstr "%d"
 
-#: ui.cc:368
+#: ui.cc:369
 #, c-format
 msgid ""
 "fatal: %s\n"
@@ -3238,7 +3265,7 @@ msgstr ""
 "var god skicka detta felmeddelande, utskriften av 'monotone --full-version'\n"
 "och en beskrivning av det du gjorde till %s.\n"
 
-#: ui.cc:411
+#: ui.cc:412
 msgid "monotone: "
 msgstr "monotone: "
 
@@ -3293,13 +3320,13 @@ msgid "skipping ignorable file %s\n"
 msgstr "hoppar över ignorerbar fil %s\n"
 
 #: work.cc:125
-#, c-format
-msgid "skipping %s, already accounted for in working copy\n"
+#, fuzzy, c-format
+msgid "skipping %s, already accounted for in workspace\n"
 msgstr "hoppar över %s, den finns redan noterad i arbetskopian\n"
 
 #: work.cc:129
-#, c-format
-msgid "adding %s to working copy add set\n"
+#, fuzzy, c-format
+msgid "adding %s to workspace add set\n"
 msgstr "lägger till %s i mängden tillagda filer i arbetskopian\n"
 
 #: work.cc:202
@@ -3313,8 +3340,8 @@ msgid "cannot remove %s/, it is not empty"
 msgstr "kan inte ta bort %s/, den är inte tom"
 
 #: work.cc:212
-#, c-format
-msgid "adding %s to working copy delete set\n"
+#, fuzzy, c-format
+msgid "adding %s to workspace delete set\n"
 msgstr "lägger till %s i mängden borttagna filer i arbetskopian\n"
 
 #: work.cc:269
@@ -3343,33 +3370,33 @@ msgid "destination %s already exists in current revision"
 msgstr "målet %s finns redan i nuvarande revision"
 
 #: work.cc:308
-#, c-format
-msgid "adding %s -> %s to working copy rename set"
+#, fuzzy, c-format
+msgid "adding %s -> %s to workspace rename set"
 msgstr "lägger till %s -> %s i mängden filer med ändrade namn i arbetskopian"
 
 #: work.cc:333
-#, c-format
-msgid "%s doesn't exist in working copy, skipping"
+#, fuzzy, c-format
+msgid "%s doesn't exist in workspace, skipping"
 msgstr "hoppar över %s, den existerar inte i arbetskopian"
 
 #: work.cc:337
-#, c-format
-msgid "destination %s already exists in working copy, skipping"
+#, fuzzy, c-format
+msgid "destination %s already exists in workspace, skipping"
 msgstr "hoppar över %s, den finns redan noterad i arbetskopian"
 
 #: work.cc:421
-#, c-format
-msgid "working copy is corrupt: %s does not exist"
+#, fuzzy, c-format
+msgid "workspace is corrupt: %s does not exist"
 msgstr "arbetskopian är korrupt: %s finns inte"
 
 #: work.cc:422
-#, c-format
-msgid "working copy is corrupt: %s is a directory"
+#, fuzzy, c-format
+msgid "workspace is corrupt: %s is a directory"
 msgstr "arbetskopian är korrupt: %s är en katalog"
 
 #: work.cc:432
-#, c-format
-msgid "Problem with working directory: %s is unreadable"
+#, fuzzy, c-format
+msgid "Problem with workspace: %s is unreadable"
 msgstr "Problem med arbetskatalogen: %s är oläsbar"
 
 #: work.cc:458
@@ -3406,6 +3433,9 @@ msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 #, c-format
 msgid "updating %s to %s"
 msgstr "uppdaterar %s till %s"
+
+#~ msgid "working copy"
+#~ msgstr "arbetskopia"
 
 #~ msgid ""
 #~ "update working copy.\n"

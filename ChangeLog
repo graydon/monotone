@@ -1,3 +1,8 @@
+2006-01-29  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Update a few translations, leave a number of fuzzy
+	ones until we've decided how "workspace" should be translated.
+
 2006-01-27  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* *: Use the term 'workspace' consistently throughout monotone for
