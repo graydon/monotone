@@ -246,10 +246,11 @@ byte* Pooling_Allocator::allocate_blocks(u32bit n)
 
    assert(last_used != blocks.end());
 
-   std::vector<Memory_Block>::iterator i = last_used + 1;
+   std::vector<Memory_Block>::iterator i = last_used;
 
-   while(i != last_used)
+   do
       {
+      i++;
       if(i == blocks.end())
          i = blocks.begin();
 
@@ -260,8 +261,8 @@ byte* Pooling_Allocator::allocate_blocks(u32bit n)
          return mem;
          }
 
-      ++i;
       }
+   while(i != last_used);
 
    return 0;
    }

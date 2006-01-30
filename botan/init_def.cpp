@@ -1,5 +1,5 @@
 /*************************************************
-* Initialization Function Source File            *
+* Default Initialization Function Source File    *
 * (C) 1999-2006 The Botan Project                *
 *************************************************/
 
@@ -9,23 +9,11 @@
 #include <botan/conf.h>
 #include <botan/parsing.h>
 #include <botan/defalloc.h>
-#include <botan/def_eng.h>
+#include <botan/eng_def.h>
 #include <botan/fips140.h>
 #include <botan/x931_rng.h>
 
 namespace Botan {
-
-/*************************************************
-* Botan's global state                           *
-*************************************************/
-Library_State* global_lib_state = 0;
-
-Library_State& global_state()
-   {
-   if(!global_lib_state)
-      throw Invalid_State("Library was not intialized correctly");
-   return (*global_lib_state);
-   }
 
 /*************************************************
 * Library Initialization                         *
@@ -94,37 +82,35 @@ void initialize(const std::string& arg_string)
          throw Exception("LibraryInitializer: thread safety impossible");
       }
 
-   Library_State* state = new Library_State(mutex_factory,
-                                            Modules::get_timer());
+   set_global_state(new Library_State(mutex_factory,
+                                      Modules::get_timer()));
 
-   global_lib_state = state;
-
-   state->add_allocator("malloc", new Malloc_Allocator);
-   state->add_allocator("locking", new Locking_Allocator);
+   global_state().add_allocator("malloc", new Malloc_Allocator);
+   global_state().add_allocator("locking", new Locking_Allocator);
 
    if(arg_set(args, "secure_memory"))
       {
       std::map<std::string, Allocator*> allocators = Modules::get_allocators();
       for(std::map<std::string, Allocator*>::iterator i = allocators.begin();
           i != allocators.end(); ++i)
-         state->add_allocator(i->first, i->second);
+         global_state().add_allocator(i->first, i->second);
       }
 
    if(arg_set(args, "config") && args["config"] != "")
-      Config::load(args["config"], *state);
+      Config::load(args["config"], global_state());
 
    if(arg_set(args, "use_engines"))
       {
       std::vector<Engine*> engines = Modules::get_engines();
       for(u32bit j = 0; j != engines.size(); ++j)
-         state->add_engine(engines[j]);
+         global_state().add_engine(engines[j]);
       }
-   state->add_engine(new Default_Engine);
+   global_state().add_engine(new Default_Engine);
 
-   state->set_prng(new ANSI_X931_RNG);
+   global_state().set_prng(new ANSI_X931_RNG);
    std::vector<EntropySource*> sources = Modules::get_entropy_sources();
    for(u32bit j = 0; j != sources.size(); ++j)
-      state->add_entropy_source(sources[j], true);
+      global_state().add_entropy_source(sources[j], true);
 
    const u32bit min_entropy = Config::get_u32bit("rng/min_entropy");
 
@@ -133,7 +119,8 @@ void initialize(const std::string& arg_string)
       u32bit total_bits = 0;
       for(u32bit j = 0; j != 4; ++j)
          {
-         total_bits += state->seed_prng(true, min_entropy - total_bits);
+         total_bits += global_state().seed_prng(true,
+                                                min_entropy - total_bits);
          if(total_bits >= min_entropy)
             break;
          }
@@ -144,8 +131,7 @@ void initialize(const std::string& arg_string)
 
    if(!FIPS140::passes_self_tests())
       {
-      delete global_lib_state;
-      global_lib_state = 0;
+      set_global_state(0);
       throw Self_Test_Failure("FIPS-140 startup tests");
       }
    }
@@ -155,8 +141,7 @@ void initialize(const std::string& arg_string)
 *************************************************/
 void deinitialize()
    {
-   delete global_lib_state;
-   global_lib_state = 0;
+   set_global_state(0);
    }
 
 }
