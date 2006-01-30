@@ -3,8 +3,8 @@
 * (C) 1999-2006 The Botan Project                *
 *************************************************/
 
+#include <botan/eng_def.h>
 #include <botan/def_powm.h>
-#include <botan/def_eng.h>
 
 namespace Botan {
 

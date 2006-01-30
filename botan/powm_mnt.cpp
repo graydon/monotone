@@ -12,24 +12,6 @@ namespace Botan {
 namespace {
 
 /*************************************************
-* Perform the actual Montgomery reduction        *
-*************************************************/
-void montgomery_reduce(word* z, u32bit z_size,
-                       const word* mod_bits, u32bit mod_size,
-                       word mod_prime)
-   {
-   for(u32bit j = 0; j != mod_size; ++j)
-      bigint_linmul_add(z + j, z_size - j,
-                        mod_bits, mod_size, z[j] * mod_prime);
-
-   for(u32bit j = 0; j != mod_size + 1; ++j)
-      z[j] = z[j + mod_size];
-
-   if(bigint_cmp(z, mod_size + 1, mod_bits, mod_size) >= 0)
-      bigint_sub2(z, mod_size + 1, mod_bits, mod_size);
-   }
-
-/*************************************************
 * Try to choose a good window size               *
 *************************************************/
 u32bit choose_window_bits(u32bit exp_bits, u32bit base_bits,
@@ -56,7 +38,7 @@ u32bit choose_window_bits(u32bit exp_bits, u32bit base_bits,
    if(hints & Power_Mod::BASE_IS_FIXED)
       window_bits += 2;
    if(hints & Power_Mod::EXP_IS_LARGE)
-      window_bits++;
+      ++window_bits;
 
    return window_bits;
    }
@@ -81,9 +63,34 @@ void Montgomery_Exponentiator::set_base(const BigInt& base)
 
    g.resize((1 << window_bits) - 1);
 
-   g[0] = reduce(((base >= modulus) ? (base % modulus) : base) * R2);
+   SecureVector<word> z(2 * (mod_words + 1));
+
+   g[0] = (base >= modulus) ? (base % modulus) : base;
+   bigint_mul(z.begin(), z.size(),
+              g[0].data(), g[0].size(), g[0].sig_words(),
+              R2.data(), R2.size(), R2.sig_words());
+   montgomery_reduce(z.begin(), z.size(), modulus.data(), mod_words,
+                     mod_prime);
+   g[0].get_reg().set(z + mod_words, mod_words + 1);
+
+   const BigInt& x = g[0];
+   const u32bit x_sig = x.sig_words();
+
    for(u32bit j = 1; j != g.size(); ++j)
-      g[j] = reduce(g[j-1] * g[0]);
+      {
+      const BigInt& y = g[j-1];
+      const u32bit y_sig = y.sig_words();
+
+      z.clear();
+      bigint_mul(z.begin(), z.size(),
+                 x.data(), x.size(), x_sig,
+                 y.data(), y.size(), y_sig);
+
+      montgomery_reduce(z.begin(), z.size(), modulus.data(), mod_words,
+                        mod_prime);
+
+      g[j].get_reg().set(z + mod_words, mod_words + 1);
+      }
    }
 
 /*************************************************
@@ -91,24 +98,22 @@ void Montgomery_Exponentiator::set_base(const BigInt& base)
 *************************************************/
 BigInt Montgomery_Exponentiator::execute() const
    {
-   const u32bit exp_nibbles = (exp.bits() + window_bits - 1) / window_bits;
-   const u32bit mod_size = modulus.sig_words();
+   const u32bit exp_nibbles = (exp_bits + window_bits - 1) / window_bits;
 
-   BigInt z = R_mod;
-   SecureVector<word> workspace(2 * (mod_size + 1));
+   BigInt x = R_mod;
+   SecureVector<word> z(2 * (mod_words + 1));
 
    for(u32bit j = exp_nibbles; j > 0; --j)
       {
       for(u32bit k = 0; k != window_bits; ++k)
          {
-         workspace.clear();
-         bigint_sqr(workspace.begin(), workspace.size(),
-                    z.data(), z.size(), z.sig_words());
+         z.clear();
+         bigint_sqr(z.begin(), z.size(),
+                    x.data(), x.size(), x.sig_words());
 
-         const u32bit mod_size = modulus.sig_words();
-         montgomery_reduce(workspace.begin(), workspace.size(),
-                           modulus.data(), mod_size, mod_prime);
-         z.get_reg().set(workspace.begin(), mod_size + 1);
+         montgomery_reduce(z.begin(), z.size(), modulus.data(), mod_words,
+                           mod_prime);
+         x.get_reg().set(z + mod_words, mod_words + 1);
          }
 
       u32bit nibble = exp.get_substring(window_bits*(j-1), window_bits);
@@ -116,51 +121,24 @@ BigInt Montgomery_Exponentiator::execute() const
          {
          const BigInt& y = g.at(nibble-1);
 
-         workspace.clear();
-         bigint_mul(workspace.begin(), workspace.size(),
-                    z.data(), z.size(), z.sig_words(),
+         z.clear();
+         bigint_mul(z.begin(), z.size(),
+                    x.data(), x.size(), x.sig_words(),
                     y.data(), y.size(), y.sig_words());
 
-         montgomery_reduce(workspace.begin(), workspace.size(),
-                           modulus.data(), mod_size, mod_prime);
-         z.get_reg().set(workspace.begin(), mod_size + 1);
+         montgomery_reduce(z.begin(), z.size(), modulus.data(), mod_words,
+                           mod_prime);
+         x.get_reg().set(z + mod_words, mod_words + 1);
          }
       }
 
-   workspace.clear();
-   workspace.copy(z.data(), z.size());
+   z.clear();
+   z.copy(x.data(), x.size());
 
-   montgomery_reduce(workspace.begin(), workspace.size(),
-                     modulus.data(), mod_size, mod_prime);
-
-   BigInt x;
-   x.get_reg().set(workspace.begin(), mod_size + 1);
+   montgomery_reduce(z.begin(), z.size(), modulus.data(), mod_words,
+                     mod_prime);
+   x.get_reg().set(z + mod_words, mod_words + 1);
    return x;
-   }
-
-/*************************************************
-* Montgomery Reduction                           *
-*************************************************/
-BigInt Montgomery_Exponentiator::reduce(const BigInt& n) const
-   {
-   const u32bit mod_size = modulus.sig_words();
-
-   SecureVector<word> z(2 * (mod_size + 1));
-   z.copy(n.data(), n.size());
-
-   montgomery_reduce(z.begin(), z.size(), modulus.data(), mod_size, mod_prime);
-
-   BigInt x;
-   x.get_reg().set(z.begin(), mod_size + 1);
-   return x;
-   }
-
-/*************************************************
-* Make a copy of this exponentiator              *
-*************************************************/
-Modular_Exponentiator* Montgomery_Exponentiator::copy() const
-   {
-   return new Montgomery_Exponentiator(*this);
    }
 
 /*************************************************
@@ -178,13 +156,15 @@ Montgomery_Exponentiator::Montgomery_Exponentiator(const BigInt& mod,
    this->hints = hints;
    modulus = mod;
 
+   mod_words = modulus.sig_words();
+
    BigInt mod_prime_bn(BigInt::Power2, MP_WORD_BITS);
    mod_prime = (mod_prime_bn - inverse_mod(modulus, mod_prime_bn)).word_at(0);
 
-   R_mod = BigInt(BigInt::Power2, MP_WORD_BITS * modulus.sig_words());
+   R_mod = BigInt(BigInt::Power2, MP_WORD_BITS * mod_words);
    R_mod %= modulus;
 
-   R2 = BigInt(BigInt::Power2, 2 * MP_WORD_BITS * modulus.sig_words());
+   R2 = BigInt(BigInt::Power2, 2 * MP_WORD_BITS * mod_words);
    R2 %= modulus;
    }
 

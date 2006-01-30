@@ -35,16 +35,13 @@ class BigInt
       BigInt& operator<<=(u32bit);
       BigInt& operator>>=(u32bit);
 
-      BigInt& operator++();
-      BigInt& operator--();
-      BigInt  operator++(int) { BigInt tmp = (*this); ++(*this); return tmp; }
-      BigInt  operator--(int) { BigInt tmp = (*this); --(*this); return tmp; }
+      BigInt& operator++() { return (*this += 1); }
+      BigInt& operator--() { return (*this -= 1); }
+      BigInt  operator++(int) { BigInt x = (*this); ++(*this); return x; }
+      BigInt  operator--(int) { BigInt x = (*this); --(*this); return x; }
 
       BigInt operator-() const;
       bool operator !() const { return (!is_nonzero()); }
-
-      void add(word);
-      void sub(word);
 
       s32bit cmp(const BigInt&, bool = true) const;
       bool is_even() const { return (get_bit(0) == 0); }
@@ -106,7 +103,7 @@ class BigInt
       BigInt(Sign, u32bit);
       BigInt(NumberType, u32bit);
    private:
-      friend void modifying_divide(BigInt&, BigInt&, BigInt&);
+      friend void divide(const BigInt&, const BigInt&, BigInt&, BigInt&);
       void grow_to(u32bit n) const { reg.grow_to(n); }
       SecureVector<word> reg;
       Sign signedness;

@@ -9,6 +9,8 @@
 #include <botan/bit_ops.h>
 #include <algorithm>
 
+#include <assert.h>
+
 namespace Botan {
 
 /*************************************************
@@ -127,15 +129,6 @@ word BigInt::operator%=(word mod)
    if(mod == 0)
       throw BigInt::DivideByZero();
 
-   if(power_of_2(mod))
-      {
-      word result = (word_at(0) & (mod - 1));
-      clear();
-      reg.grow_to(2);
-      reg[0] = result;
-      return result;
-      }
-
    word remainder = 0;
    u32bit size = sig_words();
 
@@ -143,7 +136,14 @@ word BigInt::operator%=(word mod)
       remainder = bigint_modop(remainder, word_at(j-1), mod);
    clear();
    reg.grow_to(2);
-   reg[0] = remainder;
+
+   if(remainder && sign() == BigInt::Negative)
+      reg[0] = mod - remainder;
+   else
+      reg[0] = remainder;
+
+   set_sign(BigInt::Positive);
+
    return word_at(0);
    }
 

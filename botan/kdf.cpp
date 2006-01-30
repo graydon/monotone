@@ -57,7 +57,7 @@ SecureVector<byte> KDF2::derive(u32bit out_len,
       output.append(hash_result, added);
       out_len -= added;
 
-      counter++;
+      ++counter;
       }
 
    return output;

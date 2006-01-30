@@ -7,6 +7,7 @@
 #define BOTAN_NUMBTHRY_H__
 
 #include <botan/bigint.h>
+#include <botan/reducer.h>
 #include <botan/pow_mod.h>
 
 namespace Botan {
@@ -16,7 +17,6 @@ namespace Botan {
 *************************************************/
 BigInt mul_add(const BigInt&, const BigInt&, const BigInt&);
 BigInt sub_mul(const BigInt&, const BigInt&, const BigInt&);
-BigInt mul_mod(const BigInt&, const BigInt&, const BigInt&);
 
 /*************************************************
 * Number Theory Functions                        *
@@ -24,8 +24,6 @@ BigInt mul_mod(const BigInt&, const BigInt&, const BigInt&);
 inline BigInt abs(const BigInt& n) { return n.abs(); }
 
 void divide(const BigInt&, const BigInt&, BigInt&, BigInt&);
-void positive_divide(const BigInt&, const BigInt&, BigInt&, BigInt&);
-void modifying_divide(BigInt&, BigInt&, BigInt&);
 
 BigInt gcd(const BigInt&, const BigInt&);
 BigInt lcm(const BigInt&, const BigInt&);
@@ -81,16 +79,12 @@ class MillerRabin_Test
    {
    public:
       bool passes_test(const BigInt&);
-
       MillerRabin_Test(const BigInt&);
-      ~MillerRabin_Test();
    private:
-      MillerRabin_Test(const MillerRabin_Test&) {}
-      MillerRabin_Test& operator=(const MillerRabin_Test&) { return (*this); }
       BigInt n, r, n_minus_1;
       u32bit s;
       Fixed_Exponent_Power_Mod pow_mod;
-      class ModularReducer* reducer;
+      Modular_Reducer reducer;
    };
 
 }

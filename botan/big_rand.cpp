@@ -20,6 +20,8 @@ BigInt::BigInt(NumberType type, u32bit bits)
       randomize(bits);
    else if(type == Power2)
       set_bit(bits);
+   else
+      throw Invalid_Argument("BigInt(NumberType): Unknown type");
    }
 
 /*************************************************

@@ -19,10 +19,10 @@ word bigint_add2_nc(word x[], u32bit x_size, const word y[], u32bit y_size)
    {
    word carry = 0;
 
-   const u32bit blocks = y_size - (y_size % 4);
+   const u32bit blocks = y_size - (y_size % 8);
 
-   for(u32bit j = 0; j != blocks; j += 4)
-      word4_add2(x + j, y + j, &carry);
+   for(u32bit j = 0; j != blocks; j += 8)
+      carry = word8_add2(x + j, y + j, carry);
 
    for(u32bit j = blocks; j != y_size; ++j)
       x[j] = word_add(x[j], y[j], &carry);
@@ -48,10 +48,10 @@ word bigint_add3_nc(word z[], const word x[], u32bit x_size,
 
    word carry = 0;
 
-   const u32bit blocks = y_size - (y_size % 4);
+   const u32bit blocks = y_size - (y_size % 8);
 
-   for(u32bit j = 0; j != blocks; j += 4)
-      word4_add3(z + j, x + j, y + j, &carry);
+   for(u32bit j = 0; j != blocks; j += 8)
+      carry = word8_add3(z + j, x + j, y + j, carry);
 
    for(u32bit j = blocks; j != y_size; ++j)
       z[j] = word_add(x[j], y[j], &carry);
@@ -72,7 +72,8 @@ word bigint_add3_nc(word z[], const word x[], u32bit x_size,
 *************************************************/
 void bigint_add2(word x[], u32bit x_size, const word y[], u32bit y_size)
    {
-   x[x_size] += bigint_add2_nc(x, x_size, y, y_size);
+   if(bigint_add2_nc(x, x_size, y, y_size))
+      ++x[x_size];
    }
 
 /*************************************************
@@ -81,8 +82,8 @@ void bigint_add2(word x[], u32bit x_size, const word y[], u32bit y_size)
 void bigint_add3(word z[], const word x[], u32bit x_size,
                            const word y[], u32bit y_size)
    {
-   const u32bit top_word = (x_size > y_size ? x_size : y_size);
-   z[top_word] += bigint_add3_nc(z, x, x_size, y, y_size);
+   if(bigint_add3_nc(z, x, x_size, y, y_size))
+      ++z[(x_size > y_size ? x_size : y_size)];
    }
 
 /*************************************************
@@ -92,10 +93,10 @@ void bigint_sub2(word x[], u32bit x_size, const word y[], u32bit y_size)
    {
    word carry = 0;
 
-   const u32bit blocks = y_size - (y_size % 4);
+   const u32bit blocks = y_size - (y_size % 8);
 
-   for(u32bit j = 0; j != blocks; j += 4)
-      word4_sub2(x + j, y + j, &carry);
+   for(u32bit j = 0; j != blocks; j += 8)
+      carry = word8_sub2(x + j, y + j, carry);
 
    for(u32bit j = blocks; j != y_size; ++j)
       x[j] = word_sub(x[j], y[j], &carry);
@@ -117,10 +118,10 @@ void bigint_sub3(word z[], const word x[], u32bit x_size,
    {
    word carry = 0;
 
-   const u32bit blocks = y_size - (y_size % 4);
+   const u32bit blocks = y_size - (y_size % 8);
 
-   for(u32bit j = 0; j != blocks; j += 4)
-      word4_sub3(z + j, x + j, y + j, &carry);
+   for(u32bit j = 0; j != blocks; j += 8)
+      carry = word8_sub3(z + j, x + j, y + j, carry);
 
    for(u32bit j = blocks; j != y_size; ++j)
       z[j] = word_sub(x[j], y[j], &carry);
@@ -139,15 +140,15 @@ void bigint_sub3(word z[], const word x[], u32bit x_size,
 *************************************************/
 void bigint_linmul2(word x[], u32bit x_size, word y)
    {
-   const u32bit blocks = x_size - (x_size % 4);
+   const u32bit blocks = x_size - (x_size % 8);
 
    word carry = 0;
 
-   for(u32bit j = 0; j != blocks; j += 4)
-      word4_linmul2(x + j, y, &carry);
+   for(u32bit j = 0; j != blocks; j += 8)
+      carry = word8_linmul2(x + j, y, carry);
 
    for(u32bit j = blocks; j != x_size; ++j)
-      x[j] = word_mul(x[j], y, &carry);
+      x[j] = word_madd2(x[j], y, carry, &carry);
 
    x[x_size] = carry;
    }
@@ -157,45 +158,17 @@ void bigint_linmul2(word x[], u32bit x_size, word y)
 *************************************************/
 void bigint_linmul3(word z[], const word x[], u32bit x_size, word y)
    {
-   const u32bit blocks = x_size - (x_size % 4);
-
-   word carry = 0;
-
-   for(u32bit j = 0; j != blocks; j += 4)
-      word4_linmul3(z + j, x + j, y, &carry);
-
-   for(u32bit j = blocks; j != x_size; ++j)
-      z[j] = word_mul(x[j], y, &carry);
-
-   z[x_size] = carry;
-   }
-
-/*************************************************
-* Fused Linear Multiply / Addition Operation     *
-*************************************************/
-void bigint_linmul_add(word z[], u32bit z_size,
-                       const word x[], u32bit x_size, word y)
-   {
-   word carry = 0;
-
    const u32bit blocks = x_size - (x_size % 8);
 
+   word carry = 0;
+
    for(u32bit j = 0; j != blocks; j += 8)
-      word8_madd3(z + j, y, x + j, &carry);
+      carry = word8_linmul3(z + j, x + j, y, carry);
 
    for(u32bit j = blocks; j != x_size; ++j)
-      word_madd(x[j], y, z[j], carry, z + j, &carry);
+      z[j] = word_madd2(x[j], y, carry, &carry);
 
-   word carry2 = 0;
-   z[x_size] = word_add(z[x_size], carry, &carry2);
-   carry = carry2;
-
-   for(u32bit j = x_size + 1; carry && j != z_size; ++j)
-      {
-      ++z[j];
-      carry = !z[j];
-      }
-   z[z_size] += carry;
+   z[x_size] = carry;
    }
 
 /*************************************************
@@ -214,13 +187,49 @@ void bigint_simple_mul(word z[], const word x[], u32bit x_size,
       word carry = 0;
 
       for(u32bit k = 0; k != blocks; k += 8)
-         word8_madd3(z + j + k, x_j, y + k, &carry);
+         carry = word8_madd3(z + j + k, y + k, x_j, carry);
 
       for(u32bit k = blocks; k != y_size; ++k)
-         word_madd(x_j, y[k], z[j+k], carry, z + (j+k), &carry);
+         z[j+k] = word_madd3(x_j, y[k], z[j+k], carry, &carry);
 
       z[j+y_size] = carry;
       }
+   }
+
+/*************************************************
+* Montgomery Reduction Algorithm                 *
+*************************************************/
+void montgomery_reduce(word z[], u32bit z_size,
+                       const word x[], u32bit x_size, word u)
+   {
+   for(u32bit j = 0; j != x_size; ++j)
+      {
+      word* z_j = z + j;
+
+      const word y = z_j[0] * u;
+      word carry = 0;
+
+      const u32bit blocks = x_size - (x_size % 8);
+
+      for(u32bit k = 0; k != blocks; k += 8)
+         carry = word8_madd3(z_j + k, x + k, y, carry);
+
+      for(u32bit k = blocks; k != x_size; ++k)
+         z_j[k] = word_madd3(x[k], y, z_j[k], carry, &carry);
+
+      word carry2 = 0;
+      z_j[x_size] = word_add(z_j[x_size], carry, &carry2);
+      carry = carry2;
+
+      for(u32bit k = x_size + 1; carry && k != z_size - j; ++k)
+         {
+         ++z_j[k];
+         carry = !z_j[k];
+         }
+      }
+
+   if(bigint_cmp(z + x_size, x_size + 1, x, x_size) >= 0)
+      bigint_sub2(z + x_size, x_size + 1, x, x_size);
    }
 
 }

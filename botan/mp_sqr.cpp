@@ -63,7 +63,7 @@ void karatsuba_sqr(word z[], const word x[], u32bit N, word workspace[])
 /*************************************************
 * Pick a good size for the Karatsuba squaring    *
 *************************************************/
-u32bit karatsuba_size(u32bit x_size, u32bit x_sw)
+u32bit karatsuba_size(u32bit z_size, u32bit x_size, u32bit x_sw)
    {
    if(x_sw == x_size)
       {
@@ -73,12 +73,18 @@ u32bit karatsuba_size(u32bit x_size, u32bit x_sw)
       }
 
    for(u32bit j = x_sw; j <= x_size; ++j)
-      if(j % 2 == 0 && x_sw <= j && j <= x_size)
-         {
-         if(j % 4 == 2 && (j+2) < x_size)
-            return (j+2);
-         return j;
-         }
+      {
+      if(j % 2)
+         continue;
+
+      if(2*j > z_size)
+         return 0;
+
+      if(j % 4 == 2 && (j+2) <= x_size && 2*(j+2) <= z_size)
+         return j+2;
+      return j;
+      }
+
    return 0;
    }
 
@@ -114,7 +120,7 @@ void bigint_sqr(word z[], u32bit z_size,
       return;
       }
 
-   const u32bit N = karatsuba_size(x_size, x_sw);
+   const u32bit N = karatsuba_size(z_size, x_size, x_sw);
 
    if(N)
       {

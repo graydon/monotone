@@ -74,7 +74,9 @@ void karatsuba_mul(word z[], const word x[], const word y[], u32bit N,
 /*************************************************
 * Pick a good size for the Karatsuba multiply    *
 *************************************************/
-u32bit karatsuba_size(u32bit x_size, u32bit x_sw, u32bit y_size, u32bit y_sw)
+u32bit karatsuba_size(u32bit z_size,
+                      u32bit x_size, u32bit x_sw,
+                      u32bit y_size, u32bit y_sw)
    {
    if(x_sw > y_size || y_sw > x_size)
       return 0;
@@ -96,12 +98,22 @@ u32bit karatsuba_size(u32bit x_size, u32bit x_sw, u32bit y_size, u32bit y_sw)
       }
 
    for(u32bit j = start; j <= end; ++j)
-      if(j % 2 == 0 && x_sw <= j && j <= x_size && y_sw <= j && j <= y_size)
+      {
+      if(j % 2)
+         continue;
+
+      if(2*j > z_size)
+         return 0;
+
+      if(x_sw <= j && j <= x_size && y_sw <= j && j <= y_size)
          {
-         if(j % 4 == 2 && (j+2) < x_size && (j+2) < y_size)
-            return (j+2);
+         if(j % 4 == 2 &&
+            (j+2) <= x_size && (j+2) <= y_size && 2*(j+2) <= z_size)
+            return j+2;
          return j;
          }
+      }
+
    return 0;
    }
 
@@ -150,7 +162,7 @@ void bigint_mul(word z[], u32bit z_size,
       return;
       }
 
-   const u32bit N = karatsuba_size(x_size, x_sw, y_size, y_sw);
+   const u32bit N = karatsuba_size(z_size, x_size, x_sw, y_size, y_sw);
 
    if(N)
       {

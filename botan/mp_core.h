@@ -47,6 +47,11 @@ void bigint_simple_mul(word[], const word[], u32bit, const word[], u32bit);
 void bigint_linmul_add(word[], u32bit, const word[], u32bit, word);
 
 /*************************************************
+* Modular Reduction                              *
+*************************************************/
+void montgomery_reduce(word[], u32bit, const word[], u32bit, word);
+
+/*************************************************
 * Misc Utility Operations                        *
 *************************************************/
 u32bit bigint_divcore(word, word, word, word, word, word);

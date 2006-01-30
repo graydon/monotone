@@ -55,7 +55,7 @@ void X509_DN::add_attribute(const OID& oid, const std::string& str)
    if(str == "")
       return;
 
-   typedef std::multimap<OID, ASN1_String>::const_iterator rdn_iter;
+   typedef std::multimap<OID, ASN1_String>::iterator rdn_iter;
 
    std::pair<rdn_iter, rdn_iter> range = dn_info.equal_range(oid);
    for(rdn_iter j = range.first; j != range.second; ++j)
@@ -219,7 +219,7 @@ void do_ava(DER_Encoder& encoder, std::multimap<OID, std::string>& dn_info,
             ASN1_Tag string_type, const std::string& oid_str,
             bool must_exist = false)
    {
-   typedef std::multimap<OID, std::string>::const_iterator rdn_iter;
+   typedef std::multimap<OID, std::string>::iterator rdn_iter;
 
    const OID oid = OIDS::lookup(oid_str);
    const bool exists = (dn_info.find(oid) != dn_info.end());

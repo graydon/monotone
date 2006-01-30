@@ -8,105 +8,91 @@
 #include <botan/numthry.h>
 #include <botan/mp_core.h>
 
+#include <iostream> // for testing
+
 namespace Botan {
 
-namespace {
-
 /*************************************************
-* Barrett Reducer                                *
+* Modular_Reducer Constructor                    *
 *************************************************/
-class Barrett_Reducer : public ModularReducer
+Modular_Reducer::Modular_Reducer(const BigInt& mod)
    {
-   public:
-      BigInt multiply(const BigInt&, const BigInt&) const;
-      BigInt square(const BigInt& x) const
-         { return reduce(Botan::square(x)); }
+   if(mod <= 0)
+      throw Invalid_Argument("Modular_Reducer: modulus must be positive");
 
-      BigInt reduce(const BigInt&) const;
-      const BigInt& get_modulus() const { return modulus; }
+   modulus = mod;
+   mod_words = modulus.sig_words();
 
-      Barrett_Reducer(const BigInt&);
-   private:
-      BigInt modulus, mu;
-      mutable BigInt t1, t2;
-      u32bit max_bits, k;
-   };
+   modulus_2 = Botan::square(modulus);
+   mod2_words = modulus_2.sig_words();
 
-/*************************************************
-* Barrett_Reducer Constructor                    *
-*************************************************/
-Barrett_Reducer::Barrett_Reducer(const BigInt& mod) : modulus(mod)
-   {
-   if(modulus <= 0)
-      throw Invalid_Argument("Barrett_Reducer: modulus must be positive");
-
-   if(modulus.size() > 8 && !power_of_2(modulus.size()))
-      modulus.grow_reg((1 << high_bit(modulus.size())) - modulus.size());
-
-   k = modulus.sig_words();
-   mu.set_bit(MP_WORD_BITS * 2 * k);
-   mu /= modulus;
-   max_bits = MP_WORD_BITS * 2 * k;
-
-   if(mu.size() > 8 && !power_of_2(mu.size()))
-      mu.grow_reg((1 << high_bit(mu.size())) - mu.size());
+   mu = BigInt(BigInt::Power2, 2 * MP_WORD_BITS * mod_words) / modulus;
+   mu_words = mu.sig_words();
    }
 
 /*************************************************
 * Barrett Reduction                              *
 *************************************************/
-BigInt Barrett_Reducer::reduce(const BigInt& x) const
+BigInt Modular_Reducer::reduce(const BigInt& x) const
    {
-   if(x.is_positive() && x < modulus)
-      return x;
-   if(x.bits() > max_bits)
-      return (x % modulus);
+   if(mod_words == 0)
+      throw Invalid_State("Modular_Reducer: Never initalized");
 
-   t1 = x;
+   BigInt t1 = x;
    t1.set_sign(BigInt::Positive);
 
-   t1 >>= (MP_WORD_BITS * (k - 1));
+   if(t1 < modulus)
+      {
+      if(x.is_negative() && t1.is_nonzero())
+         return modulus - t1;
+      return x;
+      }
+
+   if(t1 >= modulus_2)
+      return (x % modulus);
+
+   t1 >>= (MP_WORD_BITS * (mod_words - 1));
    t1 *= mu;
-   t1 >>= (MP_WORD_BITS * (k + 1));
+   t1 >>= (MP_WORD_BITS * (mod_words + 1));
 
    t1 *= modulus;
-   t1.mask_bits(MP_WORD_BITS * (k+1));
+   t1.mask_bits(MP_WORD_BITS * (mod_words+1));
 
-   t2 = x;
+   BigInt t2 = x;
    t2.set_sign(BigInt::Positive);
-   t2.mask_bits(MP_WORD_BITS * (k+1));
+   t2.mask_bits(MP_WORD_BITS * (mod_words+1));
 
-   t2 -= t1;
+   t1 = t2 - t1;
 
-   if(t2.is_negative())
+   if(t1.is_negative())
       {
-      BigInt b_to_k1(BigInt::Power2, MP_WORD_BITS * (k+1));
-      t2 += b_to_k1;
+      BigInt b_to_k1(BigInt::Power2, MP_WORD_BITS * (mod_words+1));
+      t1 += b_to_k1;
       }
-   while(t2 >= modulus)
-      t2 -= modulus;
 
-   if(x.is_negative() && t2.is_nonzero())
-      t2 = modulus - t2;
+   while(t1 >= modulus)
+      t1 -= modulus;
 
-   return t2;
+   if(x.is_negative() && t1.is_nonzero())
+      t1 = modulus - t1;
+
+   return t1;
    }
 
 /*************************************************
 * Multiply, followed by a reduction              *
 *************************************************/
-BigInt Barrett_Reducer::multiply(const BigInt& x, const BigInt& y) const
+BigInt Modular_Reducer::multiply(const BigInt& x, const BigInt& y) const
    {
    return reduce(x * y);
    }
 
-}
-
 /*************************************************
-* Acquire a modular reducer                      *
+* Square, followed by a reduction                *
 *************************************************/
-ModularReducer* get_reducer(const BigInt& n)
+BigInt Modular_Reducer::square(const BigInt& x) const
    {
-   return new Barrett_Reducer(n);
+   return reduce(Botan::square(x));
    }
+
 }

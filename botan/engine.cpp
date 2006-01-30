@@ -5,7 +5,7 @@
 
 #include <botan/engine.h>
 #include <botan/libstate.h>
-#include <botan/def_eng.h>
+#include <botan/eng_def.h>
 
 namespace Botan {
 

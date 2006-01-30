@@ -33,7 +33,7 @@ void MGF1::mask(const byte in[], u32bit in_len, byte out[],
       out += xored;
       out_len -= xored;
 
-      counter++;
+      ++counter;
       }
    }
 

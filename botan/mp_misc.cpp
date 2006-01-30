@@ -6,6 +6,8 @@
 #include <botan/mp_core.h>
 #include <botan/mp_asm.h>
 
+#include <stdio.h>
+
 namespace Botan {
 
 extern "C" {
@@ -17,8 +19,8 @@ u32bit bigint_divcore(word q, word y1, word y2,
                       word x1, word x2, word x3)
    {
    word y0 = 0;
-   word_madd(q, y2, 0, 0, &y2, &y0);
-   word_madd(q, y1, y0, 0, &y1, &y0);
+   y2 = word_madd2(q, y2, 0, &y0);
+   y1 = word_madd2(q, y1, y0, &y0);
 
    if(y0 > x1) return 1;
    if(y0 < x1) return 0;
@@ -79,11 +81,10 @@ word bigint_divop(word n1, word n0, word d)
 *************************************************/
 word bigint_modop(word n1, word n0, word d)
    {
-   word z0 = n1 / d, z1 = bigint_divop(n1, n0, d);
-   word carry = 0;
-   word_madd(z1, d,     0, 0, &z1, &carry);
-   word_madd(z0, d, carry, 0, &z0, &carry);
-   return (n0-z1);
+   word z0 = bigint_divop(n1, n0, d);
+   word dummy = 0;
+   z0 = word_madd2(z0, d, 0, &dummy);
+   return (n0-z0);
    }
 
 /*************************************************

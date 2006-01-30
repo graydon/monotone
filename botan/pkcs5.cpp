@@ -98,7 +98,7 @@ OctetString PKCS5_PBKDF2::derive(u32bit key_len,
 
       key_len -= T_size;
       T += T_size;
-      counter++;
+      ++counter;
       }
 
    return key;

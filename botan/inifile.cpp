@@ -98,7 +98,7 @@ void load(const std::string& fsname, Library_State& state)
 
    while(std::getline(config, line))
       {
-      line_no++;
+      ++line_no;
 
       line = strip_whitespace(line);
 

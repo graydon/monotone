@@ -4,7 +4,6 @@
 *************************************************/
 
 #include <botan/numthry.h>
-#include <botan/reducer.h>
 #include <botan/ui.h>
 #include <algorithm>
 
@@ -76,7 +75,8 @@ u32bit low_zero_bits(const BigInt& n)
    if(n.is_zero()) return 0;
 
    u32bit bits = 0, max_bits = n.bits();
-   while((n.get_bit(bits) == 0) && bits < max_bits) bits++;
+   while((n.get_bit(bits) == 0) && bits < max_bits)
+      ++bits;
    return bits;
    }
 
@@ -349,7 +349,7 @@ bool MillerRabin_Test::passes_test(const BigInt& a)
    for(u32bit j = 1; j != s; ++j)
       {
       UI::pulse(UI::PRIME_TESTING);
-      y = reducer->reduce(square(y));
+      y = reducer.square(y);
 
       if(y == 1)
          return false;
@@ -373,15 +373,7 @@ MillerRabin_Test::MillerRabin_Test(const BigInt& num)
    r = n_minus_1 >> s;
 
    pow_mod = Fixed_Exponent_Power_Mod(r, n);
-   reducer = get_reducer(n);
-   }
-
-/*************************************************
-* Miller-Rabin Constructor                       *
-*************************************************/
-MillerRabin_Test::~MillerRabin_Test()
-   {
-   delete reducer;
+   reducer = Modular_Reducer(n);
    }
 
 }

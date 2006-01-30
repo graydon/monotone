@@ -122,59 +122,6 @@ s32bit BigInt::cmp(const BigInt& n, bool check_signs) const
    }
 
 /*************************************************
-* Add n to this number                           *
-*************************************************/
-void BigInt::add(word n)
-   {
-   if(!n) return;
-   word temp = reg[0];
-   reg[0] += n;
-   if(reg[0] > temp)
-      return;
-   for(u32bit j = 1; j != size(); ++j)
-      if(++reg[j]) return;
-   grow_to(2*size());
-   reg[size() / 2] = 1;
-   }
-
-/*************************************************
-* Subtract n from this number                    *
-*************************************************/
-void BigInt::sub(word n)
-   {
-   if(!n) return;
-   word temp = reg[0];
-   reg[0] -= n;
-   if(reg[0] < temp)
-      return;
-   for(u32bit j = 1; j != size(); ++j)
-      if(reg[j]--) return;
-   reg.create(2);
-   flip_sign();
-   reg[0] = n - temp;
-   }
-
-/*************************************************
-* Prefix Increment Operator                      *
-*************************************************/
-BigInt& BigInt::operator++()
-   {
-   if(is_negative()) sub(1);
-   else              add(1);
-   return (*this);
-   }
-
-/*************************************************
-* Prefix Decrement Operator                      *
-*************************************************/
-BigInt& BigInt::operator--()
-   {
-   if(is_negative()) add(1);
-   else              sub(1);
-   return (*this);
-   }
-
-/*************************************************
 * Return word n of this number                   *
 *************************************************/
 word BigInt::word_at(u32bit n) const

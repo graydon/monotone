@@ -131,14 +131,14 @@ word operator%(const BigInt& n, word mod)
    if(mod == 0)
       throw BigInt::DivideByZero();
 
-   if(power_of_2(mod))
-      return (n.word_at(0) & (mod - 1));
-
+   const u32bit n_words = n.sig_words();
    word remainder = 0;
-   u32bit size = n.sig_words();
 
-   for(u32bit j = size; j > 0; --j)
+   for(u32bit j = n_words; j > 0; --j)
       remainder = bigint_modop(remainder, n.word_at(j-1), mod);
+
+   if(remainder && n.sign() == BigInt::Negative)
+      return mod - remainder;
    return remainder;
    }
 

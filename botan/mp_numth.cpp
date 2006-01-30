@@ -60,20 +60,4 @@ BigInt sub_mul(const BigInt& a, const BigInt& b, const BigInt& c)
    return r;
    }
 
-/*************************************************
-* Multiply-Modulo Operation                      *
-*************************************************/
-BigInt mul_mod(const BigInt& a, const BigInt& b, const BigInt& m)
-   {
-   if(a.is_negative() || b.is_negative())
-      throw Invalid_Argument("mul_mod: First two arguments must be >= 0");
-   if(m <= 0)
-      throw Invalid_Argument("mul_mod: Modulo must be positive");
-
-   BigInt r = a;
-   r *= b;
-   r %= m;
-   return r;
-   }
-
 }

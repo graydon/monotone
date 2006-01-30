@@ -6,6 +6,7 @@
 #include <botan/x509_obj.h>
 #include <botan/parsing.h>
 #include <botan/pem.h>
+#include <algorithm>
 
 namespace Botan {
 

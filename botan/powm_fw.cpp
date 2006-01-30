@@ -5,8 +5,6 @@
 
 #include <botan/def_powm.h>
 #include <botan/numthry.h>
-#include <botan/def_eng.h>
-#include <botan/reducer.h>
 #include <vector>
 
 namespace Botan {
@@ -42,7 +40,7 @@ u32bit choose_window_bits(u32bit exp_bits, u32bit,
    if(hints & Power_Mod::EXP_IS_LARGE)
       window_bits += 2;
    if(hints & Power_Mod::BASE_IS_FIXED)
-      window_bits++;
+      ++window_bits;
 
    return window_bits;
    }
@@ -67,7 +65,7 @@ void Fixed_Window_Exponentiator::set_base(const BigInt& base)
    g.resize((1 << window_bits) - 1);
    g[0] = base;
    for(u32bit j = 1; j != g.size(); ++j)
-      g[j] = reducer->multiply(g[j-1], g[0]);
+      g[j] = reducer.multiply(g[j-1], g[0]);
    }
 
 /*************************************************
@@ -81,28 +79,13 @@ BigInt Fixed_Window_Exponentiator::execute() const
    for(u32bit j = exp_nibbles; j > 0; --j)
       {
       for(u32bit k = 0; k != window_bits; ++k)
-         x = reducer->square(x);
+         x = reducer.square(x);
 
       u32bit nibble = exp.get_substring(window_bits*(j-1), window_bits);
       if(nibble)
-         x = reducer->multiply(x, g.at(nibble-1));
+         x = reducer.multiply(x, g.at(nibble-1));
       }
    return x;
-   }
-
-/*************************************************
-* Make a copy of this exponentiator              *
-*************************************************/
-Modular_Exponentiator* Fixed_Window_Exponentiator::copy() const
-   {
-   Fixed_Window_Exponentiator* out =
-      new Fixed_Window_Exponentiator(reducer->get_modulus(), hints);
-
-   out->g = g;
-   out->exp = exp;
-   out->window_bits = window_bits;
-
-   return out;
    }
 
 /*************************************************
@@ -111,17 +94,9 @@ Modular_Exponentiator* Fixed_Window_Exponentiator::copy() const
 Fixed_Window_Exponentiator::Fixed_Window_Exponentiator(const BigInt& n,
    Power_Mod::Usage_Hints hints)
    {
-   reducer = get_reducer(n);
+   reducer = Modular_Reducer(n);
    this->hints = hints;
    window_bits = 0;
-   }
-
-/*************************************************
-* Fixed_Window_Exponentiator Destructor          *
-*************************************************/
-Fixed_Window_Exponentiator::~Fixed_Window_Exponentiator()
-   {
-   delete reducer;
    }
 
 }

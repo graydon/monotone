@@ -11,6 +11,24 @@
 
 namespace Botan {
 
+/*************************************************
+* Botan's global state                           *
+*************************************************/
+Library_State* global_lib_state = 0;
+
+Library_State& global_state()
+   {
+   if(!global_lib_state)
+      throw Invalid_State("Library was not intialized correctly");
+   return (*global_lib_state);
+   }
+
+void set_global_state(Library_State* new_state)
+   {
+   delete global_lib_state;
+   global_lib_state = new_state;
+   }
+
 namespace {
 
 /*************************************************

@@ -9,6 +9,7 @@
 #include <botan/bigint.h>
 #include <botan/conf.h>
 #include <botan/oids.h>
+#include <algorithm>
 
 namespace Botan {
 

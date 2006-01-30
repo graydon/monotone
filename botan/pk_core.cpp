@@ -39,7 +39,7 @@ IF_Core::IF_Core(const BigInt& e, const BigInt& n, const BigInt& d,
       {
       BigInt k = blinding_factor(n.bits());
       if(k != 0)
-         blinder.initialize(power_mod(k, e, n), inverse_mod(k, n), n);
+         blinder = Blinder(power_mod(k, e, n), inverse_mod(k, n), n);
       }
    }
 
@@ -190,7 +190,7 @@ ELG_Core::ELG_Core(const DL_Group& group, const BigInt& y, const BigInt& x)
 
       BigInt k = blinding_factor(p.bits());
       if(k != 0)
-         blinder.initialize(k, power_mod(k, x, p), p);
+         blinder = Blinder(k, power_mod(k, x, p), p);
       }
    }
 
@@ -252,7 +252,7 @@ DH_Core::DH_Core(const DL_Group& group, const BigInt& x)
    const BigInt& p = group.get_p();
    BigInt k = blinding_factor(p.bits());
    if(k != 0)
-      blinder.initialize(k, power_mod(inverse_mod(k, p), x, p), p);
+      blinder = Blinder(k, power_mod(inverse_mod(k, p), x, p), p);
    }
 
 /*************************************************

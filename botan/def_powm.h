@@ -3,7 +3,11 @@
 * (C) 1999-2006 The Botan Project                *
 *************************************************/
 
+#ifndef BOTAN_DEFAULT_MODEXP_H__
+#define BOTAN_DEFAULT_MODEXP_H__
+
 #include <botan/pow_mod.h>
+#include <botan/reducer.h>
 #include <vector>
 
 namespace Botan {
@@ -18,12 +22,12 @@ class Fixed_Window_Exponentiator : public Modular_Exponentiator
       void set_base(const BigInt&);
       BigInt execute() const;
 
-      Modular_Exponentiator* copy() const;
+      Modular_Exponentiator* copy() const
+         { return new Fixed_Window_Exponentiator(*this); }
 
       Fixed_Window_Exponentiator(const BigInt&, Power_Mod::Usage_Hints);
-      ~Fixed_Window_Exponentiator();
    private:
-      class ModularReducer* reducer;
+      Modular_Reducer reducer;
       BigInt exp;
       u32bit window_bits;
       std::vector<BigInt> g;
@@ -40,17 +44,19 @@ class Montgomery_Exponentiator : public Modular_Exponentiator
       void set_base(const BigInt&);
       BigInt execute() const;
 
-      Modular_Exponentiator* copy() const;
+      Modular_Exponentiator* copy() const
+         { return new Montgomery_Exponentiator(*this); }
 
       Montgomery_Exponentiator(const BigInt&, Power_Mod::Usage_Hints);
    private:
-      BigInt reduce(const BigInt&) const;
-
       BigInt exp, modulus;
       BigInt R2, R_mod;
       std::vector<BigInt> g;
       word mod_prime;
-      u32bit exp_bits, window_bits;
+      u32bit mod_words, exp_bits, window_bits;
       Power_Mod::Usage_Hints hints;
    };
+
 }
+
+#endif

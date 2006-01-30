@@ -202,6 +202,8 @@ void set_default_config(Library_State* state)
    state->set_option("conf", "rng/es_files", "/dev/urandom:/dev/random");
    state->set_option("conf", "rng/egd_path",
                      "/var/run/egd-pool:/dev/egd-pool");
+   state->set_option("conf", "rng/slow_poll_request", "256");
+   state->set_option("conf", "rng/fast_poll_request", "64");
 
    state->set_option("conf", "x509/validity_slack", "24h");
    state->set_option("conf", "x509/v1_assume_ca", "false");
@@ -225,6 +227,7 @@ void set_default_config(Library_State* state)
    state->set_option("conf", "x509/exts/key_usage", "critical");
    state->set_option("conf", "x509/exts/extended_key_usage", "yes");
    state->set_option("conf", "x509/exts/crl_number", "yes");
+
    }
 
 /*************************************************

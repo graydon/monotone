@@ -11,7 +11,6 @@
 #include <botan/mutex.h>
 #include <utility>
 #include <vector>
-#include <set>
 
 namespace Botan {
 
@@ -40,23 +39,22 @@ class Pooling_Allocator : public Allocator
          {
          u64bit bitmap;
          byte* buffer;
-         u32bit block_size, how_empty;
+         u32bit block_size;
 
          Memory_Block(void*, u32bit, u32bit);
 
-         bool can_alloc(u32bit&, u32bit) const throw();
          bool contains(void*, u32bit) const throw();
-
-         byte* alloc(u32bit, u32bit) throw();
+         byte* alloc(u32bit) throw();
          void free(void*, u32bit) throw();
 
-         bool operator<(const Memory_Block& other) const
-            { return (how_empty > other.how_empty); }
+         bool operator<(const void*) const;
+         bool operator<(const Memory_Block&) const;
          };
 
       const u32bit PREF_SIZE, BLOCK_SIZE, BITMAP_SIZE;
 
-      std::multiset<Memory_Block> blocks;
+      std::vector<Memory_Block> blocks;
+      std::vector<Memory_Block>::iterator last_used;
       std::vector<std::pair<void*, u32bit> > allocated;
       Mutex* mutex;
    };

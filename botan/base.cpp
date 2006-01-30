@@ -7,6 +7,7 @@
 #include <botan/version.h>
 #include <botan/parsing.h>
 #include <botan/util.h>
+#include <botan/conf.h>
 
 namespace Botan {
 
@@ -220,8 +221,16 @@ void RandomNumberGenerator::add_entropy(const byte random[], u32bit length)
 u32bit RandomNumberGenerator::add_entropy(EntropySource& source,
                                           bool slow_poll)
    {
-   SecureVector<byte> buffer(slow_poll ? 192 : 64);
-   u32bit bytes_gathered;
+   u32bit poll_for = 0;
+
+   if(slow_poll)
+      poll_for = Config::get_u32bit("rng/slow_poll_request");
+   else
+      poll_for = Config::get_u32bit("rng/fast_poll_request");
+
+   SecureVector<byte> buffer(poll_for ? poll_for : 256);
+
+   u32bit bytes_gathered = 0;
 
    if(slow_poll)
       bytes_gathered = source.slow_poll(buffer, buffer.size());
@@ -230,7 +239,7 @@ u32bit RandomNumberGenerator::add_entropy(EntropySource& source,
 
    add_entropy(buffer, bytes_gathered);
 
-   return entropy_estimate(buffer, buffer.size());
+   return entropy_estimate(buffer, bytes_gathered);
    }
 
 /*************************************************

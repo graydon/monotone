@@ -48,7 +48,7 @@ void check_key(PK_Signer* signer, PK_Verifier* verifier)
    if(!ver->verify_message(message, signature))
       throw Self_Test_Failure("Signature key pair consistency failure");
 
-   message[0]++;
+   ++message[0];
    if(ver->verify_message(message, signature))
       throw Self_Test_Failure("Signature key pair consistency failure");
    }

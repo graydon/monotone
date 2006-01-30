@@ -31,11 +31,10 @@ class MemoryRegion
       T* end() { return (buf + size()); }
       const T* end() const { return (buf + size()); }
 
-      bool operator==(const MemoryRegion<T>& in) const
+      bool operator==(const MemoryRegion<T>& other) const
          {
-         if(size() == in.size() && std::equal(begin(), end(), in.begin()))
-            return true;
-         return false;
+         return (size() == other.size() &&
+                 same_mem(buf, other.buf, size()));
          }
 
       bool operator<(const MemoryRegion<T>&) const;

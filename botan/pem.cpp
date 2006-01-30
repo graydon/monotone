@@ -69,7 +69,7 @@ SecureVector<byte> decode(DataSource& source, std::string& label)
       if(!source.read_byte(b))
          throw Decoding_Error("PEM: No PEM header found");
       if(b == PEM_HEADER1[position])
-         position++;
+         ++position;
       else if(position >= RANDOM_CHAR_LIMIT)
          throw Decoding_Error("PEM: Malformed PEM header");
       else
@@ -82,7 +82,7 @@ SecureVector<byte> decode(DataSource& source, std::string& label)
       if(!source.read_byte(b))
          throw Decoding_Error("PEM: No PEM header found");
       if(b == PEM_HEADER2[position])
-         position++;
+         ++position;
       else if(position)
          throw Decoding_Error("PEM: Malformed PEM header");
 
@@ -101,7 +101,7 @@ SecureVector<byte> decode(DataSource& source, std::string& label)
       if(!source.read_byte(b))
          throw Decoding_Error("PEM: No PEM trailer found");
       if(b == PEM_TRAILER[position])
-         position++;
+         ++position;
       else if(position)
          throw Decoding_Error("PEM: Malformed PEM trailer");
 
@@ -131,7 +131,7 @@ bool matches(DataSource& source, const std::string& extra)
    for(u32bit j = 0; j != got; ++j)
       {
       if(search_buf[j] == PEM_HEADER[index])
-         index++;
+         ++index;
       else
          index = 0;
       if(index == PEM_HEADER.size())

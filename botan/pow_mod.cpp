@@ -114,6 +114,9 @@ Power_Mod::Usage_Hints choose_base_hints(const BigInt& b, const BigInt& n)
    return Power_Mod::NO_HINTS;
    }
 
+/*************************************************
+* Choose potentially useful hints                *
+*************************************************/
 Power_Mod::Usage_Hints choose_exp_hints(const BigInt& e, const BigInt& n)
    {
    const u32bit e_bits = e.bits();

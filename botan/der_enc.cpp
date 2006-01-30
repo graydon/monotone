@@ -7,6 +7,7 @@
 #include <botan/bigint.h>
 #include <botan/bit_ops.h>
 #include <botan/parsing.h>
+#include <algorithm>
 
 namespace Botan {
 

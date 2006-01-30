@@ -151,7 +151,7 @@ BigInt random_prime(u32bit bits, const BigInt& coprime,
          UI::pulse(UI::PRIME_SEARCHING);
 
          bool passes_sieve = true;
-         counter++;
+         ++counter;
          p += modulo;
 
          for(u32bit j = 0; j != sieve.size(); ++j)

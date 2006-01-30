@@ -1,3 +1,7 @@
+2006-01-30  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/: import of Botan 1.5.4
+
 2006-01-27  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* monotone.texi: Clean up 'serve' syntax in a couple of places.

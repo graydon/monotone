@@ -58,7 +58,7 @@ class Filter
 class Fanout_Filter : public Filter
    {
    protected:
-      void incr_owns() { filter_owns++; }
+      void incr_owns() { ++filter_owns; }
 
       void set_port(u32bit n) { Filter::set_port(n); }
       void set_next(Filter* f[], u32bit n) { Filter::set_next(f, n); }

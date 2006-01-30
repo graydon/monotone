@@ -67,7 +67,7 @@ void Output_Buffers::retire()
          {
          delete buffers[0];
          buffers.pop_front();
-         offset++;
+         ++offset;
          }
       else
          break;

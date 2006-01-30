@@ -6,8 +6,6 @@
 #ifndef BOTAN_INIT_H__
 #define BOTAN_INIT_H__
 
-#include <botan/mutex.h>
-#include <botan/timers.h>
 #include <string>
 
 namespace Botan {

@@ -11,6 +11,7 @@
 #include <botan/numthry.h>
 #include <botan/oids.h>
 #include <botan/util.h>
+#include <algorithm>
 #include <memory>
 #include <set>
 

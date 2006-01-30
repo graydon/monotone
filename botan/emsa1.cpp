@@ -71,7 +71,7 @@ bool EMSA1::verify(const MemoryRegion<byte>& coded,
 
       u32bit offset = 0;
       while(our_coding[offset] == 0 && offset < our_coding.size())
-         offset++;
+         ++offset;
       if(our_coding.size() - offset != coded.size())
          return false;
 
