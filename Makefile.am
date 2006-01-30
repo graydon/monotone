@@ -97,7 +97,7 @@ BOTAN_SOURCES =                                                                 
         botan/fips140.cpp \
         botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp      \
         botan/gzip.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
-        botan/if_algo.cpp botan/inifile.cpp botan/init.cpp      \
+        botan/if_algo.cpp botan/inifile.cpp botan/init_def.cpp      \
         botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp       \
         botan/make_prm.cpp botan/mdx_hash.cpp       \
         botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp       \
