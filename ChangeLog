@@ -1,3 +1,8 @@
+2005-01-30  Emile Snyder  <emile@alumni.reed.edu>
+
+	* annotate.cc: (do_annotate) Add ticker for revisions processed to
+	annotate command.
+	
 2006-01-29  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Update a few translations, leave a number of fuzzy

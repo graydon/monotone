@@ -22,7 +22,7 @@
 #include "transforms.hh"
 #include "vocab.hh"
 #include "cert.hh"
-
+#include "ui.hh"
 
 
 class annotate_lineage_mapping;
@@ -787,11 +787,14 @@ do_annotate (app_state &app, file_t file_node, revision_id rid)
   annotate_node_work workunit(acp, lineage, rid, file_node->self); //, fpath);
   nodes_to_process.push_back(workunit);
 
+  std::auto_ptr<ticker> revs_ticker(new ticker(_("revs done"), "r", 1));
+  revs_ticker->set_total(paths_to_nodes.size() + 1);
   while (nodes_to_process.size() && !acp->is_complete()) 
     {
       annotate_node_work work = nodes_to_process.front();
       nodes_to_process.pop_front();
       do_annotate_node(work, app, nodes_to_process, nodes_complete, paths_to_nodes, pending_merge_nodes);
+      ++(*revs_ticker);
     }
   
   I(pending_merge_nodes.size() == 0);
