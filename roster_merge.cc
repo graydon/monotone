@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // copyright (C) 2005 nathaniel smith <njs@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -19,6 +20,111 @@ roster_merge_result::is_clean()
     && orphaned_node_conflicts.empty()
     && rename_target_conflicts.empty()
     && directory_loop_conflicts.empty();
+}
+
+bool
+roster_merge_result::is_clean_except_for_content()
+{
+  return node_name_conflicts.empty()
+    && node_attr_conflicts.empty()
+    && orphaned_node_conflicts.empty()
+    && rename_target_conflicts.empty()
+    && directory_loop_conflicts.empty();
+}
+
+void
+roster_merge_result::log_conflicts()
+{
+  L(FL("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
+       "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
+    % node_name_conflicts.size()
+    % file_content_conflicts.size()
+    % node_attr_conflicts.size()
+    % orphaned_node_conflicts.size()
+    % rename_target_conflicts.size()
+    % directory_loop_conflicts.size());
+  
+  for (size_t i = 0; i < node_name_conflicts.size(); ++i)
+    L(FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
+      % node_name_conflicts[i].nid 
+      % node_name_conflicts[i].left.first 
+      % node_name_conflicts[i].left.second
+      % node_name_conflicts[i].right.first 
+      % node_name_conflicts[i].right.second);
+  
+  for (size_t i = 0; i < file_content_conflicts.size(); ++i)
+    L(FL("content conflict on node %d: [%s] vs. [%s]\n") 
+      % file_content_conflicts[i].nid
+      % file_content_conflicts[i].left
+      % file_content_conflicts[i].right);
+  
+  for (size_t i = 0; i < node_attr_conflicts.size(); ++i)
+    L(FL("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
+      % node_attr_conflicts[i].nid
+      % node_attr_conflicts[i].key
+      % node_attr_conflicts[i].left.first
+      % node_attr_conflicts[i].left.second
+      % node_attr_conflicts[i].right.first
+      % node_attr_conflicts[i].right.second);
+  
+  for (size_t i = 0; i < orphaned_node_conflicts.size(); ++i)
+    L(FL("orphaned node conflict on node %d, dead parent %d, name %s")
+      % orphaned_node_conflicts[i].nid
+      % orphaned_node_conflicts[i].parent_name.first
+      % orphaned_node_conflicts[i].parent_name.second);
+  
+  for (size_t i = 0; i < rename_target_conflicts.size(); ++i)
+    L(FL("rename target conflict: nodes %d, %d, both want parent %d, name %s")
+      % rename_target_conflicts[i].nid1
+      % rename_target_conflicts[i].nid2
+      % rename_target_conflicts[i].parent_name.first
+      % rename_target_conflicts[i].parent_name.second);
+  
+  for (size_t i = 0; i < directory_loop_conflicts.size(); ++i)
+    L(FL("directory loop conflict: node %d, wanted parent %d, name %s")
+      % directory_loop_conflicts[i].nid
+      % directory_loop_conflicts[i].parent_name.first
+      % directory_loop_conflicts[i].parent_name.second);
+}
+
+void
+roster_merge_result::warn_non_content_conflicts()
+{
+  for (size_t i = 0; i < node_name_conflicts.size(); ++i)
+    W(F("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
+      % node_name_conflicts[i].nid 
+      % node_name_conflicts[i].left.first 
+      % node_name_conflicts[i].left.second
+      % node_name_conflicts[i].right.first 
+      % node_name_conflicts[i].right.second);
+  
+  for (size_t i = 0; i < node_attr_conflicts.size(); ++i)
+    W(F("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
+      % node_attr_conflicts[i].nid
+      % node_attr_conflicts[i].key
+      % node_attr_conflicts[i].left.first
+      % node_attr_conflicts[i].left.second
+      % node_attr_conflicts[i].right.first
+      % node_attr_conflicts[i].right.second);
+  
+  for (size_t i = 0; i < orphaned_node_conflicts.size(); ++i)
+    W(F("orphaned node conflict on node %d, dead parent %d, name %s")
+      % orphaned_node_conflicts[i].nid
+      % orphaned_node_conflicts[i].parent_name.first
+      % orphaned_node_conflicts[i].parent_name.second);
+  
+  for (size_t i = 0; i < rename_target_conflicts.size(); ++i)
+    W(F("rename target conflict: nodes %d, %d, both want parent %d, name %s")
+      % rename_target_conflicts[i].nid1
+      % rename_target_conflicts[i].nid2
+      % rename_target_conflicts[i].parent_name.first
+      % rename_target_conflicts[i].parent_name.second);
+  
+  for (size_t i = 0; i < directory_loop_conflicts.size(); ++i)
+    W(F("directory loop conflict: node %d, wanted parent %d, name %s")
+      % directory_loop_conflicts[i].nid
+      % directory_loop_conflicts[i].parent_name.first
+      % directory_loop_conflicts[i].parent_name.second);
 }
 
 void

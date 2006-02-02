@@ -1,5 +1,16 @@
 2006-02-02  Emile Snyder  <emile@alumni.reed.edu>
 
+	* merge.cc (resolve_merge_conflicts): If the merge has non-content
+	conflicts warn the user and abort before making them do content
+	merges.  Move logging/warning of conflicts to methods in the
+	roster_merge_result struct.
+
+	* roster_merge.{cc,hh} (log_conflicts,
+	warn_non_content_conflicts): New methods to do the busy work of
+	logging or warning.
+
+2006-02-02  Emile Snyder  <emile@alumni.reed.edu>
+
 	* netsync.cc (run_netsync_protocol): Print a warning if either the
 	include or the exclude branch pattern have a ' or a " character
 	anywhere in them.  Hopefully will help users running in a Windows

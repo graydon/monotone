@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // copyright (C) 2005 nathaniel smith <njs@pobox.com>
 // copyright (C) 2005 graydon hoare <graydon@pobox.com>
 // all rights reserved.
@@ -48,60 +49,17 @@ resolve_merge_conflicts(revision_id const & left_rid,
   // line-merger on content conflicts. Other classes of conflict will
   // cause an invariant to trip below.  Probably just a bunch of lua
   // hooks for remaining conflict types will be ok.
-  
+
   if (!result.is_clean())
+    result.log_conflicts();
+
+  if (!result.is_clean_except_for_content())
     {
-      L(FL("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
-          "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
-        % result.node_name_conflicts.size()
-        % result.file_content_conflicts.size()
-        % result.node_attr_conflicts.size()
-        % result.orphaned_node_conflicts.size()
-        % result.rename_target_conflicts.size()
-        % result.directory_loop_conflicts.size());
-
-      for (size_t i = 0; i < result.node_name_conflicts.size(); ++i)
-        L(FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
-          % result.node_name_conflicts[i].nid 
-          % result.node_name_conflicts[i].left.first 
-          % result.node_name_conflicts[i].left.second
-          % result.node_name_conflicts[i].right.first 
-          % result.node_name_conflicts[i].right.second);
-
-      for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
-        L(FL("content conflict on node %d: [%s] vs. [%s]\n") 
-          % result.file_content_conflicts[i].nid
-          % result.file_content_conflicts[i].left
-          % result.file_content_conflicts[i].right);
-
-      for (size_t i = 0; i < result.node_attr_conflicts.size(); ++i)
-        L(FL("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
-          % result.node_attr_conflicts[i].nid
-          % result.node_attr_conflicts[i].key
-          % result.node_attr_conflicts[i].left.first
-          % result.node_attr_conflicts[i].left.second
-          % result.node_attr_conflicts[i].right.first
-          % result.node_attr_conflicts[i].right.second);
-
-      for (size_t i = 0; i < result.orphaned_node_conflicts.size(); ++i)
-        L(FL("orphaned node conflict on node %d, dead parent %d, name %s")
-          % result.orphaned_node_conflicts[i].nid
-          % result.orphaned_node_conflicts[i].parent_name.first
-          % result.orphaned_node_conflicts[i].parent_name.second);
-
-      for (size_t i = 0; i < result.rename_target_conflicts.size(); ++i)
-        L(FL("rename target conflict: nodes %d, %d, both want parent %d, name %s")
-          % result.rename_target_conflicts[i].nid1
-          % result.rename_target_conflicts[i].nid2
-          % result.rename_target_conflicts[i].parent_name.first
-          % result.rename_target_conflicts[i].parent_name.second);
-
-      for (size_t i = 0; i < result.directory_loop_conflicts.size(); ++i)
-        L(FL("directory loop conflict: node %d, wanted parent %d, name %s")
-          % result.directory_loop_conflicts[i].nid
-          % result.directory_loop_conflicts[i].parent_name.first
-          % result.directory_loop_conflicts[i].parent_name.second);
-        
+      result.warn_non_content_conflicts();
+      W(F("resolve non-content conflicts and then try again."));
+    }
+  else
+    {
       // Attempt to auto-resolve any content conflicts using the line-merger.
       // To do this requires finding a merge ancestor.
       if (!result.file_content_conflicts.empty())
