@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // copyright (C) 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -2852,6 +2853,18 @@ run_netsync_protocol(protocol_voice voice,
                      utf8 const & exclude_pattern,
                      app_state & app)
 {
+  if (include_pattern().find_first_of("'\"") != std::string::npos)
+    {
+      W(F("include branch pattern contains a quote character:\n"));
+      W(F("%s\n") % include_pattern());
+    }
+
+  if (exclude_pattern().find_first_of("'\"") != std::string::npos)
+    {
+      W(F("exclude branch pattern contains a quote character:\n"));
+      W(F("%s\n") % exclude_pattern());
+    }
+
   try 
     {
       if (voice == server_voice)

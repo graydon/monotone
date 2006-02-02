@@ -1,3 +1,11 @@
+2006-02-02  Emile Snyder  <emile@alumni.reed.edu>
+
+	* netsync.cc (run_netsync_protocol): Print a warning if either the
+	include or the exclude branch pattern have a ' or a " character
+	anywhere in them.  Hopefully will help users running in a Windows
+	shell when they do: monotone sync myserver 'mybranch*' and nothing
+	happens because the ' characters are passed in to monotone.
+	
 2005-01-30  Emile Snyder  <emile@alumni.reed.edu>
 
 	* annotate.cc: (do_annotate) Add ticker for revisions processed to
