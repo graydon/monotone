@@ -1,3 +1,9 @@
+2006-02-05  Benoît Dejean  <benoit@placenet.org>
+
+	* ui.cc (tick_write_count::write_ticks): Fixed utf8 handling.
+	boost::format + locale sucks, it ouputs "1\u+ffff24" for
+	"%d" % 1024.
+
 2006-02-02  Emile Snyder  <emile@alumni.reed.edu>
 
 	* merge.cc (resolve_merge_conflicts): If the merge has non-content

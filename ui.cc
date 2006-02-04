@@ -142,19 +142,21 @@ void tick_write_count::write_ticks()
       else
         {
           // xgettext: bytes
-          count = (F("%d") % tick->ticks).str();
+          // boost is fucked up, outputs some weird caracter
+          // count = (F("%d") % tick->ticks).str();
+          count = boost::lexical_cast<std::string>(tick->ticks);
         }
       
       size_t title_width = display_width(utf8(tick->name));
       size_t count_width = display_width(utf8(count));
-      size_t max_width = title_width > count_width ? title_width : count_width;
+      size_t max_width = std::max(title_width, count_width);
 
       string name;
-      name.append(max_width - tick->name.size(), ' ');
+      name.append(max_width - title_width, ' ');
       name.append(tick->name);
 
       string count2;
-      count2.append(max_width - count.size(), ' ');
+      count2.append(max_width - count_width, ' ');
       count2.append(count);
 
       tick_title_strings.push_back(name);
