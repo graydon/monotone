@@ -142,9 +142,7 @@ void tick_write_count::write_ticks()
       else
         {
           // xgettext: bytes
-          // boost is fucked up, outputs some weird caracter
-          // count = (F("%d") % tick->ticks).str();
-          count = boost::lexical_cast<std::string>(tick->ticks);
+          count = (F("%d") % tick->ticks).str();
         }
       
       size_t title_width = display_width(utf8(tick->name));
