@@ -1,5 +1,8 @@
 2006-02-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* sqlite/*: Import SQLite 3.3.3.
+	* Makefile.am: Adjust for new and removed files in import.
+	* NEWS: Make a note of the SQLite database format change.
 	* database.cc (database::load): Rewrite so that we don't need any
 	local changes to SQLite.
 
