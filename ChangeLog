@@ -1,3 +1,8 @@
+2006-02-08  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (ls_changed, CMD(list)): Add a new command, "list
+	changed", to list changed files, always sorted in lexical order.
+
 2006-02-05  Benoît Dejean  <benoit@placenet.org>
 
 	* ui.cc (tick_write_count::write_ticks): Reverted lexical_cast,
