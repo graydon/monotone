@@ -107,12 +107,6 @@ struct query
   std::string sql_cmd;
 };
 
-extern "C" {
-// some wrappers to ease migration
-  const char *sqlite3_value_text_s(sqlite3_value *v);
-  const char *sqlite3_column_text_s(sqlite3_stmt*, int col);
-}
-
 database::database(system_path const & fn) :
   filename(fn),
   // nb. update this if you change the schema. unfortunately we are not
@@ -179,20 +173,6 @@ database::check_format()
           "please see README.changesets for details")
         % filename);
     }
-}
-
-// sqlite3_value_text gives a const unsigned char * but most of the time
-// we need a signed char
-const char *
-sqlite3_value_text_s(sqlite3_value *v)
-{  
-  return (const char *)(sqlite3_value_text(v));
-}
-
-const char *
-sqlite3_column_text_s(sqlite3_stmt *stmt, int col)
-{
-  return (const char *)(sqlite3_column_text(stmt, col));
 }
 
 static void

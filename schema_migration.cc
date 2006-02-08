@@ -55,10 +55,6 @@ static int logged_sqlite3_exec(sqlite3* db,
 
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
-extern "C" {
-  const char *sqlite3_value_text_s(sqlite3_value *v);
-}
-
 static string 
 lowercase_facet(string const & in)
 {
@@ -119,19 +115,19 @@ sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 
   if (nargs == 1)
     {
-      string s = (sqlite3_value_text_s(args[0]));
+      string s = reinterpret_cast<char const*>(sqlite3_value_text(args[0]));
       s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
       tmp = s;
     }
   else
     {
-      string sep = string(sqlite3_value_text_s(args[0]));
-      string s = (sqlite3_value_text_s(args[1]));
+      string sep = string(reinterpret_cast<char const*>(sqlite3_value_text(args[0])));
+      string s = reinterpret_cast<char const*>(sqlite3_value_text(args[1]));
       s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
       tmp = s;
       for (int i = 2; i < nargs; ++i)
         {
-          s = string(sqlite3_value_text_s(args[i]));
+          s = string(reinterpret_cast<char const*>(sqlite3_value_text(args[i])));
           s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
           tmp += sep + s;
         }
@@ -918,7 +914,7 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
       return;
     }
   data decoded;
-  decode_base64(base64<data>(string(sqlite3_value_text_s(args[0]))), decoded);
+  decode_base64(base64<data>(string(reinterpret_cast<char const*>(sqlite3_value_text(args[0])))), decoded);
   sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
 }
 
