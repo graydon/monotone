@@ -120,7 +120,7 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("1db80c7cee8fa966913db1a463ed50bf1b0e5b0e"),
+  schema("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df"),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -193,32 +193,6 @@ const char *
 sqlite3_column_text_s(sqlite3_stmt *stmt, int col)
 {
   return (const char *)(sqlite3_column_text(stmt, col));
-}
-
-static void 
-sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
-{
-  if (nargs != 1)
-    {
-      sqlite3_result_error(f, "need exactly 1 arg to unbase64()", -1);
-      return;
-    }
-  data decoded;
-  decode_base64(base64<data>(string(sqlite3_value_text_s(args[0]))), decoded);
-  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
-}
-
-static void
-sqlite3_unpack_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
-{
-  if (nargs != 1)
-    {
-      sqlite3_result_error(f, "need exactly 1 arg to unpack()", -1);
-      return;
-    }
-  data unpacked;
-  unpack(base64< gzip<data> >(string(sqlite3_value_text_s(args[0]))), unpacked);
-  sqlite3_result_blob(f, unpacked().c_str(), unpacked().size(), SQLITE_TRANSIENT);
 }
 
 void
@@ -346,31 +320,41 @@ dump_request
 };
 
 static int 
-dump_row_cb(void *data, int n, char **vals, char **cols)
+dump_row_cb(dump_request *dump, sqlite3_stmt *stmt)
 {
-  dump_request *dump = reinterpret_cast<dump_request *>(data);
-  I(dump != NULL);
-  I(vals != NULL);
   I(dump->out != NULL);
   *(dump->out) << boost::format("INSERT INTO %s VALUES(") % dump->table_name;
-  for (int i = 0; i < n; ++i)
+  unsigned n = sqlite3_data_count(stmt);
+  for (unsigned i = 0; i < n; ++i)
     {
       if (i != 0)
         *(dump->out) << ',';
 
-      if (vals[i] == NULL)
-        *(dump->out) << "NULL";
-      else
+      if (sqlite3_column_type(stmt, i) == SQLITE_BLOB)
         {
+          *(dump->out) << "X'";
+          const char *val = (const char*) sqlite3_column_blob(stmt, i);
+          int bytes = sqlite3_column_bytes(stmt, i);
+          *(dump->out) << encode_hexenc(std::string(val,val+bytes));
           *(dump->out) << "'";
-          for (char *cp = vals[i]; *cp; ++cp)
+        }
+      else 
+        {
+          const unsigned char *val = sqlite3_column_text(stmt, i);
+          if (val == NULL)
+            *(dump->out) << "NULL";
+          else
             {
-              if (*cp == '\'')
-                *(dump->out) << "''";
-              else
-                *(dump->out) << *cp;
+              *(dump->out) << "'";
+              for (const unsigned char *cp = val; *cp; ++cp)
+                {
+                  if (*cp == '\'')
+                    *(dump->out) << "''";
+                  else
+                    *(dump->out) << *cp;
+                }
+              *(dump->out) << "'";
             }
-          *(dump->out) << "'";
         }
     }
   *(dump->out) << ");\n";  
@@ -392,7 +376,21 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
   *(dump->out) << vals[2] << ";\n";
   dump->table_name = string(vals[0]);
   string query = "SELECT * FROM " + string(vals[0]);
-  sqlite3_exec(dump->sql, query.c_str(), dump_row_cb, data, NULL);
+  sqlite3_stmt *stmt = 0;
+  sqlite3_prepare(dump->sql, query.c_str(), -1, &stmt, NULL);
+  assert_sqlite3_ok(dump->sql);
+
+  int stepresult = SQLITE_DONE;
+  do
+    {
+      stepresult = sqlite3_step(stmt);
+      I(stepresult == SQLITE_DONE || stepresult == SQLITE_ROW);
+      if (stepresult == SQLITE_ROW) 
+        dump_row_cb(dump, stmt);
+    }
+  while (stepresult == SQLITE_ROW);
+
+  sqlite3_finalize(stmt);
   assert_sqlite3_ok(dump->sql);
   return 0;
 }
@@ -706,9 +704,10 @@ database::fetch(results & res,
       vector<string> row;
       for (int col = 0; col < ncol; col++) 
         {
-          const char * value = sqlite3_column_text_s(i->second.stmt(), col);
+          const char * value = (const char*)sqlite3_column_blob(i->second.stmt(), col);
+          int bytes = sqlite3_column_bytes(i->second.stmt(), col);
           E(value, F("null result in query: %s\n") % query.sql_cmd);
-          row.push_back(value);
+          row.push_back(std::string(value, value + bytes));
           //L(FL("row %d col %d value='%s'\n") % nrow % col % value);
         }
       res.push_back(row);
@@ -839,9 +838,9 @@ database::get(hexenc<id> const & ident,
   fetch(res, one_col, one_row, q % text(ident()));
 
   // consistency check
-  base64<gzip<data> > rdata(res[0][0]);
+  gzip<data> rdata(res[0][0]);
   data rdata_unpacked;
-  unpack(rdata, rdata_unpacked);
+  decode_gzip(rdata,rdata_unpacked);
 
   hexenc<id> tid;
   calculate_ident(rdata_unpacked, tid);
@@ -862,8 +861,8 @@ database::get_delta(hexenc<id> const & ident,
   query q("SELECT delta FROM " + table + " WHERE id = ? AND base = ?");
   fetch(res, one_col, one_row, q % text(ident()) % text(base()));
 
-  base64<gzip<delta> > del_packed = res[0][0];
-  unpack(del_packed, del);
+  gzip<delta> del_packed(res[0][0]);
+  decode_gzip(del_packed, del);
 }
 
 void 
@@ -879,13 +878,13 @@ database::put(hexenc<id> const & ident,
   MM(tid);
   I(tid == ident);
 
-  base64<gzip<data> > dat_packed;
-  pack(dat, dat_packed);
+  gzip<data> dat_packed;
+  encode_gzip(dat, dat_packed);
   
   string insert = "INSERT INTO " + table + " VALUES(?, ?)";
   execute(query(insert) 
           % text(ident()) 
-          % text(dat_packed()));
+          % blob(dat_packed()));
 }
 void 
 database::put_delta(hexenc<id> const & ident,
@@ -897,14 +896,14 @@ database::put_delta(hexenc<id> const & ident,
   I(ident() != "");
   I(base() != "");
 
-  base64<gzip<delta> > del_packed;
-  pack(del, del_packed);
-  
+  gzip<delta> del_packed;
+  encode_gzip(del, del_packed);
+
   string insert = "INSERT INTO "+table+" VALUES(?, ?, ?)";
   execute(query(insert) 
           % text(ident())
           % text(base())
-          % text(del_packed()));
+          % blob(del_packed()));
 }
 
 // static ticker cache_hits("vcache hits", "h", 1);
@@ -1461,10 +1460,9 @@ database::get_revision(revision_id const & id,
         query("SELECT data FROM revisions WHERE id = ?")
         % text(id.inner()()));
 
-  base64<gzip<data> > rdat_packed;
-  rdat_packed = base64<gzip<data> >(res[0][0]);
+  gzip<data> gzdata(res[0][0]);
   data rdat;
-  unpack(rdat_packed, rdat);
+  decode_gzip(gzdata,rdat);
 
   // verify that we got a revision with the right id
   {
@@ -1554,12 +1552,11 @@ database::put_revision(revision_id const & new_id,
 
   // Phase 3: Write the revision data
 
-  base64<gzip<data> > d_packed;
-  pack(d.inner(), d_packed);
-
-  execute(query("INSERT INTO revisions VALUES(?, ?)") 
+  gzip<data> d_packed;
+  encode_gzip(d.inner(), d_packed);
+  execute(query("INSERT INTO revisions VALUES(?, ?)")
           % text(new_id.inner()())
-          % text(d_packed()));
+          % blob(d_packed()));
 
   for (edge_map::const_iterator e = rev.edges.begin();
        e != rev.edges.end(); ++e)
@@ -1657,24 +1654,20 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
 void
 database::delete_branch_named(cert_value const & branch)
 {
-  base64<cert_value> encoded;
-  encode_base64(branch, encoded);
   L(FL("Deleting all references to branch %s\n") % branch);
   execute(query("DELETE FROM revision_certs WHERE name='branch' AND value =?")
-          % text(encoded()));
+          % blob(branch()));
   execute(query("DELETE FROM branch_epochs WHERE branch=?")
-          % text(encoded()));
+          % blob(branch()));
 }
 
 /// Deletes all certs referring to a particular tag. 
 void
 database::delete_tag_named(cert_value const & tag)
 {
-  base64<cert_value> encoded;
-  encode_base64(tag, encoded);
   L(FL("Deleting all references to tag %s\n") % tag);
   execute(query("DELETE FROM revision_certs WHERE name='tag' AND value =?")
-          % text(encoded()));
+          % blob(tag()));
 }
 
 // crypto key management
@@ -1750,7 +1743,7 @@ database::get_pubkey(hexenc<id> const & hash,
         query("SELECT id, keydata FROM public_keys WHERE hash = ?")
         % text(hash()));
   id = res[0][0];
-  pub_encoded = res[0][1];
+  encode_base64(rsa_pub_key(res[0][1]), pub_encoded);
 }
 
 void 
@@ -1761,7 +1754,7 @@ database::get_key(rsa_keypair_id const & pub_id,
   fetch(res, one_col, one_row, 
         query("SELECT keydata FROM public_keys WHERE id = ?")
         % text(pub_id()));
-  pub_encoded = res[0][0];
+  encode_base64(rsa_pub_key(res[0][0]), pub_encoded);
 }
 
 void 
@@ -1773,10 +1766,12 @@ database::put_key(rsa_keypair_id const & pub_id,
   I(!public_key_exists(thash));
   E(!public_key_exists(pub_id),
     F("another key with name '%s' already exists") % pub_id);
+  rsa_pub_key pub_key;
+  decode_base64(pub_encoded, pub_key);
   execute(query("INSERT INTO public_keys VALUES(?, ?, ?)")
           % text(thash())
           % text(pub_id())
-          % text(pub_encoded()));
+          % blob(pub_key()));
 }
 
 void
@@ -1793,6 +1788,10 @@ database::cert_exists(cert const & t,
                       string const & table)
 {
   results res;
+  cert_value value;
+  decode_base64(t.value, value);
+  rsa_sha1_signature sig;
+  decode_base64(t.sig, sig);
   query q = query("SELECT id FROM " + table + " WHERE id = ? "
                   "AND name = ? "
                   "AND value = ? " 
@@ -1800,10 +1799,10 @@ database::cert_exists(cert const & t,
                   "AND signature = ?")
     % text(t.ident())
     % text(t.name())
-    % text(t.value())
+    % blob(value())
     % text(t.key())
-    % text(t.sig());
-    
+    % blob(sig());
+
   fetch(res, 1, any_rows, q);
         
   I(res.size() == 0 || res.size() == 1);
@@ -1816,6 +1815,10 @@ database::put_cert(cert const & t,
 {
   hexenc<id> thash;
   cert_hash_code(t, thash);
+  cert_value value;
+  decode_base64(t.value, value);
+  rsa_sha1_signature sig;
+  decode_base64(t.sig, sig);
 
   string insert = "INSERT INTO " + table + " VALUES(?, ?, ?, ?, ?, ?)";
 
@@ -1823,9 +1826,9 @@ database::put_cert(cert const & t,
           % text(thash())
           % text(t.ident())
           % text(t.name()) 
-          % text(t.value())
+          % blob(value())
           % text(t.key())
-          % text(t.sig()));
+          % blob(sig()));
 }
 
 void 
@@ -1836,11 +1839,15 @@ database::results_to_certs(results const & res,
   for (size_t i = 0; i < res.size(); ++i)
     {
       cert t;
+      base64<cert_value> value;
+      encode_base64(cert_value(res[i][2]), value);
+      base64<rsa_sha1_signature> sig;
+      encode_base64(rsa_sha1_signature(res[i][4]), sig);
       t = cert(hexenc<id>(res[i][0]), 
               cert_name(res[i][1]),
-              base64<cert_value>(res[i][2]),
+              value,
               rsa_keypair_id(res[i][3]),
-              base64<rsa_sha1_signature>(res[i][4]));
+              sig);
       certs.push_back(t);
     }
 }
@@ -1849,14 +1856,6 @@ void
 database::install_functions(app_state * app)
 {
   // register any functions we're going to use
-  I(sqlite3_create_function(sql(), "unbase64", -1, 
-                           SQLITE_UTF8, NULL,
-                           &sqlite3_unbase64_fn, 
-                           NULL, NULL) == 0);
-  I(sqlite3_create_function(sql(), "unpack", -1, 
-                           SQLITE_UTF8, NULL,
-                           &sqlite3_unpack_fn, 
-                           NULL, NULL) == 0);
 }
 
 void
@@ -1945,9 +1944,11 @@ database::get_certs(cert_name const & name,
   query q("SELECT id, name, value, keypair, signature FROM " + table + 
           " WHERE name = ? AND value = ?");
 
-  fetch(res, 5, any_rows, 
+  cert_value binvalue;
+  decode_base64(val, binvalue);
+  fetch(res, 5, any_rows,
         q % text(name())
-          % text(val()));
+          % blob(binvalue()));
   results_to_certs(res, certs);
 }
 
@@ -1963,10 +1964,12 @@ database::get_certs(hexenc<id> const & ident,
   query q("SELECT id, name, value, keypair, signature FROM " + table + 
           " WHERE id = ? AND name = ? AND value = ?");
 
+  cert_value binvalue;
+  decode_base64(value, binvalue);
   fetch(res, 5, any_rows, 
         q % text(ident())
           % text(name())
-          % text(value()));
+          % blob(binvalue()));
   results_to_certs(res, certs);
 }
 
@@ -2283,7 +2286,7 @@ void database::complete(selector_type ty,
                       spot++;
                       certvalue = i->second.substr(spot);
                       lim += "SELECT id FROM revision_certs ";
-                      lim += (boost::format("WHERE name='%s' AND unbase64(value) glob '%s'")
+                      lim += (boost::format("WHERE name='%s' AND CAST(value AS TEXT) glob '%s'")
                               % certname % certvalue).str();
                     }
                   else
@@ -2302,7 +2305,7 @@ void database::complete(selector_type ty,
                       % author_cert_name 
                       % tag_cert_name 
                       % branch_cert_name).str();
-              lim += (boost::format(" AND unbase64(value) glob '*%s*'")
+              lim += (boost::format(" AND CAST(value AS TEXT) glob '*%s*'")
                       % i->second).str();     
             }
           else if (i->first == selectors::sel_head) 
@@ -2316,15 +2319,13 @@ void database::complete(selector_type ty,
                 }
               else
                 {
-                  string subquery = (boost::format("SELECT DISTINCT value FROM revision_certs WHERE name='%s' and unbase64(value) glob '%s'") 
+                  string subquery = (boost::format("SELECT DISTINCT value FROM revision_certs WHERE name='%s' and CAST(value AS TEXT) glob '%s'") 
                                      % branch_cert_name % i->second).str();
                   results res;
                   fetch(res, one_col, any_rows, query(subquery));
                   for (size_t i = 0; i < res.size(); ++i)
                     {
-                      base64<data> row_encoded(res[i][0]);
-                      data row_decoded;
-                      decode_base64(row_encoded, row_decoded);
+                      data row_decoded(res[i][0]);
                       branch_names.push_back(row_decoded());
                     }
                 }
@@ -2363,8 +2364,7 @@ void database::complete(selector_type ty,
               if ((i->first == selectors::sel_branch) && (i->second.size() == 0))
                 {
                   __app->require_workspace("the empty branch selector b: refers to the current branch");
-                  // FIXME: why do we have to glob on the unbase64(value), rather than being able to use == ?
-                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND unbase64(value) glob '%s'")
+                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND CAST(value AS TEXT) glob '%s'")
                           % branch_cert_name % __app->branch_name).str();
                   L(FL("limiting to current branch '%s'\n") % __app->branch_name);
                 }
@@ -2374,13 +2374,13 @@ void database::complete(selector_type ty,
                   switch (i->first)
                     {
                     case selectors::sel_earlier:
-                      lim += (boost::format("unbase64(value) <= X'%s'") % encode_hexenc(i->second)).str();
+                      lim += (boost::format("value <= X'%s'") % encode_hexenc(i->second)).str();
                       break;
                     case selectors::sel_later:
-                      lim += (boost::format("unbase64(value) > X'%s'") % encode_hexenc(i->second)).str();
+                      lim += (boost::format("value > X'%s'") % encode_hexenc(i->second)).str();
                       break;
                     default:
-                      lim += (boost::format("unbase64(value) glob '%s%s%s'")
+                      lim += (boost::format("CAST(value AS TEXT) glob '%s%s%s'")
                               % prefix % i->second % suffix).str();
                       break;
                     }
@@ -2421,7 +2421,7 @@ void database::complete(selector_type ty,
             (boost::format(" (name='%s')") % certname).str();
         }
         
-      query_str += (boost::format(" AND (unbase64(value) GLOB '%s%s%s')")
+      query_str += (boost::format(" AND (CAST(value AS TEXT) GLOB '%s%s%s')")
                 % prefix % partial % suffix).str();
       query_str += (boost::format(" AND (id IN %s)") % lim).str();
     }
@@ -2434,9 +2434,7 @@ void database::complete(selector_type ty,
         completions.insert(res[i][0]);
       else
         {
-          base64<data> row_encoded(res[i][0]);
-          data row_decoded;
-          decode_base64(row_encoded, row_decoded);
+          data row_decoded(res[i][0]);
           completions.insert(row_decoded());
         }
     }
@@ -2452,9 +2450,7 @@ database::get_epochs(std::map<cert_value, epoch_data> & epochs)
   fetch(res, 2, any_rows, query("SELECT branch, epoch FROM branch_epochs"));
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {      
-      base64<cert_value> encoded(idx(*i, 0));
-      cert_value decoded;
-      decode_base64(encoded, decoded);
+      cert_value decoded(idx(*i, 0));
       I(epochs.find(decoded) == epochs.end());
       epochs.insert(std::make_pair(decoded, epoch_data(idx(*i, 1))));
     }
@@ -2471,8 +2467,7 @@ database::get_epoch(epoch_id const & eid,
         " WHERE hash = ?")
         % text(eid.inner()()));
   I(res.size() == 1);
-  base64<cert_value> encoded(idx(idx(res, 0), 0));
-  decode_base64(encoded, branch);
+  branch = cert_value(idx(idx(res, 0), 0));
   epo = epoch_data(idx(idx(res, 0), 1));
 }
 
@@ -2491,23 +2486,19 @@ void
 database::set_epoch(cert_value const & branch, epoch_data const & epo)
 {
   epoch_id eid;
-  base64<cert_value> encoded;
-  encode_base64(branch, encoded);
   epoch_hash_code(branch, epo, eid);
   I(epo.inner()().size() == constants::epochlen);
   execute(query("INSERT OR REPLACE INTO branch_epochs VALUES(?, ?, ?)")
           % text(eid.inner()())
-          % text(encoded())
+          % blob(branch())
           % text(epo.inner()()));
 }
 
 void 
 database::clear_epoch(cert_value const & branch)
 {
-  base64<cert_value> encoded;
-  encode_base64(branch, encoded);
   execute(query("DELETE FROM branch_epochs WHERE branch = ?")
-          % text(encoded()));
+          % blob(branch()));
 }
 
 // vars
@@ -2521,12 +2512,8 @@ database::get_vars(std::map<var_key, var_value> & vars)
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {
       var_domain domain(idx(*i, 0));
-      base64<var_name> name_encoded(idx(*i, 1));
-      var_name name;
-      decode_base64(name_encoded, name);
-      base64<var_value> value_encoded(idx(*i, 2));
-      var_value value;
-      decode_base64(value_encoded, value);
+      var_name name(idx(*i, 1));
+      var_value value(idx(*i, 2));
       I(vars.find(std::make_pair(domain, name)) == vars.end());
       vars.insert(std::make_pair(std::make_pair(domain, name), value));
     }
@@ -2556,24 +2543,18 @@ database::var_exists(var_key const & key)
 void
 database::set_var(var_key const & key, var_value const & value)
 {
-  base64<var_name> name_encoded;
-  encode_base64(key.second, name_encoded);
-  base64<var_value> value_encoded;
-  encode_base64(value, value_encoded);
   execute(query("INSERT OR REPLACE INTO db_vars VALUES(?, ?, ?)")
           % text(key.first())
-          % text(name_encoded())
-          % text(value_encoded()));
+          % blob(key.second())
+          % blob(value()));
 }
 
 void
 database::clear_var(var_key const & key)
 {
-  base64<var_name> name_encoded;
-  encode_base64(key.second, name_encoded);
   execute(query("DELETE FROM db_vars WHERE domain = ? AND name = ?")
           % text(key.first())
-          % text(name_encoded()));
+          % blob(key.second()));
 }
 
 // branches
@@ -2587,10 +2568,7 @@ database::get_branches(vector<string> & names)
     fetch(res, one_col, any_rows, q % text(cert_name));
     for (size_t i = 0; i < res.size(); ++i)
       {
-        base64<data> row_encoded(res[i][0]);
-        data name;
-        decode_base64(row_encoded, name);
-        names.push_back(name());
+        names.push_back(res[i][0]);
       }
 }
 
