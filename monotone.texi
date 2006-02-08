@@ -2708,6 +2708,7 @@ The following commands all support restrictions using optional
 @item @command{list unknown}
 @item @command{list ignored}
 @item @command{list missing}
+@item @command{list changed}
 @end itemize
 
 Including either the old or new name of a renamed file or directory will
@@ -4404,6 +4405,22 @@ included in the specified set of pathnames will not be listed.
 From within a subdirectory of the workspace the @command{list
 missing} command will, by default, search the entire workspace.
 Specifying only the pathname "." will restrict the search for missing
+files to the current subdirectory of the workspace.
+
+@item monotone list changed
+@itemx monotone list changed @var{pathname...}
+
+This command lists all files in your workspace that have changed
+compared to the base revision, including files that are dropped, added
+or renamed.
+
+Specifying pathnames to the @command{list changed} command restricts
+the set of paths that are checked for changes. Files not included in the
+specified set of pathnames will not be listed.
+
+From within a subdirectory of the workspace the @command{list
+changed} command will, by default, search the entire workspace.
+Specifying only the pathname "." will restrict the search for known
 files to the current subdirectory of the workspace.
 
 @end ftable
@@ -7545,6 +7562,12 @@ List files intentionally ignored due to the ignore_file hook.
 @item @b{list missing} @i{[<pathname>...]}
 @itemx @b{ls missing} @i{[<pathname>...]}
 List files in revision's manifest, but not in workspace.
+@comment TROFF INPUT: .TP
+
+@item @b{list changed} @i{[<pathname>...]}
+@itemx @b{ls changed} @i{[<pathname>...]}
+List files in workspace that have changed compared to the base
+revision.
 @comment TROFF INPUT: .TP
 
 @item @b{fdata} @i{<id>}

@@ -6,6 +6,19 @@
 	* database.cc (database::load): Rewrite so that we don't need any
 	local changes to SQLite.
 
+2006-02-08  Richard Levitte  <richard@levitte.org>
+
+	* testsuite.at, tests/t_ls_changed.at: News test, for "list
+	changed".
+
+	* monotone.texi, monotone.1: Document "list changed".
+
+	* po/sv.po: Correct translations of changed messages, translate
+	new messages.
+
+	* commands.cc (ls_changed, CMD(list)): Add a new command, "list
+	changed", to list changed files, always sorted in lexical order.
+
 2006-02-05  Benoît Dejean  <benoit@placenet.org>
 
 	* ui.cc (tick_write_count::write_ticks): Reverted lexical_cast,
