@@ -442,8 +442,8 @@ database::dump(ostream & out)
 void 
 database::load(istream & in)
 {
-  char buf[constants::bufsz];
-  string tmp;
+  string line;
+  string sql_stmt;
 
   check_filename();
 
@@ -454,20 +454,16 @@ database::load(istream & in)
 
   while(in)
     {
-      in.read(buf, constants::bufsz);
-      tmp.append(buf, in.gcount());
+      getline(in, line, ';');
+      sql_stmt += line + ';';
 
-      const char* last_statement = 0;
-      sqlite3_complete_last(tmp.c_str(), &last_statement);
-      if (last_statement == 0)
-        continue;
-      string::size_type len = last_statement + 1 - tmp.c_str();
-      sqlite3_exec(__sql, tmp.substr(0, len).c_str(), NULL, NULL, NULL);
-      tmp.erase(0, len);
+      if (sqlite3_complete(sql_stmt.c_str()))
+        {
+          sqlite3_exec(__sql, sql_stmt.c_str(), NULL, NULL, NULL);
+          sql_stmt.clear();
+        }
     }
 
-  if (!tmp.empty())
-    sqlite3_exec(__sql, tmp.c_str(), NULL, NULL, NULL);
   assert_sqlite3_ok(__sql);
 }
 

@@ -1,3 +1,8 @@
+2006-02-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc (database::load): Rewrite so that we don't need any
+	local changes to SQLite.
+
 2006-02-05  Benoît Dejean  <benoit@placenet.org>
 
 	* ui.cc (tick_write_count::write_ticks): Reverted lexical_cast,
