@@ -1,5 +1,10 @@
 2006-02-08  Richard Levitte  <richard@levitte.org>
 
+	* testsuite.at, tests/t_ls_changed.at: News test, for "list
+	changed".
+
+	* monotone.texi, monotone.1: Document "list changed".
+
 	* po/sv.po: Correct translations of changed messages, translate
 	new messages.
 
