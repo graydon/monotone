@@ -1,3 +1,7 @@
+2006-02-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Remove duplicate line.
+
 2006-02-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* sqlite/*: Import SQLite 3.3.3.
