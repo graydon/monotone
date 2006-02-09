@@ -1,0 +1,44 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([listing changed files])
+
+MONOTONE_SETUP
+
+AT_DATA(foo, [the foo file
+])
+AT_DATA(bar, [the bar file
+])
+AT_DATA(baz, [the baz file
+])
+AT_CHECK(MONOTONE add foo bar baz, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message='First commit', [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE ls changed, [], [stdout], [])
+AT_CHECK(cmp stdout /dev/null, [], [ignore]) 
+
+AT_CHECK(MONOTONE drop foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE rename --execute bar bartender, [], [ignore], [ignore])
+AT_CHECK(MONOTONE ls changed, [], [stdout], [])
+AT_CHECK(CANONICALISE(stdout))
+AT_DATA(ls_foobar, [bar
+foo
+])
+AT_CHECK(cmp stdout ls_foobar, [], [ignore]) 
+AT_CHECK(MONOTONE --branch=testbranch commit --message='Second commit', [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE ls changed, [], [stdout], [])
+AT_CHECK(cmp stdout /dev/null, [], [ignore]) 
+
+AT_DATA(baz, [the baz file, modified
+])
+AT_CHECK(MONOTONE ls changed, [], [stdout], [])
+AT_CHECK(CANONICALISE(stdout))
+AT_DATA(ls_baz, [baz
+])
+AT_CHECK(cmp stdout ls_baz, [], [ignore]) 
+AT_CHECK(MONOTONE --branch=testbranch commit --message='Third commit', [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE ls changed, [], [stdout], [])
+AT_CHECK(cmp stdout /dev/null, [], [ignore]) 
+
+AT_CLEANUP

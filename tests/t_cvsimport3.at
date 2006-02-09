@@ -54,10 +54,10 @@ CSHA3=`SHA1(changelog.3)`
 # build the cvs repository
 
 CVSROOT=`pwd`/cvs-repository
-AT_CHECK(cvs -q -d $CVSROOT init)
+AT_CHECK(cvs -q -d $CVSROOT init, [0], [ignore], [ignore])
 AT_CHECK(test -e $CVSROOT)
 AT_CHECK(test -e $CVSROOT/CVSROOT)
-AT_CHECK(test -e $CVSROOT/CVSROOT/history)
+AT_CHECK(test -e $CVSROOT/CVSROOT/modules)
 
 # create the initial 3rd-party vendor import
 
@@ -71,22 +71,22 @@ AT_CHECK(cd importdir && cvs -d $CVSROOT import -m "Initial import of VENDORWARE
 AT_CHECK(cvs -d $CVSROOT co testsrc, [], [ignore], [ignore])
 AT_CHECK(cp file1.1 testsrc/file1)
 AT_CHECK(cp changelog.1 testsrc/changelog)
-AT_CHECK(cvs -d $CVSROOT commit -m 'commit 0' testsrc, [], [ignore], [ignore])
+AT_CHECK(cd testsrc; cvs -d $CVSROOT commit -m 'commit 0', [], [ignore], [ignore])
 
 # now we create a branch
-AT_CHECK(cvs -d $CVSROOT tag -b branched testsrc, [], [ignore], [ignore])
-AT_CHECK(cvs -d $CVSROOT up -r branched testsrc, [], [ignore], [ignore])
+AT_CHECK(cd testsrc; cvs -d $CVSROOT tag -b branched, [], [ignore], [ignore])
+AT_CHECK(cd testsrc; cvs -d $CVSROOT up -r branched, [], [ignore], [ignore])
 
 # alter the files on the branch
 AT_CHECK(cp file1.2 testsrc/file1)
 AT_CHECK(cp file2.1 testsrc/file2)
 AT_CHECK(cp changelog.3 testsrc/changelog)
-AT_CHECK(cvs -d $CVSROOT commit -m 'commit on branch' testsrc, [], [ignore], [ignore])
+AT_CHECK(cd testsrc; cvs -d $CVSROOT commit -m 'commit on branch', [], [ignore], [ignore])
 
 # and create some mainline changes after the branch
-AT_CHECK(cvs -d $CVSROOT up -A testsrc, [], [ignore], [ignore])
+AT_CHECK(cd testsrc; cvs -d $CVSROOT up -A, [], [ignore], [ignore])
 AT_CHECK(cp changelog.2 testsrc/changelog)
-AT_CHECK(cvs -d $CVSROOT commit -m 'commit on mainline after branch' testsrc, [], [ignore], [ignore])
+AT_CHECK(cd testsrc; cvs -d $CVSROOT commit -m 'commit on mainline after branch', [], [ignore], [ignore])
 
 # import into monotone and check presence of files
 

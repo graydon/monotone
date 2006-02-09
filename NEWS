@@ -1,3 +1,16 @@
+????????????????????????????
+        x.yz release.  This is where we write a short summary of the changes
+        for this release.
+
+        Database changes:
+
+        - SQLite 3.3.3 has been imported.  3.3 introduces a new database
+          format that is not backwards compatible with earlier 3.x releases.
+          New databases will be created using this new format.  Existing
+          databases remain compatible, and are not converted automatically.
+          Existing databases can be converted by performing a database
+          vacuum.
+
 Sun Jan  8 01:08:56 PST 2006
 
         0.26pre1 release.  Massive rewrites, released for shakedown.

@@ -1,3 +1,46 @@
+2006-02-09  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_cvsimport.at, tests/t_cvsimport3.at,
+	tests/t_cvsimport_deleted_invar.at,
+	tests/t_cvsimport_manifest_cycle.at, tests/t_cvsimport_samelog.at,
+	tests/t_singlecvs.at: Changed to cope with the strictness of
+	CVSNT.  It doesn't create a CSVROOT/history file automagically,
+	but CVSROOT/modules is created automatically both by the older CVS
+	and by CVSNT.  You can't check out a group of files using revision
+	numbers with CVSNT.  You MUST stand in the work directory for some
+	command with CVSNT.  Finally, with CVSNT, 'cvs init' generates the
+	following message if you're a normal user, at least on Debian:
+
+	cvs init: Unable to register repository.
+	cvs init: Your login may not have sufficient permissions to modify the
+	cvs init: global server settings.
+	cvs init: Repository /home/levitte/cvsfoo initialised
+
+2006-02-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Remove duplicate line.
+
+2006-02-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Import SQLite 3.3.3.
+	* Makefile.am: Adjust for new and removed files in import.
+	* NEWS: Make a note of the SQLite database format change.
+	* database.cc (database::load): Rewrite so that we don't need any
+	local changes to SQLite.
+
+2006-02-08  Richard Levitte  <richard@levitte.org>
+
+	* testsuite.at, tests/t_ls_changed.at: News test, for "list
+	changed".
+
+	* monotone.texi, monotone.1: Document "list changed".
+
+	* po/sv.po: Correct translations of changed messages, translate
+	new messages.
+
+	* commands.cc (ls_changed, CMD(list)): Add a new command, "list
+	changed", to list changed files, always sorted in lexical order.
+
 2006-02-06  Blake Kaplan  <mrbkap@gmail.com>
 
 	* commands.cc CMD(commit): Call a new lua hook to validate the commit

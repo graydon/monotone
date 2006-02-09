@@ -1737,19 +1737,78 @@ ls_missing (app_state & app, vector<utf8> const & args)
 }
 
 
-CMD(list, N_("informative"), 
+struct lt_file_path
+{
+  bool operator()(const file_path &fp1, const file_path &fp2) const
+  {
+    return fp1 < fp2;
+  }
+};
+static void
+ls_changed (app_state & app, vector<utf8> const & args)
+{
+  revision_set rs;
+  revision_id rid;
+  roster_t old_roster, new_roster;
+  data tmp;
+  std::set<file_path, lt_file_path> files;
+
+  app.require_workspace();
+  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
+
+  I(rs.edges.size() == 1);
+  cset const & cs = edge_changes(rs.edges.begin());
+
+  for (path_set::const_iterator i = cs.nodes_deleted.begin();
+       i != cs.nodes_deleted.end(); ++i)
+    {
+      if (app.restriction_includes(*i))
+        files.insert(file_path(*i));
+    }
+  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+       i != cs.nodes_renamed.end(); ++i)
+    {
+      if (app.restriction_includes(i->first))
+        files.insert(file_path(i->first));
+    }
+  for (path_set::const_iterator i = cs.dirs_added.begin();
+       i != cs.dirs_added.end(); ++i)
+    {
+      if (app.restriction_includes(*i))
+        files.insert(file_path(*i));
+    }
+  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+       i != cs.files_added.end(); ++i)
+    {
+      if (app.restriction_includes(i->first))
+        files.insert(file_path(i->first));
+    }
+  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator
+         i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
+    {
+      if (app.restriction_includes(i->first))
+        files.insert(file_path(i->first));
+    }
+
+  copy(files.begin(), files.end(),
+       ostream_iterator<const file_path>(cout, "\n"));
+}
+
+
+CMD(list, N_("informative"),
     N_("certs ID\n"
-      "keys [PATTERN]\n"
-      "branches\n"
-      "epochs [BRANCH [...]]\n"
-      "tags\n"
-      "vars [DOMAIN]\n"
-      "known\n"
-      "unknown\n"
-      "ignored\n"
-      "missing"),
-    N_("show database objects, or the current workspace manifest,\n"
-      "or unknown, intentionally ignored, or missing state files"),
+       "keys [PATTERN]\n"
+       "branches\n"
+       "epochs [BRANCH [...]]\n"
+       "tags\n"
+       "vars [DOMAIN]\n"
+       "known\n"
+       "unknown\n"
+       "ignored\n"
+       "missing\n"
+       "changed"),
+    N_("show database objects, or the current workspace manifest, or known,\n"
+       "unknown, intentionally ignored, missing, or changed state files"),
     OPT_DEPTH % OPT_EXCLUDE)
 {
   if (args.size() == 0)
@@ -1778,6 +1837,8 @@ CMD(list, N_("informative"),
     ls_unknown_or_ignored(app, true, removed);
   else if (idx(args, 0)() == "missing")
     ls_missing(app, removed);
+  else if (idx(args, 0)() == "changed")
+    ls_changed(app, removed);
   else
     throw usage(name);
 }
