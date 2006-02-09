@@ -1,3 +1,21 @@
+2006-02-09  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_cvsimport.at, tests/t_cvsimport3.at,
+	tests/t_cvsimport_deleted_invar.at,
+	tests/t_cvsimport_manifest_cycle.at, tests/t_cvsimport_samelog.at,
+	tests/t_singlecvs.at: Changed to cope with the strictness of
+	CVSNT.  It doesn't create a CSVROOT/history file automagically,
+	but CVSROOT/modules is created automatically both by the older CVS
+	and by CVSNT.  You can't check out a group of files using revision
+	numbers with CVSNT.  You MUST stand in the work directory for some
+	command with CVSNT.  Finally, with CVSNT, 'cvs init' generates the
+	following message if you're a normal user, at least on Debian:
+
+	cvs init: Unable to register repository.
+	cvs init: Your login may not have sufficient permissions to modify the
+	cvs init: global server settings.
+	cvs init: Repository /home/levitte/cvsfoo initialised
+
 2006-02-09  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* testsuite.at: Remove duplicate line.
