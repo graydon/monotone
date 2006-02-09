@@ -531,13 +531,14 @@ database::info(ostream & out)
     % count("revision_ancestry")
     % count("revision_certs")
     // bytes
-    % SPACE_USAGE("rosters", "id || data")
-    % SPACE_USAGE("roster_deltas", "id || base || delta")
-    % SPACE_USAGE("files", "id || data")
-    % SPACE_USAGE("file_deltas", "id || base || delta")
-    % SPACE_USAGE("revisions", "id || data")
-    % SPACE_USAGE("revision_ancestry", "parent || child")
-    % SPACE_USAGE("revision_certs", "hash || id || name || value || keypair || signature")
+    % SPACE_USAGE("rosters", "length(id) + length(data)")
+    % SPACE_USAGE("roster_deltas", "length(id) + length(base) + length(delta)")
+    % SPACE_USAGE("files", "length(id) + length(data)")
+    % SPACE_USAGE("file_deltas", "length(id) + length(base) + length(delta)")
+    % SPACE_USAGE("revisions", "length(id) + length(data)")
+    % SPACE_USAGE("revision_ancestry", "length(parent) + length(child)")
+    % SPACE_USAGE("revision_certs", "length(hash) + length(id) + length(name)"
+                  " + length(value) + length(keypair) + length(signature)")
     % total;
 
 #undef SPACE_USAGE
@@ -797,12 +798,12 @@ database::count(string const & table)
 }
 
 unsigned long
-database::space_usage(string const & table, string const & concatenated_columns)
+database::space_usage(string const & table, string const & rowspace)
 {
   results res;
   // COALESCE is required since SUM({empty set}) is NULL.
   // the sqlite docs for SUM suggest this as a workaround
-  query q("SELECT COALESCE(SUM(LENGTH(" + concatenated_columns + ")), 0) FROM " + table);
+  query q("SELECT COALESCE(SUM(" + rowspace + "), 0) FROM " + table);
   fetch(res, one_col, one_row, q);
   return lexical_cast<unsigned long>(res[0][0]);
 }
