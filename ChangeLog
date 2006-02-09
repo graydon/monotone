@@ -1,3 +1,12 @@
+2006-02-06  Blake Kaplan  <mrbkap@gmail.com>
+
+	* commands.cc CMD(commit): Call a new lua hook to validate the commit
+	message. Don't ignore -m "" when it's passed on the command line.
+	* lua.cc, lua.hh: Add a new hook that validates a given commit message
+	and passes in the added files, deleted files, and modified files.
+	* std_hooks.lua: Give a default hook to validate commit messages. This
+	currently disallows empty messages, as monotone currently does.
+
 2006-02-05  Benoît Dejean  <benoit@placenet.org>
 
 	* ui.cc (tick_write_count::write_ticks): Reverted lexical_cast,
