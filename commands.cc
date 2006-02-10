@@ -1418,6 +1418,8 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   // we have a special case for "checkout .", i.e., to current dir
   bool checkout_dot = false;
 
+  transaction_guard guard(app.db, false);
+
   if (args.size() > 1 || app.revision_selectors.size() > 1)
     throw usage(name);
 
@@ -1520,6 +1522,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   remove_work_cset();
   update_any_attrs(app);
   maybe_update_inodeprints(app);
+  guard.commit();
 }
 
 ALIAS(co, checkout)
