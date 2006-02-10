@@ -183,8 +183,8 @@ SQLITE_SOURCES = \
 	sqlite/analyze.c sqlite/vdbefifo.c \
 	sqlite/complete.c \
 	\
-        sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
-        sqlite/os_common.h sqlite/os_unix.h sqlite/os_win.h \
+        sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
+        sqlite/os_common.h \
         sqlite/parse.h sqlite/sqlite3.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/vdbeInt.h \
 	sqlite/pager.h
 
