@@ -1389,6 +1389,7 @@ lua_hooks::hook_validate_commit_message(std::string const & message,
                                         bool & validated,
                                         std::string & reason)
 {
+  validated = true;
   return Lua(st)
     .func("validate_commit_message")
     .push_str(message)
