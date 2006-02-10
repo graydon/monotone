@@ -1,3 +1,8 @@
+2006-02-10  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(checkout)): wrapping in a transaction makes
+	a big difference.
+
 2006-02-09  Richard Levitte  <richard@levitte.org>
 
 	* tests/t_cvsimport.at, tests/t_cvsimport3.at,
