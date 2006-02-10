@@ -1,4 +1,5 @@
 // -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -1380,6 +1381,25 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
   ll.next();
   ll.extract_str(ext).pop();
   return ll.ok();
+}
+
+bool
+lua_hooks::hook_validate_commit_message(std::string const & message,
+                                        std::string const & new_manifest_text,
+                                        bool & validated,
+                                        std::string & reason)
+{
+  validated = true;
+  return Lua(st)
+    .func("validate_commit_message")
+    .push_str(message)
+    .push_str(new_manifest_text)
+    .call(2, 2)
+    .extract_str(reason)
+    // XXX When validated, the extra returned string is superfluous.
+    .pop()
+    .extract_bool(validated)
+    .ok();
 }
 
 bool 

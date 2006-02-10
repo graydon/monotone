@@ -705,3 +705,10 @@ function get_netsync_write_permitted(ident)
    io.close(permfile)
    return matches
 end
+
+function validate_commit_message(message, new_manifest_id)
+    if (message == "") then
+        return false, "empty messages aren't allowed"
+    end
+    return true, ""
+end
