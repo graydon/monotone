@@ -6367,8 +6367,8 @@ function get_revision_cert_trust(signers, id, name, val)
 
    if t == nil then return false end
 
-   if    (name ~= "ancestor" and table.getn(t) >= 1)
-      or (name == "ancestor" and table.getn(t) >= 2)
+   if    (name ~= "branch" and table.getn(t) >= 1)
+      or (name == "branch" and table.getn(t) >= 2)
    then
       return true
    else
@@ -6380,10 +6380,10 @@ end
 
 In this example, any revision certificate is trusted if it is signed
 by at least one of three ``trusted'' keys, unless it is an
-@code{ancestor} certificate, in which case it must be signed by
+@code{branch} certificate, in which case it must be signed by
 @emph{two} or more trusted keys. This is one way of requiring that
-ancestry assertions go through an extra ``reviewer'' before they are
-accepted.
+the revision has been approved by an extra ``reviewer'' who used the
+@code{approve} command.
 
 @item accept_testresult_change (@var{old_results}, @var{new_results})
 

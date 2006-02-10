@@ -1,3 +1,10 @@
+2006-02-10  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Hooks): Change the example for
+	get_revisions_cert_trust to check "branch" certs instead of
+	"ancestor" ones, and thereby match the effect of the "approve"
+	command.
+
 2006-02-09  Graydon Hoare  <graydon@pobox.com>
 
 	* lua.cc (hook_validate_commit_message): make validated the
