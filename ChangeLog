@@ -3,6 +3,11 @@
 	* commands.cc (CMD(checkout)): wrapping in a transaction makes
 	a big difference.
 
+2006-02-09  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (SQLITE_SOURCES): Remove header files lost in
+	latest SQLite upstream import.
+
 2006-02-09  Graydon Hoare  <graydon@pobox.com>
 
 	* lua.cc (hook_validate_commit_message): make validated the
