@@ -1,3 +1,7 @@
+2006-02-11  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Adapt translation to the newly changed messages.
+
 2006-02-10  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_drop_missing.at:
