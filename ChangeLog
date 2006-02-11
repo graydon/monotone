@@ -1,5 +1,10 @@
 2006-02-11  Nathaniel Smith  <njs@pobox.com>
 
+	* configure.ac, debian/changelog, monotone.spec:
+	* win32/monotone.iss: Bump version to 0.26pre2.
+
+2006-02-11  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Add mention of validate_commit_message.
 
 2006-02-11  Blake Kaplan <mrbkap@gmail.com>

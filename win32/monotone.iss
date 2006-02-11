@@ -1,7 +1,7 @@
 [Setup]
 AppName=monotone
-AppVerName=monotone 0.26pre1
-AppCopyright=Copyright © 2002-2005 Graydon Hoare et al.
+AppVerName=monotone 0.26pre2
+AppCopyright=Copyright © 2002-2006 Graydon Hoare et al.
 DefaultDirName={pf}\monotone
 DefaultGroupName=monotone
 MinVersion=4.0,4.0
@@ -10,7 +10,7 @@ OutputBaseFileName=monotone-setup
 AllowNoIcons=1
 AppPublisher=venge.net
 AppPublisherURL=http://venge.net/monotone
-AppVersion=0.26pre1
+AppVersion=0.26pre2
 Compression=lzma/ultra
 SolidCompression=yes
 LicenseFile="..\COPYING"
