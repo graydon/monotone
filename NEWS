@@ -1,4 +1,4 @@
-????????????????????????????
+Sat Feb 11 13:32:51 PST 2006
 
         0.26pre2 release.  Inching towards 0.26.  If you are using
         0.25 or earlier, then make sure to read the very important
@@ -18,6 +18,11 @@
           databases remain compatible, and are not converted automatically.
           Existing databases can be converted by performing a database
           vacuum ('monotone db execute vacuum').
+
+        New features:
+
+        - New hook validate_commit_message -- use to verify that all
+          commit messages meet arbitrary user-defined rules.
 
         UI improvements:
 
@@ -43,6 +48,11 @@
         - Fixed bug that made ticker output from netsync inaccurate.
         - In 'log', --no-merges is now the default, use --merges to
           override.
+
+        Bugs:
+
+        - 'serve' with no --bind should now work on systems where the
+          C library has IPv6 support, but the kernel does not.
 
         Other:
         - Better detection when users have not run "rosterify", and

@@ -1,3 +1,7 @@
+2006-02-11  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Add mention of validate_commit_message.
+
 2006-02-11  Blake Kaplan <mrbkap@gmail.com>
 
 	* monotone.texi (Hooks): Added new subsection about validation
