@@ -1,5 +1,12 @@
 2006-02-10  Derek Scherger  <derek@echologic.com>
 
+	* tests/t_drop_missing.at:
+	* tests/t_rename.at:
+	* work.cc (visit_file): attempt to improve a couple of messages;
+	remove some unrequired \n's
+	
+2006-02-10  Derek Scherger  <derek@echologic.com>
+
 	* netsync.cc (process_anonymous_cmd, process_auth_cmd): don't
 	report misleading permission denied errors for branches that are
 	not being served

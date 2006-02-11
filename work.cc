@@ -114,7 +114,7 @@ addition_builder::visit_file(file_path const & path)
 {     
   if (app.lua.hook_ignore_file(path))
     {
-      P(F("skipping ignorable file %s\n") % path);
+      P(F("skipping ignorable file %s") % path);
       return;
     }  
 
@@ -122,11 +122,12 @@ addition_builder::visit_file(file_path const & path)
   path.split(sp);
   if (ros.has_node(sp))
     {
-      P(F("skipping %s, already accounted for in workspace\n") % path);
+      if (sp.size() > 1) 
+        P(F("skipping %s, already accounted for in workspace") % path);
       return;
     }
 
-  P(F("adding %s to workspace add set\n") % path);
+  P(F("adding %s to workspace manifest") % path);
 
   split_path dirname, prefix;
   path_component basename;
@@ -199,7 +200,7 @@ perform_deletions(path_set const & paths, app_state & app)
       file_path name(*i);
 
       if (!new_roster.has_node(*i))
-        P(F("skipping %s, not currently tracked\n") % name);
+        P(F("skipping %s, not currently tracked") % name);
       else
         {
           node_t n = new_roster.get_node(*i);
@@ -209,7 +210,7 @@ perform_deletions(path_set const & paths, app_state & app)
               N(d->children.empty(),
                 F("cannot remove %s/, it is not empty") % name);
             }
-          P(F("adding %s to workspace delete set\n") % name);
+          P(F("dropping %s from workspace manifest") % name);
           new_roster.drop_detached_node(new_roster.detach_node(*i));
           if (app.execute && path_exists(name))
             delete_file_or_dir_shallow(name);
@@ -305,7 +306,7 @@ perform_rename(set<file_path> const & src_paths,
     {
       node_id nid = new_roster.detach_node(i->first);
       new_roster.attach_node(nid, i->second);
-      P(F("adding %s -> %s to workspace rename set") 
+      P(F("renaming %s to %s in workspace manifest") 
         % file_path(i->first) 
         % file_path(i->second));
     }
@@ -422,7 +423,7 @@ void get_revision_id(revision_id & c)
                        F("workspace is corrupt: %s is a directory") % c_path);
 
   data c_data;
-  L(FL("loading revision id from %s\n") % c_path);
+  L(FL("loading revision id from %s") % c_path);
   try
     {
       read_data(c_path, c_data);
