@@ -1,3 +1,7 @@
+2006-02-11  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Draft for 0.26pre2.
+
 2006-02-11  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Adapt translation to the newly changed messages.
