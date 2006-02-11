@@ -473,7 +473,6 @@ system_path::system_path(utf8 const & path)
 bool
 find_and_go_to_workspace(system_path const & search_root)
 {
-  // unimplemented
   fs::path root(search_root.as_external(), fs::native);
   fs::path bookdir(bookkeeping_root.as_external(), fs::native);
   fs::path current(fs::initial_path());

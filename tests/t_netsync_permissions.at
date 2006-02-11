@@ -21,6 +21,10 @@ AT_DATA(open/write-permissions, [
 *
 ])
 
+ADD_FILE(badfile, [badfile
+])
+AT_CHECK(MONOTONE --branch=badbranch commit --message badfile, [], [ignore], [ignore])
+
 AT_CHECK(cp test.db clean.db)
 AT_CHECK(cp -r keys/ clean_keys)
 
@@ -132,6 +136,13 @@ AT_CHECK(cp clean.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 NETSYNC_CLIENT_RUN(pull, testbranch)
 AT_CHECK(MONOTONE2 automate get_revision $BASE, [0], [stdout], [stderr])
+
+# pull with bad branch fails
+
+AT_CHECK(cp clean.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
+NETSYNC_CLIENT_RUN(pull, badbranch, 1)
+AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 # pull with other key fails
 

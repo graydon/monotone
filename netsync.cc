@@ -1318,13 +1318,18 @@ session::process_anonymous_cmd(protocol_role role,
       i != branchnames.end(); i++)
     {
       if (their_matcher(*i))
-        if (our_matcher(*i) && app.lua.hook_get_netsync_read_permitted(*i))
-          ok_branches.insert(utf8(*i));
-        else
+        if (!our_matcher(*i))
+          {
+            error((F("not serving branch '%s'") % *i).str());
+            return true;
+          }
+        else if (!app.lua.hook_get_netsync_read_permitted(*i))
           {
             error((F("anonymous access to branch '%s' denied by server") % *i).str());
             return true;
           }
+        else
+          ok_branches.insert(utf8(*i));
     }
 
   P(F("allowed anonymous read permission for '%s' excluding '%s'\n")
@@ -1410,15 +1415,22 @@ session::process_auth_cmd(protocol_role their_role,
     {
       if (their_matcher(*i))
         {
-          if (our_matcher(*i) && app.lua.hook_get_netsync_read_permitted(*i, their_id))
-            ok_branches.insert(utf8(*i));
-          else
+          if (!our_matcher(*i))
+            {
+              error((F("not serving branch '%s'") % *i).str());
+              return true;
+
+            }
+          else if (!app.lua.hook_get_netsync_read_permitted(*i, their_id))
             {
               W(F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'\n") 
                 % their_id % their_include_pattern % their_exclude_pattern % *i);
+
               error((F("access to branch '%s' denied by server") % *i).str());
               return true;
             }
+          else
+            ok_branches.insert(utf8(*i));
         }
     }
 

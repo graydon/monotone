@@ -1,3 +1,12 @@
+2006-02-10  Derek Scherger  <derek@echologic.com>
+
+	* netsync.cc (process_anonymous_cmd, process_auth_cmd): don't
+	report misleading permission denied errors for branches that are
+	not being served
+	* paths.cc (find_and_go_to_workspace): delete stale comment
+	* tests/t_netsync_permissions.at: add test pull of branch that is
+	not served
+
 2006-02-10  Richard Levitte  <richard@levitte.org>
 
 	* monotone.texi (Hooks): Change the example for
