@@ -1,3 +1,11 @@
+2006-02-11  Blake Kaplan <mrbkap@gmail.com>
+
+	* monotone.texi (Hooks): Added new subsection about validation
+	hooks, and describe validate_commit_message in it.
+
+	* std_hooks.lua (external_diff_default_args): Change the second
+	argument to match the documentation.
+
 2006-02-11  Matt Johnston  <matt@ucc.asn.au>
 
 	* database.hh: increase checkpoint batch size from 100 to 1000

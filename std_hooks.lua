@@ -706,7 +706,7 @@ function get_netsync_write_permitted(ident)
    return matches
 end
 
-function validate_commit_message(message, new_manifest_id)
+function validate_commit_message(message, changeset_text)
     if (message == "") then
         return false, "empty messages aren't allowed"
     end
