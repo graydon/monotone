@@ -1,3 +1,7 @@
+2006-02-11  Matt Johnston  <matt@ucc.asn.au>
+
+	* NEWS: Fix rename example.
+
 2006-02-11  Richard Levitte  <richard@levitte.org>
 
 	* NEWS: Update with the netsync change.

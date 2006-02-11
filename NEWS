@@ -24,7 +24,7 @@
         - rename (and mv) commands now accept a broader range of
           syntax:
             monotone rename foo some_dir
-              -> renames foo to foo/some_dir
+              -> renames foo to some_dir/foo
             monotone rename foo bar baz some_dir
               -> moves foo, bar, and baz to some_dir/foo,
                  some_dir/bar, and some_dir/baz
