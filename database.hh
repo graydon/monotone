@@ -475,7 +475,7 @@ class transaction_guard
   size_t checkpointed_bytes;
 public:
   transaction_guard(database & d, bool exclusive=true,
-                    size_t checkpoint_batch_size=100,
+                    size_t checkpoint_batch_size=1000,
                     size_t checkpoint_batch_bytes=0xfffff);
   ~transaction_guard();
   void do_checkpoint();

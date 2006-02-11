@@ -1,5 +1,9 @@
 2006-02-11  Matt Johnston  <matt@ucc.asn.au>
 
+	* database.hh: increase checkpoint batch size from 100 to 1000
+
+2006-02-11  Matt Johnston  <matt@ucc.asn.au>
+
 	* NEWS: Fix rename example.
 
 2006-02-11  Richard Levitte  <richard@levitte.org>
