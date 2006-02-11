@@ -1,3 +1,8 @@
+2006-02-11  Richard Levitte  <richard@levitte.org>
+
+	* NEWS: Removed my notice about netsync, as I just noticed it
+	was already mentioned under Bugs:.
+
 2006-02-11  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac, debian/changelog, monotone.spec:
