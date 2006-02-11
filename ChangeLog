@@ -1,3 +1,7 @@
+2006-02-11  Richard Levitte  <richard@levitte.org>
+
+	* NEWS: Update with the netsync change.
+
 2006-02-11  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Draft for 0.26pre2.

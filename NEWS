@@ -53,6 +53,8 @@
           interface.
         - Updates to many other contrib/ files, mostly to maintain
           compatibility with monotone changes.
+	- Update netsync.cc so "monotone serve" uses IPv4 if IPv6 fails
+	  for some reason.
 
 Sun Jan  8 01:08:56 PST 2006
 
