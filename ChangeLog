@@ -4,6 +4,11 @@
 
 2006-02-11  Richard Levitte  <richard@levitte.org>
 
+	* netsync.cc (serve_connections): Enclose more or less everything
+	in a try-catch block to catch if using IPv6 failed, and to try
+	with just IPv4 in that case.  This is important for those who
+	copy a IPv6-enabled binary to a system that doesn't use IPv6.
+
 	* po/sv.po: Adapt translation to the newly changed messages.
 
 2006-02-10  Derek Scherger  <derek@echologic.com>
