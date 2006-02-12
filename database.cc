@@ -125,6 +125,16 @@ database::database(system_path const & fn) :
   transaction_level(0)
 {}
 
+bool
+database::is_dbfile(any_path const & file)
+{
+  system_path fn(file);// why is this needed?
+  bool same = (filename.as_internal() == fn.as_internal());
+  if (same)
+    L(FL("'%s' is the database file") % file);
+  return same;
+}
+
 void 
 database::check_schema()
 {
