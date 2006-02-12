@@ -123,7 +123,7 @@ parse_cset(basic_io::parser & parser,
 void
 read_cset(data const & dat, cset & cs);
 
-void
+template <> void
 dump(cset const & cs, std::string & out);
 
 

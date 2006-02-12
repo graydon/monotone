@@ -39,7 +39,7 @@ using boost::lexical_cast;
 
 ///////////////////////////////////////////////////////////////////
 
-void
+template <> void
 dump(full_attr_map_t const & val, std::string & out)
 {
   std::ostringstream oss;
@@ -50,7 +50,7 @@ dump(full_attr_map_t const & val, std::string & out)
   out = oss.str();
 }
 
-void
+template <> void
 dump(std::set<revision_id> const & revids, std::string & out)
 {
   out.clear();
@@ -65,7 +65,7 @@ dump(std::set<revision_id> const & revids, std::string & out)
     }
 }
 
-void
+template <> void
 dump(marking_t const & marking, std::string & out)
 {
   std::ostringstream oss;
@@ -85,7 +85,7 @@ dump(marking_t const & marking, std::string & out)
   out = oss.str();
 }
 
-void
+template <> void
 dump(marking_map const & markings, std::string & out)
 {
   std::ostringstream oss;
@@ -238,7 +238,7 @@ file_node::clone()
   return f;
 }
 
-void
+template <> void
 dump(node_t const & n, std::string & out)
 {
   std::ostringstream oss;
@@ -792,7 +792,7 @@ roster_t::set_attr(split_path const & pth,
   i->second = val;
 }
 
-void
+template <> void
 dump(roster_t const & val, std::string & out)
 {
   std::ostringstream oss;
@@ -2891,7 +2891,7 @@ struct testing_node_id_source
   node_id curr;
 };
 
-static void
+template <> void
 dump(int const & i, std::string & out)
 {
   out = lexical_cast<std::string>(i) + "\n";
@@ -3194,7 +3194,7 @@ namespace
                  scalar_none, scalar_none_2 } scalar_val;
 
   void
-  dump(scalar_val val, std::string & out)
+  dump(scalar_val const & val, std::string & out)
   {
     switch (val)
       {

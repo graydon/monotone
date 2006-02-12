@@ -302,6 +302,7 @@ file_path::split(split_path & sp) const
     }
 }
 
+template <>
 void dump(split_path const & sp, std::string & out)
 {
   std::ostringstream oss;

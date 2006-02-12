@@ -547,7 +547,7 @@ typedef std::map<u64,
                  > > 
 parent_roster_map;
 
-void
+template <> void
 dump(parent_roster_map const & prm, std::string & out)
 {
   std::ostringstream oss;
@@ -1102,7 +1102,7 @@ current_rev_debugger
   }
 };
 
-void
+template <> void
 dump(current_rev_debugger const & d, std::string & out)
 {
   typedef std::multimap<u64, std::pair<cert_name, cert_value> >::const_iterator ci;
@@ -1565,7 +1565,7 @@ static void write_insane_revision_set(revision_set const & rev,
   dat = data(oss.str());
 }
 
-void
+template <> void
 dump(revision_set const & rev, std::string & out)
 {
   data dat;

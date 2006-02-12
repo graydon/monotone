@@ -289,7 +289,7 @@ MusingI::~MusingI()
     }
 }
 
-void
+template <> void
 dump(std::string const & obj, std::string & out)
 {
   out = obj;

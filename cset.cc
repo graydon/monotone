@@ -461,7 +461,7 @@ read_cset(data const & dat, cset & cs)
   I(src.lookahead == EOF);
 }
 
-void
+template <> void
 dump(cset const & cs, std::string & out)
 {
   data dat;
