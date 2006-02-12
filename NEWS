@@ -48,11 +48,14 @@ Sat Feb 11 13:32:51 PST 2006
         - Fixed bug that made ticker output from netsync inaccurate.
         - In 'log', --no-merges is now the default, use --merges to
           override.
+        - If the database is in the working copy, then it is always
+          ignored.
 
         Bugs:
 
         - 'serve' with no --bind should now work on systems where the
           C library has IPv6 support, but the kernel does not.
+        - Compile fixes for GCC 4.1 pre-releases.
 
         Other:
         - Better detection when users have not run "rosterify", and

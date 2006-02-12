@@ -2579,129 +2579,127 @@ serve_connections(protocol_role role,
   // further down.
   bool try_again=false;
 
-  do
-    {
-      try
+  // have to use a pointer, because StreamServer is non-copyable, but we might
+  // need to throw our first one out and switch to a different one
+  std::auto_ptr<Netxx::StreamServer> server;
+
+  Netxx::Address addr(use_ipv6);
+
+      if (!app.bind_address().empty())
+        addr.add_address(app.bind_address().c_str(), default_port);
+      else
+        addr.add_all_addresses (default_port);
+
+      // If se use IPv6 and the initiasation of server fails, we want
+      // to try again with IPv4.  The reason is that someone may have
+      // downloaded a IPv6-enabled monotone on a system that doesn't
+      // have IPv6, and which might fail therefore.
+      // On failure, Netxx::NetworkException is thrown, and we catch
+      // it further down.
+      try_again=use_ipv6;
+
+      Netxx::StreamServer server(addr, timeout);
+
+      // If we came this far, whatever we used (IPv6 or IPv4) was
+      // accepted, so we don't need to try again any more.
+      try_again=false;
+
+      const char *name = addr.get_name();
+      P(F("beginning service on %s : %s\n")
+        % (name != NULL ? name : "all interfaces")
+        % lexical_cast<string>(addr.get_port()));
+      
+      map<Netxx::socket_type, shared_ptr<session> > sessions;
+      set<Netxx::socket_type> armed_sessions;
+      
+      shared_ptr<transaction_guard> guard;
+      
+      while (true)
         {
-          try_again = false;
-
-          Netxx::Address addr(use_ipv6);
-
-          if (!app.bind_address().empty())
-            addr.add_address(app.bind_address().c_str(), default_port);
+          probe.clear();
+          armed_sessions.clear();
+          
+          if (sessions.size() >= session_limit)
+            W(F("session limit %d reached, some connections "
+                "will be refused\n") % session_limit);
           else
-            addr.add_all_addresses (default_port);
+            probe.add(server);
+          
+          arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
+          
+          L(FL("i/o probe with %d armed\n") % armed_sessions.size());
+          Netxx::Probe::result_type res = probe.ready(sessions.empty() ? forever
+                                                      : (armed_sessions.empty() ? timeout
+                                                         : instant));
+          Netxx::Probe::ready_type event = res.second;
+          Netxx::socket_type fd = res.first;
 
-          // If se use IPv6 and the initiasation of server fails, we want
-          // to try again with IPv4.  The reason is that someone may have
-          // downloaded a IPv6-enabled monotone on a system that doesn't
-          // have IPv6, and which might fail therefore.
-          // On failure, Netxx::NetworkException is thrown, and we catch
-          // it further down.
-          try_again=use_ipv6;
+               if (!guard)
+                 guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
 
-          Netxx::StreamServer server(addr, timeout);
+               I(guard);
 
-          // If we came this far, whatever we used (IPv6 or IPv4) was
-          // accepted, so we don't need to try again any more.
-          try_again=false;
+               if (fd == -1)
+                 {
+                   if (armed_sessions.empty())
+                     L(FL("timed out waiting for I/O (listening on %s : %s)\n")
+                       % addr.get_name() % lexical_cast<string>(addr.get_port()));
+                 }
 
-          const char *name = addr.get_name();
-          P(F("beginning service on %s : %s\n")
-            % (name != NULL ? name : "all interfaces")
-            % lexical_cast<string>(addr.get_port()));
-  
-          map<Netxx::socket_type, shared_ptr<session> > sessions;
-          set<Netxx::socket_type> armed_sessions;
-  
-          shared_ptr<transaction_guard> guard;
+               // we either got a new connection
+               else if (fd == server)
+                 handle_new_connection(addr, server, timeout, role,
+                                       include_pattern, exclude_pattern,
+                                       sessions, app);
 
-          while (true)
-            {
-              probe.clear();
-              armed_sessions.clear();
+               // or an existing session woke up
+               else
+                 {
+                   map<Netxx::socket_type, shared_ptr<session> >::iterator i;
+                   i = sessions.find(fd);
+                   if (i == sessions.end())
+                     {
+                       L(FL("got woken up for action on unknown fd %d\n") % fd);
+                     }
+                   else
+                     {
+                       shared_ptr<session> sess = i->second;
+                       bool live_p = true;
 
-              if (sessions.size() >= session_limit)
-                W(F("session limit %d reached, some connections "
-                    "will be refused\n") % session_limit);
-              else
-                probe.add(server);
+                       if (event & Netxx::Probe::ready_read)
+                         handle_read_available(fd, sess, sessions,
+                                               armed_sessions, live_p);
 
-              arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
+                       if (live_p && (event & Netxx::Probe::ready_write))
+                         handle_write_available(fd, sess, sessions, live_p);
 
-              L(FL("i/o probe with %d armed\n") % armed_sessions.size());
-              Netxx::Probe::result_type res = probe.ready(sessions.empty() ? forever
-                                                          : (armed_sessions.empty() ? timeout
-                                                             : instant));
-              Netxx::Probe::ready_type event = res.second;
-              Netxx::socket_type fd = res.first;
+                       if (live_p && (event & Netxx::Probe::ready_oobd))
+                         {
+                           P(F("got OOB from peer %s, disconnecting\n")
+                             % sess->peer_id);
+                           sessions.erase(i);
+                         }
+                     }
+                 }
+               process_armed_sessions(sessions, armed_sessions, *guard);
+               reap_dead_sessions(sessions, timeout_seconds);
 
-              if (!guard)
-                guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
-
-              I(guard);
-      
-              if (fd == -1)
-                {
-                  if (armed_sessions.empty())
-                    L(FL("timed out waiting for I/O (listening on %s : %s)\n")
-                      % addr.get_name() % lexical_cast<string>(addr.get_port()));
-                }
-      
-              // we either got a new connection
-              else if (fd == server)
-                handle_new_connection(addr, server, timeout, role,
-                                      include_pattern, exclude_pattern,
-                                      sessions, app);
-      
-              // or an existing session woke up
-              else
-                {
-                  map<Netxx::socket_type, shared_ptr<session> >::iterator i;
-                  i = sessions.find(fd);
-                  if (i == sessions.end())
-                    {
-                      L(FL("got woken up for action on unknown fd %d\n") % fd);
-                    }
-                  else
-                    {
-                      shared_ptr<session> sess = i->second;
-                      bool live_p = true;
-
-                      if (event & Netxx::Probe::ready_read)
-                        handle_read_available(fd, sess, sessions,
-                                              armed_sessions, live_p);
-                
-                      if (live_p && (event & Netxx::Probe::ready_write))
-                        handle_write_available(fd, sess, sessions, live_p);
-                
-                      if (live_p && (event & Netxx::Probe::ready_oobd))
-                        {
-                          P(F("got OOB from peer %s, disconnecting\n")
-                            % sess->peer_id);
-                          sessions.erase(i);
-                        }
-                    }
-                }
-              process_armed_sessions(sessions, armed_sessions, *guard);
-              reap_dead_sessions(sessions, timeout_seconds);
-
-              if (sessions.empty())
-                {
-                  // Let the guard die completely if everything's gone quiet.
-                  guard->commit();
-                  guard.reset();
-                }
-            }
-        }
-      catch (Netxx::NetworkException &e)
-        {
-          // If we tried with IPv6 and failed, we want to try again using IPv4.
-          if (try_again)
-            {
-              use_ipv6 = false;
-            }
-          // In all other cases, just rethrow the exception.
+               if (sessions.empty())
+                 {
+                   // Let the guard die completely if everything's gone quiet.
+                   guard->commit();
+                   guard.reset();
+                 }
+             }
+         }
+       catch (Netxx::NetworkException &e)
+         {
+           // If we tried with IPv6 and failed, we want to try again using IPv4.
+           if (try_again)
+             {
+               use_ipv6 = false;
+             }
+           // In all other cases, just rethrow the exception.
           else
             throw;
         }

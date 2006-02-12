@@ -1,3 +1,7 @@
+2006-02-12  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Add things done since last time I did this...
+
 2006-02-12  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* {cset,paths,revision,roster,sanity,vocab}.{cc,hh}: GCC 4.1
