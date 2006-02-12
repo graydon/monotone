@@ -19,6 +19,19 @@
 	* tests/t_netsync_permissions.at: add test pull of branch that is
 	not served
 
+2006-02-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Adding your db is silly and confusing (what should revert do?).
+	So, it's not allowed any more (the db file is ignored, regardless of
+	what the ignore hook says).
+	* tests/t_add_owndb.at: remove XFAIL, use 'ls known' instead of
+	'ls unknown'
+	* testsuite.at: don't put the db in the ignore hook
+	* database.{cc,hh}: is_dbfile(), check if a path is the database file
+	* work.cc: check is_dbfile where we check the ignore hook when
+	walking the filesystem
+	* tests/t_mt_ignore.at: fix for having the db always be ignored
+
 2006-02-10  Richard Levitte  <richard@levitte.org>
 
 	* monotone.texi (Hooks): Change the example for

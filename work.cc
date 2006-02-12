@@ -41,7 +41,7 @@ file_itemizer::visit_file(file_path const & path)
   path.split(sp);
   if (app.restriction_includes(sp) && known.find(sp) == known.end())
     {
-      if (app.lua.hook_ignore_file(path))
+      if (app.lua.hook_ignore_file(path) || app.db.is_dbfile(path))
         ignored.insert(sp);
       else
         unknown.insert(sp);
@@ -112,7 +112,7 @@ addition_builder::visit_dir(file_path const & path)
 void 
 addition_builder::visit_file(file_path const & path)
 {     
-  if (app.lua.hook_ignore_file(path))
+  if (app.lua.hook_ignore_file(path) || app.db.is_dbfile(path))
     {
       P(F("skipping ignorable file %s") % path);
       return;
