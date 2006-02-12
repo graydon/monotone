@@ -46,9 +46,9 @@ d_start() {
           return 0
        fi
 
-       start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE \
+       start-stop-daemon --start --quiet --pidfile $PIDFILE \
                --exec $DAEMON --chuid monotone --chdir $MTN_HOME -- \
-	       --confdir=$MTN_CONFDIR --db=$DB --norc \
+	       --confdir=$MTN_CONFDIR --db=$DB --norc --pid-file=$PIDFILE \
 	       --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR \
                --bind=$ADDRESS serve $BRANCHES >> /var/log/monotone.log 2>&1 &
 

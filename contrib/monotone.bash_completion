@@ -1,8 +1,9 @@
 # -*- shell-script -*-
 # vim: set ft=sh:
 
-# bash completion for monotone 0.18
+# bash completion for monotone 0.25
 # Author: Olivier Andrieu <oandrieu@nerim.net>
+# Contributions by Matthew A. Nicholson <matt@matt-land.com>
 
 # source this file from your .bashrc
 # If you use the bash completion package <http://www.caliban.org/bash/>,
