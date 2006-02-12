@@ -205,6 +205,7 @@ public:
   database(system_path const & file);
 
   void set_filename(system_path const & file);
+  bool is_dbfile(any_path const & file);
   void initialize();
   void debug(std::string const & sql, std::ostream & out);
   void dump(std::ostream &);

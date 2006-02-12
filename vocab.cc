@@ -201,6 +201,7 @@ ostream & operator<<(ostream & o,            \
                      ty const & a)           \
 { return (o << a.s); }                       \
                                              \
+template <>                                  \
 void dump(ty const & obj, std::string & out) \
 { out = obj(); }                             \
                                              \

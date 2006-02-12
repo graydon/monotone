@@ -1,9 +1,6 @@
 AT_SETUP([(minor) add own db])
 MONOTONE_SETUP
 
-# This test is a bug report
-AT_XFAIL_IF(true)
-
 #Adding the current in-use DB should fail
 # <Sircus> ...It *really* seems like adding the db to the db is something that should be caught and an error message thrown...
 # <Sircus> (What's revert supposed to do when you revert the db? :-)
@@ -11,23 +8,23 @@ AT_XFAIL_IF(true)
 # <njs> and add a note in a comment that "revert" is the case that really moves this 
 # from being "stupid user tricks" to "something we should protect users from" :-)
 AT_CHECK(MONOTONE add test.db, [], [ignore], [ignore])
-AT_CHECK(MONOTONE ls unknown, [], [stdout], [ignore])
-AT_CHECK(grep 'test.db' stdout, [0], [ignore])
+AT_CHECK(MONOTONE ls known, [], [stdout], [ignore])
+AT_CHECK(grep 'test.db' stdout, [1], [ignore])
 
 AT_CHECK(MONOTONE add ., [], [ignore], [ignore])
-AT_CHECK(MONOTONE ls unknown, [], [stdout], [ignore])
-AT_CHECK(grep 'test.db' stdout, [0], [ignore])
+AT_CHECK(MONOTONE ls known, [], [stdout], [ignore])
+AT_CHECK(grep 'test.db' stdout, [1], [ignore])
 
 AT_CHECK(mkdir subdir)
 AT_CHECK(cp test.db subdir)
 
 AT_CHECK(MONOTONE --db=subdir/test.db add subdir/test.db, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --db=subdir/test.db ls unknown, [], [stdout], [ignore])
-AT_CHECK(grep 'subdir/test.db' stdout, [0], [ignore])
+AT_CHECK(MONOTONE --db=subdir/test.db ls known, [], [stdout], [ignore])
+AT_CHECK(grep 'subdir/test.db' stdout, [1], [ignore])
 
 # If it's not an in-use DB, it should work, though
 AT_CHECK(MONOTONE add subdir/test.db, [], [ignore], [ignore])
-AT_CHECK(MONOTONE ls unknown, [], [stdout], [ignore])
-AT_CHECK(grep 'subdir/test.db' stdout, [1], [ignore])
+AT_CHECK(MONOTONE ls known, [], [stdout], [ignore])
+AT_CHECK(grep 'subdir/test.db' stdout, [0], [ignore])
 
 AT_CLEANUP
