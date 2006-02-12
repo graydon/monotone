@@ -1,5 +1,10 @@
 2006-02-12  Nathaniel Smith  <njs@pobox.com>
 
+	* netsync.cc (serve_connections): Revert garbage that I
+	accidentally checked in last time...
+
+2006-02-12  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Add things done since last time I did this...
 
 2006-02-12  Matthew Gregan  <kinetik@orcon.net.nz>
