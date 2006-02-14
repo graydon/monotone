@@ -1,3 +1,11 @@
+2006-02-13  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc (is_clean): Simplify.
+	(add_roster_merge_tests): 
+	* unit_tests.cc (init_unit_test_suite): 
+	* unit_tests.hh (add_roster_merge_tests): Add unit test
+	boilerplate.
+
 2006-02-12  Nathaniel Smith  <njs@pobox.com>
 
 	* netsync.cc (serve_connections): Revert garbage that I

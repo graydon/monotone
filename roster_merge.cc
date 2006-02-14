@@ -14,12 +14,8 @@
 bool
 roster_merge_result::is_clean()
 {
-  return node_name_conflicts.empty()
-    && file_content_conflicts.empty()
-    && node_attr_conflicts.empty()
-    && orphaned_node_conflicts.empty()
-    && rename_target_conflicts.empty()
-    && directory_loop_conflicts.empty();
+  return is_clean_except_for_content()
+    && file_content_conflicts.empty();
 }
 
 bool
@@ -538,3 +534,13 @@ roster_merge(roster_t const & left_parent,
   // FIXME: looped nodes here
 }
 
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+
+void
+add_roster_merge_tests(test_suite * suite)
+{
+  I(suite);
+}
+
+#endif // BUILD_UNIT_TESTS
