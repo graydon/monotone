@@ -1,5 +1,10 @@
 2006-02-14  Richard Levitte  <richard@levitte.org>
 
+	* Makefile.am (htmldir): Add variables so monotone.html is created
+	and installed automatically.
+	This is prompted by debian/monotone.html, which indicates
+	monotone.html should be available.
+
 	* netsync.cc (serve_connections): Correct spelling.
 
 2006-02-12  Nathaniel Smith  <njs@pobox.com>
