@@ -1,5 +1,10 @@
 2006-02-13  Nathaniel Smith  <njs@pobox.com>
 
+	* roster_merge.cc (log_conflicts): Tweak string.
+	Add list of tests needed.
+
+2006-02-13  Nathaniel Smith  <njs@pobox.com>
+
 	* roster_merge.cc (is_clean): Simplify.
 	(add_roster_merge_tests): 
 	* unit_tests.cc (init_unit_test_suite): 
