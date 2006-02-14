@@ -1,3 +1,7 @@
+2006-02-14  Richard Levitte  <richard@levitte.org>
+
+	* netsync.cc (serve_connections): Correct spelling.
+
 2006-02-12  Nathaniel Smith  <njs@pobox.com>
 
 	* netsync.cc (serve_connections): Revert garbage that I
