@@ -7,6 +7,13 @@
 
 	* netsync.cc (serve_connections): Correct spelling.
 
+2006-02-13  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sanity.cc (sanity::dump_buffer): Fix a SEGV when we're in an
+	error unwind and about to ask the user to mail us the crash
+	log--we must use FL() rather than F() here, since by the time this
+	is called we can't rely on the i18n infrastructure being alive.
+
 2006-02-12  Nathaniel Smith  <njs@pobox.com>
 
 	* netsync.cc (serve_connections): Revert garbage that I
