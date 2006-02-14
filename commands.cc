@@ -1995,7 +1995,7 @@ process_netsync_args(std::string const & name,
   if (serve_mode || (args.size() >= 2 || !app.exclude_patterns.empty()))
     {
       int pattern_offset = (serve_mode ? 0 : 1);
-      std::set<utf8> patterns(args.begin() + pattern_offset, args.end());
+      std::vector<utf8> patterns(args.begin() + pattern_offset, args.end());
       combine_and_check_globish(patterns, include_pattern);
       combine_and_check_globish(app.exclude_patterns, exclude_pattern);
       if (use_defaults &&

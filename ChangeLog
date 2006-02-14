@@ -1,3 +1,9 @@
+2006-02-13  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh}: 
+	* globis.{cc,hh}: make exclude_patterns a vector rather than a
+	set so that restriction includes/excludes are of the same type
+
 2006-01-10  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_revert_unchanged.at: new test to check that reverting

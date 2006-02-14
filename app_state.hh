@@ -51,9 +51,8 @@ public:
   utf8 author;
   system_path search_root;
   std::vector<utf8> revision_selectors;
-  std::set<utf8> exclude_patterns;
+  std::vector<utf8> exclude_patterns;
   std::vector<utf8> extra_rcfiles;
-  path_set excludes;
   bool found_working_copy;
   long depth;
   long last;

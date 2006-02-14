@@ -100,13 +100,13 @@ checked_globish_to_regex(std::string const & glob, std::string & regex)
 }
 
 void
-combine_and_check_globish(std::set<utf8> const & patterns, utf8 & pattern)
+combine_and_check_globish(std::vector<utf8> const & patterns, utf8 & pattern)
 {
   std::string p;
   if (patterns.size() > 1)
     p += '{';
   bool first = true;
-  for (std::set<utf8>::const_iterator i = patterns.begin(); i != patterns.end(); ++i)
+  for (std::vector<utf8>::const_iterator i = patterns.begin(); i != patterns.end(); ++i)
     {
       std::string tmp;
       // run for the checking it does
@@ -184,10 +184,10 @@ checked_globish_to_regex_test()
 static void
 combine_and_check_globish_test()
 {
-  std::set<utf8> s;
-  s.insert(utf8("a"));
-  s.insert(utf8("b"));
-  s.insert(utf8("c"));
+  std::vector<utf8> s;
+  s.push_back(utf8("a"));
+  s.push_back(utf8("b"));
+  s.push_back(utf8("c"));
   utf8 combined;
   combine_and_check_globish(s, combined);
   BOOST_CHECK(combined() == "{a,b,c}");
