@@ -2393,7 +2393,7 @@ handle_new_connection(Netxx::Address & addr,
                       app_state & app)
 {
   L(FL("accepting new connection on %s : %s\n") 
-    % addr.get_name() % lexical_cast<string>(addr.get_port()));
+    % (addr.get_name()?addr.get_name():"") % lexical_cast<string>(addr.get_port()));
   Netxx::Peer client = server.accept_connection();
   
   if (!client) 

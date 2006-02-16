@@ -1,3 +1,11 @@
+2006-02-16  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* netsync.cc (handle_new_connection): Netxx::Address.get_name()
+	returns NULL every now and then. if so, continue with "" instead
+
+	* sqlite/parse.c: move #line under all #include directives so
+	the compiler can't be confused by it.
+
 2006-02-14  Richard Levitte  <richard@levitte.org>
 
 	* Makefile.am (htmldir): Add variables so monotone.html is created

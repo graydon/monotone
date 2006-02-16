@@ -4,10 +4,10 @@
 /* First off, code is include which follows the "include" declaration
 ** in the input file. */
 #include <stdio.h>
-#line 51 "parse.y"
 
 #include "sqliteInt.h"
 #include "parse.h"
+#line 54 "parse.y"
 
 /*
 ** An instance of this structure holds information about the
