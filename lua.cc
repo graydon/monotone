@@ -1049,18 +1049,6 @@ lua_hooks::hook_ignore_branch(std::string const & branch)
   return exec_ok && ignore_it;
 }
 
-bool 
-lua_hooks::hook_non_blocking_rng_ok()
-{
-  bool ok = false;
-  bool exec_ok = Lua(st)
-    .func("non_blocking_rng_ok")
-    .call(0,1)
-    .extract_bool(ok)
-    .ok();
-  return exec_ok && ok;
-}
-
 static inline bool
 shared_trust_function_body(Lua & ll,
                            std::set<rsa_keypair_id> const & signers,

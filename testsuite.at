@@ -68,9 +68,6 @@ AT_DATA(min_hooks.lua, [
 function get_passphrase(keyid)
 	return keyid
 end
-function non_blocking_rng_ok()
-	return true
-end
 function persist_phrase_ok()
 	return true
 end
@@ -83,10 +80,6 @@ AT_DATA(test_hooks.lua, [
 
 function get_passphrase(keyid)
 	return keyid
-end
-
-function non_blocking_rng_ok()
-	return true
 end
 
 -- Everything alice signs is trusted, nothing mallory signs is

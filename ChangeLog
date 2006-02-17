@@ -1,5 +1,8 @@
 2006-02-17  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* lua.cc, lua.hh, monotone.texi, std_hooks.lua, test_hooks.lua,
+	testsuite.at: Remove unused non_blocking_rng_ok hook.
+
 	* sqlite/*: Import SQLite 3.3.4.
 
 2006-02-16  Patrick Mauritz  <oxygene@studentenbude.ath.cx>

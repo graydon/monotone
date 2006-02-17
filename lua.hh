@@ -49,7 +49,6 @@ public:
                          std::string const & user_log_message,
                          std::string & result);  
   bool hook_persist_phrase_ok();
-  bool hook_non_blocking_rng_ok();
   bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
                                    hexenc<id> const & id,
                                    cert_name const & name,
