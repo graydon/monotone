@@ -16,7 +16,7 @@
 ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: func.c,v 1.117 2006/01/17 13:21:40 danielk1977 Exp $
+** $Id: func.c,v 1.121 2006/02/09 22:13:42 drh Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -817,9 +817,9 @@ static void test_error(
 */
 typedef struct SumCtx SumCtx;
 struct SumCtx {
-  double sum;     /* Sum of terms */
-  int cnt;        /* Number of elements summed */
-  u8 seenFloat;   /* True if there has been any floating point value */
+  LONGDOUBLE_TYPE sum;    /* Sum of terms */
+  i64 cnt;                /* Number of elements summed */
+  u8 approx;              /* True if sum is approximate */
 };
 
 /*
@@ -830,18 +830,33 @@ struct SumCtx {
 ** 0.0 in that case.  In addition, TOTAL always returns a float where
 ** SUM might return an integer if it never encounters a floating point
 ** value.
+**
+** I am told that SUM() should raise an exception if it encounters
+** a integer overflow.  But after pondering this, I decided that 
+** behavior leads to brittle programs.  So instead, I have coded
+** SUM() to revert to using floating point if it encounters an
+** integer overflow.  The answer may not be exact, but it will be
+** close.  If the SUM() function returns an integer, the value is
+** exact.  If SUM() returns a floating point value, it means the
+** value might be approximated.
 */
 static void sumStep(sqlite3_context *context, int argc, sqlite3_value **argv){
   SumCtx *p;
   int type;
   assert( argc==1 );
   p = sqlite3_aggregate_context(context, sizeof(*p));
-  type = sqlite3_value_type(argv[0]);
+  type = sqlite3_value_numeric_type(argv[0]);
   if( p && type!=SQLITE_NULL ){
-    p->sum += sqlite3_value_double(argv[0]);
     p->cnt++;
-    if( type==SQLITE_FLOAT ){
-      p->seenFloat = 1;
+    if( type==SQLITE_INTEGER ){
+      p->sum += sqlite3_value_int64(argv[0]);
+      if( !p->approx ){
+        i64 iVal;
+        p->approx = p->sum!=(LONGDOUBLE_TYPE)(iVal = (i64)p->sum);
+      }
+    }else{
+      p->sum += sqlite3_value_double(argv[0]);
+      p->approx = 1;
     }
   }
 }
@@ -849,7 +864,7 @@ static void sumFinalize(sqlite3_context *context){
   SumCtx *p;
   p = sqlite3_aggregate_context(context, 0);
   if( p && p->cnt>0 ){
-    if( p->seenFloat ){
+    if( p->approx ){
       sqlite3_result_double(context, p->sum);
     }else{
       sqlite3_result_int64(context, (i64)p->sum);
@@ -870,23 +885,12 @@ static void totalFinalize(sqlite3_context *context){
 }
 
 /*
-** An instance of the following structure holds the context of a
-** variance or standard deviation computation.
-*/
-typedef struct StdDevCtx StdDevCtx;
-struct StdDevCtx {
-  double sum;     /* Sum of terms */
-  double sum2;    /* Sum of the squares of terms */
-  int cnt;        /* Number of terms counted */
-};
-
-/*
 ** The following structure keeps track of state information for the
 ** count() aggregate function.
 */
 typedef struct CountCtx CountCtx;
 struct CountCtx {
-  int n;
+  i64 n;
 };
 
 /*
@@ -902,7 +906,7 @@ static void countStep(sqlite3_context *context, int argc, sqlite3_value **argv){
 static void countFinalize(sqlite3_context *context){
   CountCtx *p;
   p = sqlite3_aggregate_context(context, 0);
-  sqlite3_result_int(context, p ? p->n : 0);
+  sqlite3_result_int64(context, p ? p->n : 0);
 }
 
 /*

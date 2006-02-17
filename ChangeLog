@@ -1,3 +1,7 @@
+2006-02-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Import SQLite 3.3.4.
+
 2006-02-16  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
 	* netsync.cc (handle_new_connection): Netxx::Address.get_name()

@@ -14,7 +14,7 @@
 ** This file contains functions for allocating memory, comparing
 ** strings, and stuff like that.
 **
-** $Id: util.c,v 1.182 2006/01/23 15:39:59 drh Exp $
+** $Id: util.c,v 1.184 2006/02/06 21:22:31 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -521,34 +521,56 @@ static void OSMALLOC_FAILED(){
 **--------------------------------------------------------------------------*/
 
 /*
-** The handleSoftLimit() function is called before each call to 
-** sqlite3OsMalloc() or xRealloc(). The parameter 'n' is the number of
-** extra bytes about to be allocated (for Realloc() this means the size of the
-** new allocation less the size of the old allocation). If the extra allocation
-** means that the total memory allocated to SQLite in this thread would exceed
-** the limit set by sqlite3_soft_heap_limit(), then sqlite3_release_memory() is
-** called to try to avoid this. No indication of whether or not this is
-** successful is returned to the caller.
+** This routine is called when we are about to allocate n additional bytes
+** of memory.  If the new allocation will put is over the soft allocation
+** limit, then invoke sqlite3_release_memory() to try to release some
+** memory before continuing with the allocation.
+**
+** This routine also makes sure that the thread-specific-data (TSD) has
+** be allocated.  If it has not and can not be allocated, then return
+** false.  The updateMemoryUsedCount() routine below will deallocate
+** the TSD if it ought to be.
+**
+** If SQLITE_ENABLE_MEMORY_MANAGEMENT is not defined, this routine is
+** a no-op
+*/ 
+#ifdef SQLITE_ENABLE_MEMORY_MANAGEMENT
+static int enforceSoftLimit(int n){
+  ThreadData *pTsd = sqlite3ThreadData();
+  if( pTsd==0 ){
+    return 0;
+  }
+  assert( pTsd->nAlloc>=0 );
+  if( n>0 && pTsd->nSoftHeapLimit>0 ){
+    while( pTsd->nAlloc+n>pTsd->nSoftHeapLimit && sqlite3_release_memory(n) );
+  }
+  return 1;
+}
+#else
+# define enforceSoftLimit(X)  1
+#endif
+
+/*
+** Update the count of total outstanding memory that is held in
+** thread-specific-data (TSD).  If after this update the TSD is
+** no longer being used, then deallocate it.
 **
 ** If SQLITE_ENABLE_MEMORY_MANAGEMENT is not defined, this routine is
 ** a no-op
 */
 #ifdef SQLITE_ENABLE_MEMORY_MANAGEMENT
-static int handleSoftLimit(int n){
+static void updateMemoryUsedCount(int n){
   ThreadData *pTsd = sqlite3ThreadData();
   if( pTsd ){
     pTsd->nAlloc += n;
     assert( pTsd->nAlloc>=0 );
-    if( n>0 && pTsd->nSoftHeapLimit>0 ){
-      while( pTsd->nAlloc>pTsd->nSoftHeapLimit && sqlite3_release_memory(n) );
-    }else if( pTsd->nAlloc==0 && pTsd->nSoftHeapLimit==0 ){
+    if( pTsd->nAlloc==0 && pTsd->nSoftHeapLimit==0 ){
       sqlite3ReleaseThreadData();
     }
   }
-  return (pTsd ? 0 : 1);
 }
 #else
-#define handleSoftLimit(x) 0
+#define updateMemoryUsedCount(x)  /* no-op */
 #endif
 
 /*
@@ -558,17 +580,13 @@ static int handleSoftLimit(int n){
 */
 void *sqlite3MallocRaw(int n){
   void *p = 0;
-  if( n>0 && !sqlite3MallocFailed() && !handleSoftLimit(n) ){
+  if( n>0 && !sqlite3MallocFailed() && enforceSoftLimit(n) ){
     while( (p = OSMALLOC(n))==0 && sqlite3_release_memory(n) );
     if( !p ){
-      /* If the allocation failed, call handleSoftLimit() again, this time
-      ** with the additive inverse of the argument passed to 
-      ** handleSoftLimit() above. This is so the ThreadData.nAlloc variable is
-      ** still correct after a malloc() failure. 
-      */
-      (void)handleSoftLimit(n * -1);
       sqlite3FailedMalloc();
       OSMALLOC_FAILED();
+    }else{
+      updateMemoryUsedCount(OSSIZEOF(p));
     }
   }
   return p;
@@ -588,17 +606,16 @@ void *sqlite3Realloc(void *p, int n){
     return sqlite3Malloc(n);
   }else{
     void *np = 0;
-    if( !handleSoftLimit(n - OSSIZEOF(p)) ){
+#ifdef SQLITE_ENABLE_MEMORY_MANAGEMENT
+    int origSize = OSSIZEOF(p);
+#endif
+    if( enforceSoftLimit(n - origSize) ){
       while( (np = OSREALLOC(p, n))==0 && sqlite3_release_memory(n) );
       if( !np ){
-        /* If the allocation failed, call handleSoftLimit() again, this time
-        ** with the additive inverse of the argument passed to 
-        ** handleSoftLimit() above. This is so the ThreadData.nAlloc variable is
-        ** still correct after a malloc() failure. 
-        */
-        (void)handleSoftLimit(OSSIZEOF(p) - n);
         sqlite3FailedMalloc();
         OSMALLOC_FAILED();
+      }else{
+        updateMemoryUsedCount(OSSIZEOF(np) - origSize);
       }
     }
     return np;
@@ -610,8 +627,8 @@ void *sqlite3Realloc(void *p, int n){
 ** value returned by a previous call to sqlite3Malloc() or sqlite3Realloc().
 */
 void sqlite3FreeX(void *p){
-  (void)handleSoftLimit(0 - OSSIZEOF(p));
   if( p ){
+    updateMemoryUsedCount(0 - OSSIZEOF(p));
     OSFREE(p);
   }
 }
