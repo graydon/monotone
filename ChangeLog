@@ -1,3 +1,13 @@
+2006-02-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* app_state.cc, app_state.hh, commands.cc, monotone.cc,
+	options.hh: Add '--no-files' option to log to allow users to
+	exclude the list of files changed in each revision from the log
+	output.
+
+	* monotone.texi: Document '--no-files', and '--next' and '--diffs'
+	while there.
+
 2006-02-17  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* lua.cc, lua.hh, monotone.texi, std_hooks.lua, test_hooks.lua,

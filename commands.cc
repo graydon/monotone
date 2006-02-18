@@ -3536,7 +3536,8 @@ CMD(annotate, N_("informative"), N_("PATH"),
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
-    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_MERGES)
+    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_MERGES %
+    OPT_NO_FILES)
 {
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
@@ -3711,7 +3712,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 log_certs(app, rid, branch_name, "Branch: ", false);
                 log_certs(app, rid, tag_name,    "Tag: ",    false);
 
-                if (! csum.cs.empty())
+                if (!app.no_files && !csum.cs.empty())
                   {
                     cout << endl;
                     csum.print(cout, 70);
