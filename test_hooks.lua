@@ -7,10 +7,6 @@ function get_passphrase(keyid)
 	return keyid
 end
 
-function non_blocking_rng_ok()
-	return true
-end
-
 function persist_phrase_ok()
 	return true
 end

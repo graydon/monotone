@@ -2393,7 +2393,7 @@ handle_new_connection(Netxx::Address & addr,
                       app_state & app)
 {
   L(FL("accepting new connection on %s : %s\n") 
-    % addr.get_name() % lexical_cast<string>(addr.get_port()));
+    % (addr.get_name()?addr.get_name():"") % lexical_cast<string>(addr.get_port()));
   Netxx::Peer client = server.accept_connection();
   
   if (!client) 
@@ -2592,7 +2592,7 @@ serve_connections(protocol_role role,
           else
             addr.add_all_addresses (default_port);
 
-          // If se use IPv6 and the initiasation of server fails, we want
+          // If se use IPv6 and the initialisation of server fails, we want
           // to try again with IPv4.  The reason is that someone may have
           // downloaded a IPv6-enabled monotone on a system that doesn't
           // have IPv6, and which might fail therefore.

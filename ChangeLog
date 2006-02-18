@@ -11,6 +11,69 @@
 	* unit_tests.hh (add_roster_merge_tests): Add unit test
 	boilerplate.
 
+2006-02-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_db_kill_rev_locally_2.at: Add an XFAIL test for a
+	kill_rev_locally bug reported by Daniel Carasone.
+
+	* testsuite.at: Add t_db_kill_rev_locally_2.at.
+
+	* sqlite/parse.h: Regenerated parse.h from pristine SQLite 3.3.4
+	source.  The version committed in the 3.3.4 import had a bunch of
+	duplicate entries.
+
+	* commands.cc (CMD(identify)): This isn't really a "workspace"
+	command--stick it under "debug" for lack of a better place.
+
+	* commands.cc (CMD(refresh_inodeprints)): Check for a valid
+	workspace rather than failing with an invariant when run outside
+	of a workspace.
+
+	* tests/t_revert_new_project.at: Add an XFAIL test for a bug where
+	reverting a file added in a new project will leave the workspace
+	in a bad state until MT/work is removed manually.
+
+	* testsuite.at: Add t_revert_new_project.at.
+
+	* app_state.cc, app_state.hh, commands.cc, monotone.cc,
+	options.hh: Add '--no-files' option to log to allow users to
+	exclude the list of files changed in each revision from the log
+	output.
+
+	* monotone.texi: Document '--no-files', and '--next' and '--diffs'
+	while there.
+
+2006-02-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* lua.cc, lua.hh, monotone.texi, std_hooks.lua, test_hooks.lua,
+	testsuite.at: Remove unused non_blocking_rng_ok hook.
+
+	* sqlite/*: Import SQLite 3.3.4.
+
+2006-02-16  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* netsync.cc (handle_new_connection): Netxx::Address.get_name()
+	returns NULL every now and then. if so, continue with "" instead
+
+	* sqlite/parse.c: move #line under all #include directives so
+	the compiler can't be confused by it.
+
+2006-02-14  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (htmldir): Add variables so monotone.html is created
+	and installed automatically.
+	This is prompted by debian/monotone.html, which indicates
+	monotone.html should be available.
+
+	* netsync.cc (serve_connections): Correct spelling.
+
+2006-02-13  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sanity.cc (sanity::dump_buffer): Fix a SEGV when we're in an
+	error unwind and about to ask the user to mail us the crash
+	log--we must use FL() rather than F() here, since by the time this
+	is called we can't rely on the i18n infrastructure being alive.
+
 2006-02-12  Nathaniel Smith  <njs@pobox.com>
 
 	* netsync.cc (serve_connections): Revert garbage that I

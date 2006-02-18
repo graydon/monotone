@@ -73,6 +73,7 @@ public:
   system_path confdir;
   bool have_set_key_dir;
   std::set<std::string> attrs_to_drop;
+  bool no_files;
 
   std::map<int, bool> explicit_option_map;  // set if the value of the flag was explicitly given on the command line
   void set_is_explicit_option (int option_id);

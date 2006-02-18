@@ -241,6 +241,9 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(LUA_SOURCES) \
 			$(SQLITE_SOURCES)
 
+htmldir = $(datadir)/doc/monotone
+html_DATA = monotone.html
+
 # flags
 
 if BUILD_PCH

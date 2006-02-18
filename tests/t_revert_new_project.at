@@ -1,0 +1,32 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([revert file in new project])
+
+AT_XFAIL_IF(true)
+
+MONOTONE_SETUP
+
+
+# reverting one of one files
+AT_DATA(testfile0, [version 0 of first test file
+])
+
+AT_CHECK(MONOTONE add testfile0, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert testfile0, [], [ignore], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(grep testfile0 stdout, [1], [ignore])
+
+
+# reverting one of two files
+AT_DATA(testfile0, [version 0 of first test file
+])
+AT_DATA(testfile1, [version 0 of second test file
+])
+
+AT_CHECK(MONOTONE add testfile0 testfile1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert testfile0, [], [ignore], [ignore])
+AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(grep testfile0 stdout, [1], [ignore])
+
+
+AT_CLEANUP
