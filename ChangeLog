@@ -1,5 +1,9 @@
 2006-02-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* sqlite/parse.h: Regenerated parse.h from pristine SQLite 3.3.4
+	source.  The version committed in the 3.3.4 import had a bunch of
+	duplicate entries.
+
 	* commands.cc (CMD(identify)): This isn't really a "workspace"
 	command--stick it under "debug" for lack of a better place.
 
