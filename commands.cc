@@ -1339,7 +1339,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
 }
 
 
-CMD(identify, N_("workspace"), N_("[PATH]"),
+CMD(identify, N_("debug"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
     OPT_NONE)
 {

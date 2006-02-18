@@ -1,5 +1,8 @@
 2006-02-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* commands.cc (CMD(identify)): This isn't really a "workspace"
+	command--stick it under "debug" for lack of a better place.
+
 	* commands.cc (CMD(refresh_inodeprints)): Check for a valid
 	workspace rather than failing with an invariant when run outside
 	of a workspace.
