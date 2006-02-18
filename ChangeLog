@@ -1,5 +1,10 @@
 2006-02-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_db_kill_rev_locally_2.at: Add an XFAIL test for a
+	kill_rev_locally bug reported by Daniel Carasone.
+
+	* testsuite.at: Add t_db_kill_rev_locally_2.at.
+
 	* sqlite/parse.h: Regenerated parse.h from pristine SQLite 3.3.4
 	source.  The version committed in the 3.3.4 import had a bunch of
 	duplicate entries.
