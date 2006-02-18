@@ -3214,6 +3214,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
     OPT_NONE)
 {
+  app.require_workspace();
   enable_inodeprints();
   maybe_update_inodeprints(app);
 }

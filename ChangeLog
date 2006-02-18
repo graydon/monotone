@@ -1,5 +1,9 @@
 2006-02-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* commands.cc (CMD(refresh_inodeprints)): Check for a valid
+	workspace rather than failing with an invariant when run outside
+	of a workspace.
+
 	* tests/t_revert_new_project.at: Add an XFAIL test for a bug where
 	reverting a file added in a new project will leave the workspace
 	in a bad state until MT/work is removed manually.
