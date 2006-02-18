@@ -1,5 +1,11 @@
 2006-02-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_revert_new_project.at: Add an XFAIL test for a bug where
+	reverting a file added in a new project will leave the workspace
+	in a bad state until MT/work is removed manually.
+
+	* testsuite.at: Add t_revert_new_project.at.
+
 	* app_state.cc, app_state.hh, commands.cc, monotone.cc,
 	options.hh: Add '--no-files' option to log to allow users to
 	exclude the list of files changed in each revision from the log
