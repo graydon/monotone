@@ -1,0 +1,41 @@
+AT_SETUP([log --no-files and --merges])
+MONOTONE_SETUP
+
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+R1=`BASE_REVISION`
+
+# check that changed (added) file is listed in the log output
+AT_CHECK(MONOTONE log, [], [stdout], [ignore])
+AT_CHECK(grep testfile stdout, [], [ignore])
+
+# and that it has been excluded by --no-files
+AT_CHECK(MONOTONE log --no-files, [], [stdout], [ignore])
+AT_CHECK(grep testfile stdout, [1], [ignore])
+
+# add create some divergence...
+SET_FILE(testfile, [stuff stuff
+])
+COMMIT(testbranch)
+
+REVERT_TO($R1)
+
+ADD_FILE(nufile, [moo moo
+])
+COMMIT(testbranch)
+
+# ...and now merge it cleanly
+AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+R2=`BASE_REVISION`
+
+# check that merge is excluded from log output
+AT_CHECK(MONOTONE log, [], [stdout], [ignore])
+AT_CHECK(grep '^Revision' stdout | grep $R2, [1], [ignore])
+
+# and that it has been included by --merges
+AT_CHECK(MONOTONE log --merges, [], [stdout], [ignore])
+AT_CHECK(grep '^Revision' stdout | grep $R2, [], [ignore])
+
+AT_CLEANUP
