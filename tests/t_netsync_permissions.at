@@ -69,7 +69,7 @@ AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 AT_CHECK(cp test.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r keys/ keys2)
-REVERT_TO($BASE)
+REVERT_N_TO(2, $BASE)
 ADD_FILE(default, [default
 ])
 AT_CHECK(MONOTONE2 commit --message default, [], [ignore], [ignore])
@@ -78,7 +78,7 @@ NETSYNC_CLIENT_RUN(push, testbranch)
 
 # push with other key
 
-REVERT_TO($BASE)
+REVERT_N_TO(2, $BASE)
 ADD_FILE(other, [other
 ])
 AT_CHECK(MONOTONE2 commit --message other, [], [ignore], [ignore])
@@ -87,7 +87,7 @@ NETSYNC_CLIENT_RUN(push --key=$OTHER , testbranch)
 
 # push with unknown key fails
 
-REVERT_TO($BASE)
+REVERT_N_TO(2, $BASE)
 ADD_FILE(unknown, [unknown
 ])
 AT_CHECK(MONOTONE2 commit --message unknown, [], [ignore], [ignore])
@@ -164,7 +164,7 @@ AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 AT_CHECK(cp test.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r keys/ keys2)
-REVERT_TO($BASE)
+REVERT_N_TO(2, $BASE)
 ADD_FILE(default, [default
 ])
 AT_CHECK(MONOTONE2 commit --message default, [], [ignore], [ignore])
@@ -173,7 +173,7 @@ NETSYNC_CLIENT_RUN(push, testbranch)
 
 # push with other key
 
-REVERT_TO($BASE)
+REVERT_N_TO(2, $BASE)
 ADD_FILE(other, [other
 ])
 AT_CHECK(MONOTONE2 commit --message other, [], [ignore], [ignore])
@@ -182,7 +182,7 @@ NETSYNC_CLIENT_RUN(push --key=$OTHER, testbranch, [1])
 
 # push with unknown key fails
 
-REVERT_TO($BASE)
+REVERT_N_TO(2, $BASE)
 ADD_FILE(unknown, [unknown
 ])
 AT_CHECK(MONOTONE2 commit --message unknown, [], [ignore], [ignore])

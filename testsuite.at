@@ -209,6 +209,17 @@ AT_CHECK(test $PROBE_R_SHA = $2)
 AT_CHECK(test $PROBE_F_SHA = $3)
 ])
 
+# run as REVERT_N_TO(2|3, rsha[, branch])
+m4_define([REVERT_N_TO], [
+AT_CHECK(rm -rf MT.old)
+AT_CHECK(mv  MT MT.old)
+m4_case([$3],
+        [], [AT_CHECK(MONOTONE$1 checkout --revision=$2 ., [], [ignore])],
+        [AT_CHECK(MONOTONE$1 --branch=$3 checkout --revision=$2 ., [], [ignore])])
+PROBE_R_SHA=`BASE_REVISION`
+AT_CHECK(test $PROBE_R_SHA = $2)
+])
+
 # run as REVERT_TO(rsha[,branch])
 m4_define([REVERT_TO], [ 
 AT_CHECK(rm -rf MT.old)
