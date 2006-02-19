@@ -10,6 +10,10 @@
 
 2006-02-19  Nathaniel Smith  <njs@pobox.com>
 
+	* roster_merge.cc (make_lifecycle_objs): Fix test bug.
+
+2006-02-19  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.cc (shallow_equal): Publically expose.
 	* roster.cc, roster_merge.cc: Various compile fixes.
 	
