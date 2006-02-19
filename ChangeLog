@@ -8,6 +8,28 @@
 	
 2006-02-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* cset.hh (struct editable_tree): Add commit() member function to
+	editable_tree.
+
+	* cset.cc (cset::apply_to): Call editable_tree::commit() after
+	applying any other changes.
+
+	* roster.hh, roster.cc: Empty implementation of
+	editable_roster_base::commit().
+
+	* work.hh, work.cc: Implementation of
+	editable_working_tree::commit() that ensures all detached nodes
+	have been reattached.
+
+	* work.hh (struct editable_working_tree): Add map for tracking
+	path name mappings across node detach operations.
+
+	* work.cc (editable_working_tree::detach_node): Insert path name
+	mappings into map.
+	(editable_working_tree::drop_detached_node,
+	editable_working_tree::attach_node): Report add/drop/rename
+	operations during workspace updates.
+
 	* lua.cc: Use the safer luaL_check* rather than lua_to* in
 	monotone_*_for_lua functions.
 

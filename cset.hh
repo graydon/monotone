@@ -46,6 +46,8 @@ struct editable_tree
                         attr_key const & name,
                         attr_value const & val) = 0;
 
+  virtual void commit() = 0;
+
   virtual ~editable_tree() {}
 };
 
