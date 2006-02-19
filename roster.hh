@@ -280,6 +280,7 @@ public:
   virtual void set_attr(split_path const & pth,
                         attr_key const & name,
                         attr_value const & val);
+  virtual void commit();
 protected:
   roster_t & r;
   node_id_source & nis;

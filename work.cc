@@ -755,6 +755,7 @@ editable_working_tree::detach_node(split_path const & src)
   node_id nid = next_nid++;
   file_path src_pth(src);
   bookkeeping_path dst_pth = path_for_nid(nid);
+  safe_insert(rename_add_drop_map, make_pair(dst_pth, src_pth));
   make_dir_for(dst_pth);
   move_path(src_pth, dst_pth);
   return nid;
@@ -764,6 +765,11 @@ void
 editable_working_tree::drop_detached_node(node_id nid)
 {
   bookkeeping_path pth = path_for_nid(nid);
+  std::map<bookkeeping_path, file_path>::const_iterator i 
+    = rename_add_drop_map.find(pth);
+  I(i != rename_add_drop_map.end());
+  P(F("dropping %s") % i->second);
+  safe_erase(rename_add_drop_map, pth);
   delete_file_or_dir_shallow(pth);
 }
 
@@ -812,6 +818,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
               if (i->second == dst_id)
                 return;
             }
+          P(F("adding %s") % dst_pth);
           file_data dat;
           source.get_file_content(i->second, dat);
           write_localized_data(dst_pth, dat.inner(), app.lua);
@@ -835,6 +842,15 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
         return;
       break;
     }
+  std::map<bookkeeping_path, file_path>::const_iterator i
+    = rename_add_drop_map.find(src_pth);
+  if (i != rename_add_drop_map.end())
+    {
+      P(F("renaming %s to %s") % i->second % dst_pth);
+      safe_erase(rename_add_drop_map, src_pth);
+    }
+  else
+    P(F("adding %s") % dst_pth);
   // This will complain if the move is actually impossible
   move_path(src_pth, dst_pth);
 }
@@ -875,6 +891,12 @@ editable_working_tree::set_attr(split_path const & pth,
                                 attr_value const & val)
 {
   // FIXME_ROSTERS: call a lua hook
+}
+
+void
+editable_working_tree::commit()
+{
+  I(rename_add_drop_map.empty());
 }
 
 editable_working_tree::~editable_working_tree()

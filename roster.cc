@@ -982,6 +982,11 @@ editable_roster_base::set_attr(split_path const & pth,
   r.set_attr(pth, name, val);
 }
 
+void
+editable_roster_base::commit()
+{
+}
+
 namespace 
 {
   struct true_node_id_source 
