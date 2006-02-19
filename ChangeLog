@@ -1,3 +1,7 @@
+2005-10-19  Matthew A. Nicholson  <matt@matt-land.com>
+
+	* contrib/monotone.bash_completion: Update for 0.25.
+	
 2006-02-18  Markus Schiltknecht  <markus@bluegap.ch>
 
 	* tests/t_cvsimport_branch.at, testsuite.at: New XFAIL test for
