@@ -169,6 +169,10 @@ namespace
         result = left;
         return true;
       }
+    MM(left_marks);
+    MM(left_uncommon_ancestors);
+    MM(right_marks);
+    MM(right_uncommon_ancestors);
     bool left_wins = a_wins(right_marks, right_uncommon_ancestors);
     bool right_wins = a_wins(left_marks, left_uncommon_ancestors);
     // two bools means 4 cases:
@@ -631,8 +635,8 @@ make_lifecycle_objs(roster_t & r, marking_map & markings, revision_id uncommon,
                     std::string const & name, node_id common_dir_nid, node_id common_file_nid,
                     node_id & safe_dir_nid, node_id & safe_file_nid, node_id_source & nis)
 {
-  make_dir(r, markings, common1, common1, name + "_old_dir", common_dir_nid);
-  make_file(r, markings, common1, common1, common1, name + "_old_file", fid1, common_file_nid);
+  make_dir(r, markings, common1, common1, "common_old_dir", common_dir_nid);
+  make_file(r, markings, common1, common1, common1, "common_old_file", fid1, common_file_nid);
   safe_dir_nid = nis.next();
   make_dir(r, markings, uncommon, uncommon, name + "_safe_dir", safe_dir_nid);
   safe_file_nid = nis.next();
