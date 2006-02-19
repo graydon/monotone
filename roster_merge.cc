@@ -14,12 +14,8 @@
 bool
 roster_merge_result::is_clean()
 {
-  return node_name_conflicts.empty()
-    && file_content_conflicts.empty()
-    && node_attr_conflicts.empty()
-    && orphaned_node_conflicts.empty()
-    && rename_target_conflicts.empty()
-    && directory_loop_conflicts.empty();
+  return is_clean_except_for_content()
+    && file_content_conflicts.empty();
 }
 
 bool
@@ -35,7 +31,7 @@ roster_merge_result::is_clean_except_for_content()
 void
 roster_merge_result::log_conflicts()
 {
-  L(FL("unclean mark-merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
+  L(FL("unclean roster_merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
        "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
     % node_name_conflicts.size()
     % file_content_conflicts.size()
@@ -538,3 +534,48 @@ roster_merge(roster_t const & left_parent,
   // FIXME: looped nodes here
 }
 
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+
+// cases for testing:
+// 
+// lifecycle, file and dir
+//    alive in both
+//    alive in one and unborn in other (left vs. right)
+//    alive in one and dead in other (left vs. right)
+// 
+// mark merge:
+//   same in both, same mark
+//   same in both, diff marks
+//   different, left wins with 1 mark
+//   different, right wins with 1 mark
+//   different, conflict
+// for:
+//   node name, name and parent, file and dir
+//   file content
+//   node attr, file and dir
+//
+// attr lifecycle:
+//   seen in both -- -->mark merge cases
+//   live in one and unseen in other
+//   dead in one and unseen in other
+//
+// two diff nodes with same name
+// directory loops
+// orphans
+// name collision on root dir
+//
+// interactions:
+//   in-node name conflict + possible between-node name conflict
+//   in-node name conflict + both possible names orphaned
+//   in-node name conflict + directory loop conflict
+//   between-node name conflict + both nodes orphaned
+//   between-node name conflict + both nodes cause loop
+
+void
+add_roster_merge_tests(test_suite * suite)
+{
+  I(suite);
+}
+
+#endif // BUILD_UNIT_TESTS

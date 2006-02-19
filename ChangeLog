@@ -5,8 +5,28 @@
 
 2006-02-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_log_nofiles_merges.at: Add test for the log options
+	--no-files and --merges.
+
+	* testsuite.at: Add t_log_nofiles_merges.at.
+
+2006-02-13  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc (log_conflicts): Tweak string.
+	Add list of tests needed.
+
+2006-02-13  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc (is_clean): Simplify.
+	(add_roster_merge_tests): 
+	* unit_tests.cc (init_unit_test_suite): 
+	* unit_tests.hh (add_roster_merge_tests): Add unit test
+	boilerplate.
+
+2006-02-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
 	* tests/t_db_kill_rev_locally_2.at: Add an XFAIL test for a
-	kill_rev_locally bug reported by Daniel Carasone.
+	kill_rev_locally bug reported by Daniel Carosone.
 
 	* testsuite.at: Add t_db_kill_rev_locally_2.at.
 
