@@ -1,5 +1,11 @@
 2006-02-19  Nathaniel Smith  <njs@pobox.com>
 
+	* roster_merge.{hh,cc}: Make terminology more consistent.
+	"marking_map" type -> "markings" name, "marking_t" type ->
+	"marking" name.
+	
+2006-02-19  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.{hh,cc} (testing_node_id_source): Make this node source
 	available to unit tests in other files.
 	* roster_merge.cc (test_roster_merge_node_lifecycle): New test.

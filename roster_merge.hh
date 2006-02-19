@@ -116,10 +116,10 @@ struct roster_merge_result
 
 void
 roster_merge(roster_t const & left_parent,
-             marking_map const & left_marking,
+             marking_map const & left_markings,
              std::set<revision_id> const & left_uncommon_ancestors,
              roster_t const & right_parent,
-             marking_map const & right_marking,
+             marking_map const & right_markings,
              std::set<revision_id> const & right_uncommon_ancestors,
              roster_merge_result & result);
 

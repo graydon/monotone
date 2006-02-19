@@ -210,11 +210,11 @@ namespace
   
   inline void
   insert_if_unborn(node_t const & n,
-                   marking_map const & marking,
+                   marking_map const & markings,
                    std::set<revision_id> const & uncommon_ancestors,
                    roster_t & new_roster)
   {
-    revision_id const & birth = safe_get(marking, n->self).birth_revision;
+    revision_id const & birth = safe_get(markings, n->self).birth_revision;
     if (uncommon_ancestors.find(birth) != uncommon_ancestors.end())
       create_node_for(n, new_roster);
   }
@@ -329,19 +329,18 @@ namespace
 
 void
 roster_merge(roster_t const & left_parent,
-             marking_map const & left_marking,
+             marking_map const & left_markings,
              std::set<revision_id> const & left_uncommon_ancestors,
              roster_t const & right_parent,
-             marking_map const & right_marking,
+             marking_map const & right_markings,
              std::set<revision_id> const & right_uncommon_ancestors,
              roster_merge_result & result)
 {
-
   result.clear();
   MM(left_parent);
-  MM(left_marking);
+  MM(left_markings);
   MM(right_parent);
-  MM(right_marking);
+  MM(right_markings);
   MM(result.roster);
   
   // First handle lifecycles, by die-die-die merge -- our result will contain
@@ -358,13 +357,13 @@ roster_merge(roster_t const & left_parent,
 
           case parallel::in_left:
             insert_if_unborn(i.left_data(),
-                             left_marking, left_uncommon_ancestors,
+                             left_markings, left_uncommon_ancestors,
                              result.roster);
             break;
 
           case parallel::in_right:
             insert_if_unborn(i.right_data(),
-                             right_marking, right_uncommon_ancestors,
+                             right_markings, right_uncommon_ancestors,
                              result.roster);
             break;
 
@@ -381,8 +380,8 @@ roster_merge(roster_t const & left_parent,
     node_map::const_iterator left_i, right_i;
     parallel::iter<node_map> i(left_parent.all_nodes(), right_parent.all_nodes());
     node_map::const_iterator new_i = result.roster.all_nodes().begin();
-    marking_map::const_iterator left_mi = left_marking.begin();
-    marking_map::const_iterator right_mi = right_marking.begin();
+    marking_map::const_iterator left_mi = left_markings.begin();
+    marking_map::const_iterator right_mi = right_markings.begin();
     while (i.next())
       {
         switch (i.state())
@@ -526,8 +525,8 @@ roster_merge(roster_t const & left_parent,
             break;
           }
       }
-    I(left_mi == left_marking.end());
-    I(right_mi == right_marking.end());
+    I(left_mi == left_markings.end());
+    I(right_mi == right_markings.end());
     I(new_i == result.roster.all_nodes().end());
   }
 }
