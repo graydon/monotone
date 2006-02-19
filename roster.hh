@@ -343,5 +343,17 @@ void
 write_manifest_of_roster(roster_t const & ros,
                          data & dat);
 
+#ifdef BUILD_UNIT_TESTS
+
+struct testing_node_id_source 
+  : public node_id_source
+{
+  testing_node_id_source();
+  virtual node_id next();
+  node_id curr;
+};
+
+#endif // BUILD_UNIT_TESTS
+
 #endif
 

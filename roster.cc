@@ -2877,19 +2877,18 @@ change_automaton
   }
 };
 
-struct testing_node_id_source 
-  : public node_id_source
+testing_node_id_source()
+  : curr(first_node)
+{}
+
+node_id
+testing_node_id_source::next()
 {
-  testing_node_id_source() : curr(first_node) {}
-  virtual node_id next()
-  {
-    // L(FL("creating node %x\n") % curr);
-    node_id n = curr++;
-    I(!temp_node(n));
-    return n;
-  }
-  node_id curr;
-};
+  // L(FL("creating node %x\n") % curr);
+  node_id n = curr++;
+  I(!temp_node(n));
+  return n;
+}
 
 template <> void
 dump(int const & i, std::string & out)

@@ -547,7 +547,12 @@ roster_merge(roster_t const & left_parent,
 //   same in both, diff marks
 //   different, left wins with 1 mark
 //   different, right wins with 1 mark
-//   different, conflict
+//   different, conflict with 1 mark
+//   different, left wins with 2 marks
+//   different, right wins with 2 marks
+//   different, conflict with 1 mark winning, 1 mark losing
+//   different, conflict with 2 marks both conflicting
+//
 // for:
 //   node name, name and parent, file and dir
 //   file content
@@ -570,10 +575,122 @@ roster_merge(roster_t const & left_parent,
 //   between-node name conflict + both nodes orphaned
 //   between-node name conflict + both nodes cause loop
 
+// need roster, marking, birth revs, and uncommon ancestors for each side...
+
+namespace
+{
+  const revision_id a_uncommon1 = revision_id(std::string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  const revision_id a_uncommon2 = revision_id(std::string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+  const revision_id b_uncommon1 = revision_id(std::string("cccccccccccccccccccccccccccccccccccccccc"));
+  const revision_id b_uncommon2 = revision_id(std::string("dddddddddddddddddddddddddddddddddddddddd"));
+  const revision_id common1 = revision_id(std::string("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"));
+  const revision_id common2 = revision_id(std::string("ffffffffffffffffffffffffffffffffffffffff"));
+
+  const file_id fid1 = file_id(std::string("1111111111111111111111111111111111111111"));
+  const file_id fid2 = file_id(std::string("2222222222222222222222222222222222222222"));
+
+  split_path
+  split(std::string const & s)
+  {
+    split_path sp;
+    file_path_internal(s).split(sp);
+    return sp;
+  }
+}
+
+static void
+make_dir(roster_t & r, marking_map & markings,
+         revision_id const & birth_rid, revision_id const & parent_name_rid,
+         std::string const & name, node_id nid)
+{
+  r.create_dir_node(nid);
+  r.attach_node(nid, split(name));
+  marking_t marking;
+  marking.birth_revision = birth_rid;
+  marking.parent_name.insert(parent_name_rid);
+  safe_insert(markings, std::make_pair(nid, marking));
+}
+
+static void
+make_file(roster_t & r, marking_map & markings,
+          revision_id const & birth_rid, revision_id const & parent_name_rid,
+          revision_id const & file_content_rid,
+          std::string const & name, file_id const & content,
+          node_id nid)
+{
+  r.create_file_node(content, nid);
+  r.attach_node(nid, split(name));
+  marking_t marking;
+  marking.birth_revision = birth_rid;
+  marking.parent_name.insert(parent_name_rid);
+  marking.contain.file_content.insert(file_content_rid);
+  safe_insert(markings, std::make_pair(nid, marking));
+}
+
+static void
+make_lifecycle_objs(roster_t & r, marking_map & markings, revision_id uncommon,
+                    std::string const & name, node_id common_dir_nid, node_id common_file_nid,
+                    node_id & safe_dir_nid, node_id & safe_file_nid, node_id_source & nis)
+{
+  make_dir(r, markings, common1, common1, name + "_old_dir", common_dir_nid);
+  make_file(r, markings, common1, common1, name + "_old_file", common_file_nid);
+  safe_dir_nid = nis.next();
+  make_dir(r, markings, uncommon, uncommon, name + "_safe_dir", safe_dir_nid);
+  safe_file_nid = nis.next();
+  make_file(r, markings, uncommon, uncommon, uncommon, name + "_safe_file", fid1, safe_file_nid);
+  make_dir(r, markings, common1, common1, name + "_dead_dir", nis.next());
+  make_file(r, markings, common1, common1, common1, name + "_dead_file", fid1, nis.next());
+}
+
+
+static void
+test_roster_merge_node_lifecycle()
+{
+  roster_t a_roster, b_roster;
+  marking_map a_markings, b_markings;
+  std::set<revision_id> a_uncommon, b_uncommon;
+  // boilerplate to get uncommon revision sets...
+  a_uncommon.insert(a_uncommon1);
+  a_uncommon.insert(a_uncommon2);
+  b_uncommon.insert(b_uncommon1);
+  b_uncommon.insert(b_uncommon2);
+  testing_node_id_source nis;
+  // boilerplate to set up a root node...
+  {
+    node_id root_nid = nis.next();
+    make_dir(a_roster, a_markings, common1, common1, "", root_nid);
+    make_dir(b_roster, b_markings, common1, common1, "", root_nid);
+  }
+  // create some nodes on each side
+  node_id common_dir_nid = nis.next();
+  node_id common_file_nid = nis.next();
+  node_id a_safe_dir_nid, a_safe_file_nid, b_safe_dir_nid, b_safe_file_nid;
+  make_lifecycle_objs(a_roster, a_markings, a_uncommon1, "a", common_dir_nid, common_file_nid,
+                      a_safe_dir_nid, a_safe_file_nid, nis);
+  make_lifecycle_objs(b_roster, b_markings, b_uncommon1, "b", common_dir_nid, common_file_nid,
+                      b_safe_dir_nid, b_safe_file_nid, nis);
+  // do the merge
+  roster_merge_result result;
+  roster_merge(a_roster, a_markings, a_uncommon, b_roster, b_markings, b_uncommon, result);
+  I(result.clean());
+  // 7 = 1 root + 2 common + 2 safe a + 2 safe b
+  I(result.roster.all_nodes().size() == 7);
+  // check that they're the right ones...
+  I(*result.roster.get_node(common_dir_nid) == *a_roster.get_node(common_dir_nid));
+  I(*result.roster.get_node(common_file_nid) == *a_roster.get_node(common_file_nid));
+  I(*result.roster.get_node(common_dir_nid) == *b_roster.get_node(common_dir_nid));
+  I(*result.roster.get_node(common_file_nid) == *b_roster.get_node(common_file_nid));
+  I(*result.roster.get_node(a_safe_dir_nid) == *a_roster.get_node(a_safe_dir_nid));
+  I(*result.roster.get_node(a_safe_file_nid) == *a_roster.get_node(a_safe_file_nid));
+  I(*result.roster.get_node(b_safe_dir_nid) == *b_roster.get_node(b_safe_dir_nid));
+  I(*result.roster.get_node(b_safe_file_nid) == *b_roster.get_node(b_safe_file_nid));
+}
+
 void
 add_roster_merge_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&test_roster_merge_node_lifecycle));
 }
 
 #endif // BUILD_UNIT_TESTS
