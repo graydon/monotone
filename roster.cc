@@ -2877,7 +2877,7 @@ change_automaton
   }
 };
 
-testing_node_id_source()
+testing_node_id_source::testing_node_id_source()
   : curr(first_node)
 {}
 

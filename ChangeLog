@@ -1,5 +1,10 @@
 2006-02-19  Nathaniel Smith  <njs@pobox.com>
 
+	* roster.cc (shallow_equal): Publically expose.
+	* roster.cc, roster_merge.cc: Various compile fixes.
+	
+2006-02-19  Nathaniel Smith  <njs@pobox.com>
+
 	* roster_merge.{hh,cc}: Make terminology more consistent.
 	"marking_map" type -> "markings" name, "marking_t" type ->
 	"marking" name.

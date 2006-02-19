@@ -622,7 +622,7 @@ make_file(roster_t & r, marking_map & markings,
   marking_t marking;
   marking.birth_revision = birth_rid;
   marking.parent_name.insert(parent_name_rid);
-  marking.contain.file_content.insert(file_content_rid);
+  marking.file_content.insert(file_content_rid);
   safe_insert(markings, std::make_pair(nid, marking));
 }
 
@@ -632,7 +632,7 @@ make_lifecycle_objs(roster_t & r, marking_map & markings, revision_id uncommon,
                     node_id & safe_dir_nid, node_id & safe_file_nid, node_id_source & nis)
 {
   make_dir(r, markings, common1, common1, name + "_old_dir", common_dir_nid);
-  make_file(r, markings, common1, common1, name + "_old_file", common_file_nid);
+  make_file(r, markings, common1, common1, common1, name + "_old_file", fid1, common_file_nid);
   safe_dir_nid = nis.next();
   make_dir(r, markings, uncommon, uncommon, name + "_safe_dir", safe_dir_nid);
   safe_file_nid = nis.next();
@@ -671,18 +671,26 @@ test_roster_merge_node_lifecycle()
   // do the merge
   roster_merge_result result;
   roster_merge(a_roster, a_markings, a_uncommon, b_roster, b_markings, b_uncommon, result);
-  I(result.clean());
+  I(result.is_clean());
   // 7 = 1 root + 2 common + 2 safe a + 2 safe b
   I(result.roster.all_nodes().size() == 7);
   // check that they're the right ones...
-  I(*result.roster.get_node(common_dir_nid) == *a_roster.get_node(common_dir_nid));
-  I(*result.roster.get_node(common_file_nid) == *a_roster.get_node(common_file_nid));
-  I(*result.roster.get_node(common_dir_nid) == *b_roster.get_node(common_dir_nid));
-  I(*result.roster.get_node(common_file_nid) == *b_roster.get_node(common_file_nid));
-  I(*result.roster.get_node(a_safe_dir_nid) == *a_roster.get_node(a_safe_dir_nid));
-  I(*result.roster.get_node(a_safe_file_nid) == *a_roster.get_node(a_safe_file_nid));
-  I(*result.roster.get_node(b_safe_dir_nid) == *b_roster.get_node(b_safe_dir_nid));
-  I(*result.roster.get_node(b_safe_file_nid) == *b_roster.get_node(b_safe_file_nid));
+  I(shallow_equal(result.roster.get_node(common_dir_nid),
+                  a_roster.get_node(common_dir_nid), false));
+  I(shallow_equal(result.roster.get_node(common_file_nid),
+                  a_roster.get_node(common_file_nid), false));
+  I(shallow_equal(result.roster.get_node(common_dir_nid),
+                  b_roster.get_node(common_dir_nid), false));
+  I(shallow_equal(result.roster.get_node(common_file_nid),
+                  b_roster.get_node(common_file_nid), false));
+  I(shallow_equal(result.roster.get_node(a_safe_dir_nid),
+                  a_roster.get_node(a_safe_dir_nid), false));
+  I(shallow_equal(result.roster.get_node(a_safe_file_nid),
+                  a_roster.get_node(a_safe_file_nid), false));
+  I(shallow_equal(result.roster.get_node(b_safe_dir_nid),
+                  b_roster.get_node(b_safe_dir_nid), false));
+  I(shallow_equal(result.roster.get_node(b_safe_file_nid),
+                  b_roster.get_node(b_safe_file_nid), false));
 }
 
 void

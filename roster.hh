@@ -143,6 +143,9 @@ downcast_to_file_t(node_t const n)
   return f;
 }
 
+bool
+shallow_equal(node_t a, node_t b, bool shallow_compare_dir_children);
+
 template <> void dump(node_t const & n, std::string & out);
 
 struct marking_t
