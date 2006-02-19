@@ -426,7 +426,7 @@ extern "C"
   {
     int fd = -1;
     FILE **pf = NULL;
-    char const *filename = lua_tostring (L, -1);
+    char const *filename = luaL_checkstring (L, -1);
     std::string dup(filename);
     
     fd = monotone_mkstemp(dup);
@@ -458,7 +458,7 @@ extern "C"
   static int
   monotone_existsonpath_for_lua(lua_State *L)
   {
-    const char *exe = lua_tostring(L, -1);
+    const char *exe = luaL_checkstring(L, -1);
     lua_pushnumber(L, existsonpath(exe));
     return 1;
   }
@@ -466,7 +466,7 @@ extern "C"
   static int
   monotone_is_executable_for_lua(lua_State *L)
   {
-    const char *path = lua_tostring(L, -1);
+    const char *path = luaL_checkstring(L, -1);
     lua_pushboolean(L, is_executable(path));
     return 1;
   }
@@ -474,7 +474,7 @@ extern "C"
   static int
   monotone_make_executable_for_lua(lua_State *L)
   {
-    const char *path = lua_tostring(L, -1);
+    const char *path = luaL_checkstring(L, -1);
     lua_pushnumber(L, make_executable(path));
     return 1;
   }
@@ -483,14 +483,14 @@ extern "C"
   monotone_spawn_for_lua(lua_State *L)
   {
     int n = lua_gettop(L);
-    const char *path = lua_tostring(L, -n);
+    const char *path = luaL_checkstring(L, -n);
     char **argv = (char**)malloc((n+1)*sizeof(char*));
     int i;
     pid_t ret;
     if (argv==NULL)
       return 0;
     argv[0] = (char*)path;
-    for (i=1; i<n; i++) argv[i] = (char*)lua_tostring(L, -(n - i));
+    for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, -(n - i));
     argv[i] = NULL;
     ret = process_spawn(argv);
     free(argv);
@@ -501,7 +501,7 @@ extern "C"
   static int
   monotone_wait_for_lua(lua_State *L)
   {
-    pid_t pid = (pid_t)lua_tonumber(L, -1);
+    pid_t pid = static_cast<pid_t>(luaL_checknumber(L, -1));
     int res;
     int ret;
     ret = process_wait(pid, &res);
@@ -514,10 +514,10 @@ extern "C"
   monotone_kill_for_lua(lua_State *L)
   {
     int n = lua_gettop(L);
-    pid_t pid = (pid_t)lua_tonumber(L, -2);
+    pid_t pid = static_cast<pid_t>(luaL_checknumber(L, -2));
     int sig;
     if (n>1)
-      sig = (int)lua_tonumber(L, -1);
+      sig = static_cast<int>(luaL_checknumber(L, -1));
     else
       sig = SIGTERM;
     lua_pushnumber(L, process_kill(pid, sig));
@@ -527,7 +527,7 @@ extern "C"
   static int
   monotone_sleep_for_lua(lua_State *L)
   {
-    int seconds = (int)lua_tonumber(L, -1);
+    int seconds = static_cast<int>(luaL_checknumber(L, -1));
     lua_pushnumber(L, process_sleep(seconds));
     return 1;
   }
@@ -535,7 +535,7 @@ extern "C"
   static int
   monotone_guess_binary_file_contents_for_lua(lua_State *L)
   {
-    const char *path = lua_tostring(L, -1);
+    const char *path = luaL_checkstring(L, -1);
     N(path, F("%s called with an invalid parameter") % "guess_binary");
 
     std::ifstream file(path, ios_base::binary);
@@ -564,7 +564,7 @@ extern "C"
   static int
   monotone_include_for_lua(lua_State *L)
   {
-    const char *path = lua_tostring(L, -1);
+    const char *path = luaL_checkstring(L, -1);
     N(path, F("%s called with an invalid parameter") % "Include");
     
     bool res =Lua(L)
@@ -579,7 +579,7 @@ extern "C"
   static int
   monotone_includedir_for_lua(lua_State *L)
   {
-    const char *pathstr = lua_tostring(L, -1);
+    const char *pathstr = luaL_checkstring(L, -1);
     N(pathstr, F("%s called with an invalid parameter") % "IncludeDir");
 
     fs::path locpath(pathstr, fs::native);
@@ -613,8 +613,8 @@ extern "C"
   static int
   monotone_regex_search_for_lua(lua_State *L)
   {
-    const char *re = lua_tostring(L, -2);
-    const char *str = lua_tostring(L, -1);
+    const char *re = luaL_checkstring(L, -2);
+    const char *str = luaL_checkstring(L, -1);
     boost::cmatch what;
 
     bool result = false;
@@ -632,8 +632,8 @@ extern "C"
   static int
   monotone_globish_match_for_lua(lua_State *L)
   {
-    const char *re = lua_tostring(L, -2);
-    const char *str = lua_tostring(L, -1);
+    const char *re = luaL_checkstring(L, -2);
+    const char *str = luaL_checkstring(L, -1);
 
     bool result = false;
     try {
@@ -661,7 +661,7 @@ extern "C"
   static int
   monotone_gettext_for_lua(lua_State *L)
   {
-    const char *msgid = lua_tostring(L, -1);
+    const char *msgid = luaL_checkstring(L, -1);
     lua_pushstring(L, gettext(msgid));
     return 1;
   }
@@ -685,7 +685,7 @@ extern "C"
   monotone_parse_basic_io_for_lua(lua_State *L)
   {
     vector<pair<string, vector<string> > > res;
-    const string str(lua_tostring(L, -1), lua_strlen(L, -1));
+    const string str(luaL_checkstring(L, -1), lua_strlen(L, -1));
     basic_io::input_source in(str, "monotone_parse_basic_io_for_lua");
     basic_io::tokenizer tok(in);
     try
