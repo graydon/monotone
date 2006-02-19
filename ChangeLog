@@ -1,3 +1,7 @@
+2006-02-18  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc (roster_merge): Remove obsolete FIXME.
+
 2005-10-19  Matthew A. Nicholson  <matt@matt-land.com>
 
 	* contrib/monotone.bash_completion: Update for 0.25.

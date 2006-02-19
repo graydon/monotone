@@ -530,8 +530,6 @@ roster_merge(roster_t const & left_parent,
     I(right_mi == right_marking.end());
     I(new_i == result.roster.all_nodes().end());
   }
-
-  // FIXME: looped nodes here
 }
 
 #ifdef BUILD_UNIT_TESTS
