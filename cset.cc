@@ -225,6 +225,8 @@ cset::apply_to(editable_tree & t) const
   for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = attrs_set.begin();
        i != attrs_set.end(); ++i)
     t.set_attr(i->first.first, i->first.second, i->second);
+
+  t.commit();
 }
 
 ////////////////////////////////////////////////////////////////////

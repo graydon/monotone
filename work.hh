@@ -201,6 +201,8 @@ struct editable_working_tree : public editable_tree
                         attr_key const & name,
                         attr_value const & val);
 
+  virtual void commit();
+
   virtual ~editable_working_tree();
 private:
   app_state & app;
