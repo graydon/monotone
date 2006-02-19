@@ -1,12 +1,15 @@
-2006-02-19  Matthew Gregan  <kinetik@orcon.net.nz>
+2006-02-19  Nathaniel Smith  <njs@pobox.com>
 
-	* testsuite.at: Add a REVERT_TO variant that allows use of
-	alternate databases.
+	* ChangeLog: Fixup after xxdiff lossage.
+
 2006-02-19  Nathaniel Smith  <njs@pobox.com>
 
 	* roster_merge.cc (make_lifecycle_objs): Fix test bug.
 
-2006-02-19  Nathaniel Smith  <njs@pobox.com>
+2006-02-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Add a REVERT_TO variant that allows use of
+	alternate databases.
 
 	* tests/t_netsync_permissions.at: Attempt to avoid a database
 	locking race in this test that is causing spurious failures by
