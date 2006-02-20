@@ -1,3 +1,10 @@
+2006-02-20  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (status, ls_known, find_unknown_and_ignored,
+	find_missing, commit, diff, revert, log): add excludes to restrictions
+	* restrictions.{cc,hh}: preliminary support for excludes and unit
+	tests to see if it works
+
 2006-02-13  Derek Scherger  <derek@echologic.com>
 
 	* app_state.{cc,hh}: 

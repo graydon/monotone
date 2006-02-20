@@ -1295,7 +1295,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
   app.require_working_copy();
   get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  restriction mask(args, old_roster, new_roster);
+  restriction mask(args, app.exclude_patterns, old_roster, new_roster);
 
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
@@ -1655,7 +1655,7 @@ ls_known(app_state & app, vector<utf8> const & args)
   app.require_working_copy();
   get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  restriction mask(args, new_roster);
+  restriction mask(args, app.exclude_patterns, new_roster);
 
   node_map const & nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
@@ -1683,7 +1683,7 @@ find_unknown_and_ignored(app_state & app, vector<utf8> const & args,
 
   get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  restriction mask(args, new_roster);
+  restriction mask(args, app.exclude_patterns, new_roster);
 
   new_roster.extract_path_set(known);
 
@@ -1716,7 +1716,7 @@ find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
 
   get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  restriction mask(args, new_roster);
+  restriction mask(args, app.exclude_patterns, new_roster);
 
   node_map const & nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
@@ -2306,7 +2306,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   app.require_working_copy();
   get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  restriction mask(args, old_roster, new_roster);
+  restriction mask(args, app.exclude_patterns, old_roster, new_roster);
 
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
@@ -2698,7 +2698,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       get_base_and_current_roster_shape(old_roster, new_roster, app);
       get_revision_id(old_rid);
 
-      restriction mask(args, old_roster, new_roster);
+      restriction mask(args, app.exclude_patterns, old_roster, new_roster);
 
       update_current_roster_from_filesystem(new_roster, mask, app);
       make_restricted_csets(old_roster, new_roster, included, excluded, mask);
@@ -2722,7 +2722,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       // FIXME: handle no ancestor case
       // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
 
-      restriction mask(args, old_roster, new_roster);
+      restriction mask(args, app.exclude_patterns, old_roster, new_roster);
       
       update_current_roster_from_filesystem(new_roster, mask, app);
       make_restricted_csets(old_roster, new_roster, included, excluded, mask);
@@ -2746,7 +2746,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.db.get_roster(r_old_id, old_roster);
       app.db.get_roster(r_new_id, new_roster);
 
-      restriction mask(args, old_roster, new_roster);
+      restriction mask(args, app.exclude_patterns, old_roster, new_roster);
       
       // FIXME: this is *possibly* a UI bug, insofar as we
       // look at the restriction name(s) you provided on the command
@@ -3277,7 +3277,9 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
 
   app.require_working_copy();
   
-  vector<utf8> restricted_args;
+  vector<utf8> includes;
+  vector<utf8> excludes;
+
   if (app.missing)
     {
       // --missing is a further filter on the files included by a restriction
@@ -3295,16 +3297,17 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
         {
           file_path fp(*i);
           L(F("missing files are '%s'") % fp);
-          restricted_args.push_back(fp.as_external());
+          includes.push_back(fp.as_external());
         }
     }
   else
     {
-      restricted_args = args;
+      includes = args;
+      excludes = app.exclude_patterns;
     }
 
   get_base_and_current_roster_shape(old_roster, new_roster, app);
-  restriction mask(restricted_args, old_roster, new_roster);
+  restriction mask(includes, excludes, old_roster, new_roster);
 
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
 
@@ -3527,7 +3530,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
       // FIXME_RESTRICTIONS: should this add paths from the rosters of all selected revs?
 
-      mask = restriction(args, old_roster, new_roster);
+      mask = restriction(args, app.exclude_patterns, old_roster, new_roster);
     }
 
   cert_name author_name(author_cert_name);

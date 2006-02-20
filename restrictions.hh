@@ -50,39 +50,49 @@ using std::vector;
 //
 // revision A ... included ... revision X ... excluded ... revision B
 
+// TODO: move these into the class below?!?
+enum path_state { explicit_include, explicit_exclude, implicit_include };
+  
+struct path_entry { 
+  path_state state;
+  int roster_count;
+  path_entry(path_state const s) : state(s), roster_count(0) {}
+};
+
+
 class restriction
 {
  public:
   restriction() {}
 
-  restriction(vector<utf8> const & args,
+  restriction(vector<utf8> const & includes,
+              vector<utf8> const & excludes,
               roster_t const & roster);
-
-  restriction(vector<utf8> const & args,
+  
+  restriction(vector<utf8> const & includes,
+              vector<utf8> const & excludes,
               roster_t const & roster1,
               roster_t const & roster2);
 
   bool includes(roster_t const & roster, node_id nid) const;
+
   bool includes(split_path const & sp) const;
-  bool empty() const { return restricted_node_map.empty(); }
 
+  bool empty() { return node_map.empty(); }
+
+  // explicit in the sense that the path was explicitly given on the command line
+  // implicit in the sense that parent directories are included for explicit paths
+  
  private:
-  // true in these two maps indicates an explicitly included node or path and
-  // explicitly included directories are recursive. alternatively, false in
-  // these maps indicated an implicitly included parent directory which is
-  // specifically required for the restriction but does not include any of its
-  // children
- 
-  map<node_id, bool> restricted_node_map;
-  map<split_path, bool> restricted_path_map;
 
-  path_set paths;
+  bool default_result;
 
-  path_set valid_paths;
+  // we maintain maps by node_id and also by split_path which is not
+  // particularly nice, but is required for checking unknown and ignored 
+  // files and used for tracking the paths that are known in the rosters
+  map<node_id, path_state> node_map;
+  map<split_path, path_entry> path_map;
 
-  void set_paths(vector<utf8> const & args);
-  void add_nodes(roster_t const & roster);
-  void check_paths();
 };
 
 #endif  // header guard
