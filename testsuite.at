@@ -231,6 +231,12 @@ PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA = $1)
 ])
 
+# run as ADD_N_FILE(2|3, filename, data)
+m4_define([ADD_N_FILE], [
+AT_DATA($2, $3)
+AT_CHECK(MONOTONE$1 add $2, [], [ignore], [ignore])
+])
+
 # run as ADD_FILE(filename, data)
 m4_define([ADD_FILE], [
 AT_DATA($1, $2)
