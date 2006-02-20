@@ -85,6 +85,7 @@ struct poptOption options[] =
 
     {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, gettext_noop("print debug log to stderr while running"), NULL},
     {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, gettext_noop("file to dump debugging log to, on failure"), NULL},
+    {"log", 0, POPT_ARG_STRING, &argstr, OPT_LOG, gettext_noop("file to write the log to"), NULL},
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, gettext_noop("suppress log and progress messages"), NULL},
     {"help", 'h', POPT_ARG_NONE, NULL, OPT_HELP, gettext_noop("display help message"), NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, gettext_noop("print version number, then exit"), NULL},
@@ -331,6 +332,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_DUMP:
               global_sanity.filename = system_path(argstr);
+              break;
+
+            case OPT_LOG:
+              ui.redirect_log_to(system_path(argstr));
               break;
 
             case OPT_DB_NAME:

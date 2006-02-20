@@ -7757,6 +7757,10 @@ Turn off normal progress messages.
 Dump debugging log to @i{<file>} on failure.
 @comment TROFF INPUT: .TP
 
+@item @b{--log=}@i{<file>}
+Redirect the log lines to to @i{<file>}.
+@comment TROFF INPUT: .TP
+
 @item @b{--nostd}
 Do not evaluate "standard" Lua hooks compiled into @b{monotone}.
 @comment TROFF INPUT: .TP
