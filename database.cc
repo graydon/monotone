@@ -1234,6 +1234,10 @@ database::remove_version(hexenc<id> const & target_id,
       }
   }
 
+  // no deltas are allowed to point to the target.
+  execute(query("DELETE from " + delta_table + " WHERE base = ?")
+          % text(target_id()));
+
   if (delta_exists(target_id, delta_table))
     {
       if (!older.empty())
@@ -1253,6 +1257,8 @@ database::remove_version(hexenc<id> const & target_id,
           for (map<hexenc<id>, data>::const_iterator i = older.begin();
                i != older.end(); ++i)
             {
+              if (delta_exists(i->first, delta_table))
+                continue;
               delta bypass_delta;
               diff(newer_data, i->second, bypass_delta);
               put_delta(i->first, newer_id, bypass_delta, delta_table);
@@ -1267,7 +1273,10 @@ database::remove_version(hexenc<id> const & target_id,
       I(exists(target_id, data_table));
       for (map<hexenc<id>, data>::const_iterator i = older.begin();
            i != older.end(); ++i)
-        put(i->first, i->second, data_table);
+        {
+          if (!exists(i->first, data_table))
+            put(i->first, i->second, data_table);
+        }
       execute(query("DELETE from " + data_table + " WHERE id = ?")
               % text(target_id()));
     }

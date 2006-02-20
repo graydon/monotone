@@ -1,8 +1,6 @@
 AT_SETUP([db kill_rev_locally command 2])
 MONOTONE_SETUP
 
-AT_XFAIL_IF(true)
-
 # start off with three revisions
 ADD_FILE(testfile, [blah blah
 ])

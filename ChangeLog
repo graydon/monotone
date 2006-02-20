@@ -1,3 +1,9 @@
+2006-02-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (remove_version): get rid of dangling deltas,
+	don't try to put data or deltas if they already exist.
+	* tests/t_db_kill_rev_locally_2.at: un-XFAIL
+
 2006-02-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* testsuite.at: Add an ADD_FILE variant that allows use of
