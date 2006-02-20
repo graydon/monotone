@@ -70,7 +70,7 @@ AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 AT_CHECK(cp test.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r keys/ keys2)
 REVERT_N_TO(2, $BASE)
-ADD_FILE(default, [default
+ADD_N_FILE(2, default, [default
 ])
 AT_CHECK(MONOTONE2 commit --message default, [], [ignore], [ignore])
 DEFAULT_REV=`BASE_REVISION`
@@ -79,7 +79,7 @@ NETSYNC_CLIENT_RUN(push, testbranch)
 # push with other key
 
 REVERT_N_TO(2, $BASE)
-ADD_FILE(other, [other
+ADD_N_FILE(2, other, [other
 ])
 AT_CHECK(MONOTONE2 commit --message other, [], [ignore], [ignore])
 OTHER_REV=`BASE_REVISION`
@@ -88,7 +88,7 @@ NETSYNC_CLIENT_RUN(push --key=$OTHER , testbranch)
 # push with unknown key fails
 
 REVERT_N_TO(2, $BASE)
-ADD_FILE(unknown, [unknown
+ADD_N_FILE(2, unknown, [unknown
 ])
 AT_CHECK(MONOTONE2 commit --message unknown, [], [ignore], [ignore])
 UNKNOWN_REV=`BASE_REVISION`
@@ -116,7 +116,7 @@ AT_CHECK(cp clean.db test.db)
 AT_CHECK(rm -r keys && cp -r clean_keys/ keys)
 AT_DATA(MT/revision [])
 
-ADD_FILE(testfile, [testfile
+ADD_N_FILE(2, testfile, [testfile
 ])
 AT_CHECK(MONOTONE --branch=testbranch commit --message testfile, [], [ignore], [ignore])
 BASE=`BASE_REVISION`
@@ -165,7 +165,7 @@ AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 AT_CHECK(cp test.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r keys/ keys2)
 REVERT_N_TO(2, $BASE)
-ADD_FILE(default, [default
+ADD_N_FILE(2, default, [default
 ])
 AT_CHECK(MONOTONE2 commit --message default, [], [ignore], [ignore])
 DEFAULT_REV=`BASE_REVISION`
@@ -174,7 +174,7 @@ NETSYNC_CLIENT_RUN(push, testbranch)
 # push with other key
 
 REVERT_N_TO(2, $BASE)
-ADD_FILE(other, [other
+ADD_N_FILE(2, other, [other
 ])
 AT_CHECK(MONOTONE2 commit --message other, [], [ignore], [ignore])
 OTHER_REV=`BASE_REVISION`
@@ -183,7 +183,7 @@ NETSYNC_CLIENT_RUN(push --key=$OTHER, testbranch, [1])
 # push with unknown key fails
 
 REVERT_N_TO(2, $BASE)
-ADD_FILE(unknown, [unknown
+ADD_N_FILE(2, unknown, [unknown
 ])
 AT_CHECK(MONOTONE2 commit --message unknown, [], [ignore], [ignore])
 UNKNOWN_REV=`BASE_REVISION`
