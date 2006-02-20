@@ -1,17 +1,3 @@
-2006-02-19  Matthew Gregan  <kinetik@orcon.net.nz>
-
-	* testsuite.at: Add a REVERT_TO variant that allows use of
-	alternate databases.
-
-	* tests/t_netsync_permissions.at: Attempt to avoid a database
-	locking race in this test that is causing spurious failures by
-	using the new REVERT_TO variant to cause revert to be performed
-	using the "client" database.
-
-2006-02-19  Nathaniel Smith  <njs@pobox.com>
-
-	* roster_merge.cc (make_lifecycle_objs): Fix test bug.
-
 2006-02-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* testsuite.at: Add an ADD_FILE variant that allows use of
