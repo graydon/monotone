@@ -1,3 +1,15 @@
+2006-02-20  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc (cpp_main), options.hh, ui.cc (redirect_log_to),
+	ui.hh (struct user_interface): Add --log option, to redirect the
+	log lines to a file.
+
+	* monotone.texi (OPTIONS): Document it.
+
+	* po/sv.po: Translate help for this option to Swedish.
+
+	* testsuite.at, tests/t_log_to_file.at: Test it.
+
 2006-02-20  Matt Johnston  <matt@ucc.asn.au>
 
 	* database.cc (remove_version): get rid of dangling deltas,

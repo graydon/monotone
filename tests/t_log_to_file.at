@@ -1,0 +1,17 @@
+# -*- Autoconf -*-
+
+AT_SETUP([check --log])
+
+MONOTONE_SETUP
+
+AT_DATA(input.txt, [random content
+])
+
+AT_CHECK(MONOTONE add input.txt, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE --branch=testbranch --log=log.log commit -m "test", [], [stdout], [ignore])
+
+AT_CHECK(QGREP('^monotone:' stdout), [1])
+AT_CHECK(QGREP('^monotone:' log.log), [0])
+
+AT_CLEANUP
