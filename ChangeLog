@@ -1,3 +1,7 @@
+2006-02-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (pid_file): newline-terminate the pid
+
 2006-02-21  Richard Levitte  <richard@levitte.org>
 
 	* contrib/usher.cc (server::set_hosts): Erasing the list node that
