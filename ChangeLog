@@ -1,3 +1,10 @@
+2006-02-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (server::set_hosts): Erasing the list node that
+	we're iterating on, then trying to go to the next node doesn't
+	work.  Save the iterator, then increment it before erasing the
+	node using the saved value.  No more segfaults.
+
 2006-02-20  Richard Levitte  <richard@levitte.org>
 
 	* monotone.cc (cpp_main), options.hh, ui.cc (redirect_log_to),

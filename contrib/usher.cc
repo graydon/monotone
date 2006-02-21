@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // Timothy Brownawell  <tbrownaw@gmail.com>
 // GPL v2
 //
@@ -691,10 +692,16 @@ struct server
       c = servers_by_host.find(*i);
       if (c != servers_by_host.end()) {
         list<map<string, shared_ptr<server> >::iterator>::iterator j;
-        for (j = c->second->by_host.begin(); j != c->second->by_host.end(); ++j)
-          if ((*j)->first == *i) {
-            servers_by_host.erase(*j);
-            c->second->by_host.erase(j);
+        for (j = c->second->by_host.begin(); j != c->second->by_host.end();)
+          {
+            list<map<string, shared_ptr<server> >::iterator>::iterator j_saved
+              = j;
+            ++j;
+            if ((*j_saved)->first == *i)
+              {
+                servers_by_host.erase(*j_saved);
+                c->second->by_host.erase(j_saved);
+              }
           }
       }
       c = servers_by_host.insert(make_pair(*i, me)).first;
