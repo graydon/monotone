@@ -5,6 +5,11 @@
 	work.  Save the iterator, then increment it before erasing the
 	node using the saved value.  No more segfaults.
 
+2006-02-21  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sanity.hh: Work around roster_merge.cc compilation failure with
+	GCC 3.4.
+
 2006-02-20  Richard Levitte  <richard@levitte.org>
 
 	* monotone.cc (cpp_main), options.hh, ui.cc (redirect_log_to),
