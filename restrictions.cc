@@ -13,8 +13,12 @@
 #include "transforms.hh"
 
 using std::make_pair;
+using std::set;
 
 // TODO: add support for --depth (replace recursive boolean with depth value)
+// depth really only makes sense when one directory is specified however. it would
+// be much better to support foo/... style recursive paths
+
 // TODO: add check for relevant rosters to be used by log
 //
 // i.e.  as log goes back through older and older rosters it may hit one that
@@ -30,6 +34,54 @@ make_path_set(vector<utf8> const & args, path_set & paths)
       split_path sp;
       file_path_external(*i).split(sp);
       paths.insert(sp);
+    }
+}
+
+// FIXME: should we really be doing implicit includes of parents?
+static void
+get_parent_paths(path_set const & paths, path_set & parents) 
+{
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      split_path sp(*i);
+      sp.pop_back();
+      while (!sp.empty() && parents.find(sp) == parents.end())
+        {
+          parents.insert(sp);
+          sp.pop_back();
+        }
+    }
+}
+
+static void
+get_nodes(path_set const & paths, roster_t const & roster, 
+          set<node_id> & nodes, 
+          path_set & known_paths)
+{
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      if (roster.has_node(*i)) 
+        {
+          known_paths.insert(*i);
+          node_id nid = roster.get_node(*i)->self;
+          nodes.insert(nid);
+        }
+    }  
+}
+
+// FIXME: should we really be doing implicit includes of parents?
+static void
+get_parent_nodes(set<node_id> const & nodes, roster_t const & roster, set<node_id> & parents)
+{
+  for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      I(roster.has_node(*i));
+      node_id nid = roster.get_node(*i)->parent;
+      while (!null_node(nid))
+        {
+          parents.insert(nid);
+          nid = roster.get_node(nid)->parent;
+        }
     }
 }
 
@@ -51,6 +103,8 @@ merge_states(path_state const & old_state,
   else if (old_state == explicit_exclude && new_state == implicit_include ||
            old_state == implicit_include && new_state == explicit_exclude)
     {
+      // FIXME: should we really be doing implicit includes of parents?
+
       // allowing a mix of explicit excludes and implicit includes on a path is
       // rather questionable but is required by things like exclude x include
       // x/y. (i.e. includes within excludes) these are also somewhat
@@ -69,201 +123,124 @@ merge_states(path_state const & old_state,
 }
 
 static void
-update_path_map(map<split_path, path_entry> & path_map, split_path const & sp, path_state const state)
+add_paths(map<split_path, path_state> & path_map, path_set const & paths, path_state const state)
 {
-  map<split_path, path_entry>::iterator p = path_map.find(sp);
-  if (p != path_map.end())
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      path_state merged;
-      merge_states(p->second.state, state, merged, sp);
-      p->second.state = merged;
-    }
-  else
-    {
-      path_map.insert(make_pair(sp, path_entry(state)));
-    }
-}
-
-static void
-add_included_paths(map<split_path, path_entry> & path_map, path_set const & includes)
-{
-  for (path_set::const_iterator i = includes.begin(); i != includes.end(); ++i)
-    {
-      split_path sp(*i);
-      path_state state = explicit_include;
-
-      while (!sp.empty())
+      map<split_path, path_state>::iterator p = path_map.find(*i);
+      if (p != path_map.end())
         {
-          update_path_map(path_map, sp, state);
-          sp.pop_back();
-          state = implicit_include;
+          path_state merged;
+          merge_states(p->second, state, merged, *i);
+          p->second = merged;
         }
-
-    }
-}
-
-static void
-add_excluded_paths(map<split_path, path_entry> & path_map, path_set const & excludes)
-{
-  for (path_set::const_iterator i = excludes.begin(); i != excludes.end(); ++i)
-    {
-      update_path_map(path_map, *i, explicit_exclude);
-    }
-}
-
-static void
-update_node_map(map<node_id, path_state> & node_map, node_id const nid, split_path const & sp, path_state const state)
-{
-  map<node_id, path_state>::iterator n = node_map.find(nid);
-  if (n != node_map.end())
-    {
-      path_state merged;
-      merge_states(n->second, state, merged, sp);
-      n->second = merged;
-    }
-  else
-    {
-      node_map.insert(make_pair(nid, state));
-    }
-}
-
-static void
-add_included_nodes(map<node_id, path_state> & node_map, 
-                   map<split_path, path_entry> & path_map,
-                   path_set const & includes, 
-                   roster_t const & roster)
-{
-  for (path_set::const_iterator i = includes.begin(); i != includes.end(); ++i)
-    {
-
-      // TODO: (future) handle some sort of peg revision path syntax here.
-      // note that the idea of a --peg option doesn't work because each
-      // path may be relative to a different revision.
-
-      if (roster.has_node(*i)) 
+      else
         {
-
-          // FIXME: this may be better as a list of invalid paths
-          map<split_path, path_entry>::iterator p = path_map.find(*i);
-          I(p != path_map.end());
-
-          p->second.roster_count++;
-
-          // TODO: proper recursive wildcard paths like foo/...  
-          // for now explicit paths are recursive
-          // and implicit parents are non-recursive
-
-          // currently we need to insert the parents of included nodes so that
-          // the included nodes are not orphaned in a restricted roster.  this
-          // happens in cases like add "a" + add "a/b" when only "a/b" is
-          // included. i.e. "a" must be included for "a/b" to be valid. this
-          // isn't entirely sensible and should probably be revisited. it does
-          // match the current (old restrictions) semantics though.
-
-          node_id nid = roster.get_node(*i)->self;
-
-          path_state state = explicit_include;
-
-          while (!null_node(nid))
-            {
-              split_path sp;
-              roster.get_name(nid, sp);
-
-              update_node_map(node_map, nid, sp, state);
-
-              nid = roster.get_node(nid)->parent;
-              state = implicit_include;
-            }
+          path_map.insert(make_pair(*i, state));
         }
     }
 }
 
 static void
-add_excluded_nodes(map<node_id, path_state> & node_map, 
-                   map<split_path, path_entry> & path_map,
-                   path_set const & excludes, 
-                   roster_t const & roster)
+add_nodes(map<node_id, path_state> & node_map, 
+          roster_t const & roster,
+          set<node_id> const & nodes,
+          path_state const state)
 {
-  for (path_set::const_iterator i = excludes.begin(); i != excludes.end(); ++i)
+  for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
     {
+      I(roster.has_node(*i));
 
-      // TODO: (future) handle some sort of peg revision path syntax here.
-      // note that the idea of a --peg option doesn't work because each
-      // path may be relative to a different revision.
-
-      if (roster.has_node(*i)) 
+      map<node_id, path_state>::iterator n = node_map.find(*i);
+      if (n != node_map.end())
         {
-          // FIXME: this may be better as a list of invalid paths
-          map<split_path, path_entry>::iterator p = path_map.find(*i);
-          I(p != path_map.end());
-
-          p->second.roster_count++;
-
-          // TODO: proper recursive wildcard paths like foo/...  
-          // for now explicit paths are recursive
-          // and implicit parents are non-recursive
-
-          node_id nid = roster.get_node(*i)->self;
-
+          path_state merged;
           split_path sp;
-          roster.get_name(nid, sp);
-          update_node_map(node_map, nid, sp, explicit_exclude);
+          roster.get_name(*i, sp);
+          merge_states(n->second, state, merged, sp);
+          n->second = merged;
+        }
+      else
+        {
+          node_map.insert(make_pair(*i, state));
         }
     }
-
 }
 
 static void
-check_paths(map<split_path, path_entry> const & path_map)
+add_paths(map<split_path, path_state> & path_map,
+          path_set const & includes, 
+          path_set const & excludes)
+{
+  path_set parents;
+  get_parent_paths(includes, parents);
+
+  add_paths(path_map, includes, explicit_include);
+  add_paths(path_map, excludes, explicit_exclude);
+  add_paths(path_map, parents,  implicit_include);
+}
+
+static void
+add_nodes(map<node_id, path_state> & node_map,
+          roster_t const & roster, 
+          path_set const & includes, 
+          path_set const & excludes,
+          path_set & known_paths)
+{
+  set<node_id> included_nodes, excluded_nodes, parent_nodes;
+  get_nodes(includes, roster, included_nodes, known_paths);
+  get_nodes(excludes, roster, excluded_nodes, known_paths);
+  get_parent_nodes(included_nodes, roster, parent_nodes);
+
+  add_nodes(node_map, roster, included_nodes, explicit_include);
+  add_nodes(node_map, roster, excluded_nodes, explicit_exclude);
+  add_nodes(node_map, roster, parent_nodes,   implicit_include);
+}
+
+static void
+check_paths(path_set const & includes, path_set const & excludes, path_set const & known_paths)
 {
   int bad = 0;
 
-  for (map<split_path, path_entry>::const_iterator i = path_map.begin(); 
-       i != path_map.end(); ++i)
+  for (path_set::const_iterator i = includes.begin(); i != includes.end(); ++i)
     {
-      L(F("%d %d %s") % i->second.state % i->second.roster_count % i->first);
- 
-      if (i->second.state == explicit_include && i->second.roster_count == 0)
+      if (known_paths.find(*i) == known_paths.end())
         {
           bad++;
-          W(F("unknown path included %s") % i->first);
+          W(F("unknown path included %s") % *i);
         }
-      else if (i->second.state == explicit_exclude && i->second.roster_count == 0)
+    }
+
+  for (path_set::const_iterator i = excludes.begin(); i != excludes.end(); ++i)
+    {
+      if (known_paths.find(*i) == known_paths.end())
         {
           bad++;
-          W(F("unknown path excluded %s") % i->first);
+          W(F("unknown path excluded %s") % *i);
         }
     }
   
   N(bad == 0, F("%d unknown paths") % bad);
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // public constructors
 ////////////////////////////////////////////////////////////////////////////////
-
-// FIXME: add_paths and add_nodes should take the nodes to add and their state
-// includes/explicit_include, excludes/explicit_exclude, parents/implicit_include
-// then we need things to generate lists of parent paths and nodes
 
 restriction::restriction(vector<utf8> const & include_args,
                          vector<utf8> const & exclude_args,
                          roster_t const & roster)
 {
-  path_set includes, excludes;
+  path_set includes, excludes, known_paths;
   make_path_set(include_args, includes);
   make_path_set(exclude_args, excludes);
 
-  add_included_paths(path_map, includes);
-  add_excluded_paths(path_map, excludes);
-
-  add_included_nodes(node_map, path_map, includes, roster);
-  add_excluded_nodes(node_map, path_map, excludes, roster);
+  add_paths(path_map, includes, excludes);
+  add_nodes(node_map, roster, includes, excludes, known_paths);
 
   default_result = includes.empty();
 
-  check_paths(path_map);
+  check_paths(includes, excludes, known_paths);
 }
 
 restriction::restriction(vector<utf8> const & include_args,
@@ -271,24 +248,18 @@ restriction::restriction(vector<utf8> const & include_args,
                          roster_t const & roster1,
                          roster_t const & roster2)
 {
-  path_set includes, excludes;
+  path_set includes, excludes, known_paths;
   make_path_set(include_args, includes);
   make_path_set(exclude_args, excludes);
 
-  add_included_paths(path_map, includes);
-  add_excluded_paths(path_map, excludes);
-
-  add_included_nodes(node_map, path_map, includes, roster1);
-  add_excluded_nodes(node_map, path_map, excludes, roster1);
-
-  add_included_nodes(node_map, path_map, includes, roster2);
-  add_excluded_nodes(node_map, path_map, excludes, roster2);
+  add_paths(path_map, includes, excludes);
+  add_nodes(node_map, roster1, includes, excludes, known_paths);
+  add_nodes(node_map, roster2, includes, excludes, known_paths);
 
   default_result = includes.empty();
 
-  check_paths(path_map);
+  check_paths(includes, excludes, known_paths);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // public api
@@ -367,11 +338,11 @@ restriction::includes(split_path const & sp) const
 
   while (!current.empty())
     {
-      map<split_path, path_entry>::const_iterator r = path_map.find(current);
+      map<split_path, path_state>::const_iterator r = path_map.find(current);
 
       if (r != path_map.end())
         {
-          switch (r->second.state) 
+          switch (r->second) 
             {
             case explicit_include:
               L(F("explicit include of path '%s'") % file_path(sp));
@@ -901,6 +872,24 @@ test_invalid_paths()
   BOOST_CHECK_THROW(restriction(includes, excludes, roster), informative_failure);
 }
 
+static void
+test_get_parent_paths()
+{
+  path_set paths, parents;
+  split_path a, ab, abc;
+
+  file_path_internal("a").split(a);
+  file_path_internal("a/b").split(ab);
+  file_path_internal("a/b/c").split(abc);
+
+  paths.insert(abc);
+  get_parent_paths(paths, parents);
+
+  BOOST_CHECK(parents.find(a)  != parents.end());
+  BOOST_CHECK(parents.find(ab) != parents.end());
+  BOOST_CHECK(parents.find(abc) == parents.end());
+}
+
 void
 add_restrictions_tests(test_suite * suite)
 {
@@ -911,5 +900,7 @@ add_restrictions_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&test_include_exclude));
   suite->add(BOOST_TEST_CASE(&test_exclude_include));
   suite->add(BOOST_TEST_CASE(&test_invalid_paths));
+  suite->add(BOOST_TEST_CASE(&test_get_parent_paths));
+
 }
 #endif // BUILD_UNIT_TESTS

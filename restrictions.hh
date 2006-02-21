@@ -50,16 +50,13 @@ using std::vector;
 //
 // revision A ... included ... revision X ... excluded ... revision B
 
+// explicit in the sense that the path was explicitly given on the command line
+// implicit in the sense that parent directories are included for explicit paths
+// FIXME: should we really be doing implicit includes of parents?
+
 // TODO: move these into the class below?!?
 enum path_state { explicit_include, explicit_exclude, implicit_include };
   
-struct path_entry { 
-  path_state state;
-  int roster_count;
-  path_entry(path_state const s) : state(s), roster_count(0) {}
-};
-
-
 class restriction
 {
  public:
@@ -80,18 +77,15 @@ class restriction
 
   bool empty() { return node_map.empty(); }
 
-  // explicit in the sense that the path was explicitly given on the command line
-  // implicit in the sense that parent directories are included for explicit paths
-  
  private:
 
   bool default_result;
 
-  // we maintain maps by node_id and also by split_path which is not
-  // particularly nice, but is required for checking unknown and ignored 
-  // files and used for tracking the paths that are known in the rosters
+  // we maintain maps by node_id and also by split_path, which is not
+  // particularly nice, but paths are required for checking unknown and ignored
+  // files
   map<node_id, path_state> node_map;
-  map<split_path, path_entry> path_map;
+  map<split_path, path_state> path_map;
 
 };
 

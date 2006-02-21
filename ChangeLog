@@ -1,5 +1,9 @@
 2006-02-20  Derek Scherger  <derek@echologic.com>
 
+	* restrictions.{cc,hh}: attempt to simplify and remove duplication
+	
+2006-02-20  Derek Scherger  <derek@echologic.com>
+
 	* commands.cc (status, ls_known, find_unknown_and_ignored,
 	find_missing, commit, diff, revert, log): add excludes to restrictions
 	* restrictions.{cc,hh}: preliminary support for excludes and unit
