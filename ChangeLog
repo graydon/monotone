@@ -1,3 +1,8 @@
+2006-02-21  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (detach_node): Check if we are passed the root dir, and
+	error out if so.
+
 2006-02-21  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc (pid_file): newline-terminate the pid
