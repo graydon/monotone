@@ -93,9 +93,18 @@ struct directory_loop_conflict
   std::pair<node_id, path_component> parent_name;
 };
 
-// renaming the root dir (as we currently do _not_) allows:
+// renaming the root dir allows these:
 //   -- MT in root
 //   -- missing root directory
+
+// this is a node that cleanly merged to some name, but that name was somehow
+// forbidden.  (Currently, the only forbidden name is "MT" in the root
+// directory.)
+struct illegal_name_conflict
+{
+  node_id nid;
+  std::pair<node_id, path_component> parent_name;
+};
 
 struct roster_merge_result
 {
@@ -105,6 +114,8 @@ struct roster_merge_result
   std::vector<orphaned_node_conflict> orphaned_node_conflicts;
   std::vector<rename_target_conflict> rename_target_conflicts;
   std::vector<directory_loop_conflict> directory_loop_conflicts;
+  std::vector<illegal_name_conflict> illegal_name_conflicts;
+  bool missing_root_dir;
   // this roster is sane if is_clean() returns true
   roster_t roster;
   bool is_clean();

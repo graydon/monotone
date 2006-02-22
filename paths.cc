@@ -76,6 +76,7 @@ static access_tracker<fs::path> initial_rel_path;
 static access_tracker<system_path> working_root;
 
 bookkeeping_path const bookkeeping_root("MT");
+path_component const bookkeeping_root_component("MT");
 
 void
 save_initial_path()
@@ -825,6 +826,7 @@ static void test_split_join()
   split_path split_mt1, split_mt2;
   file_path_internal("foo/MT").split(split_mt1);
   BOOST_CHECK(split_mt1.size() == 3);
+  I(split_mt1[2] == bookkeeping_root_component);
   split_mt2.push_back(the_null_component);
   split_mt2.push_back(split_mt1[2]);
   // split_mt2 now contains the component "MT"
