@@ -755,7 +755,7 @@ editable_working_tree::detach_node(split_path const & src)
   node_id nid = next_nid++;
   file_path src_pth(src);
   // can't detach the root dir
-  E(src != file_path(), F("cannot delete or rename the root directory"));
+  E(!(src == file_path()), F("cannot delete or rename the root directory"));
   bookkeeping_path dst_pth = path_for_nid(nid);
   safe_insert(rename_add_drop_map, make_pair(dst_pth, src_pth));
   make_dir_for(dst_pth);
