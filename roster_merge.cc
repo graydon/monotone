@@ -25,7 +25,9 @@ roster_merge_result::is_clean_except_for_content()
     && node_attr_conflicts.empty()
     && orphaned_node_conflicts.empty()
     && rename_target_conflicts.empty()
-    && directory_loop_conflicts.empty();
+    && directory_loop_conflicts.empty()
+    && illegal_name_conflicts.empty()
+    && !missing_root_dir;
 }
 
 void
@@ -81,6 +83,12 @@ roster_merge_result::log_conflicts()
       % directory_loop_conflicts[i].nid
       % directory_loop_conflicts[i].parent_name.first
       % directory_loop_conflicts[i].parent_name.second);
+
+  for (size_t i = 0; i < illegal_name_conflicts.size(); ++i)
+    L(FL("illegal name conflict: node %d, wanted parent %d, name %s")
+      % illegal_name_conflicts[i].nid
+      % illegal_name_conflicts[i].parent_name.first
+      % illegal_name_conflicts[i].parent_name.second);
 }
 
 void
@@ -121,6 +129,12 @@ roster_merge_result::warn_non_content_conflicts()
       % directory_loop_conflicts[i].nid
       % directory_loop_conflicts[i].parent_name.first
       % directory_loop_conflicts[i].parent_name.second);
+
+  for (size_t i = 0; i < illegal_name_conflicts.size(); ++i)
+    W(F("illegal name conflict: node %d, wanted parent %d, name %s")
+      % illegal_name_conflicts[i].nid
+      % illegal_name_conflicts[i].parent_name.first
+      % illegal_name_conflicts[i].parent_name.second);
 }
 
 void
@@ -601,20 +615,6 @@ namespace
     file_path_internal(s).split(sp);
     return sp;
   }
-}
-
-static void
-make_dir(roster_t & r, marking_map & markings,
-         revision_id const & birth_rid, revision_id const & parent_name_rid,
-         std::string const & name, node_id nid)
-{
-  r.create_dir_node(nid);
-  r.attach_node(nid, split(name));
-  marking_t marking;
-  marking.birth_revision = birth_rid;
-  marking.parent_name.insert(parent_name_rid);
-  safe_insert(markings, std::make_pair(nid, marking));
-}
 
   // now check for the possible global problems
   if (!result.roster.has_root())
@@ -638,6 +638,21 @@ make_dir(roster_t & r, marking_map & markings,
           result.illegal_name_conflicts.push_back(conflict);
         }
     }
+}
+
+static void
+make_dir(roster_t & r, marking_map & markings,
+         revision_id const & birth_rid, revision_id const & parent_name_rid,
+         std::string const & name, node_id nid)
+{
+  r.create_dir_node(nid);
+  r.attach_node(nid, split(name));
+  marking_t marking;
+  marking.birth_revision = birth_rid;
+  marking.parent_name.insert(parent_name_rid);
+  safe_insert(markings, std::make_pair(nid, marking));
+}
+
 static void
 make_file(roster_t & r, marking_map & markings,
           revision_id const & birth_rid, revision_id const & parent_name_rid,

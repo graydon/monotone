@@ -1,5 +1,9 @@
 2006-02-21  Nathaniel Smith  <njs@pobox.com>
 
+	* roster_merge.cc: Fixup after merge.
+
+2006-02-21  Nathaniel Smith  <njs@pobox.com>
+
 	* work.cc (detach_node): Check if we are passed the root dir, and
 	error out if so.
 
