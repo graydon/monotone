@@ -132,6 +132,8 @@ roster_merge_result::clear()
   orphaned_node_conflicts.clear();
   rename_target_conflicts.clear();
   directory_loop_conflicts.clear();
+  illegal_name_conflicts.clear();
+  missing_root_dir = false;
   roster = roster_t();
 }
 
@@ -614,6 +616,28 @@ make_dir(roster_t & r, marking_map & markings,
   safe_insert(markings, std::make_pair(nid, marking));
 }
 
+  // now check for the possible global problems
+  if (!result.roster.has_root())
+    result.missing_root_dir = true;
+  else
+    {
+      // we can't have an illegal MT dir unless we have a root node in the
+      // first place...
+      split_path bookkeeping_root_split;
+      bookkeeping_root_split.push_back(the_null_component);
+      bookkeeping_root_split.push_back(bookkeeping_root_component);
+      if (result.roster.has_node(bookkeeping_root_split))
+        {
+          illegal_name_conflict conflict;
+          node_t n = result.roster.get_node(bookkeeping_root_split);
+          conflict.nid = n->self;
+          conflict.parent_name.first = n->parent;
+          conflict.parent_name.second = n->name;
+          I(n->name == bookkeeping_root_component);
+          I(n->self == result.roster.detach_node(bookkeeping_root_split));
+          result.illegal_name_conflicts.push_back(conflict);
+        }
+    }
 static void
 make_file(roster_t & r, marking_map & markings,
           revision_id const & birth_rid, revision_id const & parent_name_rid,

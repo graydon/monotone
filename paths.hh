@@ -207,6 +207,7 @@ public:
 };
 
 extern bookkeeping_path const bookkeeping_root;
+extern path_component const bookkeeping_root_component;
 
 // this will always be an absolute path
 class system_path : public any_path
