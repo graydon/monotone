@@ -1914,7 +1914,7 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
 {
   included.clear();
   excluded.clear();
-  L(F("building restricted csets\n"));
+  L(FL("building restricted csets\n"));
   parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
   while (i.next())
     {
@@ -1928,12 +1928,12 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
           if (mask.includes(from, i.left_key()))
             {
               delta_only_in_from(from, i.left_key(), i.left_data(), included);
-              L(F("included left %d\n") % i.left_key());
+              L(FL("included left %d\n") % i.left_key());
             }
           else
             {
               delta_only_in_from(from, i.left_key(), i.left_data(), excluded);
-              L(F("excluded left %d\n") % i.left_key());
+              L(FL("excluded left %d\n") % i.left_key());
             }
           break;
  
@@ -1941,12 +1941,12 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
           if (mask.includes(to, i.right_key()))
             {
               delta_only_in_to(to, i.right_key(), i.right_data(), included);
-              L(F("included right %d\n") % i.right_key());
+              L(FL("included right %d\n") % i.right_key());
             }
           else
             {
               delta_only_in_to(to, i.right_key(), i.right_data(), excluded);
-              L(F("excluded right %d\n") % i.right_key());
+              L(FL("excluded right %d\n") % i.right_key());
             }
           break;
 
@@ -1954,12 +1954,12 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
           if (mask.includes(from, i.left_key()) || mask.includes(to, i.right_key()))
             {
               delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), included);
-              L(F("in both %d %d\n") % i.left_key() % i.right_key());
+              L(FL("in both %d %d\n") % i.left_key() % i.right_key());
             }
           else
             {
               delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), excluded);
-              L(F("in both %d %d\n") % i.left_key() % i.right_key());
+              L(FL("in both %d %d\n") % i.left_key() % i.right_key());
             }
           break;
         }

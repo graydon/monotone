@@ -1,3 +1,12 @@
+2006-02-22  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_get_revision, automate_get_manifest_of):
+	merge fixups
+	* commands.cc (ls_changed): convert to new restrictions
+	(commit, update, revert):
+	* restrictions.cc:
+	* roster.cc: merge fixups
+
 2006-02-20  Derek Scherger  <derek@echologic.com>
 
 	* restrictions.{cc,hh}: attempt to simplify and remove duplication

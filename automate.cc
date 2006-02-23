@@ -942,7 +942,7 @@ automate_get_revision(std::vector<utf8> args,
       revision_id old_revision_id;
       revision_set rev;
 
-      app.require_working_copy(); 
+      app.require_workspace(); 
       get_base_and_current_roster_shape(old_roster, new_roster, app);
       update_current_roster_from_filesystem(new_roster, app);
 
@@ -991,7 +991,7 @@ automate_get_manifest_of(std::vector<utf8> args,
     {
       revision_id old_revision_id;
 
-      app.require_working_copy(); 
+      app.require_workspace(); 
       get_base_and_current_roster_shape(old_roster, new_roster, app);
       update_current_roster_from_filesystem(new_roster, app);
     }

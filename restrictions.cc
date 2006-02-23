@@ -117,7 +117,7 @@ merge_states(path_state const & old_state,
     }
   else
     {
-      L(F("path '%s' %d %d") % sp % old_state % new_state);
+      L(FL("path '%s' %d %d") % sp % old_state % new_state);
       N(false, F("conflicting include/exclude on path '%s'") % sp);
     }
 }
@@ -277,7 +277,7 @@ restriction::includes(roster_t const & roster, node_id nid) const
   // empty restriction includes everything
   if (node_map.empty()) 
     {
-      L(F("empty include of nid %d path '%s'") % nid % file_path(sp));
+      L(FL("empty include of nid %d path '%s'") % nid % file_path(sp));
       return true;
     }
 
@@ -292,18 +292,18 @@ restriction::includes(roster_t const & roster, node_id nid) const
           switch (r->second) 
             {
             case explicit_include:
-              L(F("explicit include of nid %d path '%s'") % current % file_path(sp));
+              L(FL("explicit include of nid %d path '%s'") % current % file_path(sp));
               return true;
 
             case explicit_exclude:
-              L(F("explicit exclude of nid %d path '%s'") % current % file_path(sp));
+              L(FL("explicit exclude of nid %d path '%s'") % current % file_path(sp));
               return false;
 
             case implicit_include:
               // this is non-recursive and requires an exact match
               if (current == nid)
                 {
-                  L(F("implicit include of nid %d path '%s'") % current % file_path(sp));
+                  L(FL("implicit include of nid %d path '%s'") % current % file_path(sp));
                   return true;
                 }
             }
@@ -315,12 +315,12 @@ restriction::includes(roster_t const & roster, node_id nid) const
 
   if (default_result)
     {
-      L(F("default include of nid %d path '%s'\n") % nid % file_path(sp));
+      L(FL("default include of nid %d path '%s'\n") % nid % file_path(sp));
       return true;
     }
   else
     {
-      L(F("default exclude of nid %d path '%s'\n") % nid % file_path(sp));
+      L(FL("default exclude of nid %d path '%s'\n") % nid % file_path(sp));
       return false;
     }
 }
@@ -330,7 +330,7 @@ restriction::includes(split_path const & sp) const
 {
   if (path_map.empty()) 
     {
-      L(F("empty include of path '%s'") % file_path(sp));
+      L(FL("empty include of path '%s'") % file_path(sp));
       return true;
     }
 
@@ -345,18 +345,18 @@ restriction::includes(split_path const & sp) const
           switch (r->second) 
             {
             case explicit_include:
-              L(F("explicit include of path '%s'") % file_path(sp));
+              L(FL("explicit include of path '%s'") % file_path(sp));
               return true;
 
             case explicit_exclude:
-              L(F("explicit exclude of path '%s'") % file_path(sp));
+              L(FL("explicit exclude of path '%s'") % file_path(sp));
               return false;
 
             case implicit_include:
               // this is non-recursive and requires an exact match
               if (current == sp)
                 {
-                  L(F("implicit include of path '%s'") % file_path(sp));
+                  L(FL("implicit include of path '%s'") % file_path(sp));
                   return true;
                 }
             }
@@ -367,12 +367,12 @@ restriction::includes(split_path const & sp) const
 
   if (default_result)
     {
-      L(F("default include of path '%s'\n") % file_path(sp));
+      L(FL("default include of path '%s'\n") % file_path(sp));
       return true;
     }
   else
     {
-      L(F("default exclude of path '%s'\n") % file_path(sp));
+      L(FL("default exclude of path '%s'\n") % file_path(sp));
       return false;
     }
 }

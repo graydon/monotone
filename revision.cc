@@ -542,7 +542,7 @@ make_revision_set(revision_id const & old_rev_id,
   make_cset(old_roster, new_roster, *cs);
   
   calculate_ident(new_roster, rev.new_manifest);
-  L(F("new manifest_id is %s\n") % rev.new_manifest);
+  L(FL("new manifest_id is %s\n") % rev.new_manifest);
   
   safe_insert(rev.edges, std::make_pair(old_rev_id, cs));
 }

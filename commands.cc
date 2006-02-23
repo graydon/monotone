@@ -1767,51 +1767,58 @@ struct lt_file_path
     return fp1 < fp2;
   }
 };
+
 static void
-ls_changed (app_state & app, vector<utf8> const & args)
+ls_changed(app_state & app, vector<utf8> const & args)
 {
-  revision_set rs;
-  revision_id rid;
   roster_t old_roster, new_roster;
-  data tmp;
+  cset included, excluded;
   std::set<file_path, lt_file_path> files;
 
   app.require_workspace();
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
 
-  I(rs.edges.size() == 1);
-  cset const & cs = edge_changes(rs.edges.begin());
+  get_base_and_current_roster_shape(old_roster, new_roster, app);
 
-  for (path_set::const_iterator i = cs.nodes_deleted.begin();
-       i != cs.nodes_deleted.end(); ++i)
+  restriction mask(args, app.exclude_patterns, old_roster, new_roster);
+      
+  update_current_roster_from_filesystem(new_roster, mask, app);
+  make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+
+  // FIXME: this would probably be better as a function of roster.cc
+  for (path_set::const_iterator i = included.nodes_deleted.begin();
+       i != included.nodes_deleted.end(); ++i)
     {
-      if (app.restriction_includes(*i))
+      if (mask.includes(*i))
         files.insert(file_path(*i));
     }
-  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
-       i != cs.nodes_renamed.end(); ++i)
+  for (std::map<split_path, split_path>::const_iterator 
+         i = included.nodes_renamed.begin();
+       i != included.nodes_renamed.end(); ++i)
     {
-      if (app.restriction_includes(i->first))
+      // FIXME: is reporting the old name the "right" thing to do?
+      if (mask.includes(i->first))
         files.insert(file_path(i->first));
     }
-  for (path_set::const_iterator i = cs.dirs_added.begin();
-       i != cs.dirs_added.end(); ++i)
+  for (path_set::const_iterator i = included.dirs_added.begin();
+       i != included.dirs_added.end(); ++i)
     {
-      if (app.restriction_includes(*i))
+      if (mask.includes(*i))
         files.insert(file_path(*i));
     }
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-       i != cs.files_added.end(); ++i)
+  for (std::map<split_path, file_id>::const_iterator i = included.files_added.begin();
+       i != included.files_added.end(); ++i)
     {
-      if (app.restriction_includes(i->first))
+      if (mask.includes(i->first))
         files.insert(file_path(i->first));
     }
   for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator
-         i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
+         i = included.deltas_applied.begin(); i != included.deltas_applied.end(); 
+       ++i)
     {
-      if (app.restriction_includes(i->first))
+      if (mask.includes(i->first))
         files.insert(file_path(i->first));
     }
+  // FIXME: should attr changes count?
 
   copy(files.begin(), files.end(),
        ostream_iterator<const file_path>(cout, "\n"));
@@ -2442,7 +2449,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   bool message_validated;
   string reason, new_manifest_text;
 
-  dump(rs, new_manifest_text);
+  dump(restricted_rev, new_manifest_text);
 
   app.lua.hook_validate_commit_message(log_message, new_manifest_text,
                                        message_validated, reason);
@@ -2459,7 +2466,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     else
       {
         // new revision
-        L(FL("inserting new revision %s\n") % rid);
+        L(FL("inserting new revision %s\n") % restricted_rev_id);
 
         I(restricted_rev.edges.size() == 1);
         edge_map::const_iterator edge = restricted_rev.edges.begin();
@@ -3075,8 +3082,8 @@ CMD(update, N_("workspace"), "",
   // and write the cset from chosen to merged changeset in MT/work
   
   cset update, remaining;
-  make_cset (working_roster, merged_roster, update);
-  make_cset (target_roster, merged_roster, remaining);
+  make_cset(working_roster, merged_roster, update);
+  make_cset(target_roster, merged_roster, remaining);
 
   //   {
   //     data t1, t2, t3;
@@ -3359,7 +3366,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   if (args.size() < 1)
     throw usage(name);
 
-  app.require_working_copy();
+  app.require_workspace();
   
   vector<utf8> includes;
   vector<utf8> excludes;
@@ -3380,7 +3387,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
       for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
         {
           file_path fp(*i);
-          L(F("missing files are '%s'") % fp);
+          L(FL("missing files are '%s'") % fp);
           includes.push_back(fp.as_external());
         }
     }
