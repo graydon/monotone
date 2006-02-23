@@ -1,5 +1,7 @@
 2006-02-23  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* enumerator.hh: Another GCC 4.1 compile fix.
+
 	* tests/t_log_selectors.at: XFAILed test for bug #15877.
 
 	* testsuite.at: Add it.
