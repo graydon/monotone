@@ -181,6 +181,7 @@ public:
   bool has_root() const;
   bool has_node(split_path const & sp) const;
   bool has_node(node_id nid) const;
+  bool is_root(node_id nid) const;
   node_t get_node(split_path const & sp) const;
   node_t get_node(node_id nid) const;
   void get_name(node_id nid, split_path & sp) const;
@@ -296,12 +297,20 @@ bool
 equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
                         roster_t const & b, marking_map const & b_markings);
 
+
+// various (circular?) dependencies prevent inclusion of restrictions.hh
+class restriction;
+
+void 
+make_restricted_csets(roster_t const & from, roster_t const & to,
+                      cset & included, cset & excluded,
+                      restriction const & mask);
+
 void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
                               roster_t const & new_roster,
-                              std::set<node_id> & nodes_changed,
-                              std::set<node_id> & nodes_born);
+                              std::set<node_id> & nodes_modified);
 
 void 
 classify_roster_paths(roster_t const & ros,
@@ -311,8 +320,13 @@ classify_roster_paths(roster_t const & ros,
                       app_state & app);
 
 void 
-update_restricted_roster_from_filesystem(roster_t & ros, 
-                                         app_state & app);
+update_current_roster_from_filesystem(roster_t & ros, 
+                                      restriction const & mask,
+                                      app_state & app);
+
+void 
+update_current_roster_from_filesystem(roster_t & ros, 
+                                      app_state & app);
 
 void
 extract_roster_path_set(roster_t const & ros, 

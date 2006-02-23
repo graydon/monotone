@@ -1,3 +1,20 @@
+2006-02-20  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.{cc,hh}: attempt to simplify and remove duplication
+	
+2006-02-20  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (status, ls_known, find_unknown_and_ignored,
+	find_missing, commit, diff, revert, log): add excludes to restrictions
+	* restrictions.{cc,hh}: preliminary support for excludes and unit
+	tests to see if it works
+
+2006-02-13  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh}: 
+	* globis.{cc,hh}: make exclude_patterns a vector rather than a
+	set so that restriction includes/excludes are of the same type
+
 2006-02-21  Nathaniel Smith  <njs@pobox.com>
 
 	* work.cc (detach_node): This time for sure!
