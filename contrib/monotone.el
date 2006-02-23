@@ -686,7 +686,7 @@ the buffer if not global."
   (when (eq 'tree (monotone-arg-decode arg))
     (error "monotone subtree log is busted"))
   ;; 
-  (let ((cmds (list "log"))
+  (let ((cmds (list "log" "--no-merges"))
         (depth monotone-log-depth))
     (when (and (numberp depth) (< 0 depth))
       (setq cmds (append cmds (list (format "--last=%d" depth)))))

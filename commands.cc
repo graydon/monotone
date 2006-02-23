@@ -3537,7 +3537,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
-    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_MERGES %
+    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES %
     OPT_NO_FILES)
 {
   if (app.revision_selectors.size() == 0)
@@ -3685,7 +3685,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                    inserter(next_frontier, next_frontier.end()));
             }
 
-          if (!app.merges && rev.is_merge_node())
+          if (app.no_merges && rev.is_merge_node())
             print_this = false;
           
           if (print_this)

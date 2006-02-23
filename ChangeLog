@@ -1,3 +1,15 @@
+2006-02-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* app_state.cc, app_state.hh, commands.cc, monotone.cc,
+	options.hh: Revert failed UI experiment: reenable logging merges
+	by default and rename --merges back to --no-merges.
+
+	* contrib/color-logs.{conf,sh}, contrib/monotone-notify.pl,
+	contrib/monotone.el, tests/t_log_nofiles_nomerges.at,
+	testsuite.at: Handle --no-merges.
+
+	* monotone.texi: Document --no-merges.
+
 2006-02-23  Matt Johnston  <matt@ucc.asn.au>
 
 	* enumerator.{cc,hh}: avoid transferring deltas on both sides of merge
