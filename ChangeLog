@@ -1,5 +1,9 @@
 2006-02-23  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_log_selectors.at: XFAILed test for bug #15877.
+
+	* testsuite.at: Add it.
+
 	* app_state.cc, app_state.hh, commands.cc, monotone.cc,
 	options.hh: Revert failed UI experiment: reenable logging merges
 	by default and rename --merges back to --no-merges.
