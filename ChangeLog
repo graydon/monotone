@@ -1,3 +1,10 @@
+2006-02-23  Matt Johnston  <matt@ucc.asn.au>
+
+	* enumerator.{cc,hh}: avoid transferring deltas on both sides of merge
+	revisions, and prefer deltas to data when both are available.
+	See
+	https://savannah.nongnu.org/bugs/?func=detailitem&item_id=15846
+
 2006-02-21  Nathaniel Smith  <njs@pobox.com>
 
 	* work.cc (detach_node): This time for sure!
