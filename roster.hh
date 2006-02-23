@@ -53,7 +53,7 @@ typedef std::map<attr_key, std::pair<bool, attr_value> > full_attr_map_t;
 typedef std::map<path_component, node_t> dir_map;
 typedef std::map<node_id, node_t> node_map;
 
-void dump(full_attr_map_t const & val, std::string & out);
+template <> void dump(full_attr_map_t const & val, std::string & out);
 
 
 struct node
@@ -143,7 +143,10 @@ downcast_to_file_t(node_t const n)
   return f;
 }
 
-void dump(node_t const & n, std::string & out);
+bool
+shallow_equal(node_t a, node_t b, bool shallow_compare_dir_children);
+
+template <> void dump(node_t const & n, std::string & out);
 
 struct marking_t
 {
@@ -164,8 +167,8 @@ struct marking_t
 typedef std::map<node_id, marking_t> marking_map;
 
 void dump(std::set<revision_id> & revids, std::string & out);
-void dump(marking_t const & marking, std::string & out);
-void dump(marking_map const & marking_map, std::string & out);
+template <> void dump(marking_t const & marking, std::string & out);
+template <> void dump(marking_map const & marking_map, std::string & out);
 
 namespace basic_io { struct printer; struct parser; }
 
@@ -242,7 +245,7 @@ private:
   // place, if you were just going to put them back!  this checking verifies
   // that csets are in normalized form.
   std::map<node_id, std::pair<node_id, path_component> > old_locations;
-  friend void dump(roster_t const & val, std::string & out);
+  template <typename T> friend void dump(T const & val, std::string & out);
 };
 
 struct temp_node_id_source 
@@ -253,7 +256,7 @@ struct temp_node_id_source
   node_id curr;
 };
 
-void dump(roster_t const & val, std::string & out);
+template <> void dump(roster_t const & val, std::string & out);
 
 struct app_state;
 struct revision_set;
@@ -277,6 +280,7 @@ public:
   virtual void set_attr(split_path const & pth,
                         attr_key const & name,
                         attr_value const & val);
+  virtual void commit();
 protected:
   roster_t & r;
   node_id_source & nis;
@@ -342,6 +346,18 @@ write_roster_and_marking(roster_t const & ros,
 void
 write_manifest_of_roster(roster_t const & ros,
                          data & dat);
+
+#ifdef BUILD_UNIT_TESTS
+
+struct testing_node_id_source 
+  : public node_id_source
+{
+  testing_node_id_source();
+  virtual node_id next();
+  node_id curr;
+};
+
+#endif // BUILD_UNIT_TESTS
 
 #endif
 

@@ -41,7 +41,7 @@ file_itemizer::visit_file(file_path const & path)
   path.split(sp);
   if (app.restriction_includes(sp) && known.find(sp) == known.end())
     {
-      if (app.lua.hook_ignore_file(path))
+      if (app.lua.hook_ignore_file(path) || app.db.is_dbfile(path))
         ignored.insert(sp);
       else
         unknown.insert(sp);
@@ -112,9 +112,9 @@ addition_builder::visit_dir(file_path const & path)
 void 
 addition_builder::visit_file(file_path const & path)
 {     
-  if (app.lua.hook_ignore_file(path))
+  if (app.lua.hook_ignore_file(path) || app.db.is_dbfile(path))
     {
-      P(F("skipping ignorable file %s\n") % path);
+      P(F("skipping ignorable file %s") % path);
       return;
     }  
 
@@ -122,11 +122,12 @@ addition_builder::visit_file(file_path const & path)
   path.split(sp);
   if (ros.has_node(sp))
     {
-      P(F("skipping %s, already accounted for in workspace\n") % path);
+      if (sp.size() > 1) 
+        P(F("skipping %s, already accounted for in workspace") % path);
       return;
     }
 
-  P(F("adding %s to workspace add set\n") % path);
+  P(F("adding %s to workspace manifest") % path);
 
   split_path dirname, prefix;
   path_component basename;
@@ -199,7 +200,7 @@ perform_deletions(path_set const & paths, app_state & app)
       file_path name(*i);
 
       if (!new_roster.has_node(*i))
-        P(F("skipping %s, not currently tracked\n") % name);
+        P(F("skipping %s, not currently tracked") % name);
       else
         {
           node_t n = new_roster.get_node(*i);
@@ -209,7 +210,7 @@ perform_deletions(path_set const & paths, app_state & app)
               N(d->children.empty(),
                 F("cannot remove %s/, it is not empty") % name);
             }
-          P(F("adding %s to workspace delete set\n") % name);
+          P(F("dropping %s from workspace manifest") % name);
           new_roster.drop_detached_node(new_roster.detach_node(*i));
           if (app.execute && path_exists(name))
             delete_file_or_dir_shallow(name);
@@ -305,7 +306,7 @@ perform_rename(set<file_path> const & src_paths,
     {
       node_id nid = new_roster.detach_node(i->first);
       new_roster.attach_node(nid, i->second);
-      P(F("adding %s -> %s to workspace rename set") 
+      P(F("renaming %s to %s in workspace manifest") 
         % file_path(i->first) 
         % file_path(i->second));
     }
@@ -422,7 +423,7 @@ void get_revision_id(revision_id & c)
                        F("workspace is corrupt: %s is a directory") % c_path);
 
   data c_data;
-  L(FL("loading revision id from %s\n") % c_path);
+  L(FL("loading revision id from %s") % c_path);
   try
     {
       read_data(c_path, c_data);
@@ -753,7 +754,10 @@ editable_working_tree::detach_node(split_path const & src)
 {
   node_id nid = next_nid++;
   file_path src_pth(src);
+  // can't detach the root dir
+  E(!(src_pth == file_path()), F("cannot delete or rename the root directory"));
   bookkeeping_path dst_pth = path_for_nid(nid);
+  safe_insert(rename_add_drop_map, make_pair(dst_pth, src_pth));
   make_dir_for(dst_pth);
   move_path(src_pth, dst_pth);
   return nid;
@@ -763,6 +767,11 @@ void
 editable_working_tree::drop_detached_node(node_id nid)
 {
   bookkeeping_path pth = path_for_nid(nid);
+  std::map<bookkeeping_path, file_path>::const_iterator i 
+    = rename_add_drop_map.find(pth);
+  I(i != rename_add_drop_map.end());
+  P(F("dropping %s") % i->second);
+  safe_erase(rename_add_drop_map, pth);
   delete_file_or_dir_shallow(pth);
 }
 
@@ -811,6 +820,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
               if (i->second == dst_id)
                 return;
             }
+          P(F("adding %s") % dst_pth);
           file_data dat;
           source.get_file_content(i->second, dat);
           write_localized_data(dst_pth, dat.inner(), app.lua);
@@ -834,6 +844,15 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
         return;
       break;
     }
+  std::map<bookkeeping_path, file_path>::const_iterator i
+    = rename_add_drop_map.find(src_pth);
+  if (i != rename_add_drop_map.end())
+    {
+      P(F("renaming %s to %s") % i->second % dst_pth);
+      safe_erase(rename_add_drop_map, src_pth);
+    }
+  else
+    P(F("adding %s") % dst_pth);
   // This will complain if the move is actually impossible
   move_path(src_pth, dst_pth);
 }
@@ -874,6 +893,12 @@ editable_working_tree::set_attr(split_path const & pth,
                                 attr_value const & val)
 {
   // FIXME_ROSTERS: call a lua hook
+}
+
+void
+editable_working_tree::commit()
+{
+  I(rename_add_drop_map.empty());
 }
 
 editable_working_tree::~editable_working_tree()

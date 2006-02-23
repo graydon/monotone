@@ -16,6 +16,7 @@
 #include "constants.hh"
 
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
@@ -402,6 +403,16 @@ user_interface::ensure_clean_line()
       t_writer->clear_line();
     }
   last_write_was_a_tick = false;
+}
+
+void
+user_interface::redirect_log_to(system_path const & filename)
+{
+  static ofstream filestr;
+  if (filestr.is_open())
+    filestr.close();
+  filestr.open(filename.as_external().c_str());
+  clog.rdbuf(filestr.rdbuf());
 }
 
 void 

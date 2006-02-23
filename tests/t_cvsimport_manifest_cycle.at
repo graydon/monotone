@@ -7,10 +7,10 @@ NEED_UNGZB64
 MONOTONE_SETUP
 
 CVSROOT=`pwd`/cvs-repository
-AT_CHECK(cvs -q -d $CVSROOT init)
+AT_CHECK(cvs -q -d $CVSROOT init, [0], [ignore], [ignore])
 AT_CHECK(test -e $CVSROOT)
 AT_CHECK(test -e $CVSROOT/CVSROOT)
-AT_CHECK(test -e $CVSROOT/CVSROOT/history)
+AT_CHECK(test -e $CVSROOT/CVSROOT/modules)
 
 AT_DATA(cvsfile.gz.enc, [H4sICJBDd0ICA2N2c2ZpbGUsdgB9kU+PwiAQxc+dT0Gyd1LqX5ZLq/G6Fy/aS4Mt2sYWDKBxv/1C2ygaswmXefPmxxuoBa8ighMGvCyFMQzMb3dQrYEoW62L7f5nXWTfzhDUq6HO8/yl/6jH/m6f5/tdQQrqaoJjTOJQLFbZduM7gbgcnctQ+2RcjMZ5qAVGl3V0TIfgz9ZNVroglFKSxMs37HwcCtPPH7MMWlWeDUPG6qa0DErVdULaKP1CKQMAv3bFrYiSOHaYGU4oThIcUzxJWMSvtlYadepqBIuMdUZUuedncNBclrVwjy/F3Ub9VeCT9TBKPYE4OMFTgifkM2pzvzxJ4CF46kE9cuB5IQy4wLFT3Mcs8GT2oBouLf83oN+1EqaENB23btUJUi06dRPo2LQCQwrWWSG1dWOQOxy1jRRIHZHXfX9YsZ9suovS9m1ydPShe1cn9Emg2iXqMfoqz6iRViH3wWiI+Dr9B+M+Ez/dAgAA
 ])
@@ -21,7 +21,7 @@ UNGZB64(cvsfile.gz.enc, cvsfile)
 # ourselves.
 mv cvsfile $CVSROOT/attest/cvsfile,v
 
-AT_CHECK(cvs -d $CVSROOT co -r1.1 attest, [], [ignore], [ignore])
+AT_CHECK(cvs -d $CVSROOT co -rABC_BASE attest, [], [ignore], [ignore])
 TSHA0=`SHA1(attest/cvsfile)`
 
 # import into monotone and check presence of files

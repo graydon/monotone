@@ -182,6 +182,7 @@ struct file_content_source
 struct editable_working_tree : public editable_tree
 {
   std::map<bookkeeping_path, file_id> written_content;
+  std::map<bookkeeping_path, file_path> rename_add_drop_map;
   editable_working_tree(app_state & app, file_content_source const & source);
 
   virtual node_id detach_node(split_path const & src);
@@ -199,6 +200,8 @@ struct editable_working_tree : public editable_tree
   virtual void set_attr(split_path const & pth,
                         attr_key const & name,
                         attr_value const & val);
+
+  virtual void commit();
 
   virtual ~editable_working_tree();
 private:

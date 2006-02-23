@@ -268,18 +268,28 @@ protected:
 };
 
 
+// remove_reference is a workaround for C++ defect #106.
+template <typename T>
+struct remove_reference {
+  typedef T type;
+};
+
+template <typename T>
+struct remove_reference <T &> {
+  typedef typename remove_reference<T>::type type;
+};
+
+
 template <typename T>
 class Musing : public MusingI, private MusingBase
 {
 public:
-  Musing(T const & obj, char const * name, char const * file, int line, char const * func)
+  Musing(typename remove_reference<T>::type const & obj, char const * name, char const * file, int line, char const * func)
     : MusingBase(name, file, line, func), obj(obj) {}
   virtual void gasp(std::string & out) const;
 private:
-  T const & obj;
+  typename remove_reference<T>::type const & obj;
 };
-
-void dump(std::string const & obj, std::string & out);
 
 // The header line must be printed into the "out" string before
 // dump() is called.
@@ -315,5 +325,7 @@ Musing<T>::gasp(std::string & out) const
 #else
 #define MM(obj) /* */ 
 #endif
+
+template <> void dump(std::string const & obj, std::string & out);
 
 #endif // __SANITY_HH__

@@ -119,6 +119,16 @@ database::database(system_path const & fn) :
   transaction_level(0)
 {}
 
+bool
+database::is_dbfile(any_path const & file)
+{
+  system_path fn(file);// why is this needed?
+  bool same = (filename.as_internal() == fn.as_internal());
+  if (same)
+    L(FL("'%s' is the database file") % file);
+  return same;
+}
+
 void 
 database::check_schema()
 {
@@ -432,8 +442,8 @@ database::dump(ostream & out)
 void 
 database::load(istream & in)
 {
-  char buf[constants::bufsz];
-  string tmp;
+  string line;
+  string sql_stmt;
 
   check_filename();
 
@@ -444,20 +454,16 @@ database::load(istream & in)
 
   while(in)
     {
-      in.read(buf, constants::bufsz);
-      tmp.append(buf, in.gcount());
+      getline(in, line, ';');
+      sql_stmt += line + ';';
 
-      const char* last_statement = 0;
-      sqlite3_complete_last(tmp.c_str(), &last_statement);
-      if (last_statement == 0)
-        continue;
-      string::size_type len = last_statement + 1 - tmp.c_str();
-      sqlite3_exec(__sql, tmp.substr(0, len).c_str(), NULL, NULL, NULL);
-      tmp.erase(0, len);
+      if (sqlite3_complete(sql_stmt.c_str()))
+        {
+          sqlite3_exec(__sql, sql_stmt.c_str(), NULL, NULL, NULL);
+          sql_stmt.clear();
+        }
     }
 
-  if (!tmp.empty())
-    sqlite3_exec(__sql, tmp.c_str(), NULL, NULL, NULL);
   assert_sqlite3_ok(__sql);
 }
 
@@ -1220,6 +1226,10 @@ database::remove_version(hexenc<id> const & target_id,
       }
   }
 
+  // no deltas are allowed to point to the target.
+  execute(query("DELETE from " + delta_table + " WHERE base = ?")
+          % text(target_id()));
+
   if (delta_exists(target_id, delta_table))
     {
       if (!older.empty())
@@ -1239,6 +1249,8 @@ database::remove_version(hexenc<id> const & target_id,
           for (map<hexenc<id>, data>::const_iterator i = older.begin();
                i != older.end(); ++i)
             {
+              if (delta_exists(i->first, delta_table))
+                continue;
               delta bypass_delta;
               diff(newer_data, i->second, bypass_delta);
               put_delta(i->first, newer_id, bypass_delta, delta_table);
@@ -1253,7 +1265,10 @@ database::remove_version(hexenc<id> const & target_id,
       I(exists(target_id, data_table));
       for (map<hexenc<id>, data>::const_iterator i = older.begin();
            i != older.end(); ++i)
-        put(i->first, i->second, data_table);
+        {
+          if (!exists(i->first, data_table))
+            put(i->first, i->second, data_table);
+        }
       execute(query("DELETE from " + data_table + " WHERE id = ?")
               % text(target_id()));
     }

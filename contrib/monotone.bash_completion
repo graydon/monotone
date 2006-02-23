@@ -1,7 +1,9 @@
 # -*- shell-script -*-
+# vim: set ft=sh:
 
-# bash completion for monotone 0.18
+# bash completion for monotone 0.25
 # Author: Olivier Andrieu <oandrieu@nerim.net>
+# Contributions by Matthew A. Nicholson <matt@matt-land.com>
 
 # source this file from your .bashrc
 # If you use the bash completion package <http://www.caliban.org/bash/>,
@@ -42,6 +44,10 @@ _monotone_branches() {
   COMPREPLY=( $(compgen -W "$(monotone $mono_db list branches 2> /dev/null)" -- ${cur#*=} ) )
 }
 
+_monotone_tags() {
+  COMPREPLY=( $(compgen -W "$(monotone $mono_db list tags 2> /dev/null | awk '{print $1}')" -- ${cur#*=} ) )
+}
+
 _monotone() {
   local cur prev mono_db
 
@@ -68,6 +74,10 @@ _monotone() {
       cur="${cur#*=}"
       _filedir
       ;;
+    --root=* )
+      cur="${cur#*=}"
+      _filedir -d
+      ;;
     --branch=* )
       _monotone_branches
       ;;
@@ -76,19 +86,22 @@ _monotone() {
       ;;
     --ticker=* )
       cur="${cur#*=}"
-      COMPREPLY=( $(compgen -W 'count dot' -- $cur ) )
+      COMPREPLY=( $(compgen -W 'count dot none' -- $cur ) )
       ;;
     --revision=* )
       _monotone_complete revision
       ;;
     -* )
-      COMPREPLY=( $(compgen -W '--debug --dump --quiet --help --nostd --norc\
-                                --rcfile --key --db --branch --version --full-version\
-                                --ticker --revision --message' -- $cur) )
+      COMPREPLY=( $(compgen -W '--debug --dump --quiet --help --version
+                                --full-version --xargs --ticker --nostd --norc
+                                --rcfile --key --db --root --verbose -k -d -@
+                                -m -b -r --branch --message --date --author
+                                --depth --execute --keydir --confdir
+                                --key-to-push --bind' -- $cur) )
       ;;
     * )
       case $prev in
-        --db | -d | --rcfile | --dump )
+        --db | -d | --rcfile | --dump | --root )
           _filedir
           ;;
         --branch | -b )
@@ -103,105 +116,112 @@ _monotone() {
         --revision | -r )
           _monotone_complete revision
           ;;
-	db )
-	  COMPREPLY=( $(compgen -W 'init info version dump load migrate execute check changesetify rebuild' -- $cur ) )
-	  ;;
-	cdiff | diff | annotate )
+        db )
+          COMPREPLY=( $(compgen -W 'init info version dump load migrate execute kill_rev_locally kill_branch_certs_locally kill_tag_locally check changesetify rebuild set_epoch' -- $cur ) )
+          ;;
+        cdiff | diff | annotate )
           COMPREPLY=( $(compgen -W '--revision' -- $cur ) )
-	  _filedir
-	  ;;
-	log | approve | disapprove | comment | tag | testresult | cert | explicit_merge | trusted | update )
-	  _monotone_complete revision
-	  ;;
-	ls | list )
-	  COMPREPLY=( $(compgen -W 'certs keys branches epochs tags vars known unknown ignored missing' -- $cur ) )
-	  ;;
-	attr )
-	  COMPREPLY=( $(compgen -W 'get set drop' -- $cur ) )
-	  ;;
-	co | checkout )
-	  _filedir -d
-	  _monotone_complete revision
-	  ;;
-	status | cvs_import | add | drop | rename | revert | identify )
-	  _filedir
-	  ;;
-	cat )
-	  COMPREPLY=( $(compgen -W 'file manifest revision' -- $cur) )
-	  ;;
+          _filedir
+          ;;
+        log | approve | disapprove | comment | tag | testresult | cert | explicit_merge | trusted | update )
+          _monotone_complete revision
+          ;;
+        ls | list )
+          COMPREPLY=( $(compgen -W 'certs keys branches epochs tags vars known unknown ignored missing' -- $cur ) )
+          ;;
+        attr )
+          COMPREPLY=( $(compgen -W 'get set drop' -- $cur ) )
+          ;;
+        co | checkout )
+          _filedir -d
+          _monotone_complete revision
+          ;;
+        status | cvs_import | add | drop | rm | rename | mv | revert | identify )
+          _filedir
+          ;;
+        complete )
+          COMPREPLY=( $(compgen -W 'revision manifest file key' -- $cur) )
+          ;;
+        cat )
+          COMPREPLY=( $(compgen -W 'file manifest revision' -- $cur) )
+          ;;
         push | pull | serve | sync )
-	  COMPREPLY=( $(compgen -A hostname -- $cur) )
-	  ;;
-	pubkey | privkey )
-	  _monotone_keys $prev
-	  ;;
-	chkeypass | dropkey )
-	  _monotone_keys privkey
-	  ;;
-	propagate | reindex )
-	  _monotone_branches
-	  ;;
-	* )
-	  if (( $COMP_CWORD >= 2 )) ; then
-	    local prev2=${COMP_WORDS[COMP_CWORD-2]}
-	    case $prev2 in
-	      cdiff | diff | explicit_merge )
-		_monotone_complete revision
-		;;
-	      co | checkout | rename | annotate )
-		_filedir -d
-		;;
-	      cat )
-		_monotone_complete $prev
-		;;
-	      log | attr )
-		_filedir
-		;;
-	      list )
-		if [ $prev == certs ] ; then
-		    _monotone_complete revision
-		    _monotone_complete manifest 
-		    _monotone_complete file
-		fi
-		;;
-	      push | pull | serve | sync | propagate )
+          COMPREPLY=( $(compgen -A hostname -- $cur) )
+          ;;
+        pubkey | privkey )
+          _monotone_keys $prev
+          ;;
+        chkeypass | dropkey )
+          _monotone_keys privkey
+          ;;
+        propagate | reindex )
+          _monotone_branches
+          ;;
+        * )
+          if (( $COMP_CWORD >= 2 )) ; then
+            local prev2=${COMP_WORDS[COMP_CWORD-2]}
+            case $prev2 in
+              cdiff | diff | explicit_merge )
+                _monotone_complete revision
+                ;;
+              co | checkout | rename | mv | annotate )
+                _filedir
+                ;;
+              cat )
+                _monotone_complete $prev
+                ;;
+              log | attr )
+                _filedir
+                ;;
+              list )
+                if [ $prev == certs ] ; then
+                    _monotone_complete revision
+                    _monotone_complete manifest 
+                    _monotone_complete file
+                fi
+                ;;
+              push | pull | serve | sync | propagate )
                 _monotone_branches
-		;;
-	      * )
-		if (( $COMP_CWORD >= 3 )) ; then
-		    local prev3=${COMP_WORDS[COMP_CWORD-3]}
-		    case $prev3 in
-			explicit_merge )
-			    _monotone_complete revision
-			    _monotone_branches
-			    ;;
-			*)
-			    unset prev2
-			    unset prev3
-		    esac
-		else
-		    unset prev2
-		fi
-		;;
-	    esac
-	  fi
-	  if [ -z "$prev2" ] ; then
-	    COMPREPLY=( $(compgen -W 'db agraph \
-                                      annotate cat cdiff complete diff list log ls status \
-                                      cert chkeypass dropkey genkey trusted \
-                                      pull push reindex serve sync \
-                                      privkey pubkey read \
-                                      cvs_import \
-                                      approve comment disapprove tag testresult \
-                                      checkout co explicit_merge heads merge propagate refresh_inodeprints setup \
-                                      set unset \
-                                      add attr commit drop identify rename revert update' -- $cur) )
-	  fi
-	  ;;
+                ;;
+              * )
+                if (( $COMP_CWORD >= 3 )) ; then
+                    local prev3=${COMP_WORDS[COMP_CWORD-3]}
+                    case $prev3 in
+                        explicit_merge )
+                            _monotone_complete revision
+                            _monotone_branches
+                            ;;
+                        *)
+                            unset prev2
+                            unset prev3
+                    esac
+                else
+                    unset prev2
+                    _filedir
+                fi
+                ;;
+            esac
+          fi
+          if (( $COMP_CWORD < 2 )) ; then
+            COMPREPLY=( $(compgen -W 'automate db agraph fload fmerge lca lcad
+                                      rcs_import annotate cat complete diff
+                                      list log ls status cert chkeypass dropkey
+                                      genkey trusted pull push reindex serve
+                                      sync certs fdata fdelta mdata mdelta
+                                      privkey pubkey rdata read cvs_import
+                                      approve comment disapprove tag testresult
+                                      checkout co explicit_merge fcommit heads
+                                      merge propagate refresh_inodeprints setup
+                                      set unset add attr ci commit drop
+                                      identify mv rename revert rm update' -- $cur) )
+          else
+              _filedir
+          fi
+          ;;
       esac
       ;;
   esac
   return 0
 }
 
-complete -F _monotone -o default monotone
+complete -F _monotone -o filenames monotone

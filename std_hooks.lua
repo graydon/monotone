@@ -230,11 +230,6 @@ function edit_comment(basetext, user_log_message)
 end
 
 
-function non_blocking_rng_ok()
-   return true
-end
-
-
 function persist_phrase_ok()
    return true
 end
@@ -704,4 +699,11 @@ function get_netsync_write_permitted(ident)
    end
    io.close(permfile)
    return matches
+end
+
+function validate_commit_message(message, changeset_text)
+    if (message == "") then
+        return false, "empty messages aren't allowed"
+    end
+    return true, ""
 end

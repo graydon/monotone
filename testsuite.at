@@ -68,9 +68,6 @@ AT_DATA(min_hooks.lua, [
 function get_passphrase(keyid)
 	return keyid
 end
-function non_blocking_rng_ok()
-	return true
-end
 function persist_phrase_ok()
 	return true
 end
@@ -83,10 +80,6 @@ AT_DATA(test_hooks.lua, [
 
 function get_passphrase(keyid)
 	return keyid
-end
-
-function non_blocking_rng_ok()
-	return true
 end
 
 -- Everything alice signs is trusted, nothing mallory signs is
@@ -134,7 +127,6 @@ end
 function ignore_file(name)
 	if (string.find(name, "test_hooks.lua")) then return true end
 	if (string.find(name, "keys")) then return true end
-	if (string.find(name, "test.db")) then return true end
 	return false
 end
 
@@ -217,6 +209,17 @@ AT_CHECK(test $PROBE_R_SHA = $2)
 AT_CHECK(test $PROBE_F_SHA = $3)
 ])
 
+# run as REVERT_N_TO(2|3, rsha[, branch])
+m4_define([REVERT_N_TO], [
+AT_CHECK(rm -rf MT.old)
+AT_CHECK(mv  MT MT.old)
+m4_case([$3],
+        [], [AT_CHECK(MONOTONE$1 checkout --revision=$2 ., [], [ignore])],
+        [AT_CHECK(MONOTONE$1 --branch=$3 checkout --revision=$2 ., [], [ignore])])
+PROBE_R_SHA=`BASE_REVISION`
+AT_CHECK(test $PROBE_R_SHA = $2)
+])
+
 # run as REVERT_TO(rsha[,branch])
 m4_define([REVERT_TO], [ 
 AT_CHECK(rm -rf MT.old)
@@ -226,6 +229,12 @@ m4_case([$2],
         [AT_CHECK(MONOTONE --branch=$2 checkout --revision=$1 ., [], [ignore])])
 PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA = $1)
+])
+
+# run as ADD_N_FILE(2|3, filename, data)
+m4_define([ADD_N_FILE], [
+AT_DATA($2, $3)
+AT_CHECK(MONOTONE$1 add $2, [], [ignore], [ignore])
 ])
 
 # run as ADD_FILE(filename, data)
@@ -615,6 +624,7 @@ m4_include(tests/t_setup_creates_log.at)
 m4_include(tests/t_checkout_creates_log.at)
 m4_include(tests/t_commit_log_1.at)
 m4_include(tests/t_commit_log_2.at)
+m4_include(tests/t_commit_validate.at)
 m4_include(tests/t_dropkey_1.at)
 m4_include(tests/t_dropkey_2.at)
 m4_include(tests/t_rename_attr.at)
@@ -763,3 +773,9 @@ m4_include(tests/t_revert_ignored.at)
 m4_include(tests/t_no_persist_phrase.at)
 m4_include(tests/t_check_db_format.at)
 m4_include(tests/t_rename_destdir.at)
+m4_include(tests/t_ls_changed.at)
+m4_include(tests/t_revert_new_project.at)
+m4_include(tests/t_db_kill_rev_locally_2.at)
+m4_include(tests/t_log_nofiles_merges.at)
+m4_include(tests/t_cvsimport_branch.at)
+m4_include(tests/t_log_to_file.at)

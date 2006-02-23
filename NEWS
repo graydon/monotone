@@ -1,3 +1,72 @@
+Sat Feb 11 13:32:51 PST 2006
+
+        0.26pre2 release.  Inching towards 0.26.  If you are using
+        0.25 or earlier, then make sure to read the very important
+        notes for 0.26pre1, below.  In particular, like 0.26pre1, this
+        is a pre-release for testing.  Do not package it.  DO NOT USE
+        THIS RELEASE UNLESS YOU WANT TO BE A DAREDEVIL.
+
+        (Though, in fact, in a month of usage, only one bug has been
+        found in the new history code, and it was both minor and
+        harmless.  It has additionally been fixed.)
+
+        Database changes:
+
+        - SQLite 3.3.3 has been imported.  3.3 introduces a new database
+          format that is not backwards compatible with earlier 3.x releases.
+          New databases will be created using this new format.  Existing
+          databases remain compatible, and are not converted automatically.
+          Existing databases can be converted by performing a database
+          vacuum ('monotone db execute vacuum').
+
+        New features:
+
+        - New hook validate_commit_message -- use to verify that all
+          commit messages meet arbitrary user-defined rules.
+
+        UI improvements:
+
+        - rename (and mv) commands now accept a broader range of
+          syntax:
+            monotone rename foo some_dir
+              -> renames foo to some_dir/foo
+            monotone rename foo bar baz some_dir
+              -> moves foo, bar, and baz to some_dir/foo,
+                 some_dir/bar, and some_dir/baz
+        - Print a warning if it looks like a user has made a quoting
+          mistake on push/pull/sync/serve (windows cmd.exe has
+          confusing rules here).
+        - New command "ls changed".
+        - New option "--next" to log, which displays descendents of
+          the start revision.
+        - Updating to an arbitrary revision now works again (as it did
+          in 0.25 and earlier).  This allows one to, for instance,
+          switch a working copy to another head, or back up to an
+          earlier version, while preserving uncommitted changes.
+        - New option --brief to annotate, gives somewhat more friendly
+          output.
+        - Fixed bug that made ticker output from netsync inaccurate.
+        - In 'log', --no-merges is now the default, use --merges to
+          override.
+        - If the database is in the working copy, then it is always
+          ignored.
+
+        Bugs:
+
+        - 'serve' with no --bind should now work on systems where the
+          C library has IPv6 support, but the kernel does not.
+        - Compile fixes for GCC 4.1 pre-releases.
+
+        Other:
+        - Better detection when users have not run "rosterify", and
+          more helpful suggestions on what to do in this case.
+        - Documentation, translation, error message,
+          etc. improvements.
+        - Updates to contrib/mtbrowse.sh, simple shell-based monotone
+          interface.
+        - Updates to many other contrib/ files, mostly to maintain
+          compatibility with monotone changes.
+
 Sun Jan  8 01:08:56 PST 2006
 
         0.26pre1 release.  Massive rewrites, released for shakedown.

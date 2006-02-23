@@ -74,6 +74,7 @@ struct poptOption coptions[] =
     {"unknown", 0, POPT_ARG_NONE, NULL, OPT_UNKNOWN, gettext_noop("perform the operations for unknown files from workspace"), NULL},
     {"key-to-push", 0, POPT_ARG_STRING, &argstr, OPT_KEY_TO_PUSH, gettext_noop("push the specified key even if it hasn't signed anything"), NULL},
     {"drop-attr", 0, POPT_ARG_STRING, &argstr, OPT_DROP_ATTR, gettext_noop("when rosterifying, drop attrs entries with the given key"), NULL},
+    {"no-files", 0, POPT_ARG_NONE, NULL, OPT_NO_FILES, gettext_noop("exclude files when printing logs"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -84,6 +85,7 @@ struct poptOption options[] =
 
     {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, gettext_noop("print debug log to stderr while running"), NULL},
     {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, gettext_noop("file to dump debugging log to, on failure"), NULL},
+    {"log", 0, POPT_ARG_STRING, &argstr, OPT_LOG, gettext_noop("file to write the log to"), NULL},
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, gettext_noop("suppress log and progress messages"), NULL},
     {"help", 'h', POPT_ARG_NONE, NULL, OPT_HELP, gettext_noop("display help message"), NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, gettext_noop("print version number, then exit"), NULL},
@@ -332,6 +334,10 @@ cpp_main(int argc, char ** argv)
               global_sanity.filename = system_path(argstr);
               break;
 
+            case OPT_LOG:
+              ui.redirect_log_to(system_path(argstr));
+              break;
+
             case OPT_DB_NAME:
               app.set_database(system_path(argstr));
               break;
@@ -517,6 +523,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_DROP_ATTR:
               app.attrs_to_drop.insert(string(argstr));
+              break;
+
+            case OPT_NO_FILES:
+              app.no_files = true;
               break;
 
             case OPT_HELP:

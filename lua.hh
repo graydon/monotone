@@ -49,7 +49,6 @@ public:
                          std::string const & user_log_message,
                          std::string & result);  
   bool hook_persist_phrase_ok();
-  bool hook_non_blocking_rng_ok();
   bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
                                    hexenc<id> const & id,
                                    cert_name const & name,
@@ -105,6 +104,12 @@ public:
                              std::string & db, std::string & ext);
   bool hook_get_linesep_conv(file_path const & p, 
                              std::string & db, std::string & ext);
+
+  // validation hooks
+  bool hook_validate_commit_message(std::string const & message,
+                                    std::string const & new_manifest_text,
+                                    bool & validated,
+                                    std::string & reason);
 
   // notification hooks
   bool hook_note_commit(revision_id const & new_id,

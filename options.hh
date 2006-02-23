@@ -51,3 +51,5 @@
 #define OPT_KEY_TO_PUSH 42
 #define OPT_CONF_DIR 43
 #define OPT_DROP_ATTR 44
+#define OPT_NO_FILES 45
+#define OPT_LOG 46
