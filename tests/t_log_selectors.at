@@ -1,9 +1,7 @@
 AT_SETUP([log and selectors returning multiple rids])
 MONOTONE_SETUP
 
-# an xfailed testcase for bug #15877
-
-AT_XFAIL_IF(true)
+# testcase for bug #15877
 
 ADD_FILE(testfile, [blah blah
 ])

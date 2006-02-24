@@ -2,6 +2,13 @@
 
 	* enumerator.hh: Another GCC 4.1 compile fix.
 
+	* tests/t_log_selectors.at: UnXFAIL.
+
+	* commands.cc (complete): Refactor selector completion to enable
+	return of single or sets of completed revisions.
+	(CMD(log)): Do something sensible with selectors that return
+	multiple revisions.
+
 	* tests/t_log_selectors.at: XFAILed test for bug #15877.
 
 	* testsuite.at: Add it.
