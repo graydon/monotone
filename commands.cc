@@ -1740,13 +1740,6 @@ ls_missing (app_state & app, vector<utf8> const & args)
 }
 
 
-struct lt_file_path
-{
-  bool operator()(const file_path &fp1, const file_path &fp2) const
-  {
-    return fp1 < fp2;
-  }
-};
 static void
 ls_changed (app_state & app, vector<utf8> const & args)
 {
@@ -1754,7 +1747,7 @@ ls_changed (app_state & app, vector<utf8> const & args)
   revision_id rid;
   roster_t old_roster, new_roster;
   data tmp;
-  std::set<file_path, lt_file_path> files;
+  std::set<file_path> files;
 
   app.require_workspace();
   get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);

@@ -1,3 +1,11 @@
+2006-02-24  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (ls_changed): I was a bit overly paranoid about the
+	possibilities with C++ and defined an explicit functor for the set
+	instead of relying on the automatic generation of less<file_path>.
+	Derek Scherger made me realise I was a bit overzealous, and this
+	change removes the explicit functor.
+
 2006-02-23  Matt Johnston  <matt@ucc.asn.au>
 
 	* enumerator.{cc,hh}: avoid transferring deltas on both sides of merge
