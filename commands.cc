@@ -461,10 +461,11 @@ describe_revision(app_state & app, revision_id const & id)
   return description;
 }
 
+
 static void 
 complete(app_state & app, 
          string const & str,
-         revision_id & completion,
+         set<revision_id> & completion,
          bool must_exist=true)
 {
   // This copies the start of selectors::parse_selector().to avoid
@@ -475,10 +476,10 @@ complete(app_state & app,
   if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
       && str.size() == constants::idlen)
     {
-      completion = revision_id(str);
+      completion.insert(revision_id(str));
       if (must_exist)
-        N(app.db.revision_exists(completion),
-          F("no such revision '%s'") % completion);
+        N(app.db.revision_exists(*completion.begin()),
+          F("no such revision '%s'") % *completion.begin());
       return;
     }
 
@@ -494,16 +495,36 @@ complete(app_state & app,
 
   N(completions.size() != 0,
     F("no match for selection '%s'") % str);
+
+  for (set<string>::const_iterator i = completions.begin();
+       i != completions.end(); ++i)
+    {
+      pair<set<revision_id>::const_iterator, bool> p = completion.insert(revision_id(*i));
+      P(F("expanded to '%s'\n") % *(p.first));
+    }
+}
+
+
+static void
+complete(app_state & app, 
+         string const & str,
+         revision_id & completion,
+         bool must_exist=true)
+{
+  set<revision_id> completions;
+
+  complete(app, str, completions, must_exist);
+
   if (completions.size() > 1)
     {
       string err = (F("selection '%s' has multiple ambiguous expansions: \n") % str).str();
-      for (set<string>::const_iterator i = completions.begin();
+      for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        err += (describe_revision(app, revision_id(*i)) + "\n");
+        err += (describe_revision(app, *i) + "\n");
       N(completions.size() == 1, i18n_format(err));
     }
-  completion = revision_id(*(completions.begin()));  
-  P(F("expanded to '%s'\n") %  completion);  
+
+  completion = *completions.begin();
 }
 
 
@@ -3530,7 +3551,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
-    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_MERGES %
+    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES %
     OPT_NO_FILES)
 {
   if (app.revision_selectors.size() == 0)
@@ -3551,11 +3572,11 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       for (std::vector<utf8>::const_iterator i = app.revision_selectors.begin();
            i != app.revision_selectors.end(); i++) 
         {
-          revision_id rid;
-          complete(app, (*i)(), rid);
-          frontier.insert(rid);
+          set<revision_id> rids;
+          complete(app, (*i)(), rids);
+          frontier.insert(rids.begin(), rids.end());
           if (i == app.revision_selectors.begin())
-            first_rid = rid;
+            first_rid = *rids.begin();
         }
     }
 
@@ -3678,7 +3699,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                    inserter(next_frontier, next_frontier.end()));
             }
 
-          if (!app.merges && rev.is_merge_node())
+          if (app.no_merges && rev.is_merge_node())
             print_this = false;
           
           if (print_this)

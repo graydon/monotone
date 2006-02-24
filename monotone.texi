@@ -4139,7 +4139,7 @@ copy.  Specifying only the pathname "." will restrict @command{status}
 to files changed within the current subdirectory of the workspace.
 
 @item monotone log
-@itemx monotone log [--last=@var{n}] [--next=@var{n}] [--revision=@var{id} [...]] [--brief] [--merges] [--no-files] [--diffs] [@var{file} [...]]
+@itemx monotone log [--last=@var{n}] [--next=@var{n}] [--revision=@var{id} [...]] [--brief] [--no-merges] [--no-files] [--diffs] [@var{file} [...]]
 
 This command prints out a log, in reverse-ancestry order, of small
 history summaries.  Each summary contains author, date, changelog and
@@ -4157,9 +4157,9 @@ the current head revision will be given from the workspace's base
 revision in forward-ancestry order.  This is useful to review changes
 that will be applied to the workspace when @command{update} is run.
 
-By default, the log entries for merge nodes are not shown; usually
-they don't contain much interesting information. If @code{--merges} is
-given, the log entries for these nodes will be included.
+By default, the log entries for merge nodes are shown.  If
+@code{--no-merges} is given, the log entries for these nodes will be
+excluded.
 
 If @code{--no-files} is given, the log output excludes the list of
 files changed in each revision.

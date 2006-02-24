@@ -60,7 +60,7 @@ struct poptOption coptions[] =
     {"pid-file", 0, POPT_ARG_STRING, &argstr, OPT_PIDFILE, gettext_noop("record process id of server"), NULL},
     {"brief", 0, POPT_ARG_NONE, NULL, OPT_BRIEF, gettext_noop("print a brief version of the normal output"), NULL},
     {"diffs", 0, POPT_ARG_NONE, NULL, OPT_DIFFS, gettext_noop("print diffs along with logs"), NULL},
-    {"merges", 0, POPT_ARG_NONE, NULL, OPT_MERGES, gettext_noop("include merges when printing logs"), NULL},
+    {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, gettext_noop("exclude merges when printing logs"), NULL},
     {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, gettext_noop("use the current arguments as the future default"), NULL},
     {"exclude", 0, POPT_ARG_STRING, &argstr, OPT_EXCLUDE, gettext_noop("leave out anything described by its argument"), NULL},
     {"unified", 0, POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("use unified diff format"), NULL},
@@ -426,8 +426,8 @@ cpp_main(int argc, char ** argv)
               app.diffs = true;
               break;
 
-            case OPT_MERGES:
-              app.merges = true;
+            case OPT_NO_MERGES:
+              app.no_merges = true;
               break;
 
             case OPT_SET_DEFAULT:
