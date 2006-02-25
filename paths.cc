@@ -478,9 +478,9 @@ dirname_basename(split_path const & sp,
 {
   I(!sp.empty());
   // L(FL("dirname_basename('%s' [%d components],...)\n") % file_path(sp) % sp.size());
-  split_path::const_iterator penultimate = sp.begin() + (sp.size()-1);
-  dirname = split_path(sp.begin(), penultimate);
-  basename = *penultimate;
+  dirname = sp;
+  dirname.pop_back();
+  basename = sp.back();
   if (dirname.empty())
     {
       // L(FL("basename %d vs. null component %d\n") % basename % the_null_component);

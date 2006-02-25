@@ -375,7 +375,7 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
     split_path current_path_to_put_old_sp, current_path_to_put_old_parent_sp;
     path_component basename;
     current_path_to_put_old.split(current_path_to_put_old_sp);
-    dirname_basename(current_path_to_put_old_sp, current_path_to_put_old_sp, basename);
+    dirname_basename(current_path_to_put_old_sp, current_path_to_put_old_parent_sp, basename);
     N(new_roster.has_node(current_path_to_put_old_parent_sp),
       F("directory '%s' is not versioned or does not exist")
       % file_path(current_path_to_put_old_parent_sp));
