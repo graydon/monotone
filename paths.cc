@@ -439,13 +439,19 @@ normalize_out_dots(std::string const & path)
 
 system_path::system_path(any_path const & other, bool in_true_workspace)
 {
-  I(!is_absolute_here(other.as_internal()));
-  system_path wr;
-  if (in_true_workspace)
-    wr = working_root.get();
+  if (is_absolute_here(other.as_internal()))
+    // another system_path.  the normalizing isn't really necessary, but it
+    // makes me feel warm and fuzzy.
+    data = normalize_out_dots(other.as_internal());
   else
-    wr = working_root.get_but_unused();
-  data = normalize_out_dots((wr / other.as_internal()).as_internal());
+    {
+      system_path wr;
+      if (in_true_workspace)
+        wr = working_root.get();
+      else
+        wr = working_root.get_but_unused();
+      data = normalize_out_dots((wr / other.as_internal()).as_internal());
+    }
 }
 
 static inline std::string const_system_path(utf8 const & path)
