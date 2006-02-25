@@ -549,6 +549,29 @@ roster_merge(roster_t const & left_parent,
     I(right_mi == right_markings.end());
     I(new_i == result.roster.all_nodes().end());
   }
+
+  // now check for the possible global problems
+  if (!result.roster.has_root())
+    result.missing_root_dir = true;
+  else
+    {
+      // we can't have an illegal MT dir unless we have a root node in the
+      // first place...
+      split_path bookkeeping_root_split;
+      bookkeeping_root_split.push_back(the_null_component);
+      bookkeeping_root_split.push_back(bookkeeping_root_component);
+      if (result.roster.has_node(bookkeeping_root_split))
+        {
+          illegal_name_conflict conflict;
+          node_t n = result.roster.get_node(bookkeeping_root_split);
+          conflict.nid = n->self;
+          conflict.parent_name.first = n->parent;
+          conflict.parent_name.second = n->name;
+          I(n->name == bookkeeping_root_component);
+          I(n->self == result.roster.detach_node(bookkeeping_root_split));
+          result.illegal_name_conflicts.push_back(conflict);
+        }
+    }
 }
 
 #ifdef BUILD_UNIT_TESTS
@@ -615,29 +638,6 @@ namespace
     file_path_internal(s).split(sp);
     return sp;
   }
-
-  // now check for the possible global problems
-  if (!result.roster.has_root())
-    result.missing_root_dir = true;
-  else
-    {
-      // we can't have an illegal MT dir unless we have a root node in the
-      // first place...
-      split_path bookkeeping_root_split;
-      bookkeeping_root_split.push_back(the_null_component);
-      bookkeeping_root_split.push_back(bookkeeping_root_component);
-      if (result.roster.has_node(bookkeeping_root_split))
-        {
-          illegal_name_conflict conflict;
-          node_t n = result.roster.get_node(bookkeeping_root_split);
-          conflict.nid = n->self;
-          conflict.parent_name.first = n->parent;
-          conflict.parent_name.second = n->name;
-          I(n->name == bookkeeping_root_component);
-          I(n->self == result.roster.detach_node(bookkeeping_root_split));
-          result.illegal_name_conflicts.push_back(conflict);
-        }
-    }
 }
 
 static void
