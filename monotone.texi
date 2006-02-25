@@ -34,7 +34,7 @@ See the file COPYING for details
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 2003, 2004 Graydon Hoare
-Copyright @copyright{} 2004, 2005 Nathaniel Smith
+Copyright @copyright{} 2004, 2005, 2006 Nathaniel Smith
 Copyright @copyright{} 2005 Derek Scherger
 Copyright @copyright{} 2005 Daniel Carosone
 All rights reserved
@@ -3186,7 +3186,7 @@ to.  Each subsequent line is the name of an attribute, followed by a
 quoted value for that attribute.  Stanzas are separated by blank lines.
 
 As a convenience, you can use the @code{monotone attr} command to set
-and view the values of these attributes; see @ref{Working Copy}.
+and view the values of these attributes; see @ref{Workspace}.
 
 You can tell monotone to automatically take actions based on these
 attributes by defining hooks; see the @code{attr_functions} entry in
@@ -3421,7 +3421,7 @@ omit the @command{merge} step if you only want @command{update} to
 examine descendents of your base revision, and ignore other heads on
 your branch.
 
-@heading Moving Working Copy to Another Revision
+@heading Moving Workspace to Another Revision
 
 @multitable @columnfractions .4 .4
 @item
@@ -3487,7 +3487,7 @@ CVS and monotone here is that monotone's revision numbers are
 @emph{revision IDs}, rather than file IDs.  If one leaves off the file
 argument, then diff can print the difference between two entire trees.
 
-@heading Showing Working Copy Status
+@heading Showing Workspace Status
 
 @multitable @columnfractions .4 .4
 @item
@@ -3508,7 +3508,7 @@ This command operates similarly in monotone and CVS. The only major
 difference is that monotone's @command{status} command always gives a
 status of the whole tree, and outputs a more compact summary than CVS.
 
-@heading Adding Directories and Files to Working Copy
+@heading Adding Directories and Files to Workspace
 
 @multitable @columnfractions .4 .4
 @item
@@ -3532,7 +3532,7 @@ involves adding the file's complete path, including any directories.
 Directories are created as needed, and empty directories are ignored.
 
 
-@heading Removing Directories and Files from Working Copy
+@heading Removing Directories and Files from Workspace
 
 @multitable @columnfractions .4 .4
 @item
@@ -3631,7 +3631,7 @@ all, commands are grouped into logical categories.
 
 @menu
 * Tree::             Operations on tree states in your database
-* Working Copy::     Operations on your workspace
+* Workspace::        Operations on your workspace
 * Network::          Communication with the network
 * Informative::      Production of descriptive reports
 * Key and Cert::     General operations on keys or certificates
@@ -3790,8 +3790,8 @@ common ancestor instead of the default ancestor.
 
 
 @page
-@node    Working Copy
-@section Working Copy
+@node    Workspace
+@section Workspace
 
 @ftable @command
 @item monotone setup [@var{directory}]
