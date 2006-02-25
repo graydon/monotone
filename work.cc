@@ -394,12 +394,18 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
     editable_roster_base e(new_roster, nis);
     cs.apply_to(e);
   }
+  {
+    cset new_work;
+    make_cset(base_roster, new_roster, new_work);
+    put_work_cset(new_work);
+  }
   if (app.execute)
     {
       empty_file_content_source efcs;
       editable_working_tree e(app, efcs);
       cs.apply_to(e);
     }
+  update_any_attrs(app);
 }
 
 
