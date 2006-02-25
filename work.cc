@@ -785,13 +785,6 @@ editable_working_tree::editable_working_tree(app_state & app,
 {
 }
 
-void
-move_path_if_not_already_present(any_path const & old_path,
-                                 any_path const & new_path,
-                                 app_state & app)
-{
-}
-
 static inline bookkeeping_path
 path_for_nid(node_id nid)
 {
