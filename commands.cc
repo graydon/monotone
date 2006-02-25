@@ -1243,6 +1243,23 @@ CMD(rename, N_("workspace"),
 ALIAS(mv, rename)
 
 
+CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
+    N_("rename the root directory\n"
+       "after this command, the directory that currently has the name NEW_ROOT\n"
+       "will be the root directory, and the directory that is currently the root\n"
+       "directory will have name PUT_OLD.\n"
+       "Using --execute is strongly recommended."),
+    OPT_EXECUTE)
+{
+  if (args.size() != 2)
+    throw usage(name);
+
+  app.require_workspace();
+  file_path new_root = file_path_external(idx(args, 0));
+  file_path put_old = file_path_external(idx(args, 1));
+  perform_pivot_root(new_root, put_old, app);
+}
+
 // fload and fmerge are simple commands for debugging the line
 // merger.
 
