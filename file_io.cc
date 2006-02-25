@@ -533,8 +533,8 @@ walk_tree_recursive(fs::path const & absolute,
             }
           if (fs::is_directory(entry))
             {
-              if (walker.visit_dir(p))
-                walk_tree_recursive(entry, rel_entry, walker);
+              walker.visit_dir(p);
+              walk_tree_recursive(entry, rel_entry, walker);
             }
           else
             {
@@ -545,10 +545,9 @@ walk_tree_recursive(fs::path const & absolute,
     }
 }
 
-bool
+void
 tree_walker::visit_dir(file_path const & path)
 {
-  return true;
 }
 
 
@@ -574,10 +573,10 @@ walk_tree(file_path const & path,
       walker.visit_file(path);
       break;
     case path::directory:
-      if (walker.visit_dir(path))
-        walk_tree_recursive(system_path(path).as_external(),
-                            path.as_external(),
-                            walker);
+      walker.visit_dir(path);
+      walk_tree_recursive(system_path(path).as_external(),
+                          path.as_external(),
+                          walker);
       break;
     }
 }

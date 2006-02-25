@@ -28,11 +28,10 @@ using namespace std;
 
 string const attr_file_name(".mt-attrs");
 
-bool
+void
 file_itemizer::visit_dir(file_path const & path)
 {
   this->visit_file(path);
-  return true;
 }
 
 void 
@@ -366,16 +365,16 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
     F("proposed new root directory '%s' is not versioned or does not exist") % new_root);
   {
     split_path new_root_MT;
-    (new_root / bookkeeping_root).split(new_root_MT);
+    (new_root / bookkeeping_root.as_internal()).split(new_root_MT);
     N(!new_roster.has_node(new_root_MT),
       F("proposed new root directory '%s' contains illegal path %s") % new_root % bookkeeping_root);
   }
   
   {
-    file_path current_path_to_put_old = (new_root / put_old);
+    file_path current_path_to_put_old = (new_root / put_old.as_internal());
     split_path current_path_to_put_old_sp, current_path_to_put_old_parent_sp;
     path_component basename;
-    current_path_to_put_old.split(current_path_to_put_old);
+    current_path_to_put_old.split(current_path_to_put_old_sp);
     dirname_basename(current_path_to_put_old_sp, current_path_to_put_old_sp, basename);
     N(new_roster.has_node(current_path_to_put_old_parent_sp),
       F("directory '%s' is not versioned or does not exist")
@@ -390,10 +389,17 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
   cset cs;
   safe_insert(cs.nodes_renamed, std::make_pair(root_sp, put_old_sp));
   safe_insert(cs.nodes_renamed, std::make_pair(new_root_sp, root_sp));
-
-  cs.apply_to(editable_roster_base(new_roster, nis));
+  
+  {
+    editable_roster_base e(new_roster, nis);
+    cs.apply_to(e);
+  }
   if (app.execute)
-    cs.apply_to(editable_working_tree(app, empty_file_content_source()));
+    {
+      empty_file_content_source efcs;
+      editable_working_tree e(app, efcs);
+      cs.apply_to(e);
+    }
 }
 
 
