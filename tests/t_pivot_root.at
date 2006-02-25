@@ -1,4 +1,4 @@
-AT_SETUP([pivot_root])
+AT_SETUP([pivot_root, revert and commit])
 MONOTONE_SETUP
 
 # possible problems:
@@ -32,7 +32,39 @@ AT_CHECK(cd workspace/ && MONOTONE pivot_root dir1 file1/old_root, [1], [ignore]
 AT_CHECK(cd workspace/ && MONOTONE pivot_root dir1 dir2, [1], [ignore], [ignore])
 
 AT_CHECK(cd workspace/ && MONOTONE ls changed, [], [], [])
+AT_CHECK(cd workspace/ && MONOTONE ls missing, [], [], [])
 
 AT_CHECK(cd workspace/ && MONOTONE pivot_root --execute dir1 old_root, [], [ignore], [ignore])
+
+AT_CHECK(test -d workspace/MT)
+AT_CHECK(test -d workspace/dir2)
+AT_CHECK(test -f workspace/file1)
+AT_CHECK(test -d workspace/old_root)
+AT_CHECK(test -d workspace/old_root/dir3)
+AT_CHECK(test -d workspace/old_root/dir3/MT)
+
+AT_CHECK(cd workspace/ && MONOTONE revert, [], [ignore], [ignore])
+
+AT_CHECK(test -d workspace/MT)
+AT_CHECK(test -d workspace/dir1)
+AT_CHECK(test -d workspace/dir1/dir2)
+AT_CHECK(test -f workspace/dir1/file1)
+AT_CHECK(test -d workspace/dir3)
+AT_CHECK(test -d workspace/dir3/MT)
+AT_CHECK(test ! -d workspace/MT/tmp)
+
+AT_CHECK(cd workspace/ && MONOTONE ls changed, [], [], [])
+AT_CHECK(cd workspace/ && MONOTONE ls missing, [], [], [])
+
+AT_CHECK(cd workspace/ && MONOTONE pivot_root --execute dir1 old_root, [], [ignore], [ignore])
+
+AT_CHECK(test -d workspace/MT)
+AT_CHECK(test -d workspace/dir2)
+AT_CHECK(test -f workspace/file1)
+AT_CHECK(test -d workspace/old_root)
+AT_CHECK(test -d workspace/old_root/dir3)
+AT_CHECK(test -d workspace/old_root/dir3/MT)
+
+AT_CHECK(cd workspace/ && MONOTONE commit -m foo, [], [ignore], [ignore])
 
 AT_CLEANUP
