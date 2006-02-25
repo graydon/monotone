@@ -354,7 +354,7 @@ void read_directory(any_path const & path,
   files.clear();
   dirs.clear();
   fs::directory_iterator ei;
-  for (fs::directory_iterator di(path.as_external());
+  for (fs::directory_iterator di(system_path(path).as_external());
        di != ei; ++di)
     {
       fs::path entry = *di;
