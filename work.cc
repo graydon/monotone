@@ -363,6 +363,8 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
   I(new_roster.has_root());
   N(new_roster.has_node(new_root_sp),
     F("proposed new root directory '%s' is not versioned or does not exist") % new_root);
+  N(is_dir_t(new_roster.get_node(new_root_sp)),
+    F("proposed new root directory '%s' is not a directory") % new_root);
   {
     split_path new_root_MT;
     (new_root / bookkeeping_root.as_internal()).split(new_root_MT);
