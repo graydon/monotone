@@ -3436,7 +3436,11 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
         }
       else
         {
-          mkdir_p(fp);
+          if (!directory_exists(fp))
+            {
+              P(F("recreating %s/") % fp);
+              mkdir_p(fp);
+            }
         }
     }
 
