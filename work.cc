@@ -648,7 +648,7 @@ read_options_map(data const & dat, options_map & options)
       parser.sym(opt);
       parser.str(val);
       // options[opt] = val;      
-      // use non-replacing insert verses replacing with options[opt] = val;
+      // use non-replacing insert versus replacing with options[opt] = val;
       options.insert(make_pair(opt, val)); 
     }
 }
