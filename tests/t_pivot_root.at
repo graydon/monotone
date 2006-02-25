@@ -43,7 +43,7 @@ AT_CHECK(test -d workspace/old_root)
 AT_CHECK(test -d workspace/old_root/dir3)
 AT_CHECK(test -d workspace/old_root/dir3/MT)
 
-AT_CHECK(cd workspace/ && MONOTONE revert, [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MONOTONE revert ., [], [ignore], [ignore])
 
 AT_CHECK(test -d workspace/MT)
 AT_CHECK(test -d workspace/dir1)
