@@ -596,6 +596,7 @@ roster_t::detach_node(split_path const & pth)
   path_component basename;
   dirname_basename(pth, dirname, basename);
 
+  I(has_root());
   if (dirname.empty())
     {
       // detaching the root dir
