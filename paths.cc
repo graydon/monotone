@@ -76,6 +76,7 @@ static access_tracker<fs::path> initial_rel_path;
 static access_tracker<system_path> working_root;
 
 bookkeeping_path const bookkeeping_root("MT");
+path_component const bookkeeping_root_component("MT");
 
 void
 save_initial_path()
@@ -438,13 +439,19 @@ normalize_out_dots(std::string const & path)
 
 system_path::system_path(any_path const & other, bool in_true_workspace)
 {
-  I(!is_absolute_here(other.as_internal()));
-  system_path wr;
-  if (in_true_workspace)
-    wr = working_root.get();
+  if (is_absolute_here(other.as_internal()))
+    // another system_path.  the normalizing isn't really necessary, but it
+    // makes me feel warm and fuzzy.
+    data = normalize_out_dots(other.as_internal());
   else
-    wr = working_root.get_but_unused();
-  data = normalize_out_dots((wr / other.as_internal()).as_internal());
+    {
+      system_path wr;
+      if (in_true_workspace)
+        wr = working_root.get();
+      else
+        wr = working_root.get_but_unused();
+      data = normalize_out_dots((wr / other.as_internal()).as_internal());
+    }
 }
 
 static inline std::string const_system_path(utf8 const & path)
@@ -465,6 +472,26 @@ system_path::system_path(std::string const & path)
 system_path::system_path(utf8 const & path)
 {
   data = const_system_path(path);
+}
+
+///////////////////////////////////////////////////////////////////////////
+// utility
+///////////////////////////////////////////////////////////////////////////
+
+void
+dirname_basename(split_path const & sp,
+                 split_path & dirname, path_component & basename)
+{
+  I(!sp.empty());
+  // L(FL("dirname_basename('%s' [%d components],...)\n") % file_path(sp) % sp.size());
+  dirname = sp;
+  dirname.pop_back();
+  basename = sp.back();
+  if (dirname.empty())
+    {
+      // L(FL("basename %d vs. null component %d\n") % basename % the_null_component);
+      I(null_name(basename));
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -825,6 +852,7 @@ static void test_split_join()
   split_path split_mt1, split_mt2;
   file_path_internal("foo/MT").split(split_mt1);
   BOOST_CHECK(split_mt1.size() == 3);
+  I(split_mt1[2] == bookkeeping_root_component);
   split_mt2.push_back(the_null_component);
   split_mt2.push_back(split_mt1[2]);
   // split_mt2 now contains the component "MT"

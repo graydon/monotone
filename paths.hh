@@ -207,6 +207,7 @@ public:
 };
 
 extern bookkeeping_path const bookkeeping_root;
+extern path_component const bookkeeping_root_component;
 
 // this will always be an absolute path
 class system_path : public any_path
@@ -234,6 +235,9 @@ public:
   system_path operator /(std::string const & to_append) const;
 };
 
+void
+dirname_basename(split_path const & sp,
+                 split_path & dirname, path_component & basename);
 
 void
 save_initial_path();
