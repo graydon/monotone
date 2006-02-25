@@ -69,9 +69,7 @@ private:
   std::string payload;
 public:
   netcmd();
-  netcmd(u8 _version);
   netcmd_code get_cmd_code() const {return cmd_code;}
-  u8 get_version() const {return version;}
   size_t encoded_size();
   bool operator==(netcmd const & other) const;
 

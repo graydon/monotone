@@ -88,15 +88,6 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
     return false;
 
   u8 extracted_ver = extract_datum_lsb<u8>(inbuf, pos, "netcmd protocol number");
-  if (extracted_ver != version)
-    throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'\n"
-                       "%s")
-                     % widen<u32,u8>(version)
-                     % widen<u32,u8>(extracted_ver)
-                     % ((version < extracted_ver)
-                        ? _("the remote side has a newer, incompatible version of monotone")
-                        : _("the remote side has an older, incompatible version of monotone")));
-  version = extracted_ver;
 
   u8 cmd_byte = extract_datum_lsb<u8>(inbuf, pos, "netcmd code");
   switch (cmd_byte)
@@ -115,8 +106,21 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
       cmd_code = static_cast<netcmd_code>(cmd_byte);
       break;
     default:
-      throw bad_decode(F("unknown netcmd code 0x%x") % widen<u32,u8>(cmd_byte));
+      // if the versions don't match, we will throw the more descriptive
+      // error immediately after this switch.
+      if (extracted_ver == version)
+        throw bad_decode(F("unknown netcmd code 0x%x")
+                          % widen<u32,u8>(cmd_byte));
     }
+  // Ignore the version on usher_cmd packets.
+  if (extracted_ver != version && cmd_code != usher_cmd)
+    throw bad_decode(F("protocol version mismatch: wanted '%d' got '%d'\n"
+                       "%s")
+                     % widen<u32,u8>(version)
+                     % widen<u32,u8>(extracted_ver)
+                     % ((version < extracted_ver)
+                        ? _("the remote side has a newer, incompatible version of monotone")
+                        : _("the remote side has an older, incompatible version of monotone")));
 
   // check to see if we have even enough bytes for a complete uleb128
   size_t payload_len = 0;
