@@ -807,7 +807,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
 
   // Possibly just write data out into the workspace, if we're doing
   // a file-create (not a dir-create or file/dir rename).
-  if (!file_exists(src_pth))
+  if (!path_exists(src_pth))
     {
       std::map<bookkeeping_path, file_id>::const_iterator i 
         = written_content.find(src_pth);
