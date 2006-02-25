@@ -347,7 +347,7 @@ read_localized_data(file_path const & path,
   dat = tmp2;
 }
 
-void read_directory(system_path const & path,
+void read_directory(any_path const & path,
                     std::vector<utf8> & files,
                     std::vector<utf8> & dirs)
 {
@@ -363,6 +363,8 @@ void read_directory(system_path const & path,
           || di->string() == "..")
         continue;
 
+      // FIXME: BUG: this screws up charsets (assumes blindly that the fs is
+      // utf8)
       if (fs::is_directory(entry))
         dirs.push_back(utf8(entry.leaf()));
       else

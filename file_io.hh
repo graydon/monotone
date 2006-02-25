@@ -63,9 +63,6 @@ void move_file(any_path const & old_path,
 void move_dir(any_path const & old_path,
               any_path const & new_path);
 
-void move_dir_contents(any_path const & old_path,
-                       any_path const & new_path);
-
 // calls move_file or move_dir as appropriate
 void move_path(any_path const & old_path,
                any_path const & new_path);
@@ -75,7 +72,7 @@ void read_localized_data(file_path const & path,
                          data & dat, 
                          lua_hooks & lua);
 
-void read_directory(system_path const & path,
+void read_directory(any_path const & path,
                     std::vector<utf8> & files,
                     std::vector<utf8> & dirs);
 
