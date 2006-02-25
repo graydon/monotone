@@ -3826,7 +3826,7 @@ which it will then commit to the database. The new revision will have
 any added entries inserted in its manifest.
 
 
-@item monotone drop @var{pathname...}
+@item monotone [--execute] drop @var{pathname...}
 @itemx monotone drop --missing
 This command places ``drop'' entries for the paths specified in
 @var{pathname...} in the workspace's ``work list''. The work list of
@@ -3849,6 +3849,10 @@ Currently this command does @emph{not} actually delete the file
 @var{src} in your filesystem; if you want to actually delete the file,
 you should run @command{drop}, and then perform the actual delete using
 whatever mechanism you normally use to delete files.
+
+The option @option{--execute} will make ``drop'' perform the actual
+deletion operations in the filesystem.  It will ignore files or
+directories which have already been deleted.
 
 @item monotone [--execute] rename @var{src} @var{dst}
 @itemx monotone [--execute] rename @var{src1} @var{...} @var{dst/}
@@ -4011,6 +4015,35 @@ if it was not already, and forces a full inodeprints cache refresh.
 After running this command, you are guaranteed that your workspace is
 in inodeprints mode, and that the inodeprints cache is accurate and up
 to date.
+
+@item monotone pivot_root [--execute] pivot_root @var{new_root} @var{put_old}
+Most users will never need this command.  It is primarily useful in
+certain tricky cases where one wishes to combine several projects
+into one, or split one project into several.
+
+Its effect is to rename the directory whose name is currently
+@var{new_root} to become the root directory of the versioned tree, and
+to at the same time rename the directory that is currently the root of
+the versioned tree to have the name @var{put_old}.  Conceptually, it
+is equivalent to executing the following commands in the root of the
+workspace:
+
+@smallexample
+@group
+$ monotone rename . @var{new_root}/@var{put_old}
+$ monotone rename @var{new_root} .
+@end group
+@end smallexample
+
+Except, of course, that these @command{rename} commands are illegal,
+because after the first command the tree has no root at all, and there
+is a directory loop.  This illegality is the only reason for
+@command{pivot_root}'s existence; internally, the result is treated
+exactly like two renames, including with respect to merges and
+updates.
+
+The use of @option{--execute} with this command is strongly
+recommended, though not required.
 
 @end ftable
 
