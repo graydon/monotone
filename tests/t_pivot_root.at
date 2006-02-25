@@ -3,6 +3,7 @@ MONOTONE_SETUP
 
 # possible problems:
 #   -- the new root doesn't exist
+#   -- the new root is not a dir
 #   -- the new root has an MT in it
 #   -- the directory the old root is supposed to end up in doesn't exist
 #   -- the directory the old root is supposed to end up in is not a directory
@@ -24,6 +25,7 @@ AT_CHECK(cd workspace/ && MONOTONE add ., [], [ignore], [ignore])
 AT_CHECK(cd workspace/ && MONOTONE commit -m foo, [], [ignore], [ignore])
 
 AT_CHECK(cd workspace/ && MONOTONE pivot_root nosuchdir foo, [1], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MONOTONE pivot_root dir1/file1 foo, [1], [ignore], [ignore])
 AT_CHECK(cd workspace/ && MONOTONE pivot_root dir3 old_root, [1], [ignore], [ignore])
 AT_CHECK(cd workspace/ && MONOTONE pivot_root dir1 nosuchdir/old_root, [1], [ignore], [ignore])
 AT_CHECK(cd workspace/ && MONOTONE pivot_root dir1 file1/old_root, [1], [ignore], [ignore])
