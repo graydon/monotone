@@ -904,7 +904,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
         = written_content.find(src_pth);
       if (i != written_content.end())
         {
-          P(F("adding %s") % dst_pth);
+          P(F("adding '%s'") % dst_pth);
           file_data dat;
           source.get_file_content(i->second, dat);
           write_localized_data(dst_pth, dat.inner(), app.lua);
@@ -917,11 +917,11 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
     = rename_add_drop_map.find(src_pth);
   if (i != rename_add_drop_map.end())
     {
-      P(F("renaming %s to %s") % i->second % dst_pth);
+      P(F("renaming '%s' to '%s'") % i->second % dst_pth);
       safe_erase(rename_add_drop_map, src_pth);
     }
   else
-    P(F("adding %s") % dst_pth);
+    P(F("adding '%s'") % dst_pth);
   if (dst_pth == file_path())
     {
       // root dir attach, so we move contents, rather than the dir itself
