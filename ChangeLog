@@ -1,3 +1,11 @@
+2006-02-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netcmd.cc: Ignore protocol version field on usher_cmd packets. It
+	should now be possible to use an usher to redirect connections based
+	on netsync version.
+	* netcmd.hh: Remove unused netcmd::get_version() and
+	unused/unimplemented netcmd::netcmd(u8 version).
+
 2006-02-24  Richard Levitte  <richard@levitte.org>
 
 	* commands.cc (ls_changed): I was a bit overly paranoid about the
