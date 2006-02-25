@@ -840,7 +840,7 @@ editable_working_tree::detach_node(split_path const & src)
       read_directory(src_pth, files, dirs);
       for (std::vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
         move_file(src_pth / (*i)(), dst_pth / (*i)());
-      for (std::vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
+      for (std::vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         if (!bookkeeping_path::is_bookkeeping_path((*i)()))
           move_dir(src_pth / (*i)(), dst_pth / (*i)());
       root_dir_attached = false;
