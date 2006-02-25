@@ -922,7 +922,6 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
     }
   else
     P(F("adding %s") % dst_pth);
-  // This will complain if the move is actually impossible
   if (dst_pth == file_path())
     {
       // root dir attach, so we move contents, rather than the dir itself
@@ -933,7 +932,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
           I(!bookkeeping_path::is_bookkeeping_path((*i)()));
           move_file(src_pth / (*i)(), dst_pth / (*i)());
         }
-      for (std::vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
+      for (std::vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
           I(!bookkeeping_path::is_bookkeeping_path((*i)()));
           move_dir(src_pth / (*i)(), dst_pth / (*i)());
@@ -942,6 +941,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
       root_dir_attached = true;
     }
   else
+    // This will complain if the move is actually impossible
     move_path(src_pth, dst_pth);
 }
 
