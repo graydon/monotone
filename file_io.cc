@@ -484,8 +484,6 @@ write_data(system_path const & path,
 {
   write_data_impl(path, data, tmpdir / (boost::format("data.tmp.%d") %
                                              get_process_id()).str());
-
-
 }
 
 tree_walker::~tree_walker() {}
@@ -533,8 +531,8 @@ walk_tree_recursive(fs::path const & absolute,
             }
           if (fs::is_directory(entry))
             {
-              walker.visit_dir(p);
-              walk_tree_recursive(entry, rel_entry, walker);
+              if (walker.visit_dir(p))
+                walk_tree_recursive(entry, rel_entry, walker);
             }
           else
             {
@@ -545,9 +543,10 @@ walk_tree_recursive(fs::path const & absolute,
     }
 }
 
-void
+bool
 tree_walker::visit_dir(file_path const & path)
 {
+  return true;
 }
 
 
@@ -573,10 +572,10 @@ walk_tree(file_path const & path,
       walker.visit_file(path);
       break;
     case path::directory:
-      walker.visit_dir(path);
-      walk_tree_recursive(system_path(path).as_external(),
-                          path.as_external(),
-                          walker);
+      if (walker.visit_dir(path))
+        walk_tree_recursive(system_path(path).as_external(),
+                            path.as_external(),
+                            walker);
       break;
     }
 }

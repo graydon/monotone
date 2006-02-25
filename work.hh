@@ -55,7 +55,7 @@ struct file_itemizer : public tree_walker
   path_set & ignored;
   file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i) 
     : app(a), known(k), unknown(u), ignored(i) {}
-  virtual void visit_dir(file_path const & path);
+  virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
 };
 
@@ -69,6 +69,10 @@ void
 perform_rename(std::set<file_path> const & src_paths,
                file_path const & dst_dir,
                app_state & app);
+
+void
+perform_pivot_root(file_path const & new_root, file_path const & put_old,
+                   app_state & app);
 
 // the "work" file contains the current cset representing uncommitted
 // add/drop/rename operations (not deltas)

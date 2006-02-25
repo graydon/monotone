@@ -101,7 +101,8 @@ void write_data(system_path const & path,
 class tree_walker
 {
 public:
-  virtual void visit_dir(file_path const & path);
+  // returns true if the directory should be descended into
+  virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path) = 0;
   virtual ~tree_walker();
 };

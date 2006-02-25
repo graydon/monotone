@@ -28,10 +28,11 @@ using namespace std;
 
 string const attr_file_name(".mt-attrs");
 
-void 
+bool
 file_itemizer::visit_dir(file_path const & path)
 {
   this->visit_file(path);
+  return true;
 }
 
 void 
@@ -345,6 +346,34 @@ perform_rename(set<file_path> const & src_paths,
         }
     }
   update_any_attrs(app);
+}
+
+void
+perform_pivot_root(file_path const & new_root, file_path const & put_old,
+                   app_state & app)
+{
+split_path new_root_sp, put_old_sp, root_sp;
+  new_root.split(new_root_sp);
+  put_old.split(put_old_sp);
+  file_path().split(root_sp);
+
+  temp_node_id_source nis;
+  roster_t base_roster, new_roster;
+  get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
+
+  I(new_roster.has_root());
+  N(new_roster.has_node(new_root_sp),
+    F("proposed new root directory '%s' is not versioned or does not exist") % new_root);
+  {
+    split_path new_root_MT;
+    (new_root / bookkeeping_root).split(new_root_MT);
+    N(!new_roster.has_node(new_root_MT),
+      F("proposed new root directory '%s' contains illegal path %s") % new_root % bookkeeping_root);
+  }
+
+  node_id old_root_nid = new_roster.detach_node(root_sp);
+  node_id new_root_nid = new_roster.detach_node(new_root_sp);
+  new_roster.attach_node(new_root_nid, root_sp);
 }
 
 
