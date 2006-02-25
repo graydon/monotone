@@ -183,6 +183,15 @@ struct file_content_source
   virtual ~file_content_source() {};
 };
 
+struct empty_file_content_source : public file_content_source
+{
+  virtual void get_file_content(file_id const & fid,
+                                file_data & dat) const
+  {
+    I(false);
+  }
+};
+
 struct editable_working_tree : public editable_tree
 {
   std::map<bookkeeping_path, file_id> written_content;

@@ -352,7 +352,7 @@ void
 perform_pivot_root(file_path const & new_root, file_path const & put_old,
                    app_state & app)
 {
-split_path new_root_sp, put_old_sp, root_sp;
+  split_path new_root_sp, put_old_sp, root_sp;
   new_root.split(new_root_sp);
   put_old.split(put_old_sp);
   file_path().split(root_sp);
@@ -370,10 +370,30 @@ split_path new_root_sp, put_old_sp, root_sp;
     N(!new_roster.has_node(new_root_MT),
       F("proposed new root directory '%s' contains illegal path %s") % new_root % bookkeeping_root);
   }
+  
+  {
+    file_path current_path_to_put_old = (new_root / put_old);
+    split_path current_path_to_put_old_sp, current_path_to_put_old_parent_sp;
+    path_component basename;
+    current_path_to_put_old.split(current_path_to_put_old);
+    dirname_basename(current_path_to_put_old_sp, current_path_to_put_old_sp, basename);
+    N(new_roster.has_node(current_path_to_put_old_parent_sp),
+      F("directory '%s' is not versioned or does not exist")
+      % file_path(current_path_to_put_old_parent_sp));
+    N(is_dir_t(new_roster.get_node(current_path_to_put_old_parent_sp)),
+      F("'%s' is not a directory")
+      % file_path(current_path_to_put_old_parent_sp));
+    N(!new_roster.has_node(current_path_to_put_old_sp),
+      F("'%s' is in the way") % current_path_to_put_old);
+  }
 
-  node_id old_root_nid = new_roster.detach_node(root_sp);
-  node_id new_root_nid = new_roster.detach_node(new_root_sp);
-  new_roster.attach_node(new_root_nid, root_sp);
+  cset cs;
+  safe_insert(cs.nodes_renamed, std::make_pair(root_sp, put_old_sp));
+  safe_insert(cs.nodes_renamed, std::make_pair(new_root_sp, root_sp));
+
+  cs.apply_to(editable_roster_base(new_roster, nis));
+  if (app.execute)
+    cs.apply_to(editable_working_tree(app, empty_file_content_source()));
 }
 
 
