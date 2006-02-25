@@ -235,6 +235,9 @@ public:
   system_path operator /(std::string const & to_append) const;
 };
 
+void
+dirname_basename(split_path const & sp,
+                 split_path & dirname, path_component & basename);
 
 void
 save_initial_path();
