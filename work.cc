@@ -917,8 +917,6 @@ editable_working_tree::apply_delta(split_path const & pth,
 
   file_data dat;
   source.get_file_content(new_id, dat);
-  // FIXME_ROSTERS: inconsistent with file addition code above, and
-  // write_localized_data is poorly designed anyway...
   write_localized_data(pth_unsplit, dat.inner(), app.lua);
 }
 
