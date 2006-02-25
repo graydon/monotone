@@ -194,8 +194,6 @@ struct empty_file_content_source : public file_content_source
 
 struct editable_working_tree : public editable_tree
 {
-  std::map<bookkeeping_path, file_id> written_content;
-  std::map<bookkeeping_path, file_path> rename_add_drop_map;
   editable_working_tree(app_state & app, file_content_source const & source);
 
   virtual node_id detach_node(split_path const & src);
@@ -221,6 +219,9 @@ private:
   app_state & app;
   file_content_source const & source;
   node_id next_nid;
+  std::map<bookkeeping_path, file_id> written_content;
+  std::map<bookkeeping_path, file_path> rename_add_drop_map;
+  bool root_dir_attached;
 };
 
 #endif // __WORK_HH__

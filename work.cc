@@ -781,7 +781,7 @@ void update_any_attrs(app_state & app)
 
 editable_working_tree::editable_working_tree(app_state & app,
                                              file_content_source const & source)
-  : app(app), source(source), next_nid(1)
+  : app(app), source(source), next_nid(1), root_dir_attached(true)
 {
 }
 
@@ -791,17 +791,42 @@ path_for_nid(node_id nid)
   return bookkeeping_root / "tmp" / boost::lexical_cast<std::string>(nid);
 }
 
+// Attaching/detaching the root directory:
+//   This is tricky, because we don't want to simply move it around, like
+// other directories.  That would require some very snazzy handling of the
+// MT directory, and never be possible on windows anyway[1].  So, what we do
+// is fake it -- whenever we want to move the root directory into the
+// temporary dir, we instead create a new dir in the temporary dir, move
+// all of the root's contents into this new dir, and make a note that the root
+// directory is logically non-existent.  Whenever we want to move some
+// directory out of the temporary dir and onto the root directory, we instead
+// check that the root is logically nonexistent, move its contents, and note
+// that it exists again.
+//
+// [1] Because the root directory is our working directory, and thus locked in
+// place.  We _could_ chdir out, then move MT out, then move the real root
+// directory into our newly-moved MT, etc., but aside from being very finicky,
+// this would require that we know our root directory's name relative to its
+// parent.
+
 node_id
 editable_working_tree::detach_node(split_path const & src)
 {
+  I(root_dir_attached);
   node_id nid = next_nid++;
   file_path src_pth(src);
-  // can't detach the root dir
-  E(!(src_pth == file_path()), F("cannot delete or rename the root directory"));
   bookkeeping_path dst_pth = path_for_nid(nid);
   safe_insert(rename_add_drop_map, make_pair(dst_pth, src_pth));
   make_dir_for(dst_pth);
-  move_path(src_pth, dst_pth);
+  if (src_pth == file_path())
+    {
+      // root dir detach, so we move contents, rather than the dir itself
+      mkdir_p(dst_pth);
+      move_dir_contents(src_pth, dst_pth);
+      root_dir_attached = false;
+    }
+  else
+    move_path(src_pth, dst_pth);
   return nid;
 }
 
@@ -847,21 +872,18 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   bookkeeping_path src_pth = path_for_nid(nid);
   file_path dst_pth(dst);
 
+  require_path_is_nonexistent(dst_pth,
+                              F("path '%s' already exists, cannot create") % dst_pth);
+
   // Possibly just write data out into the workspace, if we're doing
   // a file-create (not a dir-create or file/dir rename).
   if (!file_exists(src_pth))
     {
+      I(root_dir_attached);
       std::map<bookkeeping_path, file_id>::const_iterator i 
         = written_content.find(src_pth);
       if (i != written_content.end())
         {
-          if (file_exists(dst_pth))
-            {
-              file_id dst_id;
-              ident_existing_file(dst_pth, dst_id, app.lua);
-              if (i->second == dst_id)
-                return;
-            }
           P(F("adding %s") % dst_pth);
           file_data dat;
           source.get_file_content(i->second, dat);
@@ -871,21 +893,6 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
     }
 
   // If we get here, we're doing a file/dir rename, or a dir-create.
-  switch (get_path_status(src_pth))
-    {
-    case path::nonexistent:
-      I(false);
-      break;
-    case path::file:
-      E(!file_exists(dst_pth),
-        F("renaming '%s' onto existing file: '%s'\n") 
-        % src_pth % dst_pth);
-      break;
-    case path::directory:
-      if (directory_exists(dst_pth))
-        return;
-      break;
-    }
   std::map<bookkeeping_path, file_path>::const_iterator i
     = rename_add_drop_map.find(src_pth);
   if (i != rename_add_drop_map.end())
@@ -896,7 +903,15 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   else
     P(F("adding %s") % dst_pth);
   // This will complain if the move is actually impossible
-  move_path(src_pth, dst_pth);
+  if (dst_pth == file_path())
+    {
+      // root dir attach, so we move contents, rather than the dir itself
+      move_dir_contents(src_pth, dst_pth);
+      delete_dir_shallow(src_pth);
+      root_dir_attached = true;
+    }
+  else
+    move_path(src_pth, dst_pth);
 }
 
 void
@@ -939,6 +954,7 @@ void
 editable_working_tree::commit()
 {
   I(rename_add_drop_map.empty());
+  I(root_dir_attached);
 }
 
 editable_working_tree::~editable_working_tree()
