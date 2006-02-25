@@ -12,7 +12,9 @@ dir ""
 content @<:@4cbd040533a2f43fc6691d773d510cda70f4126a@:>@
 ])
 
-AT_DATA(expected2, [dir ""
+AT_DATA(expected2, [format_version "1"
+
+dir ""
 
    file "foo"
 content @<:@9fd2be4badf713d640ae46bf4547d1549654dfe5@:>@

@@ -1,3 +1,17 @@
+2006-02-25  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_inventory): 
+	* commands.cc (status, ls_known, find_unknown_and_ignored,
+	find_missing, ls_changed, commit, diff, revert, log): 
+	* roster.cc (update_current_roster_from_filesystem): add app_state
+	to restriction constructors
+	* restrictions.{cc,hh}: add support for --depth option and ignored
+	files in restrictions to match old functionality; clean up
+	constructors a bit
+	* tests/t_automate_get_manifest_of.at: add format_version stanza
+	to test manifest
+	* tests/t_restrictions.at: re-enable --depth tests
+
 2006-02-22  Derek Scherger  <derek@echologic.com>
 
 	* automate.cc (automate_get_revision, automate_get_manifest_of):

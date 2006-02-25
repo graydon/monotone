@@ -60,26 +60,52 @@ enum path_state { explicit_include, explicit_exclude, implicit_include };
 class restriction
 {
  public:
-  restriction() {}
+  restriction(app_state & a) : app(a) {}
 
   restriction(vector<utf8> const & includes,
               vector<utf8> const & excludes,
-              roster_t const & roster);
+              roster_t const & roster, 
+              app_state & a) :
+    app(a)
+  {
+    map_paths(includes, excludes);
+    map_nodes(roster);
+    validate();
+  }
   
   restriction(vector<utf8> const & includes,
               vector<utf8> const & excludes,
               roster_t const & roster1,
-              roster_t const & roster2);
+              roster_t const & roster2,
+              app_state & a) :
+    app(a)
+  {
+    map_paths(includes, excludes);
+    map_nodes(roster1);
+    map_nodes(roster2);
+    validate();
+  }
 
   bool includes(roster_t const & roster, node_id nid) const;
 
   bool includes(split_path const & sp) const;
 
-  bool empty() { return node_map.empty(); }
+  bool empty() const { return included_paths.empty() && excluded_paths.empty(); }
+
+  restriction & operator=(restriction const & other)
+  {
+    included_paths = other.included_paths;
+    excluded_paths = other.excluded_paths;
+    known_paths = other.known_paths;
+    node_map = other.node_map;
+    path_map = other.path_map;
+    return *this;
+  }
 
  private:
 
-  bool default_result;
+  app_state & app;
+  path_set included_paths, excluded_paths, known_paths;
 
   // we maintain maps by node_id and also by split_path, which is not
   // particularly nice, but paths are required for checking unknown and ignored
@@ -87,6 +113,12 @@ class restriction
   map<node_id, path_state> node_map;
   map<split_path, path_state> path_map;
 
+  void map_paths(vector<utf8> const & includes,
+                 vector<utf8> const & excludes);
+
+  void map_nodes(roster_t const & roster);
+
+  void validate();
 };
 
 #endif  // header guard

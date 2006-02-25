@@ -42,22 +42,23 @@ AT_CHECK(MONOTONE add work/file3, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add work/A/fileA, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add work/A/B/fileAB, [], [ignore], [ignore])
 
-# FIXME_RESTRICTIONS: replace --depth with ... recursive wildcards
-
+# FIXME_RESTRICTIONS: the old code allows for --depth=N with no paths
+# and adds the "." path so that depth is interpreted against the current
+# included directory. this seems bad. how does --depth interact with --exclude?
 #AT_CHECK(MONOTONE ls known --depth=0, [], [stdout], [ignore])
 #AT_CHECK(grep fileX stdout, [1], [ignore])
 
-#AT_CHECK(MONOTONE ls known --depth=0 . , [], [stdout], [ignore])
-#AT_CHECK(grep fileX stdout, [1], [ignore])
+AT_CHECK(MONOTONE ls known --depth=0 . , [], [stdout], [ignore])
+AT_CHECK(grep fileX stdout, [1], [ignore])
 
-#AT_CHECK(MONOTONE ls known --depth=1 . , [], [stdout], [ignore])
-#AT_CHECK(grep fileX stdout, [0], [ignore])
+AT_CHECK(MONOTONE ls known --depth=1 . , [], [stdout], [ignore])
+AT_CHECK(grep fileX stdout, [0], [ignore])
 
-#AT_CHECK(MONOTONE ls known --depth=0 work/A , [], [stdout], [ignore])
-#AT_CHECK(grep fileAB stdout, [1], [ignore])
+AT_CHECK(MONOTONE ls known --depth=0 work/A , [], [stdout], [ignore])
+AT_CHECK(grep fileAB stdout, [1], [ignore])
 
-#AT_CHECK(MONOTONE ls known --depth=1 work/A , [], [stdout], [ignore])
-#AT_CHECK(grep fileAB stdout, [0], [ignore])
+AT_CHECK(MONOTONE ls known --depth=1 work/A , [], [stdout], [ignore])
+AT_CHECK(grep fileAB stdout, [0], [ignore])
 
 # test restriction of unknown, missing, ignored files
 
@@ -166,19 +167,17 @@ AT_CHECK(EXCLUDED(X 1 2 3), [0], [ignore])
 AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
 AT_CHECK(INCLUDED(X 1 2 3 4), [0], [ignore])
 
-# FIXME_RESTRICTIONS: replace --depth with ... recursive wildcards
+AT_CHECK(MONOTONE diff --depth=0 . , [], [stdout], [ignore])
+AT_CHECK(grep fileAB stdout, [1], [ignore])
 
-#AT_CHECK(MONOTONE diff --depth=0 . , [], [stdout], [ignore])
-#AT_CHECK(grep fileAB stdout, [1], [ignore])
+AT_CHECK(MONOTONE diff --depth=2 . , [], [stdout], [ignore])
+AT_CHECK(grep fileA stdout, [0], [ignore])
 
-#AT_CHECK(MONOTONE diff --depth=2 . , [], [stdout], [ignore])
-#AT_CHECK(grep fileA stdout, [0], [ignore])
+AT_CHECK(MONOTONE diff --context --depth=0 . , [], [stdout], [ignore])
+AT_CHECK(grep fileAB stdout, [1], [ignore])
 
-#AT_CHECK(MONOTONE diff --context --depth=0 . , [], [stdout], [ignore])
-#AT_CHECK(grep fileAB stdout, [1], [ignore])
-
-#AT_CHECK(MONOTONE diff --context --depth=2 . , [], [stdout], [ignore])
-#AT_CHECK(grep fileA stdout, [0], [ignore])
+AT_CHECK(MONOTONE diff --context --depth=2 . , [], [stdout], [ignore])
+AT_CHECK(grep fileA stdout, [0], [ignore])
 
 # include both source and target of rename
 
