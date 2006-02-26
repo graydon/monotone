@@ -892,9 +892,6 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   bookkeeping_path src_pth = path_for_nid(nid);
   file_path dst_pth(dst);
 
-  require_path_is_nonexistent(dst_pth,
-                              F("path '%s' already exists, cannot create") % dst_pth);
-
   // Possibly just write data out into the workspace, if we're doing
   // a file-create (not a dir-create or file/dir rename).
   if (!path_exists(src_pth))
@@ -911,6 +908,16 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
           return;
         }
     }
+
+  // FIXME: it is weird to do this here, instead of up above, but if we do it
+  // up above a lot of tests break.  those tests are arguably broken -- they
+  // depend on 'update' clobbering existing, non-versioned files -- but
+  // putting this up there doesn't actually help, since if we abort in the
+  // middle of an update to avoid clobbering a file, we just end up leaving
+  // the working copy in an inconsistent state instead.  so for now, we leave
+  // this check down here.
+  require_path_is_nonexistent(dst_pth,
+                              F("path '%s' already exists, cannot create") % dst_pth);
 
   // If we get here, we're doing a file/dir rename, or a dir-create.
   std::map<bookkeeping_path, file_path>::const_iterator i

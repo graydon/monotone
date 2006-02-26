@@ -1,5 +1,11 @@
 2006-02-25  Nathaniel Smith  <njs@pobox.com>
 
+	* work.cc (attach_node): Apparently the tests depend on update
+	clobbering existing non-versioned files... and we don't have a
+	good solution _anyway_, so just go back to clobbering them.
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
 	* cset.cc (root_dir_test, invalid_csets_test): Don't test that
 	root dir stuff fails.  Test that it works.
 
