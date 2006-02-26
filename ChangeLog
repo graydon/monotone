@@ -4,6 +4,10 @@
 	to avoid including ignored dirs such as '.svn', since dirs now
 	actually exist.
 
+2006-02-26  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc: Update notes on tests.
+
 2006-02-25  Nathaniel Smith  <njs@pobox.com>
 
 	* work.cc (attach_node): Apparently the tests depend on update
@@ -813,6 +817,17 @@
 	* lua.cc (hook_get_key_pair): Remove.
 	* keys.cc (require_password): Adjust accordingly.
 	* cert.cc (priv_key_exists, load_key_pair): Likewise.
+
+2006-01-14  Christof Petig <christof@petig-baender.de>
+
+	* database.cc, database.h: binary transparent infrastructure,
+	store and retrieve former base64 encoded columns as BLOBs
+
+	* schema_migration.cc: unbase64 changed columns, change comment
+	on files.data which indicates a different database format
+
+	* schema.sql: change comment on file which indicates, that
+	files.data is no longer base64 encoded
 
 2006-01-14  Richard Levitte  <richard@levitte.org>
 
