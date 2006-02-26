@@ -1,5 +1,10 @@
 2006-02-25  Nathaniel Smith  <njs@pobox.com>
 
+	* cset.cc (root_dir_test, invalid_csets_test): Don't test that
+	root dir stuff fails.  Test that it works.
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.cc (detach_node): Add missing invariant.
 
 2006-02-25  Nathaniel Smith  <njs@pobox.com>

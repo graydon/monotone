@@ -1072,15 +1072,6 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(FL("TEST: can't rename root (for now)"));
-    setup_roster(r, f1, nis);
-    cset cs; MM(cs);
-    split_path sp1, sp2;
-    cs.dirs_added.insert(root);
-    cs.nodes_renamed.insert(std::make_pair(root, baz));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
-  }
-  {
     L(FL("TEST: can't delete non-empty directory"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
@@ -1088,25 +1079,8 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
-    L(FL("TEST: can't delete root"));
-    // for this test, make sure root has no contents
-    r = roster_t();
-    cset cs; MM(cs);
-    cs.nodes_deleted.insert(root);
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
-  }
-  {
-    L(FL("TEST: can't delete and replace root"));
-    // for this test, make sure root has no contents
-    r = roster_t();
-    cset cs; MM(cs);
-    cs.nodes_deleted.insert(root);
-    cs.dirs_added.insert(root);
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
-  }
-  {
     L(FL("TEST: attach node with no root directory present"));
-    // for this test, make sure root has no contents
+    // for this test, make sure original roster has no contents
     r = roster_t();
     cset cs; MM(cs);
     split_path sp;
@@ -1126,12 +1100,59 @@ invalid_csets_test()
 }
 
 void
+root_dir_test()
+{
+  temp_node_id_source nis;
+  roster_t r;
+  MM(r);
+  editable_roster_base tree(r, nis);
+  
+  file_id f1(std::string("0000000000000000000000000000000000000001"));
+
+  split_path root, baz;
+  file_path().split(root);
+  file_path_internal("baz").split(baz);
+
+  {
+    L(FL("TEST: can rename root"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    split_path sp1, sp2;
+    cs.dirs_added.insert(root);
+    cs.nodes_renamed.insert(std::make_pair(root, baz));
+    cs.apply_to(tree);
+    r.check_sane(true);
+  }
+  {
+    L(FL("TEST: can delete root (but it makes us insane)"));
+    // for this test, make sure root has no contents
+    r = roster_t();
+    r.attach_node(r.create_dir_node(nis), root);
+    cset cs; MM(cs);
+    cs.nodes_deleted.insert(root);
+    cs.apply_to(tree);
+    BOOST_CHECK_THROW(r.check_sane(true), std::logic_error);
+  }
+  {
+    L(FL("TEST: can delete and replace root"));
+    r = roster_t();
+    r.attach_node(r.create_dir_node(nis), root);
+    cset cs; MM(cs);
+    cs.nodes_deleted.insert(root);
+    cs.dirs_added.insert(root);
+    cs.apply_to(tree);
+    r.check_sane(true);
+  }
+}
+
+void
 add_cset_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&basic_csets_test));
   suite->add(BOOST_TEST_CASE(&invalid_csets_test));
   suite->add(BOOST_TEST_CASE(&cset_written_test));
+  suite->add(BOOST_TEST_CASE(&root_dir_test));
 }
 
 #endif // BUILD_UNIT_TESTS
