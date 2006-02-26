@@ -32,11 +32,6 @@ typedef boost::shared_ptr<node> node_t;
 typedef boost::shared_ptr<file_node> file_t;
 typedef boost::shared_ptr<dir_node> dir_t;
 
-// FIXME: perhaps move this to paths.{cc,hh}
-void
-dirname_basename(split_path const & sp,
-                 split_path & dirname, path_component & basename);
-
 node_id const the_null_node = 0;
 
 inline bool 

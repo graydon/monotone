@@ -305,22 +305,6 @@ roster_t::operator=(roster_t const & other)
   return *this;
 }
 
-void
-dirname_basename(split_path const & sp,
-                 split_path & dirname, path_component & basename)
-{
-  I(!sp.empty());
-  // L(FL("dirname_basename('%s' [%d components],...)\n") % file_path(sp) % sp.size());
-  split_path::const_iterator penultimate = sp.begin() + (sp.size()-1);
-  dirname = split_path(sp.begin(), penultimate);
-  basename = *penultimate;
-  if (dirname.empty())
-    {
-      // L(FL("basename %d vs. null component %d\n") % basename % the_null_component);
-      I(null_name(basename));
-    }
-}
-
 
 struct
 dfs_iter
@@ -612,13 +596,10 @@ roster_t::detach_node(split_path const & pth)
   path_component basename;
   dirname_basename(pth, dirname, basename);
 
+  I(has_root());
   if (dirname.empty())
     {
       // detaching the root dir
-      {
-        // detaching the root dir is currently forbidden.
-        I(false);
-      }
       I(null_name(basename));
       node_id root_id = root_dir->self;
       safe_insert(old_locations,

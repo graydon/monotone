@@ -40,7 +40,7 @@ public:
   bool stdhooks;
   bool rcfiles;
   bool diffs;
-  bool merges;
+  bool no_merges;
   bool set_default;
   bool verbose;
   options_map options;

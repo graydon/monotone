@@ -1,3 +1,69 @@
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (attach_node): Apparently the tests depend on update
+	clobbering existing non-versioned files... and we don't have a
+	good solution _anyway_, so just go back to clobbering them.
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
+	* cset.cc (root_dir_test, invalid_csets_test): Don't test that
+	root dir stuff fails.  Test that it works.
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (detach_node): Add missing invariant.
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc (roster_merge): Fix strange merge-created
+	problem...
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (attach_node): This code should use path_exists, not
+	file_exists.
+
+2006-02-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netcmd.cc: Ignore protocol version field on usher_cmd packets. It
+	should now be possible to use an usher to redirect connections based
+	on netsync version.
+	* netcmd.hh: Remove unused netcmd::get_version() and
+	unused/unimplemented netcmd::netcmd(u8 version).
+
+2006-02-24  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (ls_changed): I was a bit overly paranoid about the
+	possibilities with C++ and defined an explicit functor for the set
+	instead of relying on the automatic generation of less<file_path>.
+	Derek Scherger made me realise I was a bit overzealous, and this
+	change removes the explicit functor.
+
+2006-02-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* enumerator.hh: Another GCC 4.1 compile fix.
+
+	* tests/t_log_selectors.at: UnXFAIL.
+
+	* commands.cc (complete): Refactor selector completion to enable
+	return of single or sets of completed revisions.
+	(CMD(log)): Do something sensible with selectors that return
+	multiple revisions.
+
+	* tests/t_log_selectors.at: XFAILed test for bug #15877.
+
+	* testsuite.at: Add it.
+
+	* app_state.cc, app_state.hh, commands.cc, monotone.cc,
+	options.hh: Revert failed UI experiment: reenable logging merges
+	by default and rename --merges back to --no-merges.
+
+	* contrib/color-logs.{conf,sh}, contrib/monotone-notify.pl,
+	contrib/monotone.el, tests/t_log_nofiles_nomerges.at,
+	testsuite.at: Handle --no-merges.
+
+	* monotone.texi: Document --no-merges.
+
 2006-02-23  Matt Johnston  <matt@ucc.asn.au>
 
 	* enumerator.{cc,hh}: avoid transferring deltas on both sides of merge
@@ -12,6 +78,10 @@
 2006-02-21  Nathaniel Smith  <njs@pobox.com>
 
 	* work.cc (detach_node): Oops, x != y != !(x == y).
+
+2006-02-21  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc: Fixup after merge.
 
 2006-02-21  Nathaniel Smith  <njs@pobox.com>
 

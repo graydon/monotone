@@ -70,6 +70,10 @@ perform_rename(std::set<file_path> const & src_paths,
                file_path const & dst_dir,
                app_state & app);
 
+void
+perform_pivot_root(file_path const & new_root, file_path const & put_old,
+                   app_state & app);
+
 // the "work" file contains the current cset representing uncommitted
 // add/drop/rename operations (not deltas)
 
@@ -179,10 +183,17 @@ struct file_content_source
   virtual ~file_content_source() {};
 };
 
+struct empty_file_content_source : public file_content_source
+{
+  virtual void get_file_content(file_id const & fid,
+                                file_data & dat) const
+  {
+    I(false);
+  }
+};
+
 struct editable_working_tree : public editable_tree
 {
-  std::map<bookkeeping_path, file_id> written_content;
-  std::map<bookkeeping_path, file_path> rename_add_drop_map;
   editable_working_tree(app_state & app, file_content_source const & source);
 
   virtual node_id detach_node(split_path const & src);
@@ -208,6 +219,9 @@ private:
   app_state & app;
   file_content_source const & source;
   node_id next_nid;
+  std::map<bookkeeping_path, file_id> written_content;
+  std::map<bookkeeping_path, file_path> rename_add_drop_map;
+  bool root_dir_attached;
 };
 
 #endif // __WORK_HH__

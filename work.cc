@@ -28,7 +28,7 @@ using namespace std;
 
 string const attr_file_name(".mt-attrs");
 
-void 
+void
 file_itemizer::visit_dir(file_path const & path)
 {
   this->visit_file(path);
@@ -347,6 +347,69 @@ perform_rename(set<file_path> const & src_paths,
   update_any_attrs(app);
 }
 
+void
+perform_pivot_root(file_path const & new_root, file_path const & put_old,
+                   app_state & app)
+{
+  split_path new_root_sp, put_old_sp, root_sp;
+  new_root.split(new_root_sp);
+  put_old.split(put_old_sp);
+  file_path().split(root_sp);
+
+  temp_node_id_source nis;
+  roster_t base_roster, new_roster;
+  get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
+
+  I(new_roster.has_root());
+  N(new_roster.has_node(new_root_sp),
+    F("proposed new root directory '%s' is not versioned or does not exist") % new_root);
+  N(is_dir_t(new_roster.get_node(new_root_sp)),
+    F("proposed new root directory '%s' is not a directory") % new_root);
+  {
+    split_path new_root_MT;
+    (new_root / bookkeeping_root.as_internal()).split(new_root_MT);
+    N(!new_roster.has_node(new_root_MT),
+      F("proposed new root directory '%s' contains illegal path %s") % new_root % bookkeeping_root);
+  }
+  
+  {
+    file_path current_path_to_put_old = (new_root / put_old.as_internal());
+    split_path current_path_to_put_old_sp, current_path_to_put_old_parent_sp;
+    path_component basename;
+    current_path_to_put_old.split(current_path_to_put_old_sp);
+    dirname_basename(current_path_to_put_old_sp, current_path_to_put_old_parent_sp, basename);
+    N(new_roster.has_node(current_path_to_put_old_parent_sp),
+      F("directory '%s' is not versioned or does not exist")
+      % file_path(current_path_to_put_old_parent_sp));
+    N(is_dir_t(new_roster.get_node(current_path_to_put_old_parent_sp)),
+      F("'%s' is not a directory")
+      % file_path(current_path_to_put_old_parent_sp));
+    N(!new_roster.has_node(current_path_to_put_old_sp),
+      F("'%s' is in the way") % current_path_to_put_old);
+  }
+
+  cset cs;
+  safe_insert(cs.nodes_renamed, std::make_pair(root_sp, put_old_sp));
+  safe_insert(cs.nodes_renamed, std::make_pair(new_root_sp, root_sp));
+  
+  {
+    editable_roster_base e(new_roster, nis);
+    cs.apply_to(e);
+  }
+  {
+    cset new_work;
+    make_cset(base_roster, new_roster, new_work);
+    put_work_cset(new_work);
+  }
+  if (app.execute)
+    {
+      empty_file_content_source efcs;
+      editable_working_tree e(app, efcs);
+      cs.apply_to(e);
+    }
+  update_any_attrs(app);
+}
+
 
 // work file containing rearrangement from uncommitted adds/drops/renames
 
@@ -599,7 +662,7 @@ read_options_map(data const & dat, options_map & options)
       parser.sym(opt);
       parser.str(val);
       // options[opt] = val;      
-      // use non-replacing insert verses replacing with options[opt] = val;
+      // use non-replacing insert versus replacing with options[opt] = val;
       options.insert(make_pair(opt, val)); 
     }
 }
@@ -732,14 +795,7 @@ void update_any_attrs(app_state & app)
 
 editable_working_tree::editable_working_tree(app_state & app,
                                              file_content_source const & source)
-  : app(app), source(source), next_nid(1)
-{
-}
-
-void
-move_path_if_not_already_present(any_path const & old_path,
-                                 any_path const & new_path,
-                                 app_state & app)
+  : app(app), source(source), next_nid(1), root_dir_attached(true)
 {
 }
 
@@ -749,17 +805,48 @@ path_for_nid(node_id nid)
   return bookkeeping_root / "tmp" / boost::lexical_cast<std::string>(nid);
 }
 
+// Attaching/detaching the root directory:
+//   This is tricky, because we don't want to simply move it around, like
+// other directories.  That would require some very snazzy handling of the
+// MT directory, and never be possible on windows anyway[1].  So, what we do
+// is fake it -- whenever we want to move the root directory into the
+// temporary dir, we instead create a new dir in the temporary dir, move
+// all of the root's contents into this new dir, and make a note that the root
+// directory is logically non-existent.  Whenever we want to move some
+// directory out of the temporary dir and onto the root directory, we instead
+// check that the root is logically nonexistent, move its contents, and note
+// that it exists again.
+//
+// [1] Because the root directory is our working directory, and thus locked in
+// place.  We _could_ chdir out, then move MT out, then move the real root
+// directory into our newly-moved MT, etc., but aside from being very finicky,
+// this would require that we know our root directory's name relative to its
+// parent.
+
 node_id
 editable_working_tree::detach_node(split_path const & src)
 {
+  I(root_dir_attached);
   node_id nid = next_nid++;
   file_path src_pth(src);
-  // can't detach the root dir
-  E(!(src_pth == file_path()), F("cannot delete or rename the root directory"));
   bookkeeping_path dst_pth = path_for_nid(nid);
   safe_insert(rename_add_drop_map, make_pair(dst_pth, src_pth));
   make_dir_for(dst_pth);
-  move_path(src_pth, dst_pth);
+  if (src_pth == file_path())
+    {
+      // root dir detach, so we move contents, rather than the dir itself
+      mkdir_p(dst_pth);
+      std::vector<utf8> files, dirs;
+      read_directory(src_pth, files, dirs);
+      for (std::vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
+        move_file(src_pth / (*i)(), dst_pth / (*i)());
+      for (std::vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
+        if (!bookkeeping_path::is_bookkeeping_path((*i)()))
+          move_dir(src_pth / (*i)(), dst_pth / (*i)());
+      root_dir_attached = false;
+    }
+  else
+    move_path(src_pth, dst_pth);
   return nid;
 }
 
@@ -807,20 +894,14 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
 
   // Possibly just write data out into the workspace, if we're doing
   // a file-create (not a dir-create or file/dir rename).
-  if (!file_exists(src_pth))
+  if (!path_exists(src_pth))
     {
+      I(root_dir_attached);
       std::map<bookkeeping_path, file_id>::const_iterator i 
         = written_content.find(src_pth);
       if (i != written_content.end())
         {
-          if (file_exists(dst_pth))
-            {
-              file_id dst_id;
-              ident_existing_file(dst_pth, dst_id, app.lua);
-              if (i->second == dst_id)
-                return;
-            }
-          P(F("adding %s") % dst_pth);
+          P(F("adding '%s'") % dst_pth);
           file_data dat;
           source.get_file_content(i->second, dat);
           write_localized_data(dst_pth, dat.inner(), app.lua);
@@ -828,33 +909,47 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
         }
     }
 
+  // FIXME: it is weird to do this here, instead of up above, but if we do it
+  // up above a lot of tests break.  those tests are arguably broken -- they
+  // depend on 'update' clobbering existing, non-versioned files -- but
+  // putting this up there doesn't actually help, since if we abort in the
+  // middle of an update to avoid clobbering a file, we just end up leaving
+  // the working copy in an inconsistent state instead.  so for now, we leave
+  // this check down here.
+  require_path_is_nonexistent(dst_pth,
+                              F("path '%s' already exists, cannot create") % dst_pth);
+
   // If we get here, we're doing a file/dir rename, or a dir-create.
-  switch (get_path_status(src_pth))
-    {
-    case path::nonexistent:
-      I(false);
-      break;
-    case path::file:
-      E(!file_exists(dst_pth),
-        F("renaming '%s' onto existing file: '%s'\n") 
-        % src_pth % dst_pth);
-      break;
-    case path::directory:
-      if (directory_exists(dst_pth))
-        return;
-      break;
-    }
   std::map<bookkeeping_path, file_path>::const_iterator i
     = rename_add_drop_map.find(src_pth);
   if (i != rename_add_drop_map.end())
     {
-      P(F("renaming %s to %s") % i->second % dst_pth);
+      P(F("renaming '%s' to '%s'") % i->second % dst_pth);
       safe_erase(rename_add_drop_map, src_pth);
     }
   else
-    P(F("adding %s") % dst_pth);
-  // This will complain if the move is actually impossible
-  move_path(src_pth, dst_pth);
+    P(F("adding '%s'") % dst_pth);
+  if (dst_pth == file_path())
+    {
+      // root dir attach, so we move contents, rather than the dir itself
+      std::vector<utf8> files, dirs;
+      read_directory(src_pth, files, dirs);
+      for (std::vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
+        {
+          I(!bookkeeping_path::is_bookkeeping_path((*i)()));
+          move_file(src_pth / (*i)(), dst_pth / (*i)());
+        }
+      for (std::vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
+        {
+          I(!bookkeeping_path::is_bookkeeping_path((*i)()));
+          move_dir(src_pth / (*i)(), dst_pth / (*i)());
+        }
+      delete_dir_shallow(src_pth);
+      root_dir_attached = true;
+    }
+  else
+    // This will complain if the move is actually impossible
+    move_path(src_pth, dst_pth);
 }
 
 void
@@ -875,8 +970,6 @@ editable_working_tree::apply_delta(split_path const & pth,
 
   file_data dat;
   source.get_file_content(new_id, dat);
-  // FIXME_ROSTERS: inconsistent with file addition code above, and
-  // write_localized_data is poorly designed anyway...
   write_localized_data(pth_unsplit, dat.inner(), app.lua);
 }
 
@@ -899,6 +992,7 @@ void
 editable_working_tree::commit()
 {
   I(rename_add_drop_map.empty());
+  I(root_dir_attached);
 }
 
 editable_working_tree::~editable_working_tree()
