@@ -20,6 +20,7 @@
 #include "botan/botan.h"
 #include "app_state.hh"
 #include "keys.hh"
+#include "transforms.hh"
 
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
@@ -54,12 +55,8 @@ static int logged_sqlite3_exec(sqlite3* db,
 
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
-extern "C" {
-  const char *sqlite3_value_text_s(sqlite3_value *v);
-}
-
 static string 
-lowercase(string const & in)
+lowercase_facet(string const & in)
 {
   I(40==in.size());
   const int sz=40;
@@ -93,7 +90,7 @@ calculate_id(string const & in,
   Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
   p.process_msg(in);
 
-  ident = lowercase(p.read_all_as_string());
+  ident = lowercase_facet(p.read_all_as_string());
 }
 
 
@@ -118,19 +115,19 @@ sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 
   if (nargs == 1)
     {
-      string s = (sqlite3_value_text_s(args[0]));
+      string s = reinterpret_cast<char const*>(sqlite3_value_text(args[0]));
       s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
       tmp = s;
     }
   else
     {
-      string sep = string(sqlite3_value_text_s(args[0]));
-      string s = (sqlite3_value_text_s(args[1]));
+      string sep = string(reinterpret_cast<char const*>(sqlite3_value_text(args[0])));
+      string s = reinterpret_cast<char const*>(sqlite3_value_text(args[1]));
       s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
       tmp = s;
       for (int i = 2; i < nargs; ++i)
         {
-          s = string(sqlite3_value_text_s(args[i]));
+          s = string(reinterpret_cast<char const*>(sqlite3_value_text(args[i])));
           s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
           tmp += sep + s;
         }
@@ -908,6 +905,135 @@ migrate_client_to_add_rosters(sqlite3 * sql,
   return true;
 }
 
+static void 
+sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
+{
+  if (nargs != 1)
+    {
+      sqlite3_result_error(f, "need exactly 1 arg to unbase64()", -1);
+      return;
+    }
+  data decoded;
+  decode_base64(base64<data>(string(reinterpret_cast<char const*>(sqlite3_value_text(args[0])))), decoded);
+  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
+}
+
+// I wish I had a form of ALTER TABLE COMMENT on sqlite3
+static bool
+migrate_files_BLOB(sqlite3 * sql,
+                                    char ** errmsg,
+                                    app_state *app)
+{
+  int res;
+  I(sqlite3_create_function(sql, "unbase64", -1, 
+                           SQLITE_UTF8, NULL,
+                           &sqlite3_unbase64_fn, 
+                           NULL, NULL) == 0);
+  // change the encoding of file(_delta)s
+  if (!move_table(sql, errmsg, 
+                  "files", 
+                  "tmp", 
+                  "("
+                  "id primary key,"
+                  "data not null"
+                  ")"))
+    return false;
+
+  res = logged_sqlite3_exec(sql, "CREATE TABLE files\n"
+                            "\t(\n"
+                            "\tid primary key,   -- strong hash of file contents\n"
+                            "\tdata not null     -- compressed contents of a file\n"
+                            "\t)", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "INSERT INTO files "
+                            "SELECT id, unbase64(data) "
+                            "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  if (!move_table(sql, errmsg, 
+                  "file_deltas", 
+                  "tmp", 
+                  "("
+                  "id not null,"
+                  "base not null,"
+                  "delta not null"
+                  ")"))
+    return false;
+
+  res = logged_sqlite3_exec(sql, "CREATE TABLE file_deltas\n"
+                            "\t(\n"
+                            "\tid not null,      -- strong hash of file contents\n"
+                            "\tbase not null,    -- joins with files.id or file_deltas.id\n"
+                            "\tdelta not null,   -- compressed rdiff to construct current from base\n"
+                            "\tunique(id, base)\n"
+                            "\t)", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "INSERT INTO file_deltas "
+                            "SELECT id, base, unbase64(delta) "
+                            "FROM tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  // migrate other contents which are accessed by get|put_version
+  res = logged_sqlite3_exec(sql, "UPDATE manifests SET data=unbase64(data)", 
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE manifest_deltas "
+                            "SET delta=unbase64(delta)", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE rosters SET data=unbase64(data) ",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE roster_deltas "
+                            "SET delta=unbase64(delta)", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql, "UPDATE db_vars "
+      "SET value=unbase64(value),name=unbase64(name)", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE public_keys "
+      "SET keydata=unbase64(keydata)", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE revision_certs "
+      "SET value=unbase64(value),signature=unbase64(signature)",
+      NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE manifest_certs "
+      "SET value=unbase64(value),signature=unbase64(signature) ",
+      NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE revisions "
+      "SET data=unbase64(data)", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "UPDATE branch_epochs "
+      "SET branch=unbase64(branch)", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  return true;
+}
+
 void 
 migrate_monotone_schema(sqlite3 *sql, app_state *app)
 {
@@ -939,9 +1065,12 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
   m.add("bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
         &migrate_client_to_add_rosters);
 
+  m.add("1db80c7cee8fa966913db1a463ed50bf1b0e5b0e",
+        &migrate_files_BLOB);
+
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "1db80c7cee8fa966913db1a463ed50bf1b0e5b0e");
+  m.migrate(sql, "9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df");
 }
