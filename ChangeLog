@@ -1,3 +1,7 @@
+2006-02-26  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc: Update notes on tests.
+
 2006-02-25  Nathaniel Smith  <njs@pobox.com>
 
 	* work.cc (attach_node): Apparently the tests depend on update
