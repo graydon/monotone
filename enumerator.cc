@@ -75,6 +75,89 @@ revision_enumerator::done()
   return revs.empty() && items.empty();
 }
 
+void
+revision_enumerator::files_for_revision(revision_id const & r, 
+                                        set<file_id> & full_files, 
+                                        set<pair<file_id,file_id> > & del_files)
+{
+  // when we're sending a merge, we have to be careful if we
+  // want to send as little data as possible. see bug #15846
+  //
+  // njs's solution: "when sending the files for a revision,
+  // look at both csets. If a given hash is not listed as new
+  // in _both_ csets, throw it out. Now, for everything left
+  // over, if one side says "add" and the other says "delta",
+  // do a delta. If both sides say "add", do a data."
+
+  set<file_id> file_adds;
+  // map<dst, src>.  src is arbitrary.
+  map<file_id, file_id> file_deltas;
+  map<file_id, size_t> file_edge_counts;
+
+  revision_set rs;
+  MM(rs);
+  app.db.get_revision(r, rs);
+
+  for (edge_map::const_iterator i = rs.edges.begin();
+       i != rs.edges.end(); ++i)
+    {
+      set<file_id> file_dsts;
+      cset const & cs = edge_changes(i);
+        
+      // Queue up all the file-adds
+      for (map<split_path, file_id>::const_iterator fa = cs.files_added.begin();
+           fa != cs.files_added.end(); ++fa)
+        {
+          file_adds.insert(fa->second);
+          file_dsts.insert(fa->second);
+        }
+        
+      // Queue up all the file-deltas
+      for (map<split_path, std::pair<file_id, file_id> >::const_iterator fd
+             = cs.deltas_applied.begin();
+           fd != cs.deltas_applied.end(); ++fd)
+        {
+          file_deltas[fd->second.second] = fd->second.first;
+          file_dsts.insert(fd->second.second);
+        }
+
+      // we don't want to be counting files twice in a single edge
+      for (set<file_id>::const_iterator i = file_dsts.begin();
+           i != file_dsts.end(); i++)
+        file_edge_counts[*i]++;
+    }
+
+  del_files.clear();
+  full_files.clear();
+  size_t num_edges = rs.edges.size();
+
+  for (map<file_id, size_t>::const_iterator i = file_edge_counts.begin(); 
+       i != file_edge_counts.end(); i++)
+    {
+      MM(i->first);
+      if (i->second < num_edges)
+        continue;
+
+      // first preference is to send as a delta...
+      map<file_id, file_id>::const_iterator fd = file_deltas.find(i->first);
+      if (fd != file_deltas.end())
+        {
+          del_files.insert(make_pair(fd->second, fd->first));
+          continue;
+        }
+
+      // ... otherwise as a full file.
+      set<file_id>::const_iterator f = file_adds.find(i->first);
+      if (f != file_adds.end())
+        {
+          full_files.insert(*f);
+          continue;
+        }
+
+      I(false);
+    }
+}
+
 void 
 revision_enumerator::step()
 {
@@ -118,42 +201,38 @@ revision_enumerator::step()
               L(FL("revision_enumerator::step expanding "
                   "contents of rev '%d'\n") % r);
 
-              revision_set rs;
-              app.db.get_revision(r, rs);
-              for (edge_map::const_iterator i = rs.edges.begin();
-                   i != rs.edges.end(); ++i)
-                {
-                  cset const & cs = edge_changes(i);
-                    
-                  // Queue up all the file-adds
-                  for (map<split_path, file_id>::const_iterator fa = cs.files_added.begin();
-                       fa != cs.files_added.end(); ++fa)
-                    {
-                      if (cb.queue_this_file(fa->second.inner()))
-                        {
-                          enumerator_item item;
-                          item.tag = enumerator_item::fdata;
-                          item.ident_a = fa->second.inner();
-                          items.push_back(item);
-                        }
-                    }
-                    
-                  // Queue up all the file-deltas
-                  for (map<split_path, std::pair<file_id, file_id> >::const_iterator fd
-                         = cs.deltas_applied.begin();
-                       fd != cs.deltas_applied.end(); ++fd)
-                    {
-                      if (cb.queue_this_file(fd->second.second.inner()))
-                        {
-                          enumerator_item item;
-                          item.tag = enumerator_item::fdelta;
-                          item.ident_a = fd->second.first.inner();
-                          item.ident_b = fd->second.second.inner();
-                          items.push_back(item);
-                        }
-                    }
-                }
-                
+              // The rev's files and fdeltas
+              {
+                set<file_id> full_files;
+                set<pair<file_id, file_id> > del_files;
+                files_for_revision(r, full_files, del_files);
+
+                for (set<file_id>::const_iterator f = full_files.begin();
+                     f != full_files.end(); f++)
+                  {
+                    if (cb.queue_this_file(f->inner()))
+                      {
+                        enumerator_item item;
+                        item.tag = enumerator_item::fdata;
+                        item.ident_a = f->inner();
+                        items.push_back(item);
+                      }
+                  }
+
+                for (set<pair<file_id, file_id> >::const_iterator fd = del_files.begin();
+                     fd != del_files.end(); fd++)
+                  {
+                    if (cb.queue_this_file(fd->second.inner()))
+                      {
+                        enumerator_item item;
+                        item.tag = enumerator_item::fdelta;
+                        item.ident_a = fd->first.inner();
+                        item.ident_b = fd->second.inner();
+                        items.push_back(item);
+                      }
+                  }
+              }
+
               // Queue up the rev itself
               {
                 enumerator_item item;

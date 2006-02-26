@@ -63,6 +63,9 @@ revision_enumerator
                       app_state & app);
   void load_graphs();
   bool all_parents_enumerated(revision_id const & child);
+  void files_for_revision(revision_id const & r, 
+                          std::set<file_id> & full_files, 
+                          std::set<std::pair<file_id,file_id> > & del_files);
   void step();
   bool done();
 };

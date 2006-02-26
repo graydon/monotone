@@ -25,7 +25,9 @@ roster_merge_result::is_clean_except_for_content()
     && node_attr_conflicts.empty()
     && orphaned_node_conflicts.empty()
     && rename_target_conflicts.empty()
-    && directory_loop_conflicts.empty();
+    && directory_loop_conflicts.empty()
+    && illegal_name_conflicts.empty()
+    && !missing_root_dir;
 }
 
 void
@@ -81,6 +83,12 @@ roster_merge_result::log_conflicts()
       % directory_loop_conflicts[i].nid
       % directory_loop_conflicts[i].parent_name.first
       % directory_loop_conflicts[i].parent_name.second);
+
+  for (size_t i = 0; i < illegal_name_conflicts.size(); ++i)
+    L(FL("illegal name conflict: node %d, wanted parent %d, name %s")
+      % illegal_name_conflicts[i].nid
+      % illegal_name_conflicts[i].parent_name.first
+      % illegal_name_conflicts[i].parent_name.second);
 }
 
 void
@@ -121,6 +129,12 @@ roster_merge_result::warn_non_content_conflicts()
       % directory_loop_conflicts[i].nid
       % directory_loop_conflicts[i].parent_name.first
       % directory_loop_conflicts[i].parent_name.second);
+
+  for (size_t i = 0; i < illegal_name_conflicts.size(); ++i)
+    W(F("illegal name conflict: node %d, wanted parent %d, name %s")
+      % illegal_name_conflicts[i].nid
+      % illegal_name_conflicts[i].parent_name.first
+      % illegal_name_conflicts[i].parent_name.second);
 }
 
 void
@@ -132,6 +146,8 @@ roster_merge_result::clear()
   orphaned_node_conflicts.clear();
   rename_target_conflicts.clear();
   directory_loop_conflicts.clear();
+  illegal_name_conflicts.clear();
+  missing_root_dir = false;
   roster = roster_t();
 }
 
@@ -533,6 +549,29 @@ roster_merge(roster_t const & left_parent,
     I(right_mi == right_markings.end());
     I(new_i == result.roster.all_nodes().end());
   }
+
+  // now check for the possible global problems
+  if (!result.roster.has_root())
+    result.missing_root_dir = true;
+  else
+    {
+      // we can't have an illegal MT dir unless we have a root node in the
+      // first place...
+      split_path bookkeeping_root_split;
+      bookkeeping_root_split.push_back(the_null_component);
+      bookkeeping_root_split.push_back(bookkeeping_root_component);
+      if (result.roster.has_node(bookkeeping_root_split))
+        {
+          illegal_name_conflict conflict;
+          node_t n = result.roster.get_node(bookkeeping_root_split);
+          conflict.nid = n->self;
+          conflict.parent_name.first = n->parent;
+          conflict.parent_name.second = n->name;
+          I(n->name == bookkeeping_root_component);
+          I(n->self == result.roster.detach_node(bookkeeping_root_split));
+          result.illegal_name_conflicts.push_back(conflict);
+        }
+    }
 }
 
 #ifdef BUILD_UNIT_TESTS

@@ -30,12 +30,12 @@ AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
 AT_CHECK(MONOTONE update, [], [ignore], [ignore])
 R2=`BASE_REVISION`
 
-# check that merge is excluded from log output
+# check that merge is included by default
 AT_CHECK(MONOTONE log, [], [stdout], [ignore])
-AT_CHECK(grep '^Revision' stdout | grep $R2, [1], [ignore])
-
-# and that it has been included by --merges
-AT_CHECK(MONOTONE log --merges, [], [stdout], [ignore])
 AT_CHECK(grep '^Revision' stdout | grep $R2, [], [ignore])
+
+# and that it is excluded by --no-merges
+AT_CHECK(MONOTONE log --no-merges, [], [stdout], [ignore])
+AT_CHECK(grep '^Revision' stdout | grep $R2, [1], [ignore])
 
 AT_CLEANUP

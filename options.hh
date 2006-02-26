@@ -32,7 +32,7 @@
 #define OPT_MSGFILE 23
 #define OPT_BRIEF 24
 #define OPT_DIFFS 25
-#define OPT_MERGES 26
+#define OPT_NO_MERGES 26
 #define OPT_LAST 27
 #define OPT_NEXT 28
 #define OPT_VERBOSE 29

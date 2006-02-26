@@ -72,7 +72,7 @@ void read_localized_data(file_path const & path,
                          data & dat, 
                          lua_hooks & lua);
 
-void read_directory(system_path const & path,
+void read_directory(any_path const & path,
                     std::vector<utf8> & files,
                     std::vector<utf8> & dirs);
 
@@ -101,6 +101,7 @@ void write_data(system_path const & path,
 class tree_walker
 {
 public:
+  // returns true if the directory should be descended into
   virtual void visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path) = 0;
   virtual ~tree_walker();
