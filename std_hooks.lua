@@ -70,6 +70,15 @@ attr_functions["mtn:execute"] =
       end
    end
 
+function dir_matches(name, dir)
+   -- helper for ignore_file, matching files within dir, or dir itself.
+   -- eg for dir of 'CVS', matches CVS/, CVS/*, */CVS/ and */CVS/*
+   if (string.find(name, "^" .. dir .. "/")) then return true end
+   if (string.find(name, "^" .. dir .. "$")) then return true end
+   if (string.find(name, "/" .. dir .. "/")) then return true end
+   if (string.find(name, "/" .. dir .. "$")) then return true end
+   return false
+end
 
 function ignore_file(name)
    -- project specific
@@ -124,26 +133,21 @@ function ignore_file(name)
    -- emacs creates #foo# files
    if (string.find(name, "%#[^/]*%#$")) then return true end
    -- autotools detritus:
-   if (string.find(name, "^autom4te.cache/")) then return true end
-   if (string.find(name, "/autom4te.cache/")) then return true end
-   if (string.find(name, "^.deps/")) then return true end
-   if (string.find(name, "/.deps/")) then return true end
+   if dir_matches(name, "autom4te.cache") then return true end
+   if dir_matches(name, ".deps") then return true end
    -- Cons/SCons detritus:
-   if (string.find(name, "^.consign$")) then return true end
-   if (string.find(name, "/.consign$")) then return true end
-   if (string.find(name, "^.sconsign$")) then return true end
-   if (string.find(name, "/.sconsign$")) then return true end
+   if dir_matches(name, ".consign") then return true end
+   if dir_matches(name, ".sconsign") then return true end
    -- other VCSes:
-   if (string.find(name, "^CVS/")) then return true end
-   if (string.find(name, "/CVS/")) then return true end
-   if (string.find(name, "^%.svn/")) then return true end
-   if (string.find(name, "/%.svn/")) then return true end
-   if (string.find(name, "^SCCS/")) then return true end
-   if (string.find(name, "/SCCS/")) then return true end
-   if (string.find(name, "^_darcs/")) then return true end
-   if (string.find(name, "^.cdv/")) then return true end
-   if (string.find(name, "^.git/")) then return true end
-   if (string.find(name, "%.scc$")) then return true end
+   if dir_matches(name, "CVS") then return true end
+   if dir_matches(name, ".svn") then return true end
+   if dir_matches(name, "SCCS") then return true end
+   if dir_matches(name, "_darcs") then return true end
+   if dir_matches(name, ".cdv") then return true end
+   if dir_matches(name, ".git") then return true end
+   if dir_matches(name, ".scc") then return true end
+   if dir_matches(name, ".bzr") then return true end
+   if dir_matches(name, ".hg") then return true end
    -- desktop/directory configuration metadata
    if (string.find(name, "^.DS_Store$")) then return true end
    if (string.find(name, "/.DS_Store$")) then return true end

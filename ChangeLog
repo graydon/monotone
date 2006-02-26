@@ -1,3 +1,9 @@
+2006-02-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* std_hooks.lua (ignore_file, dir_matches): add dir_matches helper
+	to avoid including ignored dirs such as '.svn', since dirs now
+	actually exist.
+
 2006-02-25  Nathaniel Smith  <njs@pobox.com>
 
 	* work.cc (attach_node): Apparently the tests depend on update
