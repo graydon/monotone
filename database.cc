@@ -137,9 +137,9 @@ database::check_schema()
   N (schema == db_schema_id,
      F("layout of database %s doesn't match this version of monotone\n"
        "wanted schema %s, got %s\n"
-       "try 'monotone db migrate' to upgrade\n"
+       "try '%s db migrate' to upgrade\n"
        "(this is irreversible; you may want to make a backup copy first)")
-     % filename % schema % db_schema_id);
+     % filename % schema % db_schema_id % __app->prog_name);
 }
 
 void

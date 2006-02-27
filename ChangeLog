@@ -40,6 +40,11 @@
 
 2006-02-27  Matt Johnston  <matt@ucc.asn.au>
 
+	* monotone.cc, app_state.{cc,hh}, ...: print argv[0] when giving
+	usage of commands to run, rather than just "monotone"
+
+2006-02-27  Matt Johnston  <matt@ucc.asn.au>
+
 	* std_hooks.lua (ignore_file, dir_matches): add dir_matches helper
 	to avoid including ignored dirs such as '.svn', since dirs now
 	actually exist.
