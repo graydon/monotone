@@ -12,6 +12,18 @@
 	* merge.{cc,hh}: Factor a store_roster_merge_result function out
 	of interactive_merge_and_store.
 
+2006-02-26  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_log_dir.at: new XFAIL test of log restricted to a single
+	directory
+	* testsuite.at: call it
+
+2006-02-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* std_hooks.lua (ignore_file, dir_matches): add dir_matches helper
+	to avoid including ignored dirs such as '.svn', since dirs now
+	actually exist.
+
 2006-02-26  Nathaniel Smith  <njs@pobox.com>
 
 	* roster_merge.cc: Update notes on tests.
