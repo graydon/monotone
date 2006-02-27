@@ -1,3 +1,7 @@
+2006-02-27  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Updated translations.
+
 2006-02-26  Nathaniel Smith  <njs@pobox.com>
 
 	* schema_migration.cc (migrate): Provide a little more feedback
