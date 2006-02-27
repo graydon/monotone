@@ -1,5 +1,11 @@
 2006-02-26  Nathaniel Smith  <njs@pobox.com>
 
+	* schema_migration.cc (migrate): Provide a little more feedback
+	during migration, so it doesn't look like it's taking minutes and
+	minutes just to "calculate necessary migration steps".
+
+2006-02-26  Nathaniel Smith  <njs@pobox.com>
+
 	* roster_merge.cc: Update notes on tests.
 
 2006-02-25  Nathaniel Smith  <njs@pobox.com>

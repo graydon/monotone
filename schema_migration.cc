@@ -225,6 +225,7 @@ migrator
           {
             E(logged_sqlite3_exec(sql, "BEGIN EXCLUSIVE", NULL, NULL, NULL) == SQLITE_OK,
               F("error at transaction BEGIN statement"));
+            P(F("migrating data"));
             migrating = true;
           }
 
@@ -236,8 +237,7 @@ migrator
             calculate_schema_id(sql, curr);
             if (curr != i->first)
               {
-                if (migrating)
-                  logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
+                logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
                 I(false);
               }
 
