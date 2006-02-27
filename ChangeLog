@@ -1,3 +1,9 @@
+2006-02-26  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_log_dir.at: new XFAIL test of log restricted to a single
+	directory
+	* testsuite.at: call it
+
 2006-02-27  Matt Johnston  <matt@ucc.asn.au>
 
 	* std_hooks.lua (ignore_file, dir_matches): add dir_matches helper
