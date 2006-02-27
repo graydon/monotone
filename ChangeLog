@@ -4,6 +4,12 @@
 
 2006-02-26  Nathaniel Smith  <njs@pobox.com>
 
+	* revision.cc (parse_revision): Prepare for the future by giving a
+	more user-friendly error message on unknown format_version
+	strings.
+
+2006-02-26  Nathaniel Smith  <njs@pobox.com>
+
 	* schema_migration.cc (migrate): Provide a little more feedback
 	during migration, so it doesn't look like it's taking minutes and
 	minutes just to "calculate necessary migration steps".
