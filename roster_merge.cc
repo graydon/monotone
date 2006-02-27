@@ -601,23 +601,28 @@ roster_merge(roster_t const & left_parent,
 //   node attr, file and dir
 //
 // attr lifecycle:
-//   seen in both -- -->mark merge cases
-//   live in one and unseen in other
-//   dead in one and unseen in other
+//   seen in both -->mark merge cases, above
+//   live in one and unseen in other -->live
+//   dead in one and unseen in other -->dead
 //
 // two diff nodes with same name
 // directory loops
 // orphans
 // name collision on root dir
+// illegal node ("MT")
+// missing root dir
 //
 // interactions:
 //   in-node name conflict + possible between-node name conflict
 //   in-node name conflict + both possible names orphaned
 //   in-node name conflict + directory loop conflict
+//   in-node name conflict + one name illegal
 //   between-node name conflict + both nodes orphaned
 //   between-node name conflict + both nodes cause loop
+//   between-node name conflict + both nodes illegal
 
-// need roster, marking, birth revs, and uncommon ancestors for each side...
+// to run roster_merge, need roster, marking, birth revs, and uncommon
+// ancestors for each side...
 
 namespace
 {

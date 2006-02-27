@@ -1,3 +1,25 @@
+2006-02-26  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_log_dir.at: new XFAIL test of log restricted to a single
+	directory
+	* testsuite.at: call it
+
+2006-02-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* std_hooks.lua (ignore_file, dir_matches): add dir_matches helper
+	to avoid including ignored dirs such as '.svn', since dirs now
+	actually exist.
+
+2006-02-26  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc: Update notes on tests.
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (attach_node): Apparently the tests depend on update
+	clobbering existing non-versioned files... and we don't have a
+	good solution _anyway_, so just go back to clobbering them.
+
 2006-02-25  Nathaniel Smith  <njs@pobox.com>
 
 	* cset.cc (root_dir_test, invalid_csets_test): Don't test that
@@ -841,6 +863,17 @@
 	* lua.cc (hook_get_key_pair): Remove.
 	* keys.cc (require_password): Adjust accordingly.
 	* cert.cc (priv_key_exists, load_key_pair): Likewise.
+
+2006-01-14  Christof Petig <christof@petig-baender.de>
+
+	* database.cc, database.h: binary transparent infrastructure,
+	store and retrieve former base64 encoded columns as BLOBs
+
+	* schema_migration.cc: unbase64 changed columns, change comment
+	on files.data which indicates a different database format
+
+	* schema.sql: change comment on file which indicates, that
+	files.data is no longer base64 encoded
 
 2006-01-14  Richard Levitte  <richard@levitte.org>
 
