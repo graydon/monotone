@@ -1195,9 +1195,9 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
               "it is also possible that the server key has just been changed\n"
               "remote host sent key %s\n"
               "I expected %s\n"
-              "'monotone unset %s %s' overrides this check\n")
+              "'%s unset %s %s' overrides this check\n")
             % their_key_hash % expected_key_hash
-            % their_key_key.first % their_key_key.second);
+            % app.prog_name % their_key_key.first % their_key_key.second);
           E(false, F("server key changed"));
         }
     }

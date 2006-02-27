@@ -419,9 +419,9 @@ notify_if_multiple_heads(app_state & app) {
     std::string prefixedline;
     prefix_lines_with(_("note: "),
                       _("branch '%s' has multiple heads\n"
-                        "perhaps consider 'monotone merge'"),
+                        "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % app.branch_name);
+    P(i18n_format(prefixedline) % app.branch_name % app.prog_name);
   }
 }
 
@@ -2558,7 +2558,8 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   get_branch_heads(app.branch_name(), app, heads);
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
-        "note: you may (or may not) wish to run 'monotone merge'"));
+        "note: you may (or may not) wish to run '%s merge'") 
+      % app.prog_name);
   }
     
   update_any_attrs(app);
@@ -2958,7 +2959,7 @@ CMD(update, N_("workspace"), "",
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
             P(i18n_format("  %s\n") % describe_revision(app, *i));
-          P(F("choose one with 'monotone update -r<id>'\n"));
+          P(F("choose one with '%s update -r<id>'\n") % app.prog_name);
           N(false, F("multiple candidates remain after selection"));
         }
       r_chosen_id = *(candidates.begin());
