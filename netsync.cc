@@ -797,6 +797,7 @@ session::maybe_note_epochs_finished()
 
   // But otherwise, we're ready to go. Start the next
   // set of refinements.
+  L(FL("epoch refinement finished; beginning other refinements"));
   key_refiner.begin_refinement();
   cert_refiner.begin_refinement();
   rev_refiner.begin_refinement();
@@ -1621,6 +1622,9 @@ session::process_bye_cmd(u8 phase,
 bool 
 session::process_done_cmd(netcmd_item_type type, size_t n_items)
 {
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  L(FL("received 'done' command for %s (%s items)") % typestr % n_items);
   switch (type)
     {    
     case file_item:
