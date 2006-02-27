@@ -144,8 +144,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-02-27 08:26+0100\n"
-"PO-Revision-Date: 2006-02-27 08:48+0100\n"
+"POT-Creation-Date: 2006-02-27 09:05+0100\n"
+"PO-Revision-Date: 2006-02-27 09:07+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1526,7 +1526,8 @@ msgstr "REV REV"
 #: commands.cc:3985
 msgid ""
 "Show what conflicts would need to be resolved to merge the given revisions."
-msgstr "Visa de konflikter som behöver lösas om de givna revisionerna slås ihop."
+msgstr ""
+"Visa de konflikter som behöver lösas om de givna revisionerna slås ihop."
 
 #: commands.cc:3994 commands.cc:3996
 #, c-format
@@ -3192,6 +3193,17 @@ msgstr ""
 msgid "rebuilding revision graph from manifest certs\n"
 msgstr "bygger om revisionsgrafen från manifestcert\n"
 
+#: revision.cc:1530
+#, c-format
+msgid ""
+"encountered a revision with unknown format, version '%s'\n"
+"I only know how to understand the version '1' format\n"
+"a newer version of monotone is required to complete this operation"
+msgstr ""
+"träffade på en revision med okänt format, version '%s'\n"
+"Jag förstår bara formatet version '1'\n"
+"En nyare version av monotone behövs för att fortsätta"
+
 #: sanity.cc:116
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
@@ -3470,7 +3482,9 @@ msgstr "hoppar över %s, den finns redan noterad i arbetskopian"
 #: work.cc:365
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
-msgstr "den föreslagna nya rotkatalogen '%s' är inte noterad i arbetskopian eller finns inte"
+msgstr ""
+"den föreslagna nya rotkatalogen '%s' är inte noterad i arbetskopian eller "
+"finns inte"
 
 #: work.cc:367
 #, c-format
@@ -3480,7 +3494,8 @@ msgstr "den föreslagna nya rotkatalogen '%s' är inte en katalog"
 #: work.cc:372
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
-msgstr "den föreslagna nya rotkatalogen '%s' innehåller den otillåtna sökvägen %s"
+msgstr ""
+"den föreslagna nya rotkatalogen '%s' innehåller den otillåtna sökvägen %s"
 
 #: work.cc:382
 #, c-format

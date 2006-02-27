@@ -1,12 +1,16 @@
 2006-02-27  Richard Levitte  <richard@levitte.org>
 
-	* po/sv.po: Updated translations.
+	* po/sv.po: Updated translation.
 
 2006-02-26  Nathaniel Smith  <njs@pobox.com>
 
 	* revision.cc (parse_revision): Prepare for the future by giving a
 	more user-friendly error message on unknown format_version
 	strings.
+
+2006-02-27  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Updated translations.
 
 2006-02-26  Nathaniel Smith  <njs@pobox.com>
 
