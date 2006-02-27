@@ -139,8 +139,6 @@ interactive_merge_and_store(revision_id const & left_rid,
                right_roster, right_marking_map, right_uncommon_ancestors,
                result);
 
-  roster_t & merged_roster = result.roster;
-
   content_merge_database_adaptor dba(app, left_rid, right_rid, left_marking_map);
   resolve_merge_conflicts (left_rid, right_rid,
                            left_roster, right_roster,
@@ -148,8 +146,22 @@ interactive_merge_and_store(revision_id const & left_rid,
                            result, dba, app);
 
   // write new files into the db
+  store_roster_merge_result(left_roster, right_roster, result,
+                            left_rid, right_rid, merged_rid,
+                            app);
+}
 
+void
+store_roster_merge_result(roster_t const & left_roster,
+                          roster_t const & right_roster,
+                          roster_merge_result & result,
+                          revision_id const & left_rid,
+                          revision_id const & right_rid,
+                          revision_id & merged_rid,
+                          app_state & app)
+{
   I(result.is_clean());
+  roster_t & merged_roster = result.roster;
   merged_roster.check_sane();
 
   revision_set merged_rev;
