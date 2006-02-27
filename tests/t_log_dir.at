@@ -1,0 +1,92 @@
+AT_SETUP([log dir])
+MONOTONE_SETUP
+
+# This test is a bug report
+# log dir should only list revisions which change the things in or below dir
+
+AT_XFAIL_IF(true)
+
+ADD_FILE(foo, [foo
+])
+ADD_FILE(bar, [bar
+])
+
+COMMIT(testbranch)
+REV1=`BASE_REVISION`
+
+AT_CHECK(mkdir dir1 dir2)
+ADD_FILE(dir1/file1, [dir1/file1
+])
+
+COMMIT(testbranch)
+REV2=`BASE_REVISION`
+
+ADD_FILE(dir2/file2, [dir2/file2
+])
+
+COMMIT(testbranch)
+REV3=`BASE_REVISION`
+
+AT_DATA(foo, [foofoo
+])
+AT_DATA(bar, [barbar
+])
+AT_DATA(dir1/file1, [dir1/file1 asdf
+])
+AT_DATA(dir2/file2, [dir2/file2 asdf
+])
+
+COMMIT(testbranch)
+REV4=`BASE_REVISION`
+
+AT_DATA(dir1/file1, [dir1/file1 asdf asdf
+])
+
+COMMIT(testbranch)
+REV5=`BASE_REVISION`
+
+AT_DATA(dir2/file2, [dir2/file2 asdf asdf
+])
+
+COMMIT(testbranch)
+REV6=`BASE_REVISION`
+
+# commented out tests below currently fail but they *should* pass (I think)
+
+AT_CHECK(MONOTONE log, [], [stdout], [ignore])
+
+AT_CHECK(grep "^Revision: $REV1" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV2" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV3" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV4" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV5" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV6" stdout, [0], [ignore], [ignore])
+
+AT_CHECK(MONOTONE log ., [], [stdout], [ignore])
+
+AT_CHECK(grep "^Revision: $REV1" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV2" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV3" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV4" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV5" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV6" stdout, [0], [ignore], [ignore])
+
+AT_CHECK(MONOTONE log dir1, [], [stdout], [ignore])
+
+AT_CHECK(grep "^Revision: $REV1" stdout, [1], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV2" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV3" stdout, [1], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV4" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV5" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV6" stdout, [1], [ignore], [ignore])
+
+AT_CHECK(MONOTONE log dir2, [], [stdout], [ignore])
+
+AT_CHECK(grep "^Revision: $REV1" stdout, [1], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV2" stdout, [1], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV3" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV4" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV5" stdout, [1], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV6" stdout, [0], [ignore], [ignore])
+
+AT_CLEANUP

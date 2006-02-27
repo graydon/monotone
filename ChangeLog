@@ -4,6 +4,32 @@
 	during migration, so it doesn't look like it's taking minutes and
 	minutes just to "calculate necessary migration steps".
 
+2006-02-26  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Add a new command, merge_into_dir, to allow a project to include an
+	unrelated project as a subdir. Also add a show_conflicts command that
+	performs a dry-run merge and prints conflict counts.
+	* commands.cc: new commands, merge_into_dir and show_conflicts
+	* commands.cc (propagate): remove duplicated code; this now calls
+	merge_into_dir with a dir of '' (the empty string).
+	* monotone.texi: Document the new commands.
+	* tests/t_{merge_into_dir,show_conflicts}.at: Test the new commands.
+	* testsuite.at: Use the new tests.
+	* merge.{cc,hh}: Factor a store_roster_merge_result function out
+	of interactive_merge_and_store.
+
+2006-02-26  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_log_dir.at: new XFAIL test of log restricted to a single
+	directory
+	* testsuite.at: call it
+
+2006-02-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* std_hooks.lua (ignore_file, dir_matches): add dir_matches helper
+	to avoid including ignored dirs such as '.svn', since dirs now
+	actually exist.
+
 2006-02-26  Nathaniel Smith  <njs@pobox.com>
 
 	* roster_merge.cc: Update notes on tests.

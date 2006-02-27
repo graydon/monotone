@@ -46,4 +46,13 @@ void
 interactive_merge_and_store(revision_id const & left, revision_id const & right,
                             revision_id & merged, app_state & app);
 
+void
+store_roster_merge_result(roster_t const & left_roster,
+                          roster_t const & right_roster,
+                          roster_merge_result & result,
+                          revision_id const & left_rid,
+                          revision_id const & right_rid,
+                          revision_id & merged_rid,
+                          app_state & app);
+
 #endif
