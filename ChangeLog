@@ -1,3 +1,8 @@
+2006-02-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(merge)): don't say "misuse" if it's
+	just already merged.
+
 2006-02-27  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: More translations.
