@@ -1,3 +1,7 @@
+2006-02-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_mt_ignore.at: Fix test on MinGW/Win32.
+
 2006-02-27  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: More translations.
