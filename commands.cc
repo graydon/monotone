@@ -3119,7 +3119,11 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
   get_branch_heads(app.branch_name(), app, heads);
 
   N(heads.size() != 0, F("branch '%s' is empty\n") % app.branch_name);
-  N(heads.size() != 1, F("branch '%s' is merged\n") % app.branch_name);
+  if (heads.size() == 1)
+    {
+      P(F("branch '%s' is already merged\n") % app.branch_name);
+      return;
+    }
 
   set<revision_id>::const_iterator i = heads.begin();
   revision_id left = *i;
