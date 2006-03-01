@@ -2,6 +2,26 @@
 
 	* po/fr.po: Updated French translation.
 
+2006-03-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* transforms.cc: Better use of appropriately typedefed types.
+	* transforms.cc: Don't assume wchar_t is wide enough to hold a
+	UCS-4 character.
+	* transforms.cc, transforms.hh: Add utf8_validate function and
+	some validity unit tests.
+	(system_to_utf8): Check that conversion has resulted in valid
+	UTF-8.
+	* paths.cc (file_path::file_path): Check that path is valid UTF-8.
+
+2006-02-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_mt_ignore.at: Fix test on MinGW/Win32.
+
+2006-02-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(merge)): don't say "misuse" if it's
+	just already merged.
+
 2006-02-27  Benoît Dejean  <benoit@placenet.org>
 
 	* netsync.cc: Fixed string surgery.
