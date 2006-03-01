@@ -600,7 +600,7 @@ utf8_to_system(utf8 const & utf, external & ext)
 // from the file gutf8.c of the GLib library.
 
 static bool
-is_valid_unicode_char(wchar_t c)
+is_valid_unicode_char(unsigned int c)
 {
   return (c < 0x110000 &&
           ((c & 0xfffff800) != 0xd800) &&
@@ -609,7 +609,7 @@ is_valid_unicode_char(wchar_t c)
 }
 
 static bool
-utf8_consume_continuation_char(unsigned char c, wchar_t & val)
+utf8_consume_continuation_char(unsigned char c, unsigned int & val)
 {
   if ((c & 0xc0) != 0x80)
     return false;
@@ -622,7 +622,7 @@ bool
 utf8_validate(utf8 const & utf)
 {
   std::string::size_type left = utf().size();
-  wchar_t min, val;
+  unsigned int min, val;
 
   for (std::string::const_iterator i = utf().begin();
        i != utf().end(); ++i, --left)

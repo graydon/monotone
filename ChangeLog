@@ -1,5 +1,7 @@
 2006-03-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* transforms.cc: Don't assume wchar_t is wide enough to hold a
+	UCS-4 character.
 	* transforms.cc, transforms.hh: Add utf8_validate function and
 	some validity unit tests.
 	(system_to_utf8): Check that conversion has resulted in valid
