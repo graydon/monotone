@@ -1,3 +1,11 @@
+2006-03-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* transforms.cc, transforms.hh: Add utf8_validate function and
+	some validity unit tests.
+	(system_to_utf8): Check that conversion has resulted in valid
+	UTF-8.
+	* paths.cc (file_path::file_path): Check that path is valid UTF-8.
+
 2006-02-28  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_mt_ignore.at: Fix test on MinGW/Win32.
