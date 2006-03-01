@@ -1,3 +1,7 @@
+2006-03-01  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
 2006-02-27  Benoît Dejean  <benoit@placenet.org>
 
 	* netsync.cc: Fixed string surgery.
