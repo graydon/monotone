@@ -1,3 +1,7 @@
+2006-03-01  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: One small translation change.
+
 2006-03-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* transforms.cc: Better use of appropriately typedefed types.
