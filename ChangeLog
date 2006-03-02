@@ -1,14 +1,3 @@
-2006-03-02  Emile Snyder  <emile@alumni.reed.edu>
-
-	XFAIL tests on non-win32 systems where we innappropriately I()
-	that some path does not have a '\' character in it.
-	
-	tests/t_cvsimport.at: CVS repository files can trigger this bug.
-	tests/t_automate_inventory.at
-	tests/t_ls_unknown.at: Files in the workspace can trigger this bug in
-	these two cases.
-	testsuite.at: Add new ls_unknown test case.
-	
 2006-03-01  Benoît Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.

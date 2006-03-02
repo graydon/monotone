@@ -4,9 +4,6 @@ AT_SETUP([importing CVS files])
 
 MONOTONE_SETUP
 
-# File names with backslashes in them are legal in cvs, but not in monotone.
-AT_XFAIL_IF(test "$OSTYPE" != "msys")
-
 AT_DATA(importme.0, [version 0 of test file
 ])
 
@@ -18,11 +15,6 @@ AT_DATA(importme.2, [version 2 of test file
 
 AT_DATA(importme.3, [version 3 of test file
 ])
-
-if test "$OSTYPE" != "msys"; then
-AT_DATA(importback\\slash, [file with a back slash in the name
-])
-fi
 
 TSHA0=`SHA1(importme.0)`
 TSHA1=`SHA1(importme.1)`
@@ -51,14 +43,6 @@ AT_CHECK(cp importme.2 testdir/importme)
 AT_CHECK(cvs -d $CVSROOT commit -m 'commit 2' testdir/importme, [], [ignore], [ignore])
 AT_CHECK(cp importme.3 testdir/importme)
 AT_CHECK(cvs -d $CVSROOT commit -m 'commit 3' testdir/importme, [], [ignore], [ignore])
-
-# file names with backslashes in them are legal in cvs, but not in monotone.
-
-if test "$OSTYPE" != "msys"; then
-AT_CHECK(cp importback\\slash testdir/importback\\slash)
-AT_CHECK(cvs -d $CVSROOT add testdir/importback\\slash, [], [ignore], [ignore])
-AT_CHECK(cvs -d $CVSROOT commit -m 'commit 4' testdir/importback\\slash, [], [ignore], [ignore])
-fi
 
 # import into monotone and check presence of files
 
