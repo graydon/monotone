@@ -2612,7 +2612,7 @@ serve_connections(protocol_role role,
 
           const char *name = addr.get_name();
           P(F("beginning service on %s : %s\n")
-            % (name != NULL ? name : "all interfaces")
+            % (name != NULL ? name : _("<all interfaces>"))
             % lexical_cast<string>(addr.get_port()));
   
           map<Netxx::socket_type, shared_ptr<session> > sessions;
@@ -2907,14 +2907,14 @@ run_netsync_protocol(protocol_voice voice,
 {
   if (include_pattern().find_first_of("'\"") != std::string::npos)
     {
-      W(F("include branch pattern contains a quote character:\n"));
-      W(F("%s\n") % include_pattern());
+      W(F("include branch pattern contains a quote character:\n"
+          "%s\n") % include_pattern());
     }
 
   if (exclude_pattern().find_first_of("'\"") != std::string::npos)
     {
-      W(F("exclude branch pattern contains a quote character:\n"));
-      W(F("%s\n") % exclude_pattern());
+      W(F("exclude branch pattern contains a quote character:\n"
+          "%s\n") % exclude_pattern());
     }
 
   try 
