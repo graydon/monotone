@@ -147,7 +147,7 @@ addition_builder::visit_file(file_path const & path)
 }
 
 void
-perform_additions(path_set const & paths, app_state & app)
+perform_additions(path_set const & paths, app_state & app, bool recursive)
 {
   if (paths.empty())
     return;
@@ -169,8 +169,19 @@ perform_additions(path_set const & paths, app_state & app)
   addition_builder build(app, new_roster, er);
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    // NB.: walk_tree will handle error checking for non-existent paths
-    walk_tree(file_path(*i), build);
+    {
+      if (recursive)
+        {
+          // NB.: walk_tree will handle error checking for non-existent paths
+          walk_tree(file_path(*i), build);
+        }
+      else
+        {
+          // in the case where we're just handled a set of paths, we use the builder 
+          // in this strange way.
+          build.visit_file(file_path(*i));
+        }
+    }
 
   cset new_work;
   make_cset(base_roster, new_roster, new_work);

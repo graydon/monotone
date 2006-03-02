@@ -1,3 +1,17 @@
+2006-03-02  Emile Snyder  <emile@alumni.reed.edu>
+
+	add --unknown, when new files exist in new directories, would try
+	to add files multiple times.
+	
+	* commands.cc (CMD(add)): Call perform_additions() with correct
+	new boolean flag val to determine whether it recurses on the paths
+	we hand it.
+	* work.{cc,hh} (perform_additions): Use boolean flag to indicate
+	whether the paths should be treated as a set of starting points
+	for recursively adding entries, or a fixed set of paths.
+	* tests/t_add.at: Test that we are not getting the warning
+	messages when adding new files in new directories.
+
 2006-03-01  Benoît Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.
