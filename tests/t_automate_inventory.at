@@ -1,6 +1,10 @@
 AT_SETUP([workspace inventory])
 MONOTONE_SETUP
 
+# Buggy invariant causes failure when file with back slash in name exists
+# in workspace.
+AT_XFAIL_IF(test "$OSTYPE" != "msys")
+
 AT_DATA(inventory_hooks.lua, [
 
 function ignore_file(name)
@@ -29,6 +33,10 @@ ADD_FILE(added, [added
 ])
 AT_DATA(unknown, [unknown
 ])
+if test "$OSTYPE" != "msys"; then
+AT_DATA(back\\slash, [unknown back slash file name
+])
+fi
 AT_DATA(ignored~, [ignored~
 ])
 
@@ -51,6 +59,9 @@ AT_CHECK(grep '^ R  0 1 renamed$' stdout, [], [ignore], [ignore])
 AT_CHECK(grep '^  P 0 0 patched$' stdout, [], [ignore], [ignore])
 AT_CHECK(grep '^    0 0 unchanged$' stdout, [], [ignore], [ignore])
 AT_CHECK(grep '^  U 0 0 unknown$' stdout, [], [ignore], [ignore])
+if test "$OSTYPE" != "msys"; then
+AT_CHECK(grep '^  U 0 0 back\\slash$' stdout, [], [ignore], [ignore])
+fi
 AT_CHECK(grep '^  I 0 0 ignored~$' stdout, [], [ignore], [ignore])
 
 # swapped but not moved
