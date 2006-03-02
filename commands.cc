@@ -1208,7 +1208,8 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
         paths.insert(sp);
       }
 
-  perform_additions(paths, app);
+  bool add_recursive = !app.unknown; 
+  perform_additions(paths, app, add_recursive);
 }
 
 static void find_missing (app_state & app,
