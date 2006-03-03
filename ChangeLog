@@ -1,5 +1,9 @@
 2006-03-02  Derek Scherger  <derek@echologic.com>
 
+	testsuite.at: fix broken include of t_restriction_excludes_parent.at
+
+2006-03-02  Derek Scherger  <derek@echologic.com>
+
 	* app_state.{cc,hh} (restriction_requires_parent): remove
 	* restrictions.cc (restrict_cset): remove call to
 	restriction_requires_parent
