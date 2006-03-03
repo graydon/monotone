@@ -1,3 +1,11 @@
+2006-03-03  Patrick Mauritz <oxygene@studentenbude.ath.cx>
+
+	* commands.cc: remove rdata, certs, fdata and fdelta commands
+	from user interface, and move them to
+	* automate.cc: the automate interface as packet_for_rdata,
+	packets_for_certs, packet_for_fdata, packet_for_fdelta
+	* tests/t_bad_packets.at: adapt for 0.26 and for the changes above
+
 2006-03-02  Derek Scherger  <derek@echologic.com>
 
 	testsuite.at: fix broken include of t_restriction_excludes_parent.at
