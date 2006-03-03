@@ -58,4 +58,16 @@ AT_CHECK(grep '^added   added' stdout, [], [ignore], [ignore])
 AT_CHECK(grep '^patched patched' stdout, [], [ignore], [ignore])
 AT_CHECK(grep '^patched to_patched' stdout, [], [ignore], [ignore])
 
+# restricted
+
+AT_CHECK(MONOTONE status from from_patched, [], [stdout], [ignore])
+AT_CHECK(grep '^delete "dropped"' stdout, [1], [ignore], [ignore])
+AT_CHECK(grep '^rename "from"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^    to "to"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^rename "from_patched"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^    to "to_patched"' stdout, [], [ignore], [ignore])
+AT_CHECK(grep '^add_file "added"' stdout, [1], [ignore], [ignore])
+AT_CHECK(grep '^patch "patched"' stdout, [1], [ignore], [ignore])
+AT_CHECK(grep '^patch "to_patched"' stdout, [], [ignore], [ignore])
+
 AT_CLEANUP

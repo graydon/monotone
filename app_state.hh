@@ -51,10 +51,8 @@ public:
   utf8 author;
   system_path search_root;
   std::vector<utf8> revision_selectors;
-  std::set<utf8> exclude_patterns;
+  std::vector<utf8> exclude_patterns;
   std::vector<utf8> extra_rcfiles;
-  path_set restrictions;
-  path_set excludes;
   bool found_workspace;
   long depth;
   long last;
@@ -93,10 +91,6 @@ public:
   void allow_workspace();
   void require_workspace(std::string const & explanation = "");
   void create_workspace(system_path const & dir);
-
-  void set_restriction(path_set const & valid_paths, 
-                       std::vector<utf8> const & paths);
-  bool restriction_includes(split_path const & path);
 
   // Set the branch name.  If you only invoke set_branch, the branch
   // name is not sticky (and won't be written to the workspace and

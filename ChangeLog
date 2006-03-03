@@ -201,6 +201,46 @@
 	See
 	https://savannah.nongnu.org/bugs/?func=detailitem&item_id=15846
 
+2006-02-25  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_inventory): 
+	* commands.cc (status, ls_known, find_unknown_and_ignored,
+	find_missing, ls_changed, commit, diff, revert, log): 
+	* roster.cc (update_current_roster_from_filesystem): add app_state
+	to restriction constructors
+	* restrictions.{cc,hh}: add support for --depth option and ignored
+	files in restrictions to match old functionality; clean up
+	constructors a bit
+	* tests/t_automate_get_manifest_of.at: add format_version stanza
+	to test manifest
+	* tests/t_restrictions.at: re-enable --depth tests
+
+2006-02-22  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_get_revision, automate_get_manifest_of):
+	merge fixups
+	* commands.cc (ls_changed): convert to new restrictions
+	(commit, update, revert):
+	* restrictions.cc:
+	* roster.cc: merge fixups
+
+2006-02-20  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.{cc,hh}: attempt to simplify and remove duplication
+	
+2006-02-20  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (status, ls_known, find_unknown_and_ignored,
+	find_missing, commit, diff, revert, log): add excludes to restrictions
+	* restrictions.{cc,hh}: preliminary support for excludes and unit
+	tests to see if it works
+
+2006-02-13  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh}: 
+	* globis.{cc,hh}: make exclude_patterns a vector rather than a
+	set so that restriction includes/excludes are of the same type
+
 2006-02-21  Nathaniel Smith  <njs@pobox.com>
 
 	* work.cc (detach_node): This time for sure!
