@@ -2102,9 +2102,9 @@ update_restricted_roster_from_filesystem(roster_t & ros,
   N(missing_files == 0, 
     F("%d missing files\n"
       "to restore consistency, on each missing file run either\n"
-      "'monotone drop FILE' to remove it permanently, or\n"
-      "'monotone revert FILE' to restore it\n")
-    % missing_files);
+      "'%s drop FILE' to remove it permanently, or\n"
+      "'%s revert FILE' to restore it\n")
+    % missing_files % app.prog_name % app.prog_name);
 }
 
 void

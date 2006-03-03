@@ -277,6 +277,8 @@ cpp_main(int argc, char ** argv)
   save_initial_path();
   utf8_argv uv(argc, argv);
 
+  string prog_name(uv.argv[0]);
+
   // prepare for arg parsing
 
   cleanup_ptr<poptContext, void> 
@@ -298,6 +300,8 @@ cpp_main(int argc, char ** argv)
   try
     {
       app_state app;
+
+      app.prog_name = prog_name;
 
       while ((opt = poptGetNextOpt(ctx())) > 0)
         {
@@ -613,7 +617,8 @@ cpp_main(int argc, char ** argv)
       if (count != 0)
         {
           ostringstream sstr;
-          sstr << F("Options specific to 'monotone %s':") % u.which;
+          sstr << F("Options specific to '%s %s':") 
+            % prog_name % u.which;
           options[0].descrip = strdup(sstr.str().c_str());
 
           options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;

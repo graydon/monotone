@@ -3785,6 +3785,25 @@ have a branch with two heads, and you want to propagate one of them to
 another branch, again, you can use this command. If the optional
 @var{ancestor} argument is given, the merge uses that revision as the
 common ancestor instead of the default ancestor.
+
+@item monotone merge_into_dir @var{sourcebranch} @var{destbranch} @var{dir}
+This command takes a unique head from @var{sourcebranch} and merges it
+into a unique head of @var{destbranch}, as a directory. The resulting
+revision is committed to @var{destbranch}. If either @var{sourcebranch} or
+@var{destbranch} has multiple heads, @command{merge_into_dir} aborts, doing
+nothing.
+
+The purpose of @command{merge_into_dir} is to permit a project to contain
+another project in such a way that @command{propagate} can be used to keep
+the contained project up-to-date. It is meant to replace the use of nested
+checkouts in many circumstances.
+
+Note that @command{merge_into_dir} @emph{does not} permit changes made to the
+contained project in @var{destbranch} to be propagated back to
+@var{sourcebranch}. Attempting this would lead to @var{sourcebranch} containing
+both projects nested as in @var{destbranch} instead of only the project
+originally in @var{sourcebranch}, which is almost certainly not what would be
+intended.
 @end ftable
 
 
@@ -4467,6 +4486,10 @@ changed} command will, by default, search the entire workspace.
 Specifying only the pathname "." will restrict the search for known
 files to the current subdirectory of the workspace.
 
+@item monotone show_conflicts @var{rev} @var{rev}
+
+This command shows what conflicts would need to be resolved in order to merge
+the given revisions.
 @end ftable
 
 

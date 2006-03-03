@@ -14,11 +14,105 @@
 	that exclude required parent dirs
 	* testsuite.at: call it
 
+2006-03-02  Emile Snyder  <emile@alumni.reed.edu>
+
+	add --unknown, when new files exist in new directories, would try
+	to add files multiple times.
+	
+	* commands.cc (CMD(add)): Call perform_additions() with correct
+	new boolean flag val to determine whether it recurses on the paths
+	we hand it.
+	* work.{cc,hh} (perform_additions): Use boolean flag to indicate
+	whether the paths should be treated as a set of starting points
+	for recursively adding entries, or a fixed set of paths.
+	* tests/t_add.at: Test that we are not getting the warning
+	messages when adding new files in new directories.
+
+2006-03-01  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2006-03-01  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: One small translation change.
+
+2006-03-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* transforms.cc: Better use of appropriately typedefed types.
+	* transforms.cc: Don't assume wchar_t is wide enough to hold a
+	UCS-4 character.
+	* transforms.cc, transforms.hh: Add utf8_validate function and
+	some validity unit tests.
+	(system_to_utf8): Check that conversion has resulted in valid
+	UTF-8.
+	* paths.cc (file_path::file_path): Check that path is valid UTF-8.
+
+2006-02-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_mt_ignore.at: Fix test on MinGW/Win32.
+
+2006-02-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(merge)): don't say "misuse" if it's
+	just already merged.
+
+2006-02-27  Benoît Dejean  <benoit@placenet.org>
+
+	* netsync.cc: Fixed string surgery.
+	One more string for i18n.
+
+2006-02-27  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: More translations.
+
+2006-02-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc: more logging
+
+2006-02-27  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Updated translation.
+
+2006-02-26  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (parse_revision): Prepare for the future by giving a
+	more user-friendly error message on unknown format_version
+	strings.
+
+2006-02-27  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Updated translations.
+
+2006-02-26  Nathaniel Smith  <njs@pobox.com>
+
+	* schema_migration.cc (migrate): Provide a little more feedback
+	during migration, so it doesn't look like it's taking minutes and
+	minutes just to "calculate necessary migration steps".
+
+2006-02-26  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Add a new command, merge_into_dir, to allow a project to include an
+	unrelated project as a subdir. Also add a show_conflicts command that
+	performs a dry-run merge and prints conflict counts.
+	* commands.cc: new commands, merge_into_dir and show_conflicts
+	* commands.cc (propagate): remove duplicated code; this now calls
+	merge_into_dir with a dir of '' (the empty string).
+	* monotone.texi: Document the new commands.
+	* tests/t_{merge_into_dir,show_conflicts}.at: Test the new commands.
+	* testsuite.at: Use the new tests.
+	* merge.{cc,hh}: Factor a store_roster_merge_result function out
+	of interactive_merge_and_store.
+
 2006-02-26  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_log_dir.at: new XFAIL test of log restricted to a single
 	directory
 	* testsuite.at: call it
+
+2006-02-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.cc, app_state.{cc,hh}, ...: print argv[0] when giving
+	usage of commands to run, rather than just "monotone"
 
 2006-02-27  Matt Johnston  <matt@ucc.asn.au>
 

@@ -229,7 +229,7 @@ def send_change_for(rid, m, c):
     project = c.project_for_branch(branch)
     if project is None:
         return
-    substs["author"] = escape_for_xml(author)
+    substs["author"] = escape_for_xml(author or "(unknown author)")
     substs["project"] = escape_for_xml(project)
     substs["branch"] = escape_for_xml(branch)
     substs["rid"] = escape_for_xml(rid)

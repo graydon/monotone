@@ -797,6 +797,7 @@ session::maybe_note_epochs_finished()
 
   // But otherwise, we're ready to go. Start the next
   // set of refinements.
+  L(FL("epoch refinement finished; beginning other refinements"));
   key_refiner.begin_refinement();
   cert_refiner.begin_refinement();
   rev_refiner.begin_refinement();
@@ -1195,9 +1196,9 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
               "it is also possible that the server key has just been changed\n"
               "remote host sent key %s\n"
               "I expected %s\n"
-              "'monotone unset %s %s' overrides this check\n")
+              "'%s unset %s %s' overrides this check\n")
             % their_key_hash % expected_key_hash
-            % their_key_key.first % their_key_key.second);
+            % app.prog_name % their_key_key.first % their_key_key.second);
           E(false, F("server key changed"));
         }
     }
@@ -1621,6 +1622,9 @@ session::process_bye_cmd(u8 phase,
 bool 
 session::process_done_cmd(netcmd_item_type type, size_t n_items)
 {
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  L(FL("received 'done' command for %s (%s items)") % typestr % n_items);
   switch (type)
     {    
     case file_item:
@@ -2608,7 +2612,7 @@ serve_connections(protocol_role role,
 
           const char *name = addr.get_name();
           P(F("beginning service on %s : %s\n")
-            % (name != NULL ? name : "all interfaces")
+            % (name != NULL ? name : _("<all interfaces>"))
             % lexical_cast<string>(addr.get_port()));
   
           map<Netxx::socket_type, shared_ptr<session> > sessions;
@@ -2903,14 +2907,14 @@ run_netsync_protocol(protocol_voice voice,
 {
   if (include_pattern().find_first_of("'\"") != std::string::npos)
     {
-      W(F("include branch pattern contains a quote character:\n"));
-      W(F("%s\n") % include_pattern());
+      W(F("include branch pattern contains a quote character:\n"
+          "%s\n") % include_pattern());
     }
 
   if (exclude_pattern().find_first_of("'\"") != std::string::npos)
     {
-      W(F("exclude branch pattern contains a quote character:\n"));
-      W(F("%s\n") % exclude_pattern());
+      W(F("exclude branch pattern contains a quote character:\n"
+          "%s\n") % exclude_pattern());
     }
 
   try 

@@ -486,6 +486,7 @@ system_to_utf8(external const & ext, utf8 & utf)
 {
   string out;
   charset_convert(system_charset(), "UTF-8", ext(), out);
+  I(utf8_validate(out));
   utf = out;
 }
 
@@ -592,6 +593,89 @@ utf8_to_system(utf8 const & utf, external & ext)
   string out;
   utf8_to_system(utf, out);
   ext = out;
+}
+
+// utf8_validate and the helper functions is_valid_unicode_char and
+// utf8_consume_continuation_char g_utf8_validate and supporting functions
+// from the file gutf8.c of the GLib library.
+
+static bool
+is_valid_unicode_char(u32 c)
+{
+  return (c < 0x110000 &&
+          ((c & 0xfffff800) != 0xd800) &&
+          (c < 0xfdd0 || c > 0xfdef) &&
+          (c & 0xfffe) != 0xfffe);
+}
+
+static bool
+utf8_consume_continuation_char(u8 c, u32 & val)
+{
+  if ((c & 0xc0) != 0x80)
+    return false;
+  val <<= 6;
+  val |= c & 0x3f;
+  return true;
+}
+
+bool
+utf8_validate(utf8 const & utf)
+{
+  std::string::size_type left = utf().size();
+  u32 min, val;
+
+  for (std::string::const_iterator i = utf().begin();
+       i != utf().end(); ++i, --left)
+  {
+    u8 c = *i;
+    if (c < 128)
+      continue;
+    if ((c & 0xe0) == 0xc0)
+    {
+      if (left < 2)
+        return false;
+      if ((c & 0x1e) == 0)
+        return false;
+      ++i; --left; c = *i;
+      if ((c & 0xc0) != 0x80)
+        return false;
+    }
+    else
+    {
+      if ((c & 0xf0) == 0xe0)
+      {
+        if (left < 3)
+          return false;
+        min = 1 << 11;
+        val = c & 0x0f;
+        goto two_remaining;
+      }
+      else if ((c & 0xf8) == 0xf0)
+      {
+        if (left < 4)
+          return false;
+        min = 1 << 16;
+        val = c & 0x07;
+      }
+      else
+        return false;
+      ++i; --left; c = *i;
+      if (!utf8_consume_continuation_char(c, val))
+        return false;
+two_remaining:
+      ++i; --left; c = *i;
+      if (!utf8_consume_continuation_char(c, val))
+        return false;
+      ++i; --left; c = *i;
+      if (!utf8_consume_continuation_char(c, val))
+        return false;
+      if (val < min)
+        return false;
+      if (!is_valid_unicode_char(val))
+        return false;
+    }
+  }
+  return true;
 }
 
 static string 
@@ -1069,6 +1153,229 @@ static void encode_test()
   check_idna_encoding();
 }
 
+static void utf8_validation_test()
+{
+  // these tests are based on the tests from the file utf8-validate.c of the
+  // GLib library, and also include sequences from Markus Kuhn's UTF-8
+  // example files.
+  const char* good_strings[] = {
+    "this is a valid but boring ASCII string",
+    "\x28\x28\x56\xe2\x8d\xb3\x56\x29\x3d\xe2\x8d\xb3\xe2\x8d\xb4\x56\x29\x2f\x56\xe2\x86\x90\x2c\x56\x20\x20\x20\x20\xe2\x8c\xb7\xe2\x86\x90\xe2\x8d\xb3\xe2\x86\x92\xe2\x8d\xb4\xe2\x88\x86\xe2\x88\x87\xe2\x8a\x83\xe2\x80\xbe\xe2\x8d\x8e\xe2\x8d\x95\xe2\x8c\x88",
+    "\xe2\x80\x98\x73\x69\x6e\x67\x6c\x65\xe2\x80\x99\x20\x61\x6e\x64\x20\xe2\x80\x9c\x64\x6f\x75\x62\x6c\x65\xe2\x80\x9d\x20\x71\x75\x6f\x74\x65\x73",
+    "\xe2\x80\xa2\x20\x43\x75\x72\x6c\x79\x20\x61\x70\x6f\x73\x74\x72\x6f\x70\x68\x65\x73\x3a\x20\xe2\x80\x9c\x57\x65\xe2\x80\x99\x76\x65\x20\x62\x65\x65\x6e\x20\x68\x65\x72\x65\xe2\x80\x9d",
+    "\xe2\x80\x9a\x64\x65\x75\x74\x73\x63\x68\x65\xe2\x80\x98\x20\xe2\x80\x9e\x41\x6e\x66\xc3\xbc\x68\x72\x75\x6e\x67\x73\x7a\x65\x69\x63\x68\x65\x6e\xe2\x80\x9c",
+    "\xe2\x80\xa0\x2c\x20\xe2\x80\xa1\x2c\x20\xe2\x80\xb0\x2c\x20\xe2\x80\xa2\x2c\x20\x33\xe2\x80\x93\x34\x2c\x20\xe2\x80\x94\x2c\x20\xe2\x88\x92\x35\x2f\x2b\x35\x2c\x20\xe2\x84\xa2\x2c\x20\xe2\x80\xa6",
+    "\xc2\xa9\xc2\xa9\xc2\xa9",
+    "\xe2\x89\xa0\xe2\x89\xa0",
+    "\xce\xba\xe1\xbd\xb9\xcf\x83\xce\xbc\xce\xb5",
+    "\x00",
+    "\xc2\x80",
+    "\xe0\xa0\x80",
+    "\xf0\x90\x80\x80",
+    "\x7f",
+    "\xdf\xbf",
+    "\xed\x9f\xbf",
+    "\xee\x80\x80",
+    "\xef\xbf\xbd",
+    0
+  };
+  const char* bad_strings[] = {
+    "\xf8\x88\x80\x80\x80",
+    "\xfc\x84\x80\x80\x80\x80",
+    "\xef\xbf\xbf",
+    "\xf7\xbf\xbf\xbf",
+    "\xfb\xbf\xbf\xbf\xbf",
+    "\xfd\xbf\xbf\xbf\xbf\xbf",
+    "\xf4\x8f\xbf\xbf",
+    "\xf4\x90\x80\x80",
+    "\x80",
+    "\xbf",
+    "\x80\xbf",
+    "\x80\xbf\x80",
+    "\x80\xbf\x80\xbf",
+    "\x80\xbf\x80\xbf\x80",
+    "\x80\xbf\x80\xbf\x80\xbf",
+    "\x80\xbf\x80\xbf\x80\xbf\x80",
+    "\x80",
+    "\x81",
+    "\x82",
+    "\x83",
+    "\x84",
+    "\x85",
+    "\x86",
+    "\x87",
+    "\x88",
+    "\x89",
+    "\x8a",
+    "\x8b",
+    "\x8c",
+    "\x8d",
+    "\x8e",
+    "\x8f",
+    "\x90",
+    "\x91",
+    "\x92",
+    "\x93",
+    "\x94",
+    "\x95",
+    "\x96",
+    "\x97",
+    "\x98",
+    "\x99",
+    "\x9a",
+    "\x9b",
+    "\x9c",
+    "\x9d",
+    "\x9e",
+    "\x9f",
+    "\xa0",
+    "\xa1",
+    "\xa2",
+    "\xa3",
+    "\xa4",
+    "\xa5",
+    "\xa6",
+    "\xa7",
+    "\xa8",
+    "\xa9",
+    "\xaa",
+    "\xab",
+    "\xac",
+    "\xad",
+    "\xae",
+    "\xaf",
+    "\xb0",
+    "\xb1",
+    "\xb2",
+    "\xb3",
+    "\xb4",
+    "\xb5",
+    "\xb6",
+    "\xb7",
+    "\xb8",
+    "\xb9",
+    "\xba",
+    "\xbb",
+    "\xbc",
+    "\xbd",
+    "\xbe",
+    "\xbf",
+    "\xc0\x20",
+    "\xc1\x20",
+    "\xc2\x20",
+    "\xc3\x20",
+    "\xc4\x20",
+    "\xc5\x20",
+    "\xc6\x20",
+    "\xc7\x20",
+    "\xc8\x20",
+    "\xc9\x20",
+    "\xca\x20",
+    "\xcb\x20",
+    "\xcc\x20",
+    "\xcd\x20",
+    "\xce\x20",
+    "\xcf\x20",
+    "\xd0\x20",
+    "\xd1\x20",
+    "\xd2\x20",
+    "\xd3\x20",
+    "\xd4\x20",
+    "\xd5\x20",
+    "\xd6\x20",
+    "\xd7\x20",
+    "\xd8\x20",
+    "\xd9\x20",
+    "\xda\x20",
+    "\xdb\x20",
+    "\xdc\x20",
+    "\xdd\x20",
+    "\xde\x20",
+    "\xdf\x20",
+    "\xe0\x20",
+    "\xe1\x20",
+    "\xe2\x20",
+    "\xe3\x20",
+    "\xe4\x20",
+    "\xe5\x20",
+    "\xe6\x20",
+    "\xe7\x20",
+    "\xe8\x20",
+    "\xe9\x20",
+    "\xea\x20",
+    "\xeb\x20",
+    "\xec\x20",
+    "\xed\x20",
+    "\xee\x20",
+    "\xef\x20",
+    "\xf0\x20",
+    "\xf1\x20",
+    "\xf2\x20",
+    "\xf3\x20",
+    "\xf4\x20",
+    "\xf5\x20",
+    "\xf6\x20",
+    "\xf7\x20",
+    "\xf8\x20",
+    "\xf9\x20",
+    "\xfa\x20",
+    "\xfb\x20",
+    "\xfc\x20",
+    "\xfd\x20",
+    "\x20\xc0",
+    "\x20\xe0\x80",
+    "\x20\xf0\x80\x80",
+    "\x20\xf8\x80\x80\x80",
+    "\x20\xfc\x80\x80\x80\x80",
+    "\x20\xdf",
+    "\x20\xef\xbf",
+    "\x20\xf7\xbf\xbf",
+    "\x20\xfb\xbf\xbf\xbf",
+    "\x20\xfd\xbf\xbf\xbf\xbf",
+    "\x20\xfe\x20",
+    "\x20\xff\x20",
+    "\x20\xc0\xaf\x20",
+    "\x20\xe0\x80\xaf\x20",
+    "\x20\xf0\x80\x80\xaf\x20",
+    "\x20\xf8\x80\x80\x80\xaf\x20",
+    "\x20\xfc\x80\x80\x80\x80\xaf\x20",
+    "\x20\xc1\xbf\x20",
+    "\x20\xe0\x9f\xbf\x20",
+    "\x20\xf0\x8f\xbf\xbf\x20",
+    "\x20\xf8\x87\xbf\xbf\xbf\x20",
+    "\x20\xfc\x83\xbf\xbf\xbf\xbf\x20",
+    "\x20\xc0\x80\x20",
+    "\x20\xe0\x80\x80\x20",
+    "\x20\xf0\x80\x80\x80\x20",
+    "\x20\xf8\x80\x80\x80\x80\x20",
+    "\x20\xfc\x80\x80\x80\x80\x80\x20",
+    "\x20\xed\xa0\x80\x20",
+    "\x20\xed\xad\xbf\x20",
+    "\x20\xed\xae\x80\x20",
+    "\x20\xed\xaf\xbf\x20",
+    "\x20\xed\xb0\x80\x20",
+    "\x20\xed\xbe\x80\x20",
+    "\x20\xed\xbf\xbf\x20",
+    "\x20\xed\xa0\x80\xed\xb0\x80\x20",
+    "\x20\xed\xa0\x80\xed\xbf\xbf\x20",
+    "\x20\xed\xad\xbf\xed\xb0\x80\x20",
+    "\x20\xed\xad\xbf\xed\xbf\xbf\x20",
+    "\x20\xed\xae\x80\xed\xb0\x80\x20",
+    "\x20\xed\xae\x80\xed\xbf\xbf\x20",
+    "\x20\xed\xaf\xbf\xed\xb0\x80\x20",
+    "\x20\xed\xaf\xbf\xed\xbf\xbf\x20",
+    "\x20\xef\xbf\xbe\x20",
+    "\x20\xef\xbf\xbf\x20",
+    0
+  };
+
+  for (int i = 0; good_strings[i]; ++i)
+    BOOST_CHECK(utf8_validate(string(good_strings[i])) == true);
+
+  for (int i = 0; bad_strings[i]; ++i)
+    BOOST_CHECK(utf8_validate(string(bad_strings[i])) == false);
+}
+
 void 
 add_transform_tests(test_suite * suite)
 {
@@ -1080,6 +1387,7 @@ add_transform_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&join_lines_test));
   suite->add(BOOST_TEST_CASE(&strip_ws_test));
   suite->add(BOOST_TEST_CASE(&encode_test));
+  suite->add(BOOST_TEST_CASE(&utf8_validation_test));
 }
 
 #endif // BUILD_UNIT_TESTS

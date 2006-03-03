@@ -1526,7 +1526,11 @@ parse_revision(basic_io::parser & parser,
   std::string tmp;
   parser.esym(syms::format_version);
   parser.str(tmp);
-  I(tmp == "1");
+  E(tmp == "1",
+    F("encountered a revision with unknown format, version '%s'\n"
+      "I only know how to understand the version '1' format\n"
+      "a newer version of monotone is required to complete this operation")
+    % tmp);
   parser.esym(syms::new_manifest);
   parser.hex(tmp);
   rev.new_manifest = manifest_id(tmp);

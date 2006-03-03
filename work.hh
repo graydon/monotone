@@ -60,7 +60,7 @@ struct file_itemizer : public tree_walker
 };
 
 void
-perform_additions(path_set const & targets, app_state & app);
+perform_additions(path_set const & targets, app_state & app, bool recursive = true);
 
 void
 perform_deletions(path_set const & targets, app_state & app);

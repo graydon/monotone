@@ -32,7 +32,7 @@ AT_CHECK(grep bar ignored, [], [ignore])
 AT_CHECK(grep xyzzy ignored, [], [ignore])
 
 AT_CHECK(rm .mt-ignore)
-AT_CHECK(RAW_MONOTONE ls ignored, [], [test.db
-], [])
+AT_CHECK(RAW_MONOTONE ls ignored, [], [stdout], [stderr])
+AT_CHECK(grep test.db stdout, [], [ignore])
 
 AT_CLEANUP
