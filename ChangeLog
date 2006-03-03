@@ -1,3 +1,19 @@
+2006-03-02  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (restriction_requires_parent): remove
+	* restrictions.cc (restrict_cset): remove call to
+	restriction_requires_parent
+	* restrictions.hh: remove unused struct
+	* tests/t_persistent_server_keys.at: use unrestricted commit to
+	avoid parent exclusion
+	* tests/t_restriction_with_exclude.at: remove bogus check
+	* tests/t_restrictions.at: work around excluded parents
+	* tests/t_revert_new_project.at: un-XFAIL
+	* tests/t_subdirs.at: work around excluded parents
+	* tests/t_restriction_excludes_parent.at: new XFAIL test for restrictions
+	that exclude required parent dirs
+	* testsuite.at: call it
+
 2006-02-26  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_log_dir.at: new XFAIL test of log restricted to a single

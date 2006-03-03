@@ -81,18 +81,7 @@ restrict_cset(cset const & cs,
   for (path_set::const_iterator i = cs.dirs_added.begin();
        i != cs.dirs_added.end(); ++i)
     {
-      // Here is a trick: when you're dealing with restrictions, you need
-      // to make sure that any added parents required to make the
-      // restriction-affected files exist come along for the ride.
-      bool include_it = app.restriction_includes(*i);
-      if (!include_it)
-        {
-          include_it = app.restriction_requires_parent(*i);
-          if (include_it)
-            W(F("Included required parent path '%s'\n") % *i);
-        }
-            
-      if (include_it) 
+      if (app.restriction_includes(*i)) 
         safe_insert(included.dirs_added, *i);
       else
         safe_insert(excluded.dirs_added, *i);

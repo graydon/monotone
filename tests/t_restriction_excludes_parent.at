@@ -1,0 +1,41 @@
+AT_SETUP([restriction excludes parent dir])
+MONOTONE_SETUP
+
+# this test is a bug report
+#
+# - restricting a new project excludes the root directory addition
+# - restricting to things below a newly added directory excludes the directory
+# - excluding added directories but including things they contain is bad
+#
+# we should issue a nice error indicating that such a restriction must
+# be expanded to include the containing directories.
+# we should also provide some way to include only these directories and not
+# all of their contents. 
+#
+# --depth=0 should probably mean "directory without contents" rather than
+# "directory and all immediate children"
+
+AT_XFAIL_IF(true)
+
+ADD_FILE(file, [file
+])
+
+# exclude newly added root dir but include file below it
+AT_CHECK(MONOTONE st file, [3], [ignore], [ignore])
+
+COMMIT(testbranch)
+
+AT_CHECK(mkdir foo)
+
+ADD_FILE(foo/bar, [foobar
+])
+
+
+# exclude newly added foo dir but include bar below it
+AT_CHECK(MONOTONE st foo/bar, [3], [ignore], [ignore])
+
+# note that return status [3] above indicates a crash
+
+AT_CHECK(false)
+
+AT_CLEANUP

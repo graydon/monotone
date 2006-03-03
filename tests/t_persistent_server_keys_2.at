@@ -19,7 +19,8 @@ AT_CHECK(MONOTONE2 pubkey foo@bar | MONOTONE read, [], [ignore], [ignore])
 
 ADD_FILE(foo, [data data blah
 ])
-AT_CHECK(MONOTONE2 commit --key=foo@bar --branch=testbranch -m 'commit foo' foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 status, [], [ignore], [ignore])
+AT_CHECK(MONOTONE2 commit --key=foo@bar --branch=testbranch -m 'commit foo', [], [ignore], [ignore])
 
 NETSYNC_SERVE_START(testbranch)
 NETSYNC_CLIENT_N_RUN(2, push, testbranch)

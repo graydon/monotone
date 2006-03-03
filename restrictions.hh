@@ -28,13 +28,6 @@
 #include "roster.hh"
 #include "vocab.hh"
 
-struct restriction
-{
-  roster_t base_roster;
-  roster_t current_roster;
-  roster_t restricted_roster;
-};
-
 void 
 extract_rearranged_paths(cset const & rearrangement, 
                          path_set & paths);
