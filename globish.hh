@@ -30,7 +30,7 @@
 
 #include "vocab.hh"
 
-void combine_and_check_globish(std::set<utf8> const &patterns, utf8 & pattern);
+void combine_and_check_globish(std::vector<utf8> const &patterns, utf8 & pattern);
 
 class globish_matcher
 {
