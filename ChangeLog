@@ -1,3 +1,10 @@
+2006-03-03  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.cc (check_for_missing_additions): new function
+	(remap_paths): make static	
+	(get_base_roster_and_working_cset): call check_for_missing_additions
+	* tests/t_restriction_excludes_parent.at: un-XFAIL
+	
 2006-03-03  Patrick Mauritz <oxygene@studentenbude.ath.cx>
 
 	* commands.cc: remove rdata, certs, fdata and fdelta commands
