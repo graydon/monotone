@@ -1,5 +1,10 @@
 2006-03-03  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (checkout): Oops, missed a format string
+	argument...
+
+2006-03-03  Nathaniel Smith  <njs@pobox.com>
+
 	* std_hooks.lua (merge3_xxdiff_cmd): Pass --exit-with-merge-status
 	so as to get a meaningful exit code.
 

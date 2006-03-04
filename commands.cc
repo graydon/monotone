@@ -1489,7 +1489,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
       N(heads.size() > 0, F("branch '%s' is empty") % app.branch_name);
       if (heads.size() > 1)
         {
-          P(F("branch %s has multiple heads:"));
+          P(F("branch %s has multiple heads:") % app.branch_name);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s\n") % describe_revision(app, *i));
           P(F("choose one with '%s checkout -r<id>'") % app.prog_name);
