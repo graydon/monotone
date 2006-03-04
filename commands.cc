@@ -1486,8 +1486,15 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
       N(!app.branch_name().empty(), F("need --branch argument for branch-based checkout"));
       set<revision_id> heads;
       get_branch_heads(app.branch_name(), app, heads);
-      N(heads.size() > 0, F("branch '%s' is empty\n") % app.branch_name);
-      N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
+      N(heads.size() > 0, F("branch '%s' is empty") % app.branch_name);
+      if (heads.size() > 1)
+        {
+          P(F("branch %s has multiple heads:"));
+          for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+            P(i18n_format("  %s\n") % describe_revision(app, *i));
+          P(F("choose one with '%s checkout -r<id>'") % app.prog_name);
+          E(false, F("branch %s has multiple heads") % app.branch_name);
+        }
       ident = *(heads.begin());
     }
   else if (app.revision_selectors.size() == 1)
@@ -2955,12 +2962,12 @@ CMD(update, N_("workspace"), "",
           "maybe you want --revision=<rev on other branch>"));
       if (candidates.size() != 1)
         {
-          P(F("multiple update candidates:\n"));
+          P(F("multiple update candidates:"));
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
-            P(i18n_format("  %s\n") % describe_revision(app, *i));
-          P(F("choose one with '%s update -r<id>'\n") % app.prog_name);
-          N(false, F("multiple candidates remain after selection"));
+            P(i18n_format("  %s") % describe_revision(app, *i));
+          P(F("choose one with '%s update -r<id>'") % app.prog_name);
+          E(false, F("multiple update candidates remain after selection"));
         }
       r_chosen_id = *(candidates.begin());
     }

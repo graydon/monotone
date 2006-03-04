@@ -1,3 +1,10 @@
+2006-03-03  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Make plain update with multiple heads an
+	Error, not a Naughty.
+	(checkout): If a branch has multiple heads, list candidates, give
+	usage hint, and use Error instead of Naughty.
+
 2006-03-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* transforms.cc: Don't assume wchar_t is wide enough to hold a
