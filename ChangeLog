@@ -1,3 +1,20 @@
+2006-03-03  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (checkout): Oops, missed a format string
+	argument...
+
+2006-03-03  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (merge3_xxdiff_cmd): Pass --exit-with-merge-status
+	so as to get a meaningful exit code.
+
+2006-03-03  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Make plain update with multiple heads an
+	Error, not a Naughty.
+	(checkout): If a branch has multiple heads, list candidates, give
+	usage hint, and use Error instead of Naughty.
+
 2006-03-03  Derek Scherger  <derek@echologic.com>
 
 	* restrictions.cc (check_for_missing_additions): new function

@@ -350,7 +350,8 @@ function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path,
                      "--title3", merged_path,
                      lfile, afile, rfile, 
                      "--merge", 
-                     "--merged-filename", outfile)
+                     "--merged-filename", outfile,
+                     "--exit-with-merge-status")
    end
 end
    
@@ -579,7 +580,7 @@ function expand_date(str)
       return os.date("%FT%T", t)
    end
    
-   -- today don't uses the time		# for xgettext's sake, an extra quote
+   -- today don't uses the time         # for xgettext's sake, an extra quote
    if str == "today"
    then
       local t = os.time(os.date('!*t'))
