@@ -1,3 +1,7 @@
+2006-03-05  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few changes.
+
 2006-03-03  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (checkout): Oops, missed a format string
