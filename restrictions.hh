@@ -41,12 +41,6 @@ restrict_cset(cset const & work,
               cset & excluded,
               app_state & app);
 
-void
-remap_paths(path_set const & old_paths,
-            roster_t const & r_old,
-            cset const & work,
-            path_set & new_paths);
-
 void 
 get_base_roster_and_working_cset(app_state & app, 
                                  std::vector<utf8> const & args,
