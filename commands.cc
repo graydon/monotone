@@ -1909,86 +1909,6 @@ CMD(list, N_("informative"),
 
 ALIAS(ls, list)
 
-CMD(fdelta, N_("packet i/o"), N_("OLDID NEWID"),
-    N_("write file delta packet to stdout"),
-    OPT_NONE)
-{
-  if (args.size() != 2)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  file_id f_old_id, f_new_id;
-  file_data f_old_data, f_new_data;
-
-  complete(app, idx(args, 0)(), f_old_id);
-  complete(app, idx(args, 1)(), f_new_id);
-
-  N(app.db.file_version_exists(f_old_id), F("no such file '%s'") % f_old_id);
-  app.db.get_file_version(f_old_id, f_old_data);
-  N(app.db.file_version_exists(f_new_id), F("no such file '%s'") % f_new_id);
-  app.db.get_file_version(f_new_id, f_new_data);
-  delta del;
-  diff(f_old_data.inner(), f_new_data.inner(), del);
-  pw.consume_file_delta(f_old_id, f_new_id, file_delta(del));  
-}
-
-CMD(rdata, N_("packet i/o"), N_("ID"), N_("write revision data packet to stdout"),
-    OPT_NONE)
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  revision_id r_id;
-  revision_data r_data;
-
-  complete(app, idx(args, 0)(), r_id);
-
-  N(app.db.revision_exists(r_id), F("no such revision '%s'") % r_id);
-  app.db.get_revision(r_id, r_data);
-  pw.consume_revision_data(r_id, r_data);  
-}
-
-
-CMD(fdata, N_("packet i/o"), N_("ID"), N_("write file data packet to stdout"),
-    OPT_NONE)
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  file_id f_id;
-  file_data f_data;
-
-  complete(app, idx(args, 0)(), f_id);
-
-  N(app.db.file_version_exists(f_id), F("no such file '%s'") % f_id);
-  app.db.get_file_version(f_id, f_data);
-  pw.consume_file_data(f_id, f_data);  
-}
-
-
-CMD(certs, N_("packet i/o"), N_("ID"), N_("write cert packets to stdout"),
-    OPT_NONE)
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  revision_id r_id;
-  vector< revision<cert> > certs;
-
-  complete(app, idx(args, 0)(), r_id);
-
-  app.db.get_revision_certs(r_id, certs);
-  for (size_t i = 0; i < certs.size(); ++i)
-    pw.consume_revision_cert(idx(certs, i));
-}
-
 CMD(pubkey, N_("packet i/o"), N_("ID"), N_("write public key packet to stdout"),
     OPT_NONE)
 {
@@ -3940,6 +3860,10 @@ CMD(automate, N_("automation"),
       "get_file FILEID\n"
       "get_manifest_of [REVID]\n"
       "get_revision [REVID]\n"
+      "packet_for_rdata REVID\n"
+      "packets_for_certs REVID\n"
+      "packet_for_fdata FILEID\n"
+      "packet_for_fdelta OLD_FILE NEW_FILE\n"
       "keys\n"),
     N_("automation interface"), 
     OPT_NONE)

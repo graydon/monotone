@@ -25,6 +25,7 @@
 #include "transforms.hh"
 #include "vocab.hh"
 #include "keys.hh"
+#include "packet.hh"
 
 static std::string const interface_version = "2.0";
 
@@ -1039,6 +1040,134 @@ automate_get_file(std::vector<utf8> args,
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
+// Name: packet_for_rdata
+// Arguments:
+//   1: a revision id
+// Added in: 2.0
+// Purpose: Prints the revision data in packet format
+//
+// Output format: revision data in "monotone read" compatible packet format
+//
+// Error conditions: If the revision id specified is unknown or invalid prints 
+// an error message to stderr and exits with status 1.
+static void
+automate_packet_for_rdata(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+
+  packet_writer pw(output);
+
+  revision_id r_id(idx(args, 0)());
+  revision_data r_data;
+
+  N(app.db.revision_exists(r_id),
+    F("no such revision '%s'") % r_id);
+  app.db.get_revision(r_id, r_data);
+  pw.consume_revision_data(r_id,r_data);
+}
+
+// Name: packets_for_certs
+// Arguments:
+//   1: a revision id
+// Added in: 2.0
+// Purpose: Prints the certs associated with a revision in packet format
+//
+// Output format: certs in "monotone read" compatible packet format
+//
+// Error conditions: If the revision id specified is unknown or invalid prints 
+// an error message to stderr and exits with status 1.
+static void
+automate_packets_for_certs(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+
+  packet_writer pw(output);
+
+  revision_id r_id(idx(args, 0)());
+  std::vector< revision<cert> > certs;
+    
+  N(app.db.revision_exists(r_id),
+    F("no such revision '%s'") % r_id);
+  app.db.get_revision_certs(r_id, certs);
+  for (size_t i = 0; i < certs.size(); ++i)
+    pw.consume_revision_cert(idx(certs,i));
+}
+
+// Name: packet_for_fdata
+// Arguments:
+//   1: a file id
+// Added in: 2.0
+// Purpose: Prints the file data in packet format
+//
+// Output format: file data in "monotone read" compatible packet format
+//
+// Error conditions: If the file id specified is unknown or invalid prints 
+// an error message to stderr and exits with status 1.
+static void
+automate_packet_for_fdata(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+
+  packet_writer pw(output);
+
+  file_id f_id(idx(args, 0)());
+  file_data f_data;
+    
+  N(app.db.file_version_exists(f_id),
+    F("no such revision '%s'") % f_id);
+  app.db.get_file_version(f_id, f_data);
+  pw.consume_file_data(f_id,f_data);
+}
+
+// Name: packet_for_fdelta
+// Arguments:
+//   1: a file id
+//   1: a file id
+// Added in: 2.0
+// Purpose: Prints the file delta in packet format
+//
+// Output format: file delta in "monotone read" compatible packet format
+//
+// Error conditions: If any of the file ids specified are unknown or
+// invalid prints an error message to stderr and exits with status 1.
+static void
+automate_packet_for_fdelta(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() != 2)
+    throw usage(help_name);
+
+  packet_writer pw(output);
+
+  file_id f_old_id(idx(args, 0)());
+  file_id f_new_id(idx(args, 1)());
+  file_data f_old_data, f_new_data;
+   
+  N(app.db.file_version_exists(f_old_id),
+    F("no such revision '%s'") % f_old_id);
+  N(app.db.file_version_exists(f_new_id),
+    F("no such revision '%s'") % f_new_id);
+  app.db.get_file_version(f_old_id, f_old_data);
+  app.db.get_file_version(f_new_id, f_new_data);
+  delta del;
+  diff(f_old_data.inner(), f_new_data.inner(), del);
+  pw.consume_file_delta(f_old_id, f_new_id, file_delta(del));
+}
+
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
                  std::string const & root_cmd_name,
@@ -1407,6 +1536,14 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_get_file(args, root_cmd_name, app, output);
   else if (cmd() == "keys")
     automate_keys(args, root_cmd_name, app, output);
+  else if (cmd() == "packet_for_rdata")
+    automate_packet_for_rdata(args, root_cmd_name, app, output);
+  else if (cmd() == "packets_for_certs")
+    automate_packets_for_certs(args, root_cmd_name, app, output);
+  else if (cmd() == "packet_for_fdata")
+    automate_packet_for_fdata(args, root_cmd_name, app, output);
+  else if (cmd() == "packet_for_fdelta")
+    automate_packet_for_fdelta(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }
