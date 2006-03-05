@@ -1,3 +1,8 @@
+2006-03-04  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_revert_move_to_renamed_dir.at: new test for bug reported by Thomas Keller
+	* testsuite.at: call it
+
 2006-03-03  Derek Scherger  <derek@echologic.com>
 
 	* restrictions.cc (check_for_missing_additions): new function
