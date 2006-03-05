@@ -37,6 +37,8 @@ namespace constants
   // be tweaked further.
   size_t const db_version_cache_sz = 7 * (1 << 20);
 
+  size_t const db_roster_cache_sz = 7;
+
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.
   size_t const log_line_sz = 0x300;

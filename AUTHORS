@@ -257,9 +257,17 @@ X Consortium public license, nowadays called the "X.Net, Inc. License".
 It's reproduced in popt/COPYING.
 
 
+---
+
 The file contrib/colorize is a copy of a perl script written by Cédric
 Bouvier, which is released under the GNU GPL.
 
+---
+
+The file lru_cache.h is a copy of a C++ header written by Patrick
+Audley, which was released under the GNU GPL.
+
+---
 
 copyright status:
 -----------------

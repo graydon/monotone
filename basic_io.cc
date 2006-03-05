@@ -64,10 +64,10 @@ basic_io::stanza::stanza() : indent(0)
 void basic_io::stanza::push_hex_pair(std::string const & k, std::string const & v)
 {
   for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(std::isalnum(*i) || *i == '_');
+    I(is_alnum(*i) || *i == '_');
 
   for (std::string::const_iterator i = v.begin(); i != v.end(); ++i)
-    I(std::isxdigit(*i));
+    I(is_xdigit(*i));
   
   entries.push_back(std::make_pair(k, "[" + v + "]"));
   if (k.size() > indent)
@@ -79,10 +79,10 @@ void basic_io::stanza::push_hex_triple(std::string const & k,
 				       std::string const & v)
 {
   for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(std::isalnum(*i) || *i == '_');
+    I(is_alnum(*i) || *i == '_');
 
   for (std::string::const_iterator i = v.begin(); i != v.end(); ++i)
-    I(std::isxdigit(*i));
+    I(is_xdigit(*i));
   
   entries.push_back(std::make_pair(k, escape(n) + " " + "[" + v + "]"));
   if (k.size() > indent)
@@ -92,7 +92,7 @@ void basic_io::stanza::push_hex_triple(std::string const & k,
 void basic_io::stanza::push_str_pair(std::string const & k, std::string const & v)
 {
   for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(std::isalnum(*i) || *i == '_');
+    I(is_alnum(*i) || *i == '_');
 
   entries.push_back(std::make_pair(k, escape(v)));
   if (k.size() > indent)
@@ -108,7 +108,7 @@ void basic_io::stanza::push_str_multi(std::string const & k,
                                       std::vector<std::string> const & v)
 {
   for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(std::isalnum(*i) || *i == '_');
+    I(is_alnum(*i) || *i == '_');
 
   std::string val;
   bool first = true;
@@ -130,7 +130,7 @@ void basic_io::stanza::push_str_triple(std::string const & k,
 				       std::string const & v)
 {
   for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(std::isalnum(*i) || *i == '_');
+    I(is_alnum(*i) || *i == '_');
 
   entries.push_back(std::make_pair(k, escape(n) + " " + escape(v)));
   if (k.size() > indent)

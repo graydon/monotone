@@ -1,3 +1,16 @@
+2006-03-05  Graydon Hoare  <graydon@pobox.com>
+
+	* lru_cache.h: New file.
+	* AUTHORS: Mention Patrick.
+	* Makefile.am: Include file.
+	* basic_io.cc: Change uses of isxdigit, isalnum.
+	* botan/gzip.h: Reduce gzip to level 1.
+	* constants.cc (db_roster_cache_sz): Set to 7.
+	* database.cc: Use lru cache for vcache; add roster cache.
+	* hmac.cc: Instantiate "SHA-160" not "SHA-1" 
+	(corrects lookup miss in botan's algorithm table).
+	* transforms.cc ({encode,decode}_hexenc): Specialize for idlen.	
+
 2006-03-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* transforms.cc, transforms.hh: Add utf8_validate function and
