@@ -1,3 +1,8 @@
+2006-03-05  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Hooks): Update merge2 and merge3 hook
+	documentation to reflect current reality.
+
 2006-03-05  Graydon Hoare  <graydon@pobox.com>
 
 	* lru_cache.h: New file.
