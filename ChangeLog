@@ -1,3 +1,8 @@
+2006-03-04  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_revert_move_to_renamed_dir.at: new test for bug reported by Thomas Keller
+	* testsuite.at: call it
+
 2006-03-05  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A few changes.
