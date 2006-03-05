@@ -1,5 +1,11 @@
 2006-03-05  Richard Levitte  <richard@levitte.org>
 
+	* po/fr.po: Add a translation guide, partly borrowed from
+	subversion, work on a translation update, partly done.
+	(this is done with Benoît's blessing)
+
+2006-03-05  Richard Levitte  <richard@levitte.org>
+
 	* commands.cc (CMD(tag)): "revision version" seems a bit
 	redundant.
 	* po/sv.po: change the translation accordingly.

@@ -1,13 +1,243 @@
 # French translation of monotone
 # This file is distributed under the same license as the monotone package.
 # Benoît Dejean <benoit@placenet.org>, 2005
+# Richard Levitte <richard@levitte.org>, 2006
 #
+# GUIDE DE TRADUCTION
+# ===================
+#
+# [ ce texte et les termes sont originalement emprunté de subversion.
+#   J'ai completé avec de retraductions des termes trouvé dans sv.po.
+#   /Richard Levitte ]
+#
+# Vocabulaire technique, éventuellement discutable, utilisé
+# de manière aussi consistante que possible dans la traduction.
+#
+# La traduction ne colle pas le texte de trop près, mais s'autorise
+# quelques reformulations. Les messages abscons des erreurs internes
+# de subversion ne sont pas toujours traduits : ils ont peu de chance
+# d'être particulièrement éclairant pour l'utilisateur francophone,
+# pas plus qu'ils ne le sont pour des anglophones, donc rien ne presse;-)
+#
+# Pour certains termes techniques, donner aussi l'anglais est utile.
+# Par exemple que le terme est dans le nom même de la commande et est
+# donc forcément apparent à l'utilisateur : "confier (commit)".
+# Il fera donc plus facilement le lien entre la notion et la commande.
+#
+# L'accentuation des majuscules fait partie de l'orthographe de la langue
+# française, et n'est donc pas négociable, même si personne ne le sait !
+#
+# La typographie en usage impose une espace insécable avant ':', ';', '?',
+# '!', '»' et une après '«', mais aucune avant '.', ',', ')', 
+# Il n'y a pas d'espace après '(', mais après toutes les autres ponctuations.
+#
+# Voir éventuellement pour références les pointeurs suivants :
+#  - WebDAV:	http://www.ics.uci.edu/~ejw/authoring/protocol/rfc2518.fr.html
+#  - CVS:		http://www.delafond.org/traducmanfr/man/man1/cvs.1.html
+#  - WordReference: http://www.wordreference.com/enfr/
+#
+# NOMS ET GROUPES NOMINAUX
+#
+# access                  accès
+# address                 adresse
+# an ancestor             un ancêtre
+# ancestry                des ancêtres / une ascendance
+# approval                assentiment / consentement
+# an argument             un argument ? un paramètre ?
+# an author               un auteur
+# automation              automatisation
+# a backup                une copie the sécurité
+# a base (revision)       (revision de) base
+# a baseline              ?
+# a Berkeley DB           une base Berkeley
+# a bookkeeping directory
+#                         un répertoire administratif
+# a boolean               ?
+# a branch                une branche
+# a buffer                ?
+# a bug                   un bogue
+# a byte                  octet
+# a cert / x certs        un cert / x certs
+# a change                une modification
+# a changelog message     une entrée du journal
+# a check                 un contrôle
+# a checksum              une somme de contrôle
+# a child                 un enfant / descendant
+# a client                un client
+# a conflict state        un conflit
+# a commit                un changement (commit)
+# a connection            une connection
+# a database              base de données
+# a database schema       schema / schema de base de données
+# a descendent            un descendant
+# destination             destination / but
+# an external definition  une référence externe
+# a directory             un répertoire
+# a disapproval           désapprobation
+# a divergence            divergence
+# an edge                 un côté (an edge)
+# an editor               éditeur de texte
+# an epoch                une époque
+# an exchange             un échange
+# a file                  un fichier
+# fulltext                texte complet
+# a graph                 un graphe
+# a head                  une entrée ?
+# history                 histoire
+# a host                  un hôte
+# a hostname              un nom d'hôte
+# a hook                  une procédure automatique
+# input                   entrée
+# an interface            une interface
+# an item                 un élément
+# a key                   une clef
+# a keystore              un entrepôt de clefs
+# a label                 un label, une étiquette
+# a loader                un chargeur
+# a lock-token            une marque de verrou ? un nom de verrou ?? 
+# a log                   un journal
+# a log message           une entrée du journal
+# a manifest              une manifeste ??
+# a marking               un marquage
+# a match                 une équivalence
+# a merge                 un fusion
+# a migration             une migration
+# mutex                   exclusivité (mutex)
+# a node                  un noeud
+# note:                   note:
+# an option               un choix
+# an output               utdata
+# an overflow             débordement
+# to overflow             déborder
+# to override             supplanter ?
+# a packet                un paquet
+# a parent                un parent
+# a path                  chemin, chemin local, objet (au sens quelque chose
+#                         de versionné)
+# a passphrase            une phrase de passe
+# a pattern               un motif / un modèle
+# a peer                  ?
+# a pegged revision       révision fixée
+# progress                progrés
+# a query                 une question
+# a recovery              rétablissement
+# a repository, a repos   un dépôt
+# a request               une demande
+# a review                examination
+# a revision              une révision
+# a root                  une racine
+# a roster                une liste
+# a schedule              programmation (mise en attente ? prévu ? en cours ?)
+# a selector              sélecteur
+# a server                un serveur
+# a service               un service
+# a sink                  but
+# a source                source
+# state                   état
+# a subcommand            une sous-commande
+# a tag                   une étiquette
+# a target                une cible (destination ? objectif ? argument ?)
+# text-base               copie de référence, texte/copie de base/pristine ?
+# a token                 une marque, un signe, un jeton, un nom,
+#                         un identifiant ???
+# a tree                  arborescence [de fichiers et répertoires]
+# an underflow            manque de données
+# a URL                   une URL (une adresse, une localisation uniforme de
+#                         ressource)
+# version control         gestion(naire) de version ? versionnage ?
+# version resource        ???
+# a working copy          une copie de travail
+# a work set              ensemble de travail
+# a workspace             éspace de travail
+#
+#
+# VERBES
+#
+# to approve              approuver / autoriser
+# to authenticate         authentifier
+# to authorize            ?
+# to branch               brancher ?
+# to checkout             extraire, rapatrier, récupérer ?
+# to commit               confier
+# to connect              connecter
+# to debug                déboguer
+# to delete               supprimer
+# to deny                 nier
+# to disapprove           désapprouver
+# to disconnect           déconnecter
+# to drop                 éliminer
+# to dump                 décharger (préféré à sauvegarder, qui implique
+#                         d'écrire qqpart)
+# to fail                 échouer
+# to find                 trouver
+# found                   trouvé / trouvée
+# to get                  obtenir
+# to give                 fournir
+# ro initialize           initialiser
+# to lock                 verrouiller
+# to match (a pattern)    correspondre à
+# to match (a non-pattern)        réunir
+# to not match (a non-pattern)    ne pas correspondre à
+# to merge                fusionner
+# to migrate              migrer
+# to mismatch             ne pas correspondre à
+# to note                 noter
+# to obstruct             bloquer
+# to parse                décomposer
+# parsing                 décomposement ?
+# to process              traiter
+# to propagate            propager
+# to pull                 retirer / récupérer
+# to push                 envoyer
+# to query                questionner
+# to rebuild              reconstruire
+# to refuse               refuser
+# to reject               rejeter
+# to relocate             relocaliser (voire délocaliser (vers))
+# to request              demander
+# to revert               réinitialiser, revenir �  l'ancienne version
+# to review               examiner
+# to serve                servir
+# to set                  établir / mettre / placer
+# to skip                 omettre
+# to specify              déterminer / définir / préciser
+# to spool                ???
+# to store                sauvegarder
+# to support              accepter, supporter ?
+# to switch               aiguiller, ré-aiguiller, permuter? changer?
+# to sync                 synchroniser
+# to synchronize          synchroniser
+# to terminate            finir
+# to underflow            ??
+# to unlock               déverrouiller
+# to update               actualiser, mettre à jour
+# to usher                guider
+# to violate              enfreindre
+#
+#
+# ADJECTIFS
+#
+# bad                     mauvais / incorrect
+# bogus                   boggué
+# default                 valeurs/paramètres/réglages par défaut
+# deprecated              déconseillé
+# locked                  verrouillé
+# malformed               mal formé / mal formée
+# mismatched              mal assorti
+# obstructed              bloqué
+# out-of-date             obsolète
+# parseable               ?
+# refined                 raffiné
+# required                requis, obligatoire
+# stale                   vieux
+# valid                   valable
+# invalid                 pas valable
 msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-28 23:20+0100\n"
-"PO-Revision-Date: 2006-02-28 23:21+0100\n"
+"PO-Revision-Date: 2006-03-05 21:46+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -18,17 +248,17 @@ msgstr ""
 #: ../app_state.cc:110
 #, c-format
 msgid "workspace required but not found%s%s"
-msgstr ""
+msgstr "éspace de travail requis mais pas trouvé%s%s"
 
 #: ../app_state.cc:118
-#, fuzzy, c-format
+#, c-format
 msgid "invalid directory ''"
-msgstr "chem"
+msgstr "répertoire pas valable «»"
 
 #: ../app_state.cc:126
-#, fuzzy, c-format
+#, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'\n"
-msgstr "le fichier pid « %s » existe déjà"
+msgstr "le répertoire administratif « %s » existe déjà dans « %s »\n"
 
 #: ../app_state.cc:165 ../app_state.cc:180
 #, c-format
@@ -36,19 +266,19 @@ msgid "unknown path '%s'\n"
 msgstr "chemin inconnu « %s »\n"
 
 #: ../app_state.cc:363
-#, fuzzy, c-format
+#, c-format
 msgid "search root '%s' does not exist"
-msgstr "le fichier rc « %s » n'existe pas"
+msgstr "le racine de l'éspace de travail « %s » n'existe pas"
 
 #: ../app_state.cc:364
-#, fuzzy, c-format
+#, c-format
 msgid "search root '%s' is not a directory\n"
-msgstr "la racin"
+msgstr "le racine de l'éspace de travail « %s » n'est pas un répertoire\n"
 
 #: ../app_state.cc:399
-#, fuzzy, c-format
+#, c-format
 msgid "failed to parse date string '%s': %s"
-msgstr "impossible de créer le dossier : %s : %s\n"
+msgstr "échou de comprendre la date « %s » : %s\n"
 
 #: ../app_state.cc:413
 #, c-format
@@ -56,14 +286,14 @@ msgid "negative depth not allowed\n"
 msgstr "profondeur négative interdite\n"
 
 #: ../app_state.cc:421
-#, fuzzy, c-format
+#, c-format
 msgid "negative or zero last not allowed\n"
-msgstr "profondeur négative interdite\n"
+msgstr "« last » négative ou zéro interdite\n"
 
 #: ../app_state.cc:429
-#, fuzzy, c-format
+#, c-format
 msgid "negative or zero next not allowed\n"
-msgstr "profondeur négative interdite\n"
+msgstr "« next » négative ou zéro interdite\n"
 
 #: ../app_state.cc:552
 #, c-format
@@ -106,9 +336,9 @@ msgid "calculated cert hash '%s' does not match '%s'"
 msgstr ""
 
 #: ../cert.cc:347 ../keys.cc:532
-#, fuzzy, c-format
+#, c-format
 msgid "no key pair '%s' found in key store '%s'"
-msgstr "aucun fichier « %s » dans la révision « %s »\n"
+msgstr "aucune paire de clefs « %s » dans l'entrepôt de clefs « %s »"
 
 #: ../cert.cc:424
 #, c-format
@@ -146,9 +376,9 @@ msgid ""
 msgstr ""
 
 #: ../commands.cc:160
-#, fuzzy, c-format
+#, c-format
 msgid "command '%s' has multiple ambiguous expansions:\n"
-msgstr "la sélection « %s » a plusieurs expansions ambigües : \n"
+msgstr "la commande « %s » a plusieurs expansions ambigües : \n"
 
 #: ../commands.cc:203
 msgid "commands:"
@@ -186,7 +416,7 @@ msgstr ""
 "Saisissez une description pour cette modification.\n"
 "Les lignes débutant par « MT: » sont supprimées automatiquement.\n"
 
-#: ../commands.cc:411
+#: ../commands.cc: fuzzy,411
 #, c-format
 msgid "edit of log message failed"
 msgstr "l'édition du message du journal a échouée"
@@ -196,13 +426,13 @@ msgid "note: "
 msgstr "note : "
 
 #: ../commands.cc:421
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
 "perhaps consider '%s merge'"
 msgstr ""
 "la branche « %s » a plusieurs heads\n"
-"vous devriez peut-être lancer « monotone merge »"
+"vous devriez peut-être lancer « %s merge »"
 
 #: ../commands.cc:482 ../commands.cc:758 ../commands.cc:1421
 #: ../commands.cc:1498 ../commands.cc:1919 ../commands.cc:2804
@@ -238,19 +468,19 @@ msgid "non-hex digits in id"
 msgstr "chiffre non-héxadécimal dans l'id"
 
 #: ../commands.cc:547
-#, fuzzy, c-format
+#, c-format
 msgid "partial id '%s' does not have an expansion"
-msgstr "le fichier rc « %s » n'existe pas"
+msgstr "l'identité partielle « %s » n'a pas d'expansions"
 
 #: ../commands.cc:550
-#, fuzzy, c-format
+#, c-format
 msgid "partial id '%s' has multiple ambiguous expansions:\n"
-msgstr "le fichier rc « %s » n'existe pas"
+msgstr "l'identité partielle « %s » a plusieurs expansions ambigües : \n"
 
 #: ../commands.cc:557
 #, c-format
 msgid "expanded partial id '%s' to '%s'\n"
-msgstr ""
+msgstr "expansion de l'identité partielle « %s » à « %s »\n"
 
 #: ../commands.cc:584 ../netsync.cc:1726
 #, c-format
@@ -326,9 +556,9 @@ msgid "generating key-pair '%s'"
 msgstr "génératio de la paire de clef « %s »"
 
 #: ../commands.cc:924
-#, fuzzy, c-format
+#, c-format
 msgid "storing key-pair '%s' in %s/"
-msgstr "suppression de la paire de clefs « %s » de l'entrepôt de clefs\n"
+msgstr "sauvegarde la paire de clefs « %s » dans « %s »\n\n"
 
 #: ../commands.cc:928
 msgid "drop a public and private key"
@@ -340,30 +570,30 @@ msgid "dropping public key '%s' from database\n"
 msgstr "suppression de la clef publique « %s » de la base de données\n"
 
 #: ../commands.cc:952
-#, fuzzy, c-format
+#, c-format
 msgid "dropping key pair '%s' from keystore\n"
 msgstr "suppression de la paire de clefs « %s » de l'entrepôt de clefs\n"
 
 #: ../commands.cc:959
-#, fuzzy, c-format
+#, c-format
 msgid "public or private key '%s' does not exist in keystore or database"
 msgstr "la clef publique ou privée « %s » n'existe pas dans la base de données"
 
 #: ../commands.cc:961
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "public or private key '%s' does not exist in keystore, and no database was "
 "specified"
-msgstr "la clef publique ou privée « %s » n'existe pas dans la base de données"
+msgstr "la clef publique ou privée « %s » n'existe pas dans l'entrepôt de clefs, et aucune base de données n'était précisée"
 
 #: ../commands.cc:966
 msgid "change passphrase of a private RSA key"
 msgstr "changer la phrase de passe pour une clef RSA privée"
 
 #: ../commands.cc:976
-#, fuzzy, c-format
+#, c-format
 msgid "key '%s' does not exist in the keystore"
-msgstr "la clef « %s » n'existe pas dans la base de données"
+msgstr "la clef « %s » n'existe pas dans l'entrepôt de clefs"
 
 #: ../commands.cc:983
 #, c-format
@@ -371,9 +601,8 @@ msgid "passphrase changed\n"
 msgstr "la phrase de passe à changée\n"
 
 #: ../commands.cc:986
-#, fuzzy
 msgid "REVISION CERTNAME [CERTVAL]"
-msgstr "RÉVISION CERTIFICAT "
+msgstr "RÉVISION NOM_DE_CERTIFICAT [VALEUR_DE_CERTIFICAT]"
 
 #: ../commands.cc:987
 msgid "create a cert for a revision"
@@ -409,19 +638,16 @@ msgstr "NON-fiable"
 
 #: ../commands.cc:1068 ../commands.cc:1081 ../commands.cc:1094
 #: ../commands.cc:1111 ../commands.cc:1162
-#, fuzzy
 msgid "review"
-msgstr "révs ⇩"
+msgstr "examination"
 
 #: ../commands.cc:1068
-#, fuzzy
 msgid "REVISION TAGNAME"
-msgstr "RÉVISION"
+msgstr "RÉVISION ÉTIQUETTE"
 
 #: ../commands.cc:1069
-#, fuzzy
 msgid "put a symbolic tag cert on a revision version"
-msgstr "mettre une certificat-étiquette symbolique"
+msgstr "mettre une certificat-étiquette symbolique sur une révision"
 
 #: ../commands.cc:1081
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
@@ -429,7 +655,7 @@ msgstr ""
 
 #: ../commands.cc:1082
 msgid "note the results of running a test on a revision"
-msgstr ""
+msgstr "note le résultat d'un test sur une révision"
 
 #: ../commands.cc:1094 ../commands.cc:1111
 msgid "REVISION"
@@ -449,9 +675,9 @@ msgid "disapprove of a particular revision"
 msgstr "désapprouver une révision en particulier"
 
 #: ../commands.cc:1125
-#, fuzzy, c-format
+#, c-format
 msgid "revision '%s' has %d changesets, cannot invert\n"
-msgstr "la révision %s n'existe pas"
+msgstr "la révision %s a %d ensembles de changement, je ne peux pas invertir\n"
 
 #: ../commands.cc:1129
 #, c-format
@@ -488,14 +714,12 @@ msgid "[PATH]..."
 msgstr "[CHEMIN]..."
 
 #: ../commands.cc:1190
-#, fuzzy
 msgid "add files to workspace"
-msgstr "ajouter des fichiers à la copie de travail"
+msgstr "ajouter des fichiers à l'éspace de travail"
 
 #: ../commands.cc:1218
-#, fuzzy
 msgid "drop files from workspace"
-msgstr "supprimer des fichiers de la copie de travail"
+msgstr "supprimer des fichiers de l'éspace de travail"
 
 #: ../commands.cc:1243
 msgid ""
@@ -504,9 +728,8 @@ msgid ""
 msgstr ""
 
 #: ../commands.cc:1245
-#, fuzzy
 msgid "rename entries in the workspace"
-msgstr "renommer des entrées dans la copie de travail"
+msgstr "renommer des entrées dans l'éspace de travail"
 
 #: ../commands.cc:1267
 msgid "NEW_ROOT PUT_OLD"
@@ -541,9 +764,9 @@ msgid "merge 3 files and output result"
 msgstr ""
 
 #: ../commands.cc:1311
-#, fuzzy, c-format
+#, c-format
 msgid "ancestor file id does not exist"
-msgstr "l'id du fichier gauche n'existe pas"
+msgstr "l'id du fichier de l'ancêtre n'existe pas"
 
 #: ../commands.cc:1314
 #, c-format
@@ -561,9 +784,8 @@ msgid "merge failed"
 msgstr "la fusion a échouée"
 
 #: ../commands.cc:1333
-#, fuzzy
 msgid "show status of workspace"
-msgstr "afficher l'état de la copie de travail"
+msgstr "afficher l'état de l'éspace de travail"
 
 #: ../commands.cc:1380
 msgid "[PATH]"
@@ -620,9 +842,9 @@ msgid "need --branch argument for branch-based checkout"
 msgstr ""
 
 #: ../commands.cc:1480
-#, fuzzy, c-format
+#, c-format
 msgid "checkout directory '%s' already exists"
-msgstr "le fichier pid « %s » existe déjà"
+msgstr "le fichier « %s » existe déjà"
 
 #: ../commands.cc:1489 ../commands.cc:1582 ../commands.cc:3121
 #: ../commands.cc:3206 ../commands.cc:3209
@@ -631,9 +853,9 @@ msgid "branch '%s' is empty\n"
 msgstr "la branche « %s » est vide\n"
 
 #: ../commands.cc:1490
-#, fuzzy, c-format
+#, c-format
 msgid "branch %s has multiple heads"
-msgstr "la branche %s a %d entrées\n"
+msgstr "la branche %s a plusieurs entrées"
 
 #: ../commands.cc:1516
 #, c-format
@@ -641,14 +863,13 @@ msgid "revision %s is not a member of branch %s\n"
 msgstr "la révision %s n'est pas membre de la branche %s\n"
 
 #: ../commands.cc:1550
-#, fuzzy, c-format
+#, c-format
 msgid "no file %s found in database for %s"
-msgstr "aucune clef publique « %s » dans la base de données"
+msgstr "aucun fichier « %s » trouvé dans la base de données pour %s"
 
 #: ../commands.cc:1569
-#, fuzzy
 msgid "show unmerged head revisions of branch"
-msgstr "fusionne les"
+msgstr "affiche les entrées non fusionné de la branche"
 
 #: ../commands.cc:1577 ../commands.cc:3117
 #, c-format
@@ -666,9 +887,9 @@ msgid "branch '%s' is currently unmerged:\n"
 msgstr "la branche « %s » n'est actuellement pas fusionnée :\n"
 
 #: ../commands.cc:1625
-#, fuzzy, c-format
+#, c-format
 msgid "no epoch for branch %s\n"
-msgstr "%s n'est pas dans la branche %s\n"
+msgstr "la branche %s n'a pas d'époque\n"
 
 #: ../commands.cc:1833
 msgid ""
@@ -684,6 +905,17 @@ msgid ""
 "missing\n"
 "changed"
 msgstr ""
+"certs ID\n"
+"keys [MOTIF]\n"
+"branches\n"
+"epochs [BRANCHE [...]]\n"
+"tags\n"
+"vars [DOMAINE]\n"
+"known\n"
+"unknown\n"
+"ignored\n"
+"missing\n"
+"changed"
 
 #: ../commands.cc:1844
 msgid ""
@@ -702,9 +934,8 @@ msgid "OLDID NEWID"
 msgstr "ANCIENID NOUVELID"
 
 #: ../commands.cc:1883
-#, fuzzy
 msgid "write file delta packet to stdout"
-msgstr "écrire un fichier de la base de donnée sur la sortie standard"
+msgstr "écrire le paquet delta pour un fichier sur la sortie standard"
 
 #: ../commands.cc:1897 ../commands.cc:1899 ../commands.cc:1938
 #, c-format
@@ -717,39 +948,34 @@ msgid "ID"
 msgstr "ID"
 
 #: ../commands.cc:1906
-#, fuzzy
 msgid "write revision data packet to stdout"
-msgstr "écrire un fichier de la base de donnée sur la sortie standard"
+msgstr "écrire un paquet pour une révision sur la sortie standard"
 
 #: ../commands.cc:1925
-#, fuzzy
 msgid "write file data packet to stdout"
-msgstr "écrire un fichier de la base de donnée sur la sortie standard"
+msgstr "écrire un paquet pour un fichier sur la sortie standard"
 
 #: ../commands.cc:1944
-#, fuzzy
 msgid "write cert packets to stdout"
-msgstr "écrire un fichier de la base de donnée sur la sortie standard"
+msgstr "écrire des paquets pour des certificats sur la sortie standard"
 
 #: ../commands.cc:1962
-#, fuzzy
 msgid "write public key packet to stdout"
-msgstr "écrire un fichier de la base de donnée sur la sortie standard"
+msgstr "écrire un pacquet pour un clef publique sur la sortie standard"
 
 #: ../commands.cc:1984
-#, fuzzy, c-format
+#, c-format
 msgid "public key '%s' does not exist"
-msgstr "le fichier rc « %s » n'existe pas"
+msgstr "la clef publique « %s » n'existe pas"
 
 #: ../commands.cc:1990
-#, fuzzy
 msgid "write private key packet to stdout"
-msgstr "écrire un fichier de la base de donnée sur la sortie standard"
+msgstr "écrire un pacquet pour un clef privée sur la sortie standard"
 
 #: ../commands.cc:1998
-#, fuzzy, c-format
+#, c-format
 msgid "public and private key '%s' do not exist in keystore"
-msgstr "la clef publique ou privée « %s » n'existe pas dans la base de données"
+msgstr "la clef publique ou privée « %s » n'existe pas dans l'entrepôt de clefs"
 
 #: ../commands.cc:2009
 msgid "read packets from files or stdin"
@@ -775,9 +1001,9 @@ msgstr[0] "lu %d paquet"
 msgstr[1] "lu %d paquets"
 
 #: ../commands.cc:2061
-#, fuzzy, c-format
+#, c-format
 msgid "setting default server to %s\n"
-msgstr "utilisation de l'adresse par défaut du serveur : %s\n"
+msgstr "mettant l'adresse par défaut du serveur à %s\n"
 
 #: ../commands.cc:2067
 #, c-format
@@ -800,9 +1026,9 @@ msgid "setting default branch exclude pattern to '%s'\n"
 msgstr ""
 
 #: ../commands.cc:2099
-#, fuzzy, c-format
+#, c-format
 msgid "no branch pattern given"
-msgstr "aucune phrase de passe fournie"
+msgstr "aucun motif de branche fourni"
 
 #: ../commands.cc:2101
 #, c-format
@@ -824,10 +1050,8 @@ msgstr ""
 "envoie les branches correspondant au MOTIF au serveur netsync à l'ADRESSE"
 
 #: ../commands.cc:2133
-#, fuzzy
 msgid "pull branches matching PATTERN from netsync server at ADDRESS"
-msgstr ""
-"envoie les branches correspondant au MOTIF au serveur netsync à l'ADRESSE"
+msgstr "récupère les branches correspondant au MOTIF du serveur netsync à ADRESSE"
 
 #: ../commands.cc:2140
 #, c-format
@@ -837,10 +1061,8 @@ msgstr ""
 "authentification\n"
 
 #: ../commands.cc:2147
-#, fuzzy
 msgid "sync branches matching PATTERN with netsync server at ADDRESS"
-msgstr ""
-"envoie les branches correspondant au MOTIF au serveur netsync à l'ADRESSE"
+msgstr "synchronise les branches correspondant au MOTIF au serveur netsync à ADRESSE"
 
 #: ../commands.cc:2161
 msgid "PATTERN ..."
@@ -895,14 +1117,14 @@ msgid "set, get or drop file attributes"
 msgstr ""
 
 #: ../commands.cc:2272
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown path '%s'"
 msgstr "Chemin inconnu « %s »"
 
 #: ../commands.cc:2301
-#, fuzzy, c-format
+#, c-format
 msgid "Path '%s' does not have attribute '%s'\n"
-msgstr "le chemin %s n'existe pas\n"
+msgstr "Le chemin « %s » n'a pas d'attribut « %s »\n"
 
 #: ../commands.cc:2355
 #, c-format
@@ -910,32 +1132,35 @@ msgid "--message and --message-file are mutually exclusive"
 msgstr "--message et --message-file sont mutuellement exclusifs"
 
 #: ../commands.cc:2374
-#, fuzzy
 msgid "commit workspace to database"
-msgstr "création d'une copie de travail dans %s\n"
+msgstr "confie un éspace de travail à la base de données"
 
 #: ../commands.cc:2392
 #, c-format
 msgid "no changes to commit\n"
-msgstr "aucun changement à valider\n"
+msgstr "aucun changement à confier\n"
 
 #: ../commands.cc:2406
 #, fuzzy, c-format
 msgid "beginning commit on branch '%s'\n"
-msgstr "début du service sur %s : %d\n"
+msgstr "début de confiance sur la branche « %s »\n"
 
 #: ../commands.cc:2415
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "MT/log is non-empty and log message was specified on command line\n"
 "perhaps move or delete MT/log,\n"
 "or remove --message/--message-file from the command line?"
-msgstr "MT/log n'est pas vide et --message-file a été passé\n"
+msgstr ""
+"MT/log n'est pas vide et une entrée de journal a été donné sur la linge\n"
+"de commande\n"
+"veuillez déplacé ou supprimer MT/log,\n"
+"ou supprimer --message/--message-file de la linge de command\n"
 
 #: ../commands.cc:2427
 #, fuzzy, c-format
 msgid "empty log message; commit canceled"
-msgstr "message du journal vide"
+msgstr "message du journal vide; confidence arrêté"
 
 #: ../commands.cc:2446
 #, c-format
@@ -955,7 +1180,7 @@ msgstr "le fichier « %s » a été modifié pendant le commit, interruption"
 #: ../commands.cc:2554
 #, fuzzy, c-format
 msgid "committed revision %s\n"
-msgstr "erreur réseau : %s"
+msgstr "révision confié : %s\n"
 
 #: ../commands.cc:2560
 #, c-format
@@ -1000,10 +1225,9 @@ msgid ""
 msgstr ""
 
 #: ../commands.cc:2946
-#, fuzzy, c-format
+#, c-format
 msgid "this workspace is a new project; cannot update"
-msgstr ""
-"ce dossier de travail est un nouveau projet, impossible de mettre à jour"
+msgstr "cet éspace de travail est un nouveau projet, impossible de mettre à jour"
 
 #: ../commands.cc:2953
 #, c-format
@@ -1019,9 +1243,9 @@ msgid "multiple update candidates:\n"
 msgstr "plusieurs candidats pour la mise à jour :\n"
 
 #: ../commands.cc:2962
-#, fuzzy, c-format
+#, c-format
 msgid "choose one with '%s update -r<id>'\n"
-msgstr "choisissez en un avec « monotone update -r<id> »\n"
+msgstr "choisissez en un avec « %s update -r<id> »\n"
 
 #: ../commands.cc:2963
 #, c-format
@@ -1039,11 +1263,13 @@ msgid "selected update target %s\n"
 msgstr "sélection de la cible %s pour la mise à jour\n"
 
 #: ../commands.cc:2998
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "revision %s is not a member of branch %s\n"
 "try again with explicit --branch\n"
-msgstr "la révision %s n'est pas membre de la branche %s\n"
+msgstr ""
+"la révision %s n'est pas membre de la branche %s\n"
+"éssayez de nouveau avec un --branch explicit\n"
 
 #: ../commands.cc:3098
 #, c-format
@@ -1053,7 +1279,7 @@ msgstr "mise à jour vers la révision de base %s\n"
 #: ../commands.cc:3108
 #, fuzzy
 msgid "merge unmerged heads of branch"
-msgstr "fusionne les"
+msgstr "fusionne les entrées non fusionnées"
 
 #: ../commands.cc:3122
 #, c-format
@@ -1061,14 +1287,14 @@ msgid "branch '%s' is merged\n"
 msgstr "la branche « %s » est fusionnée\n"
 
 #: ../commands.cc:3128
-#, fuzzy, c-format
+#, c-format
 msgid "starting with revision 1 / %d\n"
-msgstr "insertion de la nouvelle révision %s\n"
+msgstr "en commencent avec la révision 1 / %d\n"
 
 #: ../commands.cc:3132
-#, fuzzy, c-format
+#, c-format
 msgid "merging with revision %d / %d\n"
-msgstr "insertion de la nouvelle révision %s\n"
+msgstr "fusionnent avec la révision %d / %d\n"
 
 #. Somewhat redundant, but consistent with output of plain "merge" command.
 #: ../commands.cc:3133 ../commands.cc:3134 ../commands.cc:3216
@@ -1111,7 +1337,7 @@ msgstr "la branche « %s » n'est pas fusionnée\n"
 #: ../commands.cc:3215
 #, fuzzy, c-format
 msgid "propagating %s -> %s\n"
-msgstr "mise à jour de %s en %s\n"
+msgstr "propage %s -> %s\n"
 
 #: ../commands.cc:3217
 #, c-format
@@ -1183,9 +1409,9 @@ msgid "reverting %s"
 msgstr ""
 
 #: ../commands.cc:3501
-#, fuzzy, c-format
+#, c-format
 msgid "no file version %s found in database for %s"
-msgstr "aucune clef publique « %s » dans la base de données"
+msgstr "aucune version de fichier « %s » trouvé dans la base de données %s"
 
 #: ../commands.cc:3514
 #, c-format
@@ -1224,9 +1450,9 @@ msgid "print annotated copy of the file from REVISION"
 msgstr ""
 
 #: ../commands.cc:3627
-#, fuzzy, c-format
+#, c-format
 msgid "no revision for file '%s' in database"
-msgstr "la révision %s est déjà dans la base de données\n"
+msgstr "aucune révision pour le fichier « %s » dans la base de données"
 
 #: ../commands.cc:3645
 msgid "[FILE] ..."
@@ -1249,14 +1475,13 @@ msgid "only one of --last/--next allowed"
 msgstr ""
 
 #: ../commands.cc:3880
-#, fuzzy
 msgid "[DIRECTORY]"
-msgstr "[DOSSIER]\n"
+msgstr "[RÉPERTOIRE]\n"
 
 #: ../commands.cc:3880
 #, fuzzy
 msgid "setup a new workspace directory, default to current"
-msgstr "préparer un dossier pour une nouvelle copie de travail"
+msgstr "préparer un répertoire pour une nouvelle copie de travail, employer le répertoire actuel comme défaut"
 
 #: ../commands.cc:3886
 #, c-format
@@ -1304,10 +1529,8 @@ msgid "DOMAIN NAME VALUE"
 msgstr "DOMAINE NOM VALEUR"
 
 #: ../commands.cc:3936
-#, fuzzy
 msgid "set the database variable NAME to VALUE, in domain DOMAIN"
-msgstr ""
-"supprimer la variable NOM de la base de données dans le domaine DOMAINE"
+msgstr "établir la variable NOM de la base de données dans le domaine DOMAINE avec la valeur VALEUR"
 
 #: ../commands.cc:3951
 msgid "DOMAIN NAME"
@@ -1342,9 +1565,9 @@ msgid ""
 msgstr ""
 
 #: ../commands.cc:3995 ../commands.cc:3997
-#, fuzzy, c-format
+#, c-format
 msgid "%s in an ancestor of %s; no merge is needed."
-msgstr "%s n'est pas un ancêtre de %s"
+msgstr "%s est un ancêtre de %s; aucune fusion est nécessaire"
 
 #: ../commands.cc:4011
 #, c-format
@@ -1408,9 +1631,9 @@ msgid "certs"
 msgstr "certifs"
 
 #: ../database_check.cc:543
-#, fuzzy, c-format
+#, c-format
 msgid "file %s missing (%d manifest references)\n"
-msgstr "noeud %d = révision %s = manifeste %s\n"
+msgstr "fichier %d manquant (%d références du manifeste)\n"
 
 #: ../database_check.cc:550
 #, c-format
@@ -1420,7 +1643,7 @@ msgstr "fichier %s non-référencé\n"
 #: ../database_check.cc:571
 #, fuzzy, c-format
 msgid "roster %s unreferenced\n"
-msgstr "fichier %s non-référencé\n"
+msgstr "liste %s non-référencé\n"
 
 #: ../database_check.cc:577
 #, c-format
@@ -1428,9 +1651,9 @@ msgid "roster %s incomplete (%d missing files)\n"
 msgstr ""
 
 #: ../database_check.cc:584
-#, fuzzy, c-format
+#, c-format
 msgid "roster %s incomplete (%d missing revisions)\n"
-msgstr "nouvelle révisions %s\n"
+msgstr "liste %s incomplet (%d révisions manquantes)\n"
 
 #: ../database_check.cc:591
 #, c-format
@@ -1438,9 +1661,9 @@ msgid "roster %s is not parseable (perhaps with unnormalized paths?)\n"
 msgstr ""
 
 #: ../database_check.cc:598
-#, fuzzy, c-format
+#, c-format
 msgid "roster %s is not in normalized form\n"
-msgstr "la révision %s n'est pas membre de la branche %s\n"
+msgstr "la liste %s n'est pas en forme normalisé\n"
 
 #: ../database_check.cc:623
 #, c-format
@@ -1450,34 +1673,34 @@ msgid ""
 msgstr ""
 
 #: ../database_check.cc:631
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s incomplete (%d missing manifests)\n"
-msgstr "%d manifestes incomplets\n"
+msgstr "révision %s incomplète (%d manifestes manquants)\n"
 
 #: ../database_check.cc:638
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s incomplete (%d missing revisions)\n"
-msgstr "nouvelle révisions %s\n"
+msgstr "révision %s incomplète (%d révisions manquantes)\n"
 
 #: ../database_check.cc:645
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s incomplete (missing roster link)\n"
-msgstr "la révision %s n'est pas membre de la branche %s\n"
+msgstr "révision %s incomplète (le lien à la liste manque)\n"
 
 #: ../database_check.cc:651
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s incomplete (missing roster)\n"
-msgstr "la révision %s n'est pas membre de la branche %s\n"
+msgstr "révision %s incomplète (la liste manque)\n"
 
 #: ../database_check.cc:657
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s mismatched roster and manifest\n"
-msgstr "la révision %s n'est pas membre de la branche %s\n"
+msgstr "la liste et la manifeste de la révision %s ne s'entre-correspondent pas\n"
 
 #: ../database_check.cc:663
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s incomplete (incomplete roster)\n"
-msgstr "la révision %s n'est pas membre de la branche %s\n"
+msgstr "révision %s incomplète (liste incomplète)\n"
 
 #: ../database_check.cc:669
 #, c-format
@@ -1493,37 +1716,37 @@ msgstr ""
 #: ../database_check.cc:690
 #, fuzzy, c-format
 msgid "revision %s has bad history (%s)\n"
-msgstr "la révision %s est déjà dans la base de données\n"
+msgstr "la révision %s a une mauvaise histoire (%s)\n"
 
 #: ../database_check.cc:697
 #, fuzzy, c-format
 msgid "revision %s is not parseable (perhaps with unnormalized paths?)\n"
-msgstr "la révision %s n'est pas membre de la branche %s\n"
+msgstr "la révision %s n'est pas décomposable (peut-être a-t'elle des chemins non normalisé?)\n"
 
 #: ../database_check.cc:704
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s is not in normalized form\n"
-msgstr "la révision %s n'est pas membre de la branche %s\n"
+msgstr "la révision %s n'est pas en forme normalisé\n"
 
 #: ../database_check.cc:728
-#, fuzzy, c-format
+#, c-format
 msgid "key %s missing (signed %d certs)\n"
-msgstr "clef et certificat"
+msgstr "la clef %s manque (elle a signé %d certs)\n"
 
 #: ../database_check.cc:761
 #, c-format
 msgid "revision %s unchecked signature in %s cert from missing key %s\n"
-msgstr ""
+msgstr "la révision %s a une signature non contrôlable dans le cert %s, faite avec une clef qui manque %s\n"
 
 #: ../database_check.cc:769
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s bad signature in %s cert from key %s\n"
-msgstr "la révision %s est déjà dans la base de données\n"
+msgstr "la révision %s a une mauvaise signature dans le cert %s, faite avec la clef %s\n"
 
 #: ../database_check.cc:784
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s missing %s cert\n"
-msgstr "%d certificats manquants\n"
+msgstr "la révision %s manque le cert %s\n"
 
 #: ../database_check.cc:793
 #, c-format
@@ -1531,9 +1754,9 @@ msgid "revision %s mismatched certs (%d authors %d dates %d changelogs)\n"
 msgstr ""
 
 #: ../database_check.cc:874
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing files\n"
-msgstr "importation du fichier « %s »\n"
+msgstr "%d fichiers manquants\n"
 
 #: ../database_check.cc:876
 #, c-format
@@ -1543,12 +1766,12 @@ msgstr "%d fichiers non-référencés\n"
 #: ../database_check.cc:879
 #, fuzzy, c-format
 msgid "%d unreferenced rosters\n"
-msgstr "%d fichiers non-référencés\n"
+msgstr "%d listes non-référencés\n"
 
 #: ../database_check.cc:881
 #, fuzzy, c-format
 msgid "%d incomplete rosters\n"
-msgstr "%d manifestes incomplets\n"
+msgstr "%d listes incomplets\n"
 
 #: ../database_check.cc:883
 #, c-format
@@ -1558,32 +1781,32 @@ msgstr ""
 #: ../database_check.cc:886
 #, fuzzy, c-format
 msgid "%d rosters not in normalized form\n"
-msgstr "la révision %s n'est pas membre de la branche %s\n"
+msgstr "%d listes pas en forme normalisé\n"
 
 #: ../database_check.cc:889
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing revisions\n"
-msgstr "insertion de la nouvelle révision %s\n"
+msgstr "%d révisions manquantes\n"
 
 #: ../database_check.cc:891
-#, fuzzy, c-format
+#, c-format
 msgid "%d incomplete revisions\n"
-msgstr "nouvelle révisions %s\n"
+msgstr "%d revisions incomplètes\n"
 
 #: ../database_check.cc:893
 #, fuzzy, c-format
 msgid "%d mismatched parents\n"
-msgstr "%d"
+msgstr "%d parents non-correspondents\n"
 
 #: ../database_check.cc:895
 #, fuzzy, c-format
 msgid "%d mismatched children\n"
-msgstr "%d"
+msgstr "%d enfants non correspondents"
 
 #: ../database_check.cc:897
-#, fuzzy, c-format
+#, c-format
 msgid "%d revisions with bad history\n"
-msgstr "la révision %s est déjà dans la base de données\n"
+msgstr "%d révisions avec une mauvaise histoire\n"
 
 #: ../database_check.cc:899
 #, c-format
@@ -1591,19 +1814,19 @@ msgid "%d revisions not parseable (perhaps with invalid paths)\n"
 msgstr ""
 
 #: ../database_check.cc:902
-#, fuzzy, c-format
+#, c-format
 msgid "%d revisions not in normalized form\n"
-msgstr "la révision %s n'est pas membre de la branche %s\n"
+msgstr "%d révisions non normalisés\n"
 
 #: ../database_check.cc:906
-#, fuzzy, c-format
+#, c-format
 msgid "%d unreferenced roster links\n"
-msgstr "%d fichiers non-référencés\n"
+msgstr "%d liens à liste non-référencés\n"
 
 #: ../database_check.cc:909
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing rosters\n"
-msgstr "%d certificats manquants\n"
+msgstr "%d listes manquantes\n"
 
 #: ../database_check.cc:913
 #, c-format
@@ -1636,9 +1859,9 @@ msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs\n"
 msgstr ""
 
 #: ../database_check.cc:954
-#, fuzzy, c-format
+#, c-format
 msgid "total problems detected: %d (%d serious)\n"
-msgstr "problèmes mineurs détectés\n"
+msgstr "problèmes total détectés: %d (%d sérieux)\n"
 
 #: ../database_check.cc:956
 #, c-format
@@ -1684,6 +1907,7 @@ msgid ""
 "please see README.changesets for details"
 msgstr ""
 
+# **** Richard stopped here ****
 #: ../database.cc:217
 #, fuzzy, c-format
 msgid "unable to probe database version in file %s"
