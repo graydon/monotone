@@ -1,6 +1,13 @@
+2006-03-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* work.cc: Remove single quotes from the new adding, dropping, and
+	renaming messages to make them consistent with the existing update
+	message.
+
 2006-03-04  Derek Scherger  <derek@echologic.com>
 
-	* tests/t_revert_move_to_renamed_dir.at: new test for bug reported by Thomas Keller
+	* tests/t_revert_move_to_renamed_dir.at: new test for bug reported
+	by Thomas Keller
 	* testsuite.at: call it
 
 2006-03-05  Richard Levitte  <richard@levitte.org>
