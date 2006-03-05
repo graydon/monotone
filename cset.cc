@@ -445,10 +445,9 @@ parse_cset(basic_io::parser & parser,
 void
 write_cset(cset const & cs, data & dat)
 {
-  std::ostringstream oss;
-  basic_io::printer pr(oss);
+  basic_io::printer pr;
   print_cset(pr, cs);
-  dat = data(oss.str());
+  dat = data(pr.buf);
 }
 
 void

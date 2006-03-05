@@ -681,8 +681,7 @@ read_options_map(data const & dat, options_map & options)
 void 
 write_options_map(data & dat, options_map const & options)
 {
-  std::ostringstream oss;
-  basic_io::printer pr(oss);
+  basic_io::printer pr;
 
   basic_io::stanza st;
   for (options_map::const_iterator i = options.begin();
@@ -690,7 +689,7 @@ write_options_map(data & dat, options_map const & options)
     st.push_str_pair(i->first, i->second());
 
   pr.print_stanza(st);
-  dat = oss.str();
+  dat = pr.buf;
 }
 
 // local dump file
