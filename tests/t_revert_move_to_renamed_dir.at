@@ -1,0 +1,21 @@
+AT_SETUP([revert moving a file to a renamed directory])
+MONOTONE_SETUP
+
+# this test is a bug report
+# see http://savannah.nongnu.org/bugs/?func=detailitem&item_id=15994
+
+AT_XFAIL_IF(true)
+
+ADD_FILE(file, [file
+])
+
+AT_CHECK(mkdir dir)
+AT_CHECK(MONOTONE add dir, [], [ignore], [ignore])
+
+COMMIT(testbranch)
+
+AT_CHECK(MONOTONE --execute mv file dir, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --execute mv dir foo, [], [ignore], [ignore])
+AT_CHECK(MONOTONE revert dir, [], [ignore], [ignore])
+
+AT_CLEANUP

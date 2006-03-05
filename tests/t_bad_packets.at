@@ -1,15 +1,13 @@
 AT_SETUP([bad packet args])
 MONOTONE_SETUP
 
-AT_CHECK(MONOTONE mdelta 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f 6c704fbd4ef58f2447fd1a3e76911b2ebe97dc77, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE mdata 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE fdelta 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f 6c704fbd4ef58f2447fd1a3e76911b2ebe97dc77, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE fdata 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE rdata 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE automate packet_for_fdelta 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f 6c704fbd4ef58f2447fd1a3e76911b2ebe97dc77, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE automate packet_for_fdata 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE automate packet_for_rdata 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE pubkey foo@bar, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE privkey foo@bar, [1], [ignore], [ignore])
 
-AT_CHECK(MONOTONE certs 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE automate packets_for_certs 73070030f7b0d0f3d4ee02545d45ca4bbe5e189f, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE db check, [], [ignore], [ignore])
 
 AT_CLEANUP

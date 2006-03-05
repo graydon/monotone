@@ -28,13 +28,6 @@
 #include "roster.hh"
 #include "vocab.hh"
 
-struct restriction
-{
-  roster_t base_roster;
-  roster_t current_roster;
-  roster_t restricted_roster;
-};
-
 void 
 extract_rearranged_paths(cset const & rearrangement, 
                          path_set & paths);
@@ -47,12 +40,6 @@ restrict_cset(cset const & work,
               cset & included,
               cset & excluded,
               app_state & app);
-
-void
-remap_paths(path_set const & old_paths,
-            roster_t const & r_old,
-            cset const & work,
-            path_set & new_paths);
 
 void 
 get_base_roster_and_working_cset(app_state & app, 

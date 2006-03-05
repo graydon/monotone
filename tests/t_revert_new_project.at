@@ -2,8 +2,6 @@
 
 AT_SETUP([revert file in new project])
 
-AT_XFAIL_IF(true)
-
 MONOTONE_SETUP
 
 

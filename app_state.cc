@@ -195,28 +195,6 @@ app_state::set_restriction(path_set const & valid_paths,
 }
 
 bool
-app_state::restriction_requires_parent(split_path const & sp)
-{
-  file_path path(sp);
-  if (restrictions.empty())
-    return false;
-
-  for (path_set::const_iterator i = restrictions.begin();
-       i != restrictions.end(); ++i)
-    {
-      // If sp is a parent of any member rs of the restriction,
-      // we want to return true.
-      split_path rs = *i;
-      if (rs.size() < sp.size())
-        continue;
-      rs.resize(sp.size());
-      if (rs == sp)
-        return true;
-    }
-  return false;
-}
-
-bool
 app_state::restriction_includes(split_path const & sp)
 {
   // FIXME: this was written before split_path, and only later kludged to

@@ -57,6 +57,9 @@ AT_DATA(dir/file5, [file 5
 ])
 AT_DATA(dir/file6.ignore, [file 6
 ])
+AT_CHECK(mkdir dir2)
+AT_DATA(dir2/file7, [file 7
+])
 #AT_DATA(.mt-ignore, [.*\.ignore$
 #])
 
@@ -67,6 +70,9 @@ AT_CHECK(grep 'adding file3' stderr, [0], [ignore])
 #AT_CHECK(grep 'adding file4.ignore' stderr, [1], [ignore])
 AT_CHECK(grep 'adding dir/file5' stderr, [0], [ignore])
 #AT_CHECK(grep 'adding dir/file6.ignore' stderr, [1], [ignore])
+AT_CHECK(grep 'adding dir2' stderr, [0], [ignore])
+AT_CHECK(grep 'adding dir2/file7' stderr, [0], [ignore])
+AT_CHECK(grep 'skipping dir2/file7' stderr, [1], [ignore])
 AT_CHECK(grep 'adding test_hooks.lua' stderr, [1], [ignore])
 
 AT_CHECK(MONOTONE status, [], [stdout])
