@@ -1,5 +1,11 @@
 2006-03-05  Graydon Hoare  <graydon@pobox.com>
 
+	* basic_io.{cc,hh}: Change printer to use static string buf.
+	* {automate,cset,revision,roster,work}.cc: Update to match.
+	* xdelta.cc: Minor optimizations.
+
+2006-03-05  Graydon Hoare  <graydon@pobox.com>
+
 	* lru_cache.h: New file.
 	* AUTHORS: Mention Patrick.
 	* Makefile.am: Include file.

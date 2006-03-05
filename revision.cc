@@ -1563,10 +1563,9 @@ read_revision_set(revision_data const & dat,
 static void write_insane_revision_set(revision_set const & rev,
                                       data & dat)
 {
-  std::ostringstream oss;
-  basic_io::printer pr(oss);
+  basic_io::printer pr;
   print_revision(pr, rev);
-  dat = data(oss.str());
+  dat = data(pr.buf);
 }
 
 template <> void

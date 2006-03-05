@@ -34,7 +34,8 @@ void basic_io::tokenizer::err(std::string const & s)
   in.err(s);
 }
 
-std::string basic_io::escape(std::string const & s)
+std::string 
+basic_io::escape(std::string const & s)
 {
   std::string escaped;
   escaped.reserve(s.size() + 8);
@@ -138,26 +139,27 @@ void basic_io::stanza::push_str_triple(std::string const & k,
 }
 
 
-basic_io::printer::printer(std::ostream & ost) 
-  : empty_output(true), out(ost)
-{}
+std::string basic_io::printer::buf;
+
+basic_io::printer::printer() 
+{
+  buf.clear();
+}
 
 void basic_io::printer::print_stanza(stanza const & st)
 {
-  if (empty_output)
-    empty_output = false;
-  else
-    out.put('\n');
-  
+  if (LIKELY(!buf.empty()))
+    buf += '\n';
+
   for (std::vector<std::pair<std::string, std::string> >::const_iterator i = st.entries.begin();
        i != st.entries.end(); ++i)
     {
       for (size_t k = i->first.size(); k < st.indent; ++k)
-        out.put(' ');
-      out.write(i->first.data(), i->first.size());
-      out.put(' ');
-      out.write(i->second.data(), i->second.size());
-      out.put('\n');
+        buf += ' ';
+      buf.append(i->first);
+      buf += ' ';
+      buf.append(i->second);
+      buf += '\n';
     }
 }
 
