@@ -1,3 +1,9 @@
+2006-03-05  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (CMD(tag)): "revision version" seems a bit
+	redundant.
+	* po/sv.po: change the translation accordingly.
+
 2006-03-05  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Hooks): Update merge2 and merge3 hook

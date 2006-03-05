@@ -1066,7 +1066,7 @@ CMD(trusted, N_("key and cert"), N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]
 }
 
 CMD(tag, N_("review"), N_("REVISION TAGNAME"),
-    N_("put a symbolic tag cert on a revision version"), OPT_NONE)
+    N_("put a symbolic tag cert on a revision"), OPT_NONE)
 {
   if (args.size() != 2)
     throw usage(name);
