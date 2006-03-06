@@ -2,6 +2,40 @@
 
 	* lru_cache.hh (LRUCache::insert): Fix memory leak.
 
+2006-03-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_delete_dir.at: Check that drop on a non-empty dir
+	without --recursive doesn't work.
+
+2006-03-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.{cc,hh}, options.hh, monotone.cc: Add a --recursive option.
+	* commands.cc (drop): accept --recursive
+	* work.cc (perform_deletions): obey --recursive
+	* tests/t_delete_dir{,_patch}.at, tests/t_subdir_drop.at:
+	use --recursive, remove XFAIL
+	* tests/t_add_intermediate_MT_path.at: reenable recursive drop section
+
+2006-03-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (db set_epoch): N() on the epoch size, so we don't I()
+	on it in database.cc .
+	* netsync.cc (maybe_note_epochs_finished): If we're in source_role,
+	epochs can be finished even if the refiner says we still have some
+	to receive.
+	* refiner.cc (begin_refinement): Add logging.
+
+2006-03-05  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (CMD(tag)): "revision version" seems a bit
+	redundant.
+	* po/sv.po: change the translation accordingly.
+
+2006-03-05  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Hooks): Update merge2 and merge3 hook
+	documentation to reflect current reality.
+
 2006-03-05  Graydon Hoare  <graydon@pobox.com>
 
 	* basic_io.{cc,hh}: Change printer to use static string buf.

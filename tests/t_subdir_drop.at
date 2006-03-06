@@ -1,12 +1,6 @@
 AT_SETUP([(minor) drop in subdir])
 MONOTONE_SETUP
 
-# This test is a bug report.
-AT_XFAIL_IF(true)
-
-# This test _should_ start working once t_delete_dir.at starts
-# working.  If not, reinvestigate.
-
 AT_CHECK(mkdir subdir)
 AT_CHECK(mkdir subdir/anotherdir)
 AT_DATA(subdir/foo, [data data
@@ -21,7 +15,7 @@ REV=`BASE_REVISION`
 AT_CHECK(MONOTONE checkout --revision=$REV codir, [], [ignore], [ignore])
 
 AT_CHECK( (cd subdir && MONOTONE drop foo), [], [ignore], [ignore])
-AT_CHECK( (cd subdir && MONOTONE drop anotherdir), [], [ignore], [ignore])
+AT_CHECK( (cd subdir && MONOTONE drop --recursive anotherdir), [], [ignore], [ignore])
 COMMIT(testbranch)
 
 AT_CHECK( (cd codir && MONOTONE update), [], [ignore], [ignore])
