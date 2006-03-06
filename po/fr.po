@@ -51,7 +51,7 @@
 # a baseline              ?
 # a Berkeley DB           une base Berkeley
 # a bookkeeping directory
-#                         un répertoire administratif
+#                         un dossier administratif
 # a boolean               ?
 # a branch                une branche
 # a buffer                ?
@@ -72,7 +72,7 @@
 # a descendent            un descendant
 # destination             destination / but
 # an external definition  une référence externe
-# a directory             un répertoire
+# a directory             un dossier / un répertoire
 # a disapproval           désapprobation
 # a divergence            divergence
 # an edge                 un côté (an edge)
@@ -131,7 +131,7 @@
 # a selector              sélecteur
 # a server                un serveur
 # a service               un service
-# a sink                  but
+# a sink                  puit
 # a source                source
 # state                   état
 # a subcommand            une sous-commande
@@ -237,7 +237,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-28 23:20+0100\n"
-"PO-Revision-Date: 2006-03-05 21:46+0100\n"
+"PO-Revision-Date: 2006-03-06 05:54+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -253,12 +253,12 @@ msgstr "éspace de travail requis mais pas trouvé%s%s"
 #: ../app_state.cc:118
 #, c-format
 msgid "invalid directory ''"
-msgstr "répertoire pas valable «»"
+msgstr "dossier pas valable «»"
 
 #: ../app_state.cc:126
 #, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'\n"
-msgstr "le répertoire administratif « %s » existe déjà dans « %s »\n"
+msgstr "le dossier administratif « %s » existe déjà dans « %s »\n"
 
 #: ../app_state.cc:165 ../app_state.cc:180
 #, c-format
@@ -273,7 +273,7 @@ msgstr "le racine de l'éspace de travail « %s » n'existe pas"
 #: ../app_state.cc:364
 #, c-format
 msgid "search root '%s' is not a directory\n"
-msgstr "le racine de l'éspace de travail « %s » n'est pas un répertoire\n"
+msgstr "le racine de l'éspace de travail « %s » n'est pas un dossier\n"
 
 #: ../app_state.cc:399
 #, c-format
@@ -1476,12 +1476,12 @@ msgstr ""
 
 #: ../commands.cc:3880
 msgid "[DIRECTORY]"
-msgstr "[RÉPERTOIRE]\n"
+msgstr "[DOSSIER]\n"
 
 #: ../commands.cc:3880
 #, fuzzy
 msgid "setup a new workspace directory, default to current"
-msgstr "préparer un répertoire pour une nouvelle copie de travail, employer le répertoire actuel comme défaut"
+msgstr "préparer un dossier pour une nouvelle copie de travail, employer le dossier actuel comme défaut"
 
 #: ../commands.cc:3886
 #, c-format
@@ -1907,11 +1907,10 @@ msgid ""
 "please see README.changesets for details"
 msgstr ""
 
-# **** Richard stopped here ****
 #: ../database.cc:217
-#, fuzzy, c-format
+#, c-format
 msgid "unable to probe database version in file %s"
-msgstr "La lecture du fichier d'options « %s » a échouée"
+msgstr "le sondage de la version de la base de données dans « %s » a échouée"
 
 #: ../database.cc:224
 #, c-format
@@ -1930,7 +1929,7 @@ msgstr ""
 
 #. kind of string surgery to avoid ~duplicate strings
 #: ../database.cc:257
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "sqlite error: %d: %s\n"
 "%s"
@@ -1978,24 +1977,24 @@ msgid ""
 "  certs           : %u\n"
 "  total           : %u\n"
 msgstr ""
-"version du schéma      : %s\n"
+"version du schéma    : %s\n"
 "comptes:\n"
-"  manifestes complets  : %u\n"
-"  deltas de manifestes : %u\n"
-"  fichiers complets    : %u\n"
-"  deltas de fichiers   : %u\n"
-"  révisions            : %u\n"
-"  ancestry edges       : %u\n"
-"  certificats          : %u\n"
+"  listes complètes   : %u\n"
+"  deltas de listes   : %u\n"
+"  fichiers complets  : %u\n"
+"  deltas de fichiers : %u\n"
+"  révisions          : %u\n"
+"  ancestry edges     : %u\n"
+"  certificats        : %u\n"
 "octets:\n"
-"  manifestes complets  : %u\n"
-"  deltas de manifestes : %u\n"
-"  fichiers complets    : %u\n"
-"  deltas de fichiers   : %u\n"
-"  révisions            : %u\n"
-"  cached ancestry      : %u\n"
-"  certificats          : %u\n"
-"  total                : %u\n"
+"  listes complètes   : %u\n"
+"  deltas de listes   : %u\n"
+"  fichiers complets  : %u\n"
+"  deltas de fichiers : %u\n"
+"  révisions          : %u\n"
+"  cached ancestry    : %u\n"
+"  certificats        : %u\n"
+"  total              : %u\n"
 
 #: ../database.cc:566
 #, c-format
@@ -2023,9 +2022,9 @@ msgid "wanted %d rows got %s in query: %s\n"
 msgstr ""
 
 #: ../database.cc:1776
-#, fuzzy, c-format
+#, c-format
 msgid "another key with name '%s' already exists"
-msgstr "la clef « %s » existe déjà"
+msgstr "une autre clef nommée « %s » existe déjà"
 
 #: ../database.cc:2809
 #, c-format
@@ -2048,19 +2047,19 @@ msgid "could not open database '%s': %s"
 msgstr "impossible d'ouvrir la base de données « %s » : %s"
 
 #: ../diff_patch.cc:588
-#, fuzzy, c-format
+#, c-format
 msgid "file '%s' does not exist in workspace"
-msgstr "le fichier « %s » n'existe pas dans la copie de travail"
+msgstr "le fichier « %s » n'existe pas dans l'éspace de travail"
 
 #: ../diff_patch.cc:589
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' in workspace is a directory, not a file"
-msgstr "%s est un dossier, pas une base de données"
+msgstr "« %s » est un dossier, pas un fichier"
 
 #: ../diff_patch.cc:593
-#, fuzzy, c-format
+#, c-format
 msgid "file %s in workspace has id %s, wanted %s"
-msgstr "création d'une copie de travail dans %s\n"
+msgstr "le fichier « %s » dans l'éspace de travail a l'identité %s, je voulais %s"
 
 #: ../diff_patch.cc:714
 #, c-format
@@ -2078,9 +2077,9 @@ msgstr ""
 "[fusionné] %s\n"
 
 #: ../file_io.cc:116
-#, fuzzy, c-format
+#, c-format
 msgid "expected file '%s', but it is a directory."
-msgstr "le fichier %s ne peut être lu; c'est un dossier"
+msgstr "le fichier « %s » ne peut être lu; c'est un dossier"
 
 #: ../file_io.cc:186 ../file_io.cc:193
 #, c-format
@@ -2106,17 +2105,17 @@ msgid "could not create directory '%s'"
 msgstr "impossible de créer le dossier « %s »"
 
 #: ../file_io.cc:205
-#, fuzzy, c-format
+#, c-format
 msgid "failed to create directory '%s' for '%s'"
-msgstr "impossible de créer le dossier : %s : %s\n"
+msgstr "impossible de créer le dossier « %s » pour « %s »\n"
 
 #: ../file_io.cc:219
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "could not remove '%s'\n"
 "%s"
 msgstr ""
-"impossible de créer le dossier « %s »\n"
+"impossible de supprimer « %s »\n"
 "%s"
 
 #: ../file_io.cc:229
@@ -2125,64 +2124,64 @@ msgid "file to delete '%s' does not exist"
 msgstr "le fichier à supprimer « %s » n'existe pas"
 
 #: ../file_io.cc:230
-#, fuzzy, c-format
+#, c-format
 msgid "file to delete, '%s', is not a file but a directory"
-msgstr "le fichier à supprimer « %s » n'existe pas"
+msgstr "le fichier à supprimer « %s » n'est pas un fichier, c'est un dossier"
 
 #: ../file_io.cc:238
-#, fuzzy, c-format
+#, c-format
 msgid "directory to delete '%s' does not exist"
 msgstr "le dossier à supprimer « %s » n'existe pas"
 
 #: ../file_io.cc:239
-#, fuzzy, c-format
+#, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
-msgstr "le dossier à supprimer « %s » n'existe pas"
+msgstr "le dossier à supprimer « %s » n'est pas un dossier, c'est un fichier"
 
 #: ../file_io.cc:246
-#, fuzzy, c-format
+#, c-format
 msgid "object to delete, '%s', does not exist"
-msgstr "le dossier à supprimer « %s » n'existe pas"
+msgstr "l'objet à supprimer « %s » n'existe pas"
 
 #: ../file_io.cc:254
-#, fuzzy, c-format
+#, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr "le dossier à supprimer « %s » n'existe pas"
 
 #: ../file_io.cc:255
-#, fuzzy, c-format
+#, c-format
 msgid "directory to delete, '%s', is a file"
-msgstr "le dossier à supprimer « %s » n'existe pas"
+msgstr "le dossier à supprimer « %s » est un fichier"
 
 #: ../file_io.cc:264
-#, fuzzy, c-format
+#, c-format
 msgid "rename source file '%s' does not exist"
-msgstr "le chemin %s n'existe pas"
+msgstr "le chemin à renommer « %s » n'existe pas"
 
 #: ../file_io.cc:265
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
-msgstr ""
+msgstr "le fichier à renommer « %s » est un dossier -- cerait-ce un bogue dans monotone?"
 
 #: ../file_io.cc:268 ../file_io.cc:281
-#, fuzzy, c-format
+#, c-format
 msgid "rename target '%s' already exists"
-msgstr "le fichier pid « %s » existe déjà"
+msgstr "le nouveau nom « %s » existe déjà"
 
 #: ../file_io.cc:277
-#, fuzzy, c-format
+#, c-format
 msgid "rename source dir '%s' does not exist"
-msgstr "le chemin %s n'existe pas"
+msgstr "le dossier à renommer « %s » n'existe pas"
 
 #: ../file_io.cc:278
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
-msgstr ""
+msgstr "le dossier à renommer « %s » est un fichier -- cerait-ce un bogue dans monotone?"
 
 #: ../file_io.cc:292
-#, fuzzy, c-format
+#, c-format
 msgid "rename source path '%s' does not exist"
-msgstr "le chemin %s n'existe pas"
+msgstr "le chemin à renommer « %s » n'existe pas"
 
 #: ../file_io.cc:307
 #, c-format
@@ -2207,7 +2206,7 @@ msgstr "Impossible de lire l'entrée standard plusieurs fois"
 #: ../file_io.cc:412
 #, fuzzy, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
-msgstr "le fichier %s ne peut être lu; c'est un dossier"
+msgstr "le fichier %s ne peut être re-écrit avec des données; c'est un dossier"
 
 #: ../file_io.cc:420
 #, c-format
@@ -2222,7 +2221,7 @@ msgstr ""
 #: ../file_io.cc:569
 #, c-format
 msgid "no such file or directory: '%s'"
-msgstr "aucun fichier ou répertoire de ce type : « %s »"
+msgstr "aucun fichier ou dossier de ce type : « %s »"
 
 #: ../keys.cc:77
 #, c-format
@@ -2240,9 +2239,9 @@ msgid "confirm passphrase for key ID [%s]: "
 msgstr "confirmez la phrase de passe pour la clef d'ID [%s] :"
 
 #: ../keys.cc:105
-#, fuzzy, c-format
+#, c-format
 msgid "empty passphrases not allowed, try again\n"
-msgstr "la phrase de passe ne doit pas être vide"
+msgstr "la phrase de passe ne doit pas être vide, essayez de nouveau\n"
 
 #: ../keys.cc:106 ../keys.cc:113
 #, c-format
@@ -2280,7 +2279,7 @@ msgid "'%s' is not a directory"
 msgstr "« %s » n'est pas un dossier"
 
 #: ../lua.cc:606 ../lua.cc:908
-#, fuzzy, c-format
+#, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "erreur lua lors du chargement de « %s »"
 
@@ -2328,7 +2327,7 @@ msgstr ""
 #: ../monotone.cc:53
 #, fuzzy
 msgid "set commit changelog message"
-msgstr "message du journal vide"
+msgstr "établissez le message du journal"
 
 #: ../monotone.cc:54
 msgid "set filename containing commit changelog message"
@@ -2349,12 +2348,12 @@ msgstr ""
 #: ../monotone.cc:58
 #, fuzzy
 msgid "limit log output to the last number of entries"
-msgstr "limiter l'affichage du journal au nombre d'entrées spécifié"
+msgstr "limiter l'affichage du journal au dernier nombre d'entrées spécifié"
 
 #: ../monotone.cc:59
 #, fuzzy
 msgid "limit log output to the next number of entries"
-msgstr "limiter l'affichage du journal au nombre d'entrées spécifié"
+msgstr "limiter l'affichage du journal au prochain nombre d'entrées spécifié"
 
 #: ../monotone.cc:60
 msgid "record process id of server"
@@ -2502,9 +2501,9 @@ msgid "set location of configuration directory"
 msgstr "paramétrer l'emplacement du dossier de configuration"
 
 #: ../monotone.cc:207
-#, fuzzy, c-format
+#, c-format
 msgid "problem parsing arguments from file %s: %s"
-msgstr "erreur lors de l'analyse du manifeste %s : %s"
+msgstr "erreur lors de l'analyse d'arguments venant du fichier %s : %s"
 
 #: ../monotone.cc:216
 #, c-format
@@ -2584,9 +2583,9 @@ msgstr ""
 "ceci suggère que les données ont été corrompues pendant le transit\n"
 
 #: ../netcmd.cc:257 ../netcmd.cc:303
-#, fuzzy, c-format
+#, c-format
 msgid "unknown role specifier %d"
-msgstr "aucune base de données n'a été spécifiée"
+msgstr "rôle donné %d est inconnu"
 
 #: ../netio.hh:38 ../netio.hh:56
 #, c-format
@@ -2612,8 +2611,7 @@ msgstr ""
 #: ../netio.hh:330
 #, fuzzy, c-format
 msgid "expected %s to end at %d, have %d bytes"
-msgstr ""
-"%d octets sont nécessaire pour décoder %s à %d, seulement %d sont disponibles"
+msgstr "je m'attendai à ce que %s finisse à %d, et j'ai %d octets"
 
 #: ../netsync.cc:245
 #, c-format
@@ -2656,9 +2654,9 @@ msgid "underflow on count of %s items to receive"
 msgstr ""
 
 #: ../netsync.cc:1160
-#, fuzzy, c-format
+#, c-format
 msgid "received network error: %s"
-msgstr "erreur réseau : %s"
+msgstr "erreur de réception réseau : %s"
 
 #: ../netsync.cc:1192
 #, c-format
@@ -2700,9 +2698,9 @@ msgstr ""
 "re-vérifier l'empreinte de leur clef : %s\n"
 
 #: ../netsync.cc:1214
-#, fuzzy, c-format
+#, c-format
 msgid "saving public key for %s to database\n"
-msgstr "suppression de la clef publique « %s » de la base de données\n"
+msgstr "sauvegarde la clef publique « %s » dans la base de données\n"
 
 #: ../netsync.cc:1302
 #, c-format
@@ -2715,9 +2713,9 @@ msgid "rejected attempt at anonymous connection while running as sink\n"
 msgstr ""
 
 #: ../netsync.cc:1324 ../netsync.cc:1421
-#, fuzzy, c-format
+#, c-format
 msgid "not serving branch '%s'"
-msgstr "inclusion de la branche %s"
+msgstr "la branche « %s » n'est pas servie"
 
 #: ../netsync.cc:1329
 #, c-format
@@ -2725,9 +2723,9 @@ msgid "anonymous access to branch '%s' denied by server"
 msgstr "accès anonyme à la branche « %s » refusé par le serveur"
 
 #: ../netsync.cc:1336
-#, fuzzy, c-format
+#, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'\n"
-msgstr "permission d'écrire accordée à « %s » pour « %s » en excluant « %s »\n"
+msgstr "permission de lecture anonyme accordée pour « %s » en excluant « %s »\n"
 
 #: ../netsync.cc:1368
 #, c-format
@@ -2744,13 +2742,13 @@ msgstr ""
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' while running as pure "
 "sink\n"
-msgstr "permission d'écrire refuser à « %s » pour « %s » en excluant « %s »\n"
+msgstr "permission de lecture refusée à « %s » pour « %s » en excluant « %s » et en étant un puit pure\n"
 
 #: ../netsync.cc:1427
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'\n"
-msgstr "permission d'écrire refuser à « %s » pour « %s » en excluant « %s »\n"
+msgstr "permission de lecture refusée à « %s » pour « %s » en excluant « %s » à cause de la branche « %s »\n"
 
 #: ../netsync.cc:1430
 #, c-format
@@ -2760,21 +2758,21 @@ msgstr "accès à la branche « %s » refusé par le serveur"
 #. If we're source_and_sink_role, continue even with no branches readable
 #. eg. serve --db=empty.db
 #: ../netsync.cc:1440
-#, fuzzy, c-format
+#, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'\n"
-msgstr "permission d'écrire accordée à « %s » pour « %s » en excluant « %s »\n"
+msgstr "permission de lecture accordée à « %s » pour « %s » en excluant « %s »\n"
 
 #: ../netsync.cc:1449
 #, fuzzy, c-format
 msgid ""
 "denied '%s' write permission for '%s' excluding '%s' while running as pure "
 "source\n"
-msgstr "permission d'écrire refuser à « %s » pour « %s » en excluant « %s »\n"
+msgstr "permission d'écrire refusée à « %s » pour « %s » en excluant « %s »\n"
 
 #: ../netsync.cc:1457
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'\n"
-msgstr "permission d'écrire refuser à « %s » pour « %s » en excluant « %s »\n"
+msgstr "permission d'écrire refusée à « %s » pour « %s » en excluant « %s »\n"
 
 #: ../netsync.cc:1463
 #, c-format
@@ -2802,24 +2800,24 @@ msgid "Unexpected 'done' command on non-refined item type\n"
 msgstr ""
 
 #: ../netsync.cc:1711
-#, fuzzy, c-format
+#, c-format
 msgid "epoch with hash '%s' does not exist in our database"
-msgstr "la révision de base %s n'existe pas dans la base de données\n"
+msgstr "l'époque avec la somme de contrôle « %s » n'existe pas dans notre base de données\n"
 
 #: ../netsync.cc:1740
-#, fuzzy, c-format
+#, c-format
 msgid "revision '%s' does not exist in our database"
-msgstr "la révision de base %s n'existe pas dans la base de données\n"
+msgstr "la révision « %s » n'existe pas dans notre base de données\n"
 
 #: ../netsync.cc:1754
-#, fuzzy, c-format
+#, c-format
 msgid "file '%s' does not exist in our database"
-msgstr "le fichier « %s » n'existe pas dans la copie de travail"
+msgstr "le fichier « %s » n'existe pas dans notre base de données"
 
 #: ../netsync.cc:1768
-#, fuzzy, c-format
+#, c-format
 msgid "cert '%s' does not exist in our database"
-msgstr "le certificat « %s » existe déjà dans notre base de données\n"
+msgstr "le certificat « %s » n'existe pas dans notre base de données"
 
 #. It is safe to call 'error' here, because if we get here,
 #. then the current netcmd packet cannot possibly have
@@ -2840,9 +2838,9 @@ msgid "hash check failed for revision cert '%s'"
 msgstr "insertion de la nouvelle révision %s\n"
 
 #: ../netsync.cc:1933
-#, fuzzy, c-format
+#, c-format
 msgid "Received warning from usher: %s"
-msgstr "erreur réseau : %s"
+msgstr "Alerte reçu de usher : %s"
 
 #: ../netsync.cc:2020 ../netsync.cc:2051
 msgid "source and sink"
@@ -2861,6 +2859,7 @@ msgstr "puit"
 msgid "input buffer for peer %s is overfull after netcmd dispatch\n"
 msgstr ""
 
+# **** Richard stopped here ****
 #: ../netsync.cc:2218 ../netsync.cc:2275
 #, fuzzy, c-format
 msgid "protocol error while processing peer %s: '%s'\n"
