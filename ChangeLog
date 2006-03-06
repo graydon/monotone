@@ -1,3 +1,12 @@
+2006-03-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (db set_epoch): N() on the epoch size, so we don't I()
+	on it in database.cc .
+	* netsync.cc (maybe_note_epochs_finished): If we're in source_role,
+	epochs can be finished even if the refiner says we still have some
+	to receive.
+	* refiner.cc (begin_refinement): Add logging.
+
 2006-03-03  Patrick Mauritz <oxygene@studentenbude.ath.cx>
 
 	* commands.cc: remove rdata, certs, fdata and fdelta commands
