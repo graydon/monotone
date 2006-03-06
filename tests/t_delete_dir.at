@@ -33,6 +33,7 @@ REVERT_TO($BASE_R)
 AT_CHECK(rm groundzero/rename-in)
 AT_CHECK(rm groundzero/new-file)
 
+AT_CHECK(MONOTONE drop -e groundzero, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE drop --recursive -e groundzero, [], [ignore], [ignore])
 COMMIT(testbranch)
 DIR_DELETE_R=`BASE_REVISION`

@@ -1,5 +1,10 @@
 2006-03-06  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/t_delete_dir.at: Check that drop on a non-empty dir
+	without --recursive doesn't work.
+
+2006-03-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* app_state.{cc,hh}, options.hh, monotone.cc: Add a --recursive option.
 	* commands.cc (drop): accept --recursive
 	* work.cc (perform_deletions): obey --recursive
