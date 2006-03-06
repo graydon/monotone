@@ -1216,7 +1216,7 @@ static void find_missing (app_state & app,
                           vector<utf8> const & args, path_set & missing);
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
-    N_("drop files from workspace"), OPT_EXECUTE % OPT_MISSING)
+    N_("drop files from workspace"), OPT_EXECUTE % OPT_MISSING % OPT_RECURSIVE)
 {
   if (!app.missing && (args.size() < 1))
     throw usage(name);

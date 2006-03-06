@@ -1,3 +1,12 @@
+2006-03-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.{cc,hh}, options.hh, monotone.cc: Add a --recursive option.
+	* commands.cc (drop): accept --recursive
+	* work.cc (perform_deletions): obey --recursive
+	* tests/t_delete_dir{,_patch}.at, tests/t_subdir_drop.at:
+	use --recursive, remove XFAIL
+	* tests/t_add_intermediate_MT_path.at: reenable recursive drop section
+
 2006-03-05  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* commands.cc (db set_epoch): N() on the epoch size, so we don't I()

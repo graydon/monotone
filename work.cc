@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
+#include <queue>
 
 #include "app_state.hh"
 #include "basic_io.hh"
@@ -206,25 +207,48 @@ perform_deletions(path_set const & paths, app_state & app)
   // where, when processing 'foo', we need to know whether or not it is empty
   // (and thus legal to remove)
 
-  for (path_set::const_reverse_iterator i = paths.rbegin(); i != paths.rend(); ++i)
-    {
-      file_path name(*i);
+  std::deque<split_path> todo;
+  path_set::const_reverse_iterator i = paths.rbegin();
+  todo.push_back(*i);
+  ++i;
 
-      if (!new_roster.has_node(*i))
+  while (todo.size())
+    {
+      split_path &p(todo.front());
+      file_path name(p);
+
+      if (!new_roster.has_node(p))
         P(F("skipping %s, not currently tracked") % name);
       else
         {
-          node_t n = new_roster.get_node(*i);
+          node_t n = new_roster.get_node(p);
           if (is_dir_t(n))
             {
               dir_t d = downcast_to_dir_t(n);
-              N(d->children.empty(),
-                F("cannot remove %s/, it is not empty") % name);
+              if (!d->children.empty())
+                {
+                  N(app.recursive,
+                    F("cannot remove %s/, it is not empty") % name);
+                  for (dir_map::const_iterator j = d->children.begin();
+                       j != d->children.end(); ++j)
+                    {
+                      split_path sp = p;
+                      sp.push_back(j->first);
+                      todo.push_front(sp);
+                    }
+                  continue;
+                }
             }
           P(F("dropping %s from workspace manifest") % name);
-          new_roster.drop_detached_node(new_roster.detach_node(*i));
+          new_roster.drop_detached_node(new_roster.detach_node(p));
           if (app.execute && path_exists(name))
             delete_file_or_dir_shallow(name);
+        }
+      todo.pop_front();
+      if (i != paths.rend())
+        {
+          todo.push_back(*i);
+          ++i;
         }
     }
 
