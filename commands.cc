@@ -2244,8 +2244,12 @@ CMD(db, N_("database"),
   else if (args.size() == 3)
     {
       if (idx(args, 0)() == "set_epoch")
-        app.db.set_epoch(cert_value(idx(args, 1)()),
-                         epoch_data(idx(args,2)()));
+        {
+          epoch_data ed(idx(args,2)());
+          N(ed.inner()().size() == constants::epochlen,
+            F("The epoch must be %s characters") % constants::epochlen);
+          app.db.set_epoch(cert_value(idx(args, 1)()), ed);
+        }
       else
         throw usage(name);
     }
