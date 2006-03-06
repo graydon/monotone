@@ -33,8 +33,10 @@
 #
 # Voir éventuellement pour références les pointeurs suivants :
 #  - WebDAV:	http://www.ics.uci.edu/~ejw/authoring/protocol/rfc2518.fr.html
-#  - CVS:		http://www.delafond.org/traducmanfr/man/man1/cvs.1.html
+#  - CVS:	        http://www.delafond.org/traducmanfr/man/man1/cvs.1.html
 #  - WordReference: http://www.wordreference.com/enfr/
+#  - Le grand dictionnaire terminologique:
+#                 http://www.granddictionnaire.com/
 #
 # NOMS ET GROUPES NOMINAUX
 #
@@ -74,6 +76,7 @@
 # an external definition  une référence externe
 # a directory             un dossier / un répertoire
 # a disapproval           désapprobation
+# disconnection           déconnection
 # a divergence            divergence
 # an edge                 un côté (an edge)
 # an editor               éditeur de texte
@@ -88,6 +91,7 @@
 # a hostname              un nom d'hôte
 # a hook                  une procédure automatique
 # input                   entrée
+# input/output            entrée-sortie (abbr. E/S)
 # an interface            une interface
 # an item                 un élément
 # a key                   une clef
@@ -105,6 +109,7 @@
 # mutex                   exclusivité (mutex)
 # a node                  un noeud
 # note:                   note:
+# OOB data                données hors-bande
 # an option               un choix
 # an output               utdata
 # an overflow             débordement
@@ -116,7 +121,7 @@
 #                         de versionné)
 # a passphrase            une phrase de passe
 # a pattern               un motif / un modèle
-# a peer                  ?
+# a peer                  un pair
 # a pegged revision       révision fixée
 # progress                progrés
 # a query                 une question
@@ -237,7 +242,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-28 23:20+0100\n"
-"PO-Revision-Date: 2006-03-06 05:54+0100\n"
+"PO-Revision-Date: 2006-03-06 14:02+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -2859,11 +2864,10 @@ msgstr "puit"
 msgid "input buffer for peer %s is overfull after netcmd dispatch\n"
 msgstr ""
 
-# **** Richard stopped here ****
 #: ../netsync.cc:2218 ../netsync.cc:2275
-#, fuzzy, c-format
+#, c-format
 msgid "protocol error while processing peer %s: '%s'\n"
-msgstr "erreur lua lors du chargement de « %s »"
+msgstr "erreur de protocole en communiquant avec le pair %s: « %s »\n"
 
 #: ../netsync.cc:2224
 #, c-format
@@ -2874,17 +2878,17 @@ msgstr "erreur : %s\n"
 #: ../netsync.cc:2254
 #, c-format
 msgid "connecting to %s\n"
-msgstr "connexion à %s\n"
+msgstr "connection à %s\n"
 
 #: ../netsync.cc:2290
 #, fuzzy, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting\n"
-msgstr "la lecture du fd %d (pair %s) a échouée, déconnexion\n"
+msgstr "temps mort en attendant E/S du pair %s, déconnection\n"
 
 #: ../netsync.cc:2305
-#, fuzzy, c-format
+#, c-format
 msgid "got OOB data from peer %s, disconnecting\n"
-msgstr "la lecture du fd %d (pair %s) a échouée, déconnexion\n"
+msgstr "reçu des données hors-bande du pair %s, déconnection\n"
 
 #. We failed during processing. This should only happen in
 #. client voice when we have a decode exception, or received an
@@ -2916,9 +2920,9 @@ msgid "protocol error while processing peer %s: '%s', marking as bad\n"
 msgstr ""
 
 #: ../netsync.cc:2409
-#, fuzzy, c-format
+#, c-format
 msgid "accepted new client connection from %s : %s\n"
-msgstr "connexion d'un nouveau client de %s\n"
+msgstr "nouvelle connection d'un client acceptée de %s : %s\n"
 
 #: ../netsync.cc:2443
 #, c-format
@@ -2958,9 +2962,9 @@ msgid "peer %s write failed in confirmed state (success)\n"
 msgstr ""
 
 #: ../netsync.cc:2524
-#, fuzzy, c-format
+#, c-format
 msgid "peer %s processing finished, disconnecting\n"
-msgstr "traitement du fd %d (pair %s) terminé, déconnexion\n"
+msgstr "traitement du pair %s terminé, déconnection\n"
 
 #: ../netsync.cc:2546
 #, c-format
@@ -2968,14 +2972,13 @@ msgid "fd %d (peer %s) has been idle too long, disconnecting\n"
 msgstr "le fd %d (pair %s) est inactif depuis trop longtemps, déconnexion\n"
 
 #: ../netsync.cc:2614
-#, fuzzy, c-format
+#, c-format
 msgid "beginning service on %s : %s\n"
-msgstr "début du service sur %s : %d\n"
+msgstr "début du service sur %s : %s\n"
 
 #: ../netsync.cc:2615
-#, fuzzy
 msgid "<all interfaces>"
-msgstr "interface d'automatisation"
+msgstr "<toutes les interfaces>"
 
 #: ../netsync.cc:2629
 #, c-format
@@ -2983,9 +2986,9 @@ msgid "session limit %d reached, some connections will be refused\n"
 msgstr ""
 
 #: ../netsync.cc:2684
-#, fuzzy, c-format
+#, c-format
 msgid "got OOB from peer %s, disconnecting\n"
-msgstr "la lecture du fd %d (pair %s) a échouée, déconnexion\n"
+msgstr "reçu des données hors-bande du pair %s, déconnection\n"
 
 #: ../netsync.cc:2753
 #, c-format
@@ -3031,9 +3034,9 @@ msgid "file preimage '%s' missing in db"
 msgstr ""
 
 #: ../packet.cc:95
-#, fuzzy, c-format
+#, c-format
 msgid "dropping delta '%s' -> '%s'"
-msgstr "déplacement du dossier %s -> %s\n"
+msgstr "supprime le delta « %s » -> « %s »\n"
 
 #: ../packet.cc:109
 #, c-format
@@ -3041,19 +3044,19 @@ msgid "reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n"
 msgstr ""
 
 #: ../packet.cc:138
-#, fuzzy, c-format
+#, c-format
 msgid "missing prerequisite revision '%s'\n"
-msgstr "erreur réseau : %s"
+msgstr "la révision préalable « %s » manque\n"
 
 #: ../packet.cc:139 ../packet.cc:150 ../packet.cc:166 ../packet.cc:174
-#, fuzzy, c-format
+#, c-format
 msgid "dropping revision '%s'\n"
-msgstr "erreur réseau : %s"
+msgstr "supprime la révision « %s »\n"
 
 #: ../packet.cc:149
-#, fuzzy, c-format
+#, c-format
 msgid "missing prerequisite file '%s'\n"
-msgstr "importation du fichier « %s »\n"
+msgstr "le fichier préalable « %s » manque\n"
 
 #: ../packet.cc:164
 #, c-format
@@ -3066,14 +3069,14 @@ msgid "missing prerequisite file post-delta '%s'\n"
 msgstr ""
 
 #: ../packet.cc:200
-#, fuzzy, c-format
+#, c-format
 msgid "cert revision '%s' does not exist in db\n"
-msgstr "la révision de base %s n'existe pas dans la base de données\n"
+msgstr "la révision de cert « %s » n'existe pas dans la base de données\n"
 
 #: ../packet.cc:202
-#, fuzzy, c-format
+#, c-format
 msgid "dropping cert\n"
-msgstr "%d certificats manquants\n"
+msgstr "élimine le cert\n"
 
 #: ../packet.cc:225
 #, c-format
@@ -3191,9 +3194,9 @@ msgid "Directory for path %s cannot be added, as there is a file in the way\n"
 msgstr ""
 
 #: ../revision.cc:991
-#, fuzzy, c-format
+#, c-format
 msgid "Path %s cannot be added, as there is a directory in the way\n"
-msgstr "le fichier %s ne peut être lu; c'est un dossier"
+msgstr "Le chemin %s ne peut être ajouté, un dossier fait obstacle\n"
 
 #: ../revision.cc:994
 #, c-format
@@ -3213,9 +3216,9 @@ msgid "converting existing revision graph to new roster-style revisions\n"
 msgstr ""
 
 #: ../revision.cc:1427
-#, fuzzy, c-format
+#, c-format
 msgid "rebuilding revision graph from manifest certs\n"
-msgstr "noeud %d = révision %s = manifeste %s\n"
+msgstr "reconstruit le graphe des révisions à partir des certs de manifeste\n"
 
 #: ../revision.cc:1530
 #, c-format
@@ -3327,14 +3330,14 @@ msgstr ""
 "à jour en %s\n"
 
 #: ../schema_migration.cc:842
-#, fuzzy, c-format
+#, c-format
 msgid "public and private keys for %s don't match"
-msgstr "la clef publique ou privée « %s » n'existe pas dans la base de données"
+msgstr "la clef publique ou privée « %s » ne correspondent pas l'une a l'autre"
 
 #: ../schema_migration.cc:845
-#, fuzzy, c-format
+#, c-format
 msgid "moving key '%s' from database to %s"
-msgstr "aucune clef publique « %s » dans la base de données"
+msgstr "déplace la clef « %s » de la base de données à %s"
 
 #: ../std_hooks.lua:28
 msgid "Press enter when the subprocess has completed"
@@ -3346,9 +3349,9 @@ msgid "failed to convert string from %s to %s: '%s'"
 msgstr "impossible de convertir la chaîne de %s en %s : « %s »"
 
 #: ../transforms.cc:624 ../transforms.cc:638
-#, fuzzy, c-format
+#, c-format
 msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
-msgstr "conversion de %d octets d'UTF-8 en IDNA ACE\n"
+msgstr "conversion de %d octets d'UTF-8 en IDNA ACE: %s\n"
 
 #. xgettext: gibibytes (2^30 bytes)
 #: ../ui.cc:108
@@ -3443,19 +3446,19 @@ msgid "Invalid hmac length of %d bytes"
 msgstr "Longueur hmac invalide de %d octets"
 
 #: ../work.cc:117
-#, fuzzy, c-format
+#, c-format
 msgid "skipping ignorable file %s"
-msgstr "omission du fichier %s qui peut ignoré\n"
+msgstr "omission du fichier %s qui peut être ignoré\n"
 
 #: ../work.cc:126
-#, fuzzy, c-format
+#, c-format
 msgid "skipping %s, already accounted for in workspace"
-msgstr "omission de %s qui existe déjà dans la copie de travail\n"
+msgstr "omission de %s qui existe déjà dans l'éspace de travail"
 
 #: ../work.cc:130
-#, fuzzy, c-format
+#, c-format
 msgid "adding %s to workspace manifest"
-msgstr "ajouter des fichiers à la copie de travail"
+msgstr "ajouter %s au manifeste de l'éspace de travail"
 
 #: ../work.cc:203
 #, c-format
@@ -3468,10 +3471,11 @@ msgid "cannot remove %s/, it is not empty"
 msgstr "impossible de supprimer %s/, il n'est pas vide"
 
 #: ../work.cc:213
-#, fuzzy, c-format
+#, c-format
 msgid "dropping %s from workspace manifest"
-msgstr "supprimer des fichiers de la copie de travail"
+msgstr "supprimer %s du manifeste de l'éspace de travail"
 
+# **** Richard stopped here ****
 #: ../work.cc:270
 #, fuzzy, c-format
 msgid "destination dir %s/ does not exist in current revision"
