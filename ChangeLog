@@ -1,3 +1,11 @@
+2006-03-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_push_with_upstream_epochs.at: Test that we don't hang on a
+	one-way transfer where the sink has extra epochs.
+	* testsuite.at: call it
+	* tests/t_epoch.at: When we're setting epochs by hand, also try one
+	with an invalid length. It should N(), not I().
+
 2006-03-06  Graydon Hoare  <graydon@pobox.com>
 
 	* lru_cache.hh (LRUCache::insert): Fix memory leak.
