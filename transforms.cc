@@ -80,21 +80,38 @@ template string xform<Botan::Gzip_Decompression>(string const &);
 
 // for use in hexenc encoding
 
+static inline void
+encode_hexenc_inner(string::const_iterator i,
+                    string::const_iterator end,
+                    char *out)
+{
+  static char const *tab = "0123456789abcdef";
+  for (; i != end; ++i)
+    {
+      *out++ = tab[(*i >> 4) & 0xf];
+      *out++ = tab[*i & 0xf];
+    }
+}
+                                  
+
 string encode_hexenc(string const & in)
 {
-  boost::scoped_array<char> buf(new char[in.size() * 2]);
-  static char const *tab = "0123456789abcdef";
-  char *c = buf.get();
-  for (string::const_iterator i = in.begin();
-       i != in.end(); ++i)
+  if (LIKELY(in.size() == constants::idlen / 2))
     {
-      *c++ = tab[(*i >> 4) & 0xf];
-      *c++ = tab[*i & 0xf];
+      char buf[constants::idlen];
+      encode_hexenc_inner(in.begin(), in.end(), buf);
+      return string(buf, constants::idlen);
     }
-  return string(buf.get(), in.size() *2);
+  else
+    {
+      boost::scoped_array<char> buf(new char[in.size() * 2]);
+      encode_hexenc_inner(in.begin(), in.end(), buf.get());
+      return string(buf.get(), in.size() *2);
+    }
 }
 
-static inline char decode_hex_char(char c)
+static inline char 
+decode_hex_char(char c)
 {
   if (c >= '0' && c <= '9')
     return c - '0';
@@ -103,20 +120,36 @@ static inline char decode_hex_char(char c)
   I(false);
 }
 
-string decode_hexenc(string const & in)
+static inline void
+decode_hexenc_inner(string::const_iterator i,
+                    string::const_iterator end,
+                    char *out)
 {
-  I(in.size() % 2 == 0);
-  boost::scoped_array<char> buf(new char[in.size() / 2]);
-  char *c = buf.get();
-  for (string::const_iterator i = in.begin();
-       i != in.end(); ++i)
+  for (; i != end; ++i)
     {
       char t = decode_hex_char(*i++);
       t <<= 4;
       t |= decode_hex_char(*i);
-      *c++ = t;
+      *out++ = t;
     }
-  return string(buf.get(), in.size() / 2);        
+}
+
+string decode_hexenc(string const & in)
+{
+  
+  I(in.size() % 2 == 0);
+  if (LIKELY(in.size() == constants::idlen))
+    {
+      char buf[constants::idlen / 2];
+      decode_hexenc_inner(in.begin(), in.end(), buf);
+      return string(buf, constants::idlen / 2);
+    }
+  else 
+    {
+      boost::scoped_array<char> buf(new char[in.size() / 2]);
+      decode_hexenc_inner(in.begin(), in.end(), buf.get());
+      return string(buf.get(), in.size() / 2);
+    }
 }
 
 struct 
@@ -212,7 +245,7 @@ void
 calculate_ident(data const & dat,
                 hexenc<id> & ident)
 {
-  Botan::Pipe p(new Botan::Hash_Filter("SHA-1"));
+  Botan::Pipe p(new Botan::Hash_Filter("SHA-160"));
   p.process_msg(dat());
 
   id ident_decoded(p.read_all_as_string());
@@ -299,7 +332,7 @@ calculate_ident(file_path const & file,
       // no conversions necessary, use streaming form
       // Best to be safe and check it isn't a dir.
       assert_path_is_file(file);
-      Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
+      Botan::Pipe p(new Botan::Hash_Filter("SHA-160"), new Botan::Hex_Encoder());
       Botan::DataSource_Stream infile(file.as_external(), true);
       p.process_msg(infile);
 

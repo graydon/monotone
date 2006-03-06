@@ -50,6 +50,8 @@ MOST_SOURCES =								\
          merge.cc merge.hh                                              \
          legacy.cc legacy.hh                                            \
                                                                         \
+         lru_cache.h                                                    \
+                                                                        \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
 	 netio.hh smap.hh gettext.h					\

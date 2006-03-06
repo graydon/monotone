@@ -34,7 +34,8 @@ void basic_io::tokenizer::err(std::string const & s)
   in.err(s);
 }
 
-std::string basic_io::escape(std::string const & s)
+std::string 
+basic_io::escape(std::string const & s)
 {
   std::string escaped;
   escaped.reserve(s.size() + 8);
@@ -64,10 +65,10 @@ basic_io::stanza::stanza() : indent(0)
 void basic_io::stanza::push_hex_pair(std::string const & k, std::string const & v)
 {
   for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(std::isalnum(*i) || *i == '_');
+    I(is_alnum(*i) || *i == '_');
 
   for (std::string::const_iterator i = v.begin(); i != v.end(); ++i)
-    I(std::isxdigit(*i));
+    I(is_xdigit(*i));
   
   entries.push_back(std::make_pair(k, "[" + v + "]"));
   if (k.size() > indent)
@@ -79,10 +80,10 @@ void basic_io::stanza::push_hex_triple(std::string const & k,
 				       std::string const & v)
 {
   for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(std::isalnum(*i) || *i == '_');
+    I(is_alnum(*i) || *i == '_');
 
   for (std::string::const_iterator i = v.begin(); i != v.end(); ++i)
-    I(std::isxdigit(*i));
+    I(is_xdigit(*i));
   
   entries.push_back(std::make_pair(k, escape(n) + " " + "[" + v + "]"));
   if (k.size() > indent)
@@ -92,7 +93,7 @@ void basic_io::stanza::push_hex_triple(std::string const & k,
 void basic_io::stanza::push_str_pair(std::string const & k, std::string const & v)
 {
   for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(std::isalnum(*i) || *i == '_');
+    I(is_alnum(*i) || *i == '_');
 
   entries.push_back(std::make_pair(k, escape(v)));
   if (k.size() > indent)
@@ -108,7 +109,7 @@ void basic_io::stanza::push_str_multi(std::string const & k,
                                       std::vector<std::string> const & v)
 {
   for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(std::isalnum(*i) || *i == '_');
+    I(is_alnum(*i) || *i == '_');
 
   std::string val;
   bool first = true;
@@ -130,7 +131,7 @@ void basic_io::stanza::push_str_triple(std::string const & k,
 				       std::string const & v)
 {
   for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(std::isalnum(*i) || *i == '_');
+    I(is_alnum(*i) || *i == '_');
 
   entries.push_back(std::make_pair(k, escape(n) + " " + escape(v)));
   if (k.size() > indent)
@@ -138,26 +139,27 @@ void basic_io::stanza::push_str_triple(std::string const & k,
 }
 
 
-basic_io::printer::printer(std::ostream & ost) 
-  : empty_output(true), out(ost)
-{}
+std::string basic_io::printer::buf;
+
+basic_io::printer::printer() 
+{
+  buf.clear();
+}
 
 void basic_io::printer::print_stanza(stanza const & st)
 {
-  if (empty_output)
-    empty_output = false;
-  else
-    out.put('\n');
-  
+  if (LIKELY(!buf.empty()))
+    buf += '\n';
+
   for (std::vector<std::pair<std::string, std::string> >::const_iterator i = st.entries.begin();
        i != st.entries.end(); ++i)
     {
       for (size_t k = i->first.size(); k < st.indent; ++k)
-        out.put(' ');
-      out.write(i->first.data(), i->first.size());
-      out.put(' ');
-      out.write(i->second.data(), i->second.size());
-      out.put('\n');
+        buf += ' ';
+      buf.append(i->first);
+      buf += ' ';
+      buf.append(i->second);
+      buf += '\n';
     }
 }
 

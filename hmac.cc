@@ -30,7 +30,7 @@ chained_hmac::process(std::string const & str, size_t pos, size_t n)
 
   I(pos + n <= str.size());
 
-  Botan::Pipe p(new Botan::MAC_Filter("HMAC(SHA-1)", key,
+  Botan::Pipe p(new Botan::MAC_Filter("HMAC(SHA-160)", key,
                                       constants::sha1_digest_length));
   p.start_msg();
   p.write(chain_val);
@@ -52,7 +52,7 @@ chained_hmac::process(string_queue const & str, size_t pos, size_t n)
 
   I(pos + n <= str.size());
 
-  Botan::Pipe p(new Botan::MAC_Filter("HMAC(SHA-1)", key,
+  Botan::Pipe p(new Botan::MAC_Filter("HMAC(SHA-160)", key,
                                       constants::sha1_digest_length));
   p.start_msg();
   p.write(chain_val);

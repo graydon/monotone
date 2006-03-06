@@ -38,6 +38,9 @@
 #include "xdelta.hh"
 #include "epoch.hh"
 
+#undef _REENTRANT
+#include "lru_cache.h"
+
 // defined in schema.sql, converted to header:
 #include "schema.h"
 
@@ -907,63 +910,13 @@ database::put_delta(hexenc<id> const & ident,
 
 // static ticker cache_hits("vcache hits", "h", 1);
 
-struct version_cache
+struct datasz 
 {
-  size_t capacity;
-  size_t use;
-  std::map<hexenc<id>, data> cache;  
-
-  version_cache() : capacity(constants::db_version_cache_sz), use(0) 
-  {
-    srand(time(NULL));
-  }
-
-  void put(hexenc<id> const & ident, data const & dat)
-  {
-    while (!cache.empty() 
-           && use + dat().size() > capacity)
-      {      
-        std::string key = (boost::format("%08.8x%08.8x%08.8x%08.8x%08.8x") 
-                           % rand() % rand() % rand() % rand() % rand()).str();
-        std::map<hexenc<id>, data>::const_iterator i;
-        i = cache.lower_bound(hexenc<id>(key));
-        if (i == cache.end())
-          {
-            // we can't find a random entry, probably there's only one
-            // entry and we missed it. delete first entry instead.
-            i = cache.begin();
-          }
-        I(i != cache.end());
-        I(use >= i->second().size());
-        L(FL("version cache expiring %s\n") % i->first);
-        use -= i->second().size();          
-        cache.erase(i->first);
-      }
-    cache.insert(std::make_pair(ident, dat));
-    use += dat().size();
-  }
-
-  bool exists(hexenc<id> const & ident)
-  {
-    std::map<hexenc<id>, data>::const_iterator i;
-    i = cache.find(ident);
-    return i != cache.end();
-  }
-
-  bool get(hexenc<id> const & ident, data & dat)
-  {
-    std::map<hexenc<id>, data>::const_iterator i;
-    i = cache.find(ident);
-    if (i == cache.end())
-      return false;
-    // ++cache_hits;
-    L(FL("version cache hit on %s\n") % ident);
-    dat = i->second;
-    return true;
-  }
+  unsigned long operator()(data const & t) { return t().size(); }
 };
 
-static version_cache vcache;
+static LRUCache<hexenc<id>, data, datasz> 
+vcache(constants::db_version_cache_sz);
 
 typedef vector< hexenc<id> > version_path;
 
@@ -996,8 +949,7 @@ database::get_version(hexenc<id> const & ident,
                       string const & delta_table)
 {
   I(ident() != "");
-
-  if (vcache.get(ident, dat))
+  if (vcache.fetch(ident, dat))
     {
       return;
     }
@@ -1112,7 +1064,7 @@ database::get_version(hexenc<id> const & ident,
 
       if (vcache.exists(curr))
         {
-          I(vcache.get(curr, begin));
+          I(vcache.fetch(curr, begin));
         }
       else
         {
@@ -1131,7 +1083,7 @@ database::get_version(hexenc<id> const & ident,
             {
               string tmp;
               app->finish(tmp);
-              vcache.put(curr, tmp);
+              vcache.insert(curr, tmp);
             }
 
           L(FL("following delta %s -> %s\n") % curr % nxt);
@@ -1151,7 +1103,7 @@ database::get_version(hexenc<id> const & ident,
       calculate_ident(dat, final);
       I(final == ident);
     }
-  vcache.put(ident, dat);
+  vcache.insert(ident, dat);
 }
 
 
@@ -2619,6 +2571,11 @@ database::get_roster(hexenc<id> const & ros_id,
   get_version(ros_id, dat, data_table, delta_table);
 }
 
+
+static LRUCache<revision_id, 
+                boost::shared_ptr<pair<roster_t, marking_map> > > 
+rcache(constants::db_roster_cache_sz);
+
 void 
 database::get_roster(revision_id const & rev_id, 
                      roster_t & roster,
@@ -2631,12 +2588,23 @@ database::get_roster(revision_id const & rev_id,
       return;
     }
 
+  boost::shared_ptr<pair<roster_t, marking_map> > sp;
+  if (rcache.fetch(rev_id, sp))
+    {
+      roster = sp->first;
+      marks = sp->second;
+      return;
+    }
+
   data dat;
   hexenc<id> ident;
 
   get_roster_id_for_revision(rev_id, ident);
   get_roster(ident, dat);
   read_roster_and_marking(dat, roster, marks);
+  sp = boost::shared_ptr<pair<roster_t, marking_map> >
+    (new pair<roster_t, marking_map>(roster, marks));
+  rcache.insert(rev_id, sp);
 }
 
 
@@ -2649,6 +2617,13 @@ database::put_roster(revision_id const & rev_id,
   data old_data, new_data;
   delta reverse_delta;
   hexenc<id> old_id, new_id;
+
+  if (!rcache.exists(rev_id))
+    {
+      boost::shared_ptr<pair<roster_t, marking_map> > sp
+        (new pair<roster_t, marking_map>(roster, marks));
+      rcache.insert(rev_id, sp);
+    }
 
   write_roster_and_marking(roster, marks, new_data);
   calculate_ident(new_data, new_id);

@@ -2431,10 +2431,9 @@ write_roster_and_marking(roster_t const & ros,
     ros.check_sane_against(mm);
   else
     ros.check_sane(true);
-  std::ostringstream oss;
-  basic_io::printer pr(oss);
+  basic_io::printer pr;
   ros.print_to(pr, mm, print_local_parts);
-  dat = data(oss.str());
+  dat = data(pr.buf);
 }
 
 

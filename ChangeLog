@@ -16,6 +16,76 @@
 	to receive.
 	* refiner.cc (begin_refinement): Add logging.
 
+2006-03-05  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (CMD(tag)): "revision version" seems a bit
+	redundant.
+	* po/sv.po: change the translation accordingly.
+
+2006-03-05  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Hooks): Update merge2 and merge3 hook
+	documentation to reflect current reality.
+
+2006-03-05  Graydon Hoare  <graydon@pobox.com>
+
+	* basic_io.{cc,hh}: Change printer to use static string buf.
+	* {automate,cset,revision,roster,work}.cc: Update to match.
+	* xdelta.cc: Minor optimizations.
+
+2006-03-05  Graydon Hoare  <graydon@pobox.com>
+
+	* lru_cache.h: New file.
+	* AUTHORS: Mention Patrick.
+	* Makefile.am: Include file.
+	* basic_io.cc: Change uses of isxdigit, isalnum.
+	* botan/gzip.h: Reduce gzip to level 1.
+	* constants.cc (db_roster_cache_sz): Set to 7.
+	* database.cc: Use lru cache for vcache; add roster cache.
+	* hmac.cc: Instantiate "SHA-160" not "SHA-1" 
+	(corrects lookup miss in botan's algorithm table).
+	* transforms.cc ({encode,decode}_hexenc): Specialize for idlen.	
+
+2006-03-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* work.cc: Remove single quotes from the new adding, dropping, and
+	renaming messages to make them consistent with the existing update
+	message.
+
+2006-03-04  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_revert_move_to_renamed_dir.at: new test for bug reported
+	by Thomas Keller
+	* testsuite.at: call it
+
+2006-03-05  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few changes.
+
+2006-03-03  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (checkout): Oops, missed a format string
+	argument...
+
+2006-03-03  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (merge3_xxdiff_cmd): Pass --exit-with-merge-status
+	so as to get a meaningful exit code.
+
+2006-03-03  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Make plain update with multiple heads an
+	Error, not a Naughty.
+	(checkout): If a branch has multiple heads, list candidates, give
+	usage hint, and use Error instead of Naughty.
+
+2006-03-03  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.cc (check_for_missing_additions): new function
+	(remap_paths): make static	
+	(get_base_roster_and_working_cset): call check_for_missing_additions
+	* tests/t_restriction_excludes_parent.at: un-XFAIL
+	
 2006-03-03  Patrick Mauritz <oxygene@studentenbude.ath.cx>
 
 	* commands.cc: remove rdata, certs, fdata and fdelta commands

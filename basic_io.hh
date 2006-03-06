@@ -261,9 +261,8 @@ namespace basic_io
   struct 
   printer
   {
-    bool empty_output;
-    std::ostream & out;
-    printer(std::ostream & ost);
+    static std::string buf;
+    printer();
     void print_stanza(stanza const & st);
   };
 
