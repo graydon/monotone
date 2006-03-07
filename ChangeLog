@@ -1,3 +1,9 @@
+2006-03-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* std_hooks.lua (ignore_file): Fixup after introduction of
+	dir_matches() helper.  Visual SourceSafe stores metadata in named
+	files, not named directories.
+
 2006-03-06  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/t_push_with_upstream_epochs.at: Test that we don't hang on a
