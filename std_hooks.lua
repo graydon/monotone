@@ -148,8 +148,7 @@ function ignore_file(name)
    if dir_matches(name, ".bzr") then return true end
    if dir_matches(name, ".hg") then return true end
    -- other VCSes (where metadata is stored in named files):
-   if (string.find(name, "^%.scc$")) then return true end
-   if (string.find(name, "/%.scc$")) then return true end
+   if (string.find(name, "%.scc$")) then return true end
    -- desktop/directory configuration metadata
    if (string.find(name, "^.DS_Store$")) then return true end
    if (string.find(name, "/.DS_Store$")) then return true end
