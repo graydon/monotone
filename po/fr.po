@@ -131,7 +131,7 @@
 # a review                examination
 # a revision              une révision
 # a root                  une racine
-# a roster                une liste
+# a roster                une liste ?
 # a schedule              programmation (mise en attente ? prévu ? en cours ?)
 # a selector              sélecteur
 # a server                un serveur
@@ -163,7 +163,7 @@
 # to authorize            ?
 # to branch               brancher ?
 # to checkout             extraire, rapatrier, récupérer ?
-# to commit               confier
+# to commit               confier ?
 # to connect              connecter
 # to debug                déboguer
 # to delete               supprimer
@@ -188,8 +188,8 @@
 # to mismatch             ne pas correspondre à
 # to note                 noter
 # to obstruct             bloquer
-# to parse                décomposer
-# parsing                 décomposement ?
+# to parse                décomposer / analyser
+# parsing                 décomposement ? / analyse
 # to process              traiter
 # to propagate            propager
 # to pull                 retirer / récupérer
@@ -231,7 +231,7 @@
 # mismatched              mal assorti
 # obstructed              bloqué
 # out-of-date             obsolète
-# parseable               ?
+# parseable               analysable
 # refined                 raffiné
 # required                requis, obligatoire
 # stale                   vieux
@@ -242,7 +242,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-28 23:20+0100\n"
-"PO-Revision-Date: 2006-03-06 14:02+0100\n"
+"PO-Revision-Date: 2006-03-07 15:54+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -458,9 +458,9 @@ msgid "no match for selection '%s'"
 msgstr "aucune correspondance pour la sélection « %s »"
 
 #: ../commands.cc:503
-#, fuzzy, c-format
+#, c-format
 msgid "expanded to '%s'\n"
-msgstr "expansion de la sélection « %s »\n"
+msgstr "expansion à « %s »\n"
 
 #: ../commands.cc:520
 #, c-format
@@ -1148,7 +1148,7 @@ msgstr "aucun changement à confier\n"
 #: ../commands.cc:2406
 #, fuzzy, c-format
 msgid "beginning commit on branch '%s'\n"
-msgstr "début de confiance sur la branche « %s »\n"
+msgstr "commence à confier sur la branche « %s »\n"
 
 #: ../commands.cc:2415
 #, c-format
@@ -1340,7 +1340,7 @@ msgid "branch '%s' is not merged\n"
 msgstr "la branche « %s » n'est pas fusionnée\n"
 
 #: ../commands.cc:3215
-#, fuzzy, c-format
+#, c-format
 msgid "propagating %s -> %s\n"
 msgstr "propage %s -> %s\n"
 
@@ -1484,9 +1484,8 @@ msgid "[DIRECTORY]"
 msgstr "[DOSSIER]\n"
 
 #: ../commands.cc:3880
-#, fuzzy
 msgid "setup a new workspace directory, default to current"
-msgstr "préparer un dossier pour une nouvelle copie de travail, employer le dossier actuel comme défaut"
+msgstr "prépare un dossier pour une nouvelle copie de travail, emploie le dossier actuel comme défaut"
 
 #: ../commands.cc:3886
 #, c-format
@@ -1552,9 +1551,8 @@ msgid "no var with name %s in domain %s"
 msgstr ""
 
 #: ../commands.cc:3967
-#, fuzzy
 msgid "REVID"
-msgstr "RÉVISION"
+msgstr "ID_RÉVISION"
 
 #: ../commands.cc:3968
 msgid "dump the roster associated with the given REVID"
@@ -1663,7 +1661,7 @@ msgstr "liste %s incomplet (%d révisions manquantes)\n"
 #: ../database_check.cc:591
 #, c-format
 msgid "roster %s is not parseable (perhaps with unnormalized paths?)\n"
-msgstr ""
+msgstr "liste %s n'est pas analysable (peut-être y-a-t'il des chemins non normalisé?)\n"
 
 #: ../database_check.cc:598
 #, c-format
@@ -1719,14 +1717,14 @@ msgid "revision %s mismatched children (%d ancestry children; %d parents)\n"
 msgstr ""
 
 #: ../database_check.cc:690
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s has bad history (%s)\n"
 msgstr "la révision %s a une mauvaise histoire (%s)\n"
 
 #: ../database_check.cc:697
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s is not parseable (perhaps with unnormalized paths?)\n"
-msgstr "la révision %s n'est pas décomposable (peut-être a-t'elle des chemins non normalisé?)\n"
+msgstr "la révision %s n'est pas analysable (peut-être a-t'elle des chemins non normalisé?)\n"
 
 #: ../database_check.cc:704
 #, c-format
@@ -1769,22 +1767,22 @@ msgid "%d unreferenced files\n"
 msgstr "%d fichiers non-référencés\n"
 
 #: ../database_check.cc:879
-#, fuzzy, c-format
+#, c-format
 msgid "%d unreferenced rosters\n"
 msgstr "%d listes non-référencés\n"
 
 #: ../database_check.cc:881
-#, fuzzy, c-format
+#, c-format
 msgid "%d incomplete rosters\n"
 msgstr "%d listes incomplets\n"
 
 #: ../database_check.cc:883
 #, c-format
 msgid "%d rosters not parseable (perhaps with invalid paths)\n"
-msgstr ""
+msgstr "%d listes non analysable (peut-être ont-ils des chemins pas valable?)\n"
 
 #: ../database_check.cc:886
-#, fuzzy, c-format
+#, c-format
 msgid "%d rosters not in normalized form\n"
 msgstr "%d listes pas en forme normalisé\n"
 
@@ -1799,12 +1797,12 @@ msgid "%d incomplete revisions\n"
 msgstr "%d revisions incomplètes\n"
 
 #: ../database_check.cc:893
-#, fuzzy, c-format
+#, c-format
 msgid "%d mismatched parents\n"
-msgstr "%d parents non-correspondents\n"
+msgstr "%d parents non correspondents\n"
 
 #: ../database_check.cc:895
-#, fuzzy, c-format
+#, c-format
 msgid "%d mismatched children\n"
 msgstr "%d enfants non correspondents"
 
@@ -1816,7 +1814,7 @@ msgstr "%d révisions avec une mauvaise histoire\n"
 #: ../database_check.cc:899
 #, c-format
 msgid "%d revisions not parseable (perhaps with invalid paths)\n"
-msgstr ""
+msgstr "%d révisions non analysable (peut-être ont-ils des chemins pas valable?)\n"
 
 #: ../database_check.cc:902
 #, c-format
@@ -1844,9 +1842,9 @@ msgid "%d missing certs\n"
 msgstr "%d certificats manquants\n"
 
 #: ../database_check.cc:918
-#, fuzzy, c-format
+#, c-format
 msgid "%d mismatched certs\n"
-msgstr "%d"
+msgstr "%d certs non correspondaets\n"
 
 #: ../database_check.cc:920
 #, c-format
@@ -1961,7 +1959,7 @@ msgid "cannot create %s; it already exists"
 msgstr "impossible de créer %s car ceci existe déjà"
 
 #: ../database.cc:511
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "schema version    : %s\n"
 "counts:\n"
@@ -2209,7 +2207,7 @@ msgid "Cannot read standard input multiple times"
 msgstr "Impossible de lire l'entrée standard plusieurs fois"
 
 #: ../file_io.cc:412
-#, fuzzy, c-format
+#, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "le fichier %s ne peut être re-écrit avec des données; c'est un dossier"
 
@@ -2330,7 +2328,6 @@ msgid "select revision id for operation"
 msgstr ""
 
 #: ../monotone.cc:53
-#, fuzzy
 msgid "set commit changelog message"
 msgstr "établissez le message du journal"
 
@@ -2351,12 +2348,10 @@ msgid "limit the number of levels of directories to descend"
 msgstr ""
 
 #: ../monotone.cc:58
-#, fuzzy
 msgid "limit log output to the last number of entries"
 msgstr "limiter l'affichage du journal au dernier nombre d'entrées spécifié"
 
 #: ../monotone.cc:59
-#, fuzzy
 msgid "limit log output to the next number of entries"
 msgstr "limiter l'affichage du journal au prochain nombre d'entrées spécifié"
 
@@ -2614,7 +2609,7 @@ msgid "decoding variable length string of %d bytes for '%s', maximum is %d"
 msgstr ""
 
 #: ../netio.hh:330
-#, fuzzy, c-format
+#, c-format
 msgid "expected %s to end at %d, have %d bytes"
 msgstr "je m'attendai à ce que %s finisse à %d, et j'ai %d octets"
 
@@ -2743,7 +2738,7 @@ msgid "remote public key hash '%s' is unknown\n"
 msgstr ""
 
 #: ../netsync.cc:1407
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' while running as pure "
 "sink\n"
@@ -2768,11 +2763,11 @@ msgid "allowed '%s' read permission for '%s' excluding '%s'\n"
 msgstr "permission de lecture accordée à « %s » pour « %s » en excluant « %s »\n"
 
 #: ../netsync.cc:1449
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "denied '%s' write permission for '%s' excluding '%s' while running as pure "
 "source\n"
-msgstr "permission d'écrire refusée à « %s » pour « %s » en excluant « %s »\n"
+msgstr "permission d'écrire refusée à « %s » pour « %s » en excluant « %s » en étant un source pure\n"
 
 #: ../netsync.cc:1457
 #, c-format
@@ -2838,9 +2833,9 @@ msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
 msgstr ""
 
 #: ../netsync.cc:1858
-#, fuzzy, c-format
+#, c-format
 msgid "hash check failed for revision cert '%s'"
-msgstr "insertion de la nouvelle révision %s\n"
+msgstr "contrôle de la somme de contrôle échoué pour le cert de révision « %s »"
 
 #: ../netsync.cc:1933
 #, c-format
@@ -2881,7 +2876,7 @@ msgid "connecting to %s\n"
 msgstr "connection à %s\n"
 
 #: ../netsync.cc:2290
-#, fuzzy, c-format
+#, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting\n"
 msgstr "temps mort en attendant E/S du pair %s, déconnection\n"
 
@@ -3477,44 +3472,44 @@ msgstr "supprimer %s du manifeste de l'éspace de travail"
 
 # **** Richard stopped here ****
 #: ../work.cc:270
-#, fuzzy, c-format
+#, c-format
 msgid "destination dir %s/ does not exist in current revision"
-msgstr "%s n'existe pas dans la révision actuelle\n"
+msgstr "le dossier de destination %s/ n'existe pas dans la révision actuelle"
 
 #: ../work.cc:273
-#, fuzzy, c-format
+#, c-format
 msgid "destination %s is an existing file in current revision"
-msgstr "%s n'existe pas dans la révision actuelle\n"
+msgstr "la destination %s est un fichier qui existe dans la révision actuelle"
 
 #: ../work.cc:283
-#, fuzzy, c-format
+#, c-format
 msgid "empty path %s is not allowed"
-msgstr "la phrase de passe ne doit pas être vide"
+msgstr "le chemin vide %s n'est pas permit"
 
 #: ../work.cc:297
-#, fuzzy, c-format
+#, c-format
 msgid "%s does not exist in current revision"
-msgstr "%s n'existe pas dans la révision actuelle\n"
+msgstr "%s n'existe pas dans la révision actuelle"
 
 #: ../work.cc:300
-#, fuzzy, c-format
+#, c-format
 msgid "destination %s already exists in current revision"
-msgstr "%s existe déjà dans la révision actuelle\n"
+msgstr "la destination %s existe déjà dans la révision actuelle"
 
 #: ../work.cc:309
-#, fuzzy, c-format
+#, c-format
 msgid "renaming %s to %s in workspace manifest"
-msgstr "création d'une copie de travail dans %s\n"
+msgstr "renomme %s à %s dans le manifeste de l'éspace de travail"
 
 #: ../work.cc:334
-#, fuzzy, c-format
+#, c-format
 msgid "%s doesn't exist in workspace, skipping"
-msgstr "le fichier « %s » n'existe pas dans la copie de travail"
+msgstr "omission de %s qui n'existe pas dans la copie de travail"
 
 #: ../work.cc:338
-#, fuzzy, c-format
+#, c-format
 msgid "destination %s already exists in workspace, skipping"
-msgstr "omission de %s qui existe déjà dans la copie de travail\n"
+msgstr "omission de %s qui existe déjà dans la copie de travail"
 
 #: ../work.cc:365
 #, c-format
@@ -3522,40 +3517,39 @@ msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr ""
 
 #: ../work.cc:367
-#, fuzzy, c-format
+#, c-format
 msgid "proposed new root directory '%s' is not a directory"
-msgstr "la racin"
+msgstr "la nouvelle racine proposé « %s » n'est pas un dossier"
 
 #: ../work.cc:372
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
-msgstr ""
+msgstr "la nouvelle racine proposé « %s » contient le chemin illégal %s"
 
 #: ../work.cc:382
-#, fuzzy, c-format
+#, c-format
 msgid "directory '%s' is not versioned or does not exist"
-msgstr "le dossier « %s » n'existe pas"
+msgstr "le dossier « %s » n'est pas versioné ou n'existe pas"
 
 #: ../work.cc:388
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is in the way"
-msgstr "« %s » n'est pas un dossier"
+msgstr "« %s » fait obstacle"
 
 #: ../work.cc:485
-#, fuzzy, c-format
+#, c-format
 msgid "workspace is corrupt: %s does not exist"
-msgstr "le plan de travail est corrompu : %s n'existe pas"
+msgstr "l'éspace de travail est corrompu : %s n'existe pas"
 
 #: ../work.cc:486
-#, fuzzy, c-format
+#, c-format
 msgid "workspace is corrupt: %s is a directory"
-msgstr "la copie de travail est corrompue : %s est un dossier"
+msgstr "l'éspace de travail est corrompue : %s est un dossier"
 
 #: ../work.cc:496
-#, fuzzy, c-format
+#, c-format
 msgid "Problem with workspace: %s is unreadable"
-msgstr ""
-"ce dossier de travail est un nouveau projet, impossible de mettre à jour"
+msgstr "Problème avec l'éspace de travail: %s n'est pas lisible"
 
 #: ../work.cc:522
 #, c-format
@@ -3563,14 +3557,14 @@ msgid "base revision %s does not exist in database\n"
 msgstr "la révision de base %s n'existe pas dans la base de données\n"
 
 #: ../work.cc:860
-#, fuzzy, c-format
+#, c-format
 msgid "dropping %s"
-msgstr "%d certificats manquants\n"
+msgstr "supprime %s"
 
 #: ../work.cc:871 ../work.cc:882
-#, fuzzy, c-format
+#, c-format
 msgid "path %s already exists"
-msgstr "la clef « %s » existe déjà"
+msgstr "le chemin %s existe déjà"
 
 #: ../work.cc:904 ../work.cc:931
 #, c-format
@@ -3578,9 +3572,9 @@ msgid "adding '%s'"
 msgstr "ajout de « %s »"
 
 #: ../work.cc:920
-#, fuzzy, c-format
+#, c-format
 msgid "path '%s' already exists, cannot create"
-msgstr "la clef « %s » existe déjà"
+msgstr "le chemin « %s » existe déjà, ne peux pas le créer"
 
 #: ../work.cc:927
 #, c-format
