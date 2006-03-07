@@ -1,5 +1,9 @@
 2006-03-07  Richard Levitte  <richard@levitte.org>
 
+	* po/fr.po: Started on the untranslated strings.
+
+2006-03-07  Richard Levitte  <richard@levitte.org>
+
 	* po/fr.po: Done all the fuzzy translations I could.
 
 2006-03-06  Richard Levitte  <richard@levitte.org>

@@ -242,7 +242,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-28 23:20+0100\n"
-"PO-Revision-Date: 2006-03-07 15:54+0100\n"
+"PO-Revision-Date: 2006-03-07 16:45+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -318,27 +318,27 @@ msgstr "erreur dans %s:%d:%d:E : %s"
 #: ../cert.cc:58
 #, c-format
 msgid "ignoring bad signature by '%s' on '%s'\n"
-msgstr ""
+msgstr "ignore mauvaise signature fait par « %s » sur « %s »\n"
 
 #: ../cert.cc:66
 #, c-format
 msgid "ignoring unknown signature by '%s' on '%s'\n"
-msgstr ""
+msgstr "ignore signature inconnue fait par « %s » sur « %s »\n"
 
 #: ../cert.cc:129
 #, c-format
 msgid "trust function disliked %d signers of %s cert on manifest %s\n"
-msgstr ""
+msgstr "function de confiance n'aimait pas %d signataires du cert %s dans le manifeste %s\n"
 
 #: ../cert.cc:182
 #, c-format
 msgid "trust function disliked %d signers of %s cert on revision %s\n"
-msgstr ""
+msgstr "function de confiance n'aimait pas %d signataires du cert %s dans la révision %s\n"
 
 #: ../cert.cc:271
 #, c-format
 msgid "calculated cert hash '%s' does not match '%s'"
-msgstr ""
+msgstr "la somme de contrôle calculée pour le cert, « %s », ne correspond pas à « %s »"
 
 #: ../cert.cc:347 ../keys.cc:532
 #, c-format
@@ -367,18 +367,18 @@ msgstr ""
 #: ../cert.cc:444
 #, c-format
 msgid "no branch found for empty revision, please provide a branch name"
-msgstr ""
+msgstr "aucune branche trouvée pour la révision vide, veuillez donne le nom d'une branche"
 
 #: ../cert.cc:453
 #, c-format
 msgid "no branch certs found for revision %s, please provide a branch name"
-msgstr ""
+msgstr "aucun cert de branche trouvé pour la révision %s, veuillez donne le nom d'une branche"
 
 #: ../cert.cc:457
 #, c-format
 msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
-msgstr ""
+msgstr "multiples certs de branche trouvés pour la révision %s, veuillez donne le nom d'une branche"
 
 #: ../commands.cc:160
 #, c-format
@@ -622,6 +622,8 @@ msgid ""
 "test whether a hypothetical cert would be trusted\n"
 "by current settings"
 msgstr ""
+"test s'il est possible d'avoir confiance en un cert hypothétique\n"
+"avec les paramètres actuels"
 
 #: ../commands.cc:1056
 #, c-format
@@ -632,6 +634,11 @@ msgid ""
 "was signed by: %s\n"
 "it would be: %s\n"
 msgstr ""
+"si un cert sur : %s\n"
+"avec la clef : %s\n"
+"et la valeur : %s\n"
+"était signé par : %s\n"
+"il serait : %s\n"
 
 #: ../commands.cc:1065
 msgid "trusted"
@@ -656,7 +663,7 @@ msgstr "mettre une certificat-étiquette symbolique sur une révision"
 
 #: ../commands.cc:1081
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
-msgstr ""
+msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 
 #: ../commands.cc:1082
 msgid "note the results of running a test on a revision"
@@ -673,7 +680,7 @@ msgstr "approuver une révision particulière"
 #: ../commands.cc:1106
 #, c-format
 msgid "need --branch argument for approval"
-msgstr ""
+msgstr "il faut un argument --branch pour approuver"
 
 #: ../commands.cc:1112
 msgid "disapprove of a particular revision"
@@ -687,7 +694,7 @@ msgstr "la révision %s a %d ensembles de changement, je ne peux pas invertir\n"
 #: ../commands.cc:1129
 #, c-format
 msgid "need --branch argument for disapproval"
-msgstr ""
+msgstr "il faut un argument --branch pour désapprouver"
 
 #: ../commands.cc:1162
 msgid "REVISION [COMMENT]"
@@ -711,7 +718,7 @@ msgstr "commentaire vide"
 #: ../commands.cc:1267 ../commands.cc:2255 ../commands.cc:2373
 #: ../commands.cc:2907 ../commands.cc:3419
 msgid "workspace"
-msgstr ""
+msgstr "éspace de travail"
 
 #: ../commands.cc:1189 ../commands.cc:1217 ../commands.cc:1333
 #: ../commands.cc:2373 ../commands.cc:2754 ../commands.cc:3419
@@ -731,6 +738,8 @@ msgid ""
 "SRC DEST\n"
 "SRC1 [SRC2 [...]] DEST_DIR"
 msgstr ""
+"SOURCE DESTINATION\n"
+"SOURCE1 [SOURCE2 [...]] DOSSIER_DESTINATION"
 
 #: ../commands.cc:1245
 msgid "rename entries in the workspace"
@@ -738,7 +747,7 @@ msgstr "renommer des entrées dans l'éspace de travail"
 
 #: ../commands.cc:1267
 msgid "NEW_ROOT PUT_OLD"
-msgstr ""
+msgstr "RACINE_NOUVELLE PLACE_ANCIENNE"
 
 #: ../commands.cc:1268
 msgid ""
@@ -748,13 +757,18 @@ msgid ""
 "directory will have name PUT_OLD.\n"
 "Using --execute is strongly recommended."
 msgstr ""
+"change le nom de la racine\n"
+"après cette commande, le dossier actuallement nommé RACINE_NOUVELLE\n"
+"deviendra la racine, et le dossier qui est actuellement la racine\n"
+"deviendra le dossier appelé PLACE_ANCIENNE.\n"
+"Il est fortement recommandé d'employer --execute."
 
 #. fload and fmerge are simple commands for debugging the line
 #. merger.
 #: ../commands.cc:1287 ../commands.cc:1300 ../commands.cc:1380
 #: ../commands.cc:3526 ../commands.cc:3967
 msgid "debug"
-msgstr "debug"
+msgstr "débogue"
 
 #: ../commands.cc:1287
 msgid "load file contents into db"
@@ -766,7 +780,7 @@ msgstr "<parent> <gauche> <droite>"
 
 #: ../commands.cc:1301
 msgid "merge 3 files and output result"
-msgstr ""
+msgstr "fusionne 3 fichiers et affiche le résultat"
 
 #: ../commands.cc:1311
 #, c-format
@@ -844,7 +858,7 @@ msgstr ""
 #: ../commands.cc:1467 ../commands.cc:1486
 #, c-format
 msgid "need --branch argument for branch-based checkout"
-msgstr ""
+msgstr "il faut un argument --branch pour récupérer basé sur une branche"
 
 #: ../commands.cc:1480
 #, c-format
@@ -927,12 +941,15 @@ msgid ""
 "show database objects, or the current workspace manifest, or known,\n"
 "unknown, intentionally ignored, missing, or changed state files"
 msgstr ""
+"montre des objets de base de données, ou le manifeste de l'éspace de\n"
+"travail actuel, ou des fichiers connus, inconnus, intentionnellement\n"
+"ignorés, manquants ou changés"
 
 #: ../commands.cc:1882 ../commands.cc:1906 ../commands.cc:1925
 #: ../commands.cc:1944 ../commands.cc:1962 ../commands.cc:1990
 #: ../commands.cc:2008
 msgid "packet i/o"
-msgstr ""
+msgstr "e/s de paquets"
 
 #: ../commands.cc:1882
 msgid "OLDID NEWID"
@@ -1018,17 +1035,17 @@ msgstr "aucun nom d'hôte fourni"
 #: ../commands.cc:2069
 #, c-format
 msgid "no server given and no default server set"
-msgstr ""
+msgstr "aucun serveur donné et aucun serveur établi comme défaut"
 
 #: ../commands.cc:2087
 #, c-format
 msgid "setting default branch include pattern to '%s'\n"
-msgstr ""
+msgstr "établi le motif de branche à inclure par défaut à « %s »\n"
 
 #: ../commands.cc:2093
 #, c-format
 msgid "setting default branch exclude pattern to '%s'\n"
-msgstr ""
+msgstr "établi le motif de branche à exclure par défaut à « %s »\n"
 
 #: ../commands.cc:2099
 #, c-format
@@ -1038,7 +1055,7 @@ msgstr "aucun motif de branche fourni"
 #: ../commands.cc:2101
 #, c-format
 msgid "no branch pattern given and no default pattern set"
-msgstr ""
+msgstr "aucun motif de branche donné et aucun motif établi comme défaut"
 
 #: ../commands.cc:2117 ../commands.cc:2132 ../commands.cc:2146
 #: ../commands.cc:2161
@@ -1082,7 +1099,7 @@ msgstr ""
 #, c-format
 msgid ""
 "need permission to store persistent passphrase (see hook persist_phrase_ok())"
-msgstr ""
+msgstr "il faut vôtre permission pour garder la phrase de passe de façon persistante (voyez la procédure automatique persiste_phrase_ok())"
 
 #: ../commands.cc:2187
 msgid "database"
@@ -1105,6 +1122,20 @@ msgid ""
 "rosterify\n"
 "set_epoch BRANCH EPOCH\n"
 msgstr ""
+"init\n"
+"info\n"
+"version\n"
+"dump\n"
+"load\n"
+"migrate\n"
+"execute\n"
+"kill_rev_locally ID\n"
+"kill_branch_certs_locally BRANCHE\n"
+"kill_tag_locally ÉTIQUETTE\n"
+"check\n"
+"changesetify\n"
+"rosterify\n"
+"set_epoch BRANCHE ÉPOQUE\n"
 
 #: ../commands.cc:2202
 msgid "manipulate database state"
@@ -1116,10 +1147,13 @@ msgid ""
 "get PATH [ATTR]\n"
 "drop PATH [ATTR]"
 msgstr ""
+"set CHEMIN ATTR VALEUR\n"
+"get CHEMIN [ATTR]\n"
+"drop CHEMIN [ATTR]"
 
 #: ../commands.cc:2256
 msgid "set, get or drop file attributes"
-msgstr ""
+msgstr "établis, obtiens ou supprime des attributs de fichiers"
 
 #: ../commands.cc:2272
 #, c-format
@@ -1170,7 +1204,7 @@ msgstr "message du journal vide; confidence arrêté"
 #: ../commands.cc:2446
 #, c-format
 msgid "log message rejected: %s\n"
-msgstr ""
+msgstr "entrée du journal rejetée: %s\n"
 
 #: ../commands.cc:2454
 #, c-format
@@ -1193,6 +1227,8 @@ msgid ""
 "note: this revision creates divergence\n"
 "note: you may (or may not) wish to run '%s merge'"
 msgstr ""
+"note: cette révision a créé une divergence\n"
+"note: peut-être (ou peut-être pas) voullez-vous exécuter « %s merge »"
 
 #: ../commands.cc:2755
 msgid ""
@@ -1201,6 +1237,11 @@ msgid ""
 "that revision is shown.  If two revisions are given, the diff between\n"
 "them is given.  If no format is specified, unified is used by default."
 msgstr ""
+"affiche la différence actuelle sur la sortie standard.\n"
+"Si une révision est donnée, la différence entre l'éspace de travail et\n"
+"cette révision est affichée.  Si deux révisions sont données, la\n"
+"différence entre eux est affichée.  Si aucun format n'est précisé,\n"
+"le format « unified » est employé par défaut."
 
 #: ../commands.cc:2771
 #, c-format
@@ -1220,6 +1261,7 @@ msgstr "la révision actuelle n'existe pas"
 msgid "no changes"
 msgstr "aucun changement"
 
+# **** Richard stopped here ****
 #: ../commands.cc:2908
 msgid ""
 "update workspace.\n"
@@ -3470,7 +3512,6 @@ msgstr "impossible de supprimer %s/, il n'est pas vide"
 msgid "dropping %s from workspace manifest"
 msgstr "supprimer %s du manifeste de l'éspace de travail"
 
-# **** Richard stopped here ****
 #: ../work.cc:270
 #, c-format
 msgid "destination dir %s/ does not exist in current revision"
