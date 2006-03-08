@@ -2,6 +2,10 @@
 
 	* po/sv.po: Minor updates.
 
+2006-03-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.texi: Spelling fixes.
+
 2006-03-08  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/t_disapprove_branch.at: I'm an idiot.
