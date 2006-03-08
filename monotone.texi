@@ -431,7 +431,7 @@ reference to @i{other revision IDs}. This fact -- that revisions include
 the IDs of other revisions -- causes the set of revisions to join
 together into a historical @i{chain of events}, somewhat like a ``linked
 list''.  Each revision in the chain has a unique ID, which includes
-@i{by reference} all the revisions preceeding it. Even if you undo a
+@i{by reference} all the revisions preceding it. Even if you undo a
 changeset, and return to a previously-visited manifest ID during the
 course of your edits, each revision will incorporate the ID of its
 predecessor, thus forming a new unique ID for each point in history.
@@ -1398,7 +1398,7 @@ patch "src/banana.c"
 
 The output of this command tells Jim that his edits, so far,
 constitute only the addition of some files. In the output we can see
-one pecularity of monotone's changeset format. The pecularity is that
+one peculiarity of monotone's changeset format. The peculiarity is that
 when monotone records a ``new file'', it actually records two separate
 events: the addition of an empty file to the workspace, and a patch
 of that file from empty to its intended contents. 
@@ -1941,8 +1941,8 @@ company's work was perfectly serialized:
 @item Beth synced with Jim
 @end enumerate
 
-The result of this ordering is that Jim's work entirely preceeded
-Abe's work, which entirely preceeded Beth's work. Moreover, each
+The result of this ordering is that Jim's work entirely preceded
+Abe's work, which entirely preceded Beth's work. Moreover, each
 worker was fully informed of the ``up-stream'' worker's actions, and
 produced purely derivative, ``down-stream'' work:
 
@@ -2399,11 +2399,11 @@ While he's first testing the setup, Jim uses
 @code{--bind=localhost:1234}. This causes the monotone process to listen
 only to port 1234 on the loopback interface 127.0.0.1, which is not
 accessible from the network, so Jim doesn't expose an open port to the
-rest of the world until he's satisifed with the permissions
+rest of the world until he's satisfied with the permissions
 configuration.  You can cause monotone to listen on all interfaces on
 port 1234 by leaving out the address part like @code{--bind=:1234}.
 
-When he's satisified the server is set up correctly, Jim does an initial
+When he's satisfied the server is set up correctly, Jim does an initial
 @command{sync} with the new database, filling it with all the revision
 history currently on his laptop. While Jim has been busy setting up the
 server, Abe and Beth have kept working; the server will catch up with
@@ -3179,7 +3179,7 @@ otherattr "bob"
 @end group
 @end smallexample
 
-Each stanze of the @file{.mt-attrs} file assigns attributes to a file in
+Each stanza of the @file{.mt-attrs} file assigns attributes to a file in
 your workspace.  The first line of each stanza is @code{file}
 followed by the quoted name of the file you want to assign attributes
 to.  Each subsequent line is the name of an attribute, followed by a
@@ -3229,7 +3229,7 @@ file types.  For example, gimp for .png files, OpenOffice.org for
 .doc, and so on. 
 Starting with monotone 0.20, the @code{manual_merge} attribute is
 automatically set at add time for all ``binary'' files, i.e. all files
-for wich the @code{binary_file} hook returns true. 
+for which the @code{binary_file} hook returns true. 
 Currently, this means all files with extension gif, jpeg, png, bz2, gz
 and zip, plus files containing at least one of the following
 bytes:
@@ -4353,7 +4353,7 @@ branch:
 @smallexample
 @group
 $ monotone list certs 4a96
-monotone: expandeding partial id '4a96'
+monotone: expanding partial id '4a96'
 monotone: expanded to '4a96a230293456baa9c6e7167cafb3c5b52a8e7f'
 -----------------------------------------------------------------
 Key   : graydon@@pobox.com
@@ -5708,7 +5708,7 @@ signature "ok"
 
 @item Output format:
 
-All stanzas are formatted by basic_io. Stanzas are seperated 
+All stanzas are formatted by basic_io. Stanzas are separated 
 by a blank line. Values will be escaped, '\' to '\\' and 
 '"' to '\"'.
 
@@ -5776,11 +5776,11 @@ if there is more output to come.
 
 <output> is the output of the command. This will never exceed 1024 bytes.
 If a command produces more than 1024 bytes of output, it will be split into
-multiple peices, with all but the last having the <last?> field set to 'm'.
+multiple pieces, with all but the last having the <last?> field set to 'm'.
 
 @item Error conditions:
 
-If a badly formatted command is recieved, prints an error message to
+If a badly formatted command is received, prints an error message to
 standard error and exits with nonzero status. Errors in the commands run
 through this interface do not affect the exit status. Instead, the <err code>
 field in the output is set to 2, and the output of the command becomes
@@ -5864,7 +5864,7 @@ patch "std_hooks.lua"
 
 @item Output format:
 
-All stanzas are formatted by basic_io. Stanzas are seperated 
+All stanzas are formatted by basic_io. Stanzas are separated 
 by a blank line. Values will be escaped, '\' to '\\' and 
 '"' to '\"'.
 
@@ -6128,7 +6128,7 @@ should not perform any security-critical operations.
 
 @item note_netsync_revision_received (@var{new_id}, @var{revision}, @var{certs})
 
-Called by monotone after the revision @var{new_id} is recieved through
+Called by monotone after the revision @var{new_id} is received through
 netsync. @var{revision} is the text of the revision, what would be given
 by "monotone cat revision @var{new_id}". @var{certs} is a lua table
 containing one subtable for each
