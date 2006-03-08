@@ -1,3 +1,11 @@
+2006-03-08  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_disapprove_branch.at, testsuite.at: Add a placeholder
+	test for disapprove's broken branch handling; from code
+	inspection, it is obviously broken.  I don't have time to write a
+	real test right now, though, never mind fix it... but at least we
+	have an XFAIL and a comment...
+
 2006-03-05  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Hooks): Update merge2 and merge3 hook
