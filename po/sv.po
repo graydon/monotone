@@ -119,6 +119,7 @@
 # revision                        revision
 # root                            rot
 # roster / rosters                lista / listor
+# selection                       val
 # selector                        väljare
 # serve                           servera
 # server                          server
@@ -1628,7 +1629,7 @@ msgstr "listan %s är inte normaliserad\n"
 msgid ""
 "revision %s missing (%d revision references; %d cert references; %d parent "
 "references; %d child references; %d roster references)\n"
-msgstr "revisionen %s saknas (%d revisionsreferenser; %d certreferenser; %d föräldrareferenser; %d barnreferenser; %d listareferenser)\n"
+msgstr "revisionen %s saknas (%d revisionsreferenser; %d certreferenser; %d föräldrareferenser; %d barnreferenser; %d listreferenser)\n"
 
 #: database_check.cc:631
 #, c-format
@@ -1643,7 +1644,7 @@ msgstr "revisionen %s ej komplett (%d revisioner saknas)\n"
 #: database_check.cc:645
 #, c-format
 msgid "revision %s incomplete (missing roster link)\n"
-msgstr "revisionen %s ej komplett (listalänkar saknas)\n"
+msgstr "revisionen %s ej komplett (listlänkar saknas)\n"
 
 #: database_check.cc:651
 #, c-format
@@ -1787,7 +1788,7 @@ msgstr "%d revisioner är ej i normaliserad form\n"
 #: database_check.cc:906
 #, c-format
 msgid "%d unreferenced roster links\n"
-msgstr "%d listalänkar utan referenser\n"
+msgstr "%d listlänkar utan referenser\n"
 
 #: database_check.cc:909
 #, c-format
@@ -1964,7 +1965,7 @@ msgstr ""
 "schemaversion         : %s\n"
 "antal:\n"
 "  hela listor         : %u\n"
-"  listadeltan         : %u\n"
+"  listdeltan          : %u\n"
 "  hela filer          : %u\n"
 "  fildeltan           : %u\n"
 "  revisioner          : %u\n"
@@ -1972,7 +1973,7 @@ msgstr ""
 "  cert                : %u\n"
 "byte:\n"
 "  hela listor         : %u\n"
-"  listadeltan         : %u\n"
+"  listdeltan          : %u\n"
 "  hela filer          : %u\n"
 "  fildeltan           : %u\n"
 "  revisioner          : %u\n"
@@ -3182,7 +3183,7 @@ msgstr ""
 #: revision.cc:1373
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions\n"
-msgstr "konverterar existerande revisionsgraf till nya revisioner i lista-stil\n"
+msgstr "konverterar existerande revisionsgraf till nya revisioner i liststil\n"
 
 #: revision.cc:1427
 #, c-format
