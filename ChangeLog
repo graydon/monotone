@@ -1,5 +1,9 @@
 2006-03-08  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/t_disapprove_branch.at: Actually add.
+
+2006-03-08  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_disapprove_branch.at, testsuite.at: Add a placeholder
 	test for disapprove's broken branch handling; from code
 	inspection, it is obviously broken.  I don't have time to write a
