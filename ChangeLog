@@ -1,3 +1,7 @@
+2006-03-08  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Translating more untranslated strings.
+
 2006-03-07  Richard Levitte  <richard@levitte.org>
 
 	* po/fr.po: Started on the untranslated strings.

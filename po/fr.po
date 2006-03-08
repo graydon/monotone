@@ -242,7 +242,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-28 23:20+0100\n"
-"PO-Revision-Date: 2006-03-07 16:45+0100\n"
+"PO-Revision-Date: 2006-03-08 14:41+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -1270,6 +1270,12 @@ msgid ""
 "If a revision is given, update the workspace to that revision.\n"
 "If not, update the workspace to the head of the branch."
 msgstr ""
+"met à jour l'éspace de travail.\n"
+"Cetta commande modifie vôtre éspace de travail, basé sur une révision\n"
+"différent, tout en préservent les changements local non confiés.\n"
+"Si une révision est donnée, met à jour l'éspace de travail basé sur\n"
+"cette révision.  Sinon, met à jour basé sur la révision d'entré de\n"
+"la branche actuelle."
 
 #: ../commands.cc:2946
 #, c-format
@@ -1283,6 +1289,9 @@ msgid ""
 "in fact, it doesn't even match the current revision\n"
 "maybe you want --revision=<rev on other branch>"
 msgstr ""
+"Vôtre demande ne correspond pas à un descendant de la révision\n"
+"actuelle.  Elle ne correspond même pas à la révision actuelle.\n"
+"Peut-être voulez-vous employer --revision=<révision d'une autre branche>?"
 
 #: ../commands.cc:2958
 #, c-format
@@ -1297,7 +1306,7 @@ msgstr "choisissez en un avec « %s update -r<id> »\n"
 #: ../commands.cc:2963
 #, c-format
 msgid "multiple candidates remain after selection"
-msgstr ""
+msgstr "il reste plusieurs candidats possible après la selection"
 
 #: ../commands.cc:2978
 #, c-format
@@ -1358,23 +1367,23 @@ msgstr "[fusionné] %s\n"
 #: ../commands.cc:3154
 #, c-format
 msgid "note: your workspaces have not been updated\n"
-msgstr ""
+msgstr "note: vos éspaces de travail ne sont pas à jour\n"
 
 #: ../commands.cc:3157
 msgid "SOURCE-BRANCH DEST-BRANCH"
-msgstr ""
+msgstr "BRANCHE-SOURCE BRANCHE-DESTINATION"
 
 #: ../commands.cc:3158
 msgid "merge from one branch to another asymmetrically"
-msgstr ""
+msgstr "fusionnez d'une branche à une autre asymétriquement"
 
 #: ../commands.cc:3168
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
-msgstr ""
+msgstr "BRANCHE-SOURCE BRANCHE-DESTINATION DOSSIER"
 
 #: ../commands.cc:3169
 msgid "merge one branch into a subdirectory in another branch"
-msgstr ""
+msgstr "fusionnez une branche dans un sous-dossier d'une autre branche"
 
 #: ../commands.cc:3207 ../commands.cc:3210
 #, c-format
@@ -1394,22 +1403,22 @@ msgstr "[cible] %s\n"
 #: ../commands.cc:3222
 #, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'\n"
-msgstr ""
+msgstr "la branche « %s » est à jour par rapport à la branche « %s »\n"
 
 #: ../commands.cc:3224
 #, c-format
 msgid "no action taken\n"
-msgstr ""
+msgstr "rien n'est fait"
 
 #: ../commands.cc:3228
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'\n"
-msgstr ""
+msgstr "fusion pas nécessaire; met %s dans la branch « %s »\n"
 
 #: ../commands.cc:3264
 #, c-format
 msgid "Path %s not found in destination tree."
-msgstr ""
+msgstr "Chemin %s pas trouvé dans l'arborescence de destination"
 
 #: ../commands.cc:3318
 msgid "refresh the inodeprint cache"
@@ -1417,16 +1426,16 @@ msgstr "rafraîchir le cache d'inodeprint"
 
 #: ../commands.cc:3327
 msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
-msgstr ""
+msgstr "RÉVISION-GAUCHE RÉVISION-DROITE BRANCHE-DESTINATION"
 
 #: ../commands.cc:3328
 msgid "merge two explicitly given revisions, placing result in given branch"
-msgstr ""
+msgstr "fusionne deux révisions données explicitement et met le résultat dans la branche donnée"
 
 #: ../commands.cc:3342
 #, c-format
 msgid "%s and %s are the same revision, aborting"
-msgstr ""
+msgstr "%s et %s sont la même révision, j'abandonne"
 
 #: ../commands.cc:3344 ../commands.cc:3346
 #, c-format
@@ -1435,11 +1444,11 @@ msgstr "%s est déjà un ancêtre de %s"
 
 #: ../commands.cc:3371
 msgid "(revision|file|key) PARTIAL-ID"
-msgstr ""
+msgstr "(revision|file|key) ID-PARTIELLE"
 
 #: ../commands.cc:3372
 msgid "complete partial id"
-msgstr ""
+msgstr "remplis une identité partielle"
 
 #: ../commands.cc:3381
 #, c-format
@@ -1448,12 +1457,12 @@ msgstr "chiffres non-héxadécimaux dans l'id partielle"
 
 #: ../commands.cc:3420
 msgid "revert file(s), dir(s) or entire workspace (\".\")"
-msgstr ""
+msgstr "retourne les fichiers, dossiers ou l'éspace de travail en entier (\".\") à la révision de base"
 
 #: ../commands.cc:3497
 #, c-format
 msgid "reverting %s"
-msgstr ""
+msgstr "retourne %s à la révision de base"
 
 #: ../commands.cc:3501
 #, c-format
@@ -1463,7 +1472,7 @@ msgstr "aucune version de fichier « %s » trouvé dans la base de données %s
 #: ../commands.cc:3514
 #, c-format
 msgid "recreating %s/"
-msgstr ""
+msgstr "re-crée %s/"
 
 #: ../commands.cc:3526
 msgid "RCSFILE..."
@@ -1475,6 +1484,9 @@ msgid ""
 "this command doesn't reconstruct or import revisions.you probably want "
 "cvs_import"
 msgstr ""
+"analyse les versions dans des fichiers RCS\n"
+"cette command ne reconstruit ou n'importe pas des révisions.  Vous voulez\n"
+"probablement cvs_import"
 
 #: ../commands.cc:3543
 msgid "rcs"
