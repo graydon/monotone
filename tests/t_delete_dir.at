@@ -1,29 +1,6 @@
 AT_SETUP([(imp) deleting directories])
 MONOTONE_SETUP
 
-# This test is a bug report
-# TODO: when this is fixed, re-enabled the drop dir part of 
-# t_add_intermediate_MT_path.at
-AT_XFAIL_IF(true)
-
-# Directory deletion is currently completely broken.
-
-# Question: what _should_ happen to rename-out here?  I have it
-# supposed to survive, but I don't think it's actually possible to
-# express that with changesets -- we have no way to say "file
-# revived", and so we have no way to come up with a changeset from
-# $DIR_DELETE_R to the merged revision that preserves rename-out.
-# This might be a problem...
-#
-# I guess that unless we come up with a way to extend the model with
-# file-reviving support (which would be useful in and of itself, aside
-# from its utility in this case, but would be a significant addition),
-# we should declare that <delete_dir foo> implies <delete_file
-# foo/**>.
-
-# After fixing this; t_subdir_drop.at should start passing.
-# So should t_delete_dir_patch.at (hopefully).
-
 AT_CHECK(mkdir groundzero)
 ADD_FILE(groundzero/preexisting, [1
 ])
@@ -46,23 +23,36 @@ AT_CHECK(mv rename-in groundzero/rename-in)
 AT_CHECK(MONOTONE rename rename-in groundzero/rename-in, [], [ignore], [ignore])
 AT_CHECK(mv  groundzero/rename-out rename-out)
 AT_CHECK(MONOTONE rename groundzero/rename-out rename-out, [], [ignore], [ignore])
-AT_CHECK(MONOTONE drop groundzero/double-kill, [], [ignore], [ignore])
+AT_CHECK(MONOTONE drop -e groundzero/double-kill, [], [ignore], [ignore])
 COMMIT(testbranch)
 OTHER_OPS_R=`BASE_REVISION`
 
 REVERT_TO($BASE_R)
 
-# Boom.
-AT_CHECK(MONOTONE drop groundzero, [], [ignore], [ignore])
+# update doesn't remove files...
+AT_CHECK(rm groundzero/rename-in)
+AT_CHECK(rm groundzero/new-file)
+
+AT_CHECK(MONOTONE drop -e groundzero, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE drop --recursive -e groundzero, [], [ignore], [ignore])
 COMMIT(testbranch)
 DIR_DELETE_R=`BASE_REVISION`
 
+
+# orphaned node conflicts on rename-in and new-file
+AT_CHECK(MONOTONE merge, [1], [ignore], [ignore])
+
+AT_CHECK(MONOTONE update -r $OTHER_OPS_R, [], [ignore], [ignore])
+AT_CHECK(MONOTONE drop groundzero/new-file, [], [ignore], [ignore])
+AT_CHECK(MONOTONE drop groundzero/rename-in, [], [ignore], [ignore])
+COMMIT(testbranch)
 AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
+
 
 AT_CHECK(MONOTONE checkout --revision=$BASE_R clean, [], [ignore], [ignore])
 AT_CHECK(cd clean && MONOTONE --branch=testbranch update, [], [ignore], [ignore])
 
-AT_CHECK(test -f clean/rename-out)
+AT_CHECK(test -f clean/rename-out, [1])
 AT_CHECK(test -f clean/bystander1)
 AT_CHECK(test -f clean/bystander2)
 AT_CHECK(test -f clean/groundzero/rename-in, [1])

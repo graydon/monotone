@@ -783,7 +783,8 @@ void
 session::maybe_note_epochs_finished()
 {
   // Maybe there are outstanding epoch requests.
-  if (!epoch_refiner.items_to_receive == 0)
+  // These only matter if we're in sink or source-and-sink mode.
+  if (!(epoch_refiner.items_to_receive == 0) && !(role == source_role))
     return;
 
   // And maybe we haven't even finished the refinement.

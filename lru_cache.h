@@ -179,7 +179,7 @@ template<class Key,class Data,class Sizefn=Countfn<Data> > class LRUCache {
 			_index[ key ] = liter;
 			_curr_size += Sizefn()( data );
 			// Check to see if we need to remove an element due to exceeding max_size
-			if( _curr_size > _max_size ) {
+			while( _curr_size > _max_size ) {
 				// Remove the last element.
 				liter = _list.end();
 				--liter;
