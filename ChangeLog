@@ -1,5 +1,9 @@
 2006-03-08  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/t_disapprove_branch.at: I'm an idiot.
+
+2006-03-08  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_disapprove_branch.at: Actually add.
 
 2006-03-08  Nathaniel Smith  <njs@pobox.com>

@@ -14,6 +14,6 @@ AT_XFAIL_IF(true)
 # From reading the disapprove code; this is obviously broken.  I don't
 # have time to write a real test right now.  So this is a todo to even
 # write the bug report...
-AT_CHECK(true)
+AT_CHECK(false)
 
 AT_CLEANUP
