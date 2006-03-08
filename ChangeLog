@@ -1,5 +1,7 @@
 2006-03-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_sink_has_extra_epochs.at: Fix up subtle syntax error.
+
 	* lru_cache.h: Rename some enums to avoid namespace collisions on
 	Win32.
 
