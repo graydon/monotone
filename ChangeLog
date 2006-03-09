@@ -1,3 +1,8 @@
+2006-03-08  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_revert_file_blocked_by_dir.at: new XFAIL test for revert
+	* testsuite.at: call it
+
 2006-03-04  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_revert_move_to_renamed_dir.at: new test for bug reported by Thomas Keller
