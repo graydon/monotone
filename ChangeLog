@@ -1,5 +1,11 @@
 2006-03-08  Derek Scherger  <derek@echologic.com>
 
+	* work.{cc,hh} (get_current_restricted_roster,
+	get_base_and_current_restricted_roster): comment out
+	suspicious/unused functions
+
+2006-03-08  Derek Scherger  <derek@echologic.com>
+
 	* tests/t_revert_file_blocked_by_dir.at: new XFAIL test for revert
 	* testsuite.at: call it
 
