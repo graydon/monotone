@@ -97,6 +97,7 @@
 # a key                   une clef
 # a keystore              un entrepôt de clefs
 # a label                 un label, une étiquette
+# a layout                une disposition
 # a loader                un chargeur
 # a lock-token            une marque de verrou ? un nom de verrou ?? 
 # a log                   un journal
@@ -216,6 +217,7 @@
 # to underflow            ??
 # to unlock               déverrouiller
 # to update               actualiser, mettre à jour
+# to upgrade		mettre à niveau
 # to usher                guider
 # to violate              enfreindre
 #
@@ -242,7 +244,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-28 23:20+0100\n"
-"PO-Revision-Date: 2006-03-09 16:51+0100\n"
+"PO-Revision-Date: 2006-03-09 17:32+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -1935,7 +1937,7 @@ msgstr "%d mauvaises signatures\n"
 #: ../database_check.cc:948
 #, c-format
 msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs\n"
-msgstr ""
+msgstr "contrôle fini: %d fichiers; %d listes; %d révisions; %d clefs; %d certifs\n"
 
 #: ../database_check.cc:954
 #, c-format
@@ -1965,6 +1967,10 @@ msgid ""
 "try '%s db migrate' to upgrade\n"
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
+"la disposition de la base de données %s ne correspond pas a cette version de monotone\n"
+"voulais le schema %s, trouvais %s\n"
+"essaiyez « %s db migrate » pour mettre la base de données à niveau\n"
+"(cette opération est irréversible; vous voudrez probablement prendre une copie d'abord)"
 
 #: ../database.cc:162
 #, c-format
@@ -1977,6 +1983,13 @@ msgid ""
 "  pull into a fresh database.\n"
 "sorry about the inconvenience."
 msgstr ""
+"la base de données %s contient des révisions mais pas de listes\n"
+"si vous êtes le /leader/ d'un projet ou faites des testes localement/?/:\n"
+"  voyez le fichier UPGRADE pour les instructions de /upgrade/.\n"
+"si vous n'êtes pas le /leader/ d'un projet:\n"
+"  attendez que le /leader/ ait migré les données du projet, et\n"
+"  récupérez de nouveau dans une base de données fraiche.\n"
+"désolé pour l'inconvenience."
 
 #: ../database.cc:181
 #, c-format
