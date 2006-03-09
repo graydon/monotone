@@ -244,7 +244,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-28 23:20+0100\n"
-"PO-Revision-Date: 2006-03-09 19:39+0100\n"
+"PO-Revision-Date: 2006-03-09 19:55+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -1196,7 +1196,7 @@ msgstr ""
 "MT/log n'est pas vide et une entrée de journal a été donné sur la linge\n"
 "de commande\n"
 "veuillez déplacé ou supprimer MT/log,\n"
-"ou supprimer --message/--message-file de la linge de command\n"
+"ou supprimer --message/--message-file de la linge de commande\n"
 
 #: ../commands.cc:2427
 #, fuzzy, c-format
@@ -2518,14 +2518,13 @@ msgstr "tout en créent des listes, élimine les attributs signé par la clef do
 msgid "exclude files when printing logs"
 msgstr "n'affiche pas les fichiers en affichant le journal"
 
-# **** Richard stopped here ****
 #: ../monotone.cc:86
 msgid "print debug log to stderr while running"
-msgstr ""
+msgstr "affiche le journal à déboguer sur la sortie d'erreur standard"
 
 #: ../monotone.cc:87
 msgid "file to dump debugging log to, on failure"
-msgstr ""
+msgstr "ficher dans lequel verser le journal à déboguer, en cas d'erreur"
 
 #: ../monotone.cc:88
 msgid "file to write the log to"
@@ -2533,7 +2532,7 @@ msgstr "fichier où écrire le journal"
 
 #: ../monotone.cc:89
 msgid "suppress log and progress messages"
-msgstr ""
+msgstr "n'affiche pas le journal ou les messages de progrès"
 
 #: ../monotone.cc:90
 msgid "display help message"
@@ -2549,11 +2548,11 @@ msgstr "afficher le numéro de version détaillée, puis quitte"
 
 #: ../monotone.cc:93
 msgid "insert command line arguments taken from the given file"
-msgstr ""
+msgstr "fourre les arguments pris du fichier donné dans la linge de commande"
 
 #: ../monotone.cc:94
 msgid "set ticker style (count|dot|none)"
-msgstr ""
+msgstr "établis le style d'affichage de progrès (count|dot|none)"
 
 #: ../monotone.cc:95
 msgid "do not load standard lua hooks"
@@ -2578,11 +2577,12 @@ msgstr "paramétrer le nom de la base de données"
 
 #: ../monotone.cc:100
 msgid "limit search for workspace to specified root"
-msgstr ""
+msgstr "limite la recherche d'un éspace de travail à la racine donnée"
 
+# **** Richard stopped here ****
 #: ../monotone.cc:101
 msgid "verbose completion output"
-msgstr ""
+msgstr "affiche "
 
 #: ../monotone.cc:102
 msgid "set location of key store"

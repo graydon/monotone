@@ -1,5 +1,9 @@
 2006-03-09  Richard Levitte  <richard@levitte.org>
 
+	* po/fr.po: More translations done.
+
+2006-03-09  Richard Levitte  <richard@levitte.org>
+
 	* po/fr.po: More translations done.  Started using freedict
 	services.
 
