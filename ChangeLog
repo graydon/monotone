@@ -1,3 +1,33 @@
+2006-03-09  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Finished almost all untranslated things.  I'm a
+	bit tired...
+
+2006-03-09  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: More translations done.
+
+2006-03-09  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: More translations done.  Started using freedict
+	services.
+
+2006-03-09  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: More translations done.  Some new standard
+	translations added.
+
+2006-03-09  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: More translations done.  Note that I changed the
+	translation "cert" -> "cert" to "cert" -> "certif" because I
+	found a previous translation of the latter kind and liked it
+	better.
+
+2006-03-08  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Translating more untranslated strings.
+
 2006-03-08  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Traduce 2 new strings.
@@ -23,6 +53,14 @@
 	* std_hooks.lua (ignore_file): Fixup after introduction of
 	dir_matches() helper.  Visual SourceSafe stores metadata in named
 	files, not named directories.
+
+2006-03-07  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Started on the untranslated strings.
+
+2006-03-07  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Done all the fuzzy translations I could.
 
 2006-03-06  Timothy Brownawell  <tbrownaw@gmail.com>
 
@@ -50,6 +88,10 @@
 	use --recursive, remove XFAIL
 	* tests/t_add_intermediate_MT_path.at: reenable recursive drop section
 
+2006-03-06  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: More translations.
+
 2006-03-05  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* commands.cc (db set_epoch): N() on the epoch size, so we don't I()
@@ -58,6 +100,12 @@
 	epochs can be finished even if the refiner says we still have some
 	to receive.
 	* refiner.cc (begin_refinement): Add logging.
+
+2006-03-05  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Add a translation guide, partly borrowed from
+	subversion, work on a translation update, partly done.
+	(this is done with Benoît's blessing)
 
 2006-03-05  Richard Levitte  <richard@levitte.org>
 
