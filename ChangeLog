@@ -1,3 +1,7 @@
+2006-03-08  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.texi: mention merge_into_dir in the pivot_root description.
+
 2006-03-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_sink_has_extra_epochs.at: Er, and also check for branch

@@ -4038,7 +4038,7 @@ to date.
 @item monotone pivot_root [--execute] pivot_root @var{new_root} @var{put_old}
 Most users will never need this command.  It is primarily useful in
 certain tricky cases where one wishes to combine several projects
-into one, or split one project into several.
+into one, or split one project into several. See also @command{merge_into_dir}.
 
 Its effect is to rename the directory whose name is currently
 @var{new_root} to become the root directory of the versioned tree, and
