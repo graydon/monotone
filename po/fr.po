@@ -125,7 +125,7 @@
 # a peer                  un pair
 # a pegged revision       révision fixée
 # progress                progrés
-# a query                 une question
+# a query                 une requête (base de données) / une question
 # a recovery              rétablissement
 # a repository, a repos   un dépôt
 # a request               une demande
@@ -244,7 +244,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-28 23:20+0100\n"
-"PO-Revision-Date: 2006-03-09 17:32+0100\n"
+"PO-Revision-Date: 2006-03-09 19:39+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -1933,7 +1933,6 @@ msgstr "%d signature non contrôlées à cause de clefs manquantes\n"
 msgid "%d bad signatures\n"
 msgstr "%d mauvaises signatures\n"
 
-# **** Richard stopped here ****
 #: ../database_check.cc:948
 #, c-format
 msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs\n"
@@ -1984,10 +1983,10 @@ msgid ""
 "sorry about the inconvenience."
 msgstr ""
 "la base de données %s contient des révisions mais pas de listes\n"
-"si vous êtes le /leader/ d'un projet ou faites des testes localement/?/:\n"
-"  voyez le fichier UPGRADE pour les instructions de /upgrade/.\n"
-"si vous n'êtes pas le /leader/ d'un projet:\n"
-"  attendez que le /leader/ ait migré les données du projet, et\n"
+"si vous êtes le leader d'un projet ou faites des testes localement/?/:\n"
+"  voyez le fichier UPGRADE pour les instructions de mise à niveau.\n"
+"si vous n'êtes pas le leader d'un projet:\n"
+"  attendez que le leader ait migré les données du projet, et\n"
 "  récupérez de nouveau dans une base de données fraiche.\n"
 "désolé pour l'inconvenience."
 
@@ -1998,6 +1997,9 @@ msgid ""
 "this is a very old database; it needs to be upgraded\n"
 "please see README.changesets for details"
 msgstr ""
+"la base de données %s contient des manifestes mais aucune révision\n"
+"ceçi est un base de données tr ancienne; eller a besoin d'être mise à niveau\n"
+"veuillez lire lest détails dans README.changesets"
 
 #: ../database.cc:217
 #, c-format
@@ -2096,22 +2098,22 @@ msgstr "version du schéma de la base de données : %s"
 #: ../database.cc:643
 #, c-format
 msgid "multiple statements in query: %s\n"
-msgstr ""
+msgstr "plusieurs instructions dans la requête: %s\n"
 
 #: ../database.cc:649
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
-msgstr ""
+msgstr "voulais %s colonnes, reçu %d dans la requête: %s\n"
 
 #: ../database.cc:708
 #, c-format
 msgid "null result in query: %s\n"
-msgstr ""
+msgstr "la requête donnait aucun résultat: %s\n"
 
 #: ../database.cc:726
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
-msgstr ""
+msgstr "voulais %s rangs, reçu %d dans la requête: %s\n"
 
 #: ../database.cc:1776
 #, c-format
@@ -2308,7 +2310,7 @@ msgstr "impossible d'ouvrir le fichier %s pour l'écrire"
 #: ../file_io.cc:530
 #, c-format
 msgid "caught runtime error %s constructing file path for %s\n"
-msgstr ""
+msgstr "attrape une erreur %s en cours d'exécution au milieu de la construction du cheming de fichier pour %s"
 
 #: ../file_io.cc:569
 #, c-format
@@ -2338,7 +2340,7 @@ msgstr "la phrase de passe ne doit pas être vide, essayez de nouveau\n"
 #: ../keys.cc:106 ../keys.cc:113
 #, c-format
 msgid "too many failed passphrases\n"
-msgstr ""
+msgstr "trop de phrases de passe incorrectes\n"
 
 #: ../keys.cc:112
 #, c-format
@@ -2378,7 +2380,7 @@ msgstr "erreur lua lors du chargement de « %s »"
 #: ../lua.cc:705
 #, c-format
 msgid "bad input to parse_basic_io"
-msgstr ""
+msgstr "mauvaise entrée à parse_basic_io"
 
 #: ../lua.cc:920
 #, c-format
@@ -2401,20 +2403,20 @@ msgstr "terminé par un signal"
 #: ../merkle_tree.cc:276
 #, c-format
 msgid "node level is %d, exceeds maximum %d"
-msgstr ""
+msgstr "niveau de noeud est %d, ce qui dépasse la limite %d"
 
 #: ../merkle_tree.cc:311
 #, c-format
 msgid "mismatched node hash value %s, expected %s"
-msgstr ""
+msgstr "la somme de contrôle %s ne correspond pas à la valeur attendue %s"
 
 #: ../monotone.cc:51
 msgid "select branch cert for operation"
-msgstr ""
+msgstr "choisi certif de branch pour l'opération"
 
 #: ../monotone.cc:52
 msgid "select revision id for operation"
-msgstr ""
+msgstr "choisi révision pour l'opération"
 
 #: ../monotone.cc:53
 msgid "set commit changelog message"
@@ -2422,19 +2424,19 @@ msgstr "établissez le message du journal"
 
 #: ../monotone.cc:54
 msgid "set filename containing commit changelog message"
-msgstr ""
+msgstr "'etablissez le nom du fichier qui contient l'entrée du journal pour confier"
 
 #: ../monotone.cc:55
 msgid "override date/time for commit"
-msgstr ""
+msgstr "supplante la date/l'heure pour confier"
 
 #: ../monotone.cc:56
 msgid "override author for commit"
-msgstr ""
+msgstr "supplante l'auteur pour confier"
 
 #: ../monotone.cc:57
 msgid "limit the number of levels of directories to descend"
-msgstr ""
+msgstr "limite le niveau de dossier à descendre"
 
 #: ../monotone.cc:58
 msgid "limit log output to the last number of entries"
@@ -2450,23 +2452,23 @@ msgstr "enregistrer l'identifiant du processus serveur"
 
 #: ../monotone.cc:61
 msgid "print a brief version of the normal output"
-msgstr ""
+msgstr "affiche la version courte de l'affichage normale"
 
 #: ../monotone.cc:62
 msgid "print diffs along with logs"
-msgstr ""
+msgstr "affiche la différnce en affichant le journal"
 
 #: ../monotone.cc:63
 msgid "exclude merges when printing logs"
-msgstr ""
+msgstr "exclus les fusions en affichant le journal"
 
 #: ../monotone.cc:64
 msgid "use the current arguments as the future default"
-msgstr ""
+msgstr "emploie les arguments actuels comme défauts futurs"
 
 #: ../monotone.cc:65
 msgid "leave out anything described by its argument"
-msgstr ""
+msgstr "exclus tout ce qui est décrit par l'argument"
 
 #: ../monotone.cc:66
 msgid "use unified diff format"
@@ -2478,11 +2480,11 @@ msgstr "utiliser le format diff contextuel"
 
 #: ../monotone.cc:68
 msgid "use external diff hook for generating diffs"
-msgstr ""
+msgstr "emploie la procédure automatique de « diff » externe pour créer les différences"
 
 #: ../monotone.cc:69
 msgid "argument to pass external diff hook"
-msgstr ""
+msgstr "argument a passer la procédure automatique de « diff » externe"
 
 #: ../monotone.cc:70
 msgid "use least common ancestor as ancestor for merge"
@@ -2490,7 +2492,7 @@ msgstr ""
 
 #: ../monotone.cc:71
 msgid "perform the associated file operation"
-msgstr ""
+msgstr "accomplis les opérations sur les fichiers associés"
 
 #: ../monotone.cc:72
 msgid "address:port to listen on (default :4691)"
@@ -2498,24 +2500,25 @@ msgstr "écouteur sur adresse:port (défaut :4691)"
 
 #: ../monotone.cc:73
 msgid "perform the operations for files missing from workspace"
-msgstr ""
+msgstr "accomplis les opérations sur les fichiers qui manquent dans l'éspace de travail"
 
 #: ../monotone.cc:74
 msgid "perform the operations for unknown files from workspace"
-msgstr ""
+msgstr "accomplis les opérations sur les fichiers inconnus dans l'éspace de travail"
 
 #: ../monotone.cc:75
 msgid "push the specified key even if it hasn't signed anything"
-msgstr ""
+msgstr "envoie la clef donnée même si rien n'est signé avec elle"
 
 #: ../monotone.cc:76
 msgid "when rosterifying, drop attrs entries with the given key"
-msgstr ""
+msgstr "tout en créent des listes, élimine les attributs signé par la clef donnée"
 
 #: ../monotone.cc:77
 msgid "exclude files when printing logs"
-msgstr ""
+msgstr "n'affiche pas les fichiers en affichant le journal"
 
+# **** Richard stopped here ****
 #: ../monotone.cc:86
 msgid "print debug log to stderr while running"
 msgstr ""
