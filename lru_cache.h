@@ -52,8 +52,8 @@ template<class Key,class Data,class Sizefn=Countfn<Data> > class LRUCache {
 
 		/// Deletion strategies for element removal.
 		enum deletion_strategies {
-			IGNORE,						///< Simply set erase the element from the cache and allow it leave scope.
-			DELETE,						///< Delete the Data elements before removal from the cache.
+			LRU_IGNORE,						///< Simply set erase the element from the cache and allow it leave scope.
+			LRU_DELETE,						///< Delete the Data elements before removal from the cache.
 		};
 
 	private:
@@ -80,7 +80,7 @@ template<class Key,class Data,class Sizefn=Countfn<Data> > class LRUCache {
 		 *  @param Size maximum size of cache
 		 *  @param DeletionStrategy how we dispose of elements when we remove them from the cache
 		 */
-		LRUCache( const unsigned long Size, const deletion_strategies DeletionStrategy = IGNORE ) :
+		LRUCache( const unsigned long Size, const deletion_strategies DeletionStrategy = LRU_IGNORE ) :
 				_max_size( Size ),
 				_deletion_strategy( DeletionStrategy )
 				{}

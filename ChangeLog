@@ -32,6 +32,28 @@
 
 	* po/sv.po: Traduce 2 new strings.
 
+2006-03-08  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.texi: mention merge_into_dir in the pivot_root description.
+
+2006-03-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_sink_has_extra_epochs.at: Er, and also check for branch
+	names rather than revisions in the output of 'ls branches'.
+
+	* tests/t_sink_has_extra_epochs.at: Fix up subtle syntax error.
+
+	* lru_cache.h: Rename some enums to avoid namespace collisions on
+	Win32.
+
+2006-03-08  Joel Rosdahl  <joel@rosdahl.net>
+
+	* po/sv.po: Minor updates.
+
+2006-03-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.texi: Spelling fixes.
+
 2006-03-08  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/t_disapprove_branch.at: I'm an idiot.

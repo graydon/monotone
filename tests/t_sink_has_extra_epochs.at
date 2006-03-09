@@ -29,6 +29,7 @@ NETSYNC_CLIENT_N_RUN(2, push, *branch, 0)
 NETSYNC_SERVE_STOP
 
 AT_CHECK(MONOTONE ls branches, [], [stdout], [ignore])
-AT_CHECK(GREP `BASE_REVISION` stdout, [], [ignore], [ignore])
+AT_CHECK(QGREP testbranch stdout, [], [ignore], [ignore])
+AT_CHECK(QGREP otherbranch stdout, [], [ignore], [ignore])
 
 AT_CLEANUP
