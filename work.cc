@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
+#include <queue>
 
 #include "app_state.hh"
 #include "basic_io.hh"
@@ -206,25 +207,48 @@ perform_deletions(path_set const & paths, app_state & app)
   // where, when processing 'foo', we need to know whether or not it is empty
   // (and thus legal to remove)
 
-  for (path_set::const_reverse_iterator i = paths.rbegin(); i != paths.rend(); ++i)
-    {
-      file_path name(*i);
+  std::deque<split_path> todo;
+  path_set::const_reverse_iterator i = paths.rbegin();
+  todo.push_back(*i);
+  ++i;
 
-      if (!new_roster.has_node(*i))
+  while (todo.size())
+    {
+      split_path &p(todo.front());
+      file_path name(p);
+
+      if (!new_roster.has_node(p))
         P(F("skipping %s, not currently tracked") % name);
       else
         {
-          node_t n = new_roster.get_node(*i);
+          node_t n = new_roster.get_node(p);
           if (is_dir_t(n))
             {
               dir_t d = downcast_to_dir_t(n);
-              N(d->children.empty(),
-                F("cannot remove %s/, it is not empty") % name);
+              if (!d->children.empty())
+                {
+                  N(app.recursive,
+                    F("cannot remove %s/, it is not empty") % name);
+                  for (dir_map::const_iterator j = d->children.begin();
+                       j != d->children.end(); ++j)
+                    {
+                      split_path sp = p;
+                      sp.push_back(j->first);
+                      todo.push_front(sp);
+                    }
+                  continue;
+                }
             }
           P(F("dropping %s from workspace manifest") % name);
-          new_roster.drop_detached_node(new_roster.detach_node(*i));
+          new_roster.drop_detached_node(new_roster.detach_node(p));
           if (app.execute && path_exists(name))
             delete_file_or_dir_shallow(name);
+        }
+      todo.pop_front();
+      if (i != paths.rend())
+        {
+          todo.push_back(*i);
+          ++i;
         }
     }
 
@@ -681,8 +705,7 @@ read_options_map(data const & dat, options_map & options)
 void 
 write_options_map(data & dat, options_map const & options)
 {
-  std::ostringstream oss;
-  basic_io::printer pr(oss);
+  basic_io::printer pr;
 
   basic_io::stanza st;
   for (options_map::const_iterator i = options.begin();
@@ -690,7 +713,7 @@ write_options_map(data & dat, options_map const & options)
     st.push_str_pair(i->first, i->second());
 
   pr.print_stanza(st);
-  dat = oss.str();
+  dat = pr.buf;
 }
 
 // local dump file
@@ -912,7 +935,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
         = written_content.find(src_pth);
       if (i != written_content.end())
         {
-          P(F("adding '%s'") % dst_pth);
+          P(F("adding %s") % dst_pth);
           file_data dat;
           source.get_file_content(i->second, dat);
           write_localized_data(dst_pth, dat.inner(), app.lua);
@@ -935,11 +958,11 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
     = rename_add_drop_map.find(src_pth);
   if (i != rename_add_drop_map.end())
     {
-      P(F("renaming '%s' to '%s'") % i->second % dst_pth);
+      P(F("renaming %s to %s") % i->second % dst_pth);
       safe_erase(rename_add_drop_map, src_pth);
     }
   else
-    P(F("adding '%s'") % dst_pth);
+    P(F("adding %s") % dst_pth);
   if (dst_pth == file_path())
     {
       // root dir attach, so we move contents, rather than the dir itself

@@ -1066,7 +1066,7 @@ CMD(trusted, N_("key and cert"), N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]
 }
 
 CMD(tag, N_("review"), N_("REVISION TAGNAME"),
-    N_("put a symbolic tag cert on a revision version"), OPT_NONE)
+    N_("put a symbolic tag cert on a revision"), OPT_NONE)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1216,7 +1216,7 @@ static void find_missing (app_state & app,
                           vector<utf8> const & args, path_set & missing);
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
-    N_("drop files from workspace"), OPT_EXECUTE % OPT_MISSING)
+    N_("drop files from workspace"), OPT_EXECUTE % OPT_MISSING % OPT_RECURSIVE)
 {
   if (!app.missing && (args.size() < 1))
     throw usage(name);
@@ -2171,8 +2171,12 @@ CMD(db, N_("database"),
   else if (args.size() == 3)
     {
       if (idx(args, 0)() == "set_epoch")
-        app.db.set_epoch(cert_value(idx(args, 1)()),
-                         epoch_data(idx(args,2)()));
+        {
+          epoch_data ed(idx(args,2)());
+          N(ed.inner()().size() == constants::epochlen,
+            F("The epoch must be %s characters") % constants::epochlen);
+          app.db.set_epoch(cert_value(idx(args, 1)()), ed);
+        }
       else
         throw usage(name);
     }

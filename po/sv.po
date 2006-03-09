@@ -118,7 +118,8 @@
 # request                         begäran
 # revision                        revision
 # root                            rot
-# roster(s)                       roster(s)
+# roster / rosters                lista / listor
+# selection                       val
 # selector                        väljare
 # serve                           servera
 # server                          server
@@ -144,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-03-05 00:17+0100\n"
-"PO-Revision-Date: 2006-03-05 00:21+0100\n"
+"POT-Creation-Date: 2006-03-05 14:56+0100\n"
+"PO-Revision-Date: 2006-03-05 19:49+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -563,7 +564,7 @@ msgid "REVISION TAGNAME"
 msgstr "REVISION TAGNAMN"
 
 #: commands.cc:1069
-msgid "put a symbolic tag cert on a revision version"
+msgid "put a symbolic tag cert on a revision"
 msgstr "sätt ett symboliskt tagg-cert på en revision"
 
 #: commands.cc:1081
@@ -1512,7 +1513,7 @@ msgstr "REVID"
 
 #: commands.cc:3904
 msgid "dump the roster associated with the given REVID"
-msgstr "skriv ut den roster som hör ihop med angivet REVID"
+msgstr "skriv ut den lista som hör ihop med angivet REVID"
 
 #: commands.cc:3922
 msgid "REV REV"
@@ -1565,7 +1566,7 @@ msgstr "filer"
 
 #: database_check.cc:154
 msgid "rosters"
-msgstr "rosters"
+msgstr "listor"
 
 #: database_check.cc:221
 msgid "markings"
@@ -1601,38 +1602,34 @@ msgstr "det finns inga referenser till filen %s\n"
 #: database_check.cc:571
 #, c-format
 msgid "roster %s unreferenced\n"
-msgstr "det finns inga referenser till rostern %s\n"
+msgstr "det finns inga referenser till listan %s\n"
 
 #: database_check.cc:577
 #, c-format
 msgid "roster %s incomplete (%d missing files)\n"
-msgstr "rostern %s ej komplett (%d filer saknas)\n"
+msgstr "listan %s ej komplett (%d filer saknas)\n"
 
 #: database_check.cc:584
 #, c-format
 msgid "roster %s incomplete (%d missing revisions)\n"
-msgstr "rostern %s ej komplett (%d revisioner saknas)\n"
+msgstr "listan %s ej komplett (%d revisioner saknas)\n"
 
 #: database_check.cc:591
 #, c-format
 msgid "roster %s is not parseable (perhaps with unnormalized paths?)\n"
-msgstr ""
-"rostern %s går inte att tyda (den kanske innehåller onormaliserade\n"
-"sökvägar?)\n"
+msgstr "listan %s går inte att tyda (den kanske innehåller onormaliserade sökvägar?)\n"
 
 #: database_check.cc:598
 #, c-format
 msgid "roster %s is not in normalized form\n"
-msgstr "rostern %s är inte normaliserad\n"
+msgstr "listan %s är inte normaliserad\n"
 
 #: database_check.cc:623
 #, c-format
 msgid ""
 "revision %s missing (%d revision references; %d cert references; %d parent "
 "references; %d child references; %d roster references)\n"
-msgstr ""
-"revisionen %s saknas (%d revisionsreferenser; %d certreferenser; %d "
-"föräldrareferenser; %d barnreferenser; %d rosterreferenser)\n"
+msgstr "revisionen %s saknas (%d revisionsreferenser; %d certreferenser; %d föräldrareferenser; %d barnreferenser; %d listreferenser)\n"
 
 #: database_check.cc:631
 #, c-format
@@ -1647,22 +1644,22 @@ msgstr "revisionen %s ej komplett (%d revisioner saknas)\n"
 #: database_check.cc:645
 #, c-format
 msgid "revision %s incomplete (missing roster link)\n"
-msgstr "revisionen %s ej komplett (rosterlänkar saknas)\n"
+msgstr "revisionen %s ej komplett (listlänkar saknas)\n"
 
 #: database_check.cc:651
 #, c-format
 msgid "revision %s incomplete (missing roster)\n"
-msgstr "revisionen %s ej komplett (roster saknas)\n"
+msgstr "revisionen %s ej komplett (lista saknas)\n"
 
 #: database_check.cc:657
 #, c-format
 msgid "revision %s mismatched roster and manifest\n"
-msgstr "revisionen %s inkonsistent roster och manifest\n"
+msgstr "revisionen %s inkonsistent lista och manifest\n"
 
 #: database_check.cc:663
 #, c-format
 msgid "revision %s incomplete (incomplete roster)\n"
-msgstr "revisionen %s ej komplett (roster ej komplett)\n"
+msgstr "revisionen %s ej komplett (listan ej komplett)\n"
 
 #: database_check.cc:669
 #, c-format
@@ -1736,22 +1733,22 @@ msgstr "%d filer utan referenser\n"
 #: database_check.cc:879
 #, c-format
 msgid "%d unreferenced rosters\n"
-msgstr "%d rosters utan referenser\n"
+msgstr "%d listor utan referenser\n"
 
 #: database_check.cc:881
 #, c-format
 msgid "%d incomplete rosters\n"
-msgstr "%d ej kompletta rosters\n"
+msgstr "%d ej kompletta listor\n"
 
 #: database_check.cc:883
 #, c-format
 msgid "%d rosters not parseable (perhaps with invalid paths)\n"
-msgstr "%d rosters går inte att tyda (de kanske har felaktiga sökvägar)\n"
+msgstr "%d listor går inte att tyda (de kanske har felaktiga sökvägar)\n"
 
 #: database_check.cc:886
 #, c-format
 msgid "%d rosters not in normalized form\n"
-msgstr "%d rosters ej i normaliserad form\n"
+msgstr "%d listor ej i normaliserad form\n"
 
 #: database_check.cc:889
 #, c-format
@@ -1791,12 +1788,12 @@ msgstr "%d revisioner är ej i normaliserad form\n"
 #: database_check.cc:906
 #, c-format
 msgid "%d unreferenced roster links\n"
-msgstr "%d rosterlänkar utan referenser\n"
+msgstr "%d listlänkar utan referenser\n"
 
 #: database_check.cc:909
 #, c-format
 msgid "%d missing rosters\n"
-msgstr "%d rosters saknas\n"
+msgstr "%d listor saknas\n"
 
 #: database_check.cc:913
 #, c-format
@@ -1826,8 +1823,7 @@ msgstr "%d felaktiga signaturer\n"
 #: database_check.cc:948
 #, c-format
 msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs\n"
-msgstr ""
-"kontroll klar: %d filer; %d rosters; %d revisioner; %d nycklar; %d cert\n"
+msgstr "kontroll klar: %d filer; %d listor; %d revisioner; %d nycklar; %d cert\n"
 
 #: database_check.cc:954
 #, c-format
@@ -1849,7 +1845,7 @@ msgstr "småproblem funna\n"
 msgid "database is good\n"
 msgstr "databasen är i gott skick\n"
 
-#: database.cc:138
+#: database.cc:141
 #, c-format
 msgid ""
 "layout of database %s doesn't match this version of monotone\n"
@@ -1863,7 +1859,7 @@ msgstr ""
 "(detta går inte att ångra; du vill nog ta en säkerhetskopia av databasen\n"
 "först)"
 
-#: database.cc:162
+#: database.cc:165
 #, c-format
 msgid ""
 "database %s contains revisions but no rosters\n"
@@ -1874,7 +1870,7 @@ msgid ""
 "  pull into a fresh database.\n"
 "sorry about the inconvenience."
 msgstr ""
-"databasen %s innehåller revisioner men inga rosters.\n"
+"databasen %s innehåller revisioner men inga listor.\n"
 "om du är en projektledare eller gör lokala tester:\n"
 "  läs i filen UPGRADE och följ instruktionerna för uppgradering.\n"
 "om du inte är en projektledare:\n"
@@ -1882,7 +1878,7 @@ msgstr ""
 "  sedan databasen på nytt.\n"
 "ursäkta besväret."
 
-#: database.cc:181
+#: database.cc:184
 #, c-format
 msgid ""
 "database %s contains manifests but no revisions\n"
@@ -1893,19 +1889,19 @@ msgstr ""
 "detta är en väldigt gammal databas; den behöver uppgraderas\n"
 "var god läs README.changesets för detaljer"
 
-#: database.cc:217
+#: database.cc:220
 #, c-format
 msgid "unable to probe database version in file %s"
 msgstr "kunde inte hitta någon databasversion i filen %s"
 
-#: database.cc:224
+#: database.cc:227
 #, c-format
 msgid "database %s is not an sqlite version 3 file, try dump and reload"
 msgstr ""
 "databasen %s är inte skapad med SQLite version 3; testa att dumpa och ladda "
 "på nytt"
 
-#: database.cc:251
+#: database.cc:254
 msgid ""
 "make sure database and containing directory are writeable\n"
 "and you have not run out of disk space"
@@ -1914,7 +1910,7 @@ msgstr ""
 "i\n"
 "samt att det finns tillräckligt med ledigt utrymme på disken"
 
-#: database.cc:257
+#: database.cc:260
 #, c-format
 msgid ""
 "sqlite error: %d: %s\n"
@@ -1923,12 +1919,12 @@ msgstr ""
 "sqlite-fel: %d: %s\n"
 "%s"
 
-#: database.cc:303
+#: database.cc:306
 #, c-format
 msgid "could not initialize database: %s: already exists"
 msgstr "kunde inte initiera databasen: %s: den finns redan"
 
-#: database.cc:308
+#: database.cc:311
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -1939,12 +1935,12 @@ msgstr ""
 "databasen '%s'\n"
 "avbryter skapandet av databasen"
 
-#: database.cc:451
+#: database.cc:454
 #, c-format
 msgid "cannot create %s; it already exists"
 msgstr "kan inte skapa %s; den finns redan"
 
-#: database.cc:511
+#: database.cc:514
 #, c-format
 msgid ""
 "schema version    : %s\n"
@@ -1968,16 +1964,16 @@ msgid ""
 msgstr ""
 "schemaversion         : %s\n"
 "antal:\n"
-"  hela rosters        : %u\n"
-"  rosterdeltan        : %u\n"
+"  hela listor         : %u\n"
+"  listdeltan          : %u\n"
 "  hela filer          : %u\n"
 "  fildeltan           : %u\n"
 "  revisioner          : %u\n"
 "  föräldrabågar       : %u\n"
 "  cert                : %u\n"
 "byte:\n"
-"  hela rosters        : %u\n"
-"  rosterdeltan        : %u\n"
+"  hela listor         : %u\n"
+"  listdeltan          : %u\n"
 "  hela filer          : %u\n"
 "  fildeltan           : %u\n"
 "  revisioner          : %u\n"
@@ -1985,52 +1981,52 @@ msgstr ""
 "  cert                : %u\n"
 "  total               : %u\n"
 
-#: database.cc:566
+#: database.cc:569
 #, c-format
 msgid "database schema version: %s"
 msgstr "databasens schemaversion: %s"
 
-#: database.cc:643
+#: database.cc:646
 #, c-format
 msgid "multiple statements in query: %s\n"
 msgstr "multipla kommandon i databasfråga: %s\n"
 
-#: database.cc:649
+#: database.cc:652
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
 msgstr "ville ha %d kolumner, fick %d i databasfråga: %s\n"
 
-#: database.cc:708
+#: database.cc:711
 #, c-format
 msgid "null result in query: %s\n"
 msgstr "inget resultat med databasfråga: %s\n"
 
-#: database.cc:726
+#: database.cc:729
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
 msgstr "ville ha %d rader, fick %s i databasfråga: %s\n"
 
-#: database.cc:1776
+#: database.cc:1728
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "det finns redan en annan nyckel med namnet '%s'"
 
-#: database.cc:2809
+#: database.cc:2784
 #, c-format
 msgid "no database specified"
 msgstr "ingen databas angiven"
 
-#: database.cc:2817
+#: database.cc:2792
 #, c-format
 msgid "database %s does not exist"
 msgstr "databasen %s finns inte"
 
-#: database.cc:2818
+#: database.cc:2793
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s är en katalog, inte en databas"
 
-#: database.cc:2843
+#: database.cc:2818
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "kunde inte öppna databasen '%s': %s"
@@ -2409,7 +2405,7 @@ msgstr "skicka med angiven nyckel även om den inte använts för att signera"
 
 #: monotone.cc:76
 msgid "when rosterifying, drop attrs entries with the given key"
-msgstr "släng attribut med den givna nyckeln vid konvertering till 'rosters'"
+msgstr "släng attribut med den givna nyckeln vid konvertering till listor"
 
 #: monotone.cc:77
 msgid "exclude files when printing logs"
@@ -3158,7 +3154,7 @@ msgstr "bygger om %d noder\n"
 #: revision.cc:967
 #, c-format
 msgid "Path %s added to child roster multiple times\n"
-msgstr "Sökvägen %s tillagd till rostern mer än en gång\n"
+msgstr "Sökvägen %s tillagd till listan mer än en gång\n"
 
 #: revision.cc:980
 #, c-format
@@ -3187,8 +3183,7 @@ msgstr ""
 #: revision.cc:1373
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions\n"
-msgstr ""
-"konverterar existerande revisionsgraf till nya revisioner i roster-stil\n"
+msgstr "konverterar existerande revisionsgraf till nya revisioner i liststil\n"
 
 #: revision.cc:1427
 #, c-format
@@ -3314,12 +3309,12 @@ msgstr "flyttar nyckeln '%s' från databasen till %s"
 msgid "Press enter when the subprocess has completed"
 msgstr "Tryck [Retur] när underprocessen är klar"
 
-#: transforms.cc:477
+#: transforms.cc:510
 #, c-format
 msgid "failed to convert string from %s to %s: '%s'"
 msgstr "misslyckades med att konvertera en sträng från %s till %s: '%s'"
 
-#: transforms.cc:708 transforms.cc:722
+#: transforms.cc:741 transforms.cc:755
 #, c-format
 msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
 msgstr "fel vid konvertering av %d UTF-8-byte till IDNA ACE: %s"
@@ -3541,8 +3536,8 @@ msgstr "sökvägen %s finns redan"
 
 #: work.cc:915 work.cc:942
 #, c-format
-msgid "adding '%s'"
-msgstr "lägger till '%s'"
+msgid "adding %s"
+msgstr "lägger till %s"
 
 #: work.cc:931
 #, c-format
@@ -3551,8 +3546,8 @@ msgstr "sökvägen '%s' finns redan, kan inte skapa den"
 
 #: work.cc:938
 #, c-format
-msgid "renaming '%s' to '%s'"
-msgstr "byter namn på '%s' till '%s'"
+msgid "renaming %s to %s"
+msgstr "byter namn på %s till %s"
 
 #: work.cc:973
 #, c-format
