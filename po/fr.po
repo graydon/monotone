@@ -70,7 +70,7 @@
 # a commit                un changement (commit)
 # a connection            une connection
 # a database              base de données
-# a database schema       schema / schema de base de données
+# a database schema       schéma / schéma de base de données
 # a descendent            un descendant
 # destination             destination / but
 # an external definition  une référence externe
@@ -244,7 +244,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-28 23:20+0100\n"
-"PO-Revision-Date: 2006-03-09 19:55+0100\n"
+"PO-Revision-Date: 2006-03-09 23:10+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -1967,7 +1967,7 @@ msgid ""
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
 "la disposition de la base de données %s ne correspond pas a cette version de monotone\n"
-"voulais le schema %s, trouvais %s\n"
+"voulais le schéma %s, trouvais %s\n"
 "essaiyez « %s db migrate » pour mettre la base de données à niveau\n"
 "(cette opération est irréversible; vous voudrez probablement prendre une copie d'abord)"
 
@@ -2488,7 +2488,7 @@ msgstr "argument a passer la procédure automatique de « diff » externe"
 
 #: ../monotone.cc:70
 msgid "use least common ancestor as ancestor for merge"
-msgstr ""
+msgstr "emploi le plus petit ancêtre commun comme ancêtre pour la fusion"
 
 #: ../monotone.cc:71
 msgid "perform the associated file operation"
@@ -2582,7 +2582,7 @@ msgstr "limite la recherche d'un éspace de travail à la racine donnée"
 # **** Richard stopped here ****
 #: ../monotone.cc:101
 msgid "verbose completion output"
-msgstr "affiche "
+msgstr "affiche plus d'information à la fin de l'exécution"
 
 #: ../monotone.cc:102
 msgid "set location of key store"
@@ -2600,7 +2600,7 @@ msgstr "erreur lors de l'analyse d'arguments venant du fichier %s : %s"
 #: ../monotone.cc:216
 #, c-format
 msgid "weird error when stuffing arguments read from %s: %s\n"
-msgstr ""
+msgstr "erreur bizarre en employent des arguments lu de %s: %s\n"
 
 #: ../monotone.cc:298
 msgid "[OPTION...] command [ARGS...]\n"
@@ -2651,14 +2651,16 @@ msgid ""
 "protocol version mismatch: wanted '%d' got '%d'\n"
 "%s"
 msgstr ""
+"discordance de versions de protocol: voulais « %d », reçu « %d »\n"
+"%s"
 
 #: ../netcmd.cc:122
 msgid "the remote side has a newer, incompatible version of monotone"
-msgstr ""
+msgstr "l'autre côté emploi une nouvelle version incompatible de monotone"
 
 #: ../netcmd.cc:123
 msgid "the remote side has an older, incompatible version of monotone"
-msgstr ""
+msgstr "l'autre côté emploi une ancienne version incompatible de monotone"
 
 #: ../netcmd.cc:133
 #, c-format
@@ -2688,17 +2690,17 @@ msgstr ""
 #: ../netio.hh:84 ../netio.hh:119
 #, c-format
 msgid "uleb128 decode for '%s' into %d-byte datum overflowed"
-msgstr ""
+msgstr "décodage uleb128 de « %s » en donnée de %d octets a débordé"
 
 #: ../netio.hh:139
 #, c-format
 msgid "ran out of bytes reading uleb128 value for '%s' at pos %d"
-msgstr ""
+msgstr "pas assez d'octets en lisant la valeur uleb128 pour « %s », à la position %d"
 
 #: ../netio.hh:275
 #, c-format
 msgid "decoding variable length string of %d bytes for '%s', maximum is %d"
-msgstr ""
+msgstr "décodage d'une linge de %d octets pour « %s » quand le maximum est %d"
 
 #: ../netio.hh:330
 #, c-format
@@ -2743,7 +2745,7 @@ msgstr "révs ⇧"
 #: ../netsync.cc:814
 #, c-format
 msgid "underflow on count of %s items to receive"
-msgstr ""
+msgstr "trop peux d'objets %s à recevoir"
 
 #: ../netsync.cc:1160
 #, c-format
@@ -2797,12 +2799,12 @@ msgstr "sauvegarde la clef publique « %s » dans la base de données\n"
 #: ../netsync.cc:1302
 #, c-format
 msgid "rejected attempt at anonymous connection for write\n"
-msgstr ""
+msgstr "essai de connection anonyme pour écrire rejeté\n"
 
 #: ../netsync.cc:1309
 #, c-format
 msgid "rejected attempt at anonymous connection while running as sink\n"
-msgstr ""
+msgstr "essai de connection anonyme en étant un puit rejeté\n"
 
 #: ../netsync.cc:1324 ../netsync.cc:1421
 #, c-format
@@ -2822,12 +2824,12 @@ msgstr "permission de lecture anonyme accordée pour « %s » en excluant « 
 #: ../netsync.cc:1368
 #, c-format
 msgid "detected replay attack in auth netcmd\n"
-msgstr ""
+msgstr "détecté une attaque de repasse dans la phase auth de netcmd\n"
 
 #: ../netsync.cc:1390
 #, c-format
 msgid "remote public key hash '%s' is unknown\n"
-msgstr ""
+msgstr "la somme de contrôle « %s » d'une clef publique reçu est inconnue"
 
 #: ../netsync.cc:1407
 #, c-format
@@ -2879,17 +2881,17 @@ msgstr "signature du client invalide\n"
 #: ../netsync.cc:1519
 #, c-format
 msgid "Unexpected 'refine' command on non-refined item type\n"
-msgstr ""
+msgstr "Commande « refine » inattenue pour type d'objet non raffiné\n"
 
 #: ../netsync.cc:1616
 #, c-format
 msgid "unknown bye phase %d received"
-msgstr ""
+msgstr "phase d'adieu %d inconnue reçue"
 
 #: ../netsync.cc:1631
 #, c-format
 msgid "Unexpected 'done' command on non-refined item type\n"
-msgstr ""
+msgstr "Commande « done » inattenue pour type d'objet non raffiné\n"
 
 #: ../netsync.cc:1711
 #, c-format
@@ -2917,12 +2919,12 @@ msgstr "le certif « %s » n'existe pas dans notre base de données"
 #: ../netsync.cc:1820
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
-msgstr ""
+msgstr "Discordance d'époque sur la branche %s. Le serveur a « %s », le client a « %s »."
 
 #: ../netsync.cc:1841
 #, c-format
 msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
-msgstr ""
+msgstr "le contrôle de la somme de contrôle échoué pour la clef publique « %s » (%s); voulais « %s », reçu « %s »"
 
 #: ../netsync.cc:1858
 #, c-format
@@ -3128,7 +3130,7 @@ msgstr "supprime le delta « %s » -> « %s »\n"
 #: ../packet.cc:109
 #, c-format
 msgid "reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n"
-msgstr ""
+msgstr "fichier reconstruit du delta « %s » -> « %s » a une identité incorrected « %s »\n"
 
 #: ../packet.cc:138
 #, c-format
@@ -3217,11 +3219,13 @@ msgid ""
 "%s appears to be a CVS repository root directory\n"
 "try importing a module instead, with 'cvs_import %s/<module_name>"
 msgstr ""
+"%s a l'air d'aitre la racine d'un dépôt CVS\n"
+"essaie d'importer un module à la place, en employent « cvs_import %s/<nomo module>"
 
 #: ../rcs_import.cc:1204
 #, c-format
 msgid "need base --branch argument for importing"
-msgstr ""
+msgstr "il faut un argument --branch come base pour importer"
 
 #: ../rcs_import.cc:1216
 #, c-format
@@ -3230,7 +3234,7 @@ msgstr "le chemin %s n'existe pas"
 
 #: ../rcs_import.cc:1251
 msgid "tags"
-msgstr ""
+msgstr "étiquettes"
 
 #. This kluge exists because in the 0.24-era monotone databases, several
 #. bad merges still existed in which one side of the merge is an ancestor
@@ -3253,7 +3257,7 @@ msgstr ""
 #: ../revision.cc:700
 #, c-format
 msgid "scanning for bogus merge edges\n"
-msgstr ""
+msgstr "cherche des fusions bogguées"
 
 #: ../revision.cc:742
 #, c-format
@@ -3268,7 +3272,7 @@ msgstr ""
 #: ../revision.cc:762
 #, c-format
 msgid "rebuilding %d nodes\n"
-msgstr ""
+msgstr "reconstruis %d noeuds"
 
 #: ../revision.cc:967
 #, c-format
@@ -3296,11 +3300,13 @@ msgid ""
 "unknown attribute %s on path %s\n"
 "please contact %s so we can work out the right way to migrate this"
 msgstr ""
+"attribut %s inconnu pour le chemin %s\n"
+"veuillez contacter %s pour négocier la meilleure façon pour migrer"
 
 #: ../revision.cc:1373
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions\n"
-msgstr ""
+msgstr "convertis graphe de révisions présent à des nouvelles révision en style liste\n"
 
 #: ../revision.cc:1427
 #, c-format
@@ -3314,6 +3320,9 @@ msgid ""
 "I only know how to understand the version '1' format\n"
 "a newer version of monotone is required to complete this operation"
 msgstr ""
+"rencontré une révision d'un format inconnu, version « %s »\n"
+"je ne comprend que le format version « 1 »\n"
+"il faut une version monotone plus nouvelle pour complèter cette opération"
 
 #: ../sanity.cc:116
 #, c-format
@@ -3341,17 +3350,17 @@ msgstr ""
 #: ../sanity.cc:244
 #, c-format
 msgid "Current work set: %i items\n"
-msgstr ""
+msgstr "Ensemble de travail actuel: %i objets\n"
 
 #: ../schema_migration.cc:181
 #, c-format
 msgid "failure extracting schema from sqlite_master"
-msgstr ""
+msgstr "extraction de schéma de sqlite_master échoué"
 
 #: ../schema_migration.cc:217
 #, c-format
 msgid "calculating necessary migration steps"
-msgstr ""
+msgstr "calcule les étapes à passer pour migrer"
 
 #: ../schema_migration.cc:227
 #, c-format
@@ -3371,17 +3380,17 @@ msgstr "l'étape de migration a échoué : %s"
 #: ../schema_migration.cc:268
 #, c-format
 msgid "mismatched result of migration, got %s, wanted %s"
-msgstr ""
+msgstr "discordance de résultats de la migration, reçu %s, voulais %s"
 
 #: ../schema_migration.cc:271
 #, c-format
 msgid "committing changes to database"
-msgstr ""
+msgstr "confie les changements à la base de données"
 
 #: ../schema_migration.cc:273
 #, c-format
 msgid "failure on COMMIT"
-msgstr ""
+msgstr "COMMIT échoué"
 
 #: ../schema_migration.cc:275
 #, c-format
@@ -3396,7 +3405,7 @@ msgstr ""
 #: ../schema_migration.cc:280
 #, c-format
 msgid "error running analyze after migration"
-msgstr ""
+msgstr "erreur en analysant après la migration"
 
 #: ../schema_migration.cc:287
 #, c-format
@@ -3482,6 +3491,10 @@ msgid ""
 "please send this error message, the output of 'monotone --full-version',\n"
 "and a description of what you were doing to %s.\n"
 msgstr ""
+"néfaste: %s\n"
+"ceci est presque certainement un bogue dans monotone.\n"
+"veuillez envoyer un ce message, ce que « monotone --full-version » affiche\n"
+"et une description de ce que vous vouliez faire à %s.\n"
 
 #: ../ui.cc:422
 msgid "monotone: "
@@ -3490,7 +3503,7 @@ msgstr "monotone: "
 #: ../update.cc:65
 #, c-format
 msgid "failed to decode boolean testresult cert value '%s'\n"
-msgstr ""
+msgstr "ne pouvais pas décoder la valeur booléenne « %s » du certif testresult\n"
 
 #: ../update.cc:159
 #, c-format
