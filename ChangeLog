@@ -1,5 +1,9 @@
 2006-03-10  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* ROADMAP: Remove items that have been done and correct a typo.
+
+	* COPYING: Update FSF address.
+
 	* po/fr.po: Fix up broken msgstrs that were causing msgmerge to
 	choke.
 
