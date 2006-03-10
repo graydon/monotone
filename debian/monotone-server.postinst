@@ -131,7 +131,7 @@ case "$1" in
 
                  # check for errors
                  if [ $? -eq 0 ]; then
-                    echo "Database successfully rosterifyed." >&2
+                    echo "Database successfully rosterified." >&2
                  else
                     echo "*** Error rosterifying database. ***" >&2
                     echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
