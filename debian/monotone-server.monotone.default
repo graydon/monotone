@@ -7,7 +7,7 @@ START=0
 ADDRESS=0.0.0.0
 
 # the database to use
-DB=/var/lib/monotone/default.db
+DB=/var/lib/monotone/default.mtn
 
 # Branches that monotone should serve (seperated by white space)
 BRANCHES='tld.domain.*

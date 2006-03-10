@@ -29,7 +29,7 @@ case "$1" in
     configure)
 
        MTN_HOME=/var/lib/monotone
-       MTN_DB=$MTN_HOME/default.db
+       MTN_DB=$MTN_HOME/default.mtn
        MTN_CONFDIR=/etc/monotone
        MTN_KEYDIR=$MTN_HOME/keys
 

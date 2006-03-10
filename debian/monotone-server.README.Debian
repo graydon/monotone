@@ -11,7 +11,7 @@ specified in the monotone manual.  The /etc/default/monotone file contains
 options such as what interface the server should listen on and what branches it
 should serve.
 
-The /var/lib/monotone/default.db database will only be removed if the
+The /var/lib/monotone/default.mtn database will only be removed if the
 monotone-server package is purged (it is left intact upon normal package
 removal).
 

@@ -24,7 +24,7 @@ set -e
 case "$1" in
     purge)
        
-       MTN_DB=/var/lib/monotone/default.db
+       MTN_DB=/var/lib/monotone/default.mtn
        MTN_HOME=/var/lib/monotone
        MTN_CONFDIR=/etc/monotone
        MTN_KEYDIR=$MTN_HOME/keys
