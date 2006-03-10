@@ -1,6 +1,9 @@
 #! /bin/sh
 # postinst script for monotone-server
 #
+# This script attempts to perform any db migrations neccessary during an
+# upgrade.
+#
 # see: dh_installdeb(1)
 
 set -e
@@ -97,7 +100,7 @@ case "$1" in
                   
                   chown monotone:monotone $MTN_HOME/keys/*
 
-                  $MONOTONE --db=$MTN_DB pubkey $MTN_KEY --rcfile=$MTN_CONFDIR/hooks.lua\
+                  $MONOTONE --db=$MTN_DB pubkey $MTN_KEY --rcfile=$MTN_CONFDIR/hooks.lua \
                      --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR > $MTN_HOME/$MTN_KEY.pubkey
 
                   echo "Monotone database created successfully." >&2
@@ -105,20 +108,40 @@ case "$1" in
            elif dpkg --compare-versions "$MTN_VERSION" lt "0.17"; then 
               # monotone version to old to automatically upgrade
               echo "Cannot automatically upgrade from monotone version $2." >&2
-              echo -e "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for\n \
-                       information on upgrading." >&2
+              echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
+              echo "information on manually upgrading your database." >&2
+
            elif dpkg --compare-versions "$MTN_VERSION" lt "0.22"; then 
               # upgradable version of monotone
               echo "Attempting to migrate monotone database..." >&2
               echo "A backup named '`basename $MTN_DB~`' will be created in $MTN_HOME." >&2
 
               cp $MTN_DB $MTN_DB~
-              ($MONOTONE --db=$MTN_DB db migrate --rcfile=$MTN_CONFDIR/hooks.lua\
-                 --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2 &&
-                 echo "Database successfully migrated." >&2) || 
-              (echo "*** Error migrating database. ***" >&2 &&
-                  echo -e "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for\n \
-                           information on manually upgrading your database." >&2)
+              $MONOTONE --db=$MTN_DB db migrate --rcfile=$MTN_CONFDIR/hooks.lua \
+                 --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2
+
+              # make sure the migration was successful
+              if [ $? -eq 0 ]; then
+                 echo "Database successfully migrated." >&2
+
+                 # now we need to rosterify
+                 echo "Attempting to rosterify monotone database..." >&2
+                 $MONOTONE --db=$MTN_DB db rosterify --rcfile=$MTN_CONFDIR/hooks.lua \
+                    --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2
+
+                 # check for errors
+                 if [ $? -eq 0 ]; then
+                    echo "Database successfully rosterifyed." >&2
+                 else
+                    echo "*** Error rosterifying database. ***" >&2
+                    echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
+                    echo "information on manually upgrading your database." >&2
+                 fi
+              else
+                 echo "*** Error migrating database. ***" >&2
+                 echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
+                 echo "information on manually upgrading your database." >&2
+              fi
            fi
 
            echo "$MTN_KEY \"$MTN_KEY_PASSWD\"" > $MTN_CONFDIR/passphrases
