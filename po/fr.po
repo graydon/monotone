@@ -244,7 +244,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-28 23:20+0100\n"
-"PO-Revision-Date: 2006-03-09 23:10+0100\n"
+"PO-Revision-Date: 2006-03-10 12:08+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -1201,7 +1201,7 @@ msgstr ""
 #: ../commands.cc:2427
 #, fuzzy, c-format
 msgid "empty log message; commit canceled"
-msgstr "message du journal vide; confidence arrêté"
+msgstr "message du journal vide; confidence arrêtée"
 
 #: ../commands.cc:2446
 #, c-format
@@ -1221,7 +1221,7 @@ msgstr "le fichier « %s » a été modifié pendant le commit, interruption"
 #: ../commands.cc:2554
 #, fuzzy, c-format
 msgid "committed revision %s\n"
-msgstr "révision confié : %s\n"
+msgstr "révision %s confié\n"
 
 #: ../commands.cc:2560
 #, c-format
@@ -1334,9 +1334,8 @@ msgid "updated to base revision %s\n"
 msgstr "mise à jour vers la révision de base %s\n"
 
 #: ../commands.cc:3108
-#, fuzzy
 msgid "merge unmerged heads of branch"
-msgstr "fusionne les entrées non fusionnées"
+msgstr "fusionne les entrées de la branche non fusionnées"
 
 #: ../commands.cc:3122
 #, c-format
@@ -1721,7 +1720,7 @@ msgid "file %s unreferenced\n"
 msgstr "fichier %s non-référencé\n"
 
 #: ../database_check.cc:571
-#, fuzzy, c-format
+#, c-format
 msgid "roster %s unreferenced\n"
 msgstr "liste %s non-référencé\n"
 
