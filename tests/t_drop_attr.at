@@ -11,8 +11,6 @@ AT_CHECK(QGREP(some_value stdout))
 COMMIT(testbranch)
 
 AT_CHECK(MONOTONE drop testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE attr get testfile, [], [stdout], [ignore])
-AT_CHECK(QGREP(some_key stdout), [1])
-AT_CHECK(QGREP(some_value stdout), [1])
+AT_CHECK(MONOTONE attr get testfile, [1], [stdout], [ignore])
 
 AT_CLEANUP

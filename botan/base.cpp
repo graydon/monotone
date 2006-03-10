@@ -5,6 +5,7 @@
 
 #include <botan/base.h>
 #include <botan/version.h>
+#include <botan/parsing.h>
 
 namespace Botan {
 

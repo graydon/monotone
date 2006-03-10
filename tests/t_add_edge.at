@@ -1,6 +1,9 @@
 AT_SETUP([merging an add edge])
 MONOTONE_SETUP
 
+# This test relies on file-suturing
+AT_XFAIL_IF(true)
+
 mkdir zz
 
 ADD_FILE(ancfile, [ancestral file

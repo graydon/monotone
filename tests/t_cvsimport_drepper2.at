@@ -6,13 +6,26 @@ MONOTONE_SETUP
 
 NEED_UNGZB64
 
-AT_DATA(test.manifest, [73c0eabf76cc611c33d821d203a52670b8f6265a  t/libasm/ChangeLog
-411cfd008f4a72e433b48d6421733b6a792ca3b7  t/libelf-po/POTFILES.in
+AT_DATA(test.manifest, [format_version "1"
+
+dir ""
+
+dir "t"
+
+dir "t/libasm"
+
+   file "t/libasm/ChangeLog"
+content @<:@73c0eabf76cc611c33d821d203a52670b8f6265a@:>@
+
+dir "t/libelf-po"
+
+   file "t/libelf-po/POTFILES.in"
+content @<:@411cfd008f4a72e433b48d6421733b6a792ca3b7@:>@
 ])
 
-AT_DATA(test.tags, [initial f5e868d2572c2ae5b50fd93bc8d0cb827e416e50 tester@test.net
-portable-branch-base 1455aa956c2b095d476e803b8b3d85d8e8509bf7 tester@test.net
-portable-branch-fork-20050601T0139 1455aa956c2b095d476e803b8b3d85d8e8509bf7 tester@test.net
+AT_DATA(test.tags, [initial 7be6a094cb29307bed5bbacf40b3f3642222f413 tester@test.net
+portable-branch-base 32ba3f451dcf277762ca1c328043df2e2ceebc17 tester@test.net
+portable-branch-fork-20050601T0139 32ba3f451dcf277762ca1c328043df2e2ceebc17 tester@test.net
 ])
 
 AT_DATA(e.tar.gz.enc, [H4sIAEJyw0IAA+1YbW/bOBLOV+tXEOiHSw+xqhdKTuq9g4u03SuQbIumub1vAS3R
@@ -66,7 +79,7 @@ AT_CHECK(tar -xf e.tar)
 
 AT_CHECK(MONOTONE --branch=foo.bar cvs_import e, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=foo.bar co)
-AT_CHECK(cd foo.bar && MONOTONE automate get_manifest, [], [stdout])
+AT_CHECK(cd foo.bar && MONOTONE automate get_manifest_of, [], [stdout])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp test.manifest stdout)
 AT_CHECK(cd foo.bar && MONOTONE list tags, [], [stdout])

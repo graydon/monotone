@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/asn1_obj.h>
+#include <botan/parsing.h>
 #include <botan/oids.h>
 
 namespace Botan {

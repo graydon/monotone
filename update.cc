@@ -11,7 +11,6 @@
 
 #include "app_state.hh"
 #include "database.hh"
-#include "manifest.hh"
 #include "sanity.hh"
 #include "cert.hh"
 #include "transforms.hh"
@@ -75,7 +74,7 @@ acceptable_descendent(cert_value const & branch,
                       revision_id const & target,
                       app_state & app)
 {
-  L(F("Considering update target %s\n") % target);
+  L(FL("Considering update target %s\n") % target);
   
   // step 1: check the branch
   base64<cert_value> val;
@@ -85,7 +84,7 @@ acceptable_descendent(cert_value const & branch,
   erase_bogus_certs(certs, app);
   if (certs.empty())
     {
-      L(F("%s not in branch %s\n") % target % branch);
+      L(FL("%s not in branch %s\n") % target % branch);
       return false;
     }
   
@@ -94,12 +93,12 @@ acceptable_descendent(cert_value const & branch,
   get_test_results_for_revision(target, target_results, app);
   if (app.lua.hook_accept_testresult_change(base_results, target_results))
     {
-      L(F("%s is acceptable update candidate\n") % target);
+      L(FL("%s is acceptable update candidate\n") % target);
       return true;
     }
   else
     {
-      L(F("%s has unacceptable test results\n") % target);
+      L(FL("%s has unacceptable test results\n") % target);
       return false;
     }
 }

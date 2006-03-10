@@ -80,21 +80,38 @@ template string xform<Botan::Gzip_Decompression>(string const &);
 
 // for use in hexenc encoding
 
+static inline void
+encode_hexenc_inner(string::const_iterator i,
+                    string::const_iterator end,
+                    char *out)
+{
+  static char const *tab = "0123456789abcdef";
+  for (; i != end; ++i)
+    {
+      *out++ = tab[(*i >> 4) & 0xf];
+      *out++ = tab[*i & 0xf];
+    }
+}
+                                  
+
 string encode_hexenc(string const & in)
 {
-  boost::scoped_array<char> buf(new char[in.size() * 2]);
-  static char const *tab = "0123456789abcdef";
-  char *c = buf.get();
-  for (string::const_iterator i = in.begin();
-       i != in.end(); ++i)
+  if (LIKELY(in.size() == constants::idlen / 2))
     {
-      *c++ = tab[(*i >> 4) & 0xf];
-      *c++ = tab[*i & 0xf];
+      char buf[constants::idlen];
+      encode_hexenc_inner(in.begin(), in.end(), buf);
+      return string(buf, constants::idlen);
     }
-  return string(buf.get(), in.size() *2);
+  else
+    {
+      boost::scoped_array<char> buf(new char[in.size() * 2]);
+      encode_hexenc_inner(in.begin(), in.end(), buf.get());
+      return string(buf.get(), in.size() *2);
+    }
 }
 
-static inline char decode_hex_char(char c)
+static inline char 
+decode_hex_char(char c)
 {
   if (c >= '0' && c <= '9')
     return c - '0';
@@ -103,20 +120,36 @@ static inline char decode_hex_char(char c)
   I(false);
 }
 
-string decode_hexenc(string const & in)
+static inline void
+decode_hexenc_inner(string::const_iterator i,
+                    string::const_iterator end,
+                    char *out)
 {
-  I(in.size() % 2 == 0);
-  boost::scoped_array<char> buf(new char[in.size() / 2]);
-  char *c = buf.get();
-  for (string::const_iterator i = in.begin();
-       i != in.end(); ++i)
+  for (; i != end; ++i)
     {
       char t = decode_hex_char(*i++);
       t <<= 4;
       t |= decode_hex_char(*i);
-      *c++ = t;
+      *out++ = t;
     }
-  return string(buf.get(), in.size() / 2);        
+}
+
+string decode_hexenc(string const & in)
+{
+  
+  I(in.size() % 2 == 0);
+  if (LIKELY(in.size() == constants::idlen))
+    {
+      char buf[constants::idlen / 2];
+      decode_hexenc_inner(in.begin(), in.end(), buf);
+      return string(buf, constants::idlen / 2);
+    }
+  else 
+    {
+      boost::scoped_array<char> buf(new char[in.size() / 2]);
+      decode_hexenc_inner(in.begin(), in.end(), buf.get());
+      return string(buf.get(), in.size() / 2);
+    }
 }
 
 struct 
@@ -206,23 +239,13 @@ patch(data const & olddata,
   newdata = result;
 }
 
-void 
-diff(manifest_map const & oldman,
-     manifest_map const & newman,
-     delta & del)
-{
-  string xd;
-  compute_delta(oldman, newman, xd);
-  del = delta(xd);
-}
-
 // identifier (a.k.a. sha1 signature) calculation
 
 void 
 calculate_ident(data const & dat,
                 hexenc<id> & ident)
 {
-  Botan::Pipe p(new Botan::Hash_Filter("SHA-1"));
+  Botan::Pipe p(new Botan::Hash_Filter("SHA-160"));
   p.process_msg(dat());
 
   id ident_decoded(p.read_all_as_string());
@@ -249,62 +272,6 @@ calculate_ident(file_data const & dat,
   ident = tmp;
 }
 
-void 
-calculate_ident(manifest_map const & m,
-                manifest_id & ident)
-{
-  size_t sz = 0;
-  static size_t bufsz = 0;
-  static char *buf = NULL;
-
-  for (manifest_map::const_iterator i = m.begin();
-       i != m.end(); ++i)
-    {
-      sz += i->second.inner()().size();
-      sz += i->first.as_internal().size();
-      sz += 3;      
-    }
-
-  if (sz > bufsz)
-    {
-      bufsz = sz;
-      buf = static_cast<char *>(realloc(buf, bufsz));
-      I(buf);
-    }
-  
-  // this has to go quite fast, for cvs importing
-  char *c = buf;
-  for (manifest_map::const_iterator i = m.begin();
-       i != m.end(); ++i)
-    {
-      memcpy(c, i->second.inner()().data(), i->second.inner()().size());
-      c += i->second.inner()().size();
-      *c++ = ' '; 
-      *c++ = ' '; 
-      memcpy(c, i->first.as_internal().data(), i->first.as_internal().size());
-      c += i->first.as_internal().size();
-      *c++ = '\n'; 
-    }
-  
-  Botan::Pipe p(new Botan::Hash_Filter("SHA-1"));
-  p.process_msg(reinterpret_cast<Botan::byte const*>(buf), sz);
-
-  id ident_decoded(p.read_all_as_string());
-  hexenc<id> raw_ident;
-  encode_hexenc(ident_decoded, raw_ident);  
-  ident = manifest_id(raw_ident);    
-}
-
-void 
-calculate_ident(manifest_data const & dat,
-                manifest_id & ident)
-{
-  hexenc<id> tmp;
-  calculate_ident(dat.inner(), tmp);
-  ident = tmp;
-}
-
-
 void calculate_ident(revision_data const & dat,
                      revision_id & ident)
 {
@@ -320,6 +287,22 @@ void calculate_ident(revision_set const & cs,
   hexenc<id> tid;
   write_revision_set(cs, tmp);
   calculate_ident(tmp, tid);
+  ident = tid;
+}
+
+// Variant which calculates the "manifest part" of a roster; this does
+// not include the local sequence numbers or markings, but produces
+// the manifest_id which is stored in the public revision_set object.
+void calculate_ident(roster_t const & ros,
+                     manifest_id & ident)
+{
+  data tmp;
+  hexenc<id> tid;
+  if (!ros.all_nodes().empty())
+    {
+      write_manifest_of_roster(ros, tmp);
+      calculate_ident(tmp, tid);
+    }
   ident = tid;
 }
 
@@ -349,8 +332,8 @@ calculate_ident(file_path const & file,
       // no conversions necessary, use streaming form
       // Best to be safe and check it isn't a dir.
       assert_path_is_file(file);
-      Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
-      Botan::DataSource_Stream infile(file.as_external());
+      Botan::Pipe p(new Botan::Hash_Filter("SHA-160"), new Botan::Hex_Encoder());
+      Botan::DataSource_Stream infile(file.as_external(), true);
       p.process_msg(infile);
 
       ident = lowercase(p.read_all_as_string());
@@ -518,7 +501,7 @@ charset_convert(string const & src_charset,
     dst = src;
   else
     {
-      L(F("converting %d bytes from %s to %s\n") % src.size() 
+      L(FL("converting %d bytes from %s to %s\n") % src.size() 
         % src_charset % dst_charset);
       char * converted = stringprep_convert(src.c_str(),
                                             dst_charset.c_str(),
@@ -536,31 +519,36 @@ system_to_utf8(external const & ext, utf8 & utf)
 {
   string out;
   charset_convert(system_charset(), "UTF-8", ext(), out);
+  I(utf8_validate(out));
   utf = out;
 }
 
 size_t
 display_width(utf8 const & utf)
 {
-  // this function is called many thousands of times by the tickers, so we
-  // try and avoid performing heap allocations by starting with a reasonable
-  // size buffer, and only ever growing the buffer if needed.
-  static size_t widebuf_sz = 128;
-  static boost::scoped_array<wchar_t> widebuf(new wchar_t[widebuf_sz]);
-
-  size_t len = mbstowcs(0, utf().c_str(), 0) + 1;
-
-  if (len == static_cast<size_t>(-1))
-    return utf().length(); // conversion failed; punt and return original length
-
-  if (len > widebuf_sz) {
-    widebuf.reset(new wchar_t[len]);
-    widebuf_sz = len;
-  }
-
-  mbstowcs(widebuf.get(), utf().c_str(), widebuf_sz);
-
-  return wcswidth(widebuf.get(), widebuf_sz);
+  std::string const & u = utf();
+  size_t sz = 0;
+  std::string::const_iterator i = u.begin();
+  while (i != u.end())
+    {
+      if (UNLIKELY(static_cast<u8>(*i) & static_cast<u8>(0x80)))
+        {
+          // A UTF-8 escape: consume the full escape.
+          ++i;
+          ++sz;
+          while (i != u.end() 
+                 && (static_cast<u8>(*i) & static_cast<u8>(0x80))
+                 && (!(static_cast<u8>(*i) & static_cast<u8>(0x40))))
+            ++i;
+        }
+      else
+        {
+          // An ASCII-like character in the range 0..0x7F.
+          ++i;
+          ++sz;
+        }
+    }
+  return sz;
 }
 
 // Lots of gunk to avoid charset conversion as much as possible.  Running
@@ -640,6 +628,89 @@ utf8_to_system(utf8 const & utf, external & ext)
   ext = out;
 }
 
+// utf8_validate and the helper functions is_valid_unicode_char and
+// utf8_consume_continuation_char g_utf8_validate and supporting functions
+// from the file gutf8.c of the GLib library.
+
+static bool
+is_valid_unicode_char(u32 c)
+{
+  return (c < 0x110000 &&
+          ((c & 0xfffff800) != 0xd800) &&
+          (c < 0xfdd0 || c > 0xfdef) &&
+          (c & 0xfffe) != 0xfffe);
+}
+
+static bool
+utf8_consume_continuation_char(u8 c, u32 & val)
+{
+  if ((c & 0xc0) != 0x80)
+    return false;
+  val <<= 6;
+  val |= c & 0x3f;
+  return true;
+}
+
+bool
+utf8_validate(utf8 const & utf)
+{
+  std::string::size_type left = utf().size();
+  u32 min, val;
+
+  for (std::string::const_iterator i = utf().begin();
+       i != utf().end(); ++i, --left)
+  {
+    u8 c = *i;
+    if (c < 128)
+      continue;
+    if ((c & 0xe0) == 0xc0)
+    {
+      if (left < 2)
+        return false;
+      if ((c & 0x1e) == 0)
+        return false;
+      ++i; --left; c = *i;
+      if ((c & 0xc0) != 0x80)
+        return false;
+    }
+    else
+    {
+      if ((c & 0xf0) == 0xe0)
+      {
+        if (left < 3)
+          return false;
+        min = 1 << 11;
+        val = c & 0x0f;
+        goto two_remaining;
+      }
+      else if ((c & 0xf8) == 0xf0)
+      {
+        if (left < 4)
+          return false;
+        min = 1 << 16;
+        val = c & 0x07;
+      }
+      else
+        return false;
+      ++i; --left; c = *i;
+      if (!utf8_consume_continuation_char(c, val))
+        return false;
+two_remaining:
+      ++i; --left; c = *i;
+      if (!utf8_consume_continuation_char(c, val))
+        return false;
+      ++i; --left; c = *i;
+      if (!utf8_consume_continuation_char(c, val))
+        return false;
+      if (val < min)
+        return false;
+      if (!is_valid_unicode_char(val))
+        return false;
+    }
+  }
+  return true;
+}
+
 static string 
 decode_idna_error(int err)
 {
@@ -664,7 +735,7 @@ void
 ace_to_utf8(ace const & a, utf8 & utf)
 {
   char *out = NULL;
-  L(F("converting %d bytes from IDNA ACE to UTF-8\n") % a().size());
+  L(FL("converting %d bytes from IDNA ACE to UTF-8\n") % a().size());
   int res = idna_to_unicode_8z8z(a().c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
   N(res == IDNA_SUCCESS || res == IDNA_NO_ACE_PREFIX,
     F("error converting %d UTF-8 bytes to IDNA ACE: %s")
@@ -678,7 +749,7 @@ void
 utf8_to_ace(utf8 const & utf, ace & a)
 {
   char *out = NULL;
-  L(F("converting %d bytes from UTF-8 to IDNA ACE\n") % utf().size());
+  L(FL("converting %d bytes from UTF-8 to IDNA ACE\n") % utf().size());
   int res = idna_to_ascii_8z(utf().c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
   N(res == IDNA_SUCCESS,
     F("error converting %d UTF-8 bytes to IDNA ACE: %s")
@@ -826,7 +897,7 @@ line_end_convert(string const & linesep, string const & src, string & dst)
   else if (linesep == "LF"|| linesep == "\n")
     linesep_str = "\n";
 
-  L(F("doing linesep conversion to %s\n") % linesep);  
+  L(FL("doing linesep conversion to %s\n") % linesep);  
   vector<string> tmp;
   split_into_lines(src, tmp);
   join_lines(tmp, dst, linesep_str);
@@ -1115,6 +1186,229 @@ static void encode_test()
   check_idna_encoding();
 }
 
+static void utf8_validation_test()
+{
+  // these tests are based on the tests from the file utf8-validate.c of the
+  // GLib library, and also include sequences from Markus Kuhn's UTF-8
+  // example files.
+  const char* good_strings[] = {
+    "this is a valid but boring ASCII string",
+    "\x28\x28\x56\xe2\x8d\xb3\x56\x29\x3d\xe2\x8d\xb3\xe2\x8d\xb4\x56\x29\x2f\x56\xe2\x86\x90\x2c\x56\x20\x20\x20\x20\xe2\x8c\xb7\xe2\x86\x90\xe2\x8d\xb3\xe2\x86\x92\xe2\x8d\xb4\xe2\x88\x86\xe2\x88\x87\xe2\x8a\x83\xe2\x80\xbe\xe2\x8d\x8e\xe2\x8d\x95\xe2\x8c\x88",
+    "\xe2\x80\x98\x73\x69\x6e\x67\x6c\x65\xe2\x80\x99\x20\x61\x6e\x64\x20\xe2\x80\x9c\x64\x6f\x75\x62\x6c\x65\xe2\x80\x9d\x20\x71\x75\x6f\x74\x65\x73",
+    "\xe2\x80\xa2\x20\x43\x75\x72\x6c\x79\x20\x61\x70\x6f\x73\x74\x72\x6f\x70\x68\x65\x73\x3a\x20\xe2\x80\x9c\x57\x65\xe2\x80\x99\x76\x65\x20\x62\x65\x65\x6e\x20\x68\x65\x72\x65\xe2\x80\x9d",
+    "\xe2\x80\x9a\x64\x65\x75\x74\x73\x63\x68\x65\xe2\x80\x98\x20\xe2\x80\x9e\x41\x6e\x66\xc3\xbc\x68\x72\x75\x6e\x67\x73\x7a\x65\x69\x63\x68\x65\x6e\xe2\x80\x9c",
+    "\xe2\x80\xa0\x2c\x20\xe2\x80\xa1\x2c\x20\xe2\x80\xb0\x2c\x20\xe2\x80\xa2\x2c\x20\x33\xe2\x80\x93\x34\x2c\x20\xe2\x80\x94\x2c\x20\xe2\x88\x92\x35\x2f\x2b\x35\x2c\x20\xe2\x84\xa2\x2c\x20\xe2\x80\xa6",
+    "\xc2\xa9\xc2\xa9\xc2\xa9",
+    "\xe2\x89\xa0\xe2\x89\xa0",
+    "\xce\xba\xe1\xbd\xb9\xcf\x83\xce\xbc\xce\xb5",
+    "\x00",
+    "\xc2\x80",
+    "\xe0\xa0\x80",
+    "\xf0\x90\x80\x80",
+    "\x7f",
+    "\xdf\xbf",
+    "\xed\x9f\xbf",
+    "\xee\x80\x80",
+    "\xef\xbf\xbd",
+    0
+  };
+  const char* bad_strings[] = {
+    "\xf8\x88\x80\x80\x80",
+    "\xfc\x84\x80\x80\x80\x80",
+    "\xef\xbf\xbf",
+    "\xf7\xbf\xbf\xbf",
+    "\xfb\xbf\xbf\xbf\xbf",
+    "\xfd\xbf\xbf\xbf\xbf\xbf",
+    "\xf4\x8f\xbf\xbf",
+    "\xf4\x90\x80\x80",
+    "\x80",
+    "\xbf",
+    "\x80\xbf",
+    "\x80\xbf\x80",
+    "\x80\xbf\x80\xbf",
+    "\x80\xbf\x80\xbf\x80",
+    "\x80\xbf\x80\xbf\x80\xbf",
+    "\x80\xbf\x80\xbf\x80\xbf\x80",
+    "\x80",
+    "\x81",
+    "\x82",
+    "\x83",
+    "\x84",
+    "\x85",
+    "\x86",
+    "\x87",
+    "\x88",
+    "\x89",
+    "\x8a",
+    "\x8b",
+    "\x8c",
+    "\x8d",
+    "\x8e",
+    "\x8f",
+    "\x90",
+    "\x91",
+    "\x92",
+    "\x93",
+    "\x94",
+    "\x95",
+    "\x96",
+    "\x97",
+    "\x98",
+    "\x99",
+    "\x9a",
+    "\x9b",
+    "\x9c",
+    "\x9d",
+    "\x9e",
+    "\x9f",
+    "\xa0",
+    "\xa1",
+    "\xa2",
+    "\xa3",
+    "\xa4",
+    "\xa5",
+    "\xa6",
+    "\xa7",
+    "\xa8",
+    "\xa9",
+    "\xaa",
+    "\xab",
+    "\xac",
+    "\xad",
+    "\xae",
+    "\xaf",
+    "\xb0",
+    "\xb1",
+    "\xb2",
+    "\xb3",
+    "\xb4",
+    "\xb5",
+    "\xb6",
+    "\xb7",
+    "\xb8",
+    "\xb9",
+    "\xba",
+    "\xbb",
+    "\xbc",
+    "\xbd",
+    "\xbe",
+    "\xbf",
+    "\xc0\x20",
+    "\xc1\x20",
+    "\xc2\x20",
+    "\xc3\x20",
+    "\xc4\x20",
+    "\xc5\x20",
+    "\xc6\x20",
+    "\xc7\x20",
+    "\xc8\x20",
+    "\xc9\x20",
+    "\xca\x20",
+    "\xcb\x20",
+    "\xcc\x20",
+    "\xcd\x20",
+    "\xce\x20",
+    "\xcf\x20",
+    "\xd0\x20",
+    "\xd1\x20",
+    "\xd2\x20",
+    "\xd3\x20",
+    "\xd4\x20",
+    "\xd5\x20",
+    "\xd6\x20",
+    "\xd7\x20",
+    "\xd8\x20",
+    "\xd9\x20",
+    "\xda\x20",
+    "\xdb\x20",
+    "\xdc\x20",
+    "\xdd\x20",
+    "\xde\x20",
+    "\xdf\x20",
+    "\xe0\x20",
+    "\xe1\x20",
+    "\xe2\x20",
+    "\xe3\x20",
+    "\xe4\x20",
+    "\xe5\x20",
+    "\xe6\x20",
+    "\xe7\x20",
+    "\xe8\x20",
+    "\xe9\x20",
+    "\xea\x20",
+    "\xeb\x20",
+    "\xec\x20",
+    "\xed\x20",
+    "\xee\x20",
+    "\xef\x20",
+    "\xf0\x20",
+    "\xf1\x20",
+    "\xf2\x20",
+    "\xf3\x20",
+    "\xf4\x20",
+    "\xf5\x20",
+    "\xf6\x20",
+    "\xf7\x20",
+    "\xf8\x20",
+    "\xf9\x20",
+    "\xfa\x20",
+    "\xfb\x20",
+    "\xfc\x20",
+    "\xfd\x20",
+    "\x20\xc0",
+    "\x20\xe0\x80",
+    "\x20\xf0\x80\x80",
+    "\x20\xf8\x80\x80\x80",
+    "\x20\xfc\x80\x80\x80\x80",
+    "\x20\xdf",
+    "\x20\xef\xbf",
+    "\x20\xf7\xbf\xbf",
+    "\x20\xfb\xbf\xbf\xbf",
+    "\x20\xfd\xbf\xbf\xbf\xbf",
+    "\x20\xfe\x20",
+    "\x20\xff\x20",
+    "\x20\xc0\xaf\x20",
+    "\x20\xe0\x80\xaf\x20",
+    "\x20\xf0\x80\x80\xaf\x20",
+    "\x20\xf8\x80\x80\x80\xaf\x20",
+    "\x20\xfc\x80\x80\x80\x80\xaf\x20",
+    "\x20\xc1\xbf\x20",
+    "\x20\xe0\x9f\xbf\x20",
+    "\x20\xf0\x8f\xbf\xbf\x20",
+    "\x20\xf8\x87\xbf\xbf\xbf\x20",
+    "\x20\xfc\x83\xbf\xbf\xbf\xbf\x20",
+    "\x20\xc0\x80\x20",
+    "\x20\xe0\x80\x80\x20",
+    "\x20\xf0\x80\x80\x80\x20",
+    "\x20\xf8\x80\x80\x80\x80\x20",
+    "\x20\xfc\x80\x80\x80\x80\x80\x20",
+    "\x20\xed\xa0\x80\x20",
+    "\x20\xed\xad\xbf\x20",
+    "\x20\xed\xae\x80\x20",
+    "\x20\xed\xaf\xbf\x20",
+    "\x20\xed\xb0\x80\x20",
+    "\x20\xed\xbe\x80\x20",
+    "\x20\xed\xbf\xbf\x20",
+    "\x20\xed\xa0\x80\xed\xb0\x80\x20",
+    "\x20\xed\xa0\x80\xed\xbf\xbf\x20",
+    "\x20\xed\xad\xbf\xed\xb0\x80\x20",
+    "\x20\xed\xad\xbf\xed\xbf\xbf\x20",
+    "\x20\xed\xae\x80\xed\xb0\x80\x20",
+    "\x20\xed\xae\x80\xed\xbf\xbf\x20",
+    "\x20\xed\xaf\xbf\xed\xb0\x80\x20",
+    "\x20\xed\xaf\xbf\xed\xbf\xbf\x20",
+    "\x20\xef\xbf\xbe\x20",
+    "\x20\xef\xbf\xbf\x20",
+    0
+  };
+
+  for (int i = 0; good_strings[i]; ++i)
+    BOOST_CHECK(utf8_validate(string(good_strings[i])) == true);
+
+  for (int i = 0; bad_strings[i]; ++i)
+    BOOST_CHECK(utf8_validate(string(bad_strings[i])) == false);
+}
+
 void 
 add_transform_tests(test_suite * suite)
 {
@@ -1126,6 +1420,7 @@ add_transform_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&join_lines_test));
   suite->add(BOOST_TEST_CASE(&strip_ws_test));
   suite->add(BOOST_TEST_CASE(&encode_test));
+  suite->add(BOOST_TEST_CASE(&utf8_validation_test));
 }
 
 #endif // BUILD_UNIT_TESTS

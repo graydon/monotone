@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/x509_crl.h>
+#include <botan/parsing.h>
 #include <botan/bigint.h>
 #include <botan/conf.h>
 #include <botan/oids.h>

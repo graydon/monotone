@@ -14,7 +14,6 @@ MOST_SOURCES =								\
          key_store.cc key_store.hh					\
          file_io.cc file_io.hh						\
          keys.cc keys.hh						\
-         manifest.cc manifest.hh					\
          packet.cc packet.hh						\
          sanity.cc sanity.hh						\
          vocab.cc vocab.hh vocab_terms.hh numeric_vocab.hh		\
@@ -23,6 +22,8 @@ MOST_SOURCES =								\
          ui.cc ui.hh							\
          schema_migration.cc schema_migration.hh			\
          constants.cc constants.hh					\
+         refiner.cc refiner.hh						\
+         enumerator.cc enumerator.hh					\
          netsync.cc netsync.hh						\
          netcmd.cc netcmd.hh						\
          merkle_tree.cc merkle_tree.hh					\
@@ -31,7 +32,8 @@ MOST_SOURCES =								\
          lcs.cc lcs.hh							\
          rcs_import.cc rcs_import.hh					\
          revision.cc revision.hh					\
-	 change_set.cc change_set.hh					\
+	 cset.cc cset.hh						\
+	 roster.cc roster.hh						\
          mt_version.cc mt_version.hh					\
          automate.cc automate.hh					\
          database_check.cc database_check.hh				\
@@ -44,13 +46,18 @@ MOST_SOURCES =								\
          globish.cc globish.hh                                          \
          string_queue.cc string_queue.hh                                \
          paths.cc paths.hh                                              \
+         roster_merge.cc roster_merge.hh                                \
+         merge.cc merge.hh                                              \
+         legacy.cc legacy.hh                                            \
+                                                                        \
+         lru_cache.h                                                    \
                                                                         \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
 	 netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
-         package_full_revision.c package_full_revision.h options.hh     \
-         i18n.h hash_map.hh
+         package_full_revision.c package_full_revision.h options.hh	\
+         i18n.h hash_map.hh parallel_iter.hh safe_map.hh pch.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -101,7 +108,7 @@ BOTAN_SOURCES =                                                                 
         botan/mp_comba.cpp botan/mp_core.cpp botan/mp_fkmul.cpp		\
         botan/mp_misc.cpp botan/mp_mul.cpp botan/mp_shift.cpp		\
         botan/mp_smul.cpp botan/mutex.cpp botan/numthry.cpp		\
-        botan/ofb.cpp botan/oids.cpp botan/parse.cpp botan/pbes1.cpp	\
+        botan/ofb.cpp botan/oids.cpp botan/parsing.cpp botan/pbes1.cpp	\
         botan/pbes2.cpp botan/pem.cpp botan/pipe.cpp botan/pipe_io.cpp	\
         botan/pipe_rw.cpp botan/pk_algs.cpp botan/pk_core.cpp		\
         botan/pk_filts.cpp botan/pk_keys.cpp botan/pk_util.cpp		\
@@ -117,6 +124,7 @@ BOTAN_SOURCES =                                                                 
         botan/des.cpp botan/des_tab.cpp botan/pkcs5.cpp 		\
         botan/x509self.cpp botan/x509stor.cpp 				\
         botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp 		\
+        botan/x931_rng.cpp botan/out_buf.cpp botan/bit_ops.cpp \
         \
         botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h	\
         botan/lookup.h botan/randpool.h botan/version.h	\
@@ -138,7 +146,7 @@ BOTAN_SOURCES =                                                                 
         botan/x509stor.h botan/base64.h botan/crc32.h botan/eme.h	\
         botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h	\
         botan/crl_ent.h botan/emsa.h	\
-        botan/if_algo.h botan/mp_madd.h botan/pkcs8.h botan/socket.h	\
+        botan/if_algo.h botan/mp_madd.h botan/pkcs8.h \
         botan/x919_mac.h botan/basefilt.h botan/ctr.h botan/engine.h	\
         botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h	\
         botan/base.h botan/cts.h botan/enums.h botan/kdf.h		\
@@ -150,7 +158,9 @@ BOTAN_SOURCES =                                                                 
         botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h	\
         botan/util.h botan/charset.h botan/hash_id.h 			\
         botan/des.h botan/pkcs5.h					\
-	botan/x931_rng.cpp botan/x931_rng.h botan/sha256.h
+        botan/x931_rng.h botan/sha256.h \
+        botan/parsing.h botan/out_buf.h botan/bit_ops.h
+
 
 
 BOOST_SANDBOX_SOURCES = \
@@ -164,7 +174,7 @@ SQLITE_SOURCES = \
         sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
         sqlite/hash.c sqlite/insert.c \
         sqlite/legacy.c sqlite/main.c sqlite/opcodes.c \
-        sqlite/os_unix.c sqlite/os_win.c \
+        sqlite/os.c sqlite/os_unix.c sqlite/os_win.c \
         sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c \
         sqlite/random.c sqlite/select.c sqlite/table.c sqlite/tokenize.c \
         sqlite/trigger.c sqlite/update.c sqlite/utf.c \
@@ -175,8 +185,8 @@ SQLITE_SOURCES = \
 	sqlite/analyze.c sqlite/vdbefifo.c \
 	sqlite/complete.c \
 	\
-        sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
-        sqlite/os_common.h sqlite/os_unix.h sqlite/os_win.h \
+        sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
+        sqlite/os_common.h \
         sqlite/parse.h sqlite/sqlite3.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/vdbeInt.h \
 	sqlite/pager.h
 
@@ -208,15 +218,17 @@ UNIX_PLATFORM_SOURCES = \
 
 WIN32_PLATFORM_SOURCES = \
 	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/terminal.cc \
-	win32/inodeprint.cc win32/fs.cc win32/wcwidth.c
+	win32/inodeprint.cc win32/fs.cc
 
 # primaries
 
 bin_PROGRAMS = monotone
 check_PROGRAMS = unit_tests
 noinst_PROGRAMS = txt2c 
+EXTRA_PROGRAMS = usher 
 
 monotone_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
+usher_SOURCES = contrib/usher.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
 
 txt2c_SOURCES = txt2c.cc
@@ -230,6 +242,9 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(NETXX_SOURCES) \
 			$(LUA_SOURCES) \
 			$(SQLITE_SOURCES)
+
+htmldir = $(datadir)/doc/monotone
+html_DATA = monotone.html
 
 # flags
 

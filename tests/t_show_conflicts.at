@@ -1,0 +1,32 @@
+AT_SETUP([show_conflicts])
+MONOTONE_SETUP
+
+ADD_FILE(foo, [file foo
+])
+ADD_FILE(bar, [file bar
+])
+COMMIT(branch)
+BASE=`BASE_REVISION`
+
+AT_CHECK(MONOTONE mv -e foo baz, [], [ignore], [ignore])
+AT_CHECK(echo xxx >>bar)
+COMMIT(branch)
+LEFT=`BASE_REVISION`
+
+AT_CHECK(MONOTONE update -r $BASE, [], [ignore], [ignore])
+AT_CHECK(MONOTONE mv -e foo quux, [], [ignore], [ignore])
+AT_CHECK(echo yyy >>bar)
+COMMIT(branch)
+RIGHT=`BASE_REVISION`
+
+AT_CHECK(MONOTONE show_conflicts $LEFT $RIGHT, [], [ignore], [stderr])
+AT_CHECK(mv stderr conflicts)
+
+AT_CHECK(QGREP("There are 1 node_name_conflicts" conflicts))
+AT_CHECK(QGREP("There are 1 file_content_conflicts" conflicts))
+AT_CHECK(QGREP("There are 0 node_attr_conflicts" conflicts))
+AT_CHECK(QGREP("There are 0 orphaned_node_conflicts" conflicts))
+AT_CHECK(QGREP("There are 0 rename_target_conflicts" conflicts))
+AT_CHECK(QGREP("There are 0 directory_loop_conflicts" conflicts))
+
+AT_CLEANUP

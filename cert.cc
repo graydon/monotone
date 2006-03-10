@@ -48,7 +48,7 @@ bogus_cert_p
     cert_status status = check_cert(app, c);
     if (status == cert_ok)
       {
-        L(F("cert ok\n"));
+        L(FL("cert ok\n"));
         return false;
       }
     else if (status == cert_bad)
@@ -120,7 +120,7 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
                                                get<1>(i->first),
                                                decoded_value))
         {
-          L(F("trust function liked %d signers of %s cert on manifest %s\n")
+          L(FL("trust function liked %d signers of %s cert on manifest %s\n")
             % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
           tmp_certs.push_back(*(i->second.second));
         }
@@ -173,7 +173,7 @@ erase_bogus_certs(vector< revision<cert> > & certs,
                                                get<1>(i->first),
                                                decoded_value))
         {
-          L(F("trust function liked %d signers of %s cert on revision %s\n")
+          L(FL("trust function liked %d signers of %s cert on revision %s\n")
             % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
           tmp_certs.push_back(*(i->second.second));
         }
@@ -302,7 +302,7 @@ cert_signable_text(cert const & t,
                        string & out)
 {
   out = (boost::format("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
-  L(F("cert: signable text %s\n") % out);
+  L(FL("cert: signable text %s\n") % out);
 }
 
 void 
@@ -321,15 +321,7 @@ bool
 priv_key_exists(app_state & app, rsa_keypair_id const & id)
 {
 
-  if (app.keys.key_pair_exists(id))
-    return true;
-
-  keypair kp;
-
-  if (app.lua.hook_get_key_pair(id, kp))
-    return true;
-
-  return false;
+  return app.keys.key_pair_exists(id);
 }
 
 // Loads a key pair for a given key id, from either a lua hook
@@ -351,41 +343,12 @@ load_key_pair(app_state & app,
     }
   else
     {
-      keypair kskeys, luakeys;
-      bool haveks = false, havelua = false;
-
-      if (app.keys.key_pair_exists(id))
-        {
-          app.keys.get_key_pair(id, kskeys);
-          haveks = true;
-        }
-      havelua = app.lua.hook_get_key_pair(id, luakeys);
-
-      N(haveks || havelua,
-        F("no private key '%s' found in key store or get_priv_key hook") % id);
-
-      if (havelua)
-        {
-          if (haveks)
-            {
-              // We really don't want the database key and the rcfile key
-              // to differ.
-              N(/*keys_match(id, kskeys.priv, id, luakeys.priv)
-                && */keys_match(id, kskeys.pub, id, luakeys.pub),
-                  F("mismatch between key '%s' in key store"
-                    " and get_key_pair hook") % id);
-            }
-          kp = luakeys;
-        }
-      else if (haveks)
-        {
-          kp = kskeys;
-        }
-
+      N(app.keys.key_pair_exists(id),
+        F("no key pair '%s' found in key store '%s'")
+        % id % app.keys.get_key_dir());
+      app.keys.get_key_pair(id, kp);
       if (persist_ok)
-        {
-          keys.insert(make_pair(id, kp));
-        }
+        keys.insert(make_pair(id, kp));
     }
 }
 

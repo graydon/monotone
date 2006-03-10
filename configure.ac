@@ -2,21 +2,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.24, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.26pre2, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
 AM_CONFIG_HEADER([config.h])
-
-# we have some sse2 code in cryptopp 
-# currently gcc does some surprising things here, so we disable it
-# completely.
-# AC_CHECK_HEADERS(emmintrin.h, [CXXFLAGS_MSSE2="-msse2"])
-
-# autoconf turns on -g by default unless a user overrides.  this is
-# nice for smallish programs but it makes build times insane for
-# spirit-based programs. we turn it off here unless the user turned it
-# on themselves.
 
 # Checks for programs.
 AC_PROG_CXX
@@ -60,16 +50,13 @@ echo 'int main(void) { return 0; }' >> conftest.c
 if ${XGETTEXT} --flag printf:1:c-format -o conftest.po conftest.c \
     >/dev/null 2>&1
 then
-    XGETTEXT_OPTIONS="--keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_ \
-                      --flag=F:1:c-format --flag=FP:1:c-format \
-                      --flag=FP:2:c-format"
     xgettext_has_flag=yes
+    touch xgettext.opts
 else
-    XGETTEXT_OPTIONS="--keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_"
+    echo 'XGETTEXT_OPTIONS = $(XGETTEXT_OPTIONS_NO_FLAG)' >xgettext.opts
     xgettext_has_flag=no
 fi
 rm -f conftest.c conftest.po
-echo "XGETTEXT_OPTIONS = ${XGETTEXT_OPTIONS}" >xgettext.opts
 AC_MSG_RESULT(${xgettext_has_flag})
 
 # Checks for idna stuff
@@ -290,20 +277,11 @@ fi
 
 AC_CACHE_CHECK([if this is Windows],
        ac_win32, [
-       AC_TRY_RUN([
-#ifdef WIN32
-#include <windows.h>
-int main(void)
-{
-  return 0;
-}
-#else
-__wont_compile_
-#endif
-],
-        ac_win32=yes,
-        ac_win32=no,
-        ac_win32=no)])
+       AC_TRY_COMPILE([#include <windows.h>],
+                      [HANDLE h; DWORD d;],
+                      ac_win32=yes,
+                      ac_win32=no)
+])
 if test "$ac_win32" = "yes"; then
    AM_CONDITIONAL(WIN32_PLATFORM, true)
 else
@@ -322,21 +300,16 @@ AC_CACHE_CHECK([presence of IPv6],
       ac_inet6=no
       if test x"${enable_ipv6}" = x"auto" || test x"${enable_ipv6}" = x"yes"
       then
-         AC_TRY_RUN([
-#if defined(WIN32)
-# include <winsock2.h>
-#else
-# include <sys/types.h>
-# include <sys/socket.h>
-# include <netinet/in.h>
-# include <arpa/inet.h>
-#endif
-int main(void)
-{
-  sockaddr_in6 sa_in6;
-}
-],
-            ac_inet6=yes
+         AC_TRY_COMPILE([#ifdef WIN32
+                         #include <winsock2.h>
+                         #else
+                         #include <sys/types.h>
+                         #include <sys/socket.h>
+                         #include <netinet/in.h>
+                         #include <arpa/inet.h>
+                         #endif],
+                        [sockaddr_in6 sa_in6;],
+                        ac_inet6=yes
          )
 
          if test x"${enable_ipv6}" = x"yes" && test x"${ac_inet6}" = x"no"
@@ -432,7 +405,7 @@ AC_DEFUN([TYPE_SOCKLEN_T],
   AC_TRY_COMPILE(
   [#include <sys/types.h>
    #include <sys/socket.h>],
-  [socklen_t len = 42; return 0;],
+  [socklen_t len = 42;],
   ac_cv_type_socklen_t=yes,
   ac_cv_type_socklen_t=no)
 ])
@@ -447,7 +420,7 @@ AC_DEFUN([TYPE_PID_T],
 [
   AC_TRY_COMPILE(
   [#include <sys/types.h>],
-  [pid_t pid = 42; return 0;],
+  [pid_t pid = 42; ],
   ac_cv_type_pid_t=yes,
   ac_cv_type_pid_t=no)
 ])

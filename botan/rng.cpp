@@ -7,6 +7,7 @@
 #include <botan/mutex.h>
 #include <botan/lookup.h>
 #include <botan/init.h>
+#include <botan/util.h>
 #include <memory>
 #include <vector>
 

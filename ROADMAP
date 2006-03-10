@@ -32,7 +32,7 @@ ROADMAP
 - modify database code to use sqlite3 pre-parsed queries, blobs
 - change netsync to globbing branches, not using collections
 - implement improved ACL/permission system for default trust rules
-- implement "merge into working copy" approach to merging
+- implement "merge into workspace" approach to merging
 - emacs integration
 
   ( probably call it "1.0" or "stable" around here )

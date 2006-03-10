@@ -22,11 +22,11 @@
 #  - Browse in branches, revisions, diff files, view logs ...
 #
 # Needed tools:
-#  monotone 0.19 or compatible
+#  monotone 0.19, 0.23, 0.26 or compatible
 #  dialog (tested Version 0.9b)
-#  bash, sh, ash, dash
+#  bash, sh, dash
 #  less, vi or vim (use $VISUAL or $PAGER)
-#  cat, cut, echo, eval, head, sort, tail, wc, xargs ...
+#  cat, cut, echo, eval, head, sort, tail, tr, wc, xargs ...
 #
 # History:
 # 2005/5/5 Version 0.1.1 Henry@BigFoot.de
@@ -111,11 +111,25 @@
 # Temp files without tailing dot.
 # New option: Sort by Date/Time with up or down.
 # Fix: Parent of merge, if certs list from cache (ncolor).
+#
+# 2006-01-17 Version 0.1.14 Henry@BigFoot.de
+# One call for getting monotone version.
+# Warn before using "automate ancestor" on big database.
+#
+# 2006-01-21 Version 0.1.15 Henry@BigFoot.de
+# Fix: Author colors >8 wrong handled.
+# Faster brief selection menu, without changelog (do_log_brief_ancestors).
+# Skip merges from more as one person in brief selection.
+# Remove forbitten chars from changelog with tr. added backslash.
+#
+# 2006-01-23 Version 0.1.16 Henry@BigFoot.de
+# More posix shell syntax for dash.
+# do_head_sel: Prints error message from mt (it's first call with db file).
 
 # Known Bugs / ToDo-List:
 # * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.1.13"
+VERSION="0.1.16"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
@@ -162,7 +176,7 @@ FORMAT_LOG="F"
 FORMAT_COLOR="\\Z7\\Zb"
 
 # How get automate ancestors: I=interal function, A=automate ancestors,
-# L=Log brief
+# L=log brief with changelog, B=brief log
 ANCESTORS="L"
 
 # read saved settings
@@ -243,7 +257,7 @@ do_clear_on_exit()
 {
     rm -f $TEMPFILE.branches $TEMPFILE.ancestors $TEMPFILE.toposort \
       $TEMPFILE.action-select $TEMPFILE.menu $TEMPFILE.input \
-      $TEMPFILE.ncolor $TEMPFILE.tfc
+      $TEMPFILE.ncolor $TEMPFILE.tfc $TEMPFILE.error
 
     if [ "$CACHE" != "1" ]
     then
@@ -288,7 +302,7 @@ fill_date_key()
 {
     local in_file=$1
     local out_file=$2
-    local short_hash dat bra aut log lineno color count tfc
+    local hash short_hash dat bra aut log lineno color tfc
 
     line_count=`wc -l < $in_file`
     if [ "$line_count" -eq 0 ]
@@ -306,16 +320,16 @@ fill_date_key()
     do
 	if [ -n "$line_count" ]
 	then
-	    let lineno++
-	    echo "$(( 100*$lineno/line_count ))"
+	    lineno=$(( $lineno+1 ))
+	    echo "$(( 100*$lineno/$line_count ))"
 	else
 	    echo -n "." 1>&2
 	fi
 
 	short_hash=`echo $hash | cut -c 1-$HASH_TRIM`
 
-	# get certs of revision, cache it
-	monotone --db=$DB list certs $hash > $tfc
+	# get certs of revision, remove special chars, cache it
+	monotone --db=$DB list certs $hash | tr '\\\t\042' '/ \047' > $tfc
 		
 	# Date format
 	case $FORMAT_DATE in
@@ -376,15 +390,15 @@ fill_date_key()
 
 	# Changelog format
 	case $FORMAT_LOG in
-	    F) # full     TAB here ----v
-		log=`sed -n -r -e "y/\"	/' /" -e \
+	    F) # full
+		log=`sed -n -r -e \
 		    '/^Name  : changelog/,+1s/Value : (.+)$/ \1/p' \
-		    < $tfc`
+		    < $tfc | sed -n -e '1p'`
 		;;
 	    S) # short
-		log=`sed -n -r -e "y/\"	/' /" -e \
+		log=`sed -n -r -e \
 		    '/^Name  : changelog/,+1s/Value : (.{1,20}).*$/ \1/p' \
-		    < $tfc`
+		    < $tfc | sed -n -e '1p'`
 		;;
 	esac
 
@@ -410,7 +424,8 @@ fill_date_key()
 		then
 		    color="\\Zb\\Z$color"
 		else
-		    color="\\Z$color"
+		    color8=$(( $color - 8 ))
+		    color="\\Z$color8"
 		fi
 	     else
 		color="$FORMAT_COLOR"
@@ -426,6 +441,117 @@ fill_date_key()
     rm $tfc
 }
 
+do_log_brief_ancestors()
+{
+    local out_file=$1
+    local hash short_hash dat bra aut lineno color
+
+    # Brief output
+    # e51dc90425c6371a176e87df294b47fcdba3f0bb Full Name <henry@bigfoot.de> 2005-11-20T20:31:34 mtbrowse
+
+    lineno=0
+    monotone log --brief --last=$CERTS_MAX --revision=$HEAD --db=$DB |\
+    while read line
+    do
+	lineno=$(( $lineno+1 ))
+	# TODO: Why MT give more than "--last"?
+	if [ $lineno -le $CERTS_MAX ]
+	then
+	    echo "$(( 100*$lineno/$CERTS_MAX ))"
+	fi
+
+	set -- `echo "$line" | sed -n -r -e 's/^([^ ]+) (.+) ([0-9\-]{10})T([0-9:]{8}) (.+)$/\1 \3 \4 \5/p'`
+	author=`echo "$line" | sed -n -r -e 's/^([^ ]+) (.+) ([0-9\-]{10})T([0-9:]{8}) (.+)$/\2/p'`
+	hash=$1
+	date=$2
+	time=$3
+	branch="$4"
+
+	# Skip wrong formats, special case
+	# 37416b924fc25a48bba11ed8b2cd62e9dab7e637 First Name  <abc@gmail.com>,geecko@geek.com.au,third@domain.org 2006-01-20T08:21:37,2006-01-20T08:35:46,2006-01-20T08:35:33 net.venge.monotone
+
+	if [ -n "$hash" -a -n "$date" -a -n "$time" -a -n "$author" ]
+	then
+
+	    short_hash=`echo $hash | cut -c 1-$HASH_TRIM`
+
+	    # Date format
+	    case $FORMAT_DATE in
+	    F) # 2005-12-31T23:59:59
+		dat="${date}T$time "
+		;;
+	    L) # 2005-12-31 23:59
+		dat="`echo "$date $time" | cut -c 1-16` "
+		;;
+	    D) # 2005-12-31
+		dat=$date
+		;;
+	    S) # 12-31 23:59
+		dat=`echo "$date $time" | sed -n -r -e \
+		    '.{4}-(.+) (.{5}).+/\1 \2 /p'`
+		;;
+	    T) # 23:59:59
+		dat=$time
+		;;
+	    esac
+
+	    # Branch format
+	    case $FORMAT_BRANCH in
+	    F) # full
+		bra=$branch
+		;;
+	    S) # short
+		bra=`echo "$branch" | sed -n -r -e \
+		    '/.*\.([^\.]+)$/\1 /p' `
+		;;
+	    esac
+
+	    # Author format
+	    case $FORMAT_AUTHOR in
+	    F) # full
+		aut="$author"
+		;;
+	    S) # short
+		aut=`echo "$author " | sed -n -r -e \
+		    's/(.{1,10}).*[@ ].+$/\1/p'`
+		;;
+	    esac
+
+	    # TODO: Copied from fill_date_key
+	    # Author coloring?
+	    if [ -n "$FORMAT_COLOR" -a "$FORMAT_AUTHOR" != "N" ]
+	    then
+		if [ "$last_aut" != "$aut" ]
+		then
+		    # Automatic color by author?
+		    if [ "$FORMAT_COLOR" = "A" ]
+		    then
+			color=`grep -n "$aut" $TEMPFILE.ncolor | cut -d ':' -f 1`
+			if [ -z "$color" ]
+			then
+			    color=$(( `wc -l < $TEMPFILE.ncolor` % 16 + 1 ))
+			    echo "$aut" >> $TEMPFILE.ncolor
+			fi
+
+			if [ $color -le 8 ]
+			then
+			    color="\\Zb\\Z$color"
+			else
+			    color8=$(( $color - 8 ))
+			    color="\\Z$color8"
+			fi
+		    else
+			color="$FORMAT_COLOR"
+		    fi
+		    last_aut="$aut"
+		fi
+		echo "$short_hash \"$dat$bra\\ZR$color$aut\"" >> $out_file
+	    else
+		echo "$short_hash \"$dat$bra\\ZR$aut\"" >> $out_file
+	    fi
+	fi
+    done | dialog --gauge "$CERTS_MAX certs reading" 6 60
+}
 
 # Select a branch
 # Is parameter given: No user select, if branch known.
@@ -506,7 +632,12 @@ do_head_sel()
 	return
     fi
 
-    monotone --db=$DB automate heads $BRANCH > $TEMPFILE.heads 2>/dev/null
+    if ! monotone --db=$DB automate heads $BRANCH > $TEMPFILE.heads 2>$TEMPFILE.error
+    then
+	cat $TEMPFILE.error
+	exit -1
+    fi
+
     # Only one head ?
     if [ `wc -l < $TEMPFILE.heads` -eq 1 -a -n "$1" ]
     then
@@ -677,7 +808,7 @@ do_automate_ancestors_depth()
 		return 0
 	fi
 
-	let depth++
+	depth=$(( $depth+1 ))
 	monotone --db=$DB automate parents $head |\
 	while read rev
 	do
@@ -687,7 +818,7 @@ do_automate_ancestors_depth()
 		do_automate_ancestors_depth $depth $rev || return $?
 	    fi
 	done
-	let depth--
+	depth=$(( $depth-1 ))
 
 	return 0
 }
@@ -713,6 +844,10 @@ do_revision_sel()
 	echo "Reading ancestors ($HEAD)"
 
 	case $ANCESTORS in
+	    B)	# TODO:
+		# Get ancestors from log, brief format
+		do_log_brief_ancestors $TEMPFILE.certs3tmp
+	    ;;
 	    L)
 		# Get ancestors from log
 		monotone log --brief --last=$CERTS_MAX --revision=$HEAD \
@@ -733,9 +868,11 @@ do_revision_sel()
 	    ;;
 	esac
 
-	# Must toposort, if enabled by user, or before tailing
-	if [ "$TOPOSORT" = "T" -o "$CERTS_MAX" -gt 0 -a "$ANCESTORS" != 'L' ]
+	if [ "$ANCESTORS" != "B" ]
 	then
+	    # Must toposort, if enabled by user, or before tailing
+	    if [ "$TOPOSORT" = "T" -o "$CERTS_MAX" -gt 0 -a "$ANCESTORS" != "L" ]
+	    then
 		echo "Toposort..."
 		monotone --db=$DB automate toposort `cat $TEMPFILE.ancestors` \
 		  > $TEMPFILE.toposort || exit 200
@@ -747,12 +884,13 @@ do_revision_sel()
 			  > $TEMPFILE.toposort2
 			mv $TEMPFILE.toposort2 $TEMPFILE.toposort
 		fi
-	else
+	    else
 		mv $TEMPFILE.ancestors $TEMPFILE.toposort
-	fi
+	    fi
 
-	# Reading revisions and fill with date, names and changelog
-	fill_date_key $TEMPFILE.toposort $TEMPFILE.certs3tmp
+	    # Reading revisions and fill with date, names and changelog
+	    fill_date_key $TEMPFILE.toposort $TEMPFILE.certs3tmp
+	fi
 
 	case $TOPOSORT in
 	    D)
@@ -875,7 +1013,7 @@ do_config()
 	    if dialog --default-item "$TOPOSORT" \
 		--menu "Sort revisions by" 0 0 0 \
 		"T" "Toposort, oldest top (from Monotone)" \
-		"D" "Date/Time, oldest top" \
+		"D" "Date/Time, oldest top (internal function)" \
 		"R" "Reverse Date/Time (reverse toposort)" \
 		"N" "None. Simple get from list" \
 		2> $TEMPFILE.input
@@ -977,12 +1115,23 @@ do_config()
 	    # How to get ancestors
 	    if dialog --default-item "$ANCESTORS" \
 		--menu "Get ancestors by using" 0 0 0 \
-		"L" "Monotone \"log --brief\" (fastest)" \
+		"B" "Brief log, without changelog (fastest)" \
+		"L" "Monotone \"log --brief\" with changelog" \
 		"I" "Internal function with depth limit (faster)" \
 		"A" "Monotone \"automate ancestor\" (save mode, very slow)" \
 		2> $TEMPFILE.input
 	    then
 		ANCESTORS=`cat $TEMPFILE.input`
+
+		if [ "$ANCESTORS" = "A" ]
+		then
+		    # functions don't work with big database
+		    dialog --title " Info " --msgbox \
+"\"automate ancestor\":
+
+Big database can overflow command line.
+It's saver to use internal function (I)." 0 0
+		fi
 	    fi
 	    ;;
 	  C)
@@ -1039,7 +1188,8 @@ Automatic corrected" 0 0
 	    # functions don't work without limit
 	    dialog --title " Info " --msgbox \
 "Certs limit in Select-List:
-negative or zero last not allowed
+
+Negative or zero limit not allowed
 Automatic corrected" 0 0
 	    CERTS_MAX=20
 	fi
@@ -1066,8 +1216,9 @@ then
 fi
 
 # Get monotone version
-MT_MAJOR=`monotone --version | sed -r -e 's/^.+ ([0-9]{1,2})\.([0-9]{1,2}) .+$/\1/'`
-MT_MINOR=`monotone --version | sed -r -e 's/^.+ ([0-9]{1,2})\.([0-9]{1,2}) .+$/\2/'`
+set -- `monotone --version | sed -r -e 's/^.+ ([0-9]{1,2})\.([0-9]{1,2}) .+$/\1 \2/'`
+MT_MAJOR=$1
+MT_MINOR=$2
 
 if [ -z "$MT_MAJOR" -o -z "$MT_MINOR" ]
 then

@@ -5,6 +5,7 @@
 
 #include <botan/kdf.h>
 #include <botan/lookup.h>
+#include <botan/bit_ops.h>
 #include <memory>
 
 namespace Botan {

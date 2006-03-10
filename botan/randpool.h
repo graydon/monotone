@@ -30,8 +30,9 @@ class Randpool : public RandomNumberGenerator
 
       const u32bit ITERATIONS_BEFORE_RESEED, POOL_BLOCKS;
       BlockCipher* cipher;
-      HashFunction* hash;
-      SecureVector<byte> pool, poolhash, buffer;
+      MessageAuthenticationCode* mac;
+
+      SecureVector<byte> pool, buffer;
       u32bit entropy, counter;
    };
 

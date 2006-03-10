@@ -7,5 +7,7 @@ AT_CHECK(MONOTONE setup --branch=testbranch foo, [1], [ignore], [ignore])
 AT_CHECK(mkdir bar)
 AT_CHECK(MONOTONE setup --branch=testbranch bar, [], [ignore], [ignore])
 AT_CHECK(test -d bar/MT)
+AT_CHECK(rm -r bar/MT)
+AT_CHECK(cd bar && MONOTONE setup --branch=testbranch, [], [ignore], [ignore])
 
 AT_CLEANUP

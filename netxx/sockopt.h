@@ -110,6 +110,17 @@ public:
     //####################################################################
     bool check_for_error (std::string &message) const;
 
+    //####################################################################
+    /** 
+     * Set the socket option that does not allow IPv4 mapped addresses on
+     * a listening IPv6 socket.
+     *
+     * @return True if the socket was set to IPv6 only.
+     * @return False if the socket was not set to IPv6 only.
+     * @author Matthew Gregan
+    **/
+    //####################################################################
+    bool set_ipv6_listen_for_v6_only (void) const;
 private:
     socket_type socket_;
     bool revert_;

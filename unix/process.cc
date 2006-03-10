@@ -19,7 +19,7 @@
 
 int existsonpath(const char *exe)
 {
-  L(F("checking for program '%s'\n") % exe);
+  L(FL("checking for program '%s'\n") % exe);
   // this is horribly ugly, but at least it is rather portable
   std::string cmd_str = (F("command -v '%s' >/dev/null 2>&1") % exe).str();
   const char * const args[] = {"sh", "-c", cmd_str.c_str(), NULL};
@@ -28,20 +28,20 @@ int existsonpath(const char *exe)
   pid = process_spawn(args);
   if (pid==-1)
     {
-      L(F("error in process_spawn\n"));
+      L(FL("error in process_spawn\n"));
       return -1;
     }
   if (process_wait(pid, &res))
     {
-      L(F("error in process_wait\n"));
+      L(FL("error in process_wait\n"));
       return -1;
     }
   if (res==0)
     {
-      L(F("successful return; %s exists\n") % exe);
+      L(FL("successful return; %s exists\n") % exe);
       return 0;
     }
-  L(F("failure; %s does not exist\n") % exe);
+  L(FL("failure; %s does not exist\n") % exe);
   return -1;
 }
 
@@ -52,7 +52,7 @@ bool is_executable(const char *path)
         int rc = stat(path, &s);
         N(rc != -1, F("error getting status of file %s: %s") % path % strerror(errno));
 
-        return s.st_mode & S_IXUSR;
+        return (s.st_mode & S_IXUSR) && !(s.st_mode & S_IFDIR);
 }
 
 int make_executable(const char *path)
@@ -80,7 +80,7 @@ pid_t process_spawn(const char * const argv[])
                                 cmdline_ss << ", ";
                         cmdline_ss << "'" << *i << "'";
                 }
-                L(F("spawning command: %s\n") % cmdline_ss.str());
+                L(FL("spawning command: %s\n") % cmdline_ss.str());
         }       
         pid_t pid;
         pid = fork();

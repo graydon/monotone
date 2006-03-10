@@ -17,6 +17,10 @@
 // generally describe the "vocabulary" (nouns anyways) that modules in this
 // program use.
 
+template <typename T>
+void dump(T const &, std::string &);
+
+
 #define ENCODING(enc)                                  \
                                                        \
 template<typename INNER>                               \
@@ -99,11 +103,19 @@ public:                                                \
   ty const & operator=(ty const & other);              \
   bool operator==(ty const & other) const              \
     { return s == other(); }                           \
+  bool operator!=(ty const & other) const              \
+    { return s != other(); }                           \
   friend void verify(ty &);                            \
   friend std::ostream & operator<<(std::ostream &,     \
                                    ty const &);        \
+  struct symtab                                        \
+  {                                                    \
+    symtab();                                          \
+    ~symtab();                                         \
+  };                                                   \
 };                                                     \
 std::ostream & operator<<(std::ostream &, ty const &); \
+template <>                                            \
 void dump(ty const &, std::string &);
 
 #define ATOMIC_NOVERIFY(ty)                            \
@@ -180,6 +192,12 @@ enum diff_type
 };
 
 // do these belong here?
+inline bool 
+null_id(hexenc<id> const & i)
+{
+  return i().empty();
+}
+
 inline bool 
 null_id(file_id const & i)
 {

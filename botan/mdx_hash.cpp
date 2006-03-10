@@ -4,6 +4,7 @@
 *************************************************/
 
 #include <botan/mdx_hash.h>
+#include <botan/bit_ops.h>
 
 namespace Botan {
 
@@ -77,14 +78,14 @@ void MDx_HashFunction::final_result(byte output[])
 /*************************************************
 * Write the count bits to the buffer             *
 *************************************************/
-void MDx_HashFunction::write_count(byte buffer[])
+void MDx_HashFunction::write_count(byte out[])
    {
    if(COUNT_SIZE < 8)
       throw Invalid_State("MDx_HashFunction::write_count: COUNT_SIZE < 8");
    for(u32bit j = 0; j != 8; j++)
       {
       const u32bit choose = (BIG_BYTE_ENDIAN ? (j % 8) : (7 - (j % 8)));
-      buffer[j+COUNT_SIZE-8] = get_byte(choose, 8 * count);
+      out[j+COUNT_SIZE-8] = get_byte(choose, 8 * count);
       }
    }
 

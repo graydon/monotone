@@ -39,7 +39,7 @@ class Gzip_Compression : public Filter
       void start_msg();
       void end_msg();
 
-      Gzip_Compression(u32bit = 6);
+      Gzip_Compression(u32bit = 1);
       ~Gzip_Compression();
    private:
       void clear();

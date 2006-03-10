@@ -4,6 +4,12 @@ AT_SETUP([database is closed on signal exit])
 
 MONOTONE_SETUP
 
+# SIGTERM and SIGINT can't really be handled on Win32:
+# http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_CRT_signal.asp
+# We also don't attempt to install handlers for them in main.cc, but there's
+# little point given the discussion at the MSDN link above.
+NOT_ON_WIN32
+
 # this test checks that .db-journal files aren't left lying about if the 
 # process is killed with SIGTERM or SIGINT
 

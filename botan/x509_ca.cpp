@@ -10,6 +10,7 @@
 #include <botan/look_pk.h>
 #include <botan/numthry.h>
 #include <botan/oids.h>
+#include <botan/util.h>
 #include <memory>
 #include <set>
 

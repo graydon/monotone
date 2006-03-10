@@ -6,6 +6,7 @@
 #include <botan/rsa.h>
 #include <botan/numthry.h>
 #include <botan/keypair.h>
+#include <botan/parsing.h>
 
 namespace Botan {
 
@@ -52,7 +53,7 @@ SecureVector<byte> RSA_PublicKey::verify(const byte in[], u32bit len) const
 *************************************************/
 RSA_PrivateKey::RSA_PrivateKey(u32bit bits, u32bit exp)
    {
-   if(bits < 512)
+   if(bits < 128)
       throw Invalid_Argument(algo_name() + ": Can't make a key that is only " +
                              to_string(bits) + " bits long");
    if(exp < 3 || exp % 2 == 0)

@@ -112,19 +112,24 @@ find_match(match_table const & matches,
     return false;
   
   apos = tpos;
-  alen = tlen;
-  badvance = tlen;
 
   // see if we can extend our match forwards
-  while((apos + alen >= 0)
-        && (bpos + badvance >= 0)
-        && (apos + alen < a.size())
-        && (bpos + badvance < b.size())
-        && (a[apos + alen] == b[bpos + badvance]))
+  string::const_iterator ai = a.begin() + apos + tlen;
+  string::const_iterator ae = a.end();
+  string::const_iterator bi = b.begin() + bpos + tlen;
+  string::const_iterator be = b.end();
+  
+  while((*ai == *bi) 
+	&& (ai != ae)
+	&& (bi != be))
     {
-      ++alen;
-      ++badvance;
+      ++tlen;
+      ++ai;
+      ++bi;
     }
+
+  alen = tlen;
+  badvance = tlen;
 
   // see if we can extend backwards into a previous insert hunk
   if (! delta.empty() && delta.back().code == insn::insert)
@@ -230,90 +235,6 @@ compute_delta_insns(string const & a,
 }
 
 
-// specialized form for manifest maps, which
-// are sorted, so have far more structure
-
-static void 
-flush_copy(ostringstream & oss, u32 & pos, u32 & len)
-{
-  if (len != 0)
-    {
-      // flush any copy which is going on
-      oss << insn(pos, len);
-      pos = pos + len;
-      len = 0;
-    }
-}
-
-void 
-compute_delta(manifest_map const & a,
-              manifest_map const & b,
-              string & delta)
-{
-  delta.clear();
-  ostringstream oss;
-
-  manifest_map::const_iterator i = a.begin();
-  manifest_map::const_iterator j = b.begin();
-
-  u32 pos = 0;
-  u32 len = 0;
-  while (j != b.end())
-    {      
-      size_t isz = 0;
-
-      if (i != a.end())
-          isz = i->first.as_internal().size() + 2 + i->second.inner()().size() + 1;
-
-      if (i != a.end() && i->first == j->first)
-        {
-          if (i->second == j->second)
-            {
-              // this line was copied
-              len += isz;
-            }
-          else
-            {
-              // this line was changed, but the *entry* remained, so we
-              // treat it as a simultaneous delete + insert. that means
-              // advance pos over what used to be here, set len to 0, and
-              // copy the new data.
-              flush_copy(oss, pos, len);
-              pos += isz;
-              ostringstream ss;
-              ss << *j;
-              oss << insn(ss.str());              
-            }
-          ++i; ++j;
-        }
-      else         
-        {
-
-          flush_copy(oss, pos, len);
-          
-          if (i != a.end() && i->first < j->first)
-            {              
-              // this line was deleted              
-              ++i;
-              pos += isz;
-            }
-          
-          else
-            {
-              // this line was added
-              ostringstream ss;
-              ss << *j;
-              oss << insn(ss.str());
-              ++j;
-            }
-        }
-    }
-
-  flush_copy(oss,pos,len);
-  delta = oss.str();
-}
-
-
 void 
 compute_delta(string const & a,
               string const & b,
@@ -342,9 +263,9 @@ compute_delta(string const & a,
       I(a.size() > 0);
       I(b.size() > 0);
       
-      L(F("computing binary delta instructions\n"));
+      L(FL("computing binary delta instructions\n"));
       compute_delta_insns(a, b, delta_insns);
-      L(F("computed binary delta instructions\n"));
+      L(FL("computed binary delta instructions\n"));
     }
 
   ostringstream oss;  

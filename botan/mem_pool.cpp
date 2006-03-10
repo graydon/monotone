@@ -6,6 +6,7 @@
 #include <botan/mem_pool.h>
 #include <botan/conf.h>
 #include <botan/util.h>
+#include <algorithm>
 
 namespace Botan {
 

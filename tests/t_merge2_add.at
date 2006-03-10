@@ -1,6 +1,9 @@
 AT_SETUP([merging adds in unrelated revisions])
 MONOTONE_SETUP
 
+# This test relies on file-suturing
+AT_XFAIL_IF(true)
+
 ADD_FILE(testfile1, [This is test file 1
 ])
 COMMIT(testbranch)

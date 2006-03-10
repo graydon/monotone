@@ -48,6 +48,9 @@ namespace constants
   // size in bytes of the database xdelta version reconstruction cache
   extern size_t const db_version_cache_sz;
 
+  // number of rosters in the database roster cache
+  extern size_t const db_roster_cache_sz;
+
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.
   extern size_t const log_line_sz;
@@ -85,10 +88,6 @@ namespace constants
   // all the ASCII characters (bytes) which are illegal in a (file|local)_path
   extern char const * const illegal_path_bytes;
 
-  // how many revisions back to verify the sanity of revisions before allowing
-  // them into the database
-  extern int const verify_depth;
-
   // remaining constants are related to netsync protocol
 
   // number of bytes in the hash used in netsync
@@ -123,6 +122,7 @@ namespace constants
 
   
   // largest command *payload* allowed in a netcmd
+  // in practice, this sets the size of the largest compressed file
   static size_t const netcmd_payload_limit = 2 << 27;
 
   // maximum size of any netcmd on the wire, including payload
@@ -132,7 +132,7 @@ namespace constants
   extern size_t const netcmd_minimum_bytes_to_bother_with_gzip;
 
   // TCP port to listen on / connect to when doing netsync
-  static size_t const netsync_default_port = 5253;
+  static size_t const netsync_default_port = 4691;
 
   // maximum number of simultaneous clients on a server
   static size_t const netsync_connection_limit = 1024;
@@ -151,9 +151,6 @@ namespace constants
 
   // netsync session key default initializer
   extern std::string const & netsync_key_initializer;
-
-  // maximum path depth to allow (as a recursion limit)
-  static size_t const max_path_depth = 300;
 }
 
 #endif // __CONSTANTS_HH__

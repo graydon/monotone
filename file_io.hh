@@ -10,6 +10,7 @@
 
 #include "vocab.hh"
 #include "paths.hh"
+#include "sanity.hh"
 
 // this layer deals with talking to the filesystem, loading and saving
 // files, walking trees, etc.
@@ -27,13 +28,13 @@ void assert_path_is_directory(any_path const & path);
 
 // use N()
 void require_path_is_nonexistent(any_path const & path,
-                                 boost::format const & message);
+                                 i18n_format const & message);
 void require_path_is_file(any_path const & path,
-                          boost::format const & message_if_nonexistent,
-                          boost::format const & message_if_directory);
+                          i18n_format const & message_if_nonexistent,
+                          i18n_format const & message_if_directory);
 void require_path_is_directory(any_path const & path,
-                               boost::format const & message_if_nonexistent,
-                               boost::format const & message_if_file);
+                               i18n_format const & message_if_nonexistent,
+                               i18n_format const & message_if_file);
 
 // returns true if there is a file or directory at 'path'
 bool path_exists(any_path const & path);
@@ -52,6 +53,8 @@ void mkdir_p(any_path const & path);
 void make_dir_for(any_path const & p);
 
 void delete_file(any_path const & path);
+void delete_dir_shallow(any_path const & path);
+void delete_file_or_dir_shallow(any_path const & path);
 void delete_dir_recursive(any_path const & path);
 
 void move_file(any_path const & old_path,
@@ -69,7 +72,7 @@ void read_localized_data(file_path const & path,
                          data & dat, 
                          lua_hooks & lua);
 
-void read_directory(system_path const & path,
+void read_directory(any_path const & path,
                     std::vector<utf8> & files,
                     std::vector<utf8> & dirs);
 
@@ -79,8 +82,8 @@ void read_data_for_command_line(utf8 const & path, data & dat);
 // These are not any_path's because we make our write somewhat atomic -- we
 // first write to a temp file in MT/ (and it must be in MT/, not like /tmp or
 // something, because we can't necessarily atomic rename from /tmp to the
-// working copy).  But that means we can't use it in general, only for the
-// working copy.
+// workspace).  But that means we can't use it in general, only for the
+// workspace.
 void write_data(file_path const & path, data const & data);
 void write_data(bookkeeping_path const & path, data const & data);
 void write_localized_data(file_path const & path, 
@@ -98,6 +101,8 @@ void write_data(system_path const & path,
 class tree_walker
 {
 public:
+  // returns true if the directory should be descended into
+  virtual void visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path) = 0;
   virtual ~tree_walker();
 };

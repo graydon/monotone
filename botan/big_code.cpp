@@ -5,6 +5,7 @@
 
 #include <botan/bigint.h>
 #include <botan/numthry.h>
+#include <botan/charset.h>
 #include <botan/hex.h>
 
 namespace Botan {

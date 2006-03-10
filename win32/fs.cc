@@ -67,7 +67,7 @@ get_homedir()
   home = getenv("HOME");
   if (home != NULL)
     {
-      L(F("Home directory from HOME\n"));
+      L(FL("Home directory from HOME\n"));
       return std::string(home);
     }
   // Otherwise, try USERPROFILE.  We could also use SHGetFolderPath() to get
@@ -76,7 +76,7 @@ get_homedir()
   char * userprofile = getenv("USERPROFILE");
   if (userprofile != NULL)
     {
-      L(F("Home directory from USERPROFILE\n"));
+      L(FL("Home directory from USERPROFILE\n"));
       return std::string(userprofile);
     }
   // Try concatenating HOMEDRIVE and HOMEPATH
@@ -84,13 +84,13 @@ get_homedir()
   char * homepath = getenv("HOMEPATH");
   if (homedrive != NULL && homepath != NULL)
     {
-      L(F("Home directory from HOMEDRIVE+HOMEPATH\n"));
+      L(FL("Home directory from HOMEDRIVE+HOMEPATH\n"));
       return std::string(homedrive) + std::string(homepath);
     }
   char * systemdrive = getenv("SystemDrive");
   if (systemdrive != NULL)
     {
-      L(F("Home directory from SystemDrive\n"));
+      L(FL("Home directory from SystemDrive\n"));
       return std::string(systemdrive);
     }
   return std::string("C:");
@@ -139,18 +139,26 @@ rename_clobberingly_impl(const char* from, const char* to)
   // more compatible DeleteFile/MoveFile pair as a compatibility fall-back.
   typedef BOOL (*MoveFileExFun)(LPCTSTR, LPCTSTR, DWORD);
   static MoveFileExFun MoveFileEx = 0;
+  static bool MoveFileExAvailable = false;
   if (MoveFileEx == 0) {
     HMODULE hModule = LoadLibrary("kernel32");
     if (hModule)
       MoveFileEx = reinterpret_cast<MoveFileExFun>
         (GetProcAddress(hModule, "MoveFileExA"));
-    if (MoveFileEx)
-      L(F("using MoveFileEx for renames"));
+    if (MoveFileEx) {
+      L(FL("using MoveFileEx for renames"));
+      MoveFileExAvailable = true;
+    } else
+      L(FL("using DeleteFile/MoveFile fallback for renames"));
   }
 
-  if (MoveFileEx) {
+  if (MoveFileExAvailable) {
     if (MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
       return true;
+    else if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
+      MoveFileExAvailable = false;
+      L(FL("MoveFileEx failed with CALL_NOT_IMPLEMENTED, using fallback"));
+    }
   } else {
     // This is not even remotely atomic, but what can you do?
     DeleteFile(to);
@@ -167,6 +175,7 @@ rename_clobberingly(any_path const & from, any_path const & to)
   const char* szTo = to.as_external().c_str();
   static const int renameAttempts = 16;
   DWORD sleepTime = 1;
+  DWORD lastError = 0;
 
   // If a clobbering rename attempt fails, we wait and try again, up to an
   // (arbitrary) maximum of 16 attempts.  This is a gross hack to work
@@ -175,11 +184,13 @@ rename_clobberingly(any_path const & from, any_path const & to)
   for (int i = 0; i < renameAttempts; ++i) {
     if (rename_clobberingly_impl(szFrom, szTo))
       return;
-    L(F("attempted rename of '%s' to '%s' failed: %d")
-      % szFrom % szTo % GetLastError());
+    lastError = GetLastError();
+    L(FL("attempted rename of '%s' to '%s' failed: %d")
+      % szFrom % szTo % lastError);
     Sleep(sleepTime);
     if (sleepTime < 250)
       sleepTime *= 2;
   }
-  E(false, F("renaming '%s' to '%s' failed: %d") % from % to);
+  E(false, F("renaming '%s' to '%s' failed: %d") % from % to % lastError);
 }
+

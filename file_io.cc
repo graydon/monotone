@@ -44,15 +44,15 @@ assert_path_is_directory(any_path const & path)
 
 void
 require_path_is_nonexistent(any_path const & path,
-                            boost::format const & message)
+                            i18n_format const & message)
 {
   N(!path_exists(path), message);
 }
 
 void
 require_path_is_file(any_path const & path,
-                     boost::format const & message_if_nonexistent,
-                     boost::format const & message_if_directory)
+                     i18n_format const & message_if_nonexistent,
+                     i18n_format const & message_if_directory)
 {
   switch (get_path_status(path))
     {
@@ -69,8 +69,8 @@ require_path_is_file(any_path const & path,
 
 void
 require_path_is_directory(any_path const & path,
-                          boost::format const & message_if_nonexistent,
-                          boost::format const & message_if_file)
+                          i18n_format const & message_if_nonexistent,
+                          i18n_format const & message_if_file)
 {
   switch (get_path_status(path))
     {
@@ -206,13 +206,45 @@ make_dir_for(any_path const & p)
     }
 }
 
+static void
+do_shallow_deletion_with_sane_error_message(any_path const & p)
+{
+  fs::path fp = mkdir(p);
+  try
+    {
+      fs::remove(fp);
+    }
+  catch (fs::filesystem_error & err)
+    {
+      E(false, F("could not remove '%s'\n%s")
+        % err.path1().native_directory_string()
+        % strerror(err.native_error()));
+    }
+}
+
 void 
 delete_file(any_path const & p) 
 { 
   require_path_is_file(p,
                        F("file to delete '%s' does not exist") % p,
                        F("file to delete, '%s', is not a file but a directory") % p);
-  fs::remove(mkdir(p)); 
+  do_shallow_deletion_with_sane_error_message(p);
+}
+
+void
+delete_dir_shallow(any_path const & p)
+{
+  require_path_is_directory(p,
+                            F("directory to delete '%s' does not exist") % p,
+                            F("directory to delete, '%s', is not a directory but a file") % p);
+  do_shallow_deletion_with_sane_error_message(p);
+}
+
+void
+delete_file_or_dir_shallow(any_path const & p)
+{
+  N(path_exists(p), F("object to delete, '%s', does not exist") % p);
+  do_shallow_deletion_with_sane_error_message(p);
 }
 
 void 
@@ -315,15 +347,15 @@ read_localized_data(file_path const & path,
   dat = tmp2;
 }
 
-void read_directory(system_path const & path,
+void read_directory(any_path const & path,
                     std::vector<utf8> & files,
                     std::vector<utf8> & dirs)
 {
   files.clear();
   dirs.clear();
   fs::directory_iterator ei;
-  for(fs::directory_iterator di(path.as_external());
-      di != ei; ++di)
+  for (fs::directory_iterator di(system_path(path).as_external());
+       di != ei; ++di)
     {
       fs::path entry = *di;
       if (!fs::exists(entry)
@@ -331,6 +363,8 @@ void read_directory(system_path const & path,
           || di->string() == "..")
         continue;
 
+      // FIXME: BUG: this screws up charsets (assumes blindly that the fs is
+      // utf8)
       if (fs::is_directory(entry))
         dirs.push_back(utf8(entry.leaf()));
       else
@@ -452,8 +486,6 @@ write_data(system_path const & path,
 {
   write_data_impl(path, data, tmpdir / (boost::format("data.tmp.%d") %
                                              get_process_id()).str());
-
-
 }
 
 tree_walker::~tree_walker() {}
@@ -474,16 +506,17 @@ walk_tree_recursive(fs::path const & absolute,
       
       if (bookkeeping_path::is_bookkeeping_path(rel_entry.normalize().string()))
         {
-          L(F("ignoring book keeping entry %s\n") % rel_entry.string());
+          L(FL("ignoring book keeping entry %s\n") % rel_entry.string());
           continue;
         }
       
       if (!fs::exists(entry) 
           || di->string() == "." 
           || di->string() == "..") 
-        ;                       // ignore
-      else if (fs::is_directory(entry))
-        walk_tree_recursive(entry, rel_entry, walker);
+        {
+          // ignore
+          continue;
+        }
       else
         {
           file_path p;
@@ -497,11 +530,26 @@ walk_tree_recursive(fs::path const & absolute,
               W(F("caught runtime error %s constructing file path for %s\n") 
                 % c.what() % rel_entry.string());
               continue;
-            }     
-          walker.visit_file(p);
+            }
+          if (fs::is_directory(entry))
+            {
+              walker.visit_dir(p);
+              walk_tree_recursive(entry, rel_entry, walker);
+            }
+          else
+            {
+              walker.visit_file(p);
+            }
+
         }
     }
 }
+
+void
+tree_walker::visit_dir(file_path const & path)
+{
+}
+
 
 // from some (safe) sub-entry of cwd
 void 
@@ -525,6 +573,7 @@ walk_tree(file_path const & path,
       walker.visit_file(path);
       break;
     case path::directory:
+      walker.visit_dir(path);
       walk_tree_recursive(system_path(path).as_external(),
                           path.as_external(),
                           walker);

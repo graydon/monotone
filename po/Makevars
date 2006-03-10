@@ -7,10 +7,21 @@ DOMAIN = $(PACKAGE)
 subdir = po
 top_builddir = ..
 
-# These options get passed to xgettext.  They are defined in configure.ac
-# because they are dynamically generated depending on the xgettext version
-# in use.
-#XGETTEXT_OPTIONS =
+# These options get passed to xgettext.  Note that some of the options
+# are given twice, once in each variable.  In fact, our configure
+# script defines XGETTEXT_OPTIONS=$(XGETTEXT_OPTIONS_NO_FLAG) if it
+# discovers that the version of xgettext available does not support
+# --flag.  It would be cleaner to do something else -- have these in
+# the configure script, or have on variable with the --keywords and
+# one with the --flags and combine them at configure time, or
+# something -- but we cannot.  XGETTEXT_OPTIONS _must_ literally be
+# defined to contain the best set of xgettext options, because
+# intltool-update reads this file and scans for XGETTEXT_OPTIONS
+# directly.  Also, intltool-update doesn't seem to grok line
+# continuations, so XGETTEXT_OPTIONS needs to fit all one one line.
+# So... be careful if touching this stuff.
+XGETTEXT_OPTIONS=--keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_ --flag=F:1:c-format --flag=FP:1:c-format --flag=FP:2:c-format
+XGETTEXT_OPTIONS_NO_FLAG=--keyword=F --keyword=FP:1,2 --keyword=_ --keyword=N_
 
 # This is the copyright holder that gets inserted into the header of the
 # $(DOMAIN).pot file.  Set this to the copyright holder of the surrounding

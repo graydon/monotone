@@ -36,25 +36,16 @@ Chain::Chain(Filter* filters[], u32bit count)
 *************************************************/
 Fork::Fork(Filter* f1, Filter* f2, Filter* f3, Filter* f4)
    {
-   u32bit used = 0;
-   if(f1) used = 1;
-   if(f2) used = 2;
-   if(f3) used = 3;
-   if(f4) used = 4;
-   set_port_count(used);
-   if(f1) next[0] = f1;
-   if(f2) next[1] = f2;
-   if(f3) next[2] = f3;
-   if(f4) next[3] = f4;
+   Filter* filters[4] = { f1, f2, f3, f4 };
+   set_next(filters, 4);
    }
 
 /*************************************************
 * Fork Constructor                               *
 *************************************************/
-Fork::Fork(Filter* filters[], u32bit count) : Filter(count)
+Fork::Fork(Filter* filters[], u32bit count)
    {
-   for(u32bit j = 0; j != count; j++)
-      next[j] = filters[j];
+   set_next(filters, count);
    }
 
 /*************************************************

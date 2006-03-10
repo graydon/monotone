@@ -5,6 +5,7 @@
 
 #include <botan/def_eng.h>
 #include <botan/lookup.h>
+#include <botan/parsing.h>
 
 #include <botan/aes.h>
 #include <botan/des.h>
@@ -16,8 +17,6 @@
 #include <botan/sha256.h>
 
 #include <botan/hmac.h>
-
-#include <botan/pkcs5.h>
 
 namespace Botan {
 

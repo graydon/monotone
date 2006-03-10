@@ -6,13 +6,15 @@
 #include <botan/init.h>
 
 #include <botan/allocate.h>
+#include <botan/parsing.h>
+#include <botan/conf.h>
 #include <botan/look_add.h>
 #include <botan/mutex.h>
 #include <botan/rng.h>
+
 #include <botan/x931_rng.h>
 #include <botan/fips140.h>
 #include <botan/es_file.h>
-#include <botan/conf.h>
 #include <map>
 
 #if defined(BOTAN_EXT_MUTEX_PTHREAD)

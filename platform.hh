@@ -34,7 +34,7 @@ bool have_smart_terminal();
 // return value of 0 means "unlimited"
 unsigned int terminal_width();
 
-// for "reckless mode" working copy change detection.
+// for "reckless mode" workspace change detection.
 // returns 'true' if it has generated a valid inodeprint; returns 'false' if
 // there was a problem, in which case we should act as if the inodeprint has
 // changed.
@@ -58,10 +58,5 @@ namespace path
 path::status get_path_status(any_path const & path);
 
 void rename_clobberingly(any_path const & from, any_path const & to);
-
-#ifdef WIN32
-// Win32 doesn't have wcswidth, so we supply our own implementation.
-extern "C" int wcswidth(const wchar_t * pwcs, size_t n);
-#endif
 
 #endif // __PLATFORM_HH__

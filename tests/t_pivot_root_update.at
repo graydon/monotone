@@ -1,0 +1,49 @@
+AT_SETUP([updating through a pivot_root])
+MONOTONE_SETUP
+
+AT_CHECK(mkdir workspace)
+AT_CHECK(cd workspace/ && MONOTONE setup -b testbranch, [], [ignore], [ignore])
+
+AT_CHECK(mkdir workspace/dir1)
+AT_DATA(workspace/old_root_file, [I'm in the root to start off with!
+])
+AT_DATA(workspace/dir1/new_root_file, [I'm in the subdir to start off with.
+])
+AT_CHECK(cd workspace/ && MONOTONE add ., [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MONOTONE commit -m foo, [], [ignore], [ignore])
+BASE_REV=`cat workspace/MT/revision`
+
+AT_CHECK(cd workspace/ && MONOTONE pivot_root --execute dir1 old_root, [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MONOTONE commit -m foo, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE co -r $BASE_REV testspace, [], [ignore], [ignore])
+AT_DATA(new_old_root_file, [old root file modified
+])
+AT_DATA(new_new_root_file, [new root file modified
+])
+AT_DATA(new_unversioned_root_file, [newly placed in root dir, unversioned
+])
+AT_DATA(new_unversioned_subdir_file, [newly placed in sub dir, unversioned
+])
+AT_DATA(new_versioned_root_file, [newly placed in root dir, versioned
+])
+AT_DATA(new_versioned_subdir_file, [newly placed in sub dir, versioned
+])
+AT_CHECK(cp new_old_root_file testspace/old_root_file)
+AT_CHECK(cp new_new_root_file testspace/dir1/new_root_file)
+AT_CHECK(cp new_unversioned_root_file testspace)
+AT_CHECK(cp new_unversioned_subdir_file testspace/dir1)
+AT_CHECK(cp new_versioned_root_file testspace)
+AT_CHECK(cp new_versioned_subdir_file testspace/dir1)
+
+AT_CHECK(cd testspace/ && MONOTONE add new_versioned_root_file dir1/new_versioned_subdir_file, [], [ignore], [ignore])
+AT_CHECK(cd testspace/ && MONOTONE update, [], [ignore], [ignore])
+
+AT_CHECK(cmp new_old_root_file testspace/old_root/old_root_file)
+AT_CHECK(cmp new_new_root_file testspace/new_root_file)
+AT_CHECK(cmp new_unversioned_root_file testspace/old_root/new_unversioned_root_file)
+AT_CHECK(cmp new_unversioned_subdir_file testspace/new_unversioned_subdir_file)
+AT_CHECK(cmp new_versioned_root_file testspace/old_root/new_versioned_root_file)
+AT_CHECK(cmp new_versioned_subdir_file testspace/new_versioned_subdir_file)
+
+AT_CLEANUP

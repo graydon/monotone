@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <iosfwd>
 
 #include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
@@ -17,7 +18,6 @@
 
 #include <config.h> // Required for ENABLE_NLS
 #include "i18n.h"
-#include "ui.hh"
 
 #include "quick_alloc.hh" // to get the QA() macro
 
@@ -44,6 +44,8 @@ struct informative_failure {
 
 class MusingI;
 
+struct i18n_format;
+
 struct sanity {
   sanity();
   ~sanity();
@@ -66,24 +68,26 @@ struct sanity {
 
   void log(boost::format const & fmt, 
            char const * file, int line);
-  void progress(boost::format const & fmt,
+  void progress(i18n_format const & fmt,
                 char const * file, int line);
-  void warning(boost::format const & fmt, 
+  void warning(i18n_format const & fmt, 
                char const * file, int line);
-  void naughty_failure(std::string const & expr, boost::format const & explain, 
+  void naughty_failure(std::string const & expr, i18n_format const & explain, 
                        std::string const & file, int line) NORETURN;
-  void error_failure(std::string const & expr, boost::format const & explain, 
+  void error_failure(std::string const & expr, i18n_format const & explain, 
                      std::string const & file, int line) NORETURN;
   void invariant_failure(std::string const & expr, 
                          std::string const & file, int line) NORETURN;
-  void index_failure(std::string const & vec_expr, 
-                     std::string const & idx_expr, 
+  void index_failure(std::string const & vec_expr,
+                     std::string const & idx_expr,
                      unsigned long sz, 
                      unsigned long idx,
                      std::string const & file, int line) NORETURN;
   void gasp();
 
 private:
+  std::string do_format(i18n_format const & fmt,
+                        char const * file, int line);
   std::string do_format(boost::format const & fmt,
                         char const * file, int line);
 };
@@ -92,11 +96,36 @@ typedef std::runtime_error oops;
 
 extern sanity global_sanity;
 
+struct i18n_format
+{
+  boost::format fmt;
+  i18n_format() {}
+  explicit i18n_format(const char * localized_pattern);
+  explicit i18n_format(std::string const & localized_pattern);
+  std::string str() const;
+  template <typename T> i18n_format & operator%(T const & t)
+  {
+    fmt % t;
+    return *this;
+  }
+  template <typename T> i18n_format & operator%(T & t)
+  {
+    fmt % t;
+    return *this;
+  }
+};
+
+std::ostream & operator<<(std::ostream & os, i18n_format const & fmt);
+
 // F is for when you want to build a boost formatter for display
-boost::format F(const char * str);
+i18n_format F(const char * str);
 
 // FP is for when you want to build a boost formatter for displaying a plural
-boost::format FP(const char * str1, const char * strn, unsigned long count);
+i18n_format FP(const char * str1, const char * strn, unsigned long count);
+
+// FL is for when you want to build a boost formatter for the developers -- it
+// is not gettextified.  Think of the L as "literal" or "log".
+boost::format FL(const char * str);
 
 // L is for logging, you can log all you want
 #define L(fmt) global_sanity.log(fmt, __FILE__, __LINE__)
@@ -234,7 +263,20 @@ protected:
   MusingBase(char const * name, char const * file, int line, char const * func)
     : name(name), file(file), func(func), line(line)  {}
 
-  void gasp(const std::string & objstr, std::string & out) const;
+  void gasp_head(std::string & out) const;
+  void gasp_body(const std::string & objstr, std::string & out) const;
+};
+
+
+// remove_reference is a workaround for C++ defect #106.
+template <typename T>
+struct remove_reference {
+  typedef T type;
+};
+
+template <typename T>
+struct remove_reference <T &> {
+  typedef typename remove_reference<T>::type type;
 };
 
 
@@ -242,21 +284,29 @@ template <typename T>
 class Musing : public MusingI, private MusingBase
 {
 public:
-  Musing(T const & obj, char const * name, char const * file, int line, char const * func)
+  Musing(typename remove_reference<T>::type const & obj, char const * name, char const * file, int line, char const * func)
     : MusingBase(name, file, line, func), obj(obj) {}
   virtual void gasp(std::string & out) const;
 private:
-  T const & obj;
+  typename remove_reference<T>::type const & obj;
 };
 
-
+// The header line must be printed into the "out" string before
+// dump() is called.
+// This is so that even if the call to dump() throws an error,
+// the header line ("----- begin ...") will be printed.
+// If these calls are collapsed into one, then *no* identifying
+// information will be printed in the case of dump() throwing.
+// Having the header line without the body is still useful, as it
+// provides some semblance of a backtrace.
 template <typename T> void
 Musing<T>::gasp(std::string & out) const
 {
   std::string tmp;
+  MusingBase::gasp_head(out);
   dump(obj, tmp);
 
-  MusingBase::gasp(tmp, out);
+  MusingBase::gasp_body(tmp, out);
 }
 
 // Yes, this is insane.  No, it doesn't work if you do something more sane.
@@ -276,6 +326,6 @@ Musing<T>::gasp(std::string & out) const
 #define MM(obj) /* */ 
 #endif
 
-void dump(std::string const & obj, std::string & out);
+template <> void dump(std::string const & obj, std::string & out);
 
 #endif // __SANITY_HH__

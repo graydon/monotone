@@ -5,8 +5,6 @@ basic_io.cc
 basic_io.hh
 cert.cc
 cert.hh
-change_set.cc
-change_set.hh
 cleanup.hh
 commands.cc
 commands.hh
@@ -28,8 +26,6 @@ lcs.hh
 lua.cc
 lua.hh
 main.cc
-manifest.cc
-manifest.hh
 merkle_tree.cc
 merkle_tree.hh
 mkstemp.cc

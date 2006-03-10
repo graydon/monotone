@@ -34,7 +34,7 @@ public:
 #endif
   void set_app(app_state *_app);
   void add_std_hooks();
-  void working_copy_rcfilename(bookkeeping_path & file);
+  void workspace_rcfilename(bookkeeping_path & file);
   void default_rcfilename(system_path & file);
   void load_rcfile(utf8 const & file);
   void load_rcfile(any_path const & file, bool required);
@@ -43,15 +43,12 @@ public:
   bool hook_expand_selector(std::string const & sel, std::string & exp);
   bool hook_expand_date(std::string const & sel, std::string & exp);
   bool hook_get_branch_key(cert_value const & branchname, rsa_keypair_id & k);
-  bool hook_get_key_pair(rsa_keypair_id const & k,
-                         keypair & kp);
   bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
   bool hook_get_author(cert_value const & branchname, std::string & author);
   bool hook_edit_comment(std::string const & commentary,
                          std::string const & user_log_message,
                          std::string & result);  
   bool hook_persist_phrase_ok();
-  bool hook_non_blocking_rng_ok();
   bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
                                    hexenc<id> const & id,
                                    cert_name const & name,
@@ -73,12 +70,6 @@ public:
   // local repo hooks
   bool hook_ignore_file(file_path const & p);
   bool hook_ignore_branch(std::string const & branch);
-  bool hook_merge2(file_path const & left_path,
-                   file_path const & right_path,
-                   file_path const & merged_path,
-                   data const & left, 
-                   data const & right, 
-                   data & result);
   bool hook_merge3(file_path const & anc_path,
                    file_path const & left_path,
                    file_path const & right_path,
@@ -87,16 +78,6 @@ public:
                    data const & left, 
                    data const & right, 
                    data & result);
-
-  bool hook_resolve_file_conflict(file_path const & anc,
-                                  file_path const & a,
-                                  file_path const & b,
-                                  file_path & res);
-
-  bool hook_resolve_dir_conflict(file_path const & anc,
-                                 file_path const & a,
-                                 file_path const & b,
-                                 file_path & res);
 
   bool hook_external_diff(file_path const & path,
                           data const & data_old,
@@ -107,7 +88,7 @@ public:
                           std::string const & oldrev,
                           std::string const & newrev);
 
-  // working copy hooks
+  // workspace hooks
   bool hook_use_inodeprints();
 
   // attribute hooks
@@ -123,6 +104,12 @@ public:
                              std::string & db, std::string & ext);
   bool hook_get_linesep_conv(file_path const & p, 
                              std::string & db, std::string & ext);
+
+  // validation hooks
+  bool hook_validate_commit_message(std::string const & message,
+                                    std::string const & new_manifest_text,
+                                    bool & validated,
+                                    std::string & reason);
 
   // notification hooks
   bool hook_note_commit(revision_id const & new_id,

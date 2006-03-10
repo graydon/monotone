@@ -22,14 +22,14 @@ BEGIN EXCLUSIVE;
 CREATE TABLE files
 	(
 	id primary key,   -- strong hash of file contents
-	data not null     -- compressed, encoded contents of a file
-	); 
+	data not null     -- compressed contents of a file
+	);
 
 CREATE TABLE file_deltas
-	(	
+	(
 	id not null,      -- strong hash of file contents
 	base not null,    -- joins with files.id or file_deltas.id
-	delta not null,   -- rdiff to construct current from base
+	delta not null,   -- compressed rdiff to construct current from base
 	unique(id, base)
 	);
 
@@ -58,6 +58,31 @@ CREATE TABLE revision_ancestry
 	parent not null,     -- joins with revisions.id
 	child not null,      -- joins with revisions.id
 	unique(parent, child)
+	);
+
+CREATE TABLE rosters
+	(
+	id primary key,         -- strong hash of the roster
+	data not null           -- compressed, encoded contents of the roster
+	);
+
+CREATE TABLE roster_deltas
+	(
+	id not null,            -- strong hash of the roster
+	base not null,          -- joins with either rosters.id or roster_deltas.id
+	delta not null,         -- rdiff to construct current from base
+	unique(id, base)
+	);
+
+CREATE TABLE revision_roster
+	(
+	rev_id primary key,     -- joins with revisions.id
+	roster_id not null      -- joins with either rosters.id or roster_deltas.id
+	);
+
+CREATE TABLE next_roster_node_number
+	(
+	node primary key        -- only one entry in this table, ever
 	);
 
 CREATE INDEX revision_ancestry__child ON revision_ancestry (child);

@@ -223,12 +223,12 @@ UNB64(right.bmp.b64, right.bmp)
 
 # hook forces all files binary
 AT_DATA(binary.lua, [if (attr_init_functions == nil) then attr_init_functions = {} end
-attr_init_functions[["manual_merge"]] = function(filename) return "true" end 
+attr_init_functions[["mtn:manual_merge"]] = function(filename) return "true" end 
 ])
 
 # hook forces all files text
 AT_DATA(text.lua, [if (attr_init_functions == nil) then attr_init_functions = {} end
-attr_init_functions[["manual_merge"]] = function(filename) return "false" end 
+attr_init_functions[["mtn:manual_merge"]] = function(filename) return "false" end 
 ])
 
 # --- first: auto add as binary 
@@ -237,7 +237,7 @@ AT_CHECK(MONOTONE --rcfile=binary.lua add binary.bmp, [], [ignore], [ignore])
 COMMIT(binbranch)
 PARENT_SHA=`BASE_REVISION`
 
-AT_CHECK(MONOTONE attr get binary.bmp manual_merge, [], [ignore], [ignore])
+AT_CHECK(MONOTONE attr get binary.bmp mtn:manual_merge, [], [ignore], [ignore])
 
 AT_CHECK(cp -f left.bmp binary.bmp)
 COMMIT(binbranch)
@@ -281,7 +281,7 @@ REVERT_TO($PARENT_SHA)
 AT_CHECK(cp -f right.bmp forcebin.bmp)
 
 # set bin
-AT_CHECK(MONOTONE attr set forcebin.bmp manual_merge true, [], [ignore], [ignore])
+AT_CHECK(MONOTONE attr set forcebin.bmp mtn:manual_merge true, [], [ignore], [ignore])
 COMMIT(forcebinbranch)
 
 # file marked binary: merge should fail
@@ -290,7 +290,7 @@ AT_CHECK(MONOTONE --branch=forcebinbranch merge, [1], [ignore], [ignore])
 # --- fourth: automatically make filename as binary, then force text
 AT_CHECK(cp -f parent.bmp forcetext.bmp)
 AT_CHECK(MONOTONE --rcfile=binary.lua add forcetext.bmp, [], [ignore], [ignore])
-AT_CHECK(MONOTONE attr set forcetext.bmp manual_merge false, [], [ignore], [ignore])
+AT_CHECK(MONOTONE attr set forcetext.bmp mtn:manual_merge false, [], [ignore], [ignore])
 COMMIT(forcetextbranch)
 PARENT_SHA=`BASE_REVISION`
 

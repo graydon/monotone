@@ -29,13 +29,15 @@ static string const key_option("key");
 static string const keydir_option("keydir");
 
 app_state::app_state() 
-  : branch_name(""), db(system_path()), keys(this), stdhooks(true),
-    rcfiles(true), diffs(false),
-    no_merges(false), set_default(false), verbose(false), search_root("/"),
-    depth(-1), last(-1), diff_format(unified_diff), diff_args_provided(false),
+  : branch_name(""), db(system_path()), keys(this), recursive(false),
+    stdhooks(true), rcfiles(true), diffs(false),
+    no_merges(false), set_default(false), verbose(false), date_set(false),
+    search_root("/"),
+    depth(-1), last(-1), next(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false), bind_address(""), bind_port(""), 
     missing(false), unknown(false),
-    confdir(get_default_confdir()), have_set_key_dir(false)
+    confdir(get_default_confdir()), have_set_key_dir(false), no_files(false),
+    prog_name("monotone")
 {
   db.set_app(this);
   lua.set_app(this);
@@ -61,12 +63,12 @@ app_state::is_explicit_option(int option_id) const
 }
 
 void
-app_state::allow_working_copy()
+app_state::allow_workspace()
 {
-  L(F("initializing from directory %s\n") % fs::initial_path().string());
-  found_working_copy = find_and_go_to_working_copy(search_root);
+  L(FL("initializing from directory %s\n") % fs::initial_path().string());
+  found_workspace = find_and_go_to_workspace(search_root);
 
-  if (found_working_copy) 
+  if (found_workspace) 
     {
       read_options();
 
@@ -76,19 +78,25 @@ app_state::allow_working_copy()
           db.set_filename(dbname);
         }
 
+      if (!options[keydir_option]().empty())
+        {
+          system_path keydir = system_path(options[keydir_option]);
+          set_key_dir(keydir);
+        }
+
       if (branch_name().empty())
         branch_name = options[branch_option];
-      L(F("branch name is '%s'\n") % branch_name());
+      L(FL("branch name is '%s'\n") % branch_name());
       internalize_rsa_keypair_id(options[key_option], signing_key);
 
       if (global_sanity.filename.empty())
         {
           bookkeeping_path dump_path;
           get_local_dump_path(dump_path);
-          L(F("setting dump path to %s\n") % dump_path);
+          L(FL("setting dump path to %s\n") % dump_path);
           // the 'true' means that, e.g., if we're running checkout, then it's
           // okay for dumps to go into our starting working dir's MT rather
-          // than the checked-out dir's MT.
+          // than the new workspace dir's MT.
           global_sanity.filename = system_path(dump_path, false);
         }
     }
@@ -96,29 +104,29 @@ app_state::allow_working_copy()
 }
 
 void 
-app_state::require_working_copy(std::string const & explanation)
+app_state::require_workspace(std::string const & explanation)
 {
-  N(found_working_copy,
-    F("working copy directory required but not found%s%s")
+  N(found_workspace,
+    F("workspace required but not found%s%s")
     % (explanation.empty() ? "" : "\n") % explanation);
   write_options();
 }
 
 void 
-app_state::create_working_copy(system_path const & new_dir)
+app_state::create_workspace(system_path const & new_dir)
 {
   N(!new_dir.empty(), F("invalid directory ''"));
 
-  L(F("creating working copy in %s\n") % new_dir);
+  L(FL("creating workspace in %s\n") % new_dir);
   
   mkdir_p(new_dir);
-  go_to_working_copy(new_dir);
+  go_to_workspace(new_dir);
 
   N(!directory_exists(bookkeeping_root),
     F("monotone bookkeeping directory '%s' already exists in '%s'\n") 
     % bookkeeping_root % new_dir);
 
-  L(F("creating bookkeeping directory '%s' for working copy in '%s'\n")
+  L(FL("creating bookkeeping directory '%s' for workspace in '%s'\n")
     % bookkeeping_root % new_dir);
 
   mkdir_p(bookkeeping_root);
@@ -136,84 +144,92 @@ app_state::create_working_copy(system_path const & new_dir)
 }
 
 void 
-app_state::set_restriction(path_set const & valid_paths, 
-                           vector<utf8> const & paths,
-                           bool respect_ignore)
+app_state::set_restriction(path_set const & valid_paths,
+                           vector<utf8> const & paths)
 {
+  // FIXME: this was written before split_path, and only later kludged to
+  // work with it. Could be much tidier if written with knowledge of
+  // split_path.
+
   static file_path root = file_path_internal("");
   restrictions.clear();
   excludes.clear();
   for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       file_path p = file_path_external(*i);
+      split_path sp;
+      p.split(sp);
 
-      if (respect_ignore && lua.hook_ignore_file(p)) 
-        {
-          L(F("'%s' ignored by restricted path set\n") % p);
-          continue;
-        }
-
-      N(p == root || valid_paths.find(p) != valid_paths.end(),
+      N(lua.hook_ignore_file(p) ||
+        p == root || valid_paths.find(sp) != valid_paths.end(),
         F("unknown path '%s'\n") % p);
 
-      L(F("'%s' added to restricted path set\n") % p);
-      restrictions.insert(p);
+      L(FL("'%s' added to restricted path set\n") % p);
+      restrictions.insert(sp);
     }
 
   for (std::set<utf8>::const_iterator i = exclude_patterns.begin();
        i != exclude_patterns.end(); ++i)
     {
       file_path p = file_path_external(*i);
+      split_path sp;
+      p.split(sp);
 
-      if (respect_ignore && lua.hook_ignore_file(p)) 
-        {
-          L(F("'%s' ignored by excluded path set\n") % p);
-          continue;
-        }
-
-      N(p == root || valid_paths.find(p) != valid_paths.end(),
+      N(lua.hook_ignore_file(p) ||
+        p == root || valid_paths.find(sp) != valid_paths.end(),
         F("unknown path '%s'\n") % p);
 
-      L(F("'%s' added to excluded path set\n") % p);
-      excludes.insert(p);
+      L(FL("'%s' added to excluded path set\n") % p);
+      excludes.insert(sp);
     }
 
   // if user supplied a depth but provided no paths 
   // assume current directory
   if ((depth != -1) && restrictions.empty()) 
     {
-      restrictions.insert(file_path_external(utf8(".")));
+      file_path fp = file_path_external(utf8("."));
+      split_path sp;
+      fp.split(sp);
+      restrictions.insert(sp);
     }
 }
 
 bool
-app_state::restriction_includes(file_path const & path)
+app_state::restriction_includes(split_path const & sp)
 {
+  // FIXME: this was written before split_path, and only later kludged to
+  // work with it. Could be much tidier if written with knowledge of
+  // split_path.
+
+  file_path path(sp);
+
   static file_path root = file_path_internal("");
+  split_path sp_root;
+  root.split(sp_root);
 
   if (restrictions.empty())
     {
       if (!excludes.empty())
         {
-          if (excludes.find(root) != excludes.end())
+          if (excludes.find(sp_root) != excludes.end())
             return false;
-          fs::path test = fs::path(path.as_external(), fs::native);
+
+          split_path test = sp;
 
           while (!test.empty()) 
             {
-              L(F("checking excluded path set for '%s'\n") % test.string());
+              L(FL("checking excluded path set for '%s'\n") % file_path(test));
 
-              file_path p = file_path_internal(test.string());
-              path_set::const_iterator i = excludes.find(p);
+              path_set::const_iterator i = excludes.find(test);
 
               if (i != excludes.end()) 
                 {
-                  L(F("path '%s' found in excluded path set; '%s' excluded\n") 
-                    % test.string() % path);
+                  L(FL("path '%s' found in excluded path set; '%s' excluded\n") 
+                    % file_path(test) % path);
                   return false;
                 }
 
-              test = test.branch_path();
+              test.pop_back();
             }
         }
       return true;
@@ -221,33 +237,32 @@ app_state::restriction_includes(file_path const & path)
 
   bool user_supplied_depth = (depth != -1);
 
-  fs::path test = fs::path(path.as_external(), fs::native);
+  split_path test = sp;
   long branch_depth = 0;
   long max_depth = depth + 1;
 
   while (!test.empty()) 
     {
-      L(F("checking restricted path set for '%s'\n") % test.string());
+      L(FL("checking restricted path set for '%s'\n") % file_path(test));
 
-      file_path p = file_path_internal(test.string());
-      path_set::const_iterator i = restrictions.find(p);
-      path_set::const_iterator j = excludes.find(p);
+      path_set::const_iterator i = restrictions.find(test);
+      path_set::const_iterator j = excludes.find(test);
 
       if (i != restrictions.end()) 
         {
-          L(F("path '%s' found in restricted path set; '%s' included\n") 
-            % test.string() % path);
+          L(FL("path '%s' found in restricted path set; '%s' included\n") 
+            % file_path(test) % path);
           return true;
         }
       else if (j != excludes.end())
         {
-          L(F("path '%s' found in excluded path set; '%s' excluded\n") 
-            % test.string() % path);
+          L(FL("path '%s' found in excluded path set; '%s' excluded\n") 
+            % file_path(test) % path);
           return false;
         }
 
       if (user_supplied_depth && (max_depth == branch_depth)) return false;
-      test = test.branch_path();
+      test.pop_back();
       ++branch_depth;
     }
 
@@ -255,7 +270,7 @@ app_state::restriction_includes(file_path const & path)
   // essentially cleared (all files are included). rather than be
   // careful about what goes in to the restricted path set we just
   // check for this special case here.
-  if (restrictions.find(root) != restrictions.end())
+  if (restrictions.find(sp_root) != restrictions.end())
     {
       return (!user_supplied_depth) || (branch_depth <= max_depth);
     }
@@ -293,11 +308,11 @@ void
 app_state::make_branch_sticky()
 {
   options[branch_option] = branch_name();
-  if (found_working_copy)
+  if (found_workspace)
     {
-      // already have a working copy, can (must) write options directly,
+      // already have a workspace, can (must) write options directly,
       // because no-one else will do so
-      // if we don't have a working copy yet, then require_working_copy (for
+      // if we don't have a workspace yet, then require_workspace (for
       // instance) will call write_options when it finds one.
       write_options();
     }
@@ -326,7 +341,7 @@ app_state::set_root(system_path const & path)
                             F("search root '%s' does not exist") % path,
                             F("search root '%s' is not a directory\n") % path);
   search_root = path;
-  L(F("set search root to %s\n") % search_root);
+  L(FL("set search root to %s\n") % search_root);
 }
 
 void
@@ -344,7 +359,23 @@ app_state::set_message_file(utf8 const & m)
 void
 app_state::set_date(utf8 const & d)
 {
-  date = d;
+  try
+    {
+      // boost::posix_time is lame: it can parse "basic" ISO times, of the
+      // form 20000101T120000, but not "extended" ISO times, of the form
+      // 2000-01-01T12:00:00.  So do something stupid to convert one to the
+      // other.
+      std::string tmp = d();
+      std::string::size_type pos = 0;
+      while ((pos = tmp.find_first_of("-:")) != string::npos)
+        tmp.erase(pos, 1);
+      date = boost::posix_time::from_iso_string(tmp);
+      date_set = true;
+    }
+  catch (std::exception &e)
+    {
+      N(false, F("failed to parse date string '%s': %s") % d % e.what());
+    }
 }
 
 void
@@ -367,6 +398,14 @@ app_state::set_last(long l)
   N(l > 0,
     F("negative or zero last not allowed\n"));
   last = l;
+}
+
+void
+app_state::set_next(long l)
+{
+  N(l > 0,
+    F("negative or zero next not allowed\n"));
+  next = l;
 }
 
 void
@@ -419,6 +458,12 @@ app_state::set_verbose(bool b)
 }
 
 void
+app_state::set_recursive(bool r)
+{
+  recursive = r;
+}
+
+void
 app_state::add_rcfile(utf8 const & filename)
 {
   extra_rcfiles.push_back(filename);
@@ -438,8 +483,8 @@ app_state::get_confdir()
   return confdir;
 }
 
-// rc files are loaded after we've changed to the working copy directory so
-// that MT/monotonerc can be loaded between ~/.monotone/monotonerc and other
+// rc files are loaded after we've changed to the workspace so that
+// MT/monotonerc can be loaded between ~/.monotone/monotonerc and other
 // rcfiles
 
 void
@@ -456,11 +501,11 @@ app_state::load_rcfiles()
   if (rcfiles)
     {
       system_path default_rcfile;
-      bookkeeping_path working_copy_rcfile;
+      bookkeeping_path workspace_rcfile;
       lua.default_rcfilename(default_rcfile);
-      lua.working_copy_rcfilename(working_copy_rcfile);
+      lua.workspace_rcfilename(workspace_rcfile);
       lua.load_rcfile(default_rcfile, false);
-      lua.load_rcfile(working_copy_rcfile, false);
+      lua.load_rcfile(workspace_rcfile, false);
     }
 
   // command-line rcfiles override even that

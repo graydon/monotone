@@ -121,7 +121,8 @@ COMMIT(testbranch)
 REV6=`BASE_REVISION`
 
 # Now make right side
-AT_CHECK(MONOTONE update --revision=$REV4, [], [ignore], [ignore])
+rm -rf MT
+AT_CHECK(MONOTONE co --revision=$REV4 ., [], [ignore], [ignore])
 AT_DATA(bar0, [bar
 on right side of fork
 ])

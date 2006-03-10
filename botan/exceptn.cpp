@@ -4,7 +4,7 @@
 *************************************************/
 
 #include <botan/exceptn.h>
-#include <botan/util.h>
+#include <botan/parsing.h>
 
 namespace Botan {
 

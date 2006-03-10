@@ -140,3 +140,20 @@ bool Netxx::SockOpt::check_for_error (std::string &message) const
     return true;
 }
 //####################################################################
+bool Netxx::SockOpt::set_ipv6_listen_for_v6_only (void) const 
+{
+# ifndef NETXX_NO_INET6
+
+# ifndef IPV6_V6ONLY
+    return false;
+# else
+    int on = 1;
+    char *val = reinterpret_cast<char*>(&on);
+
+    if (setsockopt(socket_, IPPROTO_IPV6, IPV6_V6ONLY, val, sizeof(on)) != 0)
+        return false;
+# endif
+# endif
+    return true;
+}
+//####################################################################

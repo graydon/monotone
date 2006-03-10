@@ -6,9 +6,22 @@ MONOTONE_SETUP
 
 NEED_UNGZB64
 
-AT_DATA(test.manifest, [94c86fa749ed82d76fe8d6cce18d11b8c3f0ee38  src/objdump.c
-01f722126e54806abfa32f867dbeb8529b79298b  tests/asm-tst3.c
-7968cb0c8f62e6f15d710ce0cd42a65f7acd2567  tests/asm-tst4.c
+AT_DATA(test.manifest, [format_version "1"
+
+dir ""
+
+dir "src"
+
+   file "src/objdump.c"
+content @<:@94c86fa749ed82d76fe8d6cce18d11b8c3f0ee38@:>@
+
+dir "tests"
+
+   file "tests/asm-tst3.c"
+content @<:@01f722126e54806abfa32f867dbeb8529b79298b@:>@
+
+   file "tests/asm-tst4.c"
+content @<:@7968cb0c8f62e6f15d710ce0cd42a65f7acd2567@:>@
 ])
 
 AT_DATA(e.tar.gz.enc, [H4sIACBaoUIAA+w8+1fbRrP51fortu6B2GCMMa8UBxoHTMKpAxzjtMlJOLqyJGM1
@@ -185,7 +198,7 @@ AT_CHECK(tar -xf e.tar)
 
 AT_CHECK(MONOTONE --branch=foo.bar cvs_import e, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=foo.bar.disasm-branch co)
-AT_CHECK(cd foo.bar.disasm-branch && MONOTONE automate get_manifest, [], [stdout])
+AT_CHECK(cd foo.bar.disasm-branch && MONOTONE automate get_manifest_of, [], [stdout])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp test.manifest stdout)
 

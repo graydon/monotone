@@ -15,17 +15,22 @@
 #include <string>
 #include <boost/format.hpp>
 
+#include "sanity.hh"
+
 struct user_interface;
 
 struct ticker
 {
   size_t ticks;
   size_t mod;
+  size_t total;
   bool kilocount;
+  bool use_total;
   std::string name;
   std::string shortname;
   ticker(std::string const & n, std::string const & s, size_t mod = 64, 
       bool kilocount=false);
+  void set_total(size_t tot) { use_total = true; total = tot; }
   void operator++();
   void operator+=(size_t t);
   ~ticker();
@@ -48,6 +53,7 @@ public:
   void write_ticks();
   void clear_line();
 private:
+  std::vector<size_t> last_tick_widths;
   size_t last_tick_len;
 };
 
@@ -81,9 +87,11 @@ public:
   void fatal(boost::format const & fmt) { warn(fmt.str()); }
   void inform(std::string const & line);
   void inform(boost::format const & fmt) { inform(fmt.str()); }
+  void inform(i18n_format const & fmt) { inform(fmt.str()); }
   void set_tick_trailer(std::string const & trailer);
   void set_tick_writer(tick_writer * t_writer);
   void ensure_clean_line();
+  void redirect_log_to(system_path const & filename);
 
 private:  
   std::set<std::string> issued_warnings;  

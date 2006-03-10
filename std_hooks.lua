@@ -33,7 +33,7 @@ end
 -- attributes are persistent metadata about files (such as execute
 -- bit, ACLs, various special flags) which we want to have set and
 -- re-set any time the files are modified. the attributes themselves
--- are stored in a file .mt-attrs, in the working copy (and
+-- are stored in a file .mt-attrs, in the workspace (and
 -- manifest). each (f,k,v) triple in an attribute file turns into a
 -- call to attr_functions[k](f,v) in lua.
 
@@ -41,7 +41,7 @@ if (attr_init_functions == nil) then
    attr_init_functions = {}
 end
 
-attr_init_functions["execute"] = 
+attr_init_functions["mtn:execute"] = 
    function(filename)
       if (is_executable(filename)) then 
         return "true" 
@@ -50,7 +50,7 @@ attr_init_functions["execute"] =
       end 
    end
 
-attr_init_functions["manual_merge"] = 
+attr_init_functions["mtn:manual_merge"] = 
    function(filename)
       if (binary_file(filename)) then 
         return "true" -- binary files must merged manually
@@ -63,13 +63,22 @@ if (attr_functions == nil) then
    attr_functions = {}
 end
 
-attr_functions["execute"] = 
+attr_functions["mtn:execute"] = 
    function(filename, value) 
       if (value == "true") then
          make_executable(filename)
       end
    end
 
+function dir_matches(name, dir)
+   -- helper for ignore_file, matching files within dir, or dir itself.
+   -- eg for dir of 'CVS', matches CVS/, CVS/*, */CVS/ and */CVS/*
+   if (string.find(name, "^" .. dir .. "/")) then return true end
+   if (string.find(name, "^" .. dir .. "$")) then return true end
+   if (string.find(name, "/" .. dir .. "/")) then return true end
+   if (string.find(name, "/" .. dir .. "$")) then return true end
+   return false
+end
 
 function ignore_file(name)
    -- project specific
@@ -124,25 +133,21 @@ function ignore_file(name)
    -- emacs creates #foo# files
    if (string.find(name, "%#[^/]*%#$")) then return true end
    -- autotools detritus:
-   if (string.find(name, "^autom4te.cache/")) then return true end
-   if (string.find(name, "/autom4te.cache/")) then return true end
-   if (string.find(name, "^.deps/")) then return true end
-   if (string.find(name, "/.deps/")) then return true end
+   if dir_matches(name, "autom4te.cache") then return true end
+   if dir_matches(name, ".deps") then return true end
    -- Cons/SCons detritus:
-   if (string.find(name, "^.consign$")) then return true end
-   if (string.find(name, "/.consign$")) then return true end
-   if (string.find(name, "^.sconsign$")) then return true end
-   if (string.find(name, "/.sconsign$")) then return true end
-   -- other VCSes:
-   if (string.find(name, "^CVS/")) then return true end
-   if (string.find(name, "/CVS/")) then return true end
-   if (string.find(name, "^%.svn/")) then return true end
-   if (string.find(name, "/%.svn/")) then return true end
-   if (string.find(name, "^SCCS/")) then return true end
-   if (string.find(name, "/SCCS/")) then return true end
-   if (string.find(name, "^_darcs/")) then return true end
-   if (string.find(name, "^.cdv/")) then return true end
-   if (string.find(name, "^.git/")) then return true end
+   if dir_matches(name, ".consign") then return true end
+   if dir_matches(name, ".sconsign") then return true end
+   -- other VCSes (where metadata is stored in named dirs):
+   if dir_matches(name, "CVS") then return true end
+   if dir_matches(name, ".svn") then return true end
+   if dir_matches(name, "SCCS") then return true end
+   if dir_matches(name, "_darcs") then return true end
+   if dir_matches(name, ".cdv") then return true end
+   if dir_matches(name, ".git") then return true end
+   if dir_matches(name, ".bzr") then return true end
+   if dir_matches(name, ".hg") then return true end
+   -- other VCSes (where metadata is stored in named files):
    if (string.find(name, "%.scc$")) then return true end
    -- desktop/directory configuration metadata
    if (string.find(name, "^.DS_Store$")) then return true end
@@ -230,11 +235,6 @@ function edit_comment(basetext, user_log_message)
 end
 
 
-function non_blocking_rng_ok()
-   return true
-end
-
-
 function persist_phrase_ok()
    return true
 end
@@ -290,27 +290,10 @@ end
 
 -- merger support
 
-function merge2_meld_cmd(lfile, rfile)
-   return 
-   function()
-      return execute("meld", lfile, rfile)
-   end
-end
-
 function merge3_meld_cmd(lfile, afile, rfile)
    return 
    function()
       return execute("meld", lfile, afile, rfile)
-   end
-end
-
-function merge2_tortoise_cmd(lfile, rfile, outfile)
-   return
-   function()
-      return execute("tortoisemerge",
-                     string.format("/theirs:%s", lfile),
-                     string.format("/mine:%s", rfile),
-                     string.format("/merged:%s", outfile))
    end
 end
 
@@ -322,14 +305,6 @@ function merge3_tortoise_cmd(lfile, afile, rfile, outfile)
                      string.format("/theirs:%s", lfile),
                      string.format("/mine:%s", rfile),
                      string.format("/merged:%s", outfile))
-   end
-end
-
-function merge2_vim_cmd(vim, lfile, rfile, outfile)
-   return
-   function()
-      return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
-                     lfile, rfile)
    end
 end
 
@@ -357,32 +332,12 @@ function merge3_rcsmerge_vim_cmd(merge, vim, lfile, afile, rfile, outfile)
    end
 end
 
-function merge2_emacs_cmd(emacs, lfile, rfile, outfile)
-   local elisp = "(ediff-merge-files \"%s\" \"%s\" nil \"%s\")"
-   return 
-   function()
-      return execute(emacs, "--eval", 
-                     string.format(elisp, lfile, rfile, outfile))
-   end
-end
-
 function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
    local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
    return 
    function()
       return execute(emacs, "--eval", 
                      string.format(elisp, lfile, rfile, afile, outfile))
-   end
-end
-
-function merge2_xxdiff_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
-   return 
-   function()
-      return execute("xxdiff", 
-                     "--title1", left_path,
-                     "--title2", right_path,
-                     lfile, rfile, 
-                     "--merged-filename", outfile)
    end
 end
 
@@ -396,21 +351,11 @@ function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path,
                      "--title3", merged_path,
                      lfile, afile, rfile, 
                      "--merge", 
-                     "--merged-filename", outfile)
+                     "--merged-filename", outfile,
+                     "--exit-with-merge-status")
    end
 end
    
-function merge2_kdiff3_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
-   return 
-   function()
-      return execute("kdiff3", 
-                     "--L1", left_path,
-                     "--L2", right_path,
-                     lfile, rfile, 
-                     "-o", outfile)
-   end
-end
-
 function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path, 
                            lfile, afile, rfile, outfile)
    return 
@@ -423,14 +368,6 @@ function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path,
                      "--merge", 
                      "--o", outfile)
    end
-end
-
-function merge2_opendiff_cmd(left_path, right_path, merged_path, lfile, rfile, outfile)
-   return 
-   function()
-      -- As opendiff immediately returns, let user confirm manually
-      return execute_confirm("opendiff",lfile,rfile,"-merge",outfile) 
-  end
 end
 
 function merge3_opendiff_cmd(left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile)
@@ -479,102 +416,6 @@ end
 
 function program_exists_in_path(program)
    return existsonpath(program) == 0
-end
-
-function get_preferred_merge2_command (tbl)
-   local cmd = nil
-   local left_path = tbl.left_path
-   local right_path = tbl.right_path
-   local merged_path = tbl.merged_path
-   local lfile = tbl.lfile
-   local rfile = tbl.rfile
-   local outfile = tbl.outfile 
-
-   local editor = os.getenv("EDITOR")
-   if editor ~= nil then editor = string.lower(editor) else editor = "" end
-
-   
-   if program_exists_in_path("kdiff3") then
-      cmd =   merge2_kdiff3_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
-   elseif program_exists_in_path ("xxdiff") then 
-      cmd = merge2_xxdiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
-   elseif program_exists_in_path ("opendiff") then 
-      cmd = merge2_opendiff_cmd (left_path, right_path, merged_path, lfile, rfile, outfile) 
-   elseif program_exists_in_path ("TortoiseMerge") then
-      cmd = merge2_tortoise_cmd(lfile, rfile, outfile)
-   elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
-      if string.find(editor, "xemacs") and program_exists_in_path("xemacs") then
-         cmd = merge2_emacs_cmd ("xemacs", lfile, rfile, outfile) 
-      elseif program_exists_in_path("emacs") then
-         cmd = merge2_emacs_cmd ("emacs", lfile, rfile, outfile) 
-      end
-   elseif string.find(editor, "vim") ~= nil then
-      io.write (string.format("\nWARNING: 'vim' was choosen to perform external 2-way merge.\n"..
-          "You should merge all changes to *LEFT* file due to limitation of program\n"..
-          "arguments.\n\n")) 
-      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then
-         cmd = merge2_vim_cmd ("gvim", lfile, rfile, outfile) 
-      elseif program_exists_in_path ("vim") then 
-         cmd = merge2_vim_cmd ("vim", lfile, rfile, outfile) 
-      end
-   elseif program_exists_in_path ("meld") then 
-      tbl.meld_exists = true 
-      io.write (string.format("\nWARNING: 'meld' was choosen to perform external 2-way merge.\n"..
-          "You should merge all changes to *LEFT* file due to limitation of program\n"..
-          "arguments.\n\n")) 
-      cmd = merge2_meld_cmd (lfile, rfile) 
-   end 
-   return cmd 
-end 
-
-function merge2 (left_path, right_path, merged_path, left, right) 
-   local ret = nil 
-   local tbl = {}
-
-   tbl.lfile = nil 
-   tbl.rfile = nil 
-   tbl.outfile = nil 
-   tbl.meld_exists = false
- 
-   tbl.lfile = write_to_temporary_file (left) 
-   tbl.rfile = write_to_temporary_file (right) 
-   tbl.outfile = write_to_temporary_file ("") 
-
-   if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.outfile ~= nil 
-   then 
-      tbl.left_path = left_path 
-      tbl.right_path = right_path 
-      tbl.merged_path = merged_path 
-
-      local cmd = get_preferred_merge2_command (tbl) 
-
-      if cmd ~=nil 
-      then 
-         io.write (string.format(gettext("executing external 2-way merge command\n")))
-         cmd ()
-         if tbl.meld_exists 
-         then 
-            ret = read_contents_of_file (tbl.lfile, "r")
-         else
-            ret = read_contents_of_file (tbl.outfile, "r") 
-         end 
-         if string.len (ret) == 0 
-         then 
-            ret = nil 
-         end
-      else
-         io.write (string.format("No external 2-way merge command found.\n"..
-            "You may want to check that $EDITOR is set to an editor that supports 2-way merge,\n"..
-            "set this explicitly in your get_preferred_merge2_command hook,\n"..
-            "or add a 2-way merge program to your path.\n\n"))
-      end
-   end
-
-   os.remove (tbl.lfile)
-   os.remove (tbl.rfile)
-   os.remove (tbl.outfile)
-   
-   return ret
 end
 
 function get_preferred_merge3_command (tbl)
@@ -740,7 +581,7 @@ function expand_date(str)
       return os.date("%FT%T", t)
    end
    
-         -- today don't uses the time
+   -- today don't uses the time         # for xgettext's sake, an extra quote
    if str == "today"
    then
       local t = os.time(os.date('!*t'))
@@ -810,6 +651,7 @@ function get_netsync_read_permitted(branch, ident)
    local permfile = io.open(get_confdir() .. "/read-permissions", "r")
    if (permfile == nil) then return false end
    local dat = permfile:read("*a")
+   io.close(permfile)
    local res = parse_basic_io(dat)
    if res == nil then
       io.stderr:write("file read-permissions cannot be parsed\n")
@@ -853,13 +695,21 @@ function get_netsync_write_permitted(ident)
    if (permfile == nil) then
       return false
    end
+   local matches = false
    local line = permfile:read()
-   while (line ~= nil) do
+   while (not matches and line ~= nil) do
       local _, _, ln = string.find(line, "%s*([^%s]*)%s*")
-      if ln == "*" then return true end
-      if globish_match(ln, ident) then return true end
+      if ln == "*" then matches = true end
+      if globish_match(ln, ident) then matches = true end
       line = permfile:read()
    end
    io.close(permfile)
-   return false
+   return matches
+end
+
+function validate_commit_message(message, changeset_text)
+    if (message == "") then
+        return false, "empty messages aren't allowed"
+    end
+    return true, ""
 end

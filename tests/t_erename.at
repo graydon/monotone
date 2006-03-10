@@ -42,7 +42,7 @@ AT_CHECK(MONOTONE commit --message=blah-blah, [], [ignore], [ignore])
 # merge the add and the rename
 AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
 AT_CHECK(MONOTONE update, [], [ignore], [ignore])
-AT_CHECK(MONOTONE automate get_manifest, [ignore], [stdout])
+AT_CHECK(MONOTONE automate get_manifest_of, [ignore], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep bar manifest, [0], [ignore], [ignore])
 AT_CHECK(grep bleh manifest, [0], [ignore], [ignore])

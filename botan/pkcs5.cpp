@@ -5,6 +5,7 @@
 
 #include <botan/pkcs5.h>
 #include <botan/lookup.h>
+#include <botan/bit_ops.h>
 #include <botan/hmac.h>
 #include <memory>
 

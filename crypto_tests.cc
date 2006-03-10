@@ -1055,11 +1055,11 @@ calculate_ident_test()
 
   calculate_ident(input, output);
 
-  //L(F(" Input: %s\n") % input);
-  //L(F("Output: %s\n") % output);
+  //L(FL(" Input: %s\n") % input);
+  //L(FL("Output: %s\n") % output);
 
   BOOST_CHECK(output() == ident);
-  L(F("SHA Short Message Test:  Passed\n\n"));
+  L(FL("SHA Short Message Test:  Passed\n\n"));
 
 
   //SHA Monte Carlo Test
@@ -1095,18 +1095,18 @@ calculate_ident_test()
       for (int i = 3; i < 1003; i++) 
         {
           std::string messageString = MD[i - 3] + MD[i - 2] + MD[i - 1];
-          // L(F("messageString: %s\n") % messageString );
+          // L(FL("messageString: %s\n") % messageString );
 
           data messageData(decode_hexenc(messageString));
-          // L(F("message: %s\n") % messageString );
+          // L(FL("message: %s\n") % messageString );
 
           calculate_ident(messageData, output2);
-          // L(F("output: %s\n") % output2 );
+          // L(FL("output: %s\n") % output2 );
 
           MD[i] = output2();
         }
   
-      L(F("  %03d:  %s\n") % j % output2 );
+      L(FL("  %03d:  %s\n") % j % output2 );
     
       BOOST_CHECK(output2() == expected_SHA_MCT[j]);
 
@@ -1114,7 +1114,7 @@ calculate_ident_test()
       Seed  = MD[j];
     }
 
-  L(F("SHA Monte Carlo Test:  Passed\n\n"));
+  L(FL("SHA Monte Carlo Test:  Passed\n\n"));
 }
 
 

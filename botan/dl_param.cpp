@@ -4,9 +4,11 @@
 *************************************************/
 
 #include <botan/dl_param.h>
+#include <botan/parsing.h>
 #include <botan/numthry.h>
 #include <botan/asn1.h>
 #include <botan/pipe.h>
+#include <botan/util.h>
 #include <botan/pem.h>
 
 namespace Botan {

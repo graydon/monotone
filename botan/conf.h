@@ -6,7 +6,6 @@
 #ifndef BOTAN_POLICY_CONF_H__
 #define BOTAN_POLICY_CONF_H__
 
-#include <botan/config.h>
 #include <botan/types.h>
 #include <botan/enums.h>
 #include <string>

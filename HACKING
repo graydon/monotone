@@ -18,7 +18,7 @@ The appropriate Emacs modeline to use for editing source is:
 
 And something close (but not perfect) for VIM:
 
-vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 monotone's source includes a number of third party libraries.  These have
 been imported from upstream, and should retain the original coding style of
@@ -115,12 +115,68 @@ carefully observe the test case's behaviour before and after your fix. If no
 test case exists, it is strongly recommended to write a test case before
 attempting to fix the bug.
 
-When looking at test results or debugging tests, don't immediately panic if you
-notice monotone processes being killed by a SIGSEGV.  We use SIGSEGV to
-terminate 'monotone serve' processes (only) to ensure the error exit paths are
-tested.  Other than these 'monotone serve' processes, any SIGSEGVs occurring
-during the tests is very likely a bug.
 
+Single-character macros
+-----------------------
+
+These are very convenient once you get used to them, but when you
+first look at the code, it can be a bit of a shock to see all these
+bare capital letters scattered around.  Here's a quick guide.
+
+   Formatting macros:
+      F("foo %s"): create a formatting object, for display to the user.
+         Translators will translate this string, and F() runs
+         gettext() on its argument.  NB: this string should usually
+         _not_ end in a newline.
+      FP("%d foo", "%d foos", n) % n: create a formatting object, with
+         plural handling.  Same comments apply as to F().
+      FL("foo %s"): create a raw ("literal") formatting object, mostly for
+         use in logging.  This string will _not_ be translated, and
+         gettext() is _not_ called.  This is almost always an argument
+         to the L() macro:
+
+   Informational macros:
+      L(FL("foo")): log "foo".  Log messages are generally not seen by the
+         user, and are used to debug problems with monotone.
+      P(F("foo")): print "foo".  For generic informative messages to the
+         user.
+      W(F("foo")): warn "foo".  For warnings to the user.
+      
+   Assertion macros (see also the next section).  These all cause
+   monotone to exit if their condition is false:
+      I(x != y): "invariant" -- if the condition is not true, then there
+         is a bug in monotone.
+      N(x != y, F("make x and y equal")): "naughty" -- the user
+         requested something that doesn't make sense, they should fix
+         that.
+      E(x != y, F("x and y are not equal")): "error" -- not a bug in
+         monotone, not necessarily the users fault... dunno boss, it
+         just isn't working!
+
+   Tracing macros:
+      MM(x): Mark the given variable as one of the things we are looking
+         at right now.  On its own, this statement has no visible
+         effect; but if monotone crashes (that is, an I() check fails)
+         while MM(x) is in scope, then the value of x will be printed
+         to the debug log.  This is quite cheap, so feel free to
+         scatter them through your code; this information is _very_
+         useful when trying to understand crashes, especially ones
+         reported by users, that cannot necessarily be reproduced.
+         There are some limitations:
+          -- the object passed to MM must remain in scope as long as the
+             MM does.  Code like
+                MM(get_cool_value())
+             will probably crash!  Instead say 
+                cool_t my_cool_value = get_cool_value();
+                MM(my_cool_value);"
+          -- You can only use MM() once per line.  If you say
+                MM(x); MM(y);
+             you will get a compile error.  Instead say
+                MM(x);
+                MM(y);
+          -- The object passed to MM() must have a defined "dump"
+             function.  You can easily add an overload to "dump" to
+             support new types.
 
 Reporting errors to the user
 ----------------------------
@@ -152,11 +208,11 @@ Each of these assertion macros are fatal and will cause an exception to be
 thrown that will ultimately cause the monotone process to exit.  Exceptions
 are used (rather than C-style abort() based assertions) so that the stack
 will unwind and cause the destructors for objects allocated on the stack to
-run.  This allows monotone to leave the user's database and working copy in
+run.  This allows monotone to leave the user's database and workspace in
 as logical a state as possible.  Any in-flight uncommitted database
-transactions will be aborted.  Operations occurring on a working copy may
-leave the working copy in an inconsistent state, as we do not have a way to
-atomically update the working copy.
+transactions will be aborted.  Operations occurring on a workspace may
+leave the workspace in an inconsistent state, as we do not have a way to
+atomically update the workspace.
 
 
 Patch submission guidelines
@@ -203,3 +259,20 @@ In a small number of cases, a change made to our local version of the
 third-party code may not make sense to send upstream.  In this case, make a
 note of this in the file you're changing and in the ChangeLog so that this
 permanent deviation is documented.
+
+
+Compiling Hints
+---------------
+
+  - monotone's compilation time can be improved significantly by compiling
+  with 'CXXFLAGS=-O0'. Note that disabling optimisation makes the resultant
+  binary significantly slower - don't bother using it for performance
+  profiling.
+
+  - precompiled headers can be enabled by running 'configure' with --enable-pch
+  This should give shorter compile times, given boost's extensive use of
+  templates.  Some versions of gcc have issues with precompiled headers, so if
+  you get strange compilation errors, try disabling them.
+
+  - ccache (http://ccache.samba.org/) is quite effective for speeding up
+  repeated compiles of the same source.

@@ -7,7 +7,6 @@
 #define BOTAN_SECURE_MEMORY_BUFFERS_H__
 
 #include <botan/allocate.h>
-#include <botan/config.h>
 #include <botan/mem_ops.h>
 #include <algorithm>
 

@@ -68,9 +68,6 @@ AT_DATA(min_hooks.lua, [
 function get_passphrase(keyid)
 	return keyid
 end
-function non_blocking_rng_ok()
-	return true
-end
 function persist_phrase_ok()
 	return true
 end
@@ -83,10 +80,6 @@ AT_DATA(test_hooks.lua, [
 
 function get_passphrase(keyid)
 	return keyid
-end
-
-function non_blocking_rng_ok()
-	return true
 end
 
 -- Everything alice signs is trusted, nothing mallory signs is
@@ -134,7 +127,6 @@ end
 function ignore_file(name)
 	if (string.find(name, "test_hooks.lua")) then return true end
 	if (string.find(name, "keys")) then return true end
-	if (string.find(name, "test.db")) then return true end
 	return false
 end
 
@@ -146,9 +138,9 @@ end
 if (attr_functions == nil) then
   attr_functions = {}
 end
-attr_functions[["test_attr"]] =
+attr_functions[["test:test_attr"]] =
   function(filename, value)
-    io.write(string.format("test_attr:%s:%s\n", filename, value))
+    io.write(string.format("test:test_attr:%s:%s\n", filename, value))
   end
 
 ])
@@ -192,14 +184,9 @@ CHECK_SAME_STDOUT(MONOTONE --db=$1 ls keys, MONOTONE --db=$2 ls keys)
 
 REVS=`MONOTONE --db=$1 complete revision ""`
 for R in $REVS; do
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 ls certs $R, MONOTONE --db=$2 ls certs $R)
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate certs $R, MONOTONE --db=$2 automate certs $R)
   CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_revision $R, MONOTONE --db=$2 automate get_revision $R)
-done
-
-CHECK_SAME_STDOUT(MONOTONE --db=$1 complete manifest "", MONOTONE --db=$2 complete manifest "")
-MANIFESTS=`MONOTONE --db=$1 complete manifest ""`
-for M in $MANIFESTS; do
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_manifest $M, MONOTONE --db=$2 automate get_manifest $M)
+  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_manifest_of $R, MONOTONE --db=$2 automate get_manifest_of $R)
 done
 
 CHECK_SAME_STDOUT(MONOTONE --db=$1 complete file "", MONOTONE --db=$2 complete file "")
@@ -222,6 +209,17 @@ AT_CHECK(test $PROBE_R_SHA = $2)
 AT_CHECK(test $PROBE_F_SHA = $3)
 ])
 
+# run as REVERT_N_TO(2|3, rsha[, branch])
+m4_define([REVERT_N_TO], [
+AT_CHECK(rm -rf MT.old)
+AT_CHECK(mv  MT MT.old)
+m4_case([$3],
+        [], [AT_CHECK(MONOTONE$1 checkout --revision=$2 ., [], [ignore])],
+        [AT_CHECK(MONOTONE$1 --branch=$3 checkout --revision=$2 ., [], [ignore])])
+PROBE_R_SHA=`BASE_REVISION`
+AT_CHECK(test $PROBE_R_SHA = $2)
+])
+
 # run as REVERT_TO(rsha[,branch])
 m4_define([REVERT_TO], [ 
 AT_CHECK(rm -rf MT.old)
@@ -231,6 +229,12 @@ m4_case([$2],
         [AT_CHECK(MONOTONE --branch=$2 checkout --revision=$1 ., [], [ignore])])
 PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA = $1)
+])
+
+# run as ADD_N_FILE(2|3, filename, data)
+m4_define([ADD_N_FILE], [
+AT_DATA($2, $3)
+AT_CHECK(MONOTONE$1 add $2, [], [ignore], [ignore])
 ])
 
 # run as ADD_FILE(filename, data)
@@ -347,6 +351,11 @@ function get_netsync_write_permitted(identity)
 end
 ])
 
+foo () {
+	NETSYNC_KILLHARD
+}
+trap foo EXIT
+
 ])
 
 m4_define([MONOTONE2], MONOTONE --db=test2.db --keydir=keys2)
@@ -367,11 +376,7 @@ if test "$OSTYPE" = "msys"; then
     ps | awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill " $a);}'
   fi
 else
-  # use a SEGV because it will cause an exit, but trigger error
-  # unwind, so we will actually "exit normally"; which is important
-  # when using things like coverage tools, etc. that need to write out
-  # their data on program exit.
-  kill -SEGV $mt_pid 2>/dev/null
+  kill -TERM $mt_pid 2>/dev/null
 fi
 rm -f monotone_at.pid 2>/dev/null
 ])
@@ -456,7 +461,7 @@ m4_define([TAIL], [(tail -n $1 2>/dev/null || tail -$1)])
 # run as LARGISH_FILE_CREATE(filename, size) to create a <size> MB file of
 # uncompressible data
 m4_define([LARGISH_FILE_CREATE], [
-awk -- 'BEGIN{srand(5253);for(a=0;a<1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish.tmp
+awk -- 'BEGIN{srand(4691);for(a=0;a<1024*1024;a+=20)printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256,rand()*256);}' > largish.tmp
 i=$2
 while test $i -gt 0; do
 	cat largish.tmp >> $1
@@ -577,8 +582,6 @@ m4_include(tests/t_no_rename_overwrite.at)
 m4_include(tests/t_checkout_noop_on_fail.at)
 m4_include(tests/t_monotone_agent.at)
 m4_include(tests/t_approval_semantics.at)
-m4_include(tests/t_rebuild.at)
-m4_include(tests/t_lua_privkey.at)
 m4_include(tests/t_i18n_changelog.at)
 m4_include(tests/t_restrictions_warn_on_unknown.at)
 m4_include(tests/t_need_mt_revision.at)
@@ -621,6 +624,7 @@ m4_include(tests/t_setup_creates_log.at)
 m4_include(tests/t_checkout_creates_log.at)
 m4_include(tests/t_commit_log_1.at)
 m4_include(tests/t_commit_log_2.at)
+m4_include(tests/t_commit_validate.at)
 m4_include(tests/t_dropkey_1.at)
 m4_include(tests/t_dropkey_2.at)
 m4_include(tests/t_rename_attr.at)
@@ -631,11 +635,11 @@ m4_include(tests/t_automate_toposort.at)
 m4_include(tests/t_diff_first_rev.at)
 m4_include(tests/t_automate_ancestry_difference.at)
 m4_include(tests/t_automate_leaves.at)
-m4_include(tests/t_log_depth.at)
+m4_include(tests/t_log_last_next.at)
 m4_include(tests/t_commit_log_3.at)
 m4_include(tests/t_at_sign.at)
 m4_include(tests/t_db_execute.at)
-m4_include(tests/t_sql_unpack.at)
+m4_include(tests/t_sql_gunzip.at)
 m4_include(tests/t_final_space.at)
 m4_include(tests/t_inodeprints.at)
 m4_include(tests/t_inodeprints_update.at)
@@ -741,7 +745,7 @@ m4_include(tests/t_read_from_file.at)
 m4_include(tests/t_setup_existing_path.at)
 m4_include(tests/t_mt_ignore.at)
 m4_include(tests/t_automate_get_file.at)
-m4_include(tests/t_automate_get_manifest.at)
+m4_include(tests/t_automate_get_manifest_of.at)
 m4_include(tests/t_automate_get_revision.at)
 m4_include(tests/t_unreadable_db.at)
 m4_include(tests/t_restriction_with_exclude.at)
@@ -749,11 +753,41 @@ m4_include(tests/t_restriction_with_exclude_iprint.at)
 m4_include(tests/t_rename_diff_names.at)
 m4_include(tests/t_key_management_without_db.at)
 m4_include(tests/t_automate_keys.at)
-m4_include(tests/t_diff_outside_working_dir.at)
-m4_include(tests/t_log_outside_working_dir.at)
+m4_include(tests/t_diff_outside_workspace.at)
+m4_include(tests/t_log_outside_workspace.at)
 m4_include(tests/t_add_inside_MT.at)
 m4_include(tests/t_annotate_renames.at)
 m4_include(tests/t_config_confdir.at)
 m4_include(tests/t_database_sig_cleanup.at)
 m4_include(tests/t_update_switch_branch.at)
+m4_include(tests/t_migrate_rosterify.at)
+m4_include(tests/t_rosterify_attrs.at)
+m4_include(tests/t_rosterify_rename.at)
 m4_include(tests/t_mixed_case_pwd.at)
+m4_include(tests/t_read_privkey.at)
+m4_include(tests/t_restricted_commands_consistent.at)
+m4_include(tests/t_rosterify_drop_attrs.at)
+m4_include(tests/t_rosterify_one_rev.at)
+m4_include(tests/t_selectors_b_h.at)
+m4_include(tests/t_revert_ignored.at)
+m4_include(tests/t_no_persist_phrase.at)
+m4_include(tests/t_check_db_format.at)
+m4_include(tests/t_rename_destdir.at)
+m4_include(tests/t_ls_changed.at)
+m4_include(tests/t_revert_new_project.at)
+m4_include(tests/t_db_kill_rev_locally_2.at)
+m4_include(tests/t_log_nofiles_nomerges.at)
+m4_include(tests/t_cvsimport_branch.at)
+m4_include(tests/t_log_to_file.at)
+m4_include(tests/t_log_selectors.at)
+m4_include(tests/t_pivot_root.at)
+m4_include(tests/t_pivot_root_revert.at)
+m4_include(tests/t_pivot_root_update.at)
+m4_include(tests/t_rosterify_root_suture.at)
+m4_include(tests/t_log_dir.at)
+m4_include(tests/t_show_conflicts.at)
+m4_include(tests/t_merge_into_dir.at)
+m4_include(tests/t_restriction_excludes_parent.at)
+m4_include(tests/t_revert_move_to_renamed_dir.at)
+m4_include(tests/t_sink_has_extra_epochs.at)
+m4_include(tests/t_disapprove_branch.at)

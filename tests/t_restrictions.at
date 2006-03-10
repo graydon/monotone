@@ -42,6 +42,10 @@ AT_CHECK(MONOTONE add work/file3, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add work/A/fileA, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add work/A/B/fileAB, [], [ignore], [ignore])
 
+# initial commit
+
+AT_CHECK(MONOTONE --branch=testbranch commit --message='add file[X23]', [], [ignore], [ignore])
+
 AT_CHECK(MONOTONE ls known --depth=0, [], [stdout], [ignore])
 AT_CHECK(grep fileX stdout, [1], [ignore])
 
@@ -80,10 +84,6 @@ AT_CHECK(grep work/foo.o stdout, [0], [ignore])
 
 AT_CHECK(MONOTONE ls ignored --rcfile=ignored.lua work, [], [stdout], [ignore])
 AT_CHECK(grep work/foo.o stdout, [0], [ignore])
-
-# initial commit
-
-AT_CHECK(MONOTONE --branch=testbranch commit --message='add file[X23]', [], [ignore], [ignore])
 
 # create moved, dropped, and changed work to test status, diff, commit
 

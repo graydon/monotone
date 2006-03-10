@@ -20,7 +20,7 @@ AT_CHECK(MONOTONE --branch=testbranch commit --message 'committed', [], [ignore]
 AT_CHECK(rm maude)
 
 AT_CHECK(MONOTONE drop maude, [], [ignore], [stderr])
-AT_CHECK(grep 'adding maude to working copy delete set' stderr, [0], [ignore])
+AT_CHECK(grep 'dropping maude from workspace manifest' stderr, [0], [ignore])
 
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep maude stdout, [0], [ignore])
@@ -34,8 +34,8 @@ AT_CHECK(rm harold)
 AT_CHECK(rm places/cemetery)
 
 AT_CHECK(MONOTONE drop --missing, [], [ignore], [stderr])
-AT_CHECK(grep 'adding harold to working copy delete set' stderr, [0], [ignore])
-AT_CHECK(grep 'adding places/cemetery to working copy delete set' stderr, [0], [ignore])
+AT_CHECK(grep 'dropping harold from workspace manifest' stderr, [0], [ignore])
+AT_CHECK(grep 'dropping places/cemetery from workspace manifest' stderr, [0], [ignore])
 
 AT_CHECK(MONOTONE status, [], [stdout])
 AT_CHECK(grep maude stdout, [0], [ignore])

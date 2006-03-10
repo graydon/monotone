@@ -8,17 +8,6 @@ AT_DATA(fileX, [blah blah
 ])
 AT_DATA(fileY, [stuff stuff
 ])
-# manifestX is:
-#
-# e3f2b0427b57241225ba1ffc2b67fecd64d07613  fileX
-#
-# where e3f2 etc. is as above
-
-AT_DATA(manifestX, [@<:@mdata 8e5d7e5ffca2393cfca5625ac9c1a19a46489f92@:>@
-H4sIAAAAAAAAAEs1TjNKMjAxMk8yNTcyMTQyMk1KNExLSzZKMjNPS01OMTNJMTA3MzRWUEjL
-zEmN4AIA90gN9zAAAAA=
-@<:@end@:>@
-])
 
 ADD_FILE(testfile, [more stuff
 ])
@@ -27,13 +16,23 @@ REV=`BASE_REVISION`
 
 AT_CHECK(MONOTONE cert $REV author extra_author, [], [ignore], [ignore])
 
+# if we drop the file, we'll have a roster that doesn't
+# reference its own revision. 
+# we can then remove the revision to end up with a clean unreferenced roster.
+AT_CHECK(MONOTONE drop testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE commit -m "goingaway", [], [ignore], [ignore])
+DEL_REV=`BASE_REVISION`
+AT_CHECK(MONOTONE db execute "delete from revisions where id = '$DEL_REV'", [], [ignore], [ignore])
+AT_CHECK(MONOTONE db execute "delete from revision_certs where id = '$DEL_REV'", [], [ignore], [ignore])
+AT_CHECK(MONOTONE db execute "delete from revision_ancestry where child = '$DEL_REV'", [], [ignore], [ignore])
+
+# and also a few unused files shall float about
 AT_CHECK(MONOTONE fload < fileX, [], [ignore], [ignore])
 AT_CHECK(MONOTONE fload < fileY, [], [ignore], [ignore])
-AT_CHECK(MONOTONE read < manifestX, [], [ignore], [ignore])
 
 AT_CHECK(MONOTONE db check, [], [ignore], [stderr])
 
-AT_CHECK(QGREP('problems detected: 3' stderr))
+AT_CHECK(QGREP('problems detected: 5' stderr))
 AT_CHECK(QGREP('0 serious' stderr))
 AT_CHECK(QGREP('minor problems detected' stderr))
 
