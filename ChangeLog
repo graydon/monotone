@@ -1,3 +1,8 @@
+2006-03-10  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* po/fr.po: Fix up broken msgstrs that were causing msgmerge to
+	choke.
+
 2006-03-09  Richard Levitte  <richard@levitte.org>
 
 	* po/fr.po: Finished almost all untranslated things.  I'm a

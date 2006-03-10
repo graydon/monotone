@@ -285,7 +285,7 @@ msgstr "le racine de l'éspace de travail « %s » n'est pas un dossier\n"
 #: ../app_state.cc:399
 #, c-format
 msgid "failed to parse date string '%s': %s"
-msgstr "échou de comprendre la date « %s » : %s\n"
+msgstr "échou de comprendre la date « %s » : %s"
 
 #: ../app_state.cc:413
 #, c-format
@@ -565,7 +565,7 @@ msgstr "génératio de la paire de clef « %s »"
 #: ../commands.cc:924
 #, c-format
 msgid "storing key-pair '%s' in %s/"
-msgstr "sauvegarde la paire de clefs « %s » dans « %s »\n\n"
+msgstr "sauvegarde la paire de clefs « %s » dans « %s »"
 
 #: ../commands.cc:928
 msgid "drop a public and private key"
@@ -1196,7 +1196,7 @@ msgstr ""
 "MT/log n'est pas vide et une entrée de journal a été donné sur la linge\n"
 "de commande\n"
 "veuillez déplacé ou supprimer MT/log,\n"
-"ou supprimer --message/--message-file de la linge de commande\n"
+"ou supprimer --message/--message-file de la linge de commande"
 
 #: ../commands.cc:2427
 #, fuzzy, c-format
@@ -1409,7 +1409,7 @@ msgstr "la branche « %s » est à jour par rapport à la branche « %s »\n"
 #: ../commands.cc:3224
 #, c-format
 msgid "no action taken\n"
-msgstr "rien n'est fait"
+msgstr "rien n'est fait\n"
 
 #: ../commands.cc:3228
 #, c-format
@@ -1713,7 +1713,7 @@ msgstr "certifs"
 #: ../database_check.cc:543
 #, c-format
 msgid "file %s missing (%d manifest references)\n"
-msgstr "fichier %d manquant (%d références du manifeste)\n"
+msgstr "fichier %s manquant (%d références du manifeste)\n"
 
 #: ../database_check.cc:550
 #, c-format
@@ -1881,7 +1881,7 @@ msgstr "%d parents non correspondents\n"
 #: ../database_check.cc:895
 #, c-format
 msgid "%d mismatched children\n"
-msgstr "%d enfants non correspondents"
+msgstr "%d enfants non correspondents\n"
 
 #: ../database_check.cc:897
 #, c-format
@@ -2103,7 +2103,7 @@ msgstr "plusieurs instructions dans la requête: %s\n"
 #: ../database.cc:649
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
-msgstr "voulais %s colonnes, reçu %d dans la requête: %s\n"
+msgstr "voulais %d colonnes, reçu %d dans la requête: %s\n"
 
 #: ../database.cc:708
 #, c-format
@@ -2113,7 +2113,7 @@ msgstr "la requête donnait aucun résultat: %s\n"
 #: ../database.cc:726
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
-msgstr "voulais %s rangs, reçu %d dans la requête: %s\n"
+msgstr "voulais %d rangs, reçu %s dans la requête: %s\n"
 
 #: ../database.cc:1776
 #, c-format
@@ -2201,7 +2201,7 @@ msgstr "impossible de créer le dossier « %s »"
 #: ../file_io.cc:205
 #, c-format
 msgid "failed to create directory '%s' for '%s'"
-msgstr "impossible de créer le dossier « %s » pour « %s »\n"
+msgstr "impossible de créer le dossier « %s » pour « %s »"
 
 #: ../file_io.cc:219
 #, c-format
@@ -2310,7 +2310,7 @@ msgstr "impossible d'ouvrir le fichier %s pour l'écrire"
 #: ../file_io.cc:530
 #, c-format
 msgid "caught runtime error %s constructing file path for %s\n"
-msgstr "attrape une erreur %s en cours d'exécution au milieu de la construction du cheming de fichier pour %s"
+msgstr "attrape une erreur %s en cours d'exécution au milieu de la construction du cheming de fichier pour %s\n"
 
 #: ../file_io.cc:569
 #, c-format
@@ -2829,7 +2829,7 @@ msgstr "détecté une attaque de repasse dans la phase auth de netcmd\n"
 #: ../netsync.cc:1390
 #, c-format
 msgid "remote public key hash '%s' is unknown\n"
-msgstr "la somme de contrôle « %s » d'une clef publique reçu est inconnue"
+msgstr "la somme de contrôle « %s » d'une clef publique reçu est inconnue\n"
 
 #: ../netsync.cc:1407
 #, c-format
@@ -2896,12 +2896,12 @@ msgstr "Commande « done » inattenue pour type d'objet non raffiné\n"
 #: ../netsync.cc:1711
 #, c-format
 msgid "epoch with hash '%s' does not exist in our database"
-msgstr "l'époque avec la somme de contrôle « %s » n'existe pas dans notre base de données\n"
+msgstr "l'époque avec la somme de contrôle « %s » n'existe pas dans notre base de données"
 
 #: ../netsync.cc:1740
 #, c-format
 msgid "revision '%s' does not exist in our database"
-msgstr "la révision « %s » n'existe pas dans notre base de données\n"
+msgstr "la révision « %s » n'existe pas dans notre base de données"
 
 #: ../netsync.cc:1754
 #, c-format
@@ -3125,7 +3125,7 @@ msgstr ""
 #: ../packet.cc:95
 #, c-format
 msgid "dropping delta '%s' -> '%s'"
-msgstr "supprime le delta « %s » -> « %s »\n"
+msgstr "supprime le delta « %s » -> « %s »"
 
 #: ../packet.cc:109
 #, c-format
@@ -3257,7 +3257,7 @@ msgstr "étiquettes"
 #: ../revision.cc:700
 #, c-format
 msgid "scanning for bogus merge edges\n"
-msgstr "cherche des fusions bogguées"
+msgstr "cherche des fusions bogguées\n"
 
 #: ../revision.cc:742
 #, c-format
@@ -3272,7 +3272,7 @@ msgstr ""
 #: ../revision.cc:762
 #, c-format
 msgid "rebuilding %d nodes\n"
-msgstr "reconstruis %d noeuds"
+msgstr "reconstruis %d noeuds\n"
 
 #: ../revision.cc:967
 #, c-format
@@ -3447,7 +3447,7 @@ msgstr "impossible de convertir la chaîne de %s en %s : « %s »"
 #: ../transforms.cc:624 ../transforms.cc:638
 #, c-format
 msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
-msgstr "conversion de %d octets d'UTF-8 en IDNA ACE: %s\n"
+msgstr "conversion de %d octets d'UTF-8 en IDNA ACE: %s"
 
 #. xgettext: gibibytes (2^30 bytes)
 #: ../ui.cc:108
@@ -3548,7 +3548,7 @@ msgstr "Longueur hmac invalide de %d octets"
 #: ../work.cc:117
 #, c-format
 msgid "skipping ignorable file %s"
-msgstr "omission du fichier %s qui peut être ignoré\n"
+msgstr "omission du fichier %s qui peut être ignoré"
 
 #: ../work.cc:126
 #, c-format
