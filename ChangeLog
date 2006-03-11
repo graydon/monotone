@@ -10,6 +10,10 @@
 	detect, at least) in C++ code we compile.  It is probably safe to
 	remove -fno-strict-aliasing from CXXFLAGS now.
 
+2006-03-11  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Fixed encoding.
+
 2006-03-10  Richard Levitte  <richard@levitte.org>
 
 	* po/fr.po: Small details to change.
@@ -152,7 +156,7 @@
 
 	* po/fr.po: Add a translation guide, partly borrowed from
 	subversion, work on a translation update, partly done.
-	(this is done with Beno�t's blessing)
+	(this is done with Benoît's blessing)
 
 2006-03-05  Richard Levitte  <richard@levitte.org>
 
@@ -266,7 +270,7 @@
 	* tests/t_add.at: Test that we are not getting the warning
 	messages when adding new files in new directories.
 
-2006-03-01  Benoît Dejean  <benoit@placenet.org>
+2006-03-01  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.
 
@@ -294,7 +298,7 @@
 	* commands.cc (CMD(merge)): don't say "misuse" if it's
 	just already merged.
 
-2006-02-27  Benoît Dejean  <benoit@placenet.org>
+2006-02-27  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* netsync.cc: Fixed string surgery.
 	One more string for i18n.
@@ -817,12 +821,12 @@
 	* std_hooks.lua: Give a default hook to validate commit messages. This
 	currently disallows empty messages, as monotone currently does.
 
-2006-02-05  Benoît Dejean  <benoit@placenet.org>
+2006-02-05  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* ui.cc (tick_write_count::write_ticks): Reverted lexical_cast,
 	back to F().
 
-2006-02-05  Benoît Dejean  <benoit@placenet.org>
+2006-02-05  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* ui.cc (tick_write_count::write_ticks): Fixed utf8 handling.
 	boost::format + locale sucks, it ouputs "1\u+ffff24" for
@@ -892,7 +896,7 @@
 	don't confuse the reader by giving it one, and update the sample
 	output too.
 
-2006-01-27  Stéphane Gimenez <dev@gim.name>
+2006-01-27  StÃ©phane Gimenez <dev@gim.name>
 
 	* sanity.hh: fix scoping issue revealed by gcc-4.1.
 
@@ -1869,7 +1873,7 @@
 
 	* NEWS: Initial draft of 0.24 release notes.
 
-2005-11-14  Benoît Dejean  <benoit@placenet.org>
+2005-11-14  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.
 	* netsync.cc: Removed many i18n strings.
@@ -1958,7 +1962,7 @@
 	* std_hooks.lua: new (better) format for read-permissions
 	* monotone.texi: update documentation
 
-2005-10-24  Benoît Dejean  <benoit@placenet.org>
+2005-10-24  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc: Merged 2 i18n strings.
 
@@ -2290,7 +2294,7 @@
 	* configure.ac, Makefile.am: add {MONOTONE,LIB3RDPARTY}_C{,XX}FLAGS
 	variables.
 
-2005-10-10  Benoît Dejean <benoit@placenet.org>
+2005-10-10  BenoÃ®t Dejean <benoit@placenet.org>
 
 	* commands.cc: s/key store/keystore/g.
 
@@ -2339,7 +2343,7 @@
 
 	* tests/t_automate_keys.at: Portability fixes.
 
-2005-10-08  Benoît Dejean  <benoit@placenet.org>
+2005-10-08  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc: One more i18n string.
 
@@ -2686,7 +2690,7 @@
 
 	* tests/t_netsync_unrelated.at: passes, remove XFAIL
 
-2005-09-26  Benoît Dejean  <benoit@placenet.org>
+2005-09-26  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* database.cc: Merged 3 strings.
 
@@ -2704,18 +2708,18 @@
 
 	* sqlite/*: Update in-tree SQLite from 3.2.6 to 3.2.7.
 
-2005-09-25  Benoît Dejean  <benoit@placenet.org>
+2005-09-25  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* netsync.cc: 3 more i18n strings.
 
-2005-09-25  Benoît Dejean  <benoit@placenet.org>
+2005-09-25  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* cert.cc (cert_signable_text): F() vs. boost::format.
 	* lua.cc (monotone_guess_binary_file_contents_for_lua),
 	(monotone_include_for_lua), (monotone_includedir_for_lua):
 	* rcs_import.cc (import_cvs_repo): Merged some strings.
 	
-2005-09-25  Benoît Dejean  <benoit@placenet.org>
+2005-09-25  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* lua.cc (monotone_guess_binary_file_contents_for_lua):
 	Fixed signednes warning and istream usage.
@@ -2728,7 +2732,7 @@
 
 	* botan/arc4.cpp: increase maximum keylength to 256 bytes.
 
-2005-09-24  Benoît Dejean  <benoit@placenet.org>
+2005-09-24  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* ChangeLog: Fixed.
 	I don't understand how xxdiff works :/ Please help.
@@ -2737,7 +2741,7 @@
 
 	* po/ja.po: Updated Japanese translation.
 
-2005-09-23  Benoît Dejean  <benoit@placenet.org>
+2005-09-23  BenoÃ®t Dejean  <benoit@placenet.org>
 
         * std_hooks.lua: More i18n strings.
 
@@ -2745,24 +2749,24 @@
         "multiline" ..
         "strings" because gettext doesn't join them.
 
-2005-09-22  Benoît Dejean  <benoit@placenet.org>
+2005-09-22  BenoÃ®t Dejean  <benoit@placenet.org>
 
         * sanity.{cc,hh}: Uninlined F() and FP().
         This happily saves ~100KB of .text on my ppc.
 
-2005-09-22  Benoît Dejean  <benoit@placenet.org>
+2005-09-22  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* netsync.cc: Reverted changes
 	from f0a632bf14468b6e03a488d6f1a64ef18b61d04c
 	to   4f7f638954c79c54460d04c3be111acad8b26dd3
 
-2005-09-22  Benoît Dejean  <benoit@placenet.org>
+2005-09-22  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* lua.cc (monotone_gettext_for_lua): New function.
 	* po/POTFILES.in: Added std_hooks.lua.
 	* std_hooks.lua: One more string for i18n.
 
-2005-09-22  Benoît Dejean  <benoit@placenet.org>
+2005-09-22  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* ui.{cc,hh} (get_user_locale): Returns a const &.
 
@@ -2879,7 +2883,7 @@
 	* netsync.cc, commands.cc: Give hooks new argument.
 	* monotone.texi: Update documentation for those hooks.
 
-2005-09-11  Benoît Dejean  <benoit@placenet.org>
+2005-09-11  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* database.cc
 	* database_check.cc
@@ -2898,7 +2902,7 @@
 	the current directory, so we test the just-built monotone binary,
 	not some older version.                                          
 
-2005-09-07  Benoît Dejean  <benoit@placenet.org>
+2005-09-07  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* std_hooks.lua: Don't spawn emacs with '-no-init-file'.
 
@@ -2920,20 +2924,20 @@
 	* monotone.texi (Certificates): Remove mention of fcerts and
 	mcerts.
 
-2005-09-07  Benoît Dejean  <benoit@placenet.org>
+2005-09-07  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* ui.{cc,hh}: Added user_inferface::user_locale.
 	* sanity.hh: Made F() and FP() locale aware.
 
-2005-09-06  Benoît Dejean  <benoit@placenet.org>
+2005-09-06  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* monotone.cc: One more i18n string.
 
-2005-09-06  Benoît Dejean  <benoit@placenet.org>
+2005-09-06  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.
 
-2005-09-06  Benoît Dejean  <benoit@placenet.org>
+2005-09-06  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc: No i18n for cert_revision_changelog.
 
@@ -2948,13 +2952,13 @@
 	Windows (desktop.ini) per-directory browser configuration files.
 
 
-2005-09-05  Benoît Dejean  <benoit@placenet.org>
+2005-09-05  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc: Fixed some strings (added ' around revisions).
 	Removed some whitespaces.
 	No i18n in diff output.
 
-2005-09-05  Benoît Dejean  <benoit@placenet.org>
+2005-09-05  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* sanity.{cc,hh}: boost::format vs. F(). Merged boost::format
 	and moved non-template code to sanity.cc.
@@ -3091,22 +3095,22 @@
 	"Existing control files"
 	* .mt-ignore: ignore testsuite.dir
 
-2005-09-03  Benoît Dejean  <benoit@placenet.org>
+2005-09-03  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc (ls_certs):
 	* netsync.cc (load_data): Merged strings.
 
-2005-09-01  Benoît Dejean  <benoit@placenet.org>
+2005-09-01  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc: Merged one more "no such revision '%s'" string.
 
-2005-09-01  Benoît Dejean  <benoit@placenet.org>
+2005-09-01  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc: Merged all "no such revision '%s'" strings.
 	(string_to_datetime): Merged catch blocks in order to merge error
 	messages.
 
-2005-09-01  Benoît Dejean  <benoit@placenet.org>
+2005-09-01  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* ChangeLog: Fixed.
 
@@ -3148,7 +3152,7 @@
 	to monotone_guess_binary_file_contents_for_lua and
 	guess_binary_file_contents.
 
-2005-08-31  Benoît Dejean  <benoit@placenet.org>
+2005-08-31  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* basic_io.cc (basic_io::input_source::err): Merged strings.
 
@@ -3158,7 +3162,7 @@
 	to uint8_t before using as array indices.  Also replace some ints
 	with size_t's to quiet g++ warnings.
 
-2005-08-30  Benoît Dejean  <benoit@placenet.org>
+2005-08-30  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	In function void set_char_is_binary(char, bool)
 	133: warning: array subscript has type char
@@ -3168,7 +3172,7 @@
 	160: warning: comparison between signed and unsigned integer expressions
 	162: warning: array subscript has type char
 
-2005-08-30  Benoît Dejean  <benoit@placenet.org>
+2005-08-30  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* file_io.cc (walk_tree): Fixed format.
 
@@ -3196,20 +3200,20 @@
 
 	* std_hooks.lua: Simple support for merging using merge(1) and vim.
 
-2005-08-30  Benoît Dejean  <benoit@placenet.org>
+2005-08-30  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.
 
-2005-08-30  Benoît Dejean  <benoit@placenet.org>
+2005-08-30  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc: Merged some error messages.
 
-2005-08-30  Benoît Dejean  <benoit@placenet.org>
+2005-08-30  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc: Merged complete(..., file_id) and
 	complete(..., manifest_id) into template complete(..., ID).
 
-2005-08-30  Benoît Dejean  <benoit@placenet.org>
+2005-08-30  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc (ls_certs): Reworked for i18n.
 	(CMD(commit)): Merged 2 strings.
@@ -3959,7 +3963,7 @@
 	* constants.hh: new constant max_path_depth to limit
 	recursion in check_depth.
 
-2005-08-26  Benoît Dejean  <benoit@placenet.org>
+2005-08-26  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.
 
@@ -3980,39 +3984,39 @@
 	* tests/t_drop_execute.at, tests/t_rename_execute.at: New tests.
 	* testsuite.at: Add them.
 
-2005-08-26  Benoît Dejean  <benoit@placenet.org>
+2005-08-26  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* mt_version.cc (print_full_version): Merged strings.
 	* change_set.cc: No i18n for unittests. Wow, this saves
 	21 strings (total 781).
 
-2005-08-25  Benoît Dejean  <benoit@placenet.org>
+2005-08-25  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc (safe_gettext): New function.
 	(explain_usage): Used there to avoid _("").
 
-2005-08-25  Benoît Dejean  <benoit@placenet.org>
+2005-08-25  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* sanity.{cc,hh} (sanity::do_format): Merged code from
 	sanity::{log, warning, progress} in order to merge
 	strings. Fixed exception rethrowing.
 
-2005-08-25  Benoît Dejean  <benoit@placenet.org>
+2005-08-25  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc (CMD(lca)): One more string for i18n.
 	(CMD(trusted)): Merged all strings.
 
-2005-08-25  Benoît Dejean  <benoit@placenet.org>
+2005-08-25  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.
 
-2005-08-25  Benoît Dejean  <benoit@placenet.org>
+2005-08-25  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* database.cc (database::version): Marked string for i18n
 	and simplifed.
 	(database::info): Reworked to merge all strings for i18n.
 
-2005-08-25  Benoît Dejean  <benoit@placenet.org>
+2005-08-25  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* database.{cc,hh} (database::open, database::check_filename):
 	New functions to avoid error handling code and string duplicates.
@@ -4024,11 +4028,11 @@
 	* tests/t_genkey.at: check that foo+bar@example.com works
 	and foobar@exam+ple.com doesn't.
 
-2005-08-24  Benoît Dejean  <benoit@placenet.org>
+2005-08-24  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* database.cc (assert_sqlite3_ok): Somehow merged error messages.
 
-2005-08-24  Benoît Dejean  <benoit@placenet.org>
+2005-08-24  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* change_set.cc (move_files_to_tmp_bottom_up): Better strings.
 	* keys.cc (generate_key_pair): Merged 2 strings.
@@ -4116,23 +4120,23 @@
 	avoid overflow -- calculate truncation by length, but perform
 	truncation by bytes...)
 
-2005-08-24  Benoît Dejean  <benoit@placenet.org>
+2005-08-24  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* po/fr.po: Updated French translation.
 
-2005-08-24  Benoît Dejean  <benoit@placenet.org>
+2005-08-24  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* monotone.cc:
 	* commands.cc: Two more i18n strings.
 
-2005-08-23  Benoît Dejean  <benoit@placenet.org>
+2005-08-23  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* lua.cc: boost::format vs. F.
 
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
-	* AUTHORS: Add Benoît Dejean <benoit@placenet.org>.  Create new
-	section for translators.  Add Benoît there too.
+	* AUTHORS: Add BenoÃ®t Dejean <benoit@placenet.org>.  Create new
+	section for translators.  Add BenoÃ®t there too.
 
 2005-08-23  Nathaniel Smith  <njs@pobox.com>
 
@@ -4149,7 +4153,7 @@
 	* keys.cc (get_passphrase): Put back trailing ": " removed in
 	recent i18n changes.
 
-2005-08-23  Benoît Dejean  <benoit@placenet.org>
+2005-08-23  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* change_set.cc (dump_change_set): boost::format instead of F.
 	* commands.cc (get_log_message, notify_if_multiple_heads,
@@ -4160,7 +4164,7 @@
 	* i18n.h: N_() stands for gettext_noop(), not plural.
 	* keys.cc (get_passphrase): Fixed string surgery.
 	* netsync.cc: i18nized tickers' labels. Added xgettext comment
-	as tickers do not play well with multibytes characters (like é).
+	as tickers do not play well with multibytes characters (like Ã©).
 	(session::analyze_attachment): Fixed string surgery.
 	(session::process_hello_cmd): Merged many strings.
 	(session::process_data_cmd): Removed some leading/trailing
@@ -4169,16 +4173,16 @@
 	* ui.cc (tick_write_count::write_ticks): Reworked and fixed
 	surgery. Merged some strings.
 
-2005-08-23  Benoît Dejean  <benoit@placenet.org>
+2005-08-23  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* commands.cc (CMD*): _("") -> "" as _("") returns the PO
 	header.
 
-2005-08-23  Benoît Dejean  <benoit@placenet.org>
+2005-08-23  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* transforms.cc (check_idna_encoding): No i18n for unittests.
 
-2005-08-23  Benoît Dejean  <benoit@placenet.org>
+2005-08-23  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* change_set.cc (dump_change_set): boost::format instead of F.
 	* commands.cc (get_log_message, notify_if_multiple_heads,
@@ -4189,7 +4193,7 @@
 	* i18n.h: N_() stands for gettext_noop(), not plural.
 	* keys.cc (get_passphrase): Fixed string surgery.
 	* netsync.cc: i18nized tickers' labels. Added xgettext comment
-	as tickers do not play well with multibytes characters (like é).
+	as tickers do not play well with multibytes characters (like Ã©).
 	(session::analyze_attachment): Fixed string surgery.
 	(session::process_hello_cmd): Merged many strings.
 	(session::process_data_cmd): Removed some leading/trailing
@@ -4198,7 +4202,7 @@
 	* ui.cc (tick_write_count::write_ticks): Reworked and fixed
 	surgery. Merged some strings.
 
-2005-08-23  Benoît Dejean  <benoit@placenet.org>
+2005-08-23  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* netcmd.cc (test_netcmd_functions): Don't translate unittest
 	strings.
@@ -4207,7 +4211,7 @@
 	* lua.cc (dump_stack): boost::format vs. F for strings that are
 	not messages.
 
-2005-08-23  Benoît Dejean  <benoit@placenet.org>
+2005-08-23  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* xdelta.cc: Don't translate unittest strings.
 
@@ -4264,14 +4268,14 @@
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (dump_diffs): Don't use F() to create diff headers.
-	(commands::process): Put '' in the log message to make Benoît
+	(commands::process): Put '' in the log message to make BenoÃ®t
 	Dejean happy ;-).
 	
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
 	* po/LINGUAS, po/ja.po: Add Japanese translation by Satoru SATOH.
 	
-2005-08-20  Benoît Dejean  <benoit@placenet.org>
+2005-08-20  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* po/monotone.pot: Remove from version control.
 	* po/POTFILES.skip: New file.
@@ -4280,10 +4284,10 @@
 	
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
-	* commands.cc (read): Use FP (thanks to Benoît Dejean for
+	* commands.cc (read): Use FP (thanks to BenoÃ®t Dejean for
 	catch).
 	* mt_version.cc (print_version, print_full_version): Mark more
-	strings for i18n (also thanks to Benoît Dejean).
+	strings for i18n (also thanks to BenoÃ®t Dejean).
 	
 2005-08-22  Nathaniel Smith  <njs@pobox.com>
 
@@ -4337,7 +4341,7 @@
 
 	* revision.hh: Delete doubled line of text in comment.
 
-2005-08-20  Benoît Dejean  <benoit@placenet.org>
+2005-08-20  BenoÃ®t Dejean  <benoit@placenet.org>
 
 	* monotone.cc (cpp_main): setlocale(LC_ALL).
 	* commands.cc (dropkey): Unify warning into a single string.
@@ -10940,7 +10944,7 @@
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
 
-2005-01-17  Wojciech Miłkowski  <wmilkowski@interia.pl>
+2005-01-17  Wojciech MiÅkowski  <wmilkowski@interia.pl>
 
 	* std_hooks.lua: Teach about meld.
 

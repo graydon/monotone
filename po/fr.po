@@ -201,7 +201,7 @@
 # to reject               rejeter
 # to relocate             relocaliser (voire délocaliser (vers))
 # to request              demander
-# to revert               réinitialiser, revenir �  l'ancienne version
+# to revert               réinitialiser, revenir à l'ancienne version
 # to review               examiner
 # to serve                servir
 # to set                  établir / mettre / placer
