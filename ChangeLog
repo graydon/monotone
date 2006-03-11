@@ -1,3 +1,15 @@
+2006-03-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* m4/prog_cxx_warnings.m4: Turn on extra warnings (-W) when using
+	GCC.  Also disable 'unused variable' warnings (enabled by -W) for
+	now.  This change only causes 8 new warnings (all of one
+	type--signed vs unsigned) to occur.
+
+	* netxx/peer.cxx, netxx/sockaddr.cxx, netxx/sockaddr.h: Correct
+	the only six cases of type punning that occur (that GCC 4.1 can
+	detect, at least) in C++ code we compile.  It is probably safe to
+	remove -fno-strict-aliasing from CXXFLAGS now.
+
 2006-03-10  Richard Levitte  <richard@levitte.org>
 
 	* po/fr.po: Small details to change.
