@@ -1,3 +1,14 @@
+2006-03-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc, annotate.cc, xdelta.cc: Fix the signed vs unsigned
+	warnings which have obvious solutions.
+
+	* testsuite.at: Remove eval in UNB64_COMMAND and UNGZ_COMMAND; it
+	breaks testsuite tracing.
+
+	* tests/t_database_check.at, tests/t_rosterify_attrs.at,
+	tests/t_rosterify_rename.at: Use POSIX syntax for tail.
+
 2006-03-12  Richard Levitte  <richard@levitte.org>
 
 	* ChangeLog: Fixup after merge lossage.
