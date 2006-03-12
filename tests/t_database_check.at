@@ -20,7 +20,7 @@ AT_DATA(fileY, [vitamin
 AT_CHECK(MONOTONE add file1, [], [ignore], [ignore])
 AT_CHECK(MONOTONE commit --branch=test --message='add file1', [], [ignore], [ignore])
 REV1=`BASE_REVISION`
-ROST1=`monotone --norc db execute "select id from rosters"| tail -1`
+ROST1=`monotone --norc db execute "select id from rosters" | tail -n 1`
 
 AT_CHECK(MONOTONE add file2, [], [ignore], [ignore])
 AT_CHECK(MONOTONE commit --branch=test --message='add file2', [], [ignore], [ignore])

@@ -215,7 +215,6 @@ compute_delta_insns(string const & a,
           I(apos + alen <= a.size());
           I(alen == 1);
           I(alen < blocksz);
-          I(lo >= 0);
           I(lo < b.size());
           insert_insn(delta, b[lo]);
         }
@@ -223,7 +222,6 @@ compute_delta_insns(string const & a,
       string::size_type next = lo;
       for (; next < lo + badvance; ++next)
         {
-          I(next >= 0);
           I(next < b.size());
           rolling.out(static_cast<u8>(b[next]));
           if (next + blocksz < b.size())
@@ -444,7 +442,6 @@ piece_table
 
   void append(string & targ, piece_id p, piece_pos pp, length ln)
   {
-    I(p >= 0);
     I(p < pieces.size());
     targ.append(pieces[p], pp, ln);
   }

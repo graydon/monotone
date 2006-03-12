@@ -288,7 +288,7 @@ m4_define([UNB64], [AT_CHECK(
 if test "$OSTYPE" = "msys"; then
   mimencode -u -o $2 $1
 else
-  eval $UNB64_COMMAND <$1 >$2
+  $UNB64_COMMAND <$1 >$2
 fi
 )])
 
@@ -314,7 +314,7 @@ if test "$OSTYPE" = "msys"; then
   fi
   gunzip $2.gz
 else
-  eval $UNGZ_COMMAND <$1 >$2
+  $UNGZ_COMMAND <$1 >$2
 fi
 )])
 
