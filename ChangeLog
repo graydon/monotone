@@ -1,3 +1,12 @@
+2006-03-12  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Selectors): Remove line noise.
+	Also, add an example for c:.
+	
+	* roster.cc (update_restricted_roster_from_filesystem): Put back
+	hint about drop --missing, revert --missing that was lost in
+	transition to rosters.
+
 2006-03-12  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* paths.cc, annotate.cc, xdelta.cc: Fix the signed vs unsigned
