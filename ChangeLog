@@ -1,5 +1,9 @@
 2006-03-12  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* testsuite.at: Changes to Perl and Python UNB64_COMMAND
+	invocations to work around some quoting issues broken/revealed in
+	my last change.
+
 	* paths.cc, annotate.cc, xdelta.cc: Fix the signed vs unsigned
 	warnings which have obvious solutions.
 
