@@ -1,5 +1,8 @@
 2006-03-12  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* configure.ac: Add a second sync_for_stdio test to work around a
+	bug in OS X.
+
 	* testsuite.at: Changes to Perl and Python UNB64_COMMAND
 	invocations to work around some quoting issues broken/revealed in
 	my last change.
