@@ -1,3 +1,8 @@
+2006-03-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_dump_load.at: Don't canonicalise database dump output;
+	there should be no need to do so.
+
 2006-03-12  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi (Selectors): Remove line noise.
