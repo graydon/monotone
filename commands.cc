@@ -51,6 +51,8 @@
 #include "roster_merge.hh"
 #include "roster.hh"
 
+#include <sys/time.h>
+
 //
 // this file defines the task-oriented "top level" commands which can be
 // issued as part of a monotone command line. the command line can only
@@ -3703,17 +3705,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 print_this = true;
             }
 
-          changes_summary csum;
-          
-          set<revision_id> ancestors;
-
-          for (edge_map::const_iterator e = rev.edges.begin();
-               e != rev.edges.end(); ++e)
-            {
-              ancestors.insert(edge_old_revision(e));
-              csum.add_change_set(edge_changes(e));
-            }
-
           if (next > 0)
             {
               set<revision_id> children;
@@ -3747,6 +3738,17 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 cout << "-----------------------------------------------------------------"
                      << endl;
                 cout << "Revision: " << rid << endl;
+
+                changes_summary csum;
+
+                set<revision_id> ancestors;
+
+                for (edge_map::const_iterator e = rev.edges.begin();
+                     e != rev.edges.end(); ++e)
+                  {
+                    ancestors.insert(edge_old_revision(e));
+                    csum.add_change_set(edge_changes(e));
+                  }
 
                 for (set<revision_id>::const_iterator anc = ancestors.begin();
                      anc != ancestors.end(); ++anc)
