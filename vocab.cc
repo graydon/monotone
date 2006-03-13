@@ -161,9 +161,9 @@ verify(netsync_hmac_value & val)
 struct 
 symtab_impl 
 {
-  typedef hashmap::hash_set<std::string, hashmap::string_hash> hset;
+  typedef hashmap::string_hashset hset;
   hset vals;
-  symtab_impl() : vals(1024) {}
+  symtab_impl() : vals() {}
   void clear() { vals.clear(); }
   std::string const & unique(std::string const & in) 
   {
@@ -275,16 +275,16 @@ template <typename INNER>                                \
 void dump(dec<INNER> const & obj, std::string & out)     \
 { dump(obj.inner(), out); }
 
-#define EXTERN 
+#define EXTERN /* */
 
 #include "vocab_terms.hh"
 
-#undef EXTERN
 #undef ATOMIC
 #undef DECORATE
 
-template class revision<cert>;
-template class manifest<cert>;
+EXTERN template class revision<cert>;
+EXTERN template class manifest<cert>;
+#undef EXTERN
 
 template
 void dump<rsa_pub_key>(base64<rsa_pub_key> const&, std::string &);

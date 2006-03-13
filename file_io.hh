@@ -19,7 +19,7 @@
 // level for us to say whether applying them in any given case is valid or
 // not.
 
-struct lua_hooks;
+class lua_hooks;
 
 // use I()
 void assert_path_is_nonexistent(any_path const & path);

@@ -2,6 +2,16 @@
 #include "config.h"
 #endif
 
+#ifdef WIN32
+#include <io.h>
+#include <float.h>
+#include <wchar.h>
+#include <malloc.h>
+#ifndef X_OK
+#define X_OK 1
+#endif
+#endif
+
 #if defined (__GLIBC__) && defined(__LCLINT__)
 /*@-declundef@*/
 /*@unchecked@*/

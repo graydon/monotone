@@ -83,10 +83,13 @@ app_state::allow_workspace()
           set_key_dir(keydir);
         }
 
-      if (branch_name().empty())
+      if (branch_name().empty() && !options[branch_option]().empty())
         branch_name = options[branch_option];
+
       L(FL("branch name is '%s'\n") % branch_name());
-      internalize_rsa_keypair_id(options[key_option], signing_key);
+
+	  if (!options[key_option]().empty())
+		  internalize_rsa_keypair_id(options[key_option], signing_key);
 
       if (global_sanity.filename.empty())
         {

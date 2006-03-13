@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <windows.h>
 #include <shlobj.h>
+#include <direct.h>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -140,6 +141,8 @@ rename_clobberingly_impl(const char* from, const char* to)
   typedef BOOL (*MoveFileExFun)(LPCTSTR, LPCTSTR, DWORD);
   static MoveFileExFun MoveFileEx = 0;
   static bool MoveFileExAvailable = false;
+
+#if 0
   if (MoveFileEx == 0) {
     HMODULE hModule = LoadLibrary("kernel32");
     if (hModule)
@@ -151,6 +154,7 @@ rename_clobberingly_impl(const char* from, const char* to)
     } else
       L(FL("using DeleteFile/MoveFile fallback for renames"));
   }
+#endif
 
   if (MoveFileExAvailable) {
     if (MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
@@ -171,8 +175,6 @@ rename_clobberingly_impl(const char* from, const char* to)
 void
 rename_clobberingly(any_path const & from, any_path const & to)
 {
-  const char* szFrom = from.as_external().c_str();
-  const char* szTo = to.as_external().c_str();
   static const int renameAttempts = 16;
   DWORD sleepTime = 1;
   DWORD lastError = 0;
@@ -182,11 +184,11 @@ rename_clobberingly(any_path const & from, any_path const & to)
   // around the common problem where another process (e.g. a virus checker)
   // will exclusive open a file you've just touched.
   for (int i = 0; i < renameAttempts; ++i) {
-    if (rename_clobberingly_impl(szFrom, szTo))
+    if (rename_clobberingly_impl(from.as_external().c_str(), to.as_external().c_str()))
       return;
     lastError = GetLastError();
     L(FL("attempted rename of '%s' to '%s' failed: %d")
-      % szFrom % szTo % lastError);
+      % from % to % lastError);
     Sleep(sleepTime);
     if (sleepTime < 250)
       sleepTime *= 2;

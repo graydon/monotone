@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-struct roster_t;
+class roster_t;
 
 struct conflict {};
 

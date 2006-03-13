@@ -21,7 +21,7 @@ void
 print_version()
 {
   std::cout << (F("%s (base revision: %s)")
-                % PACKAGE_STRING % package_revision_constant)
+	  % PACKAGE_STRING % std::string(package_revision_constant))
             << std::endl;
 }
 
@@ -34,6 +34,6 @@ print_full_version()
   std::cout << F("Running on: %s\n"
 		 "Changes since base revision: %s\n")
     % s
-    % package_full_revision_constant;
+	% std::string(package_full_revision_constant);
 }
 

@@ -179,7 +179,7 @@ compute_delta_insns(string const & a,
                     vector<insn> & delta)
 {
   string::size_type blocksz = 64;
-  match_table matches ((a.size() / blocksz) * 2);
+  match_table matches;
   init_match_table(a, blocksz, matches);
 
   if (b.size() < blocksz)
@@ -468,12 +468,12 @@ apply_insert(piece_table & p, version_spec & out, string const & str)
 struct 
 chunk_less_than
 {
-  bool operator()(chunk const & ch, version_pos vp) const
+  bool operator()(chunk const & ch1, chunk const & ch2) const
   {
     // nb: ch.vpos + ch.len is the 0-based index of the first element *not*
     // included in ch; thus we measure against ch.len - 1.
-    I(ch.len > 0);
-    return (ch.vpos + ch.len - 1) < vp;
+    I(ch1.len > 0);
+    return (ch1.vpos + ch1.len - 1) < ch2.vpos;
   }
 };
 
@@ -507,9 +507,10 @@ apply_copy(version_spec const & in, version_spec & out,
   if (!out.empty())
     dst_vpos = out.back().vpos + out.back().len;
   version_pos dst_final = dst_vpos + src_len;
+  chunk src_bounding_chunk(0,0,src_vpos,0);
   version_spec::const_iterator lo = lower_bound(in.begin(), 
                                                 in.end(), 
-                                                src_vpos, 
+                                                src_bounding_chunk, 
                                                 chunk_less_than());
   for ( ; src_len > 0; ++lo)
     {
