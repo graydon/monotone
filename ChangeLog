@@ -1,3 +1,10 @@
+2006-03-13  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_serve_ignores_mt_options.at: New test to check that
+	'monotone serve' really ignores the contents of an available
+	MT/options.
+	* testsuite.at: Use it.
+
 2006-03-12  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netsync.cc (session::maybe_note_epochs_finished): only begin the
