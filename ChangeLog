@@ -1,5 +1,31 @@
 2006-03-12  Richard Levitte  <richard@levitte.org>
 
+	Some of the monotone commands don't really need to use the data
+	in MT/options.  As a matter of fact, it's even a really bad idea
+	for some command, for example 'monotone serve'.  We must still
+	check for the MT directory and read whatever is there, just
+	don't immediately use the data from MT/options.  I've done it by
+	moving the code that processes the data from MT/options in
+	app_state::allow_workspace to another method, which is then used
+	separately.
+
+	* app_state.cc, app_state.hh (app_state::allow_workspace): The
+	code that processes data from MT/options and uses the information
+	is now moved...
+	(app_state::process_options): ... here.
+
+	* commands.cc (struct command, commands::process, CMD, CMT_NO_MT):
+	Add a per-command flag that says if the particular command needs
+	to bother with the workspace options or not.  CMD_NO_MT is a new
+	macro to help define commands that don't.
+	(CMD(serve)): Change into...
+	(CMD_NO_MT(serve)): ... this.
+
+	* monotone.cc (cpp_main): Changed the comment so it matches
+	reality.
+
+2006-03-12  Richard Levitte  <richard@levitte.org>
+
 	* ChangeLog: Fixup after merge lossage.
 
 2006-03-11  Matthew Gregan  <kinetik@orcon.net.nz>

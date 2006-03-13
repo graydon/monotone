@@ -70,24 +70,9 @@ app_state::allow_workspace()
 
   if (found_workspace) 
     {
+      // We read the options, but we don't process them here.  That's
+      // done with process_options().
       read_options();
-
-      if (!options[database_option]().empty())
-        {
-          system_path dbname = system_path(options[database_option]);
-          db.set_filename(dbname);
-        }
-
-      if (!options[keydir_option]().empty())
-        {
-          system_path keydir = system_path(options[keydir_option]);
-          set_key_dir(keydir);
-        }
-
-      if (branch_name().empty())
-        branch_name = options[branch_option];
-      L(FL("branch name is '%s'\n") % branch_name());
-      internalize_rsa_keypair_id(options[key_option], signing_key);
 
       if (global_sanity.filename.empty())
         {
@@ -101,6 +86,29 @@ app_state::allow_workspace()
         }
     }
   load_rcfiles();
+}
+
+void 
+app_state::process_options()
+{
+  if (found_workspace) {
+    if (!options[database_option]().empty())
+      {
+	system_path dbname = system_path(options[database_option]);
+	db.set_filename(dbname);
+      }
+
+    if (!options[keydir_option]().empty())
+      {
+	system_path keydir = system_path(options[keydir_option]);
+	set_key_dir(keydir);
+      }
+
+    if (branch_name().empty())
+      branch_name = options[branch_option];
+    L(FL("branch name is '%s'\n") % branch_name());
+    internalize_rsa_keypair_id(options[key_option], signing_key);
+  }
 }
 
 void 
