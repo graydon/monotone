@@ -294,7 +294,7 @@ file_path::split(split_path & sp) const
   while (1)
     {
       stop = s.find('/', start);
-      if (stop < 0 || stop > s.length())
+      if (stop == std::string::npos)
         {
           sp.push_back(s.substr(start));
           break;

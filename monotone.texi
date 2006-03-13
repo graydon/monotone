@@ -2564,7 +2564,7 @@ of selectors follows.
 @heading Selectors in detail
 
 A selector is a combination of a selector type, which is a single
-xoASCII character, followed by a @code{:} character and a selector
+ASCII character, followed by a @code{:} character and a selector
 string. All selectors strings except for selector type @code{c}
 are just values. The value is matched against identifiers or certs,
 depending on its type, in an attempt to match a single revision.
@@ -2577,7 +2577,10 @@ Uses selector type @code{c}.  The selector string has the syntax
 @var{name} or @var{name}@code{=}@var{value}.  The former syntax will
 select any revision that has a cert with that name, regardless of
 value; the latter will match any revision that has a cert with that
-name and value.  Values to match for can have shell wildcards.
+name and value.  Values to match for can have shell wildcards.  For
+example, @code{c:tag} matches all revisions that have a tag, and
+@code{c:tag=monotone-0.25} will match the revision tagged
+@code{monotone-0.25}.  (See also the @code{t} selector below.)
 @item Author selection
 Uses selector type @code{a}. For example, @code{a:graydon} matches
 @code{author} certs where the cert value contains @code{graydon}.
