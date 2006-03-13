@@ -1,3 +1,8 @@
+2006-03-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc (session::maybe_note_epochs_finished): only begin the
+	other refinements if we're the client, as per the comment in refiner.cc
+
 2006-03-11  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* m4/prog_cxx_warnings.m4: Turn on extra warnings (-W) when using
