@@ -111,7 +111,7 @@ case "$1" in
               echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
               echo "information on manually upgrading your database." >&2
 
-           elif dpkg --compare-versions "$MTN_VERSION" lt "0.22"; then 
+           elif dpkg --compare-versions "$MTN_VERSION" lt "0.26"; then 
               # upgradable version of monotone
               echo "Attempting to migrate monotone database..." >&2
               echo "A backup named '`basename $MTN_DB~`' will be created in $MTN_HOME." >&2
