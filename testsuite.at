@@ -271,9 +271,13 @@ if test -n "`command -v mimencode`" 2>/dev/null; then
 elif test -n "`command -v recode`" 2>/dev/null; then
   UNB64_COMMAND="recode /Base64"
 elif perl -MMIME::Base64 -e 1 2>/dev/null; then
-  UNB64_COMMAND="perl -MMIME::Base64 -ne 'print decode_base64(\$_)'"
+  AT_DATA(unbase64.pl, [print decode_base64($_)
+])
+  UNB64_COMMAND="perl -MMIME::Base64 -n unbase64.pl"
 elif python -c 'import sys;sys.exit(not hasattr("", "decode"))' 2>/dev/null; then
-  UNB64_COMMAND="python -c 'import sys;sys.stdout.write(sys.stdin.read().decode("'"'"base64"'"'"))'"
+  AT_DATA(unbase64.py, [import sys;sys.stdout.write(sys.stdin.read().decode('base64'))
+])
+  UNB64_COMMAND="python unbase64.py"
 else
   # This is lame!  We should XFAIL the test so the user knows that
   # they're not, you know, actually testing the software.  But
@@ -791,3 +795,4 @@ m4_include(tests/t_restriction_excludes_parent.at)
 m4_include(tests/t_revert_move_to_renamed_dir.at)
 m4_include(tests/t_sink_has_extra_epochs.at)
 m4_include(tests/t_disapprove_branch.at)
+m4_include(tests/t_serve_ignores_mt_options.at)
