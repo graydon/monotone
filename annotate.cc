@@ -220,7 +220,7 @@ annotate_context::evaluate(revision_id rev)
 
   std::set<size_t>::const_iterator i;
   for (i = credit_lines.begin(); i != credit_lines.end(); i++) {
-    I(*i >= 0 && *i < annotations.size());
+    I(*i < annotations.size());
     if (annotations[*i] == nullid) {
       //L(FL("evaluate setting annotations[%d] -> %s, since touched_lines contained %d, copied_lines didn't and annotations[%d] was nullid\n") 
       //  % *i % rev % *i % *i);

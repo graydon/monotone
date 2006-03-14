@@ -567,8 +567,11 @@ cpp_main(int argc, char ** argv)
         }
 
       // at this point we allow a workspace (meaning search for it
-      // and if found read MT/options) but don't require it. certain
-      // commands may subsequently require a workspace or fail
+      // and if found read MT/options, but don't use the data quite
+      // yet, and read all the monotonercs).  Processing the data
+      // from MT/options happens later.
+      // Certain commands may subsequently require a workspace or fail
+      // if we didn't find one at this point.
 
       app.allow_workspace();
 

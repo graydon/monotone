@@ -92,6 +92,7 @@ public:
         boost::shared_ptr<Botan::RSA_PublicKey> > > verifiers;
 
   void allow_workspace();
+  void process_options();
   void require_workspace(std::string const & explanation = "");
   void create_workspace(system_path const & dir);
 

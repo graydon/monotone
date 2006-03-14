@@ -134,6 +134,6 @@ content @<:@55ca6286e3e4f4fba5d0448333fa99fc5a404a73@:>@
    attr "mtn:execute" "yes"
 ])
 AT_CHECK(cp -f second_manifest_good expout)
-CHECK_SAME_CANONICALISED_STDOUT(cat expout, MONOTONE automate select i: | monotone automate toposort -@- | tail -1 | monotone automate get_manifest_of -@-)
+CHECK_SAME_CANONICALISED_STDOUT(cat expout, MONOTONE automate select i: | monotone automate toposort -@- | tail -n 1 | monotone automate get_manifest_of -@-)
 
 AT_CLEANUP

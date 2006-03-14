@@ -1,4 +1,102 @@
+2006-03-13  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_serve_ignores_mt_options.at: New test to check that
+	'monotone serve' really ignores the contents of an available
+	MT/options.
+	* testsuite.at: Use it.
+
+2006-03-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc (session::maybe_note_epochs_finished): only begin the
+	other refinements if we're the client, as per the comment in refiner.cc
+
+2006-03-12  Richard Levitte  <richard@levitte.org>
+
+	Some of the monotone commands don't really need to use the data
+	in MT/options.  As a matter of fact, it's even a really bad idea
+	for some command, for example 'monotone serve'.  We must still
+	check for the MT directory and read whatever is there, just
+	don't immediately use the data from MT/options.  I've done it by
+	moving the code that processes the data from MT/options in
+	app_state::allow_workspace to another method, which is then used
+	separately.
+
+	* app_state.cc, app_state.hh (app_state::allow_workspace): The
+	code that processes data from MT/options and uses the information
+	is now moved...
+	(app_state::process_options): ... here.
+
+	* commands.cc (struct command, commands::process, CMD, CMT_NO_MT):
+	Add a per-command flag that says if the particular command needs
+	to bother with the workspace options or not.  CMD_NO_MT is a new
+	macro to help define commands that don't.
+	(CMD(serve)): Change into...
+	(CMD_NO_MT(serve)): ... this.
+
+	* monotone.cc (cpp_main): Changed the comment so it matches
+	reality.
+
+2006-03-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_dump_load.at: Don't canonicalise database dump output;
+	there should be no need to do so.
+
+2006-03-12  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Selectors): Remove line noise.
+	Also, add an example for c:.
+	
+	* roster.cc (update_restricted_roster_from_filesystem): Put back
+	hint about drop --missing, revert --missing that was lost in
+	transition to rosters.
+
+2006-03-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Add a second sync_for_stdio test to work around a
+	bug in OS X.
+
+	* testsuite.at: Changes to Perl and Python UNB64_COMMAND
+	invocations to work around some quoting issues broken/revealed in
+	my last change.
+
+	* paths.cc, annotate.cc, xdelta.cc: Fix the signed vs unsigned
+	warnings which have obvious solutions.
+
+	* testsuite.at: Remove eval in UNB64_COMMAND and UNGZ_COMMAND; it
+	breaks testsuite tracing.
+
+	* tests/t_database_check.at, tests/t_rosterify_attrs.at,
+	tests/t_rosterify_rename.at: Use POSIX syntax for tail.
+
+2006-03-12  Richard Levitte  <richard@levitte.org>
+
+	* ChangeLog: Fixup after merge lossage.
+
+2006-03-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* m4/prog_cxx_warnings.m4: Turn on extra warnings (-W) when using
+	GCC.  Also disable 'unused variable' warnings (enabled by -W) for
+	now.  This change only causes 8 new warnings (all of one
+	type--signed vs unsigned) to occur.
+
+	* netxx/peer.cxx, netxx/sockaddr.cxx, netxx/sockaddr.h: Correct
+	the only six cases of type punning that occur (that GCC 4.1 can
+	detect, at least) in C++ code we compile.  It is probably safe to
+	remove -fno-strict-aliasing from CXXFLAGS now.
+
+2006-03-11  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Fixed encoding.
+
+2006-03-10  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Small details to change.
+
 2006-03-10  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* ROADMAP: Remove items that have been done and correct a typo.
+
+	* COPYING: Update FSF address.
 
 	* po/fr.po: Fix up broken msgstrs that were causing msgmerge to
 	choke.
@@ -132,7 +230,7 @@
 
 	* po/fr.po: Add a translation guide, partly borrowed from
 	subversion, work on a translation update, partly done.
-	(this is done with Beno�t's blessing)
+	(this is done with Benoît's blessing)
 
 2006-03-05  Richard Levitte  <richard@levitte.org>
 

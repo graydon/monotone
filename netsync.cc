@@ -798,10 +798,15 @@ session::maybe_note_epochs_finished()
 
   // But otherwise, we're ready to go. Start the next
   // set of refinements.
-  L(FL("epoch refinement finished; beginning other refinements"));
-  key_refiner.begin_refinement();
-  cert_refiner.begin_refinement();
-  rev_refiner.begin_refinement();
+  if (voice == client_voice)
+    {
+      L(FL("epoch refinement finished; beginning other refinements"));
+      key_refiner.begin_refinement();
+      cert_refiner.begin_refinement();
+      rev_refiner.begin_refinement();
+    }
+  else
+    L(FL("epoch refinement finished"));
 }
 
 static void
