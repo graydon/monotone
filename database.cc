@@ -455,6 +455,9 @@ database::load(istream & in)
 
   open();
 
+  // the page size can only be set before any other commands have been executed
+  sqlite3_exec(__sql, "PRAGMA page_size=8192", NULL, NULL, NULL);
+
   while(in)
     {
       getline(in, line, ';');

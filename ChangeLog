@@ -1,3 +1,7 @@
+2006-03-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (db::load), schema.sql: PRAGMA page_size=8192
+
 2006-03-13  Richard Levitte  <richard@levitte.org>
 
 	* tests/t_serve_ignores_mt_options.at: New test to check that
