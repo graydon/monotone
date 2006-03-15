@@ -1,3 +1,10 @@
+2006-03-15  Richard Levitte  <richard@levitte.org>
+
+	* diff_patch.cc (unidiff_hunk_writer::advance_to,
+	cxtdiff_hunk_writer::advance_to): Because ctx is a size_t, make
+	everything dealing with it a size_t as well.  Keeps the compiler
+	quiet...
+
 2006-03-15  Matt Johnston  <matt@ucc.asn.au>
 
 	* database.cc (db::load), schema.sql: PRAGMA page_size=8192
