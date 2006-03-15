@@ -14,6 +14,11 @@
 	* netsync.cc (session::maybe_note_epochs_finished): only begin the
 	other refinements if we're the client, as per the comment in refiner.cc
 
+2006-03-14  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (construct_revisions_from_ancestry): Now with 17%
+	more helpfulness.
+
 2006-03-12  Richard Levitte  <richard@levitte.org>
 
 	Some of the monotone commands don't really need to use the data
