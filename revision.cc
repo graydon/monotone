@@ -1261,8 +1261,10 @@ anc_graph::construct_revisions_from_ancestry()
                                                     attr_key("mtn:" + key),
                                                     attr_value(k->second));
                             else
-                              E(false, F("unknown attribute %s on path %s\n"
-                                         "please contact %s so we can work out the right way to migrate this")
+                              E(false, F("unknown attribute '%s' on path '%s'\n"
+                                         "please contact %s so we can work out the right way to migrate this\n"
+                                         "(if you just want it to go away, see the switch --drop-attr, but\n"
+                                         "seriously, if you'd like to keep it, we're happy to figure out how)")
                                 % key % file_path(sp) % PACKAGE_BUGREPORT);
                           }
                       }

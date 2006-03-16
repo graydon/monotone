@@ -19,7 +19,7 @@ void dumper()
 {
   if (!clean_shutdown)
         global_sanity.dump_buffer();    
-        Botan::Init::deinitialize();
+  Botan::Init::deinitialize();
 }
 
 void clean_shutdown_dummy_test()

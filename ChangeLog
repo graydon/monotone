@@ -1,3 +1,20 @@
+2006-03-16  Richard Levitte  <richard@levitte.org>
+
+	* revision.cc (construct_revisions_from_ancestry): Linguistics:
+	Close a parenthesis.
+	* po/sv.po: Translation update.
+
+2006-03-15  Richard Levitte  <richard@levitte.org>
+
+	* diff_patch.cc (unidiff_hunk_writer::advance_to,
+	cxtdiff_hunk_writer::advance_to): Because ctx is a size_t, make
+	everything dealing with it a size_t as well.  Keeps the compiler
+	quiet...
+
+2006-03-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (db::load), schema.sql: PRAGMA page_size=8192
+
 2006-03-13  Richard Levitte  <richard@levitte.org>
 
 	* tests/t_serve_ignores_mt_options.at: New test to check that
@@ -9,6 +26,11 @@
 
 	* netsync.cc (session::maybe_note_epochs_finished): only begin the
 	other refinements if we're the client, as per the comment in refiner.cc
+
+2006-03-14  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (construct_revisions_from_ancestry): Now with 17%
+	more helpfulness.
 
 2006-03-12  Richard Levitte  <richard@levitte.org>
 
