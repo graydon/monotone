@@ -51,7 +51,6 @@
 #include "roster_merge.hh"
 #include "roster.hh"
 
-#include <sys/time.h>
 
 //
 // this file defines the task-oriented "top level" commands which can be

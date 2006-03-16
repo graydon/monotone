@@ -1,3 +1,7 @@
+2006-03-16  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (log): Don't include <sys/time.h>, my mistake.
+
 2006-03-16  Richard Levitte  <richard@levitte.org>
 
 	* revision.cc (construct_revisions_from_ancestry): Linguistics:
