@@ -1,5 +1,21 @@
 2006-03-17  Richard Levitte  <richard@levitte.org>
 
+	* tests/t_netsync_notes.at: New test to check that the
+	note_netsync hooks work as they should.
+	* testsuite.at: Add the above test as well as the following
+	useful macros.
+	(BASE_MANIFEST): Gives the manifest identity of the base
+	revision.
+	(WORKING_MANIFEST): Gives the manifest identity of the workspace.
+	(CERTVALUE): Picks out the value of a specific cert from a given
+	revision.
+	(DATA): Like AT_DATA, but allows environment variables to be
+	expanded in the resulting file.
+	(NETSYNC_SETUP_WITH_NOTES): A variant of NETSYNC_SETUP that adds
+	note_netsync hooks.
+
+2006-03-17  Richard Levitte  <richard@levitte.org>
+
 	* lua.cc, lua.hh (lua::hookshook_note_netsync_revision_received,
 	lua::hookshook_note_netsync_cert_received,
 	lua::hookshook_note_netsync_pubkey_received): Change them so nonce

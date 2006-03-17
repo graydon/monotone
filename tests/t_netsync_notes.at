@@ -1,0 +1,95 @@
+#  -*- Autoconf -*-
+
+AT_SETUP([exchanging work via netsync, with notes])
+AT_KEYWORDS([netsync])
+
+MONOTONE_SETUP
+NETSYNC_SETUP_WITH_NOTES
+
+AT_DATA(testfile, [version 0 of test file
+])
+AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(MONOTONE --branch=testbranch commit --message blah-blah, [], [ignore], [ignore])
+F_VER0=`SHA1(testfile)`
+VER0=`BASE_REVISION`
+MAN0=`BASE_MANIFEST`
+DATE0=`CERTVALUE([$VER0],[date])`
+
+AT_DATA(testfile, [version 1 of test file
+])
+AT_CHECK(MONOTONE commit --message blah-blah, [], [ignore], [ignore])
+F_VER1=`SHA1(testfile)`
+VER1=`BASE_REVISION`
+MAN1=`BASE_MANIFEST`
+DATE1=`CERTVALUE([$VER1],[date])`
+
+RUN_NETSYNC(pull, testbranch)
+
+DATA(testnotes.test,
+[start ---------------------------------------------------
+revision: new_id    = $VER0
+revision: revision  = format_version "1"
+
+new_manifest m4_dquote($MAN0)
+
+old_revision m4_dquote([])
+
+add_dir ""
+
+add_file "testfile"
+ content m4_dquote($F_VER0)
+
+revision: cert.name  = branch
+revision: cert.value = testbranch
+revision: cert.key   = tester@test.net
+revision: cert.name  = changelog
+revision: cert.value = blah-blah
+revision: cert.key   = tester@test.net
+revision: cert.name  = date
+revision: cert.value = $DATE0
+revision: cert.key   = tester@test.net
+revision: cert.name  = author
+revision: cert.value = tester@test.net
+revision: cert.key   = tester@test.net
+revision: new_id    = $VER1
+revision: revision  = format_version "1"
+
+new_manifest m4_dquote($MAN1)
+
+old_revision m4_dquote($VER0)
+
+patch "testfile"
+ from m4_dquote($F_VER0)
+   to m4_dquote($F_VER1)
+
+revision: cert.name  = branch
+revision: cert.value = testbranch
+revision: cert.key   = tester@test.net
+revision: cert.name  = changelog
+revision: cert.value = blah-blah
+revision: cert.key   = tester@test.net
+revision: cert.name  = date
+revision: cert.value = $DATE1
+revision: cert.key   = tester@test.net
+revision: cert.name  = author
+revision: cert.value = tester@test.net
+revision: cert.key   = tester@test.net
+end -----------------------------------------------------
+])
+AT_CHECK(cmp testnotes.log testnotes.test, [0], [ignore], [ignore])
+
+AT_CHECK(MONOTONE tag $VER0 testtag, [], [ignore], [ignore])
+
+RUN_NETSYNC(pull, testbranch)
+
+DATA(testnotes.test,
+[start ---------------------------------------------------
+cert: rev_id = $VER0
+cert: name   = tag
+cert: value  = testtag
+cert: key    = tester@test.net
+end -----------------------------------------------------
+])
+AT_CHECK(cmp testnotes.log testnotes.test, [0], [ignore], [ignore])
+
+AT_CLEANUP
