@@ -1,3 +1,24 @@
+2006-03-17  Richard Levitte  <richard@levitte.org>
+
+	There are times when it is good to be able to prepare for a
+	bunch of calls to note_netsync* hooks, as well as to know when
+	there are not more such calls to be expected.  To that end, I've
+	added note_netsync_start and note_netsync_end, and changed the
+	others to take the exact same nonce as those two.  The purpose
+	of the nonce is to differentiate between different runs, if they
+	ever would run in parallel.
+
+	* lua.cc, lua.hh (lua_hooks::hook_note_netsync_start,
+	lua_hooks::hook_note_netsync_end): Added methods.
+	(lua_hooks::hook_note_netsync_revision_received,
+	lua_hooks::hook_note_netsync_pubkey_received,
+	lua_hooks::hook_note_netsync_cert_received): Modified to take a
+	nonce.
+	* monotone.texi (Hooks): Documented.
+	* netsync.cc (session::~session): Modified to call
+	app.lua.hook_note_netsync_start and app.lua.hook_note_netsync_end
+	as well as the others with the nonce argument.
+
 2006-03-16  Benoît Dejean  <benoit@placenet.org>
 
 	* commands.cc (log): Don't include <sys/time.h>, my mistake.

@@ -1416,7 +1416,19 @@ lua_hooks::hook_note_commit(revision_id const & new_id,
 }
 
 bool 
-lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
+lua_hooks::hook_note_netsync_start(string nonce)
+{
+  Lua ll(st);
+  return ll
+    .func("note_netsync_start")
+    .push_str(nonce)
+    .call(1, 0)
+    .ok();
+}
+
+bool 
+lua_hooks::hook_note_netsync_revision_received(string nonce,
+                                               revision_id const & new_id,
                                                revision_data const & rdat,
                             set<pair<rsa_keypair_id,
                                      pair<cert_name,
@@ -1425,6 +1437,7 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
   Lua ll(st);
   ll
     .func("note_netsync_revision_received")
+    .push_str(nonce)
     .push_str(new_id.inner()())
     .push_str(rdat.inner()());
 
@@ -1449,24 +1462,27 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
       ll.set_table();
     }
 
-  ll.call(3, 0);
+  ll.call(4, 0);
   return ll.ok();
 }
 
 bool
-lua_hooks::hook_note_netsync_pubkey_received(rsa_keypair_id const & kid)
+lua_hooks::hook_note_netsync_pubkey_received(string nonce,
+                                             rsa_keypair_id const & kid)
 {
   Lua ll(st);
   ll
     .func("note_netsync_pubkey_received")
+    .push_str(nonce)
     .push_str(kid());
 
-  ll.call(1, 0);
+  ll.call(2, 0);
   return ll.ok();
 }
 
 bool
-lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
+lua_hooks::hook_note_netsync_cert_received(string nonce,
+                                           revision_id const & rid,
                                            rsa_keypair_id const & kid,
                                            cert_name const & name,
                                            cert_value const & value)
@@ -1474,11 +1490,24 @@ lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
   Lua ll(st);
   ll
     .func("note_netsync_cert_received")
+    .push_str(nonce)
     .push_str(rid.inner()())
     .push_str(kid())
     .push_str(name())
     .push_str(value());
 
-  ll.call(4, 0);
+  ll.call(5, 0);
   return ll.ok();
 }
+
+bool 
+lua_hooks::hook_note_netsync_end(string nonce)
+{
+  Lua ll(st);
+  return ll
+    .func("note_netsync_end")
+    .push_str(nonce)
+    .call(1, 0)
+    .ok();
+}
+

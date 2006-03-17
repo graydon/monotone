@@ -6129,7 +6129,14 @@ hook is only intended as an aid for integrating monotone with informal
 commit-notification systems such as mailing lists or news services. It
 should not perform any security-critical operations.
 
-@item note_netsync_revision_received (@var{new_id}, @var{revision}, @var{certs})
+@item note_netsync_start (@var{nonce})
+
+Called by monotone before any other of the netsync notification hooks
+are called.  The @var{nonce} helps keep track of the current netsync
+session in case several are happening at the same time, and is used
+throughout all netsync notification hooks.
+
+@item note_netsync_revision_received (@var{nonce}, @var{new_id}, @var{revision}, @var{certs})
 
 Called by monotone after the revision @var{new_id} is received through
 netsync. @var{revision} is the text of the revision, what would be given
@@ -6140,7 +6147,7 @@ named "key", "name", and "value", containing the signing key for the cert,
 the name of the cert, and the value of the cert. There is no default
 definition for this hook. 
 
-@item note_netsync_cert_received (@var{rev_id}, @var{key}, @var{name}, @var{value})
+@item note_netsync_cert_received (@var{nonce}, @var{rev_id}, @var{key}, @var{name}, @var{value})
 
 Called by monotone after a cert is received through netsync, iff the revision
 that the cert is attached to was not also received in the same netsync
@@ -6149,10 +6156,19 @@ operation. @var{rev_id} is the revision id that the cert is attached to,
 of the cert, and @var{value} is the cert value. There is no default
 definition for this hook. 
 
-@item note_netsync_pubkey_received (@var{keyname})
+@item note_netsync_pubkey_received (@var{nonce}, @var{keyname})
 
 Called by monotone after a pubkey is received through netsync. @var{keyname}
 is the name of the key received. There is no default definition for this hook. 
+
+@item note_netsync_end (@var{nonce})
+
+Called by monotone after all other the netsync notification hooks have
+been called.  This hook would usually be used for post-netsync purposes,
+like collecting all the data from all other netsync notification hooks,
+make some nice output from them and finally send the result somewhere.
+It could also be used to prepare parallell databases with all the data
+to be displayed through something like viewmtn.
 
 @end ftable
 

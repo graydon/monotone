@@ -496,6 +496,12 @@ session::session(protocol_role role,
 
 session::~session()
 {
+  static const char letters[] = "0123456789abcdef";
+  string nonce;
+  for (int i = 0; i < 16; i++)
+    nonce.append(1, letters[Botan::Global_RNG::random(Botan::Nonce)
+                            % sizeof(letters)]);
+
   vector<cert> unattached_certs;
   map<revision_id, vector<cert> > revcerts;
   for (vector<revision_id>::iterator i = written_revisions.begin();
@@ -512,11 +518,14 @@ session::~session()
         j->second.push_back(*i);
     }
 
+  //Start
+  app.lua.hook_note_netsync_start(nonce);
+
   //Keys
   for (vector<rsa_keypair_id>::iterator i = written_keys.begin();
        i != written_keys.end(); ++i)
     {
-      app.lua.hook_note_netsync_pubkey_received(*i);
+      app.lua.hook_note_netsync_pubkey_received(nonce, *i);
     }
 
   //Revisions
@@ -534,7 +543,7 @@ session::~session()
         }
       revision_data rdat;
       app.db.get_revision(*i, rdat);
-      app.lua.hook_note_netsync_revision_received(*i, rdat, certs);
+      app.lua.hook_note_netsync_revision_received(nonce, *i, rdat, certs);
     }
 
   //Certs (not attached to a new revision)
@@ -543,10 +552,13 @@ session::~session()
     {
       cert_value tmp;
       decode_base64(i->value, tmp);
-      app.lua.hook_note_netsync_cert_received(i->ident, i->key,
+      app.lua.hook_note_netsync_cert_received(nonce, i->ident, i->key,
                                               i->name, tmp);
 
     }
+
+  //Start
+  app.lua.hook_note_netsync_end(nonce);
 }
 
 bool 
