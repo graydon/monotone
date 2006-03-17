@@ -6136,7 +6136,7 @@ are called.  The @var{nonce} helps keep track of the current netsync
 session in case several are happening at the same time, and is used
 throughout all netsync notification hooks.
 
-@item note_netsync_revision_received (@var{nonce}, @var{new_id}, @var{revision}, @var{certs})
+@item note_netsync_revision_received (@var{new_id}, @var{revision}, @var{certs}, @var{nonce})
 
 Called by monotone after the revision @var{new_id} is received through
 netsync. @var{revision} is the text of the revision, what would be given
@@ -6145,9 +6145,12 @@ containing one subtable for each
 cert attached to the revision @var{new_id}. These subtables have fields
 named "key", "name", and "value", containing the signing key for the cert,
 the name of the cert, and the value of the cert. There is no default
-definition for this hook. 
+definition for this hook.
+@var{nonce} is used together with @code{note_netsync_start} and
+@code{note_netsync_end}.  If you're not interested in that type of
+tracking, you can ignore that variable entirely.
 
-@item note_netsync_cert_received (@var{nonce}, @var{rev_id}, @var{key}, @var{name}, @var{value})
+@item note_netsync_cert_received (@var{rev_id}, @var{key}, @var{name}, @var{value}, @var{nonce})
 
 Called by monotone after a cert is received through netsync, iff the revision
 that the cert is attached to was not also received in the same netsync
@@ -6155,11 +6158,17 @@ operation. @var{rev_id} is the revision id that the cert is attached to,
 @var{key} is the key that the cert is signed with, @var{name} is the name
 of the cert, and @var{value} is the cert value. There is no default
 definition for this hook. 
+@var{nonce} is used together with @code{note_netsync_start} and
+@code{note_netsync_end}.  If you're not interested in that type of
+tracking, you can ignore that variable entirely.
 
-@item note_netsync_pubkey_received (@var{nonce}, @var{keyname})
+@item note_netsync_pubkey_received (@var{keyname}, @var{nonce})
 
 Called by monotone after a pubkey is received through netsync. @var{keyname}
 is the name of the key received. There is no default definition for this hook. 
+@var{nonce} is used together with @code{note_netsync_start} and
+@code{note_netsync_end}.  If you're not interested in that type of
+tracking, you can ignore that variable entirely.
 
 @item note_netsync_end (@var{nonce})
 

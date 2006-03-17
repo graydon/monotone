@@ -1,5 +1,15 @@
 2006-03-17  Richard Levitte  <richard@levitte.org>
 
+	* lua.cc, lua.hh (lua::hookshook_note_netsync_revision_received,
+	lua::hookshook_note_netsync_cert_received,
+	lua::hookshook_note_netsync_pubkey_received): Change them so nonce
+	comes last.  It means that hooks written for the older inteface
+	(the once without nonce) will work transparently.
+	* monotone.texi (Hooks): Change the docs accordingly.
+	* netsync.cc (session::~session): Change the calls accordingly.
+
+2006-03-17  Richard Levitte  <richard@levitte.org>
+
 	There are times when it is good to be able to prepare for a
 	bunch of calls to note_netsync* hooks, as well as to know when
 	there are not more such calls to be expected.  To that end, I've

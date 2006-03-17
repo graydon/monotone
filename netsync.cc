@@ -525,7 +525,7 @@ session::~session()
   for (vector<rsa_keypair_id>::iterator i = written_keys.begin();
        i != written_keys.end(); ++i)
     {
-      app.lua.hook_note_netsync_pubkey_received(nonce, *i);
+      app.lua.hook_note_netsync_pubkey_received(*i, nonce);
     }
 
   //Revisions
@@ -543,7 +543,7 @@ session::~session()
         }
       revision_data rdat;
       app.db.get_revision(*i, rdat);
-      app.lua.hook_note_netsync_revision_received(nonce, *i, rdat, certs);
+      app.lua.hook_note_netsync_revision_received(*i, rdat, certs, nonce);
     }
 
   //Certs (not attached to a new revision)
@@ -552,8 +552,8 @@ session::~session()
     {
       cert_value tmp;
       decode_base64(i->value, tmp);
-      app.lua.hook_note_netsync_cert_received(nonce, i->ident, i->key,
-                                              i->name, tmp);
+      app.lua.hook_note_netsync_cert_received(i->ident, i->key,
+                                              i->name, tmp, nonce);
 
     }
 

@@ -117,19 +117,19 @@ public:
                         std::map<cert_name, cert_value> const & certs);
 
   bool hook_note_netsync_start(std::string nonce);
-  bool hook_note_netsync_revision_received(std::string nonce,
-					   revision_id const & new_id,
+  bool hook_note_netsync_revision_received(revision_id const & new_id,
                                            revision_data const & rdat,
                         std::set<std::pair<rsa_keypair_id,
                                          std::pair<cert_name,
-                                                cert_value> > > const & certs);
-  bool hook_note_netsync_pubkey_received(std::string nonce,
-					 rsa_keypair_id const & kid);
-  bool hook_note_netsync_cert_received(std::string nonce,
-				       revision_id const & rid,
+                                                cert_value> > > const & certs,
+					   std::string nonce);
+  bool hook_note_netsync_pubkey_received(rsa_keypair_id const & kid,
+					 std::string nonce);
+  bool hook_note_netsync_cert_received(revision_id const & rid,
                                        rsa_keypair_id const & kid,
                                        cert_name const & name,
-                                       cert_value const & value);
+                                       cert_value const & value,
+				       std::string nonce);
   bool hook_note_netsync_end(std::string nonce);
 };
 
