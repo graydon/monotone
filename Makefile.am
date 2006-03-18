@@ -530,15 +530,21 @@ package_full_revision.c: package_full_revision.txt txt2c Makefile
 # automake doesn't build html docs
 
 monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
+	cp -r $(srcdir)/figures .
+	cp $(srcdir)/std_hooks.lua .
 	makeinfo --no-split --no-headers --output $@ --html $<
 	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
-	rm -f monotone.html.perlbak
+	rm -f $@.perlbak
+	cp $(srcdir)/texinfo.css .
 
 # The .perlbak thing is needed, otherwise the perl executions fails on MinGW
 
 html: monotone.texi version.texi std_hooks.lua texinfo.css
-	mkdir -p html
-	makeinfo --number-sections --html --output html $<
-	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html
-	rm -f html/*.perlbak
-	cp texinfo.css html
+	cp $(srcdir)/std_hooks.lua .
+	mkdir -p $@
+	cp -r $(srcdir)/figures $@
+	makeinfo --number-sections --html --output $@ $<
+	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@/*.html
+	rm -f $@/*.perlbak
+	cp $(srcdir)/texinfo.css $@
+
