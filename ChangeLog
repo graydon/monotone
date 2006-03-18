@@ -1,7 +1,14 @@
 2006-03-18  Richard Levitte  <richard@levitte.org>
 
+	* Makefile.am (html): For the html target, figures/ and
+	std_hooks.lua should always be copied.  Making it conditional
+	should only be done for the monotone.html target.
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
 	* Makefile.am (monotone.html, html): Only copy figures/ and
 	std_hooks.lua if the builder is in a separate build directory.
+	(html): 
 
 2006-03-18  Matthew Gregan  <kinetik@orcon.net.nz>
 

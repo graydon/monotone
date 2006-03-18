@@ -546,10 +546,9 @@ monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
 # The .perlbak thing is needed, otherwise the perl executions fails on MinGW
 
 html: monotone.texi version.texi std_hooks.lua texinfo.css
+	cp $(srcdir)/std_hooks.lua .
 	mkdir -p $@
-	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
-		cp $(srcdir)/std_hooks.lua .; \
-		cp -r $(srcdir)/figures $@; \
+	cp -r $(srcdir)/figures $@
 	fi
 	makeinfo --number-sections --html --output $@ $<
 	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@/*.html
