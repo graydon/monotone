@@ -1,3 +1,9 @@
+2006-03-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Copy figures/ into two places for html target, and
+	don't attempt to copy std_hooks.lua over itself if we're building
+	in the src dir.
+
 2006-03-18  Richard Levitte  <richard@levitte.org>
 
 	* Makefile.am (html): For the html target, figures/ and
