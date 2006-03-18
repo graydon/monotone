@@ -6,6 +6,7 @@ AT_KEYWORDS([netsync])
 MONOTONE_SETUP
 NETSYNC_SETUP_WITH_NOTES
 
+# Checking the effect of a new revisions
 AT_DATA(testfile, [version 0 of test file
 ])
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
@@ -79,6 +80,7 @@ end -----------------------------------------------------
 CANONICALISE(testnotes.log)
 AT_CHECK(cmp testnotes.log testnotes.test, [0], [ignore], [ignore])
 
+# Checking the effect of a simple cert change
 AT_CHECK(MONOTONE tag $VER0 testtag, [], [ignore], [ignore])
 
 RUN_NETSYNC(pull, testbranch)
@@ -93,5 +95,12 @@ end -----------------------------------------------------
 ])
 CANONICALISE(testnotes.log)
 AT_CHECK(cmp testnotes.log testnotes.test, [0], [ignore], [ignore])
+
+# Checking that a netsyn with nothing new will not trigger the
+# note_netsync hooks
+AT_CHECK(rm testnotes.log testnotes.test)
+RUN_NETSYNC(pull, testbranch)
+
+AT_CHECK([test -f testnotes.log], [1])
 
 AT_CLEANUP

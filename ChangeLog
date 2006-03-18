@@ -1,3 +1,9 @@
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_netsync_notes.at: Enhance the test by checking that a
+	netsync where no data is written to the database won't trigger
+	the note_netsync* hooks.
+
 2006-03-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* Makefile.am: Fix a couple of cases where documentation was
