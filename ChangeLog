@@ -1,5 +1,10 @@
 2006-03-18  Richard Levitte  <richard@levitte.org>
 
+	* Makefile.am (monotone.html, html): Only copy figures/ and
+	std_hooks.lua if the builder is in a separate build directory.
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
 	* tests/t_netsync_notes.at: Enhance the test by checking that a
 	netsync where no data is written to the database won't trigger
 	the note_netsync* hooks.
