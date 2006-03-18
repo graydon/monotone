@@ -1,3 +1,18 @@
+2006-03-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Fix a couple of cases where documentation was
+	failing to build.  If you're building outside of the source dir we
+	need to copy figures/ and std_hooks.lua into the build dir.
+
+	* win32/monotone.iss: Include zlib1.dll in installer package.
+
+	* tests/t_empty_env.at: Copy zlib1.dll into the current directory
+	like we have to for libiconv-2.dll.  While here, add a check for
+	LD_LIBRARY_PATH and cause the test to be skipped if it is set.
+
+	* tests/t_netsync_notes.at: Canonicalise output in a few places so
+	that the test passes on CRLF platforms.
+
 2006-03-18  Richard Levitte  <richard@levitte.org>
 
 	* netsync.cc (session): Only call the note_netsync hooks if

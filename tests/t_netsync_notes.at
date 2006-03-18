@@ -76,6 +76,7 @@ revision: cert.value = tester@test.net
 revision: cert.key   = tester@test.net
 end -----------------------------------------------------
 ])
+CANONICALISE(testnotes.log)
 AT_CHECK(cmp testnotes.log testnotes.test, [0], [ignore], [ignore])
 
 AT_CHECK(MONOTONE tag $VER0 testtag, [], [ignore], [ignore])
@@ -90,6 +91,7 @@ cert: value  = testtag
 cert: key    = tester@test.net
 end -----------------------------------------------------
 ])
+CANONICALISE(testnotes.log)
 AT_CHECK(cmp testnotes.log testnotes.test, [0], [ignore], [ignore])
 
 AT_CLEANUP

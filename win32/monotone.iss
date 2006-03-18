@@ -20,6 +20,7 @@ Source: "..\monotone.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\html\*.*"; DestDir: "{app}\documentation"; Flags: ignoreversion
 Source: "..\COPYING"; DestDir: "{app}"; Flags: ignoreversion
 Source: "\mingw\bin\libiconv-2.dll"; DestDir: "{app}"
+Source: "\mingw\bin\zlib1.dll"; DestDir: "{app}"
 Source: "..\figures\*.png"; DestDir: "{app}\documentation\figures"; Flags: ignoreversion
 
 [Tasks]
