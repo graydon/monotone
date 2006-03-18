@@ -683,7 +683,7 @@ automate_inventory(std::vector<utf8> args,
   temp_node_id_source nis;
   roster_t base, curr;
   inventory_map inventory;
-  cset cs;
+  cset cs; MM(cs);
   path_set unchanged, changed, missing, known, unknown, ignored;
 
   get_base_and_current_roster_shape(base, curr, nis, app);

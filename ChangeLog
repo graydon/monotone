@@ -1,5 +1,7 @@
 2006-03-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* automate.cc (automate_inventory): Add an MM().
+
 	* Makefile.am: Copy figures/ into two places for html target, and
 	don't attempt to copy std_hooks.lua over itself if we're building
 	in the src dir.
