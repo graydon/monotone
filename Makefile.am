@@ -549,7 +549,6 @@ html: monotone.texi version.texi std_hooks.lua texinfo.css
 	cp $(srcdir)/std_hooks.lua .
 	mkdir -p $@
 	cp -r $(srcdir)/figures $@
-	fi
 	makeinfo --number-sections --html --output $@ $<
 	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@/*.html
 	rm -f $@/*.perlbak
