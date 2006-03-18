@@ -8,7 +8,12 @@
 
 	* Makefile.am (monotone.html, html): Only copy figures/ and
 	std_hooks.lua if the builder is in a separate build directory.
-	(html): 
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_netsync_notes.at: Enhance the test by checking that a
+	netsync where no data is written to the database won't trigger
+	the note_netsync* hooks.
 
 2006-03-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
@@ -24,6 +29,17 @@
 
 	* tests/t_netsync_notes.at: Canonicalise output in a few places so
 	that the test passes on CRLF platforms.
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* netsync.cc (session): Only call the note_netsync hooks if
+	something has been written to the database.  The reason is that
+	if those hooks are called from a server process and those hooks
+	are used to update another database (say, for viewmtn), it means
+	another run will be done with monotone to pull from the server,
+	which would trigger another call to the hooks, which would cause
+	another pull, which would cause those hooks to be called again,
+	...
 
 2006-03-17  Richard Levitte  <richard@levitte.org>
 
