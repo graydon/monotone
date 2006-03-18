@@ -500,7 +500,7 @@ session::~session()
   string nonce;
   for (int i = 0; i < 16; i++)
     nonce.append(1, letters[Botan::Global_RNG::random(Botan::Nonce)
-                            % sizeof(letters)]);
+                            % (sizeof(letters) - 1)]);
 
   vector<cert> unattached_certs;
   map<revision_id, vector<cert> > revcerts;
@@ -518,47 +518,52 @@ session::~session()
         j->second.push_back(*i);
     }
 
-  //Start
-  app.lua.hook_note_netsync_start(nonce);
-
-  //Keys
-  for (vector<rsa_keypair_id>::iterator i = written_keys.begin();
-       i != written_keys.end(); ++i)
+  //  if (role == sink_role || role == source_and_sink_role)
+  if (!written_keys.empty() 
+      || !written_revisions.empty()
+      || !written_certs.empty())
     {
-      app.lua.hook_note_netsync_pubkey_received(*i, nonce);
-    }
+      //Start
+      app.lua.hook_note_netsync_start(nonce);
 
-  //Revisions
-  for (vector<revision_id>::iterator i = written_revisions.begin();
-      i != written_revisions.end(); ++i)
-    {
-      vector<cert> & ctmp(revcerts[*i]);
-      set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > certs;
-      for (vector<cert>::const_iterator j = ctmp.begin();
-           j != ctmp.end(); ++j)
+      //Keys
+      for (vector<rsa_keypair_id>::iterator i = written_keys.begin();
+           i != written_keys.end(); ++i)
         {
-          cert_value vtmp;
-          decode_base64(j->value, vtmp);
-          certs.insert(make_pair(j->key, make_pair(j->name, vtmp)));
+          app.lua.hook_note_netsync_pubkey_received(*i, nonce);
         }
-      revision_data rdat;
-      app.db.get_revision(*i, rdat);
-      app.lua.hook_note_netsync_revision_received(*i, rdat, certs, nonce);
+
+      //Revisions
+      for (vector<revision_id>::iterator i = written_revisions.begin();
+           i != written_revisions.end(); ++i)
+        {
+          vector<cert> & ctmp(revcerts[*i]);
+          set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > certs;
+          for (vector<cert>::const_iterator j = ctmp.begin();
+               j != ctmp.end(); ++j)
+            {
+              cert_value vtmp;
+              decode_base64(j->value, vtmp);
+              certs.insert(make_pair(j->key, make_pair(j->name, vtmp)));
+            }
+          revision_data rdat;
+          app.db.get_revision(*i, rdat);
+          app.lua.hook_note_netsync_revision_received(*i, rdat, certs, nonce);
+        }
+
+      //Certs (not attached to a new revision)
+      for (vector<cert>::iterator i = unattached_certs.begin();
+           i != unattached_certs.end(); ++i)
+        {
+          cert_value tmp;
+          decode_base64(i->value, tmp);
+          app.lua.hook_note_netsync_cert_received(i->ident, i->key,
+                                                  i->name, tmp, nonce);
+        }
+
+      //Start
+      app.lua.hook_note_netsync_end(nonce);
     }
-
-  //Certs (not attached to a new revision)
-  for (vector<cert>::iterator i = unattached_certs.begin();
-      i != unattached_certs.end(); ++i)
-    {
-      cert_value tmp;
-      decode_base64(i->value, tmp);
-      app.lua.hook_note_netsync_cert_received(i->ident, i->key,
-                                              i->name, tmp, nonce);
-
-    }
-
-  //Start
-  app.lua.hook_note_netsync_end(nonce);
 }
 
 bool 

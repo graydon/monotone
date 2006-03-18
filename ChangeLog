@@ -1,3 +1,14 @@
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* netsync.cc (session): Only call the note_netsync hooks if
+	something has been written to the database.  The reason is that
+	if those hooks are called from a server process and those hooks
+	are used to update another database (say, for viewmtn), it means
+	another run will be done with monotone to pull from the server,
+	which would trigger another call to the hooks, which would cause
+	another pull, which would cause those hooks to be called again,
+	...
+
 2006-03-17  Richard Levitte  <richard@levitte.org>
 
 	* tests/t_netsync_notes.at: New test to check that the
