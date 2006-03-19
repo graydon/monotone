@@ -1,0 +1,32 @@
+AT_SETUP([db kill_rev_locally command 2])
+MONOTONE_SETUP
+
+# start off with three revisions
+ADD_FILE(testfile, [blah blah
+])
+COMMIT(testbranch)
+ANCESTOR=`BASE_REVISION`
+
+SET_FILE(testfile, [stuff stuff
+])
+COMMIT(testbranch)
+CHILD1=`BASE_REVISION`
+
+SET_FILE(testfile, [blahdy blah blay
+])
+COMMIT(testbranch)
+CHILD2=`BASE_REVISION`
+
+# kill head revision
+AT_CHECK(MONOTONE automate get_revision $CHILD2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db kill_rev_locally $CHILD2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE automate get_revision $CHILD2, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE db check, [], ignore, ignore)
+
+# head is an older revision now, let's kill that too
+AT_CHECK(MONOTONE automate get_revision $CHILD1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE db kill_rev_locally $CHILD1, [], [ignore], [ignore])
+AT_CHECK(MONOTONE automate get_revision $CHILD1, [1], [ignore], [ignore])
+AT_CHECK(MONOTONE db check, [], ignore, ignore)
+
+AT_CLEANUP

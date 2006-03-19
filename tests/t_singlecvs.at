@@ -12,12 +12,12 @@ TSHA0=`SHA1(importme.0)`
 # build the cvs repository
 
 CVSROOT=`pwd`/cvs-repository
-AT_CHECK(cvs -q -d $CVSROOT init)
+AT_CHECK(cvs -q -d $CVSROOT init, [0], [ignore], [ignore])
 AT_CHECK(test -e $CVSROOT)
 AT_CHECK(test -e $CVSROOT/CVSROOT)
-AT_CHECK(test -e $CVSROOT/CVSROOT/history)
+AT_CHECK(test -e $CVSROOT/CVSROOT/modules)
 
-# check out the working copy and make a commit
+# check out the workspace and make a commit
 
 AT_CHECK(cvs -d $CVSROOT co ., [], [ignore], [ignore])
 AT_CHECK(mkdir testdir)

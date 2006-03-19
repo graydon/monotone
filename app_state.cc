@@ -29,14 +29,15 @@ static string const key_option("key");
 static string const keydir_option("keydir");
 
 app_state::app_state() 
-  : branch_name(""), db(system_path()), keys(this), stdhooks(true),
-    rcfiles(true), diffs(false),
-    merges(false), set_default(false), verbose(false), date_set(false),
+  : branch_name(""), db(system_path()), keys(this), recursive(false),
+    stdhooks(true), rcfiles(true), diffs(false),
+    no_merges(false), set_default(false), verbose(false), date_set(false),
     search_root("/"),
     depth(-1), last(-1), next(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false), bind_address(""), bind_port(""), 
     missing(false), unknown(false),
-    confdir(get_default_confdir()), have_set_key_dir(false)
+    confdir(get_default_confdir()), have_set_key_dir(false), no_files(false),
+    prog_name("monotone")
 {
   db.set_app(this);
   lua.set_app(this);
@@ -62,31 +63,16 @@ app_state::is_explicit_option(int option_id) const
 }
 
 void
-app_state::allow_working_copy()
+app_state::allow_workspace()
 {
   L(FL("initializing from directory %s\n") % fs::initial_path().string());
-  found_working_copy = find_and_go_to_working_copy(search_root);
+  found_workspace = find_and_go_to_workspace(search_root);
 
-  if (found_working_copy) 
+  if (found_workspace) 
     {
+      // We read the options, but we don't process them here.  That's
+      // done with process_options().
       read_options();
-
-      if (!options[database_option]().empty())
-        {
-          system_path dbname = system_path(options[database_option]);
-          db.set_filename(dbname);
-        }
-
-      if (!options[keydir_option]().empty())
-        {
-          system_path keydir = system_path(options[keydir_option]);
-          set_key_dir(keydir);
-        }
-
-      if (branch_name().empty())
-        branch_name = options[branch_option];
-      L(FL("branch name is '%s'\n") % branch_name());
-      internalize_rsa_keypair_id(options[key_option], signing_key);
 
       if (global_sanity.filename.empty())
         {
@@ -95,7 +81,7 @@ app_state::allow_working_copy()
           L(FL("setting dump path to %s\n") % dump_path);
           // the 'true' means that, e.g., if we're running checkout, then it's
           // okay for dumps to go into our starting working dir's MT rather
-          // than the checked-out dir's MT.
+          // than the new workspace dir's MT.
           global_sanity.filename = system_path(dump_path, false);
         }
     }
@@ -103,29 +89,52 @@ app_state::allow_working_copy()
 }
 
 void 
-app_state::require_working_copy(std::string const & explanation)
+app_state::process_options()
 {
-  N(found_working_copy,
-    F("working copy directory required but not found%s%s")
+  if (found_workspace) {
+    if (!options[database_option]().empty())
+      {
+	system_path dbname = system_path(options[database_option]);
+	db.set_filename(dbname);
+      }
+
+    if (!options[keydir_option]().empty())
+      {
+	system_path keydir = system_path(options[keydir_option]);
+	set_key_dir(keydir);
+      }
+
+    if (branch_name().empty())
+      branch_name = options[branch_option];
+    L(FL("branch name is '%s'\n") % branch_name());
+    internalize_rsa_keypair_id(options[key_option], signing_key);
+  }
+}
+
+void 
+app_state::require_workspace(std::string const & explanation)
+{
+  N(found_workspace,
+    F("workspace required but not found%s%s")
     % (explanation.empty() ? "" : "\n") % explanation);
   write_options();
 }
 
 void 
-app_state::create_working_copy(system_path const & new_dir)
+app_state::create_workspace(system_path const & new_dir)
 {
   N(!new_dir.empty(), F("invalid directory ''"));
 
-  L(FL("creating working copy in %s\n") % new_dir);
+  L(FL("creating workspace in %s\n") % new_dir);
   
   mkdir_p(new_dir);
-  go_to_working_copy(new_dir);
+  go_to_workspace(new_dir);
 
   N(!directory_exists(bookkeeping_root),
     F("monotone bookkeeping directory '%s' already exists in '%s'\n") 
     % bookkeeping_root % new_dir);
 
-  L(FL("creating bookkeeping directory '%s' for working copy in '%s'\n")
+  L(FL("creating bookkeeping directory '%s' for workspace in '%s'\n")
     % bookkeeping_root % new_dir);
 
   mkdir_p(bookkeeping_root);
@@ -191,28 +200,6 @@ app_state::set_restriction(path_set const & valid_paths,
       fp.split(sp);
       restrictions.insert(sp);
     }
-}
-
-bool
-app_state::restriction_requires_parent(split_path const & sp)
-{
-  file_path path(sp);
-  if (restrictions.empty())
-    return false;
-
-  for (path_set::const_iterator i = restrictions.begin();
-       i != restrictions.end(); ++i)
-    {
-      // If sp is a parent of any member rs of the restriction,
-      // we want to return true.
-      split_path rs = *i;
-      if (rs.size() < sp.size())
-        continue;
-      rs.resize(sp.size());
-      if (rs == sp)
-        return true;
-    }
-  return false;
 }
 
 bool
@@ -329,11 +316,11 @@ void
 app_state::make_branch_sticky()
 {
   options[branch_option] = branch_name();
-  if (found_working_copy)
+  if (found_workspace)
     {
-      // already have a working copy, can (must) write options directly,
+      // already have a workspace, can (must) write options directly,
       // because no-one else will do so
-      // if we don't have a working copy yet, then require_working_copy (for
+      // if we don't have a workspace yet, then require_workspace (for
       // instance) will call write_options when it finds one.
       write_options();
     }
@@ -479,6 +466,12 @@ app_state::set_verbose(bool b)
 }
 
 void
+app_state::set_recursive(bool r)
+{
+  recursive = r;
+}
+
+void
 app_state::add_rcfile(utf8 const & filename)
 {
   extra_rcfiles.push_back(filename);
@@ -498,8 +491,8 @@ app_state::get_confdir()
   return confdir;
 }
 
-// rc files are loaded after we've changed to the working copy directory so
-// that MT/monotonerc can be loaded between ~/.monotone/monotonerc and other
+// rc files are loaded after we've changed to the workspace so that
+// MT/monotonerc can be loaded between ~/.monotone/monotonerc and other
 // rcfiles
 
 void
@@ -516,11 +509,11 @@ app_state::load_rcfiles()
   if (rcfiles)
     {
       system_path default_rcfile;
-      bookkeeping_path working_copy_rcfile;
+      bookkeeping_path workspace_rcfile;
       lua.default_rcfilename(default_rcfile);
-      lua.working_copy_rcfilename(working_copy_rcfile);
+      lua.workspace_rcfilename(workspace_rcfile);
       lua.load_rcfile(default_rcfile, false);
-      lua.load_rcfile(working_copy_rcfile, false);
+      lua.load_rcfile(workspace_rcfile, false);
     }
 
   // command-line rcfiles override even that

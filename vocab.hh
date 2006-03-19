@@ -17,6 +17,10 @@
 // generally describe the "vocabulary" (nouns anyways) that modules in this
 // program use.
 
+template <typename T>
+void dump(T const &, std::string &);
+
+
 #define ENCODING(enc)                                  \
                                                        \
 template<typename INNER>                               \
@@ -111,6 +115,7 @@ public:                                                \
   };                                                   \
 };                                                     \
 std::ostream & operator<<(std::ostream &, ty const &); \
+template <>                                            \
 void dump(ty const &, std::string &);
 
 #define ATOMIC_NOVERIFY(ty)                            \

@@ -167,6 +167,9 @@ refiner::begin_refinement()
   cb.queue_refine_cmd(refinement_query, *root);
   ++queries_in_flight;
   sent_initial_query = true;
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  L(FL("Beginning %s refinement.") % typestr);
 }
 
 void 

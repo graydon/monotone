@@ -39,7 +39,7 @@ using boost::lexical_cast;
 
 ///////////////////////////////////////////////////////////////////
 
-void
+template <> void
 dump(full_attr_map_t const & val, std::string & out)
 {
   std::ostringstream oss;
@@ -50,7 +50,7 @@ dump(full_attr_map_t const & val, std::string & out)
   out = oss.str();
 }
 
-void
+template <> void
 dump(std::set<revision_id> const & revids, std::string & out)
 {
   out.clear();
@@ -65,7 +65,7 @@ dump(std::set<revision_id> const & revids, std::string & out)
     }
 }
 
-void
+template <> void
 dump(marking_t const & marking, std::string & out)
 {
   std::ostringstream oss;
@@ -85,7 +85,7 @@ dump(marking_t const & marking, std::string & out)
   out = oss.str();
 }
 
-void
+template <> void
 dump(marking_map const & markings, std::string & out)
 {
   std::ostringstream oss;
@@ -238,7 +238,7 @@ file_node::clone()
   return f;
 }
 
-void
+template <> void
 dump(node_t const & n, std::string & out)
 {
   std::ostringstream oss;
@@ -303,22 +303,6 @@ roster_t::operator=(roster_t const & other)
   nodes.clear();
   do_deep_copy_from(other);
   return *this;
-}
-
-void
-dirname_basename(split_path const & sp,
-                 split_path & dirname, path_component & basename)
-{
-  I(!sp.empty());
-  // L(FL("dirname_basename('%s' [%d components],...)\n") % file_path(sp) % sp.size());
-  split_path::const_iterator penultimate = sp.begin() + (sp.size()-1);
-  dirname = split_path(sp.begin(), penultimate);
-  basename = *penultimate;
-  if (dirname.empty())
-    {
-      // L(FL("basename %d vs. null component %d\n") % basename % the_null_component);
-      I(null_name(basename));
-    }
 }
 
 
@@ -612,13 +596,10 @@ roster_t::detach_node(split_path const & pth)
   path_component basename;
   dirname_basename(pth, dirname, basename);
 
+  I(has_root());
   if (dirname.empty())
     {
       // detaching the root dir
-      {
-        // detaching the root dir is currently forbidden.
-        I(false);
-      }
       I(null_name(basename));
       node_id root_id = root_dir->self;
       safe_insert(old_locations,
@@ -792,7 +773,7 @@ roster_t::set_attr(split_path const & pth,
   i->second = val;
 }
 
-void
+template <> void
 dump(roster_t const & val, std::string & out)
 {
   std::ostringstream oss;
@@ -980,6 +961,11 @@ editable_roster_base::set_attr(split_path const & pth,
 {
   // L(FL("set_attr('%s', '%s', '%s')") % file_path(pth) % name % val);
   r.set_attr(pth, name, val);
+}
+
+void
+editable_roster_base::commit()
+{
 }
 
 namespace 
@@ -1975,7 +1961,7 @@ select_nodes_modified_by_cset(cset const & cs,
 }
 
 ////////////////////////////////////////////////////////////////////
-//   getting rosters from the working copy
+//   getting rosters from the workspace 
 ////////////////////////////////////////////////////////////////////
 
 inline static bool
@@ -2114,11 +2100,13 @@ update_restricted_roster_from_filesystem(roster_t & ros,
     }
 
   N(missing_files == 0, 
-    F("%d missing files\n"
+    F("%d missing files; use '%s ls missing' to view\n"
       "to restore consistency, on each missing file run either\n"
-      "'monotone drop FILE' to remove it permanently, or\n"
-      "'monotone revert FILE' to restore it\n")
-    % missing_files);
+      "'%s drop FILE' to remove it permanently, or\n"
+      "'%s revert FILE' to restore it\n"
+      "or to handle all at once, simply 'monotone drop --missing'\n"
+      "or 'monotone revert --missing'")
+    % missing_files % app.prog_name % app.prog_name % app.prog_name);
 }
 
 void
@@ -2445,10 +2433,9 @@ write_roster_and_marking(roster_t const & ros,
     ros.check_sane_against(mm);
   else
     ros.check_sane(true);
-  std::ostringstream oss;
-  basic_io::printer pr(oss);
+  basic_io::printer pr;
   ros.print_to(pr, mm, print_local_parts);
-  dat = data(oss.str());
+  dat = data(pr.buf);
 }
 
 
@@ -2877,21 +2864,20 @@ change_automaton
   }
 };
 
-struct testing_node_id_source 
-  : public node_id_source
-{
-  testing_node_id_source() : curr(first_node) {}
-  virtual node_id next()
-  {
-    // L(FL("creating node %x\n") % curr);
-    node_id n = curr++;
-    I(!temp_node(n));
-    return n;
-  }
-  node_id curr;
-};
+testing_node_id_source::testing_node_id_source()
+  : curr(first_node)
+{}
 
-static void
+node_id
+testing_node_id_source::next()
+{
+  // L(FL("creating node %x\n") % curr);
+  node_id n = curr++;
+  I(!temp_node(n));
+  return n;
+}
+
+template <> void
 dump(int const & i, std::string & out)
 {
   out = lexical_cast<std::string>(i) + "\n";
@@ -3194,7 +3180,7 @@ namespace
                  scalar_none, scalar_none_2 } scalar_val;
 
   void
-  dump(scalar_val val, std::string & out)
+  dump(scalar_val const & val, std::string & out)
   {
     switch (val)
       {

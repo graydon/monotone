@@ -1,4 +1,5 @@
 // -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -425,7 +426,7 @@ extern "C"
   {
     int fd = -1;
     FILE **pf = NULL;
-    char const *filename = lua_tostring (L, -1);
+    char const *filename = luaL_checkstring (L, -1);
     std::string dup(filename);
     
     fd = monotone_mkstemp(dup);
@@ -457,7 +458,7 @@ extern "C"
   static int
   monotone_existsonpath_for_lua(lua_State *L)
   {
-    const char *exe = lua_tostring(L, -1);
+    const char *exe = luaL_checkstring(L, -1);
     lua_pushnumber(L, existsonpath(exe));
     return 1;
   }
@@ -465,7 +466,7 @@ extern "C"
   static int
   monotone_is_executable_for_lua(lua_State *L)
   {
-    const char *path = lua_tostring(L, -1);
+    const char *path = luaL_checkstring(L, -1);
     lua_pushboolean(L, is_executable(path));
     return 1;
   }
@@ -473,7 +474,7 @@ extern "C"
   static int
   monotone_make_executable_for_lua(lua_State *L)
   {
-    const char *path = lua_tostring(L, -1);
+    const char *path = luaL_checkstring(L, -1);
     lua_pushnumber(L, make_executable(path));
     return 1;
   }
@@ -482,14 +483,14 @@ extern "C"
   monotone_spawn_for_lua(lua_State *L)
   {
     int n = lua_gettop(L);
-    const char *path = lua_tostring(L, -n);
+    const char *path = luaL_checkstring(L, -n);
     char **argv = (char**)malloc((n+1)*sizeof(char*));
     int i;
     pid_t ret;
     if (argv==NULL)
       return 0;
     argv[0] = (char*)path;
-    for (i=1; i<n; i++) argv[i] = (char*)lua_tostring(L, -(n - i));
+    for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, -(n - i));
     argv[i] = NULL;
     ret = process_spawn(argv);
     free(argv);
@@ -500,7 +501,7 @@ extern "C"
   static int
   monotone_wait_for_lua(lua_State *L)
   {
-    pid_t pid = (pid_t)lua_tonumber(L, -1);
+    pid_t pid = static_cast<pid_t>(luaL_checknumber(L, -1));
     int res;
     int ret;
     ret = process_wait(pid, &res);
@@ -513,10 +514,10 @@ extern "C"
   monotone_kill_for_lua(lua_State *L)
   {
     int n = lua_gettop(L);
-    pid_t pid = (pid_t)lua_tonumber(L, -2);
+    pid_t pid = static_cast<pid_t>(luaL_checknumber(L, -2));
     int sig;
     if (n>1)
-      sig = (int)lua_tonumber(L, -1);
+      sig = static_cast<int>(luaL_checknumber(L, -1));
     else
       sig = SIGTERM;
     lua_pushnumber(L, process_kill(pid, sig));
@@ -526,7 +527,7 @@ extern "C"
   static int
   monotone_sleep_for_lua(lua_State *L)
   {
-    int seconds = (int)lua_tonumber(L, -1);
+    int seconds = static_cast<int>(luaL_checknumber(L, -1));
     lua_pushnumber(L, process_sleep(seconds));
     return 1;
   }
@@ -534,7 +535,7 @@ extern "C"
   static int
   monotone_guess_binary_file_contents_for_lua(lua_State *L)
   {
-    const char *path = lua_tostring(L, -1);
+    const char *path = luaL_checkstring(L, -1);
     N(path, F("%s called with an invalid parameter") % "guess_binary");
 
     std::ifstream file(path, ios_base::binary);
@@ -563,7 +564,7 @@ extern "C"
   static int
   monotone_include_for_lua(lua_State *L)
   {
-    const char *path = lua_tostring(L, -1);
+    const char *path = luaL_checkstring(L, -1);
     N(path, F("%s called with an invalid parameter") % "Include");
     
     bool res =Lua(L)
@@ -578,7 +579,7 @@ extern "C"
   static int
   monotone_includedir_for_lua(lua_State *L)
   {
-    const char *pathstr = lua_tostring(L, -1);
+    const char *pathstr = luaL_checkstring(L, -1);
     N(pathstr, F("%s called with an invalid parameter") % "IncludeDir");
 
     fs::path locpath(pathstr, fs::native);
@@ -612,8 +613,8 @@ extern "C"
   static int
   monotone_regex_search_for_lua(lua_State *L)
   {
-    const char *re = lua_tostring(L, -2);
-    const char *str = lua_tostring(L, -1);
+    const char *re = luaL_checkstring(L, -2);
+    const char *str = luaL_checkstring(L, -1);
     boost::cmatch what;
 
     bool result = false;
@@ -631,8 +632,8 @@ extern "C"
   static int
   monotone_globish_match_for_lua(lua_State *L)
   {
-    const char *re = lua_tostring(L, -2);
-    const char *str = lua_tostring(L, -1);
+    const char *re = luaL_checkstring(L, -2);
+    const char *str = luaL_checkstring(L, -1);
 
     bool result = false;
     try {
@@ -660,7 +661,7 @@ extern "C"
   static int
   monotone_gettext_for_lua(lua_State *L)
   {
-    const char *msgid = lua_tostring(L, -1);
+    const char *msgid = luaL_checkstring(L, -1);
     lua_pushstring(L, gettext(msgid));
     return 1;
   }
@@ -684,7 +685,7 @@ extern "C"
   monotone_parse_basic_io_for_lua(lua_State *L)
   {
     vector<pair<string, vector<string> > > res;
-    const string str(lua_tostring(L, -1), lua_strlen(L, -1));
+    const string str(luaL_checkstring(L, -1), lua_strlen(L, -1));
     basic_io::input_source in(str, "monotone_parse_basic_io_for_lua");
     basic_io::tokenizer tok(in);
     try
@@ -867,7 +868,7 @@ lua_hooks::default_rcfilename(system_path & file)
 }
 
 void 
-lua_hooks::working_copy_rcfilename(bookkeeping_path & file)
+lua_hooks::workspace_rcfilename(bookkeeping_path & file)
 {
   file = bookkeeping_root / "monotonerc";
 }
@@ -1046,18 +1047,6 @@ lua_hooks::hook_ignore_branch(std::string const & branch)
     .extract_bool(ignore_it)
     .ok();
   return exec_ok && ignore_it;
-}
-
-bool 
-lua_hooks::hook_non_blocking_rng_ok()
-{
-  bool ok = false;
-  bool exec_ok = Lua(st)
-    .func("non_blocking_rng_ok")
-    .call(0,1)
-    .extract_bool(ok)
-    .ok();
-  return exec_ok && ok;
 }
 
 static inline bool
@@ -1382,6 +1371,25 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
   return ll.ok();
 }
 
+bool
+lua_hooks::hook_validate_commit_message(std::string const & message,
+                                        std::string const & new_manifest_text,
+                                        bool & validated,
+                                        std::string & reason)
+{
+  validated = true;
+  return Lua(st)
+    .func("validate_commit_message")
+    .push_str(message)
+    .push_str(new_manifest_text)
+    .call(2, 2)
+    .extract_str(reason)
+    // XXX When validated, the extra returned string is superfluous.
+    .pop()
+    .extract_bool(validated)
+    .ok();
+}
+
 bool 
 lua_hooks::hook_note_commit(revision_id const & new_id,
                             revision_data const & rdat,
@@ -1408,11 +1416,23 @@ lua_hooks::hook_note_commit(revision_id const & new_id,
 }
 
 bool 
+lua_hooks::hook_note_netsync_start(string nonce)
+{
+  Lua ll(st);
+  return ll
+    .func("note_netsync_start")
+    .push_str(nonce)
+    .call(1, 0)
+    .ok();
+}
+
+bool 
 lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
                                                revision_data const & rdat,
                             set<pair<rsa_keypair_id,
                                      pair<cert_name,
-                                          cert_value> > > const & certs)
+                                          cert_value> > > const & certs,
+                                               std::string nonce)
 {
   Lua ll(st);
   ll
@@ -1441,19 +1461,22 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
       ll.set_table();
     }
 
-  ll.call(3, 0);
+  ll.push_str(nonce);
+  ll.call(4, 0);
   return ll.ok();
 }
 
 bool
-lua_hooks::hook_note_netsync_pubkey_received(rsa_keypair_id const & kid)
+lua_hooks::hook_note_netsync_pubkey_received(rsa_keypair_id const & kid,
+                                             std::string nonce)
 {
   Lua ll(st);
   ll
     .func("note_netsync_pubkey_received")
-    .push_str(kid());
+    .push_str(kid())
+    .push_str(nonce);
 
-  ll.call(1, 0);
+  ll.call(2, 0);
   return ll.ok();
 }
 
@@ -1461,7 +1484,8 @@ bool
 lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
                                            rsa_keypair_id const & kid,
                                            cert_name const & name,
-                                           cert_value const & value)
+                                           cert_value const & value,
+                                           std::string nonce)
 {
   Lua ll(st);
   ll
@@ -1469,8 +1493,21 @@ lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
     .push_str(rid.inner()())
     .push_str(kid())
     .push_str(name())
-    .push_str(value());
+    .push_str(value())
+    .push_str(nonce);
 
-  ll.call(4, 0);
+  ll.call(5, 0);
   return ll.ok();
 }
+
+bool 
+lua_hooks::hook_note_netsync_end(string nonce)
+{
+  Lua ll(st);
+  return ll
+    .func("note_netsync_end")
+    .push_str(nonce)
+    .call(1, 0)
+    .ok();
+}
+

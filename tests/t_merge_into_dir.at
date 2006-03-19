@@ -1,0 +1,28 @@
+AT_SETUP([merge a project into a subdirectory of an unrelated project])
+MONOTONE_SETUP
+
+AT_CHECK(cp -r MT MT.orig)
+ADD_FILE(file1, [foo
+])
+COMMIT(b1)
+
+AT_CHECK(rm -r MT)
+AT_CHECK(cp -r MT.orig MT)
+AT_CHECK(rm file1)
+ADD_FILE(file2, [bar
+])
+AT_CHECK(mkdir dir)
+ADD_FILE(dir/quux, [baz
+])
+COMMIT(b2)
+
+AT_CHECK(MONOTONE merge_into_dir b1 b2 dir/zuul, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE checkout -b b2 checkout)
+AT_CHECK(test -f checkout/file2)
+AT_CHECK(test -d checkout/dir)
+AT_CHECK(test -f checkout/dir/quux)
+AT_CHECK(test -d checkout/dir/zuul)
+AT_CHECK(test -f checkout/dir/zuul/file1)
+
+AT_CLEANUP

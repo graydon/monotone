@@ -208,11 +208,11 @@ Each of these assertion macros are fatal and will cause an exception to be
 thrown that will ultimately cause the monotone process to exit.  Exceptions
 are used (rather than C-style abort() based assertions) so that the stack
 will unwind and cause the destructors for objects allocated on the stack to
-run.  This allows monotone to leave the user's database and working copy in
+run.  This allows monotone to leave the user's database and workspace in
 as logical a state as possible.  Any in-flight uncommitted database
-transactions will be aborted.  Operations occurring on a working copy may
-leave the working copy in an inconsistent state, as we do not have a way to
-atomically update the working copy.
+transactions will be aborted.  Operations occurring on a workspace may
+leave the workspace in an inconsistent state, as we do not have a way to
+atomically update the workspace.
 
 
 Patch submission guidelines

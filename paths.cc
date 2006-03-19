@@ -76,6 +76,7 @@ static access_tracker<fs::path> initial_rel_path;
 static access_tracker<system_path> working_root;
 
 bookkeeping_path const bookkeeping_root("MT");
+path_component const bookkeeping_root_component("MT");
 
 void
 save_initial_path()
@@ -171,6 +172,7 @@ is_valid_internal(std::string const & path)
 
 file_path::file_path(file_path::source_type type, std::string const & path)
 {
+  I(utf8_validate(path));
   switch (type)
     {
     case internal:
@@ -179,10 +181,10 @@ file_path::file_path(file_path::source_type type, std::string const & path)
     case external:
       if (!initial_rel_path.initialized)
         {
-          // we are not in a working directory; treat this as an internal 
+          // we are not in a workspace; treat this as an internal 
           // path, and set the access_tracker() into a very uninitialised 
           // state so that we will hit an exception if we do eventually 
-          // enter a working directory
+          // enter a workspace
           initial_rel_path.may_not_initialize();
           data = path;
           N(is_valid_internal(path) && !in_bookkeeping_dir(path),
@@ -292,7 +294,7 @@ file_path::split(split_path & sp) const
   while (1)
     {
       stop = s.find('/', start);
-      if (stop < 0 || stop > s.length())
+      if (stop == std::string::npos)
         {
           sp.push_back(s.substr(start));
           break;
@@ -302,6 +304,7 @@ file_path::split(split_path & sp) const
     }
 }
 
+template <>
 void dump(split_path const & sp, std::string & out)
 {
   std::ostringstream oss;
@@ -435,15 +438,21 @@ normalize_out_dots(std::string const & path)
 #endif
 }
 
-system_path::system_path(any_path const & other, bool in_true_working_copy)
+system_path::system_path(any_path const & other, bool in_true_workspace)
 {
-  I(!is_absolute_here(other.as_internal()));
-  system_path wr;
-  if (in_true_working_copy)
-    wr = working_root.get();
+  if (is_absolute_here(other.as_internal()))
+    // another system_path.  the normalizing isn't really necessary, but it
+    // makes me feel warm and fuzzy.
+    data = normalize_out_dots(other.as_internal());
   else
-    wr = working_root.get_but_unused();
-  data = normalize_out_dots((wr / other.as_internal()).as_internal());
+    {
+      system_path wr;
+      if (in_true_workspace)
+        wr = working_root.get();
+      else
+        wr = working_root.get_but_unused();
+      data = normalize_out_dots((wr / other.as_internal()).as_internal());
+    }
 }
 
 static inline std::string const_system_path(utf8 const & path)
@@ -467,13 +476,32 @@ system_path::system_path(utf8 const & path)
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// working copy (and path roots) handling
+// utility
+///////////////////////////////////////////////////////////////////////////
+
+void
+dirname_basename(split_path const & sp,
+                 split_path & dirname, path_component & basename)
+{
+  I(!sp.empty());
+  // L(FL("dirname_basename('%s' [%d components],...)\n") % file_path(sp) % sp.size());
+  dirname = sp;
+  dirname.pop_back();
+  basename = sp.back();
+  if (dirname.empty())
+    {
+      // L(FL("basename %d vs. null component %d\n") % basename % the_null_component);
+      I(null_name(basename));
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////
+// workspace (and path root) handling
 ///////////////////////////////////////////////////////////////////////////
 
 bool
-find_and_go_to_working_copy(system_path const & search_root)
+find_and_go_to_workspace(system_path const & search_root)
 {
-  // unimplemented
   fs::path root(search_root.as_external(), fs::native);
   fs::path bookdir(bookkeeping_root.as_external(), fs::native);
   fs::path current(fs::initial_path());
@@ -530,11 +558,11 @@ find_and_go_to_working_copy(system_path const & search_root)
 }
 
 void
-go_to_working_copy(system_path const & new_working_copy)
+go_to_workspace(system_path const & new_workspace)
 {
-  working_root.set(new_working_copy, true);
+  working_root.set(new_workspace, true);
   initial_rel_path.set(fs::path(), true);
-  change_current_working_dir(new_working_copy);
+  change_current_working_dir(new_workspace);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -825,6 +853,7 @@ static void test_split_join()
   split_path split_mt1, split_mt2;
   file_path_internal("foo/MT").split(split_mt1);
   BOOST_CHECK(split_mt1.size() == 3);
+  I(split_mt1[2] == bookkeeping_root_component);
   split_mt2.push_back(the_null_component);
   split_mt2.push_back(split_mt1[2]);
   // split_mt2 now contains the component "MT"
@@ -916,7 +945,7 @@ static void test_system_path()
   // MT/options
   //   /work/newdir$ cd ..
   //   /work$ mv newdir newerdir  # better name
-  // Oops, now, if we stored the version with ..'s in, this working directory
+  // Oops, now, if we stored the version with ..'s in, this workspace
   // is broken.
   check_system_normalizes_to("../foo", "/a/foo");
   check_system_normalizes_to("foo/..", "/a/b");

@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([diffing a file within revision outside a working dir])
+AT_SETUP([diffing a file within revision outside a workspace])
 
 MONOTONE_SETUP
 
@@ -19,6 +19,6 @@ second=`BASE_REVISION`
 AT_CHECK(rm -rf MT)
 AT_CHECK(MONOTONE diff --revision=$parent --revision=$second, [], [ignore], [ignore])
 # check it works when specifying files
-AT_CHECK(MONOTONE diff --revision=$parent --revision=$second foo2, [], [ignore], [ignore])
+AT_CHECK(MONOTONE diff --revision=$parent --revision=$second foo2 --debug, [], [ignore], [ignore])
 
 AT_CLEANUP

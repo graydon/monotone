@@ -14,6 +14,13 @@ AT_DATA(bar/bar.txt, [file bar.txt in dir bar
 AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE add bar, [], [ignore], [ignore])
 
+COMMIT(testbranch)
+
+AT_DATA(foo/foo.txt, [file foo.txt in dir foo changed
+])
+AT_DATA(bar/bar.txt, [file bar.txt in dir bar changed
+])
+
 # should have tests for 
 # add, drop, rename, revert
 #       - which use prefixing

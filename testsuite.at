@@ -20,11 +20,28 @@ m4_define([RAW_MONOTONE], [$PREEXECUTE monotone --norc])
 m4_define([MINHOOKS_MONOTONE], [$PREEXECUTE $_MT_EXEC --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --rcfile=$_ROOT_DIR/min_hooks.lua --key=tester@test.net --root=$_ROOT_DIR])
 m4_define([SHA1], [monotone --norc identify $1])
 m4_define([BASE_REVISION], [cat MT/revision])
+m4_define([BASE_MANIFEST], [cat MT/revision | monotone --norc automate get_manifest_of -@- | monotone --norc identify])
 m4_define([WORKING_REVISION], [monotone --norc automate get_revision | monotone --norc identify])
+m4_define([WORKING_MANIFEST], [monotone --norc automate get_manifest_of | monotone --norc identify])
+m4_define([CERTVALUE], [monotone automate certs $1 | sed -e '1,/name "$2"/d' | sed -e '/^$/,$d' | grep '^ *value' | sed -e 's/^m4_dquote([^"])*"//' -e 's/"m4_dquote([^"])*$//'])
 m4_define([CANONICALISE], [
 if test "$OSTYPE" = "msys"; then
   dos2unix -q -o $1
 fi
+])
+
+# DATA(FILE, CONTENTS)
+# --------------------
+# Initialize an input data FILE with given CONTENTS, which should end with
+# an end of line.
+# This macro is not robust to active symbols or environment variable
+# expansion in CONTENTS *on purpose*.
+# If you don't want CONTENTS to be evaluated, quote it twice.
+# If you don't want environment variables in CONTENTS to be expanded,
+# escape all dollar signs, or use AT_DATA.
+m4_define([DATA],
+[cat >$1 <<_ATEOF
+$2[]_ATEOF
 ])
 
 # the MONOTONE_SETUP macro deploys the standard lua hooks and loads the 
@@ -68,9 +85,6 @@ AT_DATA(min_hooks.lua, [
 function get_passphrase(keyid)
 	return keyid
 end
-function non_blocking_rng_ok()
-	return true
-end
 function persist_phrase_ok()
 	return true
 end
@@ -83,10 +97,6 @@ AT_DATA(test_hooks.lua, [
 
 function get_passphrase(keyid)
 	return keyid
-end
-
-function non_blocking_rng_ok()
-	return true
 end
 
 -- Everything alice signs is trusted, nothing mallory signs is
@@ -134,7 +144,6 @@ end
 function ignore_file(name)
 	if (string.find(name, "test_hooks.lua")) then return true end
 	if (string.find(name, "keys")) then return true end
-	if (string.find(name, "test.db")) then return true end
 	return false
 end
 
@@ -217,6 +226,17 @@ AT_CHECK(test $PROBE_R_SHA = $2)
 AT_CHECK(test $PROBE_F_SHA = $3)
 ])
 
+# run as REVERT_N_TO(2|3, rsha[, branch])
+m4_define([REVERT_N_TO], [
+AT_CHECK(rm -rf MT.old)
+AT_CHECK(mv  MT MT.old)
+m4_case([$3],
+        [], [AT_CHECK(MONOTONE$1 checkout --revision=$2 ., [], [ignore])],
+        [AT_CHECK(MONOTONE$1 --branch=$3 checkout --revision=$2 ., [], [ignore])])
+PROBE_R_SHA=`BASE_REVISION`
+AT_CHECK(test $PROBE_R_SHA = $2)
+])
+
 # run as REVERT_TO(rsha[,branch])
 m4_define([REVERT_TO], [ 
 AT_CHECK(rm -rf MT.old)
@@ -226,6 +246,12 @@ m4_case([$2],
         [AT_CHECK(MONOTONE --branch=$2 checkout --revision=$1 ., [], [ignore])])
 PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA = $1)
+])
+
+# run as ADD_N_FILE(2|3, filename, data)
+m4_define([ADD_N_FILE], [
+AT_DATA($2, $3)
+AT_CHECK(MONOTONE$1 add $2, [], [ignore], [ignore])
 ])
 
 # run as ADD_FILE(filename, data)
@@ -262,9 +288,13 @@ if test -n "`command -v mimencode`" 2>/dev/null; then
 elif test -n "`command -v recode`" 2>/dev/null; then
   UNB64_COMMAND="recode /Base64"
 elif perl -MMIME::Base64 -e 1 2>/dev/null; then
-  UNB64_COMMAND="perl -MMIME::Base64 -ne 'print decode_base64(\$_)'"
+  AT_DATA(unbase64.pl, [print decode_base64($_)
+])
+  UNB64_COMMAND="perl -MMIME::Base64 -n unbase64.pl"
 elif python -c 'import sys;sys.exit(not hasattr("", "decode"))' 2>/dev/null; then
-  UNB64_COMMAND="python -c 'import sys;sys.stdout.write(sys.stdin.read().decode("'"'"base64"'"'"))'"
+  AT_DATA(unbase64.py, [import sys;sys.stdout.write(sys.stdin.read().decode('base64'))
+])
+  UNB64_COMMAND="python unbase64.py"
 else
   # This is lame!  We should XFAIL the test so the user knows that
   # they're not, you know, actually testing the software.  But
@@ -279,7 +309,7 @@ m4_define([UNB64], [AT_CHECK(
 if test "$OSTYPE" = "msys"; then
   mimencode -u -o $2 $1
 else
-  eval $UNB64_COMMAND <$1 >$2
+  $UNB64_COMMAND <$1 >$2
 fi
 )])
 
@@ -305,7 +335,7 @@ if test "$OSTYPE" = "msys"; then
   fi
   gunzip $2.gz
 else
-  eval $UNGZ_COMMAND <$1 >$2
+  $UNGZ_COMMAND <$1 >$2
 fi
 )])
 
@@ -347,6 +377,54 @@ foo () {
 }
 trap foo EXIT
 
+])
+
+m4_define([NETSYNC_SETUP_WITH_NOTES], [
+NETSYNC_SETUP
+
+AT_DATA(netsync.lua, [
+logfile = nil
+
+function note_netsync_start()
+   logfile = io.open("testnotes.log","w")
+   logfile:write("start ---------------------------------------------------\n")
+end
+
+function note_netsync_revision_received(new_id, revision, certs)
+   logfile:write("revision: new_id    = " .. new_id .. "\n")
+   logfile:write("revision: revision  = " .. revision .. "\n")
+   for i, cert in pairs(certs)
+   do
+      logfile:write("revision: cert.name  = " .. cert.name .. "\n")
+      logfile:write("revision: cert.value = " .. cert.value .. "\n")
+      logfile:write("revision: cert.key   = " .. cert.key .. "\n")
+   end
+end
+
+function note_netsync_cert_received(rev_id, key, name, value)
+   logfile:write("cert: rev_id = " .. rev_id .. "\n")
+   logfile:write("cert: name   = " .. name .. "\n")
+   logfile:write("cert: value  = " .. value .. "\n")
+   logfile:write("cert: key    = " .. key .. "\n")
+end
+
+function note_netsync_pubkey_received(keyname)
+   logfile:write("pubkey: " .. keyname .. "\n")
+end
+
+function note_netsync_end()
+   logfile:write("end -----------------------------------------------------\n")
+   logfile:close()
+end
+
+function get_netsync_read_permitted(pattern, identity)
+	return true
+end
+
+function get_netsync_write_permitted(identity)
+	return true
+end
+])
 ])
 
 m4_define([MONOTONE2], MONOTONE --db=test2.db --keydir=keys2)
@@ -615,6 +693,7 @@ m4_include(tests/t_setup_creates_log.at)
 m4_include(tests/t_checkout_creates_log.at)
 m4_include(tests/t_commit_log_1.at)
 m4_include(tests/t_commit_log_2.at)
+m4_include(tests/t_commit_validate.at)
 m4_include(tests/t_dropkey_1.at)
 m4_include(tests/t_dropkey_2.at)
 m4_include(tests/t_rename_attr.at)
@@ -629,7 +708,7 @@ m4_include(tests/t_log_last_next.at)
 m4_include(tests/t_commit_log_3.at)
 m4_include(tests/t_at_sign.at)
 m4_include(tests/t_db_execute.at)
-m4_include(tests/t_sql_unpack.at)
+m4_include(tests/t_sql_gunzip.at)
 m4_include(tests/t_final_space.at)
 m4_include(tests/t_inodeprints.at)
 m4_include(tests/t_inodeprints_update.at)
@@ -743,8 +822,8 @@ m4_include(tests/t_restriction_with_exclude_iprint.at)
 m4_include(tests/t_rename_diff_names.at)
 m4_include(tests/t_key_management_without_db.at)
 m4_include(tests/t_automate_keys.at)
-m4_include(tests/t_diff_outside_working_dir.at)
-m4_include(tests/t_log_outside_working_dir.at)
+m4_include(tests/t_diff_outside_workspace.at)
+m4_include(tests/t_log_outside_workspace.at)
 m4_include(tests/t_add_inside_MT.at)
 m4_include(tests/t_annotate_renames.at)
 m4_include(tests/t_config_confdir.at)
@@ -763,3 +842,23 @@ m4_include(tests/t_revert_ignored.at)
 m4_include(tests/t_no_persist_phrase.at)
 m4_include(tests/t_check_db_format.at)
 m4_include(tests/t_rename_destdir.at)
+m4_include(tests/t_ls_changed.at)
+m4_include(tests/t_revert_new_project.at)
+m4_include(tests/t_db_kill_rev_locally_2.at)
+m4_include(tests/t_log_nofiles_nomerges.at)
+m4_include(tests/t_cvsimport_branch.at)
+m4_include(tests/t_log_to_file.at)
+m4_include(tests/t_log_selectors.at)
+m4_include(tests/t_pivot_root.at)
+m4_include(tests/t_pivot_root_revert.at)
+m4_include(tests/t_pivot_root_update.at)
+m4_include(tests/t_rosterify_root_suture.at)
+m4_include(tests/t_log_dir.at)
+m4_include(tests/t_show_conflicts.at)
+m4_include(tests/t_merge_into_dir.at)
+m4_include(tests/t_restriction_excludes_parent.at)
+m4_include(tests/t_revert_move_to_renamed_dir.at)
+m4_include(tests/t_sink_has_extra_epochs.at)
+m4_include(tests/t_disapprove_branch.at)
+m4_include(tests/t_serve_ignores_mt_options.at)
+m4_include(tests/t_netsync_notes.at)

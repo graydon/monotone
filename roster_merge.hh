@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 #ifndef __ROSTER_MERGE_HH__
 #define __ROSTER_MERGE_HH__
 
@@ -92,9 +93,18 @@ struct directory_loop_conflict
   std::pair<node_id, path_component> parent_name;
 };
 
-// renaming the root dir (as we currently do _not_) allows:
+// renaming the root dir allows these:
 //   -- MT in root
 //   -- missing root directory
+
+// this is a node that cleanly merged to some name, but that name was somehow
+// forbidden.  (Currently, the only forbidden name is "MT" in the root
+// directory.)
+struct illegal_name_conflict
+{
+  node_id nid;
+  std::pair<node_id, path_component> parent_name;
+};
 
 struct roster_merge_result
 {
@@ -104,18 +114,23 @@ struct roster_merge_result
   std::vector<orphaned_node_conflict> orphaned_node_conflicts;
   std::vector<rename_target_conflict> rename_target_conflicts;
   std::vector<directory_loop_conflict> directory_loop_conflicts;
+  std::vector<illegal_name_conflict> illegal_name_conflicts;
+  bool missing_root_dir;
   // this roster is sane if is_clean() returns true
   roster_t roster;
   bool is_clean();
+  bool is_clean_except_for_content();
+  void log_conflicts();
+  void warn_non_content_conflicts();
   void clear();
 };
 
 void
 roster_merge(roster_t const & left_parent,
-             marking_map const & left_marking,
+             marking_map const & left_markings,
              std::set<revision_id> const & left_uncommon_ancestors,
              roster_t const & right_parent,
-             marking_map const & right_marking,
+             marking_map const & right_markings,
              std::set<revision_id> const & right_uncommon_ancestors,
              roster_merge_result & result);
 

@@ -25,6 +25,7 @@
 #include "transforms.hh"
 #include "vocab.hh"
 #include "keys.hh"
+#include "packet.hh"
 
 static std::string const interface_version = "2.0";
 
@@ -638,7 +639,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 // Name: inventory
 // Arguments: none
 // Added in: 1.0
-// Purpose: Prints a summary of every file found in the working copy or its
+// Purpose: Prints a summary of every file found in the workspace or its
 //   associated base manifest. Each unique path is listed on a line prefixed by
 //   three status characters and two numeric values used for identifying
 //   renames. The three status characters are as follows.
@@ -665,7 +666,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 //   includes the rest of the line. Directory paths are identified as ending with
 //   the "/" character, file paths do not end in this character.
 //
-// Error conditions: If no working copy book keeping MT directory is found,
+// Error conditions: If no workspace book keeping MT directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
 static void
@@ -677,12 +678,12 @@ automate_inventory(std::vector<utf8> args,
   if (args.size() != 0)
     throw usage(help_name);
 
-  app.require_working_copy();
+  app.require_workspace();
 
   temp_node_id_source nis;
   roster_t base, curr;
   inventory_map inventory;
-  cset cs;
+  cset cs; MM(cs);
   path_set unchanged, changed, missing, known, unknown, ignored;
 
   get_base_and_current_roster_shape(base, curr, nis, app);
@@ -843,7 +844,7 @@ automate_certs(std::vector<utf8> args,
   // particular.
   std::sort(certs.begin(), certs.end());
 
-  basic_io::printer pr(output);
+  basic_io::printer pr;
 
   for (size_t i = 0; i < certs.size(); ++i)
     {
@@ -884,13 +885,14 @@ automate_certs(std::vector<utf8> args,
 
       pr.print_stanza(st);
     }
+  output.write(pr.buf.data(), pr.buf.size());
 
   guard.commit();
 }
 
 // Name: get_revision
 // Arguments:
-//   1: a revision id (optional, determined from working directory if non-existant)
+//   1: a revision id (optional, determined from the workspace if non-existant)
 // Added in: 1.0
 // Purpose: Prints changeset information for the specified revision id.
 //
@@ -942,7 +944,7 @@ automate_get_revision(std::vector<utf8> args,
       revision_set rev;
       roster_t old_roster, new_roster;
 
-      app.require_working_copy(); 
+      app.require_workspace(); 
       get_unrestricted_working_revision_and_rosters(app, rev, 
                                                     old_roster, 
                                                     new_roster);
@@ -963,7 +965,7 @@ automate_get_revision(std::vector<utf8> args,
 
 // Name: get_manifest_of
 // Arguments:
-//   1: a revision id (optional, determined from working directory if non-existant)
+//   1: a revision id (optional, determined from the workspace if non-existant)
 // Added in: 2.0
 // Purpose: Prints the contents of the manifest associated with the given revision ID.
 //
@@ -987,7 +989,7 @@ automate_get_manifest_of(std::vector<utf8> args,
   if (args.size() == 0)
     {
       revision_set rs;
-      app.require_working_copy();
+      app.require_workspace();
       get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster);
     }
   else
@@ -1032,6 +1034,134 @@ automate_get_file(std::vector<utf8> args,
   L(FL("dumping file %s\n") % ident);
   app.db.get_file_version(ident, dat);
   output.write(dat.inner()().data(), dat.inner()().size());
+}
+
+// Name: packet_for_rdata
+// Arguments:
+//   1: a revision id
+// Added in: 2.0
+// Purpose: Prints the revision data in packet format
+//
+// Output format: revision data in "monotone read" compatible packet format
+//
+// Error conditions: If the revision id specified is unknown or invalid prints 
+// an error message to stderr and exits with status 1.
+static void
+automate_packet_for_rdata(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+
+  packet_writer pw(output);
+
+  revision_id r_id(idx(args, 0)());
+  revision_data r_data;
+
+  N(app.db.revision_exists(r_id),
+    F("no such revision '%s'") % r_id);
+  app.db.get_revision(r_id, r_data);
+  pw.consume_revision_data(r_id,r_data);
+}
+
+// Name: packets_for_certs
+// Arguments:
+//   1: a revision id
+// Added in: 2.0
+// Purpose: Prints the certs associated with a revision in packet format
+//
+// Output format: certs in "monotone read" compatible packet format
+//
+// Error conditions: If the revision id specified is unknown or invalid prints 
+// an error message to stderr and exits with status 1.
+static void
+automate_packets_for_certs(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+
+  packet_writer pw(output);
+
+  revision_id r_id(idx(args, 0)());
+  std::vector< revision<cert> > certs;
+    
+  N(app.db.revision_exists(r_id),
+    F("no such revision '%s'") % r_id);
+  app.db.get_revision_certs(r_id, certs);
+  for (size_t i = 0; i < certs.size(); ++i)
+    pw.consume_revision_cert(idx(certs,i));
+}
+
+// Name: packet_for_fdata
+// Arguments:
+//   1: a file id
+// Added in: 2.0
+// Purpose: Prints the file data in packet format
+//
+// Output format: file data in "monotone read" compatible packet format
+//
+// Error conditions: If the file id specified is unknown or invalid prints 
+// an error message to stderr and exits with status 1.
+static void
+automate_packet_for_fdata(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+
+  packet_writer pw(output);
+
+  file_id f_id(idx(args, 0)());
+  file_data f_data;
+    
+  N(app.db.file_version_exists(f_id),
+    F("no such revision '%s'") % f_id);
+  app.db.get_file_version(f_id, f_data);
+  pw.consume_file_data(f_id,f_data);
+}
+
+// Name: packet_for_fdelta
+// Arguments:
+//   1: a file id
+//   1: a file id
+// Added in: 2.0
+// Purpose: Prints the file delta in packet format
+//
+// Output format: file delta in "monotone read" compatible packet format
+//
+// Error conditions: If any of the file ids specified are unknown or
+// invalid prints an error message to stderr and exits with status 1.
+static void
+automate_packet_for_fdelta(std::vector<utf8> args,
+                 std::string const & help_name,
+                 app_state & app,
+                 std::ostream & output)
+{
+  if (args.size() != 2)
+    throw usage(help_name);
+
+  packet_writer pw(output);
+
+  file_id f_old_id(idx(args, 0)());
+  file_id f_new_id(idx(args, 1)());
+  file_data f_old_data, f_new_data;
+   
+  N(app.db.file_version_exists(f_old_id),
+    F("no such revision '%s'") % f_old_id);
+  N(app.db.file_version_exists(f_new_id),
+    F("no such revision '%s'") % f_new_id);
+  app.db.get_file_version(f_old_id, f_old_data);
+  app.db.get_file_version(f_new_id, f_new_data);
+  delta del;
+  diff(f_old_data.inner(), f_new_data.inner(), del);
+  pw.consume_file_delta(f_old_id, f_new_id, file_delta(del));
 }
 
 void
@@ -1337,7 +1467,7 @@ automate_keys(std::vector<utf8> args, std::string const & help_name,
       items[(*i)()].get<2>().push_back("keystore");
       items[(*i)()].get<3>().push_back("keystore");
     }
-  basic_io::printer prt(output);
+  basic_io::printer prt;
   for (std::map<std::string, boost::tuple<hexenc<id>, hexenc<id>,
                                      std::vector<std::string>,
                                      std::vector<std::string> > >::iterator
@@ -1353,6 +1483,7 @@ automate_keys(std::vector<utf8> args, std::string const & help_name,
         stz.push_str_multi("private_location", i->second.get<3>());
       prt.print_stanza(stz);
     }
+  output.write(prt.buf.data(), prt.buf.size());
 }
 
 
@@ -1402,6 +1533,14 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_get_file(args, root_cmd_name, app, output);
   else if (cmd() == "keys")
     automate_keys(args, root_cmd_name, app, output);
+  else if (cmd() == "packet_for_rdata")
+    automate_packet_for_rdata(args, root_cmd_name, app, output);
+  else if (cmd() == "packets_for_certs")
+    automate_packets_for_certs(args, root_cmd_name, app, output);
+  else if (cmd() == "packet_for_fdata")
+    automate_packet_for_fdata(args, root_cmd_name, app, output);
+  else if (cmd() == "packet_for_fdelta")
+    automate_packet_for_fdelta(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }

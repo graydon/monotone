@@ -51,12 +51,12 @@ sanity::dump_buffer()
         {
           copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
           copy(gasp_dump.begin(), gasp_dump.end(), ostream_iterator<char>(out));
-          ui.inform((F("wrote debugging log to %s\n"
-                       "if reporting a bug, please include this file")
-                     % filename).str());
+          ui.inform((FL("wrote debugging log to %s\n"
+                        "if reporting a bug, please include this file")
+                       % filename).str());
         }
       else
-        ui.inform((F("failed to write debugging log to %s\n") % filename).str());
+        ui.inform((FL("failed to write debugging log to %s\n") % filename).str());
     }
   else
     ui.inform("discarding debug log (maybe you want --debug or --dump?)");
@@ -289,7 +289,7 @@ MusingI::~MusingI()
     }
 }
 
-void
+template <> void
 dump(std::string const & obj, std::string & out)
 {
   out = obj;

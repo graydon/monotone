@@ -90,7 +90,7 @@ edge_changes(edge_map::const_iterator i)
   return *(i->second); 
 }
 
-void
+template <> void
 dump(revision_set const & rev, std::string & out);
 
 void 

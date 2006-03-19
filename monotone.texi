@@ -34,7 +34,7 @@ See the file COPYING for details
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 2003, 2004 Graydon Hoare
-Copyright @copyright{} 2004, 2005 Nathaniel Smith
+Copyright @copyright{} 2004, 2005, 2006 Nathaniel Smith
 Copyright @copyright{} 2005 Derek Scherger
 Copyright @copyright{} 2005 Daniel Carosone
 All rights reserved
@@ -431,7 +431,7 @@ reference to @i{other revision IDs}. This fact -- that revisions include
 the IDs of other revisions -- causes the set of revisions to join
 together into a historical @i{chain of events}, somewhat like a ``linked
 list''.  Each revision in the chain has a unique ID, which includes
-@i{by reference} all the revisions preceeding it. Even if you undo a
+@i{by reference} all the revisions preceding it. Even if you undo a
 changeset, and return to a previously-visited manifest ID during the
 course of your edits, each revision will incorporate the ID of its
 predecessor, thus forming a new unique ID for each point in history.
@@ -588,7 +588,7 @@ storage:
 @item
 a @i{keystore} in your home directory
 @item
-a @i{working copy} in the local file system
+a @i{workspace} in the local file system
 @item
 a @i{local database} in the local file system
 @item
@@ -603,10 +603,10 @@ your local database along with the cert.
 
 All information passes @emph{through} your local database, en route to
 some other destination. For example, when changes are made in a
-working copy, you may save those changes to your database, and later
+workspace, you may save those changes to your database, and later
 you may synchronize your database with someone else's. Monotone will
-not move information directly between a working copy and a remote
-database, or between working copies. Your local database is always
+not move information directly between a workspace and a remote
+database, or between workspaces. Your local database is always
 the ``switching point'' for communication.
 
 @ifinfo
@@ -617,11 +617,11 @@ the ``switching point'' for communication.
             _________/\________
            /                   \
 
-    +-------------+      +------------+      +--------------+
-    |             |      |            |      |              |
-    |  remote db  | <==> |  local db  | <==> | working copy |
-    |             |      |            |      |              |
-    +-------------+      +------------+      +--------------+
+    +-------------+      +------------+      +-------------+
+    |             |      |            |      |             |
+    |  remote db  | <==> |  local db  | <==> |  workspace  |
+    |             |      |            |      |             |
+    +-------------+      +------------+      +-------------+
 
                                 \________  _______/
                                          \/
@@ -634,32 +634,32 @@ the ``switching point'' for communication.
 @image{figures/general-workflow}
 @end ifnotinfo
 
-A @dfn{working copy} is a tree of files in your file system, arranged
+A @dfn{workspace} is a tree of files in your file system, arranged
 according to the list of file paths and IDs in a particular
 manifest. A special directory called @file{MT} exists in the root of
-any working copy. Monotone keeps some special files in the @file{MT}
-directory, in order to track changes you make to your working copy.
+any workspace. Monotone keeps some special files in the @file{MT}
+directory, in order to track changes you make to your workspace.
 
-Aside from the special @file{MT} directory, a working copy is just a
+Aside from the special @file{MT} directory, a workspace is just a
 normal tree of files. You can directly edit the files in a working
 copy using a plain text editor or other program; monotone will
 automatically notice when you make any changes. If you wish to add
-files, remove files, or move files within your working copy, you must
+files, remove files, or move files within your workspace, you must
 tell monotone explicitly what you are doing, as these actions cannot
 be deduced.
 
-If you do not yet have a working copy, you can @dfn{check out} a
-working copy from a database, or construct one from scratch and
+If you do not yet have a workspace, you can @dfn{check out} a
+workspace from a database, or construct one from scratch and
 @dfn{add} it into a database. As you work, you will occasionally
-@dfn{commit} changes you have made in a working copy to a database,
-and @dfn{update} a working copy to receive changes that have arrived
+@dfn{commit} changes you have made in a workspace to a database,
+and @dfn{update} a workspace to receive changes that have arrived
 in a database. Committing and updating take place purely between a
-database and a working copy; the network is not involved.
+database and a workspace; the network is not involved.
 
 @ifinfo
 @smallexample
 @group
-   -----------------     check out,      working copy
+   -----------------     check out,      workspace
   (                 )    or update      +----------------
    -----------------     ---------->    |
   |                 |                   |  src/func.c
@@ -689,9 +689,9 @@ manipulate a database using a simple SQL interface.
 A database contains many files, manifests, revisions, and
 certificates, some of which are not immediately of interest, some of
 which may be unwanted or even false. It is a collection of information
-received from network servers, working copies, and other
+received from network servers, workspaces, and other
 databases. You can inspect and modify your databases without affecting
-your working copies, and vice-versa.
+your workspaces, and vice-versa.
 
 Monotone knows how to exchange information in your database with other
 remote databases, using an interactive protocol called @dfn{netsync}.
@@ -726,7 +726,7 @@ In general, work flow with monotone involves 3 distinct stages:
 
 @itemize
 @item
-When you @i{commit} changes from your working copy to your database,
+When you @i{commit} changes from your workspace to your database,
 your database stores the changes but does not communicate with the
 network. Your commits happen immediately, without consulting any other
 party, and do not require network connectivity.
@@ -735,30 +735,30 @@ party, and do not require network connectivity.
 When you are ready to @i{exchange} work with someone else, you can
 push, pull, or sync with other databases on the network. When you talk
 to other servers on the network, your database may change, but your
-working copy will not. In fact, you do not need a working copy at all
+workspace will not. In fact, you do not need a workspace at all
 when exchanging work.
 
 @item
-When you @i{update} your working copy, some (but not all) of the
+When you @i{update} your workspace, some (but not all) of the
 changes which your database received from the network are applied to
-your working copy. The network is not consulted during updates.
+your workspace. The network is not consulted during updates.
 @end itemize
 
 The last stage of workflow is worth clarifying: monotone does
 @emph{not} blindly apply all changes it receives from a remote
-database to your working copy.  Doing so would be very dangerous,
+database to your workspace.  Doing so would be very dangerous,
 because remote databases are not always trustworthy systems. Rather,
 monotone evaluates the certificates it has received along with the
 changes, and decides which particular changes are safe and desirable
-to apply to your working copy.
+to apply to your workspace.
 
 You can always adjust the criteria monotone uses to judge the
 trustworthiness and desirability of changes in your database. But keep
 in mind that it always uses @emph{some} criteria; receiving changes
 from a remote server is a @emph{different} activity than applying
-changes to a working copy. Sometimes you may receive changes which
+changes to a workspace. Sometimes you may receive changes which
 monotone judges to be untrusted or bad; such changes may stay in your
-database but will @emph{not} be applied to your working copy.
+database but will @emph{not} be applied to your workspace.
 
 Remote databases, in other words, are just untrusted ``buckets'' of
 data, which you can trade with promiscuously. There is no trust
@@ -1248,16 +1248,16 @@ Abe and Beth do the same, with their secret passphrases.
 @section Starting a New Project
 
 Before he can begin work on the project, Jim needs to create a
-@i{working copy} --- a directory whose contents monotone will keep track
+@i{workspace} --- a directory whose contents monotone will keep track
 of.  Often, one works on projects that someone else has started, and
-creates working copies with the @code{checkout} command, which you'll
+creates workspaces with the @code{checkout} command, which you'll
 learn about later.  Jim is starting a new project, though, so he does
 something a little bit different.  He uses the @code{monotone setup}
-command to create a new working copy.
+command to create a new workspace.
 
 This command creates the named directory (if it doesn't already exist),
 and creates the @file{MT} directory within it.  The @file{MT} directory
-is how monotone recognizes that a directory is a working copy, and
+is how monotone recognizes that a directory is a workspace, and
 monotone stores some bookkeeping files within it.  For instance, command
 line values for the @option{--db}, @option{--branch} or @option{--key}
 options to the @code{setup} command will be cached in a file called
@@ -1266,7 +1266,7 @@ all the time.
 
 He chooses @code{jp.co.juicebot.jb7} as a branch name. (See
 @ref{Naming Conventions} for more information about appropriate branch
-names.)  Jim then creates his working copy:
+names.)  Jim then creates his workspace:
 
 @smallexample
 @group
@@ -1277,8 +1277,8 @@ names.)  Jim then creates his working copy:
 @end smallexample
 
 Notice that Jim has changed his current directory to his newly created
-working copy. For the rest of this example we will assume that everyone
-issues all further monotone commands from their working copy
+workspace. For the rest of this example we will assume that everyone
+issues all further monotone commands from their workspace 
 directories.
 
 @page
@@ -1342,14 +1342,14 @@ recursively scans the directory and adds all its files.
 @smallexample
 @group
 $ monotone add include/jb.h src
-monotone: adding include/jb.h to working copy add set
-monotone: adding src/apple.c to working copy add set
-monotone: adding src/banana.c to working copy add set
+monotone: adding include/jb.h to workspace add set
+monotone: adding src/apple.c to workspace add set
+monotone: adding src/banana.c to workspace add set
 @end group
 @end smallexample
 
 This command produces a record of Jim's intentions in a special file
-called @file{MT/work}, stored in the working copy. The file is plain
+called @file{MT/work}, stored in the workspace. The file is plain
 text:
 
 @smallexample
@@ -1398,9 +1398,9 @@ patch "src/banana.c"
 
 The output of this command tells Jim that his edits, so far,
 constitute only the addition of some files. In the output we can see
-one pecularity of monotone's changeset format. The pecularity is that
+one peculiarity of monotone's changeset format. The peculiarity is that
 when monotone records a ``new file'', it actually records two separate
-events: the addition of an empty file to the working copy, and a patch
+events: the addition of an empty file to the workspace, and a patch
 of that file from empty to its intended contents. 
 
 Jim wants to see the actual details of the files he added, however, so
@@ -1476,7 +1476,7 @@ $ monotone diff
 @section Committing Work
 
 Satisfied with the work he's done, Jim wants to save his changes.  He
-then commits his working copy, which causes monotone to process the
+then commits his workspace, which causes monotone to process the
 @file{MT/work} file and record the file contents, manifest, and
 revision into the database. Since he provided a branch name when he
 ran @command{setup}, monotone will use this as the default branch name
@@ -1493,7 +1493,7 @@ monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 
 When monotone committed Jim's revision, erased the @file{MT/work} file,
 and wrote a new file called @file{MT/revision}, which contains the
-working copy's new base revision ID. Jim can use this revision ID in the
+workspace's new base revision ID. Jim can use this revision ID in the
 future, as an argument to the @command{checkout} command, if he wishes
 to return to this revision:
 
@@ -1701,7 +1701,7 @@ monotone: successful exchange with jim-laptop.juicebot.co.jp
 Abe now has, in his database, a copy of everything Jim put in the
 branch. Therefore Abe can disconnect from the expensive network
 connection he's on and work locally for a while. Remember that, in
-monotone, work is done between working directories in the filesystem and
+monotone, work is done between workspaces in the filesystem and
 the local database; network connectivity is necessary only when that
 work is to be shared with others.
 
@@ -1729,7 +1729,7 @@ little later as the project grows.
 Abe decides to do some work on his part of the code. He has a copy of
 Jim's database contents, but cannot edit any of that data yet.  He
 begins his editing by checking out the head of the
-@code{jp.co.juicebot.jb7} branch into a working copy, so he can edit
+@code{jp.co.juicebot.jb7} branch into a workspace, so he can edit
 it:
 
 @smallexample
@@ -1941,8 +1941,8 @@ company's work was perfectly serialized:
 @item Beth synced with Jim
 @end enumerate
 
-The result of this ordering is that Jim's work entirely preceeded
-Abe's work, which entirely preceeded Beth's work. Moreover, each
+The result of this ordering is that Jim's work entirely preceded
+Abe's work, which entirely preceded Beth's work. Moreover, each
 worker was fully informed of the ``up-stream'' worker's actions, and
 produced purely derivative, ``down-stream'' work:
 
@@ -1971,7 +1971,7 @@ sends out an email saying that the current polling juice dispensers
 use too much CPU time, and must be rewritten to use the JuiceBot's
 interrupt system. Beth wakes up first and begins working immediately,
 basing her work off the revision 80ef9... which is currently in her
-working copy:
+workspace:
 
 @smallexample
 @group
@@ -2037,7 +2037,7 @@ $ monotone sync
 
 Unfortunately, before Beth managed to sync with Jim, Abe had woken up
 and implemented a similar interrupt-based apple juice dispenser, but
-his working copy is 70dec..., which is still ``upstream'' of
+his workspace is 70dec..., which is still ``upstream'' of
 Beth's. 
 
 @smallexample
@@ -2094,7 +2094,7 @@ monotone: [source] 8b41b5399a564494993063287a737d26ede3dee4
 monotone: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 abe@@juicebot.co.jp  2004-10-26T:02:50:01 found
 monotone: trying 3-way merge
 monotone: [merged] da499b9d9465a0e003a4c6b2909102ef98bf4e6d
-monotone: your working copies have not been updated
+monotone: your workspaces have not been updated
 @end group
 @end smallexample
 
@@ -2106,7 +2106,7 @@ conflict, monotone would have invoked an external merging tool to help
 resolve it.
 
 After merging, the branch has a single head again, and Jim updates
-his working copy. 
+his workspace. 
 
 @smallexample
 @group
@@ -2119,9 +2119,9 @@ monotone: updated to base revision da499b9d9465a0e003a4c6b2909102ef98bf4e6d
 @end smallexample
 
 The update command selected an update target --- in this case the newly merged
-head --- and performed an in-memory merge between Jim's working copy
-and the chosen target. The result was then written to Jim's working copy. If
-Jim's working copy had any uncommitted changes in it, they would have been
+head --- and performed an in-memory merge between Jim's workspace
+and the chosen target. The result was then written to Jim's workspace. If
+Jim's workspace had any uncommitted changes in it, they would have been
 merged with the update in exactly the same manner as the merge of multiple
 committed heads. 
 
@@ -2132,7 +2132,7 @@ of the pre-merge state: if you commit your work first, and merge after
 committing, then even if the merge somehow fails (due to difficulty in a
 manual merge step, for instance), your committed state is still safe.
 If you update, on the other hand, you are requesting that monotone
-directly modify your working copy, and while monotone will try hard not
+directly modify your workspace, and while monotone will try hard not
 to break anything, this process is inherently more open to error.  It is
 therefore recommended that you commit your work @emph{first}, before
 merging.
@@ -2142,7 +2142,7 @@ first seem surprising; there are some systems where you are
 @emph{required} to update, and risk the above problems, before you can
 commit.  Monotone, however, was designed with this problem in mind, and
 thus @emph{always} allows you to commit before merging.  A good rule of
-thumb is to only use @command{update} in working copies with no local
+thumb is to only use @command{update} in workspaces with no local
 modifications, or when you actually want to work against a different
 base revision (perhaps because finishing your change turns out to
 require some fixes made in another revision, or because you discover
@@ -2192,7 +2192,7 @@ monotone: committed revision d33caefd61823ecbb605c39ffb84705dec449857
 
 That's all there is to it --- there is now a
 @code{jp.co.juicebot.jb7.muffins} branch, with her initial checkin on
-it.  She can make further checkins from the same working copy, and they
+it.  She can make further checkins from the same workspace, and they
 will automatically go to the muffins branch; if anyone else wants to
 help her work on muffins, they can check out that branch as usual.
 
@@ -2399,11 +2399,11 @@ While he's first testing the setup, Jim uses
 @code{--bind=localhost:1234}. This causes the monotone process to listen
 only to port 1234 on the loopback interface 127.0.0.1, which is not
 accessible from the network, so Jim doesn't expose an open port to the
-rest of the world until he's satisifed with the permissions
+rest of the world until he's satisfied with the permissions
 configuration.  You can cause monotone to listen on all interfaces on
 port 1234 by leaving out the address part like @code{--bind=:1234}.
 
-When he's satisified the server is set up correctly, Jim does an initial
+When he's satisfied the server is set up correctly, Jim does an initial
 @command{sync} with the new database, filling it with all the revision
 history currently on his laptop. While Jim has been busy setting up the
 server, Abe and Beth have kept working; the server will catch up with
@@ -2511,9 +2511,9 @@ familiarize yourself with its operation.
 
 @menu
 * Selectors::              Selecting revisions by certificate.
-* Restrictions::           Limit working copy changes to specified files.
+* Restrictions::           Limit workspace changes to specified files.
 * Scripting::              Running monotone from other programs.
-* Inodeprints::            Trading off safety for speed in your working copy.
+* Inodeprints::            Trading off safety for speed in your workspace.
 * Quality Assurance::      Integrating testing and review with development.
 * Vars::                   Simple per-database configuration information.
 * Reserved Files::         File names with special meanings.
@@ -2564,7 +2564,7 @@ of selectors follows.
 @heading Selectors in detail
 
 A selector is a combination of a selector type, which is a single
-xoASCII character, followed by a @code{:} character and a selector
+ASCII character, followed by a @code{:} character and a selector
 string. All selectors strings except for selector type @code{c}
 are just values. The value is matched against identifiers or certs,
 depending on its type, in an attempt to match a single revision.
@@ -2577,7 +2577,10 @@ Uses selector type @code{c}.  The selector string has the syntax
 @var{name} or @var{name}@code{=}@var{value}.  The former syntax will
 select any revision that has a cert with that name, regardless of
 value; the latter will match any revision that has a cert with that
-name and value.  Values to match for can have shell wildcards.
+name and value.  Values to match for can have shell wildcards.  For
+example, @code{c:tag} matches all revisions that have a tag, and
+@code{c:tag=monotone-0.25} will match the revision tagged
+@code{monotone-0.25}.  (See also the @code{t} selector below.)
 @item Author selection
 Uses selector type @code{a}. For example, @code{a:graydon} matches
 @code{author} certs where the cert value contains @code{graydon}.
@@ -2585,14 +2588,14 @@ Uses selector type @code{a}. For example, @code{a:graydon} matches
 Uses selector type @code{b}. For example, @code{b:net.venge.monotone} matches
 @code{branch} certs where the cert value is @code{net.venge.monotone}.
 Values to match for can have shell wildcards.  If you give a bare @code{b:}
-monotone will require you to be in a working copy, and will use the branch
+monotone will require you to be in a workspace, and will use the branch
 value recorded in your MT/options file.
 @item Heads selection
 Uses selector type @code{h}. For example, @code{h:net.venge.monotone} matches
 @code{branch} certs where the cert value is @code{net.venge.monotone} and 
 the associated revision is a head revision on that branch.  Values to match
 for can have shell wildcards like the branch selector.  If you give a bare 
-@code{h:} monotone will require you to be in a working copy, and use the branch
+@code{h:} monotone will require you to be in a workspace, and use the branch
 recorded in your MT/options file.
 @item Date selection
 Uses selector type @code{d}. For example, @code{d:2004-04} matches
@@ -2692,7 +2695,7 @@ is just as effective as specifying @code{a:graydon}.
 Several monotone commands accept optional @var{pathname...} arguments in
 order to establish a ``restriction''.  Restrictions are used to limit
 the files and directories these commands examine for changes when
-comparing the working copy to the revision it is based on. Restricting a
+comparing the workspace to the revision it is based on. Restricting a
 command to a specified set of files or directories simply ignores
 changes to files or directories not included by the restriction.
 
@@ -2708,6 +2711,7 @@ The following commands all support restrictions using optional
 @item @command{list unknown}
 @item @command{list ignored}
 @item @command{list missing}
+@item @command{list changed}
 @end itemize
 
 Including either the old or new name of a renamed file or directory will
@@ -2724,14 +2728,14 @@ recursion, @var{n}=1 means descend at most one directory, and so on.
 The @command{update} command does not allow for updates to a
 restricted set of files, which may be slightly different than other
 version control systems. Partial updates don't really make sense in
-monotone, as they would leave the working copy based on a revision that
+monotone, as they would leave the workspace based on a revision that
 doesn't exist in the database, starting an entirely new line of
 development.
 
 @heading Subdirectory restrictions
 
 The restrictions facility also allows commands to operate from within a
-subdirectory of the working copy.  By default, the @i{entire working
+subdirectory of the workspace.  By default, the @i{entire working
 copy} is always examined for changes. However, specifying an explicit
 "."  pathname to a command will restrict it to the current subdirectory.
 Note that this is quite different from other version control systems and
@@ -2744,34 +2748,34 @@ somewhat complicated ../../.. sequence to remove the restriction and
 operate on the whole tree.
 
 This default was chosen because monotone versions whole project trees
-and generally expects to commit all changes in the working copy as a
+and generally expects to commit all changes in the workspace as a
 single atomic unit. Other version control systems often version
 individual files or directories and may not support atomic commits at
 all.
 
-When working from within a subdirectory of the working copy all
+When working from within a subdirectory of the workspace all
 paths specified to monotone commands must be relative to the current
 subdirectory.
 
-@heading Finding a working copy
+@heading Finding a workspace
 
 Monotone only stores a single @file{MT} directory at the root of a
-working copy. Because of this, a search is done to find the @file{MT}
+workspace. Because of this, a search is done to find the @file{MT}
 directory in case a command is executed from within a subdirectory of a
-working copy. Before a command is executed, the search for a working
+workspace. Before a command is executed, the search for a working
 copy directory is done by traversing parent directories until an
 @file{MT} directory is found or the filesystem root is reached. Upon
 finding an @file{MT} directory, the @file{MT/options} file is read for
 default options. The @option{--root} option may be used to stop the 
 search early, before reaching the root of the physical filesystem.
 
-Many monotone commands don't require a working copy and will simply
+Many monotone commands don't require a workspace and will simply
 proceed with no default options if no @file{MT} directory is found.
-However, some monotone commands do require a working copy and will fail
+However, some monotone commands do require a workspace and will fail
 if no @file{MT} directory can be found.
 
 The @command{checkout} and @command{setup} commands create a @i{new
-working copy} and initialize a new @file{MT/options} file based on their
+workspace} and initialize a new @file{MT/options} file based on their
 current option settings.
 
 
@@ -2805,12 +2809,12 @@ For details of this interface, see @ref{Automation}.
 @section Inodeprints
 
 Fairly often, in order to accomplish its job, monotone has to look at
-your working copy and figure out what has been changed in it since your
+your workspace and figure out what has been changed in it since your
 last commit.  Commands that do this include @command{status},
 @command{diff}, @command{update}, @command{commit}, and others.  There
 are two different techniques it can use to do this.  The default, which
 is sufficient for most projects, is to simply read every file in the
-working copy, compute their @sc{sha1} hash, and compare them to the
+workspace, compute their @sc{sha1} hash, and compare them to the
 hashes monotone has stored.  This is very safe and reliable, and turns
 out to be fast enough for most projects.  However, on very large
 projects, ones whose source trees are many megabytes in size, it can
@@ -2818,7 +2822,7 @@ become unacceptably slow.
 
 The other technique, known as @emph{inodeprints}, is designed for this
 situation.  When running in inodeprints mode, monotone does not read the
-whole working copy; rather, it keeps a cache of interesting information
+whole workspace; rather, it keeps a cache of interesting information
 about each file (its size, its last modification time, and so on), and
 skips reading any file for which these values have not changed.  This is
 inherently somewhat less safe, and, as mentioned above, unnecessary for
@@ -2832,10 +2836,10 @@ the file @file{MT/inodeprints}.  You can at any time delete or truncate
 the @file{MT/inodeprints} file; monotone uses it only as a cache and
 will continue to operate correctly.
 
-Normally, instead of enabling this up on a per-working-copy basis, you
+Normally, instead of enabling this up on a per-workspace basis, you
 will want to simply define the @code{use_inodeprints} hook to return
 @code{true}; this will automatically enable inodeprints mode in any new
-working copies you create.  See @ref{Hook Reference} for details.
+workspaces you create.  See @ref{Hook Reference} for details.
 
 @page
 @node    Quality Assurance
@@ -2859,7 +2863,7 @@ the ancestors or descendents of a particular revision, or extracting
 the ``heads'' of a subgraph, which is the subgraph's set of nodes with
 no descendents. For example, when you run the @code{update} command,
 monotone searches the subgraph consisting of descendents of the base
-revision of the current working copy, trying to locate a unique head to
+revision of the current workspace, trying to locate a unique head to
 update the base revision to.
 
 Monotone's quality assurance mechanisms are mostly based on
@@ -2893,7 +2897,7 @@ selecting update candidates, and is passed a pair of tables describing
 the @code{testresult} certs present on the source and proposed
 destination of an update. Only if the change in test results are
 deemed ``acceptable'' does monotone actually select an update target
-to merge into your working copy. 
+to merge into your workspace. 
 
 For details on these hooks, see the @ref{Hook Reference}.
 
@@ -2905,7 +2909,7 @@ Every monotone database has a set of @emph{vars} associated with it.
 Vars are simple configuration variables that monotone refers to in some
 circumstances; they are used for configuration that monotone needs to be
 able to modify itself, and that should be per-database (rather than
-per-user or per-working copy, both of which are supported by
+per-user or per-workspace, both of which are supported by
 @file{monotonerc} scripts).  Vars are local to a database, and never
 transferred by netsync.
 
@@ -2957,7 +2961,7 @@ changes, monotone will notice, and refuse to connect until you have run
 @node    Reserved Files
 @section Reserved Files
 
-A monotone working copy consists of control files and non-control
+A monotone workspace consists of control files and non-control
 files. Each type of file can be versioned or non-versioned. These
 classifications lead to four groups of files:
 
@@ -2973,15 +2977,15 @@ monotone. Versioned files are recorded in a monotone database and have
 their state tracked as they are modified. 
 
 If a control file is versioned, it is considered @emph{part of} the
-state of the working copy, and will be recorded as a manifest
+state of the workspace, and will be recorded as a manifest
 entry. If a control file is not versioned, it is used to @emph{manage}
-the state of the working copy, but it not considered an intrinsic part
+the state of the workspace, but it not considered an intrinsic part
 of it.
 
 Most files you manage with monotone will be versioned non-control
 files. For example, if you keep source code or documents in a monotone
 database, they are versioned non-control files. Non-versioned,
-non-control files in your working copy are generally temporary or junk
+non-control files in your workspace are generally temporary or junk
 files, such as backups made by editors or object files made by
 compilers. Such files are ignored by monotone.
 
@@ -3015,17 +3019,17 @@ Contains a list of testresult key names, one per line. If it exists, update
 will only select revisions that do not have regressions according to the given
 testresult keys.
 @item MT/revision
-Contains the identity of the ``base'' revision of the working copy.
-Each working copy has a base revision. When the working copy is
+Contains the identity of the ``base'' revision of the workspace.
+Each workspace has a base revision. When the workspace is
 committed, the base revision is considered to be the ancestor of the
 committed revision.
 @item MT/options
 Contains ``sticky'' command-line options such as @option{--db} or 
 @option{--branch}, such that you do not need to enter them repeatedly
-after checking out a particular working copy.
+after checking out a particular workspace.
 @item MT/work
 Contains a list of additions, deletions, and renames which have occurred
-in the current working copy, relative to the base version.
+in the current workspace, relative to the base version.
 @item MT/log
 Contains log messages to append to the ``changelog'' cert upon
 commit. The user may add content to this file while they work.  Upon a
@@ -3146,14 +3150,14 @@ author owns the DNS domain @code{venge.net}.
 
 Monotone contains a mechanism for storing @dfn{persistent file
 attributes}.  These differ from file certificates in an important way:
-attributes are associated with a path name in your working copy,
+attributes are associated with a path name in your workspace,
 rather than a particular version of a file. Otherwise they are
 similar: a file attribute associates a simple name/value pair with a
-file in your working copy.
+file in your workspace.
 
 The attribute mechanism is motivated by the fact that some people like
 to store executable programs in version control systems, and would like
-the programs to remain executable when they check out a working copy.
+the programs to remain executable when they check out a workspace.
 For example, the @code{configure} shell script commonly shipped with
 many programs should be executable. 
 
@@ -3163,7 +3167,7 @@ directly related to a file's data content.
 
 Rather than try to extend the manifest file format to accommodate
 attributes, monotone requires that you place your attributes in a
-specially named file in the root of your working copy. The file is
+specially named file in the root of your workspace. The file is
 called @file{.mt-attrs}, and it has a simple stanza-based format, for
 example:
 
@@ -3178,20 +3182,20 @@ otherattr "bob"
 @end group
 @end smallexample
 
-Each stanze of the @file{.mt-attrs} file assigns attributes to a file in
-your working copy.  The first line of each stanza is @code{file}
+Each stanza of the @file{.mt-attrs} file assigns attributes to a file in
+your workspace.  The first line of each stanza is @code{file}
 followed by the quoted name of the file you want to assign attributes
 to.  Each subsequent line is the name of an attribute, followed by a
 quoted value for that attribute.  Stanzas are separated by blank lines.
 
 As a convenience, you can use the @code{monotone attr} command to set
-and view the values of these attributes; see @ref{Working Copy}.
+and view the values of these attributes; see @ref{Workspace}.
 
 You can tell monotone to automatically take actions based on these
 attributes by defining hooks; see the @code{attr_functions} entry in
 @ref{Hook Reference}.
 
-Every time your working copy is written to, monotone will look for the
+Every time your workspace is written to, monotone will look for the
 @file{.mt-attrs} file, and if it exists, run the corresponding hooks
 registered for each attribute found in the file. This way, you can
 extend the vocabulary of attributes understood by monotone simply by
@@ -3200,9 +3204,9 @@ writing new hooks.
 Aside from its special interpretation, the @file{.mt-attrs} file is a
 normal text file. If you want other people to see your attributes, you
 should @code{add} and @code{commit} the @file{.mt-attrs} file in your
-working copy. If you make changes to it which conflict with changes
+workspace. If you make changes to it which conflict with changes
 other people make, you will have to resolve those conflicts, as plain
-text, just as with any other text file in your working copy.
+text, just as with any other text file in your workspace.
 
 @page
 @node    Merging
@@ -3228,7 +3232,7 @@ file types.  For example, gimp for .png files, OpenOffice.org for
 .doc, and so on. 
 Starting with monotone 0.20, the @code{manual_merge} attribute is
 automatically set at add time for all ``binary'' files, i.e. all files
-for wich the @code{binary_file} hook returns true. 
+for which the @code{binary_file} hook returns true. 
 Currently, this means all files with extension gif, jpeg, png, bz2, gz
 and zip, plus files containing at least one of the following
 bytes:
@@ -3358,7 +3362,7 @@ $ monotone checkout --revision=fe37 wobbler
 @end multitable
 
 The CVS command contacts a network server, retrieves a revision, and
-stores it in your working copy. There are two cosmetic differences
+stores it in your workspace. There are two cosmetic differences
 with the monotone command: remote databases are specified by hostnames
 and globs, and revisions are denoted by @sc{sha1} values (or
 selectors).
@@ -3420,7 +3424,7 @@ omit the @command{merge} step if you only want @command{update} to
 examine descendents of your base revision, and ignore other heads on
 your branch.
 
-@heading Moving Working Copy to Another Revision
+@heading Moving Workspace to Another Revision
 
 @multitable @columnfractions .4 .4
 @item
@@ -3479,14 +3483,14 @@ $ monotone diff -r 3e7db -r 278df myfile
 
 Monotone's @command{diff} command is modeled on that of CVS, so the
 main features are the same: @command{diff} alone prints the
-differences between your working copy and its base revision, whereas
+differences between your workspace and its base revision, whereas
 @command{diff} accompanied by two revision numbers prints the
 difference between those two revisions. The major difference between
 CVS and monotone here is that monotone's revision numbers are
 @emph{revision IDs}, rather than file IDs.  If one leaves off the file
 argument, then diff can print the difference between two entire trees.
 
-@heading Showing Working Copy Status
+@heading Showing Workspace Status
 
 @multitable @columnfractions .4 .4
 @item
@@ -3507,7 +3511,7 @@ This command operates similarly in monotone and CVS. The only major
 difference is that monotone's @command{status} command always gives a
 status of the whole tree, and outputs a more compact summary than CVS.
 
-@heading Adding Directories and Files to Working Copy
+@heading Adding Directories and Files to Workspace
 
 @multitable @columnfractions .4 .4
 @item
@@ -3531,7 +3535,7 @@ involves adding the file's complete path, including any directories.
 Directories are created as needed, and empty directories are ignored.
 
 
-@heading Removing Directories and Files from Working Copy
+@heading Removing Directories and Files from Workspace
 
 @multitable @columnfractions .4 .4
 @item
@@ -3549,7 +3553,7 @@ $ monotone drop file.txt
 @end smallexample
 @end multitable
 
-Monotone does not require that you erase a file from the working copy
+Monotone does not require that you erase a file from the workspace
 before you drop it. Dropping a file merely removes its entry in the
 manifest of the current revision unless you give it the @command{--execute}
 flag, which tells monotone to go ahead and also remove it from the filesystem.
@@ -3596,7 +3600,7 @@ $ monotone commit
 @end multitable
 
 The @command{setup} command turns an ordinary directory into a
-monotone working copy.  After that, you can add your files and commit
+monotone workspace.  After that, you can add your files and commit
 them as usual.
 
 @heading Initializing a Repository
@@ -3630,7 +3634,7 @@ all, commands are grouped into logical categories.
 
 @menu
 * Tree::             Operations on tree states in your database
-* Working Copy::     Operations on your working copy
+* Workspace::        Operations on your workspace
 * Network::          Communication with the network
 * Informative::      Production of descriptive reports
 * Key and Cert::     General operations on keys or certificates
@@ -3654,7 +3658,7 @@ Write the contents of a specific file @var{path} to standard output.
 
 Without a @option{--revision} argument, the command outputs the 
 contents of @var{path} as found in the current revision. This requires 
-the command be executed from within a working copy.
+the command be executed from within a workspace.
 
 With an explicit @option{--revision} argument, the command outputs
 contents of @var{path} at that revision.
@@ -3784,17 +3788,36 @@ have a branch with two heads, and you want to propagate one of them to
 another branch, again, you can use this command. If the optional
 @var{ancestor} argument is given, the merge uses that revision as the
 common ancestor instead of the default ancestor.
+
+@item monotone merge_into_dir @var{sourcebranch} @var{destbranch} @var{dir}
+This command takes a unique head from @var{sourcebranch} and merges it
+into a unique head of @var{destbranch}, as a directory. The resulting
+revision is committed to @var{destbranch}. If either @var{sourcebranch} or
+@var{destbranch} has multiple heads, @command{merge_into_dir} aborts, doing
+nothing.
+
+The purpose of @command{merge_into_dir} is to permit a project to contain
+another project in such a way that @command{propagate} can be used to keep
+the contained project up-to-date. It is meant to replace the use of nested
+checkouts in many circumstances.
+
+Note that @command{merge_into_dir} @emph{does not} permit changes made to the
+contained project in @var{destbranch} to be propagated back to
+@var{sourcebranch}. Attempting this would lead to @var{sourcebranch} containing
+both projects nested as in @var{destbranch} instead of only the project
+originally in @var{sourcebranch}, which is almost certainly not what would be
+intended.
 @end ftable
 
 
 
 @page
-@node    Working Copy
-@section Working Copy
+@node    Workspace
+@section Workspace
 
 @ftable @command
 @item monotone setup [@var{directory}]
-This command prepares @var{directory} as a monotone working directory,
+This command prepares @var{directory} as a monotone workspace,
 by creating and populating the @file{MT} directory with basic
 information.  This information must include at least the branch and the
 database to be used, both of which will be placed in the
@@ -3809,8 +3832,8 @@ directory is used.
 @item monotone add @var{pathname...}
 @item monotone add --unknown
 This command places ``add'' entries for the paths specified in
-@var{pathname...} in the working copy's ``work list''. The work list
-of your working copy is located at @file{MT/work}, and is a list of
+@var{pathname...} in the workspace's ``work list''. The work list
+of your workspace is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal or renaming of files.
 
@@ -3820,16 +3843,16 @@ unknown} to be added.
 
 While this command places an ``add'' entry on your work list, it does
 not immediately affect your database. When you @command{commit} your
-working copy, monotone will use the work list to build a new revision,
+workspace, monotone will use the work list to build a new revision,
 which it will then commit to the database. The new revision will have
 any added entries inserted in its manifest.
 
 
-@item monotone drop @var{pathname...}
+@item monotone [--execute] drop @var{pathname...}
 @itemx monotone drop --missing
 This command places ``drop'' entries for the paths specified in
-@var{pathname...} in the working copy's ``work list''. The work list of
-your working copy is located at @file{MT/work}, and is a list of
+@var{pathname...} in the workspace's ``work list''. The work list of
+your workspace is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also removes
 any attributes on @var{pathname}; see @ref{File Attributes} for more
@@ -3840,7 +3863,7 @@ specified in @var{pathname...}.
 
 While this command places a ``drop'' entry on your work list, it does
 not immediately affect your database. When you @command{commit} your
-working copy, monotone will use the work list to build a new revision,
+workspace, monotone will use the work list to build a new revision,
 which it will then commit to the database. The new revision will have
 any dropped entries removed from its manifest.
 
@@ -3849,12 +3872,16 @@ Currently this command does @emph{not} actually delete the file
 you should run @command{drop}, and then perform the actual delete using
 whatever mechanism you normally use to delete files.
 
+The option @option{--execute} will make ``drop'' perform the actual
+deletion operations in the filesystem.  It will ignore files or
+directories which have already been deleted.
+
 @item monotone [--execute] rename @var{src} @var{dst}
 @itemx monotone [--execute] rename @var{src1} @var{...} @var{dst/}
 This command places ``rename'' entries for the paths specified in
-@var{src} and @var{dst} in the working copy's ``work list''. The second form
+@var{src} and @var{dst} in the workspace's ``work list''. The second form
 renames a number of source paths to the given destination. The work
-list of your working copy is located at @file{MT/work}, and is a list of
+list of your workspace is located at @file{MT/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also moves any
 attributes on @var{src} to @var{dst}; see @ref{File Attributes} for more
@@ -3862,7 +3889,7 @@ details.
 
 While this command places a ``rename'' entry on your work list, it
 does not immediately affect your database. When you @command{commit}
-your working copy, monotone will use the work list to build a new
+your workspace, monotone will use the work list to build a new
 revision, which it will then commit to the database. The new revision
 will have any renamed entries in its manifest adjusted to their new
 names.
@@ -3878,12 +3905,12 @@ and will not overwrite existing destination files.
 @itemx monotone commit --message=@var{logmsg} @var{pathname...} 
 @itemx monotone commit --message-file=@var{logfile} @var{pathname...} 
 
-This command looks at your working copy, decides which files have
+This command looks at your workspace, decides which files have
 changed, and saves the changes to your database. It does this by loading
 the revision named in the @file{MT/revision} file, locating the base
-manifest for your working copy, applying any changes described in the
+manifest for your workspace, applying any changes described in the
 @file{MT/work} file, and then comparing the updated base manifest to the
-files it finds in your working copy, to determine which files have been
+files it finds in your workspace, to determine which files have been
 edited.
 
 For each edited file, a delta is copied into the database. Then the
@@ -3895,15 +3922,15 @@ revision ID, and deletes the @file{MT/work} file.
 Specifying pathnames to @command{commit} restricts the set of changes
 that are visible and results in only a partial commit of the working
 copy. Changes to files not included in the specified set of pathnames
-will be ignored and will remain in the working copy until they are
+will be ignored and will remain in the workspace until they are
 included in a future commit. With a partial commit, only the relevant
 entries in the @file{MT/work} file will be removed and other entries
 will remain for future commits.
 
-From within a subdirectory of the working copy the @command{commit}
+From within a subdirectory of the workspace the @command{commit}
 command will, by default, include @emph{all changes} in the working
 copy.  Specifying only the pathname "." will restrict @command{commit}
-to files changed within the current subdirectory of the working copy.
+to files changed within the current subdirectory of the workspace.
 
 The @option{--message} and @option{--message-file} options are mutually
 exclusive.  Both provide a @var{logmsg} describing the commit. 
@@ -3911,7 +3938,7 @@ exclusive.  Both provide a @var{logmsg} describing the commit.
 the log message, while @option{--message} provides it directly.
 
 The @file{MT/log} file can be edited by the user during their daily work
-to record the changes made to the working copy. When running the
+to record the changes made to the workspace. When running the
 @command{commit} command without a @var{logmsg} supplied, the contents
 of the @file{MT/log} file will be read and passed to the Lua hook
 @code{edit_comment} as a second parameter named @var{user_log_content}.
@@ -3920,7 +3947,7 @@ all content making it ready for another edit/commit cycle.
 
 If a @option{--branch} option is specified, the @command{commit} command
 commits to this branch (creating it if necessary).  The branch becomes
-the new default branch of the working copy.
+the new default branch of the workspace.
 
 The @command{commit} command also synthesizes a number of
 certificates, which it attaches to the new manifest version and copies
@@ -3952,22 +3979,22 @@ and/or review your log message for the change.
 
 @item monotone revert @var{pathname...}
 @itemx monotone revert --missing @var{pathname...}
-This command changes your working copy, so that changes you have made
+This command changes your workspace, so that changes you have made
 since the last checkout or update are discarded. The command is
 restricted the set of files or directories given as arguments.  To
-revert the entire working copy, use @command{revert} "." in the
+revert the entire workspace, use @command{revert} "." in the
 top-level directory. Specifying "." in a subdirectory will restrict
 @command{revert} to files changed within the current subdirectory.
 
 If the flag @option{--missing} is given it reverts (ie, restores) any
 files which monotone has listed in its manifest, but which have been
-deleted from the working copy.  Only missing files matching the given
+deleted from the workspace.  Only missing files matching the given
 file or directory arguments are reverted.
 
 @item monotone update
 @itemx monotone update --revision=@var{revision}
 Without a @option{--revision} argument, this command incorporates
-``recent'' changes found in your database into your working copy. It
+``recent'' changes found in your database into your workspace. It
 does this by performing 3 separate stages. If any of these stages
 fails, the update aborts, doing nothing. The stages are:
 
@@ -3981,7 +4008,7 @@ Remove any candidates which lack acceptable testresult
 certificates. From the remaining candidates, select the deepest child
 by ancestry and call it the ``target'' of the update.
 @item 
-Merge the target of the update with the working copy, in memory, and
+Merge the target of the update with the workspace, in memory, and
 if the merge is successful, write the result over top of the working
 copy.
 @end itemize
@@ -3990,7 +4017,7 @@ With an explicit @option{--revision} argument, the command uses that revision
 as the update target instead of finding an acceptable candidate.
 
 The effect is always to take whatever changes you have made in the
-working copy, and to ``transpose'' them onto a new revision, using
+workspace, and to ``transpose'' them onto a new revision, using
 monotone's 3-way merge algorithm to achieve good results.  Note that
 with the explicit @option{--revision} argument, it is possible to update
 ``backwards'' or ``sideways'' in history --- for example, reverting to
@@ -4001,15 +4028,44 @@ applied.
 
 If a @option{--branch} option is specified, the @command{update} command
 tries to select the revision to update to from this branch.  The branch
-becomes the new default branch of the working copy (even if you also
+becomes the new default branch of the workspace (even if you also
 specify an explicit @option{--revision} argument).
 
 @item monotone refresh_inodeprints
-This command puts the current working copy into @ref{Inodeprints} mode,
+This command puts the current workspace into @ref{Inodeprints} mode,
 if it was not already, and forces a full inodeprints cache refresh.
-After running this command, you are guaranteed that your working copy is
+After running this command, you are guaranteed that your workspace is
 in inodeprints mode, and that the inodeprints cache is accurate and up
 to date.
+
+@item monotone pivot_root [--execute] pivot_root @var{new_root} @var{put_old}
+Most users will never need this command.  It is primarily useful in
+certain tricky cases where one wishes to combine several projects
+into one, or split one project into several. See also @command{merge_into_dir}.
+
+Its effect is to rename the directory whose name is currently
+@var{new_root} to become the root directory of the versioned tree, and
+to at the same time rename the directory that is currently the root of
+the versioned tree to have the name @var{put_old}.  Conceptually, it
+is equivalent to executing the following commands in the root of the
+workspace:
+
+@smallexample
+@group
+$ monotone rename . @var{new_root}/@var{put_old}
+$ monotone rename @var{new_root} .
+@end group
+@end smallexample
+
+Except, of course, that these @command{rename} commands are illegal,
+because after the first command the tree has no root at all, and there
+is a directory loop.  This illegality is the only reason for
+@command{pivot_root}'s existence; internally, the result is treated
+exactly like two renames, including with respect to merges and
+updates.
+
+The use of @option{--execute} with this command is strongly
+recommended, though not required.
 
 @end ftable
 
@@ -4108,18 +4164,18 @@ branch name.
 @item monotone status
 @itemx monotone status @var{pathname...}
 
-This command prints a description of the ``status'' of your working copy.
+This command prints a description of the ``status'' of your workspace.
 In particular, it prints:
 @itemize
 @item 
 The ``base revision ID'' and ``base manifest ID'', which are
-referenced by the file @file{MT/revision}, and which your working copy
+referenced by the file @file{MT/revision}, and which your workspace
 is an in-progress descendent of.
 @item
 The ``current manifest ID'', which is the ID of the manifest which
 results from applying @file{MT/work} to the base manifest, and
 updating any @sc{sha1} values of files to reflect changes you have
-made to the working copy. In other words, the current manifest ID is
+made to the workspace. In other words, the current manifest ID is
 the ID which would accompany any revision you would commit, if you ran
 @command{monotone commit}.
 @item
@@ -4129,35 +4185,46 @@ versions, such as adds, drops, renames, and patches.
 
 Specifying optional @var{pathname...} arguments to the @command{status}
 command restricts the set of changes that are visible and results in
-only a partial status of the working copy. Changes to files not included
+only a partial status of the workspace. Changes to files not included
 in the specified set of pathnames will be ignored.
 
-From within a subdirectory of the working copy the @command{status}
+From within a subdirectory of the workspace the @command{status}
 command will, by default, include @emph{all changes} in the working
 copy.  Specifying only the pathname "." will restrict @command{status}
-to files changed within the current subdirectory of the working copy.
+to files changed within the current subdirectory of the workspace.
 
 @item monotone log
-@itemx monotone log [--last=@var{n}] [--revision=@var{id} [...]] [--brief] [--merges] [@var{file} [...]]
+@itemx monotone log [--last=@var{n}] [--next=@var{n}] [--revision=@var{id} [...]] [--brief] [--no-merges] [--no-files] [--diffs] [@var{file} [...]]
 
 This command prints out a log, in reverse-ancestry order, of small
 history summaries.  Each summary contains author, date, changelog and
-comment information associated with a revision.  
+comment information associated with a revision.
 
 If @code{--brief} is given, the output consists of one line per revision
 with the revision ID, the author, the date and the branches (separated
 with commas).
 
-If @code{--last=}@var{n} is given, at most that many log entries will be
+If @code{--last=}@var{n} is given, at most @var{n} log entries will be
 given.
 
-By default, the log entries for merge nodes are not shown; usually they
-don't contain much interesting information. If @code{--merges} is given,
-the log entries for these nodes will be included.
+If @code{--next=}@var{n} is given, at most @var{n} log entries towards
+the current head revision will be given from the workspace's base
+revision in forward-ancestry order.  This is useful to review changes
+that will be applied to the workspace when @command{update} is run.
+
+By default, the log entries for merge nodes are shown.  If
+@code{--no-merges} is given, the log entries for these nodes will be
+excluded.
+
+If @code{--no-files} is given, the log output excludes the list of
+files changed in each revision.
+
+Specifying @code{--diffs} causes the log output to include a unified
+diff of the changes in each revision.
 
 If one or more revision IDs are given, the command starts tracing back
-through history from these revisions, otherwise it starts from the base
-revision of your working copy.
+through history from these revisions, otherwise it starts from the
+base revision of your workspace.
 
 If one or more files are given, the command will only log the revisions
 where those files are changed.
@@ -4225,13 +4292,13 @@ $ mt complete revision 01f
 These commands print out GNU ``unified diff format'' textual difference
 listings between various manifest versions. With no @option{--revision}
 options, @command{diff} will print the differences between the
-base revision and the current revision in the working copy.
+base revision and the current revision in the workspace.
 
 With one @option{--revision} option, @command{diff} will print the
 differences between the revision @var{id} and the current revision in
-the working copy.  With two @option{--revision} options @command{diff}
+the workspace.  With two @option{--revision} options @command{diff}
 will print the differences between revisions @var{id1} and @var{id2},
-ignoring any working copy.
+ignoring any workspace.
 
 In all cases, monotone will print a textual summary -- identical to
 the summary presented by @command{monotone status} -- of the logical
@@ -4244,10 +4311,10 @@ changes that are visible and results in only a partial diff between
 two revisions. Changes to files not included in the specified set of
 pathnames will be ignored.
 
-From within a subdirectory of the working copy the @command{diff}
+From within a subdirectory of the workspace the @command{diff}
 command will, by default, include @emph{all changes} in the working
 copy.  Specifying only the pathname "." will restrict @command{diff}
-to files changed within the current subdirectory of the working copy.
+to files changed within the current subdirectory of the workspace.
 
 The output format of @command{diff} is controlled by the options
 @option{--unified}, @option{--context}, and @option{--external}.
@@ -4289,7 +4356,7 @@ branch:
 @smallexample
 @group
 $ monotone list certs 4a96
-monotone: expandeding partial id '4a96'
+monotone: expanding partial id '4a96'
 monotone: expanded to '4a96a230293456baa9c6e7167cafb3c5b52a8e7f'
 -----------------------------------------------------------------
 Key   : graydon@@pobox.com
@@ -4349,36 +4416,36 @@ This command lists all vars in your database, or all vars within a given
 @itemx monotone list known @var{pathname...}
 
 This command lists all files which would become part of the manifest of
-the next revision if you comitted your working copy at this point.
+the next revision if you comitted your workspace at this point.
 
 Specifying pathnames to the @command{list known} command restricts
 the set of paths that are searched for manifest files. Files not
 included in the specified set of pathnames will not be listed.
 
-From within a subdirectory of the working copy the @command{list
-known} command will, by default, search the entire working copy.
+From within a subdirectory of the workspace the @command{list
+known} command will, by default, search the entire workspace.
 Specifying only the pathname "." will restrict the search for known
-files to the current subdirectory of the working copy.
+files to the current subdirectory of the workspace.
 
 @item monotone list unknown
 @itemx monotone list unknown @var{pathname...}
 
-This command lists all files in your working copy that monotone is 
+This command lists all files in your workspace that monotone is 
 either ignoring or knows nothing about.
 
 Specifying pathnames to the @command{list unknown} command restricts the
 set of paths that are searched for unknown files. Unknown files not
 included in the specified set of pathnames will not be listed.
 
-From within a subdirectory of the working copy the @command{list
-unknown} command will, by default, search the entire working copy.
+From within a subdirectory of the workspace the @command{list
+unknown} command will, by default, search the entire workspace.
 Specifying only the pathname "." will restrict the search for unknown
-files to the current subdirectory of the working copy.
+files to the current subdirectory of the workspace.
 
 @item monotone list ignored
 @itemx monotone list ignored @var{pathname...}
 
-This command lists all files in your working copy that monotone is
+This command lists all files in your workspace that monotone is
 intentionally ignoring, due to the results of the @code{ignore_file
 (@var{filename})} hook.
 
@@ -4386,26 +4453,46 @@ Specifying pathnames to the @command{list ignored} command restricts the
 set of paths that are searched for ignored files. Ignored files not
 included in the specified set of pathnames will not be listed.
 
-From within a subdirectory of the working copy the @command{list
-ignored} command will, by default, search the entire working copy.
+From within a subdirectory of the workspace the @command{list
+ignored} command will, by default, search the entire workspace.
 Specifying only the pathname "." will restrict the search for ignored
-files to the current subdirectory of the working copy.
+files to the current subdirectory of the workspace.
 
 @item monotone list missing
 @itemx monotone list missing @var{pathname...}
 
-This command lists all files in your working copy's base manifest,
-which are not present in the working copy.
+This command lists all files in your workspace's base manifest,
+which are not present in the workspace.
 
 Specifying pathnames to the @command{list missing} command restricts the
 set of paths that are searched for missing files. Missing files not
 included in the specified set of pathnames will not be listed.
 
-From within a subdirectory of the working copy the @command{list
-missing} command will, by default, search the entire working copy.
+From within a subdirectory of the workspace the @command{list
+missing} command will, by default, search the entire workspace.
 Specifying only the pathname "." will restrict the search for missing
-files to the current subdirectory of the working copy.
+files to the current subdirectory of the workspace.
 
+@item monotone list changed
+@itemx monotone list changed @var{pathname...}
+
+This command lists all files in your workspace that have changed
+compared to the base revision, including files that are dropped, added
+or renamed.
+
+Specifying pathnames to the @command{list changed} command restricts
+the set of paths that are checked for changes. Files not included in the
+specified set of pathnames will not be listed.
+
+From within a subdirectory of the workspace the @command{list
+changed} command will, by default, search the entire workspace.
+Specifying only the pathname "." will restrict the search for known
+files to the current subdirectory of the workspace.
+
+@item monotone show_conflicts @var{rev} @var{rev}
+
+This command shows what conflicts would need to be resolved in order to merge
+the given revisions.
 @end ftable
 
 
@@ -4418,12 +4505,7 @@ files to the current subdirectory of the working copy.
 
 This command generates an @sc{rsa} public/private key pair, using a
 system random number generator, and stores it in your keystore under
-the key name @var{keyid}. If the the hook
-@code{non_blocking_rng_ok()} returns @code{true}, the key
-generation will use an unlimited random number generator (such as
-@file{/dev/urandom}), otherwise it will use a higher quality random
-number generator (such as @file{/dev/random}) but might run slightly
-slower.
+the key name @var{keyid}.
 
 The private half of the key is stored in an encrypted form, so that anyone
 who can read your keystore cannot extract your private key and use it.
@@ -4478,7 +4560,7 @@ those keys.
 
 This command is a synonym for @code{monotone cert @var{id} branch
 @var{branchname}} where @var{branchname} is the current branch name
-(either deduced from the working copy or from the @option{--branch}
+(either deduced from the workspace or from the @option{--branch}
 option).
 
 
@@ -5338,7 +5420,7 @@ None.
 
 @item Purpose:
 
-Prints the inventory of every file found in the working copy or its
+Prints the inventory of every file found in the workspace or its
 associated base manifest. Each unique path is listed on a line prefixed by
 three status characters and two numeric values used for identifying
 renames. 
@@ -5390,7 +5472,7 @@ RR  3 2 baz
 @end verbatim
 
 Recorded the rotation of files @file{foo} -> @file{bar} -> @file{baz} ->
-@file{foo}, but the actual files in the working directory were not
+@file{foo}, but the actual files in the workspace were not
 moved, so monotone interprets all files as having been patched:
 
 @verbatim
@@ -5555,7 +5637,7 @@ directories.
 
 @item Error conditions:
 
-When executed from outside of a working copy directory, prints an error
+When executed from outside of a workspace directory, prints an error
 message to stderr, and exits with status 1.
 
 @end table
@@ -5629,7 +5711,7 @@ signature "ok"
 
 @item Output format:
 
-All stanzas are formatted by basic_io. Stanzas are seperated 
+All stanzas are formatted by basic_io. Stanzas are separated 
 by a blank line. Values will be escaped, '\' to '\\' and 
 '"' to '\"'.
 
@@ -5697,11 +5779,11 @@ if there is more output to come.
 
 <output> is the output of the command. This will never exceed 1024 bytes.
 If a command produces more than 1024 bytes of output, it will be split into
-multiple peices, with all but the last having the <last?> field set to 'm'.
+multiple pieces, with all but the last having the <last?> field set to 'm'.
 
 @item Error conditions:
 
-If a badly formatted command is recieved, prints an error message to
+If a badly formatted command is received, prints an error message to
 standard error and exits with nonzero status. Errors in the commands run
 through this interface do not affect the exit status. Instead, the <err code>
 field in the output is set to 2, and the output of the command becomes
@@ -5719,7 +5801,7 @@ message.
 
 Specifying the option @var{id} argument outputs the changeset 
 information for the specified @var{id}. Otherwise, @var{id} is 
-determined from the working directory.
+determined from the workspace.
 
 @item Added in:
 
@@ -5785,7 +5867,7 @@ patch "std_hooks.lua"
 
 @item Output format:
 
-All stanzas are formatted by basic_io. Stanzas are seperated 
+All stanzas are formatted by basic_io. Stanzas are separated 
 by a blank line. Values will be escaped, '\' to '\\' and 
 '"' to '\"'.
 
@@ -5804,7 +5886,7 @@ to stderr and exits with status 1.
 
 Specifying the optional @var{revid} argument outputs the manifest for the
 revision with the specified ID. Otherwise, outputs the manifest for the
-current working directory.  (You can think of leaving the argument blank
+current workspace.  (You can think of leaving the argument blank
 as meaning ``give me the manifest of THIS''.)
 
 @item Added in:
@@ -5991,7 +6073,7 @@ function definition which suits your preferences, monotone will
 execute it. This way you can modify how monotone behaves.
 
 You can put new definitions for any of these hook functions in a file
-@file{$HOME/.monotone/monotonerc}, or in your working copy in
+@file{$HOME/.monotone/monotonerc}, or in your workspace in
 @file{MT/monotonerc}, both of which will be read every time monotone
 runs. Definitions in @file{MT/monotonerc} shadow (override)
 definitions made in your @file{$HOME/.monotone/monotonerc}. You can also tell
@@ -6047,18 +6129,28 @@ hook is only intended as an aid for integrating monotone with informal
 commit-notification systems such as mailing lists or news services. It
 should not perform any security-critical operations.
 
-@item note_netsync_revision_received (@var{new_id}, @var{revision}, @var{certs})
+@item note_netsync_start (@var{nonce})
 
-Called by monotone after the revision @var{new_id} is recieved through
+Called by monotone before any other of the netsync notification hooks
+are called.  The @var{nonce} helps keep track of the current netsync
+session in case several are happening at the same time, and is used
+throughout all netsync notification hooks.
+
+@item note_netsync_revision_received (@var{new_id}, @var{revision}, @var{certs}, @var{nonce})
+
+Called by monotone after the revision @var{new_id} is received through
 netsync. @var{revision} is the text of the revision, what would be given
 by "monotone cat revision @var{new_id}". @var{certs} is a lua table
 containing one subtable for each
 cert attached to the revision @var{new_id}. These subtables have fields
 named "key", "name", and "value", containing the signing key for the cert,
 the name of the cert, and the value of the cert. There is no default
-definition for this hook. 
+definition for this hook.
+@var{nonce} is used together with @code{note_netsync_start} and
+@code{note_netsync_end}.  If you're not interested in that type of
+tracking, you can ignore that variable entirely.
 
-@item note_netsync_cert_received (@var{rev_id}, @var{key}, @var{name}, @var{value})
+@item note_netsync_cert_received (@var{rev_id}, @var{key}, @var{name}, @var{value}, @var{nonce})
 
 Called by monotone after a cert is received through netsync, iff the revision
 that the cert is attached to was not also received in the same netsync
@@ -6066,11 +6158,26 @@ operation. @var{rev_id} is the revision id that the cert is attached to,
 @var{key} is the key that the cert is signed with, @var{name} is the name
 of the cert, and @var{value} is the cert value. There is no default
 definition for this hook. 
+@var{nonce} is used together with @code{note_netsync_start} and
+@code{note_netsync_end}.  If you're not interested in that type of
+tracking, you can ignore that variable entirely.
 
-@item note_netsync_pubkey_received (@var{keyname})
+@item note_netsync_pubkey_received (@var{keyname}, @var{nonce})
 
 Called by monotone after a pubkey is received through netsync. @var{keyname}
 is the name of the key received. There is no default definition for this hook. 
+@var{nonce} is used together with @code{note_netsync_start} and
+@code{note_netsync_end}.  If you're not interested in that type of
+tracking, you can ignore that variable entirely.
+
+@item note_netsync_end (@var{nonce})
+
+Called by monotone after all other the netsync notification hooks have
+been called.  This hook would usually be used for post-netsync purposes,
+like collecting all the data from all other netsync notification hooks,
+make some nice output from them and finally send the result somewhere.
+It could also be used to prepare parallell databases with all the data
+to be displayed through something like viewmtn.
 
 @end ftable
 
@@ -6140,25 +6247,6 @@ the system up for another edit/commit cycle.
 
 For the default definition of this hook, see @ref{Default hooks}.
 
-@item non_blocking_rng_ok ()
-
-Returns @code{true} if you are willing to let monotone use the
-system's non-blocking random number generator, such as
-@file{/dev/urandom}, for generating random values during cryptographic
-operations. This diminishes the cryptographic strength of such
-operations, but speeds them up. Returns @code{false} if you want to
-force monotone to always use higher quality random numbers, such as
-those from @file{/dev/random}.
-
-The default definition of this hook is:
-@smallexample
-@group
-function non_blocking_rng_ok()
-        return true
-end
-@end group
-@end smallexample
-
 @item persist_phrase_ok ()
 
 Returns @code{true} if you want monotone to remember the passphrase of
@@ -6180,7 +6268,7 @@ end
 @item use_inodeprints ()
 
 Returns @code{true} if you want monotone to automatically enable
-@ref{Inodeprints} support in all working copies.  Only affects working
+@ref{Inodeprints} support in all workspaces.  Only affects working
 copies created after you modify the hook.
 
 The default definition of this hook is:
@@ -6312,7 +6400,7 @@ These hooks allow the user to configure which signers will be trusted to
 make which kinds of assertions using certs. Monotone these certs when
 selecting available revisions for commands such as @command{update}.
 
-Each user, or even each working directory, can have their own
+Each user, or even each workspace, can have their own
 implementation of these hooks, and thus a different filtered view of
 valid revisions, according to their own preferences and purposes.
 
@@ -6350,8 +6438,8 @@ function get_revision_cert_trust(signers, id, name, val)
 
    if t == nil then return false end
 
-   if    (name ~= "ancestor" and table.getn(t) >= 1)
-      or (name == "ancestor" and table.getn(t) >= 2)
+   if    (name ~= "branch" and table.getn(t) >= 1)
+      or (name == "branch" and table.getn(t) >= 2)
    then
       return true
    else
@@ -6363,10 +6451,10 @@ end
 
 In this example, any revision certificate is trusted if it is signed
 by at least one of three ``trusted'' keys, unless it is an
-@code{ancestor} certificate, in which case it must be signed by
+@code{branch} certificate, in which case it must be signed by
 @emph{two} or more trusted keys. This is one way of requiring that
-ancestry assertions go through an extra ``reviewer'' before they are
-accepted.
+the revision has been approved by an extra ``reviewer'' who used the
+@code{approve} command.
 
 @item accept_testresult_change (@var{old_results}, @var{new_results})
 
@@ -6448,14 +6536,22 @@ you have a tool specific to certain file types.
 
 @ftable @code
 @anchor{merge2}
-@item merge2 (@var{left}, @var{right})
+@item merge2 (@var{left_path}, @var{right_path}, @var{merged_path}, @var{left_text}, @var{right_path})
 
-Returns a string, which should be the merger of the 2 provided
-strings, which are the contents of the @var{left} and @var{right}
-nodes of a file fork which monotone was unable to automatically
-merge. This hook delegates the actual merge 
-to the result of @ref{get_preferred_merge2_command}. 
-For the default definition of this hook, see @ref{Default hooks}.
+This hook is called to resolve merges that monotone could not resolve
+automatically.  The left and right contents of the file are passed in
+the @var{left_text}, and @var{right_text} strings.  In addition, the
+hook is given the names that this file had in left (@var{left_path}
+and right (@var{right_path}) trees, and the name it will end up having
+in the merged tree (@var{merged_path}).  These paths are useful for
+merge tools that can display the names of files in their GUI, since
+the actual path names are likely more meaningful than the temporary
+file names the merge tool will actually be working on.
+
+Returns a string, which should be the merger of the given texts.  The
+default definition of this hook delegates the actual merge to the
+result of @ref{get_preferred_merge2_command}.  For the default
+definition of this hook, see @ref{Default hooks}.
 
 
 @anchor{get_preferred_merge2_command}
@@ -6469,14 +6565,24 @@ this hook to specify it.
 
 
 @anchor{merge3}
-@item merge3 (@var{ancestor}, @var{left}, @var{right})
+@item merge3 (@var{ancestor_path}, @var{left_path}, @var{right_path}, @var{merged_path}, @var{ancestor_text}, @var{left_text}, @var{right_text})
 
-Returns a string, which should be the merger of the 3 provided
-strings, which are the contents of @var{left} and @var{right} nodes,
-and least common @var{ancestor}, of a file fork which monotone was
-unable to automatically merge. This hook delegates the actual merge 
-to the result of @ref{get_preferred_merge3_command}. 
-For the default definition of this hook, see @ref{Default hooks}.
+This hook is called to resolve merges that monotone could not resolve
+automatically.  The actual ancestor, left, and right contents of the
+file are passed in the @var{ancestor_text}, @var{left_text}, and
+@var{right_text} strings.  In addition, the hook is given the names
+that this file had in the ancestor (@var{ancestor_path}), left
+(@var{left_path}), and right (@var{right_path}) trees, and the name it
+will end up having in the merged tree (@var{merged_path}).  These
+paths are useful for merge tools that can display the names of files
+in their GUI, since the actual path names are likely more meaningful
+than the temporary file names the merge tool will actually be working
+on.
+
+Returns a string, which should be the merger of the given texts.  The
+default definition of this hook delegates the actual merge to the
+result of @ref{get_preferred_merge3_command}.  For the default
+definition of this hook, see @ref{Default hooks}.
 
 
 @anchor{get_preferred_merge3_command}
@@ -6541,7 +6647,7 @@ This should be one of the strings @code{CR}, @code{LF}, or
 writing data to the terminal, or otherwise interfacing with the user.
 The system line separator is not used to convert files in the working
 copy; use @code{get_linesep_conv} for converting line endings in the
-working copy.
+workspace.
 
 This hook has no default definition. For more information on line
 ending conversion, see the section on @ref{Internationalization}.
@@ -6556,9 +6662,9 @@ the ``external'' representation of @var{filename}. Line ending
 conventions should be one of the strings @code{CR}, @code{LF}, or
 @code{CRLF}. 
 
-When @var{filename} is read from the working copy, it is run through
+When @var{filename} is read from the workspace, it is run through
 line ending conversion from the external form to the internal
-form. When @var{filename} is written to the working copy, it is run
+form. When @var{filename} is written to the workspace, it is run
 through line ending conversion from the internal form to the external
 form. @sc{sha1} values are calculated from the internal form of
 @var{filename}. It is your responsibility to decide which line ending
@@ -6577,9 +6683,9 @@ return value is the name of a character set to use for the
 the return value is the name of a character set to use for the
 ``external'' representation of @var{filename}.  
 
-When @var{filename} is read from the working copy, it is run through
+When @var{filename} is read from the workspace, it is run through
 character set conversion from the external form to the internal
-form. When @var{filename} is written to the working copy, it is run
+form. When @var{filename} is written to the workspace, it is run
 through character set conversion from the internal form to the
 external form. @sc{sha1} values are calculated from the internal
 form of @var{filename}. It is your responsibility to decide which
@@ -6601,10 +6707,10 @@ or programs.
 
 Monotone allows each file in a repository to carry arbitrary @ref{File
 Attributes}. Persistent attributes are stored in the @file{.mt-attrs},
-in your working copy and manifest. The hooks in this section allow files
+in your workspace and manifest. The hooks in this section allow files
 to be automatically recognised as having certain attributes at the time
 they're added, and for custom triggers to be invoked on each file
-according to its attributes when the working copy is changed.
+according to its attributes when the workspace is changed.
 
 @ftable @code
 @item attr_functions [@var{attribute}] (@var{filename}, @var{value})
@@ -6670,6 +6776,25 @@ attr_init_functions["manual_merge"] =
 
 The @code{binary_file} function is also defined as a lua hook. See
 @ref{Default hooks}. 
+
+@end ftable
+
+@subsection Validation Hooks
+
+If there is a policy decision to make, Monotone defines certain hooks to
+allow a client to validate or reject certain behaviors.
+
+@ftable @code
+@item validate_commit_message (@var{message}, @var{changeset_text})
+
+This hook is called after the user has entered his/her commit message.
+@var{message} is the commit message that the user has entered and 
+@var{changeset_text} is the full text of the changes for this revision,
+which can be parsed with the parse_basic_io function. If the hook finds the
+commit message satisfactory, it can return @code{true, ""}. If it finds
+fault, then it can return @code{false, reason} where @var{reason} is the
+reason the message was rejected. By default, this hook rejects empty log
+messages.
 
 @end ftable
 
@@ -6856,13 +6981,13 @@ into UTF-8.
 @item
 Monotone's control files are stored in UTF-8. This includes: revisions
 and manifests, both inside the database and when written to the
-@file{MT/} directory of the working copy; the @file{MT/options} and
+@file{MT/} directory of the workspace; the @file{MT/options} and
 @file{MT/work} files; and the @file{.mt-attrs} file. Converting these
 files to any other character set will cause monotone to break; do not
 do so.
 
 @item
-File path names in the working copy are converted to the locale's
+File path names in the workspace are converted to the locale's
 character set (determined via the LANG or CHARSET environment
 variables) before monotone interacts with the file system. If you are
 accustomed to being able to use file names in your locale's character
@@ -7476,15 +7601,15 @@ Indicate a passing or failing test result on a revision.
 @comment TROFF INPUT: .TP
 
 @item @b{diff} @i{[--revision=<id1> [--revision=<id2>] ] [<pathname>...]}
-Show diffs between working copy and database.
+Show diffs between workspace and database.
 @comment TROFF INPUT: .TP
 
 @item @b{status} @i{[<pathname>...]}
-Show status of working copy.
+Show status of workspace.
 @comment TROFF INPUT: .TP
 
 @item @b{log} @i{[id]}
-Show historical log of revisions, starting from working copy
+Show historical log of revisions, starting from workspace
 base revision, or @i{[id]} if given.
 @comment TROFF INPUT: .TP
 
@@ -7528,12 +7653,12 @@ List all tags.
 @item @b{list known} @i{[<pathname>...]}
 @itemx @b{ls known} @i{[<pathname>...]}
 List files which are in revision's manifest, or are on the work list of
-the working copy.
+the workspace.
 @comment TROFF INPUT: .TP
 
 @item @b{list unknown} @i{[<pathname>...]}
 @itemx @b{ls unknown} @i{[<pathname>...]}
-List files in working copy, but not in revision's manifest or
+List files in workspace, but not in revision's manifest or
 work list.
 @comment TROFF INPUT: .TP
 
@@ -7544,7 +7669,13 @@ List files intentionally ignored due to the ignore_file hook.
 
 @item @b{list missing} @i{[<pathname>...]}
 @itemx @b{ls missing} @i{[<pathname>...]}
-List files in revision's manifest, but not in working copy.
+List files in revision's manifest, but not in workspace.
+@comment TROFF INPUT: .TP
+
+@item @b{list changed} @i{[<pathname>...]}
+@itemx @b{ls changed} @i{[<pathname>...]}
+List files in workspace that have changed compared to the base
+revision.
 @comment TROFF INPUT: .TP
 
 @item @b{fdata} @i{<id>}
@@ -7613,7 +7744,7 @@ Merge unmerged heads of branch.
 @comment TROFF INPUT: .TP
 
 @item @b{add} @i{[--unknown] [<pathname>...]}
-Add files to working copy. adding a file does not copy it into the
+Add files to workspace. adding a file does not copy it into the
 database, merely adds it to the work list. You must @b{commit} your
 changes in order to copy added files to the database.  The missing 
 flag causes those files that @command{monotone ls unknown} would
@@ -7621,20 +7752,20 @@ display to be added to the project.
 @comment TROFF INPUT: .TP
 
 @item @b{drop} @i{[--missing] [--execute] [<pathname>...]}
-Drop files from working copy. Files are not deleted from working copy,
+Drop files from workspace. Files are not deleted from workspace,
 merely noted as removals in the work list, unless the @option{--execute}
 flag is given.  If the @option{--missing} flag is given any files that
-monotone is tracking but which are not present in the working copy
+monotone is tracking but which are not present in the workspace
 (ie. the output that @command{monotone ls missing} would give) are
 dropped.
 @comment TROFF INPUT: .TP
 
 @item @b{rename} @i{<src> <dst>}
-Rename files from @i{<src>} to @i{<dst>} in working copy.
+Rename files from @i{<src>} to @i{<dst>} in workspace.
 @comment TROFF INPUT: .TP
 
 @item @b{commit} @i{[--message=log message | --message-file=log message file] [<pathname>...]}
-Commit working copy to database.  Each commit has a changelog message
+Commit workspace to database.  Each commit has a changelog message
 associated with it.  If @option{--message} is provided on the command
 line, it is used; if @option{--message-file} is provided, the content of
 the named file will be used as a commit message.  If the filename is '-'
@@ -7647,7 +7778,7 @@ specify either of them at all.
 @comment TROFF INPUT: .TP
 
 @item @b{update} @i{[--revision=revision]}
-Update working copy.
+Update workspace.
 @comment TROFF INPUT: .SH DESCRIPTION
 
 @item @b{refresh_inodeprints}
@@ -7728,13 +7859,17 @@ Turn off normal progress messages.
 Dump debugging log to @i{<file>} on failure.
 @comment TROFF INPUT: .TP
 
+@item @b{--log=}@i{<file>}
+Redirect the log lines to to @i{<file>}.
+@comment TROFF INPUT: .TP
+
 @item @b{--nostd}
 Do not evaluate "standard" Lua hooks compiled into @b{monotone}.
 @comment TROFF INPUT: .TP
 
 @item @b{--norc}
 Do not load Lua hooks from user's @b{~/.monotone/monotonerc} or the
-working copy's @b{MT/monotonerc} file.
+workspace's @b{MT/monotonerc} file.
 @comment TROFF INPUT: .TP
 
 @item @b{--rcfile=}@i{<file>}
@@ -7796,7 +7931,7 @@ committing a new revision, rather than the current time.  Useful when
 importing history from another version control system.
 
 @item @b{--root=}@i{<root dir>}
-Stop the search for a working copy (containing the @file{MT} directory)
+Stop the search for a workspace (containing the @file{MT} directory)
 at the specified root directory rather than at the physical root of the
 filesystem.
 

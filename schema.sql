@@ -13,6 +13,8 @@
 -- licensed to the public under the terms of the GNU GPL 2.1+
 -- see the file COPYING for details
 
+PRAGMA page_size=8192;
+
 -- Transactions avoid syncing for each action, db init gets faster.
 BEGIN EXCLUSIVE;
 
@@ -22,14 +24,14 @@ BEGIN EXCLUSIVE;
 CREATE TABLE files
 	(
 	id primary key,   -- strong hash of file contents
-	data not null     -- compressed, encoded contents of a file
-	); 
+	data not null     -- compressed contents of a file
+	);
 
 CREATE TABLE file_deltas
-	(	
+	(
 	id not null,      -- strong hash of file contents
 	base not null,    -- joins with files.id or file_deltas.id
-	delta not null,   -- rdiff to construct current from base
+	delta not null,   -- compressed rdiff to construct current from base
 	unique(id, base)
 	);
 

@@ -21,6 +21,10 @@ AT_DATA(open/write-permissions, [
 *
 ])
 
+ADD_FILE(badfile, [badfile
+])
+AT_CHECK(MONOTONE --branch=badbranch commit --message badfile, [], [ignore], [ignore])
+
 AT_CHECK(cp test.db clean.db)
 AT_CHECK(cp -r keys/ clean_keys)
 
@@ -65,8 +69,8 @@ AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 AT_CHECK(cp test.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r keys/ keys2)
-REVERT_TO($BASE)
-ADD_FILE(default, [default
+REVERT_N_TO(2, $BASE)
+ADD_N_FILE(2, default, [default
 ])
 AT_CHECK(MONOTONE2 commit --message default, [], [ignore], [ignore])
 DEFAULT_REV=`BASE_REVISION`
@@ -74,8 +78,8 @@ NETSYNC_CLIENT_RUN(push, testbranch)
 
 # push with other key
 
-REVERT_TO($BASE)
-ADD_FILE(other, [other
+REVERT_N_TO(2, $BASE)
+ADD_N_FILE(2, other, [other
 ])
 AT_CHECK(MONOTONE2 commit --message other, [], [ignore], [ignore])
 OTHER_REV=`BASE_REVISION`
@@ -83,8 +87,8 @@ NETSYNC_CLIENT_RUN(push --key=$OTHER , testbranch)
 
 # push with unknown key fails
 
-REVERT_TO($BASE)
-ADD_FILE(unknown, [unknown
+REVERT_N_TO(2, $BASE)
+ADD_N_FILE(2, unknown, [unknown
 ])
 AT_CHECK(MONOTONE2 commit --message unknown, [], [ignore], [ignore])
 UNKNOWN_REV=`BASE_REVISION`
@@ -112,7 +116,7 @@ AT_CHECK(cp clean.db test.db)
 AT_CHECK(rm -r keys && cp -r clean_keys/ keys)
 AT_DATA(MT/revision [])
 
-ADD_FILE(testfile, [testfile
+ADD_N_FILE(2, testfile, [testfile
 ])
 AT_CHECK(MONOTONE --branch=testbranch commit --message testfile, [], [ignore], [ignore])
 BASE=`BASE_REVISION`
@@ -132,6 +136,13 @@ AT_CHECK(cp clean.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
 NETSYNC_CLIENT_RUN(pull, testbranch)
 AT_CHECK(MONOTONE2 automate get_revision $BASE, [0], [stdout], [stderr])
+
+# pull with bad branch fails
+
+AT_CHECK(cp clean.db test2.db)
+AT_CHECK(rm -r keys2 && cp -r clean_keys/ keys2)
+NETSYNC_CLIENT_RUN(pull, badbranch, 1)
+AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 # pull with other key fails
 
@@ -153,8 +164,8 @@ AT_CHECK(MONOTONE2 automate get_revision $BASE, [1], [stdout], [stderr])
 
 AT_CHECK(cp test.db test2.db)
 AT_CHECK(rm -r keys2 && cp -r keys/ keys2)
-REVERT_TO($BASE)
-ADD_FILE(default, [default
+REVERT_N_TO(2, $BASE)
+ADD_N_FILE(2, default, [default
 ])
 AT_CHECK(MONOTONE2 commit --message default, [], [ignore], [ignore])
 DEFAULT_REV=`BASE_REVISION`
@@ -162,8 +173,8 @@ NETSYNC_CLIENT_RUN(push, testbranch)
 
 # push with other key
 
-REVERT_TO($BASE)
-ADD_FILE(other, [other
+REVERT_N_TO(2, $BASE)
+ADD_N_FILE(2, other, [other
 ])
 AT_CHECK(MONOTONE2 commit --message other, [], [ignore], [ignore])
 OTHER_REV=`BASE_REVISION`
@@ -171,8 +182,8 @@ NETSYNC_CLIENT_RUN(push --key=$OTHER, testbranch, [1])
 
 # push with unknown key fails
 
-REVERT_TO($BASE)
-ADD_FILE(unknown, [unknown
+REVERT_N_TO(2, $BASE)
+ADD_N_FILE(2, unknown, [unknown
 ])
 AT_CHECK(MONOTONE2 commit --message unknown, [], [ignore], [ignore])
 UNKNOWN_REV=`BASE_REVISION`

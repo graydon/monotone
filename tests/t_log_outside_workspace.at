@@ -1,6 +1,6 @@
 #  -*- Autoconf -*-
 
-AT_SETUP([logging a file within revision outside a working dir])
+AT_SETUP([logging a file within revision outside a workspace])
 
 MONOTONE_SETUP
 

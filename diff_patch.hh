@@ -84,14 +84,14 @@ content_merge_database_adaptor
 };
 
 struct
-content_merge_working_copy_adaptor
+content_merge_workspace_adaptor
   : public content_merge_adaptor
 {
   std::map<file_id, file_data> temporary_store;
   app_state & app;
   boost::shared_ptr<roster_t> base;
-  content_merge_working_copy_adaptor (app_state & app,
-                                      boost::shared_ptr<roster_t> base) 
+  content_merge_workspace_adaptor (app_state & app,
+                                   boost::shared_ptr<roster_t> base) 
     : app(app), base(base) 
   {}
   void record_merge(file_id const & left_ident, 

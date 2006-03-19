@@ -24,7 +24,7 @@ AT_DATA(codir/file2, [file2
 AT_CHECK(cd codir && MONOTONE add file2, [], [ignore], [ignore])
 AT_CHECK(cd codir && MONOTONE update, [], [ignore], [ignore])
 
-# make sure there are no changes in the working copy
+# make sure there are no changes in the workspace
 
 AT_CHECK(test ! -e codir/MT/work, [], [ignore], [ignore])
 AT_CHECK(cd codir && MONOTONE diff, [], [stdout], [ignore])

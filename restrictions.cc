@@ -81,18 +81,7 @@ restrict_cset(cset const & cs,
   for (path_set::const_iterator i = cs.dirs_added.begin();
        i != cs.dirs_added.end(); ++i)
     {
-      // Here is a trick: when you're dealing with restrictions, you need
-      // to make sure that any added parents required to make the
-      // restriction-affected files exist come along for the ride.
-      bool include_it = app.restriction_includes(*i);
-      if (!include_it)
-        {
-          include_it = app.restriction_requires_parent(*i);
-          if (include_it)
-            W(F("Included required parent path '%s'\n") % *i);
-        }
-            
-      if (include_it) 
+      if (app.restriction_includes(*i)) 
         safe_insert(included.dirs_added, *i);
       else
         safe_insert(excluded.dirs_added, *i);
@@ -136,10 +125,53 @@ restrict_cset(cset const & cs,
 }
 
 
+static void
+check_for_missing_additions(cset const & work, roster_t const & roster)
+{
+  path_set added;
+  int missing = 0;
+
+  for (path_set::const_iterator i = work.dirs_added.begin();
+       i != work.dirs_added.end(); ++i)
+    {
+      split_path dir(*i);
+      added.insert(dir);
+
+      if (dir.size() > 1)
+        {
+          dir.pop_back();
+
+          if (!roster.has_node(dir) && added.find(dir) == added.end())
+            {
+              missing++;
+              W(F("restriction excludes directory '%s'") % dir);
+            }
+        }
+    }
+
+  for (std::map<split_path, file_id>::const_iterator i = work.files_added.begin();
+       i != work.files_added.end(); ++i)
+    {
+      split_path dir(i->first);
+      I(dir.size() > 1);
+      dir.pop_back();
+
+      if (!roster.has_node(dir) && added.find(dir) == added.end())
+        {
+          missing++;
+          W(F("restriction excludes directory '%s'") % dir);
+        }
+    }
+
+  N(missing == 0, 
+    F("invalid restriction excludes required directories")); 
+
+}
+
 // Project the old_paths through r_old + work, to find the new names of the
 // paths (if they survived work)
 
-void
+static void
 remap_paths(path_set const & old_paths,
             roster_t const & r_old,
             cset const & work,
@@ -186,6 +218,9 @@ get_base_roster_and_working_cset(app_state & app,
   app.set_restriction(valid_paths, args); 
 
   restrict_cset(work, included, excluded, app);  
+
+  check_for_missing_additions(included, old_roster);
+
   remap_paths(old_paths, old_roster, work, new_paths);
 
   for (path_set::const_iterator i = included.dirs_added.begin();

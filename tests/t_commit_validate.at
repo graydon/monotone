@@ -1,0 +1,31 @@
+# -*- Autoconf -*-
+# vim: tw=0
+
+AT_SETUP([commit validation lua hook])
+
+MONOTONE_SETUP
+
+AT_DATA(commit_validate.lua, [
+function validate_commit_message(message, info)
+  if (not string.find(info, "input.txt")) then
+    return false, "Wrong info message"
+  end
+  if (message == "denyme") then
+    return false, "input.txt"
+  end
+
+  return true, ""
+end
+])
+
+AT_DATA(input.txt, [version 0 of the file
+])
+
+AT_CHECK(MONOTONE add input.txt, [], [ignore], [ignore])
+
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=commit_validate.lua commit -m "denyme", 1, [ignore], [monotone: beginning commit on branch 'testbranch'
+monotone: misuse: log message rejected: input.txt
+])
+AT_CHECK(MONOTONE --branch=testbranch --rcfile=commit_validate.lua commit -m "allowme", 0, ignore, ignore)
+
+AT_CLEANUP

@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // copyright (C) 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -495,6 +496,12 @@ session::session(protocol_role role,
 
 session::~session()
 {
+  static const char letters[] = "0123456789abcdef";
+  string nonce;
+  for (int i = 0; i < 16; i++)
+    nonce.append(1, letters[Botan::Global_RNG::random(Botan::Nonce)
+                            % (sizeof(letters) - 1)]);
+
   vector<cert> unattached_certs;
   map<revision_id, vector<cert> > revcerts;
   for (vector<revision_id>::iterator i = written_revisions.begin();
@@ -511,40 +518,51 @@ session::~session()
         j->second.push_back(*i);
     }
 
-  //Keys
-  for (vector<rsa_keypair_id>::iterator i = written_keys.begin();
-       i != written_keys.end(); ++i)
+  //  if (role == sink_role || role == source_and_sink_role)
+  if (!written_keys.empty() 
+      || !written_revisions.empty()
+      || !written_certs.empty())
     {
-      app.lua.hook_note_netsync_pubkey_received(*i);
-    }
+      //Start
+      app.lua.hook_note_netsync_start(nonce);
 
-  //Revisions
-  for (vector<revision_id>::iterator i = written_revisions.begin();
-      i != written_revisions.end(); ++i)
-    {
-      vector<cert> & ctmp(revcerts[*i]);
-      set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > certs;
-      for (vector<cert>::const_iterator j = ctmp.begin();
-           j != ctmp.end(); ++j)
+      //Keys
+      for (vector<rsa_keypair_id>::iterator i = written_keys.begin();
+           i != written_keys.end(); ++i)
         {
-          cert_value vtmp;
-          decode_base64(j->value, vtmp);
-          certs.insert(make_pair(j->key, make_pair(j->name, vtmp)));
+          app.lua.hook_note_netsync_pubkey_received(*i, nonce);
         }
-      revision_data rdat;
-      app.db.get_revision(*i, rdat);
-      app.lua.hook_note_netsync_revision_received(*i, rdat, certs);
-    }
 
-  //Certs (not attached to a new revision)
-  for (vector<cert>::iterator i = unattached_certs.begin();
-      i != unattached_certs.end(); ++i)
-    {
-      cert_value tmp;
-      decode_base64(i->value, tmp);
-      app.lua.hook_note_netsync_cert_received(i->ident, i->key,
-                                              i->name, tmp);
+      //Revisions
+      for (vector<revision_id>::iterator i = written_revisions.begin();
+           i != written_revisions.end(); ++i)
+        {
+          vector<cert> & ctmp(revcerts[*i]);
+          set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > certs;
+          for (vector<cert>::const_iterator j = ctmp.begin();
+               j != ctmp.end(); ++j)
+            {
+              cert_value vtmp;
+              decode_base64(j->value, vtmp);
+              certs.insert(make_pair(j->key, make_pair(j->name, vtmp)));
+            }
+          revision_data rdat;
+          app.db.get_revision(*i, rdat);
+          app.lua.hook_note_netsync_revision_received(*i, rdat, certs, nonce);
+        }
 
+      //Certs (not attached to a new revision)
+      for (vector<cert>::iterator i = unattached_certs.begin();
+           i != unattached_certs.end(); ++i)
+        {
+          cert_value tmp;
+          decode_base64(i->value, tmp);
+          app.lua.hook_note_netsync_cert_received(i->ident, i->key,
+                                                  i->name, tmp, nonce);
+        }
+
+      //Start
+      app.lua.hook_note_netsync_end(nonce);
     }
 }
 
@@ -782,7 +800,8 @@ void
 session::maybe_note_epochs_finished()
 {
   // Maybe there are outstanding epoch requests.
-  if (!epoch_refiner.items_to_receive == 0)
+  // These only matter if we're in sink or source-and-sink mode.
+  if (!(epoch_refiner.items_to_receive == 0) && !(role == source_role))
     return;
 
   // And maybe we haven't even finished the refinement.
@@ -796,9 +815,15 @@ session::maybe_note_epochs_finished()
 
   // But otherwise, we're ready to go. Start the next
   // set of refinements.
-  key_refiner.begin_refinement();
-  cert_refiner.begin_refinement();
-  rev_refiner.begin_refinement();
+  if (voice == client_voice)
+    {
+      L(FL("epoch refinement finished; beginning other refinements"));
+      key_refiner.begin_refinement();
+      cert_refiner.begin_refinement();
+      rev_refiner.begin_refinement();
+    }
+  else
+    L(FL("epoch refinement finished"));
 }
 
 static void
@@ -1194,9 +1219,9 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
               "it is also possible that the server key has just been changed\n"
               "remote host sent key %s\n"
               "I expected %s\n"
-              "'monotone unset %s %s' overrides this check\n")
+              "'%s unset %s %s' overrides this check\n")
             % their_key_hash % expected_key_hash
-            % their_key_key.first % their_key_key.second);
+            % app.prog_name % their_key_key.first % their_key_key.second);
           E(false, F("server key changed"));
         }
     }
@@ -1317,13 +1342,18 @@ session::process_anonymous_cmd(protocol_role role,
       i != branchnames.end(); i++)
     {
       if (their_matcher(*i))
-        if (our_matcher(*i) && app.lua.hook_get_netsync_read_permitted(*i))
-          ok_branches.insert(utf8(*i));
-        else
+        if (!our_matcher(*i))
+          {
+            error((F("not serving branch '%s'") % *i).str());
+            return true;
+          }
+        else if (!app.lua.hook_get_netsync_read_permitted(*i))
           {
             error((F("anonymous access to branch '%s' denied by server") % *i).str());
             return true;
           }
+        else
+          ok_branches.insert(utf8(*i));
     }
 
   P(F("allowed anonymous read permission for '%s' excluding '%s'\n")
@@ -1409,15 +1439,22 @@ session::process_auth_cmd(protocol_role their_role,
     {
       if (their_matcher(*i))
         {
-          if (our_matcher(*i) && app.lua.hook_get_netsync_read_permitted(*i, their_id))
-            ok_branches.insert(utf8(*i));
-          else
+          if (!our_matcher(*i))
+            {
+              error((F("not serving branch '%s'") % *i).str());
+              return true;
+
+            }
+          else if (!app.lua.hook_get_netsync_read_permitted(*i, their_id))
             {
               W(F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'\n") 
                 % their_id % their_include_pattern % their_exclude_pattern % *i);
+
               error((F("access to branch '%s' denied by server") % *i).str());
               return true;
             }
+          else
+            ok_branches.insert(utf8(*i));
         }
     }
 
@@ -1608,6 +1645,9 @@ session::process_bye_cmd(u8 phase,
 bool 
 session::process_done_cmd(netcmd_item_type type, size_t n_items)
 {
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+  L(FL("received 'done' command for %s (%s items)") % typestr % n_items);
   switch (type)
     {    
     case file_item:
@@ -2380,7 +2420,7 @@ handle_new_connection(Netxx::Address & addr,
                       app_state & app)
 {
   L(FL("accepting new connection on %s : %s\n") 
-    % addr.get_name() % lexical_cast<string>(addr.get_port()));
+    % (addr.get_name()?addr.get_name():"") % lexical_cast<string>(addr.get_port()));
   Netxx::Peer client = server.accept_connection();
   
   if (!client) 
@@ -2562,102 +2602,138 @@ serve_connections(protocol_role role,
 #else
   bool use_ipv6=false;
 #endif
-  Netxx::Address addr(use_ipv6);
+  // This will be true when we try to bind while using IPv6.  See comments
+  // further down.
+  bool try_again=false;
 
-  if (!app.bind_address().empty()) 
-      addr.add_address(app.bind_address().c_str(), default_port);
-  else
-      addr.add_all_addresses (default_port);
-
-
-  Netxx::StreamServer server(addr, timeout);
-  const char *name = addr.get_name();
-  P(F("beginning service on %s : %s\n") 
-    % (name != NULL ? name : "all interfaces") 
-    % lexical_cast<string>(addr.get_port()));
-  
-  map<Netxx::socket_type, shared_ptr<session> > sessions;
-  set<Netxx::socket_type> armed_sessions;
-  
-  shared_ptr<transaction_guard> guard;
-
-  while (true)
-    {      
-      probe.clear();
-      armed_sessions.clear();
-
-      if (sessions.size() >= session_limit)
-        W(F("session limit %d reached, some connections "
-            "will be refused\n") % session_limit);
-      else
-        probe.add(server);
-
-      arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
-
-      L(FL("i/o probe with %d armed\n") % armed_sessions.size());      
-      Netxx::Probe::result_type res = probe.ready(sessions.empty() ? forever 
-                                           : (armed_sessions.empty() ? timeout 
-                                              : instant));
-      Netxx::Probe::ready_type event = res.second;
-      Netxx::socket_type fd = res.first;
-
-      if (!guard)
-        guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
-
-      I(guard);
-      
-      if (fd == -1)
+  do
+    {
+      try
         {
-          if (armed_sessions.empty()) 
-            L(FL("timed out waiting for I/O (listening on %s : %s)\n") 
-              % addr.get_name() % lexical_cast<string>(addr.get_port()));
-        }
-      
-      // we either got a new connection
-      else if (fd == server)
-        handle_new_connection(addr, server, timeout, role, 
-                              include_pattern, exclude_pattern, 
-                              sessions, app);
-      
-      // or an existing session woke up
-      else
-        {
-          map<Netxx::socket_type, shared_ptr<session> >::iterator i;
-          i = sessions.find(fd);
-          if (i == sessions.end())
-            {
-              L(FL("got woken up for action on unknown fd %d\n") % fd);
-            }
+          try_again = false;
+
+          Netxx::Address addr(use_ipv6);
+
+          if (!app.bind_address().empty())
+            addr.add_address(app.bind_address().c_str(), default_port);
           else
-            {
-              shared_ptr<session> sess = i->second;
-              bool live_p = true;
+            addr.add_all_addresses (default_port);
 
-              if (event & Netxx::Probe::ready_read)
-                handle_read_available(fd, sess, sessions, 
-                                      armed_sessions, live_p);
-                
-              if (live_p && (event & Netxx::Probe::ready_write))
-                handle_write_available(fd, sess, sessions, live_p);
-                
-              if (live_p && (event & Netxx::Probe::ready_oobd))
+          // If se use IPv6 and the initialisation of server fails, we want
+          // to try again with IPv4.  The reason is that someone may have
+          // downloaded a IPv6-enabled monotone on a system that doesn't
+          // have IPv6, and which might fail therefore.
+          // On failure, Netxx::NetworkException is thrown, and we catch
+          // it further down.
+          try_again=use_ipv6;
+
+          Netxx::StreamServer server(addr, timeout);
+
+          // If we came this far, whatever we used (IPv6 or IPv4) was
+          // accepted, so we don't need to try again any more.
+          try_again=false;
+
+          const char *name = addr.get_name();
+          P(F("beginning service on %s : %s\n")
+            % (name != NULL ? name : _("<all interfaces>"))
+            % lexical_cast<string>(addr.get_port()));
+  
+          map<Netxx::socket_type, shared_ptr<session> > sessions;
+          set<Netxx::socket_type> armed_sessions;
+  
+          shared_ptr<transaction_guard> guard;
+
+          while (true)
+            {
+              probe.clear();
+              armed_sessions.clear();
+
+              if (sessions.size() >= session_limit)
+                W(F("session limit %d reached, some connections "
+                    "will be refused\n") % session_limit);
+              else
+                probe.add(server);
+
+              arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
+
+              L(FL("i/o probe with %d armed\n") % armed_sessions.size());
+              Netxx::Probe::result_type res = probe.ready(sessions.empty() ? forever
+                                                          : (armed_sessions.empty() ? timeout
+                                                             : instant));
+              Netxx::Probe::ready_type event = res.second;
+              Netxx::socket_type fd = res.first;
+
+              if (!guard)
+                guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
+
+              I(guard);
+      
+              if (fd == -1)
                 {
-                  P(F("got OOB from peer %s, disconnecting\n") 
-                    % sess->peer_id);
-                  sessions.erase(i);
+                  if (armed_sessions.empty())
+                    L(FL("timed out waiting for I/O (listening on %s : %s)\n")
+                      % addr.get_name() % lexical_cast<string>(addr.get_port()));
+                }
+      
+              // we either got a new connection
+              else if (fd == server)
+                handle_new_connection(addr, server, timeout, role,
+                                      include_pattern, exclude_pattern,
+                                      sessions, app);
+      
+              // or an existing session woke up
+              else
+                {
+                  map<Netxx::socket_type, shared_ptr<session> >::iterator i;
+                  i = sessions.find(fd);
+                  if (i == sessions.end())
+                    {
+                      L(FL("got woken up for action on unknown fd %d\n") % fd);
+                    }
+                  else
+                    {
+                      shared_ptr<session> sess = i->second;
+                      bool live_p = true;
+
+                      if (event & Netxx::Probe::ready_read)
+                        handle_read_available(fd, sess, sessions,
+                                              armed_sessions, live_p);
+                
+                      if (live_p && (event & Netxx::Probe::ready_write))
+                        handle_write_available(fd, sess, sessions, live_p);
+                
+                      if (live_p && (event & Netxx::Probe::ready_oobd))
+                        {
+                          P(F("got OOB from peer %s, disconnecting\n")
+                            % sess->peer_id);
+                          sessions.erase(i);
+                        }
+                    }
+                }
+              process_armed_sessions(sessions, armed_sessions, *guard);
+              reap_dead_sessions(sessions, timeout_seconds);
+
+              if (sessions.empty())
+                {
+                  // Let the guard die completely if everything's gone quiet.
+                  guard->commit();
+                  guard.reset();
                 }
             }
         }
-      process_armed_sessions(sessions, armed_sessions, *guard);
-      reap_dead_sessions(sessions, timeout_seconds);
-
-      if (sessions.empty())
+      catch (Netxx::NetworkException &e)
         {
-          // Let the guard die completely if everything's gone quiet.
-          guard->commit();
-          guard.reset();
+          // If we tried with IPv6 and failed, we want to try again using IPv4.
+          if (try_again)
+            {
+              use_ipv6 = false;
+            }
+          // In all other cases, just rethrow the exception.
+          else
+            throw;
         }
     }
+  while(try_again);
 }
 
 
@@ -2852,6 +2928,18 @@ run_netsync_protocol(protocol_voice voice,
                      utf8 const & exclude_pattern,
                      app_state & app)
 {
+  if (include_pattern().find_first_of("'\"") != std::string::npos)
+    {
+      W(F("include branch pattern contains a quote character:\n"
+          "%s\n") % include_pattern());
+    }
+
+  if (exclude_pattern().find_first_of("'\"") != std::string::npos)
+    {
+      W(F("exclude branch pattern contains a quote character:\n"
+          "%s\n") % exclude_pattern());
+    }
+
   try 
     {
       if (voice == server_voice)

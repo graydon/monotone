@@ -16,7 +16,7 @@
 // Destructively alter a roster_merge_result to attempt to remove any
 // conflicts in it. Takes a content_merge_adaptor to pass on to the content
 // merger; used from both the merge-to-database code (below) and the
-// merge-to-working-copy "update" code in commands.cc.
+// merge-to-workspace "update" code in commands.cc.
 
 struct roster_merge_result;
 
@@ -45,5 +45,14 @@ resolve_merge_conflicts(revision_id const & left_rid,
 void
 interactive_merge_and_store(revision_id const & left, revision_id const & right,
                             revision_id & merged, app_state & app);
+
+void
+store_roster_merge_result(roster_t const & left_roster,
+                          roster_t const & right_roster,
+                          roster_merge_result & result,
+                          revision_id const & left_rid,
+                          revision_id const & right_rid,
+                          revision_id & merged_rid,
+                          app_state & app);
 
 #endif

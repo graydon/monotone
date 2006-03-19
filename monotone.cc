@@ -60,7 +60,7 @@ struct poptOption coptions[] =
     {"pid-file", 0, POPT_ARG_STRING, &argstr, OPT_PIDFILE, gettext_noop("record process id of server"), NULL},
     {"brief", 0, POPT_ARG_NONE, NULL, OPT_BRIEF, gettext_noop("print a brief version of the normal output"), NULL},
     {"diffs", 0, POPT_ARG_NONE, NULL, OPT_DIFFS, gettext_noop("print diffs along with logs"), NULL},
-    {"merges", 0, POPT_ARG_NONE, NULL, OPT_MERGES, gettext_noop("include merges when printing logs"), NULL},
+    {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, gettext_noop("exclude merges when printing logs"), NULL},
     {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, gettext_noop("use the current arguments as the future default"), NULL},
     {"exclude", 0, POPT_ARG_STRING, &argstr, OPT_EXCLUDE, gettext_noop("leave out anything described by its argument"), NULL},
     {"unified", 0, POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("use unified diff format"), NULL},
@@ -70,10 +70,12 @@ struct poptOption coptions[] =
     {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("use least common ancestor as ancestor for merge"), NULL},
     {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
     {"bind", 0, POPT_ARG_STRING, &argstr, OPT_BIND, gettext_noop("address:port to listen on (default :4691)"), NULL},
-    {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from working directory"), NULL},
-    {"unknown", 0, POPT_ARG_NONE, NULL, OPT_UNKNOWN, gettext_noop("perform the operations for unknown files from working directory"), NULL},
+    {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from workspace"), NULL},
+    {"unknown", 0, POPT_ARG_NONE, NULL, OPT_UNKNOWN, gettext_noop("perform the operations for unknown files from workspace"), NULL},
     {"key-to-push", 0, POPT_ARG_STRING, &argstr, OPT_KEY_TO_PUSH, gettext_noop("push the specified key even if it hasn't signed anything"), NULL},
     {"drop-attr", 0, POPT_ARG_STRING, &argstr, OPT_DROP_ATTR, gettext_noop("when rosterifying, drop attrs entries with the given key"), NULL},
+    {"no-files", 0, POPT_ARG_NONE, NULL, OPT_NO_FILES, gettext_noop("exclude files when printing logs"), NULL},
+    {"recursive", 'R', POPT_ARG_NONE, NULL, OPT_RECURSIVE, gettext_noop("also operate on the contents of any listed directories"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -84,6 +86,7 @@ struct poptOption options[] =
 
     {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, gettext_noop("print debug log to stderr while running"), NULL},
     {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, gettext_noop("file to dump debugging log to, on failure"), NULL},
+    {"log", 0, POPT_ARG_STRING, &argstr, OPT_LOG, gettext_noop("file to write the log to"), NULL},
     {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, gettext_noop("suppress log and progress messages"), NULL},
     {"help", 'h', POPT_ARG_NONE, NULL, OPT_HELP, gettext_noop("display help message"), NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, gettext_noop("print version number, then exit"), NULL},
@@ -95,7 +98,7 @@ struct poptOption options[] =
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, gettext_noop("load extra rc file"), NULL},
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, gettext_noop("set key for signatures"), NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, gettext_noop("set name of database"), NULL},
-    {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, gettext_noop("limit search for working copy to specified root"), NULL},
+    {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, gettext_noop("limit search for workspace to specified root"), NULL},
     {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, gettext_noop("verbose completion output"), NULL},
     {"keydir", 0, POPT_ARG_STRING, &argstr, OPT_KEY_DIR, gettext_noop("set location of key store"), NULL},
     {"confdir", 0, POPT_ARG_STRING, &argstr, OPT_CONF_DIR, gettext_noop("set location of configuration directory"), NULL},
@@ -275,6 +278,8 @@ cpp_main(int argc, char ** argv)
   save_initial_path();
   utf8_argv uv(argc, argv);
 
+  string prog_name(uv.argv[0]);
+
   // prepare for arg parsing
 
   cleanup_ptr<poptContext, void> 
@@ -296,6 +301,8 @@ cpp_main(int argc, char ** argv)
   try
     {
       app_state app;
+
+      app.prog_name = prog_name;
 
       while ((opt = poptGetNextOpt(ctx())) > 0)
         {
@@ -330,6 +337,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_DUMP:
               global_sanity.filename = system_path(argstr);
+              break;
+
+            case OPT_LOG:
+              ui.redirect_log_to(system_path(argstr));
               break;
 
             case OPT_DB_NAME:
@@ -420,8 +431,8 @@ cpp_main(int argc, char ** argv)
               app.diffs = true;
               break;
 
-            case OPT_MERGES:
-              app.merges = true;
+            case OPT_NO_MERGES:
+              app.no_merges = true;
               break;
 
             case OPT_SET_DEFAULT:
@@ -519,6 +530,14 @@ cpp_main(int argc, char ** argv)
               app.attrs_to_drop.insert(string(argstr));
               break;
 
+            case OPT_NO_FILES:
+              app.no_files = true;
+              break;
+
+            case OPT_RECURSIVE:
+              app.set_recursive();
+              break;
+
             case OPT_HELP:
             default:
               requested_help = true;
@@ -547,11 +566,14 @@ cpp_main(int argc, char ** argv)
           throw usage(cmd);     // cmd may be empty, and that's fine.
         }
 
-      // at this point we allow a working copy (meaning search for it
-      // and if found read MT/options) but don't require it. certain
-      // commands may subsequently require a working copy or fail
+      // at this point we allow a workspace (meaning search for it
+      // and if found read MT/options, but don't use the data quite
+      // yet, and read all the monotonercs).  Processing the data
+      // from MT/options happens later.
+      // Certain commands may subsequently require a workspace or fail
+      // if we didn't find one at this point.
 
-      app.allow_working_copy();
+      app.allow_workspace();
 
       // main options processed, now invoke the 
       // sub-command w/ remaining args
@@ -603,7 +625,8 @@ cpp_main(int argc, char ** argv)
       if (count != 0)
         {
           ostringstream sstr;
-          sstr << F("Options specific to 'monotone %s':") % u.which;
+          sstr << F("Options specific to '%s %s':") 
+            % prog_name % u.which;
           options[0].descrip = strdup(sstr.str().c_str());
 
           options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;

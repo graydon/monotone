@@ -1,3 +1,4 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // copyright (C) 2005 nathaniel smith <njs@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -13,12 +14,127 @@
 bool
 roster_merge_result::is_clean()
 {
+  return is_clean_except_for_content()
+    && file_content_conflicts.empty();
+}
+
+bool
+roster_merge_result::is_clean_except_for_content()
+{
   return node_name_conflicts.empty()
-    && file_content_conflicts.empty()
     && node_attr_conflicts.empty()
     && orphaned_node_conflicts.empty()
     && rename_target_conflicts.empty()
-    && directory_loop_conflicts.empty();
+    && directory_loop_conflicts.empty()
+    && illegal_name_conflicts.empty()
+    && !missing_root_dir;
+}
+
+void
+roster_merge_result::log_conflicts()
+{
+  L(FL("unclean roster_merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
+       "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
+    % node_name_conflicts.size()
+    % file_content_conflicts.size()
+    % node_attr_conflicts.size()
+    % orphaned_node_conflicts.size()
+    % rename_target_conflicts.size()
+    % directory_loop_conflicts.size());
+  
+  for (size_t i = 0; i < node_name_conflicts.size(); ++i)
+    L(FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
+      % node_name_conflicts[i].nid 
+      % node_name_conflicts[i].left.first 
+      % node_name_conflicts[i].left.second
+      % node_name_conflicts[i].right.first 
+      % node_name_conflicts[i].right.second);
+  
+  for (size_t i = 0; i < file_content_conflicts.size(); ++i)
+    L(FL("content conflict on node %d: [%s] vs. [%s]\n") 
+      % file_content_conflicts[i].nid
+      % file_content_conflicts[i].left
+      % file_content_conflicts[i].right);
+  
+  for (size_t i = 0; i < node_attr_conflicts.size(); ++i)
+    L(FL("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
+      % node_attr_conflicts[i].nid
+      % node_attr_conflicts[i].key
+      % node_attr_conflicts[i].left.first
+      % node_attr_conflicts[i].left.second
+      % node_attr_conflicts[i].right.first
+      % node_attr_conflicts[i].right.second);
+  
+  for (size_t i = 0; i < orphaned_node_conflicts.size(); ++i)
+    L(FL("orphaned node conflict on node %d, dead parent %d, name %s")
+      % orphaned_node_conflicts[i].nid
+      % orphaned_node_conflicts[i].parent_name.first
+      % orphaned_node_conflicts[i].parent_name.second);
+  
+  for (size_t i = 0; i < rename_target_conflicts.size(); ++i)
+    L(FL("rename target conflict: nodes %d, %d, both want parent %d, name %s")
+      % rename_target_conflicts[i].nid1
+      % rename_target_conflicts[i].nid2
+      % rename_target_conflicts[i].parent_name.first
+      % rename_target_conflicts[i].parent_name.second);
+  
+  for (size_t i = 0; i < directory_loop_conflicts.size(); ++i)
+    L(FL("directory loop conflict: node %d, wanted parent %d, name %s")
+      % directory_loop_conflicts[i].nid
+      % directory_loop_conflicts[i].parent_name.first
+      % directory_loop_conflicts[i].parent_name.second);
+
+  for (size_t i = 0; i < illegal_name_conflicts.size(); ++i)
+    L(FL("illegal name conflict: node %d, wanted parent %d, name %s")
+      % illegal_name_conflicts[i].nid
+      % illegal_name_conflicts[i].parent_name.first
+      % illegal_name_conflicts[i].parent_name.second);
+}
+
+void
+roster_merge_result::warn_non_content_conflicts()
+{
+  for (size_t i = 0; i < node_name_conflicts.size(); ++i)
+    W(F("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
+      % node_name_conflicts[i].nid 
+      % node_name_conflicts[i].left.first 
+      % node_name_conflicts[i].left.second
+      % node_name_conflicts[i].right.first 
+      % node_name_conflicts[i].right.second);
+  
+  for (size_t i = 0; i < node_attr_conflicts.size(); ++i)
+    W(F("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
+      % node_attr_conflicts[i].nid
+      % node_attr_conflicts[i].key
+      % node_attr_conflicts[i].left.first
+      % node_attr_conflicts[i].left.second
+      % node_attr_conflicts[i].right.first
+      % node_attr_conflicts[i].right.second);
+  
+  for (size_t i = 0; i < orphaned_node_conflicts.size(); ++i)
+    W(F("orphaned node conflict on node %d, dead parent %d, name %s")
+      % orphaned_node_conflicts[i].nid
+      % orphaned_node_conflicts[i].parent_name.first
+      % orphaned_node_conflicts[i].parent_name.second);
+  
+  for (size_t i = 0; i < rename_target_conflicts.size(); ++i)
+    W(F("rename target conflict: nodes %d, %d, both want parent %d, name %s")
+      % rename_target_conflicts[i].nid1
+      % rename_target_conflicts[i].nid2
+      % rename_target_conflicts[i].parent_name.first
+      % rename_target_conflicts[i].parent_name.second);
+  
+  for (size_t i = 0; i < directory_loop_conflicts.size(); ++i)
+    W(F("directory loop conflict: node %d, wanted parent %d, name %s")
+      % directory_loop_conflicts[i].nid
+      % directory_loop_conflicts[i].parent_name.first
+      % directory_loop_conflicts[i].parent_name.second);
+
+  for (size_t i = 0; i < illegal_name_conflicts.size(); ++i)
+    W(F("illegal name conflict: node %d, wanted parent %d, name %s")
+      % illegal_name_conflicts[i].nid
+      % illegal_name_conflicts[i].parent_name.first
+      % illegal_name_conflicts[i].parent_name.second);
 }
 
 void
@@ -30,6 +146,8 @@ roster_merge_result::clear()
   orphaned_node_conflicts.clear();
   rename_target_conflicts.clear();
   directory_loop_conflicts.clear();
+  illegal_name_conflicts.clear();
+  missing_root_dir = false;
   roster = roster_t();
 }
 
@@ -67,6 +185,10 @@ namespace
         result = left;
         return true;
       }
+    MM(left_marks);
+    MM(left_uncommon_ancestors);
+    MM(right_marks);
+    MM(right_uncommon_ancestors);
     bool left_wins = a_wins(right_marks, right_uncommon_ancestors);
     bool right_wins = a_wins(left_marks, left_uncommon_ancestors);
     // two bools means 4 cases:
@@ -108,11 +230,11 @@ namespace
   
   inline void
   insert_if_unborn(node_t const & n,
-                   marking_map const & marking,
+                   marking_map const & markings,
                    std::set<revision_id> const & uncommon_ancestors,
                    roster_t & new_roster)
   {
-    revision_id const & birth = safe_get(marking, n->self).birth_revision;
+    revision_id const & birth = safe_get(markings, n->self).birth_revision;
     if (uncommon_ancestors.find(birth) != uncommon_ancestors.end())
       create_node_for(n, new_roster);
   }
@@ -227,19 +349,18 @@ namespace
 
 void
 roster_merge(roster_t const & left_parent,
-             marking_map const & left_marking,
+             marking_map const & left_markings,
              std::set<revision_id> const & left_uncommon_ancestors,
              roster_t const & right_parent,
-             marking_map const & right_marking,
+             marking_map const & right_markings,
              std::set<revision_id> const & right_uncommon_ancestors,
              roster_merge_result & result)
 {
-
   result.clear();
   MM(left_parent);
-  MM(left_marking);
+  MM(left_markings);
   MM(right_parent);
-  MM(right_marking);
+  MM(right_markings);
   MM(result.roster);
   
   // First handle lifecycles, by die-die-die merge -- our result will contain
@@ -256,13 +377,13 @@ roster_merge(roster_t const & left_parent,
 
           case parallel::in_left:
             insert_if_unborn(i.left_data(),
-                             left_marking, left_uncommon_ancestors,
+                             left_markings, left_uncommon_ancestors,
                              result.roster);
             break;
 
           case parallel::in_right:
             insert_if_unborn(i.right_data(),
-                             right_marking, right_uncommon_ancestors,
+                             right_markings, right_uncommon_ancestors,
                              result.roster);
             break;
 
@@ -279,8 +400,8 @@ roster_merge(roster_t const & left_parent,
     node_map::const_iterator left_i, right_i;
     parallel::iter<node_map> i(left_parent.all_nodes(), right_parent.all_nodes());
     node_map::const_iterator new_i = result.roster.all_nodes().begin();
-    marking_map::const_iterator left_mi = left_marking.begin();
-    marking_map::const_iterator right_mi = right_marking.begin();
+    marking_map::const_iterator left_mi = left_markings.begin();
+    marking_map::const_iterator right_mi = right_markings.begin();
     while (i.next())
       {
         switch (i.state())
@@ -424,11 +545,207 @@ roster_merge(roster_t const & left_parent,
             break;
           }
       }
-    I(left_mi == left_marking.end());
-    I(right_mi == right_marking.end());
+    I(left_mi == left_markings.end());
+    I(right_mi == right_markings.end());
     I(new_i == result.roster.all_nodes().end());
   }
 
-  // FIXME: looped nodes here
+  // now check for the possible global problems
+  if (!result.roster.has_root())
+    result.missing_root_dir = true;
+  else
+    {
+      // we can't have an illegal MT dir unless we have a root node in the
+      // first place...
+      split_path bookkeeping_root_split;
+      bookkeeping_root_split.push_back(the_null_component);
+      bookkeeping_root_split.push_back(bookkeeping_root_component);
+      if (result.roster.has_node(bookkeeping_root_split))
+        {
+          illegal_name_conflict conflict;
+          node_t n = result.roster.get_node(bookkeeping_root_split);
+          conflict.nid = n->self;
+          conflict.parent_name.first = n->parent;
+          conflict.parent_name.second = n->name;
+          I(n->name == bookkeeping_root_component);
+          I(n->self == result.roster.detach_node(bookkeeping_root_split));
+          result.illegal_name_conflicts.push_back(conflict);
+        }
+    }
 }
 
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+
+// cases for testing:
+// 
+// lifecycle, file and dir
+//    alive in both
+//    alive in one and unborn in other (left vs. right)
+//    alive in one and dead in other (left vs. right)
+// 
+// mark merge:
+//   same in both, same mark
+//   same in both, diff marks
+//   different, left wins with 1 mark
+//   different, right wins with 1 mark
+//   different, conflict with 1 mark
+//   different, left wins with 2 marks
+//   different, right wins with 2 marks
+//   different, conflict with 1 mark winning, 1 mark losing
+//   different, conflict with 2 marks both conflicting
+//
+// for:
+//   node name, name and parent, file and dir
+//   file content
+//   node attr, file and dir
+//
+// attr lifecycle:
+//   seen in both -->mark merge cases, above
+//   live in one and unseen in other -->live
+//   dead in one and unseen in other -->dead
+//
+// two diff nodes with same name
+// directory loops
+// orphans
+// name collision on root dir
+// illegal node ("MT")
+// missing root dir
+//
+// interactions:
+//   in-node name conflict + possible between-node name conflict
+//   in-node name conflict + both possible names orphaned
+//   in-node name conflict + directory loop conflict
+//   in-node name conflict + one name illegal
+//   between-node name conflict + both nodes orphaned
+//   between-node name conflict + both nodes cause loop
+//   between-node name conflict + both nodes illegal
+
+// to run roster_merge, need roster, marking, birth revs, and uncommon
+// ancestors for each side...
+
+namespace
+{
+  const revision_id a_uncommon1 = revision_id(std::string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  const revision_id a_uncommon2 = revision_id(std::string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+  const revision_id b_uncommon1 = revision_id(std::string("cccccccccccccccccccccccccccccccccccccccc"));
+  const revision_id b_uncommon2 = revision_id(std::string("dddddddddddddddddddddddddddddddddddddddd"));
+  const revision_id common1 = revision_id(std::string("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"));
+  const revision_id common2 = revision_id(std::string("ffffffffffffffffffffffffffffffffffffffff"));
+
+  const file_id fid1 = file_id(std::string("1111111111111111111111111111111111111111"));
+  const file_id fid2 = file_id(std::string("2222222222222222222222222222222222222222"));
+
+  split_path
+  split(std::string const & s)
+  {
+    split_path sp;
+    file_path_internal(s).split(sp);
+    return sp;
+  }
+}
+
+static void
+make_dir(roster_t & r, marking_map & markings,
+         revision_id const & birth_rid, revision_id const & parent_name_rid,
+         std::string const & name, node_id nid)
+{
+  r.create_dir_node(nid);
+  r.attach_node(nid, split(name));
+  marking_t marking;
+  marking.birth_revision = birth_rid;
+  marking.parent_name.insert(parent_name_rid);
+  safe_insert(markings, std::make_pair(nid, marking));
+}
+
+static void
+make_file(roster_t & r, marking_map & markings,
+          revision_id const & birth_rid, revision_id const & parent_name_rid,
+          revision_id const & file_content_rid,
+          std::string const & name, file_id const & content,
+          node_id nid)
+{
+  r.create_file_node(content, nid);
+  r.attach_node(nid, split(name));
+  marking_t marking;
+  marking.birth_revision = birth_rid;
+  marking.parent_name.insert(parent_name_rid);
+  marking.file_content.insert(file_content_rid);
+  safe_insert(markings, std::make_pair(nid, marking));
+}
+
+static void
+make_lifecycle_objs(roster_t & r, marking_map & markings, revision_id uncommon,
+                    std::string const & name, node_id common_dir_nid, node_id common_file_nid,
+                    node_id & safe_dir_nid, node_id & safe_file_nid, node_id_source & nis)
+{
+  make_dir(r, markings, common1, common1, "common_old_dir", common_dir_nid);
+  make_file(r, markings, common1, common1, common1, "common_old_file", fid1, common_file_nid);
+  safe_dir_nid = nis.next();
+  make_dir(r, markings, uncommon, uncommon, name + "_safe_dir", safe_dir_nid);
+  safe_file_nid = nis.next();
+  make_file(r, markings, uncommon, uncommon, uncommon, name + "_safe_file", fid1, safe_file_nid);
+  make_dir(r, markings, common1, common1, name + "_dead_dir", nis.next());
+  make_file(r, markings, common1, common1, common1, name + "_dead_file", fid1, nis.next());
+}
+
+
+static void
+test_roster_merge_node_lifecycle()
+{
+  roster_t a_roster, b_roster;
+  marking_map a_markings, b_markings;
+  std::set<revision_id> a_uncommon, b_uncommon;
+  // boilerplate to get uncommon revision sets...
+  a_uncommon.insert(a_uncommon1);
+  a_uncommon.insert(a_uncommon2);
+  b_uncommon.insert(b_uncommon1);
+  b_uncommon.insert(b_uncommon2);
+  testing_node_id_source nis;
+  // boilerplate to set up a root node...
+  {
+    node_id root_nid = nis.next();
+    make_dir(a_roster, a_markings, common1, common1, "", root_nid);
+    make_dir(b_roster, b_markings, common1, common1, "", root_nid);
+  }
+  // create some nodes on each side
+  node_id common_dir_nid = nis.next();
+  node_id common_file_nid = nis.next();
+  node_id a_safe_dir_nid, a_safe_file_nid, b_safe_dir_nid, b_safe_file_nid;
+  make_lifecycle_objs(a_roster, a_markings, a_uncommon1, "a", common_dir_nid, common_file_nid,
+                      a_safe_dir_nid, a_safe_file_nid, nis);
+  make_lifecycle_objs(b_roster, b_markings, b_uncommon1, "b", common_dir_nid, common_file_nid,
+                      b_safe_dir_nid, b_safe_file_nid, nis);
+  // do the merge
+  roster_merge_result result;
+  roster_merge(a_roster, a_markings, a_uncommon, b_roster, b_markings, b_uncommon, result);
+  I(result.is_clean());
+  // 7 = 1 root + 2 common + 2 safe a + 2 safe b
+  I(result.roster.all_nodes().size() == 7);
+  // check that they're the right ones...
+  I(shallow_equal(result.roster.get_node(common_dir_nid),
+                  a_roster.get_node(common_dir_nid), false));
+  I(shallow_equal(result.roster.get_node(common_file_nid),
+                  a_roster.get_node(common_file_nid), false));
+  I(shallow_equal(result.roster.get_node(common_dir_nid),
+                  b_roster.get_node(common_dir_nid), false));
+  I(shallow_equal(result.roster.get_node(common_file_nid),
+                  b_roster.get_node(common_file_nid), false));
+  I(shallow_equal(result.roster.get_node(a_safe_dir_nid),
+                  a_roster.get_node(a_safe_dir_nid), false));
+  I(shallow_equal(result.roster.get_node(a_safe_file_nid),
+                  a_roster.get_node(a_safe_file_nid), false));
+  I(shallow_equal(result.roster.get_node(b_safe_dir_nid),
+                  b_roster.get_node(b_safe_dir_nid), false));
+  I(shallow_equal(result.roster.get_node(b_safe_file_nid),
+                  b_roster.get_node(b_safe_file_nid), false));
+}
+
+void
+add_roster_merge_tests(test_suite * suite)
+{
+  I(suite);
+  suite->add(BOOST_TEST_CASE(&test_roster_merge_node_lifecycle));
+}
+
+#endif // BUILD_UNIT_TESTS

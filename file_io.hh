@@ -72,7 +72,7 @@ void read_localized_data(file_path const & path,
                          data & dat, 
                          lua_hooks & lua);
 
-void read_directory(system_path const & path,
+void read_directory(any_path const & path,
                     std::vector<utf8> & files,
                     std::vector<utf8> & dirs);
 
@@ -82,8 +82,8 @@ void read_data_for_command_line(utf8 const & path, data & dat);
 // These are not any_path's because we make our write somewhat atomic -- we
 // first write to a temp file in MT/ (and it must be in MT/, not like /tmp or
 // something, because we can't necessarily atomic rename from /tmp to the
-// working copy).  But that means we can't use it in general, only for the
-// working copy.
+// workspace).  But that means we can't use it in general, only for the
+// workspace.
 void write_data(file_path const & path, data const & data);
 void write_data(bookkeeping_path const & path, data const & data);
 void write_localized_data(file_path const & path, 
@@ -101,6 +101,7 @@ void write_data(system_path const & path,
 class tree_walker
 {
 public:
+  // returns true if the directory should be descended into
   virtual void visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path) = 0;
   virtual ~tree_walker();

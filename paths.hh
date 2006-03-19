@@ -23,7 +23,7 @@
 //      always absolute.  when constructed from a string, it interprets the
 //      string as being relative to the directory that monotone was run in.
 //      (note that this may be different from monotone's current directory, as
-//      when run in working copy monotone chdir's to the project root.)
+//      when run in workspace monotone chdir's to the project root.)
 //
 //      one can also construct a system_path from one of the below two types
 //      of paths.  this is intelligent, in that it knows that these sorts of
@@ -46,16 +46,16 @@
 //        file_path_external: use this for strings that come from the user.
 //          these strings are normalized before being checked, and if there is
 //          a problem trigger N() invariants rather than I() invariants.  if in 
-//          a working directory, such strings are interpreted as being 
+//          a workspace, such strings are interpreted as being 
 //          _relative to the user's original directory_.  
-//          if not in a working copy, strings are treated as referring to some 
+//          if not in a workspace, strings are treated as referring to some 
 //          database object directly.
 //      file_path's also provide optimized splitting and joining
 //      functionality.
 //
 //   -- bookkeeping_path
 //      this is a path representing something in the MT/ directory of a
-//      working copy.  it has the same format restrictions as a file_path,
+//      workspace.  it has the same format restrictions as a file_path,
 //      except instead of being forbidden to point into the MT directory, it
 //      is _required_ to point into the MT directory.  the one constructor is
 //      strict, and analogous to file_path_internal.  however, the normal way
@@ -115,7 +115,7 @@ null_name(path_component pc)
   return pc == the_null_component;
 }
 
-void dump(split_path const & sp, std::string & out);
+template <> void dump(split_path const & sp, std::string & out);
 
 // It's possible this will become a proper virtual interface in the future,
 // but since the implementation is exactly the same in all cases, there isn't
@@ -169,7 +169,7 @@ private:
   //   -- are converted to internal syntax (/ rather than \, etc.)
   //   -- normalized
   //   -- assumed to be relative to the user's cwd, and munged
-  //      to become relative to root of the working copy instead
+  //      to become relative to root of the workspace instead
   // both types of paths:
   //   -- are confirmed to be normalized and relative
   //   -- not to be in MT/
@@ -207,6 +207,7 @@ public:
 };
 
 extern bookkeeping_path const bookkeeping_root;
+extern path_component const bookkeeping_root_component;
 
 // this will always be an absolute path
 class system_path : public any_path
@@ -215,17 +216,17 @@ public:
   system_path() {};
   system_path(system_path const & other) : any_path(other) {};
   // the optional argument takes some explanation.  this constructor takes a
-  // path relative to the working copy root.  the question is how to interpret
-  // that path -- since it's possible to have multiple working copies over the
+  // path relative to the workspace root.  the question is how to interpret
+  // that path -- since it's possible to have multiple workspaces over the
   // course of a the program's execution (e.g., if someone runs 'checkout'
-  // while already in a working copy).  if 'true' is passed (the default),
-  // then monotone will trigger an invariant if the working copy changes after
+  // while already in a workspace).  if 'true' is passed (the default),
+  // then monotone will trigger an invariant if the workspace changes after
   // we have already interpreted the path relative to some other working
   // copy.  if 'false' is passed, then the path is taken to be relative to
-  // whatever the current working copy is, and will continue to reference it
-  // even if the working copy later changes.
+  // whatever the current workspace is, and will continue to reference it
+  // even if the workspace later changes.
   explicit system_path(any_path const & other,
-                       bool in_true_working_copy = true);
+                       bool in_true_workspace = true);
   // this path can contain anything, and it will be absolutified and
   // tilde-expanded.  it will considered to be relative to the directory
   // monotone started in.  it should be in utf8.
@@ -234,19 +235,22 @@ public:
   system_path operator /(std::string const & to_append) const;
 };
 
+void
+dirname_basename(split_path const & sp,
+                 split_path & dirname, path_component & basename);
 
 void
 save_initial_path();
 
-// returns true if working copy found, in which case cwd has been changed
-// returns false if working copy not found
+// returns true if workspace found, in which case cwd has been changed
+// returns false if workspace not found
 bool
-find_and_go_to_working_copy(system_path const & search_root);
+find_and_go_to_workspace(system_path const & search_root);
 
 // this is like change_current_working_dir, but also initializes the various
 // root paths that are needed to interpret paths
 void
-go_to_working_copy(system_path const & new_working_copy);
+go_to_workspace(system_path const & new_workspace);
 
 typedef std::set<split_path> path_set;
 

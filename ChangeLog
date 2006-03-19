@@ -1,3 +1,1083 @@
+2006-03-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* automate.cc (automate_inventory): Add an MM().
+
+	* Makefile.am: Copy figures/ into two places for html target, and
+	don't attempt to copy std_hooks.lua over itself if we're building
+	in the src dir.
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (html): For the html target, figures/ and
+	std_hooks.lua should always be copied.  Making it conditional
+	should only be done for the monotone.html target.
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (monotone.html, html): Only copy figures/ and
+	std_hooks.lua if the builder is in a separate build directory.
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_netsync_notes.at: Enhance the test by checking that a
+	netsync where no data is written to the database won't trigger
+	the note_netsync* hooks.
+
+2006-03-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Fix a couple of cases where documentation was
+	failing to build.  If you're building outside of the source dir we
+	need to copy figures/ and std_hooks.lua into the build dir.
+
+	* win32/monotone.iss: Include zlib1.dll in installer package.
+
+	* tests/t_empty_env.at: Copy zlib1.dll into the current directory
+	like we have to for libiconv-2.dll.  While here, add a check for
+	LD_LIBRARY_PATH and cause the test to be skipped if it is set.
+
+	* tests/t_netsync_notes.at: Canonicalise output in a few places so
+	that the test passes on CRLF platforms.
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* netsync.cc (session): Only call the note_netsync hooks if
+	something has been written to the database.  The reason is that
+	if those hooks are called from a server process and those hooks
+	are used to update another database (say, for viewmtn), it means
+	another run will be done with monotone to pull from the server,
+	which would trigger another call to the hooks, which would cause
+	another pull, which would cause those hooks to be called again,
+	...
+
+2006-03-17  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_netsync_notes.at: New test to check that the
+	note_netsync hooks work as they should.
+	* testsuite.at: Add the above test as well as the following
+	useful macros.
+	(BASE_MANIFEST): Gives the manifest identity of the base
+	revision.
+	(WORKING_MANIFEST): Gives the manifest identity of the workspace.
+	(CERTVALUE): Picks out the value of a specific cert from a given
+	revision.
+	(DATA): Like AT_DATA, but allows environment variables to be
+	expanded in the resulting file.
+	(NETSYNC_SETUP_WITH_NOTES): A variant of NETSYNC_SETUP that adds
+	note_netsync hooks.
+
+2006-03-17  Richard Levitte  <richard@levitte.org>
+
+	* lua.cc, lua.hh (lua::hookshook_note_netsync_revision_received,
+	lua::hookshook_note_netsync_cert_received,
+	lua::hookshook_note_netsync_pubkey_received): Change them so nonce
+	comes last.  It means that hooks written for the older inteface
+	(the once without nonce) will work transparently.
+	* monotone.texi (Hooks): Change the docs accordingly.
+	* netsync.cc (session::~session): Change the calls accordingly.
+
+2006-03-17  Richard Levitte  <richard@levitte.org>
+
+	There are times when it is good to be able to prepare for a
+	bunch of calls to note_netsync* hooks, as well as to know when
+	there are not more such calls to be expected.  To that end, I've
+	added note_netsync_start and note_netsync_end, and changed the
+	others to take the exact same nonce as those two.  The purpose
+	of the nonce is to differentiate between different runs, if they
+	ever would run in parallel.
+
+	* lua.cc, lua.hh (lua_hooks::hook_note_netsync_start,
+	lua_hooks::hook_note_netsync_end): Added methods.
+	(lua_hooks::hook_note_netsync_revision_received,
+	lua_hooks::hook_note_netsync_pubkey_received,
+	lua_hooks::hook_note_netsync_cert_received): Modified to take a
+	nonce.
+	* monotone.texi (Hooks): Documented.
+	* netsync.cc (session::~session): Modified to call
+	app.lua.hook_note_netsync_start and app.lua.hook_note_netsync_end
+	as well as the others with the nonce argument.
+
+2006-03-16  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (log): Don't include <sys/time.h>, my mistake.
+
+2006-03-16  Richard Levitte  <richard@levitte.org>
+
+	* revision.cc (construct_revisions_from_ancestry): Linguistics:
+	Close a parenthesis.
+	* po/sv.po: Translation update.
+
+2006-03-15  Richard Levitte  <richard@levitte.org>
+
+	* diff_patch.cc (unidiff_hunk_writer::advance_to,
+	cxtdiff_hunk_writer::advance_to): Because ctx is a size_t, make
+	everything dealing with it a size_t as well.  Keeps the compiler
+	quiet...
+
+2006-03-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (db::load), schema.sql: PRAGMA page_size=8192
+
+2006-03-13  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_serve_ignores_mt_options.at: New test to check that
+	'monotone serve' really ignores the contents of an available
+	MT/options.
+	* testsuite.at: Use it.
+
+2006-03-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc (session::maybe_note_epochs_finished): only begin the
+	other refinements if we're the client, as per the comment in refiner.cc
+
+2006-03-14  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (construct_revisions_from_ancestry): Now with 17%
+	more helpfulness.
+
+2006-03-12  Richard Levitte  <richard@levitte.org>
+
+	Some of the monotone commands don't really need to use the data
+	in MT/options.  As a matter of fact, it's even a really bad idea
+	for some command, for example 'monotone serve'.  We must still
+	check for the MT directory and read whatever is there, just
+	don't immediately use the data from MT/options.  I've done it by
+	moving the code that processes the data from MT/options in
+	app_state::allow_workspace to another method, which is then used
+	separately.
+
+	* app_state.cc, app_state.hh (app_state::allow_workspace): The
+	code that processes data from MT/options and uses the information
+	is now moved...
+	(app_state::process_options): ... here.
+
+	* commands.cc (struct command, commands::process, CMD, CMT_NO_MT):
+	Add a per-command flag that says if the particular command needs
+	to bother with the workspace options or not.  CMD_NO_MT is a new
+	macro to help define commands that don't.
+	(CMD(serve)): Change into...
+	(CMD_NO_MT(serve)): ... this.
+
+	* monotone.cc (cpp_main): Changed the comment so it matches
+	reality.
+
+2006-03-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_dump_load.at: Don't canonicalise database dump output;
+	there should be no need to do so.
+
+2006-03-12  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Selectors): Remove line noise.
+	Also, add an example for c:.
+	
+	* roster.cc (update_restricted_roster_from_filesystem): Put back
+	hint about drop --missing, revert --missing that was lost in
+	transition to rosters.
+
+2006-03-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Add a second sync_for_stdio test to work around a
+	bug in OS X.
+
+	* testsuite.at: Changes to Perl and Python UNB64_COMMAND
+	invocations to work around some quoting issues broken/revealed in
+	my last change.
+
+2006-03-12  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: log: retrieve changes summary and ancestors only when
+	needed.
+
+2006-03-12  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Small fixes.
+
+2006-03-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc, annotate.cc, xdelta.cc: Fix the signed vs unsigned
+	warnings which have obvious solutions.
+
+	* testsuite.at: Remove eval in UNB64_COMMAND and UNGZ_COMMAND; it
+	breaks testsuite tracing.
+
+	* tests/t_database_check.at, tests/t_rosterify_attrs.at,
+	tests/t_rosterify_rename.at: Use POSIX syntax for tail.
+
+2006-03-12  Richard Levitte  <richard@levitte.org>
+
+	* ChangeLog: Fixup after merge lossage.
+
+2006-03-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* m4/prog_cxx_warnings.m4: Turn on extra warnings (-W) when using
+	GCC.  Also disable 'unused variable' warnings (enabled by -W) for
+	now.  This change only causes 8 new warnings (all of one
+	type--signed vs unsigned) to occur.
+
+	* netxx/peer.cxx, netxx/sockaddr.cxx, netxx/sockaddr.h: Correct
+	the only six cases of type punning that occur (that GCC 4.1 can
+	detect, at least) in C++ code we compile.  It is probably safe to
+	remove -fno-strict-aliasing from CXXFLAGS now.
+
+2006-03-11  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Fixed encoding.
+
+2006-03-10  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Small details to change.
+
+2006-03-10  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* ROADMAP: Remove items that have been done and correct a typo.
+
+	* COPYING: Update FSF address.
+
+	* po/fr.po: Fix up broken msgstrs that were causing msgmerge to
+	choke.
+
+2006-03-09  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Finished almost all untranslated things.  I'm a
+	bit tired...
+
+2006-03-09  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: More translations done.
+
+2006-03-09  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: More translations done.  Started using freedict
+	services.
+
+2006-03-09  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: More translations done.  Some new standard
+	translations added.
+
+2006-03-09  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: More translations done.  Note that I changed the
+	translation "cert" -> "cert" to "cert" -> "certif" because I
+	found a previous translation of the latter kind and liked it
+	better.
+
+2006-03-08  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Translating more untranslated strings.
+
+2006-03-08  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Traduce 2 new strings.
+
+2006-03-08  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.texi: mention merge_into_dir in the pivot_root description.
+
+2006-03-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_sink_has_extra_epochs.at: Er, and also check for branch
+	names rather than revisions in the output of 'ls branches'.
+
+	* tests/t_sink_has_extra_epochs.at: Fix up subtle syntax error.
+
+	* lru_cache.h: Rename some enums to avoid namespace collisions on
+	Win32.
+
+2006-03-08  Joel Rosdahl  <joel@rosdahl.net>
+
+	* po/sv.po: Minor updates.
+
+2006-03-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.texi: Spelling fixes.
+
+2006-03-08  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_disapprove_branch.at: I'm an idiot.
+
+2006-03-08  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_disapprove_branch.at: Actually add.
+
+2006-03-08  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_disapprove_branch.at, testsuite.at: Add a placeholder
+	test for disapprove's broken branch handling; from code
+	inspection, it is obviously broken.  I don't have time to write a
+	real test right now, though, never mind fix it... but at least we
+	have an XFAIL and a comment...
+
+2006-03-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* std_hooks.lua (ignore_file): Fixup after introduction of
+	dir_matches() helper.  Visual SourceSafe stores metadata in named
+	files, not named directories.
+
+2006-03-07  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Started on the untranslated strings.
+
+2006-03-07  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Done all the fuzzy translations I could.
+
+2006-03-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_push_with_upstream_epochs.at: Test that we don't hang on a
+	one-way transfer where the sink has extra epochs.
+	* testsuite.at: call it
+	* tests/t_epoch.at: When we're setting epochs by hand, also try one
+	with an invalid length. It should N(), not I().
+
+2006-03-06  Graydon Hoare  <graydon@pobox.com>
+
+	* lru_cache.hh (LRUCache::insert): Fix memory leak.
+
+2006-03-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_delete_dir.at: Check that drop on a non-empty dir
+	without --recursive doesn't work.
+
+2006-03-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.{cc,hh}, options.hh, monotone.cc: Add a --recursive option.
+	* commands.cc (drop): accept --recursive
+	* work.cc (perform_deletions): obey --recursive
+	* tests/t_delete_dir{,_patch}.at, tests/t_subdir_drop.at:
+	use --recursive, remove XFAIL
+	* tests/t_add_intermediate_MT_path.at: reenable recursive drop section
+
+2006-03-06  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: More translations.
+
+2006-03-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (db set_epoch): N() on the epoch size, so we don't I()
+	on it in database.cc .
+	* netsync.cc (maybe_note_epochs_finished): If we're in source_role,
+	epochs can be finished even if the refiner says we still have some
+	to receive.
+	* refiner.cc (begin_refinement): Add logging.
+
+2006-03-05  Richard Levitte  <richard@levitte.org>
+
+	* po/fr.po: Add a translation guide, partly borrowed from
+	subversion, work on a translation update, partly done.
+	(this is done with Benoît's blessing)
+
+2006-03-05  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (CMD(tag)): "revision version" seems a bit
+	redundant.
+	* po/sv.po: change the translation accordingly.
+
+2006-03-05  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Hooks): Update merge2 and merge3 hook
+	documentation to reflect current reality.
+
+2006-03-05  Graydon Hoare  <graydon@pobox.com>
+
+	* basic_io.{cc,hh}: Change printer to use static string buf.
+	* {automate,cset,revision,roster,work}.cc: Update to match.
+	* xdelta.cc: Minor optimizations.
+
+2006-03-05  Graydon Hoare  <graydon@pobox.com>
+
+	* lru_cache.h: New file.
+	* AUTHORS: Mention Patrick.
+	* Makefile.am: Include file.
+	* basic_io.cc: Change uses of isxdigit, isalnum.
+	* botan/gzip.h: Reduce gzip to level 1.
+	* constants.cc (db_roster_cache_sz): Set to 7.
+	* database.cc: Use lru cache for vcache; add roster cache.
+	* hmac.cc: Instantiate "SHA-160" not "SHA-1" 
+	(corrects lookup miss in botan's algorithm table).
+	* transforms.cc ({encode,decode}_hexenc): Specialize for idlen.	
+
+2006-03-05  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* work.cc: Remove single quotes from the new adding, dropping, and
+	renaming messages to make them consistent with the existing update
+	message.
+
+2006-03-04  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_revert_move_to_renamed_dir.at: new test for bug reported
+	by Thomas Keller
+	* testsuite.at: call it
+
+2006-03-05  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few changes.
+
+2006-03-03  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (checkout): Oops, missed a format string
+	argument...
+
+2006-03-03  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (merge3_xxdiff_cmd): Pass --exit-with-merge-status
+	so as to get a meaningful exit code.
+
+2006-03-03  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Make plain update with multiple heads an
+	Error, not a Naughty.
+	(checkout): If a branch has multiple heads, list candidates, give
+	usage hint, and use Error instead of Naughty.
+
+2006-03-03  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.cc (check_for_missing_additions): new function
+	(remap_paths): make static	
+	(get_base_roster_and_working_cset): call check_for_missing_additions
+	* tests/t_restriction_excludes_parent.at: un-XFAIL
+	
+2006-03-03  Patrick Mauritz <oxygene@studentenbude.ath.cx>
+
+	* commands.cc: remove rdata, certs, fdata and fdelta commands
+	from user interface, and move them to
+	* automate.cc: the automate interface as packet_for_rdata,
+	packets_for_certs, packet_for_fdata, packet_for_fdelta
+	* tests/t_bad_packets.at: adapt for 0.26 and for the changes above
+
+2006-03-02  Derek Scherger  <derek@echologic.com>
+
+	testsuite.at: fix broken include of t_restriction_excludes_parent.at
+
+2006-03-02  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh} (restriction_requires_parent): remove
+	* restrictions.cc (restrict_cset): remove call to
+	restriction_requires_parent
+	* restrictions.hh: remove unused struct
+	* tests/t_persistent_server_keys.at: use unrestricted commit to
+	avoid parent exclusion
+	* tests/t_restriction_with_exclude.at: remove bogus check
+	* tests/t_restrictions.at: work around excluded parents
+	* tests/t_revert_new_project.at: un-XFAIL
+	* tests/t_subdirs.at: work around excluded parents
+	* tests/t_restriction_excludes_parent.at: new XFAIL test for restrictions
+	that exclude required parent dirs
+	* testsuite.at: call it
+
+2006-03-02  Emile Snyder  <emile@alumni.reed.edu>
+
+	add --unknown, when new files exist in new directories, would try
+	to add files multiple times.
+	
+	* commands.cc (CMD(add)): Call perform_additions() with correct
+	new boolean flag val to determine whether it recurses on the paths
+	we hand it.
+	* work.{cc,hh} (perform_additions): Use boolean flag to indicate
+	whether the paths should be treated as a set of starting points
+	for recursively adding entries, or a fixed set of paths.
+	* tests/t_add.at: Test that we are not getting the warning
+	messages when adding new files in new directories.
+
+2006-03-01  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2006-03-01  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: One small translation change.
+
+2006-03-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* transforms.cc: Better use of appropriately typedefed types.
+	* transforms.cc: Don't assume wchar_t is wide enough to hold a
+	UCS-4 character.
+	* transforms.cc, transforms.hh: Add utf8_validate function and
+	some validity unit tests.
+	(system_to_utf8): Check that conversion has resulted in valid
+	UTF-8.
+	* paths.cc (file_path::file_path): Check that path is valid UTF-8.
+
+2006-02-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_mt_ignore.at: Fix test on MinGW/Win32.
+
+2006-02-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(merge)): don't say "misuse" if it's
+	just already merged.
+
+2006-02-27  Benoît Dejean  <benoit@placenet.org>
+
+	* netsync.cc: Fixed string surgery.
+	One more string for i18n.
+
+2006-02-27  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: More translations.
+
+2006-02-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc: more logging
+
+2006-02-27  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Updated translation.
+
+2006-02-26  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (parse_revision): Prepare for the future by giving a
+	more user-friendly error message on unknown format_version
+	strings.
+
+2006-02-27  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Updated translations.
+
+2006-02-26  Nathaniel Smith  <njs@pobox.com>
+
+	* schema_migration.cc (migrate): Provide a little more feedback
+	during migration, so it doesn't look like it's taking minutes and
+	minutes just to "calculate necessary migration steps".
+
+2006-02-26  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Add a new command, merge_into_dir, to allow a project to include an
+	unrelated project as a subdir. Also add a show_conflicts command that
+	performs a dry-run merge and prints conflict counts.
+	* commands.cc: new commands, merge_into_dir and show_conflicts
+	* commands.cc (propagate): remove duplicated code; this now calls
+	merge_into_dir with a dir of '' (the empty string).
+	* monotone.texi: Document the new commands.
+	* tests/t_{merge_into_dir,show_conflicts}.at: Test the new commands.
+	* testsuite.at: Use the new tests.
+	* merge.{cc,hh}: Factor a store_roster_merge_result function out
+	of interactive_merge_and_store.
+
+2006-02-26  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_log_dir.at: new XFAIL test of log restricted to a single
+	directory
+	* testsuite.at: call it
+
+2006-02-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* monotone.cc, app_state.{cc,hh}, ...: print argv[0] when giving
+	usage of commands to run, rather than just "monotone"
+
+2006-02-27  Matt Johnston  <matt@ucc.asn.au>
+
+	* std_hooks.lua (ignore_file, dir_matches): add dir_matches helper
+	to avoid including ignored dirs such as '.svn', since dirs now
+	actually exist.
+
+2006-02-26  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc: Update notes on tests.
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (attach_node): Apparently the tests depend on update
+	clobbering existing non-versioned files... and we don't have a
+	good solution _anyway_, so just go back to clobbering them.
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
+	* cset.cc (root_dir_test, invalid_csets_test): Don't test that
+	root dir stuff fails.  Test that it works.
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (detach_node): Add missing invariant.
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc (roster_merge): Fix strange merge-created
+	problem...
+
+2006-02-25  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (attach_node): This code should use path_exists, not
+	file_exists.
+
+2006-02-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netcmd.cc: Ignore protocol version field on usher_cmd packets. It
+	should now be possible to use an usher to redirect connections based
+	on netsync version.
+	* netcmd.hh: Remove unused netcmd::get_version() and
+	unused/unimplemented netcmd::netcmd(u8 version).
+
+2006-02-24  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (ls_changed): I was a bit overly paranoid about the
+	possibilities with C++ and defined an explicit functor for the set
+	instead of relying on the automatic generation of less<file_path>.
+	Derek Scherger made me realise I was a bit overzealous, and this
+	change removes the explicit functor.
+
+2006-02-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* enumerator.hh: Another GCC 4.1 compile fix.
+
+	* tests/t_log_selectors.at: UnXFAIL.
+
+	* commands.cc (complete): Refactor selector completion to enable
+	return of single or sets of completed revisions.
+	(CMD(log)): Do something sensible with selectors that return
+	multiple revisions.
+
+	* tests/t_log_selectors.at: XFAILed test for bug #15877.
+
+	* testsuite.at: Add it.
+
+	* app_state.cc, app_state.hh, commands.cc, monotone.cc,
+	options.hh: Revert failed UI experiment: reenable logging merges
+	by default and rename --merges back to --no-merges.
+
+	* contrib/color-logs.{conf,sh}, contrib/monotone-notify.pl,
+	contrib/monotone.el, tests/t_log_nofiles_nomerges.at,
+	testsuite.at: Handle --no-merges.
+
+	* monotone.texi: Document --no-merges.
+
+2006-02-23  Matt Johnston  <matt@ucc.asn.au>
+
+	* enumerator.{cc,hh}: avoid transferring deltas on both sides of merge
+	revisions, and prefer deltas to data when both are available.
+	See
+	https://savannah.nongnu.org/bugs/?func=detailitem&item_id=15846
+
+2006-02-21  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (detach_node): This time for sure!
+
+2006-02-21  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (detach_node): Oops, x != y != !(x == y).
+
+2006-02-21  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc: Fixup after merge.
+
+2006-02-21  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (detach_node): Check if we are passed the root dir, and
+	error out if so.
+
+2006-02-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (pid_file): newline-terminate the pid
+
+2006-02-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (server::set_hosts): Erasing the list node that
+	we're iterating on, then trying to go to the next node doesn't
+	work.  Save the iterator, then increment it before erasing the
+	node using the saved value.  No more segfaults.
+
+2006-02-21  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sanity.hh: Work around roster_merge.cc compilation failure with
+	GCC 3.4.
+
+2006-02-20  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc (cpp_main), options.hh, ui.cc (redirect_log_to),
+	ui.hh (struct user_interface): Add --log option, to redirect the
+	log lines to a file.
+
+	* monotone.texi (OPTIONS): Document it.
+
+	* po/sv.po: Translate help for this option to Swedish.
+
+	* testsuite.at, tests/t_log_to_file.at: Test it.
+
+2006-02-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (remove_version): get rid of dangling deltas,
+	don't try to put data or deltas if they already exist.
+	* tests/t_db_kill_rev_locally_2.at: un-XFAIL
+
+2006-02-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Add an ADD_FILE variant that allows use of
+	alternate databases.
+
+	* tests/t_netsync_permissions.at: Missed some cases of the
+	database locking race.
+
+2006-02-19  Nathaniel Smith  <njs@pobox.com>
+
+	* ChangeLog: Fixup after xxdiff lossage.
+
+2006-02-19  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc (make_lifecycle_objs): Fix test bug.
+
+2006-02-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Add a REVERT_TO variant that allows use of
+	alternate databases.
+
+	* tests/t_netsync_permissions.at: Attempt to avoid a database
+	locking race in this test that is causing spurious failures by
+	using the new REVERT_TO variant to cause revert to be performed
+	using the "client" database.
+
+2006-02-19  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (shallow_equal): Publically expose.
+	* roster.cc, roster_merge.cc: Various compile fixes.
+	
+2006-02-19  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.{hh,cc}: Make terminology more consistent.
+	"marking_map" type -> "markings" name, "marking_t" type ->
+	"marking" name.
+	
+2006-02-19  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.{hh,cc} (testing_node_id_source): Make this node source
+	available to unit tests in other files.
+	* roster_merge.cc (test_roster_merge_node_lifecycle): New test.
+	Still quite ugly.
+
+2006-02-18  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc (roster_merge): Remove obsolete FIXME.
+
+2005-10-19  Matthew A. Nicholson  <matt@matt-land.com>
+
+	* contrib/monotone.bash_completion: Update for 0.25.
+	
+2006-02-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* cset.hh (struct editable_tree): Add commit() member function to
+	editable_tree.
+
+	* cset.cc (cset::apply_to): Call editable_tree::commit() after
+	applying any other changes.
+
+	* roster.hh, roster.cc: Empty implementation of
+	editable_roster_base::commit().
+
+	* work.hh, work.cc: Implementation of
+	editable_working_tree::commit() that ensures all detached nodes
+	have been reattached.
+
+	* work.hh (struct editable_working_tree): Add map for tracking
+	path name mappings across node detach operations.
+
+	* work.cc (editable_working_tree::detach_node): Insert path name
+	mappings into map.
+	(editable_working_tree::drop_detached_node,
+	editable_working_tree::attach_node): Report add/drop/rename
+	operations during workspace updates.
+
+	* lua.cc: Use the safer luaL_check* rather than lua_to* in
+	monotone_*_for_lua functions.
+
+2006-02-18  Markus Schiltknecht  <markus@bluegap.ch>
+
+	* tests/t_cvsimport_branch.at, testsuite.at: New XFAIL test for
+	cvs_import branch reconstruction.
+
+2006-02-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_log_nofiles_merges.at: Add test for the log options
+	--no-files and --merges.
+
+	* testsuite.at: Add t_log_nofiles_merges.at.
+
+2006-02-13  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc (log_conflicts): Tweak string.
+	Add list of tests needed.
+
+2006-02-13  Nathaniel Smith  <njs@pobox.com>
+
+	* roster_merge.cc (is_clean): Simplify.
+	(add_roster_merge_tests): 
+	* unit_tests.cc (init_unit_test_suite): 
+	* unit_tests.hh (add_roster_merge_tests): Add unit test
+	boilerplate.
+
+2006-02-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_db_kill_rev_locally_2.at: Add an XFAIL test for a
+	kill_rev_locally bug reported by Daniel Carosone.
+
+	* testsuite.at: Add t_db_kill_rev_locally_2.at.
+
+	* sqlite/parse.h: Regenerated parse.h from pristine SQLite 3.3.4
+	source.  The version committed in the 3.3.4 import had a bunch of
+	duplicate entries.
+
+	* commands.cc (CMD(identify)): This isn't really a "workspace"
+	command--stick it under "debug" for lack of a better place.
+
+	* commands.cc (CMD(refresh_inodeprints)): Check for a valid
+	workspace rather than failing with an invariant when run outside
+	of a workspace.
+
+	* tests/t_revert_new_project.at: Add an XFAIL test for a bug where
+	reverting a file added in a new project will leave the workspace
+	in a bad state until MT/work is removed manually.
+
+	* testsuite.at: Add t_revert_new_project.at.
+
+	* app_state.cc, app_state.hh, commands.cc, monotone.cc,
+	options.hh: Add '--no-files' option to log to allow users to
+	exclude the list of files changed in each revision from the log
+	output.
+
+	* monotone.texi: Document '--no-files', and '--next' and '--diffs'
+	while there.
+
+2006-02-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* lua.cc, lua.hh, monotone.texi, std_hooks.lua, test_hooks.lua,
+	testsuite.at: Remove unused non_blocking_rng_ok hook.
+
+	* sqlite/*: Import SQLite 3.3.4.
+
+2006-02-16  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* netsync.cc (handle_new_connection): Netxx::Address.get_name()
+	returns NULL every now and then. if so, continue with "" instead
+
+	* sqlite/parse.c: move #line under all #include directives so
+	the compiler can't be confused by it.
+
+2006-02-14  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (htmldir): Add variables so monotone.html is created
+	and installed automatically.
+	This is prompted by debian/monotone.html, which indicates
+	monotone.html should be available.
+
+	* netsync.cc (serve_connections): Correct spelling.
+
+2006-02-13  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sanity.cc (sanity::dump_buffer): Fix a SEGV when we're in an
+	error unwind and about to ask the user to mail us the crash
+	log--we must use FL() rather than F() here, since by the time this
+	is called we can't rely on the i18n infrastructure being alive.
+
+2006-02-12  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc (serve_connections): Revert garbage that I
+	accidentally checked in last time...
+
+2006-02-12  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Add things done since last time I did this...
+
+2006-02-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* {cset,paths,revision,roster,sanity,vocab}.{cc,hh}: GCC 4.1
+	compile fixes.
+
+2006-02-11  Richard Levitte  <richard@levitte.org>
+
+	* NEWS: Removed my notice about netsync, as I just noticed it
+	was already mentioned under Bugs:.
+
+2006-02-11  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac, debian/changelog, monotone.spec:
+	* win32/monotone.iss: Bump version to 0.26pre2.
+
+2006-02-11  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Add mention of validate_commit_message.
+
+2006-02-11  Blake Kaplan <mrbkap@gmail.com>
+
+	* monotone.texi (Hooks): Added new subsection about validation
+	hooks, and describe validate_commit_message in it.
+
+	* std_hooks.lua (validate_commit_message): Change the second
+	argument to match the documentation.
+
+2006-02-11  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.hh: increase checkpoint batch size from 100 to 1000
+
+2006-02-11  Matt Johnston  <matt@ucc.asn.au>
+
+	* NEWS: Fix rename example.
+
+2006-02-11  Richard Levitte  <richard@levitte.org>
+
+	* NEWS: Update with the netsync change.
+
+2006-02-11  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Draft for 0.26pre2.
+
+2006-02-11  Richard Levitte  <richard@levitte.org>
+
+	* netsync.cc (serve_connections): Enclose more or less everything
+	in a try-catch block to catch if using IPv6 failed, and to try
+	with just IPv4 in that case.  This is important for those who
+	copy a IPv6-enabled binary to a system that doesn't use IPv6.
+
+	* po/sv.po: Adapt translation to the newly changed messages.
+
+2006-02-10  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_drop_missing.at:
+	* tests/t_rename.at:
+	* work.cc (visit_file): attempt to improve a couple of messages;
+	remove some unrequired \n's
+	
+2006-02-10  Derek Scherger  <derek@echologic.com>
+
+	* netsync.cc (process_anonymous_cmd, process_auth_cmd): don't
+	report misleading permission denied errors for branches that are
+	not being served
+	* paths.cc (find_and_go_to_workspace): delete stale comment
+	* tests/t_netsync_permissions.at: add test pull of branch that is
+	not served
+
+2006-02-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Adding your db is silly and confusing (what should revert do?).
+	So, it's not allowed any more (the db file is ignored, regardless of
+	what the ignore hook says).
+	* tests/t_add_owndb.at: remove XFAIL, use 'ls known' instead of
+	'ls unknown'
+	* testsuite.at: don't put the db in the ignore hook
+	* database.{cc,hh}: is_dbfile(), check if a path is the database file
+	* work.cc: check is_dbfile where we check the ignore hook when
+	walking the filesystem
+	* tests/t_mt_ignore.at: fix for having the db always be ignored
+
+2006-02-10  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Hooks): Change the example for
+	get_revisions_cert_trust to check "branch" certs instead of
+	"ancestor" ones, and thereby match the effect of the "approve"
+	command.
+
+2006-02-10  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(checkout)): wrapping in a transaction makes
+	a big difference.
+
+2006-02-09  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (SQLITE_SOURCES): Remove header files lost in
+	latest SQLite upstream import.
+
+2006-02-09  Graydon Hoare  <graydon@pobox.com>
+
+	* lua.cc (hook_validate_commit_message): make validated the
+	default.
+
+2006-02-09  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_cvsimport.at, tests/t_cvsimport3.at,
+	tests/t_cvsimport_deleted_invar.at,
+	tests/t_cvsimport_manifest_cycle.at, tests/t_cvsimport_samelog.at,
+	tests/t_singlecvs.at: Changed to cope with the strictness of
+	CVSNT.  It doesn't create a CSVROOT/history file automagically,
+	but CVSROOT/modules is created automatically both by the older CVS
+	and by CVSNT.  You can't check out a group of files using revision
+	numbers with CVSNT.  You MUST stand in the work directory for some
+	command with CVSNT.  Finally, with CVSNT, 'cvs init' generates the
+	following message if you're a normal user, at least on Debian:
+
+	cvs init: Unable to register repository.
+	cvs init: Your login may not have sufficient permissions to modify the
+	cvs init: global server settings.
+	cvs init: Repository /home/levitte/cvsfoo initialised
+
+2006-02-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at: Remove duplicate line.
+
+2006-02-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Import SQLite 3.3.3.
+	* Makefile.am: Adjust for new and removed files in import.
+	* NEWS: Make a note of the SQLite database format change.
+	* database.cc (database::load): Rewrite so that we don't need any
+	local changes to SQLite.
+
+2006-02-08  Richard Levitte  <richard@levitte.org>
+
+	* testsuite.at, tests/t_ls_changed.at: News test, for "list
+	changed".
+
+	* monotone.texi, monotone.1: Document "list changed".
+
+	* po/sv.po: Correct translations of changed messages, translate
+	new messages.
+
+	* commands.cc (ls_changed, CMD(list)): Add a new command, "list
+	changed", to list changed files, always sorted in lexical order.
+
+2006-02-06  Blake Kaplan  <mrbkap@gmail.com>
+
+	* commands.cc CMD(commit): Call a new lua hook to validate the commit
+	message. Don't ignore -m "" when it's passed on the command line.
+	* lua.cc, lua.hh: Add a new hook that validates a given commit message
+	and passes in the added files, deleted files, and modified files.
+	* std_hooks.lua: Give a default hook to validate commit messages. This
+	currently disallows empty messages, as monotone currently does.
+
+2006-02-05  Benoît Dejean  <benoit@placenet.org>
+
+	* ui.cc (tick_write_count::write_ticks): Reverted lexical_cast,
+	back to F().
+
+2006-02-05  Benoît Dejean  <benoit@placenet.org>
+
+	* ui.cc (tick_write_count::write_ticks): Fixed utf8 handling.
+	boost::format + locale sucks, it ouputs "1\u+ffff24" for
+	"%d" % 1024.
+
+2006-02-02  Emile Snyder  <emile@alumni.reed.edu>
+
+	* merge.cc (resolve_merge_conflicts): If the merge has non-content
+	conflicts warn the user and abort before making them do content
+	merges.  Move logging/warning of conflicts to methods in the
+	roster_merge_result struct.
+
+	* roster_merge.{cc,hh} (log_conflicts,
+	warn_non_content_conflicts): New methods to do the busy work of
+	logging or warning.
+
+2006-02-02  Emile Snyder  <emile@alumni.reed.edu>
+
+	* netsync.cc (run_netsync_protocol): Print a warning if either the
+	include or the exclude branch pattern have a ' or a " character
+	anywhere in them.  Hopefully will help users running in a Windows
+	shell when they do: monotone sync myserver 'mybranch*' and nothing
+	happens because the ' characters are passed in to monotone.
+	
+2005-01-30  Emile Snyder  <emile@alumni.reed.edu>
+
+	* annotate.cc: (do_annotate) Add ticker for revisions processed to
+	annotate command.
+	
+2006-01-29  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Update a few translations, leave a number of fuzzy
+	ones until we've decided how "workspace" should be translated.
+
+2006-01-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* *: Use the term 'workspace' consistently throughout monotone for
+	the concept we previously described interchangably using the two
+	terms 'working copy' and 'working directory'.  This change has
+	been made everywhere except in historical documentation (NEWS and
+	ChangeLog).
+
 2006-01-27  Richard Levitte  <richard@levitte.org>
 
 	* monotone.texi (Generating Keys): Correct small type, the keys
@@ -304,6 +1384,17 @@
 	* lua.cc (hook_get_key_pair): Remove.
 	* keys.cc (require_password): Adjust accordingly.
 	* cert.cc (priv_key_exists, load_key_pair): Likewise.
+
+2006-01-14  Christof Petig <christof@petig-baender.de>
+
+	* database.cc, database.h: binary transparent infrastructure,
+	store and retrieve former base64 encoded columns as BLOBs
+
+	* schema_migration.cc: unbase64 changed columns, change comment
+	on files.data which indicates a different database format
+
+	* schema.sql: change comment on file which indicates, that
+	files.data is no longer base64 encoded
 
 2006-01-14  Richard Levitte  <richard@levitte.org>
 

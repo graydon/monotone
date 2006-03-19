@@ -1,4 +1,5 @@
 // -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -49,6 +50,7 @@
 #include "merge.hh"
 #include "roster_merge.hh"
 #include "roster.hh"
+
 
 //
 // this file defines the task-oriented "top level" commands which can be
@@ -109,13 +111,16 @@ namespace commands
     string cmdgroup;
     string params;
     string desc;
+    bool use_workspace_options;
     command_opts options;
     command(string const & n,
             string const & g,
             string const & p,
             string const & d,
+            bool u,
             command_opts const & o)
-      : name(n), cmdgroup(g), params(p), desc(d), options(o)
+      : name(n), cmdgroup(g), params(p), desc(d), use_workspace_options(u),
+        options(o)
     { cmds[n] = this; }
     virtual ~command() {}
     virtual void exec(app_state & app, vector<utf8> const & args) = 0;
@@ -245,6 +250,12 @@ namespace commands
     if (cmds.find(cmd) != cmds.end())
       {
         L(FL("executing command '%s'\n") % cmd);
+
+        // at this point we process the data from MT/options if
+        // the command needs it.
+        if (cmds[cmd]->use_workspace_options)
+          app.process_options();
+
         cmds[cmd]->exec(app, args);
         return 0;
       }
@@ -272,7 +283,20 @@ static const no_opts OPT_NONE = no_opts();
 #define CMD(C, group, params, desc, opts)                            \
 struct cmd_ ## C : public command                                    \
 {                                                                    \
-  cmd_ ## C() : command(#C, group, params, desc,                     \
+  cmd_ ## C() : command(#C, group, params, desc, true,               \
+                        command_opts() % opts)                       \
+  {}                                                                 \
+  virtual void exec(app_state & app,                                 \
+                    vector<utf8> const & args);                      \
+};                                                                   \
+static cmd_ ## C C ## _cmd;                                          \
+void cmd_ ## C::exec(app_state & app,                                \
+                     vector<utf8> const & args)                      \
+
+#define CMD_NO_MT(C, group, params, desc, opts)                      \
+struct cmd_ ## C : public command                                    \
+{                                                                    \
+  cmd_ ## C() : command(#C, group, params, desc, false,              \
                         command_opts() % opts)                       \
   {}                                                                 \
   virtual void exec(app_state & app,                                 \
@@ -299,7 +323,7 @@ struct pid_file
       return;
     require_path_is_nonexistent(path, F("pid file '%s' already exists") % path);
     file.open(path.as_external().c_str());
-    file << get_process_id();
+    file << get_process_id() << endl;
     file.flush();
   }
 
@@ -418,9 +442,9 @@ notify_if_multiple_heads(app_state & app) {
     std::string prefixedline;
     prefix_lines_with(_("note: "),
                       _("branch '%s' has multiple heads\n"
-                        "perhaps consider 'monotone merge'"),
+                        "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % app.branch_name);
+    P(i18n_format(prefixedline) % app.branch_name % app.prog_name);
   }
 }
 
@@ -460,10 +484,11 @@ describe_revision(app_state & app, revision_id const & id)
   return description;
 }
 
+
 static void 
 complete(app_state & app, 
          string const & str,
-         revision_id & completion,
+         set<revision_id> & completion,
          bool must_exist=true)
 {
   // This copies the start of selectors::parse_selector().to avoid
@@ -474,10 +499,10 @@ complete(app_state & app,
   if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
       && str.size() == constants::idlen)
     {
-      completion = revision_id(str);
+      completion.insert(revision_id(str));
       if (must_exist)
-        N(app.db.revision_exists(completion),
-          F("no such revision '%s'") % completion);
+        N(app.db.revision_exists(*completion.begin()),
+          F("no such revision '%s'") % *completion.begin());
       return;
     }
 
@@ -493,16 +518,36 @@ complete(app_state & app,
 
   N(completions.size() != 0,
     F("no match for selection '%s'") % str);
+
+  for (set<string>::const_iterator i = completions.begin();
+       i != completions.end(); ++i)
+    {
+      pair<set<revision_id>::const_iterator, bool> p = completion.insert(revision_id(*i));
+      P(F("expanded to '%s'\n") % *(p.first));
+    }
+}
+
+
+static void
+complete(app_state & app, 
+         string const & str,
+         revision_id & completion,
+         bool must_exist=true)
+{
+  set<revision_id> completions;
+
+  complete(app, str, completions, must_exist);
+
   if (completions.size() > 1)
     {
       string err = (F("selection '%s' has multiple ambiguous expansions: \n") % str).str();
-      for (set<string>::const_iterator i = completions.begin();
+      for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        err += (describe_revision(app, revision_id(*i)) + "\n");
+        err += (describe_revision(app, *i) + "\n");
       N(completions.size() == 1, i18n_format(err));
     }
-  completion = revision_id(*(completions.begin()));  
-  P(F("expanded to '%s'\n") %  completion);  
+
+  completion = *completions.begin();
 }
 
 
@@ -1044,7 +1089,7 @@ CMD(trusted, N_("key and cert"), N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]
 }
 
 CMD(tag, N_("review"), N_("REVISION TAGNAME"),
-    N_("put a symbolic tag cert on a revision version"), OPT_NONE)
+    N_("put a symbolic tag cert on a revision"), OPT_NONE)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -1164,13 +1209,13 @@ static void find_unknown_and_ignored (app_state & app, bool want_ignored, vector
                                       path_set & unknown, path_set & ignored);
 
 
-CMD(add, N_("working copy"), N_("[PATH]..."),
-    N_("add files to working copy"), OPT_UNKNOWN)
+CMD(add, N_("workspace"), N_("[PATH]..."),
+    N_("add files to workspace"), OPT_UNKNOWN)
 {
   if (!app.unknown && (args.size() < 1))
     throw usage(name);
 
-  app.require_working_copy();
+  app.require_workspace();
 
   path_set paths;
   if (app.unknown)
@@ -1186,19 +1231,20 @@ CMD(add, N_("working copy"), N_("[PATH]..."),
         paths.insert(sp);
       }
 
-  perform_additions(paths, app);
+  bool add_recursive = !app.unknown; 
+  perform_additions(paths, app, add_recursive);
 }
 
 static void find_missing (app_state & app,
                           vector<utf8> const & args, path_set & missing);
 
-CMD(drop, N_("working copy"), N_("[PATH]..."),
-    N_("drop files from working copy"), OPT_EXECUTE % OPT_MISSING)
+CMD(drop, N_("workspace"), N_("[PATH]..."),
+    N_("drop files from workspace"), OPT_EXECUTE % OPT_MISSING % OPT_RECURSIVE)
 {
   if (!app.missing && (args.size() < 1))
     throw usage(name);
 
-  app.require_working_copy();
+  app.require_workspace();
 
   path_set paths;
   if (app.missing)
@@ -1217,16 +1263,16 @@ CMD(drop, N_("working copy"), N_("[PATH]..."),
 ALIAS(rm, drop);
 
 
-CMD(rename, N_("working copy"), 
+CMD(rename, N_("workspace"), 
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
-    N_("rename entries in the working copy"),
+    N_("rename entries in the workspace"),
     OPT_EXECUTE)
 {
   if (args.size() < 2)
     throw usage(name);
   
-  app.require_working_copy();
+  app.require_workspace();
 
   file_path dst_path = file_path_external(args.back());
 
@@ -1241,6 +1287,23 @@ CMD(rename, N_("working copy"),
 
 ALIAS(mv, rename)
 
+
+CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
+    N_("rename the root directory\n"
+       "after this command, the directory that currently has the name NEW_ROOT\n"
+       "will be the root directory, and the directory that is currently the root\n"
+       "directory will have name PUT_OLD.\n"
+       "Using --execute is strongly recommended."),
+    OPT_EXECUTE)
+{
+  if (args.size() != 2)
+    throw usage(name);
+
+  app.require_workspace();
+  file_path new_root = file_path_external(idx(args, 0));
+  file_path put_old = file_path_external(idx(args, 1));
+  perform_pivot_root(new_root, put_old, app);
+}
 
 // fload and fmerge are simple commands for debugging the line
 // merger.
@@ -1291,14 +1354,14 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
   
 }
 
-CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"),
+CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
     OPT_DEPTH % OPT_EXCLUDE % OPT_BRIEF)
 {
   revision_set rs;
   roster_t old_roster, new_roster;
   data tmp;
 
-  app.require_working_copy();
+  app.require_workspace();
   get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
 
   if (global_sanity.brief)
@@ -1338,7 +1401,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of working copy"
 }
 
 
-CMD(identify, N_("working copy"), N_("[PATH]"),
+CMD(identify, N_("debug"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
     OPT_NONE)
 {
@@ -1370,7 +1433,7 @@ CMD(cat, N_("informative"),
     throw usage(name);
 
   if (app.revision_selectors.size() == 0)
-    app.require_working_copy();
+    app.require_workspace();
 
   transaction_guard guard(app.db, false);
 
@@ -1382,7 +1445,7 @@ CMD(cat, N_("informative"),
   N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
 
   // paths are interpreted as standard external ones when we're in a
-  // working copy, but as project-rooted external ones otherwise
+  // workspace, but as project-rooted external ones otherwise
   file_path fp;
   split_path sp;
   fp = file_path_external(idx(args, 0));
@@ -1417,6 +1480,8 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   // we have a special case for "checkout .", i.e., to current dir
   bool checkout_dot = false;
 
+  transaction_guard guard(app.db, false);
+
   if (args.size() > 1 || app.revision_selectors.size() > 1)
     throw usage(name);
 
@@ -1445,8 +1510,15 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
       N(!app.branch_name().empty(), F("need --branch argument for branch-based checkout"));
       set<revision_id> heads;
       get_branch_heads(app.branch_name(), app, heads);
-      N(heads.size() > 0, F("branch '%s' is empty\n") % app.branch_name);
-      N(heads.size() == 1, F("branch %s has multiple heads") % app.branch_name);
+      N(heads.size() > 0, F("branch '%s' is empty") % app.branch_name);
+      if (heads.size() > 1)
+        {
+          P(F("branch %s has multiple heads:") % app.branch_name);
+          for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+            P(i18n_format("  %s\n") % describe_revision(app, *i));
+          P(F("choose one with '%s checkout -r<id>'") % app.prog_name);
+          E(false, F("branch %s has multiple heads") % app.branch_name);
+        }
       ident = *(heads.begin());
     }
   else if (app.revision_selectors.size() == 1)
@@ -1476,7 +1548,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
         % ident % app.branch_name);
     }
 
-  app.create_working_copy(dir);
+  app.create_workspace(dir);
     
   file_data data;
   roster_t ros;
@@ -1519,6 +1591,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   remove_work_cset();
   update_any_attrs(app);
   maybe_update_inodeprints(app);
+  guard.commit();
 }
 
 ALIAS(co, checkout)
@@ -1649,7 +1722,7 @@ ls_known (app_state & app, vector<utf8> const & args)
   roster_t old_roster, new_roster;
   data tmp;
 
-  app.require_working_copy();
+  app.require_workspace();
 
   path_set paths;
   get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
@@ -1682,7 +1755,7 @@ find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const
 static void
 ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & args)
 {
-  app.require_working_copy();
+  app.require_workspace();
 
   path_set unknown, ignored;
   find_unknown_and_ignored(app, want_ignored, args, unknown, ignored);
@@ -1704,7 +1777,7 @@ find_missing (app_state & app, vector<utf8> const & args, path_set & missing)
   cset included_work, excluded_work;
   path_set old_paths, new_paths;
 
-  app.require_working_copy();
+  app.require_workspace();
   get_base_roster_and_working_cset(app, args, base_rid, base_roster,
                                    old_paths, new_paths,
                                    included_work, excluded_work);
@@ -1736,19 +1809,71 @@ ls_missing (app_state & app, vector<utf8> const & args)
 }
 
 
-CMD(list, N_("informative"), 
+static void
+ls_changed (app_state & app, vector<utf8> const & args)
+{
+  revision_set rs;
+  revision_id rid;
+  roster_t old_roster, new_roster;
+  data tmp;
+  std::set<file_path> files;
+
+  app.require_workspace();
+  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
+
+  I(rs.edges.size() == 1);
+  cset const & cs = edge_changes(rs.edges.begin());
+
+  for (path_set::const_iterator i = cs.nodes_deleted.begin();
+       i != cs.nodes_deleted.end(); ++i)
+    {
+      if (app.restriction_includes(*i))
+        files.insert(file_path(*i));
+    }
+  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+       i != cs.nodes_renamed.end(); ++i)
+    {
+      if (app.restriction_includes(i->first))
+        files.insert(file_path(i->first));
+    }
+  for (path_set::const_iterator i = cs.dirs_added.begin();
+       i != cs.dirs_added.end(); ++i)
+    {
+      if (app.restriction_includes(*i))
+        files.insert(file_path(*i));
+    }
+  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+       i != cs.files_added.end(); ++i)
+    {
+      if (app.restriction_includes(i->first))
+        files.insert(file_path(i->first));
+    }
+  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator
+         i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
+    {
+      if (app.restriction_includes(i->first))
+        files.insert(file_path(i->first));
+    }
+
+  copy(files.begin(), files.end(),
+       ostream_iterator<const file_path>(cout, "\n"));
+}
+
+
+CMD(list, N_("informative"),
     N_("certs ID\n"
-      "keys [PATTERN]\n"
-      "branches\n"
-      "epochs [BRANCH [...]]\n"
-      "tags\n"
-      "vars [DOMAIN]\n"
-      "known\n"
-      "unknown\n"
-      "ignored\n"
-      "missing"),
-    N_("show database objects, or the current working copy manifest,\n"
-      "or unknown, intentionally ignored, or missing state files"),
+       "keys [PATTERN]\n"
+       "branches\n"
+       "epochs [BRANCH [...]]\n"
+       "tags\n"
+       "vars [DOMAIN]\n"
+       "known\n"
+       "unknown\n"
+       "ignored\n"
+       "missing\n"
+       "changed"),
+    N_("show database objects, or the current workspace manifest, or known,\n"
+       "unknown, intentionally ignored, missing, or changed state files"),
     OPT_DEPTH % OPT_EXCLUDE)
 {
   if (args.size() == 0)
@@ -1777,91 +1902,13 @@ CMD(list, N_("informative"),
     ls_unknown_or_ignored(app, true, removed);
   else if (idx(args, 0)() == "missing")
     ls_missing(app, removed);
+  else if (idx(args, 0)() == "changed")
+    ls_changed(app, removed);
   else
     throw usage(name);
 }
 
 ALIAS(ls, list)
-
-CMD(fdelta, N_("packet i/o"), N_("OLDID NEWID"),
-    N_("write file delta packet to stdout"),
-    OPT_NONE)
-{
-  if (args.size() != 2)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  file_id f_old_id, f_new_id;
-  file_data f_old_data, f_new_data;
-
-  complete(app, idx(args, 0)(), f_old_id);
-  complete(app, idx(args, 1)(), f_new_id);
-
-  N(app.db.file_version_exists(f_old_id), F("no such file '%s'") % f_old_id);
-  app.db.get_file_version(f_old_id, f_old_data);
-  N(app.db.file_version_exists(f_new_id), F("no such file '%s'") % f_new_id);
-  app.db.get_file_version(f_new_id, f_new_data);
-  delta del;
-  diff(f_old_data.inner(), f_new_data.inner(), del);
-  pw.consume_file_delta(f_old_id, f_new_id, file_delta(del));  
-}
-
-CMD(rdata, N_("packet i/o"), N_("ID"), N_("write revision data packet to stdout"),
-    OPT_NONE)
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  revision_id r_id;
-  revision_data r_data;
-
-  complete(app, idx(args, 0)(), r_id);
-
-  N(app.db.revision_exists(r_id), F("no such revision '%s'") % r_id);
-  app.db.get_revision(r_id, r_data);
-  pw.consume_revision_data(r_id, r_data);  
-}
-
-
-CMD(fdata, N_("packet i/o"), N_("ID"), N_("write file data packet to stdout"),
-    OPT_NONE)
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  file_id f_id;
-  file_data f_data;
-
-  complete(app, idx(args, 0)(), f_id);
-
-  N(app.db.file_version_exists(f_id), F("no such file '%s'") % f_id);
-  app.db.get_file_version(f_id, f_data);
-  pw.consume_file_data(f_id, f_data);  
-}
-
-
-CMD(certs, N_("packet i/o"), N_("ID"), N_("write cert packets to stdout"),
-    OPT_NONE)
-{
-  if (args.size() != 1)
-    throw usage(name);
-
-  packet_writer pw(cout);
-
-  revision_id r_id;
-  vector< revision<cert> > certs;
-
-  complete(app, idx(args, 0)(), r_id);
-
-  app.db.get_revision_certs(r_id, certs);
-  for (size_t i = 0; i < certs.size(); ++i)
-    pw.consume_revision_cert(idx(certs, i));
-}
 
 CMD(pubkey, N_("packet i/o"), N_("ID"), N_("write public key packet to stdout"),
     OPT_NONE)
@@ -2062,9 +2109,9 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
                        include_pattern, exclude_pattern, app);  
 }
 
-CMD(serve, N_("network"), N_("PATTERN ..."),
-    N_("serve the branches specified by PATTERNs to connecting clients"),
-    OPT_BIND % OPT_PIDFILE % OPT_EXCLUDE)
+CMD_NO_MT(serve, N_("network"), N_("PATTERN ..."),
+          N_("serve the branches specified by PATTERNs to connecting clients"),
+          OPT_BIND % OPT_PIDFILE % OPT_EXCLUDE)
 {
   if (args.size() < 1)
     throw usage(name);
@@ -2147,8 +2194,12 @@ CMD(db, N_("database"),
   else if (args.size() == 3)
     {
       if (idx(args, 0)() == "set_epoch")
-        app.db.set_epoch(cert_value(idx(args, 1)()),
-                         epoch_data(idx(args,2)()));
+        {
+          epoch_data ed(idx(args,2)());
+          N(ed.inner()().size() == constants::epochlen,
+            F("The epoch must be %s characters") % constants::epochlen);
+          app.db.set_epoch(cert_value(idx(args, 1)()), ed);
+        }
       else
         throw usage(name);
     }
@@ -2156,7 +2207,7 @@ CMD(db, N_("database"),
     throw usage(name);
 }
 
-CMD(attr, N_("working copy"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"), 
+CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"), 
     N_("set, get or drop file attributes"),
     OPT_NONE)
 {
@@ -2166,7 +2217,7 @@ CMD(attr, N_("working copy"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PAT
   revision_set rs;
   roster_t old_roster, new_roster;
 
-  app.require_working_copy();
+  app.require_workspace();
   get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster);
   
   file_path path = file_path_external(idx(args,1));
@@ -2258,12 +2309,12 @@ process_commit_message_args(bool & given, string & log_message, app_state & app)
   N(app.message().length() == 0 || app.message_file().length() == 0,
     F("--message and --message-file are mutually exclusive"));
   
-  if (app.message().length() > 0)
+  if (app.is_explicit_option(OPT_MESSAGE))
     {
       log_message = app.message();
       given = true;
     }
-  else if (app.message_file().length() > 0)
+  else if (app.is_explicit_option(OPT_MSGFILE))
     {
       data dat;
       read_data_for_command_line(app.message_file(), dat);
@@ -2274,9 +2325,8 @@ process_commit_message_args(bool & given, string & log_message, app_state & app)
     given = false;
 }
 
-
-CMD(commit, N_("working copy"), N_("[PATH]..."), 
-    N_("commit working copy to database"),
+CMD(commit, N_("workspace"), N_("[PATH]..."), 
+    N_("commit workspace to database"),
     OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % 
     OPT_AUTHOR % OPT_DEPTH % OPT_EXCLUDE)
 {
@@ -2287,7 +2337,7 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   roster_t old_roster, new_roster;
   
   app.make_branch_sticky();
-  app.require_working_copy();
+  app.require_workspace();
 
   // preserve excluded work for future commmits
   cset excluded_work;
@@ -2339,6 +2389,16 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
       // is annoying.
       write_user_log(data(log_message));
     }
+
+  // If the hook doesn't exist, allow the message to be used.
+  bool message_validated;
+  string reason, new_manifest_text;
+
+  dump(rs, new_manifest_text);
+
+  app.lua.hook_validate_commit_message(log_message, new_manifest_text,
+                                       message_validated, reason);
+  N(message_validated, F("log message rejected: %s\n") % reason);
 
   {
     transaction_guard guard(app.db);
@@ -2453,7 +2513,8 @@ CMD(commit, N_("working copy"), N_("[PATH]..."),
   get_branch_heads(app.branch_name(), app, heads);
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
-        "note: you may (or may not) wish to run 'monotone merge'"));
+        "note: you may (or may not) wish to run '%s merge'") 
+      % app.prog_name);
   }
     
   update_any_attrs(app);
@@ -2647,7 +2708,7 @@ dump_diffs(cset const & cs,
 
 CMD(diff, N_("informative"), N_("[PATH]..."), 
     N_("show current diffs on stdout.\n"
-    "If one revision is given, the diff between the working directory and\n"
+    "If one revision is given, the diff between the workspace and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.  If no format is specified, unified is used by default."),
     OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE %
@@ -2671,9 +2732,9 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   // initialize before transaction so we have a database to work with
 
   if (app.revision_selectors.size() == 0)
-    app.require_working_copy();
+    app.require_workspace();
   else if (app.revision_selectors.size() == 1)
-    app.require_working_copy();
+    app.require_workspace();
 
   if (app.revision_selectors.size() == 0)
     {
@@ -2735,7 +2796,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
         // Calculate a cset from old->new, then re-restrict it. 
         // FIXME: this is *possibly* a UI bug, insofar as we
         // look at the restriction name(s) you provided on the command
-        // line in the context of new and old, *not* the working copy.
+        // line in the context of new and old, *not* the workspace.
         // One way of "fixing" this is to map the filenames on the command
         // line to node_ids, and then restrict based on those. This 
         // might be more intuitive; on the other hand it would make it
@@ -2798,12 +2859,12 @@ struct update_source
   }
 };
 
-CMD(update, N_("working copy"), "",
-    N_("update working copy.\n"
-       "This command modifies your working copy to be based off of a\n"
+CMD(update, N_("workspace"), "",
+    N_("update workspace.\n"
+       "This command modifies your workspace to be based off of a\n"
        "different revision, preserving uncommitted changes as it does so.\n"
-       "If a revision is given, update the working copy to that revision.\n"
-       "If not, update the working copy to the head of the branch."),
+       "If a revision is given, update the workspace to that revision.\n"
+       "If not, update the workspace to the head of the branch."),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
   revision_set r_old, r_working, r_new;
@@ -2818,7 +2879,7 @@ CMD(update, N_("working copy"), "",
   if (app.revision_selectors.size() > 1)
     throw usage(name);
 
-  app.require_working_copy();
+  app.require_workspace();
 
   // FIXME: the next few lines are a little bit expensive insofar as they
   // load the base roster twice. The API could use some factoring or
@@ -2837,7 +2898,7 @@ CMD(update, N_("working copy"), "",
                                  working_roster, working_mm, app);
 
   N(!null_id(r_old_id),
-    F("this working directory is a new project; cannot update"));
+    F("this workspace is a new project; cannot update"));
 
   if (app.revision_selectors.size() == 0)
     {
@@ -2849,12 +2910,12 @@ CMD(update, N_("working copy"), "",
           "maybe you want --revision=<rev on other branch>"));
       if (candidates.size() != 1)
         {
-          P(F("multiple update candidates:\n"));
+          P(F("multiple update candidates:"));
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
-            P(i18n_format("  %s\n") % describe_revision(app, *i));
-          P(F("choose one with 'monotone update -r<id>'\n"));
-          N(false, F("multiple candidates remain after selection"));
+            P(i18n_format("  %s") % describe_revision(app, *i));
+          P(F("choose one with '%s update -r<id>'") % app.prog_name);
+          E(false, F("multiple update candidates remain after selection"));
         }
       r_chosen_id = *(candidates.begin());
     }
@@ -2870,7 +2931,7 @@ CMD(update, N_("working copy"), "",
   if (r_old_id == r_chosen_id)
     {
       P(F("already up to date at %s\n") % r_old_id);
-      // do still switch the working copy branch, in case they have used
+      // do still switch the workspace branch, in case they have used
       // update to switch branches.
       if (!app.branch_name().empty())
         app.make_branch_sticky();
@@ -2923,7 +2984,7 @@ CMD(update, N_("working copy"), "",
       chosen_uncommon_ancestors.insert(r_target_id);
     }
 
-  // Note that under the definition of mark-merge, the working copy is an
+  // Note that under the definition of mark-merge, the workspace is an
   // "uncommon ancestor" if itself too, even though it was not present in
   // the database (hence not returned by the query above).
 
@@ -2938,7 +2999,7 @@ CMD(update, N_("working copy"), "",
 
   roster_t & merged_roster = result.roster;
 
-  content_merge_working_copy_adaptor wca(app, old_roster);
+  content_merge_workspace_adaptor wca(app, old_roster);
   resolve_merge_conflicts (r_old_id, r_target_id,
                            working_roster, target_roster,
                            working_mm, target_mm,
@@ -2956,11 +3017,11 @@ CMD(update, N_("working copy"), "",
   //  chosen --> merged
   //
   // - old is the revision specified in MT/revision
-  // - working is based on old and includes the working copy's changes
+  // - working is based on old and includes the workspace's changes
   // - chosen is the revision we're updating to and will end up in MT/revision
   // - merged is the merge of working and chosen
   // 
-  // we apply the working to merged cset to the working copy
+  // we apply the working to merged cset to the workspace 
   // and write the cset from chosen to merged changeset in MT/work
   
   cset update, remaining;
@@ -2972,7 +3033,7 @@ CMD(update, N_("working copy"), "",
   //     write_cset(update, t1);
   //     write_cset(remaining, t2);
   //     write_manifest_of_roster(merged_roster, t3);
-  //     P(F("updating working copy with [[[\n%s\n]]]\n") % t1);
+  //     P(F("updating workspace with [[[\n%s\n]]]\n") % t1);
   //     P(F("leaving residual work [[[\n%s\n]]]\n") % t2);
   //     P(F("merged roster [[[\n%s\n]]]\n") % t3);
   //   }
@@ -2983,7 +3044,7 @@ CMD(update, N_("working copy"), "",
   
   // small race condition here...
   // nb: we write out r_chosen, not r_new, because the revision-on-disk
-  // is the basis of the working copy, not the working copy itself.
+  // is the basis of the workspace, not the workspace itself.
   put_revision_id(r_chosen_id);
   if (!app.branch_name().empty())
     {
@@ -3013,7 +3074,11 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
   get_branch_heads(app.branch_name(), app, heads);
 
   N(heads.size() != 0, F("branch '%s' is empty\n") % app.branch_name);
-  N(heads.size() != 1, F("branch '%s' is merged\n") % app.branch_name);
+  if (heads.size() == 1)
+    {
+      P(F("branch '%s' is already merged\n") % app.branch_name);
+      return;
+    }
 
   set<revision_id>::const_iterator i = heads.begin();
   revision_id left = *i;
@@ -3045,11 +3110,22 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       P(F("[merged] %s\n") % merged);
       left = merged;
     }
-  P(F("note: your working copies have not been updated\n"));
+  P(F("note: your workspaces have not been updated\n"));
 }
 
 CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"), 
     N_("merge from one branch to another asymmetrically"),
+    OPT_DATE % OPT_AUTHOR % OPT_LCA % OPT_MESSAGE % OPT_MSGFILE)
+{
+  if (args.size() != 2)
+    throw usage(name);
+  vector<utf8> a = args;
+  a.push_back(utf8());
+  process(app, "merge_into_dir", a);
+}
+
+CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"), 
+    N_("merge one branch into a subdirectory in another branch"),
     OPT_DATE % OPT_AUTHOR % OPT_LCA % OPT_MESSAGE % OPT_MSGFILE)
 {
   //   this is a special merge operator, but very useful for people maintaining
@@ -3073,10 +3149,14 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
   //   there are also special cases we have to check for where no merge is
   //   actually necessary, because there hasn't been any divergence since the
   //   last time propagate was run.
+  //
+  //   if dir is not the empty string, rename the root of N1 to have the name
+  //   'dir' in the merged tree. (ie, it has name "basename(dir)", and its
+  //   parent node is "N2.get_node(dirname(dir))")
   
   set<revision_id> src_heads, dst_heads;
 
-  if (args.size() != 2)
+  if (args.size() != 3)
     throw usage(name);
 
   get_branch_heads(idx(args, 0)(), app, src_heads);
@@ -3115,7 +3195,64 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
     {
       revision_id merged;
       transaction_guard guard(app.db);
-      interactive_merge_and_store(*src_i, *dst_i, merged, app);
+
+      {
+        revision_id const & left_rid(*src_i), & right_rid(*dst_i);
+        roster_t left_roster, right_roster;
+        MM(left_roster);
+        MM(right_roster);
+        marking_map left_marking_map, right_marking_map;
+        std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+
+        app.db.get_roster(left_rid, left_roster, left_marking_map);
+        app.db.get_roster(right_rid, right_roster, right_marking_map);
+        app.db.get_uncommon_ancestors(left_rid, right_rid,
+                                      left_uncommon_ancestors,
+                                      right_uncommon_ancestors);
+
+        {
+          dir_t moved_root = left_roster.root();
+          split_path sp, dirname;
+          path_component basename;
+          MM(dirname);
+          if (!idx(args,2)().empty())
+            {
+              file_path_external(idx(args,2)).split(sp);
+              dirname_basename(sp, dirname, basename);
+              N(right_roster.has_node(dirname),
+                F("Path %s not found in destination tree.") % sp);
+              node_t parent = right_roster.get_node(dirname);
+              moved_root->parent = parent->self;
+              moved_root->name = basename;
+              marking_map::iterator i=left_marking_map.find(moved_root->self);
+              I(i != left_marking_map.end());
+              i->second.parent_name.clear();
+              i->second.parent_name.insert(left_rid);
+            }
+        }
+
+        roster_merge_result result;
+        roster_merge(left_roster, left_marking_map, left_uncommon_ancestors,
+                     right_roster, right_marking_map, right_uncommon_ancestors,
+                     result);
+
+        content_merge_database_adaptor dba(app, left_rid, right_rid, left_marking_map);
+        resolve_merge_conflicts (left_rid, right_rid,
+                                 left_roster, right_roster,
+                                 left_marking_map, right_marking_map,
+                                 result, dba, app);
+
+        {
+          dir_t moved_root = left_roster.root();
+          moved_root->parent = 0;
+          moved_root->name = the_null_component;
+        }
+
+        // write new files into the db
+        store_roster_merge_result(left_roster, right_roster, result,
+                                  left_rid, right_rid, merged,
+                                  app);
+      }
 
       packet_db_writer dbw(app);
 
@@ -3140,6 +3277,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
     OPT_NONE)
 {
+  app.require_workspace();
   enable_inodeprints();
   maybe_update_inodeprints(app);
 }
@@ -3237,8 +3375,8 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     throw usage(name);  
 }
 
-CMD(revert, N_("working copy"), N_("[PATH]..."), 
-    N_("revert file(s), dir(s) or entire working copy (\".\")"), 
+CMD(revert, N_("workspace"), N_("[PATH]..."), 
+    N_("revert file(s), dir(s) or entire workspace (\".\")"), 
     OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
   roster_t old_roster;
@@ -3249,7 +3387,7 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
   if (args.size() < 1 && !app.missing)
       throw usage(name);
  
-  app.require_working_copy();
+  app.require_workspace();
 
   get_base_revision(app, old_revision_id, old_roster);
 
@@ -3330,7 +3468,11 @@ CMD(revert, N_("working copy"), N_("[PATH]..."),
         }
       else
         {
-          mkdir_p(fp);
+          if (!directory_exists(fp))
+            {
+              P(F("recreating %s/") % fp);
+              mkdir_p(fp);
+            }
         }
     }
 
@@ -3427,7 +3569,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
   revision_id rid;
 
   if (app.revision_selectors.size() == 0)
-    app.require_working_copy();
+    app.require_workspace();
 
   if ((args.size() != 1) || (app.revision_selectors.size() > 1))
     throw usage(name);
@@ -3462,10 +3604,11 @@ CMD(annotate, N_("informative"), N_("PATH"),
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
-    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_MERGES)
+    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES %
+    OPT_NO_FILES)
 {
   if (app.revision_selectors.size() == 0)
-    app.require_working_copy("try passing a --revision to start at");
+    app.require_workspace("try passing a --revision to start at");
 
   set<node_id> nodes;
 
@@ -3482,11 +3625,11 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       for (std::vector<utf8>::const_iterator i = app.revision_selectors.begin();
            i != app.revision_selectors.end(); i++) 
         {
-          revision_id rid;
-          complete(app, (*i)(), rid);
-          frontier.insert(rid);
+          set<revision_id> rids;
+          complete(app, (*i)(), rids);
+          frontier.insert(rids.begin(), rids.end());
           if (i == app.revision_selectors.begin())
-            first_rid = rid;
+            first_rid = *rids.begin();
         }
     }
 
@@ -3583,17 +3726,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 print_this = true;
             }
 
-          changes_summary csum;
-          
-          set<revision_id> ancestors;
-
-          for (edge_map::const_iterator e = rev.edges.begin();
-               e != rev.edges.end(); ++e)
-            {
-              ancestors.insert(edge_old_revision(e));
-              csum.add_change_set(edge_changes(e));
-            }
-
           if (next > 0)
             {
               set<revision_id> children;
@@ -3609,7 +3741,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                    inserter(next_frontier, next_frontier.end()));
             }
 
-          if (!app.merges && rev.is_merge_node())
+          if (app.no_merges && rev.is_merge_node())
             print_this = false;
           
           if (print_this)
@@ -3628,6 +3760,17 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                      << endl;
                 cout << "Revision: " << rid << endl;
 
+                changes_summary csum;
+
+                set<revision_id> ancestors;
+
+                for (edge_map::const_iterator e = rev.edges.begin();
+                     e != rev.edges.end(); ++e)
+                  {
+                    ancestors.insert(edge_old_revision(e));
+                    csum.add_change_set(edge_changes(e));
+                  }
+
                 for (set<revision_id>::const_iterator anc = ancestors.begin();
                      anc != ancestors.end(); ++anc)
                   cout << "Ancestor: " << *anc << endl;
@@ -3637,7 +3780,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 log_certs(app, rid, branch_name, "Branch: ", false);
                 log_certs(app, rid, tag_name,    "Tag: ",    false);
 
-                if (! csum.cs.empty())
+                if (!app.no_files && !csum.cs.empty())
                   {
                     cout << endl;
                     csum.print(cout, 70);
@@ -3693,7 +3836,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
 }
 
-CMD(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new working copy directory, default to current"),
+CMD(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new workspace directory, default to current"),
     OPT_BRANCH_NAME)
 {
   if (args.size() > 1)
@@ -3708,7 +3851,7 @@ CMD(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new working copy directory
   else
     dir = ".";
 
-  app.create_working_copy(dir);
+  app.create_workspace(dir);
   revision_id null;
   put_revision_id(null);
 }
@@ -3733,6 +3876,10 @@ CMD(automate, N_("automation"),
       "get_file FILEID\n"
       "get_manifest_of [REVID]\n"
       "get_revision [REVID]\n"
+      "packet_for_rdata REVID\n"
+      "packets_for_certs REVID\n"
+      "packet_for_fdata FILEID\n"
+      "packet_for_fdelta OLD_FILE NEW_FILE\n"
       "keys\n"),
     N_("automation interface"), 
     OPT_NONE)
@@ -3797,6 +3944,39 @@ CMD(get_roster, N_("debug"), N_("REVID"),
   data dat;
   write_roster_and_marking(roster, mm, dat);
   cout << dat;
+}
+
+CMD(show_conflicts, N_("informative"), N_("REV REV"), N_("Show what conflicts would need to be resolved to merge the given revisions."),
+    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
+{
+  if (args.size() != 2)
+    throw usage(name);
+  revision_id l_id, r_id;
+  complete(app, idx(args,0)(), l_id);
+  complete(app, idx(args,1)(), r_id);
+  N(!is_ancestor(l_id, r_id, app),
+    F("%s in an ancestor of %s; no merge is needed.") % l_id % r_id);
+  N(!is_ancestor(r_id, l_id, app),
+    F("%s in an ancestor of %s; no merge is needed.") % r_id % l_id);
+  roster_t l_roster, r_roster;
+  marking_map l_marking, r_marking;
+  app.db.get_roster(l_id, l_roster, l_marking);
+  app.db.get_roster(r_id, r_roster, r_marking);
+  std::set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
+  app.db.get_uncommon_ancestors(l_id, r_id,
+                                l_uncommon_ancestors, 
+                                r_uncommon_ancestors);
+  roster_merge_result result;
+  roster_merge(l_roster, l_marking, l_uncommon_ancestors,
+               r_roster, r_marking, r_uncommon_ancestors,
+               result);
+
+  P(F("There are %s node_name_conflicts.") % result.node_name_conflicts.size());
+  P(F("There are %s file_content_conflicts.") % result.file_content_conflicts.size());
+  P(F("There are %s node_attr_conflicts.") % result.node_attr_conflicts.size());
+  P(F("There are %s orphaned_node_conflicts.") % result.orphaned_node_conflicts.size());
+  P(F("There are %s rename_target_conflicts.") % result.rename_target_conflicts.size());
+  P(F("There are %s directory_loop_conflicts.") % result.directory_loop_conflicts.size());
 }
 
 }; // namespace commands

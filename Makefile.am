@@ -50,6 +50,8 @@ MOST_SOURCES =								\
          merge.cc merge.hh                                              \
          legacy.cc legacy.hh                                            \
                                                                         \
+         lru_cache.h                                                    \
+                                                                        \
 	 cleanup.hh unit_tests.hh interner.hh				\
          cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
 	 netio.hh smap.hh gettext.h					\
@@ -172,7 +174,7 @@ SQLITE_SOURCES = \
         sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
         sqlite/hash.c sqlite/insert.c \
         sqlite/legacy.c sqlite/main.c sqlite/opcodes.c \
-        sqlite/os_unix.c sqlite/os_win.c \
+        sqlite/os.c sqlite/os_unix.c sqlite/os_win.c \
         sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c \
         sqlite/random.c sqlite/select.c sqlite/table.c sqlite/tokenize.c \
         sqlite/trigger.c sqlite/update.c sqlite/utf.c \
@@ -183,8 +185,8 @@ SQLITE_SOURCES = \
 	sqlite/analyze.c sqlite/vdbefifo.c \
 	sqlite/complete.c \
 	\
-        sqlite/btree.h sqlite/config.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
-        sqlite/os_common.h sqlite/os_unix.h sqlite/os_win.h \
+        sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
+        sqlite/os_common.h \
         sqlite/parse.h sqlite/sqlite3.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/vdbeInt.h \
 	sqlite/pager.h
 
@@ -240,6 +242,9 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(NETXX_SOURCES) \
 			$(LUA_SOURCES) \
 			$(SQLITE_SOURCES)
+
+htmldir = $(datadir)/doc/monotone
+html_DATA = monotone.html
 
 # flags
 
@@ -524,16 +529,31 @@ package_full_revision.c: package_full_revision.txt txt2c Makefile
 
 # automake doesn't build html docs
 
+CHECK_SRCDIR_EQ_BUILDDIR=[ "`cd \"$(srcdir)\"; pwd`" = "`pwd`" -a -f ./monotone.texi ]
+
 monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
+	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
+		cp -r $(srcdir)/figures .; \
+		cp $(srcdir)/std_hooks.lua .; \
+	fi
 	makeinfo --no-split --no-headers --output $@ --html $<
 	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
-	rm -f monotone.html.perlbak
+	rm -f $@.perlbak
+	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
+		cp $(srcdir)/texinfo.css .; \
+	fi
 
 # The .perlbak thing is needed, otherwise the perl executions fails on MinGW
 
 html: monotone.texi version.texi std_hooks.lua texinfo.css
-	mkdir -p html
-	makeinfo --number-sections --html --output html $<
-	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' html/*.html
-	rm -f html/*.perlbak
-	cp texinfo.css html
+	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
+		cp -r $(srcdir)/figures .; \
+		cp $(srcdir)/std_hooks.lua .; \
+	fi
+	mkdir -p $@
+	makeinfo --number-sections --html --output $@ $<
+	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@/*.html
+	rm -f $@/*.perlbak
+	cp -r $(srcdir)/figures $@
+	cp $(srcdir)/texinfo.css $@
+

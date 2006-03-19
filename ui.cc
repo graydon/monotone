@@ -16,6 +16,7 @@
 #include "constants.hh"
 
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
@@ -147,14 +148,14 @@ void tick_write_count::write_ticks()
       
       size_t title_width = display_width(utf8(tick->name));
       size_t count_width = display_width(utf8(count));
-      size_t max_width = title_width > count_width ? title_width : count_width;
+      size_t max_width = std::max(title_width, count_width);
 
       string name;
-      name.append(max_width - tick->name.size(), ' ');
+      name.append(max_width - title_width, ' ');
       name.append(tick->name);
 
       string count2;
-      count2.append(max_width - count.size(), ' ');
+      count2.append(max_width - count_width, ' ');
       count2.append(count);
 
       tick_title_strings.push_back(name);
@@ -402,6 +403,16 @@ user_interface::ensure_clean_line()
       t_writer->clear_line();
     }
   last_write_was_a_tick = false;
+}
+
+void
+user_interface::redirect_log_to(system_path const & filename)
+{
+  static ofstream filestr;
+  if (filestr.is_open())
+    filestr.close();
+  filestr.open(filename.as_external().c_str());
+  clog.rdbuf(filestr.rdbuf());
 }
 
 void 

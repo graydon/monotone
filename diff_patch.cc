@@ -1,3 +1,5 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -548,15 +550,15 @@ content_merge_database_adaptor::get_version(file_path const & path,
 
 
 ///////////////////////////////////////////////////////////////////////////
-// content_merge_working_copy_adaptor
+// content_merge_workspace_adaptor
 ///////////////////////////////////////////////////////////////////////////
 
 void 
-content_merge_working_copy_adaptor::record_merge(file_id const & left_id, 
-                                                 file_id const & right_id,
-                                                 file_id const & merged_id,
-                                                 file_data const & left_data, 
-                                                 file_data const & merged_data)
+content_merge_workspace_adaptor::record_merge(file_id const & left_id, 
+                                              file_id const & right_id,
+                                              file_id const & merged_id,
+                                              file_data const & left_data, 
+                                              file_data const & merged_data)
 {  
   L(FL("temporarily recording merge of %s <-> %s into %s\n")
     % left_id % right_id % merged_id);
@@ -565,8 +567,8 @@ content_merge_working_copy_adaptor::record_merge(file_id const & left_id,
 }
 
 void 
-content_merge_working_copy_adaptor::get_ancestral_roster(node_id nid,
-                                                         boost::shared_ptr<roster_t> & anc)
+content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
+                                                      boost::shared_ptr<roster_t> & anc)
 {
   // When doing an update, the base revision is always the ancestor to 
   // use for content merging.
@@ -574,9 +576,9 @@ content_merge_working_copy_adaptor::get_ancestral_roster(node_id nid,
 }
 
 void 
-content_merge_working_copy_adaptor::get_version(file_path const & path,
-                                                file_id const & ident, 
-                                                file_data & dat)
+content_merge_workspace_adaptor::get_version(file_path const & path,
+                                             file_id const & ident, 
+                                             file_data & dat)
 {
   if (app.db.file_version_exists(ident))
     app.db.get_file_version(ident, dat);
@@ -585,12 +587,12 @@ content_merge_working_copy_adaptor::get_version(file_path const & path,
       data tmp;
       file_id fid;
       require_path_is_file(path,
-                           F("file '%s' does not exist in working copy") % path,
-                           F("'%s' in working copy is a directory, not a file") % path);
+                           F("file '%s' does not exist in workspace") % path,
+                           F("'%s' in workspace is a directory, not a file") % path);
       read_localized_data(path, tmp, app.lua);
       calculate_ident(tmp, fid);
       N(fid == ident,
-        F("file %s in working copy has id %s, wanted %s")
+        F("file %s in workspace has id %s, wanted %s")
         % path % fid % ident);
       dat = tmp;
     }
@@ -898,9 +900,12 @@ void unidiff_hunk_writer::advance_to(size_t newpos)
       // insert new leading context
       if (newpos - ctx < a.size())
         {
-          for (int i = ctx; i > 0; --i)
+          for (size_t i = ctx; i > 0; --i)
             {
-              if (newpos - i < 0)
+              // The original test was (newpos - i < 0), but since newpos
+              // is size_t (unsigned), it will never go negative.  Testing
+              // that newpos is smaller than i is the same test, really.
+              if (newpos < i)
                 continue;
               hunk.push_back(string(" ") + a[newpos - i]);
               a_begin--; a_len++;
@@ -1056,9 +1061,12 @@ void cxtdiff_hunk_writer::advance_to(size_t newpos)
       // insert new leading context
       if (newpos - ctx < a.size())
         {
-          for (int i = ctx; i > 0; --i)
+          for (size_t i = ctx; i > 0; --i)
             {
-              if (newpos - i < 0)
+              // The original test was (newpos - i < 0), but since newpos
+              // is size_t (unsigned), it will never go negative.  Testing
+              // that newpos is smaller than i is the same test, really.
+              if (newpos < i)
                 continue;
 
               // note that context diffs prefix common text with two

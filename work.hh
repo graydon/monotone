@@ -17,12 +17,12 @@
 #include "vocab.hh"
 
 //
-// this file defines structures to deal with the "working copy" of a tree
+// this file defines structures to deal with the "workspace" of a tree
 //
 
 //
-// working copy book-keeping files are stored in a directory called MT, off
-// the root of the working copy source tree (analogous to the CVS or .svn
+// workspace book-keeping files are stored in a directory called MT, off
+// the root of the workspace source tree (analogous to the CVS or .svn
 // directories). there is no hierarchy of MT directories; only one exists,
 // and it is always at the root. it contains the following files:
 //
@@ -34,7 +34,7 @@
 // MT/inodeprints    -- file fingerprint cache, presence turns on "reckless"
 //                      mode
 //
-// as work proceeds, the files in the working directory either change their
+// as work proceeds, the files in the workspace either change their
 // sha1 fingerprints from those listed in the revision's manifest, or else are
 // added or deleted or renamed (and the paths of those changes recorded in
 // 'MT/work').
@@ -42,7 +42,7 @@
 // when it comes time to commit, the cset in MT/work (which can have no
 // deltas) is applied to the base roster, then a new roster is built by
 // analyzing the content of every file in the roster, as it appears in the
-// working copy. a final cset is calculated which contains the requisite
+// workspace. a final cset is calculated which contains the requisite
 // deltas, and placed in a rev, which is written to the db.
 //
 // MT/inodes, if present, can be used to speed up this last step.
@@ -60,7 +60,7 @@ struct file_itemizer : public tree_walker
 };
 
 void
-perform_additions(path_set const & targets, app_state & app);
+perform_additions(path_set const & targets, app_state & app, bool recursive = true);
 
 void
 perform_deletions(path_set const & targets, app_state & app);
@@ -69,6 +69,10 @@ void
 perform_rename(std::set<file_path> const & src_paths,
                file_path const & dst_dir,
                app_state & app);
+
+void
+perform_pivot_root(file_path const & new_root, file_path const & put_old,
+                   app_state & app);
 
 // the "work" file contains the current cset representing uncommitted
 // add/drop/rename operations (not deltas)
@@ -129,7 +133,7 @@ bool has_contents_user_log();
 
 // the "options map" is another administrative file, stored in
 // MT/options. it keeps a list of name/value pairs which are considered
-// "persistent options", associated with a particular the working copy and
+// "persistent options", associated with a particular the workspace and
 // implied unless overridden on the command line. the main ones are
 // --branch and --db, although some others may follow in the future.
 
@@ -179,9 +183,17 @@ struct file_content_source
   virtual ~file_content_source() {};
 };
 
+struct empty_file_content_source : public file_content_source
+{
+  virtual void get_file_content(file_id const & fid,
+                                file_data & dat) const
+  {
+    I(false);
+  }
+};
+
 struct editable_working_tree : public editable_tree
 {
-  std::map<bookkeeping_path, file_id> written_content;
   editable_working_tree(app_state & app, file_content_source const & source);
 
   virtual node_id detach_node(split_path const & src);
@@ -200,11 +212,16 @@ struct editable_working_tree : public editable_tree
                         attr_key const & name,
                         attr_value const & val);
 
+  virtual void commit();
+
   virtual ~editable_working_tree();
 private:
   app_state & app;
   file_content_source const & source;
   node_id next_nid;
+  std::map<bookkeeping_path, file_id> written_content;
+  std::map<bookkeeping_path, file_path> rename_add_drop_map;
+  bool root_dir_attached;
 };
 
 #endif // __WORK_HH__

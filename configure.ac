@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.26pre1, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.26pre2, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
@@ -446,7 +446,8 @@ AC_CHECK_FUNC(getaddrinfo, [AM_CONDITIONAL(MISSING_GETADDRINFO, false)],
 
 # Check whether sync_with_stdio(false) run on C++ streams works correctly.
 # It causes strange problems (EOF returned too early) on some versions of
-# MinGW.
+# MinGW and OS X.  The first test is for the MinGW issue, the second for
+# the OS X issue.
 #
 # In order to check for this issue, we first generate a large input file
 # (over 128KB) and then try to read it (using a buffer size over 512
@@ -499,12 +500,68 @@ main(int argc, char * argv[])
 ])],
  [if ./conftest$ac_exeext check_it_now <_conftest.dat; then
     AC_MSG_RESULT(yes)
-    AC_DEFINE(SYNC_WITH_STDIO_WORKS, 1,
-              [Define to 1 if sync_with_stdio works fine on C++ streams])
+    ac_cv_sync_with_stdio=yes
   else
     AC_MSG_RESULT(no)
+    ac_cv_sync_with_stdio=no
   fi
   rm -f _conftest.dat])
+
+
+# To check for this issue, we have a writer with a short delay between writes,
+# and a reader who has set sync_with_stdio(false).
+AC_MSG_CHECKING(whether C++ streams support sync_with_stdio 2)
+AC_RUN_IFELSE([AC_LANG_SOURCE([
+#include <cstdlib>
+#include <iostream>
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#define sleep(x) Sleep((x) * 1000)
+#else
+#include <unistd.h>
+#endif
+
+int
+main(int argc, char * argv[])
+{
+  if (argc == 1)
+    return EXIT_SUCCESS;
+
+  if (argc == 2)
+    {
+      std::cin.sync_with_stdio(false);
+      int length = 0;
+      while (std::cin.good())
+        {
+          char buffer@<:@1024@:>@;
+          (void)std::cin.read(buffer, sizeof(buffer));
+          length += std::cin.gcount();
+        }
+
+      return length == 82 ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+  else
+    {
+      std::cout << "1234567890123456789012345678901234567890" << std::endl;
+      sleep(1);
+      std::cout << "1234567890123456789012345678901234567890" << std::endl;
+    }
+  return EXIT_SUCCESS;
+}
+])],
+ [if ./conftest$ac_exeext check_it_now please | ./conftest$ac_exeext foo; then
+    AC_MSG_RESULT(yes)
+    ac_cv_sync_with_stdio_2=yes
+  else
+    AC_MSG_RESULT(no)
+    ac_cv_sync_with_stdio_2=no
+  fi])
+
+if test $ac_cv_sync_with_stdio = yes && test $ac_cv_sync_with_stdio_2 = yes; then
+  AC_DEFINE(SYNC_WITH_STDIO_WORKS, 1,
+              [Define to 1 if sync_with_stdio works fine on C++ streams])
+fi
 
 # allow compiling with different flags/optimisation
 # for monotone versus libs, useful for testing.
