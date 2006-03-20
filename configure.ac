@@ -277,7 +277,9 @@ fi
 
 AC_CACHE_CHECK([if this is Windows],
        ac_win32, [
-       AC_TRY_COMPILE([#include <windows.h>],
+       AC_TRY_COMPILE([#ifdef WIN32
+                       #include <windows.h>
+                       #endif],
                       [HANDLE h; DWORD d;],
                       ac_win32=yes,
                       ac_win32=no)
