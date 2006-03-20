@@ -3,6 +3,11 @@
 	* configure.ac: use test -f rather than test -e, since Solaris's
 	/bin/sh doesn't have the latter.
 
+2006-03-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Tidier versions of html and monotone.html targets,
+	thanks to Thomas Moschny for the patch.
+
 2006-03-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* automate.cc (automate_inventory): Add an MM().
