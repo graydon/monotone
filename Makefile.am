@@ -534,26 +534,22 @@ CHECK_SRCDIR_EQ_BUILDDIR=[ "`cd \"$(srcdir)\"; pwd`" = "`pwd`" -a -f ./monotone.
 monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
 	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
 		cp -r $(srcdir)/figures .; \
-		cp $(srcdir)/std_hooks.lua .; \
-	fi
-	makeinfo --no-split --no-headers --output $@ --html $<
-	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
-	rm -f $@.perlbak
-	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
 		cp $(srcdir)/texinfo.css .; \
 	fi
+	makeinfo -I $(srcdir) --no-split --no-headers --output $@ --html $<
+	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
+	rm -f $@.perlbak
 
 # The .perlbak thing is needed, otherwise the perl executions fails on MinGW
 
 html: monotone.texi version.texi std_hooks.lua texinfo.css
 	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
 		cp -r $(srcdir)/figures .; \
-		cp $(srcdir)/std_hooks.lua .; \
 	fi
 	mkdir -p $@
-	makeinfo --number-sections --html --output $@ $<
-	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@/*.html
-	rm -f $@/*.perlbak
 	cp -r $(srcdir)/figures $@
 	cp $(srcdir)/texinfo.css $@
+	makeinfo -I $(srcdir) --number-sections --html --output $@ $<
+	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@/*.html
+	rm -f $@/*.perlbak
 
