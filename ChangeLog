@@ -1,3 +1,8 @@
+2006-03-22  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.{cc,hh}: Report page size and default cache size in 'db
+	info' output.
+
 2006-03-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* configure.ac: Fix Windows identification test so that it doesn't
