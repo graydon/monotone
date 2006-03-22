@@ -2968,7 +2968,7 @@ CMD(update, N_("workspace"), "",
             for (set<utf8>::const_iterator i = branches.begin(); 
                  i != branches.end(); i++)
               branch_list += "\n" + (*i)();
-            N(false, F("revision %s is a member of the following branches,\ntry again with explicit --branch\n%s") % r_chosen_id % branch_list);
+            N(false, F("revision %s is a member of multiple branches:\n%s\n\ntry again with explicit --branch") % r_chosen_id % branch_list);
           }
         else if (branches.size() == 1)
           {
