@@ -1,3 +1,10 @@
+2006-03-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* schema_migration.cc, database.cc: print a more helpful
+	error message when we fail in calculate_schema_id() (usually
+	because of locking). Don't bother telling the user what the
+	sqlite error number is (but still log it).
+
 2006-03-20  Matt Johnston  <matt@ucc.asn.au>
 
 	* configure.ac: use test -f rather than test -e, since Solaris's

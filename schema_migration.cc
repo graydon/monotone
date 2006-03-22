@@ -177,8 +177,19 @@ calculate_schema_id(sqlite3 *sql, string & id)
                                 &append_sql_stmt, &tmp, NULL);
   if (res != SQLITE_OK)
     {
+      // note: useful error messages should be kept consistent with
+      // assert_sqlite3_ok() in database.cc
+      string errmsg(sqlite3_errmsg(sql));
+      L(FL("calculate_schema_id sqlite error: %d: %s") % res % errmsg);
+      std::string auxiliary_message = "";
+      if (res == SQLITE_ERROR)
+        {
+      auxiliary_message += _("make sure database and containing directory are writeable\n"
+                             "and you have not run out of disk space");
+
+        }
       logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-      E(false, F("failure extracting schema from sqlite_master"));
+      E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
     }
   massage_sql_tokens(tmp, tmp2);
   calculate_id(tmp2, id);

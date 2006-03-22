@@ -248,6 +248,8 @@ assert_sqlite3_ok(sqlite3 *s)
       // errno's.
       L(FL("sqlite error: %d: %s") % errcode % errmsg);
     }
+  // note: if you update this, try to keep calculate_schema_id() in
+  // schema_migration.cc consistent.
   std::string auxiliary_message = "";
   if (errcode == SQLITE_ERROR)
     {
@@ -257,7 +259,7 @@ assert_sqlite3_ok(sqlite3 *s)
   // if the last message is empty, the \n will be stripped off too
   E(errcode == SQLITE_OK,
     // kind of string surgery to avoid ~duplicate strings
-    F("sqlite error: %d: %s\n%s") % errcode % errmsg % auxiliary_message);
+    F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
 }
 
 struct sqlite3 * 
