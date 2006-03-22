@@ -1,3 +1,15 @@
+2006-03-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(update)): update the workspace branch
+	to match a revision given with -r.
+
+2006-03-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* schema_migration.cc, database.cc: print a more helpful
+	error message when we fail in calculate_schema_id() (usually
+	because of locking). Don't bother telling the user what the
+	sqlite error number is (but still log it).
+
 2006-03-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* configure.ac: Fix Windows identification test so that it doesn't
