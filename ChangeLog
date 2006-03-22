@@ -10,6 +10,11 @@
 	because of locking). Don't bother telling the user what the
 	sqlite error number is (but still log it).
 
+2006-03-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Fix Windows identification test so that it doesn't
+	pass unexpected under Cygwin.  Reported by Lapo Luchini.
+
 2006-03-20  Matt Johnston  <matt@ucc.asn.au>
 
 	* configure.ac: use test -f rather than test -e, since Solaris's
