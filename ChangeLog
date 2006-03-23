@@ -1,3 +1,8 @@
+2006-03-22  Nathaniel Smith  <njs@pobox.com>
+
+	* key_store.cc (consume_key_pair, read_key_dir) 
+	(ensure_in_database, write_key): Add some logging.
+
 2006-03-22  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc (CMD(update)): update the workspace branch
