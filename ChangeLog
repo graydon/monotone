@@ -1,3 +1,10 @@
+2006-03-23  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_update_off_branch.at: Instead of retrying the update
+	by specifying the branch of the off-branch revision, check that
+	the branch specified in MT/options has changed automagically to
+	the intended revision's branch.
+
 2006-03-22  Matt Johnston  <matt@ucc.asn.au>
 
 	* commands.cc (CMD(update)): update the workspace branch

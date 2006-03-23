@@ -12,7 +12,7 @@ COMMIT(otherbranch)
 OR=`BASE_REVISION`
 
 AT_CHECK(MONOTONE checkout --branch=testbranch --revision=$TR codir, [], [ignore], [ignore])
-AT_CHECK(cd codir && MONOTONE update --revision=$OR, [1], [ignore], [ignore])
-AT_CHECK(cd codir && MONOTONE update --branch=otherbranch --revision=$OR, [], [ignore], [ignore])
+AT_CHECK(cd codir && MONOTONE update --revision=$OR, [], [ignore], [ignore])
+AT_CHECK(grep '^ *branch "otherbranch"' MT/options, [], [ignore], [ignore])
 
 AT_CLEANUP
