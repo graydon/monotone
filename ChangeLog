@@ -1,3 +1,8 @@
+2006-03-24  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Corrected all the fuzzy translations
+	* po/fr.po: Added some missing translations.
+
 2006-03-24  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* database.cc (database::load): Analyze database after load.
