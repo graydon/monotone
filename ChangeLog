@@ -1,7 +1,31 @@
+2006-03-23  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_update_off_branch.at: Instead of retrying the update
+	by specifying the branch of the off-branch revision, check that
+	the branch specified in MT/options has changed automagically to
+	the intended revision's branch.
+
 2006-03-22  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* database.{cc,hh}: Report page size and default cache size in 'db
 	info' output.
+
+2006-03-22  Nathaniel Smith  <njs@pobox.com>
+
+	* key_store.cc (consume_key_pair, read_key_dir) 
+	(ensure_in_database, write_key): Add some logging.
+
+2006-03-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(update)): update the workspace branch
+	to match a revision given with -r.
+
+2006-03-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* schema_migration.cc, database.cc: print a more helpful
+	error message when we fail in calculate_schema_id() (usually
+	because of locking). Don't bother telling the user what the
+	sqlite error number is (but still log it).
 
 2006-03-20  Matthew Gregan  <kinetik@orcon.net.nz>
 

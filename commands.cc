@@ -2940,20 +2940,51 @@ CMD(update, N_("workspace"), "",
   
   P(F("selected update target %s\n") % r_chosen_id);
 
-  if (!app.branch_name().empty())
-    {
-      cert_value branch_name(app.branch_name());
-      base64<cert_value> branch_encoded;
-      encode_base64(branch_name, branch_encoded);
-  
-      vector< revision<cert> > certs;
-      app.db.get_revision_certs(r_chosen_id, branch_cert_name, branch_encoded, certs);
+  {
+    // figure out which branches the target is in
+    vector< revision<cert> > certs;
+    app.db.get_revision_certs(r_chosen_id, branch_cert_name, certs);
+    erase_bogus_certs(certs, app);
 
-      N(certs.size() != 0,
-        F("revision %s is not a member of branch %s\n"
-          "try again with explicit --branch\n")
-        % r_chosen_id % app.branch_name);
-    }
+    set< utf8 > branches;
+    for (vector< revision<cert> >::const_iterator i = certs.begin(); 
+         i != certs.end(); i++)
+      {
+        cert_value b;
+        decode_base64(i->inner().value, b);
+        branches.insert(utf8(b()));
+      }
+
+    if (branches.find(app.branch_name) != branches.end())
+      {
+        L(FL("using existing branch %s") % app.branch_name());
+      }
+    else
+      {
+        if (branches.size() > 1)
+          {
+            // multiple non-matching branchnames
+            string branch_list;
+            for (set<utf8>::const_iterator i = branches.begin(); 
+                 i != branches.end(); i++)
+              branch_list += "\n" + (*i)();
+            N(false, F("revision %s is a member of multiple branches:\n%s\n\ntry again with explicit --branch") % r_chosen_id % branch_list);
+          }
+        else if (branches.size() == 1)
+          {
+            // one non-matching, inform and update
+            app.branch_name = (*(branches.begin()))();
+            P(F("revision %s is a member of\n%s, updating workspace branch") 
+              % r_chosen_id % app.branch_name());
+          }
+        else
+          {
+            I(branches.size() == 0);
+            W(F("revision %s is a member of no branches,\nusing branch %s for workspace")
+              % r_chosen_id % app.branch_name());
+          }
+      }
+  }
 
   app.db.get_roster(r_chosen_id, chosen_roster, chosen_mm);
 
