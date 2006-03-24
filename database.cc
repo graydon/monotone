@@ -473,6 +473,7 @@ database::load(istream & in)
     }
 
   assert_sqlite3_ok(__sql);
+  execute(query("ANALYZE"));
 }
 
 
@@ -623,7 +624,7 @@ void
 database::execute(query const & query)
 {
   results res;
-  fetch(res, 0, 0, query );
+  fetch(res, 0, 0, query);
 }
 
 void 

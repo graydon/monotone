@@ -1,3 +1,8 @@
+2006-03-24  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc (database::load): Analyze database after load.
+	(database::execute): Minor whitespace cleanup.
+
 2006-03-23  Richard Levitte  <richard@levitte.org>
 
 	* tests/t_update_off_branch.at: Instead of retrying the update
