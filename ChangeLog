@@ -1,3 +1,8 @@
+2006-03-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* idna/version.c: Use STRINGPREP_VERSION rather than VERSION,
+	which just happens to be defined to the monotone version number.
+
 2006-03-24  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Corrected all the fuzzy translations
