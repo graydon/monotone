@@ -9,10 +9,11 @@
 // this describes functions to be found, alternatively, in win32/* or unix/*
 // directories.
 
+#include "config.h"
+
 #include <string>
 
 #include "vocab.hh"
-#include "config.h"
 #include "paths.hh"
 
 void read_password(std::string const & prompt, char * buf, size_t bufsz);

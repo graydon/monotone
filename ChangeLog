@@ -1,5 +1,10 @@
 2006-03-25  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* diff_patch.cc, hash_map.hh, lua/lua.h, mkstemp.cc, monotone.cc,
+	platform.hh, rcs_file.cc, sanity.hh, ui.cc, vocab.hh: config.h
+	cleanups--ensure it is included before any other includes, and
+	that we use "", rather than <>.
+
 	* idna/version.c: Use STRINGPREP_VERSION rather than VERSION,
 	which just happens to be defined to the monotone version number.
 
