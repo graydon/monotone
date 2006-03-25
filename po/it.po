@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-03-23 19:29+0100\n"
-"PO-Revision-Date: 2006-03-23 19:30+0100\n"
+"POT-Creation-Date: 2006-03-25 15:07+0100\n"
+"PO-Revision-Date: 2006-03-25 15:54+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -36,9 +36,9 @@ msgid "unknown path '%s'\n"
 msgstr "percorso sconosciuto ‘%s’\n"
 
 #: app_state.cc:349
-#, c-format
+#, fuzzy, c-format
 msgid "search root '%s' does not exist"
-msgstr ""
+msgstr "Ancora HTML %s non esistente."
 
 #: app_state.cc:350
 #, fuzzy, c-format
@@ -466,8 +466,9 @@ msgid "need --branch argument for disapproval"
 msgstr "per il ‘setup’ è necessario un argomento --branch"
 
 #: commands.cc:1185
+#, fuzzy
 msgid "REVISION [COMMENT]"
-msgstr ""
+msgstr "commenta su una specifica revisione"
 
 #: commands.cc:1186
 msgid "comment on a particular revision"
@@ -914,12 +915,12 @@ msgstr "--message e --message-file sono mutuamente esclusivi"
 #: commands.cc:2329
 #, fuzzy
 msgid "commit workspace to database"
-msgstr "sposto chiave `%s' dal database a `%s'"
+msgstr "aggiunge file allo spazio di lavoro"
 
 #: commands.cc:2347
-#, fuzzy, c-format
+#, c-format
 msgid "no changes to commit\n"
-msgstr "impossibile applicare i cambiamenti al file '%s'"
+msgstr "nessuna modifica che necessita di commit\n"
 
 #: commands.cc:2361
 #, c-format
@@ -945,9 +946,9 @@ msgid "log message rejected: %s\n"
 msgstr "definizione del messaggio duplicata"
 
 #: commands.cc:2409
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s already in database\n"
-msgstr "la chiave `%s' è già in database"
+msgstr "la revisione ‘%s’ è già in database\n"
 
 #: commands.cc:2447
 #: commands.cc:2464
@@ -1015,14 +1016,14 @@ msgid ""
 msgstr ""
 
 #: commands.cc:2913
-#, fuzzy, c-format
+#, c-format
 msgid "multiple update candidates:"
-msgstr "aggiornamento della chiave segreta fallito: %s\n"
+msgstr "candidati multipli per l'update:"
 
 #: commands.cc:2917
-#, fuzzy, c-format
+#, c-format
 msgid "choose one with '%s update -r<id>'"
-msgstr "scegline una con ‘%s checkout -r<id>’"
+msgstr "selezionane uno con ‘%s checkout -r<id>’"
 
 #: commands.cc:2918
 #, c-format
@@ -1035,9 +1036,9 @@ msgid "already up to date at %s\n"
 msgstr ""
 
 #: commands.cc:2941
-#, fuzzy, c-format
+#, c-format
 msgid "selected update target %s\n"
-msgstr "Frattale IFS: obbiettivo"
+msgstr "selezionata revisione ‘%s’ per l'update\n"
 
 #: commands.cc:2971
 #, c-format
@@ -1063,9 +1064,9 @@ msgid ""
 msgstr "la revisione ‘%s’ non fa parte del ramo ‘%s’\n"
 
 #: commands.cc:3084
-#, fuzzy, c-format
+#, c-format
 msgid "updated to base revision %s\n"
-msgstr "Mostra le differenze rispetto alla revisione originale"
+msgstr "aggiorno alla revisione base ‘%s’\n"
 
 #: commands.cc:3094
 #, fuzzy
@@ -1203,12 +1204,9 @@ msgid "revert file(s), dir(s) or entire workspace (\".\")"
 msgstr ""
 
 #: commands.cc:3487
-#, fuzzy, c-format
+#, c-format
 msgid "reverting %s"
-msgstr ""
-"Ricarica di '%s' fallita:\n"
-"\n"
-"%s"
+msgstr "recupero ‘%s’"
 
 #: commands.cc:3491
 #, c-format
@@ -1555,9 +1553,9 @@ msgid "revision %s mismatched certs (%d authors %d dates %d changelogs)\n"
 msgstr ""
 
 #: database_check.cc:874
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing files\n"
-msgstr "Sfoglia"
+msgstr "%d file mancanti\n"
 
 #: database_check.cc:876
 #, fuzzy, c-format
@@ -1570,9 +1568,9 @@ msgid "%d unreferenced rosters\n"
 msgstr ""
 
 #: database_check.cc:881
-#, fuzzy, c-format
+#, c-format
 msgid "%d incomplete rosters\n"
-msgstr "ATTENZIONE: L'archivio non è completo"
+msgstr "%d roster incompleti\n"
 
 #: database_check.cc:883
 #, c-format
@@ -1580,21 +1578,19 @@ msgid "%d rosters not parseable (perhaps with invalid paths)\n"
 msgstr ""
 
 #: database_check.cc:886
-#, fuzzy, c-format
+#, c-format
 msgid "%d rosters not in normalized form\n"
-msgstr ""
-"%s: `%s' argomento di `-v' non in forma `var=valore'\n"
-"\n"
+msgstr "%d roster non in forma normalizzata\n"
 
 #: database_check.cc:889
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing revisions\n"
-msgstr "&Collassa revisioni"
+msgstr "%d revisioni mancanti\n"
 
 #: database_check.cc:891
-#, fuzzy, c-format
+#, c-format
 msgid "%d incomplete revisions\n"
-msgstr "&Collassa revisioni"
+msgstr "%d revisioni incomplete\n"
 
 #: database_check.cc:893
 #, c-format
@@ -1617,11 +1613,9 @@ msgid "%d revisions not parseable (perhaps with invalid paths)\n"
 msgstr ""
 
 #: database_check.cc:902
-#, fuzzy, c-format
+#, c-format
 msgid "%d revisions not in normalized form\n"
-msgstr ""
-"%s: `%s' argomento di `-v' non in forma `var=valore'\n"
-"\n"
+msgstr "%d revisioni non in forma normalizzata\n"
 
 #: database_check.cc:906
 #, fuzzy, c-format
@@ -1629,19 +1623,19 @@ msgid "%d unreferenced roster links\n"
 msgstr "  -L,  --relative                    segue solo i link relativi.\n"
 
 #: database_check.cc:909
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing rosters\n"
-msgstr "mancano degli argomenti"
+msgstr "%d roster mancanti\n"
 
 #: database_check.cc:913
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing keys\n"
-msgstr "esporta delle chiavi"
+msgstr "%d chiavi mancanti\n"
 
 #: database_check.cc:916
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing certs\n"
-msgstr "mancano degli argomenti"
+msgstr "%d certificati mancanti\n"
 
 #: database_check.cc:918
 #, c-format
@@ -1731,12 +1725,12 @@ msgstr ""
 
 #: database.cc:262
 #: schema_migration.cc:192
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "sqlite error: %s\n"
 "%s"
 msgstr ""
-"errore sqlite: %d: %s\n"
+"errore sqlite: %s\n"
 "%s"
 
 #: database.cc:308
@@ -1756,7 +1750,7 @@ msgstr ""
 msgid "cannot create %s; it already exists"
 msgstr "non posso creare ‘%s’: esiste già"
 
-#: database.cc:519
+#: database.cc:520
 #, c-format
 msgid ""
 "schema version    : %s\n"
@@ -1777,54 +1771,57 @@ msgid ""
 "  cached ancestry : %u\n"
 "  certs           : %u\n"
 "  total           : %u\n"
+"database:\n"
+"  page size       : %u\n"
+"  cache size      : %u\n"
 msgstr ""
 
-#: database.cc:574
+#: database.cc:580
 #, c-format
 msgid "database schema version: %s"
 msgstr "versione dello schema del database: %s"
 
-#: database.cc:651
+#: database.cc:657
 #, fuzzy, c-format
 msgid "multiple statements in query: %s\n"
 msgstr "risultato nullo nella query: %s\n"
 
-#: database.cc:657
+#: database.cc:663
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
 msgstr ""
 
-#: database.cc:716
+#: database.cc:722
 #, c-format
 msgid "null result in query: %s\n"
 msgstr "risultato nullo nella query: %s\n"
 
-#: database.cc:734
+#: database.cc:740
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
 msgstr ""
 
-#: database.cc:1733
+#: database.cc:1760
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr ""
 
-#: database.cc:2789
+#: database.cc:2816
 #, c-format
 msgid "no database specified"
 msgstr "nessuna database specificato"
 
-#: database.cc:2797
+#: database.cc:2824
 #, c-format
 msgid "database %s does not exist"
 msgstr "il database ‘%s’ non esiste"
 
-#: database.cc:2798
+#: database.cc:2825
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "‘%s’ è una cartella, non un database"
 
-#: database.cc:2823
+#: database.cc:2850
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "non riesco ad aprire il database ‘%s’: %s"
@@ -1861,32 +1858,32 @@ msgstr "il file da cancellare `%s' non è un file ma una cartella"
 
 #: file_io.cc:186
 #: file_io.cc:193
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "could not create directory '%s'\n"
 "it is a file"
 msgstr ""
-"non riesco a creare la cartella `%s'\n"
+"non riesco a creare la cartella ‘%s’\n"
 "è un file"
 
 #: file_io.cc:188
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "could not create directory '%s'\n"
 "%s"
 msgstr ""
-"non riesco a creare la cartella `%s'\n"
+"non riesco a creare la cartella ‘%s’\n"
 "%s"
 
 #: file_io.cc:192
-#, fuzzy, c-format
+#, c-format
 msgid "could not create directory '%s'"
-msgstr "non riesco a creare la cartella `%s'"
+msgstr "non riesco a creare la cartella ‘%s’"
 
 #: file_io.cc:205
-#, fuzzy, c-format
+#, c-format
 msgid "failed to create directory '%s' for '%s'"
-msgstr "Impossibile creare la cartella %s/.gnome."
+msgstr "fallita la creazione della cartella ‘%s’ per ‘%s’"
 
 #: file_io.cc:219
 #, c-format
@@ -1898,39 +1895,39 @@ msgstr ""
 "%s"
 
 #: file_io.cc:229
-#, fuzzy, c-format
+#, c-format
 msgid "file to delete '%s' does not exist"
-msgstr "il file da cancellare `%s' non esiste"
+msgstr "il file da cancellare ‘%s’ non esiste"
 
 #: file_io.cc:230
-#, fuzzy, c-format
+#, c-format
 msgid "file to delete, '%s', is not a file but a directory"
-msgstr "il file da cancellare `%s' non è un file ma una cartella"
+msgstr "il file da cancellare ‘%s’ non è un file ma una cartella"
 
 #: file_io.cc:238
-#, fuzzy, c-format
+#, c-format
 msgid "directory to delete '%s' does not exist"
-msgstr "la cartella da cancellare `%s' non esiste"
+msgstr "la cartella da cancellare ‘%s’ non esiste"
 
 #: file_io.cc:239
-#, fuzzy, c-format
+#, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
-msgstr "il file da cancellare `%s' non è un file ma una cartella"
+msgstr "la cartella da cancellare ‘%s’ non è una cartella ma un file"
 
 #: file_io.cc:246
-#, fuzzy, c-format
+#, c-format
 msgid "object to delete, '%s', does not exist"
-msgstr "il file da cancellare `%s' non esiste"
+msgstr "l'oggetto da cancellare ‘%s’ non esiste"
 
 #: file_io.cc:254
-#, fuzzy, c-format
+#, c-format
 msgid "directory to delete, '%s', does not exist"
-msgstr "la cartella da cancellare `%s' non esiste"
+msgstr "la cartella da cancellare ‘%s’ non esiste"
 
 #: file_io.cc:255
-#, fuzzy, c-format
+#, c-format
 msgid "directory to delete, '%s', is a file"
-msgstr "il file da cancellare `%s' non è un file ma una cartella"
+msgstr "il file da cancellare ‘%s’ non è un file ma una cartella"
 
 #: file_io.cc:264
 #, fuzzy, c-format
@@ -2165,14 +2162,12 @@ msgid "leave out anything described by its argument"
 msgstr ""
 
 #: monotone.cc:66
-#, fuzzy
 msgid "use unified diff format"
-msgstr "Imposta il formato dei punti del cursore che GIMP userà."
+msgstr ""
 
 #: monotone.cc:67
-#, fuzzy
 msgid "use context diff format"
-msgstr "Imposta il formato dei punti del cursore che GIMP userà."
+msgstr ""
 
 #: monotone.cc:68
 msgid "use external diff hook for generating diffs"
@@ -2311,14 +2306,14 @@ msgid "[OPTION...] command [ARGS...]\n"
 msgstr "Uso: %s [OPZIONE] COMANDO [OPZIONE-COMANDO]\n"
 
 #: monotone.cc:551
-#, fuzzy, c-format
+#, c-format
 msgid "syntax error near the \"%s\" option: %s"
-msgstr "%s:%lu: attenzione: errore di sintassi"
+msgstr "errore di sintassi vicino all'opzione ‘%s’: %s"
 
 #: monotone.cc:593
-#, fuzzy, c-format
+#, c-format
 msgid "monotone %s doesn't use the option %s"
-msgstr "%s: l'opzione `%c%s' non accetta argomenti\n"
+msgstr "monotone ‘%s’ non utilizza l'opzione ‘%s’"
 
 #: monotone.cc:628
 #, fuzzy, c-format
@@ -2455,7 +2450,7 @@ msgid "received network error: %s"
 msgstr "ricevuto errore di rete: %s"
 
 #: netsync.cc:1215
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
@@ -2470,10 +2465,10 @@ msgstr ""
 "@ ATTENZIONE: L'IDENTIFICAZIONE DEL SERVER È CAMBIATA     @\n"
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 "È POSSIBILE CHE QUALCUNO STIA FACENDO QUALCOSA DI BRUTTO\n"
-"è anche possibile che la chiave del server sia semplicemente cambiata\n"
+"è anche possibile che la chiave del server sia stata semplicemente cambiata\n"
 "l'host remoto ha inviato la chiave ‘%s’\n"
 "mi aspettavo la chiave ‘%s’\n"
-"'%s unset %s %s' overrides this check\n"
+"‘%s unset %s %s’ per forzare questo controllo\n"
 
 #: netsync.cc:1225
 #, c-format
@@ -2607,7 +2602,7 @@ msgstr "il certificato ‘%s’ non è in database"
 #: netsync.cc:1843
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
-msgstr ""
+msgstr "Epoca non corrispondente sul ramo ‘%s’: il server usa ‘%s’, il client usa ‘%s’."
 
 #: netsync.cc:1864
 #, c-format
@@ -2620,9 +2615,9 @@ msgid "hash check failed for revision cert '%s'"
 msgstr ""
 
 #: netsync.cc:1956
-#, fuzzy, c-format
+#, c-format
 msgid "Received warning from usher: %s"
-msgstr "Attenzione: rimosso affix non applicabile '%s' dalla parola %s.\n"
+msgstr "Ricevuto avvertimento dall'usciere: %s"
 
 #: netsync.cc:2043
 #: netsync.cc:2074
@@ -2656,9 +2651,9 @@ msgid "error: %s\n"
 msgstr "errore: %s\n"
 
 #: netsync.cc:2277
-#, fuzzy, c-format
+#, c-format
 msgid "connecting to %s\n"
-msgstr "Connessione a %s:%d..."
+msgstr "connessione a ‘%s’\n"
 
 #: netsync.cc:2313
 #, c-format
@@ -2822,9 +2817,9 @@ msgstr "&Annota questa revisione"
 #: packet.cc:150
 #: packet.cc:166
 #: packet.cc:174
-#, fuzzy, c-format
+#, c-format
 msgid "dropping revision '%s'\n"
-msgstr "CVS Revisione"
+msgstr "elimino la revisione ‘%s’\n"
 
 #: packet.cc:149
 #, fuzzy, c-format
@@ -3087,9 +3082,9 @@ msgid "Press enter when the subprocess has completed"
 msgstr ""
 
 #: transforms.cc:510
-#, fuzzy, c-format
+#, c-format
 msgid "failed to convert string from %s to %s: '%s'"
-msgstr "non riesco a convertire stringa a valore in virgola mobile"
+msgstr "non riesco a convertire una stringa da ‘%s’ a ‘%s’: ‘%s’"
 
 #: transforms.cc:741
 #: transforms.cc:755
@@ -3182,9 +3177,9 @@ msgid "Invalid hmac length of %d bytes"
 msgstr "argomento della lunghezza del contesto non valido"
 
 #: work.cc:118
-#, fuzzy, c-format
+#, c-format
 msgid "skipping ignorable file %s"
-msgstr "%s: file troppo grande"
+msgstr "salto il file ignorabile ‘%s’"
 
 #: work.cc:127
 #, c-format
@@ -3194,7 +3189,7 @@ msgstr ""
 #: work.cc:131
 #, fuzzy, c-format
 msgid "adding %s to workspace manifest"
-msgstr "Aggiunta in .cvsignore completata in %s"
+msgstr "aggiunge file allo spazio di lavoro"
 
 #: work.cc:221
 #, c-format
@@ -3209,7 +3204,7 @@ msgstr ""
 #: work.cc:242
 #, fuzzy, c-format
 msgid "dropping %s from workspace manifest"
-msgstr "sto cancellando la chiave pubblica ‘%s’ dal database\n"
+msgstr "toglie file dallo spazio di lavoro"
 
 #: work.cc:305
 #, c-format
@@ -3272,9 +3267,9 @@ msgid "directory '%s' is not versioned or does not exist"
 msgstr ""
 
 #: work.cc:423
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is in the way"
-msgstr "Fusione a tre-vie"
+msgstr "‘%s’ è di ostacolo"
 
 #: work.cc:520
 #, c-format
@@ -3292,9 +3287,9 @@ msgid "Problem with workspace: %s is unreadable"
 msgstr "problemi con la copia di lavoro: ‘%s’ non è leggibile"
 
 #: work.cc:557
-#, fuzzy, c-format
+#, c-format
 msgid "base revision %s does not exist in database\n"
-msgstr "la revisione ‘%s’ non è in database"
+msgstr "la revisione base ‘%s’ non è in database\n"
 
 #: work.cc:894
 #, c-format
