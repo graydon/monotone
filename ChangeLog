@@ -1,3 +1,8 @@
+2006-03-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* idna/nfkc.c, popt/popt.c, popt/popt.h, popt/popthelp.c: Warning
+	cleanups.
+
 2006-03-25  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* diff_patch.cc, hash_map.hh, lua/lua.h, mkstemp.cc, monotone.cc,
