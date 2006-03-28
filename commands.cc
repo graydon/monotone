@@ -425,7 +425,7 @@ get_log_message_interactively(revision_set const & cs,
   read_user_log(user_log_message);
   commentary += "----------------------------------------------------------------------\n";
   commentary += _("Enter a description of this change.\n"
-                  "Lines beginning with `MT:' are removed automatically.\n");
+                  "Lines beginning with `MTN:' are removed automatically.\n");
   commentary += "\n";
   commentary += summary();
   commentary += "----------------------------------------------------------------------\n";

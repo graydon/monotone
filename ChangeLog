@@ -1,5 +1,10 @@
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (get_log_message_interactively): 
+	* std_hooks.lua (edit_comment): s/MT:/MTN:/
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc: s/MT/_MTN/ everywhere.
 	(in_bookkeeping_dir): Also apply the security kluge from 0.25.2,
 	where we define the bookkeeping dir case-insensitively.
