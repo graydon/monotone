@@ -1,5 +1,11 @@
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.texi: s/.db/.mtn/ everywhere.  Also, s/MT:/MTN:/, and
+	s/MT/_MTN/ as appropriate.
+	* monotone.1: Likewise.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (file_path): Use in_bookkeeping_dir when joining paths,
 	instead of being clever.  It should be just about as fast, and
 	means that there's only one code path that has to know how to
