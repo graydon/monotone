@@ -1,4 +1,5 @@
 AT_SETUP([check that --xargs / -@ behave correctly])
+MTN_SETUP
 
 # Generate the general expected output, as we're testing using the
 # output of 'list --help'
