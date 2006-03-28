@@ -1,5 +1,5 @@
 AT_SETUP([rosterify --drop-attr])
-MONOTONE_SETUP
+MTN_SETUP
 NEED_UNGZB64
 
 # This is a db containing two revisions.  The first revision contains the
@@ -86,11 +86,11 @@ ffmS/Cj9SIGfk/9R7jbzfnmcz9+Qf5yI73/fFBmapmz+Ofg3mUznfCseAAA=
 AT_CHECK(rm -f test.db)
 
 UNGZB64(test.db.dump.gz.b64, test.db.dump)
-AT_CHECK(MONOTONE db load < test.db.dump, [], [ignore], [ignore])
-AT_CHECK(MONOTONE db migrate, [], [ignore], [ignore])
+AT_CHECK(MTN db load < test.db.dump, [], [ignore], [ignore])
+AT_CHECK(MTN db migrate, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE db rosterify, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE db rosterify --drop-attr foo, [], [ignore], [ignore])
+AT_CHECK(MTN db rosterify, [1], [ignore], [ignore])
+AT_CHECK(MTN db rosterify --drop-attr foo, [], [ignore], [ignore])
 
 AT_DATA([manifest_good], [format_version "1"
 
@@ -100,6 +100,6 @@ dir ""
 content @<:@f572d396fae9206628714fb2ce00f72e94f2258f@:>@
    attr "mtn:execute" "yes"
 ])
-CHECK_SAME_CANONICALISED_STDOUT(cat manifest_good, MONOTONE automate select i: | monotone automate toposort -@- | head -1 | monotone automate get_manifest_of -@-)
+CHECK_SAME_CANONICALISED_STDOUT(cat manifest_good, MTN automate select i: | MTN automate toposort -@- | head -1 | MTN automate get_manifest_of -@-)
 
 AT_CLEANUP

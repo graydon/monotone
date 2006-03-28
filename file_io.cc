@@ -430,7 +430,7 @@ static void
 write_data_impl(any_path const & p,
                 data const & dat)
 {  
-  // we write, non-atomically, to MT/data.tmp.
+  // we write, non-atomically, to _MTN/data.tmp.
   // nb: no mucking around with multiple-writer conditions. we're a
   // single-user single-threaded program. you get what you paid for.
   assert_path_is_directory(bookkeeping_root);

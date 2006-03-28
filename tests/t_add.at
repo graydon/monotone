@@ -2,7 +2,7 @@
 
 AT_SETUP([addition of files and directories])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_CHECK(mkdir dir)
 AT_DATA(file0, [file 0
@@ -14,35 +14,35 @@ AT_DATA(dir/file2, [file 2
 
 # adding a non-existent file should fail
 
-AT_CHECK(monotone add foobar, [1], [ignore], [ignore])
+AT_CHECK(MTN add foobar, [1], [ignore], [ignore])
 
 # newly added files should appear as such
 
-AT_CHECK(MONOTONE add file0, [], [ignore], [stderr])
+AT_CHECK(MTN add file0, [], [ignore], [stderr])
 AT_CHECK(grep 'adding file0' stderr, [0], [ignore])
 
-AT_CHECK(MONOTONE add dir, [], [ignore], [stderr])
+AT_CHECK(MTN add dir, [], [ignore], [stderr])
 AT_CHECK(grep 'adding dir/file1' stderr, [0], [ignore])
 AT_CHECK(grep 'adding dir/file2' stderr, [0], [ignore])
 
-AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(MTN status, [], [stdout])
 AT_CHECK(grep file0 stdout, [0], [ignore])
 AT_CHECK(grep file1 stdout, [0], [ignore])
 AT_CHECK(grep file2 stdout, [0], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit --message 'add files', [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message 'add files', [], [ignore], [ignore])
 
 # redundant additions should not appear 
 # (i.e. they should be ignored)
 
-AT_CHECK(MONOTONE add file0, [], [ignore], [stderr])
+AT_CHECK(MTN add file0, [], [ignore], [stderr])
 AT_CHECK(grep 'skipping file0' stderr, [0], [ignore])
 
-AT_CHECK(MONOTONE add dir, [], [ignore], [stderr])
+AT_CHECK(MTN add dir, [], [ignore], [stderr])
 AT_CHECK(grep 'skipping dir/file1' stderr, [0], [ignore])
 AT_CHECK(grep 'skipping dir/file2' stderr, [0], [ignore])
 
-AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(MTN status, [], [stdout])
 AT_CHECK(grep file0 stdout, [1], [ignore])
 AT_CHECK(grep file1 stdout, [1], [ignore])
 AT_CHECK(grep file2 stdout, [1], [ignore])
@@ -63,9 +63,9 @@ AT_DATA(dir2/file7, [file 7
 #AT_DATA(.mt-ignore, [.*\.ignore$
 #])
 
-#AT_CHECK(RAW_MONOTONE ls unkown, [], [stdout], [ignore])
+#AT_CHECK(RAW_MTN ls unkown, [], [stdout], [ignore])
 
-AT_CHECK(MONOTONE add --unknown, [], [ignore], [stderr])
+AT_CHECK(MTN add --unknown, [], [ignore], [stderr])
 AT_CHECK(grep 'adding file3' stderr, [0], [ignore])
 #AT_CHECK(grep 'adding file4.ignore' stderr, [1], [ignore])
 AT_CHECK(grep 'adding dir/file5' stderr, [0], [ignore])
@@ -75,7 +75,7 @@ AT_CHECK(grep 'adding dir2/file7' stderr, [0], [ignore])
 AT_CHECK(grep 'skipping dir2/file7' stderr, [1], [ignore])
 AT_CHECK(grep 'adding test_hooks.lua' stderr, [1], [ignore])
 
-AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(MTN status, [], [stdout])
 AT_CHECK(grep file0 stdout, [1], [ignore])
 AT_CHECK(grep file1 stdout, [1], [ignore])
 AT_CHECK(grep file2 stdout, [1], [ignore])
@@ -84,9 +84,9 @@ AT_CHECK(grep file3 stdout, [0], [ignore])
 AT_CHECK(grep file5 stdout, [0], [ignore])
 #AT_CHECK(grep file6 stdout, [1], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit --message 'add second set of files', [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message 'add second set of files', [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(MTN status, [], [stdout])
 AT_CHECK(grep file0 stdout, [1], [ignore])
 AT_CHECK(grep file1 stdout, [1], [ignore])
 AT_CHECK(grep file2 stdout, [1], [ignore])

@@ -1,5 +1,5 @@
 AT_SETUP([update updates inodeprints])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(testfile, [blah blah
 ])
@@ -11,9 +11,9 @@ SET_FILE(testfile, [stuff stuff
 COMMIT(testbranch)
 R1=`BASE_REVISION`
 
-AT_CHECK(MONOTONE checkout --branch=testbranch --revision=$R0 td, [], [ignore], [ignore])
-AT_CHECK(touch td/MT/inodeprints)
-AT_CHECK(cd td && MONOTONE update, [], [ignore], [ignore])
-AT_CHECK(test -s td/MT/inodeprints)
+AT_CHECK(MTN checkout --branch=testbranch --revision=$R0 td, [], [ignore], [ignore])
+AT_CHECK(touch td/_MTN/inodeprints)
+AT_CHECK(cd td && MTN update, [], [ignore], [ignore])
+AT_CHECK(test -s td/_MTN/inodeprints)
 
 AT_CLEANUP

@@ -146,6 +146,16 @@ database::check_schema()
 }
 
 void
+database::check_is_not_rosterified()
+{
+  results res;
+  string rosters_query = "SELECT 1 FROM rosters LIMIT 1";
+  fetch(res, one_col, any_rows, query(rosters_query));
+  N(res.empty(),
+    F("this database already contains rosters"));
+}
+
+void
 database::check_format()
 {
   results res_revisions;
@@ -155,13 +165,13 @@ database::check_format()
 
   fetch(res_revisions, one_col, any_rows, query(revisions_query));
 
-  if (res_revisions.size() > 0)
+  if (!res_revisions.empty())
     {
       // they have revisions, so they can't be _ancient_, but they still might
       // not have rosters
       results res_rosters;
       fetch(res_rosters, one_col, any_rows, query(rosters_query));
-      N(res_rosters.size() != 0,
+      N(!res_rosters.empty(),
         F("database %s contains revisions but no rosters\n"
           "if you are a project leader or doing local testing:\n"
           "  see the file UPGRADE for instructions on upgrading.\n"
@@ -180,7 +190,7 @@ database::check_format()
       // rosterified monotone.)
       results res_manifests;
       fetch(res_manifests, one_col, any_rows, query(manifests_query));
-      N(res_manifests.size() == 0,
+      N(res_manifests.empty(),
         F("database %s contains manifests but no revisions\n"
           "this is a very old database; it needs to be upgraded\n"
           "please see README.changesets for details")
@@ -248,6 +258,8 @@ assert_sqlite3_ok(sqlite3 *s)
       // errno's.
       L(FL("sqlite error: %d: %s") % errcode % errmsg);
     }
+  // note: if you update this, try to keep calculate_schema_id() in
+  // schema_migration.cc consistent.
   std::string auxiliary_message = "";
   if (errcode == SQLITE_ERROR)
     {
@@ -257,7 +269,7 @@ assert_sqlite3_ok(sqlite3 *s)
   // if the last message is empty, the \n will be stripped off too
   E(errcode == SQLITE_OK,
     // kind of string surgery to avoid ~duplicate strings
-    F("sqlite error: %d: %s\n%s") % errcode % errmsg % auxiliary_message);
+    F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
 }
 
 struct sqlite3 * 
@@ -471,6 +483,7 @@ database::load(istream & in)
     }
 
   assert_sqlite3_ok(__sql);
+  execute(query("ANALYZE"));
 }
 
 
@@ -532,6 +545,9 @@ database::info(ostream & out)
       "  cached ancestry : %u\n"
       "  certs           : %u\n"
       "  total           : %u\n"
+      "database:\n"
+      "  page size       : %u\n"
+      "  cache size      : %u\n"
       )
     % id
     // counts
@@ -551,7 +567,9 @@ database::info(ostream & out)
     % SPACE_USAGE("revision_ancestry", "length(parent) + length(child)")
     % SPACE_USAGE("revision_certs", "length(hash) + length(id) + length(name)"
                   " + length(value) + length(keypair) + length(signature)")
-    % total;
+    % total
+    % page_size()
+    % cache_size();
 
 #undef SPACE_USAGE
 }
@@ -616,7 +634,7 @@ void
 database::execute(query const & query)
 {
   results res;
-  fetch(res, 0, 0, query );
+  fetch(res, 0, 0, query);
 }
 
 void 
@@ -818,6 +836,27 @@ database::space_usage(string const & table, string const & rowspace)
   query q("SELECT COALESCE(SUM(" + rowspace + "), 0) FROM " + table);
   fetch(res, one_col, one_row, q);
   return lexical_cast<unsigned long>(res[0][0]);
+}
+
+unsigned int
+database::page_size()
+{
+  results res;
+  query q("PRAGMA page_size");
+  fetch(res, one_col, one_row, q);
+  return lexical_cast<unsigned int>(res[0][0]);
+}
+
+unsigned int
+database::cache_size()
+{
+  // This returns the persistent (default) cache size.  It's possible to
+  // override this setting transiently at runtime by setting PRAGMA
+  // cache_size.
+  results res;
+  query q("PRAGMA default_cache_size");
+  fetch(res, one_col, one_row, q);
+  return lexical_cast<unsigned int>(res[0][0]);
 }
 
 void

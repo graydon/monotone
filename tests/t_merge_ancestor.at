@@ -1,5 +1,5 @@
 AT_SETUP([merge rev with ancestor])
-MONOTONE_SETUP
+MTN_SETUP
 
 # The idea here is that if we have, say, A -> B -> C, then merging A
 # and C should not be possible, because it creates a weird graph with
@@ -20,7 +20,7 @@ SET_FILE(testfile, [2
 COMMIT(testbranch)
 REV2=`BASE_REVISION`
 
-AT_CHECK(MONOTONE explicit_merge $REV0 $REV1 testbranch, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE explicit_merge $REV1 $REV0 testbranch, [1], [ignore], [ignore])
+AT_CHECK(MTN explicit_merge $REV0 $REV1 testbranch, [1], [ignore], [ignore])
+AT_CHECK(MTN explicit_merge $REV1 $REV0 testbranch, [1], [ignore], [ignore])
 
 AT_CLEANUP

@@ -2,7 +2,7 @@
 
 AT_SETUP([creating a bad criss-cross merge])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 # this test demonstrates a tricky case in which two parties, bob and
 # alice, merge a fork, left and right, differently. bob chooses the
@@ -70,23 +70,23 @@ function get_revision_cert_trust(signers, id, name, val)
 end
 ])
 
-m4_define([BOB], [monotone --rcfile=test_hooks.lua --rcfile=bob.lua --nostd --norc --db=test.db --key=bob --keydir=keys])
-m4_define([ALICE], [monotone --rcfile=test_hooks.lua --rcfile=alice.lua --nostd --norc --db=test.db --key=alice --keydir=keys])
+m4_define([BOB], [RAW_MTN --rcfile=test_hooks.lua --rcfile=bob.lua --nostd --norc --db=test.db --key=bob --keydir=keys])
+m4_define([ALICE], [RAW_MTN --rcfile=test_hooks.lua --rcfile=alice.lua --nostd --norc --db=test.db --key=alice --keydir=keys])
 
 AT_CHECK((echo "bob"; echo "bob") | BOB genkey bob, [], [ignore], [ignore])
 AT_CHECK((echo "alice"; echo "alice") | ALICE genkey alice, [], [ignore], [ignore])
 
 # construct ancestor
 AT_CHECK(cp shared.anc shared)
-AT_CHECK(MONOTONE add shared, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit --message=ancestor, [], [ignore], [ignore])
+AT_CHECK(MTN add shared, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message=ancestor, [], [ignore], [ignore])
 ROOT_R_SHA=`BASE_REVISION`
 ROOT_F_SHA=`SHA1(shared)`
 
 # construct left node
 AT_CHECK(cp shared.left shared)
-AT_CHECK(MONOTONE add specific.left, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit --message=left, [], [ignore], [ignore])
+AT_CHECK(MTN add specific.left, [], [ignore], [ignore])
+AT_CHECK(MTN commit --message=left, [], [ignore], [ignore])
 LEFT_R_SHA=`BASE_REVISION`
 LEFT_F_SHA=`SHA1(shared)`
 AT_CHECK(test $LEFT_R_SHA != $ROOT_R_SHA)
@@ -97,8 +97,8 @@ REVERT_TO($ROOT_R_SHA)
 
 # construct right node
 AT_CHECK(cp shared.right shared)
-AT_CHECK(MONOTONE add specific.right, [], [ignore], [ignore])
-AT_CHECK(MONOTONE commit --message=right, [], [ignore], [ignore])
+AT_CHECK(MTN add specific.right, [], [ignore], [ignore])
+AT_CHECK(MTN commit --message=right, [], [ignore], [ignore])
 RIGHT_R_SHA=`BASE_REVISION`
 RIGHT_F_SHA=`SHA1(shared)`
 AT_CHECK(test $RIGHT_R_SHA != $ROOT_R_SHA)
@@ -116,6 +116,6 @@ AT_CHECK(BOB merge, [], [ignore], [ignore])
 # because there are conflicting changes and
 # we have no merge3 hook to fall back on
 
-AT_CHECK(MONOTONE --branch=testbranch merge, [1], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch merge, [1], [ignore], [ignore])
 
 AT_CLEANUP

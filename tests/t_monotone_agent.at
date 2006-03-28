@@ -1,5 +1,5 @@
 AT_SETUP([(todo) write monotone-agent])
-MONOTONE_SETUP
+MTN_SETUP
 
 # This test is a bug report.
 AT_XFAIL_IF(true)

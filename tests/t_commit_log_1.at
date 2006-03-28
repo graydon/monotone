@@ -1,8 +1,8 @@
 # -*- Autoconf -*-
 
-AT_SETUP([commit using MT/log])
+AT_SETUP([commit using _MTN/log])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(commit_log.lua, [
 function edit_comment(summary, user_log_file)
@@ -10,19 +10,19 @@ function edit_comment(summary, user_log_file)
 end
 ])
 
-AT_DATA(MT/log, [Log entry
+AT_DATA(_MTN/log, [Log entry
 ])
 
 AT_DATA(input.txt, [version 0 of the file
 ])
 
-AT_CHECK(MONOTONE add input.txt, [], [ignore], [ignore])
+AT_CHECK(MTN add input.txt, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch --rcfile=commit_log.lua commit, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch --rcfile=commit_log.lua commit, [], [ignore], [ignore])
 
 TSHA=`BASE_REVISION`
-AT_CHECK(test -f MT/log -a ! -s MT/log)
-AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout], [ignore])
+AT_CHECK(test -f _MTN/log -a ! -s _MTN/log)
+AT_CHECK(MTN ls certs $TSHA, [], [stdout], [ignore])
 AT_CHECK(QGREP('Log entry' stdout), [])
 
 AT_CLEANUP

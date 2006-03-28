@@ -222,12 +222,12 @@ WIN32_PLATFORM_SOURCES = \
 
 # primaries
 
-bin_PROGRAMS = monotone
+bin_PROGRAMS = mtn
 check_PROGRAMS = unit_tests
 noinst_PROGRAMS = txt2c 
 EXTRA_PROGRAMS = usher 
 
-monotone_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
+mtn_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
 usher_SOURCES = contrib/usher.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
 
@@ -284,10 +284,10 @@ lib3rdparty_a_CPPFLAGS =
 lib3rdparty_a_CFLAGS = $(AM_CFLAGS) $(LIB3RDPARTY_CFLAGS)
 lib3rdparty_a_CXXFLAGS = $(AM_CXXFLAGS) $(LIB3RDPARTY_CXXFLAGS)
 
-monotone_LDFLAGS = 
-monotone_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
-monotone_CFLAGS = $(AM_CFLAGS) $(MONOTONE_CFLAGS)
-monotone_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MONOTONE_CXXFLAGS)
+mtn_LDFLAGS = 
+mtn_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
+mtn_CFLAGS = $(AM_CFLAGS) $(MTN_CFLAGS)
+mtn_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MTN_CXXFLAGS)
 
 unit_tests_LDFLAGS = 
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
@@ -299,20 +299,20 @@ if STATIC_BOOST
   BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem$(BOOST_SUFFIX).a \
               @BOOST_LIBDIR@/libboost_date_time$(BOOST_SUFFIX).a \
               @BOOST_LIBDIR@/libboost_regex$(BOOST_SUFFIX).a
-  monotone_LDADD = lib3rdparty.a $(BOOSTLIBS)
+  mtn_LDADD = lib3rdparty.a $(BOOSTLIBS)
   unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
                      @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
 else
-  monotone_LDADD = lib3rdparty.a
+  mtn_LDADD = lib3rdparty.a
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework$(BOOST_SUFFIX)
 endif
 
-monotone_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
+mtn_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 unit_tests_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
-  monotone_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
+  mtn_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   unit_tests_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
@@ -363,7 +363,7 @@ PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf				\
 PNG_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.png)))
 EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.eps)))
 
-man1_MANS = monotone.1
+man1_MANS = mtn.1
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(man1_MANS) \
 	     $(PDF_FIGURES) \
@@ -513,8 +513,8 @@ package_revision.c: package_revision.txt txt2c Makefile
 .PHONY: package_full_revision.txt apidocs
 package_full_revision.txt:
 	REAL_BLDDIR=$$PWD/$(top_builddir); \
-	(cd $(srcdir) && $$REAL_BLDDIR/monotone status) 2>/dev/null >$@ \
-	|| (cd $(srcdir) && monotone status) 2>/dev/null >$@ \
+	(cd $(srcdir) && $$REAL_BLDDIR/mtn status) 2>/dev/null >$@ \
+	|| (cd $(srcdir) && mtn status) 2>/dev/null >$@ \
 	|| (cp $(srcdir)/package_full_revision_dist.txt 2>/dev/null $@) \
 	|| (echo "unknown" >$@)
 package_full_revision_dist.txt: package_full_revision.txt

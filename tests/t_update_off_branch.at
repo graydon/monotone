@@ -1,5 +1,5 @@
 AT_SETUP([update to off-branch rev])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(testfile, [blah blah
 ])
@@ -11,8 +11,8 @@ SET_FILE(testfile, [other other
 COMMIT(otherbranch)
 OR=`BASE_REVISION`
 
-AT_CHECK(MONOTONE checkout --branch=testbranch --revision=$TR codir, [], [ignore], [ignore])
-AT_CHECK(cd codir && MONOTONE update --revision=$OR, [1], [ignore], [ignore])
-AT_CHECK(cd codir && MONOTONE update --branch=otherbranch --revision=$OR, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --branch=testbranch --revision=$TR codir, [], [ignore], [ignore])
+AT_CHECK(cd codir && MTN update --revision=$OR, [], [ignore], [ignore])
+AT_CHECK(grep '^ *branch "otherbranch"' _MTN/options, [], [ignore], [ignore])
 
 AT_CLEANUP
