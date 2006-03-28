@@ -68,15 +68,15 @@ struct access_tracker
 static access_tracker<system_path> initial_abs_path;
 // initial_rel_path is for interpreting external file_path's
 // for now we just make it an fs::path for convenience; we used to make it a
-// file_path, but then you can't run monotone from inside the MT/ dir (even
-// when referring to files outside the MT/ dir).
+// file_path, but then you can't run monotone from inside the _MTN/ dir (even
+// when referring to files outside the _MTN/ dir).
 static access_tracker<fs::path> initial_rel_path;
 // working_root is for converting file_path's and bookkeeping_path's to
 // system_path's.
 static access_tracker<system_path> working_root;
 
-bookkeeping_path const bookkeeping_root("MT");
-path_component const bookkeeping_root_component("MT");
+bookkeeping_path const bookkeeping_root("_MTN");
+path_component const bookkeeping_root_component("_MTN");
 
 void
 save_initial_path()
@@ -157,10 +157,29 @@ fully_normalized_path(std::string const & path)
   return true;
 }
 
+// This function considers _MTN, _MTn, _MtN, _mtn etc. to all be bookkeeping
+// paths, because on case insensitive filesystems, files put in any of them
+// may end up in _MTN instead.  This allows arbitrary code execution.  A
+// better solution would be to fix this in the working directory writing code
+// -- this prevents all-unix projects from naming things "mt", which is a bit
+// rude -- but as a temporary security kluge it works.
 static inline bool
 in_bookkeeping_dir(std::string const & path)
 {
-  return path == "MT" || (path.size() >= 3 && (path.substr(0, 3) == "MT/"));
+  if (path.size() == 0 || (path[0] != '_'))
+    return false;
+  if (path.size() == 1 || (path[0] != 'M' && path[0] != 'm'))
+    return false;
+  if (path.size() == 2 || (path[1] != 'T' && path[1] != 't'))
+    return false;
+  if (path.size() == 3 || (path[1] != 'N' && path[1] != 'n'))
+    return false;
+  // if we've gotten here, the first three letters are _, M, T, and N, in
+  // either upper or lower case.  So if that is the whole path, or else if it
+  // continues but the next character is /, then this is a bookkeeping path.
+  if (path.size() == 2 || (path[2] == '/'))
+    return true;
+  return false;
 }
 
 static inline bool
@@ -539,7 +558,7 @@ find_and_go_to_workspace(system_path const & search_root)
       return false;
     }
 
-  // check for MT/. and MT/.. to see if mt dir is readable
+  // check for _MTN/. and _MTN/.. to see if mt dir is readable
   if (!fs::exists(check / ".") || !fs::exists(check / ".."))
     {
       L(FL("problems with '%s' (missing '.' or '..')\n") % check.string());
@@ -583,7 +602,8 @@ static void test_file_path_internal()
                             "foo//bar",
                             "foo/../bar",
                             "../bar",
-                            "MT/blah",
+                            "_MTN",
+                            "_MTN/blah",
                             "foo/bar/",
                             "foo/./bar",
                             "./foo",
@@ -592,6 +612,22 @@ static void test_file_path_internal()
                             "c:\\foo",
                             "c:foo",
                             "c:/foo",
+                            // some baddies made bad by a security kluge --
+                            // see the comment in in_bookkeeping_dir
+                            "_mtn",
+                            "_mtN",
+                            "_mTn",
+                            "_Mtn",
+                            "_MTn",
+                            "_MtN",
+                            "_mTN",
+                            "_mtn/foo",
+                            "_mtN/foo",
+                            "_mTn/foo",
+                            "_Mtn/foo",
+                            "_MTn/foo",
+                            "_MtN/foo",
+                            "_mTN/foo",
                             0 };
   initial_rel_path.unset();
   initial_rel_path.set(fs::path(), true);
@@ -619,7 +655,7 @@ static void test_file_path_internal()
                             "foo/with,other+@weird*%#$=stuff/bar",
                             ".foo/bar",
                             "..foo/bar",
-                            "MTfoo/bar",
+                            "_MTNfoo/bar",
                             "foo:bar",
                             0 };
   
@@ -677,8 +713,8 @@ static void test_file_path_external_null_prefix()
 
   char const * baddies[] = {"/foo",
                             "../bar",
-                            "MT/blah",
-                            "MT",
+                            "_MTN/blah",
+                            "_MTN",
                             "//blah",
                             "\\foo",
                             "..",
@@ -686,6 +722,22 @@ static void test_file_path_external_null_prefix()
                             "c:foo",
                             "c:/foo",
                             "",
+                            // some baddies made bad by a security kluge --
+                            // see the comment in in_bookkeeping_dir
+                            "_mtn",
+                            "_mtN",
+                            "_mTn",
+                            "_Mtn",
+                            "_MTn",
+                            "_MtN",
+                            "_mTN",
+                            "_mtn/foo",
+                            "_mtN/foo",
+                            "_mTn/foo",
+                            "_Mtn/foo",
+                            "_MTn/foo",
+                            "_MtN/foo",
+                            "_mTN/foo",
                             0 };
   for (char const ** c = baddies; *c; ++c)
     {
@@ -721,10 +773,10 @@ static void test_file_path_external_null_prefix()
   initial_rel_path.unset();
 }
 
-static void test_file_path_external_prefix_MT()
+static void test_file_path_external_prefix__MTN()
 {
   initial_rel_path.unset();
-  initial_rel_path.set(fs::path("MT"), true);
+  initial_rel_path.set(fs::path("_MTN"), true);
 
   BOOST_CHECK_THROW(file_path_external(utf8("foo")), informative_failure);
   BOOST_CHECK_THROW(file_path_external(utf8(".")), informative_failure);
@@ -741,8 +793,8 @@ static void test_file_path_external_prefix_a_b()
   char const * baddies[] = {"/foo",
                             "../../../bar",
                             "../../..",
-                            "../../MT",
-                            "../../MT/foo",
+                            "../../_MTN",
+                            "../../_MTN/foo",
                             "//blah",
                             "\\foo",
                             "c:\\foo",
@@ -751,6 +803,22 @@ static void test_file_path_external_prefix_a_b()
                             "c:/foo",
 #endif
                             "",
+                            // some baddies made bad by a security kluge --
+                            // see the comment in in_bookkeeping_dir
+                            "../../_mtn",
+                            "../../_mtN",
+                            "../../_mTn",
+                            "../../_Mtn",
+                            "../../_MTn",
+                            "../../_MtN",
+                            "../../_mTN",
+                            "../../_mtn/foo",
+                            "../../_mtN/foo",
+                            "../../_mTn/foo",
+                            "../../_Mtn/foo",
+                            "../../_MTn/foo",
+                            "../../_MtN/foo",
+                            "../../_mTN/foo",
                             0 };
   for (char const ** c = baddies; *c; ++c)
     {
@@ -785,8 +853,8 @@ static void test_file_path_external_prefix_a_b()
   check_fp_normalizes_to("../foo", "a/foo");
   check_fp_normalizes_to("..", "a");
   check_fp_normalizes_to("../..", "");
-  check_fp_normalizes_to("MT/foo", "a/b/MT/foo");
-  check_fp_normalizes_to("MT", "a/b/MT");
+  check_fp_normalizes_to("_MTN/foo", "a/b/_MTN/foo");
+  check_fp_normalizes_to("_MTN", "a/b/_MTN");
 #ifndef WIN32
   check_fp_normalizes_to("c:foo", "a/b/c:foo");
   check_fp_normalizes_to("c:/foo", "a/b/c:/foo");
@@ -851,15 +919,31 @@ static void test_split_join()
   // Make sure that we can't use joining to create a path into the bookkeeping
   // dir
   split_path split_mt1, split_mt2;
-  file_path_internal("foo/MT").split(split_mt1);
+  file_path_internal("foo/_MTN").split(split_mt1);
   BOOST_CHECK(split_mt1.size() == 3);
   I(split_mt1[2] == bookkeeping_root_component);
   split_mt2.push_back(the_null_component);
   split_mt2.push_back(split_mt1[2]);
-  // split_mt2 now contains the component "MT"
+  // split_mt2 now contains the component "_MTN"
   BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
   split_mt2.push_back(split_mt1[1]);
-  // split_mt2 now contains the components "MT", "foo" in that order
+  // split_mt2 now contains the components "_MTN", "foo" in that order
+  // this comparison tricks the compiler into not completely eliminating this
+  // code as dead...
+  BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+
+  // and make sure it fails for the klugy security cases -- see comments on
+  // in_bookkeeping_dir
+  split_path split_mt1, split_mt2;
+  file_path_internal("foo/_mTn").split(split_mt1);
+  BOOST_CHECK(split_mt1.size() == 3);
+  I(split_mt1[2] == bookkeeping_root_component);
+  split_mt2.push_back(the_null_component);
+  split_mt2.push_back(split_mt1[2]);
+  // split_mt2 now contains the component "_mTn"
+  BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+  split_mt2.push_back(split_mt1[1]);
+  // split_mt2 now contains the components "_mTn", "foo" in that order
   // this comparison tricks the compiler into not completely eliminating this
   // code as dead...
   BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
@@ -901,10 +985,10 @@ static void test_bookkeeping_path()
   BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("foo/bar")), std::logic_error);
   BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("a")), std::logic_error);
   
-  check_bk_normalizes_to("a", "MT/a");
-  check_bk_normalizes_to("foo", "MT/foo");
-  check_bk_normalizes_to("foo/bar", "MT/foo/bar");
-  check_bk_normalizes_to("foo/bar/baz", "MT/foo/bar/baz");
+  check_bk_normalizes_to("a", "_MTN/a");
+  check_bk_normalizes_to("foo", "_MTN/foo");
+  check_bk_normalizes_to("foo/bar", "_MTN/foo/bar");
+  check_bk_normalizes_to("foo/bar/baz", "_MTN/foo/bar/baz");
 }
 
 static void check_system_normalizes_to(char * before, char * after)
@@ -942,7 +1026,7 @@ static void test_system_path()
   //   /work$ cd newdir
   //   /work/newdir$ monotone setup --db=../foo.db
   // Now they have either "/work/foo.db" or "/work/newdir/../foo.db" in
-  // MT/options
+  // _MTN/options
   //   /work/newdir$ cd ..
   //   /work$ mv newdir newerdir  # better name
   // Oops, now, if we stored the version with ..'s in, this workspace
@@ -992,10 +1076,10 @@ static void test_system_path()
   file_path a_file_path;
   BOOST_CHECK(system_path(a_file_path).as_external()
               == "/working/root");
-  BOOST_CHECK(system_path(bookkeeping_path("MT/foo/bar")).as_internal()
-              == "/working/root/MT/foo/bar");
+  BOOST_CHECK(system_path(bookkeeping_path("_MTN/foo/bar")).as_internal()
+              == "/working/root/_MTN/foo/bar");
   BOOST_CHECK(system_path(bookkeeping_root).as_internal()
-              == "/working/root/MT");
+              == "/working/root/_MTN");
   initial_abs_path.unset();
   working_root.unset();
   initial_rel_path.unset();
@@ -1065,7 +1149,7 @@ void add_paths_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&test_null_name));
   suite->add(BOOST_TEST_CASE(&test_file_path_internal));
   suite->add(BOOST_TEST_CASE(&test_file_path_external_null_prefix));
-  suite->add(BOOST_TEST_CASE(&test_file_path_external_prefix_MT));
+  suite->add(BOOST_TEST_CASE(&test_file_path_external_prefix__MTN));
   suite->add(BOOST_TEST_CASE(&test_file_path_external_prefix_a_b));
   suite->add(BOOST_TEST_CASE(&test_split_join));
   suite->add(BOOST_TEST_CASE(&test_bookkeeping_path));

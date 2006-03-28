@@ -1,3 +1,10 @@
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: s/MT/_MTN/ everywhere.
+	(in_bookkeeping_dir): Also apply the security kluge from 0.25.2,
+	where we define the bookkeeping dir case-insensitively.
+	Add tests for this.
+
 2006-03-27  Nathaniel Smith  <njs@pobox.com>
 
 	* database.cc (check_format): Use .empty() instead of comparing
