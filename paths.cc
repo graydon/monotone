@@ -168,11 +168,11 @@ in_bookkeeping_dir(std::string const & path)
 {
   if (path.size() == 0 || (path[0] != '_'))
     return false;
-  if (path.size() == 1 || (path[1] != 'M' && path[0] != 'm'))
+  if (path.size() == 1 || (path[1] != 'M' && path[1] != 'm'))
     return false;
-  if (path.size() == 2 || (path[2] != 'T' && path[1] != 't'))
+  if (path.size() == 2 || (path[2] != 'T' && path[2] != 't'))
     return false;
-  if (path.size() == 3 || (path[3] != 'N' && path[2] != 'n'))
+  if (path.size() == 3 || (path[3] != 'N' && path[3] != 'n'))
     return false;
   // if we've gotten here, the first three letters are _, M, T, and N, in
   // either upper or lower case.  So if that is the whole path, or else if it
@@ -939,7 +939,6 @@ static void test_split_join()
     split_path split_mt1, split_mt2;
     file_path_internal("foo/_mTn").split(split_mt1);
     BOOST_CHECK(split_mt1.size() == 3);
-    I(split_mt1[2] == bookkeeping_root_component);
     split_mt2.push_back(the_null_component);
     split_mt2.push_back(split_mt1[2]);
     // split_mt2 now contains the component "_mTn"

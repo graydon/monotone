@@ -1,5 +1,11 @@
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (in_bookkeeping_dir): Argh.  Really correct now!
+	Really!
+	(test_split_join): Another cut-and-paste error.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (test_split_join): Whoops, be more careful
 	copy-and-pasting within a single scope...
 	(in_bookkeeping_dir): Was totally wrong, make all the constants
