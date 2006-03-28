@@ -1,5 +1,5 @@
 AT_SETUP([db rosterify preserves renames])
-MONOTONE_SETUP
+MTN_SETUP
 NEED_UNGZB64
 
 AT_DATA([test.db.dump.gz.b64], [H4sICKhtq0MAA3Rlc3QuZGIuZHVtcADtWFmTotqWfi5/hXFeqk6Y58g83Bsn4gIiogIigmhH
@@ -74,9 +74,9 @@ axRDf+UdxZeHVyRv6bjnxq9f45+lHxjzS/w/yt0G5a8PQ/0r8g9j9P3jmyJD09TNPwf/BgLY
 AT_CHECK(rm -f test.db)
 
 UNGZB64(test.db.dump.gz.b64, test.db.dump)
-AT_CHECK(MONOTONE db load < test.db.dump, [], [ignore], [ignore])
-AT_CHECK(MONOTONE db migrate, [], [ignore], [ignore])
-AT_CHECK(MONOTONE db rosterify, [], [ignore], [ignore])
+AT_CHECK(MTN db load < test.db.dump, [], [ignore], [ignore])
+AT_CHECK(MTN db migrate, [], [ignore], [ignore])
+AT_CHECK(MTN db rosterify, [], [ignore], [ignore])
 
 # check the second revision
 AT_DATA([expout], [format_version "1"
@@ -92,6 +92,6 @@ rename "testfile_start"
     to "testfile_end"
 ])
 
-CHECK_SAME_CANONICALISED_STDOUT(cat expout, MONOTONE automate select i: | monotone automate toposort -@- | tail -n 1 | monotone automate get_revision -@-)
+CHECK_SAME_CANONICALISED_STDOUT(cat expout, MTN automate select i: | MTN automate toposort -@- | tail -n 1 | MTN automate get_revision -@-)
 
 AT_CLEANUP

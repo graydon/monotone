@@ -1368,6 +1368,7 @@ void
 build_roster_style_revs_from_manifest_style_revs(app_state & app)
 {
   app.db.ensure_open_for_format_changes();
+  app.db.check_is_not_rosterified();
 
   global_sanity.set_relaxed(true);
   anc_graph graph(true, app);
@@ -1423,6 +1424,7 @@ void
 build_changesets_from_manifest_ancestry(app_state & app)
 {
   app.db.ensure_open_for_format_changes();
+  app.db.check_is_not_rosterified();
 
   anc_graph graph(false, app);
 

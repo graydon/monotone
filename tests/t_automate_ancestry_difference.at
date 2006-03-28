@@ -1,5 +1,5 @@
 AT_SETUP([automate ancestry_difference])
-MONOTONE_SETUP
+MTN_SETUP
 
 #   A
 #  / \
@@ -38,8 +38,8 @@ ADD_FILE(otherfile, [E
 COMMIT(testbranch)
 REV_E=`BASE_REVISION`
 
-AT_CHECK(MONOTONE explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 REV_F=`BASE_REVISION`
 
 AT_CHECK(test $REV_F != $REV_D)
@@ -47,34 +47,34 @@ AT_CHECK(test $REV_F != $REV_E)
 
 # Now do some checks
 
-AT_CHECK(MONOTONE automate ancestry_difference c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE automate ancestry_difference $REV_A c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+AT_CHECK(MTN automate ancestry_difference c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_A c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
 
-AT_CHECK(MONOTONE automate ancestry_difference $REV_A, [], [stdout], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_A, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_A)
-AT_CHECK(MONOTONE automate ancestry_difference $REV_A $REV_A, [], [], [ignore])
-AT_CHECK(MONOTONE automate ancestry_difference $REV_A $REV_B, [], [], [ignore])
-AT_CHECK(MONOTONE automate ancestry_difference $REV_A $REV_F, [], [], [ignore])
-AT_CHECK(MONOTONE automate ancestry_difference $REV_F $REV_F, [], [], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_A $REV_A, [], [], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_A $REV_B, [], [], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_A $REV_F, [], [], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_F $REV_F, [], [], [ignore])
 
-AT_CHECK(MONOTONE automate ancestry_difference $REV_B $REV_A, [], [stdout], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_B $REV_A, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_B)
 
 AT_CHECK(echo $REV_A > ab)
 AT_CHECK(echo $REV_B >> ab)
-AT_CHECK(MONOTONE automate ancestry_difference $REV_B, [], [stdout], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_B, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, cat ab)
 
-AT_CHECK(MONOTONE automate ancestry_difference $REV_F $REV_D $REV_E, [], [stdout], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_F $REV_D $REV_E, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_F)
 
 AT_CHECK(echo $REV_D > df)
 AT_CHECK(echo $REV_F >> df)
-AT_CHECK(MONOTONE automate ancestry_difference $REV_F $REV_E, [], [stdout], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_F $REV_E, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, cat df)
 
@@ -88,11 +88,11 @@ AT_CHECK(echo $REV_C >> acedf)
 AT_CHECK(echo $REV_E >> acedf)
 AT_CHECK(echo $REV_D >> acedf)
 AT_CHECK(echo $REV_F >> acedf)
-AT_CHECK(MONOTONE automate ancestry_difference $REV_F, [], [stdout], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_F, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp stdout acdef || cmp stdout acedf, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE automate ancestry_difference $REV_B $REV_F, [], [stdout], [ignore])
+AT_CHECK(MTN automate ancestry_difference $REV_B $REV_F, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_B)
 

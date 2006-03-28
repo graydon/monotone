@@ -1,5 +1,5 @@
 AT_SETUP([merge manual file])
-MONOTONE_SETUP
+MTN_SETUP
 
 NEED_UNB64
 
@@ -233,11 +233,11 @@ attr_init_functions[["mtn:manual_merge"]] = function(filename) return "false" en
 
 # --- first: auto add as binary 
 AT_CHECK(cp -f parent.bmp binary.bmp)
-AT_CHECK(MONOTONE --rcfile=binary.lua add binary.bmp, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=binary.lua add binary.bmp, [], [ignore], [ignore])
 COMMIT(binbranch)
 PARENT_SHA=`BASE_REVISION`
 
-AT_CHECK(MONOTONE attr get binary.bmp mtn:manual_merge, [], [ignore], [ignore])
+AT_CHECK(MTN attr get binary.bmp mtn:manual_merge, [], [ignore], [ignore])
 
 AT_CHECK(cp -f left.bmp binary.bmp)
 COMMIT(binbranch)
@@ -248,11 +248,11 @@ AT_CHECK(cp -f right.bmp binary.bmp)
 COMMIT(binbranch)
 
 # file marked binary: merge should fail
-AT_CHECK(MONOTONE --branch=binbranch merge, [1], [ignore], [ignore])
+AT_CHECK(MTN --branch=binbranch merge, [1], [ignore], [ignore])
 
 # --- second: auto add as text
 AT_CHECK(cp -f parent.bmp text.bmp)
-AT_CHECK(MONOTONE --rcfile=text.lua add text.bmp, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=text.lua add text.bmp, [], [ignore], [ignore])
 COMMIT(textbranch)
 PARENT_SHA=`BASE_REVISION`
 
@@ -265,11 +265,11 @@ AT_CHECK(cp -f right.bmp text.bmp)
 COMMIT(textbranch)
 
 # file marked text: merge should work!
-AT_CHECK(MONOTONE --branch=textbranch merge, [0], [ignore], [ignore])
+AT_CHECK(MTN --branch=textbranch merge, [0], [ignore], [ignore])
 
 # --- third: manually make filename as binary
 AT_CHECK(cp -f parent.bmp forcebin.bmp)
-AT_CHECK(MONOTONE --rcfile=text.lua add forcebin.bmp, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=text.lua add forcebin.bmp, [], [ignore], [ignore])
 COMMIT(forcebinbranch)
 PARENT_SHA=`BASE_REVISION`
 
@@ -281,16 +281,16 @@ REVERT_TO($PARENT_SHA)
 AT_CHECK(cp -f right.bmp forcebin.bmp)
 
 # set bin
-AT_CHECK(MONOTONE attr set forcebin.bmp mtn:manual_merge true, [], [ignore], [ignore])
+AT_CHECK(MTN attr set forcebin.bmp mtn:manual_merge true, [], [ignore], [ignore])
 COMMIT(forcebinbranch)
 
 # file marked binary: merge should fail
-AT_CHECK(MONOTONE --branch=forcebinbranch merge, [1], [ignore], [ignore])
+AT_CHECK(MTN --branch=forcebinbranch merge, [1], [ignore], [ignore])
 
 # --- fourth: automatically make filename as binary, then force text
 AT_CHECK(cp -f parent.bmp forcetext.bmp)
-AT_CHECK(MONOTONE --rcfile=binary.lua add forcetext.bmp, [], [ignore], [ignore])
-AT_CHECK(MONOTONE attr set forcetext.bmp mtn:manual_merge false, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=binary.lua add forcetext.bmp, [], [ignore], [ignore])
+AT_CHECK(MTN attr set forcetext.bmp mtn:manual_merge false, [], [ignore], [ignore])
 COMMIT(forcetextbranch)
 PARENT_SHA=`BASE_REVISION`
 
@@ -303,6 +303,6 @@ AT_CHECK(cp -f right.bmp forcetext.bmp)
 COMMIT(forcetextbranch)
 
 # file marked text: merge should work
-AT_CHECK(MONOTONE --branch=forcetextbranch merge, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=forcetextbranch merge, [], [ignore], [ignore])
 
 AT_CLEANUP

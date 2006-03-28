@@ -1,5 +1,5 @@
 AT_SETUP([read and convert old privkey packet])
-MONOTONE_SETUP
+MTN_SETUP
 
 # this is an old privkey generated with 0.23
 
@@ -19,9 +19,9 @@ vvQ+v3hYrpSnBocemFP1/aDAKUYlvvuzh5ojgvHXVKeEbgaXf/E9IQ==
 @<:@end@:>@
 ])
 
-AT_CHECK(MONOTONE read pkt, [], [ignore], [stderr])
+AT_CHECK(MTN read pkt, [], [ignore], [stderr])
 AT_CHECK(QGREP "read 1 packet" stderr)
-AT_CHECK(MONOTONE ls keys, [], [stdout])
+AT_CHECK(MTN ls keys, [], [stdout])
 AT_CHECK(QGREP "foo@bar.com" stdout)
 
 ADD_FILE(foo, [foo
@@ -30,6 +30,6 @@ ADD_FILE(foo, [foo
 # check that we can use the key we just read
 # if it imported wrong, it'll fail by not accepting the passphrase
 
-AT_CHECK((echo foo@bar.com; echo foo@bar.com) | MONOTONE ci -b foo -m bar, [], [ignore], [ignore])
+AT_CHECK((echo foo@bar.com; echo foo@bar.com) | MTN ci -b foo -m bar, [], [ignore], [ignore])
 
 AT_CLEANUP

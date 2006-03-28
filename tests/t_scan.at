@@ -2,7 +2,7 @@
 
 AT_SETUP([scanning trees])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_CHECK(mkdir foo)
 AT_CHECK(mkdir foo/bar)
@@ -37,9 +37,9 @@ content @<:@14c5b672e2181377e41e6d8c5ce21457d8342667@:>@
 content @<:@5c39de9ca49b3aa34fa21f5778954665d947476c@:>@
 ])
 
-AT_CHECK(MONOTONE add testfile0 foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
-AT_CHECK(MONOTONE automate get_manifest_of, [], [stdout]) 
+AT_CHECK(MTN add testfile0 foo, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
+AT_CHECK(MTN automate get_manifest_of, [], [stdout]) 
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp stdout manifest, [], [ignore]) 
 

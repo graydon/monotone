@@ -1,5 +1,5 @@
 AT_SETUP([merge binary file])
-MONOTONE_SETUP
+MTN_SETUP
 
 NEED_UNB64
 
@@ -222,7 +222,7 @@ UNB64(left.bmp.b64, left.bmp)
 UNB64(right.bmp.b64, right.bmp)
 
 AT_CHECK(cp -f parent.bmp testfile.bmp)
-AT_CHECK(MONOTONE add testfile.bmp, [], [ignore], [ignore])
+AT_CHECK(MTN add testfile.bmp, [], [ignore], [ignore])
 COMMIT(testbranch)
 PARENT_SHA=`BASE_REVISION`
 
@@ -235,6 +235,6 @@ AT_CHECK(cp -f right.bmp testfile.bmp)
 COMMIT(testbranch)
 
 # merge should fail!
-AT_CHECK(MONOTONE --branch=testbranch merge, [1], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch merge, [1], [ignore], [ignore])
 
 AT_CLEANUP

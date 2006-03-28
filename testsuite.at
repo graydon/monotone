@@ -15,15 +15,15 @@ AT_TESTED([monotone])
 # some command abbreviations to make life easier
 
 # Set PREEXECUTE in your environment to run monotone under, e.g., valgrind.
-m4_define([MONOTONE], [$PREEXECUTE $_MT_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --key=tester@test.net --root=$_ROOT_DIR])
-m4_define([RAW_MONOTONE], [$PREEXECUTE monotone --norc])
-m4_define([MINHOOKS_MONOTONE], [$PREEXECUTE $_MT_EXEC --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --rcfile=$_ROOT_DIR/min_hooks.lua --key=tester@test.net --root=$_ROOT_DIR])
-m4_define([SHA1], [monotone --norc identify $1])
-m4_define([BASE_REVISION], [cat MT/revision])
-m4_define([BASE_MANIFEST], [cat MT/revision | monotone --norc automate get_manifest_of -@- | monotone --norc identify])
-m4_define([WORKING_REVISION], [monotone --norc automate get_revision | monotone --norc identify])
-m4_define([WORKING_MANIFEST], [monotone --norc automate get_manifest_of | monotone --norc identify])
-m4_define([CERTVALUE], [monotone automate certs $1 | sed -e '1,/name "$2"/d' | sed -e '/^$/,$d' | grep '^ *value' | sed -e 's/^m4_dquote([^"])*"//' -e 's/"m4_dquote([^"])*$//'])
+m4_define([MTN], [$PREEXECUTE $_MTN_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --key=tester@test.net --root=$_ROOT_DIR])
+m4_define([RAW_MTN], [$PREEXECUTE $_MTN_EXEC --norc])
+m4_define([MINHOOKS_MTN], [$PREEXECUTE $_MTN_EXEC --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --rcfile=$_ROOT_DIR/min_hooks.lua --key=tester@test.net --root=$_ROOT_DIR])
+m4_define([SHA1], [$_MTN_EXEC --norc identify $1])
+m4_define([BASE_REVISION], [cat _MTN/revision])
+m4_define([BASE_MANIFEST], [cat _MTN/revision | $_MTN_EXEC --norc automate get_manifest_of -@- | $_MTN_EXEC --norc identify])
+m4_define([WORKING_REVISION], [$_MTN_EXEC --norc automate get_revision | $_MTN_EXEC --norc identify])
+m4_define([WORKING_MANIFEST], [$_MTN_EXEC --norc automate get_manifest_of | $_MTN_EXEC --norc identify])
+m4_define([CERTVALUE], [$_MTN_EXEC automate certs $1 | sed -e '1,/name "$2"/d' | sed -e '/^$/,$d' | grep '^ *value' | sed -e 's/^m4_dquote([^"])*"//' -e 's/"m4_dquote([^"])*$//'])
 m4_define([CANONICALISE], [
 if test "$OSTYPE" = "msys"; then
   dos2unix -q -o $1
@@ -44,15 +44,15 @@ m4_define([DATA],
 $2[]_ATEOF
 ])
 
-# the MONOTONE_SETUP macro deploys the standard lua hooks and loads the 
+# the MTN_SETUP macro deploys the standard lua hooks and loads the 
 # standard testing key, which we use for further tests.
 
-m4_define([MONOTONE_SETUP], [
+m4_define([MTN_SETUP], [
 
 # Absolutify monotone path.
-_MT_EXEC=`which monotone`
+_MTN_EXEC=`which mtn`
 
-# Save the PWD so MONOTONE macro can refer back to it
+# Save the PWD so MTN macro can refer back to it
 _ROOT_DIR=`pwd -P`
 
 # Pick a random port, so running multiple testsuites concurrently on the
@@ -162,9 +162,9 @@ attr_functions[["test:test_attr"]] =
 
 ])
 
-AT_CHECK(MONOTONE db init, [], [ignore], [ignore])
-AT_CHECK(MONOTONE read <test_keys, [], [ignore], [ignore])
-AT_CHECK(MONOTONE setup --branch=testbranch ., [], [ignore], [ignore])
+AT_CHECK(MTN db init, [], [ignore], [ignore])
+AT_CHECK(MTN read <test_keys, [], [ignore], [ignore])
+AT_CHECK(MTN setup --branch=testbranch ., [], [ignore], [ignore])
 AT_CHECK(rm test_keys)
 ])
 
@@ -197,29 +197,29 @@ AT_CHECK(cmp firstout secondout, [1], [ignore], [ignore])
 
 # run as CHECK_SAME_DB_CONTENTS(db1, db2)
 m4_define([CHECK_SAME_DB_CONTENTS], [
-CHECK_SAME_STDOUT(MONOTONE --db=$1 ls keys, MONOTONE --db=$2 ls keys)
+CHECK_SAME_STDOUT(MTN --db=$1 ls keys, MTN --db=$2 ls keys)
 
-REVS=`MONOTONE --db=$1 complete revision ""`
+REVS=`MTN --db=$1 complete revision ""`
 for R in $REVS; do
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate certs $R, MONOTONE --db=$2 automate certs $R)
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_revision $R, MONOTONE --db=$2 automate get_revision $R)
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_manifest_of $R, MONOTONE --db=$2 automate get_manifest_of $R)
+  CHECK_SAME_STDOUT(MTN --db=$1 automate certs $R, MTN --db=$2 automate certs $R)
+  CHECK_SAME_STDOUT(MTN --db=$1 automate get_revision $R, MTN --db=$2 automate get_revision $R)
+  CHECK_SAME_STDOUT(MTN --db=$1 automate get_manifest_of $R, MTN --db=$2 automate get_manifest_of $R)
 done
 
-CHECK_SAME_STDOUT(MONOTONE --db=$1 complete file "", MONOTONE --db=$2 complete file "")
-FILES=`MONOTONE --db=$1 complete file ""`
+CHECK_SAME_STDOUT(MTN --db=$1 complete file "", MTN --db=$2 complete file "")
+FILES=`MTN --db=$1 complete file ""`
 for F in $FILES; do
-  CHECK_SAME_STDOUT(MONOTONE --db=$1 automate get_file $F, MONOTONE --db=$2 automate get_file $F)
+  CHECK_SAME_STDOUT(MTN --db=$1 automate get_file $F, MTN --db=$2 automate get_file $F)
 done
 ])
 
 # run as PROBE_NODE(filename, rsha, fsha)
 m4_define([PROBE_NODE], [ 
-AT_CHECK(rm -rf MT.old)
-AT_CHECK(mv  MT MT.old)
+AT_CHECK(rm -rf _MTN.old)
+AT_CHECK(mv  _MTN _MTN.old)
 AT_CHECK(rm $1)
-AT_CHECK(MONOTONE checkout --revision=$2 ., [], [ignore])
-AT_CHECK(mv MT.old/options MT)
+AT_CHECK(MTN checkout --revision=$2 ., [], [ignore])
+AT_CHECK(mv _MTN.old/options _MTN)
 PROBE_R_SHA=`BASE_REVISION`
 PROBE_F_SHA=`SHA1($1)`
 AT_CHECK(test $PROBE_R_SHA = $2)
@@ -228,22 +228,22 @@ AT_CHECK(test $PROBE_F_SHA = $3)
 
 # run as REVERT_N_TO(2|3, rsha[, branch])
 m4_define([REVERT_N_TO], [
-AT_CHECK(rm -rf MT.old)
-AT_CHECK(mv  MT MT.old)
+AT_CHECK(rm -rf _MTN.old)
+AT_CHECK(mv  _MTN _MTN.old)
 m4_case([$3],
-        [], [AT_CHECK(MONOTONE$1 checkout --revision=$2 ., [], [ignore])],
-        [AT_CHECK(MONOTONE$1 --branch=$3 checkout --revision=$2 ., [], [ignore])])
+        [], [AT_CHECK(MTN$1 checkout --revision=$2 ., [], [ignore])],
+        [AT_CHECK(MTN$1 --branch=$3 checkout --revision=$2 ., [], [ignore])])
 PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA = $2)
 ])
 
 # run as REVERT_TO(rsha[,branch])
 m4_define([REVERT_TO], [ 
-AT_CHECK(rm -rf MT.old)
-AT_CHECK(mv  MT MT.old)
+AT_CHECK(rm -rf _MTN.old)
+AT_CHECK(mv  _MTN _MTN.old)
 m4_case([$2],
-        [], [AT_CHECK(MONOTONE checkout --revision=$1 ., [], [ignore])],
-        [AT_CHECK(MONOTONE --branch=$2 checkout --revision=$1 ., [], [ignore])])
+        [], [AT_CHECK(MTN checkout --revision=$1 ., [], [ignore])],
+        [AT_CHECK(MTN --branch=$2 checkout --revision=$1 ., [], [ignore])])
 PROBE_R_SHA=`BASE_REVISION`
 AT_CHECK(test $PROBE_R_SHA = $1)
 ])
@@ -251,13 +251,13 @@ AT_CHECK(test $PROBE_R_SHA = $1)
 # run as ADD_N_FILE(2|3, filename, data)
 m4_define([ADD_N_FILE], [
 AT_DATA($2, $3)
-AT_CHECK(MONOTONE$1 add $2, [], [ignore], [ignore])
+AT_CHECK(MTN$1 add $2, [], [ignore], [ignore])
 ])
 
 # run as ADD_FILE(filename, data)
 m4_define([ADD_FILE], [
 AT_DATA($1, $2)
-AT_CHECK(MONOTONE add $1, [], [ignore], [ignore])
+AT_CHECK(MTN add $1, [], [ignore], [ignore])
 ])
 
 # run as SET_FILE(filename, data)
@@ -267,7 +267,7 @@ AT_DATA($1, $2)
 
 # run as COMMIT(branch)
 m4_define([COMMIT], [
-AT_CHECK(MONOTONE --branch=$1 commit --message blah-blah, [], [ignore],
+AT_CHECK(MTN --branch=$1 commit --message blah-blah, [], [ignore],
 [ignore])
 ])
 
@@ -354,7 +354,7 @@ UNGZ($2.gz, $2)
 
 # netsync helpers
 # NETSYNC_SETUP sets up 2 databases; RUN_NETSYNC netsyncs between
-# them, MONOTONE2 operates on the second one.
+# them, MTN2 operates on the second one.
 
 m4_define([NETSYNC_SETUP], [
 
@@ -427,8 +427,8 @@ end
 ])
 ])
 
-m4_define([MONOTONE2], MONOTONE --db=test2.db --keydir=keys2)
-m4_define([MONOTONE3], MONOTONE --db=test3.db --keydir=keys3)
+m4_define([MTN2], MTN --db=test2.db --keydir=keys2)
+m4_define([MTN3], MTN --db=test3.db --keydir=keys3)
 
 m4_define([NETSYNC_KILL], [
 # kill last seen pid if there is no pid file (needed for cases where
@@ -461,7 +461,7 @@ if test "$OSTYPE" = "msys"; then
   if test $pskill && test -x $pskill; then
     $pskill $mt_pid 2>/dev/null
   else
-    ps | awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="monotone")system("kill -KILL " $a);}'
+    ps | awk -- '{p=$NF;a=1;if(p=="COMMAND")next;pp=split(p,ps,"/");if(ps[[pp]]=="mtn")system("kill -KILL " $a);}'
   fi
 else
   kill -KILL $mt_pid 2>/dev/null
@@ -475,26 +475,26 @@ m4_define([NETSYNC_ADDRESS], [localhost:$_PORT])
 # note that NETSYNC_SERVE_START is _not_ a special case of this macro.
 m4_define([NETSYNC_SERVE_N_START], [
 NETSYNC_KILLHARD
-MONOTONE --db=test$1.db --keydir=keys$1 --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($2, [], "{}*", $2) &
+MTN --db=test$1.db --keydir=keys$1 --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=_MTN/server_dump --bind=NETSYNC_ADDRESS serve m4_if($2, [], "{}*", $2) &
 sleep 4
 ])
 # run as NETSYNC_SERVE_START(pattern)
 m4_define([NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
-MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($1, [], "{}*", $1) &
+MTN --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=_MTN/server_dump --bind=NETSYNC_ADDRESS serve m4_if($1, [], "{}*", $1) &
 sleep 4
 ])
 # run as STDHOOKS_NETSYNC_SERVE_N_START(2|3, pattern)
 # note that NETSYNC_SERVE_START is _not_ a special case of this macro.
 m4_define([MINHOOKS_NETSYNC_SERVE_N_START], [
 NETSYNC_KILLHARD
-MINHOOKS_MONOTONE --db=test$1.db --keydir=keys$1 --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($2, [], "{}*", $2) &
+MINHOOKS_MTN --db=test$1.db --keydir=keys$1 --pid-file=monotone_at.pid --dump=_MTN/server_dump --bind=NETSYNC_ADDRESS serve m4_if($2, [], "{}*", $2) &
 sleep 4
 ])
 # run as MINHOOKS_NETSYNC_SERVE_START(pattern)
 m4_define([MINHOOKS_NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
-MINHOOKS_MONOTONE --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($1, [], "{}*", $1) &
+MINHOOKS_MTN --pid-file=monotone_at.pid --dump=_MTN/server_dump --bind=NETSYNC_ADDRESS serve m4_if($1, [], "{}*", $1) &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
@@ -506,7 +506,7 @@ NETSYNC_KILLHARD
 # run as NETSYNC_CLIENT_N_RUN(2|3, push|pull|sync, pattern[, expected result])
 # first argument chooses whether to use the 2nd or 3rd database
 m4_define([NETSYNC_CLIENT_N_RUN], [
-AT_CHECK(MONOTONE --db=test$1.db --keydir=keys$1 --rcfile=netsync.lua $2 NETSYNC_ADDRESS $3, [$4], [ignore], [ignore])
+AT_CHECK(MTN --db=test$1.db --keydir=keys$1 --rcfile=netsync.lua $2 NETSYNC_ADDRESS $3, [$4], [ignore], [ignore])
 ])
 # run as NETSYNC_CLIENT_RUN(push|pull|sync, pattern[, expected result])
 m4_define([NETSYNC_CLIENT_RUN], [
@@ -663,7 +663,7 @@ m4_include(tests/t_merge_normalization_edge_case.at)
 m4_include(tests/t_undo_update.at)
 m4_include(tests/t_change_empty_file.at)
 m4_include(tests/t_largish_file.at)
-m4_include(tests/t_add_intermediate_MT_path.at)
+m4_include(tests/t_add_intermediate__MTN_path.at)
 m4_include(tests/t_merge_3.at)
 m4_include(tests/t_merge_4.at)
 m4_include(tests/t_db_missing.at)
@@ -761,7 +761,7 @@ m4_include(tests/t_cvsimport_deleted_invar.at)
 m4_include(tests/t_rcfile_stdin.at)
 m4_include(tests/t_monotone_up.at)
 m4_include(tests/t_drop_vs_patch_rename.at)
-m4_include(tests/t_unreadable_MT.at)
+m4_include(tests/t_unreadable__MTN.at)
 m4_include(tests/t_cvsimport3.at)
 m4_include(tests/t_commit_message_file.at)
 m4_include(tests/t_automate_attributes.at)
@@ -824,7 +824,7 @@ m4_include(tests/t_key_management_without_db.at)
 m4_include(tests/t_automate_keys.at)
 m4_include(tests/t_diff_outside_workspace.at)
 m4_include(tests/t_log_outside_workspace.at)
-m4_include(tests/t_add_inside_MT.at)
+m4_include(tests/t_add_inside__MTN.at)
 m4_include(tests/t_annotate_renames.at)
 m4_include(tests/t_config_confdir.at)
 m4_include(tests/t_database_sig_cleanup.at)
@@ -862,3 +862,4 @@ m4_include(tests/t_sink_has_extra_epochs.at)
 m4_include(tests/t_disapprove_branch.at)
 m4_include(tests/t_serve_ignores_mt_options.at)
 m4_include(tests/t_netsync_notes.at)
+m4_include(tests/t_rosterify_on_rosterified_db.at)

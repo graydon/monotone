@@ -1,3 +1,137 @@
+2006-03-28  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone.bash_completion: Make if complete mtn as well.
+
+	* po/fr.po: Translation update.
+
+	* po/sv.po: Translation update.
+
+	* contrib/monotone-import.pl, contrib/monotone-import.pl: Change
+	MT to _MTN.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_at_sign.at: Add a missing MTN_SETUP.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/README, testsuite.at, tests/*.at: First pass at updating
+	tests for s/monotone/mtn/.  NB: new tests should use MTN_SETUP and
+	MTN macros.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am: Build "mtn", not "monotone".
+	* monotone.1: Rename to...
+	* mtn.1: ...this.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/*_MT*: Rename to reflect that they now test _MTN, not MT.
+	* testsuite.at: Update accordingly.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/*.at: s/MT/_MTN/.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* testsuite.at: s/MT/_MTN/.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi: s/.db/.mtn/ everywhere.  Also, s/MT:/MTN:/, and
+	s/MT/_MTN/ as appropriate.
+	* monotone.1: Likewise.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (file_path): Use in_bookkeeping_dir when joining paths,
+	instead of being clever.  It should be just about as fast, and
+	means that there's only one code path that has to know how to
+	detect bookkeeping dirs.
+	* app_state.cc, automate.cc: Oops, forgot to hit save before.
+	s/MT/_MTN/.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (in_bookkeeping_dir): Argh.  Really correct now!
+	Really!
+	(test_split_join): Another cut-and-paste error.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_split_join): Whoops, be more careful
+	copy-and-pasting within a single scope...
+	(in_bookkeeping_dir): Was totally wrong, make all the constants
+	correct...
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (CMD_NO_MT): Rename to...
+	(CMD_NO_WORKSPACE): ...this.
+	* *.cc, *.hh: s/MT/_MTN/ (mostly in comments).
+	
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (get_log_message_interactively): 
+	* std_hooks.lua (edit_comment): s/MT:/MTN:/
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: s/MT/_MTN/ everywhere.
+	(in_bookkeeping_dir): Also apply the security kluge from 0.25.2,
+	where we define the bookkeeping dir case-insensitively.
+	Add tests for this.
+
+2006-03-27  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (check_format): Use .empty() instead of comparing
+	.size() to zero, trivial style cleanup.
+	(check_is_not_rosterified): New method.
+	* revision.cc (build_changesets_from_manifest_ancestry) 
+	(build_roster_style_revs_from_manifest_style_revs): Call it.
+	* tests/t_rosterify_on_rosterified_db.at, testsuite.at: New test.
+
+2006-03-24  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Corrected all the fuzzy translations
+	* po/fr.po: Added some missing translations.
+
+2006-03-24  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc (database::load): Analyze database after load.
+	(database::execute): Minor whitespace cleanup.
+
+2006-03-23  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_update_off_branch.at: Instead of retrying the update
+	by specifying the branch of the off-branch revision, check that
+	the branch specified in MT/options has changed automagically to
+	the intended revision's branch.
+
+2006-03-22  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.{cc,hh}: Report page size and default cache size in 'db
+	info' output.
+
+2006-03-22  Nathaniel Smith  <njs@pobox.com>
+
+	* key_store.cc (consume_key_pair, read_key_dir) 
+	(ensure_in_database, write_key): Add some logging.
+
+2006-03-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(update)): update the workspace branch
+	to match a revision given with -r.
+
+2006-03-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* schema_migration.cc, database.cc: print a more helpful
+	error message when we fail in calculate_schema_id() (usually
+	because of locking). Don't bother telling the user what the
+	sqlite error number is (but still log it).
+
 2006-03-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* configure.ac: Fix Windows identification test so that it doesn't

@@ -94,11 +94,11 @@ struct directory_loop_conflict
 };
 
 // renaming the root dir allows these:
-//   -- MT in root
+//   -- _MTN in root
 //   -- missing root directory
 
 // this is a node that cleanly merged to some name, but that name was somehow
-// forbidden.  (Currently, the only forbidden name is "MT" in the root
+// forbidden.  (Currently, the only forbidden name is "_MTN" in the root
 // directory.)
 struct illegal_name_conflict
 {
