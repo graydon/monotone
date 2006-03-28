@@ -114,17 +114,17 @@ if ($mail || $debug) {
 # Make sure we have a database, and that the file spec is absolute.
 #
 
-# If no database is given, check the monotone options file (MT/options).
+# If no database is given, check the monotone options file (_MTN/options).
 # Do NOT use the branch option from there.
 if (!defined $user_database) {
     $root = rel2abs($root) if defined $root;
     $root = rootdir() unless defined $root;
 
     my $curdir = rel2abs(curdir());
-    while(! -f catfile($curdir, "MT", "options") && $curdir ne $root) {
+    while(! -f catfile($curdir, "_MTN", "options") && $curdir ne $root) {
 	$curdir = updir($curdir);
     }
-    my $options = catfile($curdir, "MT", "options");
+    my $options = catfile($curdir, "_MTN", "options");
 
     my_debug("found options file $options");
 
@@ -751,11 +751,11 @@ Print the manual page and exit.
 =item B<--db>=I<database>
 
 Sets which database to use.  If not given, the database given in
-MT/options is used.
+_MTN/options is used.
 
 =item B<--root>=I<path>
 
-Stop the search for a working copy (containing the F<MT> directory) at
+Stop the search for a working copy (containing the F<_MTN> directory) at
 the specified root directory rather than at the physical root of the
 filesystem.
 

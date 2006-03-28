@@ -1,5 +1,5 @@
 AT_SETUP([test annotate command])
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(foo1, [z
 a
@@ -51,7 +51,7 @@ REV3=`BASE_REVISION`
 # REV0: b
 # REV1: x
 
-AT_CHECK(MONOTONE annotate foo0, [], [stdout], [ignore])
+AT_CHECK(MTN annotate foo0, [], [stdout], [ignore])
 AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
 AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REV0, [0], [ignore], [ignore])
 AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REV0, [0], [ignore], [ignore])
@@ -61,7 +61,7 @@ AT_CHECK(head -n 4 stdout | TAIL(1) | grep $REV1, [0], [ignore], [ignore])
 #
 # unchanged should have all (3) lines from REV0 
 #
-AT_CHECK(MONOTONE annotate unchanged, [], [stdout], [ignore])
+AT_CHECK(MTN annotate unchanged, [], [stdout], [ignore])
 AT_CHECK(head -n 1 stdout | grep $REV0, [0], [ignore], [ignore])
 AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REV0, [0], [ignore], [ignore])
 AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REV0, [0], [ignore], [ignore])
@@ -72,7 +72,7 @@ AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REV0, [0], [ignore], [ignore])
 # REV2: 11
 # REV3: 22
 
-AT_CHECK(MONOTONE annotate bar0, [], [stdout], [ignore])
+AT_CHECK(MTN annotate bar0, [], [stdout], [ignore])
 AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
 AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REV2, [0], [ignore], [ignore])
 AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REV3, [0], [ignore], [ignore])
@@ -81,9 +81,9 @@ AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REV3, [0], [ignore], [ignore])
 #
 # OK, now try some renames
 #
-AT_CHECK(MONOTONE rename foo0 tmp, [], [ignore], [ignore])
-AT_CHECK(MONOTONE rename bar0 foo0, [], [ignore], [ignore])
-AT_CHECK(MONOTONE rename tmp bar0, [], [ignore], [ignore])
+AT_CHECK(MTN rename foo0 tmp, [], [ignore], [ignore])
+AT_CHECK(MTN rename bar0 foo0, [], [ignore], [ignore])
+AT_CHECK(MTN rename tmp bar0, [], [ignore], [ignore])
 AT_CHECK(mv foo0 tmp)
 AT_CHECK(mv bar0 foo0)
 AT_CHECK(mv tmp bar0)
@@ -93,13 +93,13 @@ REV4=`BASE_REVISION`
 #
 # Now the previous annotate results should be reversed
 #
-AT_CHECK(MONOTONE annotate bar0, [], [stdout], [ignore])
+AT_CHECK(MTN annotate bar0, [], [stdout], [ignore])
 AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
 AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REV0, [0], [ignore], [ignore])
 AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REV0, [0], [ignore], [ignore])
 AT_CHECK(head -n 4 stdout | TAIL(1) | grep $REV1, [0], [ignore], [ignore])
 
-AT_CHECK(MONOTONE annotate foo0, [], [stdout], [ignore])
+AT_CHECK(MTN annotate foo0, [], [stdout], [ignore])
 AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
 AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REV2, [0], [ignore], [ignore])
 AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REV3, [0], [ignore], [ignore])
@@ -121,8 +121,8 @@ COMMIT(testbranch)
 REV6=`BASE_REVISION`
 
 # Now make right side
-rm -rf MT
-AT_CHECK(MONOTONE co --revision=$REV4 ., [], [ignore], [ignore])
+rm -rf _MTN
+AT_CHECK(MTN co --revision=$REV4 ., [], [ignore], [ignore])
 AT_DATA(bar0, [bar
 on right side of fork
 ])
@@ -141,7 +141,7 @@ right fork
 COMMIT(testbranch)
 REV9=`BASE_REVISION`
 
-AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
+AT_CHECK(MTN merge, [], [ignore], [ignore])
 #REV10=`BASE_REVISION` # how does commit create this?
 
 # 
@@ -150,7 +150,7 @@ AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
 # REV9: changed on the
 # REV8: right fork
 
-AT_CHECK(MONOTONE annotate forkfile, [], [stdout], [ignore])
+AT_CHECK(MTN annotate forkfile, [], [stdout], [ignore])
 AT_CHECK(head -n 1 stdout | grep $REV8, [0], [ignore], [ignore])
 AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REV9, [0], [ignore], [ignore])
 AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REV8, [0], [ignore], [ignore])

@@ -151,10 +151,10 @@ associated with it.  If --message is provided on the command line, it
 is used; if --message-file is provided, the content of the
 named file will be used as a commit message. If the filename is '-'
 the commit message will be read from standard input.  Otherwise a log
-message editor will be invoked.  If the file MT/log exists
+message editor will be invoked.  If the file _MTN/log exists
 and is non-empty, its content is used to prefill the editor.  You
 cannot specify both --message and --message-file at the same time, and
-if MT/log exists and is non-empty, you can cannot specify either of them
+if _MTN/log exists and is non-empty, you can cannot specify either of them
 at all.
 .TP
 \fBupdate\fP  \fI[revision-id]\fP
@@ -291,7 +291,7 @@ committing a new revision, rather than the current time.  Useful when
 importing history from another version control system.
 .TP
 \fB--root=\fI<root dir>\fP
-Stop the search for a workspace (containing the @file{MT} directory)
+Stop the search for a workspace (containing the _MTN directory)
 at the specified root directory rather than at the physical root of the
 filesystem.
 .TP

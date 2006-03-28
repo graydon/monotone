@@ -1,5 +1,5 @@
 AT_SETUP([db kill_rev_locally command 2])
-MONOTONE_SETUP
+MTN_SETUP
 
 # start off with three revisions
 ADD_FILE(testfile, [blah blah
@@ -18,15 +18,15 @@ COMMIT(testbranch)
 CHILD2=`BASE_REVISION`
 
 # kill head revision
-AT_CHECK(MONOTONE automate get_revision $CHILD2, [], [ignore], [ignore])
-AT_CHECK(MONOTONE db kill_rev_locally $CHILD2, [], [ignore], [ignore])
-AT_CHECK(MONOTONE automate get_revision $CHILD2, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE db check, [], ignore, ignore)
+AT_CHECK(MTN automate get_revision $CHILD2, [], [ignore], [ignore])
+AT_CHECK(MTN db kill_rev_locally $CHILD2, [], [ignore], [ignore])
+AT_CHECK(MTN automate get_revision $CHILD2, [1], [ignore], [ignore])
+AT_CHECK(MTN db check, [], ignore, ignore)
 
 # head is an older revision now, let's kill that too
-AT_CHECK(MONOTONE automate get_revision $CHILD1, [], [ignore], [ignore])
-AT_CHECK(MONOTONE db kill_rev_locally $CHILD1, [], [ignore], [ignore])
-AT_CHECK(MONOTONE automate get_revision $CHILD1, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE db check, [], ignore, ignore)
+AT_CHECK(MTN automate get_revision $CHILD1, [], [ignore], [ignore])
+AT_CHECK(MTN db kill_rev_locally $CHILD1, [], [ignore], [ignore])
+AT_CHECK(MTN automate get_revision $CHILD1, [1], [ignore], [ignore])
+AT_CHECK(MTN db check, [], ignore, ignore)
 
 AT_CLEANUP

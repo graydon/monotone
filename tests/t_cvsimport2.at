@@ -1,5 +1,5 @@
 AT_SETUP([cvs_import with file added on a branch])
-MONOTONE_SETUP
+MTN_SETUP
 
 # This tests the case where a file was added on a branch in CVS; CVS
 # records this in a strange way (with a delete of the non-existent
@@ -34,7 +34,7 @@ mkdir src
 
 AT_CHECK(sh prepare.sh, [], ignore, ignore)
 
-AT_CHECK(MONOTONE --branch=test cvs_import $PWD/cvsroot/mod, [], ignore, ignore)
+AT_CHECK(MTN --branch=test cvs_import $PWD/cvsroot/mod, [], ignore, ignore)
 
 AT_CLEANUP
 (END)

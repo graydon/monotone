@@ -54,14 +54,14 @@
 //      functionality.
 //
 //   -- bookkeeping_path
-//      this is a path representing something in the MT/ directory of a
+//      this is a path representing something in the _MTN/ directory of a
 //      workspace.  it has the same format restrictions as a file_path,
-//      except instead of being forbidden to point into the MT directory, it
-//      is _required_ to point into the MT directory.  the one constructor is
+//      except instead of being forbidden to point into the _MTN directory, it
+//      is _required_ to point into the _MTN directory.  the one constructor is
 //      strict, and analogous to file_path_internal.  however, the normal way
 //      to construct bookkeeping_path's is to use the global constant
-//      'bookkeeping_root', which points to the MT directory.  Thus to
-//      construct a path pointing to MT/options, use:
+//      'bookkeeping_root', which points to the _MTN directory.  Thus to
+//      construct a path pointing to _MTN/options, use:
 //          bookkeeping_root / "options"
 //          
 // All path types should always be constructed from utf8-encoded strings.
@@ -172,7 +172,7 @@ private:
   //      to become relative to root of the workspace instead
   // both types of paths:
   //   -- are confirmed to be normalized and relative
-  //   -- not to be in MT/
+  //   -- not to be in _MTN/
   file_path(source_type type, std::string const & path);
   friend file_path file_path_internal(std::string const & path);
   friend file_path file_path_external(utf8 const & path);
@@ -192,7 +192,7 @@ class bookkeeping_path : public any_path
 {
 public:
   bookkeeping_path() {};
-  // path _should_ contain the leading MT/
+  // path _should_ contain the leading _MTN/
   // and _should_ look like an internal path
   // usually you should just use the / operator as a constructor!
   bookkeeping_path(std::string const & path);
