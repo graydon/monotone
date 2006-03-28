@@ -1,3 +1,9 @@
+2006-03-28  Lapo Luchini  <lapo@lapo.it>
+
+	* AUTHORS: Added myself as translator.
+
+	* po/it.po: Added Itailan translation.
+
 2006-03-28  Richard Levitte  <richard@levitte.org>
 
 	* contrib/monotone.bash_completion: Make if complete mtn as well.
