@@ -1,5 +1,11 @@
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
+	* Makefile.am: Build "mtn", not "monotone".
+	* monotone.1: Rename to...
+	* mtn.1: ...this.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/*_MT*: Rename to reflect that they now test _MTN, not MT.
 	* testsuite.at: Update accordingly.
 
