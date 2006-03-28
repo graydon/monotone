@@ -10,7 +10,7 @@ ADD_FILE(testfile, [some data
 ])
 COMMIT(testbranch)
 
-AT_CHECK(rm -rf MT)
+AT_CHECK(rm -rf _MTN)
 AT_CHECK(MONOTONE2 setup --branch=testbranch .)
 AT_DATA(otherfile, [some data
 ])

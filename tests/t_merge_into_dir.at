@@ -1,13 +1,13 @@
 AT_SETUP([merge a project into a subdirectory of an unrelated project])
 MONOTONE_SETUP
 
-AT_CHECK(cp -r MT MT.orig)
+AT_CHECK(cp -r _MTN MT.orig)
 ADD_FILE(file1, [foo
 ])
 COMMIT(b1)
 
-AT_CHECK(rm -r MT)
-AT_CHECK(cp -r MT.orig MT)
+AT_CHECK(rm -r _MTN)
+AT_CHECK(cp -r MT.orig _MTN)
 AT_CHECK(rm file1)
 ADD_FILE(file2, [bar
 ])

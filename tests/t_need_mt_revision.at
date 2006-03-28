@@ -1,4 +1,4 @@
-AT_SETUP([MT/revision is required])
+AT_SETUP([_MTN/revision is required])
 MONOTONE_SETUP
 
 ADD_FILE(foo, [blah blah
@@ -14,7 +14,7 @@ COMMIT(testbranch)
 AT_CHECK(rm -f bar)
 AT_CHECK(MONOTONE ls missing, [], [ignore], [ignore])
 
-AT_CHECK(rm -f MT/revision)
+AT_CHECK(rm -f _MTN/revision)
 AT_CHECK(MONOTONE ls missing, [1], [ignore], [ignore])
 
 AT_CLEANUP

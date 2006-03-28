@@ -16,8 +16,8 @@ AT_CHECK(cd codir1 && MONOTONE commit --message=foo, [], [ignore], [ignore])
 AT_CHECK(MONOTONE cert $REV branch otherbranch)
 
 # but, now we can't checkout without a --branch...
-# need to make sure don't pick up branch from our local MT dir...
-AT_CHECK(rm -rf MT)
+# need to make sure don't pick up branch from our local _MTN dir...
+AT_CHECK(rm -rf _MTN)
 AT_CHECK(MONOTONE checkout --revision=$REV codir2, [1], [ignore], [ignore])
 AT_CHECK(MONOTONE checkout --revision=$REV --branch=testbranch codir3, [], [ignore], [ignore])
 AT_CHECK(cmp foo codir3/foo)

@@ -17,7 +17,7 @@ ADD_FILE(foo, [foo
 ])
 COMMIT(testbranch)
 AT_CHECK(MONOTONE db set_epoch testbranch 1234567890123456789009876543210987654321)
-AT_CHECK(rm -r MT/)
+AT_CHECK(rm -r _MTN/)
 AT_CHECK(MONOTONE2 setup -b otherbranch ., [], [ignore], [ignore])
 AT_DATA(bar, [bar
 ])

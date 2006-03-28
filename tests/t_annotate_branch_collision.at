@@ -28,7 +28,7 @@ AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
 COMMIT(testbranch)
 REVL=`BASE_REVISION`
 
-AT_CHECK(rm -r -f MT foo)
+AT_CHECK(rm -r -f _MTN foo)
 AT_CHECK(MONOTONE setup --branch=testbranch .)
 
 AT_CHECK(cp foo.right foo)

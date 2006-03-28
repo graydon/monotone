@@ -1,6 +1,6 @@
 # -*- Autoconf -*-
 
-AT_SETUP([checking that certain commands ignores the contents of MT/options])
+AT_SETUP([checking that certain commands ignores the contents of _MTN/options])
 
 MONOTONE_SETUP
 
@@ -12,18 +12,18 @@ AT_DATA(testfile, [version 0 of test file
 AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
 AT_CHECK(MONOTONE --branch=testbranch commit --message blah-blah, [], [ignore], [ignore])
 
-# Hack MT/options
-AT_CHECK([sed -e 's/key ".*"/key "foobar@hacked.com"/' < MT/options > MT/options.new])
-AT_CHECK([mv MT/options.new MT/options])
-# Double-check that MT/options was correctly hacked
-AT_CHECK([grep 'key "tester@test.net"' MT/options], [1], [ignore], [ignore])
-AT_CHECK([grep 'key "foobar@hacked.com"' MT/options], [0], [ignore], [ignore])
+# Hack _MTN/options
+AT_CHECK([sed -e 's/key ".*"/key "foobar@hacked.com"/' < _MTN/options > _MTN/options.new])
+AT_CHECK([mv _MTN/options.new _MTN/options])
+# Double-check that _MTN/options was correctly hacked
+AT_CHECK([grep 'key "tester@test.net"' _MTN/options], [1], [ignore], [ignore])
+AT_CHECK([grep 'key "foobar@hacked.com"' _MTN/options], [0], [ignore], [ignore])
 
 # Let's see RUN_NETSYNC fly, making sure we use an existing key.  Without the
 # explicit --key option, this push would try to use the hacked identity and
 # promptly fail, and that's not what we're after.
 # The server, though, doesn't get this explicit key specification, so this
-# will test if it (wrongly) gets a key value from MT/options or if it takes
+# will test if it (wrongly) gets a key value from _MTN/options or if it takes
 # whatever key that's available in keys2/...
 RUN_NETSYNC([push --key=tester@test.net], [testbranch])
 

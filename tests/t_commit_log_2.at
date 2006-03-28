@@ -1,10 +1,10 @@
 # -*- Autoconf -*-
 
-AT_SETUP([commit w/o MT/log being present])
+AT_SETUP([commit w/o _MTN/log being present])
 
 MONOTONE_SETUP
 
-AT_CHECK(rm -f MT/log)
+AT_CHECK(rm -f _MTN/log)
 
 AT_DATA(input.txt, [version 0 of the file
 ])

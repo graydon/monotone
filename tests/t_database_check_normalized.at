@@ -6,7 +6,7 @@ AT_SETUP([database check for normalization])
 # hence the database doesn't have correctly normalised revisions.
 
 # for future reference, it was created with a modified monotone binary,
-# paths.cc was modified. Also, the 'add_dir "."' was added to MT/work by hand.
+# paths.cc was modified. Also, the 'add_dir "."' was added to _MTN/work by hand.
 
 #old_revision []
 #

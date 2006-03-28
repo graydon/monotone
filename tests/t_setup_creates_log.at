@@ -1,9 +1,9 @@
 # -*- Autoconf -*-
 
-AT_SETUP([setup creates MT/log])
+AT_SETUP([setup creates _MTN/log])
 
 MONOTONE_SETUP
 
-AT_CHECK(test -f MT/log -a ! -s MT/log)
+AT_CHECK(test -f _MTN/log -a ! -s _MTN/log)
         
 AT_CLEANUP

@@ -11,7 +11,7 @@ AT_DATA(workspace/dir1/new_root_file, [I'm in the subdir to start off with.
 ])
 AT_CHECK(cd workspace/ && MONOTONE add ., [], [ignore], [ignore])
 AT_CHECK(cd workspace/ && MONOTONE commit -m foo, [], [ignore], [ignore])
-BASE_REV=`cat workspace/MT/revision`
+BASE_REV=`cat workspace/_MTN/revision`
 
 AT_CHECK(cd workspace/ && MONOTONE pivot_root --execute dir1 old_root, [], [ignore], [ignore])
 AT_CHECK(cd workspace/ && MONOTONE commit -m foo, [], [ignore], [ignore])

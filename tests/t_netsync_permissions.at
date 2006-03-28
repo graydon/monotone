@@ -114,7 +114,7 @@ tester@test.net
 
 AT_CHECK(cp clean.db test.db)
 AT_CHECK(rm -r keys && cp -r clean_keys/ keys)
-AT_DATA(MT/revision [])
+AT_DATA(_MTN/revision [])
 
 ADD_N_FILE(2, testfile, [testfile
 ])

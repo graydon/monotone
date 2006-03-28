@@ -1,4 +1,4 @@
-AT_SETUP([checkout creates right MT/options])
+AT_SETUP([checkout creates right _MTN/options])
 MONOTONE_SETUP
 
 ADD_FILE(testfile, [foo
@@ -9,7 +9,7 @@ REV=`BASE_REVISION`
 # We use RAW_MONOTONE because it used to be that passing --db= (as
 # MONOTONE does) would hide a bug in this functionality...
 
-# all of these inherit options settings from the current MT dir
+# all of these inherit options settings from the current _MTN dir
 # unless they override them on the command line
 
 AT_CHECK(RAW_MONOTONE checkout test_dir1, [], [ignore], [ignore])
@@ -29,11 +29,11 @@ AT_CHECK(RAW_MONOTONE --branch=foobar checkout --revision=$REV test_dir10, [], [
 
 for DIR in test_dir@<:@12345678@:>@; do
   AT_CHECK(echo DIR=$DIR, [], [ignore])
-  AT_CHECK(test -f $DIR/MT/options)
-  AT_CHECK(QGREP(test.db $DIR/MT/options))
-  AT_CHECK(QGREP(testbranch $DIR/MT/options))
+  AT_CHECK(test -f $DIR/_MTN/options)
+  AT_CHECK(QGREP(test.db $DIR/_MTN/options))
+  AT_CHECK(QGREP(testbranch $DIR/_MTN/options))
 done
 
-AT_CHECK(QGREP(foobar test_dir10/MT/options))
+AT_CHECK(QGREP(foobar test_dir10/_MTN/options))
 
 AT_CLEANUP

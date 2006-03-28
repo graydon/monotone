@@ -36,7 +36,7 @@ AT_CHECK(cmp stdout r1testfile, [], [ignore])
 
 CHECK_SAME_CANONICALISED_STDOUT(cd subdir && MONOTONE cat -r $R0 testfile, cat subfile)
 
-AT_CHECK(rm -rf MT)
+AT_CHECK(rm -rf _MTN)
 
 CHECK_SAME_CANONICALISED_STDOUT(MONOTONE cat -r $R0 testfile, cat r0testfile)
 

@@ -1,6 +1,6 @@
 # -*- Autoconf -*-
 
-AT_SETUP([checkout creates MT/log])
+AT_SETUP([checkout creates _MTN/log])
 
 MONOTONE_SETUP
 
@@ -10,7 +10,7 @@ function edit_comment(summary, user_log_file)
 end
 ])
 
-AT_DATA(MT/log, [Log entry
+AT_DATA(_MTN/log, [Log entry
 ])
 
 AT_DATA(input.txt, [version 0 of the file
@@ -22,6 +22,6 @@ AT_CHECK(MONOTONE --branch=testbranch --rcfile=commit_log.lua commit, [], [ignor
 
 AT_CHECK(MONOTONE --branch=testbranch co testbranch)
 
-AT_CHECK(test -f testbranch/MT/log -a ! -s MT/log)
+AT_CHECK(test -f testbranch/_MTN/log -a ! -s _MTN/log)
                   
 AT_CLEANUP

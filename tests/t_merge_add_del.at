@@ -70,7 +70,7 @@ AT_CHECK(MONOTONE --branch=branch.main merge, [], [ignore], [ignore])
 AT_CHECK(MONOTONE propagate branch.main branch.fork, [], [ignore], [ignore])
 
 # check
-AT_CHECK(rm -rf MT)
+AT_CHECK(rm -rf _MTN)
 AT_CHECK(MONOTONE --branch=branch.fork checkout .)
 
 AT_CHECK(MONOTONE automate get_manifest_of, [], [stdout])

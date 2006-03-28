@@ -2,7 +2,7 @@ AT_SETUP([commit with --message-file])
 
 MONOTONE_SETUP
 
-AT_CHECK(rm -f MT/log)
+AT_CHECK(rm -f _MTN/log)
 
 #--------------------
 #first, verify that --message-file actually works
@@ -58,7 +58,7 @@ AT_CHECK(MONOTONE --branch=testbranch commit --message-file=to-be-or-not-to-be.t
 AT_CHECK(MONOTONE --branch=testbranch commit --message-file=msgfile.txt --message="also a message", [1], [ignore], [ignore])
 
 # --------------------
-# finally, --message-file and a filled MT/log should also fail
+# finally, --message-file and a filled _MTN/log should also fail
 # --------------------
 
 AT_DATA(commit_log.lua, [
@@ -67,7 +67,7 @@ function edit_comment(summary, user_log_file)
 end
 ])
 
-AT_DATA(MT/log, [Log entry
+AT_DATA(_MTN/log, [Log entry
 ])
 
 AT_CHECK(MONOTONE --branch=testbranch --rcfile=commit_log.lua commit --message-file=msgfile.txt, [1], [ignore], [ignore])

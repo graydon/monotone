@@ -21,7 +21,7 @@ AT_CHECK(SHORT_MONOTONE add maude, [], [ignore], [ignore])
 AT_CHECK(SHORT_MONOTONE -k badkey@example.com -b test.branch commit -d test.db -m happy, [1], [ignore], [ignore])
 
 # the failed log will have been saved
-AT_CHECK(rm MT/log)
+AT_CHECK(rm _MTN/log)
 
 # and it does work with a key
 AT_CHECK(SHORT_MONOTONE -k tester@test.net -b test.branch commit -d test.db -m happy, [], [ignore], [ignore])

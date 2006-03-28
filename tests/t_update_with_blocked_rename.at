@@ -10,7 +10,7 @@ AT_XFAIL_IF(true)
 # 4. Alice renames one of her files to bar
 # 5. Bob updates
 #
-# the update fails after moving renamed files to MT/tmp/N
+# the update fails after moving renamed files to _MTN/tmp/N
 # where N is the file's tid.
 #
 # Bob is left with a bunch of missing files.

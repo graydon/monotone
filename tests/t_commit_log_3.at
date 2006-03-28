@@ -1,6 +1,6 @@
 # -*- Autoconf -*-
 
-AT_SETUP([commit using MT/log and --message])
+AT_SETUP([commit using _MTN/log and --message])
 
 MONOTONE_SETUP
 
@@ -10,7 +10,7 @@ function edit_comment(summary, user_log_file)
 end
 ])
 
-AT_DATA(MT/log, [Log entry
+AT_DATA(_MTN/log, [Log entry
 ])
 
 AT_DATA(input.txt, [version 0 of the file

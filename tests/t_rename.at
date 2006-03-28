@@ -38,16 +38,16 @@ AT_CHECK(grep bleh manifest, [0], [ignore], [ignore])
 
 # rename a rename target
 AT_CHECK(MONOTONE rename bleh blah, [], [ignore], [ignore])
-AT_CHECK(grep bleh MT/work, [0], [ignore], [ignore])
-AT_CHECK(grep blah MT/work, [0], [ignore], [ignore])
+AT_CHECK(grep bleh _MTN/work, [0], [ignore], [ignore])
+AT_CHECK(grep blah _MTN/work, [0], [ignore], [ignore])
 AT_CHECK(MONOTONE rename blah blyh, [], [ignore], [ignore])
-AT_CHECK(grep bleh MT/work, [0], [ignore], [ignore])
-AT_CHECK(grep blah MT/work, [1], [ignore], [ignore])
-AT_CHECK(grep blyh MT/work, [0], [ignore], [ignore])
+AT_CHECK(grep bleh _MTN/work, [0], [ignore], [ignore])
+AT_CHECK(grep blah _MTN/work, [1], [ignore], [ignore])
+AT_CHECK(grep blyh _MTN/work, [0], [ignore], [ignore])
 
 # undo a rename
 AT_CHECK(MONOTONE rename blyh bleh, [], [ignore], [ignore])
-AT_CHECK(test -f MT/work, [1], [ignore], [ignore])
+AT_CHECK(test -f _MTN/work, [1], [ignore], [ignore])
 
 # move file before renaming it
 AT_CHECK(MONOTONE status, [], [ignore], [ignore])

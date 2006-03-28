@@ -1,4 +1,4 @@
-AT_SETUP([setup/checkout touch new MT/options only])
+AT_SETUP([setup/checkout touch new _MTN/options only])
 MONOTONE_SETUP
 
 ADD_FILE(foo, [blah blah
