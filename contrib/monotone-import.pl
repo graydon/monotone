@@ -119,7 +119,7 @@ if ($#branches == 0) {
 ######################################################################
 # Check if this is a monotone work directory, and bail out if it is.
 #
-my $MT_dir = catdir(curdir(),"MT");
+my $MT_dir = catdir(curdir(),"_MTN");
 if (-d $MT_dir) {
     my_error("This is a monotone work directory, unsafe to import\n");
 }
@@ -206,7 +206,7 @@ map {
 # Commit and tag.
 #
 my_system("monotone commit --message=\"$user_message\"");
-open REV,"MT/revision";
+open REV,catfile($MT_dir, "revision");
 my $newrev = <REV>;
 chomp $newrev;
 close REV;

@@ -1,3 +1,8 @@
+2006-03-28  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-import.pl, contrib/monotone-import.pl: Change
+	MT to _MTN.
+
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/t_at_sign.at: Add a missing MTN_SETUP.
