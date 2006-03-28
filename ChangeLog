@@ -1,5 +1,7 @@
 2006-03-28  Richard Levitte  <richard@levitte.org>
 
+	* po/fr.po: Translation update.
+
 	* po/sv.po: Translation update.
 
 	* contrib/monotone-import.pl, contrib/monotone-import.pl: Change
