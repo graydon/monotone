@@ -1,3 +1,260 @@
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_at_sign.at: Add a missing MTN_SETUP.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/README, testsuite.at, tests/*.at: First pass at updating
+	tests for s/monotone/mtn/.  NB: new tests should use MTN_SETUP and
+	MTN macros.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am: Build "mtn", not "monotone".
+	* monotone.1: Rename to...
+	* mtn.1: ...this.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/*_MT*: Rename to reflect that they now test _MTN, not MT.
+	* testsuite.at: Update accordingly.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/*.at: s/MT/_MTN/.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* testsuite.at: s/MT/_MTN/.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi: s/.db/.mtn/ everywhere.  Also, s/MT:/MTN:/, and
+	s/MT/_MTN/ as appropriate.
+	* monotone.1: Likewise.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (file_path): Use in_bookkeeping_dir when joining paths,
+	instead of being clever.  It should be just about as fast, and
+	means that there's only one code path that has to know how to
+	detect bookkeeping dirs.
+	* app_state.cc, automate.cc: Oops, forgot to hit save before.
+	s/MT/_MTN/.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (in_bookkeeping_dir): Argh.  Really correct now!
+	Really!
+	(test_split_join): Another cut-and-paste error.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc (test_split_join): Whoops, be more careful
+	copy-and-pasting within a single scope...
+	(in_bookkeeping_dir): Was totally wrong, make all the constants
+	correct...
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (CMD_NO_MT): Rename to...
+	(CMD_NO_WORKSPACE): ...this.
+	* *.cc, *.hh: s/MT/_MTN/ (mostly in comments).
+	
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (get_log_message_interactively): 
+	* std_hooks.lua (edit_comment): s/MT:/MTN:/
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: s/MT/_MTN/ everywhere.
+	(in_bookkeeping_dir): Also apply the security kluge from 0.25.2,
+	where we define the bookkeeping dir case-insensitively.
+	Add tests for this.
+
+2006-03-27  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (check_format): Use .empty() instead of comparing
+	.size() to zero, trivial style cleanup.
+	(check_is_not_rosterified): New method.
+	* revision.cc (build_changesets_from_manifest_ancestry) 
+	(build_roster_style_revs_from_manifest_style_revs): Call it.
+	* tests/t_rosterify_on_rosterified_db.at, testsuite.at: New test.
+
+2006-03-24  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Corrected all the fuzzy translations
+	* po/fr.po: Added some missing translations.
+
+2006-03-24  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc (database::load): Analyze database after load.
+	(database::execute): Minor whitespace cleanup.
+
+2006-03-23  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_update_off_branch.at: Instead of retrying the update
+	by specifying the branch of the off-branch revision, check that
+	the branch specified in MT/options has changed automagically to
+	the intended revision's branch.
+
+2006-03-22  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.{cc,hh}: Report page size and default cache size in 'db
+	info' output.
+
+2006-03-22  Nathaniel Smith  <njs@pobox.com>
+
+	* key_store.cc (consume_key_pair, read_key_dir) 
+	(ensure_in_database, write_key): Add some logging.
+
+2006-03-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* commands.cc (CMD(update)): update the workspace branch
+	to match a revision given with -r.
+
+2006-03-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* schema_migration.cc, database.cc: print a more helpful
+	error message when we fail in calculate_schema_id() (usually
+	because of locking). Don't bother telling the user what the
+	sqlite error number is (but still log it).
+
+2006-03-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* configure.ac: Fix Windows identification test so that it doesn't
+	pass unexpected under Cygwin.  Reported by Lapo Luchini.
+
+2006-03-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* configure.ac: use test -f rather than test -e, since Solaris's
+	/bin/sh doesn't have the latter.
+
+2006-03-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Tidier versions of html and monotone.html targets,
+	thanks to Thomas Moschny for the patch.
+
+2006-03-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* automate.cc (automate_inventory): Add an MM().
+
+	* Makefile.am: Copy figures/ into two places for html target, and
+	don't attempt to copy std_hooks.lua over itself if we're building
+	in the src dir.
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (html): For the html target, figures/ and
+	std_hooks.lua should always be copied.  Making it conditional
+	should only be done for the monotone.html target.
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (monotone.html, html): Only copy figures/ and
+	std_hooks.lua if the builder is in a separate build directory.
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_netsync_notes.at: Enhance the test by checking that a
+	netsync where no data is written to the database won't trigger
+	the note_netsync* hooks.
+
+2006-03-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Fix a couple of cases where documentation was
+	failing to build.  If you're building outside of the source dir we
+	need to copy figures/ and std_hooks.lua into the build dir.
+
+	* win32/monotone.iss: Include zlib1.dll in installer package.
+
+	* tests/t_empty_env.at: Copy zlib1.dll into the current directory
+	like we have to for libiconv-2.dll.  While here, add a check for
+	LD_LIBRARY_PATH and cause the test to be skipped if it is set.
+
+	* tests/t_netsync_notes.at: Canonicalise output in a few places so
+	that the test passes on CRLF platforms.
+
+2006-03-18  Richard Levitte  <richard@levitte.org>
+
+	* netsync.cc (session): Only call the note_netsync hooks if
+	something has been written to the database.  The reason is that
+	if those hooks are called from a server process and those hooks
+	are used to update another database (say, for viewmtn), it means
+	another run will be done with monotone to pull from the server,
+	which would trigger another call to the hooks, which would cause
+	another pull, which would cause those hooks to be called again,
+	...
+
+2006-03-17  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_netsync_notes.at: New test to check that the
+	note_netsync hooks work as they should.
+	* testsuite.at: Add the above test as well as the following
+	useful macros.
+	(BASE_MANIFEST): Gives the manifest identity of the base
+	revision.
+	(WORKING_MANIFEST): Gives the manifest identity of the workspace.
+	(CERTVALUE): Picks out the value of a specific cert from a given
+	revision.
+	(DATA): Like AT_DATA, but allows environment variables to be
+	expanded in the resulting file.
+	(NETSYNC_SETUP_WITH_NOTES): A variant of NETSYNC_SETUP that adds
+	note_netsync hooks.
+
+2006-03-17  Richard Levitte  <richard@levitte.org>
+
+	* lua.cc, lua.hh (lua::hookshook_note_netsync_revision_received,
+	lua::hookshook_note_netsync_cert_received,
+	lua::hookshook_note_netsync_pubkey_received): Change them so nonce
+	comes last.  It means that hooks written for the older inteface
+	(the once without nonce) will work transparently.
+	* monotone.texi (Hooks): Change the docs accordingly.
+	* netsync.cc (session::~session): Change the calls accordingly.
+
+2006-03-17  Richard Levitte  <richard@levitte.org>
+
+	There are times when it is good to be able to prepare for a
+	bunch of calls to note_netsync* hooks, as well as to know when
+	there are not more such calls to be expected.  To that end, I've
+	added note_netsync_start and note_netsync_end, and changed the
+	others to take the exact same nonce as those two.  The purpose
+	of the nonce is to differentiate between different runs, if they
+	ever would run in parallel.
+
+	* lua.cc, lua.hh (lua_hooks::hook_note_netsync_start,
+	lua_hooks::hook_note_netsync_end): Added methods.
+	(lua_hooks::hook_note_netsync_revision_received,
+	lua_hooks::hook_note_netsync_pubkey_received,
+	lua_hooks::hook_note_netsync_cert_received): Modified to take a
+	nonce.
+	* monotone.texi (Hooks): Documented.
+	* netsync.cc (session::~session): Modified to call
+	app.lua.hook_note_netsync_start and app.lua.hook_note_netsync_end
+	as well as the others with the nonce argument.
+
+2006-03-16  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (log): Don't include <sys/time.h>, my mistake.
+
+2006-03-16  Richard Levitte  <richard@levitte.org>
+
+	* revision.cc (construct_revisions_from_ancestry): Linguistics:
+	Close a parenthesis.
+	* po/sv.po: Translation update.
+
+2006-03-15  Richard Levitte  <richard@levitte.org>
+
+	* diff_patch.cc (unidiff_hunk_writer::advance_to,
+	cxtdiff_hunk_writer::advance_to): Because ctx is a size_t, make
+	everything dealing with it a size_t as well.  Keeps the compiler
+	quiet...
+
+2006-03-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (db::load), schema.sql: PRAGMA page_size=8192
+
 2006-03-13  Richard Levitte  <richard@levitte.org>
 
 	* tests/t_serve_ignores_mt_options.at: New test to check that
@@ -9,6 +266,11 @@
 
 	* netsync.cc (session::maybe_note_epochs_finished): only begin the
 	other refinements if we're the client, as per the comment in refiner.cc
+
+2006-03-14  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (construct_revisions_from_ancestry): Now with 17%
+	more helpfulness.
 
 2006-03-12  Richard Levitte  <richard@levitte.org>
 
@@ -58,6 +320,17 @@
 	* testsuite.at: Changes to Perl and Python UNB64_COMMAND
 	invocations to work around some quoting issues broken/revealed in
 	my last change.
+
+2006-03-12  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc: log: retrieve changes summary and ancestors only when
+	needed.
+
+2006-03-12  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Small fixes.
+
+2006-03-12  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* paths.cc, annotate.cc, xdelta.cc: Fix the signed vs unsigned
 	warnings which have obvious solutions.

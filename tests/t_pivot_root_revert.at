@@ -1,5 +1,5 @@
 AT_SETUP([reverting a pivot_root])
-MONOTONE_SETUP
+MTN_SETUP
 
 # This test is a bug report
 # I think the problem is just generally that revert does not do a good
@@ -7,41 +7,41 @@ MONOTONE_SETUP
 AT_XFAIL_IF(true)
 
 AT_CHECK(mkdir workspace)
-AT_CHECK(cd workspace/ && MONOTONE setup . -b testbranch, [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN setup . -b testbranch, [], [ignore], [ignore])
 
 AT_CHECK(mkdir workspace/dir1)
 AT_CHECK(mkdir workspace/dir1/dir2)
 AT_DATA(workspace/dir1/file1, [blah blah
 ])
 AT_CHECK(mkdir workspace/dir3)
-AT_CHECK(mkdir workspace/dir3/MT)
-AT_CHECK(cd workspace/ && MONOTONE add ., [], [ignore], [ignore])
+AT_CHECK(mkdir workspace/dir3/_MTN)
+AT_CHECK(cd workspace/ && MTN add ., [], [ignore], [ignore])
 
-AT_CHECK(cd workspace/ && MONOTONE commit -m foo, [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN commit -m foo, [], [ignore], [ignore])
 
-AT_CHECK(cd workspace/ && MONOTONE pivot_root --execute dir1 old_root, [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN pivot_root --execute dir1 old_root, [], [ignore], [ignore])
 
-AT_CHECK(test -d workspace/MT)
+AT_CHECK(test -d workspace/_MTN)
 AT_CHECK(test -d workspace/dir2)
 AT_CHECK(test -f workspace/file1)
 AT_CHECK(test -d workspace/old_root)
 AT_CHECK(test -d workspace/old_root/dir3)
-AT_CHECK(test -d workspace/old_root/dir3/MT)
+AT_CHECK(test -d workspace/old_root/dir3/_MTN)
 
-AT_CHECK(cd workspace/ && MONOTONE ls missing, [], [], [])
-AT_CHECK(cd workspace/ && MONOTONE ls unknown, [], [], [])
+AT_CHECK(cd workspace/ && MTN ls missing, [], [], [])
+AT_CHECK(cd workspace/ && MTN ls unknown, [], [], [])
 
-AT_CHECK(cd workspace/ && MONOTONE revert ., [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN revert ., [], [ignore], [ignore])
 
-AT_CHECK(test -d workspace/MT)
+AT_CHECK(test -d workspace/_MTN)
 AT_CHECK(test -d workspace/dir1)
 AT_CHECK(test -d workspace/dir1/dir2)
 AT_CHECK(test -f workspace/dir1/file1)
 AT_CHECK(test -d workspace/dir3)
-AT_CHECK(test -d workspace/dir3/MT)
+AT_CHECK(test -d workspace/dir3/_MTN)
 
-AT_CHECK(cd workspace/ && MONOTONE ls changed, [], [], [])
-AT_CHECK(cd workspace/ && MONOTONE ls missing, [], [], [])
-AT_CHECK(cd workspace/ && MONOTONE ls unknown, [], [], [])
+AT_CHECK(cd workspace/ && MTN ls changed, [], [], [])
+AT_CHECK(cd workspace/ && MTN ls missing, [], [], [])
+AT_CHECK(cd workspace/ && MTN ls unknown, [], [], [])
 
 AT_CLEANUP

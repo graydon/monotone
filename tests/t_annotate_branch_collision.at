@@ -1,5 +1,5 @@
 AT_SETUP([annotate file on multirooted branch])
-MONOTONE_SETUP
+MTN_SETUP
 
 # This test relies on file-suturing
 AT_XFAIL_IF(true)
@@ -24,15 +24,15 @@ x
 ])
 
 AT_CHECK(cp foo.left foo)
-AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+AT_CHECK(MTN add foo, [], [ignore], [ignore])
 COMMIT(testbranch)
 REVL=`BASE_REVISION`
 
-AT_CHECK(rm -r -f MT foo)
-AT_CHECK(MONOTONE setup --branch=testbranch .)
+AT_CHECK(rm -r -f _MTN foo)
+AT_CHECK(MTN setup --branch=testbranch .)
 
 AT_CHECK(cp foo.right foo)
-AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+AT_CHECK(MTN add foo, [], [ignore], [ignore])
 COMMIT(testbranch)
 REVR=`BASE_REVISION`
 
@@ -43,8 +43,8 @@ function merge2 (left, right)
 end
 ])
 
-AT_CHECK(MONOTONE --rcfile=merge2.lua merge, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=merge2.lua merge, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 REVM=`BASE_REVISION`
 
 #
@@ -56,7 +56,7 @@ REVM=`BASE_REVISION`
 #
 # where REVC (choice) is either REVL or REVR
 
-AT_CHECK(MONOTONE annotate foo, [], [stdout], [ignore])
+AT_CHECK(MTN annotate foo, [], [stdout], [ignore])
 #AT_CHECK(head -n 1 stdout | grep $REV1, [0], [ignore], [ignore])
 AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REVL, [0], [ignore], [ignore])
 AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REVR, [0], [ignore], [ignore])

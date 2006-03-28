@@ -13,6 +13,8 @@
 -- licensed to the public under the terms of the GNU GPL 2.1+
 -- see the file COPYING for details
 
+PRAGMA page_size=8192;
+
 -- Transactions avoid syncing for each action, db init gets faster.
 BEGIN EXCLUSIVE;
 

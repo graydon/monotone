@@ -1,5 +1,5 @@
 AT_SETUP([selecting arbitrary certs])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(testfile, [this is just a file
 ])
@@ -18,32 +18,32 @@ AT_DATA(testfile, [And we change it a third time
 AT_CHECK(cp testfile testfile3)
 COMMIT(testbranch)
 
-AT_CHECK(MONOTONE cert $FIRST testcert 'value=with=equal=signs')
-AT_CHECK(MONOTONE cert $SECOND testcert 'value')
+AT_CHECK(MTN cert $FIRST testcert 'value=with=equal=signs')
+AT_CHECK(MTN cert $SECOND testcert 'value')
 
 # Check that inexact values fail...
-AT_CHECK(MONOTONE list certs 'c:testcert=value=', [1], [ignore], [stderr])
+AT_CHECK(MTN list certs 'c:testcert=value=', [1], [ignore], [stderr])
 AT_CHECK(grep 'no match for selection' stderr, [0], [ignore])
 
 # Check that wild cards succeed...
-AT_CHECK(MONOTONE list certs 'c:testcert=value=*', [], [ignore], [ignore])
+AT_CHECK(MTN list certs 'c:testcert=value=*', [], [ignore], [ignore])
 
 # Check that wild cards succeed (this one becomes a misuse, because it will
 # match two revisions)...
-AT_CHECK(MONOTONE list certs 'c:testcert=value*', [1], [ignore], [stderr])
+AT_CHECK(MTN list certs 'c:testcert=value*', [1], [ignore], [stderr])
 AT_CHECK(grep 'has multiple ambiguous expansions' stderr, [0], [ignore])
 
 # Check that no value succeeds...
-AT_CHECK(MONOTONE list certs 'c:testcert', [1], [ignore], [stderr])
+AT_CHECK(MTN list certs 'c:testcert', [1], [ignore], [stderr])
 AT_CHECK(grep 'has multiple ambiguous expansions' stderr, [0], [ignore])
 
 # Check that exact value succeed...
-rm -Rf MT
-AT_CHECK(MONOTONE co --revision='c:testcert=value' ., [], [ignore], [ignore])
+rm -Rf _MTN
+AT_CHECK(MTN co --revision='c:testcert=value' ., [], [ignore], [ignore])
 AT_CHECK(cmp testfile testfile2, [], [ignore])
 
-rm -Rf MT
-AT_CHECK(MONOTONE co --revision='c:testcert=value=with=equal=signs' ., [], [ignore], [ignore])
+rm -Rf _MTN
+AT_CHECK(MTN co --revision='c:testcert=value=with=equal=signs' ., [], [ignore], [ignore])
 AT_CHECK(cmp testfile testfile1, [], [ignore])
 
 AT_CLEANUP

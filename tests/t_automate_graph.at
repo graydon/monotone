@@ -1,7 +1,7 @@
 AT_SETUP([automate graph])
-MONOTONE_SETUP
+MTN_SETUP
 
-AT_CHECK(MONOTONE automate graph, [], [], [ignore])
+AT_CHECK(MTN automate graph, [], [], [ignore])
 
 #   A
 #  / \
@@ -40,8 +40,8 @@ ADD_FILE(otherfile, [E
 COMMIT(testbranch)
 REV_E=`BASE_REVISION`
 
-AT_CHECK(MONOTONE explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 REV_F=`BASE_REVISION`
 
 AT_CHECK(test $REV_F != $REV_D)
@@ -49,7 +49,7 @@ AT_CHECK(test $REV_F != $REV_E)
 
 # Now do some checks
 
-AT_CHECK(MONOTONE automate graph, [], [stdout], [ignore])
+AT_CHECK(MTN automate graph, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 
 AT_CHECK(echo $REV_A >>graph)

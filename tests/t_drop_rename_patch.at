@@ -1,6 +1,6 @@
 AT_SETUP([merge(<>, <drop a, rename b a, patch a>)])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(v1a, [foo blah
 ])
@@ -10,16 +10,16 @@ AT_DATA(v2a, [baz blah
 ])
 
 AT_CHECK(cp v1a testfile)
-AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(MTN add testfile, [], [ignore], [ignore])
 ADD_FILE(renamefile, [this will be overwritten
 ])
-AT_CHECK(MONOTONE add renamefile, [], [ignore], [ignore])
+AT_CHECK(MTN add renamefile, [], [ignore], [ignore])
 COMMIT(testbranch)
 BASE_R_SHA=`BASE_REVISION`
 
 AT_CHECK(rm -f testfile)
-AT_CHECK(MONOTONE drop testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE rename renamefile testfile, [], [ignore], [ignore])
+AT_CHECK(MTN drop testfile, [], [ignore], [ignore])
+AT_CHECK(MTN rename renamefile testfile, [], [ignore], [ignore])
 AT_CHECK(mv renamefile testfile)
 COMMIT(testbranch)
 
@@ -32,8 +32,8 @@ ADD_FILE(otherfile, [this space for rent
 ])
 COMMIT(testbranch)
 
-AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN merge, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 AT_CHECK(cmp testfile v2a, [], [ignore])
 
 AT_CLEANUP

@@ -1,5 +1,5 @@
 AT_SETUP([db data format checking])
-MONOTONE_SETUP
+MTN_SETUP
 NEED_UNGZB64
 
 # A few times in our history we've had to do data migration beyond
@@ -37,11 +37,11 @@ x8aj7DtUjGbUMR/hgJJZByetw1UEhfknO6Y9OZoTOfaRMsPXzNFYkvqzL9wPFiVsSfMPAAA=
 ])
 
 UNGZB64(changesetify.db.dump.gz.b64, changesetify.db.dump)
-AT_CHECK(MONOTONE -d cs-modern.db db load < changesetify.db.dump, [], [ignore], [ignore])
-AT_CHECK(MONOTONE -d cs-modern.db db migrate, [], [ignore], [ignore])
+AT_CHECK(MTN -d cs-modern.db db load < changesetify.db.dump, [], [ignore], [ignore])
+AT_CHECK(MTN -d cs-modern.db db migrate, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE -d cs-modern.db ls keys, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE -d cs-modern.db serve --bind=127.0.0.1:63219 '*', [1], [ignore], [ignore])
+AT_CHECK(MTN -d cs-modern.db ls keys, [1], [ignore], [ignore])
+AT_CHECK(MTN -d cs-modern.db serve --bind=127.0.0.1:63219 '*', [1], [ignore], [ignore])
 
 AT_DATA([rosterify.db.dump.gz.b64], [H4sICFVTz0MCA3Jvc3RlcmlmeS5kYi5kdW1wAO1XW4+i2BZ+Ln4F6ZeujjUtcmcmnQwqKoqo
 4P3kpLKBza3kIqCAv342WmVVq1Wna84k5+WYaFD3un3rW2uv1ZS6sopLy5Yy0+W59AfW0iRx
@@ -90,10 +90,10 @@ Y66+P03g7+k4ttvHqsLfSp+aMALmP8lVQ+DjaWC9IX8aEY9/V4pGw6E8/QP7C+EOIsPpFgAA
 ])
 
 UNGZB64(rosterify.db.dump.gz.b64, rosterify.db.dump)
-AT_CHECK(MONOTONE -d ro-modern.db db load < rosterify.db.dump, [], [ignore], [ignore])
-AT_CHECK(MONOTONE -d ro-modern.db db migrate, [], [ignore], [ignore])
+AT_CHECK(MTN -d ro-modern.db db load < rosterify.db.dump, [], [ignore], [ignore])
+AT_CHECK(MTN -d ro-modern.db db migrate, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE -d ro-modern.db ls keys, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE -d ro-modern.db serve --bind=127.0.0.1:63219 '*', [1], [ignore], [ignore])
+AT_CHECK(MTN -d ro-modern.db ls keys, [1], [ignore], [ignore])
+AT_CHECK(MTN -d ro-modern.db serve --bind=127.0.0.1:63219 '*', [1], [ignore], [ignore])
 
 AT_CLEANUP

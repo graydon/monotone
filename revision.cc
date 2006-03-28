@@ -1261,8 +1261,10 @@ anc_graph::construct_revisions_from_ancestry()
                                                     attr_key("mtn:" + key),
                                                     attr_value(k->second));
                             else
-                              E(false, F("unknown attribute %s on path %s\n"
-                                         "please contact %s so we can work out the right way to migrate this")
+                              E(false, F("unknown attribute '%s' on path '%s'\n"
+                                         "please contact %s so we can work out the right way to migrate this\n"
+                                         "(if you just want it to go away, see the switch --drop-attr, but\n"
+                                         "seriously, if you'd like to keep it, we're happy to figure out how)")
                                 % key % file_path(sp) % PACKAGE_BUGREPORT);
                           }
                       }
@@ -1366,6 +1368,7 @@ void
 build_roster_style_revs_from_manifest_style_revs(app_state & app)
 {
   app.db.ensure_open_for_format_changes();
+  app.db.check_is_not_rosterified();
 
   global_sanity.set_relaxed(true);
   anc_graph graph(true, app);
@@ -1421,6 +1424,7 @@ void
 build_changesets_from_manifest_ancestry(app_state & app)
 {
   app.db.ensure_open_for_format_changes();
+  app.db.check_is_not_rosterified();
 
   anc_graph graph(false, app);
 

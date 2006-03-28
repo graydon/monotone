@@ -80,8 +80,8 @@ void read_directory(any_path const & path,
 void read_data_for_command_line(utf8 const & path, data & dat);
 
 // These are not any_path's because we make our write somewhat atomic -- we
-// first write to a temp file in MT/ (and it must be in MT/, not like /tmp or
-// something, because we can't necessarily atomic rename from /tmp to the
+// first write to a temp file in _MTN/ (and it must be in _MTN/, not like /tmp
+// or something, because we can't necessarily atomic rename from /tmp to the
 // workspace).  But that means we can't use it in general, only for the
 // workspace.
 void write_data(file_path const & path, data const & data);

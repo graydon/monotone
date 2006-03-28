@@ -1,5 +1,5 @@
 AT_SETUP([files with non-utf8 data])
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(ru-8859-5.gz.b64, [H4sICA/DbUICA3J1LWFscGhhYmV0Ljg4NTktNQBNzEdKQ1EAQNH5W8XZQJwJ0akjR4JZwTME
 EvhKyP8uyB3Ye++99957wR2oM6f3wG3tTNNK7BCTajm2lbK60FxoyeXz9Q25esVyrMViVqpJ
@@ -50,24 +50,24 @@ BASE_R=`BASE_REVISION`
 
 # Test 8859-5 (Russian) conversions.
 
-AT_CHECK(MONOTONE --rcfile=8859-5.lua add ru-8859-5, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --rcfile=8859-5.lua commit --message=foo, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=8859-5.lua add ru-8859-5, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=8859-5.lua commit --message=foo, [], [ignore], [ignore])
 RU_R=`BASE_REVISION`
-AT_CHECK(MONOTONE --rcfile=8859-5.lua checkout --revision=$RU_R co-ru-8859-5, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=8859-5.lua checkout --revision=$RU_R co-ru-8859-5, [], [ignore], [ignore])
 AT_CHECK(cmp ru-8859-5 co-ru-8859-5/ru-8859-5)
-AT_CHECK(MONOTONE checkout --revision=$RU_R co-ru-utf8, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --revision=$RU_R co-ru-utf8, [], [ignore], [ignore])
 AT_CHECK(cmp ru-utf8 co-ru-utf8/ru-8859-5)
 
 REVERT_TO($BASE_R)
 
 # Test EUC-JP (Japanese) conversions.
 
-AT_CHECK(MONOTONE --rcfile=euc.lua add jp-euc, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --rcfile=euc.lua commit --message=foo, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=euc.lua add jp-euc, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=euc.lua commit --message=foo, [], [ignore], [ignore])
 JP_R=`BASE_REVISION`
-AT_CHECK(MONOTONE --rcfile=euc.lua checkout --revision=$JP_R co-jp-euc, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=euc.lua checkout --revision=$JP_R co-jp-euc, [], [ignore], [ignore])
 AT_CHECK(cmp jp-euc co-jp-euc/jp-euc)
-AT_CHECK(MONOTONE checkout --revision=$JP_R co-jp-utf8, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --revision=$JP_R co-jp-utf8, [], [ignore], [ignore])
 AT_CHECK(cmp jp-utf8 co-jp-utf8/jp-euc)
 
 AT_CLEANUP

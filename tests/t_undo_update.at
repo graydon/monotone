@@ -9,7 +9,7 @@ AT_XFAIL_IF(true)
 #
 # This wouldn't be that hard to do -- before starting an update, make
 # a note of all file modifications being applied, and save copies of
-# them somewhere under MT/.  The only tricky part is making sure we
+# them somewhere under _MTN/.  The only tricky part is making sure we
 # can undo tree rearrangements.
 #
 # For bonus points, use this to implement "workspace rollback" --

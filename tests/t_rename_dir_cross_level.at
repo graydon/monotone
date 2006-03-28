@@ -1,5 +1,5 @@
 AT_SETUP([rename_dir to non-sibling])
-MONOTONE_SETUP
+MTN_SETUP
 
 # Pretty rigorous test of rename_dir, in particular when the target
 # and source of the rename are not sibling directories.
@@ -35,29 +35,29 @@ ADD_FILE(subdir1/bystander2, [asdfasknb
 ])
 ADD_FILE($OLD_DIR/new-file, [foo ping
 ])
-AT_CHECK(MONOTONE rename $OLD_DIR/rename-out-file rename-out-file, [], [ignore], [ignore])
+AT_CHECK(MTN rename $OLD_DIR/rename-out-file rename-out-file, [], [ignore], [ignore])
 AT_CHECK(mv $OLD_DIR/rename-out-file rename-out-file)
-AT_CHECK(MONOTONE rename $OLD_DIR/rename-out-dir rename-out-dir, [], [ignore], [ignore])
+AT_CHECK(MTN rename $OLD_DIR/rename-out-dir rename-out-dir, [], [ignore], [ignore])
 AT_CHECK(mv $OLD_DIR/rename-out-dir rename-out-dir)
-AT_CHECK(MONOTONE rename rename-in-dir $OLD_DIR/rename-in-dir, [], [ignore], [ignore])
+AT_CHECK(MTN rename rename-in-dir $OLD_DIR/rename-in-dir, [], [ignore], [ignore])
 AT_CHECK(mv rename-in-dir $OLD_DIR/rename-in-dir)
-AT_CHECK(MONOTONE rename rename-in-file $OLD_DIR/rename-in-file, [], [ignore], [ignore])
+AT_CHECK(MTN rename rename-in-file $OLD_DIR/rename-in-file, [], [ignore], [ignore])
 AT_CHECK(mv rename-in-file $OLD_DIR/rename-in-file)
-AT_CHECK(MONOTONE drop $OLD_DIR/doomed, [], [ignore], [ignore])
+AT_CHECK(MTN drop $OLD_DIR/doomed, [], [ignore], [ignore])
 COMMIT(testbranch)
 LEFT_R=`BASE_REVISION`
 
 REVERT_TO($BASE_R)
 
-AT_CHECK(MONOTONE rename $OLD_DIR/ $NEW_DIR/, [], [ignore], [ignore])
+AT_CHECK(MTN rename $OLD_DIR/ $NEW_DIR/, [], [ignore], [ignore])
 AT_CHECK(mv $OLD_DIR $NEW_DIR)
 COMMIT(testbranch)
 RIGHT_R=`BASE_REVISION`
 
-AT_CHECK(MONOTONE merge --branch=testbranch, [], [ignore], [ignore])
+AT_CHECK(MTN merge --branch=testbranch, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE checkout --revision=$BASE_R test_dir, [], [ignore], [ignore])
-AT_CHECK( (cd test_dir && MONOTONE --branch=testbranch update), [], [ignore], [ignore])
+AT_CHECK(MTN checkout --revision=$BASE_R test_dir, [], [ignore], [ignore])
+AT_CHECK( (cd test_dir && MTN --branch=testbranch update), [], [ignore], [ignore])
 MERGED_R=`cd test_dir && BASE_REVISION`
 AT_CHECK(test $BASE_R != $MERGED_R)
 AT_CHECK(test $LEFT_R != $MERGED_R)

@@ -235,11 +235,11 @@ then
    AC_MSG_CHECKING([location of static boost libraries])
    for i in ${static_boost_prefixes}
    do
-	if test -e $i/lib64/libboost_regex${BOOST_SUFFIX}.a
+	if test -f $i/lib64/libboost_regex${BOOST_SUFFIX}.a
 	then
 		BOOST_LIBDIR=$i/lib64
 	fi
-	if test -e $i/lib/libboost_regex${BOOST_SUFFIX}.a 
+	if test -f $i/lib/libboost_regex${BOOST_SUFFIX}.a 
 	then
 		BOOST_LIBDIR=$i/lib
 	fi
@@ -277,7 +277,9 @@ fi
 
 AC_CACHE_CHECK([if this is Windows],
        ac_win32, [
-       AC_TRY_COMPILE([#include <windows.h>],
+       AC_TRY_COMPILE([#ifdef WIN32
+                       #include <windows.h>
+                       #endif],
                       [HANDLE h; DWORD d;],
                       ac_win32=yes,
                       ac_win32=no)

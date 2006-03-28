@@ -1,9 +1,9 @@
 AT_SETUP([diff in a never-committed project])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(testfile, [flagella
 ])
-AT_CHECK(MONOTONE diff, [], [stdout], [ignore])
+AT_CHECK(MTN diff, [], [stdout], [ignore])
 AT_CHECK(QGREP(testfile stdout))
 AT_CHECK(QGREP(flagella stdout))
 

@@ -1,5 +1,5 @@
 AT_SETUP([test problematic cvs import])
-MONOTONE_SETUP
+MTN_SETUP
 NEED_UNGZB64
 
 # This test imports a rcs file which fails according to the mailing list
@@ -184,7 +184,7 @@ NksYX3riaBmsp4m/Pv0ZR559DrmcAAA=
 AT_CHECK(mkdir tmp, [], stdout, ignore)
 UNGZB64(rcsfile.gz.b64, tmp/rcsfile,v)
 
-AT_CHECK(MONOTONE --branch=test cvs_import tmp, [], ignore, ignore)
+AT_CHECK(MTN --branch=test cvs_import tmp, [], ignore, ignore)
 
 AT_CLEANUP
 (END)

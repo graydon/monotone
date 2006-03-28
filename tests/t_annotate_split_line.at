@@ -1,5 +1,5 @@
 AT_SETUP([annotate where line splits])
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(foo.A, [a
 ident
@@ -33,7 +33,7 @@ end
 
 
 AT_CHECK(cp foo.A foo)
-AT_CHECK(MONOTONE add foo, [], [ignore], [ignore])
+AT_CHECK(MTN add foo, [], [ignore], [ignore])
 COMMIT(testbranch)
 REVA=`BASE_REVISION`
 echo rev letter A $REVA
@@ -50,8 +50,8 @@ COMMIT(testbranch)
 REVC=`BASE_REVISION`
 echo rev letter C $REVC
 
-AT_CHECK(MONOTONE --rcfile=./merge.lua merge, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=./merge.lua merge, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 REVD=`BASE_REVISION`
 echo rev letter D $REVD
 
@@ -65,7 +65,7 @@ echo rev letter D $REVD
 # REVD: d
 #
 
-AT_CHECK(MONOTONE --debug annotate foo, [], [stdout], [stderr])
+AT_CHECK(MTN --debug annotate foo, [], [stdout], [stderr])
 
 AT_CHECK(head -n 1 stdout | grep $REVA, [0], [ignore], [ignore])
 AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REVA, [0], [ignore], [ignore])
