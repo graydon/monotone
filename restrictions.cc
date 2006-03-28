@@ -270,7 +270,7 @@ get_working_revision_and_rosters(app_state & app,
   {
     // We did the following:
     //
-    //  - restrict the working cset (MT/work)
+    //  - restrict the working cset (_MTN/work)
     //  - apply the working cset to the new roster,
     //    giving us a rearranged roster (with incorrect content hashes)
     //  - re-scan file contents, updating content hashes

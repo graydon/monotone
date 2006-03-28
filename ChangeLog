@@ -1,5 +1,11 @@
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (CMD_NO_MT): Rename to...
+	(CMD_NO_WORKSPACE): ...this.
+	* *.cc, *.hh: s/MT/_MTN/ (mostly in comments).
+	
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (get_log_message_interactively): 
 	* std_hooks.lua (edit_comment): s/MT:/MTN:/
 

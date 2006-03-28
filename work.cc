@@ -401,9 +401,9 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
   N(is_dir_t(new_roster.get_node(new_root_sp)),
     F("proposed new root directory '%s' is not a directory") % new_root);
   {
-    split_path new_root_MT;
-    (new_root / bookkeeping_root.as_internal()).split(new_root_MT);
-    N(!new_roster.has_node(new_root_MT),
+    split_path new_root__MTN;
+    (new_root / bookkeeping_root.as_internal()).split(new_root__MTN);
+    N(!new_roster.has_node(new_root__MTN),
       F("proposed new root directory '%s' contains illegal path %s") % new_root % bookkeeping_root);
   }
   
@@ -684,7 +684,7 @@ get_options_path(bookkeeping_path & o_path)
 void 
 read_options_map(data const & dat, options_map & options)
 {
-  basic_io::input_source src(dat(), "MT/options");
+  basic_io::input_source src(dat(), "_MTN/options");
   basic_io::tokenizer tok(src);
   basic_io::parser parser(tok);
 
@@ -842,7 +842,7 @@ path_for_nid(node_id nid)
 // Attaching/detaching the root directory:
 //   This is tricky, because we don't want to simply move it around, like
 // other directories.  That would require some very snazzy handling of the
-// MT directory, and never be possible on windows anyway[1].  So, what we do
+// _MTN directory, and never be possible on windows anyway[1].  So, what we do
 // is fake it -- whenever we want to move the root directory into the
 // temporary dir, we instead create a new dir in the temporary dir, move
 // all of the root's contents into this new dir, and make a note that the root
@@ -852,8 +852,8 @@ path_for_nid(node_id nid)
 // that it exists again.
 //
 // [1] Because the root directory is our working directory, and thus locked in
-// place.  We _could_ chdir out, then move MT out, then move the real root
-// directory into our newly-moved MT, etc., but aside from being very finicky,
+// place.  We _could_ chdir out, then move _MTN out, then move the real root
+// directory into our newly-moved _MTN, etc., but aside from being very finicky,
 // this would require that we know our root directory's name relative to its
 // parent.
 
