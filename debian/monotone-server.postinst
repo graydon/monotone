@@ -23,7 +23,7 @@ set -e
 # source debconf stuff
 . /usr/share/debconf/confmodule
 
-MONOTONE=/usr/bin/monotone
+MONOTONE=/usr/bin/mtn
 
 case "$1" in
     configure)

@@ -20,7 +20,7 @@ set -e
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DESC="Monotone Server"
 NAME=monotone
-DAEMON=/usr/bin/$NAME
+DAEMON=/usr/bin/mtn
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
