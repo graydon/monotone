@@ -168,16 +168,16 @@ in_bookkeeping_dir(std::string const & path)
 {
   if (path.size() == 0 || (path[0] != '_'))
     return false;
-  if (path.size() == 1 || (path[0] != 'M' && path[0] != 'm'))
+  if (path.size() == 1 || (path[1] != 'M' && path[0] != 'm'))
     return false;
-  if (path.size() == 2 || (path[1] != 'T' && path[1] != 't'))
+  if (path.size() == 2 || (path[2] != 'T' && path[1] != 't'))
     return false;
-  if (path.size() == 3 || (path[1] != 'N' && path[1] != 'n'))
+  if (path.size() == 3 || (path[3] != 'N' && path[2] != 'n'))
     return false;
   // if we've gotten here, the first three letters are _, M, T, and N, in
   // either upper or lower case.  So if that is the whole path, or else if it
   // continues but the next character is /, then this is a bookkeeping path.
-  if (path.size() == 2 || (path[2] == '/'))
+  if (path.size() == 4 || (path[4] == '/'))
     return true;
   return false;
 }
@@ -918,35 +918,38 @@ static void test_split_join()
 
   // Make sure that we can't use joining to create a path into the bookkeeping
   // dir
-  split_path split_mt1, split_mt2;
-  file_path_internal("foo/_MTN").split(split_mt1);
-  BOOST_CHECK(split_mt1.size() == 3);
-  I(split_mt1[2] == bookkeeping_root_component);
-  split_mt2.push_back(the_null_component);
-  split_mt2.push_back(split_mt1[2]);
-  // split_mt2 now contains the component "_MTN"
-  BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
-  split_mt2.push_back(split_mt1[1]);
-  // split_mt2 now contains the components "_MTN", "foo" in that order
-  // this comparison tricks the compiler into not completely eliminating this
-  // code as dead...
-  BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
-
+  {
+    split_path split_mt1, split_mt2;
+    file_path_internal("foo/_MTN").split(split_mt1);
+    BOOST_CHECK(split_mt1.size() == 3);
+    I(split_mt1[2] == bookkeeping_root_component);
+    split_mt2.push_back(the_null_component);
+    split_mt2.push_back(split_mt1[2]);
+    // split_mt2 now contains the component "_MTN"
+    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+    split_mt2.push_back(split_mt1[1]);
+    // split_mt2 now contains the components "_MTN", "foo" in that order
+    // this comparison tricks the compiler into not completely eliminating this
+    // code as dead...
+    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+  }
   // and make sure it fails for the klugy security cases -- see comments on
   // in_bookkeeping_dir
-  split_path split_mt1, split_mt2;
-  file_path_internal("foo/_mTn").split(split_mt1);
-  BOOST_CHECK(split_mt1.size() == 3);
-  I(split_mt1[2] == bookkeeping_root_component);
-  split_mt2.push_back(the_null_component);
-  split_mt2.push_back(split_mt1[2]);
-  // split_mt2 now contains the component "_mTn"
-  BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
-  split_mt2.push_back(split_mt1[1]);
-  // split_mt2 now contains the components "_mTn", "foo" in that order
-  // this comparison tricks the compiler into not completely eliminating this
-  // code as dead...
-  BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+  {
+    split_path split_mt1, split_mt2;
+    file_path_internal("foo/_mTn").split(split_mt1);
+    BOOST_CHECK(split_mt1.size() == 3);
+    I(split_mt1[2] == bookkeeping_root_component);
+    split_mt2.push_back(the_null_component);
+    split_mt2.push_back(split_mt1[2]);
+    // split_mt2 now contains the component "_mTn"
+    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+    split_mt2.push_back(split_mt1[1]);
+    // split_mt2 now contains the components "_mTn", "foo" in that order
+    // this comparison tricks the compiler into not completely eliminating this
+    // code as dead...
+    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+  }
 }
 
 static void check_bk_normalizes_to(char * before, char * after)

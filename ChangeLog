@@ -1,5 +1,12 @@
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (test_split_join): Whoops, be more careful
+	copy-and-pasting within a single scope...
+	(in_bookkeeping_dir): Was totally wrong, make all the constants
+	correct...
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (CMD_NO_MT): Rename to...
 	(CMD_NO_WORKSPACE): ...this.
 	* *.cc, *.hh: s/MT/_MTN/ (mostly in comments).
