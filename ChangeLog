@@ -1,5 +1,7 @@
 2006-03-28  Richard Levitte  <richard@levitte.org>
 
+	* contrib/monotone.bash_completion: Make if complete mtn as well.
+
 	* po/fr.po: Translation update.
 
 	* po/sv.po: Translation update.
