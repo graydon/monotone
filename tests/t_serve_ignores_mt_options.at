@@ -2,15 +2,15 @@
 
 AT_SETUP([checking that certain commands ignores the contents of _MTN/options])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 NETSYNC_SETUP
 
 # Now, commit something to transfer
 AT_DATA(testfile, [version 0 of test file
 ])
-AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit --message blah-blah, [], [ignore], [ignore])
+AT_CHECK(MTN add testfile, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message blah-blah, [], [ignore], [ignore])
 
 # Hack _MTN/options
 AT_CHECK([sed -e 's/key ".*"/key "foobar@hacked.com"/' < _MTN/options > _MTN/options.new])

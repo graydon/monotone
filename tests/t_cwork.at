@@ -2,20 +2,20 @@
 
 AT_SETUP([delete work file on checkout])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(testfile0, [version 0 of first test file
 ])
 AT_DATA(testfile1, [version 1 of second test file
 ])
 
-AT_CHECK(MONOTONE add testfile0, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
+AT_CHECK(MTN add testfile0, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message='blah blah', [], [ignore], [ignore])
 V1=`BASE_REVISION`
-AT_CHECK(MONOTONE add testfile1, [], [ignore], [ignore])
+AT_CHECK(MTN add testfile1, [], [ignore], [ignore])
 AT_CHECK(test -e _MTN/work, [], [ignore])
 AT_CHECK(rm -rf _MTN)
-AT_CHECK(MONOTONE checkout --revision=$V1 ., [], [ignore], [ignore])
+AT_CHECK(MTN checkout --revision=$V1 ., [], [ignore], [ignore])
 AT_CHECK(test ! -e _MTN/work, [], [ignore])
 
 AT_CLEANUP

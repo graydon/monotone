@@ -1,8 +1,8 @@
 AT_SETUP([automate parents, automate children])
-MONOTONE_SETUP
+MTN_SETUP
 
-AT_CHECK(MONOTONE automate parents c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE automate children c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+AT_CHECK(MTN automate parents c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+AT_CHECK(MTN automate children c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
 
 #   A
 #  / \
@@ -41,8 +41,8 @@ ADD_FILE(otherfile, [E
 COMMIT(testbranch)
 REV_E=`BASE_REVISION`
 
-AT_CHECK(MONOTONE explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 REV_F=`BASE_REVISION`
 
 AT_CHECK(test $REV_F != $REV_D)
@@ -50,55 +50,55 @@ AT_CHECK(test $REV_F != $REV_E)
 
 # Now do some checks
 
-AT_CHECK(MONOTONE automate parents $REV_A, [], [], [ignore])
-AT_CHECK(MONOTONE automate children $REV_B, [], [], [ignore])
-AT_CHECK(MONOTONE automate children $REV_F, [], [], [ignore])
+AT_CHECK(MTN automate parents $REV_A, [], [], [ignore])
+AT_CHECK(MTN automate children $REV_B, [], [], [ignore])
+AT_CHECK(MTN automate children $REV_F, [], [], [ignore])
 
 AT_CHECK(echo $REV_A > tmp)
-AT_CHECK(MONOTONE automate parents $REV_B, [], [stdout], [ignore])
+AT_CHECK(MTN automate parents $REV_B, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp tmp stdout)
 
 AT_CHECK(echo $REV_A > tmp)
-AT_CHECK(MONOTONE automate parents $REV_C, [], [stdout], [ignore])
+AT_CHECK(MTN automate parents $REV_C, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp tmp stdout)
 
 AT_CHECK(echo $REV_C > tmp)
-AT_CHECK(MONOTONE automate parents $REV_D, [], [stdout], [ignore])
+AT_CHECK(MTN automate parents $REV_D, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp tmp stdout)
 
 AT_CHECK(echo $REV_C > tmp)
-AT_CHECK(MONOTONE automate parents $REV_E, [], [stdout], [ignore])
+AT_CHECK(MTN automate parents $REV_E, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp tmp stdout)
 
 AT_CHECK(echo $REV_D >revs_de.unsorted)
 AT_CHECK(echo $REV_E >>revs_de.unsorted)
 AT_CHECK(sort revs_de.unsorted > revs_de)
-AT_CHECK(MONOTONE automate parents $REV_F, [], [stdout], [ignore])
+AT_CHECK(MTN automate parents $REV_F, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp revs_de stdout)
 
 AT_CHECK(echo $REV_F > tmp)
-AT_CHECK(MONOTONE automate children $REV_D, [], [stdout], [ignore])
+AT_CHECK(MTN automate children $REV_D, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp tmp stdout)
 
 AT_CHECK(echo $REV_F > tmp)
-AT_CHECK(MONOTONE automate children $REV_E, [], [stdout], [ignore])
+AT_CHECK(MTN automate children $REV_E, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp tmp stdout)
 
-AT_CHECK(MONOTONE automate children $REV_C, [], [stdout], [ignore])
+AT_CHECK(MTN automate children $REV_C, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp revs_de stdout)
 
 AT_CHECK(echo $REV_B >revs_bc.unsorted)
 AT_CHECK(echo $REV_C >>revs_bc.unsorted)
 AT_CHECK(sort revs_bc.unsorted > revs_bc)
-AT_CHECK(MONOTONE automate children $REV_A, [], [stdout], [ignore])
+AT_CHECK(MTN automate children $REV_A, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp revs_bc stdout)
 

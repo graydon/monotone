@@ -1,5 +1,5 @@
 AT_SETUP([diff --external])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(testfile, [foo bar
 ])
@@ -29,7 +29,7 @@ AT_DATA(testhook.lua, [function external_diff(file_path, data_old, data_new, is_
 end
 ])
 
-AT_CHECK(MONOTONE --rcfile=testhook.lua diff --external, [], [stdout], [ignore])
+AT_CHECK(MTN --rcfile=testhook.lua diff --external, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(CANONICALISE(old_version))
 AT_CHECK(CANONICALISE(new_version))
@@ -40,7 +40,7 @@ AT_CHECK(QGREP('diff_args is NIL' stdout))
 AT_CHECK(QGREP("rev_old: $OLD_SHA" stdout))
 AT_CHECK(QGREP("rev_new: $NEW_SHA" stdout))
 
-AT_CHECK(MONOTONE --rcfile=testhook.lua diff --external --diff-args="-foobar", [], [stdout], [ignore])
+AT_CHECK(MTN --rcfile=testhook.lua diff --external --diff-args="-foobar", [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(CANONICALISE(old_version))
 AT_CHECK(CANONICALISE(new_version))
@@ -51,7 +51,7 @@ AT_CHECK(QGREP('diff_args: -foobar' stdout))
 AT_CHECK(QGREP("rev_old: $OLD_SHA" stdout))
 AT_CHECK(QGREP("rev_new: $NEW_SHA" stdout))
 
-AT_CHECK(MONOTONE --rcfile=testhook.lua diff --external --diff-args="", [], [stdout], [ignore])
+AT_CHECK(MTN --rcfile=testhook.lua diff --external --diff-args="", [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(CANONICALISE(old_version))
 AT_CHECK(CANONICALISE(new_version))
@@ -63,6 +63,6 @@ AT_CHECK(QGREP("rev_old: $OLD_SHA" stdout))
 AT_CHECK(QGREP("rev_new: $NEW_SHA" stdout))
 
 # Make sure that --diff-args without --external is an error
-AT_CHECK(MONOTONE diff --diff-args="foo", [1], [ignore], [ignore])
+AT_CHECK(MTN diff --diff-args="foo", [1], [ignore], [ignore])
 
 AT_CLEANUP

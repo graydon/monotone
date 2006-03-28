@@ -1,6 +1,6 @@
 AT_SETUP([things in .mt-ignore get ignored])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_CHECK(touch foo)
 AT_CHECK(touch bar)
@@ -12,7 +12,7 @@ baz
 *.d
 ])
 
-AT_CHECK(RAW_MONOTONE ls unknown, [], [stdout], [stderr])
+AT_CHECK(RAW_MTN ls unknown, [], [stdout], [stderr])
 AT_CHECK(cp stdout unknown)
 AT_CHECK(cp stderr unknownerr)
 
@@ -22,7 +22,7 @@ AT_CHECK(grep bar unknown, [1], [ignore])
 AT_CHECK(grep baz unknown, [1], [ignore])
 
 
-AT_CHECK(RAW_MONOTONE ls ignored, [], [stdout], [stderr])
+AT_CHECK(RAW_MTN ls ignored, [], [stdout], [stderr])
 AT_CHECK(cp stdout ignored)
 AT_CHECK(cp stderr ignorederr)
 
@@ -32,7 +32,7 @@ AT_CHECK(grep bar ignored, [], [ignore])
 AT_CHECK(grep xyzzy ignored, [], [ignore])
 
 AT_CHECK(rm .mt-ignore)
-AT_CHECK(RAW_MONOTONE ls ignored, [], [stdout], [stderr])
+AT_CHECK(RAW_MTN ls ignored, [], [stdout], [stderr])
 AT_CHECK(grep test.db stdout, [], [ignore])
 
 AT_CLEANUP

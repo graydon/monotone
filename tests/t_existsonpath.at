@@ -1,5 +1,5 @@
 AT_SETUP([lua function existsonpath])
-MONOTONE_SETUP
+MTN_SETUP
 
 # Need a way to break into the lua interpreter; our strategy is to
 # redefine the use_inodeprints function to run our code, and then
@@ -15,7 +15,7 @@ AT_DATA(test.lua, [function use_inodeprints()
   return false
 end
 ])
-AT_CHECK(MONOTONE setup --rcfile=test.lua --branch=testbranch subdir, [], [stdout], [ignore])
+AT_CHECK(MTN setup --rcfile=test.lua --branch=testbranch subdir, [], [stdout], [ignore])
 AT_CHECK(QGREP(asdfghjkl stdout), [])
 AT_CHECK(QGREP(qwertyuiop stdout), [])
 

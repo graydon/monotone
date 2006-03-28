@@ -1,5 +1,5 @@
 AT_SETUP([_MTN/* handled correctly in aborted commit])
-MONOTONE_SETUP
+MTN_SETUP
 
 # _MTN/* means _MTN/revision and _MTN/work
 
@@ -22,7 +22,7 @@ AT_DATA(bad_edit_comment.lua, [function edit_comment(basetext, user_log_message)
 end
 ])
 
-AT_CHECK(MONOTONE commit --rcfile=bad_edit_comment.lua, [1], [ignore], [ignore])
+AT_CHECK(MTN commit --rcfile=bad_edit_comment.lua, [1], [ignore], [ignore])
 
 # Since this commit was canceled due to a problem with the log
 # message, the old log message have been preserved

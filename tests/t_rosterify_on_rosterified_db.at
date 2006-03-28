@@ -1,5 +1,5 @@
 AT_SETUP([db rosterify twice gives an error second time])
-MONOTONE_SETUP
+MTN_SETUP
 NEED_UNGZB64
 
 AT_DATA([test.db.dump.gz.b64], [H4sICFkQw0MCA3Rlc3QuZGIuZHVtcADtWFmPm0oWfm5+BcpLEnUnZl/uVaSLbYwXwAsY7B6N
@@ -52,12 +52,12 @@ oRS4tRtY8ZiqIXCJ1VCULK2ilGUlTV//F2Ggd+XF9VD19HQe38b6jYHr03k0e0/HqQ+fnqLX
 AT_CHECK(rm -f test.db)
 
 UNGZB64(test.db.dump.gz.b64, test.db.dump)
-AT_CHECK(MONOTONE db load < test.db.dump, [], [ignore], [ignore])
-AT_CHECK(MONOTONE db migrate, [], [ignore], [ignore])
+AT_CHECK(MTN db load < test.db.dump, [], [ignore], [ignore])
+AT_CHECK(MTN db migrate, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE db rosterify, [], [ignore], [ignore])
+AT_CHECK(MTN db rosterify, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE db rosterify, [1], [ignore], [stderr])
+AT_CHECK(MTN db rosterify, [1], [ignore], [stderr])
 AT_CHECK(QGREP(already stderr))
 
 AT_CLEANUP

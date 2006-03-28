@@ -1,5 +1,5 @@
 AT_SETUP([pivot_root])
-MONOTONE_SETUP
+MTN_SETUP
 
 # possible problems:
 #   -- the new root doesn't exist
@@ -12,7 +12,7 @@ MONOTONE_SETUP
 # then make sure --execute puts things in the right place...
 
 AT_CHECK(mkdir workspace)
-AT_CHECK(cd workspace/ && MONOTONE setup . -b testbranch, [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN setup . -b testbranch, [], [ignore], [ignore])
 
 AT_CHECK(mkdir workspace/dir1)
 AT_CHECK(mkdir workspace/dir1/dir2)
@@ -20,22 +20,22 @@ AT_DATA(workspace/dir1/file1, [blah blah
 ])
 AT_CHECK(mkdir workspace/dir3)
 AT_CHECK(mkdir workspace/dir3/_MTN)
-AT_CHECK(cd workspace/ && MONOTONE add ., [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN add ., [], [ignore], [ignore])
 
-AT_CHECK(cd workspace/ && MONOTONE commit -m foo, [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN commit -m foo, [], [ignore], [ignore])
 
-AT_CHECK(cd workspace/ && MONOTONE pivot_root nosuchdir foo, [1], [ignore], [ignore])
-AT_CHECK(cd workspace/ && MONOTONE pivot_root dir1/file1 foo, [1], [ignore], [ignore])
-AT_CHECK(cd workspace/ && MONOTONE pivot_root dir3 old_root, [1], [ignore], [ignore])
-AT_CHECK(cd workspace/ && MONOTONE pivot_root dir1 nosuchdir/old_root, [1], [ignore], [ignore])
-AT_CHECK(cd workspace/ && MONOTONE pivot_root dir1 file1/old_root, [1], [ignore], [ignore])
-AT_CHECK(cd workspace/ && MONOTONE pivot_root dir1 dir2, [1], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN pivot_root nosuchdir foo, [1], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN pivot_root dir1/file1 foo, [1], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN pivot_root dir3 old_root, [1], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN pivot_root dir1 nosuchdir/old_root, [1], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN pivot_root dir1 file1/old_root, [1], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN pivot_root dir1 dir2, [1], [ignore], [ignore])
 
-AT_CHECK(cd workspace/ && MONOTONE ls changed, [], [], [])
-AT_CHECK(cd workspace/ && MONOTONE ls missing, [], [], [])
-AT_CHECK(cd workspace/ && MONOTONE ls unknown, [], [], [])
+AT_CHECK(cd workspace/ && MTN ls changed, [], [], [])
+AT_CHECK(cd workspace/ && MTN ls missing, [], [], [])
+AT_CHECK(cd workspace/ && MTN ls unknown, [], [], [])
 
-AT_CHECK(cd workspace/ && MONOTONE pivot_root --execute dir1 old_root, [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN pivot_root --execute dir1 old_root, [], [ignore], [ignore])
 
 AT_CHECK(test -d workspace/_MTN)
 AT_CHECK(test -d workspace/dir2)
@@ -44,9 +44,9 @@ AT_CHECK(test -d workspace/old_root)
 AT_CHECK(test -d workspace/old_root/dir3)
 AT_CHECK(test -d workspace/old_root/dir3/_MTN)
 
-AT_CHECK(cd workspace/ && MONOTONE ls missing, [], [], [])
-AT_CHECK(cd workspace/ && MONOTONE ls unknown, [], [], [])
+AT_CHECK(cd workspace/ && MTN ls missing, [], [], [])
+AT_CHECK(cd workspace/ && MTN ls unknown, [], [], [])
 
-AT_CHECK(cd workspace/ && MONOTONE commit -m foo, [], [ignore], [ignore])
+AT_CHECK(cd workspace/ && MTN commit -m foo, [], [ignore], [ignore])
 
 AT_CLEANUP

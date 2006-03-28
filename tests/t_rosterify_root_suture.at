@@ -1,5 +1,5 @@
 AT_SETUP([db rosterify on a db with a root suture])
-MONOTONE_SETUP
+MTN_SETUP
 NEED_UNGZB64
 
 AT_DATA([test.db.dump.gz.b64], [H4sICPFEAEQCA3Rlc3QuZGIuZHVtcADtWlmPo1qSfi7/ilS/3HtFdZt9mVFLgwFjbBaz2caj
@@ -113,11 +113,11 @@ P73cvX1F/uV+6fPPD0WGpinOvy/+G7sS7iNbLwAA
 AT_CHECK(rm -f test.db)
 
 UNGZB64(test.db.dump.gz.b64, test.db.dump)
-AT_CHECK(MONOTONE db load < test.db.dump, [], [ignore], [ignore])
-AT_CHECK(MONOTONE db migrate, [], [ignore], [ignore])
-AT_CHECK(MONOTONE db rosterify, [], [ignore], [ignore])
+AT_CHECK(MTN db load < test.db.dump, [], [ignore], [ignore])
+AT_CHECK(MTN db migrate, [], [ignore], [ignore])
+AT_CHECK(MTN db rosterify, [], [ignore], [ignore])
 
-AT_CHECK(for REV in `MONOTONE automate select i:`; do MONOTONE automate get_revision $REV; done, [], [stdout], [ignore])
+AT_CHECK(for REV in `MTN automate select i:`; do MTN automate get_revision $REV; done, [], [stdout], [ignore])
 AT_CHECK(QGREP('delete ""' stdout))
 AT_CHECK(QGREP('add_dir ""' stdout))
 

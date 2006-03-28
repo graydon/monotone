@@ -1,5 +1,5 @@
 AT_SETUP([update with blocked rename])
-MONOTONE_SETUP
+MTN_SETUP
 
 # This test is a bug report
 AT_XFAIL_IF(true)
@@ -23,26 +23,26 @@ do
 done
 
 # Alice starts a projectand creates foo
-AT_CHECK(MONOTONE --branch=testbranch setup alice, [], [ignore], [ignore])
-AT_CHECK( (cd alice; MONOTONE add file.*), [], [ignore], [ignore])
-AT_CHECK( (cd alice; MONOTONE commit -m 'alice adds files'), [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch setup alice, [], [ignore], [ignore])
+AT_CHECK( (cd alice; MTN add file.*), [], [ignore], [ignore])
+AT_CHECK( (cd alice; MTN commit -m 'alice adds files'), [], [ignore], [ignore])
 
 # Bob checks out project, gets files and creates file bar
-AT_CHECK(MONOTONE --branch=testbranch checkout bob, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch checkout bob, [], [ignore], [ignore])
 AT_DATA(bob/bar, [bob's bar
 ])
 
 # Alice renames some files
-AT_CHECK( (cd alice; MONOTONE rename file.3 bar), [], [ignore], [ignore])
-AT_CHECK( (cd alice; MONOTONE rename file.4 bar.4), [], [ignore], [ignore])
-AT_CHECK( (cd alice; MONOTONE rename file.5 bar.5), [], [ignore], [ignore])
+AT_CHECK( (cd alice; MTN rename file.3 bar), [], [ignore], [ignore])
+AT_CHECK( (cd alice; MTN rename file.4 bar.4), [], [ignore], [ignore])
+AT_CHECK( (cd alice; MTN rename file.5 bar.5), [], [ignore], [ignore])
 AT_CHECK(mv alice/file.3 alice/bar)
 AT_CHECK(mv alice/file.4 alice/bar.4)
 AT_CHECK(mv alice/file.5 alice/bar.5)
-AT_CHECK( (cd alice; MONOTONE commit -m 'alice renames files'), [], [ignore], [ignore])
+AT_CHECK( (cd alice; MTN commit -m 'alice renames files'), [], [ignore], [ignore])
 
 # Bob updates but bar is in the way
-AT_CHECK( (cd bob; MONOTONE update), [], [ignore], [ignore])
+AT_CHECK( (cd bob; MTN update), [], [ignore], [ignore])
 
 # non-renamed files remain
 

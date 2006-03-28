@@ -1,5 +1,5 @@
 AT_SETUP([(imp) deleting directories])
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_CHECK(mkdir groundzero)
 ADD_FILE(groundzero/preexisting, [1
@@ -20,10 +20,10 @@ ADD_FILE(bystander2, [6
 ADD_FILE(groundzero/new-file, [7
 ])
 AT_CHECK(mv rename-in groundzero/rename-in)
-AT_CHECK(MONOTONE rename rename-in groundzero/rename-in, [], [ignore], [ignore])
+AT_CHECK(MTN rename rename-in groundzero/rename-in, [], [ignore], [ignore])
 AT_CHECK(mv  groundzero/rename-out rename-out)
-AT_CHECK(MONOTONE rename groundzero/rename-out rename-out, [], [ignore], [ignore])
-AT_CHECK(MONOTONE drop -e groundzero/double-kill, [], [ignore], [ignore])
+AT_CHECK(MTN rename groundzero/rename-out rename-out, [], [ignore], [ignore])
+AT_CHECK(MTN drop -e groundzero/double-kill, [], [ignore], [ignore])
 COMMIT(testbranch)
 OTHER_OPS_R=`BASE_REVISION`
 
@@ -33,24 +33,24 @@ REVERT_TO($BASE_R)
 AT_CHECK(rm groundzero/rename-in)
 AT_CHECK(rm groundzero/new-file)
 
-AT_CHECK(MONOTONE drop -e groundzero, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE drop --recursive -e groundzero, [], [ignore], [ignore])
+AT_CHECK(MTN drop -e groundzero, [1], [ignore], [ignore])
+AT_CHECK(MTN drop --recursive -e groundzero, [], [ignore], [ignore])
 COMMIT(testbranch)
 DIR_DELETE_R=`BASE_REVISION`
 
 
 # orphaned node conflicts on rename-in and new-file
-AT_CHECK(MONOTONE merge, [1], [ignore], [ignore])
+AT_CHECK(MTN merge, [1], [ignore], [ignore])
 
-AT_CHECK(MONOTONE update -r $OTHER_OPS_R, [], [ignore], [ignore])
-AT_CHECK(MONOTONE drop groundzero/new-file, [], [ignore], [ignore])
-AT_CHECK(MONOTONE drop groundzero/rename-in, [], [ignore], [ignore])
+AT_CHECK(MTN update -r $OTHER_OPS_R, [], [ignore], [ignore])
+AT_CHECK(MTN drop groundzero/new-file, [], [ignore], [ignore])
+AT_CHECK(MTN drop groundzero/rename-in, [], [ignore], [ignore])
 COMMIT(testbranch)
-AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
+AT_CHECK(MTN merge, [], [ignore], [ignore])
 
 
-AT_CHECK(MONOTONE checkout --revision=$BASE_R clean, [], [ignore], [ignore])
-AT_CHECK(cd clean && MONOTONE --branch=testbranch update, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --revision=$BASE_R clean, [], [ignore], [ignore])
+AT_CHECK(cd clean && MTN --branch=testbranch update, [], [ignore], [ignore])
 
 AT_CHECK(test -f clean/rename-out, [1])
 AT_CHECK(test -f clean/bystander1)

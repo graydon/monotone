@@ -2,7 +2,7 @@
 
 AT_SETUP([importing CVS branches with correct ancestory])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_XFAIL_IF(true)
 
@@ -99,15 +99,15 @@ AT_CHECK(cp changelog.2 testdir/changelog)
 AT_CHECK(cvs -d $CVSROOT commit -m 'commit on mainline after branch' testdir/file1 testdir/changelog, [], [ignore], [ignore])
 
 # import into monotone and check presence of files
-AT_CHECK(MONOTONE --branch=test cvs_import $CVSROOT/testdir, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=test cvs_import $CVSROOT/testdir, [], [ignore], [ignore])
 
 # check if all branches were imported
-AT_CHECK(MONOTONE list branches, [], [stdout], [ignore])
+AT_CHECK(MTN list branches, [], [stdout], [ignore])
 AT_CHECK(cmp stdout branchlist)
 
 # checkout the imported repository into maindir and branchdir
-AT_CHECK(MONOTONE checkout --branch=test maindir, [], [ignore], [ignore])
-AT_CHECK(MONOTONE checkout --branch=test.branched branchdir, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --branch=test maindir, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --branch=test.branched branchdir, [], [ignore], [ignore])
 
 # check for correctness of the files in the main tree
 AT_CHECK(cmp file1.2 maindir/file1)
@@ -120,7 +120,7 @@ AT_CHECK(cmp file2.1 branchdir/file2)
 AT_CHECK(cmp changelog.3 branchdir/changelog)
 
 # get the log of the branch to check for correct branchpoint
-AT_CHECK(cd branchdir; MONOTONE log, [], [stdout], [ignore])
+AT_CHECK(cd branchdir; MTN log, [], [stdout], [ignore])
 AT_CHECK(grep "commit on branch" stdout, [], [ignore], [ignore])
 AT_CHECK(grep "initial import" stdout, [], [ignore], [ignore])
 

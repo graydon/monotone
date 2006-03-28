@@ -1,5 +1,5 @@
 AT_SETUP([ls tags with ambiguous tags])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(testfile, [blah blah
 ])
@@ -11,10 +11,10 @@ SET_FILE(testfile, [foo foo
 COMMIT(testbranch)
 R2=`BASE_REVISION`
 
-AT_CHECK(MONOTONE tag $R1 ambig_tag, [], [ignore], [ignore])
-AT_CHECK(MONOTONE tag $R2 ambig_tag, [], [ignore], [ignore])
+AT_CHECK(MTN tag $R1 ambig_tag, [], [ignore], [ignore])
+AT_CHECK(MTN tag $R2 ambig_tag, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE ls tags, [], [stdout], [ignore])
+AT_CHECK(MTN ls tags, [], [stdout], [ignore])
 AT_CHECK(QGREP($R1 stdout))
 AT_CHECK(QGREP($R2 stdout))
 

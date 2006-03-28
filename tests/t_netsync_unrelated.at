@@ -1,6 +1,6 @@
 AT_SETUP([(normal) netsync on partially unrelated revisions])
 AT_KEYWORDS([netsync])
-MONOTONE_SETUP
+MTN_SETUP
 
 # This test relies on file-suturing
 AT_XFAIL_IF(true)
@@ -28,26 +28,26 @@ BASE=`BASE_REVISION`
 
 RUN_NETSYNC(pull, testbranch)
 
-CHECK_SAME_STDOUT(MONOTONE automate graph, MONOTONE2 automate graph)
-CHECK_SAME_STDOUT(MONOTONE ls certs $BASE, MONOTONE ls certs $BASE)
+CHECK_SAME_STDOUT(MTN automate graph, MTN2 automate graph)
+CHECK_SAME_STDOUT(MTN ls certs $BASE, MTN ls certs $BASE)
 
 AT_CHECK(rm -rf _MTN)
-AT_CHECK(MONOTONE setup --branch=testbranch ., [], [ignore], [ignore])
+AT_CHECK(MTN setup --branch=testbranch ., [], [ignore], [ignore])
 
 ADD_FILE(testfile2, [This is test file 2
 ])
 COMMIT(testbranch)
 UNRELATED=`BASE_REVISION`
 
-AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch merge, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 MERGE=`BASE_REVISION`
 
 RUN_NETSYNC(pull, testbranch)
 
-CHECK_SAME_STDOUT(MONOTONE automate graph, MONOTONE2 automate graph)
-CHECK_SAME_STDOUT(MONOTONE ls certs $BASE, MONOTONE ls certs $BASE)
-CHECK_SAME_STDOUT(MONOTONE ls certs $UNRELATED, MONOTONE ls certs $UNRELATED)
-CHECK_SAME_STDOUT(MONOTONE ls certs $MERGE, MONOTONE ls certs $MERGE)
+CHECK_SAME_STDOUT(MTN automate graph, MTN2 automate graph)
+CHECK_SAME_STDOUT(MTN ls certs $BASE, MTN ls certs $BASE)
+CHECK_SAME_STDOUT(MTN ls certs $UNRELATED, MTN ls certs $UNRELATED)
+CHECK_SAME_STDOUT(MTN ls certs $MERGE, MTN ls certs $MERGE)
 
 AT_CLEANUP

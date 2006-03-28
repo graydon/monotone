@@ -17,7 +17,7 @@ AT_SETUP([database check for normalization])
 #add_file "./file"
 
 
-MONOTONE_SETUP
+MTN_SETUP
 NEED_UNGZB64
 
 AT_DATA(bad.db.gz.b64,[
@@ -115,9 +115,9 @@ QN4QTh6umZ1/0+r8qxrkr/xh3YXF+yubLH9Tn7H/FwEUS+AAzAAA
 ])
 UNGZB64(bad.db.gz.b64, bad.db)
 
-AT_CHECK(MONOTONE db migrate -d bad.db, [0], [ignore], [ignore])
+AT_CHECK(MTN db migrate -d bad.db, [0], [ignore], [ignore])
 
-AT_CHECK(MONOTONE db check -d bad.db, [1], [ignore], [stderr])
+AT_CHECK(MTN db check -d bad.db, [1], [ignore], [stderr])
 
 AT_CHECK(grep 'revisions not parseable' stderr, [], [ignore], [ignore])
 

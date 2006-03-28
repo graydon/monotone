@@ -1,5 +1,5 @@
 AT_SETUP([normalized filenames])
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(foo, [blah blah
 ])
@@ -7,13 +7,13 @@ AT_DATA(foo, [blah blah
 # the inner code directly.
 AT_DATA(_MTN/work, [add_dir "."
 ])
-AT_CHECK(MONOTONE automate get_manifest_of, [3], [ignore], [ignore])
+AT_CHECK(MTN automate get_manifest_of, [3], [ignore], [ignore])
 
 AT_DATA(_MTN/work, [add_dir "./bar"
 ])
 
-AT_CHECK(MONOTONE automate get_manifest_of, [3], [ignore], [ignore])
-AT_CHECK(MONOTONE automate get_revision, [3], [ignore], [ignore])
-AT_CHECK(MONOTONE commit --message=foo --branch=foo, [3], [ignore], [ignore])
+AT_CHECK(MTN automate get_manifest_of, [3], [ignore], [ignore])
+AT_CHECK(MTN automate get_revision, [3], [ignore], [ignore])
+AT_CHECK(MTN commit --message=foo --branch=foo, [3], [ignore], [ignore])
 
 AT_CLEANUP

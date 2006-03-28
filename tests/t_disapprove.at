@@ -2,14 +2,14 @@
 
 AT_SETUP([disapproving of a revision])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(testfile, [first line of the file
 second line of the file
 third line of the file
 ])
-AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit --message blah-blah, [], [ignore], [ignore])
+AT_CHECK(MTN add testfile, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message blah-blah, [], [ignore], [ignore])
 ROOT_R_SHA=`BASE_REVISION`
 ROOT_F_SHA=`SHA1(testfile)`
 
@@ -19,7 +19,7 @@ second line of the file
 third line of the file
 ])
 
-AT_CHECK(MONOTONE commit --message "left good version", [], [ignore], [ignore])
+AT_CHECK(MTN commit --message "left good version", [], [ignore], [ignore])
 LEFT_GOOD_R_SHA=`BASE_REVISION`
 LEFT_GOOD_F_SHA=`SHA1(testfile)`
 AT_CHECK(test $LEFT_GOOD_R_SHA != $ROOT_R_SHA)
@@ -32,7 +32,7 @@ third line of the file
 an evil line which should never be seen
 ])
 
-AT_CHECK(MONOTONE commit --message "left bad version", [], [ignore], [ignore])
+AT_CHECK(MTN commit --message "left bad version", [], [ignore], [ignore])
 LEFT_BAD_R_SHA=`BASE_REVISION`
 LEFT_BAD_F_SHA=`SHA1(testfile)`
 AT_CHECK(test $LEFT_BAD_R_SHA != $LEFT_GOOD_R_SHA)
@@ -47,8 +47,8 @@ third line of the file
 ])
 
 
-AT_CHECK(MONOTONE disapprove $LEFT_BAD_R_SHA, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN disapprove $LEFT_BAD_R_SHA, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 
 # files should now be merged
 

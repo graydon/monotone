@@ -1,5 +1,5 @@
 AT_SETUP([explicit_merge LEFT RIGHT ANC BRANCH])
-MONOTONE_SETUP
+MTN_SETUP
 
 # This test relies on a command-line mode which has, for the time
 # being, been disabled. Possibly no need to revive it.
@@ -44,11 +44,11 @@ COMMIT(testbranch)
 RIGHT=`BASE_REVISION`
 
 # This should fail:
-AT_CHECK(MONOTONE explicit_merge $LEFT $RIGHT $BAD_ANC testbranch, [1], [ignore], [ignore])
+AT_CHECK(MTN explicit_merge $LEFT $RIGHT $BAD_ANC testbranch, [1], [ignore], [ignore])
 # But this should work:
-AT_CHECK(MONOTONE explicit_merge $LEFT $RIGHT $GOOD_ANC testbranch, [], [ignore], [ignore])
+AT_CHECK(MTN explicit_merge $LEFT $RIGHT $GOOD_ANC testbranch, [], [ignore], [ignore])
 # And produce the logical result:
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 AT_DATA(expected, [a
 NEW
 c

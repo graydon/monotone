@@ -1,5 +1,11 @@
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/README, testsuite.at, tests/*.at: First pass at updating
+	tests for s/monotone/mtn/.  NB: new tests should use MTN_SETUP and
+	MTN macros.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
 	* Makefile.am: Build "mtn", not "monotone".
 	* monotone.1: Rename to...
 	* mtn.1: ...this.

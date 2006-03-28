@@ -1,5 +1,5 @@
 AT_SETUP([commit writes message back to _MTN/log])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(testfile, [blah blah
 ])
@@ -14,7 +14,7 @@ AT_DATA(my_hook.lua, [function edit_comment(basetext, user_log_message)
 end
 ])
 
-AT_CHECK(MONOTONE commit -btestbranch --rcfile=my_hook.lua, [1], [ignore], [ignore])
+AT_CHECK(MTN commit -btestbranch --rcfile=my_hook.lua, [1], [ignore], [ignore])
 
 CHECK_SAME_CANONICALISED_STDOUT(echo "foobar", cat _MTN/log)
 
@@ -23,12 +23,12 @@ AT_CHECK(touch _MTN/log)
 
 # -m messages don't get written out to _MTN/log
 # (if they do, it breaks the workflow:
-#   $ monotone commit -m 'foo'
+#   $ mtn commit -m 'foo'
 #   <fails>
 #   <fixup>
-#   $ monotone commit -m 'foo'
+#   $ mtn commit -m 'foo'
 #   error, _MTN/log non-empty and -m specified
-AT_CHECK(MONOTONE commit -btestbranch -m "blah blah", [1], [ignore], [ignore])
+AT_CHECK(MTN commit -btestbranch -m "blah blah", [1], [ignore], [ignore])
 
 # So _MTN/log should still be empty
 AT_CHECK(test -s _MTN/log, [1])

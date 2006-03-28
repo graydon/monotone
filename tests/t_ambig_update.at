@@ -1,5 +1,5 @@
 AT_SETUP([update with multiple candidates])
-MONOTONE_SETUP
+MTN_SETUP
 
 # Make sure that when there are multiple plausible heads, update
 # fails, and prints some informative message listing the heads.
@@ -25,7 +25,7 @@ REVERT_TO($ANC)
 
 # There are two possible candidates, so our update should fail.
 AT_CHECK(rm -f file1)
-AT_CHECK(MONOTONE update, [1], [ignore], [stderr])
+AT_CHECK(MTN update, [1], [ignore], [stderr])
 AT_CHECK(test ! -e file1)
 # Make sure that the failure message listed the possibilities
 AT_CHECK(QGREP($LEFT stderr), [])
@@ -42,7 +42,7 @@ LEFT2=`BASE_REVISION`
 REVERT_TO($ANC)
 AT_CHECK(rm -f file1)
 AT_CHECK(rm -f file2)
-AT_CHECK(MONOTONE update, [1], [ignore], [stderr])
+AT_CHECK(MTN update, [1], [ignore], [stderr])
 AT_CHECK(test ! -e file1)
 AT_CHECK(test ! -e file2)
 # Make sure that the failure message listed the possibilities
