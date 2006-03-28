@@ -280,11 +280,9 @@ file_path::file_path(split_path const & sp)
         tmp += "/";
       tmp += (*i)();
       if (start)
-        {
-          I(tmp != bookkeeping_root.as_internal());
-          start = false;
-        }
+        start = false;
     }
+  I(!in_bookkeeping_dir(tmp));
   data = tmp;
 }
 

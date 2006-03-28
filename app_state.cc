@@ -80,8 +80,8 @@ app_state::allow_workspace()
           get_local_dump_path(dump_path);
           L(FL("setting dump path to %s\n") % dump_path);
           // the 'true' means that, e.g., if we're running checkout, then it's
-          // okay for dumps to go into our starting working dir's MT rather
-          // than the new workspace dir's MT.
+          // okay for dumps to go into our starting working dir's _MTN rather
+          // than the new workspace dir's _MTN.
           global_sanity.filename = system_path(dump_path, false);
         }
     }
@@ -94,14 +94,14 @@ app_state::process_options()
   if (found_workspace) {
     if (!options[database_option]().empty())
       {
-	system_path dbname = system_path(options[database_option]);
-	db.set_filename(dbname);
+        system_path dbname = system_path(options[database_option]);
+        db.set_filename(dbname);
       }
 
     if (!options[keydir_option]().empty())
       {
-	system_path keydir = system_path(options[keydir_option]);
-	set_key_dir(keydir);
+        system_path keydir = system_path(options[keydir_option]);
+        set_key_dir(keydir);
       }
 
     if (branch_name().empty())
@@ -492,7 +492,7 @@ app_state::get_confdir()
 }
 
 // rc files are loaded after we've changed to the workspace so that
-// MT/monotonerc can be loaded between ~/.monotone/monotonerc and other
+// _MTN/monotonerc can be loaded between ~/.monotone/monotonerc and other
 // rcfiles
 
 void
@@ -504,7 +504,7 @@ app_state::load_rcfiles()
     lua.add_std_hooks();
 
   // ~/.monotone/monotonerc overrides that, and
-  // MT/monotonerc overrides *that*
+  // _MTN/monotonerc overrides *that*
 
   if (rcfiles)
     {

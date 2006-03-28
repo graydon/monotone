@@ -1,5 +1,14 @@
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
+	* paths.cc (file_path): Use in_bookkeeping_dir when joining paths,
+	instead of being clever.  It should be just about as fast, and
+	means that there's only one code path that has to know how to
+	detect bookkeeping dirs.
+	* app_state.cc, automate.cc: Oops, forgot to hit save before.
+	s/MT/_MTN/.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
 	* paths.cc (in_bookkeeping_dir): Argh.  Really correct now!
 	Really!
 	(test_split_join): Another cut-and-paste error.
