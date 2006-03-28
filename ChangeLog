@@ -1,3 +1,12 @@
+2006-03-27  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (check_format): Use .empty() instead of comparing
+	.size() to zero, trivial style cleanup.
+	(check_is_not_rosterified): New method.
+	* revision.cc (build_changesets_from_manifest_ancestry) 
+	(build_roster_style_revs_from_manifest_style_revs): Call it.
+	* tests/t_rosterify_on_rosterified_db.at, testsuite.at: New test.
+
 2006-03-22  Nathaniel Smith  <njs@pobox.com>
 
 	* key_store.cc (consume_key_pair, read_key_dir) 

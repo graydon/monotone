@@ -146,6 +146,16 @@ database::check_schema()
 }
 
 void
+database::check_is_not_rosterified()
+{
+  results res;
+  string rosters_query = "SELECT 1 FROM rosters LIMIT 1";
+  fetch(res, one_col, any_rows, query(rosters_query));
+  N(res.empty(),
+    F("this database already contains rosters"));
+}
+
+void
 database::check_format()
 {
   results res_revisions;
@@ -155,13 +165,13 @@ database::check_format()
 
   fetch(res_revisions, one_col, any_rows, query(revisions_query));
 
-  if (res_revisions.size() > 0)
+  if (!res_revisions.empty())
     {
       // they have revisions, so they can't be _ancient_, but they still might
       // not have rosters
       results res_rosters;
       fetch(res_rosters, one_col, any_rows, query(rosters_query));
-      N(res_rosters.size() != 0,
+      N(!res_rosters.empty(),
         F("database %s contains revisions but no rosters\n"
           "if you are a project leader or doing local testing:\n"
           "  see the file UPGRADE for instructions on upgrading.\n"
@@ -180,7 +190,7 @@ database::check_format()
       // rosterified monotone.)
       results res_manifests;
       fetch(res_manifests, one_col, any_rows, query(manifests_query));
-      N(res_manifests.size() == 0,
+      N(res_manifests.empty(),
         F("database %s contains manifests but no revisions\n"
           "this is a very old database; it needs to be upgraded\n"
           "please see README.changesets for details")
