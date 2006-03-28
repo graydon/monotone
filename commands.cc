@@ -251,7 +251,7 @@ namespace commands
       {
         L(FL("executing command '%s'\n") % cmd);
 
-        // at this point we process the data from MT/options if
+        // at this point we process the data from _MTN/options if
         // the command needs it.
         if (cmds[cmd]->use_workspace_options)
           app.process_options();
@@ -293,7 +293,9 @@ static cmd_ ## C C ## _cmd;                                          \
 void cmd_ ## C::exec(app_state & app,                                \
                      vector<utf8> const & args)                      \
 
-#define CMD_NO_MT(C, group, params, desc, opts)                      \
+// use this for commands that should specifically _not_ look for an _MTN dir
+// and load options from it
+#define CMD_NO_WORKSPACE(C, group, params, desc, opts)               \
 struct cmd_ ## C : public command                                    \
 {                                                                    \
   cmd_ ## C() : command(#C, group, params, desc, false,              \
@@ -425,7 +427,7 @@ get_log_message_interactively(revision_set const & cs,
   read_user_log(user_log_message);
   commentary += "----------------------------------------------------------------------\n";
   commentary += _("Enter a description of this change.\n"
-                  "Lines beginning with `MT:' are removed automatically.\n");
+                  "Lines beginning with `MTN:' are removed automatically.\n");
   commentary += "\n";
   commentary += summary();
   commentary += "----------------------------------------------------------------------\n";
@@ -2109,9 +2111,9 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
                        include_pattern, exclude_pattern, app);  
 }
 
-CMD_NO_MT(serve, N_("network"), N_("PATTERN ..."),
-          N_("serve the branches specified by PATTERNs to connecting clients"),
-          OPT_BIND % OPT_PIDFILE % OPT_EXCLUDE)
+CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
+                 N_("serve the branches specified by PATTERNs to connecting clients"),
+                 OPT_BIND % OPT_PIDFILE % OPT_EXCLUDE)
 {
   if (args.size() < 1)
     throw usage(name);
@@ -2367,26 +2369,26 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   process_commit_message_args(log_message_given, log_message, app);
   
   N(!(log_message_given && has_contents_user_log()),
-    F("MT/log is non-empty and log message was specified on command line\n"
-      "perhaps move or delete MT/log,\n"
+    F("_MTN/log is non-empty and log message was specified on command line\n"
+      "perhaps move or delete _MTN/log,\n"
       "or remove --message/--message-file from the command line?"));
   
   if (!log_message_given)
     {
-      // this call handles MT/log
+      // this call handles _MTN/log
       get_log_message_interactively(rs, app, log_message);
       // we only check for empty log messages when the user entered them
       // interactively.  Consensus was that if someone wanted to explicitly
       // type --message="", then there wasn't any reason to stop them.
       N(log_message.find_first_not_of(" \r\t\n") != string::npos,
         F("empty log message; commit canceled"));
-      // we save interactively entered log messages to MT/log, so if something
-      // goes wrong, the next commit will pop up their old log message by
-      // default.  we only do this for interactively entered messages, because
-      // otherwise 'monotone commit -mfoo' giving an error, means that after
-      // you correct that error and hit up-arrow to try again, you get an
-      // "MT/log non-empty and message given on command line" error... which
-      // is annoying.
+      // we save interactively entered log messages to _MTN/log, so if
+      // something goes wrong, the next commit will pop up their old log
+      // message by default.  we only do this for interactively entered
+      // messages, because otherwise 'monotone commit -mfoo' giving an error,
+      // means that after you correct that error and hit up-arrow to try
+      // again, you get an "_MTN/log non-empty and message given on command
+      // line" error... which is annoying.
       write_user_log(data(log_message));
     }
 
@@ -3047,13 +3049,13 @@ CMD(update, N_("workspace"), "",
   //   V         V
   //  chosen --> merged
   //
-  // - old is the revision specified in MT/revision
+  // - old is the revision specified in _MTN/revision
   // - working is based on old and includes the workspace's changes
-  // - chosen is the revision we're updating to and will end up in MT/revision
+  // - chosen is the revision we're updating to and will end up in _MTN/revision
   // - merged is the merge of working and chosen
   // 
   // we apply the working to merged cset to the workspace 
-  // and write the cset from chosen to merged changeset in MT/work
+  // and write the cset from chosen to merged changeset in _MTN/work
   
   cset update, remaining;
   make_cset (working_roster, merged_roster, update);

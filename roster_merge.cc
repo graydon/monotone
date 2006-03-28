@@ -555,7 +555,7 @@ roster_merge(roster_t const & left_parent,
     result.missing_root_dir = true;
   else
     {
-      // we can't have an illegal MT dir unless we have a root node in the
+      // we can't have an illegal _MTN dir unless we have a root node in the
       // first place...
       split_path bookkeeping_root_split;
       bookkeeping_root_split.push_back(the_null_component);
@@ -609,7 +609,7 @@ roster_merge(roster_t const & left_parent,
 // directory loops
 // orphans
 // name collision on root dir
-// illegal node ("MT")
+// illegal node ("_MTN")
 // missing root dir
 //
 // interactions:

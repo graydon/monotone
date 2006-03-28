@@ -2,7 +2,7 @@
 
 AT_SETUP([restricted commit with inodeprints])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 # this test is a bug report. the problem is that inodeprints tries to update its
 # cache for all files in the complete manifest, but a restricted commit can
@@ -29,7 +29,7 @@ ADD_FILE(file1, [file1
 COMMIT(testbranch)
 
 # enable inodeprints mode
-AT_CHECK(MONOTONE refresh_inodeprints, [], [ignore], [ignore])
+AT_CHECK(MTN refresh_inodeprints, [], [ignore], [ignore])
 
 ADD_FILE(file2, [file2
 ])
@@ -41,6 +41,6 @@ AT_CHECK(rm file1,  [], [ignore], [ignore])
 # restricted commit of file2 succeeds with file1 missing
 # but the corresponding inodeprint update fails
 
-AT_CHECK(MONOTONE commit --message 'file2' file2,  [], [ignore], [ignore])
+AT_CHECK(MTN commit --message 'file2' file2,  [], [ignore], [ignore])
 
 AT_CLEANUP

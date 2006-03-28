@@ -1,5 +1,5 @@
 AT_SETUP([merging adds])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(irrelevantfile, [this is just a file
 ])
@@ -18,8 +18,8 @@ ADD_FILE(testfile2, [This is test file 2
 COMMIT(testbranch)
 RIGHT=`BASE_REVISION`
 
-AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch merge, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 
 AT_DATA(expected_irrelevant, [this is just a file
 ])

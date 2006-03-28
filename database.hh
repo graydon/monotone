@@ -217,6 +217,7 @@ public:
   void migrate();
   void ensure_open();
   void ensure_open_for_format_changes();
+  void check_is_not_rosterified();
   bool database_specified();
   
   bool file_version_exists(file_id const & id);

@@ -1,14 +1,14 @@
 AT_SETUP([client absorbs server key])
 AT_KEYWORDS(netsync)
-MONOTONE_SETUP
+MTN_SETUP
 NETSYNC_SETUP
 
 ADD_FILE(testfile, [foo bar
 ])
 COMMIT(testbranch)
 
-AT_CHECK((echo foo@bar; echo foo@bar) | MONOTONE genkey foo@bar, [], [ignore], [ignore])
-AT_CHECK(MONOTONE pubkey foo@bar, [], [stdout], [ignore])
+AT_CHECK((echo foo@bar; echo foo@bar) | MTN genkey foo@bar, [], [ignore], [ignore])
+AT_CHECK(MTN pubkey foo@bar, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cp stdout foo_public)
 
@@ -16,7 +16,7 @@ NETSYNC_SERVE_START(--key=foo@bar testbranch)
 NETSYNC_CLIENT_RUN(pull, testbranch)
 NETSYNC_SERVE_STOP
 
-AT_CHECK(MONOTONE2 pubkey foo@bar, [], [stdout], [ignore])
+AT_CHECK(MTN2 pubkey foo@bar, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp foo_public stdout)
 

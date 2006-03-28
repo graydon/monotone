@@ -1,8 +1,8 @@
 AT_SETUP([netsync verifies server keys])
-MONOTONE_SETUP
+MTN_SETUP
 NETSYNC_SETUP
 
-AT_CHECK((echo foo@bar; echo foo@bar) | MONOTONE genkey foo@bar, [], [ignore], [ignore])
+AT_CHECK((echo foo@bar; echo foo@bar) | MTN genkey foo@bar, [], [ignore], [ignore])
 
 # Once to let the client note down the key...
 RUN_NETSYNC(pull, testbranch)
@@ -12,15 +12,15 @@ NETSYNC_SERVE_START(--key=foo@bar testbranch)
 
 NETSYNC_CLIENT_RUN(pull, testbranch, 1)
 # It shouldn't have absorbed the key, either.
-AT_CHECK(MONOTONE2 pubkey foo@bar, [1], [stdout], [ignore])
+AT_CHECK(MTN2 pubkey foo@bar, [1], [stdout], [ignore])
 
 # But if we then clear the client's known_hosts entry, it should be fine
-AT_CHECK(MONOTONE2 unset known-servers NETSYNC_ADDRESS, [], [ignore], [ignore])
+AT_CHECK(MTN2 unset known-servers NETSYNC_ADDRESS, [], [ignore], [ignore])
 
 # Now it should succeed
 NETSYNC_CLIENT_RUN(pull, testbranch)
 # And have absorbed the key
-AT_CHECK(MONOTONE2 pubkey foo@bar, [], [stdout], [ignore])
+AT_CHECK(MTN2 pubkey foo@bar, [], [stdout], [ignore])
 
 NETSYNC_SERVE_STOP
 
