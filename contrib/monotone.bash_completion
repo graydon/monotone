@@ -225,3 +225,4 @@ _monotone() {
 }
 
 complete -F _monotone -o filenames monotone
+complete -F _monotone -o filenames mtn
