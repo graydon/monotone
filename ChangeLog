@@ -7,6 +7,28 @@
 	(build_roster_style_revs_from_manifest_style_revs): Call it.
 	* tests/t_rosterify_on_rosterified_db.at, testsuite.at: New test.
 
+2006-03-24  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Corrected all the fuzzy translations
+	* po/fr.po: Added some missing translations.
+
+2006-03-24  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc (database::load): Analyze database after load.
+	(database::execute): Minor whitespace cleanup.
+
+2006-03-23  Richard Levitte  <richard@levitte.org>
+
+	* tests/t_update_off_branch.at: Instead of retrying the update
+	by specifying the branch of the off-branch revision, check that
+	the branch specified in MT/options has changed automagically to
+	the intended revision's branch.
+
+2006-03-22  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.{cc,hh}: Report page size and default cache size in 'db
+	info' output.
+
 2006-03-22  Nathaniel Smith  <njs@pobox.com>
 
 	* key_store.cc (consume_key_pair, read_key_dir) 

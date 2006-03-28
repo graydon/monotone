@@ -483,6 +483,7 @@ database::load(istream & in)
     }
 
   assert_sqlite3_ok(__sql);
+  execute(query("ANALYZE"));
 }
 
 
@@ -544,6 +545,9 @@ database::info(ostream & out)
       "  cached ancestry : %u\n"
       "  certs           : %u\n"
       "  total           : %u\n"
+      "database:\n"
+      "  page size       : %u\n"
+      "  cache size      : %u\n"
       )
     % id
     // counts
@@ -563,7 +567,9 @@ database::info(ostream & out)
     % SPACE_USAGE("revision_ancestry", "length(parent) + length(child)")
     % SPACE_USAGE("revision_certs", "length(hash) + length(id) + length(name)"
                   " + length(value) + length(keypair) + length(signature)")
-    % total;
+    % total
+    % page_size()
+    % cache_size();
 
 #undef SPACE_USAGE
 }
@@ -628,7 +634,7 @@ void
 database::execute(query const & query)
 {
   results res;
-  fetch(res, 0, 0, query );
+  fetch(res, 0, 0, query);
 }
 
 void 
@@ -830,6 +836,27 @@ database::space_usage(string const & table, string const & rowspace)
   query q("SELECT COALESCE(SUM(" + rowspace + "), 0) FROM " + table);
   fetch(res, one_col, one_row, q);
   return lexical_cast<unsigned long>(res[0][0]);
+}
+
+unsigned int
+database::page_size()
+{
+  results res;
+  query q("PRAGMA page_size");
+  fetch(res, one_col, one_row, q);
+  return lexical_cast<unsigned int>(res[0][0]);
+}
+
+unsigned int
+database::cache_size()
+{
+  // This returns the persistent (default) cache size.  It's possible to
+  // override this setting transiently at runtime by setting PRAGMA
+  // cache_size.
+  results res;
+  query q("PRAGMA default_cache_size");
+  fetch(res, one_col, one_row, q);
+  return lexical_cast<unsigned int>(res[0][0]);
 }
 
 void
