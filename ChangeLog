@@ -1,5 +1,9 @@
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
+	* testsuite.at: s/MT/_MTN/.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.texi: s/.db/.mtn/ everywhere.  Also, s/MT:/MTN:/, and
 	s/MT/_MTN/ as appropriate.
 	* monotone.1: Likewise.

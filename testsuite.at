@@ -15,12 +15,12 @@ AT_TESTED([monotone])
 # some command abbreviations to make life easier
 
 # Set PREEXECUTE in your environment to run monotone under, e.g., valgrind.
-m4_define([MONOTONE], [$PREEXECUTE $_MT_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --key=tester@test.net --root=$_ROOT_DIR])
+m4_define([MONOTONE], [$PREEXECUTE $_MTN_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --key=tester@test.net --root=$_ROOT_DIR])
 m4_define([RAW_MONOTONE], [$PREEXECUTE monotone --norc])
-m4_define([MINHOOKS_MONOTONE], [$PREEXECUTE $_MT_EXEC --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --rcfile=$_ROOT_DIR/min_hooks.lua --key=tester@test.net --root=$_ROOT_DIR])
+m4_define([MINHOOKS_MONOTONE], [$PREEXECUTE $_MTN_EXEC --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --rcfile=$_ROOT_DIR/min_hooks.lua --key=tester@test.net --root=$_ROOT_DIR])
 m4_define([SHA1], [monotone --norc identify $1])
-m4_define([BASE_REVISION], [cat MT/revision])
-m4_define([BASE_MANIFEST], [cat MT/revision | monotone --norc automate get_manifest_of -@- | monotone --norc identify])
+m4_define([BASE_REVISION], [cat _MTN/revision])
+m4_define([BASE_MANIFEST], [cat _MTN/revision | monotone --norc automate get_manifest_of -@- | monotone --norc identify])
 m4_define([WORKING_REVISION], [monotone --norc automate get_revision | monotone --norc identify])
 m4_define([WORKING_MANIFEST], [monotone --norc automate get_manifest_of | monotone --norc identify])
 m4_define([CERTVALUE], [monotone automate certs $1 | sed -e '1,/name "$2"/d' | sed -e '/^$/,$d' | grep '^ *value' | sed -e 's/^m4_dquote([^"])*"//' -e 's/"m4_dquote([^"])*$//'])
@@ -50,7 +50,7 @@ $2[]_ATEOF
 m4_define([MONOTONE_SETUP], [
 
 # Absolutify monotone path.
-_MT_EXEC=`which monotone`
+_MTN_EXEC=`which monotone`
 
 # Save the PWD so MONOTONE macro can refer back to it
 _ROOT_DIR=`pwd -P`
@@ -215,11 +215,11 @@ done
 
 # run as PROBE_NODE(filename, rsha, fsha)
 m4_define([PROBE_NODE], [ 
-AT_CHECK(rm -rf MT.old)
-AT_CHECK(mv  MT MT.old)
+AT_CHECK(rm -rf _MTN.old)
+AT_CHECK(mv  _MTN _MTN.old)
 AT_CHECK(rm $1)
 AT_CHECK(MONOTONE checkout --revision=$2 ., [], [ignore])
-AT_CHECK(mv MT.old/options MT)
+AT_CHECK(mv _MTN.old/options _MTN)
 PROBE_R_SHA=`BASE_REVISION`
 PROBE_F_SHA=`SHA1($1)`
 AT_CHECK(test $PROBE_R_SHA = $2)
@@ -228,8 +228,8 @@ AT_CHECK(test $PROBE_F_SHA = $3)
 
 # run as REVERT_N_TO(2|3, rsha[, branch])
 m4_define([REVERT_N_TO], [
-AT_CHECK(rm -rf MT.old)
-AT_CHECK(mv  MT MT.old)
+AT_CHECK(rm -rf _MTN.old)
+AT_CHECK(mv  _MTN _MTN.old)
 m4_case([$3],
         [], [AT_CHECK(MONOTONE$1 checkout --revision=$2 ., [], [ignore])],
         [AT_CHECK(MONOTONE$1 --branch=$3 checkout --revision=$2 ., [], [ignore])])
@@ -239,8 +239,8 @@ AT_CHECK(test $PROBE_R_SHA = $2)
 
 # run as REVERT_TO(rsha[,branch])
 m4_define([REVERT_TO], [ 
-AT_CHECK(rm -rf MT.old)
-AT_CHECK(mv  MT MT.old)
+AT_CHECK(rm -rf _MTN.old)
+AT_CHECK(mv  _MTN _MTN.old)
 m4_case([$2],
         [], [AT_CHECK(MONOTONE checkout --revision=$1 ., [], [ignore])],
         [AT_CHECK(MONOTONE --branch=$2 checkout --revision=$1 ., [], [ignore])])
@@ -475,26 +475,26 @@ m4_define([NETSYNC_ADDRESS], [localhost:$_PORT])
 # note that NETSYNC_SERVE_START is _not_ a special case of this macro.
 m4_define([NETSYNC_SERVE_N_START], [
 NETSYNC_KILLHARD
-MONOTONE --db=test$1.db --keydir=keys$1 --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($2, [], "{}*", $2) &
+MONOTONE --db=test$1.db --keydir=keys$1 --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=_MTN/server_dump --bind=NETSYNC_ADDRESS serve m4_if($2, [], "{}*", $2) &
 sleep 4
 ])
 # run as NETSYNC_SERVE_START(pattern)
 m4_define([NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
-MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($1, [], "{}*", $1) &
+MONOTONE --rcfile=netsync.lua --pid-file=monotone_at.pid --dump=_MTN/server_dump --bind=NETSYNC_ADDRESS serve m4_if($1, [], "{}*", $1) &
 sleep 4
 ])
 # run as STDHOOKS_NETSYNC_SERVE_N_START(2|3, pattern)
 # note that NETSYNC_SERVE_START is _not_ a special case of this macro.
 m4_define([MINHOOKS_NETSYNC_SERVE_N_START], [
 NETSYNC_KILLHARD
-MINHOOKS_MONOTONE --db=test$1.db --keydir=keys$1 --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($2, [], "{}*", $2) &
+MINHOOKS_MONOTONE --db=test$1.db --keydir=keys$1 --pid-file=monotone_at.pid --dump=_MTN/server_dump --bind=NETSYNC_ADDRESS serve m4_if($2, [], "{}*", $2) &
 sleep 4
 ])
 # run as MINHOOKS_NETSYNC_SERVE_START(pattern)
 m4_define([MINHOOKS_NETSYNC_SERVE_START], [
 NETSYNC_KILLHARD
-MINHOOKS_MONOTONE --pid-file=monotone_at.pid --dump=MT/server_dump --bind=NETSYNC_ADDRESS serve m4_if($1, [], "{}*", $1) &
+MINHOOKS_MONOTONE --pid-file=monotone_at.pid --dump=_MTN/server_dump --bind=NETSYNC_ADDRESS serve m4_if($1, [], "{}*", $1) &
 sleep 4
 ])
 # run as NETSYNC_SERVE_STOP
