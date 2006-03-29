@@ -1,5 +1,12 @@
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
+	* std_hooks.lua (ignore_file): Read .mtn-ignore, not .mt-ignore.
+	* tests/t_mt_ignore.at, tests/t_add.at, testsuite.at: Adjust
+	accordingly.
+	* monotone.texi: Update accordingly.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/t_case_insensitive__MTN.at, testsuite.at: New test.
 
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
