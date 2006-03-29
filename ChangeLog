@@ -1,5 +1,12 @@
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
+	* revision.cc (construct_revisions_from_ancestry): Convert
+	.mt-ignore to .mtn-ignore.  We have always been at war with
+	Oceania.
+	* tests/t_rosterify_mt_ignore.at, testsuite.at: Test it.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
 	* std_hooks.lua (ignore_file): Read .mtn-ignore, not .mt-ignore.
 	* tests/t_mt_ignore.at, tests/t_add.at, testsuite.at: Adjust
 	accordingly.
