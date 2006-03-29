@@ -1,4 +1,4 @@
-AT_SETUP([things in .mt-ignore get ignored])
+AT_SETUP([things in .mtn-ignore get ignored])
 
 MTN_SETUP
 
@@ -7,7 +7,7 @@ AT_CHECK(touch bar)
 AT_CHECK(mkdir baz)
 AT_CHECK(touch baz/xyzzy)
 
-AT_DATA(.mt-ignore, [bar
+AT_DATA(.mtn-ignore, [bar
 baz
 *.d
 ])
@@ -31,7 +31,7 @@ AT_CHECK(grep WARNING ignorederr, [], [ignore])
 AT_CHECK(grep bar ignored, [], [ignore])
 AT_CHECK(grep xyzzy ignored, [], [ignore])
 
-AT_CHECK(rm .mt-ignore)
+AT_CHECK(rm .mtn-ignore)
 AT_CHECK(RAW_MTN ls ignored, [], [stdout], [stderr])
 AT_CHECK(grep test.db stdout, [], [ignore])
 
