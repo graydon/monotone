@@ -1,5 +1,9 @@
 2006-03-29  Nathaniel Smith  <njs@pobox.com>
 
+	* NEWS: Set date.
+
+2006-03-29  Nathaniel Smith  <njs@pobox.com>
+
 	* Makefile.am (package_revision.txt): Whoops, missed a few spots,
 	thanks to Marcel for the tip...
 
