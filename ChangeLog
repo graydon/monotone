@@ -1,5 +1,10 @@
 2006-03-29  Nathaniel Smith  <njs@pobox.com>
 
+	* Makefile.am (package_revision.txt): Whoops, missed a few spots,
+	thanks to Marcel for the tip...
+
+2006-03-29  Nathaniel Smith  <njs@pobox.com>
+
 	* INSTALL: mtn-related tweaks.
 	* monotone.spec, win32/monotone.iss: Untested mtn-related tweaks,
 	and bump version to 0.26pre3.

@@ -498,11 +498,11 @@ apidocs:
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
-# A fake target so we can use MT/revision as a prerequisite, yet not
-# crash if MT/revision does not exist.
-$(srcdir)/MT/revision:
+# A fake target so we can use _MTN/revision as a prerequisite, yet not
+# crash if _MTN/revision does not exist.
+$(srcdir)/_MTN/revision:
 	true
-package_revision.txt: $(srcdir)/MT/revision
+package_revision.txt: $(srcdir)/_MTN/revision
 	if [ -f $< ]; then cp $< $@; fi
 	if [ ! -f $@ ]; then echo "unknown" > $@; fi
 package_revision.c: package_revision.txt txt2c Makefile
