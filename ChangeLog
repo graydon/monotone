@@ -1,5 +1,12 @@
 2006-03-29  Nathaniel Smith  <njs@pobox.com>
 
+	* INSTALL: mtn-related tweaks.
+	* monotone.spec, win32/monotone.iss: Untested mtn-related tweaks,
+	and bump version to 0.26pre3.
+	* debian/changelog: Bump version.
+	
+2006-03-29  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: First pass at entry for 0.26pre3.
 
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
