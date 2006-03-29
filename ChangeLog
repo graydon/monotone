@@ -1,3 +1,7 @@
+2006-03-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: First pass at entry for 0.26pre3.
+
 2006-03-28  Nathaniel Smith  <njs@pobox.com>
 
 	* revision.cc (construct_revisions_from_ancestry): Convert

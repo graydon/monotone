@@ -1,3 +1,83 @@
+????????????????????????????
+
+        0.26pre3 release.  This release may be considered a "release
+        candidate", in that while we need to write some tests and make
+        sure some bugs are fixed, all features are in and we hope that
+        no further bug fixes will be needed either.  It is still a
+        pre-release for testing.  Do not package it.  DO NOT USE THIS
+        RELEASE UNLESS YOU WANT TO BE A DAREDEVIL.
+
+        But, PLEASE PLEASE TEST this release.  There are some
+        non-trivial changes since 0.26pre2, and this is your last
+        chance!
+
+        Major changes since 0.26pre2:
+          
+        - The name of the monotone binary has changed to 'mtn'.
+          - Similarly, the name of the bookkeeping directory in
+            workspaces has changed from 'MT' to '_MTN' (if you have an
+            existing 0.26-line workspace, just rename the MT directory
+            to _MTN).
+          - Similarly, the name of the ignore file has changed from
+            ".mt-ignore" to ".mtn-ignore".  'rosterify' will rename
+            these automatically (if you have already rosterified, you
+            get to rename them by hand).
+          - Similarly, the recommended suffix for monotone db files is
+            now ".mtn".
+
+        - We now perform stricter checking to make sure that filenames
+          are valid UTF-8.  It is in principle possible that this
+          stricter checking will cause histories that used to work to
+          break; if you have non-ascii filenames, it is strongly
+          recommended to test with this release.
+
+        - Root dir renaming is now supported.  See new commands
+          'pivot_root', 'merge_into_dir'.
+          - As a side-effect, it is not possible to run 'rosterify' on
+            histories in which two independent lines of history were
+            merged.
+
+        - The security fix released in 0.25.2 has been forward-ported
+          to this release; this prevents some security exposure to
+          people running monotone as a client on case-insensitive file
+          systems.
+
+        Minor change since 0.26pre2:
+
+        - Database now uses sqlite blobs for storage; should be ~1/4
+          smaller.
+        - New command: show_conflicts, does a dry-run merge.
+        - New option 'drop --recursive', to remove a directory and all
+          its contents in one swoop.
+        - Changes to 'log':
+          - New option --no-files
+          - Including merges is again the default (i.e., it now acts
+            like 0.25, and not like 0.26pre2).
+          - When 'log -r' is given an ambiguous selector, it now just
+            logs all matching revisions, instead of requiring the
+            selector be disambiguated.
+        - New option --log, to log monotone output to a file.
+        - Netsync changes:
+          - Was sending far too much data in some cases; now does not.
+          - Several bugs that caused it to lock up fixed
+          - Tweak to allow 'usher' proxy to transparently redirect
+            based on client's protocol version, to ease migration
+            between incompatible protocol versions.
+        - Packet commands have been moved to 'automate'.
+        - Fixed bugs in 'db kill_rev_locally', should no longer leave
+          an inconsistent db behind.
+        - Translation updates
+
+        Other projects receiving notable work:
+
+        - Monotone's "dumb server" support (repo distribution over
+          HTTP/FTP/SFTP etc.) has been ported to 0.26, a first command
+          line version written, etc.
+        - The 'usher' netsync proxy used for hosting many databases on 
+          a single machine has received significant cleanups, and the
+          'webhost' project to provide a simple interface to shared
+          monotone hosting providers has received even more work.
+
 Sat Feb 11 13:32:51 PST 2006
 
         0.26pre2 release.  Inching towards 0.26.  If you are using
