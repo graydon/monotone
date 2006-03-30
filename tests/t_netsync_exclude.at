@@ -1,6 +1,6 @@
 AT_SETUP([serve/pull with --exclude])
 AT_KEYWORDS([netsync])
-MONOTONE_SETUP
+MTN_SETUP
 NETSYNC_SETUP
 
 ADD_FILE(testfile, [1
@@ -35,18 +35,18 @@ NETSYNC_SERVE_START('branch*' --exclude=branch2 --exclude=branch4)
 
 NETSYNC_CLIENT_RUN(pull, 'branch2', [1])
 NETSYNC_CLIENT_RUN(pull, 'branch4', [1])
-AT_CHECK(MONOTONE2 automate get_revision $B1, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE2 automate get_revision $B2, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE2 automate get_revision $B3, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE2 automate get_revision $B4, [1], [ignore], [ignore])
+AT_CHECK(MTN2 automate get_revision $B1, [1], [ignore], [ignore])
+AT_CHECK(MTN2 automate get_revision $B2, [1], [ignore], [ignore])
+AT_CHECK(MTN2 automate get_revision $B3, [1], [ignore], [ignore])
+AT_CHECK(MTN2 automate get_revision $B4, [1], [ignore], [ignore])
 
 NETSYNC_CLIENT_RUN(pull, 'branch*' --exclude=branch2 --exclude=branch4)
-AT_CHECK(MONOTONE2 automate get_revision $B1, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 automate get_revision $B2, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 automate get_revision $B3, [], [ignore], [ignore])
-AT_CHECK(MONOTONE2 automate get_revision $B4, [1], [ignore], [ignore])
+AT_CHECK(MTN2 automate get_revision $B1, [], [ignore], [ignore])
+AT_CHECK(MTN2 automate get_revision $B2, [], [ignore], [ignore])
+AT_CHECK(MTN2 automate get_revision $B3, [], [ignore], [ignore])
+AT_CHECK(MTN2 automate get_revision $B4, [1], [ignore], [ignore])
 
-AT_CHECK(MONOTONE2 ls certs $B2 | QGREP(branch2), [1])
+AT_CHECK(MTN2 ls certs $B2 | QGREP(branch2), [1])
 
 NETSYNC_SERVE_STOP
 

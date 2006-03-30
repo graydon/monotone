@@ -1,7 +1,7 @@
-AT_SETUP([monotone up])
-MONOTONE_SETUP
+AT_SETUP([mtn up])
+MTN_SETUP
 
-# People expect 'monotone up' to run update.
+# People expect 'mtn up' to run update.
 # Make sure it does.
 
 ADD_FILE(testfile, [blah blah
@@ -14,8 +14,8 @@ SET_FILE(testfile, [other stuff
 COMMIT(testbranch)
 REV1=`BASE_REVISION`
 
-AT_CHECK(MONOTONE checkout --branch=testbranch --revision=$REV0 codir, [], [ignore], [ignore])
-AT_CHECK(cd codir && MONOTONE up, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --branch=testbranch --revision=$REV0 codir, [], [ignore], [ignore])
+AT_CHECK(cd codir && MTN up, [], [ignore], [ignore])
 AT_CHECK(cmp testfile codir/testfile)
 
 AT_CLEANUP

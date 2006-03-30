@@ -1,5 +1,5 @@
 AT_SETUP([annotate file whose name changed])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(foo, [a
 b
@@ -24,13 +24,13 @@ REVL=`BASE_REVISION`
 
 REVERT_TO($REV0)
 AT_CHECK(cp foo.rightnewname foo)
-AT_CHECK(MONOTONE rename -e foo foo.new, [], [ignore], [ignore])
+AT_CHECK(MTN rename -e foo foo.new, [], [ignore], [ignore])
 COMMIT(testbranch)
 REVR=`BASE_REVISION`
 
 
-AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN merge, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 REV1=`BASE_REVISION`
 
 #
@@ -40,7 +40,7 @@ REV1=`BASE_REVISION`
 # REVR: x
 #
 
-AT_CHECK(MONOTONE annotate foo.new, [], [stdout], [ignore])
+AT_CHECK(MTN annotate foo.new, [], [stdout], [ignore])
 AT_CHECK(head -n 1 stdout | grep $REV0, [0], [ignore], [ignore])
 AT_CHECK(head -n 2 stdout | TAIL(1) | grep $REV0, [0], [ignore], [ignore])
 AT_CHECK(head -n 3 stdout | TAIL(1) | grep $REVR, [0], [ignore], [ignore])

@@ -1218,6 +1218,8 @@ anc_graph::construct_revisions_from_ancestry()
             }
 
           file_path attr_path = file_path_internal(".mt-attrs");
+          file_path old_ignore_path = file_path_internal(".mt-ignore");
+          file_path new_ignore_path = file_path_internal(".mtn-ignore");
 
           roster_t child_roster;
           MM(child_roster);
@@ -1225,7 +1227,14 @@ anc_graph::construct_revisions_from_ancestry()
           for (legacy::manifest_map::const_iterator i = old_child_man.begin();
                i != old_child_man.end(); ++i)
             {
-              if (!(i->first == attr_path))
+              if (i->first == attr_path)
+                continue;
+              // convert .mt-ignore to .mtn-ignore... except if .mtn-ignore
+              // already exists, just leave things alone.
+              else if (i->first == old_ignore_path
+                       && old_child_man.find(new_ignore_path) == old_child_man.end())
+                insert_into_roster(child_roster, nis, new_ignore_path, i->second);
+              else
                 insert_into_roster(child_roster, nis, i->first, i->second);
             }
           
@@ -1261,8 +1270,10 @@ anc_graph::construct_revisions_from_ancestry()
                                                     attr_key("mtn:" + key),
                                                     attr_value(k->second));
                             else
-                              E(false, F("unknown attribute %s on path %s\n"
-                                         "please contact %s so we can work out the right way to migrate this")
+                              E(false, F("unknown attribute '%s' on path '%s'\n"
+                                         "please contact %s so we can work out the right way to migrate this\n"
+                                         "(if you just want it to go away, see the switch --drop-attr, but\n"
+                                         "seriously, if you'd like to keep it, we're happy to figure out how)")
                                 % key % file_path(sp) % PACKAGE_BUGREPORT);
                           }
                       }
@@ -1366,6 +1377,7 @@ void
 build_roster_style_revs_from_manifest_style_revs(app_state & app)
 {
   app.db.ensure_open_for_format_changes();
+  app.db.check_is_not_rosterified();
 
   global_sanity.set_relaxed(true);
   anc_graph graph(true, app);
@@ -1421,6 +1433,7 @@ void
 build_changesets_from_manifest_ancestry(app_state & app)
 {
   app.db.ensure_open_for_format_changes();
+  app.db.check_is_not_rosterified();
 
   anc_graph graph(false, app);
 

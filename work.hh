@@ -21,31 +21,31 @@
 //
 
 //
-// workspace book-keeping files are stored in a directory called MT, off
+// workspace book-keeping files are stored in a directory called _MTN, off
 // the root of the workspace source tree (analogous to the CVS or .svn
-// directories). there is no hierarchy of MT directories; only one exists,
+// directories). there is no hierarchy of _MTN directories; only one exists,
 // and it is always at the root. it contains the following files:
 //
-// MT/revision       -- contains the id of the checked out revision
-// MT/work           -- (optional) a set of added, deleted or moved pathnames
+// _MTN/revision     -- contains the id of the checked out revision
+// _MTN/work         -- (optional) a set of added, deleted or moved pathnames
 //                      this file is, syntactically, a cset
-// MT/options        -- the database, branch and key options currently in use
-// MT/log            -- user edited log file
-// MT/inodeprints    -- file fingerprint cache, presence turns on "reckless"
+// _MTN/options      -- the database, branch and key options currently in use
+// _MTN/log          -- user edited log file
+// _MTN/inodeprints  -- file fingerprint cache, presence turns on "reckless"
 //                      mode
 //
 // as work proceeds, the files in the workspace either change their
 // sha1 fingerprints from those listed in the revision's manifest, or else are
 // added or deleted or renamed (and the paths of those changes recorded in
-// 'MT/work').
+// '_MTN/work').
 // 
-// when it comes time to commit, the cset in MT/work (which can have no
+// when it comes time to commit, the cset in _MTN/work (which can have no
 // deltas) is applied to the base roster, then a new roster is built by
 // analyzing the content of every file in the roster, as it appears in the
 // workspace. a final cset is calculated which contains the requisite
 // deltas, and placed in a rev, which is written to the db.
 //
-// MT/inodes, if present, can be used to speed up this last step.
+// _MTN/inodeprints, if present, can be used to speed up this last step.
 
 struct file_itemizer : public tree_walker
 {
@@ -134,7 +134,7 @@ void blank_user_log();
 bool has_contents_user_log();
 
 // the "options map" is another administrative file, stored in
-// MT/options. it keeps a list of name/value pairs which are considered
+// _MTN/options. it keeps a list of name/value pairs which are considered
 // "persistent options", associated with a particular the workspace and
 // implied unless overridden on the command line. the main ones are
 // --branch and --db, although some others may follow in the future.
@@ -148,7 +148,7 @@ void read_options_map(data const & dat, options_map & options);
 void write_options_map(data & dat,
                        options_map const & options);
 
-// the "local dump file' is a debugging file, stored in MT/debug.  if we
+// the "local dump file' is a debugging file, stored in _MTN/debug.  if we
 // crash, we save some debugging information here.
 
 void get_local_dump_path(bookkeeping_path & d_path);

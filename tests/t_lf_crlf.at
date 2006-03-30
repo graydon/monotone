@@ -1,5 +1,5 @@
 AT_SETUP([use get_linesep_conv hook])
-MONOTONE_SETUP
+MTN_SETUP
 
 # This test excercises the common case of wanting to do newline 
 # character conversion so that win32 users can have native line endings
@@ -22,29 +22,29 @@ end
 ])
 
 AT_CHECK(cp foo.crlf foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --rcfile=linesep.lua add foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --rcfile=linesep.lua --branch=foo commit -m foo, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=linesep.lua add foo, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=linesep.lua --branch=foo commit -m foo, [], [ignore], [ignore])
 FOO_REV=`BASE_REVISION`
 
 AT_CHECK(cp foofoo.crlf foo, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --rcfile=linesep.lua commit -m foofoo, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=linesep.lua commit -m foofoo, [], [ignore], [ignore])
 FOO_FOO_REV=`BASE_REVISION`
 
-rm -Rf MT
-AT_CHECK(MONOTONE --rcfile=linesep.lua co --revision=$FOO_REV ., [], [ignore], [ignore])
+rm -Rf _MTN
+AT_CHECK(MTN --rcfile=linesep.lua co --revision=$FOO_REV ., [], [ignore], [ignore])
 AT_CHECK(cmp foo foo.crlf, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --rcfile=linesep.lua checkout --revision=$FOO_REV foo_crlf, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=linesep.lua checkout --revision=$FOO_REV foo_crlf, [], [ignore], [ignore])
 AT_CHECK(cmp foo.crlf foo_crlf/foo)
 
-AT_CHECK(MONOTONE --rcfile=linesep.lua checkout --revision=$FOO_FOO_REV foo_foo_crlf, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=linesep.lua checkout --revision=$FOO_FOO_REV foo_foo_crlf, [], [ignore], [ignore])
 AT_CHECK(cmp foofoo.crlf foo_foo_crlf/foo)
 
 # no rcfile here
-AT_CHECK(MONOTONE checkout --revision=$FOO_REV foo_lf, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --revision=$FOO_REV foo_lf, [], [ignore], [ignore])
 AT_CHECK(cmp foo.lf foo_lf/foo)
 
-AT_CHECK(MONOTONE checkout --revision=$FOO_FOO_REV foo_foo_lf, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --revision=$FOO_FOO_REV foo_foo_lf, [], [ignore], [ignore])
 AT_CHECK(cmp foofoo.lf foo_foo_lf/foo)
 
 AT_CLEANUP

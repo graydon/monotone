@@ -156,22 +156,25 @@ Netxx::port_type Netxx::Peer::get_local_port (void) const
 
     union {
 	sockaddr sa;
-	char data[const_max_sockaddr_size];
+	sockaddr_in sin;
+#   ifndef NETXX_NO_INET6
+	sockaddr_in6 sin6;
+#   endif
     } sau;
 
     int rc;
 
-    if ( (rc = getsockname(get_socketfd(), reinterpret_cast<sockaddr*>(sau.data), sa_size_ptr))) {
+    if ( (rc = getsockname(get_socketfd(), &sau.sa, sa_size_ptr))) {
 	    throw Exception(strerror(errno));
     }
 
    switch (sau.sa.sa_family) {
        case AF_INET:
-	   return ntohs(reinterpret_cast<sockaddr_in*>(&sau.sa)->sin_port);
+	   return ntohs(sau.sin.sin_port);
 
 #   ifndef NETXX_NO_INET6
        case AF_INET6:
-	   return ntohs(reinterpret_cast<sockaddr_in6*>(&sau.sa)->sin6_port);
+	   return ntohs(sau.sin6.sin6_port);
 #   endif
 
        default:

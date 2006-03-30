@@ -1,7 +1,7 @@
 AT_SETUP([netsync transfers public keys])
 AT_KEYWORDS([netsync])
 
-MONOTONE_SETUP
+MTN_SETUP
 NETSYNC_SETUP
 
 PUBKEY=52f32ec62128ea3541ebdd9d17400e268cfcd3fe
@@ -28,7 +28,7 @@ nVBgfV13p+heGn94EcJfVJVszAYiTKolmtgkqXij0mInJGxwRAEQq4La1va9WwNHndK2R8vj
 @<:@end@:>@
 ])
 
-AT_CHECK(MONOTONE read <newkeys.txt, [], [ignore], [ignore])
+AT_CHECK(MTN read <newkeys.txt, [], [ignore], [ignore])
 AT_CHECK(rm -f newkeys.txt)
 
 # First commit a version that doesn't use the new key, and make sure
@@ -39,25 +39,25 @@ COMMIT(testbranch)
 
 RUN_NETSYNC(pull, testbranch)
 
-AT_CHECK(MONOTONE2 ls keys, [], [stdout], [ignore])
+AT_CHECK(MTN2 ls keys, [], [stdout], [ignore])
 AT_CHECK(QGREP($PUBKEY stdout), [1])
 AT_CHECK(QGREP($PRIVKEY stdout), [1])
 
 # Now check that --key-to-push works.
 NETSYNC_SERVE_N_START(2, testbranch)
-AT_CHECK(MONOTONE --rcfile=netsync.lua push NETSYNC_ADDRESS testbranch --key-to-push=foo@test.example.com, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=netsync.lua push NETSYNC_ADDRESS testbranch --key-to-push=foo@test.example.com, [], [ignore], [ignore])
 NETSYNC_SERVE_STOP
-AT_CHECK(MONOTONE2 dropkey foo@test.example.com, [], [ignore], [ignore])
+AT_CHECK(MTN2 dropkey foo@test.example.com, [], [ignore], [ignore])
 
 # Now commit a version that does use the new key, and make sure that
 # now it does get transferred.
 SET_FILE(testfile, [version 1 of test file
 ])
-AT_CHECK(MONOTONE --branch=testbranch commit --message blah-blah --key=foo@test.example.com, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message blah-blah --key=foo@test.example.com, [], [ignore], [ignore])
 
 RUN_NETSYNC(pull, testbranch)
 
-AT_CHECK(MONOTONE2 ls keys, [], [stdout], [ignore])
+AT_CHECK(MTN2 ls keys, [], [stdout], [ignore])
 AT_CHECK(QGREP($PUBKEY stdout))
 AT_CHECK(QGREP($PRIVKEY stdout), [1])
 

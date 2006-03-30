@@ -1,5 +1,5 @@
 AT_SETUP([largish file])
-MONOTONE_SETUP
+MTN_SETUP
 NEED_UNGZB64
 
 # Check that we can handle a 15 meg file in the database
@@ -285,7 +285,7 @@ wEXMQfjCwOHkAA==
 
 UNGZB64(largish.gz.enc, largish)
 
-AT_CHECK(MONOTONE add largish, [], [ignore], [ignore])
+AT_CHECK(MTN add largish, [], [ignore], [ignore])
 COMMIT(testbranch)
 BASE_R=`BASE_REVISION`
 
@@ -299,9 +299,9 @@ MOD_R=`BASE_REVISION`
 
 AT_CHECK(mv largish largish.modified)
 
-AT_CHECK(MONOTONE checkout --revision=$BASE_R base, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --revision=$BASE_R base, [], [ignore], [ignore])
 AT_CHECK(cmp largish.orig base/largish)
-AT_CHECK(MONOTONE checkout --revision=$MOD_R modified, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --revision=$MOD_R modified, [], [ignore], [ignore])
 AT_CHECK(cmp largish.modified modified/largish)
 
 AT_CLEANUP

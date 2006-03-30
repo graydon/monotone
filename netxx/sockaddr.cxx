@@ -98,7 +98,7 @@ void Netxx::SockAddr::setup (int af_type, port_type port)
 	    if (port) sa_union_.sa_in.sin_port = htons(port);
 
 	    sa_size_ = sizeof(sa_union_.sa_in);
-	    sa_ = reinterpret_cast<sockaddr*>(&(sa_union_.sa_in));
+	    sa_ = &sa_union_.sa;
 	    break;
 
 
@@ -109,7 +109,7 @@ void Netxx::SockAddr::setup (int af_type, port_type port)
 	    if (port) sa_union_.sa_in6.sin6_port = htons(port);
 
 	    sa_size_ = sizeof(sa_union_.sa_in6);
-	    sa_ = reinterpret_cast<sockaddr*>(&(sa_union_.sa_in6));
+	    sa_ = &sa_union_.sa;
 	    break;
 # endif
 
@@ -120,7 +120,7 @@ void Netxx::SockAddr::setup (int af_type, port_type port)
 	    sa_union_.sa_un.sun_family = AF_LOCAL;
 
 	    sa_size_ = sizeof(sa_union_.sa_un);
-	    sa_ = reinterpret_cast<sockaddr*>(&(sa_union_.sa_un));
+	    sa_ = &sa_union_.sa;
 	    break;
 #   endif
 

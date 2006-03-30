@@ -1,5 +1,5 @@
 AT_SETUP([propagate a descendent])
-MONOTONE_SETUP
+MTN_SETUP
 
 # This tests the case where we have something like A1 -> A2 -> B1 ->
 # B2, where A and B are different branches, and the user propagates B
@@ -24,10 +24,10 @@ SET_FILE(testfile, [quux
 COMMIT(b)
 B_HEAD_REV=`BASE_REVISION`
 
-AT_CHECK(MONOTONE propagate b a, [], [ignore], [ignore])
-AT_CHECK(MONOTONE heads --branch=b, [], [stdout], [ignore])
+AT_CHECK(MTN propagate b a, [], [ignore], [ignore])
+AT_CHECK(MTN heads --branch=b, [], [stdout], [ignore])
 AT_CHECK(QGREP($B_HEAD_REV stdout))
-AT_CHECK(MONOTONE heads --branch=a, [], [stdout], [ignore])
+AT_CHECK(MTN heads --branch=a, [], [stdout], [ignore])
 AT_CHECK(QGREP($B_HEAD_REV stdout))
 
 AT_CLEANUP

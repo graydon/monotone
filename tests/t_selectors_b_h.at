@@ -1,5 +1,5 @@
 AT_SETUP([b: and h: selectors])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(testfile, [blah blah
 ])
@@ -16,11 +16,11 @@ SET_FILE(testfile, [chew chew
 COMMIT(otherbranch)
 REV3=`BASE_REVISION`
 
-CHECK_SAME_CANONICALISED_STDOUT((echo $REV1 && echo $REV2) | sort, MONOTONE automate select b:testbranch)
-CHECK_SAME_CANONICALISED_STDOUT(echo $REV3, MONOTONE automate select b:otherbranch)
-CHECK_SAME_CANONICALISED_STDOUT(echo $REV3, MONOTONE automate select b:)
-CHECK_SAME_CANONICALISED_STDOUT(echo $REV2, MONOTONE automate select h:testbranch)
-CHECK_SAME_CANONICALISED_STDOUT(echo $REV3, MONOTONE automate select h:otherbranch)
-CHECK_SAME_CANONICALISED_STDOUT(echo $REV3, MONOTONE automate select h:)
+CHECK_SAME_CANONICALISED_STDOUT((echo $REV1 && echo $REV2) | sort, MTN automate select b:testbranch)
+CHECK_SAME_CANONICALISED_STDOUT(echo $REV3, MTN automate select b:otherbranch)
+CHECK_SAME_CANONICALISED_STDOUT(echo $REV3, MTN automate select b:)
+CHECK_SAME_CANONICALISED_STDOUT(echo $REV2, MTN automate select h:testbranch)
+CHECK_SAME_CANONICALISED_STDOUT(echo $REV3, MTN automate select h:otherbranch)
+CHECK_SAME_CANONICALISED_STDOUT(echo $REV3, MTN automate select h:)
 
 AT_CLEANUP

@@ -2,7 +2,7 @@ AT_SETUP([pull a netsync branch which has a parent from another branch])
 AT_KEYWORDS([netsync])
 
 
-MONOTONE_SETUP
+MTN_SETUP
 NETSYNC_SETUP
 
 ADD_FILE(testfile, [blah stuff
@@ -17,6 +17,6 @@ VER1=`BASE_REVISION`
 
 RUN_NETSYNC(pull, otherbranch)
 
-CHECK_SAME_STDOUT(MONOTONE ls certs $VER1, MONOTONE2 ls certs $VER1)
+CHECK_SAME_STDOUT(MTN ls certs $VER1, MTN2 ls certs $VER1)
 
 AT_CLEANUP

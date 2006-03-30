@@ -1,8 +1,8 @@
 AT_SETUP([commit with --message-file])
 
-MONOTONE_SETUP
+MTN_SETUP
 
-AT_CHECK(rm -f MT/log)
+AT_CHECK(rm -f _MTN/log)
 
 #--------------------
 #first, verify that --message-file actually works
@@ -11,21 +11,21 @@ AT_CHECK(rm -f MT/log)
 AT_DATA(input.txt, [version 0 of the file
 ])
 
-AT_CHECK(MONOTONE add input.txt, [], [ignore], [ignore])
+AT_CHECK(MTN add input.txt, [], [ignore], [ignore])
 
 AT_DATA(msgfile.txt, [this commit uses the --message-file option
 ])
 
-AT_CHECK(MONOTONE --branch=testbranch commit --message-file=msgfile.txt, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message-file=msgfile.txt, [], [ignore], [ignore])
 
 TSHA=`BASE_REVISION`
-AT_CHECK(MONOTONE ls certs $TSHA, [], [stdout], [ignore])
+AT_CHECK(MTN ls certs $TSHA, [], [stdout], [ignore])
 AT_CHECK(QGREP('this commit uses the --message-file option' stdout), [])
 
 #--------------------
 #also with a file coming outside the workspace
 #--------------------
-AT_CHECK(MONOTONE setup --branch=testbranch alt_wrk, [], [ignore], [ignore])
+AT_CHECK(MTN setup --branch=testbranch alt_wrk, [], [ignore], [ignore])
 
 AT_DATA(alt_wrk/input1.txt, [files... files...
 ])
@@ -33,12 +33,12 @@ AT_DATA(alt_wrk/input1.txt, [files... files...
 AT_DATA(message-out-of-copy.txt, [out out out 
 ])
 
-AT_CHECK(cd alt_wrk && MONOTONE add input1.txt, [], [ignore], [ignore])
+AT_CHECK(cd alt_wrk && MTN add input1.txt, [], [ignore], [ignore])
 
-AT_CHECK(cd alt_wrk && MONOTONE --branch=outbranch commit --message-file=../message-out-of-copy.txt, [], [ignore], [ignore])
+AT_CHECK(cd alt_wrk && MTN --branch=outbranch commit --message-file=../message-out-of-copy.txt, [], [ignore], [ignore])
 
 TSHA=`cd alt_wrk && BASE_REVISION`
-AT_CHECK(cd alt_wrk && MONOTONE ls certs $TSHA, [], [stdout], [ignore])
+AT_CHECK(cd alt_wrk && MTN ls certs $TSHA, [], [stdout], [ignore])
 AT_CHECK(QGREP('out out out' stdout), [])
 
 #--------------------
@@ -47,18 +47,18 @@ AT_CHECK(QGREP('out out out' stdout), [])
 AT_DATA(input2.txt, [another file
 ])
 
-AT_CHECK(MONOTONE add input2.txt, [], [ignore], [ignore])
+AT_CHECK(MTN add input2.txt, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit --message-file=to-be-or-not-to-be.txt, [1], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message-file=to-be-or-not-to-be.txt, [1], [ignore], [ignore])
 
 #--------------------
 #then verify that --message and --message-file together cause an error
 #--------------------
 
-AT_CHECK(MONOTONE --branch=testbranch commit --message-file=msgfile.txt --message="also a message", [1], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message-file=msgfile.txt --message="also a message", [1], [ignore], [ignore])
 
 # --------------------
-# finally, --message-file and a filled MT/log should also fail
+# finally, --message-file and a filled _MTN/log should also fail
 # --------------------
 
 AT_DATA(commit_log.lua, [
@@ -67,9 +67,9 @@ function edit_comment(summary, user_log_file)
 end
 ])
 
-AT_DATA(MT/log, [Log entry
+AT_DATA(_MTN/log, [Log entry
 ])
 
-AT_CHECK(MONOTONE --branch=testbranch --rcfile=commit_log.lua commit --message-file=msgfile.txt, [1], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch --rcfile=commit_log.lua commit --message-file=msgfile.txt, [1], [ignore], [ignore])
 
 AT_CLEANUP

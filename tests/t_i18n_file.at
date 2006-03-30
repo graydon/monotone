@@ -2,7 +2,7 @@
 
 AT_SETUP([importing files with non-english names])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 EUROPEAN_UTF8=`printf "\xC3\xB6\xC3\xA4\xC3\xBc\xC3\x9F"`
 EUROPEAN_8859_1=`printf "\xF6\xE4\xFC\xDF"`
@@ -27,23 +27,23 @@ if test `uname` != "Darwin"; then
 	AT_CHECK(touch "euc/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 fi
 
-AT_CHECK(MONOTONE add "weird/file name with spaces", [], [ignore], [ignore])
-AT_CHECK(MONOTONE add "weird/$FUNNY_FILENAME", [], [ignore], [ignore])
+AT_CHECK(MTN add "weird/file name with spaces", [], [ignore], [ignore])
+AT_CHECK(MTN add "weird/$FUNNY_FILENAME", [], [ignore], [ignore])
 
 # add some files with UTF8 names
 export LANG=en_US.utf-8
 export CHARSET=UTF-8
-AT_CHECK(MONOTONE add "utf8/$EUROPEAN_UTF8", [], [ignore], [ignore])
-AT_CHECK(MONOTONE add "utf8/$JAPANESE_UTF8", [], [ignore], [ignore])
+AT_CHECK(MTN add "utf8/$EUROPEAN_UTF8", [], [ignore], [ignore])
+AT_CHECK(MTN add "utf8/$JAPANESE_UTF8", [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding european and japanese names in UTF-8', [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message 'adding european and japanese names in UTF-8', [], [ignore], [ignore])
 
 # check the names showed up in our manifest
 
 export LANG=en_US.UTF-8
 export CHARSET=UTF-8
 
-AT_CHECK(MONOTONE automate get_manifest_of, [], [stdout])
+AT_CHECK(MTN automate get_manifest_of, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep funny manifest, [], [ignore], [ignore])
 AT_CHECK(grep spaces manifest, [], [ignore], [ignore])
@@ -57,8 +57,8 @@ AT_CHECK(grep $EUROPEAN_UTF8 manifest, [], [ignore], [ignore])
 # the tree, then, monotone will attempt to convert them to the current
 # locale, and fail miserably.  so get rid of them first.
 
-AT_CHECK(MONOTONE drop "utf8/$EUROPEAN_UTF8" "utf8/$JAPANESE_UTF8", [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit --message 'cleaning up utf8 files', [], [ignore], [ignore])
+AT_CHECK(MTN drop "utf8/$EUROPEAN_UTF8" "utf8/$JAPANESE_UTF8", [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message 'cleaning up utf8 files', [], [ignore], [ignore])
 
 # OS X expects data passed to the OS to be utf8, so these tests don't make
 # sense.
@@ -67,14 +67,14 @@ if test `uname` != "Darwin"; then
 
 	export LANG=de_DE.iso-8859-1
 	export CHARSET=iso-8859-1
-	AT_CHECK(MONOTONE add "8859-1/$EUROPEAN_8859_1", [], [ignore], [ignore])
+	AT_CHECK(MTN add "8859-1/$EUROPEAN_8859_1", [], [ignore], [ignore])
 
-	AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding european name in ISO 8859-1', [], [ignore], [ignore])
+	AT_CHECK(MTN --branch=testbranch commit --message 'adding european name in ISO 8859-1', [], [ignore], [ignore])
 fi
 
 # check the names showed up in our manifest
 
-AT_CHECK(MONOTONE automate get_manifest_of, [], [stdout])
+AT_CHECK(MTN automate get_manifest_of, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep funny manifest, [], [ignore], [ignore])
 AT_CHECK(grep spaces manifest, [], [ignore], [ignore])
@@ -85,8 +85,8 @@ fi
 # okay, clean up again
 
 if test `uname` != "Darwin"; then
-	AT_CHECK(MONOTONE drop "8859-1/$EUROPEAN_8859_1", [], [ignore], [ignore])
-	AT_CHECK(MONOTONE --branch=testbranch commit --message 'cleaning up 8859-1 files', [], [ignore], [ignore])
+	AT_CHECK(MTN drop "8859-1/$EUROPEAN_8859_1", [], [ignore], [ignore])
+	AT_CHECK(MTN --branch=testbranch commit --message 'cleaning up 8859-1 files', [], [ignore], [ignore])
 fi
 
 # now try euc
@@ -94,14 +94,14 @@ fi
 if test `uname` != "Darwin"; then
 	export LANG=ja_JP.euc-jp
 	export CHARSET=euc-jp
-	AT_CHECK(MONOTONE add "euc/$JAPANESE_EUC_JP", [], [ignore], [ignore])
+	AT_CHECK(MTN add "euc/$JAPANESE_EUC_JP", [], [ignore], [ignore])
 
-	AT_CHECK(MONOTONE --branch=testbranch commit --message 'adding japanese name in EUC-JP', [], [ignore], [ignore])
+	AT_CHECK(MTN --branch=testbranch commit --message 'adding japanese name in EUC-JP', [], [ignore], [ignore])
 fi
 
 # check the names showed up in our manifest
 
-AT_CHECK(MONOTONE automate get_manifest_of, [], [stdout])
+AT_CHECK(MTN automate get_manifest_of, [], [stdout])
 AT_CHECK(mv stdout manifest)
 AT_CHECK(grep funny manifest, [], [ignore], [ignore])
 AT_CHECK(grep spaces manifest, [], [ignore], [ignore])

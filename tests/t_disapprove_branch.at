@@ -1,5 +1,5 @@
 AT_SETUP([branch handling in disapprove])
-MONOTONE_SETUP
+MTN_SETUP
 
 # 1) if no --branch is specified, disapprove should use the branch
 #    cert on the rev being disapproved.  if there are multiple such

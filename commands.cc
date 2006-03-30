@@ -51,6 +51,7 @@
 #include "roster_merge.hh"
 #include "roster.hh"
 
+
 //
 // this file defines the task-oriented "top level" commands which can be
 // issued as part of a monotone command line. the command line can only
@@ -110,13 +111,16 @@ namespace commands
     string cmdgroup;
     string params;
     string desc;
+    bool use_workspace_options;
     command_opts options;
     command(string const & n,
             string const & g,
             string const & p,
             string const & d,
+            bool u,
             command_opts const & o)
-      : name(n), cmdgroup(g), params(p), desc(d), options(o)
+      : name(n), cmdgroup(g), params(p), desc(d), use_workspace_options(u),
+        options(o)
     { cmds[n] = this; }
     virtual ~command() {}
     virtual void exec(app_state & app, vector<utf8> const & args) = 0;
@@ -246,6 +250,12 @@ namespace commands
     if (cmds.find(cmd) != cmds.end())
       {
         L(FL("executing command '%s'\n") % cmd);
+
+        // at this point we process the data from _MTN/options if
+        // the command needs it.
+        if (cmds[cmd]->use_workspace_options)
+          app.process_options();
+
         cmds[cmd]->exec(app, args);
         return 0;
       }
@@ -273,7 +283,22 @@ static const no_opts OPT_NONE = no_opts();
 #define CMD(C, group, params, desc, opts)                            \
 struct cmd_ ## C : public command                                    \
 {                                                                    \
-  cmd_ ## C() : command(#C, group, params, desc,                     \
+  cmd_ ## C() : command(#C, group, params, desc, true,               \
+                        command_opts() % opts)                       \
+  {}                                                                 \
+  virtual void exec(app_state & app,                                 \
+                    vector<utf8> const & args);                      \
+};                                                                   \
+static cmd_ ## C C ## _cmd;                                          \
+void cmd_ ## C::exec(app_state & app,                                \
+                     vector<utf8> const & args)                      \
+
+// use this for commands that should specifically _not_ look for an _MTN dir
+// and load options from it
+#define CMD_NO_WORKSPACE(C, group, params, desc, opts)               \
+struct cmd_ ## C : public command                                    \
+{                                                                    \
+  cmd_ ## C() : command(#C, group, params, desc, false,              \
                         command_opts() % opts)                       \
   {}                                                                 \
   virtual void exec(app_state & app,                                 \
@@ -402,7 +427,7 @@ get_log_message_interactively(revision_set const & cs,
   read_user_log(user_log_message);
   commentary += "----------------------------------------------------------------------\n";
   commentary += _("Enter a description of this change.\n"
-                  "Lines beginning with `MT:' are removed automatically.\n");
+                  "Lines beginning with `MTN:' are removed automatically.\n");
   commentary += "\n";
   commentary += summary();
   commentary += "----------------------------------------------------------------------\n";
@@ -2086,9 +2111,9 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
                        include_pattern, exclude_pattern, app);  
 }
 
-CMD(serve, N_("network"), N_("PATTERN ..."),
-    N_("serve the branches specified by PATTERNs to connecting clients"),
-    OPT_BIND % OPT_PIDFILE % OPT_EXCLUDE)
+CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
+                 N_("serve the branches specified by PATTERNs to connecting clients"),
+                 OPT_BIND % OPT_PIDFILE % OPT_EXCLUDE)
 {
   if (args.size() < 1)
     throw usage(name);
@@ -2344,26 +2369,26 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   process_commit_message_args(log_message_given, log_message, app);
   
   N(!(log_message_given && has_contents_user_log()),
-    F("MT/log is non-empty and log message was specified on command line\n"
-      "perhaps move or delete MT/log,\n"
+    F("_MTN/log is non-empty and log message was specified on command line\n"
+      "perhaps move or delete _MTN/log,\n"
       "or remove --message/--message-file from the command line?"));
   
   if (!log_message_given)
     {
-      // this call handles MT/log
+      // this call handles _MTN/log
       get_log_message_interactively(rs, app, log_message);
       // we only check for empty log messages when the user entered them
       // interactively.  Consensus was that if someone wanted to explicitly
       // type --message="", then there wasn't any reason to stop them.
       N(log_message.find_first_not_of(" \r\t\n") != string::npos,
         F("empty log message; commit canceled"));
-      // we save interactively entered log messages to MT/log, so if something
-      // goes wrong, the next commit will pop up their old log message by
-      // default.  we only do this for interactively entered messages, because
-      // otherwise 'monotone commit -mfoo' giving an error, means that after
-      // you correct that error and hit up-arrow to try again, you get an
-      // "MT/log non-empty and message given on command line" error... which
-      // is annoying.
+      // we save interactively entered log messages to _MTN/log, so if
+      // something goes wrong, the next commit will pop up their old log
+      // message by default.  we only do this for interactively entered
+      // messages, because otherwise 'monotone commit -mfoo' giving an error,
+      // means that after you correct that error and hit up-arrow to try
+      // again, you get an "_MTN/log non-empty and message given on command
+      // line" error... which is annoying.
       write_user_log(data(log_message));
     }
 
@@ -2917,20 +2942,51 @@ CMD(update, N_("workspace"), "",
   
   P(F("selected update target %s\n") % r_chosen_id);
 
-  if (!app.branch_name().empty())
-    {
-      cert_value branch_name(app.branch_name());
-      base64<cert_value> branch_encoded;
-      encode_base64(branch_name, branch_encoded);
-  
-      vector< revision<cert> > certs;
-      app.db.get_revision_certs(r_chosen_id, branch_cert_name, branch_encoded, certs);
+  {
+    // figure out which branches the target is in
+    vector< revision<cert> > certs;
+    app.db.get_revision_certs(r_chosen_id, branch_cert_name, certs);
+    erase_bogus_certs(certs, app);
 
-      N(certs.size() != 0,
-        F("revision %s is not a member of branch %s\n"
-          "try again with explicit --branch\n")
-        % r_chosen_id % app.branch_name);
-    }
+    set< utf8 > branches;
+    for (vector< revision<cert> >::const_iterator i = certs.begin(); 
+         i != certs.end(); i++)
+      {
+        cert_value b;
+        decode_base64(i->inner().value, b);
+        branches.insert(utf8(b()));
+      }
+
+    if (branches.find(app.branch_name) != branches.end())
+      {
+        L(FL("using existing branch %s") % app.branch_name());
+      }
+    else
+      {
+        if (branches.size() > 1)
+          {
+            // multiple non-matching branchnames
+            string branch_list;
+            for (set<utf8>::const_iterator i = branches.begin(); 
+                 i != branches.end(); i++)
+              branch_list += "\n" + (*i)();
+            N(false, F("revision %s is a member of multiple branches:\n%s\n\ntry again with explicit --branch") % r_chosen_id % branch_list);
+          }
+        else if (branches.size() == 1)
+          {
+            // one non-matching, inform and update
+            app.branch_name = (*(branches.begin()))();
+            P(F("revision %s is a member of\n%s, updating workspace branch") 
+              % r_chosen_id % app.branch_name());
+          }
+        else
+          {
+            I(branches.size() == 0);
+            W(F("revision %s is a member of no branches,\nusing branch %s for workspace")
+              % r_chosen_id % app.branch_name());
+          }
+      }
+  }
 
   app.db.get_roster(r_chosen_id, chosen_roster, chosen_mm);
 
@@ -2993,13 +3049,13 @@ CMD(update, N_("workspace"), "",
   //   V         V
   //  chosen --> merged
   //
-  // - old is the revision specified in MT/revision
+  // - old is the revision specified in _MTN/revision
   // - working is based on old and includes the workspace's changes
-  // - chosen is the revision we're updating to and will end up in MT/revision
+  // - chosen is the revision we're updating to and will end up in _MTN/revision
   // - merged is the merge of working and chosen
   // 
   // we apply the working to merged cset to the workspace 
-  // and write the cset from chosen to merged changeset in MT/work
+  // and write the cset from chosen to merged changeset in _MTN/work
   
   cset update, remaining;
   make_cset (working_roster, merged_roster, update);
@@ -3703,17 +3759,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 print_this = true;
             }
 
-          changes_summary csum;
-          
-          set<revision_id> ancestors;
-
-          for (edge_map::const_iterator e = rev.edges.begin();
-               e != rev.edges.end(); ++e)
-            {
-              ancestors.insert(edge_old_revision(e));
-              csum.add_change_set(edge_changes(e));
-            }
-
           if (next > 0)
             {
               set<revision_id> children;
@@ -3747,6 +3792,17 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 cout << "-----------------------------------------------------------------"
                      << endl;
                 cout << "Revision: " << rid << endl;
+
+                changes_summary csum;
+
+                set<revision_id> ancestors;
+
+                for (edge_map::const_iterator e = rev.edges.begin();
+                     e != rev.edges.end(); ++e)
+                  {
+                    ancestors.insert(edge_old_revision(e));
+                    csum.add_change_set(edge_changes(e));
+                  }
 
                 for (set<revision_id>::const_iterator anc = ancestors.begin();
                      anc != ancestors.end(); ++anc)

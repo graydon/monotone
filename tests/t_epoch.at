@@ -1,7 +1,7 @@
 AT_SETUP([client absorbs and checks epochs])
 AT_KEYWORDS([netsync])
 
-MONOTONE_SETUP
+MTN_SETUP
 NETSYNC_SETUP
 
 ADD_FILE(testfile, [version 0 data
@@ -12,10 +12,10 @@ VER0=`BASE_REVISION`
 RUN_NETSYNC(pull, testbranch)
 
 # check that the second db got our epoch
-CHECK_SAME_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
+CHECK_SAME_STDOUT(MTN list epochs, MTN2 list epochs)
 
 # check that epochs are only sent for netsync'ed branches
-AT_CHECK(MONOTONE2 list epochs, [], [stdout], [ignore])
+AT_CHECK(MTN2 list epochs, [], [stdout], [ignore])
 AT_CHECK(mv stdout orig-epochs)
 ADD_FILE(testfile2, [other data
 ])
@@ -26,10 +26,10 @@ NETSYNC_CLIENT_N_RUN(3, sync, otherbranch, 0)
 NETSYNC_SERVE_STOP
 # Run the real netsync
 RUN_NETSYNC(pull, testbranch)
-AT_CHECK(MONOTONE2 list epochs, [], [stdout], [ignore])
+AT_CHECK(MTN2 list epochs, [], [stdout], [ignore])
 AT_CHECK(mv stdout new-epochs)
 AT_CHECK(cmp orig-epochs new-epochs)
-CHECK_DIFFERENT_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
+CHECK_DIFFERENT_STDOUT(MTN list epochs, MTN2 list epochs)
 
 ADD_FILE(testfile3, [some data
 ])
@@ -37,9 +37,9 @@ COMMIT(testbranch)
 VER1=`BASE_REVISION`
 
 # change the epochs in the first db
-AT_CHECK(MONOTONE db set_epoch testbranch 12345, [1], [ignore], [ignore])
-AT_CHECK(MONOTONE db set_epoch testbranch aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, [], [ignore], [ignore])
-AT_CHECK(MONOTONE db set_epoch otherbranch aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, [], [ignore], [ignore])
+AT_CHECK(MTN db set_epoch testbranch 12345, [1], [ignore], [ignore])
+AT_CHECK(MTN db set_epoch testbranch aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, [], [ignore], [ignore])
+AT_CHECK(MTN db set_epoch otherbranch aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, [], [ignore], [ignore])
 
 # this should *fail* to sync 
 NETSYNC_SERVE_START(testbranch)
@@ -49,13 +49,13 @@ NETSYNC_SERVE_START(testbranch)
 NETSYNC_CLIENT_RUN(pull, testbranch, 0)
 NETSYNC_SERVE_STOP
 
-AT_CHECK(MONOTONE list epochs, [], [stdout])
+AT_CHECK(MTN list epochs, [], [stdout])
 AT_CHECK(grep testbranch stdout, [0], [ignore])
-AT_CHECK(MONOTONE2 list epochs, [], [stdout])
+AT_CHECK(MTN2 list epochs, [], [stdout])
 AT_CHECK(grep testbranch stdout, [0], [ignore])
-CHECK_DIFFERENT_STDOUT(MONOTONE list epochs, MONOTONE2 list epochs)
+CHECK_DIFFERENT_STDOUT(MTN list epochs, MTN2 list epochs)
 
 # confirm, we did not get the new revision
-AT_CHECK(MONOTONE2 automate get_revision $VER1, [1], [ignore], [ignore])
+AT_CHECK(MTN2 automate get_revision $VER1, [1], [ignore], [ignore])
 
 AT_CLEANUP
