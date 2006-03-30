@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-03-29 08:20+0200\n"
-"PO-Revision-Date: 2006-03-29 08:27+0100\n"
+"POT-Creation-Date: 2006-03-30 19:53+0200\n"
+"PO-Revision-Date: 2006-03-30 20:20+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -191,9 +191,9 @@ msgstr ""
 "Le linee che iniziano con ‘MT:’ vengono rimosse automaticamente.\n"
 
 #: commands.cc:436
-#, fuzzy, c-format
+#, c-format
 msgid "edit of log message failed"
-msgstr "Il messaggio precedente ha priorità sconosciuta"
+msgstr "modifica del messaggio di log fallita"
 
 #: commands.cc:445
 msgid "note: "
@@ -956,12 +956,15 @@ msgid "beginning commit on branch '%s'\n"
 msgstr "inizio il commit sul ramo ‘%s’\n"
 
 #: commands.cc:2372
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "_MTN/log is non-empty and log message was specified on command line\n"
 "perhaps move or delete _MTN/log,\n"
 "or remove --message/--message-file from the command line?"
-msgstr "‘_MTN/log’ non è vuoto e un messaggio di log è stato specificato sulla riga di comando\n"
+msgstr ""
+"‘_MTN/log’ non è vuoto e un messaggio di log è stato specificato sulla riga di comando\n"
+"forse vuoi muovere o cancellare ‘_MTN/log’ oppure\n"
+"togliere ‘--message’/‘--message-file’ dalla riga di comando?"
 
 #: commands.cc:2384
 #, c-format
@@ -1593,9 +1596,9 @@ msgid "%d missing files\n"
 msgstr "%d file mancanti\n"
 
 #: database_check.cc:876
-#, c-format
+#, fuzzy, c-format
 msgid "%d unreferenced files\n"
-msgstr ""
+msgstr "Sfoglia"
 
 #: database_check.cc:879
 #, fuzzy, c-format
@@ -1710,7 +1713,7 @@ msgstr "individuato un problema minore\n"
 #: database_check.cc:960
 #, c-format
 msgid "database is good\n"
-msgstr "database valido\n"
+msgstr "il database non ha problemi\n"
 
 #: database.cc:141
 #, c-format
@@ -1724,7 +1727,7 @@ msgstr ""
 #: database.cc:155
 #, c-format
 msgid "this database already contains rosters"
-msgstr ""
+msgstr "questo database contiene già dei roster"
 
 #: database.cc:175
 #, c-format
@@ -1874,7 +1877,7 @@ msgstr "il file ‘%s’ non esiste nello spazio di lavoro"
 #: diff_patch.cc:591
 #, fuzzy, c-format
 msgid "'%s' in workspace is a directory, not a file"
-msgstr "Il file \"%file:1\" non è nel formato corretto."
+msgstr "il file ‘%s’ nello spazio di lavoro è una cartella"
 
 #: diff_patch.cc:595
 #, c-format
@@ -2021,7 +2024,7 @@ msgid "cannot open file %s for reading"
 msgstr "non riesco ad aprire file ‘%s’ in lettura"
 
 #: file_io.cc:381
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "Non posso leggere stdin più volte"
 
@@ -2145,7 +2148,6 @@ msgid "mismatched node hash value %s, expected %s"
 msgstr ""
 
 #: monotone.cc:51
-#, fuzzy
 msgid "select branch cert for operation"
 msgstr "seleziona il ramo per l'operazione"
 
@@ -2183,7 +2185,7 @@ msgstr ""
 
 #: monotone.cc:60
 msgid "record process id of server"
-msgstr ""
+msgstr "registra l'id del processo server"
 
 #: monotone.cc:61
 msgid "print a brief version of the normal output"
@@ -2191,14 +2193,13 @@ msgstr "stampa una versione breve dell'output"
 
 #: monotone.cc:62
 msgid "print diffs along with logs"
-msgstr ""
+msgstr "stampa i diff assieme ai log"
 
 #: monotone.cc:63
 msgid "exclude merges when printing logs"
-msgstr ""
+msgstr "esclude i merge dalla stampa dei log"
 
 #: monotone.cc:64
-#, fuzzy
 msgid "use the current arguments as the future default"
 msgstr "usa gli argomenti attuali come default futuro"
 
@@ -2253,7 +2254,7 @@ msgstr ""
 
 #: monotone.cc:77
 msgid "exclude files when printing logs"
-msgstr ""
+msgstr "esclude i file dalla stampa dei log"
 
 #: monotone.cc:78
 msgid "also operate on the contents of any listed directories"
@@ -2261,11 +2262,11 @@ msgstr ""
 
 #: monotone.cc:87
 msgid "print debug log to stderr while running"
-msgstr ""
+msgstr "stampa i log di debug su stderr (sempre)"
 
 #: monotone.cc:88
 msgid "file to dump debugging log to, on failure"
-msgstr ""
+msgstr "file su cui salvare i log di debug (in caso di fallimento)"
 
 #: monotone.cc:89
 msgid "file to write the log to"
@@ -2280,7 +2281,6 @@ msgid "display help message"
 msgstr "mostra il messaggio di aiuto"
 
 #: monotone.cc:92
-#, fuzzy
 msgid "print version number, then exit"
 msgstr "stampa il numero di versione versione ed esce"
 
@@ -2309,7 +2309,6 @@ msgid "load extra rc file"
 msgstr "carica un file rc in più"
 
 #: monotone.cc:99
-#, fuzzy
 msgid "set key for signatures"
 msgstr "imposta chiave di firma"
 
@@ -2618,7 +2617,7 @@ msgid "Unexpected 'done' command on non-refined item type\n"
 msgstr ""
 
 #: netsync.cc:1734
-#, fuzzy, c-format
+#, c-format
 msgid "epoch with hash '%s' does not exist in our database"
 msgstr "l'epoca con hash ‘%s’ non è presente nel database"
 
@@ -2992,7 +2991,7 @@ msgstr ""
 msgid "Path %s added twice with differing content\n"
 msgstr ""
 
-#: revision.cc:1264
+#: revision.cc:1273
 #, c-format
 msgid ""
 "unknown attribute '%s' on path '%s'\n"
@@ -3001,17 +3000,17 @@ msgid ""
 "seriously, if you'd like to keep it, we're happy to figure out how)"
 msgstr ""
 
-#: revision.cc:1376
+#: revision.cc:1385
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions\n"
 msgstr ""
 
-#: revision.cc:1431
+#: revision.cc:1440
 #, c-format
 msgid "rebuilding revision graph from manifest certs\n"
 msgstr ""
 
-#: revision.cc:1534
+#: revision.cc:1543
 #, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
