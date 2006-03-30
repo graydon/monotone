@@ -1,5 +1,9 @@
 2006-03-29  Nathaniel Smith  <njs@pobox.com>
 
+	* .mt-ignore: Rename to .mtn-ignore.
+
+2006-03-29  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Set date.
 
 2006-03-29  Nathaniel Smith  <njs@pobox.com>
