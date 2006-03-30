@@ -599,7 +599,7 @@ roster_merge(roster_t const & left_parent,
 //   node name, name and parent, file and dir
 //   file content
 //   node attr, file and dir
-//
+
 // attr lifecycle:
 //   seen in both -->mark merge cases, above
 //   live in one and unseen in other -->live
@@ -623,6 +623,197 @@ roster_merge(roster_t const & left_parent,
 
 // to run roster_merge, need roster, marking, birth revs, and uncommon
 // ancestors for each side...
+
+
+void
+test_scalar_merges()
+{
+  //   same in both, same mark
+  //               a1*
+  //              / \
+  //             a2  a3
+  test_a_scalar_merge(scalar_a, "1", "2", scalar_a, "1", "3", scalar_a);
+
+  //   same in both, diff marks
+  //               .1*
+  //              / \
+  //             a2* a3*
+  test_a_scalar_merge(scalar_a, "2", "2", scalar_a, "3", "3", scalar_a);
+
+  //   different, left wins with 1 mark
+  //               a1*
+  //              / \
+  //             b2* a3
+  test_a_scalar_merge(scalar_b, "2", "2", scalar_a, "1", "3", scalar_b);
+
+  //   different, right wins with 1 mark
+  //               a1*
+  //              / \
+  //             a2  b3*
+   test_a_scalar_merge(scalar_a, "1", "2", scalar_b, "3", "3", scalar_b);
+
+  //   different, conflict with 1 mark
+  //               .1*
+  //              / \
+  //             a2* b3*
+  test_a_scalar_merge(scalar_a, "2", "2", scalar_b, "3", "3", scalar_conflict);
+
+  //   different, left wins with 2 marks
+  //               a1*
+  //              / \
+  //             a2  a3
+  //            / \
+  //           b4* b5*
+  //            \ /
+  //             b6
+  test_a_scalar_merge(scalar_b, "45", "2456", scalar_a, "1", "3", scalar_b);
+
+  //   different, right wins with 2 marks
+  //               a1*
+  //              / \
+  //             a2  a3
+  //                / \
+  //               b4* b5*
+  //                \ /
+  //                 b6
+  test_a_scalar_merge(scalar_a, "1", "2", scalar_b, "45", "3456", scalar_a);
+
+  //   different, conflict with 1 mark winning, 1 mark losing
+  //               .1*
+  //              / \
+  //             a2* a3*
+  //              \ / \
+  //               a4  b5*
+  test_a_scalar_merge(scalar_a, "23", "24", scalar_b, "5", "5", scalar_conflict);
+
+  //
+  //               .1*
+  //              / \
+  //             a2* a3*
+  //            / \ /
+  //           b4* a5
+  test_a_scalar_merge(scalar_b, "4", "4", scalar_a, "23", "35", scalar_conflict);
+
+  //   different, conflict with 2 marks both conflicting
+  //               
+  //               .1*
+  //              / \
+  //             .2  a3*
+  //            / \
+  //           b4* b5*
+  //            \ /
+  //             b6
+  test_a_scalar_merge(scalar_b, "45", "2456", scalar_a, "3", "3", scalar_conflict);
+
+  //
+  //               .1*
+  //              / \
+  //             a2* .3
+  //                / \
+  //               b4* b5*
+  //                \ /
+  //                 b6
+  test_a_scalar_merge(scalar_a, "2", "2", scalar_b, "45", "3456", scalar_conflict);
+
+  //
+  //               _.1*_
+  //              /     \
+  //             .2      .3
+  //            / \     / \
+  //           a4* a5* b6* b7*
+  //            \ /     \ /
+  //             a8      b9
+  test_a_scalar_merge(scalar_a, "45", "2458", scalar_b, "67", "3679", scalar_conflict);
+}
+
+typedef enum { scalar_a, scalar_b, scalar_conflict } scalar_val;
+
+void
+dump(scalar_val v, std::string & out)
+{
+  switch (v)
+    {
+    case scalar_a:
+      out = "scalar_a";
+      break;
+    case scalar_b:
+      out = "scalar_b";
+      break;
+    case scalar_conflict:
+      out = "scalar_conflict";
+      break;
+    }
+}
+
+void string_to_set(std::string const & from, std::set<revision_id> to)
+{
+  to.clear();
+  for (std::string::const_iterator i = from.begin(); i != from.end(); ++i)
+    {
+      std::string rid_str(*i, 40);
+      to.insert(revision_id(rid_str));a
+    }
+}
+
+void
+test_a_scalar_merge(scalar_val left_val, std::string const & left_markings_str,
+                    std::string const & left_uncommon_str,
+                    scalar_val right_val, std::string const & right_markings_str,
+                    std::string const & right_uncommon_str,
+                    scalar_val expected_outcome)
+{
+  test_a_scalar_merge_impl<foo>(left_val, left_markings_str, left_uncommon_str,
+                                right_val, right_markings_str, right_uncommon_str,
+                                expected_outcome);
+}
+
+template <typename S> void
+test_a_scalar_merge_impl(scalar_val left_val, std::string const & left_mark_str,
+                         std::string const & left_uncommon_str,
+                         scalar_val right_val, std::string const & right_mark_str,
+                         std::string const & right_uncommon_str,
+                         scalar_val expected_outcome)
+{
+  MM(left_val);
+  MM(left_mark_str);
+  MM(left_uncommon_str);
+  MM(right_val);
+  MM(right_mark_str);
+  MM(right_uncommon_str);
+  MM(expected_outcome);
+
+  S scalar;
+  roster_t left_parent, right_parent;
+  marking_map left_markings, right_markings;
+  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  roster_merge_result result;
+
+  std::set<revision_id> left_mark_set, right_mark_set;
+
+  MM(left_parent);
+  MM(right_parent);
+  MM(left_markings);
+  MM(right_markings);
+  MM(left_uncommon_ancestors);
+  MM(right_uncommon_ancestors);
+  MM(left_mark_set);
+  MM(right_mark_set);
+  MM(result);
+
+  string_to_set(left_markings_str, left_mark_set);
+  scalar.setup_parent(left_val, left_mark_set, left_parent, left_markings);
+  string_to_set(right_markings_str, right_mark_set);
+  scalar.setup_parent(right_val, right_mark_set, right_parent, right_markings);
+
+  string_to_set(left_uncommon_str, left_uncommon_ancestors);
+  string_to_set(right_uncommon_str, right_uncommon_ancestors);
+
+  roster_merge(left_parent, left_markings, left_uncommon_ancestors,
+               right_parent, right_markings, right_uncommon_ancestors,
+               result);
+
+  scalar.check_result(result, expected_outcome);
+}
 
 namespace
 {
