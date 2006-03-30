@@ -1,3 +1,58 @@
+2006-03-30  Henry Nestler  <Henry@BigFoot.de>
+
+	* mnt.1: '--bind' for serve on host, syntax from monotone.texi
+
+2006-03-29  Nathaniel Smith  <njs@pobox.com>
+
+	* testsuite.at: Clean up the macros that call monotone a little.
+
+2006-03-29  Nathaniel Smith  <njs@pobox.com>
+
+	* .mt-ignore: Rename to .mtn-ignore.
+
+2006-03-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Set date.
+
+2006-03-29  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (package_revision.txt): Whoops, missed a few spots,
+	thanks to Marcel for the tip...
+
+2006-03-29  Nathaniel Smith  <njs@pobox.com>
+
+	* INSTALL: mtn-related tweaks.
+	* monotone.spec, win32/monotone.iss: Untested mtn-related tweaks,
+	and bump version to 0.26pre3.
+	* debian/changelog: Bump version.
+	
+2006-03-29  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: First pass at entry for 0.26pre3.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (construct_revisions_from_ancestry): Convert
+	.mt-ignore to .mtn-ignore.  We have always been at war with
+	Oceania.
+	* tests/t_rosterify_mt_ignore.at, testsuite.at: Test it.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (ignore_file): Read .mtn-ignore, not .mt-ignore.
+	* tests/t_mt_ignore.at, tests/t_add.at, testsuite.at: Adjust
+	accordingly.
+	* monotone.texi: Update accordingly.
+
+2006-03-28  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/t_case_insensitive__MTN.at, testsuite.at: New test.
+
+2006-03-28  Matthew Nicholson  <matt@matt-land.com>
+
+	* contrib/monotone.bash_completion: Convert to use mtn instead of
+	monotone.
+
 2006-03-28  Lapo Luchini  <lapo@lapo.it>
 
 	* AUTHORS: Added myself as translator.
@@ -428,6 +483,17 @@
 2006-03-08  Matt Johnston  <matt@ucc.asn.au>
 
 	* monotone.texi: mention merge_into_dir in the pivot_root description.
+
+2006-03-08  Derek Scherger  <derek@echologic.com>
+
+	* work.{cc,hh} (get_current_restricted_roster,
+	get_base_and_current_restricted_roster): comment out
+	suspicious/unused functions
+
+2006-03-08  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_revert_file_blocked_by_dir.at: new XFAIL test for revert
+	* testsuite.at: call it
 
 2006-03-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
