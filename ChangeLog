@@ -1,3 +1,7 @@
+2006-03-30  Henry Nestler  <Henry@BigFoot.de>
+
+	* mnt.1: '--bind' for serve on host, syntax from monotone.texi
+
 2006-03-29  Nathaniel Smith  <njs@pobox.com>
 
 	* testsuite.at: Clean up the macros that call monotone a little.
