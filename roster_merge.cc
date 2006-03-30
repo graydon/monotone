@@ -728,7 +728,7 @@ test_scalar_merges()
 
 typedef enum { scalar_a, scalar_b, scalar_conflict } scalar_val;
 
-void
+template <> void
 dump(scalar_val v, std::string & out)
 {
   switch (v)
@@ -756,54 +756,54 @@ void string_to_set(std::string const & from, std::set<revision_id> to)
 }
 
 void
-test_a_scalar_merge(scalar_val left_val, std::string const & left_markings_str,
+test_a_scalar_merge(scalar_val left_val, std::string const & left_marks_str,
                     std::string const & left_uncommon_str,
-                    scalar_val right_val, std::string const & right_markings_str,
+                    scalar_val right_val, std::string const & right_marks_str,
                     std::string const & right_uncommon_str,
                     scalar_val expected_outcome)
 {
-  test_a_scalar_merge_impl<foo>(left_val, left_markings_str, left_uncommon_str,
-                                right_val, right_markings_str, right_uncommon_str,
+  test_a_scalar_merge_impl<foo>(left_val, left_marks_str, left_uncommon_str,
+                                right_val, right_marks_str, right_uncommon_str,
                                 expected_outcome);
 }
 
 template <typename S> void
-test_a_scalar_merge_impl(scalar_val left_val, std::string const & left_mark_str,
+test_a_scalar_merge_impl(scalar_val left_val, std::string const & left_marks_str,
                          std::string const & left_uncommon_str,
-                         scalar_val right_val, std::string const & right_mark_str,
+                         scalar_val right_val, std::string const & right_marks_str,
                          std::string const & right_uncommon_str,
                          scalar_val expected_outcome)
 {
   MM(left_val);
-  MM(left_mark_str);
+  MM(left_marks_str);
   MM(left_uncommon_str);
   MM(right_val);
-  MM(right_mark_str);
+  MM(right_marks_str);
   MM(right_uncommon_str);
   MM(expected_outcome);
 
   S scalar;
   roster_t left_parent, right_parent;
-  marking_map left_markings, right_markings;
+  marking_map left_markings, right_marks;
   std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
   roster_merge_result result;
 
-  std::set<revision_id> left_mark_set, right_mark_set;
+  std::set<revision_id> left_marks, right_marks;
 
   MM(left_parent);
   MM(right_parent);
   MM(left_markings);
-  MM(right_markings);
+  MM(right_marks);
   MM(left_uncommon_ancestors);
   MM(right_uncommon_ancestors);
-  MM(left_mark_set);
-  MM(right_mark_set);
+  MM(left_marks);
+  MM(right_marks);
   MM(result);
 
-  string_to_set(left_markings_str, left_mark_set);
-  scalar.setup_parent(left_val, left_mark_set, left_parent, left_markings);
-  string_to_set(right_markings_str, right_mark_set);
-  scalar.setup_parent(right_val, right_mark_set, right_parent, right_markings);
+  string_to_set(left_marks_str, left_marks);
+  scalar.setup_parent(left_val, left_marks, left_parent, left_markings);
+  string_to_set(right_marks_str, right_marks);
+  scalar.setup_parent(right_val, right_marks, right_parent, right_markings);
 
   string_to_set(left_uncommon_str, left_uncommon_ancestors);
   string_to_set(right_uncommon_str, right_uncommon_ancestors);
