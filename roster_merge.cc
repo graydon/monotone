@@ -599,7 +599,7 @@ roster_merge(roster_t const & left_parent,
 //   node name, name and parent, file and dir
 //   file content
 //   node attr, file and dir
-
+//
 // attr lifecycle:
 //   seen in both -->mark merge cases, above
 //   live in one and unseen in other -->live
@@ -750,7 +750,7 @@ void string_to_set(std::string const & from, std::set<revision_id> to)
   to.clear();
   for (std::string::const_iterator i = from.begin(); i != from.end(); ++i)
     {
-      std::string rid_str(*i, 40);
+      std::string rid_str(40, *i);
       to.insert(revision_id(rid_str));a
     }
 }
@@ -765,6 +765,117 @@ test_a_scalar_merge(scalar_val left_val, std::string const & left_marks_str,
   test_a_scalar_merge_impl<foo>(left_val, left_marks_str, left_uncommon_str,
                                 right_val, right_marks_str, right_uncommon_str,
                                 expected_outcome);
+}
+
+struct base_scalar
+{
+  testing_node_id_source nis;
+  node_id root_nid;
+  node_id thing_nid;
+  base_scalar() : root_nid(nis.next()), thing_nid(nis.next())
+  {}
+
+  static const revision_id root_rid(std::string("0000000000000000000000000000000000000000"));
+  static const file_id arbitrary_file(std::string("0000000000000000000000000000000000000000"));
+
+  void
+  make_dir(std::string const & name, node_id nid, roster_t & r, marking_map & markings)
+  {
+    r.create_dir_node(nid);
+    r.attach_node(split(name));
+    marking_t marking;
+    marking.birth_revision = root_rid;
+    marking.parent_name.insert(root_rid);
+    safe_insert(markings, std::make_pair(nid, marking));
+  }
+
+  void
+  make_file(std::string const & name, node_id nid, roster_t & r, marking_map & markings)
+  {
+    r.create_file_node(arbitrary_file, nid);
+    r.attach_node(split(name));
+    marking_t marking;
+    marking.birth_revision = root_rid;
+    marking.parent_name.insert(root_rid);
+    marking.file_content.insert(root_rid);
+    safe_insert(markings, std::make_pair(nid, marking));
+  }
+
+  void
+  make_root(roster_t & r, marking_map & markings)
+  {
+    make_dir("", root_nid, r, markings);
+  }
+};
+
+struct file_scalar : public base_scalar
+{
+  void
+  make_thing(roster_t & r, marking_map & markings)
+  {
+    make_root(r, markings);
+    make_file("thing", thing_nid, r, markings);
+  }
+};
+
+struct dir_scalar : public base_scalar
+{
+  void
+  make_thing(roster_t & r, marking_map & markings)
+  {
+    make_root(r, markings);
+    make_dir("thing", thing_nid, r, markings);
+  }
+};
+
+template <typename T>
+struct basename_scalar : public T
+{
+  split_path path_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return split((val == scalar_a) ? "a" : "b");
+  }
+  path_component pc_for(scalar_val val)
+  {
+    split_path sp = path_for(val);
+    return idx(sp, sp.size() - 1);
+  }
+
+  void
+  setup_parent(scalar_val val, std::set<revision_id> marks,
+               roster_t & r, marking_map & markings)
+  {
+    make_thing(r, markings);
+    r.detach_node(thing_nid);
+    r.attach_node(thing_nid, path_for(val));
+    safe_get(markings, thing_nid).parent_name = marks;
+  }
+
+  void
+  check_result(scalar_val left_val, scalar_val right_val,
+               roster_merge_result const & result, scalar_val expected_val)
+  {
+    split_path name;
+    switch (val)
+      {
+      case scalar_a: case scalar_b:
+        result.roster.get_name(thing_nid, name);
+        I(name == path_for(expected_val));
+        I(result.is_clean());
+        break;
+      case scalar_conflict:
+        node_name_conflict const & c = idx(result.node_name_conflicts, 0);
+        I(c.nid == thing_nid);
+        I(c.left == std::make_pair(root_nid, );
+        // resolve the conflict, thus making sure that resolution works and
+        // that this was the only conflict signaled
+        result.roster.attach_node(thing_nid, split("thing"));
+        result.node_name_conflicts.pop_back();
+        I(result.is_clean());
+        break;
+      }
+  }
 }
 
 template <typename S> void
@@ -812,7 +923,7 @@ test_a_scalar_merge_impl(scalar_val left_val, std::string const & left_marks_str
                right_parent, right_markings, right_uncommon_ancestors,
                result);
 
-  scalar.check_result(result, expected_outcome);
+  scalar.check_result(left_val, right_val, result, expected_outcome);
 }
 
 namespace
