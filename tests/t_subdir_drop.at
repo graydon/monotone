@@ -1,5 +1,5 @@
 AT_SETUP([(minor) drop in subdir])
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_CHECK(mkdir subdir)
 AT_CHECK(mkdir subdir/anotherdir)
@@ -7,18 +7,18 @@ AT_DATA(subdir/foo, [data data
 ])
 AT_DATA(subdir/anotherdir/bar, [more data
 ])
-AT_CHECK(MONOTONE add ., [], [ignore], [ignore])
+AT_CHECK(MTN add ., [], [ignore], [ignore])
 COMMIT(testbranch)
 REV=`BASE_REVISION`
 
 # Create a checkout we can update
-AT_CHECK(MONOTONE checkout --revision=$REV codir, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --revision=$REV codir, [], [ignore], [ignore])
 
-AT_CHECK( (cd subdir && MONOTONE drop foo), [], [ignore], [ignore])
-AT_CHECK( (cd subdir && MONOTONE drop --recursive anotherdir), [], [ignore], [ignore])
+AT_CHECK( (cd subdir && MTN drop foo), [], [ignore], [ignore])
+AT_CHECK( (cd subdir && MTN drop --recursive anotherdir), [], [ignore], [ignore])
 COMMIT(testbranch)
 
-AT_CHECK( (cd codir && MONOTONE update), [], [ignore], [ignore])
+AT_CHECK( (cd codir && MTN update), [], [ignore], [ignore])
 AT_CHECK(test -f codir/subdir/foo, [1])
 AT_CHECK(test -f codir/subdir/anotherdir/bar, [1])
 

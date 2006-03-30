@@ -1,5 +1,5 @@
 AT_SETUP([automate leaves])
-MONOTONE_SETUP
+MTN_SETUP
 
 # A
 # |\
@@ -9,14 +9,14 @@ MONOTONE_SETUP
 # ^testbranch
 #   ^otherbranch
 
-AT_CHECK(MONOTONE automate leaves, [], [], [ignore])
+AT_CHECK(MTN automate leaves, [], [], [ignore])
 
 ADD_FILE(testfile, [blah blah
 ])
 COMMIT(testbranch)
 REV_A=`BASE_REVISION`
 
-AT_CHECK(MONOTONE automate leaves, [], [stdout], [ignore])
+AT_CHECK(MTN automate leaves, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_A)
 
@@ -25,7 +25,7 @@ SET_FILE(testfile, [other stuff
 COMMIT(testbranch)
 REV_B=`BASE_REVISION`
 
-AT_CHECK(MONOTONE automate leaves, [], [stdout], [ignore])
+AT_CHECK(MTN automate leaves, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_B)
 
@@ -38,18 +38,18 @@ REV_C=`BASE_REVISION`
 
 AT_CHECK(echo $REV_B > bc)
 AT_CHECK(echo $REV_C >> bc)
-AT_CHECK(MONOTONE automate leaves, [], [stdout], [ignore])
+AT_CHECK(MTN automate leaves, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, sort < bc)
 
-AT_CHECK(MONOTONE propagate testbranch otherbranch, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN propagate testbranch otherbranch, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 REV_D=`BASE_REVISION`
 
 AT_CHECK(test $REV_D != $REV_B)
 AT_CHECK(test $REV_D != $REV_C)
 
-CHECK_SAME_STDOUT(MONOTONE automate leaves, MONOTONE automate heads otherbranch)
-CHECK_DIFFERENT_STDOUT(MONOTONE automate leaves, MONOTONE automate heads testbranch)
+CHECK_SAME_STDOUT(MTN automate leaves, MTN automate heads otherbranch)
+CHECK_DIFFERENT_STDOUT(MTN automate leaves, MTN automate heads testbranch)
 
 AT_CLEANUP

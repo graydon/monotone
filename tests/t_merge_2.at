@@ -1,5 +1,5 @@
 AT_SETUP([test a merge 2])
-MONOTONE_SETUP
+MTN_SETUP
 
 NEED_UNB64
 
@@ -1579,7 +1579,7 @@ UNB64(right.b64, right)
 UNB64(correct.b64, correct)
 
 AT_CHECK(cp -f parent testfile)
-AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(MTN add testfile, [], [ignore], [ignore])
 COMMIT(testbranch)
 PARENT_SHA=`BASE_REVISION`
 
@@ -1591,9 +1591,9 @@ REVERT_TO($PARENT_SHA)
 AT_CHECK(cp -f right testfile)
 COMMIT(testbranch)
 
-AT_CHECK(MONOTONE --branch=testbranch merge, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch merge, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 AT_CHECK(cmp testfile correct)
 
 AT_CLEANUP

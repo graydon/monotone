@@ -84,7 +84,7 @@ function ignore_file(name)
    -- project specific
    if (ignored_files == nil) then
       ignored_files = {}
-      local ignfile = io.open(".mt-ignore", "r")
+      local ignfile = io.open(".mtn-ignore", "r")
       if (ignfile ~= nil) then
          local line = ignfile:read()
          while (line ~= nil)
@@ -102,8 +102,8 @@ function ignore_file(name)
           -- no error from the regex.search call
           if result == true then return true end
       else
-          -- regex.search had a problem, warn the user their .mt-ignore file syntax is wrong
-          io.stderr:write("WARNING: the line '" .. line .. "' in your .mt-ignore file caused error '" .. result .. "'"
+          -- regex.search had a problem, warn the user their .mtn-ignore file syntax is wrong
+          io.stderr:write("WARNING: the line '" .. line .. "' in your .mtn-ignore file caused error '" .. result .. "'"
                            .. " while matching filename '" .. name .. "'.\nignoring this regex for all remaining files.\n")
           table.remove(ignored_files, i)
       end
@@ -203,7 +203,7 @@ function edit_comment(basetext, user_log_message)
 
    local tmp, tname = temp_file()
    if (tmp == nil) then return nil end
-   basetext = "MT: " .. string.gsub(basetext, "\n", "\nMT: ") .. "\n"
+   basetext = "MTN: " .. string.gsub(basetext, "\n", "\nMTN: ") .. "\n"
    if user_log_message == "" then
       tmp:write("\n")
    else
@@ -224,7 +224,7 @@ function edit_comment(basetext, user_log_message)
    local res = ""
    local line = tmp:read()
    while(line ~= nil) do 
-      if (not string.find(line, "^MT:")) then
+      if (not string.find(line, "^MTN:")) then
          res = res .. line .. "\n"
       end
       line = tmp:read()

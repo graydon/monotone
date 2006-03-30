@@ -1,5 +1,5 @@
 AT_SETUP([no-change deltas disappear])
-MONOTONE_SETUP
+MTN_SETUP
 
 
 # If we have a changeset representing a reversion, like
@@ -26,7 +26,7 @@ SET_FILE(testfile, [version 1
 ])
 ADD_FILE(end_file, [end file
 ])
-AT_CHECK(MONOTONE drop start_file, [], [stdout], [ignore])
+AT_CHECK(MTN drop start_file, [], [stdout], [ignore])
 COMMIT(testbranch)
 NEW=`BASE_REVISION`
 NEW_F_SHA=`SHA1(testfile)`
@@ -34,10 +34,10 @@ NEW_OTHER_SHA=`SHA1(end_file)`
 
 AT_CHECK(test $BASE_F_SHA = $NEW_F_SHA)
 
-AT_CHECK(MONOTONE diff --revision $BASE --revision $NEW, [], [stdout], [ignore])
+AT_CHECK(MTN diff --revision $BASE --revision $NEW, [], [stdout], [ignore])
 AT_CHECK(QGREP($NEW_OTHER_SHA stdout))
 AT_CHECK(QGREP($BASE_F_SHA stdout), [1])
-AT_CHECK(MONOTONE diff --revision $NEW --revision $BASE, [], [stdout], [ignore])
+AT_CHECK(MTN diff --revision $NEW --revision $BASE, [], [stdout], [ignore])
 AT_CHECK(QGREP($BASE_OTHER_SHA stdout))
 AT_CHECK(QGREP($BASE_F_SHA stdout), [1])
 

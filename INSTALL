@@ -144,7 +144,7 @@ building and installation process for monotone
 
 3. building monotone
 
-  * type "make". this should produce a monotone binary in your current
+  * type "make". this should produce a mtn binary in your current
     directory. if not, please send a build log to 
     monotone-devel@nongnu.org with a description of the failure.
 
@@ -158,19 +158,11 @@ building and installation process for monotone
     be free to share it with others or make changes and submit them to
     us:
 
-        monotone --db=mt.db db init
+        mtn --db=mt.mtn db init
 
-        monotone --db=mt.db read  <<EOF
-         [pubkey monotone@off.net]
-         MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCkVU7BYI5bRRJmkJc8gomO9WdTTGG10Lmh
-         PdAEqD6sSdsMkTC9okfsQQ8obE+GODrFa70fX5PJNevNoE+Ryxzu+xtJjmuR2tYTeRNwNa0F
-         dIo/QLteQ4Vwh5162It1kPhLKb1Ki62ZG8aw6ATS4GQVJPci2g1lpn1RG0Z+fFdFJQIBEQ==
-         [end]
-        EOF
+        mtn --db=mt.mtn --key="" pull venge.net net.venge.monotone
 
-        monotone --db=mt.db --key="" pull off.net net.venge.monotone
-
-        monotone --db=mt.db --branch=net.venge.monotone checkout monotone-sources
+        mtn --db=mt.mtn --branch=net.venge.monotone checkout monotone-sources
 
 5. upgrading
 

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.26pre2, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.26pre3, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE(1.7.1)
 AC_CONFIG_SRCDIR([app_state.cc])
 AC_CONFIG_TESTDIR([tests])
@@ -277,7 +277,9 @@ fi
 
 AC_CACHE_CHECK([if this is Windows],
        ac_win32, [
-       AC_TRY_COMPILE([#include <windows.h>],
+       AC_TRY_COMPILE([#ifdef WIN32
+                       #include <windows.h>
+                       #endif],
                       [HANDLE h; DWORD d;],
                       ac_win32=yes,
                       ac_win32=no)

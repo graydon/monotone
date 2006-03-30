@@ -33,13 +33,14 @@ struct keyreader : public packet_consumer
   virtual void consume_key_pair(rsa_keypair_id const & ident,
                                 keypair const & kp)
   {
+    L(FL("reading key pair '%s' from key store") % ident);
     E(!ks->key_pair_exists(ident),
       F("Key store has multiple keys with id '%s'.") % ident);
     ks->keys.insert(std::make_pair(ident, kp));
     hexenc<id> hash;
     key_hash_code(ident, kp.pub, hash);
     ks->hashes.insert(std::make_pair(hash, ident));
-    L(FL("Read key pair '%s' from key store.") % ident);
+    L(FL("successfully read key pair '%s' from key store") % ident);
   } 
 };
 
@@ -64,11 +65,17 @@ key_store::read_key_dir()
 {
   std::vector<utf8> key_files, dirs;
   if (directory_exists(key_dir))
-    read_directory(key_dir, key_files, dirs);
+    {
+      L(FL("reading key dir '%s'") % key_dir);
+      read_directory(key_dir, key_files, dirs);
+    }
+  else
+    L(FL("key dir '%s' does not exist") % key_dir);
   keyreader kr(this);
   for (std::vector<utf8>::const_iterator i = key_files.begin();
        i != key_files.end(); ++i)
     {
+      L(FL("reading keys from file '%s'") % (*i));
       data dat;
       read_data(key_dir / (*i)(), dat);
       std::istringstream is(dat());
@@ -90,10 +97,14 @@ key_store::ensure_in_database(rsa_keypair_id const & ident)
 {
   maybe_read_key_dir();
   if (app->db.public_key_exists(ident))
-    return;
+    {
+      L(FL("public key '%s' is already in db, not loading") % ident);
+      return;
+    }
   std::map<rsa_keypair_id, keypair>::iterator i = keys.find(ident);
   I(i != keys.end());
   app->db.put_key(ident, i->second.pub);
+  L(FL("loaded public key '%s' into db") % ident);
 }
 
 bool
@@ -187,6 +198,7 @@ key_store::write_key(rsa_keypair_id const & ident)
   data dat(oss.str());
   system_path file;
   get_key_file(ident, file);
+  L(FL("writing key '%s' to file '%s' in dir '%s'") % ident % file % key_dir);
   write_data(file, dat, key_dir);
 }
 

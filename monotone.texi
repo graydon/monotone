@@ -636,11 +636,13 @@ the ``switching point'' for communication.
 
 A @dfn{workspace} is a tree of files in your file system, arranged
 according to the list of file paths and IDs in a particular
-manifest. A special directory called @file{MT} exists in the root of
-any workspace. Monotone keeps some special files in the @file{MT}
-directory, in order to track changes you make to your workspace.
+manifest. A special directory called @file{_MTN} exists in the root of
+any workspace. Monotone keeps some special files in the @file{_MTN}
+directory, in order to track changes you make to your workspace.  If
+you ever want to know if a directory is a monotone workspace, just
+look for this @file{_MTN} directory.
 
-Aside from the special @file{MT} directory, a workspace is just a
+Aside from the special @file{_MTN} directory, a workspace is just a
 normal tree of files. You can directly edit the files in a working
 copy using a plain text editor or other program; monotone will
 automatically notice when you make any changes. If you wish to add
@@ -666,7 +668,7 @@ database and a workspace; the network is not involved.
   |      local      |   <----------     |  src/func.h
   |     database    |    add,           |  src/main.c
   |                 |    or commit      |  Makefile
-  \_________________/                   |  MT/
+  \_________________/                   |  _MTN/
                                         |
 @end group
 @end smallexample
@@ -1113,7 +1115,7 @@ command, to prevent spurious creation of databases when an invalid
 
 In real life, most people prefer to keep one database for each project
 they work on.  If we followed that convention here in the tutorial,
-though, then all the databases would be called @code{juicebot.db}, and
+though, then all the databases would be called @code{juicebot.mtn}, and
 that would make things more confusing to read.  So instead, we'll have
 them each name their database after themselves.
 
@@ -1121,7 +1123,7 @@ Thus Jim issues the command:
 
 @smallexample
 @group
-$ monotone db init --db=~/jim.db
+$ monotone db init --db=~/jim.mtn
 @end group
 @end smallexample
 
@@ -1129,7 +1131,7 @@ Abe issues the command:
 
 @smallexample
 @group
-$ monotone db init --db=~/abe.db
+$ monotone db init --db=~/abe.mtn
 @end group
 @end smallexample
 
@@ -1137,7 +1139,7 @@ And Beth issues the command:
 
 @smallexample
 @group
-$ monotone db init --db=~/beth.db
+$ monotone db init --db=~/beth.mtn
 @end group
 @end smallexample
 
@@ -1256,12 +1258,12 @@ something a little bit different.  He uses the @code{monotone setup}
 command to create a new workspace.
 
 This command creates the named directory (if it doesn't already exist),
-and creates the @file{MT} directory within it.  The @file{MT} directory
+and creates the @file{_MTN} directory within it.  The @file{_MTN} directory
 is how monotone recognizes that a directory is a workspace, and
 monotone stores some bookkeeping files within it.  For instance, command
 line values for the @option{--db}, @option{--branch} or @option{--key}
 options to the @code{setup} command will be cached in a file called
-@file{MT/options}, so you don't have to keep passing them to monotone
+@file{_MTN/options}, so you don't have to keep passing them to monotone
 all the time.
 
 He chooses @code{jp.co.juicebot.jb7} as a branch name. (See
@@ -1270,7 +1272,7 @@ names.)  Jim then creates his workspace:
 
 @smallexample
 @group
-/home/jim$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 setup juice
+/home/jim$ monotone --db=jim.mtn --branch=jp.co.juicebot.jb7 setup juice
 /home/jim$ cd juice
 /home/jim/juice$
 @end group
@@ -1349,12 +1351,12 @@ monotone: adding src/banana.c to workspace add set
 @end smallexample
 
 This command produces a record of Jim's intentions in a special file
-called @file{MT/work}, stored in the workspace. The file is plain
+called @file{_MTN/work}, stored in the workspace. The file is plain
 text:
 
 @smallexample
 @group
-$ cat MT/work
+$ cat _MTN/work
 add_file "include/jb.h"
 
 add_file "src/apple.c"
@@ -1477,7 +1479,7 @@ $ monotone diff
 
 Satisfied with the work he's done, Jim wants to save his changes.  He
 then commits his workspace, which causes monotone to process the
-@file{MT/work} file and record the file contents, manifest, and
+@file{_MTN/work} file and record the file contents, manifest, and
 revision into the database. Since he provided a branch name when he
 ran @command{setup}, monotone will use this as the default branch name
 when he commits.
@@ -1491,15 +1493,15 @@ monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
 
-When monotone committed Jim's revision, erased the @file{MT/work} file,
-and wrote a new file called @file{MT/revision}, which contains the
+When monotone committed Jim's revision, erased the @file{_MTN/work} file,
+and wrote a new file called @file{_MTN/revision}, which contains the
 workspace's new base revision ID. Jim can use this revision ID in the
 future, as an argument to the @command{checkout} command, if he wishes
 to return to this revision:
 
 @smallexample
 @group
-$ cat MT/revision
+$ cat _MTN/revision
 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
@@ -1588,7 +1590,7 @@ First, Abe exports his public key:
 
 @smallexample
 @group
-$ monotone --db=~/abe.db pubkey abe@@juicebot.co.jp >~/abe.pubkey
+$ monotone --db=~/abe.mtn pubkey abe@@juicebot.co.jp >~/abe.pubkey
 @end group
 @end smallexample
 
@@ -1609,7 +1611,7 @@ Beth also exports her public key:
 
 @smallexample
 @group
-$ monotone --db=~/beth.db pubkey beth@@juicebot.co.jp >~/beth.pubkey
+$ monotone --db=~/beth.mtn pubkey beth@@juicebot.co.jp >~/beth.pubkey
 @end group
 @end smallexample
 
@@ -1628,7 +1630,7 @@ into his database:
 
 @smallexample
 @group
-$ cat ~/abe.pubkey ~/beth.pubkey | monotone --db=~/jim.db read
+$ cat ~/abe.pubkey ~/beth.pubkey | monotone --db=~/jim.mtn read
 monotone: read 2 packets
 @end group
 @end smallexample
@@ -1662,7 +1664,7 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.db serve "jp.co.juicebot.jb7*"
+$ monotone --db=jim.mtn serve "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
@@ -1682,7 +1684,7 @@ code. To do this he issues the monotone @code{sync} command:
 
 @smallexample
 @group
-$ monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+$ monotone --db=abe.mtn sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
 monotone: setting default server to jim-laptop.juicebot.co.jp
 monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
 monotone: setting default branch exclude pattern to ''
@@ -1734,7 +1736,7 @@ it:
 
 @smallexample
 @group
-$ monotone --db=abe.db --branch=jp.co.juicebot.jb7 checkout .
+$ monotone --db=abe.mtn --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
@@ -1791,7 +1793,7 @@ monotone: beginning commit on branch 'jp.co.juicebot.jb7'
 @end smallexample
 
 Abe neglected to provide a @option{--message} option specifying the
-change log on the command line and the file @file{MT/log} is empty
+change log on the command line and the file @file{_MTN/log} is empty
 because he did not document his changes there.  Monotone therefore
 invokes an external ``log message editor'' --- typically an editor
 like @command{vi} --- with an explanation of the changes being
@@ -1800,28 +1802,28 @@ committed and the opportunity to enter a log message.
 @smallexample
 @group
 polling implementation of src/apple.c
-MT:
-MT: ----------------------------------------------------------------------
-MT: Enter Log.  Lines beginning with `MT:' are removed automatically
-MT:
-MT: new_manifest [b33cb337dccf21d6673f462d677a6010b60699d1]
-MT:
-MT: old_revision [2e24d49a48adf9acf3a1b6391a080008cbef9c21]
-MT: old_manifest [2098eddbe833046174de28172a813150a6cbda7b]
-MT: 
-MT: patch "src/apple.c"
-MT: from [2650ffc660dd00a08b659b883b65a060cac7e560]
-MT:   to [e2c418703c863eabe70f9bde988765406f885fd0]
-MT:
-MT: ----------------------------------------------------------------------
-MT:
+MTN:
+MTN: ----------------------------------------------------------------------
+MTN: Enter Log.  Lines beginning with `MTN:' are removed automatically
+MTN:
+MTN: new_manifest [b33cb337dccf21d6673f462d677a6010b60699d1]
+MTN:
+MTN: old_revision [2e24d49a48adf9acf3a1b6391a080008cbef9c21]
+MTN: old_manifest [2098eddbe833046174de28172a813150a6cbda7b]
+MTN: 
+MTN: patch "src/apple.c"
+MTN: from [2650ffc660dd00a08b659b883b65a060cac7e560]
+MTN:   to [e2c418703c863eabe70f9bde988765406f885fd0]
+MTN:
+MTN: ----------------------------------------------------------------------
+MTN:
 @end group
 @end smallexample
 
 Abe enters a single line above the explanatory message, saying
 ``polling implementation of src/apple.c''. He then saves the file and
 quits the editor. Monotone deletes all the lines beginning with
-``MT:'' and leaves only Abe's short message. Returning to the shell,
+``MTN:'' and leaves only Abe's short message. Returning to the shell,
 Abe's commit completes:
 
 @smallexample
@@ -1850,7 +1852,7 @@ Jim's:
 
 @smallexample
 @group
-$ monotone --db=beth.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+$ monotone --db=beth.mtn sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
 monotone: setting default server to jim-laptop.juicebot.co.jp
 monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
 monotone: setting default branch exclude pattern to ''
@@ -1873,7 +1875,7 @@ She checks out a copy of the tree from her database:
 
 @smallexample
 @group
-$ monotone --db=beth.db --branch=jp.co.juicebot.jb7 checkout .
+$ monotone --db=beth.mtn --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
@@ -1886,12 +1888,12 @@ $ vi src/banana.c
 @end group
 @end smallexample
 
-and logs her changes in @file{MT/log} right away so she does not
+and logs her changes in @file{_MTN/log} right away so she does not
 forget what she has done like Abe.
 
 @smallexample
 @group
-$ vi MT/log
+$ vi _MTN/log
 * src/banana.c: Added polling implementation
 @end group
 @end smallexample
@@ -2326,13 +2328,13 @@ in the team-members' keys:
 
 @smallexample
 @group
-$ monotone --db=server.db db init
+$ monotone --db=server.mtn db init
 $ monotone genkey monotone-server@@www.juicebot.co.jp
 monotone: generating key-pair 'monotone-server@@www.juicebot.co.jp'
 enter passphrase for key ID [monotone-server@@www.juicebot.co.jp] : @i{<Jim enters a new passphrase>}
 confirm passphrase for key ID [monotone-server@@www.juicebot.co.jp]: @i{<Jim confirms the passphrase>}
 monotone: storing key-pair 'monotone-server@@www.juicebot.co.jp' in /home/jim/.monotone/keys
-$ cat abe.pubkey beth.pubkey jim.pubkey | monotone --db=server.db read
+$ cat abe.pubkey beth.pubkey jim.pubkey | monotone --db=server.mtn read
 monotone: read 3 packets
 @end group
 @end smallexample
@@ -2384,7 +2386,7 @@ the @code{--bind=address:port} argument like so:
 
 @smallexample
 @group
-$ monotone --db=server.db --bind=www.juicebot.co.jp serve "jp.co.juicebot.jb7*"
+$ monotone --db=server.mtn --bind=www.juicebot.co.jp serve "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
@@ -2589,14 +2591,14 @@ Uses selector type @code{b}. For example, @code{b:net.venge.monotone} matches
 @code{branch} certs where the cert value is @code{net.venge.monotone}.
 Values to match for can have shell wildcards.  If you give a bare @code{b:}
 monotone will require you to be in a workspace, and will use the branch
-value recorded in your MT/options file.
+value recorded in your _MTN/options file.
 @item Heads selection
 Uses selector type @code{h}. For example, @code{h:net.venge.monotone} matches
 @code{branch} certs where the cert value is @code{net.venge.monotone} and 
 the associated revision is a head revision on that branch.  Values to match
 for can have shell wildcards like the branch selector.  If you give a bare 
 @code{h:} monotone will require you to be in a workspace, and use the branch
-recorded in your MT/options file.
+recorded in your _MTN/options file.
 @item Date selection
 Uses selector type @code{d}. For example, @code{d:2004-04} matches
 @code{date} certs where the cert value begins with
@@ -2759,23 +2761,23 @@ subdirectory.
 
 @heading Finding a workspace
 
-Monotone only stores a single @file{MT} directory at the root of a
-workspace. Because of this, a search is done to find the @file{MT}
+Monotone only stores a single @file{_MTN} directory at the root of a
+workspace. Because of this, a search is done to find the @file{_MTN}
 directory in case a command is executed from within a subdirectory of a
 workspace. Before a command is executed, the search for a working
 copy directory is done by traversing parent directories until an
-@file{MT} directory is found or the filesystem root is reached. Upon
-finding an @file{MT} directory, the @file{MT/options} file is read for
+@file{_MTN} directory is found or the filesystem root is reached. Upon
+finding an @file{_MTN} directory, the @file{_MTN/options} file is read for
 default options. The @option{--root} option may be used to stop the 
 search early, before reaching the root of the physical filesystem.
 
 Many monotone commands don't require a workspace and will simply
-proceed with no default options if no @file{MT} directory is found.
+proceed with no default options if no @file{_MTN} directory is found.
 However, some monotone commands do require a workspace and will fail
-if no @file{MT} directory can be found.
+if no @file{_MTN} directory can be found.
 
 The @command{checkout} and @command{setup} commands create a @i{new
-workspace} and initialize a new @file{MT/options} file based on their
+workspace} and initialize a new @file{_MTN/options} file based on their
 current option settings.
 
 
@@ -2832,8 +2834,8 @@ If you do determine that it is necessary to use inodeprints with your
 project, it is simple to enable them.  Simply run @command{monotone
 refresh_inodeprints}; this will enable inodeprints mode and generate an
 initial cache.  If you ever wish to turn them off again, simply delete
-the file @file{MT/inodeprints}.  You can at any time delete or truncate
-the @file{MT/inodeprints} file; monotone uses it only as a cache and
+the file @file{_MTN/inodeprints}.  You can at any time delete or truncate
+the @file{_MTN/inodeprints} file; monotone uses it only as a cache and
 will continue to operate correctly.
 
 Normally, instead of enabling this up on a per-workspace basis, you
@@ -2997,9 +2999,9 @@ names of control files follow a regular pattern:
 
 @table @asis
 @item Versioned control files
-Any file name beginning with @file{.mt-}
+Any file name beginning with @file{.mtn-}
 @item Non-versioned control files
-Any file in the directory @file{MT/}
+Any file in the directory @file{_MTN/}
 @end table
 
 @heading Existing control files
@@ -3008,37 +3010,34 @@ The following control files are currently used. More control files may be added
 in the future, but they will follow the patterns given above.
 
 @table @file
-@item .mt-attrs
-Contains versioned attributes of files, associated with the files'
-pathnames.
-@item .mt-ignore
+@item .mtn-ignore
 Contains a list of regular expression patterns, one per line. If it exists,
 any file with a name matching one of these patterns is ignored.
-@item MT/wanted-testresults
+@item _MTN/wanted-testresults
 Contains a list of testresult key names, one per line. If it exists, update
 will only select revisions that do not have regressions according to the given
 testresult keys.
-@item MT/revision
+@item _MTN/revision
 Contains the identity of the ``base'' revision of the workspace.
 Each workspace has a base revision. When the workspace is
 committed, the base revision is considered to be the ancestor of the
 committed revision.
-@item MT/options
+@item _MTN/options
 Contains ``sticky'' command-line options such as @option{--db} or 
 @option{--branch}, such that you do not need to enter them repeatedly
 after checking out a particular workspace.
-@item MT/work
+@item _MTN/work
 Contains a list of additions, deletions, and renames which have occurred
 in the current workspace, relative to the base version.
-@item MT/log
+@item _MTN/log
 Contains log messages to append to the ``changelog'' cert upon
 commit. The user may add content to this file while they work.  Upon a
 successful commit monotone will empty the file making it ready for the
 next edit/commit cycle.
-@item MT/inodeprints
+@item _MTN/inodeprints
 If this file exists, monotone considers the directory to be in
 @ref{Inodeprints} mode, and uses this file to cache the inodeprints.
-@item MT/debug
+@item _MTN/debug
 If monotone detects a bug in itself or crashes, then before exiting it
 dumps a log of its recent activity to this file, to aid in debugging.
 @end table
@@ -3312,7 +3311,7 @@ Your key name, @code{import@@example.net} in this example.
 @item
 Your project name, @code{wobbler} in this example.
 @item
-Your database name, @file{test.db} in this example.
+Your database name, @file{test.mtn} in this example.
 @item
 Your CVS repository path, @file{/usr/local/cvsroot} in this example.
 @item
@@ -3326,10 +3325,10 @@ copy:
 
 @smallexample
 @group
-$ monotone --db=test.db db init
-$ monotone --db=test.db genkey import@@example.net
-$ monotone --db=test.db --branch=net.example.wobbler cvs_import /usr/local/cvsroot/wobbler
-$ monotone --db=test.db --branch=net.example.wobbler checkout wobber-checkout
+$ monotone --db=test.mtn db init
+$ monotone --db=test.mtn genkey import@@example.net
+$ monotone --db=test.mtn --branch=net.example.wobbler cvs_import /usr/local/cvsroot/wobbler
+$ monotone --db=test.mtn --branch=net.example.wobbler checkout wobber-checkout
 @end group
 @end smallexample
 
@@ -3592,7 +3591,7 @@ $ cvs import wobbler vendor start
 @tab
 @smallexample
 @group
-$ monotone --db=/path/to/database.db --branch=com.foo.wobbler setup .
+$ monotone --db=/path/to/database.mtn --branch=com.foo.wobbler setup .
 $ monotone add .
 $ monotone commit
 @end group
@@ -3615,7 +3614,7 @@ $ cvs init -d /path/to/repository
 @tab
 @smallexample
 @group
-$ monotone db init --db=/path/to/database.db 
+$ monotone db init --db=/path/to/database.mtn 
 @end group
 @end smallexample
 @end multitable
@@ -3670,7 +3669,7 @@ contents of @var{path} at that revision.
 
 These commands copy a revision @var{id} out of your database, writing
 the string @var{id} into the file
-@file{@var{directory}/MT/revision}. These commands then copy every
+@file{@var{directory}/_MTN/revision}. These commands then copy every
 file version listed in the revision's manifest to paths under
 @var{directory}. For example, if the revision's manifest contains
 these entries:
@@ -3818,10 +3817,10 @@ intended.
 @ftable @command
 @item monotone setup [@var{directory}]
 This command prepares @var{directory} as a monotone workspace,
-by creating and populating the @file{MT} directory with basic
+by creating and populating the @file{_MTN} directory with basic
 information.  This information must include at least the branch and the
 database to be used, both of which will be placed in the
-@file{MT/options} file.
+@file{_MTN/options} file.
 
 This can be used with an empty directory to start a new blank project,
 or within an existing directory full of files, prior to using
@@ -3833,7 +3832,7 @@ directory is used.
 @item monotone add --unknown
 This command places ``add'' entries for the paths specified in
 @var{pathname...} in the workspace's ``work list''. The work list
-of your workspace is located at @file{MT/work}, and is a list of
+of your workspace is located at @file{_MTN/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal or renaming of files.
 
@@ -3852,7 +3851,7 @@ any added entries inserted in its manifest.
 @itemx monotone drop --missing
 This command places ``drop'' entries for the paths specified in
 @var{pathname...} in the workspace's ``work list''. The work list of
-your workspace is located at @file{MT/work}, and is a list of
+your workspace is located at @file{_MTN/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also removes
 any attributes on @var{pathname}; see @ref{File Attributes} for more
@@ -3881,7 +3880,7 @@ directories which have already been deleted.
 This command places ``rename'' entries for the paths specified in
 @var{src} and @var{dst} in the workspace's ``work list''. The second form
 renames a number of source paths to the given destination. The work
-list of your workspace is located at @file{MT/work}, and is a list of
+list of your workspace is located at @file{_MTN/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also moves any
 attributes on @var{src} to @var{dst}; see @ref{File Attributes} for more
@@ -3907,24 +3906,24 @@ and will not overwrite existing destination files.
 
 This command looks at your workspace, decides which files have
 changed, and saves the changes to your database. It does this by loading
-the revision named in the @file{MT/revision} file, locating the base
+the revision named in the @file{_MTN/revision} file, locating the base
 manifest for your workspace, applying any changes described in the
-@file{MT/work} file, and then comparing the updated base manifest to the
+@file{_MTN/work} file, and then comparing the updated base manifest to the
 files it finds in your workspace, to determine which files have been
 edited.
 
 For each edited file, a delta is copied into the database. Then the
 newly constructed manifest is recorded (as a delta) and finally the
 new revision.  Once all these objects are recorded in you database,
-@command{commit} overwrites the @file{MT/revision} file with the new
-revision ID, and deletes the @file{MT/work} file.
+@command{commit} overwrites the @file{_MTN/revision} file with the new
+revision ID, and deletes the @file{_MTN/work} file.
 
 Specifying pathnames to @command{commit} restricts the set of changes
 that are visible and results in only a partial commit of the working
 copy. Changes to files not included in the specified set of pathnames
 will be ignored and will remain in the workspace until they are
 included in a future commit. With a partial commit, only the relevant
-entries in the @file{MT/work} file will be removed and other entries
+entries in the @file{_MTN/work} file will be removed and other entries
 will remain for future commits.
 
 From within a subdirectory of the workspace the @command{commit}
@@ -3937,12 +3936,12 @@ exclusive.  Both provide a @var{logmsg} describing the commit.
 @option{--message-file} actually specifies the name of the file containing
 the log message, while @option{--message} provides it directly.
 
-The @file{MT/log} file can be edited by the user during their daily work
+The @file{_MTN/log} file can be edited by the user during their daily work
 to record the changes made to the workspace. When running the
 @command{commit} command without a @var{logmsg} supplied, the contents
-of the @file{MT/log} file will be read and passed to the Lua hook
+of the @file{_MTN/log} file will be read and passed to the Lua hook
 @code{edit_comment} as a second parameter named @var{user_log_content}.
-If the commit is successful, the @file{MT/log} file is cleared of
+If the commit is successful, the @file{_MTN/log} file is cleared of
 all content making it ready for another edit/commit cycle.
 
 If a @option{--branch} option is specified, the @command{commit} command
@@ -4169,11 +4168,11 @@ In particular, it prints:
 @itemize
 @item 
 The ``base revision ID'' and ``base manifest ID'', which are
-referenced by the file @file{MT/revision}, and which your workspace
+referenced by the file @file{_MTN/revision}, and which your workspace
 is an in-progress descendent of.
 @item
 The ``current manifest ID'', which is the ID of the manifest which
-results from applying @file{MT/work} to the base manifest, and
+results from applying @file{_MTN/work} to the base manifest, and
 updating any @sc{sha1} values of files to reflect changes you have
 made to the workspace. In other words, the current manifest ID is
 the ID which would accompany any revision you would commit, if you ran
@@ -6074,8 +6073,8 @@ execute it. This way you can modify how monotone behaves.
 
 You can put new definitions for any of these hook functions in a file
 @file{$HOME/.monotone/monotonerc}, or in your workspace in
-@file{MT/monotonerc}, both of which will be read every time monotone
-runs. Definitions in @file{MT/monotonerc} shadow (override)
+@file{_MTN/monotonerc}, both of which will be read every time monotone
+runs. Definitions in @file{_MTN/monotonerc} shadow (override)
 definitions made in your @file{$HOME/.monotone/monotonerc}. You can also tell
 monotone to interpret extra hook functions from any other @var{file}
 using the @option{--rcfile=@var{file}} option; hooks defined in files
@@ -6239,10 +6238,10 @@ change you make. The result is used as the value for a
 @code{changelog} certificate, automatically generated when you commit
 changes.
 
-The contents of @file{MT/log} are read and passed as
+The contents of @file{_MTN/log} are read and passed as
 @var{user_log_message}. This allows you to document your changes as
 you proceed instead of waiting until you are ready to commit. Upon
-a successful commit, the contents of @file{MT/log} are erased setting
+a successful commit, the contents of @file{_MTN/log} are erased setting
 the system up for another edit/commit cycle.
 
 For the default definition of this hook, see @ref{Default hooks}.
@@ -6289,7 +6288,7 @@ may affect multiple files simultaneously.
 
 The default definition of this hook recognises a number of common file
 types and extensions for temporary and generated file types that users
-typically don't want to track. If the file @file{.mt-ignore} exists,
+typically don't want to track. If the file @file{.mtn-ignore} exists,
 this hook will read a list of regular expressions from the file, one per
 line, and ignore all files matching one of these expressions. For the
 default definition of this hook, see @ref{Default hooks}.
@@ -6981,8 +6980,8 @@ into UTF-8.
 @item
 Monotone's control files are stored in UTF-8. This includes: revisions
 and manifests, both inside the database and when written to the
-@file{MT/} directory of the workspace; the @file{MT/options} and
-@file{MT/work} files; and the @file{.mt-attrs} file. Converting these
+@file{_MTN/} directory of the workspace; the @file{_MTN/options} and
+@file{_MTN/work} files; and the @file{.mt-attrs} file. Converting these
 files to any other character set will cause monotone to break; do not
 do so.
 
@@ -7051,8 +7050,8 @@ loaded.
 
 Monotone's normal form is the UTF-8 character set and the @code{0x0A}
 (LF) line ending form. This form is used in any files monotone needs
-to read, write, and interpret itself, such as: @file{MT/revision},
-@file{MT/work}, @file{MT/options}, @file{.mt-attrs}
+to read, write, and interpret itself, such as: @file{_MTN/revision},
+@file{_MTN/work}, @file{_MTN/options}, @file{.mt-attrs}
 
 @item LDH
 Letters, digits, and hyphen: the set of ASCII bytes @code{0x2D},
@@ -7770,10 +7769,10 @@ associated with it.  If @option{--message} is provided on the command
 line, it is used; if @option{--message-file} is provided, the content of
 the named file will be used as a commit message.  If the filename is '-'
 the commit message will be read from standard input.  Otherwise a log
-message editor will be invoked.  If the file @file{MT/log} exists and is
+message editor will be invoked.  If the file @file{_MTN/log} exists and is
 non-empty, its content is used to prefill the editor.  You cannot
 specify both @option{--message} and @option{--message-file} at the same
-time, and if @file{MT/log} exists and is non-empty, you can cannot
+time, and if @file{_MTN/log} exists and is non-empty, you can cannot
 specify either of them at all.
 @comment TROFF INPUT: .TP
 
@@ -7869,7 +7868,7 @@ Do not evaluate "standard" Lua hooks compiled into @b{monotone}.
 
 @item @b{--norc}
 Do not load Lua hooks from user's @b{~/.monotone/monotonerc} or the
-workspace's @b{MT/monotonerc} file.
+workspace's @b{_MTN/monotonerc} file.
 @comment TROFF INPUT: .TP
 
 @item @b{--rcfile=}@i{<file>}
@@ -7931,7 +7930,7 @@ committing a new revision, rather than the current time.  Useful when
 importing history from another version control system.
 
 @item @b{--root=}@i{<root dir>}
-Stop the search for a workspace (containing the @file{MT} directory)
+Stop the search for a workspace (containing the @file{_MTN} directory)
 at the specified root directory rather than at the physical root of the
 filesystem.
 

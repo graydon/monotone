@@ -1,5 +1,5 @@
 AT_SETUP([merge --lca])
-MONOTONE_SETUP
+MTN_SETUP
 
 # --lca is a temporary workaround for 3-way merge suckiness.  So this
 # test should go away eventually.
@@ -33,8 +33,8 @@ SET_FILE(testfile, [new stuff
 COMMIT(testbranch)
 C=`BASE_REVISION`
 
-AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN merge, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 F=`BASE_REVISION`
 
 REVERT_TO($B)
@@ -44,11 +44,11 @@ ADD_FILE(otherfile2, [blah blah
 COMMIT(testbranch)
 D=`BASE_REVISION`
 
-AT_CHECK(MONOTONE explicit_merge $D $C testbranch, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN explicit_merge $D $C testbranch, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 E=`BASE_REVISION`
 
-AT_CHECK(MONOTONE merge --lca, [], [ignore], [stderr])
+AT_CHECK(MTN merge --lca, [], [ignore], [stderr])
 AT_CHECK(QGREP($A stderr), [1])
 AT_CHECK(QGREP($E stderr), [])
 AT_CHECK(QGREP($F stderr), [])

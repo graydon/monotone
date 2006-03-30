@@ -1,7 +1,7 @@
 #  -*- Autoconf -*-
 
 AT_SETUP(['heads'])
-MONOTONE_SETUP
+MTN_SETUP
 
 # Create a single revision in branch1
 # 
@@ -12,11 +12,11 @@ MONOTONE_SETUP
 AT_DATA(f, [base data
 ])
 
-AT_CHECK(MONOTONE add f, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
+AT_CHECK(MTN add f, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
 ROOT_R_SHA=`BASE_REVISION`
 
-AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(MTN --branch=branch1 heads, [], [stdout], [ignore])
 AT_CHECK(QGREP($ROOT_R_SHA stdout))
 
 # Create a child
@@ -29,10 +29,10 @@ AT_CHECK(QGREP($ROOT_R_SHA stdout))
 
 AT_DATA(f, [child1 data
 ])
-AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
 CHILD1_R_SHA=`BASE_REVISION`
 
-AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(MTN --branch=branch1 heads, [], [stdout], [ignore])
 AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
 AT_CHECK(QGREP($CHILD1_R_SHA stdout))
 
@@ -47,10 +47,10 @@ AT_CHECK(QGREP($CHILD1_R_SHA stdout))
 REVERT_TO($ROOT_R_SHA)
 AT_DATA(f, [child2 data
 ])
-AT_CHECK(MONOTONE --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=branch1 commit --message blah-blah, [], [ignore], [ignore])
 CHILD2_R_SHA=`BASE_REVISION`
 
-AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(MTN --branch=branch1 heads, [], [stdout], [ignore])
 AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
 AT_CHECK(QGREP($CHILD1_R_SHA stdout))
 AT_CHECK(QGREP($CHILD2_R_SHA stdout))
@@ -68,15 +68,15 @@ AT_CHECK(QGREP($CHILD2_R_SHA stdout))
 
 AT_DATA(f, [child3 data
 ])
-AT_CHECK(MONOTONE --branch=branch2 commit --message blah-blah, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=branch2 commit --message blah-blah, [], [ignore], [ignore])
 CHILD3_R_SHA=`BASE_REVISION`
 
-AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(MTN --branch=branch1 heads, [], [stdout], [ignore])
 AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
 AT_CHECK(QGREP($CHILD1_R_SHA stdout))
 AT_CHECK(QGREP($CHILD2_R_SHA stdout))
 AT_CHECK(QGREP($CHILD3_R_SHA stdout), [1])
-AT_CHECK(MONOTONE --branch=branch2 heads, [], [stdout], [ignore])
+AT_CHECK(MTN --branch=branch2 heads, [], [stdout], [ignore])
 AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
 AT_CHECK(QGREP($CHILD1_R_SHA stdout), [1])
 AT_CHECK(QGREP($CHILD2_R_SHA stdout), [1])
@@ -96,16 +96,16 @@ AT_CHECK(QGREP($CHILD3_R_SHA stdout))
 REVERT_TO($CHILD1_R_SHA)
 AT_DATA(f, [child4 data
 ])
-AT_CHECK(MONOTONE --branch=branch2 commit --message blah-blah, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=branch2 commit --message blah-blah, [], [ignore], [ignore])
 CHILD4_R_SHA=`BASE_REVISION`
 
-AT_CHECK(MONOTONE --branch=branch1 heads, [], [stdout], [ignore])
+AT_CHECK(MTN --branch=branch1 heads, [], [stdout], [ignore])
 AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
 AT_CHECK(QGREP($CHILD1_R_SHA stdout))
 AT_CHECK(QGREP($CHILD2_R_SHA stdout))
 AT_CHECK(QGREP($CHILD3_R_SHA stdout), [1])
 AT_CHECK(QGREP($CHILD4_R_SHA stdout), [1])
-AT_CHECK(MONOTONE --branch=branch2 heads, [], [stdout], [ignore])
+AT_CHECK(MTN --branch=branch2 heads, [], [stdout], [ignore])
 AT_CHECK(QGREP($ROOT_R_SHA stdout), [1])
 AT_CHECK(QGREP($CHILD1_R_SHA stdout), [1])
 AT_CHECK(QGREP($CHILD2_R_SHA stdout), [1])
