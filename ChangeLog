@@ -1,3 +1,7 @@
+2006-04-01  Henry Nestler  <Henry@BigFoot.de>
+
+	* contrib/mtbrowse.sh: Bookkeeping directory _MTN
+
 2006-03-31  Lapo Luchini  <lapo@lapo.it>
 
 	* po/it.po: Translated a few more strings to Italian (243 to go).
