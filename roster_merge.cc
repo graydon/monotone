@@ -624,112 +624,18 @@ roster_merge(roster_t const & left_parent,
 // to run roster_merge, need roster, marking, birth revs, and uncommon
 // ancestors for each side...
 
-
-void
-test_scalar_merges()
+split_path
+split(std::string const & s)
 {
-  //   same in both, same mark
-  //               a1*
-  //              / \
-  //             a2  a3
-  test_a_scalar_merge(scalar_a, "1", "2", scalar_a, "1", "3", scalar_a);
-
-  //   same in both, diff marks
-  //               .1*
-  //              / \
-  //             a2* a3*
-  test_a_scalar_merge(scalar_a, "2", "2", scalar_a, "3", "3", scalar_a);
-
-  //   different, left wins with 1 mark
-  //               a1*
-  //              / \
-  //             b2* a3
-  test_a_scalar_merge(scalar_b, "2", "2", scalar_a, "1", "3", scalar_b);
-
-  //   different, right wins with 1 mark
-  //               a1*
-  //              / \
-  //             a2  b3*
-   test_a_scalar_merge(scalar_a, "1", "2", scalar_b, "3", "3", scalar_b);
-
-  //   different, conflict with 1 mark
-  //               .1*
-  //              / \
-  //             a2* b3*
-  test_a_scalar_merge(scalar_a, "2", "2", scalar_b, "3", "3", scalar_conflict);
-
-  //   different, left wins with 2 marks
-  //               a1*
-  //              / \
-  //             a2  a3
-  //            / \
-  //           b4* b5*
-  //            \ /
-  //             b6
-  test_a_scalar_merge(scalar_b, "45", "2456", scalar_a, "1", "3", scalar_b);
-
-  //   different, right wins with 2 marks
-  //               a1*
-  //              / \
-  //             a2  a3
-  //                / \
-  //               b4* b5*
-  //                \ /
-  //                 b6
-  test_a_scalar_merge(scalar_a, "1", "2", scalar_b, "45", "3456", scalar_a);
-
-  //   different, conflict with 1 mark winning, 1 mark losing
-  //               .1*
-  //              / \
-  //             a2* a3*
-  //              \ / \
-  //               a4  b5*
-  test_a_scalar_merge(scalar_a, "23", "24", scalar_b, "5", "5", scalar_conflict);
-
-  //
-  //               .1*
-  //              / \
-  //             a2* a3*
-  //            / \ /
-  //           b4* a5
-  test_a_scalar_merge(scalar_b, "4", "4", scalar_a, "23", "35", scalar_conflict);
-
-  //   different, conflict with 2 marks both conflicting
-  //               
-  //               .1*
-  //              / \
-  //             .2  a3*
-  //            / \
-  //           b4* b5*
-  //            \ /
-  //             b6
-  test_a_scalar_merge(scalar_b, "45", "2456", scalar_a, "3", "3", scalar_conflict);
-
-  //
-  //               .1*
-  //              / \
-  //             a2* .3
-  //                / \
-  //               b4* b5*
-  //                \ /
-  //                 b6
-  test_a_scalar_merge(scalar_a, "2", "2", scalar_b, "45", "3456", scalar_conflict);
-
-  //
-  //               _.1*_
-  //              /     \
-  //             .2      .3
-  //            / \     / \
-  //           a4* a5* b6* b7*
-  //            \ /     \ /
-  //             a8      b9
-  test_a_scalar_merge(scalar_a, "45", "2458", scalar_b, "67", "3679", scalar_conflict);
+  split_path sp;
+  file_path_internal(s).split(sp);
+  return sp;
 }
 
 typedef enum { scalar_a, scalar_b, scalar_conflict } scalar_val;
 
 template <> void
-dump(scalar_val v, std::string & out)
+dump(scalar_val const & v, std::string & out)
 {
   switch (v)
     {
@@ -745,138 +651,16 @@ dump(scalar_val v, std::string & out)
     }
 }
 
-void string_to_set(std::string const & from, std::set<revision_id> to)
+void string_to_set(std::string const & from, std::set<revision_id> & to)
 {
   to.clear();
   for (std::string::const_iterator i = from.begin(); i != from.end(); ++i)
     {
       std::string rid_str(40, *i);
-      to.insert(revision_id(rid_str));a
+      to.insert(revision_id(rid_str));
     }
 }
 
-void
-test_a_scalar_merge(scalar_val left_val, std::string const & left_marks_str,
-                    std::string const & left_uncommon_str,
-                    scalar_val right_val, std::string const & right_marks_str,
-                    std::string const & right_uncommon_str,
-                    scalar_val expected_outcome)
-{
-  test_a_scalar_merge_impl<foo>(left_val, left_marks_str, left_uncommon_str,
-                                right_val, right_marks_str, right_uncommon_str,
-                                expected_outcome);
-}
-
-struct base_scalar
-{
-  testing_node_id_source nis;
-  node_id root_nid;
-  node_id thing_nid;
-  base_scalar() : root_nid(nis.next()), thing_nid(nis.next())
-  {}
-
-  static const revision_id root_rid(std::string("0000000000000000000000000000000000000000"));
-  static const file_id arbitrary_file(std::string("0000000000000000000000000000000000000000"));
-
-  void
-  make_dir(std::string const & name, node_id nid, roster_t & r, marking_map & markings)
-  {
-    r.create_dir_node(nid);
-    r.attach_node(split(name));
-    marking_t marking;
-    marking.birth_revision = root_rid;
-    marking.parent_name.insert(root_rid);
-    safe_insert(markings, std::make_pair(nid, marking));
-  }
-
-  void
-  make_file(std::string const & name, node_id nid, roster_t & r, marking_map & markings)
-  {
-    r.create_file_node(arbitrary_file, nid);
-    r.attach_node(split(name));
-    marking_t marking;
-    marking.birth_revision = root_rid;
-    marking.parent_name.insert(root_rid);
-    marking.file_content.insert(root_rid);
-    safe_insert(markings, std::make_pair(nid, marking));
-  }
-
-  void
-  make_root(roster_t & r, marking_map & markings)
-  {
-    make_dir("", root_nid, r, markings);
-  }
-};
-
-struct file_scalar : public base_scalar
-{
-  void
-  make_thing(roster_t & r, marking_map & markings)
-  {
-    make_root(r, markings);
-    make_file("thing", thing_nid, r, markings);
-  }
-};
-
-struct dir_scalar : public base_scalar
-{
-  void
-  make_thing(roster_t & r, marking_map & markings)
-  {
-    make_root(r, markings);
-    make_dir("thing", thing_nid, r, markings);
-  }
-};
-
-template <typename T>
-struct basename_scalar : public T
-{
-  split_path path_for(scalar_val val)
-  {
-    I(val != scalar_conflict);
-    return split((val == scalar_a) ? "a" : "b");
-  }
-  path_component pc_for(scalar_val val)
-  {
-    split_path sp = path_for(val);
-    return idx(sp, sp.size() - 1);
-  }
-
-  void
-  setup_parent(scalar_val val, std::set<revision_id> marks,
-               roster_t & r, marking_map & markings)
-  {
-    make_thing(r, markings);
-    r.detach_node(thing_nid);
-    r.attach_node(thing_nid, path_for(val));
-    safe_get(markings, thing_nid).parent_name = marks;
-  }
-
-  void
-  check_result(scalar_val left_val, scalar_val right_val,
-               roster_merge_result const & result, scalar_val expected_val)
-  {
-    split_path name;
-    switch (val)
-      {
-      case scalar_a: case scalar_b:
-        result.roster.get_name(thing_nid, name);
-        I(name == path_for(expected_val));
-        I(result.is_clean());
-        break;
-      case scalar_conflict:
-        node_name_conflict const & c = idx(result.node_name_conflicts, 0);
-        I(c.nid == thing_nid);
-        I(c.left == std::make_pair(root_nid, );
-        // resolve the conflict, thus making sure that resolution works and
-        // that this was the only conflict signaled
-        result.roster.attach_node(thing_nid, split("thing"));
-        result.node_name_conflicts.pop_back();
-        I(result.is_clean());
-        break;
-      }
-  }
-}
 
 template <typename S> void
 test_a_scalar_merge_impl(scalar_val left_val, std::string const & left_marks_str,
@@ -895,7 +679,7 @@ test_a_scalar_merge_impl(scalar_val left_val, std::string const & left_marks_str
 
   S scalar;
   roster_t left_parent, right_parent;
-  marking_map left_markings, right_marks;
+  marking_map left_markings, right_markings;
   std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
   roster_merge_result result;
 
@@ -904,12 +688,12 @@ test_a_scalar_merge_impl(scalar_val left_val, std::string const & left_marks_str
   MM(left_parent);
   MM(right_parent);
   MM(left_markings);
-  MM(right_marks);
+  MM(right_markings);
   MM(left_uncommon_ancestors);
   MM(right_uncommon_ancestors);
   MM(left_marks);
   MM(right_marks);
-  MM(result);
+  MM(result.roster);
 
   string_to_set(left_marks_str, left_marks);
   scalar.setup_parent(left_val, left_marks, left_parent, left_markings);
@@ -926,6 +710,248 @@ test_a_scalar_merge_impl(scalar_val left_val, std::string const & left_marks_str
   scalar.check_result(left_val, right_val, result, expected_outcome);
 }
 
+static const revision_id root_rid = revision_id(std::string("0000000000000000000000000000000000000000"));
+static const file_id arbitrary_file = file_id(std::string("0000000000000000000000000000000000000000"));
+
+struct base_scalar
+{
+  testing_node_id_source nis;
+  node_id root_nid;
+  node_id thing_nid;
+  base_scalar() : root_nid(nis.next()), thing_nid(nis.next())
+  {}
+
+  void
+  make_dir(std::string const & name, node_id nid, roster_t & r, marking_map & markings)
+  {
+    r.create_dir_node(nid);
+    r.attach_node(nid, split(name));
+    marking_t marking;
+    marking.birth_revision = root_rid;
+    marking.parent_name.insert(root_rid);
+    safe_insert(markings, std::make_pair(nid, marking));
+  }
+
+  void
+  make_file(std::string const & name, node_id nid, roster_t & r, marking_map & markings)
+  {
+    r.create_file_node(arbitrary_file, nid);
+    r.attach_node(nid, split(name));
+    marking_t marking;
+    marking.birth_revision = root_rid;
+    marking.parent_name.insert(root_rid);
+    marking.file_content.insert(root_rid);
+    safe_insert(markings, std::make_pair(nid, marking));
+  }
+
+  void
+  make_root(roster_t & r, marking_map & markings)
+  {
+    make_dir("", root_nid, r, markings);
+  }
+};
+
+struct file_mixin : public virtual base_scalar
+{
+  void
+  make_thing(roster_t & r, marking_map & markings)
+  {
+    make_root(r, markings);
+    make_file("thing", thing_nid, r, markings);
+  }
+};
+
+struct dir_mixin : public virtual base_scalar
+{
+  void
+  make_thing(roster_t & r, marking_map & markings)
+  {
+    make_root(r, markings);
+    make_dir("thing", thing_nid, r, markings);
+  }
+};
+
+template <typename T>
+struct basename_scalar : public virtual base_scalar, public T
+{
+  split_path path_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return split((val == scalar_a) ? "a" : "b");
+  }
+  path_component pc_for(scalar_val val)
+  {
+    split_path sp = path_for(val);
+    return idx(sp, sp.size() - 1);
+  }
+
+  void
+  setup_parent(scalar_val val, std::set<revision_id> marks,
+               roster_t & r, marking_map & markings)
+  {
+    this->T::make_thing(r, markings);
+    split_path name;
+    r.get_name(thing_nid, name);
+    r.detach_node(name);
+    r.attach_node(thing_nid, path_for(val));
+    markings.find(thing_nid)->second.parent_name = marks;
+  }
+
+  void
+  check_result(scalar_val left_val, scalar_val right_val,
+               // NB result is writeable -- we can scribble on it
+               roster_merge_result & result, scalar_val expected_val)
+  {
+    split_path name;
+    switch (expected_val)
+      {
+      case scalar_a: case scalar_b:
+        result.roster.get_name(thing_nid, name);
+        I(name == path_for(expected_val));
+        break;
+      case scalar_conflict:
+        node_name_conflict const & c = idx(result.node_name_conflicts, 0);
+        I(c.nid == thing_nid);
+        I(c.left == std::make_pair(root_nid, pc_for(left_val)));
+        I(c.right == std::make_pair(root_nid, pc_for(right_val)));
+        // resolve the conflict, thus making sure that resolution works and
+        // that this was the only conflict signaled
+        result.roster.attach_node(thing_nid, split("thing"));
+        result.node_name_conflicts.pop_back();
+        break;
+      }
+    // by now, the merge should have been resolved cleanly, one way or another
+    result.roster.check_sane();
+    I(result.is_clean());
+  }
+};
+
+void
+test_a_scalar_merge(scalar_val left_val, std::string const & left_marks_str,
+                    std::string const & left_uncommon_str,
+                    scalar_val right_val, std::string const & right_marks_str,
+                    std::string const & right_uncommon_str,
+                    scalar_val expected_outcome)
+{
+  test_a_scalar_merge_impl<basename_scalar<file_mixin> >(left_val, left_marks_str, left_uncommon_str,
+                                                          right_val, right_marks_str, right_uncommon_str,
+                                                          expected_outcome);
+  test_a_scalar_merge_impl<basename_scalar<dir_mixin> >(left_val, left_marks_str, left_uncommon_str,
+                                                         right_val, right_marks_str, right_uncommon_str,
+                                                         expected_outcome);
+}
+
+
+void
+test_scalar_merges()
+{
+  // Notation: a1* means, "value is a, this is node 1 in the graph, it is
+  // marked".  ".2" means, "value is unimportant and different from either a
+  // or b, this is node 2 in the graph, it is not marked".
+  //
+  // Backslashes with dots after them mean, the C++ line continuation rules
+  // are annoying when it comes to drawing ascii graphs -- the dot is only to
+  // stop the backslash from having special meaning to the parser.  So just
+  // ignore them :-).
+
+  //   same in both, same mark
+  //               a1*
+  //              / \.
+  //             a2  a3
+  test_a_scalar_merge(scalar_a, "1", "2", scalar_a, "1", "3", scalar_a);
+
+  //   same in both, diff marks
+  //               .1*
+  //              / \.
+  //             a2* a3*
+  test_a_scalar_merge(scalar_a, "2", "2", scalar_a, "3", "3", scalar_a);
+
+  //   different, left wins with 1 mark
+  //               a1*
+  //              / \.
+  //             b2* a3
+  test_a_scalar_merge(scalar_b, "2", "2", scalar_a, "1", "3", scalar_b);
+
+  //   different, right wins with 1 mark
+  //               a1*
+  //              / \.
+  //             a2  b3*
+   test_a_scalar_merge(scalar_a, "1", "2", scalar_b, "3", "3", scalar_b);
+
+  //   different, conflict with 1 mark
+  //               .1*
+  //              / \.
+  //             a2* b3*
+  test_a_scalar_merge(scalar_a, "2", "2", scalar_b, "3", "3", scalar_conflict);
+
+  //   different, left wins with 2 marks
+  //               a1*
+  //              / \.
+  //             a2  a3
+  //            / \.
+  //           b4* b5*
+  //            \ /
+  //             b6
+  test_a_scalar_merge(scalar_b, "45", "2456", scalar_a, "1", "3", scalar_b);
+
+  //   different, right wins with 2 marks
+  //               a1*
+  //              / \.
+  //             a2  a3
+  //                / \.
+  //               b4* b5*
+  //                \ /
+  //                 b6
+  test_a_scalar_merge(scalar_a, "1", "2", scalar_b, "45", "3456", scalar_b);
+
+  //   different, conflict with 1 mark winning, 1 mark losing
+  //               .1*
+  //              / \.
+  //             a2* a3*
+  //              \ / \.
+  //               a4  b5*
+  test_a_scalar_merge(scalar_a, "23", "24", scalar_b, "5", "5", scalar_conflict);
+
+  //
+  //               .1*
+  //              / \.
+  //             a2* a3*
+  //            / \ /
+  //           b4* a5
+  test_a_scalar_merge(scalar_b, "4", "4", scalar_a, "23", "35", scalar_conflict);
+
+  //   different, conflict with 2 marks both conflicting
+  //               
+  //               .1*
+  //              / \.
+  //             .2  a3*
+  //            / \.
+  //           b4* b5*
+  //            \ /
+  //             b6
+  test_a_scalar_merge(scalar_b, "45", "2456", scalar_a, "3", "3", scalar_conflict);
+
+  //
+  //               .1*
+  //              / \.
+  //             a2* .3
+  //                / \.
+  //               b4* b5*
+  //                \ /
+  //                 b6
+  test_a_scalar_merge(scalar_a, "2", "2", scalar_b, "45", "3456", scalar_conflict);
+
+  //
+  //               _.1*_
+  //              /     \.
+  //             .2      .3
+  //            / \     / \.
+  //           a4* a5* b6* b7*
+  //            \ /     \ /
+  //             a8      b9
+  test_a_scalar_merge(scalar_a, "45", "2458", scalar_b, "67", "3679", scalar_conflict);
+}
+
 namespace
 {
   const revision_id a_uncommon1 = revision_id(std::string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
@@ -938,13 +964,6 @@ namespace
   const file_id fid1 = file_id(std::string("1111111111111111111111111111111111111111"));
   const file_id fid2 = file_id(std::string("2222222222222222222222222222222222222222"));
 
-  split_path
-  split(std::string const & s)
-  {
-    split_path sp;
-    file_path_internal(s).split(sp);
-    return sp;
-  }
 }
 
 static void
@@ -1048,6 +1067,7 @@ add_roster_merge_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&test_roster_merge_node_lifecycle));
+  suite->add(BOOST_TEST_CASE(&test_scalar_merges));
 }
 
 #endif // BUILD_UNIT_TESTS
