@@ -165,7 +165,7 @@ roster_merge_result::warn_non_content_conflicts() const
 void
 roster_merge_result::clear()
 {
-  node_attr_conflicts.clear();
+  node_name_conflicts.clear();
   file_content_conflicts.clear();
   node_attr_conflicts.clear();
   orphaned_node_conflicts.clear();
