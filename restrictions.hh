@@ -55,7 +55,7 @@ using std::vector;
 // FIXME: should we really be doing implicit includes of parents?
 
 // TODO: move these into the class below?!?
-enum path_state { explicit_include, explicit_exclude, implicit_include };
+enum path_state { included, excluded };
   
 class restriction
 {

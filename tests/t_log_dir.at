@@ -1,11 +1,6 @@
 AT_SETUP([log dir])
 MONOTONE_SETUP
 
-# This test is a bug report
-# log dir should only list revisions which change the things in or below dir
-
-AT_XFAIL_IF(true)
-
 ADD_FILE(foo, [foo
 ])
 ADD_FILE(bar, [bar

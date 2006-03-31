@@ -1,3 +1,13 @@
+2006-03-30  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (status, ls_changed, commit, diff, revert): call
+	check_restricted_cset after make_restricted_csets
+	* restrictions.cc: remove implicit parents gunk and update
+	unit tests accordingly
+	* roster.{cc,hh} (check_restricted_cset): new function to issue a
+	nice message if required directories have been excluded
+	* tests/t_log_dir.at: un-XFAIL
+	
 2006-03-03  Derek Scherger  <derek@echologic.com>
 
 	* restrictions.cc (check_for_missing_additions): new function

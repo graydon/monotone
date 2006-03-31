@@ -1839,14 +1839,17 @@ make_cset(roster_t const & from, roster_t const & to, cset & cs)
           I(false);
 
         case parallel::in_left:
+          // deleted
           delta_only_in_from(from, i.left_key(), i.left_data(), cs);
           break;
  
         case parallel::in_right:
+          // added
           delta_only_in_to(to, i.right_key(), i.right_data(), cs);
           break;
 
         case parallel::in_both:
+          // moved/renamed/patched/attribute changes
           delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), cs);
           break;
         }
@@ -1895,6 +1898,7 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
 {
   included.clear();
   excluded.clear();
+
   L(FL("building restricted csets\n"));
   parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
   while (i.next())
@@ -1906,6 +1910,7 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
           I(false);
 
         case parallel::in_left:
+          // deleted
           if (mask.includes(from, i.left_key()))
             {
               delta_only_in_from(from, i.left_key(), i.left_data(), included);
@@ -1919,6 +1924,7 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
           break;
  
         case parallel::in_right:
+          // added
           if (mask.includes(to, i.right_key()))
             {
               delta_only_in_to(to, i.right_key(), i.right_data(), included);
@@ -1932,6 +1938,7 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
           break;
 
         case parallel::in_both:
+          // moved/renamed/patched/attribute changes
           if (mask.includes(from, i.left_key()) || mask.includes(to, i.right_key()))
             {
               delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), included);
@@ -1945,6 +1952,49 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
           break;
         }
     }
+
+}
+
+void
+check_restricted_cset(roster_t const & roster, cset const & cs)
+{
+  path_set added;
+  int missing = 0;
+
+  for (path_set::const_iterator i = cs.dirs_added.begin();
+       i != cs.dirs_added.end(); ++i)
+    {
+      split_path dir(*i);
+      added.insert(dir);
+
+      if (dir.size() > 1)
+        {
+          dir.pop_back();
+
+          if (!roster.has_node(dir) && added.find(dir) == added.end())
+            {
+              missing++;
+              W(F("restriction excludes directory '%s'") % dir);
+            }
+        }
+    }
+
+  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+       i != cs.files_added.end(); ++i)
+    {
+      split_path dir(i->first);
+      I(dir.size() > 1);
+      dir.pop_back();
+
+      if (!roster.has_node(dir) && added.find(dir) == added.end())
+        {
+          missing++;
+          W(F("restriction excludes directory '%s'") % dir);
+        }
+    }
+
+  N(missing == 0, F("invalid restriction excludes required directories")); 
+
 }
 
 

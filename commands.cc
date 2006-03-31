@@ -1346,6 +1346,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
 
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+  check_restricted_cset(old_roster, included);
 
   restricted_roster = old_roster;
   temp_node_id_source nis;
@@ -1814,6 +1815,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
       
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+  check_restricted_cset(old_roster, included);
 
   // FIXME: this would probably be better as a function of roster.cc
   // set<node_id> nodes;
@@ -2342,6 +2344,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+  check_restricted_cset(old_roster, included);
 
   restricted_roster = old_roster;
   temp_node_id_source nis;
@@ -2745,6 +2748,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       update_current_roster_from_filesystem(new_roster, mask, app);
       make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+      check_restricted_cset(old_roster, included);
 
       new_is_archived = false;
       header << "# old_revision [" << old_rid << "]" << endl;
@@ -2769,6 +2773,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       
       update_current_roster_from_filesystem(new_roster, mask, app);
       make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+      check_restricted_cset(old_roster, included);
 
       new_is_archived = false;
       header << "# old_revision [" << r_old_id << "]" << endl;
@@ -2814,6 +2819,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       //   since versioned paths are required to be relative.
 
       make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+      check_restricted_cset(old_roster, included);
 
       new_is_archived = true;
     }
@@ -3432,6 +3438,9 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   restriction mask(includes, excludes, old_roster, new_roster, app);
 
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+  // the included cset will be thrown away (reverted) leaving the excluded
+  // cset pending in MTN/work which must be valid against the old roster
+  check_restricted_cset(old_roster, excluded);
 
   node_map const & nodes = old_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
