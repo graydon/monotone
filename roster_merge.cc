@@ -12,14 +12,14 @@
 #include "safe_map.hh"
 
 bool
-roster_merge_result::is_clean()
+roster_merge_result::is_clean() const
 {
   return is_clean_except_for_content()
     && file_content_conflicts.empty();
 }
 
 bool
-roster_merge_result::is_clean_except_for_content()
+roster_merge_result::is_clean_except_for_content() const
 {
   return node_name_conflicts.empty()
     && node_attr_conflicts.empty()
@@ -30,69 +30,94 @@ roster_merge_result::is_clean_except_for_content()
     && !missing_root_dir;
 }
 
-void
-roster_merge_result::log_conflicts()
+static void
+debug_describe_conflicts(roster_merge_result const & result, std::string & out)
 {
-  L(FL("unclean roster_merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
-       "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
-    % node_name_conflicts.size()
-    % file_content_conflicts.size()
-    % node_attr_conflicts.size()
-    % orphaned_node_conflicts.size()
-    % rename_target_conflicts.size()
-    % directory_loop_conflicts.size());
+  out = (FL("unclean roster_merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
+            "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n")
+         % result.node_name_conflicts.size()
+         % result.file_content_conflicts.size()
+         % result.node_attr_conflicts.size()
+         % result.orphaned_node_conflicts.size()
+         % result.rename_target_conflicts.size()
+         % result.directory_loop_conflicts.size())
+    .str();
   
-  for (size_t i = 0; i < node_name_conflicts.size(); ++i)
-    L(FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
-      % node_name_conflicts[i].nid 
-      % node_name_conflicts[i].left.first 
-      % node_name_conflicts[i].left.second
-      % node_name_conflicts[i].right.first 
-      % node_name_conflicts[i].right.second);
+  for (size_t i = 0; i < result.node_name_conflicts.size(); ++i)
+    out += (FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
+            % result.node_name_conflicts[i].nid 
+            % result.node_name_conflicts[i].left.first 
+            % result.node_name_conflicts[i].left.second
+            % result.node_name_conflicts[i].right.first 
+            % result.node_name_conflicts[i].right.second)
+      .str();
   
-  for (size_t i = 0; i < file_content_conflicts.size(); ++i)
-    L(FL("content conflict on node %d: [%s] vs. [%s]\n") 
-      % file_content_conflicts[i].nid
-      % file_content_conflicts[i].left
-      % file_content_conflicts[i].right);
+  for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
+    out += (FL("content conflict on node %d: [%s] vs. [%s]\n") 
+            % result.file_content_conflicts[i].nid
+            % result.file_content_conflicts[i].left
+            % result.file_content_conflicts[i].right)
+      .str();
   
-  for (size_t i = 0; i < node_attr_conflicts.size(); ++i)
-    L(FL("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
-      % node_attr_conflicts[i].nid
-      % node_attr_conflicts[i].key
-      % node_attr_conflicts[i].left.first
-      % node_attr_conflicts[i].left.second
-      % node_attr_conflicts[i].right.first
-      % node_attr_conflicts[i].right.second);
+  for (size_t i = 0; i < result.node_attr_conflicts.size(); ++i)
+    out += (FL("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
+            % result.node_attr_conflicts[i].nid
+            % result.node_attr_conflicts[i].key
+            % result.node_attr_conflicts[i].left.first
+            % result.node_attr_conflicts[i].left.second
+            % result.node_attr_conflicts[i].right.first
+            % result.node_attr_conflicts[i].right.second)
+      .str();
   
-  for (size_t i = 0; i < orphaned_node_conflicts.size(); ++i)
-    L(FL("orphaned node conflict on node %d, dead parent %d, name %s")
-      % orphaned_node_conflicts[i].nid
-      % orphaned_node_conflicts[i].parent_name.first
-      % orphaned_node_conflicts[i].parent_name.second);
+  for (size_t i = 0; i < result.orphaned_node_conflicts.size(); ++i)
+    out += (FL("orphaned node conflict on node %d, dead parent %d, name %s")
+            % result.orphaned_node_conflicts[i].nid
+            % result.orphaned_node_conflicts[i].parent_name.first
+            % result.orphaned_node_conflicts[i].parent_name.second)
+      .str();
   
-  for (size_t i = 0; i < rename_target_conflicts.size(); ++i)
-    L(FL("rename target conflict: nodes %d, %d, both want parent %d, name %s")
-      % rename_target_conflicts[i].nid1
-      % rename_target_conflicts[i].nid2
-      % rename_target_conflicts[i].parent_name.first
-      % rename_target_conflicts[i].parent_name.second);
+  for (size_t i = 0; i < result.rename_target_conflicts.size(); ++i)
+    out += (FL("rename target conflict: nodes %d, %d, both want parent %d, name %s")
+            % result.rename_target_conflicts[i].nid1
+            % result.rename_target_conflicts[i].nid2
+            % result.rename_target_conflicts[i].parent_name.first
+            % result.rename_target_conflicts[i].parent_name.second)
+      .str();
   
-  for (size_t i = 0; i < directory_loop_conflicts.size(); ++i)
-    L(FL("directory loop conflict: node %d, wanted parent %d, name %s")
-      % directory_loop_conflicts[i].nid
-      % directory_loop_conflicts[i].parent_name.first
-      % directory_loop_conflicts[i].parent_name.second);
+  for (size_t i = 0; i < result.directory_loop_conflicts.size(); ++i)
+    out += (FL("directory loop conflict: node %d, wanted parent %d, name %s")
+            % result.directory_loop_conflicts[i].nid
+            % result.directory_loop_conflicts[i].parent_name.first
+            % result.directory_loop_conflicts[i].parent_name.second)
+      .str();
 
-  for (size_t i = 0; i < illegal_name_conflicts.size(); ++i)
-    L(FL("illegal name conflict: node %d, wanted parent %d, name %s")
-      % illegal_name_conflicts[i].nid
-      % illegal_name_conflicts[i].parent_name.first
-      % illegal_name_conflicts[i].parent_name.second);
+  for (size_t i = 0; i < result.illegal_name_conflicts.size(); ++i)
+    out += (FL("illegal name conflict: node %d, wanted parent %d, name %s")
+            % result.illegal_name_conflicts[i].nid
+            % result.illegal_name_conflicts[i].parent_name.first
+            % result.illegal_name_conflicts[i].parent_name.second)
+      .str();
+}
+
+template <> void
+dump(roster_merge_result const & result, std::string & out)
+{
+  debug_describe_conflicts(result, out);
+  std::string roster_part;
+  dump(result.roster, roster_part);
+  out += roster_part;
 }
 
 void
-roster_merge_result::warn_non_content_conflicts()
+roster_merge_result::log_conflicts() const
+{
+  std::string str;
+  debug_describe_conflicts(*this, str);
+  L(FL("%s") % str);
+}
+
+void
+roster_merge_result::warn_non_content_conflicts() const
 {
   for (size_t i = 0; i < node_name_conflicts.size(); ++i)
     W(F("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
@@ -361,7 +386,7 @@ roster_merge(roster_t const & left_parent,
   MM(left_markings);
   MM(right_parent);
   MM(right_markings);
-  MM(result.roster);
+  MM(result);
   
   // First handle lifecycles, by die-die-die merge -- our result will contain
   // everything that is alive in both parents, or alive in one and unborn in
@@ -696,7 +721,7 @@ test_a_scalar_merge_impl(scalar_val left_val, std::string const & left_marks_str
   MM(right_uncommon_ancestors);
   MM(left_marks);
   MM(right_marks);
-  MM(result.roster);
+  MM(result);
 
   string_to_set(left_marks_str, left_marks);
   scalar.setup_parent(left_val, left_marks, left_parent, left_markings);
