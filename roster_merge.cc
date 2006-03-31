@@ -810,95 +810,15 @@ struct dir_scalar : public virtual base_scalar
   }
 };
 
-template <typename T>
-struct basename_scalar : public virtual base_scalar, public T
+struct name_shared_stuff : public virtual base_scalar
 {
-  split_path path_for(scalar_val val)
-  {
-    I(val != scalar_conflict);
-    return split((val == scalar_a) ? "a" : "b");
-  }
+  virtual split_path path_for(scalar_val val) = 0;
   path_component pc_for(scalar_val val)
   {
     split_path sp = path_for(val);
     return idx(sp, sp.size() - 1);
   }
-
-  void
-  setup_parent(scalar_val val, std::set<revision_id> marks,
-               roster_t & r, marking_map & markings)
-  {
-    this->T::make_thing(r, markings);
-    r.detach_node(this->T::thing_name);
-    r.attach_node(thing_nid, path_for(val));
-    markings.find(thing_nid)->second.parent_name = marks;
-  }
-
-  void
-  check_result(scalar_val left_val, scalar_val right_val,
-               // NB result is writeable -- we can scribble on it
-               roster_merge_result & result, scalar_val expected_val)
-  {
-    split_path name;
-    switch (expected_val)
-      {
-      case scalar_a: case scalar_b:
-        result.roster.get_name(thing_nid, name);
-        I(name == path_for(expected_val));
-        break;
-      case scalar_conflict:
-        node_name_conflict const & c = idx(result.node_name_conflicts, 0);
-        I(c.nid == thing_nid);
-        I(c.left == std::make_pair(root_nid, pc_for(left_val)));
-        I(c.right == std::make_pair(root_nid, pc_for(right_val)));
-        I(null_node(result.roster.get_node(thing_nid)->parent));
-        I(null_name(result.roster.get_node(thing_nid)->name));
-        // resolve the conflict, thus making sure that resolution works and
-        // that this was the only conflict signaled
-        result.roster.attach_node(thing_nid, split("thing"));
-        result.node_name_conflicts.pop_back();
-        break;
-      }
-    // by now, the merge should have been resolved cleanly, one way or another
-    result.roster.check_sane();
-    I(result.is_clean());
-  }
-};
-
-template <typename T>
-struct parent_scalar : public virtual base_scalar, public T
-{
-  node_id a_dir_nid, b_dir_nid;
-  parent_scalar() : a_dir_nid(nis.next()), b_dir_nid(nis.next())
-  {}
-
-  split_path path_for(scalar_val val)
-  {
-    I(val != scalar_conflict);
-    return split((val == scalar_a) ? "a/thing" : "b/thing");
-  }
-  path_component pc_for(scalar_val val)
-  {
-    split_path sp = path_for(val);
-    return idx(sp, sp.size() - 1);
-  }
-  node_id parent_for(scalar_val val)
-  {
-    I(val != scalar_conflict);
-    return ((val == scalar_a) ? a_dir_nid : b_dir_nid);
-  }
-
-  void
-  setup_parent(scalar_val val, std::set<revision_id> marks,
-               roster_t & r, marking_map & markings)
-  {
-    this->T::make_thing(r, markings);
-    make_dir("a", a_dir_nid, r, markings);
-    make_dir("b", b_dir_nid, r, markings);
-    r.detach_node(this->T::thing_name);
-    r.attach_node(thing_nid, path_for(val));
-    markings.find(thing_nid)->second.parent_name = marks;
-  }
+  virtual node_id parent_for(scalar_val val) = 0;
 
   void
   check_result(scalar_val left_val, scalar_val right_val,
@@ -930,6 +850,68 @@ struct parent_scalar : public virtual base_scalar, public T
     result.roster.check_sane();
     I(result.is_clean());
   }
+
+  virtual ~name_shared_stuff() {};
+};
+
+template <typename T>
+struct basename_scalar : public name_shared_stuff, public T
+{
+  virtual split_path path_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return split((val == scalar_a) ? "a" : "b");
+  }
+  virtual node_id parent_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return root_nid;
+  }
+
+  void
+  setup_parent(scalar_val val, std::set<revision_id> marks,
+               roster_t & r, marking_map & markings)
+  {
+    this->T::make_thing(r, markings);
+    r.detach_node(this->T::thing_name);
+    r.attach_node(thing_nid, path_for(val));
+    markings.find(thing_nid)->second.parent_name = marks;
+  }
+
+  virtual ~basename_scalar() {}
+};
+
+template <typename T>
+struct parent_scalar : public virtual name_shared_stuff, public T
+{
+  node_id a_dir_nid, b_dir_nid;
+  parent_scalar() : a_dir_nid(nis.next()), b_dir_nid(nis.next())
+  {}
+
+  virtual split_path path_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return split((val == scalar_a) ? "a/thing" : "b/thing");
+  }
+  virtual node_id parent_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return ((val == scalar_a) ? a_dir_nid : b_dir_nid);
+  }
+
+  void
+  setup_parent(scalar_val val, std::set<revision_id> marks,
+               roster_t & r, marking_map & markings)
+  {
+    this->T::make_thing(r, markings);
+    make_dir("a", a_dir_nid, r, markings);
+    make_dir("b", b_dir_nid, r, markings);
+    r.detach_node(this->T::thing_name);
+    r.attach_node(thing_nid, path_for(val));
+    markings.find(thing_nid)->second.parent_name = marks;
+  }
+
+  virtual ~parent_scalar() {}
 };
 
 template <typename T>
