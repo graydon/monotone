@@ -60,7 +60,7 @@ AT_DATA(dir/file6.ignore, [file 6
 AT_CHECK(mkdir dir2)
 AT_DATA(dir2/file7, [file 7
 ])
-#AT_DATA(.mt-ignore, [.*\.ignore$
+#AT_DATA(.mtn-ignore, [.*\.ignore$
 #])
 
 #AT_CHECK(RAW_MTN ls unkown, [], [stdout], [ignore])

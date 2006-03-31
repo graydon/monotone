@@ -10,20 +10,23 @@
 #
 
 AT_INIT([integration tests])
-AT_TESTED([monotone])
+AT_TESTED([mtn])
 
 # some command abbreviations to make life easier
 
 # Set PREEXECUTE in your environment to run monotone under, e.g., valgrind.
-m4_define([MTN], [$PREEXECUTE $_MTN_EXEC --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --norc --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --key=tester@test.net --root=$_ROOT_DIR])
-m4_define([RAW_MTN], [$PREEXECUTE $_MTN_EXEC --norc])
-m4_define([MINHOOKS_MTN], [$PREEXECUTE $_MTN_EXEC --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --rcfile=$_ROOT_DIR/min_hooks.lua --key=tester@test.net --root=$_ROOT_DIR])
-m4_define([SHA1], [$_MTN_EXEC --norc identify $1])
+# --norc and --root are required for running mtn at all to be safe (they
+# both just shield us from user config)
+m4_define([SAFE_MTN], [$_MTN_EXEC --norc --root=$_ROOT_DIR])
+m4_define([RAW_MTN], [$PREEXECUTE SAFE_MTN])
+m4_define([MTN], [RAW_MTN --rcfile=$_ROOT_DIR/test_hooks.lua --nostd --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --key=tester@test.net])
+m4_define([MINHOOKS_MTN], [RAW_MTN --db=$_ROOT_DIR/test.db --keydir=$_ROOT_DIR/keys --rcfile=$_ROOT_DIR/min_hooks.lua --key=tester@test.net])
+m4_define([SHA1], [SAFE_MTN identify $1])
 m4_define([BASE_REVISION], [cat _MTN/revision])
-m4_define([BASE_MANIFEST], [cat _MTN/revision | $_MTN_EXEC --norc automate get_manifest_of -@- | $_MTN_EXEC --norc identify])
-m4_define([WORKING_REVISION], [$_MTN_EXEC --norc automate get_revision | $_MTN_EXEC --norc identify])
-m4_define([WORKING_MANIFEST], [$_MTN_EXEC --norc automate get_manifest_of | $_MTN_EXEC --norc identify])
-m4_define([CERTVALUE], [$_MTN_EXEC automate certs $1 | sed -e '1,/name "$2"/d' | sed -e '/^$/,$d' | grep '^ *value' | sed -e 's/^m4_dquote([^"])*"//' -e 's/"m4_dquote([^"])*$//'])
+m4_define([BASE_MANIFEST], [cat _MTN/revision | SAFE_MTN automate get_manifest_of -@- | SAFE_MTN identify])
+m4_define([WORKING_REVISION], [SAFE_MTN automate get_revision | SAFE_MTN --norc identify])
+m4_define([WORKING_MANIFEST], [SAFE_MTN automate get_manifest_of | SAFE_MTN --norc identify])
+m4_define([CERTVALUE], [SAFE_MTN automate certs $1 | sed -e '1,/name "$2"/d' | sed -e '/^$/,$d' | grep '^ *value' | sed -e 's/^m4_dquote([^"])*"//' -e 's/"m4_dquote([^"])*$//'])
 m4_define([CANONICALISE], [
 if test "$OSTYPE" = "msys"; then
   dos2unix -q -o $1
@@ -812,7 +815,7 @@ m4_include(tests/t_drop_execute.at)
 m4_include(tests/t_rename_execute.at)
 m4_include(tests/t_read_from_file.at)
 m4_include(tests/t_setup_existing_path.at)
-m4_include(tests/t_mt_ignore.at)
+m4_include(tests/t_mtn_ignore.at)
 m4_include(tests/t_automate_get_file.at)
 m4_include(tests/t_automate_get_manifest_of.at)
 m4_include(tests/t_automate_get_revision.at)
@@ -863,3 +866,6 @@ m4_include(tests/t_disapprove_branch.at)
 m4_include(tests/t_serve_ignores_mt_options.at)
 m4_include(tests/t_netsync_notes.at)
 m4_include(tests/t_rosterify_on_rosterified_db.at)
+m4_include(tests/t_case_insensitive__MTN.at)
+m4_include(tests/t_rosterify_mt_ignore.at)
+m4_include(tests/t_revert_file_blocked_by_dir.at)

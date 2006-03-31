@@ -2999,7 +2999,7 @@ names of control files follow a regular pattern:
 
 @table @asis
 @item Versioned control files
-Any file name beginning with @file{.mt-}
+Any file name beginning with @file{.mtn-}
 @item Non-versioned control files
 Any file in the directory @file{_MTN/}
 @end table
@@ -3010,10 +3010,7 @@ The following control files are currently used. More control files may be added
 in the future, but they will follow the patterns given above.
 
 @table @file
-@item .mt-attrs
-Contains versioned attributes of files, associated with the files'
-pathnames.
-@item .mt-ignore
+@item .mtn-ignore
 Contains a list of regular expression patterns, one per line. If it exists,
 any file with a name matching one of these patterns is ignored.
 @item _MTN/wanted-testresults
@@ -6291,7 +6288,7 @@ may affect multiple files simultaneously.
 
 The default definition of this hook recognises a number of common file
 types and extensions for temporary and generated file types that users
-typically don't want to track. If the file @file{.mt-ignore} exists,
+typically don't want to track. If the file @file{.mtn-ignore} exists,
 this hook will read a list of regular expressions from the file, one per
 line, and ignore all files matching one of these expressions. For the
 default definition of this hook, see @ref{Default hooks}.
