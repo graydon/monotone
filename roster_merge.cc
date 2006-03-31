@@ -535,6 +535,8 @@ roster_merge(roster_t const & left_parent,
                     case parallel::in_both:
                       std::pair<bool, attr_value> new_value;
                       node_attr_conflict conflict(new_n->self);
+                      conflict.key = attr_i.left_key();
+                      I(conflict.key == attr_i.right_key());
                       if (merge_scalar(attr_i.left_data(),
                                        safe_get(left_marking.attrs,
                                                 attr_i.left_key()),
