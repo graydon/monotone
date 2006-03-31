@@ -626,9 +626,10 @@ roster_merge(roster_t const & left_parent,
 //
 // for:
 //   node name and parent, file and dir
-// (NEEDED:)
 //   node attr, file and dir
 //   file content
+//
+// (NEEDED:)
 //
 // attr lifecycle:
 //   seen in both -->mark merge cases, above
@@ -850,6 +851,8 @@ struct basename_scalar : public virtual base_scalar, public T
         I(c.nid == thing_nid);
         I(c.left == std::make_pair(root_nid, pc_for(left_val)));
         I(c.right == std::make_pair(root_nid, pc_for(right_val)));
+        I(null_node(result.roster.get_node(thing_nid)->parent));
+        I(null_name(result.roster.get_node(thing_nid)->name));
         // resolve the conflict, thus making sure that resolution works and
         // that this was the only conflict signaled
         result.roster.attach_node(thing_nid, split("thing"));
@@ -914,8 +917,11 @@ struct parent_scalar : public virtual base_scalar, public T
         I(c.nid == thing_nid);
         I(c.left == std::make_pair(parent_for(left_val), pc_for(left_val)));
         I(c.right == std::make_pair(parent_for(right_val), pc_for(right_val)));
+        I(null_node(result.roster.get_node(thing_nid)->parent));
+        I(null_name(result.roster.get_node(thing_nid)->name));
         // resolve the conflict, thus making sure that resolution works and
         // that this was the only conflict signaled
+        // attach implicitly checks that we were already detached
         result.roster.attach_node(thing_nid, split("thing"));
         result.node_name_conflicts.pop_back();
         break;
@@ -962,11 +968,63 @@ struct attr_scalar : public virtual base_scalar, public T
         I(c.key == attr_key("test_key"));
         I(c.left == std::make_pair(true, attr_value_for(left_val)));
         I(c.right == std::make_pair(true, attr_value_for(right_val)));
+        full_attr_map_t const & attrs = result.roster.get_node(thing_nid)->attrs;
+        I(attrs.find(attr_key("test_key")) == attrs.end());
         // resolve the conflict, thus making sure that resolution works and
         // that this was the only conflict signaled
         result.roster.set_attr(this->T::thing_name, attr_key("test_key"),
                                attr_value("conflict -- RESOLVED"));
         result.node_attr_conflicts.pop_back();
+        break;
+      }
+    // by now, the merge should have been resolved cleanly, one way or another
+    result.roster.check_sane();
+    I(result.is_clean());
+  }
+};
+
+struct file_content_scalar : public virtual file_scalar
+{
+  file_id content_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return file_id(std::string((val == scalar_a)
+                               ? "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                               : "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+  }
+
+  void
+  setup_parent(scalar_val val, std::set<revision_id> marks,
+               roster_t & r, marking_map & markings)
+  {
+    make_thing(r, markings);
+    downcast_to_file_t(r.get_node(thing_name))->content = content_for(val);
+    markings.find(thing_nid)->second.file_content = marks;
+  }
+
+  void
+  check_result(scalar_val left_val, scalar_val right_val,
+               // NB result is writeable -- we can scribble on it
+               roster_merge_result & result, scalar_val expected_val)
+  {
+    split_path name;
+    switch (expected_val)
+      {
+      case scalar_a: case scalar_b:
+        I(downcast_to_file_t(result.roster.get_node(thing_nid))->content
+          == content_for(expected_val));
+        break;
+      case scalar_conflict:
+        file_content_conflict const & c = idx(result.file_content_conflicts, 0);
+        I(c.nid == thing_nid);
+        I(c.left == content_for(left_val));
+        I(c.right == content_for(right_val));
+        file_id & content = downcast_to_file_t(result.roster.get_node(thing_nid))->content;
+        I(null_id(content));
+        // resolve the conflict, thus making sure that resolution works and
+        // that this was the only conflict signaled
+        content = file_id(std::string("ffffffffffffffffffffffffffffffffffffffff"));
+        result.file_content_conflicts.pop_back();
         break;
       }
     // by now, the merge should have been resolved cleanly, one way or another
@@ -1000,6 +1058,9 @@ test_a_scalar_merge(scalar_val left_val, std::string const & left_marks_str,
   test_a_scalar_merge_impl<attr_scalar<dir_scalar> >(left_val, left_marks_str, left_uncommon_str,
                                                      right_val, right_marks_str, right_uncommon_str,
                                                      expected_outcome);
+  test_a_scalar_merge_impl<file_content_scalar>(left_val, left_marks_str, left_uncommon_str,
+                                                right_val, right_marks_str, right_uncommon_str,
+                                                expected_outcome);
 }
 
 
