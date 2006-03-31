@@ -10,7 +10,7 @@
 #
 
 AT_INIT([integration tests])
-AT_TESTED([monotone])
+AT_TESTED([mtn])
 
 # some command abbreviations to make life easier
 
