@@ -1,3 +1,7 @@
+2006-03-31  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (243 to go).
+
 2006-03-30  Nathaniel Smith  <njs@pobox.com>
 
 	* testsuite.at: Ah-hah, missed AT_TESTED.  Should fix the

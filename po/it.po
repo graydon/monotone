@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-03-30 19:53+0200\n"
-"PO-Revision-Date: 2006-03-30 20:20+0100\n"
+"PO-Revision-Date: 2006-03-31 20:00+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -66,19 +66,19 @@ msgid "negative or zero next not allowed\n"
 msgstr "il valore ‘next’ deve essere positivo\n"
 
 #: app_state.cc:544
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to read options file %s"
 msgstr "Impossibile leggere il file di opzioni %s"
 
 #: app_state.cc:561
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to write options file %s"
 msgstr "Impossibile scrivere il file di opzioni %s"
 
 #: basic_io.cc:27
-#, fuzzy, c-format
+#, c-format
 msgid "error in %s:%d:%d:E: %s"
-msgstr "errore in un sottoprocesso"
+msgstr "errore in %s:%d:%d:E: %s"
 
 #: cert.cc:58
 #, c-format
@@ -461,9 +461,9 @@ msgid "approve of a particular revision"
 msgstr "approva una particolare revisione"
 
 #: commands.cc:1131
-#, fuzzy, c-format
+#, c-format
 msgid "need --branch argument for approval"
-msgstr "per il ‘setup’ è necessario un argomento --branch"
+msgstr "per ‘approve’ è necessario un argomento --branch"
 
 #: commands.cc:1137
 msgid "disapprove of a particular revision"
@@ -475,9 +475,9 @@ msgid "revision '%s' has %d changesets, cannot invert\n"
 msgstr ""
 
 #: commands.cc:1154
-#, fuzzy, c-format
+#, c-format
 msgid "need --branch argument for disapproval"
-msgstr "per il ‘setup’ è necessario un argomento --branch"
+msgstr "per ‘disapprove’ è necessario un argomento --branch"
 
 #: commands.cc:1187
 msgid "REVISION [COMMENT]"
@@ -593,7 +593,7 @@ msgstr "id del file di destra inesistente"
 #: commands.cc:1354
 #, c-format
 msgid "merge failed"
-msgstr "merge fallito"
+msgstr "‘merge’ fallito"
 
 #: commands.cc:1359
 msgid "show status of workspace"
@@ -652,9 +652,9 @@ msgid "need --branch argument for branch-based checkout"
 msgstr "c'è bisogno di un parametro --branch per estrarre un ramo specifico"
 
 #: commands.cc:1506
-#, fuzzy, c-format
+#, c-format
 msgid "checkout directory '%s' already exists"
-msgstr "Un file di nome '%s' esiste già."
+msgstr "la cartella ‘%s’ esiste già, non può essere utilizzata per il ‘checkout’"
 
 #: commands.cc:1515
 #, c-format
@@ -861,9 +861,9 @@ msgid "pull branches matching PATTERN from netsync server at ADDRESS"
 msgstr ""
 
 #: commands.cc:2093
-#, fuzzy, c-format
+#, c-format
 msgid "doing anonymous pull; use -kKEYNAME if you need authentication\n"
-msgstr "eseguo ‘pull’ anonimo; utilizza ‘-k NOMECHIAVE’ se è necessario autenticarsi\n"
+msgstr "eseguo ‘pull’ anonimo; utilizza ‘-k NOMECHIAVE’ se necessiti di autenticazione\n"
 
 #: commands.cc:2100
 msgid "sync branches matching PATTERN with netsync server at ADDRESS"
@@ -943,7 +943,7 @@ msgstr "--message e --message-file sono mutuamente esclusivi"
 #: commands.cc:2331
 #, fuzzy
 msgid "commit workspace to database"
-msgstr "aggiunge file allo spazio di lavoro"
+msgstr "commit delle modifiche nel database in corso"
 
 #: commands.cc:2349
 #, c-format
@@ -969,7 +969,7 @@ msgstr ""
 #: commands.cc:2384
 #, c-format
 msgid "empty log message; commit canceled"
-msgstr ""
+msgstr "messaggio di log vuoto; ‘commit’ annullato"
 
 #: commands.cc:2403
 #, fuzzy, c-format
@@ -1043,7 +1043,7 @@ msgstr ""
 #: commands.cc:2903
 #, c-format
 msgid "this workspace is a new project; cannot update"
-msgstr ""
+msgstr "questo spazio di lavoro è un nuovo progetto, non posso fare un ‘update’"
 
 #: commands.cc:2910
 #, c-format
@@ -1066,7 +1066,7 @@ msgstr "selezionane uno con ‘%s checkout -r<id>’"
 #: commands.cc:2920
 #, c-format
 msgid "multiple update candidates remain after selection"
-msgstr ""
+msgstr "dopo la selezione restano candidati multipli per ‘update’"
 
 #: commands.cc:2935
 #, c-format
@@ -1108,7 +1108,7 @@ msgstr "aggiorno alla revisione base ‘%s’\n"
 
 #: commands.cc:3096
 msgid "merge unmerged heads of branch"
-msgstr "fa il merge delle teste di un ramo"
+msgstr "fa il ‘merge’ delle teste di un ramo"
 
 #: commands.cc:3112
 #, c-format
@@ -1192,7 +1192,7 @@ msgstr "nessuna azione svolta\n"
 #: commands.cc:3220
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'\n"
-msgstr "merge non necessario; metto ‘%s’ nel ramo ‘%s’\n"
+msgstr "‘merge’ non necessario; metto ‘%s’ nel ramo ‘%s’\n"
 
 #: commands.cc:3256
 #, c-format
@@ -1227,9 +1227,8 @@ msgid "(revision|file|key) PARTIAL-ID"
 msgstr ""
 
 #: commands.cc:3364
-#, fuzzy
 msgid "complete partial id"
-msgstr "id parziale ‘%s’ espanso in ‘%s’\n"
+msgstr "completa un id parziale"
 
 #: commands.cc:3373
 #, c-format
@@ -1283,7 +1282,7 @@ msgstr "PERCORSO"
 
 #: commands.cc:3599
 msgid "print annotated copy of the file from REVISION"
-msgstr ""
+msgstr "stampa una copia annotata del file tratto da REVISIONE"
 
 #: commands.cc:3619
 #, c-format
@@ -1301,14 +1300,14 @@ msgid ""
 msgstr ""
 
 #: commands.cc:3686
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown file '%s' for log command"
-msgstr "Spiacente, formato del file sconosciuto."
+msgstr "File ‘%s’ per il comando ‘log’ sconosciuto"
 
 #: commands.cc:3704
 #, c-format
 msgid "only one of --last/--next allowed"
-msgstr ""
+msgstr "solo un comando permesso tra ‘--last’ e ‘--next’"
 
 #: commands.cc:3872
 msgid "[DIRECTORY]"
@@ -1392,7 +1391,7 @@ msgstr "ID_REV"
 
 #: commands.cc:3964
 msgid "dump the roster associated with the given REVID"
-msgstr ""
+msgstr "stampa il roster associato al REVID dato"
 
 #: commands.cc:3982
 msgid "REV REV"
@@ -1400,13 +1399,13 @@ msgstr "REV REV"
 
 #: commands.cc:3982
 msgid "Show what conflicts would need to be resolved to merge the given revisions."
-msgstr ""
+msgstr "Mostra quali conflitti andrebbero risolto per fare il ‘merge’ di due revisioni specificate."
 
 #: commands.cc:3991
 #: commands.cc:3993
 #, c-format
 msgid "%s in an ancestor of %s; no merge is needed."
-msgstr "‘%s’ è un antenato di ‘%s’: il merge non è necessario."
+msgstr "‘%s’ è un antenato di ‘%s’: il ‘merge’ non è necessario."
 
 #: commands.cc:4007
 #, fuzzy, c-format
@@ -1693,7 +1692,7 @@ msgstr "%d firme non valide\n"
 #: database_check.cc:948
 #, c-format
 msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs\n"
-msgstr ""
+msgstr "controllo completo: %d file; %d roster; %d revisioni; %d chiavi; %d certificati\n"
 
 #: database_check.cc:954
 #, c-format
@@ -1877,12 +1876,12 @@ msgstr "il file ‘%s’ non esiste nello spazio di lavoro"
 #: diff_patch.cc:591
 #, fuzzy, c-format
 msgid "'%s' in workspace is a directory, not a file"
-msgstr "il file ‘%s’ nello spazio di lavoro è una cartella"
+msgstr "Il file \"%file:1\" non è nel formato corretto."
 
 #: diff_patch.cc:595
 #, c-format
 msgid "file %s in workspace has id %s, wanted %s"
-msgstr ""
+msgstr "il file ‘%s’ hd id ‘%s’ nello spazio di lavoro, era atteso ‘%s’"
 
 #: diff_patch.cc:716
 #, fuzzy, c-format
@@ -1985,7 +1984,7 @@ msgstr "id del file antenato non esistente"
 #: file_io.cc:265
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
-msgstr ""
+msgstr "il file sorgente da rinominare ‘%s’ è una cartella -- bug in monotone?"
 
 #: file_io.cc:268
 #: file_io.cc:281
@@ -2001,7 +2000,7 @@ msgstr "Chiave '%s' del registro di sistema non esistente, impossibile rinominar
 #: file_io.cc:278
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
-msgstr ""
+msgstr "la cartella sorgente da rinominare ‘%s’ è un file -- bug in monotone?"
 
 #: file_io.cc:292
 #, fuzzy, c-format
@@ -2173,15 +2172,15 @@ msgstr "forza l'autore del commit"
 
 #: monotone.cc:57
 msgid "limit the number of levels of directories to descend"
-msgstr ""
+msgstr "limita il numero di livelli di cartelle in cui discendere"
 
 #: monotone.cc:58
 msgid "limit log output to the last number of entries"
-msgstr ""
+msgstr "limita la stampa del log alle ultime n voci"
 
 #: monotone.cc:59
 msgid "limit log output to the next number of entries"
-msgstr ""
+msgstr "limita la stampa del log alle seguenti n voci"
 
 #: monotone.cc:60
 msgid "record process id of server"
@@ -2197,7 +2196,7 @@ msgstr "stampa i diff assieme ai log"
 
 #: monotone.cc:63
 msgid "exclude merges when printing logs"
-msgstr "esclude i merge dalla stampa dei log"
+msgstr "esclude i ‘merge’ dalla stampa dei log"
 
 #: monotone.cc:64
 msgid "use the current arguments as the future default"
@@ -3072,9 +3071,9 @@ msgid "mismatched result of migration, got %s, wanted %s"
 msgstr ""
 
 #: schema_migration.cc:282
-#, fuzzy, c-format
+#, c-format
 msgid "committing changes to database"
-msgstr "nessuna modifica che necessita di commit\n"
+msgstr "commit delle modifiche nel database in corso"
 
 #: schema_migration.cc:284
 #, c-format
@@ -3102,7 +3101,7 @@ msgid "database schema %s is unknown; cannot perform migration"
 msgstr "schema del database ‘%s’ sconosciuto: non posso eseguire la migrazione"
 
 #: schema_migration.cc:303
-#, fuzzy, c-format
+#, c-format
 msgid "no migration performed; database schema already up-to-date at %s\n"
 msgstr "nessuna migrazione effettuata: lo schema del database era già aggiornato a ‘%s’\n"
 
