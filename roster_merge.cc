@@ -826,6 +826,72 @@ struct basename_scalar : public virtual base_scalar, public T
   }
 };
 
+template <typename T>
+struct parent_scalar : public virtual base_scalar, public T
+{
+  node_id a_dir_nid, b_dir_nid;
+  parent_scalar() : a_dir_nid(nis.next()), b_dir_nid(nis.next())
+  {}
+
+  split_path path_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return split((val == scalar_a) ? "a/thing" : "b/thing");
+  }
+  path_component pc_for(scalar_val val)
+  {
+    split_path sp = path_for(val);
+    return idx(sp, sp.size() - 1);
+  }
+  node_id parent_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return ((val == scalar_a) ? a_dir_nid : b_dir_nid);
+  }
+
+  void
+  setup_parent(scalar_val val, std::set<revision_id> marks,
+               roster_t & r, marking_map & markings)
+  {
+    this->T::make_thing(r, markings);
+    make_dir("a", a_dir_nid, r, markings);
+    make_dir("b", b_dir_nid, r, markings);
+    split_path name;
+    r.get_name(thing_nid, name);
+    r.detach_node(name);
+    r.attach_node(thing_nid, path_for(val));
+    markings.find(thing_nid)->second.parent_name = marks;
+  }
+
+  void
+  check_result(scalar_val left_val, scalar_val right_val,
+               // NB result is writeable -- we can scribble on it
+               roster_merge_result & result, scalar_val expected_val)
+  {
+    split_path name;
+    switch (expected_val)
+      {
+      case scalar_a: case scalar_b:
+        result.roster.get_name(thing_nid, name);
+        I(name == path_for(expected_val));
+        break;
+      case scalar_conflict:
+        node_name_conflict const & c = idx(result.node_name_conflicts, 0);
+        I(c.nid == thing_nid);
+        I(c.left == std::make_pair(parent_for(left_val), pc_for(left_val)));
+        I(c.right == std::make_pair(parent_for(right_val), pc_for(right_val)));
+        // resolve the conflict, thus making sure that resolution works and
+        // that this was the only conflict signaled
+        result.roster.attach_node(thing_nid, split("thing"));
+        result.node_name_conflicts.pop_back();
+        break;
+      }
+    // by now, the merge should have been resolved cleanly, one way or another
+    result.roster.check_sane();
+    I(result.is_clean());
+  }
+};
+
 void
 test_a_scalar_merge(scalar_val left_val, std::string const & left_marks_str,
                     std::string const & left_uncommon_str,
@@ -839,6 +905,12 @@ test_a_scalar_merge(scalar_val left_val, std::string const & left_marks_str,
   test_a_scalar_merge_impl<basename_scalar<dir_mixin> >(left_val, left_marks_str, left_uncommon_str,
                                                          right_val, right_marks_str, right_uncommon_str,
                                                          expected_outcome);
+  test_a_scalar_merge_impl<parent_scalar<file_mixin> >(left_val, left_marks_str, left_uncommon_str,
+                                                       right_val, right_marks_str, right_uncommon_str,
+                                                       expected_outcome);
+  test_a_scalar_merge_impl<parent_scalar<dir_mixin> >(left_val, left_marks_str, left_uncommon_str,
+                                                      right_val, right_marks_str, right_uncommon_str,
+                                                      expected_outcome);
 }
 
 
