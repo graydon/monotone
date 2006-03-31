@@ -20,8 +20,9 @@ set -e
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DESC="Monotone Server"
 NAME=monotone
+EXECNAME=mtn
 DAEMON=/usr/bin/mtn
-PIDFILE=/var/run/$NAME.pid
+PIDFILE=/var/run/$EXECNAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
 MTN_HOME=/var/lib/monotone
@@ -46,9 +47,9 @@ d_start() {
           return 0
        fi
 
-       start-stop-daemon --start --quiet --pidfile $PIDFILE \
+       start-stop-daemon --start --quiet --pidfile $PIDFILE --make-pidfile \
                --exec $DAEMON --chuid monotone --chdir $MTN_HOME -- \
-	       --confdir=$MTN_CONFDIR --db=$DB --norc --pid-file=$PIDFILE \
+	       --confdir=$MTN_CONFDIR --db=$DB --norc \
 	       --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR \
                --bind=$ADDRESS serve $BRANCHES >> /var/log/monotone.log 2>&1 &
 
@@ -59,7 +60,7 @@ d_start() {
 #
 d_stop() {
        start-stop-daemon --stop --quiet --pidfile $PIDFILE \
-               --name $NAME --user monotone
+               --name $EXECNAME --user monotone
        
 
 #       kill `ps x | grep monotone.*serve | grep -v grep | awk -- '{print $1}'` &> /dev/null \
