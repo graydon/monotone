@@ -578,6 +578,8 @@ roster_merge(roster_t const & left_parent,
 #include "unit_tests.hh"
 
 // cases for testing:
+//
+// (DONE:)
 // 
 // lifecycle, file and dir
 //    alive in both
@@ -596,9 +598,10 @@ roster_merge(roster_t const & left_parent,
 //   different, conflict with 2 marks both conflicting
 //
 // for:
-//   node name, name and parent, file and dir
-//   file content
+//   node name and parent, file and dir
+// (NEEDED:)
 //   node attr, file and dir
+//   file content
 //
 // attr lifecycle:
 //   seen in both -->mark merge cases, above
@@ -751,8 +754,12 @@ struct base_scalar
   }
 };
 
-struct file_mixin : public virtual base_scalar
+struct file_scalar : public virtual base_scalar
 {
+  split_path thing_name;
+  file_scalar() : thing_name(split("thing"))
+  {}
+    
   void
   make_thing(roster_t & r, marking_map & markings)
   {
@@ -761,8 +768,12 @@ struct file_mixin : public virtual base_scalar
   }
 };
 
-struct dir_mixin : public virtual base_scalar
+struct dir_scalar : public virtual base_scalar
 {
+  split_path thing_name;
+  dir_scalar() : thing_name(split("thing"))
+  {}
+    
   void
   make_thing(roster_t & r, marking_map & markings)
   {
@@ -790,9 +801,7 @@ struct basename_scalar : public virtual base_scalar, public T
                roster_t & r, marking_map & markings)
   {
     this->T::make_thing(r, markings);
-    split_path name;
-    r.get_name(thing_nid, name);
-    r.detach_node(name);
+    r.detach_node(this->T::thing_name);
     r.attach_node(thing_nid, path_for(val));
     markings.find(thing_nid)->second.parent_name = marks;
   }
@@ -856,9 +865,7 @@ struct parent_scalar : public virtual base_scalar, public T
     this->T::make_thing(r, markings);
     make_dir("a", a_dir_nid, r, markings);
     make_dir("b", b_dir_nid, r, markings);
-    split_path name;
-    r.get_name(thing_nid, name);
-    r.detach_node(name);
+    r.detach_node(this->T::thing_name);
     r.attach_node(thing_nid, path_for(val));
     markings.find(thing_nid)->second.parent_name = marks;
   }
@@ -892,6 +899,55 @@ struct parent_scalar : public virtual base_scalar, public T
   }
 };
 
+template <typename T>
+struct attr_scalar : public virtual base_scalar, public T
+{
+  attr_value attr_value_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return attr_value((val == scalar_a) ? "a" : "b");
+  }
+
+  void
+  setup_parent(scalar_val val, std::set<revision_id> marks,
+               roster_t & r, marking_map & markings)
+  {
+    this->T::make_thing(r, markings);
+    r.set_attr(this->T::thing_name, attr_key("test_key"), attr_value_for(val));
+    markings.find(thing_nid)->second.attrs[attr_key("test_key")] = marks;
+  }
+
+  void
+  check_result(scalar_val left_val, scalar_val right_val,
+               // NB result is writeable -- we can scribble on it
+               roster_merge_result & result, scalar_val expected_val)
+  {
+    split_path name;
+    switch (expected_val)
+      {
+      case scalar_a: case scalar_b:
+        I(result.roster.get_node(thing_nid)->attrs[attr_key("test_key")]
+          == std::make_pair(true, attr_value_for(expected_val)));
+        break;
+      case scalar_conflict:
+        node_attr_conflict const & c = idx(result.node_attr_conflicts, 0);
+        I(c.nid == thing_nid);
+        I(c.key == attr_key("test_key"));
+        I(c.left == std::make_pair(true, attr_value_for(left_val)));
+        I(c.right == std::make_pair(true, attr_value_for(right_val)));
+        // resolve the conflict, thus making sure that resolution works and
+        // that this was the only conflict signaled
+        result.roster.set_attr(this->T::thing_name, attr_key("test_key"),
+                               attr_value("conflict -- RESOLVED"));
+        result.node_attr_conflicts.pop_back();
+        break;
+      }
+    // by now, the merge should have been resolved cleanly, one way or another
+    result.roster.check_sane();
+    I(result.is_clean());
+  }
+};
+
 void
 test_a_scalar_merge(scalar_val left_val, std::string const & left_marks_str,
                     std::string const & left_uncommon_str,
@@ -899,18 +955,24 @@ test_a_scalar_merge(scalar_val left_val, std::string const & left_marks_str,
                     std::string const & right_uncommon_str,
                     scalar_val expected_outcome)
 {
-  test_a_scalar_merge_impl<basename_scalar<file_mixin> >(left_val, left_marks_str, left_uncommon_str,
+  test_a_scalar_merge_impl<basename_scalar<file_scalar> >(left_val, left_marks_str, left_uncommon_str,
                                                           right_val, right_marks_str, right_uncommon_str,
                                                           expected_outcome);
-  test_a_scalar_merge_impl<basename_scalar<dir_mixin> >(left_val, left_marks_str, left_uncommon_str,
+  test_a_scalar_merge_impl<basename_scalar<dir_scalar> >(left_val, left_marks_str, left_uncommon_str,
                                                          right_val, right_marks_str, right_uncommon_str,
                                                          expected_outcome);
-  test_a_scalar_merge_impl<parent_scalar<file_mixin> >(left_val, left_marks_str, left_uncommon_str,
+  test_a_scalar_merge_impl<parent_scalar<file_scalar> >(left_val, left_marks_str, left_uncommon_str,
+                                                        right_val, right_marks_str, right_uncommon_str,
+                                                        expected_outcome);
+  test_a_scalar_merge_impl<parent_scalar<dir_scalar> >(left_val, left_marks_str, left_uncommon_str,
                                                        right_val, right_marks_str, right_uncommon_str,
                                                        expected_outcome);
-  test_a_scalar_merge_impl<parent_scalar<dir_mixin> >(left_val, left_marks_str, left_uncommon_str,
+  test_a_scalar_merge_impl<attr_scalar<file_scalar> >(left_val, left_marks_str, left_uncommon_str,
                                                       right_val, right_marks_str, right_uncommon_str,
                                                       expected_outcome);
+  test_a_scalar_merge_impl<attr_scalar<dir_scalar> >(left_val, left_marks_str, left_uncommon_str,
+                                                     right_val, right_marks_str, right_uncommon_str,
+                                                     expected_outcome);
 }
 
 
