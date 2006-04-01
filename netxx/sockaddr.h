@@ -60,6 +60,7 @@ public:
     void setup (int af_type, port_type port);
 private:
     union {
+	sockaddr sa;
 	sockaddr_in sa_in;
 
 #   ifndef NETXX_NO_INET6

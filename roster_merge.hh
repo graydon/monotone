@@ -7,6 +7,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <string>
+
 #include "vocab.hh"
 #include "roster.hh"
 
@@ -94,11 +96,11 @@ struct directory_loop_conflict
 };
 
 // renaming the root dir allows these:
-//   -- MT in root
+//   -- _MTN in root
 //   -- missing root directory
 
 // this is a node that cleanly merged to some name, but that name was somehow
-// forbidden.  (Currently, the only forbidden name is "MT" in the root
+// forbidden.  (Currently, the only forbidden name is "_MTN" in the root
 // directory.)
 struct illegal_name_conflict
 {
@@ -118,12 +120,14 @@ struct roster_merge_result
   bool missing_root_dir;
   // this roster is sane if is_clean() returns true
   roster_t roster;
-  bool is_clean();
-  bool is_clean_except_for_content();
-  void log_conflicts();
-  void warn_non_content_conflicts();
+  bool is_clean() const;
+  bool is_clean_except_for_content() const;
+  void log_conflicts() const;
+  void warn_non_content_conflicts() const;
   void clear();
 };
+
+template <> void dump(roster_merge_result const & result, std::string & out);
 
 void
 roster_merge(roster_t const & left_parent,

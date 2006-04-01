@@ -2,7 +2,7 @@
 
 AT_SETUP([importing a CVS file with one version])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(importme.0, [version 0 of test file
 ])
@@ -28,7 +28,7 @@ AT_CHECK(cvs -d $CVSROOT commit -m 'commit 0' testdir/importme, [], [ignore], [i
 
 # import into monotone and check presence of file
 
-AT_CHECK(MONOTONE --branch=testbranch cvs_import $CVSROOT/testdir, [], [ignore], [ignore])
-AT_CHECK(MONOTONE automate get_file $TSHA0, [], [ignore])
+AT_CHECK(MTN --branch=testbranch cvs_import $CVSROOT/testdir, [], [ignore], [ignore])
+AT_CHECK(MTN automate get_file $TSHA0, [], [ignore])
 
 AT_CLEANUP

@@ -94,7 +94,7 @@ struct poptOption options[] =
     {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, gettext_noop("insert command line arguments taken from the given file"), NULL},
     {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, gettext_noop("set ticker style (count|dot|none)"), NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, gettext_noop("do not load standard lua hooks"), NULL},
-    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, gettext_noop("do not load ~/.monotone/monotonerc or MT/monotonerc lua files"), NULL},
+    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, gettext_noop("do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"), NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, gettext_noop("load extra rc file"), NULL},
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, gettext_noop("set key for signatures"), NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, gettext_noop("set name of database"), NULL},
@@ -567,8 +567,11 @@ cpp_main(int argc, char ** argv)
         }
 
       // at this point we allow a workspace (meaning search for it
-      // and if found read MT/options) but don't require it. certain
-      // commands may subsequently require a workspace or fail
+      // and if found read _MTN/options, but don't use the data quite
+      // yet, and read all the monotonercs).  Processing the data
+      // from _MTN/options happens later.
+      // Certain commands may subsequently require a workspace or fail
+      // if we didn't find one at this point.
 
       app.allow_workspace();
 

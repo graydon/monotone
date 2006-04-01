@@ -1,3 +1,5 @@
+// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -898,9 +900,12 @@ void unidiff_hunk_writer::advance_to(size_t newpos)
       // insert new leading context
       if (newpos - ctx < a.size())
         {
-          for (int i = ctx; i > 0; --i)
+          for (size_t i = ctx; i > 0; --i)
             {
-              if (newpos - i < 0)
+              // The original test was (newpos - i < 0), but since newpos
+              // is size_t (unsigned), it will never go negative.  Testing
+              // that newpos is smaller than i is the same test, really.
+              if (newpos < i)
                 continue;
               hunk.push_back(string(" ") + a[newpos - i]);
               a_begin--; a_len++;
@@ -1056,9 +1061,12 @@ void cxtdiff_hunk_writer::advance_to(size_t newpos)
       // insert new leading context
       if (newpos - ctx < a.size())
         {
-          for (int i = ctx; i > 0; --i)
+          for (size_t i = ctx; i > 0; --i)
             {
-              if (newpos - i < 0)
+              // The original test was (newpos - i < 0), but since newpos
+              // is size_t (unsigned), it will never go negative.  Testing
+              // that newpos is smaller than i is the same test, really.
+              if (newpos < i)
                 continue;
 
               // note that context diffs prefix common text with two

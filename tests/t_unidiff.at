@@ -4,7 +4,7 @@ AT_SETUP([calculation of unidiffs])
 
 NEED_UNB64
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(firstfile.b64, [LyogU3Vicm91dGluZXMgc2hhcmVkIGJ5IGFsbCBsYW5ndWFnZXMgdGhhdCBhcmUgdmFyaWFu
 dHMgb2YgQy4KICAgQ29weXJpZ2h0IChDKSAxOTkyLCA5MywgOTQsIDk1LCA5NiwgMTk5NyBG
@@ -4777,8 +4777,8 @@ ZGUgImd0LWMtY29tbW9uLmgiCg==
 # decode first file and commit to db
 UNB64(firstfile.b64, firstfile)
 AT_CHECK(cp firstfile testfile, [], [ignore])
-AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
-AT_CHECK(MONOTONE --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
+AT_CHECK(MTN add testfile, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch commit --message=blah-blah, [], [ignore], [ignore])
 AT_CHECK(mv testfile firstfile, [], [ignore])
 
 # decode second file
@@ -4786,7 +4786,7 @@ UNB64(secondfile.b64, secondfile)
 
 # calculate diff to second file using monotone
 AT_CHECK(cp secondfile testfile, [], [ignore])
-AT_CHECK(MONOTONE diff, [], [stdout])
+AT_CHECK(MTN diff, [], [stdout])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout monodiff, [], [ignore])
 

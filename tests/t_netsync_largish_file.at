@@ -3,12 +3,12 @@ AT_KEYWORDS([netsync])
 
 # Check that we can netsync a 32MB file.
 
-MONOTONE_SETUP
+MTN_SETUP
 NETSYNC_SETUP
 
 LARGISH_FILE_CREATE(largish, 32)
 
-AT_CHECK(MONOTONE add largish, [], [ignore], [ignore])
+AT_CHECK(MTN add largish, [], [ignore], [ignore])
 COMMIT(testbranch)
 F_VER0=`SHA1(largish)`
 
@@ -18,7 +18,7 @@ NETSYNC_CLIENT_RUN(pull, testbranch)
 
 NETSYNC_SERVE_STOP
 
-AT_CHECK(MONOTONE --db=test2.db --branch=testbranch checkout other, [], [ignore], [ignore])
+AT_CHECK(MTN --db=test2.db --branch=testbranch checkout other, [], [ignore], [ignore])
 CHK=`SHA1(other/largish)`
 AT_CHECK(test $CHK = $F_VER0)
 

@@ -1,6 +1,6 @@
 AT_SETUP([warn on bad restriction])
-MONOTONE_SETUP
+MTN_SETUP
 
-AT_CHECK(MONOTONE diff bogusdir1 bogusdir2, [1], [ignore], [stderr])
+AT_CHECK(MTN diff bogusdir1 bogusdir2, [1], [ignore], [stderr])
 
 AT_CLEANUP

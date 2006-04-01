@@ -2,7 +2,7 @@
 
 AT_SETUP([importing CVS with vendor imports and branches])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(file1.0, [version 0 of test file1
 ])
@@ -90,13 +90,13 @@ AT_CHECK(cd testsrc; cvs -d $CVSROOT commit -m 'commit on mainline after branch'
 
 # import into monotone and check presence of files
 
-AT_CHECK(MONOTONE --branch=test cvs_import $CVSROOT/testsrc, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=test cvs_import $CVSROOT/testsrc, [], [ignore], [ignore])
 
 # also check that checkout is correct
 # right one.
 
-AT_CHECK(MONOTONE checkout --branch=test maindir, [], [ignore], [ignore])
-AT_CHECK(MONOTONE checkout --branch=test.branched branchdir, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --branch=test maindir, [], [ignore], [ignore])
+AT_CHECK(MTN checkout --branch=test.branched branchdir, [], [ignore], [ignore])
 
 AT_CHECK(cmp file1.1 maindir/file1)
 AT_CHECK(cmp file2.0 maindir/file2)
