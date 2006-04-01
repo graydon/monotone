@@ -6,6 +6,14 @@
 
 	* xdelta.cc (apply_copy): Fixed warning.
 
+2006-04-01  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (205 to go).
+
+2006-04-01  Petr Ovtchenkov  <ptr at island.corbina.net>
+
+	* xdelta.cc: avoid dereference of iterators at end()
+
 2006-03-31  Nathaniel Smith  <njs@pobox.com>
 
 	* work.cc (apply_delta): Don't print file hashes when updating.
