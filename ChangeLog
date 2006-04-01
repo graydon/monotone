@@ -1,3 +1,10 @@
+2006-03-31  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.cc (get_nodes, merge_states): remove;
+	(add_paths, add_nodes, map_paths, map_nodes): simplify after above
+	cleanup and removal of implicit includes;
+	* restrictions.hh: remove stale comments
+	
 2006-03-30  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc (status, ls_changed, commit, diff, revert): call

@@ -50,13 +50,8 @@ using std::vector;
 //
 // revision A ... included ... revision X ... excluded ... revision B
 
-// explicit in the sense that the path was explicitly given on the command line
-// implicit in the sense that parent directories are included for explicit paths
-// FIXME: should we really be doing implicit includes of parents?
-
-// TODO: move these into the class below?!?
 enum path_state { included, excluded };
-  
+
 class restriction
 {
  public:

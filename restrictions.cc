@@ -34,39 +34,6 @@ make_path_set(vector<utf8> const & args, path_set & paths)
 }
 
 static void
-get_nodes(path_set const & paths, roster_t const & roster, 
-          set<node_id> & nodes, 
-          path_set & known_paths)
-{
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      if (roster.has_node(*i)) 
-        {
-          known_paths.insert(*i);
-          node_id nid = roster.get_node(*i)->self;
-          nodes.insert(nid);
-        }
-    }  
-}
-
-static void 
-merge_states(path_state const & old_state, 
-             path_state const & new_state, 
-             path_state & merged_state, 
-             split_path const & sp)
-{
-  if (old_state == new_state)
-    {
-      merged_state = old_state;
-    }
-  else
-    {
-      L(FL("path '%s' %d %d") % sp % old_state % new_state);
-      N(false, F("conflicting include/exclude on path '%s'") % sp);
-    }
-}
-
-static void
 add_paths(map<split_path, path_state> & path_map, 
           path_set const & paths, 
           path_state const state)
@@ -75,40 +42,33 @@ add_paths(map<split_path, path_state> & path_map,
     {
       map<split_path, path_state>::iterator p = path_map.find(*i);
       if (p != path_map.end())
-        {
-          path_state merged;
-          merge_states(p->second, state, merged, *i);
-          p->second = merged;
-        }
+        N(p->second == state, 
+          F("conflicting include/exclude on path '%s'") % *i);
       else
-        {
-          path_map.insert(make_pair(*i, state));
-        }
+        path_map.insert(make_pair(*i, state));
     }
 }
 
 static void
 add_nodes(map<node_id, path_state> & node_map, 
           roster_t const & roster,
-          set<node_id> const & nodes,
+          path_set const & paths, 
+          path_set & known, 
           path_state const state)
 {
-  for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      I(roster.has_node(*i));
-
-      map<node_id, path_state>::iterator n = node_map.find(*i);
-      if (n != node_map.end())
+      if (roster.has_node(*i)) 
         {
-          path_state merged;
-          split_path sp;
-          roster.get_name(*i, sp);
-          merge_states(n->second, state, merged, sp);
-          n->second = merged;
-        }
-      else
-        {
-          node_map.insert(make_pair(*i, state));
+          known.insert(*i);
+          node_id nid = roster.get_node(*i)->self;
+          
+          map<node_id, path_state>::iterator n = node_map.find(nid);
+          if (n != node_map.end())
+            N(n->second == state, 
+              F("conflicting include/exclude on path '%s'") % *i);
+          else
+            node_map.insert(make_pair(nid, state));
         }
     }
 }
@@ -126,25 +86,13 @@ restriction::map_paths(vector<utf8> const & include_args,
 
   add_paths(path_map, included_paths, included);
   add_paths(path_map, excluded_paths, excluded);
-
-  L(FL("restriction paths: %d included; %d excluded") 
-    % included_paths.size()
-    % excluded_paths.size());
 }
 
 void
 restriction::map_nodes(roster_t const & roster)
 {
-  set<node_id> included_nodes, excluded_nodes;
-  get_nodes(included_paths, roster, included_nodes, known_paths);
-  get_nodes(excluded_paths, roster, excluded_nodes, known_paths);
-
-  add_nodes(node_map, roster, included_nodes, included);
-  add_nodes(node_map, roster, excluded_nodes, excluded);
-
-  L(FL("restriction nodes: %d included; %d excluded") 
-    % included_nodes.size()
-    % excluded_nodes.size());
+  add_nodes(node_map, roster, included_paths, known_paths, included);
+  add_nodes(node_map, roster, excluded_paths, known_paths, excluded);
 }
 
 void
