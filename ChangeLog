@@ -1,3 +1,7 @@
+2006-04-01  Benoît Dejean  <benoit@placenet.org>
+
+	* xdelta.cc (apply_copy): Fixed warning.
+
 2006-03-31  Nathaniel Smith  <njs@pobox.com>
 
 	* work.cc (apply_delta): Don't print file hashes when updating.

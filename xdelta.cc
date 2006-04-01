@@ -546,8 +546,8 @@ apply_copy(version_spec const & in, version_spec & out,
       out.push_back(lo->subchunk(dst_vpos, seglen, offset));
       src_vpos += seglen;
       dst_vpos += seglen;
+      I(src_len >= seglen);
       src_len -= seglen;
-      I(src_len >= 0);
       I(out.back().vpos + out.back().len == dst_vpos);
     }
 
