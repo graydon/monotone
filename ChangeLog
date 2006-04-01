@@ -1,3 +1,7 @@
+2006-04-01  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (205 to go).
+
 2006-04-01  Petr Ovtchenkov  <ptr at island.corbina.net>
 
 	* xdelta.cc: avoid dereference of iterators at end()
