@@ -1334,6 +1334,55 @@ test_roster_merge_attr_lifecycle()
   I(safe_get(result.roster.get_node(file_nid)->attrs, attr_key("left_dead")) == std::make_pair(false, attr_value("")));
 }
 
+// two diff nodes with same name
+static void
+test_simple_rename_target_conflict()
+{
+  MM(left_roster);
+  MM(left_markings);
+  MM(right_roster);
+  MM(right_markings);
+  std::set<revision_id> old_revs, left_revs, right_revs;
+  string_to_set("0", old_revs);
+  string_to_set("1", left_revs);
+  string_to_set("2", right_revs);
+  revision_id old_rid = *old_revs.begin();
+  revision_id left_rid = *left_revs.begin();
+  revision_id right_rid = *right_revs.begin();
+  testing_node_id_source nis;
+  node_id root_nid = nis.next();
+  make_dir(left_roster, left_markings, old_rid, old_rid, "", root_nid);
+  make_dir(right_roster, right_markings, old_rid, old_rid, "", root_nid);
+  node_id left_nid = nis.next();
+  make_dir(left_roster, left_markings, left_rid, left_rid, "thing", left_nid);
+  node_id right_nid = nis.next();
+  make_dir(right_roster, right_markings, right_rid, right_rid, "thing", right_nid);
+
+  roster_merge_result result;
+  MM(result);
+  roster_merge(left_roster, left_markings, left_revs,
+               right_roster, right_markings, right_revs,
+               result);
+
+  I(!result.is_clean());
+  I(
+}
+
+// directory loops
+// orphans
+// name collision on root dir
+// illegal node ("_MTN")
+// missing root dir
+//
+// interactions:
+//   in-node name conflict + possible between-node name conflict
+//   in-node name conflict + both possible names orphaned
+//   in-node name conflict + directory loop conflict
+//   in-node name conflict + one name illegal
+//   between-node name conflict + both nodes orphaned
+//   between-node name conflict + both nodes cause loop
+//   between-node name conflict + both nodes illegal
+
 void
 add_roster_merge_tests(test_suite * suite)
 {
