@@ -1,5 +1,9 @@
 2006-03-31  Nathaniel Smith  <njs@pobox.com>
 
+	* work.cc (apply_delta): Don't print file hashes when updating.
+
+2006-03-31  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (update): Print branch name when updating.
 
 2006-04-01  Henry Nestler  <Henry@BigFoot.de>

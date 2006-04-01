@@ -1000,7 +1000,7 @@ editable_working_tree::apply_delta(split_path const & pth,
   file_id curr_id(curr_id_raw);
   E(curr_id == old_id,
     F("content of file '%s' has changed, not overwriting"));
-  P(F("updating %s to %s") % pth_unsplit % new_id);
+  P(F("updating %s") % pth_unsplit);
 
   file_data dat;
   source.get_file_content(new_id, dat);
