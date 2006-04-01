@@ -2281,7 +2281,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
                 has_any_live_attrs = true;
               }
           if (!has_any_live_attrs)
-            cout << "No attributes for " << path << endl;
+            cout << F("No attributes for '%s'") % path << endl;
         }
       else if (args.size() == 3)
         {
@@ -2290,7 +2290,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           if (i != node->attrs.end() && i->second.first)
             cout << path << " : " << i->first << "=" << i->second.second << endl;
           else
-            cout << "No attribute " << a_key << " on path " << path << endl;
+            cout << F("No attribute '%s' on path '%s'") % a_key % path << endl;
         }
       else
         throw usage(name);

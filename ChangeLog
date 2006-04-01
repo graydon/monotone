@@ -1,5 +1,9 @@
 2006-04-01  Benoît Dejean  <benoit@placenet.org>
 
+	* commands.cc (CMD(attr)): 2 more strings for I18N.
+
+2006-04-01  Benoît Dejean  <benoit@placenet.org>
+
 	* xdelta.cc (apply_copy): Fixed warning.
 
 2006-03-31  Nathaniel Smith  <njs@pobox.com>
