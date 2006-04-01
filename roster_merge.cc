@@ -629,12 +629,12 @@ roster_merge(roster_t const & left_parent,
 //   node attr, file and dir
 //   file content
 //
-// (NEEDED:)
-//
 // attr lifecycle:
 //   seen in both -->mark merge cases, above
 //   live in one and unseen in other -->live
 //   dead in one and unseen in other -->dead
+//
+// (NEEDED:)
 //
 // two diff nodes with same name
 // directory loops
@@ -1200,9 +1200,9 @@ make_file(roster_t & r, marking_map & markings,
 }
 
 static void
-make_lifecycle_objs(roster_t & r, marking_map & markings, revision_id uncommon,
-                    std::string const & name, node_id common_dir_nid, node_id common_file_nid,
-                    node_id & safe_dir_nid, node_id & safe_file_nid, node_id_source & nis)
+make_node_lifecycle_objs(roster_t & r, marking_map & markings, revision_id const & uncommon,
+                         std::string const & name, node_id common_dir_nid, node_id common_file_nid,
+                         node_id & safe_dir_nid, node_id & safe_file_nid, node_id_source & nis)
 {
   make_dir(r, markings, common1, common1, "common_old_dir", common_dir_nid);
   make_file(r, markings, common1, common1, common1, "common_old_file", fid1, common_file_nid);
@@ -1237,10 +1237,10 @@ test_roster_merge_node_lifecycle()
   node_id common_dir_nid = nis.next();
   node_id common_file_nid = nis.next();
   node_id a_safe_dir_nid, a_safe_file_nid, b_safe_dir_nid, b_safe_file_nid;
-  make_lifecycle_objs(a_roster, a_markings, a_uncommon1, "a", common_dir_nid, common_file_nid,
-                      a_safe_dir_nid, a_safe_file_nid, nis);
-  make_lifecycle_objs(b_roster, b_markings, b_uncommon1, "b", common_dir_nid, common_file_nid,
-                      b_safe_dir_nid, b_safe_file_nid, nis);
+  make_node_lifecycle_objs(a_roster, a_markings, a_uncommon1, "a", common_dir_nid, common_file_nid,
+                           a_safe_dir_nid, a_safe_file_nid, nis);
+  make_node_lifecycle_objs(b_roster, b_markings, b_uncommon1, "b", common_dir_nid, common_file_nid,
+                           b_safe_dir_nid, b_safe_file_nid, nis);
   // do the merge
   roster_merge_result result;
   roster_merge(a_roster, a_markings, a_uncommon, b_roster, b_markings, b_uncommon, result);
@@ -1266,11 +1266,80 @@ test_roster_merge_node_lifecycle()
                   b_roster.get_node(b_safe_file_nid), false));
 }
 
+static void
+test_roster_merge_attr_lifecycle()
+{
+  roster_t left_roster, right_roster;
+  marking_map left_markings, right_markings;
+  MM(left_roster);
+  MM(left_markings);
+  MM(right_roster);
+  MM(right_markings);
+  std::set<revision_id> old_revs, left_revs, right_revs;
+  string_to_set("0", old_revs);
+  string_to_set("1", left_revs);
+  string_to_set("2", right_revs);
+  revision_id old_rid = *old_revs.begin();
+  testing_node_id_source nis;
+  node_id dir_nid = nis.next();
+  make_dir(left_roster, left_markings, old_rid, old_rid, "", dir_nid);
+  make_dir(right_roster, right_markings, old_rid, old_rid, "", dir_nid);
+  node_id file_nid = nis.next();
+  make_file(left_roster, left_markings, old_rid, old_rid, old_rid, "thing", fid1, file_nid);
+  make_file(right_roster, right_markings, old_rid, old_rid, old_rid, "thing", fid1, file_nid);
+
+  // put one live and one dead attr on each thing on each side, with uncommon
+  // marks on them
+  safe_insert(left_roster.get_node(dir_nid)->attrs,
+              std::make_pair(attr_key("left_live"), std::make_pair(true, attr_value("left_live"))));
+  safe_insert(left_markings[dir_nid].attrs, std::make_pair(attr_key("left_live"), left_revs));
+  safe_insert(left_roster.get_node(dir_nid)->attrs,
+              std::make_pair(attr_key("left_dead"), std::make_pair(false, attr_value(""))));
+  safe_insert(left_markings[dir_nid].attrs, std::make_pair(attr_key("left_dead"), left_revs));
+  safe_insert(left_roster.get_node(file_nid)->attrs,
+              std::make_pair(attr_key("left_live"), std::make_pair(true, attr_value("left_live"))));
+  safe_insert(left_markings[file_nid].attrs, std::make_pair(attr_key("left_live"), left_revs));
+  safe_insert(left_roster.get_node(file_nid)->attrs,
+              std::make_pair(attr_key("left_dead"), std::make_pair(false, attr_value(""))));
+  safe_insert(left_markings[file_nid].attrs, std::make_pair(attr_key("left_dead"), left_revs));
+
+  safe_insert(right_roster.get_node(dir_nid)->attrs,
+              std::make_pair(attr_key("right_live"), std::make_pair(true, attr_value("right_live"))));
+  safe_insert(right_markings[dir_nid].attrs, std::make_pair(attr_key("right_live"), right_revs));
+  safe_insert(right_roster.get_node(dir_nid)->attrs,
+              std::make_pair(attr_key("right_dead"), std::make_pair(false, attr_value(""))));
+  safe_insert(right_markings[dir_nid].attrs, std::make_pair(attr_key("right_dead"), right_revs));
+  safe_insert(right_roster.get_node(file_nid)->attrs,
+              std::make_pair(attr_key("right_live"), std::make_pair(true, attr_value("right_live"))));
+  safe_insert(right_markings[file_nid].attrs, std::make_pair(attr_key("right_live"), right_revs));
+  safe_insert(right_roster.get_node(file_nid)->attrs,
+              std::make_pair(attr_key("right_dead"), std::make_pair(false, attr_value(""))));
+  safe_insert(right_markings[file_nid].attrs, std::make_pair(attr_key("right_dead"), right_revs));
+
+  roster_merge_result result;
+  MM(result);
+  roster_merge(left_roster, left_markings, left_revs,
+               right_roster, right_markings, right_revs,
+               result);
+  I(result.roster.all_nodes().size() == 2);
+  I(result.roster.get_node(dir_nid)->attrs.size() == 4);
+  I(safe_get(result.roster.get_node(dir_nid)->attrs, attr_key("left_live")) == std::make_pair(true, attr_value("left_live")));
+  I(safe_get(result.roster.get_node(dir_nid)->attrs, attr_key("left_dead")) == std::make_pair(false, attr_value("")));
+  I(safe_get(result.roster.get_node(dir_nid)->attrs, attr_key("right_live")) == std::make_pair(true, attr_value("right_live")));
+  I(safe_get(result.roster.get_node(dir_nid)->attrs, attr_key("left_dead")) == std::make_pair(false, attr_value("")));
+  I(result.roster.get_node(file_nid)->attrs.size() == 4);
+  I(safe_get(result.roster.get_node(file_nid)->attrs, attr_key("left_live")) == std::make_pair(true, attr_value("left_live")));
+  I(safe_get(result.roster.get_node(file_nid)->attrs, attr_key("left_dead")) == std::make_pair(false, attr_value("")));
+  I(safe_get(result.roster.get_node(file_nid)->attrs, attr_key("right_live")) == std::make_pair(true, attr_value("right_live")));
+  I(safe_get(result.roster.get_node(file_nid)->attrs, attr_key("left_dead")) == std::make_pair(false, attr_value("")));
+}
+
 void
 add_roster_merge_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&test_roster_merge_node_lifecycle));
+  suite->add(BOOST_TEST_CASE(&test_roster_merge_attr_lifecycle));
   suite->add(BOOST_TEST_CASE(&test_scalar_merges));
 }
 
