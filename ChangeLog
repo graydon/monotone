@@ -1,4 +1,10 @@
 2006-04-01  Matthew Nicholson  <matt@matt-land.com>
+	
+	* debian/monotone-server.examples: Added.
+	* debian/monotone-server.install: Removed.  The
+	monotone-server.examples file handles this now.
+
+2006-04-01  Matthew Nicholson  <matt@matt-land.com>
 
 	* debian/monotone-server.dirs: Added new /var/log/monotone and
 	/var/run/monotone directories.
