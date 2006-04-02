@@ -472,7 +472,7 @@ chunk_less_than
   {
     // nb: ch.vpos + ch.len is the 0-based index of the first element *not*
     // included in ch; thus we measure against ch.len - 1.
-    I(ch1.len > 0);
+//    I(ch1.len > 0);
     return (ch1.vpos + ch1.len - 1) < ch2.vpos;
   }
 };
