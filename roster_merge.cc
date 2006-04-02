@@ -1380,6 +1380,56 @@ test_simple_rename_target_conflict()
 }
 
 // directory loops
+static void
+test_simple_dir_loop_conflict()
+{
+  roster_t left_roster, right_roster;
+  marking_map left_markings, right_markings;
+  MM(left_roster);
+  MM(left_markings);
+  MM(right_roster);
+  MM(right_markings);
+  std::set<revision_id> old_revs, left_revs, right_revs;
+  string_to_set("0", old_revs);
+  string_to_set("1", left_revs);
+  string_to_set("2", right_revs);
+  revision_id old_rid = *old_revs.begin();
+  revision_id left_rid = *left_revs.begin();
+  revision_id right_rid = *right_revs.begin();
+  testing_node_id_source nis;
+  node_id root_nid = nis.next();
+  make_dir(left_roster, left_markings, old_rid, old_rid, "", root_nid);
+  make_dir(right_roster, right_markings, old_rid, old_rid, "", root_nid);
+
+  node_id left_top_nid = nis.next();
+  node_id right_top_nid = nis.next();
+
+  make_dir(left_roster, left_markings, old_rid, old_rid, "top", left_top_nid);
+  make_dir(left_roster, left_markings, old_rid, left_rid, "top/bottom", right_top_nid);
+
+  make_dir(right_roster, right_markings, old_rid, old_rid, "top", right_top_nid);
+  make_dir(right_roster, right_markings, old_rid, right_rid, "top/bottom", left_top_nid);
+
+  roster_merge_result result;
+  MM(result);
+  roster_merge(left_roster, left_markings, left_revs,
+               right_roster, right_markings, right_revs,
+               result);
+
+  I(!result.is_clean());
+  directory_loop_conflict const & c = idx(result.directory_loop_conflicts, 0);
+  // TODO:
+  I((c.nid1 == left_nid && c.nid2 == right_nid)
+    || (c.nid1 == right_nid && c.nid2 == left_nid));
+  I(c.parent_name == std::make_pair(root_nid, idx(split("thing"), 1)));
+  // this tests that they were detached, implicitly
+  result.roster.attach_node(left_nid, split("left"));
+  result.roster.attach_node(right_nid, split("right"));
+  result.rename_target_conflicts.pop_back();
+  I(result.is_clean());
+  result.roster.check_sane();
+}
+
 // orphans
 // name collision on root dir
 // illegal node ("_MTN")
