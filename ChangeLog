@@ -1,3 +1,7 @@
+2006-04-01  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (170 to go).
+
 2006-04-01  Benoît Dejean  <benoit@placenet.org>
 
 	* commands.cc (CMD(attr)): 2 more strings for I18N.
