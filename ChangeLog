@@ -1,3 +1,8 @@
+2006-04-02  Richard Levitte  <richard@levitte.org>
+
+	* ui.cc (user_interface::redirect_log_to): Someone correctly
+	pointed out that the log gets clobbered.  Now corrected.
+
 2006-04-01  Lapo Luchini  <lapo@lapo.it>
 
 	* po/it.po: Translated a few more strings to Italian (170 to go).
