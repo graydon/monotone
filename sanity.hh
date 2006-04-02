@@ -7,6 +7,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "config.h" // Required for ENABLE_NLS
+
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -16,7 +18,6 @@
 #include "boost/circular_buffer.hpp"
 #include "boost/current_function.hpp"
 
-#include <config.h> // Required for ENABLE_NLS
 #include "i18n.h"
 
 #include "quick_alloc.hh" // to get the QA() macro
