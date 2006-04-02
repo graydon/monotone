@@ -227,6 +227,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\sqlite\os.c"
+				>
+			</File>
+			<File
 				RelativePath="..\sqlite\os_unix.c"
 				>
 			</File>
@@ -324,10 +328,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\sqlite\config.h"
-				>
-			</File>
-			<File
 				RelativePath="..\sqlite\hash.h"
 				>
 			</File>
@@ -345,14 +345,6 @@
 			</File>
 			<File
 				RelativePath="..\sqlite\os_common.h"
-				>
-			</File>
-			<File
-				RelativePath="..\sqlite\os_unix.h"
-				>
-			</File>
-			<File
-				RelativePath="..\sqlite\os_win.h"
 				>
 			</File>
 			<File
