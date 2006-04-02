@@ -1,3 +1,8 @@
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
+	* tests/t_pidfile.at: Added.  Test's pid file cleanup.
+	* testsuite.at: Added new t_pidfile.at test.
+
 2006-04-02  Richard Levitte  <richard@levitte.org>
 
 	* ui.cc (user_interface::redirect_log_to): Someone correctly
