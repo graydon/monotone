@@ -21,8 +21,8 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DESC="Monotone Server"
 NAME=monotone
 EXECNAME=mtn
-DAEMON=/usr/bin/mtn
-PIDFILE=/var/run/$EXECNAME.pid
+DAEMON=/usr/bin/$EXECNAME
+PIDFILE=/var/run/$NAME/$EXECNAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
 MTN_HOME=/var/lib/monotone
@@ -47,11 +47,12 @@ d_start() {
           return 0
        fi
 
-       start-stop-daemon --start --quiet --pidfile $PIDFILE --make-pidfile \
-               --exec $DAEMON --chuid monotone --chdir $MTN_HOME -- \
-	       --confdir=$MTN_CONFDIR --db=$DB --norc \
-	       --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR \
-               --bind=$ADDRESS serve $BRANCHES >> /var/log/monotone.log 2>&1 &
+       start-stop-daemon --start --quiet --pidfile $PIDFILE --background \
+          --exec $DAEMON --chuid monotone --chdir $MTN_HOME -- \
+          --confdir=$MTN_CONFDIR --db=$DB --norc --pid-file=$PIDFILE \
+          --log=/var/log/$NAME/$EXECNAME.log --dump=/var/log/$NAME/error.log \
+          --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR --quiet \
+          --bind=$ADDRESS serve $BRANCHES 
 
 }
 

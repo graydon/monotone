@@ -32,7 +32,7 @@ case "$1" in
        MTN_DB=$MTN_HOME/default.mtn
        MTN_CONFDIR=/etc/monotone
        MTN_KEYDIR=$MTN_HOME/keys
-
+	       
        /usr/bin/ucf --debconf-ok /usr/share/doc/monotone-server/examples/write-permissions /etc/monotone/write-permissions
        /usr/bin/ucf --debconf-ok /usr/share/doc/monotone-server/examples/read-permissions /etc/monotone/read-permissions
        /usr/bin/ucf --debconf-ok /usr/share/doc/monotone-server/examples/hooks.lua /etc/monotone/hooks.lua
@@ -48,6 +48,8 @@ case "$1" in
 	       chown monotone:monotone $MTN_HOME
                chown monotone:monotone $MTN_CONFDIR
                chown monotone:monotone $MTN_KEYDIR
+               chown monotone:monotone /var/log/monotone
+               chown monotone:monotone /var/run/monotone
 
                chmod 0750 $MTN_HOME
                chmod 0750 $MTN_CONFDIR

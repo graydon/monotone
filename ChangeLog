@@ -1,3 +1,12 @@
+2006-04-01  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.dirs: Added new /var/log/monotone and
+	/var/run/monotone directories.
+	* debian/monotone-server.postinst: Set ownership and on new
+	directories.
+	* debian/monotone-server.monotone.init: Modified to use new log and
+	pid file locations and new --log option.
+
 2006-03-31  Matthew Nicholson  <matt@matt-land.com>
 
 	* debian/monotone-server.monotone.init: Fix pidfile saving.
