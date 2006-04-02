@@ -12,14 +12,14 @@
 #include "safe_map.hh"
 
 bool
-roster_merge_result::is_clean()
+roster_merge_result::is_clean() const
 {
   return is_clean_except_for_content()
     && file_content_conflicts.empty();
 }
 
 bool
-roster_merge_result::is_clean_except_for_content()
+roster_merge_result::is_clean_except_for_content() const
 {
   return node_name_conflicts.empty()
     && node_attr_conflicts.empty()
@@ -30,69 +30,94 @@ roster_merge_result::is_clean_except_for_content()
     && !missing_root_dir;
 }
 
-void
-roster_merge_result::log_conflicts()
+static void
+debug_describe_conflicts(roster_merge_result const & result, std::string & out)
 {
-  L(FL("unclean roster_merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
-       "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n") 
-    % node_name_conflicts.size()
-    % file_content_conflicts.size()
-    % node_attr_conflicts.size()
-    % orphaned_node_conflicts.size()
-    % rename_target_conflicts.size()
-    % directory_loop_conflicts.size());
+  out = (FL("unclean roster_merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
+            "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n")
+         % result.node_name_conflicts.size()
+         % result.file_content_conflicts.size()
+         % result.node_attr_conflicts.size()
+         % result.orphaned_node_conflicts.size()
+         % result.rename_target_conflicts.size()
+         % result.directory_loop_conflicts.size())
+    .str();
   
-  for (size_t i = 0; i < node_name_conflicts.size(); ++i)
-    L(FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
-      % node_name_conflicts[i].nid 
-      % node_name_conflicts[i].left.first 
-      % node_name_conflicts[i].left.second
-      % node_name_conflicts[i].right.first 
-      % node_name_conflicts[i].right.second);
+  for (size_t i = 0; i < result.node_name_conflicts.size(); ++i)
+    out += (FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
+            % result.node_name_conflicts[i].nid 
+            % result.node_name_conflicts[i].left.first 
+            % result.node_name_conflicts[i].left.second
+            % result.node_name_conflicts[i].right.first 
+            % result.node_name_conflicts[i].right.second)
+      .str();
   
-  for (size_t i = 0; i < file_content_conflicts.size(); ++i)
-    L(FL("content conflict on node %d: [%s] vs. [%s]\n") 
-      % file_content_conflicts[i].nid
-      % file_content_conflicts[i].left
-      % file_content_conflicts[i].right);
+  for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
+    out += (FL("content conflict on node %d: [%s] vs. [%s]\n") 
+            % result.file_content_conflicts[i].nid
+            % result.file_content_conflicts[i].left
+            % result.file_content_conflicts[i].right)
+      .str();
   
-  for (size_t i = 0; i < node_attr_conflicts.size(); ++i)
-    L(FL("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
-      % node_attr_conflicts[i].nid
-      % node_attr_conflicts[i].key
-      % node_attr_conflicts[i].left.first
-      % node_attr_conflicts[i].left.second
-      % node_attr_conflicts[i].right.first
-      % node_attr_conflicts[i].right.second);
+  for (size_t i = 0; i < result.node_attr_conflicts.size(); ++i)
+    out += (FL("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
+            % result.node_attr_conflicts[i].nid
+            % result.node_attr_conflicts[i].key
+            % result.node_attr_conflicts[i].left.first
+            % result.node_attr_conflicts[i].left.second
+            % result.node_attr_conflicts[i].right.first
+            % result.node_attr_conflicts[i].right.second)
+      .str();
   
-  for (size_t i = 0; i < orphaned_node_conflicts.size(); ++i)
-    L(FL("orphaned node conflict on node %d, dead parent %d, name %s")
-      % orphaned_node_conflicts[i].nid
-      % orphaned_node_conflicts[i].parent_name.first
-      % orphaned_node_conflicts[i].parent_name.second);
+  for (size_t i = 0; i < result.orphaned_node_conflicts.size(); ++i)
+    out += (FL("orphaned node conflict on node %d, dead parent %d, name %s")
+            % result.orphaned_node_conflicts[i].nid
+            % result.orphaned_node_conflicts[i].parent_name.first
+            % result.orphaned_node_conflicts[i].parent_name.second)
+      .str();
   
-  for (size_t i = 0; i < rename_target_conflicts.size(); ++i)
-    L(FL("rename target conflict: nodes %d, %d, both want parent %d, name %s")
-      % rename_target_conflicts[i].nid1
-      % rename_target_conflicts[i].nid2
-      % rename_target_conflicts[i].parent_name.first
-      % rename_target_conflicts[i].parent_name.second);
+  for (size_t i = 0; i < result.rename_target_conflicts.size(); ++i)
+    out += (FL("rename target conflict: nodes %d, %d, both want parent %d, name %s")
+            % result.rename_target_conflicts[i].nid1
+            % result.rename_target_conflicts[i].nid2
+            % result.rename_target_conflicts[i].parent_name.first
+            % result.rename_target_conflicts[i].parent_name.second)
+      .str();
   
-  for (size_t i = 0; i < directory_loop_conflicts.size(); ++i)
-    L(FL("directory loop conflict: node %d, wanted parent %d, name %s")
-      % directory_loop_conflicts[i].nid
-      % directory_loop_conflicts[i].parent_name.first
-      % directory_loop_conflicts[i].parent_name.second);
+  for (size_t i = 0; i < result.directory_loop_conflicts.size(); ++i)
+    out += (FL("directory loop conflict: node %d, wanted parent %d, name %s")
+            % result.directory_loop_conflicts[i].nid
+            % result.directory_loop_conflicts[i].parent_name.first
+            % result.directory_loop_conflicts[i].parent_name.second)
+      .str();
 
-  for (size_t i = 0; i < illegal_name_conflicts.size(); ++i)
-    L(FL("illegal name conflict: node %d, wanted parent %d, name %s")
-      % illegal_name_conflicts[i].nid
-      % illegal_name_conflicts[i].parent_name.first
-      % illegal_name_conflicts[i].parent_name.second);
+  for (size_t i = 0; i < result.illegal_name_conflicts.size(); ++i)
+    out += (FL("illegal name conflict: node %d, wanted parent %d, name %s")
+            % result.illegal_name_conflicts[i].nid
+            % result.illegal_name_conflicts[i].parent_name.first
+            % result.illegal_name_conflicts[i].parent_name.second)
+      .str();
+}
+
+template <> void
+dump(roster_merge_result const & result, std::string & out)
+{
+  debug_describe_conflicts(result, out);
+  std::string roster_part;
+  dump(result.roster, roster_part);
+  out += roster_part;
 }
 
 void
-roster_merge_result::warn_non_content_conflicts()
+roster_merge_result::log_conflicts() const
+{
+  std::string str;
+  debug_describe_conflicts(*this, str);
+  L(FL("%s") % str);
+}
+
+void
+roster_merge_result::warn_non_content_conflicts() const
 {
   for (size_t i = 0; i < node_name_conflicts.size(); ++i)
     W(F("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
@@ -140,7 +165,7 @@ roster_merge_result::warn_non_content_conflicts()
 void
 roster_merge_result::clear()
 {
-  node_attr_conflicts.clear();
+  node_name_conflicts.clear();
   file_content_conflicts.clear();
   node_attr_conflicts.clear();
   orphaned_node_conflicts.clear();
@@ -361,7 +386,7 @@ roster_merge(roster_t const & left_parent,
   MM(left_markings);
   MM(right_parent);
   MM(right_markings);
-  MM(result.roster);
+  MM(result);
   
   // First handle lifecycles, by die-die-die merge -- our result will contain
   // everything that is alive in both parents, or alive in one and unborn in
@@ -510,6 +535,8 @@ roster_merge(roster_t const & left_parent,
                     case parallel::in_both:
                       std::pair<bool, attr_value> new_value;
                       node_attr_conflict conflict(new_n->self);
+                      conflict.key = attr_i.left_key();
+                      I(conflict.key == attr_i.right_key());
                       if (merge_scalar(attr_i.left_data(),
                                        safe_get(left_marking.attrs,
                                                 attr_i.left_key()),
@@ -578,6 +605,8 @@ roster_merge(roster_t const & left_parent,
 #include "unit_tests.hh"
 
 // cases for testing:
+//
+// (DONE:)
 // 
 // lifecycle, file and dir
 //    alive in both
@@ -596,14 +625,16 @@ roster_merge(roster_t const & left_parent,
 //   different, conflict with 2 marks both conflicting
 //
 // for:
-//   node name, name and parent, file and dir
-//   file content
+//   node name and parent, file and dir
 //   node attr, file and dir
+//   file content
 //
 // attr lifecycle:
 //   seen in both -->mark merge cases, above
 //   live in one and unseen in other -->live
 //   dead in one and unseen in other -->dead
+//
+// (NEEDED:)
 //
 // two diff nodes with same name
 // directory loops
@@ -624,6 +655,507 @@ roster_merge(roster_t const & left_parent,
 // to run roster_merge, need roster, marking, birth revs, and uncommon
 // ancestors for each side...
 
+split_path
+split(std::string const & s)
+{
+  split_path sp;
+  file_path_internal(s).split(sp);
+  return sp;
+}
+
+typedef enum { scalar_a, scalar_b, scalar_conflict } scalar_val;
+
+template <> void
+dump(scalar_val const & v, std::string & out)
+{
+  switch (v)
+    {
+    case scalar_a:
+      out = "scalar_a";
+      break;
+    case scalar_b:
+      out = "scalar_b";
+      break;
+    case scalar_conflict:
+      out = "scalar_conflict";
+      break;
+    }
+}
+
+void string_to_set(std::string const & from, std::set<revision_id> & to)
+{
+  to.clear();
+  for (std::string::const_iterator i = from.begin(); i != from.end(); ++i)
+    {
+      std::string rid_str(40, *i);
+      to.insert(revision_id(rid_str));
+    }
+}
+
+
+template <typename S> void
+test_a_scalar_merge_impl(scalar_val left_val, std::string const & left_marks_str,
+                         std::string const & left_uncommon_str,
+                         scalar_val right_val, std::string const & right_marks_str,
+                         std::string const & right_uncommon_str,
+                         scalar_val expected_outcome)
+{
+  MM(left_val);
+  MM(left_marks_str);
+  MM(left_uncommon_str);
+  MM(right_val);
+  MM(right_marks_str);
+  MM(right_uncommon_str);
+  MM(expected_outcome);
+
+  S scalar;
+  roster_t left_parent, right_parent;
+  marking_map left_markings, right_markings;
+  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  roster_merge_result result;
+
+  std::set<revision_id> left_marks, right_marks;
+
+  MM(left_parent);
+  MM(right_parent);
+  MM(left_markings);
+  MM(right_markings);
+  MM(left_uncommon_ancestors);
+  MM(right_uncommon_ancestors);
+  MM(left_marks);
+  MM(right_marks);
+  MM(result);
+
+  string_to_set(left_marks_str, left_marks);
+  scalar.setup_parent(left_val, left_marks, left_parent, left_markings);
+  string_to_set(right_marks_str, right_marks);
+  scalar.setup_parent(right_val, right_marks, right_parent, right_markings);
+
+  string_to_set(left_uncommon_str, left_uncommon_ancestors);
+  string_to_set(right_uncommon_str, right_uncommon_ancestors);
+
+  roster_merge(left_parent, left_markings, left_uncommon_ancestors,
+               right_parent, right_markings, right_uncommon_ancestors,
+               result);
+
+  scalar.check_result(left_val, right_val, result, expected_outcome);
+}
+
+static const revision_id root_rid = revision_id(std::string("0000000000000000000000000000000000000000"));
+static const file_id arbitrary_file = file_id(std::string("0000000000000000000000000000000000000000"));
+
+struct base_scalar
+{
+  testing_node_id_source nis;
+  node_id root_nid;
+  node_id thing_nid;
+  base_scalar() : root_nid(nis.next()), thing_nid(nis.next())
+  {}
+
+  void
+  make_dir(std::string const & name, node_id nid, roster_t & r, marking_map & markings)
+  {
+    r.create_dir_node(nid);
+    r.attach_node(nid, split(name));
+    marking_t marking;
+    marking.birth_revision = root_rid;
+    marking.parent_name.insert(root_rid);
+    safe_insert(markings, std::make_pair(nid, marking));
+  }
+
+  void
+  make_file(std::string const & name, node_id nid, roster_t & r, marking_map & markings)
+  {
+    r.create_file_node(arbitrary_file, nid);
+    r.attach_node(nid, split(name));
+    marking_t marking;
+    marking.birth_revision = root_rid;
+    marking.parent_name.insert(root_rid);
+    marking.file_content.insert(root_rid);
+    safe_insert(markings, std::make_pair(nid, marking));
+  }
+
+  void
+  make_root(roster_t & r, marking_map & markings)
+  {
+    make_dir("", root_nid, r, markings);
+  }
+};
+
+struct file_scalar : public virtual base_scalar
+{
+  split_path thing_name;
+  file_scalar() : thing_name(split("thing"))
+  {}
+    
+  void
+  make_thing(roster_t & r, marking_map & markings)
+  {
+    make_root(r, markings);
+    make_file("thing", thing_nid, r, markings);
+  }
+};
+
+struct dir_scalar : public virtual base_scalar
+{
+  split_path thing_name;
+  dir_scalar() : thing_name(split("thing"))
+  {}
+    
+  void
+  make_thing(roster_t & r, marking_map & markings)
+  {
+    make_root(r, markings);
+    make_dir("thing", thing_nid, r, markings);
+  }
+};
+
+struct name_shared_stuff : public virtual base_scalar
+{
+  virtual split_path path_for(scalar_val val) = 0;
+  path_component pc_for(scalar_val val)
+  {
+    split_path sp = path_for(val);
+    return idx(sp, sp.size() - 1);
+  }
+  virtual node_id parent_for(scalar_val val) = 0;
+
+  void
+  check_result(scalar_val left_val, scalar_val right_val,
+               // NB result is writeable -- we can scribble on it
+               roster_merge_result & result, scalar_val expected_val)
+  {
+    split_path name;
+    switch (expected_val)
+      {
+      case scalar_a: case scalar_b:
+        result.roster.get_name(thing_nid, name);
+        I(name == path_for(expected_val));
+        break;
+      case scalar_conflict:
+        node_name_conflict const & c = idx(result.node_name_conflicts, 0);
+        I(c.nid == thing_nid);
+        I(c.left == std::make_pair(parent_for(left_val), pc_for(left_val)));
+        I(c.right == std::make_pair(parent_for(right_val), pc_for(right_val)));
+        I(null_node(result.roster.get_node(thing_nid)->parent));
+        I(null_name(result.roster.get_node(thing_nid)->name));
+        // resolve the conflict, thus making sure that resolution works and
+        // that this was the only conflict signaled
+        // attach implicitly checks that we were already detached
+        result.roster.attach_node(thing_nid, split("thing"));
+        result.node_name_conflicts.pop_back();
+        break;
+      }
+    // by now, the merge should have been resolved cleanly, one way or another
+    result.roster.check_sane();
+    I(result.is_clean());
+  }
+
+  virtual ~name_shared_stuff() {};
+};
+
+template <typename T>
+struct basename_scalar : public name_shared_stuff, public T
+{
+  virtual split_path path_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return split((val == scalar_a) ? "a" : "b");
+  }
+  virtual node_id parent_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return root_nid;
+  }
+
+  void
+  setup_parent(scalar_val val, std::set<revision_id> marks,
+               roster_t & r, marking_map & markings)
+  {
+    this->T::make_thing(r, markings);
+    r.detach_node(this->T::thing_name);
+    r.attach_node(thing_nid, path_for(val));
+    markings.find(thing_nid)->second.parent_name = marks;
+  }
+
+  virtual ~basename_scalar() {}
+};
+
+template <typename T>
+struct parent_scalar : public virtual name_shared_stuff, public T
+{
+  node_id a_dir_nid, b_dir_nid;
+  parent_scalar() : a_dir_nid(nis.next()), b_dir_nid(nis.next())
+  {}
+
+  virtual split_path path_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return split((val == scalar_a) ? "a/thing" : "b/thing");
+  }
+  virtual node_id parent_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return ((val == scalar_a) ? a_dir_nid : b_dir_nid);
+  }
+
+  void
+  setup_parent(scalar_val val, std::set<revision_id> marks,
+               roster_t & r, marking_map & markings)
+  {
+    this->T::make_thing(r, markings);
+    make_dir("a", a_dir_nid, r, markings);
+    make_dir("b", b_dir_nid, r, markings);
+    r.detach_node(this->T::thing_name);
+    r.attach_node(thing_nid, path_for(val));
+    markings.find(thing_nid)->second.parent_name = marks;
+  }
+
+  virtual ~parent_scalar() {}
+};
+
+template <typename T>
+struct attr_scalar : public virtual base_scalar, public T
+{
+  attr_value attr_value_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return attr_value((val == scalar_a) ? "a" : "b");
+  }
+
+  void
+  setup_parent(scalar_val val, std::set<revision_id> marks,
+               roster_t & r, marking_map & markings)
+  {
+    this->T::make_thing(r, markings);
+    r.set_attr(this->T::thing_name, attr_key("test_key"), attr_value_for(val));
+    markings.find(thing_nid)->second.attrs[attr_key("test_key")] = marks;
+  }
+
+  void
+  check_result(scalar_val left_val, scalar_val right_val,
+               // NB result is writeable -- we can scribble on it
+               roster_merge_result & result, scalar_val expected_val)
+  {
+    split_path name;
+    switch (expected_val)
+      {
+      case scalar_a: case scalar_b:
+        I(result.roster.get_node(thing_nid)->attrs[attr_key("test_key")]
+          == std::make_pair(true, attr_value_for(expected_val)));
+        break;
+      case scalar_conflict:
+        node_attr_conflict const & c = idx(result.node_attr_conflicts, 0);
+        I(c.nid == thing_nid);
+        I(c.key == attr_key("test_key"));
+        I(c.left == std::make_pair(true, attr_value_for(left_val)));
+        I(c.right == std::make_pair(true, attr_value_for(right_val)));
+        full_attr_map_t const & attrs = result.roster.get_node(thing_nid)->attrs;
+        I(attrs.find(attr_key("test_key")) == attrs.end());
+        // resolve the conflict, thus making sure that resolution works and
+        // that this was the only conflict signaled
+        result.roster.set_attr(this->T::thing_name, attr_key("test_key"),
+                               attr_value("conflict -- RESOLVED"));
+        result.node_attr_conflicts.pop_back();
+        break;
+      }
+    // by now, the merge should have been resolved cleanly, one way or another
+    result.roster.check_sane();
+    I(result.is_clean());
+  }
+};
+
+struct file_content_scalar : public virtual file_scalar
+{
+  file_id content_for(scalar_val val)
+  {
+    I(val != scalar_conflict);
+    return file_id(std::string((val == scalar_a)
+                               ? "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                               : "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+  }
+
+  void
+  setup_parent(scalar_val val, std::set<revision_id> marks,
+               roster_t & r, marking_map & markings)
+  {
+    make_thing(r, markings);
+    downcast_to_file_t(r.get_node(thing_name))->content = content_for(val);
+    markings.find(thing_nid)->second.file_content = marks;
+  }
+
+  void
+  check_result(scalar_val left_val, scalar_val right_val,
+               // NB result is writeable -- we can scribble on it
+               roster_merge_result & result, scalar_val expected_val)
+  {
+    split_path name;
+    switch (expected_val)
+      {
+      case scalar_a: case scalar_b:
+        I(downcast_to_file_t(result.roster.get_node(thing_nid))->content
+          == content_for(expected_val));
+        break;
+      case scalar_conflict:
+        file_content_conflict const & c = idx(result.file_content_conflicts, 0);
+        I(c.nid == thing_nid);
+        I(c.left == content_for(left_val));
+        I(c.right == content_for(right_val));
+        file_id & content = downcast_to_file_t(result.roster.get_node(thing_nid))->content;
+        I(null_id(content));
+        // resolve the conflict, thus making sure that resolution works and
+        // that this was the only conflict signaled
+        content = file_id(std::string("ffffffffffffffffffffffffffffffffffffffff"));
+        result.file_content_conflicts.pop_back();
+        break;
+      }
+    // by now, the merge should have been resolved cleanly, one way or another
+    result.roster.check_sane();
+    I(result.is_clean());
+  }
+};
+
+void
+test_a_scalar_merge(scalar_val left_val, std::string const & left_marks_str,
+                    std::string const & left_uncommon_str,
+                    scalar_val right_val, std::string const & right_marks_str,
+                    std::string const & right_uncommon_str,
+                    scalar_val expected_outcome)
+{
+  test_a_scalar_merge_impl<basename_scalar<file_scalar> >(left_val, left_marks_str, left_uncommon_str,
+                                                          right_val, right_marks_str, right_uncommon_str,
+                                                          expected_outcome);
+  test_a_scalar_merge_impl<basename_scalar<dir_scalar> >(left_val, left_marks_str, left_uncommon_str,
+                                                         right_val, right_marks_str, right_uncommon_str,
+                                                         expected_outcome);
+  test_a_scalar_merge_impl<parent_scalar<file_scalar> >(left_val, left_marks_str, left_uncommon_str,
+                                                        right_val, right_marks_str, right_uncommon_str,
+                                                        expected_outcome);
+  test_a_scalar_merge_impl<parent_scalar<dir_scalar> >(left_val, left_marks_str, left_uncommon_str,
+                                                       right_val, right_marks_str, right_uncommon_str,
+                                                       expected_outcome);
+  test_a_scalar_merge_impl<attr_scalar<file_scalar> >(left_val, left_marks_str, left_uncommon_str,
+                                                      right_val, right_marks_str, right_uncommon_str,
+                                                      expected_outcome);
+  test_a_scalar_merge_impl<attr_scalar<dir_scalar> >(left_val, left_marks_str, left_uncommon_str,
+                                                     right_val, right_marks_str, right_uncommon_str,
+                                                     expected_outcome);
+  test_a_scalar_merge_impl<file_content_scalar>(left_val, left_marks_str, left_uncommon_str,
+                                                right_val, right_marks_str, right_uncommon_str,
+                                                expected_outcome);
+}
+
+
+void
+test_scalar_merges()
+{
+  // Notation: a1* means, "value is a, this is node 1 in the graph, it is
+  // marked".  ".2" means, "value is unimportant and different from either a
+  // or b, this is node 2 in the graph, it is not marked".
+  //
+  // Backslashes with dots after them mean, the C++ line continuation rules
+  // are annoying when it comes to drawing ascii graphs -- the dot is only to
+  // stop the backslash from having special meaning to the parser.  So just
+  // ignore them :-).
+
+  //   same in both, same mark
+  //               a1*
+  //              / \.
+  //             a2  a3
+  test_a_scalar_merge(scalar_a, "1", "2", scalar_a, "1", "3", scalar_a);
+
+  //   same in both, diff marks
+  //               .1*
+  //              / \.
+  //             a2* a3*
+  test_a_scalar_merge(scalar_a, "2", "2", scalar_a, "3", "3", scalar_a);
+
+  //   different, left wins with 1 mark
+  //               a1*
+  //              / \.
+  //             b2* a3
+  test_a_scalar_merge(scalar_b, "2", "2", scalar_a, "1", "3", scalar_b);
+
+  //   different, right wins with 1 mark
+  //               a1*
+  //              / \.
+  //             a2  b3*
+   test_a_scalar_merge(scalar_a, "1", "2", scalar_b, "3", "3", scalar_b);
+
+  //   different, conflict with 1 mark
+  //               .1*
+  //              / \.
+  //             a2* b3*
+  test_a_scalar_merge(scalar_a, "2", "2", scalar_b, "3", "3", scalar_conflict);
+
+  //   different, left wins with 2 marks
+  //               a1*
+  //              / \.
+  //             a2  a3
+  //            / \.
+  //           b4* b5*
+  //            \ /
+  //             b6
+  test_a_scalar_merge(scalar_b, "45", "2456", scalar_a, "1", "3", scalar_b);
+
+  //   different, right wins with 2 marks
+  //               a1*
+  //              / \.
+  //             a2  a3
+  //                / \.
+  //               b4* b5*
+  //                \ /
+  //                 b6
+  test_a_scalar_merge(scalar_a, "1", "2", scalar_b, "45", "3456", scalar_b);
+
+  //   different, conflict with 1 mark winning, 1 mark losing
+  //               .1*
+  //              / \.
+  //             a2* a3*
+  //              \ / \.
+  //               a4  b5*
+  test_a_scalar_merge(scalar_a, "23", "24", scalar_b, "5", "5", scalar_conflict);
+
+  //
+  //               .1*
+  //              / \.
+  //             a2* a3*
+  //            / \ /
+  //           b4* a5
+  test_a_scalar_merge(scalar_b, "4", "4", scalar_a, "23", "35", scalar_conflict);
+
+  //   different, conflict with 2 marks both conflicting
+  //               
+  //               .1*
+  //              / \.
+  //             .2  a3*
+  //            / \.
+  //           b4* b5*
+  //            \ /
+  //             b6
+  test_a_scalar_merge(scalar_b, "45", "2456", scalar_a, "3", "3", scalar_conflict);
+
+  //
+  //               .1*
+  //              / \.
+  //             a2* .3
+  //                / \.
+  //               b4* b5*
+  //                \ /
+  //                 b6
+  test_a_scalar_merge(scalar_a, "2", "2", scalar_b, "45", "3456", scalar_conflict);
+
+  //
+  //               _.1*_
+  //              /     \.
+  //             .2      .3
+  //            / \     / \.
+  //           a4* a5* b6* b7*
+  //            \ /     \ /
+  //             a8      b9
+  test_a_scalar_merge(scalar_a, "45", "2458", scalar_b, "67", "3679", scalar_conflict);
+}
+
 namespace
 {
   const revision_id a_uncommon1 = revision_id(std::string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
@@ -636,13 +1168,6 @@ namespace
   const file_id fid1 = file_id(std::string("1111111111111111111111111111111111111111"));
   const file_id fid2 = file_id(std::string("2222222222222222222222222222222222222222"));
 
-  split_path
-  split(std::string const & s)
-  {
-    split_path sp;
-    file_path_internal(s).split(sp);
-    return sp;
-  }
 }
 
 static void
@@ -675,9 +1200,9 @@ make_file(roster_t & r, marking_map & markings,
 }
 
 static void
-make_lifecycle_objs(roster_t & r, marking_map & markings, revision_id uncommon,
-                    std::string const & name, node_id common_dir_nid, node_id common_file_nid,
-                    node_id & safe_dir_nid, node_id & safe_file_nid, node_id_source & nis)
+make_node_lifecycle_objs(roster_t & r, marking_map & markings, revision_id const & uncommon,
+                         std::string const & name, node_id common_dir_nid, node_id common_file_nid,
+                         node_id & safe_dir_nid, node_id & safe_file_nid, node_id_source & nis)
 {
   make_dir(r, markings, common1, common1, "common_old_dir", common_dir_nid);
   make_file(r, markings, common1, common1, common1, "common_old_file", fid1, common_file_nid);
@@ -712,10 +1237,10 @@ test_roster_merge_node_lifecycle()
   node_id common_dir_nid = nis.next();
   node_id common_file_nid = nis.next();
   node_id a_safe_dir_nid, a_safe_file_nid, b_safe_dir_nid, b_safe_file_nid;
-  make_lifecycle_objs(a_roster, a_markings, a_uncommon1, "a", common_dir_nid, common_file_nid,
-                      a_safe_dir_nid, a_safe_file_nid, nis);
-  make_lifecycle_objs(b_roster, b_markings, b_uncommon1, "b", common_dir_nid, common_file_nid,
-                      b_safe_dir_nid, b_safe_file_nid, nis);
+  make_node_lifecycle_objs(a_roster, a_markings, a_uncommon1, "a", common_dir_nid, common_file_nid,
+                           a_safe_dir_nid, a_safe_file_nid, nis);
+  make_node_lifecycle_objs(b_roster, b_markings, b_uncommon1, "b", common_dir_nid, common_file_nid,
+                           b_safe_dir_nid, b_safe_file_nid, nis);
   // do the merge
   roster_merge_result result;
   roster_merge(a_roster, a_markings, a_uncommon, b_roster, b_markings, b_uncommon, result);
@@ -741,11 +1266,81 @@ test_roster_merge_node_lifecycle()
                   b_roster.get_node(b_safe_file_nid), false));
 }
 
+static void
+test_roster_merge_attr_lifecycle()
+{
+  roster_t left_roster, right_roster;
+  marking_map left_markings, right_markings;
+  MM(left_roster);
+  MM(left_markings);
+  MM(right_roster);
+  MM(right_markings);
+  std::set<revision_id> old_revs, left_revs, right_revs;
+  string_to_set("0", old_revs);
+  string_to_set("1", left_revs);
+  string_to_set("2", right_revs);
+  revision_id old_rid = *old_revs.begin();
+  testing_node_id_source nis;
+  node_id dir_nid = nis.next();
+  make_dir(left_roster, left_markings, old_rid, old_rid, "", dir_nid);
+  make_dir(right_roster, right_markings, old_rid, old_rid, "", dir_nid);
+  node_id file_nid = nis.next();
+  make_file(left_roster, left_markings, old_rid, old_rid, old_rid, "thing", fid1, file_nid);
+  make_file(right_roster, right_markings, old_rid, old_rid, old_rid, "thing", fid1, file_nid);
+
+  // put one live and one dead attr on each thing on each side, with uncommon
+  // marks on them
+  safe_insert(left_roster.get_node(dir_nid)->attrs,
+              std::make_pair(attr_key("left_live"), std::make_pair(true, attr_value("left_live"))));
+  safe_insert(left_markings[dir_nid].attrs, std::make_pair(attr_key("left_live"), left_revs));
+  safe_insert(left_roster.get_node(dir_nid)->attrs,
+              std::make_pair(attr_key("left_dead"), std::make_pair(false, attr_value(""))));
+  safe_insert(left_markings[dir_nid].attrs, std::make_pair(attr_key("left_dead"), left_revs));
+  safe_insert(left_roster.get_node(file_nid)->attrs,
+              std::make_pair(attr_key("left_live"), std::make_pair(true, attr_value("left_live"))));
+  safe_insert(left_markings[file_nid].attrs, std::make_pair(attr_key("left_live"), left_revs));
+  safe_insert(left_roster.get_node(file_nid)->attrs,
+              std::make_pair(attr_key("left_dead"), std::make_pair(false, attr_value(""))));
+  safe_insert(left_markings[file_nid].attrs, std::make_pair(attr_key("left_dead"), left_revs));
+
+  safe_insert(right_roster.get_node(dir_nid)->attrs,
+              std::make_pair(attr_key("right_live"), std::make_pair(true, attr_value("right_live"))));
+  safe_insert(right_markings[dir_nid].attrs, std::make_pair(attr_key("right_live"), right_revs));
+  safe_insert(right_roster.get_node(dir_nid)->attrs,
+              std::make_pair(attr_key("right_dead"), std::make_pair(false, attr_value(""))));
+  safe_insert(right_markings[dir_nid].attrs, std::make_pair(attr_key("right_dead"), right_revs));
+  safe_insert(right_roster.get_node(file_nid)->attrs,
+              std::make_pair(attr_key("right_live"), std::make_pair(true, attr_value("right_live"))));
+  safe_insert(right_markings[file_nid].attrs, std::make_pair(attr_key("right_live"), right_revs));
+  safe_insert(right_roster.get_node(file_nid)->attrs,
+              std::make_pair(attr_key("right_dead"), std::make_pair(false, attr_value(""))));
+  safe_insert(right_markings[file_nid].attrs, std::make_pair(attr_key("right_dead"), right_revs));
+
+  roster_merge_result result;
+  MM(result);
+  roster_merge(left_roster, left_markings, left_revs,
+               right_roster, right_markings, right_revs,
+               result);
+  I(result.roster.all_nodes().size() == 2);
+  I(result.roster.get_node(dir_nid)->attrs.size() == 4);
+  I(safe_get(result.roster.get_node(dir_nid)->attrs, attr_key("left_live")) == std::make_pair(true, attr_value("left_live")));
+  I(safe_get(result.roster.get_node(dir_nid)->attrs, attr_key("left_dead")) == std::make_pair(false, attr_value("")));
+  I(safe_get(result.roster.get_node(dir_nid)->attrs, attr_key("right_live")) == std::make_pair(true, attr_value("right_live")));
+  I(safe_get(result.roster.get_node(dir_nid)->attrs, attr_key("left_dead")) == std::make_pair(false, attr_value("")));
+  I(result.roster.get_node(file_nid)->attrs.size() == 4);
+  I(safe_get(result.roster.get_node(file_nid)->attrs, attr_key("left_live")) == std::make_pair(true, attr_value("left_live")));
+  I(safe_get(result.roster.get_node(file_nid)->attrs, attr_key("left_dead")) == std::make_pair(false, attr_value("")));
+  I(safe_get(result.roster.get_node(file_nid)->attrs, attr_key("right_live")) == std::make_pair(true, attr_value("right_live")));
+  I(safe_get(result.roster.get_node(file_nid)->attrs, attr_key("left_dead")) == std::make_pair(false, attr_value("")));
+}
+
 void
 add_roster_merge_tests(test_suite * suite)
 {
   I(suite);
   suite->add(BOOST_TEST_CASE(&test_roster_merge_node_lifecycle));
+  suite->add(BOOST_TEST_CASE(&test_roster_merge_attr_lifecycle));
+  suite->add(BOOST_TEST_CASE(&test_scalar_merges));
 }
 
 #endif // BUILD_UNIT_TESTS
