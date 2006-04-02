@@ -707,7 +707,7 @@ msgstr ""
 "missing\n"
 "changed"
 
-#: commands.cc:1750
+#: commands.cc:1877
 msgid ""
 "show database objects, or the current workspace manifest, or known,\n"
 "unknown, intentionally ignored, missing, or changed state files"
@@ -1297,7 +1297,7 @@ msgstr "configura um novo diretório como área de trabalho, o padrão é o atua
 msgid "need --branch argument for setup"
 msgstr "argumento --branch é necessário para configuração"
 
-#: commands.cc:3710
+#: commands.cc:3892
 msgid "automation"
 msgstr "automação"
 
@@ -2770,7 +2770,21 @@ msgstr ""
 msgid "Cannot find key '%s'"
 msgstr ""
 
-#: netsync.cc:2874 netsync.cc:2878
+#: netsync.cc:2933
+#, c-format
+msgid ""
+"include branch pattern contains a quote character:\n"
+"%s\n"
+msgstr ""
+
+#: netsync.cc:2939
+#, c-format
+msgid ""
+"exclude branch pattern contains a quote character:\n"
+"%s\n"
+msgstr ""
+
+#: netsync.cc:2962 netsync.cc:2966
 #, c-format
 msgid "network error: %s"
 msgstr ""
@@ -2940,7 +2954,7 @@ msgid ""
 "seriously, if you'd like to keep it, we're happy to figure out how)"
 msgstr ""
 
-#: revision.cc:1373
+#: revision.cc:1385
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions\n"
 msgstr ""

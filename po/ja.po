@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone HEAD\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-03-10 02:15-0600\n"
+"POT-Creation-Date: 2005-12-29 14:41-0800\n"
 "PO-Revision-Date: 2005-09-21 14:55+0900\n"
 "Last-Translator: Satoru SATOH <ss@gnome.gr.jp>\n"
 "Language-Team: Japanese <gnome-translation@gnome.gr.jp>\n"
@@ -16,70 +16,135 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: app_state.cc:110
-#, fuzzy, c-format
-msgid "workspace required but not found%s%s"
+#: app_state.cc:66
+#, c-format
+msgid "initializing from directory %s\n"
+msgstr "ディレクトリ %s から初期化中\n"
+
+#: app_state.cc:87
+#, c-format
+msgid "branch name is '%s'\n"
+msgstr "ブランチ名は '%s' です\n"
+
+#: app_state.cc:94
+#, c-format
+msgid "setting dump path to %s\n"
+msgstr "ダンプパスを %s に設定\n"
+
+#: app_state.cc:108
+#, c-format
+msgid "working copy directory required but not found%s%s"
 msgstr "作業コピーディレクトリが必要ですが、みつかりませんでした: %s%s"
 
-#: app_state.cc:118
+#: app_state.cc:116
 #, c-format
 msgid "invalid directory ''"
 msgstr "無効なディレクトリ ''"
 
-#: app_state.cc:126
+#: app_state.cc:118
+#, c-format
+msgid "creating working copy in %s\n"
+msgstr "%s 内に作業コピーを作成\n"
+
+#: app_state.cc:124
 #, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'\n"
 msgstr "monotone 記録簿用ディレクトリ '%s' は既に '%s' 内に存在しています\n"
 
-#: app_state.cc:165 app_state.cc:180
+#: app_state.cc:127
+#, c-format
+msgid "creating bookkeeping directory '%s' for working copy in '%s'\n"
+msgstr "作業コピーの記録簿用ディレクトリ '%s' を '%s' 内に作成\n"
+
+#: app_state.cc:158
+#, c-format
+msgid "'%s' ignored by restricted path set\n"
+msgstr "'%s' は制限パスセットによって無視されました\n"
+
+#: app_state.cc:163 app_state.cc:181
 #, c-format
 msgid "unknown path '%s'\n"
 msgstr "不明なパス '%s'\n"
 
-#: app_state.cc:341
+#: app_state.cc:165
+#, c-format
+msgid "'%s' added to restricted path set\n"
+msgstr "'%s' を制限パスセットに追加しました\n"
+
+#: app_state.cc:176
+#, c-format
+msgid "'%s' ignored by excluded path set\n"
+msgstr "'%s' は除外パスセットによって無視されました\n"
+
+#: app_state.cc:183
+#, c-format
+msgid "'%s' added to excluded path set\n"
+msgstr "'%s' を除外パスセットに追加しました\n"
+
+#: app_state.cc:210
+#, c-format
+msgid "checking excluded path set for '%s'\n"
+msgstr "'%s' について除外パスセットを調べています\n"
+
+#: app_state.cc:217 app_state.cc:250
+#, c-format
+msgid "path '%s' found in excluded path set; '%s' excluded\n"
+msgstr "パス '%s' は除外パスセットに含まれています; '%s' は除外されます\n"
+
+#: app_state.cc:236
+#, c-format
+msgid "checking restricted path set for '%s'\n"
+msgstr "'%s' について制限パスセットを調べています\n"
+
+#: app_state.cc:244
+#, c-format
+msgid "path '%s' found in restricted path set; '%s' included\n"
+msgstr "パス '%s' は制限パスセットに含まれています; '%s' は含められます\n"
+
+#: app_state.cc:332
 #, c-format
 msgid "search root '%s' does not exist"
 msgstr "検索ルート '%s' は存在しません"
 
-#: app_state.cc:342
+#: app_state.cc:333
 #, c-format
 msgid "search root '%s' is not a directory\n"
 msgstr "検索ルート '%s' はディレクトリではありません\n"
 
-#: app_state.cc:377
+#: app_state.cc:335
 #, c-format
-msgid "failed to parse date string '%s': %s"
-msgstr "データ文字列 '%s' の解析に失敗: %s"
+msgid "set search root to %s\n"
+msgstr "検索ルートを %s に設定\n"
 
-#: app_state.cc:391
+#: app_state.cc:366
 #, c-format
 msgid "negative depth not allowed\n"
 msgstr "深さの値を負にすることはできません\n"
 
-#: app_state.cc:399
+#: app_state.cc:374
 #, c-format
 msgid "negative or zero last not allowed\n"
 msgstr "最終値を負または零にすることはできません\n"
 
-#: app_state.cc:407
-#, fuzzy, c-format
-msgid "negative or zero next not allowed\n"
-msgstr "最終値を負または零にすることはできません\n"
-
-#: app_state.cc:536
+#: app_state.cc:497
 #, c-format
 msgid "Failed to read options file %s"
 msgstr "オプションファイル '%s' の解析に失敗"
 
-#: app_state.cc:553
+#: app_state.cc:514
 #, c-format
 msgid "Failed to write options file %s"
 msgstr "オプションファイル '%s' の書き込みに失敗"
 
-#: basic_io.cc:27
+#: basic_io.cc:26 basic_io.cc:27
 #, c-format
 msgid "error in %s:%d:%d:E: %s"
 msgstr "エラー %s:%d:%d:E: %s"
+
+#: cert.cc:51
+#, c-format
+msgid "cert ok\n"
+msgstr "証明 OK\n"
 
 #: cert.cc:58
 #, c-format
@@ -91,10 +156,20 @@ msgstr "'%s' による '%s' への不正な署名を無視します\n"
 msgid "ignoring unknown signature by '%s' on '%s'\n"
 msgstr "'%s' による '%s' への不明な署名を無視します\n"
 
+#: cert.cc:123
+#, c-format
+msgid "trust function liked %d signers of %s cert on manifest %s\n"
+msgstr "trust function liked %d signers of %s cert on manifest %s\n"
+
 #: cert.cc:129
 #, c-format
 msgid "trust function disliked %d signers of %s cert on manifest %s\n"
 msgstr "trust function disliked %d signers of %s cert on manifest %s\n"
+
+#: cert.cc:176
+#, c-format
+msgid "trust function liked %d signers of %s cert on revision %s\n"
+msgstr "trust function liked %d signers of %s cert on revision %s\n"
 
 #: cert.cc:182
 #, c-format
@@ -106,79 +181,315 @@ msgstr "trust function disliked %d signers of %s cert on revision %s\n"
 msgid "calculated cert hash '%s' does not match '%s'"
 msgstr "計算した証明ハッシュ '%s' は '%s' と一致しません"
 
-#: cert.cc:347 keys.cc:532
+#: cert.cc:305
+#, c-format
+msgid "cert: signable text %s\n"
+msgstr "証明: 署名テキスト %s\n"
+
+#: cert.cc:365
 #, fuzzy, c-format
-msgid "no key pair '%s' found in key store '%s'"
+msgid "no private key '%s' found in key store or get_priv_key hook"
 msgstr ""
 "秘密鍵 '%s' はデータベース内にも get_priv_key フック内にもみつかりません"
 
-#: cert.cc:424
+#: cert.cc:375
+#, fuzzy, c-format
+msgid "mismatch between key '%s' in key store and get_key_pair hook"
+msgstr ""
+"秘密鍵 '%s' はデータベース内のものと get_priv_key フック内のものが一致してい"
+"ません"
+
+#: cert.cc:461
 #, c-format
 msgid ""
 "you have no private key to make signatures with\n"
 "perhaps you need to 'genkey <your email>'"
 msgstr ""
 
-#: cert.cc:427
+#: cert.cc:464
 #, c-format
 msgid ""
 "you have multiple private keys\n"
 "pick one to use for signatures by adding '-k<keyname>' to your command"
 msgstr ""
 
-#: cert.cc:444
+#: cert.cc:481
 #, c-format
 msgid "no branch found for empty revision, please provide a branch name"
 msgstr "リビジョンが空のブランチはありません. ブランチ名を指定して下さい"
 
-#: cert.cc:453
+#: cert.cc:490
 #, c-format
 msgid "no branch certs found for revision %s, please provide a branch name"
 msgstr ""
 "リビジョン %s のブランチ証明がみつかりません. ブランチ名を指定して下さい"
 
-#: cert.cc:457
+#: cert.cc:494
 #, c-format
 msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
 msgstr "リビジョン %s のブランチ証明は複数あります. ブランチ名を指定して下さい"
 
-#: commands.cc:160
+#: change_set.cc:289
+#, c-format
+msgid "tid %d: parent %d, type %s, name %s\n"
+msgstr "tid %d: 親 %d、タイプ %s、名前 %s\n"
+
+#: change_set.cc:315
+#, c-format
+msgid "%d -> %d\n"
+msgstr "%d -> %d\n"
+
+#: change_set.cc:1540
+#, c-format
+msgid "concatenating change sets\n"
+msgstr "変更セットを結合中\n"
+
+#: change_set.cc:1563
+#, c-format
+msgid "concatenating %d and %d deltas\n"
+msgstr "%d と %d の差分を結合中\n"
+
+#: change_set.cc:1573
+#, c-format
+msgid "processing delta on %s\n"
+msgstr "%s の差分を処理中\n"
+
+#: change_set.cc:1577
+#, c-format
+msgid "delta on %s in first changeset renamed to %s\n"
+msgstr "最初の変更セット内の %s についての差分は %s への名称変更です\n"
+
+#: change_set.cc:1582
+#, c-format
+msgid "discarding delta [%s]->[%s] for deleted file '%s'\n"
+msgstr "差分 [%s]->[%s] (対象は削除されたファイル '%s') を破棄\n"
+
+#: change_set.cc:1600
+#, c-format
+msgid "fusing deltas on %s : %s -> %s and %s -> %s\n"
+msgstr "%s の差分を融合中: %s -> %s と %s -> %s\n"
+
+#: change_set.cc:1614
+#, c-format
+msgid "delta on %s in second changeset copied forward\n"
+msgstr "第二の変更セット内の %s の差分のコピーを転送しました\n"
+
+#: change_set.cc:1628
+#, c-format
+msgid "finished concatenation\n"
+msgstr "結合終了\n"
+
+#: change_set.cc:1734 change_set.cc:1741
+#, c-format
+msgid "delete of %s dominates rename to %s\n"
+msgstr "%s の削除は %s への名称変更を決定付けます\n"
+
+#: change_set.cc:1751
+#, c-format
+msgid "unable to resolve file conflict '%s' -> '%s' vs. '%s'"
+msgstr "ファイルの競合 '%s' -> '%s' 対 '%s' を解決できません"
+
+#: change_set.cc:1755
+#, c-format
+msgid "unable to resolve dir conflict '%s' -> '%s' vs. '%s'"
+msgstr "ディレクトリの競合 '%s' -> '%s' 対 '%s' を解決できません"
+
+#: change_set.cc:1760
+#, c-format
+msgid "illegal conflict resolution '%s', wanted '%s' or '%s'\n"
+msgstr "不法な競合の解決 '%s'. '%s' または '%s' であるべきです\n"
+
+#: change_set.cc:1816
+#, c-format
+msgid "tid %d (%s) clobbered tid %d (%s)\n"
+msgstr "tid %d (%s) は tid %d (%s) を上書きします\n"
+
+#: change_set.cc:1852
+#, c-format
+msgid "skipping common change on %s (tid %d)\n"
+msgstr "%s (tid %d) への共通の変更をスキップ\n"
+
+#: change_set.cc:1857
+#, c-format
+msgid "skipping neutral change of %s -> %s (tid %d)\n"
+msgstr "中立の変更 %s -> %s (tid %d) をスキップ\n"
+
+#: change_set.cc:1864
+#, c-format
+msgid "propagating change on %s -> %s (tid %d)\n"
+msgstr "変更を伝播中: %s -> %s (tid %d)\n"
+
+#: change_set.cc:1880
+#, c-format
+msgid "conflict detected, resolved in A's favour\n"
+msgstr "競合を検出. A フレーバで解決\n"
+
+#: change_set.cc:1886
+#, c-format
+msgid "conflict detected, resolved in B's favour\n"
+msgstr "競合を検出. B フレーバで解決\n"
+
+#: change_set.cc:2053
+#, c-format
+msgid "reusing merge resolution '%s' : '%s' -> '%s'\n"
+msgstr "統合解決案 '%s' を再利用 : '%s' -> '%s'\n"
+
+#: change_set.cc:2062
+#, c-format
+msgid "merge of '%s' : '%s' vs. '%s' (no common ancestor) failed"
+msgstr "'%s' の統合に失敗: '%s' と '%s' が対立 (共通の祖先なし)"
+
+#: change_set.cc:2069
+#, c-format
+msgid "merge of '%s' : '%s' -> '%s' vs '%s' failed"
+msgstr "'%s' の統合に失敗: '%s' -> '%s' と '%s' が対立"
+
+#: change_set.cc:2073
+#, c-format
+msgid "merge of '%s' : '%s' -> '%s' vs '%s' resolved to '%s'\n"
+msgstr "'%s' の統合: '%s' -> '%s' と '%s' の対立を '%s' に解決\n"
+
+#: change_set.cc:2131
+#, c-format
+msgid "skipping delta '%s'->'%s' on deleted file '%s'\n"
+msgstr "差分 '%s'->'%s' (対象=削除されたファイル '%s') をスキップ\n"
+
+#: change_set.cc:2139
+#, c-format
+msgid "merge is copying delta '%s' : '%s' -> '%s'\n"
+msgstr "統合は差分 '%s' : '%s' -> '%s' のコピーです\n"
+
+#: change_set.cc:2163
+#, c-format
+msgid "propagating new file addition delta on '%s' : '%s' -> '%s'\n"
+msgstr "'%s' の新規ファイル追加差分を伝播中: '%s' -> '%s'\n"
+
+#: change_set.cc:2175
+#, c-format
+msgid "skipping new file addition delta on '%s' : '' -> '%s'\n"
+msgstr "'%s' の新規ファイル追加差分をスキップ: '' -> '%s'\n"
+
+#: change_set.cc:2183
+#, c-format
+msgid "skipping common delta '%s' : '%s' -> '%s'\n"
+msgstr "共通の差分 '%s' をスキップ: '%s' -> '%s'\n"
+
+#: change_set.cc:2189
+#, c-format
+msgid "skipping neutral delta on '%s' : %s -> %s\n"
+msgstr "中立の差分 '%s' をスキップ: '%s' -> '%s'\n"
+
+#: change_set.cc:2197
+#, c-format
+msgid "propagating unperturbed delta on '%s' : '%s' -> '%s'\n"
+msgstr "'%s' の摂動を受けない差分を伝播中: '%s' -> '%s'\n"
+
+#: change_set.cc:2207
+#, c-format
+msgid "merging delta '%s' : '%s' -> '%s' vs. '%s'\n"
+msgstr "差分 '%s' を統合中: '%s' -> '%s' 対 '%s'\n"
+
+#: change_set.cc:2220
+#, c-format
+msgid "resolved merge to '%s' : '%s' -> '%s'\n"
+msgstr "'%s' への統合を解決しました: '%s' -> '%s'\n"
+
+#: change_set.cc:2249
+#, c-format
+msgid "merging change sets\n"
+msgstr "変更セットを統合中\n"
+
+#: change_set.cc:2311
+#, c-format
+msgid "finished merge\n"
+msgstr "統合終了\n"
+
+#: change_set.cc:2330
+#, c-format
+msgid "inverting change set\n"
+msgstr "変更セットを反転中\n"
+
+#: change_set.cc:2360
+#, c-format
+msgid "converted 'delete %s' to 'add as %s' in inverse\n"
+msgstr "'%s の削除' を '%s の追加' (逆方向)に変換しました\n"
+
+#: change_set.cc:2369
+#, c-format
+msgid "converted add %s to delete in inverse\n"
+msgstr "%s の追加を削除(逆方向)に変換しました\n"
+
+#: change_set.cc:2379
+#, c-format
+msgid "converting delta %s -> %s on %s\n"
+msgstr "差分 %s -> %s (対象 %s) を変換\n"
+
+#: change_set.cc:2381
+#, c-format
+msgid "inverse is delta %s -> %s on %s\n"
+msgstr "逆方向の差分は %s -> %s (対象=%s) です\n"
+
+#: change_set.cc:2447 change_set.cc:2495
+#, c-format
+msgid "moving file %s -> %s\n"
+msgstr "ファイルを移動 %s -> %s\n"
+
+#: change_set.cc:2454 change_set.cc:2503
+#, c-format
+msgid "moving dir %s -> %s\n"
+msgstr "ディレクトリを移動 %s -> %s\n"
+
+#: commands.cc:136
+#, c-format
+msgid "expanding command '%s'\n"
+msgstr "コマンド '%s' を展開\n"
+
+#: commands.cc:153
+#, c-format
+msgid "expanded command to '%s'\n"
+msgstr "コマンドを '%s' に展開\n"
+
+#: commands.cc:158
 #, c-format
 msgid "command '%s' has multiple ambiguous expansions:\n"
 msgstr "'%s' だけでは曖昧で、展開できるコマンド候補は複数あります:\n"
 
-#: commands.cc:203
+#: commands.cc:201
 msgid "commands:"
 msgstr "コマンド:"
 
-#: commands.cc:254
+#: commands.cc:246
+#, c-format
+msgid "executing command '%s'\n"
+msgstr "コマンド '%s' を実行中\n"
+
+#: commands.cc:252
 #, c-format
 msgid "unknown command '%s'\n"
 msgstr "不明なコマンド '%s'\n"
 
-#: commands.cc:301
+#: commands.cc:299
 #, c-format
 msgid "pid file '%s' already exists"
 msgstr "PID ファイル '%s' は既に存在しています"
 
-#: commands.cc:325 commands.cc:1334 commands.cc:1404 commands.cc:1840
-#: commands.cc:2686 commands.cc:3307 commands.cc:3542 commands.cc:3581
-#: commands.cc:3926
+#: commands.cc:323 commands.cc:1275 commands.cc:1355 commands.cc:1720
+#: commands.cc:2674 commands.cc:3362 commands.cc:3582 commands.cc:3619
 msgid "informative"
 msgstr "情報"
 
-#: commands.cc:325
+#: commands.cc:323
 #, fuzzy
 msgid "command [ARGS...]"
 msgstr "[OPTION...] command [ARGS...]\n"
 
-#: commands.cc:325
+#: commands.cc:323
 #, fuzzy
 msgid "display command help"
 msgstr "ヘルプメッセージを表示"
 
-#: commands.cc:404
+#: commands.cc:382
 msgid ""
 "Enter a description of this change.\n"
 "Lines beginning with `MT:' are removed automatically.\n"
@@ -186,77 +497,77 @@ msgstr ""
 "この変更の説明を入力して下さい\n"
 "'MT:' で始まる行は自動的に削除されます\n"
 
-#: commands.cc:411
+#: commands.cc:389
 #, c-format
 msgid "edit of log message failed"
 msgstr "ログメッセージの編集に失敗しました"
 
-#: commands.cc:420
+#: commands.cc:398
 msgid "note: "
 msgstr "ノート: "
 
-#: commands.cc:421
-#, fuzzy, c-format
+#: commands.cc:399
+#, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
-"perhaps consider '%s merge'"
+"perhaps consider 'monotone merge'"
 msgstr ""
 "ブランチ '%s' には複数の最新版があります\n"
 "’monotone merge' を実行した方がよいでしょう"
 
-#: commands.cc:482 commands.cc:758 commands.cc:1422 commands.cc:1506
-#: commands.cc:2736 commands.cc:2764 commands.cc:2767 commands.cc:2903
-#: commands.cc:3564
+#: commands.cc:459 commands.cc:715 commands.cc:1374 commands.cc:1446
+#: commands.cc:1831 commands.cc:2721 commands.cc:2736 commands.cc:2739
+#: commands.cc:2937 commands.cc:3601
 #, c-format
 msgid "no such revision '%s'"
 msgstr "リビジョン '%s' は存在しません"
 
-#: commands.cc:489
+#: commands.cc:466
 #, c-format
 msgid "expanding selection '%s'\n"
 msgstr "セレクション '%s' を展開\n"
 
-#: commands.cc:497
+#: commands.cc:474
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "セレクション '%s' に一致するものがありません"
 
-#: commands.cc:503
-#, c-format
-msgid "expanded to '%s'\n"
-msgstr "'%s' に展開\n"
-
-#: commands.cc:520
+#: commands.cc:477
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions: \n"
 msgstr "'%s' だけでは曖昧で、展開できるセレクションの候補は複数あります: \n"
 
-#: commands.cc:538
+#: commands.cc:484
+#, c-format
+msgid "expanded to '%s'\n"
+msgstr "'%s' に展開\n"
+
+#: commands.cc:495
 #, c-format
 msgid "non-hex digits in id"
 msgstr "ID に十六進数が含まれていません"
 
-#: commands.cc:547
+#: commands.cc:504
 #, c-format
 msgid "partial id '%s' does not have an expansion"
 msgstr "部分 ID '%s' を一つの ID に展開することはできません"
 
-#: commands.cc:550
+#: commands.cc:507
 #, c-format
 msgid "partial id '%s' has multiple ambiguous expansions:\n"
 msgstr "'%s' だけでは曖昧で、展開できる ID の候補は複数あります:\n"
 
-#: commands.cc:557
+#: commands.cc:514
 #, c-format
 msgid "expanded partial id '%s' to '%s'\n"
 msgstr "部分 ID '%s' を '%s' に展開\n"
 
-#: commands.cc:584 netsync.cc:1727
+#: commands.cc:541 netsync.cc:1942
 #, c-format
 msgid "no public key '%s' found in database"
 msgstr "データベース内に公開鍵 '%s' はありません"
 
-#: commands.cc:594
+#: commands.cc:551
 #, c-format
 msgid ""
 "Key   : %s\n"
@@ -269,125 +580,125 @@ msgstr ""
 "名前  : %s\n"
 "値    : %s\n"
 
-#: commands.cc:628
+#: commands.cc:585
 msgid "ok"
 msgstr "OK"
 
-#: commands.cc:631
+#: commands.cc:588
 msgid "bad"
 msgstr "NG"
 
-#: commands.cc:634
+#: commands.cc:591
 msgid "unknown"
 msgstr "不明"
 
-#: commands.cc:721
+#: commands.cc:678
 #, c-format
 msgid "(*) - only in %s/"
 msgstr ""
 
-#: commands.cc:744
+#: commands.cc:701
 #, c-format
 msgid "no keys found\n"
 msgstr "鍵がみつかりませんでした\n"
 
-#: commands.cc:746
+#: commands.cc:703
 #, c-format
 msgid "no keys found matching '%s'\n"
 msgstr "'%s' に一致する鍵はみつかりませんでした\n"
 
-#: commands.cc:764
+#: commands.cc:721
 #, c-format
 msgid "revision %s already has children. We cannot kill it."
 msgstr "リビジョン %s は既に子を持っていて削除できません"
 
-#: commands.cc:904 commands.cc:928 commands.cc:965 commands.cc:986
-#: commands.cc:1022
+#: commands.cc:851 commands.cc:875 commands.cc:912 commands.cc:933
+#: commands.cc:969
 msgid "key and cert"
 msgstr "鍵と証明"
 
-#: commands.cc:904 commands.cc:928 commands.cc:965
+#: commands.cc:851 commands.cc:875 commands.cc:912
 msgid "KEYID"
 msgstr "KEYID"
 
-#: commands.cc:904
+#: commands.cc:851
 msgid "generate an RSA key-pair"
 msgstr "鍵対を生成"
 
-#: commands.cc:919
+#: commands.cc:866
 #, fuzzy, c-format
 msgid "key '%s' already exists"
 msgstr "PID ファイル '%s' は既に存在しています"
 
-#: commands.cc:922
+#: commands.cc:869
 #, fuzzy, c-format
 msgid "generating key-pair '%s'"
 msgstr "鍵対 '%s' を生成\n"
 
-#: commands.cc:924
+#: commands.cc:871
 #, fuzzy, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "鍵対 '%s' をデータベースに保存\n"
 
-#: commands.cc:928
+#: commands.cc:875
 msgid "drop a public and private key"
 msgstr "公開鍵と秘密鍵を破棄"
 
-#: commands.cc:942
+#: commands.cc:889
 #, c-format
 msgid "dropping public key '%s' from database\n"
 msgstr "公開鍵 '%s' をデータベースから破棄\n"
 
-#: commands.cc:952
+#: commands.cc:899
 #, fuzzy, c-format
 msgid "dropping key pair '%s' from keystore\n"
 msgstr "公開鍵 '%s' をデータベースから破棄\n"
 
-#: commands.cc:959
+#: commands.cc:906
 #, fuzzy, c-format
 msgid "public or private key '%s' does not exist in keystore or database"
 msgstr "公開または秘密鍵 '%s' はデータベース内に存在しません"
 
-#: commands.cc:961
+#: commands.cc:908
 #, fuzzy, c-format
 msgid ""
 "public or private key '%s' does not exist in keystore, and no database was "
 "specified"
 msgstr "公開または秘密鍵 '%s' はデータベース内に存在しません"
 
-#: commands.cc:966
+#: commands.cc:913
 msgid "change passphrase of a private RSA key"
 msgstr "秘密 RSA 鍵のパスフレーズを変更"
 
-#: commands.cc:976
+#: commands.cc:923
 #, fuzzy, c-format
 msgid "key '%s' does not exist in the keystore"
 msgstr "鍵 '%s' はデータベース内にありません"
 
-#: commands.cc:983
+#: commands.cc:930
 #, c-format
 msgid "passphrase changed\n"
 msgstr "パスフレーズを変更しました\n"
 
-#: commands.cc:986
+#: commands.cc:933
 msgid "REVISION CERTNAME [CERTVAL]"
 msgstr "REVISION CERTNAME [CERTVAL]"
 
-#: commands.cc:987
+#: commands.cc:934
 msgid "create a cert for a revision"
 msgstr "リビジョンの証明を作成"
 
-#: commands.cc:1022
+#: commands.cc:969
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 msgstr "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 
-#: commands.cc:1023
+#: commands.cc:970
 msgid ""
 "test whether a hypothetical cert would be trusted\n"
 "by current settings"
 msgstr "現在の設定で仮想証明が信頼可能かテスト"
 
-#: commands.cc:1056
+#: commands.cc:1003
 #, c-format
 msgid ""
 "if a cert on: %s\n"
@@ -402,198 +713,183 @@ msgstr ""
 "署名者 : %s\n"
 "よっておそらく %s でしょう\n"
 
-#: commands.cc:1065
+#: commands.cc:1012
 msgid "trusted"
 msgstr "trusted"
 
-#: commands.cc:1065
+#: commands.cc:1012
 msgid "UNtrusted"
 msgstr "UNtrusted"
 
-#: commands.cc:1068 commands.cc:1081 commands.cc:1094 commands.cc:1111
-#: commands.cc:1162
+#: commands.cc:1015 commands.cc:1028 commands.cc:1040 commands.cc:1057
+#: commands.cc:1103
 msgid "review"
 msgstr "レビュー"
 
-#: commands.cc:1068
+#: commands.cc:1015
 msgid "REVISION TAGNAME"
 msgstr "REVISION TAGNAME"
 
-#: commands.cc:1069
-#, fuzzy
-msgid "put a symbolic tag cert on a revision"
+#: commands.cc:1016
+msgid "put a symbolic tag cert on a revision version"
 msgstr "象徴的なタグ証明をリビジョンバージョンに付加"
 
-#: commands.cc:1081
+#: commands.cc:1028
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
 msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 
-#: commands.cc:1082
+#: commands.cc:1029
 msgid "note the results of running a test on a revision"
 msgstr "リビジョンのテストの実行結果を記録"
 
-#: commands.cc:1094 commands.cc:1111
+#: commands.cc:1040 commands.cc:1057
 msgid "REVISION"
 msgstr "REVISION"
 
-#: commands.cc:1095
+#: commands.cc:1041
 msgid "approve of a particular revision"
 msgstr "特定のリビジョンを承認"
 
-#: commands.cc:1106
+#: commands.cc:1052
 #, c-format
 msgid "need --branch argument for approval"
 msgstr "承認には --branch 引数が必要です"
 
-#: commands.cc:1112
+#: commands.cc:1058
 msgid "disapprove of a particular revision"
 msgstr "特定のリビジョンを非承認"
 
-#: commands.cc:1125
+#: commands.cc:1071
 #, c-format
 msgid "revision '%s' has %d changesets, cannot invert\n"
 msgstr "リビジョン '%s' には %d 個の変更セットがあり、反転できません\n"
 
-#: commands.cc:1129
+#: commands.cc:1075
 #, c-format
 msgid "need --branch argument for disapproval"
 msgstr "非承認とするには --branch 引数が必要です"
 
-#: commands.cc:1162
+#: commands.cc:1103
 msgid "REVISION [COMMENT]"
 msgstr "REVISION [COMMENT]"
 
-#: commands.cc:1163
+#: commands.cc:1104
 msgid "comment on a particular revision"
 msgstr "特定のリビジョンにコメント"
 
-#: commands.cc:1173
+#: commands.cc:1114
 #, c-format
 msgid "edit comment failed"
 msgstr "コメント編集に失敗"
 
-#: commands.cc:1176
+#: commands.cc:1117
 #, c-format
 msgid "empty comment"
 msgstr "空のコメント"
 
-#: commands.cc:1189 commands.cc:1218 commands.cc:1243 commands.cc:1268
-#: commands.cc:2187 commands.cc:2305 commands.cc:2839 commands.cc:3355
-msgid "workspace"
-msgstr ""
+#: commands.cc:1129 commands.cc:1166 commands.cc:1200 commands.cc:1332
+#: commands.cc:2198 commands.cc:2321 commands.cc:2886 commands.cc:3419
+msgid "working copy"
+msgstr "作業コピー"
 
-#: commands.cc:1189 commands.cc:1218 commands.cc:1334 commands.cc:2305
-#: commands.cc:2686 commands.cc:3355
+#: commands.cc:1129 commands.cc:1166 commands.cc:1275 commands.cc:2321
+#: commands.cc:2674 commands.cc:3419
 msgid "[PATH]..."
 msgstr "[PATH]..."
 
-#: commands.cc:1190
-#, fuzzy
-msgid "add files to workspace"
+#: commands.cc:1130
+msgid "add files to working copy"
 msgstr "ファイルを作業コピーに追加"
 
-#: commands.cc:1219
-#, fuzzy
-msgid "drop files from workspace"
+#: commands.cc:1167
+msgid "drop files from working copy"
 msgstr "ファイルを作業コピーから削除"
 
-#: commands.cc:1244
-msgid ""
-"SRC DEST\n"
-"SRC1 [SRC2 [...]] DEST_DIR"
-msgstr ""
+#: commands.cc:1200
+msgid "SRC DST"
+msgstr "SRC DST"
 
-#: commands.cc:1246
-#, fuzzy
-msgid "rename entries in the workspace"
+#: commands.cc:1201
+msgid "rename entries in the working copy"
 msgstr "作業コピー内のエントリの名称を変更"
 
-#: commands.cc:1268
-msgid "NEW_ROOT PUT_OLD"
-msgstr ""
-
-#: commands.cc:1269
-msgid ""
-"rename the root directory\n"
-"after this command, the directory that currently has the name NEW_ROOT\n"
-"will be the root directory, and the directory that is currently the root\n"
-"directory will have name PUT_OLD.\n"
-"Using --execute is strongly recommended."
-msgstr ""
-
-#: commands.cc:1288 commands.cc:1301 commands.cc:1381 commands.cc:3462
-#: commands.cc:3907
+#: commands.cc:1229 commands.cc:1242 commands.cc:2807 commands.cc:2824
+#: commands.cc:3502
 msgid "debug"
 msgstr "デバッグ"
 
-#: commands.cc:1288
+#: commands.cc:1229
 msgid "load file contents into db"
 msgstr "ファイルの内容をデータベースに読み込み"
 
-#: commands.cc:1301
+#: commands.cc:1242
 msgid "<parent> <left> <right>"
 msgstr "<親> <左> <右>"
 
-#: commands.cc:1302
+#: commands.cc:1243
 msgid "merge 3 files and output result"
 msgstr "三つのファイルを統合し結果を出力"
 
-#: commands.cc:1312
+#: commands.cc:1253
 #, c-format
 msgid "ancestor file id does not exist"
 msgstr "祖先のファイル ID は存在しません"
 
-#: commands.cc:1315
+#: commands.cc:1256
 #, c-format
 msgid "left file id does not exist"
 msgstr "左ファイル ID は存在しません"
 
-#: commands.cc:1318
+#: commands.cc:1259
 #, c-format
 msgid "right file id does not exist"
 msgstr "右ファイル ID は存在しません"
 
-#: commands.cc:1329
+#: commands.cc:1270
 #, c-format
 msgid "merge failed"
 msgstr "統合失敗"
 
-#: commands.cc:1334
-#, fuzzy
-msgid "show status of workspace"
+#: commands.cc:1275
+msgid "show status of working copy"
 msgstr "作業コピーの状態を表示"
 
-#: commands.cc:1381
+#: commands.cc:1332
 msgid "[PATH]"
 msgstr "[PATH]"
 
-#: commands.cc:1382
+#: commands.cc:1333
 msgid "calculate identity of PATH or stdin"
 msgstr "PATH または標準入力を識別"
 
-#: commands.cc:1405
+#: commands.cc:1356
 msgid "FILENAME"
 msgstr "FILENAME"
 
-#: commands.cc:1406
+#: commands.cc:1357
 msgid "write file from database to stdout"
 msgstr "データベースのファイルを標準出力に書き出し"
 
-#: commands.cc:1434 commands.cc:1436 commands.cc:3573
+#: commands.cc:1385
 #, c-format
 msgid "no file '%s' found in revision '%s'\n"
 msgstr "ファイル '%s' はリビジョン '%s' にはありませんでした\n"
 
-#: commands.cc:1448 commands.cc:1577 commands.cc:3040 commands.cc:3093
-#: commands.cc:3104 commands.cc:3254 commands.cc:3262 commands.cc:3816
+#: commands.cc:1389
+#, c-format
+msgid "dumping file '%s'\n"
+msgstr "ファイル '%s' をダンプ\n"
+
+#: commands.cc:1397 commands.cc:1505 commands.cc:3162 commands.cc:3211
+#: commands.cc:3296 commands.cc:3303 commands.cc:3787
 msgid "tree"
 msgstr "ツリー"
 
-#: commands.cc:1448
+#: commands.cc:1397
 msgid "[DIRECTORY]\n"
 msgstr "[DIRECTORY]\n"
 
-#: commands.cc:1449
+#: commands.cc:1398
 msgid ""
 "check out a revision from database into directory.\n"
 "If a revision is given, that's the one that will be checked out.\n"
@@ -606,77 +902,82 @@ msgstr ""
 "取り出します。ディレクトリが未指定ならディレクトリ名として\n"
 "ブランチ名を使います"
 
-#: commands.cc:1468 commands.cc:1487
+#: commands.cc:1415 commands.cc:1434
 #, c-format
 msgid "need --branch argument for branch-based checkout"
 msgstr "ブランチを基準にしたチェックアウトには --branch 引数が必要です"
 
-#: commands.cc:1481
+#: commands.cc:1428
 #, c-format
 msgid "checkout directory '%s' already exists"
 msgstr "取り出すディレクトリ '%s' は既に存在しています"
 
-#: commands.cc:1490
-#, fuzzy, c-format
-msgid "branch '%s' is empty"
-msgstr "ブランチ '%s' は空です\n"
-
-#: commands.cc:1493
-#, fuzzy, c-format
-msgid "branch %s has multiple heads:"
-msgstr "ブランチ %s には複数の最新版が存在しています"
-
-#: commands.cc:1496
-#, fuzzy, c-format
-msgid "choose one with '%s checkout -r<id>'"
-msgstr "'monotone update -r<id>' として一つ選択\n"
-
-#: commands.cc:1497
-#, c-format
-msgid "branch %s has multiple heads"
-msgstr "ブランチ %s には複数の最新版が存在しています"
-
-#: commands.cc:1524
-#, c-format
-msgid "revision %s is not a member of branch %s\n"
-msgstr "リビジョン %s はブランチ %s には属していません\n"
-
-#: commands.cc:1558
-#, c-format
-msgid "no file %s found in database for %s"
-msgstr "ファイル %s (対象 %s)はデータベース内にはみつかりません"
-
-#: commands.cc:1577
-msgid "show unmerged head revisions of branch"
-msgstr "ブランチの統合されていない最新リビジョンを表示"
-
-#: commands.cc:1585 commands.cc:3049
-#, c-format
-msgid "please specify a branch, with --branch=BRANCH"
-msgstr "--branch=BRANCH というようにブランチを指定して下さい"
-
-#: commands.cc:1590 commands.cc:3053 commands.cc:3142 commands.cc:3145
+#: commands.cc:1437 commands.cc:1518 commands.cc:3175 commands.cc:3245
+#: commands.cc:3248
 #, c-format
 msgid "branch '%s' is empty\n"
 msgstr "ブランチ '%s' は空です\n"
 
-#: commands.cc:1592
+#: commands.cc:1438
+#, c-format
+msgid "branch %s has multiple heads"
+msgstr "ブランチ %s には複数の最新版が存在しています"
+
+#: commands.cc:1459
+#, c-format
+msgid "found %d %s branch certs on revision %s\n"
+msgstr "%d %s ブランチ証明がリビジョン %s でみつかりました\n"
+
+#: commands.cc:1464
+#, c-format
+msgid "revision %s is not a member of branch %s\n"
+msgstr "リビジョン %s はブランチ %s には属していません\n"
+
+#: commands.cc:1480
+#, c-format
+msgid "no manifest %s found in database"
+msgstr "マニフェスト %s はデータベース内にはみつかりません"
+
+#: commands.cc:1482
+#, c-format
+msgid "checking out revision %s to directory %s\n"
+msgstr "リビジョン %s をディレクトリ %s に取り出し中\n"
+
+#: commands.cc:1488
+#, c-format
+msgid "no file %s found in database for %s"
+msgstr "ファイル %s (対象 %s)はデータベース内にはみつかりません"
+
+#: commands.cc:1492 commands.cc:3489
+#, c-format
+msgid "writing file %s to %s\n"
+msgstr "ファイル %s を %s に書き込み中\n"
+
+#: commands.cc:1505
+msgid "show unmerged head revisions of branch"
+msgstr "ブランチの統合されていない最新リビジョンを表示"
+
+#: commands.cc:1513 commands.cc:3171
+#, c-format
+msgid "please specify a branch, with --branch=BRANCH"
+msgstr "--branch=BRANCH というようにブランチを指定して下さい"
+
+#: commands.cc:1520
 #, c-format
 msgid "branch '%s' is currently merged:\n"
 msgstr "ブランチ '%s' は現在統合済みです:\n"
 
-#: commands.cc:1594
+#: commands.cc:1522
 #, c-format
 msgid "branch '%s' is currently unmerged:\n"
 msgstr "ブランチ '%s' は現在未統合です:\n"
 
-#: commands.cc:1633
+#: commands.cc:1561
 #, c-format
 msgid "no epoch for branch %s\n"
 msgstr "ブランチ %s は epoch を持ちません\n"
 
-#: commands.cc:1841
-#, fuzzy
+#: commands.cc:1721
 msgid ""
 "certs ID\n"
 "keys [PATTERN]\n"
@@ -687,8 +988,7 @@ msgid ""
 "known\n"
 "unknown\n"
 "ignored\n"
-"missing\n"
-"changed"
+"missing"
 msgstr ""
 "certs ID\n"
 "keys [PATTERN]\n"
@@ -701,135 +1001,195 @@ msgstr ""
 "ignored\n"
 "missing"
 
-#: commands.cc:1852
-#, fuzzy
+#: commands.cc:1731
 msgid ""
-"show database objects, or the current workspace manifest, or known,\n"
-"unknown, intentionally ignored, missing, or changed state files"
+"show database objects, or the current working copy manifest,\n"
+"or unknown, intentionally ignored, or missing state files"
 msgstr ""
 "データベースオブジェクト、現在の作業コピーのマニフェスト、\n"
 "不明な、無視された、または失なわれた状態のファイルを表示"
 
-#: commands.cc:1890 commands.cc:1918 commands.cc:1936
+#: commands.cc:1768 commands.cc:1794 commands.cc:1818 commands.cc:1836
+#: commands.cc:1855 commands.cc:1874 commands.cc:1892 commands.cc:1920
+#: commands.cc:1938
 msgid "packet i/o"
 msgstr "パケット I/O"
 
-#: commands.cc:1890 commands.cc:1918
+#: commands.cc:1768 commands.cc:1794
+msgid "OLDID NEWID"
+msgstr "OLDID NEWID"
+
+#: commands.cc:1769
+msgid "write manifest delta packet to stdout"
+msgstr "マニフェスト差分パケットを標準出力に出力"
+
+#: commands.cc:1783 commands.cc:1785 commands.cc:1849
+#, c-format
+msgid "no such manifest '%s'"
+msgstr "マニフェスト '%s' は存在しません"
+
+#: commands.cc:1795
+msgid "write file delta packet to stdout"
+msgstr "ファイル差分パケットを標準出力に出力"
+
+#: commands.cc:1809 commands.cc:1811 commands.cc:1868 commands.cc:2219
+#, c-format
+msgid "no such file '%s'"
+msgstr "ファイル '%s' は存在しません"
+
+#: commands.cc:1818 commands.cc:1836 commands.cc:1855 commands.cc:1874
+#: commands.cc:1892 commands.cc:1920
 msgid "ID"
 msgstr "ID"
 
-#: commands.cc:1890
+#: commands.cc:1818
+msgid "write revision data packet to stdout"
+msgstr "リビジョンデータパケットを標準出力に出力"
+
+#: commands.cc:1836
+msgid "write manifest data packet to stdout"
+msgstr "マニフェストデータパケットを標準出力に出力"
+
+#: commands.cc:1855
+msgid "write file data packet to stdout"
+msgstr "ファイルデータパケットを標準出力に出力"
+
+#: commands.cc:1874
+msgid "write cert packets to stdout"
+msgstr "証明パケットを標準出力に出力"
+
+#: commands.cc:1892
 msgid "write public key packet to stdout"
 msgstr "公開鍵パケットを標準出力に出力"
 
-#: commands.cc:1912
+#: commands.cc:1914
 #, fuzzy, c-format
 msgid "public key '%s' does not exist"
 msgstr "公開鍵 '%s' はデータベース内に存在しません"
 
-#: commands.cc:1918
+#: commands.cc:1920
 msgid "write private key packet to stdout"
 msgstr "秘密鍵パケットを標準出力に出力"
 
-#: commands.cc:1926
+#: commands.cc:1928
 #, fuzzy, c-format
 msgid "public and private key '%s' do not exist in keystore"
 msgstr "公開または秘密鍵 '%s' はデータベース内に存在しません"
 
-#: commands.cc:1937
+#: commands.cc:1939
 msgid "read packets from files or stdin"
 msgstr "ファイルまたは標準入力からパケットを読み込み"
 
-#: commands.cc:1945
+#: commands.cc:1947
 #, c-format
 msgid "no packets found on stdin"
 msgstr "標準入力にパケットをみつけることができませんでした"
 
-#: commands.cc:1956
+#: commands.cc:1958
 #, c-format
 msgid "no packets found in given file"
 msgid_plural "no packets found in given files"
 msgstr[0] "ファイル内にパケットは含まれていません"
 msgstr[1] "ファイル内にパケットは含まれていません"
 
-#: commands.cc:1960
+#: commands.cc:1962
 #, c-format
 msgid "read %d packet"
 msgid_plural "read %d packets"
 msgstr[0] "%d パケット読み込み"
 msgstr[1] "%d パケット読み込み"
 
-#: commands.cc:1989
+#: commands.cc:1966 commands.cc:2060 commands.cc:2075 commands.cc:2089
+#: commands.cc:2104
+msgid "network"
+msgstr "ネットワーク"
+
+#: commands.cc:1967
+msgid "rebuild the indices used to sync over the network"
+msgstr "ネットワークを介して同期するのに使う索引を再構築"
+
+#: commands.cc:2004
 #, c-format
 msgid "setting default server to %s\n"
 msgstr "デフォルトのサーバーを %s に設定\n"
 
-#: commands.cc:1995
+#: commands.cc:2010
 #, c-format
 msgid "no hostname given"
 msgstr "ホスト名を指定して下さい"
 
-#: commands.cc:1997
+#: commands.cc:2012
 #, c-format
 msgid "no server given and no default server set"
 msgstr "サーバが未指定であり、デフォルトのサーバーも設定されていません"
 
-#: commands.cc:2015
+#: commands.cc:2016
+#, c-format
+msgid "using default server address: %s\n"
+msgstr "デフォルトのサーバーアドレスを利用: %s\n"
+
+#: commands.cc:2030
 #, c-format
 msgid "setting default branch include pattern to '%s'\n"
 msgstr "ブランチ名に含めるデフォルトパターンを '%s' に設定\n"
 
-#: commands.cc:2021
+#: commands.cc:2036
 #, c-format
 msgid "setting default branch exclude pattern to '%s'\n"
 msgstr "ブランチ名に含めないデフォルトパターンを '%s' に設定\n"
 
-#: commands.cc:2027
+#: commands.cc:2042
 #, c-format
 msgid "no branch pattern given"
 msgstr "ブランチ名を指定して下さい"
 
-#: commands.cc:2029
+#: commands.cc:2044
 #, c-format
 msgid "no branch pattern given and no default pattern set"
 msgstr "ブランチパターンが未指定、かつデフォルトパターンも設定されていません"
 
-#: commands.cc:2045 commands.cc:2060 commands.cc:2074 commands.cc:2089
-msgid "network"
-msgstr "ネットワーク"
+#: commands.cc:2048
+#, c-format
+msgid "using default branch include pattern: '%s'\n"
+msgstr "ブランチ名に含めるデフォルトのパターンを利用: '%s'\n"
 
-#: commands.cc:2045 commands.cc:2060 commands.cc:2074
+#: commands.cc:2056
+#, c-format
+msgid "excluding: %s\n"
+msgstr "除外: %s\n"
+
+#: commands.cc:2060 commands.cc:2075 commands.cc:2089
 msgid "[ADDRESS[:PORTNUMBER] [PATTERN]]"
 msgstr "[ADDRESS[:PORTNUMBER] [PATTERN]]"
 
-#: commands.cc:2046
+#: commands.cc:2061
 msgid "push branches matching PATTERN to netsync server at ADDRESS"
 msgstr "PATTERN に合うブランチを netsync サーバー (ADDRESS) にプッシュ"
 
-#: commands.cc:2061
+#: commands.cc:2076
 msgid "pull branches matching PATTERN from netsync server at ADDRESS"
 msgstr "PATTERN に合うブランチを netsync サーバー (ADDRESS) から取り込み"
 
-#: commands.cc:2068
+#: commands.cc:2083
 #, c-format
 msgid "doing anonymous pull; use -kKEYNAME if you need authentication\n"
 msgstr "匿名で取り込んでいます; 認証が必要な場合は -kKEYNAME を使って下さい\n"
 
-#: commands.cc:2075
+#: commands.cc:2090
 msgid "sync branches matching PATTERN with netsync server at ADDRESS"
 msgstr "PATTERN に合うブランチを netsync サーバー (ADDRESS) と同期"
 
-#: commands.cc:2089
+#: commands.cc:2104
 #, fuzzy
 msgid "PATTERN ..."
 msgstr "PATH..."
 
-#: commands.cc:2090
+#: commands.cc:2105
 #, fuzzy
 msgid "serve the branches specified by PATTERNs to connecting clients"
 msgstr "ADDRESS で待機し、指定ブランチを接続クライアントに提供"
 
-#: commands.cc:2103
+#: commands.cc:2118
 #, c-format
 msgid ""
 "need permission to store persistent passphrase (see hook persist_phrase_ok())"
@@ -837,12 +1197,11 @@ msgstr ""
 "永続的にパスフレーズを保存しておきたいのなら権限が必要です (フック "
 "persist_phrase_ok() を参照して下さい)"
 
-#: commands.cc:2115
+#: commands.cc:2130
 msgid "database"
 msgstr "データベース"
 
-#: commands.cc:2116
-#, fuzzy
+#: commands.cc:2131
 msgid ""
 "init\n"
 "info\n"
@@ -856,7 +1215,7 @@ msgid ""
 "kill_tag_locally TAG\n"
 "check\n"
 "changesetify\n"
-"rosterify\n"
+"rebuild\n"
 "set_epoch BRANCH EPOCH\n"
 msgstr ""
 "init\n"
@@ -874,110 +1233,152 @@ msgstr ""
 "rebuild\n"
 "set_epoch BRANCH EPOCH\n"
 
-#: commands.cc:2130
+#: commands.cc:2145
 msgid "manipulate database state"
 msgstr "データベースの状態を操作"
 
-#: commands.cc:2177
-#, c-format
-msgid "The epoch must be %s characters"
-msgstr ""
-
-#: commands.cc:2187
-#, fuzzy
+#: commands.cc:2198
 msgid ""
-"set PATH ATTR VALUE\n"
-"get PATH [ATTR]\n"
-"drop PATH [ATTR]"
+"set FILE ATTR VALUE\n"
+"get FILE [ATTR]\n"
+"drop FILE"
 msgstr ""
 "set FILE ATTR VALUE\n"
 "get FILE [ATTR]\n"
 "drop FILE"
 
-#: commands.cc:2188
+#: commands.cc:2199
 msgid "set, get or drop file attributes"
 msgstr "ファイル属性を設定/取得/削除"
 
-#: commands.cc:2204
-#, fuzzy, c-format
-msgid "Unknown path '%s'"
-msgstr "不明なパス '%s'\n"
-
-#: commands.cc:2233
-#, fuzzy, c-format
-msgid "Path '%s' does not have attribute '%s'\n"
-msgstr "パス %s は存在しません"
-
-#: commands.cc:2287
+#: commands.cc:2287 work.cc:113
 #, c-format
-msgid "--message and --message-file are mutually exclusive"
-msgstr "--message と --message-file を同時に指定することはできません"
+msgid "registering %s file in working copy\n"
+msgstr "作業コピー内の %s ファイルを登録\n"
 
-#: commands.cc:2306
-#, fuzzy
-msgid "commit workspace to database"
+#: commands.cc:2316
+#, c-format
+msgid "failed to parse date string '%s': %s"
+msgstr "データ文字列 '%s' の解析に失敗: %s"
+
+#: commands.cc:2322
+msgid "commit working copy to database"
 msgstr "作業コピーをデータベースにコミット"
 
-#: commands.cc:2324
+#: commands.cc:2340
 #, c-format
 msgid "no changes to commit\n"
 msgstr "コミットすべき変更がありません\n"
 
-#: commands.cc:2338
+#: commands.cc:2354
 #, c-format
 msgid "beginning commit on branch '%s'\n"
 msgstr "ブランチ '%s' についてコミット開始\n"
 
-#: commands.cc:2347
-#, fuzzy, c-format
+#: commands.cc:2355
+#, c-format
 msgid ""
-"MT/log is non-empty and log message was specified on command line\n"
+"new manifest '%s'\n"
+"new revision '%s'\n"
+msgstr ""
+"新規マニフェスト '%s'\n"
+"新規リビジョン '%s'\n"
+
+#: commands.cc:2362
+#, c-format
+msgid "--message and --message-file are mutually exclusive"
+msgstr "--message と --message-file を同時に指定することはできません"
+
+#: commands.cc:2365
+#, c-format
+msgid ""
+"MT/log is non-empty and --message supplied\n"
 "perhaps move or delete MT/log,\n"
-"or remove --message/--message-file from the command line?"
+"or remove --message from the command line?"
+msgstr ""
+"MT/log は空ではなく、 --message が指定されています.\n"
+"もしかしたら MT/log を移動/削除したか、コマンド\n"
+"行から --message を削除したのではありませんか?"
+
+#: commands.cc:2370
+#, c-format
+msgid ""
+"MT/log is non-empty and --message-file supplied\n"
+"perhaps move or delete MT/log,\n"
+"or remove --message-file from the command line?"
 msgstr ""
 "MT/log は空ではなく、 --message-file が指定されています.\n"
 "もしかしたら MT/log を移動/削除したか、コマンド\n"
 "行から --message-file を削除したのではありませんか?"
 
-#: commands.cc:2359
+#: commands.cc:2388
 #, c-format
 msgid "empty log message; commit canceled"
 msgstr "空のログメッセージ; コミットは取り消されました"
 
-#: commands.cc:2378
-#, c-format
-msgid "log message rejected: %s\n"
-msgstr ""
-
-#: commands.cc:2386
+#: commands.cc:2400
 #, c-format
 msgid "revision %s already in database\n"
 msgstr "リビジョン %s は既にデータベース内に存在しています\n"
 
-#: commands.cc:2424 commands.cc:2441 commands.cc:2460
+#: commands.cc:2405
+#, c-format
+msgid "inserting new revision %s\n"
+msgstr "新規リビジョン %s を挿入中\n"
+
+#: commands.cc:2414
+#, c-format
+msgid "skipping manifest %s, already in database\n"
+msgstr "既にデータベースにあるマニフェスト %s をスキップ\n"
+
+#: commands.cc:2418
+#, c-format
+msgid "inserting manifest delta %s -> %s\n"
+msgstr "マニフェスト差分 %s -> %s を挿入中\n"
+
+#: commands.cc:2429
+#, c-format
+msgid "inserting full manifest %s\n"
+msgstr "完全マニフェスト %s を挿入中\n"
+
+#: commands.cc:2442
+#, c-format
+msgid "skipping file delta %s, already in database\n"
+msgstr "既にデータベースにあるファイル差分 %s をスキップ\n"
+
+#: commands.cc:2448
+#, c-format
+msgid "inserting delta %s -> %s\n"
+msgstr "差分 %s -> %s を挿入中\n"
+
+#: commands.cc:2458 commands.cc:2475
 #, c-format
 msgid "file '%s' modified during commit, aborting"
 msgstr "ファイル '%s' は commit 前に変更されました. 中止します"
 
-#: commands.cc:2486
+#: commands.cc:2468
+#, c-format
+msgid "inserting full version %s\n"
+msgstr "完全なバージョン %s を挿入中\n"
+
+#: commands.cc:2502
 #, c-format
 msgid "committed revision %s\n"
 msgstr "リビジョン %s をコミット\n"
 
-#: commands.cc:2492
-#, fuzzy, c-format
+#: commands.cc:2508
+#, c-format
 msgid ""
 "note: this revision creates divergence\n"
-"note: you may (or may not) wish to run '%s merge'"
+"note: you may (or may not) wish to run 'monotone merge'"
 msgstr ""
 "注意: このリビジョンによって分岐が生じます\n"
 "注意: 分岐を望まないなら 'monotone merge' を実行して下さい"
 
-#: commands.cc:2687
-#, fuzzy
+#: commands.cc:2675
 msgid ""
 "show current diffs on stdout.\n"
-"If one revision is given, the diff between the workspace and\n"
+"If one revision is given, the diff between the working directory and\n"
 "that revision is shown.  If two revisions are given, the diff between\n"
 "them is given.  If no format is specified, unified is used by default."
 msgstr ""
@@ -986,7 +1387,7 @@ msgstr ""
 "差分を、二つ指定されていればそれらリビジョン間の差分を表示します。\n"
 "形式が指定されていなければ、デフォルトでは unified 形式が使用されます。"
 
-#: commands.cc:2703
+#: commands.cc:2691
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -995,31 +1396,62 @@ msgstr ""
 "--diff-args は --external を必要とします。\n"
 "--external を追加するか、--diff-args を省いてみてはどうですか?"
 
-#: commands.cc:2745
+#: commands.cc:2725
 #, c-format
 msgid "current revision has no ancestor"
 msgstr "現在のリビジョンには祖先がありません"
 
-#: commands.cc:2808
-#, fuzzy
-msgid "no changes"
-msgstr "コミットすべき変更がありません\n"
+#: commands.cc:2764
+#, c-format
+msgid "no common ancestor for %s and %s"
+msgstr "%s と %s には共通の祖先がありません"
 
-#: commands.cc:2840
-msgid ""
-"update workspace.\n"
-"This command modifies your workspace to be based off of a\n"
-"different revision, preserving uncommitted changes as it does so.\n"
-"If a revision is given, update the workspace to that revision.\n"
-"If not, update the workspace to the head of the branch."
-msgstr ""
+#: commands.cc:2770
+#, c-format
+msgid "concatenating un-committed changeset to composite\n"
+msgstr "合成のためにコミットされていない変更セットを連結\n"
 
-#: commands.cc:2878
+#: commands.cc:2807 commands.cc:2824
+msgid "LEFT RIGHT"
+msgstr "LEFT RIGHT"
+
+#: commands.cc:2807
+msgid "print least common ancestor"
+msgstr "最も近い祖先を表示"
+
+#: commands.cc:2820
+msgid "no common ancestor found"
+msgstr "共通の祖先はありませんでした"
+
+#: commands.cc:2824
+msgid "print least common ancestor / dominator"
+msgstr "最も近い祖先 / 支配者を表示"
+
+#: commands.cc:2838
+msgid "no common ancestor/dominator found"
+msgstr "共通の祖先 / 支配者がみつかりません"
+
+#: commands.cc:2863
 #, fuzzy, c-format
-msgid "this workspace is a new project; cannot update"
+msgid "updating %s to %s"
+msgstr "%s を %s に更新中\n"
+
+#: commands.cc:2887
+msgid ""
+"update working copy.\n"
+"If a revision is given, base the update on that revision.  If not,\n"
+"base the update on the head of the branch (given or implicit)."
+msgstr ""
+"作業コピーを更新。\n"
+"リビジョンが指定されていればそれに基づいて、指定されていなければ\n"
+"明示的または暗黙に指定されたブランチの最新版に基づいて更新します。"
+
+#: commands.cc:2912
+#, c-format
+msgid "this working directory is a new project; cannot update"
 msgstr "この作業ディレクトリは新規のプロジェクトです; 更新できません"
 
-#: commands.cc:2885
+#: commands.cc:2919
 #, c-format
 msgid ""
 "your request matches no descendents of the current revision\n"
@@ -1030,32 +1462,32 @@ msgstr ""
 "もしかしたら --revision=<他のブランチのリビジョン> としたいのでは\n"
 "ありませんか?"
 
-#: commands.cc:2890
-#, fuzzy, c-format
-msgid "multiple update candidates:"
+#: commands.cc:2924
+#, c-format
+msgid "multiple update candidates:\n"
 msgstr "複数の更新候補:\n"
 
-#: commands.cc:2894
-#, fuzzy, c-format
-msgid "choose one with '%s update -r<id>'"
+#: commands.cc:2928
+#, c-format
+msgid "choose one with 'monotone update -r<id>'\n"
 msgstr "'monotone update -r<id>' として一つ選択\n"
 
-#: commands.cc:2895
-#, fuzzy, c-format
-msgid "multiple update candidates remain after selection"
+#: commands.cc:2929
+#, c-format
+msgid "multiple candidates remain after selection"
 msgstr "選択したものより後に複数の候補が残っています"
 
-#: commands.cc:2910
+#: commands.cc:2944
 #, c-format
 msgid "already up to date at %s\n"
 msgstr "%s は既に最新です\n"
 
-#: commands.cc:2918
+#: commands.cc:2952
 #, c-format
 msgid "selected update target %s\n"
 msgstr "選択された更新ターゲット %s\n"
 
-#: commands.cc:2930
+#: commands.cc:2964
 #, c-format
 msgid ""
 "revision %s is not a member of branch %s\n"
@@ -1064,159 +1496,183 @@ msgstr ""
 "リビジョン %s はブランチ %s に属していません\n"
 "明示的に --branch を指定して再試行して下さい\n"
 
-#: commands.cc:3030
+#: commands.cc:2979
+#, c-format
+msgid "updating along chosen edge %s -> %s\n"
+msgstr "選択した先端 %s -> %s に従って更新中\n"
+
+#: commands.cc:2990
+#, c-format
+msgid "merging working copy with chosen edge %s -> %s\n"
+msgstr "作業コピーを選択した先端 %s -> %s と統合中\n"
+
+#: commands.cc:3039
 #, c-format
 msgid "updated to base revision %s\n"
 msgstr "基準リビジョン %s に更新\n"
 
-#: commands.cc:3040
+#: commands.cc:3105
+#, c-format
+msgid ""
+"common ancestor %s found\n"
+"trying 3-way merge\n"
+msgstr ""
+"共通の祖先 %s を発見\n"
+"3方結合を試みています\n"
+
+#: commands.cc:3116
+#, c-format
+msgid "no common ancestor found, synthesizing edges\n"
+msgstr "共通の祖先がありませんでしたので、先端同士を同期中\n"
+
+#: commands.cc:3162
 msgid "merge unmerged heads of branch"
 msgstr "統合されていないブランチの複数の最新版を統合"
 
-#: commands.cc:3056
-#, fuzzy, c-format
-msgid "branch '%s' is already merged\n"
+#: commands.cc:3176
+#, c-format
+msgid "branch '%s' is merged\n"
 msgstr "ブランチ '%s' を統合\n"
 
-#: commands.cc:3064
+#: commands.cc:3182
 #, c-format
 msgid "starting with revision 1 / %d\n"
 msgstr "リビジョン 1 / %d について作業開始\n"
 
-#: commands.cc:3068
+#: commands.cc:3186
 #, c-format
 msgid "merging with revision %d / %d\n"
 msgstr "リビジョン %d / %d について統合中\n"
 
-#: commands.cc:3069 commands.cc:3070 commands.cc:3152 commands.cc:3285
-#: commands.cc:3286
+#: commands.cc:3187 commands.cc:3188 commands.cc:3255 commands.cc:3339
+#: commands.cc:3340
 #, c-format
 msgid "[source] %s\n"
 msgstr "[元] %s\n"
 
-#: commands.cc:3087 commands.cc:3250 commands.cc:3304
+#: commands.cc:3205 commands.cc:3292 commands.cc:3359
 #, c-format
 msgid "[merged] %s\n"
 msgstr "[統合済み] %s\n"
 
-#: commands.cc:3090
-#, fuzzy, c-format
-msgid "note: your workspaces have not been updated\n"
+#: commands.cc:3208
+#, c-format
+msgid "note: your working copies have not been updated\n"
 msgstr "注意: 作業コピーは更新されていません\n"
 
-#: commands.cc:3093
+#: commands.cc:3211
 msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr "SOURCE-BRANCH DEST-BRANCH"
 
-#: commands.cc:3094
+#: commands.cc:3212
 msgid "merge from one branch to another asymmetrically"
 msgstr "一方のブランチを他方に非同期に統合"
 
-#: commands.cc:3104
-#, fuzzy
-msgid "SOURCE-BRANCH DEST-BRANCH DIR"
-msgstr "SOURCE-BRANCH DEST-BRANCH"
-
-#: commands.cc:3105
-msgid "merge one branch into a subdirectory in another branch"
-msgstr ""
-
-#: commands.cc:3143 commands.cc:3146
+#: commands.cc:3246 commands.cc:3249
 #, c-format
 msgid "branch '%s' is not merged\n"
 msgstr "ブランチ '%s' は統合されていません\n"
 
-#: commands.cc:3151
+#: commands.cc:3254
 #, c-format
 msgid "propagating %s -> %s\n"
 msgstr "伝播中 %s -> %s\n"
 
-#: commands.cc:3153
+#: commands.cc:3256
 #, c-format
 msgid "[target] %s\n"
 msgstr "[先] %s\n"
 
-#: commands.cc:3158
+#: commands.cc:3261
 #, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'\n"
 msgstr "ブランチ '%s' はブランチ '%s' に対して最新です\n"
 
-#: commands.cc:3160
+#: commands.cc:3263
 #, c-format
 msgid "no action taken\n"
 msgstr "何もしません\n"
 
-#: commands.cc:3164
+#: commands.cc:3267
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'\n"
 msgstr "統合は必要ありません. %s をブランチ '%s' 内に取り込み中\n"
 
-#: commands.cc:3200
-#, c-format
-msgid "Path %s not found in destination tree."
-msgstr ""
-
-#: commands.cc:3254
+#: commands.cc:3296
 msgid "refresh the inodeprint cache"
 msgstr "i-node 表示キャッシュを更新"
 
-#: commands.cc:3263
-msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
+#: commands.cc:3304
+msgid ""
+"LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
+"LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"
 msgstr ""
+"LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
+"LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"
 
-#: commands.cc:3264
+#: commands.cc:3306
 msgid "merge two explicitly given revisions, placing result in given branch"
 msgstr "明示的に指定した二つのリビジョンを統合。結果は指定ブランチへ。"
 
-#: commands.cc:3278
+#: commands.cc:3321 commands.cc:3323
+#, c-format
+msgid "%s is not an ancestor of %s"
+msgstr "%s は %s の祖先ではありません"
+
+#: commands.cc:3332
 #, c-format
 msgid "%s and %s are the same revision, aborting"
 msgstr "%s と %s は同じリビジョンです. 中止します"
 
-#: commands.cc:3280 commands.cc:3282
+#: commands.cc:3334 commands.cc:3336
 #, c-format
 msgid "%s is already an ancestor of %s"
 msgstr "%s は既に %s の祖先となっています"
 
-#: commands.cc:3307
-#, fuzzy
-msgid "(revision|file|key) PARTIAL-ID"
+#: commands.cc:3362
+msgid "(revision|manifest|file|key) PARTIAL-ID"
 msgstr "(revision|manifest|file|key) PARTIAL-ID"
 
-#: commands.cc:3308
+#: commands.cc:3363
 msgid "complete partial id"
 msgstr "部分 ID を補完"
 
-#: commands.cc:3317
+#: commands.cc:3372
 #, c-format
 msgid "non-hex digits in partial id"
 msgstr "部分 ID に十六進数が含まれていません"
 
-#: commands.cc:3356
+#: commands.cc:3420
 #, fuzzy
-msgid "revert file(s), dir(s) or entire workspace (\".\")"
+msgid "revert file(s), dir(s) or entire working copy (\".\")"
 msgstr "ファイル、ディレクトリまたは完全な作業コピーの変更を破棄"
 
-#: commands.cc:3433
+#: commands.cc:3448
+#, c-format
+msgid "revert adding find_missing entries to %d original args elements\n"
+msgstr ""
+
+#: commands.cc:3457
+#, c-format
+msgid ""
+"after adding everything from find_missing, revert args_copy has %d elements\n"
+msgstr ""
+
+#: commands.cc:3481
 #, fuzzy, c-format
-msgid "reverting %s"
+msgid "reverting %s to %s"
 msgstr "%s を %s から %s へ戻しています\n"
 
-#: commands.cc:3437
+#: commands.cc:3485
 #, c-format
 msgid "no file version %s found in database for %s"
 msgstr "バージョン %s のファイルはデータベース内にみつかりません (対象: %s)"
 
-#: commands.cc:3450
-#, fuzzy, c-format
-msgid "recreating %s/"
-msgstr "%s を %s から %s へ戻しています\n"
-
-#: commands.cc:3462
+#: commands.cc:3502
 msgid "RCSFILE..."
 msgstr "RCSFILE..."
 
-#: commands.cc:3463
+#: commands.cc:3503
 msgid ""
 "parse versions in RCS files\n"
 "this command doesn't reconstruct or import revisions.you probably want "
@@ -1226,37 +1682,51 @@ msgstr ""
 "このコマンドは (CVS の) リビジョンを再構築または取り込みはしません。おそらく"
 "あなたの期待しているのは cvs_import でしょう。"
 
-#: commands.cc:3479
+#: commands.cc:3519
 msgid "rcs"
 msgstr "RCS 関連"
 
-#: commands.cc:3479
+#: commands.cc:3519
 msgid "CVSROOT"
 msgstr "CVSROOT"
 
-#: commands.cc:3479
+#: commands.cc:3519
 msgid "import all versions in CVS repository"
 msgstr "CVS リポジトリ内のすべてのバージョンを取り込む"
 
-#: commands.cc:3542
+#: commands.cc:3582
 msgid "PATH"
 msgstr "PATH"
 
-#: commands.cc:3543
+#: commands.cc:3583
 msgid "print annotated copy of the file from REVISION"
 msgstr "REVISION の注釈付きのファイルのコピーを表示"
 
-#: commands.cc:3563
+#: commands.cc:3600
 #, c-format
 msgid "no revision for file '%s' in database"
 msgstr "ファイル '%s' に対するリビジョンはデータベース内にみつかりませんでした"
 
-#: commands.cc:3581
-#, fuzzy
-msgid "[FILE] ..."
+#: commands.cc:3603
+#, c-format
+msgid "annotate file file_path '%s'\n"
+msgstr "注釈ファイル file_path '%s'\n"
+
+#: commands.cc:3612
+#, c-format
+msgid "no such file '%s' in revision '%s'\n"
+msgstr "ファイル '%s' はリビジョン %s 内にはありません\n"
+
+#: commands.cc:3614
+#, c-format
+msgid "annotate for file_id %s\n"
+msgstr "file_id %s に対する注釈\n"
+
+#: commands.cc:3619
+msgid "[FILE]"
 msgstr "[FILE]"
 
-#: commands.cc:3582
+#: commands.cc:3620
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
@@ -1264,36 +1734,34 @@ msgstr ""
 "降順で履歴を表示 ('FILE' でフィルタ)。一つ以上のリビジョンが指定されて\n"
 "いればそれを開始点として利用。"
 
-#: commands.cc:3630
+#: commands.cc:3680
 #, c-format
-msgid "Unknown file '%s' for log command"
-msgstr ""
+msgid "revision %s does not exist in db, skipping\n"
+msgstr "リビジョン %s は db 内にありません. スキップします\n"
 
-#: commands.cc:3648
+#: commands.cc:3713
 #, c-format
-msgid "only one of --last/--next allowed"
-msgstr ""
+msgid "revision '%s' in '%s' maps to '%s' in %s\n"
+msgstr "リビジョン '%s' ('%s' 内) を '%s' (%s 内) にマップ\n"
 
-#: commands.cc:3816
-#, fuzzy
-msgid "[DIRECTORY]"
-msgstr "[DIRECTORY]\n"
+#: commands.cc:3787
+msgid "DIRECTORY"
+msgstr "DIRECTORY"
 
-#: commands.cc:3816
-#, fuzzy
-msgid "setup a new workspace directory, default to current"
+#: commands.cc:3787
+msgid "setup a new working copy directory"
 msgstr "新規作業コピーディレクトリを作成"
 
-#: commands.cc:3822
+#: commands.cc:3793
 #, c-format
 msgid "need --branch argument for setup"
 msgstr "作成には --branch 引数が必要です"
 
-#: commands.cc:3836
+#: commands.cc:3802
 msgid "automation"
 msgstr "自動化"
 
-#: commands.cc:3837
+#: commands.cc:3803
 #, fuzzy
 msgid ""
 "interface_version\n"
@@ -1312,13 +1780,9 @@ msgid ""
 "stdio\n"
 "certs REV\n"
 "select SELECTOR\n"
-"get_file FILEID\n"
-"get_manifest_of [REVID]\n"
-"get_revision [REVID]\n"
-"packet_for_rdata REVID\n"
-"packets_for_certs REVID\n"
-"packet_for_fdata FILEID\n"
-"packet_for_fdelta OLD_FILE NEW_FILE\n"
+"get_file ID\n"
+"get_manifest [ID]\n"
+"get_revision [ID]\n"
 "keys\n"
 msgstr ""
 "interface_version\n"
@@ -1341,430 +1805,397 @@ msgstr ""
 "get_manifest [ID]\n"
 "get_revision [ID]\n"
 
-#: commands.cc:3861
+#: commands.cc:3823
 msgid "automation interface"
 msgstr "自動化インターフェース"
 
-#: commands.cc:3875 commands.cc:3891
+#: commands.cc:3837 commands.cc:3853
 msgid "vars"
 msgstr "変数"
 
-#: commands.cc:3875
+#: commands.cc:3837
 msgid "DOMAIN NAME VALUE"
 msgstr "DOMAIN NAME VALUE"
 
-#: commands.cc:3876
+#: commands.cc:3838
 msgid "set the database variable NAME to VALUE, in domain DOMAIN"
 msgstr "ドメイン DOMAIN のデータベース変数 NAME を VALUE に設定"
 
-#: commands.cc:3891
+#: commands.cc:3853
 msgid "DOMAIN NAME"
 msgstr "DOMAIN NAME"
 
-#: commands.cc:3892
+#: commands.cc:3854
 msgid "remove the database variable NAME in domain DOMAIN"
 msgstr "ドメイン DOMAIN のデータベース変数 NAME を消去"
 
-#: commands.cc:3903
+#: commands.cc:3865
 #, c-format
 msgid "no var with name %s in domain %s"
 msgstr "%s という変数はドメイン %s 内にはありません"
 
-#: commands.cc:3907
-#, fuzzy
-msgid "REVID"
-msgstr "REVISION"
-
-#: commands.cc:3908
-msgid "dump the roster associated with the given REVID"
-msgstr ""
-
-#: commands.cc:3926
-msgid "REV REV"
-msgstr ""
-
-#: commands.cc:3926
-msgid ""
-"Show what conflicts would need to be resolved to merge the given revisions."
-msgstr ""
-
-#: commands.cc:3935 commands.cc:3937
-#, fuzzy, c-format
-msgid "%s in an ancestor of %s; no merge is needed."
-msgstr "%s は %s の祖先ではありません"
-
-#: commands.cc:3951
+#: database_check.cc:109
 #, c-format
-msgid "There are %s node_name_conflicts."
-msgstr ""
+msgid "checking %d files\n"
+msgstr "%d 個のファイルを検証中\n"
 
-#: commands.cc:3952
-#, c-format
-msgid "There are %s file_content_conflicts."
-msgstr ""
-
-#: commands.cc:3953
-#, c-format
-msgid "There are %s node_attr_conflicts."
-msgstr ""
-
-#: commands.cc:3954
-#, c-format
-msgid "There are %s orphaned_node_conflicts."
-msgstr ""
-
-#: commands.cc:3955
-#, c-format
-msgid "There are %s rename_target_conflicts."
-msgstr ""
-
-#: commands.cc:3956
-#, c-format
-msgid "There are %s directory_loop_conflicts."
-msgstr ""
-
-#: database_check.cc:125
+#: database_check.cc:111
 msgid "files"
 msgstr "ファイル"
 
-#: database_check.cc:154
-msgid "rosters"
-msgstr ""
+#: database_check.cc:116
+#, c-format
+msgid "checking file %s\n"
+msgstr "ファイル %s を検証中\n"
 
-#: database_check.cc:221
-msgid "markings"
-msgstr ""
+#: database_check.cc:134
+#, c-format
+msgid "checking %d manifests\n"
+msgstr "%d 個のマニフェストを検証中\n"
 
-#: database_check.cc:319 database_check.cc:507 netsync.cc:2760
-#: rcs_import.cc:1226
+#: database_check.cc:136 rcs_import.cc:1258
+msgid "manifests"
+msgstr "マニフェスト"
+
+#: database_check.cc:141
+#, c-format
+msgid "checking manifest %s\n"
+msgstr "マニフェスト %s を検証中\n"
+
+#: database_check.cc:153
+#, c-format
+msgid "error parsing manifest %s: %s"
+msgstr "マニフェスト %s: %s を解析中にエラー"
+
+#: database_check.cc:190
+#, c-format
+msgid "checking %d revisions\n"
+msgstr "%d 個のリビジョンを検証中\n"
+
+#: database_check.cc:192 database_check.cc:380 netsync.cc:3497
+#: rcs_import.cc:1257
 msgid "revisions"
 msgstr "リビジョン"
 
-#: database_check.cc:418
+#: database_check.cc:197
+#, c-format
+msgid "checking revision %s\n"
+msgstr "リビジョン %s を検証中\n"
+
+#: database_check.cc:209
+#, c-format
+msgid "error parsing revision %s: %s"
+msgstr "リビジョン %s: %s を解析中にエラー"
+
+#: database_check.cc:277
+#, c-format
+msgid "checked %d revisions after starting with %d\n"
+msgstr "%d 個のリビジョンを %d からはじめて検証しました\n"
+
+#: database_check.cc:289
+#, c-format
+msgid "checking %d ancestry edges\n"
+msgstr "%d 個の祖先の端を検証中\n"
+
+#: database_check.cc:291
 msgid "ancestry"
 msgstr "祖先"
 
-#: database_check.cc:451 netsync.cc:2764
+#: database_check.cc:322
+#, c-format
+msgid "checking %d public keys\n"
+msgstr "%d 個の公開鍵を検証中\n"
+
+#: database_check.cc:324 netsync.cc:3501
 msgid "keys"
 msgstr "鍵"
 
-#: database_check.cc:477
+#: database_check.cc:348
+#, c-format
+msgid "checking %d revision certs\n"
+msgstr "%d 個のリビジョン証明を検証中\n"
+
+#: database_check.cc:350 netsync.cc:3499
 msgid "certs"
 msgstr "証明"
 
-#: database_check.cc:543
+#: database_check.cc:378
+#, c-format
+msgid "checking local history of %d revisions\n"
+msgstr "%d 個のリビジョンのローカルの履歴を検証中\n"
+
+#: database_check.cc:413
 #, c-format
 msgid "file %s missing (%d manifest references)\n"
 msgstr "ファイル %s がありません (マニフェスト参照: %d)\n"
 
-#: database_check.cc:550
+#: database_check.cc:420
 #, c-format
 msgid "file %s unreferenced\n"
 msgstr "ファイル %s は参照されていません\n"
 
-#: database_check.cc:571
-#, fuzzy, c-format
-msgid "roster %s unreferenced\n"
-msgstr "ファイル %s は参照されていません\n"
+#: database_check.cc:442
+#, c-format
+msgid "manifest %s missing (%d revision references)\n"
+msgstr "マニフェスト %s がありません (リビジョン参照: %d)\n"
 
-#: database_check.cc:577
-#, fuzzy, c-format
-msgid "roster %s incomplete (%d missing files)\n"
+#: database_check.cc:449
+#, c-format
+msgid "manifest %s unreferenced\n"
+msgstr "マニフェスト %s は参照されていません\n"
+
+#: database_check.cc:455
+#, c-format
+msgid "manifest %s incomplete (%d missing files)\n"
 msgstr "マニフェスト %s は不完全です (みつからないファイル: %d)\n"
 
-#: database_check.cc:584
-#, fuzzy, c-format
-msgid "roster %s incomplete (%d missing revisions)\n"
-msgstr "リビジョン %s は不完全です (みつからないリビジョン: %d)\n"
+#: database_check.cc:462
+#, c-format
+msgid "manifest %s is not parseable (perhaps with unnormalized paths?)\n"
+msgstr "マニフェスト %s を解析できません (パスが正規化されていないのでは?)\n"
 
-#: database_check.cc:591
-#, fuzzy, c-format
-msgid "roster %s is not parseable (perhaps with unnormalized paths?)\n"
-msgstr "リビジョン %s を解析できません (パスが正規化されていないのでは?)\n"
-
-#: database_check.cc:598
-#, fuzzy, c-format
-msgid "roster %s is not in normalized form\n"
+#: database_check.cc:469
+#, c-format
+msgid "manifest %s is not in normalized form\n"
 msgstr "マニフェスト %s は正規化された形式になっていません\n"
 
-#: database_check.cc:623
-#, fuzzy, c-format
-msgid ""
-"revision %s missing (%d revision references; %d cert references; %d parent "
-"references; %d child references; %d roster references)\n"
+#: database_check.cc:493
+#, c-format
+msgid "revision %s missing (%d revision references; %d cert references)\n"
 msgstr "リビジョン %s がありません (リビジョン参照: %d, 証明参照: %d)\n"
 
-#: database_check.cc:631
+#: database_check.cc:500
 #, c-format
 msgid "revision %s incomplete (%d missing manifests)\n"
 msgstr "リビジョン %s は不完全です (みつからないマニフェスト: %d)\n"
 
-#: database_check.cc:638
+#: database_check.cc:507
 #, c-format
 msgid "revision %s incomplete (%d missing revisions)\n"
 msgstr "リビジョン %s は不完全です (みつからないリビジョン: %d)\n"
 
-#: database_check.cc:645
-#, fuzzy, c-format
-msgid "revision %s incomplete (missing roster link)\n"
-msgstr "リビジョン %s は不完全です (みつからないリビジョン: %d)\n"
-
-#: database_check.cc:651
-#, fuzzy, c-format
-msgid "revision %s incomplete (missing roster)\n"
-msgstr "リビジョン %s は不完全です (みつからないリビジョン: %d)\n"
-
-#: database_check.cc:657
-#, fuzzy, c-format
-msgid "revision %s mismatched roster and manifest\n"
-msgstr "リビジョン %s は不完全です (みつからないマニフェスト: %d)\n"
-
-#: database_check.cc:663
-#, fuzzy, c-format
-msgid "revision %s incomplete (incomplete roster)\n"
+#: database_check.cc:514
+#, c-format
+msgid "revision %s incomplete (%d incomplete manifests)\n"
 msgstr "リビジョン %s は不完全です (不完全なマニフェスト: %d)\n"
 
-#: database_check.cc:669
+#: database_check.cc:521
 #, c-format
 msgid ""
 "revision %s mismatched parents (%d ancestry parents; %d revision refs)\n"
 msgstr "リビジョン %s は親と不一致です (親: %d; リビジョン参照: %d)\n"
 
-#: database_check.cc:678
+#: database_check.cc:530
 #, c-format
 msgid "revision %s mismatched children (%d ancestry children; %d parents)\n"
 msgstr "リビジョン %s は子と不一致です (子: %d; 親: %d)\n"
 
-#: database_check.cc:690
+#: database_check.cc:542
 #, c-format
 msgid "revision %s has bad history (%s)\n"
 msgstr "リビジョン %s は不正な履歴 (%s) を持っています\n"
 
-#: database_check.cc:697
+#: database_check.cc:549
 #, c-format
 msgid "revision %s is not parseable (perhaps with unnormalized paths?)\n"
 msgstr "リビジョン %s を解析できません (パスが正規化されていないのでは?)\n"
 
-#: database_check.cc:704
+#: database_check.cc:556
 #, c-format
 msgid "revision %s is not in normalized form\n"
 msgstr "リビジョン %s は正規化された形式ではありません\n"
 
-#: database_check.cc:728
+#: database_check.cc:573
+#, c-format
+msgid "key %s signed %d certs\n"
+msgstr "鍵 %s は %d 個の証明の署名に使われています\n"
+
+#: database_check.cc:580
 #, c-format
 msgid "key %s missing (signed %d certs)\n"
 msgstr "鍵 %s がありません (%d 個の証明を署名)\n"
 
-#: database_check.cc:761
+#: database_check.cc:613
 #, c-format
 msgid "revision %s unchecked signature in %s cert from missing key %s\n"
 msgstr ""
 "リビジョン %s の %s 証明(失われた鍵 %s) の署名は検証されたものではありませ"
 "ん\n"
 
-#: database_check.cc:769
+#: database_check.cc:621
 #, c-format
 msgid "revision %s bad signature in %s cert from key %s\n"
 msgstr "リビジョン %s の %s 証明 (鍵 %s) の不正な署名を無視します\n"
 
-#: database_check.cc:784
+#: database_check.cc:636
 #, c-format
 msgid "revision %s missing %s cert\n"
 msgstr "リビジョン %s は %s 証明を欠いています\n"
 
-#: database_check.cc:793
+#: database_check.cc:645
 #, c-format
 msgid "revision %s mismatched certs (%d authors %d dates %d changelogs)\n"
 msgstr "リビジョン %s は証明に合致しません (%d 作者 %d 日時 %d 変更ログ)\n"
 
-#: database_check.cc:874
+#: database_check.cc:717
 #, c-format
 msgid "%d missing files\n"
 msgstr "みつからないファイル: %d\n"
 
-#: database_check.cc:876
+#: database_check.cc:719
 #, c-format
 msgid "%d unreferenced files\n"
 msgstr "参照されていないファイル: %d\n"
 
-#: database_check.cc:879
-#, fuzzy, c-format
-msgid "%d unreferenced rosters\n"
-msgstr "参照されていないファイル: %d\n"
+#: database_check.cc:722
+#, c-format
+msgid "%d missing manifests\n"
+msgstr "みつからないマニフェスト: %d\n"
 
-#: database_check.cc:881
-#, fuzzy, c-format
-msgid "%d incomplete rosters\n"
+#: database_check.cc:724
+#, c-format
+msgid "%d unreferenced manifests\n"
+msgstr "参照されていないマニフェスト: %d\n"
+
+#: database_check.cc:726
+#, c-format
+msgid "%d incomplete manifests\n"
 msgstr "不完全なマニフェスト: %d\n"
 
-#: database_check.cc:883
-#, fuzzy, c-format
-msgid "%d rosters not parseable (perhaps with invalid paths)\n"
-msgstr "解析できないリビジョン (パスが不適切なのでは?): %d\n"
+#: database_check.cc:728
+#, c-format
+msgid "%d manifests not parseable (perhaps with invalid paths)\n"
+msgstr "解析できないマニフェスト(不適切なパスを指定していませんか?): %d\n"
 
-#: database_check.cc:886
-#, fuzzy, c-format
-msgid "%d rosters not in normalized form\n"
-msgstr "正規化された形式になっていないリビジョン: %d\n"
+#: database_check.cc:731
+#, c-format
+msgid "%d manifests not in normalized form\n"
+msgstr "正規化された形式になっていないマニフェスト: %d\n"
 
-#: database_check.cc:889
+#: database_check.cc:734
 #, c-format
 msgid "%d missing revisions\n"
 msgstr "みつからないリビジョン: %d\n"
 
-#: database_check.cc:891
+#: database_check.cc:736
 #, c-format
 msgid "%d incomplete revisions\n"
 msgstr "不完全なリビジョン: %d\n"
 
-#: database_check.cc:893
+#: database_check.cc:738
 #, c-format
 msgid "%d mismatched parents\n"
 msgstr "一致しない親: %d\n"
 
-#: database_check.cc:895
+#: database_check.cc:740
 #, c-format
 msgid "%d mismatched children\n"
 msgstr "一致しない子: %d\n"
 
-#: database_check.cc:897
+#: database_check.cc:742
 #, c-format
 msgid "%d revisions with bad history\n"
 msgstr "不正な履歴を持つリビジョン: %d\n"
 
-#: database_check.cc:899
+#: database_check.cc:744
 #, c-format
 msgid "%d revisions not parseable (perhaps with invalid paths)\n"
 msgstr "解析できないリビジョン (パスが不適切なのでは?): %d\n"
 
-#: database_check.cc:902
+#: database_check.cc:747
 #, c-format
 msgid "%d revisions not in normalized form\n"
 msgstr "正規化された形式になっていないリビジョン: %d\n"
 
-#: database_check.cc:906
-#, fuzzy, c-format
-msgid "%d unreferenced roster links\n"
-msgstr "参照されていないファイル: %d\n"
-
-#: database_check.cc:909
-#, fuzzy, c-format
-msgid "%d missing rosters\n"
-msgstr "みつからない証明: %d\n"
-
-#: database_check.cc:913
+#: database_check.cc:750
 #, c-format
 msgid "%d missing keys\n"
 msgstr "みつからない鍵: %d\n"
 
-#: database_check.cc:916
+#: database_check.cc:753
 #, c-format
 msgid "%d missing certs\n"
 msgstr "みつからない証明: %d\n"
 
-#: database_check.cc:918
+#: database_check.cc:755
 #, c-format
 msgid "%d mismatched certs\n"
 msgstr "一致しない証明: %d\n"
 
-#: database_check.cc:920
+#: database_check.cc:757
 #, c-format
 msgid "%d unchecked signatures due to missing keys\n"
 msgstr "鍵がみつからないために検証されていない署名: %d\n"
 
-#: database_check.cc:922
+#: database_check.cc:759
 #, c-format
 msgid "%d bad signatures\n"
 msgstr "不正な署名: %d\n"
 
-#: database_check.cc:948
-#, fuzzy, c-format
-msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs\n"
+#: database_check.cc:784
+#, c-format
+msgid ""
+"check complete: %d files; %d manifests; %d revisions; %d keys; %d certs\n"
 msgstr ""
 "検証完了: %d ファイル; %d マニフェスト; %d リビジョン; %d 鍵; %d 証明\n"
 
-#: database_check.cc:954
+#: database_check.cc:790
 #, c-format
 msgid "total problems detected: %d (%d serious)\n"
 msgstr "検出した障害総計: %d (深刻: %d)\n"
 
-#: database_check.cc:956
+#: database_check.cc:792
 #, c-format
 msgid "serious problems detected"
 msgstr "深刻な問題を検出しました"
 
-#: database_check.cc:958
+#: database_check.cc:794
 #, c-format
 msgid "minor problems detected\n"
 msgstr "軽微な問題を検出しました\n"
 
-#: database_check.cc:960
+#: database_check.cc:796
 #, c-format
 msgid "database is good\n"
 msgstr "データベースは正常です\n"
 
-#: database.cc:141
+#: database.cc:86
 #, c-format
 msgid ""
 "layout of database %s doesn't match this version of monotone\n"
 "wanted schema %s, got %s\n"
-"try '%s db migrate' to upgrade\n"
+"try 'monotone db migrate' to upgrade\n"
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
 
-#: database.cc:165
-#, c-format
-msgid ""
-"database %s contains revisions but no rosters\n"
-"if you are a project leader or doing local testing:\n"
-"  see the file UPGRADE for instructions on upgrading.\n"
-"if you are not a project leader:\n"
-"  wait for a leader to migrate project data, and then\n"
-"  pull into a fresh database.\n"
-"sorry about the inconvenience."
-msgstr ""
-
-#: database.cc:184
-#, c-format
-msgid ""
-"database %s contains manifests but no revisions\n"
-"this is a very old database; it needs to be upgraded\n"
-"please see README.changesets for details"
-msgstr ""
-
-#: database.cc:220
+#: database.cc:147
 #, c-format
 msgid "unable to probe database version in file %s"
 msgstr "ファイル %s 内のデータベースバージョンを検出できませんでした"
 
-#: database.cc:227
+#: database.cc:154
 #, c-format
 msgid "database %s is not an sqlite version 3 file, try dump and reload"
 msgstr ""
 "データベース %s は SQLite ver. 3 のファイルではありません。ダンプした後再度読"
 "み込んでみて下さい"
 
-#: database.cc:254
-#, fuzzy
-msgid ""
-"make sure database and containing directory are writeable\n"
-"and you have not run out of disk space"
+#: database.cc:176 database.cc:187
+#, c-format
+msgid "sqlite error: %d: %s"
+msgstr "SQLite エラー: %d: %s"
+
+#: database.cc:181
+msgid "make sure database and containing directory are writeable"
 msgstr ""
 "データベースとそれを含むディレクトリが書き込み可能であるか確認して下さい"
 
-#: database.cc:260
-#, fuzzy, c-format
-msgid ""
-"sqlite error: %d: %s\n"
-"%s"
-msgstr "SQLite エラー: %d: %s"
-
-#: database.cc:306
+#: database.cc:226
 #, c-format
 msgid "could not initialize database: %s: already exists"
 msgstr "データベースを初期化できませんでした: %s: 既に存在しています"
 
-#: database.cc:311
+#: database.cc:231
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -1775,26 +2206,26 @@ msgstr ""
 "じ幹を持っています\n"
 "データベース作成を中止します"
 
-#: database.cc:454
+#: database.cc:353
 #, c-format
 msgid "cannot create %s; it already exists"
 msgstr "%s を作成できません; 既に存在しています"
 
-#: database.cc:514
-#, fuzzy, c-format
+#: database.cc:417
+#, c-format
 msgid ""
 "schema version    : %s\n"
 "counts:\n"
-"  full rosters    : %u\n"
-"  roster deltas   : %u\n"
+"  full manifests  : %u\n"
+"  manifest deltas : %u\n"
 "  full files      : %u\n"
 "  file deltas     : %u\n"
 "  revisions       : %u\n"
 "  ancestry edges  : %u\n"
 "  certs           : %u\n"
 "bytes:\n"
-"  full rosters    : %u\n"
-"  roster deltas   : %u\n"
+"  full manifests  : %u\n"
+"  manifest deltas : %u\n"
 "  full files      : %u\n"
 "  file deltas     : %u\n"
 "  revisions       : %u\n"
@@ -1821,72 +2252,257 @@ msgstr ""
 "  証明              : %u\n"
 "  総計              : %u\n"
 
-#: database.cc:569
+#: database.cc:471
 #, c-format
 msgid "database schema version: %s"
 msgstr "基準スキーマバージョン: %s"
 
-#: database.cc:646
+#: database.cc:490
+msgid "mcerts"
+msgstr "mcerts"
+
+#: database.cc:491
+msgid "pubkeys"
+msgstr "公開鍵"
+
+#: database.cc:492
+msgid "privkeys"
+msgstr "秘密鍵"
+
+#: database.cc:536
+#, c-format
+msgid "statement cache statistics\n"
+msgstr "ステートメントキャッシュ統計\n"
+
+#: database.cc:537
+#, c-format
+msgid "prepared %d statements\n"
+msgstr "%d 個のプリペアードステートメント\n"
+
+#: database.cc:541
+#, c-format
+msgid "%d executions of %s\n"
+msgstr "%d 実行 (%s)\n"
+
+#: database.cc:594
+#, c-format
+msgid "prepared statement %s\n"
+msgstr "プリペアードステートメント %s\n"
+
+#: database.cc:598
 #, c-format
 msgid "multiple statements in query: %s\n"
 msgstr "クエリ中に複数のステートメント: %s\n"
 
-#: database.cc:652
+#: database.cc:604
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
 msgstr "クエリで %d 列要求しましたが得たのは %d 列です: %s\n"
 
-#: database.cc:711
+#: database.cc:610
+#, c-format
+msgid "binding %d parameters for %s\n"
+msgstr "%d 変数を %s にバインド\n"
+
+#: database.cc:624
+#, c-format
+msgid "binding %d with value '%s'\n"
+msgstr "%d を値 '%s' にバインド\n"
+
+#: database.cc:640
 #, c-format
 msgid "null result in query: %s\n"
 msgstr "クエリ中に結果 null が含まれています: %s\n"
 
-#: database.cc:729
+#: database.cc:658
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
 msgstr "クエリで %d 行要求しましたが得たのは %s です: %s\n"
 
-#: database.cc:1728
+#: database.cc:668
+#, c-format
+msgid "cannot change filename to %s while db is open"
+msgstr "データベースが使用中なのでファイル名を %s に変更することができません"
+
+#: database.cc:686
+#, c-format
+msgid ""
+"Attempt to start exclusive transaction within non-exclusive transaction."
+msgstr ""
+
+#: database.cc:880
+#, c-format
+msgid "version cache expiring %s\n"
+msgstr "バージョンキャッシュの有効期限が切れています: %s\n"
+
+#: database.cc:902
+#, c-format
+msgid "version cache hit on %s\n"
+msgstr "バージョンキャッシュヒット: %s\n"
+
+#: database.cc:971
+#, c-format
+msgid "reconstructing %s in %s\n"
+msgstr "%s (%s 内)を再構築中\n"
+
+#: database.cc:1077
+#, c-format
+msgid "following delta %s -> %s\n"
+msgstr "続く差分 %s -> %s\n"
+
+#: database.cc:1499
+#, c-format
+msgid "Killing revision %s locally\n"
+msgstr "ローカルにリビジョン %s を削除\n"
+
+#: database.cc:1511
+#, c-format
+msgid "Deleting all references to branch %s\n"
+msgstr "ブランチ %s へのすべての参照を削除\n"
+
+#: database.cc:1524
+#, c-format
+msgid "Deleting all references to tag %s\n"
+msgstr "タグ %s へのすべてのリファレンスを削除\n"
+
+#: database.cc:1625
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "'%s' という名前の他の鍵が既に存在しています"
 
-#: database.cc:2784
+#: database.cc:2253
+#, fuzzy, c-format
+msgid "after get_branch_heads for %s, heads has %d entries\n"
+msgstr "ブランチ %s には %d 個のエントリがあります\n"
+
+#: database.cc:2276
+#, c-format
+msgid "processing selector type %d with i->second '%s'\n"
+msgstr ""
+
+#: database.cc:2283
+#, fuzzy, c-format
+msgid "limiting to current branch '%s'\n"
+msgstr "ブランチ %s へのすべての参照を削除\n"
+
+#: database.cc:2513
 #, c-format
 msgid "no database specified"
 msgstr "データベース未指定"
 
-#: database.cc:2792
+#: database.cc:2521
 #, c-format
 msgid "database %s does not exist"
 msgstr "データベース %s は存在しません"
 
-#: database.cc:2793
+#: database.cc:2522
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s はデータベースではなくディレクトリです"
 
-#: database.cc:2818
+#: database.cc:2547
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "データベース '%s': %s を開けませんでした"
 
-#: diff_patch.cc:588
-#, fuzzy, c-format
-msgid "file '%s' does not exist in workspace"
-msgstr "ファイル '%s' は作業コピー中にはありません"
+#: database.cc:2592
+#, c-format
+msgid "attempting to rollback and close %d databases"
+msgstr ""
 
-#: diff_patch.cc:589
-#, fuzzy, c-format
-msgid "'%s' in workspace is a directory, not a file"
-msgstr "作業コピー内の '%s' はファイルではなくディレクトリです"
+#: database.cc:2601
+#, c-format
+msgid "exec_err = %d, close_err = %d"
+msgstr ""
 
-#: diff_patch.cc:593
-#, fuzzy, c-format
-msgid "file %s in workspace has id %s, wanted %s"
-msgstr "作業コピー内のファイル %s の ID は %s ですが、欲しいのは %s です"
+#: diff_patch.cc:209
+#, c-format
+msgid "exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n"
+msgstr ""
+"前に確保したエクステント [%d+%d] を変更されたエクステント [%d+%d] に置き換え"
+"ています\n"
 
-#: diff_patch.cc:714
+#: diff_patch.cc:300
+#, c-format
+msgid "conflicting edits: %s %d[%d] '%s' vs. %s %d[%d] '%s'\n"
+msgstr "競合する編集箇所: %s %d[%d] '%s' 対 %s %d[%d] '%s'\n"
+
+#: diff_patch.cc:328
+#, c-format
+msgid "conflicting edits: [%s %d %d] vs. [%s %d %d]\n"
+msgstr "競合する編集箇所: [%s %d %d] 対 [%s %d %d]\n"
+
+#: diff_patch.cc:376
+#, c-format
+msgid "calculating left edit script on %d -> %d lines\n"
+msgstr "%d -> %d 行について左側を編集するスクリプトを計算中\n"
+
+#: diff_patch.cc:384
+#, c-format
+msgid "calculating right edit script on %d -> %d lines\n"
+msgstr "%d -> %d 行について右側を編集するスクリプトを計算中\n"
+
+#: diff_patch.cc:392
+#, c-format
+msgid "calculating left extents on %d edits\n"
+msgstr "%d 編集箇所について左エクステントを計算中\n"
+
+#: diff_patch.cc:397
+#, c-format
+msgid "calculating right extents on %d edits\n"
+msgstr "%d 編集箇所について右エクステントを計算中\n"
+
+#: diff_patch.cc:402
+#, c-format
+msgid "normalizing %d right extents\n"
+msgstr "%d 右エクステントを正規化\n"
+
+#: diff_patch.cc:405
+#, c-format
+msgid "normalizing %d left extents\n"
+msgstr "%d 左エクステントを正規化\n"
+
+#: diff_patch.cc:411
+#, c-format
+msgid "conflicting prefixes\n"
+msgstr "競合するプレフィクス\n"
+
+#: diff_patch.cc:417
+#, c-format
+msgid "conflicting suffixes\n"
+msgstr "競合するサフィックス\n"
+
+#: diff_patch.cc:421
+#, c-format
+msgid "merging %d left, %d right extents\n"
+msgstr "%d 左, %d 右エクステントを統合\n"
+
+#: diff_patch.cc:452
+#, c-format
+msgid "conflict detected. no merge.\n"
+msgstr "競合を検出、統合しません\n"
+
+#: diff_patch.cc:472
+#, c-format
+msgid "recording successful merge of %s <-> %s into %s\n"
+msgstr "%s <-> %s から %s への成功した統合を記録\n"
+
+#: diff_patch.cc:530
+#, c-format
+msgid "trying to merge %s <-> %s (ancestor: %s)\n"
+msgstr "%s <-> %s (祖先: %s) の統合を試しています\n"
+
+#: diff_patch.cc:535 diff_patch.cc:640
+#, c-format
+msgid "files are identical\n"
+msgstr "ファイルは全く同じです\n"
+
+#: diff_patch.cc:577
+#, c-format
+msgid "internal 3-way merged ok\n"
+msgstr "内部三元統合完了\n"
+
+#: diff_patch.cc:591
 #, c-format
 msgid ""
 "help required for 3-way merge\n"
@@ -1900,6 +2516,54 @@ msgstr ""
 "[    左] %s\n"
 "[    右] %s\n"
 "[統合済] %s\n"
+
+#: diff_patch.cc:608
+#, c-format
+msgid "lua merge3 hook merged ok\n"
+msgstr "lua merge3 フック統合完了\n"
+
+#: diff_patch.cc:635
+#, c-format
+msgid "trying to merge %s <-> %s\n"
+msgstr "%s <-> %s の統合を試しています\n"
+
+#: diff_patch.cc:651
+#, c-format
+msgid ""
+"help required for 2-way merge\n"
+"[    left] %s\n"
+"[   right] %s\n"
+"[  merged] %s\n"
+msgstr ""
+"二元統合には手助けが必要です\n"
+"[    左] %s\n"
+"[    右] %s\n"
+"[統合済] %s\n"
+
+#: diff_patch.cc:665
+#, c-format
+msgid "lua merge2 hook merged ok\n"
+msgstr "lua merge2 フック統合完了\n"
+
+#: diff_patch.cc:696
+#, c-format
+msgid "temporarily recording merge of %s <-> %s into %s\n"
+msgstr "一時的に %s <-> %s から %s への統合を記録\n"
+
+#: diff_patch.cc:713
+#, c-format
+msgid "file '%s' does not exist in working copy"
+msgstr "ファイル '%s' は作業コピー中にはありません"
+
+#: diff_patch.cc:714
+#, c-format
+msgid "'%s' in working copy is a directory, not a file"
+msgstr "作業コピー内の '%s' はファイルではなくディレクトリです"
+
+#: diff_patch.cc:718
+#, c-format
+msgid "file %s in working copy has id %s, wanted %s"
+msgstr "作業コピー内のファイル %s の ID は %s ですが、欲しいのは %s です"
 
 #: file_io.cc:116
 #, c-format
@@ -1934,194 +2598,300 @@ msgstr "ディレクトリ '%s' を作成できませんでした"
 msgid "failed to create directory '%s' for '%s'"
 msgstr "ディレクトリ '%s' ('%s' のための)の作成に失敗しました"
 
-#: file_io.cc:219
-#, fuzzy, c-format
-msgid ""
-"could not remove '%s'\n"
-"%s"
-msgstr ""
-"ディレクトリ '%s' を作成できませんでした\n"
-"%s"
-
-#: file_io.cc:229
+#: file_io.cc:213
 #, c-format
 msgid "file to delete '%s' does not exist"
 msgstr "削除するファイル '%s' は存在しません"
 
-#: file_io.cc:230
+#: file_io.cc:214
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
 msgstr "削除するファイル '%s' はファイルでなく、ディレクトリです"
 
-#: file_io.cc:238
-#, fuzzy, c-format
-msgid "directory to delete '%s' does not exist"
-msgstr "削除するディレクトリ '%s' は存在しません"
-
-#: file_io.cc:239
-#, fuzzy, c-format
-msgid "directory to delete, '%s', is not a directory but a file"
-msgstr "削除するディレクトリ '%s' はファイルです"
-
-#: file_io.cc:246
-#, fuzzy, c-format
-msgid "object to delete, '%s', does not exist"
-msgstr "削除するディレクトリ '%s' は存在しません"
-
-#: file_io.cc:254
+#: file_io.cc:222
 #, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr "削除するディレクトリ '%s' は存在しません"
 
-#: file_io.cc:255
+#: file_io.cc:223
 #, c-format
 msgid "directory to delete, '%s', is a file"
 msgstr "削除するディレクトリ '%s' はファイルです"
 
-#: file_io.cc:264
+#: file_io.cc:232
 #, c-format
 msgid "rename source file '%s' does not exist"
 msgstr "名称変更する元のファイル '%s' は存在しません"
 
-#: file_io.cc:265
+#: file_io.cc:233
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
 msgstr "名称変更元のファイル '%s' はディレクトリです -- monotone のバグ?"
 
-#: file_io.cc:268 file_io.cc:281
+#: file_io.cc:236 file_io.cc:249
 #, c-format
 msgid "rename target '%s' already exists"
 msgstr "名称変更ターゲット '%s' は既に存在しています"
 
-#: file_io.cc:277
+#: file_io.cc:245
 #, c-format
 msgid "rename source dir '%s' does not exist"
 msgstr "名称変更元のディレクトリ '%s' は存在しません"
 
-#: file_io.cc:278
+#: file_io.cc:246
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr "名称変更元のディレクトリ '%s' はファイルです -- monotone のバグ?"
 
-#: file_io.cc:292
+#: file_io.cc:260
 #, c-format
 msgid "rename source path '%s' does not exist"
 msgstr "名称変更元のパス '%s' は存在しません"
 
-#: file_io.cc:307
+#: file_io.cc:275
 #, c-format
 msgid "file %s does not exist"
 msgstr "ファイル %s は存在しません"
 
-#: file_io.cc:308
+#: file_io.cc:276
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
 msgstr "'%s' は期待していたファイルではなく、ディレクトリです"
 
-#: file_io.cc:312
+#: file_io.cc:280
 #, c-format
 msgid "cannot open file %s for reading"
 msgstr "ファイル %s を読み込みのために開くことができません"
 
-#: file_io.cc:381
+#: file_io.cc:347
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "標準入力を何度も読み込むことはできません"
 
-#: file_io.cc:412
+#: file_io.cc:378
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "'%s' にデータを上書きできません。ディレクトリです"
 
-#: file_io.cc:420
+#: file_io.cc:386
 #, c-format
 msgid "cannot open file %s for writing"
 msgstr "ファイル %s を書き込みのために開くことができません"
 
-#: file_io.cc:530
+#: file_io.cc:477
+#, c-format
+msgid "ignoring book keeping entry %s\n"
+msgstr "記録簿用エントリ %s を無視します\n"
+
+#: file_io.cc:497
 #, c-format
 msgid "caught runtime error %s constructing file path for %s\n"
 msgstr "%s についてファイルパス作成中に実行時エラー %s 発生\n"
 
-#: file_io.cc:569
+#: file_io.cc:521
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "そのようなファイルまたはディレクトリはありません: '%s'"
 
-#: keys.cc:77
+#: keys.cc:42
+#, c-format
+msgid "running arc4 process on %d bytes of data\n"
+msgstr "データ %d バイト目について arc4 プロセスを実行中\n"
+
+#: keys.cc:76
 #, c-format
 msgid "got empty passphrase from get_passphrase() hook"
 msgstr "get_passphrase() フックは空のパスフレーズを返しました"
 
-#: keys.cc:93
+#: keys.cc:92
 #, c-format
 msgid "empty passphrase not allowed"
 msgstr "パスフレーズは空にできません"
 
-#: keys.cc:100
+#: keys.cc:99
 #, c-format
 msgid "confirm passphrase for key ID [%s]: "
 msgstr "鍵 ID [%s] のパスフレーズを確認: "
 
-#: keys.cc:105
+#: keys.cc:104
 #, c-format
 msgid "empty passphrases not allowed, try again\n"
 msgstr "パスフレーズは空にできません. 再度試して下さい\n"
 
-#: keys.cc:106 keys.cc:113
+#: keys.cc:105 keys.cc:112
 #, c-format
 msgid "too many failed passphrases\n"
 msgstr "パスフレーズの入力ミスが多すぎます\n"
 
-#: keys.cc:112
+#: keys.cc:111
 #, c-format
 msgid "passphrases do not match, try again\n"
 msgstr "パスフレーズが一致しません。再度試して下さい\n"
 
-#: keys.cc:119
+#: keys.cc:118
 #, c-format
 msgid "no passphrase given"
 msgstr "パスフレーズを指定して下さい"
+
+#: keys.cc:177
+#, c-format
+msgid ""
+"generated %d-byte public key\n"
+"generated %d-byte (encrypted) private key\n"
+msgstr ""
+"%d バイトの公開鍵を生成\n"
+"%d バイトの(暗号化された)秘密鍵を生成\n"
+
+#: keys.cc:194
+#, c-format
+msgid "base64-decoding %d-byte private key\n"
+msgstr "%d バイト秘密鍵の base64 デコード\n"
+
+#: keys.cc:199
+#, fuzzy, c-format
+msgid "have %d-byte encrypted private key\n"
+msgstr "%d バイトの復号化された秘密鍵から署名を作成中\n"
+
+#: keys.cc:244
+#, fuzzy, c-format
+msgid "base64-decoding %d-byte old private key\n"
+msgstr "%d バイト秘密鍵の base64 デコード\n"
+
+#: keys.cc:255
+#, c-format
+msgid "building signer from %d-byte decrypted private key\n"
+msgstr "%d バイトの復号化された秘密鍵から署名を作成中\n"
+
+#: keys.cc:355
+#, c-format
+msgid "produced %d-byte signature\n"
+msgstr "%d バイトの署名を作成\n"
+
+#: keys.cc:383
+#, c-format
+msgid "building verifier for %d-byte pub key\n"
+msgstr "%d バイトの公開鍵について識別子を構築中\n"
+
+#: keys.cc:405
+#, c-format
+msgid "checking %d-byte (%d decoded) signature\n"
+msgstr "%d バイト (%d デコード)の署名を検証中\n"
+
+#: keys.cc:531
+#, fuzzy, c-format
+msgid "no key pair '%s' found in key store or get_priv_key hook"
+msgstr ""
+"秘密鍵 '%s' はデータベース内にも get_priv_key フック内にもみつかりません"
 
 #: keys.cc:542
 #, c-format
 msgid "passphrase for '%s' is incorrect"
 msgstr "'%s' に対するパスフレーズが間違っています"
 
-#: lua.cc:539 lua.cc:568 lua.cc:583
+#: lua.cc:119
+#, c-format
+msgid "lua failure: %s; stack = %s\n"
+msgstr "lua 失敗: %s; スタック = %s\n"
+
+#: lua.cc:126
+#, fuzzy, c-format
+msgid "Lua::ok(): failed"
+msgstr "Lua::ok(): 失敗 = %i"
+
+#: lua.cc:135
+#, c-format
+msgid "lua stack: %s"
+msgstr "lua スタック: %s"
+
+#: lua.cc:215
+#, c-format
+msgid "lua: extracted string = %s"
+msgstr "lua: 抽出文字列 = %s"
+
+#: lua.cc:228
+#, c-format
+msgid "lua: extracted int = %i"
+msgstr "lua: 抽出 int = %i"
+
+#: lua.cc:241
+#, c-format
+msgid "lua: extracted double = %i"
+msgstr "lua: 抽出 double = %i"
+
+#: lua.cc:255
+#, c-format
+msgid "lua: extracted bool = %i"
+msgstr "lua: 抽出 bool = %i"
+
+#: lua.cc:375
+#, c-format
+msgid "loading lua hook %s"
+msgstr "lua フック %s を読み込み中"
+
+#: lua.cc:538 lua.cc:567 lua.cc:582
 #, fuzzy, c-format
 msgid "%s called with an invalid parameter"
 msgstr "Include 呼出し時の変数が不適切です"
 
-#: lua.cc:586
+#: lua.cc:585
 #, c-format
 msgid "Directory '%s' does not exists"
 msgstr "ディレクトリ '%s' は存在しません"
 
-#: lua.cc:587 rcs_import.cc:1217 work.cc:420
+#: lua.cc:586 rcs_import.cc:1248
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' はディレクトリではありません"
 
-#: lua.cc:606 lua.cc:908
+#: lua.cc:605 lua.cc:900
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "初期化ファイル '%s' を読み込み中に lua のエラー"
 
-#: lua.cc:705
+#: lua.cc:897 lua.cc:910
 #, c-format
-msgid "bad input to parse_basic_io"
-msgstr ""
+msgid "opening rcfile '%s' ...\n"
+msgstr "初期化ファイル '%s' を開いています...\n"
 
-#: lua.cc:920
+#: lua.cc:901 lua.cc:913
+#, c-format
+msgid "'%s' is ok\n"
+msgstr "'%s' OK\n"
+
+#: lua.cc:912
 #, c-format
 msgid "lua error while loading '%s'"
 msgstr "lua '%s' を読み込み中にエラー"
 
-#: lua.cc:925
+#: lua.cc:917
 #, c-format
 msgid "rcfile '%s' does not exist"
 msgstr "初期化ファイル '%s' は存在しません"
+
+#: lua.cc:918
+#, c-format
+msgid "skipping nonexistent rcfile '%s'\n"
+msgstr "存在しない初期化ファイル '%s' をスキップ\n"
+
+#: lua.cc:1363
+#, c-format
+msgid "calling attr_init_function for %s"
+msgstr "%s について attr_init_function を呼出し"
+
+#: lua.cc:1367
+#, c-format
+msgid "  calling an attr_init_function for %s"
+msgstr "  %s について attr_init_function を呼出し"
+
+#: lua.cc:1380
+#, c-format
+msgid "  added attr %s = %s"
+msgstr "  属性 %s = %s を追加"
+
+#: lua.cc:1384
+#, c-format
+msgid "  no attr added"
+msgstr "  属性追加なし"
 
 #: main.cc:325
 #, fuzzy
@@ -2132,12 +2902,37 @@ msgstr "trusted"
 msgid "terminated by signal"
 msgstr ""
 
-#: merkle_tree.cc:276
+#: manifest.cc:55
+#, c-format
+msgid "scanning file %s\n"
+msgstr "ファイル %s を走査中\n"
+
+#: manifest.cc:188
+#, c-format
+msgid "missing %s"
+msgstr "%s がみつかりません"
+
+#: manifest.cc:201
+#, fuzzy, c-format
+msgid ""
+"%d missing files\n"
+"to restore consistency, on each missing file run either\n"
+"'monotone drop FILE' to remove it permanently, or\n"
+"'monotone revert FILE' to restore it\n"
+"or to handle all at once, simple 'monotone drop --missing'\n"
+"or 'monotone revert --missing'"
+msgstr ""
+"一貫性を保つために必要な\n"
+"ファイルが %d 個みつかりません。各々のファイルについて\n"
+"'monotone drop FILE' として恒久的にファイルを削除するか、\n"
+"'monotone revert FILE' として復活させて下さい。\n"
+
+#: merkle_tree.cc:281
 #, c-format
 msgid "node level is %d, exceeds maximum %d"
 msgstr "ノードレベル %d は最大制限 %d を越えています"
 
-#: merkle_tree.cc:311
+#: merkle_tree.cc:317
 #, c-format
 msgid "mismatched node hash value %s, expected %s"
 msgstr "一致しないノードハッシュ値 %s、期待されるのは %s です"
@@ -2171,195 +2966,189 @@ msgid "limit the number of levels of directories to descend"
 msgstr "降下するディレクトリの深さを制限"
 
 #: monotone.cc:58
-#, fuzzy
-msgid "limit log output to the last number of entries"
+msgid "limit the log output to the given number of entries"
 msgstr "ログ出力のエントリの数を制限"
 
 #: monotone.cc:59
-#, fuzzy
-msgid "limit log output to the next number of entries"
-msgstr "ログ出力のエントリの数を制限"
-
-#: monotone.cc:60
 msgid "record process id of server"
 msgstr "サーバーのプロセス ID を記録"
 
-#: monotone.cc:61
+#: monotone.cc:60
 msgid "print a brief version of the normal output"
 msgstr "通常出力の簡単なバージョンを表示"
 
-#: monotone.cc:62
+#: monotone.cc:61
 msgid "print diffs along with logs"
 msgstr "ログと共に差分を表示"
 
-#: monotone.cc:63
-#, fuzzy
-msgid "exclude merges when printing logs"
+#: monotone.cc:62
+msgid "skip merges when printing logs"
 msgstr "ログを表示する際に統合については省略"
 
-#: monotone.cc:64
+#: monotone.cc:63
 msgid "use the current arguments as the future default"
 msgstr "現在の引数を将来のデフォルトとして使用"
 
-#: monotone.cc:65
+#: monotone.cc:64
 msgid "leave out anything described by its argument"
 msgstr "引数によって説明されるすべてを省く"
 
-#: monotone.cc:66
+#: monotone.cc:65
 msgid "use unified diff format"
 msgstr "unified diff 形式を使用"
 
-#: monotone.cc:67
+#: monotone.cc:66
 msgid "use context diff format"
 msgstr "context diff 形式を使用"
 
-#: monotone.cc:68
+#: monotone.cc:67
 msgid "use external diff hook for generating diffs"
 msgstr "差分の生成に外部 diff フックを使用"
 
-#: monotone.cc:69
+#: monotone.cc:68
 msgid "argument to pass external diff hook"
 msgstr "外部 diff フックに渡す引数"
 
-#: monotone.cc:70
+#: monotone.cc:69
 msgid "use least common ancestor as ancestor for merge"
 msgstr "最も近い共通の祖先を統合の祖先として使用"
 
-#: monotone.cc:71
+#: monotone.cc:70
 msgid "perform the associated file operation"
 msgstr "関連付けられたファイル操作を実行"
 
-#: monotone.cc:72
+#: monotone.cc:71
 msgid "address:port to listen on (default :4691)"
 msgstr ""
 
+#: monotone.cc:72
+msgid "perform the operations for files missing from working directory"
+msgstr ""
+
 #: monotone.cc:73
-msgid "perform the operations for files missing from workspace"
+msgid "perform the operations for unknown files from working directory"
 msgstr ""
 
 #: monotone.cc:74
-msgid "perform the operations for unknown files from workspace"
-msgstr ""
-
-#: monotone.cc:75
 msgid "push the specified key even if it hasn't signed anything"
 msgstr ""
 
-#: monotone.cc:76
-msgid "when rosterifying, drop attrs entries with the given key"
-msgstr ""
-
-#: monotone.cc:77
-#, fuzzy
-msgid "exclude files when printing logs"
-msgstr "ログを表示する際に統合については省略"
-
-#: monotone.cc:78
-msgid "also operate on the contents of any listed directories"
-msgstr ""
-
-#: monotone.cc:87
+#: monotone.cc:83
 msgid "print debug log to stderr while running"
 msgstr "実行時、標準エラー出力にデバッグログを表示"
 
-#: monotone.cc:88
+#: monotone.cc:84
 msgid "file to dump debugging log to, on failure"
 msgstr "失敗時にデバッグログを出力するファイル"
 
-#: monotone.cc:89
-#, fuzzy
-msgid "file to write the log to"
-msgstr "%s へのデバッグログの書き込みに失敗しました"
-
-#: monotone.cc:90
+#: monotone.cc:85
 msgid "suppress log and progress messages"
 msgstr "ログおよび進捗を示すメッセージを表示しない"
 
-#: monotone.cc:91
+#: monotone.cc:86
 msgid "display help message"
 msgstr "ヘルプメッセージを表示"
 
-#: monotone.cc:92
+#: monotone.cc:87
 msgid "print version number, then exit"
 msgstr "バージョン番号を表示し、終了"
 
-#: monotone.cc:93
+#: monotone.cc:88
 msgid "print detailed version number, then exit"
 msgstr "詳細なバージョン番号を表示し、終了"
 
-#: monotone.cc:94
+#: monotone.cc:89
 msgid "insert command line arguments taken from the given file"
 msgstr "指定のファイルの内容をコマンド行引数に挿入"
 
-#: monotone.cc:95
+#: monotone.cc:90
 msgid "set ticker style (count|dot|none)"
 msgstr "ティッカーのスタイルを設定 (count|dot|none)"
 
-#: monotone.cc:96
+#: monotone.cc:91
 msgid "do not load standard lua hooks"
 msgstr "標準 lua フックを読み込まない"
 
-#: monotone.cc:97
+#: monotone.cc:92
 msgid "do not load ~/.monotone/monotonerc or MT/monotonerc lua files"
 msgstr ""
 "$HOME/.monotone/monotonerc または MT/monotonerc lua ファイルを読み込まない"
 
-#: monotone.cc:98
+#: monotone.cc:93
 msgid "load extra rc file"
 msgstr "別の初期化ファイルを読み込む"
 
-#: monotone.cc:99
+#: monotone.cc:94
 msgid "set key for signatures"
 msgstr "署名の鍵を設定"
 
-#: monotone.cc:100
+#: monotone.cc:95
 msgid "set name of database"
 msgstr "データベース名を設定"
 
-#: monotone.cc:101
-#, fuzzy
-msgid "limit search for workspace to specified root"
+#: monotone.cc:96
+msgid "limit search for working copy to specified root"
 msgstr "作業コピーの検索を指定のルート下に制限"
 
-#: monotone.cc:102
+#: monotone.cc:97
 msgid "verbose completion output"
 msgstr "冗長な完了メッセージ"
 
-#: monotone.cc:103
+#: monotone.cc:98
 msgid "set location of key store"
 msgstr ""
 
-#: monotone.cc:104
+#: monotone.cc:99
 msgid "set location of configuration directory"
 msgstr ""
 
-#: monotone.cc:208
+#: monotone.cc:203
 #, c-format
 msgid "problem parsing arguments from file %s: %s"
 msgstr "ファイル %s からの引数を解析中に問題発生: %s"
 
-#: monotone.cc:217
+#: monotone.cc:212
 #, c-format
 msgid "weird error when stuffing arguments read from %s: %s\n"
 msgstr "%s から引数を読み取り中に予期せぬエラー発生: %s\n"
 
-#: monotone.cc:299
+#: monotone.cc:261
+#, c-format
+msgid "command line: %s\n"
+msgstr "コマンド行: %s\n"
+
+#: monotone.cc:264
+#, c-format
+msgid "set locale: LC_ALL=%s\n"
+msgstr "ロカール設定: LC_ALL=%s\n"
+
+#: monotone.cc:292
 msgid "[OPTION...] command [ARGS...]\n"
 msgstr "[OPTION...] command [ARGS...]\n"
 
-#: monotone.cc:551
+#: monotone.cc:522
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "\"%s\" オプションの近くに構文エラー: %s"
 
-#: monotone.cc:590
+#: monotone.cc:561
 #, c-format
 msgid "monotone %s doesn't use the option %s"
 msgstr "monotone %s にはオプション %s は使えません"
 
-#: monotone.cc:625
-#, fuzzy, c-format
-msgid "Options specific to '%s %s':"
+#: monotone.cc:583
+#, c-format
+msgid "Removed 'hidden' from option # %d\n"
+msgstr "オプション # %d から 'hidden' を削除\n"
+
+#: monotone.cc:589 monotone.cc:600
+#, c-format
+msgid "Added 'hidden' to option # %d\n"
+msgstr "オプション # %d に 'hidden' を追加\n"
+
+#: monotone.cc:596
+#, c-format
+msgid "Options specific to 'monotone %s':"
 msgstr "'monotone %s' に特化したオプション:"
 
 #: mt_version.cc:23
@@ -2376,39 +3165,29 @@ msgstr ""
 "%s 上で実行\n"
 "基準リビジョン %s からの変更\n"
 
-#: netcmd.cc:40
+#: netcmd.cc:42
 #, c-format
 msgid "unknown item type 0x%x for '%s'"
 msgstr "不明なアイテムタイプ 0x%x (対象 '%s')"
 
-#: netcmd.cc:112
+#: netcmd.cc:94
 #, c-format
-msgid "unknown netcmd code 0x%x"
-msgstr "不明な netcmd コード 0x%x"
-
-#: netcmd.cc:117
-#, fuzzy, c-format
-msgid ""
-"protocol version mismatch: wanted '%d' got '%d'\n"
-"%s"
+msgid "protocol version mismatch: wanted '%d' got '%d'"
 msgstr ""
 "プロトコルバージョンが一致しません: 期待したのは '%d' ですが得たのは '%d' で"
 "す"
 
-#: netcmd.cc:122
-msgid "the remote side has a newer, incompatible version of monotone"
-msgstr ""
+#: netcmd.cc:119
+#, c-format
+msgid "unknown netcmd code 0x%x"
+msgstr "不明な netcmd コード 0x%x"
 
-#: netcmd.cc:123
-msgid "the remote side has an older, incompatible version of monotone"
-msgstr ""
-
-#: netcmd.cc:133
+#: netcmd.cc:130
 #, c-format
 msgid "oversized payload of '%d' bytes"
 msgstr "'%d' バイトの長さ超過のペイロード"
 
-#: netcmd.cc:162
+#: netcmd.cc:159
 #, c-format
 msgid ""
 "bad HMAC checksum (got %s, wanted %s)\n"
@@ -2417,7 +3196,7 @@ msgstr ""
 "不正な HMAC チェックサム (計算値 %s / 期待値 %s)\n"
 "これは転送中にデータが壊れたことを示唆しています\n"
 
-#: netcmd.cc:257 netcmd.cc:303
+#: netcmd.cc:235 netcmd.cc:281
 #, c-format
 msgid "unknown role specifier %d"
 msgstr "不明な役割指定子 %d"
@@ -2447,47 +3226,250 @@ msgstr "%d バイトの可変長文字列 （対象 '%s'、最大長 %d) をデ�
 msgid "expected %s to end at %d, have %d bytes"
 msgstr "%s について終端 %d、容量 %d バイトであることを期待"
 
-#: netsync.cc:245
+#: netsync.cc:243
 #, c-format
 msgid "check of '%s' failed"
 msgstr "'%s' の検証に失敗"
 
-#: netsync.cc:691
+#: netsync.cc:696
 msgid "bytes in"
 msgstr "バイト (入)"
 
-#: netsync.cc:693
+#: netsync.cc:698
 msgid "bytes out"
 msgstr "バイト (出)"
 
-#: netsync.cc:697
+#: netsync.cc:702 netsync.cc:719
+msgid "revs written"
+msgstr "書き込んだリビジョン"
+
+#: netsync.cc:704
 msgid "certs in"
 msgstr "証明 (入)"
 
-#: netsync.cc:699 netsync.cc:712
+#: netsync.cc:706 netsync.cc:721
 msgid "revs in"
 msgstr "リビジョン (入)"
 
-#: netsync.cc:704
+#: netsync.cc:711
 msgid "certs out"
 msgstr "証明 (出)"
 
-#: netsync.cc:706 netsync.cc:714
+#: netsync.cc:713 netsync.cc:723
 msgid "revs out"
 msgstr "リビジョン (出)"
 
-#: netsync.cc:815
+#: netsync.cc:781
 #, c-format
-msgid "underflow on count of %s items to receive"
+msgid "all epochs processed, opening database valve\n"
+msgstr "すべての epoch を処理しました。データベースバルブを開いています\n"
+
+#: netsync.cc:878
+#, c-format
+msgid "dropping outgoing netcmd (because we're in error unwind mode)\n"
+msgstr "エラー回復が可能なモードですので、外向きの netcmd を破棄します\n"
+
+#: netsync.cc:902
+#, c-format
+msgid "error: %s\n"
+msgstr "エラー: %s\n"
+
+#: netsync.cc:910
+#, c-format
+msgid "analyzing %d entries in manifest\n"
+msgstr "マニフェスト内の %d エントリを解析中\n"
+
+#: netsync.cc:949
+#, c-format
+msgid "analyzing %d ancestry edges\n"
+msgstr "%d 個の系の端を解析中\n"
+
+#: netsync.cc:971
+#, c-format
+msgid "intermediate set_difference heads size %d"
 msgstr ""
 
-#: netsync.cc:1161
+#: netsync.cc:1007
+#, c-format
+msgid "Dropping branch certs for unwanted branch %s"
+msgstr "希望しないブランチ %s のブランチ証明を削除"
+
+#: netsync.cc:1024
+#, c-format
+msgid "after step 2, heads size %d"
+msgstr ""
+
+#: netsync.cc:1048
+#, c-format
+msgid "after step 3, heads size %d"
+msgstr ""
+
+#: netsync.cc:1068
+#, fuzzy, c-format
+msgid "analyze_ancestry_graph"
+msgstr "%d 個の系の端を解析中\n"
+
+#: netsync.cc:1071
+#, c-format
+msgid "not all done in analyze_ancestry_graph"
+msgstr ""
+
+#: netsync.cc:1077
+#, c-format
+msgid "already analyzed_ancestry in analyze_ancestry_graph"
+msgstr ""
+
+#: netsync.cc:1081
+#, c-format
+msgid "analyze_ancestry_graph fetching"
+msgstr ""
+
+#: netsync.cc:1116
+#, c-format
+msgid "read %d bytes from fd %d (peer %s)\n"
+msgstr "%d バイト fd %d (ピーア %s) から読み込み\n"
+
+#: netsync.cc:1119
+#, c-format
+msgid "in error unwind mode, so throwing them into the bit bucket\n"
+msgstr "エラー回復可能モードですので、これらをビットバケット中に捨てます\n"
+
+#: netsync.cc:1151
+#, c-format
+msgid "wrote %d bytes to fd %d (peer %s)\n"
+msgstr "%d バイト fd %d (ピーア %s) へ書き込み\n"
+
+#: netsync.cc:1159
+#, c-format
+msgid "finished flushing output queue in error unwind mode, disconnecting\n"
+msgstr "エラー回復可能モードで出力キューをフラッシュ完了、切断中\n"
+
+#: netsync.cc:1173
+#, c-format
+msgid "queueing 'bye' command\n"
+msgstr "'bye' コマンドをキューに追加\n"
+
+#: netsync.cc:1183
+#, c-format
+msgid "queueing 'error' command\n"
+msgstr "'error' コマンドをキューに追加\n"
+
+#: netsync.cc:1196
+#, c-format
+msgid "queueing 'done' command for %s level %s\n"
+msgstr "'%s' (レベル %s) について 'done' コマンドをキューに追加\n"
+
+#: netsync.cc:1265
+#, c-format
+msgid "queueing request for refinement of %s node '%s', level %d\n"
+msgstr "%s ノード '%s', レベル %d の微調整要求をキューに追加\n"
+
+#: netsync.cc:1283
+#, c-format
+msgid "not queueing request for %s '%s' as we are in pure source role\n"
+msgstr ""
+"純粋なソースの役割を果しているので %s '%s' の要求はキューに追加しません\n"
+
+#: netsync.cc:1290
+#, c-format
+msgid "not queueing request for %s '%s' as we already requested it\n"
+msgstr "既に要求済みの %s '%s' はキューに追加しません\n"
+
+#: netsync.cc:1295
+#, c-format
+msgid "queueing request for data of %s item '%s'\n"
+msgstr "%s アイテム '%s' のデータ要求をキューに追加\n"
+
+#: netsync.cc:1319
+#, c-format
+msgid ""
+"not queueing request for %s delta '%s' -> '%s' as we are in pure source "
+"role\n"
+msgstr ""
+"純粋なソースの役割を果しているので %s 差分 '%s' -> '%s' の要求をキューに追加"
+"しません\n"
+
+#: netsync.cc:1326
+#, c-format
+msgid ""
+"not queueing request for %s delta '%s' -> '%s' as we already requested the "
+"target\n"
+msgstr "既に要求済みなので %s 差分 '%s' -> '%s' の要求をキューに追加しません\n"
+
+#: netsync.cc:1331
+#, c-format
+msgid "queueing request for contents of %s delta '%s' -> '%s'\n"
+msgstr "%s 差分 '%s' -> '%s' の内容について要求をキューに追加\n"
+
+#: netsync.cc:1351
+#, c-format
+msgid "not queueing %s data for '%s' as we are in pure sink role\n"
+msgstr ""
+"純粋なシンクの役割を果しているので %s データ (対象: '%s' )をキューに追加しま"
+"せん\n"
+
+#: netsync.cc:1356
+#, c-format
+msgid "queueing %d bytes of data for %s item '%s'\n"
+msgstr "%d バイト (%s アイテム '%s' のデータ)をキューに追加\n"
+
+#: netsync.cc:1390
+#, c-format
+msgid "not queueing %s delta '%s' -> '%s' as we are in pure sink role\n"
+msgstr ""
+"純粋なシンクの役割を果しているので %s 差分 '%s' -> '%s' をキューに追加しませ"
+"ん\n"
+
+#: netsync.cc:1395
+#, c-format
+msgid "queueing %s delta '%s' -> '%s'\n"
+msgstr "%s 差分 '%s' -> '%s' をキューに追加\n"
+
+#: netsync.cc:1413
+#, c-format
+msgid ""
+"not queueing note of nonexistence of %s item '%s' as we are in pure sink "
+"role\n"
+msgstr ""
+"純粋なシンクの役割を果しているので %s アイテム '%s' がないことについてノート"
+"をキューに追加しません\n"
+
+#: netsync.cc:1418
+#, c-format
+msgid "queueing note of nonexistance of %s item '%s'\n"
+msgstr "%s アイテム '%s' がないことについてノートをキューに追加\n"
+
+#: netsync.cc:1430
+#, c-format
+msgid "received 'bye' netcmd\n"
+msgstr "'bye' netcmd を受信\n"
+
+#: netsync.cc:1438
 #, c-format
 msgid "received network error: %s"
 msgstr "ネットワークエラーを受信: %s"
 
-#: netsync.cc:1193
-#, fuzzy, c-format
+#: netsync.cc:1455
+#, c-format
+msgid "received 'done' for empty %s level %d, marking as complete\n"
+msgstr "空の %s レベル %d について 'done' 受信, 完了としてマーク\n"
+
+#: netsync.cc:1477
+#, c-format
+msgid ""
+"received 'done' for %s level %d, which had refinements; sending echo of done "
+"for level %d\n"
+msgstr ""
+"微調整を含む %s レベル %d について 'done' 受信;レベル %d の各 'done' について"
+"送信\n"
+
+#: netsync.cc:1510
+#, c-format
+msgid "server key has name %s, hash %s\n"
+msgstr "サーバー鍵の名前 %s、ハッシュ %s\n"
+
+#: netsync.cc:1518
+#, c-format
 msgid ""
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
@@ -2496,7 +3478,7 @@ msgid ""
 "it is also possible that the server key has just been changed\n"
 "remote host sent key %s\n"
 "I expected %s\n"
-"'%s unset %s %s' overrides this check\n"
+"'monotone unset %s %s' overrides this check\n"
 msgstr ""
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 "@ 警告: サーバーの識別 ID が変更されています              @\n"
@@ -2507,12 +3489,12 @@ msgstr ""
 "期待値 %s\n"
 "'monotone unset %s %s' とすると検証結果を無視するようになります\n"
 
-#: netsync.cc:1203
+#: netsync.cc:1528
 #, c-format
 msgid "server key changed"
 msgstr "サーバー鍵が変更されました"
 
-#: netsync.cc:1208
+#: netsync.cc:1533
 #, c-format
 msgid ""
 "first time connecting to server %s\n"
@@ -2522,47 +3504,47 @@ msgstr ""
 "サーバー %s に接続するのは初めてです\n"
 "偽物でないとは思いますが、鍵の指紋を二重チェックしてみるといいでしょう: %s\n"
 
-#: netsync.cc:1215
+#: netsync.cc:1540
 #, c-format
 msgid "saving public key for %s to database\n"
 msgstr "%s の公開鍵をデータベースに保存中\n"
 
-#: netsync.cc:1303
+#: netsync.cc:1547
+#, c-format
+msgid "received 'hello' netcmd from server '%s' with nonce '%s'\n"
+msgstr "サーバー '%s' から nonce '%s' と一緒に 'hello' netcmd を受信\n"
+
+#: netsync.cc:1628
 #, c-format
 msgid "rejected attempt at anonymous connection for write\n"
 msgstr "匿名での接続からの書き込みを拒否\n"
 
-#: netsync.cc:1310
+#: netsync.cc:1635
 #, c-format
 msgid "rejected attempt at anonymous connection while running as sink\n"
 msgstr "シンクとして実行中の匿名での接続からの書き込みを拒否\n"
 
-#: netsync.cc:1325 netsync.cc:1422
-#, fuzzy, c-format
-msgid "not serving branch '%s'"
-msgstr "%s はブランチ %s 内にはありません\n"
-
-#: netsync.cc:1330
+#: netsync.cc:1652
 #, c-format
 msgid "anonymous access to branch '%s' denied by server"
 msgstr "ブランチ '%s' への匿名アクセスはサーバーによって拒否されました"
 
-#: netsync.cc:1337
+#: netsync.cc:1657
 #, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'\n"
 msgstr "匿名での '%s' ('%s' を除く)の読み込みを許可しました\n"
 
-#: netsync.cc:1369
+#: netsync.cc:1689
 #, c-format
 msgid "detected replay attack in auth netcmd\n"
 msgstr "auth netcmd 中に繰り返し攻撃を検出\n"
 
-#: netsync.cc:1391
+#: netsync.cc:1714
 #, c-format
 msgid "remote public key hash '%s' is unknown\n"
 msgstr "リモートの公開鍵ハッシュ '%s' は不明なものです\n"
 
-#: netsync.cc:1408
+#: netsync.cc:1731
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' while running as pure "
@@ -2571,24 +3553,24 @@ msgstr ""
 "純粋シンクとして実行中の '%s' の '%s' ('%s' を除く) の読み込みを拒否しまし"
 "た\n"
 
-#: netsync.cc:1428
+#: netsync.cc:1747
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'\n"
 msgstr ""
 "'%s' の '%s' ('%s' を除く)の読み込みをブランチ '%s' のために拒否しました\n"
 
-#: netsync.cc:1431
+#: netsync.cc:1749
 #, c-format
 msgid "access to branch '%s' denied by server"
 msgstr "ブランチ '%s' へのアクセスはサーバーによって拒否されました"
 
-#: netsync.cc:1441
+#: netsync.cc:1757
 #, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'\n"
 msgstr "'%s' の匿名での '%s' ('%s' を除く)の読み込みを許可しました\n"
 
-#: netsync.cc:1450
+#: netsync.cc:1766
 #, c-format
 msgid ""
 "denied '%s' write permission for '%s' excluding '%s' while running as pure "
@@ -2597,313 +3579,685 @@ msgstr ""
 "純粋ソースとして実行中の '%s' の '%s' ('%s' を除く) への書き込みを拒否しまし"
 "た\n"
 
-#: netsync.cc:1458
+#: netsync.cc:1774
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'\n"
 msgstr "'%s' の '%s' ('%s' を除く)への書き込みを拒否しました\n"
 
-#: netsync.cc:1464
+#: netsync.cc:1780
 #, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'\n"
 msgstr "'%s' の '%s' ('%s' を除く)への書き込みを許可しました\n"
 
-#: netsync.cc:1504
+#: netsync.cc:1795
+#, c-format
+msgid "client signature OK, accepting authentication\n"
+msgstr "クライアント署名 OK、認証完了\n"
+
+#: netsync.cc:1817
 #, c-format
 msgid "bad client signature\n"
 msgstr "不正なクライアント署名\n"
 
-#: netsync.cc:1520
+#: netsync.cc:1832
 #, c-format
-msgid "Unexpected 'refine' command on non-refined item type\n"
+msgid ""
+"received 'confirm' netcmd from server '%s' for pattern '%s' exclude '%s' in %"
+"s mode\n"
+msgstr ""
+"サーバー '%s' からパターン '%s' ('%s' を除く; %s モード)への 'confirm' "
+"netcmd を受信しました\n"
+
+#: netsync.cc:1834 netsync.cc:2831 netsync.cc:2862
+msgid "source and sink"
 msgstr ""
 
-#: netsync.cc:1617
-#, c-format
-msgid "unknown bye phase %d received"
+#: netsync.cc:1835 netsync.cc:2832 netsync.cc:2863
+msgid "sink"
 msgstr ""
 
-#: netsync.cc:1632
-#, c-format
-msgid "Unexpected 'done' command on non-refined item type\n"
-msgstr ""
+#: netsync.cc:1835 netsync.cc:2832 netsync.cc:2863
+#, fuzzy
+msgid "source"
+msgstr "[元] %s\n"
 
-#: netsync.cc:1712
+#: netsync.cc:1848
+#, c-format
+msgid "server signature OK, accepting authentication\n"
+msgstr "サーバー署名 OK、認証完了\n"
+
+#: netsync.cc:1853
+#, c-format
+msgid "bad server signature\n"
+msgstr "不正なサーバー署名\n"
+
+#: netsync.cc:1858
+#, c-format
+msgid "unknown server key\n"
+msgstr "不明なサーバー鍵\n"
+
+#: netsync.cc:1927
 #, c-format
 msgid "epoch with hash '%s' does not exist in our database"
 msgstr "こちらのデータベースにはハッシュ '%s' の epoch は含まれていません"
 
-#: netsync.cc:1741
+#: netsync.cc:1937
+#, c-format
+msgid "public key '%s' is also called '%s'\n"
+msgstr "公開鍵 '%s' の別名は '%s' です\n"
+
+#: netsync.cc:1956
 #, c-format
 msgid "revision '%s' does not exist in our database"
 msgstr "こちらのデータベースにはリビジョン '%s' は含まれていません"
 
-#: netsync.cc:1755
+#: netsync.cc:1970
+#, c-format
+msgid "manifest '%s' does not exist in our database"
+msgstr "こちらのデータベースにはマニフェスト '%s' は含まれていません"
+
+#: netsync.cc:1984
 #, c-format
 msgid "file '%s' does not exist in our database"
 msgstr "こちらのデータベースにはファイル '%s' は含まれていません"
 
-#: netsync.cc:1769
+#: netsync.cc:1998
 #, c-format
 msgid "cert '%s' does not exist in our database"
 msgstr "こちらのデータベースには証明 '%s' は含まれていません"
 
-#: netsync.cc:1821
+#: netsync.cc:2017
+#, c-format
+msgid "received 'refine' netcmd on %s node '%s', level %d\n"
+msgstr "%s ノード '%s'、レベル %d で 'refine' netcmd を受信\n"
+
+#: netsync.cc:2022
+#, c-format
+msgid "no corresponding %s merkle node for prefix '%s', level %d\n"
+msgstr ""
+"相当する %s merkle ノード(対象: プレフィクス '%s'、レベル %d) を持っていませ"
+"ん\n"
+
+#: netsync.cc:2077
+#, c-format
+msgid "found corresponding %s merkle node for prefix '%s', level %d\n"
+msgstr ""
+"相当する %s merkle ノード (対象: プレフィクス '%s', レベル %d) をみつけまし"
+"た\n"
+
+#: netsync.cc:2408
+#, c-format
+msgid "received 'send_data' netcmd requesting %s '%s'\n"
+msgstr "%s '%s' を要求する 'send_data' netcmd を受信\n"
+
+#: netsync.cc:2436
+#, c-format
+msgid "received 'send_delta' netcmd requesting %s edge '%s' -> '%s'\n"
+msgstr "%s 先端 '%s' -> '%s' を要求する 'send_delta' netcmd を受信\n"
+
+#: netsync.cc:2490
+#, c-format
+msgid "delta requested for item type %s\n"
+msgstr "アイテムタイプ %s について要求された差分\n"
+
+#: netsync.cc:2513
+#, c-format
+msgid "epoch '%s' already exists in our database\n"
+msgstr "epoch '%s' は既にデータベースにあります\n"
+
+#: netsync.cc:2520
+#, c-format
+msgid "received epoch %s for branch %s\n"
+msgstr "epoch %s (ブランチ %s) を受信\n"
+
+#: netsync.cc:2527
+#, c-format
+msgid "branch %s has no epoch; setting epoch to %s\n"
+msgstr "ブランチ %s には epoch はありませんので、epoch を %s に設定します\n"
+
+#: netsync.cc:2533
+#, c-format
+msgid "branch %s already has an epoch; checking\n"
+msgstr "ブランチ %s には既に epoch があります。検証中\n"
+
+#: netsync.cc:2544
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
 msgstr ""
 "ブランチ %s について epoch が一致しません。サーバー側 '%s', クライアント側 '%"
 "s'"
 
-#: netsync.cc:1842
+#: netsync.cc:2555
+#, c-format
+msgid "public key '%s' already exists in our database\n"
+msgstr "公開鍵 '%s' は既にデータベースにあります\n"
+
+#: netsync.cc:2564
 #, c-format
 msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
 msgstr "公開鍵 '%s' (%s) についてハッシュ検証に失敗。期待値 '%s'、計算値 '%s'"
 
-#: netsync.cc:1859
+#: netsync.cc:2573
+#, c-format
+msgid "cert '%s' already exists in our database\n"
+msgstr "証明 '%s' は既にデータベースにあります\n"
+
+#: netsync.cc:2581
 #, c-format
 msgid "hash check failed for revision cert '%s'"
 msgstr "リビジョン証明 '%s' についてハッシュ検証に失敗"
 
-#: netsync.cc:1934
+#: netsync.cc:2597
+#, c-format
+msgid "revision '%s' already exists in our database\n"
+msgstr "リビジョン '%s' は既にデータベースにあります\n"
+
+#: netsync.cc:2600
+#, c-format
+msgid "received revision '%s'\n"
+msgstr "リビジョン '%s' を受信\n"
+
+#: netsync.cc:2619
+#, c-format
+msgid "manifest version '%s' already exists in our database\n"
+msgstr "バージョン '%s' のマニフェストは既にデータベースにあります\n"
+
+#: netsync.cc:2634
+#, c-format
+msgid "file version '%s' already exists in our database\n"
+msgstr "バージョン '%s' のファイルは既にデータベースにあります\n"
+
+#: netsync.cc:2720
+#, c-format
+msgid "ignoring delta received for item type %s\n"
+msgstr "アイテムタイプ %s について受信した差分を無視\n"
+
+#: netsync.cc:2734
+#, c-format
+msgid "received 'nonexistant' netcmd for %s '%s'\n"
+msgstr "%s '%s' について 'nonexistant' netcmd を受信\n"
+
+#: netsync.cc:2746
 #, c-format
 msgid "Received warning from usher: %s"
 msgstr "門番から警告を受信: %s"
 
-#: netsync.cc:2021 netsync.cc:2052
-msgid "source and sink"
+#: netsync.cc:2748
+#, c-format
+msgid "Received greeting from usher: %s"
+msgstr "門番から受け入れ挨拶を受信: %s"
+
+#: netsync.cc:2753
+#, c-format
+msgid "Sent reply."
+msgstr "応答を送信"
+
+#: netsync.cc:2828
+#, c-format
+msgid ""
+"received 'anonymous' netcmd from client for pattern '%s' excluding '%s' in %"
+"s mode\n"
 msgstr ""
+"クライアントからパターン '%s' ('%s' を除く; %s モード)への 'anonymous' "
+"netcmd を受信\n"
 
-#: netsync.cc:2022 netsync.cc:2053
-#, fuzzy
-msgid "source"
-msgstr "[元] %s\n"
-
-#: netsync.cc:2022 netsync.cc:2053
-msgid "sink"
+#: netsync.cc:2859
+#, c-format
+msgid ""
+"received 'auth(hmac)' netcmd from client '%s' for pattern '%s' exclude '%s' "
+"in %s mode with nonce1 '%s'\n"
 msgstr ""
+"クライアント '%s' からパターン '%s' ('%s' を除く; モード %s) について nonce1 "
+"'%s' とともに 'auth(hmac)' netcmd を受信\n"
 
-#: netsync.cc:2207
+#: netsync.cc:3031
+#, c-format
+msgid "processing %d byte input buffer from peer %s\n"
+msgstr "%d バイトの入力バッファ (送信元: ピーア %s) を処理中\n"
+
+#: netsync.cc:3034
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch\n"
 msgstr "netcmd dispatch の後でピーア %s の入力バッファがあふれました\n"
 
-#: netsync.cc:2219 netsync.cc:2276
+#: netsync.cc:3038
+#, fuzzy, c-format
+msgid "failed to process '%s' packet"
+msgstr "データ文字列 '%s' の解析に失敗: %s"
+
+#: netsync.cc:3043 netsync.cc:3083 netsync.cc:3110
 #, c-format
 msgid "protocol error while processing peer %s: '%s'\n"
 msgstr "ピーア %s: '%s' を処理中にプロトコルエラー発生\n"
 
-#: netsync.cc:2225
-#, c-format
-msgid "error: %s\n"
-msgstr "エラー: %s\n"
-
-#: netsync.cc:2255
+#: netsync.cc:3068
 #, c-format
 msgid "connecting to %s\n"
 msgstr "%s に接続中\n"
 
-#: netsync.cc:2291
+#: netsync.cc:3096
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting\n"
 msgstr "ピーア %s の I/O を待っている間にタイムアウト, 切断中\n"
 
-#: netsync.cc:2306
-#, fuzzy, c-format
-msgid "got OOB data from peer %s, disconnecting\n"
+#: netsync.cc:3118
+#, c-format
+msgid "read from fd %d (peer %s) closed OK after goodbye\n"
+msgstr "fd %d (ピーア %s) からの読み込みは goodbye の後で問題なく閉じました\n"
+
+#: netsync.cc:3120
+#, c-format
+msgid "read from fd %d (peer %s) failed, disconnecting\n"
+msgstr "fd %d (ピーア %s) からの読み込みに失敗, 切断中\n"
+
+#: netsync.cc:3130
+#, c-format
+msgid "write on fd %d (peer %s) closed OK after goodbye\n"
+msgstr "fd %d (ピーア %s) への書き込みは goodbye の後で問題なく閉じました\n"
+
+#: netsync.cc:3132
+#, c-format
+msgid "write on fd %d (peer %s) failed, disconnecting\n"
+msgstr "fd %d (ピーア %s) からの書き込みに失敗、切断中\n"
+
+#: netsync.cc:3139
+#, c-format
+msgid "got OOB data on fd %d (peer %s), disconnecting\n"
 msgstr "fd %d (ピーア %s) で OOB データを受信、切断中\n"
 
-#: netsync.cc:2321
-#, fuzzy, c-format
-msgid "processing failure while talking to peer %s, disconnecting\n"
-msgstr "ピーア %s: '%s' からを処理中にプロトコルエラー発生、切断中\n"
+#: netsync.cc:3148
+#, c-format
+msgid "terminated exchange with %s\n"
+msgstr "%s との交換を切断\n"
 
-#: netsync.cc:2338
+#: netsync.cc:3156
 #, c-format
 msgid "successful exchange with %s\n"
 msgstr "%s との交換に成功\n"
 
-#: netsync.cc:2344
+#: netsync.cc:3177
 #, c-format
-msgid "peer %s disconnected after we informed them of error\n"
-msgstr ""
+msgid "fd %d is armed\n"
+msgstr "fd %d: armed\n"
 
-#: netsync.cc:2349
-#, fuzzy, c-format
-msgid "I/O failure while talking to peer %s, disconnecting\n"
-msgstr "ピーア %s の I/O を待っている間にタイムアウト, 切断中\n"
-
-#: netsync.cc:2378
+#: netsync.cc:3184
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad\n"
 msgstr "ピーア %s: '%s' を処理中にプロトコルエラー発生、誤りとして印付け\n"
 
-#: netsync.cc:2410
+#: netsync.cc:3206
+#, fuzzy, c-format
+msgid "accepting new connection on %s : %s\n"
+msgstr "%s : %d での新しい接続を受理\n"
+
+#: netsync.cc:3212
+#, c-format
+msgid "accept() returned a dead client\n"
+msgstr "accept() は死んだクライアントを返しました\n"
+
+#: netsync.cc:3216
 #, fuzzy, c-format
 msgid "accepted new client connection from %s : %s\n"
 msgstr "%s からの新しいクライアント接続を受理\n"
 
-#: netsync.cc:2444
+#: netsync.cc:3244
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting\n"
 msgstr "ピーア %s: '%s' からを処理中にプロトコルエラー発生、切断中\n"
 
-#: netsync.cc:2455
-#, fuzzy, c-format
-msgid "peer %s read failed in working state (error)\n"
-msgstr "作業コピー内の %s ファイルを登録\n"
-
-#: netsync.cc:2460
+#: netsync.cc:3252
 #, c-format
-msgid ""
-"peer %s read failed in shutdown state (possibly client misreported error)\n"
-msgstr ""
+msgid "fd %d (peer %s) read failed, disconnecting\n"
+msgstr "fd %d (ピーア %s) 読み込み失敗、切断中\n"
 
-#: netsync.cc:2466
+#: netsync.cc:3268
 #, c-format
-msgid "peer %s read failed in confirmed state (success)\n"
-msgstr ""
+msgid "fd %d (peer %s) write failed, disconnecting\n"
+msgstr "fd %d (ピーア %s) 書き込み失敗、切断中\n"
 
-#: netsync.cc:2487
-#, fuzzy, c-format
-msgid "peer %s write failed in working state (error)\n"
-msgstr "作業コピー内の %s ファイルを登録\n"
-
-#: netsync.cc:2492
+#: netsync.cc:3292
 #, c-format
-msgid ""
-"peer %s write failed in shutdown state (possibly client misreported error)\n"
-msgstr ""
-
-#: netsync.cc:2498
-#, c-format
-msgid "peer %s write failed in confirmed state (success)\n"
-msgstr ""
-
-#: netsync.cc:2525
-#, fuzzy, c-format
-msgid "peer %s processing finished, disconnecting\n"
+msgid "fd %d (peer %s) processing finished, disconnecting\n"
 msgstr "fd %d (ピーア %s) 処理終了、切断中\n"
 
-#: netsync.cc:2547
+#: netsync.cc:3314
 #, c-format
 msgid "fd %d (peer %s) has been idle too long, disconnecting\n"
 msgstr "fd %d (ピーア %s) はアイドル時間が長すぎます。切断中\n"
 
-#: netsync.cc:2615
+#: netsync.cc:3320
+#, c-format
+msgid "fd %d (peer %s) exchanged goodbyes and flushed output, disconnecting\n"
+msgstr "fd %d (ピーア %s) は goodbye を交し出力をフラッシュしました。切断中\n"
+
+#: netsync.cc:3366
 #, fuzzy, c-format
 msgid "beginning service on %s : %s\n"
 msgstr "%s : %d でサービスを開始\n"
 
-#: netsync.cc:2616
-#, fuzzy
-msgid "<all interfaces>"
-msgstr "自動化インターフェース"
-
-#: netsync.cc:2630
+#: netsync.cc:3378
 #, c-format
 msgid "session limit %d reached, some connections will be refused\n"
 msgstr "セッション制限 %d に達っしました。いくつかの接続は拒否されます\n"
 
-#: netsync.cc:2685
-#, fuzzy, c-format
-msgid "got OOB from peer %s, disconnecting\n"
-msgstr "fd %d (ピーア %s) で OOB データを受信、切断中\n"
+#: netsync.cc:3384
+#, c-format
+msgid "i/o probe with %d armed\n"
+msgstr "%d armed で I/O プローブ\n"
 
-#: netsync.cc:2754
+#: netsync.cc:3394
+#, fuzzy, c-format
+msgid "timed out waiting for I/O (listening on %s : %s)\n"
+msgstr "I/O (%s : %d でリスン中) 待機中にタイムアウト\n"
+
+#: netsync.cc:3410
+#, c-format
+msgid "got woken up for action on unknown fd %d\n"
+msgstr "不明な fd %d はアクションのために起こされました\n"
+
+#: netsync.cc:3425
+#, c-format
+msgid "got some OOB data on fd %d (peer %s), disconnecting\n"
+msgstr "fd %d (ピーア %s) で OOB データを受信し、切断中\n"
+
+#: netsync.cc:3487
 #, c-format
 msgid "finding items to synchronize:\n"
 msgstr "同期アイテムを検索中:\n"
 
-#: netsync.cc:2762
-msgid "certificates"
-msgstr ""
+#: netsync.cc:3490
+#, c-format
+msgid "including branch %s"
+msgstr "ブランチ %s を含めます"
 
-#: netsync.cc:2871
+#: netsync.cc:3549
+#, c-format
+msgid "setting epoch on %s to zero\n"
+msgstr "%s の epoch を零に設定\n"
+
+#: netsync.cc:3598
 #, fuzzy, c-format
 msgid "Cannot find key '%s'"
 msgstr "注釈ファイル file_path '%s'\n"
 
-#: netsync.cc:2911
-#, c-format
-msgid ""
-"include branch pattern contains a quote character:\n"
-"%s\n"
-msgstr ""
-
-#: netsync.cc:2917
-#, c-format
-msgid ""
-"exclude branch pattern contains a quote character:\n"
-"%s\n"
-msgstr ""
-
-#: netsync.cc:2940 netsync.cc:2944
+#: netsync.cc:3652 netsync.cc:3656
 #, c-format
 msgid "network error: %s"
 msgstr "ネットワークエラー: %s"
 
-#: packet.cc:94
+#: netsync.cc:3710
 #, c-format
-msgid "file preimage '%s' missing in db"
+msgid "ancestry_fetcher: got %d heads"
 msgstr ""
 
-#: packet.cc:95
+#: netsync.cc:3820
 #, fuzzy, c-format
-msgid "dropping delta '%s' -> '%s'"
-msgstr "%s 差分 '%s' -> '%s' をキューに追加\n"
+msgid "traversing head %s"
+msgstr "最新版 %s を保存しています\n"
 
-#: packet.cc:109
+#: packet.cc:330
+#, c-format
+msgid "writing delayed revision data packet for %s\n"
+msgstr "%s について遅延したリビジョンデータパケットを書き込み中\n"
+
+#: packet.cc:337
+#, c-format
+msgid "discarding revision data packet %s with unmet dependencies\n"
+msgstr "依存関係を満たさないリビジョンデータパケット %s を破棄\n"
+
+#: packet.cc:343
+#, c-format
+msgid "writing delayed manifest data packet for %s\n"
+msgstr "%s について遅延したマニフェストデータパケットを書き込み中\n"
+
+#: packet.cc:350
+#, c-format
+msgid "discarding manifest data packet %s with unmet dependencies\n"
+msgstr "依存関係を満たさないマニフェストデータパケット %s を破棄\n"
+
+#: packet.cc:356
+#, c-format
+msgid "writing delayed file data packet for %s\n"
+msgstr "%s について遅延ファイルデータパケットを書き込み中\n"
+
+#: packet.cc:369
+#, fuzzy, c-format
+msgid "writing delayed manifest %s packet for %s -> %s%s\n"
+msgstr "遅延マニフェスト %s パケット(%s -> %s)を書き込み中\n"
+
+#: packet.cc:383
+#, c-format
+msgid "discarding manifest delta packet %s -> %s with unmet dependencies\n"
+msgstr "依存関係を満たさないマニフェスト差分パケット %s -> %s を破棄\n"
+
+#: packet.cc:390
+#, fuzzy, c-format
+msgid "writing delayed file %s packet for %s -> %s%s\n"
+msgstr "遅延したファイル %s パケット(%s -> %s)を書き込み中\n"
+
+#: packet.cc:404
+#, c-format
+msgid "discarding file delta packet %s -> %s with unmet dependencies\n"
+msgstr "依存関係を満たさないファイル差分パケット %s -> %s を破棄\n"
+
+#: packet.cc:411
+#, c-format
+msgid "writing delayed revision cert on %s\n"
+msgstr "%s の遅延リビジョン証明を書き込み中\n"
+
+#: packet.cc:418
+#, c-format
+msgid "discarding revision cert packet %s with unmet dependencies\n"
+msgstr "依存関係を満たさないリビジョン証明パケット %s を破棄\n"
+
+#: packet.cc:425
+#, c-format
+msgid "writing delayed public key %s\n"
+msgstr "遅延公開鍵 %s を書き込み中\n"
+
+#: packet.cc:438
+#, c-format
+msgid "writing delayed private key %s\n"
+msgstr "遅延秘密鍵 %s を書き込み中\n"
+
+#: packet.cc:608
+#, c-format
+msgid "noting acceptence of revision %s\n"
+msgstr "リビジョン %s について受理したものはありません\n"
+
+#: packet.cc:621
+#, c-format
+msgid "noting acceptence of manifest %s\n"
+msgstr "マニフェスト %s について受理したものはありません\n"
+
+#: packet.cc:634
+#, c-format
+msgid "noting acceptence of file %s\n"
+msgstr "ファイル %s について受理したものはありません\n"
+
+#: packet.cc:656
+#, c-format
+msgid "skipping existing file version %s\n"
+msgstr "既存のファイル、バージョン %s をスキップ\n"
+
+#: packet.cc:696
 #, c-format
 msgid "reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n"
 msgstr ""
 "差分 '%s' -> '%s' から再構築されたファイルの ID '%s' は不正なものです\n"
 
-#: packet.cc:138
-#, fuzzy, c-format
-msgid "missing prerequisite revision '%s'\n"
-msgstr "リビジョン '%s' を受信\n"
-
-#: packet.cc:139 packet.cc:150 packet.cc:166 packet.cc:174
-#, fuzzy, c-format
-msgid "dropping revision '%s'\n"
-msgstr "リビジョン '%s' を受信\n"
-
-#: packet.cc:149
-#, fuzzy, c-format
-msgid "missing prerequisite file '%s'\n"
-msgstr "存在しない初期化ファイル '%s' をスキップ\n"
-
-#: packet.cc:164
+#: packet.cc:702
 #, c-format
-msgid "missing prerequisite file pre-delta '%s'\n"
-msgstr ""
+msgid "delaying file delta %s -> %s for preimage\n"
+msgstr "事前イメージのためのファイル差分 %s -> %s を遅延\n"
 
-#: packet.cc:172
+#: packet.cc:712
 #, c-format
-msgid "missing prerequisite file post-delta '%s'\n"
+msgid "skipping delta to existing file version %s\n"
+msgstr "既存のファイル、バージョン %s への差分をスキップ\n"
+
+#: packet.cc:740
+#, c-format
+msgid "reconstructed file from reverse delta '%s' -> '%s' has wrong id '%s'\n"
 msgstr ""
+"逆方向の差分 '%s' -> '%s' から再構築されたファイルの ID '%s' は不正なもので"
+"す\n"
 
-#: packet.cc:200
-#, fuzzy, c-format
-msgid "cert revision '%s' does not exist in db\n"
-msgstr "データベースに基準リビジョン %s は含まれていません\n"
+#: packet.cc:746
+#, c-format
+msgid "delaying reverse file delta %s -> %s for preimage\n"
+msgstr "事前イメージのための逆方向のファイル差分 %s -> %s を遅延\n"
 
-#: packet.cc:202
-#, fuzzy, c-format
-msgid "dropping cert\n"
-msgstr "みつからない証明: %d\n"
+#: packet.cc:756
+#, c-format
+msgid "skipping reverse delta to existing file version %s\n"
+msgstr "既存のファイル、バージョン %s への逆方向の差分をスキップ\n"
 
-#: packet.cc:225
+#: packet.cc:773
+#, c-format
+msgid "skipping existing manifest version %s\n"
+msgstr "既存のマニフェスト、バージョン %s をスキップ\n"
+
+#: packet.cc:814
+#, c-format
+msgid "reconstructed manifest from delta '%s' -> '%s' has wrong id '%s'\n"
+msgstr ""
+"差分 '%s' -> '%s' から再構築されたマニフェストの ID '%s' は不正なものです\n"
+
+#: packet.cc:820
+#, c-format
+msgid "delaying manifest delta %s -> %s for preimage\n"
+msgstr "事前イメージのための逆方向のファイル差分 %s -> %s を遅延\n"
+
+#: packet.cc:830
+#, c-format
+msgid "skipping delta to existing manifest version %s\n"
+msgstr "既存のマニフェストバージョン %s への差分をスキップ\n"
+
+#: packet.cc:858
+#, c-format
+msgid ""
+"reconstructed manifest from reverse delta '%s' -> '%s' has wrong id '%s'\n"
+msgstr ""
+"逆方向の差分 '%s' -> '%s' から再構築されたマニフェストの ID '%s' は不正なもの"
+"です\n"
+
+#: packet.cc:864
+#, c-format
+msgid "delaying manifest reverse delta %s -> %s for preimage\n"
+msgstr "事前イメージのためのマニフェストの逆方向の差分 %s -> %s を遅延\n"
+
+#: packet.cc:874
+#, c-format
+msgid "skipping reverse delta to existing manifest version %s\n"
+msgstr "既存のマニフェスト、バージョン %s への逆方向の差分をスキップ\n"
+
+#: packet.cc:896
+#, c-format
+msgid "delaying revision %s for new manifest %s\n"
+msgstr "リビジョン %s (新しいマニフェスト %s) を遅延\n"
+
+#: packet.cc:910
+#, c-format
+msgid "delaying revision %s for old manifest %s\n"
+msgstr "リビジョン %s (古いマニフェスト %s) を遅延\n"
+
+#: packet.cc:920
+#, c-format
+msgid "delaying revision %s for old revision %s\n"
+msgstr "リビジョン %s (古いリビジョン %s) を遅延\n"
+
+#: packet.cc:933
+#, c-format
+msgid "delaying revision %s for old file %s\n"
+msgstr "リビジョン %s (古いファイル %s) を遅延\n"
+
+#: packet.cc:943
+#, c-format
+msgid "delaying revision %s for new file %s\n"
+msgstr "リビジョン %s (新しいファイル %s) を遅延\n"
+
+#: packet.cc:961
+#, c-format
+msgid "skipping existing revision %s\n"
+msgstr "既存のリビジョン %s をスキップ\n"
+
+#: packet.cc:979
+#, c-format
+msgid "delaying revision cert on %s\n"
+msgstr "%s のリビジョン証明を遅延\n"
+
+#: packet.cc:992
+#, c-format
+msgid "skipping existing revision cert %s\n"
+msgstr "既存のリビジョン証明 %s をスキップ\n"
+
+#: packet.cc:1006
+#, c-format
+msgid "skipping prohibited public key %s\n"
+msgstr "禁止された公開鍵 %s をスキップ\n"
+
+#: packet.cc:1019
 #, c-format
 msgid "key '%s' is not equal to key '%s' in database\n"
 msgstr "鍵 '%s' はデータベース内の鍵 '%s' と一致しません\n"
 
-#: packet.cc:349
+#: packet.cc:1020
+#, c-format
+msgid "skipping existing public key %s\n"
+msgstr "既存の公開鍵 %s をスキップ\n"
+
+#: packet.cc:1033
+#, fuzzy, c-format
+msgid "skipping prohibited key pair %s\n"
+msgstr "禁止された公開鍵 %s をスキップ\n"
+
+#: packet.cc:1042
+#, fuzzy, c-format
+msgid "skipping existing key pair %s\n"
+msgstr "既存の公開鍵 %s をスキップ\n"
+
+#: packet.cc:1078
+#, c-format
+msgid "packet valve opened\n"
+msgstr "パケットバルブ: 開\n"
+
+#: packet.cc:1090
+#, c-format
+msgid "wrote %i queued packets\n"
+msgstr "%i キューパケット書き込み\n"
+
+#: packet.cc:1362
 #, fuzzy, c-format
 msgid "malformed packet"
 msgstr "%d パケット読み込み"
 
-#: packet.cc:449
+#: packet.cc:1378
+#, fuzzy, c-format
+msgid "read data packet"
+msgstr "データパケット読み込み\n"
+
+#: packet.cc:1398
+#, fuzzy, c-format
+msgid "read delta packet"
+msgstr "差分パケット読み込み\n"
+
+#: packet.cc:1429
+#, fuzzy, c-format
+msgid "read cert packet"
+msgstr "証明パケット読み込み\n"
+
+#: packet.cc:1449 packet.cc:1468
+#, fuzzy, c-format
+msgid "read pubkey data packet"
+msgstr "鍵データパケット読み込み\n"
+
+#: packet.cc:1458
+#, fuzzy, c-format
+msgid "read keypair data packet"
+msgstr "鍵データパケット読み込み\n"
+
+#: packet.cc:1481
 #, fuzzy, c-format
 msgid "unknown packet type: '%s'"
 msgstr "不明なパス '%s'\n"
@@ -2923,22 +4277,137 @@ msgstr "解析失敗 %d:%d: 期待される語句 '%s'\n"
 msgid "parse failure %d:%d: expecting word\n"
 msgstr "解析失敗 %d:%d: 期待される語句\n"
 
-#: rcs_import.cc:703
+#: rcs_import.cc:247
+#, c-format
+msgid "Calculating time of %s\n"
+msgstr "%s の時間を計算しています\n"
+
+#: rcs_import.cc:281
+#, c-format
+msgid "version %s -> tag %s\n"
+msgstr "バージョン %s - タグ %s\n"
+
+#: rcs_import.cc:448
+#, c-format
+msgid "skipping identity file edge\n"
+msgstr "識別ファイルの先端をスキップ\n"
+
+#: rcs_import.cc:456 rcs_import.cc:482
+#, c-format
+msgid "existing path to %s found, skipping\n"
+msgstr "%s への既存のパスを発見、スキップ\n"
+
+#: rcs_import.cc:474
+#, c-format
+msgid "skipping identity manifest edge\n"
+msgstr "識別マニフェストの先端をスキップ\n"
+
+#: rcs_import.cc:592
+#, c-format
+msgid "version %s has %d lines\n"
+msgstr "バージョン %s には %d 行あります\n"
+
+#: rcs_import.cc:605
+#, c-format
+msgid "following RCS edge %s -> %s\n"
+msgstr "次の RCS 先端 %s -> %s\n"
+
+#: rcs_import.cc:608
+#, c-format
+msgid "constructed RCS version %s, inserting into database\n"
+msgstr "構築された RCS バージョン %s をデータベースに挿入\n"
+
+#: rcs_import.cc:651
+#, c-format
+msgid "following RCS branch %s = '%s'\n"
+msgstr "次の RCS ブランチ %s = '%s' を追跡\n"
+
+#: rcs_import.cc:661
+#, c-format
+msgid "finished RCS branch %s = '%s'\n"
+msgstr "RCS ブランチ %s ='%s' を終了\n"
+
+#: rcs_import.cc:682 rcs_import.cc:730
 #, c-format
 msgid "parsing RCS file %s\n"
 msgstr "RCS ファイル %s を解析中\n"
 
-#: rcs_import.cc:706
+#: rcs_import.cc:684 rcs_import.cc:733
 #, c-format
 msgid "parsed RCS file %s OK\n"
 msgstr "解析した RCS ファイル %s: OK\n"
 
-#: rcs_import.cc:895
+#: rcs_import.cc:773
+#, c-format
+msgid "importing file '%s'\n"
+msgstr "ファイル '%s' を取り込み中\n"
+
+#: rcs_import.cc:845
+#, c-format
+msgid "first version in branch %s would be %s\n"
+msgstr "ブランチ %s 内の最初のバージョンは %s でしょう\n"
+
+#: rcs_import.cc:852
+#, c-format
+msgid "file branchpoint for %s at %s\n"
+msgstr "%s のファイルブランチ点 %s\n"
+
+#: rcs_import.cc:922
 #, c-format
 msgid "error reading RCS file %s: %s\n"
 msgstr "RCS ファイル %s を読み込み中にエラー: %s\n"
 
-#: rcs_import.cc:1192
+#: rcs_import.cc:926
+#, c-format
+msgid "skipping non-RCS file %s\n"
+msgstr "非 RCS ファイル %s をスキップ\n"
+
+#: rcs_import.cc:1105
+#, c-format
+msgid "examining next commit [t:%d] [p:%s] [a:%s] [c:%s]\n"
+msgstr "次のコミット [t:%d] [p:%s] [a:%s] [c:%s] を検査中\n"
+
+#: rcs_import.cc:1118
+#, c-format
+msgid "expiring cluster\n"
+msgstr "クラスタを終了中\n"
+
+#: rcs_import.cc:1134
+#, c-format
+msgid "examining cluster %d to see if it touched %d\n"
+msgstr "クラスタ %d が %d にふれているか調べています\n"
+
+#: rcs_import.cc:1142
+#, c-format
+msgid "found cluster touching %d: [t:%d] [a:%d] [c:%d]\n"
+msgstr "%d: [t:%d] [a:%d] [c:%d] にふれているクラスタをみつけました\n"
+
+#: rcs_import.cc:1150
+#, c-format
+msgid "last modification time is %d\n"
+msgstr "最終更新日時は %d です\n"
+
+#: rcs_import.cc:1166
+#, c-format
+msgid "picked existing cluster [t:%d] [a:%d] [c:%d]\n"
+msgstr "既存のクラスタ [t:%d] [a:%d] [c:%d] を選択\n"
+
+#: rcs_import.cc:1180
+#, c-format
+msgid "building new cluster [t:%d] [a:%d] [c:%d]\n"
+msgstr "新しいクラスタ [t:%d] [a:%d] [c:%d] を作成中\n"
+
+#: rcs_import.cc:1205
+#, c-format
+msgid "finished branch commits, writing all pending clusters\n"
+msgstr "ブランチコミットを終了し、すべての待機中のクラスタを書き込んでいます\n"
+
+#: rcs_import.cc:1211
+#, c-format
+msgid "finished writing pending clusters\n"
+msgstr "待機中のクラスタへの書き込みを完了\n"
+
+#: rcs_import.cc:1223
 #, c-format
 msgid ""
 "%s appears to be a CVS repository root directory\n"
@@ -2947,132 +4416,422 @@ msgstr ""
 "%s は CVS リポジトリのルートディレクトリのようです。\n"
 "代りに 'cvs_import %s/<モジュール名>' で取り込んでみて下さい"
 
-#: rcs_import.cc:1204
+#: rcs_import.cc:1235
 #, c-format
 msgid "need base --branch argument for importing"
 msgstr "取り込みには基準 --branch 引数が必要です"
 
-#: rcs_import.cc:1216
+#: rcs_import.cc:1247
 #, c-format
 msgid "path %s does not exist"
 msgstr "パス %s は存在しません"
 
-#: rcs_import.cc:1251
+#: rcs_import.cc:1266
+#, c-format
+msgid "branch %s has %d entries\n"
+msgstr "ブランチ %s には %d 個のエントリがあります\n"
+
+#: rcs_import.cc:1276
+#, c-format
+msgid "trunk has %d entries\n"
+msgstr "trunk には %d 個のエントリがあります\n"
+
+#: rcs_import.cc:1283
 msgid "tags"
 msgstr "タグ"
 
-#: revision.cc:700
-#, fuzzy, c-format
-msgid "scanning for bogus merge edges\n"
+#: rcs_import.cc:1329
+#, c-format
+msgid "initial cluster on branch %s has %d live entries\n"
+msgstr "ブランチ %s の初期クラスタには %d 個の生きたエントリがあります\n"
+
+#: rcs_import.cc:1336
+#, c-format
+msgid "initial cluster contains %s at %s\n"
+msgstr "初期クラスタは %s を %s に含んでいます\n"
+
+#: rcs_import.cc:1382
+#, c-format
+msgid "storing manifest '%s' (base %s)\n"
+msgstr "マニフェスト '%s' (基準 %s) を保存しています\n"
+
+#: rcs_import.cc:1387
+#, c-format
+msgid "storing head %s\n"
+msgstr "最新版 %s を保存しています\n"
+
+#: rcs_import.cc:1402
+#, c-format
+msgid "skipping delta to null manifest\n"
+msgstr "空マニフェストについての差分をスキップ\n"
+
+#: rcs_import.cc:1414
+#, c-format
+msgid "skipping cyclical manifest delta %s -> %s\n"
+msgstr "マニフェストの循環差分 %s -> %s をスキップ\n"
+
+#: rcs_import.cc:1420
+#, c-format
+msgid "writing full manifest %s\n"
+msgstr "完全なマニフェスト %s を書き込み中\n"
+
+#: rcs_import.cc:1430
+#, c-format
+msgid "storing manifest delta %s -> %s\n"
+msgstr "マニフェスト差分 %s -> %s を保存中\n"
+
+#: rcs_import.cc:1492
+#, c-format
+msgid "adding entry state '%s' on '%s'\n"
+msgstr "エントリ状態 '%s' ('%s') を追加\n"
+
+#: rcs_import.cc:1499
+#, c-format
+msgid "applying state delta on '%s' : '%s' -> '%s'\n"
+msgstr "'%s' : '%s' -> '%s' の状態差分を適用中\n"
+
+#: rcs_import.cc:1510
+#, c-format
+msgid "deleting entry state '%s' on '%s'\n"
+msgstr "エントリ状態 '%s' ('%s') を削除しています\n"
+
+#: rcs_import.cc:1529
+#, c-format
+msgid "BEGIN consume_cluster()\n"
+msgstr "BEGIN consume_cluster()\n"
+
+#: rcs_import.cc:1549
+#, c-format
+msgid "END consume_cluster('%s') (parent '%s')\n"
+msgstr "END consume_cluster('%s') (親 '%s')\n"
+
+#: revision.cc:126
+#, c-format
+msgid "verifying new revisions (this may take a while)\n"
+msgstr "新しいリビジョンを検証中 (しばらく御待ち下さい)\n"
+
+#: revision.cc:128
+#, c-format
+msgid "Verifying revision %s has sane history (to depth %i)\n"
+msgstr "リビジョン %s の履歴が正しいか検証しています (深さ %i)\n"
+
+#: revision.cc:166
+#, c-format
+msgid "Examining %s -> %s\n"
+msgstr "%s -> %s を検討中\n"
+
+#: revision.cc:243
+#, c-format
+msgid "%s and %s have no common ancestor, so done\n"
+msgstr "%s と %s には共通の祖先はありません。完了\n"
+
+#: revision.cc:249
+#, c-format
+msgid "already checked common ancestor, so done\n"
+msgstr "既にチェック済の共通の祖先。完了\n"
+
+#: revision.cc:252
+#, c-format
+msgid "%s is a merge; verifying paths to common ancestor %s are sane\n"
+msgstr "%s は統合です。共通の祖先 %s へのパスが適切なものか検証しています\n"
+
+#: revision.cc:310
+#, c-format
+msgid "loading parents for node %d\n"
+msgstr "ノード %d の親を読み込み中\n"
+
+#: revision.cc:332
+#, c-format
+msgid "parent %s -> node %d\n"
+msgstr "親 %s -> ノード %d\n"
+
+#: revision.cc:482
+#, c-format
+msgid "found %d intersecting nodes\n"
+msgstr "%d 個の交差ノードがみつかりました\n"
+
+#: revision.cc:535
+#, c-format
+msgid "searching for common ancestor, left=%s right=%s\n"
+msgstr "左=%s 右=%s の共通の祖先を検索中\n"
+
+#: revision.cc:540
+#, c-format
+msgid "common ancestor scan [par=%d,anc=%d,dom=%d]\n"
+msgstr "共通の祖先を走査 [親=%d,祖先=%d,支配=%d]\n"
+
+#: revision.cc:545
+#, c-format
+msgid "found node %d, ancestor of left %s and dominating right %s\n"
+msgstr "みつかったノード %d は左 %s と支配している右 %s の祖先です\n"
+
+#: revision.cc:552
+#, c-format
+msgid "found node %d, ancestor of right %s and dominating left %s\n"
+msgstr "みつかったノード %d は右 %s と支配している左 %s の祖先です\n"
+
+#: revision.cc:589
+#, c-format
+msgid "searching for least common ancestor, left=%s right=%s\n"
+msgstr "最小公倍の祖先を検索中, 左=%s 右=%s\n"
+
+#: revision.cc:593
+#, c-format
+msgid "least common ancestor scan [par=%d,anc=%d]\n"
+msgstr "最も近い祖先を走査 [親=%d,祖先=%d]\n"
+
+#: revision.cc:598
+#, c-format
+msgid "found node %d, ancestor of left %s and right %s\n"
+msgstr "みつかったノード %d は左 %s、右 %s の祖先です\n"
+
+#: revision.cc:652
+#, c-format
+msgid "checking whether %s is an ancestor of %s\n"
+msgstr "%s が %s の祖先かどうか検証しています\n"
+
+#: revision.cc:764
+#, c-format
+msgid "new root: %s\n"
+msgstr "新規ルート: %s\n"
+
+#: revision.cc:779
+#, c-format
+msgid "new leaf: %s\n"
+msgstr "新規リーフ: %s\n"
+
+#: revision.cc:921
+#, c-format
+msgid "exploring changesets from parents of %s, seeking towards %s\n"
+msgstr "%s の親から %s に向って変更セットを調査中\n"
+
+#: revision.cc:934
+#, c-format
+msgid "considering parent %s of %s\n"
+msgstr "親 %s (%s) について検討中\n"
+
+#: revision.cc:960
+#, c-format
+msgid "revision %s is relevant, composing with edge to %s\n"
+msgstr "リビジョン %s は %s への先端と関連し複合しています\n"
+
+#: revision.cc:967
+#, c-format
+msgid "parent %s of %s is not relevant\n"
+msgstr "親 %s (%s) は関連していません\n"
+
+#: revision.cc:1003
+#, c-format
+msgid "adding parents of %s to subgraph\n"
+msgstr "%s の親をサブグラフに追加\n"
+
+#: revision.cc:1013
+#, c-format
+msgid "found parent %s of %s\n"
+msgstr "親 %s (%s) を発見\n"
+
+#: revision.cc:1017
+#, c-format
+msgid "adding parent %s to next frontier\n"
+msgstr "親 %s を次の先端に追加\n"
+
+#: revision.cc:1032
+#, c-format
+msgid "calculating composite changeset between %s and %s\n"
+msgstr "%s と %s の間の複合変更セットを見積っています\n"
+
+#: revision.cc:1050
+#, c-format
+msgid "calculating changeset from %s to %s\n"
+msgstr "%s から %s への変更セットを見積っています\n"
+
+#: revision.cc:1054
+#, c-format
+msgid "no common ancestor for %s and %s\n"
+msgstr "%s と %s の共通の祖先はありません\n"
+
+#: revision.cc:1055
+#, c-format
+msgid "common ancestor is %s\n"
+msgstr "共通の祖先は %s です\n"
+
+#: revision.cc:1086
+#, c-format
+msgid "analyzing manifest changes from '%s' -> '%s'\n"
+msgstr "'%s' -> '%s' からマニフェストの変更を解析中\n"
+
+#: revision.cc:1099
+#, c-format
+msgid "splitting ancestry for file %s\n"
+msgstr "ファイル %s の系統を分離中\n"
+
+#: revision.cc:1166
+#, c-format
+msgid "noting ancestry from child %d -> parent %d\n"
+msgstr "子 %d -> 親 %d の系統はありません\n"
+
+#: revision.cc:1199
+#, c-format
+msgid "setting epoch for %s to %s\n"
+msgstr "%s の epoch を %s に設定\n"
+
+#: revision.cc:1255
+#, c-format
+msgid "scanning for nodes with 3+ parents\n"
 msgstr "3 個以上の親を持つノードを走査中\n"
 
-#: revision.cc:742
-#, fuzzy, c-format
-msgid "optimizing out redundant edge %d -> %d\n"
+#: revision.cc:1296
+#, c-format
+msgid "optimizing out redundant edge %i -> %i\n"
 msgstr "冗長な先端 %i -> %i を最適化中\n"
 
-#: revision.cc:751
-#, fuzzy, c-format
-msgid "failed to eliminate edge %d -> %d\n"
-msgstr "%s へのデバッグログの書き込みに失敗しました"
-
-#: revision.cc:762
+#: revision.cc:1323
 #, c-format
 msgid "rebuilding %d nodes\n"
 msgstr "再構築中: %d ノード\n"
 
-#: revision.cc:967
+#: revision.cc:1360
 #, c-format
-msgid "Path %s added to child roster multiple times\n"
-msgstr ""
+msgid "node %d = manifest %s\n"
+msgstr "ノード %d = マニフェスト %s\n"
 
-#: revision.cc:980
+#: revision.cc:1371
 #, c-format
-msgid "Directory for path %s cannot be added, as there is a file in the way\n"
-msgstr ""
+msgid "loaded '%s' manifest cert for node %s\n"
+msgstr "'%s' マニフェスト証明 (ノード %s) を読み込みました\n"
 
-#: revision.cc:991
-#, fuzzy, c-format
-msgid "Path %s cannot be added, as there is a directory in the way\n"
-msgstr "'%s' は期待していたファイルではなく、ディレクトリです"
-
-#: revision.cc:994
+#: revision.cc:1399
 #, c-format
-msgid "Path %s added twice with differing content\n"
-msgstr ""
+msgid "node %d = revision %s = manifest %s\n"
+msgstr "ノード %d = リビジョン %s = マニフェスト %s\n"
 
-#: revision.cc:1264
+#: revision.cc:1411
 #, c-format
-msgid ""
-"unknown attribute %s on path %s\n"
-"please contact %s so we can work out the right way to migrate this"
-msgstr ""
+msgid "loaded '%s' revision cert for node %s\n"
+msgstr "'%s' リビジョン証明 (ノード %s) を読み込みました\n"
 
-#: revision.cc:1373
+#: revision.cc:1435
 #, c-format
-msgid "converting existing revision graph to new roster-style revisions\n"
-msgstr ""
+msgid "processing node %d\n"
+msgstr "ノード %d を処理中\n"
 
-#: revision.cc:1427
+#: revision.cc:1439
+#, c-format
+msgid "node %d already processed, skipping\n"
+msgstr "ノード %d をスキップ (既に処理済み)\n"
+
+#: revision.cc:1453
+#, c-format
+msgid "node %d is a root node\n"
+msgstr "ノード %d はルートノードです\n"
+
+#: revision.cc:1469 revision.cc:1552
+#, c-format
+msgid "parent node %d = revision %s\n"
+msgstr "親ノード %d = リビジョン %s\n"
+
+#: revision.cc:1531
+#, c-format
+msgid "processing edge from child %d -> parent %d\n"
+msgstr "子 %d -> 親 %d から先端を処理中\n"
+
+#: revision.cc:1569
+#, c-format
+msgid "mapped node %d to revision %s\n"
+msgstr "ノード %d をリビジョン %s へ割り当てました\n"
+
+#: revision.cc:1575
+#, c-format
+msgid "skipping already existing revision %s\n"
+msgstr "既存のリビジョン %s をスキップ\n"
+
+#: revision.cc:1587
+#, c-format
+msgid "rebuilding revision graph from existing graph\n"
+msgstr "既存のグラフからリビジョングラフを再度構成中\n"
+
+#: revision.cc:1619
 #, c-format
 msgid "rebuilding revision graph from manifest certs\n"
 msgstr "マニフェスト証明からリビジョングラフを再度構成中\n"
 
-#: revision.cc:1530
+#: sanity.cc:38
 #, c-format
-msgid ""
-"encountered a revision with unknown format, version '%s'\n"
-"I only know how to understand the version '1' format\n"
-"a newer version of monotone is required to complete this operation"
+msgid "started up on %s\n"
+msgstr "%s で開始\n"
+
+#: sanity.cc:54
+#, c-format
+msgid "wrote debugging log to %sif reporting a bug, please include this file"
 msgstr ""
 
-#: sanity.cc:116
+#: sanity.cc:59
+#, fuzzy, c-format
+msgid "failed to write debugging log to %s\n"
+msgstr "%s へのデバッグログの書き込みに失敗しました"
+
+#: sanity.cc:110
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
 msgstr "致命的: フォーマッタ失敗 %s:%d: %s"
 
-#: sanity.cc:190
+#: sanity.cc:184
 msgid "misuse: "
 msgstr "誤り: "
 
-#: sanity.cc:202
+#: sanity.cc:196
 msgid "error: "
 msgstr "エラー: "
 
-#: sanity.cc:210
+#: sanity.cc:234
 #, c-format
-msgid "%s:%d: invariant '%s' violated"
-msgstr ""
+msgid "ignoring request to give last gasp; already in process of dumping\n"
+msgstr "最後の変更要請を無視します。既にダンプ処理中です\n"
 
-#: sanity.cc:223
+#: sanity.cc:238
 #, c-format
-msgid "%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n"
-msgstr ""
+msgid "saving current work set: %i items"
+msgstr "現在の作業セットを保存中: %i アイテム"
 
-#: sanity.cc:244
+#: sanity.cc:240
 #, c-format
 msgid "Current work set: %i items\n"
 msgstr "現在の作業セット: %i アイテム\n"
 
-#: schema_migration.cc:181
+#: sanity.cc:254 sanity.cc:260
+#, c-format
+msgid "ignoring error trigged by saving work set to debug log"
+msgstr "作業セットの保存によって引き起されたデバッグログへのエラーを無視します"
+
+#: sanity.cc:264
+#, c-format
+msgid "finished saving work set"
+msgstr "作業セットの保存終了"
+
+#: schema_migration.cc:47
+#, fuzzy, c-format
+msgid "executing SQL '%s'"
+msgstr "コマンド '%s' を実行中\n"
+
+#: schema_migration.cc:49
+#, c-format
+msgid "result: %i (%s)"
+msgstr ""
+
+#: schema_migration.cc:51
+#, fuzzy, c-format
+msgid "errmsg: %s"
+msgstr "エラー: %s\n"
+
+#: schema_migration.cc:184
 #, c-format
 msgid "failure extracting schema from sqlite_master"
 msgstr ""
-
-#: schema_migration.cc:217
-#, fuzzy, c-format
-msgid "calculating necessary migration steps"
-msgstr "%s から %s への変更セットを見積っています\n"
 
 #: schema_migration.cc:227
 #, c-format
 msgid "error at transaction BEGIN statement"
 msgstr ""
-
-#: schema_migration.cc:228
-#, fuzzy, c-format
-msgid "migrating data"
-msgstr "作業コピーをデータベースにコミット"
 
 #: schema_migration.cc:254
 #, c-format
@@ -3133,42 +4892,67 @@ msgstr "公開鍵 '%s' をデータベースから破棄\n"
 msgid "Press enter when the subprocess has completed"
 msgstr ""
 
-#: transforms.cc:510
+#: std_hooks.lua:211
+#, c-format
+msgid "Error running editor '%s' to enter log message\n"
+msgstr ""
+
+#: std_hooks.lua:553
+#, fuzzy
+msgid "executing external 2-way merge command\n"
+msgstr "内部三元統合完了\n"
+
+#: std_hooks.lua:661
+#, fuzzy
+msgid "executing external 3-way merge command\n"
+msgstr "内部三元統合完了\n"
+
+#: transforms.cc:521
+#, c-format
+msgid "converting %d bytes from %s to %s\n"
+msgstr "%d バイト: %s から %s へ変換中\n"
+
+#: transforms.cc:527
 #, c-format
 msgid "failed to convert string from %s to %s: '%s'"
 msgstr "文字列の変換 (%s から %s: '%s' へ) に失敗しました"
 
-#: transforms.cc:741 transforms.cc:755
+#: transforms.cc:667
+#, c-format
+msgid "converting %d bytes from IDNA ACE to UTF-8\n"
+msgstr "IDNA ACE から UTF-8 へ変換中 (%d バイト)\n"
+
+#: transforms.cc:670 transforms.cc:684
 #, c-format
 msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
 msgstr "UTF-8 から IDNA ACE へ変換中にエラー(%d バイト): %s"
 
-#: ui.cc:108
-#, fuzzy, c-format
-msgid "%.1f G"
-msgstr "%.1f M"
+#: transforms.cc:681
+#, c-format
+msgid "converting %d bytes from UTF-8 to IDNA ACE\n"
+msgstr "UTF-8 から IDNA ACE へ変換中 (%d バイト)\n"
 
-#: ui.cc:114
+#: transforms.cc:829
+#, c-format
+msgid "doing linesep conversion to %s\n"
+msgstr "%s について行末を変換中\n"
+
+#: ui.cc:120
 #, c-format
 msgid "%.1f M"
 msgstr "%.1f M"
 
-#: ui.cc:120
+#: ui.cc:125
 #, c-format
 msgid "%.1f k"
 msgstr "%.1f k"
 
-#: ui.cc:137 ui.cc:139
-#, c-format
-msgid "%d/%d"
-msgstr ""
-
-#: ui.cc:146
+#: ui.cc:134
 #, c-format
 msgid "%d"
 msgstr "%d"
 
-#: ui.cc:369
+#: ui.cc:326
 #, c-format
 msgid ""
 "fatal: %s\n"
@@ -3181,1708 +4965,258 @@ msgstr ""
 "このエラーメッセージと 'monotone --full-version' の結果、さらに %s について\n"
 "何をしたか説明を添えて報告して下さい\n"
 
-#: ui.cc:422
+#: ui.cc:369
 msgid "monotone: "
 msgstr "monotone: "
 
-#: update.cc:65
+#: update.cc:66
 #, c-format
 msgid "failed to decode boolean testresult cert value '%s'\n"
 msgstr "テスト結果真偽値の証明値 '%s' のデコードに失敗しました\n"
 
-#: update.cc:159
+#: update.cc:78
+#, c-format
+msgid "Considering update target %s\n"
+msgstr "ターゲット %s の更新について計算中\n"
+
+#: update.cc:88
+#, c-format
+msgid "%s not in branch %s\n"
+msgstr "%s はブランチ %s 内にはありません\n"
+
+#: update.cc:97
+#, c-format
+msgid "%s is acceptable update candidate\n"
+msgstr "%s は受け入れ可能な更新候補です\n"
+
+#: update.cc:102
+#, c-format
+msgid "%s has unacceptable test results\n"
+msgstr "%s は受け入れられないテスト結果です\n"
+
+#: update.cc:160
 #, c-format
 msgid "cannot determine branch for update"
 msgstr "更新するブランチを決定できません"
 
-#: vocab.cc:68
+#: vocab.cc:53
 #, c-format
 msgid "hex encoded ID '%s' size != %d"
 msgstr "十六進エンコード ID '%s' サイズ != %d"
 
-#: vocab.cc:72
+#: vocab.cc:56
 #, c-format
 msgid "bad character '%c' in id name '%s'"
 msgstr "不正な文字 '%c' (ID 名 '%s' 内)"
 
-#: vocab.cc:85
+#: vocab.cc:69
 #, c-format
 msgid "bad character '%c' in ace string '%s'"
 msgstr "不正な文字 '%c' (ace 文字列 '%s' 内)"
 
-#: vocab.cc:99
+#: vocab.cc:83
 #, c-format
 msgid "bad character '%c' in cert name '%s'"
 msgstr "不正な文字 '%c' (証明 '%s' 内)"
 
-#: vocab.cc:112
+#: vocab.cc:96
 #, c-format
 msgid "bad character '%c' in key name '%s'"
 msgstr "不正な文字 '%c' (キー名 '%s' 内)"
 
-#: vocab.cc:130
+#: vocab.cc:114
 #, c-format
 msgid "Invalid key length of %d bytes"
 msgstr "不正な鍵長 %d バイト"
 
-#: vocab.cc:148
+#: vocab.cc:132
 #, c-format
 msgid "Invalid hmac length of %d bytes"
 msgstr "不正な HMAC 長 %d バイト"
 
-#: work.cc:118
-#, fuzzy, c-format
-msgid "skipping ignorable file %s"
+#: work.cc:64
+#, c-format
+msgid "skipping ignorable file %s\n"
 msgstr "無視可能なファイル %s をスキップ\n"
 
-#: work.cc:127
-#, fuzzy, c-format
-msgid "skipping %s, already accounted for in workspace"
+#: work.cc:70
+#, c-format
+msgid "skipping %s, already accounted for in working copy\n"
 msgstr "既に作業コピーに追加されている %s をスキップ\n"
 
-#: work.cc:131
-#, fuzzy, c-format
-msgid "adding %s to workspace manifest"
+#: work.cc:74
+#, c-format
+msgid "adding %s to working copy add set\n"
 msgstr "作業コピー追加セットに %s を追加\n"
 
-#: work.cc:221
-#, fuzzy, c-format
-msgid "skipping %s, not currently tracked"
+#: work.cc:136
+#, c-format
+msgid "adding attribute '%s' on file %s to %s\n"
+msgstr "属性 '%s' (ファイル %s の)を %s に追加\n"
+
+#: work.cc:203
+#, c-format
+msgid "invalid path ''"
+msgstr "不適切なパス ''"
+
+#: work.cc:207
+#, c-format
+msgid "skipping %s, not currently tracked\n"
 msgstr "現在追跡対象ではない %s をスキップ\n"
 
-#: work.cc:231
+#: work.cc:211
 #, c-format
-msgid "cannot remove %s/, it is not empty"
-msgstr ""
+msgid "adding %s to working copy delete set\n"
+msgstr "%s を作業コピー削除セットに追加\n"
 
-#: work.cc:242
+#: work.cc:215
 #, c-format
-msgid "dropping %s from workspace manifest"
+msgid ""
+"sorry -- 'drop <directory>' is currently broken.\n"
+"try 'find %s -type f | monotone drop -@-'\n"
 msgstr ""
+"申し分けありませんが 'drop <ディレクトリ>' は使えません.\n"
+"代りに 'find %s -type f | monotone drop -@-' を試してみて下さい.\n"
 
-#: work.cc:305
-#, fuzzy, c-format
-msgid "destination dir %s/ does not exist in current revision"
+#: work.cc:227
+#, c-format
+msgid "dropped attributes for file %s from %s\n"
+msgstr "ファイル %s の属性を %s から削除しました\n"
+
+#: work.cc:253
+#, c-format
+msgid "invalid source path ''"
+msgstr "不適切なソースパス ''"
+
+#: work.cc:254
+#, c-format
+msgid "invalid destination path ''"
+msgstr "不適切な方向パス ''"
+
+#: work.cc:265
+#, c-format
+msgid "%s does not exist in current revision\n"
 msgstr "ファイル %s は現在のリビジョン内にはありません\n"
 
-#: work.cc:308
-#, fuzzy, c-format
-msgid "destination %s is an existing file in current revision"
-msgstr "ファイル %s は現在のリビジョン内にはありません\n"
-
-#: work.cc:318
-#, fuzzy, c-format
-msgid "empty path %s is not allowed"
-msgstr "パスフレーズは空にできません"
-
-#: work.cc:332
-#, fuzzy, c-format
-msgid "%s does not exist in current revision"
-msgstr "ファイル %s は現在のリビジョン内にはありません\n"
-
-#: work.cc:335
-#, fuzzy, c-format
-msgid "destination %s already exists in current revision"
+#: work.cc:268
+#, c-format
+msgid "%s already exists in current revision\n"
 msgstr "%s は現在のリビジョン内に存在しています\n"
 
-#: work.cc:344
-#, fuzzy, c-format
-msgid "renaming %s to %s in workspace manifest"
-msgstr "マニフェスト内の %d エントリを解析中\n"
-
-#: work.cc:369
-#, fuzzy, c-format
-msgid "%s doesn't exist in workspace, skipping"
-msgstr "リビジョン %s は db 内にありません. スキップします\n"
-
-#: work.cc:373
-#, fuzzy, c-format
-msgid "destination %s already exists in workspace, skipping"
-msgstr "リビジョン '%s' は既にデータベースにあります\n"
-
-#: work.cc:400
+#: work.cc:270
 #, c-format
-msgid "proposed new root directory '%s' is not versioned or does not exist"
-msgstr ""
+msgid "adding %s -> %s to working copy rename set\n"
+msgstr "%s -> %s を作業コピー名称変更セットに追加\n"
 
-#: work.cc:402
-#, fuzzy, c-format
-msgid "proposed new root directory '%s' is not a directory"
-msgstr "検索ルート '%s' はディレクトリではありません\n"
-
-#: work.cc:407
+#: work.cc:293
 #, c-format
-msgid "proposed new root directory '%s' contains illegal path %s"
-msgstr ""
+msgid "%s has existing attributes in %s; clean them up first"
+msgstr "%s は既存の %s 内に属性を持っています; まずそれを削除して下さい"
 
-#: work.cc:417
-#, fuzzy, c-format
-msgid "directory '%s' is not versioned or does not exist"
-msgstr "ディレクトリ '%s' は存在しません"
+#: work.cc:302
+#, c-format
+msgid "moving attributes for %s to %s\n"
+msgstr "%s の属性を %s に移動中\n"
 
-#: work.cc:423
-#, fuzzy, c-format
-msgid "'%s' is in the way"
-msgstr "'%s' はディレクトリではありません"
+#: work.cc:321
+#, c-format
+msgid "work path is %s\n"
+msgstr "作業パスは %s です\n"
 
-#: work.cc:520
-#, fuzzy, c-format
-msgid "workspace is corrupt: %s does not exist"
+#: work.cc:330
+#, c-format
+msgid "checking for un-committed work file %s\n"
+msgstr "未コミットの作業ファイル %s を検証中\n"
+
+#: work.cc:334
+#, c-format
+msgid "read rearrangement from %s\n"
+msgstr "%s から再調整読み取り\n"
+
+#: work.cc:338
+#, c-format
+msgid "no un-committed work file %s\n"
+msgstr "未コミットの作業ファイル %s はありません\n"
+
+#: work.cc:375
+#, c-format
+msgid "revision path is %s\n"
+msgstr "リビジョンパスは %s です\n"
+
+#: work.cc:385
+#, c-format
+msgid "working copy is corrupt: %s does not exist"
 msgstr "作業コピーは壊れています: %s は存在しません"
 
-#: work.cc:521
-#, fuzzy, c-format
-msgid "workspace is corrupt: %s is a directory"
+#: work.cc:386
+#, c-format
+msgid "working copy is corrupt: %s is a directory"
 msgstr "作業コピーは壊れています: %s は存在しません"
 
-#: work.cc:531
-#, fuzzy, c-format
-msgid "Problem with workspace: %s is unreadable"
+#: work.cc:389
+#, c-format
+msgid "loading revision id from %s\n"
+msgstr "%s からリビジョン ID を読み込み\n"
+
+#: work.cc:396
+#, c-format
+msgid "Problem with working directory: %s is unreadable"
 msgstr "作業ディレクトリに問題があります: %s を読み込めません"
 
-#: work.cc:557
+#: work.cc:405
+#, c-format
+msgid "writing revision id to %s\n"
+msgstr "リビジョン ID を %s に書き込み中\n"
+
+#: work.cc:424
 #, c-format
 msgid "base revision %s does not exist in database\n"
 msgstr "データベースに基準リビジョン %s は含まれていません\n"
 
-#: work.cc:894
+#: work.cc:427
 #, c-format
-msgid "dropping %s"
-msgstr ""
-
-#: work.cc:905 work.cc:916
-#, fuzzy, c-format
-msgid "path %s already exists"
-msgstr "PID ファイル '%s' は既に存在しています"
-
-#: work.cc:938 work.cc:965
-#, fuzzy, c-format
-msgid "adding %s"
-msgstr "%s がみつかりません"
-
-#: work.cc:954
-#, fuzzy, c-format
-msgid "path '%s' already exists, cannot create"
-msgstr "epoch '%s' は既にデータベースにあります\n"
-
-#: work.cc:961
-#, fuzzy, c-format
-msgid "renaming %s to %s"
-msgstr "%s を %s から %s へ戻しています\n"
-
-#: work.cc:996
-#, fuzzy, c-format
-msgid "file '%s' does not exist"
-msgstr "初期化ファイル '%s' は存在しません"
-
-#: work.cc:997
-#, fuzzy, c-format
-msgid "file '%s' is a directory"
-msgstr "'%s' はディレクトリではありません"
-
-#: work.cc:1002
-#, fuzzy, c-format
-msgid "content of file '%s' has changed, not overwriting"
-msgstr "ファイル %s を書き込みのために開くことができません"
-
-#: work.cc:1003
-#, fuzzy, c-format
-msgid "updating %s to %s"
-msgstr "%s を %s に更新中\n"
-
-#~ msgid "initializing from directory %s\n"
-#~ msgstr "ディレクトリ %s から初期化中\n"
-
-#~ msgid "branch name is '%s'\n"
-#~ msgstr "ブランチ名は '%s' です\n"
-
-#~ msgid "setting dump path to %s\n"
-#~ msgstr "ダンプパスを %s に設定\n"
-
-#~ msgid "creating working copy in %s\n"
-#~ msgstr "%s 内に作業コピーを作成\n"
-
-#~ msgid "creating bookkeeping directory '%s' for working copy in '%s'\n"
-#~ msgstr "作業コピーの記録簿用ディレクトリ '%s' を '%s' 内に作成\n"
-
-#~ msgid "'%s' ignored by restricted path set\n"
-#~ msgstr "'%s' は制限パスセットによって無視されました\n"
-
-#~ msgid "'%s' added to restricted path set\n"
-#~ msgstr "'%s' を制限パスセットに追加しました\n"
-
-#~ msgid "'%s' ignored by excluded path set\n"
-#~ msgstr "'%s' は除外パスセットによって無視されました\n"
-
-#~ msgid "'%s' added to excluded path set\n"
-#~ msgstr "'%s' を除外パスセットに追加しました\n"
-
-#~ msgid "checking excluded path set for '%s'\n"
-#~ msgstr "'%s' について除外パスセットを調べています\n"
-
-#~ msgid "path '%s' found in excluded path set; '%s' excluded\n"
-#~ msgstr "パス '%s' は除外パスセットに含まれています; '%s' は除外されます\n"
-
-#~ msgid "checking restricted path set for '%s'\n"
-#~ msgstr "'%s' について制限パスセットを調べています\n"
-
-#~ msgid "path '%s' found in restricted path set; '%s' included\n"
-#~ msgstr "パス '%s' は制限パスセットに含まれています; '%s' は含められます\n"
-
-#~ msgid "set search root to %s\n"
-#~ msgstr "検索ルートを %s に設定\n"
-
-#~ msgid "cert ok\n"
-#~ msgstr "証明 OK\n"
-
-#~ msgid "trust function liked %d signers of %s cert on manifest %s\n"
-#~ msgstr "trust function liked %d signers of %s cert on manifest %s\n"
-
-#~ msgid "trust function liked %d signers of %s cert on revision %s\n"
-#~ msgstr "trust function liked %d signers of %s cert on revision %s\n"
-
-#~ msgid "cert: signable text %s\n"
-#~ msgstr "証明: 署名テキスト %s\n"
-
-#, fuzzy
-#~ msgid "no private key '%s' found in key store or get_priv_key hook"
-#~ msgstr ""
-#~ "秘密鍵 '%s' はデータベース内にも get_priv_key フック内にもみつかりません"
-
-#, fuzzy
-#~ msgid "mismatch between key '%s' in key store and get_key_pair hook"
-#~ msgstr ""
-#~ "秘密鍵 '%s' はデータベース内のものと get_priv_key フック内のものが一致して"
-#~ "いません"
-
-#~ msgid "tid %d: parent %d, type %s, name %s\n"
-#~ msgstr "tid %d: 親 %d、タイプ %s、名前 %s\n"
-
-#~ msgid "%d -> %d\n"
-#~ msgstr "%d -> %d\n"
-
-#~ msgid "concatenating change sets\n"
-#~ msgstr "変更セットを結合中\n"
-
-#~ msgid "concatenating %d and %d deltas\n"
-#~ msgstr "%d と %d の差分を結合中\n"
-
-#~ msgid "processing delta on %s\n"
-#~ msgstr "%s の差分を処理中\n"
-
-#~ msgid "delta on %s in first changeset renamed to %s\n"
-#~ msgstr "最初の変更セット内の %s についての差分は %s への名称変更です\n"
-
-#~ msgid "discarding delta [%s]->[%s] for deleted file '%s'\n"
-#~ msgstr "差分 [%s]->[%s] (対象は削除されたファイル '%s') を破棄\n"
-
-#~ msgid "fusing deltas on %s : %s -> %s and %s -> %s\n"
-#~ msgstr "%s の差分を融合中: %s -> %s と %s -> %s\n"
-
-#~ msgid "delta on %s in second changeset copied forward\n"
-#~ msgstr "第二の変更セット内の %s の差分のコピーを転送しました\n"
-
-#~ msgid "finished concatenation\n"
-#~ msgstr "結合終了\n"
-
-#~ msgid "delete of %s dominates rename to %s\n"
-#~ msgstr "%s の削除は %s への名称変更を決定付けます\n"
-
-#~ msgid "unable to resolve file conflict '%s' -> '%s' vs. '%s'"
-#~ msgstr "ファイルの競合 '%s' -> '%s' 対 '%s' を解決できません"
-
-#~ msgid "unable to resolve dir conflict '%s' -> '%s' vs. '%s'"
-#~ msgstr "ディレクトリの競合 '%s' -> '%s' 対 '%s' を解決できません"
-
-#~ msgid "illegal conflict resolution '%s', wanted '%s' or '%s'\n"
-#~ msgstr "不法な競合の解決 '%s'. '%s' または '%s' であるべきです\n"
-
-#~ msgid "tid %d (%s) clobbered tid %d (%s)\n"
-#~ msgstr "tid %d (%s) は tid %d (%s) を上書きします\n"
-
-#~ msgid "skipping common change on %s (tid %d)\n"
-#~ msgstr "%s (tid %d) への共通の変更をスキップ\n"
-
-#~ msgid "skipping neutral change of %s -> %s (tid %d)\n"
-#~ msgstr "中立の変更 %s -> %s (tid %d) をスキップ\n"
-
-#~ msgid "propagating change on %s -> %s (tid %d)\n"
-#~ msgstr "変更を伝播中: %s -> %s (tid %d)\n"
-
-#~ msgid "conflict detected, resolved in A's favour\n"
-#~ msgstr "競合を検出. A フレーバで解決\n"
-
-#~ msgid "conflict detected, resolved in B's favour\n"
-#~ msgstr "競合を検出. B フレーバで解決\n"
-
-#~ msgid "reusing merge resolution '%s' : '%s' -> '%s'\n"
-#~ msgstr "統合解決案 '%s' を再利用 : '%s' -> '%s'\n"
-
-#~ msgid "merge of '%s' : '%s' vs. '%s' (no common ancestor) failed"
-#~ msgstr "'%s' の統合に失敗: '%s' と '%s' が対立 (共通の祖先なし)"
-
-#~ msgid "merge of '%s' : '%s' -> '%s' vs '%s' failed"
-#~ msgstr "'%s' の統合に失敗: '%s' -> '%s' と '%s' が対立"
-
-#~ msgid "merge of '%s' : '%s' -> '%s' vs '%s' resolved to '%s'\n"
-#~ msgstr "'%s' の統合: '%s' -> '%s' と '%s' の対立を '%s' に解決\n"
-
-#~ msgid "skipping delta '%s'->'%s' on deleted file '%s'\n"
-#~ msgstr "差分 '%s'->'%s' (対象=削除されたファイル '%s') をスキップ\n"
-
-#~ msgid "merge is copying delta '%s' : '%s' -> '%s'\n"
-#~ msgstr "統合は差分 '%s' : '%s' -> '%s' のコピーです\n"
-
-#~ msgid "propagating new file addition delta on '%s' : '%s' -> '%s'\n"
-#~ msgstr "'%s' の新規ファイル追加差分を伝播中: '%s' -> '%s'\n"
-
-#~ msgid "skipping new file addition delta on '%s' : '' -> '%s'\n"
-#~ msgstr "'%s' の新規ファイル追加差分をスキップ: '' -> '%s'\n"
-
-#~ msgid "skipping common delta '%s' : '%s' -> '%s'\n"
-#~ msgstr "共通の差分 '%s' をスキップ: '%s' -> '%s'\n"
-
-#~ msgid "skipping neutral delta on '%s' : %s -> %s\n"
-#~ msgstr "中立の差分 '%s' をスキップ: '%s' -> '%s'\n"
-
-#~ msgid "propagating unperturbed delta on '%s' : '%s' -> '%s'\n"
-#~ msgstr "'%s' の摂動を受けない差分を伝播中: '%s' -> '%s'\n"
-
-#~ msgid "merging delta '%s' : '%s' -> '%s' vs. '%s'\n"
-#~ msgstr "差分 '%s' を統合中: '%s' -> '%s' 対 '%s'\n"
-
-#~ msgid "resolved merge to '%s' : '%s' -> '%s'\n"
-#~ msgstr "'%s' への統合を解決しました: '%s' -> '%s'\n"
-
-#~ msgid "merging change sets\n"
-#~ msgstr "変更セットを統合中\n"
-
-#~ msgid "finished merge\n"
-#~ msgstr "統合終了\n"
-
-#~ msgid "inverting change set\n"
-#~ msgstr "変更セットを反転中\n"
-
-#~ msgid "converted 'delete %s' to 'add as %s' in inverse\n"
-#~ msgstr "'%s の削除' を '%s の追加' (逆方向)に変換しました\n"
-
-#~ msgid "converted add %s to delete in inverse\n"
-#~ msgstr "%s の追加を削除(逆方向)に変換しました\n"
-
-#~ msgid "converting delta %s -> %s on %s\n"
-#~ msgstr "差分 %s -> %s (対象 %s) を変換\n"
-
-#~ msgid "inverse is delta %s -> %s on %s\n"
-#~ msgstr "逆方向の差分は %s -> %s (対象=%s) です\n"
-
-#~ msgid "moving file %s -> %s\n"
-#~ msgstr "ファイルを移動 %s -> %s\n"
-
-#~ msgid "moving dir %s -> %s\n"
-#~ msgstr "ディレクトリを移動 %s -> %s\n"
-
-#~ msgid "expanding command '%s'\n"
-#~ msgstr "コマンド '%s' を展開\n"
-
-#~ msgid "expanded command to '%s'\n"
-#~ msgstr "コマンドを '%s' に展開\n"
-
-#~ msgid "executing command '%s'\n"
-#~ msgstr "コマンド '%s' を実行中\n"
-
-#~ msgid "working copy"
-#~ msgstr "作業コピー"
-
-#~ msgid "SRC DST"
-#~ msgstr "SRC DST"
-
-#~ msgid "dumping file '%s'\n"
-#~ msgstr "ファイル '%s' をダンプ\n"
-
-#~ msgid "found %d %s branch certs on revision %s\n"
-#~ msgstr "%d %s ブランチ証明がリビジョン %s でみつかりました\n"
-
-#~ msgid "no manifest %s found in database"
-#~ msgstr "マニフェスト %s はデータベース内にはみつかりません"
-
-#~ msgid "checking out revision %s to directory %s\n"
-#~ msgstr "リビジョン %s をディレクトリ %s に取り出し中\n"
-
-#~ msgid "writing file %s to %s\n"
-#~ msgstr "ファイル %s を %s に書き込み中\n"
-
-#~ msgid "OLDID NEWID"
-#~ msgstr "OLDID NEWID"
-
-#~ msgid "write manifest delta packet to stdout"
-#~ msgstr "マニフェスト差分パケットを標準出力に出力"
-
-#~ msgid "no such manifest '%s'"
-#~ msgstr "マニフェスト '%s' は存在しません"
-
-#~ msgid "write file delta packet to stdout"
-#~ msgstr "ファイル差分パケットを標準出力に出力"
-
-#~ msgid "no such file '%s'"
-#~ msgstr "ファイル '%s' は存在しません"
-
-#~ msgid "write revision data packet to stdout"
-#~ msgstr "リビジョンデータパケットを標準出力に出力"
-
-#~ msgid "write manifest data packet to stdout"
-#~ msgstr "マニフェストデータパケットを標準出力に出力"
-
-#~ msgid "write file data packet to stdout"
-#~ msgstr "ファイルデータパケットを標準出力に出力"
-
-#~ msgid "write cert packets to stdout"
-#~ msgstr "証明パケットを標準出力に出力"
-
-#~ msgid "rebuild the indices used to sync over the network"
-#~ msgstr "ネットワークを介して同期するのに使う索引を再構築"
-
-#~ msgid "using default server address: %s\n"
-#~ msgstr "デフォルトのサーバーアドレスを利用: %s\n"
-
-#~ msgid "using default branch include pattern: '%s'\n"
-#~ msgstr "ブランチ名に含めるデフォルトのパターンを利用: '%s'\n"
-
-#~ msgid "excluding: %s\n"
-#~ msgstr "除外: %s\n"
-
-#~ msgid ""
-#~ "new manifest '%s'\n"
-#~ "new revision '%s'\n"
-#~ msgstr ""
-#~ "新規マニフェスト '%s'\n"
-#~ "新規リビジョン '%s'\n"
-
-#~ msgid ""
-#~ "MT/log is non-empty and --message supplied\n"
-#~ "perhaps move or delete MT/log,\n"
-#~ "or remove --message from the command line?"
-#~ msgstr ""
-#~ "MT/log は空ではなく、 --message が指定されています.\n"
-#~ "もしかしたら MT/log を移動/削除したか、コマンド\n"
-#~ "行から --message を削除したのではありませんか?"
-
-#~ msgid "inserting new revision %s\n"
-#~ msgstr "新規リビジョン %s を挿入中\n"
-
-#~ msgid "skipping manifest %s, already in database\n"
-#~ msgstr "既にデータベースにあるマニフェスト %s をスキップ\n"
-
-#~ msgid "inserting manifest delta %s -> %s\n"
-#~ msgstr "マニフェスト差分 %s -> %s を挿入中\n"
-
-#~ msgid "inserting full manifest %s\n"
-#~ msgstr "完全マニフェスト %s を挿入中\n"
-
-#~ msgid "skipping file delta %s, already in database\n"
-#~ msgstr "既にデータベースにあるファイル差分 %s をスキップ\n"
-
-#~ msgid "inserting delta %s -> %s\n"
-#~ msgstr "差分 %s -> %s を挿入中\n"
-
-#~ msgid "inserting full version %s\n"
-#~ msgstr "完全なバージョン %s を挿入中\n"
-
-#~ msgid "no common ancestor for %s and %s"
-#~ msgstr "%s と %s には共通の祖先がありません"
-
-#~ msgid "concatenating un-committed changeset to composite\n"
-#~ msgstr "合成のためにコミットされていない変更セットを連結\n"
-
-#~ msgid "LEFT RIGHT"
-#~ msgstr "LEFT RIGHT"
-
-#~ msgid "print least common ancestor"
-#~ msgstr "最も近い祖先を表示"
-
-#~ msgid "no common ancestor found"
-#~ msgstr "共通の祖先はありませんでした"
-
-#~ msgid "print least common ancestor / dominator"
-#~ msgstr "最も近い祖先 / 支配者を表示"
-
-#~ msgid "no common ancestor/dominator found"
-#~ msgstr "共通の祖先 / 支配者がみつかりません"
-
-#~ msgid ""
-#~ "update working copy.\n"
-#~ "If a revision is given, base the update on that revision.  If not,\n"
-#~ "base the update on the head of the branch (given or implicit)."
-#~ msgstr ""
-#~ "作業コピーを更新。\n"
-#~ "リビジョンが指定されていればそれに基づいて、指定されていなければ\n"
-#~ "明示的または暗黙に指定されたブランチの最新版に基づいて更新します。"
-
-#~ msgid "updating along chosen edge %s -> %s\n"
-#~ msgstr "選択した先端 %s -> %s に従って更新中\n"
-
-#~ msgid "merging working copy with chosen edge %s -> %s\n"
-#~ msgstr "作業コピーを選択した先端 %s -> %s と統合中\n"
-
-#~ msgid ""
-#~ "common ancestor %s found\n"
-#~ "trying 3-way merge\n"
-#~ msgstr ""
-#~ "共通の祖先 %s を発見\n"
-#~ "3方結合を試みています\n"
-
-#~ msgid "no common ancestor found, synthesizing edges\n"
-#~ msgstr "共通の祖先がありませんでしたので、先端同士を同期中\n"
-
-#~ msgid ""
-#~ "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
-#~ "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"
-#~ msgstr ""
-#~ "LEFT-REVISION RIGHT-REVISION DEST-BRANCH\n"
-#~ "LEFT-REVISION RIGHT-REVISION COMMON-ANCESTOR DEST-BRANCH"
-
-#~ msgid "annotate file file_path '%s'\n"
-#~ msgstr "注釈ファイル file_path '%s'\n"
-
-#~ msgid "no such file '%s' in revision '%s'\n"
-#~ msgstr "ファイル '%s' はリビジョン %s 内にはありません\n"
-
-#~ msgid "annotate for file_id %s\n"
-#~ msgstr "file_id %s に対する注釈\n"
-
-#~ msgid "revision '%s' in '%s' maps to '%s' in %s\n"
-#~ msgstr "リビジョン '%s' ('%s' 内) を '%s' (%s 内) にマップ\n"
-
-#~ msgid "DIRECTORY"
-#~ msgstr "DIRECTORY"
-
-#~ msgid "checking %d files\n"
-#~ msgstr "%d 個のファイルを検証中\n"
-
-#~ msgid "checking file %s\n"
-#~ msgstr "ファイル %s を検証中\n"
-
-#~ msgid "checking %d manifests\n"
-#~ msgstr "%d 個のマニフェストを検証中\n"
-
-#~ msgid "manifests"
-#~ msgstr "マニフェスト"
-
-#~ msgid "checking manifest %s\n"
-#~ msgstr "マニフェスト %s を検証中\n"
-
-#~ msgid "error parsing manifest %s: %s"
-#~ msgstr "マニフェスト %s: %s を解析中にエラー"
-
-#~ msgid "checking %d revisions\n"
-#~ msgstr "%d 個のリビジョンを検証中\n"
-
-#~ msgid "checking revision %s\n"
-#~ msgstr "リビジョン %s を検証中\n"
-
-#~ msgid "error parsing revision %s: %s"
-#~ msgstr "リビジョン %s: %s を解析中にエラー"
-
-#~ msgid "checked %d revisions after starting with %d\n"
-#~ msgstr "%d 個のリビジョンを %d からはじめて検証しました\n"
-
-#~ msgid "checking %d ancestry edges\n"
-#~ msgstr "%d 個の祖先の端を検証中\n"
-
-#~ msgid "checking %d public keys\n"
-#~ msgstr "%d 個の公開鍵を検証中\n"
-
-#~ msgid "checking %d revision certs\n"
-#~ msgstr "%d 個のリビジョン証明を検証中\n"
-
-#~ msgid "checking local history of %d revisions\n"
-#~ msgstr "%d 個のリビジョンのローカルの履歴を検証中\n"
-
-#~ msgid "manifest %s missing (%d revision references)\n"
-#~ msgstr "マニフェスト %s がありません (リビジョン参照: %d)\n"
-
-#~ msgid "manifest %s unreferenced\n"
-#~ msgstr "マニフェスト %s は参照されていません\n"
-
-#~ msgid "manifest %s is not parseable (perhaps with unnormalized paths?)\n"
-#~ msgstr ""
-#~ "マニフェスト %s を解析できません (パスが正規化されていないのでは?)\n"
-
-#~ msgid "key %s signed %d certs\n"
-#~ msgstr "鍵 %s は %d 個の証明の署名に使われています\n"
-
-#~ msgid "%d missing manifests\n"
-#~ msgstr "みつからないマニフェスト: %d\n"
-
-#~ msgid "%d unreferenced manifests\n"
-#~ msgstr "参照されていないマニフェスト: %d\n"
-
-#~ msgid "%d manifests not parseable (perhaps with invalid paths)\n"
-#~ msgstr "解析できないマニフェスト(不適切なパスを指定していませんか?): %d\n"
-
-#~ msgid "%d manifests not in normalized form\n"
-#~ msgstr "正規化された形式になっていないマニフェスト: %d\n"
-
-#~ msgid "mcerts"
-#~ msgstr "mcerts"
-
-#~ msgid "pubkeys"
-#~ msgstr "公開鍵"
-
-#~ msgid "privkeys"
-#~ msgstr "秘密鍵"
-
-#~ msgid "statement cache statistics\n"
-#~ msgstr "ステートメントキャッシュ統計\n"
-
-#~ msgid "prepared %d statements\n"
-#~ msgstr "%d 個のプリペアードステートメント\n"
-
-#~ msgid "%d executions of %s\n"
-#~ msgstr "%d 実行 (%s)\n"
-
-#~ msgid "prepared statement %s\n"
-#~ msgstr "プリペアードステートメント %s\n"
-
-#~ msgid "binding %d parameters for %s\n"
-#~ msgstr "%d 変数を %s にバインド\n"
-
-#~ msgid "binding %d with value '%s'\n"
-#~ msgstr "%d を値 '%s' にバインド\n"
-
-#~ msgid "cannot change filename to %s while db is open"
-#~ msgstr ""
-#~ "データベースが使用中なのでファイル名を %s に変更することができません"
-
-#~ msgid "version cache expiring %s\n"
-#~ msgstr "バージョンキャッシュの有効期限が切れています: %s\n"
-
-#~ msgid "version cache hit on %s\n"
-#~ msgstr "バージョンキャッシュヒット: %s\n"
-
-#~ msgid "reconstructing %s in %s\n"
-#~ msgstr "%s (%s 内)を再構築中\n"
-
-#~ msgid "following delta %s -> %s\n"
-#~ msgstr "続く差分 %s -> %s\n"
-
-#~ msgid "Killing revision %s locally\n"
-#~ msgstr "ローカルにリビジョン %s を削除\n"
-
-#~ msgid "Deleting all references to branch %s\n"
-#~ msgstr "ブランチ %s へのすべての参照を削除\n"
-
-#~ msgid "Deleting all references to tag %s\n"
-#~ msgstr "タグ %s へのすべてのリファレンスを削除\n"
-
-#, fuzzy
-#~ msgid "after get_branch_heads for %s, heads has %d entries\n"
-#~ msgstr "ブランチ %s には %d 個のエントリがあります\n"
-
-#, fuzzy
-#~ msgid "limiting to current branch '%s'\n"
-#~ msgstr "ブランチ %s へのすべての参照を削除\n"
-
-#~ msgid "exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n"
-#~ msgstr ""
-#~ "前に確保したエクステント [%d+%d] を変更されたエクステント [%d+%d] に置き換"
-#~ "えています\n"
-
-#~ msgid "conflicting edits: %s %d[%d] '%s' vs. %s %d[%d] '%s'\n"
-#~ msgstr "競合する編集箇所: %s %d[%d] '%s' 対 %s %d[%d] '%s'\n"
-
-#~ msgid "conflicting edits: [%s %d %d] vs. [%s %d %d]\n"
-#~ msgstr "競合する編集箇所: [%s %d %d] 対 [%s %d %d]\n"
-
-#~ msgid "calculating left edit script on %d -> %d lines\n"
-#~ msgstr "%d -> %d 行について左側を編集するスクリプトを計算中\n"
-
-#~ msgid "calculating right edit script on %d -> %d lines\n"
-#~ msgstr "%d -> %d 行について右側を編集するスクリプトを計算中\n"
-
-#~ msgid "calculating left extents on %d edits\n"
-#~ msgstr "%d 編集箇所について左エクステントを計算中\n"
-
-#~ msgid "calculating right extents on %d edits\n"
-#~ msgstr "%d 編集箇所について右エクステントを計算中\n"
-
-#~ msgid "normalizing %d right extents\n"
-#~ msgstr "%d 右エクステントを正規化\n"
-
-#~ msgid "normalizing %d left extents\n"
-#~ msgstr "%d 左エクステントを正規化\n"
-
-#~ msgid "conflicting prefixes\n"
-#~ msgstr "競合するプレフィクス\n"
-
-#~ msgid "conflicting suffixes\n"
-#~ msgstr "競合するサフィックス\n"
-
-#~ msgid "merging %d left, %d right extents\n"
-#~ msgstr "%d 左, %d 右エクステントを統合\n"
-
-#~ msgid "conflict detected. no merge.\n"
-#~ msgstr "競合を検出、統合しません\n"
-
-#~ msgid "recording successful merge of %s <-> %s into %s\n"
-#~ msgstr "%s <-> %s から %s への成功した統合を記録\n"
-
-#~ msgid "trying to merge %s <-> %s (ancestor: %s)\n"
-#~ msgstr "%s <-> %s (祖先: %s) の統合を試しています\n"
-
-#~ msgid "files are identical\n"
-#~ msgstr "ファイルは全く同じです\n"
-
-#~ msgid "internal 3-way merged ok\n"
-#~ msgstr "内部三元統合完了\n"
-
-#~ msgid "lua merge3 hook merged ok\n"
-#~ msgstr "lua merge3 フック統合完了\n"
-
-#~ msgid "trying to merge %s <-> %s\n"
-#~ msgstr "%s <-> %s の統合を試しています\n"
-
-#~ msgid ""
-#~ "help required for 2-way merge\n"
-#~ "[    left] %s\n"
-#~ "[   right] %s\n"
-#~ "[  merged] %s\n"
-#~ msgstr ""
-#~ "二元統合には手助けが必要です\n"
-#~ "[    左] %s\n"
-#~ "[    右] %s\n"
-#~ "[統合済] %s\n"
-
-#~ msgid "lua merge2 hook merged ok\n"
-#~ msgstr "lua merge2 フック統合完了\n"
-
-#~ msgid "temporarily recording merge of %s <-> %s into %s\n"
-#~ msgstr "一時的に %s <-> %s から %s への統合を記録\n"
-
-#~ msgid "ignoring book keeping entry %s\n"
-#~ msgstr "記録簿用エントリ %s を無視します\n"
-
-#~ msgid "running arc4 process on %d bytes of data\n"
-#~ msgstr "データ %d バイト目について arc4 プロセスを実行中\n"
-
-#~ msgid ""
-#~ "generated %d-byte public key\n"
-#~ "generated %d-byte (encrypted) private key\n"
-#~ msgstr ""
-#~ "%d バイトの公開鍵を生成\n"
-#~ "%d バイトの(暗号化された)秘密鍵を生成\n"
-
-#~ msgid "base64-decoding %d-byte private key\n"
-#~ msgstr "%d バイト秘密鍵の base64 デコード\n"
-
-#, fuzzy
-#~ msgid "have %d-byte encrypted private key\n"
-#~ msgstr "%d バイトの復号化された秘密鍵から署名を作成中\n"
-
-#, fuzzy
-#~ msgid "base64-decoding %d-byte old private key\n"
-#~ msgstr "%d バイト秘密鍵の base64 デコード\n"
-
-#~ msgid "building signer from %d-byte decrypted private key\n"
-#~ msgstr "%d バイトの復号化された秘密鍵から署名を作成中\n"
-
-#~ msgid "produced %d-byte signature\n"
-#~ msgstr "%d バイトの署名を作成\n"
-
-#~ msgid "building verifier for %d-byte pub key\n"
-#~ msgstr "%d バイトの公開鍵について識別子を構築中\n"
-
-#~ msgid "checking %d-byte (%d decoded) signature\n"
-#~ msgstr "%d バイト (%d デコード)の署名を検証中\n"
-
-#~ msgid "lua failure: %s; stack = %s\n"
-#~ msgstr "lua 失敗: %s; スタック = %s\n"
-
-#, fuzzy
-#~ msgid "Lua::ok(): failed"
-#~ msgstr "Lua::ok(): 失敗 = %i"
-
-#~ msgid "lua stack: %s"
-#~ msgstr "lua スタック: %s"
-
-#~ msgid "lua: extracted string = %s"
-#~ msgstr "lua: 抽出文字列 = %s"
-
-#~ msgid "lua: extracted int = %i"
-#~ msgstr "lua: 抽出 int = %i"
-
-#~ msgid "lua: extracted double = %i"
-#~ msgstr "lua: 抽出 double = %i"
-
-#~ msgid "lua: extracted bool = %i"
-#~ msgstr "lua: 抽出 bool = %i"
-
-#~ msgid "loading lua hook %s"
-#~ msgstr "lua フック %s を読み込み中"
-
-#~ msgid "opening rcfile '%s' ...\n"
-#~ msgstr "初期化ファイル '%s' を開いています...\n"
-
-#~ msgid "'%s' is ok\n"
-#~ msgstr "'%s' OK\n"
-
-#~ msgid "calling attr_init_function for %s"
-#~ msgstr "%s について attr_init_function を呼出し"
-
-#~ msgid "  calling an attr_init_function for %s"
-#~ msgstr "  %s について attr_init_function を呼出し"
-
-#~ msgid "  added attr %s = %s"
-#~ msgstr "  属性 %s = %s を追加"
-
-#~ msgid "  no attr added"
-#~ msgstr "  属性追加なし"
-
-#~ msgid "scanning file %s\n"
-#~ msgstr "ファイル %s を走査中\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "%d missing files\n"
-#~ "to restore consistency, on each missing file run either\n"
-#~ "'monotone drop FILE' to remove it permanently, or\n"
-#~ "'monotone revert FILE' to restore it\n"
-#~ "or to handle all at once, simple 'monotone drop --missing'\n"
-#~ "or 'monotone revert --missing'"
-#~ msgstr ""
-#~ "一貫性を保つために必要な\n"
-#~ "ファイルが %d 個みつかりません。各々のファイルについて\n"
-#~ "'monotone drop FILE' として恒久的にファイルを削除するか、\n"
-#~ "'monotone revert FILE' として復活させて下さい。\n"
-
-#~ msgid "command line: %s\n"
-#~ msgstr "コマンド行: %s\n"
-
-#~ msgid "set locale: LC_ALL=%s\n"
-#~ msgstr "ロカール設定: LC_ALL=%s\n"
-
-#~ msgid "Removed 'hidden' from option # %d\n"
-#~ msgstr "オプション # %d から 'hidden' を削除\n"
-
-#~ msgid "Added 'hidden' to option # %d\n"
-#~ msgstr "オプション # %d に 'hidden' を追加\n"
-
-#~ msgid "revs written"
-#~ msgstr "書き込んだリビジョン"
-
-#~ msgid "all epochs processed, opening database valve\n"
-#~ msgstr "すべての epoch を処理しました。データベースバルブを開いています\n"
-
-#~ msgid "dropping outgoing netcmd (because we're in error unwind mode)\n"
-#~ msgstr "エラー回復が可能なモードですので、外向きの netcmd を破棄します\n"
-
-#~ msgid "analyzing %d ancestry edges\n"
-#~ msgstr "%d 個の系の端を解析中\n"
-
-#~ msgid "Dropping branch certs for unwanted branch %s"
-#~ msgstr "希望しないブランチ %s のブランチ証明を削除"
-
-#, fuzzy
-#~ msgid "analyze_ancestry_graph"
-#~ msgstr "%d 個の系の端を解析中\n"
-
-#~ msgid "read %d bytes from fd %d (peer %s)\n"
-#~ msgstr "%d バイト fd %d (ピーア %s) から読み込み\n"
-
-#~ msgid "in error unwind mode, so throwing them into the bit bucket\n"
-#~ msgstr "エラー回復可能モードですので、これらをビットバケット中に捨てます\n"
-
-#~ msgid "wrote %d bytes to fd %d (peer %s)\n"
-#~ msgstr "%d バイト fd %d (ピーア %s) へ書き込み\n"
-
-#~ msgid "finished flushing output queue in error unwind mode, disconnecting\n"
-#~ msgstr "エラー回復可能モードで出力キューをフラッシュ完了、切断中\n"
-
-#~ msgid "queueing 'bye' command\n"
-#~ msgstr "'bye' コマンドをキューに追加\n"
-
-#~ msgid "queueing 'error' command\n"
-#~ msgstr "'error' コマンドをキューに追加\n"
-
-#~ msgid "queueing 'done' command for %s level %s\n"
-#~ msgstr "'%s' (レベル %s) について 'done' コマンドをキューに追加\n"
-
-#~ msgid "queueing request for refinement of %s node '%s', level %d\n"
-#~ msgstr "%s ノード '%s', レベル %d の微調整要求をキューに追加\n"
-
-#~ msgid "not queueing request for %s '%s' as we are in pure source role\n"
-#~ msgstr ""
-#~ "純粋なソースの役割を果しているので %s '%s' の要求はキューに追加しません\n"
-
-#~ msgid "not queueing request for %s '%s' as we already requested it\n"
-#~ msgstr "既に要求済みの %s '%s' はキューに追加しません\n"
-
-#~ msgid "queueing request for data of %s item '%s'\n"
-#~ msgstr "%s アイテム '%s' のデータ要求をキューに追加\n"
-
-#~ msgid ""
-#~ "not queueing request for %s delta '%s' -> '%s' as we are in pure source "
-#~ "role\n"
-#~ msgstr ""
-#~ "純粋なソースの役割を果しているので %s 差分 '%s' -> '%s' の要求をキューに追"
-#~ "加しません\n"
-
-#~ msgid ""
-#~ "not queueing request for %s delta '%s' -> '%s' as we already requested "
-#~ "the target\n"
-#~ msgstr ""
-#~ "既に要求済みなので %s 差分 '%s' -> '%s' の要求をキューに追加しません\n"
-
-#~ msgid "queueing request for contents of %s delta '%s' -> '%s'\n"
-#~ msgstr "%s 差分 '%s' -> '%s' の内容について要求をキューに追加\n"
-
-#~ msgid "not queueing %s data for '%s' as we are in pure sink role\n"
-#~ msgstr ""
-#~ "純粋なシンクの役割を果しているので %s データ (対象: '%s' )をキューに追加し"
-#~ "ません\n"
-
-#~ msgid "queueing %d bytes of data for %s item '%s'\n"
-#~ msgstr "%d バイト (%s アイテム '%s' のデータ)をキューに追加\n"
-
-#~ msgid "not queueing %s delta '%s' -> '%s' as we are in pure sink role\n"
-#~ msgstr ""
-#~ "純粋なシンクの役割を果しているので %s 差分 '%s' -> '%s' をキューに追加しま"
-#~ "せん\n"
-
-#~ msgid ""
-#~ "not queueing note of nonexistence of %s item '%s' as we are in pure sink "
-#~ "role\n"
-#~ msgstr ""
-#~ "純粋なシンクの役割を果しているので %s アイテム '%s' がないことについてノー"
-#~ "トをキューに追加しません\n"
-
-#~ msgid "queueing note of nonexistance of %s item '%s'\n"
-#~ msgstr "%s アイテム '%s' がないことについてノートをキューに追加\n"
-
-#~ msgid "received 'bye' netcmd\n"
-#~ msgstr "'bye' netcmd を受信\n"
-
-#~ msgid "received 'done' for empty %s level %d, marking as complete\n"
-#~ msgstr "空の %s レベル %d について 'done' 受信, 完了としてマーク\n"
-
-#~ msgid ""
-#~ "received 'done' for %s level %d, which had refinements; sending echo of "
-#~ "done for level %d\n"
-#~ msgstr ""
-#~ "微調整を含む %s レベル %d について 'done' 受信;レベル %d の各 'done' につ"
-#~ "いて送信\n"
-
-#~ msgid "server key has name %s, hash %s\n"
-#~ msgstr "サーバー鍵の名前 %s、ハッシュ %s\n"
-
-#~ msgid "received 'hello' netcmd from server '%s' with nonce '%s'\n"
-#~ msgstr "サーバー '%s' から nonce '%s' と一緒に 'hello' netcmd を受信\n"
-
-#~ msgid "client signature OK, accepting authentication\n"
-#~ msgstr "クライアント署名 OK、認証完了\n"
-
-#~ msgid ""
-#~ "received 'confirm' netcmd from server '%s' for pattern '%s' exclude '%s' "
-#~ "in %s mode\n"
-#~ msgstr ""
-#~ "サーバー '%s' からパターン '%s' ('%s' を除く; %s モード)への 'confirm' "
-#~ "netcmd を受信しました\n"
-
-#~ msgid "server signature OK, accepting authentication\n"
-#~ msgstr "サーバー署名 OK、認証完了\n"
-
-#~ msgid "bad server signature\n"
-#~ msgstr "不正なサーバー署名\n"
-
-#~ msgid "unknown server key\n"
-#~ msgstr "不明なサーバー鍵\n"
-
-#~ msgid "public key '%s' is also called '%s'\n"
-#~ msgstr "公開鍵 '%s' の別名は '%s' です\n"
-
-#~ msgid "manifest '%s' does not exist in our database"
-#~ msgstr "こちらのデータベースにはマニフェスト '%s' は含まれていません"
-
-#~ msgid "received 'refine' netcmd on %s node '%s', level %d\n"
-#~ msgstr "%s ノード '%s'、レベル %d で 'refine' netcmd を受信\n"
-
-#~ msgid "no corresponding %s merkle node for prefix '%s', level %d\n"
-#~ msgstr ""
-#~ "相当する %s merkle ノード(対象: プレフィクス '%s'、レベル %d) を持っていま"
-#~ "せん\n"
-
-#~ msgid "found corresponding %s merkle node for prefix '%s', level %d\n"
-#~ msgstr ""
-#~ "相当する %s merkle ノード (対象: プレフィクス '%s', レベル %d) をみつけま"
-#~ "した\n"
-
-#~ msgid "received 'send_data' netcmd requesting %s '%s'\n"
-#~ msgstr "%s '%s' を要求する 'send_data' netcmd を受信\n"
-
-#~ msgid "received 'send_delta' netcmd requesting %s edge '%s' -> '%s'\n"
-#~ msgstr "%s 先端 '%s' -> '%s' を要求する 'send_delta' netcmd を受信\n"
-
-#~ msgid "delta requested for item type %s\n"
-#~ msgstr "アイテムタイプ %s について要求された差分\n"
-
-#~ msgid "received epoch %s for branch %s\n"
-#~ msgstr "epoch %s (ブランチ %s) を受信\n"
-
-#~ msgid "branch %s has no epoch; setting epoch to %s\n"
-#~ msgstr "ブランチ %s には epoch はありませんので、epoch を %s に設定します\n"
-
-#~ msgid "branch %s already has an epoch; checking\n"
-#~ msgstr "ブランチ %s には既に epoch があります。検証中\n"
-
-#~ msgid "public key '%s' already exists in our database\n"
-#~ msgstr "公開鍵 '%s' は既にデータベースにあります\n"
-
-#~ msgid "cert '%s' already exists in our database\n"
-#~ msgstr "証明 '%s' は既にデータベースにあります\n"
-
-#~ msgid "manifest version '%s' already exists in our database\n"
-#~ msgstr "バージョン '%s' のマニフェストは既にデータベースにあります\n"
-
-#~ msgid "file version '%s' already exists in our database\n"
-#~ msgstr "バージョン '%s' のファイルは既にデータベースにあります\n"
-
-#~ msgid "ignoring delta received for item type %s\n"
-#~ msgstr "アイテムタイプ %s について受信した差分を無視\n"
-
-#~ msgid "received 'nonexistant' netcmd for %s '%s'\n"
-#~ msgstr "%s '%s' について 'nonexistant' netcmd を受信\n"
-
-#~ msgid "Received greeting from usher: %s"
-#~ msgstr "門番から受け入れ挨拶を受信: %s"
-
-#~ msgid "Sent reply."
-#~ msgstr "応答を送信"
-
-#~ msgid ""
-#~ "received 'anonymous' netcmd from client for pattern '%s' excluding '%s' "
-#~ "in %s mode\n"
-#~ msgstr ""
-#~ "クライアントからパターン '%s' ('%s' を除く; %s モード)への 'anonymous' "
-#~ "netcmd を受信\n"
-
-#~ msgid ""
-#~ "received 'auth(hmac)' netcmd from client '%s' for pattern '%s' exclude '%"
-#~ "s' in %s mode with nonce1 '%s'\n"
-#~ msgstr ""
-#~ "クライアント '%s' からパターン '%s' ('%s' を除く; モード %s) について "
-#~ "nonce1 '%s' とともに 'auth(hmac)' netcmd を受信\n"
-
-#~ msgid "processing %d byte input buffer from peer %s\n"
-#~ msgstr "%d バイトの入力バッファ (送信元: ピーア %s) を処理中\n"
-
-#, fuzzy
-#~ msgid "failed to process '%s' packet"
-#~ msgstr "データ文字列 '%s' の解析に失敗: %s"
-
-#~ msgid "read from fd %d (peer %s) closed OK after goodbye\n"
-#~ msgstr ""
-#~ "fd %d (ピーア %s) からの読み込みは goodbye の後で問題なく閉じました\n"
-
-#~ msgid "read from fd %d (peer %s) failed, disconnecting\n"
-#~ msgstr "fd %d (ピーア %s) からの読み込みに失敗, 切断中\n"
-
-#~ msgid "write on fd %d (peer %s) closed OK after goodbye\n"
-#~ msgstr "fd %d (ピーア %s) への書き込みは goodbye の後で問題なく閉じました\n"
-
-#~ msgid "write on fd %d (peer %s) failed, disconnecting\n"
-#~ msgstr "fd %d (ピーア %s) からの書き込みに失敗、切断中\n"
-
-#~ msgid "terminated exchange with %s\n"
-#~ msgstr "%s との交換を切断\n"
-
-#~ msgid "fd %d is armed\n"
-#~ msgstr "fd %d: armed\n"
-
-#, fuzzy
-#~ msgid "accepting new connection on %s : %s\n"
-#~ msgstr "%s : %d での新しい接続を受理\n"
-
-#~ msgid "accept() returned a dead client\n"
-#~ msgstr "accept() は死んだクライアントを返しました\n"
-
-#~ msgid "fd %d (peer %s) read failed, disconnecting\n"
-#~ msgstr "fd %d (ピーア %s) 読み込み失敗、切断中\n"
-
-#~ msgid "fd %d (peer %s) write failed, disconnecting\n"
-#~ msgstr "fd %d (ピーア %s) 書き込み失敗、切断中\n"
-
-#~ msgid ""
-#~ "fd %d (peer %s) exchanged goodbyes and flushed output, disconnecting\n"
-#~ msgstr ""
-#~ "fd %d (ピーア %s) は goodbye を交し出力をフラッシュしました。切断中\n"
-
-#~ msgid "i/o probe with %d armed\n"
-#~ msgstr "%d armed で I/O プローブ\n"
-
-#, fuzzy
-#~ msgid "timed out waiting for I/O (listening on %s : %s)\n"
-#~ msgstr "I/O (%s : %d でリスン中) 待機中にタイムアウト\n"
-
-#~ msgid "got woken up for action on unknown fd %d\n"
-#~ msgstr "不明な fd %d はアクションのために起こされました\n"
-
-#~ msgid "got some OOB data on fd %d (peer %s), disconnecting\n"
-#~ msgstr "fd %d (ピーア %s) で OOB データを受信し、切断中\n"
-
-#~ msgid "including branch %s"
-#~ msgstr "ブランチ %s を含めます"
-
-#~ msgid "setting epoch on %s to zero\n"
-#~ msgstr "%s の epoch を零に設定\n"
-
-#, fuzzy
-#~ msgid "traversing head %s"
-#~ msgstr "最新版 %s を保存しています\n"
-
-#~ msgid "writing delayed revision data packet for %s\n"
-#~ msgstr "%s について遅延したリビジョンデータパケットを書き込み中\n"
-
-#~ msgid "discarding revision data packet %s with unmet dependencies\n"
-#~ msgstr "依存関係を満たさないリビジョンデータパケット %s を破棄\n"
-
-#~ msgid "writing delayed manifest data packet for %s\n"
-#~ msgstr "%s について遅延したマニフェストデータパケットを書き込み中\n"
-
-#~ msgid "discarding manifest data packet %s with unmet dependencies\n"
-#~ msgstr "依存関係を満たさないマニフェストデータパケット %s を破棄\n"
-
-#~ msgid "writing delayed file data packet for %s\n"
-#~ msgstr "%s について遅延ファイルデータパケットを書き込み中\n"
-
-#, fuzzy
-#~ msgid "writing delayed manifest %s packet for %s -> %s%s\n"
-#~ msgstr "遅延マニフェスト %s パケット(%s -> %s)を書き込み中\n"
-
-#~ msgid "discarding manifest delta packet %s -> %s with unmet dependencies\n"
-#~ msgstr "依存関係を満たさないマニフェスト差分パケット %s -> %s を破棄\n"
-
-#, fuzzy
-#~ msgid "writing delayed file %s packet for %s -> %s%s\n"
-#~ msgstr "遅延したファイル %s パケット(%s -> %s)を書き込み中\n"
-
-#~ msgid "discarding file delta packet %s -> %s with unmet dependencies\n"
-#~ msgstr "依存関係を満たさないファイル差分パケット %s -> %s を破棄\n"
-
-#~ msgid "writing delayed revision cert on %s\n"
-#~ msgstr "%s の遅延リビジョン証明を書き込み中\n"
-
-#~ msgid "discarding revision cert packet %s with unmet dependencies\n"
-#~ msgstr "依存関係を満たさないリビジョン証明パケット %s を破棄\n"
-
-#~ msgid "writing delayed public key %s\n"
-#~ msgstr "遅延公開鍵 %s を書き込み中\n"
-
-#~ msgid "writing delayed private key %s\n"
-#~ msgstr "遅延秘密鍵 %s を書き込み中\n"
-
-#~ msgid "noting acceptence of revision %s\n"
-#~ msgstr "リビジョン %s について受理したものはありません\n"
-
-#~ msgid "noting acceptence of manifest %s\n"
-#~ msgstr "マニフェスト %s について受理したものはありません\n"
-
-#~ msgid "noting acceptence of file %s\n"
-#~ msgstr "ファイル %s について受理したものはありません\n"
-
-#~ msgid "skipping existing file version %s\n"
-#~ msgstr "既存のファイル、バージョン %s をスキップ\n"
-
-#~ msgid "delaying file delta %s -> %s for preimage\n"
-#~ msgstr "事前イメージのためのファイル差分 %s -> %s を遅延\n"
-
-#~ msgid "skipping delta to existing file version %s\n"
-#~ msgstr "既存のファイル、バージョン %s への差分をスキップ\n"
-
-#~ msgid ""
-#~ "reconstructed file from reverse delta '%s' -> '%s' has wrong id '%s'\n"
-#~ msgstr ""
-#~ "逆方向の差分 '%s' -> '%s' から再構築されたファイルの ID '%s' は不正なもの"
-#~ "です\n"
-
-#~ msgid "delaying reverse file delta %s -> %s for preimage\n"
-#~ msgstr "事前イメージのための逆方向のファイル差分 %s -> %s を遅延\n"
-
-#~ msgid "skipping reverse delta to existing file version %s\n"
-#~ msgstr "既存のファイル、バージョン %s への逆方向の差分をスキップ\n"
-
-#~ msgid "skipping existing manifest version %s\n"
-#~ msgstr "既存のマニフェスト、バージョン %s をスキップ\n"
-
-#~ msgid "reconstructed manifest from delta '%s' -> '%s' has wrong id '%s'\n"
-#~ msgstr ""
-#~ "差分 '%s' -> '%s' から再構築されたマニフェストの ID '%s' は不正なもので"
-#~ "す\n"
-
-#~ msgid "delaying manifest delta %s -> %s for preimage\n"
-#~ msgstr "事前イメージのための逆方向のファイル差分 %s -> %s を遅延\n"
-
-#~ msgid "skipping delta to existing manifest version %s\n"
-#~ msgstr "既存のマニフェストバージョン %s への差分をスキップ\n"
-
-#~ msgid ""
-#~ "reconstructed manifest from reverse delta '%s' -> '%s' has wrong id '%s'\n"
-#~ msgstr ""
-#~ "逆方向の差分 '%s' -> '%s' から再構築されたマニフェストの ID '%s' は不正な"
-#~ "ものです\n"
-
-#~ msgid "delaying manifest reverse delta %s -> %s for preimage\n"
-#~ msgstr "事前イメージのためのマニフェストの逆方向の差分 %s -> %s を遅延\n"
-
-#~ msgid "skipping reverse delta to existing manifest version %s\n"
-#~ msgstr "既存のマニフェスト、バージョン %s への逆方向の差分をスキップ\n"
-
-#~ msgid "delaying revision %s for new manifest %s\n"
-#~ msgstr "リビジョン %s (新しいマニフェスト %s) を遅延\n"
-
-#~ msgid "delaying revision %s for old manifest %s\n"
-#~ msgstr "リビジョン %s (古いマニフェスト %s) を遅延\n"
-
-#~ msgid "delaying revision %s for old revision %s\n"
-#~ msgstr "リビジョン %s (古いリビジョン %s) を遅延\n"
-
-#~ msgid "delaying revision %s for old file %s\n"
-#~ msgstr "リビジョン %s (古いファイル %s) を遅延\n"
-
-#~ msgid "delaying revision %s for new file %s\n"
-#~ msgstr "リビジョン %s (新しいファイル %s) を遅延\n"
-
-#~ msgid "skipping existing revision %s\n"
-#~ msgstr "既存のリビジョン %s をスキップ\n"
-
-#~ msgid "delaying revision cert on %s\n"
-#~ msgstr "%s のリビジョン証明を遅延\n"
-
-#~ msgid "skipping existing revision cert %s\n"
-#~ msgstr "既存のリビジョン証明 %s をスキップ\n"
-
-#~ msgid "skipping prohibited public key %s\n"
-#~ msgstr "禁止された公開鍵 %s をスキップ\n"
-
-#~ msgid "skipping existing public key %s\n"
-#~ msgstr "既存の公開鍵 %s をスキップ\n"
-
-#, fuzzy
-#~ msgid "skipping prohibited key pair %s\n"
-#~ msgstr "禁止された公開鍵 %s をスキップ\n"
-
-#, fuzzy
-#~ msgid "skipping existing key pair %s\n"
-#~ msgstr "既存の公開鍵 %s をスキップ\n"
-
-#~ msgid "packet valve opened\n"
-#~ msgstr "パケットバルブ: 開\n"
-
-#~ msgid "wrote %i queued packets\n"
-#~ msgstr "%i キューパケット書き込み\n"
-
-#, fuzzy
-#~ msgid "read data packet"
-#~ msgstr "データパケット読み込み\n"
-
-#, fuzzy
-#~ msgid "read delta packet"
-#~ msgstr "差分パケット読み込み\n"
-
-#, fuzzy
-#~ msgid "read cert packet"
-#~ msgstr "証明パケット読み込み\n"
-
-#, fuzzy
-#~ msgid "read pubkey data packet"
-#~ msgstr "鍵データパケット読み込み\n"
-
-#, fuzzy
-#~ msgid "read keypair data packet"
-#~ msgstr "鍵データパケット読み込み\n"
-
-#~ msgid "Calculating time of %s\n"
-#~ msgstr "%s の時間を計算しています\n"
-
-#~ msgid "version %s -> tag %s\n"
-#~ msgstr "バージョン %s - タグ %s\n"
-
-#~ msgid "skipping identity file edge\n"
-#~ msgstr "識別ファイルの先端をスキップ\n"
-
-#~ msgid "existing path to %s found, skipping\n"
-#~ msgstr "%s への既存のパスを発見、スキップ\n"
-
-#~ msgid "skipping identity manifest edge\n"
-#~ msgstr "識別マニフェストの先端をスキップ\n"
-
-#~ msgid "version %s has %d lines\n"
-#~ msgstr "バージョン %s には %d 行あります\n"
-
-#~ msgid "following RCS edge %s -> %s\n"
-#~ msgstr "次の RCS 先端 %s -> %s\n"
-
-#~ msgid "constructed RCS version %s, inserting into database\n"
-#~ msgstr "構築された RCS バージョン %s をデータベースに挿入\n"
-
-#~ msgid "following RCS branch %s = '%s'\n"
-#~ msgstr "次の RCS ブランチ %s = '%s' を追跡\n"
-
-#~ msgid "finished RCS branch %s = '%s'\n"
-#~ msgstr "RCS ブランチ %s ='%s' を終了\n"
-
-#~ msgid "importing file '%s'\n"
-#~ msgstr "ファイル '%s' を取り込み中\n"
-
-#~ msgid "first version in branch %s would be %s\n"
-#~ msgstr "ブランチ %s 内の最初のバージョンは %s でしょう\n"
-
-#~ msgid "file branchpoint for %s at %s\n"
-#~ msgstr "%s のファイルブランチ点 %s\n"
-
-#~ msgid "skipping non-RCS file %s\n"
-#~ msgstr "非 RCS ファイル %s をスキップ\n"
-
-#~ msgid "examining next commit [t:%d] [p:%s] [a:%s] [c:%s]\n"
-#~ msgstr "次のコミット [t:%d] [p:%s] [a:%s] [c:%s] を検査中\n"
-
-#~ msgid "expiring cluster\n"
-#~ msgstr "クラスタを終了中\n"
-
-#~ msgid "examining cluster %d to see if it touched %d\n"
-#~ msgstr "クラスタ %d が %d にふれているか調べています\n"
-
-#~ msgid "found cluster touching %d: [t:%d] [a:%d] [c:%d]\n"
-#~ msgstr "%d: [t:%d] [a:%d] [c:%d] にふれているクラスタをみつけました\n"
-
-#~ msgid "last modification time is %d\n"
-#~ msgstr "最終更新日時は %d です\n"
-
-#~ msgid "picked existing cluster [t:%d] [a:%d] [c:%d]\n"
-#~ msgstr "既存のクラスタ [t:%d] [a:%d] [c:%d] を選択\n"
-
-#~ msgid "building new cluster [t:%d] [a:%d] [c:%d]\n"
-#~ msgstr "新しいクラスタ [t:%d] [a:%d] [c:%d] を作成中\n"
-
-#~ msgid "finished branch commits, writing all pending clusters\n"
-#~ msgstr ""
-#~ "ブランチコミットを終了し、すべての待機中のクラスタを書き込んでいます\n"
-
-#~ msgid "finished writing pending clusters\n"
-#~ msgstr "待機中のクラスタへの書き込みを完了\n"
-
-#~ msgid "branch %s has %d entries\n"
-#~ msgstr "ブランチ %s には %d 個のエントリがあります\n"
-
-#~ msgid "trunk has %d entries\n"
-#~ msgstr "trunk には %d 個のエントリがあります\n"
-
-#~ msgid "initial cluster on branch %s has %d live entries\n"
-#~ msgstr "ブランチ %s の初期クラスタには %d 個の生きたエントリがあります\n"
-
-#~ msgid "initial cluster contains %s at %s\n"
-#~ msgstr "初期クラスタは %s を %s に含んでいます\n"
-
-#~ msgid "storing manifest '%s' (base %s)\n"
-#~ msgstr "マニフェスト '%s' (基準 %s) を保存しています\n"
-
-#~ msgid "storing head %s\n"
-#~ msgstr "最新版 %s を保存しています\n"
-
-#~ msgid "skipping delta to null manifest\n"
-#~ msgstr "空マニフェストについての差分をスキップ\n"
-
-#~ msgid "skipping cyclical manifest delta %s -> %s\n"
-#~ msgstr "マニフェストの循環差分 %s -> %s をスキップ\n"
-
-#~ msgid "writing full manifest %s\n"
-#~ msgstr "完全なマニフェスト %s を書き込み中\n"
-
-#~ msgid "storing manifest delta %s -> %s\n"
-#~ msgstr "マニフェスト差分 %s -> %s を保存中\n"
-
-#~ msgid "adding entry state '%s' on '%s'\n"
-#~ msgstr "エントリ状態 '%s' ('%s') を追加\n"
-
-#~ msgid "applying state delta on '%s' : '%s' -> '%s'\n"
-#~ msgstr "'%s' : '%s' -> '%s' の状態差分を適用中\n"
-
-#~ msgid "deleting entry state '%s' on '%s'\n"
-#~ msgstr "エントリ状態 '%s' ('%s') を削除しています\n"
-
-#~ msgid "BEGIN consume_cluster()\n"
-#~ msgstr "BEGIN consume_cluster()\n"
-
-#~ msgid "END consume_cluster('%s') (parent '%s')\n"
-#~ msgstr "END consume_cluster('%s') (親 '%s')\n"
-
-#~ msgid "verifying new revisions (this may take a while)\n"
-#~ msgstr "新しいリビジョンを検証中 (しばらく御待ち下さい)\n"
-
-#~ msgid "Verifying revision %s has sane history (to depth %i)\n"
-#~ msgstr "リビジョン %s の履歴が正しいか検証しています (深さ %i)\n"
-
-#~ msgid "Examining %s -> %s\n"
-#~ msgstr "%s -> %s を検討中\n"
-
-#~ msgid "%s and %s have no common ancestor, so done\n"
-#~ msgstr "%s と %s には共通の祖先はありません。完了\n"
-
-#~ msgid "already checked common ancestor, so done\n"
-#~ msgstr "既にチェック済の共通の祖先。完了\n"
-
-#~ msgid "%s is a merge; verifying paths to common ancestor %s are sane\n"
-#~ msgstr "%s は統合です。共通の祖先 %s へのパスが適切なものか検証しています\n"
-
-#~ msgid "loading parents for node %d\n"
-#~ msgstr "ノード %d の親を読み込み中\n"
-
-#~ msgid "parent %s -> node %d\n"
-#~ msgstr "親 %s -> ノード %d\n"
-
-#~ msgid "found %d intersecting nodes\n"
-#~ msgstr "%d 個の交差ノードがみつかりました\n"
-
-#~ msgid "searching for common ancestor, left=%s right=%s\n"
-#~ msgstr "左=%s 右=%s の共通の祖先を検索中\n"
-
-#~ msgid "common ancestor scan [par=%d,anc=%d,dom=%d]\n"
-#~ msgstr "共通の祖先を走査 [親=%d,祖先=%d,支配=%d]\n"
-
-#~ msgid "found node %d, ancestor of left %s and dominating right %s\n"
-#~ msgstr "みつかったノード %d は左 %s と支配している右 %s の祖先です\n"
-
-#~ msgid "found node %d, ancestor of right %s and dominating left %s\n"
-#~ msgstr "みつかったノード %d は右 %s と支配している左 %s の祖先です\n"
-
-#~ msgid "searching for least common ancestor, left=%s right=%s\n"
-#~ msgstr "最小公倍の祖先を検索中, 左=%s 右=%s\n"
-
-#~ msgid "least common ancestor scan [par=%d,anc=%d]\n"
-#~ msgstr "最も近い祖先を走査 [親=%d,祖先=%d]\n"
-
-#~ msgid "found node %d, ancestor of left %s and right %s\n"
-#~ msgstr "みつかったノード %d は左 %s、右 %s の祖先です\n"
-
-#~ msgid "checking whether %s is an ancestor of %s\n"
-#~ msgstr "%s が %s の祖先かどうか検証しています\n"
-
-#~ msgid "new root: %s\n"
-#~ msgstr "新規ルート: %s\n"
-
-#~ msgid "new leaf: %s\n"
-#~ msgstr "新規リーフ: %s\n"
-
-#~ msgid "exploring changesets from parents of %s, seeking towards %s\n"
-#~ msgstr "%s の親から %s に向って変更セットを調査中\n"
-
-#~ msgid "considering parent %s of %s\n"
-#~ msgstr "親 %s (%s) について検討中\n"
-
-#~ msgid "revision %s is relevant, composing with edge to %s\n"
-#~ msgstr "リビジョン %s は %s への先端と関連し複合しています\n"
-
-#~ msgid "parent %s of %s is not relevant\n"
-#~ msgstr "親 %s (%s) は関連していません\n"
-
-#~ msgid "adding parents of %s to subgraph\n"
-#~ msgstr "%s の親をサブグラフに追加\n"
-
-#~ msgid "found parent %s of %s\n"
-#~ msgstr "親 %s (%s) を発見\n"
-
-#~ msgid "adding parent %s to next frontier\n"
-#~ msgstr "親 %s を次の先端に追加\n"
-
-#~ msgid "calculating composite changeset between %s and %s\n"
-#~ msgstr "%s と %s の間の複合変更セットを見積っています\n"
-
-#~ msgid "no common ancestor for %s and %s\n"
-#~ msgstr "%s と %s の共通の祖先はありません\n"
-
-#~ msgid "common ancestor is %s\n"
-#~ msgstr "共通の祖先は %s です\n"
-
-#~ msgid "analyzing manifest changes from '%s' -> '%s'\n"
-#~ msgstr "'%s' -> '%s' からマニフェストの変更を解析中\n"
-
-#~ msgid "splitting ancestry for file %s\n"
-#~ msgstr "ファイル %s の系統を分離中\n"
-
-#~ msgid "noting ancestry from child %d -> parent %d\n"
-#~ msgstr "子 %d -> 親 %d の系統はありません\n"
-
-#~ msgid "setting epoch for %s to %s\n"
-#~ msgstr "%s の epoch を %s に設定\n"
-
-#~ msgid "node %d = manifest %s\n"
-#~ msgstr "ノード %d = マニフェスト %s\n"
-
-#~ msgid "loaded '%s' manifest cert for node %s\n"
-#~ msgstr "'%s' マニフェスト証明 (ノード %s) を読み込みました\n"
-
-#~ msgid "node %d = revision %s = manifest %s\n"
-#~ msgstr "ノード %d = リビジョン %s = マニフェスト %s\n"
-
-#~ msgid "loaded '%s' revision cert for node %s\n"
-#~ msgstr "'%s' リビジョン証明 (ノード %s) を読み込みました\n"
-
-#~ msgid "processing node %d\n"
-#~ msgstr "ノード %d を処理中\n"
-
-#~ msgid "node %d already processed, skipping\n"
-#~ msgstr "ノード %d をスキップ (既に処理済み)\n"
-
-#~ msgid "node %d is a root node\n"
-#~ msgstr "ノード %d はルートノードです\n"
-
-#~ msgid "parent node %d = revision %s\n"
-#~ msgstr "親ノード %d = リビジョン %s\n"
-
-#~ msgid "processing edge from child %d -> parent %d\n"
-#~ msgstr "子 %d -> 親 %d から先端を処理中\n"
-
-#~ msgid "mapped node %d to revision %s\n"
-#~ msgstr "ノード %d をリビジョン %s へ割り当てました\n"
-
-#~ msgid "skipping already existing revision %s\n"
-#~ msgstr "既存のリビジョン %s をスキップ\n"
-
-#~ msgid "rebuilding revision graph from existing graph\n"
-#~ msgstr "既存のグラフからリビジョングラフを再度構成中\n"
-
-#~ msgid "started up on %s\n"
-#~ msgstr "%s で開始\n"
-
-#~ msgid "ignoring request to give last gasp; already in process of dumping\n"
-#~ msgstr "最後の変更要請を無視します。既にダンプ処理中です\n"
-
-#~ msgid "saving current work set: %i items"
-#~ msgstr "現在の作業セットを保存中: %i アイテム"
-
-#~ msgid "ignoring error trigged by saving work set to debug log"
-#~ msgstr ""
-#~ "作業セットの保存によって引き起されたデバッグログへのエラーを無視します"
-
-#~ msgid "finished saving work set"
-#~ msgstr "作業セットの保存終了"
-
-#, fuzzy
-#~ msgid "executing SQL '%s'"
-#~ msgstr "コマンド '%s' を実行中\n"
-
-#, fuzzy
-#~ msgid "errmsg: %s"
-#~ msgstr "エラー: %s\n"
-
-#, fuzzy
-#~ msgid "executing external 2-way merge command\n"
-#~ msgstr "内部三元統合完了\n"
-
-#, fuzzy
-#~ msgid "executing external 3-way merge command\n"
-#~ msgstr "内部三元統合完了\n"
-
-#~ msgid "converting %d bytes from %s to %s\n"
-#~ msgstr "%d バイト: %s から %s へ変換中\n"
-
-#~ msgid "converting %d bytes from IDNA ACE to UTF-8\n"
-#~ msgstr "IDNA ACE から UTF-8 へ変換中 (%d バイト)\n"
-
-#~ msgid "converting %d bytes from UTF-8 to IDNA ACE\n"
-#~ msgstr "UTF-8 から IDNA ACE へ変換中 (%d バイト)\n"
-
-#~ msgid "doing linesep conversion to %s\n"
-#~ msgstr "%s について行末を変換中\n"
-
-#~ msgid "Considering update target %s\n"
-#~ msgstr "ターゲット %s の更新について計算中\n"
-
-#~ msgid "%s is acceptable update candidate\n"
-#~ msgstr "%s は受け入れ可能な更新候補です\n"
-
-#~ msgid "%s has unacceptable test results\n"
-#~ msgstr "%s は受け入れられないテスト結果です\n"
-
-#~ msgid "adding attribute '%s' on file %s to %s\n"
-#~ msgstr "属性 '%s' (ファイル %s の)を %s に追加\n"
-
-#~ msgid "invalid path ''"
-#~ msgstr "不適切なパス ''"
-
-#~ msgid "adding %s to working copy delete set\n"
-#~ msgstr "%s を作業コピー削除セットに追加\n"
-
-#~ msgid ""
-#~ "sorry -- 'drop <directory>' is currently broken.\n"
-#~ "try 'find %s -type f | monotone drop -@-'\n"
-#~ msgstr ""
-#~ "申し分けありませんが 'drop <ディレクトリ>' は使えません.\n"
-#~ "代りに 'find %s -type f | monotone drop -@-' を試してみて下さい.\n"
-
-#~ msgid "dropped attributes for file %s from %s\n"
-#~ msgstr "ファイル %s の属性を %s から削除しました\n"
-
-#~ msgid "invalid source path ''"
-#~ msgstr "不適切なソースパス ''"
-
-#~ msgid "invalid destination path ''"
-#~ msgstr "不適切な方向パス ''"
-
-#~ msgid "adding %s -> %s to working copy rename set\n"
-#~ msgstr "%s -> %s を作業コピー名称変更セットに追加\n"
-
-#~ msgid "%s has existing attributes in %s; clean them up first"
-#~ msgstr "%s は既存の %s 内に属性を持っています; まずそれを削除して下さい"
-
-#~ msgid "moving attributes for %s to %s\n"
-#~ msgstr "%s の属性を %s に移動中\n"
-
-#~ msgid "work path is %s\n"
-#~ msgstr "作業パスは %s です\n"
-
-#~ msgid "checking for un-committed work file %s\n"
-#~ msgstr "未コミットの作業ファイル %s を検証中\n"
-
-#~ msgid "read rearrangement from %s\n"
-#~ msgstr "%s から再調整読み取り\n"
-
-#~ msgid "no un-committed work file %s\n"
-#~ msgstr "未コミットの作業ファイル %s はありません\n"
-
-#~ msgid "revision path is %s\n"
-#~ msgstr "リビジョンパスは %s です\n"
-
-#~ msgid "loading revision id from %s\n"
-#~ msgstr "%s からリビジョン ID を読み込み\n"
-
-#~ msgid "writing revision id to %s\n"
-#~ msgstr "リビジョン ID を %s に書き込み中\n"
-
-#~ msgid "old manifest is %s\n"
-#~ msgstr "古い manifest は %s です\n"
-
-#~ msgid "base manifest %s does not exist in database\n"
-#~ msgstr "データベースに基準マニフェスト %s は含まれていません\n"
-
-#~ msgid "old manifest has %d entries\n"
-#~ msgstr "古いマニフェストには %d 個のエントリがあります\n"
-
-#~ msgid "user log path is %s\n"
-#~ msgstr "ユーザーログパスは %s です\n"
-
-#~ msgid "options path is %s\n"
-#~ msgstr "オプションパスは %s です\n"
-
-#~ msgid "local dump path is %s\n"
-#~ msgstr "ローカルのダンプパスは %s です\n"
-
-#~ msgid "attribute map path is %s\n"
-#~ msgstr "属性マップパスは %s です\n"
-
-#~ msgid "computing binary delta instructions\n"
-#~ msgstr "バイナリ差分命令を計算中\n"
-
-#~ msgid "computed binary delta instructions\n"
-#~ msgstr "バイナリ差分命令の計算結果\n"
+msgid "old manifest is %s\n"
+msgstr "古い manifest は %s です\n"
+
+#: work.cc:430
+#, c-format
+msgid "base manifest %s does not exist in database\n"
+msgstr "データベースに基準マニフェスト %s は含まれていません\n"
+
+#: work.cc:435
+#, c-format
+msgid "old manifest has %d entries\n"
+msgstr "古いマニフェストには %d 個のエントリがあります\n"
+
+#: work.cc:456
+#, c-format
+msgid "user log path is %s\n"
+msgstr "ユーザーログパスは %s です\n"
+
+#: work.cc:505
+#, c-format
+msgid "options path is %s\n"
+msgstr "オプションパスは %s です\n"
+
+#: work.cc:552
+#, c-format
+msgid "local dump path is %s\n"
+msgstr "ローカルのダンプパスは %s です\n"
+
+#: work.cc:604
+#, c-format
+msgid "attribute map path is %s\n"
+msgstr "属性マップパスは %s です\n"
+
+#: xdelta.cc:345
+#, c-format
+msgid "computing binary delta instructions\n"
+msgstr "バイナリ差分命令を計算中\n"
+
+#: xdelta.cc:347
+#, c-format
+msgid "computed binary delta instructions\n"
+msgstr "バイナリ差分命令の計算結果\n"
 
 #~ msgid "no unique private key for cert construction"
 #~ msgstr "証明作成のための固有の秘密鍵がありません"
