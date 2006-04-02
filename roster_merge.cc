@@ -1,5 +1,5 @@
 // -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-// copyright (C) 2005 nathaniel smith <njs@pobox.com>
+// copyright (C) 2005, 2006 nathaniel smith <njs@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
@@ -1338,6 +1338,8 @@ test_roster_merge_attr_lifecycle()
 static void
 test_simple_rename_target_conflict()
 {
+  roster_t left_roster, right_roster;
+  marking_map left_markings, right_markings;
   MM(left_roster);
   MM(left_markings);
   MM(right_roster);
@@ -1365,7 +1367,16 @@ test_simple_rename_target_conflict()
                result);
 
   I(!result.is_clean());
-  I(
+  rename_target_conflict const & c = idx(result.rename_target_conflicts, 0);
+  I((c.nid1 == left_nid && c.nid2 == right_nid)
+    || (c.nid1 == right_nid && c.nid2 == left_nid));
+  I(c.parent_name == std::make_pair(root_nid, idx(split("thing"), 1)));
+  // this tests that they were detached, implicitly
+  result.roster.attach_node(left_nid, split("left"));
+  result.roster.attach_node(right_nid, split("right"));
+  result.rename_target_conflicts.pop_back();
+  I(result.is_clean());
+  result.roster.check_sane();
 }
 
 // directory loops
@@ -1390,6 +1401,7 @@ add_roster_merge_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&test_roster_merge_node_lifecycle));
   suite->add(BOOST_TEST_CASE(&test_roster_merge_attr_lifecycle));
   suite->add(BOOST_TEST_CASE(&test_scalar_merges));
+  suite->add(BOOST_TEST_CASE(&test_simple_rename_target_conflict));
 }
 
 #endif // BUILD_UNIT_TESTS
