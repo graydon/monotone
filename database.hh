@@ -69,7 +69,7 @@ int sqlite3_finalize(sqlite3_stmt *);
 
 class transaction_guard;
 struct posting;
-struct app_state;
+class app_state;
 struct revision_set;
 struct query;
 
@@ -88,7 +88,7 @@ class database
 
   std::map<std::string, statement> statement_cache;
 
-  struct app_state * __app;
+  app_state * __app;
   struct sqlite3 * __sql;
   struct sqlite3 * sql(bool init = false, bool migrating_format = false);
   int transaction_level;
@@ -126,7 +126,7 @@ class database
                  hexenc<id> const & base,
                  delta & del,
                  std::string const & table);
-  void get_version(hexenc<id> const & id,
+  void get_version(hexenc<id> const & ident,
                    data & dat,
                    std::string const & data_table,
                    std::string const & delta_table);
@@ -136,7 +136,7 @@ class database
            std::string const & table);
   void drop(hexenc<id> const & base,
             std::string const & table);
-  void put_delta(hexenc<id> const & id,
+  void put_delta(hexenc<id> const & ident,
                  hexenc<id> const & base,
                  delta const & del,
                  std::string const & table);
@@ -160,7 +160,7 @@ class database
   void get_certs(std::vector< cert > & certs,
                  std::string const & table);  
 
-  void get_certs(hexenc<id> const & id, 
+  void get_certs(hexenc<id> const & ident, 
                  std::vector< cert > & certs,
                  std::string const & table);  
 
@@ -168,12 +168,12 @@ class database
                  std::vector< cert > & certs,
                  std::string const & table);
 
-  void get_certs(hexenc<id> const & id,
+  void get_certs(hexenc<id> const & ident,
                  cert_name const & name,
                  std::vector< cert > & certs,
                  std::string const & table);  
 
-  void get_certs(hexenc<id> const & id,
+  void get_certs(hexenc<id> const & ident,
                  cert_name const & name,
                  base64<cert_value> const & val, 
                  std::vector< cert > & certs,
@@ -219,11 +219,11 @@ public:
   void ensure_open_for_format_changes();
   bool database_specified();
   
-  bool file_version_exists(file_id const & id);
-  bool roster_version_exists(hexenc<id> const & id);
-  bool revision_exists(revision_id const & id);
-  bool roster_link_exists_for_revision(revision_id const & id);
-  bool roster_exists_for_revision(revision_id const & id);
+  bool file_version_exists(file_id const & ident);
+  bool roster_version_exists(hexenc<id> const & ident);
+  bool revision_exists(revision_id const & ident);
+  bool roster_link_exists_for_revision(revision_id const & ident);
+  bool roster_exists_for_revision(revision_id const & ident);
 
   void get_roster_links(std::map<revision_id, hexenc<id> > & links);
   void get_file_ids(std::set<file_id> & ids);
@@ -234,7 +234,7 @@ public:
   
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist)
-  void get_file_version(file_id const & id,
+  void get_file_version(file_id const & ident,
                         file_data & dat);
 
   // put file w/o predecessor into db
@@ -248,15 +248,15 @@ public:
 
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist). 
-  void get_manifest_version(manifest_id const & id,
+  void get_manifest_version(manifest_id const & ident,
                             manifest_data & dat);
 
   void get_revision_ancestry(std::multimap<revision_id, revision_id> & graph);
 
-  void get_revision_parents(revision_id const & id,
+  void get_revision_parents(revision_id const & ident,
                            std::set<revision_id> & parents);
 
-  void get_revision_children(revision_id const & id,
+  void get_revision_children(revision_id const & ident,
                              std::set<revision_id> & children);
 
   void get_revision_manifest(revision_id const & cid,
@@ -264,10 +264,10 @@ public:
 
   void deltify_revision(revision_id const & rid);
 
-  void get_revision(revision_id const & id,
+  void get_revision(revision_id const & ident,
                    revision_set & cs);
 
-  void get_revision(revision_id const & id,
+  void get_revision(revision_id const & ident,
                    revision_data & dat);
 
   void put_revision(revision_id const & new_id,
@@ -294,17 +294,17 @@ public:
   void get_public_keys(std::vector<rsa_keypair_id> & pubkeys);
 
   bool public_key_exists(hexenc<id> const & hash);
-  bool public_key_exists(rsa_keypair_id const & id);
+  bool public_key_exists(rsa_keypair_id const & ident);
 
   
   void get_pubkey(hexenc<id> const & hash, 
-                  rsa_keypair_id & id,
+                  rsa_keypair_id & ident,
                   base64<rsa_pub_key> & pub_encoded);
 
-  void get_key(rsa_keypair_id const & id, 
+  void get_key(rsa_keypair_id const & ident, 
                base64<rsa_pub_key> & pub_encoded);
 
-  void put_key(rsa_keypair_id const & id, 
+  void put_key(rsa_keypair_id const & ident, 
                base64<rsa_pub_key> const & pub_encoded);
 
   void delete_public_key(rsa_keypair_id const & pub_id);
@@ -325,7 +325,7 @@ public:
   void get_revision_certs(cert_name const & name, 
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & id, 
+  void get_revision_certs(revision_id const & ident, 
                           cert_name const & name, 
                           std::vector< revision<cert> > & certs);
 
@@ -333,21 +333,21 @@ public:
                           base64<cert_value> const & val, 
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & id, 
+  void get_revision_certs(revision_id const & ident, 
                           cert_name const & name, 
                           base64<cert_value> const & value,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & id, 
+  void get_revision_certs(revision_id const & ident, 
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & id, 
+  void get_revision_certs(revision_id const & ident, 
                           std::vector< hexenc<id> > & hashes);
 
   void get_revision_cert(hexenc<id> const & hash,
                          revision<cert> & c);
   
-  void get_manifest_certs(manifest_id const & id, 
+  void get_manifest_certs(manifest_id const & ident, 
                           std::vector< manifest<cert> > & certs);
 
   void get_manifest_certs(cert_name const & name, 

@@ -14,7 +14,7 @@
 // could in theory be in transforms.cc too, but that file's already kinda
 // big and this stuff "feels" different, imho.
 
-struct lua_hooks;
+class lua_hooks;
 
 void generate_key_pair(lua_hooks & lua,           // to hook for phrase
                        rsa_keypair_id const & id, // to prompting user for phrase
@@ -68,11 +68,11 @@ void write_pubkey(rsa_keypair_id const & id,
                   base64<rsa_pub_key> const & pub,
                   std::string & out);
 
-void key_hash_code(rsa_keypair_id const & id,
+void key_hash_code(rsa_keypair_id const & ident,
                    base64<rsa_pub_key> const & pub,
                    hexenc<id> & out);
 
-void key_hash_code(rsa_keypair_id const & id,
+void key_hash_code(rsa_keypair_id const & ident,
                    base64< rsa_priv_key > const & priv,
                    hexenc<id> & out);
 

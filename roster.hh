@@ -253,7 +253,7 @@ struct temp_node_id_source
 
 template <> void dump(roster_t const & val, std::string & out);
 
-struct app_state;
+class app_state;
 struct revision_set;
 
 // adaptor class to enable cset application on rosters.
