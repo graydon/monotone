@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-04-01 13:25+0200\n"
-"PO-Revision-Date: 2006-04-01 16:55+0100\n"
+"PO-Revision-Date: 2006-04-01 18:30+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -38,7 +38,7 @@ msgstr "percorso sconosciuto ‘%s’\n"
 #: app_state.cc:349
 #, fuzzy, c-format
 msgid "search root '%s' does not exist"
-msgstr "la chiave pubblica ‘%s’ non è conosciuta"
+msgstr "Ancora HTML %s non esistente."
 
 #: app_state.cc:350
 #, fuzzy, c-format
@@ -46,9 +46,9 @@ msgid "search root '%s' is not a directory\n"
 msgstr "%s esiste ma non è una directory"
 
 #: app_state.cc:385
-#, c-format
+#, fuzzy, c-format
 msgid "failed to parse date string '%s': %s"
-msgstr ""
+msgstr "Impossibile creare la stringa DDE"
 
 #: app_state.cc:399
 #, c-format
@@ -684,7 +684,7 @@ msgstr "la revisione ‘%s’ non fa parte del ramo ‘%s’\n"
 #: commands.cc:1583
 #, fuzzy, c-format
 msgid "no file %s found in database for %s"
-msgstr "nessun file con versione ‘%s’ trovato per ‘%s’ in database"
+msgstr "nessuna revisione in database per il file ‘%s’"
 
 #: commands.cc:1602
 msgid "show unmerged head revisions of branch"
@@ -806,7 +806,7 @@ msgstr[1] "letti %d pacchetto"
 #: commands.cc:2014
 #, fuzzy, c-format
 msgid "setting default server to %s\n"
-msgstr "esporta le chiavi a un key server"
+msgstr "Identificazione automatica (DOS per default)"
 
 #: commands.cc:2020
 #, c-format
@@ -850,7 +850,7 @@ msgstr "rete"
 #: commands.cc:2099
 #, fuzzy
 msgid "[ADDRESS[:PORTNUMBER] [PATTERN]]"
-msgstr "[INDIRIZZO[:NUMEROPORTA] [PATTERN]]"
+msgstr "Usa sovrapposizione motivo"
 
 #: commands.cc:2071
 msgid "push branches matching PATTERN to netsync server at ADDRESS"
@@ -872,7 +872,7 @@ msgstr ""
 #: commands.cc:2114
 #, fuzzy
 msgid "PATTERN ..."
-msgstr "PATTERN …"
+msgstr "Motivo"
 
 #: commands.cc:2115
 msgid "serve the branches specified by PATTERNs to connecting clients"
@@ -912,7 +912,7 @@ msgstr "manipola lo stato del database"
 #: commands.cc:2202
 #, fuzzy, c-format
 msgid "The epoch must be %s characters"
-msgstr "il link primario per %s deve essere %s\n"
+msgstr "La #define %s deve essere un intero."
 
 #: commands.cc:2212
 msgid ""
@@ -1409,32 +1409,32 @@ msgstr "‘%s’ è un antenato di ‘%s’: il ‘merge’ non è necessario."
 #: commands.cc:4007
 #, fuzzy, c-format
 msgid "There are %s node_name_conflicts."
-msgstr "Ci sono %s node_name_conflicts."
+msgstr "Non ci sono conflitti da risolvere"
 
 #: commands.cc:4008
 #, fuzzy, c-format
 msgid "There are %s file_content_conflicts."
-msgstr "Ci sono %s file_content_conflicts."
+msgstr "Non ci sono conflitti da risolvere"
 
 #: commands.cc:4009
 #, fuzzy, c-format
 msgid "There are %s node_attr_conflicts."
-msgstr "Ci sono %s node_attr_conflicts."
+msgstr "Non ci sono conflitti da risolvere"
 
 #: commands.cc:4010
 #, fuzzy, c-format
 msgid "There are %s orphaned_node_conflicts."
-msgstr "Ci sono %s orphaned_node_conflicts."
+msgstr "Non ci sono conflitti da risolvere"
 
 #: commands.cc:4011
 #, fuzzy, c-format
 msgid "There are %s rename_target_conflicts."
-msgstr "Ci sono %s rename_target_conflicts."
+msgstr "Non ci sono conflitti da risolvere"
 
 #: commands.cc:4012
 #, fuzzy, c-format
 msgid "There are %s directory_loop_conflicts."
-msgstr "Ci sono %s directory_loop_conflicts."
+msgstr "Non ci sono conflitti da risolvere"
 
 #: database_check.cc:125
 msgid "files"
@@ -1536,7 +1536,7 @@ msgstr ""
 #: database_check.cc:663
 #, fuzzy, c-format
 msgid "revision %s incomplete (incomplete roster)\n"
-msgstr "revisione `%s' inesistente"
+msgstr "la revisione ‘%s’ è incompleta (roster mancante)\n"
 
 #: database_check.cc:669
 #, c-format
@@ -1566,7 +1566,7 @@ msgstr "la revisione ‘%s’ non in forma normalizzata\n"
 #: database_check.cc:728
 #, fuzzy, c-format
 msgid "key %s missing (signed %d certs)\n"
-msgstr "chiavi pubbliche e segrete create e firmate.\n"
+msgstr "Opzione mancante per la versione: \"aspell\"."
 
 #: database_check.cc:761
 #, c-format
@@ -1581,7 +1581,7 @@ msgstr ""
 #: database_check.cc:784
 #, fuzzy, c-format
 msgid "revision %s missing %s cert\n"
-msgstr "manca l'argomento di `%s'"
+msgstr "crea un certificato per una revisione"
 
 #: database_check.cc:793
 #, c-format
@@ -1594,14 +1594,14 @@ msgid "%d missing files\n"
 msgstr "%d file mancanti\n"
 
 #: database_check.cc:876
-#, fuzzy, c-format
+#, c-format
 msgid "%d unreferenced files\n"
-msgstr "Sfoglia"
+msgstr "%d file non utilizzati\n"
 
 #: database_check.cc:879
-#, fuzzy, c-format
+#, c-format
 msgid "%d unreferenced rosters\n"
-msgstr "%d roster incompleti\n"
+msgstr "%d roster non utilizzati\n"
 
 #: database_check.cc:881
 #, c-format
@@ -1654,9 +1654,9 @@ msgid "%d revisions not in normalized form\n"
 msgstr "%d revisioni non in forma normalizzata\n"
 
 #: database_check.cc:906
-#, fuzzy, c-format
+#, c-format
 msgid "%d unreferenced roster links\n"
-msgstr "  -L,  --relative                    segue solo i link relativi.\n"
+msgstr ""
 
 #: database_check.cc:909
 #, c-format
@@ -1676,7 +1676,7 @@ msgstr "%d certificati mancanti\n"
 #: database_check.cc:918
 #, fuzzy, c-format
 msgid "%d mismatched certs\n"
-msgstr "%d certificati mancanti\n"
+msgstr "%d certificati non corrispondenti\n"
 
 #: database_check.cc:920
 #, fuzzy, c-format
@@ -1864,9 +1864,9 @@ msgid "wanted %d rows got %s in query: %s\n"
 msgstr ""
 
 #: database.cc:1770
-#, fuzzy, c-format
+#, c-format
 msgid "another key with name '%s' already exists"
-msgstr "una chiave con nome ‘%s’ esiste già"
+msgstr "esiste già un'altra chiave con nome ‘%s’"
 
 #: database.cc:2826
 #, c-format
@@ -1894,9 +1894,9 @@ msgid "file '%s' does not exist in workspace"
 msgstr "il file ‘%s’ non esiste nello spazio di lavoro"
 
 #: diff_patch.cc:591
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' in workspace is a directory, not a file"
-msgstr "il file ‘%s’ non esiste nello spazio di lavoro"
+msgstr "nello spazio di lavoro ‘%s’ è una cartella, non un file"
 
 #: diff_patch.cc:595
 #, c-format
@@ -1921,7 +1921,7 @@ msgstr ""
 #: file_io.cc:116
 #, fuzzy, c-format
 msgid "expected file '%s', but it is a directory."
-msgstr "la cartella da cancellare `%s' non è una cartella ma un file"
+msgstr "il file da cancellare `%s' non è un file ma una cartella"
 
 #: file_io.cc:186
 #: file_io.cc:193
@@ -1999,7 +1999,7 @@ msgstr "il file da cancellare ‘%s’ non è un file ma una cartella"
 #: file_io.cc:264
 #, fuzzy, c-format
 msgid "rename source file '%s' does not exist"
-msgstr "il file ‘%s’ non esiste nello spazio di lavoro"
+msgstr "id del file antenato non esistente"
 
 #: file_io.cc:265
 #, c-format
@@ -2399,9 +2399,9 @@ msgid "unknown item type 0x%x for '%s'"
 msgstr "elemento di tipo sconosciuto 0x%x per ‘%s’"
 
 #: netcmd.cc:112
-#, c-format
+#, fuzzy, c-format
 msgid "unknown netcmd code 0x%x"
-msgstr ""
+msgstr "errore sconosciuto (codice %08x)."
 
 #: netcmd.cc:117
 #, c-format
@@ -2444,9 +2444,9 @@ msgstr ""
 
 #: netio.hh:84
 #: netio.hh:119
-#, c-format
+#, fuzzy, c-format
 msgid "uleb128 decode for '%s' into %d-byte datum overflowed"
-msgstr ""
+msgstr "la decodifica uleb128 di ‘%s’ in dat* da %d byte ha"
 
 #: netio.hh:139
 #, c-format
@@ -2557,7 +2557,7 @@ msgstr "rifiutato un tentativo di connessione anonima funzionando come pozzo\n"
 #: netsync.cc:1444
 #, fuzzy, c-format
 msgid "not serving branch '%s'"
-msgstr "RAMO_SORG RAMO_DEST"
+msgstr "%s non nel ramo %s\n"
 
 #: netsync.cc:1352
 #, c-format
@@ -2798,7 +2798,7 @@ msgstr ""
 #: netsync.cc:2637
 #, fuzzy, c-format
 msgid "beginning service on %s : %s\n"
-msgstr "errore di lettura su %s: %s"
+msgstr "inizio il commit sul ramo ‘%s’\n"
 
 #: netsync.cc:2638
 msgid "<all interfaces>"
@@ -2866,7 +2866,7 @@ msgstr ""
 #: packet.cc:138
 #, fuzzy, c-format
 msgid "missing prerequisite revision '%s'\n"
-msgstr "revisione `%s' inesistente"
+msgstr "la revisione ‘%s’ è incompleta (roster mancante)\n"
 
 #: packet.cc:139
 #: packet.cc:150
@@ -2879,7 +2879,7 @@ msgstr "elimino la revisione ‘%s’\n"
 #: packet.cc:149
 #, fuzzy, c-format
 msgid "missing prerequisite file '%s'\n"
-msgstr "Manca il nome del file dopo -C"
+msgstr "argomenti dei file mancanti"
 
 #: packet.cc:164
 #, c-format
@@ -2958,7 +2958,7 @@ msgstr ""
 #: rcs_import.cc:1204
 #, c-format
 msgid "need base --branch argument for importing"
-msgstr ""
+msgstr "l'argomento ‘--branch’ è necessario per l'importazione"
 
 #: rcs_import.cc:1216
 #, c-format
@@ -3147,7 +3147,7 @@ msgstr "non riesco a convertire una stringa da ‘%s’ a ‘%s’: ‘%s’"
 #: transforms.cc:755
 #, c-format
 msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
-msgstr ""
+msgstr "errore nella conversione di %d byte UTF-8 in IDNA ACE: %s"
 
 #: ui.cc:108
 #, c-format
