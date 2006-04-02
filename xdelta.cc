@@ -119,9 +119,9 @@ find_match(match_table const & matches,
   string::const_iterator bi = b.begin() + bpos + tlen;
   string::const_iterator be = b.end();
   
-  while((*ai == *bi) 
-	&& (ai != ae)
-	&& (bi != be))
+  while((ai != ae)
+	 && (bi != be)
+     && (*ai == *bi))
     {
       ++tlen;
       ++ai;
