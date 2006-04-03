@@ -636,10 +636,11 @@ roster_merge(roster_t const & left_parent,
 //
 // two diff nodes with same name
 // directory loops
-// (NEEDED:)
 // orphans
 // illegal node ("_MTN")
 // missing root dir
+//
+// (NEEDED:)
 //
 // interactions:
 //   in-node name conflict + possible between-node name conflict
@@ -1524,6 +1525,36 @@ struct simple_illegal_name_conflict : public structural_conflict_helper
 };
 
 // missing root dir
+struct simple_missing_root_dir : public structural_conflict_helper
+{
+  node_id other_root_nid;
+  
+  // left and right each have different root nodes, and each has deleted the
+  // other's root node
+
+  virtual void setup()
+    {
+      other_root_nid = nis.next();
+
+      left_roster.drop_detached_node(left_roster.detach_node(split("")));
+      safe_erase(left_markings, root_nid);
+      make_dir(left_roster, left_markings, old_rid, old_rid, "", other_root_nid);
+    }
+
+  virtual void check()
+    {
+      I(!result.is_clean());
+      I(result.missing_root_dir);
+      // stick in some dir, the markings are all irrelevant so put nonsense
+      // for them
+      marking_map blah;
+      make_dir(result.roster, blah, old_rid, old_rid, "", nis.next());
+      result.missing_root_dir = false;
+      I(result.is_clean());
+      result.roster.check_sane();
+    }
+};
+
 
 static void
 test_simple_structural_conflicts()
@@ -1542,6 +1573,10 @@ test_simple_structural_conflicts()
   }
   {
     simple_illegal_name_conflict t;
+    t.test();
+  }
+  {
+    simple_missing_root_dir t;
     t.test();
   }
 }
