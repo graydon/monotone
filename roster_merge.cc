@@ -1599,20 +1599,45 @@ test_simple_structural_conflicts()
   }
 }
 
-struct name_plus_rename_target : public structural_conflict_helper
+struct node_name_plus_helper : public structural_conflict_helper
+{
+  node_id name_conflict_nid;
+  node_id left_parent, right_parent;
+  path_component left_name, right_name;
+  void make_nn_conflict(std::string const & left_name, std::string const & right_name)
+  {
+    name_conflict_nid = nis.next();
+    make_dir(left_roster, left_markings, old_rid, left_rid, split(left_name), name_conflict_nid);
+    left_parent = left_roster.get_node(split(left_name))->parent;
+    left_name = left_roster.get_node(split(left_name))->name;
+    make_dir(right_roster, right_markings, old_rid, right_rid, "b", name_conflict_nid);
+    left_parent = left_roster.get_node(split(left_name))->parent;
+    left_name = left_roster.get_node(split(left_name))->name;
+  }
+  void check_nn_conflict()
+  {
+    I(!result.is_clean());
+    node_name_conflict const & c = idx(result.node_name_conflicts, 0);
+    I(c.nid == name_conflict_nid);
+    I(c.left == std::make_pair(left_parent, left_name));
+    I(c.right == std::make_pair(right_parent, right_name));
+    result.roster.attach_node(name_conflict_nid, split("totally_other_name"));
+    result.node_name_conflicts.pop_back();
+    I(result.is_clean());
+    result.roster.check_sane();
+  }
+};
+
+struct node_name_plus_rename_target : public node_name_plus_helper
 {
   node_id name_conflict_nid, a_nid, b_nid;
 
   virtual void setup()
   {
-    name_conflict_nid = nis.next();
     a_nid = nis.next();
     b_nid = nis.next();
-
-    make_dir(left_roster, left_markings, old_rid, left_rid, "a", name_conflict_nid);
+    make_nn_conflict("a", "b");
     make_dir(left_roster, left_markings, left_rid, left_rid, "b", b_nid);
-    
-    make_dir(right_roster, right_markings, old_rid, right_rid, "b", name_conflict_nid);
     make_dir(right_roster, right_markings, right_rid, right_rid, "a", a_nid);
   }
 
@@ -1622,15 +1647,7 @@ struct name_plus_rename_target : public structural_conflict_helper
     // b should have landed fine
     I(result.roster.get_node(split("a"))->self == a_nid);
     I(result.roster.get_node(split("b"))->self == b_nid);
-    I(!result.is_clean());
-    node_name_conflict const & c = idx(result.node_name_conflicts, 0);
-    I(c.nid == name_conflict_nid);
-    I(c.left == std::make_pair(root_nid, idx(split("a"), 1)));
-    I(c.right == std::make_pair(root_nid, idx(split("b"), 1)));
-    result.roster.attach_node(name_conflict_nid, split("totally_other_name"));
-    result.node_name_conflicts.pop_back();
-    I(result.is_clean());
-    result.roster.check_sane();
+    check_nn_conflict();
   }
 };
 
@@ -1638,7 +1655,7 @@ static void
 test_complex_structural_conflicts()
 {
   {
-    name_plus_rename_target t;
+    node_name_plus_rename_target t;
     t.test();
   }
 }
