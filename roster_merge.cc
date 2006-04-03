@@ -1604,15 +1604,15 @@ struct node_name_plus_helper : public structural_conflict_helper
   node_id name_conflict_nid;
   node_id left_parent, right_parent;
   path_component left_name, right_name;
-  void make_nn_conflict(std::string const & left_name, std::string const & right_name)
+  void make_nn_conflict(std::string const & left_path, std::string const & right_path)
   {
     name_conflict_nid = nis.next();
-    make_dir(left_roster, left_markings, old_rid, left_rid, split(left_name), name_conflict_nid);
-    left_parent = left_roster.get_node(split(left_name))->parent;
-    left_name = left_roster.get_node(split(left_name))->name;
-    make_dir(right_roster, right_markings, old_rid, right_rid, "b", name_conflict_nid);
-    left_parent = left_roster.get_node(split(left_name))->parent;
-    left_name = left_roster.get_node(split(left_name))->name;
+    make_dir(left_roster, left_markings, old_rid, left_rid, left_path, name_conflict_nid);
+    left_parent = left_roster.get_node(split(left_path))->parent;
+    left_name = left_roster.get_node(split(left_path))->name;
+    make_dir(right_roster, right_markings, old_rid, right_rid, right_path, name_conflict_nid);
+    right_parent = right_roster.get_node(split(right_path))->parent;
+    right_name = right_roster.get_node(split(right_path))->name;
   }
   void check_nn_conflict()
   {
@@ -1630,7 +1630,7 @@ struct node_name_plus_helper : public structural_conflict_helper
 
 struct node_name_plus_rename_target : public node_name_plus_helper
 {
-  node_id name_conflict_nid, a_nid, b_nid;
+  node_id a_nid, b_nid;
 
   virtual void setup()
   {
@@ -1651,11 +1651,61 @@ struct node_name_plus_rename_target : public node_name_plus_helper
   }
 };
 
+struct node_name_plus_orphan : public node_name_plus_helper
+{
+  node_id a_nid, b_nid;
+
+  virtual void setup()
+  {
+    a_nid = nis.next();
+    b_nid = nis.next();
+    make_dir(left_roster, left_markings, old_rid, left_rid, "a", a_nid);
+    make_dir(right_roster, right_markings, old_rid, right_rid, "b", b_nid);
+    make_nn_conflict("a/foo", "b/foo");
+  }
+
+  virtual void check()
+  {
+    I(result.roster.all_nodes().size() == 2);
+    check_nn_conflict();
+  }
+};
+
+struct node_name_plus_directory_loop : public node_name_plus_helper
+{
+  node_id a_nid, b_nid;
+
+  virtual void setup()
+  {
+    a_nid = nis.next();
+    b_nid = nis.next();
+    make_dir(left_roster, left_markings, old_rid, old_rid, "a", a_nid);
+    make_dir(right_roster, right_markings, old_rid, old_rid, "b", b_nid);
+    make_nn_conflict("a/foo", "b/foo");
+    make_dir(left_roster, left_markings, old_rid, left_rid, "a/foo/b", b_nid);
+    make_dir(right_roster, right_markings, old_rid, right_rid, "b/foo/a", a_nid);
+  }
+
+  virtual void check()
+  {
+    I(downcast_to_dir_t(result.roster.get_node(name_conflict_nid))->children.size() == 2);
+    check_nn_conflict();
+  }
+};
+
 static void
 test_complex_structural_conflicts()
 {
   {
     node_name_plus_rename_target t;
+    t.test();
+  }
+  {
+    node_name_plus_orphan t;
+    t.test();
+  }
+  {
+    node_name_plus_directory_loop t;
     t.test();
   }
 }
