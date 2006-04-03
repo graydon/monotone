@@ -306,8 +306,6 @@ namespace
             c.parent_name = std::make_pair(parent, name);
             split_path root_sp;
             file_path().split(root_sp);
-            // this line will currently cause an abort, because we don't
-            // support detaching the root node
             result.roster.detach_node(root_sp);
             result.rename_target_conflicts.push_back(c);
           }

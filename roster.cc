@@ -606,6 +606,7 @@ roster_t::detach_node(split_path const & pth)
                   make_pair(root_id, make_pair(root_dir->parent, root_dir->name)));
       // clear ("reset") the root_dir shared_pointer
       root_dir.reset();
+      I(!has_root());
       return root_id;
     }
 
