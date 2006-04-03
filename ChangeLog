@@ -1,5 +1,10 @@
 2006-04-02  Matthew Nicholson  <matt@matt-land.com>
 	
+	* contrib/get_passphrase_from_file.lua: Added.  This hook reads
+	passphrases from 'confdir/passphrases'.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+	
 	* contrib/ChangeLog.sh: Updated to reflect monotone name changes.
 
 2006-04-02  Matthew Nicholson  <matt@matt-land.com>
