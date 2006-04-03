@@ -712,6 +712,7 @@ roster_t::attach_node(node_id nid, node_id parent, path_component name)
       I(null_node(parent) && null_name(name));
       I(null_node(n->parent));
       I(null_name(n->name));
+      I(!has_root());
       root_dir = downcast_to_dir_t(n);
       I(i == old_locations.end() || i->second != make_pair(root_dir->parent,
                                                            root_dir->name));
