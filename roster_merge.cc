@@ -1693,6 +1693,28 @@ struct node_name_plus_directory_loop : public node_name_plus_helper
   }
 };
 
+struct node_name_plus_illegal_name : public node_name_plus_helper
+{
+  node_id new_root_nid;
+
+  virtual void setup()
+  {
+    new_root_nid = nis.next();
+    make_dir(left_roster, left_markings, old_rid, old_rid, "new_root", new_root_nid);
+    right_roster.drop_detached_node(right_roster.detach_node(split("")));
+    safe_erase(right_markings, root_nid);
+    make_dir(right_roster, right_markings, old_rid, right_rid, "", new_root_nid);
+    make_nn_conflict("new_root/_MTN", "foo");
+  }
+
+  virtual void check()
+  {
+    I(result.roster.root()->self == new_root_nid);
+    I(result.roster.all_nodes().size() == 2);
+    check_nn_conflict();
+  }
+};
+
 static void
 test_complex_structural_conflicts()
 {
@@ -1706,6 +1728,10 @@ test_complex_structural_conflicts()
   }
   {
     node_name_plus_directory_loop t;
+    t.test();
+  }
+  {
+    node_name_plus_illegal_name t;
     t.test();
   }
 }
