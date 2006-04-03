@@ -1715,6 +1715,59 @@ struct node_name_plus_illegal_name : public node_name_plus_helper
   }
 };
 
+struct node_name_plus_missing_root : public structural_conflict_helper
+{
+  node_id left_root_nid, right_root_nid;
+
+  virtual void setup()
+  {
+    left_root_nid = nis.next();
+    right_root_nid = nis.next();
+    
+    left_roster.drop_detached_node(left_roster.detach_node(split("")));
+    safe_erase(left_markings, root_nid);
+    make_dir(left_roster, left_markings, old_rid, left_rid, "", left_root_nid);
+    make_dir(left_roster, left_markings, old_rid, left_rid, "right_root", right_root_nid);
+
+    right_roster.drop_detached_node(right_roster.detach_node(split("")));
+    safe_erase(right_markings, root_nid);
+    make_dir(right_roster, right_markings, old_rid, right_rid, "", right_root_nid);
+    make_dir(right_roster, right_markings, old_rid, right_rid, "left_root", left_root_nid);
+  }
+  void check_helper(node_name_conflict const & left_c, node_name_conflict const & right_c)
+  {
+    I(left_c.nid == left_root_nid);
+    I(left_c.left == std::make_pair(the_null_node, the_null_component));
+    I(left_c.right == std::make_pair(right_root_nid, idx(split("left_root"), 1)));
+
+    I(right_c.nid == right_root_nid);
+    I(right_c.left == std::make_pair(left_root_nid, idx(split("right_root"), 1)));
+    I(right_c.right == std::make_pair(the_null_node, the_null_component));
+  }
+  virtual void check()
+  {
+    I(!result.is_clean());
+    I(result.node_name_conflicts.size() == 2);
+
+    if (idx(result.node_name_conflicts, 0).nid == left_root_nid)
+      check_helper(idx(result.node_name_conflicts, 0),
+                   idx(result.node_name_conflicts, 1));
+    else
+      check_helper(idx(result.node_name_conflicts, 1),
+                   idx(result.node_name_conflicts, 0));
+
+    I(result.missing_root_dir);
+
+    result.roster.attach_node(left_root_nid, split(""));
+    result.roster.attach_node(right_root_nid, split("totally_other_name"));
+    result.node_name_conflicts.pop_back();
+    result.node_name_conflicts.pop_back();
+    result.missing_root_dir = false;
+    I(result.is_clean());
+    result.roster.check_sane();
+  }
+};
+
 static void
 test_complex_structural_conflicts()
 {
@@ -1732,6 +1785,10 @@ test_complex_structural_conflicts()
   }
   {
     node_name_plus_illegal_name t;
+    t.test();
+  }
+  {
+    node_name_plus_missing_root t;
     t.test();
   }
 }
