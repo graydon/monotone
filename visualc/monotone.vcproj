@@ -136,7 +136,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE;BOOST_MSVC_STD_ITERATOR;_CRT_SECURE_NO_DEPRECATE;min=min;max=max"
 				StringPooling="true"
 				MinimalRebuild="true"
-				RuntimeLibrary="0"
+				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="false"
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="pch.hh"
