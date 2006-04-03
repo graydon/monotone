@@ -1435,6 +1435,62 @@ struct simple_dir_loop_conflict : public structural_conflict_helper
     }
 };
 
+// orphans
+struct simple_orphan_conflict : public structural_conflict_helper
+{
+  node_id a_dead_parent_nid, a_live_child_nid, b_dead_parent_nid, b_live_child_nid;
+  
+  // in ancestor, both parents are alive
+  // in left, a_dead_parent is dead, and b_live_child is created
+  // in right, b_dead_parent is dead, and a_live_child is created
+
+  virtual void setup()
+    {
+      a_dead_parent_nid = nis.next();
+      a_live_child_nid = nis.next();
+      b_dead_parent_nid = nis.next();
+      b_live_child_nid = nis.next();
+
+      make_dir(left_roster, left_markings, old_rid, old_rid, "b_parent", b_dead_parent_nid);
+      make_dir(left_roster, left_markings, left_rid, left_rid, "b_parent/b_child", b_live_child_nid);
+
+      make_dir(right_roster, right_markings, old_rid, old_rid, "a_parent", a_dead_parent_nid);
+      make_dir(right_roster, right_markings, right_rid, right_rid, "a_parent/a_child", a_live_child_nid);
+    }
+
+  virtual void check()
+    {
+      I(!result.is_clean());
+      I(result.orphaned_node_conflicts.size() == 2);
+      orphaned_node_conflict a, b;
+      if (idx(result.orphaned_node_conflicts, 0).nid == a_live_child_nid)
+        {
+          a = idx(result.orphaned_node_conflicts, 0);
+          b = idx(result.orphaned_node_conflicts, 1);
+        }
+      else
+        {
+          a = idx(result.orphaned_node_conflicts, 1);
+          b = idx(result.orphaned_node_conflicts, 0);
+        }
+      I(a.nid == a_live_child_nid);
+      I(a.parent_name == std::make_pair(a_dead_parent_nid, idx(split("a_child"), 1)));
+      I(b.nid == b_live_child_nid);
+      I(b.parent_name == std::make_pair(b_dead_parent_nid, idx(split("b_child"), 1)));
+      // this tests it was detached, implicitly
+      result.roster.attach_node(a.nid, split("resolved_a"));
+      result.roster.attach_node(b.nid, split("resolved_b"));
+      result.orphaned_node_conflicts.pop_back();
+      result.orphaned_node_conflicts.pop_back();
+      I(result.is_clean());
+      result.roster.check_sane();
+    }
+};
+
+// name collision on root dir
+// illegal node ("_MTN")
+// missing root dir
+
 static void
 test_simple_structural_conflicts()
 {
@@ -1446,12 +1502,12 @@ test_simple_structural_conflicts()
     simple_dir_loop_conflict t;
     t.test();
   }
+  {
+    simple_orphan_conflict t;
+    t.test();
+  }
 }
 
-// orphans
-// name collision on root dir
-// illegal node ("_MTN")
-// missing root dir
 //
 // interactions:
 //   in-node name conflict + possible between-node name conflict
