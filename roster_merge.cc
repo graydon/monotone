@@ -1449,6 +1449,7 @@ add_roster_merge_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&test_roster_merge_attr_lifecycle));
   suite->add(BOOST_TEST_CASE(&test_scalar_merges));
   suite->add(BOOST_TEST_CASE(&test_simple_rename_target_conflict));
+  suite->add(BOOST_TEST_CASE(&test_simple_dir_loop_conflict));
 }
 
 #endif // BUILD_UNIT_TESTS
