@@ -643,18 +643,39 @@ roster_merge(roster_t const & left_parent,
 // (NEEDED:)
 //
 // interactions:
-//   in-node name conflict + possible between-node name conflict
-//   in-node name conflict + both possible names orphaned
-//   in-node name conflict + directory loop conflict
-//   in-node name conflict + one name illegal
-//   in-node name conflict + causes missing root dir
-//   between-node name conflict + both nodes orphaned
-//   between-node name conflict + both nodes cause loop
-//   between-node name conflict + both nodes illegal
-//   between-node name conflict + causes missing root dir
-
-// to run roster_merge, need roster, marking, birth revs, and uncommon
-// ancestors for each side...
+//   in-node name conflict prevents other problems:
+//     in-node name conflict + possible between-node name conflict
+//        a vs. b, plus a, b, exist in result
+//        left: 1: a
+//              2: b
+//        right: 1: b
+//               3: a
+//     in-node name conflict + both possible names orphaned
+//        a/foo vs. b/foo conflict, + a, b exist in parents but deleted in
+//        children
+//        left: 1: a
+//              2: a/foo
+//        right:
+//              3: b
+//              2: b/foo
+//     in-node name conflict + directory loop conflict
+//        a/bottom vs. b/bottom, with a and b both moved inside it
+//     in-node name conflict + one name illegal
+//        _MTN vs. foo
+//   in-node name conflict causes other problems:
+//     in-node name conflict + causes missing root dir
+//        "" vs. foo and bar vs. ""
+//   between-node name conflict prevents other problems:
+//     between-node name conflict + both nodes orphaned
+//        this is not possible
+//     between-node name conflict + both nodes cause loop
+//        this is not possible
+//     between-node name conflict + both nodes illegal
+//        two nodes that both merge to _MTN
+//        this is not possible
+//   between-node name conflict causes other problems:
+//     between-node name conflict + causes missing root dir
+//        two nodes that both want ""
 
 split_path
 split(std::string const & s)
@@ -1545,10 +1566,7 @@ struct simple_missing_root_dir : public structural_conflict_helper
     {
       I(!result.is_clean());
       I(result.missing_root_dir);
-      // stick in some dir, the markings are all irrelevant so put nonsense
-      // for them
-      marking_map blah;
-      make_dir(result.roster, blah, old_rid, old_rid, "", nis.next());
+      result.roster.attach_node(result.roster.create_dir_node(nis), split(""));
       result.missing_root_dir = false;
       I(result.is_clean());
       result.roster.check_sane();
@@ -1581,17 +1599,49 @@ test_simple_structural_conflicts()
   }
 }
 
-//
-// interactions:
-//   in-node name conflict + possible between-node name conflict
-//   in-node name conflict + both possible names orphaned
-//   in-node name conflict + directory loop conflict
-//   in-node name conflict + one name illegal
-//   in-node name conflict + causes missing root dir
-//   between-node name conflict + both nodes orphaned
-//   between-node name conflict + both nodes cause loop
-//   between-node name conflict + both nodes illegal
-//   between-node name conflict + causes missing root dir
+struct name_plus_rename_target : public structural_conflict_helper
+{
+  node_id name_conflict_nid, a_nid, b_nid;
+
+  virtual void setup()
+  {
+    name_conflict_nid = nis.next();
+    a_nid = nis.next();
+    b_nid = nis.next();
+
+    make_dir(left_roster, left_markings, old_rid, left_rid, "a", name_conflict_nid);
+    make_dir(left_roster, left_markings, left_rid, left_rid, "b", b_nid);
+    
+    make_dir(right_roster, right_markings, old_rid, right_rid, "b", name_conflict_nid);
+    make_dir(right_roster, right_markings, right_rid, right_rid, "a", a_nid);
+  }
+
+  virtual void check()
+  {
+    // there should just be a single conflict on name_conflict_nid, and a and
+    // b should have landed fine
+    I(result.roster.get_node(split("a"))->self == a_nid);
+    I(result.roster.get_node(split("b"))->self == b_nid);
+    I(!result.is_clean());
+    node_name_conflict const & c = idx(result.node_name_conflicts, 0);
+    I(c.nid == name_conflict_nid);
+    I(c.left == std::make_pair(root_nid, idx(split("a"), 1)));
+    I(c.right == std::make_pair(root_nid, idx(split("b"), 1)));
+    result.roster.attach_node(name_conflict_nid, split("totally_other_name"));
+    result.node_name_conflicts.pop_back();
+    I(result.is_clean());
+    result.roster.check_sane();
+  }
+};
+
+static void
+test_complex_structural_conflicts()
+{
+  {
+    name_plus_rename_target t;
+    t.test();
+  }
+}
 
 void
 add_roster_merge_tests(test_suite * suite)
@@ -1601,6 +1651,7 @@ add_roster_merge_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&test_roster_merge_attr_lifecycle));
   suite->add(BOOST_TEST_CASE(&test_scalar_merges));
   suite->add(BOOST_TEST_CASE(&test_simple_structural_conflicts));
+  suite->add(BOOST_TEST_CASE(&test_complex_structural_conflicts));
 }
 
 #endif // BUILD_UNIT_TESTS
