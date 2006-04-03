@@ -1487,8 +1487,42 @@ struct simple_orphan_conflict : public structural_conflict_helper
     }
 };
 
-// name collision on root dir
 // illegal node ("_MTN")
+struct simple_illegal_name_conflict : public structural_conflict_helper
+{
+  node_id new_root_nid, bad_dir_nid;
+  
+  // in left, new_root is the root (it existed in old, but was renamed in left)
+  // in right, new_root is still a subdir, the old root still exists, and a
+  // new dir has been created
+
+  virtual void setup()
+    {
+      new_root_nid = nis.next();
+      bad_dir_nid = nis.next();
+
+      left_roster.drop_detached_node(left_roster.detach_node(split("")));
+      safe_erase(left_markings, root_nid);
+      make_dir(left_roster, left_markings, old_rid, left_rid, "", new_root_nid);
+
+      make_dir(right_roster, right_markings, old_rid, old_rid, "root_to_be", new_root_nid);
+      make_dir(right_roster, right_markings, right_rid, right_rid, "root_to_be/_MTN", bad_dir_nid);
+    }
+
+  virtual void check()
+    {
+      I(!result.is_clean());
+      illegal_name_conflict const & c = idx(result.illegal_name_conflicts, 0);
+      I(c.nid == bad_dir_nid);
+      I(c.parent_name == std::make_pair(new_root_nid, bookkeeping_root_component));
+      // this tests it was detached, implicitly
+      result.roster.attach_node(bad_dir_nid, split("dir_formerly_known_as__MTN"));
+      result.illegal_name_conflicts.pop_back();
+      I(result.is_clean());
+      result.roster.check_sane();
+    }
+};
+
 // missing root dir
 
 static void
@@ -1504,6 +1538,10 @@ test_simple_structural_conflicts()
   }
   {
     simple_orphan_conflict t;
+    t.test();
+  }
+  {
+    simple_illegal_name_conflict t;
     t.test();
   }
 }
