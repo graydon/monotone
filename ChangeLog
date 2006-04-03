@@ -1,5 +1,10 @@
 2006-04-02  Matthew Nicholson  <matt@matt-land.com>
 	
+	* debian/monotone-server.monotone.init: Clean up monotone's pid file
+	for it.  The is a temporary work around until monotone learns to clean
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+	
 	* debian/monotone-server.TODO.Debian: Added.
 
 2006-04-02  Matthew Nicholson  <matt@matt-land.com>

@@ -24,6 +24,8 @@ EXECNAME=mtn
 DAEMON=/usr/bin/$EXECNAME
 PIDFILE=/var/run/$NAME/$EXECNAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
+MAINLOG=/var/log/$NAME/$EXECNAME.log
+ERRORLOG=/var/log/$NAME/error.log
 
 MTN_HOME=/var/lib/monotone
 MTN_CONFDIR=/etc/monotone
@@ -50,7 +52,7 @@ d_start() {
        start-stop-daemon --start --quiet --pidfile $PIDFILE --background \
           --exec $DAEMON --chuid monotone --chdir $MTN_HOME -- \
           --confdir=$MTN_CONFDIR --db=$DB --norc --pid-file=$PIDFILE \
-          --log=/var/log/$NAME/$EXECNAME.log --dump=/var/log/$NAME/error.log \
+          --log=$MAINLOG --dump=$ERRORLOG \
           --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR --quiet \
           --bind=$ADDRESS serve $BRANCHES 
 
@@ -61,7 +63,8 @@ d_start() {
 #
 d_stop() {
        start-stop-daemon --stop --quiet --pidfile $PIDFILE \
-               --name $EXECNAME --user monotone
+               --name $EXECNAME --user monotone \
+          && rm $PIDFILE
        
 
 #       kill `ps x | grep monotone.*serve | grep -v grep | awk -- '{print $1}'` &> /dev/null \
