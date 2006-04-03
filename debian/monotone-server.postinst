@@ -35,7 +35,7 @@ case "$1" in
 	       
        /usr/bin/ucf --debconf-ok /usr/share/doc/monotone-server/examples/write-permissions /etc/monotone/write-permissions
        /usr/bin/ucf --debconf-ok /usr/share/doc/monotone-server/examples/read-permissions /etc/monotone/read-permissions
-       /usr/bin/ucf --debconf-ok /usr/share/doc/monotone-server/examples/hooks.lua /etc/monotone/hooks.lua
+       /usr/bin/ucf --debconf-ok /usr/share/doc/monotone/contrib/get_passphrase_from_file.lua /etc/monotone/hooks.lua
        
        # if this is our first install give config files correct permissions
        if [ -z "$2" ]; then

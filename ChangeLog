@@ -1,5 +1,11 @@
 2006-04-02  Matthew Nicholson  <matt@matt-land.com>
 	
+	* debian/monotone-server.postinst: Changed to use the
+	get_passphrase_from_file.lua file as the default hooks file for the
+	server.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+	
 	* contrib/get_passphrase_from_file.lua: Added.  This hook reads
 	passphrases from 'confdir/passphrases'.
 
