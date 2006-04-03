@@ -1418,14 +1418,11 @@ test_simple_dir_loop_conflict()
 
   I(!result.is_clean());
   directory_loop_conflict const & c = idx(result.directory_loop_conflicts, 0);
-  // TODO:
-  I((c.nid1 == left_nid && c.nid2 == right_nid)
-    || (c.nid1 == right_nid && c.nid2 == left_nid));
-  I(c.parent_name == std::make_pair(root_nid, idx(split("thing"), 1)));
-  // this tests that they were detached, implicitly
-  result.roster.attach_node(left_nid, split("left"));
-  result.roster.attach_node(right_nid, split("right"));
-  result.rename_target_conflicts.pop_back();
+  I((c.nid == left_top_nid && c.parent_name == std::make_pair(right_top_nid, idx(split("bottom"), 1)))
+    || (c.nid == right_top_nid && c.parent_name == std::make_pair(left_top_nid, idx(split("bottom"), 1))));
+  // this tests it was detached, implicitly
+  result.roster.attach_node(c.nid, split("resolved"));
+  result.directory_loop_conflicts.pop_back();
   I(result.is_clean());
   result.roster.check_sane();
 }
