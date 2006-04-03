@@ -9,6 +9,7 @@
 # the -d and -r options are required.
 
 NUM=15
+MTN=mtn
 
 while ! [ $# -eq 0 ] ; do
 	case "$1" in
@@ -19,7 +20,7 @@ while ! [ $# -eq 0 ] ; do
 	shift
 done
 
-if ! [ -s MT/revision ]; then
+if ! [ -s _MTN/revision ]; then
 	if [ "x$REV" = "x" ] || [ "x$DB" = "x" ]; then
 		echo "Both the -d and -r arguments are needed when this" >&2;
 		echo "script is not run from the root of a monotone workspace." >&2;
@@ -27,7 +28,7 @@ if ! [ -s MT/revision ]; then
 	fi
 else
 	if [ "x$REV" = "x" ]; then
-		REV=`cat MT/revision`
+		REV=`cat _MTN/revision`
 	fi
 fi
 
@@ -44,14 +45,14 @@ RD=':b; N; /^[[:digit:]]\{4\}.*\n[[:digit:]]\{4\}/ { s/^.*\n//; b b; }; P; D'
 
 get()
 {
-	monotone $DB ls certs "$2" | sed "$1" \
+	$MTN $DB ls certs "$2" | sed "$1" \
 	| sed 's/^[^\:]\+\: //g'
 }
 
 getrevs()
 {
-	monotone $DB automate ancestors "$1" \
-	| monotone $DB automate toposort -@- \
+	$MTN $DB automate ancestors "$1" \
+	| $MTN $DB automate toposort -@- \
 	| tail -n "$2" | tac
 }
 
@@ -68,5 +69,5 @@ if [ ! x$REV = x ]; then
 	getlogs | sed "$RD" | sed '/^$/ d' \
 	| sed 's/^\([[:digit:]]\{4\}.*\)$/\n\1\n/g'
 else
-	echo "MT/revision does not exist!" >&2
+	echo "_MTN/revision does not exist!" >&2
 fi
