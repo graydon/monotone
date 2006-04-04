@@ -1,3 +1,10 @@
+2006-04-04  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh (class roster_t): Add massive comment about roster_t's
+	location tracking stuff.  Conclusion: it is a little icky, but
+	it's icky in an overly conservative way that doesn't cause any
+	forseeable problems, so we'll leave it for now.
+
 2006-03-29  Nathaniel Smith  <njs@pobox.com>
 
 	* testsuite.at: Clean up the macros that call monotone a little.
