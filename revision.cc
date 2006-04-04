@@ -1224,6 +1224,14 @@ anc_graph::construct_revisions_from_ancestry()
           roster_t child_roster;
           MM(child_roster);
           temp_node_id_source nis;
+
+          // all rosters shall have a root node.
+          {
+            split_path root_pth;
+            file_path().split(root_pth);
+            child_roster.attach_node(child_roster.create_dir_node(nis), root_pth);
+          }
+
           for (legacy::manifest_map::const_iterator i = old_child_man.begin();
                i != old_child_man.end(); ++i)
             {

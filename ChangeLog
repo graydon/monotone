@@ -1,5 +1,10 @@
 2006-04-04  Matt Johnston  <matt@ucc.asn.au>
 
+	* revision.cc (construct_revisions_from_ancestry): all rosters must be
+	given a root node, even if all files have been dropped.
+
+2006-04-04  Matt Johnston  <matt@ucc.asn.au>
+
 	* database.cc (database::dump): don't check schema of the db.
 
 2006-04-04  Nathaniel Smith  <njs@pobox.com>
