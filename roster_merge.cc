@@ -105,6 +105,7 @@ dump(roster_merge_result const & result, std::string & out)
   debug_describe_conflicts(result, out);
   std::string roster_part;
   dump(result.roster, roster_part);
+  out += "\n\n";
   out += roster_part;
 }
 
