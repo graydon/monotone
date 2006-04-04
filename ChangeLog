@@ -1,3 +1,7 @@
+2006-04-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (database::dump): don't check schema of the db.
+
 2006-04-01  Lapo Luchini  <lapo@lapo.it>
 
 	* po/it.po: Translated a few more strings to Italian (170 to go).
