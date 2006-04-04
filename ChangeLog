@@ -1,5 +1,9 @@
+2006-04-04  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Updated and additional translations.
+
 2006-04-02  Matthew Nicholson  <matt@matt-land.com>
-	
+
 	* contrib/get_passphrase_from_file.lua: Added.  This hook reads
 	passphrases from 'confdir/passphrases'.
 
