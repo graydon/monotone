@@ -309,6 +309,7 @@ namespace
             file_path().split(root_sp);
             result.roster.detach_node(root_sp);
             result.rename_target_conflicts.push_back(c);
+            return;
           }
       }
     else
