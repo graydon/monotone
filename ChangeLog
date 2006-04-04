@@ -5,6 +5,74 @@
 	it's icky in an overly conservative way that doesn't cause any
 	forseeable problems, so we'll leave it for now.
 
+2006-04-04  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Updated and additional translations.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
+	* contrib/get_passphrase_from_file.lua: Added.  This hook reads
+	passphrases from 'confdir/passphrases'.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+	
+	* contrib/ChangeLog.sh: Updated to reflect monotone name changes.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
+	* tests/t_pidfile.at: Added.  Test's pid file cleanup.
+	* testsuite.at: Added new t_pidfile.at test.
+
+2006-04-02  Richard Levitte  <richard@levitte.org>
+
+	* ui.cc (user_interface::redirect_log_to): Someone correctly
+	pointed out that the log gets clobbered.  Now corrected.
+
+2006-04-01  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (170 to go).
+
+2006-04-01  Benoît Dejean  <benoit@placenet.org>
+
+	* commands.cc (CMD(attr)): 2 more strings for I18N.
+
+2006-04-01  Benoît Dejean  <benoit@placenet.org>
+
+	* xdelta.cc (apply_copy): Fixed warning.
+
+2006-04-01  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (205 to go).
+
+2006-04-01  Petr Ovtchenkov  <ptr at island.corbina.net>
+
+	* xdelta.cc: avoid dereference of iterators at end()
+
+2006-03-31  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (apply_delta): Don't print file hashes when updating.
+
+2006-03-31  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (update): Print branch name when updating.
+
+2006-04-01  Henry Nestler  <Henry@BigFoot.de>
+
+	* contrib/mtbrowse.sh: Bookkeeping directory _MTN
+
+2006-03-31  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (243 to go).
+
+2006-03-30  Nathaniel Smith  <njs@pobox.com>
+
+	* testsuite.at: Ah-hah, missed AT_TESTED.  Should fix the
+	"monotone not found" errors people have reported.
+
+2006-03-30  Henry Nestler  <Henry@BigFoot.de>
+
+	* mnt.1: '--bind' for serve on host, syntax from monotone.texi
+
 2006-03-29  Nathaniel Smith  <njs@pobox.com>
 
 	* testsuite.at: Clean up the macros that call monotone a little.

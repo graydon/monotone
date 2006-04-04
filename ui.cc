@@ -411,7 +411,7 @@ user_interface::redirect_log_to(system_path const & filename)
   static ofstream filestr;
   if (filestr.is_open())
     filestr.close();
-  filestr.open(filename.as_external().c_str());
+  filestr.open(filename.as_external().c_str(), ofstream::out | ofstream::app);
   clog.rdbuf(filestr.rdbuf());
 }
 

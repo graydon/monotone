@@ -10,7 +10,7 @@
 #
 
 AT_INIT([integration tests])
-AT_TESTED([monotone])
+AT_TESTED([mtn])
 
 # some command abbreviations to make life easier
 
@@ -869,3 +869,4 @@ m4_include(tests/t_rosterify_on_rosterified_db.at)
 m4_include(tests/t_case_insensitive__MTN.at)
 m4_include(tests/t_rosterify_mt_ignore.at)
 m4_include(tests/t_revert_file_blocked_by_dir.at)
+m4_include(tests/t_pidfile.at)

@@ -125,11 +125,15 @@
 # 2006-01-23 Version 0.1.16 Henry@BigFoot.de
 # More posix shell syntax for dash.
 # do_head_sel: Prints error message from mt (it's first call with db file).
+#
+# 2006-04-01 Version 0.2.0 Henry@BigFoot.de
+# Handle bookkeeping directory MT and _MTN
+# Move checking bookkeeping directory behind versions check.
 
 # Known Bugs / ToDo-List:
 # * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.1.16"
+VERSION="0.2.0"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
@@ -184,65 +188,6 @@ if [ -f $CONFIGFILE ]
 then
     . $CONFIGFILE
 fi
-
-# exist working copy?
-if [ -f MT/options ]
-then
-    # Read parameters from file
-    #  branch "mtbrowse"
-    #database "/home/hn/mtbrowse.db"
-    #     key ""
-
-    eval `sed -n -r \
-      -e 's/^[ ]*(branch) \"([^\"]+)\"$/\1=\2/p' \
-      -e 's/^[ ]*(database) \"([^\"]+)\"$/\1=\2/p' < MT/options`
-
-    if [ -n "$database" ]
-    then
-	DB=$database
-	BRANCH=$branch
-    fi
-fi
-
-
-# Simple program args supported
-if [ -n "$1" ]
-then
-    case $1 in
-      --version)
-	echo "mtbrowse $VERSION"
-	exit 0
-      ;;
-      --help|-h)
-	echo "mtbrowse [dbfile]"
-	exit 0
-      ;;
-      *)
-	# Databasefile from command line
-	DB="$1"
-	unset BRANCH
-
-	# MT change the options, if you continue with other DB here!
-	if [ -f MT/options ]
-	then
-
-	    if ! dialog --cr-wrap \
-		--title " *********** WARNING! ********** " \
-		--defaultno --colors --yesno "
-Your \Zb\Z1MT/options\Zn will be overwrite, if
-continue with different DB file or branch
-in exist working directory!
-
-YES confirm  /  NO abbort" 0 0
-	    then
-		echo "abbort"
-		exit 1
-	    fi
-	fi
-      ;;
-    esac
-fi
-
 
 # Clear cached files
 do_clear_cache()
@@ -665,7 +610,7 @@ do_action_sel()
     while dialog \
 	--backtitle "h:$HEAD b:$BRANCH f:$SHORT_DB" \
 	--menu "Action for $REVISION" 0 60 0 \
-	"L" "Log view of current revision" \
+	"L" "Logview of current revision" \
 	"P" "Diff files from parent" \
 	"W" "Diff files from working copy head" \
 	"S" "Diff files from selected revision" \
@@ -731,7 +676,7 @@ do_action_sel()
 		dialog --msgbox "Can't diff with head self\n$HEAD" 6 45
 	    else
 		# exist working copy?
-		if [ -f MT/options ]
+		if [ -f $BK_DIR/options ]
 		then
 		    monotone --db=$DB diff \
 		      --revision=$REVISION \
@@ -1064,7 +1009,7 @@ do_config()
 	    # Author coloring
 	    if dialog --default-item \
 		"`test -n \"$FORMAT_COLOR\" && echo \"yes\" || echo \"no\"`" \
-		--menu "Color author in selecetion" 0 0 0 \
+		--menu "Color author in selection" 0 0 0 \
 		"yes" "author is color" \
 		"no" "author has no special color" \
 		2> $TEMPFILE.input
@@ -1073,7 +1018,7 @@ do_config()
 		then
 		    dialog --colors \
 		     --default-item "$FORMAT_COLOR" \
-		     --menu "Selecet color for author" 0 0 0 \
+		     --menu "Select color for author" 0 0 0 \
 			"A" "Automatic color" \
 			"\\Z0" "\Z0Color\Zn 0" \
 			"\\Z1" "\Z1Color\Zn 1" \
@@ -1215,8 +1160,11 @@ then
     exit -1
 fi
 
+# Save args
+arg1=$1
+
 # Get monotone version
-set -- `monotone --version | sed -r -e 's/^.+ ([0-9]{1,2})\.([0-9]{1,2}) .+$/\1 \2/'`
+set -- `monotone --version | sed -n -r -e 's/^.+ ([0-9]+)\.([0-9]+).+$/\1 \2/p'`
 MT_MAJOR=$1
 MT_MINOR=$2
 
@@ -1238,6 +1186,71 @@ then
     DEPTH_LAST="--depth"
 else
     DEPTH_LAST="--last"
+fi
+
+# New bookkeeping directory is _MTN, in 0.26+
+if [ $MT_MAJOR -eq 0 -a $MT_MINOR -lt 26 ]
+then
+    BK_DIR="MT"
+else
+    BK_DIR="_MTN"
+fi
+
+# exist working copy?
+if [ -f $BK_DIR/options ]
+then
+    # Read parameters from file
+    #  branch "mtbrowse"
+    #database "/home/hn/mtbrowse.db"
+    #     key ""
+
+    eval `sed -n -r \
+      -e 's/^[ ]*(branch) \"([^\"]+)\"$/\1=\2/p' \
+      -e 's/^[ ]*(database) \"([^\"]+)\"$/\1=\2/p' < $BK_DIR/options`
+
+    if [ -n "$database" ]
+    then
+	DB=$database
+	BRANCH=$branch
+    fi
+fi
+
+
+# Simple program args supported
+if [ -n "$arg1" ]
+then
+    case $arg1 in
+      --version)
+	echo "mtbrowse $VERSION"
+	exit 0
+      ;;
+      --help|-h)
+	echo "mtbrowse [dbfile]"
+	exit 0
+      ;;
+      *)
+	# Databasefile from command line
+	DB="$arg1"
+	unset BRANCH
+
+	# MT change the options, if you continue with other DB here!
+	if [ -f $BK_DIR/options ]
+	then
+	    if ! dialog --cr-wrap \
+		--title " *********** WARNING! ********** " \
+		--defaultno --colors --yesno "
+Your \Zb\Z1$BK_DIR/options\Zn will be overwrite, if
+continue with different DB file or branch
+in exist working directory!
+
+YES confirm  /  NO abbort" 0 0
+	    then
+		echo "abbort"
+		exit 1
+	    fi
+	fi
+      ;;
+    esac
 fi
 
 mkdir -p $TEMPDIR
