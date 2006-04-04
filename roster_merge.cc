@@ -1795,8 +1795,11 @@ struct rename_target_plus_missing_root : public structural_conflict_helper
 
     I(result.missing_root_dir);
 
-    result.roster.attach_node(left_root_nid, split(""));
-    result.roster.attach_node(right_root_nid, split("totally_other_name"));
+    // we can't just attach one of these as the root -- see the massive
+    // comment on the old_locations member of roster_t, in roster.hh.
+    result.roster.attach_node(result.roster.create_dir_node(nis), split(""));
+    result.roster.attach_node(left_root_nid, split("totally_left_name"));
+    result.roster.attach_node(right_root_nid, split("totally_right_name"));
     result.rename_target_conflicts.pop_back();
     result.missing_root_dir = false;
     I(result.is_clean());
