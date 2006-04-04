@@ -508,7 +508,7 @@ msgstr "comentário vazio"
 #: commands.cc:2864
 #: commands.cc:3412
 msgid "workspace"
-msgstr ""
+msgstr "área de trabalho"
 
 #: commands.cc:1214
 #: commands.cc:1243
@@ -532,6 +532,8 @@ msgid ""
 "SRC DEST\n"
 "SRC1 [SRC2 [...]] DEST_DIR"
 msgstr ""
+"ORIGEM DESTINO\n"
+"ORIGEM1 [ORIGEM2 [...]] DIRETÓRIO_DESTINO"
 
 #: commands.cc:1271
 msgid "rename entries in the workspace"
@@ -539,7 +541,7 @@ msgstr "renomeia entradas na área de trabalho"
 
 #: commands.cc:1293
 msgid "NEW_ROOT PUT_OLD"
-msgstr ""
+msgstr "NOVA_RAIZ COLOCAR_O_ANTIGO"
 
 #: commands.cc:1294
 msgid ""
@@ -549,6 +551,11 @@ msgid ""
 "directory will have name PUT_OLD.\n"
 "Using --execute is strongly recommended."
 msgstr ""
+"renomeia o diretório raiz\n"
+"depois deste comando, o diretório que atualmente tem o nome NOVA_RAIZ\n"
+"será  diretŕio raiz, e o diretório que atualmente é o raiz terá o nome\n"
+"COLOCAR_O_ANTIGO.\n"
+"Usar --execute é altamente recomendado."
 
 #: commands.cc:1313
 #: commands.cc:1326
@@ -568,7 +575,7 @@ msgstr "<pai> <esquerda> <direita>"
 
 #: commands.cc:1327
 msgid "merge 3 files and output result"
-msgstr "combina 3 arquivos e retorna resultado"
+msgstr "combina 3 arquivos e retorna o resultado"
 
 #: commands.cc:1337
 #, c-format
@@ -639,6 +646,11 @@ msgid ""
 "Otherwise, it will be the head of the branch (given or implicit).\n"
 "If no directory is given, the branch name will be used as directory"
 msgstr ""
+"descarrega uma versão do banco de dados no diretório.\n"
+"Se uma versão é dada, esta é a versão que será descarregada.\n"
+"De outra forma, será a versão à frente do ramo (dado ou implícito).\n"
+"Se nenhum nome de diretório for dado, o nome do ramo será usado como\n"
+"diretório"
 
 #: commands.cc:1493
 #: commands.cc:1512
@@ -712,7 +724,7 @@ msgstr "ramo '%s' não está combinado atualmente:\n"
 #: commands.cc:1658
 #, c-format
 msgid "no epoch for branch %s\n"
-msgstr ""
+msgstr "nenhuma era para ramo %s\n"
 
 #: commands.cc:1866
 msgid ""
@@ -745,6 +757,9 @@ msgid ""
 "show database objects, or the current workspace manifest, or known,\n"
 "unknown, intentionally ignored, missing, or changed state files"
 msgstr ""
+"exibe objetos do banc de dados, ou a listagem da área de trabalho atual,\n"
+"ou arquivos conhecidos, desconhecidos, intencionalmente ignorados,\n"
+"faltando ou que mudaram de estado"
 
 #: commands.cc:1915
 #: commands.cc:1943
@@ -919,7 +934,7 @@ msgstr "manipula estado do bando de dados"
 #: commands.cc:2202
 #, c-format
 msgid "The epoch must be %s characters"
-msgstr ""
+msgstr "A era deve ter %s caracteres"
 
 #: commands.cc:2212
 msgid ""
@@ -948,12 +963,12 @@ msgstr "caminho '%s' não tem atributo '%s'\n"
 #: commands.cc:2284
 #, c-format
 msgid "No attributes for '%s'"
-msgstr ""
+msgstr "Nenhum atributo para '%s'"
 
 #: commands.cc:2293
 #, c-format
 msgid "No attribute '%s' on path '%s'"
-msgstr ""
+msgstr "Nenhum atributo '%s' no caminho '%s'"
 
 #: commands.cc:2312
 #, c-format
@@ -993,7 +1008,7 @@ msgstr "mensagem de registro vazia, gravação cancelada"
 #: commands.cc:2403
 #, c-format
 msgid "log message rejected: %s\n"
-msgstr ""
+msgstr "mensagem de registro rejeitada: %s\n"
 
 #: commands.cc:2411
 #, c-format
@@ -1028,6 +1043,11 @@ msgid ""
 "that revision is shown.  If two revisions are given, the diff between\n"
 "them is given.  If no format is specified, unified is used by default."
 msgstr ""
+"mostra as diferenças atuais na saída padrão.\n"
+"Se uma versão for dada, a diferença entre a área de trabalho e esta\n"
+"versão será mostrada. Se duas versões forem dadas, a diferença entre\n"
+"elas é exibida. Se nenhum formato for especificado. o unificado é\n"
+"usado por padrão."
 
 #: commands.cc:2728
 #, c-format
@@ -1188,7 +1208,7 @@ msgstr "RAMO-FONTE RAMO-DESTINO DIRETÓRIO"
 
 #: commands.cc:3162
 msgid "merge one branch into a subdirectory in another branch"
-msgstr ""
+msgstr "combina um ramo com um sibdiretório de outro ramo"
 
 #: commands.cc:3200
 #: commands.cc:3203
@@ -1224,7 +1244,7 @@ msgstr "não há necessidade de combinação; colocando %s no ramo '%s'\n"
 #: commands.cc:3257
 #, c-format
 msgid "Path %s not found in destination tree."
-msgstr ""
+msgstr "Caminho %s não foi encontrado na árvore de destino."
 
 #: commands.cc:3311
 msgid "refresh the inodeprint cache"
@@ -1338,7 +1358,7 @@ msgstr "Arquivo '%s' desconhecido para comando log"
 #: commands.cc:3705
 #, c-format
 msgid "only one of --last/--next allowed"
-msgstr ""
+msgstr "apenas ou --last ou --next é permitido"
 
 #: commands.cc:3873
 msgid "[DIRECTORY]"
@@ -1449,7 +1469,7 @@ msgstr "exibe conteúdo do roster associado com VERSÃO"
 
 #: commands.cc:3983
 msgid "REV REV"
-msgstr ""
+msgstr "VERSÂO VERSÂO"
 
 #: commands.cc:3983
 msgid "Show what conflicts would need to be resolved to merge the given revisions."
@@ -1459,7 +1479,7 @@ msgstr ""
 #: commands.cc:3994
 #, c-format
 msgid "%s in an ancestor of %s; no merge is needed."
-msgstr ""
+msgstr "%s e um ancestral de %s; nenhuma combinação é necessária."
 
 #: commands.cc:4008
 #, c-format
@@ -1566,12 +1586,12 @@ msgstr ""
 #: database_check.cc:631
 #, c-format
 msgid "revision %s incomplete (%d missing manifests)\n"
-msgstr ""
+msgstr "versão %s está incompleta (%d listagens faltando)\n"
 
 #: database_check.cc:638
 #, c-format
 msgid "revision %s incomplete (%d missing revisions)\n"
-msgstr ""
+msgstr "versão %s está incompleta (%d versões faltando)\n"
 
 #: database_check.cc:645
 #, c-format
@@ -1606,7 +1626,7 @@ msgstr ""
 #: database_check.cc:690
 #, c-format
 msgid "revision %s has bad history (%s)\n"
-msgstr ""
+msgstr "versão %s tem um histórico ruim (%s)\n"
 
 #: database_check.cc:697
 #, c-format
