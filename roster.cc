@@ -606,6 +606,7 @@ roster_t::detach_node(split_path const & pth)
                   make_pair(root_id, make_pair(root_dir->parent, root_dir->name)));
       // clear ("reset") the root_dir shared_pointer
       root_dir.reset();
+      I(!has_root());
       return root_id;
     }
 
@@ -712,6 +713,7 @@ roster_t::attach_node(node_id nid, node_id parent, path_component name)
       I(null_node(parent) && null_name(name));
       I(null_node(n->parent));
       I(null_name(n->name));
+      I(!has_root());
       root_dir = downcast_to_dir_t(n);
       I(i == old_locations.end() || i->second != make_pair(root_dir->parent,
                                                            root_dir->name));
