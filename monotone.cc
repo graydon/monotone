@@ -255,6 +255,9 @@ cpp_main(int argc, char ** argv)
   try
   {
 
+  // set up some marked strings, so even if our logbuf overflows, we'll get
+  // this data in a crash.
+  std::string cmdline_string;
   {
     std::ostringstream cmdline_ss;
     for (int i = 0; i < argc; ++i)
@@ -263,11 +266,18 @@ cpp_main(int argc, char ** argv)
           cmdline_ss << ", ";
         cmdline_ss << "'" << argv[i] << "'";
       }
-    L(FL("command line: %s\n") % cmdline_ss.str());
+    cmdline_string = cmdline_ss.str();
   }
+  MM(cmdline_string);
+  L(FL("command line: %s\n") % cmdline_string);
 
-  L(FL("set locale: LC_ALL=%s\n")
-    % (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL)));
+  std::string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
+  MM(locale_string);
+  L(FL("set locale: LC_ALL=%s\n") % locale_string);
+
+  std::string full_version_string;
+  get_full_version(full_version_string);
+  MM(full_version_string);
 
   // Set up secure memory allocation etc
   Botan::Init::initialize();

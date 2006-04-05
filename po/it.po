@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-04-02 11:02+0200\n"
-"PO-Revision-Date: 2006-04-02 11:06+0100\n"
+"POT-Creation-Date: 2006-04-05 07:39+0200\n"
+"PO-Revision-Date: 2006-04-05 07:42+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -38,7 +38,7 @@ msgstr "percorso sconosciuto ‘%s’\n"
 #: app_state.cc:349
 #, fuzzy, c-format
 msgid "search root '%s' does not exist"
-msgstr "la chiave pubblica ‘%s’ non è conosciuta"
+msgstr "Ancora HTML %s non esistente."
 
 #: app_state.cc:350
 #, fuzzy, c-format
@@ -804,9 +804,9 @@ msgstr[0] "letto %d pacchetto"
 msgstr[1] "letti %d pacchetto"
 
 #: commands.cc:2014
-#, fuzzy, c-format
+#, c-format
 msgid "setting default server to %s\n"
-msgstr "imposto il pattern di default di inclusione rami a ‘%s’\n"
+msgstr "imposto il server di default a ‘%s’\n"
 
 #: commands.cc:2020
 #, c-format
@@ -924,7 +924,7 @@ msgstr "manipola lo stato del database"
 #: commands.cc:2202
 #, fuzzy, c-format
 msgid "The epoch must be %s characters"
-msgstr "L'epoca deve essere di %s caratteri"
+msgstr "La #define %s deve essere un intero."
 
 #: commands.cc:2212
 msgid ""
@@ -1070,7 +1070,7 @@ msgstr "questo spazio di lavoro è un nuovo progetto, non posso fare un ‘updat
 #: commands.cc:2907
 #, fuzzy, c-format
 msgid "updating along branch '%s'..."
-msgstr "RAMO_SORG RAMO_DEST"
+msgstr "&Crea nuovo ramo"
 
 #: commands.cc:2911
 #, c-format
@@ -1502,12 +1502,12 @@ msgstr "Manca il nome del file dopo -C"
 #: database_check.cc:550
 #, fuzzy, c-format
 msgid "file %s unreferenced\n"
-msgstr "file strano"
+msgstr "%d file non utilizzati\n"
 
 #: database_check.cc:571
 #, fuzzy, c-format
 msgid "roster %s unreferenced\n"
-msgstr "la revisione ‘%s’ `e incompleta (roster incompleto)\n"
+msgstr "%d file non utilizzati\n"
 
 #: database_check.cc:577
 #, fuzzy, c-format
@@ -1592,7 +1592,7 @@ msgstr "la revisione ‘%s’ non in forma normalizzata\n"
 #: database_check.cc:728
 #, fuzzy, c-format
 msgid "key %s missing (signed %d certs)\n"
-msgstr "chiavi pubbliche e segrete create e firmate.\n"
+msgstr "Opzione mancante per la versione: \"aspell\"."
 
 #: database_check.cc:761
 #, c-format
@@ -1682,7 +1682,7 @@ msgstr "%d revisioni non in forma normalizzata\n"
 #: database_check.cc:906
 #, fuzzy, c-format
 msgid "%d unreferenced roster links\n"
-msgstr "la revisione ‘%s’ `e incompleta (roster incompleto)\n"
+msgstr "  -L,  --relative                    segue solo i link relativi.\n"
 
 #: database_check.cc:909
 #, c-format
@@ -1812,12 +1812,12 @@ msgid ""
 "cancelling database creation"
 msgstr ""
 
-#: database.cc:466
+#: database.cc:473
 #, c-format
 msgid "cannot create %s; it already exists"
 msgstr "non posso creare ‘%s’: esiste già"
 
-#: database.cc:530
+#: database.cc:537
 #, c-format
 msgid ""
 "schema version    : %s\n"
@@ -1864,52 +1864,52 @@ msgstr ""
 "  dimensione pagine   : %u\n"
 "  dimensione cache    : %u\n"
 
-#: database.cc:590
+#: database.cc:597
 #, c-format
 msgid "database schema version: %s"
 msgstr "versione dello schema del database: %s"
 
-#: database.cc:667
+#: database.cc:674
 #, fuzzy, c-format
 msgid "multiple statements in query: %s\n"
 msgstr "risultato nullo nella query: %s\n"
 
-#: database.cc:673
+#: database.cc:680
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
 msgstr ""
 
-#: database.cc:732
+#: database.cc:739
 #, c-format
 msgid "null result in query: %s\n"
 msgstr "risultato nullo nella query: %s\n"
 
-#: database.cc:750
+#: database.cc:757
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
 msgstr ""
 
-#: database.cc:1770
+#: database.cc:1777
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "esiste già un'altra chiave con nome ‘%s’"
 
-#: database.cc:2826
+#: database.cc:2833
 #, c-format
 msgid "no database specified"
 msgstr "nessuna database specificato"
 
-#: database.cc:2834
+#: database.cc:2841
 #, c-format
 msgid "database %s does not exist"
 msgstr "il database ‘%s’ non esiste"
 
-#: database.cc:2835
+#: database.cc:2842
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "‘%s’ è una cartella, non un database"
 
-#: database.cc:2860
+#: database.cc:2867
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "non riesco ad aprire il database ‘%s’: %s"
@@ -2025,7 +2025,7 @@ msgstr "il file da cancellare ‘%s’ non è un file ma una cartella"
 #: file_io.cc:264
 #, fuzzy, c-format
 msgid "rename source file '%s' does not exist"
-msgstr "il file ‘%s’ non esiste nello spazio di lavoro"
+msgstr "id del file antenato non esistente"
 
 #: file_io.cc:265
 #, c-format
@@ -2041,7 +2041,7 @@ msgstr "esiste già un'altra chiave con nome ‘%s’"
 #: file_io.cc:277
 #, fuzzy, c-format
 msgid "rename source dir '%s' does not exist"
-msgstr "la cartella di destinazione ‘%s/’ non esiste nella revisione attuale"
+msgstr "Chiave '%s' del registro di sistema non esistente, impossibile rinominarla."
 
 #: file_io.cc:278
 #, c-format
@@ -2427,7 +2427,7 @@ msgstr "elemento di tipo sconosciuto 0x%x per ‘%s’"
 #: netcmd.cc:112
 #, fuzzy, c-format
 msgid "unknown netcmd code 0x%x"
-msgstr "elemento di tipo sconosciuto 0x%x per ‘%s’"
+msgstr "errore sconosciuto (codice %08x)."
 
 #: netcmd.cc:117
 #, c-format
@@ -2496,29 +2496,29 @@ msgstr "controllo di ‘%s’ fallito"
 
 #: netsync.cc:708
 msgid "bytes in"
-msgstr "byte ing"
+msgstr "byte ↓"
 
 #: netsync.cc:710
 msgid "bytes out"
-msgstr "byte usc"
+msgstr "byte ↑"
 
 #: netsync.cc:714
 msgid "certs in"
-msgstr "cert ing"
+msgstr "cert. ↓"
 
 #: netsync.cc:716
 #: netsync.cc:729
 msgid "revs in"
-msgstr "rev ing"
+msgstr "rev. ↓"
 
 #: netsync.cc:721
 msgid "certs out"
-msgstr "cert usc"
+msgstr "cert. ↑"
 
 #: netsync.cc:723
 #: netsync.cc:731
 msgid "revs out"
-msgstr "rev usc"
+msgstr "rev. ↑"
 
 #: netsync.cc:837
 #, c-format
@@ -2583,7 +2583,7 @@ msgstr "rifiutato un tentativo di connessione anonima funzionando come pozzo\n"
 #: netsync.cc:1444
 #, fuzzy, c-format
 msgid "not serving branch '%s'"
-msgstr "RAMO_SORG RAMO_DEST"
+msgstr "%s non nel ramo %s\n"
 
 #: netsync.cc:1352
 #, c-format
@@ -2636,9 +2636,9 @@ msgid "denied '%s' write permission for '%s' excluding '%s'\n"
 msgstr "negati a ‘%s’ permessi di scrittura per ‘%s’ con esclusione di ‘%s’\n"
 
 #: netsync.cc:1486
-#, fuzzy, c-format
+#, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'\n"
-msgstr "negati a ‘%s’ permessi di scrittura per ‘%s’ con esclusione di ‘%s’\n"
+msgstr "concessi a ‘%s’ permessi di scrittura per ‘%s’ con esclusione di ‘%s’\n"
 
 #: netsync.cc:1526
 #, c-format
@@ -2824,7 +2824,7 @@ msgstr ""
 #: netsync.cc:2637
 #, fuzzy, c-format
 msgid "beginning service on %s : %s\n"
-msgstr "errore di lettura su %s: %s"
+msgstr "inizio il commit sul ramo ‘%s’\n"
 
 #: netsync.cc:2638
 msgid "<all interfaces>"
@@ -2920,7 +2920,7 @@ msgstr ""
 #: packet.cc:200
 #, fuzzy, c-format
 msgid "cert revision '%s' does not exist in db\n"
-msgstr "la cartella di destinazione ‘%s/’ non esiste nella revisione attuale"
+msgstr "la revisione ‘%s’ non è in database"
 
 #: packet.cc:202
 #, c-format
@@ -3035,7 +3035,7 @@ msgstr ""
 msgid "Path %s added twice with differing content\n"
 msgstr "Percorso ‘%s’ aggiunto due volte con contenuti diversi\n"
 
-#: revision.cc:1273
+#: revision.cc:1281
 #, c-format
 msgid ""
 "unknown attribute '%s' on path '%s'\n"
@@ -3044,17 +3044,17 @@ msgid ""
 "seriously, if you'd like to keep it, we're happy to figure out how)"
 msgstr ""
 
-#: revision.cc:1385
+#: revision.cc:1393
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions\n"
 msgstr ""
 
-#: revision.cc:1440
+#: revision.cc:1448
 #, c-format
 msgid "rebuilding revision graph from manifest certs\n"
 msgstr ""
 
-#: revision.cc:1543
+#: revision.cc:1551
 #, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
@@ -3421,7 +3421,7 @@ msgid "content of file '%s' has changed, not overwriting"
 msgstr "i contenuti del file ‘%s’ sono cambiati, non lo sovrascrivo"
 
 #: work.cc:1003
-#, fuzzy, c-format
+#, c-format
 msgid "updating %s"
-msgstr "aggiorno ‘%s’ a ‘%s’"
+msgstr "aggiornamento di ‘%s’ in corso"
 
