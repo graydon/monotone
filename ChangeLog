@@ -22,6 +22,15 @@
 	versions, while also getting rid of the repeated "Generated from
 	cached data" messages.
 
+2006-04-05  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Changed "in/out" translations as graphical arrows.
+
+2006-04-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_rosterify_empty_manifest.at: a test for rosterifying a db
+	that has empty manifests
+
 2006-04-04  Matt Johnston  <matt@ucc.asn.au>
 
 	* revision.cc (construct_revisions_from_ancestry): all rosters must be
