@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include <iostream>
+#include <sstream>
 
 #include <boost/version.hpp>
 #include <boost/config.hpp>
@@ -21,28 +22,46 @@
 #include "sanity.hh"
 
 void
-print_version()
+get_version(std::string & out)
 {
-  std::cout << (F("%s (base revision: %s)")
-                % PACKAGE_STRING % package_revision_constant)
-            << std::endl;
+  out = (F("%s (base revision: %s")
+         % PACKAGE_STRING % package_revision_constant).str();
 }
 
 void
-print_full_version()
+print_version()
 {
-  print_version();
   std::string s;
+  get_version(s);
+  std::cout << s << std::endl;
+}
+
+void
+get_full_version(std::string & out)
+{
+  std::ostringstream oss;
+  std::string s;
+  get_version(s);
+  oss << s << "\n";
   get_system_flavour(s);
-  std::cout << F("Running on: %s\n"
-                 "C++ compiler: %s\n"
-                 "C++ standard library: %s\n"
-                 "Boost version: %s\n"
-                 "Changes since base revision:\n"
-                 "%s\n")
+  oss << F("Running on          : %s\n"
+           "C++ compiler        : %s\n"
+           "C++ standard library: %s\n"
+           "Boost version       : %s\n"
+           "Changes since base revision:\n"
+           "%s")
     % s
     % BOOST_COMPILER
     % BOOST_STDLIB
     % BOOST_LIB_VERSION
     % package_full_revision_constant;
+  out = oss.str();
+}
+
+void
+print_full_version()
+{
+  std::string s;
+  get_full_version(s);
+  std::cout << s << std::endl;
 }

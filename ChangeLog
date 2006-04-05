@@ -1,5 +1,10 @@
 2006-04-04  Nathaniel Smith  <njs@pobox.com>
 
+	* mt_version.{cc,hh} (get_version, get_full_version): New
+	functions.  Also tweak --full-version output for readability.
+
+2006-04-04  Nathaniel Smith  <njs@pobox.com>
+
 	* mt_version.cc (print_full_version): Include compiler
 	vendor/version, c++ stdlib vendor/version, and boost version in
 	--full-version output.
