@@ -1,3 +1,9 @@
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): MM() our command line, LC_ALL, and full
+	version, so that they are always included in dump and debug
+	files.
+
 2006-04-04  Nathaniel Smith  <njs@pobox.com>
 
 	* mt_version.{cc,hh} (get_version, get_full_version): New
