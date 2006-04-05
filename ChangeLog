@@ -1,3 +1,10 @@
+2006-04-04  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am: Yet another try at the package full revision stuff;
+	hopefully this version still works just as well as the old
+	versions, while also getting rid of the repeated "Generated from
+	cached data" messages.
+
 2006-04-04  Matt Johnston  <matt@ucc.asn.au>
 
 	* revision.cc (construct_revisions_from_ancestry): all rosters must be
