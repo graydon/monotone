@@ -24,7 +24,7 @@
 void
 get_version(std::string & out)
 {
-  out = (F("%s (base revision: %s")
+  out = (F("%s (base revision: %s)")
          % PACKAGE_STRING % package_revision_constant).str();
 }
 
