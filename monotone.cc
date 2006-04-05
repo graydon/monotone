@@ -278,7 +278,7 @@ cpp_main(int argc, char ** argv)
   save_initial_path();
   utf8_argv uv(argc, argv);
 
-  string prog_name(uv.argv[0]);
+  utf8 prog_name(uv.argv[0]);
 
   // prepare for arg parsing
 
@@ -302,7 +302,7 @@ cpp_main(int argc, char ** argv)
     {
       app_state app;
 
-      app.prog_name = prog_name;
+      app.set_prog_name(prog_name);
 
       while ((opt = poptGetNextOpt(ctx())) > 0)
         {

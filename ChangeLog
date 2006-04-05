@@ -1,3 +1,11 @@
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* ui.{cc,hh}: Use the prog_name in output.
+	* app_state.cc (app_state::prog_name): Change default to 'mtn'.
+	Set the global ui object's prog_name whenever our prog_name is
+	set.
+	* monotone.cc (cpp_main): Use the new prog_name setter.
+
 2006-04-04  Nathaniel Smith  <njs@pobox.com>
 
 	* roster.hh (class roster_t): Add massive comment about roster_t's
