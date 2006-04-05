@@ -1,3 +1,7 @@
+2006-04-05  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Changed "in/out" translations as graphical arrows.
+
 2006-04-04  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/t_rosterify_empty_manifest.at: a test for rosterifying a db
