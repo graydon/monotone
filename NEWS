@@ -2,7 +2,10 @@
 
         0.26 release.  Major enhancements and internal rewrites.
         Please read these notes carefully, as significant changes are
-        described.
+        described.  In particular, you _cannot_ upgrade to 0.26
+        without some attention to the migration, especially if you are
+        working on a project with other people.  See UPGRADE for
+        details of this procedure.
 
         The changes are large enough that there were 3 pre-releases of
         this code; the changes that occurred in each can be seen
@@ -42,7 +45,139 @@
           structure is called a 'roster'.  You don't really need to
           know this name; unless you are hacking on monotone or using
           various debug operations, you will never see a roster.
-          However, when you hear 
+          It's mostly useful to know that when someone says something
+          about 'roster-enabled monotone' or the like, they're
+          referring to this body of new code.
+          
+          This change has a number of consequences:
+          - The textual format for revisions and manifests changed.
+            There is no conceptual change, they still contain the same
+            information and work the same way.  The formats were
+            merely cleaned up to correct various problems experience
+            showed us, and allow various enhancements now and in the
+            future.  However, this change means that a flag-day
+            migration is required.  See UPGRADE for details.
+          - Directories are now first-class objects.  You can add an
+            empty directory, must drop a directory if you want it to
+            go away, etc.
+          - Attrs are now first-class objects.  '.mt-attrs' no longer
+            exists; attrs are now described directly in the manifest,
+            and changes to them appear directly in revisions.  The
+            migration code will automatically convert existing
+            .mt-attrs files to the new first-class attrs.  If you have
+            custom attrs, those may require special handling -- if
+            this is the case, then the upgrader will tell you.
+          - The merge code has been rewritten completely.  The
+            interface is currently the same (though this rewrite makes
+            it easier to improve the interface going forward); if you
+            have found merging in monotone to be easy in the past,
+            then you will not notice anything different.  If you have
+            run into problems, then the new merger should make your
+            life substantially simpler.  It has full support for
+            renames (of both directories and files), intelligent
+            merging of attrs, improved handling of file content
+            merges.  Is the first known merger implementation based on
+            a provably correct algorithm (the "multi-*-merge"
+            algorithm), has exhaustive automated tests, and generally
+            should give accurate, conservative merges.
+          - The new code is generally faster, though not yet as
+            fast as it could be.
+
+        Netsync changes:
+
+        - The default netsync port has changed 5253 to 4691.  4691 is
+          our official IANA-assigned port.  Please adjust firewalls
+          appropriately.
+
+        - Netsync code has also been largely reworked; new code should
+          provide better opportunities for 
+
+        - The protocol is incompatible with earlier versions of
+          monotone.  This should not be a surprise, since the data it
+          carries is also incompatible (see above)...
+
+        New features:
+
+        - New option --brief to 'annotate', gives somewhat more
+          friendly output.
+
+        - Several enhancements to log:
+          - New option --next, to display descendent revisions
+            (rather than ancestor revisions).
+          - When 'log -r' is given an ambiguous selector, it now just
+            logs all matching revisions, instead of requiring the
+            selector be disambiguated.
+          - New option --no-files.
+
+        - New command 'show_conflicts', performs a dry run merge.
+
+        - New command 'ls changed'.
+
+        - 'rename' (and its alias 'mv') now accept a broader range of
+          syntax:
+            mtn rename foo some_dir
+              -> renames foo to some_dir/foo
+            mtn rename foo bar baz some_dir
+              -> moves foo, bar, and baz to some_dir/foo,
+              some_dir/bar, and some_dir/baz
+
+        - New hook 'validate_commit_message', which may be used to
+          verify that all commit messages meet arbitrary user-defined
+          rules.
+
+        - New option --log, to log monotone's output to a file.
+
+        - New option 'drop --recursive', to remove a directory and its
+          contents in one swoop.
+
+        - The root dir may now be renamed.  This is a somewhat exotic
+          feature, but has some interesting uses related to splitting
+          up or joining together projects; see new commands
+          'pivot_root', 'merge_into_dir'.
+
+        Minor bug fixes:
+
+        - 'serve' with no --bind argument should now work on systems
+          where the C library has IPv6 support, but the kernel does
+          not.
+
+        - Stricter checking on the internal version of filenames to
+          ensure that they are valid UTF-8.
+
+        - If the database is in the workspace, then it is always
+          ignored.
+
+        - Monotone no longer errors out when using a French (fr)
+          locale with a non-Unicode codeset.
+
+        Other changes:
+
+        - Packet commands ('rdata', 'fdata', etc.) have been moved to
+          'automate'.
+
+        - Database storage now uses sqlite's blob support; database
+          files should be ~1/4 smaller as a result.
+
+        - Translations updated, and 3 new translations added (de, it,
+          sv).
+          
+        Reliability considerations:
+
+        - This new codebase has received much less testing under real
+          world conditions than the codebase used in 0.25, simply
+          because it is newer.  It has been in active use for monotone
+          development since 8 January 2006, and only a small number of
+          bugs have been found; all bugs found so far have been very
+          minor, and none stood any danger of corrupting data.
+          Furthermore, we are much more confident in the theoretical
+          underpinnings of the new approach than the old, and the test
+          suite attempts to exhaustively exercise all new code paths.
+
+          However, none of this is or can be a substitute for real
+          world experience.  We advise caution in upgrading to this
+          version of monotone, and suggest that (especially) those who
+          upgrade aggressively should pay extra attention to the
+          monotone mailing list before and after doing so.
 
 Wed Mar 29 05:20:10 PST 2006
 
@@ -79,7 +214,7 @@ Wed Mar 29 05:20:10 PST 2006
 
         - Root dir renaming is now supported.  See new commands
           'pivot_root', 'merge_into_dir'.
-          - As a side-effect, it is not possible to run 'rosterify' on
+          - As a side-effect, it is now possible to run 'rosterify' on
             histories in which two independent lines of history were
             merged.
 
