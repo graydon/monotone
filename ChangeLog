@@ -1,5 +1,11 @@
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
+	* Makefile.am (package_full_revision_*.txt): Try this again,
+	hopefully now 'distcheck' will work in a clean dir on systems that
+	have no mtn binary.
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
 	* UPGRADE: Expand and hopefully clarify 0.26 upgrading notes.
 	Also add a paragraph at the top to explain how the file is
 	organized (maybe this should have been there a long time ago...)

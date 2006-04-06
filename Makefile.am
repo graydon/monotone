@@ -518,7 +518,7 @@ package_revision.c: package_revision.txt txt2c Makefile
 #              |                \  <-- add "generated from cached data" text
 #              |      package_full_revision_dist.txt
 #              |           /        
-#          package_full_revision.txt   <-- or, "unknown" if neither exists
+#          package_full_revision.txt
 
 # This is phony, so that we always try to rebuild it.  If it succeeds
 # in calculating changes, it produces its target; otherwise, its
@@ -533,8 +533,12 @@ package_full_revision_raw.txt:
 	|| (cd $(srcdir) && mtn automate get_revision) 2>/dev/null >$@ \
 	|| rm -f $@
 # See above comment -- the file this depends on may or may not exist.
-# If it does, then we overwrite this file; if it doesn't, then we
-# leave this file alone.  (Possibly leaving it non-existent.)
+# This file, however, must always exist, so that 'make dist' can
+# include it in the tarball it generates.  So there are three cases:
+#   -- if the raw file does not exist, then
+#      -- if the dist file exists, then we leave it alone
+#      -- if the dist file does not exist, then we say "unknown"
+#   -- if the raw file does exist, then we regenerate the dist file
 package_full_revision_dist.txt: package_full_revision_raw.txt
 	if [ -f $< ]; then \
 	  cp -f $< $@ \
@@ -542,12 +546,12 @@ package_full_revision_dist.txt: package_full_revision_raw.txt
 	      echo '  Generated from data cached in the distribution;'; \
 	      echo '  further changes may have been made.') >> $@; \
 	fi
-# It is possible that neither of the files this depends on exactly
-# exist.  We use the first one that does.
+	[ -f $@ ] || echo "unknown" > $@
+# The raw file may not exist, but the dist file definitely does; we
+# just take the first dependency that exists.
 package_full_revision.txt: package_full_revision_raw.txt package_full_revision_dist.txt
 	rm -f $@
 	for SRC in $^; do ([ -f $$SRC -a ! -f $@ ] && cp -f $$SRC $@) || true; done
-	[ -f $@ ] || echo "unknown" > $@
 package_full_revision.c: package_full_revision.txt txt2c Makefile
 	./txt2c --no-static $< package_full_revision >$@.tmp
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
