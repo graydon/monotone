@@ -499,35 +499,6 @@ check_certs(app_state & app,
 }
 
 static void
-check_sane(app_state & app, 
-           std::map<revision_id, checked_revision> & checked_revisions)
-{
-  L(FL("checking local history of %d revisions\n") % checked_revisions.size());
-
-  ticker ticks(_("revisions"), "r", 1);
-
-  for (std::map<revision_id, checked_revision>::iterator 
-         i = checked_revisions.begin(); i != checked_revisions.end(); ++i)
-  {
-    if (i->second.found)
-      {
-        try 
-          {
-/*
-// FIXME_ROSTERS: disabled until rewritten to use rosters
-            check_sane_history(i->first, constants::verify_depth, app);
-*/
-          }
-        catch (std::exception & e)
-          {
-            i->second.history_error = e.what();
-          }
-      }
-    ++ticks;
-  }
-}
-
-static void
 report_files(std::map<file_id, checked_file> const & checked_files, 
              size_t & missing_files, 
              size_t & unreferenced_files)
@@ -845,7 +816,6 @@ check_db(app_state & app)
                      unreferenced_roster_links,
                      missing_rosters);
   check_ancestry(app, checked_revisions);
-  check_sane(app, checked_revisions);
   check_keys(app, checked_keys);
   check_certs(app, checked_revisions, checked_keys, total_certs);
 

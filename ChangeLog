@@ -1,5 +1,9 @@
 2006-04-05  Nathaniel Smith  <njs@pobox.com>
 
+	* database_check.cc (check_sane): Remove dead code.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
 	* sanity.cc (dump_buffer): Make the "discarding debug log"
 	slightly more informative.
 
