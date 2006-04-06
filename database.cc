@@ -431,27 +431,34 @@ dump_index_cb(void *data, int n, char **vals, char **cols)
 void 
 database::dump(ostream & out)
 {
-  transaction_guard guard(*this);
-  dump_request req;
-  req.out = &out;
-  req.sql = sql();
-  out << "BEGIN EXCLUSIVE;\n";
-  int res;
-  res = sqlite3_exec(req.sql,
-                        "SELECT name, type, sql FROM sqlite_master "
-                        "WHERE type='table' AND sql NOT NULL "
-                        "AND name not like 'sqlite_stat%' "
-                        "ORDER BY name",
-                        dump_table_cb, &req, NULL);
-  assert_sqlite3_ok(req.sql);
-  res = sqlite3_exec(req.sql,
-                        "SELECT name, type, sql FROM sqlite_master "
-                        "WHERE type='index' AND sql NOT NULL "
-                        "ORDER BY name",
-                        dump_index_cb, &req, NULL);
-  assert_sqlite3_ok(req.sql);
-  out << "COMMIT;\n";
-  guard.commit();
+  // don't care about schema checking etc.
+  check_filename();
+  check_db_exists();
+  open();
+  {
+    transaction_guard guard(*this);
+    dump_request req;
+    req.out = &out;
+    req.sql = sql();
+    out << "BEGIN EXCLUSIVE;\n";
+    int res;
+    res = sqlite3_exec(req.sql,
+                          "SELECT name, type, sql FROM sqlite_master "
+                          "WHERE type='table' AND sql NOT NULL "
+                          "AND name not like 'sqlite_stat%' "
+                          "ORDER BY name",
+                          dump_table_cb, &req, NULL);
+    assert_sqlite3_ok(req.sql);
+    res = sqlite3_exec(req.sql,
+                          "SELECT name, type, sql FROM sqlite_master "
+                          "WHERE type='index' AND sql NOT NULL "
+                          "ORDER BY name",
+                          dump_index_cb, &req, NULL);
+    assert_sqlite3_ok(req.sql);
+    out << "COMMIT;\n";
+    guard.commit();
+  }
+  close();
 }
 
 void 

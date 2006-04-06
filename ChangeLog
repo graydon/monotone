@@ -1,3 +1,128 @@
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Complete (?) draft of 0.26 release notes.
+
+2006-04-07  Satoru SATOH <ss@gnome.gr.jp>
+
+	* po/ja.po: Updated Japanese translation.
+
+2006-04-06  Richard Levitte  <richard@levitte.org>
+
+	* ui.cc (user_interface::output_prefix): Move the invariant
+	checking that prog_name isn't empty...
+	(user_interface::set_prog_name): here.  The reason is that an
+	invariant generates a log, and that will generate another call
+	to this message, which will trigger the invariant again, which
+	generates a log, which...
+	In user_interface::output_prefix, still check if prog_name is
+	empty, and output something harmless if it is.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Start writing 0.26 release notes.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (unify_roster_oneway): Discover that this code is not
+	really composable with arbitrary node_id_sources; add an assertion
+	to document the real interface, and a comment explaining why this
+	is the case, and why it is a problem for workspace merge and db
+	check.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* database_check.cc (check_sane): Remove dead code.
+
+2006-04-05  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc: Make sure prog_name gets the basename of the
+	program from argv[0], not the whole absolute path to it.
+
+	* tests/t_commit_validate.at, tests/t_log_to_file.at: The monotone
+	logs are prefixed with the program name ('mtn'), not with
+	'monotone' any longer.
+
+2006-04-05  Richard Levitte  <richard@levitte.org>
+
+	* mt_version.cc (get_version): Close the parenthesis.
+
+	* po/sv.po: Fix a few fuzzy strings and translate a new one.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.cc (dump_buffer): Make the "discarding debug log"
+	slightly more informative.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* ui.{cc,hh}: Use the prog_name in output.
+	* app_state.cc (app_state::prog_name): Change default to 'mtn'.
+	Set the global ui object's prog_name whenever our prog_name is
+	set.
+	* monotone.cc (cpp_main): Use the new prog_name setter.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): MM() our command line, LC_ALL, and full
+	version, so that they are always included in dump and debug
+	files.
+
+2006-04-04  Nathaniel Smith  <njs@pobox.com>
+
+	* mt_version.{cc,hh} (get_version, get_full_version): New
+	functions.  Also tweak --full-version output for readability.
+
+2006-04-04  Nathaniel Smith  <njs@pobox.com>
+
+	* mt_version.cc (print_full_version): Include compiler
+	vendor/version, c++ stdlib vendor/version, and boost version in
+	--full-version output.
+
+2006-04-04  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am: Yet another try at the package full revision stuff;
+	hopefully this version still works just as well as the old
+	versions, while also getting rid of the repeated "Generated from
+	cached data" messages.
+
+2006-04-05  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Changed "in/out" translations as graphical arrows.
+
+2006-04-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_rosterify_empty_manifest.at: a test for rosterifying a db
+	that has empty manifests
+
+2006-04-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* revision.cc (construct_revisions_from_ancestry): all rosters must be
+	given a root node, even if all files have been dropped.
+
+2006-04-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (database::dump): don't check schema of the db.
+
+2006-04-04  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh (class roster_t): Add massive comment about roster_t's
+	location tracking stuff.  Conclusion: it is a little icky, but
+	it's icky in an overly conservative way that doesn't cause any
+	forseeable problems, so we'll leave it for now.
+
+2006-04-04  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Updated and additional translations.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
+	* contrib/get_passphrase_from_file.lua: Added.  This hook reads
+	passphrases from 'confdir/passphrases'.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+	
+	* contrib/ChangeLog.sh: Updated to reflect monotone name changes.
+
 2006-04-02  Matthew Nicholson  <matt@matt-land.com>
 
 	* tests/t_pidfile.at: Added.  Test's pid file cleanup.

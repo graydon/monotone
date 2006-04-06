@@ -8,6 +8,7 @@
 #include <boost/filesystem/convenience.hpp>
 #include <boost/filesystem/exception.hpp>
 
+#include "ui.hh"
 #include "app_state.hh"
 #include "database.hh"
 #include "file_io.hh"
@@ -36,12 +37,12 @@ app_state::app_state()
     depth(-1), last(-1), next(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false), bind_address(""), bind_port(""), 
     missing(false), unknown(false),
-    confdir(get_default_confdir()), have_set_key_dir(false), no_files(false),
-    prog_name("monotone")
+    confdir(get_default_confdir()), have_set_key_dir(false), no_files(false)
 {
   db.set_app(this);
   lua.set_app(this);
   keys.set_key_dir(confdir / "keys");
+  set_prog_name(utf8(std::string("mtn")));
 }
 
 app_state::~app_state()
@@ -469,6 +470,13 @@ void
 app_state::set_recursive(bool r)
 {
   recursive = r;
+}
+
+void
+app_state::set_prog_name(utf8 const & name)
+{
+  prog_name = name;
+  ui.set_prog_name(name());
 }
 
 void

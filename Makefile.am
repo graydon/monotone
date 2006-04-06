@@ -474,8 +474,8 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 # we generate some headers to copy data into the executable
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
-                      package_revision.txt package_revision.c \
-                      package_full_revision.txt package_full_revision.c \
+                      package_revision.c \
+                      package_full_revision.txt package_full_revision_raw.txt package_full_revision.c \
                       $(PCH_FILE) $(PCH_BUILD)
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
@@ -485,6 +485,7 @@ txt2c: txt2c.cc Makefile
 	$(CXX) $(CXXFLAGS) -o $@ $<
 	chmod 0755 $@$(EXEEXT)
 
+.PHONY: apidocs
 apidocs:
 	doxygen doxygen.cfg
 
@@ -510,18 +511,43 @@ package_revision.c: package_revision.txt txt2c Makefile
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
-.PHONY: package_full_revision.txt apidocs
-package_full_revision.txt:
+# To avoid a dependency loop here, what we do is:
+#           calculate changes
+#                  |
+#      package_full_revision_raw.txt
+#              |                \  <-- add "generated from cached data" text
+#              |      package_full_revision_dist.txt
+#              |           /        
+#          package_full_revision.txt   <-- or, "unknown" if neither exists
+
+# This is phony, so that we always try to rebuild it.  If it succeeds
+# in calculating changes, it produces its target; otherwise, its
+# target does not exist.
+.PHONY: package_full_revision_raw.txt
+package_full_revision_raw.txt:
+# if both attempts fail, then we need to remove the empty file that >
+# creates, and also make sure that the shell command exits
+# successfully; the rm -f ensures both
 	REAL_BLDDIR=$$PWD/$(top_builddir); \
-	(cd $(srcdir) && $$REAL_BLDDIR/mtn status) 2>/dev/null >$@ \
-	|| (cd $(srcdir) && mtn status) 2>/dev/null >$@ \
-	|| (cp $(srcdir)/package_full_revision_dist.txt 2>/dev/null $@) \
-	|| (echo "unknown" >$@)
-package_full_revision_dist.txt: package_full_revision.txt
-	cp $< $@
-	(echo ''; \
-	 echo '  Generated from data cached in the distribution;'; \
-	 echo '  further changes may have been made.') >> $@
+	(cd $(srcdir) && $$REAL_BLDDIR/mtn automate get_revision) 2>/dev/null >$@ \
+	|| (cd $(srcdir) && mtn automate get_revision) 2>/dev/null >$@ \
+	|| rm -f $@
+# See above comment -- the file this depends on may or may not exist.
+# If it does, then we overwrite this file; if it doesn't, then we
+# leave this file alone.  (Possibly leaving it non-existent.)
+package_full_revision_dist.txt: package_full_revision_raw.txt
+	if [ -f $< ]; then \
+	  cp -f $< $@ \
+	  && (echo ''; \
+	      echo '  Generated from data cached in the distribution;'; \
+	      echo '  further changes may have been made.') >> $@; \
+	fi
+# It is possible that neither of the files this depends on exactly
+# exist.  We use the first one that does.
+package_full_revision.txt: package_full_revision_raw.txt package_full_revision_dist.txt
+	rm -f $@
+	for SRC in $^; do ([ -f $$SRC -a ! -f $@ ] && cp -f $$SRC $@) || true; done
+	[ -f $@ ] || echo "unknown" > $@
 package_full_revision.c: package_full_revision.txt txt2c Makefile
 	./txt2c --no-static $< package_full_revision >$@.tmp
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
