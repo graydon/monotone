@@ -1,3 +1,7 @@
+2006-04-07  Satoru SATOH <ss@gnome.gr.jp>
+
+	* po/ja.po: Updated Japanese translation.
+
 2006-04-06  Richard Levitte  <richard@levitte.org>
 
 	* ui.cc (user_interface::output_prefix): Move the invariant
