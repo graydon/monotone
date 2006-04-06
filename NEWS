@@ -158,6 +158,12 @@
         - Database storage now uses sqlite's blob support; database
           files should be ~1/4 smaller as a result.
 
+        - Monotone now uses sqlite 3.3; this means that older versions
+          of the command line client (e.g., an 'sqlite3' command built
+          against sqlite version 3.2) cannot be used to poke at a
+          monotone 0.26 database.  Solution is to upgrade your sqlite3
+          program.  Hopefully this is irrelevant to most users...
+
         - Translations updated, and 3 new translations added (de, it,
           sv).
           

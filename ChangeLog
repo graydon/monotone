@@ -1,5 +1,11 @@
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
+	* NEWS: Go ahead and add a note about sqlite 3.3, since
+	incompatibility with the 3.2 command line client has apparently
+	bitten at least two of us.
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
 	* Makefile.am (package_full_revision_*.txt): Try this again,
 	hopefully now 'distcheck' will work in a clean dir on systems that
 	have no mtn binary.
