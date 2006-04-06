@@ -1,5 +1,11 @@
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
+	* UPGRADE: Expand and hopefully clarify 0.26 upgrading notes.
+	Also add a paragraph at the top to explain how the file is
+	organized (maybe this should have been there a long time ago...)
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Complete (?) draft of 0.26 release notes.
 
 2006-04-07  Satoru SATOH <ss@gnome.gr.jp>
