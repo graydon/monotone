@@ -1,3 +1,49 @@
+????????????????????????????
+
+        0.26 release.  Major enhancements and internal rewrites.
+        Please read these notes carefully, as significant changes are
+        described.
+
+        The changes are large enough that there were 3 pre-releases of
+        this code; the changes that occurred in each can be seen
+        below.  However, for the convenience of those following
+        releases, all changes since 0.25 will be summarized in these
+        release notes.  There is no need to read the pre-release notes
+        individually.
+
+        Major changes since 0.25:
+        
+        - The most user-visible change is that the default name of the
+          monotone binary has changed to 'mtn'.  So, for example, you
+          would now run 'mtn checkout', 'mtn diff', 'mtn commit',
+          etc., instead of 'monotone checkout', 'monotone diff',
+          'monotone commit'.
+          - Similarly, the name of the workspace bookkeeping directory
+            has changed from "MT" to "_MTN".  As workspaces will
+            generally be recreated when migrating to this release,
+            this should not cause any problems.
+          - Similarly, built-in attrs like 'execute' have had 'mtn:'
+            prepended to their names.  For example, executable files
+            should now have the attr 'mtn:execute' set to 'true' on
+            them.  The migration code will automatically add this
+            prefix; no user intervention is needed.
+          - Similarly, the name of the ignore file has changed from
+            '.mt-ignore' to '.mtn-ignore'.  The migration code will
+            automatically rename this file; no user intervention is
+            needed.
+          - Similarly, the recommended suffix for monotone db files is
+            now '.mtn'.
+          These changes are all purely cosmetic, and have no affect on
+          functionality.
+
+        - The most developer-visible change is that the data
+          structure for representing trees has been completely
+          replaced, and all related code rewritten.  The new data
+          structure is called a 'roster'.  You don't really need to
+          know this name; unless you are hacking on monotone or using
+          various debug operations, you will never see a roster.
+          However, when you hear 
+
 Wed Mar 29 05:20:10 PST 2006
 
         0.26pre3 release.  This release may be considered a "release

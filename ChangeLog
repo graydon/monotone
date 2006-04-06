@@ -1,5 +1,9 @@
 2006-04-05  Nathaniel Smith  <njs@pobox.com>
 
+	* NEWS: Start writing 0.26 release notes.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.cc (unify_roster_oneway): Discover that this code is not
 	really composable with arbitrary node_id_sources; add an assertion
 	to document the real interface, and a comment explaining why this
