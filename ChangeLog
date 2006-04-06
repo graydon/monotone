@@ -10,6 +10,21 @@
 
 	* database_check.cc (check_sane): Remove dead code.
 
+2006-04-05  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc: Make sure prog_name gets the basename of the
+	program from argv[0], not the whole absolute path to it.
+
+	* tests/t_commit_validate.at, tests/t_log_to_file.at: The monotone
+	logs are prefixed with the program name ('mtn'), not with
+	'monotone' any longer.
+
+2006-04-05  Richard Levitte  <richard@levitte.org>
+
+	* mt_version.cc (get_version): Close the parenthesis.
+
+	* po/sv.po: Fix a few fuzzy strings and translate a new one.
+
 2006-04-05  Nathaniel Smith  <njs@pobox.com>
 
 	* sanity.cc (dump_buffer): Make the "discarding debug log"

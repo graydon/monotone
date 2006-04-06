@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-04-04 10:07+0200\n"
-"PO-Revision-Date: 2006-04-04 10:09+0200\n"
+"POT-Creation-Date: 2006-04-05 17:00+0200\n"
+"PO-Revision-Date: 2006-04-05 17:03+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -154,62 +154,62 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
 
-#: app_state.cc:118
+#: app_state.cc:119
 #, c-format
 msgid "workspace required but not found%s%s"
 msgstr "arbetskatalog behövs men kunde inte hittas%s%s"
 
-#: app_state.cc:126
+#: app_state.cc:127
 #, c-format
 msgid "invalid directory ''"
 msgstr "katalogen '' är ogiltig"
 
-#: app_state.cc:134
+#: app_state.cc:135
 #, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'\n"
 msgstr "det finns redan en administrativ katalog (%s) i '%s'\n"
 
-#: app_state.cc:173 app_state.cc:188
+#: app_state.cc:174 app_state.cc:189
 #, c-format
 msgid "unknown path '%s'\n"
 msgstr "okänd sökväg '%s'\n"
 
-#: app_state.cc:349
+#: app_state.cc:350
 #, c-format
 msgid "search root '%s' does not exist"
 msgstr "angiven sökrot '%s' finns inte"
 
-#: app_state.cc:350
+#: app_state.cc:351
 #, c-format
 msgid "search root '%s' is not a directory\n"
 msgstr "sökroten '%s' är inte en katalog\n"
 
-#: app_state.cc:385
+#: app_state.cc:386
 #, c-format
 msgid "failed to parse date string '%s': %s"
 msgstr "kunde inte tyda datumangivelsen '%s': %s"
 
-#: app_state.cc:399
+#: app_state.cc:400
 #, c-format
 msgid "negative depth not allowed\n"
 msgstr "negativt djup är inte tillåtet\n"
 
-#: app_state.cc:407
+#: app_state.cc:408
 #, c-format
 msgid "negative or zero last not allowed\n"
 msgstr "talet angett med --last får inte vara negativt eller noll\n"
 
-#: app_state.cc:415
+#: app_state.cc:416
 #, c-format
 msgid "negative or zero next not allowed\n"
 msgstr "talet angett med --next får inte vara negativt eller noll\n"
 
-#: app_state.cc:544
+#: app_state.cc:552
 #, c-format
 msgid "Failed to read options file %s"
 msgstr "Misslyckades med att läsa filen %s"
 
-#: app_state.cc:561
+#: app_state.cc:569
 #, c-format
 msgid "Failed to write options file %s"
 msgstr "Misslyckades med att skriva filen %s"
@@ -1987,12 +1987,12 @@ msgstr ""
 "databasen '%s'\n"
 "avbryter skapandet av databasen"
 
-#: database.cc:466
+#: database.cc:473
 #, c-format
 msgid "cannot create %s; it already exists"
 msgstr "kan inte skapa %s; den finns redan"
 
-#: database.cc:530
+#: database.cc:537
 #, c-format
 msgid ""
 "schema version    : %s\n"
@@ -2039,52 +2039,52 @@ msgstr ""
 "  sidstorlek          : %u\n"
 "  cachestorlek        : %u\n"
 
-#: database.cc:590
+#: database.cc:597
 #, c-format
 msgid "database schema version: %s"
 msgstr "databasens schemaversion: %s"
 
-#: database.cc:667
+#: database.cc:674
 #, c-format
 msgid "multiple statements in query: %s\n"
 msgstr "multipla kommandon i databasfråga: %s\n"
 
-#: database.cc:673
+#: database.cc:680
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
 msgstr "ville ha %d kolumner, fick %d i databasfråga: %s\n"
 
-#: database.cc:732
+#: database.cc:739
 #, c-format
 msgid "null result in query: %s\n"
 msgstr "inget resultat med databasfråga: %s\n"
 
-#: database.cc:750
+#: database.cc:757
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
 msgstr "ville ha %d rader, fick %s i databasfråga: %s\n"
 
-#: database.cc:1770
+#: database.cc:1777
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "det finns redan en annan nyckel med namnet '%s'"
 
-#: database.cc:2826
+#: database.cc:2833
 #, c-format
 msgid "no database specified"
 msgstr "ingen databas angiven"
 
-#: database.cc:2834
+#: database.cc:2841
 #, c-format
 msgid "database %s does not exist"
 msgstr "databasen %s finns inte"
 
-#: database.cc:2835
+#: database.cc:2842
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s är en katalog, inte en databas"
 
-#: database.cc:2860
+#: database.cc:2867
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "kunde inte öppna databasen '%s': %s"
@@ -2555,38 +2555,46 @@ msgstr "problem att tyda argumenten i filen %s: %s"
 msgid "weird error when stuffing arguments read from %s: %s\n"
 msgstr "underligt fel när argument lästa från %s stoppades in: %s\n"
 
-#: monotone.cc:299
+#: monotone.cc:309
 msgid "[OPTION...] command [ARGS...]\n"
 msgstr "[FLAGGOR...] kommando [ARGUMENT...]\n"
 
-#: monotone.cc:551
+#: monotone.cc:561
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "syntaxfel nära flaggan \"%s\": %s"
 
-#: monotone.cc:593
+#: monotone.cc:603
 #, c-format
 msgid "monotone %s doesn't use the option %s"
 msgstr "monotone %s använder inte flaggan %s"
 
-#: monotone.cc:628
+#: monotone.cc:638
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
 
-#: mt_version.cc:23
+#: mt_version.cc:27
 #, c-format
 msgid "%s (base revision: %s)"
 msgstr "%s (grundrevision: %s)"
 
-#: mt_version.cc:34
+#: mt_version.cc:47
 #, c-format
 msgid ""
-"Running on: %s\n"
-"Changes since base revision: %s\n"
+"Running on          : %s\n"
+"C++ compiler        : %s\n"
+"C++ standard library: %s\n"
+"Boost version       : %s\n"
+"Changes since base revision:\n"
+"%s"
 msgstr ""
-"Kör på: %s\n"
-"Ändringar sedan grundrevisionen: %s\n"
+"Kör på                : %s\n"
+"C++, kompilator       : %s\n"
+"C++, standardbibliotek: %s\n"
+"Boost-version         : %s\n"
+"Ändringar sen grundrevisionen:\n"
+"%s"
 
 #: netcmd.cc:40
 #, c-format
@@ -3233,7 +3241,7 @@ msgstr "Filen %s kan inte läggas till, det finns en katalog i vägen\n"
 msgid "Path %s added twice with differing content\n"
 msgstr "Sökvägen %s tillagd två gånger med olika innehåll\n"
 
-#: revision.cc:1273
+#: revision.cc:1281
 #, c-format
 msgid ""
 "unknown attribute '%s' on path '%s'\n"
@@ -3248,17 +3256,17 @@ msgstr ""
 "attributet hjälper vi gärna till att klura ut ett bra sätt att hantera\n"
 "det på)"
 
-#: revision.cc:1385
+#: revision.cc:1393
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions\n"
 msgstr "konverterar existerande revisionsgraf till nya revisioner i liststil\n"
 
-#: revision.cc:1440
+#: revision.cc:1448
 #, c-format
 msgid "rebuilding revision graph from manifest certs\n"
 msgstr "bygger om revisionsgrafen från manifestcert\n"
 
-#: revision.cc:1543
+#: revision.cc:1551
 #, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
@@ -3269,30 +3277,30 @@ msgstr ""
 "Jag förstår bara formatet version '1'\n"
 "En nyare version av monotone behövs för att fortsätta"
 
-#: sanity.cc:116
+#: sanity.cc:117
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
 msgstr "allvarligt fel: formatering misslyckades vid %s:%d: %s"
 
-#: sanity.cc:190
+#: sanity.cc:191
 msgid "misuse: "
 msgstr "missbruk: "
 
-#: sanity.cc:202
+#: sanity.cc:203
 msgid "error: "
 msgstr "fel: "
 
-#: sanity.cc:210
+#: sanity.cc:211
 #, c-format
 msgid "%s:%d: invariant '%s' violated"
 msgstr "%s:%d: invariant '%s' ej uppfylld"
 
-#: sanity.cc:223
+#: sanity.cc:224
 #, c-format
 msgid "%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n"
 msgstr "%s:%d; index '%s' = %d blev större än vektorn '%s' med storlek %d\n"
 
-#: sanity.cc:244
+#: sanity.cc:245
 #, c-format
 msgid "Current work set: %i items\n"
 msgstr "Nuvarande arbetsmängd: %i delar\n"
@@ -3412,17 +3420,13 @@ msgstr "%d"
 msgid ""
 "fatal: %s\n"
 "this is almost certainly a bug in monotone.\n"
-"please send this error message, the output of 'monotone --full-version',\n"
+"please send this error message, the output of '%s --full-version',\n"
 "and a description of what you were doing to %s.\n"
 msgstr ""
 "allvarligt: %s\n"
 "detta är nästan helt säkert ett programfel i monotone.\n"
-"var god skicka detta felmeddelande, utskriften av 'monotone --full-version'\n"
+"var god skicka detta felmeddelande, utskriften av '%s --full-version'\n"
 "och en beskrivning av det du gjorde till %s.\n"
-
-#: ui.cc:422
-msgid "monotone: "
-msgstr "monotone: "
 
 #: update.cc:65
 #, c-format
@@ -3631,6 +3635,16 @@ msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 #, c-format
 msgid "updating %s"
 msgstr "uppdaterar %s"
+
+#~ msgid ""
+#~ "Running on: %s\n"
+#~ "Changes since base revision: %s\n"
+#~ msgstr ""
+#~ "Kör på: %s\n"
+#~ "Ändringar sedan grundrevisionen: %s\n"
+
+#~ msgid "monotone: "
+#~ msgstr "monotone: "
 
 #~ msgid "failure extracting schema from sqlite_master"
 #~ msgstr "kunde inte extrahera schemat ur sqlite_master"
