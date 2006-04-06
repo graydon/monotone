@@ -1027,6 +1027,19 @@ namespace
         if (temp_node(bid))
           {
             node_id new_nid = nis.next();
+            // the node_id_source provided to this function must only generate
+            // true node ids, because this code was written with the
+            // assumption that only true nids would come in or go out, and
+            // temp ids are used as an intermediate stage to indicate nodes
+            // that need true ids installed.
+            // FIXME: make everything work correctly when this node_id_source
+            // returns temp ids.  This is needed for workspace merge support.
+            // FIXME: having done this, add a test in database_check.cc that
+            // for each revision, generates that rev's roster from scratch,
+            // and compares it to the one stored in the db.  (Do the
+            // comparison using something like equal_up_to_renumbering, except
+            // should say if (!temp_node(a) && !temp_node(b)) I(a == b).)
+            I(!temp_node(new_nid));
             a.replace_node_id(aid, new_nid);
             b.replace_node_id(bid, new_nid);
             b_new.erase(bid);
