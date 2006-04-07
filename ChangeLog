@@ -1,3 +1,7 @@
+2006-04-07  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Fixed a fuzzy.
+
 2006-04-07  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* Makefile.am: Backticks don't nest, use $().
