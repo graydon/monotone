@@ -1,3 +1,56 @@
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Go ahead and add a note about sqlite 3.3, since
+	incompatibility with the 3.2 command line client has apparently
+	bitten at least two of us.
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (package_full_revision_*.txt): Try this again,
+	hopefully now 'distcheck' will work in a clean dir on systems that
+	have no mtn binary.
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE: Expand and hopefully clarify 0.26 upgrading notes.
+	Also add a paragraph at the top to explain how the file is
+	organized (maybe this should have been there a long time ago...)
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Complete (?) draft of 0.26 release notes.
+
+2006-04-07  Satoru SATOH <ss@gnome.gr.jp>
+
+	* po/ja.po: Updated Japanese translation.
+
+2006-04-06  Richard Levitte  <richard@levitte.org>
+
+	* ui.cc (user_interface::output_prefix): Move the invariant
+	checking that prog_name isn't empty...
+	(user_interface::set_prog_name): here.  The reason is that an
+	invariant generates a log, and that will generate another call
+	to this message, which will trigger the invariant again, which
+	generates a log, which...
+	In user_interface::output_prefix, still check if prog_name is
+	empty, and output something harmless if it is.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Start writing 0.26 release notes.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (unify_roster_oneway): Discover that this code is not
+	really composable with arbitrary node_id_sources; add an assertion
+	to document the real interface, and a comment explaining why this
+	is the case, and why it is a problem for workspace merge and db
+	check.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* database_check.cc (check_sane): Remove dead code.
+
 2006-04-05  Richard Levitte  <richard@levitte.org>
 
 	* monotone.cc: Make sure prog_name gets the basename of the

@@ -377,12 +377,15 @@ void
 user_interface::set_prog_name(std::string const & name)
 {
   prog_name = name;
+  I(!prog_name.empty());
 }
 
 std::string
 user_interface::output_prefix()
 {
-  I(!prog_name.empty());
+  if (prog_name.empty()) {
+    return "?: ";
+  }
   return prog_name + ": ";
 }
 
