@@ -1791,6 +1791,8 @@ forgotten what he changed. He can ask monotone for details:
 @group
 $ mtn diff
 # 
+# old_revision [2e24d49a48adf9acf3a1b6391a080008cbef9c21]
+# 
 # patch "src/apple.c"
 #  from [2650ffc660dd00a08b659b883b65a060cac7e560]
 #    to [e2c418703c863eabe70f9bde988765406f885fd0]
@@ -1836,10 +1838,11 @@ MTN:
 MTN: ----------------------------------------------------------------------
 MTN: Enter Log.  Lines beginning with `MTN:' are removed automatically
 MTN:
+MTN: format_version "1"
+MTN:
 MTN: new_manifest [b33cb337dccf21d6673f462d677a6010b60699d1]
 MTN:
 MTN: old_revision [2e24d49a48adf9acf3a1b6391a080008cbef9c21]
-MTN: old_manifest [2098eddbe833046174de28172a813150a6cbda7b]
 MTN: 
 MTN: patch "src/apple.c"
 MTN: from [2650ffc660dd00a08b659b883b65a060cac7e560]
@@ -2018,6 +2021,8 @@ Beth finishes and examines her changes:
 @group
 $ mtn diff
 # 
+# old_revision [80ef9c9d251d39074d37e72abf4897e0bbae1cfb]
+#
 # patch "src/banana.c"
 #  from [7381d6b3adfddaf16dc0fdb05e0f2d1873e3132a]
 #    to [5e6622cf5c8805bcbd50921ce7db86dad40f2ec6]
@@ -3689,9 +3694,14 @@ these entries:
 
 @smallexample
 @group
-84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
-c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
-97dfc6fd4f486df95868d85b4b81197014ae2a84  src/hello.c
+   file "Makefile"
+content [84e2c30a2571bd627918deee1e6613d34e64a29e]
+
+   file "include/hello.h"
+content [c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6]
+
+   file "src/hello.c
+content [97dfc6fd4f486df95868d85b4b81197014ae2a84]
 @end group
 @end smallexample
 
@@ -5863,10 +5873,11 @@ basic_io formatted string pairs that will be provided are:
 @item Sample output:
 
 @verbatim
+format_version "1"
+
 new_manifest [bfe2df785c07bebeb369e537116ab9bb7a4b5e19]
 
 old_revision [429fea55e9e819a046843f618d90674486695745]
-old_manifest [b71855116f7049ac663102c0cb628653ffe316d1]
 
 patch "ChangeLog"
  from [7dc21d3a46c6ecd94685ab21e67b131b32002f12]
@@ -5911,33 +5922,82 @@ Prints the contents of the manifest associated with the given roster.
 
 @item Sample output:
 
-FIXME_ROSTER
-
 @verbatim
-e3915658cb464d05f21332e03d30dca5d94fe776  .htaccess
-80d8f3f75c9b517ec462233e155f7dfb93379f67  AUTHORS
-fc74a48c7f73eedcbe1ea709755fbe819b29736c  ChangeLog
-dfac199a7539a404407098a2541b9482279f690d  LICENSE
-440eec971e7bb61ccbb61634deb2729bb25931cd  README
-e0ea26c666b37c5f98ccf80cb933d021ee55c593  TODO
-b28ece354969314ce996f3030569215d685973d6  branch.psp
-1fdb62e05fb2a9338d2c72ddc58de3ab2b3976fe  common.py
-64cb5898e3a026b4782c343ca4386585e0c3c275  config.py.example
-7152c3ff110418aca5d23c374ea9fb92a0e98379  error.psp
-5d8536100fdf51d505b6f20bc9c16aa78d4e86a8  fileinbranch.psp
-981df124a0b5655a9f78c42504cfa8c6f02b267a  headofbranch.psp
-a43d0588a69e622b2afc681678c2a5c3b3b1f342  help.psp
-18a8bffc8729d7bfd71d2e0cb35a1aed1854fa74  html.py
-c621827db187839e1a7c6e51d5f1a7f6e0aa560c  index.psp
-708b61436dce59f47bd07397ce96a1cfabe81970  monotone.py
-a02b1c161006840ea8685e461fd07f0e9bb145a3  revision.psp
-027515fd4558abf317d54c437b83ec6bc76e3dd8  rss_feed.gif
-638140d6823eee5844de37d985773be75707fa25  tags.psp
-be83f459a152ffd49d89d69555f870291bc85311  tarofbranch.psp
-fb51955563d64e628e0e67e4acca1a1abc4cd989  utility.py
-8d04b3fc352a860b0e3240dcb539c1193705398f  viewmtn.css
-7cb5c6b1b1710bf2c0fa41e9631ae43b03424a35  viewmtn.py
-530290467a99ca65f87b74f653bf462b28c6cda9  wrapper.py
+format_version "1"
+
+dir ""
+
+   file ".htaccess"
+content [e3915658cb464d05f21332e03d30dca5d94fe776]
+
+   file "AUTHORS"
+content [80d8f3f75c9b517ec462233e155f7dfb93379f67]
+
+   file "ChangeLog"
+content [fc74a48c7f73eedcbe1ea709755fbe819b29736c]
+
+   file "LICENSE"
+content [dfac199a7539a404407098a2541b9482279f690d]
+
+   file "README"
+content [440eec971e7bb61ccbb61634deb2729bb25931cd]
+
+   file "TODO"
+content [e0ea26c666b37c5f98ccf80cb933d021ee55c593]
+
+   file "branch.psp"
+content [b28ece354969314ce996f3030569215d685973d6]
+
+   file "common.py"
+content [1fdb62e05fb2a9338d2c72ddc58de3ab2b3976fe]
+
+   file "config.py.example"
+content [64cb5898e3a026b4782c343ca4386585e0c3c275]
+
+   file "error.psp"
+content [7152c3ff110418aca5d23c374ea9fb92a0e98379]
+
+   file "fileinbranch.psp"
+content [5d8536100fdf51d505b6f20bc9c16aa78d4e86a8]
+
+   file "headofbranch.psp"
+content [981df124a0b5655a9f78c42504cfa8c6f02b267a]
+
+   file "help.psp"
+content [a43d0588a69e622b2afc681678c2a5c3b3b1f342]
+
+   file "html.py"
+content [18a8bffc8729d7bfd71d2e0cb35a1aed1854fa74]
+
+   file "index.psp"
+content [c621827db187839e1a7c6e51d5f1a7f6e0aa560c]
+
+   file "monotone.py"
+content [708b61436dce59f47bd07397ce96a1cfabe81970]
+
+   file "revision.psp"
+content [a02b1c161006840ea8685e461fd07f0e9bb145a3]
+
+   file "rss_feed.gif"
+content [027515fd4558abf317d54c437b83ec6bc76e3dd8]
+
+   file "tags.psp"
+content [638140d6823eee5844de37d985773be75707fa25]
+
+   file "tarofbranch.psp"
+content [be83f459a152ffd49d89d69555f870291bc85311]
+
+   file "utility.py"
+content [fb51955563d64e628e0e67e4acca1a1abc4cd989]
+
+   file "viewmtn.css"
+content [8d04b3fc352a860b0e3240dcb539c1193705398f]
+
+   file "viewmtn.py"
+content [7cb5c6b1b1710bf2c0fa41e9631ae43b03424a35]
+
+   file "wrapper.py"
+content [530290467a99ca65f87b74f653bf462b28c6cda9]
 @end verbatim
 
 @item Output format:
