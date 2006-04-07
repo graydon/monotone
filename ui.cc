@@ -9,6 +9,7 @@
 // writing to it directly!
 
 #include "config.h"
+
 #include "platform.hh"
 #include "sanity.hh"
 #include "ui.hh"

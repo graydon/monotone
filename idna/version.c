@@ -80,7 +80,7 @@ parse_version_string (const char *s, int *major, int *minor, int *micro)
 const char *
 stringprep_check_version (const char *req_version)
 {
-  const char *ver = VERSION;
+  const char *ver = STRINGPREP_VERSION;
   int my_major, my_minor, my_micro;
   int rq_major, rq_minor, rq_micro;
   const char *my_plvl, *rq_plvl;
