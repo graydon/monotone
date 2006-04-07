@@ -32,28 +32,29 @@ ticker::ticker(string const & tickname, std::string const & s, size_t mod,
   total(0),
   kilocount(kilocount),
   use_total(false),
-  name(tickname),
+  keyname(tickname),
+  name(_(tickname.c_str())),
   shortname(s)
 {
-  I(ui.tickers.find(tickname) == ui.tickers.end());
-  ui.tickers.insert(make_pair(tickname,this));
+  I(ui.tickers.find(keyname) == ui.tickers.end());
+  ui.tickers.insert(make_pair(keyname, this));
 }
 
 ticker::~ticker()
 {
-  I(ui.tickers.find(name) != ui.tickers.end());
+  I(ui.tickers.find(keyname) != ui.tickers.end());
   if (ui.some_tick_is_dirty)
     {
       ui.write_ticks();
     }
-  ui.tickers.erase(name);
+  ui.tickers.erase(keyname);
   ui.finish_ticking();
 }
 
 void 
 ticker::operator++()
 {
-  I(ui.tickers.find(name) != ui.tickers.end());
+  I(ui.tickers.find(keyname) != ui.tickers.end());
   ticks++;
   ui.some_tick_is_dirty = true;
   if (ticks % mod == 0)
@@ -63,7 +64,7 @@ ticker::operator++()
 void 
 ticker::operator+=(size_t t)
 {
-  I(ui.tickers.find(name) != ui.tickers.end());
+  I(ui.tickers.find(keyname) != ui.tickers.end());
   size_t old = ticks;
 
   ticks += t;

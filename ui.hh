@@ -26,7 +26,8 @@ struct ticker
   size_t total;
   bool kilocount;
   bool use_total;
-  std::string name;
+  std::string keyname;
+  std::string name; // translated name
   std::string shortname;
   ticker(std::string const & n, std::string const & s, size_t mod = 64, 
       bool kilocount=false);

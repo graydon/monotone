@@ -41,6 +41,11 @@
 	
 2006-04-07  Benoît Dejean  <benoit@placenet.org>
 
+	* ui.{cc,hh}: Use untranslated ticker name as key in ui.tickers
+	to prevent buggy translations from crashing monotone.
+
+2006-04-07  Benoît Dejean  <benoit@placenet.org>
+
 	* po/fr.po: Fixed.
 
 2006-04-07  Benoît Dejean  <benoit@placenet.org>
