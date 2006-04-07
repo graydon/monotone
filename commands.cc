@@ -3989,9 +3989,9 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"), N_("Show what conflicts wo
   complete(app, idx(args,0)(), l_id);
   complete(app, idx(args,1)(), r_id);
   N(!is_ancestor(l_id, r_id, app),
-    F("%s in an ancestor of %s; no merge is needed.") % l_id % r_id);
+    F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(r_id, l_id, app),
-    F("%s in an ancestor of %s; no merge is needed.") % r_id % l_id);
+    F("%s is an ancestor of %s; no merge is needed.") % r_id % l_id);
   roster_t l_roster, r_roster;
   marking_map l_marking, r_marking;
   app.db.get_roster(l_id, l_roster, l_marking);
