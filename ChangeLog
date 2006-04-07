@@ -1,3 +1,12 @@
+2006-04-07  Nathaniel Smith  <njs@pobox.com>
+
+	* figures/README: More notes.
+	* figures/oo-figures.sxd: No idea what changed about this file,
+	don't care.
+	* figures/{manifest,file-id-manifest-id,revision-chaining,revision}:
+	Finally managed to get proper pdfs out of OpenOffice.  Committing
+	now before I have a chance to screw things up.
+	
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
 	* figures/README: New file.
