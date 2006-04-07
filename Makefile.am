@@ -570,7 +570,7 @@ package_full_revision.c: package_full_revision.txt txt2c Makefile
 # those automake thinks that 'distclean' _should_ remove those files,
 # and 'distcheck' gets cranky if we don't.  So basically what this
 # line does is tell 'distcheck' to shut up and ignore those two files.
-distcleancheck_listfiles = find -type f -exec sh -c '[ "`basename {}`" == "package_revision.txt" ] || [ "`basename {}`" == "package_full_revision_dist.txt" ] || echo {}' ';'
+distcleancheck_listfiles = find . -type f -exec sh -c '[ "`basename {}`" == "package_revision.txt" ] || [ "`basename {}`" == "package_full_revision_dist.txt" ] || echo {}' ';'
 
 # automake doesn't build html docs
 

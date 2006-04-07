@@ -1,3 +1,7 @@
+2006-04-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am (distcleancheck_listfiles): Fix up find(1) syntax.
+
 2006-04-07  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (distcleancheck_listfiles): Another try at this...
