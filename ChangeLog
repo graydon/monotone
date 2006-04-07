@@ -1,5 +1,10 @@
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
+	* Makefile.am (mostlyclean-local): Delete
+	package_full_revision.txt, not package_full_revision_dist.txt.
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.texi: Fix a bunch more places where we say "monotone"
 	to refer to the command name.
 	

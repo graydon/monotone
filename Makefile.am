@@ -441,7 +441,7 @@ endif
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 
 mostlyclean-local:
-	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
+	rm -rf testsuite.dir testsuite.log package_full_revision.txt
 
 DISTCLEANFILES = tests/atconfig mt-stdint.h xgettext.opts pch-build.hh.gch.dep
 
