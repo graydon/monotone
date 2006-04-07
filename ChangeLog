@@ -4,6 +4,8 @@
 
 2006-04-07  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* Makefile.am: Syntax tweak.  I bet this still won't work...
+
 	* Makefile.am: Backticks don't nest, use $().
 
 2006-04-07  Daniel Carosone  <dan@geek.com.au>
