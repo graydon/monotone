@@ -1,5 +1,7 @@
 2006-04-07  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* lua.cc, commands.cc: Tiny string cleanups.
+
 	* Makefile.am (distcleancheck_listfiles): Fix up find(1) syntax.
 
 2006-04-07  Daniel Carosone  <dan@geek.com.au>

@@ -2904,7 +2904,7 @@ CMD(update, N_("workspace"), "",
 
   if (app.revision_selectors.size() == 0)
     {
-      P(F("updating along branch '%s'...") % app.branch_name);
+      P(F("updating along branch '%s'") % app.branch_name);
       set<revision_id> candidates;
       pick_update_candidates(r_old_id, app, candidates);
       N(!candidates.empty(),
