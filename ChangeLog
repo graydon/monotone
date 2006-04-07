@@ -1,3 +1,7 @@
+2006-04-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Backticks don't nest, use $().
+
 2006-04-07  Daniel Carosone  <dan@geek.com.au>
 
 	* monotone.texi: Update more examples to reflect new program
