@@ -1,5 +1,9 @@
 2006-04-07  Richard Levitte  <richard@levitte.org>
 
+	* po/sv.po: A few untranslated ones appeared.
+
+2006-04-07  Richard Levitte  <richard@levitte.org>
+
 	* po/sv.po: Fixed a fuzzy.
 
 2006-04-07  Matthew Gregan  <kinetik@orcon.net.nz>
