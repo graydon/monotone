@@ -1,5 +1,10 @@
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.texi: Fix a bunch more places where we say "monotone"
+	to refer to the command name.
+	
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.texi: .mt-attrs?  Never heard of it...
 
 2006-04-06  Nathaniel Smith  <njs@pobox.com>

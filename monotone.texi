@@ -874,7 +874,7 @@ that the fork has produced a new @dfn{branch}. Branches tell monotone
 which revisions you would like to merge, and which you would like to
 keep separate.
 
-You can see all the available branches using @code{monotone list branches}.
+You can see all the available branches using @code{mtn list branches}.
 
 Branches are indicated with certs.  The cert name @code{branch} is
 reserved for use by monotone, for the purpose of identifying the
@@ -1105,7 +1105,7 @@ example team; other tasks involve only one member.
 @section Creating a Database
 
 The first step Jim, Abe and Beth each need to perform is to create a
-new database. This is done with the @code{monotone db init} command,
+new database. This is done with the @code{mtn db init} command,
 providing a @option{--db} option to specify the location of the new
 database. Each programmer creates their own database, which will
 reside in their home directory and store all the revisions, files and
@@ -1254,7 +1254,7 @@ Before he can begin work on the project, Jim needs to create a
 of.  Often, one works on projects that someone else has started, and
 creates workspaces with the @code{checkout} command, which you'll
 learn about later.  Jim is starting a new project, though, so he does
-something a little bit different.  He uses the @code{monotone setup}
+something a little bit different.  He uses the @code{mtn setup}
 command to create a new workspace.
 
 This command creates the named directory (if it doesn't already exist),
@@ -2160,7 +2160,7 @@ So by now you're familiar with making changes, sharing them with other
 people, and integrating your changes with their changes.  Sometimes,
 though, you may want to make some changes, and @emph{not} integrate them
 with other people's --- or at least not right away.  One way to do this
-would be to simply never run @command{monotone merge}; but it would
+would be to simply never run @command{mtn merge}; but it would
 quickly become confusing to try and keep track of which changes were in
 which revisions.  This is where @emph{branches} are useful.
 
@@ -2831,7 +2831,7 @@ inherently somewhat less safe, and, as mentioned above, unnecessary for
 most projects, so it is disabled by default.
 
 If you do determine that it is necessary to use inodeprints with your
-project, it is simple to enable them.  Simply run @command{monotone
+project, it is simple to enable them.  Simply run @command{mtn
 refresh_inodeprints}; this will enable inodeprints mode and generate an
 initial cache.  If you ever wish to turn them off again, simply delete
 the file @file{_MTN/inodeprints}.  You can at any time delete or truncate
@@ -2955,7 +2955,7 @@ past.  Analogous to @command{ssh}'s @file{known_hosts} file, this is
 needed to detect man-in-the-middle attacks.  Automatically set the first
 time you netsync with any given server.  If that server's key later
 changes, monotone will notice, and refuse to connect until you have run
-@command{monotone unset known-servers @var{server-name}}.
+@command{mtn unset known-servers @var{server-name}}.
 
 @end table
 
@@ -3244,7 +3244,7 @@ backup copies of your database in plain text. These issues are not
 properly addressed by generating packet streams: instead, you must use
 @dfn{migration} or @dfn{dumping} commands.
 
-The @command{monotone db migrate} command is used to alter the SQL
+The @command{mtn db migrate} command is used to alter the SQL
 schema of a database. The schema of a monotone database is identified
 by a special hash of its generating SQL, which is stored in the
 database's auxiliary tables. Each version of monotone knows which
@@ -3261,10 +3261,10 @@ migration hashes to an unexpected value --- the migration is aborted.
 
 If more drastic changes to the underlying database are made, such as
 changing the page size of sqlite, or if you simply want to keep a
-plain text version of your database on hand, the @command{monotone db
+plain text version of your database on hand, the @command{mtn db
 dump} command can produce a plain ASCII SQL statement which generates
 the state of your database. This dump can later be reloaded using the
-@command{monotone db load} command. 
+@command{mtn db load} command. 
 
 Note that when reloading a dumped database, the schema of the dumped
 database is @emph{included} in the dump, so you should not try to
@@ -3807,7 +3807,7 @@ database to be used, both of which will be placed in the
 
 This can be used with an empty directory to start a new blank project,
 or within an existing directory full of files, prior to using
-@command{monotone commit}. If no directory is specified, the current
+@command{mtn commit}. If no directory is specified, the current
 directory is used.
 
 
@@ -3820,7 +3820,7 @@ explicit pathname changes you wish to commit at some future time, such
 as addition, removal or renaming of files.
 
 As a convenience, the @option{--unknown} option can be used; this
-option will cause all of the files listed by @command{monotone list
+option will cause all of the files listed by @command{mtn list
 unknown} to be added.
 
 While this command places an ``add'' entry on your work list, it does
@@ -4159,7 +4159,7 @@ results from applying @file{_MTN/work} to the base manifest, and
 updating any @sc{sha1} values of files to reflect changes you have
 made to the workspace. In other words, the current manifest ID is
 the ID which would accompany any revision you would commit, if you ran
-@command{monotone commit}.
+@command{mtn commit}.
 @item
 A list of logical changes between the base and current manifest
 versions, such as adds, drops, renames, and patches.
@@ -4283,7 +4283,7 @@ will print the differences between revisions @var{id1} and @var{id2},
 ignoring any workspace.
 
 In all cases, monotone will print a textual summary -- identical to
-the summary presented by @command{monotone status} -- of the logical
+the summary presented by @command{mtn status} -- of the logical
 differences between revisions in lines proceeding the diff. These
 lines begin with a single hash mark @code{#}, and should be ignored by
 a program processing the diff, such as @command{patch}.
@@ -4540,7 +4540,7 @@ those keys.
 @ftable @command
 @item monotone approve @var{id}
 
-This command is a synonym for @code{monotone cert @var{id} branch
+This command is a synonym for @code{mtn cert @var{id} branch
 @var{branchname}} where @var{branchname} is the current branch name
 (either deduced from the workspace or from the @option{--branch}
 option).
@@ -4549,21 +4549,21 @@ option).
 @item monotone comment @var{id}
 @itemx monotone comment @var{id} @var{comment}
 
-These commands are synonyms for @code{monotone cert @var{id}
+These commands are synonyms for @code{mtn cert @var{id}
 comment @var{comment}}. If @var{comment} is not provided, it is read
 from @code{stdin}.
 
 
 @item monotone tag @var{id} @var{tagname}
 
-This command is a synonym for @code{monotone cert @var{id} tag
+This command is a synonym for @code{mtn cert @var{id} tag
 @var{tagname}}.
 
 @item monotone testresult @var{id} 0
 @itemx monotone testresult @var{id} 1
 
-These commands are synonyms for @code{monotone cert @var{id}
-testresult 0} or @code{monotone cert @var{id} testresult 1}.
+These commands are synonyms for @code{mtn cert @var{id}
+testresult 0} or @code{mtn cert @var{id} testresult 1}.
 
 @end ftable
 
@@ -4905,7 +4905,7 @@ help diagnose failures.
 @node    Automation
 @section Automation
 
-This section contains subcommands of the @code{monotone automate}
+This section contains subcommands of the @code{mtn automate}
 command, used for scripting monotone.  All give output on stdout; they
 may also give useful chatter on stderr, including warnings and error
 messages.
@@ -6214,7 +6214,7 @@ end
 
 Returns a log entry for a given set of changes, described in
 @var{commentary}.  The commentary is identical to the output of
-@command{monotone status}. This hook is intended to interface with
+@command{mtn status}. This hook is intended to interface with
 some sort of editor, so that you can interactively document each
 change you make. The result is used as the value for a
 @code{changelog} certificate, automatically generated when you commit
@@ -6286,7 +6286,7 @@ definition, therefore the default behavior is to list all branches.
 @subsection Netsync Permission Hooks
 
 These hooks are used when running a netsync server, via
-@command{monotone serve}. They are evaluated by the server for each new
+@command{mtn serve}. They are evaluated by the server for each new
 connection, based on the certificate used for authentication by the
 client.  Note that a long-running server will need to be restarted in
 order to reload the hook definitions if the @file{montonerc} file is
@@ -7524,7 +7524,7 @@ monotone @minus{} distributed version control system
 @end ifnottex
 
 
-@b{monotone} @i{[options] <command> [parameters]}
+@b{mtn} @i{[options] <command> [parameters]}
 @comment TROFF INPUT: .P
 @comment .P
 
@@ -7721,7 +7721,7 @@ Merge unmerged heads of branch.
 Add files to workspace. adding a file does not copy it into the
 database, merely adds it to the work list. You must @b{commit} your
 changes in order to copy added files to the database.  The missing 
-flag causes those files that @command{monotone ls unknown} would
+flag causes those files that @command{mtn ls unknown} would
 display to be added to the project.
 @comment TROFF INPUT: .TP
 
@@ -7730,7 +7730,7 @@ Drop files from workspace. Files are not deleted from workspace,
 merely noted as removals in the work list, unless the @option{--execute}
 flag is given.  If the @option{--missing} flag is given any files that
 monotone is tracking but which are not present in the workspace
-(ie. the output that @command{monotone ls missing} would give) are
+(ie. the output that @command{mtn ls missing} would give) are
 dropped.
 @comment TROFF INPUT: .TP
 
@@ -7838,7 +7838,7 @@ Redirect the log lines to to @i{<file>}.
 @comment TROFF INPUT: .TP
 
 @item @b{--nostd}
-Do not evaluate "standard" Lua hooks compiled into @b{monotone}.
+Do not evaluate "standard" Lua hooks compiled into @b{mtn}.
 @comment TROFF INPUT: .TP
 
 @item @b{--norc}
