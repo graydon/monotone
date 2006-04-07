@@ -299,7 +299,7 @@ your friend a @i{set} of changes to many files at once.
 To make a snapshot of a tree, we begin by writing a special file
 called a @dfn{manifest}. In fact, monotone will write this file for
 us, but we could write it ourselves too. It is just a plain text
-file. Each line of a manifest file contains two columns. In the first
+file.  Each line of a manifest file contains two columns. In the first
 column we write the ID of a file in your tree, and in the second
 column we write the path to the file, from the root of our tree to the
 filename.
@@ -307,23 +307,33 @@ filename.
 @ifinfo
 @smallexample
 @group
-+--------------------------------------------------------------+
-|                                                              |
-|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
-|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
-|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
-|  ddc2686e000e97f670180c60a3066989e56a11a3  fs/open.c         |
-|  295d276e6c9ce64846d309a8e39507bcb0a14248  fs/namespace.c    |
-|  71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc  fs/namei.c        |
-|  1112c0f8054cebc9978aa77384e3e45c0f3b6472  fs/iobuf.c        |
-|  8ddcfcc568f33db6205316d072825d2e5c123275  fs/inode.c        |
-|                                                              |
-+--------------------------------------------------------------+
 
-\_____________________________  _______________________________/
-                              \/
-                          an example
-                         manifest file
++------------------------------------------------------+
+|                                                      |
+|  format_version "1"                                  |
+|                                                      |
+|  dir ""                                              |
+|                                                      |
+|  dir "fs"                                            |
+|                                                      |
+|     file "fs/readdir.c"                              |
+|  content [f2e5719b975e319c2371c98ed2c7231313fac9b5]  |
+|                                                      |
+|     file "fs/read_write.c"                           |
+|  content [81f0c9a0df254bc8d51bb785713a9f6d0b020b22]  |
+|                                                      |
+|     file "fs/pipe.c"                                 |
+|  content [943851e7da46014cb07473b90d55dd5145f24de0]  |
+|                                                      |
+|     file "fs/inode.c"                                |
+|  content [8ddcfcc568f33db6205316d072825d2e5c123275]  |
+|                                                      |
++------------------------------------------------------+
+
+\_________________________  ___________________________/
+                          \/
+                      an example
+                     manifest file
 @end group
 @end smallexample
 @end ifinfo
@@ -343,32 +353,33 @@ lacking the actual contents of the files themselves.
 @ifinfo
 @smallexample
 @group
-  +--------------------------+
-  |   int readdir(...) @{     |
-  |     ...                  |
-  |   @}                      |
-  +--------------------------+
+                    +--------------------------+
+                    |   int readdir(...) @{     |
+                    |     ...                  |
+                    |   @}                      |
+                    +--------------------------+
 
-  \____________  ___________/
-               \/
-              SHA1
-               ||
-+--------------||----------------------------------------------+
-|              \/                                              |
-|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
-|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
-|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
-|                   . . .                       . . .          |
-+--------------------------------------------------------------+
+                    \____________  ____________/
+                                 \/
+                                SHA1
+                                 ||
++--------------------------------||--------------------+
+|                       . . .    ||                    |
+|                                ||                    |
+|     file "fs/readdir.c"        \/                    |
+|  content [f2e5719b975e319c2371c98ed2c7231313fac9b5]  |
+|                                                      |
+|                       . . .
++------------------------------------------------------+
 
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-                              ||
-                              \/
-                         manifest ID:
-           a2eeaa28574141a7d48fa1cc2802070150b93ec4
+\_________________________  ___________________________/
+                          \/
+                         SHA1
+                          ||
+                          ||
+                          \/
+                     manifest ID:
+       a2eeaa28574141a7d48fa1cc2802070150b93ec4
 @end group
 @end smallexample
 @end ifinfo
@@ -401,19 +412,30 @@ function and thus assigned a @dfn{revision ID}.
 @ifinfo
 @smallexample
 @group
-+--------------------------------------------------------------+
-|                                                              |
-|                 ... content of revision ...                  |
-|                                                              |
-+--------------------------------------------------------------+
++-----------------------------------------------------------+
+|                                                           |
+|  format_version "1"                                       |
+|                                                           |
+|  new_manifest [83bc0a52da351cac950ac1c12d85be494fc21199]  |
+|                                                           |
+|  old_revision [75c9ffcab50c46e77e642751314b34a16fba36ff]  |
+|                                                           |
+|  add_file "include/foo.h"                                 |
+|   content [8ca6a9862bdeddfdb4b12248c075fa9570f45f6d]      |
+|                                                           |
+|  patch "include/bar.h"                                    |
+|   from [d624672a03e42d2172e56c4d54924af10ff8518d]         |
+|     to [2f58cfc4791aa1695b76c31c9cd1139b3d79ee1b]         |
+|                                                           |
++-----------------------------------------------------------+
 
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-                              \/
-                         revision ID:
-           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
+\____________________________  _____________________________/
+                             \/
+                            SHA1
+                             ||
+                             \/
+                        revision ID:
+          1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
 @end group
 @end smallexample
 @end ifinfo
@@ -439,36 +461,57 @@ predecessor, thus forming a new unique ID for each point in history.
 @ifinfo
 @smallexample
 @group
-                              ||
-+-----------------------------||-------------------------------+
-|                             \/                               |
-|  old_revision: 86d06a095529dca003ad62715dc2be7873edade0      |
-|    change_set:           .  .  .                             |
-|  old_manifest: 1b24ba8b8dc3ff9c87b5198315eced1b279dc74e  <----- manifest ID 
-|  new_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
-|                                                              |
-+--------------------------------------------------------------+
++-----------------------------------------------------------+
+|                                                           |
+|  format_version "1"                                       |
+|                                                           |
+|  new_manifest [dbd022dc423fd7f473e0fa79842cd9901cc2dd69] <-- manifest id
+|                                                           |
+|  old_revision: []                                         |
+|                                                           |
+|  ...                                                      |
+|                                                           |
++-----------------------------------------------------------+
 
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-+-----------------------------||-------------------------------+
-|                             \/                               |
-|  old_revision: f45add3bfb21cb459d99b6a9c0111df75f6d9f85      |
-|    change_set:           .  .  .                             |
-|  old_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
-|  new_manifest: 8a05c60422770bbf49a3192c2367ddaa066538ca  <----- manifest ID 
-|                                                              |
-+--------------------------------------------------------------+
+\____________________________________  _____________________/
+                                     \/
+                                    SHA1
+                                     ||
++------------------------------------||---------------------+
+|                                    ||                     |
+|  format_version "1"                ||                     |
+|                                    ||                     |
+|  new_manifest [8a05c60422770bbf49a3||2c2367ddaa066538ca] <-- manifest id
+|                                    \/                     |
+|  old_revision [f45add3bfb21cb459d99b6a9c0111df75f6d9f85]  |
+|                                                           |
+|  ...                                                      |
+|                                                           |
++-----------------------------------------------------------+
 
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-                              \/
-                         revision ID:
-           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
+\____________________________________  _____________________/
+                                     \/
+                                    SHA1
+                                     ||
++------------------------------------||---------------------+
+|                                    ||                     |
+|  format_version "1"                ||                     |
+|                                    ||                     |
+|  new_manifest [2027b4ab2febf98bd9a0||c000a69a8227cdaaf7] <-- manifest id
+|                                    \/                     |
+|  old_revision [1c83997e7ab40c0df47554c81b7d4e7ee691eb0d]  |
+|                                                           |
+|  ...                                                      |
+|                                                           |
++-----------------------------------------------------------+
+
+\____________________________  _____________________________/
+                             \/
+                            SHA1
+                             ||
+                             \/
+                        revision ID:
+          1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
 @end group
 @end smallexample
 @end ifinfo
@@ -1123,7 +1166,7 @@ Thus Jim issues the command:
 
 @smallexample
 @group
-$ monotone db init --db=~/jim.mtn
+$ mtn db init --db=~/jim.mtn
 @end group
 @end smallexample
 
@@ -1131,7 +1174,7 @@ Abe issues the command:
 
 @smallexample
 @group
-$ monotone db init --db=~/abe.mtn
+$ mtn db init --db=~/abe.mtn
 @end group
 @end smallexample
 
@@ -1139,7 +1182,7 @@ And Beth issues the command:
 
 @smallexample
 @group
-$ monotone db init --db=~/beth.mtn
+$ mtn db init --db=~/beth.mtn
 @end group
 @end smallexample
 
@@ -1160,11 +1203,11 @@ Jim does the following:
 
 @smallexample
 @group
-$ monotone genkey jim@@juicebot.co.jp
-monotone: generating key-pair 'jim@@juicebot.co.jp'
+$ mtn genkey jim@@juicebot.co.jp
+mtn: generating key-pair 'jim@@juicebot.co.jp'
 enter passphrase for key ID [jim@@juicebot.co.jp] : @i{<Jim enters his passphrase>}
 confirm passphrase for key ID [jim@@juicebot.co.jp]: @i{<Jim confirms his passphrase>}
-monotone: storing key-pair 'jim@@juicebot.co.jp' in /home/jim/.monotone/keys
+mtn: storing key-pair 'jim@@juicebot.co.jp' in /home/jim/.monotone/keys
 @end group
 @end smallexample
 
@@ -1172,11 +1215,11 @@ Abe does something similar:
 
 @smallexample
 @group
-$ monotone genkey abe@@juicebot.co.jp
-monotone: generating key-pair 'abe@@juicebot.co.jp'
+$ mtn genkey abe@@juicebot.co.jp
+mtn: generating key-pair 'abe@@juicebot.co.jp'
 enter passphrase for key ID [abe@@juicebot.co.jp] : @i{<Abe enters his passphrase>}
 confirm passphrase for key ID [abe@@juicebot.co.jp]: @i{<Abe confirms his passphrase>}
-monotone: storing key-pair 'abe@@juicebot.co.jp' in /home/abe/.monotone/keys
+mtn: storing key-pair 'abe@@juicebot.co.jp' in /home/abe/.monotone/keys
 @end group
 @end smallexample
 
@@ -1184,11 +1227,11 @@ as does Beth:
 
 @smallexample
 @group
-$ monotone genkey beth@@juicebot.co.jp
-monotone: generating key-pair 'beth@@juicebot.co.jp'
+$ mtn genkey beth@@juicebot.co.jp
+mtn: generating key-pair 'beth@@juicebot.co.jp'
 enter passphrase for key ID [beth@@juicebot.co.jp] : @i{<Beth enters her passphrase>}
 confirm passphrase for key ID [beth@@juicebot.co.jp]: @i{<Beth confirms her passphrase>}
-monotone: storing key-pair 'beth@@juicebot.co.jp' in /home/beth/.monotone/keys
+mtn: storing key-pair 'beth@@juicebot.co.jp' in /home/beth/.monotone/keys
 @end group
 @end smallexample
 
@@ -1198,7 +1241,7 @@ the correct key was generated. For example, Jim might see this:
 
 @smallexample
 @group
-$ monotone list keys
+$ mtn list keys
 
 [public keys]
 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c jim@@juicebot.co.jp   (*)
@@ -1272,7 +1315,7 @@ names.)  Jim then creates his workspace:
 
 @smallexample
 @group
-/home/jim$ monotone --db=jim.mtn --branch=jp.co.juicebot.jb7 setup juice
+/home/jim$ mtn --db=jim.mtn --branch=jp.co.juicebot.jb7 setup juice
 /home/jim$ cd juice
 /home/jim/juice$
 @end group
@@ -1343,10 +1386,10 @@ recursively scans the directory and adds all its files.
 
 @smallexample
 @group
-$ monotone add include/jb.h src
-monotone: adding include/jb.h to workspace add set
-monotone: adding src/apple.c to workspace add set
-monotone: adding src/banana.c to workspace add set
+$ mtn add include/jb.h src
+mtn: adding include/jb.h to workspace add set
+mtn: adding src/apple.c to workspace add set
+mtn: adding src/banana.c to workspace add set
 @end group
 @end smallexample
 
@@ -1358,52 +1401,46 @@ text:
 @group
 $ cat _MTN/work
 add_file "include/jb.h"
+ content [3b12b2d0b31439bd50976633db1895cff8b19da0]
 
 add_file "src/apple.c"
+ content [2650ffc660dd00a08b659b883b65a060cac7e560]
 
 add_file "src/banana.c"
+ content [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
 @end group
 @end smallexample
+
+You will never have to look at this file, but it is nice to know that
+it is there.
 
 Jim then gets up from his machine to get a coffee. When he returns
 he has forgotten what he was doing. He asks monotone:
 
 @smallexample
 @group
-$ monotone status
+$ mtn status
+
+format_version "1"
 
 new_manifest [2098eddbe833046174de28172a813150a6cbda7b]
 
 old_revision []
-old_manifest []
 
 add_file "include/jb.h"
+ content [3b12b2d0b31439bd50976633db1895cff8b19da0]
 
 add_file "src/apple.c"
+ content [2650ffc660dd00a08b659b883b65a060cac7e560]
 
 add_file "src/banana.c"
-
-patch "include/jb.h"
- from []
-   to [3b12b2d0b31439bd50976633db1895cff8b19da0]
-
-patch "src/apple.c"
- from []
-   to [2650ffc660dd00a08b659b883b65a060cac7e560]
-
-patch "src/banana.c"
- from []
-   to [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
+ content [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
 
 @end group
 @end smallexample
 
 The output of this command tells Jim that his edits, so far,
-constitute only the addition of some files. In the output we can see
-one peculiarity of monotone's changeset format. The peculiarity is that
-when monotone records a ``new file'', it actually records two separate
-events: the addition of an empty file to the workspace, and a patch
-of that file from empty to its intended contents. 
+constitute only the addition of some files.
 
 Jim wants to see the actual details of the files he added, however, so
 he runs a command which prints out the status @emph{and} a GNU
@@ -1411,25 +1448,18 @@ he runs a command which prints out the status @emph{and} a GNU
 
 @smallexample
 @group
-$ monotone diff
+$ mtn diff
+# 
+# old_revision []
 # 
 # add_file "include/jb.h"
+#  content [3b12b2d0b31439bd50976633db1895cff8b19da0]
 # 
 # add_file "src/apple.c"
+#  content [2650ffc660dd00a08b659b883b65a060cac7e560]
 # 
 # add_file "src/banana.c"
-# 
-# patch "include/jb.h"
-#  from []
-#    to [3b12b2d0b31439bd50976633db1895cff8b19da0]
-# 
-# patch "src/apple.c"
-#  from []
-#    to [2650ffc660dd00a08b659b883b65a060cac7e560]
-# 
-# patch "src/banana.c"
-#  from []
-#    to [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
+#  content [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
 # 
 ============================================================================
 --- include/jb.h
@@ -1487,9 +1517,9 @@ when he commits.
 
 @smallexample
 @group
-$ monotone commit --message="initial checkin of project"
-monotone: beginning commit on branch 'jp.co.juicebot.jb7'
-monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
+$ mtn commit --message="initial checkin of project"
+mtn: beginning commit on branch 'jp.co.juicebot.jb7'
+mtn: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
 
@@ -1513,7 +1543,7 @@ ask monotone for a list of certs on this revision.
 
 @smallexample
 @group
-$ monotone ls certs 2e24d49a48adf9acf3a1b6391a080008cbef9c21
+$ mtn ls certs 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 -----------------------------------------------------------------
 Key   : jim@@juicebot.co.jp
 Sig   : ok
@@ -1561,7 +1591,7 @@ command, which lists all the head revisions in the branch:
 
 @smallexample
 @group
-$ monotone heads
+$ mtn heads
 branch 'jp.co.juicebot.jb7' is currently merged:
 2e24d49a48adf9acf3a1b6391a080008cbef9c21 jim@@juicebot.co.jp 2004-10-26T02:53:08
 @end group
@@ -1590,7 +1620,7 @@ First, Abe exports his public key:
 
 @smallexample
 @group
-$ monotone --db=~/abe.mtn pubkey abe@@juicebot.co.jp >~/abe.pubkey
+$ mtn --db=~/abe.mtn pubkey abe@@juicebot.co.jp >~/abe.pubkey
 @end group
 @end smallexample
 
@@ -1611,7 +1641,7 @@ Beth also exports her public key:
 
 @smallexample
 @group
-$ monotone --db=~/beth.mtn pubkey beth@@juicebot.co.jp >~/beth.pubkey
+$ mtn --db=~/beth.mtn pubkey beth@@juicebot.co.jp >~/beth.pubkey
 @end group
 @end smallexample
 
@@ -1631,7 +1661,7 @@ into his database:
 @smallexample
 @group
 $ cat ~/abe.pubkey ~/beth.pubkey | monotone --db=~/jim.mtn read
-monotone: read 2 packets
+mtn: read 2 packets
 @end group
 @end smallexample
 
@@ -1664,7 +1694,7 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.mtn serve "jp.co.juicebot.jb7*"
+$ mtn --db=jim.mtn serve "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
@@ -1684,19 +1714,19 @@ code. To do this he issues the monotone @code{sync} command:
 
 @smallexample
 @group
-$ monotone --db=abe.mtn sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: setting default server to jim-laptop.juicebot.co.jp
-monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
-monotone: setting default branch exclude pattern to ''
-monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: first time connecting to server jim-laptop.juicebot.co.jp:4691
-monotone: I'll assume it's really them, but you might want to double-check
-monotone: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
-monotone: warning: saving public key for jim@@juicebot.co.jp to database
-monotone: finding items to synchronize:
-monotone: bytes in | bytes out | revs in | revs out | revs written
-monotone:     2587 |      1025 |       1 |        0 |            1
-monotone: successful exchange with jim-laptop.juicebot.co.jp
+$ mtn --db=abe.mtn sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+mtn: setting default server to jim-laptop.juicebot.co.jp
+mtn: setting default branch include pattern to 'jp.co.juicebot.jb7*'
+mtn: setting default branch exclude pattern to ''
+mtn: connecting to jim-laptop.juicebot.co.jp
+mtn: first time connecting to server jim-laptop.juicebot.co.jp:4691
+mtn: I'll assume it's really them, but you might want to double-check
+mtn: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
+mtn: warning: saving public key for jim@@juicebot.co.jp to database
+mtn: finding items to synchronize:
+mtn: bytes in | bytes out | revs in | revs out | revs written
+mtn:     2587 |      1025 |       1 |        0 |            1
+mtn: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
@@ -1736,7 +1766,7 @@ it:
 
 @smallexample
 @group
-$ monotone --db=abe.mtn --branch=jp.co.juicebot.jb7 checkout .
+$ mtn --db=abe.mtn --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
@@ -1759,7 +1789,7 @@ forgotten what he changed. He can ask monotone for details:
 
 @smallexample
 @group
-$ monotone diff
+$ mtn diff
 # 
 # patch "src/apple.c"
 #  from [2650ffc660dd00a08b659b883b65a060cac7e560]
@@ -1787,8 +1817,8 @@ Satisfied with his day's work, Abe decides to commit.
 
 @smallexample
 @group
-$ monotone commit 
-monotone: beginning commit on branch 'jp.co.juicebot.jb7'
+$ mtn commit 
+mtn: beginning commit on branch 'jp.co.juicebot.jb7'
 @end group
 @end smallexample
 
@@ -1828,7 +1858,7 @@ Abe's commit completes:
 
 @smallexample
 @group
-monotone: committed revision 70decb4b31a8227a629c0e364495286c5c75f979
+mtn: committed revision 70decb4b31a8227a629c0e364495286c5c75f979
 @end group
 @end smallexample
 
@@ -1836,14 +1866,14 @@ Abe then sends his new revision back to Jim:
 
 @smallexample
 @group
-$ monotone sync
-monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: finding items to synchronize:
-monotone:   certs |    keys | revisions
-monotone:       8 |       2 |         2
-monotone: bytes in | bytes out | revs in | revs out | revs written
-monotone:      615 |      2822 |       0 |        1 |            0
-monotone: successful exchange with jim-laptop.juicebot.co.jp
+$ mtn sync
+mtn: connecting to jim-laptop.juicebot.co.jp
+mtn: finding items to synchronize:
+mtn:   certs |    keys | revisions
+mtn:       8 |       2 |         2
+mtn: bytes in | bytes out | revs in | revs out | revs written
+mtn:      615 |      2822 |       0 |        1 |            0
+mtn: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
@@ -1852,22 +1882,22 @@ Jim's:
 
 @smallexample
 @group
-$ monotone --db=beth.mtn sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: setting default server to jim-laptop.juicebot.co.jp
-monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
-monotone: setting default branch exclude pattern to ''
-monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: first time connecting to server jim-laptop.juicebot.co.jp:4691
-monotone: I'll assume it's really them, but you might want to double-check
-monotone: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
-monotone: warning: saving public key for jim@@juicebot.co.jp to database
-monotone: finding items to synchronize:
-monotone: bytes in | bytes out | revs in | revs out | revs written
-monotone:     4601 |      1239 |       2 |        0 |            1
-monotone: verifying new revisions (this may take a while)
-monotone: bytes in | bytes out | revs in | revs out | revs written
-monotone:     4601 |      1285 |       2 |        0 |            2
-monotone: successful exchange with jim-laptop.juicebot.co.jp
+$ mtn --db=beth.mtn sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+mtn: setting default server to jim-laptop.juicebot.co.jp
+mtn: setting default branch include pattern to 'jp.co.juicebot.jb7*'
+mtn: setting default branch exclude pattern to ''
+mtn: connecting to jim-laptop.juicebot.co.jp
+mtn: first time connecting to server jim-laptop.juicebot.co.jp:4691
+mtn: I'll assume it's really them, but you might want to double-check
+mtn: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
+mtn: warning: saving public key for jim@@juicebot.co.jp to database
+mtn: finding items to synchronize:
+mtn: bytes in | bytes out | revs in | revs out | revs written
+mtn:     4601 |      1239 |       2 |        0 |            1
+mtn: verifying new revisions (this may take a while)
+mtn: bytes in | bytes out | revs in | revs out | revs written
+mtn:     4601 |      1285 |       2 |        0 |            2
+mtn: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
@@ -1875,7 +1905,7 @@ She checks out a copy of the tree from her database:
 
 @smallexample
 @group
-$ monotone --db=beth.mtn --branch=jp.co.juicebot.jb7 checkout .
+$ mtn --db=beth.mtn --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
@@ -1905,9 +1935,9 @@ before finishing her commit:
 
 @smallexample
 @group
-$ monotone commit
-monotone: beginning commit on branch 'jp.co.juicebot.jb7'
-monotone: committed revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
+$ mtn commit
+mtn: beginning commit on branch 'jp.co.juicebot.jb7'
+mtn: committed revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
 @end group
 @end smallexample
 
@@ -1915,14 +1945,14 @@ And she syncs with Jim again:
 
 @smallexample
 @group
-$ monotone sync
-monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: finding items to synchronize:
-monotone:   certs |    keys | revisions
-monotone:      12 |       3 |         3
-monotone: bytes in | bytes out | revs in | revs out | revs written
-monotone:      709 |      2879 |       0 |        1 |            0
-monotone: successful exchange with jim-laptop.juicebot.co.jp
+$ mtn sync
+mtn: connecting to jim-laptop.juicebot.co.jp
+mtn: finding items to synchronize:
+mtn:   certs |    keys | revisions
+mtn:      12 |       3 |         3
+mtn: bytes in | bytes out | revs in | revs out | revs written
+mtn:      709 |      2879 |       0 |        1 |            0
+mtn: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
@@ -1986,7 +2016,7 @@ Beth finishes and examines her changes:
 
 @smallexample
 @group
-$ monotone diff
+$ mtn diff
 # 
 # patch "src/banana.c"
 #  from [7381d6b3adfddaf16dc0fdb05e0f2d1873e3132a]
@@ -2022,9 +2052,9 @@ She commits her work:
 
 @smallexample
 @group
-$ monotone commit --message="interrupt implementation of src/banana.c"
-monotone: beginning commit on branch 'jp.co.juicebot.jb7'
-monotone: committed revision 8b41b5399a564494993063287a737d26ede3dee4
+$ mtn commit --message="interrupt implementation of src/banana.c"
+mtn: beginning commit on branch 'jp.co.juicebot.jb7'
+mtn: committed revision 8b41b5399a564494993063287a737d26ede3dee4
 @end group
 @end smallexample
 
@@ -2032,7 +2062,7 @@ And she syncs with Jim:
 
 @smallexample
 @group
-$ monotone sync
+$ mtn sync
 @end group
 @end smallexample
 
@@ -2053,7 +2083,7 @@ Thus when Abe commits, he unknowingly creates a fork:
 
 @smallexample
 @group
-$ monotone commit --message="interrupt implementation of src/apple.c"
+$ mtn commit --message="interrupt implementation of src/apple.c"
 @end group
 @end smallexample
 
@@ -2063,7 +2093,7 @@ he has new work to contribute, however, he now syncs:
 
 @smallexample
 @group
-$ monotone sync
+$ mtn sync
 @end group
 @end smallexample
 
@@ -2073,8 +2103,8 @@ the branch:
 
 @smallexample
 @group
-$ monotone heads
-monotone: branch 'jp.co.juicebot.jb7' is currently unmerged:
+$ mtn heads
+mtn: branch 'jp.co.juicebot.jb7' is currently unmerged:
 39969614e5a14316c7ffefc588771f491c709152 abe@@juicebot.co.jp 2004-10-26T02:53:16
 8b41b5399a564494993063287a737d26ede3dee4 beth@@juicebot.co.jp 2004-10-26T02:53:15
 @end group
@@ -2088,15 +2118,15 @@ conflicts Jim does so himself:
 
 @smallexample
 @group
-$ monotone merge
-monotone: starting with revision 1 / 2
-monotone: merging with revision 2 / 2
-monotone: [source] 39969614e5a14316c7ffefc588771f491c709152
-monotone: [source] 8b41b5399a564494993063287a737d26ede3dee4
-monotone: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 abe@@juicebot.co.jp  2004-10-26T:02:50:01 found
-monotone: trying 3-way merge
-monotone: [merged] da499b9d9465a0e003a4c6b2909102ef98bf4e6d
-monotone: your workspaces have not been updated
+$ mtn merge
+mtn: starting with revision 1 / 2
+mtn: merging with revision 2 / 2
+mtn: [source] 39969614e5a14316c7ffefc588771f491c709152
+mtn: [source] 8b41b5399a564494993063287a737d26ede3dee4
+mtn: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 abe@@juicebot.co.jp  2004-10-26T:02:50:01 found
+mtn: trying 3-way merge
+mtn: [merged] da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+mtn: your workspaces have not been updated
 @end group
 @end smallexample
 
@@ -2112,11 +2142,11 @@ his workspace.
 
 @smallexample
 @group
-$ monotone update
-monotone: selected update target da499b9d9465a0e003a4c6b2909102ef98bf4e6d
-monotone: updating src/apple.c to f088e24beb43ab1468d7243e36ce214a559bdc96
-monotone: updating src/banana.c to 5e6622cf5c8805bcbd50921ce7db86dad40f2ec6
-monotone: updated to base revision da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+$ mtn update
+mtn: selected update target da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+mtn: updating src/apple.c to f088e24beb43ab1468d7243e36ce214a559bdc96
+mtn: updating src/banana.c to 5e6622cf5c8805bcbd50921ce7db86dad40f2ec6
+mtn: updated to base revision da499b9d9465a0e003a4c6b2909102ef98bf4e6d
 @end group
 @end smallexample
 
@@ -2186,9 +2216,9 @@ the new muffins code, and commits it on a new branch by simply passing
 
 @smallexample
 @group
-$ monotone commit --branch=jp.co.juicebot.jb7.muffins --message='autobake framework'
-monotone: beginning commit on branch 'jp.co.juicebot.jb7.muffins'
-monotone: committed revision d33caefd61823ecbb605c39ffb84705dec449857
+$ mtn commit --branch=jp.co.juicebot.jb7.muffins --message='autobake framework'
+mtn: beginning commit on branch 'jp.co.juicebot.jb7.muffins'
+mtn: committed revision d33caefd61823ecbb605c39ffb84705dec449857
 @end group
 @end smallexample
 
@@ -2206,13 +2236,13 @@ command:
 
 @smallexample
 @group
-$ monotone propagate jp.co.juicebot.jb7 jp.co.juicebot.jb7.muffins
-monotone: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
-monotone: [source] da003f115752ac6e4750b89aaca9dbba178ac80c
-monotone: [target] d0e5c93bb61e5fd25a0dadf41426f209b73f40af
-monotone: common ancestor 853b8c7ac5689181d4b958504adfb5d07fd959ab jim@@juicebot.co.jp 2004-10-26T:12:44:23 found
-monotone: trying 3-way merge
-monotone: [merged] 89585b3c5e51a5a75f5d1a05dda859c5b7dde52f
+$ mtn propagate jp.co.juicebot.jb7 jp.co.juicebot.jb7.muffins
+mtn: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
+mtn: [source] da003f115752ac6e4750b89aaca9dbba178ac80c
+mtn: [target] d0e5c93bb61e5fd25a0dadf41426f209b73f40af
+mtn: common ancestor 853b8c7ac5689181d4b958504adfb5d07fd959ab jim@@juicebot.co.jp 2004-10-26T:12:44:23 found
+mtn: trying 3-way merge
+mtn: [merged] 89585b3c5e51a5a75f5d1a05dda859c5b7dde52f
 @end group
 @end smallexample
 
@@ -2224,12 +2254,12 @@ into the main line of development, she simply propagates the other way:
 
 @smallexample
 @group
-$ monotone propagate jp.co.juicebot.jb7.muffins jp.co.juicebot.jb7
-monotone: propagating jp.co.juicebot.jb7.muffins -> jp.co.juicebot.jb7
-monotone: [source] 4e48e2c9a3d2ca8a708cb0cc545700544efb5021
-monotone: [target] bd29b2bfd07644ab370f50e0d68f26dcfd3bb4af
-monotone: common ancestor 652b1035343281a0d2a5de79919f9a31a30c9028 jim@@juicebot.co.jp 2004-10-26T:15:25:05 found
-monotone: [merged] 03f7495b51cc70b76872ed019d19dee1b73e89b6
+$ mtn propagate jp.co.juicebot.jb7.muffins jp.co.juicebot.jb7
+mtn: propagating jp.co.juicebot.jb7.muffins -> jp.co.juicebot.jb7
+mtn: [source] 4e48e2c9a3d2ca8a708cb0cc545700544efb5021
+mtn: [target] bd29b2bfd07644ab370f50e0d68f26dcfd3bb4af
+mtn: common ancestor 652b1035343281a0d2a5de79919f9a31a30c9028 jim@@juicebot.co.jp 2004-10-26T:15:25:05 found
+mtn: [merged] 03f7495b51cc70b76872ed019d19dee1b73e89b6
 @end group
 @end smallexample
 
@@ -2328,14 +2358,14 @@ in the team-members' keys:
 
 @smallexample
 @group
-$ monotone --db=server.mtn db init
-$ monotone genkey monotone-server@@www.juicebot.co.jp
-monotone: generating key-pair 'monotone-server@@www.juicebot.co.jp'
+$ mtn --db=server.mtn db init
+$ mtn genkey monotone-server@@www.juicebot.co.jp
+mtn: generating key-pair 'monotone-server@@www.juicebot.co.jp'
 enter passphrase for key ID [monotone-server@@www.juicebot.co.jp] : @i{<Jim enters a new passphrase>}
 confirm passphrase for key ID [monotone-server@@www.juicebot.co.jp]: @i{<Jim confirms the passphrase>}
-monotone: storing key-pair 'monotone-server@@www.juicebot.co.jp' in /home/jim/.monotone/keys
+mtn: storing key-pair 'monotone-server@@www.juicebot.co.jp' in /home/jim/.monotone/keys
 $ cat abe.pubkey beth.pubkey jim.pubkey | monotone --db=server.mtn read
-monotone: read 3 packets
+mtn: read 3 packets
 @end group
 @end smallexample
 
@@ -2386,7 +2416,7 @@ the @code{--bind=address:port} argument like so:
 
 @smallexample
 @group
-$ monotone --db=server.mtn --bind=www.juicebot.co.jp serve "jp.co.juicebot.jb7*"
+$ mtn --db=server.mtn --bind=www.juicebot.co.jp serve "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
@@ -2420,7 +2450,7 @@ remembered the first server and branch patterns used in database
 
 @smallexample
 @group
-$ monotone list vars
+$ mtn list vars
 database: default-exclude-pattern 
 database: default-include-pattern jp.co.juicebot.jb7*
 database: default-server jim-laptop.juicebot.co.jp
@@ -2434,7 +2464,7 @@ The team members can reset their local database vars accordingly:
 
 @smallexample
 @group
-$ monotone set database default-server www.juicebot.co.jp
+$ mtn set database default-server www.juicebot.co.jp
 @end group
 @end smallexample
 
@@ -3308,10 +3338,10 @@ copy:
 
 @smallexample
 @group
-$ monotone --db=test.mtn db init
-$ monotone --db=test.mtn genkey import@@example.net
-$ monotone --db=test.mtn --branch=net.example.wobbler cvs_import /usr/local/cvsroot/wobbler
-$ monotone --db=test.mtn --branch=net.example.wobbler checkout wobber-checkout
+$ mtn --db=test.mtn db init
+$ mtn --db=test.mtn genkey import@@example.net
+$ mtn --db=test.mtn --branch=net.example.wobbler cvs_import /usr/local/cvsroot/wobbler
+$ mtn --db=test.mtn --branch=net.example.wobbler checkout wobber-checkout
 @end group
 @end smallexample
 
@@ -3337,8 +3367,8 @@ $ cvs -d $CVSROOT checkout -r 1.2
 @tab
 @smallexample
 @group
-$ monotone pull www.foo.com com.foo.wobbler*
-$ monotone checkout --revision=fe37 wobbler
+$ mtn pull www.foo.com com.foo.wobbler*
+$ mtn checkout --revision=fe37 wobbler
 @end group
 @end smallexample
 @end multitable
@@ -3369,8 +3399,8 @@ $ cvs commit -m "log message"
 @tab
 @smallexample
 @group
-$ monotone commit --message="log message"
-$ monotone push www.foo.com com.foo.wobbler*
+$ mtn commit --message="log message"
+$ mtn push www.foo.com com.foo.wobbler*
 @end group
 @end smallexample
 @end multitable
@@ -3392,9 +3422,9 @@ $ cvs update -d
 @tab
 @smallexample
 @group
-$ monotone pull www.foo.com com.foo.wobbler*
-$ monotone merge
-$ monotone update
+$ mtn pull www.foo.com com.foo.wobbler*
+$ mtn merge
+$ mtn update
 @end group
 @end smallexample
 @end multitable
@@ -3418,8 +3448,8 @@ $ cvs update -r FOO_TAG -d
 @tab
 @smallexample
 @group
-$ monotone update -r 830ac1a5f033825ab364f911608ec294fe37f7bc
-$ monotone update -r t:FOO_TAG
+$ mtn update -r 830ac1a5f033825ab364f911608ec294fe37f7bc
+$ mtn update -r t:FOO_TAG
 @end group
 @end smallexample
 @end multitable
@@ -3446,7 +3476,7 @@ $ cvs diff
 @tab
 @smallexample
 @group
-$ monotone diff
+$ mtn diff
 @end group
 @end smallexample
 @item
@@ -3458,7 +3488,7 @@ $ cvs diff -r 1.2 -r 1.4 myfile
 @tab
 @smallexample
 @group
-$ monotone diff -r 3e7db -r 278df myfile
+$ mtn diff -r 3e7db -r 278df myfile
 @end group
 @end smallexample
 @end multitable
@@ -3484,7 +3514,7 @@ $ cvs status
 @tab
 @smallexample
 @group
-$ monotone status
+$ mtn status
 @end group
 @end smallexample
 @end multitable
@@ -3507,7 +3537,7 @@ $ cvs add dir/subdir/file.txt
 @tab
 @smallexample
 @group
-$ monotone add dir/subdir/file.txt
+$ mtn add dir/subdir/file.txt
 @end group
 @end smallexample
 @end multitable
@@ -3530,7 +3560,7 @@ $ cvs remove file.txt
 @tab
 @smallexample
 @group
-$ monotone drop file.txt
+$ mtn drop file.txt
 @end group
 @end smallexample
 @end multitable
@@ -3553,7 +3583,7 @@ $ cvs log [file]
 @tab
 @smallexample
 @group
-$ monotone log [file]
+$ mtn log [file]
 @end group
 @end smallexample
 @end multitable
@@ -3574,9 +3604,9 @@ $ cvs import wobbler vendor start
 @tab
 @smallexample
 @group
-$ monotone --db=/path/to/database.mtn --branch=com.foo.wobbler setup .
-$ monotone add .
-$ monotone commit
+$ mtn --db=/path/to/database.mtn --branch=com.foo.wobbler setup .
+$ mtn add .
+$ mtn commit
 @end group
 @end smallexample
 @end multitable
@@ -3597,7 +3627,7 @@ $ cvs init -d /path/to/repository
 @tab
 @smallexample
 @group
-$ monotone db init --db=/path/to/database.mtn 
+$ mtn db init --db=/path/to/database.mtn 
 @end group
 @end smallexample
 @end multitable
@@ -4034,8 +4064,8 @@ workspace:
 
 @smallexample
 @group
-$ monotone rename . @var{new_root}/@var{put_old}
-$ monotone rename @var{new_root} .
+$ mtn rename . @var{new_root}/@var{put_old}
+$ mtn rename @var{new_root} .
 @end group
 @end smallexample
 
@@ -4082,7 +4112,7 @@ branches. Supposing Alice's computer has hostname
 
 @smallexample
 @group
-$ monotone --bind=alice.someisp.com serve "net.venge.monotone*"
+$ mtn --bind=alice.someisp.com serve "net.venge.monotone*"
 @end group
 @end smallexample
 
@@ -4090,7 +4120,7 @@ And Bob might run
 
 @smallexample
 @group
-$ monotone sync alice.someisp.com "net.venge.monotone*"
+$ mtn sync alice.someisp.com "net.venge.monotone*"
 @end group
 @end smallexample
 
@@ -4106,7 +4136,7 @@ with Alice again, he can simply run:
 
 @smallexample
 @group
-$ monotone sync
+$ mtn sync
 @end group
 @end smallexample
 
@@ -4236,7 +4266,7 @@ example, suppose you enter this command and get this result:
 
 @smallexample
 @group
-$ monotone complete revision fa36
+$ mtn complete revision fa36
 fa36deead87811b0e15208da2853c39d2f6ebe90
 fa36b76dd0139177b28b379fe1d56b22342e5306
 fa36965ec190bee14c5afcac235f1b8e2239bb2a
@@ -4337,9 +4367,9 @@ branch:
 
 @smallexample
 @group
-$ monotone list certs 4a96
-monotone: expanding partial id '4a96'
-monotone: expanded to '4a96a230293456baa9c6e7167cafb3c5b52a8e7f'
+$ mtn list certs 4a96
+mtn: expanding partial id '4a96'
+mtn: expanded to '4a96a230293456baa9c6e7167cafb3c5b52a8e7f'
 -----------------------------------------------------------------
 Key   : graydon@@pobox.com
 Sig   : ok
