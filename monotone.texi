@@ -296,13 +296,19 @@ we say that you want to capture a @i{version of your tree}. Doing
 so will permit you to undo changes to multiple files at once, or send
 your friend a @i{set} of changes to many files at once.
 
-To make a snapshot of a tree, we begin by writing a special file
-called a @dfn{manifest}. In fact, monotone will write this file for
-us, but we could write it ourselves too. It is just a plain text
-file.  Each line of a manifest file contains two columns. In the first
-column we write the ID of a file in your tree, and in the second
-column we write the path to the file, from the root of our tree to the
-filename.
+To make a snapshot of a tree, we begin by writing a special file called
+a @dfn{manifest}. In fact, monotone will write this file for us, but we
+could write it ourselves too. It is just a plain text file, in a
+strucutred but human-readable format used by several parts of monotone.
+Each file entry of a manifest binds a specific name, as a full path from
+the root of the workspace, to a specific file ID, as the hash of its
+content.  In this way, the manifest collects together the snapshot of
+the file names and contents you have at this point in time; other
+snapshots with other manifests can use different names for the same
+file, or different contents for the same name. 
+
+Other entries in the manifest format name directories or store file
+attrs, which we will cover later.
 
 @ifinfo
 @smallexample
