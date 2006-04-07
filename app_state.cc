@@ -405,7 +405,7 @@ void
 app_state::set_last(long l)
 {
   N(l > 0,
-    F("negative or zero last not allowed\n"));
+    F("illegal argument to --last: cannot be zero or negative\n"));
   last = l;
 }
 
@@ -413,7 +413,7 @@ void
 app_state::set_next(long l)
 {
   N(l > 0,
-    F("negative or zero next not allowed\n"));
+    F("illegal argument to --next: cannot be zero or negative\n"));
   next = l;
 }
 
