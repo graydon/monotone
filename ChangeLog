@@ -1,5 +1,9 @@
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
+	* po/LINGUAS: Add de.
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Go ahead and add a note about sqlite 3.3, since
 	incompatibility with the 3.2 command line client has apparently
 	bitten at least two of us.
