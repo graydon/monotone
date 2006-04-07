@@ -1,5 +1,9 @@
 2006-04-07  Nathaniel Smith  <njs@pobox.com>
 
+	* Makefile.am (distcleancheck_listfiles): Another try at this...
+
+2006-04-07  Nathaniel Smith  <njs@pobox.com>
+
 	* Makefile.am (distcleancheck_listfiles): Attempt to teach
 	distcheck that it's okay that distclean does not remove
 	package_revision.txt and package_full_revision_dist.txt files.
