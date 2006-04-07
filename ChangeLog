@@ -1,8 +1,17 @@
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
+	
+	* monotone.texi: Fix up the ascii diagrams in the early sections
+	to match current data formats.  Fix up sample output similarly.
+	Fix even more places where we say "monotone" to refer to the
+	command.
+	* figures/oo-figures.sxd: Update graphical figures to match
+	current data formats.
+	
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi: Fix a bunch more places where we say "monotone"
 	to refer to the command name.
-	
+
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi: .mt-attrs?  Never heard of it...
