@@ -1,5 +1,12 @@
 2006-04-07  Nathaniel Smith  <njs@pobox.com>
 
+	* figures/oo-figures.sxd: Sigh, accidentally discarded the changes
+	I had to make since the fonts changed and the arrows/boxes became
+	incorrect.  This redoes them, to approximately match the version
+	used to generate the current pdf files.
+
+2006-04-07  Nathaniel Smith  <njs@pobox.com>
+
 	* figures/README: More notes.
 	* figures/oo-figures.sxd: No idea what changed about this file,
 	don't care.
