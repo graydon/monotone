@@ -51,7 +51,7 @@
 #define g_malloc malloc
 #define g_free free
 #define GError void
-#define g_set_error(a,b,c,d) 0
+#define g_set_error(a,b,c,d) /* */
 #define g_new(struct_type, n_structs)                                   \
   ((struct_type *) g_malloc (((gsize) sizeof (struct_type)) * ((gsize) (n_structs))))
 #  if defined (__GNUC__) && !defined (__STRICT_ANSI__) && !defined (__cplusplus)

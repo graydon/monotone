@@ -3,6 +3,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "config.h"
+
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -24,7 +26,6 @@
 #include <fcntl.h>
 #endif
 
-#include "config.h"
 #include "rcs_file.hh"
 #include "sanity.hh"
 
