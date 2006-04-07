@@ -2813,7 +2813,7 @@ msgstr "certs entrants"
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:706 ../netsync.cc:714
 msgid "revs out"
-msgstr "révs entrantes"
+msgstr "révs sortantes"
 #msgstr "révs ⇧"
 
 #: ../netsync.cc:820
