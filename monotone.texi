@@ -2641,7 +2641,7 @@ monotone will assume 00:00:00. This selector also accepts expanded date
 syntax (see below)
 @item "Later than" selection
 Uses selector type @code{l}. For example, @code{l:2004-04-25} matches
-@code{date} certs where the cert value is strictly less than
+@code{date} certs where the cert value is strictly greater than
 @code{2004-04-25T00:00:00}. If the time component is unspecified,
 monotone will assume 00:00:00. This selector also accepts expanded date
 syntax (see below)
