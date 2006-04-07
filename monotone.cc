@@ -17,7 +17,7 @@
 
 #include <stdlib.h>
 
-#include <libgen.h>
+#include <boost/filesystem/path.hpp>
 
 #include "botan/botan.h"
 
@@ -290,7 +290,7 @@ cpp_main(int argc, char ** argv)
   save_initial_path();
   utf8_argv uv(argc, argv);
 
-  utf8 prog_name(basename(uv.argv[0]));
+  utf8 prog_name(fs::path(uv.argv[0]).leaf());
 
   // prepare for arg parsing
 

@@ -54,6 +54,9 @@
 
 2006-04-07  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* monotone.cc: Remove libgen.h and basename(), replace with
+	equivalent from boost::filesystem.
+
 	* sqlite/*: Import SQLite 3.3.5.
 
 	* tests/t_mtn_ignore.at: Shuffle the output grepping tests a bit
