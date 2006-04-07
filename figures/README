@@ -15,5 +15,6 @@ you should be good on the PDF.
 
 The PNGs are exported in the same way from OpenOffice: select the
 figure, export.. and change the file type to PNG and the output file
-name as appropriate.  There is no equivalent prompt for page-range or
-Selection, but the selected items will be exported to the named file.
+name as appropriate.  There equivalent prompt for Selection is a
+checkbox at the bottom of the first dialog this time, and will be on
+by default if a selection is active.

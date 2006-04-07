@@ -2,6 +2,14 @@
 
 	* Makefile.am (distcleancheck_listfiles): Fix up find(1) syntax.
 
+2006-04-07  Daniel Carosone  <dan@geek.com.au>
+
+	* figures/README: Revise to describe a better .png generation method
+	* figures/{manifest,file-id-manifest-id,revision-chaining,revision}.png:
+	Reregenerate accordingly	
+	* figures/oo-figures.sxd: Source changes for the following:
+	* figures/{local,general}-workflow: "working copy" to "workspace", MT to _MTN
+
 2006-04-07  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (distcleancheck_listfiles): Another try at this...
