@@ -14,6 +14,14 @@
 	each figure should be exported to.  I'll actually do the exports
 	later...
 	
+2006-04-07  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Fixed.
+
+2006-04-07  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Replaced nice unicode arrows with long strings.
+
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (mostlyclean-local): Delete
