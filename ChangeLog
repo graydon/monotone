@@ -1,3 +1,7 @@
+2006-04-07  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Replaced nice unicode arrows with long strings.
+
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (mostlyclean-local): Delete
