@@ -1,5 +1,11 @@
 2006-04-07  Nathaniel Smith  <njs@pobox.com>
 
+	* figures/README: Add note on PNGs.
+	* figures/{manifest,file-id-manifest-id,revision-chaining,revision}.png:
+	Regenerate PNGs.
+	
+2006-04-07  Nathaniel Smith  <njs@pobox.com>
+
 	* figures/oo-figures.sxd: Sigh, accidentally discarded the changes
 	I had to make since the fonts changed and the arrows/boxes became
 	incorrect.  This redoes them, to approximately match the version

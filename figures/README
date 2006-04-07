@@ -13,4 +13,6 @@ pdfcrop.pl script comes in.  Run 'pdfcrop.pl <your file>.pdf'; this
 will generate <your file>-crop.pdf'.  Copy that over <your file>, and
 you should be good on the PDF.
 
-The PNGs are generated from the PDFs.  For instance, 
+The PNGs are generated from the PDFs.  I used the gimp to do this;
+just open the PNG in the gimp, use resolution "100" in the box it
+gives when you open a PDF, and then save as PNG.
