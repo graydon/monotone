@@ -1,5 +1,9 @@
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.texi: .mt-attrs?  Never heard of it...
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
 	* po/LINGUAS: Add de.
 
 2006-04-06  Nathaniel Smith  <njs@pobox.com>

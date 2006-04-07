@@ -3147,65 +3147,49 @@ author owns the DNS domain @code{venge.net}.
 @node    File Attributes
 @section File Attributes
 
-Monotone contains a mechanism for storing @dfn{persistent file
-attributes}.  These differ from file certificates in an important way:
-attributes are associated with a path name in your workspace,
-rather than a particular version of a file. Otherwise they are
-similar: a file attribute associates a simple name/value pair with a
-file in your workspace.
+Monotone contains a support for storing @dfn{persistent attributes} on
+files and directories, generally known as @dfn{attrs} for short.  An
+attr associates a simple name/value pair with a file or directory, and
+is stored in the manifest.  Attrs are first-class versioned data; they
+can be changed in a workspace, and those changes will be saved when
+the workspace is committed.  The merger knows how to intelligently
+merge attrs.
 
-The attribute mechanism is motivated by the fact that some people like
-to store executable programs in version control systems, and would like
-the programs to remain executable when they check out a workspace.
-For example, the @code{configure} shell script commonly shipped with
-many programs should be executable. 
+The attribute mechanism was originally motivated by the fact that some
+people like to store executable programs in version control systems,
+and would like the programs to remain executable when they check out a
+workspace.  For example, the @code{configure} shell script commonly
+shipped with many programs should be executable.  Similarly, some
+people would like to store devices, symbolic links, read-only files,
+and all manner of extra attributes of a file, not directly related to
+a file's data content.
 
-Similarly, some people would like to store devices, symbolic links,
-read-only files, and all manner of extra attributes of a file, not
-directly related to a file's data content. 
+Monotone comes with support for some attrs built-in; for instance, if
+an executable file is given to @command{mtn add}, then it will
+automatically mark the new file with a @code{mtn:execute} attr, and
+when the file is checked out later, the executable bit will be set
+automatically.  (Of course, if it is checked out on Windows, which
+does not support the executable bit, then the executable bit will not
+be set.  However, monotone will still know that the attr is set, and
+Windows users can view and modify the attr like anyone else.)
 
-Rather than try to extend the manifest file format to accommodate
-attributes, monotone requires that you place your attributes in a
-specially named file in the root of your workspace. The file is
-called @file{.mt-attrs}, and it has a simple stanza-based format, for
-example:
-
-@smallexample
-@group
-file "analyze_coverage"
-execute "true"
-
-file "autogen.sh"
-execute "true"
-otherattr "bob"
-@end group
-@end smallexample
-
-Each stanza of the @file{.mt-attrs} file assigns attributes to a file in
-your workspace.  The first line of each stanza is @code{file}
-followed by the quoted name of the file you want to assign attributes
-to.  Each subsequent line is the name of an attribute, followed by a
-quoted value for that attribute.  Stanzas are separated by blank lines.
-
-As a convenience, you can use the @code{monotone attr} command to set
-and view the values of these attributes; see @ref{Workspace}.
+Attrs in the current workspace can be seen and modified using the
+@code{mtn attr} command; see @ref{Workspace}.  Attrs can also be found
+by examining any manifest directly.
 
 You can tell monotone to automatically take actions based on these
 attributes by defining hooks; see the @code{attr_functions} entry in
-@ref{Hook Reference}.
+@ref{Hook Reference}.  Every time your workspace is written to,
+monotone will run the corresponding hooks registered for each attr in
+your workspace.  This way, you can extend the vocabulary of attrs
+understood by monotone simply by writing new hooks.
 
-Every time your workspace is written to, monotone will look for the
-@file{.mt-attrs} file, and if it exists, run the corresponding hooks
-registered for each attribute found in the file. This way, you can
-extend the vocabulary of attributes understood by monotone simply by
-writing new hooks.
-
-Aside from its special interpretation, the @file{.mt-attrs} file is a
-normal text file. If you want other people to see your attributes, you
-should @code{add} and @code{commit} the @file{.mt-attrs} file in your
-workspace. If you make changes to it which conflict with changes
-other people make, you will have to resolve those conflicts, as plain
-text, just as with any other text file in your workspace.
+You can make up your own attrs for anything you find useful; the
+mechanism is fully general.  (If you make up some particularly useful
+ones, we may even be interested in adding support to monotone proper.)
+We only ask that if you do use custom attrs, you use some prefix for
+them besides @code{mtn:}; attrs beginning with @code{mtn:} are
+reserved for monotone's own use.
 
 @page
 @node    Merging
@@ -3220,9 +3204,8 @@ In automatic mode files are merged without user intervention, using
 monotone internal three-way merging algorithm. 
 Only if there are conflicts or an ancestor is not available monotone
 switches to manual mode, essentially escalating the merging to the user.
-When working in manual mode, monotone invokes the merge2 (for two-way
-merging) or merge3 (three-way) hooks to start an user defined external
-merge tool.  
+When working in manual mode, monotone invokes the @code{merge3} hook
+to start an user defined external merge tool.  
 If the tool terminates without writing the merged file, monotone aborts the
 merging, reverting any changes made.
 By redefining the aforementioned hooks the user can not only choose a
@@ -5902,7 +5885,6 @@ FIXME_ROSTER
 
 @verbatim
 e3915658cb464d05f21332e03d30dca5d94fe776  .htaccess
-00ff89c69e7a8f6a0f48c6503168d9b62a0cfeb0  .mt-attrs
 80d8f3f75c9b517ec462233e155f7dfb93379f67  AUTHORS
 fc74a48c7f73eedcbe1ea709755fbe819b29736c  ChangeLog
 dfac199a7539a404407098a2541b9482279f690d  LICENSE
@@ -6704,10 +6686,10 @@ Some files in a project are special; they may require different handling
 merged -- see @ref{Merging}), or they may represent executable scripts
 or programs.
 
-Monotone allows each file in a repository to carry arbitrary @ref{File
-Attributes}. Persistent attributes are stored in the @file{.mt-attrs},
-in your workspace and manifest. The hooks in this section allow files
-to be automatically recognised as having certain attributes at the time
+Monotone allows each file (or directory) in a repository to carry
+arbitrary @ref{File Attributes}.  Persistent attributes are stored
+each revision's manifest. The hooks in this section allow files to be
+automatically recognised as having certain attributes at the time
 they're added, and for custom triggers to be invoked on each file
 according to its attributes when the workspace is changed.
 
@@ -6720,11 +6702,11 @@ entry @var{attribute}, is a function taking a file name @var{filename}
 and a attribute value @var{value}. The function should ``apply'' the 
 attribute to the file, possibly in a platform-specific way.
 
-Hook functions from this table are called for each triple found in the
-@file{.mt-attrs} file, after any command which modifies the working
-copy. This facility can be used to extend monotone's understanding of
-files with platform-specific attributes, such as permission bits, access
-control lists, or special file types.
+Hook functions from this table are called for each existing attr,
+after any command which modifies the working copy. This facility can
+be used to extend monotone's understanding of files with
+platform-specific attributes, such as permission bits, access control
+lists, or special file types.
 
 By default, there is only one entry in this table, for the @code{execute}
 attribute. Its definition is:
@@ -6743,10 +6725,10 @@ attr_functions["execute"] =
 @item attr_init_functions [@var{attribute}] (@var{filename})
 
 This is not a hook function, but a @emph{table} of hook
-functions. Each entry in the table @code{attr_init_functions}, at table
-entry @var{attribute}, is a function taking a file name
-@var{filename}. Each function defines the attributes that should be
-stored in @file{.mt-attrs} for the given @var{filename}. This table of
+functions. Each entry in the table @code{attr_init_functions}, at
+table entry @var{attribute}, is a function taking a file (or
+directory) name @var{filename}. Each function defines the attributes
+that should be set on the file named @var{filename}. This table of
 hook functions is called once for each file during an @dfn{add}.
 
 By default, there are only two entries in this table, for the
@@ -6981,9 +6963,8 @@ into UTF-8.
 Monotone's control files are stored in UTF-8. This includes: revisions
 and manifests, both inside the database and when written to the
 @file{_MTN/} directory of the workspace; the @file{_MTN/options} and
-@file{_MTN/work} files; and the @file{.mt-attrs} file. Converting these
-files to any other character set will cause monotone to break; do not
-do so.
+@file{_MTN/work} files. Converting these files to any other character
+set will cause monotone to break; do not do so.
 
 @item
 File path names in the workspace are converted to the locale's
@@ -7051,7 +7032,7 @@ loaded.
 Monotone's normal form is the UTF-8 character set and the @code{0x0A}
 (LF) line ending form. This form is used in any files monotone needs
 to read, write, and interpret itself, such as: @file{_MTN/revision},
-@file{_MTN/work}, @file{_MTN/options}, @file{.mt-attrs}
+@file{_MTN/work}, @file{_MTN/options}.
 
 @item LDH
 Letters, digits, and hyphen: the set of ASCII bytes @code{0x2D},
@@ -7218,12 +7199,6 @@ LDH, '@@' and '.' characters, as required for key and cert names.
 @item
 ASCII codes 0x0D (CR), 0x0A (LF), 0x09 (HT), and 0x20 (SP). 
 @end itemize
-
-@heading The @file{.mt-attrs} file
-
-Now uses 0x0A (ASCII LF) as a delimiter, to permit 0x20 in
-filenames. This may change in the future.
-
 
 @page
 @node    Hash Integrity
