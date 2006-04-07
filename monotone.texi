@@ -299,7 +299,7 @@ your friend a @i{set} of changes to many files at once.
 To make a snapshot of a tree, we begin by writing a special file called
 a @dfn{manifest}. In fact, monotone will write this file for us, but we
 could write it ourselves too. It is just a plain text file, in a
-strucutred but human-readable format used by several parts of monotone.
+structured but human-readable format used by several parts of monotone.
 Each file entry of a manifest binds a specific name, as a full path from
 the root of the workspace, to a specific file ID, as the hash of its
 content.  In this way, the manifest collects together the snapshot of
