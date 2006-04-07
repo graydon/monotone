@@ -1,5 +1,12 @@
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
+	* figures/README: New file.
+	* figures/oo-figures.sxd: Write into the file the filename that
+	each figure should be exported to.  I'll actually do the exports
+	later...
+	
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
 	* Makefile.am (mostlyclean-local): Delete
 	package_full_revision.txt, not package_full_revision_dist.txt.
 
