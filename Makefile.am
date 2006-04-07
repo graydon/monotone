@@ -557,6 +557,21 @@ package_full_revision.c: package_full_revision.txt txt2c Makefile
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
+# This is a magic directive copy-and-pasted, then modified, from the
+# automake 1.9 manual, section 13.4, "Checking the distribution".
+# Normally, 'distcheck' does a clean build, and then afterwards runs
+# 'distclean', and 'distclean' is supposed to remove everything that
+# the build created.  However, we have some targets
+# (package_revision.txt, package_full_revision_dist.txt) that we
+# distribute, but then always attempt to rebuild optimistically, and
+# then if that fails fall back on the distributed versions.  This
+# means that 'distclean' should _not_ remove those files, since they
+# are distributed, yet building the package will generate those files,
+# those automake thinks that 'distclean' _should_ remove those files,
+# and 'distcheck' gets cranky if we don't.  So basically what this
+# line does is tell 'distcheck' to shut up and ignore those two files.
+distcleancheck_listfiles = find -type f -exec sh -c '[ {} == "package_revision.txt" ] || [ {} == "package_full_revision_dist.txt" ] || echo {}' ';'
+
 # automake doesn't build html docs
 
 CHECK_SRCDIR_EQ_BUILDDIR=[ "`cd \"$(srcdir)\"; pwd`" = "`pwd`" -a -f ./monotone.texi ]

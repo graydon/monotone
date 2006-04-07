@@ -1,5 +1,13 @@
 2006-04-07  Nathaniel Smith  <njs@pobox.com>
 
+	* Makefile.am (distcleancheck_listfiles): Attempt to teach
+	distcheck that it's okay that distclean does not remove
+	package_revision.txt and package_full_revision_dist.txt files.
+	Untested, because the test is taking ages and I want to go to
+	sleep, so good luck :-).
+
+2006-04-07  Nathaniel Smith  <njs@pobox.com>
+
 	* figures/README: Add note on PNGs.
 	* figures/{manifest,file-id-manifest-id,revision-chaining,revision}.png:
 	Regenerate PNGs.
