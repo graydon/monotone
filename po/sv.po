@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-04-07 23:58+0200\n"
-"PO-Revision-Date: 2006-04-07 23:59+0200\n"
+"POT-Creation-Date: 2006-04-08 07:57+0200\n"
+"PO-Revision-Date: 2006-04-08 07:58+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1569,7 +1569,7 @@ msgstr ""
 
 #: commands.cc:3992 commands.cc:3994
 #, c-format
-msgid "%s in an ancestor of %s; no merge is needed."
+msgid "%s is an ancestor of %s; no merge is needed."
 msgstr "%s är en förfader till %s; någon ihopslagning behövs inte."
 
 #: commands.cc:4008

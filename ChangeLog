@@ -1,3 +1,7 @@
+2006-04-08  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A phrase was changed in command.cc...
+
 2006-04-07  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A few untranslated ones appeared.
