@@ -41,7 +41,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm200"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Platform SDK\Include&quot;;&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\sqlite&quot;;&quot;$(ProjectDir)\..&quot;;&quot;C:\Boost\include\boost-1_33_1&quot;"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\GnuWin32\include&quot;;&quot;C:\Program Files\Microsoft Platform SDK\Include&quot;;&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\sqlite&quot;;&quot;$(ProjectDir)\..&quot;;&quot;C:\Boost\include\boost-1_33_1&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;BOOST_MSVC_STD_ITERATOR;_CRT_SECURE_NO_DEPRECATE;min=min;max=max"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -66,10 +66,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib"
-				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib popt.lib iconv.lib charset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
+				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib popt.lib libiconv.lib libcharset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
 				OutputFile="$(outdir)\mtn.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(ProjectDir)\..\..\libiconv-1.9.1\lib&quot;;&quot;$(ProjectDir)\..\..\zlib-1.2.3\projects\visualc6\Win32_LIB_Release&quot;;&quot;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Debug&quot;;C:\Boost\lib"
+				AdditionalLibraryDirectories="&quot;C:\Program Files\GnuWin32\lib&quot;;&quot;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Debug&quot;;C:\Boost\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(outdir)/visualc.pdb"
 				SubSystem="1"
@@ -132,7 +132,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Platform SDK\Include&quot;;&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\sqlite&quot;;&quot;$(ProjectDir)\..&quot;;&quot;C:\Boost\include\boost-1_33_1&quot;"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\GnuWin32\include&quot;;&quot;C:\Program Files\Microsoft Platform SDK\Include&quot;;&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\sqlite&quot;;&quot;$(ProjectDir)\..&quot;;&quot;C:\Boost\include\boost-1_33_1&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE;BOOST_MSVC_STD_ITERATOR;_CRT_SECURE_NO_DEPRECATE;min=min;max=max"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -158,10 +158,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMT.lib"
-				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib popt.lib iconv.lib charset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
+				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib popt.lib libiconv.lib libcharset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
 				OutputFile="$(outdir)/mtn.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(ProjectDir)\..\..\libiconv-1.9.1\libcharset\lib&quot;;&quot;$(ProjectDir)\..\..\libiconv-1.9.1\lib&quot;;&quot;$(ProjectDir)\..\..\zlib-1.2.3\projects\visualc6\Win32_LIB_Release&quot;;&quot;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Release&quot;;C:\Boost\lib"
+				AdditionalLibraryDirectories="&quot;C:\Program Files\GnuWin32\lib&quot;;&quot;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Release&quot;;C:\Boost\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -276,6 +276,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\inodeprint.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\win32\inodeprint.cc"
 				>
 				<FileConfiguration
@@ -296,10 +300,6 @@
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\inodeprint.cc"
-				>
 			</File>
 			<File
 				RelativePath="..\key_store.cc"
