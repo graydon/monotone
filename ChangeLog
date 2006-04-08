@@ -1,5 +1,9 @@
 2006-04-08  Nathaniel Smith  <njs@pobox.com>
 
+	* AUTHORS: Add Thomas Keller.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
 	* Makefile.am (distcleancheck_listfiles): Third time's
 	the... charm?
 
