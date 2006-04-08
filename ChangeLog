@@ -1,5 +1,13 @@
 2006-04-08  Richard Levitte  <richard@levitte.org>
 
+	* netsync.cc (serve_connections): When socket() fails in Netxx,
+	it throws a Netxx::Exception rather than a
+	Netxx::NetworkException, so we need to catch that as well.  This
+	should solve the problems some have experienced when they don't
+	have a IPv6 stack and try to run a IPv6-enabled monotone.
+
+2006-04-08  Richard Levitte  <richard@levitte.org>
+
 	* po/sv.po: A phrase was changed in command.cc...
 
 2006-04-07  Richard Levitte  <richard@levitte.org>

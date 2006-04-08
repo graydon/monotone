@@ -2721,7 +2721,22 @@ serve_connections(protocol_role role,
                 }
             }
         }
+      // This exception is thrown when bind() fails somewhere in Netxx.
       catch (Netxx::NetworkException &e)
+        {
+          // If we tried with IPv6 and failed, we want to try again using IPv4.
+          if (try_again)
+            {
+              use_ipv6 = false;
+            }
+          // In all other cases, just rethrow the exception.
+          else
+            throw;
+        }
+      // This exception is thrown when there is no support for the type of
+      // connection we want to do in the kernel, for example when a socket()
+      // call fails somewhere in Netxx.
+      catch (Netxx::Exception &e)
         {
           // If we tried with IPv6 and failed, we want to try again using IPv4.
           if (try_again)
