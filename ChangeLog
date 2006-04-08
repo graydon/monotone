@@ -1,5 +1,10 @@
 2006-04-08  Nathaniel Smith  <njs@pobox.com>
 
+	* netsync.cc, annotate.cc: Turn all ticker labels from _() to
+	N_(), to match Benoît's changes to the ticker class.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
 	* AUTHORS: Add Thomas Keller.
 
 2006-04-08  Nathaniel Smith  <njs@pobox.com>
