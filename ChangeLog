@@ -1,5 +1,10 @@
 2006-04-08  Nathaniel Smith  <njs@pobox.com>
 
+	* netxx/resolve_gethostbyname.cxx (resolve_hostname): #ifdef out
+	Win32-incompatible error reporting call.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
 	* netsync.cc, annotate.cc: Turn all ticker labels from _() to
 	N_(), to match Benoît's changes to the ticker class.
 
