@@ -80,6 +80,7 @@ void Netxx::resolve_hostname (const char *hostname, port_type port, bool use_ipv
     hostent *he; // WARNING not MT safe
     if ( (he = gethostbyname(hostname)) == 0) {
 	std::string error("name resolution failure for "); error += hostname;
+	error += ": "; error += hstrerror(h_errno);
 	throw NetworkException(error);
     }
 

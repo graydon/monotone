@@ -1,5 +1,10 @@
 2006-04-08  Richard Levitte  <richard@levitte.org>
 
+	* netxx/resolve_gethostbyname.cxx (resolve_hostname),
+	* netxx/resolve_getaddrinfo.cxx (resolve_hostname): Include the
+	error string associated with the error returned by getaddrinfo()
+	and gethostbyname() in the exception text.
+
 	* netsync.cc (serve_connections): When socket() fails in Netxx,
 	it throws a Netxx::Exception rather than a
 	Netxx::NetworkException, so we need to catch that as well.  This
