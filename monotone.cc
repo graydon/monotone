@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 
+#include <boost/filesystem/convenience.hpp>
 #include <boost/filesystem/path.hpp>
 
 #include "botan/botan.h"

@@ -1,5 +1,8 @@
 2006-04-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* monotone.cc: Oops, needed to include
+	boost/filesystem/convenience.hpp too.
+
 	* monotone.cc (cpp_main): Exclude .exe extension by using
 	fs::basename rather than path.leaf().
 
