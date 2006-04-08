@@ -4,7 +4,7 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include <config.h>
+#include "config.h"
 
 #include "popt/popt.h"
 #include <cstdio>
@@ -18,6 +18,9 @@
 #include <locale.h>
 
 #include <stdlib.h>
+
+#include <boost/filesystem/convenience.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include "botan/botan.h"
 
@@ -96,7 +99,7 @@ struct poptOption options[] =
     {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, gettext_noop("insert command line arguments taken from the given file"), NULL},
     {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, gettext_noop("set ticker style (count|dot|none)"), NULL},
     {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, gettext_noop("do not load standard lua hooks"), NULL},
-    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, gettext_noop("do not load ~/.monotone/monotonerc or MT/monotonerc lua files"), NULL},
+    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, gettext_noop("do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"), NULL},
     {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, gettext_noop("load extra rc file"), NULL},
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, gettext_noop("set key for signatures"), NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, gettext_noop("set name of database"), NULL},
@@ -257,6 +260,9 @@ cpp_main(int argc, char ** argv)
   try
   {
 
+  // set up some marked strings, so even if our logbuf overflows, we'll get
+  // this data in a crash.
+  std::string cmdline_string;
   {
     std::ostringstream cmdline_ss;
     for (int i = 0; i < argc; ++i)
@@ -265,11 +271,18 @@ cpp_main(int argc, char ** argv)
           cmdline_ss << ", ";
         cmdline_ss << "'" << argv[i] << "'";
       }
-    L(FL("command line: %s\n") % cmdline_ss.str());
+    cmdline_string = cmdline_ss.str();
   }
+  MM(cmdline_string);
+  L(FL("command line: %s\n") % cmdline_string);
 
-  L(FL("set locale: LC_ALL=%s\n")
-    % (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL)));
+  std::string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
+  MM(locale_string);
+  L(FL("set locale: LC_ALL=%s\n") % locale_string);
+
+  std::string full_version_string;
+  get_full_version(full_version_string);
+  MM(full_version_string);
 
   // Set up secure memory allocation etc
   Botan::Init::initialize();
@@ -280,7 +293,7 @@ cpp_main(int argc, char ** argv)
   save_initial_path();
   utf8_argv uv(argc, argv);
 
-  string prog_name(uv.argv[0]);
+  utf8 prog_name(fs::basename(fs::path(uv.argv[0])));
 
   // prepare for arg parsing
 
@@ -304,7 +317,7 @@ cpp_main(int argc, char ** argv)
     {
       app_state app;
 
-      app.prog_name = prog_name;
+      app.set_prog_name(prog_name);
 
       while ((opt = poptGetNextOpt(ctx())) > 0)
         {
@@ -569,9 +582,9 @@ cpp_main(int argc, char ** argv)
         }
 
       // at this point we allow a workspace (meaning search for it
-      // and if found read MT/options, but don't use the data quite
+      // and if found read _MTN/options, but don't use the data quite
       // yet, and read all the monotonercs).  Processing the data
-      // from MT/options happens later.
+      // from _MTN/options happens later.
       // Certain commands may subsequently require a workspace or fail
       // if we didn't find one at this point.
 

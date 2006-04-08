@@ -6,11 +6,11 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "config.h"
+
 #include <utility>
 #include <string>
 #include <iosfwd>
-
-#include <config.h>
 
 // the purpose of this file is to wrap things which are otherwise strings
 // in a bit of typesafety, set up enumerations and tuple-types, and

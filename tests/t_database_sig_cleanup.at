@@ -2,7 +2,7 @@
 
 AT_SETUP([database is closed on signal exit])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 # SIGTERM and SIGINT can't really be handled on Win32:
 # http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_CRT_signal.asp
@@ -15,7 +15,7 @@ NOT_ON_WIN32
 
 AT_DATA(testfile, [stuff
 ])
-AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(MTN add testfile, [], [ignore], [ignore])
 
 # a hack to make the monotone process hang around with the database locked.
 
@@ -25,7 +25,7 @@ function get_passphrase(key) sleep(1000) end
 
 
 # SIGTERM first
-AT_CHECK(MONOTONE --rcfile=wait.lua --branch=testbranch commit --message=blah-blah & echo $! > monotone_commit.pid, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=wait.lua --branch=testbranch commit --message=blah-blah & echo $! > monotone_commit.pid, [], [ignore], [ignore])
 AT_CHECK(sleep 2, [], [ignore], [ignore])
 AT_CHECK(test -f test.db-journal, [], [ignore], [ignore])
 AT_CHECK(kill -TERM `cat monotone_commit.pid`, [], [ignore], [ignore])
@@ -34,7 +34,7 @@ AT_CHECK(test -f test.db-journal, [1], [ignore], [ignore])
 
 
 # and again for SIGINT
-AT_CHECK(MONOTONE --rcfile=wait.lua --branch=testbranch commit --message=blah-blah & echo $! > monotone_commit.pid, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=wait.lua --branch=testbranch commit --message=blah-blah & echo $! > monotone_commit.pid, [], [ignore], [ignore])
 AT_CHECK(sleep 2, [], [ignore], [ignore])
 AT_CHECK(test -f test.db-journal, [], [ignore], [ignore])
 AT_CHECK(kill -INT `cat monotone_commit.pid`, [], [ignore], [ignore])
@@ -43,7 +43,7 @@ AT_CHECK(test -f test.db-journal, [1], [ignore], [ignore])
 
 
 # should be cleaned up for SIGSEGV
-AT_CHECK(MONOTONE --rcfile=wait.lua --branch=testbranch commit --message=blah-blah & echo $! > monotone_commit.pid, [], [ignore], [ignore])
+AT_CHECK(MTN --rcfile=wait.lua --branch=testbranch commit --message=blah-blah & echo $! > monotone_commit.pid, [], [ignore], [ignore])
 AT_CHECK(sleep 2, [], [ignore], [ignore])
 AT_CHECK(test -f test.db-journal, [], [ignore], [ignore])
 AT_CHECK(kill -SEGV `cat monotone_commit.pid`, [], [ignore], [ignore])

@@ -1,5 +1,5 @@
 AT_SETUP([migrate + rosterify])
-MONOTONE_SETUP
+MTN_SETUP
 NEED_UNGZB64
 
 # This test takes databases in all the old pre-roster formats, and
@@ -21,7 +21,7 @@ NEED_UNGZB64
 # We don't want the standard db, we want full control ourselves
 AT_CHECK(rm -f test.db)
 AT_CHECK(rm -r keys/)
-AT_CHECK(MONOTONE db init)
+AT_CHECK(MTN db init)
 
 # Put some random keys in, with and without corresponding private keys
 AT_DATA(migrate_keys, [@<:@pubkey njs@pobox.com@:>@
@@ -49,7 +49,7 @@ vTlEEZeNPdRtYwOz4ogqysHgZzDmbJ/AOt23u5R+O+vipNaYpv0S/vlGMJPtj2TcpgIn2ooZ
 KLqSDA8igs89M3oRnyvz
 @<:@end@:>@
 ])
-AT_CHECK(MONOTONE read < migrate_keys, [], [ignore], [ignore])
+AT_CHECK(MTN read < migrate_keys, [], [ignore], [ignore])
 
 ADD_FILE(testfile1, [f1v1
 ])
@@ -58,7 +58,7 @@ ADD_FILE(testfile2, [f2v1
 COMMIT(testbranch1)
 REV=`BASE_REVISION`
 
-AT_CHECK(MONOTONE cert $REV somekey somevalue, [], [ignore], [ignore])
+AT_CHECK(MTN cert $REV somekey somevalue, [], [ignore], [ignore])
 
 SET_FILE(testfile1, [f1v2
 ])
@@ -77,10 +77,10 @@ COMMIT(testbranch1)
 AT_DATA([old_revs_propagate_log], [propagate from branch 'testbranch2' (head c606ed519e48f526bb130fd64fef712f795f0625)
             to branch 'testbranch1' (head 04fe9ed6642b2e258162f948934726a3085e473f)
 ])
-AT_CHECK(MONOTONE propagate testbranch2 testbranch1 --message-file=old_revs_propagate_log, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN propagate testbranch2 testbranch1 --message-file=old_revs_propagate_log, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE drop testfile1, [], [ignore], [ignore])
+AT_CHECK(MTN drop testfile1, [], [ignore], [ignore])
 SET_FILE(testfile4, [f4v2
 ])
 COMMIT(testbranch3)
@@ -88,10 +88,10 @@ COMMIT(testbranch3)
 # Exception to this code being untouchable:
 # This line may have to be modified at a later date; this won't cause
 # any problem, as long as it's replaced by code with the same effect.
-AT_CHECK(MONOTONE db execute "DELETE FROM revision_certs WHERE name = 'date'", [], [ignore], [ignore])
+AT_CHECK(MTN db execute "DELETE FROM revision_certs WHERE name = 'date'", [], [ignore], [ignore])
 
 AT_CHECK(cp test.db latest.db)
-AT_CHECK(MONOTONE --db=latest.db db dump, [], [stdout], [ignore])
+AT_CHECK(MTN --db=latest.db db dump, [], [stdout], [ignore])
 AT_CHECK(cp stdout latest.db.dump)
 
 ######################################################################
@@ -102,14 +102,14 @@ AT_CHECK(cp stdout latest.db.dump)
 m4_define([CHECK_MIGRATE_FROM], [
 AT_DATA($1.db.dumped.gz.b64, $2)
 UNGZB64($1.db.dumped.gz.b64, $1.db.dumped)
-AT_CHECK(MONOTONE --db=$1.db db load < $1.db.dumped, [], [ignore], [ignore])
+AT_CHECK(MTN --db=$1.db db load < $1.db.dumped, [], [ignore], [ignore])
 # verify that the db actually has the claimed schema
-AT_CHECK(MONOTONE --db=$1.db db version, [], [stdout], [ignore])
+AT_CHECK(MTN --db=$1.db db version, [], [stdout], [ignore])
 AT_CHECK(QGREP($1 stdout))
 # now do the actual migration
-AT_CHECK(MONOTONE --db=$1.db db migrate, [], [ignore], [ignore])
+AT_CHECK(MTN --db=$1.db db migrate, [], [ignore], [ignore])
 # and the rosterify
-AT_CHECK(MONOTONE --db=$1.db db rosterify, [], [ignore], [ignore])
+AT_CHECK(MTN --db=$1.db db rosterify, [], [ignore], [ignore])
 CHECK_SAME_DB_CONTENTS($1.db, latest.db)
 ])
 

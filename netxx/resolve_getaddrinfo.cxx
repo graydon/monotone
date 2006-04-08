@@ -81,8 +81,10 @@ void Netxx::resolve_hostname (const char *hostname, port_type port, bool use_ipv
     // maintainer knows this. hmm.
     flags.ai_socktype = SOCK_STREAM;
 
-    if (getaddrinfo(hostname, 0, &flags, &info) != 0) {
+    int gai_error = getaddrinfo(hostname, 0, &flags, &info);
+    if (gai_error != 0) {
 	std::string error("name resolution failure for "); error += hostname;
+	error += ": "; error += gai_strerror(gai_error);
 	throw NetworkException(error);
     }
 

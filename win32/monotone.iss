@@ -1,6 +1,6 @@
 [Setup]
 AppName=monotone
-AppVerName=monotone 0.26pre2
+AppVerName=monotone 0.26pre3
 AppCopyright=Copyright © 2002-2006 Graydon Hoare et al.
 DefaultDirName={pf}\monotone
 DefaultGroupName=monotone
@@ -10,13 +10,13 @@ OutputBaseFileName=monotone-setup
 AllowNoIcons=1
 AppPublisher=venge.net
 AppPublisherURL=http://venge.net/monotone
-AppVersion=0.26pre2
+AppVersion=0.26pre3
 Compression=lzma/ultra
 SolidCompression=yes
 LicenseFile="..\COPYING"
 
 [Files]
-Source: "..\monotone.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\mtn.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\html\*.*"; DestDir: "{app}\documentation"; Flags: ignoreversion
 Source: "..\COPYING"; DestDir: "{app}"; Flags: ignoreversion
 Source: "\mingw\bin\libiconv-2.dll"; DestDir: "{app}"
@@ -29,8 +29,8 @@ Name: initdb\genkey; Description: "Generate a key for use with monotone"; GroupD
 Name: viewdocs; Description: "View the monotone documentation"; GroupDescription: "Get up and running"
 
 [Run]
-Filename: "{app}\monotone.exe"; Tasks: initdb; StatusMsg: "Initialising database..."; WorkingDir: "{app}"; Parameters: "--db=""{code:ForceDBPath|monotone.db}"" db init"
-Filename: "{app}\monotone.exe"; Tasks: initdb\genkey; StatusMsg: "Generating key..."; Flags: hidewizard; WorkingDir: "{app}"; Parameters: "--db=""{code:ForceDBPath|monotone.db}"" genkey {code:GetKeyID}"
+Filename: "{app}\mtn.exe"; Tasks: initdb; StatusMsg: "Initialising database..."; WorkingDir: "{app}"; Parameters: "--db=""{code:ForceDBPath|monotone.mtn}"" db init"
+Filename: "{app}\mtn.exe"; Tasks: initdb\genkey; StatusMsg: "Generating key..."; Flags: hidewizard; WorkingDir: "{app}"; Parameters: "--db=""{code:ForceDBPath|monotone.mtn}"" genkey {code:GetKeyID}"
 Filename: "{app}\documentation\index.html"; Tasks: viewdocs; Flags: shellexec nowait; WorkingDir: "{app}\documentation"
 
 [Icons]
@@ -72,7 +72,7 @@ begin
     Result := DBDidntExist;
     exit;
   end;
-  path := GetDBPath('monotone.db');
+  path := GetDBPath('monotone.mtn');
   DBDidntExist := not FileOrDirExists(path);
   DBChecked := true;
   Result := DBDidntExist;

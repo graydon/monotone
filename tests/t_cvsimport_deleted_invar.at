@@ -4,7 +4,7 @@ AT_SETUP([cvs import, deleted file invariant])
 AT_KEYWORDS(cvs)
 NEED_UNGZB64
 
-MONOTONE_SETUP
+MTN_SETUP
 
 CVSROOT=`pwd`/cvs-repository
 AT_CHECK(cvs -q -d $CVSROOT init, [0], [ignore], [ignore])
@@ -26,11 +26,11 @@ TSHA2=`SHA1(attest/cfile)`
 
 # import into monotone and check presence of files
 
-AT_CHECK(MONOTONE --branch=testbranch cvs_import $CVSROOT/attest, [], [ignore], [ignore])
+AT_CHECK(MTN --branch=testbranch cvs_import $CVSROOT/attest, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE automate get_file $TSHA0, [], [ignore])
-AT_CHECK(MONOTONE automate get_file $TSHA1, [], [ignore])
-AT_CHECK(MONOTONE automate get_file $TSHA2, [], [ignore])
+AT_CHECK(MTN automate get_file $TSHA0, [], [ignore])
+AT_CHECK(MTN automate get_file $TSHA1, [], [ignore])
+AT_CHECK(MTN automate get_file $TSHA2, [], [ignore])
 
 AT_CLEANUP
 

@@ -1,5 +1,5 @@
 AT_SETUP([automate erase_ancestors])
-MONOTONE_SETUP
+MTN_SETUP
 
 #   A
 #  / \
@@ -38,8 +38,8 @@ ADD_FILE(otherfile, [E
 COMMIT(testbranch)
 REV_E=`BASE_REVISION`
 
-AT_CHECK(MONOTONE explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN explicit_merge $REV_D $REV_E testbranch, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 REV_F=`BASE_REVISION`
 
 AT_CHECK(test $REV_F != $REV_D)
@@ -47,61 +47,61 @@ AT_CHECK(test $REV_F != $REV_E)
 
 # Now do some checks
 
-AT_CHECK(MONOTONE automate erase_ancestors c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
+AT_CHECK(MTN automate erase_ancestors c7539264e83c5d6af4c792f079b5d46e9c128665, [1], [ignore], [ignore])
 
-AT_CHECK(MONOTONE automate erase_ancestors, [], [], [ignore])
+AT_CHECK(MTN automate erase_ancestors, [], [], [ignore])
 
-AT_CHECK(MONOTONE automate erase_ancestors $REV_A, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_A, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_A)
-AT_CHECK(MONOTONE automate erase_ancestors $REV_B, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_B, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_B)
-AT_CHECK(MONOTONE automate erase_ancestors $REV_C, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_C, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_C)
-AT_CHECK(MONOTONE automate erase_ancestors $REV_D, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_D, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_D)
-AT_CHECK(MONOTONE automate erase_ancestors $REV_E, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_E, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_E)
-AT_CHECK(MONOTONE automate erase_ancestors $REV_F, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_F, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_F)
 
 
-AT_CHECK(MONOTONE automate erase_ancestors $REV_A $REV_B, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_A $REV_B, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_B)
-AT_CHECK(MONOTONE automate erase_ancestors $REV_A $REV_C, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_A $REV_C, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_C)
-AT_CHECK(MONOTONE automate erase_ancestors $REV_A $REV_F, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_A $REV_F, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, echo $REV_F)
 
 AT_CHECK(echo $REV_B > b_c)
 AT_CHECK(echo $REV_C >> b_c)
-AT_CHECK(MONOTONE automate erase_ancestors $REV_B $REV_C, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_B $REV_C, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, sort < b_c)
 
 AT_CHECK(echo $REV_B > a_b_c)
 AT_CHECK(echo $REV_C >> a_b_c)
-AT_CHECK(MONOTONE automate erase_ancestors $REV_A $REV_B $REV_C, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_A $REV_B $REV_C, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, sort < a_b_c)
 
 AT_CHECK(echo $REV_B > b_f)
 AT_CHECK(echo $REV_F >> b_f)
-AT_CHECK(MONOTONE automate erase_ancestors $REV_B $REV_F, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_B $REV_F, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, sort < b_f)
 
 AT_CHECK(echo $REV_B > a_b_f)
 AT_CHECK(echo $REV_F >> a_b_f)
-AT_CHECK(MONOTONE automate erase_ancestors $REV_A $REV_B $REV_F, [], [stdout], [ignore])
+AT_CHECK(MTN automate erase_ancestors $REV_A $REV_B $REV_F, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 CHECK_SAME_STDOUT(cat stdout, sort < a_b_f)
 

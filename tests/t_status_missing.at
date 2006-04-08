@@ -1,5 +1,5 @@
 AT_SETUP([status with missing files])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(testfile1, [foo
 ])
@@ -17,7 +17,7 @@ AT_CHECK(rm -f testfile2)
 # status should list all missing files before failing 
 # if/when there are missing files
 
-AT_CHECK(MONOTONE status, [1], [ignore], [stderr])
+AT_CHECK(MTN status, [1], [ignore], [stderr])
 AT_CHECK(grep testfile1 stderr, [], [ignore], [ignore])
 AT_CHECK(grep testfile2 stderr, [], [ignore], [ignore])
 

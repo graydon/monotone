@@ -1,6 +1,6 @@
 AT_SETUP([merge(<>, <add a, drop a, add a>)])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(v1, [foo blah
 ])
@@ -13,15 +13,15 @@ COMMIT(testbranch)
 BASE_R_SHA=`BASE_REVISION`
 
 AT_CHECK(cp v1 testfile)
-AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(MTN add testfile, [], [ignore], [ignore])
 COMMIT(testbranch)
 
 AT_CHECK(rm -f testfile)
-AT_CHECK(MONOTONE drop testfile, [], [ignore], [ignore])
+AT_CHECK(MTN drop testfile, [], [ignore], [ignore])
 COMMIT(testbranch)
 
 AT_CHECK(cp v2 testfile)
-AT_CHECK(MONOTONE add testfile, [], [ignore], [ignore])
+AT_CHECK(MTN add testfile, [], [ignore], [ignore])
 COMMIT(testbranch)
 
 REVERT_TO($BASE_R_SHA)
@@ -30,8 +30,8 @@ ADD_FILE(otherfile, [this space for rent
 ])
 COMMIT(testbranch)
 
-AT_CHECK(MONOTONE merge, [], [ignore], [ignore])
-AT_CHECK(MONOTONE update, [], [ignore], [ignore])
+AT_CHECK(MTN merge, [], [ignore], [ignore])
+AT_CHECK(MTN update, [], [ignore], [ignore])
 AT_CHECK(cmp testfile v2, [], [ignore])
 
 AT_CLEANUP

@@ -25,7 +25,8 @@ struct ticker
   size_t total;
   bool kilocount;
   bool use_total;
-  std::string name;
+  std::string keyname;
+  std::string name; // translated name
   std::string shortname;
   ticker(std::string const & n, std::string const & s, size_t mod = 64, 
       bool kilocount=false);
@@ -92,6 +93,9 @@ public:
   void ensure_clean_line();
   void redirect_log_to(system_path const & filename);
 
+  void set_prog_name(std::string const & name);
+  std::string output_prefix();
+
 private:  
   std::set<std::string> issued_warnings;  
 
@@ -102,6 +106,8 @@ private:
   void finish_ticking();
   void write_ticks();
   std::string tick_trailer;
+
+  std::string prog_name;
 
   friend struct tick_write_dot;
   friend struct tick_write_count;

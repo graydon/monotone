@@ -995,6 +995,20 @@ invalid_csets_test()
     BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
   }
   {
+    L(FL("TEST: can't add on top of root dir"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.dirs_added.insert(root);
+    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+  }
+  {
+    L(FL("TEST: can't rename on top of root dir"));
+    setup_roster(r, f1, nis);
+    cset cs; MM(cs);
+    cs.nodes_renamed.insert(std::make_pair(foo, root));
+    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+  }
+  {
     L(FL("TEST: can't rename 'a' 'a'"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);

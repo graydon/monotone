@@ -1,5 +1,5 @@
 AT_SETUP([diff respects restrictions])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(file1, [1: data 1
 ])
@@ -20,19 +20,19 @@ AT_DATA(file1, [1: data 3
 AT_DATA(file2, [2: data 3
 ])
 
-AT_CHECK(MONOTONE diff file1, [], [stdout], [ignore])
+AT_CHECK(MTN diff file1, [], [stdout], [ignore])
 AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
 AT_CHECK(QGREP(file2 stdout), [1], [ignore], [ignore])
 
-AT_CHECK(MONOTONE diff --revision=$REV0 file1, [], [stdout], [ignore])
+AT_CHECK(MTN diff --revision=$REV0 file1, [], [stdout], [ignore])
 AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
 AT_CHECK(QGREP(file2 stdout), [1], [ignore], [ignore])
 
-AT_CHECK(MONOTONE diff --revision=$REV0 --revision=$REV1 file1, [], [stdout], [ignore])
+AT_CHECK(MTN diff --revision=$REV0 --revision=$REV1 file1, [], [stdout], [ignore])
 AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
 AT_CHECK(QGREP(file2 stdout), [1], [ignore], [ignore])
 
-AT_CHECK(MONOTONE diff --revision=$REV1 --revision=$REV0 file1, [], [stdout], [ignore])
+AT_CHECK(MTN diff --revision=$REV1 --revision=$REV0 file1, [], [stdout], [ignore])
 AT_CHECK(grep file1 stdout, [], [ignore], [ignore])
 AT_CHECK(QGREP(file2 stdout), [1], [ignore], [ignore])
 

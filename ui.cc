@@ -9,6 +9,7 @@
 // writing to it directly!
 
 #include "config.h"
+
 #include "platform.hh"
 #include "sanity.hh"
 #include "ui.hh"
@@ -32,28 +33,29 @@ ticker::ticker(string const & tickname, std::string const & s, size_t mod,
   total(0),
   kilocount(kilocount),
   use_total(false),
-  name(tickname),
+  keyname(tickname),
+  name(_(tickname.c_str())),
   shortname(s)
 {
-  I(ui.tickers.find(tickname) == ui.tickers.end());
-  ui.tickers.insert(make_pair(tickname,this));
+  I(ui.tickers.find(keyname) == ui.tickers.end());
+  ui.tickers.insert(make_pair(keyname, this));
 }
 
 ticker::~ticker()
 {
-  I(ui.tickers.find(name) != ui.tickers.end());
+  I(ui.tickers.find(keyname) != ui.tickers.end());
   if (ui.some_tick_is_dirty)
     {
       ui.write_ticks();
     }
-  ui.tickers.erase(name);
+  ui.tickers.erase(keyname);
   ui.finish_ticking();
 }
 
 void 
 ticker::operator++()
 {
-  I(ui.tickers.find(name) != ui.tickers.end());
+  I(ui.tickers.find(keyname) != ui.tickers.end());
   ticks++;
   ui.some_tick_is_dirty = true;
   if (ticks % mod == 0)
@@ -63,7 +65,7 @@ ticker::operator++()
 void 
 ticker::operator+=(size_t t)
 {
-  I(ui.tickers.find(name) != ui.tickers.end());
+  I(ui.tickers.find(keyname) != ui.tickers.end());
   size_t old = ticks;
 
   ticks += t;
@@ -169,7 +171,7 @@ void tick_write_count::write_ticks()
   if (write_tickline1)
     {
       // Reissue the titles if the widths have changed.
-      tickline1 = "monotone: ";
+      tickline1 = ui.output_prefix();
       for (size_t i = 0; i < tick_widths.size(); ++i)
         {
           if (i != 0)
@@ -181,7 +183,7 @@ void tick_write_count::write_ticks()
     }
 
   // Always reissue the counts.
-  string tickline2 = "monotone: ";
+  string tickline2 = ui.output_prefix();
   for (size_t i = 0; i < tick_widths.size(); ++i)
     {
       if (i != 0)
@@ -240,7 +242,7 @@ tick_write_dot::~tick_write_dot()
 
 void tick_write_dot::write_ticks()
 {
-  static const string tickline_prefix = "monotone: ";
+  static const string tickline_prefix = ui.output_prefix();
   string tickline1, tickline2;
   bool first_tick = true;
 
@@ -251,7 +253,7 @@ void tick_write_dot::write_ticks()
     }
   else
     {
-      tickline1 = "monotone: ticks: ";
+      tickline1 = ui.output_prefix() + "ticks: ";
       tickline2 = "\n" + tickline_prefix;
       chars_on_line = tickline_prefix.size();
     }
@@ -368,11 +370,26 @@ user_interface::fatal(string const & fatal)
 {
   inform(F("fatal: %s\n"
            "this is almost certainly a bug in monotone.\n"
-           "please send this error message, the output of 'monotone --full-version',\n"
+           "please send this error message, the output of '%s --full-version',\n"
            "and a description of what you were doing to %s.\n")
-         % fatal % PACKAGE_BUGREPORT);
+         % fatal % prog_name % PACKAGE_BUGREPORT);
 }
 
+void
+user_interface::set_prog_name(std::string const & name)
+{
+  prog_name = name;
+  I(!prog_name.empty());
+}
+
+std::string
+user_interface::output_prefix()
+{
+  if (prog_name.empty()) {
+    return "?: ";
+  }
+  return prog_name + ": ";
+}
 
 static inline string 
 sanitize(string const & line)
@@ -411,7 +428,7 @@ user_interface::redirect_log_to(system_path const & filename)
   static ofstream filestr;
   if (filestr.is_open())
     filestr.close();
-  filestr.open(filename.as_external().c_str());
+  filestr.open(filename.as_external().c_str(), ofstream::out | ofstream::app);
   clog.rdbuf(filestr.rdbuf());
 }
 
@@ -419,7 +436,7 @@ void
 user_interface::inform(string const & line)
 {
   string prefixedLine;
-  prefix_lines_with(_("monotone: "), line, prefixedLine);
+  prefix_lines_with(output_prefix(), line, prefixedLine);
   ensure_clean_line();
   clog << sanitize(prefixedLine) << endl;
   clog.flush();

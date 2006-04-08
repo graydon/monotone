@@ -2,7 +2,7 @@
 
 AT_SETUP([add and then drop file does nothing])
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(maude, [the file maude
 ])
@@ -10,14 +10,14 @@ AT_DATA(maude, [the file maude
 AT_DATA(liver, [the file liver
 ])
 
-AT_CHECK(MONOTONE add maude, [], [ignore], [ignore])
-AT_CHECK(MONOTONE drop maude, [], [ignore], [ignore])
-AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(MTN add maude, [], [ignore], [ignore])
+AT_CHECK(MTN drop maude, [], [ignore], [ignore])
+AT_CHECK(MTN status, [], [stdout])
 AT_CHECK(grep -v '_file' stdout, [], [ignore])
 
-AT_CHECK(MONOTONE add liver, [], [ignore], [ignore])
-AT_CHECK(MONOTONE drop liver, [], [ignore], [ignore])
-AT_CHECK(MONOTONE status, [], [stdout])
+AT_CHECK(MTN add liver, [], [ignore], [ignore])
+AT_CHECK(MTN drop liver, [], [ignore], [ignore])
+AT_CHECK(MTN status, [], [stdout])
 AT_CHECK(grep -v '_file' stdout, [], [ignore])
 
 AT_CLEANUP

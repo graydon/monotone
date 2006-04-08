@@ -151,10 +151,10 @@ associated with it.  If --message is provided on the command line, it
 is used; if --message-file is provided, the content of the
 named file will be used as a commit message. If the filename is '-'
 the commit message will be read from standard input.  Otherwise a log
-message editor will be invoked.  If the file MT/log exists
+message editor will be invoked.  If the file _MTN/log exists
 and is non-empty, its content is used to prefill the editor.  You
 cannot specify both --message and --message-file at the same time, and
-if MT/log exists and is non-empty, you can cannot specify either of them
+if _MTN/log exists and is non-empty, you can cannot specify either of them
 at all.
 .TP
 \fBupdate\fP  \fI[revision-id]\fP
@@ -172,7 +172,7 @@ Push contents of \fI<glob>\fP from database on \fI<host>\fP.
 \fBsync\fP \fI<host> <glob>\fP 
 Sync contents of \fI<glob>\fP with database on \fI<host>\fP.
 .TP
-\fBserve\fP \fI[--pid-file=<path>] <host>[:<port> <glob>\fP 
+\fBserve\fP \fI[--pid-file=<path>] [--bind=[<host>][:<port>]] <glob> [--exclude=<exclude-glob>]\fP 
 Serve contents of \fI<glob>\fP at network address \fI<host>\fP, on the
 port \fI<port>\fP.  If \fI<port>\fP isn't given, 4691 is used. If a
 --pid-file option is provided on the command line, monotone will store
@@ -291,7 +291,7 @@ committing a new revision, rather than the current time.  Useful when
 importing history from another version control system.
 .TP
 \fB--root=\fI<root dir>\fP
-Stop the search for a workspace (containing the @file{MT} directory)
+Stop the search for a workspace (containing the _MTN directory)
 at the specified root directory rather than at the physical root of the
 filesystem.
 .TP

@@ -1,5 +1,5 @@
 AT_SETUP([db kill_tag_locally])
-MONOTONE_SETUP
+MTN_SETUP
 
 ADD_FILE(testfile, [blah blah
 ])
@@ -21,12 +21,12 @@ SET_FILE(testfile, [baz baz
 COMMIT(testbranch)
 R4=`BASE_REVISION`
 
-AT_CHECK(MONOTONE tag $R1 ambig_tag, [], [ignore], [ignore])
-AT_CHECK(MONOTONE tag $R2 ambig_tag, [], [ignore], [ignore])
-AT_CHECK(MONOTONE tag $R3 test_tag, [], [ignore], [ignore])
-AT_CHECK(MONOTONE tag $R4 other_tag, [], [ignore], [ignore])
+AT_CHECK(MTN tag $R1 ambig_tag, [], [ignore], [ignore])
+AT_CHECK(MTN tag $R2 ambig_tag, [], [ignore], [ignore])
+AT_CHECK(MTN tag $R3 test_tag, [], [ignore], [ignore])
+AT_CHECK(MTN tag $R4 other_tag, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE ls tags, [], [stdout], [ignore])
+AT_CHECK(MTN ls tags, [], [stdout], [ignore])
 AT_CHECK(QGREP($R1 stdout), [])
 AT_CHECK(QGREP(ambig_tag stdout), [])
 AT_CHECK(QGREP($R2 stdout), [])
@@ -36,9 +36,9 @@ AT_CHECK(QGREP(test_tag stdout), [])
 AT_CHECK(QGREP($R4 stdout), [])
 AT_CHECK(QGREP(other_tag stdout), [])
 
-AT_CHECK(MONOTONE db kill_tag_locally test_tag, [], [ignore], [ignore])
+AT_CHECK(MTN db kill_tag_locally test_tag, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE ls tags, [], [stdout], [ignore])
+AT_CHECK(MTN ls tags, [], [stdout], [ignore])
 AT_CHECK(QGREP($R1 stdout), [])
 AT_CHECK(QGREP(ambig_tag stdout), [])
 AT_CHECK(QGREP($R2 stdout), [])
@@ -48,9 +48,9 @@ AT_CHECK(QGREP(test_tag stdout), [1])
 AT_CHECK(QGREP($R4 stdout), [])
 AT_CHECK(QGREP(other_tag stdout), [])
 
-AT_CHECK(MONOTONE db kill_tag_locally ambig_tag, [], [ignore], [ignore])
+AT_CHECK(MTN db kill_tag_locally ambig_tag, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE ls tags, [], [stdout], [ignore])
+AT_CHECK(MTN ls tags, [], [stdout], [ignore])
 AT_CHECK(QGREP($R1 stdout), [1])
 AT_CHECK(QGREP(ambig_tag stdout), [1])
 AT_CHECK(QGREP($R2 stdout), [1])

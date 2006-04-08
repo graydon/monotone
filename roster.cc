@@ -606,6 +606,7 @@ roster_t::detach_node(split_path const & pth)
                   make_pair(root_id, make_pair(root_dir->parent, root_dir->name)));
       // clear ("reset") the root_dir shared_pointer
       root_dir.reset();
+      I(!has_root());
       return root_id;
     }
 
@@ -712,6 +713,7 @@ roster_t::attach_node(node_id nid, node_id parent, path_component name)
       I(null_node(parent) && null_name(name));
       I(null_node(n->parent));
       I(null_name(n->name));
+      I(!has_root());
       root_dir = downcast_to_dir_t(n);
       I(i == old_locations.end() || i->second != make_pair(root_dir->parent,
                                                            root_dir->name));
@@ -1025,6 +1027,19 @@ namespace
         if (temp_node(bid))
           {
             node_id new_nid = nis.next();
+            // the node_id_source provided to this function must only generate
+            // true node ids, because this code was written with the
+            // assumption that only true nids would come in or go out, and
+            // temp ids are used as an intermediate stage to indicate nodes
+            // that need true ids installed.
+            // FIXME: make everything work correctly when this node_id_source
+            // returns temp ids.  This is needed for workspace merge support.
+            // FIXME: having done this, add a test in database_check.cc that
+            // for each revision, generates that rev's roster from scratch,
+            // and compares it to the one stored in the db.  (Do the
+            // comparison using something like equal_up_to_renumbering, except
+            // should say if (!temp_node(a) && !temp_node(b)) I(a == b).)
+            I(!temp_node(new_nid));
             a.replace_node_id(aid, new_nid);
             b.replace_node_id(bid, new_nid);
             b_new.erase(bid);

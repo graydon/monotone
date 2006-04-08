@@ -8,6 +8,7 @@
 #include <boost/filesystem/convenience.hpp>
 #include <boost/filesystem/exception.hpp>
 
+#include "ui.hh"
 #include "app_state.hh"
 #include "database.hh"
 #include "file_io.hh"
@@ -36,12 +37,12 @@ app_state::app_state()
     depth(-1), last(-1), next(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false), bind_address(""), bind_port(""), 
     missing(false), unknown(false),
-    confdir(get_default_confdir()), have_set_key_dir(false), no_files(false),
-    prog_name("monotone")
+    confdir(get_default_confdir()), have_set_key_dir(false), no_files(false)
 {
   db.set_app(this);
   lua.set_app(this);
   keys.set_key_dir(confdir / "keys");
+  set_prog_name(utf8(std::string("mtn")));
 }
 
 app_state::~app_state()
@@ -80,8 +81,8 @@ app_state::allow_workspace()
           get_local_dump_path(dump_path);
           L(FL("setting dump path to %s\n") % dump_path);
           // the 'true' means that, e.g., if we're running checkout, then it's
-          // okay for dumps to go into our starting working dir's MT rather
-          // than the new workspace dir's MT.
+          // okay for dumps to go into our starting working dir's _MTN rather
+          // than the new workspace dir's _MTN.
           global_sanity.filename = system_path(dump_path, false);
         }
     }
@@ -94,14 +95,14 @@ app_state::process_options()
   if (found_workspace) {
     if (!options[database_option]().empty())
       {
-	system_path dbname = system_path(options[database_option]);
-	db.set_filename(dbname);
+        system_path dbname = system_path(options[database_option]);
+        db.set_filename(dbname);
       }
 
     if (!options[keydir_option]().empty())
       {
-	system_path keydir = system_path(options[keydir_option]);
-	set_key_dir(keydir);
+        system_path keydir = system_path(options[keydir_option]);
+        set_key_dir(keydir);
       }
 
     if (branch_name().empty() && !options[branch_option]().empty())
@@ -407,7 +408,7 @@ void
 app_state::set_last(long l)
 {
   N(l > 0,
-    F("negative or zero last not allowed\n"));
+    F("illegal argument to --last: cannot be zero or negative\n"));
   last = l;
 }
 
@@ -415,7 +416,7 @@ void
 app_state::set_next(long l)
 {
   N(l > 0,
-    F("negative or zero next not allowed\n"));
+    F("illegal argument to --next: cannot be zero or negative\n"));
   next = l;
 }
 
@@ -475,6 +476,13 @@ app_state::set_recursive(bool r)
 }
 
 void
+app_state::set_prog_name(utf8 const & name)
+{
+  prog_name = name;
+  ui.set_prog_name(name());
+}
+
+void
 app_state::add_rcfile(utf8 const & filename)
 {
   extra_rcfiles.push_back(filename);
@@ -495,7 +503,7 @@ app_state::get_confdir()
 }
 
 // rc files are loaded after we've changed to the workspace so that
-// MT/monotonerc can be loaded between ~/.monotone/monotonerc and other
+// _MTN/monotonerc can be loaded between ~/.monotone/monotonerc and other
 // rcfiles
 
 void
@@ -507,7 +515,7 @@ app_state::load_rcfiles()
     lua.add_std_hooks();
 
   // ~/.monotone/monotonerc overrides that, and
-  // MT/monotonerc overrides *that*
+  // _MTN/monotonerc overrides *that*
 
   if (rcfiles)
     {

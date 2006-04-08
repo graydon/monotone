@@ -26,7 +26,7 @@ Creating tests:
 Template for a test (name tests/t_<testname>.at:
 ------------------------------------------------
 AT_SETUP([brief test description goes here])
-MONOTONE_SETUP
+MTN_SETUP
 
 #the next lines (including AT_XFAIL_IF) state that the test is
 #expected to fail as this is still a bug. Remove if it should pass!
@@ -41,7 +41,7 @@ AT_XFAIL_IF(true)
 #see autoconf tutorials
 #e.g. http://www.gnu.org/software/autoconf/manual/autoconf-2.57/
 #     html_node/autoconf_167.html for further information.
-AT_CHECK(MONOTONE import foo, [], ignore, ignore)
+AT_CHECK(MTN import foo, [], ignore, ignore)
 ...
 ...
 ...

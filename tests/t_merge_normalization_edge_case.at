@@ -7,7 +7,7 @@ fi
 
 NEED_UNGZB64
 
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_DATA(parent.gz.b64, [H4sICK2WEUIAA3AA3Vr/b9u4Ff85/it4wgWVGttNk1vXtQi2ItcbCvS6oe26DWlq0BZt8yKR
 GknZDg7r3773SEqi5C9x3Ba7zU1tieT79uHje4+UeoMBMXOuCfyZOSPaUJFSlRLNDJFTkpWU
@@ -177,11 +177,11 @@ AT_CHECK(test $PVER = $PARENT)
 AT_CHECK(test $LVER = $LEFT)
 AT_CHECK(test $RVER = $RIGHT)
 
-AT_CHECK(MONOTONE fload <parent, [], [ignore], [ignore])
-AT_CHECK(MONOTONE fload <left, [], [ignore], [ignore])
-AT_CHECK(MONOTONE fload <right, [], [ignore], [ignore])
+AT_CHECK(MTN fload <parent, [], [ignore], [ignore])
+AT_CHECK(MTN fload <left, [], [ignore], [ignore])
+AT_CHECK(MTN fload <right, [], [ignore], [ignore])
 
-AT_CHECK(MONOTONE fmerge $PARENT $LEFT $RIGHT, [], [stdout], [ignore])
+AT_CHECK(MTN fmerge $PARENT $LEFT $RIGHT, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(mv stdout merge.monotone, [], [ignore], [ignore])
 

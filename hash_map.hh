@@ -1,7 +1,7 @@
 #ifndef __HASHMAP_HH
 #define __HASHMAP_HH
 
-#include <config.h>
+#include "config.h"
 
 #ifdef HAVE_GNUCXX_HASHMAP
 #define HASHMAP_PRESENT

@@ -33,13 +33,13 @@
 ;; This mode was written and tested with GNU Emacs 21.3.50.1
 
 ;; FIXME: handle aborts better and kill monotone.
-;; FIXME: given an id, suck out the file with "monotone cat"
+;; FIXME: given an id, suck out the file with "mtn cat"
 ;; FIXME: handle diff --revision XXX path/to/file
 
 ;;; User vars:
 ;; These vars are likley to be changed by the user.
 
-(defvar monotone-program "monotone"
+(defvar monotone-program "mtn"
   "*The path to the monotone program.")
 
 (defvar monotone-passwd-remember nil
@@ -108,15 +108,15 @@ This is used for defaults.")
 (defvar monotone-wait-time 5
   "Time to wait for monotone to produce output.")
 
-(defvar monotone-MT-top nil
-  "The directory which contains the MT directory.
+(defvar monotone-_MTN-top nil
+  "The directory which contains the _MTN directory.
 This is used to pass state -- best be left nil.")
 
 (defvar monotone-log-depth 100
   "The depth to limit output of 'monotone log' entries.
 Zero is unlimited.")
 
-(defvar monotone-MT-revision nil
+(defvar monotone-_MTN-revision nil
   "")
 
 ;;; monotone-commit-mode is used when editing the commit message.
@@ -146,11 +146,11 @@ Zero is unlimited.")
 
 (defvar monotone-commit-instructions
   "--------------------------------------------------
-Enter Log.  Lines beginning with 'MT:' are removed automatically.
+Enter Log.  Lines beginning with 'MTN:' are removed automatically.
 Type C-c C-c to commit, kill the buffer to abort.
 --------------------------------------------------"
   "Instructional text to insert into the commit buffer.
-'MT: ' is added when inserted.")
+'MTN: ' is added when inserted.")
 
 (defvar monotone-commit-mode-hook nil
   "*The hook for function `monotone-commit-mode'.")
@@ -212,21 +212,21 @@ This permits quick switches between the classic vc and monotone keymaps."
   "Return the parent directory of FILE."
   (file-name-directory (directory-file-name file)))
 
-(defun monotone-MT-revision ()
-  "The current revision as read from 'MT/revision'."
-  (let ((dir (monotone-find-MT-top)))
+(defun monotone-_MTN-revision ()
+  "The current revision as read from '_MTN/revision'."
+  (let ((dir (monotone-find-_MTN-top)))
     (when (not dir)
-      (error "No MT top directory."))
-    (let ((file (concat dir "/MT/revision")))
+      (error "No _MTN top directory."))
+    (let ((file (concat dir "/_MTN/revision")))
       (with-temp-buffer
         (insert-file-contents-literally file nil)
-        (setq monotone-MT-revision (buffer-substring 1 41)))
-      monotone-MT-revision)))
-;; (monotone-MT-revision)      
+        (setq monotone-_MTN-revision (buffer-substring 1 41)))
+      monotone-_MTN-revision)))
+;; (monotone-_MTN-revision)      
 
 
-(defun monotone-find-MT-top (&optional path)
-  "Find the directory which contains the 'MT' directory.
+(defun monotone-find-_MTN-top (&optional path)
+  "Find the directory which contains the '_MTN' directory.
 Optional argument PATH ."
   (setq path (or path buffer-file-name default-directory))
   (when (null path)
@@ -236,32 +236,32 @@ Optional argument PATH ."
   (catch 'found
     (let ((prev-path nil))
       (while (not (equal path prev-path))
-        (let ((mt-dir (concat path "MT")))
-          ;;(message "Search: %s" mt-dir)
-          (when (file-directory-p mt-dir)
+        (let ((mtn-dir (concat path "_MTN")))
+          ;;(message "Search: %s" mtn-dir)
+          (when (file-directory-p mtn-dir)
             (throw 'found path))
           (setq prev-path path
                 path (monotone-file-parent-directory path)))))))
-;;(monotone-find-MT-top "/disk/amelie1/harley/monotone-dev/contrib/monotone.el")
+;;(monotone-find-_MTN-top "/disk/amelie1/harley/monotone-dev/contrib/monotone.el")
 
-(defun monotone-extract-MT-path (path &optional mt-top)
-  "Get the PATH minus the MT-TOP."
+(defun monotone-extract-_MTN-path (path &optional mtn-top)
+  "Get the PATH minus the _MTN-TOP."
   ;; cast and check
   (when (bufferp path)
     (setq path (buffer-file-name path)))
   (when (not (stringp path))
     (error "path is not a string."))
-  (let ((mt-top (or mt-top monotone-MT-top (monotone-find-MT-top path))))
+  (let ((mtn-top (or mtn-top monotone-_MTN-top (monotone-find-_MTN-top path))))
     ;; work with full names
     (setq path (expand-file-name path)
-          mt-top (expand-file-name mt-top))
-    (if (not mt-top)
+          mtn-top (expand-file-name mtn-top))
+    (if (not mtn-top)
       nil
-      (substring path (length mt-top)))))
+      (substring path (length mtn-top)))))
 
-;; (monotone-extract-MT-path "/disk/amelie1/harley/monotone-dev/contrib/monotone.el")
-;; (monotone-find-MT-dir "/disk/amelie1/harley")
-;; (monotone-extract-MT-path (current-buffer))
+;; (monotone-extract-_MTN-path "/disk/amelie1/harley/monotone-dev/contrib/monotone.el")
+;; (monotone-find-_MTN-dir "/disk/amelie1/harley")
+;; (monotone-extract-_MTN-path (current-buffer))
 
 (defun monotone-output-mode ()
   "In the future this will provide some fontification.
@@ -296,38 +296,38 @@ Nothing for now."
   (when (not (listp args))
     (setq args (list args)))
   ;;
-  (let ((mt-top (or monotone-MT-top (monotone-find-MT-top)))
-        (mt-buf (get-buffer-create monotone-buffer))
-        ;;(mt-pgm "ls") ;; easy debugging
-        (mt-pgm monotone-program)
-        monotone-MT-top
-        mt-cmd mt-status)
+  (let ((mtn-top (or monotone-_MTN-top (monotone-find-_MTN-top)))
+        (mtn-buf (get-buffer-create monotone-buffer))
+        ;;(mtn-pgm "ls") ;; easy debugging
+        (mtn-pgm monotone-program)
+        monotone-_MTN-top
+        mtn-cmd mtn-status)
     ;; where to run
-    (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
-      (setq mt-top (monotone-find-MT-top))
-      (when (or (not (stringp mt-top)) (not (file-directory-p mt-top)))
-        (error "Unable to find the MT top directory")))
-    (setq monotone-MT-top mt-top)
+    (when (or (not (stringp mtn-top)) (not (file-directory-p mtn-top)))
+      (setq mtn-top (monotone-find-_MTN-top))
+      (when (or (not (stringp mtn-top)) (not (file-directory-p mtn-top)))
+        (error "Unable to find the _MTN top directory")))
+    (setq monotone-_MTN-top mtn-top)
     ;; show buffer in a window 
     (when monotone-cmd-show
-      (pop-to-buffer mt-buf)
+      (pop-to-buffer mtn-buf)
       (sit-for 0))
-    (set-buffer mt-buf)
+    (set-buffer mtn-buf)
     ;; still going?
-    (when (get-buffer-process mt-buf)
+    (when (get-buffer-process mtn-buf)
       (error "Monotone is currently running"))
     ;; prep the buffer for output
     (toggle-read-only -1)
     (erase-buffer)
     ;;(buffer-disable-undo (current-buffer))
-    (setq default-directory mt-top)
+    (setq default-directory mtn-top)
     ;; remeber the args
     (setq monotone-cmd-last-args args)
     ;;
     (when monotone-program-args-always
       (setq args (append monotone-program-args-always args)))
     ;; run
-    (let ((p (apply #'start-process monotone-buffer mt-buf mt-pgm args)))
+    (let ((p (apply #'start-process monotone-buffer mtn-buf mtn-pgm args)))
       ;; dont dirty the output
       (set-process-sentinel p #'monotone-process-sentinel)
       (while (eq (process-status p) 'run)
@@ -345,19 +345,19 @@ Nothing for now."
               ;;(insert "********\n") ;; filler text
               (process-send-string p pass)
               (process-send-string p "\n"))))
-        (setq mt-status (process-exit-status p)))
+        (setq mtn-status (process-exit-status p)))
       ;; make the buffer nice.
       (goto-char (point-min))
       (view-mode)
       (set-buffer-modified-p nil)
       ;; did we part on good terms?
-      (when (and mt-status (not (zerop mt-status)))
-        (message "%s: exited with status %s" mt-pgm mt-status)
+      (when (and mtn-status (not (zerop mtn-status)))
+        (message "%s: exited with status %s" mtn-pgm mtn-status)
         (beep)
         (sit-for 3))
       ;; this seems to be needed for the sentinel to catch up.
       (sit-for 1)
-      mt-status)))
+      mtn-status)))
 
 ;; (monotone-cmd '("list" "branches"))
 ;; (monotone-cmd '("list" "keys"))
@@ -497,10 +497,10 @@ With ARG of 0, clear default server and collection."
   (save-some-buffers)
   ;;
   (let ((buf (get-buffer-create monotone-commit-buffer))
-        (monotone-MT-top (monotone-find-MT-top)))
-    ;; found MT?
-    (when (not monotone-MT-top)
-      (error "Cant find MT directory"))
+        (monotone-_MTN-top (monotone-find-_MTN-top)))
+    ;; found _MTN?
+    (when (not monotone-_MTN-top)
+      (error "Cant find _MTN directory"))
     ;; show it
     (when (not (equal (current-buffer) buf))
       (switch-to-buffer-other-window buf))
@@ -511,17 +511,17 @@ With ARG of 0, clear default server and collection."
       (message "Continuing commit message already started."))
     (when (or (null monotone-commit-edit-status) (eq monotone-commit-edit-status 'done))
       (erase-buffer)
-      (setq default-directory monotone-MT-top)
-      (let ((mt-log-path (concat monotone-MT-top "MT/log")))
-        (when (file-readable-p mt-log-path)
-          (insert-file mt-log-path)))
+      (setq default-directory monotone-_MTN-top)
+      (let ((mtn-log-path (concat monotone-_MTN-top "_MTN/log")))
+        (when (file-readable-p mtn-log-path)
+          (insert-file mtn-log-path)))
       ;; blank line for user to type
       (goto-char (point-min))
       (insert "\n")
       (goto-char (point-min))
       (monotone-commit-mode))
-    ;; update the "MT:" lines by replacing them.
-    (monotone-remove-MT-lines)
+    ;; update the "MTN:" lines by replacing them.
+    (monotone-remove-MTN-lines)
     (end-of-buffer)
     (when (not (looking-at "^"))
       (insert "\n"))
@@ -539,10 +539,10 @@ With ARG of 0, clear default server and collection."
       ;; FIXME: handle args -- this is doing a global status
       (monotone-cmd-hide "status")
       (insert-buffer-substring monotone-buffer)
-      ;; insert "MT: " prefix
+      ;; insert "MTN: " prefix
       (goto-char eo-message)
       (while (search-forward-regexp "^" (point-max) t)
-        (insert "MT: ")))
+        (insert "MTN: ")))
     ;; ready for edit -- put this last avoid being cleared on mode switch.
     (goto-char (point-min))
     (setq monotone-commit-edit-status 'started
@@ -567,7 +567,7 @@ With ARG of 0, clear default server and collection."
   (interactive)
   (when (not (eq monotone-commit-edit-status 'started))
     (error "The commit in this buffer is '%s'" monotone-commit-edit-status))
-  (monotone-remove-MT-lines)
+  (monotone-remove-_MTN-lines)
   (let ((buf (current-buffer))
         (message (buffer-substring-no-properties (point-min) (point-max)))
         (mca     monotone-commit-args) ;; copy of buffer-local-var
@@ -582,7 +582,7 @@ With ARG of 0, clear default server and collection."
      ((equal mca 'tree)
       (error "Monotone tree scope sucks for commit!"))
      ((stringp mca) ;; file
-      (setq args (append args (list (monotone-extract-MT-path mca))))
+      (setq args (append args (list (monotone-extract-_MTN-path mca))))
       (monotone-cmd args))
      (t
       (error "unknown monotone-commit-args")))
@@ -590,11 +590,11 @@ With ARG of 0, clear default server and collection."
     (set-buffer buf)
     (setq monotone-commit-edit-status 'done)))
 
-(defun monotone-remove-MT-lines ()
-  "Remove lines starting with 'MT:' from the buffer."
+(defun monotone-remove-MTN-lines ()
+  "Remove lines starting with 'MTN:' from the buffer."
   ;; doesnt need to be (interactive)
   (goto-char (point-min))
-  (while (search-forward-regexp "^MT:.*$" (point-max) t)
+  (while (search-forward-regexp "^MTN:.*$" (point-max) t)
     (beginning-of-line)
     (kill-line 1)))
 
@@ -624,7 +624,7 @@ With ARG of 0, clear default server and collection."
 ;;   ((eq scope 'tree) ".")
 ;;   ((eq scope 'file)
 ;;    (if filename
-;;      (monotone-extract-MT-path filename
+;;      (monotone-extract-_MTN-path filename
 ;;   (t (error "Bad scope: %s" scope))))
 ;;;; (monotone-arg-scope 'file (current-buffer))
 
@@ -641,8 +641,8 @@ the buffer if not global."
     (monotone-cmd cmds))
    ;; path/.
    ((eq prefix 'tree)
-    (let ((path (monotone-extract-MT-path
-		 (with-current-buffer buf default-directory))))
+    (let ((path (monotone-extract-_MTN-path
+                 (with-current-buffer buf default-directory))))
       (unless path
         (error "No directory"))
       (monotone-cmd (append cmds (list path)))))
@@ -650,8 +650,8 @@ the buffer if not global."
    ((eq prefix 'file)
     (let ((name (buffer-file-name buf)))
       (unless name
-	(error "This buffer is not a file"))
-      (setq name (monotone-extract-MT-path name))
+        (error "This buffer is not a file"))
+      (setq name (monotone-extract-_MTN-path name))
       (monotone-cmd (append cmds (list name)))))
    (t
     (error "Bad prefix"))))
@@ -665,8 +665,8 @@ the buffer if not global."
 ;;  (let ((bfn (buffer-file-name)))
 ;;    (when (not bfn)
 ;;      (error "No file-name for buffer"))
-;;    (let* ((monotone-MT-top (monotone-find-MT-top bfn))
-;;           (bmn (monotone-extract-MT-path bfn)))
+;;    (let* ((monotone-_MTN-top (monotone-find-_MTN-top bfn))
+;;           (bmn (monotone-extract-_MTN-path bfn)))
 ;;
 
 ;; NOTE: The command names are modeled after the vc command names.
@@ -699,12 +699,12 @@ the buffer if not global."
   (interactive "p")
   (save-some-buffers)
   (let* ((what (monotone-arg-decode arg))
-	 (target-buffer-name
-	  (format "*monotone diff %s*"
-		  (cond
-		   ((eq what 'file) 
-		    (monotone-extract-MT-path buffer-file-name))
-		   (t what))))) 
+         (target-buffer-name
+          (format "*monotone diff %s*"
+                  (cond
+                   ((eq what 'file) 
+                    (monotone-extract-_MTN-path buffer-file-name))
+                   (t what))))) 
     (monotone-cmd-buf what '("diff"))
     (diff-mode)
     ;; dont duplicate the buffers
@@ -726,10 +726,10 @@ the buffer if not global."
 (defun monotone-vc-update-change-log ()
   "Edit the monotone change log."
   (interactive)
-  (let ((mt-top (monotone-find-MT-top)))
-    (when (not mt-top)
-      (error "Unable to find MT directory"))
-    (find-file-other-window (concat mt-top "MT/log"))))
+  (let ((mtn-top (monotone-find-_MTN-top)))
+    (when (not mtn-top)
+      (error "Unable to find _MTN directory"))
+    (find-file-other-window (concat mtn-top "_MTN/log"))))
 
 ;; (monotone-vc-update-change-log)
 

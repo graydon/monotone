@@ -524,7 +524,7 @@ automate_select(std::vector<utf8> args,
 // post-state corresponds to the "to" side of renames and additions
 // node-state corresponds to the state of the node with the given name
 //
-// pre/post state are related to the path rearrangement in MT/work
+// pre/post state are related to the path rearrangement in _MTN/work
 // node state is related to the details of the resulting path
 
 struct inventory_item
@@ -666,7 +666,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 //   includes the rest of the line. Directory paths are identified as ending with
 //   the "/" character, file paths do not end in this character.
 //
-// Error conditions: If no workspace book keeping MT directory is found,
+// Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
 static void

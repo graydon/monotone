@@ -24,7 +24,7 @@ fi
 # Call monotone to complete IDs
 _monotone_complete() {
   if (( "${#cur}" >=2 )) ; then
-    COMPREPLY=( ${COMPREPLY[@]:-} $(monotone $mono_db complete $1 $cur 2> /dev/null) )
+    COMPREPLY=( ${COMPREPLY[@]:-} $(mtn $mono_db complete $1 $cur 2> /dev/null) )
   fi
 }
 
@@ -36,16 +36,16 @@ _monotone_keys() {
   else
     range='1,/\[private/'
   fi
-  COMPREPLY=( $(compgen -W "$(monotone $mono_db list keys 2> /dev/null |\
+  COMPREPLY=( $(compgen -W "$(mtn $mono_db list keys 2> /dev/null |\
                               sed -n ${range}'{/^[0-9a-f]/s/[0-9a-f]* //p}')" -- ${cur#*=} ) )
 }
 
 _monotone_branches() {
-  COMPREPLY=( $(compgen -W "$(monotone $mono_db list branches 2> /dev/null)" -- ${cur#*=} ) )
+  COMPREPLY=( $(compgen -W "$(mtn $mono_db list branches 2> /dev/null)" -- ${cur#*=} ) )
 }
 
 _monotone_tags() {
-  COMPREPLY=( $(compgen -W "$(monotone $mono_db list tags 2> /dev/null | awk '{print $1}')" -- ${cur#*=} ) )
+  COMPREPLY=( $(compgen -W "$(mtn $mono_db list tags 2> /dev/null | awk '{print $1}')" -- ${cur#*=} ) )
 }
 
 _monotone() {
@@ -194,6 +194,7 @@ _monotone() {
                         *)
                             unset prev2
                             unset prev3
+                            _filedir
                     esac
                 else
                     unset prev2
@@ -214,8 +215,6 @@ _monotone() {
                                       merge propagate refresh_inodeprints setup
                                       set unset add attr ci commit drop
                                       identify mv rename revert rm update' -- $cur) )
-          else
-              _filedir
           fi
           ;;
       esac
@@ -224,4 +223,4 @@ _monotone() {
   return 0
 }
 
-complete -F _monotone -o filenames monotone
+complete -F _monotone -o filenames mtn

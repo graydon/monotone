@@ -296,34 +296,50 @@ we say that you want to capture a @i{version of your tree}. Doing
 so will permit you to undo changes to multiple files at once, or send
 your friend a @i{set} of changes to many files at once.
 
-To make a snapshot of a tree, we begin by writing a special file
-called a @dfn{manifest}. In fact, monotone will write this file for
-us, but we could write it ourselves too. It is just a plain text
-file. Each line of a manifest file contains two columns. In the first
-column we write the ID of a file in your tree, and in the second
-column we write the path to the file, from the root of our tree to the
-filename.
+To make a snapshot of a tree, we begin by writing a special file called
+a @dfn{manifest}. In fact, monotone will write this file for us, but we
+could write it ourselves too. It is just a plain text file, in a
+structured but human-readable format used by several parts of monotone.
+Each file entry of a manifest binds a specific name, as a full path from
+the root of the workspace, to a specific file ID, as the hash of its
+content.  In this way, the manifest collects together the snapshot of
+the file names and contents you have at this point in time; other
+snapshots with other manifests can use different names for the same
+file, or different contents for the same name. 
+
+Other entries in the manifest format name directories or store file
+attrs, which we will cover later.
 
 @ifinfo
 @smallexample
 @group
-+--------------------------------------------------------------+
-|                                                              |
-|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
-|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
-|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
-|  ddc2686e000e97f670180c60a3066989e56a11a3  fs/open.c         |
-|  295d276e6c9ce64846d309a8e39507bcb0a14248  fs/namespace.c    |
-|  71e0274f16cd68bdf9a2bf5743b86fcc1e597cdc  fs/namei.c        |
-|  1112c0f8054cebc9978aa77384e3e45c0f3b6472  fs/iobuf.c        |
-|  8ddcfcc568f33db6205316d072825d2e5c123275  fs/inode.c        |
-|                                                              |
-+--------------------------------------------------------------+
 
-\_____________________________  _______________________________/
-                              \/
-                          an example
-                         manifest file
++------------------------------------------------------+
+|                                                      |
+|  format_version "1"                                  |
+|                                                      |
+|  dir ""                                              |
+|                                                      |
+|  dir "fs"                                            |
+|                                                      |
+|     file "fs/readdir.c"                              |
+|  content [f2e5719b975e319c2371c98ed2c7231313fac9b5]  |
+|                                                      |
+|     file "fs/read_write.c"                           |
+|  content [81f0c9a0df254bc8d51bb785713a9f6d0b020b22]  |
+|                                                      |
+|     file "fs/pipe.c"                                 |
+|  content [943851e7da46014cb07473b90d55dd5145f24de0]  |
+|                                                      |
+|     file "fs/inode.c"                                |
+|  content [8ddcfcc568f33db6205316d072825d2e5c123275]  |
+|                                                      |
++------------------------------------------------------+
+
+\_________________________  ___________________________/
+                          \/
+                      an example
+                     manifest file
 @end group
 @end smallexample
 @end ifinfo
@@ -343,32 +359,33 @@ lacking the actual contents of the files themselves.
 @ifinfo
 @smallexample
 @group
-  +--------------------------+
-  |   int readdir(...) @{     |
-  |     ...                  |
-  |   @}                      |
-  +--------------------------+
+                    +--------------------------+
+                    |   int readdir(...) @{     |
+                    |     ...                  |
+                    |   @}                      |
+                    +--------------------------+
 
-  \____________  ___________/
-               \/
-              SHA1
-               ||
-+--------------||----------------------------------------------+
-|              \/                                              |
-|  f2e5719b975e319c2371c98ed2c7231313fac9b5  fs/readdir.c      |
-|  81f0c9a0df254bc8d51bb785713a9f6d0b020b22  fs/read_write.c   |
-|  943851e7da46014cb07473b90d55dd5145f24de0  fs/pipe.c         |
-|                   . . .                       . . .          |
-+--------------------------------------------------------------+
+                    \____________  ____________/
+                                 \/
+                                SHA1
+                                 ||
++--------------------------------||--------------------+
+|                       . . .    ||                    |
+|                                ||                    |
+|     file "fs/readdir.c"        \/                    |
+|  content [f2e5719b975e319c2371c98ed2c7231313fac9b5]  |
+|                                                      |
+|                       . . .
++------------------------------------------------------+
 
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-                              ||
-                              \/
-                         manifest ID:
-           a2eeaa28574141a7d48fa1cc2802070150b93ec4
+\_________________________  ___________________________/
+                          \/
+                         SHA1
+                          ||
+                          ||
+                          \/
+                     manifest ID:
+       a2eeaa28574141a7d48fa1cc2802070150b93ec4
 @end group
 @end smallexample
 @end ifinfo
@@ -401,19 +418,30 @@ function and thus assigned a @dfn{revision ID}.
 @ifinfo
 @smallexample
 @group
-+--------------------------------------------------------------+
-|                                                              |
-|                 ... content of revision ...                  |
-|                                                              |
-+--------------------------------------------------------------+
++-----------------------------------------------------------+
+|                                                           |
+|  format_version "1"                                       |
+|                                                           |
+|  new_manifest [83bc0a52da351cac950ac1c12d85be494fc21199]  |
+|                                                           |
+|  old_revision [75c9ffcab50c46e77e642751314b34a16fba36ff]  |
+|                                                           |
+|  add_file "include/foo.h"                                 |
+|   content [8ca6a9862bdeddfdb4b12248c075fa9570f45f6d]      |
+|                                                           |
+|  patch "include/bar.h"                                    |
+|   from [d624672a03e42d2172e56c4d54924af10ff8518d]         |
+|     to [2f58cfc4791aa1695b76c31c9cd1139b3d79ee1b]         |
+|                                                           |
++-----------------------------------------------------------+
 
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-                              \/
-                         revision ID:
-           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
+\____________________________  _____________________________/
+                             \/
+                            SHA1
+                             ||
+                             \/
+                        revision ID:
+          1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
 @end group
 @end smallexample
 @end ifinfo
@@ -439,36 +467,57 @@ predecessor, thus forming a new unique ID for each point in history.
 @ifinfo
 @smallexample
 @group
-                              ||
-+-----------------------------||-------------------------------+
-|                             \/                               |
-|  old_revision: 86d06a095529dca003ad62715dc2be7873edade0      |
-|    change_set:           .  .  .                             |
-|  old_manifest: 1b24ba8b8dc3ff9c87b5198315eced1b279dc74e  <----- manifest ID 
-|  new_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
-|                                                              |
-+--------------------------------------------------------------+
++-----------------------------------------------------------+
+|                                                           |
+|  format_version "1"                                       |
+|                                                           |
+|  new_manifest [dbd022dc423fd7f473e0fa79842cd9901cc2dd69] <-- manifest id
+|                                                           |
+|  old_revision: []                                         |
+|                                                           |
+|  ...                                                      |
+|                                                           |
++-----------------------------------------------------------+
 
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-+-----------------------------||-------------------------------+
-|                             \/                               |
-|  old_revision: f45add3bfb21cb459d99b6a9c0111df75f6d9f85      |
-|    change_set:           .  .  .                             |
-|  old_manifest: dbd022dc423fd7f473e0fa79842cd9901cc2dd69  <----- manifest ID 
-|  new_manifest: 8a05c60422770bbf49a3192c2367ddaa066538ca  <----- manifest ID 
-|                                                              |
-+--------------------------------------------------------------+
+\____________________________________  _____________________/
+                                     \/
+                                    SHA1
+                                     ||
++------------------------------------||---------------------+
+|                                    ||                     |
+|  format_version "1"                ||                     |
+|                                    ||                     |
+|  new_manifest [8a05c60422770bbf49a3||2c2367ddaa066538ca] <-- manifest id
+|                                    \/                     |
+|  old_revision [f45add3bfb21cb459d99b6a9c0111df75f6d9f85]  |
+|                                                           |
+|  ...                                                      |
+|                                                           |
++-----------------------------------------------------------+
 
-\_____________________________  _______________________________/
-                              \/
-                             SHA1
-                              ||
-                              \/
-                         revision ID:
-           1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
+\____________________________________  _____________________/
+                                     \/
+                                    SHA1
+                                     ||
++------------------------------------||---------------------+
+|                                    ||                     |
+|  format_version "1"                ||                     |
+|                                    ||                     |
+|  new_manifest [2027b4ab2febf98bd9a0||c000a69a8227cdaaf7] <-- manifest id
+|                                    \/                     |
+|  old_revision [1c83997e7ab40c0df47554c81b7d4e7ee691eb0d]  |
+|                                                           |
+|  ...                                                      |
+|                                                           |
++-----------------------------------------------------------+
+
+\____________________________  _____________________________/
+                             \/
+                            SHA1
+                             ||
+                             \/
+                        revision ID:
+          1c83997e7ab40c0df47554c81b7d4e7ee691eb0d
 @end group
 @end smallexample
 @end ifinfo
@@ -636,11 +685,13 @@ the ``switching point'' for communication.
 
 A @dfn{workspace} is a tree of files in your file system, arranged
 according to the list of file paths and IDs in a particular
-manifest. A special directory called @file{MT} exists in the root of
-any workspace. Monotone keeps some special files in the @file{MT}
-directory, in order to track changes you make to your workspace.
+manifest. A special directory called @file{_MTN} exists in the root of
+any workspace. Monotone keeps some special files in the @file{_MTN}
+directory, in order to track changes you make to your workspace.  If
+you ever want to know if a directory is a monotone workspace, just
+look for this @file{_MTN} directory.
 
-Aside from the special @file{MT} directory, a workspace is just a
+Aside from the special @file{_MTN} directory, a workspace is just a
 normal tree of files. You can directly edit the files in a working
 copy using a plain text editor or other program; monotone will
 automatically notice when you make any changes. If you wish to add
@@ -666,7 +717,7 @@ database and a workspace; the network is not involved.
   |      local      |   <----------     |  src/func.h
   |     database    |    add,           |  src/main.c
   |                 |    or commit      |  Makefile
-  \_________________/                   |  MT/
+  \_________________/                   |  _MTN/
                                         |
 @end group
 @end smallexample
@@ -872,7 +923,7 @@ that the fork has produced a new @dfn{branch}. Branches tell monotone
 which revisions you would like to merge, and which you would like to
 keep separate.
 
-You can see all the available branches using @code{monotone list branches}.
+You can see all the available branches using @code{mtn list branches}.
 
 Branches are indicated with certs.  The cert name @code{branch} is
 reserved for use by monotone, for the purpose of identifying the
@@ -1103,7 +1154,7 @@ example team; other tasks involve only one member.
 @section Creating a Database
 
 The first step Jim, Abe and Beth each need to perform is to create a
-new database. This is done with the @code{monotone db init} command,
+new database. This is done with the @code{mtn db init} command,
 providing a @option{--db} option to specify the location of the new
 database. Each programmer creates their own database, which will
 reside in their home directory and store all the revisions, files and
@@ -1113,7 +1164,7 @@ command, to prevent spurious creation of databases when an invalid
 
 In real life, most people prefer to keep one database for each project
 they work on.  If we followed that convention here in the tutorial,
-though, then all the databases would be called @code{juicebot.db}, and
+though, then all the databases would be called @code{juicebot.mtn}, and
 that would make things more confusing to read.  So instead, we'll have
 them each name their database after themselves.
 
@@ -1121,7 +1172,7 @@ Thus Jim issues the command:
 
 @smallexample
 @group
-$ monotone db init --db=~/jim.db
+$ mtn db init --db=~/jim.mtn
 @end group
 @end smallexample
 
@@ -1129,7 +1180,7 @@ Abe issues the command:
 
 @smallexample
 @group
-$ monotone db init --db=~/abe.db
+$ mtn db init --db=~/abe.mtn
 @end group
 @end smallexample
 
@@ -1137,7 +1188,7 @@ And Beth issues the command:
 
 @smallexample
 @group
-$ monotone db init --db=~/beth.db
+$ mtn db init --db=~/beth.mtn
 @end group
 @end smallexample
 
@@ -1158,11 +1209,11 @@ Jim does the following:
 
 @smallexample
 @group
-$ monotone genkey jim@@juicebot.co.jp
-monotone: generating key-pair 'jim@@juicebot.co.jp'
+$ mtn genkey jim@@juicebot.co.jp
+mtn: generating key-pair 'jim@@juicebot.co.jp'
 enter passphrase for key ID [jim@@juicebot.co.jp] : @i{<Jim enters his passphrase>}
 confirm passphrase for key ID [jim@@juicebot.co.jp]: @i{<Jim confirms his passphrase>}
-monotone: storing key-pair 'jim@@juicebot.co.jp' in /home/jim/.monotone/keys
+mtn: storing key-pair 'jim@@juicebot.co.jp' in /home/jim/.monotone/keys
 @end group
 @end smallexample
 
@@ -1170,11 +1221,11 @@ Abe does something similar:
 
 @smallexample
 @group
-$ monotone genkey abe@@juicebot.co.jp
-monotone: generating key-pair 'abe@@juicebot.co.jp'
+$ mtn genkey abe@@juicebot.co.jp
+mtn: generating key-pair 'abe@@juicebot.co.jp'
 enter passphrase for key ID [abe@@juicebot.co.jp] : @i{<Abe enters his passphrase>}
 confirm passphrase for key ID [abe@@juicebot.co.jp]: @i{<Abe confirms his passphrase>}
-monotone: storing key-pair 'abe@@juicebot.co.jp' in /home/abe/.monotone/keys
+mtn: storing key-pair 'abe@@juicebot.co.jp' in /home/abe/.monotone/keys
 @end group
 @end smallexample
 
@@ -1182,11 +1233,11 @@ as does Beth:
 
 @smallexample
 @group
-$ monotone genkey beth@@juicebot.co.jp
-monotone: generating key-pair 'beth@@juicebot.co.jp'
+$ mtn genkey beth@@juicebot.co.jp
+mtn: generating key-pair 'beth@@juicebot.co.jp'
 enter passphrase for key ID [beth@@juicebot.co.jp] : @i{<Beth enters her passphrase>}
 confirm passphrase for key ID [beth@@juicebot.co.jp]: @i{<Beth confirms her passphrase>}
-monotone: storing key-pair 'beth@@juicebot.co.jp' in /home/beth/.monotone/keys
+mtn: storing key-pair 'beth@@juicebot.co.jp' in /home/beth/.monotone/keys
 @end group
 @end smallexample
 
@@ -1196,7 +1247,7 @@ the correct key was generated. For example, Jim might see this:
 
 @smallexample
 @group
-$ monotone list keys
+$ mtn list keys
 
 [public keys]
 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c jim@@juicebot.co.jp   (*)
@@ -1252,16 +1303,16 @@ Before he can begin work on the project, Jim needs to create a
 of.  Often, one works on projects that someone else has started, and
 creates workspaces with the @code{checkout} command, which you'll
 learn about later.  Jim is starting a new project, though, so he does
-something a little bit different.  He uses the @code{monotone setup}
+something a little bit different.  He uses the @code{mtn setup}
 command to create a new workspace.
 
 This command creates the named directory (if it doesn't already exist),
-and creates the @file{MT} directory within it.  The @file{MT} directory
+and creates the @file{_MTN} directory within it.  The @file{_MTN} directory
 is how monotone recognizes that a directory is a workspace, and
 monotone stores some bookkeeping files within it.  For instance, command
 line values for the @option{--db}, @option{--branch} or @option{--key}
 options to the @code{setup} command will be cached in a file called
-@file{MT/options}, so you don't have to keep passing them to monotone
+@file{_MTN/options}, so you don't have to keep passing them to monotone
 all the time.
 
 He chooses @code{jp.co.juicebot.jb7} as a branch name. (See
@@ -1270,7 +1321,7 @@ names.)  Jim then creates his workspace:
 
 @smallexample
 @group
-/home/jim$ monotone --db=jim.db --branch=jp.co.juicebot.jb7 setup juice
+/home/jim$ mtn --db=jim.mtn --branch=jp.co.juicebot.jb7 setup juice
 /home/jim$ cd juice
 /home/jim/juice$
 @end group
@@ -1341,67 +1392,61 @@ recursively scans the directory and adds all its files.
 
 @smallexample
 @group
-$ monotone add include/jb.h src
-monotone: adding include/jb.h to workspace add set
-monotone: adding src/apple.c to workspace add set
-monotone: adding src/banana.c to workspace add set
+$ mtn add include/jb.h src
+mtn: adding include/jb.h to workspace add set
+mtn: adding src/apple.c to workspace add set
+mtn: adding src/banana.c to workspace add set
 @end group
 @end smallexample
 
 This command produces a record of Jim's intentions in a special file
-called @file{MT/work}, stored in the workspace. The file is plain
+called @file{_MTN/work}, stored in the workspace. The file is plain
 text:
 
 @smallexample
 @group
-$ cat MT/work
+$ cat _MTN/work
 add_file "include/jb.h"
+ content [3b12b2d0b31439bd50976633db1895cff8b19da0]
 
 add_file "src/apple.c"
+ content [2650ffc660dd00a08b659b883b65a060cac7e560]
 
 add_file "src/banana.c"
+ content [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
 @end group
 @end smallexample
+
+You will never have to look at this file, but it is nice to know that
+it is there.
 
 Jim then gets up from his machine to get a coffee. When he returns
 he has forgotten what he was doing. He asks monotone:
 
 @smallexample
 @group
-$ monotone status
+$ mtn status
+
+format_version "1"
 
 new_manifest [2098eddbe833046174de28172a813150a6cbda7b]
 
 old_revision []
-old_manifest []
 
 add_file "include/jb.h"
+ content [3b12b2d0b31439bd50976633db1895cff8b19da0]
 
 add_file "src/apple.c"
+ content [2650ffc660dd00a08b659b883b65a060cac7e560]
 
 add_file "src/banana.c"
-
-patch "include/jb.h"
- from []
-   to [3b12b2d0b31439bd50976633db1895cff8b19da0]
-
-patch "src/apple.c"
- from []
-   to [2650ffc660dd00a08b659b883b65a060cac7e560]
-
-patch "src/banana.c"
- from []
-   to [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
+ content [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
 
 @end group
 @end smallexample
 
 The output of this command tells Jim that his edits, so far,
-constitute only the addition of some files. In the output we can see
-one peculiarity of monotone's changeset format. The peculiarity is that
-when monotone records a ``new file'', it actually records two separate
-events: the addition of an empty file to the workspace, and a patch
-of that file from empty to its intended contents. 
+constitute only the addition of some files.
 
 Jim wants to see the actual details of the files he added, however, so
 he runs a command which prints out the status @emph{and} a GNU
@@ -1409,25 +1454,18 @@ he runs a command which prints out the status @emph{and} a GNU
 
 @smallexample
 @group
-$ monotone diff
+$ mtn diff
+# 
+# old_revision []
 # 
 # add_file "include/jb.h"
+#  content [3b12b2d0b31439bd50976633db1895cff8b19da0]
 # 
 # add_file "src/apple.c"
+#  content [2650ffc660dd00a08b659b883b65a060cac7e560]
 # 
 # add_file "src/banana.c"
-# 
-# patch "include/jb.h"
-#  from []
-#    to [3b12b2d0b31439bd50976633db1895cff8b19da0]
-# 
-# patch "src/apple.c"
-#  from []
-#    to [2650ffc660dd00a08b659b883b65a060cac7e560]
-# 
-# patch "src/banana.c"
-#  from []
-#    to [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
+#  content [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
 # 
 ============================================================================
 --- include/jb.h
@@ -1477,7 +1515,7 @@ $ monotone diff
 
 Satisfied with the work he's done, Jim wants to save his changes.  He
 then commits his workspace, which causes monotone to process the
-@file{MT/work} file and record the file contents, manifest, and
+@file{_MTN/work} file and record the file contents, manifest, and
 revision into the database. Since he provided a branch name when he
 ran @command{setup}, monotone will use this as the default branch name
 when he commits.
@@ -1485,21 +1523,21 @@ when he commits.
 
 @smallexample
 @group
-$ monotone commit --message="initial checkin of project"
-monotone: beginning commit on branch 'jp.co.juicebot.jb7'
-monotone: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
+$ mtn commit --message="initial checkin of project"
+mtn: beginning commit on branch 'jp.co.juicebot.jb7'
+mtn: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
 
-When monotone committed Jim's revision, erased the @file{MT/work} file,
-and wrote a new file called @file{MT/revision}, which contains the
+When monotone committed Jim's revision, erased the @file{_MTN/work} file,
+and wrote a new file called @file{_MTN/revision}, which contains the
 workspace's new base revision ID. Jim can use this revision ID in the
 future, as an argument to the @command{checkout} command, if he wishes
 to return to this revision:
 
 @smallexample
 @group
-$ cat MT/revision
+$ cat _MTN/revision
 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
@@ -1511,7 +1549,7 @@ ask monotone for a list of certs on this revision.
 
 @smallexample
 @group
-$ monotone ls certs 2e24d49a48adf9acf3a1b6391a080008cbef9c21
+$ mtn ls certs 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 -----------------------------------------------------------------
 Key   : jim@@juicebot.co.jp
 Sig   : ok
@@ -1559,7 +1597,7 @@ command, which lists all the head revisions in the branch:
 
 @smallexample
 @group
-$ monotone heads
+$ mtn heads
 branch 'jp.co.juicebot.jb7' is currently merged:
 2e24d49a48adf9acf3a1b6391a080008cbef9c21 jim@@juicebot.co.jp 2004-10-26T02:53:08
 @end group
@@ -1588,7 +1626,7 @@ First, Abe exports his public key:
 
 @smallexample
 @group
-$ monotone --db=~/abe.db pubkey abe@@juicebot.co.jp >~/abe.pubkey
+$ mtn --db=~/abe.mtn pubkey abe@@juicebot.co.jp >~/abe.pubkey
 @end group
 @end smallexample
 
@@ -1609,7 +1647,7 @@ Beth also exports her public key:
 
 @smallexample
 @group
-$ monotone --db=~/beth.db pubkey beth@@juicebot.co.jp >~/beth.pubkey
+$ mtn --db=~/beth.mtn pubkey beth@@juicebot.co.jp >~/beth.pubkey
 @end group
 @end smallexample
 
@@ -1628,8 +1666,8 @@ into his database:
 
 @smallexample
 @group
-$ cat ~/abe.pubkey ~/beth.pubkey | monotone --db=~/jim.db read
-monotone: read 2 packets
+$ cat ~/abe.pubkey ~/beth.pubkey | monotone --db=~/jim.mtn read
+mtn: read 2 packets
 @end group
 @end smallexample
 
@@ -1662,7 +1700,7 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ monotone --db=jim.db serve "jp.co.juicebot.jb7*"
+$ mtn --db=jim.mtn serve "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
@@ -1682,19 +1720,19 @@ code. To do this he issues the monotone @code{sync} command:
 
 @smallexample
 @group
-$ monotone --db=abe.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: setting default server to jim-laptop.juicebot.co.jp
-monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
-monotone: setting default branch exclude pattern to ''
-monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: first time connecting to server jim-laptop.juicebot.co.jp:4691
-monotone: I'll assume it's really them, but you might want to double-check
-monotone: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
-monotone: warning: saving public key for jim@@juicebot.co.jp to database
-monotone: finding items to synchronize:
-monotone: bytes in | bytes out | revs in | revs out | revs written
-monotone:     2587 |      1025 |       1 |        0 |            1
-monotone: successful exchange with jim-laptop.juicebot.co.jp
+$ mtn --db=abe.mtn sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+mtn: setting default server to jim-laptop.juicebot.co.jp
+mtn: setting default branch include pattern to 'jp.co.juicebot.jb7*'
+mtn: setting default branch exclude pattern to ''
+mtn: connecting to jim-laptop.juicebot.co.jp
+mtn: first time connecting to server jim-laptop.juicebot.co.jp:4691
+mtn: I'll assume it's really them, but you might want to double-check
+mtn: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
+mtn: warning: saving public key for jim@@juicebot.co.jp to database
+mtn: finding items to synchronize:
+mtn: bytes in | bytes out | revs in | revs out | revs written
+mtn:     2587 |      1025 |       1 |        0 |            1
+mtn: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
@@ -1734,7 +1772,7 @@ it:
 
 @smallexample
 @group
-$ monotone --db=abe.db --branch=jp.co.juicebot.jb7 checkout .
+$ mtn --db=abe.mtn --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
@@ -1757,7 +1795,9 @@ forgotten what he changed. He can ask monotone for details:
 
 @smallexample
 @group
-$ monotone diff
+$ mtn diff
+# 
+# old_revision [2e24d49a48adf9acf3a1b6391a080008cbef9c21]
 # 
 # patch "src/apple.c"
 #  from [2650ffc660dd00a08b659b883b65a060cac7e560]
@@ -1785,13 +1825,13 @@ Satisfied with his day's work, Abe decides to commit.
 
 @smallexample
 @group
-$ monotone commit 
-monotone: beginning commit on branch 'jp.co.juicebot.jb7'
+$ mtn commit 
+mtn: beginning commit on branch 'jp.co.juicebot.jb7'
 @end group
 @end smallexample
 
 Abe neglected to provide a @option{--message} option specifying the
-change log on the command line and the file @file{MT/log} is empty
+change log on the command line and the file @file{_MTN/log} is empty
 because he did not document his changes there.  Monotone therefore
 invokes an external ``log message editor'' --- typically an editor
 like @command{vi} --- with an explanation of the changes being
@@ -1800,33 +1840,34 @@ committed and the opportunity to enter a log message.
 @smallexample
 @group
 polling implementation of src/apple.c
-MT:
-MT: ----------------------------------------------------------------------
-MT: Enter Log.  Lines beginning with `MT:' are removed automatically
-MT:
-MT: new_manifest [b33cb337dccf21d6673f462d677a6010b60699d1]
-MT:
-MT: old_revision [2e24d49a48adf9acf3a1b6391a080008cbef9c21]
-MT: old_manifest [2098eddbe833046174de28172a813150a6cbda7b]
-MT: 
-MT: patch "src/apple.c"
-MT: from [2650ffc660dd00a08b659b883b65a060cac7e560]
-MT:   to [e2c418703c863eabe70f9bde988765406f885fd0]
-MT:
-MT: ----------------------------------------------------------------------
-MT:
+MTN:
+MTN: ----------------------------------------------------------------------
+MTN: Enter Log.  Lines beginning with `MTN:' are removed automatically
+MTN:
+MTN: format_version "1"
+MTN:
+MTN: new_manifest [b33cb337dccf21d6673f462d677a6010b60699d1]
+MTN:
+MTN: old_revision [2e24d49a48adf9acf3a1b6391a080008cbef9c21]
+MTN: 
+MTN: patch "src/apple.c"
+MTN: from [2650ffc660dd00a08b659b883b65a060cac7e560]
+MTN:   to [e2c418703c863eabe70f9bde988765406f885fd0]
+MTN:
+MTN: ----------------------------------------------------------------------
+MTN:
 @end group
 @end smallexample
 
 Abe enters a single line above the explanatory message, saying
 ``polling implementation of src/apple.c''. He then saves the file and
 quits the editor. Monotone deletes all the lines beginning with
-``MT:'' and leaves only Abe's short message. Returning to the shell,
+``MTN:'' and leaves only Abe's short message. Returning to the shell,
 Abe's commit completes:
 
 @smallexample
 @group
-monotone: committed revision 70decb4b31a8227a629c0e364495286c5c75f979
+mtn: committed revision 70decb4b31a8227a629c0e364495286c5c75f979
 @end group
 @end smallexample
 
@@ -1834,14 +1875,14 @@ Abe then sends his new revision back to Jim:
 
 @smallexample
 @group
-$ monotone sync
-monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: finding items to synchronize:
-monotone:   certs |    keys | revisions
-monotone:       8 |       2 |         2
-monotone: bytes in | bytes out | revs in | revs out | revs written
-monotone:      615 |      2822 |       0 |        1 |            0
-monotone: successful exchange with jim-laptop.juicebot.co.jp
+$ mtn sync
+mtn: connecting to jim-laptop.juicebot.co.jp
+mtn: finding items to synchronize:
+mtn:   certs |    keys | revisions
+mtn:       8 |       2 |         2
+mtn: bytes in | bytes out | revs in | revs out | revs written
+mtn:      615 |      2822 |       0 |        1 |            0
+mtn: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
@@ -1850,22 +1891,22 @@ Jim's:
 
 @smallexample
 @group
-$ monotone --db=beth.db sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
-monotone: setting default server to jim-laptop.juicebot.co.jp
-monotone: setting default branch include pattern to 'jp.co.juicebot.jb7*'
-monotone: setting default branch exclude pattern to ''
-monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: first time connecting to server jim-laptop.juicebot.co.jp:4691
-monotone: I'll assume it's really them, but you might want to double-check
-monotone: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
-monotone: warning: saving public key for jim@@juicebot.co.jp to database
-monotone: finding items to synchronize:
-monotone: bytes in | bytes out | revs in | revs out | revs written
-monotone:     4601 |      1239 |       2 |        0 |            1
-monotone: verifying new revisions (this may take a while)
-monotone: bytes in | bytes out | revs in | revs out | revs written
-monotone:     4601 |      1285 |       2 |        0 |            2
-monotone: successful exchange with jim-laptop.juicebot.co.jp
+$ mtn --db=beth.mtn sync jim-laptop.juicebot.co.jp "jp.co.juicebot.jb7*"
+mtn: setting default server to jim-laptop.juicebot.co.jp
+mtn: setting default branch include pattern to 'jp.co.juicebot.jb7*'
+mtn: setting default branch exclude pattern to ''
+mtn: connecting to jim-laptop.juicebot.co.jp
+mtn: first time connecting to server jim-laptop.juicebot.co.jp:4691
+mtn: I'll assume it's really them, but you might want to double-check
+mtn: their key's fingerprint: 9e9e9ef1d515ad58bfaa5cf282b4a872d8fda00c
+mtn: warning: saving public key for jim@@juicebot.co.jp to database
+mtn: finding items to synchronize:
+mtn: bytes in | bytes out | revs in | revs out | revs written
+mtn:     4601 |      1239 |       2 |        0 |            1
+mtn: verifying new revisions (this may take a while)
+mtn: bytes in | bytes out | revs in | revs out | revs written
+mtn:     4601 |      1285 |       2 |        0 |            2
+mtn: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
@@ -1873,7 +1914,7 @@ She checks out a copy of the tree from her database:
 
 @smallexample
 @group
-$ monotone --db=beth.db --branch=jp.co.juicebot.jb7 checkout .
+$ mtn --db=beth.mtn --branch=jp.co.juicebot.jb7 checkout .
 @end group
 @end smallexample
 
@@ -1886,12 +1927,12 @@ $ vi src/banana.c
 @end group
 @end smallexample
 
-and logs her changes in @file{MT/log} right away so she does not
+and logs her changes in @file{_MTN/log} right away so she does not
 forget what she has done like Abe.
 
 @smallexample
 @group
-$ vi MT/log
+$ vi _MTN/log
 * src/banana.c: Added polling implementation
 @end group
 @end smallexample
@@ -1903,9 +1944,9 @@ before finishing her commit:
 
 @smallexample
 @group
-$ monotone commit
-monotone: beginning commit on branch 'jp.co.juicebot.jb7'
-monotone: committed revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
+$ mtn commit
+mtn: beginning commit on branch 'jp.co.juicebot.jb7'
+mtn: committed revision 80ef9c9d251d39074d37e72abf4897e0bbae1cfb
 @end group
 @end smallexample
 
@@ -1913,14 +1954,14 @@ And she syncs with Jim again:
 
 @smallexample
 @group
-$ monotone sync
-monotone: connecting to jim-laptop.juicebot.co.jp
-monotone: finding items to synchronize:
-monotone:   certs |    keys | revisions
-monotone:      12 |       3 |         3
-monotone: bytes in | bytes out | revs in | revs out | revs written
-monotone:      709 |      2879 |       0 |        1 |            0
-monotone: successful exchange with jim-laptop.juicebot.co.jp
+$ mtn sync
+mtn: connecting to jim-laptop.juicebot.co.jp
+mtn: finding items to synchronize:
+mtn:   certs |    keys | revisions
+mtn:      12 |       3 |         3
+mtn: bytes in | bytes out | revs in | revs out | revs written
+mtn:      709 |      2879 |       0 |        1 |            0
+mtn: successful exchange with jim-laptop.juicebot.co.jp
 @end group
 @end smallexample
 
@@ -1984,8 +2025,10 @@ Beth finishes and examines her changes:
 
 @smallexample
 @group
-$ monotone diff
+$ mtn diff
 # 
+# old_revision [80ef9c9d251d39074d37e72abf4897e0bbae1cfb]
+#
 # patch "src/banana.c"
 #  from [7381d6b3adfddaf16dc0fdb05e0f2d1873e3132a]
 #    to [5e6622cf5c8805bcbd50921ce7db86dad40f2ec6]
@@ -2020,9 +2063,9 @@ She commits her work:
 
 @smallexample
 @group
-$ monotone commit --message="interrupt implementation of src/banana.c"
-monotone: beginning commit on branch 'jp.co.juicebot.jb7'
-monotone: committed revision 8b41b5399a564494993063287a737d26ede3dee4
+$ mtn commit --message="interrupt implementation of src/banana.c"
+mtn: beginning commit on branch 'jp.co.juicebot.jb7'
+mtn: committed revision 8b41b5399a564494993063287a737d26ede3dee4
 @end group
 @end smallexample
 
@@ -2030,7 +2073,7 @@ And she syncs with Jim:
 
 @smallexample
 @group
-$ monotone sync
+$ mtn sync
 @end group
 @end smallexample
 
@@ -2051,7 +2094,7 @@ Thus when Abe commits, he unknowingly creates a fork:
 
 @smallexample
 @group
-$ monotone commit --message="interrupt implementation of src/apple.c"
+$ mtn commit --message="interrupt implementation of src/apple.c"
 @end group
 @end smallexample
 
@@ -2061,7 +2104,7 @@ he has new work to contribute, however, he now syncs:
 
 @smallexample
 @group
-$ monotone sync
+$ mtn sync
 @end group
 @end smallexample
 
@@ -2071,8 +2114,8 @@ the branch:
 
 @smallexample
 @group
-$ monotone heads
-monotone: branch 'jp.co.juicebot.jb7' is currently unmerged:
+$ mtn heads
+mtn: branch 'jp.co.juicebot.jb7' is currently unmerged:
 39969614e5a14316c7ffefc588771f491c709152 abe@@juicebot.co.jp 2004-10-26T02:53:16
 8b41b5399a564494993063287a737d26ede3dee4 beth@@juicebot.co.jp 2004-10-26T02:53:15
 @end group
@@ -2086,15 +2129,15 @@ conflicts Jim does so himself:
 
 @smallexample
 @group
-$ monotone merge
-monotone: starting with revision 1 / 2
-monotone: merging with revision 2 / 2
-monotone: [source] 39969614e5a14316c7ffefc588771f491c709152
-monotone: [source] 8b41b5399a564494993063287a737d26ede3dee4
-monotone: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 abe@@juicebot.co.jp  2004-10-26T:02:50:01 found
-monotone: trying 3-way merge
-monotone: [merged] da499b9d9465a0e003a4c6b2909102ef98bf4e6d
-monotone: your workspaces have not been updated
+$ mtn merge
+mtn: starting with revision 1 / 2
+mtn: merging with revision 2 / 2
+mtn: [source] 39969614e5a14316c7ffefc588771f491c709152
+mtn: [source] 8b41b5399a564494993063287a737d26ede3dee4
+mtn: common ancestor 70decb4b31a8227a629c0e364495286c5c75f979 abe@@juicebot.co.jp  2004-10-26T:02:50:01 found
+mtn: trying 3-way merge
+mtn: [merged] da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+mtn: your workspaces have not been updated
 @end group
 @end smallexample
 
@@ -2110,11 +2153,11 @@ his workspace.
 
 @smallexample
 @group
-$ monotone update
-monotone: selected update target da499b9d9465a0e003a4c6b2909102ef98bf4e6d
-monotone: updating src/apple.c to f088e24beb43ab1468d7243e36ce214a559bdc96
-monotone: updating src/banana.c to 5e6622cf5c8805bcbd50921ce7db86dad40f2ec6
-monotone: updated to base revision da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+$ mtn update
+mtn: selected update target da499b9d9465a0e003a4c6b2909102ef98bf4e6d
+mtn: updating src/apple.c to f088e24beb43ab1468d7243e36ce214a559bdc96
+mtn: updating src/banana.c to 5e6622cf5c8805bcbd50921ce7db86dad40f2ec6
+mtn: updated to base revision da499b9d9465a0e003a4c6b2909102ef98bf4e6d
 @end group
 @end smallexample
 
@@ -2158,7 +2201,7 @@ So by now you're familiar with making changes, sharing them with other
 people, and integrating your changes with their changes.  Sometimes,
 though, you may want to make some changes, and @emph{not} integrate them
 with other people's --- or at least not right away.  One way to do this
-would be to simply never run @command{monotone merge}; but it would
+would be to simply never run @command{mtn merge}; but it would
 quickly become confusing to try and keep track of which changes were in
 which revisions.  This is where @emph{branches} are useful.
 
@@ -2184,9 +2227,9 @@ the new muffins code, and commits it on a new branch by simply passing
 
 @smallexample
 @group
-$ monotone commit --branch=jp.co.juicebot.jb7.muffins --message='autobake framework'
-monotone: beginning commit on branch 'jp.co.juicebot.jb7.muffins'
-monotone: committed revision d33caefd61823ecbb605c39ffb84705dec449857
+$ mtn commit --branch=jp.co.juicebot.jb7.muffins --message='autobake framework'
+mtn: beginning commit on branch 'jp.co.juicebot.jb7.muffins'
+mtn: committed revision d33caefd61823ecbb605c39ffb84705dec449857
 @end group
 @end smallexample
 
@@ -2204,13 +2247,13 @@ command:
 
 @smallexample
 @group
-$ monotone propagate jp.co.juicebot.jb7 jp.co.juicebot.jb7.muffins
-monotone: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
-monotone: [source] da003f115752ac6e4750b89aaca9dbba178ac80c
-monotone: [target] d0e5c93bb61e5fd25a0dadf41426f209b73f40af
-monotone: common ancestor 853b8c7ac5689181d4b958504adfb5d07fd959ab jim@@juicebot.co.jp 2004-10-26T:12:44:23 found
-monotone: trying 3-way merge
-monotone: [merged] 89585b3c5e51a5a75f5d1a05dda859c5b7dde52f
+$ mtn propagate jp.co.juicebot.jb7 jp.co.juicebot.jb7.muffins
+mtn: propagating jp.co.juicebot.jb7 -> jp.co.juicebot.jb7.muffins
+mtn: [source] da003f115752ac6e4750b89aaca9dbba178ac80c
+mtn: [target] d0e5c93bb61e5fd25a0dadf41426f209b73f40af
+mtn: common ancestor 853b8c7ac5689181d4b958504adfb5d07fd959ab jim@@juicebot.co.jp 2004-10-26T:12:44:23 found
+mtn: trying 3-way merge
+mtn: [merged] 89585b3c5e51a5a75f5d1a05dda859c5b7dde52f
 @end group
 @end smallexample
 
@@ -2222,12 +2265,12 @@ into the main line of development, she simply propagates the other way:
 
 @smallexample
 @group
-$ monotone propagate jp.co.juicebot.jb7.muffins jp.co.juicebot.jb7
-monotone: propagating jp.co.juicebot.jb7.muffins -> jp.co.juicebot.jb7
-monotone: [source] 4e48e2c9a3d2ca8a708cb0cc545700544efb5021
-monotone: [target] bd29b2bfd07644ab370f50e0d68f26dcfd3bb4af
-monotone: common ancestor 652b1035343281a0d2a5de79919f9a31a30c9028 jim@@juicebot.co.jp 2004-10-26T:15:25:05 found
-monotone: [merged] 03f7495b51cc70b76872ed019d19dee1b73e89b6
+$ mtn propagate jp.co.juicebot.jb7.muffins jp.co.juicebot.jb7
+mtn: propagating jp.co.juicebot.jb7.muffins -> jp.co.juicebot.jb7
+mtn: [source] 4e48e2c9a3d2ca8a708cb0cc545700544efb5021
+mtn: [target] bd29b2bfd07644ab370f50e0d68f26dcfd3bb4af
+mtn: common ancestor 652b1035343281a0d2a5de79919f9a31a30c9028 jim@@juicebot.co.jp 2004-10-26T:15:25:05 found
+mtn: [merged] 03f7495b51cc70b76872ed019d19dee1b73e89b6
 @end group
 @end smallexample
 
@@ -2326,14 +2369,14 @@ in the team-members' keys:
 
 @smallexample
 @group
-$ monotone --db=server.db db init
-$ monotone genkey monotone-server@@www.juicebot.co.jp
-monotone: generating key-pair 'monotone-server@@www.juicebot.co.jp'
+$ mtn --db=server.mtn db init
+$ mtn genkey monotone-server@@www.juicebot.co.jp
+mtn: generating key-pair 'monotone-server@@www.juicebot.co.jp'
 enter passphrase for key ID [monotone-server@@www.juicebot.co.jp] : @i{<Jim enters a new passphrase>}
 confirm passphrase for key ID [monotone-server@@www.juicebot.co.jp]: @i{<Jim confirms the passphrase>}
-monotone: storing key-pair 'monotone-server@@www.juicebot.co.jp' in /home/jim/.monotone/keys
-$ cat abe.pubkey beth.pubkey jim.pubkey | monotone --db=server.db read
-monotone: read 3 packets
+mtn: storing key-pair 'monotone-server@@www.juicebot.co.jp' in /home/jim/.monotone/keys
+$ cat abe.pubkey beth.pubkey jim.pubkey | monotone --db=server.mtn read
+mtn: read 3 packets
 @end group
 @end smallexample
 
@@ -2384,7 +2427,7 @@ the @code{--bind=address:port} argument like so:
 
 @smallexample
 @group
-$ monotone --db=server.db --bind=www.juicebot.co.jp serve "jp.co.juicebot.jb7*"
+$ mtn --db=server.mtn --bind=www.juicebot.co.jp serve "jp.co.juicebot.jb7*"
 @end group
 @end smallexample
 
@@ -2418,7 +2461,7 @@ remembered the first server and branch patterns used in database
 
 @smallexample
 @group
-$ monotone list vars
+$ mtn list vars
 database: default-exclude-pattern 
 database: default-include-pattern jp.co.juicebot.jb7*
 database: default-server jim-laptop.juicebot.co.jp
@@ -2432,7 +2475,7 @@ The team members can reset their local database vars accordingly:
 
 @smallexample
 @group
-$ monotone set database default-server www.juicebot.co.jp
+$ mtn set database default-server www.juicebot.co.jp
 @end group
 @end smallexample
 
@@ -2589,14 +2632,14 @@ Uses selector type @code{b}. For example, @code{b:net.venge.monotone} matches
 @code{branch} certs where the cert value is @code{net.venge.monotone}.
 Values to match for can have shell wildcards.  If you give a bare @code{b:}
 monotone will require you to be in a workspace, and will use the branch
-value recorded in your MT/options file.
+value recorded in your _MTN/options file.
 @item Heads selection
 Uses selector type @code{h}. For example, @code{h:net.venge.monotone} matches
 @code{branch} certs where the cert value is @code{net.venge.monotone} and 
 the associated revision is a head revision on that branch.  Values to match
 for can have shell wildcards like the branch selector.  If you give a bare 
 @code{h:} monotone will require you to be in a workspace, and use the branch
-recorded in your MT/options file.
+recorded in your _MTN/options file.
 @item Date selection
 Uses selector type @code{d}. For example, @code{d:2004-04} matches
 @code{date} certs where the cert value begins with
@@ -2609,7 +2652,7 @@ monotone will assume 00:00:00. This selector also accepts expanded date
 syntax (see below)
 @item "Later than" selection
 Uses selector type @code{l}. For example, @code{l:2004-04-25} matches
-@code{date} certs where the cert value is strictly less than
+@code{date} certs where the cert value is strictly greater than
 @code{2004-04-25T00:00:00}. If the time component is unspecified,
 monotone will assume 00:00:00. This selector also accepts expanded date
 syntax (see below)
@@ -2759,23 +2802,23 @@ subdirectory.
 
 @heading Finding a workspace
 
-Monotone only stores a single @file{MT} directory at the root of a
-workspace. Because of this, a search is done to find the @file{MT}
+Monotone only stores a single @file{_MTN} directory at the root of a
+workspace. Because of this, a search is done to find the @file{_MTN}
 directory in case a command is executed from within a subdirectory of a
 workspace. Before a command is executed, the search for a working
 copy directory is done by traversing parent directories until an
-@file{MT} directory is found or the filesystem root is reached. Upon
-finding an @file{MT} directory, the @file{MT/options} file is read for
+@file{_MTN} directory is found or the filesystem root is reached. Upon
+finding an @file{_MTN} directory, the @file{_MTN/options} file is read for
 default options. The @option{--root} option may be used to stop the 
 search early, before reaching the root of the physical filesystem.
 
 Many monotone commands don't require a workspace and will simply
-proceed with no default options if no @file{MT} directory is found.
+proceed with no default options if no @file{_MTN} directory is found.
 However, some monotone commands do require a workspace and will fail
-if no @file{MT} directory can be found.
+if no @file{_MTN} directory can be found.
 
 The @command{checkout} and @command{setup} commands create a @i{new
-workspace} and initialize a new @file{MT/options} file based on their
+workspace} and initialize a new @file{_MTN/options} file based on their
 current option settings.
 
 
@@ -2829,11 +2872,11 @@ inherently somewhat less safe, and, as mentioned above, unnecessary for
 most projects, so it is disabled by default.
 
 If you do determine that it is necessary to use inodeprints with your
-project, it is simple to enable them.  Simply run @command{monotone
+project, it is simple to enable them.  Simply run @command{mtn
 refresh_inodeprints}; this will enable inodeprints mode and generate an
 initial cache.  If you ever wish to turn them off again, simply delete
-the file @file{MT/inodeprints}.  You can at any time delete or truncate
-the @file{MT/inodeprints} file; monotone uses it only as a cache and
+the file @file{_MTN/inodeprints}.  You can at any time delete or truncate
+the @file{_MTN/inodeprints} file; monotone uses it only as a cache and
 will continue to operate correctly.
 
 Normally, instead of enabling this up on a per-workspace basis, you
@@ -2953,7 +2996,7 @@ past.  Analogous to @command{ssh}'s @file{known_hosts} file, this is
 needed to detect man-in-the-middle attacks.  Automatically set the first
 time you netsync with any given server.  If that server's key later
 changes, monotone will notice, and refuse to connect until you have run
-@command{monotone unset known-servers @var{server-name}}.
+@command{mtn unset known-servers @var{server-name}}.
 
 @end table
 
@@ -2997,9 +3040,9 @@ names of control files follow a regular pattern:
 
 @table @asis
 @item Versioned control files
-Any file name beginning with @file{.mt-}
+Any file name beginning with @file{.mtn-}
 @item Non-versioned control files
-Any file in the directory @file{MT/}
+Any file in the directory @file{_MTN/}
 @end table
 
 @heading Existing control files
@@ -3008,37 +3051,34 @@ The following control files are currently used. More control files may be added
 in the future, but they will follow the patterns given above.
 
 @table @file
-@item .mt-attrs
-Contains versioned attributes of files, associated with the files'
-pathnames.
-@item .mt-ignore
+@item .mtn-ignore
 Contains a list of regular expression patterns, one per line. If it exists,
 any file with a name matching one of these patterns is ignored.
-@item MT/wanted-testresults
+@item _MTN/wanted-testresults
 Contains a list of testresult key names, one per line. If it exists, update
 will only select revisions that do not have regressions according to the given
 testresult keys.
-@item MT/revision
+@item _MTN/revision
 Contains the identity of the ``base'' revision of the workspace.
 Each workspace has a base revision. When the workspace is
 committed, the base revision is considered to be the ancestor of the
 committed revision.
-@item MT/options
+@item _MTN/options
 Contains ``sticky'' command-line options such as @option{--db} or 
 @option{--branch}, such that you do not need to enter them repeatedly
 after checking out a particular workspace.
-@item MT/work
+@item _MTN/work
 Contains a list of additions, deletions, and renames which have occurred
 in the current workspace, relative to the base version.
-@item MT/log
+@item _MTN/log
 Contains log messages to append to the ``changelog'' cert upon
 commit. The user may add content to this file while they work.  Upon a
 successful commit monotone will empty the file making it ready for the
 next edit/commit cycle.
-@item MT/inodeprints
+@item _MTN/inodeprints
 If this file exists, monotone considers the directory to be in
 @ref{Inodeprints} mode, and uses this file to cache the inodeprints.
-@item MT/debug
+@item _MTN/debug
 If monotone detects a bug in itself or crashes, then before exiting it
 dumps a log of its recent activity to this file, to aid in debugging.
 @end table
@@ -3148,65 +3188,49 @@ author owns the DNS domain @code{venge.net}.
 @node    File Attributes
 @section File Attributes
 
-Monotone contains a mechanism for storing @dfn{persistent file
-attributes}.  These differ from file certificates in an important way:
-attributes are associated with a path name in your workspace,
-rather than a particular version of a file. Otherwise they are
-similar: a file attribute associates a simple name/value pair with a
-file in your workspace.
+Monotone contains a support for storing @dfn{persistent attributes} on
+files and directories, generally known as @dfn{attrs} for short.  An
+attr associates a simple name/value pair with a file or directory, and
+is stored in the manifest.  Attrs are first-class versioned data; they
+can be changed in a workspace, and those changes will be saved when
+the workspace is committed.  The merger knows how to intelligently
+merge attrs.
 
-The attribute mechanism is motivated by the fact that some people like
-to store executable programs in version control systems, and would like
-the programs to remain executable when they check out a workspace.
-For example, the @code{configure} shell script commonly shipped with
-many programs should be executable. 
+The attribute mechanism was originally motivated by the fact that some
+people like to store executable programs in version control systems,
+and would like the programs to remain executable when they check out a
+workspace.  For example, the @code{configure} shell script commonly
+shipped with many programs should be executable.  Similarly, some
+people would like to store devices, symbolic links, read-only files,
+and all manner of extra attributes of a file, not directly related to
+a file's data content.
 
-Similarly, some people would like to store devices, symbolic links,
-read-only files, and all manner of extra attributes of a file, not
-directly related to a file's data content. 
+Monotone comes with support for some attrs built-in; for instance, if
+an executable file is given to @command{mtn add}, then it will
+automatically mark the new file with a @code{mtn:execute} attr, and
+when the file is checked out later, the executable bit will be set
+automatically.  (Of course, if it is checked out on Windows, which
+does not support the executable bit, then the executable bit will not
+be set.  However, monotone will still know that the attr is set, and
+Windows users can view and modify the attr like anyone else.)
 
-Rather than try to extend the manifest file format to accommodate
-attributes, monotone requires that you place your attributes in a
-specially named file in the root of your workspace. The file is
-called @file{.mt-attrs}, and it has a simple stanza-based format, for
-example:
-
-@smallexample
-@group
-file "analyze_coverage"
-execute "true"
-
-file "autogen.sh"
-execute "true"
-otherattr "bob"
-@end group
-@end smallexample
-
-Each stanza of the @file{.mt-attrs} file assigns attributes to a file in
-your workspace.  The first line of each stanza is @code{file}
-followed by the quoted name of the file you want to assign attributes
-to.  Each subsequent line is the name of an attribute, followed by a
-quoted value for that attribute.  Stanzas are separated by blank lines.
-
-As a convenience, you can use the @code{monotone attr} command to set
-and view the values of these attributes; see @ref{Workspace}.
+Attrs in the current workspace can be seen and modified using the
+@code{mtn attr} command; see @ref{Workspace}.  Attrs can also be found
+by examining any manifest directly.
 
 You can tell monotone to automatically take actions based on these
 attributes by defining hooks; see the @code{attr_functions} entry in
-@ref{Hook Reference}.
+@ref{Hook Reference}.  Every time your workspace is written to,
+monotone will run the corresponding hooks registered for each attr in
+your workspace.  This way, you can extend the vocabulary of attrs
+understood by monotone simply by writing new hooks.
 
-Every time your workspace is written to, monotone will look for the
-@file{.mt-attrs} file, and if it exists, run the corresponding hooks
-registered for each attribute found in the file. This way, you can
-extend the vocabulary of attributes understood by monotone simply by
-writing new hooks.
-
-Aside from its special interpretation, the @file{.mt-attrs} file is a
-normal text file. If you want other people to see your attributes, you
-should @code{add} and @code{commit} the @file{.mt-attrs} file in your
-workspace. If you make changes to it which conflict with changes
-other people make, you will have to resolve those conflicts, as plain
-text, just as with any other text file in your workspace.
+You can make up your own attrs for anything you find useful; the
+mechanism is fully general.  (If you make up some particularly useful
+ones, we may even be interested in adding support to monotone proper.)
+We only ask that if you do use custom attrs, you use some prefix for
+them besides @code{mtn:}; attrs beginning with @code{mtn:} are
+reserved for monotone's own use.
 
 @page
 @node    Merging
@@ -3221,9 +3245,8 @@ In automatic mode files are merged without user intervention, using
 monotone internal three-way merging algorithm. 
 Only if there are conflicts or an ancestor is not available monotone
 switches to manual mode, essentially escalating the merging to the user.
-When working in manual mode, monotone invokes the merge2 (for two-way
-merging) or merge3 (three-way) hooks to start an user defined external
-merge tool.  
+When working in manual mode, monotone invokes the @code{merge3} hook
+to start an user defined external merge tool.  
 If the tool terminates without writing the merged file, monotone aborts the
 merging, reverting any changes made.
 By redefining the aforementioned hooks the user can not only choose a
@@ -3262,7 +3285,7 @@ backup copies of your database in plain text. These issues are not
 properly addressed by generating packet streams: instead, you must use
 @dfn{migration} or @dfn{dumping} commands.
 
-The @command{monotone db migrate} command is used to alter the SQL
+The @command{mtn db migrate} command is used to alter the SQL
 schema of a database. The schema of a monotone database is identified
 by a special hash of its generating SQL, which is stored in the
 database's auxiliary tables. Each version of monotone knows which
@@ -3279,10 +3302,10 @@ migration hashes to an unexpected value --- the migration is aborted.
 
 If more drastic changes to the underlying database are made, such as
 changing the page size of sqlite, or if you simply want to keep a
-plain text version of your database on hand, the @command{monotone db
+plain text version of your database on hand, the @command{mtn db
 dump} command can produce a plain ASCII SQL statement which generates
 the state of your database. This dump can later be reloaded using the
-@command{monotone db load} command. 
+@command{mtn db load} command. 
 
 Note that when reloading a dumped database, the schema of the dumped
 database is @emph{included} in the dump, so you should not try to
@@ -3312,7 +3335,7 @@ Your key name, @code{import@@example.net} in this example.
 @item
 Your project name, @code{wobbler} in this example.
 @item
-Your database name, @file{test.db} in this example.
+Your database name, @file{test.mtn} in this example.
 @item
 Your CVS repository path, @file{/usr/local/cvsroot} in this example.
 @item
@@ -3326,10 +3349,10 @@ copy:
 
 @smallexample
 @group
-$ monotone --db=test.db db init
-$ monotone --db=test.db genkey import@@example.net
-$ monotone --db=test.db --branch=net.example.wobbler cvs_import /usr/local/cvsroot/wobbler
-$ monotone --db=test.db --branch=net.example.wobbler checkout wobber-checkout
+$ mtn --db=test.mtn db init
+$ mtn --db=test.mtn genkey import@@example.net
+$ mtn --db=test.mtn --branch=net.example.wobbler cvs_import /usr/local/cvsroot/wobbler
+$ mtn --db=test.mtn --branch=net.example.wobbler checkout wobber-checkout
 @end group
 @end smallexample
 
@@ -3355,8 +3378,8 @@ $ cvs -d $CVSROOT checkout -r 1.2
 @tab
 @smallexample
 @group
-$ monotone pull www.foo.com com.foo.wobbler*
-$ monotone checkout --revision=fe37 wobbler
+$ mtn pull www.foo.com com.foo.wobbler*
+$ mtn checkout --revision=fe37 wobbler
 @end group
 @end smallexample
 @end multitable
@@ -3387,8 +3410,8 @@ $ cvs commit -m "log message"
 @tab
 @smallexample
 @group
-$ monotone commit --message="log message"
-$ monotone push www.foo.com com.foo.wobbler*
+$ mtn commit --message="log message"
+$ mtn push www.foo.com com.foo.wobbler*
 @end group
 @end smallexample
 @end multitable
@@ -3410,9 +3433,9 @@ $ cvs update -d
 @tab
 @smallexample
 @group
-$ monotone pull www.foo.com com.foo.wobbler*
-$ monotone merge
-$ monotone update
+$ mtn pull www.foo.com com.foo.wobbler*
+$ mtn merge
+$ mtn update
 @end group
 @end smallexample
 @end multitable
@@ -3436,8 +3459,8 @@ $ cvs update -r FOO_TAG -d
 @tab
 @smallexample
 @group
-$ monotone update -r 830ac1a5f033825ab364f911608ec294fe37f7bc
-$ monotone update -r t:FOO_TAG
+$ mtn update -r 830ac1a5f033825ab364f911608ec294fe37f7bc
+$ mtn update -r t:FOO_TAG
 @end group
 @end smallexample
 @end multitable
@@ -3464,7 +3487,7 @@ $ cvs diff
 @tab
 @smallexample
 @group
-$ monotone diff
+$ mtn diff
 @end group
 @end smallexample
 @item
@@ -3476,7 +3499,7 @@ $ cvs diff -r 1.2 -r 1.4 myfile
 @tab
 @smallexample
 @group
-$ monotone diff -r 3e7db -r 278df myfile
+$ mtn diff -r 3e7db -r 278df myfile
 @end group
 @end smallexample
 @end multitable
@@ -3502,7 +3525,7 @@ $ cvs status
 @tab
 @smallexample
 @group
-$ monotone status
+$ mtn status
 @end group
 @end smallexample
 @end multitable
@@ -3525,7 +3548,7 @@ $ cvs add dir/subdir/file.txt
 @tab
 @smallexample
 @group
-$ monotone add dir/subdir/file.txt
+$ mtn add dir/subdir/file.txt
 @end group
 @end smallexample
 @end multitable
@@ -3548,7 +3571,7 @@ $ cvs remove file.txt
 @tab
 @smallexample
 @group
-$ monotone drop file.txt
+$ mtn drop file.txt
 @end group
 @end smallexample
 @end multitable
@@ -3571,7 +3594,7 @@ $ cvs log [file]
 @tab
 @smallexample
 @group
-$ monotone log [file]
+$ mtn log [file]
 @end group
 @end smallexample
 @end multitable
@@ -3592,9 +3615,9 @@ $ cvs import wobbler vendor start
 @tab
 @smallexample
 @group
-$ monotone --db=/path/to/database.db --branch=com.foo.wobbler setup .
-$ monotone add .
-$ monotone commit
+$ mtn --db=/path/to/database.mtn --branch=com.foo.wobbler setup .
+$ mtn add .
+$ mtn commit
 @end group
 @end smallexample
 @end multitable
@@ -3615,7 +3638,7 @@ $ cvs init -d /path/to/repository
 @tab
 @smallexample
 @group
-$ monotone db init --db=/path/to/database.db 
+$ mtn db init --db=/path/to/database.mtn 
 @end group
 @end smallexample
 @end multitable
@@ -3670,16 +3693,21 @@ contents of @var{path} at that revision.
 
 These commands copy a revision @var{id} out of your database, writing
 the string @var{id} into the file
-@file{@var{directory}/MT/revision}. These commands then copy every
+@file{@var{directory}/_MTN/revision}. These commands then copy every
 file version listed in the revision's manifest to paths under
 @var{directory}. For example, if the revision's manifest contains
 these entries:
 
 @smallexample
 @group
-84e2c30a2571bd627918deee1e6613d34e64a29e  Makefile
-c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6  include/hello.h
-97dfc6fd4f486df95868d85b4b81197014ae2a84  src/hello.c
+   file "Makefile"
+content [84e2c30a2571bd627918deee1e6613d34e64a29e]
+
+   file "include/hello.h"
+content [c61af2e67eb9b81e46357bb3c409a9a53a7cdfc6]
+
+   file "src/hello.c
+content [97dfc6fd4f486df95868d85b4b81197014ae2a84]
 @end group
 @end smallexample
 
@@ -3818,14 +3846,14 @@ intended.
 @ftable @command
 @item monotone setup [@var{directory}]
 This command prepares @var{directory} as a monotone workspace,
-by creating and populating the @file{MT} directory with basic
+by creating and populating the @file{_MTN} directory with basic
 information.  This information must include at least the branch and the
 database to be used, both of which will be placed in the
-@file{MT/options} file.
+@file{_MTN/options} file.
 
 This can be used with an empty directory to start a new blank project,
 or within an existing directory full of files, prior to using
-@command{monotone commit}. If no directory is specified, the current
+@command{mtn commit}. If no directory is specified, the current
 directory is used.
 
 
@@ -3833,12 +3861,12 @@ directory is used.
 @item monotone add --unknown
 This command places ``add'' entries for the paths specified in
 @var{pathname...} in the workspace's ``work list''. The work list
-of your workspace is located at @file{MT/work}, and is a list of
+of your workspace is located at @file{_MTN/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal or renaming of files.
 
 As a convenience, the @option{--unknown} option can be used; this
-option will cause all of the files listed by @command{monotone list
+option will cause all of the files listed by @command{mtn list
 unknown} to be added.
 
 While this command places an ``add'' entry on your work list, it does
@@ -3852,7 +3880,7 @@ any added entries inserted in its manifest.
 @itemx monotone drop --missing
 This command places ``drop'' entries for the paths specified in
 @var{pathname...} in the workspace's ``work list''. The work list of
-your workspace is located at @file{MT/work}, and is a list of
+your workspace is located at @file{_MTN/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also removes
 any attributes on @var{pathname}; see @ref{File Attributes} for more
@@ -3881,7 +3909,7 @@ directories which have already been deleted.
 This command places ``rename'' entries for the paths specified in
 @var{src} and @var{dst} in the workspace's ``work list''. The second form
 renames a number of source paths to the given destination. The work
-list of your workspace is located at @file{MT/work}, and is a list of
+list of your workspace is located at @file{_MTN/work}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also moves any
 attributes on @var{src} to @var{dst}; see @ref{File Attributes} for more
@@ -3907,24 +3935,24 @@ and will not overwrite existing destination files.
 
 This command looks at your workspace, decides which files have
 changed, and saves the changes to your database. It does this by loading
-the revision named in the @file{MT/revision} file, locating the base
+the revision named in the @file{_MTN/revision} file, locating the base
 manifest for your workspace, applying any changes described in the
-@file{MT/work} file, and then comparing the updated base manifest to the
+@file{_MTN/work} file, and then comparing the updated base manifest to the
 files it finds in your workspace, to determine which files have been
 edited.
 
 For each edited file, a delta is copied into the database. Then the
 newly constructed manifest is recorded (as a delta) and finally the
 new revision.  Once all these objects are recorded in you database,
-@command{commit} overwrites the @file{MT/revision} file with the new
-revision ID, and deletes the @file{MT/work} file.
+@command{commit} overwrites the @file{_MTN/revision} file with the new
+revision ID, and deletes the @file{_MTN/work} file.
 
 Specifying pathnames to @command{commit} restricts the set of changes
 that are visible and results in only a partial commit of the working
 copy. Changes to files not included in the specified set of pathnames
 will be ignored and will remain in the workspace until they are
 included in a future commit. With a partial commit, only the relevant
-entries in the @file{MT/work} file will be removed and other entries
+entries in the @file{_MTN/work} file will be removed and other entries
 will remain for future commits.
 
 From within a subdirectory of the workspace the @command{commit}
@@ -3937,12 +3965,12 @@ exclusive.  Both provide a @var{logmsg} describing the commit.
 @option{--message-file} actually specifies the name of the file containing
 the log message, while @option{--message} provides it directly.
 
-The @file{MT/log} file can be edited by the user during their daily work
+The @file{_MTN/log} file can be edited by the user during their daily work
 to record the changes made to the workspace. When running the
 @command{commit} command without a @var{logmsg} supplied, the contents
-of the @file{MT/log} file will be read and passed to the Lua hook
+of the @file{_MTN/log} file will be read and passed to the Lua hook
 @code{edit_comment} as a second parameter named @var{user_log_content}.
-If the commit is successful, the @file{MT/log} file is cleared of
+If the commit is successful, the @file{_MTN/log} file is cleared of
 all content making it ready for another edit/commit cycle.
 
 If a @option{--branch} option is specified, the @command{commit} command
@@ -4052,8 +4080,8 @@ workspace:
 
 @smallexample
 @group
-$ monotone rename . @var{new_root}/@var{put_old}
-$ monotone rename @var{new_root} .
+$ mtn rename . @var{new_root}/@var{put_old}
+$ mtn rename @var{new_root} .
 @end group
 @end smallexample
 
@@ -4100,7 +4128,7 @@ branches. Supposing Alice's computer has hostname
 
 @smallexample
 @group
-$ monotone --bind=alice.someisp.com serve "net.venge.monotone*"
+$ mtn --bind=alice.someisp.com serve "net.venge.monotone*"
 @end group
 @end smallexample
 
@@ -4108,7 +4136,7 @@ And Bob might run
 
 @smallexample
 @group
-$ monotone sync alice.someisp.com "net.venge.monotone*"
+$ mtn sync alice.someisp.com "net.venge.monotone*"
 @end group
 @end smallexample
 
@@ -4124,7 +4152,7 @@ with Alice again, he can simply run:
 
 @smallexample
 @group
-$ monotone sync
+$ mtn sync
 @end group
 @end smallexample
 
@@ -4169,15 +4197,15 @@ In particular, it prints:
 @itemize
 @item 
 The ``base revision ID'' and ``base manifest ID'', which are
-referenced by the file @file{MT/revision}, and which your workspace
+referenced by the file @file{_MTN/revision}, and which your workspace
 is an in-progress descendent of.
 @item
 The ``current manifest ID'', which is the ID of the manifest which
-results from applying @file{MT/work} to the base manifest, and
+results from applying @file{_MTN/work} to the base manifest, and
 updating any @sc{sha1} values of files to reflect changes you have
 made to the workspace. In other words, the current manifest ID is
 the ID which would accompany any revision you would commit, if you ran
-@command{monotone commit}.
+@command{mtn commit}.
 @item
 A list of logical changes between the base and current manifest
 versions, such as adds, drops, renames, and patches.
@@ -4254,7 +4282,7 @@ example, suppose you enter this command and get this result:
 
 @smallexample
 @group
-$ monotone complete revision fa36
+$ mtn complete revision fa36
 fa36deead87811b0e15208da2853c39d2f6ebe90
 fa36b76dd0139177b28b379fe1d56b22342e5306
 fa36965ec190bee14c5afcac235f1b8e2239bb2a
@@ -4301,7 +4329,7 @@ will print the differences between revisions @var{id1} and @var{id2},
 ignoring any workspace.
 
 In all cases, monotone will print a textual summary -- identical to
-the summary presented by @command{monotone status} -- of the logical
+the summary presented by @command{mtn status} -- of the logical
 differences between revisions in lines proceeding the diff. These
 lines begin with a single hash mark @code{#}, and should be ignored by
 a program processing the diff, such as @command{patch}.
@@ -4355,9 +4383,9 @@ branch:
 
 @smallexample
 @group
-$ monotone list certs 4a96
-monotone: expanding partial id '4a96'
-monotone: expanded to '4a96a230293456baa9c6e7167cafb3c5b52a8e7f'
+$ mtn list certs 4a96
+mtn: expanding partial id '4a96'
+mtn: expanded to '4a96a230293456baa9c6e7167cafb3c5b52a8e7f'
 -----------------------------------------------------------------
 Key   : graydon@@pobox.com
 Sig   : ok
@@ -4558,7 +4586,7 @@ those keys.
 @ftable @command
 @item monotone approve @var{id}
 
-This command is a synonym for @code{monotone cert @var{id} branch
+This command is a synonym for @code{mtn cert @var{id} branch
 @var{branchname}} where @var{branchname} is the current branch name
 (either deduced from the workspace or from the @option{--branch}
 option).
@@ -4567,21 +4595,21 @@ option).
 @item monotone comment @var{id}
 @itemx monotone comment @var{id} @var{comment}
 
-These commands are synonyms for @code{monotone cert @var{id}
+These commands are synonyms for @code{mtn cert @var{id}
 comment @var{comment}}. If @var{comment} is not provided, it is read
 from @code{stdin}.
 
 
 @item monotone tag @var{id} @var{tagname}
 
-This command is a synonym for @code{monotone cert @var{id} tag
+This command is a synonym for @code{mtn cert @var{id} tag
 @var{tagname}}.
 
 @item monotone testresult @var{id} 0
 @itemx monotone testresult @var{id} 1
 
-These commands are synonyms for @code{monotone cert @var{id}
-testresult 0} or @code{monotone cert @var{id} testresult 1}.
+These commands are synonyms for @code{mtn cert @var{id}
+testresult 0} or @code{mtn cert @var{id} testresult 1}.
 
 @end ftable
 
@@ -4923,7 +4951,7 @@ help diagnose failures.
 @node    Automation
 @section Automation
 
-This section contains subcommands of the @code{monotone automate}
+This section contains subcommands of the @code{mtn automate}
 command, used for scripting monotone.  All give output on stdout; they
 may also give useful chatter on stderr, including warnings and error
 messages.
@@ -5851,10 +5879,11 @@ basic_io formatted string pairs that will be provided are:
 @item Sample output:
 
 @verbatim
+format_version "1"
+
 new_manifest [bfe2df785c07bebeb369e537116ab9bb7a4b5e19]
 
 old_revision [429fea55e9e819a046843f618d90674486695745]
-old_manifest [b71855116f7049ac663102c0cb628653ffe316d1]
 
 patch "ChangeLog"
  from [7dc21d3a46c6ecd94685ab21e67b131b32002f12]
@@ -5899,34 +5928,82 @@ Prints the contents of the manifest associated with the given roster.
 
 @item Sample output:
 
-FIXME_ROSTER
-
 @verbatim
-e3915658cb464d05f21332e03d30dca5d94fe776  .htaccess
-00ff89c69e7a8f6a0f48c6503168d9b62a0cfeb0  .mt-attrs
-80d8f3f75c9b517ec462233e155f7dfb93379f67  AUTHORS
-fc74a48c7f73eedcbe1ea709755fbe819b29736c  ChangeLog
-dfac199a7539a404407098a2541b9482279f690d  LICENSE
-440eec971e7bb61ccbb61634deb2729bb25931cd  README
-e0ea26c666b37c5f98ccf80cb933d021ee55c593  TODO
-b28ece354969314ce996f3030569215d685973d6  branch.psp
-1fdb62e05fb2a9338d2c72ddc58de3ab2b3976fe  common.py
-64cb5898e3a026b4782c343ca4386585e0c3c275  config.py.example
-7152c3ff110418aca5d23c374ea9fb92a0e98379  error.psp
-5d8536100fdf51d505b6f20bc9c16aa78d4e86a8  fileinbranch.psp
-981df124a0b5655a9f78c42504cfa8c6f02b267a  headofbranch.psp
-a43d0588a69e622b2afc681678c2a5c3b3b1f342  help.psp
-18a8bffc8729d7bfd71d2e0cb35a1aed1854fa74  html.py
-c621827db187839e1a7c6e51d5f1a7f6e0aa560c  index.psp
-708b61436dce59f47bd07397ce96a1cfabe81970  monotone.py
-a02b1c161006840ea8685e461fd07f0e9bb145a3  revision.psp
-027515fd4558abf317d54c437b83ec6bc76e3dd8  rss_feed.gif
-638140d6823eee5844de37d985773be75707fa25  tags.psp
-be83f459a152ffd49d89d69555f870291bc85311  tarofbranch.psp
-fb51955563d64e628e0e67e4acca1a1abc4cd989  utility.py
-8d04b3fc352a860b0e3240dcb539c1193705398f  viewmtn.css
-7cb5c6b1b1710bf2c0fa41e9631ae43b03424a35  viewmtn.py
-530290467a99ca65f87b74f653bf462b28c6cda9  wrapper.py
+format_version "1"
+
+dir ""
+
+   file ".htaccess"
+content [e3915658cb464d05f21332e03d30dca5d94fe776]
+
+   file "AUTHORS"
+content [80d8f3f75c9b517ec462233e155f7dfb93379f67]
+
+   file "ChangeLog"
+content [fc74a48c7f73eedcbe1ea709755fbe819b29736c]
+
+   file "LICENSE"
+content [dfac199a7539a404407098a2541b9482279f690d]
+
+   file "README"
+content [440eec971e7bb61ccbb61634deb2729bb25931cd]
+
+   file "TODO"
+content [e0ea26c666b37c5f98ccf80cb933d021ee55c593]
+
+   file "branch.psp"
+content [b28ece354969314ce996f3030569215d685973d6]
+
+   file "common.py"
+content [1fdb62e05fb2a9338d2c72ddc58de3ab2b3976fe]
+
+   file "config.py.example"
+content [64cb5898e3a026b4782c343ca4386585e0c3c275]
+
+   file "error.psp"
+content [7152c3ff110418aca5d23c374ea9fb92a0e98379]
+
+   file "fileinbranch.psp"
+content [5d8536100fdf51d505b6f20bc9c16aa78d4e86a8]
+
+   file "headofbranch.psp"
+content [981df124a0b5655a9f78c42504cfa8c6f02b267a]
+
+   file "help.psp"
+content [a43d0588a69e622b2afc681678c2a5c3b3b1f342]
+
+   file "html.py"
+content [18a8bffc8729d7bfd71d2e0cb35a1aed1854fa74]
+
+   file "index.psp"
+content [c621827db187839e1a7c6e51d5f1a7f6e0aa560c]
+
+   file "monotone.py"
+content [708b61436dce59f47bd07397ce96a1cfabe81970]
+
+   file "revision.psp"
+content [a02b1c161006840ea8685e461fd07f0e9bb145a3]
+
+   file "rss_feed.gif"
+content [027515fd4558abf317d54c437b83ec6bc76e3dd8]
+
+   file "tags.psp"
+content [638140d6823eee5844de37d985773be75707fa25]
+
+   file "tarofbranch.psp"
+content [be83f459a152ffd49d89d69555f870291bc85311]
+
+   file "utility.py"
+content [fb51955563d64e628e0e67e4acca1a1abc4cd989]
+
+   file "viewmtn.css"
+content [8d04b3fc352a860b0e3240dcb539c1193705398f]
+
+   file "viewmtn.py"
+content [7cb5c6b1b1710bf2c0fa41e9631ae43b03424a35]
+
+   file "wrapper.py"
+content [530290467a99ca65f87b74f653bf462b28c6cda9]
 @end verbatim
 
 @item Output format:
@@ -6074,8 +6151,8 @@ execute it. This way you can modify how monotone behaves.
 
 You can put new definitions for any of these hook functions in a file
 @file{$HOME/.monotone/monotonerc}, or in your workspace in
-@file{MT/monotonerc}, both of which will be read every time monotone
-runs. Definitions in @file{MT/monotonerc} shadow (override)
+@file{_MTN/monotonerc}, both of which will be read every time monotone
+runs. Definitions in @file{_MTN/monotonerc} shadow (override)
 definitions made in your @file{$HOME/.monotone/monotonerc}. You can also tell
 monotone to interpret extra hook functions from any other @var{file}
 using the @option{--rcfile=@var{file}} option; hooks defined in files
@@ -6233,16 +6310,16 @@ end
 
 Returns a log entry for a given set of changes, described in
 @var{commentary}.  The commentary is identical to the output of
-@command{monotone status}. This hook is intended to interface with
+@command{mtn status}. This hook is intended to interface with
 some sort of editor, so that you can interactively document each
 change you make. The result is used as the value for a
 @code{changelog} certificate, automatically generated when you commit
 changes.
 
-The contents of @file{MT/log} are read and passed as
+The contents of @file{_MTN/log} are read and passed as
 @var{user_log_message}. This allows you to document your changes as
 you proceed instead of waiting until you are ready to commit. Upon
-a successful commit, the contents of @file{MT/log} are erased setting
+a successful commit, the contents of @file{_MTN/log} are erased setting
 the system up for another edit/commit cycle.
 
 For the default definition of this hook, see @ref{Default hooks}.
@@ -6289,7 +6366,7 @@ may affect multiple files simultaneously.
 
 The default definition of this hook recognises a number of common file
 types and extensions for temporary and generated file types that users
-typically don't want to track. If the file @file{.mt-ignore} exists,
+typically don't want to track. If the file @file{.mtn-ignore} exists,
 this hook will read a list of regular expressions from the file, one per
 line, and ignore all files matching one of these expressions. For the
 default definition of this hook, see @ref{Default hooks}.
@@ -6305,7 +6382,7 @@ definition, therefore the default behavior is to list all branches.
 @subsection Netsync Permission Hooks
 
 These hooks are used when running a netsync server, via
-@command{monotone serve}. They are evaluated by the server for each new
+@command{mtn serve}. They are evaluated by the server for each new
 connection, based on the certificate used for authentication by the
 client.  Note that a long-running server will need to be restarted in
 order to reload the hook definitions if the @file{montonerc} file is
@@ -6705,10 +6782,10 @@ Some files in a project are special; they may require different handling
 merged -- see @ref{Merging}), or they may represent executable scripts
 or programs.
 
-Monotone allows each file in a repository to carry arbitrary @ref{File
-Attributes}. Persistent attributes are stored in the @file{.mt-attrs},
-in your workspace and manifest. The hooks in this section allow files
-to be automatically recognised as having certain attributes at the time
+Monotone allows each file (or directory) in a repository to carry
+arbitrary @ref{File Attributes}.  Persistent attributes are stored
+each revision's manifest. The hooks in this section allow files to be
+automatically recognised as having certain attributes at the time
 they're added, and for custom triggers to be invoked on each file
 according to its attributes when the workspace is changed.
 
@@ -6721,11 +6798,11 @@ entry @var{attribute}, is a function taking a file name @var{filename}
 and a attribute value @var{value}. The function should ``apply'' the 
 attribute to the file, possibly in a platform-specific way.
 
-Hook functions from this table are called for each triple found in the
-@file{.mt-attrs} file, after any command which modifies the working
-copy. This facility can be used to extend monotone's understanding of
-files with platform-specific attributes, such as permission bits, access
-control lists, or special file types.
+Hook functions from this table are called for each existing attr,
+after any command which modifies the working copy. This facility can
+be used to extend monotone's understanding of files with
+platform-specific attributes, such as permission bits, access control
+lists, or special file types.
 
 By default, there is only one entry in this table, for the @code{execute}
 attribute. Its definition is:
@@ -6744,10 +6821,10 @@ attr_functions["execute"] =
 @item attr_init_functions [@var{attribute}] (@var{filename})
 
 This is not a hook function, but a @emph{table} of hook
-functions. Each entry in the table @code{attr_init_functions}, at table
-entry @var{attribute}, is a function taking a file name
-@var{filename}. Each function defines the attributes that should be
-stored in @file{.mt-attrs} for the given @var{filename}. This table of
+functions. Each entry in the table @code{attr_init_functions}, at
+table entry @var{attribute}, is a function taking a file (or
+directory) name @var{filename}. Each function defines the attributes
+that should be set on the file named @var{filename}. This table of
 hook functions is called once for each file during an @dfn{add}.
 
 By default, there are only two entries in this table, for the
@@ -6981,10 +7058,9 @@ into UTF-8.
 @item
 Monotone's control files are stored in UTF-8. This includes: revisions
 and manifests, both inside the database and when written to the
-@file{MT/} directory of the workspace; the @file{MT/options} and
-@file{MT/work} files; and the @file{.mt-attrs} file. Converting these
-files to any other character set will cause monotone to break; do not
-do so.
+@file{_MTN/} directory of the workspace; the @file{_MTN/options} and
+@file{_MTN/work} files. Converting these files to any other character
+set will cause monotone to break; do not do so.
 
 @item
 File path names in the workspace are converted to the locale's
@@ -7051,8 +7127,8 @@ loaded.
 
 Monotone's normal form is the UTF-8 character set and the @code{0x0A}
 (LF) line ending form. This form is used in any files monotone needs
-to read, write, and interpret itself, such as: @file{MT/revision},
-@file{MT/work}, @file{MT/options}, @file{.mt-attrs}
+to read, write, and interpret itself, such as: @file{_MTN/revision},
+@file{_MTN/work}, @file{_MTN/options}.
 
 @item LDH
 Letters, digits, and hyphen: the set of ASCII bytes @code{0x2D},
@@ -7219,12 +7295,6 @@ LDH, '@@' and '.' characters, as required for key and cert names.
 @item
 ASCII codes 0x0D (CR), 0x0A (LF), 0x09 (HT), and 0x20 (SP). 
 @end itemize
-
-@heading The @file{.mt-attrs} file
-
-Now uses 0x0A (ASCII LF) as a delimiter, to permit 0x20 in
-filenames. This may change in the future.
-
 
 @page
 @node    Hash Integrity
@@ -7550,7 +7620,7 @@ monotone @minus{} distributed version control system
 @end ifnottex
 
 
-@b{monotone} @i{[options] <command> [parameters]}
+@b{mtn} @i{[options] <command> [parameters]}
 @comment TROFF INPUT: .P
 @comment .P
 
@@ -7747,7 +7817,7 @@ Merge unmerged heads of branch.
 Add files to workspace. adding a file does not copy it into the
 database, merely adds it to the work list. You must @b{commit} your
 changes in order to copy added files to the database.  The missing 
-flag causes those files that @command{monotone ls unknown} would
+flag causes those files that @command{mtn ls unknown} would
 display to be added to the project.
 @comment TROFF INPUT: .TP
 
@@ -7756,7 +7826,7 @@ Drop files from workspace. Files are not deleted from workspace,
 merely noted as removals in the work list, unless the @option{--execute}
 flag is given.  If the @option{--missing} flag is given any files that
 monotone is tracking but which are not present in the workspace
-(ie. the output that @command{monotone ls missing} would give) are
+(ie. the output that @command{mtn ls missing} would give) are
 dropped.
 @comment TROFF INPUT: .TP
 
@@ -7770,10 +7840,10 @@ associated with it.  If @option{--message} is provided on the command
 line, it is used; if @option{--message-file} is provided, the content of
 the named file will be used as a commit message.  If the filename is '-'
 the commit message will be read from standard input.  Otherwise a log
-message editor will be invoked.  If the file @file{MT/log} exists and is
+message editor will be invoked.  If the file @file{_MTN/log} exists and is
 non-empty, its content is used to prefill the editor.  You cannot
 specify both @option{--message} and @option{--message-file} at the same
-time, and if @file{MT/log} exists and is non-empty, you can cannot
+time, and if @file{_MTN/log} exists and is non-empty, you can cannot
 specify either of them at all.
 @comment TROFF INPUT: .TP
 
@@ -7864,12 +7934,12 @@ Redirect the log lines to to @i{<file>}.
 @comment TROFF INPUT: .TP
 
 @item @b{--nostd}
-Do not evaluate "standard" Lua hooks compiled into @b{monotone}.
+Do not evaluate "standard" Lua hooks compiled into @b{mtn}.
 @comment TROFF INPUT: .TP
 
 @item @b{--norc}
 Do not load Lua hooks from user's @b{~/.monotone/monotonerc} or the
-workspace's @b{MT/monotonerc} file.
+workspace's @b{_MTN/monotonerc} file.
 @comment TROFF INPUT: .TP
 
 @item @b{--rcfile=}@i{<file>}
@@ -7931,7 +8001,7 @@ committing a new revision, rather than the current time.  Useful when
 importing history from another version control system.
 
 @item @b{--root=}@i{<root dir>}
-Stop the search for a workspace (containing the @file{MT} directory)
+Stop the search for a workspace (containing the @file{_MTN} directory)
 at the specified root directory rather than at the physical root of the
 filesystem.
 

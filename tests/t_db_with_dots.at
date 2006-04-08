@@ -1,15 +1,15 @@
 AT_SETUP([--db with ..])
-MONOTONE_SETUP
+MTN_SETUP
 
 AT_CHECK(mkdir foo)
-AT_CHECK( (cd foo && MONOTONE --db=../new.db db init), [], [ignore], [ignore])
-AT_CHECK( (cd foo && MONOTONE --db=../new.db ls branches), [], [ignore], [ignore])
+AT_CHECK( (cd foo && MTN --db=../new.db db init), [], [ignore], [ignore])
+AT_CHECK( (cd foo && MTN --db=../new.db ls branches), [], [ignore], [ignore])
 
-# paths in MT/options should be absolute and not contain ..
+# paths in _MTN/options should be absolute and not contain ..
 
 AT_CHECK(mkdir bar)
-AT_CHECK( (cd bar && MONOTONE --db=../new.db --branch=testbranch setup .), [], [ignore], [ignore])
-AT_CHECK(grep new.db bar/MT/options, [], [ignore], [ignore])
-AT_CHECK(grep new.db bar/MT/options | grep -v '\.\.', [], [ignore], [ignore])
+AT_CHECK( (cd bar && MTN --db=../new.db --branch=testbranch setup .), [], [ignore], [ignore])
+AT_CHECK(grep new.db bar/_MTN/options, [], [ignore], [ignore])
+AT_CHECK(grep new.db bar/_MTN/options | grep -v '\.\.', [], [ignore], [ignore])
 
 AT_CLEANUP

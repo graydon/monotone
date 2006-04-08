@@ -1,7 +1,7 @@
 AT_SETUP([automate automate_version])
-MONOTONE_SETUP
+MTN_SETUP
 
-AT_CHECK(MONOTONE automate interface_version, [], [stdout], [ignore])
+AT_CHECK(MTN automate interface_version, [], [stdout], [ignore])
 AT_CHECK(mv stdout a_v)
 
 # MinGW's wc produces "      1" as output.  Arithmetic comparison works, string comparison doesn't

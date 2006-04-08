@@ -1,5 +1,5 @@
 AT_SETUP([restricted commands are consistent])
-MONOTONE_SETUP
+MTN_SETUP
 
 # the following commands accept file arguments and --exclude and --depth
 # options used to define a restriction on the files that will be processed:
@@ -39,7 +39,7 @@ AT_DATA(foo/bar/bar2, [bar2 $1
 
 # $1 the monotone command and associated arguments to run
 m4_define([RUN], [
-AT_CHECK(MONOTONE $1, [], [stdout], [stderr])
+AT_CHECK(MTN $1, [], [stdout], [stderr])
 ])
 
 # $1 0 or 1 to indicate whether grep should find find words in the output or not
@@ -97,7 +97,7 @@ AT_CHECK(mkdir foo)
 AT_CHECK(mkdir foo/bar)
 
 PATCH_FILES(initial addition of files)
-AT_CHECK(MONOTONE add file1 file2 foo, [], [ignore], [ignore])
+AT_CHECK(MTN add file1 file2 foo, [], [ignore], [ignore])
 COMMIT(testbranch)
 
 # check that ls unknown/ignored/missing/known, status, diff, revert and commit
@@ -106,13 +106,13 @@ COMMIT(testbranch)
 # ls unknown 
 
 # dropped files are valid for restriction but are unknown in the post-state
-AT_CHECK(MONOTONE drop file1 file2 foo/foo1 foo/foo2 foo/bar/bar1 foo/bar/bar2, [], [ignore], [ignore])
+AT_CHECK(MTN drop file1 file2 foo/foo1 foo/foo2 foo/bar/bar1 foo/bar/bar2, [], [ignore], [ignore])
 TEST(ls unknown $ROOT_ARGS, stdout, $ROOT_INCLUDED, $ROOT_EXCLUDED)
 TEST(ls unknown $INCLUDE_ARGS, stdout, $INCLUDE_INCLUDED, $INCLUDE_EXCLUDED)
 TEST(ls unknown $EXCLUDE_ARGS, stdout, $EXCLUDE_INCLUDED, $EXCLUDE_EXCLUDED)
 TEST(ls unknown $BOTH_ARGS, stdout, $BOTH_INCLUDED, $BOTH_EXCLUDED)
 TEST(ls unknown $DEPTH_ARGS, stdout, $DEPTH_INCLUDED, $DEPTH_EXCLUDED)
-AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
+AT_CHECK(MTN revert ., [], [ignore], [ignore])
 
 # ls ignored
 
@@ -125,13 +125,13 @@ end
 ])
 
 # only unknown files are considered by ls ignored
-AT_CHECK(MONOTONE drop file1 file2 foo/foo1 foo/foo2 foo/bar/bar1 foo/bar/bar2, [], [ignore], [ignore])
+AT_CHECK(MTN drop file1 file2 foo/foo1 foo/foo2 foo/bar/bar1 foo/bar/bar2, [], [ignore], [ignore])
 TEST(ls ignored --rcfile ignore.lua $ROOT_ARGS, stdout, $ROOT_INCLUDED, $ROOT_EXCLUDED)
 TEST(ls ignored --rcfile ignore.lua $INCLUDE_ARGS, stdout, $INCLUDE_INCLUDED, $INCLUDE_EXCLUDED)
 TEST(ls ignored --rcfile ignore.lua $EXCLUDE_ARGS, stdout, $EXCLUDE_INCLUDED, $EXCLUDE_EXCLUDED)
 TEST(ls ignored --rcfile ignore.lua $BOTH_ARGS, stdout, $BOTH_INCLUDED, $BOTH_EXCLUDED)
 TEST(ls ignored --rcfile ignore.lua $DEPTH_ARGS, stdout, $DEPTH_INCLUDED, $DEPTH_EXCLUDED)
-AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
+AT_CHECK(MTN revert ., [], [ignore], [ignore])
 
 # ls missing
 
@@ -141,7 +141,7 @@ TEST(ls missing $INCLUDE_ARGS, stdout, $INCLUDE_INCLUDED, $INCLUDE_EXCLUDED)
 TEST(ls missing $EXCLUDE_ARGS, stdout, $EXCLUDE_INCLUDED, $EXCLUDE_EXCLUDED)
 TEST(ls missing $BOTH_ARGS, stdout, $BOTH_INCLUDED, $BOTH_EXCLUDED)
 TEST(ls missing $DEPTH_ARGS, stdout, $DEPTH_INCLUDED, $DEPTH_EXCLUDED)
-AT_CHECK(MONOTONE revert ., [], [ignore], [ignore])
+AT_CHECK(MTN revert ., [], [ignore], [ignore])
 
 PATCH_FILES(changes for testing ls known, status, diff)
 
@@ -193,9 +193,9 @@ PATCH_FILES(commit root)
 RUN(commit -m root $ROOT_ARGS)
 NEW=`BASE_REVISION`
 
-AT_CHECK(MONOTONE status, [], [stdout], [stderr])
+AT_CHECK(MTN status, [], [stdout], [stderr])
 CHECK(stdout, $ROOT_EXCLUDED, $ROOT_INCLUDED)
-AT_CHECK(MONOTONE diff -r $OLD -r $NEW, [], [stdout], [ignore])
+AT_CHECK(MTN diff -r $OLD -r $NEW, [], [stdout], [ignore])
 CHECK(stdout, $ROOT_INCLUDED, $ROOT_EXCLUDED)
 
 OLD=`BASE_REVISION`
@@ -203,9 +203,9 @@ PATCH_FILES(commit includes)
 RUN(commit -m includes $INCLUDE_ARGS)
 NEW=`BASE_REVISION`
 
-AT_CHECK(MONOTONE diff -r $OLD -r $NEW, [], [stdout], [ignore])
+AT_CHECK(MTN diff -r $OLD -r $NEW, [], [stdout], [ignore])
 CHECK(stdout, $INCLUDE_INCLUDED, $INCLUDE_EXCLUDED)
-AT_CHECK(MONOTONE diff -r $OLD -r $NEW, [], [stdout], [ignore])
+AT_CHECK(MTN diff -r $OLD -r $NEW, [], [stdout], [ignore])
 CHECK(stdout, $INCLUDE_INCLUDED, $INCLUDE_EXCLUDED)
 
 OLD=`BASE_REVISION`
@@ -213,9 +213,9 @@ PATCH_FILES(commit excludes)
 RUN(commit -m excludes $EXCLUDE_ARGS)
 NEW=`BASE_REVISION`
 
-AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(MTN status, [], [stdout], [ignore])
 CHECK(stdout, $EXCLUDE_EXCLUDED, $EXCLUDE_INCLUDED)
-AT_CHECK(MONOTONE diff -r $OLD -r $NEW, [], [stdout], [ignore])
+AT_CHECK(MTN diff -r $OLD -r $NEW, [], [stdout], [ignore])
 CHECK(stdout, $EXCLUDE_INCLUDED, $EXCLUDE_EXCLUDED)
 
 OLD=`BASE_REVISION`
@@ -223,9 +223,9 @@ PATCH_FILES(commit both)
 RUN(commit -m both $BOTH_ARGS)
 NEW=`BASE_REVISION`
 
-AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(MTN status, [], [stdout], [ignore])
 CHECK(stdout, $BOTH_EXCLUDED, $BOTH_INCLUDED)
-AT_CHECK(MONOTONE diff -r $OLD -r $NEW, [], [stdout], [ignore])
+AT_CHECK(MTN diff -r $OLD -r $NEW, [], [stdout], [ignore])
 CHECK(stdout, $BOTH_INCLUDED, $BOTH_EXCLUDED)
 
 OLD=`BASE_REVISION`
@@ -233,9 +233,9 @@ PATCH_FILES(commit depth)
 RUN(commit -m depth $DEPTH_ARGS)
 NEW=`BASE_REVISION`
 
-AT_CHECK(MONOTONE status, [], [stdout], [ignore])
+AT_CHECK(MTN status, [], [stdout], [ignore])
 CHECK(stdout, $DEPTH_EXCLUDED, $DEPTH_INCLUDED)
-AT_CHECK(MONOTONE diff -r $OLD -r $NEW, [], [stdout], [ignore])
+AT_CHECK(MTN diff -r $OLD -r $NEW, [], [stdout], [ignore])
 CHECK(stdout, $DEPTH_INCLUDED, $DEPTH_EXCLUDED)
 
 AT_CLEANUP
