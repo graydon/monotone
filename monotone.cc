@@ -290,7 +290,7 @@ cpp_main(int argc, char ** argv)
   save_initial_path();
   utf8_argv uv(argc, argv);
 
-  utf8 prog_name(fs::path(uv.argv[0]).leaf());
+  utf8 prog_name(fs::basename(fs::path(uv.argv[0])));
 
   // prepare for arg parsing
 
