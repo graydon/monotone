@@ -67,7 +67,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib"
 				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib popt.lib iconv.lib charset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
-				OutputFile="$(outdir)\$(ProjectName).exe"
+				OutputFile="$(outdir)\mtn.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(ProjectDir)\..\..\libiconv-1.9.1\lib&quot;;&quot;$(ProjectDir)\..\..\zlib-1.2.3\projects\visualc6\Win32_LIB_Release&quot;;&quot;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Debug&quot;;C:\Boost\lib"
 				GenerateDebugInformation="true"
@@ -159,7 +159,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMT.lib"
 				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib popt.lib iconv.lib charset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
-				OutputFile="$(outdir)/monotone.exe"
+				OutputFile="$(outdir)/mtn.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(ProjectDir)\..\..\libiconv-1.9.1\libcharset\lib&quot;;&quot;$(ProjectDir)\..\..\libiconv-1.9.1\lib&quot;;&quot;$(ProjectDir)\..\..\zlib-1.2.3\projects\visualc6\Win32_LIB_Release&quot;;&quot;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Release&quot;;C:\Boost\lib"
 				GenerateDebugInformation="true"
@@ -276,10 +276,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\inodeprint.cc"
-				>
-			</File>
-			<File
 				RelativePath="..\win32\inodeprint.cc"
 				>
 				<FileConfiguration
@@ -300,6 +296,10 @@
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\inodeprint.cc"
+				>
 			</File>
 			<File
 				RelativePath="..\key_store.cc"
