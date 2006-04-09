@@ -191,6 +191,7 @@ is_valid_internal(std::string const & path)
 
 file_path::file_path(file_path::source_type type, std::string const & path)
 {
+  MM(path);
   I(utf8_validate(path));
   switch (type)
     {

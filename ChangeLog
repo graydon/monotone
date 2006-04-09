@@ -1,3 +1,7 @@
+2006-04-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc (file_path::file_path): MM() on source path.
+
 2006-04-08  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Finish paragraph that stopped in the
