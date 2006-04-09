@@ -840,6 +840,12 @@ check_db(app_state & app)
                missing_certs, mismatched_certs,
                unchecked_sigs, bad_sigs);
 
+  // NOTE: any new sorts of problems need to have added:
+  //   -- a message here, that tells the use about them
+  //   -- entries in one _or both_ of the sums calculated at the end
+  //   -- an entry added to the manual, which describes in detail why the
+  //      error occurs and what it means to the user
+
   if (missing_files > 0) 
     W(F("%d missing files\n") % missing_files);
   if (unreferenced_files > 0) 
