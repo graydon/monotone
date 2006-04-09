@@ -8,6 +8,20 @@
 
 2006-04-08  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.texi: Several little content improvements, scattered
+	throughout.
+	(Automation): Document new rev and manifest formats.  Document new
+	packet commands.
+	* database_check.cc: Add a comment to warn people that there are
+	detailed docs on this, so if they add new stuff they'll want to
+	add new docs too.
+	* automate.cc (automate_get_manifest_of, automate_get_revision):
+	Re-sync docs to manual.
+	(automate_packet_for_fdata): Fix copy/paste error in error
+	message.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
 	* netxx/resolve_gethostbyname.cxx (resolve_hostname): #ifdef out
 	Win32-incompatible error reporting call.
 
