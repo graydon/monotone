@@ -2030,6 +2030,7 @@ process_netsync_args(std::string const & name,
   // handle include/exclude args
   if (serve_mode || (args.size() >= 2 || !app.exclude_patterns.empty()))
     {
+      E(serve_mode || args.size() >= 2, F("no branch pattern given"));
       int pattern_offset = (serve_mode ? 0 : 1);
       std::set<utf8> patterns(args.begin() + pattern_offset, args.end());
       combine_and_check_globish(patterns, include_pattern);
