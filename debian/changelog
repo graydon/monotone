@@ -1,3 +1,11 @@
+monotone (0.26.0-0.1) unstable; urgency=low
+
+  * New upstream release.  (NB: The official upstream version number
+    is "0.26", but an error with the pre-release packages makes the
+    extra ".0" necessary.)
+
+ -- Nathaniel Smith <njs@pobox.com>  Sat,  8 Apr 2006 19:42:55 -0700
+
 monotone (0.26pre3-0.1) unstable; urgency=low
 
   * New upstream release.

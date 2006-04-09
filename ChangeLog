@@ -1,3 +1,9 @@
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac, debian/changelog, win32/monotone.iss: 
+	* monotone.spec: Bump version number to 0.26.
+	* NEWS: Insert release time.
+
 2006-04-08  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* commands.cc (process_netsync_args): fix crash when calling netsync
