@@ -1,3 +1,10 @@
+2006-04-11  Richard Levitte  <richard@levitte.org>
+
+	* netxx/resolve_getaddrinfo.cxx (resolve_hostname): monotone might
+	be compiled on a computer that has AI_ADDRCONFIG and run on one
+	that doesn't understand that flag.  If the error EAI_BADFLAGS is
+	returned, try again without AI_ADDRCONFIG.
+
 2006-04-10  Richard Levitte  <richard@levitte.org>
 
 	* contrib/usher.cc: Changed all reference to "monotone" to the new

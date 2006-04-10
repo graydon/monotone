@@ -82,6 +82,17 @@ void Netxx::resolve_hostname (const char *hostname, port_type port, bool use_ipv
     flags.ai_socktype = SOCK_STREAM;
 
     int gai_error = getaddrinfo(hostname, 0, &flags, &info);
+
+    // Because we might compile on a computer that has AI_ADDRCONFIG and
+    // run on one that doesn't, we need to check for EAI_BADFLAGS, and
+    // try again without AI_ADDRCONFIG in that case.
+#ifdef AI_ADDRCONFIG
+    if (gai_error == EAI_BADFLAGS) {
+	flags.ai_flags &= ~AI_ADDRCONFIG;
+	gai_error = getaddrinfo(hostname, 0, &flags, &info);
+    }
+#endif
+
     if (gai_error != 0) {
 	std::string error("name resolution failure for "); error += hostname;
 	error += ": "; error += gai_strerror(gai_error);
