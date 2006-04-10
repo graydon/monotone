@@ -1,5 +1,13 @@
 2006-04-09  Nathaniel Smith  <njs@pobox.com>
 
+	* restrictions.{cc,hh}: Audit use of node id sources, and make a
+	number of functions take an explicit node_id_source argument.
+	* roster.cc (make_roster_for_base_plus_cset): Also take an
+	explicit node_id_source.
+	* commands.cc, automate.cc: Update to match new calling conventions.
+
+2006-04-09  Nathaniel Smith  <njs@pobox.com>
+
 	* std_hooks.lua (accept_testresult_change): s/MT/_MTN/, thanks to
 	Alex Queiroz for the catch...
 

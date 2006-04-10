@@ -1684,12 +1684,12 @@ void
 make_roster_for_base_plus_cset(revision_id const & base, cset const & cs,
                                revision_id const & new_rid,
                                roster_t & new_roster, marking_map & new_markings,
+                               node_id_source & nis,
                                app_state & app)
 {
   MM(base);
   MM(cs);
   app.db.get_roster(base, new_roster, new_markings);
-  temp_node_id_source nis;
   editable_roster_for_nonmerge er(new_roster, nis, new_rid, new_markings);
   cs.apply_to(er);
 }

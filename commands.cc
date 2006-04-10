@@ -367,9 +367,9 @@ maybe_update_inodeprints(app_state & app)
   inodeprint_map ipm_new;
   revision_set rev;
   roster_t old_roster, new_roster;
-  get_unrestricted_working_revision_and_rosters(app, rev, 
-                                                old_roster, 
-                                                new_roster);
+  temp_node_id_source nis;
+  get_unrestricted_working_revision_and_rosters(app, rev,
+                                                old_roster, new_roster, nis);
   
   node_map const & new_nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
@@ -1362,9 +1362,10 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   revision_set rs;
   roster_t old_roster, new_roster;
   data tmp;
+  temp_node_id_source nis;
 
   app.require_workspace();
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
+  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, nis);
 
   if (global_sanity.brief)
     {
@@ -1723,11 +1724,12 @@ ls_known (app_state & app, vector<utf8> const & args)
   revision_set rs;
   roster_t old_roster, new_roster;
   data tmp;
+  temp_node_id_source nis;
 
   app.require_workspace();
 
   path_set paths;
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
+  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, nis);
   new_roster.extract_path_set(paths);
   
   for (path_set::const_iterator p = paths.begin(); p != paths.end(); ++p)
@@ -1745,8 +1747,9 @@ find_unknown_and_ignored (app_state & app, bool want_ignored, vector<utf8> const
   revision_set rev;
   roster_t old_roster, new_roster;
   path_set known;
+  temp_node_id_source nis;
 
-  get_working_revision_and_rosters(app, args, rev, old_roster, new_roster);
+  get_working_revision_and_rosters(app, args, rev, old_roster, new_roster, nis);
   new_roster.extract_path_set(known);
 
   file_itemizer u(app, known, unknown, ignored);
@@ -1819,9 +1822,10 @@ ls_changed (app_state & app, vector<utf8> const & args)
   roster_t old_roster, new_roster;
   data tmp;
   std::set<file_path> files;
+  temp_node_id_source nis;
 
   app.require_workspace();
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster);
+  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, nis);
 
   I(rs.edges.size() == 1);
   cset const & cs = edge_changes(rs.edges.begin());
@@ -2221,7 +2225,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
   roster_t old_roster, new_roster;
 
   app.require_workspace();
-  get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster);
+  temp_node_id_source nis;
+  get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster, nis);
   
   file_path path = file_path_external(idx(args,1));
   split_path sp;
@@ -2338,13 +2343,14 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   revision_set rs;
   revision_id rid;
   roster_t old_roster, new_roster;
+  temp_node_id_source nis;
   
   app.make_branch_sticky();
   app.require_workspace();
 
   // preserve excluded work for future commmits
   cset excluded_work;
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, excluded_work);
+  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, excluded_work, nis);
   calculate_ident(rs, rid);
 
   N(rs.is_nontrivial(), F("no changes to commit\n"));
@@ -2723,6 +2729,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   bool new_is_archived;
   diff_type type = app.diff_format;
   ostringstream header;
+  temp_node_id_source nis;
 
   if (app.diff_args_provided)
     N(app.diff_format == external_diff,
@@ -2744,7 +2751,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       get_working_revision_and_rosters(app, args, r_new,
                                        old_roster, 
                                        new_roster,
-                                       excluded);
+                                       excluded,
+                                       nis);
 
       I(r_new.edges.size() == 1 || r_new.edges.size() == 0);
       if (r_new.edges.size() == 1)
@@ -2763,7 +2771,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       get_working_revision_and_rosters(app, args, r_new,
                                        old_roster, 
                                        new_roster,
-                                       excluded);
+                                       excluded,
+                                       nis);
       // Clobber old_roster with the one specified
       app.db.get_revision(r_old_id, r_old);
       app.db.get_roster(r_old_id, old_roster);
@@ -2875,6 +2884,7 @@ CMD(update, N_("workspace"), "",
   boost::shared_ptr<roster_t> old_roster = boost::shared_ptr<roster_t>(new roster_t());
   marking_map working_mm, chosen_mm, merged_mm, target_mm;
   revision_id r_old_id, r_working_id, r_chosen_id, r_target_id;
+  temp_node_id_source nis;
 
   if (args.size() > 0)
     throw usage(name);
@@ -2891,14 +2901,14 @@ CMD(update, N_("workspace"), "",
 
   get_unrestricted_working_revision_and_rosters(app, r_working,
                                                 *old_roster, 
-                                                working_roster);
+                                                working_roster, nis);
   calculate_ident(r_working, r_working_id);
   I(r_working.edges.size() == 1);
   r_old_id = edge_old_revision(r_working.edges.begin());
   make_roster_for_base_plus_cset(r_old_id, 
                                  edge_changes(r_working.edges.begin()),
                                  r_working_id,
-                                 working_roster, working_mm, app);
+                                 working_roster, working_mm, nis, app);
 
   N(!null_id(r_old_id),
     F("this workspace is a new project; cannot update"));
@@ -3015,7 +3025,7 @@ CMD(update, N_("workspace"), "",
       make_roster_for_base_plus_cset(r_old_id, 
                                      transplant,
                                      r_target_id,
-                                     target_roster, target_mm, app);
+                                     target_roster, target_mm, nis, app);
       chosen_uncommon_ancestors.insert(r_target_id);
     }
 
@@ -3645,8 +3655,10 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
 
-  set<node_id> nodes;
+  temp_node_id_source nis;
 
+  set<node_id> nodes;
+  
   set<revision_id> frontier;
 
   revision_id first_rid;
@@ -3675,7 +3687,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       revision_set rev;
 
       if (app.revision_selectors.size() == 0)
-        get_unrestricted_working_revision_and_rosters(app, rev, old_roster, new_roster);
+        get_unrestricted_working_revision_and_rosters(app, rev, old_roster, new_roster, nis);
       else
         app.db.get_roster(first_rid, new_roster);          
 

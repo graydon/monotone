@@ -359,6 +359,7 @@ make_roster_for_base_plus_cset(revision_id const & base,
                                revision_id const & new_rid,
                                roster_t & result, 
                                marking_map & marking,
+                               node_id_source & nis,
                                app_state & app);
 
 void 
