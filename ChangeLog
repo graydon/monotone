@@ -1,3 +1,7 @@
+2006-04-11  Henry Nestler  <Henry@BigFoot.de>
+
+	* contrib/mtbrowse.sh: Binary call to mtn
+
 2006-04-11  Richard Levitte  <richard@levitte.org>
 
 	* netxx/resolve_getaddrinfo.cxx (resolve_hostname): monotone might
