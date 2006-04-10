@@ -3939,6 +3939,8 @@ CMD(automate, N_("automation"),
   ++i;
   vector<utf8> cmd_args(i, args.end());
 
+  make_io_binary();
+
   automate_command(cmd, cmd_args, name, app, cout);
 }
 
