@@ -2,6 +2,28 @@
 
 	* paths.cc (file_path::file_path): MM() on source path.
 
+2006-04-09  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* platform.hh (make_io_binary): new function, turn off textmode
+	"\n"->"\r\n" translation on Windows
+	* {win32,unix}/make_io_binary.cc: Implementations of said function.
+	* commands.cc (automate): Use said function so our output doesn't get
+	mangled. (Mostly important for "automate stdio".)
+	* Makefile.am: Add the new files.
+
+2006-04-09  Nathaniel Smith  <njs@pobox.com>
+
+	* restrictions.{cc,hh}: Audit use of node id sources, and make a
+	number of functions take an explicit node_id_source argument.
+	* roster.cc (make_roster_for_base_plus_cset): Also take an
+	explicit node_id_source.
+	* commands.cc, automate.cc: Update to match new calling conventions.
+
+2006-04-09  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (accept_testresult_change): s/MT/_MTN/, thanks to
+	Alex Queiroz for the catch...
+
 2006-04-08  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Finish paragraph that stopped in the

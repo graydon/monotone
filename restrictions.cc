@@ -178,6 +178,10 @@ remap_paths(path_set const & old_paths,
             path_set & new_paths)
 {
   new_paths.clear();
+  // FIXME: This use of temp_node_id_source is dubious.  So long as r_old
+  // contains no temp nids, it is safe.  ATM, this is always the case.  Even
+  // if it stops being the case, the worst that will happen is that things
+  // crash horribly when we try to add a node that already exists...
   temp_node_id_source nis;
   roster_t r_tmp = r_old;
   editable_roster_base er(r_tmp, nis);
@@ -242,7 +246,8 @@ get_working_revision_and_rosters(app_state & app,
                                  revision_set & rev,
                                  roster_t & old_roster,
                                  roster_t & new_roster,
-                                 cset & excluded)
+                                 cset & excluded,
+                                 node_id_source & nis)
 {
   revision_id old_revision_id;
   boost::shared_ptr<cset> cs(new cset());
@@ -256,7 +261,6 @@ get_working_revision_and_rosters(app_state & app,
                                    new_paths, 
                                    *cs, excluded);
 
-  temp_node_id_source nis;
   new_roster = old_roster;
   editable_roster_base er(new_roster, nis);
   cs->apply_to(er);
@@ -300,23 +304,25 @@ get_working_revision_and_rosters(app_state & app,
                                  std::vector<utf8> const & args,
                                  revision_set & rev,
                                  roster_t & old_roster,
-                                 roster_t & new_roster)
+                                 roster_t & new_roster,
+                                 node_id_source & nis)
 {
   cset excluded;
   get_working_revision_and_rosters(app, args, rev, 
-                                   old_roster, new_roster, excluded);
+                                   old_roster, new_roster, excluded, nis);
 }
 
 void
 get_unrestricted_working_revision_and_rosters(app_state & app, 
                                               revision_set & rev,
                                               roster_t & old_roster,
-                                              roster_t & new_roster)
+                                              roster_t & new_roster,
+                                              node_id_source & nis)
 {
   std::vector<utf8> empty_args;
   std::set<utf8> saved_exclude_patterns(app.exclude_patterns);
   app.exclude_patterns.clear();
-  get_working_revision_and_rosters(app, empty_args, rev, old_roster, new_roster);
+  get_working_revision_and_rosters(app, empty_args, rev, old_roster, new_roster, nis);
   app.exclude_patterns = saved_exclude_patterns;
 }
 
