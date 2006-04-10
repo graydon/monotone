@@ -276,10 +276,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\inodeprint.cc"
-				>
-			</File>
-			<File
 				RelativePath="..\win32\inodeprint.cc"
 				>
 				<FileConfiguration
@@ -300,6 +296,10 @@
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\inodeprint.cc"
+				>
 			</File>
 			<File
 				RelativePath="..\key_store.cc"
@@ -323,6 +323,10 @@
 			</File>
 			<File
 				RelativePath="..\main.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\win32\make_io_binary.cc"
 				>
 			</File>
 			<File
