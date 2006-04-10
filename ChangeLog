@@ -1,3 +1,8 @@
+2006-04-09  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (accept_testresult_change): s/MT/_MTN/, thanks to
+	Alex Queiroz for the catch...
+
 2006-04-08  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Finish paragraph that stopped in the
