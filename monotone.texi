@@ -2981,13 +2981,16 @@ Contains database-global configuration information.  Defined names are:
 @table @code
 @item default-exclude-pattern
 The default branch exclusion glob pattern for netsync operations to
-use. Automatically set by first use of netsync.
+use. Automatically set by first use of netsync, and by any netsync
+that uses the @option{--set-default} option.
 @item default-include-pattern
 The default branch glob pattern for netsync operations to use.
-Automatically set by first use of netsync.
+Automatically set by first use of netsync, and by any netsync that
+uses the @option{--set-default} option.
 @item default-server
 The default server for netsync operations to use.  Automatically set
-by first use of netsync.
+by first use of netsync, and by any netsync that uses the
+@option{--set-default} option.
 @end table
 
 @item known-servers
@@ -3044,6 +3047,13 @@ Any file name beginning with @file{.mtn-}
 @item Non-versioned control files
 Any file in the directory @file{_MTN/}
 @end table
+
+The general intention is that versioned control files are things that
+you may want to edit directly.  In comparison, you should never have
+to edit non-versioned control files directly; monotone should do that
+for you whenever it is appropriate.  However, both are documented
+here, just in case a situation arises where you need to go ``under the
+hood''.
 
 @heading Existing control files
 
@@ -3700,6 +3710,8 @@ these entries:
 
 @smallexample
 @group
+dir ""
+
    file "Makefile"
 content [84e2c30a2571bd627918deee1e6613d34e64a29e]
 
@@ -3714,6 +3726,7 @@ content [97dfc6fd4f486df95868d85b4b81197014ae2a84]
 Then the following files are created:
 @smallexample
 @group
+@var{directory}/
 @var{directory}/Makefile
 @var{directory}/include/hello.h
 @var{directory}/src/hello.c
@@ -4196,9 +4209,9 @@ This command prints a description of the ``status'' of your workspace.
 In particular, it prints:
 @itemize
 @item 
-The ``base revision ID'' and ``base manifest ID'', which are
-referenced by the file @file{_MTN/revision}, and which your workspace
-is an in-progress descendent of.
+The ``base revision ID'', which is referenced by the file
+@file{_MTN/revision}, and which your workspace is an in-progress
+descendent of.
 @item
 The ``current manifest ID'', which is the ID of the manifest which
 results from applying @file{_MTN/work} to the base manifest, and
@@ -4627,37 +4640,36 @@ public key -- from one monotone database to another, it is often
 convenient to read and write packets.
 
 @emph{Note:} earlier versions of monotone queued and replayed packet
-streams for their networking system. This older networking system is
-deprecated and will be removed in a future version, as the netsync
-protocol has several properties which make it advantageous as a
-communication system. However, the packet i/o facility will remain in
-monotone as a utility for moving individual data items around
-manually.
+streams for their networking system. This older networking system has
+been removed, as the netsync protocol has several properties which
+make it a superior communication system. However, the packet I/O
+facility will remain in monotone as a utility for moving individual
+data items around manually.
 
 @ftable @command
-@itemx monotone certs @var{id}
+@itemx monotone automate packets_for_certs @var{id}
 
 This command prints out an @code{rcert} packet for each cert in your
 database associated with @var{id}. These can be used to transport
-certificates safely between monotone databases.
+certificates safely between monotone databases.  See @ref{Automation}
+for details of this command.
 
-@item monotone fdata @var{id}
-@itemx monotone mdata @var{id}
-@itemx monotone rdata @var{id}
+@item monotone automate packet_for_fdata @var{id}
+@itemx monotone automate packet_for_rdata @var{id}
 
-These commands print out an @code{fdata}, @code{mdata} or @code{rdata}
-packet for the file, manifest or revision @var{id} in your database.
-These can be used to transport files, manifests or revisions, in their
-entirety, safely between monotone databases.
+These commands print out an @code{fdata} or @code{rdata} packet for
+the file, manifest or revision @var{id} in your database.  These can
+be used to transport files or revisions, in their entirety, safely
+between monotone databases.  See @ref{Automation} for details of these
+commands.
 
+@item monotone automate packet_for_fdelta @var{id1} @var{id2}
 
-@item monotone fdelta @var{id1} @var{id2}
-@itemx monotone mdelta @var{id1} @var{id2}
-
-These commands print out an @code{fdelta} or @code{mdelta} packet for
-the differences between file or manifest versions @var{id1} and
-@var{id2}, in your database.  These can be used to transport file or
-manifest differences safely between monotone databases.
+This command prints out an @code{fdelta} packet for the differences
+between file versions @var{id1} and @var{id2}, in your database.
+These can be used to transport file differences safely between
+monotone databases.  See @ref{Automation} for details of this
+command.
 
 @item monotone privkey @var{keyid}
 @itemx monotone pubkey @var{keyid}
@@ -5837,45 +5849,8 @@ determined from the workspace.
 
 @item Purpose:
 
-Prints changeset information for the specified revision id.
+Prints change information for the specified revision id.
 
-There are several changes that are described; each of these is described by 
-a different basic_io stanza. The first string pair of each stanza indicates the 
-type of change represented. 
-
-Possible values of this first value are along with an ordered list of 
-basic_io formatted string pairs that will be provided are:
-
-@verbatim
-'old_revision'
-      represents a parent revision.
-      format: ('old_revision', revision id)
-'new_manifest'
-      represents the new manifest associated with the revision.
-      format: ('new_manifest', manifest id)
-'old_manifest'
-      represents a manifest associated with a parent revision.
-      format: ('old_manifest', manifest id)
-'patch'
-      represents a file that was modified.
-      format: ('patch', filename), ('from', file id), ('to', file id)
-'add_file'
-      represents a file that was added.
-      format: ('add_file', filename)
-'delete_file'
-      represents a file that was deleted.
-      format: ('delete_file', filename)
-'delete_dir'
-      represents a directory that was deleted.
-      format: ('delete_dir', filename)
-'rename_file'
-      represents a file that was renamed.
-      format: ('rename_file', old filename), ('to', new filename)
-'rename_dir'
-      represents a directory that was renamed.
-      format: ('rename_dir', old filename), ('to', new filename)
-@end verbatim
- 
 @item Sample output:
 
 @verbatim
@@ -5896,9 +5871,62 @@ patch "std_hooks.lua"
 
 @item Output format:
 
+There are several changes that are described; each of these is described by 
+a different basic_io stanza. The first string pair of each stanza indicates the 
+type of change represented. 
+
 All stanzas are formatted by basic_io. Stanzas are separated 
 by a blank line. Values will be escaped, '\' to '\\' and 
 '"' to '\"'.
+
+Possible values of this first value are along with an ordered list of 
+basic_io formatted stanzas that will be provided are:
+
+@verbatim
+'format_version'
+      used in case this format ever needs to change.
+      format: ('format_version', the string "1")
+      occurs: exactly once
+'new_manifest'
+      represents the new manifest associated with the revision.
+      format: ('new_manifest', manifest id)
+      occurs: exactly one
+'old_revision'
+      represents a parent revision.
+      format: ('old_revision', revision id)
+      occurs: either one or two times
+'delete
+      represents a file or directory that was deleted.
+      format: ('delete', path)
+      occurs: zero or more times
+'rename'
+      represents a file or directory that was renamed.
+      format: ('rename, old filename), ('to', new filename)
+      occurs: zero or more times
+'add_dir'
+      represents a directory that was added.
+      format: ('add_dir, path)
+      occurs: zero or more times
+'add_file'
+      represents a file that was added.
+      format: ('add_file', path), ('content', file id)
+      occurs: zero or more times
+'patch'
+      represents a file that was modified.
+      format: ('patch', filename), ('from', file id), ('to', file id)
+      occurs: zero or more times
+'clear'
+      represents an attr that was removed.
+      format: ('clear', filename), ('attr', attr name)
+      occurs: zero or more times
+'set'
+      represents an attr whose value was changed.
+      format: ('set', filename), ('attr', attr name), ('value', attr value)
+      occurs: zero or more times
+@end verbatim
+ 
+These stanzas will always occur in the order listed here; stanzas of
+the same type will be sorted by the filename they refer to.
 
 @item Error conditions:
 
@@ -5993,6 +6021,10 @@ content [638140d6823eee5844de37d985773be75707fa25]
    file "tarofbranch.psp"
 content [be83f459a152ffd49d89d69555f870291bc85311]
 
+   file "test.py"
+content [e65aace9237833ec775253cfde97f59a0af5bc3d]
+   attr "mtn:execute" "true"
+
    file "utility.py"
 content [fb51955563d64e628e0e67e4acca1a1abc4cd989]
 
@@ -6008,13 +6040,42 @@ content [530290467a99ca65f87b74f653bf462b28c6cda9]
 
 @item Output format:
 
-The output format is one line for each file in the manifest. Each line begins 
-with a 40 character file ID, followed by two space characters ('  ') and then 
-the filename.
+There is one basic_io stanza for each file or directory in the
+manifest.
+
+All stanzas are formatted by basic_io. Stanzas are separated 
+by a blank line. Values will be escaped, '\' to '\\' and 
+'"' to '\"'.
+
+Possible values of this first value are along with an ordered list of 
+basic_io formatted stanzas that will be provided are:
+
+@verbatim
+'format_version'
+      used in case this format ever needs to change.
+      format: ('format_version', the string "1")
+      occurs: exactly once
+'dir':
+      represents a directory.  The path "" (the empty string) is used
+      to represent the root of the tree.
+      format: ('dir', pathname)
+      occurs: one or more times
+'file':
+      represents a file.
+      format: ('file', pathname), ('content', file id)
+      occurs: zero or more times
+@end verbatim
+ 
+In addition, 'dir' and 'file' stanzas may have attr information
+included.  These are appended to the stanza below the basic dir/file
+information, with one line describing each attr.  These lines take the
+form ('attr', attr name, attr value).
+
+Stanzas are sorted by the path string.
 
 @item Error conditions:
 
-If the manifest ID specified is unknown or invalid prints an error
+If the revision ID specified is unknown or invalid prints an error
 message to stderr and exits with status 1.
 
 @end table
@@ -6102,6 +6163,186 @@ items will be absent. The keys are ordered alphabetically by name.
 @item Error conditions:
 
 None.
+
+@end table
+
+@item monotone automate packet_for_rdata @var{id}
+
+@table @strong
+@item Arguments:
+
+The @var{id} specifies the revision to output an rdata packet for.
+
+@item Added in:
+
+2.0
+
+@item Purpose:
+
+Prints the revision data in packet format
+
+@item Sample output:
+
+@verbatim
+[rdata bdf3b10b5df0f17cc6c1b4b3351d84701bda59ed]
+H4sIAAAAAAAA/0XQS27DMAwE0L1PIfgArb4kte62NzACg5SoJEBsF7aRurev0UVzgJl5mLas
+E+/jU9ftvsymd33Xzfo9Tjzfm267GSgGwVarz6Valx0KtFYwii9VqUFCqJQ5X7puedRx1ef9
+r2rwHlSbi+BUSrF4xn1p0RInkmxTbmwREp/BL97LzfQfN56v+rlc+860dZnMED01jhILkURJ
+Ul0KPpGN1ueUwDHyiXF66Ywx+2IGD+0Uqg8aCzikAEzZNRXPmJKlkhMxSHuNzrofx/uq2/J4
+6njV/bZsu/zMPOlbOY4XJSD5KOrwXGdwpDGdfotZayQHKTAi5fRPqUWKcAMMIQfAjOK0nkfm
+6tFacjYgBPV46X4BtlpiNYUBAAA=
+[end]
+@end verbatim
+
+@item Output format:
+
+Revision data in @command{monotone read} compatible packet format.
+
+@item Error conditions:
+
+If @var{id} is unknown or invalid prints an error message to stderr
+and exits with status 1.
+
+@end table
+
+@item monotone automate packet_for_certs @var{id}
+
+@table @strong
+@item Arguments:
+
+The @var{id} specifies the revision to output cert packets for.
+
+@item Added in:
+
+2.0
+
+@item Purpose:
+
+Prints the certs associated with a revision in packet format
+
+@item Sample output:
+
+@verbatim
+[rcert bdf3b10b5df0f17cc6c1b4b3351d84701bda59ed
+       branch
+       njs@pobox.com
+       bmV0LnZlbmdlLm1vbm90b25l]
+K90i1XHHmaMEMuwbPifFweLThJl0m7jigh2Qq6Z7TBwNJ6IMOjXWCizv73cacZ1CtzxFDVwQ
+SlqhNWiPQWxdcMp+Uuo+V8IFMKmvxVSTuVDukLMuNAQqpGL5S+a+tEj68NMq+KLKuL8kAAPc
+RoFD7GQlTS35S3RHWA4cnvqn+8U=
+[end]
+[rcert bdf3b10b5df0f17cc6c1b4b3351d84701bda59ed
+       date
+       njs@pobox.com
+       MjAwNi0wNC0wOFQxMTo1MDowMA==]
+araz9A8x6AlK6m6UhwnhUhk7cdyxeE2nvzj2gwaDvkaBxOq4SN23/wnaPqUXx1Ddn8smzyRY
+HN08xloYc0yNChp3wjbqx20REcsTg3XE4rN/sgCbqqw5hVT22a5ZhqkfkDeoeJvan0R0UBax
+ngKYo9eLuABNlmFX2onca75JW1E=
+[end]
+[rcert bdf3b10b5df0f17cc6c1b4b3351d84701bda59ed
+       author
+       njs@pobox.com
+       bmpzQHBvYm94LmNvbQ==]
+BLPOYhgLsAN+w7CwOsv9GfXnG3u7RNF1DTrWdn0AnYE1e+ptgTeMVWUI18H4OGL0B7wm08rv
+Pxk/hvsb8fBn1Kf5HDDO2pbjJ0xVzI9+p+TR0y5jJNZlVSTj+nvtPgvK9NzsdooYWnwlWmJv
+bOkAzQcZb8NMh8pbQkdHbR5uzMo=
+[end]
+[rcert bdf3b10b5df0f17cc6c1b4b3351d84701bda59ed
+       changelog
+       njs@pobox.com
+       MjAwNi0wNC0wOCAgTmF0aGFuaWVsIFNtaXRoICA8bmpzQHBvYm94LmNvbT4KCgkqIG5ldHh4
+L3Jlc29sdmVfZ2V0aG9zdGJ5bmFtZS5jeHggKHJlc29sdmVfaG9zdG5hbWUpOiAjaWZkZWYg
+b3V0CglXaW4zMi1pbmNvbXBhdGlibGUgZXJyb3IgcmVwb3J0aW5nIGNhbGwuCg==]
+Ncl4L/oEPctzVQixTKA6FrLceeHnLiXfeyeFDNmtUFYg9BMUcjWkeyKmaWknLvOcHortxjto
+K6pQ9E8S7zI+TpzFAhssg5a///rFL0+2GJU3t6pcHs6LC0Q4tbqzwKd/5+8GwT1gphbM1wm7
+KuzKthwqD3pp49GbgTrp8iWMTr0=
+[end]
+@end verbatim
+
+@item Output format:
+
+Cert data in @command{monotone read} compatible packet format.
+
+@item Error conditions:
+
+If @var{id} is unknown or invalid prints an error message to stderr
+and exits with status 1.
+
+@end table
+
+@item monotone automate packet_for_fdata @var{id}
+
+@table @strong
+@item Arguments:
+
+The @var{id} specifies the file to output an fdata packet for.
+
+@item Added in:
+
+2.0
+
+@item Purpose:
+
+Prints the file data in packet format
+
+@item Sample output:
+
+@verbatim
+[fdata 229c7f621b65f7e4970ae5aaec993812b9daa1d4]
+H4sIAAAAAAAA/z2OO27DMBBEe51ioMaNrJzBpQAjTXKBBTW0CJPcgFw6yO1DCkG62Q/em83j
+R9vlRez6naPKzh2CwkipXFBJbO8fn7f7HV4LQq4mMYoFzdMYSnMj1xXY/lnuoHt2kB2hQpst
+PREPZhaxvvchskIKkdU6xsXWvQsk76MOUquGVolZmmmh0+xxvf7JZ5jCFXbU4KZ1muYkT+Kw
+FOez5q6uLuh9+9eoQawhez3Fp+VtHJNkfMmDHfALzWYfcAgBAAA=
+[end]
+@end verbatim
+
+@item Output format:
+
+File data in @command{monotone read} compatible packet format.
+
+@item Error conditions:
+
+If @var{id} is unknown or invalid prints an error message to stderr
+and exits with status 1.
+
+@end table
+
+@item monotone automate packet_for_fdelta @var{from-id} @var{to-id}
+
+@table @strong
+@item Arguments:
+
+The @var{from-id} specifies the file to use as the base of the delta,
+and @var{to-id} specifies the file to use as the target of the delta.
+
+@item Added in:
+
+2.0
+
+@item Purpose:
+
+Prints the file delta in packet format
+
+@item Sample output:
+
+@verbatim
+[fdelta 597049a62d0a2e6af7df0b19f4945ec7d6458727
+        229c7f621b65f7e4970ae5aaec993812b9daa1d4]
+H4sIAAAAAAAA/0WOy0oEMRBF9/mKS2/c9LQg4t5lw+BGf6BIKtNhkpSkKop/b9II7m49OOfu
+eHp5dnvEj/SHL0aQ75qFAgcQGmcm5RXKjP3t/eP1ekWUhlTVKGeyJNXNoXU/s27AP8sf7O8D
+ZEdSSLd1JMaNKzeysY8ps4Iao4oNjM99eFdQDbMOSldDV8ZC3aSxlxpxufzJF5jANx6oyS2b
+c0uhO+OwkpezZhCvK0bf8TVrMLZUo5zi0/I4j4UqPunGA+B+AfHvKEIPAQAA
+[end]
+@end verbatim
+
+@item Output format:
+
+File delta data in @command{monotone read} compatible packet format.
+
+@item Error conditions:
+
+If @var{from-id} or @var{to-id} is unknown or invalid prints an error
+message to stderr and exits with status 1.
 
 @end table
 

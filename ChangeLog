@@ -1,10 +1,11 @@
-2006-04-08  Timothy Brownawell  <tbrownaw@gmail.com>
+2006-04-09  Timothy Brownawell  <tbrownaw@gmail.com>
 
-	* commands.cc (process_netsync_args): fix crash when calling netsync
-	with an --exclude but no include argument.
-	* tests/t_netsync_no_include.at: netsync with --exclude but no
-	include should E(), not I().
-	* testsuite.at: call it
+	* platform.hh (make_io_binary): new function, turn off textmode
+	"\n"->"\r\n" translation on Windows
+	* {win32,unix}/make_io_binary.cc: Implementations of said function.
+	* commands.cc (automate): Use said function so our output doesn't get
+	mangled. (Mostly important for "automate stdio".)
+	* Makefile.am: Add the new files.
 
 2006-04-08  Nathaniel Smith  <njs@pobox.com>
 
