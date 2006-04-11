@@ -2,3 +2,4 @@
 void make_io_binary()
 {
 }
+

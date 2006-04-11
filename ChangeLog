@@ -1,3 +1,7 @@
+2006-04-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/make_io_binary.cc: Fix compile errors under MinGW.
+
 2006-04-11  Henry Nestler  <Henry@BigFoot.de>
 
 	* contrib/mtbrowse.sh: Binary call to mtn
