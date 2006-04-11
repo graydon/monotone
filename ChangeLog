@@ -3,6 +3,35 @@
 	* commands.cc (ls_branches): Allow "ls branches <pattern>".
 	* tests/t_ls_branches.at: Test it.
 
+2006-04-11  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (main): Small error.  When -m was parsed, it
+	was saved as the path to mtn instead of its value.
+
+2006-04-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/make_io_binary.cc: Fix compile errors under MinGW.
+
+2006-04-11  Henry Nestler  <Henry@BigFoot.de>
+
+	* contrib/mtbrowse.sh: Binary call to mtn
+
+2006-04-11  Richard Levitte  <richard@levitte.org>
+
+	* netxx/resolve_getaddrinfo.cxx (resolve_hostname): monotone might
+	be compiled on a computer that has AI_ADDRCONFIG and run on one
+	that doesn't understand that flag.  If the error EAI_BADFLAGS is
+	returned, try again without AI_ADDRCONFIG.
+
+2006-04-10  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc: Changed all reference to "monotone" to the new
+	"mtn".  Submitted by Ethan Blanton <eblanton@cs.ohiou.edu>.
+
+2006-04-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc (file_path::file_path): MM() on source path.
+
 2006-04-09  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* platform.hh (make_io_binary): new function, turn off textmode
