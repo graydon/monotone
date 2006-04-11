@@ -894,37 +894,61 @@ automate_certs(std::vector<utf8> args,
 // Arguments:
 //   1: a revision id (optional, determined from the workspace if non-existant)
 // Added in: 1.0
-// Purpose: Prints changeset information for the specified revision id.
+// Purpose: Prints change information for the specified revision id.
+//   There are several changes that are described; each of these is described by 
+//   a different basic_io stanza. The first string pair of each stanza indicates the 
+//   type of change represented. 
 //
-// There are several changes that are described; each of these is described by 
-// a different basic_io stanza. The first string pair of each stanza indicates the 
-// type of change represented. 
+//   All stanzas are formatted by basic_io. Stanzas are separated 
+//   by a blank line. Values will be escaped, '\' to '\\' and 
+//   '"' to '\"'.
 //
-// Possible values of this first value are along with an ordered list of 
-// basic_io formatted string pairs that will be provided are:
+//   Possible values of this first value are along with an ordered list of 
+//   basic_io formatted stanzas that will be provided are:
 //
-//  'old_revision' : represents a parent revision.
-//                   format: ('old_revision', revision id)
-//  'new_manifest' : represents the new manifest associated with the revision.
-//                   format: ('new_manifest', manifest id)
-//  'old_manifest' : represents a manifest associated with a parent revision.
-//                   format: ('old_manifest', manifest id)
-//  'patch' : represents a file that was modified.
-//            format: ('patch', filename), ('from', file id), ('to', file id)
-//  'add_file' : represents a file that was added.
-//               format: ('add_file', filename)
-//  'delete_file' : represents a file that was deleted.
-//                  format: ('delete_file', filename)
-//  'delete_dir' : represents a directory that was deleted.
-//                 format: ('delete_dir', filename)
-//  'rename_file' : represents a file that was renamed.
-//                  format: ('rename_file', old filename), ('to', new filename)
-//  'rename_dir' : represents a directory that was renamed.
-//                 format: ('rename_dir', old filename), ('to', new filename)
+//   'format_version'
+//         used in case this format ever needs to change.
+//         format: ('format_version', the string "1")
+//         occurs: exactly once
+//   'new_manifest'
+//         represents the new manifest associated with the revision.
+//         format: ('new_manifest', manifest id)
+//         occurs: exactly one
+//   'old_revision'
+//         represents a parent revision.
+//         format: ('old_revision', revision id)
+//         occurs: either one or two times
+//   'delete
+//         represents a file or directory that was deleted.
+//         format: ('delete', path)
+//         occurs: zero or more times
+//   'rename'
+//         represents a file or directory that was renamed.
+//         format: ('rename, old filename), ('to', new filename)
+//         occurs: zero or more times
+//   'add_dir'
+//         represents a directory that was added.
+//         format: ('add_dir, path)
+//         occurs: zero or more times
+//   'add_file'
+//         represents a file that was added.
+//         format: ('add_file', path), ('content', file id)
+//         occurs: zero or more times
+//   'patch'
+//         represents a file that was modified.
+//         format: ('patch', filename), ('from', file id), ('to', file id)
+//         occurs: zero or more times
+//   'clear'
+//         represents an attr that was removed.
+//         format: ('clear', filename), ('attr', attr name)
+//         occurs: zero or more times
+//   'set'
+//         represents an attr whose value was changed.
+//         format: ('set', filename), ('attr', attr name), ('value', attr value)
+//         occurs: zero or more times
 //
-// Output format: All stanzas are formatted by basic_io. Stanzas are seperated 
-// by a blank line. Values will be escaped, '\' -> '\\' and '"' -> '\"'.
-//
+//   These stanzas will always occur in the order listed here; stanzas of
+//   the same type will be sorted by the filename they refer to.
 // Error conditions: If the revision specified is unknown or invalid prints an 
 // error message to stderr and exits with status 1.
 static void
@@ -936,6 +960,7 @@ automate_get_revision(std::vector<utf8> args,
   if (args.size() > 1)
     throw usage(help_name);
 
+  temp_node_id_source nis;
   revision_data dat;
   revision_id ident;
 
@@ -947,7 +972,8 @@ automate_get_revision(std::vector<utf8> args,
       app.require_workspace(); 
       get_unrestricted_working_revision_and_rosters(app, rev, 
                                                     old_roster, 
-                                                    new_roster);
+                                                    new_roster,
+                                                    nis);
       calculate_ident(rev, ident);
       write_revision_set(rev, dat);
     }
@@ -965,11 +991,41 @@ automate_get_revision(std::vector<utf8> args,
 
 // Name: get_manifest_of
 // Arguments:
-//   1: a revision id (optional, determined from the workspace if non-existant)
+//   1: a revision id (optional, determined from the workspace if not given)
 // Added in: 2.0
 // Purpose: Prints the contents of the manifest associated with the given revision ID.
 //
-// Output format: A basic_io string containing the manifest.
+// Output format:
+//   There is one basic_io stanza for each file or directory in the
+//   manifest.
+//
+//   All stanzas are formatted by basic_io. Stanzas are separated 
+//   by a blank line. Values will be escaped, '\' to '\\' and 
+//   '"' to '\"'.
+//
+//   Possible values of this first value are along with an ordered list of 
+//   basic_io formatted stanzas that will be provided are:
+//
+//   'format_version'
+//         used in case this format ever needs to change.
+//         format: ('format_version', the string "1")
+//         occurs: exactly once
+//   'dir':
+//         represents a directory.  The path "" (the empty string) is used
+//         to represent the root of the tree.
+//         format: ('dir', pathname)
+//         occurs: one or more times
+//   'file':
+//         represents a file.
+//         format: ('file', pathname), ('content', file id)
+//         occurs: zero or more times
+//
+//   In addition, 'dir' and 'file' stanzas may have attr information
+//   included.  These are appended to the stanza below the basic dir/file
+//   information, with one line describing each attr.  These lines take the
+//   form ('attr', attr name, attr value).
+//
+//   Stanzas are sorted by the path string.
 //
 // Error conditions:  If the revision ID specified is unknown or invalid prints an 
 // error message to stderr and exits with status 1.
@@ -985,12 +1041,13 @@ automate_get_manifest_of(std::vector<utf8> args,
   data dat;
   manifest_id mid;
   roster_t old_roster, new_roster;
+  temp_node_id_source nis;
 
   if (args.size() == 0)
     {
       revision_set rs;
       app.require_workspace();
-      get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster);
+      get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster, nis);
     }
   else
     {
@@ -1122,7 +1179,7 @@ automate_packet_for_fdata(std::vector<utf8> args,
   file_data f_data;
     
   N(app.db.file_version_exists(f_id),
-    F("no such revision '%s'") % f_id);
+    F("no such file '%s'") % f_id);
   app.db.get_file_version(f_id, f_data);
   pw.consume_file_data(f_id,f_data);
 }
@@ -1130,7 +1187,7 @@ automate_packet_for_fdata(std::vector<utf8> args,
 // Name: packet_for_fdelta
 // Arguments:
 //   1: a file id
-//   1: a file id
+//   2: a file id
 // Added in: 2.0
 // Purpose: Prints the file delta in packet format
 //

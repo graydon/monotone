@@ -57,7 +57,8 @@ get_working_revision_and_rosters(app_state & app,
                                  revision_set & rev,
                                  roster_t & old_roster,
                                  roster_t & new_roster,
-                                 cset & excluded);
+                                 cset & excluded,
+                                 node_id_source & nis);
 
 // Same as above, only without the "excluded" out-parameter.
 void
@@ -65,13 +66,15 @@ get_working_revision_and_rosters(app_state & app,
                                  std::vector<utf8> const & args,
                                  revision_set & rev,
                                  roster_t & old_roster,
-                                 roster_t & new_roster);
+                                 roster_t & new_roster,
+                                 node_id_source & nis);
 
 void
 get_unrestricted_working_revision_and_rosters(app_state & app, 
                                               revision_set & rev,
                                               roster_t & old_roster,
-                                              roster_t & new_roster);
+                                              roster_t & new_roster,
+                                              node_id_source & nis);
 
 void
 calculate_restricted_cset(app_state & app, 

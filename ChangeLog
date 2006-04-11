@@ -1,3 +1,143 @@
+2006-04-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* merkle_tree.hh: make merkle_table be a hash_map instead of a map.
+
+2006-04-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (ls_branches): Allow "ls branches <pattern>".
+	* tests/t_ls_branches.at: Test it.
+
+2006-04-11  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (main): Small error.  When -m was parsed, it
+	was saved as the path to mtn instead of its value.
+
+2006-04-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/make_io_binary.cc: Fix compile errors under MinGW.
+
+2006-04-11  Henry Nestler  <Henry@BigFoot.de>
+
+	* contrib/mtbrowse.sh: Binary call to mtn
+
+2006-04-11  Richard Levitte  <richard@levitte.org>
+
+	* netxx/resolve_getaddrinfo.cxx (resolve_hostname): monotone might
+	be compiled on a computer that has AI_ADDRCONFIG and run on one
+	that doesn't understand that flag.  If the error EAI_BADFLAGS is
+	returned, try again without AI_ADDRCONFIG.
+
+2006-04-10  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc: Changed all reference to "monotone" to the new
+	"mtn".  Submitted by Ethan Blanton <eblanton@cs.ohiou.edu>.
+
+2006-04-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc (file_path::file_path): MM() on source path.
+
+2006-04-09  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* platform.hh (make_io_binary): new function, turn off textmode
+	"\n"->"\r\n" translation on Windows
+	* {win32,unix}/make_io_binary.cc: Implementations of said function.
+	* commands.cc (automate): Use said function so our output doesn't get
+	mangled. (Mostly important for "automate stdio".)
+	* Makefile.am: Add the new files.
+
+2006-04-09  Nathaniel Smith  <njs@pobox.com>
+
+	* restrictions.{cc,hh}: Audit use of node id sources, and make a
+	number of functions take an explicit node_id_source argument.
+	* roster.cc (make_roster_for_base_plus_cset): Also take an
+	explicit node_id_source.
+	* commands.cc, automate.cc: Update to match new calling conventions.
+
+2006-04-09  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (accept_testresult_change): s/MT/_MTN/, thanks to
+	Alex Queiroz for the catch...
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Finish paragraph that stopped in the
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac, debian/changelog, win32/monotone.iss: 
+	* monotone.spec: Bump version number to 0.26.
+	* NEWS: Insert release time.
+
+2006-04-08  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (process_netsync_args): fix crash when calling netsync
+	with an --exclude but no include argument.
+	* tests/t_netsync_no_include.at: netsync with --exclude but no
+	include should E(), not I().
+	* testsuite.at: call it
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi: Several little content improvements, scattered
+	throughout.
+	(Automation): Document new rev and manifest formats.  Document new
+	packet commands.
+	* database_check.cc: Add a comment to warn people that there are
+	detailed docs on this, so if they add new stuff they'll want to
+	add new docs too.
+	* automate.cc (automate_get_manifest_of, automate_get_revision):
+	Re-sync docs to manual.
+	(automate_packet_for_fdata): Fix copy/paste error in error
+	message.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* netxx/resolve_gethostbyname.cxx (resolve_hostname): #ifdef out
+	Win32-incompatible error reporting call.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc, annotate.cc: Turn all ticker labels from _() to
+	N_(), to match Benoît's changes to the ticker class.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* AUTHORS: Add Thomas Keller.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (distcleancheck_listfiles): Third time's
+	the... charm?
+
+2006-04-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Oops, needed to include
+	boost/filesystem/convenience.hpp too.
+
+	* monotone.cc (cpp_main): Exclude .exe extension by using
+	fs::basename rather than path.leaf().
+
+2006-04-08  Richard Levitte  <richard@levitte.org>
+
+	* netxx/resolve_gethostbyname.cxx (resolve_hostname),
+	* netxx/resolve_getaddrinfo.cxx (resolve_hostname): Include the
+	error string associated with the error returned by getaddrinfo()
+	and gethostbyname() in the exception text.
+
+	* netsync.cc (serve_connections): When socket() fails in Netxx,
+	it throws a Netxx::Exception rather than a
+	Netxx::NetworkException, so we need to catch that as well.  This
+	should solve the problems some have experienced when they don't
+	have a IPv6 stack and try to run a IPv6-enabled monotone.
+
+2006-04-08  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A phrase was changed in command.cc...
+
+2006-04-07  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few untranslated ones appeared.
+
 2006-04-07  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Fixed a fuzzy.

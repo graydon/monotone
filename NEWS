@@ -1,4 +1,4 @@
-????????????????????????????
+Sat Apr  8 19:33:35 PDT 2006
 
         0.26 release.  Major enhancements and internal rewrites.
         Please read these notes carefully, as significant changes are
@@ -90,7 +90,8 @@
           appropriately.
 
         - Netsync code has also been largely reworked; new code should
-          provide better opportunities for 
+          provide better opportunities for optimizations going
+          forward.
 
         - The protocol is incompatible with earlier versions of
           monotone.  This should not be a surprise, since the data it

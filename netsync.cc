@@ -705,30 +705,30 @@ void
 session::setup_client_tickers()
 {
   // xgettext: please use short message and try to avoid multibytes chars
-  byte_in_ticker.reset(new ticker(_("bytes in"), ">", 1024, true));
+  byte_in_ticker.reset(new ticker(N_("bytes in"), ">", 1024, true));
   // xgettext: please use short message and try to avoid multibytes chars
-  byte_out_ticker.reset(new ticker(_("bytes out"), "<", 1024, true));
+  byte_out_ticker.reset(new ticker(N_("bytes out"), "<", 1024, true));
   if (role == sink_role)
     {
       // xgettext: please use short message and try to avoid multibytes chars
-      cert_in_ticker.reset(new ticker(_("certs in"), "c", 3));
+      cert_in_ticker.reset(new ticker(N_("certs in"), "c", 3));
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
+      revision_in_ticker.reset(new ticker(N_("revs in"), "r", 1));
     }
   else if (role == source_role)
     {
       // xgettext: please use short message and try to avoid multibytes chars
-      cert_out_ticker.reset(new ticker(_("certs out"), "C", 3));
+      cert_out_ticker.reset(new ticker(N_("certs out"), "C", 3));
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_out_ticker.reset(new ticker(_("revs out"), "R", 1));
+      revision_out_ticker.reset(new ticker(N_("revs out"), "R", 1));
     }
   else
     {
       I(role == source_and_sink_role);
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_in_ticker.reset(new ticker(_("revs in"), "r", 1));
+      revision_in_ticker.reset(new ticker(N_("revs in"), "r", 1));
       // xgettext: please use short message and try to avoid multibytes chars
-      revision_out_ticker.reset(new ticker(_("revs out"), "R", 1));
+      revision_out_ticker.reset(new ticker(N_("revs out"), "R", 1));
     }
 }
 
@@ -2721,7 +2721,22 @@ serve_connections(protocol_role role,
                 }
             }
         }
+      // This exception is thrown when bind() fails somewhere in Netxx.
       catch (Netxx::NetworkException &e)
+        {
+          // If we tried with IPv6 and failed, we want to try again using IPv4.
+          if (try_again)
+            {
+              use_ipv6 = false;
+            }
+          // In all other cases, just rethrow the exception.
+          else
+            throw;
+        }
+      // This exception is thrown when there is no support for the type of
+      // connection we want to do in the kernel, for example when a socket()
+      // call fails somewhere in Netxx.
+      catch (Netxx::Exception &e)
         {
           // If we tried with IPv6 and failed, we want to try again using IPv4.
           if (try_again)
@@ -2779,11 +2794,11 @@ session::rebuild_merkle_trees(app_state & app,
     L(FL("including branch %s") % *i);
 
   // xgettext: please use short message and try to avoid multibytes chars
-  ticker revisions_ticker(_("revisions"), "r", 64);
+  ticker revisions_ticker(N_("revisions"), "r", 64);
   // xgettext: please use short message and try to avoid multibytes chars
-  ticker certs_ticker(_("certificates"), "c", 256);
+  ticker certs_ticker(N_("certificates"), "c", 256);
   // xgettext: please use short message and try to avoid multibytes chars
-  ticker keys_ticker(_("keys"), "k", 1);
+  ticker keys_ticker(N_("keys"), "k", 1);
 
   set<revision_id> revision_ids;
   set<rsa_keypair_id> inserted_keys;

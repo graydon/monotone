@@ -31,6 +31,16 @@ testbranch
 ])
 AT_CHECK(cmp branches stdout,[],[ignore])
 
+AT_CHECK(MTN ls branches "other*",[0],[stdout],[stderr])
+AT_CHECK(CANONICALISE(stdout))
+AT_DATA(branches2,[otherbranch
+])
+AT_CHECK(cmp branches2 stdout,[],[ignore])
+
+AT_CHECK(MTN ls branches --exclude "test*",[0],[stdout],[stderr])
+AT_CHECK(CANONICALISE(stdout))
+AT_CHECK(cmp branches2 stdout,[],[ignore])
+
 # Create an ignore_branch hook to pass in
 AT_DATA(ignore_branch.lua,[
 function ignore_branch(branchname)

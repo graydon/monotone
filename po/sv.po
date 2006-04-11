@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-04-07 15:14+0200\n"
-"PO-Revision-Date: 2006-04-07 15:15+0200\n"
+"POT-Creation-Date: 2006-04-08 07:57+0200\n"
+"PO-Revision-Date: 2006-04-08 07:58+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -196,13 +196,13 @@ msgstr "negativt djup är inte tillåtet\n"
 
 #: app_state.cc:408
 #, c-format
-msgid "negative or zero last not allowed\n"
-msgstr "talet angett med --last får inte vara negativt eller noll\n"
+msgid "illegal argument to --last: cannot be zero or negative\n"
+msgstr "felaktigt argument till --last: får ej vara noll eller negativt\n"
 
 #: app_state.cc:416
 #, c-format
-msgid "negative or zero next not allowed\n"
-msgstr "talet angett med --next får inte vara negativt eller noll\n"
+msgid "illegal argument to --next: cannot be zero or negative\n"
+msgstr "felaktigt argument till --next: får ej vara noll eller negativt\n"
 
 #: app_state.cc:552
 #, c-format
@@ -1569,7 +1569,7 @@ msgstr ""
 
 #: commands.cc:3992 commands.cc:3994
 #, c-format
-msgid "%s in an ancestor of %s; no merge is needed."
+msgid "%s is an ancestor of %s; no merge is needed."
 msgstr "%s är en förfader till %s; någon ihopslagning behövs inte."
 
 #: commands.cc:4008
@@ -3634,6 +3634,12 @@ msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 #, c-format
 msgid "updating %s"
 msgstr "uppdaterar %s"
+
+#~ msgid "negative or zero last not allowed\n"
+#~ msgstr "talet angett med --last får inte vara negativt eller noll\n"
+
+#~ msgid "negative or zero next not allowed\n"
+#~ msgstr "talet angett med --next får inte vara negativt eller noll\n"
 
 #~ msgid ""
 #~ "Running on: %s\n"

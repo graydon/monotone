@@ -214,11 +214,11 @@ POPT_SOURCES = \
 
 UNIX_PLATFORM_SOURCES = \
 	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/terminal.cc \
-	unix/inodeprint.cc unix/fs.cc
+	unix/inodeprint.cc unix/fs.cc unix/make_io_binary.cc
 
 WIN32_PLATFORM_SOURCES = \
 	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/terminal.cc \
-	win32/inodeprint.cc win32/fs.cc
+	win32/inodeprint.cc win32/fs.cc win32/make_io_binary.cc
 
 # primaries
 
@@ -570,7 +570,7 @@ package_full_revision.c: package_full_revision.txt txt2c Makefile
 # those automake thinks that 'distclean' _should_ remove those files,
 # and 'distcheck' gets cranky if we don't.  So basically what this
 # line does is tell 'distcheck' to shut up and ignore those two files.
-distcleancheck_listfiles = find . -type f -exec sh -c '[ "$(basename {})" = "package_revision.txt" ] || [ "$(basename {})" = "package_full_revision_dist.txt" ] || echo {}' ';'
+distcleancheck_listfiles = find . -type f -a ! -name package_revision.txt -a ! -name package_full_revision_dist.txt
 
 # automake doesn't build html docs
 
