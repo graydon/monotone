@@ -1424,7 +1424,7 @@ int main (int argc, char **argv)
         if (c != lp.npos)
           listenport = lexical_cast<int>(lp.substr(c+1));
       } else if (string(argv[i]) == "-m")
-        monotone = argv[i++];
+        monotone = argv[++i];
       else if (string(argv[i]) == "-a")
         admin.initialize(argv[++i]);
       else if (string(argv[i]) == "-p")
