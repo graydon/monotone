@@ -1,3 +1,7 @@
+2006-04-12 Thomas Keller <me@thomaskeller.biz>
+	* po/README: Added small HOWTO for new translations
+	* po/po-update.sh: Shell script to update po files
+
 2006-04-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* merkle_tree.hh: make merkle_table be a hash_map instead of a map.
