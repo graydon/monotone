@@ -1,5 +1,9 @@
 2006-04-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* merkle_tree.hh: make merkle_table be a hash_map instead of a map.
+
+2006-04-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* commands.cc (ls_branches): Allow "ls branches <pattern>".
 	* tests/t_ls_branches.at: Test it.
 

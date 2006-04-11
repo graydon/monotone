@@ -14,6 +14,8 @@
 #include "numeric_vocab.hh"
 #include "vocab.hh"
 #include "transforms.hh"
+//#include <tr1/unordered_map>
+#include "hash_map.hh"
 
 // This file contains data structures and functions for managing merkle
 // trees. A merkle tree is, conceptually, a general recursive construction
@@ -83,7 +85,47 @@ struct merkle_node
 };
 
 typedef boost::shared_ptr<merkle_node> merkle_ptr;
-typedef std::map<std::pair<prefix,size_t>, merkle_ptr> merkle_table;
+
+//typedef std::map<std::pair<prefix,size_t>, merkle_ptr> merkle_table;
+/*
+namespace std {
+  namespace tr1 {
+    template<>
+    struct hash<std::pair<prefix, size_t> >
+        : public std::unary_function<std::pair<prefix, size_t>, std::size_t> {
+      hash<string> h;
+      hash<size_t> t;
+      std::size_t operator()(std::pair<prefix, size_t> const & val) const {
+        return h(val.first()) + t(val.second);
+      }
+    };
+  }
+}
+typedef std::tr1::unordered_map<std::pair<prefix,size_t>, merkle_ptr> merkle_table;
+*/
+typedef std::pair<prefix,size_t> merkle_node_id;
+namespace hashmap {
+ struct merkle_node_id_hash
+ {
+   string_hash sh;
+   size_t operator()(merkle_node_id const & m) const
+   {
+    return sh(m.first()) + m.second;
+   }
+ };
+}
+struct merkle_node_id_eq
+{
+  bool operator()(merkle_node_id const & a,
+                  merkle_node_id const & b) const
+  {
+    return a.second == b.second && a.first == b.first;
+  }
+};
+typedef hashmap::hash_map<merkle_node_id, merkle_ptr,
+                          hashmap::merkle_node_id_hash,
+                          merkle_node_id_eq> merkle_table;
+
 
 size_t prefix_length_in_bits(size_t level);
 size_t prefix_length_in_bytes(size_t level);
