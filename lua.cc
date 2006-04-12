@@ -902,7 +902,7 @@ lua_hooks::load_rcfile(utf8 const & rc)
         }
     }
   data dat;
-  L(FL("opening rcfile '%s' ...\n") % rc);
+  L(FL("opening rcfile '%s'\n") % rc);
   read_data_for_command_line(rc, dat);
   N(run_string(st, dat(), rc().c_str()),
     F("lua error while loading rcfile '%s'") % rc);
@@ -915,7 +915,7 @@ lua_hooks::load_rcfile(any_path const & rc, bool required)
   I(st);  
   if (path_exists(rc))
     {
-      L(FL("opening rcfile '%s' ...\n") % rc);
+      L(FL("opening rcfile '%s'\n") % rc);
       N(run_file(st, rc.as_external()),
         F("lua error while loading '%s'") % rc);
       L(FL("'%s' is ok\n") % rc);

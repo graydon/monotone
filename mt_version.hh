@@ -6,7 +6,11 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <string>
+
+void get_version(std::string & out);
 void print_version();
+void get_full_version(std::string & out);
 void print_full_version();
 
 #endif

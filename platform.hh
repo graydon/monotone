@@ -9,10 +9,11 @@
 // this describes functions to be found, alternatively, in win32/* or unix/*
 // directories.
 
+#include "config.h"
+
 #include <string>
 
 #include "vocab.hh"
-#include "config.h"
 #include "paths.hh"
 
 void read_password(std::string const & prompt, char * buf, size_t bufsz);
@@ -26,6 +27,9 @@ pid_t process_spawn(const char * const argv[]);
 int process_wait(pid_t pid, int *res);
 int process_kill(pid_t pid, int signal);
 int process_sleep(unsigned int seconds);
+
+// stop "\n"->"\r\n" from breaking automate on Windows
+void make_io_binary();
 
 // for term selection
 bool have_smart_terminal();

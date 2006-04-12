@@ -233,12 +233,52 @@ private:
   void do_deep_copy_from(roster_t const & other);
   dir_t root_dir;
   node_map nodes;
-  // this attribute holds the previous location of detached nodes.  when
-  // applying a cset, we pass through intermediate states where some nodes are
-  // detached from the directory tree.  it is illegal to re-attach these nodes
-  // to where they started -- you shouldn't have detached them in the first
-  // place, if you were just going to put them back!  this checking verifies
-  // that csets are in normalized form.
+  // This requires some explanation.  There is a particular kind of
+  // nonsensical behavior which we wish to discourage -- when a node is
+  // detached from some location, and then re-attached at that same location
+  // (or similarly, if a new node is created, then immediately deleted -- this
+  // is like the previous case, if you think of "does not exist" as a
+  // location).  In particular, we _must_ error out if a cset attempts to do
+  // this, because it indicates that the cset had something non-normalized,
+  // like "rename a a" in it, and that is illegal.  There are two options for
+  // detecting this.  The more natural approach, perhaps, is to keep a chunk
+  // of state around while performing any particular operation (like cset
+  // application) for which we wish to detect these kinds of redundant
+  // computations.  The other option is to keep this state directly within the
+  // roster, at all times.  In the first case, we explicitly turn on checking
+  // when we want it; the the latter, we must explicitly turn _off_ checking
+  // when we _don't_ want it.  We choose the latter, because it is more
+  // conservative --- perhaps it will turn out that it is _too_ conservative
+  // and causes problems, in which case we should probably switch to the
+  // former.
+  // 
+  // FIXME: This _is_ all a little nasty, because this can be a source of
+  // abstraction leak -- for instance, roster_merge's contract is that nodes
+  // involved in name-related will be detached in the roster it returns.
+  // Those nodes really should be allowed to be attached anywhere, or dropped,
+  // which is not actually expressible right now.  Worse, whether or not they
+  // are in old_locations map is an implementation detail of roster_merge --
+  // it may temporarily attach and then detach the nodes it creates, but this
+  // is not deterministic or part of its interface.  The main time this would
+  // be a _problem_ is if we add interactive resolution of tree rearrangement
+  // conflicts -- if someone resolves a rename conflict by saying that one
+  // side wins, or by deleting one of the conflicting nodes, and this all
+  // happens in memory, then it may trigger a spurious invariant failure here.
+  // If anyone ever decides to add this kind of functionality, then it would
+  // definitely make sense to move this checking into editable_tree.  For now,
+  // though, no such functionality is planned, so we'll see what happens.
+  //
+  // The implementation itself uses the map old_locations.  A node can be in
+  // the following states:
+  //   -- attached, no entry in old_locations map
+  //   -- detached, no entry in old_locations map
+  //      -- create_dir_node, create_file_node put a node into this state
+  //      -- a node in this state can be attached, anywhere, but may not be
+  //         deleted.
+  //   -- detached, an entry in old_locations map
+  //      -- detach_node puts a node into this state
+  //      -- a node in this state can be attached anywhere _except_ the
+  //         (parent, basename) entry given in the map, or may be deleted.
   std::map<node_id, std::pair<node_id, path_component> > old_locations;
   template <typename T> friend void dump(T const & val, std::string & out);
 };
@@ -319,6 +359,7 @@ make_roster_for_base_plus_cset(revision_id const & base,
                                revision_id const & new_rid,
                                roster_t & result, 
                                marking_map & marking,
+                               node_id_source & nis,
                                app_state & app);
 
 void 

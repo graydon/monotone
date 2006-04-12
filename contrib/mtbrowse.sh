@@ -22,7 +22,7 @@
 #  - Browse in branches, revisions, diff files, view logs ...
 #
 # Needed tools:
-#  monotone 0.19, 0.23, 0.26 or compatible
+#  Monotone 0.19, 0.23, mtn 0.26 or compatible
 #  dialog (tested Version 0.9b)
 #  bash, sh, dash
 #  less, vi or vim (use $VISUAL or $PAGER)
@@ -129,11 +129,17 @@
 # 2006-04-01 Version 0.2.0 Henry@BigFoot.de
 # Handle bookkeeping directory MT and _MTN
 # Move checking bookkeeping directory behind versions check.
+#
+# 2006-04-10 Version 0.2.1 Henry@BigFoot.de
+# Binary is mtn, set by MTN, with fallback to 'monotone'.
 
 # Known Bugs / ToDo-List:
 # * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.2.0"
+VERSION="0.2.1"
+
+# Binary
+MTN="mtn"
 
 # Save users settings
 # Default values, can overwrite on .mtbrowserc
@@ -274,7 +280,7 @@ fill_date_key()
 	short_hash=`echo $hash | cut -c 1-$HASH_TRIM`
 
 	# get certs of revision, remove special chars, cache it
-	monotone --db=$DB list certs $hash | tr '\\\t\042' '/ \047' > $tfc
+	$MTN --db=$DB list certs $hash | tr '\\\t\042' '/ \047' > $tfc
 		
 	# Date format
 	case $FORMAT_DATE in
@@ -395,7 +401,7 @@ do_log_brief_ancestors()
     # e51dc90425c6371a176e87df294b47fcdba3f0bb Full Name <henry@bigfoot.de> 2005-11-20T20:31:34 mtbrowse
 
     lineno=0
-    monotone log --brief --last=$CERTS_MAX --revision=$HEAD --db=$DB |\
+    $MTN log --brief --last=$CERTS_MAX --revision=$HEAD --db=$DB |\
     while read line
     do
 	lineno=$(( $lineno+1 ))
@@ -537,7 +543,7 @@ do_branch_sel()
     if [ ! -f $TEMPFILE.branches -o $DB -nt $TEMPFILE.branches \
 	-o "$CACHE" != "1" ]
     then
-	monotone --db=$DB list branches \
+	$MTN --db=$DB list branches \
 	 | sed -n -r -e 's/^(.+)$/\1\t-/p' > $TEMPFILE.branches \
 	 || exit 200
     fi
@@ -577,7 +583,7 @@ do_head_sel()
 	return
     fi
 
-    if ! monotone --db=$DB automate heads $BRANCH > $TEMPFILE.heads 2>$TEMPFILE.error
+    if ! $MTN --db=$DB automate heads $BRANCH > $TEMPFILE.heads 2>$TEMPFILE.error
     then
 	cat $TEMPFILE.error
 	exit -1
@@ -589,7 +595,7 @@ do_head_sel()
 	HEAD=`head -n 1 < $TEMPFILE.heads`
     else
 	# List heads with author and date. Select by user.
-	monotone --db=$DB heads --branch=$BRANCH \
+	$MTN --db=$DB heads --branch=$BRANCH \
 	  | sed -n -r -e 's/^([^ ]+) ([^ ]+) ([^ ]+)$/\1 \"\2 \3\"/p' \
 	  | xargs dialog --begin 1 2 --menu "Select head" 0 0 0 \
 	  2> $TEMPFILE.input
@@ -626,14 +632,14 @@ do_action_sel()
 	    # LOG
 	    # 0.19   monotone log --depth=n id file
 	    # 0.19+  monotone log --last=n id file
-	    monotone --db=$DB log $DEPTH_LAST=1 --revision=$REVISION \
+	    $MTN --db=$DB log $DEPTH_LAST=1 --revision=$REVISION \
 	      > $TEMPFILE.change.log || exit 200
 
 	    do_pager $TEMPFILE.change.log
 	    ;;
 	  P)
 	    # DIFF parent
-	    monotone --db=$DB automate parents $REVISION > $TEMPFILE.parents
+	    $MTN --db=$DB automate parents $REVISION > $TEMPFILE.parents
 
 	    if [ `wc -l < $TEMPFILE.parents` -ne 1 ]
 	    then
@@ -662,7 +668,7 @@ do_action_sel()
 	    then
 		dialog --msgbox "No parent found\n$REVISION" 6 45
 	    else
-		monotone --db=$DB diff \
+		$MTN --db=$DB diff \
 		  --revision=$PARENT --revision=$REVISION \
 		  > $TEMPFILE.parent.diff || exit 200
 		do_pager $TEMPFILE.parent.diff
@@ -670,7 +676,7 @@ do_action_sel()
 	    ;;
 	  W)
 	    # DIFF
-	    # monotone diff --revision=id
+	    # $MTN diff --revision=id
 	    if [ "$HEAD" = "$REVISION" ]
 	    then
 		dialog --msgbox "Can't diff with head self\n$HEAD" 6 45
@@ -678,13 +684,13 @@ do_action_sel()
 		# exist working copy?
 		if [ -f $BK_DIR/options ]
 		then
-		    monotone --db=$DB diff \
+		    $MTN --db=$DB diff \
 		      --revision=$REVISION \
 		      > $TEMPFILE.cwd.diff || exit 200
 		else
 		    # w/o MT dir don't work:
 		    # Help MT with HEAD info ;-)
-		    monotone --db=$DB diff \
+		    $MTN --db=$DB diff \
 		      --revision=$HEAD --revision=$REVISION \
 		      > $TEMPFILE.cwd.diff || exit 200
 		fi
@@ -701,8 +707,8 @@ do_action_sel()
 	    then
 		REV2=`cat $TEMPFILE.revision-select`
 
-		# monotone diff --revision=id1 --revision=id2
-		monotone --db=$DB diff \
+		# $MTN diff --revision=id1 --revision=id2
+		$MTN --db=$DB diff \
 		  --revision=$REV2 --revision=$REVISION \
 		  > $TEMPFILE.ref.diff || exit 200
 		do_pager $TEMPFILE.ref.diff
@@ -711,7 +717,7 @@ do_action_sel()
 	    ;;
 	  C)
 	    # List certs
-	    monotone --db=$DB list certs $REVISION > $TEMPFILE.certs.log \
+	    $MTN --db=$DB list certs $REVISION > $TEMPFILE.certs.log \
 	      || exit 200
 	    do_pager $TEMPFILE.certs.log
 	    ;;
@@ -719,7 +725,7 @@ do_action_sel()
 	   # List changed files
 	   # 0.22: monotone cat revision <id>
 	   # 0.23: monotone automate get_revision <id>
-	   monotone --db=$DB automate get_revision $REVISION > $TEMPFILE.rev.changed \
+	   $MTN --db=$DB automate get_revision $REVISION > $TEMPFILE.rev.changed \
 	     || exit 200
 	   do_pager $TEMPFILE.rev.changed
 	   ;;
@@ -754,7 +760,7 @@ do_automate_ancestors_depth()
 	fi
 
 	depth=$(( $depth+1 ))
-	monotone --db=$DB automate parents $head |\
+	$MTN --db=$DB automate parents $head |\
 	while read rev
 	do
 	    if ! grep -q -l -e "$rev" $TEMPFILE.ancestors
@@ -795,7 +801,7 @@ do_revision_sel()
 	    ;;
 	    L)
 		# Get ancestors from log
-		monotone log --brief --last=$CERTS_MAX --revision=$HEAD \
+		$MTN log --brief --last=$CERTS_MAX --revision=$HEAD \
 		  --db=$DB | cut -d ' ' -f 1 > $TEMPFILE.ancestors
 		# Check empty output, if fails
 		test -s $TEMPFILE.ancestors || exit 200
@@ -808,7 +814,7 @@ do_revision_sel()
 	    *)
 		# Get all ancestors
 		echo "$HEAD" > $TEMPFILE.ancestors
-		monotone --db=$DB automate ancestors $HEAD \
+		$MTN --db=$DB automate ancestors $HEAD \
 		  >> $TEMPFILE.ancestors || exit 200
 	    ;;
 	esac
@@ -819,7 +825,7 @@ do_revision_sel()
 	    if [ "$TOPOSORT" = "T" -o "$CERTS_MAX" -gt 0 -a "$ANCESTORS" != "L" ]
 	    then
 		echo "Toposort..."
-		monotone --db=$DB automate toposort `cat $TEMPFILE.ancestors` \
+		$MTN --db=$DB automate toposort `cat $TEMPFILE.ancestors` \
 		  > $TEMPFILE.toposort || exit 200
 
 		if [ "$CERTS_MAX" -gt 0 ]
@@ -892,7 +898,7 @@ do_revision_sel()
 
 	# Error, on "monotone automate parents XXXXXX", if short revision.  :-(
 	# Expand revision here, if short revision (is alway short now)
-	REVISION=`monotone --db=$DB complete revision $SHORT_REV`
+	REVISION=`$MTN --db=$DB complete revision $SHORT_REV`
 
 	# OK Button: Sub Menu
 	do_action_sel
@@ -943,7 +949,7 @@ do_config()
 	  P)
 	    # Setup for PAGER
 	    if dialog --inputbox \
-		"Config for pipe pager\nuse in sample: \"monotone log | less\"" \
+		"Config for pipe pager\nuse in sample: \"$MTN log | less\"" \
 		9 70 "$PAGER" 2> $TEMPFILE.input
 	    then
 		PAGER=`cat $TEMPFILE.input`
@@ -1090,7 +1096,7 @@ It's saver to use internal function (I)." 0 0
 	    # Save environment
 	    cat > $CONFIGFILE << EOF
 # File: ~/.mtbrowserc
-# Created for monotone $MT_MAJOR.$MT_MINOR
+# Created for Monotone $MT_MAJOR.$MT_MINOR
 
 DB="$DB"
 BRANCH="$BRANCH"
@@ -1123,7 +1129,7 @@ EOF
 	if [ $ANCESTORS = "L" -a \( $MT_MAJOR -eq 0 -a $MT_MINOR -lt 20 \) ]
 	then
 	    dialog --title " Info " --msgbox \
-"\"log brief\" is only supported on monotone version 0.20 or newer
+"\"log brief\" is only supported on Monotone version 0.20 or newer
 Automatic corrected" 0 0
 	    ANCESTORS="I"
 	fi
@@ -1163,8 +1169,18 @@ fi
 # Save args
 arg1=$1
 
-# Get monotone version
-set -- `monotone --version | sed -n -r -e 's/^.+ ([0-9]+)\.([0-9]+).+$/\1 \2/p'`
+# Check for binary
+if [ -z "`which $MTN 2>/dev/null`" ]
+then
+    if [ -n "`which monotone 2>/dev/null`" ]
+    then
+	# fall back to older binary name
+	MTN="monotone"
+    fi
+fi
+
+# Get $MTN version
+set -- `$MTN --version | sed -n -r -e 's/^.+ ([0-9]+)\.([0-9]+).+$/\1 \2/p'`
 MT_MAJOR=$1
 MT_MINOR=$2
 
@@ -1172,7 +1188,7 @@ if [ -z "$MT_MAJOR" -o -z "$MT_MINOR" ]
 then
     # Hm, need this here
     echo
-    echo "monotone - distributed version control system."
+    echo "$MTN - distributed version control system."
     echo "Can't execute!"
     echo
     exit -1
@@ -1291,9 +1307,9 @@ do
 
 	    if [ `echo "$REVISION" | wc -L` -lt 40 ]
 	    then
-		# Error, on "monotone automate parents XXXXXX", if short revision.  :-(
+		# Error, on "$MTN automate parents XXXXXX", if short revision.  :-(
 		# Expand revision here, if short revision
-		REVISION=`monotone --db=$DB complete revision $REVISION`
+		REVISION=`$MTN --db=$DB complete revision $REVISION`
 	    fi
 
 	    do_action_sel
@@ -1350,7 +1366,7 @@ do
 	    $DB -nt $TEMPFILE.changelog.$BRANCH ]
 	then
 	    echo "Reading log...($BRANCH)"
-	    monotone --db=$DB log --revision=$HEAD \
+	    $MTN --db=$DB log --revision=$HEAD \
 	      > $TEMPFILE.changelog.$BRANCH || exit 200
 	fi
 	cp $TEMPFILE.changelog.$BRANCH $TEMPFILE.change.log
@@ -1359,19 +1375,19 @@ do
       t)
 	# List Tags
 	echo "Reading Tags..."
-	monotone --db=$DB list tags > $TEMPFILE.tags.log || exit 200
+	$MTN --db=$DB list tags > $TEMPFILE.tags.log || exit 200
 	do_pager $TEMPFILE.tags.log
 	;;
       h)
 	# if not branch known, ask user
 	do_branch_sel check
 
-	monotone --db=$DB heads --branch=$BRANCH > $TEMPFILE.txt || exit 200
+	$MTN --db=$DB heads --branch=$BRANCH > $TEMPFILE.txt || exit 200
 	do_pager $TEMPFILE.txt
 	;;
       k)
 	# List keys
-	monotone --db=$DB list keys > $TEMPFILE.txt || exit 200
+	$MTN --db=$DB list keys > $TEMPFILE.txt || exit 200
 	do_pager $TEMPFILE.txt
 	;;
       X)

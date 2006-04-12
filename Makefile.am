@@ -214,11 +214,11 @@ POPT_SOURCES = \
 
 UNIX_PLATFORM_SOURCES = \
 	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/terminal.cc \
-	unix/inodeprint.cc unix/fs.cc
+	unix/inodeprint.cc unix/fs.cc unix/make_io_binary.cc
 
 WIN32_PLATFORM_SOURCES = \
 	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/terminal.cc \
-	win32/inodeprint.cc win32/fs.cc
+	win32/inodeprint.cc win32/fs.cc win32/make_io_binary.cc
 
 # primaries
 
@@ -441,7 +441,7 @@ endif
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 
 mostlyclean-local:
-	rm -rf testsuite.dir testsuite.log package_full_revision_dist.txt
+	rm -rf testsuite.dir testsuite.log package_full_revision.txt
 
 DISTCLEANFILES = tests/atconfig mt-stdint.h xgettext.opts pch-build.hh.gch.dep
 
@@ -474,8 +474,8 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 # we generate some headers to copy data into the executable
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
-                      package_revision.txt package_revision.c \
-                      package_full_revision.txt package_full_revision.c \
+                      package_revision.c \
+                      package_full_revision.txt package_full_revision_raw.txt package_full_revision.c \
                       $(PCH_FILE) $(PCH_BUILD)
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
@@ -485,6 +485,7 @@ txt2c: txt2c.cc Makefile
 	$(CXX) $(CXXFLAGS) -o $@ $<
 	chmod 0755 $@$(EXEEXT)
 
+.PHONY: apidocs
 apidocs:
 	doxygen doxygen.cfg
 
@@ -510,22 +511,66 @@ package_revision.c: package_revision.txt txt2c Makefile
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
-.PHONY: package_full_revision.txt apidocs
-package_full_revision.txt:
+# To avoid a dependency loop here, what we do is:
+#           calculate changes
+#                  |
+#      package_full_revision_raw.txt
+#              |                \  <-- add "generated from cached data" text
+#              |      package_full_revision_dist.txt
+#              |           /        
+#          package_full_revision.txt
+
+# This is phony, so that we always try to rebuild it.  If it succeeds
+# in calculating changes, it produces its target; otherwise, its
+# target does not exist.
+.PHONY: package_full_revision_raw.txt
+package_full_revision_raw.txt:
+# if both attempts fail, then we need to remove the empty file that >
+# creates, and also make sure that the shell command exits
+# successfully; the rm -f ensures both
 	REAL_BLDDIR=$$PWD/$(top_builddir); \
-	(cd $(srcdir) && $$REAL_BLDDIR/mtn status) 2>/dev/null >$@ \
-	|| (cd $(srcdir) && mtn status) 2>/dev/null >$@ \
-	|| (cp $(srcdir)/package_full_revision_dist.txt 2>/dev/null $@) \
-	|| (echo "unknown" >$@)
-package_full_revision_dist.txt: package_full_revision.txt
-	cp $< $@
-	(echo ''; \
-	 echo '  Generated from data cached in the distribution;'; \
-	 echo '  further changes may have been made.') >> $@
+	(cd $(srcdir) && $$REAL_BLDDIR/mtn automate get_revision) 2>/dev/null >$@ \
+	|| (cd $(srcdir) && mtn automate get_revision) 2>/dev/null >$@ \
+	|| rm -f $@
+# See above comment -- the file this depends on may or may not exist.
+# This file, however, must always exist, so that 'make dist' can
+# include it in the tarball it generates.  So there are three cases:
+#   -- if the raw file does not exist, then
+#      -- if the dist file exists, then we leave it alone
+#      -- if the dist file does not exist, then we say "unknown"
+#   -- if the raw file does exist, then we regenerate the dist file
+package_full_revision_dist.txt: package_full_revision_raw.txt
+	if [ -f $< ]; then \
+	  cp -f $< $@ \
+	  && (echo ''; \
+	      echo '  Generated from data cached in the distribution;'; \
+	      echo '  further changes may have been made.') >> $@; \
+	fi
+	[ -f $@ ] || echo "unknown" > $@
+# The raw file may not exist, but the dist file definitely does; we
+# just take the first dependency that exists.
+package_full_revision.txt: package_full_revision_raw.txt package_full_revision_dist.txt
+	rm -f $@
+	for SRC in $^; do ([ -f $$SRC -a ! -f $@ ] && cp -f $$SRC $@) || true; done
 package_full_revision.c: package_full_revision.txt txt2c Makefile
 	./txt2c --no-static $< package_full_revision >$@.tmp
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
+
+# This is a magic directive copy-and-pasted, then modified, from the
+# automake 1.9 manual, section 13.4, "Checking the distribution".
+# Normally, 'distcheck' does a clean build, and then afterwards runs
+# 'distclean', and 'distclean' is supposed to remove everything that
+# the build created.  However, we have some targets
+# (package_revision.txt, package_full_revision_dist.txt) that we
+# distribute, but then always attempt to rebuild optimistically, and
+# then if that fails fall back on the distributed versions.  This
+# means that 'distclean' should _not_ remove those files, since they
+# are distributed, yet building the package will generate those files,
+# those automake thinks that 'distclean' _should_ remove those files,
+# and 'distcheck' gets cranky if we don't.  So basically what this
+# line does is tell 'distcheck' to shut up and ignore those two files.
+distcleancheck_listfiles = find . -type f -a ! -name package_revision.txt -a ! -name package_full_revision_dist.txt
 
 # automake doesn't build html docs
 

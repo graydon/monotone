@@ -84,20 +84,13 @@ function ignore_file(name)
    -- project specific
    if (ignored_files == nil) then
       ignored_files = {}
-      local ignfile = io.open(".mtn-ignore", "r")
-      if (ignfile ~= nil) then
-         local line = ignfile:read()
-         while (line ~= nil)
-         do
-            table.insert(ignored_files, line)
-            line = ignfile:read()
-         end
-         io.close(ignfile)
+      for line in io.lines(".mtn-ignore") do
+         table.insert(ignored_files, line)
       end
    end
    for i, line in pairs(ignored_files)
    do
-      local pcallstatus, result = pcall(function() if (regex.search(line, name)) then return true else return false end end)
+      local pcallstatus, result = pcall(function() return regex.search(line, name) end)
       if pcallstatus == true then
           -- no error from the regex.search call
           if result == true then return true end
@@ -108,79 +101,69 @@ function ignore_file(name)
           table.remove(ignored_files, i)
       end
    end
-   -- c/c++
-   if (string.find(name, "%.a$")) then return true end
-   if (string.find(name, "%.so$")) then return true end
-   if (string.find(name, "%.o$")) then return true end
-   if (string.find(name, "%.la$")) then return true end
-   if (string.find(name, "%.lo$")) then return true end
-   if (string.find(name, "^core$")) then return true end
-   if (string.find(name, "/core$")) then return true end
-   if (string.find(name, "/core%.%d+$")) then return true end
-   -- python
-   if (string.find(name, "%.pyc$")) then return true end
-   if (string.find(name, "%.pyo$")) then return true end
-   -- TeX
-   if (string.find(name, "%.aux$")) then return true end
-   -- backup files
-   if (string.find(name, "%.bak$")) then return true end
-   if (string.find(name, "%.orig$")) then return true end
-   if (string.find(name, "%.rej$")) then return true end
-   if (string.find(name, "%~$")) then return true end
-   -- editor temp files
-   -- vim creates .foo.swp files
-   if (string.find(name, "%.[^/]*%.swp$")) then return true end
-   -- emacs creates #foo# files
-   if (string.find(name, "%#[^/]*%#$")) then return true end
-   -- autotools detritus:
-   if dir_matches(name, "autom4te.cache") then return true end
-   if dir_matches(name, ".deps") then return true end
-   -- Cons/SCons detritus:
-   if dir_matches(name, ".consign") then return true end
-   if dir_matches(name, ".sconsign") then return true end
-   -- other VCSes (where metadata is stored in named dirs):
-   if dir_matches(name, "CVS") then return true end
-   if dir_matches(name, ".svn") then return true end
-   if dir_matches(name, "SCCS") then return true end
-   if dir_matches(name, "_darcs") then return true end
-   if dir_matches(name, ".cdv") then return true end
-   if dir_matches(name, ".git") then return true end
-   if dir_matches(name, ".bzr") then return true end
-   if dir_matches(name, ".hg") then return true end
-   -- other VCSes (where metadata is stored in named files):
-   if (string.find(name, "%.scc$")) then return true end
-   -- desktop/directory configuration metadata
-   if (string.find(name, "^.DS_Store$")) then return true end
-   if (string.find(name, "/.DS_Store$")) then return true end
-   if (string.find(name, "^desktop.ini$")) then return true end
-   if (string.find(name, "/desktop.ini$")) then return true end
+
+   local file_pats = {
+      -- c/c++
+      "%.a$", "%.so$", "%.o$", "%.la$", "%.lo$", "^core$",
+      "/core$", "/core%.%d+$",
+      -- python
+      "%.pyc$", "%.pyo$",
+      -- TeX
+      "%.aux$",
+      -- backup files
+      "%.bak$", "%.orig$", "%.rej$", "%~$",
+      -- vim creates .foo.swp files
+      "%.[^/]*%.swp$",
+      -- emacs creates #foo# files
+      "%#[^/]*%#$",
+      -- other VCSes (where metadata is stored in named files):
+      "%.scc$",
+      -- desktop/directory configuration metadata
+      "^.DS_Store$", "/.DS_Store$", "^desktop.ini$", "/desktop.ini$"
+   }
+
+   local dir_pats = {
+      -- autotools detritus:
+      "autom4te.cache", ".deps",
+      -- Cons/SCons detritus:
+      ".consign", ".sconsign",
+      -- other VCSes (where metadata is stored in named dirs):
+      "CVS", ".svn", "SCCS", "_darcs", ".cdv", ".git", ".bzr", ".hg"
+   }
+
+   for _, pat in ipairs(file_pats) do
+      if string.find(name, pat) then return true end
+   end
+   for _, pat in ipairs(dir_pats) do
+      if dir_matches(name, pat) then return true end
+   end
+
    return false;
 end
 
 -- return true means "binary", false means "text",
 -- nil means "unknown, try to guess"
 function binary_file(name)
-   local lowname=string.lower(name)
    -- some known binaries, return true
-   if (string.find(lowname, "%.gif$")) then return true end
-   if (string.find(lowname, "%.jpe?g$")) then return true end
-   if (string.find(lowname, "%.png$")) then return true end
-   if (string.find(lowname, "%.bz2$")) then return true end
-   if (string.find(lowname, "%.gz$")) then return true end
-   if (string.find(lowname, "%.zip$")) then return true end
-   if (string.find(lowname, "%.class$")) then return true end
-   if (string.find(lowname, "%.jar$")) then return true end
-   if (string.find(lowname, "%.war$")) then return true end
-   if (string.find(lowname, "%.ear$")) then return true end
+   local bin_pats = {
+      "%.gif$", "%.jpe?g$", "%.png$", "%.bz2$", "%.gz$", "%.zip$",
+      "%.class$", "%.jar$", "%.war$", "%.ear$"
+   }
+
    -- some known text, return false
-   if (string.find(lowname, "%.cc?$")) then return false end
-   if (string.find(lowname, "%.cxx$")) then return false end
-   if (string.find(lowname, "%.hh?$")) then return false end
-   if (string.find(lowname, "%.hxx$")) then return false end
-   if (string.find(lowname, "%.lua$")) then return false end
-   if (string.find(lowname, "%.texi$")) then return false end
-   if (string.find(lowname, "%.sql$")) then return false end
-   if (string.find(lowname, "%.java$")) then return false end
+   local txt_pats = {
+      "%.cc?$", "%.cxx$", "%.hh?$", "%.hxx$", "%.cpp$", "%.hpp$",
+      "%.lua$", "%.texi$", "%.sql$", "%.java$"
+   }
+
+   local lowname=string.lower(name)
+   for _, pat in ipairs(bin_pats) do
+      if string.find(lowname, pat) then return true end
+   end
+   for _, pat in ipairs(txt_pats) do
+      if string.find(lowname, pat) then return false end
+   end
+
    -- unknown - read file and use the guess-binary 
    -- monotone built-in function
    return guess_binary_file_contents(name)
@@ -268,7 +251,7 @@ function get_file_cert_trust(signers, id, name, val)
 end
 
 function accept_testresult_change(old_results, new_results)
-   local reqfile = io.open("MT/wanted-testresults", "r")
+   local reqfile = io.open("_MTN/wanted-testresults", "r")
    if (reqfile == nil) then return true end
    local line = reqfile:read()
    local required = {}

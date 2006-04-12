@@ -9,6 +9,7 @@
 // writing to it directly!
 
 #include "config.h"
+
 #include "platform.hh"
 #include "sanity.hh"
 #include "ui.hh"
@@ -32,28 +33,30 @@ ticker::ticker(string const & tickname, std::string const & s, size_t mod,
   total(0),
   kilocount(kilocount),
   use_total(false),
-  name(tickname),
-  shortname(s)
+  keyname(tickname),
+  name(_(tickname.c_str())),
+  shortname(s),
+  count_size(0)
 {
-  I(ui.tickers.find(tickname) == ui.tickers.end());
-  ui.tickers.insert(make_pair(tickname,this));
+  I(ui.tickers.find(keyname) == ui.tickers.end());
+  ui.tickers.insert(make_pair(keyname, this));
 }
 
 ticker::~ticker()
 {
-  I(ui.tickers.find(name) != ui.tickers.end());
+  I(ui.tickers.find(keyname) != ui.tickers.end());
   if (ui.some_tick_is_dirty)
     {
       ui.write_ticks();
     }
-  ui.tickers.erase(name);
+  ui.tickers.erase(keyname);
   ui.finish_ticking();
 }
 
 void 
 ticker::operator++()
 {
-  I(ui.tickers.find(name) != ui.tickers.end());
+  I(ui.tickers.find(keyname) != ui.tickers.end());
   ticks++;
   ui.some_tick_is_dirty = true;
   if (ticks % mod == 0)
@@ -63,7 +66,7 @@ ticker::operator++()
 void 
 ticker::operator+=(size_t t)
 {
-  I(ui.tickers.find(name) != ui.tickers.end());
+  I(ui.tickers.find(keyname) != ui.tickers.end());
   size_t old = ticks;
 
   ticks += t;
@@ -84,6 +87,69 @@ tick_write_count::~tick_write_count()
 {
 }
 
+static string compose_count(ticker *tick, size_t ticks=0)
+{
+  string count;
+
+  if (ticks == 0)
+    {
+      ticks = tick->ticks;
+    }
+
+  if (tick->kilocount && ticks)
+    {
+      // automatic unit conversion is enabled
+      float div = 1.0;
+      const char *message;
+
+      if (ticks >= 1073741824)
+        {
+          div = 1073741824;
+          // xgettext: gibibytes (2^30 bytes)
+          message = N_("%.1f G");
+        }
+      else if (ticks >= 1048576)
+        {
+          div = 1048576;
+          // xgettext: mebibytes (2^20 bytes)
+          message = N_("%.1f M");
+        }
+      else if (ticks >= 1024)
+        {
+          div = 1024;
+          // xgettext: kibibytes (2^10 bytes)
+          message = N_("%.1f k");
+        }
+      else
+        {
+          div = 1;
+          message = "%.0f";
+        }
+      // We reset the mod to the divider, to avoid spurious screen updates.
+      tick->mod = max(static_cast<int>(div / 10.0), 1);
+      count = (F(message) % (ticks / div)).str();
+    }
+  else if (tick->use_total)
+    {
+      // We know that we're going to eventually have 'total' displayed
+      // twice on screen, plus a slash. So we should pad out this field
+      // to that eventual size to avoid spurious re-issuing of the
+      // tick titles as we expand to the goal.
+      string complete = (F("%d/%d") % tick->total % tick->total).str();
+      // xgettext: bytes
+      string current = (F("%d/%d") % ticks % tick->total).str();
+      count.append(complete.size() - current.size(),' ');
+      count.append(current);
+    }
+  else
+    {
+      // xgettext: bytes
+      count = (F("%d") % ticks).str();
+    }
+
+  return count;
+}
+
 void tick_write_count::write_ticks()
 {
   vector<size_t> tick_widths;
@@ -93,62 +159,29 @@ void tick_write_count::write_ticks()
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
        i != ui.tickers.end(); ++i)
     {
-      string count;
       ticker * tick = i->second;
-      if (tick->kilocount && tick->ticks)
-        { 
-          // automatic unit conversion is enabled
-          float div = 1.0;
-          const char *message;
 
-          if (tick->ticks >= 1073741824) 
-            {
-              div = 1073741824;
-              // xgettext: gibibytes (2^30 bytes)
-              message = N_("%.1f G");
-            } 
-          else if (tick->ticks >= 1048576) 
-            {
-              div = 1048576;
-              // xgettext: mebibytes (2^20 bytes)
-              message = N_("%.1f M");
-            } 
-          else if (tick->ticks >= 1024)
-            {
-              div = 1024;
-              // xgettext: kibibytes (2^10 bytes)
-              message = N_("%.1f k");
-            }
-          else
-            {
-              div = 1;
-              message = "%.0f";
-            }
-          // We reset the mod to the divider, to avoid spurious screen updates.
-          tick->mod = max(static_cast<int>(div / 10.0), 1);
-          count = (F(message) % (tick->ticks / div)).str();
-        }
-      else if (tick->use_total)
+      if (tick->count_size == 0)
         {
-          // We know that we're going to eventually have 'total' displayed
-          // twice on screen, plus a slash. So we should pad out this field
-          // to that eventual size to avoid spurious re-issuing of the 
-          // tick titles as we expand to the goal.
-          string complete = (F("%d/%d") % tick->total % tick->total).str();          
-          // xgettext: bytes
-          string current = (F("%d/%d") % tick->ticks % tick->total).str();
-          count.append(complete.size() - current.size(),' ');
-          count.append(current);
+          // To find out what the maximum size can be, choose one the the
+          // dividers from compose_count, subtract one and have compose_count
+          // create the count string for that.  Use the size of the returned
+          // count string as an initial size for this tick.
+          tick->set_count_size(display_width(utf8(compose_count(tick,
+                                                                1048575))));
         }
-      else
-        {
-          // xgettext: bytes
-          count = (F("%d") % tick->ticks).str();
-        }
-      
+
+      string count(compose_count(tick));
+
       size_t title_width = display_width(utf8(tick->name));
       size_t count_width = display_width(utf8(count));
-      size_t max_width = std::max(title_width, count_width);
+
+      if (count_width > tick->count_size)
+        {
+          tick->set_count_size(count_width);
+        }
+
+      size_t max_width = std::max(title_width, tick->count_size);
 
       string name;
       name.append(max_width - title_width, ' ');
@@ -169,7 +202,7 @@ void tick_write_count::write_ticks()
   if (write_tickline1)
     {
       // Reissue the titles if the widths have changed.
-      tickline1 = "monotone: ";
+      tickline1 = ui.output_prefix();
       for (size_t i = 0; i < tick_widths.size(); ++i)
         {
           if (i != 0)
@@ -181,7 +214,7 @@ void tick_write_count::write_ticks()
     }
 
   // Always reissue the counts.
-  string tickline2 = "monotone: ";
+  string tickline2 = ui.output_prefix();
   for (size_t i = 0; i < tick_widths.size(); ++i)
     {
       if (i != 0)
@@ -240,7 +273,7 @@ tick_write_dot::~tick_write_dot()
 
 void tick_write_dot::write_ticks()
 {
-  static const string tickline_prefix = "monotone: ";
+  static const string tickline_prefix = ui.output_prefix();
   string tickline1, tickline2;
   bool first_tick = true;
 
@@ -251,7 +284,7 @@ void tick_write_dot::write_ticks()
     }
   else
     {
-      tickline1 = "monotone: ticks: ";
+      tickline1 = ui.output_prefix() + "ticks: ";
       tickline2 = "\n" + tickline_prefix;
       chars_on_line = tickline_prefix.size();
     }
@@ -368,11 +401,26 @@ user_interface::fatal(string const & fatal)
 {
   inform(F("fatal: %s\n"
            "this is almost certainly a bug in monotone.\n"
-           "please send this error message, the output of 'monotone --full-version',\n"
+           "please send this error message, the output of '%s --full-version',\n"
            "and a description of what you were doing to %s.\n")
-         % fatal % PACKAGE_BUGREPORT);
+         % fatal % prog_name % PACKAGE_BUGREPORT);
 }
 
+void
+user_interface::set_prog_name(std::string const & name)
+{
+  prog_name = name;
+  I(!prog_name.empty());
+}
+
+std::string
+user_interface::output_prefix()
+{
+  if (prog_name.empty()) {
+    return "?: ";
+  }
+  return prog_name + ": ";
+}
 
 static inline string 
 sanitize(string const & line)
@@ -412,6 +460,7 @@ user_interface::redirect_log_to(system_path const & filename)
   if (filestr.is_open())
     filestr.close();
   filestr.open(filename.as_external().c_str(), ofstream::out | ofstream::app);
+  E(filestr.is_open(), F("failed to open log file '%s'") % filename);
   clog.rdbuf(filestr.rdbuf());
 }
 
@@ -419,7 +468,7 @@ void
 user_interface::inform(string const & line)
 {
   string prefixedLine;
-  prefix_lines_with(_("monotone: "), line, prefixedLine);
+  prefix_lines_with(output_prefix(), line, prefixedLine);
   ensure_clean_line();
   clog << sanitize(prefixedLine) << endl;
   clog.flush();

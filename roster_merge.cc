@@ -1,5 +1,5 @@
 // -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-// copyright (C) 2005 nathaniel smith <njs@pobox.com>
+// copyright (C) 2005, 2006 nathaniel smith <njs@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
@@ -105,6 +105,7 @@ dump(roster_merge_result const & result, std::string & out)
   debug_describe_conflicts(result, out);
   std::string roster_part;
   dump(result.roster, roster_part);
+  out += "\n\n";
   out += roster_part;
 }
 
@@ -306,10 +307,9 @@ namespace
             c.parent_name = std::make_pair(parent, name);
             split_path root_sp;
             file_path().split(root_sp);
-            // this line will currently cause an abort, because we don't
-            // support detaching the root node
             result.roster.detach_node(root_sp);
             result.rename_target_conflicts.push_back(c);
+            return;
           }
       }
     else
@@ -634,26 +634,48 @@ roster_merge(roster_t const & left_parent,
 //   live in one and unseen in other -->live
 //   dead in one and unseen in other -->dead
 //
-// (NEEDED:)
-//
 // two diff nodes with same name
 // directory loops
 // orphans
-// name collision on root dir
 // illegal node ("_MTN")
 // missing root dir
 //
+// (NEEDED:)
+//
 // interactions:
-//   in-node name conflict + possible between-node name conflict
-//   in-node name conflict + both possible names orphaned
-//   in-node name conflict + directory loop conflict
-//   in-node name conflict + one name illegal
-//   between-node name conflict + both nodes orphaned
-//   between-node name conflict + both nodes cause loop
-//   between-node name conflict + both nodes illegal
-
-// to run roster_merge, need roster, marking, birth revs, and uncommon
-// ancestors for each side...
+//   in-node name conflict prevents other problems:
+//     in-node name conflict + possible between-node name conflict
+//        a vs. b, plus a, b, exist in result
+//        left: 1: a
+//              2: b
+//        right: 1: b
+//               3: a
+//     in-node name conflict + both possible names orphaned
+//        a/foo vs. b/foo conflict, + a, b exist in parents but deleted in
+//        children
+//        left: 1: a
+//              2: a/foo
+//        right:
+//              3: b
+//              2: b/foo
+//     in-node name conflict + directory loop conflict
+//        a/bottom vs. b/bottom, with a and b both moved inside it
+//     in-node name conflict + one name illegal
+//        _MTN vs. foo
+//   in-node name conflict causes other problems:
+//     in-node name conflict + causes missing root dir
+//        "" vs. foo and bar vs. ""
+//   between-node name conflict prevents other problems:
+//     between-node name conflict + both nodes orphaned
+//        this is not possible
+//     between-node name conflict + both nodes cause loop
+//        this is not possible
+//     between-node name conflict + both nodes illegal
+//        two nodes that both merge to _MTN
+//        this is not possible
+//   between-node name conflict causes other problems:
+//     between-node name conflict + causes missing root dir
+//        two nodes that both want ""
 
 split_path
 split(std::string const & s)
@@ -1334,6 +1356,486 @@ test_roster_merge_attr_lifecycle()
   I(safe_get(result.roster.get_node(file_nid)->attrs, attr_key("left_dead")) == std::make_pair(false, attr_value("")));
 }
 
+struct structural_conflict_helper
+{
+  roster_t left_roster, right_roster;
+  marking_map left_markings, right_markings;
+  std::set<revision_id> old_revs, left_revs, right_revs;
+  revision_id old_rid, left_rid, right_rid;
+  testing_node_id_source nis;
+  node_id root_nid;
+  roster_merge_result result;
+
+  virtual void setup() = 0;
+  virtual void check() = 0;
+
+  void test()
+  {
+    MM(left_roster);
+    MM(left_markings);
+    MM(right_roster);
+    MM(right_markings);
+    string_to_set("0", old_revs);
+    string_to_set("1", left_revs);
+    string_to_set("2", right_revs);
+    old_rid = *old_revs.begin();
+    left_rid = *left_revs.begin();
+    right_rid = *right_revs.begin();
+    root_nid = nis.next();
+    make_dir(left_roster, left_markings, old_rid, old_rid, "", root_nid);
+    make_dir(right_roster, right_markings, old_rid, old_rid, "", root_nid);
+
+    setup();
+
+    MM(result);
+    roster_merge(left_roster, left_markings, left_revs,
+                 right_roster, right_markings, right_revs,
+                 result);
+
+    check();
+  }
+
+  virtual ~structural_conflict_helper() {}
+};
+
+// two diff nodes with same name
+struct simple_rename_target_conflict : public structural_conflict_helper
+{
+  node_id left_nid, right_nid;
+  virtual void setup()
+  {
+    left_nid = nis.next();
+    make_dir(left_roster, left_markings, left_rid, left_rid, "thing", left_nid);
+    right_nid = nis.next();
+    make_dir(right_roster, right_markings, right_rid, right_rid, "thing", right_nid);
+  }
+
+  virtual void check()
+  {
+    I(!result.is_clean());
+    rename_target_conflict const & c = idx(result.rename_target_conflicts, 0);
+    I((c.nid1 == left_nid && c.nid2 == right_nid)
+      || (c.nid1 == right_nid && c.nid2 == left_nid));
+    I(c.parent_name == std::make_pair(root_nid, idx(split("thing"), 1)));
+    // this tests that they were detached, implicitly
+    result.roster.attach_node(left_nid, split("left"));
+    result.roster.attach_node(right_nid, split("right"));
+    result.rename_target_conflicts.pop_back();
+    I(result.is_clean());
+    result.roster.check_sane();
+  }
+};
+
+// directory loops
+struct simple_dir_loop_conflict : public structural_conflict_helper
+{
+  node_id left_top_nid, right_top_nid;
+  
+  virtual void setup()
+    {
+      left_top_nid = nis.next();
+      right_top_nid = nis.next();
+
+      make_dir(left_roster, left_markings, old_rid, old_rid, "top", left_top_nid);
+      make_dir(left_roster, left_markings, old_rid, left_rid, "top/bottom", right_top_nid);
+
+      make_dir(right_roster, right_markings, old_rid, old_rid, "top", right_top_nid);
+      make_dir(right_roster, right_markings, old_rid, right_rid, "top/bottom", left_top_nid);
+    }
+
+  virtual void check()
+    {
+      I(!result.is_clean());
+      directory_loop_conflict const & c = idx(result.directory_loop_conflicts, 0);
+      I((c.nid == left_top_nid && c.parent_name == std::make_pair(right_top_nid, idx(split("bottom"), 1)))
+        || (c.nid == right_top_nid && c.parent_name == std::make_pair(left_top_nid, idx(split("bottom"), 1))));
+      // this tests it was detached, implicitly
+      result.roster.attach_node(c.nid, split("resolved"));
+      result.directory_loop_conflicts.pop_back();
+      I(result.is_clean());
+      result.roster.check_sane();
+    }
+};
+
+// orphans
+struct simple_orphan_conflict : public structural_conflict_helper
+{
+  node_id a_dead_parent_nid, a_live_child_nid, b_dead_parent_nid, b_live_child_nid;
+  
+  // in ancestor, both parents are alive
+  // in left, a_dead_parent is dead, and b_live_child is created
+  // in right, b_dead_parent is dead, and a_live_child is created
+
+  virtual void setup()
+    {
+      a_dead_parent_nid = nis.next();
+      a_live_child_nid = nis.next();
+      b_dead_parent_nid = nis.next();
+      b_live_child_nid = nis.next();
+
+      make_dir(left_roster, left_markings, old_rid, old_rid, "b_parent", b_dead_parent_nid);
+      make_dir(left_roster, left_markings, left_rid, left_rid, "b_parent/b_child", b_live_child_nid);
+
+      make_dir(right_roster, right_markings, old_rid, old_rid, "a_parent", a_dead_parent_nid);
+      make_dir(right_roster, right_markings, right_rid, right_rid, "a_parent/a_child", a_live_child_nid);
+    }
+
+  virtual void check()
+    {
+      I(!result.is_clean());
+      I(result.orphaned_node_conflicts.size() == 2);
+      orphaned_node_conflict a, b;
+      if (idx(result.orphaned_node_conflicts, 0).nid == a_live_child_nid)
+        {
+          a = idx(result.orphaned_node_conflicts, 0);
+          b = idx(result.orphaned_node_conflicts, 1);
+        }
+      else
+        {
+          a = idx(result.orphaned_node_conflicts, 1);
+          b = idx(result.orphaned_node_conflicts, 0);
+        }
+      I(a.nid == a_live_child_nid);
+      I(a.parent_name == std::make_pair(a_dead_parent_nid, idx(split("a_child"), 1)));
+      I(b.nid == b_live_child_nid);
+      I(b.parent_name == std::make_pair(b_dead_parent_nid, idx(split("b_child"), 1)));
+      // this tests it was detached, implicitly
+      result.roster.attach_node(a.nid, split("resolved_a"));
+      result.roster.attach_node(b.nid, split("resolved_b"));
+      result.orphaned_node_conflicts.pop_back();
+      result.orphaned_node_conflicts.pop_back();
+      I(result.is_clean());
+      result.roster.check_sane();
+    }
+};
+
+// illegal node ("_MTN")
+struct simple_illegal_name_conflict : public structural_conflict_helper
+{
+  node_id new_root_nid, bad_dir_nid;
+  
+  // in left, new_root is the root (it existed in old, but was renamed in left)
+  // in right, new_root is still a subdir, the old root still exists, and a
+  // new dir has been created
+
+  virtual void setup()
+    {
+      new_root_nid = nis.next();
+      bad_dir_nid = nis.next();
+
+      left_roster.drop_detached_node(left_roster.detach_node(split("")));
+      safe_erase(left_markings, root_nid);
+      make_dir(left_roster, left_markings, old_rid, left_rid, "", new_root_nid);
+
+      make_dir(right_roster, right_markings, old_rid, old_rid, "root_to_be", new_root_nid);
+      make_dir(right_roster, right_markings, right_rid, right_rid, "root_to_be/_MTN", bad_dir_nid);
+    }
+
+  virtual void check()
+    {
+      I(!result.is_clean());
+      illegal_name_conflict const & c = idx(result.illegal_name_conflicts, 0);
+      I(c.nid == bad_dir_nid);
+      I(c.parent_name == std::make_pair(new_root_nid, bookkeeping_root_component));
+      // this tests it was detached, implicitly
+      result.roster.attach_node(bad_dir_nid, split("dir_formerly_known_as__MTN"));
+      result.illegal_name_conflicts.pop_back();
+      I(result.is_clean());
+      result.roster.check_sane();
+    }
+};
+
+// missing root dir
+struct simple_missing_root_dir : public structural_conflict_helper
+{
+  node_id other_root_nid;
+  
+  // left and right each have different root nodes, and each has deleted the
+  // other's root node
+
+  virtual void setup()
+    {
+      other_root_nid = nis.next();
+
+      left_roster.drop_detached_node(left_roster.detach_node(split("")));
+      safe_erase(left_markings, root_nid);
+      make_dir(left_roster, left_markings, old_rid, old_rid, "", other_root_nid);
+    }
+
+  virtual void check()
+    {
+      I(!result.is_clean());
+      I(result.missing_root_dir);
+      result.roster.attach_node(result.roster.create_dir_node(nis), split(""));
+      result.missing_root_dir = false;
+      I(result.is_clean());
+      result.roster.check_sane();
+    }
+};
+
+
+static void
+test_simple_structural_conflicts()
+{
+  {
+    simple_rename_target_conflict t;
+    t.test();
+  }
+  {
+    simple_dir_loop_conflict t;
+    t.test();
+  }
+  {
+    simple_orphan_conflict t;
+    t.test();
+  }
+  {
+    simple_illegal_name_conflict t;
+    t.test();
+  }
+  {
+    simple_missing_root_dir t;
+    t.test();
+  }
+}
+
+struct node_name_plus_helper : public structural_conflict_helper
+{
+  node_id name_conflict_nid;
+  node_id left_parent, right_parent;
+  path_component left_name, right_name;
+  void make_nn_conflict(std::string const & left_path, std::string const & right_path)
+  {
+    name_conflict_nid = nis.next();
+    make_dir(left_roster, left_markings, old_rid, left_rid, left_path, name_conflict_nid);
+    left_parent = left_roster.get_node(split(left_path))->parent;
+    left_name = left_roster.get_node(split(left_path))->name;
+    make_dir(right_roster, right_markings, old_rid, right_rid, right_path, name_conflict_nid);
+    right_parent = right_roster.get_node(split(right_path))->parent;
+    right_name = right_roster.get_node(split(right_path))->name;
+  }
+  void check_nn_conflict()
+  {
+    I(!result.is_clean());
+    node_name_conflict const & c = idx(result.node_name_conflicts, 0);
+    I(c.nid == name_conflict_nid);
+    I(c.left == std::make_pair(left_parent, left_name));
+    I(c.right == std::make_pair(right_parent, right_name));
+    result.roster.attach_node(name_conflict_nid, split("totally_other_name"));
+    result.node_name_conflicts.pop_back();
+    I(result.is_clean());
+    result.roster.check_sane();
+  }
+};
+
+struct node_name_plus_rename_target : public node_name_plus_helper
+{
+  node_id a_nid, b_nid;
+
+  virtual void setup()
+  {
+    a_nid = nis.next();
+    b_nid = nis.next();
+    make_nn_conflict("a", "b");
+    make_dir(left_roster, left_markings, left_rid, left_rid, "b", b_nid);
+    make_dir(right_roster, right_markings, right_rid, right_rid, "a", a_nid);
+  }
+
+  virtual void check()
+  {
+    // there should just be a single conflict on name_conflict_nid, and a and
+    // b should have landed fine
+    I(result.roster.get_node(split("a"))->self == a_nid);
+    I(result.roster.get_node(split("b"))->self == b_nid);
+    check_nn_conflict();
+  }
+};
+
+struct node_name_plus_orphan : public node_name_plus_helper
+{
+  node_id a_nid, b_nid;
+
+  virtual void setup()
+  {
+    a_nid = nis.next();
+    b_nid = nis.next();
+    make_dir(left_roster, left_markings, old_rid, left_rid, "a", a_nid);
+    make_dir(right_roster, right_markings, old_rid, right_rid, "b", b_nid);
+    make_nn_conflict("a/foo", "b/foo");
+  }
+
+  virtual void check()
+  {
+    I(result.roster.all_nodes().size() == 2);
+    check_nn_conflict();
+  }
+};
+
+struct node_name_plus_directory_loop : public node_name_plus_helper
+{
+  node_id a_nid, b_nid;
+
+  virtual void setup()
+  {
+    a_nid = nis.next();
+    b_nid = nis.next();
+    make_dir(left_roster, left_markings, old_rid, old_rid, "a", a_nid);
+    make_dir(right_roster, right_markings, old_rid, old_rid, "b", b_nid);
+    make_nn_conflict("a/foo", "b/foo");
+    make_dir(left_roster, left_markings, old_rid, left_rid, "a/foo/b", b_nid);
+    make_dir(right_roster, right_markings, old_rid, right_rid, "b/foo/a", a_nid);
+  }
+
+  virtual void check()
+  {
+    I(downcast_to_dir_t(result.roster.get_node(name_conflict_nid))->children.size() == 2);
+    check_nn_conflict();
+  }
+};
+
+struct node_name_plus_illegal_name : public node_name_plus_helper
+{
+  node_id new_root_nid;
+
+  virtual void setup()
+  {
+    new_root_nid = nis.next();
+    make_dir(left_roster, left_markings, old_rid, old_rid, "new_root", new_root_nid);
+    right_roster.drop_detached_node(right_roster.detach_node(split("")));
+    safe_erase(right_markings, root_nid);
+    make_dir(right_roster, right_markings, old_rid, right_rid, "", new_root_nid);
+    make_nn_conflict("new_root/_MTN", "foo");
+  }
+
+  virtual void check()
+  {
+    I(result.roster.root()->self == new_root_nid);
+    I(result.roster.all_nodes().size() == 2);
+    check_nn_conflict();
+  }
+};
+
+struct node_name_plus_missing_root : public structural_conflict_helper
+{
+  node_id left_root_nid, right_root_nid;
+
+  virtual void setup()
+  {
+    left_root_nid = nis.next();
+    right_root_nid = nis.next();
+    
+    left_roster.drop_detached_node(left_roster.detach_node(split("")));
+    safe_erase(left_markings, root_nid);
+    make_dir(left_roster, left_markings, old_rid, left_rid, "", left_root_nid);
+    make_dir(left_roster, left_markings, old_rid, left_rid, "right_root", right_root_nid);
+
+    right_roster.drop_detached_node(right_roster.detach_node(split("")));
+    safe_erase(right_markings, root_nid);
+    make_dir(right_roster, right_markings, old_rid, right_rid, "", right_root_nid);
+    make_dir(right_roster, right_markings, old_rid, right_rid, "left_root", left_root_nid);
+  }
+  void check_helper(node_name_conflict const & left_c, node_name_conflict const & right_c)
+  {
+    I(left_c.nid == left_root_nid);
+    I(left_c.left == std::make_pair(the_null_node, the_null_component));
+    I(left_c.right == std::make_pair(right_root_nid, idx(split("left_root"), 1)));
+
+    I(right_c.nid == right_root_nid);
+    I(right_c.left == std::make_pair(left_root_nid, idx(split("right_root"), 1)));
+    I(right_c.right == std::make_pair(the_null_node, the_null_component));
+  }
+  virtual void check()
+  {
+    I(!result.is_clean());
+    I(result.node_name_conflicts.size() == 2);
+
+    if (idx(result.node_name_conflicts, 0).nid == left_root_nid)
+      check_helper(idx(result.node_name_conflicts, 0),
+                   idx(result.node_name_conflicts, 1));
+    else
+      check_helper(idx(result.node_name_conflicts, 1),
+                   idx(result.node_name_conflicts, 0));
+
+    I(result.missing_root_dir);
+
+    result.roster.attach_node(left_root_nid, split(""));
+    result.roster.attach_node(right_root_nid, split("totally_other_name"));
+    result.node_name_conflicts.pop_back();
+    result.node_name_conflicts.pop_back();
+    result.missing_root_dir = false;
+    I(result.is_clean());
+    result.roster.check_sane();
+  }
+};
+
+struct rename_target_plus_missing_root : public structural_conflict_helper
+{
+  node_id left_root_nid, right_root_nid;
+
+  virtual void setup()
+  {
+    left_root_nid = nis.next();
+    right_root_nid = nis.next();
+    
+    left_roster.drop_detached_node(left_roster.detach_node(split("")));
+    safe_erase(left_markings, root_nid);
+    make_dir(left_roster, left_markings, left_rid, left_rid, "", left_root_nid);
+
+    right_roster.drop_detached_node(right_roster.detach_node(split("")));
+    safe_erase(right_markings, root_nid);
+    make_dir(right_roster, right_markings, right_rid, right_rid, "", right_root_nid);
+  }
+  virtual void check()
+  {
+    I(!result.is_clean());
+    rename_target_conflict const & c = idx(result.rename_target_conflicts, 0);
+    I((c.nid1 == left_root_nid && c.nid2 == right_root_nid)
+      || (c.nid1 == right_root_nid && c.nid2 == left_root_nid));
+    I(c.parent_name == std::make_pair(the_null_node, the_null_component));
+
+    I(result.missing_root_dir);
+
+    // we can't just attach one of these as the root -- see the massive
+    // comment on the old_locations member of roster_t, in roster.hh.
+    result.roster.attach_node(result.roster.create_dir_node(nis), split(""));
+    result.roster.attach_node(left_root_nid, split("totally_left_name"));
+    result.roster.attach_node(right_root_nid, split("totally_right_name"));
+    result.rename_target_conflicts.pop_back();
+    result.missing_root_dir = false;
+    I(result.is_clean());
+    result.roster.check_sane();
+  }
+};
+
+static void
+test_complex_structural_conflicts()
+{
+  {
+    node_name_plus_rename_target t;
+    t.test();
+  }
+  {
+    node_name_plus_orphan t;
+    t.test();
+  }
+  {
+    node_name_plus_directory_loop t;
+    t.test();
+  }
+  {
+    node_name_plus_illegal_name t;
+    t.test();
+  }
+  {
+    node_name_plus_missing_root t;
+    t.test();
+  }
+  {
+    rename_target_plus_missing_root t;
+    t.test();
+  }
+}
+
 void
 add_roster_merge_tests(test_suite * suite)
 {
@@ -1341,6 +1843,8 @@ add_roster_merge_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&test_roster_merge_node_lifecycle));
   suite->add(BOOST_TEST_CASE(&test_roster_merge_attr_lifecycle));
   suite->add(BOOST_TEST_CASE(&test_scalar_merges));
+  suite->add(BOOST_TEST_CASE(&test_simple_structural_conflicts));
+  suite->add(BOOST_TEST_CASE(&test_complex_structural_conflicts));
 }
 
 #endif // BUILD_UNIT_TESTS
