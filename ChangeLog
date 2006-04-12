@@ -1,3 +1,14 @@
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (fork_server): Set the C locale before
+	executing monotone itself.  This is needed since usher is
+	trying to interpret the first line of monotone output, and
+	only understands the english message.
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: "ls branches" changed to take a pattern.
+
 2006-04-12  Matthew Nicholson  <matt@matt-land.com>
 	
 	* commands.cc (pid_file::pid_file): Move check for open pidfile until
