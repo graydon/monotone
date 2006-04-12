@@ -9,48 +9,54 @@ c) You can deal with the shell...
 
 Now the step-by-step HOWTO:
 
-I) Create a new, untranslated po-file for your language
-  
-   $ cd /path/to/net.venge.monotone/po
-   $ ./po-update.sh <yourlang>
-   
-   where <yourlang> is the ISO 639-1 code of your language
-   (e.g. "en" for English, "de" for German, aso.)
-   
-   If the language differs by region, you can also
-   expand the code with the country code to reflect these
-   differences. F.e. "en_GB" stands for English as spoken
-   (and written) in Great Britain (BE), while "en_US" 
-   determines American English (AE).
+I) Edit the file po/LINGUAS a new entry for your language.
+   The language code has the format ISO 639-1 (e.g. "en" 
+   for English, "de" for German, aso.) - if your language 
+   differs by region, you can also expand the language code 
+   with the country code to reflect these differences. 
+   F.e. "en_GB" stands for English as spoken (and written) 
+   in Great Britain (BE), while "en_US" determines 
+   American English (AE).
 
-II) Add your language to the LINGUAS list by creating an
-    entry in a new line in this file
+
+II) Configure monotone
+  
+   $ cd net.venge.monotone
+   $ aclocal && autoreconf --install 
+   $ ./configure
+   $ ( cd po; make monotone.pot-update )
+   
+   This will create an untranslated monotone.pot file in po/.
+   Copy this file to <yourlang>.po (where <yourlang> is the
+   language code you've entered in LINGUAS), and continue 
+   with III).
     
 III) Edit the header of your new language po according to
-     the excellent HOWTO here [0]. Of particular interest
-     are mainly two things:
+   the excellent HOWTO here [0]. Of particular interest
+   are mainly two things:
      
-     a) The encoding of the file (Content-Type: ...)
-        Set this to the encoding you'll use in your text
-        editor to translate the file. UTF-8 is recommended
-        here.
-     b) The Plural forms configuration (Plural-Forms: ...)
-        The Entries here differ from language to language,
-        some might have more complex plural forms (e.g.
-        Slavic languages), others have simple ones (e.g.
-        most Romanian languages). If you don't know exactly
-        what to write here, take a look at the gettext manual
-        here [1].
-        
-Thats it basically. If you like to have a nice GUI for editing
-language files, I can recommend KBabel[2], which already comes 
-with the kdesdk module.
+   a) The encoding of the file (Content-Type: ...)
+      Set this to the encoding you'll use in your text
+      editor to translate the file. UTF-8 is recommended
+      here.
+   b) The Plural forms configuration (Plural-Forms: ...)
+      The Entries here differ from language to language,
+      some might have more complex plural forms (e.g.
+      Slavic languages), others have simple ones (e.g.
+      most Romanian languages). If you don't know exactly
+      what to write here, take a look at the gettext manual
+      here [1].
 
-Subsequent calls to po-update.sh backup the old po file
-as "<langcode>.po.old". If new strings are recognized, the
-script will tell you with "XX untranslated messages". If
-existing strings have changed, you'll get a message similar
-to "XX fuzzy messages".
+IV) Start translating the entries. If you like to update your
+    *.po file, trigger the following command:
+	
+	$ export lang=<yourlang>
+    $ (cd po; make monotone.pot-update && make ${lang}.mo ${lang}.gmo)
+
+
+Thats it basically. If you're looking for a nice GUI to edit
+language files, I can recommend KBabel[2], which comes with the kdesdk 
+module of KDE.
 
 [0] http://mail.gnome.org/archives/gnome-i18n/2004-July/msg00073.html
 [1] http://www.gnu.org/software/gettext/manual/html_node/gettext_150.html
