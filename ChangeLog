@@ -1,5 +1,9 @@
 2006-04-12  Richard Levitte  <richard@levitte.org>
 
+	* po/sv.po: A few more fuzzies to change.
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
 	* contrib/usher.cc (fork_server): Set the C locale before
 	executing monotone itself.  This is needed since usher is
 	trying to interpret the first line of monotone output, and
