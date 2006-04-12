@@ -35,7 +35,8 @@ ticker::ticker(string const & tickname, std::string const & s, size_t mod,
   use_total(false),
   keyname(tickname),
   name(_(tickname.c_str())),
-  shortname(s)
+  shortname(s),
+  count_size(0)
 {
   I(ui.tickers.find(keyname) == ui.tickers.end());
   ui.tickers.insert(make_pair(keyname, this));
@@ -86,6 +87,69 @@ tick_write_count::~tick_write_count()
 {
 }
 
+static string compose_count(ticker *tick, size_t ticks=0)
+{
+  string count;
+
+  if (ticks == 0)
+    {
+      ticks = tick->ticks;
+    }
+
+  if (tick->kilocount && ticks)
+    {
+      // automatic unit conversion is enabled
+      float div = 1.0;
+      const char *message;
+
+      if (ticks >= 1073741824)
+        {
+          div = 1073741824;
+          // xgettext: gibibytes (2^30 bytes)
+          message = N_("%.1f G");
+        }
+      else if (ticks >= 1048576)
+        {
+          div = 1048576;
+          // xgettext: mebibytes (2^20 bytes)
+          message = N_("%.1f M");
+        }
+      else if (ticks >= 1024)
+        {
+          div = 1024;
+          // xgettext: kibibytes (2^10 bytes)
+          message = N_("%.1f k");
+        }
+      else
+        {
+          div = 1;
+          message = "%.0f";
+        }
+      // We reset the mod to the divider, to avoid spurious screen updates.
+      tick->mod = max(static_cast<int>(div / 10.0), 1);
+      count = (F(message) % (ticks / div)).str();
+    }
+  else if (tick->use_total)
+    {
+      // We know that we're going to eventually have 'total' displayed
+      // twice on screen, plus a slash. So we should pad out this field
+      // to that eventual size to avoid spurious re-issuing of the
+      // tick titles as we expand to the goal.
+      string complete = (F("%d/%d") % tick->total % tick->total).str();
+      // xgettext: bytes
+      string current = (F("%d/%d") % ticks % tick->total).str();
+      count.append(complete.size() - current.size(),' ');
+      count.append(current);
+    }
+  else
+    {
+      // xgettext: bytes
+      count = (F("%d") % ticks).str();
+    }
+
+  return count;
+}
+
 void tick_write_count::write_ticks()
 {
   vector<size_t> tick_widths;
@@ -95,62 +159,29 @@ void tick_write_count::write_ticks()
   for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
        i != ui.tickers.end(); ++i)
     {
-      string count;
       ticker * tick = i->second;
-      if (tick->kilocount && tick->ticks)
-        { 
-          // automatic unit conversion is enabled
-          float div = 1.0;
-          const char *message;
 
-          if (tick->ticks >= 1073741824) 
-            {
-              div = 1073741824;
-              // xgettext: gibibytes (2^30 bytes)
-              message = N_("%.1f G");
-            } 
-          else if (tick->ticks >= 1048576) 
-            {
-              div = 1048576;
-              // xgettext: mebibytes (2^20 bytes)
-              message = N_("%.1f M");
-            } 
-          else if (tick->ticks >= 1024)
-            {
-              div = 1024;
-              // xgettext: kibibytes (2^10 bytes)
-              message = N_("%.1f k");
-            }
-          else
-            {
-              div = 1;
-              message = "%.0f";
-            }
-          // We reset the mod to the divider, to avoid spurious screen updates.
-          tick->mod = max(static_cast<int>(div / 10.0), 1);
-          count = (F(message) % (tick->ticks / div)).str();
-        }
-      else if (tick->use_total)
+      if (tick->count_size == 0)
         {
-          // We know that we're going to eventually have 'total' displayed
-          // twice on screen, plus a slash. So we should pad out this field
-          // to that eventual size to avoid spurious re-issuing of the 
-          // tick titles as we expand to the goal.
-          string complete = (F("%d/%d") % tick->total % tick->total).str();          
-          // xgettext: bytes
-          string current = (F("%d/%d") % tick->ticks % tick->total).str();
-          count.append(complete.size() - current.size(),' ');
-          count.append(current);
+          // To find out what the maximum size can be, choose one the the
+          // dividers from compose_count, subtract one and have compose_count
+          // create the count string for that.  Use the size of the returned
+          // count string as an initial size for this tick.
+          tick->set_count_size(display_width(utf8(compose_count(tick,
+                                                                1048575))));
         }
-      else
-        {
-          // xgettext: bytes
-          count = (F("%d") % tick->ticks).str();
-        }
-      
+
+      string count(compose_count(tick));
+
       size_t title_width = display_width(utf8(tick->name));
       size_t count_width = display_width(utf8(count));
-      size_t max_width = std::max(title_width, count_width);
+
+      if (count_width > tick->count_size)
+        {
+          tick->set_count_size(count_width);
+        }
+
+      size_t max_width = std::max(title_width, tick->count_size);
 
       string name;
       name.append(max_width - title_width, ' ');

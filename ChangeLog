@@ -1,5 +1,19 @@
 2006-04-12  Richard Levitte  <richard@levitte.org>
 
+	* ui.hh (struct ticker): Add a member count_size to hold the size
+	of the tick count output and a method set_count_size to modify it.
+
+	* ui.cc (compose_count): New function to compose the count string
+	for a ticker.  The code was moved from...
+	(write_ticks): ... here.  If the tick's count_size is zero, use
+	compose_count to calculate the output string for a well chosen
+	large number and use its size as a default initial count size.
+	This is still updated dynamically if we get a count string size
+	that's still larger, but it should happen very rarely (when we get
+	a size of 1024 gibibytes or more, quite precisely).
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
 	* po/sv.po: A few more fuzzies to change.
 
 2006-04-12  Richard Levitte  <richard@levitte.org>
