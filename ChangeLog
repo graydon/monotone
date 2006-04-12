@@ -1,10 +1,3 @@
-2006-04-12  Nathaniel Smith  <njs@pobox.com>
-
-	* unix/process.cc (read_umask): New function.
-	(make_executable): Use it.
-	* tests/t_executable_umask.at, testsuite.at: New test.
-	XFAILed, because of totally mysterious failure!
-	
 2006-04-12  Richard Levitte  <richard@levitte.org>
 
 	* ui.cc (compose_count): Simplify for count/total ticks.  There's
@@ -68,7 +61,7 @@
 
 2006-04-12 Thomas Keller <me@thomaskeller.biz>
 	* po/README: Added small HOWTO for new translations
-
+	
 2006-04-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* merkle_tree.hh: make merkle_table be a hash_map instead of a map.
