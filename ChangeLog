@@ -12,6 +12,10 @@
 	that's still larger, but it should happen very rarely (when we get
 	a size of 1024 gibibytes or more, quite precisely).
 
+2006-04-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_pidfile_log_permissions.at: Spelling.
+
 2006-04-12  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A few more fuzzies to change.

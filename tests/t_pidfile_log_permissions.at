@@ -11,8 +11,7 @@ AT_CHECK(touch ro.log)
 AT_CHECK(chmod 400 ro.log)
 AT_CHECK(MTN --log=ro.log status, [1], [ignore], [ignore])
 
-# it should also fail if the a parent directory of the file is not
-# accessible.
+# it should also fail if a parent directory of the file is not accessible.
 AT_CHECK(mkdir noaccess)
 AT_CHECK(chmod 100 noaccess)
 AT_CHECK(MTN --log=noaccess/my.log status, [1], [ignore], [ignore])
