@@ -874,3 +874,4 @@ m4_include(tests/t_rosterify_empty_manifest.at)
 m4_include(tests/t_netsync_no_include.at)
 m4_include(tests/t_pidfile_log_permissions.at)
 
+m4_include(tests/t_executable_umask.at)

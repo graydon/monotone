@@ -55,6 +55,15 @@ bool is_executable(const char *path)
         return (s.st_mode & S_IXUSR) && !(s.st_mode & S_IFDIR);
 }
 
+// copied from libc info page
+static mode_t
+read_umask()
+{
+  mode_t mask = umask(0);
+  umask(mask);
+  return mask;
+}
+
 int make_executable(const char *path)
 {
         mode_t mode;
@@ -64,7 +73,7 @@ int make_executable(const char *path)
         if (fstat(fd, &s))
           return -1;
         mode = s.st_mode;
-        mode |= S_IXUSR|S_IXGRP|S_IXOTH;
+        mode |= ((S_IXUSR|S_IXGRP|S_IXOTH) & ~read_umask());
         int ret = fchmod(fd, mode);
         N(close(fd) == 0, F("error closing file %s: %s") % path % strerror(errno));
         return ret;
