@@ -324,6 +324,7 @@ struct pid_file
     if (path.empty())
       return;
     require_path_is_nonexistent(path, F("pid file '%s' already exists") % path);
+    E(file.is_open(), F("failed to create pid file '%s'") % path);
     file.open(path.as_external().c_str());
     file << get_process_id() << endl;
     file.flush();

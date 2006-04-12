@@ -429,6 +429,7 @@ user_interface::redirect_log_to(system_path const & filename)
   if (filestr.is_open())
     filestr.close();
   filestr.open(filename.as_external().c_str(), ofstream::out | ofstream::app);
+  E(filestr.is_open(), F("failed to open log file '%s'") % filename);
   clog.rdbuf(filestr.rdbuf());
 }
 

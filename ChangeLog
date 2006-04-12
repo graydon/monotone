@@ -1,3 +1,12 @@
+2006-04-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_pidfile_log_permissions.at: New test to check that we
+	fail properly if the specified pid or log file could not be
+	opened.  Thanks to Matthew Nicholson for the bug report.
+	* testsuite.at: Add it.
+	* ui.cc (user_interface::redirect_log_to): Check that file is open.
+	* commands.cc (pid_file::pid_file): Ditto.
+
 2006-04-11  Nathaniel Smith  <njs@pobox.com>
 
 	* UPGRADE: Add a note that all certs will be re-issued, and all
