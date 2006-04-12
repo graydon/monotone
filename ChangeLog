@@ -1,3 +1,7 @@
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: "ls branches" changed to take a pattern.
+
 2006-04-12 Thomas Keller <me@thomaskeller.biz>
 	* po/README: Added small HOWTO for new translations
 	* po/po-update.sh: Shell script to update po files
