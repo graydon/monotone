@@ -1,3 +1,8 @@
+2006-04-11  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE: Add a note that all certs will be re-issued, and all
+	revids will change.
+
 2006-04-09  Nathaniel Smith  <njs@pobox.com>
 
 	* restrictions.{cc,hh}: Audit use of node id sources, and make a
