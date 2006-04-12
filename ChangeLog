@@ -1,3 +1,7 @@
+2006-04-12  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone.docs: Added monotone.html back in.
+
 2006-04-12  Richard Levitte  <richard@levitte.org>
 
 	* ui.hh (struct ticker): Add a member count_size to hold the size
