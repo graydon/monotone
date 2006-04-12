@@ -1,3 +1,8 @@
+2006-04-12  Matthew Nicholson  <matt@matt-land.com>
+	
+	* commands.cc (pid_file::pid_file): Move check for open pidfile until
+	after we attempt to open the file :).
+
 2006-04-12  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_pidfile_log_permissions.at: New test to check that we
