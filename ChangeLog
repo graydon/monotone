@@ -1,3 +1,10 @@
+2006-04-12  Nathaniel Smith  <njs@pobox.com>
+
+	* unix/process.cc (read_umask): New function.
+	(make_executable): Use it.
+	* tests/t_executable_umask.at, testsuite.at: New test.
+	XFAILed, because of totally mysterious failure!
+	
 2006-04-11  Nathaniel Smith  <njs@pobox.com>
 
 	* UPGRADE: Add a note that all certs will be re-issued, and all
