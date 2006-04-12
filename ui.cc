@@ -131,15 +131,7 @@ static string compose_count(ticker *tick, size_t ticks=0)
     }
   else if (tick->use_total)
     {
-      // We know that we're going to eventually have 'total' displayed
-      // twice on screen, plus a slash. So we should pad out this field
-      // to that eventual size to avoid spurious re-issuing of the
-      // tick titles as we expand to the goal.
-      string complete = (F("%d/%d") % tick->total % tick->total).str();
-      // xgettext: bytes
-      string current = (F("%d/%d") % ticks % tick->total).str();
-      count.append(complete.size() - current.size(),' ');
-      count.append(current);
+      count = (F("%d/%d") % ticks % tick->total).str();
     }
   else
     {
@@ -161,14 +153,28 @@ void tick_write_count::write_ticks()
     {
       ticker * tick = i->second;
 
-      if (tick->count_size == 0)
+      if (tick->count_size == 0 && (tick->kilocount || tick->use_total))
         {
-          // To find out what the maximum size can be, choose one the the
-          // dividers from compose_count, subtract one and have compose_count
-          // create the count string for that.  Use the size of the returned
-          // count string as an initial size for this tick.
-          tick->set_count_size(display_width(utf8(compose_count(tick,
-                                                                1048575))));
+          if (!tick->kilocount && tick->use_total)
+            {
+              // We know that we're going to eventually have 'total'
+              // displayed twice on screen, plus a slash. So we should
+              // pad out this field to that eventual size to avoid
+              // spurious re-issuing of the tick titles as we expand to
+              // the goal.
+              tick->set_count_size(display_width(utf8(compose_count(tick,
+                                                                    tick->total))));
+            }
+          else
+            {
+              // To find out what the maximum size can be, choose one the
+              // the dividers from compose_count, subtract one and have
+              // compose_count create the count string for that.  Use the
+              // size of the returned count string as an initial size for
+              // this tick.
+              tick->set_count_size(display_width(utf8(compose_count(tick,
+                                                                    1048575))));
+            }
         }
 
       string count(compose_count(tick));

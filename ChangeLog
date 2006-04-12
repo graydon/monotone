@@ -1,5 +1,14 @@
 2006-04-12  Richard Levitte  <richard@levitte.org>
 
+	* ui.cc (compose_count): Simplify for count/total ticks.  There's
+	no need to calculate the maximum size every time, since
+	write_ticks has a specific test with the exact same effect.
+	(tick_write_count::write_ticks): Specialise the test for the
+	count/total case, since we know the exact maximum and therefore
+	don't need to make space for a ludicrously large number.
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
 	* ui.hh (struct ticker): Add a member count_size to hold the size
 	of the tick count output and a method set_count_size to modify it.
 
