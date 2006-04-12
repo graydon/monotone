@@ -1627,12 +1627,20 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
 static void 
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
+  utf8 inc("*");
+  utf8 exc;
+  if (args.size() == 1)
+    inc = idx(args,0);
+  else if (args.size() > 1)
+    throw usage(name);
+  combine_and_check_globish(app.exclude_patterns, exc);
+  globish_matcher match(inc, exc);
   vector<string> names;
   app.db.get_branches(names);
 
   sort(names.begin(), names.end());
   for (size_t i = 0; i < names.size(); ++i)
-    if (!app.lua.hook_ignore_branch(idx(names, i)))
+    if (match(idx(names, i)) && !app.lua.hook_ignore_branch(idx(names, i)))
       cout << idx(names, i) << endl;
 }
 
@@ -1869,7 +1877,7 @@ ls_changed (app_state & app, vector<utf8> const & args)
 CMD(list, N_("informative"),
     N_("certs ID\n"
        "keys [PATTERN]\n"
-       "branches\n"
+       "branches [PATTERN]\n"
        "epochs [BRANCH [...]]\n"
        "tags\n"
        "vars [DOMAIN]\n"
@@ -3938,6 +3946,8 @@ CMD(automate, N_("automation"),
   utf8 cmd = *i;
   ++i;
   vector<utf8> cmd_args(i, args.end());
+
+  make_io_binary();
 
   automate_command(cmd, cmd_args, name, app, cout);
 }
