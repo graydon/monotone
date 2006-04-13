@@ -4,7 +4,12 @@
 	(make_executable): Use it.
 	* tests/t_executable_umask.at, testsuite.at: New test.
 	XFAILed, because of totally mysterious failure!
-	
+
+2006-04-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc (cpp_main): Use the entire path leaf for prog_name,
+	but strip ".exe" off if present.
+
 2006-04-12  Richard Levitte  <richard@levitte.org>
 
 	* ui.cc (compose_count): Simplify for count/total ticks.  There's

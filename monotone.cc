@@ -291,7 +291,11 @@ cpp_main(int argc, char ** argv)
   save_initial_path();
   utf8_argv uv(argc, argv);
 
-  utf8 prog_name(fs::basename(fs::path(uv.argv[0])));
+  // find base name of executable
+
+  string prog_path = fs::path(uv.argv[0]).leaf();
+  prog_path = prog_path.substr(0, prog_path.find(".exe", 0));
+  utf8 prog_name(prog_path);
 
   // prepare for arg parsing
 
