@@ -20,7 +20,7 @@ Description: A distributed version (revision) control system
  trust functions to client-side RSA certificates.
 
 Package: monotone-server
-Architecture: any
+Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, monotone (= ${Source-Version}), adduser, ucf (>= 0.28)
 Description: A distributed version (revision) control system
  Monotone is a free, distributed version control system. It provides

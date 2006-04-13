@@ -1,3 +1,8 @@
+2006-04-13  Matthew Nicholson  <matt@matt-land.com>
+	
+	* debian/control: Made monotone-server's Architecture 'all' instead of
+	'any', as it does not contain any architecture dependent files.
+
 2006-04-06  Matthew Nicholson  <matt@matt-land.com>
 	
 	* debian/monotone-server.postrm: Fix purging of monotone-server
