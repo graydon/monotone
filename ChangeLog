@@ -1,4 +1,11 @@
 2006-04-13  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postinst: Only try to
+	migrate/rosterify/whatever database once.  If it fails print a
+	message.  This is how the script was coded but 'set -e' prevented it
+	from working properly.
+
+2006-04-13  Matthew Nicholson  <matt@matt-land.com>
 	
 	* debian/control: Made monotone-server's Architecture 'all' instead of
 	'any', as it does not contain any architecture dependent files.

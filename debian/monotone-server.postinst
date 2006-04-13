@@ -119,6 +119,8 @@ case "$1" in
               echo "A backup named '`basename $MTN_DB~`' will be created in $MTN_HOME." >&2
 
               cp $MTN_DB $MTN_DB~
+
+              set +e
               $MONOTONE --db=$MTN_DB db migrate --rcfile=$MTN_CONFDIR/hooks.lua \
                  --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2
 
@@ -144,6 +146,7 @@ case "$1" in
                  echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
                  echo "information on manually upgrading your database." >&2
               fi
+              set -e
            fi
 
            echo "$MTN_KEY \"$MTN_KEY_PASSWD\"" > $MTN_CONFDIR/passphrases
