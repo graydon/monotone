@@ -2783,32 +2783,38 @@ msgstr "la vérification de « %s » a échouée"
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:691
 msgid "bytes in"
-msgstr "octets ⇩"
+msgstr "octets entrants"
+#msgstr "octets ⇩"
 
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:693
 msgid "bytes out"
-msgstr "octets ⇧"
+msgstr "octets sortants"
+#msgstr "octets ⇧"
 
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:697
 msgid "certs in"
-msgstr "certs ⇩"
+msgstr "certs entrants"
+#msgstr "certs ⇩"
 
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:699 ../netsync.cc:712
 msgid "revs in"
-msgstr "révs ⇩"
+msgstr "révs entrantes"
+#msgstr "révs ⇩"
 
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:704
 msgid "certs out"
-msgstr "certs ⇧"
+msgstr "certs entrants"
+#msgstr "certs ⇧"
 
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:706 ../netsync.cc:714
 msgid "revs out"
-msgstr "révs ⇧"
+msgstr "révs sortantes"
+#msgstr "révs ⇧"
 
 #: ../netsync.cc:820
 #, c-format

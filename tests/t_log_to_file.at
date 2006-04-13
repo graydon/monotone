@@ -11,7 +11,7 @@ AT_CHECK(MTN add input.txt, [], [ignore], [ignore])
 
 AT_CHECK(MTN --branch=testbranch --log=log.log commit -m "test", [], [stdout], [ignore])
 
-AT_CHECK(QGREP('^monotone:' stdout), [1])
-AT_CHECK(QGREP('^monotone:' log.log), [0])
+AT_CHECK(QGREP('^mtn:' stdout), [1])
+AT_CHECK(QGREP('^mtn:' log.log), [0])
 
 AT_CLEANUP

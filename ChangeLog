@@ -3,6 +3,303 @@
 	* debian/control: Made monotone-server's Architecture 'all' instead of
 	'any', as it does not contain any architecture dependent files.
 
+2006-04-12  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone.docs: Added monotone.html back in.
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* ui.hh (struct ticker): Add a member count_size to hold the size
+	of the tick count output and a method set_count_size to modify it.
+
+	* ui.cc (compose_count): New function to compose the count string
+	for a ticker.  The code was moved from...
+	(write_ticks): ... here.  If the tick's count_size is zero, use
+	compose_count to calculate the output string for a well chosen
+	large number and use its size as a default initial count size.
+	This is still updated dynamically if we get a count string size
+	that's still larger, but it should happen very rarely (when we get
+	a size of 1024 gibibytes or more, quite precisely).
+
+2006-04-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_pidfile_log_permissions.at: Spelling.
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few more fuzzies to change.
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (fork_server): Set the C locale before
+	executing monotone itself.  This is needed since usher is
+	trying to interpret the first line of monotone output, and
+	only understands the english message.
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: "ls branches" changed to take a pattern.
+
+2006-04-12  Matthew Nicholson  <matt@matt-land.com>
+	
+	* commands.cc (pid_file::pid_file): Move check for open pidfile until
+	after we attempt to open the file :).
+
+2006-04-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_pidfile_log_permissions.at: New test to check that we
+	fail properly if the specified pid or log file could not be
+	opened.  Thanks to Matthew Nicholson for the bug report.
+	* testsuite.at: Add it.
+	* ui.cc (user_interface::redirect_log_to): Check that file is open.
+	* commands.cc (pid_file::pid_file): Ditto.
+
+2006-04-11  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE: Add a note that all certs will be re-issued, and all
+	revids will change.
+
+2006-04-12 Thomas Keller <me@thomaskeller.biz>
+	* po/README: Added small HOWTO for new translations
+	* po/po-update.sh: Shell script to update po files
+
+2006-04-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* merkle_tree.hh: make merkle_table be a hash_map instead of a map.
+
+2006-04-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (ls_branches): Allow "ls branches <pattern>".
+	* tests/t_ls_branches.at: Test it.
+
+2006-04-11  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (main): Small error.  When -m was parsed, it
+	was saved as the path to mtn instead of its value.
+
+2006-04-11  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/make_io_binary.cc: Fix compile errors under MinGW.
+
+2006-04-11  Henry Nestler  <Henry@BigFoot.de>
+
+	* contrib/mtbrowse.sh: Binary call to mtn
+
+2006-04-11  Richard Levitte  <richard@levitte.org>
+
+	* netxx/resolve_getaddrinfo.cxx (resolve_hostname): monotone might
+	be compiled on a computer that has AI_ADDRCONFIG and run on one
+	that doesn't understand that flag.  If the error EAI_BADFLAGS is
+	returned, try again without AI_ADDRCONFIG.
+
+2006-04-10  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc: Changed all reference to "monotone" to the new
+	"mtn".  Submitted by Ethan Blanton <eblanton@cs.ohiou.edu>.
+
+2006-04-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* paths.cc (file_path::file_path): MM() on source path.
+
+2006-04-09  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* platform.hh (make_io_binary): new function, turn off textmode
+	"\n"->"\r\n" translation on Windows
+	* {win32,unix}/make_io_binary.cc: Implementations of said function.
+	* commands.cc (automate): Use said function so our output doesn't get
+	mangled. (Mostly important for "automate stdio".)
+	* Makefile.am: Add the new files.
+
+2006-04-09  Nathaniel Smith  <njs@pobox.com>
+
+	* restrictions.{cc,hh}: Audit use of node id sources, and make a
+	number of functions take an explicit node_id_source argument.
+	* roster.cc (make_roster_for_base_plus_cset): Also take an
+	explicit node_id_source.
+	* commands.cc, automate.cc: Update to match new calling conventions.
+
+2006-04-09  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (accept_testresult_change): s/MT/_MTN/, thanks to
+	Alex Queiroz for the catch...
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Finish paragraph that stopped in the
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac, debian/changelog, win32/monotone.iss: 
+	* monotone.spec: Bump version number to 0.26.
+	* NEWS: Insert release time.
+
+2006-04-08  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (process_netsync_args): fix crash when calling netsync
+	with an --exclude but no include argument.
+	* tests/t_netsync_no_include.at: netsync with --exclude but no
+	include should E(), not I().
+	* testsuite.at: call it
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi: Several little content improvements, scattered
+	throughout.
+	(Automation): Document new rev and manifest formats.  Document new
+	packet commands.
+	* database_check.cc: Add a comment to warn people that there are
+	detailed docs on this, so if they add new stuff they'll want to
+	add new docs too.
+	* automate.cc (automate_get_manifest_of, automate_get_revision):
+	Re-sync docs to manual.
+	(automate_packet_for_fdata): Fix copy/paste error in error
+	message.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* netxx/resolve_gethostbyname.cxx (resolve_hostname): #ifdef out
+	Win32-incompatible error reporting call.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* netsync.cc, annotate.cc: Turn all ticker labels from _() to
+	N_(), to match Benoît's changes to the ticker class.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* AUTHORS: Add Thomas Keller.
+
+2006-04-08  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (distcleancheck_listfiles): Third time's
+	the... charm?
+
+2006-04-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Oops, needed to include
+	boost/filesystem/convenience.hpp too.
+
+	* monotone.cc (cpp_main): Exclude .exe extension by using
+	fs::basename rather than path.leaf().
+
+2006-04-08  Richard Levitte  <richard@levitte.org>
+
+	* netxx/resolve_gethostbyname.cxx (resolve_hostname),
+	* netxx/resolve_getaddrinfo.cxx (resolve_hostname): Include the
+	error string associated with the error returned by getaddrinfo()
+	and gethostbyname() in the exception text.
+
+	* netsync.cc (serve_connections): When socket() fails in Netxx,
+	it throws a Netxx::Exception rather than a
+	Netxx::NetworkException, so we need to catch that as well.  This
+	should solve the problems some have experienced when they don't
+	have a IPv6 stack and try to run a IPv6-enabled monotone.
+
+2006-04-08  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A phrase was changed in command.cc...
+
+2006-04-07  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few untranslated ones appeared.
+
+2006-04-07  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Fixed a fuzzy.
+
+2006-04-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am: Syntax tweak.  I bet this still won't work...
+
+	* Makefile.am: Backticks don't nest, use $().
+
+2006-04-07  Daniel Carosone  <dan@geek.com.au>
+
+	* monotone.texi: Update more examples to reflect new program
+	output for revisions and diffs and manifests.
+
+2006-04-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* lua.cc, commands.cc: Tiny string cleanups.
+
+	* Makefile.am (distcleancheck_listfiles): Fix up find(1) syntax.
+
+2006-04-07  Daniel Carosone  <dan@geek.com.au>
+
+	* monotone.texi: Correct a copy/paste error, bug #15708
+
+2006-04-07  Daniel Carosone  <dan@geek.com.au>
+
+	* figures/README: Revise to describe a better .png generation method
+	* figures/{manifest,file-id-manifest-id,revision-chaining,revision}.png:
+	Reregenerate accordingly	
+	* figures/oo-figures.sxd: Source changes for the following:
+	* figures/{local,general}-workflow: "working copy" to "workspace", MT to _MTN
+
+2006-04-07  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (distcleancheck_listfiles): Another try at this...
+
+2006-04-07  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (distcleancheck_listfiles): Attempt to teach
+	distcheck that it's okay that distclean does not remove
+	package_revision.txt and package_full_revision_dist.txt files.
+	Untested, because the test is taking ages and I want to go to
+	sleep, so good luck :-).
+
+2006-04-07  Nathaniel Smith  <njs@pobox.com>
+
+	* figures/README: Add note on PNGs.
+	* figures/{manifest,file-id-manifest-id,revision-chaining,revision}.png:
+	Regenerate PNGs.
+	
+2006-04-07  Nathaniel Smith  <njs@pobox.com>
+
+	* figures/oo-figures.sxd: Sigh, accidentally discarded the changes
+	I had to make since the fonts changed and the arrows/boxes became
+	incorrect.  This redoes them, to approximately match the version
+	used to generate the current pdf files.
+
+2006-04-07  Nathaniel Smith  <njs@pobox.com>
+
+	* figures/README: More notes.
+	* figures/oo-figures.sxd: No idea what changed about this file,
+	don't care.
+	* figures/{manifest,file-id-manifest-id,revision-chaining,revision}:
+	Finally managed to get proper pdfs out of OpenOffice.  Committing
+	now before I have a chance to screw things up.
+	
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* figures/README: New file.
+	* figures/oo-figures.sxd: Write into the file the filename that
+	each figure should be exported to.  I'll actually do the exports
+	later...
+	
+2006-04-07  Benoît Dejean  <benoit@placenet.org>
+
+	* ui.{cc,hh}: Use untranslated ticker name as key in ui.tickers
+	to prevent buggy translations from crashing monotone.
+
+2006-04-07  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Fixed.
+
+2006-04-07  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Replaced nice unicode arrows with long strings.
+
+2006-04-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc: Remove libgen.h and basename(), replace with
+	equivalent from boost::filesystem.
+
+	* sqlite/*: Import SQLite 3.3.5.
+
+	* tests/t_mtn_ignore.at: Shuffle the output grepping tests a bit
+	to make failure cases more obvious.
+
 2006-04-06  Matthew Nicholson  <matt@matt-land.com>
 	
 	* debian/monotone-server.postrm: Fix purging of monotone-server
@@ -13,6 +310,167 @@
 	* debian/monotone-server.examples: Don't install entire directory
 	hierarchy.
 
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (mostlyclean-local): Delete
+	package_full_revision.txt, not package_full_revision_dist.txt.
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+	
+	* monotone.texi: Fix up the ascii diagrams in the early sections
+	to match current data formats.  Fix up sample output similarly.
+	Fix even more places where we say "monotone" to refer to the
+	command.
+	* figures/oo-figures.sxd: Update graphical figures to match
+	current data formats.
+	
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi: Fix a bunch more places where we say "monotone"
+	to refer to the command name.
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi: .mt-attrs?  Never heard of it...
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* po/LINGUAS: Add de.
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Go ahead and add a note about sqlite 3.3, since
+	incompatibility with the 3.2 command line client has apparently
+	bitten at least two of us.
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (package_full_revision_*.txt): Try this again,
+	hopefully now 'distcheck' will work in a clean dir on systems that
+	have no mtn binary.
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE: Expand and hopefully clarify 0.26 upgrading notes.
+	Also add a paragraph at the top to explain how the file is
+	organized (maybe this should have been there a long time ago...)
+
+2006-04-06  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Complete (?) draft of 0.26 release notes.
+
+2006-04-07  Satoru SATOH <ss@gnome.gr.jp>
+
+	* po/ja.po: Updated Japanese translation.
+
+2006-04-06  Richard Levitte  <richard@levitte.org>
+
+	* ui.cc (user_interface::output_prefix): Move the invariant
+	checking that prog_name isn't empty...
+	(user_interface::set_prog_name): here.  The reason is that an
+	invariant generates a log, and that will generate another call
+	to this message, which will trigger the invariant again, which
+	generates a log, which...
+	In user_interface::output_prefix, still check if prog_name is
+	empty, and output something harmless if it is.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Start writing 0.26 release notes.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (unify_roster_oneway): Discover that this code is not
+	really composable with arbitrary node_id_sources; add an assertion
+	to document the real interface, and a comment explaining why this
+	is the case, and why it is a problem for workspace merge and db
+	check.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* database_check.cc (check_sane): Remove dead code.
+
+2006-04-05  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc: Make sure prog_name gets the basename of the
+	program from argv[0], not the whole absolute path to it.
+
+	* tests/t_commit_validate.at, tests/t_log_to_file.at: The monotone
+	logs are prefixed with the program name ('mtn'), not with
+	'monotone' any longer.
+
+2006-04-05  Richard Levitte  <richard@levitte.org>
+
+	* mt_version.cc (get_version): Close the parenthesis.
+
+	* po/sv.po: Fix a few fuzzy strings and translate a new one.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.cc (dump_buffer): Make the "discarding debug log"
+	slightly more informative.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* ui.{cc,hh}: Use the prog_name in output.
+	* app_state.cc (app_state::prog_name): Change default to 'mtn'.
+	Set the global ui object's prog_name whenever our prog_name is
+	set.
+	* monotone.cc (cpp_main): Use the new prog_name setter.
+
+2006-04-05  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): MM() our command line, LC_ALL, and full
+	version, so that they are always included in dump and debug
+	files.
+
+2006-04-04  Nathaniel Smith  <njs@pobox.com>
+
+	* mt_version.{cc,hh} (get_version, get_full_version): New
+	functions.  Also tweak --full-version output for readability.
+
+2006-04-04  Nathaniel Smith  <njs@pobox.com>
+
+	* mt_version.cc (print_full_version): Include compiler
+	vendor/version, c++ stdlib vendor/version, and boost version in
+	--full-version output.
+
+2006-04-04  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am: Yet another try at the package full revision stuff;
+	hopefully this version still works just as well as the old
+	versions, while also getting rid of the repeated "Generated from
+	cached data" messages.
+
+2006-04-05  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Changed "in/out" translations as graphical arrows.
+
+2006-04-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/t_rosterify_empty_manifest.at: a test for rosterifying a db
+	that has empty manifests
+
+2006-04-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* revision.cc (construct_revisions_from_ancestry): all rosters must be
+	given a root node, even if all files have been dropped.
+
+2006-04-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* database.cc (database::dump): don't check schema of the db.
+
+2006-04-04  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh (class roster_t): Add massive comment about roster_t's
+	location tracking stuff.  Conclusion: it is a little icky, but
+	it's icky in an overly conservative way that doesn't cause any
+	forseeable problems, so we'll leave it for now.
+
+2006-04-04  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Updated and additional translations.
+	
 2006-04-02  Matthew Nicholson  <matt@matt-land.com>
 	
 	* ChangeLog: Fix typo and merge goofs.
@@ -34,7 +492,7 @@
 	server.
 
 2006-04-02  Matthew Nicholson  <matt@matt-land.com>
-	
+
 	* contrib/get_passphrase_from_file.lua: Added.  This hook reads
 	passphrases from 'confdir/passphrases'.
 
@@ -272,6 +730,21 @@
 	* revision.cc (build_changesets_from_manifest_ancestry) 
 	(build_roster_style_revs_from_manifest_style_revs): Call it.
 	* tests/t_rosterify_on_rosterified_db.at, testsuite.at: New test.
+
+2006-03-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* idna/nfkc.c, popt/popt.c, popt/popt.h, popt/popthelp.c: Warning
+	cleanups.
+
+2006-03-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* diff_patch.cc, hash_map.hh, lua/lua.h, mkstemp.cc, monotone.cc,
+	platform.hh, rcs_file.cc, sanity.hh, ui.cc, vocab.hh: config.h
+	cleanups--ensure it is included before any other includes, and
+	that we use "", rather than <>.
+
+	* idna/version.c: Use STRINGPREP_VERSION rather than VERSION,
+	which just happens to be defined to the monotone version number.
 
 2006-03-24  Richard Levitte  <richard@levitte.org>
 

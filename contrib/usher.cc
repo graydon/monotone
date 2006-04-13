@@ -16,7 +16,7 @@
 // Usage: usher [-l address[:port]] [-a address:port] [-p pidfile] <server-file>
 //
 // options:
-// -m   the monotone command, defaults to "monotone"
+// -m   the monotone command, defaults to "mtn"
 // -l   address and port to listen on, defaults to 0.0.0.0:4691
 // -a   address and port to listen for admin commands
 // -p   a file (deleted on program exit) to record the pid of the usher in
@@ -27,7 +27,7 @@
 //   host localhost
 //   pattern net.venge.monotone
 //   remote 66.96.28.3:4691
-//   
+//
 //   server local
 //   host 127.0.0.1
 //   pattern *
@@ -51,8 +51,8 @@
 // A request to server "hostname" will be directed to the
 // server at <ip-address>:<port-number>, if that stem is marked as remote,
 // and to a local server managed by the usher, started with the given
-// arguments ("monotone serve --bind=something <server arguments>"),
-// if it is marked as local.
+// arguments ("mtn serve --bind=something <server arguments>"), if it is
+// marked as local.
 // Note that "hostname" has to be an initial substring of who the client asked
 // to connect to, but does not have to match exactly. This means that you don't
 // have to know in advance whether clients will be asking for
@@ -133,6 +133,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <time.h>
+#include <locale.h>
 
 #include <string>
 #include <list>
@@ -161,7 +162,7 @@ using std::make_pair;
 // defaults, overridden by command line
 int listenport = 4691;
 string listenaddr = "0.0.0.0";
-string monotone = "monotone";
+string monotone = "mtn";
 
 // keep local servers around for this many seconds after the last
 // client disconnects from them (only accurate to ~10 seconds)
@@ -517,8 +518,15 @@ int fork_server(vector<string> const & args)
     }
     a[args.size()] = 0;
 
+    // Must set C locale, because usher interprets the output from
+    // monotone itself, and only deals with english!
+    setlocale(LC_ALL,"C");
+    setlocale(LC_MESSAGES,"C");
+    setlocale(LC_NUMERIC,"C");
+    setenv("LC_ALL","C",1);
+
     execvp(a[0], a);
-    perror("execvp failed\n");
+    perror("execvp failed");
     exit(1);
   } else {
     close(err[1]);
@@ -1424,7 +1432,7 @@ int main (int argc, char **argv)
         if (c != lp.npos)
           listenport = lexical_cast<int>(lp.substr(c+1));
       } else if (string(argv[i]) == "-m")
-        monotone = argv[i++];
+        monotone = argv[++i];
       else if (string(argv[i]) == "-a")
         admin.initialize(argv[++i]);
       else if (string(argv[i]) == "-p")

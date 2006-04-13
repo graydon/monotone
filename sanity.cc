@@ -59,7 +59,8 @@ sanity::dump_buffer()
         ui.inform((FL("failed to write debugging log to %s\n") % filename).str());
     }
   else
-    ui.inform("discarding debug log (maybe you want --debug or --dump?)");
+    ui.inform("discarding debug log, because I have nowhere to write it\n"
+              "(maybe you want --debug or --dump?)");
 }
 
 void 

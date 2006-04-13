@@ -5,6 +5,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "config.h"
+
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -13,8 +15,6 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
-
-#include "config.h"
 #include "diff_patch.hh"
 #include "interner.hh"
 #include "lcs.hh"

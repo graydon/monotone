@@ -1,13 +1,34 @@
-upgrading monotone to 0.26pre1
-==============================
+upgrading monotone to 0.26
+==========================
 
-if you are upgrading from:
-  - 0.25 or earlier: we have modified the textual format of revisions
-    and manifests.  See NEWS before upgrading.  Your project must
-    rebuild its history; this is irreversible and creates a flag day.
+How to read this file:
+  - Figure out what version of monotone you are upgrading from, let's
+    say 0.22, for example.
+  - Read down the list, and at each "version X or earlier" line, those
+    instructions apply if X is larger than 0.22.  So, for instance,
+    the "0.25 or earlier" instructions _and_ the "0.23 or earlier"
+    instructions both apply.
+  - If there are no entries that apply, then there is nothing to do.
+    For instance, when upgrading from 0.23 to 0.24, no action was
+    necessary.
+  - No matter what, reading the release notes in NEWS is a good idea.
+    Changes to things like command line switches, new commands, etc.,
+    will be described there, not here.
+
+If you are upgrading from:
+  - 0.25 or earlier: Please read this section carefully.  We have
+    modified the textual format used by revisions and manifests; old
+    monotones cannot parse the new format, and new monotones cannot
+    parse the old format, except to convert it to the new format.  See
+    NEWS before upgrading.  Your project must rebuild its history;
+    this is irreversible and creates a flag day -- everyone in your
+    project must switch over at the same time.
+
     You will not be able to sync revisions between pre- and post-
-    migration databases, and you should migrate only one database for
-    a project and re-fetch working databases from there.
+    migration databases, and each project should only run the
+    migration ONCE, on ONE database.  Pick a person to do the
+    migration, they do it, once they're done, everyone else does a
+    fresh pull from them.
 
     You should probably do some test migrations locally first to make
     sure everything seems to be working, before running your real
@@ -18,22 +39,46 @@ if you are upgrading from:
          migration.
       2) shut down the server
       3) run 'cp server.db server.db.backup'
-      4) run 'monotone db migrate --db server.db'
-      5) run 'monotone db rosterify --db server.db'
+      4) run 'mtn db migrate --db server.db'
+      5) run 'mtn db rosterify --db server.db'
       6) do whatever tests you like to make sure things look reasonable
-      7) start up the server
-      8) tell everyone to do a new pull into a fresh database, using
+      7) make sure that your server's firewall is set up to allow
+         connections on the new netsync port: 4691
+      8) start up the server
+      9) tell everyone to do a new pull into a fresh database, using
          the new version of monotone.
     This migration is "best effort"; bugs in rename handling in the
     old code mean that some histories contain bogosities that cannot
     be migrated.  However, it makes an effort to preserve everything
     it can (including renames), and does guarantee that at each
     entry in the history graph, the tree layout and file contents are
-    entirely preserved.
+    preserved exactly.
+
+    The largest changes are that after upgrading, all revision ids
+    will change, and, as a consequence, all certs must be reissued.
+    This means that after upgrading, all certs will be signed by the
+    person who performed the upgrade, rather than their original
+    issuer.  This is a basic property of how signatures work, so
+    there's little we can do about it.
+
+    If you have any private branches, and are not your project's
+    "designated migrator", then it is still possible to preserve your
+    branches.  However, this requires some more understanding of what
+    exactly is going on, and is outside the scope of this document.
+    See http://venge.net/monotone/wiki/RosterifyingPrivateBranches
+    for one approach, and if you don't understand the logic behind
+    those commands, then we're happy to explain things in more detail
+    on the mailing list (monotone-devel@nongnu.org) or IRC (#monotone
+    on irc.OFTC.net).
 
     We tentatively hope that this is the last time we will have to
     change the revision/manifest formats and have a flag day of this
     magnitude; but only experience will let us know for certain.
+
+    If you have any questions or concerns about this process, please
+    let us know via email (monotone-devel@nongnu.org) or discuss it on
+    IRC (#monotone on irc.OFTC.net).
+
   - 0.23 or earlier: keys are now stored in ~/.monotone/keys (Unix,
     OS X), or %APPDATA%\Monotone\keys (Windows).  You must run 'db
     migrate' against each of your databases; this will automatically
@@ -42,14 +87,19 @@ if you are upgrading from:
     scripts accordingly.
     On Windows only, monotone now looks in a different place for the
     monotonerc file; see NEWS for 0.24 for details.
+
   - 0.21 or earlier: hooks governing netsync read permission have
     changed again; see NEWS for 0.22.
+
   - 0.19 or earlier: there are incompatible command line and server
     configuration changes; see NEWS for 0.20.
+
   - 0.18 or earlier: if you have created a ~/.monotonerc, rename it to
     ~/.monotone/monotonerc, so monotone will still find it.
+
   - 0.17: simply make a backup of your databases, just in case, and
     run "db migrate" on each.
+
   - 0.15 or 0.16: see below
   - 0.14 or earlier: see file README.changesets
 

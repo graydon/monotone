@@ -23,8 +23,8 @@ AT_DATA(input.txt, [version 0 of the file
 
 AT_CHECK(MTN add input.txt, [], [ignore], [ignore])
 
-AT_CHECK(MTN --branch=testbranch --rcfile=commit_validate.lua commit -m "denyme", 1, [ignore], [monotone: beginning commit on branch 'testbranch'
-monotone: misuse: log message rejected: input.txt
+AT_CHECK(MTN --branch=testbranch --rcfile=commit_validate.lua commit -m "denyme", 1, [ignore], [mtn: beginning commit on branch 'testbranch'
+mtn: misuse: log message rejected: input.txt
 ])
 AT_CHECK(MTN --branch=testbranch --rcfile=commit_validate.lua commit -m "allowme", 0, ignore, ignore)
 
