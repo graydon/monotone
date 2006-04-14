@@ -1,3 +1,7 @@
+2006-04-14  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Corrected an error (some "help command" were translated).
+
 2006-04-14  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* Makefile.am: Use sed instead of perl to add the stylesheet
