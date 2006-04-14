@@ -1,3 +1,9 @@
+2006-04-14  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* Makefile.am: Use sed instead of perl to add the stylesheet
+	reference in HTML files.  Perl is not available in some systems
+	by default so this avoids an extra build-time dependency.
+
 2006-04-12  Nathaniel Smith  <njs@pobox.com>
 
 	* unix/process.cc (read_umask): New function.

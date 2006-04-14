@@ -582,10 +582,9 @@ monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
 		cp $(srcdir)/texinfo.css .; \
 	fi
 	makeinfo -I $(srcdir) --no-split --no-headers --output $@ --html $<
-	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
-	rm -f $@.perlbak
-
-# The .perlbak thing is needed, otherwise the perl executions fails on MinGW
+	cp $@ $@.bak
+	sed -e 's,<head>,<head><link type="text/css" rel="stylesheet" href="texinfo.css" />,' $@.bak >$@
+	rm -f $@.bak
 
 html: monotone.texi version.texi std_hooks.lua texinfo.css
 	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
@@ -595,6 +594,8 @@ html: monotone.texi version.texi std_hooks.lua texinfo.css
 	cp -r $(srcdir)/figures $@
 	cp $(srcdir)/texinfo.css $@
 	makeinfo -I $(srcdir) --number-sections --html --output $@ $<
-	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@/*.html
-	rm -f $@/*.perlbak
-
+	for f in $@/*.html; do \
+		cp $$f $$f.bak; \
+		sed -e 's,<head>,<head><link type="text/css" rel="stylesheet" href="texinfo.css" />,' $$f.bak >$$f; \
+		rm -f $$f.bak; \
+	done
