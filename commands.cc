@@ -3892,7 +3892,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
 }
 
-CMD(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new workspace directory, default to current"),
+CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new workspace directory, default to current"),
     OPT_BRANCH_NAME)
 {
   if (args.size() > 1)
