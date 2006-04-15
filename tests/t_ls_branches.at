@@ -31,13 +31,13 @@ testbranch
 ])
 AT_CHECK(cmp branches stdout,[],[ignore])
 
-AT_CHECK(MTN ls branches "other*",[0],[stdout],[stderr])
+AT_CHECK(MTN ls branches "otherbr*",[0],[stdout],[stderr])
 AT_CHECK(CANONICALISE(stdout))
 AT_DATA(branches2,[otherbranch
 ])
 AT_CHECK(cmp branches2 stdout,[],[ignore])
 
-AT_CHECK(MTN ls branches --exclude "test*",[0],[stdout],[stderr])
+AT_CHECK(MTN ls branches --exclude "testbr*",[0],[stdout],[stderr])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp branches2 stdout,[],[ignore])
 

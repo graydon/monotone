@@ -1,3 +1,16 @@
+2006-04-15  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_empty_env.at: Remove LD_LIBRARY_PATH test; it was
+	causing the test to be skipped without good reason in too many
+	environments.
+
+	* tests/t_ls_branches.at: Tweak include and exclude patterns to
+	avoid spurious glob expansion under MinGW.
+
+	* tests/t_pidfile_log_permissions.at: Skip part of the test under
+	MinGW since we can't get UNIX permissions to map to the particular
+	NT permissions we'd need for this portion of the test.
+
 2006-04-14  Richard Levitte  <richard@levitte.org>
 
 	* commands.cc (CMD(setup)): Make this a CMD_NO_WORKSPACE.  The
