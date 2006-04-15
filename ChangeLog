@@ -1,5 +1,7 @@
 2006-04-15  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_pidfile_log_permissions.at: Minor tweak to last change.
+
 	* tests/t_empty_env.at: Remove LD_LIBRARY_PATH test; it was
 	causing the test to be skipped without good reason in too many
 	environments.

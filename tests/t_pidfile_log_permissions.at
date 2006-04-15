@@ -11,11 +11,11 @@ AT_CHECK(touch ro.log)
 AT_CHECK(chmod 400 ro.log)
 AT_CHECK(MTN --log=ro.log status, [1], [ignore], [ignore])
 
+AT_CHECK(mkdir noaccess)
 # skip part of the test on win32 for now as the permission restrictions
 # don't map to the NT permissions we need.
 if test "$OSTYPE" != "msys"; then
   # it should also fail if a parent directory of the file is not accessible.
-  AT_CHECK(mkdir noaccess)
   AT_CHECK(chmod 100 noaccess)
   AT_CHECK(MTN --log=noaccess/my.log status, [1], [ignore], [ignore])
 
