@@ -1,3 +1,7 @@
+2006-04-17  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Fixed nœud spelling.
+
 2006-04-15  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_pidfile_log_permissions.at: Minor tweak to last change.
