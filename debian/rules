@@ -11,3 +11,10 @@ DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 ifneq (,$(filter $(DEB_HOST_ARCH),$(GCC4_ICES_HERE)))
 	DEB_CONFIGURE_EXTRA_FLAGS = CC=gcc-3.4 CXX=g++-3.4
 endif
+
+install/monotone::
+	cp contrib/monotone.bash_completion debian/monotone/etc/bash_completion.d/monotone
+
+binary-install/monotone-server::
+	dh_installinit --name=monotone
+
