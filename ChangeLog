@@ -1,3 +1,12 @@
+2006-04-18  Richard Levitte  <richard@levitte.org>
+
+	This change was contributed by Shaun Jackman <sjackman@gmail.com>
+
+	* debian/changelog: Add missing Debian releases.
+
+	* debian/rules: From Debian bug report #334999: FTBFS on
+	arm/hppa/m68k: please use g++-3.4
+
 2006-04-15  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_pidfile_log_permissions.at: Minor tweak to last change.
