@@ -30,9 +30,12 @@ AT_CHECK(grep foo ignored, [1], [ignore])
 AT_CHECK(grep bar ignored, [], [ignore])
 AT_CHECK(grep xyzzy ignored, [], [ignore])
 AT_CHECK(grep WARNING ignorederr, [], [ignore])
+AT_CHECK(grep -v WARNING ignorederr | grep -v ignoring, [1], [ignore])
 
 AT_CHECK(rm .mtn-ignore)
 AT_CHECK(RAW_MTN ls ignored, [], [stdout], [stderr])
 AT_CHECK(grep test.db stdout, [], [ignore])
+AT_CHECK(grep WARNING stderr, [1], [ignore])
+AT_CHECK(grep -v WARNING stderr| grep -v ignoring, [1], [ignore])
 
 AT_CLEANUP

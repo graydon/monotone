@@ -1,5 +1,8 @@
 2006-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/t_mtn_ignore.at: Tweak test so it would have detected the
+	broken .mtn-ignore error handling fixed in the last commit.
+
 	* std_hooks.lua (ignore_file): Fix up error handling for
 	non-existent .mtn-ignore files.
 
