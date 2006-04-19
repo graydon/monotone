@@ -1,3 +1,8 @@
+2006-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* std_hooks.lua (ignore_file): Fix up error handling for
+	non-existent .mtn-ignore files.
+
 2006-04-18  Richard Levitte  <richard@levitte.org>
 
 	This change was contributed by Shaun Jackman <sjackman@gmail.com>
