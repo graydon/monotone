@@ -29,9 +29,11 @@ struct ticker
   std::string keyname;
   std::string name; // translated name
   std::string shortname;
-  ticker(std::string const & n, std::string const & s, size_t mod = 64, 
+  size_t count_size;
+  ticker(std::string const & n, std::string const & s, size_t mod = 64,
       bool kilocount=false);
   void set_total(size_t tot) { use_total = true; total = tot; }
+  void set_count_size(size_t csiz) { count_size = csiz; }
   void operator++();
   void operator+=(size_t t);
   ~ticker();

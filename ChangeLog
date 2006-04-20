@@ -1,6 +1,67 @@
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* ui.cc (compose_count): Simplify for count/total ticks.  There's
+	no need to calculate the maximum size every time, since
+	write_ticks has a specific test with the exact same effect.
+	(tick_write_count::write_ticks): Specialise the test for the
+	count/total case, since we know the exact maximum and therefore
+	don't need to make space for a ludicrously large number.
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* ui.hh (struct ticker): Add a member count_size to hold the size
+	of the tick count output and a method set_count_size to modify it.
+
+	* ui.cc (compose_count): New function to compose the count string
+	for a ticker.  The code was moved from...
+	(write_ticks): ... here.  If the tick's count_size is zero, use
+	compose_count to calculate the output string for a well chosen
+	large number and use its size as a default initial count size.
+	This is still updated dynamically if we get a count string size
+	that's still larger, but it should happen very rarely (when we get
+	a size of 1024 gibibytes or more, quite precisely).
+
+2006-04-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_pidfile_log_permissions.at: Spelling.
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few more fuzzies to change.
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (fork_server): Set the C locale before
+	executing monotone itself.  This is needed since usher is
+	trying to interpret the first line of monotone output, and
+	only understands the english message.
+
+2006-04-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: "ls branches" changed to take a pattern.
+
+2006-04-12  Matthew Nicholson  <matt@matt-land.com>
+	
+	* commands.cc (pid_file::pid_file): Move check for open pidfile until
+	after we attempt to open the file :).
+
+2006-04-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_pidfile_log_permissions.at: New test to check that we
+	fail properly if the specified pid or log file could not be
+	opened.  Thanks to Matthew Nicholson for the bug report.
+	* testsuite.at: Add it.
+	* ui.cc (user_interface::redirect_log_to): Check that file is open.
+	* commands.cc (pid_file::pid_file): Ditto.
+
+2006-04-11  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE: Add a note that all certs will be re-issued, and all
+	revids will change.
+
 2006-04-12 Thomas Keller <me@thomaskeller.biz>
 	* po/README: Added small HOWTO for new translations
-
+	
 2006-04-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* merkle_tree.hh: make merkle_table be a hash_map instead of a map.

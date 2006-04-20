@@ -133,6 +133,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <time.h>
+#include <locale.h>
 
 #include <string>
 #include <list>
@@ -517,8 +518,15 @@ int fork_server(vector<string> const & args)
     }
     a[args.size()] = 0;
 
+    // Must set C locale, because usher interprets the output from
+    // monotone itself, and only deals with english!
+    setlocale(LC_ALL,"C");
+    setlocale(LC_MESSAGES,"C");
+    setlocale(LC_NUMERIC,"C");
+    setenv("LC_ALL","C",1);
+
     execvp(a[0], a);
-    perror("execvp failed\n");
+    perror("execvp failed");
     exit(1);
   } else {
     close(err[1]);

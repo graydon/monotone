@@ -54,6 +54,13 @@ If you are upgrading from:
     entry in the history graph, the tree layout and file contents are
     preserved exactly.
 
+    The largest changes are that after upgrading, all revision ids
+    will change, and, as a consequence, all certs must be reissued.
+    This means that after upgrading, all certs will be signed by the
+    person who performed the upgrade, rather than their original
+    issuer.  This is a basic property of how signatures work, so
+    there's little we can do about it.
+
     If you have any private branches, and are not your project's
     "designated migrator", then it is still possible to preserve your
     branches.  However, this requires some more understanding of what
