@@ -1,5 +1,11 @@
 2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/t_checkout_heads.at: New file: checkout should fail if there
+	are multiple heads.
+	* testsuite.at: Add it.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
 	* testsuite.at: NOT_ON_WIN32 seems to be broken. Fix it.
 
 2006-04-19  Timtohy Brownawell  <tbrownaw@gmail.com>
