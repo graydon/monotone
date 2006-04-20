@@ -1,5 +1,9 @@
 2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/t_ls_changed.at: Also check that it detects added files/dirs.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
 	* tests/t_ls_epochs.at: New file: test "ls epochs" and
 	"ls epochs <branch>"
 	* testsuite.at: Add it.
