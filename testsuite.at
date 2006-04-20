@@ -276,6 +276,7 @@ AT_CHECK(MTN --branch=$1 commit --message blah-blah, [], [ignore],
 
 m4_define([NOT_ON_WIN32], [
 if test "$OSTYPE" = "msys"; then
+  echo 77 > $at_status_file
   exit 77
 fi
 ])
