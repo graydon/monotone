@@ -2471,18 +2471,9 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                                        file_delta(del));
               }
             else
-              {
-                L(FL("inserting full version %s\n") % new_content);
-                data new_data;
-                read_localized_data(path, new_data, app.lua);
-                // sanity check
-                hexenc<id> tid;
-                calculate_ident(new_data, tid);
-                N(tid == new_content.inner(),
-                  F("file '%s' modified during commit, aborting")
-                  % path);
-                dbw.consume_file_data(new_content, file_data(new_data));
-              }
+              // If we don't err out here, our packet writer will later.
+              E(false, F("Your database is missing version %s of file '%s'")
+                         % old_content % path);
           }
 
         for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();

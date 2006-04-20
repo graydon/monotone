@@ -1,5 +1,9 @@
 2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
 
+	* commands.cc (commit): E() if the old end of a delta is missing.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
 	* tests/t_ls_changed.at: Also check that it detects added files/dirs.
 
 2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
