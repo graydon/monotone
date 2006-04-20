@@ -1,3 +1,7 @@
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy updated
+
 2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/t_hook_helpers.at: New file: test some of the helper functions
