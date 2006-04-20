@@ -1,3 +1,12 @@
+2006-04-19  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (log): Make log accept --recursive, which makes
+	"log dir" log revisions where anything under dir/ changes.
+	* tests/t_log_dir.at: Remove XFAIL. Test logging at attr change.
+	* tests/t_help.at: New file, test the "help" command.
+	* tests/t_approve.at: New file, test the "approve" command.
+	* testsuite.at: Add the new tests.
+
 2006-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/t_mtn_ignore.at: Tweak test so it would have detected the

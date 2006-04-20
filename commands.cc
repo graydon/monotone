@@ -3659,7 +3659,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
     OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES %
-    OPT_NO_FILES)
+    OPT_NO_FILES % OPT_RECURSIVE)
 {
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
@@ -3700,6 +3700,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       else
         app.db.get_roster(first_rid, new_roster);          
 
+      deque<node_t> todo;
       for (size_t i = 0; i < args.size(); ++i)
         {
           file_path fp = file_path_external(idx(args, i));
@@ -3707,7 +3708,22 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
           fp.split(sp);
           N(new_roster.has_node(sp),
             F("Unknown file '%s' for log command") % fp);
-          nodes.insert(new_roster.get_node(sp)->self);
+          todo.push_back(new_roster.get_node(sp));
+        }
+      while (!todo.empty())
+        {
+          node_t n = todo.front();
+          todo.pop_front();
+          nodes.insert(n->self);
+          if (app.recursive && is_dir_t(n))
+            {
+              dir_t d = downcast_to_dir_t(n);
+              for (dir_map::const_iterator i = d->children.begin();
+                   i != d->children.end(); ++i)
+                {
+                  todo.push_front(i->second);
+                }
+            }
         }
     }
 
