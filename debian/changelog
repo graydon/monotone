@@ -30,11 +30,32 @@ monotone (0.25-0.1) unstable; urgency=low
 
  -- Nathaniel Smith <njs@pobox.com>  Thu, 29 Dec 2005 13:28:11 -0800
 
+monotone (0.24-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Tomas Fasth <tomfa@debian.org>  Sun, 18 Dec 2005 23:30:28 +0000
+
 monotone (0.24-0.1) unstable; urgency=low
 
   * New upstream release.
 
  -- Nathaniel Smith <njs@pobox.com>  Sat, 26 Nov 2005 17:33:48 -0800
+
+monotone (0.23-4) unstable; urgency=low
+
+  * Applied a patch from Frank to actually make things work as intended.
+  * Closes: #334999: FTBFS on arm/hppa/m68k: please use g++-3.4
+
+ -- Tomas Fasth <tomfa@debian.org>  Sun, 23 Oct 2005 23:25:09 +0000
+
+monotone (0.23-3) unstable; urgency=low
+
+  * The build script is now configured to explicitly use g++-3.4 for arm,
+    hppa and m68k architectures as requested by Frank Lichtenheld.
+  * Closes: #334999: FTBFS on arm/hppa/m68k: please use g++-3.4
+
+ -- Tomas Fasth <tomfa@debian.org>  Sat, 22 Oct 2005 16:46:26 +0000
 
 monotone (0.23-2) unstable; urgency=low
 

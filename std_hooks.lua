@@ -84,8 +84,14 @@ function ignore_file(name)
    -- project specific
    if (ignored_files == nil) then
       ignored_files = {}
-      for line in io.lines(".mtn-ignore") do
-         table.insert(ignored_files, line)
+      local ignfile = io.open(".mtn-ignore", "r")
+      if (ignfile ~= nil) then
+         local line = ignfile:read()
+         while (line ~= nil) do
+            table.insert(ignored_files, line)
+            line = ignfile:read()
+         end
+         io.close(ignfile)
       end
    end
    for i, line in pairs(ignored_files)

@@ -2471,18 +2471,9 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                                        file_delta(del));
               }
             else
-              {
-                L(FL("inserting full version %s\n") % new_content);
-                data new_data;
-                read_localized_data(path, new_data, app.lua);
-                // sanity check
-                hexenc<id> tid;
-                calculate_ident(new_data, tid);
-                N(tid == new_content.inner(),
-                  F("file '%s' modified during commit, aborting")
-                  % path);
-                dbw.consume_file_data(new_content, file_data(new_data));
-              }
+              // If we don't err out here, our packet writer will later.
+              E(false, F("Your database is missing version %s of file '%s'")
+                         % old_content % path);
           }
 
         for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
@@ -3659,7 +3650,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
     OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES %
-    OPT_NO_FILES)
+    OPT_NO_FILES % OPT_RECURSIVE)
 {
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
@@ -3700,6 +3691,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       else
         app.db.get_roster(first_rid, new_roster);          
 
+      deque<node_t> todo;
       for (size_t i = 0; i < args.size(); ++i)
         {
           file_path fp = file_path_external(idx(args, i));
@@ -3707,7 +3699,22 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
           fp.split(sp);
           N(new_roster.has_node(sp),
             F("Unknown file '%s' for log command") % fp);
-          nodes.insert(new_roster.get_node(sp)->self);
+          todo.push_back(new_roster.get_node(sp));
+        }
+      while (!todo.empty())
+        {
+          node_t n = todo.front();
+          todo.pop_front();
+          nodes.insert(n->self);
+          if (app.recursive && is_dir_t(n))
+            {
+              dir_t d = downcast_to_dir_t(n);
+              for (dir_map::const_iterator i = d->children.begin();
+                   i != d->children.end(); ++i)
+                {
+                  todo.push_front(i->second);
+                }
+            }
         }
     }
 
@@ -3892,7 +3899,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
 }
 
-CMD(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new workspace directory, default to current"),
+CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new workspace directory, default to current"),
     OPT_BRANCH_NAME)
 {
   if (args.size() > 1)

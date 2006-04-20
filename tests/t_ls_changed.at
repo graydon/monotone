@@ -41,4 +41,19 @@ AT_CHECK(MTN --branch=testbranch commit --message='Third commit', [], [ignore], 
 AT_CHECK(MTN ls changed, [], [stdout], [])
 AT_CHECK(cmp stdout /dev/null, [], [ignore]) 
 
+ADD_FILE(piano, [earplugs
+])
+AT_CHECK(mkdir guitar)
+AT_CHECK(MTN add guitar, [], [ignore], [ignore])
+AT_CHECK(MTN ls changed, [], [stdout], [])
+AT_CHECK(CANONICALISE(stdout))
+AT_DATA(ls_baz, [guitar
+piano
+])
+AT_CHECK(cmp stdout ls_baz, [], [ignore]) 
+
+COMMIT(testbranch)
+AT_CHECK(MTN ls changed, [], [stdout], [])
+AT_CHECK(cmp stdout /dev/null, [], [ignore]) 
+
 AT_CLEANUP

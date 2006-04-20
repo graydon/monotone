@@ -1,3 +1,110 @@
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_hook_helpers.at: New file: test some of the helper functions
+	for the lua hooks.
+	* testsuite.at: Add it.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (commit): E() if the old end of a delta is missing.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_ls_changed.at: Also check that it detects added files/dirs.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_ls_epochs.at: New file: test "ls epochs" and
+	"ls epochs <branch>"
+	* testsuite.at: Add it.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_checkout_heads.at: New file: checkout should fail if there
+	are multiple heads.
+	* testsuite.at: Add it.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* testsuite.at: NOT_ON_WIN32 seems to be broken. Fix it.
+
+2006-04-19  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (log): Make log accept --recursive, which makes
+	"log dir" log revisions where anything under dir/ changes.
+	* tests/t_log_dir.at: Remove XFAIL. Test logging at attr change.
+	* tests/t_help.at: New file, test the "help" command.
+	* tests/t_approve.at: New file, test the "approve" command.
+	* testsuite.at: Add the new tests.
+
+2006-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_mtn_ignore.at: Tweak test so it would have detected the
+	broken .mtn-ignore error handling fixed in the last commit.
+
+	* std_hooks.lua (ignore_file): Fix up error handling for
+	non-existent .mtn-ignore files.
+
+2006-04-18  Richard Levitte  <richard@levitte.org>
+
+	This change was contributed by Shaun Jackman <sjackman@gmail.com>
+
+	* debian/changelog: Add missing Debian releases.
+
+	* debian/rules: From Debian bug report #334999: FTBFS on
+	arm/hppa/m68k: please use g++-3.4
+
+2006-04-17  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Fixed nœud spelling.
+
+2006-04-15  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_pidfile_log_permissions.at: Minor tweak to last change.
+
+	* tests/t_empty_env.at: Remove LD_LIBRARY_PATH test; it was
+	causing the test to be skipped without good reason in too many
+	environments.
+
+	* tests/t_ls_branches.at: Tweak include and exclude patterns to
+	avoid spurious glob expansion under MinGW.
+
+	* tests/t_pidfile_log_permissions.at: Skip part of the test under
+	MinGW since we can't get UNIX permissions to map to the particular
+	NT permissions we'd need for this portion of the test.
+
+2006-04-14  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (CMD(setup)): Make this a CMD_NO_WORKSPACE.  The
+	reason is a use-case, when someone setup a new project as a
+	subdirectory of another project, and forgot to give the database
+	and branch for this new project, and thereby ended up having it
+	be in the same database and branch as the parent directory.
+	* tests/t_setup_workspace_in_workspace.at (setup in subdirectory),
+	testsuit.at: Add a test for it.
+
+2006-04-14  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Corrected an error (some "help command" were translated).
+
+2006-04-14  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* Makefile.am: Use sed instead of perl to add the stylesheet
+	reference in HTML files.  Perl is not available in some systems
+	by default so this avoids an extra build-time dependency.
+
+2006-04-12  Nathaniel Smith  <njs@pobox.com>
+
+	* unix/process.cc (read_umask): New function.
+	(make_executable): Use it.
+	* tests/t_executable_umask.at, testsuite.at: New test.
+	XFAILed, because of totally mysterious failure!
+
+2006-04-12  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc (cpp_main): Use the entire path leaf for prog_name,
+	but strip ".exe" off if present.
+
 2006-04-12  Richard Levitte  <richard@levitte.org>
 
 	* ui.cc (compose_count): Simplify for count/total ticks.  There's
