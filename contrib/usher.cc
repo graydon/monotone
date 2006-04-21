@@ -699,19 +699,25 @@ struct server
     for (vector<string>::const_iterator i = h.begin(); i != h.end(); ++i) {
       c = servers_by_host.find(*i);
       if (c != servers_by_host.end()) {
-        cerr << "Removing duplicates for host " << *i << std::endl;
+        cerr << "Removing duplicate for hostname " << *i << " in:" << std::endl
+             << "  ";
         list<map<string, shared_ptr<server> >::iterator>::iterator j;
+        bool first = true;
         for (j = c->second->by_host.begin(); j != c->second->by_host.end();)
           {
             list<map<string, shared_ptr<server> >::iterator>::iterator j_saved
               = j;
             ++j;
+            cerr << (first ? "" : ", ") << (*j_saved)->second->by_name->first;
+            first = false;
             if ((*j_saved)->first == *i)
               {
                 servers_by_host.erase(*j_saved);
                 c->second->by_host.erase(j_saved);
               }
           }
+        cerr << std::endl
+             << "  ... because it appeared in " << by_name->first << std::endl;
       }
       c = servers_by_host.insert(make_pair(*i, me)).first;
       by_host.push_back(c);
@@ -728,18 +734,25 @@ struct server
     for (vector<string>::const_iterator i = p.begin(); i != p.end(); ++i) {
       c = servers_by_pattern.find(*i);
       if (c != servers_by_pattern.end()) {
-        cerr << "Removing duplicates for pattern " << *i << std::endl;
+        cerr << "Removing duplicate for pattern " << *i << " in: " << std::endl
+             << "  ";
         list<map<string, shared_ptr<server> >::iterator>::iterator j;
+        bool first = true;
         for (j = c->second->by_pat.begin(); j != c->second->by_pat.end(); ++j)
           {
             list<map<string, shared_ptr<server> >::iterator>::iterator j_saved
               = j;
             ++j;
-            if ((*j_saved)->first == *i) {
-              servers_by_pattern.erase(*j_saved);
-              c->second->by_pat.erase(j_saved);
-            }
+            cerr << (first ? "" : ", ") << (*j_saved)->second->by_name->first;
+            first = false;
+            if ((*j_saved)->first == *i)
+              {
+                servers_by_pattern.erase(*j_saved);
+                c->second->by_pat.erase(j_saved);
+              }
           }
+        cerr << std::endl
+             << "  ... because it appeared in " << by_name->first << std::endl;
       }
       c = servers_by_pattern.insert(make_pair(*i, me)).first;
       by_pat.push_back(c);
