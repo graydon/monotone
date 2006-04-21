@@ -5926,7 +5926,9 @@ basic_io formatted stanzas that will be provided are:
 @end verbatim
  
 These stanzas will always occur in the order listed here; stanzas of
-the same type will be sorted by the filename they refer to.
+the same type will be sorted by the filename they refer to. The 'delete'
+and following stanzas will be grouped under the corresponding 'old_revision'
+one.
 
 @item Error conditions:
 

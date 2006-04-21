@@ -1,3 +1,8 @@
+2006-04-21 Alex Queiroz <alex@ventonegro.org>
+
+	* Make clear in the "automate get_revision" documentation that
+	path stanzas are grouped under the corresponding "old_revision" one.
+
 2006-04-21  Richard Levitte  <richard@levitte.org>
 
 	* contrib/usher.cc (server::set_hosts, server::set_patterns):
