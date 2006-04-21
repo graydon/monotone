@@ -499,7 +499,7 @@ int fork_server(const string & name, vector<string> const & args)
 {
   string logfile = logdir + "/" + name + ".log";
   int err[2];
-  if ((err[1]=creat(logfile.c_str(),0644)) < 0)
+  if ((err[1]=open(logfile.c_str(),O_CREAT|O_APPEND,0644)) < 0)
     return false;
   if ((err[0]=open(logfile.c_str(),O_RDONLY)) < 0)
     {

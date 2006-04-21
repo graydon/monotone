@@ -1,5 +1,10 @@
 2006-04-21  Richard Levitte  <richard@levitte.org>
 
+	* contrib/usher.cc (fork_server): Make sure to append to already
+	existing log file.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
 	* contrib/usher.cc (fork_server): Redirect the logs of the sub-
 	servers to log files instead of a pipe, and have the main
 	process read that file instead of the pipe.
