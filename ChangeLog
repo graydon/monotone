@@ -1,5 +1,15 @@
 2006-04-21  Richard Levitte  <richard@levitte.org>
 
+	* contrib/usher.cc (fork_server): Redirect the logs of the sub-
+	servers to log files instead of a pipe, and have the main
+	process read that file instead of the pipe.
+	(read_server_record): Complain about unrecognised commands, and
+	continue processing.
+	(reload_conffile): Parse the logdir command.  Complain about
+	unrecognised commands, and continue processing.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
 	* contrib/usher.cc (server::set_hosts, server::set_patterns):
 	Explain a little more what is removed from what.
 
