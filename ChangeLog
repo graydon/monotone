@@ -1,6 +1,11 @@
-2006-04-23 Alex Queiroz <alex@ventonegro.org>
+2006-04-23  Richard Levitte  <richard@levitte.org>
 
-	* lua.cc: Fixed typo.
+	* po/sv.po: Clear a fuzzy.
+
+2006-04-23  Richard Levitte  <richard@levitte.org> &  Alex Queiroz <alex@ventonegro.org>
+
+	* lua.cc (monotone_includedir_for_lua): Tweak a spelling mistake.
+	Notified by Jeronimo Pellegrini <pellegrini@mpcnet.com.br>.
 
 2006-04-23 Alex Queiroz <alex@ventonegro.org>
 
