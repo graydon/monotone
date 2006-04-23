@@ -227,8 +227,7 @@ automate_attributes(std::vector<utf8> args,
     throw usage(help_name);
 
   roster_t base, current;
-  temp_node_id_source nis;
-  get_base_and_current_roster_shape(base, current, nis, app);
+  get_base_and_current_roster_shape(base, current, app);
 
   if (args.size() == 1)
     {
@@ -680,13 +679,12 @@ automate_inventory(std::vector<utf8> args,
 
   app.require_workspace();
 
-  temp_node_id_source nis;
   roster_t base, curr;
   inventory_map inventory;
   cset cs; MM(cs);
   path_set unchanged, changed, missing, known, unknown, ignored;
 
-  get_base_and_current_roster_shape(base, curr, nis, app);
+  get_base_and_current_roster_shape(base, curr, app);
   make_cset(base, curr, cs);
 
   I(cs.deltas_applied.empty());
@@ -710,7 +708,8 @@ automate_inventory(std::vector<utf8> args,
   classify_roster_paths(curr, unchanged, changed, missing, app);
   curr.extract_path_set(known);
 
-  file_itemizer u(app, known, unknown, ignored);
+  restriction mask(app);
+  file_itemizer u(app, known, unknown, ignored, mask);
   walk_tree(file_path(), u);
 
   inventory_node_state(inventory, unchanged, inventory_item::UNCHANGED_NODE);
@@ -966,14 +965,17 @@ automate_get_revision(std::vector<utf8> args,
 
   if (args.size() == 0)
     {
-      revision_set rev;
       roster_t old_roster, new_roster;
+      revision_id old_revision_id;
+      revision_set rev;
 
       app.require_workspace(); 
-      get_unrestricted_working_revision_and_rosters(app, rev, 
-                                                    old_roster, 
-                                                    new_roster,
-                                                    nis);
+      get_base_and_current_roster_shape(old_roster, new_roster, app);
+      update_current_roster_from_filesystem(new_roster, app);
+
+      get_revision_id(old_revision_id);
+      make_revision_set(old_revision_id, old_roster, new_roster, rev);
+
       calculate_ident(rev, ident);
       write_revision_set(rev, dat);
     }
@@ -1045,9 +1047,11 @@ automate_get_manifest_of(std::vector<utf8> args,
 
   if (args.size() == 0)
     {
-      revision_set rs;
-      app.require_workspace();
-      get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster, nis);
+      revision_id old_revision_id;
+
+      app.require_workspace(); 
+      get_base_and_current_roster_shape(old_roster, new_roster, app);
+      update_current_roster_from_filesystem(new_roster, app);
     }
   else
     {
