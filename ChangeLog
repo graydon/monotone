@@ -1,5 +1,9 @@
 2006-04-23  Richard Levitte  <richard@levitte.org>
 
+	* po/sv.po: Clear a fuzzy.
+
+2006-04-23  Richard Levitte  <richard@levitte.org>
+
 	* lua.cc (monotone_includedir_for_lua): Tweak a spelling mistake.
 	Notified by Jeronimo Pellegrini <pellegrini@mpcnet.com.br>.
 
