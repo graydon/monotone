@@ -583,7 +583,7 @@ extern "C"
     N(pathstr, F("%s called with an invalid parameter") % "IncludeDir");
 
     fs::path locpath(pathstr, fs::native);
-    N(fs::exists(locpath), F("Directory '%s' does not exists") % pathstr);
+    N(fs::exists(locpath), F("Directory '%s' does not exist") % pathstr);
     N(fs::is_directory(locpath), F("'%s' is not a directory") % pathstr);
 
     // directory, iterate over it, skipping subdirs, taking every filename,

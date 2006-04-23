@@ -1,5 +1,9 @@
 2006-04-23 Alex Queiroz <alex@ventonegro.org>
 
+	* lua.cc: Fixed typo.
+
+2006-04-23 Alex Queiroz <alex@ventonegro.org>
+
 	* pt_BR.po: Fixed some fuzzy translations.
 
 2006-04-21  Richard Levitte  <richard@levitte.org>
