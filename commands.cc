@@ -1364,7 +1364,6 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   revision_id old_rev_id;
   revision_set rev;
   data tmp;
-  temp_node_id_source nis;
 
   app.require_workspace();
   get_base_and_current_roster_shape(old_roster, new_roster, app);
@@ -3704,12 +3703,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 {
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
-
-  temp_node_id_source nis;
-
-  set<node_id> nodes;
-  
-  set<revision_id> frontier;
 
   set<revision_id> frontier;
   revision_id first_rid;

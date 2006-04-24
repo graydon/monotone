@@ -53,7 +53,7 @@ AT_CHECK(cmp empty stdout)
 # check that modified working copy manifest is correct
 AT_DATA(foo, [bla bla
 ])        
-AT_CHECK(MONOTONE automate get_manifest_of, [], [stdout], [ignore])
+AT_CHECK(MTN automate get_manifest_of, [], [stdout], [ignore])
 AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp expected2 stdout)
 

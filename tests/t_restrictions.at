@@ -49,7 +49,7 @@ AT_CHECK(MTN --branch=testbranch commit --message='add file[X23]', [], [ignore],
 # FIXME_RESTRICTIONS: the old code allows for --depth=N with no paths
 # and adds the "." path so that depth is interpreted against the current
 # included directory. this seems bad. how does --depth interact with --exclude?
-#AT_CHECK(MONOTONE ls known --depth=0, [], [stdout], [ignore])
+#AT_CHECK(MTN ls known --depth=0, [], [stdout], [ignore])
 #AT_CHECK(grep fileX stdout, [1], [ignore])
 
 AT_CHECK(MTN ls known --depth=0 . , [], [stdout], [ignore])

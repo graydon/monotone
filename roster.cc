@@ -2226,9 +2226,6 @@ update_current_roster_from_filesystem(roster_t & ros,
       "or to handle all at once, simply 'monotone drop --missing'\n"
       "or 'monotone revert --missing'")
     % missing_files % app.prog_name % app.prog_name % app.prog_name);
-      "'monotone drop FILE' to remove it permanently, or\n"
-      "'monotone revert FILE' to restore it\n")
-    % missing_files);
 }
 
 void 
