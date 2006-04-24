@@ -2230,12 +2230,11 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
 
-  revision_set rs;
   roster_t old_roster, new_roster;
 
   app.require_workspace();
   temp_node_id_source nis;
-  get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster, nis);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
   
   file_path path = file_path_external(idx(args,1));
   split_path sp;

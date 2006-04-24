@@ -1,3 +1,8 @@
+2006-04-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (attr): Use get_base_and_current_roster_shape
+	instead of doing a pointless workspace scan.
+
 2006-04-23  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Clear a fuzzy.
