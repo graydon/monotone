@@ -1,3 +1,9 @@
+2006-04-24  Derek Scherger  <derek@echologic.com>
+
+	* cmd_diff_log.cc (log): remove --recursive option from log;
+	directories are always recursive as with other restricted commands
+	* tests/t_log_dir.at: account for recursive directories
+
 2006-04-23  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (attr): Use get_base_and_current_roster_shape

@@ -502,7 +502,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
     OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES %
-    OPT_NO_FILES % OPT_RECURSIVE)
+    OPT_NO_FILES)
 {
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
@@ -558,7 +558,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
           node_t n = todo.front();
           todo.pop_front();
           nodes.insert(n->self);
-          if (app.recursive && is_dir_t(n))
+          if (is_dir_t(n))
             {
               dir_t d = downcast_to_dir_t(n);
               for (dir_map::const_iterator i = d->children.begin();
