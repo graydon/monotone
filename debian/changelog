@@ -1,3 +1,9 @@
+monotone (0.26.0-0.2) unstable; urgency=low
+
+  * Added examples to the files that should end up in the documentation.
+
+ -- Richard Levitte <richard@levitte.org>  Tue, 25 Apr 2006 11:30:05 +0200
+
 monotone (0.26.0-0.1) unstable; urgency=low
 
   * New upstream release.  (NB: The official upstream version number

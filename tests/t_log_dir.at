@@ -71,16 +71,6 @@ AT_CHECK(grep "^Revision: $REV7" stdout, [0], [ignore], [ignore])
 AT_CHECK(MTN log ., [], [stdout], [ignore])
 
 AT_CHECK(grep "^Revision: $REV1" stdout, [0], [ignore], [ignore])
-AT_CHECK(grep "^Revision: $REV2" stdout, [1], [ignore], [ignore])
-AT_CHECK(grep "^Revision: $REV3" stdout, [1], [ignore], [ignore])
-AT_CHECK(grep "^Revision: $REV4" stdout, [1], [ignore], [ignore])
-AT_CHECK(grep "^Revision: $REV5" stdout, [1], [ignore], [ignore])
-AT_CHECK(grep "^Revision: $REV6" stdout, [1], [ignore], [ignore])
-AT_CHECK(grep "^Revision: $REV7" stdout, [1], [ignore], [ignore])
-
-AT_CHECK(MTN log . -R, [], [stdout], [ignore])
-
-AT_CHECK(grep "^Revision: $REV1" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV2" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV3" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV4" stdout, [0], [ignore], [ignore])
@@ -88,7 +78,7 @@ AT_CHECK(grep "^Revision: $REV5" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV6" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV7" stdout, [0], [ignore], [ignore])
 
-AT_CHECK(MTN log dir1 -R, [], [stdout], [ignore])
+AT_CHECK(MTN log dir1, [], [stdout], [ignore])
 
 AT_CHECK(grep "^Revision: $REV1" stdout, [1], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV2" stdout, [0], [ignore], [ignore])
@@ -98,7 +88,7 @@ AT_CHECK(grep "^Revision: $REV5" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV6" stdout, [1], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV7" stdout, [1], [ignore], [ignore])
 
-AT_CHECK(MTN log dir2 -R, [], [stdout], [ignore])
+AT_CHECK(MTN log dir2, [], [stdout], [ignore])
 
 AT_CHECK(grep "^Revision: $REV1" stdout, [1], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV2" stdout, [1], [ignore], [ignore])

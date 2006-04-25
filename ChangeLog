@@ -1,3 +1,14 @@
+2006-04-25  Richard Levitte  <richard@levitte.org>
+
+	* examples/000README.txt, examples/display_branches.lua: Start a
+	directory of small examples and other cool things you can do with
+	monotone.  Contrary to the contrib directory, these files can
+	seldom be taken and used as they are, they usually need to get
+	integrated into some other file.
+	* debian/docs, debian/changelog: Make sure the examples directory
+	end up inside Debian's standard documentation directory, and
+	document this change.
+
 2006-04-25  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.texi: Add Jeronimo to copyright holder list.
@@ -12,6 +23,17 @@
 
 	* monotone.texi: Replace many references to 'monotone' with
 	'mtn'.
+
+2006-04-24  Derek Scherger  <derek@echologic.com>
+
+	* contrib/monotone.el (monotone-commit-complete): call line
+	removal function by it's actual name
+
+2006-04-24  Derek Scherger  <derek@echologic.com>
+
+	* cmd_diff_log.cc (log): remove --recursive option from log;
+	directories are always recursive as with other restricted commands
+	* tests/t_log_dir.at: account for recursive directories
 
 2006-04-23  Nathaniel Smith  <njs@pobox.com>
 
