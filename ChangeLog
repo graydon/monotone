@@ -1,3 +1,7 @@
+2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* po/POTFILES.in: add cmd.hh and the cmd_*.cc files
+
 2006-04-23  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (attr): Use get_base_and_current_roster_shape
