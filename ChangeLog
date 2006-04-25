@@ -1370,6 +1370,23 @@
 	(checkout): If a branch has multiple heads, list candidates, give
 	usage hint, and use Error instead of Naughty.
 
+2006-03-31  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.cc (get_nodes, merge_states): remove;
+	(add_paths, add_nodes, map_paths, map_nodes): simplify after above
+	cleanup and removal of implicit includes;
+	* restrictions.hh: remove stale comments
+	
+2006-03-30  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (status, ls_changed, commit, diff, revert): call
+	check_restricted_cset after make_restricted_csets
+	* restrictions.cc: remove implicit parents gunk and update
+	unit tests accordingly
+	* roster.{cc,hh} (check_restricted_cset): new function to issue a
+	nice message if required directories have been excluded
+	* tests/t_log_dir.at: un-XFAIL
+	
 2006-03-03  Derek Scherger  <derek@echologic.com>
 
 	* restrictions.cc (check_for_missing_additions): new function
@@ -1587,6 +1604,46 @@
 	revisions, and prefer deltas to data when both are available.
 	See
 	https://savannah.nongnu.org/bugs/?func=detailitem&item_id=15846
+
+2006-02-25  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_inventory): 
+	* commands.cc (status, ls_known, find_unknown_and_ignored,
+	find_missing, ls_changed, commit, diff, revert, log): 
+	* roster.cc (update_current_roster_from_filesystem): add app_state
+	to restriction constructors
+	* restrictions.{cc,hh}: add support for --depth option and ignored
+	files in restrictions to match old functionality; clean up
+	constructors a bit
+	* tests/t_automate_get_manifest_of.at: add format_version stanza
+	to test manifest
+	* tests/t_restrictions.at: re-enable --depth tests
+
+2006-02-22  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_get_revision, automate_get_manifest_of):
+	merge fixups
+	* commands.cc (ls_changed): convert to new restrictions
+	(commit, update, revert):
+	* restrictions.cc:
+	* roster.cc: merge fixups
+
+2006-02-20  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.{cc,hh}: attempt to simplify and remove duplication
+	
+2006-02-20  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (status, ls_known, find_unknown_and_ignored,
+	find_missing, commit, diff, revert, log): add excludes to restrictions
+	* restrictions.{cc,hh}: preliminary support for excludes and unit
+	tests to see if it works
+
+2006-02-13  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh}: 
+	* globis.{cc,hh}: make exclude_patterns a vector rather than a
+	set so that restriction includes/excludes are of the same type
 
 2006-02-21  Nathaniel Smith  <njs@pobox.com>
 

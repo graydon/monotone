@@ -12,398 +12,895 @@
 #include "safe_map.hh"
 #include "transforms.hh"
 
-void
-extract_rearranged_paths(cset const & cs, path_set & paths)
-{
-  paths.insert(cs.nodes_deleted.begin(), cs.nodes_deleted.end());
-  paths.insert(cs.dirs_added.begin(), cs.dirs_added.end());
+using std::make_pair;
+using std::set;
 
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-       i != cs.files_added.end(); ++i)
-    {
-      paths.insert(i->first);
-    }
-
-  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin(); 
-       i != cs.nodes_renamed.end(); ++i) 
-    {
-      paths.insert(i->first); 
-      paths.insert(i->second); 
-    }
-}
-
-
-void 
-add_intermediate_paths(path_set & paths)
-{
-  path_set intermediate_paths;
-
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      split_path sp;
-      for (split_path::const_iterator j = i->begin(); j != i->end(); ++j)
-        {
-          sp.push_back(*j);
-          intermediate_paths.insert(sp);
-        }
-    }
-  paths.insert(intermediate_paths.begin(), intermediate_paths.end());
-}
-
-void
-restrict_cset(cset const & cs, 
-              cset & included,
-              cset & excluded,
-              app_state & app)
-{
-  included.clear();
-  excluded.clear();
-
-  for (path_set::const_iterator i = cs.nodes_deleted.begin();
-       i != cs.nodes_deleted.end(); ++i)
-    {
-      if (app.restriction_includes(*i)) 
-        safe_insert(included.nodes_deleted, *i);
-      else
-        safe_insert(excluded.nodes_deleted, *i);
-    }
-
-  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin(); 
-       i != cs.nodes_renamed.end(); ++i) 
-    {
-      if (app.restriction_includes(i->first) ||
-          app.restriction_includes(i->second)) 
-        safe_insert(included.nodes_renamed, *i);
-      else
-        safe_insert(excluded.nodes_renamed, *i);
-    }
-
-  for (path_set::const_iterator i = cs.dirs_added.begin();
-       i != cs.dirs_added.end(); ++i)
-    {
-      if (app.restriction_includes(*i)) 
-        safe_insert(included.dirs_added, *i);
-      else
-        safe_insert(excluded.dirs_added, *i);
-    }
-
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-       i != cs.files_added.end(); ++i)
-    {
-      if (app.restriction_includes(i->first)) 
-        safe_insert(included.files_added, *i);
-      else
-        safe_insert(excluded.files_added, *i);
-    }
-
-  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i = 
-         cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-    {
-      if (app.restriction_includes(i->first)) 
-        safe_insert(included.deltas_applied, *i);
-      else
-        safe_insert(excluded.deltas_applied, *i);
-    }
-
-  for (std::set<std::pair<split_path, attr_key> >::const_iterator i = 
-         cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
-    {
-      if (app.restriction_includes(i->first)) 
-        safe_insert(included.attrs_cleared, *i);
-      else
-        safe_insert(excluded.attrs_cleared, *i);
-    }
-
-  for (std::map<std::pair<split_path, attr_key>, attr_value>::const_iterator i =
-         cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
-    {
-      if (app.restriction_includes(i->first.first)) 
-        safe_insert(included.attrs_set, *i);
-      else
-        safe_insert(excluded.attrs_set, *i);
-    }
-}
-
+// TODO: add check for relevant rosters to be used by log
+//
+// i.e.  as log goes back through older and older rosters it may hit one that
+// pre-dates any of the nodes in the restriction. the nodes that the restriction
+// includes or excludes may not have been born in a sufficiently old roster. at
+// this point log should stop because no earlier roster will include these nodes.
 
 static void
-check_for_missing_additions(cset const & work, roster_t const & roster)
+make_path_set(vector<utf8> const & args, path_set & paths)
 {
-  path_set added;
-  int missing = 0;
-
-  for (path_set::const_iterator i = work.dirs_added.begin();
-       i != work.dirs_added.end(); ++i)
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      split_path dir(*i);
-      added.insert(dir);
+      split_path sp;
+      file_path_external(*i).split(sp);
+      paths.insert(sp);
+    }
+}
 
-      if (dir.size() > 1)
+static void
+add_paths(map<split_path, path_state> & path_map, 
+          path_set const & paths, 
+          path_state const state)
+{
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      map<split_path, path_state>::iterator p = path_map.find(*i);
+      if (p != path_map.end())
+        N(p->second == state, 
+          F("conflicting include/exclude on path '%s'") % *i);
+      else
+        path_map.insert(make_pair(*i, state));
+    }
+}
+
+static void
+add_nodes(map<node_id, path_state> & node_map, 
+          roster_t const & roster,
+          path_set const & paths, 
+          path_set & known, 
+          path_state const state)
+{
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      if (roster.has_node(*i)) 
         {
-          dir.pop_back();
+          known.insert(*i);
+          node_id nid = roster.get_node(*i)->self;
+          
+          map<node_id, path_state>::iterator n = node_map.find(nid);
+          if (n != node_map.end())
+            N(n->second == state, 
+              F("conflicting include/exclude on path '%s'") % *i);
+          else
+            node_map.insert(make_pair(nid, state));
+        }
+    }
+}
 
-          if (!roster.has_node(dir) && added.find(dir) == added.end())
+////////////////////////////////////////////////////////////////////////////////
+// construction helpers
+////////////////////////////////////////////////////////////////////////////////
+
+void
+restriction::map_paths(vector<utf8> const & include_args,
+                       vector<utf8> const & exclude_args)
+{
+  make_path_set(include_args, included_paths);
+  make_path_set(exclude_args, excluded_paths);
+
+  add_paths(path_map, included_paths, included);
+  add_paths(path_map, excluded_paths, excluded);
+}
+
+void
+restriction::map_nodes(roster_t const & roster)
+{
+  add_nodes(node_map, roster, included_paths, known_paths, included);
+  add_nodes(node_map, roster, excluded_paths, known_paths, excluded);
+}
+
+void
+restriction::validate()
+{
+  int bad = 0;
+
+  for (path_set::const_iterator i = included_paths.begin(); 
+       i != included_paths.end(); ++i)
+    {
+      // ignored paths are allowed into the restriction but are not considered
+      // invalid if they are found in none of the restriction's rosters
+      if (known_paths.find(*i) == known_paths.end())
+        {
+          file_path fp(*i);
+          if (!app.lua.hook_ignore_file(fp))
             {
-              missing++;
-              W(F("restriction excludes directory '%s'") % dir);
+              bad++;
+              W(F("unknown path included %s") % *i);
             }
         }
     }
 
-  for (std::map<split_path, file_id>::const_iterator i = work.files_added.begin();
-       i != work.files_added.end(); ++i)
+  for (path_set::const_iterator i = excluded_paths.begin(); 
+       i != excluded_paths.end(); ++i)
     {
-      split_path dir(i->first);
-      I(dir.size() > 1);
-      dir.pop_back();
-
-      if (!roster.has_node(dir) && added.find(dir) == added.end())
+      if (known_paths.find(*i) == known_paths.end())
         {
-          missing++;
-          W(F("restriction excludes directory '%s'") % dir);
+          bad++;
+          W(F("unknown path excluded %s") % *i);
         }
     }
-
-  N(missing == 0, 
-    F("invalid restriction excludes required directories")); 
-
+  
+  N(bad == 0, F("%d unknown paths") % bad);
 }
 
-// Project the old_paths through r_old + work, to find the new names of the
-// paths (if they survived work)
+////////////////////////////////////////////////////////////////////////////////
+// public api
+////////////////////////////////////////////////////////////////////////////////
 
-static void
-remap_paths(path_set const & old_paths,
-            roster_t const & r_old,
-            cset const & work,
-            path_set & new_paths)
+bool
+restriction::includes(roster_t const & roster, node_id nid) const
 {
-  new_paths.clear();
-  // FIXME: This use of temp_node_id_source is dubious.  So long as r_old
-  // contains no temp nids, it is safe.  ATM, this is always the case.  Even
-  // if it stops being the case, the worst that will happen is that things
-  // crash horribly when we try to add a node that already exists...
-  temp_node_id_source nis;
-  roster_t r_tmp = r_old;
-  editable_roster_base er(r_tmp, nis);
-  work.apply_to(er);
-  for (path_set::const_iterator i = old_paths.begin();
-       i != old_paths.end(); ++i)
+  MM(roster);
+  I(roster.has_node(nid));
+
+  split_path sp;
+  roster.get_name(nid, sp);
+  
+  // empty restriction includes everything
+  if (empty()) 
     {
-      node_t n_old = r_old.get_node(*i);
-      if (r_tmp.has_node(n_old->self))
-        {
-          split_path new_sp;
-          r_tmp.get_name(n_old->self, new_sp);
-          new_paths.insert(new_sp);
-        }
+      L(FL("empty include of nid %d path '%s'") % nid % file_path(sp));
+      return true;
     }
-}
 
-void
-get_base_roster_and_working_cset(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_id & old_revision_id,
-                                 roster_t & old_roster,
-                                 path_set & old_paths, 
-                                 path_set & new_paths,
-                                 cset & included,
-                                 cset & excluded)
-{
-  cset work;
+  node_id current = nid;
+  int depth = 0;
 
-  get_base_revision(app, old_revision_id, old_roster);
-  get_work_cset(work);
+  // FIXME: this uses app.depth+1 because the old semantics of depth=0 were
+  // something like "the current directory and its immediate children". it seems
+  // somewhat more reasonable here to use depth=0 to mean "exactly this
+  // directory" and depth=1 to mean "this directory and its immediate children"
 
-  old_roster.extract_path_set(old_paths);
-
-  path_set valid_paths(old_paths);
-  extract_rearranged_paths(work, valid_paths);
-  add_intermediate_paths(valid_paths);
-  app.set_restriction(valid_paths, args); 
-
-  restrict_cset(work, included, excluded, app);  
-
-  check_for_missing_additions(included, old_roster);
-
-  remap_paths(old_paths, old_roster, work, new_paths);
-
-  for (path_set::const_iterator i = included.dirs_added.begin();
-       i != included.dirs_added.end(); ++i)
-    new_paths.insert(*i);
-  
-  for (std::map<split_path, file_id>::const_iterator i = included.files_added.begin();
-       i != included.files_added.end(); ++i)
-    new_paths.insert(i->first);
-  
-  for (std::map<split_path, split_path>::const_iterator i = included.nodes_renamed.begin(); 
-       i != included.nodes_renamed.end(); ++i) 
-    new_paths.insert(i->second);
-}
-
-void
-get_working_revision_and_rosters(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_set & rev,
-                                 roster_t & old_roster,
-                                 roster_t & new_roster,
-                                 cset & excluded,
-                                 node_id_source & nis)
-{
-  revision_id old_revision_id;
-  boost::shared_ptr<cset> cs(new cset());
-  path_set old_paths, new_paths;
-
-  rev.edges.clear();
-  get_base_roster_and_working_cset(app, args, 
-                                   old_revision_id,
-                                   old_roster,
-                                   old_paths,
-                                   new_paths, 
-                                   *cs, excluded);
-
-  new_roster = old_roster;
-  editable_roster_base er(new_roster, nis);
-  cs->apply_to(er);
-
-  // Now update any idents in the new roster
-  update_restricted_roster_from_filesystem(new_roster, app);
-
-  calculate_ident(new_roster, rev.new_manifest);
-  L(FL("new manifest_id is %s\n") % rev.new_manifest);
-  
-  {
-    // We did the following:
-    //
-    //  - restrict the working cset (_MTN/work)
-    //  - apply the working cset to the new roster,
-    //    giving us a rearranged roster (with incorrect content hashes)
-    //  - re-scan file contents, updating content hashes
-    // 
-    // Alas, this is not enough: we must now re-calculate the cset
-    // such that it contains the content deltas we found, and 
-    // re-restrict that cset.
-    //
-    // FIXME: arguably, this *could* be made faster by doing a
-    // "make_restricted_cset" (or "augment_restricted_cset_deltas_only" 
-    // call, for maximum speed) but it's worth profiling before 
-    // spending time on it.
-
-    cset tmp_full, tmp_excluded;
-    // We ignore excluded stuff, our 'excluded' argument is only really
-    // supposed to have tree rearrangement stuff in it, and it already has
-    // that
-    make_cset(old_roster, new_roster, tmp_full);
-    restrict_cset(tmp_full, *cs, tmp_excluded, app);
-  }
-
-  safe_insert(rev.edges, std::make_pair(old_revision_id, cs));
-}
-
-void
-get_working_revision_and_rosters(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_set & rev,
-                                 roster_t & old_roster,
-                                 roster_t & new_roster,
-                                 node_id_source & nis)
-{
-  cset excluded;
-  get_working_revision_and_rosters(app, args, rev, 
-                                   old_roster, new_roster, excluded, nis);
-}
-
-void
-get_unrestricted_working_revision_and_rosters(app_state & app, 
-                                              revision_set & rev,
-                                              roster_t & old_roster,
-                                              roster_t & new_roster,
-                                              node_id_source & nis)
-{
-  std::vector<utf8> empty_args;
-  std::set<utf8> saved_exclude_patterns(app.exclude_patterns);
-  app.exclude_patterns.clear();
-  get_working_revision_and_rosters(app, empty_args, rev, old_roster, new_roster, nis);
-  app.exclude_patterns = saved_exclude_patterns;
-}
-
-
-static void
-extract_changed_paths(cset const & cs, path_set & paths)
-{
-  extract_rearranged_paths(cs, paths);
-
-  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i 
-         = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-    paths.insert(i->first);
-  
-  for (std::set<std::pair<split_path, attr_key> >::const_iterator i =
-         cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
-    paths.insert(i->first);
-
-  for (std::map<std::pair<split_path, attr_key>, attr_value>::const_iterator i =
-         cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
-    paths.insert(i->first.first);
-}
-
-void
-calculate_restricted_cset(app_state & app, 
-                          std::vector<utf8> const & args,
-                          cset const & cs,
-                          cset & included,
-                          cset & excluded)
-{
-  path_set valid_paths;
-
-  extract_changed_paths(cs, valid_paths);
-  add_intermediate_paths(valid_paths);
-
-  app.set_restriction(valid_paths, args); 
-  restrict_cset(cs, included, excluded, app);
-}
-
-void
-find_missing(app_state & app,
-             std::vector<utf8> const & args,
-             path_set & missing)
-{
-  revision_id base_rid;
-  roster_t base_roster;
-  cset included_work, excluded_work;
-  path_set old_paths, new_paths;
-
-  app.require_workspace();
-  get_base_roster_and_working_cset(app, args, base_rid, base_roster,
-                                   old_paths, new_paths,
-                                   included_work, excluded_work);
-
-  for (path_set::const_iterator i = new_paths.begin(); i != new_paths.end(); ++i)
+  while (!null_node(current) && (app.depth == -1 || depth <= app.depth + 1)) 
     {
-      if (i->size() == 1)
+      map<node_id, path_state>::const_iterator r = node_map.find(current);
+
+      if (r != node_map.end()) 
         {
-          I(null_name(idx(*i, 0)));
-          continue;
+          switch (r->second) 
+            {
+            case included:
+              L(FL("explicit include of nid %d path '%s'") % current % file_path(sp));
+              return true;
+
+            case excluded:
+              L(FL("explicit exclude of nid %d path '%s'") % current % file_path(sp));
+              return false;
+            }
         }
-      file_path fp(*i);      
-      if (app.restriction_includes(*i) && !path_exists(fp))
-        missing.insert(*i);
+
+      node_t node = roster.get_node(current);
+      current = node->parent;
+      depth++;
+    }
+
+  if (included_paths.empty())
+    {
+      L(FL("default include of nid %d path '%s'\n") % nid % file_path(sp));
+      return true;
+    }
+  else
+    {
+      L(FL("default exclude of nid %d path '%s'\n") % nid % file_path(sp));
+      return false;
     }
 }
 
-void
-find_unknown_and_ignored(app_state & app,
-                         bool want_ignored,
-                         std::vector<utf8> const & args, 
-                         path_set & unknown,
-                         path_set & ignored)
+bool
+restriction::includes(split_path const & sp) const
 {
-  revision_set rev;
-  roster_t old_roster, new_roster;
-  path_set known;
+  // empty restriction includes everything
+  if (empty()) 
+    {
+      L(FL("empty include of path '%s'") % file_path(sp));
+      return true;
+    }
+
+  split_path current(sp);
+  int depth = 0;
+
+  // FIXME: this uses app.depth+1 because the old semantics of depth=0 were
+  // something like "the current directory and its immediate children". it seems
+  // somewhat more reasonable here to use depth=0 to mean "exactly this
+  // directory" and depth=1 to mean "this directory and its immediate children"
+
+  while (!current.empty() && (app.depth == -1 || depth <= app.depth + 1))
+    {
+      map<split_path, path_state>::const_iterator r = path_map.find(current);
+
+      if (r != path_map.end())
+        {
+          switch (r->second) 
+            {
+            case included:
+              L(FL("explicit include of path '%s'") % file_path(sp));
+              return true;
+
+            case excluded:
+              L(FL("explicit exclude of path '%s'") % file_path(sp));
+              return false;
+            }
+        }
+
+      current.pop_back();
+      depth++;
+    }
+
+  if (included_paths.empty())
+    {
+      L(FL("default include of path '%s'\n") % file_path(sp));
+      return true;
+    }
+  else
+    {
+      L(FL("default exclude of path '%s'\n") % file_path(sp));
+      return false;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// tests
+////////////////////////////////////////////////////////////////////////////////
+
+#ifdef BUILD_UNIT_TESTS
+#include "app_state.hh"
+#include "unit_tests.hh"
+#include "roster.hh"
+#include "sanity.hh"
+
+using std::string;
+
+// f's and g's are files
+// x's and y's are directories
+// and this is rather painful
+
+split_path sp_root;
+split_path sp_f;
+split_path sp_g;
+
+split_path sp_x;
+split_path sp_xf;
+split_path sp_xg;
+split_path sp_xx;
+split_path sp_xxf;
+split_path sp_xxg;
+split_path sp_xy;
+split_path sp_xyf;
+split_path sp_xyg;
+
+split_path sp_y;
+split_path sp_yf;
+split_path sp_yg;
+split_path sp_yx;
+split_path sp_yxf;
+split_path sp_yxg;
+split_path sp_yy;
+split_path sp_yyf;
+split_path sp_yyg;
+
+node_id nid_root;
+node_id nid_f;
+node_id nid_g;
+
+node_id nid_x;
+node_id nid_xf;
+node_id nid_xg;
+node_id nid_xx;
+node_id nid_xxf;
+node_id nid_xxg;
+node_id nid_xy;
+node_id nid_xyf;
+node_id nid_xyg;
+
+node_id nid_y;
+node_id nid_yf;
+node_id nid_yg;
+node_id nid_yx;
+node_id nid_yxf;
+node_id nid_yxg;
+node_id nid_yy;
+node_id nid_yyf;
+node_id nid_yyg;
+
+file_id fid_f(string("1000000000000000000000000000000000000000"));
+file_id fid_g(string("2000000000000000000000000000000000000000"));
+
+file_id fid_xf(string("3000000000000000000000000000000000000000"));
+file_id fid_xg(string("4000000000000000000000000000000000000000"));
+file_id fid_xxf(string("5000000000000000000000000000000000000000"));
+file_id fid_xxg(string("6000000000000000000000000000000000000000"));
+file_id fid_xyf(string("7000000000000000000000000000000000000000"));
+file_id fid_xyg(string("8000000000000000000000000000000000000000"));
+
+file_id fid_yf(string("9000000000000000000000000000000000000000"));
+file_id fid_yg(string("a000000000000000000000000000000000000000"));
+file_id fid_yxf(string("b000000000000000000000000000000000000000"));
+file_id fid_yxg(string("c000000000000000000000000000000000000000"));
+file_id fid_yyf(string("d000000000000000000000000000000000000000"));
+file_id fid_yyg(string("e000000000000000000000000000000000000000"));
+
+static void setup(roster_t & roster) 
+{
   temp_node_id_source nis;
 
-  get_working_revision_and_rosters(app, args, rev, old_roster, new_roster, nis);
-  new_roster.extract_path_set(known);
+  file_path_internal("").split(sp_root);
+  file_path_internal("f").split(sp_f);
+  file_path_internal("g").split(sp_g);
 
-  file_itemizer u(app, known, unknown, ignored);
-  walk_tree(file_path(), u);
+  file_path_internal("x").split(sp_x);
+  file_path_internal("x/f").split(sp_xf);
+  file_path_internal("x/g").split(sp_xg);
+  file_path_internal("x/x").split(sp_xx);
+  file_path_internal("x/x/f").split(sp_xxf);
+  file_path_internal("x/x/g").split(sp_xxg);
+  file_path_internal("x/y").split(sp_xy);
+  file_path_internal("x/y/f").split(sp_xyf);
+  file_path_internal("x/y/g").split(sp_xyg);
+
+  file_path_internal("y").split(sp_y);
+  file_path_internal("y/f").split(sp_yf);
+  file_path_internal("y/g").split(sp_yg);
+  file_path_internal("y/x").split(sp_yx);
+  file_path_internal("y/x/f").split(sp_yxf);
+  file_path_internal("y/x/g").split(sp_yxg);
+  file_path_internal("y/y").split(sp_yy);
+  file_path_internal("y/y/f").split(sp_yyf);
+  file_path_internal("y/y/g").split(sp_yyg);
+
+  nid_root = roster.create_dir_node(nis);
+  nid_f    = roster.create_file_node(fid_f, nis);
+  nid_g    = roster.create_file_node(fid_g, nis);
+
+  nid_x   = roster.create_dir_node(nis);
+  nid_xf  = roster.create_file_node(fid_xf, nis);
+  nid_xg  = roster.create_file_node(fid_xg, nis);
+  nid_xx  = roster.create_dir_node(nis);
+  nid_xxf = roster.create_file_node(fid_xxf, nis);
+  nid_xxg = roster.create_file_node(fid_xxg, nis);
+  nid_xy  = roster.create_dir_node(nis);
+  nid_xyf = roster.create_file_node(fid_xxf, nis);
+  nid_xyg = roster.create_file_node(fid_xxg, nis);
+
+  nid_y   = roster.create_dir_node(nis);
+  nid_yf  = roster.create_file_node(fid_yf, nis);
+  nid_yg  = roster.create_file_node(fid_yg, nis);
+  nid_yx  = roster.create_dir_node(nis);
+  nid_yxf = roster.create_file_node(fid_yxf, nis);
+  nid_yxg = roster.create_file_node(fid_yxg, nis);
+  nid_yy  = roster.create_dir_node(nis);
+  nid_yyf = roster.create_file_node(fid_yxf, nis);
+  nid_yyg = roster.create_file_node(fid_yxg, nis);
+
+  roster.attach_node(nid_root, sp_root);
+  roster.attach_node(nid_f, sp_f);
+  roster.attach_node(nid_g, sp_g);
+
+  roster.attach_node(nid_x,   sp_x);
+  roster.attach_node(nid_xf,  sp_xf);
+  roster.attach_node(nid_xg,  sp_xg);
+  roster.attach_node(nid_xx,  sp_xx);
+  roster.attach_node(nid_xxf, sp_xxf);
+  roster.attach_node(nid_xxg, sp_xxg);
+  roster.attach_node(nid_xy,  sp_xy);
+  roster.attach_node(nid_xyf, sp_xyf);
+  roster.attach_node(nid_xyg, sp_xyg);
+
+  roster.attach_node(nid_y,   sp_y);
+  roster.attach_node(nid_yf,  sp_yf);
+  roster.attach_node(nid_yg,  sp_yg);
+  roster.attach_node(nid_yx,  sp_yx);
+  roster.attach_node(nid_yxf, sp_yxf);
+  roster.attach_node(nid_yxg, sp_yxg);
+  roster.attach_node(nid_yy,  sp_yy);
+  roster.attach_node(nid_yyf, sp_yyf);
+  roster.attach_node(nid_yyg, sp_yyg);
 }
+
+static void 
+test_empty_restriction()
+{
+  roster_t roster;
+  setup(roster);
+
+  app_state app;
+  restriction mask(app);
+  
+  BOOST_CHECK(mask.empty());
+
+  // check restricted nodes
+  BOOST_CHECK(mask.includes(roster, nid_root));
+  BOOST_CHECK(mask.includes(roster, nid_f));
+  BOOST_CHECK(mask.includes(roster, nid_g));
+
+  BOOST_CHECK(mask.includes(roster, nid_x));
+  BOOST_CHECK(mask.includes(roster, nid_xf));
+  BOOST_CHECK(mask.includes(roster, nid_xg));
+  BOOST_CHECK(mask.includes(roster, nid_xx));
+  BOOST_CHECK(mask.includes(roster, nid_xxf));
+  BOOST_CHECK(mask.includes(roster, nid_xxg));
+  BOOST_CHECK(mask.includes(roster, nid_xy));
+  BOOST_CHECK(mask.includes(roster, nid_xyf));
+  BOOST_CHECK(mask.includes(roster, nid_xyg));
+
+  BOOST_CHECK(mask.includes(roster, nid_y));
+  BOOST_CHECK(mask.includes(roster, nid_yf));
+  BOOST_CHECK(mask.includes(roster, nid_yg));
+  BOOST_CHECK(mask.includes(roster, nid_yx));
+  BOOST_CHECK(mask.includes(roster, nid_yxf));
+  BOOST_CHECK(mask.includes(roster, nid_yxg));
+  BOOST_CHECK(mask.includes(roster, nid_yy));
+  BOOST_CHECK(mask.includes(roster, nid_yyf));
+  BOOST_CHECK(mask.includes(roster, nid_yyg));
+
+  // check restricted paths
+  BOOST_CHECK(mask.includes(sp_root));
+  BOOST_CHECK(mask.includes(sp_f));
+  BOOST_CHECK(mask.includes(sp_g));
+
+  BOOST_CHECK(mask.includes(sp_x));
+  BOOST_CHECK(mask.includes(sp_xf));
+  BOOST_CHECK(mask.includes(sp_xg));
+  BOOST_CHECK(mask.includes(sp_xx));
+  BOOST_CHECK(mask.includes(sp_xxf));
+  BOOST_CHECK(mask.includes(sp_xxg));
+  BOOST_CHECK(mask.includes(sp_xy));
+  BOOST_CHECK(mask.includes(sp_xyf));
+  BOOST_CHECK(mask.includes(sp_xyg));
+
+  BOOST_CHECK(mask.includes(sp_y));
+  BOOST_CHECK(mask.includes(sp_yf));
+  BOOST_CHECK(mask.includes(sp_yg));
+  BOOST_CHECK(mask.includes(sp_yx));
+  BOOST_CHECK(mask.includes(sp_yxf));
+  BOOST_CHECK(mask.includes(sp_yxg));
+  BOOST_CHECK(mask.includes(sp_yy));
+  BOOST_CHECK(mask.includes(sp_yyf));
+  BOOST_CHECK(mask.includes(sp_yyg));
+}
+
+static void 
+test_simple_include()
+{
+  roster_t roster;
+  setup(roster);
+
+  vector<utf8> includes, excludes;
+  includes.push_back(utf8(string("x/x")));
+  includes.push_back(utf8(string("y/y")));
+
+  app_state app;
+  restriction mask(includes, excludes, roster, app);
+
+  BOOST_CHECK(!mask.empty());
+
+  // check restricted nodes
+  BOOST_CHECK(!mask.includes(roster, nid_root));
+  BOOST_CHECK(!mask.includes(roster, nid_f));
+  BOOST_CHECK(!mask.includes(roster, nid_g));
+
+  BOOST_CHECK(!mask.includes(roster, nid_x));
+  BOOST_CHECK(!mask.includes(roster, nid_xf));
+  BOOST_CHECK(!mask.includes(roster, nid_xg));
+  BOOST_CHECK( mask.includes(roster, nid_xx));
+  BOOST_CHECK( mask.includes(roster, nid_xxf));
+  BOOST_CHECK( mask.includes(roster, nid_xxg));
+  BOOST_CHECK(!mask.includes(roster, nid_xy));
+  BOOST_CHECK(!mask.includes(roster, nid_xyf));
+  BOOST_CHECK(!mask.includes(roster, nid_xyg));
+
+  BOOST_CHECK(!mask.includes(roster, nid_y));
+  BOOST_CHECK(!mask.includes(roster, nid_yf));
+  BOOST_CHECK(!mask.includes(roster, nid_yg));
+  BOOST_CHECK(!mask.includes(roster, nid_yx));
+  BOOST_CHECK(!mask.includes(roster, nid_yxf));
+  BOOST_CHECK(!mask.includes(roster, nid_yxg));
+  BOOST_CHECK( mask.includes(roster, nid_yy));
+  BOOST_CHECK( mask.includes(roster, nid_yyf));
+  BOOST_CHECK( mask.includes(roster, nid_yyg));
+
+  // check restricted paths
+  BOOST_CHECK(!mask.includes(sp_root));
+  BOOST_CHECK(!mask.includes(sp_f));
+  BOOST_CHECK(!mask.includes(sp_g));
+
+  BOOST_CHECK(!mask.includes(sp_x));
+  BOOST_CHECK(!mask.includes(sp_xf));
+  BOOST_CHECK(!mask.includes(sp_xg));
+  BOOST_CHECK( mask.includes(sp_xx));
+  BOOST_CHECK( mask.includes(sp_xxf));
+  BOOST_CHECK( mask.includes(sp_xxg));
+  BOOST_CHECK(!mask.includes(sp_xy));
+  BOOST_CHECK(!mask.includes(sp_xyf));
+  BOOST_CHECK(!mask.includes(sp_xyg));
+
+  BOOST_CHECK(!mask.includes(sp_y));
+  BOOST_CHECK(!mask.includes(sp_yf));
+  BOOST_CHECK(!mask.includes(sp_yg));
+  BOOST_CHECK(!mask.includes(sp_yx));
+  BOOST_CHECK(!mask.includes(sp_yxf));
+  BOOST_CHECK(!mask.includes(sp_yxg));
+  BOOST_CHECK( mask.includes(sp_yy));
+  BOOST_CHECK( mask.includes(sp_yyf));
+  BOOST_CHECK( mask.includes(sp_yyg));
+}
+
+static void 
+test_simple_exclude()
+{
+  roster_t roster;
+  setup(roster);
+
+  vector<utf8> includes, excludes;
+  excludes.push_back(utf8(string("x/x")));
+  excludes.push_back(utf8(string("y/y")));
+
+  app_state app;
+  restriction mask(includes, excludes, roster, app);
+
+  BOOST_CHECK(!mask.empty());
+
+  // check restricted nodes
+  BOOST_CHECK( mask.includes(roster, nid_root));
+  BOOST_CHECK( mask.includes(roster, nid_f));
+  BOOST_CHECK( mask.includes(roster, nid_g));
+
+  BOOST_CHECK( mask.includes(roster, nid_x));
+  BOOST_CHECK( mask.includes(roster, nid_xf));
+  BOOST_CHECK( mask.includes(roster, nid_xg));
+  BOOST_CHECK(!mask.includes(roster, nid_xx));
+  BOOST_CHECK(!mask.includes(roster, nid_xxf));
+  BOOST_CHECK(!mask.includes(roster, nid_xxg));
+  BOOST_CHECK( mask.includes(roster, nid_xy));
+  BOOST_CHECK( mask.includes(roster, nid_xyf));
+  BOOST_CHECK( mask.includes(roster, nid_xyg));
+
+  BOOST_CHECK( mask.includes(roster, nid_y));
+  BOOST_CHECK( mask.includes(roster, nid_yf));
+  BOOST_CHECK( mask.includes(roster, nid_yg));
+  BOOST_CHECK( mask.includes(roster, nid_yx));
+  BOOST_CHECK( mask.includes(roster, nid_yxf));
+  BOOST_CHECK( mask.includes(roster, nid_yxg));
+  BOOST_CHECK(!mask.includes(roster, nid_yy));
+  BOOST_CHECK(!mask.includes(roster, nid_yyf));
+  BOOST_CHECK(!mask.includes(roster, nid_yyg));
+
+  // check restricted paths
+  BOOST_CHECK( mask.includes(sp_root));
+  BOOST_CHECK( mask.includes(sp_f));
+  BOOST_CHECK( mask.includes(sp_g));
+
+  BOOST_CHECK( mask.includes(sp_x));
+  BOOST_CHECK( mask.includes(sp_xf));
+  BOOST_CHECK( mask.includes(sp_xg));
+  BOOST_CHECK(!mask.includes(sp_xx));
+  BOOST_CHECK(!mask.includes(sp_xxf));
+  BOOST_CHECK(!mask.includes(sp_xxg));
+  BOOST_CHECK( mask.includes(sp_xy));
+  BOOST_CHECK( mask.includes(sp_xyf));
+  BOOST_CHECK( mask.includes(sp_xyg));
+
+  BOOST_CHECK( mask.includes(sp_y));
+  BOOST_CHECK( mask.includes(sp_yf));
+  BOOST_CHECK( mask.includes(sp_yg));
+  BOOST_CHECK( mask.includes(sp_yx));
+  BOOST_CHECK( mask.includes(sp_yxf));
+  BOOST_CHECK( mask.includes(sp_yxg));
+  BOOST_CHECK(!mask.includes(sp_yy));
+  BOOST_CHECK(!mask.includes(sp_yyf));
+  BOOST_CHECK(!mask.includes(sp_yyg));
+}
+
+static void 
+test_include_exclude()
+{
+  roster_t roster;
+  setup(roster);
+
+  vector<utf8> includes, excludes;
+  includes.push_back(utf8(string("x")));
+  includes.push_back(utf8(string("y")));
+  excludes.push_back(utf8(string("x/x")));
+  excludes.push_back(utf8(string("y/y")));
+
+  app_state app;
+  restriction mask(includes, excludes, roster, app);
+
+  BOOST_CHECK(!mask.empty());
+
+  // check restricted nodes
+  BOOST_CHECK(!mask.includes(roster, nid_root));
+  BOOST_CHECK(!mask.includes(roster, nid_f));
+  BOOST_CHECK(!mask.includes(roster, nid_g));
+
+  BOOST_CHECK( mask.includes(roster, nid_x));
+  BOOST_CHECK( mask.includes(roster, nid_xf));
+  BOOST_CHECK( mask.includes(roster, nid_xg));
+  BOOST_CHECK(!mask.includes(roster, nid_xx));
+  BOOST_CHECK(!mask.includes(roster, nid_xxf));
+  BOOST_CHECK(!mask.includes(roster, nid_xxg));
+  BOOST_CHECK( mask.includes(roster, nid_xy));
+  BOOST_CHECK( mask.includes(roster, nid_xyf));
+  BOOST_CHECK( mask.includes(roster, nid_xyg));
+
+  BOOST_CHECK( mask.includes(roster, nid_y));
+  BOOST_CHECK( mask.includes(roster, nid_yf));
+  BOOST_CHECK( mask.includes(roster, nid_yg));
+  BOOST_CHECK( mask.includes(roster, nid_yx));
+  BOOST_CHECK( mask.includes(roster, nid_yxf));
+  BOOST_CHECK( mask.includes(roster, nid_yxg));
+  BOOST_CHECK(!mask.includes(roster, nid_yy));
+  BOOST_CHECK(!mask.includes(roster, nid_yyf));
+  BOOST_CHECK(!mask.includes(roster, nid_yyg));
+
+  // check restricted paths
+  BOOST_CHECK(!mask.includes(sp_root));
+  BOOST_CHECK(!mask.includes(sp_f));
+  BOOST_CHECK(!mask.includes(sp_g));
+
+  BOOST_CHECK( mask.includes(sp_x));
+  BOOST_CHECK( mask.includes(sp_xf));
+  BOOST_CHECK( mask.includes(sp_xg));
+  BOOST_CHECK(!mask.includes(sp_xx));
+  BOOST_CHECK(!mask.includes(sp_xxf));
+  BOOST_CHECK(!mask.includes(sp_xxg));
+  BOOST_CHECK( mask.includes(sp_xy));
+  BOOST_CHECK( mask.includes(sp_xyf));
+  BOOST_CHECK( mask.includes(sp_xyg));
+
+  BOOST_CHECK( mask.includes(sp_y));
+  BOOST_CHECK( mask.includes(sp_yf));
+  BOOST_CHECK( mask.includes(sp_yg));
+  BOOST_CHECK( mask.includes(sp_yx));
+  BOOST_CHECK( mask.includes(sp_yxf));
+  BOOST_CHECK( mask.includes(sp_yxg));
+  BOOST_CHECK(!mask.includes(sp_yy));
+  BOOST_CHECK(!mask.includes(sp_yyf));
+  BOOST_CHECK(!mask.includes(sp_yyg));
+}
+
+static void 
+test_exclude_include()
+{
+  roster_t roster;
+  setup(roster);
+
+  vector<utf8> includes, excludes;
+  // note that excludes higher up the tree than the top
+  // include are rather pointless -- nothing above the
+  // top include is included anyway
+  excludes.push_back(utf8(string("x")));
+  excludes.push_back(utf8(string("y")));
+  includes.push_back(utf8(string("x/x")));
+  includes.push_back(utf8(string("y/y")));
+
+  app_state app;
+  restriction mask(includes, excludes, roster, app);
+
+  BOOST_CHECK(!mask.empty());
+
+  // check restricted nodes
+  BOOST_CHECK(!mask.includes(roster, nid_root));
+  BOOST_CHECK(!mask.includes(roster, nid_f));
+  BOOST_CHECK(!mask.includes(roster, nid_g));
+
+  BOOST_CHECK(!mask.includes(roster, nid_x));
+  BOOST_CHECK(!mask.includes(roster, nid_xf));
+  BOOST_CHECK(!mask.includes(roster, nid_xg));
+  BOOST_CHECK( mask.includes(roster, nid_xx));
+  BOOST_CHECK( mask.includes(roster, nid_xxf));
+  BOOST_CHECK( mask.includes(roster, nid_xxg));
+  BOOST_CHECK(!mask.includes(roster, nid_xy));
+  BOOST_CHECK(!mask.includes(roster, nid_xyf));
+  BOOST_CHECK(!mask.includes(roster, nid_xyg));
+
+  BOOST_CHECK(!mask.includes(roster, nid_y));
+  BOOST_CHECK(!mask.includes(roster, nid_yf));
+  BOOST_CHECK(!mask.includes(roster, nid_yg));
+  BOOST_CHECK(!mask.includes(roster, nid_yx));
+  BOOST_CHECK(!mask.includes(roster, nid_yxf));
+  BOOST_CHECK(!mask.includes(roster, nid_yxg));
+  BOOST_CHECK( mask.includes(roster, nid_yy));
+  BOOST_CHECK( mask.includes(roster, nid_yyf));
+  BOOST_CHECK( mask.includes(roster, nid_yyg));
+
+  // check restricted paths
+  BOOST_CHECK(!mask.includes(sp_root));
+  BOOST_CHECK(!mask.includes(sp_f));
+  BOOST_CHECK(!mask.includes(sp_g));
+
+  BOOST_CHECK(!mask.includes(sp_x));
+  BOOST_CHECK(!mask.includes(sp_xf));
+  BOOST_CHECK(!mask.includes(sp_xg));
+  BOOST_CHECK( mask.includes(sp_xx));
+  BOOST_CHECK( mask.includes(sp_xxf));
+  BOOST_CHECK( mask.includes(sp_xxg));
+  BOOST_CHECK(!mask.includes(sp_xy));
+  BOOST_CHECK(!mask.includes(sp_xyf));
+  BOOST_CHECK(!mask.includes(sp_xyg));
+
+  BOOST_CHECK(!mask.includes(sp_y));
+  BOOST_CHECK(!mask.includes(sp_yf));
+  BOOST_CHECK(!mask.includes(sp_yg));
+  BOOST_CHECK(!mask.includes(sp_yx));
+  BOOST_CHECK(!mask.includes(sp_yxf));
+  BOOST_CHECK(!mask.includes(sp_yxg));
+  BOOST_CHECK( mask.includes(sp_yy));
+  BOOST_CHECK( mask.includes(sp_yyf));
+  BOOST_CHECK( mask.includes(sp_yyg));
+}
+
+static void 
+test_invalid_paths()
+{
+  roster_t roster;
+  setup(roster);
+
+  vector<utf8> includes, excludes;
+  includes.push_back(utf8(string("foo")));
+  excludes.push_back(utf8(string("bar")));
+
+  app_state app;
+  BOOST_CHECK_THROW(restriction(includes, excludes, roster, app), informative_failure);
+}
+
+static void
+test_include_depth_0()
+{
+  roster_t roster;
+  setup(roster);
+
+  vector<utf8> includes, excludes;
+  includes.push_back(utf8(string("x")));
+  includes.push_back(utf8(string("y")));
+
+  app_state app;
+  // FIXME: depth == 0 currently means directory + immediate children
+  // this should be changed to mean just the named directory but for 
+  // compatibility with old restrictions this behaviour has been preserved
+  app.set_depth(0);
+  restriction mask(includes, excludes, roster, app);
+
+  BOOST_CHECK(!mask.empty());
+
+  // check restricted nodes
+  BOOST_CHECK(!mask.includes(roster, nid_root));
+  BOOST_CHECK(!mask.includes(roster, nid_f));
+  BOOST_CHECK(!mask.includes(roster, nid_g));
+
+  BOOST_CHECK( mask.includes(roster, nid_x));
+  BOOST_CHECK( mask.includes(roster, nid_xf));
+  BOOST_CHECK( mask.includes(roster, nid_xg));
+  BOOST_CHECK( mask.includes(roster, nid_xx));
+  BOOST_CHECK(!mask.includes(roster, nid_xxf));
+  BOOST_CHECK(!mask.includes(roster, nid_xxg));
+  BOOST_CHECK( mask.includes(roster, nid_xy));
+  BOOST_CHECK(!mask.includes(roster, nid_xyf));
+  BOOST_CHECK(!mask.includes(roster, nid_xyg));
+
+  BOOST_CHECK( mask.includes(roster, nid_y));
+  BOOST_CHECK( mask.includes(roster, nid_yf));
+  BOOST_CHECK( mask.includes(roster, nid_yg));
+  BOOST_CHECK( mask.includes(roster, nid_yx));
+  BOOST_CHECK(!mask.includes(roster, nid_yxf));
+  BOOST_CHECK(!mask.includes(roster, nid_yxg));
+  BOOST_CHECK( mask.includes(roster, nid_yy));
+  BOOST_CHECK(!mask.includes(roster, nid_yyf));
+  BOOST_CHECK(!mask.includes(roster, nid_yyg));
+
+  // check restricted paths
+  BOOST_CHECK(!mask.includes(sp_root));
+  BOOST_CHECK(!mask.includes(sp_f));
+  BOOST_CHECK(!mask.includes(sp_g));
+
+  BOOST_CHECK( mask.includes(sp_x));
+  BOOST_CHECK( mask.includes(sp_xf));
+  BOOST_CHECK( mask.includes(sp_xg));
+  BOOST_CHECK( mask.includes(sp_xx));
+  BOOST_CHECK(!mask.includes(sp_xxf));
+  BOOST_CHECK(!mask.includes(sp_xxg));
+  BOOST_CHECK( mask.includes(sp_xy));
+  BOOST_CHECK(!mask.includes(sp_xyf));
+  BOOST_CHECK(!mask.includes(sp_xyg));
+
+  BOOST_CHECK( mask.includes(sp_y));
+  BOOST_CHECK( mask.includes(sp_yf));
+  BOOST_CHECK( mask.includes(sp_yg));
+  BOOST_CHECK( mask.includes(sp_yx));
+  BOOST_CHECK(!mask.includes(sp_yxf));
+  BOOST_CHECK(!mask.includes(sp_yxg));
+  BOOST_CHECK( mask.includes(sp_yy));
+  BOOST_CHECK(!mask.includes(sp_yyf));
+  BOOST_CHECK(!mask.includes(sp_yyg));
+}
+
+static void
+test_include_depth_1()
+{
+  roster_t roster;
+  setup(roster);
+
+  vector<utf8> includes, excludes;
+  includes.push_back(utf8(string("x")));
+  includes.push_back(utf8(string("y")));
+
+  app_state app;
+  // FIXME: depth == 1 currently means directory + children + grand children
+  // this should be changed to mean directory + immediate children but for 
+  // compatibility with old restrictions this behaviour has been preserved
+  app.set_depth(1);
+  restriction mask(includes, excludes, roster, app);
+
+  BOOST_CHECK(!mask.empty());
+
+  // check restricted nodes
+  BOOST_CHECK(!mask.includes(roster, nid_root));
+  BOOST_CHECK(!mask.includes(roster, nid_f));
+  BOOST_CHECK(!mask.includes(roster, nid_g));
+
+  BOOST_CHECK( mask.includes(roster, nid_x));
+  BOOST_CHECK( mask.includes(roster, nid_xf));
+  BOOST_CHECK( mask.includes(roster, nid_xg));
+  BOOST_CHECK( mask.includes(roster, nid_xx));
+  BOOST_CHECK( mask.includes(roster, nid_xxf));
+  BOOST_CHECK( mask.includes(roster, nid_xxg));
+  BOOST_CHECK( mask.includes(roster, nid_xy));
+  BOOST_CHECK( mask.includes(roster, nid_xyf));
+  BOOST_CHECK( mask.includes(roster, nid_xyg));
+
+  BOOST_CHECK( mask.includes(roster, nid_y));
+  BOOST_CHECK( mask.includes(roster, nid_yf));
+  BOOST_CHECK( mask.includes(roster, nid_yg));
+  BOOST_CHECK( mask.includes(roster, nid_yx));
+  BOOST_CHECK( mask.includes(roster, nid_yxf));
+  BOOST_CHECK( mask.includes(roster, nid_yxg));
+  BOOST_CHECK( mask.includes(roster, nid_yy));
+  BOOST_CHECK( mask.includes(roster, nid_yyf));
+  BOOST_CHECK( mask.includes(roster, nid_yyg));
+
+  // check restricted paths
+  BOOST_CHECK(!mask.includes(sp_root));
+  BOOST_CHECK(!mask.includes(sp_f));
+  BOOST_CHECK(!mask.includes(sp_g));
+
+  BOOST_CHECK( mask.includes(sp_x));
+  BOOST_CHECK( mask.includes(sp_xf));
+  BOOST_CHECK( mask.includes(sp_xg));
+  BOOST_CHECK( mask.includes(sp_xx));
+  BOOST_CHECK( mask.includes(sp_xxf));
+  BOOST_CHECK( mask.includes(sp_xxg));
+  BOOST_CHECK( mask.includes(sp_xy));
+  BOOST_CHECK( mask.includes(sp_xyf));
+  BOOST_CHECK( mask.includes(sp_xyg));
+
+  BOOST_CHECK( mask.includes(sp_y));
+  BOOST_CHECK( mask.includes(sp_yf));
+  BOOST_CHECK( mask.includes(sp_yg));
+  BOOST_CHECK( mask.includes(sp_yx));
+  BOOST_CHECK( mask.includes(sp_yxf));
+  BOOST_CHECK( mask.includes(sp_yxg));
+  BOOST_CHECK( mask.includes(sp_yy));
+  BOOST_CHECK( mask.includes(sp_yyf));
+  BOOST_CHECK( mask.includes(sp_yyg));
+}
+
+void
+add_restrictions_tests(test_suite * suite)
+{
+  I(suite);
+  suite->add(BOOST_TEST_CASE(&test_empty_restriction));
+  suite->add(BOOST_TEST_CASE(&test_simple_include));
+  suite->add(BOOST_TEST_CASE(&test_simple_exclude));
+  suite->add(BOOST_TEST_CASE(&test_include_exclude));
+  suite->add(BOOST_TEST_CASE(&test_exclude_include));
+  suite->add(BOOST_TEST_CASE(&test_invalid_paths));
+  suite->add(BOOST_TEST_CASE(&test_include_depth_0));
+  suite->add(BOOST_TEST_CASE(&test_include_depth_1));
+
+}
+#endif // BUILD_UNIT_TESTS
