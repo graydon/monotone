@@ -1,5 +1,10 @@
 2006-04-24  Derek Scherger  <derek@echologic.com>
 
+	* contrib/monotone.el (monotone-commit-complete): call line
+	removal function by it's actual name
+
+2006-04-24  Derek Scherger  <derek@echologic.com>
+
 	* cmd_diff_log.cc (log): remove --recursive option from log;
 	directories are always recursive as with other restricted commands
 	* tests/t_log_dir.at: account for recursive directories
