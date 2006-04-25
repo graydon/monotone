@@ -16,6 +16,7 @@ Copyright 2003, 2004 Graydon Hoare
 Copyright 2004, 2005 Nathaniel Smith
 Copyright 2005 Derek Scherger
 Copyright 2005 Daniel Carosone
+Copyright 2006 Jeronimo Pellegrini
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
