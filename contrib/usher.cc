@@ -22,6 +22,7 @@
 // -p   a file (deleted on program exit) to record the pid of the usher in
 // <server-file>   a file that looks like
 //   userpass username password
+//   logdir directory
 //
 //   server monotone
 //   host localhost
@@ -35,6 +36,7 @@
 //
 // or in general, one block of one or more lines of
 //   userpass <username> <password>
+//   logdir <directory>
 // followed by any number of blocks of a
 //   server <name>
 // line followed by one or more
@@ -125,6 +127,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <string.h>
 #include <signal.h>
@@ -163,6 +167,7 @@ using std::make_pair;
 int listenport = 4691;
 string listenaddr = "0.0.0.0";
 string monotone = "mtn";
+string logdir = ".";
 
 // keep local servers around for this many seconds after the last
 // client disconnects from them (only accurate to ~10 seconds)
@@ -490,11 +495,17 @@ sock make_outgoing(int port, string const & address)
   return s;
 }
 
-int fork_server(vector<string> const & args)
+int fork_server(const string & name, vector<string> const & args)
 {
+  string logfile = logdir + "/" + name + ".log";
   int err[2];
-  if (pipe(err) < 0)
+  if ((err[1]=open(logfile.c_str(),O_CREAT|O_APPEND,0644)) < 0)
     return false;
+  if ((err[0]=open(logfile.c_str(),O_RDONLY)) < 0)
+    {
+      close(err[1]);
+      return false;
+    }
   int pid = fork();
   if (pid == -1) {
     close(err[0]);
@@ -507,7 +518,11 @@ int fork_server(vector<string> const & args)
     close(1);
     close(2);
     sock::close_all_socks();
-    if (dup2(err[1], 2) < 0) {
+    if (dup2(err[1], 1) < 0) {
+      exit(1);
+    }
+    close(err[1]);
+    if (dup2(1, 2) < 0) {
       exit(1);
     }
 
@@ -547,7 +562,8 @@ int fork_server(vector<string> const & args)
             line = true;
         got += r;
       }
-    } while(r > 0 && !line && got < 256);
+    } while(r >= 0 && !line && got < 256);
+    close(err[0]);
     head[got] = 0;
     if (string(head).find("beginning service") != string::npos)
       return pid;
@@ -699,18 +715,25 @@ struct server
     for (vector<string>::const_iterator i = h.begin(); i != h.end(); ++i) {
       c = servers_by_host.find(*i);
       if (c != servers_by_host.end()) {
+        cerr << "Removing duplicate for hostname " << *i << " in:" << std::endl
+             << "  ";
         list<map<string, shared_ptr<server> >::iterator>::iterator j;
+        bool first = true;
         for (j = c->second->by_host.begin(); j != c->second->by_host.end();)
           {
             list<map<string, shared_ptr<server> >::iterator>::iterator j_saved
               = j;
             ++j;
+            cerr << (first ? "" : ", ") << (*j_saved)->second->by_name->first;
+            first = false;
             if ((*j_saved)->first == *i)
               {
                 servers_by_host.erase(*j_saved);
                 c->second->by_host.erase(j_saved);
               }
           }
+        cerr << std::endl
+             << "  ... because it appeared in " << by_name->first << std::endl;
       }
       c = servers_by_host.insert(make_pair(*i, me)).first;
       by_host.push_back(c);
@@ -727,12 +750,25 @@ struct server
     for (vector<string>::const_iterator i = p.begin(); i != p.end(); ++i) {
       c = servers_by_pattern.find(*i);
       if (c != servers_by_pattern.end()) {
+        cerr << "Removing duplicate for pattern " << *i << " in: " << std::endl
+             << "  ";
         list<map<string, shared_ptr<server> >::iterator>::iterator j;
+        bool first = true;
         for (j = c->second->by_pat.begin(); j != c->second->by_pat.end(); ++j)
-          if ((*j)->first == *i) {
-            servers_by_pattern.erase(*j);
-            c->second->by_pat.erase(j);
+          {
+            list<map<string, shared_ptr<server> >::iterator>::iterator j_saved
+              = j;
+            ++j;
+            cerr << (first ? "" : ", ") << (*j_saved)->second->by_name->first;
+            first = false;
+            if ((*j_saved)->first == *i)
+              {
+                servers_by_pattern.erase(*j_saved);
+                c->second->by_pat.erase(j_saved);
+              }
           }
+        cerr << std::endl
+             << "  ... because it appeared in " << by_name->first << std::endl;
       }
       c = servers_by_pattern.insert(make_pair(*i, me)).first;
       by_pat.push_back(c);
@@ -754,6 +790,7 @@ struct server
         vector<string> args;
         args.push_back(monotone);
         args.push_back("serve");
+        args.push_back("--ticker=dot");
         args.push_back("--bind=" + addr + ":" + lexical_cast<string>(port));
         unsigned int n = 0, m = 0;
         n = arguments.find_first_not_of(" \t");
@@ -762,7 +799,7 @@ struct server
           args.push_back(arguments.substr(n, m-n));
           n = arguments.find_first_not_of(" ", m);
         }
-        pid = fork_server(args);
+        pid = fork_server(by_name->first,args);
       }
     }
     sock s = make_outgoing(port, addr);
@@ -870,6 +907,10 @@ string read_server_record(std::istream & in)
       hosts.push_back(arg);
     else if (cmd == "pattern")
       patterns.push_back(arg);
+    else
+      cerr << "Unrecognised directive " << cmd << ", skipping line..."
+           << std::endl;
+
     line = getline(in);
   }
   if (name.empty())
@@ -1156,9 +1197,20 @@ void reload_conffile(string const & file)
   while (!line.empty()) {
     std::istringstream iss(line);
     string a, b, c;
-    iss>>a>>b>>c;
+    iss>>a;
     if (a == "userpass")
-      admins.insert(make_pair(b, c));
+      {
+        iss>>b>>c;
+        admins.insert(make_pair(b, c));
+      }
+    else if (a == "logdir")
+      {
+        iss>>b;
+        logdir = b;
+      }
+    else
+      cerr << "Unrecognised directive " << a << ", skipping line..."
+           << std::endl;
     line = getline(cf);
   }
 

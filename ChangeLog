@@ -1,3 +1,61 @@
+2006-04-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (attr): Use get_base_and_current_roster_shape
+	instead of doing a pointless workspace scan.
+
+2006-04-23  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Clear a fuzzy.
+
+2006-04-23  Richard Levitte  <richard@levitte.org> &  Alex Queiroz <alex@ventonegro.org>
+
+	* lua.cc (monotone_includedir_for_lua): Tweak a spelling mistake.
+	Notified by Jeronimo Pellegrini <pellegrini@mpcnet.com.br>.
+
+2006-04-23 Alex Queiroz <alex@ventonegro.org>
+
+	* pt_BR.po: Fixed some fuzzy translations.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (fork_server): Make sure to append to already
+	existing log file.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (fork_server): Redirect the logs of the sub-
+	servers to log files instead of a pipe, and have the main
+	process read that file instead of the pipe.
+	(read_server_record): Complain about unrecognised commands, and
+	continue processing.
+	(reload_conffile): Parse the logdir command.  Complain about
+	unrecognised commands, and continue processing.
+
+2006-04-21 Alex Queiroz <alex@ventonegro.org>
+
+	* Make clear in the "automate get_revision" documentation that
+	path stanzas are grouped under the corresponding "old_revision" one.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (server::set_hosts, server::set_patterns):
+	Explain a little more what is removed from what.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (server::set_hosts, server::set_patterns):
+	Write a warning saying that existing entries with the same host
+	or pattern are stripped of said host or pattern.
+	(server::set_patterns): Erasing the list node that we're iterating
+	on, then trying to go to the next node doesn't work.  Save the
+	iterator, then increment it before erasing the node using the
+	saved value.  No more segfaults.  This is the same fix as was done
+	for server::set_hosts February 21st.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy updated
+
 2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
 
 	* commands.{cc,hh} cmd.hh cmd_*.cc Makefile.am: Split commands.cc into
@@ -174,7 +232,7 @@
 
 2006-04-12 Thomas Keller <me@thomaskeller.biz>
 	* po/README: Added small HOWTO for new translations
-
+	
 2006-04-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* merkle_tree.hh: make merkle_table be a hash_map instead of a map.
