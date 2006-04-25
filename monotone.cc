@@ -8,7 +8,9 @@
 
 #include "popt/popt.h"
 #include <cstdio>
+#ifndef _MSC_VER
 #include <strings.h>
+#endif
 #include <iterator>
 #include <iostream>
 #include <fstream>

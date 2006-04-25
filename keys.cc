@@ -34,11 +34,10 @@ using namespace std;
 
 using boost::shared_ptr;
 using boost::shared_dynamic_cast;
-using Botan::byte;
 
 static void 
-do_arc4(SecureVector<byte> & sym_key,
-        SecureVector<byte> & payload)
+do_arc4(SecureVector<Botan::byte> & sym_key,
+        SecureVector<Botan::byte> & payload)
 {
   L(FL("running arc4 process on %d bytes of data\n") % payload.size());
   Pipe enc(get_cipher("ARC4", sym_key, ENCRYPTION));
@@ -149,7 +148,7 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
 {
   
   string phrase;
-  SecureVector<byte> pubkey, privkey;
+  SecureVector<Botan::byte> pubkey, privkey;
   rsa_pub_key raw_pub_key;
   rsa_priv_key raw_priv_key;
   
@@ -236,7 +235,7 @@ migrate_private_key(app_state & app,
                     keypair & new_kp)
 {
   arc4<rsa_priv_key> decoded_key;
-  SecureVector<byte> decrypted_key;
+  SecureVector<Botan::byte> decrypted_key;
   string phrase;
 
   bool force = false;
@@ -247,11 +246,11 @@ migrate_private_key(app_state & app,
   decode_base64(old_priv, decoded_key);
   for (int i = 0; i < 3; ++i)
     {
-      decrypted_key.set(reinterpret_cast<byte const *>(decoded_key().data()), 
+      decrypted_key.set(reinterpret_cast<Botan::byte const *>(decoded_key().data()), 
                            decoded_key().size());
       get_passphrase(app.lua, id, phrase, false, force);
-      SecureVector<byte> sym_key;
-      sym_key.set(reinterpret_cast<byte const *>(phrase.data()), phrase.size());
+      SecureVector<Botan::byte> sym_key;
+      sym_key.set(reinterpret_cast<Botan::byte const *>(phrase.data()), phrase.size());
       do_arc4(sym_key, decrypted_key);
 
       L(FL("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
@@ -322,7 +321,7 @@ make_signature(app_state & app,           // to hook for phrase
                string const & tosign,
                base64<rsa_sha1_signature> & signature)
 {
-  SecureVector<byte> sig;
+  SecureVector<Botan::byte> sig;
   string sig_string;
 
   // we permit the user to relax security here, by caching a decrypted key
@@ -350,7 +349,7 @@ make_signature(app_state & app,           // to hook for phrase
         app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
     }
 
-  sig = signer->sign_message(reinterpret_cast<byte const *>(tosign.data()), tosign.size());
+  sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
   sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
   
   L(FL("produced %d-byte signature\n") % sig_string.size());
@@ -378,8 +377,8 @@ check_signature(app_state &app,
     {
       rsa_pub_key pub;
       decode_base64(pub_encoded, pub);
-      SecureVector<byte> pub_block;
-      pub_block.set(reinterpret_cast<byte const *>(pub().data()), pub().size());
+      SecureVector<Botan::byte> pub_block;
+      pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()), pub().size());
 
       L(FL("building verifier for %d-byte pub key\n") % pub_block.size());
       shared_ptr<X509_PublicKey> x509_key =
@@ -407,8 +406,8 @@ check_signature(app_state &app,
     signature().size() % sig_decoded().size());
 
   bool valid_sig = verifier->verify_message(
-          reinterpret_cast<byte const*>(alleged_text.data()), alleged_text.size(),
-          reinterpret_cast<byte const*>(sig_decoded().data()), sig_decoded().size());
+          reinterpret_cast<Botan::byte const*>(alleged_text.data()), alleged_text.size(),
+          reinterpret_cast<Botan::byte const*>(sig_decoded().data()), sig_decoded().size());
 
   return valid_sig;
 }
@@ -421,8 +420,8 @@ void encrypt_rsa(lua_hooks & lua,
 {
   rsa_pub_key pub;
   decode_base64(pub_encoded, pub);
-  SecureVector<byte> pub_block;
-  pub_block.set(reinterpret_cast<byte const *>(pub().data()), pub().size());
+  SecureVector<Botan::byte> pub_block;
+  pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()), pub().size());
 
   shared_ptr<X509_PublicKey> x509_key = shared_ptr<X509_PublicKey>(X509::load_key(pub_block));
   shared_ptr<RSA_PublicKey> pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
@@ -432,9 +431,9 @@ void encrypt_rsa(lua_hooks & lua,
   shared_ptr<PK_Encryptor> encryptor;
   encryptor = shared_ptr<PK_Encryptor>(get_pk_encryptor(*pub_key, "EME1(SHA-1)"));
 
-  SecureVector<byte> ct;
+  SecureVector<Botan::byte> ct;
   ct = encryptor->encrypt(
-          reinterpret_cast<byte const *>(plaintext.data()), plaintext.size());
+          reinterpret_cast<Botan::byte const *>(plaintext.data()), plaintext.size());
   ciphertext = rsa_oaep_sha_data(string(reinterpret_cast<char const *>(ct.begin()), ct.size()));
 }
 
@@ -449,9 +448,9 @@ void decrypt_rsa(lua_hooks & lua,
   shared_ptr<PK_Decryptor> decryptor;
   decryptor = shared_ptr<PK_Decryptor>(get_pk_decryptor(*priv_key, "EME1(SHA-1)"));
 
-  SecureVector<byte> plain;
+  SecureVector<Botan::byte> plain;
   plain = decryptor->decrypt(
-        reinterpret_cast<byte const *>(ciphertext().data()), ciphertext().size());
+        reinterpret_cast<Botan::byte const *>(ciphertext().data()), ciphertext().size());
   plaintext = string(reinterpret_cast<char const*>(plain.begin()), plain.size());
 }
 
@@ -481,20 +480,20 @@ write_pubkey(rsa_keypair_id const & id,
 
 
 void 
-key_hash_code(rsa_keypair_id const & id,
+key_hash_code(rsa_keypair_id const & ident,
               base64<rsa_pub_key> const & pub,
               hexenc<id> & out)
 {
-  data tdat(id() + ":" + remove_ws(pub()));
+  data tdat(ident() + ":" + remove_ws(pub()));
   calculate_ident(tdat, out);  
 }
 
 void 
-key_hash_code(rsa_keypair_id const & id,
+key_hash_code(rsa_keypair_id const & ident,
               base64< rsa_priv_key > const & priv,
               hexenc<id> & out)
 {
-  data tdat(id() + ":" + remove_ws(priv()));
+  data tdat(ident() + ":" + remove_ws(priv()));
   calculate_ident(tdat, out);
 }
 
@@ -553,13 +552,13 @@ arc4_test()
   string pt("new fascist tidiness regime in place");
   string phr("still spring water");
 
-  SecureVector<byte> phrase(reinterpret_cast<byte const*>(phr.data()),
+  SecureVector<Botan::byte> phrase(reinterpret_cast<Botan::byte const*>(phr.data()),
     phr.size());
 
-  SecureVector<byte> orig(reinterpret_cast<byte const*>(pt.data()),
+  SecureVector<Botan::byte> orig(reinterpret_cast<Botan::byte const*>(pt.data()),
     pt.size());
 
-  SecureVector<byte> data(orig);
+  SecureVector<Botan::byte> data(orig);
 
   BOOST_CHECKPOINT("encrypting data");
   do_arc4(phrase, data);

@@ -2726,7 +2726,7 @@ database::put_roster(revision_id const & rev_id,
 }
 
 
-typedef hashmap::hash_multimap<string,string,hashmap::string_hash> ancestry_map;
+typedef hashmap::string_hashmultimap<std::string> ancestry_map;
 
 static void 
 transitive_closure(string const & x,

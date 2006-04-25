@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "file_io.hh"
 #include "botan/botan.h"
@@ -44,8 +45,12 @@ monotone_mkstemp(std::string &tmpl)
 
       for (i = 0; i < 6; ++i)
         tmp.append(1, letters[Botan::Global_RNG::random(Botan::Nonce) % NLETTERS]);
-      fd = open(tmp.c_str(), O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
-      if (fd >= 0)
+#ifdef _MSC_VER
+      fd = _open(tmp.c_str(), _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY, 0600);
+#else
+	  fd = open(tmp.c_str(), O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
+#endif
+	  if (fd >= 0)
       {
         tmpl = tmp;
         return fd;

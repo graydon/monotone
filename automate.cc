@@ -1343,8 +1343,7 @@ void print_some_output(int cmdnum,
   s.flush();
 }
 
-static ssize_t
-automate_stdio_read(int d, void *buf, size_t nbytes)
+static ssize_t automate_stdio_read(int d, void *buf, size_t nbytes)
 {
   ssize_t rv;
   

@@ -14,7 +14,7 @@
 // bind tcl or lua or something in here
 
 class app_state;
-struct utf8;
+class utf8;
 
 struct usage 
 {

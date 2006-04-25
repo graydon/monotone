@@ -7,7 +7,7 @@
 #include "paths.hh"
 #include "platform.hh"
 
-struct app_state;
+class app_state;
 
 struct keyreader;
 
