@@ -58,6 +58,12 @@
 
 2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
 
+	* commands.{cc,hh} cmd.hh cmd_*.cc Makefile.am: Split commands.cc into
+	lots of smaller files. Current grouping is semi-arbitrary by other
+	code called and general "what it does" concept.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
 	* tests/t_hook_helpers.at: New file: test some of the helper functions
 	for the lua hooks.
 	* testsuite.at: Add it.

@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 // this defines a global function which processes command-line-like things,
 // possibly from the command line and possibly internal scripting if we ever

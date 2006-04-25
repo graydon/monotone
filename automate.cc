@@ -1543,6 +1543,58 @@ automate_keys(std::vector<utf8> args, std::string const & help_name,
 }
 
 
+static void
+automate_common_ancestors(std::vector<utf8> args, std::string const & help_name,
+                         app_state & app, std::ostream & output)
+{
+  if (args.size() == 0)
+    throw usage(help_name);
+
+  std::set<revision_id> ancestors, common_ancestors;
+  std::vector<revision_id> frontier;
+  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    {
+      revision_id rid((*i)());
+      N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+      ancestors.clear();
+      frontier.push_back(rid);
+      while (!frontier.empty())
+        {
+          revision_id rid = frontier.back();
+          frontier.pop_back();
+          if(!null_id(rid))
+            {
+              std::set<revision_id> parents;
+              app.db.get_revision_parents(rid, parents);
+              for (std::set<revision_id>::const_iterator i = parents.begin();
+                   i != parents.end(); ++i)
+                {
+                  if (ancestors.find(*i) == ancestors.end())
+                    {
+                      frontier.push_back(*i);
+                      ancestors.insert(*i);
+                    }
+                }
+            }
+        }
+      if (common_ancestors.empty())
+        common_ancestors = ancestors;
+      else
+        {
+          std::set<revision_id> common;
+          std::set_intersection(ancestors.begin(), ancestors.end(),
+                         common_ancestors.begin(), common_ancestors.end(),
+                         std::inserter(common, common.begin()));
+          common_ancestors = common;
+        }
+    }
+
+  for (std::set<revision_id>::const_iterator i = common_ancestors.begin();
+       i != common_ancestors.end(); ++i)
+    if (!null_id(*i))
+      output << (*i).inner()() << std::endl;
+}
+
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
                  std::string const & root_cmd_name,
@@ -1597,6 +1649,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_packet_for_fdata(args, root_cmd_name, app, output);
   else if (cmd() == "packet_for_fdelta")
     automate_packet_for_fdelta(args, root_cmd_name, app, output);
+  else if (cmd() == "common_ancestors")
+    automate_common_ancestors(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }

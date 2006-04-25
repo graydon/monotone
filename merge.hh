@@ -19,6 +19,7 @@
 // merge-to-workspace "update" code in commands.cc.
 
 struct roster_merge_result;
+struct content_merge_adaptor;
 
 void
 resolve_merge_conflicts(revision_id const & left_rid,
