@@ -2566,6 +2566,7 @@ familiarize yourself with its operation.
 * Merging::                Merging with external tools, handling binary files.
 * Migrating and Dumping::  Changing the underlying storage system.
 * Importing from CVS::     Building a monotone database from a CVS repository.
+* Using packets::          Transferring data ``by hand''.
 @end menu
 
 
@@ -3365,6 +3366,188 @@ $ mtn --db=test.mtn --branch=net.example.wobbler cvs_import /usr/local/cvsroot/w
 $ mtn --db=test.mtn --branch=net.example.wobbler checkout wobber-checkout
 @end group
 @end smallexample
+
+@page
+@node    Using packets
+@section Using packets
+
+This is a tutorial on how to transfer single revisions between
+databases by dumping them from one database to a text file and then
+reading the dump in a second database.
+
+We will create two databases, A and B, then create a few revisions in
+A, and transfer part of them to B.
+
+First we initialize the databases:
+
+@smallexample
+@group
+$ mtn -d A db init
+$ mtn -d B db init
+@end group
+@end smallexample
+
+Now set up a branch in A:
+
+@smallexample
+@group
+$ mtn -d A setup -b test test
+@end group
+@end smallexample
+
+And let's put some revisions in that branch:
+
+@smallexample
+@group
+$ cd test/
+$ cat > file
+xyz
+^D
+$ mtn add file
+$ mtn ci -m "One"    @i{You may need to select a key and type a passphrase here}
+$ cat > file2
+file 2 getting in
+^D
+$ cat > file
+ERASE
+^D
+$ mtn add file2
+$ mtn ci -m "Two"
+$ cat > file
+THIRD
+^D
+$ mtn ci -m "Three"
+@end group
+@end smallexample
+
+OK, that's enough.  Let's see what we have:
+
+@smallexample
+@group
+$ cd ..
+$ mtn -d A automate select i: | mtn -d A automate toposort -@-
+a423db0ad651c74e41ab2529eca6f17513ccf714
+d14e89582ad9030e1eb62f563c8721be02ca0b65
+151f1fb125f19ebe11eb8bfe3a5798fcbea4e736
+@end group
+@end smallexample
+
+Three revisions! Let's transfer the first one to the database B. First we
+get the meta-information on that revision:
+
+@smallexample
+@group
+$ mtn -d A automate get_revision a423db0ad651c74e41ab2529eca6f17513ccf714
+format_version "1"
+
+new_manifest [b6dbdbbe0e7f41e44d9b72f9fe29b1f1a4f47f18]
+
+old_revision []
+
+add_dir ""
+
+add_file "file"
+ content [8714e0ef31edb00e33683f575274379955b3526c]
+@end group
+@end smallexample
+
+OK, one file was added in this revision. We'll transfer it. Now, @emph{ORDER MATTERS}!
+We should transfer:
+
+@enumerate
+@item The file data (fdata) and file deltas (fdeltas), if any
+@item The release data (rdata)
+@item The certs
+@end enumerate
+
+In that order. This is because certs make reference to release data, and release data
+makes reference to file data and file deltas.
+
+@smallexample
+@group
+mtn -d A automate packet_for_fdata 8714e0ef31edb00e33683f575274379955b3526c > PACKETS
+mtn -d A automate packet_for_rdata a423db0ad651c74e41ab2529eca6f17513ccf714 >> PACKETS
+mtn -d A automate packets_for_certs a423db0ad651c74e41ab2529eca6f17513ccf714 >> PACKETS
+mtn -d B read < PACKETS
+@end group
+@end smallexample
+
+This revision (a423db0ad651c74e41ab2529eca6f17513ccf714) was already sent to database
+B. You may want to check the PACKETS file to see what the packets look like.
+
+Now let's transfer one more revision:
+
+@smallexample
+@group
+mtn -d A automate get_revision d14e89582ad9030e1eb62f563c8721be02ca0b65
+format_version "1"
+
+new_manifest [48a03530005d46ed9c31c8f83ad96c4fa22b8b28]
+
+old_revision [a423db0ad651c74e41ab2529eca6f17513ccf714]
+
+add_file "file2"
+ content [d2178687226560032947c1deacb39d16a16ea5c6]
+
+patch "file"
+ from [8714e0ef31edb00e33683f575274379955b3526c]
+   to [8b52d96d4fab6c1e56d6364b0a2673f4111b228e]
+@end group
+@end smallexample
+
+From what we see, in this revision we have one new file and one patch, so we do the
+same we did before for them:
+
+@smallexample
+@group
+mtn -d A automate packet_for_fdata d2178687226560032947c1deacb39d16a16ea5c6 > PACKETS2
+mtn -d A automate packet_for_fdelta 8714e0ef31edb00e33683f575274379955b3526c 8b52d96d4fab6c1e56d6364b0a2673f4111b228e >> PACKETS2
+mtn -d A automate packet_for_rdata d14e89582ad9030e1eb62f563c8721be02ca0b65 >> PACKETS2
+mtn -d A automate packets_for_certs d14e89582ad9030e1eb62f563c8721be02ca0b65 >> PACKETS2
+mtn -d B read < PACKETS2
+@end group
+@end smallexample
+
+Fine. The two revisions should be in the second database now.
+Let's take a look at what's in each database:
+
+@smallexample
+@group
+$ mtn -d A automate select i: | mtn -d A automate toposort -@-
+a423db0ad651c74e41ab2529eca6f17513ccf714
+d14e89582ad9030e1eb62f563c8721be02ca0b65
+151f1fb125f19ebe11eb8bfe3a5798fcbea4e736
+
+$ mtn -d B automate select i: | mtn -d B automate toposort -@-
+a423db0ad651c74e41ab2529eca6f17513ccf714
+d14e89582ad9030e1eb62f563c8721be02ca0b65
+@end group
+@end smallexample
+
+Good! B has the two first revisions (as expected), and A has all three. However, a checkout
+of that branch on B will not work, because the certificate signatures cannot be verified.
+We need to transfer the signatures too (suppose the key used had the ID @code{"johndoe@@domain.com"}):
+
+@smallexample
+@group
+mtn -d A pubkey johndoe@@domain.com > KEY_PACKETS
+mtn -d B read < KEY_PACKETS
+@end group
+@end smallexample
+
+Done.
+
+@smallexample
+@group
+$ mtn -d B co -b test test-B
+$ ls test-B
+file2  _MTN  x
+more test-B/file2
+file 2 getting in
+@end group
+@end smallexample
+
+And that's it! The revisions were successfully transfered.
 
 
 @page

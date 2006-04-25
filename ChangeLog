@@ -1,5 +1,10 @@
 2006-04-25  Jeronimo Pellegrini  <pellegrini@mpcnet.com.br>
 
+	* monotone.texi (Using packets): New section, short tutorial
+	showing how packets work.  (With some small fixups by Nathaniel.)
+
+2006-04-25  Jeronimo Pellegrini  <pellegrini@mpcnet.com.br>
+
 	* monotone.texi: Replace many references to 'monotone' with
 	'mtn'.
 
