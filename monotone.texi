@@ -1666,7 +1666,7 @@ into his database:
 
 @smallexample
 @group
-$ cat ~/abe.pubkey ~/beth.pubkey | monotone --db=~/jim.mtn read
+$ cat ~/abe.pubkey ~/beth.pubkey | mtn --db=~/jim.mtn read
 mtn: read 2 packets
 @end group
 @end smallexample
@@ -2375,7 +2375,7 @@ mtn: generating key-pair 'monotone-server@@www.juicebot.co.jp'
 enter passphrase for key ID [monotone-server@@www.juicebot.co.jp] : @i{<Jim enters a new passphrase>}
 confirm passphrase for key ID [monotone-server@@www.juicebot.co.jp]: @i{<Jim confirms the passphrase>}
 mtn: storing key-pair 'monotone-server@@www.juicebot.co.jp' in /home/jim/.monotone/keys
-$ cat abe.pubkey beth.pubkey jim.pubkey | monotone --db=server.mtn read
+$ cat abe.pubkey beth.pubkey jim.pubkey | mtn --db=server.mtn read
 mtn: read 3 packets
 @end group
 @end smallexample
@@ -3684,8 +3684,8 @@ all, commands are grouped into logical categories.
 @section Tree
 
 @ftable @command
-@itemx monotone cat @var{path}
-@itemx monotone cat --revision=@var{id} @var{path}
+@itemx mtn cat @var{path}
+@itemx mtn cat --revision=@var{id} @var{path}
 
 Write the contents of a specific file @var{path} to standard output.
 
@@ -3696,10 +3696,10 @@ the command be executed from within a workspace.
 With an explicit @option{--revision} argument, the command outputs
 contents of @var{path} at that revision.
 
-@item monotone checkout --revision=@var{id} @var{directory}
-@itemx monotone co --revision=@var{id} @var{directory}
-@itemx monotone --branch=@var{branchname} checkout @var{directory}
-@itemx monotone --branch=@var{branchname} co @var{directory}
+@item mtn checkout --revision=@var{id} @var{directory}
+@itemx mtn co --revision=@var{id} @var{directory}
+@itemx mtn --branch=@var{branchname} checkout @var{directory}
+@itemx mtn --branch=@var{branchname} co @var{directory}
 
 These commands copy a revision @var{id} out of your database, writing
 the string @var{id} into the file
@@ -3742,7 +3742,7 @@ If no @var{id} is provided, as in the latter two commands, you
 @var{id} as the unique head of @var{branchname} if it exists.
 
 
-@item monotone disapprove @var{id}
+@item mtn disapprove @var{id}
 
 This command records a disapproval of the changes between @var{id}'s
 ancestor and @var{id}. It does this by committing the @i{inverse}
@@ -3759,7 +3759,7 @@ only works if @var{id} has exactly one ancestor, since it hasn't been
 worked out how to generate such a descendent in the multi-ancestor case.
 
 
-@item monotone heads --branch=@var{branchname}
+@item mtn heads --branch=@var{branchname}
 This command lists the ``heads'' of @var{branchname}. 
 
 The ``heads'' of a branch is the set of revisions which are members of
@@ -3770,8 +3770,8 @@ not be the newest revisions, in terms of time, but synchronization of
 computer clocks is not reliable, so monotone usually ignores time.
 
 
-@item monotone merge [--branch=@var{branchname}]
-@item monotone merge --lca [--branch=@var{branchname}]
+@item mtn merge [--branch=@var{branchname}]
+@item mtn merge --lca [--branch=@var{branchname}]
 This command merges the ``heads'' of @var{branchname}, if there are
 multiple heads, and commits the results to the database, marking the
 resulting merged revision as a member of @var{branchname}. The merged
@@ -3792,8 +3792,8 @@ cleanly instead, which is why it is not the default; but these cases are
 rare, and until we can find something better than 3-way merging to use,
 you may find this option more convenient than @command{explicit_merge}
 
-@item monotone propagate @var{sourcebranch} @var{destbranch}
-@item monotone propagate --lca @var{sourcebranch} @var{destbranch}
+@item mtn propagate @var{sourcebranch} @var{destbranch}
+@item mtn propagate --lca @var{sourcebranch} @var{destbranch}
 This command takes a unique head from @var{sourcebranch} and merges it
 with a unique head of @var{destbranch}, using the least common
 ancestor of the two heads for a 3-way merge. The resulting revision is
@@ -3818,8 +3818,8 @@ cleanly instead, which is why it is not the default; but these cases are
 rare, and until we can find something better than 3-way merging to use,
 you may find this option more convenient than @command{explicit_merge}
 
-@item monotone explicit_merge @var{id} @var{id} @var{destbranch}
-@itemx monotone explicit_merge @var{id} @var{id} @var{ancestor} @var{destbranch}
+@item mtn explicit_merge @var{id} @var{id} @var{destbranch}
+@itemx mtn explicit_merge @var{id} @var{id} @var{ancestor} @var{destbranch}
 This command merges exactly the two @var{id}s you give it, and places
 the result in branch @var{destbranch}.  It is useful when you need more
 control over the merging process than @code{propagate} or @code{merge}
@@ -3830,7 +3830,7 @@ another branch, again, you can use this command. If the optional
 @var{ancestor} argument is given, the merge uses that revision as the
 common ancestor instead of the default ancestor.
 
-@item monotone merge_into_dir @var{sourcebranch} @var{destbranch} @var{dir}
+@item mtn merge_into_dir @var{sourcebranch} @var{destbranch} @var{dir}
 This command takes a unique head from @var{sourcebranch} and merges it
 into a unique head of @var{destbranch}, as a directory. The resulting
 revision is committed to @var{destbranch}. If either @var{sourcebranch} or
@@ -3857,7 +3857,7 @@ intended.
 @section Workspace
 
 @ftable @command
-@item monotone setup [@var{directory}]
+@item mtn setup [@var{directory}]
 This command prepares @var{directory} as a monotone workspace,
 by creating and populating the @file{_MTN} directory with basic
 information.  This information must include at least the branch and the
@@ -3870,8 +3870,8 @@ or within an existing directory full of files, prior to using
 directory is used.
 
 
-@item monotone add @var{pathname...}
-@item monotone add --unknown
+@item mtn add @var{pathname...}
+@item mtn add --unknown
 This command places ``add'' entries for the paths specified in
 @var{pathname...} in the workspace's ``work list''. The work list
 of your workspace is located at @file{_MTN/work}, and is a list of
@@ -3889,8 +3889,8 @@ which it will then commit to the database. The new revision will have
 any added entries inserted in its manifest.
 
 
-@item monotone [--execute] drop @var{pathname...}
-@itemx monotone drop --missing
+@item mtn [--execute] drop @var{pathname...}
+@itemx mtn drop --missing
 This command places ``drop'' entries for the paths specified in
 @var{pathname...} in the workspace's ``work list''. The work list of
 your workspace is located at @file{_MTN/work}, and is a list of
@@ -3917,8 +3917,8 @@ The option @option{--execute} will make ``drop'' perform the actual
 deletion operations in the filesystem.  It will ignore files or
 directories which have already been deleted.
 
-@item monotone [--execute] rename @var{src} @var{dst}
-@itemx monotone [--execute] rename @var{src1} @var{...} @var{dst/}
+@item mtn [--execute] rename @var{src} @var{dst}
+@itemx mtn [--execute] rename @var{src1} @var{...} @var{dst/}
 This command places ``rename'' entries for the paths specified in
 @var{src} and @var{dst} in the workspace's ``work list''. The second form
 renames a number of source paths to the given destination. The work
@@ -3939,12 +3939,12 @@ The option @option{--execute} will make ``rename'' perform the actual
 rename operations in the filesystem. It will ignore missing source files
 and will not overwrite existing destination files.
 
-@item monotone commit
-@itemx monotone commit --message=@var{logmsg}
-@itemx monotone commit --message-file=@var{logfile}
-@itemx monotone commit @var{pathname...}
-@itemx monotone commit --message=@var{logmsg} @var{pathname...} 
-@itemx monotone commit --message-file=@var{logfile} @var{pathname...} 
+@item mtn commit
+@itemx mtn commit --message=@var{logmsg}
+@itemx mtn commit --message-file=@var{logfile}
+@itemx mtn commit @var{pathname...}
+@itemx mtn commit --message=@var{logmsg} @var{pathname...} 
+@itemx mtn commit --message-file=@var{logfile} @var{pathname...} 
 
 This command looks at your workspace, decides which files have
 changed, and saves the changes to your database. It does this by loading
@@ -4018,8 +4018,8 @@ typically invokes an external editor program, in which you can compose
 and/or review your log message for the change.
 @end itemize
 
-@item monotone revert @var{pathname...}
-@itemx monotone revert --missing @var{pathname...}
+@item mtn revert @var{pathname...}
+@itemx mtn revert --missing @var{pathname...}
 This command changes your workspace, so that changes you have made
 since the last checkout or update are discarded. The command is
 restricted the set of files or directories given as arguments.  To
@@ -4032,8 +4032,8 @@ files which monotone has listed in its manifest, but which have been
 deleted from the workspace.  Only missing files matching the given
 file or directory arguments are reverted.
 
-@item monotone update
-@itemx monotone update --revision=@var{revision}
+@item mtn update
+@itemx mtn update --revision=@var{revision}
 Without a @option{--revision} argument, this command incorporates
 ``recent'' changes found in your database into your workspace. It
 does this by performing 3 separate stages. If any of these stages
@@ -4072,14 +4072,14 @@ tries to select the revision to update to from this branch.  The branch
 becomes the new default branch of the workspace (even if you also
 specify an explicit @option{--revision} argument).
 
-@item monotone refresh_inodeprints
+@item mtn refresh_inodeprints
 This command puts the current workspace into @ref{Inodeprints} mode,
 if it was not already, and forces a full inodeprints cache refresh.
 After running this command, you are guaranteed that your workspace is
 in inodeprints mode, and that the inodeprints cache is accurate and up
 to date.
 
-@item monotone pivot_root [--execute] pivot_root @var{new_root} @var{put_old}
+@item mtn pivot_root [--execute] pivot_root @var{new_root} @var{put_old}
 Most users will never need this command.  It is primarily useful in
 certain tricky cases where one wishes to combine several projects
 into one, or split one project into several. See also @command{merge_into_dir}.
@@ -4115,10 +4115,10 @@ recommended, though not required.
 @section Network
 
 @ftable @command
-@item monotone serve [--bind=[@var{address}][:@var{port}]] @var{glob} [...] [--exclude=@var{exclude-glob}]
-@itemx monotone pull [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
-@itemx monotone push [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
-@itemx monotone sync [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
+@item mtn serve [--bind=[@var{address}][:@var{port}]] @var{glob} [...] [--exclude=@var{exclude-glob}]
+@itemx mtn pull [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
+@itemx mtn push [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
+@itemx mtn sync [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
@@ -4202,8 +4202,8 @@ branch name.
 @section Informative
 
 @ftable @command
-@item monotone status
-@itemx monotone status @var{pathname...}
+@item mtn status
+@itemx mtn status @var{pathname...}
 
 This command prints a description of the ``status'' of your workspace.
 In particular, it prints:
@@ -4234,8 +4234,8 @@ command will, by default, include @emph{all changes} in the working
 copy.  Specifying only the pathname "." will restrict @command{status}
 to files changed within the current subdirectory of the workspace.
 
-@item monotone log
-@itemx monotone log [--last=@var{n}] [--next=@var{n}] [--revision=@var{id} [...]] [--brief] [--no-merges] [--no-files] [--diffs] [@var{file} [...]]
+@item mtn log
+@itemx mtn log [--last=@var{n}] [--next=@var{n}] [--revision=@var{id} [...]] [--brief] [--no-merges] [--no-files] [--diffs] [@var{file} [...]]
 
 This command prints out a log, in reverse-ancestry order, of small
 history summaries.  Each summary contains author, date, changelog and
@@ -4270,8 +4270,8 @@ base revision of your workspace.
 If one or more files are given, the command will only log the revisions
 where those files are changed.
 
-@item monotone annotate @var{file}
-@itemx monotone annotate [--revision=@var{id}] [--brief] @var{file}
+@item mtn annotate @var{file}
+@itemx mtn annotate [--revision=@var{id}] [--brief] @var{file}
 
 Dumps an annotated copy of the file to stdout.  In the absence of the 
 @code{--brief} flag, each line of the file
@@ -4284,9 +4284,9 @@ Only the first 8 characters of the revision id are displayed, the
 author cert value is truncated at the first @code{@@} or space
 character and the date field is truncated to remove the time of day.
 
-@item monotone complete file @var{partial-id}
-@itemx monotone complete [--brief] key @var{partial-id}
-@itemx monotone complete [--brief] revision @var{partial-id}
+@item mtn complete file @var{partial-id}
+@itemx mtn complete [--brief] key @var{partial-id}
+@itemx mtn complete [--brief] revision @var{partial-id}
 
 These commands print out all known completions of a partial @sc{sha1}
 value, listing completions which are @code{file}, @code{manifest} or
@@ -4321,14 +4321,14 @@ $ mt complete revision 01f
 @end group
 @end smallexample
 
-@item monotone diff
-@item monotone diff --context
-@item monotone diff --external [--diff-args=@var{argstring}]
-@itemx monotone diff @var{pathname...}
-@itemx monotone diff --revision=@var{id}
-@itemx monotone diff --revision=@var{id} @var{pathname...}
-@itemx monotone diff --revision=@var{id1} --revision=@var{id2}
-@itemx monotone diff --revision=@var{id1} --revision=@var{id2} @var{pathname...}
+@item mtn diff
+@item mtn diff --context
+@item mtn diff --external [--diff-args=@var{argstring}]
+@itemx mtn diff @var{pathname...}
+@itemx mtn diff --revision=@var{id}
+@itemx mtn diff --revision=@var{id} @var{pathname...}
+@itemx mtn diff --revision=@var{id1} --revision=@var{id2}
+@itemx mtn diff --revision=@var{id1} --revision=@var{id2} @var{pathname...}
 
 These commands print out GNU ``unified diff format'' textual difference
 listings between various manifest versions. With no @option{--revision}
@@ -4374,7 +4374,7 @@ formatting.  The actual invocation of @code{diff}, default arguments
 passed to it, and so on, are controlled by the hook
 @code{external_diff}; see @ref{Hooks} for more details.
 
-@item monotone list certs @var{id}
+@item mtn list certs @var{id}
 
 These commands will print out a list of certificates associated with
 a particular revision @var{id}. Each line of the print out will
@@ -4430,8 +4430,8 @@ Value : 2003-10-16  graydon hoare  <graydon@@pobox.com>
 @end group
 @end smallexample
 
-@item monotone list keys
-@itemx monotone list keys @var{pattern}
+@item mtn list keys
+@itemx mtn list keys @var{pattern}
 These commands list @sc{rsa} keys held in your keystore and current database.
 They do not print out any cryptographic information; they simply list the
 names of public and private keys you have on hand.
@@ -4439,22 +4439,22 @@ names of public and private keys you have on hand.
 If @var{pattern} is provided, it is used as a glob to limit the keys
 listed. Otherwise all keys in your database are listed.
 
-@item monotone list branches
+@item mtn list branches
 
 This command lists all known branches in your database.
 
-@item monotone list tags
+@item mtn list tags
 
 This command lists all known tags in your database.
 
-@item monotone list vars
-@item monotone list vars @var{domain}
+@item mtn list vars
+@item mtn list vars @var{domain}
 
 This command lists all vars in your database, or all vars within a given
 @var{domain}.  See @ref{Vars} for more information.
 
-@item monotone list known
-@itemx monotone list known @var{pathname...}
+@item mtn list known
+@itemx mtn list known @var{pathname...}
 
 This command lists all files which would become part of the manifest of
 the next revision if you comitted your workspace at this point.
@@ -4468,8 +4468,8 @@ known} command will, by default, search the entire workspace.
 Specifying only the pathname "." will restrict the search for known
 files to the current subdirectory of the workspace.
 
-@item monotone list unknown
-@itemx monotone list unknown @var{pathname...}
+@item mtn list unknown
+@itemx mtn list unknown @var{pathname...}
 
 This command lists all files in your workspace that monotone is 
 either ignoring or knows nothing about.
@@ -4483,8 +4483,8 @@ unknown} command will, by default, search the entire workspace.
 Specifying only the pathname "." will restrict the search for unknown
 files to the current subdirectory of the workspace.
 
-@item monotone list ignored
-@itemx monotone list ignored @var{pathname...}
+@item mtn list ignored
+@itemx mtn list ignored @var{pathname...}
 
 This command lists all files in your workspace that monotone is
 intentionally ignoring, due to the results of the @code{ignore_file
@@ -4499,8 +4499,8 @@ ignored} command will, by default, search the entire workspace.
 Specifying only the pathname "." will restrict the search for ignored
 files to the current subdirectory of the workspace.
 
-@item monotone list missing
-@itemx monotone list missing @var{pathname...}
+@item mtn list missing
+@itemx mtn list missing @var{pathname...}
 
 This command lists all files in your workspace's base manifest,
 which are not present in the workspace.
@@ -4514,8 +4514,8 @@ missing} command will, by default, search the entire workspace.
 Specifying only the pathname "." will restrict the search for missing
 files to the current subdirectory of the workspace.
 
-@item monotone list changed
-@itemx monotone list changed @var{pathname...}
+@item mtn list changed
+@itemx mtn list changed @var{pathname...}
 
 This command lists all files in your workspace that have changed
 compared to the base revision, including files that are dropped, added
@@ -4530,7 +4530,7 @@ changed} command will, by default, search the entire workspace.
 Specifying only the pathname "." will restrict the search for known
 files to the current subdirectory of the workspace.
 
-@item monotone show_conflicts @var{rev} @var{rev}
+@item mtn show_conflicts @var{rev} @var{rev}
 
 This command shows what conflicts would need to be resolved in order to merge
 the given revisions.
@@ -4542,7 +4542,7 @@ the given revisions.
 @section Key and Cert
 
 @ftable @command
-@item monotone genkey @var{keyid}
+@item mtn genkey @var{keyid}
 
 This command generates an @sc{rsa} public/private key pair, using a
 system random number generator, and stores it in your keystore under
@@ -4559,27 +4559,27 @@ automatically use a certain passphrase for a given key using the
 increases the risk of a key compromise on your local computer. Be
 careful using this hook.
 
-@item monotone dropkey @var{keyid}
+@item mtn dropkey @var{keyid}
 
 This command drops the public and/or private key. If both exist, both
 are dropped, if only one exists, it is dropped. This command should
 be used with caution as changes are irreversible without a backup of
 the key(s) that were dropped.
 
-@item monotone chkeypass @var{id}
+@item mtn chkeypass @var{id}
 
 This command lets you change the passphrase of the private half of the
 key @var{id}.
 
-@item monotone cert @var{id} @var{certname} 
-@itemx monotone cert @var{id} @var{certname} @var{certval}
+@item mtn cert @var{id} @var{certname} 
+@itemx mtn cert @var{id} @var{certname} @var{certval}
 
 These commands create a new certificate with name @var{certname}, for
 a revision with version @var{id}. If @var{certval} is provided, it is
 the value of the certificate.  Otherwise the certificate value is read
 from @code{stdin}.
 
-@item monotone trusted @var{id} @var{certname} @var{certval} @var{signers}
+@item mtn trusted @var{id} @var{certname} @var{certval} @var{signers}
 
 This command lets you test your revision trust hook
 @code{get_revision_cert_trust} (see @ref{Hook Reference}).  You pass it
@@ -4597,7 +4597,7 @@ those keys.
 @section Certificate
 
 @ftable @command
-@item monotone approve @var{id}
+@item mtn approve @var{id}
 
 This command is a synonym for @code{mtn cert @var{id} branch
 @var{branchname}} where @var{branchname} is the current branch name
@@ -4605,21 +4605,21 @@ This command is a synonym for @code{mtn cert @var{id} branch
 option).
 
 
-@item monotone comment @var{id}
-@itemx monotone comment @var{id} @var{comment}
+@item mtn comment @var{id}
+@itemx mtn comment @var{id} @var{comment}
 
 These commands are synonyms for @code{mtn cert @var{id}
 comment @var{comment}}. If @var{comment} is not provided, it is read
 from @code{stdin}.
 
 
-@item monotone tag @var{id} @var{tagname}
+@item mtn tag @var{id} @var{tagname}
 
 This command is a synonym for @code{mtn cert @var{id} tag
 @var{tagname}}.
 
-@item monotone testresult @var{id} 0
-@itemx monotone testresult @var{id} 1
+@item mtn testresult @var{id} 0
+@itemx mtn testresult @var{id} 1
 
 These commands are synonyms for @code{mtn cert @var{id}
 testresult 0} or @code{mtn cert @var{id} testresult 1}.
@@ -4647,15 +4647,15 @@ facility will remain in monotone as a utility for moving individual
 data items around manually.
 
 @ftable @command
-@itemx monotone automate packets_for_certs @var{id}
+@itemx mtn automate packets_for_certs @var{id}
 
 This command prints out an @code{rcert} packet for each cert in your
 database associated with @var{id}. These can be used to transport
 certificates safely between monotone databases.  See @ref{Automation}
 for details of this command.
 
-@item monotone automate packet_for_fdata @var{id}
-@itemx monotone automate packet_for_rdata @var{id}
+@item mtn automate packet_for_fdata @var{id}
+@itemx mtn automate packet_for_rdata @var{id}
 
 These commands print out an @code{fdata} or @code{rdata} packet for
 the file, manifest or revision @var{id} in your database.  These can
@@ -4663,7 +4663,7 @@ be used to transport files or revisions, in their entirety, safely
 between monotone databases.  See @ref{Automation} for details of these
 commands.
 
-@item monotone automate packet_for_fdelta @var{id1} @var{id2}
+@item mtn automate packet_for_fdelta @var{id1} @var{id2}
 
 This command prints out an @code{fdelta} packet for the differences
 between file versions @var{id1} and @var{id2}, in your database.
@@ -4671,16 +4671,16 @@ These can be used to transport file differences safely between
 monotone databases.  See @ref{Automation} for details of this
 command.
 
-@item monotone privkey @var{keyid}
-@itemx monotone pubkey @var{keyid}
+@item mtn privkey @var{keyid}
+@itemx mtn pubkey @var{keyid}
 
 These commands print out an @code{keypair} or @code{pubkey} packet for
 the @sc{rsa} key @var{keyid}. These can be used to transport public or
 private keys safely between monotone databases.
 
 
-@item monotone read
-@item monotone read @var{file1} @var{file2...}
+@item mtn read
+@item mtn read @var{file1} @var{file2...}
 
 This command reads packets from files or @code{stdin} and stores them
 in your database.
@@ -4693,21 +4693,21 @@ in your database.
 @section Database
 
 @ftable @command
-@item monotone set @var{domain} @var{name} @var{value}
+@item mtn set @var{domain} @var{name} @var{value}
 
 Associates the value @var{value} to @var{name} in domain @var{domain}.
 See @ref{Vars} for more information.
 
-@item monotone unset @var{domain} @var{name}
+@item mtn unset @var{domain} @var{name}
 
 Deletes any value associated with @var{name} in @var{domain}.  See
 @ref{Vars} for more information.
 
-@item monotone db init --db=@var{dbfile} 
+@item mtn db init --db=@var{dbfile} 
 
 This command initializes a new monotone database at @file{dbfile}.
 
-@item monotone db rebuild --db=@var{dbfile} 
+@item mtn db rebuild --db=@var{dbfile} 
 
 This command rebuilds the ancestry graph of the monotone database at
 @file{dbfile}, which may become necessary if future bugs in monotone
@@ -4719,17 +4719,17 @@ lose rename history.  Use it carefully, and only after understanding
 incompatible with that of anyone else working on the same project!  Read
 @ref{Rebuilding ancestry}.
 
-@item monotone db info --db=@var{dbfile} 
+@item mtn db info --db=@var{dbfile} 
 
 This command prints information about the monotone database @file{dbfile},
 including its schema version and various table size statistics.
 
-@item monotone db version --db=@var{dbfile} 
+@item mtn db version --db=@var{dbfile} 
 
 This command prints out just the schema version of the monotone
 database @file{dbfile}.
 
-@item monotone db dump --db=@var{dbfile} 
+@item mtn db dump --db=@var{dbfile} 
 
 This command dumps an SQL statement representing the entire state of
 @file{dbfile} to the standard output stream. It is a very low-level
@@ -4737,7 +4737,7 @@ command, and produces the most ``recoverable'' dumps of your database
 possible. It is sometimes also useful when migrating databases between
 variants of the underlying sqlite database format.
 
-@item monotone db load --db=@var{dbfile} 
+@item mtn db load --db=@var{dbfile} 
 
 This command applies a raw SQL statement, read from the standard input
 stream, to the database @file{dbfile}. It is most useful when loading
@@ -4747,7 +4747,7 @@ Note that when reloading a dumped database, the schema of the dumped
 database is @emph{included} in the dump, so you should not try to
 @command{init} your database before a @command{load}.
 
-@item monotone db migrate --db=@var{dbfile} 
+@item mtn db migrate --db=@var{dbfile} 
 
 This command attempts to migrate the database @file{dbfile} to the
 newest schema known by the version of monotone you are currently
@@ -4758,7 +4758,7 @@ If you have important information in your database, you should back up
 a copy of it before migrating, in case there is an untrapped error
 during migration.
 
-@item monotone db check --db=@var{dbfile} 
+@item mtn db check --db=@var{dbfile} 
 
 Monotone always works hard to verify the data it creates and accesses.
 For instance, if you have hard drive problems that corrupt data in
@@ -4890,7 +4890,7 @@ which can be loaded into your database with @command{read}.
 This command also verifies that the @sc{sha1} hash of every file, manifest,
 and revision is correct.
 
-@item monotone db kill_rev_locally @var{id}
+@item mtn db kill_rev_locally @var{id}
 
 This command ``kills'', i.e., deletes, a given revision, as well as any
 certs attached to it.  It has an ugly name because it is a dangerous
@@ -4921,7 +4921,7 @@ you do, after all, need to retrieve the data in @var{id}, then
 work you can extract @var{id}'s data.
 @end itemize
 
-@item monotone db kill_branch_certs_locally @var{branch}
+@item mtn db kill_branch_certs_locally @var{branch}
 
 This command ``kills'' a branch by deleting all branch certs with that
 branch name. You should consider carefully whether you want to use it,
@@ -4936,7 +4936,7 @@ revisions in this branch, the branch certificates will reappear when
 you sync, unless the owners of those databases also delete those
 certificates locally.
 
-@item monotone db kill_tag_locally @var{tag}
+@item mtn db kill_tag_locally @var{tag}
 
 This command ``kills'' a tag by deleting all tag certs with that tag
 name. You should consider carefully whether you want to use it, because
@@ -4949,7 +4949,7 @@ with which have this tag, the tag certificates will reappear when you
 sync, unless the owners of those databases also delete those
 certificates locally.
 
-@item monotone db execute @var{sql-statement}
+@item mtn db execute @var{sql-statement}
 
 This is a debugging command which executes @var{sql-statement} against
 your database, and prints any results of the expression in a tabular
@@ -4970,7 +4970,7 @@ messages.
 
 
 @ftable @command
-@item monotone automate interface_version
+@item mtn automate interface_version
 
 @table @strong
 @item Arguments:
@@ -5007,7 +5007,7 @@ None.
 @end table
 
 
-@item monotone automate heads [@var{branch}]
+@item mtn automate heads [@var{branch}]
 
 @table @strong
 @item Arguments:
@@ -5042,7 +5042,7 @@ If the given branch contains no members or does not exist, then no lines are pri
 @end table
 
 
-@item monotone automate ancestors @var{rev1} [@var{rev2} [...]]
+@item mtn automate ancestors @var{rev1} [@var{rev2} [...]]
 
 @table @strong
 @item Arguments:
@@ -5083,7 +5083,7 @@ an error message to stderr, and exits with status 1.
 @end table
 
 
-@item monotone automate parents @var{rev}
+@item mtn automate parents @var{rev}
 
 @table @strong
 @item Arguments:
@@ -5121,7 +5121,7 @@ stdout, prints an error message to stderr, and exits with status 1.
 @end table
 
 
-@item monotone automate descendents @var{rev1} [@var{rev2} [...]]
+@item mtn automate descendents @var{rev1} [@var{rev2} [...]]
 
 @table @strong
 @item Arguments:
@@ -5162,7 +5162,7 @@ an error message to stderr, and exits with status 1.
 @end table
 
 
-@item monotone automate children @var{rev}
+@item mtn automate children @var{rev}
 
 @table @strong
 @item Arguments:
@@ -5200,7 +5200,7 @@ stdout, prints an error message to stderr, and exits with status 1.
 @end table
 
 
-@item monotone automate graph
+@item mtn automate graph
 
 @table @strong
 @item Arguments:
@@ -5245,7 +5245,7 @@ None.
 @end table
 
 
-@item monotone automate erase_ancestors [@var{rev1} [@var{rev2} [...]]]
+@item mtn automate erase_ancestors [@var{rev1} [@var{rev2} [...]]]
 
 @table @strong
 @item Arguments:
@@ -5287,7 +5287,7 @@ an error message to stderr, and exits with status 1.
 @end table
 
 
-@item monotone automate toposort [@var{rev1} [@var{rev2} [...]]]
+@item mtn automate toposort [@var{rev1} [@var{rev2} [...]]]
 
 @table @strong
 @item Arguments:
@@ -5327,7 +5327,7 @@ an error message to stderr, and exits with status 1.
 @end table
 
 
-@item monotone automate ancestry_difference @var{new} [@var{old1} [@var{old2} [...]]]
+@item mtn automate ancestry_difference @var{new} [@var{old1} [@var{old2} [...]]]
 
 @table @strong
 @item Arguments:
@@ -5372,7 +5372,7 @@ an error message to stderr, and exits with status 1.
 @end table
 
 
-@item monotone automate leaves
+@item mtn automate leaves
 
 @table @strong
 @item Arguments:
@@ -5412,7 +5412,7 @@ None.
 @end table
 
 
-@item monotone automate select @var{selector}
+@item mtn automate select @var{selector}
 
 @table @strong
 @item Arguments:
@@ -5447,7 +5447,7 @@ None.
 
 @end table
 
-@item monotone automate inventory
+@item mtn automate inventory
 
 @table @strong
 @item Arguments:
@@ -5682,7 +5682,7 @@ message to stderr, and exits with status 1.
 
 @end table
 
-@item monotone automate certs @var{id}
+@item mtn automate certs @var{id}
 
 @table @strong
 @item Arguments:
@@ -5763,7 +5763,7 @@ or invalid prints an error message to stderr and exits with status 1.
 
 @end table
 
-@item monotone automate stdio
+@item mtn automate stdio
 
 @table @strong
 @item Arguments:
@@ -5833,8 +5833,8 @@ message.
 
 @end table
 
-@item monotone automate get_revision
-@item monotone automate get_revision @var{id}
+@item mtn automate get_revision
+@item mtn automate get_revision @var{id}
 
 @table @strong
 @item Arguments:
@@ -5937,8 +5937,8 @@ to stderr and exits with status 1.
 
 @end table
 
-@item monotone automate get_manifest_of
-@item monotone automate get_manifest_of @var{revid}
+@item mtn automate get_manifest_of
+@item mtn automate get_manifest_of @var{revid}
 
 @table @strong
 @item Arguments:
@@ -6082,7 +6082,7 @@ message to stderr and exits with status 1.
 
 @end table
 
-@item monotone automate get_file @var{id}
+@item mtn automate get_file @var{id}
 
 @table @strong
 @item Arguments:
@@ -6119,7 +6119,7 @@ to stderr and exits with status 1.
 @end table
 
 
-@item monotone automate keys
+@item mtn automate keys
 
 @table @strong
 @item Arguments:
@@ -6168,7 +6168,7 @@ None.
 
 @end table
 
-@item monotone automate packet_for_rdata @var{id}
+@item mtn automate packet_for_rdata @var{id}
 
 @table @strong
 @item Arguments:
@@ -6207,7 +6207,7 @@ and exits with status 1.
 
 @end table
 
-@item monotone automate packet_for_certs @var{id}
+@item mtn automate packet_for_certs @var{id}
 
 @table @strong
 @item Arguments:
@@ -6272,7 +6272,7 @@ and exits with status 1.
 
 @end table
 
-@item monotone automate packet_for_fdata @var{id}
+@item mtn automate packet_for_fdata @var{id}
 
 @table @strong
 @item Arguments:
@@ -6309,7 +6309,7 @@ and exits with status 1.
 
 @end table
 
-@item monotone automate packet_for_fdelta @var{from-id} @var{to-id}
+@item mtn automate packet_for_fdelta @var{from-id} @var{to-id}
 
 @table @strong
 @item Arguments:
@@ -6355,7 +6355,7 @@ message to stderr and exits with status 1.
 @section RCS
 
 @ftable @command
-@item monotone rcs_import @var{filename...}
+@item mtn rcs_import @var{filename...}
 
 This command imports all the file versions in each RCS file listed in
 @var{filename...}.  These files should be raw RCS files, ending in
@@ -6363,7 +6363,7 @@ This command imports all the file versions in each RCS file listed in
 database.  Note that this does not do any revision reconstruction, and
 is only useful for debugging.
 
-@item monotone cvs_import @var{pathname}
+@item mtn cvs_import @var{pathname}
 
 This command imports all the file versions in each RCS file found in the
 tree of files starting at @var{pathname}, then reconstructs the
