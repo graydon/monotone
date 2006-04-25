@@ -1,5 +1,13 @@
 2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* lua.cc: There is now an "extract_classified_str" to go with
+	"extract_str", which doesn't log the value of the returned string.
+	Use this in hook_get_passphrase.
+	* tests/t_no_log_password.at: Test that the passphrase is not logged.
+	* testsuite.at: Call it.
+
+2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* po/POTFILES.in: add cmd.hh and the cmd_*.cc files
 
 2006-04-25  Richard Levitte  <richard@levitte.org>

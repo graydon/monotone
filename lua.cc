@@ -204,7 +204,7 @@ Lua
 
   // extractors
 
-  Lua & extract_str(string & str)
+  Lua & extract_str_nolog(string & str)
   {
     if (failed) return *this;
     if (!lua_isstring (st, -1)) 
@@ -213,7 +213,20 @@ Lua
         return *this;
       }
     str = string(lua_tostring(st, -1), lua_strlen(st, -1));
+    return *this;
+  }
+
+  Lua & extract_str(string & str)
+  {
+    extract_str_nolog(str);
     L(FL("lua: extracted string = %s") % str);
+    return *this;
+  }
+
+  Lua & extract_classified_str(string & str)
+  {
+    extract_str_nolog(str);
+    L(FL("lua: extracted string [CLASSIFIED]"));
     return *this;
   }
 
@@ -939,7 +952,7 @@ lua_hooks::hook_get_passphrase(rsa_keypair_id const & k, string & phrase)
     .func("get_passphrase")
     .push_str(k())
     .call(1,1)
-    .extract_str(phrase)
+    .extract_classified_str(phrase)
     .ok();
 }
 
