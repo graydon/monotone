@@ -1,3 +1,7 @@
+2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* po/POTFILES.in: add cmd.hh and the cmd_*.cc files
+
 2006-04-25  Richard Levitte  <richard@levitte.org>
 
 	* examples/000README.txt, examples/display_branches.lua: Start a
