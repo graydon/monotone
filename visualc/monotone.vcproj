@@ -224,6 +224,50 @@
 				>
 			</File>
 			<File
+				RelativePath="..\cmd_automate.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\cmd_db.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\cmd_diff_log.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\cmd_files.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\cmd_key_cert.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\cmd_list.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\cmd_merging.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\cmd_netsync.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\cmd_othervcs.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\cmd_packet.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\cmd_ws_commit.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\commands.cc"
 				>
 			</File>
@@ -276,6 +320,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\inodeprint.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\win32\inodeprint.cc"
 				>
 				<FileConfiguration
@@ -296,10 +344,6 @@
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\inodeprint.cc"
-				>
 			</File>
 			<File
 				RelativePath="..\key_store.cc"
@@ -529,6 +573,10 @@
 			</File>
 			<File
 				RelativePath="..\cleanup.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\cmd.hh"
 				>
 			</File>
 			<File
