@@ -60,6 +60,18 @@ struct file_itemizer : public tree_walker
 };
 
 void
+find_missing(app_state & app,
+             std::vector<utf8> const & args,
+             path_set & missing);
+
+void
+find_unknown_and_ignored(app_state & app,
+                         bool want_ignored,
+                         std::vector<utf8> const & args, 
+                         path_set & unknown,
+                         path_set & ignored);
+
+void
 perform_additions(path_set const & targets, app_state & app, bool recursive = true);
 
 void

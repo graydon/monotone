@@ -83,16 +83,4 @@ calculate_restricted_cset(app_state & app,
                           cset & included,
                           cset & excluded);
 
-void
-find_missing(app_state & app,
-             std::vector<utf8> const & args,
-             path_set & missing);
-
-void
-find_unknown_and_ignored(app_state & app,
-                         bool want_ignored,
-                         std::vector<utf8> const & args, 
-                         path_set & unknown,
-                         path_set & ignored);
-
 #endif  // header guard

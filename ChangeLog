@@ -1,3 +1,9 @@
+2006-04-25  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.{cc,hh} (find_missing, find_unknown_and_ignored): move to...
+	* work.{cc,hh}: ...here since these are not really restriction things
+	* cmd_ws_commit.cc: sort includes and add work.hh to account for moves
+
 2006-04-24  Derek Scherger  <derek@echologic.com>
 
 	* contrib/monotone.el (monotone-commit-complete): call line

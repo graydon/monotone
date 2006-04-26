@@ -1,10 +1,11 @@
 #include "cmd.hh"
 
-#include "revision.hh"
 #include "diff_patch.hh"
 #include "packet.hh"
-#include "transforms.hh"
 #include "restrictions.hh"
+#include "revision.hh"
+#include "transforms.hh"
+#include "work.hh"
 
 #include <map>
 using std::map;
