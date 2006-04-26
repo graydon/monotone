@@ -4,6 +4,56 @@
 	* work.{cc,hh}: ...here since these are not really restriction things
 	* cmd_ws_commit.cc: sort includes and add work.hh to account for moves
 
+2006-04-26  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.{cc,hh}: Overload set_restriction to take a path_set as
+	the list of paths to restrict to.
+	* cmd_ws_commit.cc: Use this to fix revert --missing.
+
+2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.cc: --quiet forces --ticker=none
+	* tests/t_quiet.at: Check that --quiet turns off tickers.
+	* testsuite.at: Call it.
+
+2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* lua.cc: There is now an "extract_classified_str" to go with
+	"extract_str", which doesn't log the value of the returned string.
+	Use this in hook_get_passphrase.
+	* tests/t_no_log_password.at: Test that the passphrase is not logged.
+	* testsuite.at: Call it.
+
+2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* po/POTFILES.in: add cmd.hh and the cmd_*.cc files
+
+2006-04-25  Richard Levitte  <richard@levitte.org>
+
+	* examples/000README.txt, examples/display_branches.lua: Start a
+	directory of small examples and other cool things you can do with
+	monotone.  Contrary to the contrib directory, these files can
+	seldom be taken and used as they are, they usually need to get
+	integrated into some other file.
+	* debian/docs, debian/changelog: Make sure the examples directory
+	end up inside Debian's standard documentation directory, and
+	document this change.
+
+2006-04-25  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi: Add Jeronimo to copyright holder list.
+	* AUTHORS: And the contributor list.
+	
+2006-04-25  Jeronimo Pellegrini  <pellegrini@mpcnet.com.br>
+
+	* monotone.texi (Using packets): New section, short tutorial
+	showing how packets work.  (With some small fixups by Nathaniel.)
+
+2006-04-25  Jeronimo Pellegrini  <pellegrini@mpcnet.com.br>
+
+	* monotone.texi: Replace many references to 'monotone' with
+	'mtn'.
+
 2006-04-24  Derek Scherger  <derek@echologic.com>
 
 	* contrib/monotone.el (monotone-commit-complete): call line
