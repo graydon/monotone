@@ -56,8 +56,6 @@ AT_CHECK(MTN attr set dir2/ myattr myval, [], [ignore], [ignore])
 COMMIT(testbranch)
 REV7=`BASE_REVISION`
 
-# commented out tests below currently fail but they *should* pass (I think)
-
 AT_CHECK(MTN log, [], [stdout], [ignore])
 
 AT_CHECK(grep "^Revision: $REV1" stdout, [0], [ignore], [ignore])

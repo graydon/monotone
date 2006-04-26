@@ -1,3 +1,11 @@
+2006-04-25  Derek Scherger  <derek@echologic.com>
+
+	* cmd_*.cc: merge new restrictions changes in from commands.cc
+	split
+	* tests/t_log_dir.at: remove stale comment 
+	* work.{cc,hh}(find_missing, find_unknown_and_ignored): move 
+	these functions here from commands.cc split
+	
 2006-04-24  Derek Scherger  <derek@echologic.com>
 
 	* contrib/monotone.el (monotone-commit-complete): call line

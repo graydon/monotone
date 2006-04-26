@@ -52,6 +52,51 @@ file_itemizer::visit_file(file_path const & path)
 }
 
 
+void
+find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
+{
+  roster_t old_roster, new_roster;
+
+  get_base_and_current_roster_shape(old_roster, new_roster, app);
+
+  restriction mask(args, app.exclude_patterns, new_roster, app);
+
+  node_map const & nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_id nid = i->first;
+
+      if (!new_roster.is_root(nid) && mask.includes(new_roster, nid))
+        {
+          split_path sp;
+          new_roster.get_name(nid, sp);
+          file_path fp(sp);      
+
+          if (!path_exists(fp))
+            missing.insert(sp);
+        }
+    }
+}
+
+void
+find_unknown_and_ignored(app_state & app, vector<utf8> const & args, 
+                         path_set & unknown, path_set & ignored)
+{
+  revision_set rev;
+  roster_t old_roster, new_roster;
+  path_set known;
+  temp_node_id_source nis;
+
+  get_base_and_current_roster_shape(old_roster, new_roster, app);
+
+  restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+
+  new_roster.extract_path_set(known);
+
+  file_itemizer u(app, known, unknown, ignored, mask);
+  walk_tree(file_path(), u);
+}
+
 class 
 addition_builder 
   : public tree_walker
