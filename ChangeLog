@@ -1,3 +1,9 @@
+2006-04-26  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.{cc,hh}: Overload set_restriction to take a path_set as
+	the list of paths to restrict to.
+	* cmd_ws_commit.cc: Use this to fix revert --missing.
+
 2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* monotone.cc: --quiet forces --ticker=none
