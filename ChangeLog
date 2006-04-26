@@ -1,5 +1,11 @@
 2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* monotone.cc: --quiet forces --ticker=none
+	* tests/t_quiet.at: Check that --quiet turns off tickers.
+	* testsuite.at: Call it.
+
+2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* lua.cc: There is now an "extract_classified_str" to go with
 	"extract_str", which doesn't log the value of the returned string.
 	Use this in hook_get_passphrase.
