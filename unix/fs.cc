@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pwd.h>
+#include <stdio.h>
 #include <cstring>
 
 #include <boost/filesystem/path.hpp>

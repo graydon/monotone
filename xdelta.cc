@@ -184,7 +184,7 @@ compute_delta_insns(string const & a,
                     vector<insn> & delta)
 {
   string::size_type blocksz = 64;
-  match_table matches ((a.size() / blocksz) * 2);
+  match_table matches;
   init_match_table(a, blocksz, matches);
 
   if (b.size() < blocksz)
