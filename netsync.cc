@@ -2657,59 +2657,71 @@ serve_connections(protocol_role role,
               arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
 
               L(FL("i/o probe with %d armed\n") % armed_sessions.size());
-              Netxx::Probe::result_type res = probe.ready(sessions.empty() ? forever
-                                                          : (armed_sessions.empty() ? timeout
-                                                             : instant));
-              Netxx::Probe::ready_type event = res.second;
-              Netxx::socket_type fd = res.first;
-
-              if (!guard)
-                guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
-
-              I(guard);
-      
-              if (fd == -1)
-                {
-                  if (armed_sessions.empty())
-                    L(FL("timed out waiting for I/O (listening on %s : %s)\n")
-                      % addr.get_name() % lexical_cast<string>(addr.get_port()));
-                }
-      
-              // we either got a new connection
-              else if (fd == server)
-                handle_new_connection(addr, server, timeout, role,
-                                      include_pattern, exclude_pattern,
-                                      sessions, app);
-      
-              // or an existing session woke up
+              Netxx::socket_type fd;
+              Netxx::Timeout how_long;
+              if (sessions.empty())
+                how_long = forever;
+              else if (armed_sessions.empty())
+                how_long = timeout;
               else
+                how_long = instant;
+              do
                 {
-                  map<Netxx::socket_type, shared_ptr<session> >::iterator i;
-                  i = sessions.find(fd);
-                  if (i == sessions.end())
+                  Netxx::Probe::result_type res = probe.ready(how_long);
+                  how_long = instant;
+                  Netxx::Probe::ready_type event = res.second;
+                  fd = res.first;
+
+                  if (!guard)
+                    guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
+
+                  I(guard);
+          
+                  if (fd == -1)
                     {
-                      L(FL("got woken up for action on unknown fd %d\n") % fd);
+                      if (armed_sessions.empty())
+                        L(FL("timed out waiting for I/O (listening on %s : %s)\n")
+                          % addr.get_name() % lexical_cast<string>(addr.get_port()));
                     }
+          
+                  // we either got a new connection
+                  else if (fd == server)
+                    handle_new_connection(addr, server, timeout, role,
+                                          include_pattern, exclude_pattern,
+                                          sessions, app);
+          
+                  // or an existing session woke up
                   else
                     {
-                      shared_ptr<session> sess = i->second;
-                      bool live_p = true;
-
-                      if (event & Netxx::Probe::ready_read)
-                        handle_read_available(fd, sess, sessions,
-                                              armed_sessions, live_p);
-                
-                      if (live_p && (event & Netxx::Probe::ready_write))
-                        handle_write_available(fd, sess, sessions, live_p);
-                
-                      if (live_p && (event & Netxx::Probe::ready_oobd))
+                      map<Netxx::socket_type, shared_ptr<session> >::iterator i;
+                      i = sessions.find(fd);
+                      if (i == sessions.end())
                         {
-                          P(F("got OOB from peer %s, disconnecting\n")
-                            % sess->peer_id);
-                          sessions.erase(i);
+                          L(FL("got woken up for action on unknown fd %d\n") % fd);
+                        }
+                      else
+                        {
+                          probe.remove(i->second->str);
+                          shared_ptr<session> sess = i->second;
+                          bool live_p = true;
+
+                          if (event & Netxx::Probe::ready_read)
+                            handle_read_available(fd, sess, sessions,
+                                                  armed_sessions, live_p);
+                    
+                          if (live_p && (event & Netxx::Probe::ready_write))
+                            handle_write_available(fd, sess, sessions, live_p);
+                    
+                          if (live_p && (event & Netxx::Probe::ready_oobd))
+                            {
+                              P(F("got OOB from peer %s, disconnecting\n")
+                                % sess->peer_id);
+                              sessions.erase(i);
+                            }
                         }
                     }
                 }
+              while (fd != -1);
               process_armed_sessions(sessions, armed_sessions, *guard);
               reap_dead_sessions(sessions, timeout_seconds);
 

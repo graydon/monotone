@@ -2,6 +2,16 @@
 
 	* po/pt_BR.po: Translated more strings.
 
+2006-04-27  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* cmd_list.cc: missing using std::sort; broke build with stlport4
+
+2006-04-26  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc (serve_connections): Cycle through all results before
+	recalculating the probe. Netxx does not make this as simple as it
+	should be.
+
 2006-04-26  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (package_full_revision_raw.txt): Pass --root to our
