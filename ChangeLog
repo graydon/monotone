@@ -1,3 +1,9 @@
+2006-04-26  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc (serve_connections): Cycle through all results before
+	recalculating the probe. Netxx does not make this as simple as it
+	should be.
+
 2006-04-26  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (package_full_revision_raw.txt): Pass --root to our
