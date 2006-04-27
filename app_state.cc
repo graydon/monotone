@@ -154,7 +154,7 @@ app_state::create_workspace(system_path const & new_dir)
 
 void 
 app_state::set_restriction(path_set const & valid_paths,
-                           vector<utf8> const & paths)
+                           path_set const & paths)
 {
   // FIXME: this was written before split_path, and only later kludged to
   // work with it. Could be much tidier if written with knowledge of
@@ -163,18 +163,16 @@ app_state::set_restriction(path_set const & valid_paths,
   static file_path root = file_path_internal("");
   restrictions.clear();
   excludes.clear();
-  for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
+  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      file_path p = file_path_external(*i);
-      split_path sp;
-      p.split(sp);
+      file_path p(*i);
 
       N(lua.hook_ignore_file(p) ||
-        p == root || valid_paths.find(sp) != valid_paths.end(),
+        p == root || valid_paths.find(*i) != valid_paths.end(),
         F("unknown path '%s'\n") % p);
 
       L(FL("'%s' added to restricted path set\n") % p);
-      restrictions.insert(sp);
+      restrictions.insert(*i);
     }
 
   for (std::set<utf8>::const_iterator i = exclude_patterns.begin();
@@ -201,6 +199,21 @@ app_state::set_restriction(path_set const & valid_paths,
       fp.split(sp);
       restrictions.insert(sp);
     }
+}
+
+void 
+app_state::set_restriction(path_set const & valid_paths,
+                           vector<utf8> const & paths)
+{
+  path_set ps;
+  for (vector<utf8>::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    {
+      file_path p = file_path_external(*i);
+      split_path sp;
+      p.split(sp);
+      ps.insert(sp);
+    }
+  set_restriction(valid_paths, ps);
 }
 
 bool
