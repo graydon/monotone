@@ -1,3 +1,14 @@
+2006-04-26  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc:
+	* cmd_diff_log.cc:
+	* cmd_list.cc:
+	* cmd_merging.cc:
+	* cmd_ws_commit.cc:
+	* commands.cc:
+	* work.cc: use explicit temp_node_id_sources everywhere
+	* tests/t_log_dir.at: remove stale comment
+
 2006-04-25  Derek Scherger  <derek@echologic.com>
 
 	* cmd_*.cc: merge new restrictions changes in from commands.cc

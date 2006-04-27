@@ -1,12 +1,6 @@
 AT_SETUP([log dir])
 MTN_SETUP
 
-# This test is a bug report
-# log dir -R should only list revisions which change the things in or below dir
-# log dir should only list revisions which change dir (note that this does not
-# include things that change "ls dir", but only add/drop/rename/attr set on
-# the dir itself)
-
 ADD_FILE(foo, [foo
 ])
 ADD_FILE(bar, [bar

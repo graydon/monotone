@@ -37,11 +37,12 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
     N_("revert file(s), dir(s) or entire workspace (\".\")"), 
     OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
-  roster_t old_roster, new_roster;
-  cset included, excluded;
-
   if (args.size() < 1)
     throw usage(name);
+
+  temp_node_id_source nis;
+  roster_t old_roster, new_roster;
+  cset included, excluded;
 
   app.require_workspace();
   
@@ -74,7 +75,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
       excludes = app.exclude_patterns;
     }
 
-  get_base_and_current_roster_shape(old_roster, new_roster, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
   restriction mask(includes, excludes, old_roster, new_roster, app);
 
   make_restricted_csets(old_roster, new_roster, included, excluded, mask);
@@ -295,9 +296,10 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   revision_id old_rev_id;
   revision_set rev;
   data tmp;
+  temp_node_id_source nis;
 
   app.require_workspace();
-  get_base_and_current_roster_shape(old_roster, new_roster, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
   restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
 
@@ -306,7 +308,6 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   check_restricted_cset(old_roster, included);
 
   restricted_roster = old_roster;
-  temp_node_id_source nis;
   editable_roster_base er(restricted_roster, nis);
   included.apply_to(er);
 
@@ -338,7 +339,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
 
       for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
              i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i) 
-          cout << "patched " << i->first << "\n";
+        cout << "patched " << i->first << "\n";
     }
   else
     {
@@ -483,9 +484,10 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
     throw usage(name);
 
   roster_t old_roster, new_roster;
+  temp_node_id_source nis;
 
   app.require_workspace();
-  get_base_and_current_roster_shape(old_roster, new_roster, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
   
   file_path path = file_path_external(idx(args,1));
@@ -577,11 +579,12 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   revision_set restricted_rev;
   revision_id old_rev_id, restricted_rev_id;
   roster_t old_roster, new_roster, restricted_roster;
+  temp_node_id_source nis;
   cset included, excluded;
 
   app.make_branch_sticky();
   app.require_workspace();
-  get_base_and_current_roster_shape(old_roster, new_roster, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
   restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
 
@@ -590,7 +593,6 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   check_restricted_cset(old_roster, included);
 
   restricted_roster = old_roster;
-  temp_node_id_source nis;
   editable_roster_base er(restricted_roster, nis);
   included.apply_to(er);
 

@@ -246,9 +246,10 @@ maybe_update_inodeprints(app_state & app)
   if (!in_inodeprints_mode())
     return;
   inodeprint_map ipm_new;
+  temp_node_id_source nis;
   roster_t old_roster, new_roster;
 
-  get_base_and_current_roster_shape(old_roster, new_roster, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
   update_current_roster_from_filesystem(new_roster, app);
 
   node_map const & new_nodes = new_roster.all_nodes();

@@ -311,9 +311,10 @@ static void
 ls_known(app_state & app, vector<utf8> const & args)
 {
   roster_t old_roster, new_roster;
+  temp_node_id_source nis;
 
   app.require_workspace();
-  get_base_and_current_roster_shape(old_roster, new_roster, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
   restriction mask(args, app.exclude_patterns, new_roster, app);
 
@@ -370,7 +371,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
 
   app.require_workspace();
 
-  get_base_and_current_roster_shape(old_roster, new_roster, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
   restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
       

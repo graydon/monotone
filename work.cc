@@ -55,9 +55,10 @@ file_itemizer::visit_file(file_path const & path)
 void
 find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
 {
+  temp_node_id_source nis;
   roster_t old_roster, new_roster;
 
-  get_base_and_current_roster_shape(old_roster, new_roster, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
   restriction mask(args, app.exclude_patterns, new_roster, app);
 
@@ -87,7 +88,7 @@ find_unknown_and_ignored(app_state & app, vector<utf8> const & args,
   path_set known;
   temp_node_id_source nis;
 
-  get_base_and_current_roster_shape(old_roster, new_roster, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
   restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
 
@@ -96,6 +97,7 @@ find_unknown_and_ignored(app_state & app, vector<utf8> const & args,
   file_itemizer u(app, known, unknown, ignored, mask);
   walk_tree(file_path(), u);
 }
+
 
 class 
 addition_builder 
@@ -243,8 +245,9 @@ perform_deletions(path_set const & paths, app_state & app)
   if (paths.empty())
     return;
   
+  temp_node_id_source nis;
   roster_t base_roster, new_roster;
-  get_base_and_current_roster_shape(base_roster, new_roster, app);
+  get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
 
   // we traverse the the paths backwards, so that we always hit deep paths
   // before shallow paths (because path_set is lexicographically sorted).
@@ -636,13 +639,6 @@ get_current_roster_shape(roster_t & ros, node_id_source & nis, app_state & app)
   cs.apply_to(er);
 }
 
-// void
-// get_current_restricted_roster(roster_t & ros, node_id_source & nis, app_state & app)
-// {
-//   get_current_roster_shape(ros, nis, app);
-//   update_restricted_roster_from_filesystem(ros, app);
-// }
-
 void
 get_base_and_current_roster_shape(roster_t & base_roster,
                                   roster_t & current_roster,
@@ -655,15 +651,6 @@ get_base_and_current_roster_shape(roster_t & base_roster,
   get_work_cset(cs);
   editable_roster_base er(current_roster, nis);
   cs.apply_to(er);
-}
-
-void
-get_base_and_current_roster_shape(roster_t & base_roster,
-                                  roster_t & current_roster,
-                                  app_state & app)
-{
-  temp_node_id_source nis;
-  get_base_and_current_roster_shape(base_roster, current_roster, nis, app);
 }
 
 // user log file

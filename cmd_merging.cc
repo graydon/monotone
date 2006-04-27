@@ -61,7 +61,7 @@ CMD(update, N_("workspace"), "",
   // such. But it should work for now; revisit if performance is
   // intolerable.
 
-  get_base_and_current_roster_shape(*old_roster, working_roster, app);
+  get_base_and_current_roster_shape(*old_roster, working_roster, nis, app);
   update_current_roster_from_filesystem(working_roster, app);
 
   get_revision_id(r_old_id);

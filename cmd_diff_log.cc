@@ -334,7 +334,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       roster_t new_roster, old_roster;
       revision_id old_rid;
 
-      get_base_and_current_roster_shape(old_roster, new_roster, app);
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       get_revision_id(old_rid);
 
       restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
@@ -355,7 +355,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
-      get_base_and_current_roster_shape(old_roster, new_roster, app);
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       // Clobber old_roster with the one specified
       app.db.get_roster(r_old_id, old_roster);
 
@@ -508,6 +508,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
 
+  temp_node_id_source nis;
   set<revision_id> frontier;
   revision_id first_rid;
 
@@ -537,7 +538,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       roster_t old_roster, new_roster;
 
       if (app.revision_selectors.size() == 0)
-        get_base_and_current_roster_shape(old_roster, new_roster, app);
+        get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       else
         app.db.get_roster(first_rid, new_roster);          
 

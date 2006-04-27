@@ -227,7 +227,9 @@ automate_attributes(std::vector<utf8> args,
     throw usage(help_name);
 
   roster_t base, current;
-  get_base_and_current_roster_shape(base, current, app);
+  temp_node_id_source nis;
+
+  get_base_and_current_roster_shape(base, current, nis, app);
 
   if (args.size() == 1)
     {
@@ -679,12 +681,13 @@ automate_inventory(std::vector<utf8> args,
 
   app.require_workspace();
 
+  temp_node_id_source nis;
   roster_t base, curr;
   inventory_map inventory;
   cset cs; MM(cs);
   path_set unchanged, changed, missing, known, unknown, ignored;
 
-  get_base_and_current_roster_shape(base, curr, app);
+  get_base_and_current_roster_shape(base, curr, nis, app);
   make_cset(base, curr, cs);
 
   I(cs.deltas_applied.empty());
@@ -970,7 +973,7 @@ automate_get_revision(std::vector<utf8> args,
       revision_set rev;
 
       app.require_workspace(); 
-      get_base_and_current_roster_shape(old_roster, new_roster, app);
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       update_current_roster_from_filesystem(new_roster, app);
 
       get_revision_id(old_revision_id);
@@ -1050,7 +1053,7 @@ automate_get_manifest_of(std::vector<utf8> args,
       revision_id old_revision_id;
 
       app.require_workspace(); 
-      get_base_and_current_roster_shape(old_roster, new_roster, app);
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       update_current_roster_from_filesystem(new_roster, app);
     }
   else

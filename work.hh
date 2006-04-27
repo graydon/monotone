@@ -116,10 +116,6 @@ void get_base_and_current_roster_shape(roster_t & base_roster,
                                        node_id_source & nis,
                                        app_state & app);
 
-void get_base_and_current_roster_shape(roster_t & base_roster,
-                                       roster_t & current_roster,
-                                       app_state & app);
-
 // the "user log" is a file the user can edit as they program to record
 // changes they make to their source code. Upon commit the file is read
 // and passed to the edit_comment lua hook. If the commit is a success,
