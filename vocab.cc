@@ -161,7 +161,7 @@ verify(netsync_hmac_value & val)
 struct 
 symtab_impl 
 {
-  typedef hashmap::string_hashset hset;
+  typedef hashmap::hash_set<std::string> hset;
   hset vals;
   symtab_impl() : vals() {}
   void clear() { vals.clear(); }

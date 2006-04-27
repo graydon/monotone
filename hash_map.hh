@@ -3,6 +3,27 @@
 
 #include "config.h"
 
+#include <functional>
+namespace hashmap {
+  template<typename _T>
+  class equal_to : public std::equal_to<_T>
+  {};
+  
+  template<typename _T>
+  struct hash
+  {
+//    size_t operator()(_T const & t) const;
+  };
+  template<>
+  struct hash<unsigned int>
+  {
+    size_t operator()(unsigned int t) const
+    {
+      return t;
+    }
+  };
+}
+
 #ifdef HAVE_GNUCXX_HASHMAP
 #define HASHMAP_PRESENT
 #include <ext/hash_map>
@@ -10,34 +31,36 @@
 #include <string>
 
 namespace hashmap {
- using __gnu_cxx::hash_map;
- using __gnu_cxx::hash_set;
- using __gnu_cxx::hash_multimap;
+  template<>
+  struct hash<std::string>
+  {
+    size_t operator()(std::string const & s) const
+    {
+      return __gnu_cxx::__stl_hash_string(s.c_str());
+    }
+  };
+  
+  template<typename _Key, typename _Value>
+  class hash_map : public __gnu_cxx::hash_map<_Key,
+                                              _Value,
+                                              hash<_Key>,
+                                              equal_to<_Key> >
+  {};
+  
+  template<typename _Key>
+  class hash_set : public __gnu_cxx::hash_set<_Key,
+                                              hash<_Key>,
+                                              equal_to<_Key> >
+  {};
+  
+  template<typename _Key, typename _Value>
+  class hash_multimap : public __gnu_cxx::hash_multimap<_Key,
+                                                        _Value,
+                                                        hash<_Key>,
+                                                        equal_to<_Key> >
+  {};
 
- struct string_hash
- {
-   size_t operator()(std::string const & s) const
-   {
-    return __gnu_cxx::__stl_hash_string(s.c_str());
-   }
- };
- struct string_eq
- {
-   bool operator()(std::string const & a,
-                   std::string const & b) const
-   {
-     return a == b;
-   }
- };
- template <typename V> struct string_hashmap 
-	 : public hash_map<std::string, V, string_hash, string_eq>
- {};
- template <typename V> struct string_hashmultimap 
-	 : public hash_multimap<std::string, V, string_hash, string_eq>
- {};
- struct string_hashset 
-	 : public hash_set<std::string, string_hash, string_eq>
- {};	
+	
 }
 #endif
 
@@ -48,38 +71,38 @@ namespace hashmap {
 #include <string>
 
 namespace hashmap {
- using std::hash_map;
- using std::hash_set;
- using std::hash_multimap;
+  template<>
+  struct hash<std::string>
+  {
+    size_t operator()(std::string const & s) const
+    {
+      const char* s2=s.c_str();
+      unsigned long h = 0;
+      for ( ; *s2; ++s2)
+        h = 5*h + *s2;
+      return size_t(h);
+    }
+  };
 
- struct string_hash
- {
-   size_t operator()(std::string const & s) const
-   {
-     const char* s2=s.c_str();
-     unsigned long h = 0;
-     for ( ; *s2; ++s2)
-       h = 5*h + *s2;
-     return size_t(h);
-   }
- };
- struct string_eq
- {
-   bool operator()(std::string const & a,
-                   std::string const & b) const
-   {
-     return a == b;
-   }
- };
- struct string_hashmap<typename V> 
-	 : public hash_map<std::string, V, string_hash, string_eq>
- {};
- template <typename V> struct string_hashmultimap 
-	 : public hash_multimap<std::string, V, string_hash, string_eq>
- {};
- struct string_hashset 
-	 : public hash_set<std::string, string_hash, string_eq>
- {};	
+  template<typename _Key, typename _Value>
+  class hash_map : public std::hash_map<_Key,
+                                        _Value,
+                                        hash<_Key>,
+                                        equal_to<_Key> >
+  {};
+  
+  template<typename _Key>
+  class hash_set : public std::hash_set<_Key,
+                                        hash<_Key>,
+                                        equal_to<_Key> >
+  {};
+  
+  template<typename _Key, typename _Value>
+  class hash_multimap : public std::hash_multimap<_Key,
+                                                  _Value,
+                                                  hash<_Key>,
+                                                  equal_to<_Key> >
+  {};
 }
 #endif
 

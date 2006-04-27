@@ -1,3 +1,17 @@
+2006-04-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* hash_map.hh: Do things a little differently. Should make
+	instantiating different types of hash_map (like merkle_tree.hh does)
+	easier, slightly less dependent on the compiler/library. (Currently,
+	this should mostly be useful in the .visualc8 branch.)
+	* basic_io.hh cmd_list.hh rcs_file.cc rcs_import.cc unix/fs.cc: These
+	wouldn't compile with g++/stlport. Add includes, replace a
+	const_iterator with an iterator in rcs_import.cc
+	* database.cc interner.hh merkle_tree.hh vocab.cc xdelta.cc: Adjust
+	to match the new hash_map.
+	Compile-tested on g++ and g++ with stlport. Won't link when using
+	stlport, because my boost was compiled against g++'s normal stl.
+
 2006-04-26  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netsync.cc (serve_connections): Cycle through all results before

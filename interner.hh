@@ -11,13 +11,11 @@
 #include "hash_map.hh"
 #include "sanity.hh"
 
-
-
 template <typename T>
 struct 
 interner 
 {
-  typedef typename hashmap::string_hashmap<T> hmap;
+  typedef typename hashmap::hash_map<std::string, T> hmap;
 
   hmap fwd;
   std::vector<std::string> rev;

@@ -105,24 +105,26 @@ typedef std::tr1::unordered_map<std::pair<prefix,size_t>, merkle_ptr> merkle_tab
 */
 typedef std::pair<prefix,size_t> merkle_node_id;
 namespace hashmap {
-  struct merkle_node_id_hash_traits
+  template<>
+  struct hash<merkle_node_id>
   {
-    static const size_t bucket_size = 4;
-    static const size_t min_buckets = 8;
-    string_hash_traits sh;
+    hash<std::string> sh;
     size_t operator()(merkle_node_id const & m) const
     {
      return sh(m.first()) + m.second;
     }
-    bool operator()(merkle_node_id const & l,
-                    merkle_node_id const & r)
+  };
+  template<>
+  struct equal_to<merkle_node_id>
+  {
+    bool operator()(merkle_node_id const & a,
+                    merkle_node_id const & b) const
     {
-      return l.second == r.second && l.first == r.first;
+      return a.second == b.second && a.first == b.first;
     }
   };
 }
-typedef hashmap::hash_map<merkle_node_id, merkle_ptr,
-                          hashmap::merkle_node_id_hash_traits> merkle_table;
+typedef hashmap::hash_map<merkle_node_id, merkle_ptr> merkle_table;
 
 
 size_t prefix_length_in_bits(size_t level);
