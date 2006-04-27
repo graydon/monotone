@@ -1,10 +1,11 @@
 #include "cmd.hh"
 
-#include "revision.hh"
 #include "diff_patch.hh"
 #include "packet.hh"
-#include "transforms.hh"
 #include "restrictions.hh"
+#include "revision.hh"
+#include "transforms.hh"
+#include "work.hh"
 
 #include <map>
 using std::map;
@@ -66,13 +67,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
           return;
         }
 
-      vector<utf8> missing_args;
-      for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
-      {
-        L(FL("missing files are '%s'") % file_path(*i));
-        missing_args.push_back(file_path(*i).as_external());
-      }
-      app.set_restriction(valid_paths, missing_args);
+      app.set_restriction(valid_paths, missing);
     }
   else
     {

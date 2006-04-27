@@ -336,6 +336,7 @@ cpp_main(int argc, char ** argv)
 
             case OPT_QUIET:
               global_sanity.set_quiet();
+              ui.set_tick_writer(new tick_write_nothing);
               break;
 
             case OPT_NOSTD:
@@ -375,12 +376,12 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_TICKER:
-              if (string(argstr) == "dot")
+              if (string(argstr) == "none" || global_sanity.quiet)
+                ui.set_tick_writer(new tick_write_nothing);
+              else if (string(argstr) == "dot")
                 ui.set_tick_writer(new tick_write_dot);
               else if (string(argstr) == "count")
                 ui.set_tick_writer(new tick_write_count);
-              else if (string(argstr) == "none")
-                ui.set_tick_writer(new tick_write_nothing);
               else
                 requested_help = true;
               break;

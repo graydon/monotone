@@ -97,6 +97,8 @@ public:
 
   void set_restriction(path_set const & valid_paths, 
                        std::vector<utf8> const & paths);
+  void set_restriction(path_set const & valid_paths, 
+                       path_set const & paths);
   bool restriction_includes(split_path const & path);
 
   // Set the branch name.  If you only invoke set_branch, the branch

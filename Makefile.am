@@ -534,8 +534,8 @@ package_full_revision_raw.txt:
 # creates, and also make sure that the shell command exits
 # successfully; the rm -f ensures both
 	REAL_BLDDIR=$$PWD/$(top_builddir); \
-	(cd $(srcdir) && $$REAL_BLDDIR/mtn automate get_revision) 2>/dev/null >$@ \
-	|| (cd $(srcdir) && mtn automate get_revision) 2>/dev/null >$@ \
+	(cd $(srcdir) && $$REAL_BLDDIR/mtn --root=. automate get_revision) 2>/dev/null >$@ \
+	|| (cd $(srcdir) && mtn --root=. automate get_revision) 2>/dev/null >$@ \
 	|| rm -f $@
 # See above comment -- the file this depends on may or may not exist.
 # This file, however, must always exist, so that 'make dist' can
