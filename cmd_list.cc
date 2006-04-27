@@ -10,6 +10,7 @@
 
 #include <iostream>
 using std::cout;
+using std::sort;
 #include <utility>
 using std::pair;
 using std::set;
