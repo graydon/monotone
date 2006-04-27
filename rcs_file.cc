@@ -29,6 +29,7 @@
 #include "rcs_file.hh"
 #include "sanity.hh"
 
+#include <cstdio>
 
 #ifdef HAVE_MMAP
 struct 
