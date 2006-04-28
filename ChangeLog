@@ -1,5 +1,9 @@
 2006-04-27  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* std_hooks.lua: Remove default validate_commit_message hook.
+
+2006-04-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* hash_map.hh: Do things a little differently. Should make
 	instantiating different types of hash_map (like merkle_tree.hh does)
 	easier, slightly less dependent on the compiler/library. (Currently,
