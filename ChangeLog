@@ -1,3 +1,8 @@
+2006-04-28  Matthew Nicholson  <matt@matt-land.com>
+	
+	* tests/t_escaped_selectors.at: Added.  Tests escaped selectors.
+	* testsuite.at: Added t_escaped_selectors.at.
+
 2006-04-27  Matthew Nicholson  <matt@matt-land.com>
 
 	* selectors.cc (parse_selector): Change boost::char_separator to
