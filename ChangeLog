@@ -1,3 +1,11 @@
+2006-04-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc (query::query): Allow query to be constructed
+	without an initial SQL command.
+	* database.cc (database::complete): Replace use of boost::format
+	with query; building the query.sql_cmd as we go.  Fixes potential
+	SQL injection attacks.
+
 2006-04-28  Alex Queiroz  <alex@ventonegro.org>
 
 	* po/pt_BR.po: Translated even more strings.

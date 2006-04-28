@@ -96,8 +96,11 @@ namespace
 
 struct query
 {
-  query(std::string const & cmd)
+  explicit query(std::string const & cmd)
     : sql_cmd(cmd)
+  {}
+
+  query()
   {}
   
   query & operator %(query_param const & qp)
@@ -2262,10 +2265,11 @@ void database::complete(selector_type ty,
   // limit.  this is done by building an SQL select statement for each term
   // in the limit and then INTERSECTing them all.
 
-  string lim = "(";
+  query lim;
+  lim.sql_cmd = "(";
   if (limit.empty())
     {
-      lim += "SELECT id FROM revision_certs";
+      lim.sql_cmd += "SELECT id FROM revision_certs";
     }
   else
     {
@@ -2276,13 +2280,12 @@ void database::complete(selector_type ty,
           if (first_limit)
             first_limit = false;
           else
-            lim += " INTERSECT ";
+            lim.sql_cmd += " INTERSECT ";
           
           if (i->first == selectors::sel_ident)
             {
-              lim += "SELECT id FROM revision_certs ";
-              lim += (boost::format("WHERE id GLOB '%s*'") 
-                      % i->second).str();
+              lim.sql_cmd += "SELECT id FROM revision_certs WHERE id GLOB ?";
+              lim % text(i->second + "*");
             }
           else if (i->first == selectors::sel_cert)
             {
@@ -2298,28 +2301,23 @@ void database::complete(selector_type ty,
                       certname = i->second.substr(0, spot);
                       spot++;
                       certvalue = i->second.substr(spot);
-                      lim += "SELECT id FROM revision_certs ";
-                      lim += (boost::format("WHERE name='%s' AND CAST(value AS TEXT) glob '%s'")
-                              % certname % certvalue).str();
+                      lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
+                      lim % text(certname) % text(certvalue);
                     }
                   else
                     {
-                      lim += "SELECT id FROM revision_certs ";
-                      lim += (boost::format("WHERE name='%s'")
-                              % i->second).str();
+                      lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=?";
+                      lim % text(i->second);
                     }
 
                 }
             }
           else if (i->first == selectors::sel_unknown)
             {
-              lim += "SELECT id FROM revision_certs ";
-              lim += (boost::format(" WHERE (name='%s' OR name='%s' OR name='%s')")
-                      % author_cert_name 
-                      % tag_cert_name 
-                      % branch_cert_name).str();
-              lim += (boost::format(" AND CAST(value AS TEXT) glob '*%s*'")
-                      % i->second).str();     
+              lim.sql_cmd += "SELECT id FROM revision_certs WHERE (name=? OR name=? OR name=?)";
+              lim % text(author_cert_name) % text(tag_cert_name) % text(branch_cert_name);
+              lim.sql_cmd += " AND CAST(value AS TEXT) glob ?";
+              lim % text(i->second + "*");
             }
           else if (i->first == selectors::sel_head) 
             {
@@ -2332,10 +2330,10 @@ void database::complete(selector_type ty,
                 }
               else
                 {
-                  string subquery = (boost::format("SELECT DISTINCT value FROM revision_certs WHERE name='%s' and CAST(value AS TEXT) glob '%s'") 
-                                     % branch_cert_name % i->second).str();
+                  query subquery("SELECT DISTINCT value FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?");
+                  subquery % text(branch_cert_name) % text(i->second);
                   results res;
-                  fetch(res, one_col, any_rows, query(subquery));
+                  fetch(res, one_col, any_rows, subquery);
                   for (size_t i = 0; i < res.size(); ++i)
                     {
                       data row_decoded(res[i][0]);
@@ -2353,19 +2351,21 @@ void database::complete(selector_type ty,
                   L(FL("after get_branch_heads for %s, heads has %d entries\n") % (*bn) % heads.size());
                 }
 
-              lim += "SELECT id FROM revision_certs WHERE id IN (";
+              lim.sql_cmd += "SELECT id FROM revision_certs WHERE id IN (";
               if (heads.size())
                 {
                   set<revision_id>::const_iterator r = heads.begin();
-                  lim += (boost::format("'%s'") % r->inner()()).str();
+                  lim.sql_cmd += "?";
+                  lim % text(r->inner()());
                   r++;
                   while (r != heads.end())
                     {
-                      lim += (boost::format(", '%s'") % r->inner()()).str();
+                      lim.sql_cmd += ", ?";
+                      lim % text(r->inner()());
                       r++;
                     }
                 }
-              lim += ") ";
+              lim.sql_cmd += ") ";
             }
           else
             {
@@ -2377,24 +2377,27 @@ void database::complete(selector_type ty,
               if ((i->first == selectors::sel_branch) && (i->second.size() == 0))
                 {
                   __app->require_workspace("the empty branch selector b: refers to the current branch");
-                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND CAST(value AS TEXT) glob '%s'")
-                          % branch_cert_name % __app->branch_name).str();
+                  lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
+                  lim % text(branch_cert_name) % text(__app->branch_name());
                   L(FL("limiting to current branch '%s'\n") % __app->branch_name);
                 }
               else
                 {
-                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND ") % certname).str();
+                  lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND ";
+                  lim % text(certname);
                   switch (i->first)
                     {
                     case selectors::sel_earlier:
-                      lim += (boost::format("value <= X'%s'") % encode_hexenc(i->second)).str();
+                      lim.sql_cmd += "value <= ?";
+                      lim % blob(i->second);
                       break;
                     case selectors::sel_later:
-                      lim += (boost::format("value > X'%s'") % encode_hexenc(i->second)).str();
+                      lim.sql_cmd += "value > ?";
+                      lim % blob(i->second);
                       break;
                     default:
-                      lim += (boost::format("CAST(value AS TEXT) glob '%s%s%s'")
-                              % prefix % i->second % suffix).str();
+                      lim.sql_cmd += "CAST(value AS TEXT) glob ?";
+                      lim % text(prefix + i->second + suffix);
                       break;
                     }
                 }
@@ -2402,45 +2405,40 @@ void database::complete(selector_type ty,
           //L(FL("found selector type %d, selecting_head is now %d\n") % i->first % selecting_head);
         }
     }
-  lim += ")";
+  lim.sql_cmd += ")";
   
   // step 2: depending on what we've been asked to disambiguate, we
   // will complete either some idents, or cert values, or "unknown"
   // which generally means "author, tag or branch"
 
-  string query_str;
   if (ty == selectors::sel_ident)
     {
-      query_str = (boost::format("SELECT id FROM %s") % lim).str();
+      lim.sql_cmd = "SELECT id FROM " + lim.sql_cmd;
     }
   else 
     {
       string prefix = "*";
       string suffix = "*";
-      query_str = "SELECT value FROM revision_certs WHERE";
+      lim.sql_cmd = "SELECT value FROM revision_certs WHERE";
       if (ty == selectors::sel_unknown)
         {               
-          query_str += 
-            (boost::format(" (name='%s' OR name='%s' OR name='%s')")
-             % author_cert_name 
-             % tag_cert_name 
-             % branch_cert_name).str();
+          lim.sql_cmd += " (name=? OR name=? OR name=?)";
+          lim % text(author_cert_name) % text(tag_cert_name) % text(branch_cert_name);
         }
       else
         {
           string certname;
           selector_to_certname(ty, certname, prefix, suffix);
-          query_str += 
-            (boost::format(" (name='%s')") % certname).str();
+          lim.sql_cmd += " (name=?)";
+          lim % text(certname);
         }
         
-      query_str += (boost::format(" AND (CAST(value AS TEXT) GLOB '%s%s%s')")
-                % prefix % partial % suffix).str();
-      query_str += (boost::format(" AND (id IN %s)") % lim).str();
+      lim.sql_cmd += " AND (CAST(value AS TEXT) GLOB ?) AND (id IN " + lim.sql_cmd + ")";
+      lim % text(prefix + partial + suffix);
     }
 
   results res;
-  fetch(res, one_col, any_rows, query(query_str));
+  fetch(res, one_col, any_rows, lim);
   for (size_t i = 0; i < res.size(); ++i)
     {
       if (ty == selectors::sel_ident) 
