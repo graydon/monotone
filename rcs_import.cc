@@ -17,6 +17,7 @@
 #include <vector>
 
 #include <unistd.h>
+#include <cstdio>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -1082,7 +1083,7 @@ import_branch(cvs_history & cvs,
       // have passed the window size
       while (!clusters.empty())
         {
-          cluster_set::const_iterator j = clusters.begin();
+          cluster_set::iterator j = clusters.begin();
           if ((*j)->first_time + constants::cvs_window < i->time)
             {
               L(FL("expiring cluster\n"));

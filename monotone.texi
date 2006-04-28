@@ -3372,9 +3372,17 @@ $ mtn --db=test.mtn --branch=net.example.wobbler checkout wobber-checkout
 @node    Using packets
 @section Using packets
 
+Suppose you made changes to your database, and want to send those
+changes to someone else but for some reason you cannot use netsync.  Or
+maybe you want to extract and inject individual revisions automatically
+via an external program. In this case, you can convert the information
+into packets. Packets are a convenient way to represent revisions and
+other database contents as plain text with wrapped lines -- just what
+you need if you want to send them in the body of an email.
+
 This is a tutorial on how to transfer single revisions between
 databases by dumping them from one database to a text file and then
-reading the dump in a second database.
+reading the dump into a second database.
 
 We will create two databases, A and B, then create a few revisions in
 A, and transfer part of them to B.
@@ -3543,7 +3551,7 @@ Done.
 $ mtn -d B co -b test test-B
 $ ls test-B
 file2  _MTN  x
-more test-B/file2
+$ more test-B/file2
 file 2 getting in
 @end group
 @end smallexample
