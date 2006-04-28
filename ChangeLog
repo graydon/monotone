@@ -12,6 +12,19 @@
 	Compile-tested on g++ and g++ with stlport. Won't link when using
 	stlport, because my boost was compiled against g++'s normal stl.
 
+2006-04-27  Daniel Carosone  <dan@geek.com.au>
+	* monotone.texi: add a missing $ to a packet example, and an
+	introductory paragraph to the section. From Jeronimo Pellegrini,
+	with minor wording tweaks.
+
+2006-04-27  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Translated more strings.
+
+2006-04-27  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* cmd_list.cc: missing using std::sort; broke build with stlport4
+
 2006-04-26  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netsync.cc (serve_connections): Cycle through all results before
