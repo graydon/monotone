@@ -113,37 +113,50 @@ namespace hashmap {
 
 namespace hashmap 
 {
-	using stdext::hash_map;
-	using stdext::hash_set;
-	using stdext::hash_multimap;
+  template<>
+  struct hash<std::string>
+  {
+    size_t operator()(std::string const & s) const
+    {
+      const char* s2=s.c_str();
+      unsigned long h = 0;
+      for ( ; *s2; ++s2)
+        h = 5*h + *s2;
+      return size_t(h);
+    }
+  };
 
-	struct string_hash_traits
-	{
-		static const size_t bucket_size = 4;
-		static const size_t min_buckets = 8;
+  template<typename _T>
+  struct hash_traits
+  {
+    static const size_t bucket_size = 4;
+    static const size_t min_buckets = 8;
+    equal_to<_T> eq;
+    hash<_T> h;
 
-		size_t operator( )(std::string const & s) const
-		{
-			const char* s2=s.c_str();
-			unsigned long h = 0;
-			for ( ; *s2; ++s2)
-				h = 5*h + *s2;
-			return size_t(h);			
-		}
-		bool operator( )(std::string const & a,
-						 std::string const & b) const
-		{
-			return a < b;
-		}
-	};
-  template <typename V> struct string_hashmap 
-	 : public hash_map<std::string, V, string_hash_traits>
+    size_t operator( )(_T const & s) const
+    {
+      return h(s);		
+    }
+    bool operator( )(_T const & a,
+                     _T const & b) const
+    {
+      return eq(a, b);
+    }
+  };
+  template <typename _Key, typename _Value>
+  struct hash_map : public stdext::hash_map<_Key,
+                                            _Value,
+                                            hash_traits<_Key> >
   {};
-  template <typename V> struct string_hashmultimap 
-	 : public hash_multimap<std::string, V, string_hash_traits>
+  template <typename _Key, typename _Value>
+  struct hash_multimap : public stdext::hash_multimap<_Key,
+                                                      _Value,
+                                                      hash_traits<_Key> >
   {};
-  struct string_hashset
-	  : public hash_set<std::string, string_hash_traits>
+  template <typename _Key>
+  struct hash_set : public stdext::hash_set<_Key,
+                                            hash_traits<_Key> >
   {};
 }
 #endif
