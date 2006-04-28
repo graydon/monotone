@@ -1,3 +1,7 @@
+2006-04-28  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Translated even more strings.
+
 2006-04-27  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* hash_map.hh: Do things a little differently. Should make
