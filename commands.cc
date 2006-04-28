@@ -246,12 +246,12 @@ maybe_update_inodeprints(app_state & app)
   if (!in_inodeprints_mode())
     return;
   inodeprint_map ipm_new;
-  revision_set rev;
-  roster_t old_roster, new_roster;
   temp_node_id_source nis;
-  get_unrestricted_working_revision_and_rosters(app, rev,
-                                                old_roster, new_roster, nis);
-  
+  roster_t old_roster, new_roster;
+
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  update_current_roster_from_filesystem(new_roster, app);
+
   node_map const & new_nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
     {

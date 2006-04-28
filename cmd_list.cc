@@ -308,33 +308,37 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_known (app_state & app, vector<utf8> const & args)
+ls_known(app_state & app, vector<utf8> const & args)
 {
-  revision_set rs;
   roster_t old_roster, new_roster;
-  data tmp;
   temp_node_id_source nis;
 
   app.require_workspace();
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  path_set paths;
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, nis);
-  new_roster.extract_path_set(paths);
-  
-  for (path_set::const_iterator p = paths.begin(); p != paths.end(); ++p)
+  restriction mask(args, app.exclude_patterns, new_roster, app);
+
+  node_map const & nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
     {
-      if (app.restriction_includes(*p))
-        cout << file_path(*p) << "\n";
+      node_id nid = i->first;
+
+      if (!new_roster.is_root(nid) && mask.includes(new_roster, nid))
+        {
+          split_path sp;
+          new_roster.get_name(nid, sp);
+          cout << file_path(sp) << "\n";
+        }
     }
 }
 
 static void
-ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & args)
+ls_unknown_or_ignored(app_state & app, bool want_ignored, vector<utf8> const & args)
 {
   app.require_workspace();
 
   path_set unknown, ignored;
-  find_unknown_and_ignored(app, want_ignored, args, unknown, ignored);
+  find_unknown_and_ignored(app, args, unknown, ignored);
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin(); i != ignored.end(); ++i)
@@ -345,7 +349,7 @@ ls_unknown_or_ignored (app_state & app, bool want_ignored, vector<utf8> const & 
 }
 
 static void
-ls_missing (app_state & app, vector<utf8> const & args)
+ls_missing(app_state & app, vector<utf8> const & args)
 {
   path_set missing;
   find_missing(app, args, missing);
@@ -358,51 +362,61 @@ ls_missing (app_state & app, vector<utf8> const & args)
 
 
 static void
-ls_changed (app_state & app, vector<utf8> const & args)
+ls_changed(app_state & app, vector<utf8> const & args)
 {
-  revision_set rs;
-  revision_id rid;
   roster_t old_roster, new_roster;
-  data tmp;
+  cset included, excluded;
   std::set<file_path> files;
   temp_node_id_source nis;
 
   app.require_workspace();
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, nis);
 
-  I(rs.edges.size() == 1);
-  cset const & cs = edge_changes(rs.edges.begin());
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  for (path_set::const_iterator i = cs.nodes_deleted.begin();
-       i != cs.nodes_deleted.end(); ++i)
+  restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+      
+  update_current_roster_from_filesystem(new_roster, mask, app);
+  make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+  check_restricted_cset(old_roster, included);
+
+  // FIXME: this would probably be better as a function of roster.cc
+  // set<node_id> nodes;
+  // select_nodes_modified_by_cset(included, old_roster, new_roster, nodes);
+
+  for (path_set::const_iterator i = included.nodes_deleted.begin();
+       i != included.nodes_deleted.end(); ++i)
     {
-      if (app.restriction_includes(*i))
+      if (mask.includes(*i))
         files.insert(file_path(*i));
     }
-  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
-       i != cs.nodes_renamed.end(); ++i)
+  for (std::map<split_path, split_path>::const_iterator 
+         i = included.nodes_renamed.begin();
+       i != included.nodes_renamed.end(); ++i)
     {
-      if (app.restriction_includes(i->first))
+      // FIXME: is reporting the old name the "right" thing to do?
+      if (mask.includes(i->first))
         files.insert(file_path(i->first));
     }
-  for (path_set::const_iterator i = cs.dirs_added.begin();
-       i != cs.dirs_added.end(); ++i)
+  for (path_set::const_iterator i = included.dirs_added.begin();
+       i != included.dirs_added.end(); ++i)
     {
-      if (app.restriction_includes(*i))
+      if (mask.includes(*i))
         files.insert(file_path(*i));
     }
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-       i != cs.files_added.end(); ++i)
+  for (std::map<split_path, file_id>::const_iterator i = included.files_added.begin();
+       i != included.files_added.end(); ++i)
     {
-      if (app.restriction_includes(i->first))
+      if (mask.includes(i->first))
         files.insert(file_path(i->first));
     }
   for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator
-         i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
+         i = included.deltas_applied.begin(); i != included.deltas_applied.end(); 
+       ++i)
     {
-      if (app.restriction_includes(i->first))
+      if (mask.includes(i->first))
         files.insert(file_path(i->first));
     }
+  // FIXME: should attr changes count?
 
   copy(files.begin(), files.end(),
        std::ostream_iterator<const file_path>(cout, "\n"));

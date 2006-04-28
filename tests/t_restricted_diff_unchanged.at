@@ -1,11 +1,6 @@
 AT_SETUP([diff -rREV1 -rREV2 UNCHANGED-FILE])
 MTN_SETUP
 
-# This test is a bug report.  The problem appears to be in
-# calculated_restricted_change_set, as called by do_diffs; it passes a
-# very sparse valid_paths argument to app.set_restriction.
-AT_XFAIL_IF(true)
-
 ADD_FILE(testfile, [blah blah
 ])
 ADD_FILE(otherfile, [foo bar
@@ -18,6 +13,15 @@ SET_FILE(otherfile, [stuff stuff
 COMMIT(testbranch)
 R2=`BASE_REVISION`
 
-AT_CHECK(MTN diff -r$R1 -r$R2 testfile, [], [], [ignore])
+AT_CHECK(MTN diff -r$R1 -r$R2 testfile, [], [stdout], [ignore])
+AT_CHECK(grep 'no changes' stdout, [0], [ignore], [ignore])
+AT_CHECK(grep testfile  stdout, [1], [ignore], [ignore])
+AT_CHECK(grep otherfile stdout, [1], [ignore], [ignore])
+
+AT_CHECK(MTN diff -r$R1 -r$R2, [], [stdout], [ignore])
+AT_CHECK(grep testfile  stdout, [1], [ignore], [ignore])
+AT_CHECK(grep otherfile stdout, [0], [ignore], [ignore])
+
+AT_CHECK(MTN diff -r$R1 -r$R2 badfile, [1], [ignore], [ignore])
 
 AT_CLEANUP
