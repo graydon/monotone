@@ -2,6 +2,13 @@
 
 	* po/pt_BR.po: Translated more strings.
 
+2006-04-28  Graydon Hoare  <graydon@pobox.com>
+
+	* contrib/color-logs.sh: Update to 'mtn'.
+	* enumerator.{cc,hh}: Expose parent map, cache certs.
+	* netsync.cc: Use caches in enumerator and refiners.
+	* refiner.hh (local_item_exists): New helper.
+
 2006-04-28  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* database.cc (query::query): Allow query to be constructed

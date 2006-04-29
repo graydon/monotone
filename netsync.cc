@@ -433,6 +433,12 @@ session:
 
   // Various helpers.
   void respond_to_confirm_cmd();
+  bool data_exists(netcmd_item_type type, 
+                   id const & item);
+  void load_data(netcmd_item_type type,
+                 id const & item,
+                 string & out);
+
   void rebuild_merkle_trees(app_state & app,
                             set<utf8> const & branches);
 
@@ -1686,110 +1692,91 @@ session::respond_to_confirm_cmd()
   epoch_refiner.begin_refinement();
 }
 
-static bool 
-data_exists(netcmd_item_type type, 
-            id const & item, 
-            app_state & app)
+bool 
+session::data_exists(netcmd_item_type type, 
+                     id const & item)
 {
   hexenc<id> hitem;
   encode_hexenc(item, hitem);
   switch (type)
     {
     case key_item:
-      return app.db.public_key_exists(hitem);
+      return key_refiner.local_item_exists(item) 
+        || app.db.public_key_exists(hitem);
     case file_item:
       return app.db.file_version_exists(file_id(hitem));
     case revision_item:
-      return app.db.revision_exists(revision_id(hitem));
+      return rev_refiner.local_item_exists(item) 
+        || app.db.revision_exists(revision_id(hitem));
     case cert_item:
-      return app.db.revision_cert_exists(hitem);
+      return cert_refiner.local_item_exists(item) 
+        || app.db.revision_cert_exists(hitem);
     case epoch_item:
-      return app.db.epoch_exists(epoch_id(hitem));
+      return epoch_refiner.local_item_exists(item) 
+        || app.db.epoch_exists(epoch_id(hitem));
     }
   return false;
 }
 
-static void 
-load_data(netcmd_item_type type, 
-          id const & item, 
-          app_state & app, 
-          string & out)
+void 
+session::load_data(netcmd_item_type type, 
+                   id const & item, 
+                   string & out)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   hexenc<id> hitem;
   encode_hexenc(item, hitem);
+
+  if (!data_exists(type, item))
+    throw bad_decode(F("%s with hash '%s' does not exist in our database")
+                     % typestr % hitem);
+
   switch (type)
     {
     case epoch_item:
-      if (app.db.epoch_exists(epoch_id(hitem)))
       {
         cert_value branch;
         epoch_data epoch;
         app.db.get_epoch(epoch_id(hitem), branch, epoch);
         write_epoch(branch, epoch, out);
       }
-      else
-        {
-          throw bad_decode(F("epoch with hash '%s' does not exist in our database")
-                           % hitem);
-        }
       break;
     case key_item:
-      if (app.db.public_key_exists(hitem))
-        {
-          rsa_keypair_id keyid;
-          base64<rsa_pub_key> pub_encoded;
-          app.db.get_pubkey(hitem, keyid, pub_encoded);
-          L(FL("public key '%s' is also called '%s'\n") % hitem % keyid);
-          write_pubkey(keyid, pub_encoded, out);
-        }
-      else
-        {
-          throw bad_decode(F("no public key '%s' found in database") % hitem);
-        }
+      {
+        rsa_keypair_id keyid;
+        base64<rsa_pub_key> pub_encoded;
+        app.db.get_pubkey(hitem, keyid, pub_encoded);
+        L(FL("public key '%s' is also called '%s'\n") % hitem % keyid);
+        write_pubkey(keyid, pub_encoded, out);
+      }
       break;
 
     case revision_item:
-      if (app.db.revision_exists(revision_id(hitem)))
-        {
-          revision_data mdat;
-          data dat;
-          app.db.get_revision(revision_id(hitem), mdat);
-          out = mdat.inner()();
-        }
-      else
-        {
-          throw bad_decode(F("revision '%s' does not exist in our database") % hitem);
-        }
+      {
+        revision_data mdat;
+        data dat;
+        app.db.get_revision(revision_id(hitem), mdat);
+        out = mdat.inner()();
+      }
       break;
-
+      
     case file_item:
-      if (app.db.file_version_exists(file_id(hitem)))
-        {
-          file_data fdat;
-          data dat;
-          app.db.get_file_version(file_id(hitem), fdat);
-          out = fdat.inner()();
-        }
-      else
-        {
-          throw bad_decode(F("file '%s' does not exist in our database") % hitem);
-        }
+      {
+        file_data fdat;
+        data dat;
+        app.db.get_file_version(file_id(hitem), fdat);
+        out = fdat.inner()();
+      }
       break;
 
     case cert_item:
-      if (app.db.revision_cert_exists(hitem))
-        {
-          revision<cert> c;
-          app.db.get_revision_cert(hitem, c);
-          string tmp;
-          write_cert(c.inner(), out);
-        }
-      else
-        {
-          throw bad_decode(F("cert '%s' does not exist in our database") % hitem);
-        }
+      {
+        revision<cert> c;
+        app.db.get_revision_cert(hitem, c);
+        string tmp;
+        write_cert(c.inner(), out);
+      }
       break;
     }
 }
@@ -1802,113 +1789,97 @@ session::process_data_cmd(netcmd_item_type type,
   hexenc<id> hitem;
   encode_hexenc(item, hitem);
 
+  string typestr;
+  netcmd_item_type_to_string(type, typestr);
+
   note_item_arrived(type, item);
+  if (data_exists(type, item))
+    {
+      L(FL("%s '%s' already exists in our database\n") % typestr % hitem);
+      return true;
+    }
 
   switch (type)
     {
     case epoch_item:
-      if (this->app.db.epoch_exists(epoch_id(hitem)))
-        {
-          L(FL("epoch '%s' already exists in our database\n") % hitem);
-        }
-      else
-        {
-          cert_value branch;
-          epoch_data epoch;
-          read_epoch(dat, branch, epoch);
-          L(FL("received epoch %s for branch %s\n") % epoch % branch);
-          std::map<cert_value, epoch_data> epochs;
-          app.db.get_epochs(epochs);
-          std::map<cert_value, epoch_data>::const_iterator i;
-          i = epochs.find(branch);
-          if (i == epochs.end())
-            {
-              L(FL("branch %s has no epoch; setting epoch to %s\n") % branch % epoch);
-              app.db.set_epoch(branch, epoch);
-            }
-          else
-            {
-              L(FL("branch %s already has an epoch; checking\n") % branch);
-              // If we get here, then we know that the epoch must be
-              // different, because if it were the same then the
-              // if (epoch_exists()) branch up above would have been taken.
-              // if somehow this is wrong, then we have broken epoch
-              // hashing or something, which is very dangerous, so play it
-              // safe...
-              I(!(i->second == epoch));
-
-              // It is safe to call 'error' here, because if we get here,
-              // then the current netcmd packet cannot possibly have
-              // written anything to the database.
-              error((F("Mismatched epoch on branch %s."
-                       " Server has '%s', client has '%s'.")
-                     % branch
-                     % (voice == server_voice ? i->second : epoch)
-                     % (voice == server_voice ? epoch : i->second)).str());
-            }
-        }
+      {
+        cert_value branch;
+        epoch_data epoch;
+        read_epoch(dat, branch, epoch);
+        L(FL("received epoch %s for branch %s\n") % epoch % branch);
+        std::map<cert_value, epoch_data> epochs;
+        app.db.get_epochs(epochs);
+        std::map<cert_value, epoch_data>::const_iterator i;
+        i = epochs.find(branch);
+        if (i == epochs.end())
+          {
+            L(FL("branch %s has no epoch; setting epoch to %s\n") % branch % epoch);
+            app.db.set_epoch(branch, epoch);
+          }
+        else
+          {
+            L(FL("branch %s already has an epoch; checking\n") % branch);
+            // If we get here, then we know that the epoch must be
+            // different, because if it were the same then the
+            // if (epoch_exists()) branch up above would have been taken.
+            // if somehow this is wrong, then we have broken epoch
+            // hashing or something, which is very dangerous, so play it
+            // safe...
+            I(!(i->second == epoch));
+            
+            // It is safe to call 'error' here, because if we get here,
+            // then the current netcmd packet cannot possibly have
+            // written anything to the database.
+            error((F("Mismatched epoch on branch %s."
+                     " Server has '%s', client has '%s'.")
+                   % branch
+                   % (voice == server_voice ? i->second : epoch)
+                   % (voice == server_voice ? epoch : i->second)).str());
+          }
+      }
       maybe_note_epochs_finished();
       break;
       
     case key_item:
-      if (this->app.db.public_key_exists(hitem))
-        L(FL("public key '%s' already exists in our database\n")  % hitem);
-      else
-        {
-          rsa_keypair_id keyid;
-          base64<rsa_pub_key> pub;
-          read_pubkey(dat, keyid, pub);
-          hexenc<id> tmp;
-          key_hash_code(keyid, pub, tmp);
-          if (! (tmp == hitem))
-            throw bad_decode(F("hash check failed for public key '%s' (%s);"
-                               " wanted '%s' got '%s'")  
-                             % hitem % keyid % hitem % tmp);
-          this->dbw.consume_public_key(keyid, pub);
-        }
+      {
+        rsa_keypair_id keyid;
+        base64<rsa_pub_key> pub;
+        read_pubkey(dat, keyid, pub);
+        hexenc<id> tmp;
+        key_hash_code(keyid, pub, tmp);
+        if (! (tmp == hitem))
+          throw bad_decode(F("hash check failed for public key '%s' (%s);"
+                             " wanted '%s' got '%s'")  
+                           % hitem % keyid % hitem % tmp);
+        this->dbw.consume_public_key(keyid, pub);
+      }
       break;
 
     case cert_item:
-      if (this->app.db.revision_cert_exists(hitem))
-        L(FL("cert '%s' already exists in our database\n")  % hitem);
-      else
-        {
-          cert c;
-          read_cert(dat, c);
-          hexenc<id> tmp;
-          cert_hash_code(c, tmp);
-          if (! (tmp == hitem))
-            throw bad_decode(F("hash check failed for revision cert '%s'")  % hitem);
-          this->dbw.consume_revision_cert(revision<cert>(c));
-        }
+      {
+        cert c;
+        read_cert(dat, c);
+        hexenc<id> tmp;
+        cert_hash_code(c, tmp);
+        if (! (tmp == hitem))
+          throw bad_decode(F("hash check failed for revision cert '%s'")  % hitem);
+        this->dbw.consume_revision_cert(revision<cert>(c));
+      }
       break;
 
     case revision_item:
       {
-        revision_id rid(hitem);
-        if (this->app.db.revision_exists(rid))
-          L(FL("revision '%s' already exists in our database\n") % hitem);
-        else
-          {
-            L(FL("received revision '%s'\n") % hitem);
-            this->dbw.consume_revision_data(rid, revision_data(dat));
-          }
+        L(FL("received revision '%s'\n") % hitem);
+        this->dbw.consume_revision_data(revision_id(hitem), revision_data(dat));
       }
       break;
-
+      
     case file_item:
       {
-        file_id fid(hitem);
-        if (this->app.db.file_version_exists(fid))
-          L(FL("file version '%s' already exists in our database\n") % hitem);
-        else
-          {
-            L(FL("received file '%s'\n") % hitem);
-            this->dbw.consume_file_data(fid, file_data(dat));
-          }
+        L(FL("received file '%s'\n") % hitem);
+        this->dbw.consume_file_data(file_id(hitem), file_data(dat));
       }
       break;
-
     }
   return true;
 }
@@ -1980,10 +1951,10 @@ session::send_all_data(netcmd_item_type ty, set<id> const & items)
       hexenc<id> hitem;
       encode_hexenc(*i, hitem);
 
-      if (data_exists(ty, *i, this->app))
+      if (data_exists(ty, *i))
         {
           string out;
-          load_data(ty, *i, this->app, out);
+          load_data(ty, *i, out);
           queue_data_cmd(ty, *i, out);
         }
     }
@@ -2767,6 +2738,7 @@ serve_connections(protocol_role role,
 void
 insert_with_parents(revision_id rev, 
                     refiner & ref, 
+                    revision_enumerator & rev_enumerator,
                     set<revision_id> & revs,
                     app_state & app, 
                     ticker & revisions_ticker)
@@ -2785,9 +2757,9 @@ insert_with_parents(revision_id rev,
           id rev_item;
           decode_hexenc(rid.inner(), rev_item);
           ref.note_local_item(rev_item);
-          std::set<revision_id> parents;
-          app.db.get_revision_parents(rid, parents);
-          for (std::set<revision_id>::const_iterator i = parents.begin();
+          std::vector<revision_id> parents;
+          rev_enumerator.get_revision_parents(rid, parents);
+          for (std::vector<revision_id>::const_iterator i = parents.begin();
                i != parents.end(); ++i)
             {
               work.push_back(*i);
@@ -2831,14 +2803,16 @@ session::rebuild_merkle_trees(app_state & app,
             for (vector< revision<cert> >::const_iterator j = certs.begin();
                  j != certs.end(); j++)
               {
-                insert_with_parents(revision_id(j->inner().ident),
-                                    rev_refiner, revision_ids, app, revisions_ticker);
+                revision_id rid(j->inner().ident);
+                insert_with_parents(rid, rev_refiner, rev_enumerator, 
+                                    revision_ids, app, revisions_ticker);
                 // Granch certs go in here, others later on.
                 hexenc<id> tmp;
                 id item;
                 cert_hash_code(j->inner(), tmp);
                 decode_hexenc(tmp, item);
                 cert_refiner.note_local_item(item);
+                rev_enumerator.note_cert(rid, tmp);
                 if (inserted_keys.find(j->inner().key) == inserted_keys.end())
                     inserted_keys.insert(j->inner().key);
               }
@@ -2883,7 +2857,7 @@ session::rebuild_merkle_trees(app_state & app,
     
     cert_idx idx;
     app.db.get_revision_cert_nobranch_index(idx);
-    
+
     // Insert all non-branch certs reachable via these revisions
     // (branch certs were inserted earlier).
 
@@ -2892,6 +2866,8 @@ session::rebuild_merkle_trees(app_state & app,
         hexenc<id> const & hash = i->first;
         revision_id const & ident = i->second.first;
         rsa_keypair_id const & key = i->second.second;
+
+        rev_enumerator.note_cert(ident, hash);
         
         if (revision_ids.find(ident) == revision_ids.end())
           continue;

@@ -78,6 +78,11 @@ public:
   void begin_refinement();
   void process_done_command(size_t n_items);
   void process_refinement_command(refinement_type ty, merkle_node const & their_node);
+  bool local_item_exists(id const & ident) 
+  { 
+    return local_items.find(ident) != local_items.end(); 
+  }
+
 
   // These are populated as the 'done' packets arrive.
   bool done;
