@@ -9,6 +9,7 @@
 #include <deque>
 #include <map>
 #include <set>
+#include <vector>
 
 #include "app_state.hh"
 #include "vocab.hh"
@@ -54,6 +55,14 @@ revision_enumerator
   std::deque<enumerator_item> items;
   std::multimap<revision_id, revision_id> graph;
   std::multimap<revision_id, revision_id> inverse_graph;
+  std::multimap<revision_id, hexenc<id> >  revision_certs;
+
+  void note_cert(revision_id const & rid,
+		 hexenc<id> const & cert_hash);
+  void get_revision_certs(revision_id const & rid,
+			  std::vector<hexenc<id> > & certs);
+  void get_revision_parents(revision_id const & rid,
+			    std::vector<revision_id> & parents);
 
   revision_enumerator(enumerator_callbacks & cb,
                       app_state & app,
