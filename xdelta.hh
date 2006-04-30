@@ -38,5 +38,8 @@ void apply_delta(boost::shared_ptr<delta_applicator> da,
                  std::string const & delta);
 
 u64 measure_delta_target_size(std::string const & delta);
+void invert_xdelta(std::string const & old_str,
+		   std::string const & delta,
+		   std::string & delta_inverse);
 
 #endif // __XDELTA_HH__
