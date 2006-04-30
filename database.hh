@@ -247,6 +247,10 @@ public:
                         file_id const & new_id,
                         file_delta const & del);
 
+  void get_arbitrary_file_delta(file_id const & src_id,
+                                file_id const & dst_id,
+                                file_delta & del);
+
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist). 
   void get_manifest_version(manifest_id const & id,

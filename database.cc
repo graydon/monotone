@@ -1180,7 +1180,16 @@ database::put_version(hexenc<id> const & old_id,
   
   get_version(old_id, old_data, data_table, delta_table);
   patch(old_data, del, new_data);
-  diff(new_data, old_data, reverse_delta);
+  {
+    string tmp;
+    invert_xdelta(old_data(), del(), tmp);
+    reverse_delta = delta(tmp);
+    data old_tmp;
+    hexenc<id> old_tmp_id;
+    patch(new_data, reverse_delta, old_tmp);
+    calculate_ident(old_tmp, old_tmp_id);
+    I(old_tmp_id == old_id);
+  }
       
   transaction_guard guard(*this);
   if (exists(old_id, data_table))
@@ -1404,6 +1413,56 @@ database::put_file_version(file_id const & old_id,
   put_version(old_id.inner(), new_id.inner(), del.inner(), 
               "files", "file_deltas");
 }
+
+void 
+database::get_arbitrary_file_delta(file_id const & src_id,
+                                   file_id const & dst_id,
+                                   file_delta & del)
+{
+  delta dtmp;
+  // Deltas stored in the database go from base -> id.
+  results res;
+  query q1("SELECT delta FROM file_deltas "
+           "WHERE base = ? AND id = ?");
+  fetch(res, one_col, any_rows, 
+        q1 % text(src_id.inner()()) % text(dst_id.inner()()));
+
+  if (!res.empty())
+    {
+      // Exact hit: a plain delta from src -> dst.
+      gzip<delta> del_packed(res[0][0]);
+      decode_gzip(del_packed, dtmp);
+      del = file_delta(dtmp);
+      return;
+    }
+
+  query q2("SELECT delta FROM file_deltas "
+           "WHERE id = ? AND base = ?");
+  fetch(res, one_col, any_rows, 
+        q2 % text(dst_id.inner()()) % text(src_id.inner()()));
+
+  if (!res.empty())
+    {
+      // We have a delta from dst -> src; we need to 
+      // invert this to a delta from src -> dst.
+      gzip<delta> del_packed(res[0][0]);
+      decode_gzip(del_packed, dtmp);
+      string fwd_delta;
+      file_data dst;
+      get_file_version(dst_id, dst);
+      invert_xdelta(dst.inner()(), dtmp(), fwd_delta);
+      del = file_delta(fwd_delta);
+      return;
+    }
+  
+  // No deltas of use; just load both versions and diff.
+  file_data fd1, fd2;
+  get_file_version(src_id, fd1);
+  get_file_version(dst_id, fd2);
+  diff(fd1.inner(), fd2.inner(), dtmp);
+  del = file_delta(dtmp);
+}
+
 
 void 
 database::get_revision_ancestry(std::multimap<revision_id, revision_id> & graph)

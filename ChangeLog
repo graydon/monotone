@@ -1,3 +1,11 @@
+2006-04-30  Graydon Hoare  <graydon@pobox.com>
+
+	* xdelta.{cc,hh} (invert_xdelta): New function.
+	* database.{cc,hh} (database::get_arbitrary_file_delta): Add.
+	(database::put_file_version): Use invert_xdelta.
+	* netsync.cc (session::note_file_delta): 
+	Use get_arbitrary_file_delta.
+
 2006-04-29  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Updated a fuzzy.

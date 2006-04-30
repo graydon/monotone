@@ -614,15 +614,12 @@ session::note_file_delta(file_id const & src, file_id const & dst)
 {
   if (role == sink_role)
     return;
-  file_data fd1, fd2;
-  delta del;
+  file_delta fdel;
   id fid1, fid2;
   decode_hexenc(src.inner(), fid1);
   decode_hexenc(dst.inner(), fid2);  
-  app.db.get_file_version(src, fd1);
-  app.db.get_file_version(dst, fd2);
-  diff(fd1.inner(), fd2.inner(), del);
-  queue_delta_cmd(file_item, fid1, fid2, del);
+  app.db.get_arbitrary_file_delta(src, dst, fdel);
+  queue_delta_cmd(file_item, fid1, fid2, fdel.inner());
   file_items_sent.insert(dst);
 }
 
