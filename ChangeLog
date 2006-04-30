@@ -12,8 +12,8 @@
 
 2006-04-29  Matt Johnston  <matt@ucc.asn.au>
 
-    * vocab.hh: removing superfluous string("") constructor shrinks mtn
-    binary by >100kB (from Benoît Dejean)
+	* vocab.hh: removing superfluous string("") constructor shrinks mtn
+	binary by >100kB (from Benoît Dejean)
 
 2006-04-28  Alex Queiroz  <alex@ventonegro.org>
 
