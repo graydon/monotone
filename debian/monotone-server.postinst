@@ -23,7 +23,7 @@ set -e
 # source debconf stuff
 . /usr/share/debconf/confmodule
 
-MONOTONE=/usr/bin/mtn
+MTN=/usr/bin/mtn
 
 case "$1" in
     configure)
@@ -88,7 +88,7 @@ case "$1" in
               # if there is no database, create one
               if [ ! -e $MTN_DB ]; then
                   echo "Creating Monotone database..." >&2
-                  $MONOTONE --db=$MTN_DB db init \
+                  $MTN --db=$MTN_DB db init \
                      --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR
 
                   chmod 0600 $MTN_DB
@@ -97,13 +97,10 @@ case "$1" in
                   echo "Creating Monotone server keypair..." >&2
 
                   yes "$MTN_KEY_PASSWD" | 
-                     $MONOTONE --db=$MTN_DB genkey $MTN_KEY \
-                     --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR 2>/dev/null >/dev/null
+                     $MTN --db=$MTN_DB genkey $MTN_KEY --quiet \
+                     --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR
                   
                   chown monotone:monotone $MTN_HOME/keys/*
-
-                  $MONOTONE --db=$MTN_DB pubkey $MTN_KEY --rcfile=$MTN_CONFDIR/hooks.lua \
-                     --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR > $MTN_HOME/$MTN_KEY.pubkey
 
                   echo "Monotone database created successfully." >&2
               fi
@@ -121,7 +118,7 @@ case "$1" in
               cp $MTN_DB $MTN_DB~
 
               set +e
-              $MONOTONE --db=$MTN_DB db migrate --rcfile=$MTN_CONFDIR/hooks.lua \
+              $MTN --db=$MTN_DB db migrate --rcfile=$MTN_CONFDIR/hooks.lua \
                  --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2
 
               # make sure the migration was successful
@@ -130,7 +127,7 @@ case "$1" in
 
                  # now we need to rosterify
                  echo "Attempting to rosterify monotone database..." >&2
-                 $MONOTONE --db=$MTN_DB db rosterify --rcfile=$MTN_CONFDIR/hooks.lua \
+                 $MTN --db=$MTN_DB db rosterify --rcfile=$MTN_CONFDIR/hooks.lua \
                     --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2
 
                  # check for errors
