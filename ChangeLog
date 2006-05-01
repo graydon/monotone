@@ -1,5 +1,11 @@
 2006-05-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* win32/terminal.cc (have_smart_terminal): Simplify smart terminal
+	detection, since it doesn't really work anyway.  We'll now default
+	to smart almost everywhere (except inside environments with
+	TERM=dumb or TERM=emacs).  Users can override this with
+	--ticker=(dot|none) if need be.
+
 	* win32/fs.cc (get_current_working_dir): Strip trailing backslash
 	from path, if present.  Fixes bug #16442.
 
