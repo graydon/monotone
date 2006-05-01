@@ -1550,7 +1550,7 @@ automate_keys(std::vector<utf8> args, std::string const & help_name,
   output.write(prt.buf.data(), prt.buf.size());
 }
 
-
+/* FIXME: add test & documentation, then uncomment
 static void
 automate_common_ancestors(std::vector<utf8> args, std::string const & help_name,
                          app_state & app, std::ostream & output)
@@ -1602,6 +1602,7 @@ automate_common_ancestors(std::vector<utf8> args, std::string const & help_name,
     if (!null_id(*i))
       output << (*i).inner()() << std::endl;
 }
+*/
 
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
@@ -1657,8 +1658,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_packet_for_fdata(args, root_cmd_name, app, output);
   else if (cmd() == "packet_for_fdelta")
     automate_packet_for_fdelta(args, root_cmd_name, app, output);
-  else if (cmd() == "common_ancestors")
-    automate_common_ancestors(args, root_cmd_name, app, output);
+//  else if (cmd() == "common_ancestors")
+//    automate_common_ancestors(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }
