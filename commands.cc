@@ -95,21 +95,24 @@ namespace commands
           }
       }
 
+    // no matched commands
+    N(matched.size() != 0,
+      F("unknown command '%s'\n") % cmd);
+
+    // one matched command
     if (matched.size() == 1) 
       {
       string completed = *matched.begin();
       L(FL("expanded command to '%s'") %  completed);  
       return completed;
       }
-    else if (matched.size() > 1) 
-      {
-      string err = (F("command '%s' has multiple ambiguous expansions:\n") % cmd).str();
-      for (vector<string>::iterator i = matched.begin();
-           i != matched.end(); ++i)
-        err += (*i + "\n");
-      W(i18n_format(err));
-    }
 
+    // more than one matched command
+    string err = (F("command '%s' has multiple ambiguous expansions:\n") % cmd).str();
+    for (vector<string>::iterator i = matched.begin();
+         i != matched.end(); ++i)
+      err += (*i + "\n");
+    W(i18n_format(err));
     return cmd;
   }
 
