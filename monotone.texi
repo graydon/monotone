@@ -2675,7 +2675,8 @@ Selectors may be combined with the @code{/} character. The combination
 acts as database intersection (or logical @code{and}). For example,
 the selector @code{a:graydon/d:2004-04} can be used to select a
 revision which has an @code{author} cert beginning with @code{graydon}
-@emph{as well as} a @code{date} cert beginning with @code{2004-04}.
+@emph{as well as} a @code{date} cert beginning with @code{2004-04}. The
+@code{/} character can be escaped using the @code{\} character if necessary.
 
 @heading Selector expansion
 
