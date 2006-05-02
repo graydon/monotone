@@ -1,3 +1,8 @@
+2006-05-02  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (commands::complete_command): Make sure to catch the
+	case of a unknown command, and treat it as a naughty.
+
 2006-05-01  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_merging.cc (update): Hopefully clarify messages in the
