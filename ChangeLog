@@ -1,3 +1,7 @@
+2006-05-02  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few new strings to translate.
+
 2006-05-02  Matthew Nicholson  <matt@matt-land.com>
 
 	* monotone.texi (Composite selectors): Added note about escaping in
