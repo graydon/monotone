@@ -140,27 +140,29 @@ CMD(update, N_("workspace"), "",
       }
     else
       {
+        P(F("target revision is not in current branch"));
         if (branches.size() > 1)
           {
             // multiple non-matching branchnames
             string branch_list;
             for (set<utf8>::const_iterator i = branches.begin(); 
                  i != branches.end(); i++)
-              branch_list += "\n" + (*i)();
-            N(false, F("revision %s is a member of multiple branches:\n%s\n\ntry again with explicit --branch") % r_chosen_id % branch_list);
+              branch_list += "\n  " + (*i)();
+            N(false, F("target revision is in multiple branches:%s\n\n"
+                       "try again with explicit --branch") % branch_list);
           }
         else if (branches.size() == 1)
           {
             // one non-matching, inform and update
             app.branch_name = (*(branches.begin()))();
-            P(F("revision %s is a member of\n%s, updating workspace branch") 
-              % r_chosen_id % app.branch_name());
+            P(F("switching branches; next commit will use branch %s") % app.branch_name());
           }
         else
           {
             I(branches.size() == 0);
-            W(F("revision %s is a member of no branches,\nusing branch %s for workspace")
-              % r_chosen_id % app.branch_name());
+            W(F("target revision not in any branch\n"
+                "next commit will use branch %s")
+              % app.branch_name());
           }
       }
   }

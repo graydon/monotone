@@ -1,3 +1,11 @@
+2006-05-01  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_merging.cc (update): Hopefully clarify messages in the
+	different cases where target branch differs from current branch.
+	* tests/t_update_off_branch.at: Test all paths.
+	* ui.cc (warn): Use prefix_lines_with and mark "warning:" for
+	translation.
+
 2006-05-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/terminal.cc (have_smart_terminal): Simplify smart terminal
