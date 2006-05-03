@@ -14,7 +14,7 @@
 # /self->start/
 # {
 #  now=timestamp;
-#  printf("%d\t%s\n", now - self->start, probefunc);
+#  printf("syscall: %d\t%s\n", now - self->start, probefunc);
 #  ustack();
 #  self->start = 0;
 # }
@@ -24,10 +24,7 @@
 # It looks like:
 #
 #----------------
-# t.d
-# t.result.txt
-#
-# 47029 munmap
+# syscall: 47029 munmap
 #               ld.so.1`munmap+0x7
 #               ld.so.1`leave+0x83
 #               ld.so.1`call_init+0x41
@@ -36,7 +33,7 @@
 #               ld.so.1`_rt_boot+0x56
 #               0x80473dc
 #
-# 20017 mmap
+# syscall: 20017 mmap
 #               libc.so.1`mmap+0x15
 #               libc.so.1`lmalloc+0x6c
 #               libc.so.1`atexit+0x1c
@@ -47,7 +44,7 @@
 #               ld.so.1`_rt_boot+0x56
 #               0x80473dc
 #
-# 4092  fstat64
+# syscall: 4092  fstat64
 #               libc.so.1`fstat64+0x15
 #               libc.so.1`opendir+0x3e
 #               ls`0x8052605
@@ -152,15 +149,16 @@ def read_stack(stream):
 def read(stream):
     data = Data()
     for line in stream:
-        if not line or line[0] not in "0123456789":
+        if not line.startswith("syscall:"):
             # skip over nonsense
             continue
         else:
             # we have the beginning of a sample
-            cost_str, syscall = line.strip().split()
+            syscall_marker, cost_str, syscall = line.strip().split()
+            assert syscall_marker == "syscall:"
             cost = int(cost_str)
             stack = read_stack(stream)
-            data.charge(cost, stack)
+            data.charge(cost, [("kernel", syscall)] + stack)
     return data
 
 if __name__ == "__main__":
