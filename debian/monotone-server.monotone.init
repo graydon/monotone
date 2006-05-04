@@ -30,6 +30,10 @@ ERRORLOG=/var/log/$NAME/error.log
 MTN_HOME=/var/lib/monotone
 MTN_CONFDIR=/etc/monotone
 MTN_KEYDIR=$MTN_HOME/keys
+MTN_DB=$MTN_HOME/default.mtn
+
+START=1
+ADDRESS=0.0.0.0
 
 # Gracefully exit if the package has been removed.
 test -x $DAEMON || exit 0
@@ -51,10 +55,10 @@ d_start() {
 
        start-stop-daemon --start --quiet --pidfile $PIDFILE --background \
           --exec $DAEMON --chuid monotone --chdir $MTN_HOME -- \
-          --confdir=$MTN_CONFDIR --db=$DB --norc --pid-file=$PIDFILE \
+          --confdir=$MTN_CONFDIR --db=$MTN_DB --norc --pid-file=$PIDFILE \
           --log=$MAINLOG --dump=$ERRORLOG \
           --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR --quiet \
-          --bind=$ADDRESS serve $BRANCHES 
+          --bind=$ADDRESS serve "*"
 
 }
 

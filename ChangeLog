@@ -1,3 +1,11 @@
+2006-05-04  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.monotone.default: Removed BRANCHES option and
+	make all other options optional.  Also DB became MTN_DB.
+	* debian/monotone-server.monotone.init: Set defaults for every option
+	in /etc/default/monotone, also serve '*' instead of specific branches.
+	Restrictions can be added using the read and write permissions files.
+
 2006-04-30  Matthew Nicholson  <matt@matt-land.com>
 
 	* debian/monotone-server.postinst: Change $MONOTONE to $MTN.  Added
