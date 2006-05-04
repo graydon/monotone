@@ -1033,7 +1033,7 @@ editable_working_tree::apply_delta(split_path const & pth,
   calculate_ident(pth_unsplit, curr_id_raw, app.lua);
   file_id curr_id(curr_id_raw);
   E(curr_id == old_id,
-    F("content of file '%s' has changed, not overwriting"));
+    F("content of file '%s' has changed, not overwriting") % pth_unsplit);
   P(F("updating %s") % pth_unsplit);
 
   file_data dat;
