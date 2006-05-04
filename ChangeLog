@@ -1,12 +1,16 @@
 2006-05-04  Nathaniel Smith  <njs@pobox.com>
 
+	* ChangeLog: fix whitespace.
+
+2006-05-04  Nathaniel Smith  <njs@pobox.com>
+
 	* cmd_files.cc (annotate): Check whether file exists.
 	* tests/t_annotate.at: Test this check.
 
 2006-05-04  Matt Johnston  <matt@ucc.asn.au>
 
-  * work.cc (editable_working_tree::apply_delta): filename argument
-  was missing for E() format string.
+	* work.cc (editable_working_tree::apply_delta): filename argument
+	was missing for E() format string.
 
 2006-05-02  Richard Levitte  <richard@levitte.org>
 
