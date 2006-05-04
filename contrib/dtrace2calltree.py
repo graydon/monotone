@@ -51,6 +51,18 @@
 #               ls`0x8051b2b
 #               ls`main+0x637
 #               ls`0x8051106
+#
+# syscall: 1234  fstat64
+#               libc.so.1`mmap+0x15
+#               libc.so.1`lmalloc+0x6c
+#               libc.so.1`atexit+0x1c
+#               libc.so.1`libc_init+0x40
+#               ld.so.1`call_init+0x46
+#               ld.so.1`setup+0xe2c
+#               ld.so.1`_setup+0x28c
+#               ld.so.1`_rt_boot+0x56
+#               0x80473dc
+#
 #----------------
 
 # See also:
