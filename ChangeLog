@@ -1,3 +1,7 @@
+2006-05-05  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Retranslate a few changed strings.
+
 2006-05-05  Nathaniel Smith  <njs@pobox.com>
 
 	* database.cc (info): Include count of total nodes allocated in
