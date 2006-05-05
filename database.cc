@@ -534,6 +534,16 @@ database::info(ostream & out)
 
   unsigned long total = 0UL;
 
+  u64 num_nodes;
+  {
+    results res;
+    fetch(res, one_col, one_row, query("SELECT node FROM next_roster_node_number"));
+    if (res.empty())
+      num_nodes = 0;
+    else
+      num_nodes = lexical_cast<u64>(res[0][0]) - 1;
+  }
+
 #define SPACE_USAGE(TABLE, COLS) add(space_usage(TABLE, COLS), total)
 
   out << \
@@ -546,6 +556,7 @@ database::info(ostream & out)
       "  revisions       : %u\n"
       "  ancestry edges  : %u\n"
       "  certs           : %u\n"
+      "  logical files   : %u\n"
       "bytes:\n"
       "  full rosters    : %u\n"
       "  roster deltas   : %u\n"
@@ -568,6 +579,7 @@ database::info(ostream & out)
     % count("revisions")
     % count("revision_ancestry")
     % count("revision_certs")
+    % num_nodes
     // bytes
     % SPACE_USAGE("rosters", "length(id) + length(data)")
     % SPACE_USAGE("roster_deltas", "length(id) + length(base) + length(delta)")
