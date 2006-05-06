@@ -541,7 +541,7 @@ msgstr "filen '%s' har ingen revision i databasen"
 #: cmd_files.cc:91
 #, c-format
 msgid "no such file '%s' in revision '%s'"
-msgstr "filen '%s' finns inte i revisionen '%s'\n"
+msgstr "filen '%s' finns inte i revisionen '%s'"
 
 #: cmd_files.cc:93
 #, c-format

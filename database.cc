@@ -2583,6 +2583,17 @@ database::clear_epoch(cert_value const & branch)
           % blob(branch()));
 }
 
+bool
+database::check_integrity()
+{
+  results res;
+  fetch(res, one_col, any_rows, query("PRAGMA integrity_check"));
+  I(res.size() == 1);
+  I(res[0].size() == 1);
+
+  return res[0][0] == "ok";
+}
+
 // vars
 
 void
