@@ -114,6 +114,17 @@ struct checked_revision {
     cert_refs(0), parseable(false), normalized(false) {}
 };
 
+/*
+ * check integrity of the SQLite database
+ */
+static void
+check_db_integrity_check(app_state & app )
+{
+    L(F("asking sqlite to check db integrity"));
+    E(app.db.check_integrity(),
+      F("file structure is corrupted; cannot check further"));
+}
+
 static void
 check_files(app_state & app, std::map<file_id, checked_file> & checked_files)
 {
@@ -807,6 +818,7 @@ check_db(app_state & app)
   size_t unchecked_sigs = 0;
   size_t bad_sigs = 0;
 
+  check_db_integrity_check(app);
   check_files(app, checked_files);
   check_rosters_manifest(app, checked_rosters, checked_revisions, 
                          found_manifests, checked_files);

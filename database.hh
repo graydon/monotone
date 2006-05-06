@@ -231,6 +231,9 @@ public:
   void get_revision_ids(std::set<revision_id> & ids);
   void get_roster_ids(std::set< hexenc<id> > & ids) ;
 
+
+  bool check_integrity();
+
   void set_app(app_state * app);
   
   // get plain version if it exists, or reconstruct version
