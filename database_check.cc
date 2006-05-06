@@ -120,7 +120,7 @@ struct checked_revision {
 static void
 check_db_integrity_check(app_state & app )
 {
-    L(F("asking sqlite to check db integrity"));
+    L(FL("asking sqlite to check db integrity"));
     E(app.db.check_integrity(),
       F("file structure is corrupted; cannot check further"));
 }
