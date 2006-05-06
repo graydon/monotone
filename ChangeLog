@@ -1,3 +1,10 @@
+2006-05-06  Richard Levitte  <richard@levitte.org>
+
+	* INSTALL: Warn people not to run "make check" as root, since it
+	will cause failure of the tests.  I jave no idea if there's any
+	such possiblity on Windows, someone else will have to fill that
+	in.
+
 2006-05-05  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Retranslate a few changed strings.
