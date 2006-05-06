@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-05-05 11:36+0200\n"
-"PO-Revision-Date: 2006-05-05 11:38+0200\n"
+"POT-Creation-Date: 2006-05-06 12:30+0200\n"
+"PO-Revision-Date: 2006-05-06 12:31+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1609,71 +1609,76 @@ msgid "--message and --message-file are mutually exclusive"
 msgstr "--message och --message-file får inte anges samtidigt"
 
 #: database_check.cc:125
+#, c-format
+msgid "file structure is corrupted; cannot check further"
+msgstr "filstrukturen är korrupt; kan inte kolla vidare"
+
+#: database_check.cc:136
 msgid "files"
 msgstr "filer"
 
-#: database_check.cc:154
+#: database_check.cc:165
 msgid "rosters"
 msgstr "listor"
 
-#: database_check.cc:221
+#: database_check.cc:232
 msgid "markings"
 msgstr "markeringar"
 
-#: database_check.cc:319 netsync.cc:2778 rcs_import.cc:1227
+#: database_check.cc:330 netsync.cc:2778 rcs_import.cc:1227
 msgid "revisions"
 msgstr "revisioner"
 
-#: database_check.cc:418
+#: database_check.cc:429
 msgid "ancestry"
 msgstr "föräldraskap"
 
-#: database_check.cc:451 netsync.cc:2782
+#: database_check.cc:462 netsync.cc:2782
 msgid "keys"
 msgstr "nycklar"
 
-#: database_check.cc:477
+#: database_check.cc:488
 msgid "certs"
 msgstr "cert"
 
-#: database_check.cc:514
+#: database_check.cc:525
 #, c-format
 msgid "file %s missing (%d manifest references)\n"
 msgstr "filen %s saknas (refererad från %d manifest)\n"
 
-#: database_check.cc:521
+#: database_check.cc:532
 #, c-format
 msgid "file %s unreferenced\n"
 msgstr "det finns inga referenser till filen %s\n"
 
-#: database_check.cc:542
+#: database_check.cc:553
 #, c-format
 msgid "roster %s unreferenced\n"
 msgstr "det finns inga referenser till listan %s\n"
 
-#: database_check.cc:548
+#: database_check.cc:559
 #, c-format
 msgid "roster %s incomplete (%d missing files)\n"
 msgstr "listan %s ej komplett (%d filer saknas)\n"
 
-#: database_check.cc:555
+#: database_check.cc:566
 #, c-format
 msgid "roster %s incomplete (%d missing revisions)\n"
 msgstr "listan %s ej komplett (%d revisioner saknas)\n"
 
-#: database_check.cc:562
+#: database_check.cc:573
 #, c-format
 msgid "roster %s is not parseable (perhaps with unnormalized paths?)\n"
 msgstr ""
 "listan %s går inte att tyda (den kanske innehåller onormaliserade "
 "sökvägar?)\n"
 
-#: database_check.cc:569
+#: database_check.cc:580
 #, c-format
 msgid "roster %s is not in normalized form\n"
 msgstr "listan %s är inte normaliserad\n"
 
-#: database_check.cc:594
+#: database_check.cc:605
 #, c-format
 msgid ""
 "revision %s missing (%d revision references; %d cert references; %d parent "
@@ -1682,37 +1687,37 @@ msgstr ""
 "revisionen %s saknas (%d revisionsreferenser; %d certreferenser; %d "
 "föräldrareferenser; %d barnreferenser; %d listreferenser)\n"
 
-#: database_check.cc:602
+#: database_check.cc:613
 #, c-format
 msgid "revision %s incomplete (%d missing manifests)\n"
 msgstr "revisionen %s ej komplett (%d manifest saknas)\n"
 
-#: database_check.cc:609
+#: database_check.cc:620
 #, c-format
 msgid "revision %s incomplete (%d missing revisions)\n"
 msgstr "revisionen %s ej komplett (%d revisioner saknas)\n"
 
-#: database_check.cc:616
+#: database_check.cc:627
 #, c-format
 msgid "revision %s incomplete (missing roster link)\n"
 msgstr "revisionen %s ej komplett (listlänkar saknas)\n"
 
-#: database_check.cc:622
+#: database_check.cc:633
 #, c-format
 msgid "revision %s incomplete (missing roster)\n"
 msgstr "revisionen %s ej komplett (lista saknas)\n"
 
-#: database_check.cc:628
+#: database_check.cc:639
 #, c-format
 msgid "revision %s mismatched roster and manifest\n"
 msgstr "revisionen %s inkonsistent lista och manifest\n"
 
-#: database_check.cc:634
+#: database_check.cc:645
 #, c-format
 msgid "revision %s incomplete (incomplete roster)\n"
 msgstr "revisionen %s ej komplett (listan ej komplett)\n"
 
-#: database_check.cc:640
+#: database_check.cc:651
 #, c-format
 msgid ""
 "revision %s mismatched parents (%d ancestry parents; %d revision refs)\n"
@@ -1720,179 +1725,179 @@ msgstr ""
 "revisionen %s har inkonsistenta föräldrareferenser (%d föräldrareferenser; %"
 "d revisionsreferenser)\n"
 
-#: database_check.cc:649
+#: database_check.cc:660
 #, c-format
 msgid "revision %s mismatched children (%d ancestry children; %d parents)\n"
 msgstr ""
 "revisionen %s har inkonsistenta barnreferenser (%d barnreferenser; %d "
 "föräldrar)\n"
 
-#: database_check.cc:661
+#: database_check.cc:672
 #, c-format
 msgid "revision %s has bad history (%s)\n"
 msgstr "revisionen %s har felaktig historik (%s)\n"
 
-#: database_check.cc:668
+#: database_check.cc:679
 #, c-format
 msgid "revision %s is not parseable (perhaps with unnormalized paths?)\n"
 msgstr "revisionen %s är inte uttydbar (kanske med onormaliserade sökvägar?)\n"
 
-#: database_check.cc:675
+#: database_check.cc:686
 #, c-format
 msgid "revision %s is not in normalized form\n"
 msgstr "revisionen %s är inte i normaliserad form\n"
 
-#: database_check.cc:699
+#: database_check.cc:710
 #, c-format
 msgid "key %s missing (signed %d certs)\n"
 msgstr "nyckeln %s saknas (har signerat %d cert)\n"
 
-#: database_check.cc:732
+#: database_check.cc:743
 #, c-format
 msgid "revision %s unchecked signature in %s cert from missing key %s\n"
 msgstr ""
 "revisionen %s har en overifierad signatur i certet %s från den saknade "
 "nyckeln %s\n"
 
-#: database_check.cc:740
+#: database_check.cc:751
 #, c-format
 msgid "revision %s bad signature in %s cert from key %s\n"
 msgstr "revisionen %s har felaktig signatur i certet %s från nyckeln %s\n"
 
-#: database_check.cc:755
+#: database_check.cc:766
 #, c-format
 msgid "revision %s missing %s cert\n"
 msgstr "revisionen %s saknar certet %s\n"
 
-#: database_check.cc:764
+#: database_check.cc:775
 #, c-format
 msgid "revision %s mismatched certs (%d authors %d dates %d changelogs)\n"
 msgstr ""
 "revisionen %s har inkonsistenta cert (%d upphovsmän %d datum %d "
 "loggmeddelanden)\n"
 
-#: database_check.cc:850
+#: database_check.cc:862
 #, c-format
 msgid "%d missing files\n"
 msgstr "%d filer saknas\n"
 
-#: database_check.cc:852
+#: database_check.cc:864
 #, c-format
 msgid "%d unreferenced files\n"
 msgstr "%d filer utan referenser\n"
 
-#: database_check.cc:855
+#: database_check.cc:867
 #, c-format
 msgid "%d unreferenced rosters\n"
 msgstr "%d listor utan referenser\n"
 
-#: database_check.cc:857
+#: database_check.cc:869
 #, c-format
 msgid "%d incomplete rosters\n"
 msgstr "%d ej kompletta listor\n"
 
-#: database_check.cc:859
+#: database_check.cc:871
 #, c-format
 msgid "%d rosters not parseable (perhaps with invalid paths)\n"
 msgstr "%d listor går inte att tyda (de kanske har felaktiga sökvägar)\n"
 
-#: database_check.cc:862
+#: database_check.cc:874
 #, c-format
 msgid "%d rosters not in normalized form\n"
 msgstr "%d listor ej i normaliserad form\n"
 
-#: database_check.cc:865
+#: database_check.cc:877
 #, c-format
 msgid "%d missing revisions\n"
 msgstr "%d revisioner saknas\n"
 
-#: database_check.cc:867
+#: database_check.cc:879
 #, c-format
 msgid "%d incomplete revisions\n"
 msgstr "%d ej kompletta revisioner\n"
 
-#: database_check.cc:869
+#: database_check.cc:881
 #, c-format
 msgid "%d mismatched parents\n"
 msgstr "%d inkonsistenta föräldrar\n"
 
-#: database_check.cc:871
+#: database_check.cc:883
 #, c-format
 msgid "%d mismatched children\n"
 msgstr "%d inkonsistenta barn\n"
 
-#: database_check.cc:873
+#: database_check.cc:885
 #, c-format
 msgid "%d revisions with bad history\n"
 msgstr "%d revisioner med felaktig historik\n"
 
-#: database_check.cc:875
+#: database_check.cc:887
 #, c-format
 msgid "%d revisions not parseable (perhaps with invalid paths)\n"
 msgstr "%d revisioner går inte att tyda (kanske med felaktiga sökvägar)\n"
 
-#: database_check.cc:878
+#: database_check.cc:890
 #, c-format
 msgid "%d revisions not in normalized form\n"
 msgstr "%d revisioner är ej i normaliserad form\n"
 
-#: database_check.cc:882
+#: database_check.cc:894
 #, c-format
 msgid "%d unreferenced roster links\n"
 msgstr "%d listlänkar utan referenser\n"
 
-#: database_check.cc:885
+#: database_check.cc:897
 #, c-format
 msgid "%d missing rosters\n"
 msgstr "%d listor saknas\n"
 
-#: database_check.cc:889
+#: database_check.cc:901
 #, c-format
 msgid "%d missing keys\n"
 msgstr "%d nycklar saknas\n"
 
-#: database_check.cc:892
+#: database_check.cc:904
 #, c-format
 msgid "%d missing certs\n"
 msgstr "%d cert saknas\n"
 
-#: database_check.cc:894
+#: database_check.cc:906
 #, c-format
 msgid "%d mismatched certs\n"
 msgstr "%d inkonsistenta cert\n"
 
-#: database_check.cc:896
+#: database_check.cc:908
 #, c-format
 msgid "%d unchecked signatures due to missing keys\n"
 msgstr "%d signaturer kunde inte kontrolleras på grund av att nycklar saknas\n"
 
-#: database_check.cc:898
+#: database_check.cc:910
 #, c-format
 msgid "%d bad signatures\n"
 msgstr "%d felaktiga signaturer\n"
 
-#: database_check.cc:924
+#: database_check.cc:936
 #, c-format
 msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs\n"
 msgstr ""
 "kontroll klar: %d filer; %d listor; %d revisioner; %d nycklar; %d cert\n"
 
-#: database_check.cc:930
+#: database_check.cc:942
 #, c-format
 msgid "total problems detected: %d (%d serious)\n"
 msgstr "totalt antal funna problem: %d (varav %d är allvarliga)\n"
 
-#: database_check.cc:932
+#: database_check.cc:944
 #, c-format
 msgid "serious problems detected"
 msgstr "allvarliga problem funna"
 
-#: database_check.cc:934
+#: database_check.cc:946
 #, c-format
 msgid "minor problems detected\n"
 msgstr "småproblem funna\n"
 
-#: database_check.cc:936
+#: database_check.cc:948
 #, c-format
 msgid "database is good\n"
 msgstr "databasen är i gott skick\n"
@@ -2076,22 +2081,22 @@ msgstr "ville ha %d rader, fick %s i databasfråga: %s\n"
 msgid "another key with name '%s' already exists"
 msgstr "det finns redan en annan nyckel med namnet '%s'"
 
-#: database.cc:2902
+#: database.cc:2913
 #, c-format
 msgid "no database specified"
 msgstr "ingen databas angiven"
 
-#: database.cc:2910
+#: database.cc:2921
 #, c-format
 msgid "database %s does not exist"
 msgstr "databasen %s finns inte"
 
-#: database.cc:2911
+#: database.cc:2922
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s är en katalog, inte en databas"
 
-#: database.cc:2936
+#: database.cc:2947
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "kunde inte öppna databasen '%s': %s"
