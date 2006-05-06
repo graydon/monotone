@@ -231,6 +231,9 @@ public:
   void get_revision_ids(std::set<revision_id> & ids);
   void get_roster_ids(std::set< hexenc<id> > & ids) ;
 
+
+  bool check_integrity();
+
   void set_app(app_state * app);
   
   // get plain version if it exists, or reconstruct version
@@ -246,6 +249,10 @@ public:
   void put_file_version(file_id const & old_id,
                         file_id const & new_id,
                         file_delta const & del);
+
+  void get_arbitrary_file_delta(file_id const & src_id,
+                                file_id const & dst_id,
+                                file_delta & del);
 
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist). 
@@ -266,10 +273,10 @@ public:
   void deltify_revision(revision_id const & rid);
 
   void get_revision(revision_id const & id,
-                   revision_set & cs);
+                    revision_set & cs);
 
   void get_revision(revision_id const & id,
-                   revision_data & dat);
+                    revision_data & dat);
 
   void put_revision(revision_id const & new_id,
                     revision_set const & rev);

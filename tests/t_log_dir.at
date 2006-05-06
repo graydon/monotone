@@ -1,11 +1,6 @@
 AT_SETUP([log dir])
 MTN_SETUP
 
-# This test is a bug report
-# log dir should only list revisions which change the things in or below dir
-
-AT_XFAIL_IF(true)
-
 ADD_FILE(foo, [foo
 ])
 ADD_FILE(bar, [bar
@@ -51,7 +46,9 @@ AT_DATA(dir2/file2, [dir2/file2 asdf asdf
 COMMIT(testbranch)
 REV6=`BASE_REVISION`
 
-# commented out tests below currently fail but they *should* pass (I think)
+AT_CHECK(MTN attr set dir2/ myattr myval, [], [ignore], [ignore])
+COMMIT(testbranch)
+REV7=`BASE_REVISION`
 
 AT_CHECK(MTN log, [], [stdout], [ignore])
 
@@ -61,6 +58,7 @@ AT_CHECK(grep "^Revision: $REV3" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV4" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV5" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV6" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV7" stdout, [0], [ignore], [ignore])
 
 AT_CHECK(MTN log ., [], [stdout], [ignore])
 
@@ -70,6 +68,7 @@ AT_CHECK(grep "^Revision: $REV3" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV4" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV5" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV6" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV7" stdout, [0], [ignore], [ignore])
 
 AT_CHECK(MTN log dir1, [], [stdout], [ignore])
 
@@ -79,6 +78,7 @@ AT_CHECK(grep "^Revision: $REV3" stdout, [1], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV4" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV5" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV6" stdout, [1], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV7" stdout, [1], [ignore], [ignore])
 
 AT_CHECK(MTN log dir2, [], [stdout], [ignore])
 
@@ -88,5 +88,6 @@ AT_CHECK(grep "^Revision: $REV3" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV4" stdout, [0], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV5" stdout, [1], [ignore], [ignore])
 AT_CHECK(grep "^Revision: $REV6" stdout, [0], [ignore], [ignore])
+AT_CHECK(grep "^Revision: $REV7" stdout, [0], [ignore], [ignore])
 
 AT_CLEANUP

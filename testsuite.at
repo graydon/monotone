@@ -276,6 +276,7 @@ AT_CHECK(MTN --branch=$1 commit --message blah-blah, [], [ignore],
 
 m4_define([NOT_ON_WIN32], [
 if test "$OSTYPE" = "msys"; then
+  echo 77 > $at_status_file
   exit 77
 fi
 ])
@@ -875,3 +876,11 @@ m4_include(tests/t_netsync_no_include.at)
 m4_include(tests/t_pidfile_log_permissions.at)
 m4_include(tests/t_executable_umask.at)
 m4_include(tests/t_setup_workspace_in_workspace.at)
+m4_include(tests/t_help.at)
+m4_include(tests/t_approve.at)
+m4_include(tests/t_checkout_heads.at)
+m4_include(tests/t_ls_epochs.at)
+m4_include(tests/t_hook_helpers.at)
+m4_include(tests/t_no_log_password.at)
+m4_include(tests/t_quiet.at)
+m4_include(tests/t_escaped_selectors.at)

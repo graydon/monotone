@@ -11,22 +11,11 @@
 #include "hash_map.hh"
 #include "sanity.hh"
 
-struct string_eq
-{
-  bool operator()(std::string const & a,
-                  std::string const & b) const
-  {
-    return a == b;
-  }
-};
-
 template <typename T>
 struct 
 interner 
 {
-  typedef typename hashmap::hash_map<std::string, T, 
-                                       hashmap::string_hash, 
-                                       string_eq> hmap;
+  typedef typename hashmap::hash_map<std::string, T> hmap;
 
   hmap fwd;
   std::vector<std::string> rev;

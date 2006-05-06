@@ -1,11 +1,6 @@
 AT_SETUP([revert moving a file to a renamed directory])
 MTN_SETUP
 
-# this test is a bug report
-# see http://savannah.nongnu.org/bugs/?func=detailitem&item_id=15994
-
-AT_XFAIL_IF(true)
-
 ADD_FILE(file, [file
 ])
 

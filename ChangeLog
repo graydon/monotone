@@ -1,3 +1,375 @@
+2006-05-06  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: New string to translate.
+
+2006-05-06  Richard Levitte  <richard@levitte.org>
+
+	* INSTALL: Warn people not to run "make check" as root, since it
+	will cause failure of the tests.  I jave no idea if there's any
+	such possiblity on Windows, someone else will have to fill that
+	in.
+
+2006-05-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* database_check.cc (check_db_integrity_check): Replace F with FL.
+
+2006-05-06  Nathaniel Smith  <njs@pobox.com>
+
+	Patch contributed by 'zecke'.
+	* database.cc (check_integrity): 
+	* database_check.cc (check_db_integrity_check): Add a call to
+	PRAGMA integrity_check to 'db check'.
+
+2006-05-05  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Retranslate a few changed strings.
+
+2006-05-05  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (info): Include count of total nodes allocated in
+	this db in 'db info' output.
+
+2006-05-04  Nathaniel Smith  <njs@pobox.com>
+
+	* ChangeLog: fix whitespace.
+
+2006-05-04  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_files.cc (annotate): Check whether file exists.
+	* tests/t_annotate.at: Test this check.
+
+2006-05-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* work.cc (editable_working_tree::apply_delta): filename argument
+	was missing for E() format string.
+
+2006-05-02  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few new strings to translate.
+
+2006-05-02  Matthew Nicholson  <matt@matt-land.com>
+
+	* monotone.texi (Composite selectors): Added note about escaping in
+	selectors.
+
+2006-05-02  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (commands::complete_command): Make sure to catch the
+	case of a unknown command, and treat it as a naughty.
+
+2006-05-01  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_merging.cc (update): Hopefully clarify messages in the
+	different cases where target branch differs from current branch.
+	* tests/t_update_off_branch.at: Test all paths.
+	* ui.cc (warn): Use prefix_lines_with and mark "warning:" for
+	translation.
+
+2006-05-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/terminal.cc (have_smart_terminal): Simplify smart terminal
+	detection, since it doesn't really work anyway.  We'll now default
+	to smart almost everywhere (except inside environments with
+	TERM=dumb or TERM=emacs).  Users can override this with
+	--ticker=(dot|none) if need be.
+
+	* win32/fs.cc (get_current_working_dir): Strip trailing backslash
+	from path, if present.  Fixes bug #16442.
+
+2006-05-01  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: "automate common_ancestors" was committed accidentally.
+	Comment it out until tests/documentation are ready.
+
+2006-04-30  Graydon Hoare  <graydon@pobox.com>
+
+	* xdelta.{cc,hh} (invert_xdelta): New function.
+	* database.{cc,hh} (database::get_arbitrary_file_delta): Add.
+	(database::put_file_version): Use invert_xdelta.
+	* netsync.cc (session::note_file_delta): 
+	Use get_arbitrary_file_delta.
+
+2006-04-29  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Updated a fuzzy.
+
+2006-04-29  Matt Johnston  <matt@ucc.asn.au>
+
+	* vocab.hh: removing superfluous string("") constructor shrinks mtn
+	binary by >100kB (from Benoît Dejean)
+
+2006-04-28  Matthew Nicholson  <matt@matt-land.com>
+	
+	* tests/t_escaped_selectors.at: Added.  Tests escaped selectors.
+	* testsuite.at: Added t_escaped_selectors.at.
+
+2006-04-28  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Translated more strings.
+
+2006-04-28  Graydon Hoare  <graydon@pobox.com>
+
+	* contrib/color-logs.sh: Update to 'mtn'.
+	* enumerator.{cc,hh}: Expose parent map, cache certs.
+	* netsync.cc: Use caches in enumerator and refiners.
+	* refiner.hh (local_item_exists): New helper.
+
+2006-04-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc (query::query): Allow query to be constructed
+	without an initial SQL command.
+	* database.cc (database::complete): Replace use of boost::format
+	with query; building the query.sql_cmd as we go.  Fixes potential
+	SQL injection attacks.
+
+2006-04-28  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Translated even more strings.
+
+2006-04-27  Matthew Nicholson  <matt@matt-land.com>
+
+	* selectors.cc (parse_selector): Change boost::char_separator to
+	boost::escaped_list_separator to support branch names containing '/'.
+
+2006-04-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: Remove default validate_commit_message hook.
+
+2006-04-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* hash_map.hh: Do things a little differently. Should make
+	instantiating different types of hash_map (like merkle_tree.hh does)
+	easier, slightly less dependent on the compiler/library. (Currently,
+	this should mostly be useful in the .visualc8 branch.)
+	* basic_io.hh cmd_list.hh rcs_file.cc rcs_import.cc unix/fs.cc: These
+	wouldn't compile with g++/stlport. Add includes, replace a
+	const_iterator with an iterator in rcs_import.cc
+	* database.cc interner.hh merkle_tree.hh vocab.cc xdelta.cc: Adjust
+	to match the new hash_map.
+	Compile-tested on g++ and g++ with stlport. Won't link when using
+	stlport, because my boost was compiled against g++'s normal stl.
+
+2006-04-27  Daniel Carosone  <dan@geek.com.au>
+	* monotone.texi: add a missing $ to a packet example, and an
+	introductory paragraph to the section. From Jeronimo Pellegrini,
+	with minor wording tweaks.
+
+2006-04-27  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Translated more strings.
+
+2006-04-27  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* cmd_list.cc: missing using std::sort; broke build with stlport4
+
+2006-04-26  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc (serve_connections): Cycle through all results before
+	recalculating the probe. Netxx does not make this as simple as it
+	should be.
+
+2006-04-26  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc:
+	* cmd_diff_log.cc:
+	* cmd_list.cc:
+	* cmd_merging.cc:
+	* cmd_ws_commit.cc:
+	* commands.cc:
+	* work.cc: use explicit temp_node_id_sources everywhere
+	* tests/t_log_dir.at: remove stale comment
+
+2006-04-25  Derek Scherger  <derek@echologic.com>
+
+	* cmd_*.cc: merge new restrictions changes in from commands.cc
+	split
+	* tests/t_log_dir.at: remove stale comment 
+	* work.{cc,hh}(find_missing, find_unknown_and_ignored): move 
+	these functions here from commands.cc split
+	
+2006-04-26  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (package_full_revision_raw.txt): Pass --root to our
+	calls to mtn.
+
+2006-04-25  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.{cc,hh} (find_missing, find_unknown_and_ignored): move to...
+	* work.{cc,hh}: ...here since these are not really restriction things
+	* cmd_ws_commit.cc: sort includes and add work.hh to account for moves
+
+2006-04-26  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* app_state.{cc,hh}: Overload set_restriction to take a path_set as
+	the list of paths to restrict to.
+	* cmd_ws_commit.cc: Use this to fix revert --missing.
+
+2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.cc: --quiet forces --ticker=none
+	* tests/t_quiet.at: Check that --quiet turns off tickers.
+	* testsuite.at: Call it.
+
+2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* lua.cc: There is now an "extract_classified_str" to go with
+	"extract_str", which doesn't log the value of the returned string.
+	Use this in hook_get_passphrase.
+	* tests/t_no_log_password.at: Test that the passphrase is not logged.
+	* testsuite.at: Call it.
+
+2006-04-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* po/POTFILES.in: add cmd.hh and the cmd_*.cc files
+
+2006-04-25  Richard Levitte  <richard@levitte.org>
+
+	* examples/000README.txt, examples/display_branches.lua: Start a
+	directory of small examples and other cool things you can do with
+	monotone.  Contrary to the contrib directory, these files can
+	seldom be taken and used as they are, they usually need to get
+	integrated into some other file.
+	* debian/docs, debian/changelog: Make sure the examples directory
+	end up inside Debian's standard documentation directory, and
+	document this change.
+
+2006-04-25  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi: Add Jeronimo to copyright holder list.
+	* AUTHORS: And the contributor list.
+	
+2006-04-25  Jeronimo Pellegrini  <pellegrini@mpcnet.com.br>
+
+	* monotone.texi (Using packets): New section, short tutorial
+	showing how packets work.  (With some small fixups by Nathaniel.)
+
+2006-04-25  Jeronimo Pellegrini  <pellegrini@mpcnet.com.br>
+
+	* monotone.texi: Replace many references to 'monotone' with
+	'mtn'.
+
+2006-04-24  Derek Scherger  <derek@echologic.com>
+
+	* contrib/monotone.el (monotone-commit-complete): call line
+	removal function by it's actual name
+
+2006-04-24  Derek Scherger  <derek@echologic.com>
+
+	* cmd_diff_log.cc (log): remove --recursive option from log;
+	directories are always recursive as with other restricted commands
+	* tests/t_log_dir.at: account for recursive directories
+
+2006-04-23  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (attr): Use get_base_and_current_roster_shape
+	instead of doing a pointless workspace scan.
+
+2006-04-23  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Clear a fuzzy.
+
+2006-04-23  Richard Levitte  <richard@levitte.org> &  Alex Queiroz <alex@ventonegro.org>
+
+	* lua.cc (monotone_includedir_for_lua): Tweak a spelling mistake.
+	Notified by Jeronimo Pellegrini <pellegrini@mpcnet.com.br>.
+
+2006-04-23 Alex Queiroz <alex@ventonegro.org>
+
+	* pt_BR.po: Fixed some fuzzy translations.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (fork_server): Make sure to append to already
+	existing log file.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (fork_server): Redirect the logs of the sub-
+	servers to log files instead of a pipe, and have the main
+	process read that file instead of the pipe.
+	(read_server_record): Complain about unrecognised commands, and
+	continue processing.
+	(reload_conffile): Parse the logdir command.  Complain about
+	unrecognised commands, and continue processing.
+
+2006-04-21 Alex Queiroz <alex@ventonegro.org>
+
+	* Make clear in the "automate get_revision" documentation that
+	path stanzas are grouped under the corresponding "old_revision" one.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (server::set_hosts, server::set_patterns):
+	Explain a little more what is removed from what.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
+	* contrib/usher.cc (server::set_hosts, server::set_patterns):
+	Write a warning saying that existing entries with the same host
+	or pattern are stripped of said host or pattern.
+	(server::set_patterns): Erasing the list node that we're iterating
+	on, then trying to go to the next node doesn't work.  Save the
+	iterator, then increment it before erasing the node using the
+	saved value.  No more segfaults.  This is the same fix as was done
+	for server::set_hosts February 21st.
+
+2006-04-21  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy updated
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.{cc,hh} cmd.hh cmd_*.cc Makefile.am: Split commands.cc into
+	lots of smaller files. Current grouping is semi-arbitrary by other
+	code called and general "what it does" concept.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_hook_helpers.at: New file: test some of the helper functions
+	for the lua hooks.
+	* testsuite.at: Add it.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (commit): E() if the old end of a delta is missing.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_ls_changed.at: Also check that it detects added files/dirs.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_ls_epochs.at: New file: test "ls epochs" and
+	"ls epochs <branch>"
+	* testsuite.at: Add it.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/t_checkout_heads.at: New file: checkout should fail if there
+	are multiple heads.
+	* testsuite.at: Add it.
+
+2006-04-20  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* testsuite.at: NOT_ON_WIN32 seems to be broken. Fix it.
+
+2006-04-19  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	* commands.cc (log): Make log accept --recursive, which makes
+	"log dir" log revisions where anything under dir/ changes.
+	* tests/t_log_dir.at: Remove XFAIL. Test logging at attr change.
+	* tests/t_help.at: New file, test the "help" command.
+	* tests/t_approve.at: New file, test the "approve" command.
+	* testsuite.at: Add the new tests.
+
+2006-04-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_mtn_ignore.at: Tweak test so it would have detected the
+	broken .mtn-ignore error handling fixed in the last commit.
+
+	* std_hooks.lua (ignore_file): Fix up error handling for
+	non-existent .mtn-ignore files.
+
 2006-04-18  Richard Levitte  <richard@levitte.org>
 
 	This change was contributed by Shaun Jackman <sjackman@gmail.com>
@@ -6,6 +378,10 @@
 
 	* debian/rules: From Debian bug report #334999: FTBFS on
 	arm/hppa/m68k: please use g++-3.4
+
+2006-04-17  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Fixed nœud spelling.
 
 2006-04-15  Matthew Gregan  <kinetik@orcon.net.nz>
 
@@ -117,7 +493,7 @@
 
 2006-04-12 Thomas Keller <me@thomaskeller.biz>
 	* po/README: Added small HOWTO for new translations
-
+	
 2006-04-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* merkle_tree.hh: make merkle_table be a hash_map instead of a map.
@@ -1244,6 +1620,23 @@
 	(checkout): If a branch has multiple heads, list candidates, give
 	usage hint, and use Error instead of Naughty.
 
+2006-03-31  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.cc (get_nodes, merge_states): remove;
+	(add_paths, add_nodes, map_paths, map_nodes): simplify after above
+	cleanup and removal of implicit includes;
+	* restrictions.hh: remove stale comments
+	
+2006-03-30  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (status, ls_changed, commit, diff, revert): call
+	check_restricted_cset after make_restricted_csets
+	* restrictions.cc: remove implicit parents gunk and update
+	unit tests accordingly
+	* roster.{cc,hh} (check_restricted_cset): new function to issue a
+	nice message if required directories have been excluded
+	* tests/t_log_dir.at: un-XFAIL
+	
 2006-03-03  Derek Scherger  <derek@echologic.com>
 
 	* restrictions.cc (check_for_missing_additions): new function
@@ -1461,6 +1854,46 @@
 	revisions, and prefer deltas to data when both are available.
 	See
 	https://savannah.nongnu.org/bugs/?func=detailitem&item_id=15846
+
+2006-02-25  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_inventory): 
+	* commands.cc (status, ls_known, find_unknown_and_ignored,
+	find_missing, ls_changed, commit, diff, revert, log): 
+	* roster.cc (update_current_roster_from_filesystem): add app_state
+	to restriction constructors
+	* restrictions.{cc,hh}: add support for --depth option and ignored
+	files in restrictions to match old functionality; clean up
+	constructors a bit
+	* tests/t_automate_get_manifest_of.at: add format_version stanza
+	to test manifest
+	* tests/t_restrictions.at: re-enable --depth tests
+
+2006-02-22  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_get_revision, automate_get_manifest_of):
+	merge fixups
+	* commands.cc (ls_changed): convert to new restrictions
+	(commit, update, revert):
+	* restrictions.cc:
+	* roster.cc: merge fixups
+
+2006-02-20  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.{cc,hh}: attempt to simplify and remove duplication
+	
+2006-02-20  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc (status, ls_known, find_unknown_and_ignored,
+	find_missing, commit, diff, revert, log): add excludes to restrictions
+	* restrictions.{cc,hh}: preliminary support for excludes and unit
+	tests to see if it works
+
+2006-02-13  Derek Scherger  <derek@echologic.com>
+
+	* app_state.{cc,hh}: 
+	* globis.{cc,hh}: make exclude_patterns a vector rather than a
+	set so that restriction includes/excludes are of the same type
 
 2006-02-21  Nathaniel Smith  <njs@pobox.com>
 

@@ -228,6 +228,7 @@ automate_attributes(std::vector<utf8> args,
 
   roster_t base, current;
   temp_node_id_source nis;
+
   get_base_and_current_roster_shape(base, current, nis, app);
 
   if (args.size() == 1)
@@ -710,7 +711,8 @@ automate_inventory(std::vector<utf8> args,
   classify_roster_paths(curr, unchanged, changed, missing, app);
   curr.extract_path_set(known);
 
-  file_itemizer u(app, known, unknown, ignored);
+  restriction mask(app);
+  file_itemizer u(app, known, unknown, ignored, mask);
   walk_tree(file_path(), u);
 
   inventory_node_state(inventory, unchanged, inventory_item::UNCHANGED_NODE);
@@ -966,14 +968,17 @@ automate_get_revision(std::vector<utf8> args,
 
   if (args.size() == 0)
     {
-      revision_set rev;
       roster_t old_roster, new_roster;
+      revision_id old_revision_id;
+      revision_set rev;
 
       app.require_workspace(); 
-      get_unrestricted_working_revision_and_rosters(app, rev, 
-                                                    old_roster, 
-                                                    new_roster,
-                                                    nis);
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      update_current_roster_from_filesystem(new_roster, app);
+
+      get_revision_id(old_revision_id);
+      make_revision_set(old_revision_id, old_roster, new_roster, rev);
+
       calculate_ident(rev, ident);
       write_revision_set(rev, dat);
     }
@@ -1045,9 +1050,11 @@ automate_get_manifest_of(std::vector<utf8> args,
 
   if (args.size() == 0)
     {
-      revision_set rs;
-      app.require_workspace();
-      get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster, nis);
+      revision_id old_revision_id;
+
+      app.require_workspace(); 
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      update_current_roster_from_filesystem(new_roster, app);
     }
   else
     {
@@ -1543,6 +1550,59 @@ automate_keys(std::vector<utf8> args, std::string const & help_name,
   output.write(prt.buf.data(), prt.buf.size());
 }
 
+/* FIXME: add test & documentation, then uncomment
+static void
+automate_common_ancestors(std::vector<utf8> args, std::string const & help_name,
+                         app_state & app, std::ostream & output)
+{
+  if (args.size() == 0)
+    throw usage(help_name);
+
+  std::set<revision_id> ancestors, common_ancestors;
+  std::vector<revision_id> frontier;
+  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    {
+      revision_id rid((*i)());
+      N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+      ancestors.clear();
+      frontier.push_back(rid);
+      while (!frontier.empty())
+        {
+          revision_id rid = frontier.back();
+          frontier.pop_back();
+          if(!null_id(rid))
+            {
+              std::set<revision_id> parents;
+              app.db.get_revision_parents(rid, parents);
+              for (std::set<revision_id>::const_iterator i = parents.begin();
+                   i != parents.end(); ++i)
+                {
+                  if (ancestors.find(*i) == ancestors.end())
+                    {
+                      frontier.push_back(*i);
+                      ancestors.insert(*i);
+                    }
+                }
+            }
+        }
+      if (common_ancestors.empty())
+        common_ancestors = ancestors;
+      else
+        {
+          std::set<revision_id> common;
+          std::set_intersection(ancestors.begin(), ancestors.end(),
+                         common_ancestors.begin(), common_ancestors.end(),
+                         std::inserter(common, common.begin()));
+          common_ancestors = common;
+        }
+    }
+
+  for (std::set<revision_id>::const_iterator i = common_ancestors.begin();
+       i != common_ancestors.end(); ++i)
+    if (!null_id(*i))
+      output << (*i).inner()() << std::endl;
+}
+*/
 
 void
 automate_command(utf8 cmd, std::vector<utf8> args,
@@ -1598,6 +1658,8 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_packet_for_fdata(args, root_cmd_name, app, output);
   else if (cmd() == "packet_for_fdelta")
     automate_packet_for_fdelta(args, root_cmd_name, app, output);
+//  else if (cmd() == "common_ancestors")
+//    automate_common_ancestors(args, root_cmd_name, app, output);
   else
     throw usage(root_cmd_name);
 }

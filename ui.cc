@@ -398,7 +398,11 @@ void
 user_interface::warn(string const & warning)
 {
   if (issued_warnings.find(warning) == issued_warnings.end())
-    inform("warning: " + warning);
+    {
+      std::string message;
+      prefix_lines_with(_("warning: "), warning, message);
+      inform(message);
+    }
   issued_warnings.insert(warning);
 }
 

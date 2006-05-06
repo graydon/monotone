@@ -1,9 +1,14 @@
 AUTOMAKE_OPTIONS=subdir-objects 1.7.1
 ACLOCAL_AMFLAGS = -I m4
 
+CMD_SOURCES =								\
+	cmd.hh cmd_netsync.cc cmd_list.cc cmd_packet.cc cmd_key_cert.cc	\
+	cmd_merging.cc cmd_db.cc cmd_diff_log.cc cmd_ws_commit.cc	\
+	cmd_othervcs.cc cmd_automate.cc cmd_files.cc
+
 MOST_SOURCES =								\
 	 app_state.cc app_state.hh					\
-         commands.cc commands.hh					\
+         commands.cc commands.hh $(CMD_SOURCES)				\
          diff_patch.cc diff_patch.hh					\
          lua.cc lua.hh							\
          transforms.cc transforms.hh					\
@@ -529,8 +534,8 @@ package_full_revision_raw.txt:
 # creates, and also make sure that the shell command exits
 # successfully; the rm -f ensures both
 	REAL_BLDDIR=$$PWD/$(top_builddir); \
-	(cd $(srcdir) && $$REAL_BLDDIR/mtn automate get_revision) 2>/dev/null >$@ \
-	|| (cd $(srcdir) && mtn automate get_revision) 2>/dev/null >$@ \
+	(cd $(srcdir) && $$REAL_BLDDIR/mtn --root=. automate get_revision) 2>/dev/null >$@ \
+	|| (cd $(srcdir) && mtn --root=. automate get_revision) 2>/dev/null >$@ \
 	|| rm -f $@
 # See above comment -- the file this depends on may or may not exist.
 # This file, however, must always exist, so that 'make dist' can

@@ -151,9 +151,12 @@ building and installation process for monotone
 4. testing monotone
 
   * there is a "make check" target which you can try, if you'd like to
-    confirm monotone's functionality on your system. you might also
-    like to try fetching monotone's sources from our monotone
-    server. this process will transfer the complete development
+    confirm monotone's functionality on your system.
+    Do not run "make check" as root (Unix)!  Doing so will cause the
+    failure of some of the tests!
+
+    You might also like to try fetching monotone's sources from our
+    monotone server. this process will transfer the complete development
     history (about 40 megabytes) to your database, and you will then
     be free to share it with others or make changes and submit them to
     us:

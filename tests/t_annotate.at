@@ -44,6 +44,11 @@ AT_CHECK(cp bar2 bar0)
 COMMIT(testbranch)
 REV3=`BASE_REVISION`
 
+# annotate on a non-existent file gives an error
+AT_CHECK(MTN annotate nonexistent, [1], [ignore], [ignore])
+# annotate on dirs gives an error
+AT_CHECK(MTN annotate ., [1], [ignore], [ignore])
+
 #
 # annotate foo0 should now be
 # REV1: z

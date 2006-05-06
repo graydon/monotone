@@ -19,6 +19,8 @@
 #include "paths.hh"
 #include "sanity.hh"
 
+#include <cstdio>
+
 namespace basic_io
 {
 

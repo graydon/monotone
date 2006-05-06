@@ -93,7 +93,7 @@ class ty {                                             \
   std::string s;                                       \
 public:                                                \
   bool ok;                                             \
-  ty() : s(""), ok(false) {}                           \
+  ty() : ok(false) {}                                  \
   ty(std::string const & str);                         \
   ty(ty const & other);                                \
   std::string const & operator()() const               \

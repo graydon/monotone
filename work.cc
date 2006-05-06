@@ -15,6 +15,7 @@
 #include "cset.hh"
 #include "file_io.hh"
 #include "platform.hh"
+#include "restrictions.hh"
 #include "sanity.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
@@ -40,13 +41,61 @@ file_itemizer::visit_file(file_path const & path)
 {
   split_path sp;
   path.split(sp);
-  if (app.restriction_includes(sp) && known.find(sp) == known.end())
+
+  if (mask.includes(sp) && known.find(sp) == known.end())
     {
       if (app.lua.hook_ignore_file(path) || app.db.is_dbfile(path))
         ignored.insert(sp);
       else
         unknown.insert(sp);
     }
+}
+
+
+void
+find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
+{
+  temp_node_id_source nis;
+  roster_t old_roster, new_roster;
+
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+
+  restriction mask(args, app.exclude_patterns, new_roster, app);
+
+  node_map const & nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_id nid = i->first;
+
+      if (!new_roster.is_root(nid) && mask.includes(new_roster, nid))
+        {
+          split_path sp;
+          new_roster.get_name(nid, sp);
+          file_path fp(sp);      
+
+          if (!path_exists(fp))
+            missing.insert(sp);
+        }
+    }
+}
+
+void
+find_unknown_and_ignored(app_state & app, vector<utf8> const & args, 
+                         path_set & unknown, path_set & ignored)
+{
+  revision_set rev;
+  roster_t old_roster, new_roster;
+  path_set known;
+  temp_node_id_source nis;
+
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+
+  restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+
+  new_roster.extract_path_set(known);
+
+  file_itemizer u(app, known, unknown, ignored, mask);
+  walk_tree(file_path(), u);
 }
 
 
@@ -590,13 +639,6 @@ get_current_roster_shape(roster_t & ros, node_id_source & nis, app_state & app)
   cs.apply_to(er);
 }
 
-// void
-// get_current_restricted_roster(roster_t & ros, node_id_source & nis, app_state & app)
-// {
-//   get_current_roster_shape(ros, nis, app);
-//   update_restricted_roster_from_filesystem(ros, app);
-// }
-
 void
 get_base_and_current_roster_shape(roster_t & base_roster,
                                   roster_t & current_roster,
@@ -610,16 +652,6 @@ get_base_and_current_roster_shape(roster_t & base_roster,
   editable_roster_base er(current_roster, nis);
   cs.apply_to(er);
 }
-
-// void
-// get_base_and_current_restricted_roster(roster_t & base_roster,
-//                                        roster_t & current_roster,
-//                                        node_id_source & nis,
-//                                        app_state & app)
-// {
-//   get_base_and_current_roster_shape(base_roster, current_roster, nis, app);
-//   update_restricted_roster_from_filesystem(current_roster, app);
-// }
 
 // user log file
 
@@ -810,8 +842,10 @@ void update_any_attrs(app_state & app)
     {
       split_path sp;
       new_roster.get_name(i->first, sp);
-      if (!app.restriction_includes(sp))
-        continue;
+
+      // FIXME_RESTRICTIONS: do we need this check?
+      // if (!app.restriction_includes(sp))
+      //  continue;
 
       node_t n = i->second;
       for (full_attr_map_t::const_iterator j = n->attrs.begin();
@@ -999,7 +1033,7 @@ editable_working_tree::apply_delta(split_path const & pth,
   calculate_ident(pth_unsplit, curr_id_raw, app.lua);
   file_id curr_id(curr_id_raw);
   E(curr_id == old_id,
-    F("content of file '%s' has changed, not overwriting"));
+    F("content of file '%s' has changed, not overwriting") % pth_unsplit);
   P(F("updating %s") % pth_unsplit);
 
   file_data dat;

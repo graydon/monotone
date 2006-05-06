@@ -108,7 +108,7 @@
 # a merge                 un fusion
 # a migration             une migration
 # mutex                   exclusivité (mutex)
-# a node                  un noeud
+# a node                  un nœud
 # note:                   note:
 # OOB data                données hors-bande
 # an option               un choix
@@ -2458,7 +2458,7 @@ msgstr "terminé par un signal"
 #: ../merkle_tree.cc:276
 #, c-format
 msgid "node level is %d, exceeds maximum %d"
-msgstr "niveau de noeud est %d, ce qui dépasse la limite %d"
+msgstr "niveau de nœud est %d, ce qui dépasse la limite %d"
 
 #: ../merkle_tree.cc:311
 #, c-format
@@ -3364,7 +3364,7 @@ msgstr ""
 #: ../revision.cc:762
 #, c-format
 msgid "rebuilding %d nodes\n"
-msgstr "reconstruis %d noeuds\n"
+msgstr "reconstruis %d nœuds\n"
 
 #: ../revision.cc:967
 #, c-format
@@ -4161,7 +4161,7 @@ msgstr "mise à jour de %s en %s"
 #~ msgstr "vérification des nouvelles révisions (ceci peut prendre du temps)\n"
 
 #~ msgid "parent %s -> node %d\n"
-#~ msgstr "parent %s -> noeud %d\n"
+#~ msgstr "parent %s -> nœud %d\n"
 
 #~ msgid "checking whether %s is an ancestor of %s\n"
 #~ msgstr "vérification si %s est un ancêtre de %s\n"
@@ -4179,7 +4179,7 @@ msgstr "mise à jour de %s en %s"
 #~ msgstr "l'ancêtre commun est %s\n"
 
 #~ msgid "node %d is a root node\n"
-#~ msgstr "le noeud %d est un noeud racine\n"
+#~ msgstr "le nœud %d est un nœud racine\n"
 
 #~ msgid "converting %d bytes from %s to %s\n"
 #~ msgstr "conversion de %d octets de %s en %s\n"

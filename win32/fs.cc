@@ -23,7 +23,10 @@ get_current_working_dir()
   char buffer[4096];
   E(getcwd(buffer, 4096),
     F("cannot get working directory: %s") % strerror(errno));
-  return std::string(buffer);
+  std::string str(buffer);
+  if (str[str.size() - 1] == '\\')
+    str = str.substr(0, str.size() - 1);
+  return str;
 }
 
 void

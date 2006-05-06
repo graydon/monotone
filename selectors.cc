@@ -120,8 +120,8 @@ namespace selectors
       }
     else
       {
-        typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-        boost::char_separator<char> slash("/");
+        typedef boost::tokenizer<boost::escaped_list_separator<char> > tokenizer;
+        boost::escaped_list_separator<char> slash("\\", "/", "");
         tokenizer tokens(str, slash);
 
         std::vector<std::string> selector_strings;
