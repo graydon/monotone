@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-05-06 16:19+0200\n"
-"PO-Revision-Date: 2006-05-06 16:44+0100\n"
+"PO-Revision-Date: 2006-05-06 20:32+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -1543,14 +1543,14 @@ msgid "file %s missing (%d manifest references)\n"
 msgstr "Manca il nome del file dopo -C"
 
 #: database_check.cc:532
-#, fuzzy, c-format
+#, c-format
 msgid "file %s unreferenced\n"
-msgstr "%d file non utilizzati\n"
+msgstr "file ‘%s’ senza referenze\n"
 
 #: database_check.cc:553
-#, fuzzy, c-format
+#, c-format
 msgid "roster %s unreferenced\n"
-msgstr "%d file non utilizzati\n"
+msgstr "roster ‘%s’ senza referenze\n"
 
 #: database_check.cc:559
 #, fuzzy, c-format
@@ -3168,12 +3168,12 @@ msgstr "ottimizzazione database"
 #: schema_migration.cc:288
 #, c-format
 msgid "error vacuuming after migration"
-msgstr ""
+msgstr "errore nella pulizia dopo la migrazione"
 
 #: schema_migration.cc:291
 #, c-format
 msgid "error running analyze after migration"
-msgstr ""
+msgstr "errore nell'analisi dopo la migrazione"
 
 #: schema_migration.cc:298
 #, c-format
@@ -3250,9 +3250,9 @@ msgid ""
 msgstr ""
 
 #: ui.cc:473
-#, c-format
+#, fuzzy, c-format
 msgid "failed to open log file '%s'"
-msgstr ""
+msgstr "Fallito caricamento del file chiarore a gradiente: '%s': %s"
 
 #: update.cc:65
 #, c-format
