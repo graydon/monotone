@@ -1,4 +1,17 @@
-﻿2006-05-07  Roberta Lazzeri  <ripley@lapo.it>
+2006-05-07  Graydon Hoare  <graydon@pobox.com>
+
+	* database.{cc,hh} (pending_writes): New fulltext write buffer,
+	gives about 20% performance gain on initial pull.
+	(database::have_pending_write): Helper function.
+	(database::load_pending_write): Likewise.
+	(database::cancel_pending_write): Likewise.
+	(database::schedule_write): Likewise.
+	(database::exists): Modify to use buffer.
+	(database::put_version): Likewise.
+	(database::put_file): Likewise.
+	(database::put_roster): Likewise.
+
+2006-05-07  Roberta Lazzeri  <ripley@lapo.it>
 
 	* po/it.po: Translated a few more strings to Italian (148 to go).
 
