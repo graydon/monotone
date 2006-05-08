@@ -30,6 +30,7 @@
 #include "database.hh"
 #include "hash_map.hh"
 #include "keys.hh"
+#include "safe_map.hh"
 #include "sanity.hh"
 #include "schema_migration.hh"
 #include "transforms.hh"
@@ -801,11 +802,47 @@ database::begin_transaction(bool exclusive)
   transaction_level++;
 }
 
+
+bool 
+database::have_pending_write(string const & tab, hexenc<id> const & id)
+{
+  return pending_writes.find(make_pair(tab, id)) != pending_writes.end();
+}
+
+void 
+database::load_pending_write(string const & tab, hexenc<id> const & id, data & dat)
+{
+  dat = safe_get(pending_writes, make_pair(tab, id));
+}
+
+void 
+database::cancel_pending_write(string const & tab, hexenc<id> const & id)
+{
+  safe_erase(pending_writes, make_pair(tab, id));
+}
+
+void 
+database::schedule_write(string const & tab, 
+                         hexenc<id> const & id,
+                         data const & dat)
+{
+  if (!have_pending_write(tab, id))
+    safe_insert(pending_writes, make_pair(make_pair(tab, id), dat));
+}
+
 void 
 database::commit_transaction()
 {
   if (transaction_level == 1)
-    execute(query("COMMIT"));
+    {
+      for (map<pair<string, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
+           i != pending_writes.end(); ++i)
+        {
+          put(i->first.second, i->second, i->first.first);
+        }
+      pending_writes.clear();
+      execute(query("COMMIT"));
+    }
   transaction_level--;
 }
 
@@ -822,6 +859,9 @@ bool
 database::exists(hexenc<id> const & ident,
                       string const & table)
 {
+  if (have_pending_write(table, ident))
+    return true;
+
   results res;
   query q("SELECT id FROM " + table + " WHERE id = ?");
   fetch(res, one_col, any_rows, q % text(ident()));
@@ -899,6 +939,12 @@ database::get(hexenc<id> const & ident,
               data & dat,
               string const & table)
 {
+  if (have_pending_write(table, ident))
+    {
+      load_pending_write(table, ident, dat);
+      return;
+    }
+
   results res;
   query q("SELECT data FROM " + table + " WHERE id = ?");
   fetch(res, one_col, one_row, q % text(ident()));
@@ -1208,9 +1254,12 @@ database::put_version(hexenc<id> const & old_id,
     {
       // descendent of a head version replaces the head, therefore old head
       // must be disposed of
-      drop(old_id, data_table);
+      if (have_pending_write(data_table, old_id))
+        cancel_pending_write(data_table, old_id);
+      else
+        drop(old_id, data_table);
     }
-  put(new_id, new_data, data_table);
+  schedule_write(data_table, new_id, new_data);
   put_delta(old_id, new_id, reverse_delta, delta_table);
   guard.commit();
 }
@@ -1414,7 +1463,7 @@ void
 database::put_file(file_id const & id,
                    file_data const & dat)
 {
-  put(id.inner(), dat.inner(), "files");
+  schedule_write("files", id.inner(), dat.inner());
 }
 
 void 
@@ -2780,7 +2829,7 @@ database::put_roster(revision_id const & rev_id,
   // Else we have a new roster the database hasn't seen yet; our task is to
   // add it, and deltify all the incoming edges (if they aren't already).
 
-  put(new_id, new_data, data_table);
+  schedule_write(data_table, new_id, new_data);
 
   std::set<revision_id> parents;
   get_revision_parents(rev_id, parents);
@@ -2798,7 +2847,10 @@ database::put_roster(revision_id const & rev_id,
         {
           get_version(old_id, old_data, data_table, delta_table);
           diff(new_data, old_data, reverse_delta);
-          drop(old_id, data_table);
+          if (have_pending_write(data_table, old_id))
+            cancel_pending_write(data_table, old_id);
+          else
+            drop(old_id, data_table);
           put_delta(old_id, new_id, reverse_delta, delta_table);
         }
     }
