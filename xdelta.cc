@@ -649,7 +649,8 @@ struct copied_extent
   string::size_type len;
   bool operator<(copied_extent const & other) const
   {
-    return old_pos < other.old_pos;
+    return (old_pos < other.old_pos) ||
+      (old_pos == other.old_pos && len > other.len);
   }
 };
 

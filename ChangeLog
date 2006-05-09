@@ -1,3 +1,9 @@
+2006-05-09  Graydon Hoare  <graydon@pobox.com>
+
+	* xdelta.cc (copied_extent::operator<): Fix ordering bug which 
+	caused an unfortunate degradation in inverse delta quality,
+	particularly on ChangeLogs.
+
 2006-05-07  Graydon Hoare  <graydon@pobox.com>
 
 	* database.{cc,hh} (pending_writes): New fulltext write buffer,
