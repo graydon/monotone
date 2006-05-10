@@ -543,7 +543,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
         app.db.get_roster(first_rid, new_roster);          
 
       // FIXME_RESTRICTIONS: should this add paths from the rosters of all selected revs?
-      // try log dir/ to see what happens
       mask = restriction(args, app.exclude_patterns, old_roster, new_roster, app);
     }
 
@@ -578,13 +577,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
           set<  revision<id> > parents;
           vector< revision<cert> > tmp;
 
-          if (!app.db.revision_exists(rid))
-            {
-              L(FL("revision %s does not exist in db, skipping\n") % rid);
-              continue;
-            }
-
-          if (seen.find(rid) != seen.end())
+          if (null_id(rid) || seen.find(rid) != seen.end())
             continue;
 
           seen.insert(rid);

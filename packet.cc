@@ -96,19 +96,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
       return;
     }
 
-  file_id confirm;
-  file_data old_dat;
-  data new_dat;
-  app.db.get_file_version(old_id, old_dat);
-  patch(old_dat.inner(), del.inner(), new_dat);
-  calculate_ident(file_data(new_dat), confirm);
-  if (confirm == new_id)
-    app.db.put_file_version(old_id, new_id, del);
-  else
-    {
-      W(F("reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n") 
-        % old_id % new_id % confirm);
-    }
+  app.db.put_file_version(old_id, new_id, del);
 
   guard.commit();
 }
@@ -126,7 +114,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
     }
 
   revision_set rev;
-      MM(rev);
+  MM(rev);
   read_revision_set(dat, rev);
       
   for (edge_map::const_iterator i = rev.edges.begin(); 

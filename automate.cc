@@ -690,8 +690,6 @@ automate_inventory(std::vector<utf8> args,
   get_base_and_current_roster_shape(base, curr, nis, app);
   make_cset(base, curr, cs);
 
-  I(cs.deltas_applied.empty());
-
   // the current roster (curr) has the complete set of registered nodes
   // conveniently with unchanged sha1 hash values
 
