@@ -69,8 +69,6 @@
 //      its merkle trie.
 //   -- add some sort of vhost field to the client's first packet, saying who
 //      they expect to talk to
-//   -- apparently we have a IANA approved port: 4691.  I guess we should
-//      switch to using that.
 
 //
 // This is the "new" network synchronization (netsync) system in
