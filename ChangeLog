@@ -1,5 +1,10 @@
 2006-05-09  Derek Scherger  <derek@echologic.com>
 
+	* packet.cc (consume_file_delta): remove redundant file delta
+	verification
+
+2006-05-09  Derek Scherger  <derek@echologic.com>
+
 	* automate.cc (automate_inventory): remove invalid assertion
 	* cmd_diff_log.cc (log): check for null revision id rather than
 	missing revision id
