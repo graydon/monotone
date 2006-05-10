@@ -1,4 +1,9 @@
-﻿2006-05-08  Roberta Lazzeri  <ripley@lapo.it>
+﻿
+2006-05-10  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (140 to go).
+
+2006-05-08  Roberta Lazzeri  <ripley@lapo.it>
 
 	* po/it.po: Changed translation of 'directory' to 'directory'.
 

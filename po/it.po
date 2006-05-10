@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-05-06 16:19+0200\n"
-"PO-Revision-Date: 2006-05-09 00:58+0100\n"
+"PO-Revision-Date: 2006-05-10 09:37+0100\n"
 "Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -355,6 +355,8 @@ msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
 msgstr ""
+"stampa lo storico in ordine contrario (filtrando con ‘FILE’). Se una o più\n"
+"revisioni sono date, usa quelle come punto di partenza."
 
 #: cmd_diff_log.cc:563
 #, c-format
@@ -730,6 +732,7 @@ msgstr ""
 msgid "workspace"
 msgstr "spazio di lavoro"
 
+# TODO per Lapo, controlla un po'
 #: cmd_merging.cc:37
 msgid ""
 "update workspace.\n"
@@ -738,6 +741,11 @@ msgid ""
 "If a revision is given, update the workspace to that revision.\n"
 "If not, update the workspace to the head of the branch."
 msgstr ""
+"aggiorna spazio di lavoro.\n"
+"Questo comando modifica il tuo spazio di lavoro e lo posiziona ad off di\n"
+"una differente versione, preservando cambiamenti non committati come se lo fossero.\n"
+"Se una revisione è data, aggiorna lo spazio di lavoro a quella versione.\n"
+"Altrimenti aggiorna lo spazio di lavoro alla testa del ramo."
 
 #: cmd_merging.cc:79
 #, c-format
@@ -1575,7 +1583,7 @@ msgstr "roster ‘%s’ incompleto (‘%d’ revisioni mancanti)\n"
 #: database_check.cc:573
 #, c-format
 msgid "roster %s is not parseable (perhaps with unnormalized paths?)\n"
-msgstr ""
+msgstr "roster ‘%s’ non leggibile (forse a causa di percorsi non normalizzati?)\n"
 
 #: database_check.cc:580
 #, c-format
@@ -1635,7 +1643,7 @@ msgstr "%d revisioni con storia non valida\n"
 #: database_check.cc:679
 #, c-format
 msgid "revision %s is not parseable (perhaps with unnormalized paths?)\n"
-msgstr ""
+msgstr "revisione ‘%s’ non leggibile (perhaps with unnormalized paths?)\n"
 
 #: database_check.cc:686
 #, c-format
@@ -1690,7 +1698,7 @@ msgstr "%d roster incompleti\n"
 #: database_check.cc:871
 #, c-format
 msgid "%d rosters not parseable (perhaps with invalid paths)\n"
-msgstr ""
+msgstr "%d roster non leggibili (forse con percorsi invalidi)\n"
 
 #: database_check.cc:874
 #, c-format
@@ -1725,7 +1733,7 @@ msgstr "%d revisioni con storia non valida\n"
 #: database_check.cc:887
 #, c-format
 msgid "%d revisions not parseable (perhaps with invalid paths)\n"
-msgstr ""
+msgstr "%d revisioni non leggibili (forse con percorsi invalidi)\n"
 
 #: database_check.cc:890
 #, c-format
