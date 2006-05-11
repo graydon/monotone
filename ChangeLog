@@ -1,3 +1,8 @@
+2006-05-11  Graydon Hoare  <graydon@pobox.com>
+
+	* xdelta.cc (read_num): New function.
+	(apply_delta): Rewrite to avoid string streams.
+
 2006-05-09  Graydon Hoare  <graydon@pobox.com>
 
 	* xdelta.cc (copied_extent::operator<): Fix ordering bug which 
