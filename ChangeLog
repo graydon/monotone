@@ -1,3 +1,8 @@
+2006-05-11  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* roster.cc: include proper header for srand, rand and prefix
+	srand, rand, search with std:: for sunpro
+
 2006-05-11  Graydon Hoare  <graydon@pobox.com>
 
 	* xdelta.cc (read_num): New function.
