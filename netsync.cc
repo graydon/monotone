@@ -1255,21 +1255,6 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
     this->remote_peer_key_hash = their_key_hash_decoded;
   }
 
-  // clients always include in the synchronization set, every branch that the
-  // user requested
-  vector<string> branchnames;
-  set<utf8> ok_branches;
-  get_branches(app, branchnames);
-  for (vector<string>::const_iterator i = branchnames.begin();
-      i != branchnames.end(); i++)
-    {
-      if (our_matcher(*i))
-        ok_branches.insert(utf8(*i));
-    }
-  rebuild_merkle_trees(app, ok_branches);
-
-  setup_client_tickers();
-    
   if (app.signing_key() != "")
     {
       // get our key pair
@@ -1298,6 +1283,22 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       queue_anonymous_cmd(this->role, our_include_pattern,
                           our_exclude_pattern, mk_nonce(), their_key_encoded);
     }
+
+  // clients always include in the synchronization set, every branch that the
+  // user requested
+  vector<string> branchnames;
+  set<utf8> ok_branches;
+  get_branches(app, branchnames);
+  for (vector<string>::const_iterator i = branchnames.begin();
+      i != branchnames.end(); i++)
+    {
+      if (our_matcher(*i))
+        ok_branches.insert(utf8(*i));
+    }
+  rebuild_merkle_trees(app, ok_branches);
+
+  setup_client_tickers();
+    
   return true;
 }
 
