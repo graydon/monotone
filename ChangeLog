@@ -1,3 +1,9 @@
+2006-05-12  Matt Johnston  <matt@ucc.asn.au>
+
+	* merkle_tree.cc (bitset_to_prefix): use strings directly 
+	rather than ostringstream for getting bitset blocks, ~10%
+	cpu time improvement for empty pull.
+
 2006-05-12  Graydon Hoare  <graydon@pobox.com>
 
 	* xdelta.cc (apply_delta): Tolerate 0-length instructions.
