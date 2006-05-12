@@ -1,4 +1,4 @@
-Botan: Version 1.4.10, December 18, 2005
+Botan: Version 1.5.3, January 24, 2006
 
 Botan is a C++ class library for performing a wide variety of cryptographic
 operations, including encryption, hashing, authentication, public key
@@ -15,9 +15,9 @@ algorithms:
     IDEA, KASUMI, Lion, Luby-Rackoff, MARS, MISTY1, RC2, RC5, RC6, SAFER-SK,
     SEED, Serpent, Skipjack, Square, TEA, Twofish, XTEA
 
-* Stream Ciphers: ARC4, ISAAC, SEAL, WiderWake4+1
+* Stream Ciphers: ARC4, WiderWake4+1, Turing
 
-* Hash Functions: HAS-160, HAVAL, MD2, MD4, MD5, RIPEMD-128, RIPEMD-160,
+* Hash Functions: HAS-160, MD2, MD4, MD5, RIPEMD-128, RIPEMD-160,
     SHA-160, SHA-256, SHA-384, SHA-512, Tiger, Whirlpool
 
 * MACs: ANSI X9.19 MAC, CMAC, HMAC

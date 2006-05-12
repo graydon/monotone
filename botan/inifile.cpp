@@ -1,12 +1,10 @@
 /*************************************************
 * Configuration Reader Source File               *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/conf.h>
-#include <botan/lookup.h>
-#include <botan/look_add.h>
-#include <botan/oids.h>
+#include <botan/libstate.h>
 #include <botan/charset.h>
 #include <botan/parsing.h>
 #include <fstream>
@@ -24,7 +22,7 @@ std::string strip_whitespace(const std::string& line)
    bool is_escaped = false, in_quote = false, in_string = false;
    std::string new_line;
 
-   for(std::string::const_iterator j = line.begin(); j != line.end(); j++)
+   for(std::string::const_iterator j = line.begin(); j != line.end(); ++j)
       {
       const char c = *j;
 
@@ -81,6 +79,14 @@ namespace Config {
 *************************************************/
 void load(const std::string& fsname)
    {
+   load(fsname, global_state());
+   }
+
+/*************************************************
+* Load a configuration file                      *
+*************************************************/
+void load(const std::string& fsname, Library_State& state)
+   {
    std::ifstream config(fsname.c_str());
 
    if(!config)
@@ -92,7 +98,7 @@ void load(const std::string& fsname)
 
    while(std::getline(config, line))
       {
-      line_no++;
+      ++line_no;
 
       line = strip_whitespace(line);
 
@@ -128,11 +134,14 @@ void load(const std::string& fsname)
          variables[name] = value;
 
       if(section == "oids")
-         OIDS::add_oid(OID(value), name);
+         {
+         state.set_option("oid2str", name, value, false);
+         state.set_option("str2oid", value, name, false);
+         }
       else if(section == "aliases")
-         add_alias(name, value);
+         state.set_option("alias", name, value);
       else
-         set(section + '/' + name, value);
+         state.set_option("conf", section + '/' + name, value);
       }
    }
 

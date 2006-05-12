@@ -1,11 +1,12 @@
 /*************************************************
 * MGF1 Source File                               *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/mgf1.h>
 #include <botan/lookup.h>
 #include <botan/bit_ops.h>
+#include <algorithm>
 #include <memory>
 
 namespace Botan {
@@ -23,7 +24,7 @@ void MGF1::mask(const byte in[], u32bit in_len, byte out[],
    while(out_len)
       {
       hash->update(in, in_len);
-      for(u32bit j = 0; j != 4; j++)
+      for(u32bit j = 0; j != 4; ++j)
          hash->update(get_byte(j, counter));
       SecureVector<byte> buffer = hash->final();
 
@@ -32,7 +33,7 @@ void MGF1::mask(const byte in[], u32bit in_len, byte out[],
       out += xored;
       out_len -= xored;
 
-      counter++;
+      ++counter;
       }
    }
 

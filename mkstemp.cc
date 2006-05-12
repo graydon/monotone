@@ -43,7 +43,7 @@ monotone_mkstemp(std::string &tmpl)
       tmp = tmpl.substr(0, len-6);
 
       for (i = 0; i < 6; ++i)
-        tmp.append(1, letters[Botan::Global_RNG::random(Botan::Nonce) % NLETTERS]);
+        tmp.append(1, letters[Botan::Global_RNG::random() % NLETTERS]);
       fd = open(tmp.c_str(), O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
       if (fd >= 0)
       {

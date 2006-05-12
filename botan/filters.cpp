@@ -1,10 +1,11 @@
 /*************************************************
 * Filters Source File                            *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/filters.h>
 #include <botan/lookup.h>
+#include <algorithm>
 
 namespace Botan {
 

@@ -1,6 +1,6 @@
 /*************************************************
 * S2K Source File                                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/s2k.h>
@@ -47,7 +47,7 @@ void S2K::change_salt(const MemoryRegion<byte>& new_salt)
 void S2K::new_random_salt(u32bit length)
    {
    salt.create(length);
-   Global_RNG::randomize(salt, length, Nonce);
+   Global_RNG::randomize(salt, length);
    }
 
 }

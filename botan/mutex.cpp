@@ -1,21 +1,13 @@
 /*************************************************
 * Mutex Source File                              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/mutex.h>
-#include <botan/exceptn.h>
-#include <botan/init.h>
 
 namespace Botan {
 
 namespace {
-
-/*************************************************
-* Global Mutex Variables                         *
-*************************************************/
-Mutex* mutex_factory = 0;
-Mutex* mutex_init_lock = 0;
 
 /*************************************************
 * Default Mutex                                  *
@@ -25,7 +17,6 @@ class Default_Mutex : public Mutex
    public:
       void lock();
       void unlock();
-      Mutex* clone() const { return new Default_Mutex; }
       Default_Mutex() { locked = false; }
    private:
       bool locked;
@@ -54,48 +45,29 @@ void Default_Mutex::unlock()
 }
 
 /*************************************************
-* Get a mew mutex                                *
+* Mutex_Holder Constructor                       *
 *************************************************/
-Mutex* get_mutex()
+Mutex_Holder::Mutex_Holder(Mutex* m) : mux(m)
    {
-   if(mutex_factory == 0)
-      return new Default_Mutex;
-   return mutex_factory->clone();
+   if(!mux)
+      throw Invalid_Argument("Mutex_Holder: Argument was NULL");
+   mux->lock();
    }
 
 /*************************************************
-* Initialize a mutex atomically                  *
+* Mutex_Holder Destructor                        *
 *************************************************/
-void initialize_mutex(Mutex*& mutex)
+Mutex_Holder::~Mutex_Holder()
    {
-   if(mutex) return;
-
-   if(mutex_init_lock)
-      {
-      Mutex_Holder lock(mutex_init_lock);
-      if(mutex == 0)
-         mutex = get_mutex();
-      }
-   else
-      mutex = get_mutex();
+   mux->unlock();
    }
-
-namespace Init {
 
 /*************************************************
-* Set the Mutex type                             *
+* Default Mutex Factory                          *
 *************************************************/
-void set_mutex_type(Mutex* mutex)
+Mutex* Mutex_Factory::make()
    {
-   delete mutex_factory;
-   delete mutex_init_lock;
-
-   mutex_factory = mutex;
-
-   if(mutex) mutex_init_lock = get_mutex();
-   else      mutex_init_lock = 0;
+   return new Default_Mutex;
    }
-
-}
 
 }

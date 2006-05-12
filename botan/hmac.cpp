@@ -1,6 +1,6 @@
 /*************************************************
 * HMAC Source File                               *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/hmac.h>
@@ -77,7 +77,8 @@ MessageAuthenticationCode* HMAC::clone() const
 * HMAC Constructor                               *
 *************************************************/
 HMAC::HMAC(const std::string& hash_name) :
-   MessageAuthenticationCode(output_length_of(hash_name), 1, 64),
+   MessageAuthenticationCode(output_length_of(hash_name),
+                             1, 2*block_size_of(hash_name)),
    hash(get_hash(hash_name))
    {
    if(hash->HASH_BLOCK_SIZE == 0)

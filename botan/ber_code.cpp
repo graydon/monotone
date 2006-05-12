@@ -1,6 +1,6 @@
 /*************************************************
 * BER Decoding Source File                       *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1.h>
@@ -120,10 +120,10 @@ void decode(BER_Decoder& decoder, BigInt& out,
 
    if(negative)
       {
-      for(u32bit j = obj.value.size(); j > 0; j--)
+      for(u32bit j = obj.value.size(); j > 0; --j)
          if(obj.value[j-1]--)
             break;
-      for(u32bit j = 0; j != obj.value.size(); j++)
+      for(u32bit j = 0; j != obj.value.size(); ++j)
          obj.value[j] = ~obj.value[j];
       }
 

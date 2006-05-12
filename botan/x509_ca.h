@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Authority Header File        *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_X509_CA_H__
@@ -34,6 +34,7 @@ class X509_CA
                                         const X509_Time&, const X509_Time&,
                                         const X509_DN&, const X509_DN&,
                                         bool, u32bit, const AlternativeName&,
+                                        const AlternativeName&,
                                         Key_Constraints,
                                         const std::vector<OID>&);
 

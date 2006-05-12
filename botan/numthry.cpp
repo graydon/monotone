@@ -1,10 +1,11 @@
 /*************************************************
 * Number Theory Source File                      *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/numthry.h>
 #include <botan/ui.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -53,7 +54,7 @@ u32bit miller_rabin_test_iterations(u32bit bits, bool verify)
       {    0,  0,  0 }
    };
 
-   for(u32bit j = 0; tests[j].bits; j++)
+   for(u32bit j = 0; tests[j].bits; ++j)
       {
       if(bits <= tests[j].bits)
          if(verify)
@@ -74,7 +75,8 @@ u32bit low_zero_bits(const BigInt& n)
    if(n.is_zero()) return 0;
 
    u32bit bits = 0, max_bits = n.bits();
-   while((n.get_bit(bits) == 0) && bits < max_bits) bits++;
+   while((n.get_bit(bits) == 0) && bits < max_bits)
+      ++bits;
    return bits;
    }
 
@@ -114,14 +116,6 @@ BigInt lcm(const BigInt& a, const BigInt& b)
    }
 
 /*************************************************
-* Square a BigInt                                *
-*************************************************/
-BigInt square(const BigInt& a)
-   {
-   return (a * a);
-   }
-
-/*************************************************
 * Find the Modular Inverse                       *
 *************************************************/
 BigInt inverse_mod(const BigInt& n, const BigInt& mod)
@@ -141,7 +135,7 @@ BigInt inverse_mod(const BigInt& n, const BigInt& mod)
       {
       u32bit zero_bits = low_zero_bits(u);
       u >>= zero_bits;
-      for(u32bit j = 0; j != zero_bits; j++)
+      for(u32bit j = 0; j != zero_bits; ++j)
          {
          if(A.is_odd() || B.is_odd())
             { A += y; B -= x; }
@@ -150,7 +144,7 @@ BigInt inverse_mod(const BigInt& n, const BigInt& mod)
 
       zero_bits = low_zero_bits(v);
       v >>= zero_bits;
-      for(u32bit j = 0; j != zero_bits; j++)
+      for(u32bit j = 0; j != zero_bits; ++j)
          {
          if(C.is_odd() || D.is_odd())
             { C += y; D -= x; }
@@ -227,6 +221,17 @@ BigInt power(const BigInt& base, u32bit exp)
    }
 
 /*************************************************
+* Modular Exponentiation                         *
+*************************************************/
+BigInt power_mod(const BigInt& base, const BigInt& exp, const BigInt& mod)
+   {
+   Power_Mod pow_mod(mod);
+   pow_mod.set_base(base);
+   pow_mod.set_exponent(exp);
+   return pow_mod.execute();
+   }
+
+/*************************************************
 * Do simple tests of primality                   *
 *************************************************/
 s32bit simple_primality_tests(const BigInt& n)
@@ -241,7 +246,7 @@ s32bit simple_primality_tests(const BigInt& n)
    if(n <= PRIMES[PRIME_TABLE_SIZE-1])
       {
       const word num = n.word_at(0);
-      for(u32bit j = 0; PRIMES[j]; j++)
+      for(u32bit j = 0; PRIMES[j]; ++j)
          {
          if(num == PRIMES[j]) return PRIME;
          if(num <  PRIMES[j]) return NOT_PRIME;
@@ -250,7 +255,7 @@ s32bit simple_primality_tests(const BigInt& n)
       }
 
    u32bit check_first = std::min(n.bits() / 32, PRIME_PRODUCTS_TABLE_SIZE);
-   for(u32bit j = 0; j != check_first; j++)
+   for(u32bit j = 0; j != check_first; ++j)
       if(gcd(n, PRIME_PRODUCTS[j]) != 1)
          return NOT_PRIME;
 
@@ -316,9 +321,9 @@ bool passes_mr_tests(const BigInt& n, u32bit level)
    u32bit tests = miller_rabin_test_iterations(n.bits(), verify);
 
    BigInt nonce;
-   for(u32bit j = 0; j != tests; j++)
+   for(u32bit j = 0; j != tests; ++j)
       {
-      if(verify) nonce = random_integer(NONCE_BITS, Nonce);
+      if(verify) nonce = random_integer(NONCE_BITS);
       else       nonce = PRIMES[j];
 
       if(!mr.passes_test(nonce))
@@ -336,15 +341,16 @@ bool MillerRabin_Test::passes_test(const BigInt& a)
       throw Invalid_Argument("Bad size for nonce in Miller-Rabin test");
 
    UI::pulse(UI::PRIME_TESTING);
-   BigInt y = power_mod(a, r, reducer);
 
+   BigInt y = pow_mod(a);
    if(y == 1 || y == n_minus_1)
       return true;
 
-   for(u32bit j = 1; j != s; j++)
+   for(u32bit j = 1; j != s; ++j)
       {
       UI::pulse(UI::PRIME_TESTING);
-      y = reducer->square(y);
+      y = reducer.square(y);
+
       if(y == 1)
          return false;
       if(y == n_minus_1)
@@ -366,7 +372,8 @@ MillerRabin_Test::MillerRabin_Test(const BigInt& num)
    s = low_zero_bits(n_minus_1);
    r = n_minus_1 >> s;
 
-   reducer = get_reducer(n);
+   pow_mod = Fixed_Exponent_Power_Mod(r, n);
+   reducer = Modular_Reducer(n);
    }
 
 }

@@ -1,52 +1,15 @@
 /*************************************************
 * Engine Source File                             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/engine.h>
-#include <botan/def_eng.h>
-#include <botan/init.h>
-#include <botan/rng.h>
+#include <botan/libstate.h>
+#include <botan/eng_def.h>
 
 namespace Botan {
 
-namespace {
-
-std::vector<Engine*> engines;
-
-}
-
-namespace Init {
-
-/*************************************************
-* Initialize the list of Engines                 *
-*************************************************/
-void startup_engines()
-   {
-   engines.push_back(new Default_Engine);
-   }
-
-/*************************************************
-* Delete the list of Engines                     *
-*************************************************/
-void shutdown_engines()
-   {
-   for(u32bit j = 0; j != engines.size(); j++)
-      delete engines[j];
-   engines.clear();
-   }
-
-}
-
 namespace Engine_Core {
-
-/*************************************************
-* Add an Engine to the list                      *
-*************************************************/
-void add_engine(Engine* engine)
-   {
-   engines.insert(engines.end() - 1, engine);
-   }
 
 /*************************************************
 * Acquire an IF op                               *
@@ -55,11 +18,15 @@ IF_Operation* if_op(const BigInt& e, const BigInt& n, const BigInt& d,
                     const BigInt& p, const BigInt& q, const BigInt& d1,
                     const BigInt& d2, const BigInt& c)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
       {
-      IF_Operation* op = engines[j]->if_op(e, n, d, p, q, d1, d2, c);
-      if(op) return op;
+      IF_Operation* op = engine->if_op(e, n, d, p, q, d1, d2, c);
+      if(op)
+         return op;
       }
+
    throw Lookup_Error("Engine_Core::if_op: Unable to find a working engine");
    }
 
@@ -68,11 +35,15 @@ IF_Operation* if_op(const BigInt& e, const BigInt& n, const BigInt& d,
 *************************************************/
 DSA_Operation* dsa_op(const DL_Group& group, const BigInt& y, const BigInt& x)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
       {
-      DSA_Operation* op = engines[j]->dsa_op(group, y, x);
-      if(op) return op;
+      DSA_Operation* op = engine->dsa_op(group, y, x);
+      if(op)
+         return op;
       }
+
    throw Lookup_Error("Engine_Core::dsa_op: Unable to find a working engine");
    }
 
@@ -81,11 +52,15 @@ DSA_Operation* dsa_op(const DL_Group& group, const BigInt& y, const BigInt& x)
 *************************************************/
 NR_Operation* nr_op(const DL_Group& group, const BigInt& y, const BigInt& x)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
       {
-      NR_Operation* op = engines[j]->nr_op(group, y, x);
-      if(op) return op;
+      NR_Operation* op = engine->nr_op(group, y, x);
+      if(op)
+         return op;
       }
+
    throw Lookup_Error("Engine_Core::nr_op: Unable to find a working engine");
    }
 
@@ -94,11 +69,15 @@ NR_Operation* nr_op(const DL_Group& group, const BigInt& y, const BigInt& x)
 *************************************************/
 ELG_Operation* elg_op(const DL_Group& group, const BigInt& y, const BigInt& x)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
       {
-      ELG_Operation* op = engines[j]->elg_op(group, y, x);
-      if(op) return op;
+      ELG_Operation* op = engine->elg_op(group, y, x);
+      if(op)
+         return op;
       }
+
    throw Lookup_Error("Engine_Core::elg_op: Unable to find a working engine");
    }
 
@@ -107,39 +86,52 @@ ELG_Operation* elg_op(const DL_Group& group, const BigInt& y, const BigInt& x)
 *************************************************/
 DH_Operation* dh_op(const DL_Group& group, const BigInt& x)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
       {
-      DH_Operation* op = engines[j]->dh_op(group, x);
-      if(op) return op;
+      DH_Operation* op = engine->dh_op(group, x);
+      if(op)
+         return op;
       }
+
    throw Lookup_Error("Engine_Core::dh_op: Unable to find a working engine");
    }
 
-}
-
 /*************************************************
-* Acquire a modular reducer                      *
+* Acquire a modular exponentiator                *
 *************************************************/
-ModularReducer* get_reducer(const BigInt& n, bool convert_ok)
+Modular_Exponentiator* mod_exp(const BigInt& n, Power_Mod::Usage_Hints hints)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
       {
-      ModularReducer* op = engines[j]->reducer(n, convert_ok);
-      if(op) return op;
+      Modular_Exponentiator* op = engine->mod_exp(n, hints);
+
+      if(op)
+         return op;
       }
-   throw Lookup_Error("get_reducer: Unable to find a working engine");
+
+   throw Lookup_Error("Engine_Core::mod_exp: Unable to find a working engine");
    }
+
+}
 
 /*************************************************
 * Acquire a block cipher                         *
 *************************************************/
 const BlockCipher* retrieve_block_cipher(const std::string& name)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
       {
-      const BlockCipher* algo = engines[j]->block_cipher(name);
-      if(algo) return algo;
+      const BlockCipher* algo = engine->block_cipher(name);
+      if(algo)
+         return algo;
       }
+
    return 0;
    }
 
@@ -148,11 +140,15 @@ const BlockCipher* retrieve_block_cipher(const std::string& name)
 *************************************************/
 const StreamCipher* retrieve_stream_cipher(const std::string& name)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
       {
-      const StreamCipher* algo = engines[j]->stream_cipher(name);
-      if(algo) return algo;
+      const StreamCipher* algo = engine->stream_cipher(name);
+      if(algo)
+         return algo;
       }
+
    return 0;
    }
 
@@ -161,11 +157,15 @@ const StreamCipher* retrieve_stream_cipher(const std::string& name)
 *************************************************/
 const HashFunction* retrieve_hash(const std::string& name)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
       {
-      const HashFunction* algo = engines[j]->hash(name);
-      if(algo) return algo;
+      const HashFunction* algo = engine->hash(name);
+      if(algo)
+         return algo;
       }
+
    return 0;
    }
 
@@ -174,11 +174,49 @@ const HashFunction* retrieve_hash(const std::string& name)
 *************************************************/
 const MessageAuthenticationCode* retrieve_mac(const std::string& name)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
       {
-      const MessageAuthenticationCode* algo = engines[j]->mac(name);
-      if(algo) return algo;
+      const MessageAuthenticationCode* algo = engine->mac(name);
+      if(algo)
+         return algo;
       }
+
+   return 0;
+   }
+
+/*************************************************
+* Acquire a string-to-key algorithm              *
+*************************************************/
+const S2K* retrieve_s2k(const std::string& name)
+   {
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
+      {
+      const S2K* algo = engine->s2k(name);
+      if(algo)
+         return algo;
+      }
+
+   return 0;
+   }
+
+/*************************************************
+* Retrieve a block cipher padding method         *
+*************************************************/
+const BlockCipherModePaddingMethod* retrieve_bc_pad(const std::string& name)
+   {
+   Library_State::Engine_Iterator i(global_state());
+
+   while(const Engine* engine = i.next())
+      {
+      const BlockCipherModePaddingMethod* algo = engine->bc_pad(name);
+      if(algo)
+         return algo;
+      }
+
    return 0;
    }
 
@@ -187,15 +225,18 @@ const MessageAuthenticationCode* retrieve_mac(const std::string& name)
 *************************************************/
 void add_algorithm(BlockCipher* algo)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(Engine* engine_base = i.next())
       {
-      Default_Engine* engine = dynamic_cast<Default_Engine*>(engines[j]);
+      Default_Engine* engine = dynamic_cast<Default_Engine*>(engine_base);
       if(engine)
          {
          engine->add_algorithm(algo);
          return;
          }
       }
+
    throw Invalid_State("add_algorithm: Couldn't find the Default_Engine");
    }
 
@@ -204,15 +245,18 @@ void add_algorithm(BlockCipher* algo)
 *************************************************/
 void add_algorithm(StreamCipher* algo)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(Engine* engine_base = i.next())
       {
-      Default_Engine* engine = dynamic_cast<Default_Engine*>(engines[j]);
+      Default_Engine* engine = dynamic_cast<Default_Engine*>(engine_base);
       if(engine)
          {
          engine->add_algorithm(algo);
          return;
          }
       }
+
    throw Invalid_State("add_algorithm: Couldn't find the Default_Engine");
    }
 
@@ -221,15 +265,18 @@ void add_algorithm(StreamCipher* algo)
 *************************************************/
 void add_algorithm(HashFunction* algo)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(Engine* engine_base = i.next())
       {
-      Default_Engine* engine = dynamic_cast<Default_Engine*>(engines[j]);
+      Default_Engine* engine = dynamic_cast<Default_Engine*>(engine_base);
       if(engine)
          {
          engine->add_algorithm(algo);
          return;
          }
       }
+
    throw Invalid_State("add_algorithm: Couldn't find the Default_Engine");
    }
 
@@ -238,15 +285,38 @@ void add_algorithm(HashFunction* algo)
 *************************************************/
 void add_algorithm(MessageAuthenticationCode* algo)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(Engine* engine_base = i.next())
       {
-      Default_Engine* engine = dynamic_cast<Default_Engine*>(engines[j]);
+      Default_Engine* engine = dynamic_cast<Default_Engine*>(engine_base);
       if(engine)
          {
          engine->add_algorithm(algo);
          return;
          }
       }
+
+   throw Invalid_State("add_algorithm: Couldn't find the Default_Engine");
+   }
+
+/*************************************************
+* Add a padding method to the lookup table       *
+*************************************************/
+void add_algorithm(BlockCipherModePaddingMethod* algo)
+   {
+   Library_State::Engine_Iterator i(global_state());
+
+   while(Engine* engine_base = i.next())
+      {
+      Default_Engine* engine = dynamic_cast<Default_Engine*>(engine_base);
+      if(engine)
+         {
+         engine->add_algorithm(algo);
+         return;
+         }
+      }
+
    throw Invalid_State("add_algorithm: Couldn't find the Default_Engine");
    }
 
@@ -255,11 +325,15 @@ void add_algorithm(MessageAuthenticationCode* algo)
 *************************************************/
 Keyed_Filter* get_cipher(const std::string& algo_spec, Cipher_Dir direction)
    {
-   for(u32bit j = 0; j != engines.size(); j++)
+   Library_State::Engine_Iterator i(global_state());
+
+   while(Engine* engine = i.next())
       {
-      Keyed_Filter* algo = engines[j]->get_cipher(algo_spec, direction);
-      if(algo) return algo;
+      Keyed_Filter* algo = engine->get_cipher(algo_spec, direction);
+      if(algo)
+         return algo;
       }
+
    throw Algorithm_Not_Found(algo_spec);
    }
 

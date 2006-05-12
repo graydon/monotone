@@ -1,12 +1,13 @@
 /*************************************************
 * BigInt Binary Operators Source File            *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/bigint.h>
 #include <botan/numthry.h>
 #include <botan/mp_core.h>
 #include <botan/bit_ops.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -89,9 +90,9 @@ BigInt operator*(const BigInt& x, const BigInt& y)
       }
 
    BigInt z(sign, x.size() + y.size());
-   bigint_mul3(z.get_reg(), z.size(),
-               x.data(), x.size(), x_sw,
-               y.data(), y.size(), y_sw);
+   bigint_mul(z.get_reg(), z.size(),
+              x.data(), x.size(), x_sw,
+              y.data(), y.size(), y_sw);
    return z;
    }
 
@@ -130,14 +131,14 @@ word operator%(const BigInt& n, word mod)
    if(mod == 0)
       throw BigInt::DivideByZero();
 
-   if(power_of_2(mod))
-      return (n.word_at(0) & (mod - 1));
-
+   const u32bit n_words = n.sig_words();
    word remainder = 0;
-   u32bit size = n.sig_words();
 
-   for(u32bit j = size; j > 0; j--)
+   for(u32bit j = n_words; j > 0; --j)
       remainder = bigint_modop(remainder, n.word_at(j-1), mod);
+
+   if(remainder && n.sign() == BigInt::Negative)
+      return mod - remainder;
    return remainder;
    }
 

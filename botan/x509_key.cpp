@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Public Key Source File                   *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/x509_key.h>
@@ -27,7 +27,7 @@ u64bit X509_PublicKey::key_id() const
    pipe.end_msg();
 
    u64bit hash = 0;
-   for(u32bit j = 0; j != 8; j++)
+   for(u32bit j = 0; j != 8; ++j)
       {
       byte next = 0;
       if(pipe.read(next) != 1)

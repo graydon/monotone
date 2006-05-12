@@ -1,12 +1,13 @@
 /*************************************************
 * DER Encoder Source File                        *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/der_enc.h>
 #include <botan/bigint.h>
 #include <botan/bit_ops.h>
 #include <botan/parsing.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -30,7 +31,7 @@ SecureVector<byte> encode_tag(ASN1_Tag type_tag, ASN1_Tag class_tag)
       blocks = (blocks - (blocks % 7)) / 7;
 
       encoded_tag.append(class_tag | 0x1F);
-      for(u32bit k = 0; k != blocks - 1; k++)
+      for(u32bit k = 0; k != blocks - 1; ++k)
          encoded_tag.append(0x80 | ((type_tag >> 7*(blocks-k-1)) & 0x7F));
       encoded_tag.append(type_tag & 0x7F);
       }
@@ -50,7 +51,7 @@ SecureVector<byte> encode_length(u32bit length)
       {
       const u32bit top_byte = significant_bytes(length);
       encoded_length.append((byte)(0x80 | top_byte));
-      for(u32bit j = 4-top_byte; j != 4; j++)
+      for(u32bit j = 4-top_byte; j != 4; ++j)
          encoded_length.append(get_byte(j, length));
       }
    return encoded_length;
@@ -75,7 +76,7 @@ bool DER_Cmp::operator()(const MemoryRegion<byte>& a,
    if(a.size() < b.size()) return true;
    if(a.size() > b.size()) return false;
 
-   for(u32bit j = 0; j != a.size(); j++)
+   for(u32bit j = 0; j != a.size(); ++j)
       {
       if(a[j] < b[j]) return true;
       if(a[j] > b[j]) return false;
@@ -97,7 +98,7 @@ SecureVector<byte> DER_Encoder::DER_Sequence::get_contents()
    if(is_a_set)
       {
       std::sort(set_contents.begin(), set_contents.end(), DER_Cmp());
-      for(u32bit j = 0; j != set_contents.size(); j++)
+      for(u32bit j = 0; j != set_contents.size(); ++j)
          contents.append(set_contents[j]);
       set_contents.clear();
       }
@@ -161,7 +162,7 @@ SecureVector<byte> DER_Encoder::get_contents()
 void DER_Encoder::start_cons(ASN1_Tag type_tag, ASN1_Tag class_tag,
                              bool is_a_set)
    {
-   sequence_level++;
+   ++sequence_level;
    subsequences.push_back(DER_Sequence(type_tag, class_tag, is_a_set));
    }
 

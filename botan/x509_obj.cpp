@@ -1,11 +1,12 @@
 /*************************************************
 * X.509 SIGNED Object Source File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/x509_obj.h>
 #include <botan/parsing.h>
 #include <botan/pem.h>
+#include <algorithm>
 
 namespace Botan {
 

@@ -1,11 +1,13 @@
 /*************************************************
 * Base Classes Source File                       *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/base.h>
 #include <botan/version.h>
 #include <botan/parsing.h>
+#include <botan/util.h>
+#include <botan/conf.h>
 
 namespace Botan {
 
@@ -104,7 +106,7 @@ bool MessageAuthenticationCode::verify_mac(const byte mac[], u32bit length)
    SecureVector<byte> our_mac = final();
    if(our_mac.size() != length)
       return false;
-   for(u32bit j = 0; j != length; j++)
+   for(u32bit j = 0; j != length; ++j)
       if(mac[j] != our_mac[j])
          return false;
    return true;
@@ -216,15 +218,28 @@ void RandomNumberGenerator::add_entropy(const byte random[], u32bit length)
 /*************************************************
 * Add entropy to internal state                  *
 *************************************************/
-void RandomNumberGenerator::add_entropy(EntropySource& source, bool slowpoll)
+u32bit RandomNumberGenerator::add_entropy(EntropySource& source,
+                                          bool slow_poll)
    {
-   SecureVector<byte> buffer(slowpoll ? 192 : 64);
-   u32bit returned;
+   u32bit poll_for = 0;
 
-   if(slowpoll) returned = source.slow_poll(buffer, buffer.size());
-   else         returned = source.fast_poll(buffer, buffer.size());
+   if(slow_poll)
+      poll_for = Config::get_u32bit("rng/slow_poll_request");
+   else
+      poll_for = Config::get_u32bit("rng/fast_poll_request");
 
-   add_entropy(buffer, returned);
+   SecureVector<byte> buffer(poll_for ? poll_for : 256);
+
+   u32bit bytes_gathered = 0;
+
+   if(slow_poll)
+      bytes_gathered = source.slow_poll(buffer, buffer.size());
+   else
+      bytes_gathered = source.fast_poll(buffer, buffer.size());
+
+   add_entropy(buffer, bytes_gathered);
+
+   return entropy_estimate(buffer, bytes_gathered);
    }
 
 /*************************************************

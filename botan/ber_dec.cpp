@@ -1,6 +1,6 @@
 /*************************************************
 * BER Decoder Source File                        *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1.h>
@@ -39,7 +39,7 @@ u32bit decode_tag(DataSource* ber, ASN1_Tag& type_tag, ASN1_Tag& class_tag)
          throw Decoding_Error("BER long-form tag truncated");
       if(tag_buf & 0xFF000000)
          throw Decoding_Error("BER long-form tag overflow");
-      tag_bytes++;
+      ++tag_bytes;
       tag_buf = (tag_buf << 7) | (b & 0x7F);
       if((b & 0x80) == 0) break;
       }
@@ -71,7 +71,7 @@ u32bit decode_length(DataSource* ber, u32bit& field_size)
 
    u32bit length = 0;
 
-   for(u32bit j = 0; j != field_size - 1; j++)
+   for(u32bit j = 0; j != field_size - 1; ++j)
       {
       if(get_byte(0, length) != 0)
          throw BER_Decoding_Error("Field length overflow");
@@ -96,12 +96,10 @@ u32bit decode_length(DataSource* ber)
 *************************************************/
 u32bit find_eoc(DataSource* ber)
    {
-   SecureVector<byte> data;
+   SecureVector<byte> buffer(DEFAULT_BUFFERSIZE), data;
 
    while(true)
       {
-      SecureVector<byte> buffer(DEFAULT_BUFFERSIZE);
-
       const u32bit got = ber->peek(buffer, buffer.size(), data.size());
       if(got == 0)
          break;

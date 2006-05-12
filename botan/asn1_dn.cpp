@@ -1,10 +1,11 @@
 /*************************************************
 * X509_DN Source File                            *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1_obj.h>
 #include <botan/parsing.h>
+#include <botan/map_util.h>
 #include <botan/oids.h>
 
 namespace Botan {
@@ -22,7 +23,7 @@ X509_DN::X509_DN()
 X509_DN::X509_DN(const std::multimap<OID, std::string>& args)
    {
    std::multimap<OID, std::string>::const_iterator j;
-   for(j = args.begin(); j != args.end(); j++)
+   for(j = args.begin(); j != args.end(); ++j)
       add_attribute(j->first, j->second);
    }
 
@@ -32,7 +33,7 @@ X509_DN::X509_DN(const std::multimap<OID, std::string>& args)
 X509_DN::X509_DN(const std::multimap<std::string, std::string>& args)
    {
    std::multimap<std::string, std::string>::const_iterator j;
-   for(j = args.begin(); j != args.end(); j++)
+   for(j = args.begin(); j != args.end(); ++j)
       add_attribute(OIDS::lookup(j->first), j->second);
    }
 
@@ -57,7 +58,7 @@ void X509_DN::add_attribute(const OID& oid, const std::string& str)
    typedef std::multimap<OID, ASN1_String>::iterator rdn_iter;
 
    std::pair<rdn_iter, rdn_iter> range = dn_info.equal_range(oid);
-   for(rdn_iter j = range.first; j != range.second; j++)
+   for(rdn_iter j = range.first; j != range.second; ++j)
       if(j->second.value() == str)
          return;
 
@@ -73,7 +74,7 @@ std::multimap<OID, std::string> X509_DN::get_attributes() const
    typedef std::multimap<OID, ASN1_String>::const_iterator rdn_iter;
 
    std::multimap<OID, std::string> retval;
-   for(rdn_iter j = dn_info.begin(); j != dn_info.end(); j++)
+   for(rdn_iter j = dn_info.begin(); j != dn_info.end(); ++j)
       multimap_insert(retval, j->first, j->second.value());
    return retval;
    }
@@ -89,7 +90,7 @@ std::vector<std::string> X509_DN::get_attribute(const std::string& attr) const
    std::pair<rdn_iter, rdn_iter> range = dn_info.equal_range(oid);
 
    std::vector<std::string> values;
-   for(rdn_iter j = range.first; j != range.second; j++)
+   for(rdn_iter j = range.first; j != range.second; ++j)
       values.push_back(j->second.value());
    return values;
    }
@@ -169,8 +170,8 @@ bool operator==(const X509_DN& dn1, const X509_DN& dn2)
       if(p1->first != p2->first) return false;
       if(!x500_name_cmp(p1->second, p2->second))
          return false;
-      p1++;
-      p2++;
+      ++p1;
+      ++p2;
       }
    return true;
    }
@@ -196,7 +197,7 @@ bool operator<(const X509_DN& dn1, const X509_DN& dn2)
    if(attr1.size() < attr2.size()) return true;
    if(attr1.size() > attr2.size()) return false;
 
-   for(rdn_iter p1 = attr1.begin(); p1 != attr1.end(); p1++)
+   for(rdn_iter p1 = attr1.begin(); p1 != attr1.end(); ++p1)
       {
       std::multimap<OID, std::string>::const_iterator p2;
       p2 = attr2.find(p1->first);
@@ -229,7 +230,7 @@ void do_ava(DER_Encoder& encoder, std::multimap<OID, std::string>& dn_info,
 
    std::pair<rdn_iter, rdn_iter> range = dn_info.equal_range(oid);
 
-   for(rdn_iter j = range.first; j != range.second; j++)
+   for(rdn_iter j = range.first; j != range.second; ++j)
       {
       ASN1_String asn1_string(j->second, string_type);
 

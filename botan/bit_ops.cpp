@@ -1,6 +1,6 @@
 /*************************************************
 * Bit/Word Operations Source File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/bit_ops.h>
@@ -20,7 +20,7 @@ void xor_buf(byte data[], const byte mask[], u32bit length)
       data[6] ^= mask[6]; data[7] ^= mask[7];
       data += 8; mask += 8; length -= 8;
       }
-   for(u32bit j = 0; j != length; j++)
+   for(u32bit j = 0; j != length; ++j)
       data[j] ^= mask[j];
    }
 
@@ -34,7 +34,7 @@ void xor_buf(byte out[], const byte in[], const byte mask[], u32bit length)
       out[6] = in[6] ^ mask[6]; out[7] = in[7] ^ mask[7];
       in += 8; out += 8; mask += 8; length -= 8;
       }
-   for(u32bit j = 0; j != length; j++)
+   for(u32bit j = 0; j != length; ++j)
       out[j] = in[j] ^ mask[j];
    }
 
@@ -55,7 +55,7 @@ bool power_of_2(u64bit arg)
 *************************************************/
 u32bit high_bit(u64bit n)
    {
-   for(u32bit count = 64; count > 0; count--)
+   for(u32bit count = 64; count > 0; --count)
       if((n >> (count - 1)) & 0x01)
          return count;
    return 0;
@@ -66,7 +66,7 @@ u32bit high_bit(u64bit n)
 *************************************************/
 u32bit low_bit(u64bit n)
    {
-   for(u32bit count = 0; count != 64; count++)
+   for(u32bit count = 0; count != 64; ++count)
       if((n >> count) & 0x01)
          return (count + 1);
    return 0;
@@ -77,7 +77,7 @@ u32bit low_bit(u64bit n)
 *************************************************/
 u32bit significant_bytes(u64bit n)
    {
-   for(u32bit j = 0; j != 8; j++)
+   for(u32bit j = 0; j != 8; ++j)
       if(get_byte(j, n))
          return 8-j;
    return 0;
@@ -89,9 +89,9 @@ u32bit significant_bytes(u64bit n)
 u32bit hamming_weight(u64bit n)
    {
    u32bit weight = 0;
-   for(u32bit j = 0; j != 64; j++)
+   for(u32bit j = 0; j != 64; ++j)
       if((n >> j) & 0x01)
-         weight++;
+         ++weight;
    return weight;
    }
 

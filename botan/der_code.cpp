@@ -1,6 +1,6 @@
 /*************************************************
 * DER Coding Source File                         *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/der_enc.h>
@@ -129,9 +129,9 @@ void encode(DER_Encoder& encoder, const BigInt& n,
       BigInt::encode(contents.begin() + extra_zero, n);
       if(n < 0)
          {
-         for(u32bit j = 0; j != contents.size(); j++)
+         for(u32bit j = 0; j != contents.size(); ++j)
             contents[j] = ~contents[j];
-         for(u32bit j = contents.size(); j > 0; j--)
+         for(u32bit j = contents.size(); j > 0; --j)
             if(++contents[j-1])
                break;
          }

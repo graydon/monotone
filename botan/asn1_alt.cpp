@@ -1,9 +1,10 @@
 /*************************************************
 * AlternativeName Source File                    *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1_obj.h>
+#include <botan/map_util.h>
 #include <botan/charset.h>
 
 namespace Botan {
@@ -31,7 +32,7 @@ void AlternativeName::add_attribute(const std::string& type,
 
    typedef std::multimap<std::string, std::string>::iterator iter;
    std::pair<iter, iter> range = alt_info.equal_range(type);
-   for(iter j = range.first; j != range.second; j++)
+   for(iter j = range.first; j != range.second; ++j)
       if(j->second == str)
          return;
 
@@ -85,7 +86,7 @@ void encode_entries(DER_Encoder& encoder, const AlternativeName& alt_name,
    typedef std::multimap<std::string, std::string>::iterator iter;
 
    std::pair<iter, iter> range = attr.equal_range(type);
-   for(iter j = range.first; j != range.second; j++)
+   for(iter j = range.first; j != range.second; ++j)
       {
       ASN1_String asn1_string(j->second, IA5_STRING);
       DER::encode(encoder, asn1_string, tagging, CONTEXT_SPECIFIC);
@@ -106,7 +107,7 @@ void encode(DER_Encoder& encoder, const AlternativeName& alt_name)
    std::multimap<OID, ASN1_String> othernames = alt_name.get_othernames();
 
    std::multimap<OID, ASN1_String>::const_iterator i;
-   for(i = othernames.begin(); i != othernames.end(); i++)
+   for(i = othernames.begin(); i != othernames.end(); ++i)
       {
       encoder.start_explicit(ASN1_Tag(0));
       DER::encode(encoder, i->first);

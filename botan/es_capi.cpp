@@ -1,11 +1,11 @@
 /*************************************************
-* Win32 CAPI EntropySource Source File           *
-* (C) 1999-2005 The Botan Project                *
+* Win32 CryptoAPI EntropySource Source File      *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/es_capi.h>
-#include <botan/conf.h>
 #include <botan/parsing.h>
+#include <botan/conf.h>
 #include <windows.h>
 #include <wincrypt.h>
 
@@ -22,6 +22,7 @@ class CSP_Handle
       CSP_Handle(u64bit);
       ~CSP_Handle();
 
+      void gen_random(byte[], u32bit) const;
       bool is_valid() const { return valid; }
 
       HCRYPTPROV get_handle() const { return handle; }
@@ -29,6 +30,14 @@ class CSP_Handle
       HCRYPTPROV handle;
       bool valid;
    };
+
+/*************************************************
+* Call CryptGenRandom                            *
+*************************************************/
+void CSP_Handle::gen_random(byte out[], u32bit n) const
+   {
+   CryptGenRandom(handle, n, out);
+   }
 
 /*************************************************
 * Initialize a CSP Handle                        *
@@ -64,8 +73,11 @@ u32bit Win32_CAPI_EntropySource::slow_poll(byte output[], u32bit length)
    for(u32bit j = 0; j != prov_types.size(); j++)
       {
       CSP_Handle csp(prov_types[j]);
-      if(!csp.is_valid()) continue;
-      if(CryptGenRandom(csp.get_handle(), length, output)) break;
+      if(!csp.is_valid())
+         continue;
+
+      csp.gen_random(output, length);
+      break;
       }
    return length;
    }

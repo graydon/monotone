@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Authority Source File        *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/x509_ca.h>
@@ -11,6 +11,7 @@
 #include <botan/numthry.h>
 #include <botan/oids.h>
 #include <botan/util.h>
+#include <algorithm>
 #include <memory>
 #include <set>
 
@@ -84,7 +85,7 @@ X509_Certificate X509_CA::sign_request(const PKCS10_Request& req,
                     cert.subject_key_id(), not_before, not_after,
                     cert.subject_dn(), req.subject_dn(),
                     req.is_CA(), req.path_limit(), req.subject_alt_name(),
-                    constraints, req.ex_constraints());
+                    AlternativeName(), constraints, req.ex_constraints());
    }
 
 /*************************************************
@@ -100,6 +101,7 @@ X509_Certificate X509_CA::make_cert(PK_Signer* signer,
                                     const X509_DN& subject_dn,
                                     bool is_CA, u32bit path_limit,
                                     const AlternativeName& subject_alt,
+                                    const AlternativeName& issuer_alt,
                                     Key_Constraints constraints,
                                     const std::vector<OID>& ex_constraints)
    {
@@ -113,7 +115,7 @@ X509_Certificate X509_CA::make_cert(PK_Signer* signer,
    DER::encode(tbs_cert, X509_CERT_VERSION);
    tbs_cert.end_explicit(ASN1_Tag(0));
 
-   DER::encode(tbs_cert, random_integer(SERIAL_BITS, Nonce));
+   DER::encode(tbs_cert, random_integer(SERIAL_BITS));
    DER::encode(tbs_cert, sig_algo);
    DER::encode(tbs_cert, issuer_dn);
    tbs_cert.start_sequence();
@@ -161,6 +163,13 @@ X509_Certificate X509_CA::make_cert(PK_Signer* signer,
              "subject_alternative_name");
       }
 
+   if(issuer_alt.has_items())
+      {
+      DER::encode(v3_ext, issuer_alt);
+      do_ext(tbs_cert, v3_ext, "X509v3.IssuerAlternativeName",
+             "issuer_alternative_name");
+      }
+
    if(constraints != NO_CONSTRAINTS)
       {
       DER::encode(v3_ext, constraints);
@@ -170,7 +179,7 @@ X509_Certificate X509_CA::make_cert(PK_Signer* signer,
    if(ex_constraints.size())
       {
       v3_ext.start_sequence();
-      for(u32bit j = 0; j != ex_constraints.size(); j++)
+      for(u32bit j = 0; j != ex_constraints.size(); ++j)
          DER::encode(v3_ext, ex_constraints[j]);
       v3_ext.end_sequence();
       do_ext(tbs_cert, v3_ext, "X509v3.ExtendedKeyUsage",
@@ -213,7 +222,10 @@ void X509_CA::do_ext(DER_Encoder& new_cert, DER_Encoder& extension,
       }
 
    if(EXT_SETTING == "no")
+      {
+      extension = DER_Encoder();
       return;
+      }
    else if(EXT_SETTING == "yes" || EXT_SETTING == "noncritical" ||
            EXT_SETTING == "critical")
       {
@@ -252,7 +264,7 @@ X509_CRL X509_CA::update_crl(const X509_CRL& crl,
       throw Invalid_Argument("X509_CA::update_crl: Invalid CRL provided");
 
    std::set<SecureVector<byte> > removed_from_crl;
-   for(u32bit j = 0; j != new_revoked.size(); j++)
+   for(u32bit j = 0; j != new_revoked.size(); ++j)
       {
       if(new_revoked[j].reason == DELETE_CRL_ENTRY)
          removed_from_crl.insert(new_revoked[j].serial);
@@ -260,7 +272,7 @@ X509_CRL X509_CA::update_crl(const X509_CRL& crl,
          all_revoked.push_back(new_revoked[j]);
       }
 
-   for(u32bit j = 0; j != already_revoked.size(); j++)
+   for(u32bit j = 0; j != already_revoked.size(); ++j)
       {
       std::set<SecureVector<byte> >::const_iterator i;
       i = removed_from_crl.find(already_revoked[j].serial);
@@ -302,7 +314,7 @@ X509_CRL X509_CA::make_crl(const std::vector<CRL_Entry>& revoked,
    if(revoked.size())
       {
       tbs_crl.start_sequence();
-      for(u32bit j = 0; j != revoked.size(); j++)
+      for(u32bit j = 0; j != revoked.size(); ++j)
          DER::encode(tbs_crl, revoked[j]);
       tbs_crl.end_sequence();
       }

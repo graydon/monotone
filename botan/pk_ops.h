@@ -1,13 +1,13 @@
 /*************************************************
 * Public Key Operations Header File              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_PK_OPS_H__
 #define BOTAN_PK_OPS_H__
 
 #include <botan/bigint.h>
-#include <botan/dl_param.h>
+#include <botan/dl_group.h>
 
 namespace Botan {
 

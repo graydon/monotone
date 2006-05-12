@@ -1,6 +1,6 @@
 /*************************************************
 * Win32 EntropySource Source File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/es_win32.h>
@@ -10,40 +10,11 @@
 namespace Botan {
 
 /*************************************************
-* Win32 Fast Poll                                *
-*************************************************/
-void Win32_EntropySource::do_fast_poll()
-   {
-   add_bytes(GetTickCount());
-   add_bytes(GetMessagePos());
-   add_bytes(GetMessageTime());
-   add_bytes(GetInputState());
-   add_bytes(GetCurrentProcessId());
-   add_bytes(GetCurrentThreadId());
-
-   SYSTEM_INFO sys_info;
-   GetSystemInfo(&sys_info);
-   add_bytes(&sys_info, sizeof(sys_info));
-
-   MEMORYSTATUS mem_info;
-   GlobalMemoryStatus(&mem_info);
-   add_bytes(&mem_info, sizeof(mem_info));
-
-   POINT point;
-   GetCursorPos(&point);
-   add_bytes(&point, sizeof(point));
-   GetCaretPos(&point);
-   add_bytes(&point, sizeof(point));
-   }
-
-/*************************************************
 * Win32 Slow Poll                                *
 *************************************************/
 void Win32_EntropySource::do_slow_poll()
    {
    const u32bit MAX_ITEMS = 256;
-   const u32bit HEAP_LISTS_MAX = 32;
-   const u32bit HEAP_OBJS_PER_LIST = 128;
 
    do_fast_poll();
 
@@ -73,6 +44,9 @@ void Win32_EntropySource::do_slow_poll()
    u32bit heap_lists_found = 0;
    HEAPLIST32 heap_list;
    heap_list.dwSize = sizeof(HEAPLIST32);
+
+   const u32bit HEAP_LISTS_MAX = 32;
+   const u32bit HEAP_OBJS_PER_LIST = 128;
    if(Heap32ListFirst(snapshot, &heap_list))
       {
       do
@@ -99,6 +73,33 @@ void Win32_EntropySource::do_slow_poll()
       }
 
    CloseHandle(snapshot);
+   }
+
+/*************************************************
+* Win32 Fast Poll                                *
+*************************************************/
+void Win32_EntropySource::do_fast_poll()
+   {
+   add_bytes(GetTickCount());
+   add_bytes(GetMessagePos());
+   add_bytes(GetMessageTime());
+   add_bytes(GetInputState());
+   add_bytes(GetCurrentProcessId());
+   add_bytes(GetCurrentThreadId());
+
+   SYSTEM_INFO sys_info;
+   GetSystemInfo(&sys_info);
+   add_bytes(&sys_info, sizeof(sys_info));
+
+   MEMORYSTATUS mem_info;
+   GlobalMemoryStatus(&mem_info);
+   add_bytes(&mem_info, sizeof(mem_info));
+
+   POINT point;
+   GetCursorPos(&point);
+   add_bytes(&point, sizeof(point));
+   GetCaretPos(&point);
+   add_bytes(&point, sizeof(point));
    }
 
 }

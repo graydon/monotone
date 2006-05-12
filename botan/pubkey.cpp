@@ -1,6 +1,6 @@
 /*************************************************
 * Public Key Base Source File                    *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pubkey.h>
@@ -192,12 +192,12 @@ SecureVector<byte> PK_Signer::signature()
       const u32bit SIZE_OF_PART = plain_sig.size() / key.message_parts();
 
       std::vector<BigInt> sig_parts(key.message_parts());
-      for(u32bit j = 0; j != sig_parts.size(); j++)
+      for(u32bit j = 0; j != sig_parts.size(); ++j)
          sig_parts[j].binary_decode(plain_sig + SIZE_OF_PART*j, SIZE_OF_PART);
 
       DER_Encoder der_sig;
       der_sig.start_sequence();
-      for(u32bit j = 0; j != sig_parts.size(); j++)
+      for(u32bit j = 0; j != sig_parts.size(); ++j)
          DER::encode(der_sig, sig_parts[j]);
       der_sig.end_sequence();
 
@@ -299,7 +299,7 @@ bool PK_Verifier::check_signature(const byte sig[], u32bit length)
             BER::decode(ber_sig, sig_part);
             real_sig.append(BigInt::encode_1363(sig_part,
                                                 key.message_part_size()));
-            count++;
+            ++count;
             }
          if(count != key.message_parts())
             throw Decoding_Error("PK_Verifier: signature size invalid");

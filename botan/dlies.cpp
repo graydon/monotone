@@ -1,6 +1,6 @@
 /*************************************************
 * DLIES Source File                              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/dlies.h>
@@ -52,7 +52,7 @@ SecureVector<byte> DLIES_Encryptor::enc(const byte in[], u32bit length) const
    mac->set_key(K.begin(), MAC_KEYLEN);
 
    mac->update(C, length);
-   for(u32bit j = 0; j != 8; j++)
+   for(u32bit j = 0; j != 8; ++j)
       mac->update(0);
 
    mac->final(C + length);
@@ -114,7 +114,7 @@ SecureVector<byte> DLIES_Decryptor::dec(const byte msg[], u32bit length) const
 
    mac->set_key(K.begin(), MAC_KEYLEN);
    mac->update(C);
-   for(u32bit j = 0; j != 8; j++)
+   for(u32bit j = 0; j != 8; ++j)
       mac->update(0);
    SecureVector<byte> T2 = mac->final();
    if(T != T2)

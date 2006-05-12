@@ -1,6 +1,6 @@
 /*************************************************
 * CRC32 Source File                              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/crc32.h>
@@ -81,7 +81,7 @@ void CRC32::add_data(const byte input[], u32bit length)
       length -= 16;
       }
 
-   for(u32bit j = 0; j != length; j++)
+   for(u32bit j = 0; j != length; ++j)
       tmp = TABLE[(tmp ^ input[j]) & 0xFF] ^ (tmp >> 8);
 
    crc = tmp;
@@ -93,7 +93,7 @@ void CRC32::add_data(const byte input[], u32bit length)
 void CRC32::final_result(byte output[])
    {
    crc ^= 0xFFFFFFFF;
-   for(u32bit j = 0; j != 4; j++)
+   for(u32bit j = 0; j != 4; ++j)
       output[j] = get_byte(j, crc);
    clear();
    }

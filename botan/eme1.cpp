@@ -1,6 +1,6 @@
 /*************************************************
 * EME1 Source File                               *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/eme.h>
@@ -26,7 +26,7 @@ SecureVector<byte> EME1::pad(const byte in[], u32bit in_length,
 
    out.clear();
 
-   Global_RNG::randomize(out, HASH_LENGTH, Nonce);
+   Global_RNG::randomize(out, HASH_LENGTH);
 
    out.copy(HASH_LENGTH, Phash, Phash.size());
    out[out.size() - in_length - 1] = 0x01;
@@ -53,11 +53,11 @@ SecureVector<byte> EME1::unpad(const byte in[], u32bit in_length,
    mgf->mask(tmp + HASH_LENGTH, tmp.size() - HASH_LENGTH, tmp, HASH_LENGTH);
    mgf->mask(tmp, HASH_LENGTH, tmp + HASH_LENGTH, tmp.size() - HASH_LENGTH);
 
-   for(u32bit j = 0; j != Phash.size(); j++)
+   for(u32bit j = 0; j != Phash.size(); ++j)
       if(tmp[j+HASH_LENGTH] != Phash[j])
          throw Decoding_Error("Invalid EME1 encoding");
 
-   for(u32bit j = HASH_LENGTH + Phash.size(); j != tmp.size(); j++)
+   for(u32bit j = HASH_LENGTH + Phash.size(); j != tmp.size(); ++j)
       {
       if(tmp[j] && tmp[j] != 0x01)
          throw Decoding_Error("Invalid EME1 encoding");

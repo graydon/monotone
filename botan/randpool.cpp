@@ -1,12 +1,13 @@
 /*************************************************
 * Randpool Source File                           *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/randpool.h>
 #include <botan/lookup.h>
 #include <botan/bit_ops.h>
 #include <botan/util.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -35,16 +36,16 @@ void Randpool::randomize(byte out[], u32bit length) throw(PRNG_Unseeded)
 void Randpool::update_buffer()
    {
    const u64bit timestamp = system_clock();
-   counter++;
+   ++counter;
 
-   for(u32bit j = 0; j != 4; j++)
+   for(u32bit j = 0; j != 4; ++j)
       mac->update(get_byte(j, counter));
-   for(u32bit j = 0; j != 8; j++)
+   for(u32bit j = 0; j != 8; ++j)
       mac->update(get_byte(j, timestamp));
 
    SecureVector<byte> mac_val = mac->final();
 
-   for(u32bit j = 0; j != mac_val.size(); j++)
+   for(u32bit j = 0; j != mac_val.size(); ++j)
       buffer[j % buffer.size()] ^= mac_val[j];
    cipher->encrypt(buffer);
 
@@ -67,7 +68,7 @@ void Randpool::mix_pool()
 
    xor_buf(pool, buffer, BLOCK_SIZE);
    cipher->encrypt(pool);
-   for(u32bit j = 1; j != POOL_BLOCKS; j++)
+   for(u32bit j = 1; j != POOL_BLOCKS; ++j)
       {
       const byte* previous_block = pool + BLOCK_SIZE*(j-1);
       byte* this_block = pool + BLOCK_SIZE*j;

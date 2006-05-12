@@ -1,6 +1,6 @@
 /*************************************************
 * PKCS1 EME Source File                          *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/eme.h>
@@ -24,9 +24,9 @@ SecureVector<byte> EME_PKCS1v15::pad(const byte in[], u32bit inlen,
    SecureVector<byte> out(olen);
 
    out[0] = 0x02;
-   for(u32bit j = 1; j != olen - inlen - 1; j++)
+   for(u32bit j = 1; j != olen - inlen - 1; ++j)
       while(out[j] == 0)
-         out[j] = Global_RNG::random(Nonce);
+         out[j] = Global_RNG::random();
    out.copy(olen - inlen, in, inlen);
 
    return out;
@@ -42,7 +42,7 @@ SecureVector<byte> EME_PKCS1v15::unpad(const byte in[], u32bit inlen,
       throw Decoding_Error("PKCS1::unpad");
 
    u32bit seperator = 0;
-   for(u32bit j = 0; j != inlen; j++)
+   for(u32bit j = 0; j != inlen; ++j)
       if(in[j] == 0)
          {
          seperator = j;

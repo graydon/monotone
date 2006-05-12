@@ -1,6 +1,6 @@
 /*************************************************
 * Filter Header File                             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_FILTER_H__
@@ -49,6 +49,7 @@ class Filter
       SecureVector<byte> write_queue;
       std::vector<Filter*> next;
       u32bit port_num, filter_owns;
+      bool owned;
    };
 
 /*************************************************
@@ -57,7 +58,7 @@ class Filter
 class Fanout_Filter : public Filter
    {
    protected:
-      void incr_owns() { filter_owns++; }
+      void incr_owns() { ++filter_owns; }
 
       void set_port(u32bit n) { Filter::set_port(n); }
       void set_next(Filter* f[], u32bit n) { Filter::set_next(f, n); }

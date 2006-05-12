@@ -1,6 +1,6 @@
 /*************************************************
 * Prime Generation Source File                   *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/numthry.h>
@@ -9,6 +9,7 @@
 #include <botan/parsing.h>
 #include <botan/rng.h>
 #include <botan/ui.h>
+#include <algorithm>
 #include <memory>
 
 namespace Botan {
@@ -20,7 +21,7 @@ namespace {
 *************************************************/
 void increment(SecureVector<byte>& seed)
    {
-   for(u32bit j = seed.size(); j > 0; j--)
+   for(u32bit j = seed.size(); j > 0; --j)
       if(++seed[j-1])
          break;
    }
@@ -60,15 +61,15 @@ bool generate_dsa_primes(BigInt& p, BigInt& q, const byte const_seed[],
    SecureVector<byte> W(20 * (n+1));
    BigInt X;
 
-   for(u32bit j = 0; j != counter_start; j++)
-      for(u32bit k = 0; k != n + 1; k++)
+   for(u32bit j = 0; j != counter_start; ++j)
+      for(u32bit k = 0; k != n + 1; ++k)
          increment(seed);
 
-   for(u32bit j = 0; j != 4096 - counter_start; j++)
+   for(u32bit j = 0; j != 4096 - counter_start; ++j)
       {
       UI::pulse(UI::PRIME_SEARCHING);
 
-      for(u32bit k = 0; k != n + 1; k++)
+      for(u32bit k = 0; k != n + 1; ++k)
          {
          increment(seed);
          sha1->update(seed);
@@ -97,7 +98,7 @@ SecureVector<byte> generate_dsa_primes(BigInt& p, BigInt& q, u32bit pbits)
 
    while(true)
       {
-      Global_RNG::randomize(seed, seed.size(), Nonce);
+      Global_RNG::randomize(seed, seed.size());
       UI::pulse(UI::PRIME_SEARCHING);
       if(generate_dsa_primes(p, q, seed, seed.size(), pbits))
          return seed;
@@ -107,7 +108,7 @@ SecureVector<byte> generate_dsa_primes(BigInt& p, BigInt& q, u32bit pbits)
 /*************************************************
 * Generate a random prime                        *
 *************************************************/
-BigInt random_prime(u32bit bits, RNG_Quality level, const BigInt& coprime,
+BigInt random_prime(u32bit bits, const BigInt& coprime,
                     u32bit equiv, u32bit modulo)
    {
    if(bits <= 48)
@@ -125,7 +126,7 @@ BigInt random_prime(u32bit bits, RNG_Quality level, const BigInt& coprime,
       {
       UI::pulse(UI::PRIME_SEARCHING);
 
-      BigInt p = random_integer(bits, level);
+      BigInt p = random_integer(bits);
       p.set_bit(bits - 2);
       p.set_bit(0);
 
@@ -135,7 +136,7 @@ BigInt random_prime(u32bit bits, RNG_Quality level, const BigInt& coprime,
       const u32bit sieve_size = std::min(bits / 2, PRIME_TABLE_SIZE);
       SecureVector<u32bit> sieve(sieve_size);
 
-      for(u32bit j = 0; j != sieve.size(); j++)
+      for(u32bit j = 0; j != sieve.size(); ++j)
          {
          sieve[j] = p % PRIMES[j];
          UI::pulse(UI::PRIME_SIEVING);
@@ -150,10 +151,10 @@ BigInt random_prime(u32bit bits, RNG_Quality level, const BigInt& coprime,
          UI::pulse(UI::PRIME_SEARCHING);
 
          bool passes_sieve = true;
-         counter++;
+         ++counter;
          p += modulo;
 
-         for(u32bit j = 0; j != sieve.size(); j++)
+         for(u32bit j = 0; j != sieve.size(); ++j)
             {
             sieve[j] = (sieve[j] + modulo) % PRIMES[j];
             UI::pulse(UI::PRIME_SIEVING);

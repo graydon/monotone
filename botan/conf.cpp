@@ -1,89 +1,16 @@
 /*************************************************
 * Configuration Handling Source File             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/conf.h>
+#include <botan/libstate.h>
 #include <botan/lookup.h>
-#include <botan/mutex.h>
 #include <botan/charset.h>
 #include <botan/parsing.h>
 #include <string>
-#include <map>
 
 namespace Botan {
-
-namespace {
-
-/*************************************************
-* Holder for name-value option pairs             *
-*************************************************/
-class Options
-   {
-   public:
-      std::string get(const std::string&);
-      void set(const std::string&, const std::string&, bool);
-
-      Options() { options_mutex = get_mutex(); }
-      ~Options() { delete options_mutex; }
-   private:
-      std::map<std::string, std::string> options;
-      Mutex* options_mutex;
-   };
-
-/*************************************************
-* Get an option by name                          *
-*************************************************/
-std::string Options::get(const std::string& name)
-   {
-   Mutex_Holder lock(options_mutex);
-
-   std::map<std::string, std::string>::const_iterator i = options.find(name);
-   if(i != options.end())
-      return i->second;
-   return "";
-   }
-
-/*************************************************
-* Set an option by name                          *
-*************************************************/
-void Options::set(const std::string& name, const std::string& value,
-                  bool overwrite)
-   {
-   const bool have_it = ((get(name) == "") ? false : true);
-
-   Mutex_Holder lock(options_mutex);
-   if(overwrite || !have_it)
-      options[name] = value;
-   }
-
-/*************************************************
-* Global state                                   *
-*************************************************/
-Options* options = 0;
-
-}
-
-namespace Init {
-
-/*************************************************
-* Startup the configuration system               *
-*************************************************/
-void startup_conf()
-   {
-   options = new Options;
-   }
-
-/*************************************************
-* Shutdown the configuration system              *
-*************************************************/
-void shutdown_conf()
-   {
-   delete options;
-   options = 0;
-   }
-
-}
 
 namespace Config {
 
@@ -92,10 +19,7 @@ namespace Config {
 *************************************************/
 void set(const std::string& name, const std::string& value, bool overwrite)
    {
-   if(!options)
-      throw Internal_Error("Config::set: Conf system never started");
-
-   options->set(name, value, overwrite);
+   global_state().set_option("conf", name, value, overwrite);
    }
 
 /*************************************************
@@ -103,10 +27,7 @@ void set(const std::string& name, const std::string& value, bool overwrite)
 *************************************************/
 std::string get_string(const std::string& name)
    {
-   if(!options)
-      throw Internal_Error("Config::get: Conf system never started");
-
-   return options->get(name);
+   return global_state().get_option("conf", name);
    }
 
 /*************************************************
@@ -206,5 +127,27 @@ void choose_sig_format(const std::string& algo_name, std::string& padding,
    }
 
 }
+
+/*************************************************
+* Add an alias for an algorithm                  *
+*************************************************/
+void add_alias(const std::string& alias, const std::string& official_name)
+   {
+   if(alias == "" || official_name == "")
+      return;
+
+   global_state().set_option("alias", alias, official_name);
+   }
+
+/*************************************************
+* Dereference an alias                           *
+*************************************************/
+std::string deref_alias(const std::string& name)
+   {
+   std::string result = name;
+   while(global_state().option_set("alias", result))
+      result = global_state().get_option("alias", result);
+   return result;
+   }
 
 }

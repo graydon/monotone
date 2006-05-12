@@ -1,12 +1,16 @@
 /*************************************************
 * MP Misc Functions Source File                  *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/mp_core.h>
-#include <botan/mp_madd.h>
+#include <botan/mp_asm.h>
+
+#include <stdio.h>
 
 namespace Botan {
+
+extern "C" {
 
 /*************************************************
 * Core Division Operation                        *
@@ -15,8 +19,8 @@ u32bit bigint_divcore(word q, word y1, word y2,
                       word x1, word x2, word x3)
    {
    word y0 = 0;
-   bigint_madd(q, y2, 0, 0, &y2, &y0);
-   bigint_madd(q, y1, y0, 0, &y1, &y0);
+   y2 = word_madd2(q, y2, 0, &y0);
+   y1 = word_madd2(q, y1, y0, &y0);
 
    if(y0 > x1) return 1;
    if(y0 < x1) return 0;
@@ -41,7 +45,7 @@ s32bit bigint_cmp(const word x[], u32bit x_size,
          return 1;
       x_size--;
       }
-   for(u32bit j = x_size; j > 0; j--)
+   for(u32bit j = x_size; j > 0; --j)
       {
       if(x[j-1] > y[j-1]) return 1;
       if(x[j-1] < y[j-1]) return -1;
@@ -56,7 +60,7 @@ word bigint_divop(word n1, word n0, word d)
    {
    word high = n1 % d;
    word quotient = 0;
-   for(u32bit j = 0; j != MP_WORD_BITS; j++)
+   for(u32bit j = 0; j != MP_WORD_BITS; ++j)
       {
       const word mask = (word)1 << (MP_WORD_BITS-1-j);
       const bool high_top_bit = (high & MP_WORD_TOP_BIT) ? true : false;
@@ -77,11 +81,10 @@ word bigint_divop(word n1, word n0, word d)
 *************************************************/
 word bigint_modop(word n1, word n0, word d)
    {
-   word z0 = n1 / d, z1 = bigint_divop(n1, n0, d);
-   word carry = 0;
-   bigint_madd(z1, d,     0, 0, &z1, &carry);
-   bigint_madd(z0, d, carry, 0, &z0, &carry);
-   return (n0-z1);
+   word z0 = bigint_divop(n1, n0, d);
+   word dummy = 0;
+   z0 = word_madd2(z0, d, 0, &dummy);
+   return (n0-z0);
    }
 
 /*************************************************
@@ -110,5 +113,7 @@ void bigint_wordmul(word a, word b, word* out_low, word* out_high)
    *out_high = x0 + (x2 >> MP_HWORD_BITS);
    *out_low = ((x2 & MP_HWORD_MASK) << MP_HWORD_BITS) + (x3 & MP_HWORD_MASK);
    }
+
+}
 
 }

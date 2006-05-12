@@ -1,12 +1,13 @@
 /*************************************************
 * ANSI X9.31 RNG Source File                     *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/x931_rng.h>
 #include <botan/lookup.h>
 #include <botan/randpool.h>
 #include <botan/bit_ops.h>
+#include <algorithm>
 
 namespace Botan {
 

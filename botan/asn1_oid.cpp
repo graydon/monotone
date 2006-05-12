@@ -1,6 +1,6 @@
 /*************************************************
 * ASN.1 OID Source File                          *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1.h>
@@ -38,7 +38,7 @@ void OID::clear()
 std::string OID::as_string() const
    {
    std::string oid_str;
-   for(u32bit j = 0; j != id.size(); j++)
+   for(u32bit j = 0; j != id.size(); ++j)
       {
       oid_str += to_string(id[j]);
       if(j != id.size() - 1)
@@ -54,7 +54,7 @@ bool OID::operator==(const OID& oid) const
    {
    if(id.size() != oid.id.size())
       return false;
-   for(u32bit j = 0; j != id.size(); j++)
+   for(u32bit j = 0; j != id.size(); ++j)
       if(id[j] != oid.id[j])
          return false;
    return true;
@@ -99,7 +99,7 @@ bool operator<(const OID& a, const OID& b)
       return true;
    if(oid1.size() > oid2.size())
       return false;
-   for(u32bit j = 0; j != oid1.size(); j++)
+   for(u32bit j = 0; j != oid1.size(); ++j)
       {
       if(oid1[j] < oid2[j])
          return true;
@@ -124,7 +124,7 @@ void encode(DER_Encoder& encoder, const OID& oid_obj)
    MemoryVector<byte> encoding;
    encoding.append(40 * oid[0] + oid[1]);
 
-   for(u32bit j = 2; j != oid.size(); j++)
+   for(u32bit j = 2; j != oid.size(); ++j)
       {
       if(oid[j] == 0)
          encoding.append(0);
@@ -133,7 +133,7 @@ void encode(DER_Encoder& encoder, const OID& oid_obj)
          u32bit blocks = high_bit(oid[j]) + 6;
          blocks = (blocks - (blocks % 7)) / 7;
 
-         for(u32bit k = 0; k != blocks - 1; k++)
+         for(u32bit k = 0; k != blocks - 1; ++k)
             encoding.append(0x80 | ((oid[j] >> 7*(blocks-k-1)) & 0x7F));
          encoding.append(oid[j] & 0x7F);
          }
@@ -167,7 +167,7 @@ void decode(BER_Decoder& decoder, OID& oid)
       u32bit component = 0;
       while(j != obj.value.size() - 1)
          {
-         j++;
+         ++j;
          component = (component << 7) + (obj.value[j] & 0x7F);
          if(!(obj.value[j] & 0x80))
             break;

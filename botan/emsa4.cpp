@@ -1,6 +1,6 @@
 /*************************************************
 * EMSA4 Source File                              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/emsa.h>
@@ -43,9 +43,9 @@ SecureVector<byte> EMSA4::encoding_of(const MemoryRegion<byte>& msg,
    const u32bit output_length = (output_bits + 7) / 8;
 
    SecureVector<byte> salt(SALT_SIZE);
-   Global_RNG::randomize(salt, SALT_SIZE, Nonce);
+   Global_RNG::randomize(salt, SALT_SIZE);
 
-   for(u32bit j = 0; j != 8; j++)
+   for(u32bit j = 0; j != 8; ++j)
       hash->update(0);
    hash->update(msg);
    hash->update(salt, SALT_SIZE);
@@ -100,7 +100,7 @@ bool EMSA4::verify(const MemoryRegion<byte>& const_coded,
    DB[0] &= 0xFF >> TOP_BITS;
 
    u32bit salt_offset = 0;
-   for(u32bit j = 0; j != DB.size(); j++)
+   for(u32bit j = 0; j != DB.size(); ++j)
       {
       if(DB[j] == 0x01)
          { salt_offset = j + 1; break; }
@@ -112,7 +112,7 @@ bool EMSA4::verify(const MemoryRegion<byte>& const_coded,
 
    SecureVector<byte> salt(DB + salt_offset, DB.size() - salt_offset);
 
-   for(u32bit j = 0; j != 8; j++)
+   for(u32bit j = 0; j != 8; ++j)
       hash->update(0);
    hash->update(raw);
    hash->update(salt);

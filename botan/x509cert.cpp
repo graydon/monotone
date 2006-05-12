@@ -1,13 +1,15 @@
 /*************************************************
 * X.509 Certificates Source File                 *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/x509cert.h>
+#include <botan/map_util.h>
 #include <botan/parsing.h>
 #include <botan/bigint.h>
 #include <botan/conf.h>
 #include <botan/oids.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -22,7 +24,7 @@ void load_info(std::multimap<std::string, std::string>& names,
    typedef std::multimap<OID, std::string>::const_iterator rdn_iter;
    std::multimap<OID, std::string> attr = dn_info.get_attributes();
 
-   for(rdn_iter j = attr.begin(); j != attr.end(); j++)
+   for(rdn_iter j = attr.begin(); j != attr.end(); ++j)
       {
       const std::string oid_name = OIDS::lookup(j->first);
 
@@ -42,12 +44,12 @@ void load_info(std::multimap<std::string, std::string>& names,
    typedef std::multimap<std::string, std::string>::const_iterator rdn_iter;
    std::multimap<std::string, std::string> attr = alt_info.get_attributes();
 
-   for(rdn_iter j = attr.begin(); j != attr.end(); j++)
+   for(rdn_iter j = attr.begin(); j != attr.end(); ++j)
       multimap_insert(names, j->first, j->second);
 
    typedef std::multimap<OID, ASN1_String>::const_iterator on_iter;
    std::multimap<OID, ASN1_String> othernames = alt_info.get_othernames();
-   for(on_iter j = othernames.begin(); j != othernames.end(); j++)
+   for(on_iter j = othernames.begin(); j != othernames.end(); ++j)
       multimap_insert(names, OIDS::lookup(j->first), j->second.value());
 
    }
@@ -64,14 +66,14 @@ std::string get_info(const std::multimap<std::string, std::string>& names,
    std::pair<rdn_iter, rdn_iter> range = names.equal_range(what);
 
    std::vector<std::string> results;
-   for(rdn_iter j = range.first; j != range.second; j++)
+   for(rdn_iter j = range.first; j != range.second; ++j)
       {
       if(std::find(results.begin(), results.end(), j->second) == results.end())
          results.push_back(j->second);
       }
 
    std::string value;
-   for(u32bit j = 0; j != results.size(); j++)
+   for(u32bit j = 0; j != results.size(); ++j)
       value += results[j] + '/';
    if(value.size())
       value.erase(value.size() - 1, 1);
@@ -86,7 +88,7 @@ X509_DN create_dn(const std::multimap<std::string, std::string>& names)
    typedef std::multimap<std::string, std::string>::const_iterator rdn_iter;
 
    X509_DN new_dn;
-   for(rdn_iter j = names.begin(); j != names.end(); j++)
+   for(rdn_iter j = names.begin(); j != names.end(); ++j)
       {
       const std::string oid = j->first;
       const std::string value = j->second;

@@ -1,6 +1,6 @@
 /*************************************************
 * Diffie-Hellman Source File                     *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/dh.h>
@@ -43,7 +43,7 @@ DH_PrivateKey::DH_PrivateKey(const DL_Group& grp)
    group = grp;
 
    const BigInt& p = group_p();
-   x = random_integer(2 * dl_work_factor(p.bits()), LongTermKey);
+   x = random_integer(2 * dl_work_factor(p.bits()));
 
    PKCS8_load_hook();
    check_generated_private();

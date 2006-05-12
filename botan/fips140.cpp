@@ -1,6 +1,6 @@
 /*************************************************
 * FIPS-140 Self Tests Source File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/fips140.h>
@@ -147,7 +147,7 @@ bool passes_self_tests()
              "301C393738363533343132343837363932331C", "C209CCB78EE1B606",
              "0123456789ABCDEFFEDCBA9876543210");
   }
-  catch(std::exception)
+  catch(std::exception& e)
      {
      return false;
      }

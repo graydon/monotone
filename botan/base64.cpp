@@ -1,6 +1,6 @@
 /*************************************************
 * Base64 Encoder/Decoder Source File             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/base64.h>
@@ -179,7 +179,7 @@ void Base64_Decoder::handle_bad_char(byte c)
 *************************************************/
 void Base64_Decoder::write(const byte input[], u32bit length)
    {
-   for(u32bit j = 0; j != length; j++)
+   for(u32bit j = 0; j != length; ++j)
       {
       if(is_valid(input[j]))
          in[position++] = input[j];

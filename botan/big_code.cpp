@@ -1,6 +1,6 @@
 /*************************************************
 * BigInt Encoding/Decoding Source File           *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/bigint.h>
@@ -21,14 +21,14 @@ void BigInt::encode(byte output[], const BigInt& n, Base base)
       {
       SecureVector<byte> binary(n.encoded_size(Binary));
       n.binary_encode(binary);
-      for(u32bit j = 0; j != binary.size(); j++)
+      for(u32bit j = 0; j != binary.size(); ++j)
          Hex_Encoder::encode(binary[j], output + 2*j);
       }
    else if(base == Octal)
       {
       BigInt copy = n;
       const u32bit output_size = n.encoded_size(Octal);
-      for(u32bit j = 0; j != output_size; j++)
+      for(u32bit j = 0; j != output_size; ++j)
          {
          output[output_size - 1 - j] = digit2char(copy % 8);
          copy /= 8;
@@ -40,7 +40,7 @@ void BigInt::encode(byte output[], const BigInt& n, Base base)
       BigInt remainder;
       copy.set_sign(Positive);
       const u32bit output_size = n.encoded_size(Decimal);
-      for(u32bit j = 0; j != output_size; j++)
+      for(u32bit j = 0; j != output_size; ++j)
          {
          divide(copy, 10, copy, remainder);
          output[output_size - 1 - j] = digit2char(remainder.word_at(0));
@@ -60,7 +60,7 @@ SecureVector<byte> BigInt::encode(const BigInt& n, Base base)
    SecureVector<byte> output(n.encoded_size(base));
    encode(output, n, base);
    if(base != Binary)
-      for(u32bit j = 0; j != output.size(); j++)
+      for(u32bit j = 0; j != output.size(); ++j)
          if(output[j] == 0)
             output[j] = '0';
    return output;
@@ -101,7 +101,7 @@ BigInt BigInt::decode(const byte buf[], u32bit length, Base base)
    else if(base == Hexadecimal)
       {
       SecureVector<byte> hex;
-      for(u32bit j = 0; j != length; j++)
+      for(u32bit j = 0; j != length; ++j)
          if(Hex_Decoder::is_valid(buf[j]))
             hex.append(buf[j]);
 
@@ -114,14 +114,14 @@ BigInt BigInt::decode(const byte buf[], u32bit length, Base base)
          binary[0] = Hex_Decoder::decode(temp);
          }
 
-      for(u32bit j = offset; j != binary.size(); j++)
+      for(u32bit j = offset; j != binary.size(); ++j)
          binary[j] = Hex_Decoder::decode(hex+2*j-offset);
       r.binary_decode(binary, binary.size());
       }
    else if(base == Decimal || base == Octal)
       {
       const u32bit RADIX = ((base == Decimal) ? 10 : 8);
-      for(u32bit j = 0; j != length; j++)
+      for(u32bit j = 0; j != length; ++j)
          {
          byte x = char2digit(buf[j]);
          if(x >= RADIX)
