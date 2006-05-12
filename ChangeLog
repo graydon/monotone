@@ -1,3 +1,7 @@
+2006-05-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* lua.hh: Remove unused, unimplemented template lua_hooks::call_hook.
+
 2006-05-12  Matt Johnston  <matt@ucc.asn.au>
 
 	* netsync.cc (process_hello_cmd): ask for passphrase before
