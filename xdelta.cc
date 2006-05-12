@@ -350,15 +350,17 @@ apply_delta(boost::shared_ptr<delta_applicator> da,
           ++i;
           I(i != delta.end());
           string::size_type len = read_num(i, delta.end());
-          I(len != 0);
           I(i != delta.end());
           I(*i == '\n');
           ++i;
           I(i != delta.end());
-          I((i - delta.begin()) + len <= delta.size());
-          string tmp(i, i+len);
-          i += len;
-          da->insert(tmp);
+	  I((i - delta.begin()) + len <= delta.size());
+	  if (len > 0)
+	    {
+	      string tmp(i, i+len);
+	      da->insert(tmp);
+	    }
+	  i += len;
         }
       else
         {
@@ -368,8 +370,8 @@ apply_delta(boost::shared_ptr<delta_applicator> da,
           string::size_type pos = read_num(i, delta.end());
           I(i != delta.end());
           string::size_type len = read_num(i, delta.end());
-          I(len != 0);
-          da->copy(pos, len);
+	  if (len != 0)
+	    da->copy(pos, len);
         }
       I(i != delta.end());
       I(*i == '\n');

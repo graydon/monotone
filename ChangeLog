@@ -1,3 +1,7 @@
+2006-05-12  Graydon Hoare  <graydon@pobox.com>
+
+	* xdelta.cc (apply_delta): Tolerate 0-length instructions.
+
 2006-05-11  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
 	* roster.cc: include proper header for srand, rand and prefix
