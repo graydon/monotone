@@ -86,6 +86,14 @@
 	(help): fix indentation
 	* netsync.cc: remove stale comment
 
+2006-05-08  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Changed translation of 'directory' to 'directory'.
+
+2006-05-07  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (148 to go).
+
 2006-05-07  Graydon Hoare  <graydon@pobox.com>
 
 	* database.{cc,hh} (pending_writes): New fulltext write buffer,
