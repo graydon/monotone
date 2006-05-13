@@ -1,3 +1,15 @@
+2006-05-12  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_get_base_revision_id,
+	automate_get_current_revision_id): new functions
+	(automate_command): call them 
+	* cmd_automate.cc (automate): fix indentation and add entries for
+	new commands
+	* monotone.texi: document new commands
+	* tests/t_automate_get_base_revision_id.at:
+	* tests/t_automate_get_current_revision_id.at: new tests
+	* testsuite.at: call them
+
 2006-05-09  Derek Scherger  <derek@echologic.com>
 
 	* packet.cc (consume_file_delta): remove redundant file delta
