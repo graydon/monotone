@@ -6130,6 +6130,80 @@ to stderr and exits with status 1.
 
 @end table
 
+
+
+@item mtn automate get_base_revision_id
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+2.0
+
+@item Purpose:
+
+Prints the revision id the current workspace is based on. This is the
+value stored in _MTN/revision
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+@end verbatim
+
+@item Output format:
+
+One line containing the base revision ID of the current workspace.
+
+@item Error conditions:
+
+If no workspace book keeping _MTN directory is found, prints an error
+message to stderr, and exits with status 1.
+
+@end table
+
+
+
+@item mtn automate get_current_revision_id
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+2.0
+
+@item Purpose:
+
+Prints the revision id of the current workspace. This is the id
+of the revision that would be committed by an unrestricted commit
+calculated from _MTN/revision, _MTN/work and any edits to files in the
+workspace.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+@end verbatim
+
+@item Output format:
+
+One line containing the current revision id ID of the current workspace.
+
+@item Error conditions:
+
+If no workspace book keeping _MTN directory is found, prints an error
+message to stderr, and exits with status 1.
+
+
+@end table
+
+
 @item mtn automate get_manifest_of
 @item mtn automate get_manifest_of @var{revid}
 

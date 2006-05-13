@@ -1298,6 +1298,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   rebuild_merkle_trees(app, ok_branches);
 
   setup_client_tickers();
+    
   return true;
 }
 
