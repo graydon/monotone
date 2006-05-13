@@ -13,7 +13,7 @@ This manual is for the ``monotone'' distributed version control system.
 This edition documents version @value{VERSION}.
 
 Copyright 2003, 2004 Graydon Hoare
-Copyright 2004, 2005 Nathaniel Smith
+Copyright 2004, 2005, 2006 Nathaniel Smith
 Copyright 2005 Derek Scherger
 Copyright 2005 Daniel Carosone
 Copyright 2006 Jeronimo Pellegrini
@@ -30,7 +30,7 @@ See the file COPYING for details
 @titlepage
 @title Monotone
 @subtitle A distributed version control system
-@author Graydon Hoare
+@author Graydon Hoare and others
 
 @page
 @vskip 0pt plus 1filll
@@ -38,6 +38,7 @@ Copyright @copyright{} 2003, 2004 Graydon Hoare
 Copyright @copyright{} 2004, 2005, 2006 Nathaniel Smith
 Copyright @copyright{} 2005 Derek Scherger
 Copyright @copyright{} 2005 Daniel Carosone
+Copyright @copyright{} 2006 Jeronimo Pellegrini
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
