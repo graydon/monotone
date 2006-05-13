@@ -1,3 +1,7 @@
+2006-05-13  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_diff_log (log): don't get the roster unless we have restrictions.
+
 2006-05-13  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netsync.cc: (process_hello_cmd) Build our merkle tries after
