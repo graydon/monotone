@@ -787,6 +787,7 @@ database::begin_transaction(bool exclusive)
 {
   if (transaction_level == 0)
     {
+      I(pending_writes.empty());
       if (exclusive)
         execute(query("BEGIN EXCLUSIVE"));
       else
@@ -850,7 +851,10 @@ void
 database::rollback_transaction()
 {
   if (transaction_level == 1)
-    execute(query("ROLLBACK"));
+    {
+      pending_writes.clear();
+      execute(query("ROLLBACK"));
+    }
   transaction_level--;
 }
 
