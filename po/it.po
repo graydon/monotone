@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-05-06 16:19+0200\n"
-"PO-Revision-Date: 2006-05-06 16:44+0100\n"
-"Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
+"PO-Revision-Date: 2006-05-09 00:58+0100\n"
+"Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -22,7 +22,7 @@ msgstr "spazio di lavoro richiesto ma non trovato%s%s"
 #: app_state.cc:127
 #, c-format
 msgid "invalid directory ''"
-msgstr "cartella non valida ‘’"
+msgstr "directory non valida ‘’"
 
 #: app_state.cc:135
 #, c-format
@@ -52,12 +52,12 @@ msgstr "profondità negativa non permessa\n"
 #: app_state.cc:273
 #, c-format
 msgid "illegal argument to --last: cannot be zero or negative\n"
-msgstr ""
+msgstr "argomento illegale per --ultimo: non può essere zero o negativo\n"
 
 #: app_state.cc:281
 #, c-format
 msgid "illegal argument to --next: cannot be zero or negative\n"
-msgstr ""
+msgstr "argomento illegale per --prossimo: non può essere zero o negativo\n"
 
 #: app_state.cc:417
 #, c-format
@@ -794,6 +794,9 @@ msgid ""
 "\n"
 "try again with explicit --branch"
 msgstr ""
+"la revisione in oggetto è in rami multipli:%s\n"
+"\n"
+"prova ancora con --ramo dichiarato"
 
 #: cmd_merging.cc:158
 #, c-format
@@ -806,6 +809,8 @@ msgid ""
 "target revision not in any branch\n"
 "next commit will use branch %s"
 msgstr ""
+"la revisione in oggetto non è in un ramo\n"
+"il prossimo commit userà il ramo %s"
 
 #: cmd_merging.cc:265
 #, c-format
@@ -1262,9 +1267,9 @@ msgid ""
 "directory will have name PUT_OLD.\n"
 "Using --execute is strongly recommended."
 msgstr ""
-"rinomina la cartella root\n"
-"dopo questo comando, la cartella che attualmente ha il nome NEW_ROOT\n"
-"sarà la cartella root, e la cartella che ora è la cartella root\n"
+"rinomina la directory root\n"
+"dopo questo comando, la directory che attualmente ha il nome NEW_ROOT\n"
+"sarà la directory root, e la directory che ora è la directory root\n"
 "avrà il nome PUT_OLD.\n"
 "Usare --execute è raccomandato fortemente."
 
@@ -1274,8 +1279,9 @@ msgstr "mostra stato dello spazio di lavoro"
 
 #: cmd_ws_commit.cc:351
 msgid "[DIRECTORY]\n"
-msgstr "[CARTELLA]\n"
+msgstr "[DIRECTORY]\n"
 
+# TODO non sono sicura se lasciare "check out" o mettere "verificare"
 #: cmd_ws_commit.cc:352
 msgid ""
 "check out a revision from database into directory.\n"
@@ -1283,6 +1289,10 @@ msgid ""
 "Otherwise, it will be the head of the branch (given or implicit).\n"
 "If no directory is given, the branch name will be used as directory"
 msgstr ""
+"check out una revisione dal database nella directory.\n"
+"Se viene data una revisione, sarò quella ad essere check out.\n"
+"Altrimenti sarà la testa del ramo (dato o implicito).\n"
+"Se nessuna directory è data, il nome del ramo sarà usato come directory"
 
 #: cmd_ws_commit.cc:371
 #: cmd_ws_commit.cc:390
@@ -1293,7 +1303,7 @@ msgstr "c'è bisogno di un parametro --branch per estrarre un ramo specifico"
 #: cmd_ws_commit.cc:384
 #, c-format
 msgid "checkout directory '%s' already exists"
-msgstr "la cartella ‘%s’ esiste già, non può essere utilizzata per il ‘checkout’"
+msgstr "la directory ‘%s’ esiste già, non può essere utilizzata per il ‘checkout’"
 
 #: cmd_ws_commit.cc:393
 #, c-format
@@ -1406,7 +1416,7 @@ msgstr "file ‘%s’ modificato durante il commit, abbandono"
 #: cmd_ws_commit.cc:714
 #, c-format
 msgid "Your database is missing version %s of file '%s'"
-msgstr ""
+msgstr "Nel tuo database manca la versione %s del file ‘%s’"
 
 # TODO: togliere le virgolette?
 #: cmd_ws_commit.cc:757
@@ -1425,11 +1435,11 @@ msgstr ""
 
 #: cmd_ws_commit.cc:795
 msgid "[DIRECTORY]"
-msgstr "[CARTELLA]"
+msgstr "[DIRECTORY]"
 
 #: cmd_ws_commit.cc:795
 msgid "setup a new workspace directory, default to current"
-msgstr "imposta una nuova cartella come spazio di lavoro, il default è quella attuale"
+msgstr "imposta una nuova directory come spazio di lavoro, il default è quella attuale"
 
 #: cmd_ws_commit.cc:801
 #, c-format
@@ -1504,7 +1514,7 @@ msgstr "--message e --message-file sono mutuamente esclusivi"
 #: database_check.cc:125
 #, c-format
 msgid "file structure is corrupted; cannot check further"
-msgstr ""
+msgstr "la struttura del file è rovinata; non puoi più controllare"
 
 #: database_check.cc:136
 msgid "files"
@@ -1543,24 +1553,24 @@ msgid "file %s missing (%d manifest references)\n"
 msgstr "Manca il nome del file dopo -C"
 
 #: database_check.cc:532
-#, fuzzy, c-format
+#, c-format
 msgid "file %s unreferenced\n"
-msgstr "%d file non utilizzati\n"
+msgstr "file ‘%s’ senza referenze\n"
 
 #: database_check.cc:553
-#, fuzzy, c-format
+#, c-format
 msgid "roster %s unreferenced\n"
-msgstr "%d file non utilizzati\n"
+msgstr "roster ‘%s’ senza referenze\n"
 
 #: database_check.cc:559
-#, fuzzy, c-format
+#, c-format
 msgid "roster %s incomplete (%d missing files)\n"
-msgstr "la revisione ‘%s’ è incompleta (roster mancante)\n"
+msgstr "roster  ‘%s’ incompleto (‘%d’ file mancanti)\n"
 
 #: database_check.cc:566
-#, fuzzy, c-format
+#, c-format
 msgid "roster %s incomplete (%d missing revisions)\n"
-msgstr "la revisione ‘%s’ è incompleta (mancano %d revisioni)\n"
+msgstr "roster ‘%s’ incompleto (‘%d’ revisioni mancanti)\n"
 
 #: database_check.cc:573
 #, c-format
@@ -1951,7 +1961,7 @@ msgstr "il database ‘%s’ non esiste"
 #: database.cc:2922
 #, c-format
 msgid "%s is a directory, not a database"
-msgstr "‘%s’ è una cartella, non un database"
+msgstr "‘%s’ è una directory, non un database"
 
 #: database.cc:2947
 #, c-format
@@ -1966,7 +1976,7 @@ msgstr "il file ‘%s’ non esiste nello spazio di lavoro"
 #: diff_patch.cc:591
 #, c-format
 msgid "'%s' in workspace is a directory, not a file"
-msgstr "nello spazio di lavoro ‘%s’ è una cartella, non un file"
+msgstr "nello spazio di lavoro ‘%s’ è una directory, non un file"
 
 #: diff_patch.cc:595
 #, c-format
@@ -1992,7 +2002,7 @@ msgstr ""
 #: file_io.cc:116
 #, c-format
 msgid "expected file '%s', but it is a directory."
-msgstr "mi aspettavo il file ‘%s’, invece è una cartella"
+msgstr "mi aspettavo il file ‘%s’, invece è una directory"
 
 #: file_io.cc:186
 #: file_io.cc:193
@@ -2001,7 +2011,7 @@ msgid ""
 "could not create directory '%s'\n"
 "it is a file"
 msgstr ""
-"non riesco a creare la cartella ‘%s’\n"
+"non riesco a creare la directory‘%s’\n"
 "è un file"
 
 #: file_io.cc:188
@@ -2010,18 +2020,18 @@ msgid ""
 "could not create directory '%s'\n"
 "%s"
 msgstr ""
-"non riesco a creare la cartella ‘%s’\n"
+"non riesco a creare la directory‘%s’\n"
 "%s"
 
 #: file_io.cc:192
 #, c-format
 msgid "could not create directory '%s'"
-msgstr "non riesco a creare la cartella ‘%s’"
+msgstr "non riesco a creare la directory‘%s’"
 
 #: file_io.cc:205
 #, c-format
 msgid "failed to create directory '%s' for '%s'"
-msgstr "fallita la creazione della cartella ‘%s’ per ‘%s’"
+msgstr "fallita la creazione della directory‘%s’ per ‘%s’"
 
 #: file_io.cc:219
 #, c-format
@@ -2040,17 +2050,17 @@ msgstr "il file da cancellare ‘%s’ non esiste"
 #: file_io.cc:230
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
-msgstr "il file da cancellare ‘%s’ non è un file ma una cartella"
+msgstr "il file da cancellare ‘%s’ non è un file ma una directory"
 
 #: file_io.cc:238
 #, c-format
 msgid "directory to delete '%s' does not exist"
-msgstr "la cartella da cancellare ‘%s’ non esiste"
+msgstr "la directory da cancellare ‘%s’ non esiste"
 
 #: file_io.cc:239
 #, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
-msgstr "la cartella da cancellare ‘%s’ non è una cartella ma un file"
+msgstr "la directory da cancellare ‘%s’ non è una directory ma un file"
 
 #: file_io.cc:246
 #, c-format
@@ -2060,12 +2070,12 @@ msgstr "l'oggetto da cancellare ‘%s’ non esiste"
 #: file_io.cc:254
 #, c-format
 msgid "directory to delete, '%s', does not exist"
-msgstr "la cartella da cancellare ‘%s’ non esiste"
+msgstr "la directory da cancellare ‘%s’ non esiste"
 
 #: file_io.cc:255
 #, c-format
 msgid "directory to delete, '%s', is a file"
-msgstr "il file da cancellare ‘%s’ non è un file ma una cartella"
+msgstr "la directory da cancellare ‘%s’ è un file"
 
 #: file_io.cc:264
 #, fuzzy, c-format
@@ -2075,7 +2085,7 @@ msgstr "id del file antenato non esistente"
 #: file_io.cc:265
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
-msgstr "il file sorgente da rinominare ‘%s’ è una cartella -- bug in monotone?"
+msgstr "il file sorgente da rinominare ‘%s’ è una directory -- bug in monotone?"
 
 #: file_io.cc:268
 #: file_io.cc:281
@@ -2091,7 +2101,7 @@ msgstr "Chiave '%s' del registro di sistema non esistente, impossibile rinominar
 #: file_io.cc:278
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
-msgstr "la cartella sorgente da rinominare ‘%s’ è un file -- bug in monotone?"
+msgstr "la directory sorgente da rinominare ‘%s’ è un file -- bug in monotone?"
 
 #: file_io.cc:292
 #, fuzzy, c-format
@@ -2106,7 +2116,7 @@ msgstr "il file ‘%s’ non esiste"
 #: file_io.cc:308
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
-msgstr "il file ‘%s’ non può essere letto: è una cartella"
+msgstr "il file ‘%s’ non può essere letto: è una directory"
 
 #: file_io.cc:312
 #, c-format
@@ -2121,7 +2131,7 @@ msgstr "Non posso leggere stdin più volte"
 #: file_io.cc:412
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
-msgstr "il file ‘%s’ non può essere sovrascritto: è una cartella"
+msgstr "il file ‘%s’ non può essere sovrascritto: è una directory"
 
 #: file_io.cc:420
 #, c-format
@@ -2136,7 +2146,7 @@ msgstr ""
 #: file_io.cc:569
 #, c-format
 msgid "no such file or directory: '%s'"
-msgstr "nessun file o cartella con nome ‘%s’"
+msgstr "nessun file o directory con nome ‘%s’"
 
 #: keys.cc:77
 #, c-format
@@ -2196,7 +2206,7 @@ msgstr "%s: la directory non esiste!\n"
 #: work.cc:469
 #, c-format
 msgid "'%s' is not a directory"
-msgstr "‘%s’ non è una cartella"
+msgstr "‘%s’ non è una directory"
 
 #: lua.cc:619
 #: lua.cc:921
@@ -2422,7 +2432,7 @@ msgstr "imposta locazione del portachiavi"
 
 #: monotone.cc:107
 msgid "set location of configuration directory"
-msgstr "imposta la locazione della cartella di configurazione"
+msgstr "imposta la locazione della directory di configurazione"
 
 #: monotone.cc:211
 #, c-format
@@ -3168,12 +3178,12 @@ msgstr "ottimizzazione database"
 #: schema_migration.cc:288
 #, c-format
 msgid "error vacuuming after migration"
-msgstr ""
+msgstr "errore nella pulizia dopo la migrazione"
 
 #: schema_migration.cc:291
 #, c-format
 msgid "error running analyze after migration"
-msgstr ""
+msgstr "errore nell'analisi dopo la migrazione"
 
 #: schema_migration.cc:298
 #, c-format
@@ -3250,9 +3260,9 @@ msgid ""
 msgstr ""
 
 #: ui.cc:473
-#, c-format
+#, fuzzy, c-format
 msgid "failed to open log file '%s'"
-msgstr ""
+msgstr "Fallito caricamento del file chiarore a gradiente: '%s': %s"
 
 #: update.cc:65
 #, c-format
@@ -3332,7 +3342,7 @@ msgstr "elimino ‘%s’ dal manifesto dello spazio di lavoro"
 #: work.cc:354
 #, c-format
 msgid "destination dir %s/ does not exist in current revision"
-msgstr "la cartella di destinazione ‘%s/’ non esiste nella revisione attuale"
+msgstr "la directory di destinazione ‘%s/’ non esiste nella revisione attuale"
 
 #: work.cc:357
 #, c-format
@@ -3372,22 +3382,22 @@ msgstr "salto ‘%s’, esiste già nello spazio di lavoro"
 #: work.cc:449
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
-msgstr ""
+msgstr "la nuova directory root proposta ‘%s’ non è versionata o non esiste"
 
 #: work.cc:451
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
-msgstr ""
+msgstr "la nuova directory root proposta ‘%s’ non è una directory"
 
 #: work.cc:456
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
-msgstr ""
+msgstr "la nuova directory root proposta ‘%s’ ha un percorso illegale %s"
 
 #: work.cc:466
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
-msgstr "la cartella ‘%s’ non è versionata o non esiste"
+msgstr "la directory ‘%s’ non è versionata o non esiste"
 
 #: work.cc:472
 #, c-format
@@ -3402,7 +3412,7 @@ msgstr "lo spazio di lavoro è corrotto: ‘%s’ non esiste"
 #: work.cc:570
 #, c-format
 msgid "workspace is corrupt: %s is a directory"
-msgstr "lo spazio di lavoro è corrotto: ‘%s’ è una cartella"
+msgstr "lo spazio di lavoro è corrotto: ‘%s’ è una directory "
 
 #: work.cc:580
 #, c-format
@@ -3449,7 +3459,7 @@ msgstr "il file ‘%s’ non esiste"
 #: work.cc:1031
 #, c-format
 msgid "file '%s' is a directory"
-msgstr "il file ‘%s’ è una cartella"
+msgstr "il file ‘%s’ è una directory "
 
 #: work.cc:1036
 #, c-format
