@@ -1,3 +1,22 @@
+2006-05-12  Derek Scherger  <derek@echologic.com>
+
+	* database.cc (begin_transaction): ensure there are no pending
+	writes when a transaction begins
+	(rollback_transaction): clear any pending writes before rolling
+	back a transaction
+
+2006-05-12  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_get_base_revision_id,
+	automate_get_current_revision_id): new functions
+	(automate_command): call them 
+	* cmd_automate.cc (automate): fix indentation and add entries for
+	new commands
+	* monotone.texi: document new commands
+	* tests/t_automate_get_base_revision_id.at:
+	* tests/t_automate_get_current_revision_id.at: new tests
+	* testsuite.at: call them
+
 2006-05-12  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* lua.hh: Remove unused, unimplemented template lua_hooks::call_hook.
