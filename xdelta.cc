@@ -320,45 +320,64 @@ simple_applicator
   }
 };
 
+inline string::size_type
+read_num(string::const_iterator &i,
+         string::const_iterator e)
+{
+  string::size_type n = 0;
+
+  while (i != e && *i == ' ')
+    ++i;
+
+  while (i != e && *i >= '0' && *i <= '9')
+    {
+      n *= 10;
+      n += static_cast<size_t>(*i - '0');
+      ++i;
+    }
+  return n;
+}
+
 void 
 apply_delta(boost::shared_ptr<delta_applicator> da,
             std::string const & delta)
-{
-  istringstream del(delta);
-  for (char c = del.get(); c == 'I' || c == 'C'; c = del.get())
+{  
+  std::string::const_iterator i = delta.begin(); 
+  while (i != delta.end() && (*i == 'I' || *i == 'C'))
     {
-      I(del.good());
-      if (c == 'I')
+      if (*i == 'I')
         { 
-          string::size_type len = string::npos;
-          del >> len;
-          I(del.good());
-          I(len != string::npos);
-          string tmp;
-          tmp.reserve(len);
-          I(del.get(c).good());
-          I(c == '\n');
-          while(len--)
-            {
-              I(del.get(c).good());
-              tmp += c;
-            }
-          I(del.get(c).good());
-          I(c == '\n');
-          da->insert(tmp);
+          ++i;
+          I(i != delta.end());
+          string::size_type len = read_num(i, delta.end());
+          I(i != delta.end());
+          I(*i == '\n');
+          ++i;
+          I(i != delta.end());
+	  I((i - delta.begin()) + len <= delta.size());
+	  if (len > 0)
+	    {
+	      string tmp(i, i+len);
+	      da->insert(tmp);
+	    }
+	  i += len;
         }
       else
         {
-          string::size_type pos = string::npos, len = string::npos;
-          del >> pos >> len;          
-          I(del.good());
-          I(len != string::npos);
-          I(del.get(c).good());
-          I(c == '\n');
-          da->copy(pos, len);
+          I(*i == 'C');
+          ++i;
+          I(i != delta.end());
+          string::size_type pos = read_num(i, delta.end());
+          I(i != delta.end());
+          string::size_type len = read_num(i, delta.end());
+	  if (len != 0)
+	    da->copy(pos, len);
         }
+      I(i != delta.end());
+      I(*i == '\n');
+      ++i;
     }    
-  I(del.eof());
+  I(i == delta.end());
 }
 
 void
@@ -649,7 +668,8 @@ struct copied_extent
   string::size_type len;
   bool operator<(copied_extent const & other) const
   {
-    return old_pos < other.old_pos;
+    return (old_pos < other.old_pos) ||
+      (old_pos == other.old_pos && len > other.len);
   }
 };
 

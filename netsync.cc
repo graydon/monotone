@@ -69,8 +69,6 @@
 //      its merkle trie.
 //   -- add some sort of vhost field to the client's first packet, saying who
 //      they expect to talk to
-//   -- apparently we have a IANA approved port: 4691.  I guess we should
-//      switch to using that.
 
 //
 // This is the "new" network synchronization (netsync) system in
@@ -912,8 +910,8 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
     L(FL("dropping outgoing netcmd (because we're in error unwind mode)\n"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
   // interfere with initial and final sequences. careful with it.
-  // write_some();
-  // read_some();
+  write_some();
+  read_some();
 }
 
 // This method triggers a special "error unwind" mode to netsync.  In this
@@ -1256,21 +1254,6 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
     decode_hexenc(their_key_hash, their_key_hash_decoded);
     this->remote_peer_key_hash = their_key_hash_decoded;
   }
-
-  // clients always include in the synchronization set, every branch that the
-  // user requested
-  vector<string> branchnames;
-  set<utf8> ok_branches;
-  get_branches(app, branchnames);
-  for (vector<string>::const_iterator i = branchnames.begin();
-      i != branchnames.end(); i++)
-    {
-      if (our_matcher(*i))
-        ok_branches.insert(utf8(*i));
-    }
-  rebuild_merkle_trees(app, ok_branches);
-
-  setup_client_tickers();
     
   if (app.signing_key() != "")
     {
@@ -1300,6 +1283,22 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       queue_anonymous_cmd(this->role, our_include_pattern,
                           our_exclude_pattern, mk_nonce(), their_key_encoded);
     }
+
+  // clients always include in the synchronization set, every branch that the
+  // user requested
+  vector<string> branchnames;
+  set<utf8> ok_branches;
+  get_branches(app, branchnames);
+  for (vector<string>::const_iterator i = branchnames.begin();
+      i != branchnames.end(); i++)
+    {
+      if (our_matcher(*i))
+        ok_branches.insert(utf8(*i));
+    }
+  rebuild_merkle_trees(app, ok_branches);
+
+  setup_client_tickers();
+    
   return true;
 }
 
@@ -2252,10 +2251,13 @@ call_server(protocol_role role,
   socket_options.set_non_blocking();
 
   session sess(role, client_voice, include_pattern, exclude_pattern,
-               app, address(), server.get_socketfd(), timeout);
+               app, address(), server.get_socketfd(), instant);
 
   while (true)
-    {       
+    {
+      sess.maybe_step();
+      sess.maybe_say_goodbye(guard);
+
       bool armed = false;
       try 
         {
@@ -2266,9 +2268,6 @@ call_server(protocol_role role,
           E(false, F("protocol error while processing peer %s: '%s'\n") 
             % sess.peer_id % bd.what);
         }
-
-      sess.maybe_step();
-      sess.maybe_say_goodbye(guard);
 
       probe.clear();
       probe.add(sess.str, sess.which_events());
@@ -2595,7 +2594,7 @@ serve_connections(protocol_role role,
           // it further down.
           try_again=use_ipv6;
 
-          Netxx::StreamServer server(addr, timeout);
+          Netxx::StreamServer server(addr, instant);
 
           // If we came this far, whatever we used (IPv6 or IPv4) was
           // accepted, so we don't need to try again any more.
@@ -2654,7 +2653,7 @@ serve_connections(protocol_role role,
           
                   // we either got a new connection
                   else if (fd == server)
-                    handle_new_connection(addr, server, timeout, role,
+                    handle_new_connection(addr, server, instant, role,
                                           include_pattern, exclude_pattern,
                                           sessions, app);
           

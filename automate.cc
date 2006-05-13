@@ -690,8 +690,6 @@ automate_inventory(std::vector<utf8> args,
   get_base_and_current_roster_shape(base, curr, nis, app);
   make_cset(base, curr, cs);
 
-  I(cs.deltas_applied.empty());
-
   // the current roster (curr) has the complete set of registered nodes
   // conveniently with unchanged sha1 hash values
 
@@ -992,6 +990,65 @@ automate_get_revision(std::vector<utf8> args,
 
   L(FL("dumping revision %s\n") % ident);
   output.write(dat.inner()().data(), dat.inner()().size());
+}
+
+// Name: get_base_revision_id
+// Arguments: none
+// Added in: 2.0
+// Purpose: Prints the revision id the current workspace is based on. This is 
+//   the value stored in _MTN/revision
+// Error conditions: If no workspace book keeping _MTN directory is found,
+//   prints an error message to stderr, and exits with status 1.
+static void
+automate_get_base_revision_id(std::vector<utf8> args,
+                              std::string const & help_name,
+                              app_state & app,
+                              std::ostream & output)
+{
+  if (args.size() > 0)
+    throw usage(help_name);
+
+  app.require_workspace();
+
+  revision_id rid;
+  get_revision_id(rid);
+  output << rid << std::endl;
+}
+
+// Name: get_current_revision_id
+// Arguments: none
+// Added in: 2.0
+// Purpose: Prints the revision id of the current workspace. This is the
+//   id of the revision that would be committed by an unrestricted commit calculated
+//   from _MTN/revision, _MTN/work and any edits to files in the workspace.
+// Error conditions: If no workspace book keeping _MTN directory is found,
+//   prints an error message to stderr, and exits with status 1.
+static void
+automate_get_current_revision_id(std::vector<utf8> args,
+                                 std::string const & help_name,
+                                 app_state & app,
+                                 std::ostream & output)
+{
+  if (args.size() > 0)
+    throw usage(help_name);
+
+  app.require_workspace();
+
+  roster_t old_roster, new_roster;
+  revision_id old_revision_id, new_revision_id;
+  revision_set rev;
+  temp_node_id_source nis;
+  
+  app.require_workspace(); 
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  update_current_roster_from_filesystem(new_roster, app);
+
+  get_revision_id(old_revision_id);
+  make_revision_set(old_revision_id, old_roster, new_roster, rev);
+
+  calculate_ident(rev, new_revision_id);
+
+  output << new_revision_id << std::endl;
 }
 
 // Name: get_manifest_of
@@ -1644,6 +1701,10 @@ automate_command(utf8 cmd, std::vector<utf8> args,
     automate_certs(args, root_cmd_name, app, output);
   else if (cmd() == "get_revision")
     automate_get_revision(args, root_cmd_name, app, output);
+  else if (cmd() == "get_base_revision_id")
+    automate_get_base_revision_id(args, root_cmd_name, app, output);
+  else if (cmd() == "get_current_revision_id")
+    automate_get_current_revision_id(args, root_cmd_name, app, output);
   else if (cmd() == "get_manifest_of")
     automate_get_manifest_of(args, root_cmd_name, app, output);
   else if (cmd() == "get_file")
