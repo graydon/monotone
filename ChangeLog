@@ -1,15 +1,3 @@
-2006-05-13  Timothy Brownawell  <tbrownaw@gmail.com>
-
-	* netsync.cc: (process_hello_cmd) Build our merkle tries after
-	replying to the server.
-	(call_server, serve_connections) Use instant timeout for our streams.
-	Looking at the netxx code, it appears that reads will select() using
-	the stream's timeout. Regardless of whether the stream has been set
-	non-blocking.
-	(call_server) Move maybe_step and maybe_say_goodbye to before we arm
-	the session.
-	(write_netcmd_and_try_flush) Uncomment the {read,write}_some calls.
-
 2006-05-12  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* lua.hh: Remove unused, unimplemented template lua_hooks::call_hook.
