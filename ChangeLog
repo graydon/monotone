@@ -1,3 +1,9 @@
+2006-05-14  Graydon Hoare  <graydon@pobox.com>
+
+	* netxx_pipe.{cc,hh}: Various cleanups to build on unix.
+	* netsync.cc (drop_session_associated_with_fd): New helper,
+	and use it everywhere we did sessions.erase() before.
+
 2006-05-13  Graydon Hoare  <graydon@pobox.com>
 
 	* netsync.cc, netxx/probe.h, netxx_pipe.{cc,hh}: Adaptation of

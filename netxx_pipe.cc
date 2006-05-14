@@ -21,8 +21,16 @@
 #endif
 
 Netxx::PipeStream::PipeStream(int _readfd, int _writefd)
-    : child(INVALID_HANDLE_VALUE),
-      bytes_available(0)
+    : 
+#ifdef WIN32
+  child(INVALID_HANDLE_VALUE),
+  bytes_available(0),
+  read_in_progress(false)
+#else
+  readfd(_readfd),
+  writefd(_writefd),
+  child(0)
+#endif
 {
 #ifdef WIN32
   if (_setmode(_readfd, _O_BINARY) == -1)
@@ -106,6 +114,7 @@ pipe_and_fork(int fd1[2], int fd2[2])
 }
 #endif
 
+#ifdef WIN32
 static std::string 
 err_msg()
 {
@@ -115,13 +124,20 @@ err_msg()
                   (LPSTR) &buf, sizeof(buf) / sizeof(TCHAR), NULL) != 0);
   return std::string(buf);
 }
+#endif
+
 
 Netxx::PipeStream::PipeStream (const std::string & cmd, 
                                const std::vector<std::string> & args)
-    : child(INVALID_HANDLE_VALUE),
-      bytes_available(0)
+  : 
 #ifdef WIN32
-      ,read_in_progress(false)
+  child(INVALID_HANDLE_VALUE),
+  bytes_available(0),
+  read_in_progress(false)
+#else
+  readfd(-1),
+  writefd(-1),
+  child(0)
 #endif
 {
   // Unfortunately neither munge_argv_into_cmdline nor execvp do take

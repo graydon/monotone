@@ -112,7 +112,6 @@ namespace Netxx
       void add(PipeStream &ps, ready_type rt=ready_none);
       void add(const StreamBase &sb, ready_type rt=ready_none);
       void add(const StreamServer &ss, ready_type rt=ready_none);
-      void remove(const PipeStream &ps);
     };
 #else
 

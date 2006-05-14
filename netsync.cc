@@ -2517,6 +2517,43 @@ call_server(protocol_role role,
     }
 }
 
+static void
+drop_session_associated_with_fd(map<Netxx::socket_type, shared_ptr<session> > & sessions,
+                                Netxx::socket_type fd)
+{
+  // This is a bit of a hack. Initially all "file descriptors" in
+  // netsync were full duplex, so we could get away with indexing
+  // sessions by their file descriptor.  
+  //
+  // When using pipes in unix, it's no longer true: a session gets
+  // entered in the session map under its read pipe fd *and* its write
+  // pipe fd. When we're in such a situation the socket fd is "-1" and
+  // we downcast to a PipeStream and use its read+write fds.
+  // 
+  // When using pipes in windows, we use a full duplex pipe (named
+  // pipe) so the socket-like abstraction holds.
+
+  I(fd != -1);
+  map<Netxx::socket_type, shared_ptr<session> >::const_iterator i = sessions.find(fd);
+  I(i != sessions.end());
+  shared_ptr<session> sess = i->second;
+  fd = sess->str->get_socketfd();
+  if (fd != -1)
+    {
+      sessions.erase(fd);
+    }
+  else 
+    {
+      shared_ptr<Netxx::PipeStream> pipe = 
+        boost::dynamic_pointer_cast<Netxx::PipeStream, Netxx::StreamBase>(sess->str);
+      I(static_cast<bool>(pipe));
+      I(static_cast<bool>(pipe->get_writefd()) != -1);
+      I(static_cast<bool>(pipe->get_readfd()) != -1);
+      sessions.erase(pipe->get_readfd());
+      sessions.erase(pipe->get_writefd());
+    }
+}
+
 static void 
 arm_sessions_and_calculate_probe(Netxx::PipeCompatibleProbe & probe,
                                  map<Netxx::socket_type, shared_ptr<session> > & sessions,
@@ -2547,7 +2584,7 @@ arm_sessions_and_calculate_probe(Netxx::PipeCompatibleProbe & probe,
   for (set<Netxx::socket_type>::const_iterator i = arm_failed.begin();
        i != arm_failed.end(); ++i)
     {
-      sessions.erase(*i);
+      drop_session_associated_with_fd(sessions, *i);
     }
 }
 
@@ -2610,7 +2647,7 @@ handle_read_available(Netxx::socket_type fd,
         {
           W(F("protocol error while processing peer %s: '%s', disconnecting\n") 
             % sess->peer_id % bd.what);
-          sessions.erase(fd);
+          drop_session_associated_with_fd(sessions, fd);
           live_p = false;
         }
     }
@@ -2634,7 +2671,7 @@ handle_read_available(Netxx::socket_type fd,
             % sess->peer_id);
           break;
         }
-      sessions.erase(fd);
+      drop_session_associated_with_fd(sessions, fd);
       live_p = false;
     }
 }
@@ -2667,7 +2704,7 @@ handle_write_available(Netxx::socket_type fd,
           break;
         }
 
-      sessions.erase(fd);
+      drop_session_associated_with_fd(sessions, fd);
       live_p = false;
     }
 }
@@ -2691,7 +2728,7 @@ process_armed_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
             {
               P(F("peer %s processing finished, disconnecting\n") 
                 % sess->peer_id);
-              sessions.erase(j);
+              drop_session_associated_with_fd(sessions, *i);
             }
         }
     }
@@ -2719,7 +2756,7 @@ reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
   for (set<Netxx::socket_type>::const_iterator i = dead_clients.begin();
        i != dead_clients.end(); ++i)
     {
-      sessions.erase(*i);
+      drop_session_associated_with_fd(sessions, *i);
     }
 }
 
@@ -2846,7 +2883,7 @@ serve_connections(protocol_role role,
                         }
                       else
                         {
-                          probe.remove(i->second->str);
+                          probe.remove(*(i->second->str));
                           shared_ptr<session> sess = i->second;
                           bool live_p = true;
 
@@ -2861,7 +2898,7 @@ serve_connections(protocol_role role,
                             {
                               P(F("got OOB from peer %s, disconnecting\n")
                                 % sess->peer_id);
-                              sessions.erase(i);
+                              drop_session_associated_with_fd(sessions, fd);
                             }
                         }
                     }
@@ -2931,12 +2968,11 @@ serve_single_connection(shared_ptr<session> sess,
   if (sess->str->get_socketfd() == -1) 
     {
       // Unix pipes are non-duplex, have two filedescriptors
-      Netxx::PipeStream *pipe=dynamic_cast<Netxx::PipeStream*>(&*sess->str);
-      if (pipe) 
-        { 
-          sessions[pipe->get_writefd()]=sess;
-          sessions[pipe->get_readfd()]=sess;
-        }
+      shared_ptr<Netxx::PipeStream> pipe = 
+        boost::dynamic_pointer_cast<Netxx::PipeStream, Netxx::StreamBase>(sess->str);
+      I(pipe);
+      sessions[pipe->get_writefd()]=sess;
+      sessions[pipe->get_readfd()]=sess;
     }
   else
     sessions[sess->str->get_socketfd()]=sess;
@@ -2985,7 +3021,7 @@ serve_single_connection(shared_ptr<session> sess,
                 {
                   P(F("got some OOB data on fd %d (peer %s), disconnecting\n") 
                     % fd % sess->peer_id);
-                  sessions.erase(i);
+                  drop_session_associated_with_fd(sessions, fd);
                 }
             }
         }
