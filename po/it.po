@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-05-06 16:19+0200\n"
-"PO-Revision-Date: 2006-05-09 00:58+0100\n"
-"Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
+"PO-Revision-Date: 2006-05-14 10:20+0100\n"
+"Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -29,20 +29,22 @@ msgstr "directory non valida ‘’"
 msgid "monotone bookkeeping directory '%s' already exists in '%s'\n"
 msgstr ""
 
+# TODO: radice di ricerca?
 #: app_state.cc:215
-#, fuzzy, c-format
+#, c-format
 msgid "search root '%s' does not exist"
-msgstr "Ancora HTML %s non esistente."
+msgstr "la radice di ricerca ‘%s’ non esiste"
 
+# TODO: radice di ricerca?
 #: app_state.cc:216
-#, fuzzy, c-format
+#, c-format
 msgid "search root '%s' is not a directory\n"
-msgstr "%s esiste ma non è una directory"
+msgstr "la radice di ricerca ‘%s’ non è una directory\n"
 
 #: app_state.cc:251
-#, fuzzy, c-format
+#, c-format
 msgid "failed to parse date string '%s': %s"
-msgstr "Impossibile creare la stringa DDE"
+msgstr "impossibile interpretare la stringa ‘%s’ come data: %s"
 
 #: app_state.cc:265
 #, c-format
@@ -163,6 +165,8 @@ msgid ""
 "get_file FILEID\n"
 "get_manifest_of [REVID]\n"
 "get_revision [REVID]\n"
+"get_base_revision_id\n"
+"get_current_revision_id\n"
 "packet_for_rdata REVID\n"
 "packets_for_certs REVID\n"
 "packet_for_fdata FILEID\n"
@@ -188,13 +192,15 @@ msgstr ""
 "get_file ID_FILE\n"
 "get_manifest_of [ID_REV]\n"
 "get_revision [ID_REV]\n"
+"get_base_revision_id\n"
+"get_current_revision_id\n"
 "packet_for_rdata ID_REV\n"
 "packets_for_certs ID_REV\n"
 "packet_for_fdata ID_FILE\n"
 "packet_for_fdelta VECCHIO_FILE NUOVO_FILE\n"
 "keys\n"
 
-#: cmd_automate.cc:32
+#: cmd_automate.cc:34
 msgid "automation interface"
 msgstr "interfaccia di automazione"
 
@@ -206,7 +212,7 @@ msgstr "interfaccia di automazione"
 #: cmd_files.cc:141
 #: cmd_merging.cc:105
 #: cmd_ws_commit.cc:409
-#: commands.cc:358
+#: commands.cc:357
 #, c-format
 msgid "no such revision '%s'"
 msgstr "questa revisione ‘%s’ non esiste"
@@ -257,9 +263,9 @@ msgid "manipulate database state"
 msgstr "manipola lo stato del database"
 
 #: cmd_db.cc:95
-#, fuzzy, c-format
+#, c-format
 msgid "The epoch must be %s characters"
-msgstr "La #define %s deve essere un intero."
+msgstr "L'epoca deve essere di %s caratteri"
 
 #: cmd_db.cc:105
 #: cmd_db.cc:121
@@ -295,7 +301,7 @@ msgstr "nessuna variabile ha nome ‘%s’ nel dominio ‘%s’"
 #: cmd_list.cc:429
 #: cmd_merging.cc:534
 #: cmd_ws_commit.cc:291
-#: commands.cc:230
+#: commands.cc:229
 msgid "informative"
 msgstr "informativo"
 
@@ -356,7 +362,7 @@ msgid ""
 "revisions are given, use them as a starting point."
 msgstr ""
 
-#: cmd_diff_log.cc:563
+#: cmd_diff_log.cc:562
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "solo un comando permesso tra ‘--last’ e ‘--next’"
@@ -416,14 +422,14 @@ msgid "no revision for file '%s' in database"
 msgstr "nessuna revisione nel database per il file ‘%s’"
 
 #: cmd_files.cc:91
-#, fuzzy, c-format
+#, c-format
 msgid "no such file '%s' in revision '%s'"
-msgstr "nessun file ‘%s’ trovato nella revisione ‘%s’\n"
+msgstr "nessun file ‘%s’ trovato nella revisione ‘%s’"
 
 #: cmd_files.cc:93
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' in revision '%s' is not a file"
-msgstr "Il file \"%file:1\" non è nel formato corretto."
+msgstr "‘%s’ della revisione ‘%s’ non è un file"
 
 #: cmd_files.cc:100
 msgid "[PATH]"
@@ -801,7 +807,7 @@ msgstr ""
 #: cmd_merging.cc:158
 #, c-format
 msgid "switching branches; next commit will use branch %s"
-msgstr ""
+msgstr "cambio ramo: il prossimo commit userà il ramo ‘%s’"
 
 #: cmd_merging.cc:163
 #, c-format
@@ -969,39 +975,39 @@ msgstr "Mostra quali conflitti andrebbero risolto per fare il ‘merge’ di due
 
 #: cmd_merging.cc:543
 #: cmd_merging.cc:545
-#, fuzzy, c-format
+#, c-format
 msgid "%s is an ancestor of %s; no merge is needed."
 msgstr "‘%s’ è un antenato di ‘%s’: il merge non è necessario."
 
 #: cmd_merging.cc:559
-#, fuzzy, c-format
+#, c-format
 msgid "There are %s node_name_conflicts."
-msgstr "Non ci sono conflitti da risolvere"
+msgstr "Ci sono %s conflitti di tipo node_name_conflicts."
 
 #: cmd_merging.cc:560
-#, fuzzy, c-format
+#, c-format
 msgid "There are %s file_content_conflicts."
-msgstr "Non ci sono conflitti da risolvere"
+msgstr "Ci sono %s conflitti di tipo file_content_conflicts."
 
 #: cmd_merging.cc:561
-#, fuzzy, c-format
+#, c-format
 msgid "There are %s node_attr_conflicts."
-msgstr "Non ci sono conflitti da risolvere"
+msgstr "Ci sono %s conflitti di tipo node_attr_conflicts."
 
 #: cmd_merging.cc:562
-#, fuzzy, c-format
+#, c-format
 msgid "There are %s orphaned_node_conflicts."
-msgstr "Non ci sono conflitti da risolvere"
+msgstr "Ci sono %s conflitti di tipo orphaned_node_conflicts."
 
 #: cmd_merging.cc:563
-#, fuzzy, c-format
+#, c-format
 msgid "There are %s rename_target_conflicts."
-msgstr "Non ci sono conflitti da risolvere"
+msgstr "Ci sono %s conflitti di tipo rename_target_conflicts."
 
 #: cmd_merging.cc:564
-#, fuzzy, c-format
+#, c-format
 msgid "There are %s directory_loop_conflicts."
-msgstr "Non ci sono conflitti da risolvere"
+msgstr "Ci sono %s conflitti di tipo directory_loop_conflicts."
 
 #: cmd_merging.cc:567
 msgid "show unmerged head revisions of branch"
@@ -1228,7 +1234,7 @@ msgstr "disapprova una particolare revisione"
 #: cmd_ws_commit.cc:161
 #, c-format
 msgid "revision '%s' has %d changesets, cannot invert\n"
-msgstr ""
+msgstr "la revisione ‘%s’ contiene %d changeset, non può essere annullata\n"
 
 #: cmd_ws_commit.cc:165
 #, c-format
@@ -1450,54 +1456,54 @@ msgstr "per il ‘setup’ è necessario un argomento --branch"
 msgid "refresh the inodeprint cache"
 msgstr "aggiorna la cache degli inodeprint"
 
-#: commands.cc:100
-#: commands.cc:209
+#: commands.cc:99
+#: commands.cc:208
 #, c-format
 msgid "unknown command '%s'\n"
 msgstr "comando ‘%s’ sconosciuto\n"
 
-#: commands.cc:111
+#: commands.cc:110
 #, c-format
 msgid "command '%s' has multiple ambiguous expansions:\n"
 msgstr "il comando ‘%s’ ha espansioni multiple ambigue:\n"
 
-#: commands.cc:152
+#: commands.cc:151
 msgid "commands:"
 msgstr "comandi:"
 
-#: commands.cc:230
+#: commands.cc:229
 msgid "command [ARGS...]"
 msgstr "comando [ARGOMENTI…]"
 
-#: commands.cc:230
+#: commands.cc:229
 msgid "display command help"
 msgstr "mostra l'aiuto sui comandi"
 
-#: commands.cc:365
+#: commands.cc:364
 #, c-format
 msgid "expanding selection '%s'\n"
 msgstr "espando la selezione ‘%s’\n"
 
-#: commands.cc:373
+#: commands.cc:372
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "nessuna corrispondenza per la selezione ‘%s’"
 
-#: commands.cc:379
+#: commands.cc:378
 #, c-format
 msgid "expanded to '%s'\n"
 msgstr "espanso in ‘%s’\n"
 
-#: commands.cc:396
+#: commands.cc:395
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions: \n"
 msgstr "la selezione ‘%s’ ha espansioni multiple ambigue: \n"
 
-#: commands.cc:413
+#: commands.cc:412
 msgid "note: "
 msgstr "nota: "
 
-#: commands.cc:414
+#: commands.cc:413
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -1506,7 +1512,7 @@ msgstr ""
 "il ramo ‘%s’ ha più teste\n"
 "valuta l'uso di ‘%s merge’"
 
-#: commands.cc:432
+#: commands.cc:431
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message e --message-file sono mutuamente esclusivi"
@@ -1529,7 +1535,7 @@ msgid "markings"
 msgstr "contrassegni"
 
 #: database_check.cc:330
-#: netsync.cc:2778
+#: netsync.cc:2777
 #: rcs_import.cc:1227
 msgid "revisions"
 msgstr "revisioni"
@@ -1539,7 +1545,7 @@ msgid "ancestry"
 msgstr "ascendenza"
 
 #: database_check.cc:462
-#: netsync.cc:2782
+#: netsync.cc:2781
 msgid "keys"
 msgstr "chiavi"
 
@@ -1628,9 +1634,9 @@ msgid "revision %s mismatched children (%d ancestry children; %d parents)\n"
 msgstr ""
 
 #: database_check.cc:672
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s has bad history (%s)\n"
-msgstr "%d revisioni con storia non valida\n"
+msgstr "la revisione ‘%s’ ha una storia non valida (%s)\n"
 
 #: database_check.cc:679
 #, c-format
@@ -1792,7 +1798,7 @@ msgstr "individuato un problema minore\n"
 msgid "database is good\n"
 msgstr "il database non ha problemi\n"
 
-#: database.cc:144
+#: database.cc:145
 #, c-format
 msgid ""
 "layout of database %s doesn't match this version of monotone\n"
@@ -1801,12 +1807,12 @@ msgid ""
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
 
-#: database.cc:158
+#: database.cc:159
 #, c-format
 msgid "this database already contains rosters"
 msgstr "questo database contiene già dei roster"
 
-#: database.cc:178
+#: database.cc:179
 #, c-format
 msgid ""
 "database %s contains revisions but no rosters\n"
@@ -1818,7 +1824,7 @@ msgid ""
 "sorry about the inconvenience."
 msgstr ""
 
-#: database.cc:197
+#: database.cc:198
 #, c-format
 msgid ""
 "database %s contains manifests but no revisions\n"
@@ -1826,24 +1832,24 @@ msgid ""
 "please see README.changesets for details"
 msgstr ""
 
-#: database.cc:233
+#: database.cc:234
 #, c-format
 msgid "unable to probe database version in file %s"
 msgstr ""
 
-#: database.cc:240
+#: database.cc:241
 #, c-format
 msgid "database %s is not an sqlite version 3 file, try dump and reload"
 msgstr "il database ‘%s’ non è un file SQLite versione 3, prova ‘dump’ e ‘reload’"
 
-#: database.cc:269
+#: database.cc:270
 #: schema_migration.cc:187
 msgid ""
 "make sure database and containing directory are writeable\n"
 "and you have not run out of disk space"
 msgstr ""
 
-#: database.cc:275
+#: database.cc:276
 #: schema_migration.cc:192
 #, c-format
 msgid ""
@@ -1853,25 +1859,25 @@ msgstr ""
 "errore sqlite: %s\n"
 "%s"
 
-#: database.cc:321
+#: database.cc:322
 #, c-format
 msgid "could not initialize database: %s: already exists"
 msgstr "non riesco ad inizializzare il database ‘%s’: esiste già"
 
-#: database.cc:326
+#: database.cc:327
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%s'\n"
 "cancelling database creation"
 msgstr ""
 
-#: database.cc:476
+#: database.cc:477
 #, c-format
 msgid "cannot create %s; it already exists"
 msgstr "non posso creare ‘%s’: esiste già"
 
-#: database.cc:550
-#, fuzzy, c-format
+#: database.cc:551
+#, c-format
 msgid ""
 "schema version    : %s\n"
 "counts:\n"
@@ -1905,6 +1911,7 @@ msgstr ""
 "  revisioni           : %u\n"
 "  relaz. di parentela : %u\n"
 "  certificati         : %u\n"
+"  file logici         : %u\n"
 "byte:\n"
 "  roster completi     : %u\n"
 "  roster incrementali : %u\n"
@@ -1918,52 +1925,52 @@ msgstr ""
 "  dimensione pagine   : %u\n"
 "  dimensione cache    : %u\n"
 
-#: database.cc:612
+#: database.cc:613
 #, c-format
 msgid "database schema version: %s"
 msgstr "versione dello schema del database: %s"
 
-#: database.cc:689
-#, fuzzy, c-format
+#: database.cc:690
+#, c-format
 msgid "multiple statements in query: %s\n"
-msgstr "risultato nullo nella query: %s\n"
+msgstr "query con più di un comando: %s\n"
 
-#: database.cc:695
+#: database.cc:696
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
 msgstr ""
 
-#: database.cc:754
+#: database.cc:755
 #, c-format
 msgid "null result in query: %s\n"
 msgstr "risultato nullo nella query: %s\n"
 
-#: database.cc:772
+#: database.cc:773
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
 msgstr ""
 
-#: database.cc:1851
+#: database.cc:1904
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "esiste già un'altra chiave con nome ‘%s’"
 
-#: database.cc:2913
+#: database.cc:2969
 #, c-format
 msgid "no database specified"
 msgstr "nessuna database specificato"
 
-#: database.cc:2921
+#: database.cc:2977
 #, c-format
 msgid "database %s does not exist"
 msgstr "il database ‘%s’ non esiste"
 
-#: database.cc:2922
+#: database.cc:2978
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "‘%s’ è una directory, non un database"
 
-#: database.cc:2947
+#: database.cc:3003
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "non riesco ad aprire il database ‘%s’: %s"
@@ -2078,9 +2085,9 @@ msgid "directory to delete, '%s', is a file"
 msgstr "la directory da cancellare ‘%s’ è un file"
 
 #: file_io.cc:264
-#, fuzzy, c-format
+#, c-format
 msgid "rename source file '%s' does not exist"
-msgstr "id del file antenato non esistente"
+msgstr "il file da rinominare ‘%s’ non esiste"
 
 #: file_io.cc:265
 #, c-format
@@ -2094,9 +2101,9 @@ msgid "rename target '%s' already exists"
 msgstr "esiste già un'altra chiave con nome ‘%s’"
 
 #: file_io.cc:277
-#, fuzzy, c-format
+#, c-format
 msgid "rename source dir '%s' does not exist"
-msgstr "Chiave '%s' del registro di sistema non esistente, impossibile rinominarla."
+msgstr "la directory da rinominare ‘%s’ non esiste"
 
 #: file_io.cc:278
 #, c-format
@@ -2104,9 +2111,9 @@ msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr "la directory sorgente da rinominare ‘%s’ è un file -- bug in monotone?"
 
 #: file_io.cc:292
-#, fuzzy, c-format
+#, c-format
 msgid "rename source path '%s' does not exist"
-msgstr "Chiave '%s' del registro di sistema non esistente, impossibile rinominarla."
+msgstr "il percorso da rinominare ‘%s’ non esiste"
 
 #: file_io.cc:307
 #, c-format
@@ -2197,9 +2204,9 @@ msgid "%s called with an invalid parameter"
 msgstr "‘%s’ chiamato con un parametro non valido"
 
 #: lua.cc:599
-#, fuzzy, c-format
+#, c-format
 msgid "Directory '%s' does not exist"
-msgstr "%s: la directory non esiste!\n"
+msgstr "La directory ‘%s’ non esiste"
 
 #: lua.cc:600
 #: rcs_import.cc:1218
@@ -2217,7 +2224,7 @@ msgstr "errore lua caricando il file rc ‘%s’"
 #: lua.cc:718
 #, c-format
 msgid "bad input to parse_basic_io"
-msgstr ""
+msgstr "input non valido per parse_basic_io"
 
 #: lua.cc:933
 #, c-format
@@ -2237,12 +2244,12 @@ msgstr "interrotto"
 msgid "terminated by signal"
 msgstr "terminato dal segnale"
 
-#: merkle_tree.cc:276
+#: merkle_tree.cc:281
 #, c-format
 msgid "node level is %d, exceeds maximum %d"
 msgstr "il livello del nodo è %d, superiore al massimo di %d"
 
-#: merkle_tree.cc:311
+#: merkle_tree.cc:316
 #, c-format
 msgid "mismatched node hash value %s, expected %s"
 msgstr ""
@@ -2329,9 +2336,8 @@ msgid "use least common ancestor as ancestor for merge"
 msgstr ""
 
 #: monotone.cc:74
-#, fuzzy
 msgid "perform the associated file operation"
-msgstr "Avvertimento di operazione su file del mixer dei canali"
+msgstr "esegue l'operazione su file associata"
 
 #: monotone.cc:75
 msgid "address:port to listen on (default :4691)"
@@ -2399,7 +2405,7 @@ msgstr "imposta lo stile del ticker (count|dot|none)"
 
 #: monotone.cc:99
 msgid "do not load standard lua hooks"
-msgstr ""
+msgstr "non caricare gli hook standard Lua"
 
 #: monotone.cc:100
 msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
@@ -2485,9 +2491,9 @@ msgid "unknown item type 0x%x for '%s'"
 msgstr "elemento di tipo sconosciuto 0x%x per ‘%s’"
 
 #: netcmd.cc:112
-#, fuzzy, c-format
+#, c-format
 msgid "unknown netcmd code 0x%x"
-msgstr "errore sconosciuto (codice %08x)."
+msgstr "codice netcmd sconosciuto 0x%x"
 
 #: netcmd.cc:117
 #, c-format
@@ -2549,48 +2555,48 @@ msgstr "decodifica in corso della stringa a lungheza variabile di %d byte per �
 msgid "expected %s to end at %d, have %d bytes"
 msgstr ""
 
-#: netsync.cc:245
+#: netsync.cc:243
 #, c-format
 msgid "check of '%s' failed"
 msgstr "controllo di ‘%s’ fallito"
 
-#: netsync.cc:711
+#: netsync.cc:709
 msgid "bytes in"
 msgstr "byte ↓"
 
-#: netsync.cc:713
+#: netsync.cc:711
 msgid "bytes out"
 msgstr "byte ↑"
 
-#: netsync.cc:717
+#: netsync.cc:715
 msgid "certs in"
 msgstr "cert. ↓"
 
-#: netsync.cc:719
-#: netsync.cc:732
+#: netsync.cc:717
+#: netsync.cc:730
 msgid "revs in"
 msgstr "rev. ↓"
 
-#: netsync.cc:724
+#: netsync.cc:722
 msgid "certs out"
 msgstr "cert. ↑"
 
-#: netsync.cc:726
-#: netsync.cc:734
+#: netsync.cc:724
+#: netsync.cc:732
 msgid "revs out"
 msgstr "rev. ↑"
 
-#: netsync.cc:840
+#: netsync.cc:838
 #, c-format
 msgid "underflow on count of %s items to receive"
 msgstr ""
 
-#: netsync.cc:1186
+#: netsync.cc:1184
 #, c-format
 msgid "received network error: %s"
 msgstr "ricevuto errore di rete: %s"
 
-#: netsync.cc:1218
+#: netsync.cc:1216
 #, c-format
 msgid ""
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
@@ -2611,12 +2617,12 @@ msgstr ""
 "mi aspettavo la chiave ‘%s’\n"
 "‘%s unset %s %s’ per forzare questo controllo\n"
 
-#: netsync.cc:1228
+#: netsync.cc:1226
 #, c-format
 msgid "server key changed"
 msgstr "la chiave del server è cambiata"
 
-#: netsync.cc:1233
+#: netsync.cc:1231
 #, c-format
 msgid ""
 "first time connecting to server %s\n"
@@ -2624,297 +2630,298 @@ msgid ""
 "their key's fingerprint: %s\n"
 msgstr ""
 
-#: netsync.cc:1240
+#: netsync.cc:1238
 #, c-format
 msgid "saving public key for %s to database\n"
 msgstr "salvo la chiave pubblica per ‘%s’ nel database\n"
 
-#: netsync.cc:1328
+#: netsync.cc:1327
 #, c-format
 msgid "rejected attempt at anonymous connection for write\n"
 msgstr "rifiutato un tentativo di connessione anonima in scrittura\n"
 
-#: netsync.cc:1335
+#: netsync.cc:1334
 #, c-format
 msgid "rejected attempt at anonymous connection while running as sink\n"
 msgstr "rifiutato un tentativo di connessione anonima funzionando come pozzo\n"
 
-#: netsync.cc:1350
-#: netsync.cc:1447
+#: netsync.cc:1349
+#: netsync.cc:1446
 #, c-format
 msgid "not serving branch '%s'"
 msgstr "il ramo ‘%s’ non è servito"
 
-#: netsync.cc:1355
+#: netsync.cc:1354
 #, c-format
 msgid "anonymous access to branch '%s' denied by server"
 msgstr "il server ha negato l'accesso anonimo al ramo ‘%s’"
 
-#: netsync.cc:1362
+#: netsync.cc:1361
 #, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'\n"
 msgstr "concessi permessi di lettura anonima a ‘%s’ con esclusione di ‘%s’\n"
 
-#: netsync.cc:1394
+#: netsync.cc:1393
 #, c-format
 msgid "detected replay attack in auth netcmd\n"
 msgstr "individuato attacco replay nell'autenticazione netcmd\n"
 
-#: netsync.cc:1416
+#: netsync.cc:1415
 #, c-format
 msgid "remote public key hash '%s' is unknown\n"
 msgstr "l'hash ‘%s’ della chiave pubblica remota è sconosciuto\n"
 
-#: netsync.cc:1433
+#: netsync.cc:1432
 #, c-format
 msgid "denied '%s' read permission for '%s' excluding '%s' while running as pure sink\n"
 msgstr ""
 
-#: netsync.cc:1453
+#: netsync.cc:1452
 #, c-format
 msgid "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'\n"
 msgstr ""
 
-#: netsync.cc:1456
+#: netsync.cc:1455
 #, c-format
 msgid "access to branch '%s' denied by server"
 msgstr "accesso al ramo ‘%s’ negato dal server"
 
-#: netsync.cc:1466
+#: netsync.cc:1465
 #, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'\n"
 msgstr "concessi a ‘%s’ permessi di lettura per ‘%s’ con esclusione di ‘%s’\n"
 
-#: netsync.cc:1475
+#: netsync.cc:1474
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s' while running as pure source\n"
 msgstr ""
 
-#: netsync.cc:1483
+#: netsync.cc:1482
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'\n"
 msgstr "negati a ‘%s’ permessi di scrittura per ‘%s’ con esclusione di ‘%s’\n"
 
-#: netsync.cc:1489
+#: netsync.cc:1488
 #, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'\n"
 msgstr "concessi a ‘%s’ permessi di scrittura per ‘%s’ con esclusione di ‘%s’\n"
 
-#: netsync.cc:1529
+#: netsync.cc:1528
 #, c-format
 msgid "bad client signature\n"
 msgstr "firma del client non valida\n"
 
-#: netsync.cc:1545
+#: netsync.cc:1544
 #, c-format
 msgid "Unexpected 'refine' command on non-refined item type\n"
 msgstr ""
 
-#: netsync.cc:1642
+#: netsync.cc:1641
 #, c-format
 msgid "unknown bye phase %d received"
 msgstr "ricevuta fase di saluto %d sconosciuta"
 
-#: netsync.cc:1657
+#: netsync.cc:1656
 #, c-format
 msgid "Unexpected 'done' command on non-refined item type\n"
 msgstr ""
 
-#: netsync.cc:1729
-#, fuzzy, c-format
+#: netsync.cc:1728
+#, c-format
 msgid "%s with hash '%s' does not exist in our database"
-msgstr "l'epoca con hash ‘%s’ non è presente nel database"
+msgstr "‘%s’ con hash ‘%s’ non è presente nel database"
 
-#: netsync.cc:1830
+#: netsync.cc:1829
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
 msgstr "Epoca non corrispondente sul ramo ‘%s’: il server usa ‘%s’, il client usa ‘%s’."
 
-#: netsync.cc:1848
+#: netsync.cc:1847
 #, c-format
 msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
 msgstr ""
 
-#: netsync.cc:1862
+#: netsync.cc:1861
 #, c-format
 msgid "hash check failed for revision cert '%s'"
-msgstr ""
+msgstr "l'hash nel certificato della revisione ‘%s’ non è corretto"
 
-#: netsync.cc:1924
+#: netsync.cc:1923
 #, c-format
 msgid "Received warning from usher: %s"
 msgstr "Ricevuto avvertimento dall'usciere: %s"
 
-#: netsync.cc:2011
-#: netsync.cc:2042
+#: netsync.cc:2010
+#: netsync.cc:2041
 msgid "source and sink"
 msgstr "sorgente e pozzo"
 
-#: netsync.cc:2012
-#: netsync.cc:2043
+#: netsync.cc:2011
+#: netsync.cc:2042
 msgid "source"
 msgstr "sorgente"
 
-#: netsync.cc:2012
-#: netsync.cc:2043
+#: netsync.cc:2011
+#: netsync.cc:2042
 msgid "sink"
 msgstr "pozzo"
 
-#: netsync.cc:2197
+#: netsync.cc:2196
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch\n"
 msgstr ""
 
-#: netsync.cc:2209
-#: netsync.cc:2266
+#: netsync.cc:2208
+#: netsync.cc:2265
 #, c-format
 msgid "protocol error while processing peer %s: '%s'\n"
 msgstr ""
 
-#: netsync.cc:2215
+#: netsync.cc:2214
 #, c-format
 msgid "error: %s\n"
 msgstr "errore: %s\n"
 
-#: netsync.cc:2245
+#: netsync.cc:2244
 #, c-format
 msgid "connecting to %s\n"
 msgstr "connessione a ‘%s’\n"
 
-#: netsync.cc:2281
+#: netsync.cc:2280
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:2296
+# TODO: peer?
+#: netsync.cc:2295
 #, c-format
 msgid "got OOB data from peer %s, disconnecting\n"
-msgstr ""
+msgstr "ricevuti dati OOB dal peer ‘%s’, mi scollego\n"
 
-#: netsync.cc:2311
+#: netsync.cc:2310
 #, c-format
 msgid "processing failure while talking to peer %s, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:2328
+#: netsync.cc:2327
 #, c-format
 msgid "successful exchange with %s\n"
 msgstr "scambio con ‘%s’ avvenuto con successo\n"
 
-#: netsync.cc:2334
+#: netsync.cc:2333
 #, c-format
 msgid "peer %s disconnected after we informed them of error\n"
 msgstr ""
 
-#: netsync.cc:2339
+#: netsync.cc:2338
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:2368
+#: netsync.cc:2367
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad\n"
 msgstr ""
 
-#: netsync.cc:2400
+#: netsync.cc:2399
 #, c-format
 msgid "accepted new client connection from %s : %s\n"
 msgstr ""
 
-#: netsync.cc:2434
+#: netsync.cc:2433
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting\n"
 msgstr ""
 
-#: netsync.cc:2445
+#: netsync.cc:2444
 #, c-format
 msgid "peer %s read failed in working state (error)\n"
 msgstr ""
 
-#: netsync.cc:2450
+#: netsync.cc:2449
 #, c-format
 msgid "peer %s read failed in shutdown state (possibly client misreported error)\n"
 msgstr ""
 
-#: netsync.cc:2456
+#: netsync.cc:2455
 #, c-format
 msgid "peer %s read failed in confirmed state (success)\n"
 msgstr ""
 
-#: netsync.cc:2477
+#: netsync.cc:2476
 #, c-format
 msgid "peer %s write failed in working state (error)\n"
 msgstr ""
 
-#: netsync.cc:2482
+#: netsync.cc:2481
 #, c-format
 msgid "peer %s write failed in shutdown state (possibly client misreported error)\n"
 msgstr ""
 
-#: netsync.cc:2488
+#: netsync.cc:2487
 #, c-format
 msgid "peer %s write failed in confirmed state (success)\n"
 msgstr ""
 
-#: netsync.cc:2515
+#: netsync.cc:2514
 #, c-format
 msgid "peer %s processing finished, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:2537
+#: netsync.cc:2536
 #, c-format
 msgid "fd %d (peer %s) has been idle too long, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:2605
+#: netsync.cc:2604
 #, c-format
 msgid "beginning service on %s : %s\n"
 msgstr "attivo il servizio su %s : %s\n"
 
-#: netsync.cc:2606
+#: netsync.cc:2605
 msgid "<all interfaces>"
 msgstr "<tutte le interfacce>"
 
-#: netsync.cc:2620
+#: netsync.cc:2619
 #, c-format
 msgid "session limit %d reached, some connections will be refused\n"
 msgstr ""
 
-#: netsync.cc:2685
+#: netsync.cc:2684
 #, c-format
 msgid "got OOB from peer %s, disconnecting\n"
 msgstr ""
 
-#: netsync.cc:2772
+#: netsync.cc:2771
 #, c-format
 msgid "finding items to synchronize:\n"
 msgstr "cerco elementi da sincronizzare:\n"
 
-#: netsync.cc:2780
+#: netsync.cc:2779
 msgid "certificates"
 msgstr "certificati"
 
-#: netsync.cc:2893
+#: netsync.cc:2892
 #, c-format
 msgid "Cannot find key '%s'"
 msgstr "Non trovo la chiave ‘%s’"
 
-#: netsync.cc:2933
+#: netsync.cc:2932
 #, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
 "%s\n"
 msgstr ""
 
-#: netsync.cc:2939
+#: netsync.cc:2938
 #, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
 "%s\n"
 msgstr ""
 
-#: netsync.cc:2962
-#: netsync.cc:2966
+#: netsync.cc:2961
+#: netsync.cc:2965
 #, c-format
 msgid "network error: %s"
 msgstr "errore di rete: %s"
@@ -2929,60 +2936,55 @@ msgstr "nel database manca la preimmagine del file ‘%s’"
 msgid "dropping delta '%s' -> '%s'"
 msgstr "cancello il delta ‘%s’ → ‘%s’"
 
-#: packet.cc:109
-#, c-format
-msgid "reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n"
-msgstr ""
-
-#: packet.cc:138
+#: packet.cc:126
 #, c-format
 msgid "missing prerequisite revision '%s'\n"
 msgstr "manca un requisito: la revisione ‘%s’\n"
 
-#: packet.cc:139
-#: packet.cc:150
-#: packet.cc:166
-#: packet.cc:174
+#: packet.cc:127
+#: packet.cc:138
+#: packet.cc:154
+#: packet.cc:162
 #, c-format
 msgid "dropping revision '%s'\n"
 msgstr "elimino la revisione ‘%s’\n"
 
-#: packet.cc:149
+#: packet.cc:137
 #, c-format
 msgid "missing prerequisite file '%s'\n"
 msgstr "manca un requisito: il file ‘%s’\n"
 
-#: packet.cc:164
+#: packet.cc:152
 #, c-format
 msgid "missing prerequisite file pre-delta '%s'\n"
 msgstr ""
 
-#: packet.cc:172
+#: packet.cc:160
 #, c-format
 msgid "missing prerequisite file post-delta '%s'\n"
 msgstr ""
 
-#: packet.cc:200
+#: packet.cc:188
 #, fuzzy, c-format
 msgid "cert revision '%s' does not exist in db\n"
 msgstr "la revisione ‘%s’ non è in database"
 
-#: packet.cc:202
+#: packet.cc:190
 #, c-format
 msgid "dropping cert\n"
 msgstr "cancella certificato\n"
 
-#: packet.cc:225
+#: packet.cc:213
 #, c-format
 msgid "key '%s' is not equal to key '%s' in database\n"
 msgstr "la chiave ‘%s’ non è uguale alla chiave ‘%s’ nel database\n"
 
-#: packet.cc:349
+#: packet.cc:337
 #, c-format
 msgid "malformed packet"
 msgstr "pacchetto non valido"
 
-#: packet.cc:449
+#: packet.cc:437
 #, c-format
 msgid "unknown packet type: '%s'"
 msgstr "pacchetto di tipo sconosciuto: ‘%s’"
@@ -3260,9 +3262,9 @@ msgid ""
 msgstr ""
 
 #: ui.cc:473
-#, fuzzy, c-format
+#, c-format
 msgid "failed to open log file '%s'"
-msgstr "Fallito caricamento del file chiarore a gradiente: '%s': %s"
+msgstr "impossibile aprire il file di log ‘%s’"
 
 #: update.cc:65
 #, c-format
