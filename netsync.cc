@@ -50,7 +50,7 @@
 #include "netxx/stream.h"
 #include "netxx/streamserver.h"
 #include "netxx/timeout.h"
-
+#include "netxx_pipe.hh"
 // TODO: things to do that will break protocol compatibility
 //   -- need some way to upgrade anonymous to keyed pull, without user having
 //      to explicitly specify which they want
@@ -264,8 +264,7 @@ session:
   app_state & app;
 
   string peer_id;
-  Netxx::socket_type fd;
-  Netxx::Stream str;  
+  shared_ptr<Netxx::StreamBase> str;  
 
   string_queue inbuf; 
   // deque of pair<string data, size_t cur_pos>
@@ -336,8 +335,7 @@ session:
           utf8 const & our_exclude_pattern,
           app_state & app,
           string const & peer,
-          Netxx::socket_type sock, 
-          Netxx::Timeout const & to);
+          shared_ptr<Netxx::StreamBase> sock);
 
   virtual ~session();
   
@@ -448,8 +446,7 @@ session::session(protocol_role role,
                  utf8 const & our_exclude_pattern,
                  app_state & app,
                  string const & peer,
-                 Netxx::socket_type sock, 
-                 Netxx::Timeout const & to) : 
+                 shared_ptr<Netxx::StreamBase> sock) : 
   role(role),
   voice(voice),
   our_include_pattern(our_include_pattern),
@@ -457,8 +454,7 @@ session::session(protocol_role role,
   our_matcher(our_include_pattern, our_exclude_pattern),
   app(app),
   peer_id(peer),
-  fd(sock),
-  str(sock, to),
+  str(sock),
   inbuf(),
   outbuf_size(0),
   armed(false),
@@ -924,7 +920,6 @@ session::error(std::string const & errmsg)
   throw netsync_error(errmsg);
 }
 
-
 Netxx::Probe::ready_type 
 session::which_events() const
 {
@@ -950,10 +945,10 @@ session::read_some()
 {
   I(inbuf.size() < constants::netcmd_maxsz);
   char tmp[constants::bufsz];
-  Netxx::signed_size_type count = str.read(tmp, sizeof(tmp));
+  Netxx::signed_size_type count = str->read(tmp, sizeof(tmp));
   if (count > 0)
     {
-      L(FL("read %d bytes from fd %d (peer %s)\n") % count % fd % peer_id);
+      L(FL("read %d bytes from fd %d (peer %s)\n") % count % str->get_socketfd() % peer_id);
       if (encountered_error)
         {
           L(FL("in error unwind mode, so throwing them into the bit bucket\n"));
@@ -974,7 +969,7 @@ session::write_some()
 {
   I(!outbuf.empty());    
   size_t writelen = outbuf.front().first.size() - outbuf.front().second;
-  Netxx::signed_size_type count = str.write(outbuf.front().first.data() + outbuf.front().second, 
+  Netxx::signed_size_type count = str->write(outbuf.front().first.data() + outbuf.front().second, 
                                             std::min(writelen,
                                             constants::bufsz));
   if (count > 0)
@@ -989,7 +984,7 @@ session::write_some()
           outbuf.front().second += count;
         }
       L(FL("wrote %d bytes to fd %d (peer %s)\n")
-        % count % fd % peer_id);
+        % count % str->get_socketfd() % peer_id);
       mark_recent_io();
       if (byte_out_ticker.get() != NULL)
         (*byte_out_ticker) += count;
@@ -2252,6 +2247,159 @@ bool session::process(transaction_guard & guard)
 }
 
 
+static bool 
+parse_ssh_url(const std::string & address,
+              std::string & host,
+              std::string & user,
+              std::string & port,
+              std::string & dbpath)
+{
+  std::string::size_type 
+    wordbegin = 0,
+    wordend = std::string::npos;
+
+  if (address.size() >= 2 && 
+      address.substr(wordbegin, 2) == "//") 
+    wordbegin += 2;
+  
+  wordend = address.find_first_of("@:/", wordbegin);
+  
+  if (wordend == string::npos) 
+    return false;
+  
+  if (address.at(wordend) == '@') 
+    {  
+      user = address.substr(wordbegin, wordend - wordbegin);
+      wordbegin = wordend + 1;
+      wordend = address.find_first_of(":/", wordbegin);
+      if (wordend == string::npos) 
+        return false;
+    }
+
+  if (address.at(wordend) == ':')
+    {  
+      host = address.substr(wordbegin, wordend-wordbegin);
+      wordbegin = wordend + 1;
+      wordend = address.find_first_of("/", wordbegin);
+      if (wordend == string::npos)
+        return false;
+    }
+
+  if (address.at(wordend) != '/')
+    return false;
+
+  if (wordbegin == wordend)
+    return false; // empty port/host
+
+  if (host.empty()) 
+    host = address.substr(wordbegin, wordend-wordbegin);
+  else 
+    port = address.substr(wordbegin, wordend-wordbegin);
+
+  dbpath = address.substr(wordend); // with leading '/' !
+  return true;
+}
+
+static shared_ptr<Netxx::StreamBase> 
+build_stream_to_server(utf8 const & include_pattern,
+                       utf8 const & exclude_pattern,
+                       utf8 const & address,
+                       Netxx::port_type default_port,
+                       Netxx::Timeout timeout)
+{
+  shared_ptr<Netxx::StreamBase> server;
+
+  if (address().size() > 5 && 
+      address().substr(0,5)=="file:")
+    {  
+      std::vector<std::string> args;
+      std::string db_path = address().substr(5);
+      if (global_sanity.debug) 
+        args.push_back("--debug");
+      else
+        args.push_back("--quiet");
+
+      args.push_back("--db");
+      args.push_back(db_path);
+
+      if (exclude_pattern().size())
+        { 
+          args.push_back("--exclude");
+          args.push_back(exclude_pattern());
+        }
+
+      args.push_back("serve");
+      args.push_back("--stdio");
+      args.push_back(include_pattern());
+    
+      return shared_ptr<Netxx::StreamBase>
+        (new Netxx::PipeStream("mtn", args));
+    }
+
+  else if (address().size() > 4 && 
+           address().substr(0,4)=="ssh:")
+    {  
+      std::vector<std::string> args;
+      std::string user, host, port, db_path;
+
+      if (!parse_ssh_url(address().substr(4),
+                         host, user, port, db_path))
+        {  
+          N(false, 
+            F("url %s is not of form "
+              "ssh:[//]user@host:port/dbpath\n") % address());
+        }
+
+      if (!port.empty()) 
+        {  
+          args.push_back("-p");
+          args.push_back(port);
+        }
+
+      if (!user.empty()) 
+        {  
+          args.push_back("-l");
+          args.push_back(user);
+        }
+
+      args.push_back(host);
+      args.push_back("mtn");
+
+      if (global_sanity.debug) 
+        args.push_back("--debug");
+      else
+        args.push_back("--quiet");
+
+      args.push_back("--db");
+      args.push_back(db_path);
+
+      if (exclude_pattern().size())
+        { 
+          args.push_back("--exclude");
+          args.push_back(exclude_pattern());
+        }
+
+      args.push_back("--stdio");
+      args.push_back("serve");
+      args.push_back(include_pattern());
+
+      return shared_ptr<Netxx::StreamBase>
+        (new Netxx::PipeStream("ssh", args));
+    }
+  else 
+    { 
+#ifdef USE_IPV6
+      bool use_ipv6=true;
+#else
+      bool use_ipv6=false;
+#endif
+      Netxx::Address addr(address().c_str(), 
+                          default_port, use_ipv6);
+      return shared_ptr<Netxx::StreamBase>
+        (new Netxx::Stream(addr, timeout));
+    }  
+}
+
 static void 
 call_server(protocol_role role,
             utf8 const & include_pattern,
@@ -2261,30 +2409,31 @@ call_server(protocol_role role,
             Netxx::port_type default_port,
             unsigned long timeout_seconds)
 {
-
+  Netxx::PipeCompatibleProbe probe;
   transaction_guard guard(app.db);
 
-  Netxx::Probe probe;
   Netxx::Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
-#ifdef USE_IPV6
-  bool use_ipv6=true;
-#else
-  bool use_ipv6=false;
-#endif
 
   // FIXME: split into labels and convert to ace here.
 
   P(F("connecting to %s\n") % address());
-  Netxx::Address addr(address().c_str(), default_port, use_ipv6);
-  Netxx::Stream server(addr, timeout);
+
+  shared_ptr<Netxx::StreamBase> server 
+    = build_stream_to_server(include_pattern,
+                             exclude_pattern,
+                             address, default_port, 
+                             timeout);
+
 
   // 'false' here means not to revert changes when the SockOpt
   // goes out of scope.
-  Netxx::SockOpt socket_options(server.get_socketfd(), false);
+  Netxx::SockOpt socket_options(server->get_socketfd(), false);
   socket_options.set_non_blocking();
 
-  session sess(role, client_voice, include_pattern, exclude_pattern,
-               app, address(), server.get_socketfd(), timeout);
+  session sess(role, client_voice, 
+               include_pattern, 
+               exclude_pattern,
+               app, address(), server);
 
   while (true)
     {       
@@ -2303,7 +2452,7 @@ call_server(protocol_role role,
       sess.maybe_say_goodbye(guard);
 
       probe.clear();
-      probe.add(sess.str, sess.which_events());
+      probe.add(*(sess.str), sess.which_events());
       Netxx::Probe::result_type res = probe.ready(armed ? instant : timeout);
       Netxx::Probe::ready_type event = res.second;
       Netxx::socket_type fd = res.first;
@@ -2315,20 +2464,13 @@ call_server(protocol_role role,
                     % sess.peer_id));
         }
 
-      bool all_io_clean = true;
+      bool all_io_clean = (event != Netxx::Probe::ready_oobd);
 
       if (event & Netxx::Probe::ready_read)
         all_io_clean = all_io_clean && sess.read_some();
       
       if (event & Netxx::Probe::ready_write)
         all_io_clean = all_io_clean && sess.write_some();
-      
-      if (event & Netxx::Probe::ready_oobd)
-        {
-          E(false, (F("got OOB data from "
-                      "peer %s, disconnecting\n") 
-                    % sess.peer_id));
-        }
 
       if (armed)
         if (!sess.process(guard))
@@ -2376,7 +2518,7 @@ call_server(protocol_role role,
 }
 
 static void 
-arm_sessions_and_calculate_probe(Netxx::Probe & probe,
+arm_sessions_and_calculate_probe(Netxx::PipeCompatibleProbe & probe,
                                  map<Netxx::socket_type, shared_ptr<session> > & sessions,
                                  set<Netxx::socket_type> & armed_sessions)
 {
@@ -2393,7 +2535,7 @@ arm_sessions_and_calculate_probe(Netxx::Probe & probe,
               L(FL("fd %d is armed\n") % i->first);
               armed_sessions.insert(i->first);
             }
-          probe.add(i->second->str, i->second->which_events());
+          probe.add(*i->second->str, i->second->which_events());
         }
       catch (bad_decode & bd)
         {
@@ -2436,12 +2578,15 @@ handle_new_connection(Netxx::Address & addr,
       // goes out of scope.
       Netxx::SockOpt socket_options(client.get_socketfd(), false);
       socket_options.set_non_blocking();
+      
+      shared_ptr<Netxx::Stream> str = 
+        shared_ptr<Netxx::Stream>
+        (new Netxx::Stream(client.get_socketfd(), timeout));
 
       shared_ptr<session> sess(new session(role, server_voice,
                                            include_pattern, exclude_pattern,
                                            app,
-                                           lexical_cast<string>(client), 
-                                           client.get_socketfd(), timeout));
+                                           lexical_cast<string>(client), str));
       sess->begin_service();
       sessions.insert(make_pair(client.get_socketfd(), sess));
     }
@@ -2588,7 +2733,7 @@ serve_connections(protocol_role role,
                   unsigned long timeout_seconds,
                   unsigned long session_limit)
 {
-  Netxx::Probe probe;  
+  Netxx::PipeCompatibleProbe probe;  
 
   Netxx::Timeout 
     forever, 
@@ -2761,6 +2906,92 @@ serve_connections(protocol_role role,
         }
     }
   while(try_again);
+  }
+
+static void 
+serve_single_connection(shared_ptr<session> sess,
+                        unsigned long timeout_seconds)
+{
+  Netxx::PipeCompatibleProbe probe;  
+  
+  Netxx::Timeout 
+    forever, 
+    timeout(static_cast<long>(timeout_seconds)), 
+    instant(0,1);
+  
+  P(F("beginning service on %s\n") % sess->peer_id);
+  
+  sess->begin_service();
+  
+  transaction_guard guard(sess->app.db);
+
+  map<Netxx::socket_type, shared_ptr<session> > sessions;
+  set<Netxx::socket_type> armed_sessions;
+  
+  if (sess->str->get_socketfd() == -1) 
+    {
+      // Unix pipes are non-duplex, have two filedescriptors
+      Netxx::PipeStream *pipe=dynamic_cast<Netxx::PipeStream*>(&*sess->str);
+      if (pipe) 
+        { 
+          sessions[pipe->get_writefd()]=sess;
+          sessions[pipe->get_readfd()]=sess;
+        }
+    }
+  else
+    sessions[sess->str->get_socketfd()]=sess;
+  
+  while (!sessions.empty())
+    {
+      probe.clear();
+      armed_sessions.clear();
+      
+      arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
+      
+      L(FL("i/o probe with %d armed\n") % armed_sessions.size());      
+      Netxx::Probe::result_type res = probe.ready((armed_sessions.empty() ? timeout 
+                                                   : instant));
+      Netxx::Probe::ready_type event = res.second;
+      Netxx::socket_type fd = res.first;
+      
+      if (fd == -1)
+        {
+          if (armed_sessions.empty()) 
+            L(FL("timed out waiting for I/O (listening on %s)\n") 
+              % sess->peer_id);
+        }
+      
+      // an existing session woke up
+      else
+        {
+          map<Netxx::socket_type, shared_ptr<session> >::iterator i;
+          i = sessions.find(fd);
+          if (i == sessions.end())
+            {
+              L(FL("got woken up for action on unknown fd %d\n") % fd);
+            }
+          else
+            {
+              shared_ptr<session> sess = i->second;
+              bool live_p = true;
+
+              if (event & Netxx::Probe::ready_read)
+                handle_read_available(fd, sess, sessions, armed_sessions, live_p);
+                
+              if (live_p && (event & Netxx::Probe::ready_write))
+                handle_write_available(fd, sess, sessions, live_p);
+                
+              if (live_p && (event & Netxx::Probe::ready_oobd))
+                {
+                  P(F("got some OOB data on fd %d (peer %s), disconnecting\n") 
+                    % fd % sess->peer_id);
+                  sessions.erase(i);
+                }
+            }
+        }
+      process_armed_sessions(sessions, armed_sessions, guard);
+      reap_dead_sessions(sessions, timeout_seconds);
+    }
 }
 
 
@@ -2971,10 +3202,19 @@ run_netsync_protocol(protocol_voice voice,
     {
       if (voice == server_voice)
         {
-          serve_connections(role, include_pattern, exclude_pattern, app,
-                            addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
-                            static_cast<unsigned long>(constants::netsync_timeout_seconds), 
-                            static_cast<unsigned long>(constants::netsync_connection_limit));
+          if (app.bind_stdio)
+            { 
+              shared_ptr<Netxx::PipeStream> str(new Netxx::PipeStream(0,1));
+              shared_ptr<session> sess(new session(role, server_voice, 
+                                                   include_pattern, exclude_pattern,
+                                                   app, "stdio", str));
+              serve_single_connection(sess,constants::netsync_timeout_seconds);
+            }
+          else
+            serve_connections(role, include_pattern, exclude_pattern, app,
+                              addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
+                              static_cast<unsigned long>(constants::netsync_timeout_seconds), 
+                              static_cast<unsigned long>(constants::netsync_connection_limit));
         }
       else    
         {

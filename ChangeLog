@@ -1,3 +1,30 @@
+2006-05-13  Graydon Hoare  <graydon@pobox.com>
+
+	* netsync.cc, netxx/probe.h, netxx_pipe.{cc,hh}: Adaptation of
+	Christof Petig's PipeStream work, with heavy modifications; seems
+	to work under win32 / visualc8 now.
+
+	* options.hh (OPT_STDIO): New option.
+	* app_state.{cc,hh} (bind_stdio): Store it.
+	* monotone.cc (cpp_main): Parse it.
+	* cmd_netsync.cc (serve): Accept --stdio option for 'serve'.
+	* platform.hh (munge_argv_into_cmdline): Export on win32.
+	* win32/process.cc (munge_argv_into_cmdline): Make non-static.
+	* unit_tests.{cc,hh}: Add tests for pipes.
+	* visualc/monotone.vcproj: Add netxx_pipe.{cc,hh}
+	* Makefile.am: Likewise.
+
+2006-05-13  Christof Petig <christof@petig-baender.de>
+
+	(Originally from 2004-06-18, on a different branch)
+
+	* netsync.cc:
+	(struct session): use PipeStream, pair of sockets
+	(find_wordend,parse_ssh_url): helper functions to parse an URL
+	(call_server): recognize ssh: and file: URLs
+	(serve_stdio): variant of serve_connections for stdio
+	(run_netsync_protocol): call serve_stdio if address is -
+
 2006-04-27  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* hash_map.hh: Do things a little differently. Should make

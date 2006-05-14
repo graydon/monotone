@@ -80,6 +80,8 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   if (t.empty() || t.find("crypto") != t.end())
     add_crypto_tests(suite);  
   
+  if (t.empty() || t.find("pipe") != t.end())
+    add_pipe_tests(suite);  
   if (t.empty() || t.find("string_queue") != t.end())
     add_string_queue_tests(suite);  
   

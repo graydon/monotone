@@ -68,6 +68,7 @@ public:
   bool execute;
   utf8 bind_address;
   utf8 bind_port;
+  bool bind_stdio;
   bool missing;
   bool unknown;
   std::vector<rsa_keypair_id> keys_to_push;
