@@ -562,7 +562,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     F("only one of --last/--next allowed"));
 
   revision_set rev;
-  roster_t roster;
 
   while(! frontier.empty() && (last == -1 || last > 0) && (next == -1 || next > 0))
     {
@@ -582,12 +581,13 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
           seen.insert(rid);
           app.db.get_revision(rid, rev);
-          app.db.get_roster(rid, roster); 
 
           if (!mask.empty())
             {
               // TODO: stop if the restriction is pre-dated by the current roster
               // i.e. the restriction's nodes are not born in the current roster
+              roster_t roster;
+              app.db.get_roster(rid, roster); 
 
               set<node_id> nodes_modified;
               bool any_node_hit = false;

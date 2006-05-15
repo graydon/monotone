@@ -5,6 +5,39 @@
 	* tests/t_db_init_info.at: new test of info on a new database
 	* testsuite.at: call it
 
+2006-05-14  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (115 to go).
+
+2006-05-14  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to correct.
+
+2006-05-13  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/t_automate_get_current_revision_id.at: Canonicalise output
+	before comparison--fixes test on Win32.
+
+2006-05-13  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_diff_log (log): don't get the roster unless we have restrictions.
+
+2006-05-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc: (process_hello_cmd) Build our merkle tries after
+	replying to the server.
+	(call_server, serve_connections) Use instant timeout for our streams.
+	Looking at the netxx code, it appears that reads will select() using
+	the stream's timeout. Regardless of whether the stream has been set
+	non-blocking.
+	(call_server) Move maybe_step and maybe_say_goodbye to before we arm
+	the session.
+	(write_netcmd_and_try_flush) Uncomment the {read,write}_some calls.
+
+2006-05-12  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi: Re-sync the two copyright blocks.
+
 2006-05-12  Derek Scherger  <derek@echologic.com>
 
 	* testsuite.at (test_hooks.lua): ignore testsuite.log files
@@ -76,6 +109,14 @@
 	* commands.cc: remove unnecessary #include 
 	(help): fix indentation
 	* netsync.cc: remove stale comment
+
+2006-05-08  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Changed translation of 'directory' to 'directory'.
+
+2006-05-07  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (148 to go).
 
 2006-05-07  Graydon Hoare  <graydon@pobox.com>
 
