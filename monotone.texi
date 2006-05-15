@@ -13,7 +13,7 @@ This manual is for the ``monotone'' distributed version control system.
 This edition documents version @value{VERSION}.
 
 Copyright 2003, 2004 Graydon Hoare
-Copyright 2004, 2005 Nathaniel Smith
+Copyright 2004, 2005, 2006 Nathaniel Smith
 Copyright 2005 Derek Scherger
 Copyright 2005 Daniel Carosone
 Copyright 2006 Jeronimo Pellegrini
@@ -30,7 +30,7 @@ See the file COPYING for details
 @titlepage
 @title Monotone
 @subtitle A distributed version control system
-@author Graydon Hoare
+@author Graydon Hoare and others
 
 @page
 @vskip 0pt plus 1filll
@@ -38,6 +38,7 @@ Copyright @copyright{} 2003, 2004 Graydon Hoare
 Copyright @copyright{} 2004, 2005, 2006 Nathaniel Smith
 Copyright @copyright{} 2005 Derek Scherger
 Copyright @copyright{} 2005 Daniel Carosone
+Copyright @copyright{} 2006 Jeronimo Pellegrini
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -2675,7 +2676,8 @@ Selectors may be combined with the @code{/} character. The combination
 acts as database intersection (or logical @code{and}). For example,
 the selector @code{a:graydon/d:2004-04} can be used to select a
 revision which has an @code{author} cert beginning with @code{graydon}
-@emph{as well as} a @code{date} cert beginning with @code{2004-04}.
+@emph{as well as} a @code{date} cert beginning with @code{2004-04}. The
+@code{/} character can be escaped using the @code{\} character if necessary.
 
 @heading Selector expansion
 
@@ -6128,6 +6130,80 @@ If the revision specified is unknown or invalid prints an error message
 to stderr and exits with status 1.
 
 @end table
+
+
+
+@item mtn automate get_base_revision_id
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+2.0
+
+@item Purpose:
+
+Prints the revision id the current workspace is based on. This is the
+value stored in _MTN/revision
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+@end verbatim
+
+@item Output format:
+
+One line containing the base revision ID of the current workspace.
+
+@item Error conditions:
+
+If no workspace book keeping _MTN directory is found, prints an error
+message to stderr, and exits with status 1.
+
+@end table
+
+
+
+@item mtn automate get_current_revision_id
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+2.0
+
+@item Purpose:
+
+Prints the revision id of the current workspace. This is the id
+of the revision that would be committed by an unrestricted commit
+calculated from _MTN/revision, _MTN/work and any edits to files in the
+workspace.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+@end verbatim
+
+@item Output format:
+
+One line containing the current revision id ID of the current workspace.
+
+@item Error conditions:
+
+If no workspace book keeping _MTN directory is found, prints an error
+message to stderr, and exits with status 1.
+
+
+@end table
+
 
 @item mtn automate get_manifest_of
 @item mtn automate get_manifest_of @var{revid}

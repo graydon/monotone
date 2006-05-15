@@ -232,6 +232,19 @@ compute_delta_insns(string const & a,
     }
 }
 
+void 
+write_delta_insns(vector<insn> const & delta_insns,
+		  string & delta)
+{
+  delta.clear();
+  ostringstream oss;  
+  for (vector<insn>::const_iterator i = delta_insns.begin(); 
+       i != delta_insns.end(); ++i)
+    {
+      oss << *i;
+    }
+  delta = oss.str();  
+}
 
 void 
 compute_delta(string const & a,
@@ -307,45 +320,64 @@ simple_applicator
   }
 };
 
+inline string::size_type
+read_num(string::const_iterator &i,
+         string::const_iterator e)
+{
+  string::size_type n = 0;
+
+  while (i != e && *i == ' ')
+    ++i;
+
+  while (i != e && *i >= '0' && *i <= '9')
+    {
+      n *= 10;
+      n += static_cast<size_t>(*i - '0');
+      ++i;
+    }
+  return n;
+}
+
 void 
 apply_delta(boost::shared_ptr<delta_applicator> da,
             std::string const & delta)
-{
-  istringstream del(delta);
-  for (char c = del.get(); c == 'I' || c == 'C'; c = del.get())
+{  
+  std::string::const_iterator i = delta.begin(); 
+  while (i != delta.end() && (*i == 'I' || *i == 'C'))
     {
-      I(del.good());
-      if (c == 'I')
+      if (*i == 'I')
         { 
-          string::size_type len = string::npos;
-          del >> len;
-          I(del.good());
-          I(len != string::npos);
-          string tmp;
-          tmp.reserve(len);
-          I(del.get(c).good());
-          I(c == '\n');
-          while(len--)
-            {
-              I(del.get(c).good());
-              tmp += c;
-            }
-          I(del.get(c).good());
-          I(c == '\n');
-          da->insert(tmp);
+          ++i;
+          I(i != delta.end());
+          string::size_type len = read_num(i, delta.end());
+          I(i != delta.end());
+          I(*i == '\n');
+          ++i;
+          I(i != delta.end());
+	  I((i - delta.begin()) + len <= delta.size());
+	  if (len > 0)
+	    {
+	      string tmp(i, i+len);
+	      da->insert(tmp);
+	    }
+	  i += len;
         }
       else
         {
-          string::size_type pos = string::npos, len = string::npos;
-          del >> pos >> len;          
-          I(del.good());
-          I(len != string::npos);
-          I(del.get(c).good());
-          I(c == '\n');
-          da->copy(pos, len);
+          I(*i == 'C');
+          ++i;
+          I(i != delta.end());
+          string::size_type pos = read_num(i, delta.end());
+          I(i != delta.end());
+          string::size_type len = read_num(i, delta.end());
+	  if (len != 0)
+	    da->copy(pos, len);
         }
+      I(i != delta.end());
+      I(*i == '\n');
+      ++i;
     }    
-  I(del.eof());
+  I(i == delta.end());
 }
 
 void
@@ -619,6 +651,118 @@ new_piecewise_applicator()
 {
   return boost::shared_ptr<delta_applicator>(new piecewise_applicator());
 }
+
+
+// inversion
+
+struct copied_extent
+{
+  copied_extent(string::size_type op,
+		string::size_type np,
+		string::size_type len)
+    : old_pos(op),
+      new_pos(np),
+      len(len)
+  {}
+  string::size_type old_pos;
+  string::size_type new_pos;
+  string::size_type len;
+  bool operator<(copied_extent const & other) const
+  {
+    return (old_pos < other.old_pos) ||
+      (old_pos == other.old_pos && len > other.len);
+  }
+};
+
+struct 
+inverse_delta_writing_applicator :
+  public delta_applicator
+{
+  string const & old;
+  set<copied_extent> copied_extents;
+  string::size_type new_pos;
+  
+  inverse_delta_writing_applicator(string const & old) 
+    : old(old), 
+      new_pos(0)
+  {}
+
+  virtual void begin(std::string const & base) {}
+  virtual void next() {}
+  virtual void finish(std::string & out) 
+  {
+    // We are trying to write a delta instruction stream which
+    // produces 'old' from 'new'. We don't care what was in 'new',
+    // because we're only going to copy some parts forwards, and we
+    // already know which parts: those in the table. Our table lists
+    // extents which were copied in order that they appear in 'old'.
+    //
+    // When we run into a section of 'old' which isn't in the table,
+    // we have to emit an insert instruction for the gap.
+
+    string::size_type old_pos = 0;
+    out.clear();
+    vector<insn> delta_insns;
+
+    for (set<copied_extent>::iterator i = copied_extents.begin();
+	 i != copied_extents.end(); ++i)
+      {	
+	// It is possible that this extent left a gap after the
+	// previously copied extent; in this case we wish to pad
+	// the intermediate space with an insert.
+	while (old_pos < i->old_pos)
+	  {
+	    I(old_pos < old.size());
+	    // Don't worry, adjacent inserts are merged.
+	    insert_insn(delta_insns, old.at(old_pos++));
+	  }
+
+	// It is also possible that this extent *overlapped* the
+	// previously copied extent; in this case we wish to subtract
+	// the overlap from the inverse copy.
+
+	string::size_type overlap = 0;
+	if (i->old_pos < old_pos)
+	  overlap = old_pos - i->old_pos;
+
+	if (i->len <= overlap)
+	  continue;
+
+	I(i->len > overlap);
+	copy_insn(delta_insns, i->new_pos + overlap, i->len - overlap);
+	old_pos += (i->len - overlap);
+      }
+    while (old_pos < old.size())
+      insert_insn(delta_insns, old.at(old_pos++));
+
+    write_delta_insns(delta_insns, out);
+  }
+
+  virtual void copy(std::string::size_type old_pos, 
+                    std::string::size_type len) 
+  { 
+    I(old_pos < old.size());
+    copied_extents.insert(copied_extent(old_pos, new_pos, len));
+    new_pos += len;
+  }
+
+  virtual void insert(std::string const & str) 
+  { 
+    new_pos += str.size();
+  }
+};
+
+
+void
+invert_xdelta(string const & old_str,
+	      string const & delta,
+	      string & delta_inverse)
+{
+  boost::shared_ptr<delta_applicator> da(new inverse_delta_writing_applicator(old_str));
+  apply_delta(da, delta);
+  da->finish(delta_inverse);
+}
+
 
 #ifdef BUILD_UNIT_TESTS
 

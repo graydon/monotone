@@ -30,6 +30,7 @@
 #include "database.hh"
 #include "hash_map.hh"
 #include "keys.hh"
+#include "safe_map.hh"
 #include "sanity.hh"
 #include "schema_migration.hh"
 #include "transforms.hh"
@@ -96,8 +97,11 @@ namespace
 
 struct query
 {
-  query(std::string const & cmd)
+  explicit query(std::string const & cmd)
     : sql_cmd(cmd)
+  {}
+
+  query()
   {}
   
   query & operator %(query_param const & qp)
@@ -531,6 +535,16 @@ database::info(ostream & out)
 
   unsigned long total = 0UL;
 
+  u64 num_nodes;
+  {
+    results res;
+    fetch(res, one_col, one_row, query("SELECT node FROM next_roster_node_number"));
+    if (res.empty())
+      num_nodes = 0;
+    else
+      num_nodes = lexical_cast<u64>(res[0][0]) - 1;
+  }
+
 #define SPACE_USAGE(TABLE, COLS) add(space_usage(TABLE, COLS), total)
 
   out << \
@@ -543,6 +557,7 @@ database::info(ostream & out)
       "  revisions       : %u\n"
       "  ancestry edges  : %u\n"
       "  certs           : %u\n"
+      "  logical files   : %u\n"
       "bytes:\n"
       "  full rosters    : %u\n"
       "  roster deltas   : %u\n"
@@ -565,6 +580,7 @@ database::info(ostream & out)
     % count("revisions")
     % count("revision_ancestry")
     % count("revision_certs")
+    % num_nodes
     // bytes
     % SPACE_USAGE("rosters", "length(id) + length(data)")
     % SPACE_USAGE("roster_deltas", "length(id) + length(base) + length(delta)")
@@ -771,6 +787,7 @@ database::begin_transaction(bool exclusive)
 {
   if (transaction_level == 0)
     {
+      I(pending_writes.empty());
       if (exclusive)
         execute(query("BEGIN EXCLUSIVE"));
       else
@@ -786,11 +803,47 @@ database::begin_transaction(bool exclusive)
   transaction_level++;
 }
 
+
+bool 
+database::have_pending_write(string const & tab, hexenc<id> const & id)
+{
+  return pending_writes.find(make_pair(tab, id)) != pending_writes.end();
+}
+
+void 
+database::load_pending_write(string const & tab, hexenc<id> const & id, data & dat)
+{
+  dat = safe_get(pending_writes, make_pair(tab, id));
+}
+
+void 
+database::cancel_pending_write(string const & tab, hexenc<id> const & id)
+{
+  safe_erase(pending_writes, make_pair(tab, id));
+}
+
+void 
+database::schedule_write(string const & tab, 
+                         hexenc<id> const & id,
+                         data const & dat)
+{
+  if (!have_pending_write(tab, id))
+    safe_insert(pending_writes, make_pair(make_pair(tab, id), dat));
+}
+
 void 
 database::commit_transaction()
 {
   if (transaction_level == 1)
-    execute(query("COMMIT"));
+    {
+      for (map<pair<string, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
+           i != pending_writes.end(); ++i)
+        {
+          put(i->first.second, i->second, i->first.first);
+        }
+      pending_writes.clear();
+      execute(query("COMMIT"));
+    }
   transaction_level--;
 }
 
@@ -798,7 +851,10 @@ void
 database::rollback_transaction()
 {
   if (transaction_level == 1)
-    execute(query("ROLLBACK"));
+    {
+      pending_writes.clear();
+      execute(query("ROLLBACK"));
+    }
   transaction_level--;
 }
 
@@ -807,6 +863,9 @@ bool
 database::exists(hexenc<id> const & ident,
                       string const & table)
 {
+  if (have_pending_write(table, ident))
+    return true;
+
   results res;
   query q("SELECT id FROM " + table + " WHERE id = ?");
   fetch(res, one_col, any_rows, q % text(ident()));
@@ -884,6 +943,12 @@ database::get(hexenc<id> const & ident,
               data & dat,
               string const & table)
 {
+  if (have_pending_write(table, ident))
+    {
+      load_pending_write(table, ident, dat);
+      return;
+    }
+
   results res;
   query q("SELECT data FROM " + table + " WHERE id = ?");
   fetch(res, one_col, one_row, q % text(ident()));
@@ -1177,16 +1242,28 @@ database::put_version(hexenc<id> const & old_id,
   
   get_version(old_id, old_data, data_table, delta_table);
   patch(old_data, del, new_data);
-  diff(new_data, old_data, reverse_delta);
+  {
+    string tmp;
+    invert_xdelta(old_data(), del(), tmp);
+    reverse_delta = delta(tmp);
+    data old_tmp;
+    hexenc<id> old_tmp_id;
+    patch(new_data, reverse_delta, old_tmp);
+    calculate_ident(old_tmp, old_tmp_id);
+    I(old_tmp_id == old_id);
+  }
       
   transaction_guard guard(*this);
   if (exists(old_id, data_table))
     {
       // descendent of a head version replaces the head, therefore old head
       // must be disposed of
-      drop(old_id, data_table);
+      if (have_pending_write(data_table, old_id))
+        cancel_pending_write(data_table, old_id);
+      else
+        drop(old_id, data_table);
     }
-  put(new_id, new_data, data_table);
+  schedule_write(data_table, new_id, new_data);
   put_delta(old_id, new_id, reverse_delta, delta_table);
   guard.commit();
 }
@@ -1390,7 +1467,7 @@ void
 database::put_file(file_id const & id,
                    file_data const & dat)
 {
-  put(id.inner(), dat.inner(), "files");
+  schedule_write("files", id.inner(), dat.inner());
 }
 
 void 
@@ -1401,6 +1478,56 @@ database::put_file_version(file_id const & old_id,
   put_version(old_id.inner(), new_id.inner(), del.inner(), 
               "files", "file_deltas");
 }
+
+void 
+database::get_arbitrary_file_delta(file_id const & src_id,
+                                   file_id const & dst_id,
+                                   file_delta & del)
+{
+  delta dtmp;
+  // Deltas stored in the database go from base -> id.
+  results res;
+  query q1("SELECT delta FROM file_deltas "
+           "WHERE base = ? AND id = ?");
+  fetch(res, one_col, any_rows, 
+        q1 % text(src_id.inner()()) % text(dst_id.inner()()));
+
+  if (!res.empty())
+    {
+      // Exact hit: a plain delta from src -> dst.
+      gzip<delta> del_packed(res[0][0]);
+      decode_gzip(del_packed, dtmp);
+      del = file_delta(dtmp);
+      return;
+    }
+
+  query q2("SELECT delta FROM file_deltas "
+           "WHERE id = ? AND base = ?");
+  fetch(res, one_col, any_rows, 
+        q2 % text(dst_id.inner()()) % text(src_id.inner()()));
+
+  if (!res.empty())
+    {
+      // We have a delta from dst -> src; we need to 
+      // invert this to a delta from src -> dst.
+      gzip<delta> del_packed(res[0][0]);
+      decode_gzip(del_packed, dtmp);
+      string fwd_delta;
+      file_data dst;
+      get_file_version(dst_id, dst);
+      invert_xdelta(dst.inner()(), dtmp(), fwd_delta);
+      del = file_delta(fwd_delta);
+      return;
+    }
+  
+  // No deltas of use; just load both versions and diff.
+  file_data fd1, fd2;
+  get_file_version(src_id, fd1);
+  get_file_version(dst_id, fd2);
+  diff(fd1.inner(), fd2.inner(), dtmp);
+  del = file_delta(dtmp);
+}
+
 
 void 
 database::get_revision_ancestry(std::multimap<revision_id, revision_id> & graph)
@@ -2262,10 +2389,11 @@ void database::complete(selector_type ty,
   // limit.  this is done by building an SQL select statement for each term
   // in the limit and then INTERSECTing them all.
 
-  string lim = "(";
+  query lim;
+  lim.sql_cmd = "(";
   if (limit.empty())
     {
-      lim += "SELECT id FROM revision_certs";
+      lim.sql_cmd += "SELECT id FROM revision_certs";
     }
   else
     {
@@ -2276,13 +2404,12 @@ void database::complete(selector_type ty,
           if (first_limit)
             first_limit = false;
           else
-            lim += " INTERSECT ";
+            lim.sql_cmd += " INTERSECT ";
           
           if (i->first == selectors::sel_ident)
             {
-              lim += "SELECT id FROM revision_certs ";
-              lim += (boost::format("WHERE id GLOB '%s*'") 
-                      % i->second).str();
+              lim.sql_cmd += "SELECT id FROM revision_certs WHERE id GLOB ?";
+              lim % text(i->second + "*");
             }
           else if (i->first == selectors::sel_cert)
             {
@@ -2298,28 +2425,23 @@ void database::complete(selector_type ty,
                       certname = i->second.substr(0, spot);
                       spot++;
                       certvalue = i->second.substr(spot);
-                      lim += "SELECT id FROM revision_certs ";
-                      lim += (boost::format("WHERE name='%s' AND CAST(value AS TEXT) glob '%s'")
-                              % certname % certvalue).str();
+                      lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
+                      lim % text(certname) % text(certvalue);
                     }
                   else
                     {
-                      lim += "SELECT id FROM revision_certs ";
-                      lim += (boost::format("WHERE name='%s'")
-                              % i->second).str();
+                      lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=?";
+                      lim % text(i->second);
                     }
 
                 }
             }
           else if (i->first == selectors::sel_unknown)
             {
-              lim += "SELECT id FROM revision_certs ";
-              lim += (boost::format(" WHERE (name='%s' OR name='%s' OR name='%s')")
-                      % author_cert_name 
-                      % tag_cert_name 
-                      % branch_cert_name).str();
-              lim += (boost::format(" AND CAST(value AS TEXT) glob '*%s*'")
-                      % i->second).str();     
+              lim.sql_cmd += "SELECT id FROM revision_certs WHERE (name=? OR name=? OR name=?)";
+              lim % text(author_cert_name) % text(tag_cert_name) % text(branch_cert_name);
+              lim.sql_cmd += " AND CAST(value AS TEXT) glob ?";
+              lim % text(i->second + "*");
             }
           else if (i->first == selectors::sel_head) 
             {
@@ -2332,10 +2454,10 @@ void database::complete(selector_type ty,
                 }
               else
                 {
-                  string subquery = (boost::format("SELECT DISTINCT value FROM revision_certs WHERE name='%s' and CAST(value AS TEXT) glob '%s'") 
-                                     % branch_cert_name % i->second).str();
+                  query subquery("SELECT DISTINCT value FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?");
+                  subquery % text(branch_cert_name) % text(i->second);
                   results res;
-                  fetch(res, one_col, any_rows, query(subquery));
+                  fetch(res, one_col, any_rows, subquery);
                   for (size_t i = 0; i < res.size(); ++i)
                     {
                       data row_decoded(res[i][0]);
@@ -2353,19 +2475,21 @@ void database::complete(selector_type ty,
                   L(FL("after get_branch_heads for %s, heads has %d entries\n") % (*bn) % heads.size());
                 }
 
-              lim += "SELECT id FROM revision_certs WHERE id IN (";
+              lim.sql_cmd += "SELECT id FROM revision_certs WHERE id IN (";
               if (heads.size())
                 {
                   set<revision_id>::const_iterator r = heads.begin();
-                  lim += (boost::format("'%s'") % r->inner()()).str();
+                  lim.sql_cmd += "?";
+                  lim % text(r->inner()());
                   r++;
                   while (r != heads.end())
                     {
-                      lim += (boost::format(", '%s'") % r->inner()()).str();
+                      lim.sql_cmd += ", ?";
+                      lim % text(r->inner()());
                       r++;
                     }
                 }
-              lim += ") ";
+              lim.sql_cmd += ") ";
             }
           else
             {
@@ -2377,24 +2501,27 @@ void database::complete(selector_type ty,
               if ((i->first == selectors::sel_branch) && (i->second.size() == 0))
                 {
                   __app->require_workspace("the empty branch selector b: refers to the current branch");
-                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND CAST(value AS TEXT) glob '%s'")
-                          % branch_cert_name % __app->branch_name).str();
+                  lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
+                  lim % text(branch_cert_name) % text(__app->branch_name());
                   L(FL("limiting to current branch '%s'\n") % __app->branch_name);
                 }
               else
                 {
-                  lim += (boost::format("SELECT id FROM revision_certs WHERE name='%s' AND ") % certname).str();
+                  lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND ";
+                  lim % text(certname);
                   switch (i->first)
                     {
                     case selectors::sel_earlier:
-                      lim += (boost::format("value <= X'%s'") % encode_hexenc(i->second)).str();
+                      lim.sql_cmd += "value <= ?";
+                      lim % blob(i->second);
                       break;
                     case selectors::sel_later:
-                      lim += (boost::format("value > X'%s'") % encode_hexenc(i->second)).str();
+                      lim.sql_cmd += "value > ?";
+                      lim % blob(i->second);
                       break;
                     default:
-                      lim += (boost::format("CAST(value AS TEXT) glob '%s%s%s'")
-                              % prefix % i->second % suffix).str();
+                      lim.sql_cmd += "CAST(value AS TEXT) glob ?";
+                      lim % text(prefix + i->second + suffix);
                       break;
                     }
                 }
@@ -2402,45 +2529,40 @@ void database::complete(selector_type ty,
           //L(FL("found selector type %d, selecting_head is now %d\n") % i->first % selecting_head);
         }
     }
-  lim += ")";
+  lim.sql_cmd += ")";
   
   // step 2: depending on what we've been asked to disambiguate, we
   // will complete either some idents, or cert values, or "unknown"
   // which generally means "author, tag or branch"
 
-  string query_str;
   if (ty == selectors::sel_ident)
     {
-      query_str = (boost::format("SELECT id FROM %s") % lim).str();
+      lim.sql_cmd = "SELECT id FROM " + lim.sql_cmd;
     }
   else 
     {
       string prefix = "*";
       string suffix = "*";
-      query_str = "SELECT value FROM revision_certs WHERE";
+      lim.sql_cmd = "SELECT value FROM revision_certs WHERE";
       if (ty == selectors::sel_unknown)
         {               
-          query_str += 
-            (boost::format(" (name='%s' OR name='%s' OR name='%s')")
-             % author_cert_name 
-             % tag_cert_name 
-             % branch_cert_name).str();
+          lim.sql_cmd += " (name=? OR name=? OR name=?)";
+          lim % text(author_cert_name) % text(tag_cert_name) % text(branch_cert_name);
         }
       else
         {
           string certname;
           selector_to_certname(ty, certname, prefix, suffix);
-          query_str += 
-            (boost::format(" (name='%s')") % certname).str();
+          lim.sql_cmd += " (name=?)";
+          lim % text(certname);
         }
         
-      query_str += (boost::format(" AND (CAST(value AS TEXT) GLOB '%s%s%s')")
-                % prefix % partial % suffix).str();
-      query_str += (boost::format(" AND (id IN %s)") % lim).str();
+      lim.sql_cmd += " AND (CAST(value AS TEXT) GLOB ?) AND (id IN " + lim.sql_cmd + ")";
+      lim % text(prefix + partial + suffix);
     }
 
   results res;
-  fetch(res, one_col, any_rows, query(query_str));
+  fetch(res, one_col, any_rows, lim);
   for (size_t i = 0; i < res.size(); ++i)
     {
       if (ty == selectors::sel_ident) 
@@ -2512,6 +2634,17 @@ database::clear_epoch(cert_value const & branch)
 {
   execute(query("DELETE FROM branch_epochs WHERE branch = ?")
           % blob(branch()));
+}
+
+bool
+database::check_integrity()
+{
+  results res;
+  fetch(res, one_col, any_rows, query("PRAGMA integrity_check"));
+  I(res.size() == 1);
+  I(res[0].size() == 1);
+
+  return res[0][0] == "ok";
 }
 
 // vars
@@ -2700,7 +2833,7 @@ database::put_roster(revision_id const & rev_id,
   // Else we have a new roster the database hasn't seen yet; our task is to
   // add it, and deltify all the incoming edges (if they aren't already).
 
-  put(new_id, new_data, data_table);
+  schedule_write(data_table, new_id, new_data);
 
   std::set<revision_id> parents;
   get_revision_parents(rev_id, parents);
@@ -2718,7 +2851,10 @@ database::put_roster(revision_id const & rev_id,
         {
           get_version(old_id, old_data, data_table, delta_table);
           diff(new_data, old_data, reverse_delta);
-          drop(old_id, data_table);
+          if (have_pending_write(data_table, old_id))
+            cancel_pending_write(data_table, old_id);
+          else
+            drop(old_id, data_table);
           put_delta(old_id, new_id, reverse_delta, delta_table);
         }
     }

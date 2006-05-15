@@ -23,8 +23,6 @@ struct lua_State;
 class lua_hooks
 {
   struct lua_State * st;
-  template <typename RES>
-  std::pair<bool,RES> call_hook(char const * name, int nargs, ...);
 
 public:
   lua_hooks();

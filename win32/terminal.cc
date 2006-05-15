@@ -21,7 +21,8 @@ bool have_smart_terminal()
 
   // Win32 consoles are weird; cmd.exe does not set TERM, but isatty returns
   // true, Cygwin and MinGW MSYS shells set a TERM but isatty returns false.
-  if (term == "emacs" || term == "dumb" || !isatty(fileno(stderr)))
+  // Let's just check for some obvious dumb terminals, and default to smart.
+  if (term == "emacs" || term == "dumb")
     return false;
   else
     return true;

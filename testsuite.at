@@ -145,6 +145,7 @@ function get_author(branchname)
 end
 
 function ignore_file(name)
+	if (string.find(name, "testsuite.log")) then return true end
 	if (string.find(name, "test_hooks.lua")) then return true end
 	if (string.find(name, "keys")) then return true end
 	return false
@@ -883,3 +884,6 @@ m4_include(tests/t_ls_epochs.at)
 m4_include(tests/t_hook_helpers.at)
 m4_include(tests/t_no_log_password.at)
 m4_include(tests/t_quiet.at)
+m4_include(tests/t_escaped_selectors.at)
+m4_include(tests/t_automate_get_base_revision_id.at)
+m4_include(tests/t_automate_get_current_revision_id.at)

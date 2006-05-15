@@ -37,28 +37,23 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
     N_("revert file(s), dir(s) or entire workspace (\".\")"), 
     OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
-  roster_t old_roster;
-  revision_id old_revision_id;
-  cset work, included_work, excluded_work;
-  path_set old_paths;
+  if (args.size() < 1)
+    throw usage(name);
 
-  if (args.size() < 1 && !app.missing)
-      throw usage(name);
- 
+  temp_node_id_source nis;
+  roster_t old_roster, new_roster;
+  cset included, excluded;
+
   app.require_workspace();
-
-  get_base_revision(app, old_revision_id, old_roster);
-
-  get_work_cset(work);
-  old_roster.extract_path_set(old_paths);
-
-  path_set valid_paths(old_paths);
-
-  extract_rearranged_paths(work, valid_paths);
-  add_intermediate_paths(valid_paths);
+  
+  vector<utf8> includes;
+  vector<utf8> excludes;
 
   if (app.missing)
     {
+      // --missing is a further filter on the files included by a restriction
+      // we first find all missing files included by the specified args
+      // and then make a restriction that includes only these missing files
       path_set missing;
       find_missing(app, args, missing);
       if (missing.empty())
@@ -66,15 +61,27 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
           L(FL("no missing files in restriction."));
           return;
         }
-
-      app.set_restriction(valid_paths, missing);
+      
+      for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
+        {
+          file_path fp(*i);
+          L(FL("missing files are '%s'") % fp);
+          includes.push_back(fp.as_external());
+        }
     }
   else
     {
-      app.set_restriction(valid_paths, args);
+      includes = args;
+      excludes = app.exclude_patterns;
     }
 
-  restrict_cset(work, included_work, excluded_work, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  restriction mask(includes, excludes, old_roster, new_roster, app);
+
+  make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+  // the included cset will be thrown away (reverted) leaving the excluded
+  // cset pending in MTN/work which must be valid against the old roster
+  check_restricted_cset(old_roster, excluded);
 
   node_map const & nodes = old_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
@@ -82,15 +89,14 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
       node_id nid = i->first;
       node_t node = i->second;
 
-      if (null_node(node->parent))
+      if (old_roster.is_root(nid))
         continue;
 
       split_path sp;
       old_roster.get_name(nid, sp);
       file_path fp(sp);
       
-      // Only revert restriction-included files.
-      if (!app.restriction_includes(sp))
+      if (!mask.includes(old_roster, nid))
         continue;
 
       if (is_file_t(node))
@@ -128,8 +134,12 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
         }
     }
 
+  // included_work is thrown away which effectively reverts any adds, drops and
+  // renames it contains. drops and rename sources will have been rewritten
+  // above but this may leave rename targets laying around.
+
   // race
-  put_work_cset(excluded_work);
+  put_work_cset(excluded);
   update_any_attrs(app);
   maybe_update_inodeprints(app);
 }
@@ -197,7 +207,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   if (app.unknown)
     {
       path_set ignored;
-      find_unknown_and_ignored(app, false, args, paths, ignored);
+      find_unknown_and_ignored(app, args, paths, ignored);
     }
   else
     for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -281,18 +291,33 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
     OPT_DEPTH % OPT_EXCLUDE % OPT_BRIEF)
 {
-  revision_set rs;
-  roster_t old_roster, new_roster;
+  roster_t old_roster, new_roster, restricted_roster;
+  cset included, excluded;
+  revision_id old_rev_id;
+  revision_set rev;
   data tmp;
   temp_node_id_source nis;
 
   app.require_workspace();
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, nis);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+
+  restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+
+  update_current_roster_from_filesystem(new_roster, mask, app);
+  make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+  check_restricted_cset(old_roster, included);
+
+  restricted_roster = old_roster;
+  editable_roster_base er(restricted_roster, nis);
+  included.apply_to(er);
+
+  get_revision_id(old_rev_id);
+  make_revision_set(old_rev_id, old_roster, restricted_roster, rev);
 
   if (global_sanity.brief)
     {
-      I(rs.edges.size() == 1);
-      cset const & cs = edge_changes(rs.edges.begin());
+      I(rev.edges.size() == 1);
+      cset const & cs = edge_changes(rev.edges.begin());
       
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
            i != cs.nodes_deleted.end(); ++i) 
@@ -314,13 +339,11 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
 
       for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
              i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i) 
-        {
-          cout << "patched " << i->first << "\n";
-        }
+        cout << "patched " << i->first << "\n";
     }
   else
     {
-      write_revision_set(rs, tmp);
+      write_revision_set(rev, tmp);
       cout << "\n" << tmp << "\n";
     }
 }
@@ -461,10 +484,11 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
     throw usage(name);
 
   roster_t old_roster, new_roster;
+  temp_node_id_source nis;
 
   app.require_workspace();
-  temp_node_id_source nis;
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+
   
   file_path path = file_path_external(idx(args,1));
   split_path sp;
@@ -552,23 +576,35 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 {
   string log_message("");
   bool log_message_given;
-  revision_set rs;
-  revision_id rid;
-  roster_t old_roster, new_roster;
+  revision_set restricted_rev;
+  revision_id old_rev_id, restricted_rev_id;
+  roster_t old_roster, new_roster, restricted_roster;
   temp_node_id_source nis;
-  
+  cset included, excluded;
+
   app.make_branch_sticky();
   app.require_workspace();
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  // preserve excluded work for future commmits
-  cset excluded_work;
-  get_working_revision_and_rosters(app, args, rs, old_roster, new_roster, excluded_work, nis);
-  calculate_ident(rs, rid);
+  restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
 
-  N(rs.is_nontrivial(), F("no changes to commit\n"));
+  update_current_roster_from_filesystem(new_roster, mask, app);
+  make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+  check_restricted_cset(old_roster, included);
+
+  restricted_roster = old_roster;
+  editable_roster_base er(restricted_roster, nis);
+  included.apply_to(er);
+
+  get_revision_id(old_rev_id);
+  make_revision_set(old_rev_id, old_roster, restricted_roster, restricted_rev);
+
+  calculate_ident(restricted_rev, restricted_rev_id);
+
+  N(restricted_rev.is_nontrivial(), F("no changes to commit\n"));
     
   cert_value branchname;
-  I(rs.edges.size() == 1);
+  I(restricted_rev.edges.size() == 1);
 
   set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
@@ -577,13 +613,13 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   if (app.branch_name() != "") 
     branchname = app.branch_name();
   else 
-    guess_branch(edge_old_revision(rs.edges.begin()), app, branchname);
+    guess_branch(edge_old_revision(restricted_rev.edges.begin()), app, branchname);
 
   P(F("beginning commit on branch '%s'\n") % branchname);
   L(FL("new manifest '%s'\n"
       "new revision '%s'\n")
-    % rs.new_manifest
-    % rid);
+    % restricted_rev.new_manifest
+    % restricted_rev_id);
 
   process_commit_message_args(log_message_given, log_message, app);
   
@@ -595,7 +631,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   if (!log_message_given)
     {
       // this call handles _MTN/log
-      get_log_message_interactively(rs, app, log_message);
+      get_log_message_interactively(restricted_rev, app, log_message);
       // we only check for empty log messages when the user entered them
       // interactively.  Consensus was that if someone wanted to explicitly
       // type --message="", then there wasn't any reason to stop them.
@@ -615,7 +651,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   bool message_validated;
   string reason, new_manifest_text;
 
-  dump(rs, new_manifest_text);
+  dump(restricted_rev, new_manifest_text);
 
   app.lua.hook_validate_commit_message(log_message, new_manifest_text,
                                        message_validated, reason);
@@ -625,18 +661,18 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     transaction_guard guard(app.db);
     packet_db_writer dbw(app);
 
-    if (app.db.revision_exists(rid))
+    if (app.db.revision_exists(restricted_rev_id))
       {
-        W(F("revision %s already in database\n") % rid);
+        W(F("revision %s already in database\n") % restricted_rev_id);
       }
     else
       {
         // new revision
-        L(FL("inserting new revision %s\n") % rid);
+        L(FL("inserting new revision %s\n") % restricted_rev_id);
 
-        I(rs.edges.size() == 1);
-        edge_map::const_iterator edge = rs.edges.begin();
-        I(edge != rs.edges.end());
+        I(restricted_rev.edges.size() == 1);
+        edge_map::const_iterator edge = restricted_rev.edges.begin();
+        I(edge != restricted_rev.edges.end());
 
         // process file deltas or new files
         cset const & cs = edge_changes(edge);
@@ -699,26 +735,26 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
       }
 
     revision_data rdat;
-    write_revision_set(rs, rdat);
-    dbw.consume_revision_data(rid, rdat);
+    write_revision_set(restricted_rev, rdat);
+    dbw.consume_revision_data(restricted_rev_id, rdat);
   
-    cert_revision_in_branch(rid, branchname, app, dbw); 
+    cert_revision_in_branch(restricted_rev_id, branchname, app, dbw); 
     if (app.date_set)
-      cert_revision_date_time(rid, app.date, app, dbw);
+      cert_revision_date_time(restricted_rev_id, app.date, app, dbw);
     else
-      cert_revision_date_now(rid, app, dbw);
+      cert_revision_date_now(restricted_rev_id, app, dbw);
     if (app.author().length() > 0)
-      cert_revision_author(rid, app.author(), app, dbw);
+      cert_revision_author(restricted_rev_id, app.author(), app, dbw);
     else
-      cert_revision_author_default(rid, app, dbw);
-    cert_revision_changelog(rid, log_message, app, dbw);
+      cert_revision_author_default(restricted_rev_id, app, dbw);
+    cert_revision_changelog(restricted_rev_id, log_message, app, dbw);
     guard.commit();
   }
   
   // small race condition here...
-  put_work_cset(excluded_work);
-  put_revision_id(rid);
-  P(F("committed revision %s\n") % rid);
+  put_work_cset(excluded);
+  put_revision_id(restricted_rev_id);
+  P(F("committed revision %s\n") % restricted_rev_id);
   
   blank_user_log();
 
@@ -739,7 +775,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     // with same name, etc.  they can inquire further, later.
     map<cert_name, cert_value> certs;
     vector< revision<cert> > ctmp;
-    app.db.get_revision_certs(rid, ctmp);
+    app.db.get_revision_certs(restricted_rev_id, ctmp);
     for (vector< revision<cert> >::const_iterator i = ctmp.begin();
          i != ctmp.end(); ++i)
       {
@@ -748,8 +784,8 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
         certs.insert(make_pair(i->inner().name, vtmp));
       }
     revision_data rdat;
-    app.db.get_revision(rid, rdat);
-    app.lua.hook_note_commit(rid, rdat, certs);
+    app.db.get_revision(restricted_rev_id, rdat);
+    app.lua.hook_note_commit(restricted_rev_id, rdat, certs);
   }
 }
 

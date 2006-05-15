@@ -88,8 +88,9 @@ CMD(annotate, N_("informative"), N_("PATH"),
   roster_t roster;
   marking_map marks;
   app.db.get_roster(rid, roster, marks);
+  N(roster.has_node(sp), F("no such file '%s' in revision '%s'") % file % rid);
   node_t node = roster.get_node(sp);
-  N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'\n") % file % rid);
+  N(is_file_t(node), F("'%s' in revision '%s' is not a file") % file % rid);
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s\n") % file_node->self);

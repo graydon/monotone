@@ -41,7 +41,7 @@ CMD(update, N_("workspace"), "",
        "If not, update the workspace to the head of the branch."),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
-  revision_set r_old, r_working, r_new;
+  revision_set r_working;
   roster_t working_roster, chosen_roster, target_roster;
   boost::shared_ptr<roster_t> old_roster = boost::shared_ptr<roster_t>(new roster_t());
   marking_map working_mm, chosen_mm, merged_mm, target_mm;
@@ -61,9 +61,12 @@ CMD(update, N_("workspace"), "",
   // such. But it should work for now; revisit if performance is
   // intolerable.
 
-  get_unrestricted_working_revision_and_rosters(app, r_working,
-                                                *old_roster, 
-                                                working_roster, nis);
+  get_base_and_current_roster_shape(*old_roster, working_roster, nis, app);
+  update_current_roster_from_filesystem(working_roster, app);
+
+  get_revision_id(r_old_id);
+  make_revision_set(r_old_id, *old_roster, working_roster, r_working);
+
   calculate_ident(r_working, r_working_id);
   I(r_working.edges.size() == 1);
   r_old_id = edge_old_revision(r_working.edges.begin());
@@ -137,27 +140,29 @@ CMD(update, N_("workspace"), "",
       }
     else
       {
+        P(F("target revision is not in current branch"));
         if (branches.size() > 1)
           {
             // multiple non-matching branchnames
             string branch_list;
             for (set<utf8>::const_iterator i = branches.begin(); 
                  i != branches.end(); i++)
-              branch_list += "\n" + (*i)();
-            N(false, F("revision %s is a member of multiple branches:\n%s\n\ntry again with explicit --branch") % r_chosen_id % branch_list);
+              branch_list += "\n  " + (*i)();
+            N(false, F("target revision is in multiple branches:%s\n\n"
+                       "try again with explicit --branch") % branch_list);
           }
         else if (branches.size() == 1)
           {
             // one non-matching, inform and update
             app.branch_name = (*(branches.begin()))();
-            P(F("revision %s is a member of\n%s, updating workspace branch") 
-              % r_chosen_id % app.branch_name());
+            P(F("switching branches; next commit will use branch %s") % app.branch_name());
           }
         else
           {
             I(branches.size() == 0);
-            W(F("revision %s is a member of no branches,\nusing branch %s for workspace")
-              % r_chosen_id % app.branch_name());
+            W(F("target revision not in any branch\n"
+                "next commit will use branch %s")
+              % app.branch_name());
           }
       }
   }
@@ -192,7 +197,7 @@ CMD(update, N_("workspace"), "",
     }
 
   // Note that under the definition of mark-merge, the workspace is an
-  // "uncommon ancestor" if itself too, even though it was not present in
+  // "uncommon ancestor" of itself too, even though it was not present in
   // the database (hence not returned by the query above).
 
   working_uncommon_ancestors.insert(r_working_id);
@@ -232,8 +237,8 @@ CMD(update, N_("workspace"), "",
   // and write the cset from chosen to merged changeset in _MTN/work
   
   cset update, remaining;
-  make_cset (working_roster, merged_roster, update);
-  make_cset (target_roster, merged_roster, remaining);
+  make_cset(working_roster, merged_roster, update);
+  make_cset(target_roster, merged_roster, remaining);
 
   //   {
   //     data t1, t2, t3;

@@ -507,36 +507,46 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
 void
 select_nodes_modified_by_rev(revision_id const & rid,
                              revision_set const & rev,
-                             std::set<node_id> & nodes_changed,
-                             std::set<node_id> & nodes_born,
+                             roster_t const new_roster,
+                             std::set<node_id> & nodes_modified,
                              app_state & app)
 {
-  roster_t new_roster;
-  marking_map mm;
-  nodes_changed.clear();
-  nodes_born.clear();
-  app.db.get_roster(rid, new_roster, mm); 
+  nodes_modified.clear();
 
   for (edge_map::const_iterator i = rev.edges.begin();
        i != rev.edges.end(); ++i)
     {
-      std::set<node_id> edge_nodes_changed, edge_nodes_born;
+      std::set<node_id> edge_nodes_modified;
       roster_t old_roster;
-      marking_map mm2;
-      app.db.get_roster(edge_old_revision(i), old_roster, mm2);
+      app.db.get_roster(edge_old_revision(i), old_roster);
       select_nodes_modified_by_cset(edge_changes(i), 
                                     old_roster, 
                                     new_roster, 
-                                    edge_nodes_changed,
-                                    edge_nodes_born);
-      std::copy(edge_nodes_changed.begin(), edge_nodes_changed.end(), 
-                inserter(nodes_changed, nodes_changed.begin()));
-      // edges don't really get "born" in merges.
-      if (rev.edges.size() == 1)
-        std::copy(edge_nodes_born.begin(), edge_nodes_born.end(), 
-                  inserter(nodes_born, nodes_born.begin()));
+                                    edge_nodes_modified);
+
+      std::copy(edge_nodes_modified.begin(), edge_nodes_modified.end(), 
+                inserter(nodes_modified, nodes_modified.begin()));
     }
 }
+
+
+void
+make_revision_set(revision_id const & old_rev_id, 
+                  roster_t const & old_roster,
+                  roster_t const & new_roster,
+                  revision_set & rev)
+{
+  boost::shared_ptr<cset> cs(new cset());
+
+  rev.edges.clear();
+  make_cset(old_roster, new_roster, *cs);
+  
+  calculate_ident(new_roster, rev.new_manifest);
+  L(FL("new manifest_id is %s\n") % rev.new_manifest);
+  
+  safe_insert(rev.edges, std::make_pair(old_rev_id, cs));
+}
+
 
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.

@@ -20,6 +20,7 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "parallel_iter.hh"
+#include "restrictions.hh"
 #include "safe_map.hh"
 
 #include <boost/lexical_cast.hpp>
@@ -512,6 +513,12 @@ bool
 roster_t::has_node(node_id n) const
 {
   return nodes.find(n) != nodes.end();
+}
+
+bool
+roster_t::is_root(node_id n) const
+{
+  return has_root() && root_dir->self == n;
 }
 
 bool
@@ -1411,7 +1418,7 @@ namespace
                     roster_t const & merge, 
                     marking_map & new_markings)
   {
-    for (map<node_id, node_t>::const_iterator i = merge.all_nodes().begin();
+    for (node_map::const_iterator i = merge.all_nodes().begin();
          i != merge.all_nodes().end(); ++i)
       {
         node_t const & n = i->second;
@@ -1837,7 +1844,7 @@ void
 make_cset(roster_t const & from, roster_t const & to, cset & cs)
 {
   cs.clear();
-  parallel::iter<map<node_id, node_t> > i(from.all_nodes(), to.all_nodes());
+  parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
   while (i.next())
     {
       MM(i);
@@ -1847,14 +1854,17 @@ make_cset(roster_t const & from, roster_t const & to, cset & cs)
           I(false);
 
         case parallel::in_left:
+          // deleted
           delta_only_in_from(from, i.left_key(), i.left_data(), cs);
           break;
  
         case parallel::in_right:
+          // added
           delta_only_in_to(to, i.right_key(), i.right_data(), cs);
           break;
 
         case parallel::in_both:
+          // moved/renamed/patched/attribute changes
           delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), cs);
           break;
         }
@@ -1897,15 +1907,119 @@ equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
 }
 
 
+void make_restricted_csets(roster_t const & from, roster_t const & to,
+                           cset & included, cset & excluded,
+                           restriction const & mask)
+{
+  included.clear();
+  excluded.clear();
+
+  L(FL("building restricted csets\n"));
+  parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
+  while (i.next())
+    {
+      MM(i);
+      switch (i.state())
+        {
+        case parallel::invalid:
+          I(false);
+
+        case parallel::in_left:
+          // deleted
+          if (mask.includes(from, i.left_key()))
+            {
+              delta_only_in_from(from, i.left_key(), i.left_data(), included);
+              L(FL("included left %d\n") % i.left_key());
+            }
+          else
+            {
+              delta_only_in_from(from, i.left_key(), i.left_data(), excluded);
+              L(FL("excluded left %d\n") % i.left_key());
+            }
+          break;
+ 
+        case parallel::in_right:
+          // added
+          if (mask.includes(to, i.right_key()))
+            {
+              delta_only_in_to(to, i.right_key(), i.right_data(), included);
+              L(FL("included right %d\n") % i.right_key());
+            }
+          else
+            {
+              delta_only_in_to(to, i.right_key(), i.right_data(), excluded);
+              L(FL("excluded right %d\n") % i.right_key());
+            }
+          break;
+
+        case parallel::in_both:
+          // moved/renamed/patched/attribute changes
+          if (mask.includes(from, i.left_key()) || mask.includes(to, i.right_key()))
+            {
+              delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), included);
+              L(FL("in both %d %d\n") % i.left_key() % i.right_key());
+            }
+          else
+            {
+              delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), excluded);
+              L(FL("in both %d %d\n") % i.left_key() % i.right_key());
+            }
+          break;
+        }
+    }
+
+}
+
+void
+check_restricted_cset(roster_t const & roster, cset const & cs)
+{
+  path_set added;
+  int missing = 0;
+
+  for (path_set::const_iterator i = cs.dirs_added.begin();
+       i != cs.dirs_added.end(); ++i)
+    {
+      split_path dir(*i);
+      added.insert(dir);
+
+      if (dir.size() > 1)
+        {
+          dir.pop_back();
+
+          if (!roster.has_node(dir) && added.find(dir) == added.end())
+            {
+              missing++;
+              W(F("restriction excludes directory '%s'") % dir);
+            }
+        }
+    }
+
+  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+       i != cs.files_added.end(); ++i)
+    {
+      split_path dir(i->first);
+      I(dir.size() > 1);
+      dir.pop_back();
+
+      if (!roster.has_node(dir) && added.find(dir) == added.end())
+        {
+          missing++;
+          W(F("restriction excludes directory '%s'") % dir);
+        }
+    }
+
+  N(missing == 0, F("invalid restriction excludes required directories")); 
+
+}
+
+
 void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
                               roster_t const & new_roster,
-                              std::set<node_id> & nodes_changed,
-                              std::set<node_id> & nodes_born)
+                              std::set<node_id> & nodes_modified)
 {
-  nodes_changed.clear();
-  nodes_born.clear();
+  nodes_modified.clear();
 
   path_set modified_prestate_nodes;
   path_set modified_poststate_nodes;
@@ -1950,34 +2064,25 @@ select_nodes_modified_by_cset(cset const & cs,
        i != modified_prestate_nodes.end(); ++i)
     {
       I(old_roster.has_node(*i));
-      nodes_changed.insert(old_roster.get_node(*i)->self);
+      nodes_modified.insert(old_roster.get_node(*i)->self);
     }
 
   for (path_set::const_iterator i = modified_poststate_nodes.begin();
        i != modified_poststate_nodes.end(); ++i)
     {
       I(new_roster.has_node(*i));
-      nodes_changed.insert(new_roster.get_node(*i)->self);
+      nodes_modified.insert(new_roster.get_node(*i)->self);
     }
 
-  for (path_set::const_iterator i = cs.dirs_added.begin();
-       i != cs.dirs_added.end(); ++i)
-    {
-      I(new_roster.has_node(*i));
-      nodes_born.insert(new_roster.get_node(*i)->self);
-    }
-
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-       i != cs.files_added.end(); ++i)
-    {
-      I(new_roster.has_node(i->first));
-      nodes_born.insert(new_roster.get_node(i->first)->self);
-    }
 }
 
 ////////////////////////////////////////////////////////////////////
 //   getting rosters from the workspace 
 ////////////////////////////////////////////////////////////////////
+
+// TODO: doesn't that mean they should go in work.cc ? 
+// perhaps do that after propagating back to n.v.m.experiment.rosters
+// or to mainline so that diffs are more informative
 
 inline static bool
 inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path) 
@@ -1994,6 +2099,12 @@ inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
   else
     return false; // unavailable
 }
+
+// TODO: unchanged, changed, missing might be better as set<node_id>
+
+// note that this does not take a restriction because it is used only by
+// automate_inventory which operates on the entire, unrestricted, working
+// directory.
 
 void 
 classify_roster_paths(roster_t const & ros,
@@ -2026,44 +2137,37 @@ classify_roster_paths(roster_t const & ros,
 
       split_path sp;
       ros.get_name(nid, sp);
+
       file_path fp(sp);
 
-      // Only analyze restriction-included files.
-      if (app.restriction_includes(sp))
+      if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
         {
-          if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
-            {
-              // dirs don't have content changes
-              unchanged.insert(sp);
-            }
-          else 
-            {
-              file_t file = downcast_to_file_t(node);
-              file_id fid;
-              if (ident_existing_file(fp, fid, app.lua))
-                {
-                  if (file->content == fid)
-                    unchanged.insert(sp);
-                  else
-                    changed.insert(sp);
-                }
-              else
-                {
-                  missing.insert(sp);
-                }
-            }
-        }
-      else
-        {
-          // changes to excluded files are ignored
+          // dirs don't have content changes
           unchanged.insert(sp);
+        }
+      else 
+        {
+          file_t file = downcast_to_file_t(node);
+          file_id fid;
+          if (ident_existing_file(fp, fid, app.lua))
+            {
+              if (file->content == fid)
+                unchanged.insert(sp);
+              else
+                changed.insert(sp);
+            }
+          else
+            {
+              missing.insert(sp);
+            }
         }
     }
 }
 
 void 
-update_restricted_roster_from_filesystem(roster_t & ros, 
-                                         app_state & app)
+update_current_roster_from_filesystem(roster_t & ros, 
+                                      restriction const & mask,
+                                      app_state & app)
 {
   temp_node_id_source nis;
   inodeprint_map ipm;
@@ -2093,13 +2197,13 @@ update_restricted_roster_from_filesystem(roster_t & ros,
       if (! is_file_t(node))
         continue;
 
+      // Only analyze restriction-included files.
+      if (!mask.includes(ros, nid))
+        continue;
+
       split_path sp;
       ros.get_name(nid, sp);
       file_path fp(sp);
-
-      // Only analyze restriction-included files.
-      if (!app.restriction_includes(sp))
-        continue;
 
       // Only analyze changed files (or all files if inodeprints mode
       // is disabled).
@@ -2122,6 +2226,14 @@ update_restricted_roster_from_filesystem(roster_t & ros,
       "or to handle all at once, simply 'monotone drop --missing'\n"
       "or 'monotone revert --missing'")
     % missing_files % app.prog_name % app.prog_name % app.prog_name);
+}
+
+void 
+update_current_roster_from_filesystem(roster_t & ros, 
+                                      app_state & app)
+{
+  restriction tmp(app);
+  update_current_roster_from_filesystem(ros, tmp, app);
 }
 
 void
@@ -2482,6 +2594,7 @@ write_manifest_of_roster(roster_t const & ros,
 #include "constants.hh"
 
 #include <string>
+#include <cstdlib>
 #include <boost/lexical_cast.hpp>
 
 using std::string;
@@ -2672,7 +2785,7 @@ random_element(M const & m)
 
 bool flip(unsigned n = 2)
 {
-  return (rand() % n) == 0;
+  return (std::rand() % n) == 0;
 }
 
 string new_word()
@@ -2682,7 +2795,7 @@ string new_word()
   string tmp;
   do
     {
-      tmp += wordchars[rand() % wordchars.size()];
+      tmp += wordchars[std::rand() % wordchars.size()];
     }
   while (tmp.size() < 10 && !flip(10));
   return tmp + lexical_cast<string>(tick++);
@@ -2694,7 +2807,7 @@ file_id new_ident()
   string tmp;
   tmp.reserve(constants::idlen);
   for (unsigned i = 0; i < constants::idlen; ++i)
-    tmp += tab[rand() % tab.size()];
+    tmp += tab[std::rand() % tab.size()];
   return file_id(tmp);
 }
 
@@ -2724,7 +2837,7 @@ bool parent_of(split_path const & p,
   if (p.size() <= c.size())
     {
       split_path::const_iterator c_anchor = 
-        search(c.begin(), c.end(),
+        std::search(c.begin(), c.end(),
                p.begin(), p.end());
         
       is_parent = (c_anchor == c.begin());
@@ -2744,7 +2857,7 @@ change_automaton
 
   change_automaton()
   {
-    srand(0x12345678);
+    std::srand(0x12345678);
   }
 
   void perform_random_action(roster_t & r, node_id_source & nis)
@@ -2766,7 +2879,7 @@ change_automaton
             r.get_name(n->self, pth);
             // L(FL("considering acting on '%s'\n") % file_path(pth));
 
-            switch (rand() % 7)
+            switch (std::rand() % 7)
               {
               default:
               case 0:
@@ -4507,7 +4620,7 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
                            roster_t & right_ros,
                            set<node_id> & right_new_nodes)
 {
-  size_t n_nodes = 10 + (rand() % 30);
+  size_t n_nodes = 10 + (std::rand() % 30);
   editable_roster_base left_er(left_ros, nis);
   editable_roster_base right_er(right_ros, nis);
 
