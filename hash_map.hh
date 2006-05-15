@@ -5,15 +5,25 @@
 
 #include <functional>
 namespace hashmap {
+
   template<typename _T>
   class equal_to : public std::equal_to<_T>
-  {};
+  {
+    // bool operator()(_T const & b, _T const & b) const;
+  };
+
+  template<typename _T>
+  class less : public std::less<_T>
+  {
+    // bool operator()(_T const & b, _T const & b) const;
+  };
   
   template<typename _T>
   struct hash
   {
-//    size_t operator()(_T const & t) const;
+    // size_t operator()(_T const & t) const;
   };
+
   template<>
   struct hash<unsigned int>
   {
@@ -131,7 +141,7 @@ namespace hashmap
   {
     static const size_t bucket_size = 4;
     static const size_t min_buckets = 8;
-    equal_to<_T> eq;
+    less<_T> lt;
     hash<_T> h;
 
     size_t operator( )(_T const & s) const
@@ -141,7 +151,7 @@ namespace hashmap
     bool operator( )(_T const & a,
                      _T const & b) const
     {
-      return eq(a, b);
+      return lt(a, b);
     }
   };
   template <typename _Key, typename _Value>

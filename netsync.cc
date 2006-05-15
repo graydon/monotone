@@ -2547,8 +2547,8 @@ drop_session_associated_with_fd(map<Netxx::socket_type, shared_ptr<session> > & 
       shared_ptr<Netxx::PipeStream> pipe = 
         boost::dynamic_pointer_cast<Netxx::PipeStream, Netxx::StreamBase>(sess->str);
       I(static_cast<bool>(pipe));
-      I(static_cast<bool>(pipe->get_writefd()) != -1);
-      I(static_cast<bool>(pipe->get_readfd()) != -1);
+      I(pipe->get_writefd() != -1);
+      I(pipe->get_readfd() != -1);
       sessions.erase(pipe->get_readfd());
       sessions.erase(pipe->get_writefd());
     }

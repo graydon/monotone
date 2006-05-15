@@ -1,5 +1,13 @@
 2006-05-14  Graydon Hoare  <graydon@pobox.com>
 
+	* netsync.cc: Fix invariant typo.
+	* merkle_tree.hh: Remove unused equal_to struct.
+	* hash_map.hh: Correct for Microsoft hash_map assumption
+	that the binary functor in the traits class is an order,
+	not just an equality predicate.
+
+2006-05-14  Graydon Hoare  <graydon@pobox.com>
+
 	* netxx_pipe.{cc,hh}: Various cleanups to build on unix.
 	* netsync.cc (drop_session_associated_with_fd): New helper,
 	and use it everywhere we did sessions.erase() before.
