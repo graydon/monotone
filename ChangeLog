@@ -1,3 +1,16 @@
+2006-05-15  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_diff_log (log, dump_diffs): limit diffs to restricted files,
+	updated for new restrictions code.
+	* tests/t_log_diffs.at: A test for log --diffs
+
+2006-05-14  Derek Scherger  <derek@echologic.com>
+
+	* database.cc (info): allow any number of rows to be returned from
+	query of next_roster_node_number
+	* tests/t_db_init_info.at: new test of info on a new database
+	* testsuite.at: call it
+
 2006-05-14  Graydon Hoare  <graydon@pobox.com>
 
 	* netsync.cc: Fix invariant typo.

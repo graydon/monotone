@@ -196,7 +196,9 @@ static void
 dump_diffs(cset const & cs,
            app_state & app,
            bool new_is_archived,
-           diff_type type)
+           diff_type type,
+           set<split_path> const & paths,
+           bool limit_paths = false)
 {
   // 60 is somewhat arbitrary, but less than 80
   std::string patch_sep = std::string(60, '=');
@@ -205,6 +207,9 @@ dump_diffs(cset const & cs,
          i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     {
+      if (limit_paths && paths.find(i->first) == paths.end())
+        continue;
+
       cout << patch_sep << "\n";
       data unpacked;
       vector<string> lines;
@@ -253,6 +258,9 @@ dump_diffs(cset const & cs,
          i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
+      if (limit_paths && paths.find(i->first) == paths.end())
+        continue;
+
       file_data f_old;
       data data_old, data_new;
       vector<string> old_lines, new_lines;
@@ -299,6 +307,16 @@ dump_diffs(cset const & cs,
                     cout, type);
         }
     }
+}
+
+static void 
+dump_diffs(cset const & cs,
+           app_state & app,
+           bool new_is_archived,
+           diff_type type)
+{
+  set<split_path> dummy;
+  dump_diffs(cs, app, new_is_archived, type, dummy);
 }
 
 CMD(diff, N_("informative"), N_("[PATH]..."), 
@@ -575,6 +593,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
           bool print_this = mask.empty();
           set<  revision<id> > parents;
           vector< revision<cert> > tmp;
+          set<split_path> diff_paths;
 
           if (null_id(rid) || seen.find(rid) != seen.end())
             continue;
@@ -590,7 +609,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               app.db.get_roster(rid, roster); 
 
               set<node_id> nodes_modified;
-              bool any_node_hit = false;
               select_nodes_modified_by_rev(rid, rev, roster,
                                            nodes_modified, 
                                            app);
@@ -598,16 +616,22 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               for (set<node_id>::const_iterator n = nodes_modified.begin(); 
                    n != nodes_modified.end(); ++n)
                 {
-                  // the current roster won't have deleted nodes
-                  if (!roster.has_node(*n) || mask.includes(roster, *n)) 
+                  if (!roster.has_node(*n))
                     {
-                      any_node_hit = true;
-                      break;
+                      // include all deleted nodes
+                      print_this = true;
+                    }
+                  else if (mask.includes(roster, *n)) 
+                    {
+                      print_this = true;
+                      if (app.diffs)
+                        {
+                          split_path sp;
+                          roster.get_name(*n, sp);
+                          diff_paths.insert(sp);
+                        }
                     }
                 }
-
-              if (any_node_hit)
-                print_this = true;
             }
 
           if (next > 0)
@@ -680,7 +704,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 for (edge_map::const_iterator e = rev.edges.begin();
                      e != rev.edges.end(); ++e)
                   {
-                    dump_diffs(edge_changes(e), app, true, unified_diff);
+                    dump_diffs(edge_changes(e), app, true, unified_diff, 
+                               diff_paths, !mask.empty());
                   }
               }
 
