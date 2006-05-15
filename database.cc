@@ -538,11 +538,14 @@ database::info(ostream & out)
   u64 num_nodes;
   {
     results res;
-    fetch(res, one_col, one_row, query("SELECT node FROM next_roster_node_number"));
+    fetch(res, one_col, any_rows, query("SELECT node FROM next_roster_node_number"));
     if (res.empty())
       num_nodes = 0;
     else
-      num_nodes = lexical_cast<u64>(res[0][0]) - 1;
+      {
+        I(res.size() == 1);
+        num_nodes = lexical_cast<u64>(res[0][0]) - 1;
+      }
   }
 
 #define SPACE_USAGE(TABLE, COLS) add(space_usage(TABLE, COLS), total)
