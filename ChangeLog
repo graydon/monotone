@@ -1,3 +1,8 @@
+2006-05-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* roster.cc (parse_from): don't use lexical_cast, avoid copying a
+	marking_t.
+
 2006-05-15  Matt Johnston  <matt@ucc.asn.au>
 
 	* cmd_diff_log (log, dump_diffs): limit diffs to restricted files,

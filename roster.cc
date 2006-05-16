@@ -2436,6 +2436,19 @@ roster_t::print_to(basic_io::printer & pr,
     }
 }
 
+inline size_t
+read_num(string const & s)
+{
+  size_t n = 0;
+
+  for (string::const_iterator i = s.begin(); i != s.end(); i++)
+    {
+      I(*i >= '0' && *i <= '9');
+      n *= 10;
+      n += static_cast<size_t>(*i - '0');
+    }
+  return n;
+}
 
 void 
 roster_t::parse_from(basic_io::parser & pa,
@@ -2478,7 +2491,7 @@ roster_t::parse_from(basic_io::parser & pa,
           pa.hex(content);
           pa.esym(syms::ident);
           pa.str(ident);
-          n = file_t(new file_node(lexical_cast<node_id>(ident),
+          n = file_t(new file_node(read_num(ident),
                                    file_id(content)));
         }
       else if (pa.symp(syms::dir))
@@ -2487,7 +2500,7 @@ roster_t::parse_from(basic_io::parser & pa,
           pa.str(pth);
           pa.esym(syms::ident);
           pa.str(ident);
-          n = dir_t(new dir_node(lexical_cast<node_id>(ident)));
+          n = dir_t(new dir_node(read_num(ident)));
         }
       else 
         break;
@@ -2528,9 +2541,8 @@ roster_t::parse_from(basic_io::parser & pa,
         }
 
       {
-        marking_t marking;
-        parse_marking(pa, n, marking);
-        safe_insert(mm, make_pair(n->self, marking));
+        marking_t & m(safe_insert(mm, make_pair(n->self, marking_t()))->second);
+        parse_marking(pa, n, m);
       }
     }
 }
