@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="841.88977pt"
+   height="595.27557pt"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.43"
+   version="1.0"
+   sodipodi:docbase="/share"
+   sodipodi:docname="mtn_cheat_sheet.svg">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient3159">
+      <stop
+         id="stop3161"
+         offset="0"
+         style="stop-color:#006600;stop-opacity:0.50196081;" />
+      <stop
+         id="stop3163"
+         offset="1"
+         style="stop-color:#883600;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2194">
+      <stop
+         style="stop-color:#660000;stop-opacity:0.50196081;"
+         offset="0"
+         id="stop2196" />
+      <stop
+         style="stop-color:#883600;stop-opacity:0;"
+         offset="1"
+         id="stop2198" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2186">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop2188" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0;"
+         offset="1"
+         id="stop2190" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2194"
+       id="linearGradient3153"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1,0,0,1.17396,-45.83015,-34.32677)"
+       x1="271.73111"
+       y1="213.65121"
+       x2="271.73111"
+       y2="221.909" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3159"
+       id="linearGradient3157"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1,0,0,1.17396,334.6175,-35.21854)"
+       x1="271.73111"
+       y1="213.65121"
+       x2="271.73111"
+       y2="221.909" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.2187708"
+     inkscape:cx="428.24156"
+     inkscape:cy="376.69265"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="1167"
+     inkscape:window-height="674"
+     inkscape:window-x="36"
+     inkscape:window-y="44">
+    <sodipodi:guide
+       orientation="horizontal"
+       position="569.42618"
+       id="guide3314" />
+    <sodipodi:guide
+       orientation="horizontal"
+       position="535.78573"
+       id="guide3316" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:url(#linearGradient3153);fill-opacity:1.0;stroke:#660000;stroke-width:10;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.50196081"
+       id="rect1311"
+       width="311.30356"
+       height="326.22824"
+       x="70.249184"
+       y="180.56006"
+       ry="20.728132"
+       rx="17.9133" />
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="88.539688"
+       y="207.0863"
+       id="text1307"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         id="tspan1309"
+         x="88.539688"
+         y="207.0863">Manage Your Workspace</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:100%;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="88.613869"
+       y="246.05168"
+       id="text2221"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         id="tspan2223"
+         x="88.613869"
+         y="246.05168"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#660000;fill-opacity:1;font-family:Bitstream Vera Sans">// update your workspace</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="258.05168"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;font-family:Bitstream Vera Sans"
+         id="tspan3128">$ mtn update   -or-</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="270.05168"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;font-family:Bitstream Vera Sans"
+         id="tspan3132">$ mtn up</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="282.05168"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#660000;fill-opacity:1;font-family:Bitstream Vera Sans"
+         id="tspan3130" /><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="294.05168"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#660000;fill-opacity:1;font-family:Bitstream Vera Sans"
+         id="tspan3126">// add files</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="306.05168"
+         id="tspan2225">$ mtn add foo bar/baz</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="318.05168"
+         id="tspan2227" /><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="330.05168"
+         id="tspan2229"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#660000;fill-opacity:1;font-family:Bitstream Vera Sans">// remove files</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="342.05168"
+         id="tspan2231">$ mtn drop foo   -or-</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="354.05168"
+         id="tspan2233">$ mtn rm foo</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="366.05168"
+         id="tspan2235" /><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="380.44388"
+         id="tspan2237"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#660000;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Bitstream Vera Sans">// rename files and folders</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="393.05168"
+         id="tspan2239">$ mtn rename foo bar    -or-</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="405.05168"
+         id="tspan2241">$ mtn mv foo bar</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="417.05168"
+         id="tspan3116" /><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="429.05168"
+         id="tspan3118"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#660000;fill-opacity:1;font-family:Bitstream Vera Sans">// revert uncommitted changes </tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="441.05168"
+         id="tspan3120">$ mtn revert foo bar baz</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="453.05168"
+         id="tspan3142" /><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="465.05168"
+         id="tspan3144"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#660000;fill-opacity:1;font-family:Bitstream Vera Sans">// commit your changes</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="477.05168"
+         id="tspan3146">$ mtn commit   [FILE [...]]  -or-</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="489.05168"
+         id="tspan3148">$ mtn ci -m &quot;Log message&quot; [FILE [...]]</tspan><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="501.05168"
+         id="tspan3122" /><tspan
+         sodipodi:role="line"
+         x="88.613869"
+         y="513.05168"
+         id="tspan3124" /></text>
+    <rect
+       style="fill:url(#linearGradient3157);fill-opacity:1;stroke:#006600;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.50196078"
+       id="rect3155"
+       width="311.30356"
+       height="326.22824"
+       x="450.69684"
+       y="179.6683"
+       ry="20.728132"
+       rx="17.9133" />
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="496.93152"
+       y="207.90222"
+       id="text3165"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         id="tspan3167"
+         x="496.93152"
+         y="207.90222">Share With Others</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:100%;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="484.22824"
+       y="243.55258"
+       id="text3169"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         id="tspan3171"
+         x="484.22824"
+         y="243.55258"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#006600;fill-opacity:1;font-family:Bitstream Vera Sans">// push to the default server</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="255.55258"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;font-family:Bitstream Vera Sans"
+         id="tspan3173">$ mtn push   -or-</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="267.55258"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;font-family:Bitstream Vera Sans"
+         id="tspan3175">$ mtn push &quot;my.branch*&quot;</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="279.55258"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#660000;fill-opacity:1;font-family:Bitstream Vera Sans"
+         id="tspan3177" /><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="291.55258"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#006600;fill-opacity:1;font-family:Bitstream Vera Sans"
+         id="tspan3179">// pull from the default server</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="303.55258"
+         id="tspan3181">$ mtn pull    -or-</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="315.55258"
+         id="tspan3217">$ mtn pull &quot;my.branch*&quot;</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="327.55258"
+         id="tspan3219" /><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="339.55258"
+         id="tspan3221"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#006600;fill-opacity:1;font-family:Bitstream Vera Sans">// synchronize completly (push &amp; pull)</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="351.55258"
+         id="tspan3223">$ mtn sync  -or-</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="363.55258"
+         id="tspan3225">$ mtn sync &quot;my.branch*&quot;</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="375.55258"
+         id="tspan3183" /><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="387.55258"
+         id="tspan3185"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#006600;fill-opacity:1;font-family:Bitstream Vera Sans">// setup a server </tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="399.55258"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;font-family:Bitstream Vera Sans"
+         id="tspan3242">$ mtn serve &quot;*&quot;</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="411.55258"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#660000;fill-opacity:1;font-family:Bitstream Vera Sans"
+         id="tspan3240" /><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="423.55258"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#006600;fill-opacity:1;font-family:Bitstream Vera Sans"
+         id="tspan3246">// override the defaults</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="435.55258"
+         id="tspan3187">$ mtn push some.server:5432</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="447.55258"
+         id="tspan3227">$ mtn pull --db foo.mtn</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="459.55258"
+         id="tspan3308">$ mtn sync --db foo.mtn some.server:5432</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="471.55258"
+         id="tspan3310">$ mtn serve --bind 5432 &quot;my.branch*&quot; \</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="483.55258"
+         id="tspan3312">   --exclude &quot;my.branch.secret&quot;</tspan><tspan
+         sodipodi:role="line"
+         x="484.22824"
+         y="495.55258"
+         id="tspan3215" /></text>
+  </g>
+</svg>
