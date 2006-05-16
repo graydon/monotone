@@ -1,0 +1,70 @@
+AT_SETUP([log --diffs])
+MTN_SETUP
+
+ADD_FILE(foo, [foo
+])
+ADD_FILE(bar, [bar
+])
+
+COMMIT(testbranch)
+REV1=`BASE_REVISION`
+
+AT_DATA(foo, [foo changed
+])
+
+COMMIT(testbranch)
+REV2=`BASE_REVISION`
+
+ADD_FILE(quux, [quux
+])
+
+COMMIT(testbranch)
+REV3=`BASE_REVISION`
+
+AT_DATA(foo, [foo again
+])
+AT_DATA(bar, [bar again
+])
+
+AT_CHECK(MTN rename -e foo foo2, [], [ignore], [ignore])
+
+COMMIT(testbranch)
+REV4=`BASE_REVISION`
+
+# without restrictions
+AT_CHECK(MTN log --diffs, [], [stdout], [ignore])
+AT_CHECK(mv stdout logfull)
+AT_CHECK(egrep '^(---|\+\+\+) ' logfull, [], [stdout], [ignore])
+AT_CHECK(mv stdout full)
+AT_DATA(expect_full, [--- bar	e242ed3bffccdf271b7fbaf34ed72d089537b42f
++++ bar	17ecc84b62b35bcf309c0b246cba8641426ad35d
+--- foo	5527e63e7193ef5fadbc8fd40cc8092d742602e7
++++ foo2	6d0789008812dd091f3e0c97d6606bf427cf82e4
+--- quux	f3d9ae4aeea6946a8668445395ba10b7399523a0
++++ quux	f3d9ae4aeea6946a8668445395ba10b7399523a0
+--- foo	f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
++++ foo	5527e63e7193ef5fadbc8fd40cc8092d742602e7
+--- bar	e242ed3bffccdf271b7fbaf34ed72d089537b42f
++++ bar	e242ed3bffccdf271b7fbaf34ed72d089537b42f
+--- foo	f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
++++ foo	f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
+])
+AT_CHECK(cmp expect_full full, [], [ignore])
+
+# restrict to foo2 and quux
+AT_CHECK(MTN log quux --diffs foo2, [], [stdout], [ignore])
+AT_CHECK(mv stdout logrestrict)
+AT_CHECK(egrep '^(---|\+\+\+) | sed 's/\t//' ' logrestrict, [], [stdout], [ignore])
+AT_CHECK(mv stdout restrict)
+AT_DATA(expect_restrict, [--- foo	5527e63e7193ef5fadbc8fd40cc8092d742602e7
++++ foo2	6d0789008812dd091f3e0c97d6606bf427cf82e4
+--- quux	f3d9ae4aeea6946a8668445395ba10b7399523a0
++++ quux	f3d9ae4aeea6946a8668445395ba10b7399523a0
+--- foo	f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
++++ foo	5527e63e7193ef5fadbc8fd40cc8092d742602e7
+--- foo	f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
++++ foo	f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
+])
+AT_CHECK(cmp expect_restrict restrict, [], [ignore])
+
+AT_CLEANUP

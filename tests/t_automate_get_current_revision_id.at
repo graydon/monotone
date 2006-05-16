@@ -6,8 +6,10 @@ MTN_SETUP
 # check an empty base revision id
 
 AT_CHECK(MTN automate get_current_revision_id, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cp stdout current, [], [], [])
 AT_CHECK(MTN automate get_revision | MTN identify, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp current stdout, [0], [], [])
 
 # check pending changes against an empty base
@@ -16,8 +18,10 @@ ADD_FILE(foo, [this is file foo
 ])
 
 AT_CHECK(MTN automate get_current_revision_id, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cp stdout current, [], [], [])
 AT_CHECK(MTN automate get_revision | MTN identify, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp current stdout, [0], [], [])
 
 COMMIT(testbranch)
@@ -25,8 +29,10 @@ COMMIT(testbranch)
 # check no changes against a non-empty base
 
 AT_CHECK(MTN automate get_current_revision_id, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cp stdout current, [], [], [])
 AT_CHECK(MTN automate get_revision | MTN identify, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp current stdout, [0], [], [])
 
 # check changes against a non-empty base
@@ -35,8 +41,10 @@ ADD_FILE(bar, [this is file bar
 ])
 
 AT_CHECK(MTN automate get_current_revision_id, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cp stdout current, [], [], [])
 AT_CHECK(MTN automate get_revision | MTN identify, [], [stdout], [ignore])
+AT_CHECK(CANONICALISE(stdout))
 AT_CHECK(cmp current stdout, [0], [], [])
 
 AT_CLEANUP
