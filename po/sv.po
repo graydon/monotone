@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-05-14 00:38+0200\n"
-"PO-Revision-Date: 2006-05-14 00:40+0200\n"
+"POT-Creation-Date: 2006-05-17 06:56+0200\n"
+"PO-Revision-Date: 2006-05-17 06:58+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -284,6 +284,7 @@ msgid "automation"
 msgstr "automatisering"
 
 #: cmd_automate.cc:8
+#, fuzzy
 msgid ""
 "interface_version\n"
 "heads [BRANCH]\n"
@@ -296,6 +297,7 @@ msgid ""
 "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
 "toposort [REV1 [REV2 [REV3 [...]]]]\n"
 "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
+"common_ancestors REV1 [REV2 [REV3 [...]]]\n"
 "leaves\n"
 "inventory\n"
 "stdio\n"
@@ -323,6 +325,7 @@ msgstr ""
 "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
 "toposort [REV1 [REV2 [REV3 [...]]]]\n"
 "ancestry_difference NY_REV [GAMMAL_REV1 [GAMMAL_REV2 [...]]]\n"
+"common_ancestors REV1 [REV2 [REV3 [...]]]\n"
 "leaves\n"
 "inventory\n"
 "stdio\n"
@@ -339,11 +342,11 @@ msgstr ""
 "packet_for_fdelta GAMMAL_FIL NY_FIL\n"
 "keys\n"
 
-#: cmd_automate.cc:34
+#: cmd_automate.cc:35
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
-#: cmd_db.cc:22 cmd_diff_log.cc:356 cmd_diff_log.cc:383 cmd_diff_log.cc:385
+#: cmd_db.cc:22 cmd_diff_log.cc:374 cmd_diff_log.cc:401 cmd_diff_log.cc:403
 #: cmd_files.cc:83 cmd_files.cc:141 cmd_merging.cc:105 cmd_ws_commit.cc:409
 #: commands.cc:357
 #, c-format
@@ -425,7 +428,7 @@ msgstr "ta bort databasvariabeln NAMN från domänen DOMÄN"
 msgid "no var with name %s in domain %s"
 msgstr "det finns inga variabler med namnet %s i domänen %s"
 
-#: cmd_db.cc:137 cmd_diff_log.cc:304 cmd_diff_log.cc:502 cmd_files.cc:61
+#: cmd_db.cc:137 cmd_diff_log.cc:322 cmd_diff_log.cc:520 cmd_files.cc:61
 #: cmd_files.cc:123 cmd_list.cc:429 cmd_merging.cc:534 cmd_ws_commit.cc:291
 #: commands.cc:229
 msgid "informative"
@@ -444,12 +447,12 @@ msgstr "utöka den partiella identiteten"
 msgid "non-hex digits in partial id"
 msgstr "något tecken i den partiella identiteten är inte hexadecimalt"
 
-#: cmd_diff_log.cc:304 cmd_ws_commit.cc:36 cmd_ws_commit.cc:198
+#: cmd_diff_log.cc:322 cmd_ws_commit.cc:36 cmd_ws_commit.cc:198
 #: cmd_ws_commit.cc:224 cmd_ws_commit.cc:291 cmd_ws_commit.cc:572
 msgid "[PATH]..."
 msgstr "[SÖKVÄG]..."
 
-#: cmd_diff_log.cc:305
+#: cmd_diff_log.cc:323
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the workspace and\n"
@@ -461,7 +464,7 @@ msgstr ""
 "revisionen. Om två revisioner anges visas skillnaden mellan dem. Om\n"
 "inget format anges används unified."
 
-#: cmd_diff_log.cc:320
+#: cmd_diff_log.cc:338
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -470,15 +473,15 @@ msgstr ""
 "--diff-args kräver att även --external anges\n"
 "lägg till --external eller ta bort --diff-args?"
 
-#: cmd_diff_log.cc:439
+#: cmd_diff_log.cc:457
 msgid "no changes"
 msgstr "inga ändringar"
 
-#: cmd_diff_log.cc:502
+#: cmd_diff_log.cc:520
 msgid "[FILE] ..."
 msgstr "[FIL] ..."
 
-#: cmd_diff_log.cc:503
+#: cmd_diff_log.cc:521
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
@@ -487,7 +490,7 @@ msgstr ""
 "arbetskatalogen om inga filer angivits. Om en eller flera revisioner\n"
 "har angivits används de som utgångspunkter."
 
-#: cmd_diff_log.cc:562
+#: cmd_diff_log.cc:580
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "enbart en av --last eller --next tillåten"
@@ -2006,7 +2009,7 @@ msgstr ""
 msgid "cannot create %s; it already exists"
 msgstr "kan inte skapa %s; den finns redan"
 
-#: database.cc:551
+#: database.cc:554
 #, c-format
 msgid ""
 "schema version    : %s\n"
@@ -2055,52 +2058,52 @@ msgstr ""
 "  sidstorlek          : %u\n"
 "  cachestorlek        : %u\n"
 
-#: database.cc:613
+#: database.cc:616
 #, c-format
 msgid "database schema version: %s"
 msgstr "databasens schemaversion: %s"
 
-#: database.cc:690
+#: database.cc:693
 #, c-format
 msgid "multiple statements in query: %s\n"
 msgstr "multipla kommandon i databasfråga: %s\n"
 
-#: database.cc:696
+#: database.cc:699
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
 msgstr "ville ha %d kolumner, fick %d i databasfråga: %s\n"
 
-#: database.cc:755
+#: database.cc:758
 #, c-format
 msgid "null result in query: %s\n"
 msgstr "inget resultat med databasfråga: %s\n"
 
-#: database.cc:773
+#: database.cc:776
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
 msgstr "ville ha %d rader, fick %s i databasfråga: %s\n"
 
-#: database.cc:1904
+#: database.cc:1907
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "det finns redan en annan nyckel med namnet '%s'"
 
-#: database.cc:2969
+#: database.cc:2972
 #, c-format
 msgid "no database specified"
 msgstr "ingen databas angiven"
 
-#: database.cc:2977
+#: database.cc:2980
 #, c-format
 msgid "database %s does not exist"
 msgstr "databasen %s finns inte"
 
-#: database.cc:2978
+#: database.cc:2981
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s är en katalog, inte en databas"
 
-#: database.cc:3003
+#: database.cc:3006
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "kunde inte öppna databasen '%s': %s"

@@ -1,3 +1,7 @@
+2006-05-17  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Another fuzzy to re-translate.
+
 2006-05-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* automate.cc: Uncomment automate_common_ancestors.
