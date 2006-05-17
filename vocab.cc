@@ -61,7 +61,7 @@ verify(hexenc<id> & val)
   if (val.ok)
     return;
 
-  if (val() == "")
+  if (val().empty())
     return;
 
   N(val().size() == constants::idlen,

@@ -1,3 +1,12 @@
+2006-05-17  Matt Johnston  <matt@ucc.asn.au>
+
+	* paths.cc (internal_string_to_split_path): move from cset.hh to
+	here, make it share the path splitting with fully_normalized_path().
+	(has_bad_chars): use lookup table to check bad chars.
+	(bad_component): don't compare string vs char* every time.
+	* roster.cc, cset.hh: internal_string_to_split_path changes
+	* vocab.cc (verify(hexenc<id>): .empty() rather than == ""
+
 2006-05-16  Matt Johnston  <matt@ucc.asn.au>
 
 	* roster.cc (parse_from): don't use lexical_cast, avoid copying a

@@ -2516,7 +2516,9 @@ roster_t::parse_from(basic_io::parser & pa,
       else
         {
           I(!pth.empty());
-          attach_node(n->self, internal_string_to_split_path(pth));
+          split_path sp;
+          internal_string_to_split_path(pth, sp);
+          attach_node(n->self, sp);
         }
 
       // Non-dormant attrs
