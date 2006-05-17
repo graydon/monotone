@@ -1,3 +1,10 @@
+2006-05-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: Uncomment automate_common_ancestors.
+	* tests/t_automate_common_ancestors.at, testsuite.at: Test it.
+	* monotone.texi: Document it.
+	* cmd_automate.cc: Add it to the command description for automate.
+
 2006-05-17  Matt Johnston  <matt@ucc.asn.au>
 
 	* paths.cc (internal_string_to_split_path): move from cset.hh to
