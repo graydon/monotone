@@ -339,13 +339,6 @@ select_nodes_modified_by_cset(cset const & cs,
                               std::set<node_id> & nodes_born);
 
 void 
-classify_roster_paths(roster_t const & ros,
-                      path_set & unchanged,
-                      path_set & changed,
-                      path_set & missing,
-                      app_state & app);
-
-void 
 update_restricted_roster_from_filesystem(roster_t & ros, 
                                          app_state & app);
 

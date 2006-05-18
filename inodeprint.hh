@@ -25,5 +25,21 @@ void read_inodeprint_map(data const & dat,
 void write_inodeprint_map(inodeprint_map const & ipm, 
                           data & dat);
 
+inline bool
+inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path) 
+{
+  inodeprint_map::const_iterator old_ip = ipm.find(path);
+  if (old_ip != ipm.end())
+    {
+      hexenc<inodeprint> ip;
+      if (inodeprint_file(path, ip) && ip == old_ip->second)
+          return true; // unchanged
+      else
+          return false; // changed or unavailable
+    }
+  else
+    return false; // unavailable
+}
+
 
 #endif
