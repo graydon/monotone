@@ -1,3 +1,7 @@
+2006-05-18  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Forgot to unfuzzy a string.
+
 2006-05-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* testsuite.at, t_merge_lca.at: Rename to t_merge_7.at, tweak

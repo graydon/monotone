@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-05-17 06:56+0200\n"
-"PO-Revision-Date: 2006-05-17 06:58+0200\n"
+"POT-Creation-Date: 2006-05-18 23:12+0200\n"
+"PO-Revision-Date: 2006-05-18 23:16+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -284,7 +284,6 @@ msgid "automation"
 msgstr "automatisering"
 
 #: cmd_automate.cc:8
-#, fuzzy
 msgid ""
 "interface_version\n"
 "heads [BRANCH]\n"
@@ -2457,138 +2456,134 @@ msgid "argument to pass external diff hook"
 msgstr "argument att skicka med till extern diff"
 
 #: monotone.cc:73
-msgid "use least common ancestor as ancestor for merge"
-msgstr "använd den senaste gemensamma förfadern som förfader vid ihopslagning"
-
-#: monotone.cc:74
 msgid "perform the associated file operation"
 msgstr "genomför den tillhörande operationen på filen/filerna"
 
-#: monotone.cc:75
+#: monotone.cc:74
 msgid "address:port to listen on (default :4691)"
 msgstr "adress:port att lyssna på (:4691 om inget anges)"
 
-#: monotone.cc:76
+#: monotone.cc:75
 msgid "perform the operations for files missing from workspace"
 msgstr "genomför operationen på filer som saknas i arbetskatalogen"
 
-#: monotone.cc:77
+#: monotone.cc:76
 msgid "perform the operations for unknown files from workspace"
 msgstr "genomför operationen på okända filer i arbetskatalogen"
 
-#: monotone.cc:78
+#: monotone.cc:77
 msgid "push the specified key even if it hasn't signed anything"
 msgstr "skicka med angiven nyckel även om den inte använts för att signera"
 
-#: monotone.cc:79
+#: monotone.cc:78
 msgid "when rosterifying, drop attrs entries with the given key"
 msgstr "släng attribut med den givna nyckeln vid konvertering till listor"
 
-#: monotone.cc:80
+#: monotone.cc:79
 msgid "exclude files when printing logs"
 msgstr "ta ej med ihopslagningar i loggen"
 
-#: monotone.cc:81
+#: monotone.cc:80
 msgid "also operate on the contents of any listed directories"
 msgstr "ta även med innehållet för varje listad katalog"
 
-#: monotone.cc:90
+#: monotone.cc:89
 msgid "print debug log to stderr while running"
 msgstr "skriv ut felsökningslogg till stderr under körning"
 
-#: monotone.cc:91
+#: monotone.cc:90
 msgid "file to dump debugging log to, on failure"
 msgstr "fil att skriva ut felsökningsloggen till om något gick fel"
 
-#: monotone.cc:92
+#: monotone.cc:91
 msgid "file to write the log to"
 msgstr "fil att skriva ut loggen till"
 
-#: monotone.cc:93
+#: monotone.cc:92
 msgid "suppress log and progress messages"
 msgstr "skriv inte ut loggar eller förloppsmeddelanden"
 
-#: monotone.cc:94
+#: monotone.cc:93
 msgid "display help message"
 msgstr "skriv ut extra hjälptext"
 
-#: monotone.cc:95
+#: monotone.cc:94
 msgid "print version number, then exit"
 msgstr "skriv ut versionsnumret och avsluta sedan omedelbart"
 
-#: monotone.cc:96
+#: monotone.cc:95
 msgid "print detailed version number, then exit"
 msgstr "skriv ut detaljerad versionsinformation och avsluta sedan omedelbart"
 
-#: monotone.cc:97
+#: monotone.cc:96
 msgid "insert command line arguments taken from the given file"
 msgstr "använd kommandoradsargument ur denna fil"
 
-#: monotone.cc:98
+#: monotone.cc:97
 msgid "set ticker style (count|dot|none)"
 msgstr "sätt stilen för förloppsinformationen (count|dot|none)"
 
-#: monotone.cc:99
+#: monotone.cc:98
 msgid "do not load standard lua hooks"
 msgstr "använd inte standard-lua-rutinerna"
 
-#: monotone.cc:100
+#: monotone.cc:99
 msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
 msgstr "använd inte ~/.monotone/monotonerc eller _MTN/monotonerc"
 
-#: monotone.cc:101
+#: monotone.cc:100
 msgid "load extra rc file"
 msgstr "använd denna lua-fil"
 
-#: monotone.cc:102
+#: monotone.cc:101
 msgid "set key for signatures"
 msgstr "ange nyckel att signera med"
 
-#: monotone.cc:103
+#: monotone.cc:102
 msgid "set name of database"
 msgstr "ange databasens filnamn"
 
-#: monotone.cc:104
+#: monotone.cc:103
 msgid "limit search for workspace to specified root"
 msgstr "begränsa sökningen efter arbetskopian till denna katalog"
 
-#: monotone.cc:105
+#: monotone.cc:104
 msgid "verbose completion output"
 msgstr "ge utförlig information"
 
-#: monotone.cc:106
+#: monotone.cc:105
 msgid "set location of key store"
 msgstr "ange i vilken katalog nycklarna finns"
 
-#: monotone.cc:107
+#: monotone.cc:106
 msgid "set location of configuration directory"
 msgstr "ange i vilken katalog konfigurationsfilerna finns"
 
-#: monotone.cc:211
+#: monotone.cc:210
 #, c-format
 msgid "problem parsing arguments from file %s: %s"
 msgstr "problem att tyda argumenten i filen %s: %s"
 
-#: monotone.cc:220
+#: monotone.cc:219
 #, c-format
 msgid "weird error when stuffing arguments read from %s: %s\n"
 msgstr "underligt fel när argument lästa från %s stoppades in: %s\n"
 
-#: monotone.cc:316
+#: monotone.cc:315
 msgid "[OPTION...] command [ARGS...]\n"
 msgstr "[FLAGGOR...] kommando [ARGUMENT...]\n"
 
-#: monotone.cc:569
+#: monotone.cc:564
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "syntaxfel nära flaggan \"%s\": %s"
 
-#: monotone.cc:611
+#: monotone.cc:606
 #, c-format
 msgid "monotone %s doesn't use the option %s"
 msgstr "monotone %s använder inte flaggan %s"
 
-#: monotone.cc:646
+#: monotone.cc:641
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
@@ -3643,6 +3638,10 @@ msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 #, c-format
 msgid "updating %s"
 msgstr "uppdaterar %s"
+
+#~ msgid "use least common ancestor as ancestor for merge"
+#~ msgstr ""
+#~ "använd den senaste gemensamma förfadern som förfader vid ihopslagning"
 
 #~ msgid "reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n"
 #~ msgstr ""
