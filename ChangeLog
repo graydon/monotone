@@ -1,3 +1,9 @@
+2006-05-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* testsuite.at, t_merge_lca.at: Rename to t_merge_7.at, tweak
+	comments to reflect that this used to test --lca, but now is
+	simply another merge test.
+
 2006-05-18  Nathaniel Smith  <njs@pobox.com>
 
 	* options.hh, app_state.cc, monotone.cc:
