@@ -273,7 +273,7 @@ CMD(update, N_("workspace"), "",
 // should merge support --message, --message-file?  It seems somewhat weird,
 // since a single 'merge' command may perform arbitrarily many actual merges.
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
-    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR % OPT_LCA)
+    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
 {
   set<revision_id> heads;
 
@@ -327,7 +327,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
 
 CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"), 
     N_("merge from one branch to another asymmetrically"),
-    OPT_DATE % OPT_AUTHOR % OPT_LCA % OPT_MESSAGE % OPT_MSGFILE)
+    OPT_DATE % OPT_AUTHOR % OPT_MESSAGE % OPT_MSGFILE)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -338,7 +338,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 
 CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"), 
     N_("merge one branch into a subdirectory in another branch"),
-    OPT_DATE % OPT_AUTHOR % OPT_LCA % OPT_MESSAGE % OPT_MSGFILE)
+    OPT_DATE % OPT_AUTHOR % OPT_MESSAGE % OPT_MSGFILE)
 {
   //   this is a special merge operator, but very useful for people maintaining
   //   "slightly disparate but related" trees. it does a one-way merge; less

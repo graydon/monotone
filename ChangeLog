@@ -1,3 +1,9 @@
+2006-05-18  Nathaniel Smith  <njs@pobox.com>
+
+	* options.hh, app_state.cc, monotone.cc:
+	* cmd_merging.cc (merge, propagate, merge_into_dir): Remove
+	OPT_LCA option.
+
 2006-05-17  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Another fuzzy to re-translate.

@@ -42,7 +42,7 @@
 #define OPT_CONTEXT_DIFF 33
 #define OPT_EXTERNAL_DIFF 34
 #define OPT_EXTERNAL_DIFF_ARGS 35
-#define OPT_LCA 36
+// formerly OPT_LCA was here
 #define OPT_EXECUTE 37
 #define OPT_KEY_DIR 38
 #define OPT_BIND 39
