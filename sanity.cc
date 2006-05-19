@@ -96,7 +96,7 @@ sanity::set_quiet()
 }
 
 void 
-sanity::set_quiet()
+sanity::set_reallyquiet()
 {
   debug = false;
   quiet = true;
