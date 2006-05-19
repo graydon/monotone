@@ -1,3 +1,9 @@
+2006-05-19  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc, options.hh, sanity.cc, sanity.hh: Do not suppress
+	warnings when --quiet is given.  Add --reallyquiet which does
+	suppress warnings as well as everything that --quiet suppresses.
+
 2006-05-18  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Forgot to unfuzzy a string.

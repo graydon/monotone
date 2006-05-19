@@ -30,7 +30,7 @@ using boost::format;
 sanity global_sanity;
 
 sanity::sanity() : 
-  debug(false), quiet(false), relaxed(false), logbuf(0xffff), 
+  debug(false), quiet(false), reallyquiet(false), relaxed(false), logbuf(0xffff), 
   already_dumping(false), clean_shutdown(false)
 {
   std::string flavour;
@@ -67,6 +67,7 @@ void
 sanity::set_debug()
 {
   quiet = false;
+  reallyquiet = false;
   debug = true;
 
   // it is possible that some pre-setting-of-debug data
@@ -91,6 +92,15 @@ sanity::set_quiet()
 {
   debug = false;
   quiet = true;
+  reallyquiet = false;
+}
+
+void 
+sanity::set_quiet()
+{
+  debug = false;
+  quiet = true;
+  reallyquiet = true;
 }
 
 void 
@@ -177,7 +187,7 @@ sanity::warning(i18n_format const & i18nfmt,
   copy(str2.begin(), str2.end(), back_inserter(logbuf));
   if (str[str.size() - 1] != '\n')
     logbuf.push_back('\n');
-  if (! quiet)
+  if (! reallyquiet)
     ui.warn(str);
 }
 

@@ -54,3 +54,4 @@
 #define OPT_NO_FILES 45
 #define OPT_LOG 46
 #define OPT_RECURSIVE 47
+#define OPT_REALLYQUIET 48
