@@ -834,7 +834,7 @@ automate_certs(std::vector<utf8> args,
       {
         if (checked.find(idx(certs, i).key) == checked.end() &&
             !app.db.public_key_exists(idx(certs, i).key))
-          P(F("warning: no public key '%s' found in database\n")
+          W(F("no public key '%s' found in database\n")
             % idx(certs, i).key);
         checked.insert(idx(certs, i).key);
       }

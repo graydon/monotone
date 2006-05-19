@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-05-18 23:12+0200\n"
-"PO-Revision-Date: 2006-05-18 23:16+0200\n"
+"POT-Creation-Date: 2006-05-19 09:46+0200\n"
+"PO-Revision-Date: 2006-05-19 09:48+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -2500,90 +2500,94 @@ msgid "file to write the log to"
 msgstr "fil att skriva ut loggen till"
 
 #: monotone.cc:92
-msgid "suppress log and progress messages"
-msgstr "skriv inte ut loggar eller förloppsmeddelanden"
+msgid "suppress verbose, informational and progress messages"
+msgstr "skriv inte ut informations- eller förloppsmeddelanden"
 
 #: monotone.cc:93
+msgid "suppress warning, verbose, informational and progress messages"
+msgstr "skriv inte ut varningar eller informations- eller förloppsmeddelanden"
+
+#: monotone.cc:94
 msgid "display help message"
 msgstr "skriv ut extra hjälptext"
 
-#: monotone.cc:94
+#: monotone.cc:95
 msgid "print version number, then exit"
 msgstr "skriv ut versionsnumret och avsluta sedan omedelbart"
 
-#: monotone.cc:95
+#: monotone.cc:96
 msgid "print detailed version number, then exit"
 msgstr "skriv ut detaljerad versionsinformation och avsluta sedan omedelbart"
 
-#: monotone.cc:96
+#: monotone.cc:97
 msgid "insert command line arguments taken from the given file"
 msgstr "använd kommandoradsargument ur denna fil"
 
-#: monotone.cc:97
+#: monotone.cc:98
 msgid "set ticker style (count|dot|none)"
 msgstr "sätt stilen för förloppsinformationen (count|dot|none)"
 
-#: monotone.cc:98
+#: monotone.cc:99
 msgid "do not load standard lua hooks"
 msgstr "använd inte standard-lua-rutinerna"
 
-#: monotone.cc:99
+#: monotone.cc:100
 msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
 msgstr "använd inte ~/.monotone/monotonerc eller _MTN/monotonerc"
 
-#: monotone.cc:100
+#: monotone.cc:101
 msgid "load extra rc file"
 msgstr "använd denna lua-fil"
 
-#: monotone.cc:101
+#: monotone.cc:102
 msgid "set key for signatures"
 msgstr "ange nyckel att signera med"
 
-#: monotone.cc:102
+#: monotone.cc:103
 msgid "set name of database"
 msgstr "ange databasens filnamn"
 
-#: monotone.cc:103
+#: monotone.cc:104
 msgid "limit search for workspace to specified root"
 msgstr "begränsa sökningen efter arbetskopian till denna katalog"
 
-#: monotone.cc:104
+#: monotone.cc:105
 msgid "verbose completion output"
 msgstr "ge utförlig information"
 
-#: monotone.cc:105
+#: monotone.cc:106
 msgid "set location of key store"
 msgstr "ange i vilken katalog nycklarna finns"
 
-#: monotone.cc:106
+#: monotone.cc:107
 msgid "set location of configuration directory"
 msgstr "ange i vilken katalog konfigurationsfilerna finns"
 
-#: monotone.cc:210
+#: monotone.cc:211
 #, c-format
 msgid "problem parsing arguments from file %s: %s"
 msgstr "problem att tyda argumenten i filen %s: %s"
 
-#: monotone.cc:219
+#: monotone.cc:220
 #, c-format
 msgid "weird error when stuffing arguments read from %s: %s\n"
 msgstr "underligt fel när argument lästa från %s stoppades in: %s\n"
 
-#: monotone.cc:315
+#: monotone.cc:317
 msgid "[OPTION...] command [ARGS...]\n"
 msgstr "[FLAGGOR...] kommando [ARGUMENT...]\n"
 
-#: monotone.cc:564
+#: monotone.cc:571
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "syntaxfel nära flaggan \"%s\": %s"
 
-#: monotone.cc:606
+#: monotone.cc:613
 #, c-format
 msgid "monotone %s doesn't use the option %s"
 msgstr "monotone %s använder inte flaggan %s"
 
-#: monotone.cc:641
+#: monotone.cc:648
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
@@ -3271,30 +3275,30 @@ msgstr ""
 "Jag förstår bara formatet version '1'\n"
 "En nyare version av monotone behövs för att fortsätta"
 
-#: sanity.cc:117
+#: sanity.cc:127
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
 msgstr "allvarligt fel: formatering misslyckades vid %s:%d: %s"
 
-#: sanity.cc:191
+#: sanity.cc:201
 msgid "misuse: "
 msgstr "missbruk: "
 
-#: sanity.cc:203
+#: sanity.cc:213
 msgid "error: "
 msgstr "fel: "
 
-#: sanity.cc:211
+#: sanity.cc:221
 #, c-format
 msgid "%s:%d: invariant '%s' violated"
 msgstr "%s:%d: invariant '%s' ej uppfylld"
 
-#: sanity.cc:224
+#: sanity.cc:234
 #, c-format
 msgid "%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n"
 msgstr "%s:%d; index '%s' = %d blev större än vektorn '%s' med storlek %d\n"
 
-#: sanity.cc:245
+#: sanity.cc:255
 #, c-format
 msgid "Current work set: %i items\n"
 msgstr "Nuvarande arbetsmängd: %i delar\n"
