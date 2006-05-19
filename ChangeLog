@@ -1,5 +1,15 @@
 2006-05-19  Richard Levitte  <richard@levitte.org>
 
+	* ui.hh (struct ticker), ui.cc (ticker::ticker,
+	ticker::write_ticks): Keep track of the last total we were given
+	and recalculate the counter width each time we detect a change in
+	total.  The reason is that the counter is sometimes display even
+	though the real total isn't figured out yet, which gives the old
+	stepwise increase of counter size instead of doing it in one go
+	when we have the real total.
+
+2006-05-19  Richard Levitte  <richard@levitte.org>
+
 	* tests/t_quiet.at: Test that --quiet doesn't suppress warnings.
 	* tests/t_reallyquiet.at: New file.  Test that --reallyquiet
 	suppresses progress meters and warnings.
