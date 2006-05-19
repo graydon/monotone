@@ -11,8 +11,8 @@ COMMIT(testbranch)
 
 NETSYNC_SERVE_START(testbranch)
 
-AT_CHECK(MTN --db=test2.db --keydir=keys2 --rcfile=netsync.lua pull --quiet NETSYNC_ADDRESS testbranch, [], [], [])
-
+AT_CHECK(MTN --db=test2.db --keydir=keys2 --rcfile=netsync.lua pull --quiet NETSYNC_ADDRESS testbranch, [], [], [stderr])
+AT_CHECK(grep -v warning stderr, [1], [], [])
 NETSYNC_SERVE_STOP
 
 AT_CLEANUP
