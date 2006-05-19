@@ -294,7 +294,8 @@ cpp_main(int argc, char ** argv)
   // find base name of executable
 
   string prog_path = fs::path(uv.argv[0]).leaf();
-  prog_path = prog_path.substr(0, prog_path.find(".exe", 0));
+  if (prog_path.rfind(".exe") == prog_path.size() - 4)
+    prog_path = prog_path.substr(0, prog_path.size() - 4);
   utf8 prog_name(prog_path);
 
   // prepare for arg parsing
