@@ -1,6 +1,11 @@
 2006-05-19  Richard Levitte  <richard@levitte.org>
 
-	* ui.hh (struct ticker), ui.cc (ticker::ticker,
+	* ui.cc (tick_write_count::write_ticks): Simplify the condition
+	to check if the count width needs to be changed.
+
+2006-05-19  Richard Levitte  <richard@levitte.org>
+
+	* ui.hh (struct ticker), ui.cc (tick_write_count::ticker,
 	ticker::write_ticks): Keep track of the last total we were given
 	and recalculate the counter width each time we detect a change in
 	total.  The reason is that the counter is sometimes display even

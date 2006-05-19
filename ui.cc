@@ -156,8 +156,7 @@ void tick_write_count::write_ticks()
 
       if ((tick->count_size == 0 && tick->kilocount)
           ||
-          ((tick->count_size == 0 || tick->previous_total == 0)
-           && tick->use_total))
+          (tick->use_total && tick->previous_total != tick->total))
         {
           if (!tick->kilocount && tick->use_total)
             {
