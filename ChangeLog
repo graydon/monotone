@@ -1,5 +1,12 @@
 2006-05-19  Richard Levitte  <richard@levitte.org>
 
+	* tests/t_quiet.at: Test that --quiet doesn't suppress warnings.
+	* tests/t_reallyquiet.at: New file.  Test that --reallyquiet
+	suppresses progress meters and warnings.
+	* testsuite.at: Add t_reallyquiet.at.
+
+2006-05-19  Richard Levitte  <richard@levitte.org>
+
 	* automate.cc (automate_certs): Change a warning disguised as a
 	progress meter into a real warning.
 
