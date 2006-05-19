@@ -14,6 +14,10 @@
 
 2006-05-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/t_quiet.at: --quiet now allows warnings to still be printed
+
+2006-05-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* sanity.cc: second sanity::set_quiet should be sanity::set_reallyquiet
 
 2006-05-19  Richard Levitte  <richard@levitte.org>
