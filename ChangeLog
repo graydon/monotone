@@ -1,3 +1,7 @@
+2006-05-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* monotone.cc (cpp_main): Smarter stripping of ".exe" extension.
+
 2006-05-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* testsuite.at, t_merge_lca.at: Rename to t_merge_7.at, tweak
