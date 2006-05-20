@@ -1,3 +1,7 @@
+2006-05-20  Graydon Hoare    <graydon@pobox.com>
+
+	* figures/monotone-logo.svg: Add.
+
 2006-05-19  Richard Levitte  <richard@levitte.org>
 
 	* ui.cc (tick_write_count::write_ticks): Simplify the condition
