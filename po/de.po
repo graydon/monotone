@@ -24,7 +24,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-05-13 10:16+0200\n"
+"POT-Creation-Date: 2006-05-21 16:58+0200\n"
 "PO-Revision-Date: 2006-04-08 00:09+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <kde-i18n-de@kde.org>\n"
@@ -185,6 +185,7 @@ msgid ""
 "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
 "toposort [REV1 [REV2 [REV3 [...]]]]\n"
 "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
+"common_ancestors REV1 [REV2 [REV3 [...]]]\n"
 "leaves\n"
 "inventory\n"
 "stdio\n"
@@ -212,6 +213,7 @@ msgstr ""
 "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
 "toposort [REV1 [REV2 [REV3 [...]]]]\n"
 "ancestry_difference ALTE_REV [ALTE_REV1 [ALTE_REV2 [...]]]\n"
+"common_ancestors REV1 [REV2 [REV3 [...]]]\n"
 "leaves\n"
 "inventory\n"
 "stdio\n"
@@ -228,11 +230,11 @@ msgstr ""
 "packet_for_fdelta ALTE_DATEI NEUE_DATEI\n"
 "keys\n"
 
-#: cmd_automate.cc:34
+#: cmd_automate.cc:35
 msgid "automation interface"
 msgstr "Schnittstelle für die Automatisierung"
 
-#: cmd_db.cc:22 cmd_diff_log.cc:356 cmd_diff_log.cc:383 cmd_diff_log.cc:385
+#: cmd_db.cc:22 cmd_diff_log.cc:374 cmd_diff_log.cc:401 cmd_diff_log.cc:403
 #: cmd_files.cc:83 cmd_files.cc:141 cmd_merging.cc:105 cmd_ws_commit.cc:409
 #: commands.cc:357
 #, c-format
@@ -314,7 +316,7 @@ msgstr "entfernt die Datenbankvariable NAME in der Domäne DOMÄNE"
 msgid "no var with name %s in domain %s"
 msgstr "keine Variable mit dem Namen %s in der Domäne %s"
 
-#: cmd_db.cc:137 cmd_diff_log.cc:304 cmd_diff_log.cc:502 cmd_files.cc:61
+#: cmd_db.cc:137 cmd_diff_log.cc:322 cmd_diff_log.cc:520 cmd_files.cc:61
 #: cmd_files.cc:123 cmd_list.cc:429 cmd_merging.cc:534 cmd_ws_commit.cc:291
 #: commands.cc:229
 msgid "informative"
@@ -333,12 +335,12 @@ msgstr "vervollständige Teil-ID"
 msgid "non-hex digits in partial id"
 msgstr "nicht-hexadezimale Zeichen in Teil-ID"
 
-#: cmd_diff_log.cc:304 cmd_ws_commit.cc:36 cmd_ws_commit.cc:198
+#: cmd_diff_log.cc:322 cmd_ws_commit.cc:36 cmd_ws_commit.cc:198
 #: cmd_ws_commit.cc:224 cmd_ws_commit.cc:291 cmd_ws_commit.cc:572
 msgid "[PATH]..."
 msgstr "[PFAD]..."
 
-#: cmd_diff_log.cc:305
+#: cmd_diff_log.cc:323
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the workspace and\n"
@@ -352,7 +354,7 @@ msgstr ""
 "Unterschiede zwischen beiden ausgegeben.\n"
 "Wenn kein Format angegeben wurde, wird standardmäßig 'unified' verwendet."
 
-#: cmd_diff_log.cc:320
+#: cmd_diff_log.cc:338
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -361,15 +363,15 @@ msgstr ""
 "--diff-args benötigt --external\n"
 "Fügen Sie --external hinzu oder entfernen Sie --diff-args."
 
-#: cmd_diff_log.cc:439
+#: cmd_diff_log.cc:457
 msgid "no changes"
 msgstr "keine Änderungen"
 
-#: cmd_diff_log.cc:502
+#: cmd_diff_log.cc:520
 msgid "[FILE] ..."
 msgstr "[DATEI] ..."
 
-#: cmd_diff_log.cc:503
+#: cmd_diff_log.cc:521
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
@@ -379,7 +381,7 @@ msgstr ""
 "oder mehrere Revision übergeben wurden, werden diese als Ausgangspunkt "
 "genutzt."
 
-#: cmd_diff_log.cc:562
+#: cmd_diff_log.cc:580
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "'--last' und '--next' sind nur einmal erlaubt"
@@ -1917,7 +1919,7 @@ msgstr ""
 msgid "cannot create %s; it already exists"
 msgstr "Kann %s nicht erzeugen; es existiert bereits"
 
-#: database.cc:551
+#: database.cc:554
 #, c-format
 msgid ""
 "schema version    : %s\n"
@@ -1966,52 +1968,52 @@ msgstr ""
 "  Seitengröße          : %u\n"
 "  Cache-Größe          : %u\n"
 
-#: database.cc:613
+#: database.cc:616
 #, c-format
 msgid "database schema version: %s"
 msgstr "Datenbank Schema-Version: %s"
 
-#: database.cc:690
+#: database.cc:693
 #, c-format
 msgid "multiple statements in query: %s\n"
 msgstr "mehrere Angaben in Anfrage: %s\n"
 
-#: database.cc:696
+#: database.cc:699
 #, c-format
 msgid "wanted %d columns got %d in query: %s\n"
 msgstr "erwarte %d, erhielt %d Spalten in Anfrage: %s\n"
 
-#: database.cc:755
+#: database.cc:758
 #, c-format
 msgid "null result in query: %s\n"
 msgstr "null-Ergebnis in Anfrage: %s\n"
 
-#: database.cc:773
+#: database.cc:776
 #, c-format
 msgid "wanted %d rows got %s in query: %s\n"
 msgstr "erwarte %d, erhielt %s Zeilen in Anfrage: %s\n"
 
-#: database.cc:1904
+#: database.cc:1907
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "ein anderer Schlüssel mit dem Namen '%s' existiert bereits"
 
-#: database.cc:2969
+#: database.cc:2972
 #, c-format
 msgid "no database specified"
 msgstr "keine Datenbank spezifiziert"
 
-#: database.cc:2977
+#: database.cc:2980
 #, c-format
 msgid "database %s does not exist"
 msgstr "Datenbank %s existiert nicht"
 
-#: database.cc:2978
+#: database.cc:2981
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s ist ein Verzeichnis, keine Datenbank"
 
-#: database.cc:3003
+#: database.cc:3006
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "Konnte Datenbank '%s' nicht öffnen: %s"
@@ -2369,60 +2371,59 @@ msgid "argument to pass external diff hook"
 msgstr "Argument für externe 'diff'-Anwendung"
 
 #: monotone.cc:73
-msgid "use least common ancestor as ancestor for merge"
-msgstr ""
-"benutze den Vorfahren mit den wenigsten Gemeinsamkeiten als Vorfahren für "
-"das Zusammenführen"
-
-#: monotone.cc:74
 msgid "perform the associated file operation"
 msgstr "führe die zusammenhängende Dateioperation aus"
 
-#: monotone.cc:75
+#: monotone.cc:74
 msgid "address:port to listen on (default :4691)"
 msgstr "Adresse:Port, auf den die Anwendung lauschen soll (Standard: :4691)"
 
-#: monotone.cc:76
+#: monotone.cc:75
 msgid "perform the operations for files missing from workspace"
 msgstr "führe diese Operationen für fehlende Dateien im Arbeitsbereich aus"
 
-#: monotone.cc:77
+#: monotone.cc:76
 msgid "perform the operations for unknown files from workspace"
 msgstr "führe diese Operation für unbekannte Dateien im Arbeitsbereich aus"
 
-#: monotone.cc:78
+#: monotone.cc:77
 msgid "push the specified key even if it hasn't signed anything"
 msgstr "exportiere diesen Schlüssel, selbst wenn damit nichts signiert wurde"
 
-#: monotone.cc:79
+#: monotone.cc:78
 msgid "when rosterifying, drop attrs entries with the given key"
 msgstr ""
 "während der Katalogisierung, entferne 'attrs'-Einträge mit dem gegebenen "
 "Schlüssel"
 
-#: monotone.cc:80
+#: monotone.cc:79
 msgid "exclude files when printing logs"
 msgstr "schließe Dateien bei der Ausgabe der Logeinträge aus"
 
-#: monotone.cc:81
+#: monotone.cc:80
 msgid "also operate on the contents of any listed directories"
 msgstr "arbeite auch auf den Inhalten beliebiger aufgeführter Verzeichnisse"
 
-#: monotone.cc:90
+#: monotone.cc:89
 msgid "print debug log to stderr while running"
 msgstr "schreibe das Debug-Log nach stderr während der Ausführung"
 
-#: monotone.cc:91
+#: monotone.cc:90
 msgid "file to dump debugging log to, on failure"
 msgstr "Datei, in die das Debug-Log im Fehlerfall geschrieben werden soll"
 
-#: monotone.cc:92
+#: monotone.cc:91
 msgid "file to write the log to"
 msgstr "Datei, in die das Log geschrieben wird"
 
+#: monotone.cc:92
+msgid "suppress verbose, informational and progress messages"
+msgstr "unterdrücke wortreiche, informelle und Fortschrittsmeldungen"
+
 #: monotone.cc:93
-msgid "suppress log and progress messages"
-msgstr "unterdrücke Log- und Fortschrittsmeldungen"
+msgid "suppress warning, verbose, informational and progress messages"
+msgstr ""
+"unterdrücke Warnungen, wortreiche, informelle und Fortschrittsmeldungen"
 
 #: monotone.cc:94
 msgid "display help message"
@@ -2493,21 +2494,21 @@ msgid "weird error when stuffing arguments read from %s: %s\n"
 msgstr ""
 "seltsamer Fehler beim Zusammenpacken der gelesen Argumente von %s: %s\n"
 
-#: monotone.cc:316
+#: monotone.cc:317
 msgid "[OPTION...] command [ARGS...]\n"
 msgstr "[OPTION...] Kommando [Argumente...]\n"
 
-#: monotone.cc:569
+#: monotone.cc:571
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "Syntaxfehler in der der Option \"%s\": %s"
 
-#: monotone.cc:611
+#: monotone.cc:613
 #, c-format
 msgid "monotone %s doesn't use the option %s"
 msgstr "monotone %s benutzt die Option %s nicht"
 
-#: monotone.cc:646
+#: monotone.cc:648
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Spezifische Optionen für '%s %s':"
@@ -3207,30 +3208,30 @@ msgstr ""
 "Eine neuere Version von monotone wird benötigt, um diese Operation "
 "durchzuführen."
 
-#: sanity.cc:117
+#: sanity.cc:127
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
 msgstr "Fataler Fehler: Formatierung schlug fehl bei %s:%d: %s"
 
-#: sanity.cc:191
+#: sanity.cc:201
 msgid "misuse: "
 msgstr "falscher Gebrauch: "
 
-#: sanity.cc:203
+#: sanity.cc:213
 msgid "error: "
 msgstr "Fehler: "
 
-#: sanity.cc:211
+#: sanity.cc:221
 #, c-format
 msgid "%s:%d: invariant '%s' violated"
 msgstr "%s:%d: Invariante '%s' verletzt"
 
-#: sanity.cc:224
+#: sanity.cc:234
 #, c-format
 msgid "%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n"
 msgstr "%s:%d: Index '%s' = %d übergelaufener Vektor '%s' der Größe %d\n"
 
-#: sanity.cc:245
+#: sanity.cc:255
 #, c-format
 msgid "Current work set: %i items\n"
 msgstr "Derzeitiger Arbeitsgruppe: %i Elemente\n"
@@ -3321,36 +3322,36 @@ msgstr "konnte Zeichenfolge nicht von %s nach %s konvertieren: '%s'"
 msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
 msgstr "Fehler bei der Konvertierung von %d UTF-8 Bytes nach IDNA ACE: %s"
 
-#: ui.cc:109
+#: ui.cc:110
 #, c-format
 msgid "%.1f G"
 msgstr "%.1f G"
 
-#: ui.cc:115
+#: ui.cc:116
 #, c-format
 msgid "%.1f M"
 msgstr "%.1f M"
 
-#: ui.cc:121
+#: ui.cc:122
 #, c-format
 msgid "%.1f k"
 msgstr "%.1f k"
 
-#: ui.cc:134
+#: ui.cc:135
 #, c-format
 msgid "%d/%d"
 msgstr "%d/%d"
 
-#: ui.cc:139
+#: ui.cc:140
 #, c-format
 msgid "%d"
 msgstr "%d"
 
-#: ui.cc:403
+#: ui.cc:407
 msgid "warning: "
 msgstr "Warnung: "
 
-#: ui.cc:412
+#: ui.cc:416
 #, c-format
 msgid ""
 "fatal: %s\n"
@@ -3363,7 +3364,7 @@ msgstr ""
 "Bitte senden Sie diese, die Ausgabe von '%s --full-version',\n"
 "sowie eine Beschreibung Ihrer Tätigkeit an %s.\n"
 
-#: ui.cc:473
+#: ui.cc:477
 #, c-format
 msgid "failed to open log file '%s'"
 msgstr "konnte Logdatei '%s' nicht öffnen"
@@ -3578,6 +3579,11 @@ msgstr ""
 #, c-format
 msgid "updating %s"
 msgstr "aktualisiere %s"
+
+#~ msgid "use least common ancestor as ancestor for merge"
+#~ msgstr ""
+#~ "benutze den Vorfahren mit den wenigsten Gemeinsamkeiten als Vorfahren für "
+#~ "das Zusammenführen"
 
 #~ msgid "unknown path '%s'\n"
 #~ msgstr "unbekannter Pfad '%s'\n"
