@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-05-19 09:46+0200\n"
-"PO-Revision-Date: 2006-05-19 09:48+0200\n"
+"POT-Creation-Date: 2006-05-21 18:11+0200\n"
+"PO-Revision-Date: 2006-05-21 20:48+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -2481,7 +2481,7 @@ msgstr "släng attribut med den givna nyckeln vid konvertering till listor"
 
 #: monotone.cc:79
 msgid "exclude files when printing logs"
-msgstr "ta ej med ihopslagningar i loggen"
+msgstr "ta ej med vilka filer som lagts till, tagits bort eller ändrats i loggen"
 
 #: monotone.cc:80
 msgid "also operate on the contents of any listed directories"
@@ -3388,36 +3388,36 @@ msgstr "misslyckades med att konvertera en sträng från %s till %s: '%s'"
 msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
 msgstr "fel vid konvertering av %d UTF-8-byte till IDNA ACE: %s"
 
-#: ui.cc:109
+#: ui.cc:110
 #, c-format
 msgid "%.1f G"
 msgstr "%.1f Gi"
 
-#: ui.cc:115
+#: ui.cc:116
 #, c-format
 msgid "%.1f M"
 msgstr "%.1f Mi"
 
-#: ui.cc:121
+#: ui.cc:122
 #, c-format
 msgid "%.1f k"
 msgstr "%.1f Ki"
 
-#: ui.cc:134
+#: ui.cc:135
 #, c-format
 msgid "%d/%d"
 msgstr "%d/%d"
 
-#: ui.cc:139
+#: ui.cc:140
 #, c-format
 msgid "%d"
 msgstr "%d"
 
-#: ui.cc:403
+#: ui.cc:407
 msgid "warning: "
 msgstr "varning: "
 
-#: ui.cc:412
+#: ui.cc:416
 #, c-format
 msgid ""
 "fatal: %s\n"
@@ -3430,7 +3430,7 @@ msgstr ""
 "var god skicka detta felmeddelande, utskriften av '%s --full-version'\n"
 "och en beskrivning av det du gjorde till %s.\n"
 
-#: ui.cc:473
+#: ui.cc:477
 #, c-format
 msgid "failed to open log file '%s'"
 msgstr "Misslyckades med att öppna log-filen %s"
