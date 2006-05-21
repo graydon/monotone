@@ -1,3 +1,7 @@
+2006-05-21  Richard Levitte  <richard@levitte.org>
+
+	* debian/changelog: Updated from the latest Debian release.
+
 2006-05-19  Richard Levitte  <richard@levitte.org>
 
 	* ui.cc (tick_write_count::write_ticks): Simplify the condition
