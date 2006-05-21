@@ -1,5 +1,10 @@
 2006-05-21  Richard Levitte  <richard@levitte.org>
 
+	* po/sv.po: Correct a translation that was clearly cut and pasted
+	but never changed.  What was I thinking?
+
+2006-05-21  Richard Levitte  <richard@levitte.org>
+
 	* debian/changelog: Updated from the latest Debian release.
 
 2006-05-20  Graydon Hoare    <graydon@pobox.com>
