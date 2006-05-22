@@ -13,7 +13,7 @@
 
 #include "constants.hh"
 #include "keys.hh"
-#include "lua.hh"
+#include "lua_hooks.hh"
 #include "netio.hh"
 #include "platform.hh"
 #include "safe_map.hh"

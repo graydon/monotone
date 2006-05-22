@@ -10,7 +10,7 @@ MOST_SOURCES =								\
 	 app_state.cc app_state.hh					\
          commands.cc commands.hh $(CMD_SOURCES)				\
          diff_patch.cc diff_patch.hh					\
-         lua.cc lua.hh							\
+         lua.cc lua.hh lua_hooks.cc lua_hooks.hh			\
          transforms.cc transforms.hh					\
          update.cc update.hh						\
          work.cc work.hh						\

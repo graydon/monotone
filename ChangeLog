@@ -1,3 +1,15 @@
+2006-05-21  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Split lua.cc into two files: lua_hooks.cc gets the lua_hooks class
+	and the one callback that needs an app_state, lua.cc gets everything
+	else.
+	* lua.{cc,hh}: Rename to lua_hooks.{cc,hh}. Move almost everything
+	except the lua_hooks class to...
+	* lua.{cc,hh}: New files.
+	* Makefile.am: Adjust accordingly.
+	* app_state.hh file_io.cc keys.cc transforms.hh: Adjust includes to
+	account for rename.
+
 2006-05-21  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Correct a translation that was clearly cut and pasted
@@ -40,11 +52,11 @@
 
 	* po/sv.po: Retranslate two fuzzies.
 
-2006-05-16  Timothy Brownawell  <tbrownaw@gmail.com>
+2006-05-19  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/t_quiet.at: --quiet now allows warnings to still be printed
 
-2006-05-16  Timothy Brownawell  <tbrownaw@gmail.com>
+2006-05-19  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* sanity.cc: second sanity::set_quiet should be sanity::set_reallyquiet
 

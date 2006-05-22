@@ -14,7 +14,7 @@
 #include "botan/botan.h"
 
 #include "file_io.hh"
-#include "lua.hh"
+#include "lua_hooks.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "platform.hh"

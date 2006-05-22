@@ -17,7 +17,7 @@ class lua_hooks;
 #include <vector>
 
 #include "database.hh"
-#include "lua.hh"
+#include "lua_hooks.hh"
 #include "work.hh"
 #include "vocab.hh"
 #include "paths.hh"

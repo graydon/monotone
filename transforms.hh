@@ -7,7 +7,7 @@
 // see the file COPYING for details
 
 #include "revision.hh"
-#include "lua.hh"
+#include "lua_hooks.hh"
 #include "vocab.hh"
 #include "roster.hh"
 
