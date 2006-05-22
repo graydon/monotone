@@ -1,5 +1,11 @@
 2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* work.{cc,hh} constants.{cc,hh}: Move attribute strings to constants.
+	* transforms.cc: Include constants.hh instead of work.hh .
+	* annotate.cc diff_patch.cc crypto_tests.cc: Fix includes.
+
+2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* transforms.{cc,hh} revision.{cc,hh} roster.{cc,hh} file_io.{cc,hh}:
 	Move calculate_ident for revision_set and roster to those files. Move
 	calulate_ident for files to file_io.

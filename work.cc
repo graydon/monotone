@@ -27,9 +27,15 @@
 
 using namespace std;
 
-// attribute map file
+static string const attr_file_name(".mt-attrs");
+static string const inodeprints_file_name("inodeprints");
+static string const local_dump_file_name("debug");
+static string const options_file_name("options");
+static string const work_file_name("work");
+static string const user_log_file_name("log");
 
-string const attr_file_name(".mt-attrs");
+
+// attribute map file
 
 void
 file_itemizer::visit_dir(file_path const & path)
@@ -498,8 +504,6 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
 
 // work file containing rearrangement from uncommitted adds/drops/renames
 
-std::string const work_file_name("work");
-
 static void get_work_path(bookkeeping_path & w_path)
 {
   w_path = bookkeeping_root / work_file_name;
@@ -656,8 +660,6 @@ get_base_and_current_roster_shape(roster_t & base_roster,
 
 // user log file
 
-string const user_log_file_name("log");
-
 void
 get_user_log_path(bookkeeping_path & ul_path)
 {
@@ -705,8 +707,6 @@ has_contents_user_log()
 
 // options map file
 
-string const options_file_name("options");
-
 void 
 get_options_path(bookkeeping_path & o_path)
 {
@@ -751,8 +751,6 @@ write_options_map(data & dat, options_map const & options)
 
 // local dump file
 
-static string const local_dump_file_name("debug");
-
 void get_local_dump_path(bookkeeping_path & d_path)
 {
   d_path = bookkeeping_root / local_dump_file_name;
@@ -760,8 +758,6 @@ void get_local_dump_path(bookkeeping_path & d_path)
 }
 
 // inodeprint file
-
-static string const inodeprints_file_name("inodeprints");
 
 void
 get_inodeprints_path(bookkeeping_path & ip_path)
@@ -804,11 +800,6 @@ enable_inodeprints()
   write_data(ip_path, dat);
 }
 
-string const encoding_attribute("mtn:encoding");
-string const binary_encoding("binary");
-string const default_encoding("default");
-
-string const manual_merge_attribute("mtn:manual_merge");
 
 bool 
 get_attribute_from_roster(roster_t const & ros,                               

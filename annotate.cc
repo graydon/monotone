@@ -13,6 +13,7 @@
 
 #include "annotate.hh"
 #include "app_state.hh"
+#include "constants.hh"
 #include "cset.hh"
 #include "interner.hh"
 #include "lcs.hh"
@@ -180,7 +181,7 @@ annotate_context::annotate_context(file_id fid, app_state &app)
   // initialize file_lines
   file_data fpacked;
   app.db.get_file_version(fid, fpacked);
-  std::string encoding = default_encoding; // FIXME
+  std::string encoding = constants::default_encoding; // FIXME
   split_into_lines(fpacked.inner()(), encoding, file_lines);
   L(FL("annotate_context::annotate_context initialized with %d file lines\n") % file_lines.size());
 
@@ -406,7 +407,7 @@ annotate_lineage_mapping::annotate_lineage_mapping(const file_data &data)
 {
   // split into lines
   std::vector<std::string> lines;
-  std::string encoding = default_encoding; // FIXME
+  std::string encoding = constants::default_encoding; // FIXME
   split_into_lines (data.inner()().data(), encoding, lines);
 
   init_with_lines(lines);

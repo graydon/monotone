@@ -28,7 +28,6 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "vocab.hh"
-#include "work.hh"
 #include "xdelta.hh"
 
 using namespace std;
@@ -297,7 +296,7 @@ void split_into_lines(std::string const & in,
   // as far as I know, this covers the EUC, ISO-8859-X, GB, Big5, KOI,
   // ASCII, and UTF-8 families of encodings. 
   
-  if (lc_encoding == default_encoding
+  if (lc_encoding == constants::default_encoding
       || lc_encoding.find("ascii") != std::string::npos
       || lc_encoding.find("8859") != std::string::npos
       || lc_encoding.find("euc") != std::string::npos
@@ -337,7 +336,7 @@ void
 split_into_lines(string const & in,
                  vector<string> & out)
 {
-  split_into_lines(in, default_encoding, out);
+  split_into_lines(in, constants::default_encoding, out);
 }
 
 void 
