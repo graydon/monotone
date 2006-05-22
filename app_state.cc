@@ -13,7 +13,7 @@
 #include "database.hh"
 #include "file_io.hh"
 #include "sanity.hh"
-#include "transforms.hh"
+#include "charset.hh"
 #include "work.hh"
 #include "platform.hh"
 

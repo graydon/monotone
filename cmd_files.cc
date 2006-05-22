@@ -1,6 +1,7 @@
 #include "cmd.hh"
 
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "packet.hh"
 #include "annotate.hh"
 #include "diff_patch.hh"

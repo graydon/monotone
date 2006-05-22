@@ -4,6 +4,8 @@
 #include "restrictions.hh"
 #include "revision.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
+#include "charset.hh"
 #include "database.hh"
 #include "ui.hh"
 #include "keys.hh"

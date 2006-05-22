@@ -25,6 +25,8 @@ void add_diff_patch_tests(test_suite * suite);
 void add_file_io_tests(test_suite * suite);
 void add_key_tests(test_suite * suite);
 void add_transform_tests(test_suite * suite);
+void add_charset_tests(test_suite * suite);
+void add_simplestring_xform_tests(test_suite * suite);
 void add_vocab_tests(test_suite * suite);
 void add_cset_tests(test_suite * suite);
 void add_revision_tests(test_suite * suite);

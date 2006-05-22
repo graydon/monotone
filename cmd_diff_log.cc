@@ -2,6 +2,7 @@
 #include "diff_patch.hh"
 #include "revision.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "restrictions.hh"
 
 using std::set;

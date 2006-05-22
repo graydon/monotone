@@ -34,6 +34,7 @@
 #include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "ui.hh"
 #include "vocab.hh"
 #include "safe_map.hh"

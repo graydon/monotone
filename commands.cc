@@ -9,6 +9,8 @@
 #include <algorithm>
 
 #include "transforms.hh"
+#include "simplestring_xform.hh"
+#include "charset.hh"
 #include "inodeprint.hh"
 #include "cert.hh"
 

@@ -13,6 +13,7 @@
 #include "netio.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "ui.hh"
 #include "options.hh"
 #include "revision.hh"

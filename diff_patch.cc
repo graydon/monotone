@@ -23,6 +23,7 @@
 #include "safe_map.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "vocab.hh"
 #include "revision.hh"
 #include "constants.hh"

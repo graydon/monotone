@@ -19,7 +19,7 @@
 #include "constants.hh"
 #include "platform.hh"
 #include "sanity.hh"
-#include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "ui.hh"
 
 using namespace std;

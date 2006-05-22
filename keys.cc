@@ -18,6 +18,7 @@
 #include "platform.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "sanity.hh"
 #include "ui.hh"
 #include "cert.hh"

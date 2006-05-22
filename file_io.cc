@@ -17,6 +17,8 @@
 #include "lua_hooks.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
+#include "charset.hh"
 #include "platform.hh"
 
 // this file deals with talking to the filesystem, loading and

@@ -16,7 +16,8 @@
 #include "platform.hh"
 #include "sanity.hh"
 #include "interner.hh"
-#include "transforms.hh"
+#include "charset.hh"
+#include "simplestring_xform.hh"
 
 // some structure to ensure we aren't doing anything broken when resolving
 // filenames.  the idea is to make sure

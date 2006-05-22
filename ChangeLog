@@ -1,5 +1,14 @@
 2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* transforms.{cc,hh} charset.{cc,hh} simplestring_xform.{cc,hh}:
+	Split up transforms.cc . Hex, base64, gzip, and ident stay in
+	transforms. Simple string stuff (no botan or idna) goes in
+	simplestring_xform. Charset stuff goes in charset.
+	* Makefile.am unit_tests.{cc,hh}: Adjust for having new files.
+	* 20 others: Adjust includes.
+
+2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* work.{cc,hh} constants.{cc,hh}: Move attribute strings to constants.
 	* transforms.cc: Include constants.hh instead of work.hh .
 	* annotate.cc diff_patch.cc crypto_tests.cc: Fix includes.

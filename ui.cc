@@ -13,7 +13,8 @@
 #include "platform.hh"
 #include "sanity.hh"
 #include "ui.hh"
-#include "transforms.hh"
+#include "charset.hh"
+#include "simplestring_xform.hh"
 #include "constants.hh"
 
 #include <iostream>

@@ -53,6 +53,12 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   if (t.empty() || t.find("transform") != t.end())
     add_transform_tests(suite);
   
+  if (t.empty() || t.find("charset") != t.end())
+    add_charset_tests(suite);
+  
+  if (t.empty() || t.find("simplestring_xform") != t.end())
+    add_simplestring_xform_tests(suite);
+  
   if (t.empty() || t.find("vocab") != t.end())
     add_vocab_tests(suite);
 

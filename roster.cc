@@ -19,6 +19,7 @@
 #include "revision.hh"
 #include "vocab.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "parallel_iter.hh"
 #include "restrictions.hh"
 #include "safe_map.hh"

@@ -29,7 +29,7 @@
 #include "sanity.hh"
 #include "cleanup.hh"
 #include "file_io.hh"
-#include "transforms.hh"
+#include "charset.hh"
 #include "ui.hh"
 #include "mt_version.hh"
 #include "options.hh"

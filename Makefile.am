@@ -11,7 +11,8 @@ MOST_SOURCES =								\
          commands.cc commands.hh $(CMD_SOURCES)				\
          diff_patch.cc diff_patch.hh					\
          lua.cc lua.hh lua_hooks.cc lua_hooks.hh			\
-         transforms.cc transforms.hh					\
+         transforms.cc transforms.hh charset.cc charset.hh		\
+         simplestring_xform.cc simplestring_xform.hh			\
          update.cc update.hh						\
          work.cc work.hh						\
          cert.cc cert.hh						\

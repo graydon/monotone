@@ -21,6 +21,7 @@
 #include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "vocab.hh"
 #include "cert.hh"
 #include "ui.hh"

@@ -3,6 +3,7 @@
 #include "keys.hh"
 #include "cert.hh"
 #include "transforms.hh"
+#include "charset.hh"
 #include "packet.hh"
 
 #include <sstream>

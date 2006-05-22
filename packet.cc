@@ -16,6 +16,7 @@
 #include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "keys.hh"
 #include "cert.hh"
 
