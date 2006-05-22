@@ -780,6 +780,23 @@ automate_inventory(std::vector<utf8> args,
     }
 }
 
+namespace 
+{
+  namespace syms 
+  {
+    symbol const key("key");
+    symbol const signature("signature");
+    symbol const name("name");
+    symbol const value("value");
+    symbol const trust("trust");
+
+    symbol const public_hash("public_hash");
+    symbol const private_hash("private_hash");
+    symbol const public_location("public_location");
+    symbol const private_location("private_location");
+  }
+};
+
 // Name: certs
 // Arguments:
 //   1: a revision id
@@ -863,7 +880,7 @@ automate_certs(std::vector<utf8> args,
       bool trusted = app.lua.hook_get_revision_cert_trust(signers, ident,
                                                           name, tv);
 
-      st.push_str_pair("key", keyid());
+      st.push_str_pair(syms::key, keyid());
 
       std::string stat;
       switch (status)
@@ -878,11 +895,11 @@ automate_certs(std::vector<utf8> args,
           stat = "unknown";
           break;
         }
-      st.push_str_pair("signature", stat);
+      st.push_str_pair(syms::signature, stat);
 
-      st.push_str_pair("name", name());
-      st.push_str_pair("value", tv());
-      st.push_str_pair("trust", (trusted ? "trusted" : "untrusted"));
+      st.push_str_pair(syms::name, name());
+      st.push_str_pair(syms::value, tv());
+      st.push_str_pair(syms::trust, (trusted ? "trusted" : "untrusted"));
 
       pr.print_stanza(st);
     }
@@ -1596,13 +1613,13 @@ automate_keys(std::vector<utf8> args, std::string const & help_name,
          i = items.begin(); i != items.end(); ++i)
     {
       basic_io::stanza stz;
-      stz.push_str_pair("name", i->first);
-      stz.push_hex_pair("public_hash", i->second.get<0>()());
+      stz.push_str_pair(syms::name, i->first);
+      stz.push_hex_pair(syms::public_hash, i->second.get<0>());
       if (!i->second.get<1>()().empty())
-        stz.push_hex_pair("private_hash", i->second.get<1>()());
-      stz.push_str_multi("public_location", i->second.get<2>());
+        stz.push_hex_pair(syms::private_hash, i->second.get<1>());
+      stz.push_str_multi(syms::public_location, i->second.get<2>());
       if (!i->second.get<3>().empty())
-        stz.push_str_multi("private_location", i->second.get<3>());
+        stz.push_str_multi(syms::private_location, i->second.get<3>());
       prt.print_stanza(stz);
     }
   output.write(prt.buf.data(), prt.buf.size());

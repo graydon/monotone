@@ -48,13 +48,6 @@ verify(path_component & val)
   val.ok = true;
 }
 
-inline bool is_xdigit(char x) 
-{ 
-  return ((x >= '0' && x <= '9')
-	  || (x >= 'a' && x <= 'f')
-	  || (x >= 'A' && x <= 'F'));
-}
-
 inline void 
 verify(hexenc<id> & val)
 {
@@ -87,6 +80,20 @@ verify(ace & val)
   val.ok = true;
 }
 
+inline void
+verify(symbol & val)
+{
+  if (val.ok)
+    return;
+
+  for (string::const_iterator i = val().begin(); i != val().end(); ++i)
+    {
+      N(is_alnum(*i) || *i == '_',
+	F("bad character '%c' in symbol '%s'") % *i % val);
+    }
+
+  val.ok = true;
+}
 
 inline void 
 verify(cert_name & val)
