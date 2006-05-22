@@ -8,6 +8,31 @@
 	* 12 others: Fix includes that relied on cert.hh being included
 	by vocab.hh .
 
+2006-05-21  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Split lua.cc into two files: lua_hooks.cc gets the lua_hooks class
+	and the one callback that needs an app_state, lua.cc gets everything
+	else.
+	* lua.{cc,hh}: Rename to lua_hooks.{cc,hh}. Move almost everything
+	except the lua_hooks class to...
+	* lua.{cc,hh}: New files.
+	* Makefile.am: Adjust accordingly.
+	* app_state.hh file_io.cc keys.cc transforms.hh: Adjust includes to
+	account for rename.
+
+2006-05-21  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Correct a translation that was clearly cut and pasted
+	but never changed.  What was I thinking?
+
+2006-05-21  Richard Levitte  <richard@levitte.org>
+
+	* debian/changelog: Updated from the latest Debian release.
+
+2006-05-20  Graydon Hoare    <graydon@pobox.com>
+
+	* figures/monotone-logo.svg: Add.
+
 2006-05-20  Derek Scherger  <derek@echologic.com>
 
 	* automate.cc: add basic_io symbols
