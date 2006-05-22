@@ -10,6 +10,7 @@
 ATOMIC_NOVERIFY(external);    // "external" string in unknown system charset
 ATOMIC_NOVERIFY(utf8);        // unknown string in UTF8 charset
 ATOMIC(ace);                  // unknown string in ACE form
+ATOMIC(symbol);               // valid basic io symbol (alphanumeric or _ chars)
 
 ATOMIC(path_component);       // piece of a path (see paths.hh)
 
@@ -44,7 +45,7 @@ ATOMIC_NOVERIFY(attr_value);
 DECORATE(revision);           // thing associated with a revision
 DECORATE(manifest);           // thing associated with a manifest
 DECORATE(file);               // thing associated with a file
-DECORATE(key);               // thing associated with a key
+DECORATE(key);                // thing associated with a key
 DECORATE(epoch);              // thing associated with an epoch
 
 ENCODING(gzip);               // thing which is gzipped
