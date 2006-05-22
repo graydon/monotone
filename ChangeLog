@@ -1,3 +1,27 @@
+2006-05-20  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc: add basic_io symbols
+	(hook_get_revision_cert_trust, automate_certs): push symbols
+	(automate_keys): push symbols and hexenc's 
+	* basic_io.{cc,hh}
+	(is_xdigit, is_alpha, is_alnum, is_space): move to vocab.hh
+	(push_hex_pair, push_hex_triple, push_str_pair, push_file_pair,
+	push_str_multi, push_str_triple, print_stanza): use symbol and
+	hexenc<id> in place of strings to avoid repeated/redundant
+	validations which account for 4% of the client profile of a fresh
+	pull of the monotone db
+	* cset.cc (print_cset): push symbols and hexenc's 
+	* legacy.cc (read_dot_mt_attrs, extract_renames,
+	get_manifest_and_renames_for_rev): parse symbols
+	* revision.cc (print_edge, print_stanza): push symbols and hexenc's
+	* roster.cc (push_marking, print_to): push symbols and hexenc's
+	* vocab.cc (is_xdigit): move to vocab.hh
+	(verify): new verification for symbol type
+	* vocab.hh (is_xdigit, is_alpha, is_alnum, is_space): add functions
+	from basic_io.hh 
+	* vocab_terms.hh (symbol): new ATOMIC type for basic_io symbols
+	which allow only [a-zA-Z0-9_]
+
 2006-05-21  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Split lua.cc into two files: lua_hooks.cc gets the lua_hooks class

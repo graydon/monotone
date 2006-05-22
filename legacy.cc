@@ -10,6 +10,14 @@
 
 namespace legacy
 {
+  namespace 
+  {
+    namespace syms
+    {
+      symbol const file("file");
+    }
+  };
+
   // cf. work.cc:read_attr_map in the pre-roster code.
   void
   read_dot_mt_attrs(data const & dat, dot_mt_attrs_map & attr)
@@ -22,14 +30,14 @@ namespace legacy
     
     attr.clear();
 
-    while (parser.symp("file"))
+    while (parser.symp(syms::file))
       {
         parser.sym();
         parser.str(file);
         file_path fp = file_path_internal(file);
         
         while (parser.symp() && 
-               !parser.symp("file"))
+               !parser.symp(syms::file))
           {
             parser.sym(name);
             parser.str(value);
@@ -42,17 +50,17 @@ namespace legacy
   {
     namespace syms
     {
-      std::string const new_manifest("new_manifest");
-      std::string const old_revision("old_revision");
-      std::string const old_manifest("old_manifest");
-      std::string const patch("patch");
-      std::string const from("from");
-      std::string const to("to");
-      std::string const add_file("add_file");
-      std::string const delete_file("delete_file");
-      std::string const delete_dir("delete_dir");
-      std::string const rename_file("rename_file");
-      std::string const rename_dir("rename_dir");
+      symbol const new_manifest("new_manifest");
+      symbol const old_revision("old_revision");
+      symbol const old_manifest("old_manifest");
+      symbol const patch("patch");
+      symbol const from("from");
+      symbol const to("to");
+      symbol const add_file("add_file");
+      symbol const delete_file("delete_file");
+      symbol const delete_dir("delete_dir");
+      symbol const rename_file("rename_file");
+      symbol const rename_dir("rename_dir");
     }
   }
   

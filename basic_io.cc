@@ -62,55 +62,37 @@ basic_io::escape(std::string const & s)
 basic_io::stanza::stanza() : indent(0)
 {}
 
-void basic_io::stanza::push_hex_pair(std::string const & k, std::string const & v)
+void basic_io::stanza::push_hex_pair(symbol const & k, hexenc<id> const & v)
 {
-  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(is_alnum(*i) || *i == '_');
-
-  for (std::string::const_iterator i = v.begin(); i != v.end(); ++i)
-    I(is_xdigit(*i));
-  
-  entries.push_back(std::make_pair(k, "[" + v + "]"));
-  if (k.size() > indent)
-    indent = k.size();
+  entries.push_back(std::make_pair(k, "[" + v() + "]"));
+  if (k().size() > indent)
+    indent = k().size();
 }
 
-void basic_io::stanza::push_hex_triple(std::string const & k, 
+void basic_io::stanza::push_hex_triple(symbol const & k, 
 				       std::string const & n, 
-				       std::string const & v)
+				       hexenc<id> const & v)
 {
-  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(is_alnum(*i) || *i == '_');
-
-  for (std::string::const_iterator i = v.begin(); i != v.end(); ++i)
-    I(is_xdigit(*i));
-  
-  entries.push_back(std::make_pair(k, escape(n) + " " + "[" + v + "]"));
-  if (k.size() > indent)
-    indent = k.size();
+  entries.push_back(std::make_pair(k, escape(n) + " " + "[" + v() + "]"));
+  if (k().size() > indent)
+    indent = k().size();
 }
 
-void basic_io::stanza::push_str_pair(std::string const & k, std::string const & v)
+void basic_io::stanza::push_str_pair(symbol const & k, std::string const & v)
 {
-  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(is_alnum(*i) || *i == '_');
-
   entries.push_back(std::make_pair(k, escape(v)));
-  if (k.size() > indent)
-    indent = k.size();
+  if (k().size() > indent)
+    indent = k().size();
 }
 
-void basic_io::stanza::push_file_pair(std::string const & k, file_path const & v)
+void basic_io::stanza::push_file_pair(symbol const & k, file_path const & v)
 {
   push_str_pair(k, v.as_internal());
 }
 
-void basic_io::stanza::push_str_multi(std::string const & k,
+void basic_io::stanza::push_str_multi(symbol const & k,
                                       std::vector<std::string> const & v)
 {
-  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(is_alnum(*i) || *i == '_');
-
   std::string val;
   bool first = true;
   for (std::vector<std::string>::const_iterator i = v.begin();
@@ -122,20 +104,17 @@ void basic_io::stanza::push_str_multi(std::string const & k,
       first = false;
     }
   entries.push_back(std::make_pair(k, val));
-  if (k.size() > indent)
-    indent = k.size();
+  if (k().size() > indent)
+    indent = k().size();
 }
 
-void basic_io::stanza::push_str_triple(std::string const & k, 
+void basic_io::stanza::push_str_triple(symbol const & k, 
 				       std::string const & n,
 				       std::string const & v)
 {
-  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(is_alnum(*i) || *i == '_');
-
   entries.push_back(std::make_pair(k, escape(n) + " " + escape(v)));
-  if (k.size() > indent)
-    indent = k.size();
+  if (k().size() > indent)
+    indent = k().size();
 }
 
 
@@ -151,12 +130,12 @@ void basic_io::printer::print_stanza(stanza const & st)
   if (LIKELY(!buf.empty()))
     buf += '\n';
 
-  for (std::vector<std::pair<std::string, std::string> >::const_iterator i = st.entries.begin();
+  for (std::vector<std::pair<symbol, std::string> >::const_iterator i = st.entries.begin();
        i != st.entries.end(); ++i)
     {
-      for (size_t k = i->first.size(); k < st.indent; ++k)
+      for (size_t k = i->first().size(); k < st.indent; ++k)
         buf += ' ';
-      buf.append(i->first);
+      buf.append(i->first());
       buf += ' ';
       buf.append(i->second);
       buf += '\n';

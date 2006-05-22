@@ -238,18 +238,18 @@ namespace
   namespace syms
   {
     // cset symbols
-    string const delete_node("delete");
-    string const rename_node("rename");
-    string const content("content");
-    string const add_file("add_file");
-    string const add_dir("add_dir");
-    string const patch("patch");
-    string const from("from");
-    string const to("to");
-    string const clear("clear");
-    string const set("set");
-    string const attr("attr");
-    string const value("value");
+    symbol const delete_node("delete");
+    symbol const rename_node("rename");
+    symbol const content("content");
+    symbol const add_file("add_file");
+    symbol const add_dir("add_dir");
+    symbol const patch("patch");
+    symbol const from("from");
+    symbol const to("to");
+    symbol const clear("clear");
+    symbol const set("set");
+    symbol const attr("attr");
+    symbol const value("value");
   }
 }
 
@@ -291,7 +291,7 @@ print_cset(basic_io::printer & printer,
       file_path p(i->first);
       basic_io::stanza st;
       st.push_file_pair(syms::add_file, file_path(i->first));
-      st.push_hex_pair(syms::content, i->second.inner()());
+      st.push_hex_pair(syms::content, i->second.inner());
       printer.print_stanza(st);
     }
 
@@ -301,8 +301,8 @@ print_cset(basic_io::printer & printer,
       file_path p(i->first);
       basic_io::stanza st;
       st.push_file_pair(syms::patch, file_path(i->first));
-      st.push_hex_pair(syms::from, i->second.first.inner()());
-      st.push_hex_pair(syms::to, i->second.second.inner()());
+      st.push_hex_pair(syms::from, i->second.first.inner());
+      st.push_hex_pair(syms::to, i->second.second.inner());
       printer.print_stanza(st);
     }
 

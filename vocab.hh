@@ -20,7 +20,36 @@
 template <typename T>
 void dump(T const &, std::string &);
 
+inline bool is_xdigit(char x) 
+{ 
+  return ((x >= '0' && x <= '9')
+	  || (x >= 'a' && x <= 'f')
+	  || (x >= 'A' && x <= 'F'));
+}
 
+inline bool is_alpha(char x)
+{
+  return ((x >= 'a' && x <= 'z')
+          || (x >= 'A' && x <= 'Z'));
+}
+
+inline bool is_alnum(char x)
+{
+  return ((x >= '0' && x <= '9')
+          || (x >= 'a' && x <= 'z')
+          || (x >= 'A' && x <= 'Z'));
+}
+
+inline bool is_space(char x)
+{
+  return (x == ' ') 
+    || (x == '\n')
+    || (x == '\t')
+    || (x == '\r')
+    || (x == '\v')
+    || (x == '\f');
+}
+      
 #define ENCODING(enc)                                  \
                                                        \
 template<typename INNER>                               \
