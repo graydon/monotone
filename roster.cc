@@ -2266,20 +2266,20 @@ namespace
   namespace syms
   {
     // roster symbols
-    string const format_version("format_version");
-    string const dir("dir");
-    string const file("file");
-    string const content("content");
-    string const attr("attr");
+    symbol const format_version("format_version");
+    symbol const dir("dir");
+    symbol const file("file");
+    symbol const content("content");
+    symbol const attr("attr");
     
     // 'local' roster and marking symbols
-    string const ident("ident");
-    string const birth("birth");
-    string const dormant_attr("dormant_attr");
+    symbol const ident("ident");
+    symbol const birth("birth");
+    symbol const dormant_attr("dormant_attr");
 
-    string const path_mark("path_mark");
-    string const content_mark("content_mark");
-    string const attr_mark("attr_mark");
+    symbol const path_mark("path_mark");
+    symbol const content_mark("content_mark");
+    symbol const attr_mark("attr_mark");
   }
 }
 
@@ -2291,17 +2291,17 @@ push_marking(basic_io::stanza & st,
 {
 
   I(!null_id(mark.birth_revision));
-  st.push_hex_pair(syms::birth, mark.birth_revision.inner()());
+  st.push_hex_pair(syms::birth, mark.birth_revision.inner());
 
   for (set<revision_id>::const_iterator i = mark.parent_name.begin();
        i != mark.parent_name.end(); ++i)
-    st.push_hex_pair(syms::path_mark, i->inner()());
+    st.push_hex_pair(syms::path_mark, i->inner());
 
   if (is_file_t(curr))
     {
       for (set<revision_id>::const_iterator i = mark.file_content.begin();
            i != mark.file_content.end(); ++i)
-        st.push_hex_pair(syms::content_mark, i->inner()());
+        st.push_hex_pair(syms::content_mark, i->inner());
     }
   else
     I(mark.file_content.empty());
@@ -2313,7 +2313,7 @@ push_marking(basic_io::stanza & st,
       I(am != mark.attrs.end());
       for (set<revision_id>::const_iterator j = am->second.begin();
            j != am->second.end(); ++j)
-        st.push_hex_triple(syms::attr_mark, i->first(), j->inner()());
+        st.push_hex_triple(syms::attr_mark, i->first(), j->inner());
     }
 }
 
@@ -2392,7 +2392,7 @@ roster_t::print_to(basic_io::printer & pr,
         {
           file_t ftmp = downcast_to_file_t(curr);
           st.push_file_pair(syms::file, fp);
-          st.push_hex_pair(syms::content, ftmp->content.inner()());
+          st.push_hex_pair(syms::content, ftmp->content.inner());
           // L(FL("printing file %s\n") % fp);
         }
 

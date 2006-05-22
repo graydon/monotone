@@ -11,6 +11,7 @@
 // revision_set. every revision_set contains a number of change_sets, so
 // their i/o routines are somewhat related.
 
+#include <cstdio>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -18,43 +19,10 @@
 
 #include "paths.hh"
 #include "sanity.hh"
-
-#include <cstdio>
+#include "vocab.hh"
 
 namespace basic_io
 {
-
-  inline bool is_xdigit(char x) 
-  { 
-    return ((x >= '0' && x <= '9')
-	    || (x >= 'a' && x <= 'f')
-	    || (x >= 'A' && x <= 'F'));
-  }
-
-  inline bool is_alpha(char x)
-  {
-    return ((x >= 'a' && x <= 'z')
-	    || (x >= 'A' && x <= 'Z'));
-  }
-
-  inline bool is_alnum(char x)
-  {
-    return ((x >= '0' && x <= '9')
-	    || (x >= 'a' && x <= 'z')
-	    || (x >= 'A' && x <= 'Z'));
-  }
-
-  inline bool is_space(char x)
-  {
-    return (x == ' ') 
-      || (x == '\n')
-      || (x == '\t')
-      || (x == '\r')
-      || (x == '\v')
-      || (x == '\f');
-  }
-	    
-      
 
   typedef enum
     {
@@ -250,13 +218,13 @@ namespace basic_io
   {
     stanza();
     size_t indent;  
-    std::vector<std::pair<std::string, std::string> > entries;
-    void push_hex_pair(std::string const & k, std::string const & v);
-    void push_hex_triple(std::string const & k, std::string const & n, std::string const & v);
-    void push_str_pair(std::string const & k, std::string const & v);
-    void push_str_triple(std::string const & k, std::string const & n, std::string const & v);
-    void push_file_pair(std::string const & k, file_path const & v);
-    void push_str_multi(std::string const & k,
+    std::vector<std::pair<symbol, std::string> > entries;
+    void push_hex_pair(symbol const & k, hexenc<id> const & v);
+    void push_hex_triple(symbol const & k, std::string const & n, hexenc<id> const & v);
+    void push_str_pair(symbol const & k, std::string const & v);
+    void push_str_triple(symbol const & k, std::string const & n, std::string const & v);
+    void push_file_pair(symbol const & k, file_path const & v);
+    void push_str_multi(symbol const & k,
                         std::vector<std::string> const & v);
   };
 
@@ -310,15 +278,15 @@ namespace basic_io
     inline void sym(std::string & v) { v = token; sym(); }
     inline void hex(std::string & v) { v = token; hex(); }
     inline bool symp() { return ttype == basic_io::TOK_SYMBOL; }
-    inline bool symp(std::string const & val) 
+    inline bool symp(symbol const & val) 
     {
-      return ttype == basic_io::TOK_SYMBOL && token == val;
+      return ttype == basic_io::TOK_SYMBOL && token == val();
     }
-    inline void esym(std::string const & val)
+    inline void esym(symbol const & val)
     {
-      if (!(ttype == basic_io::TOK_SYMBOL && token == val))
+      if (!(ttype == basic_io::TOK_SYMBOL && token == val()))
         err("wanted symbol '" 
-            + val +
+            + val() +
             + "', got "
             + tt2str(ttype)
             + (token.empty() 

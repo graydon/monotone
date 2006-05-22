@@ -1491,9 +1491,9 @@ namespace
 {
   namespace syms
   {
-    std::string const format_version("format_version");
-    std::string const old_revision("old_revision");
-    std::string const new_manifest("new_manifest");
+    symbol const format_version("format_version");
+    symbol const old_revision("old_revision");
+    symbol const new_manifest("new_manifest");
   }
 }
 
@@ -1502,7 +1502,7 @@ print_edge(basic_io::printer & printer,
            edge_entry const & e)
 {       
   basic_io::stanza st;
-  st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner()());
+  st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner());
   printer.print_stanza(st);
   print_cset(printer, edge_changes(e)); 
 }
@@ -1519,7 +1519,7 @@ print_revision(basic_io::printer & printer,
   printer.print_stanza(format_stanza);
 
   basic_io::stanza manifest_stanza; 
-  manifest_stanza.push_hex_pair(syms::new_manifest, rev.new_manifest.inner()());
+  manifest_stanza.push_hex_pair(syms::new_manifest, rev.new_manifest.inner());
   printer.print_stanza(manifest_stanza);
 
   for (edge_map::const_iterator edge = rev.edges.begin();
