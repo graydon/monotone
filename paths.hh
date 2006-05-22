@@ -102,6 +102,7 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "vocab.hh"
 

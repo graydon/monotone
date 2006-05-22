@@ -25,6 +25,7 @@
 
 #include "app_state.hh"
 #include "basic_io.hh"
+#include "cert.hh"
 #include "cset.hh"
 #include "constants.hh"
 #include "interner.hh"

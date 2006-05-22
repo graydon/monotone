@@ -17,7 +17,7 @@
 #include "paths.hh"
 
 struct patch_set;
-
+struct app_state;
 struct lua_State;
 
 class lua_hooks

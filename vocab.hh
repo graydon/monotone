@@ -20,107 +20,12 @@
 template <typename T>
 void dump(T const &, std::string &);
 
+#include "vocab_macros.hh"
+#define ENCODING(enc) hh_ENCODING(enc)
+#define DECORATE(dec) hh_DECORATE(dec)
+#define ATOMIC(ty) hh_ATOMIC(ty)
+#define ATOMIC_NOVERIFY(ty) hh_ATOMIC_NOVERIFY(ty)
 
-#define ENCODING(enc)                                  \
-                                                       \
-template<typename INNER>                               \
-class enc;                                             \
-                                                       \
-template <typename INNER>                              \
-std::ostream & operator<<(std::ostream &,              \
-                          enc<INNER> const &);         \
-                                                       \
-template <typename INNER>                              \
-void dump(enc<INNER> const &, std::string &);          \
-                                                       \
-template<typename INNER>                               \
-class enc {                                            \
-  INNER i;                                             \
-public:                                                \
-  bool ok;                                             \
-  enc() : ok(false) {}                                 \
-  enc(std::string const & s);                          \
-  enc(INNER const & inner);                            \
-  enc(enc<INNER> const & other);                       \
-  std::string const & operator()() const               \
-    { return i(); }                                    \
-  bool operator<(enc<INNER> const & x) const           \
-    { return i() < x(); }                              \
-  enc<INNER> const &                                   \
-  operator=(enc<INNER> const & other);                 \
-  bool operator==(enc<INNER> const & x) const          \
-    { return i() == x(); }                             \
-  friend std::ostream & operator<< <>(std::ostream &,  \
-                                 enc<INNER> const &);  \
-};
-
-
-#define DECORATE(dec)                                  \
-                                                       \
-template<typename INNER>                               \
-class dec;                                             \
-                                                       \
-template <typename INNER>                              \
-std::ostream & operator<<(std::ostream &,              \
-                          dec<INNER> const &);         \
-                                                       \
-template <typename INNER>                              \
-void dump(dec<INNER> const &, std::string &);          \
-                                                       \
-template<typename INNER>                               \
-class dec {                                            \
-  INNER i;                                             \
-public:                                                \
-  bool ok;                                             \
-  dec() : ok(false) {}                                 \
-  dec(INNER const & inner);                            \
-  dec(dec<INNER> const & other);                       \
-  bool operator<(dec<INNER> const & x) const           \
-    { return i < x.i; }                                \
-  INNER const & inner() const                          \
-    { return i; }                                      \
-  dec<INNER> const &                                   \
-  operator=(dec<INNER> const & other);                 \
-  bool operator==(dec<INNER> const & x) const          \
-    { return i == x.i; }                               \
-  friend std::ostream & operator<< <>(std::ostream &,  \
-                                 dec<INNER> const &);  \
-};
-
-
-#define ATOMIC(ty)                                     \
-class ty {                                             \
-  std::string s;                                       \
-public:                                                \
-  bool ok;                                             \
-  ty() : ok(false) {}                                  \
-  ty(std::string const & str);                         \
-  ty(ty const & other);                                \
-  std::string const & operator()() const               \
-    { return s; }                                      \
-  bool operator<(ty const & other) const               \
-    { return s < other(); }                            \
-  ty const & operator=(ty const & other);              \
-  bool operator==(ty const & other) const              \
-    { return s == other(); }                           \
-  bool operator!=(ty const & other) const              \
-    { return s != other(); }                           \
-  friend void verify(ty &);                            \
-  friend std::ostream & operator<<(std::ostream &,     \
-                                   ty const &);        \
-  struct symtab                                        \
-  {                                                    \
-    symtab();                                          \
-    ~symtab();                                         \
-  };                                                   \
-};                                                     \
-std::ostream & operator<<(std::ostream &, ty const &); \
-template <>                                            \
-void dump(ty const &, std::string &);
-
-#define ATOMIC_NOVERIFY(ty)                            \
-ATOMIC(ty)                                             \
-inline void verify(ty &) {}
 
 #ifdef HAVE_EXTERN_TEMPLATE
 #define EXTERN extern
@@ -173,15 +78,6 @@ struct keypair
 
 namespace boost { namespace filesystem { struct path; } }
 namespace fs = boost::filesystem;
-
-// kludge: certs are derived types. what else can we do?
-#ifndef __CERT_HH__
-#include "cert.hh"
-EXTERN template class revision<cert>;
-EXTERN template class manifest<cert>;
-#endif
-
-#undef EXTERN
 
 // diff type
 enum diff_type

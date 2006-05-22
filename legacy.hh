@@ -13,6 +13,8 @@
 
 #include "paths.hh"
 
+struct app_state;
+
 namespace legacy
 {
   ////////

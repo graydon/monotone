@@ -10,6 +10,7 @@
 
 #include "transforms.hh"
 #include "inodeprint.hh"
+#include "cert.hh"
 
 #include "cmd.hh"
 //

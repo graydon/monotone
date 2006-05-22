@@ -14,6 +14,7 @@
 #include "ui.hh"
 #include "vocab.hh"
 #include "transforms.hh"
+#include "cert.hh"
 
 // the database has roughly the following structure
 //

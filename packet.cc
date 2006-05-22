@@ -17,6 +17,7 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "keys.hh"
+#include "cert.hh"
 
 using namespace std;
 using boost::shared_ptr;

@@ -34,6 +34,17 @@ using boost::get;
 using boost::tuple;
 using boost::lexical_cast;
 
+// The alternaive is to #include "cert.hh" in vocab.*, which is even uglier.
+#include "vocab_macros.hh"
+cc_DECORATE(revision)
+cc_DECORATE(manifest)
+template <typename T>
+static inline void
+verify(T & val)
+{}
+template class revision<cert>;
+template class manifest<cert>;
+
 // FIXME: the bogus-cert family of functions is ridiculous
 // and needs to be replaced, or at least factored.
 

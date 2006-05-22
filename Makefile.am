@@ -21,7 +21,8 @@ MOST_SOURCES =								\
          keys.cc keys.hh						\
          packet.cc packet.hh						\
          sanity.cc sanity.hh						\
-         vocab.cc vocab.hh vocab_terms.hh numeric_vocab.hh		\
+         vocab.cc vocab.hh vocab_terms.hh				\
+         numeric_vocab.hh vocab_macros.hh				\
          rcs_file.cc rcs_file.hh					\
          xdelta.cc xdelta.hh						\
          ui.cc ui.hh							\

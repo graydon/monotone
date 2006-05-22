@@ -1,3 +1,13 @@
+2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Do not include cert.hh from vocab.hh .
+	* vocab_macros.hh vocab.{cc,hh} cert.{cc,hh}: Move the type definition
+	macros to vocab_macros.hh, and move revision<cert> and manifest<cert>
+	to cert.{cc,hh} .
+	* Makefile.am: Adjust for having a new file.
+	* 12 others: Fix includes that relied on cert.hh being included
+	by vocab.hh .
+
 2006-05-21  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Split lua.cc into two files: lua_hooks.cc gets the lua_hooks class

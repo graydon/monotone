@@ -26,6 +26,7 @@
 #include "vocab.hh"
 #include "keys.hh"
 #include "packet.hh"
+#include "cert.hh"
 
 static std::string const interface_version = "2.1";
 

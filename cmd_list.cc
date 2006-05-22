@@ -7,6 +7,7 @@
 #include "database.hh"
 #include "ui.hh"
 #include "keys.hh"
+#include "cert.hh"
 
 #include <iostream>
 using std::cout;

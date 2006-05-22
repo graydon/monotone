@@ -20,6 +20,8 @@
 #include "transforms.hh"
 #include "sanity.hh"
 #include "ui.hh"
+#include "cert.hh"
+#include "app_state.hh"
 
 // copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
