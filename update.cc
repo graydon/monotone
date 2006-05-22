@@ -17,6 +17,7 @@
 #include "ui.hh"
 #include "update.hh"
 #include "vocab.hh"
+#include "revision.hh"
 
 // these functions just encapsulate the (somewhat complex) logic behind
 // picking an update target. the actual updating takes place in

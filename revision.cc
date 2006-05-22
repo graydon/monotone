@@ -1625,6 +1625,16 @@ write_revision_set(revision_set const & rev,
   dat = revision_data(d);
 }
 
+void calculate_ident(revision_set const & cs,
+                     revision_id & ident)
+{
+  data tmp;
+  hexenc<id> tid;
+  write_revision_set(cs, tmp);
+  calculate_ident(tmp, tid);
+  ident = tid;
+}
+
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 #include "sanity.hh"

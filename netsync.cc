@@ -31,6 +31,7 @@
 #include "numeric_vocab.hh"
 #include "packet.hh"
 #include "refiner.hh"
+#include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"

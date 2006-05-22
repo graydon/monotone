@@ -1,5 +1,12 @@
 2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* transforms.{cc,hh} revision.{cc,hh} roster.{cc,hh} file_io.{cc,hh}:
+	Move calculate_ident for revision_set and roster to those files. Move
+	calulate_ident for files to file_io.
+	* 10 others: Fix includes.
+
+2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	Do not include cert.hh from vocab.hh .
 	* vocab_macros.hh vocab.{cc,hh} cert.{cc,hh}: Move the type definition
 	macros to vocab_macros.hh, and move revision<cert> and manifest<cert>

@@ -79,6 +79,10 @@ void read_directory(any_path const & path,
 // This function knows that "-" means "stdin".
 void read_data_for_command_line(utf8 const & path, data & dat);
 
+void calculate_ident(file_path const & file,
+                     hexenc<id> & ident, 
+                     lua_hooks & lua);
+
 // These are not any_path's because we make our write somewhat atomic -- we
 // first write to a temp file in _MTN/ (and it must be in _MTN/, not like /tmp
 // or something, because we can't necessarily atomic rename from /tmp to the

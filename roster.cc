@@ -2597,6 +2597,19 @@ write_manifest_of_roster(roster_t const & ros,
   write_roster_and_marking(ros, mm, dat, false);  
 }
 
+void calculate_ident(roster_t const & ros,
+                     manifest_id & ident)
+{
+  data tmp;
+  hexenc<id> tid;
+  if (!ros.all_nodes().empty())
+    {
+      write_manifest_of_roster(ros, tmp);
+      calculate_ident(tmp, tid);
+    }
+  ident = tid;
+}
+
 
 ////////////////////////////////////////////////////////////////////
 //   testing

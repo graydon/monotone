@@ -21,6 +21,7 @@
 #include "transforms.hh"
 #include "vocab.hh"
 #include "work.hh"
+#include "revision.hh"
 
 // workspace / book-keeping file code
 

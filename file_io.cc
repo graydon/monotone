@@ -488,6 +488,39 @@ write_data(system_path const & path,
                                              get_process_id()).str());
 }
 
+void 
+calculate_ident(file_path const & file,
+                hexenc<id> & ident,
+                lua_hooks & lua)
+{
+  string db_linesep, ext_linesep;
+  string db_charset, ext_charset;
+
+  bool do_lineconv = (lua.hook_get_linesep_conv(file, db_linesep, ext_linesep) 
+                      && db_linesep != ext_linesep);
+
+  bool do_charconv = (lua.hook_get_charset_conv(file, db_charset, ext_charset) 
+                      && db_charset != ext_charset);
+
+  if (do_charconv || do_lineconv)
+    {
+      data dat;
+      read_localized_data(file, dat, lua);
+      calculate_ident(dat, ident);
+    }
+  else
+    {
+      // no conversions necessary, use streaming form
+      // Best to be safe and check it isn't a dir.
+      assert_path_is_file(file);
+      Botan::Pipe p(new Botan::Hash_Filter("SHA-160"), new Botan::Hex_Encoder());
+      Botan::DataSource_Stream infile(file.as_external(), true);
+      p.process_msg(infile);
+
+      ident = lowercase(p.read_all_as_string());
+    }
+}
+
 tree_walker::~tree_walker() {}
 
 static void 

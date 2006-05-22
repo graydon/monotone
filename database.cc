@@ -30,6 +30,7 @@
 #include "database.hh"
 #include "hash_map.hh"
 #include "keys.hh"
+#include "revision.hh"
 #include "safe_map.hh"
 #include "sanity.hh"
 #include "schema_migration.hh"

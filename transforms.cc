@@ -280,66 +280,6 @@ void calculate_ident(revision_data const & dat,
   ident = tmp;
 }
 
-void calculate_ident(revision_set const & cs,
-                     revision_id & ident)
-{
-  data tmp;
-  hexenc<id> tid;
-  write_revision_set(cs, tmp);
-  calculate_ident(tmp, tid);
-  ident = tid;
-}
-
-// Variant which calculates the "manifest part" of a roster; this does
-// not include the local sequence numbers or markings, but produces
-// the manifest_id which is stored in the public revision_set object.
-void calculate_ident(roster_t const & ros,
-                     manifest_id & ident)
-{
-  data tmp;
-  hexenc<id> tid;
-  if (!ros.all_nodes().empty())
-    {
-      write_manifest_of_roster(ros, tmp);
-      calculate_ident(tmp, tid);
-    }
-  ident = tid;
-}
-
-// this might reasonably go in file_io.cc too...
-void 
-calculate_ident(file_path const & file,
-                hexenc<id> & ident,
-                lua_hooks & lua)
-{
-  string db_linesep, ext_linesep;
-  string db_charset, ext_charset;
-
-  bool do_lineconv = (lua.hook_get_linesep_conv(file, db_linesep, ext_linesep) 
-                      && db_linesep != ext_linesep);
-
-  bool do_charconv = (lua.hook_get_charset_conv(file, db_charset, ext_charset) 
-                      && db_charset != ext_charset);
-
-  if (do_charconv || do_lineconv)
-    {
-      data dat;
-      read_localized_data(file, dat, lua);
-      calculate_ident(dat, ident);
-    }
-  else
-    {
-      // no conversions necessary, use streaming form
-      // Best to be safe and check it isn't a dir.
-      assert_path_is_file(file);
-      Botan::Pipe p(new Botan::Hash_Filter("SHA-160"), new Botan::Hex_Encoder());
-      Botan::DataSource_Stream infile(file.as_external(), true);
-      p.process_msg(infile);
-
-      ident = lowercase(p.read_all_as_string());
-    }
-}
-
 void split_into_lines(std::string const & in,                 
                       std::string const & encoding,
                       std::vector<std::string> & out)

@@ -24,6 +24,7 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "vocab.hh"
+#include "revision.hh"
 
 using namespace std;
 using boost::shared_ptr;

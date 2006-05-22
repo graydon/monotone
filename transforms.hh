@@ -6,10 +6,7 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include "revision.hh"
-#include "lua_hooks.hh"
 #include "vocab.hh"
-#include "roster.hh"
 
 #include <vector>
 
@@ -125,21 +122,7 @@ void calculate_ident(manifest_data const & dat,
 void calculate_ident(revision_data const & dat,
                      revision_id & ident);
 
-void calculate_ident(revision_set const & cs,
-                     revision_id & ident);
 
-// Variant which calculates the "manifest part" of a roster; this does
-// not include the local sequence numbers or markings, but produces
-// the manifest_id which is stored in the public revision_set object.
-void calculate_ident(roster_t const & ros,
-                     manifest_id & ident);
-
-
-// quick streamy variant which doesn't necessarily load the whole file
-
-void calculate_ident(file_path const & file,
-                     hexenc<id> & ident, 
-                     lua_hooks & lua);
 
 void split_into_lines(std::string const & in,
                       std::vector<std::string> & out);

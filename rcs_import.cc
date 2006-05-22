@@ -36,6 +36,7 @@
 #include "paths.hh"
 #include "platform.hh"
 #include "rcs_file.hh"
+#include "revision.hh"
 #include "safe_map.hh"
 #include "sanity.hh"
 #include "transforms.hh"

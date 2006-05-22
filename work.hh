@@ -15,6 +15,7 @@
 #include "paths.hh"
 #include "roster.hh"
 #include "vocab.hh"
+#include "file_io.hh"
 
 //
 // this file defines structures to deal with the "workspace" of a tree
