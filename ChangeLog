@@ -1,3 +1,7 @@
+2006-05-23  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to change.
+
 2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* transforms.{cc,hh} charset.{cc,hh} simplestring_xform.{cc,hh}:
