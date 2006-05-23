@@ -1,3 +1,13 @@
+2006-05-23  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tester.cc tester.lua: New files, which will eventually become a
+	new testsuite system.
+	* Makefile.am: Break sanity.* and dependencies out as
+	SANITY_CORE_SOURCES. Break lua.* and non-sanity dependencies out
+	as LUAEXT_SOURCES. Right now these are just included into MOST_SOURCES,
+	maybe compile them into .a files later? New target tester also
+	uses these.
+
 2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* file_io.{cc,hh} localized_file_io.{cc,hh}: Split off the functions

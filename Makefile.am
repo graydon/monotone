@@ -6,36 +6,41 @@ CMD_SOURCES =								\
 	cmd_merging.cc cmd_db.cc cmd_diff_log.cc cmd_ws_commit.cc	\
 	cmd_othervcs.cc cmd_automate.cc cmd_files.cc
 
+SANITY_CORE_SOURCES =							\
+	sanity.cc sanity.hh ui.cc ui.hh quick_alloc.hh			\
+	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh		\
+	charset.cc charset.hh						\
+	simplestring_xform.cc simplestring_xform.hh			\
+	constants.cc constants.hh numeric_vocab.hh paths.cc paths.hh	\
+	interner.hh hash_map.hh platform.hh
+
+LUAEXT_SOURCES =							\
+	lua.cc lua.hh mkstemp.cc mkstemp.hh file_io.cc file_io.hh	\
+	globish.cc globish.hh basic_io.cc basic_io.hh
+
 MOST_SOURCES =								\
+	 $(SANITY_CORE_SOURCES)	$(LUAEXT_SOURCES)			\
 	 app_state.cc app_state.hh					\
          commands.cc commands.hh $(CMD_SOURCES)				\
          diff_patch.cc diff_patch.hh					\
-         lua.cc lua.hh lua_hooks.cc lua_hooks.hh			\
-         transforms.cc transforms.hh charset.cc charset.hh		\
-         simplestring_xform.cc simplestring_xform.hh			\
+         lua_hooks.cc lua_hooks.hh					\
+         transforms.cc transforms.hh					\
          update.cc update.hh						\
          work.cc work.hh						\
          cert.cc cert.hh						\
          database.cc database.hh					\
          key_store.cc key_store.hh					\
-         file_io.cc file_io.hh localized_file_io.cc localized_file_io.hh\
+         localized_file_io.cc localized_file_io.hh			\
          keys.cc keys.hh						\
          packet.cc packet.hh						\
-         sanity.cc sanity.hh						\
-         vocab.cc vocab.hh vocab_terms.hh				\
-         numeric_vocab.hh vocab_macros.hh				\
          rcs_file.cc rcs_file.hh					\
          xdelta.cc xdelta.hh						\
-         ui.cc ui.hh							\
          schema_migration.cc schema_migration.hh			\
-         constants.cc constants.hh					\
          refiner.cc refiner.hh						\
          enumerator.cc enumerator.hh					\
          netsync.cc netsync.hh						\
          netcmd.cc netcmd.hh						\
          merkle_tree.cc merkle_tree.hh					\
-         basic_io.cc basic_io.hh					\
-         mkstemp.cc mkstemp.hh						\
          lcs.cc lcs.hh							\
          rcs_import.cc rcs_import.hh					\
          revision.cc revision.hh					\
@@ -50,21 +55,19 @@ MOST_SOURCES =								\
          annotate.cc annotate.hh					\
          restrictions.cc restrictions.hh				\
          hmac.cc hmac.hh                                                \
-         globish.cc globish.hh                                          \
          string_queue.cc string_queue.hh                                \
-         paths.cc paths.hh                                              \
          roster_merge.cc roster_merge.hh                                \
          merge.cc merge.hh                                              \
          legacy.cc legacy.hh                                            \
                                                                         \
          lru_cache.h                                                    \
                                                                         \
-	 cleanup.hh unit_tests.hh interner.hh				\
-         cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
+	 cleanup.hh unit_tests.hh 					\
+         cycle_detector.hh randomfile.hh adler32.hh 			\
 	 netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
          package_full_revision.c package_full_revision.h options.hh	\
-         i18n.h hash_map.hh parallel_iter.hh safe_map.hh pch.hh
+         i18n.h parallel_iter.hh safe_map.hh pch.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -232,11 +235,12 @@ WIN32_PLATFORM_SOURCES = \
 bin_PROGRAMS = mtn
 check_PROGRAMS = unit_tests
 noinst_PROGRAMS = txt2c 
-EXTRA_PROGRAMS = usher 
+EXTRA_PROGRAMS = usher tester
 
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
 usher_SOURCES = contrib/usher.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
+tester_SOURCES = $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) tester.cc
 
 txt2c_SOURCES = txt2c.cc
 
@@ -300,6 +304,10 @@ unit_tests_LDFLAGS =
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
 unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
 
+tester_LDFLAGS = 
+tester_CPPFLAGS = -I$(top_srcdir)/lua
+tester_CXXFLAGS = $(AM_CXXFLAGS)
+
 # conditionals from configury
 
 if STATIC_BOOST
@@ -309,13 +317,16 @@ if STATIC_BOOST
   mtn_LDADD = lib3rdparty.a $(BOOSTLIBS)
   unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
                      @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
+  tester_LDADD = lib3rdparty.a
 else
   mtn_LDADD = lib3rdparty.a
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework$(BOOST_SUFFIX)
+  tester_LDADD = lib3rdparty.a
 endif
 
 mtn_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 unit_tests_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
+tester_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
@@ -382,7 +393,7 @@ EXTRA_DIST = $(man1_MANS) \
              monotone.html \
              texinfo.css \
 	     schema.sql views.sql \
-	     std_hooks.lua test_hooks.lua \
+	     std_hooks.lua test_hooks.lua tester.lua \
 	     testsuite.at \
 	     $(wildcard $(srcdir)/tests/t_*.at) \
 	     testsuite \
@@ -480,7 +491,8 @@ $(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
+BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h tester.h \
+                      schema.h views.h \
                       package_revision.c \
                       package_full_revision.txt package_full_revision_raw.txt package_full_revision.c \
                       $(PCH_FILE) $(PCH_BUILD)
