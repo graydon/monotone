@@ -185,6 +185,11 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
 	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
       require_password(key, app);
     }
+  else
+    {
+      E(app.bind_stdio,
+	F("The --no-transport-auth option is only permitted in combination with --stdio"));
+    }
 
   app.db.ensure_open();
 

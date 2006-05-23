@@ -1,5 +1,9 @@
 2006-05-22  Graydon Hoare  <graydon@pobox.com>
 
+	* cmd_netsync.cc (serve): Make --no-transport-auth require --stdio.
+
+2006-05-22  Graydon Hoare  <graydon@pobox.com>
+
 	* Makefile.am: Add uri.{cc,hh}.
 	* app_state.{cc,hh} (use_transport_auth): New state variable.
 	* cmd_netsync.cc (serve): Support use_transport_auth.
