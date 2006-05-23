@@ -13,7 +13,7 @@
 #include "app_state.hh"
 #include "basic_io.hh"
 #include "cset.hh"
-#include "file_io.hh"
+#include "localized_file_io.hh"
 #include "platform.hh"
 #include "restrictions.hh"
 #include "sanity.hh"

@@ -18,7 +18,7 @@ MOST_SOURCES =								\
          cert.cc cert.hh						\
          database.cc database.hh					\
          key_store.cc key_store.hh					\
-         file_io.cc file_io.hh						\
+         file_io.cc file_io.hh localized_file_io.cc localized_file_io.hh\
          keys.cc keys.hh						\
          packet.cc packet.hh						\
          sanity.cc sanity.hh						\

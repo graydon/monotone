@@ -1,5 +1,13 @@
 2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* file_io.{cc,hh} localized_file_io.{cc,hh}: Split off the functions
+	that use lua_hooks (to get localization settings) into a separate file.
+	* Makefile.am: Adjust for having new files.
+	* roster.cc work.cc diff_patch.cc cmd_diff_log.cc:
+	* cmd_files.cc cmd_ws_commit.cc: Adjust includes.
+
+2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* transforms.{cc,hh} charset.{cc,hh} simplestring_xform.{cc,hh}:
 	Split up transforms.cc . Hex, base64, gzip, and ident stay in
 	transforms. Simple string stuff (no botan or idna) goes in

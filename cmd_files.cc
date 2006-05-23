@@ -5,6 +5,7 @@
 #include "packet.hh"
 #include "annotate.hh"
 #include "diff_patch.hh"
+#include "localized_file_io.hh"
 
 #include <iostream>
 using std::cout;

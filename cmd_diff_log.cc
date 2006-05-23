@@ -4,6 +4,7 @@
 #include "transforms.hh"
 #include "simplestring_xform.hh"
 #include "restrictions.hh"
+#include "localized_file_io.hh"
 
 using std::set;
 #include <map>

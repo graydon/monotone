@@ -27,6 +27,7 @@
 #include "vocab.hh"
 #include "revision.hh"
 #include "constants.hh"
+#include "localized_file_io.hh"
 
 using namespace std;
 using boost::shared_ptr;
