@@ -39,6 +39,7 @@
 #include "platform.hh"
 #include "hmac.hh"
 #include "globish.hh"
+#include "uri.hh"
 
 #include "botan/botan.h"
 
@@ -428,6 +429,7 @@ session:
                         transaction_guard & guard);
 
   // Various helpers.
+  void assume_corresponding_role(protocol_role their_role);
   void respond_to_confirm_cmd();
   bool data_exists(netcmd_item_type type, 
                    id const & item);
@@ -465,8 +467,8 @@ session::session(protocol_role role,
   remote_peer_key_hash(""),
   remote_peer_key_name(""),
   session_key(constants::netsync_key_initializer),
-  read_hmac(constants::netsync_key_initializer),
-  write_hmac(constants::netsync_key_initializer),
+  read_hmac(constants::netsync_key_initializer, app.use_transport_auth),
+  write_hmac(constants::netsync_key_initializer, app.use_transport_auth),
   authenticated(false),
   last_io_time(::time(NULL)),
   byte_in_ticker(NULL),
@@ -690,12 +692,15 @@ session::set_session_key(string const & key)
 void
 session::set_session_key(rsa_oaep_sha_data const & hmac_key_encrypted)
 {
-  keypair our_kp;
-  load_key_pair(app, app.signing_key, our_kp);
-  string hmac_key;
-  decrypt_rsa(app.lua, app.signing_key, our_kp.priv,
-              hmac_key_encrypted, hmac_key);
-  set_session_key(hmac_key);
+  if (app.use_transport_auth)
+    {
+      keypair our_kp;
+      load_key_pair(app, app.signing_key, our_kp);
+      string hmac_key;
+      decrypt_rsa(app.lua, app.signing_key, our_kp.priv,
+                  hmac_key_encrypted, hmac_key);
+      set_session_key(hmac_key);
+    }
 }
 
 void
@@ -1041,7 +1046,8 @@ session::queue_hello_cmd(rsa_keypair_id const & key_name,
                          id const & nonce) 
 {
   rsa_pub_key pub;
-  decode_base64(pub_encoded, pub);
+  if (app.use_transport_auth)
+    decode_base64(pub_encoded, pub);
   cmd.write_hello_cmd(key_name, pub, nonce);
   write_netcmd_and_try_flush(cmd);
 }
@@ -1055,8 +1061,9 @@ session::queue_anonymous_cmd(protocol_role role,
 {
   netcmd cmd;
   rsa_oaep_sha_data hmac_key_encrypted;
-  encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
-              nonce2(), hmac_key_encrypted);
+  if (app.use_transport_auth)
+    encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
+                nonce2(), hmac_key_encrypted);
   cmd.write_anonymous_cmd(role, include_pattern, exclude_pattern,
                           hmac_key_encrypted);
   write_netcmd_and_try_flush(cmd);
@@ -1075,6 +1082,7 @@ session::queue_auth_cmd(protocol_role role,
 {
   netcmd cmd;
   rsa_oaep_sha_data hmac_key_encrypted;
+  I(app.use_transport_auth);
   encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
               nonce2(), hmac_key_encrypted);
   cmd.write_auth_cmd(role, include_pattern, exclude_pattern, client,
@@ -1195,60 +1203,61 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == 0);
-  
-  hexenc<id> their_key_hash;
+
   base64<rsa_pub_key> their_key_encoded;
-  encode_base64(their_key, their_key_encoded);
-  key_hash_code(their_keyname, their_key_encoded, their_key_hash);
-  L(FL("server key has name %s, hash %s\n") % their_keyname % their_key_hash);
-  var_key their_key_key(known_servers_domain, var_name(peer_id));
-  if (app.db.var_exists(their_key_key))
+
+  if (app.use_transport_auth)
     {
-      var_value expected_key_hash;
-      app.db.get_var(their_key_key, expected_key_hash);
-      if (expected_key_hash() != their_key_hash())
+      hexenc<id> their_key_hash;
+      encode_base64(their_key, their_key_encoded);
+      key_hash_code(their_keyname, their_key_encoded, their_key_hash);
+      L(FL("server key has name %s, hash %s\n") % their_keyname % their_key_hash);
+      var_key their_key_key(known_servers_domain, var_name(peer_id));
+      if (app.db.var_exists(their_key_key))
         {
-          P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-              "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
-              "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-              "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"
-              "it is also possible that the server key has just been changed\n"
-              "remote host sent key %s\n"
-              "I expected %s\n"
-              "'%s unset %s %s' overrides this check\n")
-            % their_key_hash % expected_key_hash
-            % app.prog_name % their_key_key.first % their_key_key.second);
-          E(false, F("server key changed"));
+          var_value expected_key_hash;
+          app.db.get_var(their_key_key, expected_key_hash);
+          if (expected_key_hash() != their_key_hash())
+            {
+              P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+                  "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
+                  "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+                  "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"
+                  "it is also possible that the server key has just been changed\n"
+                  "remote host sent key %s\n"
+                  "I expected %s\n"
+                  "'%s unset %s %s' overrides this check\n")
+                % their_key_hash % expected_key_hash
+                % app.prog_name % their_key_key.first % their_key_key.second);
+              E(false, F("server key changed"));
+            }
         }
-    }
-  else
-    {
-      P(F("first time connecting to server %s\n"
-          "I'll assume it's really them, but you might want to double-check\n"
-          "their key's fingerprint: %s\n") % peer_id % their_key_hash);
-      app.db.set_var(their_key_key, var_value(their_key_hash()));
-    }
-  if (!app.db.public_key_exists(their_key_hash))
-    {
-      W(F("saving public key for %s to database\n") % their_keyname);
-      app.db.put_key(their_keyname, their_key_encoded);
-    }
+      else
+        {
+          P(F("first time connecting to server %s\n"
+              "I'll assume it's really them, but you might want to double-check\n"
+              "their key's fingerprint: %s\n") % peer_id % their_key_hash);
+          app.db.set_var(their_key_key, var_value(their_key_hash()));
+        }
+      if (!app.db.public_key_exists(their_key_hash))
+        {
+          W(F("saving public key for %s to database\n") % their_keyname);
+          app.db.put_key(their_keyname, their_key_encoded);
+        }
+      {
+        hexenc<id> hnonce;
+        encode_hexenc(nonce, hnonce);
+        L(FL("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
+          % their_key_hash % hnonce);
+      }
+
+      I(app.db.public_key_exists(their_key_hash));
   
-  {
-    hexenc<id> hnonce;
-    encode_hexenc(nonce, hnonce);
-    L(FL("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
-      % their_key_hash % hnonce);
-  }
-  
-  I(app.db.public_key_exists(their_key_hash));
-  
-  // save their identity 
-  {
-    id their_key_hash_decoded;
-    decode_hexenc(their_key_hash, their_key_hash_decoded);
-    this->remote_peer_key_hash = their_key_hash_decoded;
-  }
+      // save their identity 
+      id their_key_hash_decoded;
+      decode_hexenc(their_key_hash, their_key_hash_decoded);
+      this->remote_peer_key_hash = their_key_hash_decoded;
+    }
 
   // clients always include in the synchronization set, every branch that the
   // user requested
@@ -1265,7 +1274,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 
   setup_client_tickers();
     
-  if (app.signing_key() != "")
+  if (app.use_transport_auth && 
+      app.signing_key() != "")
     {
       // get our key pair
       keypair our_kp;
@@ -1298,7 +1308,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 }
 
 bool 
-session::process_anonymous_cmd(protocol_role role, 
+session::process_anonymous_cmd(protocol_role their_role, 
                                utf8 const & their_include_pattern,
                                utf8 const & their_exclude_pattern)
 {
@@ -1315,20 +1325,26 @@ session::process_anonymous_cmd(protocol_role role,
   //
 
   // Client must be a sink and server must be a source (anonymous
-  // read-only).
+  // read-only), unless transport auth is disabled. 
+  // 
+  // If running in no-transport-auth mode, we operate anonymously and
+  // permit adoption of any role.
 
-  if (role != sink_role)
+  if (app.use_transport_auth)
     {
-      W(F("rejected attempt at anonymous connection for write\n"));
-      this->saved_nonce = id("");
-      return false;
-    }
-
-  if (this->role != source_role && this->role != source_and_sink_role)
-    {
-      W(F("rejected attempt at anonymous connection while running as sink\n"));
-      this->saved_nonce = id("");
-      return false;
+      if (their_role != sink_role)
+        {
+          W(F("rejected attempt at anonymous connection for write\n"));
+          this->saved_nonce = id("");
+          return false;
+        }
+      
+      if (this->role == sink_role)
+        {
+          W(F("rejected attempt at anonymous connection while running as sink\n"));
+          this->saved_nonce = id("");
+          return false;
+        }
     }
 
   vector<string> branchnames;
@@ -1344,7 +1360,8 @@ session::process_anonymous_cmd(protocol_role role,
             error((F("not serving branch '%s'") % *i).str());
             return true;
           }
-        else if (!app.lua.hook_get_netsync_read_permitted(*i))
+        else if (app.use_transport_auth &&
+                 !app.lua.hook_get_netsync_read_permitted(*i))
           {
             error((F("anonymous access to branch '%s' denied by server") % *i).str());
             return true;
@@ -1353,15 +1370,46 @@ session::process_anonymous_cmd(protocol_role role,
           ok_branches.insert(utf8(*i));
     }
 
-  P(F("allowed anonymous read permission for '%s' excluding '%s'\n")
-    % their_include_pattern % their_exclude_pattern);
+  if (app.use_transport_auth)
+    {
+      P(F("allowed anonymous read permission for '%s' excluding '%s'\n")
+        % their_include_pattern % their_exclude_pattern);
+      this->role = source_role;
+    }
+  else
+    {
+      P(F("allowed anonymous read/write permission for '%s' excluding '%s'\n")
+        % their_include_pattern % their_exclude_pattern);
+      assume_corresponding_role(their_role);
+    }
 
   rebuild_merkle_trees(app, ok_branches);
 
   this->remote_peer_key_name = rsa_keypair_id("");
   this->authenticated = true;
-  this->role = source_role;
   return true;
+}
+
+void
+session::assume_corresponding_role(protocol_role their_role)
+{
+  // Assume the (possibly degraded) opposite role.
+  switch (their_role)
+    {
+    case source_role:
+      I(this->role != source_role);
+      this->role = sink_role;
+      break;
+      
+    case source_and_sink_role:
+      I(this->role == source_and_sink_role);
+      break;
+      
+    case sink_role:
+      I(this->role != sink_role);
+      this->role = source_role;
+      break;          
+    }
 }
 
 bool
@@ -1499,23 +1547,7 @@ session::process_auth_cmd(protocol_role their_role,
       this->authenticated = true;
       this->remote_peer_key_name = their_id;
 
-      // Assume the (possibly degraded) opposite role.
-      switch (their_role)
-        {
-        case source_role:
-          I(this->role != source_role);
-          this->role = sink_role;
-          break;
-
-        case source_and_sink_role:
-          I(this->role == source_and_sink_role);
-          break;
-
-        case sink_role:
-          I(this->role != sink_role);
-          this->role = source_role;
-          break;          
-        }
+      assume_corresponding_role(their_role);
       return true;
     }
   else
@@ -2038,6 +2070,7 @@ session::dispatch_payload(netcmd const & cmd,
           % hnonce1);
 
         set_session_key(hmac_key_encrypted);
+
         if (!process_auth_cmd(role, their_include_pattern, their_exclude_pattern,
                               client, nonce1, signature))
             return false;
@@ -2126,7 +2159,8 @@ void
 session::begin_service()
 {
   keypair kp;
-  app.keys.get_key_pair(app.signing_key, kp);
+  if (app.use_transport_auth)
+    app.keys.get_key_pair(app.signing_key, kp);
   queue_hello_cmd(app.signing_key, kp.pub, mk_nonce());
 }
 
@@ -2214,144 +2248,31 @@ bool session::process(transaction_guard & guard)
 }
 
 
-static bool 
-parse_ssh_url(const std::string & address,
-              std::string & host,
-              std::string & user,
-              std::string & port,
-              std::string & dbpath)
-{
-  std::string::size_type 
-    wordbegin = 0,
-    wordend = std::string::npos;
-
-  if (address.size() >= 2 && 
-      address.substr(wordbegin, 2) == "//") 
-    wordbegin += 2;
-  
-  wordend = address.find_first_of("@:/", wordbegin);
-  
-  if (wordend == string::npos) 
-    return false;
-  
-  if (address.at(wordend) == '@') 
-    {  
-      user = address.substr(wordbegin, wordend - wordbegin);
-      wordbegin = wordend + 1;
-      wordend = address.find_first_of(":/", wordbegin);
-      if (wordend == string::npos) 
-        return false;
-    }
-
-  if (address.at(wordend) == ':')
-    {  
-      host = address.substr(wordbegin, wordend-wordbegin);
-      wordbegin = wordend + 1;
-      wordend = address.find_first_of("/", wordbegin);
-      if (wordend == string::npos)
-        return false;
-    }
-
-  if (address.at(wordend) != '/')
-    return false;
-
-  if (wordbegin == wordend)
-    return false; // empty port/host
-
-  if (host.empty()) 
-    host = address.substr(wordbegin, wordend-wordbegin);
-  else 
-    port = address.substr(wordbegin, wordend-wordbegin);
-
-  dbpath = address.substr(wordend); // with leading '/' !
-  return true;
-}
-
 static shared_ptr<Netxx::StreamBase> 
-build_stream_to_server(utf8 const & include_pattern,
+build_stream_to_server(app_state & app,
+                       utf8 const & include_pattern,
                        utf8 const & exclude_pattern,
                        utf8 const & address,
                        Netxx::port_type default_port,
                        Netxx::Timeout timeout)
 {
   shared_ptr<Netxx::StreamBase> server;
-
-  if (address().size() > 5 && 
-      address().substr(0,5)=="file:")
-    {  
-      std::vector<std::string> args;
-      std::string db_path = address().substr(5);
-      if (global_sanity.debug) 
-        args.push_back("--debug");
-      else
-        args.push_back("--quiet");
-
-      args.push_back("--db");
-      args.push_back(db_path);
-
-      if (exclude_pattern().size())
-        { 
-          args.push_back("--exclude");
-          args.push_back(exclude_pattern());
-        }
-
-      args.push_back("serve");
-      args.push_back("--stdio");
-      args.push_back(include_pattern());
-    
+  uri u;
+  vector<string> argv;
+  if (parse_uri(address(), u) 
+      && app.lua.hook_get_netsync_connect_command(u, 
+                                                  include_pattern(),
+                                                  exclude_pattern(),
+                                                  global_sanity.debug,
+                                                  argv))
+    {
+      I(argv.size() > 0);
+      string cmd = argv[0];
+      argv.erase(argv.begin());
+      app.use_transport_auth = app.lua.hook_use_transport_auth(u);
       return shared_ptr<Netxx::StreamBase>
-        (new Netxx::PipeStream("mtn", args));
-    }
-
-  else if (address().size() > 4 && 
-           address().substr(0,4)=="ssh:")
-    {  
-      std::vector<std::string> args;
-      std::string user, host, port, db_path;
-
-      if (!parse_ssh_url(address().substr(4),
-                         host, user, port, db_path))
-        {  
-          N(false, 
-            F("url %s is not of form "
-              "ssh:[//]user@host:port/dbpath\n") % address());
-        }
-
-      if (!port.empty()) 
-        {  
-          args.push_back("-p");
-          args.push_back(port);
-        }
-
-      if (!user.empty()) 
-        {  
-          args.push_back("-l");
-          args.push_back(user);
-        }
-
-      args.push_back(host);
-      args.push_back("mtn");
-
-      if (global_sanity.debug) 
-        args.push_back("--debug");
-      else
-        args.push_back("--quiet");
-
-      args.push_back("--db");
-      args.push_back(db_path);
-
-      if (exclude_pattern().size())
-        { 
-          args.push_back("--exclude");
-          args.push_back(exclude_pattern());
-        }
-
-      args.push_back("--stdio");
-      args.push_back("serve");
-      args.push_back(include_pattern());
-
-      return shared_ptr<Netxx::StreamBase>
-        (new Netxx::PipeStream("ssh", args));
+        (new Netxx::PipeStream(cmd, argv));
+      
     }
   else 
     { 
@@ -2386,7 +2307,8 @@ call_server(protocol_role role,
   P(F("connecting to %s\n") % address());
 
   shared_ptr<Netxx::StreamBase> server 
-    = build_stream_to_server(include_pattern,
+    = build_stream_to_server(app, 
+                             include_pattern,
                              exclude_pattern,
                              address, default_port, 
                              timeout);

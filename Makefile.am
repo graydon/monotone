@@ -55,6 +55,7 @@ MOST_SOURCES =								\
          roster_merge.cc roster_merge.hh                                \
          merge.cc merge.hh                                              \
          legacy.cc legacy.hh                                            \
+	 uri.cc uri.hh                                                  \
                                                                         \
          lru_cache.h                                                    \
                                                                         \

@@ -67,6 +67,7 @@ public:
   utf8 bind_address;
   utf8 bind_port;
   bool bind_stdio;
+  bool use_transport_auth;
   bool missing;
   bool unknown;
   std::vector<rsa_keypair_id> keys_to_push;

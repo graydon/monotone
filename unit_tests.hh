@@ -39,5 +39,6 @@ void add_paths_tests(test_suite * suite);
 void add_roster_tests(test_suite * suite);
 void add_roster_merge_tests(test_suite * suite);
 void add_restrictions_tests(test_suite * suite);
+void add_uri_tests(test_suite * suite);
 
 #endif

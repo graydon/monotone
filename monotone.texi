@@ -2303,11 +2303,11 @@ change, and two problems are starting to cause occasional difficulties.
 
 @itemize
 @item
-Firstly, Jim is finding that he has to spend more of his time
+First, Jim is finding that he has to spend more of his time
 travelling, demonstrating the new juicebot features to customers; thus
 his laptop is spending more time disconnected from the network, or
 connected at dynamic addresses where it's not convenient for Abe and
-Beth to find him and sync. 
+Beth to find him and sync.
 
 This doesn't prevent them doing any work, but it does have some
 uncomfortable consequences: they're more likely to have to manually
@@ -2318,11 +2318,11 @@ suffers a disk failure before they've had a chance to sync that work
 with another database.
 
 @item
-Secondly, because Jim has been using the one database file both
-for his own local work, and for serving to the others in the team, he
+Second, because Jim has been using the one database file both for his
+own local work, and for serving to the others in the team, he
 occasionally finds that the monotone serve process (busy syncing with
 Abe or Beth) has a lock on the database, while he's trying to do local
-work like updates or commits.  
+work like updates or commits.
 
 The level of project activity is picking up, and there are more and more
 changes to be synced in the narrower window of time while Jim is
@@ -2555,6 +2555,7 @@ and tutorial, and possibly spent some time playing with the program to
 familiarize yourself with its operation.
 
 @menu
+* Other Transports::       Using netsync over SSH, or other transports.
 * Selectors::              Selecting revisions by certificate.
 * Restrictions::           Limit workspace changes to specified files.
 * Scripting::              Running monotone from other programs.
@@ -2571,6 +2572,58 @@ familiarize yourself with its operation.
 * Using packets::          Transferring data ``by hand''.
 @end menu
 
+@page
+@node    Other Transports
+@section Other Transports
+
+Monotone's database synchronization system is based on a protocol
+called netsync. By default, monotone transports this protocol over a
+plain TCP connection, but this is not the only transport monotone can
+use. It can also transport netsync through SSH, or any program which
+can provide a full-duplex connection over @code{stdio}.
+
+When a monotone client initiates a push, pull, or sync operation, it
+parses the first command-line argument as a URI and calls a lua hook
+to convert that URI into a @dfn{connection command}. If the lua hook
+returns a connection command, monotone spawns the command locally and
+speaks netsync over a pipe connected to the command's standard I/O
+handles. 
+
+If the lua hook does not return a connection command, monotone
+attempts to parse the command-line argument as a TCP address -- a
+hostname with an optional port number -- connects a TCP socket the
+host and port, and speaks netsync over the socket.
+
+By default, monotone understands two URI schemes:
+
+@enumerate
+@item SSH URIs, of the form 
+  @code{ssh://[@var{user}@@]@var{hostname}[:@var{port}]/@var{path/to/db.mtn}},
+  to synchronize between private databases on hosts accessible only through SSH.
+@item File URIs, of the form
+  @code{file:@var{/path/to/db.mtn}}, to synchronize between local databases.
+@end enumerate
+
+In the case of SSH URIs, the @command{ssh} program must be in your
+command execution path, either @var{$PATH} on Unix-like systems or
+@var{%PATH%} on Windows systems. Monotone will execute @command{ssh}
+as a subprocess, running @command{mtn serve} on the other end of the
+SSH connection. You will need @command{mtn} to be in the command
+execution path of the remote shell environment.
+
+In the case of File URIs, @command{mtn} is run locally, so must be 
+in your command execution path. 
+
+In both cases, the database specified in the URI needs to exist
+already, and will be locked for the duration of the synchronization
+operation. Also note that monotone's default transport authentication
+is @emph{disabled} over these transports, to reduce the complexity of
+configuration and eliminate redundant protocol cost.
+
+Additional URI schemes can be supported by customization of the lua
+hooks @code{get_netsync_connect_command} and
+@code{use_transport_auth}. For details on these hooks, see
+@ref{Netsync Transport Hooks}.
 
 @page
 @node    Selectors
@@ -4310,23 +4363,48 @@ recommended, though not required.
 
 @ftable @command
 @item mtn serve [--bind=[@var{address}][:@var{port}]] @var{glob} [...] [--exclude=@var{exclude-glob}]
-@itemx mtn pull [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
-@itemx mtn push [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
-@itemx mtn sync [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
+@item mtn serve --stdio [--no-transport-auth] @var{glob} [...] [--exclude=@var{exclude-glob}]
+@itemx mtn pull [--set-default] [@var{uri-or-address}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
+@itemx mtn push [--set-default] [@var{uri-or-address}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
+@itemx mtn sync [--set-default] [@var{uri-or-address}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
 monotone databases using a hash tree index. The protocol is ``peer to
 peer'', but requires one peer to listen for incoming connections (the
-server) and the other peer (the client) to connect to the server.
+server) and the other peer (the client) to connect to the server. When
+run with @option{--stdio}, the server listens for a single connection
+then terminates. When run with @option{--bind}, or with neither
+option, the server listens for TCP connections and serves them
+continuously, until it is shut down.
 
-The network @var{address} specified in each case should be the same: a
-host name to listen on, or connect to, optionally followed by a colon
-and a port number.  The default port number is 4691. The @var{glob}
-parameters indicate a set of branches to exchange.  Multiple @var{glob}
-and @option{--exclude} options can be specified; every branch which
-matches a @var{glob} exactly, and does not match an @var{exclude-glob},
-will be indexed and made available for synchronization.
+The network @var{address} given to @command{serve} as an argument to
+@option{--bind} should be a host name to listen on, optionally
+followed by a colon and a port number. The default port number is
+4691. If no @option{--bind} option is given, the server listens on
+port 4691 of every network interface.
+
+If @command{serve} is run with @option{--stdio}, a single netsync
+session is served over the @code{stdin} and @code{stdout} file
+descriptors. If @option{--no-transport-auth} is provided along with
+@option{--stdio}, transport authentication and access control mechanisms
+are disabled. Only use @option{--no-transport-auth} if you are certain 
+that the transport channel in use already provides sufficient 
+authentication and authorization facilities. 
+
+The @var{uri-or-address} arguments given to @command{push},
+@command{pull}, and @command{sync} can be of two possible forms. If
+the argument is a URI, a lua hook may transform the URI into a
+connection command, and execute the command as a transport channel for
+netsync. If the argument is a simple hostname (with optional port
+number), monotone will use a TCP socket to the specified host and port
+as a transport channel for netsync.
+
+The @var{glob} parameters indicate a set of branches to exchange.
+Multiple @var{glob} and @option{--exclude} options can be specified;
+every branch which matches a @var{glob} exactly, and does not match an
+@var{exclude-glob}, will be indexed and made available for
+synchronization.
 
 For example, perhaps Bob and Alice wish to synchronize their
 @code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
@@ -6975,6 +7053,135 @@ database from different authors can be selectively trusted using the
 @ref{Trust Evaluation Hooks} instead.
 
 @end ftable
+
+@anchor{Netsync Transport Hooks}
+@subsection Netsync Transport Hooks
+
+When a monotone client initiates a netsync connection, these hooks are
+called to attempt to parse the host argument provided on the command
+line. If the hooks fail or return nil, monotone will interpret the
+host argument as a network name (possibly with a port number) and open
+a TCP socket.
+
+@ftable @code
+@item get_netsync_connect_command (@var{uri}, @var{args})
+
+Returns a table describing a command to run to connect to the
+specified host. The @var{uri} argument is a table containing
+between 0 and 7 components:
+
+@itemize
+@item @code{uri["scheme"]}, such as @code{"ssh"} or @code{"file"}
+@item @code{uri["user"]}, the name of a remote user
+@item @code{uri["host"]}, the name or address of a remote host
+@item @code{uri["port"]}, a network port number
+@item @code{uri["path"]}, a filesystem path
+@item @code{uri["query"]}, for additional parameters
+@item @code{uri["fragment"]}, to describe a sub-location within the remote resource
+@end itemize
+
+The @var{args} argument is a table containing between 0 and 3
+components:
+
+@itemize
+@item @code{args["include"]}, the branch pattern to include
+@item @code{args["exclude"]}, the branch pattern to exclude
+@item @code{args["debug"]}, whether to run the connection in debug mode
+@end itemize
+
+The default definition of this hook follows:
+
+@smallexample
+@group
+function get_netsync_connect_command(uri, args)
+
+        local argv = nil
+
+        if uri["scheme"] == "ssh" 
+                and uri["host"] 
+                and uri["path"] then
+
+                argv = @{ "ssh" @}
+                if uri["user"] then
+                        table.insert(argv, "-l")
+                        table.insert(argv, uri["user"])
+                end
+                if uri["port"] then
+                        table.insert(argv, "-p")
+                        table.insert(argv, uri["port"])
+                end
+
+                table.insert(argv, uri["host"])
+        end
+        
+        if uri["scheme"] == "file" and uri["path"] then
+                argv = @{ @}
+        end
+
+        if argv then
+
+                table.insert(argv, "mtn")
+
+                if args["debug"] then
+                        table.insert(argv, "--debug")
+                else
+                        table.insert(argv, "--quiet")
+                end
+
+                table.insert(argv, "--db")
+                table.insert(argv, uri["path"])
+                table.insert(argv, "serve")
+                table.insert(argv, "--stdio")
+                table.insert(argv, "--no-transport-auth")
+
+                if args["include"] then
+                        table.insert(argv, args["include"])
+                end
+
+                if args["exclude"] then
+                        table.insert(argv, "--exclude")
+                        table.insert(argv, args["exclude"])
+                end
+        end
+        return argv
+end
+@end group
+@end smallexample
+
+
+@item use_transport_auth (@var{uri})
+
+Returns a boolean indicating whether monotone should use transport
+authentication mechanisms when communicating with @var{uri}. If this
+hook fails, the return value is assumed to be @code{true}. The form of
+the @var{uri} argument is a table, identical to the table provided as
+an argument to @code{get_netsync_connect_command}.
+
+Note that the return value of this hook must "match" the semantics of
+the command returned by @code{get_netsync_connect_command}. In
+particular, if this hook returns @code{false}, the @command{serve}
+command line arguments passed to the remote end of the connection
+should include the @option{--no-transport-auth} option. A mismatch
+between this hook's return value and the command line returned by
+@code{get_netsync_connect_command} will cause a communication failure,
+as the local and remote monotone processes will have mismatched
+authentication assumptions.
+
+@smallexample
+@group
+function use_transport_auth(uri)
+        if uri["scheme"] == "ssh" 
+        or uri["scheme"] == "file" then
+                return false
+        else
+                return true
+        end
+end
+@end group
+@end smallexample
+
+@end ftable
+
 
 @anchor{Trust Evaluation Hooks}
 @subsection Trust Evaluation Hooks

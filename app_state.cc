@@ -36,7 +36,7 @@ app_state::app_state()
     search_root("/"),
     depth(-1), last(-1), next(-1), diff_format(unified_diff), diff_args_provided(false),
     use_lca(false), execute(false), bind_address(""), bind_port(""), bind_stdio(false),
-    missing(false), unknown(false),
+    use_transport_auth(true), missing(false), unknown(false),
     confdir(get_default_confdir()), have_set_key_dir(false), no_files(false)
 {
   db.set_app(this);
