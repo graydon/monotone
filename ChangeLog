@@ -1,3 +1,7 @@
+2006-05-23  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to change.
+
 2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* file_io.{cc,hh} localized_file_io.{cc,hh}: Split off the functions
