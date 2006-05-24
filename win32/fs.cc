@@ -18,6 +18,22 @@
 #include "platform.hh"
 
 std::string
+win32_strerror(DWORD errnum)
+{
+  LPTSTR tstr;
+
+  if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
+                    0, errnum, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                    reinterpret_cast<LPTSTR>(&tstr), 0,
+                    static_cast<va_list*>(0)) == 0)
+    return (F("unknown error code %d") % errnum).str();
+
+  std::string str = tstr;
+  LocalFree(tstr);
+  return str;
+}
+
+std::string
 get_current_working_dir()
 {
   char buffer[4096];
@@ -194,6 +210,7 @@ rename_clobberingly(any_path const & from, any_path const & to)
     if (sleepTime < 250)
       sleepTime *= 2;
   }
-  E(false, F("renaming '%s' to '%s' failed: %d") % from % to % lastError);
+  E(false, F("renaming '%s' to '%s' failed: %s (%d)") % from % to
+           % win32_strerror(lastError) % lastError);
 }
 
