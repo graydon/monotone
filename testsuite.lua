@@ -25,11 +25,22 @@ end
 
 function commit(branch)
   if branch == nil then branch = "testbranch" end
-  return mtn("commit", "--message=blah-blah", "--branch", branch)
+  check(cmd(mtn("commit", "--message=blah-blah", "--branch", branch)), 0, false, false)
 end
 
 function sha1(what)
-  return safe_mtn("identify", what)
+  check(cmd(safe_mtn("identify", what)), 0, false, false)
+  return trim(readfile("ts-stdout"))
+end
+
+function probe_node(filename, rsha, fsha)
+  remove_recursive("_MTN.old")
+  os.rename("_MTN", "_MTN.old")
+  os.remove(filename)
+  check(cmd(mtn("checkout", "--revision", rsha, ".")), 0, false)
+  os.rename("_MTN.old/options", "_MTN")
+  check(base_revision() == rsha)
+  check(sha1(filename) == fsha)
 end
 
 function mtn_setup()
@@ -49,28 +60,25 @@ function base_revision()
 end
 
 function qgrep(what, where)
-  return grep("-q", what, where)
+  return cmd(grep("-q", what, where))() == 0
+end
+
+function addfile(filename)
+  check(cmd(mtn("add", filename)), 0, false, false)
 end
 
 function canonicalize(filename)
-  local func = function (fn)
-                 local f = io.open(filename, "rb")
-                 local indat = f:read("*a")
-                 f:close()
-                 local outdat = string.gsub(indat, "\r\n", "\n")
-                 f = io.open(filename, "wb")
-                 f:write(outdat)
-                 f:close()
-                 return 0
-               end
-  local nullfunc = function (fn) return 0 end
   local ostype = os.getenv("OSTYPE")
   local osenv = os.getenv("OS")
   if osenv ~= nil then osenv = string.find(osenv, "[Ww]in") end
   if ostype == "msys" or osenv then
-    return func, filename
-  else
-    return nullfunc, filename
+    local f = io.open(filename, "rb")
+    local indat = f:read("*a")
+    f:close()
+    local outdat = string.gsub(indat, "\r\n", "\n")
+    f = io.open(filename, "wb")
+    f:write(outdat)
+    f:close()
   end
 end
 
@@ -82,3 +90,9 @@ table.insert(tests, "tests/basic_invocation_and_options")
 table.insert(tests, "tests/scanning_trees")
 table.insert(tests, "tests/importing_a_file")
 table.insert(tests, "tests/generating_and_extracting_keys_and_certs")
+table.insert(tests, "tests/calculation_of_unififfs")
+table.insert(tests, "tests/persistence_of_passphrase")
+table.insert(tests, "tests/multiple_version_committing")
+table.insert(tests, "tests/creating_a_fork")
+table.insert(tests, "tests/creating_a_fork_and_updating")
+table.insert(tests, "tests/creating_a_fork_and_merging")

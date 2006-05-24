@@ -14,15 +14,15 @@ check(cmd(mtn("genkey", tkey)), 0, false, false, tkey .. "\n" .. tkey .. "\n")
 
 -- check key exists
 check(cmd(mtn("ls", "keys")), 0, true)
-check(cmd(grep(tkey, "stdout")), 0, false)
+check(qgrep(tkey, "stdout"))
 
 -- check globbing on name works
 check(cmd(mtn("ls", "keys", "happy*")), 0, true)
-check(cmd(grep(tkey, "stdout")), 0, false)
+check(qgrep(tkey, "stdout"))
 
 -- check globbing on bogus name misses key
 check(cmd(mtn("ls", "keys", "burp*")), 0, true, false)
-check(cmd(qgrep(tkey, "stdout")), 1)
+check(not qgrep(tkey, "stdout"))
 
 
 -- second section, check making certs with this key
@@ -30,16 +30,16 @@ check(cmd(qgrep(tkey, "stdout")), 1)
 writefile("input.txt", "blah blah blah\n")
 
 check(cmd(mtn("add", "input.txt")), 0, false, false)
-check(cmd(commit()), 0, false, false)
+commit()
 tsha = base_revision()
 check(cmd(mtn("--key", tkey, "cert", tsha, "color", "pink")), 0, false, false)
 check(cmd(mtn("ls", "certs", tsha)), 0, true)
-check(cmd(qgrep("pink", "stdout")))
+check(qgrep("pink", "stdout"))
 
 check(cmd(mtn("--key", tkey, "cert", tsha, "color")), 0, false, false, "yellow\n")
 check(cmd(mtn("ls", "certs", tsha)), 0, true, false)
-check(cmd(qgrep("pink", "stdout")))
-check(cmd(qgrep("yellow", "stdout")))
+check(qgrep("pink", "stdout"))
+check(qgrep("yellow", "stdout"))
 
 -- third section, keys with a + in the user portion work, keys with a
 -- + in the domain portion don't work.
@@ -49,7 +49,7 @@ check(cmd(mtn("genkey", goodkey)), 0, false, false, string.rep(goodkey .. "\n", 
 --exists
 check(cmd(mtn("ls", "keys")), 0, true)
 -- remember '+' is a special character for regexes
-check(cmd(qgrep(string.gsub(goodkey, "+", "\\+"), "stdout")))
+check(qgrep(string.gsub(goodkey, "+", "\\+"), "stdout"))
 
 -- bad keys fail
 badkey1 = "test+thing@example+456.com"
@@ -65,7 +65,7 @@ goodkey = "test_a_+thing.ie@example.com"
 check(cmd(mtn("genkey", goodkey)), 0, false, false, string.rep(goodkey .. "\n", 2))
 --exists
 check(cmd(mtn("ls", "keys")), 0, true)
-check(cmd(qgrep(string.gsub(goodkey, "+", "\\+"), "stdout")))
+check(qgrep(string.gsub(goodkey, "+", "\\+"), "stdout"))
 
 -- bad keys fail
 badkey1 = "test_a_+thing.ie@exa_m+p.le.com"

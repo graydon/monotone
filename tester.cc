@@ -85,6 +85,15 @@ extern "C"
   }
 
   static int
+  remove_recursive(lua_State *L)
+  {
+    char const * dirname = luaL_checkstring(L, -1);
+    fs::path dir(dirname, fs::native);
+    fs::remove_all(dir);
+    return 0;
+  }
+
+  static int
   leave_test_dir(lua_State *L)
   {
     go_to_workspace(run_dir.native_file_string());
@@ -173,6 +182,7 @@ int main(int argc, char **argv)
   lua_register(st, "clean_test_dir", go_to_test_dir);
   lua_register(st, "leave_test_dir", leave_test_dir);
   lua_register(st, "mkdir", make_dir);
+  lua_register(st, "remove_recursive", remove_recursive);
 
   int ret = 2;
   try

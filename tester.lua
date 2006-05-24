@@ -31,15 +31,15 @@ function writefile(filename, dat)
   return
 end
 
-function getstdfile(name, as)
-  local infile = io.open(srcdir .. "/" .. name, "rb")
+function copyfile(from, to)
+  local infile = io.open(from, "rb")
   if infile == nil then
-    error("Cannot open file " .. srcdir .. "/" .. name, 2)
+    error("Cannot open file " .. from, 2)
   end
-  local outfile = io.open(as, "wb")
+  local outfile = io.open(to, "wb")
   if outfile == nil then
     infile:close()
-    error("Cannot open file " .. as, 2)
+    error("Cannot open file " .. to, 2)
   end
   local size = 2^13
   while true do
@@ -51,9 +51,17 @@ function getstdfile(name, as)
   outfile:close()
 end
 
+function getstdfile(name, as)
+  copyfile(srcdir .. "/" .. name, as)
+end
+
 function getfile(name, as)
   if as == nil then as = name end
   getstdfile(testname .. "/" .. name, as)
+end
+
+function trim(str)
+  return string.gsub(str, "^%s*(.-)%s$", "%1")
 end
 
 function execute(path, ...)   
@@ -76,27 +84,24 @@ function cmd(first, ...)
   end
 end
 
-function cmp(left, right)
-  local docmp = function (left, right)
-                  local ldat = nil
-                  local rdat = nil
-                  if left == "-" then
-                    ldat = io.input:read("*a")
-                    rdat = readfile(right)
-                  elseif right == "-" then
-                    rdat = io.input:read("*a")
-                    ldat = readfile(left)
-                  else
-                    if fsize(left) ~= fsize(right) then
-                      return 1
-                    else
-                      ldat = readfile(left)
-                      rdat = readfile(right)
-                    end
-                  end
-                  if ldat == rdat then return 0 else return 1 end
-                end
-  return docmp, left, right
+function samefile(left, right)
+  local ldat = nil
+  local rdat = nil
+  if left == "-" then
+    ldat = io.input:read("*a")
+    rdat = readfile(right)
+  elseif right == "-" then
+    rdat = io.input:read("*a")
+    ldat = readfile(left)
+  else
+    if fsize(left) ~= fsize(right) then
+      return false
+    else
+      ldat = readfile(left)
+      rdat = readfile(right)
+    end
+  end
+  return ldat == rdat
 end
 
 function grep(...)
@@ -131,7 +136,7 @@ end
 --   * true: use existing "stdin" file
 --   * nil, false: empty input
 --   * string: contents of string
-function check(func, ret, stdout, stderr, stdin)
+function check_func(func, ret, stdout, stderr, stdin)
   if ret == nil then ret = 0 end
   if stdin ~= true then
     local infile = io.open("stdin", "w")
@@ -149,19 +154,19 @@ function check(func, ret, stdout, stderr, stdin)
     error(result, 2)
   end
   if result ~= ret then
-    error("Check failed (return value): wanted " .. ret .. " got " .. result, 2)
+    error("Check failed (return value): wanted " .. ret .. " got " .. result, 3)
   end
 
   if stdout == nil then
     if fsize("ts-stdout") ~= 0 then
-      error("Check failed (stdout): not empty", 2)
+      error("Check failed (stdout): not empty", 3)
     end
   elseif type(stdout) == "string" then
     local realout = io.open("stdout")
     local contents = realout:read("*a")
     realout:close()
     if contents ~= stdout then
-      error("Check failed (stdout): doesn't match", 2)
+      error("Check failed (stdout): doesn't match", 3)
     end
   elseif stdout == true then
     os.remove("stdout")
@@ -170,18 +175,36 @@ function check(func, ret, stdout, stderr, stdin)
 
   if stderr == nil then
     if fsize("ts-stderr") ~= 0 then
-      error("Check failed (stderr): not empty", 2)
+      error("Check failed (stderr): not empty", 3)
     end
   elseif type(stderr) == "string" then
     local realerr = io.open("stderr")
     local contents = realerr:read("*a")
     realerr:close()
     if contents ~= stderr then
-      error("Check failed (stderr): doesn't match", 2)
+      error("Check failed (stderr): doesn't match", 3)
     end
   elseif stderr == true then
     os.remove("stderr")
     os.rename("ts-stderr", "stderr")
+  end
+end
+
+function check(first, ...)
+  if type(first) == "function" then
+    check_func(first, unpack(arg))
+  elseif type(first) == "boolean" then
+    if not first then error("Check failed: false", 2) end
+  elseif type(first) == "number" then
+    if first ~= 0 then error("Check failed: " .. first .. " ~= 0", 2) end
+  else
+    error("Bad argument to check()", 2)
+  end
+end
+
+function skip_if(chk)
+  if chk then
+    error(true, 2)
   end
 end
 
@@ -226,11 +249,16 @@ function run_tests(args)
       P("ok\n")
       clean_test_dir(testname)
     else
-      P("FAIL\n")
-      test_log:write("\n", e, "\n")
-      failed = failed + 1
-      table.insert(failed_testlogs, tlog)
-      leave_test_dir()
+      if e == true then
+        P("skipped\n")
+        clean_test_dir(testname)
+      else
+        P("FAIL\n")
+        test_log:write("\n", e, "\n")
+        failed = failed + 1
+        table.insert(failed_testlogs, tlog)
+        leave_test_dir()
+      end
     end
     test_log:close()
   end
