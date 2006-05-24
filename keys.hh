@@ -9,8 +9,8 @@
 #include "vocab.hh"
 #include <string>
 
-struct lua_hooks;
-struct app_state;
+class lua_hooks;
+class app_state;
 
 // keys.{hh,cc} does all the "delicate" crypto (meaning: that which needs
 // to read passphrases and manipulate raw, decrypted private keys). it 

@@ -61,7 +61,7 @@ get_test_results_for_revision(revision_id const & id,
           bool test_ok = lexical_cast<bool>(cv());
           results.insert(make_pair(i->inner().key, test_ok));
         }
-      catch(boost::bad_lexical_cast & e)
+      catch(boost::bad_lexical_cast &)
         {
           W(F("failed to decode boolean testresult cert value '%s'\n") % cv);
         }

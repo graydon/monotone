@@ -415,7 +415,7 @@ app_state::read_options()
           read_options_map(dat, options);
         }
     }
-  catch(std::exception & e)
+  catch(std::exception &)
     {
       W(F("Failed to read options file %s") % o_path);
     }
@@ -432,7 +432,7 @@ app_state::write_options()
       write_options_map(dat, options);
       write_data(o_path, dat);
     }
-  catch(std::exception & e)
+  catch(std::exception &)
     {
       W(F("Failed to write options file %s") % o_path);
     }

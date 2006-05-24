@@ -580,7 +580,7 @@ void get_revision_id(revision_id & c)
     {
       read_data(c_path, c_data);
     }
-  catch(std::exception & e)
+  catch(std::exception &)
     {
       N(false, F("Problem with workspace: %s is unreadable") % c_path);
     }

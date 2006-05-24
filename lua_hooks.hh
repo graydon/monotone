@@ -17,7 +17,7 @@
 #include "paths.hh"
 
 struct uri;
-struct app_state;
+class app_state;
 struct lua_State;
 
 class lua_hooks

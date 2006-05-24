@@ -1502,7 +1502,7 @@ automate_stdio(std::vector<utf8> args,
               err=0;
               automate_command(cmd, args, help_name, app, s);
             }
-          catch(usage & u)
+          catch(usage &)
             {
               if(sb.str().size())
                 s.flush();

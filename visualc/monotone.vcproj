@@ -136,7 +136,6 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE;BOOST_MSVC_STD_ITERATOR;_CRT_SECURE_NO_DEPRECATE;min=min;max=max"
 				StringPooling="true"
 				MinimalRebuild="true"
-				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="false"
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="pch.hh"
@@ -157,12 +156,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/NODEFAULTLIB:LIBCMT.lib"
+				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib"
 				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib popt.lib libiconv.lib libcharset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
 				OutputFile="$(outdir)/mtn.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\GnuWin32\lib&quot;;&quot;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Release&quot;;C:\Boost\lib"
 				GenerateDebugInformation="true"
+				GenerateMapFile="false"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -221,6 +221,10 @@
 			</File>
 			<File
 				RelativePath="..\cert.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\charset.cc"
 				>
 			</File>
 			<File
@@ -362,7 +366,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\localized_file_io.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\lua.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\lua_hooks.cc"
 				>
 			</File>
 			<File
@@ -515,6 +527,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\simplestring_xform.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\string_queue.cc"
 				>
 			</File>
@@ -532,6 +548,10 @@
 			</File>
 			<File
 				RelativePath="..\update.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\uri.cc"
 				>
 			</File>
 			<File
@@ -573,6 +593,10 @@
 			</File>
 			<File
 				RelativePath="..\cert.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\charset.hh"
 				>
 			</File>
 			<File
@@ -668,11 +692,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\localized_file_io.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\lru_cache.h"
 				>
 			</File>
 			<File
 				RelativePath="..\lua.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\lua_hooks.hh"
 				>
 			</File>
 			<File
@@ -796,6 +828,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\simplestring_xform.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\smap.hh"
 				>
 			</File>
@@ -829,6 +865,10 @@
 			</File>
 			<File
 				RelativePath="..\update.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\uri.hh"
 				>
 			</File>
 			<File

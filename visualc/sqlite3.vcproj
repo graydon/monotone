@@ -113,7 +113,6 @@
 				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Platform SDK\Include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE;SQLITE_OMIT_CURSOR"
 				StringPooling="true"
-				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"

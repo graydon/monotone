@@ -277,7 +277,7 @@ file_path::file_path(file_path::source_type type, std::string const & path)
           relative = fs::path(path, fs::native);
           out = (base / relative).normalize();
         }
-      catch (std::exception & e)
+      catch (std::exception &)
         {
           N(false, F("path '%s' is invalid") % path);
         }
