@@ -3,6 +3,9 @@ srcdir = get_source_dir()
 test_root = nil
 testname = nil
 
+errfile = nil
+errline = nil
+
 logfile = io.open("tester.log", "w") -- combined logfile
 test_log = nil -- logfile for this test
 failed_testlogs = {}
@@ -72,12 +75,38 @@ function execute(path, ...)
    return ret
 end
 
+function getsrcline()
+  local info
+  local depth = 1
+  repeat
+    depth = depth + 1
+    info = debug.getinfo(depth)
+  until info == nil
+  while src == nil and depth > 1 do
+    depth = depth - 1
+    info = debug.getinfo(depth)
+    if string.find(info.source, "^@.*__driver__%.lua") then
+      -- return info.source, info.currentline
+      return testname, info.currentline
+    end
+  end
+end
+
 function cmd(first, ...)
+  local _1,_2 = getsrcline()
+  local src = _1 .. ":" .. _2
   if type(first) == "string" then
-    test_log:write("\n", first, " ", table.concat(arg, " "), "\n")
+    test_log:write("\n", src, ": ", first, " ", table.concat(arg, " "), "\n")
     return function () return execute(first, unpack(arg)) end
   elseif type(first) == "function" then
-    test_log:write("\n<function> ", table.concat(arg, " "), "\n")
+    local info = debug.getinfo(first)
+    local name
+    if info.name ~= nil then
+      name  = info.name
+    else
+      name = "<function>"
+    end
+    test_log:write("\n", src, ": ", name, " ", table.concat(arg, " "), "\n")
     return function () return first(unpack(arg)) end
   else
     error("cmd() called with argument of unknown type " .. type(first), 2)
@@ -127,6 +156,10 @@ function grep(...)
   return dogrep, unpack(arg)
 end
 
+function log_file_contents(filename)
+  L(readfile(filename))
+end
+
 -- std{out,err} can be:
 --   * false: ignore
 --   * true: ignore, copy to stdout
@@ -147,18 +180,26 @@ function check_func(func, ret, stdout, stderr, stdin)
   end
   os.remove("ts-stdin")
   os.rename("stdin", "ts-stdin")
+  L("stdin:\n")
+  log_file_contents("ts-stdin")
   local i, o, e = set_redirect("ts-stdin", "ts-stdout", "ts-stderr")
   local ok, result = pcall(func)
   clear_redirect(i, o, e)
+  L("stdout:\n")
+  log_file_contents("ts-stdout")
+  L("stderr:\n")
+  log_file_contents("ts-stderr")
   if ok == false then
     error(result, 2)
   end
   if result ~= ret then
+    errfile,errline = getsrcline()
     error("Check failed (return value): wanted " .. ret .. " got " .. result, 3)
   end
 
   if stdout == nil then
     if fsize("ts-stdout") ~= 0 then
+      errfile,errline = getsrcline()
       error("Check failed (stdout): not empty", 3)
     end
   elseif type(stdout) == "string" then
@@ -166,6 +207,7 @@ function check_func(func, ret, stdout, stderr, stdin)
     local contents = realout:read("*a")
     realout:close()
     if contents ~= stdout then
+      errfile,errline = getsrcline()
       error("Check failed (stdout): doesn't match", 3)
     end
   elseif stdout == true then
@@ -175,6 +217,7 @@ function check_func(func, ret, stdout, stderr, stdin)
 
   if stderr == nil then
     if fsize("ts-stderr") ~= 0 then
+      errfile,errline = getsrcline()
       error("Check failed (stderr): not empty", 3)
     end
   elseif type(stderr) == "string" then
@@ -182,6 +225,7 @@ function check_func(func, ret, stdout, stderr, stdin)
     local contents = realerr:read("*a")
     realerr:close()
     if contents ~= stderr then
+      errfile,errline = getsrcline()
       error("Check failed (stderr): doesn't match", 3)
     end
   elseif stderr == true then
@@ -194,9 +238,13 @@ function check(first, ...)
   if type(first) == "function" then
     check_func(first, unpack(arg))
   elseif type(first) == "boolean" then
+    errfile,errline = getsrcline()
     if not first then error("Check failed: false", 2) end
   elseif type(first) == "number" then
-    if first ~= 0 then error("Check failed: " .. first .. " ~= 0", 2) end
+    if first ~= 0 then
+      errfile,errline = getsrcline()
+      error("Check failed: " .. first .. " ~= 0", 2)
+      end
   else
     error("Bad argument to check()", 2)
   end
@@ -204,6 +252,7 @@ end
 
 function skip_if(chk)
   if chk then
+    errfile,errline = getsrcline()
     error(true, 2)
   end
 end
@@ -214,10 +263,15 @@ function P(...)
   logfile:write(unpack(arg))
 end
 
+function L(...)
+  test_log:write(unpack(arg))
+end
+
 function run_tests(args)
   local torun = {}
   local run_all = true
   local debugging = false
+  local list_only = false
   for i,a in pairs(args) do
     local _1,_2,l,r = string.find(a, "^(-?%d+)%.%.(-?%d+)$")
     if _1 then
@@ -237,6 +291,8 @@ function run_tests(args)
       run_all = false
     elseif a == "-d" then
       debugging = true
+    elseif a == "-l" then
+      list_only = true
     else
       -- pattern
       local matched = false
@@ -253,7 +309,7 @@ function run_tests(args)
       end
     end
   end
-  P("Running tests...\n")
+  if not list_only then P("Running tests...\n") end
   local failed = 0
 
   local function runtest(i, tname)
@@ -263,8 +319,8 @@ function run_tests(args)
     if i < 100 then P(" ") end
     if i < 10 then P(" ") end
     P(i .. " " .. shortname)
-    local spacelen = 60 - string.len(shortname)
-    local spaces = string.rep("          ", 7)
+    local spacelen = 50 - string.len(shortname)
+    local spaces = string.rep(" ", 50)
     if spacelen > 0 then P(string.sub(spaces, 1, spacelen)) end
 
     local tlog = test_root .. "/tester.log"
@@ -286,11 +342,11 @@ function run_tests(args)
       if not debugging then clean_test_dir(testname) end
     else
       if e == true then
-        P("skipped\n")
+        P(string.format("skipped (line %i)", errline))
         test_log:close()
         if not debugging then clean_test_dir(testname) end
       else
-        P("FAIL\n")
+        P(string.format("FAIL (line %i)", errline))
         test_log:write("\n", e, "\n")
         failed = failed + 1
         table.insert(failed_testlogs, tlog)
@@ -302,11 +358,23 @@ function run_tests(args)
 
   if run_all then
     for i,t in pairs(tests) do
-      runtest(i, t)
+      if list_only then
+        if i < 10 then P(" ") end
+        if i < 100 then P(" ") end
+        P(i .. " " .. t .. "\n")
+      else
+        runtest(i, t)
+      end
     end
   else
     for i,_ in pairs(torun) do
-      runtest(i, tests[i])
+      if list_only then
+        if i < 10 then P(" ") end
+        if i < 100 then P(" ") end
+        P(i .. " " .. tests[i] .. "\n")
+      else
+        runtest(i, tests[i])
+      end
     end
   end
 

@@ -177,6 +177,7 @@ int main(int argc, char **argv)
     {
       fprintf(stderr, "Usage: %s test-file [arguments]\n", argv[0]);
       fprintf(stderr, "\t-h         print this message\n");
+      fprintf(stderr, "\t-l         print test names only; don't run them\n");
       fprintf(stderr, "\t-d         don't clean the scratch directories\n");
       fprintf(stderr, "\tnum        run a specific test\n");
       fprintf(stderr, "\tnum..num   run tests in a range\n");
@@ -206,7 +207,7 @@ int main(int argc, char **argv)
   try
     {
       run_string(st, tester_constant, "tester builtin functions");
-      printf("Loading test file %s\n", testfile.c_str());
+      //printf("Loading test file %s\n", testfile.c_str());
       run_file(st, testfile);
       Lua ll(st);
       ll.func("run_tests");
