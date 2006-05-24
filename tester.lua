@@ -1,10 +1,12 @@
 tests = {}
 srcdir = get_source_dir()
+
 test_root = nil
 testname = nil
+wanted_fail = false
 
-errfile = nil
-errline = nil
+errfile = ""
+errline = -1
 
 logfile = io.open("tester.log", "w") -- combined logfile
 test_log = nil -- logfile for this test
@@ -190,6 +192,7 @@ function check_func(func, ret, stdout, stderr, stdin)
   L("stderr:\n")
   log_file_contents("ts-stderr")
   if ok == false then
+    errfile,errline = getsrcline()
     error(result, 2)
   end
   if result ~= ret then
@@ -257,6 +260,18 @@ function skip_if(chk)
   end
 end
 
+function xfail_if(chk, ...)
+  local res,err = pcall(check, unpack(arg))
+  if res == false then
+    if chk then error(false, 2) else error(err, 2) end
+  else
+    if chk then
+      wanted_fail = true
+      L("UNEXPECTED SUCCESS\n")
+    end
+  end
+end
+
 function P(...)
   io.write(unpack(arg))
   io.flush()
@@ -310,16 +325,24 @@ function run_tests(args)
     end
   end
   if not list_only then P("Running tests...\n") end
-  local failed = 0
+  local counts = {}
+  counts.success = 0
+  counts.skip = 0
+  counts.xfail = 0
+  counts.noxfail = 0
+  counts.fail = 0
+  counts.total = 0
 
   local function runtest(i, tname)
     testname = tname
+    wanted_fail = false
     local shortname = nil
     test_root, shortname = go_to_test_dir(testname)
+    
     if i < 100 then P(" ") end
     if i < 10 then P(" ") end
     P(i .. " " .. shortname)
-    local spacelen = 50 - string.len(shortname)
+    local spacelen = 46 - string.len(shortname)
     local spaces = string.rep(" ", 50)
     if spacelen > 0 then P(string.sub(spaces, 1, spacelen)) end
 
@@ -337,23 +360,38 @@ function run_tests(args)
       r,e = xpcall(driver, debug.traceback)
     end
     if r then
-      P("ok\n")
-      test_log:close()
-      if not debugging then clean_test_dir(testname) end
-    else
-      if e == true then
-        P(string.format("skipped (line %i)", errline))
+      if wanted_fail then
+        P("unexpected success\n")
+        test_log:close()
+        leave_test_dir()
+        counts.noxfail = counts.noxfail + 1
+      else
+        P("ok\n")
         test_log:close()
         if not debugging then clean_test_dir(testname) end
+        counts.success = counts.success + 1
+      end
+    else
+      if e == true then
+        P(string.format("skipped (line %i)\n", errline))
+        test_log:close()
+        if not debugging then clean_test_dir(testname) end
+        counts.skip = counts.skip + 1
+      elseif e == false then
+        P(string.format("expected failure (line %i)\n", errline))
+        test_log:close()
+        leave_test_dir()
+        counts.xfail = counts.xfail + 1
       else
-        P(string.format("FAIL (line %i)", errline))
+        P(string.format("FAIL (line %i)\n", errline))
         test_log:write("\n", e, "\n")
-        failed = failed + 1
         table.insert(failed_testlogs, tlog)
         test_log:close()
         leave_test_dir()
+        counts.fail = counts.fail + 1
       end
     end
+    counts.total = counts.total + 1
   end
 
   if run_all then
@@ -377,6 +415,14 @@ function run_tests(args)
       end
     end
   end
+  
+  P("\n")
+  P(string.format("Of %i tests run:\n", counts.total))
+  P(string.format("\t%i succeeded\n", counts.success))
+  P(string.format("\t%i failed\n", counts.fail))
+  P(string.format("\t%i had expected failures\n", counts.xfail))
+  P(string.format("\t%i succeeded unexpectedly\n", counts.noxfail))
+  P(string.format("\t%i were skipped\n", counts.skip))
 
   for i,log in pairs(failed_testlogs) do
     local tlog = io.open(log, "r")
@@ -387,5 +433,9 @@ function run_tests(args)
     end
   end
 
-  if failed == 0 then return 0 else return 1 end
+  if counts.success + counts.skip + counts.xfail == counts.total then
+    return 0
+  else
+    return 1
+  end
 end

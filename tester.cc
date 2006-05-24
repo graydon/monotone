@@ -118,6 +118,15 @@ extern "C"
   }
 
   static int
+  exists(lua_State *L)
+  {
+    char const * name = luaL_checkstring(L, -1);
+    fs::path p(name, fs::native);
+    lua_pushboolean(L, fs::exists(p));
+    return 1;
+  }
+
+  static int
   get_source_dir(lua_State * L)
   {
     lua_pushstring(L, source_dir.native_file_string().c_str());
@@ -202,6 +211,7 @@ int main(int argc, char **argv)
   lua_register(st, "leave_test_dir", leave_test_dir);
   lua_register(st, "mkdir", make_dir);
   lua_register(st, "remove_recursive", remove_recursive);
+  lua_register(st, "exists", exists);
 
   int ret = 2;
   try

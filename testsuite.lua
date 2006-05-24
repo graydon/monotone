@@ -63,8 +63,21 @@ function qgrep(what, where)
   return cmd(grep("-q", what, where))() == 0
 end
 
-function addfile(filename)
+function addfile(filename, contents)
+  if contents ~= nil then writefile(filename, contents) end
   check(cmd(mtn("add", filename)), 0, false, false)
+end
+
+function revert_to(rev, branch)
+  remove_recursive("_MTN.old")
+  os.rename("_MTN", "_MTN.old")
+  
+  if branch == nil then
+    check(cmd(mtn("checkout", "--revision", rev, ".")), 0, false)
+  else
+    check(cmd(mtn("checkout", "--branch", branch, "--revision", rev, ".")), 0, false)
+  end
+  check(base_revision() == rev)
 end
 
 function canonicalize(filename)
@@ -96,3 +109,13 @@ table.insert(tests, "tests/multiple_version_committing")
 table.insert(tests, "tests/creating_a_fork")
 table.insert(tests, "tests/creating_a_fork_and_updating")
 table.insert(tests, "tests/creating_a_fork_and_merging")
+table.insert(tests, "tests/merging_adds")
+table.insert(tests, "tests/merging_data_in_unrelated_files")
+table.insert(tests, "tests/merging_adds_in_unrelated_revisions")
+table.insert(tests, "tests/merging_data_in_unrelated_revisions")
+table.insert(tests, "tests/calculation_of_incorrect_unidiffs")
+table.insert(tests, "tests/delete_work_file_on_checkout")
+table.insert(tests, "tests/revert_file_to_base_revision")
+table.insert(tests, "tests/addition_of_files_and_directories")
+table.insert(tests, "tests/add_and_then_drop_file_does_nothing")
+table.insert(tests, "tests/drop_missing_and_unknown_files")

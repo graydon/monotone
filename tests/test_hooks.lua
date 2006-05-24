@@ -50,6 +50,7 @@ function get_author(branchname)
 end
 
 function ignore_file(name)
+	if (string.find(name, "ts-std", 1, true)) then return true end
 	if (string.find(name, "testsuite.log")) then return true end
 	if (string.find(name, "test_hooks.lua")) then return true end
 	if (string.find(name, "keys")) then return true end
