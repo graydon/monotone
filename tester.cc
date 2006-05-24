@@ -11,6 +11,8 @@ extern "C" {
 
 #include <cstdio>
 
+#include <exception>
+
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
@@ -49,7 +51,13 @@ void clear_redirect(int what, int saved)
 fs::path source_dir;
 fs::path run_dir;
 
-struct oops {};
+struct oops : public std::exception
+{
+  oops(string const &s = "") throw() : err(s) {}
+  ~oops() throw() {}
+  string err;
+  char const * what() {return err.c_str();}
+};
 
 static int panic_thrower(lua_State * st)
 {
@@ -136,9 +144,9 @@ extern "C"
   static int
   clear_redirect(lua_State * L)
   {
-    int infd = luaL_checknumber(L, -3);
-    int outfd = luaL_checknumber(L, -2);
-    int errfd = luaL_checknumber(L, -1);
+    int infd = (int)luaL_checknumber(L, -3);
+    int outfd = (int)luaL_checknumber(L, -2);
+    int errfd = (int)luaL_checknumber(L, -1);
     
     clear_redirect(0, infd);
     clear_redirect(1, outfd);
@@ -151,7 +159,11 @@ extern "C"
 int main(int argc, char **argv)
 {
   string testfile;
-  if (argc > 1)
+  bool needhelp = false;
+  for (int i = 1; i < argc; ++i)
+    if (string(argv[i]) == "--help" || string(argv[i]) == "-h")
+      needhelp = true;
+  if (argc > 1 && !needhelp)
     {
       fs::path file(argv[1], fs::native);
       testfile = fs::complete(file).native_file_string();
@@ -163,7 +175,13 @@ int main(int argc, char **argv)
     }
   else
     {
-      fprintf(stderr, "Usage: %s test-file [arguments]", argv[0]);
+      fprintf(stderr, "Usage: %s test-file [arguments]\n", argv[0]);
+      fprintf(stderr, "\t-h         print this message\n");
+      fprintf(stderr, "\t-d         don't clean the scratch directories\n");
+      fprintf(stderr, "\tnum        run a specific test\n");
+      fprintf(stderr, "\tnum..num   run tests in a range\n");
+      fprintf(stderr, "\t           if num is negative, count back from the end");
+      fprintf(stderr, "\tregex      run tests with matching names\n");
       return 1;
     }
   lua_State *st = lua_open();
@@ -179,7 +197,7 @@ int main(int argc, char **argv)
   lua_register(st, "get_source_dir", get_source_dir);
   lua_register(st, "set_redirect", set_redirect);
   lua_register(st, "clear_redirect", clear_redirect);
-  lua_register(st, "clean_test_dir", go_to_test_dir);
+  lua_register(st, "clean_test_dir", clean_test_dir);
   lua_register(st, "leave_test_dir", leave_test_dir);
   lua_register(st, "mkdir", make_dir);
   lua_register(st, "remove_recursive", remove_recursive);
@@ -202,7 +220,7 @@ int main(int argc, char **argv)
       ll.call(1,1)
         .extract_int(ret);
     }
-  catch (oops &e)
+  catch (std::exception &e)
     {
     }
 

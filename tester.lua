@@ -215,16 +215,51 @@ function P(...)
 end
 
 function run_tests(args)
-  print("Args:")
+  local torun = {}
+  local run_all = true
+  local debugging = false
   for i,a in pairs(args) do
-    print ("\t", i, a)
+    local _1,_2,l,r = string.find(a, "^(-?%d+)%.%.(-?%d+)$")
+    if _1 then
+      l = l + 0
+      r = r + 0
+      if l < 1 then l = table.getn(tests) + l + 1 end
+      if r < 1 then r = table.getn(tests) + r + 1 end
+      if l > r then l,r = r,l end
+      for j = l,r do
+        torun[j]=j
+      end
+      run_all = false
+    elseif string.find(a, "^-?%d+$") then
+      r = a + 0
+      if r < 1 then r = table.getn(tests) + r + 1 end
+      torun[r] = r
+      run_all = false
+    elseif a == "-d" then
+      debugging = true
+    else
+      -- pattern
+      local matched = false
+      for i,t in pairs(tests) do
+        if regex.search(a, t) then
+          torun[i] = i
+          matched = true
+        end
+      end
+      if matched then
+        run_all = false
+      else
+        print(string.format("Warning: pattern '%s' does not match any tests.", a))
+      end
+    end
   end
   P("Running tests...\n")
   local failed = 0
-  for i,t in pairs(tests) do
-    testname = t
+
+  local function runtest(i, tname)
+    testname = tname
     local shortname = nil
-    test_root, shortname = go_to_test_dir(t)
+    test_root, shortname = go_to_test_dir(testname)
     if i < 100 then P(" ") end
     if i < 10 then P(" ") end
     P(i .. " " .. shortname)
@@ -247,20 +282,32 @@ function run_tests(args)
     end
     if r then
       P("ok\n")
-      clean_test_dir(testname)
+      test_log:close()
+      if not debugging then clean_test_dir(testname) end
     else
       if e == true then
         P("skipped\n")
-        clean_test_dir(testname)
+        test_log:close()
+        if not debugging then clean_test_dir(testname) end
       else
         P("FAIL\n")
         test_log:write("\n", e, "\n")
         failed = failed + 1
         table.insert(failed_testlogs, tlog)
+        test_log:close()
         leave_test_dir()
       end
     end
-    test_log:close()
+  end
+
+  if run_all then
+    for i,t in pairs(tests) do
+      runtest(i, t)
+    end
+  else
+    for i,_ in pairs(torun) do
+      runtest(i, tests[i])
+    end
   end
 
   for i,log in pairs(failed_testlogs) do
