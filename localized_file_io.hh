@@ -7,7 +7,7 @@
 #include "paths.hh"
 #include "vocab.hh"
 
-struct lua_hooks;
+class lua_hooks;
 
 void read_localized_data(file_path const & path, 
                          data & dat, 

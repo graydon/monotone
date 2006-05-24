@@ -1,5 +1,6 @@
 // -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 // copyright (C) 2005 Christof Petig <christof@petig-baender.de>
+// copyright (C) 2006 Graydon Hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
@@ -166,9 +167,6 @@ Netxx::PipeStream::PipeStream (const std::string & cmd,
 
   // Create the parent's handle to the named pipe.
 
-  // P(F("mtn %d: creating pipe %s\n") 
-  // % GetCurrentProcessId() % pipename);
-  
   named_pipe = CreateNamedPipe(pipename.c_str(), 
                                PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                                PIPE_TYPE_BYTE | PIPE_WAIT, 
@@ -177,9 +175,6 @@ Netxx::PipeStream::PipeStream (const std::string & cmd,
                                sizeof(readbuf),
                                1000, 
                                0);
-
-  // P(F("mtn %d: created pipe %s\n") 
-  // % GetCurrentProcessId() % pipename);
 
   E(named_pipe != INVALID_HANDLE_VALUE,
     F("CreateNamedPipe(%s,...) call failed: %s") 
@@ -202,9 +197,6 @@ Netxx::PipeStream::PipeStream (const std::string & cmd,
     F("CreateFile(%s,...) call failed: %s") 
     % pipename % err_msg());
   
-  // P(F("mtn %d: creating file handle on named pipe %s\n") 
-  // % GetCurrentProcessId() % pipename);
-
   // Set up the child with the pipes as stdin/stdout and inheriting stderr.
 
   PROCESS_INFORMATION piProcInfo;
@@ -222,9 +214,6 @@ Netxx::PipeStream::PipeStream (const std::string & cmd,
   std::string cmdline = munge_argv_into_cmdline(newargv);
   L(FL("Subprocess command line: '%s'\n") % cmdline);
 
-  // P(F("mtn %d: subprocess cmd line: '%s'\n") 
-  // % GetCurrentProcessId() % cmdline);
-
   BOOL started = CreateProcess(NULL, // Application name
                                const_cast<CHAR*>(cmdline.c_str()),
                                NULL, // Process attributes
@@ -239,22 +228,14 @@ Netxx::PipeStream::PipeStream (const std::string & cmd,
     F("CreateProcess(%s,...) call failed: %s")
     % cmdline % err_msg());
 
-  // P(F("mtn %d: started subprocess: '%s'\n") 
-  // % GetCurrentProcessId() % cmdline);
-
   child = piProcInfo.hProcess;
 
-  // P(F("mtn %d: opened handles\n") 
-  // % GetCurrentProcessId());
-
   // create infrastructure for overlapping I/O
+
   memset(&overlap, 0, sizeof(overlap));
   overlap.hEvent = CreateEvent(0, TRUE, TRUE, 0);
   bytes_available = 0;
   I(overlap.hEvent != 0);
-
-  // P(F("mtn %d: created overlap event\n") 
-  // % GetCurrentProcessId());
 
 #else // !WIN32
 
@@ -282,14 +263,9 @@ Netxx::signed_size_type
 Netxx::PipeStream::read (void *buffer, size_type length)
 {
 #ifdef WIN32  
-  // P(F("mtn %d: attempting read of length %d\n") 
-  // % GetCurrentProcessId() % length);
 
   if (length > bytes_available)
     length = bytes_available;
-
-  // P(F("mtn %d: reading %d bytes of %d available\n") 
-  // % GetCurrentProcessId() % length % bytes_available);
 
   if (length)
     {
@@ -299,8 +275,6 @@ Netxx::PipeStream::read (void *buffer, size_type length)
       bytes_available -= length;
     }
 
-  // P(F("mtn %d: read complete, %d bytes\n") 
-  // % GetCurrentProcessId() % length);
   return length;
 #else
   return ::read(readfd, buffer, length);
@@ -310,8 +284,6 @@ Netxx::PipeStream::read (void *buffer, size_type length)
 Netxx::signed_size_type 
 Netxx::PipeStream::write(const void *buffer, size_type length)
 {
-  // P(F("mtn %d: writing, %d bytes\n") 
-  // % GetCurrentProcessId() % length);
 #ifdef WIN32
   DWORD written = 0;
   BOOL ok = WriteFile(named_pipe, buffer, length, &written, NULL);
@@ -319,8 +291,6 @@ Netxx::PipeStream::write(const void *buffer, size_type length)
 #else
   size_t written = ::write(writefd, buffer, length);
 #endif
-  // P(F("mtn %d: write complete, %d bytes\n") 
-  // % GetCurrentProcessId() % length);
   return written;
 }
 
@@ -329,9 +299,6 @@ Netxx::PipeStream::close (void)
 {
 
 #ifdef WIN32
-  // P(F("mtn %d: closing named pipe\n") 
-  // % GetCurrentProcessId());
-
   if (named_pipe != INVALID_HANDLE_VALUE)
     CloseHandle(named_pipe);
   named_pipe = INVALID_HANDLE_VALUE;
@@ -376,10 +343,6 @@ Netxx::PipeStream::get_probe_info (void) const
 
 #ifdef WIN32
 
-// to emulate the semantics of the select call we wait up to timeout for the
-// first byte and ask for more bytes with no timeout
-//   perhaps there is a more efficient/less complicated way (tell me if you know)
-
 static std::string
 status_name(DWORD wstatus)
 {
@@ -405,8 +368,6 @@ Netxx::PipeCompatibleProbe::ready(const Timeout &timeout, ready_type rt)
 
   if (rt & ready_write)
     {
-      // P(F("mtn %d: write is possible, returning\n") 
-      // % GetCurrentProcessId());
       return std::make_pair(pipe->get_socketfd(), ready_write);
     }
 
@@ -415,7 +376,6 @@ Netxx::PipeCompatibleProbe::ready(const Timeout &timeout, ready_type rt)
       if (pipe->bytes_available == 0)
         {
           // Issue an async request to fill our buffer.
-          // P(F("mtn %d: issuing readfile\n") % GetCurrentProcessId());
           BOOL ok = ReadFile(pipe->named_pipe, pipe->readbuf, 
                              sizeof(pipe->readbuf), NULL, &pipe->overlap);
           E(ok || GetLastError() == ERROR_IO_PENDING, 
@@ -426,38 +386,43 @@ Netxx::PipeCompatibleProbe::ready(const Timeout &timeout, ready_type rt)
       if (pipe->read_in_progress)
         {
           I(pipe->bytes_available == 0);
+
           // Attempt to wait for the completion of the read-in-progress.
+
 	  int milliseconds = ((timeout.get_sec() * 1000) 
                               + (timeout.get_usec() / 1000));
+
 	  L(FL("WaitForSingleObject(,%d)\n") % milliseconds);
 
           DWORD wstatus = WAIT_FAILED;
 
           if (pipe->child != INVALID_HANDLE_VALUE)
             {
-              // We're a server; we're going to wait for the client to exit as well
-              // as the pipe read status, because apparently you don't find out about
-              // closed pipes during an overlapped read request (?)
+
+              // We're a server; we're going to wait for the client to
+              // exit as well as the pipe read status, because
+              // apparently you don't find out about closed pipes
+              // during an overlapped read request (?)
+
               HANDLE handles[2];
               handles[0] = pipe->overlap.hEvent;
               handles[1] = pipe->child;
-              // P( F("mtn %d: waiting %d milliseconds for multiple objects\n") 
-              // % GetCurrentProcessId() % milliseconds);
-              wstatus = WaitForMultipleObjects(2, handles, FALSE, milliseconds);
-              // P(F("mtn %d: wait finished with %s\n") 
-              // % GetCurrentProcessId() % status_name(wstatus));
+
+              wstatus = WaitForMultipleObjects(2, 
+                                               handles, 
+                                               FALSE, 
+                                               milliseconds);
+
               E(wstatus != WAIT_FAILED, 
                 F("WaitForMultipleObjects call failed: %s") % err_msg());
+
               if (wstatus == WAIT_OBJECT_0 + 1)
                 return std::make_pair(pipe->get_socketfd(), ready_oobd);
             }
           else
             {              
-              // P(F("mtn %d: waiting %d milliseconds for single object\n") 
-              // % GetCurrentProcessId() % milliseconds);
-              wstatus = WaitForSingleObject(pipe->overlap.hEvent, milliseconds);
-              // P(F("mtn %d: wait finished with %s\n") 
-              // % GetCurrentProcessId() % status_name(wstatus));
+              wstatus = WaitForSingleObject(pipe->overlap.hEvent, 
+                                            milliseconds);
               E(wstatus != WAIT_FAILED, 
                 F("WaitForSingleObject call failed: %s") % err_msg());
             }
@@ -465,10 +430,11 @@ Netxx::PipeCompatibleProbe::ready(const Timeout &timeout, ready_type rt)
           if (wstatus == WAIT_TIMEOUT)
             return std::make_pair(-1, ready_none);
           
-          // P(F("mtn %d: getting overlapped result\n") % GetCurrentProcessId());
-          BOOL ok = GetOverlappedResult(pipe->named_pipe, &pipe->overlap, 
-                                        &pipe->bytes_available, FALSE);
-          // P(F("mtn %d: overlapped result: %s\n") % GetCurrentProcessId() % ok);
+          BOOL ok = GetOverlappedResult(pipe->named_pipe, 
+                                        &pipe->overlap, 
+                                        &pipe->bytes_available, 
+                                        FALSE);
+
           if (ok)
             {
               // We completed our read.
@@ -478,19 +444,17 @@ Netxx::PipeCompatibleProbe::ready(const Timeout &timeout, ready_type rt)
             {
               // We did not complete our read.
               E(GetLastError() == ERROR_IO_INCOMPLETE,
-                F("GetOverlappedResult call failed: %s") % err_msg());
+                F("GetOverlappedResult call failed: %s") 
+                % err_msg());
             }
         }
       
       if (pipe->bytes_available != 0)
         {
-          // P(F("mtn %d: %d bytes are available, returning\n") 
-          //             % GetCurrentProcessId() % pipe->bytes_available);
           return std::make_pair(pipe->get_socketfd(), ready_read);
         }
     }
   
-  // P(F("mtn %d: no i/o ready\n") % GetCurrentProcessId());
   return std::make_pair(pipe->get_socketfd(), ready_none);
 }
 
@@ -507,6 +471,8 @@ Netxx::PipeCompatibleProbe::add(PipeStream &ps, ready_type rt)
 void 
 Netxx::PipeCompatibleProbe::add(const StreamBase &sb, ready_type rt)
   { 
+    // FIXME: This is an unfortunate way of performing a downcast.
+    // Perhaps we should twiddle the caller-visible API.
     try
       {
         add(const_cast<PipeStream&>(dynamic_cast<const PipeStream&>(sb)),rt);
