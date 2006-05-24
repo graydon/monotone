@@ -1,5 +1,8 @@
 2006-05-24  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* win32/get_system_flavour.cc: Report service pack number, if any
+	is installed.  While here, make a few other tweaks based on
+	documentation in MSDN.
 	* win32/fs.cc: Add win32_strerror() and use it in
 	rename_clobberingly() rather than displaying a raw error number to
 	the user.
