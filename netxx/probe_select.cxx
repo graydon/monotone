@@ -223,7 +223,7 @@ Netxx::Probe_impl::probe_type Netxx::Probe_impl::probe (const Timeout &timeout, 
 		default:
 		{
 		    std::string error("select(2): ");
-		    error += strerror(error_code);
+		    error += str_error(error_code);
 		    throw Exception(error);
 		}
 	    }

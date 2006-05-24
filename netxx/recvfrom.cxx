@@ -75,7 +75,7 @@ std::pair<Netxx::signed_size_type, Netxx::Peer> Netxx::call_recvfrom (Socket &so
 		default:
 		{
 		    std::string error("recvfrom(2) failed: ");
-		    error += strerror(error_code);
+		    error += str_error(error_code);
 		    throw Exception(error);
 		}
 	    }

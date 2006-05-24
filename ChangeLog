@@ -1,3 +1,12 @@
+2006-05-24  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* netxx/osutil.{cxx,h}: Add OS-specific strerror function.  This
+	continues to call strerror() on POSIX, and tries using
+	FormatMessage() and a built-in error message table on Win32.
+	* netxx/{accept,datagram,peer,probe_select,recvfrom}.cxx,
+	netxx/{resolve_gethostbyname,serverbase,socket,sockopt}.cxx,
+	netxx/{streambase,streamserver}.cxx: s/strerror/Netxx::str_error/g.
+
 2006-05-23  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tester.cc tester.lua: New files, which will eventually become a
