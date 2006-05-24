@@ -5355,6 +5355,47 @@ an error message to stderr, and exits with status 1.
 @end table
 
 
+@item mtn automate common_ancestors @var{rev1} [@var{rev2} [...]]
+
+@table @strong
+@item Arguments:
+
+One or more revision IDs, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+2.1
+
+@item Purpose:
+
+Prints all revisions which are ancestors of all of the revisions given as
+arguments.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the ID of one common ancestor of all the given
+revisions.  Each line consists of a revision ID, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+The output will include one of the argument revisions only if that revision is
+an ancestor of all other revisions given as arguments.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
 @item mtn automate parents @var{rev}
 
 @table @strong

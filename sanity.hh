@@ -54,11 +54,13 @@ struct sanity {
   void set_debug();
   void set_brief();
   void set_quiet();
+  void set_reallyquiet();
   void set_relaxed(bool rel);
 
   bool debug;
   bool brief;
   bool quiet;
+  bool reallyquiet;
   bool relaxed;
   boost::circular_buffer<char> logbuf;
   system_path filename;

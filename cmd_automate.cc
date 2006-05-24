@@ -16,6 +16,7 @@ CMD(automate, N_("automation"),
        "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
        "toposort [REV1 [REV2 [REV3 [...]]]]\n"
        "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
+       "common_ancestors REV1 [REV2 [REV3 [...]]]\n"
        "leaves\n"
        "inventory\n"
        "stdio\n"

@@ -31,7 +31,7 @@
 #include "sanity.hh"
 #include "cleanup.hh"
 #include "file_io.hh"
-#include "transforms.hh"
+#include "charset.hh"
 #include "ui.hh"
 #include "mt_version.hh"
 #include "options.hh"
@@ -72,7 +72,6 @@ struct poptOption coptions[] =
     {"context", 0, POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("use context diff format"), NULL},
     {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, gettext_noop("use external diff hook for generating diffs"), NULL},
     {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, gettext_noop("argument to pass external diff hook"), NULL},
-    {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("use least common ancestor as ancestor for merge"), NULL},
     {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
     {"bind", 0, POPT_ARG_STRING, &argstr, OPT_BIND, gettext_noop("address:port to listen on (default :4691)"), NULL},
     {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from workspace"), NULL},
@@ -94,7 +93,8 @@ struct poptOption options[] =
     {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, gettext_noop("print debug log to stderr while running"), NULL},
     {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, gettext_noop("file to dump debugging log to, on failure"), NULL},
     {"log", 0, POPT_ARG_STRING, &argstr, OPT_LOG, gettext_noop("file to write the log to"), NULL},
-    {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, gettext_noop("suppress log and progress messages"), NULL},
+    {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, gettext_noop("suppress verbose, informational and progress messages"), NULL},
+    {"reallyquiet", 0, POPT_ARG_NONE, NULL, OPT_REALLYQUIET, gettext_noop("suppress warning, verbose, informational and progress messages"), NULL},
     {"help", 'h', POPT_ARG_NONE, NULL, OPT_HELP, gettext_noop("display help message"), NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, gettext_noop("print version number, then exit"), NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, gettext_noop("print detailed version number, then exit"), NULL},
@@ -298,7 +298,8 @@ cpp_main(int argc, char ** argv)
   // find base name of executable
 
   string prog_path = fs::path(uv.argv[0]).leaf();
-  prog_path = prog_path.substr(0, prog_path.find(".exe", 0));
+  if (prog_path.rfind(".exe") == prog_path.size() - 4)
+    prog_path = prog_path.substr(0, prog_path.size() - 4);
   utf8 prog_name(prog_path);
 
   // prepare for arg parsing
@@ -338,6 +339,11 @@ cpp_main(int argc, char ** argv)
 
             case OPT_QUIET:
               global_sanity.set_quiet();
+              ui.set_tick_writer(new tick_write_nothing);
+              break;
+
+            case OPT_REALLYQUIET:
+              global_sanity.set_reallyquiet();
               ui.set_tick_writer(new tick_write_nothing);
               break;
 
@@ -487,10 +493,6 @@ cpp_main(int argc, char ** argv)
               
             case OPT_EXTERNAL_DIFF_ARGS:
               app.set_diff_args(utf8(string(argstr)));
-              break;
-
-            case OPT_LCA:
-              app.use_lca = true;
               break;
 
             case OPT_EXECUTE:

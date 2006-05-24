@@ -23,6 +23,7 @@ struct ticker
   size_t ticks;
   size_t mod;
   size_t total;
+  size_t previous_total;
   bool kilocount;
   bool use_total;
   std::string keyname;

@@ -128,15 +128,4 @@ read_cset(data const & dat, cset & cs);
 template <> void
 dump(cset const & cs, std::string & out);
 
-
-// Some helpers.
-
-inline split_path
-internal_string_to_split_path(std::string const & str)
-{
-  split_path sp;
-  file_path_internal(str).split(sp);
-  return sp;
-}
-
 #endif // __CSET_HH__

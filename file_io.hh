@@ -19,8 +19,6 @@
 // level for us to say whether applying them in any given case is valid or
 // not.
 
-class lua_hooks;
-
 // use I()
 void assert_path_is_nonexistent(any_path const & path);
 void assert_path_is_file(any_path const & path);
@@ -43,7 +41,6 @@ bool directory_exists(any_path const & path);
 // returns true if there is a file at 'path'
 bool file_exists(any_path const & path);
 
-bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
 
 // returns true if the string content is binary according to monotone heuristic
 bool guess_binary(std::string const & s);
@@ -68,9 +65,6 @@ void move_path(any_path const & old_path,
                any_path const & new_path);
 
 void read_data(any_path const & path, data & data);
-void read_localized_data(file_path const & path, 
-                         data & dat, 
-                         lua_hooks & lua);
 
 void read_directory(any_path const & path,
                     std::vector<utf8> & files,
@@ -86,9 +80,6 @@ void read_data_for_command_line(utf8 const & path, data & dat);
 // workspace.
 void write_data(file_path const & path, data const & data);
 void write_data(bookkeeping_path const & path, data const & data);
-void write_localized_data(file_path const & path, 
-                          data const & dat, 
-                          lua_hooks & lua);
 
 // Version that takes a system_path. To work with the "somewhat atomic"
 // goal, it also takes as an argument the place to put the temp file. Whoever

@@ -48,20 +48,13 @@ verify(path_component & val)
   val.ok = true;
 }
 
-inline bool is_xdigit(char x) 
-{ 
-  return ((x >= '0' && x <= '9')
-	  || (x >= 'a' && x <= 'f')
-	  || (x >= 'A' && x <= 'F'));
-}
-
 inline void 
 verify(hexenc<id> & val)
 {
   if (val.ok)
     return;
 
-  if (val() == "")
+  if (val().empty())
     return;
 
   N(val().size() == constants::idlen,
@@ -87,6 +80,20 @@ verify(ace & val)
   val.ok = true;
 }
 
+inline void
+verify(symbol & val)
+{
+  if (val.ok)
+    return;
+
+  for (string::const_iterator i = val().begin(); i != val().end(); ++i)
+    {
+      N(is_alnum(*i) || *i == '_',
+	F("bad character '%c' in symbol '%s'") % *i % val);
+    }
+
+  val.ok = true;
+}
 
 inline void 
 verify(cert_name & val)
@@ -177,115 +184,22 @@ symtab_impl
 
 // instantiation of various vocab functions
 
-#define ATOMIC(ty)                           \
-                                             \
-static symtab_impl ty ## _tab;               \
-static size_t ty ## _tab_active = 0;         \
-                                             \
-ty::ty(string const & str) :                 \
-  s((ty ## _tab_active > 0)                  \
-    ? (ty ## _tab.unique(str))               \
-    : str),                                  \
-  ok(false)                                  \
-{ verify(*this); }                           \
-                                             \
-ty::ty(ty const & other) :                   \
-            s(other.s), ok(other.ok)         \
-{ verify(*this); }                           \
-                                             \
-ty const & ty::operator=(ty const & other)   \
-{ s = other.s; ok = other.ok;                \
-  verify(*this); return *this; }             \
-                                             \
-ostream & operator<<(ostream & o,            \
-                     ty const & a)           \
-{ return (o << a.s); }                       \
-                                             \
-template <>                                  \
-void dump(ty const & obj, std::string & out) \
-{ out = obj(); }                             \
-                                             \
-ty::symtab::symtab()                         \
-{ ty ## _tab_active++; }                     \
-                                             \
-ty::symtab::~symtab()                        \
-{                                            \
-  I(ty ## _tab_active > 0);                  \
-  ty ## _tab_active--;                       \
-  if (ty ## _tab_active == 0)                \
-    ty ## _tab.clear();                      \
-}
 
 
-#define ATOMIC_NOVERIFY(ty) ATOMIC(ty)
+#include "vocab_macros.hh"
+#define ENCODING(enc) cc_ENCODING(enc)
+#define DECORATE(dec) cc_DECORATE(dec)
+#define ATOMIC(ty) cc_ATOMIC(ty)
+#define ATOMIC_NOVERIFY(ty) cc_ATOMIC_NOVERIFY(ty)
 
-
-
-#define ENCODING(enc)                                    \
-                                                         \
-template<typename INNER>                                 \
-enc<INNER>::enc(string const & s) : i(s), ok(false)      \
-  { verify(*this); }                                     \
-                                                         \
-template<typename INNER>                                 \
-enc<INNER>::enc(enc<INNER> const & other)                \
-  : i(other.i()), ok(other.ok) { verify(*this); }        \
-                                                         \
-template<typename INNER>                                 \
-enc<INNER>::enc(INNER const & inner) :                   \
-    i(inner), ok(false)                                  \
-  { verify(*this); }                                     \
-                                                         \
-template<typename INNER>                                 \
-enc<INNER> const &                                       \
-enc<INNER>::operator=(enc<INNER> const & other)          \
-  { i = other.i; ok = other.ok;                          \
-    verify(*this); return *this;}                        \
-                                                         \
-template <typename INNER>                                \
-ostream & operator<<(ostream & o, enc<INNER> const & e)  \
-{ return (o << e.i); }                                   \
-                                                         \
-template <typename INNER>                                \
-void dump(enc<INNER> const & obj, std::string & out)     \
-{ out = obj(); }
-
-
-#define DECORATE(dec)                                    \
-                                                         \
-template<typename INNER>                                 \
-dec<INNER>::dec(dec<INNER> const & other)                \
-  : i(other.i), ok(other.ok) { verify(*this); }          \
-                                                         \
-template<typename INNER>                                 \
-dec<INNER>::dec(INNER const & inner) :                   \
-    i(inner), ok(false)                                  \
-  { verify(*this); }                                     \
-                                                         \
-template<typename INNER>                                 \
-dec<INNER> const &                                       \
-dec<INNER>::operator=(dec<INNER> const & other)          \
-  { i = other.i; ok = other.ok;                          \
-    verify(*this); return *this;}                        \
-                                                         \
-template <typename INNER>                                \
-ostream & operator<<(ostream & o, dec<INNER> const & d)  \
-{ return (o << d.i); }                                   \
-                                                         \
-template <typename INNER>                                \
-void dump(dec<INNER> const & obj, std::string & out)     \
-{ dump(obj.inner(), out); }
-
-#define EXTERN /* */
+#define EXTERN 
 
 #include "vocab_terms.hh"
 
+#undef EXTERN
 #undef ATOMIC
 #undef DECORATE
 
-EXTERN template class revision<cert>;
-EXTERN template class manifest<cert>;
-#undef EXTERN
 
 template
 void dump<rsa_pub_key>(base64<rsa_pub_key> const&, std::string &);

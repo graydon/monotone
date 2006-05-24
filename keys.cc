@@ -13,13 +13,16 @@
 
 #include "constants.hh"
 #include "keys.hh"
-#include "lua.hh"
+#include "lua_hooks.hh"
 #include "netio.hh"
 #include "platform.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "sanity.hh"
 #include "ui.hh"
+#include "cert.hh"
+#include "app_state.hh"
 
 // copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.

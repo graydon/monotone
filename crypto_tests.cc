@@ -9,6 +9,7 @@
 #include <string>
 
 #include "transforms.hh"
+#include "sanity.hh"
 
 static std::string expected_SHA_MCT[] = {
   "e216836819477c7f78e0d843fe4ff1b6d6c14cd4",

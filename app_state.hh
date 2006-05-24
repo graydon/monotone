@@ -17,7 +17,7 @@ class lua_hooks;
 #include <vector>
 
 #include "database.hh"
-#include "lua.hh"
+#include "lua_hooks.hh"
 #include "work.hh"
 #include "vocab.hh"
 #include "paths.hh"
@@ -62,7 +62,6 @@ public:
   diff_type diff_format;
   bool diff_args_provided;
   utf8 diff_args;
-  bool use_lca;
   bool execute;
   utf8 bind_address;
   utf8 bind_port;

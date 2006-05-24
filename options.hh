@@ -42,7 +42,7 @@
 #define OPT_CONTEXT_DIFF 33
 #define OPT_EXTERNAL_DIFF 34
 #define OPT_EXTERNAL_DIFF_ARGS 35
-#define OPT_LCA 36
+// formerly OPT_LCA was here
 #define OPT_EXECUTE 37
 #define OPT_KEY_DIR 38
 #define OPT_BIND 39
@@ -54,5 +54,6 @@
 #define OPT_NO_FILES 45
 #define OPT_LOG 46
 #define OPT_RECURSIVE 47
-#define OPT_STDIO 48
-#define OPT_NO_TRANSPORT_AUTH 49
+#define OPT_REALLYQUIET 48
+#define OPT_STDIO 49
+#define OPT_NO_TRANSPORT_AUTH 50

@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -15,7 +16,8 @@
 #include "platform.hh"
 #include "sanity.hh"
 #include "interner.hh"
-#include "transforms.hh"
+#include "charset.hh"
+#include "simplestring_xform.hh"
 
 // some structure to ensure we aren't doing anything broken when resolving
 // filenames.  the idea is to make sure
@@ -113,21 +115,50 @@ save_initial_path()
 static inline bool
 bad_component(std::string const & component)
 {
-  if (component == "")
+  static const std::string dot(".");
+  static const std::string dotdot("..");
+  if (component.empty())
     return true;
-  if (component == ".")
+  if (component == dot)
     return true;
-  if (component == "..")
+  if (component == dotdot)
     return true;
   return false;
 }
 
 static inline bool
-fully_normalized_path(std::string const & path)
+has_bad_chars(std::string const & path)
 {
-  // FIXME: probably should make this a 256-byte static lookup table
-  const static std::string bad_chars = std::string("\\") + constants::illegal_path_bytes + std::string(1, '\0');
-  
+  static bool bad_chars_init(false);
+  static u8 bad_table[128] = {0};
+  if (UNLIKELY(!bad_chars_init))
+    {
+      std::string bad_chars = std::string("\\") + constants::illegal_path_bytes + std::string(1, '\0');
+      for (std::string::const_iterator b = bad_chars.begin(); b != bad_chars.end(); b++)
+        {
+          u8 x = (u8)*b;
+          I((x) < sizeof(bad_table));
+          bad_table[x] = 1;
+        }
+      bad_chars_init = true;
+    }
+
+  for (std::string::const_iterator c = path.begin(); c != path.end(); c++)
+    {
+      u8 x = (u8)*c;
+      if (x < sizeof(bad_table) && bad_table[x])
+          return true;
+    }
+  return false;
+}
+
+// fully_normalized_path performs very similar function to file_path.split().
+// if want_split is set, split_path will be filled with the '/' separated
+// components of the path.
+static inline bool
+fully_normalized_path_split(std::string const & path, bool want_split,
+                            split_path & sp)
+{
   // empty path is fine
   if (path.empty())
     return true;
@@ -136,7 +167,7 @@ fully_normalized_path(std::string const & path)
   if (path.size() > 1 && path[1] == ':')
     return false;
   // first scan for completely illegal bytes
-  if (path.find_first_of(bad_chars) != std::string::npos)
+  if (has_bad_chars(path))
     return false;
   // now check each component
   std::string::size_type start, stop;
@@ -146,15 +177,28 @@ fully_normalized_path(std::string const & path)
       stop = path.find('/', start);
       if (stop == std::string::npos)
         {
-          if (bad_component(path.substr(start)))
+          std::string const & s(path.substr(start));
+          if (bad_component(s))
             return false;
+          if (want_split)
+            sp.push_back(s);
           break;
         }
-      if (bad_component(path.substr(start, stop - start)))
+      std::string const & s(path.substr(start, stop - start));
+      if (bad_component(s))
         return false;
+      if (want_split)
+        sp.push_back(s);
       start = stop + 1;
     }
   return true;
+}
+
+static inline bool
+fully_normalized_path(std::string const & path)
+{
+  split_path sp;
+  return fully_normalized_path_split(path, false, sp);
 }
 
 // This function considers _MTN, _MTn, _MtN, _mtn etc. to all be bookkeeping
@@ -187,6 +231,19 @@ is_valid_internal(std::string const & path)
 {
   return (fully_normalized_path(path)
           && !in_bookkeeping_dir(path));
+}
+
+// equivalent to file_path_internal(path).split(sp), but
+// avoids splitting the string twice
+void
+internal_string_to_split_path(std::string const & path, split_path & sp)
+{
+  I(utf8_validate(path));
+  I(!in_bookkeeping_dir(path));
+  sp.clear();
+  sp.reserve(8);
+  sp.push_back(the_null_component);
+  I(fully_normalized_path_split(path, true, sp));
 }
 
 file_path::file_path(file_path::source_type type, std::string const & path)

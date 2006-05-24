@@ -1,9 +1,11 @@
 #include "cmd.hh"
 
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "packet.hh"
 #include "annotate.hh"
 #include "diff_patch.hh"
+#include "localized_file_io.hh"
 
 #include <iostream>
 using std::cout;

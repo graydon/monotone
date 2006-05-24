@@ -152,4 +152,9 @@ namespace constants
 
   std::string const & netsync_key_initializer = std::string(netsync_session_key_length_in_bytes, 0);
 
+  // attributes
+  std::string const encoding_attribute("mtn:encoding");
+  std::string const manual_merge_attribute("mtn:manual_merge");
+  std::string const binary_encoding("binary");
+  std::string const default_encoding("default");
 }

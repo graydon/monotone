@@ -3,6 +3,7 @@
 #include "netsync.hh"
 #include "globish.hh"
 #include "keys.hh"
+#include "cert.hh"
 
 #include <fstream>
 using std::ifstream;

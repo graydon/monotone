@@ -25,6 +25,7 @@
 
 #include "app_state.hh"
 #include "basic_io.hh"
+#include "cert.hh"
 #include "cset.hh"
 #include "constants.hh"
 #include "interner.hh"
@@ -33,6 +34,7 @@
 #include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "ui.hh"
 #include "vocab.hh"
 #include "safe_map.hh"
@@ -1491,9 +1493,9 @@ namespace
 {
   namespace syms
   {
-    std::string const format_version("format_version");
-    std::string const old_revision("old_revision");
-    std::string const new_manifest("new_manifest");
+    symbol const format_version("format_version");
+    symbol const old_revision("old_revision");
+    symbol const new_manifest("new_manifest");
   }
 }
 
@@ -1502,7 +1504,7 @@ print_edge(basic_io::printer & printer,
            edge_entry const & e)
 {       
   basic_io::stanza st;
-  st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner()());
+  st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner());
   printer.print_stanza(st);
   print_cset(printer, edge_changes(e)); 
 }
@@ -1519,7 +1521,7 @@ print_revision(basic_io::printer & printer,
   printer.print_stanza(format_stanza);
 
   basic_io::stanza manifest_stanza; 
-  manifest_stanza.push_hex_pair(syms::new_manifest, rev.new_manifest.inner()());
+  manifest_stanza.push_hex_pair(syms::new_manifest, rev.new_manifest.inner());
   printer.print_stanza(manifest_stanza);
 
   for (edge_map::const_iterator edge = rev.edges.begin();
@@ -1622,6 +1624,16 @@ write_revision_set(revision_set const & rev,
   data d;
   write_revision_set(rev, d);
   dat = revision_data(d);
+}
+
+void calculate_ident(revision_set const & cs,
+                     revision_id & ident)
+{
+  data tmp;
+  hexenc<id> tid;
+  write_revision_set(cs, tmp);
+  calculate_ident(tmp, tid);
+  ident = tid;
 }
 
 #ifdef BUILD_UNIT_TESTS

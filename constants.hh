@@ -150,6 +150,12 @@ namespace constants
 
   // netsync session key default initializer
   extern std::string const & netsync_key_initializer;
+
+  // attributes
+  extern std::string const encoding_attribute;
+  extern std::string const binary_encoding;
+  extern std::string const default_encoding;
+  extern std::string const manual_merge_attribute;
 }
 
 #endif // __CONSTANTS_HH__

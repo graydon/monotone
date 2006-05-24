@@ -15,6 +15,7 @@
 #include "paths.hh"
 #include "roster.hh"
 #include "vocab.hh"
+#include "file_io.hh"
 
 //
 // this file defines structures to deal with the "workspace" of a tree
@@ -164,18 +165,12 @@ void write_inodeprints(data const & dat);
 
 void enable_inodeprints();
 
-extern std::string const encoding_attribute;
-extern std::string const manual_merge_attribute;
-
 bool get_attribute_from_roster(roster_t const & ros,                               
                                file_path const & path,
                                attr_key const & key,
                                attr_value & val);
 
 void update_any_attrs(app_state & app);
-
-extern std::string const binary_encoding;
-extern std::string const default_encoding;
 
 struct file_content_source
 {

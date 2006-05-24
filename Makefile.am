@@ -10,18 +10,20 @@ MOST_SOURCES =								\
 	 app_state.cc app_state.hh					\
          commands.cc commands.hh $(CMD_SOURCES)				\
          diff_patch.cc diff_patch.hh					\
-         lua.cc lua.hh							\
-         transforms.cc transforms.hh					\
+         lua.cc lua.hh lua_hooks.cc lua_hooks.hh			\
+         transforms.cc transforms.hh charset.cc charset.hh		\
+         simplestring_xform.cc simplestring_xform.hh			\
          update.cc update.hh						\
          work.cc work.hh						\
          cert.cc cert.hh						\
          database.cc database.hh					\
          key_store.cc key_store.hh					\
-         file_io.cc file_io.hh						\
+         file_io.cc file_io.hh localized_file_io.cc localized_file_io.hh\
          keys.cc keys.hh						\
          packet.cc packet.hh						\
          sanity.cc sanity.hh						\
-         vocab.cc vocab.hh vocab_terms.hh numeric_vocab.hh		\
+         vocab.cc vocab.hh vocab_terms.hh				\
+         numeric_vocab.hh vocab_macros.hh				\
          rcs_file.cc rcs_file.hh					\
          xdelta.cc xdelta.hh						\
          ui.cc ui.hh							\

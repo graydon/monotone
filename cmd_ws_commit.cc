@@ -6,6 +6,7 @@
 #include "revision.hh"
 #include "transforms.hh"
 #include "work.hh"
+#include "localized_file_io.hh"
 
 #include <map>
 using std::map;

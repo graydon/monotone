@@ -1,7 +1,7 @@
 #include "cmd.hh"
 #include "revision.hh"
 #include "database_check.hh"
-#include "transforms.hh"
+#include "charset.hh"
 
 #include <iostream>
 using std::cin;
