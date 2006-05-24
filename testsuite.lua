@@ -38,10 +38,18 @@ function mtn_setup()
   getstdfile("tests/min_hooks.lua", "min_hooks.lua")
   port = math.random(20000, 50000)
   
-  check(prepare(mtn("db", "init")), 0, false, false)
-  check(prepare(mtn("read", "test_keys")), 0, false, false)
-  check(prepare(mtn("setup", "--branch=testbranch", ".")), 0, false, false)
+  check(cmd(mtn("db", "init")), 0, false, false)
+  check(cmd(mtn("read", "test_keys")), 0, false, false)
+  check(cmd(mtn("setup", "--branch=testbranch", ".")), 0, false, false)
   os.remove("test_keys")
+end
+
+function base_revision()
+  return string.gsub(readfile("_MTN/revision"), "%s*$", "")
+end
+
+function qgrep(what, where)
+  return grep("-q", what, where)
 end
 
 function canonicalize(filename)
@@ -73,3 +81,4 @@ end
 table.insert(tests, "tests/basic_invocation_and_options")
 table.insert(tests, "tests/scanning_trees")
 table.insert(tests, "tests/importing_a_file")
+table.insert(tests, "tests/generating_and_extracting_keys_and_certs")

@@ -64,7 +64,7 @@ function execute(path, ...)
    return ret
 end
 
-function prepare(first, ...)
+function cmd(first, ...)
   if type(first) == "string" then
     test_log:write("\n", first, " ", table.concat(arg, " "), "\n")
     return function () return execute(first, unpack(arg)) end
@@ -72,7 +72,7 @@ function prepare(first, ...)
     test_log:write("\n<function> ", table.concat(arg, " "), "\n")
     return function () return first(unpack(arg)) end
   else
-    error("prepare() called with argument of unknown type " .. type(first), 2)
+    error("cmd() called with argument of unknown type " .. type(first), 2)
   end
 end
 
@@ -99,11 +99,38 @@ function cmp(left, right)
   return docmp, left, right
 end
 
+function grep(...)
+  local dogrep = function (flags, what, where)
+                   if where == nil and string.sub(flags, 1, 1) ~= "-" then
+                     where = what
+                     what = flags
+                     flags = ""
+                   end
+                   local quiet = string.find(flags, "q") ~= nil
+                   local reverse = string.find(flags, "v") ~= nil
+                   local out = 1
+                   for line in io.lines(where) do
+                     local matched = regex.search(what, line)
+                     if reverse then matched = not matched end
+                     if matched then
+                       if not quiet then print(line) end
+                       out = 0
+                     end
+                   end
+                   return out
+                 end
+  return dogrep, unpack(arg)
+end
+
 -- std{out,err} can be:
 --   * false: ignore
 --   * true: ignore, copy to stdout
 --   * string: check that it matches the contents
 --   * nil: must be empty
+-- stdin can be:
+--   * true: use existing "stdin" file
+--   * nil, false: empty input
+--   * string: contents of string
 function check(func, ret, stdout, stderr, stdin)
   if ret == nil then ret = 0 end
   if stdin ~= true then
@@ -186,8 +213,15 @@ function run_tests(args)
     test_log = io.open(tlog, "w")
     test_log:write("Test number ", i, ", ", shortname, "\n")
 
-    local driver = srcdir .. "/" .. testname .. "/__driver__.lua"
-    local r,e = xpcall(loadfile(driver), debug.traceback)
+    local driverfile = srcdir .. "/" .. testname .. "/__driver__.lua"
+    local driver, e = loadfile(driverfile)
+    local r
+    if driver == nil then
+      r = false
+      e = "Could not load driver file " .. driverfile .. " .\n" .. e
+    else
+      r,e = xpcall(driver, debug.traceback)
+    end
     if r then
       P("ok\n")
       clean_test_dir(testname)
