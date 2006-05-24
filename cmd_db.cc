@@ -46,7 +46,7 @@ CMD(db, N_("database"),
       "rosterify\n"
       "set_epoch BRANCH EPOCH\n"), 
     N_("manipulate database state"),
-    OPT_DROP_ATTR)
+    option::drop_attr)
 {
   if (args.size() == 1)
     {
@@ -104,7 +104,7 @@ CMD(db, N_("database"),
 
 CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
     N_("set the database variable NAME to VALUE, in domain DOMAIN"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -120,7 +120,7 @@ CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
 
 CMD(unset, N_("vars"), N_("DOMAIN NAME"),
     N_("remove the database variable NAME in domain DOMAIN"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -136,7 +136,7 @@ CMD(unset, N_("vars"), N_("DOMAIN NAME"),
 
 CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     N_("complete partial id"),
-    OPT_VERBOSE)
+    option::verbose)
 {
   if (args.size() != 2)
     throw usage(name);

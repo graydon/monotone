@@ -1,6 +1,9 @@
 #ifndef __CMD_HH__
 #define __CMD_HH__
 
+#include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include "sanity.hh"
 #include "options.hh"
 #include "constants.hh"
@@ -14,19 +17,20 @@ using std::vector;
 namespace commands
 {
   using std::set;
-  struct no_opts {};
+  using boost::program_options::option_description;
+  using boost::shared_ptr;
+
   struct command_opts
   {
-    set<int> opts;
+    set< shared_ptr<option_description> > opts;
     command_opts() {}
-    command_opts & operator%(int o)
-    { opts.insert(o); return *this; }
-    command_opts & operator%(no_opts o)
+    command_opts & operator%(shared_ptr<option_description> p)
+    { opts.insert(p); return *this; }
+    command_opts & operator%(option::no_option)
     { return *this; }
     command_opts & operator%(command_opts const &o)
     { opts.insert(o.opts.begin(), o.opts.end()); return *this; }
   };
-  extern const no_opts OPT_NONE;
 
   struct command 
   {

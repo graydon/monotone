@@ -14,7 +14,7 @@ using std::ostream_iterator;
 // fload and fmerge are simple commands for debugging the line
 // merger.
 
-CMD(fload, N_("debug"), "", N_("load file contents into db"), OPT_NONE)
+CMD(fload, N_("debug"), "", N_("load file contents into db"), option::none)
 {
   string s = get_stdin();
 
@@ -29,7 +29,7 @@ CMD(fload, N_("debug"), "", N_("load file contents into db"), OPT_NONE)
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
     N_("merge 3 files and output result"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -62,7 +62,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
-    OPT_REVISION % OPT_BRIEF)
+    option::revision % option::brief)
 {
   revision_id rid;
 
@@ -101,7 +101,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 
 CMD(identify, N_("debug"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
-    OPT_NONE)
+    option::none)
 {
   if (!(args.size() == 0 || args.size() == 1))
     throw usage(name);
@@ -125,7 +125,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 CMD(cat, N_("informative"),
     N_("FILENAME"),
     N_("write file from database to stdout"),
-    OPT_REVISION)
+    option::revision)
 {
   if (args.size() != 1)
     throw usage(name);

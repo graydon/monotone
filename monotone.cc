@@ -6,7 +6,6 @@
 
 #include "config.h"
 
-#include "popt/popt.h"
 #include <cstdio>
 #include <strings.h>
 #include <iterator>
@@ -19,6 +18,8 @@
 
 #include <boost/filesystem/convenience.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "botan/botan.h"
 
@@ -35,78 +36,98 @@
 #include "options.hh"
 #include "paths.hh"
 
+using std::cout;
+using std::string;
+using std::ostringstream;
+using std::set;
+using std::vector;
+using std::ios_base;
+using boost::shared_ptr;
+namespace po = boost::program_options;
+
 // main option processing and exception handling code
 
-using namespace std;
+// options are split into two categories.  the first covers global options,
+// which globally affect program behaviour.  the second covers options
+// specific to one or more commands.  these command-specific options are
+// defined in a single group, with the intent that any command-specific
+// option means the same thing for any command that uses it.
 
-char * argstr = NULL;
-long arglong = 0;
+namespace option
+{
+  using boost::program_options::value;
+  using boost::program_options::option_description;
+  using boost::program_options::options_description;
 
-// Options are split between two tables.  The first one is command-specific
-// options (hence the `c' in `coptions').  The second is the global one
-// with options that aren't tied to specific commands.
-//
-// the intent is to ensure that any command specific options mean the same
-// thing to all commands that use them
+  options_description global_options;
+  options_description specific_options;
 
-struct poptOption coptions[] =
+  no_option none;
+
+  po::value_semantic *
+  null_value()
   {
-    {"branch", 'b', POPT_ARG_STRING, &argstr, OPT_BRANCH_NAME, gettext_noop("select branch cert for operation"), NULL},
-    {"revision", 'r', POPT_ARG_STRING, &argstr, OPT_REVISION, gettext_noop("select revision id for operation"), NULL},
-    {"message", 'm', POPT_ARG_STRING, &argstr, OPT_MESSAGE, gettext_noop("set commit changelog message"), NULL},
-    {"message-file", 0, POPT_ARG_STRING, &argstr, OPT_MSGFILE, gettext_noop("set filename containing commit changelog message"), NULL},
-    {"date", 0, POPT_ARG_STRING, &argstr, OPT_DATE, gettext_noop("override date/time for commit"), NULL},
-    {"author", 0, POPT_ARG_STRING, &argstr, OPT_AUTHOR, gettext_noop("override author for commit"), NULL},
-    {"depth", 0, POPT_ARG_LONG, &arglong, OPT_DEPTH, gettext_noop("limit the number of levels of directories to descend"), NULL},
-    {"last", 0, POPT_ARG_LONG, &arglong, OPT_LAST, gettext_noop("limit log output to the last number of entries"), NULL},
-    {"next", 0, POPT_ARG_LONG, &arglong, OPT_NEXT, gettext_noop("limit log output to the next number of entries"), NULL},
-    {"pid-file", 0, POPT_ARG_STRING, &argstr, OPT_PIDFILE, gettext_noop("record process id of server"), NULL},
-    {"brief", 0, POPT_ARG_NONE, NULL, OPT_BRIEF, gettext_noop("print a brief version of the normal output"), NULL},
-    {"diffs", 0, POPT_ARG_NONE, NULL, OPT_DIFFS, gettext_noop("print diffs along with logs"), NULL},
-    {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, gettext_noop("exclude merges when printing logs"), NULL},
-    {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, gettext_noop("use the current arguments as the future default"), NULL},
-    {"exclude", 0, POPT_ARG_STRING, &argstr, OPT_EXCLUDE, gettext_noop("leave out anything described by its argument"), NULL},
-    {"unified", 0, POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("use unified diff format"), NULL},
-    {"context", 0, POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("use context diff format"), NULL},
-    {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, gettext_noop("use external diff hook for generating diffs"), NULL},
-    {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, gettext_noop("argument to pass external diff hook"), NULL},
-    {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
-    {"bind", 0, POPT_ARG_STRING, &argstr, OPT_BIND, gettext_noop("address:port to listen on (default :4691)"), NULL},
-    {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from workspace"), NULL},
-    {"unknown", 0, POPT_ARG_NONE, NULL, OPT_UNKNOWN, gettext_noop("perform the operations for unknown files from workspace"), NULL},
-    {"key-to-push", 0, POPT_ARG_STRING, &argstr, OPT_KEY_TO_PUSH, gettext_noop("push the specified key even if it hasn't signed anything"), NULL},
-    {"drop-attr", 0, POPT_ARG_STRING, &argstr, OPT_DROP_ATTR, gettext_noop("when rosterifying, drop attrs entries with the given key"), NULL},
-    {"no-files", 0, POPT_ARG_NONE, NULL, OPT_NO_FILES, gettext_noop("exclude files when printing logs"), NULL},
-    {"recursive", 'R', POPT_ARG_NONE, NULL, OPT_RECURSIVE, gettext_noop("also operate on the contents of any listed directories"), NULL},
-    { NULL, 0, 0, NULL, 0, NULL, NULL }
-  };
+    return new po::untyped_value(true);
+  }
 
-struct poptOption options[] =
-  {
-    // Use the coptions table as well.
-    { NULL, 0, POPT_ARG_INCLUDE_TABLE, coptions, 0, NULL, NULL },
+  // the options below are also declared in options.hh for other users.  the
+  // GOPT and COPT defines are just to reduce duplication, maybe there is a
+  // cleaner way to do the same thing?
 
-    {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, gettext_noop("print debug log to stderr while running"), NULL},
-    {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, gettext_noop("file to dump debugging log to, on failure"), NULL},
-    {"log", 0, POPT_ARG_STRING, &argstr, OPT_LOG, gettext_noop("file to write the log to"), NULL},
-    {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, gettext_noop("suppress verbose, informational and progress messages"), NULL},
-    {"reallyquiet", 0, POPT_ARG_NONE, NULL, OPT_REALLYQUIET, gettext_noop("suppress warning, verbose, informational and progress messages"), NULL},
-    {"help", 'h', POPT_ARG_NONE, NULL, OPT_HELP, gettext_noop("display help message"), NULL},
-    {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, gettext_noop("print version number, then exit"), NULL},
-    {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, gettext_noop("print detailed version number, then exit"), NULL},
-    {"xargs", '@', POPT_ARG_STRING, &argstr, OPT_ARGFILE, gettext_noop("insert command line arguments taken from the given file"), NULL},
-    {"ticker", 0, POPT_ARG_STRING, &argstr, OPT_TICKER, gettext_noop("set ticker style (count|dot|none)"), NULL},
-    {"nostd", 0, POPT_ARG_NONE, NULL, OPT_NOSTD, gettext_noop("do not load standard lua hooks"), NULL},
-    {"norc", 0, POPT_ARG_NONE, NULL, OPT_NORC, gettext_noop("do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"), NULL},
-    {"rcfile", 0, POPT_ARG_STRING, &argstr, OPT_RCFILE, gettext_noop("load extra rc file"), NULL},
-    {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, gettext_noop("set key for signatures"), NULL},
-    {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, gettext_noop("set name of database"), NULL},
-    {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, gettext_noop("limit search for workspace to specified root"), NULL},
-    {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, gettext_noop("verbose completion output"), NULL},
-    {"keydir", 0, POPT_ARG_STRING, &argstr, OPT_KEY_DIR, gettext_noop("set location of key store"), NULL},
-    {"confdir", 0, POPT_ARG_STRING, &argstr, OPT_CONF_DIR, gettext_noop("set location of configuration directory"), NULL},
-    { NULL, 0, 0, NULL, 0, NULL, NULL }
-  };
+  // global options
+#define GOPT(NAME, OPT, TYPE, DESC) global NAME(new option_description(OPT, TYPE, DESC))
+  GOPT(debug, "debug", null_value(), gettext_noop("print debug log to stderr while running"));
+  GOPT(dump, "dump", value<string>(), gettext_noop("file to dump debugging log to, on failure"));
+  GOPT(log, "log", value<string>(), gettext_noop("file to write the log to"));
+  GOPT(quiet, "quiet", null_value(), gettext_noop("suppress verbose, informational and progress messages"));
+  GOPT(reallyquiet, "reallyquiet", null_value(), gettext_noop("suppress warning, verbose, informational and progress messages"));
+  GOPT(help, "help,h", null_value(), gettext_noop("display help message"));
+  GOPT(version, "version", null_value(), gettext_noop("print version number, then exit"));
+  GOPT(full_version, "full-version", null_value(), gettext_noop("print detailed version number, then exit"));
+  GOPT(argfile, "xargs,@", value<string>(), gettext_noop("insert command line arguments taken from the given file"));
+  GOPT(ticker, "ticker", value<string>(), gettext_noop("set ticker style (count|dot|none)"));
+  GOPT(nostd, "nostd", null_value(), gettext_noop("do not load standard lua hooks"));
+  GOPT(norc, "norc", null_value(), gettext_noop("do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"));
+  GOPT(rcfile, "rcfile", value<string>(), gettext_noop("load extra rc file"));
+  GOPT(key_name, "key,k", value<string>(), gettext_noop("set key for signatures"));
+  GOPT(db_name, "db,d", value<string>(), gettext_noop("set name of database"));
+  GOPT(root, "root", value<string>(), gettext_noop("limit search for workspace to specified root"));
+  GOPT(verbose, "verbose", null_value(), gettext_noop("verbose completion output"));
+  GOPT(key_dir, "keydir", value<string>(), gettext_noop("set location of key store"));
+  GOPT(conf_dir, "confdir", value<string>(), gettext_noop("set location of configuration directory"));
+#undef OPT
+
+  // command-specific options
+#define COPT(NAME, OPT, TYPE, DESC) specific NAME(new option_description(OPT, TYPE, DESC))
+  COPT(author, "author", value<string>(), gettext_noop("override author for commit"));
+  COPT(bind, "bind", value<string>(), gettext_noop("address:port to listen on (default :4691)"));
+  COPT(branch_name, "branch,b", value<string>(), gettext_noop("select branch cert for operation"));
+  COPT(brief, "brief", null_value(), gettext_noop("print a brief version of the normal output"));
+  COPT(context_diff, "context", null_value(), gettext_noop("use context diff format"));
+  COPT(date, "date", value<string>(), gettext_noop("override date/time for commit"));
+  COPT(depth, "depth", value<long>(), gettext_noop("limit the number of levels of directories to descend"));
+  COPT(diffs, "diffs", null_value(), gettext_noop("print diffs along with logs"));
+  COPT(drop_attr, "drop-attr", value<string>(), gettext_noop("when rosterifying, drop attrs entries with the given key"));
+  COPT(exclude, "exclude", value<string>(), gettext_noop("leave out anything described by its argument"));
+  COPT(execute, "execute,e", null_value(), gettext_noop("perform the associated file operation"));
+  COPT(external_diff, "external", null_value(), gettext_noop("use external diff hook for generating diffs"));
+  COPT(external_diff_args, "diff-args", value<string>(), gettext_noop("argument to pass external diff hook"));
+  COPT(key_to_push, "key-to-push", value<string>(), gettext_noop("push the specified key even if it hasn't signed anything"));
+  COPT(last, "last", value<long>(), gettext_noop("limit log output to the last number of entries"));
+  COPT(message, "message,m", value<string>(), gettext_noop("set commit changelog message"));
+  COPT(missing, "missing", null_value(), gettext_noop("perform the operations for files missing from workspace"));
+  COPT(msgfile, "message-file", value<string>(), gettext_noop("set filename containing commit changelog message"));
+  COPT(next, "next", value<long>(), gettext_noop("limit log output to the next number of entries"));
+  COPT(no_files, "no-files", null_value(), gettext_noop("exclude files when printing logs"));
+  COPT(no_merges, "no-merges", null_value(), gettext_noop("exclude merges when printing logs"));
+  COPT(pidfile, "pid-file", value<string>(), gettext_noop("record process id of server"));
+  COPT(recursive, "recursive,R", null_value(), gettext_noop("also operate on the contents of any listed directories"));
+  COPT(revision, "revision,r", value<string>(), gettext_noop("select revision id for operation"));
+  COPT(set_default, "set-default", null_value(), gettext_noop("use the current arguments as the future default"));
+  COPT(unified_diff, "unified", null_value(), gettext_noop("use unified diff format"));
+  COPT(unknown, "unknown", null_value(), gettext_noop("perform the operations for unknown files from workspace"));
+#undef COPT
+}
 
 // there are 3 variables which serve as roots for our system.
 //
@@ -132,17 +153,17 @@ struct poptOption options[] =
 // in other words, this program should *never* unexpectedly terminate
 // without dumping some diagnostics.
 
-void 
-dumper() 
+void
+dumper()
 {
   if (!global_sanity.clean_shutdown)
     global_sanity.dump_buffer();
-  
+
   Botan::Init::deinitialize();
 }
 
 
-struct 
+struct
 utf8_argv
 {
   int argc;
@@ -165,7 +186,7 @@ utf8_argv
     }
   }
 
-  ~utf8_argv() 
+  ~utf8_argv()
   {
     if (argv != NULL)
       {
@@ -173,21 +194,11 @@ utf8_argv
           if (argv[i] != NULL)
             free(argv[i]);
         free(argv);
-      }    
+      }
   }
 };
 
-// Stupid type system tricks: to use a cleanup_ptr, we need to know the return
-// type of the cleanup function.  But popt silently changed the return type of
-// poptFreeContext at some point, I guess because they thought it would be
-// "backwards compatible".  We don't actually _use_ the return value of
-// poptFreeContext, so this little wrapper works.
-static void
-my_poptFreeContext(poptContext con)
-{
-  poptFreeContext(con);
-}
-
+#if 0 // FIXME! need b::po equiv.
 // Read arguments from a file.  The special file '-' means stdin.
 // Returned value must be free()'d, after arg parsing has completed.
 static void
@@ -223,23 +234,9 @@ my_poptStuffArgFile(poptContext con, utf8 const & filename)
 
   free(argv);
 }
+#endif
 
-static string
-coption_string(int o)
-{
-  char buf[2] = { 0,0 };
-  for(struct poptOption *opt = coptions; opt->val; opt++)
-    if (o == opt->val)
-      {
-        buf[0] = opt->shortName;
-        return opt->longName
-          ? string("--") + string(opt->longName)
-          : string("-") + string(buf);
-      }
-  return string();
-}
-
-int 
+int
 cpp_main(int argc, char ** argv)
 {
   int ret = 0;
@@ -247,7 +244,6 @@ cpp_main(int argc, char ** argv)
   atexit(&dumper);
 
   // go-go gadget i18n
-
   setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
@@ -260,9 +256,9 @@ cpp_main(int argc, char ** argv)
 
   // set up some marked strings, so even if our logbuf overflows, we'll get
   // this data in a crash.
-  std::string cmdline_string;
+  string cmdline_string;
   {
-    std::ostringstream cmdline_ss;
+    ostringstream cmdline_ss;
     for (int i = 0; i < argc; ++i)
       {
         if (i)
@@ -274,47 +270,30 @@ cpp_main(int argc, char ** argv)
   MM(cmdline_string);
   L(FL("command line: %s\n") % cmdline_string);
 
-  std::string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
+  string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
   MM(locale_string);
   L(FL("set locale: LC_ALL=%s\n") % locale_string);
 
-  std::string full_version_string;
+  string full_version_string;
   get_full_version(full_version_string);
   MM(full_version_string);
 
   // Set up secure memory allocation etc
   Botan::Init::initialize();
   Botan::set_default_allocator("malloc");
-  
-  // decode all argv values into a UTF-8 array
 
+  // decode all argv values into a UTF-8 array
   save_initial_path();
   utf8_argv uv(argc, argv);
 
   // find base name of executable
-
   string prog_path = fs::path(uv.argv[0]).leaf();
   if (prog_path.rfind(".exe") == prog_path.size() - 4)
     prog_path = prog_path.substr(0, prog_path.size() - 4);
   utf8 prog_name(prog_path);
 
-  // prepare for arg parsing
-
-  cleanup_ptr<poptContext, void> 
-    ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
-        &my_poptFreeContext);
-
-  set<int> local_options;
-  for (poptOption *opt = coptions; opt->val; opt++)
-    local_options.insert(opt->val);
-
   // process main program options
-
-  int opt;
   bool requested_help = false;
-  set<int> used_local_options;
-
-  poptSetOtherOptionHelp(ctx(), _("[OPTION...] command [ARGS...]\n"));
 
   try
     {
@@ -322,265 +301,337 @@ cpp_main(int argc, char ** argv)
 
       app.set_prog_name(prog_name);
 
-      while ((opt = poptGetNextOpt(ctx())) > 0)
+      // set up for parsing.  we add a hidden argument that collections all
+      // positional arguments, which we process ourselves in a moment.
+      po::options_description all_options;
+      all_options.add(option::global_options);
+      all_options.add(option::specific_options);
+      all_options.add_options()
+        ("all_positional_args", po::value< vector<string> >());
+      po::positional_options_description all_positional_args;
+      all_positional_args.add("all_positional_args", -1);
+
+      po::parsed_options parsed = po::command_line_parser(argc, uv.argv)
+        .options(all_options)
+        .positional(all_positional_args)
+        .run();
+      po::variables_map vm;
+      po::store(parsed, vm);
+      po::notify(vm);
+
+      // consume the command, and perform completion if necessary
+      string cmd;
+      vector<string> positional_args;
+      if (vm.count("all_positional_args"))
         {
-          if (local_options.find(opt) != local_options.end())
-            used_local_options.insert(opt);
-
-          switch(opt)
-            {
-            case OPT_DEBUG:
-              global_sanity.set_debug();
-              break;
-
-            case OPT_QUIET:
-              global_sanity.set_quiet();
-              ui.set_tick_writer(new tick_write_nothing);
-              break;
-
-            case OPT_REALLYQUIET:
-              global_sanity.set_reallyquiet();
-              ui.set_tick_writer(new tick_write_nothing);
-              break;
-
-            case OPT_NOSTD:
-              app.set_stdhooks(false);
-              break;
-
-            case OPT_NORC:
-              app.set_rcfiles(false);
-              break;
-
-            case OPT_VERBOSE:
-              app.set_verbose(true);
-              break;
-
-            case OPT_RCFILE:
-              app.add_rcfile(string(argstr));
-              break;
-
-            case OPT_DUMP:
-              global_sanity.filename = system_path(argstr);
-              break;
-
-            case OPT_LOG:
-              ui.redirect_log_to(system_path(argstr));
-              break;
-
-            case OPT_DB_NAME:
-              app.set_database(system_path(argstr));
-              break;
-
-            case OPT_KEY_DIR:
-              app.set_key_dir(system_path(argstr));
-              break;
-
-            case OPT_CONF_DIR:
-              app.set_confdir(system_path(argstr));
-              break;
-
-            case OPT_TICKER:
-              if (string(argstr) == "none" || global_sanity.quiet)
-                ui.set_tick_writer(new tick_write_nothing);
-              else if (string(argstr) == "dot")
-                ui.set_tick_writer(new tick_write_dot);
-              else if (string(argstr) == "count")
-                ui.set_tick_writer(new tick_write_count);
-              else
-                requested_help = true;
-              break;
-
-            case OPT_KEY_NAME:
-              app.set_signing_key(string(argstr));
-              break;
-
-            case OPT_BRANCH_NAME:
-              app.set_branch(string(argstr));
-              app.set_is_explicit_option(OPT_BRANCH_NAME);
-              break;
-
-            case OPT_VERSION:
-              print_version();
-              global_sanity.clean_shutdown = true;
-              return 0;
-
-            case OPT_FULL_VERSION:
-              print_full_version();
-              global_sanity.clean_shutdown = true;
-              return 0;
-
-            case OPT_REVISION:
-              app.add_revision(string(argstr));
-              break;
-
-            case OPT_MESSAGE:
-              app.set_message(string(argstr));
-              app.set_is_explicit_option(OPT_MESSAGE);
-              break;
-
-            case OPT_MSGFILE:
-              app.set_message_file(string(argstr));
-              app.set_is_explicit_option(OPT_MSGFILE);
-              break;
-
-            case OPT_DATE:
-              app.set_date(string(argstr));
-              break;
-
-            case OPT_AUTHOR:
-              app.set_author(string(argstr));
-              break;
-
-            case OPT_ROOT:
-              app.set_root(system_path(argstr));
-              break;
-
-            case OPT_LAST:
-              app.set_last(arglong);
-              break;
-
-            case OPT_NEXT:
-              app.set_next(arglong);
-              break;
-
-            case OPT_DEPTH:
-              app.set_depth(arglong);
-              break;
-
-            case OPT_BRIEF:
-              global_sanity.set_brief();
-              break;
-
-            case OPT_DIFFS:
-              app.diffs = true;
-              break;
-
-            case OPT_NO_MERGES:
-              app.no_merges = true;
-              break;
-
-            case OPT_SET_DEFAULT:
-              app.set_default = true;
-              break;
-
-            case OPT_EXCLUDE:
-              app.add_exclude(utf8(string(argstr)));
-              break;
-
-            case OPT_PIDFILE:
-              app.set_pidfile(system_path(argstr));
-              break;
-
-            case OPT_ARGFILE:
-              my_poptStuffArgFile(ctx(), utf8(string(argstr)));
-              break;
-
-            case OPT_UNIFIED_DIFF:
-              app.set_diff_format(unified_diff);
-              break;
-
-            case OPT_CONTEXT_DIFF:
-              app.set_diff_format(context_diff);
-              break;
-
-            case OPT_EXTERNAL_DIFF:
-              app.set_diff_format(external_diff);
-              break;
-              
-            case OPT_EXTERNAL_DIFF_ARGS:
-              app.set_diff_args(utf8(string(argstr)));
-              break;
-
-            case OPT_EXECUTE:
-              app.execute = true;
-              break;
-
-            case OPT_BIND:
-              {
-                std::string arg(argstr);
-                std::string addr_part, port_part;
-                size_t l_colon = arg.find(':');
-                size_t r_colon = arg.rfind(':');
-                
-                // not an ipv6 address, as that would have at least two colons
-                if (l_colon == r_colon)
-                  {
-                    addr_part = (r_colon == std::string::npos ? arg : arg.substr(0, r_colon));
-                    port_part = (r_colon == std::string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
-                  }
-                else
-                  { 
-                    // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
-                    size_t squareb = arg.rfind(']');
-                    if ((arg.find('[') == 0) && (squareb != std::string::npos))
-                      {
-                        if (squareb < r_colon)
-                          port_part = (r_colon == std::string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
-                        else
-                          port_part = "";
-                        addr_part = (squareb == std::string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
-                      }
-                    else 
-                      {
-                        addr_part = arg;
-                        port_part = "";
-                      }
-                  }
-                app.bind_address = utf8(addr_part);
-                app.bind_port = utf8(port_part);
-              }
-              app.set_is_explicit_option(OPT_BIND);
-              break;
-
-            case OPT_MISSING:
-              app.missing = true;
-              break;
-
-            case OPT_UNKNOWN:
-              app.unknown = true;
-              break;
-
-            case OPT_KEY_TO_PUSH:
-              {
-                app.add_key_to_push(string(argstr));
-              }
-              break;
-
-            case OPT_DROP_ATTR:
-              app.attrs_to_drop.insert(string(argstr));
-              break;
-
-            case OPT_NO_FILES:
-              app.no_files = true;
-              break;
-
-            case OPT_RECURSIVE:
-              app.set_recursive();
-              break;
-
-            case OPT_HELP:
-            default:
-              requested_help = true;
-              break;
-            }
+          positional_args = vm["all_positional_args"].as< vector<string> >();
+          cmd = commands::complete_command(idx(positional_args, 0));
+          positional_args.erase(positional_args.begin());
         }
 
-      // verify that there are no errors in the command line
+      // build an options_description specific to this cmd.
+      set< shared_ptr<po::option_description> > cmd_options;
+      cmd_options = commands::command_options(cmd);
+      po::options_description cmd_options_desc;
+      set< shared_ptr<po::option_description> >::const_iterator it;
+      for (it = cmd_options.begin(); it != cmd_options.end(); ++it)
+        cmd_options_desc.add(*it);
 
-      N(opt == -1,
-        F("syntax error near the \"%s\" option: %s") %
-          poptBadOption(ctx(), POPT_BADOPTION_NOALIAS) % poptStrerror(opt));
+      po::options_description all_for_this_cmd;
+      all_for_this_cmd.add(option::global_options);
+      all_for_this_cmd.add(cmd_options_desc);
 
-      // complete the command if necessary
+      // reparse arguments using specific options.
+      parsed = po::command_line_parser(argc, uv.argv)
+        .options(all_for_this_cmd)
+        .run();
+      po::store(parsed, vm);
+      po::notify(vm);
 
-      string cmd;
-      if (poptPeekArg(ctx()))
+      if (vm.count(option::debug()))
         {
-          cmd = commands::complete_command(poptGetArg(ctx()));
+          global_sanity.set_debug();
+        }
+
+      if (vm.count(option::quiet()))
+        {
+          global_sanity.set_quiet();
+          ui.set_tick_writer(new tick_write_nothing);
+        }
+
+      if (vm.count(option::reallyquiet()))
+        {
+          global_sanity.set_reallyquiet();
+          ui.set_tick_writer(new tick_write_nothing);
+        }
+
+      if (vm.count(option::nostd()))
+        {
+          app.set_stdhooks(false);
+        }
+
+      if (vm.count(option::norc()))
+        {
+          app.set_rcfiles(false);
+        }
+
+      if (vm.count(option::verbose()))
+        {
+          app.set_verbose(true);
+        }
+
+      if (vm.count(option::rcfile()))
+        {
+          app.add_rcfile(vm[option::rcfile()].as<string>());
+        }
+
+      if (vm.count(option::dump()))
+        {
+          global_sanity.filename = system_path(vm[option::dump()].as<string>());
+        }
+
+      if (vm.count(option::log()))
+        {
+          ui.redirect_log_to(system_path(vm[option::log()].as<string>()));
+        }
+
+      if (vm.count(option::db_name()))
+        {
+          app.set_database(system_path(vm[option::db_name()].as<string>()));
+        }
+
+      if (vm.count(option::key_dir()))
+        {
+          app.set_key_dir(system_path(vm[option::key_dir()].as<string>()));
+        }
+
+      if (vm.count(option::conf_dir()))
+        {
+          app.set_confdir(system_path(vm[option::conf_dir()].as<string>()));
+        }
+
+      if (vm.count(option::ticker()))
+        {
+          string ticker = vm[option::ticker()].as<string>();
+          if (ticker == "none" || global_sanity.quiet)
+            ui.set_tick_writer(new tick_write_nothing);
+          else if (ticker == "dot")
+            ui.set_tick_writer(new tick_write_dot);
+          else if (ticker == "count")
+            ui.set_tick_writer(new tick_write_count);
+          else
+            requested_help = true;
+        }
+
+      if (vm.count(option::key_name()))
+        {
+          app.set_signing_key(vm[option::key_name()].as<string>());
+        }
+
+      if (vm.count(option::branch_name()))
+        {
+          app.set_branch(vm[option::branch_name()].as<string>());
+          app.set_is_explicit_option(option::branch_name());
+        }
+
+      if (vm.count(option::version()))
+        {
+          print_version();
+          global_sanity.clean_shutdown = true;
+          return 0;
+        }
+
+      if (vm.count(option::full_version()))
+        {
+          print_full_version();
+          global_sanity.clean_shutdown = true;
+          return 0;
+        }
+
+      if (vm.count(option::revision()))
+        {
+          app.add_revision(vm[option::revision()].as<string>());
+        }
+
+      if (vm.count(option::message()))
+        {
+          app.set_message(vm[option::message()].as<string>());
+          app.set_is_explicit_option(option::message());
+        }
+
+      if (vm.count(option::msgfile()))
+        {
+          app.set_message_file(vm[option::msgfile()].as<string>());
+          app.set_is_explicit_option(option::msgfile());
+        }
+
+      if (vm.count(option::date()))
+        {
+          app.set_date(vm[option::date()].as<string>());
+        }
+
+      if (vm.count(option::author()))
+        {
+          app.set_author(vm[option::author()].as<string>());
+        }
+
+      if (vm.count(option::root()))
+        {
+          app.set_root(system_path(vm[option::root()].as<string>()));
+        }
+
+      if (vm.count(option::last()))
+        {
+          app.set_last(vm[option::last()].as<long>());
+        }
+
+      if (vm.count(option::next()))
+        {
+          app.set_next(vm[option::next()].as<long>());
+        }
+
+      if (vm.count(option::depth()))
+        {
+          app.set_depth(vm[option::depth()].as<long>());
+        }
+
+      if (vm.count(option::brief()))
+        {
+          global_sanity.set_brief();
+        }
+
+      if (vm.count(option::diffs()))
+        {
+          app.diffs = true;
+        }
+
+      if (vm.count(option::no_merges()))
+        {
+          app.no_merges = true;
+        }
+
+      if (vm.count(option::set_default()))
+        {
+          app.set_default = true;
+        }
+
+      if (vm.count(option::exclude()))
+        {
+          app.add_exclude(utf8(vm[option::exclude()].as<string>()));
+        }
+
+      if (vm.count(option::pidfile()))
+        {
+          app.set_pidfile(system_path(vm[option::pidfile()].as<string>()));
+        }
+
+      if (vm.count(option::argfile()))
+        {
+#if 0
+          // FIXME!
+          my_poptStuffArgFile(ctx(), utf8(string(argstr)));
+#endif
+        }
+
+      if (vm.count(option::unified_diff()))
+        {
+          app.set_diff_format(unified_diff);
+        }
+
+      if (vm.count(option::context_diff()))
+        {
+          app.set_diff_format(context_diff);
+        }
+
+      if (vm.count(option::external_diff()))
+        {
+          app.set_diff_format(external_diff);
+        }
+
+      if (vm.count(option::external_diff_args()))
+        {
+          app.set_diff_args(utf8(vm[option::external_diff_args()].as<string>()));
+        }
+
+      if (vm.count(option::execute()))
+        {
+          app.execute = true;
+        }
+
+      if (vm.count(option::bind()))
+        {
+          {
+            string arg = vm[option::bind()].as<string>();
+            string addr_part, port_part;
+            size_t l_colon = arg.find(':');
+            size_t r_colon = arg.rfind(':');
+
+            // not an ipv6 address, as that would have at least two colons
+            if (l_colon == r_colon)
+              {
+                addr_part = (r_colon == string::npos ? arg : arg.substr(0, r_colon));
+                port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+              }
+            else
+              {
+                // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
+                size_t squareb = arg.rfind(']');
+                if ((arg.find('[') == 0) && (squareb != string::npos))
+                  {
+                    if (squareb < r_colon)
+                      port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+                    else
+                      port_part = "";
+                    addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
+                  }
+                else
+                  {
+                    addr_part = arg;
+                    port_part = "";
+                  }
+              }
+            app.bind_address = utf8(addr_part);
+            app.bind_port = utf8(port_part);
+          }
+          app.set_is_explicit_option(option::bind());
+        }
+
+      if (vm.count(option::missing()))
+        {
+          app.missing = true;
+        }
+
+      if (vm.count(option::unknown()))
+        {
+          app.unknown = true;
+        }
+
+      if (vm.count(option::key_to_push()))
+        {
+          app.add_key_to_push(vm[option::key_to_push()].as<string>());
+        }
+
+      if (vm.count(option::drop_attr()))
+        {
+          app.attrs_to_drop.insert(vm[option::drop_attr()].as<string>());
+        }
+
+      if (vm.count(option::no_files()))
+        {
+          app.no_files = true;
+        }
+
+      if (vm.count(option::recursive()))
+        {
+          app.set_recursive();
+        }
+
+      if (vm.count(option::help()))
+        {
+          requested_help = true;
         }
 
       // stop here if they asked for help
-
       if (requested_help)
         {
           throw usage(cmd);     // cmd may be empty, and that's fine.
@@ -592,69 +643,54 @@ cpp_main(int argc, char ** argv)
       // from _MTN/options happens later.
       // Certain commands may subsequently require a workspace or fail
       // if we didn't find one at this point.
-
       app.allow_workspace();
 
-      // main options processed, now invoke the 
+      // main options processed, now invoke the
       // sub-command w/ remaining args
-
       if (cmd.empty())
         {
           throw usage("");
         }
       else
         {
-          // Make sure the local options used are really used by the
-          // given command.
-          set<int> command_options = commands::command_options(cmd);
-          for (set<int>::const_iterator i = used_local_options.begin();
-               i != used_local_options.end(); ++i)
-            N(command_options.find(*i) != command_options.end(),
-              F("monotone %s doesn't use the option %s")
-              % cmd % coption_string(*i));
-
-          vector<utf8> args;
-          while(poptPeekArg(ctx()))
-            {
-              args.push_back(utf8(string(poptGetArg(ctx()))));
-            }
+          vector<utf8> args(positional_args.begin(), positional_args.end());
           ret = commands::process(app, cmd, args);
         }
+    }
+  catch (po::ambiguous_option const & e)
+    {
+      string msg = (F("%s:\n") % e.what()).str();
+      vector<string>::const_iterator it = e.alternatives.begin();
+      for (; it != e.alternatives.end(); ++it)
+        msg += *it + "\n";
+      N(false, i18n_format(msg));
+    }
+  catch (po::error const & e)
+    {
+      N(false, F("%s") % e.what());
     }
   catch (usage & u)
     {
       // Make sure to hide documentation that's not part of
       // the current command.
-      set<int> command_options = commands::command_options(u.which);
-      int count = 0;
-      for (poptOption *o = coptions; o->val != 0; o++)
-        {
-          if (command_options.find(o->val) != command_options.end())
-            {
-              o->argInfo &= ~POPT_ARGFLAG_DOC_HIDDEN;
-              L(FL("Removed 'hidden' from option # %d\n") % o->argInfo);
-              count++;
-            }
-          else
-            {
-              o->argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
-              L(FL("Added 'hidden' to option # %d\n") % o->argInfo);
-            }
-        }
-      free((void *)options[0].descrip); options[0].descrip = NULL;
-      if (count != 0)
-        {
-          ostringstream sstr;
-          sstr << F("Options specific to '%s %s':") 
-            % prog_name % u.which;
-          options[0].descrip = strdup(sstr.str().c_str());
+      set< shared_ptr<po::option_description> > cmd_options;
+      cmd_options = commands::command_options(u.which);
 
-          options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
-          L(FL("Added 'hidden' to option # %d\n") % options[0].argInfo);
+      unsigned count = 0;
+      po::options_description cmd_options_desc;
+      set< shared_ptr<po::option_description> >::const_iterator it;
+      for (it = cmd_options.begin(); it != cmd_options.end(); ++it, ++count)
+        cmd_options_desc.add(*it);
+
+      cout << F("Usage: %s [OPTION...] command [ARG...]") % prog_name << "\n\n";
+      cout << option::global_options << "\n";
+
+      if (count > 0)
+        {
+          cout << F("Options specific to '%s %s':") % prog_name % u.which << "\n\n";
+          cout << cmd_options_desc << "\n";
         }
 
-      poptPrintHelp(ctx(), stdout, 0);
-      cout << endl;
       commands::explain_usage(u.which, cout);
       global_sanity.clean_shutdown = true;
       return 2;
@@ -666,7 +702,7 @@ cpp_main(int argc, char ** argv)
     global_sanity.clean_shutdown = true;
     return 1;
   }
-  catch (std::ios_base::failure const & ex)
+  catch (ios_base::failure const & ex)
   {
     global_sanity.clean_shutdown = true;
     return 1;

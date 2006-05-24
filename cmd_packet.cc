@@ -9,7 +9,7 @@ using std::cout;
 using std::cin;
 
 CMD(pubkey, N_("packet i/o"), N_("ID"), N_("write public key packet to stdout"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -37,7 +37,7 @@ CMD(pubkey, N_("packet i/o"), N_("ID"), N_("write public key packet to stdout"),
 }
 
 CMD(privkey, N_("packet i/o"), N_("ID"), N_("write private key packet to stdout"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -56,7 +56,7 @@ CMD(privkey, N_("packet i/o"), N_("ID"), N_("write private key packet to stdout"
 
 CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
     N_("read packets from files or stdin"),
-    OPT_NONE)
+    option::none)
 {
   packet_db_writer dbw(app);
   size_t count = 0;

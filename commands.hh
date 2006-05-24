@@ -9,6 +9,11 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
+
+using boost::shared_ptr;
+using boost::program_options::option_description;
 
 // this defines a global function which processes command-line-like things,
 // possibly from the command line and possibly internal scripting if we ever
@@ -27,7 +32,7 @@ namespace commands {
   void explain_usage(std::string const & cmd, std::ostream & out);
   std::string complete_command(std::string const & cmd);
   int process(app_state & app, std::string const & cmd, std::vector<utf8> const & args);
-  std::set<int> command_options(std::string const & cmd);
+  std::set< shared_ptr<option_description> > command_options(std::string const & cmd);
 };
 
 #endif

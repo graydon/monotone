@@ -219,6 +219,17 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_FAILURE([libboost_regex failure])])
 
 
+LIBS="-lboost_program_options${BOOST_SUFFIX} $LIBS"
+AC_MSG_CHECKING(for the libboost_program_options${BOOST_SUFFIX} library)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+  #include <boost/program_options.hpp>
+  using namespace boost::program_options;
+]],
+[[options_description od("foo"); od.add_options()("test", "a test option");]])],
+ [AC_MSG_RESULT([yes])],
+ [AC_MSG_FAILURE([libboost_program_options failure])])
+
+
 # check for static boost option
 AC_ARG_ENABLE(static-boost,
 AS_HELP_STRING([--enable-static-boost@<:@=prefix@:>@],
@@ -348,39 +359,6 @@ if test "x$enable_large_file" = "xno"; then
    SQLITE_CPPFLAGS="$SQLITE_CPPFLAGS -DSQLITE_DISABLE_LFS"
 fi
 AC_SUBST(SQLITE_CPPFLAGS)
-
-##########
-# We use our bundled popt unconditionally, because the external one has
-# serious bugs that we can't live with.  Maybe some time in the future...
-# The following was simply taken from the configure.in that comes with popt.
-#AC_LANG_PUSH(C)
-AC_CHECK_HEADERS([alloca.h float.h libintl.h mcheck.h])
-AC_MSG_CHECKING(for /usr/ucblib in LIBS)
-if test -d /usr/ucblib ; then
-	if test "$build" = "mips-sni-sysv4" ; then
-		addlib /usr/ccs/lib -lc
-	fi
-
-	addlib /usr/ucblib
-	
-	AC_MSG_RESULT(yes)
-else
-	AC_MSG_RESULT(no)
-fi
-AC_CHECK_FUNCS(strerror strptime mtrace getuid geteuid)
-AC_CHECK_FUNC(setreuid, [], [
-    AC_CHECK_LIB(ucb, setreuid, [if echo $LIBS | grep -- -lucb >/dev/null ;then :; else LIBS="$LIBS -lc -lucb" USEUCB=y;fi])
-])
-
-POPT_SOURCE_PATH="`pwd`"
-AC_DEFINE_UNQUOTED(POPT_SOURCE_PATH, "$POPT_SOURCE_PATH",
-	[Full path to popt top_sourcedir.])
-AC_SUBST(POPT_SOURCE_PATH)
-#AC_LANG_POP()
-
-
-##########
-
 
 # Checks for header files.
 AC_HEADER_STDC

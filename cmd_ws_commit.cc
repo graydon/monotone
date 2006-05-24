@@ -36,7 +36,7 @@ get_log_message_interactively(revision_set const & cs,
 
 CMD(revert, N_("workspace"), N_("[PATH]..."), 
     N_("revert file(s), dir(s) or entire workspace (\".\")"), 
-    OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
+    option::depth % option::exclude % option::missing)
 {
   if (args.size() < 1)
     throw usage(name);
@@ -147,7 +147,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
 CMD(disapprove, N_("review"), N_("REVISION"), 
     N_("disapprove of a particular revision"),
-    OPT_BRANCH_NAME)
+    option::branch_name)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -197,7 +197,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
 
 
 CMD(add, N_("workspace"), N_("[PATH]..."),
-    N_("add files to workspace"), OPT_UNKNOWN)
+    N_("add files to workspace"), option::unknown)
 {
   if (!app.unknown && (args.size() < 1))
     throw usage(name);
@@ -223,7 +223,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
 }
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
-    N_("drop files from workspace"), OPT_EXECUTE % OPT_MISSING % OPT_RECURSIVE)
+    N_("drop files from workspace"), option::execute % option::missing % option::recursive)
 {
   if (!app.missing && (args.size() < 1))
     throw usage(name);
@@ -251,7 +251,7 @@ CMD(rename, N_("workspace"),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("rename entries in the workspace"),
-    OPT_EXECUTE)
+    option::execute)
 {
   if (args.size() < 2)
     throw usage(name);
@@ -278,7 +278,7 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
        "will be the root directory, and the directory that is currently the root\n"
        "directory will have name PUT_OLD.\n"
        "Using --execute is strongly recommended."),
-    OPT_EXECUTE)
+    option::execute)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -290,7 +290,7 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
-    OPT_DEPTH % OPT_EXCLUDE % OPT_BRIEF)
+    option::depth % option::exclude % option::brief)
 {
   roster_t old_roster, new_roster, restricted_roster;
   cset included, excluded;
@@ -354,7 +354,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     "If a revision is given, that's the one that will be checked out.\n"
     "Otherwise, it will be the head of the branch (given or implicit).\n"
     "If no directory is given, the branch name will be used as directory"),
-    OPT_BRANCH_NAME % OPT_REVISION)
+    option::branch_name % option::revision)
 {
   revision_id ident;
   system_path dir;
@@ -479,7 +479,7 @@ ALIAS(co, checkout)
 
 CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"), 
     N_("set, get or drop file attributes"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
@@ -572,8 +572,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 
 CMD(commit, N_("workspace"), N_("[PATH]..."), 
     N_("commit workspace to database"),
-    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE % 
-    OPT_AUTHOR % OPT_DEPTH % OPT_EXCLUDE)
+    option::branch_name % option::message % option::msgfile % option::date % 
+    option::author % option::depth % option::exclude)
 {
   string log_message("");
   bool log_message_given;
@@ -794,7 +794,7 @@ ALIAS(ci, commit);
 
 
 CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new workspace directory, default to current"),
-    OPT_BRANCH_NAME)
+    option::branch_name)
 {
   if (args.size() > 1)
     throw usage(name);
@@ -814,7 +814,7 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"), N_("setup a new workspace
 }
 
 CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
-    OPT_NONE)
+    option::none)
 {
   app.require_workspace();
   enable_inodeprints();

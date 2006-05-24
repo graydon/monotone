@@ -33,7 +33,7 @@ CMD(automate, N_("automation"),
        "packet_for_fdelta OLD_FILE NEW_FILE\n"
        "keys\n"),
     N_("automation interface"), 
-    OPT_NONE)
+    option::none)
 {
   if (args.size() == 0)
     throw usage(name);

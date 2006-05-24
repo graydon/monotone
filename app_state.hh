@@ -18,6 +18,7 @@ class lua_hooks;
 
 #include "database.hh"
 #include "lua_hooks.hh"
+#include "options.hh"
 #include "work.hh"
 #include "vocab.hh"
 #include "paths.hh"
@@ -73,9 +74,9 @@ public:
   std::set<std::string> attrs_to_drop;
   bool no_files;
 
-  std::map<int, bool> explicit_option_map;  // set if the value of the flag was explicitly given on the command line
-  void set_is_explicit_option (int option_id);
-  bool is_explicit_option(int option_id) const;
+  std::set<std::string> explicit_options;  // in set if the value of the flag was explicitly given on the command line
+  void set_is_explicit_option (std::string o);
+  bool is_explicit_option(std::string o) const;
 
   // These are used to cache signers/verifiers (if the hook allows).
   // They can't be function-static variables in key.cc, since they must be

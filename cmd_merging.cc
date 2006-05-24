@@ -39,7 +39,7 @@ CMD(update, N_("workspace"), "",
        "different revision, preserving uncommitted changes as it does so.\n"
        "If a revision is given, update the workspace to that revision.\n"
        "If not, update the workspace to the head of the branch."),
-    OPT_BRANCH_NAME % OPT_REVISION)
+    option::branch_name % option::revision)
 {
   revision_set r_working;
   roster_t working_roster, chosen_roster, target_roster;
@@ -273,7 +273,7 @@ CMD(update, N_("workspace"), "",
 // should merge support --message, --message-file?  It seems somewhat weird,
 // since a single 'merge' command may perform arbitrarily many actual merges.
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
-    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
+    option::branch_name % option::date % option::author)
 {
   set<revision_id> heads;
 
@@ -327,7 +327,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
 
 CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"), 
     N_("merge from one branch to another asymmetrically"),
-    OPT_DATE % OPT_AUTHOR % OPT_MESSAGE % OPT_MSGFILE)
+    option::date % option::author % option::message % option::msgfile)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -338,7 +338,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 
 CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"), 
     N_("merge one branch into a subdirectory in another branch"),
-    OPT_DATE % OPT_AUTHOR % OPT_MESSAGE % OPT_MSGFILE)
+    option::date % option::author % option::message % option::msgfile)
 {
   //   this is a special merge operator, but very useful for people maintaining
   //   "slightly disparate but related" trees. it does a one-way merge; less
@@ -489,7 +489,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
 CMD(explicit_merge, N_("tree"),
     N_("LEFT-REVISION RIGHT-REVISION DEST-BRANCH"),
     N_("merge two explicitly given revisions, placing result in given branch"),
-    OPT_DATE % OPT_AUTHOR)
+    option::date % option::author)
 {
   revision_id left, right;
   string branch;
@@ -532,7 +532,7 @@ CMD(explicit_merge, N_("tree"),
 }
 
 CMD(show_conflicts, N_("informative"), N_("REV REV"), N_("Show what conflicts would need to be resolved to merge the given revisions."),
-    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
+    option::branch_name % option::date % option::author)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -565,7 +565,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"), N_("Show what conflicts wo
 }
 
 CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
-    OPT_BRANCH_NAME)
+    option::branch_name)
 {
   set<revision_id> heads;
   if (args.size() != 0)
@@ -590,7 +590,7 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
 
 CMD(get_roster, N_("debug"), N_("REVID"),
     N_("dump the roster associated with the given REVID"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 1)
     throw usage(name);
