@@ -60,10 +60,15 @@ std::string Netxx::str_error(Netxx::error_type errnum)
 
     // try FormatMessage first--this will probably fail for anything < Win2k.
     LPTSTR msg;
-    if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
+    DWORD len;
+    if ((len = FormatMessage(
+                      FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
                       0, errnum, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                       reinterpret_cast<LPTSTR>(&msg), 0,
-                      static_cast<va_list *>(0)) != 0) {
+                      static_cast<va_list *>(0))) != 0) {
+        for (LPTSTR p = msg + len - 1; p > msg; --p)
+            if (*p == '\r' || *p == '\n')
+                *p = '\0';
         s << msg;
         LocalFree(msg);
     } else {

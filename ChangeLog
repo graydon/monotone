@@ -4,7 +4,10 @@
 	reporting updated files so that the user is less likely to miss
 	the message.
 
-	* netxx/osutil.cxx: Mark string table static const.
+	* netxx/osutil.cxx: Mark string table static const.  Trim any
+	trailing line feeds from message returned from FormatMessage.
+
+	* netxx/osutil.h: error_type is a DWORD on Win32.
 
 2006-05-24  Matthew Gregan  <kinetik@orcon.net.nz>
 

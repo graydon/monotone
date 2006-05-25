@@ -84,7 +84,11 @@
 
 namespace Netxx 
 {
+#if defined (WIN32)
+    typedef DWORD error_type;
+#else
     typedef int error_type;
+#endif
     error_type get_last_error (void);
     std::string str_error(error_type);
 
