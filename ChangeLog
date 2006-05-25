@@ -1,3 +1,7 @@
+2006-05-24  Derek Scherger  <derek@echologic.com>
+
+	* cmd_merging.cc (merge_into_dir): use the_null_node rather than 0
+
 2006-05-24  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/get_system_flavour.cc: Report service pack number, if any

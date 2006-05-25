@@ -456,7 +456,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
 
         {
           dir_t moved_root = left_roster.root();
-          moved_root->parent = 0;
+          moved_root->parent = the_null_node;
           moved_root->name = the_null_component;
         }
 
