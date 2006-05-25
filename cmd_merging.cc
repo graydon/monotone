@@ -119,6 +119,7 @@ CMD(update, N_("workspace"), "",
   
   P(F("selected update target %s\n") % r_chosen_id);
 
+  bool switched_branch = false;
   {
     // figure out which branches the target is in
     vector< revision<cert> > certs;
@@ -155,7 +156,8 @@ CMD(update, N_("workspace"), "",
           {
             // one non-matching, inform and update
             app.branch_name = (*(branches.begin()))();
-            P(F("switching branches; next commit will use branch %s") % app.branch_name());
+	    switched_branch = true;
+	    P(F("switching to branch %s") % app.branch_name());
           }
         else
           {
@@ -262,6 +264,8 @@ CMD(update, N_("workspace"), "",
     {
       app.make_branch_sticky();
     }
+  if (switched_branch)
+    P(F("switched branch; next commit will use branch %s") % app.branch_name());
   P(F("updated to base revision %s\n") % r_chosen_id);
 
   put_work_cset(remaining);

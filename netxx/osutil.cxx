@@ -71,7 +71,7 @@ std::string Netxx::str_error(Netxx::error_type errnum)
       struct {
           DWORD n;
           char const * m;
-      } error_msgs[]  = {
+      } static const error_msgs[]  = {
           { WSAEINTR, "interrupted function call" },
           { WSAEBADF, "invalid socket handle" },
           { WSAEACCES, "access denied" },

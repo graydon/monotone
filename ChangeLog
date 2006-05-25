@@ -1,3 +1,11 @@
+2006-05-25  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* cmd_merging.cc (CMD(update)): Report branch switch after
+	reporting updated files so that the user is less likely to miss
+	the message.
+
+	* netxx/osutil.cxx: Mark string table static const.
+
 2006-05-24  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/get_system_flavour.cc: Report service pack number, if any
