@@ -208,6 +208,9 @@ template
 void dump(revision_id const & r, std::string &);
 
 template
+void dump(roster_id const & r, std::string &);
+
+template
 void dump(manifest_id const & r, std::string &);
 
 template

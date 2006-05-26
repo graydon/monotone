@@ -43,6 +43,7 @@ ATOMIC_NOVERIFY(attr_key);
 ATOMIC_NOVERIFY(attr_value);
 
 DECORATE(revision);           // thing associated with a revision
+DECORATE(roster);             // thing associated with a roster
 DECORATE(manifest);           // thing associated with a manifest
 DECORATE(file);               // thing associated with a file
 DECORATE(key);                // thing associated with a key
@@ -60,6 +61,7 @@ ATOMIC_NOVERIFY(merkle);      // raw encoding of a merkle tree node
 
 EXTERN template class           hexenc<id>;
 EXTERN template class revision< hexenc<id> >;
+EXTERN template class   roster< hexenc<id> >;
 EXTERN template class manifest< hexenc<id> >;
 EXTERN template class     file< hexenc<id> >;
 EXTERN template class      key< hexenc<id> >;
@@ -103,6 +105,7 @@ EXTERN template class base64<data>;
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<id>   const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, revision< hexenc<id> > const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,   roster< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, manifest< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,     file< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<id> > const &);

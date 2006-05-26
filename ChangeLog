@@ -9,6 +9,24 @@
 
 	* netxx/osutil.h: error_type is a DWORD on Win32.
 
+2006-05-25  Derek Scherger  <derek@echologic.com>
+
+	* database.{cc,hh} (exists): indentation fix
+	(roster_version_exists, roster_exists_for_revision,
+	get_roster_links, get_roster_ids, delete_existing_rev_and_certs,
+	get_roster_id_for_revision, get_roster, put_roster):
+	* database_check.cc (check_rosters_manifest,
+	check_rosters_marking, check_roster_links, check_revisions,
+	report_rosters, check_db): replace hexenc<id> with roster_id
+	* transforms.{cc,hh} (calculate_ident): new roster_id variant
+	* vocab.cc (dump): new roster_id variant
+	* vocab.hh: typedef roster_id
+	* vocab_terms.hh: roster_id template instantiations
+
+2006-05-24  Derek Scherger  <derek@echologic.com>
+
+	* cmd_merging.cc (merge_into_dir): use the_null_node rather than 0
+
 2006-05-24  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/get_system_flavour.cc: Report service pack number, if any
