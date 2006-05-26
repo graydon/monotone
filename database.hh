@@ -227,15 +227,15 @@ public:
   bool database_specified();
   
   bool file_version_exists(file_id const & id);
-  bool roster_version_exists(hexenc<id> const & id);
+  bool roster_version_exists(roster_id const & id);
   bool revision_exists(revision_id const & id);
   bool roster_link_exists_for_revision(revision_id const & id);
   bool roster_exists_for_revision(revision_id const & id);
 
-  void get_roster_links(std::map<revision_id, hexenc<id> > & links);
+  void get_roster_links(std::map<revision_id, roster_id> & links);
   void get_file_ids(std::set<file_id> & ids);
   void get_revision_ids(std::set<revision_id> & ids);
-  void get_roster_ids(std::set< hexenc<id> > & ids) ;
+  void get_roster_ids(std::set<roster_id> & ids) ;
 
 
   bool check_integrity();
@@ -396,7 +396,7 @@ public:
 
   // roster and node_id stuff
   void get_roster_id_for_revision(revision_id const & rev_id,
-                                  hexenc<id> & roster_id);
+                                  roster_id & ros_id);
 
   void get_roster(revision_id const & rid, 
                   roster_t & roster);
@@ -405,7 +405,7 @@ public:
                   roster_t & roster,
                   marking_map & marks);
 
-  void get_roster(hexenc<id> const & roster_id,
+  void get_roster(roster_id const & ros_id,
                   data & dat);
 
   void get_uncommon_ancestors(revision_id const & a,

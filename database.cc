@@ -865,7 +865,7 @@ database::rollback_transaction()
 
 bool 
 database::exists(hexenc<id> const & ident,
-                      string const & table)
+                 string const & table)
 {
   if (have_pending_write(table, ident))
     return true;
@@ -1373,10 +1373,10 @@ database::file_version_exists(file_id const & id)
 }
 
 bool 
-database::roster_version_exists(hexenc<id> const & id)
+database::roster_version_exists(roster_id const & id)
 {
-  return delta_exists(id(), "roster_deltas") 
-    || exists(id(), "rosters");
+  return delta_exists(id.inner(), "roster_deltas") 
+    || exists(id.inner(), "rosters");
 }
 
 bool 
@@ -1404,11 +1404,11 @@ database::roster_exists_for_revision(revision_id const & rev_id)
         query("SELECT roster_id FROM revision_roster WHERE rev_id = ? ")
         % text(rev_id.inner()()));
   I((res.size() == 1) || (res.size() == 0));
-  return (res.size() == 1) && roster_version_exists(hexenc<id>(res[0][0]));
+  return (res.size() == 1) && roster_version_exists(roster_id(res[0][0]));
 }
 
 void 
-database::get_roster_links(std::map<revision_id, hexenc<id> > & links)
+database::get_roster_links(std::map<revision_id, roster_id> & links)
 {
   links.clear();
   results res;
@@ -1416,7 +1416,7 @@ database::get_roster_links(std::map<revision_id, hexenc<id> > & links)
   for (size_t i = 0; i < res.size(); ++i)
     {
       links.insert(make_pair(revision_id(res[i][0]), 
-                             hexenc<id>(res[i][1])));
+                             roster_id(res[i][1])));
     }
 }
 
@@ -1440,7 +1440,7 @@ database::get_revision_ids(set<revision_id> & ids)
 }
 
 void 
-database::get_roster_ids(set< hexenc<id> > & ids) 
+database::get_roster_ids(set<roster_id> & ids) 
 {
   ids.clear();
   set< hexenc<id> > tmp;
@@ -1767,14 +1767,14 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
           % text(rid.inner()()));
   
   // Find the associated roster and count the number of links to it
-  hexenc<id> roster_id;
+  roster_id ros_id;
   size_t link_count = 0;  
-  get_roster_id_for_revision(rid, roster_id);
+  get_roster_id_for_revision(rid, ros_id);
   {  
     results res;
     fetch(res, 2, any_rows,
           query("SELECT rev_id, roster_id FROM revision_roster "
-                "WHERE roster_id = ?") % text(roster_id()));
+                "WHERE roster_id = ?") % text(ros_id.inner()()));
     I(res.size() > 0);
     link_count = res.size();
   }
@@ -1785,7 +1785,7 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
 
   // If that was the last link to the roster, kill the roster too.
   if (link_count == 1)
-    remove_version(roster_id, "rosters", "roster_deltas");
+    remove_version(ros_id.inner(), "rosters", "roster_deltas");
 
   guard.commit();
 }
@@ -2724,11 +2724,11 @@ database::get_branches(vector<string> & names)
 
 void
 database::get_roster_id_for_revision(revision_id const & rev_id,
-                                     hexenc<id> & roster_id)
+                                     roster_id & ros_id)
 {
   if (rev_id.inner()().empty())
     {
-      roster_id = hexenc<id>();
+      ros_id = roster_id();
       return;
     }
 
@@ -2736,7 +2736,7 @@ database::get_roster_id_for_revision(revision_id const & rev_id,
   query q("SELECT roster_id FROM revision_roster WHERE rev_id = ? ");  
   fetch(res, one_col, any_rows, q % text(rev_id.inner()()));
   I(res.size() == 1);
-  roster_id = hexenc<id>(res[0][0]);
+  ros_id = roster_id(res[0][0]);
 }
 
 void 
@@ -2748,13 +2748,13 @@ database::get_roster(revision_id const & rev_id,
 }
 
 void 
-database::get_roster(hexenc<id> const & ros_id, 
+database::get_roster(roster_id const & ros_id, 
                      data & dat)
 {
   string data_table = "rosters";
   string delta_table = "roster_deltas";
 
-  get_version(ros_id, dat, data_table, delta_table);
+  get_version(ros_id.inner(), dat, data_table, delta_table);
 }
 
 
@@ -2783,7 +2783,7 @@ database::get_roster(revision_id const & rev_id,
     }
 
   data dat;
-  hexenc<id> ident;
+  roster_id ident;
 
   get_roster_id_for_revision(rev_id, ident);
   get_roster(ident, dat);
@@ -2802,7 +2802,7 @@ database::put_roster(revision_id const & rev_id,
   MM(rev_id);
   data old_data, new_data;
   delta reverse_delta;
-  hexenc<id> old_id, new_id;
+  roster_id old_id, new_id;
 
   if (!rcache.exists(rev_id))
     {
@@ -2825,10 +2825,10 @@ database::put_roster(revision_id const & rev_id,
 
   execute(query("INSERT into revision_roster VALUES (?, ?)")
           % text(rev_id.inner()())
-          % text(new_id()));
+          % text(new_id.inner()()));
 
-  if (exists(new_id, data_table) 
-      || delta_exists(new_id, delta_table))
+  if (exists(new_id.inner(), data_table) 
+      || delta_exists(new_id.inner(), delta_table))
     {
       guard.commit();
       return;
@@ -2837,7 +2837,7 @@ database::put_roster(revision_id const & rev_id,
   // Else we have a new roster the database hasn't seen yet; our task is to
   // add it, and deltify all the incoming edges (if they aren't already).
 
-  schedule_write(data_table, new_id, new_data);
+  schedule_write(data_table, new_id.inner(), new_data);
 
   std::set<revision_id> parents;
   get_revision_parents(rev_id, parents);
@@ -2851,15 +2851,15 @@ database::put_roster(revision_id const & rev_id,
         continue;      
       revision_id old_rev = *i;
       get_roster_id_for_revision(old_rev, old_id);
-      if (exists(new_id, data_table))
+      if (exists(new_id.inner(), data_table))
         {
-          get_version(old_id, old_data, data_table, delta_table);
+          get_version(old_id.inner(), old_data, data_table, delta_table);
           diff(new_data, old_data, reverse_delta);
-          if (have_pending_write(data_table, old_id))
-            cancel_pending_write(data_table, old_id);
+          if (have_pending_write(data_table, old_id.inner()))
+            cancel_pending_write(data_table, old_id.inner());
           else
-            drop(old_id, data_table);
-          put_delta(old_id, new_id, reverse_delta, delta_table);
+            drop(old_id.inner(), data_table);
+          put_delta(old_id.inner(), new_id.inner(), reverse_delta, delta_table);
         }
     }
   guard.commit();

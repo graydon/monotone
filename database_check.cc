@@ -153,19 +153,19 @@ check_files(app_state & app, std::map<file_id, checked_file> & checked_files)
 // roster, and general parsability/normalisation
 static void
 check_rosters_manifest(app_state & app,
-              std::map<hexenc<id>, checked_roster> & checked_rosters,
+              std::map<roster_id, checked_roster> & checked_rosters,
               std::map<revision_id, checked_revision> & checked_revisions,
               std::set<manifest_id> & found_manifests,
               std::map<file_id, checked_file> & checked_files)
 {
-  set< hexenc<id> > rosters;
+  set<roster_id> rosters;
 
   app.db.get_roster_ids(rosters);
   L(FL("checking %d rosters, manifest pass\n") % rosters.size());
 
   ticker ticks(_("rosters"), "r", rosters.size()/70+1);
 
-  for (set<hexenc<id> >::const_iterator i = rosters.begin();
+  for (set<roster_id>::const_iterator i = rosters.begin();
        i != rosters.end(); ++i) 
     {
 
@@ -190,7 +190,7 @@ check_rosters_manifest(app_state & app,
       
       // normalisation check
       {
-        hexenc<id> norm_ident;
+        roster_id norm_ident;
         data norm_data;
         write_roster_and_marking(ros, mm, norm_data);
         calculate_ident(norm_data, norm_ident);
@@ -225,17 +225,17 @@ check_rosters_manifest(app_state & app,
 // that the referenced revisions exist.
 static void
 check_rosters_marking(app_state & app,
-              std::map<hexenc<id>, checked_roster> & checked_rosters,
+              std::map<roster_id, checked_roster> & checked_rosters,
               std::map<revision_id, checked_revision> & checked_revisions)
 {
   L(FL("checking %d rosters, marking pass\n") % checked_rosters.size());
 
   ticker ticks(_("markings"), "m", checked_rosters.size()/70+1);
 
-  for (std::map<hexenc<id>, checked_roster>::const_iterator i 
+  for (std::map<roster_id, checked_roster>::const_iterator i 
        = checked_rosters.begin(); i != checked_rosters.end(); i++)
     {
-      hexenc<id> ros_id = i->first;
+      roster_id ros_id = i->first;
       L(FL("checking roster %s\n") % i->first);
       if (!i->second.parseable)
           continue;
@@ -289,27 +289,27 @@ check_rosters_marking(app_state & app,
 static void 
 check_roster_links(app_state & app, 
                    std::map<revision_id, checked_revision> & checked_revisions,
-                   std::map<hexenc<id>, checked_roster> & checked_rosters,
+                   std::map<roster_id, checked_roster> & checked_rosters,
                    size_t & unreferenced_roster_links,
                    size_t & missing_rosters)
 {
   unreferenced_roster_links = 0;
 
-  std::map<revision_id, hexenc<id> > links;
+  std::map<revision_id, roster_id> links;
   app.db.get_roster_links(links);
 
-  for (std::map<revision_id, hexenc<id> >::const_iterator i = links.begin();
+  for (std::map<revision_id, roster_id>::const_iterator i = links.begin();
        i != links.end(); ++i)
     {
       revision_id rev(i->first);
-      hexenc<id> ros(i->second);
+      roster_id ros(i->second);
 
       std::map<revision_id, checked_revision>::const_iterator j 
         = checked_revisions.find(rev);
       if (j == checked_revisions.end() || (!j->second.found))
         ++unreferenced_roster_links;
 
-      std::map<hexenc<id>, checked_roster>::const_iterator k 
+      std::map<roster_id, checked_roster>::const_iterator k 
         = checked_rosters.find(ros);
       if (k == checked_rosters.end() || (!k->second.found))
         ++missing_rosters;
@@ -320,7 +320,7 @@ check_roster_links(app_state & app,
 static void
 check_revisions(app_state & app, 
                 std::map<revision_id, checked_revision> & checked_revisions,
-                std::map<hexenc<id>, checked_roster> & checked_rosters,
+                std::map<roster_id, checked_roster> & checked_rosters,
                 std::set<manifest_id> const & found_manifests)
 {
   std::set<revision_id> revisions;
@@ -362,17 +362,17 @@ check_revisions(app_state & app,
       // roster checks
       if (app.db.roster_link_exists_for_revision(*i))
         {
-          hexenc<id> roster_id;
+          roster_id ros_id;
           checked_revisions[*i].found_roster_link = true;
-          app.db.get_roster_id_for_revision(*i, roster_id);
+          app.db.get_roster_id_for_revision(*i, ros_id);
           if (app.db.roster_exists_for_revision(*i))
             {
               checked_revisions[*i].found_roster = true;
-              I(checked_rosters[roster_id].found);
-              checked_rosters[roster_id].revision_refs++;
-              if (!(rev.new_manifest == checked_rosters[roster_id].man_id))
+              I(checked_rosters[ros_id].found);
+              checked_rosters[ros_id].revision_refs++;
+              if (!(rev.new_manifest == checked_rosters[ros_id].man_id))
                 checked_revisions[*i].manifest_mismatch = true;
-              if (checked_rosters[roster_id].missing_files > 0)
+              if (checked_rosters[ros_id].missing_files > 0)
                 checked_revisions[*i].incomplete_roster = true;
             }
         }
@@ -537,13 +537,13 @@ report_files(std::map<file_id, checked_file> const & checked_files,
 }
 
 static void
-report_rosters(std::map<hexenc<id>, checked_roster> const & checked_rosters, 
+report_rosters(std::map<roster_id, checked_roster> const & checked_rosters, 
                  size_t & unreferenced_rosters,
                  size_t & incomplete_rosters,
                  size_t & non_parseable_rosters,
                  size_t & non_normalized_rosters)
 {
-  for (std::map<hexenc<id>, checked_roster>::const_iterator 
+  for (std::map<roster_id, checked_roster>::const_iterator 
          i = checked_rosters.begin(); i != checked_rosters.end(); ++i)
     {
       checked_roster roster = i->second;
@@ -788,7 +788,7 @@ check_db(app_state & app)
 {
   std::map<file_id, checked_file> checked_files;
   std::set<manifest_id> found_manifests;
-  std::map<hexenc<id>, checked_roster> checked_rosters;
+  std::map<roster_id, checked_roster> checked_rosters;
   std::map<revision_id, checked_revision> checked_revisions;
   std::map<rsa_keypair_id, checked_key> checked_keys;
 
