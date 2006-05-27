@@ -10,6 +10,12 @@
 
 	* tests/t_invalid_root.at:
 
+2006-05-27  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (116 to go).
+	* netxx/resolve_gethostbyname.cxx: Reverted what I think was an
+	unwanted replace in r:0f1782f7e2348f991a0b8eeac03c45a72c8633a2
+
 2006-05-26  Derek Scherger  <derek@echologic.com>
 
 	* automate.cc (automate_get_manifest_of, automate_get_file):
