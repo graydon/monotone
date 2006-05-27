@@ -1,3 +1,8 @@
+2006-05-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* netxx/{resolve_gethostbyname,sockopt}.cxx: A couple more error
+	reporting cleanups.
+
 2006-05-27  Derek Scherger  <derek@echologic.com>
 
 	* paths.cc (find_and_go_to_workspace): ensure that the current
@@ -5,7 +10,7 @@
 	the search if it's not
 	* tests/t_invalid_root.at: new test
 	* testsuite.at: call it
-	
+
 2006-05-27  Derek Scherger  <derek@echologic.com>
 
 	* tests/t_invalid_root.at:

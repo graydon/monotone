@@ -128,7 +128,7 @@ bool Netxx::SockOpt::check_for_error (std::string &message) const
     os_socklen_type so_len(sizeof(so_error));
 
     if ( (so_return = getsockopt(socket_, SOL_SOCKET, SO_ERROR, val, &so_len)) < 0) {
-	message = str_error(so_return);
+	message = str_error(get_last_error());
 	return false;
     }
 
