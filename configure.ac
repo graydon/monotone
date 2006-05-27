@@ -286,8 +286,10 @@ AC_CACHE_CHECK([if this is Windows],
 ])
 if test "$ac_win32" = "yes"; then
    AM_CONDITIONAL(WIN32_PLATFORM, true)
+   AC_DEFINE(os_err_t, unsigned int, [OS-specific error type])
 else
    AM_CONDITIONAL(WIN32_PLATFORM, false)
+   AC_DEFINE(os_err_t, int, [OS-specific error type])
 fi
 
 # Check for IPv6.  Let the user enable or disable it manually using a

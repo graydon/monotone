@@ -1,5 +1,12 @@
 2006-05-27  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* {unix,win32}/os_strerror.cc, platform.hh: Add OS-specific
+	wrapper around strerror().
+	* Makefile.am: Add new files.
+	* configure.ac: Define os_err_t based on detected OS.
+	* {unix,win32}/{fs,process}.cc, file_io.cc: Use new strerror
+	wrapper.
+
 	* netxx/{resolve_gethostbyname,sockopt}.cxx: A couple more error
 	reporting cleanups.
 

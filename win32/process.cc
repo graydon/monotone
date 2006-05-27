@@ -120,7 +120,8 @@ pid_t process_spawn(const char * const argv[])
   L(FL("searching for exe: %s\n") % argv[0]);
   if (SearchPath(NULL, argv[0], ".exe", realexelen, realexe, &filepart)==0)
     {
-      L(FL("SearchPath failed, err=%d\n") % GetLastError());
+      os_err_t errnum = GetLastError();
+      L(FL("SearchPath failed, err=%s (%d)\n") % os_strerror(errnum) % errnum);
       free(realexe);
       return -1;
     }
@@ -133,7 +134,8 @@ pid_t process_spawn(const char * const argv[])
   /* We don't need to set any of the STARTUPINFO members */
   if (CreateProcess(realexe, (char*)cmd.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)==0)
     {
-      L(FL("CreateProcess failed, err=%d\n") % GetLastError());
+      os_err_t errnum = GetLastError();
+      L(FL("CreateProcess failed, err=%s (%d)\n") % os_strerror(errnum) % errnum);
       free(realexe);
       return -1;
     }

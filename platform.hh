@@ -63,4 +63,7 @@ path::status get_path_status(any_path const & path);
 
 void rename_clobberingly(any_path const & from, any_path const & to);
 
+// strerror wrapper for OS-specific errors (e.g. use FormatMessage on Win32)
+std::string os_strerror(os_err_t errnum);
+
 #endif // __PLATFORM_HH__

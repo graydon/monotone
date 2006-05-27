@@ -165,7 +165,7 @@ mkdir_p(any_path const & p)
         F("could not create directory '%s'\nit is a file") % p);
       E(false,
         F("could not create directory '%s'\n%s")
-        % err.path1().native_directory_string() % strerror(err.native_error()));
+        % err.path1().native_directory_string() % os_strerror(err.native_error()));
     }
   require_path_is_directory(p,
                             F("could not create directory '%s'") % p,
@@ -197,7 +197,7 @@ do_shallow_deletion_with_sane_error_message(any_path const & p)
     {
       E(false, F("could not remove '%s'\n%s")
         % err.path1().native_directory_string()
-        % strerror(err.native_error()));
+        % os_strerror(err.native_error()));
     }
 }
 
