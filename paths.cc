@@ -583,6 +583,27 @@ find_and_go_to_workspace(system_path const & search_root)
   fs::path removed;
   fs::path check = current / bookdir;
 
+  // check that the current directory is below the specified search root
+
+  fs::path::iterator ri = root.begin();
+  fs::path::iterator ci = current.begin();
+
+  while (ri != root.end() && ci != current.end() && *ri == *ci) 
+    {
+      ++ri;
+      ++ci;
+    }
+
+  // if it's not then issue a warning and abort the search
+
+  if (ri != root.end())
+    {
+      W(F("current directory '%s' is not below root '%s'")
+        % current.string() 
+        % root.string());
+      return false;
+    }
+
   L(FL("searching for '%s' directory with root '%s'\n") 
     % bookdir.string()
     % root.string());

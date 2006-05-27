@@ -1,3 +1,15 @@
+2006-05-27  Derek Scherger  <derek@echologic.com>
+
+	* paths.cc (find_and_go_to_workspace): ensure that the current
+	directory is below the specified -root; issue a warning and abort
+	the search if it's not
+	* tests/t_invalid_root.at: new test
+	* testsuite.at: call it
+	
+2006-05-27  Derek Scherger  <derek@echologic.com>
+
+	* tests/t_invalid_root.at:
+
 2006-05-26  Derek Scherger  <derek@echologic.com>
 
 	* automate.cc (automate_get_manifest_of, automate_get_file):
