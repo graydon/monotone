@@ -1,3 +1,7 @@
+2006-05-28  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Update two fuzzies.
+
 2006-05-27  Derek Scherger  <derek@echologic.com>
 
 	* paths.cc (find_and_go_to_workspace): ensure that the current
