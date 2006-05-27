@@ -387,18 +387,19 @@ make_roster_for_revision(revision_set const & rev,
                          app_state & app);
 
 void 
-read_roster_and_marking(data const & dat,
+read_roster_and_marking(roster_data const & dat,
                         roster_t & ros,
                         marking_map & mm);
 
 void
 write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
-                         data & dat);
+                         roster_data & dat);
 
 void
 write_manifest_of_roster(roster_t const & ros,
-                         data & dat);
+                         roster_data & dat);
+
 
 void calculate_ident(roster_t const & ros,
                      manifest_id & ident);

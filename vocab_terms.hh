@@ -76,6 +76,7 @@ EXTERN template class                   gzip<data>;
 EXTERN template class           base64< gzip<data> >;
 
 EXTERN template class revision< data >;
+EXTERN template class   roster< data >;
 EXTERN template class manifest< data >;
 EXTERN template class     file< data >;
 
@@ -110,9 +111,11 @@ EXTERN template std::ostream & operator<< <>(std::ostream &, manifest< hexenc<id
 EXTERN template std::ostream & operator<< <>(std::ostream &,     file< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<id> > const &);
 
-EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodeprint>   const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodeprint> const &);
 
-EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<data> const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,           roster<data> const &);
+
+EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<data>   const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<data> > const &);
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,                   gzip<data>     const &);

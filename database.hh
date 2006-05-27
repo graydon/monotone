@@ -405,8 +405,8 @@ public:
                   roster_t & roster,
                   marking_map & marks);
 
-  void get_roster(roster_id const & ros_id,
-                  data & dat);
+  void get_roster_version(roster_id const & ros_id,
+                          roster_data & dat);
 
   void get_uncommon_ancestors(revision_id const & a,
                               revision_id const & b,

@@ -2553,11 +2553,11 @@ roster_t::parse_from(basic_io::parser & pa,
 
 
 void 
-read_roster_and_marking(data const & dat,
+read_roster_and_marking(roster_data const & dat,
                         roster_t & ros,
                         marking_map & mm)
 {
-  basic_io::input_source src(dat(), "roster");
+  basic_io::input_source src(dat.inner()(), "roster");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   ros.parse_from(pars, mm);
@@ -2569,7 +2569,7 @@ read_roster_and_marking(data const & dat,
 static void
 write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
-                         data & dat,
+                         roster_data & dat,
                          bool print_local_parts)
 {
   if (print_local_parts)
@@ -2578,14 +2578,14 @@ write_roster_and_marking(roster_t const & ros,
     ros.check_sane(true);
   basic_io::printer pr;
   ros.print_to(pr, mm, print_local_parts);
-  dat = data(pr.buf);
+  dat = roster_data(pr.buf);
 }
 
 
 void
 write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
-                         data & dat)
+                         roster_data & dat)
 {
   write_roster_and_marking(ros, mm, dat, true);
 }
@@ -2593,7 +2593,7 @@ write_roster_and_marking(roster_t const & ros,
 
 void
 write_manifest_of_roster(roster_t const & ros,
-                         data & dat)
+                         roster_data & dat)
 {
   marking_map mm;
   write_roster_and_marking(ros, mm, dat, false);  
@@ -2602,16 +2602,15 @@ write_manifest_of_roster(roster_t const & ros,
 void calculate_ident(roster_t const & ros,
                      manifest_id & ident)
 {
-  data tmp;
-  hexenc<id> tid;
+  roster_data tmp;
+  roster_id tid;
   if (!ros.all_nodes().empty())
     {
       write_manifest_of_roster(ros, tmp);
       calculate_ident(tmp, tid);
     }
-  ident = tid;
+  ident = tid.inner();
 }
-
 
 ////////////////////////////////////////////////////////////////////
 //   testing
@@ -2667,7 +2666,7 @@ do_testing_on_one_roster(roster_t const & r)
   I(n == dfs_counted);
 
   // do a read/write spin
-  data r_dat; MM(r_dat);
+  roster_data r_dat; MM(r_dat);
   marking_map fm;
   make_fake_marking_for(r, fm);
   write_roster_and_marking(r, fm, r_dat);
@@ -2676,7 +2675,7 @@ do_testing_on_one_roster(roster_t const & r)
   read_roster_and_marking(r_dat, r2, fm2);
   I(r == r2);
   I(fm == fm2);
-  data r2_dat; MM(r2_dat);
+  roster_data r2_dat; MM(r2_dat);
   write_roster_and_marking(r2, fm2, r2_dat);
   I(r_dat == r2_dat);
 }
@@ -2774,10 +2773,10 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   // will have new ids assigned.
   // But they _will_ have the same manifests, assuming things are working
   // correctly.
-  data a_dat; MM(a_dat);
-  data a2_dat; MM(a2_dat);
-  data b_dat; MM(b_dat);
-  data b2_dat; MM(b2_dat);
+  roster_data a_dat; MM(a_dat);
+  roster_data a2_dat; MM(a2_dat);
+  roster_data b_dat; MM(b_dat);
+  roster_data b2_dat; MM(b2_dat);
   if (a.has_root())
     write_manifest_of_roster(a, a_dat);
   if (a2.has_root())
@@ -4364,28 +4363,29 @@ write_roster_test()
 
   { 
     // manifest first
-    data mdat; MM(mdat);
+    roster_data mdat; MM(mdat);
     write_manifest_of_roster(r, mdat);
 
-    data expected("format_version \"1\"\n"
-                  "\n"
-                  "dir \"\"\n"
-                  "\n"
-                  "dir \"fo\"\n"
-                  "\n"
-                  "dir \"foo\"\n"
-                  "\n"
-                  "dir \"foo/ang\"\n"
-                  "\n"
-                  "   file \"foo/bar\"\n"
-                  "content [1111111111111111111111111111111111111111]\n"
-                  "   attr \"fascist\" \"tidiness\"\n"
-                  "\n"
-                  "dir \"foo/zoo\"\n"
-                  "\n"
-                  " dir \"xx\"\n"
-                  "attr \"say\" \"hello\"\n"
-                 );
+    roster_data 
+      expected(string("format_version \"1\"\n"
+                      "\n"
+                      "dir \"\"\n"
+                      "\n"
+                      "dir \"fo\"\n"
+                      "\n"
+                      "dir \"foo\"\n"
+                      "\n"
+                      "dir \"foo/ang\"\n"
+                      "\n"
+                      "   file \"foo/bar\"\n"
+                      "content [1111111111111111111111111111111111111111]\n"
+                      "   attr \"fascist\" \"tidiness\"\n"
+                      "\n"
+                      "dir \"foo/zoo\"\n"
+                      "\n"
+                      " dir \"xx\"\n"
+                      "attr \"say\" \"hello\"\n"
+                      ));
     MM(expected);
 
     BOOST_CHECK_NOT_THROW( I(expected == mdat), std::logic_error);
@@ -4393,56 +4393,57 @@ write_roster_test()
 
   { 
     // full roster with local parts
-    data rdat; MM(rdat);
+    roster_data rdat; MM(rdat);
     write_roster_and_marking(r, mm, rdat);
 
     // node_id order is a hassle.
     // root 1, foo 2, xx 3, fo 4, foo_bar 5, foo_ang 6, foo_zoo 7
-    data expected("format_version \"1\"\n"
-                  "\n"
-                  "      dir \"\"\n"
-                  "    ident \"1\"\n"
-                  "    birth [1234123412341234123412341234123412341234]\n"
-                  "path_mark [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "      dir \"fo\"\n"
-                  "    ident \"4\"\n"
-                  "    birth [1234123412341234123412341234123412341234]\n"
-                  "path_mark [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "      dir \"foo\"\n"
-                  "    ident \"2\"\n"
-                  "    birth [1234123412341234123412341234123412341234]\n"
-                  "path_mark [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "      dir \"foo/ang\"\n"
-                  "    ident \"6\"\n"
-                  "    birth [1234123412341234123412341234123412341234]\n"
-                  "path_mark [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "        file \"foo/bar\"\n"
-                  "     content [1111111111111111111111111111111111111111]\n"
-                  "       ident \"5\"\n"
-                  "        attr \"fascist\" \"tidiness\"\n"
-                  "       birth [1234123412341234123412341234123412341234]\n"
-                  "   path_mark [1234123412341234123412341234123412341234]\n"
-                  "content_mark [1234123412341234123412341234123412341234]\n"
-                  "   attr_mark \"fascist\" [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "         dir \"foo/zoo\"\n"
-                  "       ident \"7\"\n"
-                  "dormant_attr \"regime\"\n"
-                  "       birth [1234123412341234123412341234123412341234]\n"
-                  "   path_mark [1234123412341234123412341234123412341234]\n"
-                  "   attr_mark \"regime\" [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "      dir \"xx\"\n"
-                  "    ident \"3\"\n"
-                  "     attr \"say\" \"hello\"\n"
-                  "    birth [1234123412341234123412341234123412341234]\n"
-                  "path_mark [1234123412341234123412341234123412341234]\n"
-                  "attr_mark \"say\" [1234123412341234123412341234123412341234]\n"
-                 );
+    roster_data 
+      expected(string("format_version \"1\"\n"
+                      "\n"
+                      "      dir \"\"\n"
+                      "    ident \"1\"\n"
+                      "    birth [1234123412341234123412341234123412341234]\n"
+                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "      dir \"fo\"\n"
+                      "    ident \"4\"\n"
+                      "    birth [1234123412341234123412341234123412341234]\n"
+                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "      dir \"foo\"\n"
+                      "    ident \"2\"\n"
+                      "    birth [1234123412341234123412341234123412341234]\n"
+                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "      dir \"foo/ang\"\n"
+                      "    ident \"6\"\n"
+                      "    birth [1234123412341234123412341234123412341234]\n"
+                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "        file \"foo/bar\"\n"
+                      "     content [1111111111111111111111111111111111111111]\n"
+                      "       ident \"5\"\n"
+                      "        attr \"fascist\" \"tidiness\"\n"
+                      "       birth [1234123412341234123412341234123412341234]\n"
+                      "   path_mark [1234123412341234123412341234123412341234]\n"
+                      "content_mark [1234123412341234123412341234123412341234]\n"
+                      "   attr_mark \"fascist\" [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "         dir \"foo/zoo\"\n"
+                      "       ident \"7\"\n"
+                      "dormant_attr \"regime\"\n"
+                      "       birth [1234123412341234123412341234123412341234]\n"
+                      "   path_mark [1234123412341234123412341234123412341234]\n"
+                      "   attr_mark \"regime\" [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "      dir \"xx\"\n"
+                      "    ident \"3\"\n"
+                      "     attr \"say\" \"hello\"\n"
+                      "    birth [1234123412341234123412341234123412341234]\n"
+                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "attr_mark \"say\" [1234123412341234123412341234123412341234]\n"
+                      ));
     MM(expected);
 
     BOOST_CHECK_NOT_THROW( I(expected == rdat), std::logic_error);

@@ -219,6 +219,9 @@ void dump(file_id const & r, std::string &);
 template
 void dump(hexenc<id> const & r, std::string &);
 
+template
+void dump(roster_data const & d, std::string &);
+
 // the rest is unit tests
 
 #ifdef BUILD_UNIT_TESTS

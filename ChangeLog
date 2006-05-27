@@ -1,3 +1,23 @@
+2006-05-26  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (automate_get_manifest_of, automate_get_file):
+	* cmd_merging.cc (get_roster): use roster_data instead of generic
+	data
+	* database.{cc,hh} (get_roster): rename to ...
+	(get_roster_version): ... this and move to a better spot
+	(put_roster): use roster_data
+	* database_check.cc (check_rosters_manifest,
+	check_rosters_marking): use roster_data
+	* roster.{cc,hh} (read_roster_and_marking,
+	write_roster_and_marking, write_manifest_of_roster,
+	calculate_ident, do_testing_on_one_roster, tests_on_two_rosters,
+	write_roster_test): 
+	* transforms.{cc,hh} (calculate_ident): use roster_data
+	* vocab.cc: add dump template for roster_data
+	* vocab.hh: add roster_data typedef
+	* vocab_terms.hh: instantiate roster_data template, add
+	roster_data operator<<
+
 2006-05-25  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* cmd_merging.cc (CMD(update)): Report branch switch after

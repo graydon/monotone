@@ -606,7 +606,7 @@ CMD(get_roster, N_("debug"), N_("REVID"),
   marking_map mm;
   app.db.get_roster(rid, roster, mm);
   
-  data dat;
+  roster_data dat;
   write_roster_and_marking(roster, mm, dat);
   cout << dat;
 }

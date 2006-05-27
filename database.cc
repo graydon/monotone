@@ -1468,6 +1468,15 @@ database::get_manifest_version(manifest_id const & id,
 }
 
 void 
+database::get_roster_version(roster_id const & id,
+                             roster_data & dat)
+{
+  data tmp;
+  get_version(id.inner(), tmp, "rosters", "roster_deltas");
+  dat = tmp;
+}
+
+void 
 database::put_file(file_id const & id,
                    file_data const & dat)
 {
@@ -2747,17 +2756,6 @@ database::get_roster(revision_id const & rev_id,
   get_roster(rev_id, roster, mm);
 }
 
-void 
-database::get_roster(roster_id const & ros_id, 
-                     data & dat)
-{
-  string data_table = "rosters";
-  string delta_table = "roster_deltas";
-
-  get_version(ros_id.inner(), dat, data_table, delta_table);
-}
-
-
 static LRUCache<revision_id, 
                 boost::shared_ptr<pair<roster_t, marking_map> > > 
 rcache(constants::db_roster_cache_sz);
@@ -2782,11 +2780,11 @@ database::get_roster(revision_id const & rev_id,
       return;
     }
 
-  data dat;
+  roster_data dat;
   roster_id ident;
 
   get_roster_id_for_revision(rev_id, ident);
-  get_roster(ident, dat);
+  get_roster_version(ident, dat);
   read_roster_and_marking(dat, roster, marks);
   sp = boost::shared_ptr<pair<roster_t, marking_map> >
     (new pair<roster_t, marking_map>(roster, marks));
@@ -2800,7 +2798,7 @@ database::put_roster(revision_id const & rev_id,
                      marking_map & marks)
 {
   MM(rev_id);
-  data old_data, new_data;
+  roster_data old_data, new_data;
   delta reverse_delta;
   roster_id old_id, new_id;
 
@@ -2837,7 +2835,7 @@ database::put_roster(revision_id const & rev_id,
   // Else we have a new roster the database hasn't seen yet; our task is to
   // add it, and deltify all the incoming edges (if they aren't already).
 
-  schedule_write(data_table, new_id.inner(), new_data);
+  schedule_write(data_table, new_id.inner(), new_data.inner());
 
   std::set<revision_id> parents;
   get_revision_parents(rev_id, parents);
@@ -2853,8 +2851,8 @@ database::put_roster(revision_id const & rev_id,
       get_roster_id_for_revision(old_rev, old_id);
       if (exists(new_id.inner(), data_table))
         {
-          get_version(old_id.inner(), old_data, data_table, delta_table);
-          diff(new_data, old_data, reverse_delta);
+          get_roster_version(old_id, old_data);
+          diff(new_data.inner(), old_data.inner(), reverse_delta);
           if (have_pending_write(data_table, old_id.inner()))
             cancel_pending_write(data_table, old_id.inner());
           else

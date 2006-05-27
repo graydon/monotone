@@ -170,8 +170,8 @@ check_rosters_manifest(app_state & app,
     {
 
       L(FL("checking roster %s\n") % *i);
-      data dat;
-      app.db.get_roster(*i, dat);
+      roster_data dat;
+      app.db.get_roster_version(*i, dat);
       checked_rosters[*i].found = true;
 
       roster_t ros;
@@ -191,7 +191,7 @@ check_rosters_manifest(app_state & app,
       // normalisation check
       {
         roster_id norm_ident;
-        data norm_data;
+        roster_data norm_data;
         write_roster_and_marking(ros, mm, norm_data);
         calculate_ident(norm_data, norm_ident);
         if (norm_ident == *i)
@@ -240,8 +240,8 @@ check_rosters_marking(app_state & app,
       if (!i->second.parseable)
           continue;
 
-      data dat;
-      app.db.get_roster(ros_id, dat);
+      roster_data dat;
+      app.db.get_roster_version(ros_id, dat);
 
       roster_t ros;
       marking_map mm;

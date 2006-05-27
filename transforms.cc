@@ -245,11 +245,11 @@ calculate_ident(revision_data const & dat,
 }
 
 void
-calculate_ident(data const & dat,
+calculate_ident(roster_data const & dat,
                 roster_id & ident)
 {
   hexenc<id> tmp;
-  calculate_ident(dat, tmp);
+  calculate_ident(dat.inner(), tmp);
   ident = tmp;
 }
 

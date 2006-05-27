@@ -1118,7 +1118,7 @@ automate_get_manifest_of(std::vector<utf8> args,
   if (args.size() > 1)
     throw usage(help_name);
 
-  data dat;
+  roster_data dat;
   manifest_id mid;
   roster_t old_roster, new_roster;
   temp_node_id_source nis;
@@ -1142,7 +1142,7 @@ automate_get_manifest_of(std::vector<utf8> args,
   calculate_ident(new_roster, mid);
   write_manifest_of_roster(new_roster, dat);
   L(FL("dumping manifest %s\n") % mid);
-  output.write(dat().data(), dat().size());
+  output.write(dat.inner()().data(), dat.inner()().size());
 }
 
 
