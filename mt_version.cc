@@ -21,8 +21,13 @@
 #include "package_full_revision.h"
 #include "sanity.hh"
 
+using std::cout;
+using std::endl;
+using std::ostringstream;
+using std::string;
+
 void
-get_version(std::string & out)
+get_version(string & out)
 {
   out = (F("%s (base revision: %s)")
          % PACKAGE_STRING % package_revision_constant).str();
@@ -31,16 +36,16 @@ get_version(std::string & out)
 void
 print_version()
 {
-  std::string s;
+  string s;
   get_version(s);
-  std::cout << s << std::endl;
+  cout << s << endl;
 }
 
 void
-get_full_version(std::string & out)
+get_full_version(string & out)
 {
-  std::ostringstream oss;
-  std::string s;
+  ostringstream oss;
+  string s;
   get_version(s);
   oss << s << "\n";
   get_system_flavour(s);
@@ -61,7 +66,7 @@ get_full_version(std::string & out)
 void
 print_full_version()
 {
-  std::string s;
+  string s;
   get_full_version(s);
-  std::cout << s << std::endl;
+  cout << s << endl;
 }

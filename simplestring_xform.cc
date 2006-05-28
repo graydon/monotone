@@ -43,11 +43,11 @@ uppercase(string const & in)
   return n;
 }
 
-void split_into_lines(std::string const & in,                 
-                      std::string const & encoding,
-                      std::vector<std::string> & out)
+void split_into_lines(string const & in,                 
+                      string const & encoding,
+                      vector<string> & out)
 {
-  std::string lc_encoding = lowercase(encoding);  
+  string lc_encoding = lowercase(encoding);  
   out.clear();
 
   // note: this function does not handle ISO-2022-X, Shift-JIS, and 
@@ -61,19 +61,19 @@ void split_into_lines(std::string const & in,
   // ASCII, and UTF-8 families of encodings. 
   
   if (lc_encoding == constants::default_encoding
-      || lc_encoding.find("ascii") != std::string::npos
-      || lc_encoding.find("8859") != std::string::npos
-      || lc_encoding.find("euc") != std::string::npos
-      || lc_encoding.find("koi") != std::string::npos
-      || lc_encoding.find("gb") != std::string::npos
+      || lc_encoding.find("ascii") != string::npos
+      || lc_encoding.find("8859") != string::npos
+      || lc_encoding.find("euc") != string::npos
+      || lc_encoding.find("koi") != string::npos
+      || lc_encoding.find("gb") != string::npos
       || lc_encoding == "utf-8"
       || lc_encoding == "utf_8"
       || lc_encoding == "utf8")
     {
-      std::string::size_type begin = 0;
-      std::string::size_type end = in.find_first_of("\r\n", begin);
+      string::size_type begin = 0;
+      string::size_type end = in.find_first_of("\r\n", begin);
 
-      while (end != std::string::npos && end >= begin)
+      while (end != string::npos && end >= begin)
         {
           out.push_back(in.substr(begin, end-begin));
           if (in.at(end) == '\r'
@@ -123,11 +123,11 @@ join_lines(vector<string> const & in,
 void
 prefix_lines_with(string const & prefix, string const & lines, string & out)
 {
-  std::vector<std::string> msgs;
+  vector<string> msgs;
   split_into_lines(lines, msgs);
 
   ostringstream oss;
-  for (std::vector<string>::const_iterator i = msgs.begin();
+  for (vector<string>::const_iterator i = msgs.begin();
        i != msgs.end();)
     {
       oss << prefix << *i;

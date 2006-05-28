@@ -6,8 +6,11 @@
 #include "cert.hh"
 
 #include <fstream>
-using std::ifstream;
 
+using std::ifstream;
+using std::ofstream;
+using std::string;
+using std::vector;
 
 static const var_key default_server_key(var_domain("database"),
                                         var_name("default-server"));
@@ -17,8 +20,8 @@ static const var_key default_exclude_pattern_key(var_domain("database"),
                                                  var_name("default-exclude-pattern"));
 
 static void
-process_netsync_args(std::string const & name,
-                     std::vector<utf8> const & args,
+process_netsync_args(string const & name,
+                     vector<utf8> const & args,
                      utf8 & addr,
                      utf8 & include_pattern, utf8 & exclude_pattern,
                      bool use_defaults,
@@ -55,7 +58,7 @@ process_netsync_args(std::string const & name,
     {
       E(serve_mode || args.size() >= 2, F("no branch pattern given"));
       int pattern_offset = (serve_mode ? 0 : 1);
-      std::vector<utf8> patterns(args.begin() + pattern_offset, args.end());
+      vector<utf8> patterns(args.begin() + pattern_offset, args.end());
       combine_and_check_globish(patterns, include_pattern);
       combine_and_check_globish(app.exclude_patterns, exclude_pattern);
       if (use_defaults &&
@@ -155,7 +158,7 @@ struct pid_file
     if (path.empty())
       return;
     pid_t pid;
-    std::ifstream(path.as_external().c_str()) >> pid;
+    ifstream(path.as_external().c_str()) >> pid;
     if (pid == get_process_id()) {
       file.close();
       delete_file(path);
@@ -163,7 +166,7 @@ struct pid_file
   }
 
 private:
-  std::ofstream file;
+  ofstream file;
   system_path path;
 };
 

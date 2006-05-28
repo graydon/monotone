@@ -22,7 +22,13 @@
 // this file deals with talking to the filesystem, loading and
 // saving files.
 
-using namespace std;
+using std::cin;
+using std::ifstream;
+using std::ios_base;
+using std::ofstream;
+using std::runtime_error;
+using std::string;
+using std::vector;
 
 void
 assert_path_is_nonexistent(any_path const & path)
@@ -297,8 +303,8 @@ read_data(any_path const & p, data & dat)
 }
 
 void read_directory(any_path const & path,
-                    std::vector<utf8> & files,
-                    std::vector<utf8> & dirs)
+                    vector<utf8> & files,
+                    vector<utf8> & dirs)
 {
   files.clear();
   dirs.clear();
@@ -446,7 +452,7 @@ walk_tree_recursive(fs::path const & absolute,
               // FIXME: BUG: this screws up charsets
               p = file_path_internal(rel_entry.normalize().string());
             }
-          catch (std::runtime_error const & c)
+          catch (runtime_error const & c)
             {
               W(F("caught runtime error %s constructing file path for %s\n") 
                 % c.what() % rel_entry.string());

@@ -103,20 +103,6 @@ ATOMIC(ty)                                             \
 inline void verify(ty &) {}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //CC
 
 
@@ -140,8 +126,8 @@ ty const & ty::operator=(ty const & other)   \
 { s = other.s; ok = other.ok;                \
   verify(*this); return *this; }             \
                                              \
-ostream & operator<<(ostream & o,            \
-                     ty const & a)           \
+  std::ostream & operator<<(std::ostream & o,\
+                            ty const & a)    \
 { return (o << a.s); }                       \
                                              \
 template <>                                  \
@@ -186,7 +172,8 @@ enc<INNER>::operator=(enc<INNER> const & other)          \
     verify(*this); return *this;}                        \
                                                          \
 template <typename INNER>                                \
-ostream & operator<<(ostream & o, enc<INNER> const & e)  \
+std::ostream & operator<<(std::ostream & o,              \
+                          enc<INNER> const & e)          \
 { return (o << e.i); }                                   \
                                                          \
 template <typename INNER>                                \
@@ -212,7 +199,8 @@ dec<INNER>::operator=(dec<INNER> const & other)          \
     verify(*this); return *this;}                        \
                                                          \
 template <typename INNER>                                \
-ostream & operator<<(ostream & o, dec<INNER> const & d)  \
+std::ostream & operator<<(std::ostream & o,              \
+                          dec<INNER> const & d)          \
 { return (o << d.i); }                                   \
                                                          \
 template <typename INNER>                                \

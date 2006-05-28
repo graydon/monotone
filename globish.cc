@@ -7,6 +7,11 @@
 #include "sanity.hh"
 #include "globish.hh"
 
+using std::string;
+using std::vector;
+
+using boost::regex_match;
+
 // this converts a globish pattern to a regex.  The regex should be usable by
 // the Boost regex library operating in default mode, i.e., it should be a
 // valid ECMAscript regex.
@@ -29,7 +34,7 @@
 //   unescaped [.
 // - ] directly following an unescaped [ is escaped.
 static void
-maybe_quote(char c, std::string & re)
+maybe_quote(char c, string & re)
 {
   if (!(isalnum(c) || c == '_'))
     {
@@ -39,7 +44,7 @@ maybe_quote(char c, std::string & re)
 }
 
 static void
-checked_globish_to_regex(std::string const & glob, std::string & regex)
+checked_globish_to_regex(string const & glob, string & regex)
 {
   int in_braces = 0;            // counter for levels if {}
 
@@ -53,7 +58,7 @@ checked_globish_to_regex(std::string const & glob, std::string & regex)
       regex = "$.^";
       // and the below loop will do nothing
     }
-  for (std::string::const_iterator i = glob.begin(); i != glob.end(); ++i)
+  for (string::const_iterator i = glob.begin(); i != glob.end(); ++i)
     {
       char c = *i;
       
@@ -100,15 +105,15 @@ checked_globish_to_regex(std::string const & glob, std::string & regex)
 }
 
 void
-combine_and_check_globish(std::vector<utf8> const & patterns, utf8 & pattern)
+combine_and_check_globish(vector<utf8> const & patterns, utf8 & pattern)
 {
-  std::string p;
+  string p;
   if (patterns.size() > 1)
     p += '{';
   bool first = true;
-  for (std::vector<utf8>::const_iterator i = patterns.begin(); i != patterns.end(); ++i)
+  for (vector<utf8>::const_iterator i = patterns.begin(); i != patterns.end(); ++i)
     {
-      std::string tmp;
+      string tmp;
       // run for the checking it does
       checked_globish_to_regex((*i)(), tmp);
       if (!first)
@@ -123,7 +128,7 @@ combine_and_check_globish(std::vector<utf8> const & patterns, utf8 & pattern)
 
 globish_matcher::globish_matcher(utf8 const & include_pat, utf8 const & exclude_pat)
 {
-  std::string re;
+  string re;
   checked_globish_to_regex(include_pat(), re);
   r_inc = re;
   checked_globish_to_regex(exclude_pat(), re);
@@ -131,12 +136,12 @@ globish_matcher::globish_matcher(utf8 const & include_pat, utf8 const & exclude_
 }
 
 bool
-globish_matcher::operator()(std::string const & s)
+globish_matcher::operator()(string const & s)
 {
-  // regex_match may throw a std::runtime_error, if the regex turns out to be
+  // regex_match may throw a runtime_error, if the regex turns out to be
   // really pathological
-  bool inc_match = boost::regex_match(s, r_inc);
-  bool exc_match = boost::regex_match(s, r_exc);
+  bool inc_match = regex_match(s, r_inc);
+  bool exc_match = regex_match(s, r_exc);
   bool result = inc_match && !exc_match;
   L(FL("matching '%s' against '%s' excluding '%s': %s, %s: %s\n")
     % s % r_inc % r_exc
@@ -152,7 +157,7 @@ globish_matcher::operator()(std::string const & s)
 static void
 checked_globish_to_regex_test()
 {
-  std::string pat;
+  string pat;
 
   checked_globish_to_regex("*", pat);
   BOOST_CHECK(pat == ".*");
@@ -184,7 +189,7 @@ checked_globish_to_regex_test()
 static void
 combine_and_check_globish_test()
 {
-  std::vector<utf8> s;
+  vector<utf8> s;
   s.push_back(utf8("a"));
   s.push_back(utf8("b"));
   s.push_back(utf8("c"));

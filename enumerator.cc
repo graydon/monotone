@@ -13,7 +13,6 @@
 #include "revision.hh"
 #include "vocab.hh"
 
-using std::deque;
 using std::make_pair;
 using std::map;
 using std::multimap;
@@ -130,7 +129,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
         }
         
       // Queue up all the file-deltas
-      for (map<split_path, std::pair<file_id, file_id> >::const_iterator fd
+      for (map<split_path, pair<file_id, file_id> >::const_iterator fd
              = cs.deltas_applied.begin();
            fd != cs.deltas_applied.end(); ++fd)
         {
@@ -179,13 +178,13 @@ void
 revision_enumerator::note_cert(revision_id const & rid,
 			       hexenc<id> const & cert_hash)
 {
-  revision_certs.insert(std::make_pair(rid, cert_hash));
+  revision_certs.insert(make_pair(rid, cert_hash));
 }
 
 
 void 
 revision_enumerator::get_revision_certs(revision_id const & rid,
-					std::vector<hexenc<id> > & hashes)
+					vector<hexenc<id> > & hashes)
 {
   hashes.clear();
   bool found_one = false;

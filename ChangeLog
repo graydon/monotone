@@ -1,3 +1,66 @@
+2006-05-27  Derek Scherger  <derek@echologic.com>
+
+	* annotate.cc:
+	* app_state.cc:
+	* automate.cc:
+	* basic_io.cc:
+	* cert.cc:
+	* charset.cc:
+	* cmd_automate.cc:
+	* cmd_db.cc:
+	* cmd_diff_log.cc:
+	* cmd_list.cc:
+	* cmd_merging.cc:
+	* cmd_netsync.cc:
+	* cmd_packet.cc:
+	* cmd_ws_commit.cc:
+	* commands.cc:
+	* constants.cc:
+	* crypto_tests.cc:
+	* cset.cc:
+	* database.cc:
+	* database_check.cc:
+	* diff_patch.cc:
+	* enumerator.cc:
+	* epoch.cc:
+	* file_io.cc:
+	* globish.cc:
+	* hmac.cc:
+	* inodeprint.cc:
+	* key_store.cc:
+	* keys.cc:
+	* lcs.cc:
+	* legacy.cc:
+	* lua.cc:
+	* lua_hooks.cc:
+	* main.cc:
+	* merge.cc:
+	* merkle_tree.cc:
+	* mkstemp.cc:
+	* monotone.cc:
+	* mt_version.cc:
+	* netcmd.cc:
+	* netsync.cc:
+	* packet.cc:
+	* paths.cc:
+	* rcs_file.cc:
+	* rcs_import.cc:
+	* refiner.cc:
+	* revision.cc:
+	* roster.cc:
+	* roster_merge.cc:
+	* sanity.cc:
+	* schema_migration.cc:
+	* selectors.cc:
+	* simplestring_xform.cc:
+	* ui.cc:
+	* unit_tests.cc:
+	* vocab.cc:
+	* vocab_macros.hh:
+	* work.cc:
+	* xdelta.cc:
+	namespace fixups as described in the ROADMAP
+	
 2006-05-26  Derek Scherger  <derek@echologic.com>
 
 	* automate.cc (automate_get_manifest_of, automate_get_file):

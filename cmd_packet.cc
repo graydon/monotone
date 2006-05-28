@@ -3,10 +3,12 @@
 #include "packet.hh"
 
 #include <sstream>
-using std::istringstream;
 #include <iostream>
-using std::cout;
+
 using std::cin;
+using std::cout;
+using std::istringstream;
+using std::vector;
 
 CMD(pubkey, N_("packet i/o"), N_("ID"), N_("write public key packet to stdout"),
     OPT_NONE)
@@ -67,7 +69,7 @@ CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
     }
   else
     {
-      for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+      for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
         {
           data dat;
           read_data(system_path(*i), dat);

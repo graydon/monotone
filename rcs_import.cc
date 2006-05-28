@@ -42,9 +42,19 @@
 #include "transforms.hh"
 #include "ui.hh"
 
-using namespace std;
-using boost::shared_ptr;
+using std::make_pair;
+using std::map;
+using std::multimap;
+using std::out_of_range;
+using std::pair;
+using std::set;
+using std::stack;
+using std::string;
+using std::vector;
+
 using boost::scoped_ptr;
+using boost::shared_ptr;
+using boost::lexical_cast;
 
 // cvs history recording stuff
 
@@ -292,8 +302,8 @@ struct piece;
 struct 
 piece_store
 {
-  vector< boost::shared_ptr<rcs_deltatext> > texts;
-  void index_deltatext(boost::shared_ptr<rcs_deltatext> const & dt,
+  vector< shared_ptr<rcs_deltatext> > texts;
+  void index_deltatext(shared_ptr<rcs_deltatext> const & dt,
                        vector<piece> & pieces);
   void build_string(vector<piece> const & pieces,
                     string & out);
@@ -333,7 +343,7 @@ piece_store::build_string(vector<piece> const & pieces,
 }
 
 void 
-piece_store::index_deltatext(boost::shared_ptr<rcs_deltatext> const & dt,
+piece_store::index_deltatext(shared_ptr<rcs_deltatext> const & dt,
                              vector<piece> & pieces)
 {
   pieces.clear();
@@ -397,13 +407,13 @@ process_one_hunk(vector< piece > const & source,
       else 
         throw oops("unknown directive '" + directive + "'");
     } 
-  catch (std::out_of_range & oor)
+  catch (out_of_range & oor)
     {
-      throw oops("std::out_of_range while processing " + directive 
+      throw oops("out_of_range while processing " + directive 
                  + " with source.size() == " 
-                 + boost::lexical_cast<string>(source.size())
+                 + lexical_cast<string>(source.size())
                  + " and cursor == "
-                 + boost::lexical_cast<string>(cursor));
+                 + lexical_cast<string>(cursor));
     }  
 }
 
@@ -607,7 +617,7 @@ process_branch(string const & begin_version,
                 
 
       // recursively follow any branch commits coming from the branchpoint
-      boost::shared_ptr<rcs_delta> curr_delta = r.deltas.find(curr_version)->second;
+      shared_ptr<rcs_delta> curr_delta = r.deltas.find(curr_version)->second;
       for(vector<string>::const_iterator i = curr_delta->branches.begin();
           i != curr_delta->branches.end(); ++i)
         {
@@ -752,8 +762,8 @@ cvs_history::set_filename(string const & file,
   ui.set_tick_trailer(ss);
   ss.resize(ss.size() - 2);
   // remove Attic/ if present
-  std::string::size_type last_slash=ss.rfind('/');
-  if (last_slash!=std::string::npos && last_slash>=5
+  string::size_type last_slash=ss.rfind('/');
+  if (last_slash!=string::npos && last_slash>=5
         && ss.substr(last_slash-5,6)=="Attic/")
      ss.erase(last_slash-5,6);
   curr_file = file_path_internal(ss);
@@ -765,11 +775,11 @@ void cvs_history::index_branchpoint_symbols(rcs_file const & r)
   branchpoints.clear();
   branch_first_entries.clear();
 
-  for (std::multimap<std::string, std::string>::const_iterator i = 
+  for (multimap<string, string>::const_iterator i = 
          r.admin.symbols.begin(); i != r.admin.symbols.end(); ++i)
     {
-      std::string const & num = i->first;
-      std::string const & sym = i->second;
+      string const & num = i->first;
+      string const & sym = i->second;
 
       vector<string> components;
       split_version(num, components);
@@ -1450,7 +1460,7 @@ cluster_consumer::consume_cluster(cvs_cluster const & c)
   I(!c.entries.empty());
 
   shared_ptr<revision_set> rev(new revision_set());
-  boost::shared_ptr<cset> cs(new cset());
+  shared_ptr<cset> cs(new cset());
   build_cset(c, *cs);
 
   cs->apply_to(editable_ros);

@@ -7,6 +7,8 @@
 #include "vocab.hh"
 #include "constants.hh"
 
+using std::string;
+
 chained_hmac::chained_hmac(netsync_session_key const & session_key) :
   hmac_length(constants::sha1_digest_length), 
   key(reinterpret_cast<Botan::byte const *>(session_key().data()), session_key().size())
@@ -21,11 +23,11 @@ chained_hmac::set_key(netsync_session_key const & session_key)
                             session_key().size());
 }
 
-std::string
-chained_hmac::process(std::string const & str, size_t pos, size_t n)
+string
+chained_hmac::process(string const & str, size_t pos, size_t n)
 {
   I(pos < str.size());
-  if (n == std::string::npos)
+  if (n == string::npos)
     n = str.size() - pos;
 
   I(pos + n <= str.size());
@@ -43,11 +45,11 @@ chained_hmac::process(std::string const & str, size_t pos, size_t n)
   return chain_val;
 }
 
-std::string
+string
 chained_hmac::process(string_queue const & str, size_t pos, size_t n)
 {
   I(pos < str.size());
-  if (n == std::string::npos)
+  if (n == string::npos)
     n = str.size() - pos;
 
   I(pos + n <= str.size());

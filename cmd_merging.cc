@@ -11,21 +11,24 @@
 #include "update.hh"
 
 #include <iostream>
+
 using std::cout;
+using std::map;
+using std::set;
 
 struct update_source 
   : public file_content_source
 {
-  std::map<file_id, file_data> & temporary_store;
+  map<file_id, file_data> & temporary_store;
   app_state & app;
-  update_source (std::map<file_id, file_data> & tmp,
+  update_source (map<file_id, file_data> & tmp,
                  app_state & app)
     : temporary_store(tmp), app(app)
   {}
   void get_file_content(file_id const & fid,
                         file_data & dat) const
   {
-    std::map<file_id, file_data>::const_iterator i = temporary_store.find(fid);
+    map<file_id, file_data>::const_iterator i = temporary_store.find(fid);
     if (i != temporary_store.end())
       dat = i->second;
     else
@@ -171,7 +174,7 @@ CMD(update, N_("workspace"), "",
 
   app.db.get_roster(r_chosen_id, chosen_roster, chosen_mm);
 
-  std::set<revision_id> 
+  set<revision_id> 
     working_uncommon_ancestors, 
     chosen_uncommon_ancestors;
 
@@ -418,7 +421,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
         MM(left_roster);
         MM(right_roster);
         marking_map left_marking_map, right_marking_map;
-        std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+        set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
 
         app.db.get_roster(left_rid, left_roster, left_marking_map);
         app.db.get_roster(right_rid, right_roster, right_marking_map);
@@ -551,7 +554,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"), N_("Show what conflicts wo
   marking_map l_marking, r_marking;
   app.db.get_roster(l_id, l_roster, l_marking);
   app.db.get_roster(r_id, r_roster, r_marking);
-  std::set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
+  set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
   app.db.get_uncommon_ancestors(l_id, r_id,
                                 l_uncommon_ancestors, 
                                 r_uncommon_ancestors);

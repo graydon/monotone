@@ -54,9 +54,21 @@
 //
 // see file schema.sql for the text of the schema.
 
+using std::deque;
+using std::endl;
+using std::istream;
+using std::ifstream;
+using std::make_pair;
+using std::map;
+using std::multimap;
+using std::ostream;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
 using boost::shared_ptr;
 using boost::lexical_cast;
-using namespace std;
 
 int const one_row = 1;
 int const one_col = 1;
@@ -69,11 +81,11 @@ namespace
   {
     enum arg_type { text, blob };
     arg_type type;
-    std::string data;
+    string data;
   };
 
   query_param
-  text(std::string const & txt)
+  text(string const & txt)
   {
     query_param q = {
       query_param::text,
@@ -83,7 +95,7 @@ namespace
   }
   
   query_param
-  blob(std::string const & blb)
+  blob(string const & blb)
   {
     query_param q = { 
       query_param::blob,
@@ -98,7 +110,7 @@ namespace
 
 struct query
 {
-  explicit query(std::string const & cmd)
+  explicit query(string const & cmd)
     : sql_cmd(cmd)
   {}
 
@@ -111,8 +123,8 @@ struct query
     return *this;
   }
   
-  std::vector<query_param> args;
-  std::string sql_cmd;
+  vector<query_param> args;
+  string sql_cmd;
 };
 
 database::database(system_path const & fn) :
@@ -214,7 +226,7 @@ sqlite3_gunzip_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   data unpacked;
   const char *val = (const char*) sqlite3_value_blob(args[0]);
   int bytes = sqlite3_value_bytes(args[0]);
-  decode_gzip(gzip<data>(std::string(val,val+bytes)), unpacked);
+  decode_gzip(gzip<data>(string(val,val+bytes)), unpacked);
   sqlite3_result_blob(f, unpacked().c_str(), unpacked().size(), SQLITE_TRANSIENT);
 }
 
@@ -229,12 +241,12 @@ check_sqlite_format_version(system_path const & filename)
 {
   // sqlite 3 files begin with this constant string
   // (version 2 files begin with a different one)
-  std::string version_string("SQLite format 3");
+  string version_string("SQLite format 3");
 
-  std::ifstream file(filename.as_external().c_str());
+  ifstream file(filename.as_external().c_str());
   N(file, F("unable to probe database version in file %s") % filename);
 
-  for (std::string::const_iterator i = version_string.begin();
+  for (string::const_iterator i = version_string.begin();
        i != version_string.end(); ++i)
     {
       char c;
@@ -265,7 +277,7 @@ assert_sqlite3_ok(sqlite3 *s)
     }
   // note: if you update this, try to keep calculate_schema_id() in
   // schema_migration.cc consistent.
-  std::string auxiliary_message = "";
+  string auxiliary_message = "";
   if (errcode == SQLITE_ERROR)
     {
       auxiliary_message += _("make sure database and containing directory are writeable\n"
@@ -344,7 +356,7 @@ dump_request
 };
 
 static void
-dump_row(std::ostream &out, sqlite3_stmt *stmt, std::string const& table_name)
+dump_row(ostream &out, sqlite3_stmt *stmt, string const& table_name)
 {
   out << boost::format("INSERT INTO %s VALUES(") % table_name;
   unsigned n = sqlite3_data_count(stmt);
@@ -358,7 +370,7 @@ dump_row(std::ostream &out, sqlite3_stmt *stmt, std::string const& table_name)
           out << "X'";
           const char *val = (const char*) sqlite3_column_blob(stmt, i);
           int bytes = sqlite3_column_bytes(stmt, i);
-          out << encode_hexenc(std::string(val,val+bytes));
+          out << encode_hexenc(string(val,val+bytes));
           out << "'";
         }
       else 
@@ -732,7 +744,7 @@ database::fetch(results & res,
           break;
         case query_param::blob:
           {
-            std::string const & data = idx(query.args, param - 1).data;
+            string const & data = idx(query.args, param - 1).data;
             sqlite3_bind_blob(i->second.stmt(), param,
                               data.data(), data.size(),
                               SQLITE_STATIC);
@@ -757,7 +769,7 @@ database::fetch(results & res,
           const char * value = (const char*)sqlite3_column_blob(i->second.stmt(), col);
           int bytes = sqlite3_column_bytes(i->second.stmt(), col);
           E(value, F("null result in query: %s\n") % query.sql_cmd);
-          row.push_back(std::string(value, value + bytes));
+          row.push_back(string(value, value + bytes));
           //L(FL("row %d col %d value='%s'\n") % nrow % col % value);
         }
       res.push_back(row);
@@ -1408,7 +1420,7 @@ database::roster_exists_for_revision(revision_id const & rev_id)
 }
 
 void 
-database::get_roster_links(std::map<revision_id, roster_id> & links)
+database::get_roster_links(map<revision_id, roster_id> & links)
 {
   links.clear();
   results res;
@@ -1543,14 +1555,14 @@ database::get_arbitrary_file_delta(file_id const & src_id,
 
 
 void 
-database::get_revision_ancestry(std::multimap<revision_id, revision_id> & graph)
+database::get_revision_ancestry(multimap<revision_id, revision_id> & graph)
 {
   results res;
   graph.clear();
   fetch(res, 2, any_rows, 
         query("SELECT parent,child FROM revision_ancestry"));
   for (size_t i = 0; i < res.size(); ++i)
-    graph.insert(std::make_pair(revision_id(res[i][0]),
+    graph.insert(make_pair(revision_id(res[i][0]),
                                 revision_id(res[i][1])));
 }
 
@@ -1637,7 +1649,7 @@ database::deltify_revision(revision_id const & rid)
     for (edge_map::const_iterator i = rev.edges.begin();
          i != rev.edges.end(); ++i)
       {
-        for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator
+        for (map<split_path, pair<file_id, file_id> >::const_iterator
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
@@ -2140,8 +2152,8 @@ database::put_revision_cert(revision<cert> const & cert)
   put_cert(cert.inner(), "revision_certs"); 
 }
 
-void database::get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
-                                       std::pair<revision_id, rsa_keypair_id> > > & idx)
+void database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
+                                                pair<revision_id, rsa_keypair_id> > > & idx)
 {
   results res;
   fetch(res, 3, any_rows, 
@@ -2152,9 +2164,9 @@ void database::get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id
   idx.reserve(res.size());
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {
-      idx.push_back(std::make_pair(hexenc<id>((*i)[0]), 
-                                   std::make_pair(revision_id((*i)[1]),
-                                                  rsa_keypair_id((*i)[2]))));
+      idx.push_back(make_pair(hexenc<id>((*i)[0]), 
+                              make_pair(revision_id((*i)[1]),
+                                        rsa_keypair_id((*i)[2]))));
     }
 }
 
@@ -2591,7 +2603,7 @@ void database::complete(selector_type ty,
 // epochs 
 
 void 
-database::get_epochs(std::map<cert_value, epoch_data> & epochs)
+database::get_epochs(map<cert_value, epoch_data> & epochs)
 {
   epochs.clear();
   results res;
@@ -2600,7 +2612,7 @@ database::get_epochs(std::map<cert_value, epoch_data> & epochs)
     {      
       cert_value decoded(idx(*i, 0));
       I(epochs.find(decoded) == epochs.end());
-      epochs.insert(std::make_pair(decoded, epoch_data(idx(*i, 1))));
+      epochs.insert(make_pair(decoded, epoch_data(idx(*i, 1))));
     }
 }
 
@@ -2663,7 +2675,7 @@ database::check_integrity()
 // vars
 
 void
-database::get_vars(std::map<var_key, var_value> & vars)
+database::get_vars(map<var_key, var_value> & vars)
 {
   vars.clear();
   results res;
@@ -2673,8 +2685,8 @@ database::get_vars(std::map<var_key, var_value> & vars)
       var_domain domain(idx(*i, 0));
       var_name name(idx(*i, 1));
       var_value value(idx(*i, 2));
-      I(vars.find(std::make_pair(domain, name)) == vars.end());
-      vars.insert(std::make_pair(std::make_pair(domain, name), value));
+      I(vars.find(make_pair(domain, name)) == vars.end());
+      vars.insert(make_pair(make_pair(domain, name), value));
     }
 }
 
@@ -2682,9 +2694,9 @@ void
 database::get_var(var_key const & key, var_value & value)
 {
   // FIXME: sillyly inefficient.  Doesn't really matter, though.
-  std::map<var_key, var_value> vars;
+  map<var_key, var_value> vars;
   get_vars(vars);
-  std::map<var_key, var_value>::const_iterator i = vars.find(key);
+  map<var_key, var_value>::const_iterator i = vars.find(key);
   I(i != vars.end());
   value = i->second;
 }
@@ -2693,9 +2705,9 @@ bool
 database::var_exists(var_key const & key)
 {
   // FIXME: sillyly inefficient.  Doesn't really matter, though.
-  std::map<var_key, var_value> vars;
+  map<var_key, var_value> vars;
   get_vars(vars);
-  std::map<var_key, var_value>::const_iterator i = vars.find(key);
+  map<var_key, var_value>::const_iterator i = vars.find(key);
   return i != vars.end();
 }
 
@@ -2837,12 +2849,12 @@ database::put_roster(revision_id const & rev_id,
 
   schedule_write(data_table, new_id.inner(), new_data.inner());
 
-  std::set<revision_id> parents;
+  set<revision_id> parents;
   get_revision_parents(rev_id, parents);
 
   // Now do what deltify would do if we bothered (we have the
   // roster written now, so might as well do it here).
-  for (std::set<revision_id>::const_iterator i = parents.begin();
+  for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
     {
       if (null_id(*i))
