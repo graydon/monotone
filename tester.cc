@@ -8,6 +8,7 @@ extern "C" {
 #include "lua.hh"
 #include "tester.h"
 #include "paths.hh"
+#include "platform.hh"
 
 #include <cstdio>
 
@@ -18,7 +19,12 @@ extern "C" {
 #include <boost/filesystem/convenience.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <map>
+#include <utility>
+
 using std::string;
+using std::map;
+using std::make_pair;
 using boost::lexical_cast;
 
 
@@ -29,6 +35,57 @@ inline int dup(int x) {return _dup(x);}
 inline int close(int x) {return _close(x);}
 #else
 #include <unistd.h>
+#endif
+
+#include <cstdlib>
+map<string, string> orig_env_vars;
+void save_env() { orig_env_vars.clear(); }
+#ifdef WIN32
+void restore_env()
+{
+  for (map<string,string>::const_iterator i = orig_env_vars.begin();
+       i != orig_env_vars.end(); ++i)
+    {
+      _putenv_s(i->first.c_str(), i->second.c_str());
+    }
+  orig_env_vars.clear();
+}
+void set_env(string const &var, string const &val)
+{
+  char const *old = getenv(var.c_str());
+  if (old)
+    orig_env_vars.insert(make_pair(var, string(old)));
+  else
+    orig_env_vars.insert(make_pair(var, ""))
+  _putenv_s(var.c_str(), val.c_str());
+}
+#else
+void putenv2(string const &var, string const &val)
+{
+  char const *s = (var + "=" + val).c_str();
+  size_t len = var.size() + val.size() + 2;
+  char *cp = new char[len];
+  memcpy(cp, s, len);
+  putenv(cp);
+}
+void restore_env()
+{
+  for (map<string,string>::const_iterator i = orig_env_vars.begin();
+       i != orig_env_vars.end(); ++i)
+    {
+      putenv2(i->first, i->second);
+    }
+  orig_env_vars.clear();
+}
+void set_env(string const &var, string const &val)
+{
+  char const *old = getenv(var.c_str());
+  if (old)
+    orig_env_vars.insert(make_pair(var, string(old)));
+  else
+    orig_env_vars.insert(make_pair(var, ""));
+  putenv2(var, val);
+}
 #endif
 
 int set_redirect(int what, string where, string mode)
@@ -163,6 +220,38 @@ extern "C"
     
     return 0;
   }
+
+  static int
+  get_ostype(lua_State * L)
+  {
+    string str;
+    get_system_flavour(str);
+    lua_pushstring(L, str.c_str());
+    return 1;
+  }
+
+  static int
+  do_save_env(lua_State * L)
+  {
+    save_env();
+    return 0;
+  }
+
+  static int
+  do_restore_env(lua_State * L)
+  {
+    restore_env();
+    return 0;
+  }
+
+  static int
+  do_set_env(lua_State * L)
+  {
+    char const * var = luaL_checkstring(L, -2);
+    char const * val = luaL_checkstring(L, -1);
+    set_env(var, val);
+    return 0;
+  }
 }
 
 int main(int argc, char **argv)
@@ -212,6 +301,10 @@ int main(int argc, char **argv)
   lua_register(st, "mkdir", make_dir);
   lua_register(st, "remove_recursive", remove_recursive);
   lua_register(st, "exists", exists);
+  lua_register(st, "get_ostype", get_ostype);
+  lua_register(st, "save_env", do_save_env);
+  lua_register(st, "restore_env", do_restore_env);
+  lua_register(st, "set_env", do_set_env);
 
   int ret = 2;
   try
