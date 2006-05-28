@@ -1,3 +1,8 @@
+2006-05-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* std_hooks.lua (get_netsync_connect_command): quote patterns
+	so that remote shells won't expand them.
+
 2006-05-28  Graydon Hoare  <graydon@pobox.com>
 
 	* visualc/monotone.vcproj: Fix for package revision generation
