@@ -1,3 +1,7 @@
+2006-05-28  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few new and fuzzy strings to (re)translate.
+
 2006-05-28  Matt Johnston  <matt@ucc.asn.au>
 
 	* std_hooks.lua (get_netsync_connect_command): quote patterns
