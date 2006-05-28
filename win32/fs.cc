@@ -141,15 +141,15 @@ rename_clobberingly_impl(const char* from, const char* to)
 {
   // MoveFileEx is only available on NT-based systems.  We will revert to a
   // more compatible DeleteFile/MoveFile pair as a compatibility fall-back.
-  typedef BOOL (*MoveFileExFun)(LPCTSTR, LPCTSTR, DWORD);
-  static MoveFileExFun MoveFileEx = 0;
+  typedef BOOL (WINAPI *MoveFileExFun)(LPCTSTR, LPCTSTR, DWORD);
+  static MoveFileExFun fnMoveFileEx = 0;
   static bool MoveFileExAvailable = false;
-  if (MoveFileEx == 0) {
+  if (fnMoveFileEx == 0) {
     HMODULE hModule = LoadLibrary("kernel32");
     if (hModule)
-      MoveFileEx = reinterpret_cast<MoveFileExFun>
+      fnMoveFileEx = reinterpret_cast<MoveFileExFun>
         (GetProcAddress(hModule, "MoveFileExA"));
-    if (MoveFileEx) {
+    if (fnMoveFileEx) {
       L(FL("using MoveFileEx for renames"));
       MoveFileExAvailable = true;
     } else
@@ -157,7 +157,7 @@ rename_clobberingly_impl(const char* from, const char* to)
   }
 
   if (MoveFileExAvailable) {
-    if (MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
+    if (fnMoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
       return true;
     else if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
       MoveFileExAvailable = false;

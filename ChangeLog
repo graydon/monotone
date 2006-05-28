@@ -1,8 +1,15 @@
 2006-05-28  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* visualc/config.h: Fix build: add typedef needed by recent
+	os_strerror changes.
+	* netxx_pipe.cc (Netxx::PipeCompatibleProbe::add): Compile fix for
+	Win32.
+	* win32/fs.cc (rename_clobberingly_impl): Fix crash with
+	VC8--calling convention for MoveFileEx was not correct (we
+	defaulted to cdecl, should have been using stdcall).
+
 	* win32/monotone.iss: First pass at rewriting InnoSetup file for
 	modern versions of IS.
-
 	* win32/modpath.iss: Add Jared Breland's GPL-licensed IS script
 	for portable %PATH% modification.
 

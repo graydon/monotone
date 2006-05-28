@@ -487,7 +487,7 @@ Netxx::PipeCompatibleProbe::add(const StreamBase &sb, ready_type rt)
 void 
 Netxx::PipeCompatibleProbe::add(const StreamServer &ss, ready_type rt)
   {
-    assert(!ip_pipe);
+    assert(!is_pipe);
     Probe::add(ss,rt);
   }
 #else // unix

@@ -9,6 +9,7 @@
 
 #ifdef _MSC_VER
 typedef unsigned long pid_t;
+typedef unsigned int os_err_t;
 // #define HAVE_EXTERN_TEMPLATE
 #define LOCALEDIR ""
 #endif
