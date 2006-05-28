@@ -12,6 +12,48 @@ logfile = io.open("tester.log", "w") -- combined logfile
 test_log = nil -- logfile for this test
 failed_testlogs = {}
 
+function P(...)
+  io.write(unpack(arg))
+  io.flush()
+  logfile:write(unpack(arg))
+end
+
+function L(...)
+  test_log:write(unpack(arg))
+end
+
+function getsrcline()
+  local info
+  local depth = 1
+  repeat
+    depth = depth + 1
+    info = debug.getinfo(depth)
+  until info == nil
+  while src == nil and depth > 1 do
+    depth = depth - 1
+    info = debug.getinfo(depth)
+    if string.find(info.source, "^@.*__driver__%.lua") then
+      -- return info.source, info.currentline
+      return testname, info.currentline
+    end
+  end
+end
+
+function locheader()
+  local _,line = getsrcline()
+  if testname == nil then
+    return "\n<unknown>:" .. line .. ": "
+  else
+    return "\n" .. testname .. ":" .. line .. ": "
+  end
+end
+
+old_mkdir = mkdir
+mkdir = function(name)
+  L(locheader(), "mkdir ", name, "\n")
+  old_mkdir(name)
+end
+
 function fsize(filename)
   local file = io.open(filename, "r")
   if file == nil then error("Cannot open file " .. filename, 2) end
@@ -21,30 +63,40 @@ function fsize(filename)
 end
 
 function readfile(filename)
+  L(locheader(), "readfile ", filename, "\n")
   local file = io.open(filename, "rb")
-  if file == nil then error("Cannot open file " .. filename, 2) end
+  if file == nil then
+    error("Cannot open file " .. filename)
+  end
   local dat = file:read("*a")
   file:close()
   return dat
 end
 
 function writefile(filename, dat)
+  L(locheader(), "writefile ", filename, "\n")
   local file = io.open(filename, "wb")
-  if file == nil then error("Cannot open file " .. filename, 2) end
+  if file == nil then
+    L("Cannot open file " .. filename)
+    return false
+  end
   file:write(dat)
   file:close()
-  return
+  return true
 end
 
 function copyfile(from, to)
+  L(locheader(), "copyfile ", from, " ", to, "\n")
   local infile = io.open(from, "rb")
   if infile == nil then
-    error("Cannot open file " .. from, 2)
+    L("Cannot open file " .. from)
+    return false
   end
   local outfile = io.open(to, "wb")
   if outfile == nil then
     infile:close()
-    error("Cannot open file " .. to, 2)
+    L("Cannot open file " .. to)
+    return false
   end
   local size = 2^13
   while true do
@@ -54,6 +106,34 @@ function copyfile(from, to)
   end
   infile:close()
   outfile:close()
+  return true
+end
+
+function rename(from, to)
+  L(locheader(), "rename ", from, " ", to, "\n")
+  local res,err = os.rename(from, to)
+  if res == nil then
+    L(err, "\n")
+    return false
+  else
+    return true
+  end
+end
+
+function remove(file)
+  L(locheader(), "remove ", file, "\n")
+  local res,err = os.remove(file)
+  if res == nil then
+    L(err, "\n")
+    return false
+  else
+    return true
+  end
+end
+
+function rename_over(from, to)
+  remove(to)
+  return rename(from, to)
 end
 
 function getstdfile(name, as)
@@ -77,28 +157,9 @@ function execute(path, ...)
    return ret
 end
 
-function getsrcline()
-  local info
-  local depth = 1
-  repeat
-    depth = depth + 1
-    info = debug.getinfo(depth)
-  until info == nil
-  while src == nil and depth > 1 do
-    depth = depth - 1
-    info = debug.getinfo(depth)
-    if string.find(info.source, "^@.*__driver__%.lua") then
-      -- return info.source, info.currentline
-      return testname, info.currentline
-    end
-  end
-end
-
 function cmd(first, ...)
-  local _1,_2 = getsrcline()
-  local src = _1 .. ":" .. _2
   if type(first) == "string" then
-    test_log:write("\n", src, ": ", first, " ", table.concat(arg, " "), "\n")
+    L(locheader(), first, " ", table.concat(arg, " "), "\n")
     return function () return execute(first, unpack(arg)) end
   elseif type(first) == "function" then
     local info = debug.getinfo(first)
@@ -108,7 +169,7 @@ function cmd(first, ...)
     else
       name = "<function>"
     end
-    test_log:write("\n", src, ": ", name, " ", table.concat(arg, " "), "\n")
+    L(locheader(), name, " ", table.concat(arg, " "), "\n")
     return function () return first(unpack(arg)) end
   else
     error("cmd() called with argument of unknown type " .. type(first), 2)
@@ -272,16 +333,6 @@ function xfail_if(chk, ...)
   end
 end
 
-function P(...)
-  io.write(unpack(arg))
-  io.flush()
-  logfile:write(unpack(arg))
-end
-
-function L(...)
-  test_log:write(unpack(arg))
-end
-
 function run_tests(args)
   local torun = {}
   local run_all = true
@@ -358,6 +409,7 @@ function run_tests(args)
       e = "Could not load driver file " .. driverfile .. " .\n" .. e
     else
       r,e = xpcall(driver, debug.traceback)
+      restore_env()
     end
     if r then
       if wanted_fail then
@@ -394,6 +446,7 @@ function run_tests(args)
     counts.total = counts.total + 1
   end
 
+  save_env()
   if run_all then
     for i,t in pairs(tests) do
       if list_only then
@@ -416,6 +469,11 @@ function run_tests(args)
     end
   end
   
+  if list_only then
+    logfile:close()
+    return 0
+  end
+  
   P("\n")
   P(string.format("Of %i tests run:\n", counts.total))
   P(string.format("\t%i succeeded\n", counts.success))
@@ -432,6 +490,7 @@ function run_tests(args)
       logfile:write(dat)
     end
   end
+  logfile:close()
 
   if counts.success + counts.skip + counts.xfail == counts.total then
     return 0

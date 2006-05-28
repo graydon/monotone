@@ -80,11 +80,10 @@ function revert_to(rev, branch)
   check(base_revision() == rev)
 end
 
+ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
+
 function canonicalize(filename)
-  local ostype = os.getenv("OSTYPE")
-  local osenv = os.getenv("OS")
-  if osenv ~= nil then osenv = string.find(osenv, "[Ww]in") end
-  if ostype == "msys" or osenv then
+  if ostype == "Windows" then
     local f = io.open(filename, "rb")
     local indat = f:read("*a")
     f:close()
@@ -113,9 +112,16 @@ table.insert(tests, "tests/merging_adds")
 table.insert(tests, "tests/merging_data_in_unrelated_files")
 table.insert(tests, "tests/merging_adds_in_unrelated_revisions")
 table.insert(tests, "tests/merging_data_in_unrelated_revisions")
-table.insert(tests, "tests/calculation_of_incorrect_unidiffs")
+table.insert(tests, "tests/calculation_of_other_unidiffs")
 table.insert(tests, "tests/delete_work_file_on_checkout")
 table.insert(tests, "tests/revert_file_to_base_revision")
 table.insert(tests, "tests/addition_of_files_and_directories")
 table.insert(tests, "tests/add_and_then_drop_file_does_nothing")
 table.insert(tests, "tests/drop_missing_and_unknown_files")
+table.insert(tests, "tests/creating_a_bad_criss-cross_merge")
+table.insert(tests, "tests/renaming_a_file")
+table.insert(tests, "tests/renaming_a_directory")
+table.insert(tests, "tests/renaming_and_editing_a_file")
+table.insert(tests, "tests/importing_CVS_files")
+table.insert(tests, "tests/importing_files_with_non-english_names")
+table.insert(tests, "tests/external_unit_test_of_the_line_merger")
