@@ -1,5 +1,10 @@
 2006-05-28  Graydon Hoare  <graydon@pobox.com>
 
+	* visualc/monotone.vcproj: Fix for package revision generation
+	(still not capturing workspace changes, but base rev)
+
+2006-05-28  Graydon Hoare  <graydon@pobox.com>
+
 	* app_state.cc (search_root): Initialize to current_root_path().
 	* paths.{cc,hh} (current_root_path): New function.
 	* win32/get_system_flavour.cc (processor_types): Fix typo.
