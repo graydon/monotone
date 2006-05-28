@@ -9,7 +9,6 @@
 // all network i/o decoding and encoding in netcmd and merkle is done using
 // the primitives in this header. it has to be very correct.
 
-#include <boost/format.hpp>
 #include <boost/static_assert.hpp>
 
 #include "numeric_vocab.hh"

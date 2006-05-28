@@ -76,7 +76,7 @@ static std::string munge_argument(const char* arg)
   return munge_inner_argument(arg);
 }
 
-static std::string munge_argv_into_cmdline(const char* const argv[])
+std::string munge_argv_into_cmdline(const char* const argv[])
 {
   std::string cmdline;
 

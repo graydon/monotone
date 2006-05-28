@@ -172,20 +172,28 @@ private:
 
 CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
                  N_("serve the branches specified by PATTERNs to connecting clients"),
-                 OPT_BIND % OPT_PIDFILE % OPT_EXCLUDE)
+                 OPT_BIND % OPT_STDIO % OPT_NO_TRANSPORT_AUTH % OPT_PIDFILE % OPT_EXCLUDE)
 {
   if (args.size() < 1)
     throw usage(name);
 
   pid_file pid(app.pidfile);
 
-  rsa_keypair_id key;
-  get_user_key(key, app);
-  app.signing_key = key;
+  if (app.use_transport_auth)
+    {
+      rsa_keypair_id key;
+      get_user_key(key, app);
+      app.signing_key = key;
 
-  N(app.lua.hook_persist_phrase_ok(),
-    F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
-  require_password(key, app);
+      N(app.lua.hook_persist_phrase_ok(),
+	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
+      require_password(key, app);
+    }
+  else
+    {
+      E(app.bind_stdio,
+	F("The --no-transport-auth option is only permitted in combination with --stdio"));
+    }
 
   app.db.ensure_open();
 

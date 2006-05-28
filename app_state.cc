@@ -37,10 +37,10 @@ app_state::app_state()
   : branch_name(""), db(system_path()), keys(this), recursive(false),
     stdhooks(true), rcfiles(true), diffs(false),
     no_merges(false), set_default(false), verbose(false), date_set(false),
-    search_root("/"),
+    search_root(current_root_path()),
     depth(-1), last(-1), next(-1), diff_format(unified_diff), diff_args_provided(false),
     execute(false), bind_address(""), bind_port(""), 
-    missing(false), unknown(false),
+    bind_stdio(false), use_transport_auth(true), missing(false), unknown(false),
     confdir(get_default_confdir()), have_set_key_dir(false), no_files(false)
 {
   db.set_app(this);
@@ -109,10 +109,13 @@ app_state::process_options()
         set_key_dir(keydir);
       }
 
-    if (branch_name().empty())
+    if (branch_name().empty() && !options[branch_option]().empty())
       branch_name = options[branch_option];
+
     L(FL("branch name is '%s'\n") % branch_name());
-    internalize_rsa_keypair_id(options[key_option], signing_key);
+
+	  if (!options[key_option]().empty())
+		  internalize_rsa_keypair_id(options[key_option], signing_key);
   }
 }
 
@@ -416,7 +419,7 @@ app_state::read_options()
           read_options_map(dat, options);
         }
     }
-  catch(exception & e)
+  catch(exception &)
     {
       W(F("Failed to read options file %s") % o_path);
     }
@@ -433,7 +436,7 @@ app_state::write_options()
       write_options_map(dat, options);
       write_data(o_path, dat);
     }
-  catch(exception & e)
+  catch(exception &)
     {
       W(F("Failed to write options file %s") % o_path);
     }

@@ -467,7 +467,7 @@ bool merge3(vector<string> const & ancestor,
    { 
       merge_via_edit_scripts(ancestor, left, right, merged);
     }
-  catch(conflict & c)
+  catch(conflict &)
     {
       L(FL("conflict detected. no merge.\n"));
       return false;

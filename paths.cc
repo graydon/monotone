@@ -282,7 +282,7 @@ file_path::file_path(file_path::source_type type, string const & path)
           relative = fs::path(path, fs::native);
           out = (base / relative).normalize();
         }
-      catch (exception & e)
+      catch (exception &)
         {
           N(false, F("path '%s' is invalid") % path);
         }
@@ -578,6 +578,13 @@ dirname_basename(split_path const & sp,
 ///////////////////////////////////////////////////////////////////////////
 // workspace (and path root) handling
 ///////////////////////////////////////////////////////////////////////////
+
+system_path 
+current_root_path()
+{
+  return system_path(fs::initial_path().root_path().string());
+}
+
 
 bool
 find_and_go_to_workspace(system_path const & search_root)

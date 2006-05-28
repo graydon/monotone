@@ -22,7 +22,7 @@
 // much extra meta-data as they like about files or manifests, using certs,
 // without needing anyone's special permission.
 
-struct app_state;
+class app_state;
 struct packet_consumer;
 
 struct cert

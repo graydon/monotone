@@ -65,7 +65,7 @@ static table_entry processor_types[] = {
   { PROCESSOR_SHx_SH3DSP, "sh3dsp" },
 #endif
 #ifdef PROCESSOR_AMD_X8664
-  { PROCESSOR_AMD_X8684, "amd64" },
+  { PROCESSOR_AMD_X8664, "amd64" },
 #endif
   { 0, 0 }
 };
