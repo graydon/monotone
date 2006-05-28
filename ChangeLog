@@ -5,6 +5,10 @@
 
 2006-05-28  Graydon Hoare  <graydon@pobox.com>
 
+	* netcmd.cc: Fix build breakage in unit tests.
+
+2006-05-28  Graydon Hoare  <graydon@pobox.com>
+
 	* app_state.cc (search_root): Initialize to current_root_path().
 	* paths.{cc,hh} (current_root_path): New function.
 	* win32/get_system_flavour.cc (processor_types): Fix typo.
