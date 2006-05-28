@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-05-27 12:06+0200\n"
-"PO-Revision-Date: 2006-05-27 12:07+0100\n"
+"PO-Revision-Date: 2006-05-28 08:53+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -117,13 +117,13 @@ msgstr ""
 "puoi crearla con ‘genkey <tua e-mail>’"
 
 #: cert.cc:440
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "you have multiple private keys\n"
 "pick one to use for signatures by adding '-k<keyname>' to your command"
 msgstr ""
 "hai più chiavi private\n"
-"prendine una da usare per firmare aggiungendo  '-k<keyname>'  al tuo comando"
+"scegli quale usare per firmare aggiungendo ‘-k<keyname>’ al tuo comando"
 
 #: cert.cc:457
 #, c-format
@@ -278,17 +278,19 @@ msgstr "variabili"
 msgid "DOMAIN NAME VALUE"
 msgstr "DOMINIO NOME VALORE"
 
+# TODO: poco scorrevole
 #: cmd_db.cc:106
 msgid "set the database variable NAME to VALUE, in domain DOMAIN"
-msgstr ""
+msgstr "imposta nel dominio DOMINIO del database la variabile NOME al valore VALORE"
 
 #: cmd_db.cc:121
 msgid "DOMAIN NAME"
 msgstr "DOMINIO NOME"
 
+# TODO: poco scorrevole
 #: cmd_db.cc:122
 msgid "remove the database variable NAME in domain DOMAIN"
-msgstr ""
+msgstr "elimina dal dominio DOMINIO del database la variabile NOME"
 
 #: cmd_db.cc:133
 #, c-format
@@ -822,9 +824,9 @@ msgstr ""
 "il prossimo commit userà il ramo %s"
 
 #: cmd_merging.cc:268
-#, fuzzy, c-format
+#, c-format
 msgid "switched branch; next commit will use branch %s"
-msgstr "cambio ramo: il prossimo commit userà il ramo ‘%s’"
+msgstr "ramo cambiato: il prossimo commit userà il ramo ‘%s’"
 
 #: cmd_merging.cc:269
 #, c-format
@@ -1218,7 +1220,7 @@ msgstr "modifica del messaggio di log fallita"
 
 #: cmd_ws_commit.cc:38
 msgid "revert file(s), dir(s) or entire workspace (\".\")"
-msgstr ""
+msgstr "recupera file, directory o l'intero spazio di lavoro (\".\")"
 
 #: cmd_ws_commit.cc:115
 #, c-format
@@ -1657,9 +1659,9 @@ msgid "revision %s is not in normalized form\n"
 msgstr "la revisione ‘%s’ non in forma normalizzata\n"
 
 #: database_check.cc:711
-#, fuzzy, c-format
+#, c-format
 msgid "key %s missing (signed %d certs)\n"
-msgstr "Opzione mancante per la versione: \"aspell\"."
+msgstr "chiave ‘%s’ mancante (firma %d certificati)\n"
 
 #: database_check.cc:744
 #, c-format
@@ -3092,7 +3094,7 @@ msgstr ""
 #: revision.cc:1460
 #, c-format
 msgid "rebuilding revision graph from manifest certs\n"
-msgstr ""
+msgstr "ricostruisco il grafo delle revisioni dai certificati di manifesto\n"
 
 #: revision.cc:1563
 #, c-format
@@ -3270,14 +3272,14 @@ msgstr "carattere non ammesso ‘%c’ nel nome dell'id ‘%s’"
 
 # TODO: cosa è una stringa ACE?
 #: vocab.cc:78
-#, fuzzy, c-format
+#, c-format
 msgid "bad character '%c' in ace string '%s'"
-msgstr "carattere %s non valido nella stringa di modo %s"
+msgstr "carattere ‘%c’ non valido nella stringa ace ‘%s’"
 
 #: vocab.cc:92
-#, fuzzy, c-format
+#, c-format
 msgid "bad character '%c' in symbol '%s'"
-msgstr "carattere non ammesso `%c' nel nome id `%s'"
+msgstr "carattere ‘%c’ non valido nel simbolo ‘%s’"
 
 #: vocab.cc:106
 #, c-format
@@ -3337,7 +3339,7 @@ msgstr "la directory di destinazione ‘%s/’ non esiste nella revisione attual
 #: work.cc:364
 #, c-format
 msgid "destination %s is an existing file in current revision"
-msgstr ""
+msgstr "la destinazione ‘%s’ è un file già esistente nella versione attuale"
 
 #: work.cc:374
 #, c-format
@@ -3357,7 +3359,7 @@ msgstr "la destinazione ‘%s’ esiste già nella revisione attuale"
 #: work.cc:400
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
-msgstr ""
+msgstr "rinomino ‘%s’ in ‘%s’ nel manifesto dello spazio di lavoro"
 
 #: work.cc:425
 #, c-format
