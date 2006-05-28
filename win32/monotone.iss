@@ -1,36 +1,40 @@
 [Setup]
 AppName=monotone
+AppVersion=0.26
 AppVerName=monotone 0.26
+OutputBaseFileName=monotone-0.26-setup
 AppCopyright=Copyright © 2002-2006 Graydon Hoare et al.
+AppPublisher=venge.net
+AppPublisherURL=http://venge.net/monotone
 DefaultDirName={pf}\monotone
 DefaultGroupName=monotone
 MinVersion=4.0,4.0
 OutputDir=.
-OutputBaseFileName=monotone-setup
 AllowNoIcons=1
-AppPublisher=venge.net
-AppPublisherURL=http://venge.net/monotone
-AppVersion=0.26
-Compression=lzma/ultra
+Compression=lzma/fast
 SolidCompression=yes
 LicenseFile="..\COPYING"
+ChangesEnvironment=true
 
 [Files]
-Source: "..\mtn.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\html\*.*"; DestDir: "{app}\documentation"; Flags: ignoreversion
+Source: "..\..\monotone.release\mtn.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\monotone.release\html\*.*"; DestDir: "{app}\documentation"; Flags: ignoreversion
 Source: "..\COPYING"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\monotone.release\figures\*.png"; DestDir: "{app}\documentation\figures"; Flags: ignoreversion
 Source: "\mingw\bin\libiconv-2.dll"; DestDir: "{app}"
 Source: "\mingw\bin\zlib1.dll"; DestDir: "{app}"
-Source: "..\figures\*.png"; DestDir: "{app}\documentation\figures"; Flags: ignoreversion
 
 [Tasks]
 Name: initdb; Description: "Initialise a new database"; GroupDescription: "Get up and running"; Check: DBDoesntExist
 Name: initdb\genkey; Description: "Generate a key for use with monotone"; GroupDescription: "Get up and running"; Check: DBDoesntExist
+Name: initdb\createws; Description: "Create an initial workspace"; GroupDescription: "Get up and running"; Check: DBDoesntExist
+Name: modifypath; Description: "Add monotone to your path"; GroupDescription: "Get up and running"; Flags: unchecked
 Name: viewdocs; Description: "View the monotone documentation"; GroupDescription: "Get up and running"
 
 [Run]
 Filename: "{app}\mtn.exe"; Tasks: initdb; StatusMsg: "Initialising database..."; WorkingDir: "{app}"; Parameters: "--db=""{code:ForceDBPath|monotone.mtn}"" db init"
 Filename: "{app}\mtn.exe"; Tasks: initdb\genkey; StatusMsg: "Generating key..."; Flags: hidewizard; WorkingDir: "{app}"; Parameters: "--db=""{code:ForceDBPath|monotone.mtn}"" genkey {code:GetKeyID}"
+Filename: "{app}\mtn.exe"; Tasks: initdb\createws; StatusMsg: "Creating inital workspace..."; WorkingDir: "{app}"; Parameters: "--db=""{code:ForceDBPath|monotone.mtn}"" --branch=""{code:GetBranchName}"" setup ""{code:GetWorkspacePath}"""
 Filename: "{app}\documentation\index.html"; Tasks: viewdocs; Flags: shellexec nowait; WorkingDir: "{app}\documentation"
 
 [Icons]
@@ -42,7 +46,8 @@ program Setup;
 var
   DBChecked : Boolean;
   DBDidntExist : Boolean;
-  KeyID : String;
+  KeyIDPage : TInputQueryWizardPage;
+  BranchWorkspacePage : TInputQueryWizardPage;
 
 function InitializeSetup(): Boolean;
 begin
@@ -61,7 +66,17 @@ end;
 
 function GetKeyID(Default: String) : String;
 begin
-  Result := KeyID;
+  Result := KeyIDPage.Values[0];
+end;
+
+function GetBranchName(Default: String) : String;
+begin
+  Result := BranchWorkspacePage.Values[0];
+end;
+
+function GetWorkspacePath(Default: String) : String;
+begin
+  Result := BranchWorkspacePage.Values[1];
 end;
 
 function DBDoesntExist() : Boolean;
@@ -86,42 +101,34 @@ begin
   Result := path + db;
 end;
 
-function ScriptDlgPages(CurPage: Integer; BackClicked: Boolean): Boolean;
-var
-  Next: Boolean;
+procedure InitializeWizard;
 begin
-  if (ShouldProcessEntry('','initdb\genkey') = srYes) and ((not BackClicked and (CurPage = wpSelectTasks)) or (BackClicked and (CurPage = wpReady))) then begin
-    { Insert a custom wizard page between two non custom pages }
-    { First open the custom wizard page }
-    ScriptDlgPageOpen();
-    { Set some captions }
-    ScriptDlgPageSetCaption('Key ID for use with monotone');
-    ScriptDlgPageSetSubCaption1('Which e-mail address should your key be generated with?');
-    ScriptDlgPageSetSubCaption2('Enter your chosen key ID (this is usually an e-mail address, sometimes a special one for monotone work), then click Next.');
-    Next := InputQuery('Key ID / e-mail address:', KeyID);
-    while Next and (KeyID='') do begin
-      MsgBox('In order to generate a key, you must enter a Key ID', mbError, MB_OK);
-      Next := InputQuery('Key ID / e-mail address:', KeyID);
-    end;
-    { See NextButtonClick and BackButtonClick: return True if the click should be allowed }
-    if not BackClicked then
-      Result := Next
-    else
-      Result := not Next;
-    { Close the wizard page. Do a FullRestore only if the click (see above) is not allowed }
-    ScriptDlgPageClose(not Result);
-  end else begin
-    Result := true;
-  end;
+  KeyIDPage := CreateInputQueryPage(wpSelectTasks, 'Key ID', 'Key ID for use with monotone',
+                                    'Which email address should your key be generated with?');
+  KeyIDPage.Add('Key ID:', False);
+
+  BranchWorkspacePage := CreateInputQueryPage(KeyIDPage.ID, 'Workspace initialisation',
+                                              'Workspace path and branch name',
+                                              'What branch name and workspace path would you'
+                                              + ' like to use for your initial workspace?');
+  BranchWorkspacePage.Add('Branch name:', False);
+  BranchWorkspacePage.Add('Workspace path:', False);
 end;
 
-function NextButtonClick(CurPage: Integer): Boolean;
+function ShouldSkipPage(PageID: Integer): Boolean;
 begin
-  Result := ScriptDlgPages(CurPage, False);
+  if (IsTaskSelected('initdb\genkey') = False) and (PageID = KeyIDPage.ID) then
+    Result := True
+  else if (IsTaskSelected('initdb\createws') = False) and (PageID = BranchWorkspacePage.ID) then
+    Result := True
+  else
+    Result := False
 end;
 
-function BackButtonClick(CurPage: Integer): Boolean;
+function ModPathDir(): String;
 begin
-  Result := ScriptDlgPages(CurPage, True);
+  Result := ExpandConstant('{app}');
 end;
+
+#include "modpath.iss"
 

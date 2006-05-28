@@ -1,3 +1,11 @@
+2006-05-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/monotone.iss: First pass at rewriting InnoSetup file for
+	modern versions of IS.
+
+	* win32/modpath.iss: Add Jared Breland's GPL-licensed IS script
+	for portable %PATH% modification.
+
 2006-05-27  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* {unix,win32}/os_strerror.cc, platform.hh: Add OS-specific
