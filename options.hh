@@ -55,3 +55,5 @@
 #define OPT_LOG 46
 #define OPT_RECURSIVE 47
 #define OPT_REALLYQUIET 48
+#define OPT_STDIO 49
+#define OPT_NO_TRANSPORT_AUTH 50

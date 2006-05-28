@@ -10,12 +10,14 @@
 
 #include <string>
 
+using std::string;
+
 void
-read_epoch(std::string const & in,
+read_epoch(string const & in,
            cert_value & branch, epoch_data & epoch)
 {
   size_t pos = 0;
-  std::string raw_branch;
+  string raw_branch;
   data raw_epoch;
   extract_variable_length_string(in, raw_branch, pos, "epoch, branch name");
   raw_epoch = data(extract_substring(in, pos, constants::epochlen_bytes,
@@ -28,7 +30,7 @@ read_epoch(std::string const & in,
 
 void
 write_epoch(cert_value const & branch, epoch_data const & epoch,
-            std::string & out)
+            string & out)
 {
   insert_variable_length_string(branch(), out);
   data raw_epoch;
@@ -40,7 +42,7 @@ void
 epoch_hash_code(cert_value const & branch, epoch_data const & epoch,
                 epoch_id & eid)
 {
-  std::string tmp(branch() + ":" + epoch.inner()());
+  string tmp(branch() + ":" + epoch.inner()());
   data tdat(tmp);
   hexenc<id> out;
   calculate_ident(tdat, out);

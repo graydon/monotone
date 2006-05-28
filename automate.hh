@@ -11,7 +11,7 @@
 #include <vector>
 
 class app_state;
-struct utf8;
+class utf8;
 
 void
 automate_command(utf8 cmd, std::vector<utf8> args,

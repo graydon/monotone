@@ -22,6 +22,8 @@
 #include "keys.hh"
 #include "transforms.hh"
 
+using std::string;
+
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
 // required to get from one hash value to the next. when you do a
@@ -181,7 +183,7 @@ calculate_schema_id(sqlite3 *sql, string & id)
       // assert_sqlite3_ok() in database.cc
       string errmsg(sqlite3_errmsg(sql));
       L(FL("calculate_schema_id sqlite error: %d: %s") % res % errmsg);
-      std::string auxiliary_message = "";
+      string auxiliary_message = "";
       if (res == SQLITE_ERROR)
         {
       auxiliary_message += _("make sure database and containing directory are writeable\n"

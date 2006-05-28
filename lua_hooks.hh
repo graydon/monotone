@@ -16,8 +16,8 @@
 #include "vocab.hh"
 #include "paths.hh"
 
-struct patch_set;
-struct app_state;
+struct uri;
+class app_state;
 struct lua_State;
 
 class lua_hooks
@@ -59,6 +59,13 @@ public:
                                      std::map<rsa_keypair_id, bool> const & new_results);
 
   // network hooks
+  bool hook_get_netsync_connect_command(uri const & u,
+					std::string const & include_pattern,
+					std::string const & exclude_pattern,
+					bool debug,
+					std::vector<std::string> & argv);
+  bool hook_use_transport_auth(uri const & u);
+			       
   bool hook_get_netsync_read_permitted(std::string const & branch, 
                                        rsa_keypair_id const & identity);
   // anonymous no-key version

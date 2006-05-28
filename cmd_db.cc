@@ -4,17 +4,19 @@
 #include "charset.hh"
 
 #include <iostream>
+#include <utility>
+
 using std::cin;
 using std::cout;
-#include <utility>
+using std::make_pair;
 using std::pair;
-
 using std::set;
+using std::string;
 
 // Deletes a revision from the local database.  This can be used to 'undo' a
 // changed revision from a local database without leaving (much of) a trace.
 static void
-kill_rev_locally(app_state& app, std::string const& id)
+kill_rev_locally(app_state& app, string const& id)
 {
   revision_id ident;
   complete(app, id, ident);
@@ -115,7 +117,7 @@ CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
   internalize_var_domain(idx(args, 0), d);
   n = var_name(idx(args, 1)());
   v = var_value(idx(args, 2)());
-  app.db.set_var(std::make_pair(d, n), v);
+  app.db.set_var(make_pair(d, n), v);
 }
 
 CMD(unset, N_("vars"), N_("DOMAIN NAME"),

@@ -117,8 +117,7 @@ namespace constants
   // minimum size of any netcmd on the wire
   static size_t const netcmd_minsz = (1     // version
                                       + 1   // cmd code
-                                      + 1   // smallest uleb possible
-                                      + 4); // adler32
+                                      + 1); // smallest uleb possible
 
   
   // largest command *payload* allowed in a netcmd

@@ -32,25 +32,29 @@ extern "C" {
 #include <boost/filesystem/operations.hpp>
 #include <boost/regex.hpp>
 
+using std::ifstream;
+using std::ios_base;
+using std::pair;
+using std::set;
+using std::sort;
 using std::string;
 using std::vector;
-using std::pair;
 
 // adapted from "programming in lua", section 24.2.3
 // http://www.lua.org/pil/24.2.3.html
 // output is from bottom (least accessible) to top (most accessible, where
 // push and pop happen).
-static std::string
+static string
 dump_stack(lua_State * st)
 {
-  std::string out;
+  string out;
   int i;
   int top = lua_gettop(st);
   for (i = 1; i <= top; i++) {  /* repeat for each level */
     int t = lua_type(st, i);
     switch (t) {
     case LUA_TSTRING:  /* strings */
-      out += (boost::format("`%s'") % std::string(lua_tostring(st, i), lua_strlen(st, i))).str();
+      out += (boost::format("`%s'") % string(lua_tostring(st, i), lua_strlen(st, i))).str();
       break;
       
     case LUA_TBOOLEAN:  /* booleans */
@@ -82,7 +86,7 @@ Lua::~Lua()
 }
 
 void
-Lua::fail(std::string const & reason)
+Lua::fail(string const & reason)
 {
   L(FL("lua failure: %s; stack = %s\n") % reason % dump_stack(st));
   failed = true;
@@ -421,7 +425,7 @@ Lua::loadfile(string const & filename)
   return *this;
 }
 
-std::set<string> Lua::missing_functions;
+set<string> Lua::missing_functions;
 
 
 
@@ -434,7 +438,7 @@ extern "C"
     int fd = -1;
     FILE **pf = NULL;
     char const *filename = luaL_checkstring (L, -1);
-    std::string dup(filename);
+    string dup(filename);
     
     fd = monotone_mkstemp(dup);
     
@@ -545,7 +549,7 @@ extern "C"
     const char *path = luaL_checkstring(L, -1);
     N(path, F("%s called with an invalid parameter") % "guess_binary");
 
-    std::ifstream file(path, std::ios_base::binary);
+    ifstream file(path, ios_base::binary);
     if (!file) 
       {
         lua_pushnil(L);
@@ -575,7 +579,7 @@ extern "C"
     N(path, F("%s called with an invalid parameter") % "Include");
     
     bool res =Lua(L)
-    .loadfile(std::string(path, lua_strlen(L, -1)))
+    .loadfile(string(path, lua_strlen(L, -1)))
     .call(0,1)
     .ok();
 
@@ -596,15 +600,15 @@ extern "C"
     // directory, iterate over it, skipping subdirs, taking every filename,
     // sorting them and loading in sorted order
     fs::directory_iterator it(locpath);
-    std::vector<fs::path> arr;
+    vector<fs::path> arr;
     while (it != fs::directory_iterator())
       {
         if (!fs::is_directory(*it))
           arr.push_back(*it);
         ++it;
       }
-    std::sort(arr.begin(), arr.end());
-    for (std::vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
+    sort(arr.begin(), arr.end());
+    for (vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
       {
         bool res =Lua(L)
         .loadfile(i->string())

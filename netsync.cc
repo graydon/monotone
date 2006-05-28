@@ -40,6 +40,7 @@
 #include "platform.hh"
 #include "hmac.hh"
 #include "globish.hh"
+#include "uri.hh"
 
 #include "botan/botan.h"
 
@@ -51,7 +52,7 @@
 #include "netxx/stream.h"
 #include "netxx/streamserver.h"
 #include "netxx/timeout.h"
-
+#include "netxx_pipe.hh"
 // TODO: things to do that will break protocol compatibility
 //   -- need some way to upgrade anonymous to keyed pull, without user having
 //      to explicitly specify which they want
@@ -233,7 +234,16 @@
 // interpreting manually anyways.
 //
 
-using namespace std;
+using std::auto_ptr;
+using std::deque;
+using std::make_pair;
+using std::map;
+using std::min;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
 using boost::shared_ptr;
 using boost::lexical_cast;
 
@@ -263,8 +273,7 @@ session:
   app_state & app;
 
   string peer_id;
-  Netxx::socket_type fd;
-  Netxx::Stream str;  
+  shared_ptr<Netxx::StreamBase> str;  
 
   string_queue inbuf; 
   // deque of pair<string data, size_t cur_pos>
@@ -335,8 +344,7 @@ session:
           utf8 const & our_exclude_pattern,
           app_state & app,
           string const & peer,
-          Netxx::socket_type sock, 
-          Netxx::Timeout const & to);
+          shared_ptr<Netxx::StreamBase> sock);
 
   virtual ~session();
   
@@ -431,6 +439,7 @@ session:
                         transaction_guard & guard);
 
   // Various helpers.
+  void assume_corresponding_role(protocol_role their_role);
   void respond_to_confirm_cmd();
   bool data_exists(netcmd_item_type type, 
                    id const & item);
@@ -453,8 +462,7 @@ session::session(protocol_role role,
                  utf8 const & our_exclude_pattern,
                  app_state & app,
                  string const & peer,
-                 Netxx::socket_type sock, 
-                 Netxx::Timeout const & to) : 
+                 shared_ptr<Netxx::StreamBase> sock) : 
   role(role),
   voice(voice),
   our_include_pattern(our_include_pattern),
@@ -462,16 +470,15 @@ session::session(protocol_role role,
   our_matcher(our_include_pattern, our_exclude_pattern),
   app(app),
   peer_id(peer),
-  fd(sock),
-  str(sock, to),
+  str(sock),
   inbuf(),
   outbuf_size(0),
   armed(false),
   remote_peer_key_hash(""),
   remote_peer_key_name(""),
   session_key(constants::netsync_key_initializer),
-  read_hmac(constants::netsync_key_initializer),
-  write_hmac(constants::netsync_key_initializer),
+  read_hmac(constants::netsync_key_initializer, app.use_transport_auth),
+  write_hmac(constants::netsync_key_initializer, app.use_transport_auth),
   authenticated(false),
   last_io_time(::time(NULL)),
   byte_in_ticker(NULL),
@@ -695,12 +702,15 @@ session::set_session_key(string const & key)
 void
 session::set_session_key(rsa_oaep_sha_data const & hmac_key_encrypted)
 {
-  keypair our_kp;
-  load_key_pair(app, app.signing_key, our_kp);
-  string hmac_key;
-  decrypt_rsa(app.lua, app.signing_key, our_kp.priv,
-              hmac_key_encrypted, hmac_key);
-  set_session_key(hmac_key);
+  if (app.use_transport_auth)
+    {
+      keypair our_kp;
+      load_key_pair(app, app.signing_key, our_kp);
+      string hmac_key;
+      decrypt_rsa(app.lua, app.signing_key, our_kp.priv,
+                  hmac_key_encrypted, hmac_key);
+      set_session_key(hmac_key);
+    }
 }
 
 void
@@ -921,11 +931,10 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
 // ensure that our peer receives the error message.
 // Affects read_some, write_some, and process .
 void
-session::error(std::string const & errmsg)
+session::error(string const & errmsg)
 {
   throw netsync_error(errmsg);
 }
-
 
 Netxx::Probe::ready_type 
 session::which_events() const
@@ -952,10 +961,10 @@ session::read_some()
 {
   I(inbuf.size() < constants::netcmd_maxsz);
   char tmp[constants::bufsz];
-  Netxx::signed_size_type count = str.read(tmp, sizeof(tmp));
+  Netxx::signed_size_type count = str->read(tmp, sizeof(tmp));
   if (count > 0)
     {
-      L(FL("read %d bytes from fd %d (peer %s)\n") % count % fd % peer_id);
+      L(FL("read %d bytes from fd %d (peer %s)\n") % count % str->get_socketfd() % peer_id);
       if (encountered_error)
         {
           L(FL("in error unwind mode, so throwing them into the bit bucket\n"));
@@ -976,8 +985,8 @@ session::write_some()
 {
   I(!outbuf.empty());    
   size_t writelen = outbuf.front().first.size() - outbuf.front().second;
-  Netxx::signed_size_type count = str.write(outbuf.front().first.data() + outbuf.front().second, 
-                                            std::min(writelen,
+  Netxx::signed_size_type count = str->write(outbuf.front().first.data() + outbuf.front().second, 
+                                            min(writelen,
                                             constants::bufsz));
   if (count > 0)
     {
@@ -991,7 +1000,7 @@ session::write_some()
           outbuf.front().second += count;
         }
       L(FL("wrote %d bytes to fd %d (peer %s)\n")
-        % count % fd % peer_id);
+        % count % str->get_socketfd() % peer_id);
       mark_recent_io();
       if (byte_out_ticker.get() != NULL)
         (*byte_out_ticker) += count;
@@ -1047,7 +1056,8 @@ session::queue_hello_cmd(rsa_keypair_id const & key_name,
                          id const & nonce) 
 {
   rsa_pub_key pub;
-  decode_base64(pub_encoded, pub);
+  if (app.use_transport_auth)
+    decode_base64(pub_encoded, pub);
   cmd.write_hello_cmd(key_name, pub, nonce);
   write_netcmd_and_try_flush(cmd);
 }
@@ -1061,8 +1071,9 @@ session::queue_anonymous_cmd(protocol_role role,
 {
   netcmd cmd;
   rsa_oaep_sha_data hmac_key_encrypted;
-  encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
-              nonce2(), hmac_key_encrypted);
+  if (app.use_transport_auth)
+    encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
+                nonce2(), hmac_key_encrypted);
   cmd.write_anonymous_cmd(role, include_pattern, exclude_pattern,
                           hmac_key_encrypted);
   write_netcmd_and_try_flush(cmd);
@@ -1081,6 +1092,7 @@ session::queue_auth_cmd(protocol_role role,
 {
   netcmd cmd;
   rsa_oaep_sha_data hmac_key_encrypted;
+  I(app.use_transport_auth);
   encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
               nonce2(), hmac_key_encrypted);
   cmd.write_auth_cmd(role, include_pattern, exclude_pattern, client,
@@ -1201,60 +1213,61 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == 0);
-  
-  hexenc<id> their_key_hash;
+
   base64<rsa_pub_key> their_key_encoded;
-  encode_base64(their_key, their_key_encoded);
-  key_hash_code(their_keyname, their_key_encoded, their_key_hash);
-  L(FL("server key has name %s, hash %s\n") % their_keyname % their_key_hash);
-  var_key their_key_key(known_servers_domain, var_name(peer_id));
-  if (app.db.var_exists(their_key_key))
+
+  if (app.use_transport_auth)
     {
-      var_value expected_key_hash;
-      app.db.get_var(their_key_key, expected_key_hash);
-      if (expected_key_hash() != their_key_hash())
+      hexenc<id> their_key_hash;
+      encode_base64(their_key, their_key_encoded);
+      key_hash_code(their_keyname, their_key_encoded, their_key_hash);
+      L(FL("server key has name %s, hash %s\n") % their_keyname % their_key_hash);
+      var_key their_key_key(known_servers_domain, var_name(peer_id));
+      if (app.db.var_exists(their_key_key))
         {
-          P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-              "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
-              "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-              "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"
-              "it is also possible that the server key has just been changed\n"
-              "remote host sent key %s\n"
-              "I expected %s\n"
-              "'%s unset %s %s' overrides this check\n")
-            % their_key_hash % expected_key_hash
-            % app.prog_name % their_key_key.first % their_key_key.second);
-          E(false, F("server key changed"));
+          var_value expected_key_hash;
+          app.db.get_var(their_key_key, expected_key_hash);
+          if (expected_key_hash() != their_key_hash())
+            {
+              P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+                  "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
+                  "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+                  "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY\n"
+                  "it is also possible that the server key has just been changed\n"
+                  "remote host sent key %s\n"
+                  "I expected %s\n"
+                  "'%s unset %s %s' overrides this check\n")
+                % their_key_hash % expected_key_hash
+                % app.prog_name % their_key_key.first % their_key_key.second);
+              E(false, F("server key changed"));
+            }
         }
-    }
-  else
-    {
-      P(F("first time connecting to server %s\n"
-          "I'll assume it's really them, but you might want to double-check\n"
-          "their key's fingerprint: %s\n") % peer_id % their_key_hash);
-      app.db.set_var(their_key_key, var_value(their_key_hash()));
-    }
-  if (!app.db.public_key_exists(their_key_hash))
-    {
-      W(F("saving public key for %s to database\n") % their_keyname);
-      app.db.put_key(their_keyname, their_key_encoded);
-    }
+      else
+        {
+          P(F("first time connecting to server %s\n"
+              "I'll assume it's really them, but you might want to double-check\n"
+              "their key's fingerprint: %s\n") % peer_id % their_key_hash);
+          app.db.set_var(their_key_key, var_value(their_key_hash()));
+        }
+      if (!app.db.public_key_exists(their_key_hash))
+        {
+          W(F("saving public key for %s to database\n") % their_keyname);
+          app.db.put_key(their_keyname, their_key_encoded);
+        }
+      {
+        hexenc<id> hnonce;
+        encode_hexenc(nonce, hnonce);
+        L(FL("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
+          % their_key_hash % hnonce);
+      }
+
+      I(app.db.public_key_exists(their_key_hash));
   
-  {
-    hexenc<id> hnonce;
-    encode_hexenc(nonce, hnonce);
-    L(FL("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
-      % their_key_hash % hnonce);
-  }
-  
-  I(app.db.public_key_exists(their_key_hash));
-  
-  // save their identity 
-  {
-    id their_key_hash_decoded;
-    decode_hexenc(their_key_hash, their_key_hash_decoded);
-    this->remote_peer_key_hash = their_key_hash_decoded;
-  }
+      // save their identity 
+      id their_key_hash_decoded;
+      decode_hexenc(their_key_hash, their_key_hash_decoded);
+      this->remote_peer_key_hash = their_key_hash_decoded;
+    }
 
   // clients always include in the synchronization set, every branch that the
   // user requested
@@ -1271,7 +1284,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 
   setup_client_tickers();
     
-  if (app.signing_key() != "")
+  if (app.use_transport_auth && 
+      app.signing_key() != "")
     {
       // get our key pair
       keypair our_kp;
@@ -1304,7 +1318,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 }
 
 bool 
-session::process_anonymous_cmd(protocol_role role, 
+session::process_anonymous_cmd(protocol_role their_role, 
                                utf8 const & their_include_pattern,
                                utf8 const & their_exclude_pattern)
 {
@@ -1321,20 +1335,26 @@ session::process_anonymous_cmd(protocol_role role,
   //
 
   // Client must be a sink and server must be a source (anonymous
-  // read-only).
+  // read-only), unless transport auth is disabled. 
+  // 
+  // If running in no-transport-auth mode, we operate anonymously and
+  // permit adoption of any role.
 
-  if (role != sink_role)
+  if (app.use_transport_auth)
     {
-      W(F("rejected attempt at anonymous connection for write\n"));
-      this->saved_nonce = id("");
-      return false;
-    }
-
-  if (this->role != source_role && this->role != source_and_sink_role)
-    {
-      W(F("rejected attempt at anonymous connection while running as sink\n"));
-      this->saved_nonce = id("");
-      return false;
+      if (their_role != sink_role)
+        {
+          W(F("rejected attempt at anonymous connection for write\n"));
+          this->saved_nonce = id("");
+          return false;
+        }
+      
+      if (this->role == sink_role)
+        {
+          W(F("rejected attempt at anonymous connection while running as sink\n"));
+          this->saved_nonce = id("");
+          return false;
+        }
     }
 
   vector<string> branchnames;
@@ -1350,7 +1370,8 @@ session::process_anonymous_cmd(protocol_role role,
             error((F("not serving branch '%s'") % *i).str());
             return true;
           }
-        else if (!app.lua.hook_get_netsync_read_permitted(*i))
+        else if (app.use_transport_auth &&
+                 !app.lua.hook_get_netsync_read_permitted(*i))
           {
             error((F("anonymous access to branch '%s' denied by server") % *i).str());
             return true;
@@ -1359,15 +1380,46 @@ session::process_anonymous_cmd(protocol_role role,
           ok_branches.insert(utf8(*i));
     }
 
-  P(F("allowed anonymous read permission for '%s' excluding '%s'\n")
-    % their_include_pattern % their_exclude_pattern);
+  if (app.use_transport_auth)
+    {
+      P(F("allowed anonymous read permission for '%s' excluding '%s'\n")
+        % their_include_pattern % their_exclude_pattern);
+      this->role = source_role;
+    }
+  else
+    {
+      P(F("allowed anonymous read/write permission for '%s' excluding '%s'\n")
+        % their_include_pattern % their_exclude_pattern);
+      assume_corresponding_role(their_role);
+    }
 
   rebuild_merkle_trees(app, ok_branches);
 
   this->remote_peer_key_name = rsa_keypair_id("");
   this->authenticated = true;
-  this->role = source_role;
   return true;
+}
+
+void
+session::assume_corresponding_role(protocol_role their_role)
+{
+  // Assume the (possibly degraded) opposite role.
+  switch (their_role)
+    {
+    case source_role:
+      I(this->role != source_role);
+      this->role = sink_role;
+      break;
+      
+    case source_and_sink_role:
+      I(this->role == source_and_sink_role);
+      break;
+      
+    case sink_role:
+      I(this->role != sink_role);
+      this->role = source_role;
+      break;          
+    }
 }
 
 bool
@@ -1505,23 +1557,7 @@ session::process_auth_cmd(protocol_role their_role,
       this->authenticated = true;
       this->remote_peer_key_name = their_id;
 
-      // Assume the (possibly degraded) opposite role.
-      switch (their_role)
-        {
-        case source_role:
-          I(this->role != source_role);
-          this->role = sink_role;
-          break;
-
-        case source_and_sink_role:
-          I(this->role == source_and_sink_role);
-          break;
-
-        case sink_role:
-          I(this->role != sink_role);
-          this->role = source_role;
-          break;          
-        }
+      assume_corresponding_role(their_role);
       return true;
     }
   else
@@ -1804,9 +1840,9 @@ session::process_data_cmd(netcmd_item_type type,
         epoch_data epoch;
         read_epoch(dat, branch, epoch);
         L(FL("received epoch %s for branch %s\n") % epoch % branch);
-        std::map<cert_value, epoch_data> epochs;
+        map<cert_value, epoch_data> epochs;
         app.db.get_epochs(epochs);
-        std::map<cert_value, epoch_data>::const_iterator i;
+        map<cert_value, epoch_data>::const_iterator i;
         i = epochs.find(branch);
         if (i == epochs.end())
           {
@@ -2044,6 +2080,7 @@ session::dispatch_payload(netcmd const & cmd,
           % hnonce1);
 
         set_session_key(hmac_key_encrypted);
+
         if (!process_auth_cmd(role, their_include_pattern, their_exclude_pattern,
                               client, nonce1, signature))
             return false;
@@ -2132,7 +2169,8 @@ void
 session::begin_service()
 {
   keypair kp;
-  app.keys.get_key_pair(app.signing_key, kp);
+  if (app.use_transport_auth)
+    app.keys.get_key_pair(app.signing_key, kp);
   queue_hello_cmd(app.signing_key, kp.pub, mk_nonce());
 }
 
@@ -2220,6 +2258,46 @@ bool session::process(transaction_guard & guard)
 }
 
 
+static shared_ptr<Netxx::StreamBase> 
+build_stream_to_server(app_state & app,
+                       utf8 const & include_pattern,
+                       utf8 const & exclude_pattern,
+                       utf8 const & address,
+                       Netxx::port_type default_port,
+                       Netxx::Timeout timeout)
+{
+  shared_ptr<Netxx::StreamBase> server;
+  uri u;
+  vector<string> argv;
+  if (parse_uri(address(), u) 
+      && app.lua.hook_get_netsync_connect_command(u, 
+                                                  include_pattern(),
+                                                  exclude_pattern(),
+                                                  global_sanity.debug,
+                                                  argv))
+    {
+      I(argv.size() > 0);
+      string cmd = argv[0];
+      argv.erase(argv.begin());
+      app.use_transport_auth = app.lua.hook_use_transport_auth(u);
+      return shared_ptr<Netxx::StreamBase>
+        (new Netxx::PipeStream(cmd, argv));
+      
+    }
+  else 
+    { 
+#ifdef USE_IPV6
+      bool use_ipv6=true;
+#else
+      bool use_ipv6=false;
+#endif
+      Netxx::Address addr(address().c_str(), 
+                          default_port, use_ipv6);
+      return shared_ptr<Netxx::StreamBase>
+        (new Netxx::Stream(addr, timeout));
+    }  
+}
+
 static void 
 call_server(protocol_role role,
             utf8 const & include_pattern,
@@ -2229,30 +2307,32 @@ call_server(protocol_role role,
             Netxx::port_type default_port,
             unsigned long timeout_seconds)
 {
-
+  Netxx::PipeCompatibleProbe probe;
   transaction_guard guard(app.db);
 
-  Netxx::Probe probe;
   Netxx::Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
-#ifdef USE_IPV6
-  bool use_ipv6=true;
-#else
-  bool use_ipv6=false;
-#endif
 
   // FIXME: split into labels and convert to ace here.
 
   P(F("connecting to %s\n") % address());
-  Netxx::Address addr(address().c_str(), default_port, use_ipv6);
-  Netxx::Stream server(addr, timeout);
+
+  shared_ptr<Netxx::StreamBase> server 
+    = build_stream_to_server(app, 
+                             include_pattern,
+                             exclude_pattern,
+                             address, default_port, 
+                             timeout);
+
 
   // 'false' here means not to revert changes when the SockOpt
   // goes out of scope.
-  Netxx::SockOpt socket_options(server.get_socketfd(), false);
+  Netxx::SockOpt socket_options(server->get_socketfd(), false);
   socket_options.set_non_blocking();
 
-  session sess(role, client_voice, include_pattern, exclude_pattern,
-               app, address(), server.get_socketfd(), timeout);
+  session sess(role, client_voice, 
+               include_pattern, 
+               exclude_pattern,
+               app, address(), server);
 
   while (true)
     {       
@@ -2271,7 +2351,7 @@ call_server(protocol_role role,
       sess.maybe_say_goodbye(guard);
 
       probe.clear();
-      probe.add(sess.str, sess.which_events());
+      probe.add(*(sess.str), sess.which_events());
       Netxx::Probe::result_type res = probe.ready(armed ? instant : timeout);
       Netxx::Probe::ready_type event = res.second;
       Netxx::socket_type fd = res.first;
@@ -2283,20 +2363,13 @@ call_server(protocol_role role,
                     % sess.peer_id));
         }
 
-      bool all_io_clean = true;
+      bool all_io_clean = (event != Netxx::Probe::ready_oobd);
 
       if (event & Netxx::Probe::ready_read)
         all_io_clean = all_io_clean && sess.read_some();
       
       if (event & Netxx::Probe::ready_write)
         all_io_clean = all_io_clean && sess.write_some();
-      
-      if (event & Netxx::Probe::ready_oobd)
-        {
-          E(false, (F("got OOB data from "
-                      "peer %s, disconnecting\n") 
-                    % sess.peer_id));
-        }
 
       if (armed)
         if (!sess.process(guard))
@@ -2343,8 +2416,45 @@ call_server(protocol_role role,
     }
 }
 
+static void
+drop_session_associated_with_fd(map<Netxx::socket_type, shared_ptr<session> > & sessions,
+                                Netxx::socket_type fd)
+{
+  // This is a bit of a hack. Initially all "file descriptors" in
+  // netsync were full duplex, so we could get away with indexing
+  // sessions by their file descriptor.  
+  //
+  // When using pipes in unix, it's no longer true: a session gets
+  // entered in the session map under its read pipe fd *and* its write
+  // pipe fd. When we're in such a situation the socket fd is "-1" and
+  // we downcast to a PipeStream and use its read+write fds.
+  // 
+  // When using pipes in windows, we use a full duplex pipe (named
+  // pipe) so the socket-like abstraction holds.
+
+  I(fd != -1);
+  map<Netxx::socket_type, shared_ptr<session> >::const_iterator i = sessions.find(fd);
+  I(i != sessions.end());
+  shared_ptr<session> sess = i->second;
+  fd = sess->str->get_socketfd();
+  if (fd != -1)
+    {
+      sessions.erase(fd);
+    }
+  else 
+    {
+      shared_ptr<Netxx::PipeStream> pipe = 
+        boost::dynamic_pointer_cast<Netxx::PipeStream, Netxx::StreamBase>(sess->str);
+      I(static_cast<bool>(pipe));
+      I(pipe->get_writefd() != -1);
+      I(pipe->get_readfd() != -1);
+      sessions.erase(pipe->get_readfd());
+      sessions.erase(pipe->get_writefd());
+    }
+}
+
 static void 
-arm_sessions_and_calculate_probe(Netxx::Probe & probe,
+arm_sessions_and_calculate_probe(Netxx::PipeCompatibleProbe & probe,
                                  map<Netxx::socket_type, shared_ptr<session> > & sessions,
                                  set<Netxx::socket_type> & armed_sessions)
 {
@@ -2361,7 +2471,7 @@ arm_sessions_and_calculate_probe(Netxx::Probe & probe,
               L(FL("fd %d is armed\n") % i->first);
               armed_sessions.insert(i->first);
             }
-          probe.add(i->second->str, i->second->which_events());
+          probe.add(*i->second->str, i->second->which_events());
         }
       catch (bad_decode & bd)
         {
@@ -2373,7 +2483,7 @@ arm_sessions_and_calculate_probe(Netxx::Probe & probe,
   for (set<Netxx::socket_type>::const_iterator i = arm_failed.begin();
        i != arm_failed.end(); ++i)
     {
-      sessions.erase(*i);
+      drop_session_associated_with_fd(sessions, *i);
     }
 }
 
@@ -2404,12 +2514,15 @@ handle_new_connection(Netxx::Address & addr,
       // goes out of scope.
       Netxx::SockOpt socket_options(client.get_socketfd(), false);
       socket_options.set_non_blocking();
+      
+      shared_ptr<Netxx::Stream> str = 
+        shared_ptr<Netxx::Stream>
+        (new Netxx::Stream(client.get_socketfd(), timeout));
 
       shared_ptr<session> sess(new session(role, server_voice,
                                            include_pattern, exclude_pattern,
                                            app,
-                                           lexical_cast<string>(client), 
-                                           client.get_socketfd(), timeout));
+                                           lexical_cast<string>(client), str));
       sess->begin_service();
       sessions.insert(make_pair(client.get_socketfd(), sess));
     }
@@ -2433,7 +2546,7 @@ handle_read_available(Netxx::socket_type fd,
         {
           W(F("protocol error while processing peer %s: '%s', disconnecting\n") 
             % sess->peer_id % bd.what);
-          sessions.erase(fd);
+          drop_session_associated_with_fd(sessions, fd);
           live_p = false;
         }
     }
@@ -2457,7 +2570,7 @@ handle_read_available(Netxx::socket_type fd,
             % sess->peer_id);
           break;
         }
-      sessions.erase(fd);
+      drop_session_associated_with_fd(sessions, fd);
       live_p = false;
     }
 }
@@ -2490,7 +2603,7 @@ handle_write_available(Netxx::socket_type fd,
           break;
         }
 
-      sessions.erase(fd);
+      drop_session_associated_with_fd(sessions, fd);
       live_p = false;
     }
 }
@@ -2514,7 +2627,7 @@ process_armed_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
             {
               P(F("peer %s processing finished, disconnecting\n") 
                 % sess->peer_id);
-              sessions.erase(j);
+              drop_session_associated_with_fd(sessions, *i);
             }
         }
     }
@@ -2542,7 +2655,7 @@ reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
   for (set<Netxx::socket_type>::const_iterator i = dead_clients.begin();
        i != dead_clients.end(); ++i)
     {
-      sessions.erase(*i);
+      drop_session_associated_with_fd(sessions, *i);
     }
 }
 
@@ -2556,7 +2669,7 @@ serve_connections(protocol_role role,
                   unsigned long timeout_seconds,
                   unsigned long session_limit)
 {
-  Netxx::Probe probe;  
+  Netxx::PipeCompatibleProbe probe;  
 
   Netxx::Timeout 
     forever, 
@@ -2669,7 +2782,7 @@ serve_connections(protocol_role role,
                         }
                       else
                         {
-                          probe.remove(i->second->str);
+                          probe.remove(*(i->second->str));
                           shared_ptr<session> sess = i->second;
                           bool live_p = true;
 
@@ -2684,7 +2797,7 @@ serve_connections(protocol_role role,
                             {
                               P(F("got OOB from peer %s, disconnecting\n")
                                 % sess->peer_id);
-                              sessions.erase(i);
+                              drop_session_associated_with_fd(sessions, fd);
                             }
                         }
                     }
@@ -2702,7 +2815,7 @@ serve_connections(protocol_role role,
             }
         }
       // This exception is thrown when bind() fails somewhere in Netxx.
-      catch (Netxx::NetworkException &e)
+      catch (Netxx::NetworkException &)
         {
           // If we tried with IPv6 and failed, we want to try again using IPv4.
           if (try_again)
@@ -2716,7 +2829,7 @@ serve_connections(protocol_role role,
       // This exception is thrown when there is no support for the type of
       // connection we want to do in the kernel, for example when a socket()
       // call fails somewhere in Netxx.
-      catch (Netxx::Exception &e)
+      catch (Netxx::Exception &)
         {
           // If we tried with IPv6 and failed, we want to try again using IPv4.
           if (try_again)
@@ -2729,6 +2842,91 @@ serve_connections(protocol_role role,
         }
     }
   while(try_again);
+  }
+
+static void 
+serve_single_connection(shared_ptr<session> sess,
+                        unsigned long timeout_seconds)
+{
+  Netxx::PipeCompatibleProbe probe;  
+  
+  Netxx::Timeout 
+    forever, 
+    timeout(static_cast<long>(timeout_seconds)), 
+    instant(0,1);
+  
+  P(F("beginning service on %s\n") % sess->peer_id);
+  
+  sess->begin_service();
+  
+  transaction_guard guard(sess->app.db);
+
+  map<Netxx::socket_type, shared_ptr<session> > sessions;
+  set<Netxx::socket_type> armed_sessions;
+  
+  if (sess->str->get_socketfd() == -1) 
+    {
+      // Unix pipes are non-duplex, have two filedescriptors
+      shared_ptr<Netxx::PipeStream> pipe = 
+        boost::dynamic_pointer_cast<Netxx::PipeStream, Netxx::StreamBase>(sess->str);
+      I(pipe);
+      sessions[pipe->get_writefd()]=sess;
+      sessions[pipe->get_readfd()]=sess;
+    }
+  else
+    sessions[sess->str->get_socketfd()]=sess;
+  
+  while (!sessions.empty())
+    {
+      probe.clear();
+      armed_sessions.clear();
+      
+      arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
+      
+      L(FL("i/o probe with %d armed\n") % armed_sessions.size());      
+      Netxx::Probe::result_type res = probe.ready((armed_sessions.empty() ? timeout 
+                                                   : instant));
+      Netxx::Probe::ready_type event = res.second;
+      Netxx::socket_type fd = res.first;
+      
+      if (fd == -1)
+        {
+          if (armed_sessions.empty()) 
+            L(FL("timed out waiting for I/O (listening on %s)\n") 
+              % sess->peer_id);
+        }
+      
+      // an existing session woke up
+      else
+        {
+          map<Netxx::socket_type, shared_ptr<session> >::iterator i;
+          i = sessions.find(fd);
+          if (i == sessions.end())
+            {
+              L(FL("got woken up for action on unknown fd %d\n") % fd);
+            }
+          else
+            {
+              shared_ptr<session> sess = i->second;
+              bool live_p = true;
+
+              if (event & Netxx::Probe::ready_read)
+                handle_read_available(fd, sess, sessions, armed_sessions, live_p);
+                
+              if (live_p && (event & Netxx::Probe::ready_write))
+                handle_write_available(fd, sess, sessions, live_p);
+                
+              if (live_p && (event & Netxx::Probe::ready_oobd))
+                {
+                  P(F("got some OOB data on fd %d (peer %s), disconnecting\n") 
+                    % fd % sess->peer_id);
+                  drop_session_associated_with_fd(sessions, fd);
+                }
+            }
+        }
+      process_armed_sessions(sessions, armed_sessions, guard);
+      reap_dead_sessions(sessions, timeout_seconds);
+    }
 }
 
 
@@ -2754,9 +2952,9 @@ insert_with_parents(revision_id rev,
           id rev_item;
           decode_hexenc(rid.inner(), rev_item);
           ref.note_local_item(rev_item);
-          std::vector<revision_id> parents;
+          vector<revision_id> parents;
           rev_enumerator.get_revision_parents(rid, parents);
-          for (std::vector<revision_id>::const_iterator i = parents.begin();
+          for (vector<revision_id>::const_iterator i = parents.begin();
                i != parents.end(); ++i)
             {
               work.push_back(*i);
@@ -2821,19 +3019,19 @@ session::rebuild_merkle_trees(app_state & app,
     map<cert_value, epoch_data> epochs;
     app.db.get_epochs(epochs);
     
-    epoch_data epoch_zero(std::string(constants::epochlen, '0'));
-    for (std::set<utf8>::const_iterator i = branchnames.begin();
+    epoch_data epoch_zero(string(constants::epochlen, '0'));
+    for (set<utf8>::const_iterator i = branchnames.begin();
          i != branchnames.end(); ++i)
       {
         cert_value branch((*i)());
-        std::map<cert_value, epoch_data>::const_iterator j;
+        map<cert_value, epoch_data>::const_iterator j;
         j = epochs.find(branch);
 
         // Set to zero any epoch which is not yet set.
         if (j == epochs.end())
           {
             L(FL("setting epoch on %s to zero\n") % branch);
-            epochs.insert(std::make_pair(branch, epoch_zero));
+            epochs.insert(make_pair(branch, epoch_zero));
             app.db.set_epoch(branch, epoch_zero);
           }
 
@@ -2849,8 +3047,8 @@ session::rebuild_merkle_trees(app_state & app,
   }
   
   {
-    typedef std::vector< std::pair<hexenc<id>,
-      std::pair<revision_id, rsa_keypair_id> > > cert_idx;
+    typedef vector< pair<hexenc<id>,
+      pair<revision_id, rsa_keypair_id> > > cert_idx;
     
     cert_idx idx;
     app.db.get_revision_cert_nobranch_index(idx);
@@ -2928,13 +3126,13 @@ run_netsync_protocol(protocol_voice voice,
                      utf8 const & exclude_pattern,
                      app_state & app)
 {
-  if (include_pattern().find_first_of("'\"") != std::string::npos)
+  if (include_pattern().find_first_of("'\"") != string::npos)
     {
       W(F("include branch pattern contains a quote character:\n"
           "%s\n") % include_pattern());
     }
 
-  if (exclude_pattern().find_first_of("'\"") != std::string::npos)
+  if (exclude_pattern().find_first_of("'\"") != string::npos)
     {
       W(F("exclude branch pattern contains a quote character:\n"
           "%s\n") % exclude_pattern());
@@ -2944,10 +3142,19 @@ run_netsync_protocol(protocol_voice voice,
     {
       if (voice == server_voice)
         {
-          serve_connections(role, include_pattern, exclude_pattern, app,
-                            addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
-                            static_cast<unsigned long>(constants::netsync_timeout_seconds), 
-                            static_cast<unsigned long>(constants::netsync_connection_limit));
+          if (app.bind_stdio)
+            { 
+              shared_ptr<Netxx::PipeStream> str(new Netxx::PipeStream(0,1));
+              shared_ptr<session> sess(new session(role, server_voice, 
+                                                   include_pattern, exclude_pattern,
+                                                   app, "stdio", str));
+              serve_single_connection(sess,constants::netsync_timeout_seconds);
+            }
+          else
+            serve_connections(role, include_pattern, exclude_pattern, app,
+                              addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
+                              static_cast<unsigned long>(constants::netsync_timeout_seconds), 
+                              static_cast<unsigned long>(constants::netsync_connection_limit));
         }
       else    
         {

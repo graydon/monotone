@@ -17,6 +17,10 @@
 #include "work.hh"
 #include "platform.hh"
 
+using std::exception;
+using std::map;
+using std::string;
+
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -33,16 +37,16 @@ app_state::app_state()
   : branch_name(""), db(system_path()), keys(this), recursive(false),
     stdhooks(true), rcfiles(true), diffs(false),
     no_merges(false), set_default(false), verbose(false), date_set(false),
-    search_root("/"),
+    search_root(current_root_path()),
     depth(-1), last(-1), next(-1), diff_format(unified_diff), diff_args_provided(false),
     execute(false), bind_address(""), bind_port(""), 
-    missing(false), unknown(false),
+    bind_stdio(false), use_transport_auth(true), missing(false), unknown(false),
     confdir(get_default_confdir()), have_set_key_dir(false), no_files(false)
 {
   db.set_app(this);
   lua.set_app(this);
   keys.set_key_dir(confdir / "keys");
-  set_prog_name(utf8(std::string("mtn")));
+  set_prog_name(utf8(string("mtn")));
 }
 
 app_state::~app_state()
@@ -58,7 +62,7 @@ app_state::set_is_explicit_option (int option_id)
 bool
 app_state::is_explicit_option(int option_id) const
 {
-  std::map<int, bool>::const_iterator i = explicit_option_map.find(option_id);
+  map<int, bool>::const_iterator i = explicit_option_map.find(option_id);
   if (i == explicit_option_map.end()) return false;
   return i->second;
 }
@@ -105,15 +109,18 @@ app_state::process_options()
         set_key_dir(keydir);
       }
 
-    if (branch_name().empty())
+    if (branch_name().empty() && !options[branch_option]().empty())
       branch_name = options[branch_option];
+
     L(FL("branch name is '%s'\n") % branch_name());
-    internalize_rsa_keypair_id(options[key_option], signing_key);
+
+	  if (!options[key_option]().empty())
+		  internalize_rsa_keypair_id(options[key_option], signing_key);
   }
 }
 
 void 
-app_state::require_workspace(std::string const & explanation)
+app_state::require_workspace(string const & explanation)
 {
   N(found_workspace,
     F("workspace required but not found%s%s")
@@ -239,14 +246,14 @@ app_state::set_date(utf8 const & d)
       // form 20000101T120000, but not "extended" ISO times, of the form
       // 2000-01-01T12:00:00.  So do something stupid to convert one to the
       // other.
-      std::string tmp = d();
-      std::string::size_type pos = 0;
+      string tmp = d();
+      string::size_type pos = 0;
       while ((pos = tmp.find_first_of("-:")) != string::npos)
         tmp.erase(pos, 1);
       date = boost::posix_time::from_iso_string(tmp);
       date_set = true;
     }
-  catch (std::exception &e)
+  catch (exception &e)
     {
       N(false, F("failed to parse date string '%s': %s") % d % e.what());
     }
@@ -412,7 +419,7 @@ app_state::read_options()
           read_options_map(dat, options);
         }
     }
-  catch(std::exception & e)
+  catch(exception &)
     {
       W(F("Failed to read options file %s") % o_path);
     }
@@ -429,7 +436,7 @@ app_state::write_options()
       write_options_map(dat, options);
       write_data(o_path, dat);
     }
-  catch(std::exception & e)
+  catch(exception &)
     {
       W(F("Failed to write options file %s") % o_path);
     }

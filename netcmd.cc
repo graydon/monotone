@@ -7,7 +7,6 @@
 #include <vector>
 #include <utility>
 
-#include "adler32.hh"
 #include "constants.hh"
 #include "netcmd.hh"
 #include "netio.hh"
@@ -16,7 +15,7 @@
 #include "transforms.hh"
 #include "hmac.hh"
 
-using namespace std;
+using std::string;
 
 static netcmd_item_type 
 read_netcmd_item_type(string const & in, 
@@ -70,7 +69,7 @@ netcmd::write(string & out, chained_hmac & hmac) const
   out += static_cast<char>(cmd_code);
   insert_variable_length_string(payload, out);
 
-  if (cmd_code != usher_reply_cmd)
+  if (hmac.is_active() && cmd_code != usher_reply_cmd)
     {
       string digest = hmac.process(out, oldlen);
       I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
@@ -134,35 +133,47 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
   
   // there might not be enough data yet in the input buffer
   unsigned int minsize;
-  if (cmd_code == usher_cmd)
-    minsize = pos + payload_len;
-  else
+  if (hmac.is_active() && cmd_code != usher_cmd)
     minsize = pos + payload_len + constants::netsync_hmac_value_length_in_bytes;
+  else
+    minsize = pos + payload_len;
+
   if (inbuf.size() < minsize)
     {
       return false;
     }
 
-  // grab it before the data gets munged
-  I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
   string digest;
-  if (cmd_code != usher_cmd)
-    digest = hmac.process(inbuf, 0, pos + payload_len);
-
-  payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
-
-  // they might have given us bogus data
   string cmd_digest;
-  if (cmd_code != usher_cmd)
-    cmd_digest = extract_substring(inbuf, pos, 
-        constants::netsync_hmac_value_length_in_bytes,
-                                          "netcmd HMAC");
+
+  if (hmac.is_active() && cmd_code != usher_cmd)
+    {
+      // grab it before the data gets munged
+      I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);	
+      digest = hmac.process(inbuf, 0, pos + payload_len);
+    }
+  
+  payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
+  
+  if (hmac.is_active() && cmd_code != usher_cmd)
+    {
+      // they might have given us bogus data
+      cmd_digest = extract_substring(inbuf, pos, 
+				     constants::netsync_hmac_value_length_in_bytes,
+				     "netcmd HMAC");
+    }
+
   inbuf.pop_front(pos);
-  if (cmd_digest != digest)
-    throw bad_decode(F("bad HMAC checksum (got %s, wanted %s)\n"
-                       "this suggests data was corrupted in transit\n")
-                     % encode_hexenc(cmd_digest)
-                     % encode_hexenc(digest));
+
+  if (hmac.is_active() 
+      && cmd_code != usher_cmd 
+      && cmd_digest != digest)
+    {
+      throw bad_decode(F("bad HMAC checksum (got %s, wanted %s)\n"
+			 "this suggests data was corrupted in transit\n")
+		       % encode_hexenc(cmd_digest)
+		       % encode_hexenc(digest));
+    }
 
   return true;    
 }
@@ -172,7 +183,7 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
 ////////////////////////////////////////////
 
 void 
-netcmd::read_error_cmd(std::string & errmsg) const
+netcmd::read_error_cmd(string & errmsg) const
 {
   size_t pos = 0;
   // syntax is: <errmsg:vstr>
@@ -181,7 +192,7 @@ netcmd::read_error_cmd(std::string & errmsg) const
 }
 
 void 
-netcmd::write_error_cmd(std::string const & errmsg)
+netcmd::write_error_cmd(string const & errmsg)
 {
   cmd_code = error_cmd;
   payload.clear();
@@ -256,7 +267,7 @@ netcmd::read_anonymous_cmd(protocol_role & role,
       && role_byte != static_cast<u8>(source_and_sink_role))
     throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
   role = static_cast<protocol_role>(role_byte);
-  std::string pattern_string;
+  string pattern_string;
   extract_variable_length_string(payload, pattern_string, pos,
                                  "anonymous(hmac) netcmd, include_pattern");
   include_pattern = utf8(pattern_string);
@@ -302,7 +313,7 @@ netcmd::read_auth_cmd(protocol_role & role,
       && role_byte != static_cast<u8>(source_and_sink_role))
     throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
   role = static_cast<protocol_role>(role_byte);
-  std::string pattern_string;
+  string pattern_string;
   extract_variable_length_string(payload, pattern_string, pos,
                                  "auth(hmac) netcmd, include_pattern");
   include_pattern = utf8(pattern_string);
@@ -519,7 +530,7 @@ void
 netcmd::read_usher_cmd(utf8 & greeting) const
 {
   size_t pos = 0;
-  std::string str;
+  string str;
   extract_variable_length_string(payload, str, pos, "error netcmd, message");
   greeting = utf8(str);
   assert_end_of_buffer(payload, pos, "error netcmd payload");
@@ -548,39 +559,39 @@ test_netcmd_mac()
   string buf;
   netsync_session_key key(constants::netsync_key_initializer);
   {
-    chained_hmac mac(key);
+    chained_hmac mac(key, true);
     // mutates mac
     out_cmd.write(buf, mac);
     BOOST_CHECK_THROW(in_cmd.read_string(buf, mac), bad_decode);
   }
 
   {
-    chained_hmac mac(key);
+    chained_hmac mac(key, true);
     out_cmd.write(buf, mac);
   }
   buf[0] ^= 0xff;
   {
-    chained_hmac mac(key);
+    chained_hmac mac(key, true);
     BOOST_CHECK_THROW(in_cmd.read_string(buf, mac), bad_decode);
   }
 
   {
-    chained_hmac mac(key);
+    chained_hmac mac(key, true);
     out_cmd.write(buf, mac);
   }
   buf[buf.size() - 1] ^= 0xff;
   {
-    chained_hmac mac(key);
+    chained_hmac mac(key, true);
     BOOST_CHECK_THROW(in_cmd.read_string(buf, mac), bad_decode);
   }
 
   {
-    chained_hmac mac(key);
+    chained_hmac mac(key, true);
     out_cmd.write(buf, mac);
   }
   buf += '\0';
   {
-    chained_hmac mac(key);
+    chained_hmac mac(key, true);
     BOOST_CHECK_THROW(in_cmd.read_string(buf, mac), bad_decode);
   }
 }
@@ -590,11 +601,11 @@ do_netcmd_roundtrip(netcmd const & out_cmd, netcmd & in_cmd, string & buf)
 {
   netsync_session_key key(constants::netsync_key_initializer);
   {
-    chained_hmac mac(key);
+    chained_hmac mac(key, true);
     out_cmd.write(buf, mac);
   }
   {
-    chained_hmac mac(key);
+    chained_hmac mac(key, true);
     BOOST_CHECK(in_cmd.read_string(buf, mac));
   }
   BOOST_CHECK(in_cmd == out_cmd);

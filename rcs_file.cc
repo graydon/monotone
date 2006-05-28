@@ -31,14 +31,19 @@
 
 #include <cstdio>
 
+using std::ifstream;
+using std::ios_base;
+using std::istream;
+using std::string;
+
 #ifdef HAVE_MMAP
 struct 
 file_handle
 {
-  std::string const & filename;
+  string const & filename;
   off_t length;
   int fd;
-  file_handle(std::string const & fn) : 
+  file_handle(string const & fn) : 
     filename(fn), 
     length(0),
     fd(-1)
@@ -59,7 +64,7 @@ file_handle
 };
 struct file_source
 {
-  std::string const & filename;
+  string const & filename;
   int fd;
   off_t length;
   off_t pos;
@@ -82,7 +87,7 @@ struct file_source
       ++pos;
     return good();
   }
-  file_source(std::string const & fn, 
+  file_source(string const & fn, 
               int f, 
               off_t len) : 
     filename(fn),
@@ -105,10 +110,10 @@ struct file_source
 struct 
 file_handle
 {
-  std::string const & filename;
+  string const & filename;
   off_t length;
   HANDLE fd;
-  file_handle(std::string const & fn) : 
+  file_handle(string const & fn) : 
     filename(fn), 
     length(0),
     fd(NULL)
@@ -135,7 +140,7 @@ file_handle
 struct
 file_source
 {
-  std::string const & filename;
+  string const & filename;
   HANDLE fd,map;
   off_t length;
   off_t pos;
@@ -158,7 +163,7 @@ file_source
       ++pos;
     return good();
   }
-  file_source(std::string const & fn,
+  file_source(string const & fn,
               HANDLE f,
               off_t len) :
     filename(fn),
@@ -184,7 +189,7 @@ file_source
 };
 #else
 // no mmap at all
-typedef std::istream file_source;
+typedef istream file_source;
 #endif
 
 typedef enum 
@@ -212,7 +217,7 @@ adv(char i, size_t & line, size_t & col)
 
 static token_type 
 get_token(file_source & ist,
-          std::string & str,
+          string & str,
 	  size_t & line, 
 	  size_t & col)
 {
@@ -296,7 +301,7 @@ struct parser
 {
   file_source & ist;
   rcs_file & r;
-  std::string token;
+  string token;
   token_type ttype;
 
   size_t line, col;
@@ -306,7 +311,7 @@ struct parser
     : ist(s), r(r), line(1), col(1)
   {}
   
-  std::string tt2str(token_type tt)
+  string tt2str(token_type tt)
   {
     switch (tt)
       {
@@ -329,13 +334,13 @@ struct parser
   void advance()
   {
     ttype = get_token(ist, token, line, col);
-    // std::cerr << tt2str(ttype) << ": " << token << std::endl;
+    // cerr << tt2str(ttype) << ": " << token << endl;
   }
 
   bool nump() { return ttype == TOK_NUM; }
   bool strp() { return ttype == TOK_STRING; }
   bool symp() { return ttype == TOK_SYMBOL; }
-  bool symp(std::string const & val)
+  bool symp(string const & val)
   {
     return ttype == TOK_SYMBOL && token == val;
   }
@@ -349,17 +354,17 @@ struct parser
 
   // basic "expect / extract" functions
 
-  void str(std::string & v) { v = token; eat(TOK_STRING); }
+  void str(string & v) { v = token; eat(TOK_STRING); }
   void str() { eat(TOK_STRING); }
-  void sym(std::string & v) { v = token; eat(TOK_SYMBOL); }
+  void sym(string & v) { v = token; eat(TOK_SYMBOL); }
   void sym() { eat(TOK_SYMBOL); }
-  void num(std::string & v) { v = token; eat(TOK_NUM); }
+  void num(string & v) { v = token; eat(TOK_NUM); }
   void num() { eat(TOK_NUM); }
   void semi() { eat(TOK_SEMI); } 
   void colon() { eat(TOK_COLON); }
-  void expect(std::string const & expected)
+  void expect(string const & expected)
   { 
-    std::string tmp;
+    string tmp;
     if (!symp(expected))
       throw oops((F("parse failure %d:%d: expecting word '%s'\n")
 		  % line % col % expected).str());
@@ -381,7 +386,7 @@ struct parser
     advance();
   }
 
-  void parse_newphrases(std::string const & terminator)
+  void parse_newphrases(string const & terminator)
   {
     while(symp() && !symp(terminator))
       {
@@ -405,7 +410,7 @@ struct parser
 
     while(symp() || nump()) 
       { 
-        std::string stmp, ntmp;
+        string stmp, ntmp;
 	if (symp())
 	  {
 	    sym(stmp); colon(); num(ntmp); 
@@ -436,7 +441,7 @@ struct parser
         expect("branches"); 
         while(nump()) 
           { 
-            std::string tmp; 
+            string tmp; 
             num(tmp); 
             d.branches.push_back(tmp); 
           }
@@ -477,14 +482,14 @@ struct parser
 };
 
 void
-parse_rcs_file(std::string const & filename, rcs_file & r)
+parse_rcs_file(string const & filename, rcs_file & r)
 {
 #if defined(HAVE_MMAP) || defined(WIN32)
       file_handle handle(filename);
       file_source ifs(filename, handle.fd, handle.length);
 #else
-      std::ifstream ifs(filename.c_str());
-      ifs.unsetf(std::ios_base::skipws);
+      ifstream ifs(filename.c_str());
+      ifs.unsetf(ios_base::skipws);
 #endif
       parser p(ifs, r);
       p.parse_file();

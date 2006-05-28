@@ -30,12 +30,20 @@ extern "C" {
 #include "vocab.hh"
 #include "transforms.hh"
 #include "paths.hh"
+#include "uri.hh"
 
 // defined in {std,test}_hooks.lua, converted
 #include "test_hooks.h"
 #include "std_hooks.h"
 
-using namespace std;
+using std::make_pair;
+using std::map;
+using std::pair;
+using std::set;
+using std::sort;
+using std::string;
+using std::vector;
+
 using boost::lexical_cast;
 
 static int panic_thrower(lua_State * st)
@@ -49,7 +57,7 @@ static int panic_thrower(lua_State * st)
 // the command line (and so known only to the app_state), and still be
 // available to lua
 // please *don't* use it for complex things that can throw errors
-static std::map<lua_State*, app_state*> map_of_lua_to_app;
+static map<lua_State*, app_state*> map_of_lua_to_app;
 
 extern "C"
 {
@@ -155,15 +163,15 @@ lua_hooks::load_rcfile(utf8 const & rc)
           // directory, iterate over it, skipping subdirs, taking every filename,
           // sorting them and loading in sorted order
           fs::directory_iterator it(locpath);
-          std::vector<fs::path> arr;
+          vector<fs::path> arr;
           while (it != fs::directory_iterator())
             {
               if (!fs::is_directory(*it))
                 arr.push_back(*it);
               ++it;
             }
-          std::sort(arr.begin(), arr.end());
-          for (std::vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
+          sort(arr.begin(), arr.end());
+          for (vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
             {
               load_rcfile(system_path(i->native_directory_string()), true);
             }
@@ -225,8 +233,8 @@ lua_hooks::hook_persist_phrase_ok()
 }
 
 bool 
-lua_hooks::hook_expand_selector(std::string const & sel, 
-                                std::string & exp)
+lua_hooks::hook_expand_selector(string const & sel, 
+                                string & exp)
 {
   return Lua(st)
     .func("expand_selector")
@@ -237,8 +245,8 @@ lua_hooks::hook_expand_selector(std::string const & sel,
 }
 
 bool 
-lua_hooks::hook_expand_date(std::string const & sel, 
-                            std::string & exp)
+lua_hooks::hook_expand_date(string const & sel, 
+                            string & exp)
 {
   exp.clear();
   bool res= Lua(st)
@@ -306,7 +314,7 @@ lua_hooks::hook_ignore_file(file_path const & p)
 }
 
 bool 
-lua_hooks::hook_ignore_branch(std::string const & branch)
+lua_hooks::hook_ignore_branch(string const & branch)
 {
   bool ignore_it = false;
   bool exec_ok = Lua(st)
@@ -320,7 +328,7 @@ lua_hooks::hook_ignore_branch(std::string const & branch)
 
 static inline bool
 shared_trust_function_body(Lua & ll,
-                           std::set<rsa_keypair_id> const & signers,
+                           set<rsa_keypair_id> const & signers,
                            hexenc<id> const & id,
                            cert_name const & name,
                            cert_value const & val)
@@ -350,7 +358,7 @@ shared_trust_function_body(Lua & ll,
 }
 
 bool 
-lua_hooks::hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
+lua_hooks::hook_get_revision_cert_trust(set<rsa_keypair_id> const & signers,
                                        hexenc<id> const & id,
                                        cert_name const & name,
                                        cert_value const & val)
@@ -361,7 +369,7 @@ lua_hooks::hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers
 }
 
 bool 
-lua_hooks::hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
+lua_hooks::hook_get_manifest_cert_trust(set<rsa_keypair_id> const & signers,
                                         hexenc<id> const & id,
                                         cert_name const & name,
                                         cert_value const & val)
@@ -442,9 +450,9 @@ lua_hooks::hook_external_diff(file_path const & path,
                               data const & data_new,
                               bool is_binary,
                               bool diff_args_provided,
-                              std::string const & diff_args,
-                              std::string const & oldrev,
-                              std::string const & newrev)
+                              string const & diff_args,
+                              string const & oldrev,
+                              string const & newrev)
 {
   Lua ll(st);
 
@@ -485,8 +493,129 @@ lua_hooks::hook_use_inodeprints()
   return use && exec_ok;
 }
 
+static void
+push_uri(uri const & u, Lua & ll)
+{
+  ll.push_table();
+
+  if (!u.scheme.empty()) 
+    {
+      ll.push_str("scheme");
+      ll.push_str(u.scheme);
+      ll.set_table();
+    }
+
+  if (!u.user.empty())
+    {
+      ll.push_str("user");
+      ll.push_str(u.user);
+      ll.set_table();
+    }
+
+  if (!u.host.empty())
+    {
+      ll.push_str("host");
+      ll.push_str(u.host);
+      ll.set_table();
+    }
+
+  if (!u.port.empty())
+    {
+      ll.push_str("port");
+      ll.push_str(u.port);
+      ll.set_table();
+    }
+
+  if (!u.path.empty())
+    {
+      ll.push_str("path");
+      ll.push_str(u.path);
+      ll.set_table();
+    }
+
+  if (!u.query.empty())
+    {
+      ll.push_str("query");
+      ll.push_str(u.query);
+      ll.set_table();
+    }
+
+  if (!u.fragment.empty())
+    {
+      ll.push_str("fragment");
+      ll.push_str(u.fragment);
+      ll.set_table();
+    }
+}
+
 bool 
-lua_hooks::hook_get_netsync_read_permitted(std::string const & branch, 
+lua_hooks::hook_get_netsync_connect_command(uri const & u,
+                                            std::string const & include_pattern,
+                                            std::string const & exclude_pattern,
+                                            bool debug,
+                                            std::vector<std::string> & argv)
+{
+  bool cmd = false, exec_ok = false;
+  Lua ll(st);
+  ll.func("get_netsync_connect_command");
+
+  push_uri(u, ll);
+
+  ll.push_table();
+
+  if (!include_pattern.empty())
+    {
+      ll.push_str("include");
+      ll.push_str(include_pattern);
+      ll.set_table();
+    }
+
+  if (!exclude_pattern.empty())
+    {
+      ll.push_str("exclude");
+      ll.push_str(exclude_pattern);
+      ll.set_table();
+    }
+
+  if (debug)
+    {
+      ll.push_str("debug");
+      ll.push_bool(debug);
+      ll.set_table();
+    }
+
+  ll.call(2,1);
+
+  ll.begin();
+  
+  argv.clear();
+  while(ll.next())
+    {
+      std::string s;
+      ll.extract_str(s).pop();
+      argv.push_back(s);
+    }
+  return ll.ok() && !argv.empty();
+}
+
+
+bool 
+lua_hooks::hook_use_transport_auth(uri const & u)
+{
+  bool use_auth = true;
+  Lua ll(st);
+  ll.func("use_transport_auth");
+  push_uri(u, ll);
+  ll.call(1,1);
+  ll.extract_bool(use_auth);
+
+  // NB: we want to return *true* here if there's a failure.
+  return use_auth;
+}
+
+
+bool 
+lua_hooks::hook_get_netsync_read_permitted(string const & branch, 
                                            rsa_keypair_id const & identity)
 {
   bool permitted = false, exec_ok = false;
@@ -504,7 +633,7 @@ lua_hooks::hook_get_netsync_read_permitted(std::string const & branch,
 
 // Anonymous no-key version
 bool 
-lua_hooks::hook_get_netsync_read_permitted(std::string const & branch)
+lua_hooks::hook_get_netsync_read_permitted(string const & branch)
 {
   bool permitted = false, exec_ok = false;
 
@@ -536,7 +665,7 @@ lua_hooks::hook_get_netsync_write_permitted(rsa_keypair_id const & identity)
 
 bool 
 lua_hooks::hook_init_attributes(file_path const & filename,
-                                std::map<std::string, std::string> & attrs)
+                                map<string, string> & attrs)
 {
   Lua ll(st);
 
@@ -602,8 +731,8 @@ lua_hooks::hook_get_system_linesep(string & linesep)
 
 bool 
 lua_hooks::hook_get_charset_conv(file_path const & p, 
-                                 std::string & db, 
-                                 std::string & ext)
+                                 string & db, 
+                                 string & ext)
 {
   Lua ll(st);
   ll
@@ -622,8 +751,8 @@ lua_hooks::hook_get_charset_conv(file_path const & p,
 
 bool 
 lua_hooks::hook_get_linesep_conv(file_path const & p, 
-                                 std::string & db, 
-                                 std::string & ext)
+                                 string & db, 
+                                 string & ext)
 {
   Lua ll(st);
   ll
@@ -641,10 +770,10 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
 }
 
 bool
-lua_hooks::hook_validate_commit_message(std::string const & message,
-                                        std::string const & new_manifest_text,
+lua_hooks::hook_validate_commit_message(string const & message,
+                                        string const & new_manifest_text,
                                         bool & validated,
-                                        std::string & reason)
+                                        string & reason)
 {
   validated = true;
   return Lua(st)
@@ -701,7 +830,7 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
                             set<pair<rsa_keypair_id,
                                      pair<cert_name,
                                           cert_value> > > const & certs,
-                                               std::string nonce)
+                                               string nonce)
 {
   Lua ll(st);
   ll
@@ -737,7 +866,7 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
 
 bool
 lua_hooks::hook_note_netsync_pubkey_received(rsa_keypair_id const & kid,
-                                             std::string nonce)
+                                             string nonce)
 {
   Lua ll(st);
   ll
@@ -754,7 +883,7 @@ lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
                                            rsa_keypair_id const & kid,
                                            cert_name const & name,
                                            cert_value const & value,
-                                           std::string nonce)
+                                           string nonce)
 {
   Lua ll(st);
   ll

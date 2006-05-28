@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "file_io.hh"
 #include "botan/botan.h"
@@ -22,13 +23,15 @@
 #define O_BINARY 0
 #endif
 
+using std::string;
+
 int
-monotone_mkstemp(std::string &tmpl)
+monotone_mkstemp(string &tmpl)
 {
   unsigned int len = 0;
   int i = 0;
   int count = 0, fd = -1;
-  std::string tmp;
+  string tmp;
 
   static const char letters[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -44,8 +47,12 @@ monotone_mkstemp(std::string &tmpl)
 
       for (i = 0; i < 6; ++i)
         tmp.append(1, letters[Botan::Global_RNG::random(Botan::Nonce) % NLETTERS]);
-      fd = open(tmp.c_str(), O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
-      if (fd >= 0)
+#ifdef _MSC_VER
+      fd = _open(tmp.c_str(), _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY, 0600);
+#else
+	  fd = open(tmp.c_str(), O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
+#endif
+	  if (fd >= 0)
       {
         tmpl = tmp;
         return fd;

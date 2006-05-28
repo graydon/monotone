@@ -29,7 +29,16 @@
 #include "constants.hh"
 #include "localized_file_io.hh"
 
-using namespace std;
+using std::endl;
+using std::make_pair;
+using std::map;
+using std::min;
+using std::ostream;
+using std::ostream_iterator;
+using std::string;
+using std::swap;
+using std::vector;
+
 using boost::shared_ptr;
 
 //
@@ -364,9 +373,9 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
   vector<long, QA(long)> merged_interned;
   interner<long> in;
 
-  //   for (int i = 0; i < std::min(std::min(left.size(), right.size()), ancestor.size()); ++i)
+  //   for (int i = 0; i < min(min(left.size(), right.size()), ancestor.size()); ++i)
   //     {
-  //       std::cerr << "[" << i << "] " << left[i] << " " << ancestor[i] <<  " " << right[i] << endl;
+  //       cerr << "[" << i << "] " << left[i] << " " << ancestor[i] <<  " " << right[i] << endl;
   //     }
 
   anc_interned.reserve(ancestor.size());
@@ -389,7 +398,7 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
 
   edit_script(anc_interned.begin(), anc_interned.end(),
               left_interned.begin(), left_interned.end(),
-              std::min(ancestor.size(), left.size()),
+              min(ancestor.size(), left.size()),
               left_edits);
   
   L(FL("calculating right edit script on %d -> %d lines\n")
@@ -397,7 +406,7 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
 
   edit_script(anc_interned.begin(), anc_interned.end(),
               right_interned.begin(), right_interned.end(),
-              std::min(ancestor.size(), right.size()),
+              min(ancestor.size(), right.size()),
               right_edits);
 
   L(FL("calculating left extents on %d edits\n") % left_edits.size());
@@ -458,7 +467,7 @@ bool merge3(vector<string> const & ancestor,
    { 
       merge_via_edit_scripts(ancestor, left, right, merged);
     }
-  catch(conflict & c)
+  catch(conflict &)
     {
       L(FL("conflict detected. no merge.\n"));
       return false;
@@ -619,7 +628,7 @@ content_merger::content_merger(app_state & app,
     adaptor(adaptor)
 {}
 
-std::string 
+string 
 content_merger::get_file_encoding(file_path const & path,
                                   roster_t const & ros)
 {
@@ -1121,10 +1130,10 @@ void make_diff(string const & filename1,
        i != lines2.end(); ++i)
     right_interned.push_back(in.intern(*i));
 
-  lcs.reserve(std::min(lines1.size(),lines2.size()));
+  lcs.reserve(min(lines1.size(),lines2.size()));
   longest_common_subsequence(left_interned.begin(), left_interned.end(),
                              right_interned.begin(), right_interned.end(),
-                             std::min(lines1.size(), lines2.size()),
+                             min(lines1.size(), lines2.size()),
                              back_inserter(lcs));
 
   switch (type)
@@ -1161,6 +1170,10 @@ void make_diff(string const & filename1,
 #include "transforms.hh"
 #include <boost/lexical_cast.hpp>
 #include "randomfile.hh"
+
+using std::cerr;
+using std::cout;
+using std::stringstream;
 
 using boost::lexical_cast;
 
@@ -1243,7 +1256,7 @@ static void unidiff_append_test()
             file_id(id("0123456789abcdef0123456789abcdef01234567")),
             file_id(id("abcdef0123456789abcdef0123456789abcdef01")),
             src_lines, dst_lines, sst, unified_diff);
-  cout << sst.str() << std::endl;
+  cout << sst.str() << endl;
   BOOST_CHECK(sst.str() == ud);
 }
 

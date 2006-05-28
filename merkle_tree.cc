@@ -20,8 +20,13 @@
 #include "sanity.hh"
 #include "transforms.hh"
 
+using std::make_pair;
+using std::ostream_iterator;
+using std::ostringstream;
+using std::set;
+using std::string;
+
 using boost::dynamic_bitset;
-using namespace std;
 
 static void
 bitset_to_prefix(dynamic_bitset<unsigned char> const & pref,
@@ -524,6 +529,6 @@ insert_into_merkle_tree(merkle_table & tab,
       node->total_num_leaves = 1;
       node->set_slot_state(slotnum, leaf_state);
       node->set_raw_slot(slotnum, leaf);
-      tab.insert(std::make_pair(std::make_pair(rawpref, level), node));
+      tab.insert(make_pair(make_pair(rawpref, level), node));
     }
 }

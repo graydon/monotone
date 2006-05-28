@@ -30,7 +30,13 @@
 #include <sstream>
 #include <vector>
 
-using namespace std;
+using std::make_pair;
+using std::map;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
 using boost::shared_ptr;
 using boost::get;
 using boost::tuple;
@@ -104,7 +110,7 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
   vector< manifest<cert> > tmp_certs;
 
   // sorry, this is a crazy data structure
-  typedef boost::tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
+  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
   typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
   trust_map trust;
 
@@ -346,7 +352,7 @@ load_key_pair(app_state & app,
               keypair & kp)
 {
 
-  static std::map<rsa_keypair_id, keypair> keys;
+  static map<rsa_keypair_id, keypair> keys;
   bool persist_ok = (!keys.empty()) || app.lua.hook_persist_phrase_ok();
 
 
@@ -385,7 +391,7 @@ check_cert(app_state & app, cert const & t)
 
   base64< rsa_pub_key > pub;
 
-  static std::map<rsa_keypair_id, base64< rsa_pub_key > > pubkeys;
+  static map<rsa_keypair_id, base64< rsa_pub_key > > pubkeys;
   bool persist_ok = (!pubkeys.empty()) || app.lua.hook_persist_phrase_ok();
 
   if (persist_ok

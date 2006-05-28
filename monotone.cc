@@ -8,7 +8,9 @@
 
 #include "popt/popt.h"
 #include <cstdio>
+#ifndef _MSC_VER
 #include <strings.h>
+#endif
 #include <iterator>
 #include <iostream>
 #include <fstream>
@@ -35,9 +37,15 @@
 #include "options.hh"
 #include "paths.hh"
 
-// main option processing and exception handling code
+using std::cout;
+using std::endl;
+using std::ios_base;
+using std::ostringstream;
+using std::set;
+using std::string;
+using std::vector;
 
-using namespace std;
+// main option processing and exception handling code
 
 char * argstr = NULL;
 long arglong = 0;
@@ -75,6 +83,8 @@ struct poptOption coptions[] =
     {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from workspace"), NULL},
     {"unknown", 0, POPT_ARG_NONE, NULL, OPT_UNKNOWN, gettext_noop("perform the operations for unknown files from workspace"), NULL},
     {"key-to-push", 0, POPT_ARG_STRING, &argstr, OPT_KEY_TO_PUSH, gettext_noop("push the specified key even if it hasn't signed anything"), NULL},
+    {"stdio", 0, POPT_ARG_NONE, NULL, OPT_STDIO, gettext_noop("serve netsync on stdio"), NULL},
+    {"no-transport-auth", 0, POPT_ARG_NONE, NULL, OPT_NO_TRANSPORT_AUTH, gettext_noop("disable transport authentication"), NULL},
     {"drop-attr", 0, POPT_ARG_STRING, &argstr, OPT_DROP_ATTR, gettext_noop("when rosterifying, drop attrs entries with the given key"), NULL},
     {"no-files", 0, POPT_ARG_NONE, NULL, OPT_NO_FILES, gettext_noop("exclude files when printing logs"), NULL},
     {"recursive", 'R', POPT_ARG_NONE, NULL, OPT_RECURSIVE, gettext_noop("also operate on the contents of any listed directories"), NULL},
@@ -260,9 +270,9 @@ cpp_main(int argc, char ** argv)
 
   // set up some marked strings, so even if our logbuf overflows, we'll get
   // this data in a crash.
-  std::string cmdline_string;
+  string cmdline_string;
   {
-    std::ostringstream cmdline_ss;
+    ostringstream cmdline_ss;
     for (int i = 0; i < argc; ++i)
       {
         if (i)
@@ -274,11 +284,11 @@ cpp_main(int argc, char ** argv)
   MM(cmdline_string);
   L(FL("command line: %s\n") % cmdline_string);
 
-  std::string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
+  string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
   MM(locale_string);
   L(FL("set locale: LC_ALL=%s\n") % locale_string);
 
-  std::string full_version_string;
+  string full_version_string;
   get_full_version(full_version_string);
   MM(full_version_string);
 
@@ -495,30 +505,38 @@ cpp_main(int argc, char ** argv)
               app.execute = true;
               break;
 
+            case OPT_STDIO:
+              app.bind_stdio = true;
+              break;
+
+            case OPT_NO_TRANSPORT_AUTH:
+              app.use_transport_auth = false;
+              break;
+
             case OPT_BIND:
               {
-                std::string arg(argstr);
-                std::string addr_part, port_part;
+                string arg(argstr);
+                string addr_part, port_part;
                 size_t l_colon = arg.find(':');
                 size_t r_colon = arg.rfind(':');
                 
                 // not an ipv6 address, as that would have at least two colons
                 if (l_colon == r_colon)
                   {
-                    addr_part = (r_colon == std::string::npos ? arg : arg.substr(0, r_colon));
-                    port_part = (r_colon == std::string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+                    addr_part = (r_colon == string::npos ? arg : arg.substr(0, r_colon));
+                    port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
                   }
                 else
                   { 
                     // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
                     size_t squareb = arg.rfind(']');
-                    if ((arg.find('[') == 0) && (squareb != std::string::npos))
+                    if ((arg.find('[') == 0) && (squareb != string::npos))
                       {
                         if (squareb < r_colon)
-                          port_part = (r_colon == std::string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+                          port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
                         else
                           port_part = "";
-                        addr_part = (squareb == std::string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
+                        addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
                       }
                     else 
                       {
@@ -526,6 +544,7 @@ cpp_main(int argc, char ** argv)
                         port_part = "";
                       }
                   }
+                app.bind_stdio = false;
                 app.bind_address = utf8(addr_part);
                 app.bind_port = utf8(port_part);
               }
@@ -666,7 +685,7 @@ cpp_main(int argc, char ** argv)
     global_sanity.clean_shutdown = true;
     return 1;
   }
-  catch (std::ios_base::failure const & ex)
+  catch (ios_base::failure const & ex)
   {
     global_sanity.clean_shutdown = true;
     return 1;

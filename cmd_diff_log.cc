@@ -6,15 +6,23 @@
 #include "restrictions.hh"
 #include "localized_file_io.hh"
 
-using std::set;
 #include <map>
-using std::map;
 #include <iostream>
-using std::cout;
 #include <sstream>
-using std::ostringstream;
 #include <deque>
+
+using std::cout;
 using std::deque;
+using std::make_pair;
+using std::map;
+using std::ostream;
+using std::ostringstream;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
+using boost::lexical_cast;
 
 // The changes_summary structure holds a list all of files and directories
 // affected in a revision, and is useful in the 'log' command to print this
@@ -27,7 +35,7 @@ changes_summary
   cset cs;
   changes_summary(void);
   void add_change_set(cset const & cs);
-  void print(std::ostream & os, size_t max_cols) const;
+  void print(ostream & os, size_t max_cols) const;
 };
 
 changes_summary::changes_summary(void) 
@@ -68,7 +76,7 @@ changes_summary::add_change_set(cset const & c)
 }
 
 static void 
-print_indented_set(std::ostream & os, 
+print_indented_set(ostream & os, 
                    path_set const & s,
                    size_t max_cols)
 {
@@ -77,7 +85,7 @@ print_indented_set(std::ostream & os,
   for (path_set::const_iterator i = s.begin();
        i != s.end(); i++)
     {
-      const std::string str = boost::lexical_cast<std::string>(file_path(*i));
+      const string str = lexical_cast<string>(file_path(*i));
       if (cols > 8 && cols + str.size() + 1 >= max_cols)
         {
           cols = 8;
@@ -90,7 +98,7 @@ print_indented_set(std::ostream & os,
 }
 
 void
-changes_summary::print(std::ostream & os, size_t max_cols) const
+changes_summary::print(ostream & os, size_t max_cols) const
 {
 
   if (! cs.nodes_deleted.empty())
@@ -102,7 +110,7 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
   if (! cs.nodes_renamed.empty())
     {
       os << "Renamed entries:" << "\n";
-      for (std::map<split_path, split_path>::const_iterator
+      for (map<split_path, split_path>::const_iterator
            i = cs.nodes_renamed.begin();
            i != cs.nodes_renamed.end(); i++)
         os << "        " << file_path(i->first) << " to " << file_path(i->second) << "\n";
@@ -111,7 +119,7 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
   if (! cs.files_added.empty())
     {
       path_set tmp;
-      for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+      for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
            i != cs.files_added.end(); ++i)
         tmp.insert(i->first);
       os << "Added files:" << "\n";
@@ -127,7 +135,7 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
   if (! cs.deltas_applied.empty())
     {
       path_set tmp;
-      for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+      for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
            i != cs.deltas_applied.end(); ++i)
         tmp.insert(i->first);
       os << "Modified files:" << "\n";
@@ -137,11 +145,11 @@ changes_summary::print(std::ostream & os, size_t max_cols) const
   if (! cs.attrs_set.empty() || ! cs.attrs_cleared.empty())
     {
       path_set tmp;
-      for (std::set<std::pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
+      for (set<pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
            i != cs.attrs_cleared.end(); ++i)
         tmp.insert(i->first);
 
-      for (std::map<std::pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
+      for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
            i != cs.attrs_set.end(); ++i)
         tmp.insert(i->first.first);
 
@@ -155,7 +163,7 @@ do_external_diff(cset const & cs,
                  app_state & app,
                  bool new_is_archived)
 {
-  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
+  for (map<split_path, pair<file_id, file_id> >::const_iterator 
          i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
@@ -203,9 +211,9 @@ dump_diffs(cset const & cs,
            bool limit_paths = false)
 {
   // 60 is somewhat arbitrary, but less than 80
-  std::string patch_sep = std::string(60, '=');
+  string patch_sep = string(60, '=');
 
-  for (std::map<split_path, file_id>::const_iterator 
+  for (map<split_path, file_id>::const_iterator 
          i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     {
@@ -247,16 +255,16 @@ dump_diffs(cset const & cs,
         }
     }
 
-  std::map<split_path, split_path> reverse_rename_map;
+  map<split_path, split_path> reverse_rename_map;
 
-  for (std::map<split_path, split_path>::const_iterator 
+  for (map<split_path, split_path>::const_iterator 
          i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     {
-      reverse_rename_map.insert(std::make_pair(i->second, i->first));
+      reverse_rename_map.insert(make_pair(i->second, i->first));
     }
 
-  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
+  for (map<split_path, pair<file_id, file_id> >::const_iterator 
          i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
@@ -295,7 +303,7 @@ dump_diffs(cset const & cs,
           split_path dst_path = delta_entry_path(i);
           split_path src_path = dst_path;
 
-          std::map<split_path, split_path>::const_iterator re;
+          map<split_path, split_path>::const_iterator re;
           re = reverse_rename_map.find(dst_path);
 
           if (re != reverse_rename_map.end())
@@ -539,7 +547,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
   else
     {
-      for (std::vector<utf8>::const_iterator i = app.revision_selectors.begin();
+      for (vector<utf8>::const_iterator i = app.revision_selectors.begin();
            i != app.revision_selectors.end(); i++) 
         {
           set<revision_id> rids;

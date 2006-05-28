@@ -35,7 +35,14 @@
 #include "sanity.hh"
 #include "xdelta.hh"
 
-using namespace std;
+using std::make_pair;
+using std::min;
+using std::ostream;
+using std::ostringstream;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
 
 struct identity {size_t operator()(u32 const & v) const { return static_cast<size_t>(v);}};
 typedef pair<string::size_type, string::size_type> extent;
@@ -340,9 +347,9 @@ read_num(string::const_iterator &i,
 
 void 
 apply_delta(boost::shared_ptr<delta_applicator> da,
-            std::string const & delta)
+            string const & delta)
 {  
-  std::string::const_iterator i = delta.begin(); 
+  string::const_iterator i = delta.begin(); 
   while (i != delta.end() && (*i == 'I' || *i == 'C'))
     {
       if (*i == 'I')
@@ -398,20 +405,20 @@ size_accumulating_delta_applicator :
 {
   u64 & sz;
   size_accumulating_delta_applicator(u64 & s) : sz(s) {}
-  virtual void begin(std::string const & base) {}
+  virtual void begin(string const & base) {}
   virtual void next() {}
-  virtual void finish(std::string & out) {}
+  virtual void finish(string & out) {}
 
-  virtual void copy(std::string::size_type pos, 
-                    std::string::size_type len) 
+  virtual void copy(string::size_type pos, 
+                    string::size_type len) 
   { sz += len; }
-  virtual void insert(std::string const & str) 
+  virtual void insert(string const & str) 
   { sz += str.size(); }
 };
 
 
 u64 
-measure_delta_target_size(std::string const & delta)
+measure_delta_target_size(string const & delta)
 {
   u64 sz = 0;
   boost::shared_ptr<delta_applicator> da(new size_accumulating_delta_applicator(sz));
@@ -502,12 +509,12 @@ apply_insert(piece_table & p, version_spec & out, string const & str)
 struct 
 chunk_less_than
 {
-  bool operator()(chunk const & ch, version_pos vp) const
+  bool operator()(chunk const & ch1, chunk const & ch2) const
   {
     // nb: ch.vpos + ch.len is the 0-based index of the first element *not*
     // included in ch; thus we measure against ch.len - 1.
-    I(ch.len > 0);
-    return (ch.vpos + ch.len - 1) < vp;
+//    I(ch1.len > 0);
+    return (ch1.vpos + ch1.len - 1) < ch2.vpos;
   }
 };
 
@@ -541,9 +548,10 @@ apply_copy(version_spec const & in, version_spec & out,
   if (!out.empty())
     dst_vpos = out.back().vpos + out.back().len;
   version_pos dst_final = dst_vpos + src_len;
+  chunk src_bounding_chunk(0,0,src_vpos,0);
   version_spec::const_iterator lo = lower_bound(in.begin(), 
                                                 in.end(), 
-                                                src_vpos, 
+                                                src_bounding_chunk, 
                                                 chunk_less_than());
   for ( ; src_len > 0; ++lo)
     {
@@ -686,9 +694,9 @@ inverse_delta_writing_applicator :
       new_pos(0)
   {}
 
-  virtual void begin(std::string const & base) {}
+  virtual void begin(string const & base) {}
   virtual void next() {}
-  virtual void finish(std::string & out) 
+  virtual void finish(string & out) 
   {
     // We are trying to write a delta instruction stream which
     // produces 'old' from 'new'. We don't care what was in 'new',
@@ -737,15 +745,15 @@ inverse_delta_writing_applicator :
     write_delta_insns(delta_insns, out);
   }
 
-  virtual void copy(std::string::size_type old_pos, 
-                    std::string::size_type len) 
+  virtual void copy(string::size_type old_pos, 
+                    string::size_type len) 
   { 
     I(old_pos < old.size());
     copied_extents.insert(copied_extent(old_pos, new_pos, len));
     new_pos += len;
   }
 
-  virtual void insert(std::string const & str) 
+  virtual void insert(string const & str) 
   { 
     new_pos += str.size();
   }

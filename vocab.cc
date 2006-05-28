@@ -11,9 +11,9 @@
 #include "sanity.hh"
 #include "vocab.hh"
 
-// verifiers for various types of data
+using std::string;
 
-using namespace std;
+// verifiers for various types of data
 
 // the verify() stuff gets a little complicated; there doesn't seem to be a
 // really nice way to achieve what we want with c++'s type system.  the
@@ -162,17 +162,17 @@ verify(netsync_hmac_value & val)
 // counter of activations, and when there is an activation, the
 // members of the ATOMIC type initialize their internal string using a
 // copy of the string found in the symtab. Since some (all?) C++
-// std::string implementations are copy-on-write, this has the affect
+// string implementations are copy-on-write, this has the affect
 // of making the ATOMIC(foo) values constructed within a symbol table
 // scope share string storage.
 struct 
 symtab_impl 
 {
-  typedef hashmap::hash_set<std::string> hset;
+  typedef hashmap::hash_set<string> hset;
   hset vals;
   symtab_impl() : vals() {}
   void clear() { vals.clear(); }
-  std::string const & unique(std::string const & in) 
+  string const & unique(string const & in) 
   {
     // This produces a pair <iter,bool> where iter points to an
     // element of the table; the bool indicates whether the element is
@@ -202,25 +202,25 @@ symtab_impl
 
 
 template
-void dump<rsa_pub_key>(base64<rsa_pub_key> const&, std::string &);
+void dump<rsa_pub_key>(base64<rsa_pub_key> const&, string &);
 
 template
-void dump(revision_id const & r, std::string &);
+void dump(revision_id const & r, string &);
 
 template
-void dump(roster_id const & r, std::string &);
+void dump(roster_id const & r, string &);
 
 template
-void dump(manifest_id const & r, std::string &);
+void dump(manifest_id const & r, string &);
 
 template
-void dump(file_id const & r, std::string &);
+void dump(file_id const & r, string &);
 
 template
-void dump(hexenc<id> const & r, std::string &);
+void dump(hexenc<id> const & r, string &);
 
 template
-void dump(roster_data const & d, std::string &);
+void dump(roster_data const & d, string &);
 
 // the rest is unit tests
 
