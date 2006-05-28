@@ -1,27 +1,8 @@
-2006-05-22  Graydon Hoare  <graydon@pobox.com>
+2006-05-28  Graydon Hoare  <graydon@pobox.com>
 
-	* cmd_netsync.cc (serve): Make --no-transport-auth require --stdio.
-
-2006-05-22  Graydon Hoare  <graydon@pobox.com>
-
-	* Makefile.am: Add uri.{cc,hh}.
-	* app_state.{cc,hh} (use_transport_auth): New state variable.
-	* cmd_netsync.cc (serve): Support use_transport_auth.
-	* constants.hh (netcmd_minsz): Remove dead byte count related to adler32.	
-	* hmac.{cc,hh} (active): New state variable.
-	* lua.{cc,hh} (lua_hooks::hook_get_netsync_connect_command):
-	(lua_hooks::hook_use_transport_auth): New hooks.
-	* monotone.cc: Support --no-transport-auth.
-	* monotone.texi: Document all this stuff.
-	* netcmd.cc: Predicate hmac activity on hmac.is_active().	
-	* netsync.cc: Parse URIs via lua, optionally disable transport auth.
-	* options.hh (OPT_NO_TRANSPORT_AUTH): New option.
-	* std_hooks.lua (get_netsync_connect_command):
-	(use_transport_auth): New default definitions.
-	* tests/t_netsync_pipe.at: New test.
-	* testsuite.at: Add new hooks and t_netsync_pipe.at.
-	* unit_tests.{cc,hh}: Support URI tests.
-	* uri.{cc,hh}: New files.
+	* app_state.cc (search_root): Initialize to current_root_path().
+	* paths.{cc,hh} (current_root_path): New function.
+	* win32/get_system_flavour.cc (processor_types): Fix typo.
 
 2006-05-27  Derek Scherger  <derek@echologic.com>
 
@@ -93,7 +74,7 @@
 2006-05-27  Derek Scherger  <derek@echologic.com>
 
 	* paths.cc (find_and_go_to_workspace): ensure that the current
-	directory is below the specified -root; issue a warning and abort
+	directory is below the specified --root; issue a warning and abort
 	the search if it's not
 	* tests/t_invalid_root.at: new test
 	* testsuite.at: call it
@@ -185,6 +166,31 @@
 2006-05-23  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A fuzzy to change.
+
+2006-05-22  Graydon Hoare  <graydon@pobox.com>
+
+	* cmd_netsync.cc (serve): Make --no-transport-auth require --stdio.
+
+2006-05-22  Graydon Hoare  <graydon@pobox.com>
+
+	* Makefile.am: Add uri.{cc,hh}.
+	* app_state.{cc,hh} (use_transport_auth): New state variable.
+	* cmd_netsync.cc (serve): Support use_transport_auth.
+	* constants.hh (netcmd_minsz): Remove dead byte count related to adler32.	
+	* hmac.{cc,hh} (active): New state variable.
+	* lua.{cc,hh} (lua_hooks::hook_get_netsync_connect_command):
+	(lua_hooks::hook_use_transport_auth): New hooks.
+	* monotone.cc: Support --no-transport-auth.
+	* monotone.texi: Document all this stuff.
+	* netcmd.cc: Predicate hmac activity on hmac.is_active().	
+	* netsync.cc: Parse URIs via lua, optionally disable transport auth.
+	* options.hh (OPT_NO_TRANSPORT_AUTH): New option.
+	* std_hooks.lua (get_netsync_connect_command):
+	(use_transport_auth): New default definitions.
+	* tests/t_netsync_pipe.at: New test.
+	* testsuite.at: Add new hooks and t_netsync_pipe.at.
+	* unit_tests.{cc,hh}: Support URI tests.
+	* uri.{cc,hh}: New files.
 
 2006-05-22  Timothy Brownawell  <tbrownaw@gmail.com>
 

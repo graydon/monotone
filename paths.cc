@@ -579,6 +579,13 @@ dirname_basename(split_path const & sp,
 // workspace (and path root) handling
 ///////////////////////////////////////////////////////////////////////////
 
+system_path 
+current_root_path()
+{
+  return system_path(fs::initial_path().root_path().string());
+}
+
+
 bool
 find_and_go_to_workspace(system_path const & search_root)
 {

@@ -37,7 +37,7 @@ app_state::app_state()
   : branch_name(""), db(system_path()), keys(this), recursive(false),
     stdhooks(true), rcfiles(true), diffs(false),
     no_merges(false), set_default(false), verbose(false), date_set(false),
-    search_root("/"),
+    search_root(current_root_path()),
     depth(-1), last(-1), next(-1), diff_format(unified_diff), diff_args_provided(false),
     execute(false), bind_address(""), bind_port(""), 
     bind_stdio(false), use_transport_auth(true), missing(false), unknown(false),
