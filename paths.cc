@@ -282,7 +282,7 @@ file_path::file_path(file_path::source_type type, string const & path)
           relative = fs::path(path, fs::native);
           out = (base / relative).normalize();
         }
-      catch (exception & e)
+      catch (exception &)
         {
           N(false, F("path '%s' is invalid") % path);
         }

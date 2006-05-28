@@ -30,7 +30,7 @@ void
 get_version(string & out)
 {
   out = (F("%s (base revision: %s)")
-         % PACKAGE_STRING % package_revision_constant).str();
+         % PACKAGE_STRING % string(package_revision_constant)).str();
 }
 
 void
@@ -59,7 +59,7 @@ get_full_version(string & out)
     % BOOST_COMPILER
     % BOOST_STDLIB
     % BOOST_LIB_VERSION
-    % package_full_revision_constant;
+    % string(package_full_revision_constant);
   out = oss.str();
 }
 

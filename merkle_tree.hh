@@ -114,15 +114,6 @@ namespace hashmap {
      return sh(m.first()) + m.second;
     }
   };
-  template<>
-  struct equal_to<merkle_node_id>
-  {
-    bool operator()(merkle_node_id const & a,
-                    merkle_node_id const & b) const
-    {
-      return a.second == b.second && a.first == b.first;
-    }
-  };
 }
 typedef hashmap::hash_map<merkle_node_id, merkle_ptr> merkle_table;
 

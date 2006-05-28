@@ -18,6 +18,7 @@
 #include "simplestring_xform.hh"
 #include "charset.hh"
 #include "platform.hh"
+#include "numeric_vocab.hh"
 
 // this file deals with talking to the filesystem, loading and
 // saving files.

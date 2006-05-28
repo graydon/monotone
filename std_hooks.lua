@@ -695,3 +695,70 @@ function get_netsync_write_permitted(ident)
    io.close(permfile)
    return matches
 end
+
+-- This is a simple funciton which assumes you're going to be spawning
+-- a copy of mtn, so reuses a common bit at the end for converting
+-- local args into remote args. You might need to massage the logic a
+-- bit if this doesn't fit your assumptions.
+
+function get_netsync_connect_command(uri, args)
+
+	local argv = nil
+
+	if uri["scheme"] == "ssh" 
+		and uri["host"] 
+		and uri["path"] then
+
+		argv = { "ssh" }
+		if uri["user"] then
+			table.insert(argv, "-l")
+			table.insert(argv, uri["user"])
+		end
+		if uri["port"] then
+			table.insert(argv, "-p")
+			table.insert(argv, uri["port"])
+		end
+
+		table.insert(argv, uri["host"])
+	end
+	
+	if uri["scheme"] == "file" and uri["path"] then
+		argv = { }
+	end
+
+	if argv then
+
+		table.insert(argv, "mtn")
+
+		if args["debug"] then
+			table.insert(argv, "--debug")
+		else
+			table.insert(argv, "--quiet")
+		end
+
+		table.insert(argv, "--db")
+		table.insert(argv, uri["path"])
+		table.insert(argv, "serve")
+		table.insert(argv, "--stdio")
+		table.insert(argv, "--no-transport-auth")
+
+		if args["include"] then
+			table.insert(argv, args["include"])
+		end
+
+		if args["exclude"] then
+			table.insert(argv, "--exclude")
+			table.insert(argv, args["exclude"])
+		end
+	end
+	return argv
+end
+
+function use_transport_auth(uri)
+	if uri["scheme"] == "ssh" 
+	or uri["scheme"] == "file" then
+		return false
+	else
+		return true
+	end
+end

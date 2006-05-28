@@ -7,7 +7,6 @@
 #include <vector>
 #include <utility>
 
-#include "adler32.hh"
 #include "constants.hh"
 #include "netcmd.hh"
 #include "netio.hh"
@@ -70,7 +69,7 @@ netcmd::write(string & out, chained_hmac & hmac) const
   out += static_cast<char>(cmd_code);
   insert_variable_length_string(payload, out);
 
-  if (cmd_code != usher_reply_cmd)
+  if (hmac.is_active() && cmd_code != usher_reply_cmd)
     {
       string digest = hmac.process(out, oldlen);
       I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
@@ -134,35 +133,47 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
   
   // there might not be enough data yet in the input buffer
   unsigned int minsize;
-  if (cmd_code == usher_cmd)
-    minsize = pos + payload_len;
-  else
+  if (hmac.is_active() && cmd_code != usher_cmd)
     minsize = pos + payload_len + constants::netsync_hmac_value_length_in_bytes;
+  else
+    minsize = pos + payload_len;
+
   if (inbuf.size() < minsize)
     {
       return false;
     }
 
-  // grab it before the data gets munged
-  I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
   string digest;
-  if (cmd_code != usher_cmd)
-    digest = hmac.process(inbuf, 0, pos + payload_len);
-
-  payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
-
-  // they might have given us bogus data
   string cmd_digest;
-  if (cmd_code != usher_cmd)
-    cmd_digest = extract_substring(inbuf, pos, 
-        constants::netsync_hmac_value_length_in_bytes,
-                                          "netcmd HMAC");
+
+  if (hmac.is_active() && cmd_code != usher_cmd)
+    {
+      // grab it before the data gets munged
+      I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);	
+      digest = hmac.process(inbuf, 0, pos + payload_len);
+    }
+  
+  payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
+  
+  if (hmac.is_active() && cmd_code != usher_cmd)
+    {
+      // they might have given us bogus data
+      cmd_digest = extract_substring(inbuf, pos, 
+				     constants::netsync_hmac_value_length_in_bytes,
+				     "netcmd HMAC");
+    }
+
   inbuf.pop_front(pos);
-  if (cmd_digest != digest)
-    throw bad_decode(F("bad HMAC checksum (got %s, wanted %s)\n"
-                       "this suggests data was corrupted in transit\n")
-                     % encode_hexenc(cmd_digest)
-                     % encode_hexenc(digest));
+
+  if (hmac.is_active() 
+      && cmd_code != usher_cmd 
+      && cmd_digest != digest)
+    {
+      throw bad_decode(F("bad HMAC checksum (got %s, wanted %s)\n"
+			 "this suggests data was corrupted in transit\n")
+		       % encode_hexenc(cmd_digest)
+		       % encode_hexenc(digest));
+    }
 
   return true;    
 }

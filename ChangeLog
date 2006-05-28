@@ -1,3 +1,28 @@
+2006-05-22  Graydon Hoare  <graydon@pobox.com>
+
+	* cmd_netsync.cc (serve): Make --no-transport-auth require --stdio.
+
+2006-05-22  Graydon Hoare  <graydon@pobox.com>
+
+	* Makefile.am: Add uri.{cc,hh}.
+	* app_state.{cc,hh} (use_transport_auth): New state variable.
+	* cmd_netsync.cc (serve): Support use_transport_auth.
+	* constants.hh (netcmd_minsz): Remove dead byte count related to adler32.	
+	* hmac.{cc,hh} (active): New state variable.
+	* lua.{cc,hh} (lua_hooks::hook_get_netsync_connect_command):
+	(lua_hooks::hook_use_transport_auth): New hooks.
+	* monotone.cc: Support --no-transport-auth.
+	* monotone.texi: Document all this stuff.
+	* netcmd.cc: Predicate hmac activity on hmac.is_active().	
+	* netsync.cc: Parse URIs via lua, optionally disable transport auth.
+	* options.hh (OPT_NO_TRANSPORT_AUTH): New option.
+	* std_hooks.lua (get_netsync_connect_command):
+	(use_transport_auth): New default definitions.
+	* tests/t_netsync_pipe.at: New test.
+	* testsuite.at: Add new hooks and t_netsync_pipe.at.
+	* unit_tests.{cc,hh}: Support URI tests.
+	* uri.{cc,hh}: New files.
+
 2006-05-27  Derek Scherger  <derek@echologic.com>
 
 	* annotate.cc:
@@ -375,6 +400,47 @@
 	query of next_roster_node_number
 	* tests/t_db_init_info.at: new test of info on a new database
 	* testsuite.at: call it
+
+2006-05-14  Graydon Hoare  <graydon@pobox.com>
+
+	* netsync.cc: Fix invariant typo.
+	* merkle_tree.hh: Remove unused equal_to struct.
+	* hash_map.hh: Correct for Microsoft hash_map assumption
+	that the binary functor in the traits class is an order,
+	not just an equality predicate.
+
+2006-05-14  Graydon Hoare  <graydon@pobox.com>
+
+	* netxx_pipe.{cc,hh}: Various cleanups to build on unix.
+	* netsync.cc (drop_session_associated_with_fd): New helper,
+	and use it everywhere we did sessions.erase() before.
+
+2006-05-13  Graydon Hoare  <graydon@pobox.com>
+
+	* netsync.cc, netxx/probe.h, netxx_pipe.{cc,hh}: Adaptation of
+	Christof Petig's PipeStream work, with heavy modifications; seems
+	to work under win32 / visualc8 now.
+
+	* options.hh (OPT_STDIO): New option.
+	* app_state.{cc,hh} (bind_stdio): Store it.
+	* monotone.cc (cpp_main): Parse it.
+	* cmd_netsync.cc (serve): Accept --stdio option for 'serve'.
+	* platform.hh (munge_argv_into_cmdline): Export on win32.
+	* win32/process.cc (munge_argv_into_cmdline): Make non-static.
+	* unit_tests.{cc,hh}: Add tests for pipes.
+	* visualc/monotone.vcproj: Add netxx_pipe.{cc,hh}
+	* Makefile.am: Likewise.
+
+2006-05-13  Christof Petig <christof@petig-baender.de>
+
+	(Originally from 2004-06-18, on a different branch)
+
+	* netsync.cc:
+	(struct session): use PipeStream, pair of sockets
+	(find_wordend,parse_ssh_url): helper functions to parse an URL
+	(call_server): recognize ssh: and file: URLs
+	(serve_stdio): variant of serve_connections for stdio
+	(run_netsync_protocol): call serve_stdio if address is -
 
 2006-05-14  Lapo Luchini  <lapo@lapo.it>
 

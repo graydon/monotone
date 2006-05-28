@@ -10,19 +10,21 @@
 
 struct chained_hmac
 {
-  public:
-    chained_hmac(netsync_session_key const & session_key);
-    void set_key(netsync_session_key const & session_key);
-    std::string process(std::string const & str, size_t pos = 0, 
-        size_t n = std::string::npos);
-    std::string process(string_queue const & str, size_t pos = 0, 
-        size_t n = std::string::npos);
-
-    size_t const hmac_length;
-
-  private:
-    Botan::SymmetricKey key;
-    std::string chain_val;
+public:
+  chained_hmac(netsync_session_key const & session_key, bool active);
+  void set_key(netsync_session_key const & session_key);
+  std::string process(std::string const & str, size_t pos = 0, 
+		      size_t n = std::string::npos);
+  std::string process(string_queue const & str, size_t pos = 0, 
+		      size_t n = std::string::npos);
+  
+  size_t const hmac_length;
+  bool is_active() { return active; }
+  
+private:
+  bool active;
+  Botan::SymmetricKey key;
+  std::string chain_val;
 };
 
 

@@ -407,7 +407,7 @@ process_one_hunk(vector< piece > const & source,
       else 
         throw oops("unknown directive '" + directive + "'");
     } 
-  catch (out_of_range & oor)
+  catch (out_of_range &)
     {
       throw oops("out_of_range while processing " + directive 
                  + " with source.size() == " 

@@ -1443,8 +1443,7 @@ void print_some_output(int cmdnum,
   s.flush();
 }
 
-static ssize_t
-automate_stdio_read(int d, void *buf, size_t nbytes)
+static ssize_t automate_stdio_read(int d, void *buf, size_t nbytes)
 {
   ssize_t rv;
   
@@ -1521,7 +1520,7 @@ automate_stdio(vector<utf8> args,
               err=0;
               automate_command(cmd, args, help_name, app, s);
             }
-          catch(usage & u)
+          catch(usage &)
             {
               if(sb.str().size())
                 s.flush();

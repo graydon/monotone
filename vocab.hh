@@ -108,7 +108,7 @@ struct keypair
 // in the filesystem. if you want to *define* or work with any of these you
 // need to include boost/filesystem/path.hpp.
 
-namespace boost { namespace filesystem { struct path; } }
+namespace boost { namespace filesystem { class path; } }
 namespace fs = boost::filesystem;
 
 // diff type
