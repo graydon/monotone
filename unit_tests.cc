@@ -14,6 +14,9 @@
 #include <set>
 #include <string>
 
+using std::set;
+using std::string;
+
 static bool clean_shutdown;
 void dumper() 
 {
@@ -38,9 +41,9 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   test_suite * suite = BOOST_TEST_SUITE("monotone unit tests");
   I(suite);
 
-  std::set<std::string> t;
+  set<string> t;
   if (argc > 1)
-    t = std::set<std::string>(argv+1, argv+argc);
+    t = set<string>(argv+1, argv+argc);
 
   // call all the adders here
 

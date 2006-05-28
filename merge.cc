@@ -17,8 +17,11 @@
 #include "safe_map.hh"
 #include "transforms.hh"
 
-using std::map;
 using std::make_pair;
+using std::map;
+using std::set;
+using std::vector;
+
 using boost::shared_ptr;
 
 static void
@@ -66,13 +69,13 @@ resolve_merge_conflicts(revision_id const & left_rid,
         {
 
           L(FL("examining content conflicts\n"));
-          std::vector<file_content_conflict> residual_conflicts;
+          vector<file_content_conflict> residual_conflicts;
 
           for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
             {
               file_content_conflict const & conflict = result.file_content_conflicts[i];
 
-              boost::shared_ptr<roster_t> roster_for_file_lca;
+              shared_ptr<roster_t> roster_for_file_lca;
               adaptor.get_ancestral_roster(conflict.nid, roster_for_file_lca);
 
               // Now we should certainly have a roster, which has the node.
@@ -118,7 +121,7 @@ interactive_merge_and_store(revision_id const & left_rid,
 {
   roster_t left_roster, right_roster;
   marking_map left_marking_map, right_marking_map;
-  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
 
   app.db.get_roster(left_rid, left_roster, left_marking_map);
   app.db.get_roster(right_rid, right_roster, right_marking_map);
@@ -168,13 +171,13 @@ store_roster_merge_result(roster_t const & left_roster,
   
   calculate_ident(merged_roster, merged_rev.new_manifest);
   
-  boost::shared_ptr<cset> left_to_merged(new cset);
+  shared_ptr<cset> left_to_merged(new cset);
   make_cset(left_roster, merged_roster, *left_to_merged);
-  safe_insert(merged_rev.edges, std::make_pair(left_rid, left_to_merged));
+  safe_insert(merged_rev.edges, make_pair(left_rid, left_to_merged));
   
-  boost::shared_ptr<cset> right_to_merged(new cset);
+  shared_ptr<cset> right_to_merged(new cset);
   make_cset(right_roster, merged_roster, *right_to_merged);
-  safe_insert(merged_rev.edges, std::make_pair(right_rid, right_to_merged));
+  safe_insert(merged_rev.edges, make_pair(right_rid, right_to_merged));
   
   revision_data merged_data;
   write_revision_set(merged_rev, merged_data);

@@ -9,20 +9,26 @@
 #include "app_state.hh"
 #include "constants.hh"
 
+using std::make_pair;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
 namespace selectors
 {
 
   static void
-  decode_selector(std::string const & orig_sel,
+  decode_selector(string const & orig_sel,
                   selector_type & type,
-                  std::string & sel,
+                  string & sel,
                   app_state & app)
   {
     sel = orig_sel;
 
     L(FL("decoding selector '%s'\n") % sel);
 
-    std::string tmp;
+    string tmp;
     if (sel.size() < 2 || sel[1] != ':')
       {
         if (!app.lua.hook_expand_selector(sel, tmp))
@@ -94,29 +100,29 @@ namespace selectors
   }
 
   void
-  complete_selector(std::string const & orig_sel,
-                    std::vector<std::pair<selector_type, std::string> > const & limit,
+  complete_selector(string const & orig_sel,
+                    vector<pair<selector_type, string> > const & limit,
                     selector_type & type,
-                    std::set<std::string> & completions,
+                    set<string> & completions,
                     app_state & app)
   {
-    std::string sel;
+    string sel;
     decode_selector(orig_sel, type, sel, app);
     app.db.complete(type, sel, limit, completions);
   }
 
-  std::vector<std::pair<selector_type, std::string> >
-  parse_selector(std::string const & str,
+  vector<pair<selector_type, string> >
+  parse_selector(string const & str,
                  app_state & app)
   {
-    std::vector<std::pair<selector_type, std::string> > sels;
+    vector<pair<selector_type, string> > sels;
 
     // this rule should always be enabled, even if the user specifies
     // --norc: if you provide a revision id, you get a revision id.
-    if (str.find_first_not_of(constants::legal_id_bytes) == std::string::npos
+    if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
         && str.size() == constants::idlen)
       {
-        sels.push_back(std::make_pair(sel_ident, str));
+        sels.push_back(make_pair(sel_ident, str));
       }
     else
       {
@@ -124,17 +130,17 @@ namespace selectors
         boost::escaped_list_separator<char> slash("\\", "/", "");
         tokenizer tokens(str, slash);
 
-        std::vector<std::string> selector_strings;
+        vector<string> selector_strings;
         copy(tokens.begin(), tokens.end(), back_inserter(selector_strings));
 
-        for (std::vector<std::string>::const_iterator i = selector_strings.begin();
+        for (vector<string>::const_iterator i = selector_strings.begin();
              i != selector_strings.end(); ++i)
           {
-            std::string sel;
+            string sel;
             selector_type type = sel_unknown;
 
             decode_selector(*i, type, sel, app);
-            sels.push_back(std::make_pair(type, sel));
+            sels.push_back(make_pair(type, sel));
           }
       }
 

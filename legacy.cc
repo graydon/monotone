@@ -8,6 +8,9 @@
 #include "app_state.hh"
 #include "constants.hh"
 
+using std::make_pair;
+using std::string;
+
 namespace legacy
 {
   namespace 
@@ -26,7 +29,7 @@ namespace legacy
     basic_io::tokenizer tok(src);
     basic_io::parser parser(tok);
     
-    std::string file, name, value;
+    string file, name, value;
     
     attr.clear();
 
@@ -70,7 +73,7 @@ namespace legacy
   extract_renames(basic_io::parser & parser, renames_map & renames)
   {
     revision_id old_rev;
-    std::string tmp;
+    string tmp;
     parser.esym(syms::old_revision);
     parser.hex(tmp);
     old_rev = revision_id(tmp);
@@ -90,7 +93,7 @@ namespace legacy
         else if (parser.symp(syms::rename_file)
                  || parser.symp(syms::rename_dir))
           {
-            std::string from_str, to_str;
+            string from_str, to_str;
             parser.sym();
             parser.str(from_str);
             parser.esym(syms::to);
@@ -128,7 +131,7 @@ namespace legacy
     basic_io::parser pars(tok);
 
     pars.esym(syms::new_manifest);
-    std::string tmp;
+    string tmp;
     pars.hex(tmp);
     mid = manifest_id(tmp);
     while (pars.symp(syms::old_revision))
@@ -141,23 +144,23 @@ namespace legacy
                     manifest_map & man)
   {
     data const & dat = mdat.inner();
-    std::string::size_type pos = 0;
+    string::size_type pos = 0;
     while (pos != dat().size())
       {
         // whenever we get here, pos points to the beginning of a manifest
         // line
         // manifest file has 40 characters hash, then 2 characters space, then
         // everything until next \n is filename.
-        std::string ident = dat().substr(pos, constants::idlen);
-        std::string::size_type file_name_begin = pos + constants::idlen + 2;
+        string ident = dat().substr(pos, constants::idlen);
+        string::size_type file_name_begin = pos + constants::idlen + 2;
         pos = dat().find('\n', file_name_begin);
-        std::string file_name;
-        if (pos == std::string::npos)
+        string file_name;
+        if (pos == string::npos)
           file_name = dat().substr(file_name_begin);
         else
           file_name = dat().substr(file_name_begin, pos - file_name_begin);
-        man.insert(std::make_pair(file_path_internal(file_name),
-                                  hexenc<id>(ident)));
+        man.insert(make_pair(file_path_internal(file_name),
+                             hexenc<id>(ident)));
         // skip past the '\n'
         ++pos;
       }

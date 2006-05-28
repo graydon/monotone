@@ -16,7 +16,7 @@
 #include "transforms.hh"
 #include "hmac.hh"
 
-using namespace std;
+using std::string;
 
 static netcmd_item_type 
 read_netcmd_item_type(string const & in, 
@@ -172,7 +172,7 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
 ////////////////////////////////////////////
 
 void 
-netcmd::read_error_cmd(std::string & errmsg) const
+netcmd::read_error_cmd(string & errmsg) const
 {
   size_t pos = 0;
   // syntax is: <errmsg:vstr>
@@ -181,7 +181,7 @@ netcmd::read_error_cmd(std::string & errmsg) const
 }
 
 void 
-netcmd::write_error_cmd(std::string const & errmsg)
+netcmd::write_error_cmd(string const & errmsg)
 {
   cmd_code = error_cmd;
   payload.clear();
@@ -256,7 +256,7 @@ netcmd::read_anonymous_cmd(protocol_role & role,
       && role_byte != static_cast<u8>(source_and_sink_role))
     throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
   role = static_cast<protocol_role>(role_byte);
-  std::string pattern_string;
+  string pattern_string;
   extract_variable_length_string(payload, pattern_string, pos,
                                  "anonymous(hmac) netcmd, include_pattern");
   include_pattern = utf8(pattern_string);
@@ -302,7 +302,7 @@ netcmd::read_auth_cmd(protocol_role & role,
       && role_byte != static_cast<u8>(source_and_sink_role))
     throw bad_decode(F("unknown role specifier %d") % widen<u32,u8>(role_byte));
   role = static_cast<protocol_role>(role_byte);
-  std::string pattern_string;
+  string pattern_string;
   extract_variable_length_string(payload, pattern_string, pos,
                                  "auth(hmac) netcmd, include_pattern");
   include_pattern = utf8(pattern_string);
@@ -519,7 +519,7 @@ void
 netcmd::read_usher_cmd(utf8 & greeting) const
 {
   size_t pos = 0;
-  std::string str;
+  string str;
   extract_variable_length_string(payload, str, pos, "error netcmd, message");
   greeting = utf8(str);
   assert_end_of_buffer(payload, pos, "error netcmd payload");

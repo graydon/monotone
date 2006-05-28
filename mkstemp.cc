@@ -22,13 +22,15 @@
 #define O_BINARY 0
 #endif
 
+using std::string;
+
 int
-monotone_mkstemp(std::string &tmpl)
+monotone_mkstemp(string &tmpl)
 {
   unsigned int len = 0;
   int i = 0;
   int count = 0, fd = -1;
-  std::string tmp;
+  string tmp;
 
   static const char letters[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

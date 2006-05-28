@@ -17,9 +17,11 @@
 #include "netcmd.hh"
 #include "netsync.hh"
 
-using std::string;
-using std::set;
+using std::inserter;
 using std::make_pair;
+using std::set;
+using std::set_difference;
+using std::string;
 
 // Our goal is to learn the complete set of items to send. To do this
 // we exchange two types of refinement commands: queries and responses.
@@ -68,7 +70,7 @@ void
 refiner::load_merkle_node(size_t level, prefix const & pref,
                           merkle_ptr & node)
 {
-  merkle_table::const_iterator j = table.find(std::make_pair(pref, level));  
+  merkle_table::const_iterator j = table.find(make_pair(pref, level));  
   I(j != table.end());
   node = j->second;
 }
@@ -77,7 +79,7 @@ bool
 refiner::merkle_node_exists(size_t level,
                             prefix const & pref)
 {
-  merkle_table::const_iterator j = table.find(std::make_pair(pref, level));
+  merkle_table::const_iterator j = table.find(make_pair(pref, level));
   return (j != table.end());
 }
 
@@ -90,9 +92,9 @@ refiner::calculate_items_to_send()
   items_to_send.clear();
   items_to_receive = 0;
 
-  std::set_difference(local_items.begin(), local_items.end(),
-                      peer_items.begin(), peer_items.end(),
-                      std::inserter(items_to_send, items_to_send.begin()));
+  set_difference(local_items.begin(), local_items.end(),
+                 peer_items.begin(), peer_items.end(),
+                 inserter(items_to_send, items_to_send.begin()));
 
   string typestr;
   netcmd_item_type_to_string(type, typestr);

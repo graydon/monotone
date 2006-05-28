@@ -233,7 +233,16 @@
 // interpreting manually anyways.
 //
 
-using namespace std;
+using std::auto_ptr;
+using std::deque;
+using std::make_pair;
+using std::map;
+using std::min;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
 using boost::shared_ptr;
 using boost::lexical_cast;
 
@@ -921,7 +930,7 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
 // ensure that our peer receives the error message.
 // Affects read_some, write_some, and process .
 void
-session::error(std::string const & errmsg)
+session::error(string const & errmsg)
 {
   throw netsync_error(errmsg);
 }
@@ -977,7 +986,7 @@ session::write_some()
   I(!outbuf.empty());    
   size_t writelen = outbuf.front().first.size() - outbuf.front().second;
   Netxx::signed_size_type count = str.write(outbuf.front().first.data() + outbuf.front().second, 
-                                            std::min(writelen,
+                                            min(writelen,
                                             constants::bufsz));
   if (count > 0)
     {
@@ -1804,9 +1813,9 @@ session::process_data_cmd(netcmd_item_type type,
         epoch_data epoch;
         read_epoch(dat, branch, epoch);
         L(FL("received epoch %s for branch %s\n") % epoch % branch);
-        std::map<cert_value, epoch_data> epochs;
+        map<cert_value, epoch_data> epochs;
         app.db.get_epochs(epochs);
-        std::map<cert_value, epoch_data>::const_iterator i;
+        map<cert_value, epoch_data>::const_iterator i;
         i = epochs.find(branch);
         if (i == epochs.end())
           {
@@ -2754,9 +2763,9 @@ insert_with_parents(revision_id rev,
           id rev_item;
           decode_hexenc(rid.inner(), rev_item);
           ref.note_local_item(rev_item);
-          std::vector<revision_id> parents;
+          vector<revision_id> parents;
           rev_enumerator.get_revision_parents(rid, parents);
-          for (std::vector<revision_id>::const_iterator i = parents.begin();
+          for (vector<revision_id>::const_iterator i = parents.begin();
                i != parents.end(); ++i)
             {
               work.push_back(*i);
@@ -2821,19 +2830,19 @@ session::rebuild_merkle_trees(app_state & app,
     map<cert_value, epoch_data> epochs;
     app.db.get_epochs(epochs);
     
-    epoch_data epoch_zero(std::string(constants::epochlen, '0'));
-    for (std::set<utf8>::const_iterator i = branchnames.begin();
+    epoch_data epoch_zero(string(constants::epochlen, '0'));
+    for (set<utf8>::const_iterator i = branchnames.begin();
          i != branchnames.end(); ++i)
       {
         cert_value branch((*i)());
-        std::map<cert_value, epoch_data>::const_iterator j;
+        map<cert_value, epoch_data>::const_iterator j;
         j = epochs.find(branch);
 
         // Set to zero any epoch which is not yet set.
         if (j == epochs.end())
           {
             L(FL("setting epoch on %s to zero\n") % branch);
-            epochs.insert(std::make_pair(branch, epoch_zero));
+            epochs.insert(make_pair(branch, epoch_zero));
             app.db.set_epoch(branch, epoch_zero);
           }
 
@@ -2849,8 +2858,8 @@ session::rebuild_merkle_trees(app_state & app,
   }
   
   {
-    typedef std::vector< std::pair<hexenc<id>,
-      std::pair<revision_id, rsa_keypair_id> > > cert_idx;
+    typedef vector< pair<hexenc<id>,
+      pair<revision_id, rsa_keypair_id> > > cert_idx;
     
     cert_idx idx;
     app.db.get_revision_cert_nobranch_index(idx);
@@ -2928,13 +2937,13 @@ run_netsync_protocol(protocol_voice voice,
                      utf8 const & exclude_pattern,
                      app_state & app)
 {
-  if (include_pattern().find_first_of("'\"") != std::string::npos)
+  if (include_pattern().find_first_of("'\"") != string::npos)
     {
       W(F("include branch pattern contains a quote character:\n"
           "%s\n") % include_pattern());
     }
 
-  if (exclude_pattern().find_first_of("'\"") != std::string::npos)
+  if (exclude_pattern().find_first_of("'\"") != string::npos)
     {
       W(F("exclude branch pattern contains a quote character:\n"
           "%s\n") % exclude_pattern());

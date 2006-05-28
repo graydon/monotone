@@ -26,6 +26,20 @@
 #include "cert.hh"
 #include "ui.hh"
 
+using std::auto_ptr;
+using std::back_insert_iterator;
+using std::back_inserter;
+using std::cout;
+using std::deque;
+using std::endl;
+using std::make_pair;
+using std::map;
+using std::min;
+using std::set;
+using std::string;
+using std::vector;
+
+using boost::shared_ptr; 
 
 class annotate_lineage_mapping;
 
@@ -34,7 +48,7 @@ class annotate_context {
 public:
   annotate_context(file_id fid, app_state &app);
 
-  boost::shared_ptr<annotate_lineage_mapping> initial_lineage() const;
+  shared_ptr<annotate_lineage_mapping> initial_lineage() const;
 
   /// credit any uncopied lines (as recorded in copied_lines) to
   /// rev, and reset copied_lines.
@@ -51,27 +65,27 @@ public:
 
   void dump(app_state & app) const;
 
-  std::string get_line(int line_index) const { return file_lines[line_index]; }
+  string get_line(int line_index) const { return file_lines[line_index]; }
 
 private:
-  void build_revisions_to_annotations(app_state & app, std::map<revision_id, std::string> & revs_to_notations) const;
+  void build_revisions_to_annotations(app_state & app, map<revision_id, string> & revs_to_notations) const;
 
-  std::vector<std::string> file_lines;
-  std::vector<revision_id> annotations;
+  vector<string> file_lines;
+  vector<revision_id> annotations;
 
   /// equivalent_lines[n] = m means that line n should be blamed to the same 
   /// revision as line m
-  std::map<int, int> equivalent_lines;
+  map<int, int> equivalent_lines;
 
   /// keep a count so we can tell quickly whether we can terminate
   size_t annotated_lines_completed;
 
   // elements of the set are indexes into the array of lines in the UDOI
   // lineages add entries here when they notice that they copied a line from the UDOI
-  std::set<size_t> copied_lines;
+  set<size_t> copied_lines;
 
   // similarly, lineages add entries here for all the lines from the UDOI they know about that they didn't copy
-  std::set<size_t> touched_lines;
+  set<size_t> touched_lines;
 };
 
 
@@ -84,31 +98,31 @@ private:
 class annotate_lineage_mapping {
 public:
   annotate_lineage_mapping(const file_data &data);
-  annotate_lineage_mapping(const std::vector<std::string> &lines);
+  annotate_lineage_mapping(const vector<string> &lines);
 
   // debugging
   //bool equal_interned (const annotate_lineage_mapping &rhs) const;
 
   /// need a better name.  does the work of setting copied bits in the context object.
-  boost::shared_ptr<annotate_lineage_mapping> 
-  build_parent_lineage(boost::shared_ptr<annotate_context> acp, revision_id parent_rev, const file_data &parent_data) const;
+  shared_ptr<annotate_lineage_mapping> 
+  build_parent_lineage(shared_ptr<annotate_context> acp, revision_id parent_rev, const file_data &parent_data) const;
 
-  void merge(const annotate_lineage_mapping &other, const boost::shared_ptr<annotate_context> &acp);
+  void merge(const annotate_lineage_mapping &other, const shared_ptr<annotate_context> &acp);
 
-  void credit_mapped_lines (boost::shared_ptr<annotate_context> acp) const;
-  void set_copied_all_mapped (boost::shared_ptr<annotate_context> acp) const;
+  void credit_mapped_lines(shared_ptr<annotate_context> acp) const;
+  void set_copied_all_mapped(shared_ptr<annotate_context> acp) const;
 
 private:
-  void init_with_lines(const std::vector<std::string> &lines);
+  void init_with_lines(const vector<string> &lines);
 
   static interner<long> in; // FIX, testing hack 
 
-  std::vector<long, QA(long)> file_interned;
+  vector<long, QA(long)> file_interned;
 
   // maps an index into the vector of lines for our current version of the file
   // into an index into the vector of lines of the UDOI:
   // eg. if the line file_interned[i] will turn into line 4 in the UDOI, mapping[i] = 4
-  std::vector<int> mapping;
+  vector<int> mapping;
 };
 
 
@@ -121,23 +135,23 @@ interner<long> annotate_lineage_mapping::in;
   childrev -> parentrevN edges.
 */
 struct annotate_node_work {
-  annotate_node_work (boost::shared_ptr<annotate_context> annotations_,
-                      boost::shared_ptr<annotate_lineage_mapping> lineage_,
-                      revision_id revision_, node_id fid_)//, file_path node_fpath_)
+  annotate_node_work(shared_ptr<annotate_context> annotations_,
+                     shared_ptr<annotate_lineage_mapping> lineage_,
+                     revision_id revision_, node_id fid_)//, file_path node_fpath_)
     : annotations(annotations_), 
       lineage(lineage_),
       revision(revision_), 
       fid(fid_)//, node_fpath(node_fpath_)
   {}
-  annotate_node_work (const annotate_node_work &w)
+  annotate_node_work(const annotate_node_work &w)
     : annotations(w.annotations), 
       lineage(w.lineage),
       revision(w.revision),
       fid(w.fid) //, node_fpath(w.node_fpath)
   {}
 
-  boost::shared_ptr<annotate_context> annotations;
-  boost::shared_ptr<annotate_lineage_mapping> lineage;
+  shared_ptr<annotate_context> annotations;
+  shared_ptr<annotate_lineage_mapping> lineage;
   revision_id revision;
   //file_id     node_fid;
   node_id fid;
@@ -147,7 +161,7 @@ struct annotate_node_work {
 
 class lineage_merge_node {
 public:
-  typedef boost::shared_ptr<annotate_lineage_mapping> splm;
+  typedef shared_ptr<annotate_lineage_mapping> splm;
 
   lineage_merge_node(const lineage_merge_node &m)
     : work(m.work), incoming_edges(m.incoming_edges), completed_edges(m.completed_edges)
@@ -157,7 +171,7 @@ public:
     : work(wu), incoming_edges(incoming), completed_edges(1)
   {}
   
-  void merge(splm incoming, const boost::shared_ptr<annotate_context> &acp)
+  void merge(splm incoming, const shared_ptr<annotate_context> &acp)
   { 
     work.lineage->merge(*incoming, acp); completed_edges++;
   }
@@ -182,7 +196,7 @@ annotate_context::annotate_context(file_id fid, app_state &app)
   // initialize file_lines
   file_data fpacked;
   app.db.get_file_version(fid, fpacked);
-  std::string encoding = constants::default_encoding; // FIXME
+  string encoding = constants::default_encoding; // FIXME
   split_into_lines(fpacked.inner()(), encoding, file_lines);
   L(FL("annotate_context::annotate_context initialized with %d file lines\n") % file_lines.size());
 
@@ -199,10 +213,10 @@ annotate_context::annotate_context(file_id fid, app_state &app)
 }
 
 
-boost::shared_ptr<annotate_lineage_mapping> 
+shared_ptr<annotate_lineage_mapping> 
 annotate_context::initial_lineage() const
 {
-  boost::shared_ptr<annotate_lineage_mapping> res(new annotate_lineage_mapping(file_lines));
+  shared_ptr<annotate_lineage_mapping> res(new annotate_lineage_mapping(file_lines));
   return res;
 }
 
@@ -215,12 +229,12 @@ annotate_context::evaluate(revision_id rev)
   I(touched_lines.size() <= annotations.size());
 
   // Find the lines that we touched but that no other parent copied.
-  std::set<size_t> credit_lines;
-  std::set_difference(touched_lines.begin(), touched_lines.end(),
-                      copied_lines.begin(), copied_lines.end(),
-                      inserter(credit_lines, credit_lines.begin()));
+  set<size_t> credit_lines;
+  set_difference(touched_lines.begin(), touched_lines.end(),
+                 copied_lines.begin(), copied_lines.end(),
+                 inserter(credit_lines, credit_lines.begin()));
 
-  std::set<size_t>::const_iterator i;
+  set<size_t>::const_iterator i;
   for (i = credit_lines.begin(); i != credit_lines.end(); i++) {
     I(*i < annotations.size());
     if (annotations[*i] == nullid) {
@@ -273,7 +287,7 @@ annotate_context::annotate_equivalent_lines()
 
   for (size_t i=0; i<annotations.size(); i++) {
     if (annotations[i] == null_id) {
-      std::map<int, int>::const_iterator j = equivalent_lines.find(i);
+      map<int, int>::const_iterator j = equivalent_lines.find(i);
       if (j == equivalent_lines.end()) {
         L(FL("annotate_equivalent_lines unable to find equivalent for line %d\n") % i);
       }
@@ -295,26 +309,26 @@ annotate_context::is_complete() const
 }
 
 
-std::string cert_string_value (std::vector< revision<cert> > const & certs,
-                               const std::string & name, 
-                               bool from_start, bool from_end, 
-                               const std::string & sep)
+string cert_string_value(vector< revision<cert> > const & certs,
+                         const string & name, 
+                         bool from_start, bool from_end, 
+                         const string & sep)
 {
-  for (std::vector < revision < cert > >::const_iterator i = certs.begin ();
+  for (vector < revision < cert > >::const_iterator i = certs.begin ();
        i != certs.end (); ++i)
     {
       if (i->inner ().name () == name)
         {
           cert_value tv;
           decode_base64 (i->inner ().value, tv);
-          std::string::size_type f = 0;
-          std::string::size_type l = std::string::npos;
+          string::size_type f = 0;
+          string::size_type l = string::npos;
           if (from_start)
             l = tv ().find_first_of (sep);
           if (from_end)
             {
               f = tv ().find_last_of (sep);
-              if (f == std::string::npos)
+              if (f == string::npos)
                 f = 0;
             }
           return tv ().substr (f, l);
@@ -327,13 +341,13 @@ std::string cert_string_value (std::vector< revision<cert> > const & certs,
 
 void
 annotate_context::build_revisions_to_annotations(app_state &app,
-                                                 std::map<revision_id, std::string> &revs_to_notations) const
+                                                 map<revision_id, string> &revs_to_notations) const
 {
   I(annotations.size() == file_lines.size());
 
   // build set of unique revisions present in annotations
-  std::set<revision_id> seen;
-  for (std::vector<revision_id>::const_iterator i = annotations.begin(); i != annotations.end(); i++)
+  set<revision_id> seen;
+  for (vector<revision_id>::const_iterator i = annotations.begin(); i != annotations.end(); i++)
     {
       seen.insert(*i);
     }
@@ -341,16 +355,16 @@ annotate_context::build_revisions_to_annotations(app_state &app,
   size_t max_note_length = 0;
 
   // build revision -> annotation string mapping
-  for (std::set<revision_id>::const_iterator i = seen.begin(); i != seen.end(); i++)
+  for (set<revision_id>::const_iterator i = seen.begin(); i != seen.end(); i++)
     {
-      std::vector< revision<cert> > certs;
+      vector< revision<cert> > certs;
       app.db.get_revision_certs(*i, certs);
       erase_bogus_certs(certs, app);
 
-      std::string author(cert_string_value(certs, author_cert_name, true, false, "@< "));
-      std::string date(cert_string_value(certs, date_cert_name, true, false, "T"));
+      string author(cert_string_value(certs, author_cert_name, true, false, "@< "));
+      string date(cert_string_value(certs, date_cert_name, true, false, "T"));
 
-      std::string result;
+      string result;
       result.append((*i).inner ()().substr(0, 8));
       result.append(".. by ");
       result.append(author);
@@ -363,10 +377,10 @@ annotate_context::build_revisions_to_annotations(app_state &app,
     }
 
   // justify annotation strings
-  for (std::map<revision_id, std::string>::iterator i = revs_to_notations.begin(); i != revs_to_notations.end(); i++)
+  for (map<revision_id, string>::iterator i = revs_to_notations.begin(); i != revs_to_notations.end(); i++)
     {
       size_t l = i->second.size();
-      i->second.insert(std::string::size_type(0), max_note_length - l, ' ');
+      i->second.insert(string::size_type(0), max_note_length - l, ' ');
     }
 }
 
@@ -377,13 +391,13 @@ annotate_context::dump(app_state &app) const
   revision_id nullid;
   I(annotations.size() == file_lines.size());
 
-  std::map<revision_id, std::string> revs_to_notations;
-  std::string empty_note;
+  map<revision_id, string> revs_to_notations;
+  string empty_note;
   if (global_sanity.brief) 
     {
       build_revisions_to_annotations(app, revs_to_notations);
       size_t max_note_length = revs_to_notations.begin()->second.size();
-      empty_note.insert(std::string::size_type(0), max_note_length - 2, ' ');
+      empty_note.insert(string::size_type(0), max_note_length - 2, ' ');
     }
 
   revision_id lastid = nullid;
@@ -393,13 +407,13 @@ annotate_context::dump(app_state &app) const
       if (global_sanity.brief)
         {
           if (lastid == annotations[i])
-            std::cout << empty_note << ": " << file_lines[i] << std::endl;
+            cout << empty_note << ": " << file_lines[i] << endl;
           else
-            std::cout << revs_to_notations[annotations[i]] << file_lines[i] << std::endl;
+            cout << revs_to_notations[annotations[i]] << file_lines[i] << endl;
           lastid = annotations[i];
         } 
       else
-        std::cout << annotations[i] << ": " << file_lines[i] << std::endl;
+        cout << annotations[i] << ": " << file_lines[i] << endl;
     }
 }
 
@@ -407,14 +421,14 @@ annotate_context::dump(app_state &app) const
 annotate_lineage_mapping::annotate_lineage_mapping(const file_data &data)
 {
   // split into lines
-  std::vector<std::string> lines;
-  std::string encoding = constants::default_encoding; // FIXME
+  vector<string> lines;
+  string encoding = constants::default_encoding; // FIXME
   split_into_lines (data.inner()().data(), encoding, lines);
 
   init_with_lines(lines);
 }
 
-annotate_lineage_mapping::annotate_lineage_mapping(const std::vector<std::string> &lines)
+annotate_lineage_mapping::annotate_lineage_mapping(const vector<string> &lines)
 {
   init_with_lines(lines);
 }
@@ -431,7 +445,7 @@ annotate_lineage_mapping::equal_interned (const annotate_lineage_mapping &rhs) c
     result = false;
   }
 
-  size_t limit = std::min(file_interned.size(), rhs.file_interned.size());
+  size_t limit = min(file_interned.size(), rhs.file_interned.size());
   for (size_t i=0; i<limit; i++) {
     if (file_interned[i] != rhs.file_interned[i]) {
       L(FL("annotate_lineage_mapping::equal_interned lhs[%d]:%ld != rhs[%d]:%ld\n")
@@ -445,7 +459,7 @@ annotate_lineage_mapping::equal_interned (const annotate_lineage_mapping &rhs) c
 */
 
 void
-annotate_lineage_mapping::init_with_lines(const std::vector<std::string> &lines)
+annotate_lineage_mapping::init_with_lines(const vector<string> &lines)
 {
   file_interned.clear();
   file_interned.reserve(lines.size());
@@ -453,7 +467,7 @@ annotate_lineage_mapping::init_with_lines(const std::vector<std::string> &lines)
   mapping.reserve(lines.size());
 
   int count;
-  std::vector<std::string>::const_iterator i;
+  vector<string>::const_iterator i;
   for (count=0, i = lines.begin(); i != lines.end(); i++, count++) {
     file_interned.push_back(in.intern(*i));
     mapping.push_back(count);
@@ -462,29 +476,29 @@ annotate_lineage_mapping::init_with_lines(const std::vector<std::string> &lines)
 }
 
 
-boost::shared_ptr<annotate_lineage_mapping>
-annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_context> acp, 
-                                                revision_id parent_rev, 
-                                                const file_data &parent_data) const
+shared_ptr<annotate_lineage_mapping>
+annotate_lineage_mapping::build_parent_lineage(shared_ptr<annotate_context> acp, 
+                                               revision_id parent_rev, 
+                                               const file_data &parent_data) const
 {
   bool verbose = false;
-  boost::shared_ptr<annotate_lineage_mapping> parent_lineage(new annotate_lineage_mapping(parent_data));
+  shared_ptr<annotate_lineage_mapping> parent_lineage(new annotate_lineage_mapping(parent_data));
 
-  std::vector<long, QA(long)> lcs;
-  std::back_insert_iterator< std::vector<long, QA(long)> > bii(lcs);
+  vector<long, QA(long)> lcs;
+  back_insert_iterator< vector<long, QA(long)> > bii(lcs);
   longest_common_subsequence(file_interned.begin(), 
                              file_interned.end(),
                              parent_lineage->file_interned.begin(), 
                              parent_lineage->file_interned.end(),
-                             std::min(file_interned.size(), parent_lineage->file_interned.size()),
-                             std::back_inserter(lcs));
+                             min(file_interned.size(), parent_lineage->file_interned.size()),
+                             back_inserter(lcs));
 
   if (verbose)
     L(FL("build_parent_lineage: file_lines.size() == %d, parent.file_lines.size() == %d, lcs.size() == %d\n")
       % file_interned.size() % parent_lineage->file_interned.size() % lcs.size());
 
   // do the copied lines thing for our annotate_context
-  std::vector<long> lcs_src_lines;
+  vector<long> lcs_src_lines;
   lcs_src_lines.resize(lcs.size());
   size_t i, j;
   i = j = 0;
@@ -544,8 +558,8 @@ annotate_lineage_mapping::build_parent_lineage (boost::shared_ptr<annotate_conte
 
 
 void
-annotate_lineage_mapping::merge (const annotate_lineage_mapping &other, 
-                                 const boost::shared_ptr<annotate_context> &acp)
+annotate_lineage_mapping::merge(const annotate_lineage_mapping &other, 
+                                const shared_ptr<annotate_context> &acp)
 {
   I(file_interned.size() == other.file_interned.size());
   I(mapping.size() == other.mapping.size());
@@ -569,9 +583,9 @@ annotate_lineage_mapping::merge (const annotate_lineage_mapping &other,
 }
 
 void
-annotate_lineage_mapping::credit_mapped_lines (boost::shared_ptr<annotate_context> acp) const
+annotate_lineage_mapping::credit_mapped_lines (shared_ptr<annotate_context> acp) const
 {
-  std::vector<int>::const_iterator i;
+  vector<int>::const_iterator i;
   for (i=mapping.begin(); i != mapping.end(); i++) {
     acp->set_touched(*i);
   }
@@ -579,9 +593,9 @@ annotate_lineage_mapping::credit_mapped_lines (boost::shared_ptr<annotate_contex
 
 
 void 
-annotate_lineage_mapping::set_copied_all_mapped (boost::shared_ptr<annotate_context> acp) const
+annotate_lineage_mapping::set_copied_all_mapped (shared_ptr<annotate_context> acp) const
 {
-  std::vector<int>::const_iterator i;
+  vector<int>::const_iterator i;
   for (i=mapping.begin(); i != mapping.end(); i++) {
     acp->set_copied(*i);
   }
@@ -591,20 +605,20 @@ annotate_lineage_mapping::set_copied_all_mapped (boost::shared_ptr<annotate_cont
 static void
 do_annotate_node (const annotate_node_work &work_unit, 
                   app_state &app,
-                  std::deque<annotate_node_work> &nodes_to_process,
-                  std::set<revision_id> &nodes_complete,
-                  const std::map<revision_id, size_t> &paths_to_nodes,
-                  std::map<revision_id, lineage_merge_node> &pending_merge_nodes)
+                  deque<annotate_node_work> &nodes_to_process,
+                  set<revision_id> &nodes_complete,
+                  const map<revision_id, size_t> &paths_to_nodes,
+                  map<revision_id, lineage_merge_node> &pending_merge_nodes)
 {
   L(FL("do_annotate_node for node %s\n") % work_unit.revision);
   I(nodes_complete.find(work_unit.revision) == nodes_complete.end());
-  // nodes_seen.insert(std::make_pair(work_unit.revision, work_unit.lineage));
+  // nodes_seen.insert(make_pair(work_unit.revision, work_unit.lineage));
 
   roster_t roster;
   marking_map markmap;
   app.db.get_roster(work_unit.revision, roster, markmap);
   marking_t marks;
-  std::map<node_id, marking_t>::const_iterator mmi = markmap.find(work_unit.fid);
+  map<node_id, marking_t>::const_iterator mmi = markmap.find(work_unit.fid);
   I(mmi != markmap.end());
   marks = mmi->second;
 
@@ -617,7 +631,7 @@ do_annotate_node (const annotate_node_work &work_unit,
       return;
     }
 
-  std::set<revision_id> parents;
+  set<revision_id> parents;
 
   // If we have content-marks which are *not* equal to the current rev,
   // we can jump back to them directly. If we have only a content-mark
@@ -637,7 +651,7 @@ do_annotate_node (const annotate_node_work &work_unit,
 
   size_t added_in_parent_count = 0;
 
-  for (std::set<revision_id>::const_iterator i = parents.begin(); 
+  for (set<revision_id>::const_iterator i = parents.begin(); 
        i != parents.end(); i++)
     {
       revision_id parent_revision = *i;
@@ -661,7 +675,7 @@ do_annotate_node (const annotate_node_work &work_unit,
       file_t file_in_child = downcast_to_file_t(roster.get_node(work_unit.fid));
       file_t file_in_parent = downcast_to_file_t(parent_roster.get_node(work_unit.fid));
 
-      boost::shared_ptr<annotate_lineage_mapping> parent_lineage;
+      shared_ptr<annotate_lineage_mapping> parent_lineage;
 
       if (file_in_parent->content == file_in_child->content)
         {
@@ -681,7 +695,7 @@ do_annotate_node (const annotate_node_work &work_unit,
 
       // If this parent has not yet been queued for processing, create the
       // work unit for it.
-      std::map<revision_id, lineage_merge_node>::iterator lmn 
+      map<revision_id, lineage_merge_node>::iterator lmn 
         = pending_merge_nodes.find(parent_revision);
 
       if (lmn == pending_merge_nodes.end()) 
@@ -693,13 +707,13 @@ do_annotate_node (const annotate_node_work &work_unit,
                                      parent_revision, 
                                      work_unit.fid);
 
-          std::map<revision_id, size_t>::const_iterator ptn 
+          map<revision_id, size_t>::const_iterator ptn 
             = paths_to_nodes.find(parent_revision);
 
           if (ptn->second > 1) 
             {
               lineage_merge_node nmn(newunit, ptn->second);
-              pending_merge_nodes.insert(std::make_pair(parent_revision, nmn));
+              pending_merge_nodes.insert(make_pair(parent_revision, nmn));
               L(FL("put new merge node on pending_merge_nodes for parent %s\n") 
                 % parent_revision);
               // just checking...
@@ -741,9 +755,9 @@ do_annotate_node (const annotate_node_work &work_unit,
 
 
 void 
-find_ancestors(app_state &app, revision_id rid, std::map<revision_id, size_t> &paths_to_nodes)
+find_ancestors(app_state &app, revision_id rid, map<revision_id, size_t> &paths_to_nodes)
 {
-  std::vector<revision_id> frontier;
+  vector<revision_id> frontier;
   frontier.push_back(rid);
 
   while (!frontier.empty())
@@ -751,16 +765,16 @@ find_ancestors(app_state &app, revision_id rid, std::map<revision_id, size_t> &p
       revision_id rid = frontier.back();
       frontier.pop_back();
       if(!null_id(rid)) {
-        std::set<revision_id> parents;
+        set<revision_id> parents;
         app.db.get_revision_parents(rid, parents);
-        for (std::set<revision_id>::const_iterator i = parents.begin();
+        for (set<revision_id>::const_iterator i = parents.begin();
              i != parents.end(); ++i)
           {
-            std::map<revision_id, size_t>::iterator found = paths_to_nodes.find(*i);
+            map<revision_id, size_t>::iterator found = paths_to_nodes.find(*i);
             if (found == paths_to_nodes.end())
               {
                 frontier.push_back(*i);
-                paths_to_nodes.insert(std::make_pair(*i, 1));
+                paths_to_nodes.insert(make_pair(*i, 1));
               }
             else
               {
@@ -776,20 +790,20 @@ do_annotate (app_state &app, file_t file_node, revision_id rid)
 {
   L(FL("annotating file %s with content %s in revision %s\n") % file_node->self % file_node->content % rid);
 
-  boost::shared_ptr<annotate_context> acp(new annotate_context(file_node->content, app));
-  boost::shared_ptr<annotate_lineage_mapping> lineage = acp->initial_lineage();
+  shared_ptr<annotate_context> acp(new annotate_context(file_node->content, app));
+  shared_ptr<annotate_lineage_mapping> lineage = acp->initial_lineage();
 
-  std::set<revision_id> nodes_complete;
-  std::map<revision_id, size_t> paths_to_nodes;
-  std::map<revision_id, lineage_merge_node> pending_merge_nodes;
+  set<revision_id> nodes_complete;
+  map<revision_id, size_t> paths_to_nodes;
+  map<revision_id, lineage_merge_node> pending_merge_nodes;
   find_ancestors(app, rid, paths_to_nodes);
 
   // build node work unit
-  std::deque<annotate_node_work> nodes_to_process;
+  deque<annotate_node_work> nodes_to_process;
   annotate_node_work workunit(acp, lineage, rid, file_node->self); //, fpath);
   nodes_to_process.push_back(workunit);
 
-  std::auto_ptr<ticker> revs_ticker(new ticker(N_("revs done"), "r", 1));
+  auto_ptr<ticker> revs_ticker(new ticker(N_("revs done"), "r", 1));
   revs_ticker->set_total(paths_to_nodes.size() + 1);
   while (nodes_to_process.size() && !acp->is_complete()) 
     {

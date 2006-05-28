@@ -59,9 +59,9 @@ system_to_utf8(external const & ext, utf8 & utf)
 size_t
 display_width(utf8 const & utf)
 {
-  std::string const & u = utf();
+  string const & u = utf();
   size_t sz = 0;
-  std::string::const_iterator i = u.begin();
+  string::const_iterator i = u.begin();
   while (i != u.end())
     {
       if (UNLIKELY(static_cast<u8>(*i) & static_cast<u8>(0x80)))
@@ -91,7 +91,7 @@ display_width(utf8 const & utf)
 static inline bool
 system_charset_is_utf8_impl()
 {
-  std::string lc_encoding = lowercase(system_charset());
+  string lc_encoding = lowercase(system_charset());
   return (lc_encoding == "utf-8"
           || lc_encoding == "utf_8"
           || lc_encoding == "utf8");
@@ -109,17 +109,17 @@ system_charset_is_ascii_extension_impl()
 {
   if (system_charset_is_utf8())
     return true;
-  std::string lc_encoding = lowercase(system_charset());
+  string lc_encoding = lowercase(system_charset());
   // if your character set is identical to ascii in the lower 7 bits, then add
   // it here for a speed boost.
-  return (lc_encoding.find("ascii") != std::string::npos
-          || lc_encoding.find("8859") != std::string::npos
-          || lc_encoding.find("ansi_x3.4") != std::string::npos
+  return (lc_encoding.find("ascii") != string::npos
+          || lc_encoding.find("8859") != string::npos
+          || lc_encoding.find("ansi_x3.4") != string::npos
           // http://www.cs.mcgill.ca/~aelias4/encodings.html -- "EUC (Extended
           // Unix Code) is a simple and clean encoding, standard on Unix
           // systems.... It is backwards-compatible with ASCII (i.e. valid
           // ASCII implies valid EUC)."
-          || lc_encoding.find("euc") != std::string::npos);
+          || lc_encoding.find("euc") != string::npos);
 }
 
 static inline bool
@@ -134,7 +134,7 @@ is_all_ascii(string const & utf)
 {
   // could speed this up by vectorization -- mask against 0x80808080,
   // process a whole word at at time...
-  for (std::string::const_iterator i = utf.begin(); i != utf.end(); ++i)
+  for (string::const_iterator i = utf.begin(); i != utf.end(); ++i)
     if (0x80 & *i)
       return false;
   return true;
@@ -142,7 +142,7 @@ is_all_ascii(string const & utf)
 
 // this function must be fast.  do not make it slow.
 void 
-utf8_to_system(utf8 const & utf, std::string & ext)
+utf8_to_system(utf8 const & utf, string & ext)
 {
   if (system_charset_is_utf8())
     ext = utf();
@@ -187,10 +187,10 @@ utf8_consume_continuation_char(u8 c, u32 & val)
 bool
 utf8_validate(utf8 const & utf)
 {
-  std::string::size_type left = utf().size();
+  string::size_type left = utf().size();
   u32 min, val;
 
-  for (std::string::const_iterator i = utf().begin();
+  for (string::const_iterator i = utf().begin();
        i != utf().end(); ++i, --left)
   {
     u8 c = *i;

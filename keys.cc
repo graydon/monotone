@@ -24,6 +24,9 @@
 #include "cert.hh"
 #include "app_state.hh"
 
+using std::map;
+using std::string;
+
 // copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
@@ -65,7 +68,7 @@ get_passphrase(lua_hooks & lua,
   // you're making a half-dozen certs during a commit or merge or
   // something.
   bool persist_phrase = lua.hook_persist_phrase_ok();
-  static std::map<rsa_keypair_id, string> phrases;
+  static map<rsa_keypair_id, string> phrases;
   
   if (!force_from_user && phrases.find(keyid) != phrases.end())
     {
@@ -419,7 +422,7 @@ check_signature(app_state &app,
 void encrypt_rsa(lua_hooks & lua,
                  rsa_keypair_id const & id,
                  base64<rsa_pub_key> & pub_encoded,
-                 std::string const & plaintext,
+                 string const & plaintext,
                  rsa_oaep_sha_data & ciphertext)
 {
   rsa_pub_key pub;
@@ -445,7 +448,7 @@ void decrypt_rsa(lua_hooks & lua,
                  rsa_keypair_id const & id,
                  base64< rsa_priv_key > const & priv,
                  rsa_oaep_sha_data const & ciphertext,
-                 std::string & plaintext)
+                 string & plaintext)
 {
   shared_ptr<RSA_PrivateKey> priv_key = get_private_key(lua, id, priv);
 

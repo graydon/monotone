@@ -9,10 +9,12 @@
 #include "localized_file_io.hh"
 
 #include <map>
-using std::map;
-using std::make_pair;
 #include <iostream>
+
 using std::cout;
+using std::make_pair;
+using std::pair;
+using std::map;
 
 static void 
 get_log_message_interactively(revision_set const & cs, 
@@ -324,7 +326,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
            i != cs.nodes_deleted.end(); ++i) 
         cout << "dropped " << *i << "\n";
 
-      for (std::map<split_path, split_path>::const_iterator 
+      for (map<split_path, split_path>::const_iterator 
            i = cs.nodes_renamed.begin();
            i != cs.nodes_renamed.end(); ++i) 
         cout << "renamed " << i->first << "\n" 
@@ -334,11 +336,11 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
            i != cs.dirs_added.end(); ++i) 
         cout << "added   " << *i << "\n";
 
-      for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+      for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
            i != cs.files_added.end(); ++i) 
         cout << "added   " << i->first << "\n";
 
-      for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
+      for (map<split_path, pair<file_id, file_id> >::const_iterator 
              i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i) 
         cout << "patched " << i->first << "\n";
     }
@@ -678,7 +680,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
         // process file deltas or new files
         cset const & cs = edge_changes(edge);
 
-        for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+        for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
              i != cs.deltas_applied.end(); ++i)
           {
             file_path path(i->first);
@@ -716,7 +718,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                          % old_content % path);
           }
 
-        for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+        for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
              i != cs.files_added.end(); ++i)
           {
             file_path path(i->first);

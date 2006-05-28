@@ -34,7 +34,7 @@ check_normalized(cset const & cs)
   // no file appears in both the "added" list and the "patched" list
   {
     map<split_path, file_id>::const_iterator a = cs.files_added.begin();
-    map<split_path, std::pair<file_id, file_id> >::const_iterator
+    map<split_path, pair<file_id, file_id> >::const_iterator
       d = cs.deltas_applied.begin();
     while (a != cs.files_added.end() && d != cs.deltas_applied.end())
       {
@@ -330,7 +330,7 @@ print_cset(basic_io::printer & printer,
 static inline void
 parse_path(basic_io::parser & parser, split_path & sp)
 {
-  std::string s;
+  string s;
   parser.str(s);
   file_path_internal(s).split(sp);
 }
@@ -463,7 +463,7 @@ read_cset(data const & dat, cset & cs)
 }
 
 template <> void
-dump(cset const & cs, std::string & out)
+dump(cset const & cs, string & out)
 {
   data dat;
   write_cset(cs, dat);
@@ -474,6 +474,8 @@ dump(cset const & cs, std::string & out)
 #include "unit_tests.hh"
 
 #include "roster.hh"
+
+using std::logic_error;
 
 static void
 setup_roster(roster_t & r, file_id const & fid, node_id_source & nis)
@@ -520,14 +522,14 @@ cset_written_test()
              "add_dir \"pling\"\n");
     data d1(s);
     cset cs;
-    BOOST_CHECK_THROW(read_cset(d1, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(d1, cs), logic_error);
     // check that it still fails if there's extra stanzas past the
     // mis-ordered entries
     data d2(s + "\n"
                 "  set \"bar\"\n"
                 " attr \"flavoursome\"\n"
                 "value \"mostly\"\n");
-    BOOST_CHECK_THROW(read_cset(d2, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(d2, cs), logic_error);
   }
 
   {
@@ -537,7 +539,7 @@ cset_written_test()
              "\n"
              "delete \"bar\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -549,7 +551,7 @@ cset_written_test()
              "rename \"bar\"\n"
              "    to \"barnew\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -559,7 +561,7 @@ cset_written_test()
              "\n"
              "add_dir \"bar\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -571,7 +573,7 @@ cset_written_test()
              "add_file \"bar\"\n"
              " content [0000000000000000000000000000000000000000]\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -583,7 +585,7 @@ cset_written_test()
              "add_file \"bar\"\n"
              " content [0000000000000000000000000000000000000000]\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -597,7 +599,7 @@ cset_written_test()
              " from [0000000000000000000000000000000000000000]\n"
              "   to [1000000000000000000000000000000000000000]\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -609,7 +611,7 @@ cset_written_test()
              "clear \"bar\"\n"
              " attr \"flavoursome\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -623,7 +625,7 @@ cset_written_test()
              " attr \"flavoursome\"\n"
              "value \"yes\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -632,7 +634,7 @@ cset_written_test()
              "\n"
              "delete \"foo\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -646,7 +648,7 @@ cset_written_test()
               " attr \"smell\"\n"
               "value \"socks\"\n");
     cset cs;
-    BOOST_CHECK_NOT_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_NOT_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -658,7 +660,7 @@ cset_written_test()
               "clear \"bar\"\n"
               " attr \"fooish\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -672,7 +674,7 @@ cset_written_test()
               " attr \"fooish\"\n"
               "value \"seldom\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -686,16 +688,16 @@ cset_written_test()
               " attr \"flavoursome\"\n"
               "value \"sometimes\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), std::logic_error);
+    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
     L(FL("TEST: cset writing - normalisation"));
     cset cs; MM(cs);
     split_path foo, bar, quux, foo_quux, idle, fish, womble, policeman;
-    file_id f1(std::string("1234567800000000000000000000000000000000"));
-    file_id f2(std::string("9876543212394657263900000000000000000000"));
-    file_id f3(std::string("0000000000011111111000000000000000000000"));
+    file_id f1(string("1234567800000000000000000000000000000000"));
+    file_id f2(string("9876543212394657263900000000000000000000"));
+    file_id f3(string("0000000000011111111000000000000000000000"));
     file_path_internal("foo").split(foo);
     file_path_internal("foo/quux").split(foo_quux);
     file_path_internal("bar").split(bar);
@@ -751,7 +753,7 @@ cset_written_test()
                  );
     MM(expected);
     // I() so that it'll dump on failure
-    BOOST_CHECK_NOT_THROW(I(expected == dat), std::logic_error);
+    BOOST_CHECK_NOT_THROW(I(expected == dat), logic_error);
   }
 }
 
@@ -765,8 +767,8 @@ basic_csets_test()
 
   editable_roster_base tree(r, nis);
   
-  file_id f1(std::string("0000000000000000000000000000000000000001"));
-  file_id f2(std::string("0000000000000000000000000000000000000002"));
+  file_id f1(string("0000000000000000000000000000000000000001"));
+  file_id f2(string("0000000000000000000000000000000000000002"));
 
   split_path root, foo, foo_bar, baz, quux;
   file_path().split(root);
@@ -781,7 +783,7 @@ basic_csets_test()
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.files_added.insert(make_pair(baz, f2));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     BOOST_CHECK(is_file_t(r.get_node(baz)));
     BOOST_CHECK(downcast_to_file_t(r.get_node(baz))->content == f2);
     BOOST_CHECK(r.all_nodes().size() == 4);
@@ -792,7 +794,7 @@ basic_csets_test()
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.dirs_added.insert(quux);
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     BOOST_CHECK(is_dir_t(r.get_node(quux)));
     BOOST_CHECK(r.all_nodes().size() == 4);
   }
@@ -803,7 +805,7 @@ basic_csets_test()
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo_bar);
     cs.nodes_deleted.insert(foo);
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     BOOST_CHECK(r.all_nodes().size() == 1); // only the root left
   }
 
@@ -812,7 +814,7 @@ basic_csets_test()
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo_bar, quux));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     BOOST_CHECK(is_file_t(r.get_node(quux)));
     BOOST_CHECK(is_dir_t(r.get_node(foo)));
     BOOST_CHECK(!r.has_node(foo_bar));
@@ -826,7 +828,7 @@ basic_csets_test()
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo, quux));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     BOOST_CHECK(is_dir_t(r.get_node(quux)));
     BOOST_CHECK(is_file_t(r.get_node(quux_bar)));
     BOOST_CHECK(!r.has_node(foo));
@@ -838,7 +840,7 @@ basic_csets_test()
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.deltas_applied.insert(make_pair(foo_bar, make_pair(f1, f2)));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     BOOST_CHECK(is_dir_t(r.get_node(foo)));
     BOOST_CHECK(is_file_t(r.get_node(foo_bar)));
     BOOST_CHECK(downcast_to_file_t(r.get_node(foo_bar))->content == f2);
@@ -851,7 +853,7 @@ basic_csets_test()
     cset cs; MM(cs);
     cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")), 
                                   attr_value("klang")));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
 
     full_attr_map_t attrs = (r.get_node(foo_bar))->attrs;
     BOOST_CHECK(attrs[attr_key("ping")] == make_pair(true, attr_value("klang")));
@@ -869,7 +871,7 @@ basic_csets_test()
     cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")), 
                                   attr_value("klang")));
     cs.attrs_cleared.insert(make_pair(foo_bar, attr_key("attr_file")));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     BOOST_CHECK((r.get_node(foo_bar))->attrs[attr_key("attr_file")] 
                 == make_pair(false, attr_value("")));
     BOOST_CHECK(r.all_nodes().size() == 3);
@@ -899,7 +901,7 @@ basic_csets_test()
       cs.dirs_added.insert(foo_sub);
       cs.files_added.insert(make_pair(foo_sub_deep, f2));
       cs.files_added.insert(make_pair(quux_sub_thing, f1));
-      BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+      BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
       BOOST_CHECK(r.all_nodes().size() == 8);
     }
 
@@ -908,7 +910,7 @@ basic_csets_test()
       cs.nodes_renamed.insert(make_pair(foo, quux));
       cs.nodes_renamed.insert(make_pair(quux, foo));
       cs.nodes_renamed.insert(make_pair(foo_sub, foo_subsub));
-      BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+      BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     }
 
     BOOST_CHECK(r.all_nodes().size() == 8);
@@ -931,7 +933,7 @@ basic_csets_test()
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo_bar, foo));
     cs.nodes_deleted.insert(foo);
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     BOOST_CHECK(r.all_nodes().size() == 2);
     BOOST_CHECK(is_file_t(r.get_node(foo)));
   }
@@ -945,8 +947,8 @@ invalid_csets_test()
   MM(r);
   editable_roster_base tree(r, nis);
   
-  file_id f1(std::string("0000000000000000000000000000000000000001"));
-  file_id f2(std::string("0000000000000000000000000000000000000002"));
+  file_id f1(string("0000000000000000000000000000000000000001"));
+  file_id f2(string("0000000000000000000000000000000000000002"));
 
   split_path root, foo, foo_bar, baz, quux;
   file_path().split(root);
@@ -960,60 +962,60 @@ invalid_csets_test()
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo_bar);
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't double-add file"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.files_added.insert(std::make_pair(baz, f2));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.files_added.insert(make_pair(baz, f2));
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't add file on top of dir"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.files_added.insert(std::make_pair(foo, f2));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.files_added.insert(make_pair(foo, f2));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't delete+rename"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo_bar);
-    cs.nodes_renamed.insert(std::make_pair(foo_bar, baz));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.nodes_renamed.insert(make_pair(foo_bar, baz));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't add+rename"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.dirs_added.insert(baz);
-    cs.nodes_renamed.insert(std::make_pair(baz, quux));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.nodes_renamed.insert(make_pair(baz, quux));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't add on top of root dir"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.dirs_added.insert(root);
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't rename on top of root dir"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.nodes_renamed.insert(std::make_pair(foo, root));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.nodes_renamed.insert(make_pair(foo, root));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't rename 'a' 'a'"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.nodes_renamed.insert(std::make_pair(foo_bar, foo_bar));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.nodes_renamed.insert(make_pair(foo_bar, foo_bar));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't rename 'a' 'b'; rename 'a/foo' 'b/foo'"));
@@ -1021,75 +1023,75 @@ invalid_csets_test()
     cset cs; MM(cs);
     split_path baz_bar;
     file_path_internal("baz/bar").split(baz_bar);
-    cs.nodes_renamed.insert(std::make_pair(foo, baz));
-    cs.nodes_renamed.insert(std::make_pair(foo_bar, baz_bar));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.nodes_renamed.insert(make_pair(foo, baz));
+    cs.nodes_renamed.insert(make_pair(foo_bar, baz_bar));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't attr_set + attr_cleared"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.attrs_set.insert(std::make_pair(std::make_pair(foo_bar, attr_key("blah")),
+    cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("blah")),
                                        attr_value("blahblah")));
-    cs.attrs_cleared.insert(std::make_pair(foo_bar, attr_key("blah")));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.attrs_cleared.insert(make_pair(foo_bar, attr_key("blah")));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't no-op attr_set"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.attrs_set.insert(std::make_pair(std::make_pair(foo_bar, attr_key("attr_file")),
+    cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("attr_file")),
                                        attr_value("value_file")));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't clear non-existent attr"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.attrs_cleared.insert(std::make_pair(foo_bar, attr_key("blah")));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.attrs_cleared.insert(make_pair(foo_bar, attr_key("blah")));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't clear non-existent attr that once existed"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.attrs_cleared.insert(std::make_pair(foo_bar, attr_key("attr_file")));
+    cs.attrs_cleared.insert(make_pair(foo_bar, attr_key("attr_file")));
     // exists now, so should be fine
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     // but last time killed it, so can't be killed again
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't have no-op deltas"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.deltas_applied.insert(std::make_pair(foo_bar,
-                                            std::make_pair(f1, f1)));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.deltas_applied.insert(make_pair(foo_bar,
+                                            make_pair(f1, f1)));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't have add+delta"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.files_added.insert(std::make_pair(baz, f1));
-    cs.deltas_applied.insert(std::make_pair(baz,
-                                            std::make_pair(f1, f2)));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.files_added.insert(make_pair(baz, f1));
+    cs.deltas_applied.insert(make_pair(baz,
+                                            make_pair(f1, f2)));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't delta a directory"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.deltas_applied.insert(std::make_pair(foo,
-                                            std::make_pair(f1, f2)));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.deltas_applied.insert(make_pair(foo,
+                                            make_pair(f1, f2)));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't delete non-empty directory"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo);
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: attach node with no root directory present"));
@@ -1099,7 +1101,7 @@ invalid_csets_test()
     split_path sp;
     file_path_internal("blah/blah/blah").split(sp);
     cs.dirs_added.insert(sp);
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't move a directory underneath itself"));
@@ -1107,8 +1109,8 @@ invalid_csets_test()
     cset cs; MM(cs);
     split_path foo_blah;
     file_path_internal("foo/blah").split(foo_blah);
-    cs.nodes_renamed.insert(std::make_pair(foo, foo_blah));
-    BOOST_CHECK_THROW(cs.apply_to(tree), std::logic_error);
+    cs.nodes_renamed.insert(make_pair(foo, foo_blah));
+    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
 }
 
@@ -1120,7 +1122,7 @@ root_dir_test()
   MM(r);
   editable_roster_base tree(r, nis);
   
-  file_id f1(std::string("0000000000000000000000000000000000000001"));
+  file_id f1(string("0000000000000000000000000000000000000001"));
 
   split_path root, baz;
   file_path().split(root);
@@ -1132,7 +1134,7 @@ root_dir_test()
     cset cs; MM(cs);
     split_path sp1, sp2;
     cs.dirs_added.insert(root);
-    cs.nodes_renamed.insert(std::make_pair(root, baz));
+    cs.nodes_renamed.insert(make_pair(root, baz));
     cs.apply_to(tree);
     r.check_sane(true);
   }
@@ -1144,7 +1146,7 @@ root_dir_test()
     cset cs; MM(cs);
     cs.nodes_deleted.insert(root);
     cs.apply_to(tree);
-    BOOST_CHECK_THROW(r.check_sane(true), std::logic_error);
+    BOOST_CHECK_THROW(r.check_sane(true), logic_error);
   }
   {
     L(FL("TEST: can delete and replace root"));

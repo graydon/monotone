@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+using std::cout;
+
 CMD(automate, N_("automation"),
     N_("interface_version\n"
        "heads [BRANCH]\n"
@@ -45,5 +47,5 @@ CMD(automate, N_("automation"),
 
   make_io_binary();
 
-  automate_command(cmd, cmd_args, name, app, std::cout);
+  automate_command(cmd, cmd_args, name, app, cout);
 }

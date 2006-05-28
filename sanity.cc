@@ -22,7 +22,15 @@
 #include "simplestring_xform.hh"
 #include "ui.hh"
 
-using namespace std;
+using std::exception;
+using std::logic_error;
+using std::ofstream;
+using std::ostream;
+using std::ostream_iterator;
+using std::ostringstream;
+using std::string;
+using std::vector;
+
 using boost::format;
 
 // debugging / logging system
@@ -33,7 +41,7 @@ sanity::sanity() :
   debug(false), quiet(false), reallyquiet(false), relaxed(false), logbuf(0xffff), 
   already_dumping(false), clean_shutdown(false)
 {
-  std::string flavour;
+  string flavour;
   get_system_flavour(flavour);
   L(FL("started up on %s\n") % flavour);
 }
@@ -122,7 +130,7 @@ sanity::do_format(format const & fmt, char const * file, int line)
     {
       return fmt.str();
     }
-  catch (std::exception & e)
+  catch (exception & e)
     {
       ui.inform(F("fatal: formatter failed on %s:%d: %s")
                 % file
@@ -251,12 +259,12 @@ sanity::gasp()
     }
   already_dumping = true;
   L(FL("saving current work set: %i items") % musings.size());
-  std::ostringstream out;
+  ostringstream out;
   out << F("Current work set: %i items\n") % musings.size();
-  for (std::vector<MusingI const *>::const_iterator
+  for (vector<MusingI const *>::const_iterator
          i = musings.begin(); i != musings.end(); ++i)
     {
-      std::string tmp;
+      string tmp;
       try
         {
           (*i)->gasp(tmp);
@@ -301,20 +309,20 @@ MusingI::~MusingI()
 }
 
 template <> void
-dump(std::string const & obj, std::string & out)
+dump(string const & obj, string & out)
 {
   out = obj;
 }
 
 
-void MusingBase::gasp_head(std::string & out) const
+void MusingBase::gasp_head(string & out) const
 {
   out = (boost::format("----- begin '%s' (in %s, at %s:%d)\n")
          % name % func % file % line
          ).str();
 }
 
-void MusingBase::gasp_body(const std::string & objstr, std::string & out) const
+void MusingBase::gasp_body(const string & objstr, string & out) const
 {
   out += (boost::format("%s%s"
                         "-----   end '%s' (in %s, at %s:%d)\n")
@@ -330,19 +338,19 @@ i18n_format::i18n_format(const char * localized_pattern)
 {
 }
 
-i18n_format::i18n_format(std::string const & localized_pattern)
+i18n_format::i18n_format(string const & localized_pattern)
   : fmt(localized_pattern, get_user_locale())
 {
 }
 
-std::string
+string
 i18n_format::str() const
 {
   return fmt.str();
 }
 
-std::ostream &
-operator<<(std::ostream & os, i18n_format const & fmt)
+ostream &
+operator<<(ostream & os, i18n_format const & fmt)
 {
   return os << fmt.str();
 }
