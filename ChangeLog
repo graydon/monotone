@@ -1,5 +1,14 @@
 2006-05-29  Richard Levitte  <richard@levitte.org>
 
+	* std_hooks.lua (merge3_*_cmd): Make all the merge3 merge helpers
+	check the returned exit code of the merge program and generate an
+	error message if it fails.
+	(execute_confirm): Don't output an error message, that's the
+	caller's responsability.
+	(merge3): Follow the way the check of exit code is done elsewhere.
+
+2006-05-29  Richard Levitte  <richard@levitte.org>
+
 	* std_hooks.lua (merge3): Check the exit code from the merging
 	program to detect failure.  We could do that by strictly checking
 	if the output file exists, but since some programs, like meld,

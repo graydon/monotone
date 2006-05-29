@@ -28,7 +28,6 @@ function execute_confirm(path, ...)
 
    if (ret ~= 0)
    then
-      io.write(string.format(gettext("Error running '%s'\n"), path))
       print(gettext("Press enter"))
    else
       print(gettext("Press enter when the subprocess has completed"))
@@ -289,26 +288,40 @@ end
 function merge3_meld_cmd(lfile, afile, rfile)
    return 
    function()
-      return execute("meld", lfile, afile, rfile)
+      local path = "meld"
+      local ret = execute(path, lfile, afile, rfile)
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), path))
+      end
+      return ret
    end
 end
 
 function merge3_tortoise_cmd(lfile, afile, rfile, outfile)
    return
    function()
-      return execute("tortoisemerge",
-                     string.format("/base:%s", afile),
-                     string.format("/theirs:%s", lfile),
-                     string.format("/mine:%s", rfile),
-                     string.format("/merged:%s", outfile))
+      local path = "tortoisemerge"
+      local ret = execute(path,
+			  string.format("/base:%s", afile),
+			  string.format("/theirs:%s", lfile),
+			  string.format("/mine:%s", rfile),
+			  string.format("/merged:%s", outfile))
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), path))
+      end
+      return ret
    end
 end
 
 function merge3_vim_cmd(vim, afile, lfile, rfile, outfile)
    return
    function()
-      return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
-                     afile, lfile, rfile)
+      local ret = execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
+			  afile, lfile, rfile)
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), vim))
+      end
+      return ret
    end
 end
 
@@ -323,8 +336,12 @@ function merge3_rcsmerge_vim_cmd(merge, vim, lfile, afile, rfile, outfile)
          copy_text_file(lfile, outfile);
          return 0
       end
-      return execute(vim, "-f", "-c", string.format("file %s", outfile),
-                     lfile)
+      local ret = execute(vim, "-f", "-c", string.format("file %s", outfile),
+			  lfile)
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), vim))
+      end
+      return ret
    end
 end
 
@@ -332,8 +349,12 @@ function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
    local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
    return 
    function()
-      return execute(emacs, "--eval", 
-                     string.format(elisp, lfile, rfile, afile, outfile))
+      local ret = execute(emacs, "--eval", 
+			  string.format(elisp, lfile, rfile, afile, outfile))
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), emacs))
+      end
+      return ret
    end
 end
 
@@ -341,14 +362,19 @@ function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path,
                            lfile, afile, rfile, outfile)
    return 
    function()
-      return execute("xxdiff", 
-                     "--title1", left_path,
-                     "--title2", right_path,
-                     "--title3", merged_path,
-                     lfile, afile, rfile, 
-                     "--merge", 
-                     "--merged-filename", outfile,
-                     "--exit-with-merge-status")
+      local path = "xxdiff"
+      local ret execute(path, 
+			"--title1", left_path,
+			"--title2", right_path,
+			"--title3", merged_path,
+			lfile, afile, rfile, 
+			"--merge", 
+			"--merged-filename", outfile,
+			"--exit-with-merge-status")
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), path))
+      end
+      return ret
    end
 end
    
@@ -356,21 +382,34 @@ function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path,
                            lfile, afile, rfile, outfile)
    return 
    function()
-      return execute("kdiff3", 
-                     "--L1", anc_path,
-                     "--L2", left_path,
-                     "--L3", right_path,
-                     afile, lfile, rfile, 
-                     "--merge", 
-                     "--o", outfile)
+      local path = "kdiff3"
+      local ret = execute(path, 
+			  "--L1", anc_path,
+			  "--L2", left_path,
+			  "--L3", right_path,
+			  afile, lfile, rfile, 
+			  "--merge", 
+			  "--o", outfile)
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), path))
+      end
+      return ret
    end
 end
 
 function merge3_opendiff_cmd(left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile)
    return 
    function()
+      local path = "opendiff"
       -- As opendiff immediately returns, let user confirm manually
-      execute_confirm("opendiff",lfile,rfile,"-ancestor",afile,"-merge",outfile)
+      local ret = execute_confirm(path,
+				  lfile,rfile,
+				  "-ancestor",afile,
+				  "-merge",outfile)
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), path))
+      end
+      return ret
    end
 end
 
@@ -496,10 +535,11 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
       if cmd ~=nil 
       then 
          io.write (string.format(gettext("executing external 3-way merge command\n")))
-	 ret = nil
 	 -- cmd() return 0 on success.
-         if cmd () == 0
+         if cmd () ~= 0
 	 then
+	    ret = nil
+	 else
 	    if tbl.meld_exists 
 	    then 
 	       ret = read_contents_of_file (tbl.afile, "r")
