@@ -54,7 +54,9 @@ dump_stack(lua_State * st)
     int t = lua_type(st, i);
     switch (t) {
     case LUA_TSTRING:  /* strings */
-      out += (boost::format("`%s'") % string(lua_tostring(st, i), lua_strlen(st, i))).str();
+      out += '`';
+      out += string(lua_tostring(st, i), lua_strlen(st, i));
+      out += '\'';
       break;
       
     case LUA_TBOOLEAN:  /* booleans */
@@ -62,11 +64,11 @@ dump_stack(lua_State * st)
       break;
       
     case LUA_TNUMBER:  /* numbers */
-      out += (boost::format("%g") % lua_tonumber(st, i)).str();
+      out += (FL("%g") % lua_tonumber(st, i)).str();
       break;
       
     default:  /* other values */
-      out += (boost::format("%s") % lua_typename(st, t)).str();
+      out += std::string(lua_typename(st, t));
       break;
       
     }

@@ -1,3 +1,24 @@
+2006-05-28  Graydon Hoare  <graydon@pobox.com>
+
+	* AUTHORS: Minor touchups.
+        * ChangeLog: Fix capitalization.
+        * annotate.{cc,hh}: 
+	* app_state.{cc,hh}:
+	* automate.{cc,hh}:
+	* lcs.cc: 
+	* basic_io.{cc,hh}: Cosmetic and copyright fixes.
+	* configure.ac: Permit PCH for 4.* not 4.0*.
+	* cert.cc:
+	* charset.cc:
+	* cmd_diff_log.cc:
+	* cmd_merging.cc:
+	* cmd_ws_commit.cc:
+	* database.cc:
+	* ui.hh: 
+	* unix/get_system_flavour.cc:
+	* xdelta.cc: Purge boost::format uses.
+	* sanity.{cc,hh}: Hide boost::format in pimpl.
+
 2006-05-28  Matt Johnston  <matt@ucc.asn.au>
 
 	* std_hooks.lua (get_netsync_connect_command): quote patterns
@@ -3535,7 +3556,7 @@
 	choices and moves them on to running a dedicated server.  Other
 	small tweaks in nearby sections while here.
 
-2005-12-18  graydon hoare  <graydon@pobox.com>
+2005-12-18  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS: Add Roland.
 
@@ -3886,19 +3907,19 @@
 	assume that the address of a newly allocated Buffer will always be
 	greated than existing Buffers).
 
-2005-11-25  graydon hoare  <graydon@pobox.com>
+2005-11-25  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc (get_version): Another important fix: make sure to
 	cancel overlapping paths, to avoid exponential memory requirement
 	in deep, heavily-forked-and-merged storage paths.
 
-2005-11-25  graydon hoare  <graydon@pobox.com>
+2005-11-25  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc (get_version): Another important fix: make sure to
 	cancel overlapping paths, to avoid exponential memory requirement
 	in deep, heavily-forked-and-merged storage paths.
 
-2005-11-25  graydon hoare  <graydon@pobox.com>
+2005-11-25  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc (get_version): Crucial fix! Rewrite the
 	delta-reconstruction algorithm to work with a DAG storage topology,
@@ -6836,7 +6857,7 @@
 	(get_preferred_merge3_command): Provide more information on how to
 	use vim as merge tool.
 
-2005-08-03  graydon hoare  <graydon@pobox.com>
+2005-08-03  Graydon Hoare  <graydon@pobox.com>
 
 	* unix/process.cc (make_executable): Fix race, set user/group/other.
 
@@ -7327,7 +7348,7 @@
 	* tests/t_restricted_diff_unchanged.at: New test.
 	* testsuite.at: Add it.
 
-2005-07-13  graydon hoare  <graydon@pobox.com>
+2005-07-13  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc (cvs_branch::cvs_branch): Initialize bools to false.
 
@@ -7341,7 +7362,7 @@
 	tests.
 	* testsuite.at: Add them.
 
-2005-07-11  graydon hoare  <graydon@pobox.com>
+2005-07-11  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS: Add Jordan.
 	* commands.cc (ls_tags): Do not uniquify tags.
@@ -7674,17 +7695,17 @@
 	merkle_tree.hh, monotone.cc, netcmd.cc, netsync.cc,
 	netxx/osutil.h, packet.cc: Namespace and include file cleanup.
 
-2005-06-29  graydon hoare  <graydon@pobox.com>
+2005-06-29  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_cvsimport_drepper2.at: New test.
 	* testsuite.at: Call it.
 
-2005-06-23  graydon hoare  <graydon@pobox.com>
+2005-06-23  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc (import_cvs_repo): Put branch imports inside
 	transaction blocks, add a couple tickers.
 
-2005-06-22  graydon hoare  <graydon@pobox.com>
+2005-06-22  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_file.cc: Track file:line numbers, accept files which violate
 	some lies in rcs file format.
@@ -7697,12 +7718,12 @@
 	(import_branch)
 	(import_cvs_repo): Support non-branch tags.
 
-2005-06-21  graydon hoare  <graydon@pobox.com>
+2005-06-21  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.{cc,hh} (import_rcs_file): Rename to test_parse_rcs_file.
 	* commands.cc (rcs_import): rename call.
 
-2005-06-19  graydon hoare  <graydon@pobox.com>
+2005-06-19  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc: Rewrite change set inference logic.
 
@@ -8234,7 +8255,7 @@
 	* tests/t_restricted_commit_with_inodeprints.at: new bug reports
 	* testsuite.at: call them
 
-2005-06-04  graydon hoare  <graydon@pobox.com>
+2005-06-04  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc 
 	(note_state_at_branch_beginning): Move time back when
@@ -8248,7 +8269,7 @@
 	* contrib/monotone.zsh_completion: use verbose output when
 	completing revisions
 
-2005-06-02  graydon hoare  <graydon@pobox.com>
+2005-06-02  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc
 	(cvs_key::is_synthetic_branch_founding_commit): New field.
@@ -8658,12 +8679,12 @@
 	* monotone.texi (Network): Document 'serve' as taking more than
 	one collection argument.
 
-2005-05-15  graydon hoare  <graydon@pobox.com>
+2005-05-15  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc (note_state_at_branch_beginning): collect
 	branch beginning states into a single synthetic commit.
 
-2005-05-15  graydon hoare  <graydon@pobox.com>
+2005-05-15  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc: rewrite most of the branch logic to 
 	address issues raised in bugs 13032 and 13063.
@@ -11610,7 +11631,7 @@
 
 	* revision.cc (struct anc_graph): Fixup after merge.
 
-2005-02-18  graydon hoare  <graydon@pobox.com>
+2005-02-18  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc (set_epoch): Fix SQL.
 	* monotone.texi (Rebuilding ancestry): Reword a bit.
@@ -11628,7 +11649,7 @@
 	* monotone.texi: Document db rebuild.  Add section on rebuilding
 	ancestry and epochs.
 
-2005-02-06  graydon hoare  <graydon@pobox.com>
+2005-02-06  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (db): Add epoch commands.
 	(list): Likewise.
@@ -12115,13 +12136,13 @@
 	* configure.ac: Improve Boost detection by trying several possible
 	library suffixes before aborting.
 
-2005-02-18  graydon hoare  <graydon@pobox.com>
+2005-02-18  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc
 	(apply_change_set): Avoid fast path when there are adds.
 	(apply_path_rearrangement): Likewise.
 
-2005-02-18  graydon hoare  <graydon@pobox.com>
+2005-02-18  Graydon Hoare  <graydon@pobox.com>
 
 	* automate.cc (automate_heads): Fix initialize() call.
 	* change_set.{cc,hh}
@@ -12139,11 +12160,11 @@
 
 	* xdelta.cc (compute_delta_insns): Correct 1-byte-source bug.
 
-2005-02-18  graydon hoare  <graydon@pobox.com>
+2005-02-18  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am (MOST_SOURCES): Add smap.hh.
 
-2005-02-18  graydon hoare  <graydon@pobox.com>
+2005-02-18  Graydon Hoare  <graydon@pobox.com>
 
 	* basic_io.{cc,hh}: Inline some stuff.
 	* change_set.cc: Use smap various places, reduce to 32-bit tids.
@@ -12314,7 +12335,7 @@
 	conventions for database management following question on mailing
 	list.
 
-2005-02-12  graydon hoare  <graydon@pobox.com>
+2005-02-12  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.{cc,hh}: Correct code to pass newly-added unit tests.
 
@@ -12332,7 +12353,7 @@
 	diffs
 	* monotone.texi: update for restrictions
 
-2005-02-08  graydon hoare  <graydon@pobox.com>
+2005-02-08  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc (version_cache::set): Fix bad expiry logic.
 
@@ -12351,7 +12372,7 @@
 	* change_set.cc: Add a few more invariants; add lots and lots of
 	unit tests.
 
-2005-02-06  graydon hoare  <graydon@pobox.com>
+2005-02-06  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc: Use hash_map in a few places.
 	(confirm_unique_entries_in_directories): Fix invariants.
@@ -12477,7 +12498,7 @@
 
 	* work.hh: Remove tabs.
 
-2005-02-03  graydon hoare  <graydon@pobox.com>
+2005-02-03  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_i18n_changelog.at: New test.
 	* testsuite.at: Run it.
@@ -12502,7 +12523,7 @@
 	manifest.
 	* revision.cc (check_sane): More invariants.
 
-2005-01-28  graydon hoare  <graydon@pobox.com>
+2005-01-28  Graydon Hoare  <graydon@pobox.com>
 
 	* database.{cc,hh}: More netsync speed tweaks.
 	* netsync.cc: Likewise.
@@ -12551,7 +12572,7 @@
 	suffixes
 	* botan/{gzip.cpp}: fix type for std::max() comparison
 
-2005-01-27  graydon hoare  <graydon@pobox.com>
+2005-01-27  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS: Mention Georg.
 	* change_set.cc: Null out names which are in null directories.
@@ -12773,7 +12794,7 @@
 	Alter logic to yell if a rename crosses the restriction boundary,
 	rather than silently ignore it.
 
-2005-01-19  graydon hoare  <graydon@pobox.com>
+2005-01-19  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc: Fix up some merge breakage.
 	* tests/t_add_dot.at: Un-XFAIL.
@@ -12999,7 +13020,7 @@
 	* tests/t_status_missing.at: new test
 	* testsuite.at: include it
 
-2005-01-10  graydon hoare  <graydon@pboox.com>
+2005-01-10  Graydon Hoare  <graydon@pboox.com>
 
 	* commands.cc (explicit_merge): Tweak merge message.
 	* database.cc (check_sqlite_format_version): New function.
@@ -13020,7 +13041,7 @@
 	for optimization. This also does not change the schema (i.e.
 	still uses base64 encoded values in tables)
 
-2005-01-17  graydon hoare  <graydon@pobox.com>
+2005-01-17  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS: Mention Wojciech and Neil.
 	* revision.cc (calculate_ancestors_from_graph): Make non-recursive.
@@ -13040,7 +13061,7 @@
 	using the same directory name as the branch name, unless a
 	branch is specified.
 
-2005-01-17  graydon hoare  <graydon@pobox.com>
+2005-01-17  Graydon Hoare  <graydon@pobox.com>
 
 	* cryptopp/osrng.cpp (NonblockingRng::GenerateBlock):
 	Bring forward patch lost in cryptopp 5.2 upgrade.
@@ -13077,7 +13098,7 @@
 	* tests/t_status_missing.at: new test
 	* testsuite.at: include it
 
-2005-01-10  graydon hoare  <graydon@pboox.com>
+2005-01-10  Graydon Hoare  <graydon@pboox.com>
 
 	* commands.cc (explicit_merge): Tweak merge message.
 	* database.cc (check_sqlite_format_version): New function.
@@ -13231,14 +13252,14 @@
 	* botan/{aes,des,dh,dsa,elgamal,lion,lubyrack,nr,rw,openpgp}*: removed
 	unused files.
 
-2004-12-30  graydon hoare  <graydon@pobox.com>
+2004-12-30  Graydon Hoare  <graydon@pobox.com>
 
 	* constants.cc (netcmd_current_protocol_version): Set to 3.
 	* tests/t_crlf.at: New test of crlf line encodings.
 	* testsuite.at: Call it.
 	* monotone.spec: Note 0.16 release.
 
-2004-12-30  graydon hoare  <graydon@pobox.com>
+2004-12-30  Graydon Hoare  <graydon@pobox.com>
 
 	* win32/get_system_flavour.cc: Fix little compile bugs.
 
@@ -13254,7 +13275,7 @@
 	* tests/t_log_nonexistent.at: New check to verify previous.
 	* testsuite.at: Add it.
 
-2004-12-30  graydon hoare  <graydon@pobox.com>
+2004-12-30  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am: Clean full testsuite directory and full-version.
 	* configure.ac: Bump version number.
@@ -13279,7 +13300,7 @@
 	deletion of a file with the same name as the rename src.
 	* testsuite.at: add it
 
-2004-12-29  graydon hoare  <graydon@pobox.com>
+2004-12-29  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS: Add Jordi.
 	* change_set.{cc,hh}: Make sanity helpers const.
@@ -13292,7 +13313,7 @@
 	(calculate_change_sets_recursive): Use results.
 	* tests/t_no_change_deltas.at: Fix.
 
-2004-12-29  graydon hoare  <graydon@pobox.com>
+2004-12-29  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc: Fix unit tests to satisfy sanity checks.
 	* std_hooks.lua: Fix status checking on external merges.
@@ -13336,7 +13357,7 @@
 	in each revision in a nice format (easier to read than what
 	'cat revision' shows).
 
-2004-12-28  graydon hoare  <graydon@pobox.com>
+2004-12-28  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS: Add various recent authors.
 
@@ -13344,7 +13365,7 @@
 
 	* debian/*: Fix up for package building.
 
-2004-12-28  graydon hoare  <graydon@pobox.com>
+2004-12-28  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.{cc,hh}: Add sanity checking, rework
 	some of concatenation logic to accomodate.
@@ -13501,11 +13522,11 @@
 	* tests/t_patch_drop_add.at: Remove priority notes, since these
 	are no longer bugs.
 
-2004-12-17  graydon hoare  <graydon@pobox.com>
+2004-12-17  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_merge_2.at: Works now, remove xfail.
 
-2004-12-17  graydon hoare  <graydon@pobox.com>
+2004-12-17  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_merge_1.at: Remove AT_CHECK(false) and xfail.
 	* tests/t_fdiff_normalize.at: New test.
@@ -13549,7 +13570,7 @@
 	* commands.cc (lca): Correct negative status text.
 	* commands.cc (update): Use GNU style braces.
 
-2004-12-12  graydon hoare  <graydon@pobox.com>
+2004-12-12  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc: Fix bug reported in t_attr.at
 	* tests/t_attr.at: Remove xfail.
@@ -13737,7 +13758,7 @@
 	(queue_data_cmd): Call 'note_item_sent'.
 	(queue_delta_cmd): Call 'note_item_sent'.
 
-2004-12-09  graydon hoare  <graydon@pobox.com>
+2004-12-09  Graydon Hoare  <graydon@pobox.com>
 
 	* ROADMAP: Add file.
 
@@ -13794,7 +13815,7 @@
 	* tests/t_ambig_update.at: Also check that update fails when one
 	candidate edge is deeper than the other.
 
-2004-12-08  graydon hoare  <graydon@pobox.com>
+2004-12-08  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc (extend_renumbering_via_added_files):
 	Look up parent tid in existing renumbering.
@@ -13833,7 +13854,7 @@
 
 	* commands.cc (explicit_merge): New command.
 
-2004-12-08  graydon hoare  <graydon@pobox.com>
+2004-12-08  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc (extend_renumbering_via_added_files):
 	Look up parent tid in existing renumbering.
@@ -13882,18 +13903,18 @@
 	* Makefile.am (package_full_revision.txt): Silence error messages
 	when deducing full package revision.
 
-2004-12-06  graydon hoare  <graydon@pobox.com>
+2004-12-06  Graydon Hoare  <graydon@pobox.com>
 
 	* unix/get_system_flavour.cc:
 	* win32/get_system_flavour.cc: Add missing files.
 
-2004-12-06  graydon hoare  <graydon@pobox.com>
+2004-12-06  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (merge): Add newline in output.
 	* change_set.cc (project_missing_deltas): Fix very bad
 	delta-renaming bug.
 
-2004-12-06  graydon hoare  <graydon@pobox.com>
+2004-12-06  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc:
 	* tests/t_merge_add_del.at:
@@ -13932,7 +13953,7 @@
 	* configure.ac: bumped the prequisite version to 2.58 since
 	  some tests use AT_XFAIL_IF
 
-2004-12-05  graydon hoare  <graydon@pobox.com>
+2004-12-05  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am (package_full_revision.txt): Use top_builddir
 	to locate monotone executable.
@@ -13949,7 +13970,7 @@
 	* configure.ac: bumped the prequisite version to 2.58 since
 	  some tests use AT_XFAIL_IF
 
-2004-12-04  graydon hoare  <graydon@pobox.com>
+2004-12-04  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (fcommit): New command.
 	(update): Finish off merge of update command.
@@ -14042,7 +14063,7 @@
 	* commands.cc: reordered commands to help merge with changesets
 	branch
 
-2004-12-01  graydon hoare  <graydon@pobox.com>
+2004-12-01  Graydon Hoare  <graydon@pobox.com>
 
 	* {unix,win32}/get_system_flavour.cc: New files.
 	* basic_io.{cc,hh}: Give names to input sources.
@@ -14347,19 +14368,19 @@
 
 	* monotone.texi: Fix typos.
 
-2004-11-08  graydon hoare  <graydon@pobox.com>
+2004-11-08  Graydon Hoare  <graydon@pobox.com>
 
 	* monotone.texi: Some minor cleanups.
 	* netsync.cc: Fix a formatter.
 
-2004-11-07  graydon hoare  <graydon@pobox.com>
+2004-11-07  Graydon Hoare  <graydon@pobox.com>
 
 	* figures/*.txt: Drop.
 	* monotone.texi: Pull ASCII figures back in conditionally.
 	* NEWS, AUTHORS, monotone.spec: Update for 0.15.
 	* monotone.1: Update.
 
-2004-11-06  graydon hoare  <graydon@pobox.com>
+2004-11-06  Graydon Hoare  <graydon@pobox.com>
 
 	* README.changesets: New file.
 	* config.guess, config.sub: Remove.
@@ -14370,7 +14391,7 @@
 	* po/POTFILES.in: Update to remove os_specific.hh.
 	* po/monotone.pot: Regenerate.
 
-2004-11-05  graydon hoare  <graydon@pobox.com>
+2004-11-05  Graydon Hoare  <graydon@pobox.com>
 
 	* constants.cc: Up timeout, connection limit.
 	* monotone.texi: Various cleanups.
@@ -14386,7 +14407,7 @@
 	* Makefile.am (EXTRA_DIST): Include spec file.
 	* commands.cc (diff): No output if empty diff.
 
-2004-10-31  graydon hoare  <graydon@pobox.com>
+2004-10-31  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (diff): Use guess_binary.
 	Fix up some messages to fit on single lines.
@@ -14395,7 +14416,7 @@
 	* texinfo.css: Make images align nicely.
 	* netsync.cc: Fix up some messages to be clearer.
 
-2004-10-30  graydon hoare  <graydon@pobox.com>
+2004-10-30  Graydon Hoare  <graydon@pobox.com>
 
 	* figures/*: New figures.
 	* monotone.texi: Rewrite much of the tutorial.
@@ -14410,13 +14431,13 @@
 	* sanity.cc (dump_buffer): Wrap bare string in call to string(),
 	to disambiguate conversions (required by Boost 1.30).
 
-2004-10-26  graydon hoare  <graydon@pobox.com>
+2004-10-26  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_update_missing.at: New test from Bruce Stephens
 	* testsuite.at: Call it.
 	* change_set.cc: Fix the error exposed by it.
 
-2004-10-26  graydon hoare  <graydon@pobox.com>
+2004-10-26  Graydon Hoare  <graydon@pobox.com>
 
 	* work.{cc,hh}: Comply with Derek's new tests.
 	* commands.cc: Likewise.
@@ -14437,7 +14458,7 @@
 	* tests/t_add.at: New test.
 	* testsuite.at: Call it.
 
-2004-10-26  graydon hoare  <graydon@pobox.com>
+2004-10-26  Graydon Hoare  <graydon@pobox.com>
 
 	* basic_io.{cc,hh}: Rework to use indented stanzas.
 	* change_set.cc, revision.cc: Likewise.
@@ -14445,14 +14466,14 @@
 	* commands.cc: Sanity check file ID on delta commit.
 	* work.cc: Chatter a bit more on add/drop.
 
-2004-10-17  graydon hoare  <graydon@pobox.com>
+2004-10-17  Graydon Hoare  <graydon@pobox.com>
 
 	* merkle_tree.cc: Fix bad logging.
 	* netsync.cc: Fix transmission bugs.
 	* work.cc: Add some progress messages back in.
 	* monotone.texi: Change contents of MT/work in example.
 
-2004-10-17  graydon hoare  <graydon@pobox.com>
+2004-10-17  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (log): Keep a seen list, mask frontier by it.
 	* monotone.texi: Updates to cover revision terminology.
@@ -14519,17 +14540,17 @@
 	a result, set the tick writer to be the progress dot kind or the
 	counting type.
 
-2004-10-15  graydon hoare  <graydon@pobox.com>
+2004-10-15  Graydon Hoare  <graydon@pobox.com>
 
 	* std_hooks.lua (get_revision_cert_trust): Add.
 
-2004-10-14  graydon hoare  <graydon@pobox.com>
+2004-10-14  Graydon Hoare  <graydon@pobox.com>
 
 	* main.cc (UNIX_STYLE_SIGNAL_HANDLING): Enable on OSX.
 	* cryptopp/*: Upgrade to 5.2.1
 	* Makefile.am: Adjust for a couple new files.
 
-2004-10-13  graydon hoare  <graydon@pobox.com>
+2004-10-13  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc (__STDC_CONSTANT_MACROS): Further hammering.
 	* commands.cc (changesetify): New subcommand to db.
@@ -14545,22 +14566,22 @@
 	* schema_migration.cc: Add migration code for revisions.
 	* Makefile.am: Mention views.sql.
 
-2004-10-12  graydon hoare  <graydon@pobox.com>
+2004-10-12  Graydon Hoare  <graydon@pobox.com>
 
 	* unix/read_password.cc: Don't force echo on.
 
-2004-10-10  graydon hoare  <graydon@pobox.com>
+2004-10-10  Graydon Hoare  <graydon@pobox.com>
 
 	merge a batch of changes from trunk, see below.
 	* monotone.spec: Bump to 0.14.
 
-2004-10-10  graydon hoare  <graydon@pobox.com>
+2004-10-10  Graydon Hoare  <graydon@pobox.com>
 
 	fix bug 9884
 	* tests/t_singlenetsync.at: sleep 5
 	* tests/t_netsync.at: sleep 5
 
-2004-10-10  graydon hoare  <graydon@pobox.com>
+2004-10-10  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS: Mention Richard Levitte.
 	* Makefile.am: Remove nonce stuff.
@@ -14587,12 +14608,12 @@
 	* tests/t_null.at: Adjust for new option names.
 	* unit_tests.cc: Set debug, not verbose.
 
-2004-10-10  graydon hoare  <graydon@pobox.com>
+2004-10-10  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_remerge.at: New test.
 	* testsuite.at: Call it.
 
-2004-10-10  graydon hoare  <graydon@pobox.com>
+2004-10-10  Graydon Hoare  <graydon@pobox.com>
 
 	* cryptopp/algebra.cpp:
 	* cryptopp/asn.h:
@@ -14611,22 +14632,22 @@
 	* lua.cc: Fixes for g++ 3.4 from Michael Scherer.
 	* AUTHORS: Mention Michael.
 
-2004-10-10  graydon hoare  <graydon@pobox.com>
+2004-10-10  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_movedel.at: New test.
 	* testsuite.at: Call it.
 
-2004-10-10  graydon hoare  <graydon@pobox.com>
+2004-10-10  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_movepatch.at: New test.
 	* testsuite.at: Call it.
 
-2004-10-10  graydon hoare  <graydon@pobox.com>
+2004-10-10  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc:
 	* file_io.{cc,hh}: Bug Fixes.
 
-2004-10-10  graydon hoare  <graydon@pobox.com>
+2004-10-10  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.{cc,hh} (cert_revision_manifest): Bug fixes.
 	* commands.cc (approve)
@@ -14637,7 +14658,7 @@
 	* tests/t_ls_missing.at:
 	* tests/t_testresult.at: Bug fixes.
 
-2004-10-09  graydon hoare  <graydon@pobox.com>
+2004-10-09  Graydon Hoare  <graydon@pobox.com>
 
 	* netsync.cc:
 	* packet.cc:
@@ -14646,7 +14667,7 @@
 	* tests/t_single_char_filenames.at:
 	* tests/t_singlenetsync.at: Bug fixes.
 
-2004-10-04  graydon hoare  <graydon@pobox.com>
+2004-10-04  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am: Re-enable rcs stuff.
 	* cert.{cc,hh}: Bug fixes.
@@ -14662,7 +14683,7 @@
 	* rcs_file.cc: Pick up bug fix from trunk.
 	* rcs_import.cc: Teach about revisions.
 
-2004-10-03  graydon hoare  <graydon@pobox.com>
+2004-10-03  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.{cc,hh}: Lots of little bug fixes.
 	* commands.cc: Likewise.
@@ -14674,7 +14695,7 @@
 	* testsuite.at: Likewise.
 	* work.cc: Bug fixes.
 
-2004-09-30  graydon hoare  <graydon@pobox.com>
+2004-09-30  Graydon Hoare  <graydon@pobox.com>
 
 	* app_state.cc: Inform db of app.
 	* change_set.cc: Bug fixes.
@@ -14684,11 +14705,11 @@
 	* file_io.{cc,hh}: Remove unlink function.
 	* schema.sql: Pass pubkey data into trust call.
 
-2004-09-29  graydon hoare  <graydon@pobox.com>
+2004-09-29  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc: Various bug fixes, merge unit tests.
 
-2004-09-26  graydon hoare  <graydon@pobox.com>
+2004-09-26  Graydon Hoare  <graydon@pobox.com>
 
 	* predicament.{cc,hh}: Remove.
 	* Makefile.am: Update.
@@ -14697,7 +14718,7 @@
 	* file_io.{cc,hh}: Likewise, and implement link/unlink.
 	* lua.{cc,hh}: Implement conflict resolver hooks.
 
-2004-09-25  graydon hoare  <graydon@pobox.com>
+2004-09-25  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.{cc,hh}: Rewrite entirely.
 	* work.cc: Adjust to compensate.
@@ -14764,18 +14785,18 @@
 	* tests/t_update.at: commit --message
 	* tests/t_versions.at: commit --message
 
-2004-09-19  graydon hoare  <graydon@pobox.com>
+2004-09-19  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc: More bug fixes.
 	* basic_io.cc: Improve error reporting.
 	* commands.cc (complete): Teach about revisions.
 	* database.{cc,hh}: Add complete variant for revisions.
 
-2004-09-19  graydon hoare  <graydon@pobox.com>
+2004-09-19  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc: Add a unit test, fix some bugs.
 
-2004-09-18  graydon hoare  <graydon@pobox.com>
+2004-09-18  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.{cc,hh} (subtract_change_sets): New function.
 	(build_pure_addition_change_set): New function.
@@ -14786,12 +14807,12 @@
 	* database.{cc,hh} (get_manifest): New function.
 	* cert.cc: Use it.
 
-2004-09-13  graydon hoare  <graydon@pobox.com>
+2004-09-13  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.cc: Bug fixes.
 	* commands.cc: Likewise.
 
-2004-09-13  graydon hoare  <graydon@pobox.com>
+2004-09-13  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.{cc,hh}: Implement delta renaming and merging.
 	* commands.cc
@@ -14803,7 +14824,7 @@
 	(move_dir): New function.
 	(delete_dir_recursive): New function.
 
-2004-09-10  graydon hoare  <graydon@pobox.com>
+2004-09-10  Graydon Hoare  <graydon@pobox.com>
 
 	* basic_io.{cc,hh}: Move to more "normal" looking
 	quoted output.
@@ -14844,7 +14865,7 @@
 	* tests/t_single_char_filenames.at: ditto
 	* tests/t_versions.at: ditto
 
-2004-09-06  graydon hoare  <graydon@pobox.com>
+2004-09-06  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am: Revise,
 	* cert.{cc,hh}: Minor bug fixes.
@@ -14858,7 +14879,7 @@
 	* schema.sql: Fix typos.
 	* update.{cc,hh}: Teach about revisions.
 
-2004-09-06  graydon hoare  <graydon@pobox.com>
+2004-09-06  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am (unit_tests): Revise.
 	* change_set.{cc,hh}: Move accessors to header.
@@ -14878,7 +14899,7 @@
 	* commands.cc (restrict_patch_set): fix bug in removal of
 	restricted adds/dels/moves/deltas
 
-2004-08-28  graydon hoare  <graydon@pobox.com>
+2004-08-28  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am (unit_tests): Split out working parts.
 	* basic_io.{cc,hh}: Minor fixes.
@@ -14894,7 +14915,7 @@
 	* vocab.cc: Instantiate revision<cert>.
 	* work.{cc,hh}: Rewrite in terms of path_rearrangement.
 
-2004-08-17  graydon hoare  <graydon@pobox.com>
+2004-08-17  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc: Simplified.
 	* schema.sql: Simplified.
@@ -14902,14 +14923,14 @@
 	* revision.{hh,cc}: Stripped out tid_source.
 	* change_set.{cc,hh}: Oops, never committed!
 
-2004-08-16  graydon hoare  <graydon@pobox.com>
+2004-08-16  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.{hh,cc}: Simplified, finished i/o.
 	* revision.{hh,cc}: Fix to match, redo i/o.
 	* basic_io.cc (basic_io::parser::key): Print trailing colon.
 	* vocab.hh: Whitespace tweak.
 
-2004-08-09  graydon hoare  <graydon@pobox.com>
+2004-08-09  Graydon Hoare  <graydon@pobox.com>
 
 	* change_set.{hh,cc}: New files.
 	* basic_io.{hh,cc}: New files.
@@ -14919,7 +14940,7 @@
 	* lua.{hh,cc}, std_hooks.lua: Model predicaments.
 	* Makefile.am: Update.
 
-2004-07-10  graydon hoare  <graydon@pobox.com>
+2004-07-10  Graydon Hoare  <graydon@pobox.com>
 
 	* lcs.{hh,cc}: Move lcs.hh body into lcs.cc.
 	* diff_patch.cc: Modify to compensate.
@@ -14943,12 +14964,12 @@
 	* commands.cc (restrict_patch_set): new function. called by
 	commit, update, status, diff commands
 
-2004-07-05  graydon hoare  <graydon@pobox.com>
+2004-07-05  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.cc (operator<): Fix wrong ordering of
 	fields.
 
-2004-06-07  graydon hoare  <graydon@pobox.com>
+2004-06-07  Graydon Hoare  <graydon@pobox.com>
 
 	* cryptopp/algebra.cpp:
 	* cryptopp/asn.h:
@@ -14967,38 +14988,38 @@
 	* lua.cc: Fixes for g++ 3.4 from Michael Scherer.
 	* AUTHORS: Mention Michael.
 
-2004-05-28  graydon hoare  <graydon@pobox.com>
+2004-05-28  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_movedel.at: New test.
 	* testsuite.at: Call it.
 	* diff_patch.cc (adjust_deletes_under_renames): New function.
 	(merge3): Use it.
 
-2004-05-27  graydon hoare  <graydon@pobox.com>
+2004-05-27  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_movepatch.at: New test.
 	* testsuite.at: Call it.
 	* diff_patch.cc (adjust_deltas_under_renames): New function.
 	(merge3): Use it.
 
-2004-05-20  graydon hoare  <graydon@pobox.com>
+2004-05-20  Graydon Hoare  <graydon@pobox.com>
 
 	* NEWS: Note 0.13 release.
 	* configure.ac: Bump version number.
 	* monotone.spec: Likewise.
 
-2004-05-19  graydon hoare  <graydon@pobox.com>
+2004-05-19  Graydon Hoare  <graydon@pobox.com>
 
 	* file_io.cc (tilde_expand): Fix fs::path use.
 
-2004-05-18  graydon hoare  <graydon@pobox.com>
+2004-05-18  Graydon Hoare  <graydon@pobox.com>
 
 	* diff_patch.cc (apply_directory_moves): Fix fs::path use.
 	* file_io.cc (write_data_impl): Likewise.
 	* packet.cc: Use explicit true/false maps in caches.
 	* sanity.cc (dump_buffer): Write to clog (buffered).
 
-2004-05-16  graydon hoare  <graydon@pobox.com>
+2004-05-16  Graydon Hoare  <graydon@pobox.com>
 
 	* keys.cc (get_passphrase): Reimplement.
 	* unix/read_password.c: Remove.
@@ -15006,7 +15027,7 @@
 	* constants.{hh,cc} (maxpasswd): New constant.
 	* Makefile.am: Teach about platform specific stuff.
 
-2004-05-16  graydon hoare  <graydon@pobox.com>
+2004-05-16  Graydon Hoare  <graydon@pobox.com>
 
 	* diff_patch.cc (merge2): Don't discard files on one side.
 	* std_hooks.lua (merge2_xxdiff_cmd): Specify merge filename.
@@ -15038,7 +15059,7 @@
 	* monotone.texi (Hook Reference): Update documented default
 	definitions of 'merge2' and 'merge3'.
 
-2004-05-12  graydon hoare  <graydon@pobox.com>
+2004-05-12  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS: Rename Netxx back to netxx. Really, look in
 	the manifest; it's been renamed!
@@ -15056,12 +15077,12 @@
 	(merge3): Likewise.  Also add (disabled) hook to use CVS
 	'merge' command, as a demonstration of how to.
 
-2004-05-12  graydon hoare  <graydon@pobox.com>
+2004-05-12  Graydon Hoare  <graydon@pobox.com>
 
 	* std_hooks.lua (get_author): Remove standard definition.
 	* monotone.texi: Document change.
 
-2004-05-12  graydon hoare  <graydon@pobox.com>
+2004-05-12  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.cc (cert_manifest_author_default): Use default signing key
 	name for default author, if lua hook fails.
@@ -15077,7 +15098,7 @@
 	* tests/t_ls_missing.at: New test case.
 	* testsuite.at: Added t_ls_missing.at.
 
-2004-05-10  graydon hoare  <graydon@pobox.com>
+2004-05-10  Graydon Hoare  <graydon@pobox.com>
 
 	* nonce.cc, nonce.hh: New files.
 	* Makefile.am: Note new files.
@@ -15092,20 +15113,20 @@
 	* monotone.texi, monotone.1: Adjust to compensate.
 	* work.cc, work.hh: Constify some arguments.
 
-2004-05-09  graydon hoare  <graydon@pobox.com>
+2004-05-09  Graydon Hoare  <graydon@pobox.com>
 
 	* diff_patch.cc: Remove recording of file merge ancestry.
 
-2004-05-09  graydon hoare  <graydon@pobox.com>
+2004-05-09  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (ls_missing): Modify to account for work.
 
-2004-05-09  graydon hoare  <graydon@pobox.com>
+2004-05-09  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (list missing): New command.
 	* monotone.texi, monotone.1: Update to document.
 
-2004-05-08  graydon hoare  <graydon@pobox.com>
+2004-05-08  Graydon Hoare  <graydon@pobox.com>
 
 	* main.cc: New file encompassing prg_exec_monitor.
 	* mkstemp.cc, mkstemp.hh: New portable implementation.
@@ -15120,7 +15141,7 @@
 
 	* monotone.texi: Removed extraneous @ftable directive.
 
-2004-05-02  graydon hoare  <graydon@pobox.com>
+2004-05-02  Graydon Hoare  <graydon@pobox.com>
 
 	* monotone.texi: Add stuff on selectors, new hooks.
 	* AUTHORS: Typo fix.
@@ -15163,13 +15184,13 @@
 	* rcs_import.cc (process_branch):
 		also follow branches of last/first versions
 
-2004-04-29  graydon hoare  <graydon@pobox.com>
+2004-04-29  Graydon Hoare  <graydon@pobox.com>
 
 	* configure.ac: Fix up windows probe and bundling checks.
 	* netxx/resolve_getaddrinfo.cxx: Local hack for stream addresses.
 	* netsync.cc: Report address before listening.
 
-2004-04-29  graydon hoare  <graydon@pobox.com>
+2004-04-29  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.cc (get_branch_heads): Calculate a "disapproved version"
 	attribute which culls a version with only disapproved ancestry
@@ -15228,19 +15249,19 @@
 
 	* configure.ac: enable use of installed SQLite library
 
-2004-04-20  graydon hoare  <graydon@pobox.com>
+2004-04-20  Graydon Hoare  <graydon@pobox.com>
 
 	* lua.hh, lua.cc (hook_note_commit): New hook.
 	* commands.cc (commit): Call it.
 
-2004-04-19  graydon hoare  <graydon@pobox.com>
+2004-04-19  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.cc: Make trust messages nicer.
 	* merkle_tree.cc: Clarify logging messages.
 	* netsync.cc: Reorganize tickers, put client in txn.
 	* packet.cc, packet.hh: Teach about constructability.
 
-2004-04-16  graydon hoare  <graydon@pobox.com>
+2004-04-16  Graydon Hoare  <graydon@pobox.com>
 
 	* netsync.cc (session::extra_manifests): New member.
 	(session::analyze_ancestry_graph): Use it.
@@ -15258,11 +15279,11 @@
 
 	* monotone.texi: Typo fixes.
 
-2004-04-10  graydon hoare  <graydon@pobox.com>
+2004-04-10  Graydon Hoare  <graydon@pobox.com>
 
 	* netsync.cc: Minor bug fixes.
 
-2004-04-10  graydon hoare  <graydon@pobox.com>
+2004-04-10  Graydon Hoare  <graydon@pobox.com>
 
 	* database.{cc,hh}:
 	* commands.{cc,hh}:
@@ -15271,7 +15292,7 @@
 	* vocab_terms.hh:
 	Implement first cut at selectors.
 
-2004-04-10  graydon hoare  <graydon@pobox.com>
+2004-04-10  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.cc (operator<): Include name in compare.
 	(operator==): Likewise.
@@ -15279,7 +15300,7 @@
 	* rcs_file.cc: Rewrite by hand, no spirit.
 	* rcs_import.cc: Change ticker names a bit.
 
-2004-04-09  graydon hoare  <graydon@pobox.com>
+2004-04-09  Graydon Hoare  <graydon@pobox.com>
 
 	* app_state.cc: Fix a couple file path constructions.
 	* file_io.cc (book_keeping_file): Make one variant static.
@@ -15287,7 +15308,7 @@
 	* work.cc: Ditto.
 	* rcs_file.cc: fcntl fix from Paul Snively for OSX.
 
-2004-04-09  graydon hoare  <graydon@pobox.com>
+2004-04-09  Graydon Hoare  <graydon@pobox.com>
 
 	* file_io.cc: Fix boost filesystem "." and ".." breakage.
 	* lua.cc: Fix format of log entry.
@@ -15296,14 +15317,14 @@
 	* testsuite/t_i18n_file.at: Fix autotest LANG breakage.
 	* testsuite/t_null.at: Account for chatter with --verbose.
 
-2004-04-09  graydon hoare  <graydon@pobox.com>
+2004-04-09  Graydon Hoare  <graydon@pobox.com>
 
 	* configure.ac: Comment out check for sse2,
 	set bundling to true by default.
 	* INSTALL: describe changes to bundling.
 	* Makefile.am: Remove vestiges of depot.
 
-2004-04-07  graydon hoare  <graydon@pobox.com>
+2004-04-07  Graydon Hoare  <graydon@pobox.com>
 
 	* adns/*:
 	* network.{cc,hh}:
@@ -15332,20 +15353,20 @@
 	* commands.cc:
 	* std_hooks.lua: Add initial selector stuff.
 
-2004-03-29  graydon hoare  <graydon@pobox.com>
+2004-03-29  Graydon Hoare  <graydon@pobox.com>
 
 	* monotone.spec: Update for 0.11 release.
 
 	Release point (v 0.11).
 
-2004-03-29  graydon hoare  <graydon@pobox.com>
+2004-03-29  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am (DISTCHECK_CONFIGURE_FLAGS): Set.
 	* commands.cc: Tidy up / narrow output width.
 	* patch_set.cc: Likewise.
 	* monotone.texi: Cleanups for PDF generation.
 
-2004-03-28  graydon hoare  <graydon@pobox.com>
+2004-03-28  Graydon Hoare  <graydon@pobox.com>
 
 	* NEWS: Mention 0.11 release.
 	* AUTHORS: Mention Robert.
@@ -15354,7 +15375,7 @@
 
 	* file_io.cc (walk_tree_recursive): Ignore broken symlinks.
 
-2004-03-27  graydon hoare  <graydon@pobox.com>
+2004-03-27  Graydon Hoare  <graydon@pobox.com>
 
 	* monotone.texi: Flesh out netsync stuff, remove old network stuff.
 	* monotone.1: Likewise.
@@ -15369,7 +15390,7 @@
 	* network.cc:
 	* schema_migration.cc: Bundled library switch logic.
 
-2004-03-27  graydon hoare  <graydon@pobox.com>
+2004-03-27  Graydon Hoare  <graydon@pobox.com>
 
 	* depot.cc (dump): Implement.
 	* tests/t_http.at, test/t_proxy.at: Use "depot.cgi dump" rather than sqlite.
@@ -15381,18 +15402,18 @@
 	* vocab.cc (verify): Normalize local_path's during verification on boost 1.31.0.
 	* monotone.texi: Rip out some of the pre-netsync networking docs.
 
-2004-03-24  graydon hoare  <graydon@pobox.com>
+2004-03-24  Graydon Hoare  <graydon@pobox.com>
 
 	* boost/circular_buffer_base.hpp: Boost version insulation.
 	* cert.cc, cert.hh, commands.cc: Differentiate "unknown" keys from "bad".
 	* xdelta.cc, proto_machine.cc: Fix boost version insulation.
 
-2004-03-24  graydon hoare  <graydon@pobox.com>
+2004-03-24  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc (import_substates): Filter by branch.
 	* xdelta.cc: Minor bits of insulation.
 
-2004-03-24  graydon hoare  <graydon@pobox.com>
+2004-03-24  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS: Mention Robert.
 	* configure.ac: Enable sse2 stuff.
@@ -15412,16 +15433,16 @@
 	* xdelta.cc:
 	Portability fixes for boost 1.31.0
 
-2004-03-22  graydon hoare  <graydon@pobox.com>
+2004-03-22  Graydon Hoare  <graydon@pobox.com>
 
 	* cryptopp/integer.cpp, integer.h: Enable SSE2 multiply code.
 	* database.cc, database.hh, certs.cc: Speed up 'heads'.
 
-2004-03-21  graydon hoare  <graydon@pobox.com>
+2004-03-21  Graydon Hoare  <graydon@pobox.com>
 
 	* lcs.hh, sanity.hh: Minor performance tweaks.
 
-2004-03-20  graydon hoare  <graydon@pobox.com>
+2004-03-20  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc: Teach how to aggregate branches.
 	* monotone.texi: Start section on netsync.
@@ -15440,27 +15461,27 @@
 	* quick_alloc.hh:
 	Fixes for gcc 3.4 compat and warnings.
 
-2004-03-17  graydon hoare  <graydon@pobox.com>
+2004-03-17  Graydon Hoare  <graydon@pobox.com>
 	* cryptopp/config.h: Fix for gcc aliasing optimization error.
 	* rcs_import.cc (cvs_history::note_file_edge):
 	Fix for first changelog import bug (#5813).
 
-2004-03-15  graydon hoare  <graydon@pobox.com>
+2004-03-15  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc: Import lone versions properly.
 	* tests/t_singlecvs.at: New test for it.
 	* testsuite.at: Call it.
 
-2004-03-14  graydon hoare  <graydon@pobox.com>
+2004-03-14  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (diff): Show added files too.
 	* monotone.texi: Fix typo.
 
-2004-03-08  graydon hoare  <graydon@pobox.com>
+2004-03-08  Graydon Hoare  <graydon@pobox.com>
 
 	* netsync.cc (analyze_manifest_edge): Fix broken formatter.
 
-2004-03-07  graydon hoare  <graydon@pobox.com>
+2004-03-07  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am (BOOST_SANDBOX_SOURCES): Remove boost::socket entries.
 	(NETXX_SOURCES): Predicate on IP6 support in OS (from Paul Snively).
@@ -15473,7 +15494,7 @@
 	* sanity.hh, sanity.cc: Make log formatters give file:line coords,
 	throw log offending coordinate if formatting fails.
 
-2004-03-07  graydon hoare  <graydon@pobox.com>
+2004-03-07  Graydon Hoare  <graydon@pobox.com>
 
 	* sqlite/date.c, sqlite/vdbeInt.h, sqlite/vdbeaux.c: Add.
 	* sqlite/*.c: Upgrade to 2.8.12.
@@ -15482,18 +15503,18 @@
 	(expand_ancestors)
 	(expand_dominators): Resize child bitmaps to cover parent.
 
-2004-03-06  graydon hoare  <graydon@pobox.com>
+2004-03-06  Graydon Hoare  <graydon@pobox.com>
 
 	* netsync.cc (get_root_prefix): Fix from Paul Snively
 	to fix static initialization order on mac OSX.
 	* montone.texi: Typo fix from Anders Petersson.
 	* *.cc: Move all function defs into column 0.
 
-2004-03-04  graydon hoare  <graydon@pobox.com>
+2004-03-04  Graydon Hoare  <graydon@pobox.com>
 
 	* std_hooks.lua: Fix merger execution pessimism.
 
-2004-03-04  graydon hoare  <graydon@pobox.com>
+2004-03-04  Graydon Hoare  <graydon@pobox.com>
 
 	* adler32.hh: Modify to use u8.
 	* depot.cc, netcmd.cc, xdelta.cc: Modify to use u8.
@@ -15502,14 +15523,14 @@
 	* schema_migration.cc: Strip whitespace in sha1.
 	(changes received from Christof Petig)
 
-2004-03-01  graydon hoare  <graydon@pobox.com>
+2004-03-01  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc: Handle anonymous pulling.
 	* netsync.cc: Ditto.
 
 	Release point (v 0.10).
 
-2004-03-01  graydon hoare  <graydon@pobox.com>
+2004-03-01  Graydon Hoare  <graydon@pobox.com>
 
 	* NEWS: Mention impending 0.10 release.
 	* cert.cc, cert.hh: Bug fixes, implement trust function, QA stuff.
@@ -15533,7 +15554,7 @@
 	* ui.cc (sanitize): Clean escape chars from output (optional?)
 	* update.cc: Rewrite entirely in terms of new QA definitions.
 
-2004-02-24  graydon hoare  <graydon@pobox.com>
+2004-02-24  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (ls_keys): Write key hash codes.
 	* constands.cc (netsync_timeout_seconds): Up to 120.
@@ -15541,14 +15562,14 @@
 	* patch_set.cc (manifests_to_patch_set): Fix bug in overload
 	default construction.
 
-2004-02-22  graydon hoare  <graydon@pobox.com>
+2004-02-22  Graydon Hoare  <graydon@pobox.com>
 
 	* patch_set.cc, patch_set.hh: Parameterize yet further.
 	* netsync.cc: Fix a lot of bugs, add manifest and file grovelling.
 	* tests/t_netsync.at: A new test (which runs!)
 	* testsuite.at: Call it.
 
-2004-02-20  graydon hoare  <graydon@pobox.com>
+2004-02-20  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.cc, cert.hh, key.cc, key.hh, database.cc, database.hh:
 	Add lots of little netsync support routines.
@@ -15564,7 +15585,7 @@
 	* netcmd.cc: Switch everything over to uleb128s.
 	* netsync.cc: Implement lots of missing stuff.
 
-2004-02-09  graydon hoare  <graydon@pobox.com>
+2004-02-09  Graydon Hoare  <graydon@pobox.com>
 
 	* netsync.cc (ROOT_PREFIX): New variable.
 	* commands.cc (merkle): New command.
@@ -15573,7 +15594,7 @@
 
 	* monotone.texi: Spelling corrections.
 
-2004-02-09  graydon hoare  <graydon@pobox.com>
+2004-02-09  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc, database.hh
 	(get_version_size)
@@ -15584,7 +15605,7 @@
 	Cleanup and typesafety.
 	* netsync.cc: Cleanup, typesafety, implement refine phase.
 
-2004-02-01  graydon hoare  <graydon@pobox.com>
+2004-02-01  Graydon Hoare  <graydon@pobox.com>
 
 	* netsync.cc: Remove a lot of stuff, implement auth phase.
 	* constants.cc, constants.hh: Move constants from netsync.cc.
@@ -15599,7 +15620,7 @@
 	* database.cc, database.hh (public_key_exists)
 	(get_pubkey): New functions based on key hashes.
 
-2004-01-31  graydon hoare  <graydon@pobox.com>
+2004-01-31  Graydon Hoare  <graydon@pobox.com>
 
 	* Netxx/*: New files.
 	* AUTHORS: Mention Netxx.
@@ -15643,7 +15664,7 @@
 	Add check for pthread_mutex_lock and ACX_PTHREAD.
 	* m4/acx_pthread.m4: New file.
 
-2004-01-07  graydon hoare  <graydon@pobox.com>
+2004-01-07  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am:
 	* po/POTFILES.in:
@@ -15657,7 +15678,7 @@
 
 	Release point (v 0.9).
 
-2004-01-07  graydon hoare  <graydon@pobox.com>
+2004-01-07  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.cc (ensure_parents_loaded)
 	(expand_dominators)
@@ -15671,14 +15692,14 @@
 	* vocab.cc (verify<local_path>) Fix use of val() / iterator.
 	* constants.cc (illegal_path_bytes): NUL-terminate.
 
-2004-01-02  graydon hoare  <graydon@pobox.com>
+2004-01-02  Graydon Hoare  <graydon@pobox.com>
 
 	* diff_patch.cc (normalize_extents): Improve to handle an odd case.
 	* tests/t_fmerge.at: New test, to test it.
 	* commands.cc (fload, fmerge): Permanently enable, for test.
 	* testsuite.at: Call new test.
 
-2004-01-01  graydon hoare  <graydon@pobox.com>
+2004-01-01  Graydon Hoare  <graydon@pobox.com>
 
 	* file_io.hh, file_io.cc (read_localized_data, write_localized_data):
 	New functions
@@ -15690,7 +15711,7 @@
 	* po/monotone.pot: Regenerate.
 	* NEWS, configure.ac: Prep for 0.9 release.
 
-2003-12-30  graydon hoare  <graydon@pobox.com>
+2003-12-30  Graydon Hoare  <graydon@pobox.com>
 
 	* file_io.hh, file_io.cc (mkpath): New function.
 	* commands.cc, database.cc, diff_patch.cc, file_io.cc,
@@ -15699,7 +15720,7 @@
 	* monotone.texi: Include i18n docs.
 	* tests/t_i18n_file.at: Check colon in filename.
 
-2003-12-29  graydon hoare  <graydon@pobox.com>
+2003-12-29  Graydon Hoare  <graydon@pobox.com>
 
 	* file_io.cc: Localize names before touching fs.
 	* lua.hh, lua.cc (hook_get_system_charset): Remove useless fn.
@@ -15709,7 +15730,7 @@
 	* tests/t_i18n_file.at: New test.
 	* testsuite.at: Call it.
 
-2003-12-28  graydon hoare  <graydon@pobox.com>
+2003-12-28  Graydon Hoare  <graydon@pobox.com>
 
 	* app_state.cc, app_state.hh: Massage to use i18n vocab.
 	* cert.cc, commands.cc, commands.hh, rcs_import.cc,
@@ -15725,7 +15746,7 @@
 	* monotone.cc (utf8_argv): Charconv argv.
 	* network.hh, network.cc: Use url.{hh,cc}.
 
-2003-12-28  graydon hoare  <graydon@pobox.com>
+2003-12-28  Graydon Hoare  <graydon@pobox.com>
 
 	* constants.hh, constants.cc (idlen): New constant.
 	* commands.cc, vocab.cc: Use it.
@@ -15743,12 +15764,12 @@
 	(externalize_rsa_keypair_id): New functions.
 	* url.hh, url.cc (parse_utf8_url): New function.
 
-2003-12-20  graydon hoare  <graydon@pobox.com>
+2003-12-20  Graydon Hoare  <graydon@pobox.com>
 
 	* diff_patch.cc (normalize_extents): New function.
 	(merge_via_edit_scripts): Use it.
 
-2003-12-19  graydon hoare  <graydon@pobox.com>
+2003-12-19  Graydon Hoare  <graydon@pobox.com>
 
 	[net.venge.monotone.i18n branch]
 
@@ -15776,33 +15797,33 @@
 	* commands.cc: Various formatting cleanups.
 	* unit_tests.cc, unit_tests.hh: Connect to url tests.
 
-2003-12-19  graydon hoare  <graydon@pobox.com>
+2003-12-19  Graydon Hoare  <graydon@pobox.com>
 
 	* diff_patch.cc (merge3): Skip patches to deleted files.
 
-2003-12-16  graydon hoare  <graydon@pobox.com>
+2003-12-16  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (ls_ignored, ignored_itemizer): Fold in as subcases of unknown.
 
-2003-12-16  graydon hoare  <graydon@pobox.com>
+2003-12-16  Graydon Hoare  <graydon@pobox.com>
 
 	* lua.cc (working_copy_rcfilename): MT/monotonerc not MT/.monotonerc.
 
-2003-12-16  graydon hoare  <graydon@pobox.com>
+2003-12-16  Graydon Hoare  <graydon@pobox.com>
 
 	* lua.hh, lua.cc (working_copy_rcfilename): New function.
 	* monotone.cc: Add working copy rcfiles.
 	* commands.cc (ls_unknown, unknown_itemizer): Skip ignored files.
 
-2003-12-16  graydon hoare  <graydon@pobox.com>
+2003-12-16  Graydon Hoare  <graydon@pobox.com>
 
 	* file_io.cc (walk_tree_recursive): continue on book-keeping file.
 
-2003-12-15  graydon hoare  <graydon@pobox.com>
+2003-12-15  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_unidiff.at, t_unidiff2.at: Check for mimencode.
 
-2003-12-15  graydon hoare  <graydon@pobox.com>
+2003-12-15  Graydon Hoare  <graydon@pobox.com>
 
 	* configure.ac: Add --enable-static-boost.
 	* Makefile.am: Likewise.
@@ -15831,7 +15852,7 @@
 	* commands.cc (update): Notice when we're already up-to-date.
 	* commands.cc (propagate): Assign branch name correctly when merging.
 
-2003-12-05  graydon hoare  <graydon@pobox.com>
+2003-12-05  Graydon Hoare  <graydon@pobox.com>
 
 	* lcs.hh (edit_script): New entry point.
 	* diff_patch.cc: Rewrite merge in terms of edit scripts.
@@ -15840,19 +15861,19 @@
 	* randomfile.hh: Prohibit deletes on end of chunks.
 	* sanity.cc: EOL-terminate truncated long lines.
 
-2003-12-02  graydon hoare  <graydon@pobox.com>
+2003-12-02  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc, database.hh (reverse_queue): Copy constructor.
 	* std_hooks.lua (merge3): Remove afile, not ancestor.
 	* monotone.cc: Remove debugging message.
 	* ui.cc (finish_ticking): Set last_write_was_a_tick to false.
 
-2003-12-01  graydon hoare  <graydon@pobox.com>
+2003-12-01  Graydon Hoare  <graydon@pobox.com>
 
 	* app_state.hh, app_state.cc (set_signing_key): New fn, persist key.
 	* monotone.cc (cpp_main): Permit commuting the --help argument around.
 
-2003-11-30  graydon hoare  <graydon@pobox.com>
+2003-11-30  Graydon Hoare  <graydon@pobox.com>
 
 	* network.cc (post_queued_blobs_to_network): Fail when posted_ok is false.
 	* database.cc (initialize): Fail when -journal file exists.
@@ -15871,7 +15892,7 @@
 	* http_tasks.cc (check_received_bytes): Allow "-" as well.
 	* depot.cc (execute_post_query): Allow "-" as well.
 
-2003-11-28  graydon hoare  <graydon@pobox.com>
+2003-11-28  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.cc: Various speedups.
 	* cycle_detector.hh (edge_makes_cycle): Use visited set, too.
@@ -15880,7 +15901,7 @@
 	* sqlite/os.c (sqliteOsRandomSeed): Harmless valgrind purification.
 	* tests/t_fork.at, tests/t_merge.at: Ignore stderr chatter on 'heads'.
 
-2003-11-27  graydon hoare  <graydon@pobox.com>
+2003-11-27  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am (AM_LDFLAGS): No more -static, sigh.
 	* cert.cc (find_relevant_edges): Keep dynamic-programming caches.
@@ -15888,41 +15909,41 @@
 	* cert.cc, cert.hh (rename_edge): Add constructor, copy constructor.
 	* commands.cc (list certs): Note rename certs are binary.
 
-2003-11-24  graydon hoare  <graydon@pobox.com>
+2003-11-24  Graydon Hoare  <graydon@pobox.com>
 
 	* network.cc: Continue fetch, post loops even if one target has
 	an exception.
 
-2003-11-24  graydon hoare  <graydon@pobox.com>
+2003-11-24  Graydon Hoare  <graydon@pobox.com>
 
 	* database.hh, database.cc (delete_posting): Change to take queue
 	sequence numbers.
 	* commands.cc (queue): Use new API.
 	* network.cc (post_queued_blobs_to_network): Use new API.
 
-2003-11-24  graydon hoare  <graydon@pobox.com>
+2003-11-24  Graydon Hoare  <graydon@pobox.com>
 
 	* std_hooks.lua (get_http_proxy): Return nil when no ENV var.
 	* monotone.texi (get_http_proxY): Document change.
 
-2003-11-24  graydon hoare  <graydon@pobox.com>
+2003-11-24  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/t_proxy.at: Add a test for proxying with tinyproxy.
 	* testsuite.at: Call it.
 	* lua.cc: Fix dumb error breaking proxying.
 	* network.cc: Be verbose about proxying.
 
-2003-11-23  graydon hoare  <graydon@pobox.com>
+2003-11-23  Graydon Hoare  <graydon@pobox.com>
 
 	* http_tasks.cc (read_chunk): Tolerate 0x20* after chunk len.
 
-2003-11-23  graydon hoare  <graydon@pobox.com>
+2003-11-23  Graydon Hoare  <graydon@pobox.com>
 
 	* network.cc: Make more informative error policy.
 	* boost/socket/socketstream.hpp: Pass SocketType to streambuf template.
 	* boost/socket/src/default_socket_impl.cpp: Translate EINTR.
 
-2003-11-22  graydon hoare  <graydon@pobox.com>
+2003-11-22  Graydon Hoare  <graydon@pobox.com>
 
 	* lua.cc, lua.hh (hook_get_http_proxy): New hook.
 	* std_hooks.lua (get_http_proxy): Default uses HTTP_PROXY.
@@ -15931,7 +15952,7 @@
 	* http_tasks.hh, http_tasks.cc: Teach about proxies (sigh).
 	* monotone.texi: Document new hooks.
 
-2003-11-22  graydon hoare  <graydon@pobox.com>
+2003-11-22  Graydon Hoare  <graydon@pobox.com>
 
 	* lua.cc, lua.hh (hook_get_connect_addr): New hook.
 	* std_hooks.lua (get_connect_addr): Default uses HTTP_PROXY.
@@ -15939,7 +15960,7 @@
 	* http_tasks.cc: Teach about HTTP/1.1.
 	* cert.cc (bogus_cert_p): Fix UI ugly.
 
-2003-11-21  graydon hoare  <graydon@pobox.com>
+2003-11-21  Graydon Hoare  <graydon@pobox.com>
 
 	* constants.hh (postsz): New constant for suggested post size.
 	* database.cc, database.hh (queue*): Change db API slightly.
@@ -15959,7 +15980,7 @@
 
 	* missing: Removed generated file.
 
-2003-11-14  graydon hoare  <graydon@pobox.com>
+2003-11-14  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (vcheck): Add.
 	* cert.cc, cert.hh (cert_manifest_vcheck): Add.
@@ -15970,7 +15991,7 @@
 	* monotone.texi (Hash Integrity): New section.
 	* monotone.1: Document vcheck.
 
-2003-11-14  graydon hoare  <graydon@pobox.com>
+2003-11-14  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc, database.hh (reverse_queue): New class.
 	(compute_older_version): New functions.
@@ -15985,7 +16006,7 @@
 	* tests/t_cross.at: Ignore new UI chatter.
 	* monotone.texi (Transmitting Changes): Change UI output.
 
-2003-11-13  graydon hoare  <graydon@pobox.com>
+2003-11-13  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am (AUTOMAKE_OPTIONS): Require 1.7.1
 	* commands.cc (addtree): Wrap in transaction guard.
@@ -16001,18 +16022,18 @@
 	* tests/t_cvsimport.at: New test.
 	* testsuite.at: Call it.
 
-2003-11-10  graydon hoare  <graydon@pobox.com>
+2003-11-10  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (find_oldest_ancestors): New function.
 	(queue): New "addtree" subcommand.
 	* monotone.texi: Document it.
 	* monotone.1: Document it.
 
-2003-11-10  graydon hoare  <graydon@pobox.com>
+2003-11-10  Graydon Hoare  <graydon@pobox.com>
 
 	* file_io.cc (walk_tree_recursive): Ignore MT/
 
-2003-11-09  graydon hoare  <graydon@pobox.com>
+2003-11-09  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc (dump, load): Implement.
 	* commands.cc (db): Call db.dump, load.
@@ -16021,7 +16042,7 @@
 	special sections.
 	* monotone.1: Mention dump and load.
 
-2003-11-09  graydon hoare  <graydon@pobox.com>
+2003-11-09  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_file.hh (rcs_symbol): New structure.
 	* rcs_file.cc (symbol): New rule.
@@ -16033,7 +16054,7 @@
 	* monotone.texi: Document new command variant.
 	* monotone.1: Ditto.
 
-2003-11-09  graydon hoare  <graydon@pobox.com>
+2003-11-09  Graydon Hoare  <graydon@pobox.com>
 
 	* quick_alloc.hh: New file.
 	* Makefile.am: Add it.
@@ -16042,7 +16063,7 @@
 	* vocab.cc: Relax path name requirements a bit.
 	* sqlite/sqliteInt.h: Up size of row to 16mb.
 
-2003-11-02  graydon hoare  <graydon@pobox.com>
+2003-11-02  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (post): Post everything if no URL given; don't base
 	decision off branch name presence.
@@ -16059,11 +16080,11 @@
 
 	Release point (v 0.7).
 
-2003-11-01  graydon hoare  <graydon@pobox.com>
+2003-11-01  Graydon Hoare  <graydon@pobox.com>
 
 	* http_tasks.cc: Drop extra leading slashes in HTTP messages.
 
-2003-10-31  graydon hoare  <graydon@pobox.com>
+2003-10-31  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc, database.cc, database.hh, lua.cc, lua.hh,
 	network.cc, network.hh, packet.cc, packet.hh, schema.sql,
@@ -16075,7 +16096,7 @@
 	* tests/t_smtp.at: New test.
 	* testsuite.at: Call it.
 
-2003-10-31  graydon hoare  <graydon@pobox.com>
+2003-10-31  Graydon Hoare  <graydon@pobox.com>
 
 	* patch_set.cc (manifests_to_patch_set): Second form with explicit renames.
 	(manifests_to_patch_set): Split edit+rename events when we see them.
@@ -16087,7 +16108,7 @@
 	* proto_machine.cc (read_line): get() into streambuf.
 	* Makefile.am: Cover renames and adds.
 
-2003-10-31  graydon hoare  <graydon@pobox.com>
+2003-10-31  Graydon Hoare  <graydon@pobox.com>
 
 	* diff_patch.cc (merge3): Extract renames.
 	* commands.cc (calculate_new_manifest_map): Extract renames.
@@ -16100,7 +16121,7 @@
 	* tests/t_erename.at: New test for edit+rename events.
 	* testsuite.at: Call t_erename.at.
 
-2003-10-30  graydon hoare  <graydon@pobox.com>
+2003-10-30  Graydon Hoare  <graydon@pobox.com>
 
 	* patch_set.cc (operator<): s/a/b/ in a few places, yikes!
 	* cert.cc: Add machinery for rename edge certs.
@@ -16115,7 +16136,7 @@
 	transforms.hh, update.hh, vocab.hh, work.hh, xdelta.hh:
 	fix use of std:: prefix / "using namespace" pollution.
 
-2003-10-27  graydon hoare  <graydon@pobox.com>
+2003-10-27  Graydon Hoare  <graydon@pobox.com>
 
 	* lua/liolib.c (io_mkstemp): Portability fix
 	from Ian Main.
@@ -16123,7 +16144,7 @@
 	* transforms.cc,hh (diff): Same.
 	* rcs_import.cc: Various speedups to cvs import.
 
-2003-10-26  graydon hoare  <graydon@pobox.com>
+2003-10-26  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.cc (get_parents): New function.
 	(write_paths_recursive): New function.
@@ -16133,12 +16154,12 @@
 	Call write_ancestry_paths for "reposting" queue
 	strategy.
 
-2003-10-25  graydon hoare  <graydon@pobox.com>
+2003-10-25  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (log): Skip looking inside nonexistent
 	manifests for file comments.
 
-2003-10-24  graydon hoare  <graydon@pobox.com>
+2003-10-24  Graydon Hoare  <graydon@pobox.com>
 
 	* adns/*.c, adns/*.h: Import adns library.
 	* Makefile.am: Update to build adns into lib3rdparty.a.
@@ -16152,12 +16173,12 @@
 	* commands.cc (get_log_message, status, diff): Use
 	patch_set_to_text_summary for complete description.
 
-2003-10-22  graydon hoare  <graydon@pobox.com>
+2003-10-22  Graydon Hoare  <graydon@pobox.com>
 
 	* monotone.texi: Document 'queue' command.
 	* monotone.1: Likewise.
 
-2003-10-22  graydon hoare  <graydon@pobox.com>
+2003-10-22  Graydon Hoare  <graydon@pobox.com>
 
 	* diff_patch.cc
 	(infer_directory_moves): New function.
@@ -16167,12 +16188,12 @@
 	* tests/t_renamed.at: New test for dir renames.
 	* testsuite.at: Call it.
 
-2003-10-21  graydon hoare  <graydon@pobox.com>
+2003-10-21  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (queue): New command.
 	(list): Add "queue" subcommand, too.
 
-2003-10-21  graydon hoare  <graydon@pobox.com>
+2003-10-21  Graydon Hoare  <graydon@pobox.com>
 
 	* diff_patch.cc (merge_deltas): New function.
 	(check_map_inclusion): New function.
@@ -16183,7 +16204,7 @@
 	* file_io.cc, file_io.hh (make_dir_for): New function.
 	* commands.cc (update): Call make_dir_for on update.
 
-2003-10-20  graydon hoare  <graydon@pobox.com>
+2003-10-20  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc: Replace [] with idx() everywhere.
 
@@ -16202,20 +16223,20 @@
 	* network.cc (post_queued_blobs_to_network): Do nothing if no
 	packets to post.
 
-2003-10-20  graydon hoare  <graydon@pobox.com>
+2003-10-20  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.cc (get_branch_heads): Fix dumb bug.
 	* diff_patch.cc (merge3): Fix dumb bug.
 	(merge2): Fix dumb bug.
 	(try_to_merge_files): Fix dumb bug.
 
-2003-10-20  graydon hoare  <graydon@pobox.com>
+2003-10-20  Graydon Hoare  <graydon@pobox.com>
 
 	* file_io.cc (tilde_expand): New function.
 	* monotone.cc (cpp_main): Expand tildes in
 	db and rcfile arguments.
 
-2003-10-20  graydon hoare  <graydon@pobox.com>
+2003-10-20  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc (import_cvs_repo): Check key existence
 	at beginning of import pass, to avoid wasted work.
@@ -16224,7 +16245,7 @@
 
 	* commands.cc (log): Add each seen id to `cycles'.
 
-2003-10-19  graydon hoare  <graydon@pobox.com>
+2003-10-19  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS: Mention Tecgraf PUC-Rio and their
 	copyright.
@@ -16243,18 +16264,18 @@
 	* commands.cc (merge): Use app.branch_name instead of args[0] for
 	the branch name.
 
-2003-10-17  graydon hoare  <graydon@pobox.com>
+2003-10-17  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (log): New command.
 	Various other bug fixes.
 	* monotone.1, monotone.texi: Minor updates.
 
-2003-10-17  graydon hoare  <graydon@pobox.com>
+2003-10-17  Graydon Hoare  <graydon@pobox.com>
 
 	* monotone.texi: Expand command and hook references.
 	* commands.cc: Disable db dump / load commands for now.
 
-2003-10-16  graydon hoare  <graydon@pobox.com>
+2003-10-16  Graydon Hoare  <graydon@pobox.com>
 
 	* sanity.hh: Add a const version of idx().
 	* diff_patch.cc: Change to using idx() everywhere.
@@ -16263,7 +16284,7 @@
 	* tests/t_cross.at: New test for merging merges.
 	* testsuite.at: Call t_cross.at.
 
-2003-10-10  graydon hoare  <graydon@pobox.com>
+2003-10-10  Graydon Hoare  <graydon@pobox.com>
 
 	* lua.hh, lua.cc (hook_apply_attribute): New hook.
 	* work.hh, work.cc (apply_attributes): New function.
@@ -16272,7 +16293,7 @@
 	* std_hooks.lua (temp_file): Use some env vars.
 	(attr_functions): Make table of attr-setting functions.
 
-2003-10-10  graydon hoare  <graydon@pobox.com>
+2003-10-10  Graydon Hoare  <graydon@pobox.com>
 
 	* work.cc: Fix add/drop inversion bug.
 	* lua/*.{c,h}: Import lua 5.0 sources.
@@ -16281,27 +16302,27 @@
 	tests/t_persist_phrase.at, configure.ac, config.h.in, Makefile.am:
 	Modify to handle presence of lua 5.0.
 
-2003-10-08  graydon hoare  <graydon@pobox.com>
+2003-10-08  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc: Attach aux certs to child, not parent.
 	* manifest.cc: Speed up some calculations.
 	* keys.cc: Optionally cache decoded keys.
 
-2003-10-07  graydon hoare  <graydon@pobox.com>
+2003-10-07  Graydon Hoare  <graydon@pobox.com>
 
 	* manifest.hh, manifest.cc, rcs_import.cc: Write manifests w/o
 	compression.
 	* vocab.hh, vocab.cc: Don't re-verify verified data.
 	* ui.hh, ui.cc: Minor efficiency tweaks.
 
-2003-10-07  graydon hoare  <graydon@pobox.com>
+2003-10-07  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc, work.cc, work.hh: Add some preliminary stuff
 	to support explicit renaming, .mt-attrs.
 	* monotone.texi: Add skeletal sections for command reference,
 	hook reference, CVS phrasebook. Fill in some parts.
 
-2003-10-02  graydon hoare  <graydon@pobox.com>
+2003-10-02  Graydon Hoare  <graydon@pobox.com>
 
 	* boost/circular_buffer*.hpp: Add.
 	* AUTHORS, cert.cc, commands.cc, database.cc,
@@ -16313,7 +16334,7 @@
 	logging and asserty stuff with boost::format objects
 	rather than vsnprintf.
 
-2003-10-01  graydon hoare  <graydon@pobox.com>
+2003-10-01  Graydon Hoare  <graydon@pobox.com>
 
 	* testsuite.at: Don't use getenv("HOSTNAME").
 	* database.cc (exec, fetch): Do va_end/va_start again in between
@@ -16328,7 +16349,7 @@
 	* monotone.cc: Remove "monotone.db" default to --db
 	option in help text.
 
-2003-09-27  graydon hoare  <graydon@pobox.com>
+2003-09-27  Graydon Hoare  <graydon@pobox.com>
 
 	* diff_patch.cc: Rework conflict detection.
 	* rcs_import.cc: Remove some pointless slowness.
@@ -16336,7 +16357,7 @@
 
 	Release point (v 0.5).
 
-2003-09-27  graydon hoare  <graydon@pobox.com>
+2003-09-27  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS, NEWS, configure.ac: Update for 0.5 release.
 	* monotone.texi: Various updates.
@@ -16344,7 +16365,7 @@
 	* database.cc (sql): Require --db for init.
 	* work.cc (read_options_map): Fix options regex.
 
-2003-09-27  graydon hoare  <graydon@pobox.com>
+2003-09-27  Graydon Hoare  <graydon@pobox.com>
 
 	* lcs.hh: New jaffer LCS algorithm.
 	* interner.hh, rcs_import.cc: Templatize interner.
@@ -16367,11 +16388,11 @@
 	set.
 	* app_state.cc (app_state): Default to no database.
 
-2003-09-26  graydon hoare  <graydon@pobox.com>
+2003-09-26  Graydon Hoare  <graydon@pobox.com>
 
 	* debian/*, monotone.spec: Add packaging control files.
 
-2003-09-24  graydon hoare  <graydon@pobox.com>
+2003-09-24  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc, database.hh (debug): New function.
 	* commands.cc (debug): New command.
@@ -16381,13 +16402,13 @@
 	* commands.cc (list): List unknown, ignored files.
 	* monotone.texi, monotone.1: Document.
 
-2003-09-24  graydon hoare  <graydon@pobox.com>
+2003-09-24  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc (queue_edge_for_target_ancestor): Queue the
 	correct ancestry cert, from child to target, as well as
 	patch_set.
 
-2003-09-22  graydon hoare  <graydon@pobox.com>
+2003-09-22  Graydon Hoare  <graydon@pobox.com>
 
 	* depot_schema.sql, schema_migration.cc,
 	schema_migration.hh: Add.
@@ -16458,7 +16479,7 @@
 	(Commands): Mention "list branches".
 	(Branches): Likewise.
 
-2003-09-15  graydon hoare  <graydon@redhat.com>
+2003-09-15  Graydon Hoare  <graydon@redhat.com>
 
 	* http_tasks.cc: Fix networking to handle long input.
 
@@ -16494,7 +16515,7 @@
 	* monotone.cc (cpp_main): Don't set initial database name on
 	app.  Use new settor methods.  Don't look at MT_BRANCH or MT_DB.
 
-2003-09-14  graydon hoare  <graydon@pobox.com>
+2003-09-14  Graydon Hoare  <graydon@pobox.com>
 
 	* vocab.cc, vocab.hh: Add streamers for vocab terms in preparation
 	for switch to formatter.
@@ -16517,7 +16538,7 @@
 	* tests/t_http.at: If we can't find boa or depot.cgi, skip the
 	test.
 
-2003-09-12  graydon hoare  <graydon@pobox.com>
+2003-09-12  Graydon Hoare  <graydon@pobox.com>
 
 	* update.cc (pick_update_target): Only insert base rev as update
 	candidate if it actually exists in db.
@@ -16548,7 +16569,7 @@
 
 	* Makefile.am (TESTS): unit_tests is not in srcdir.
 
-2003-09-11  graydon hoare  <graydon@pobox.com>
+2003-09-11  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc: Check for MT directory in status.
 	* commands.cc: Require directory for checkout.
@@ -16568,7 +16589,7 @@
 
 	* commands.cc, monotone.cc: Report unknown commands nicely.
 
-2003-09-08  graydon hoare  <graydon@pobox.com>
+2003-09-08  Graydon Hoare  <graydon@pobox.com>
 
 	* tests/merge.at: Accept tromey's non-error case for update.
 
@@ -16597,7 +16618,7 @@
 	* texinfo.tex, INSTALL, Makefile.in, aclocal.m4, compile, depcomp,
 	install-sh, missing, mkinstalldirs: Removed generated files.
 
-2003-09-04  graydon hoare  <graydon@pobox.com>
+2003-09-04  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am, depot.cc, http_tasks.cc, http_tasks.hh,
 	lua.cc, lua.hh, monotone.texi, network.cc, tests/t_http.at,
@@ -16615,13 +16636,13 @@
 
 	Release point (v 0.4).
 
-2003-09-03  graydon hoare  <graydon@pobox.com>
+2003-09-03  Graydon Hoare  <graydon@pobox.com>
 
 	* monotone.texi: Expand notes about setting up depot.
 
 	* update.cc: Update by ancestry. Duh.
 
-2003-09-02  graydon hoare  <graydon@pobox.com>
+2003-09-02  Graydon Hoare  <graydon@pobox.com>
 
 	* boost/socket/streambuf.hpp: Bump ppos on overflow.
 
@@ -16660,7 +16681,7 @@
 	HAVE_LIBLUALIB templates.
 	* lua.cc: Include config.h.  Use LUA_H, LIBLUA_H macros.
 
-2003-08-29  graydon hoare  <graydon@pobox.com>
+2003-08-29  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am, txt2c.cc, lua.cc, database.cc:
 	Use a C constant-building converter rather than objcopy.
@@ -16674,12 +16695,12 @@
 	Modify packet queueing strategy to select ancestors from known
 	network server content, rather than most recent edge.
 
-2003-08-25  graydon hoare  <graydon@pobox.com>
+2003-08-25  Graydon Hoare  <graydon@pobox.com>
 
 	* AUTHORS, ChangeLog, Makefile.am, NEWS, configure.ac,
 	tests/t_http.at: Release point (v 0.3)
 
-2003-08-24  graydon hoare  <graydon@pobox.com>
+2003-08-24  Graydon Hoare  <graydon@pobox.com>
 
 	* nntp_tasks.cc: Measure success from postlines state.
 	* network.cc: Print summary counts of transmissions.
@@ -16690,13 +16711,13 @@
 	* monotone.texi: Update to reflect depot existence.
 	* http_tasks.cc: Pick bugs out.
 
-2003-08-24  graydon hoare  <graydon@pobox.com>
+2003-08-24  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc: Wash certs before output.
 	* *.cc,*.hh: Adjust cert packet format to
 	be more readable, avoid superfluous gzipping.
 
-2003-08-24  graydon hoare  <graydon@pobox.com>
+2003-08-24  Graydon Hoare  <graydon@pobox.com>
 
 	* configure, Makefile.in: Remove generated files, oops.
 	* commands.cc: Implement 'propagate'.
@@ -16706,7 +16727,7 @@
 	* diff_patch.hh, diff_patch.cc: Implement basic
 	merge2-on-manifest.
 
-2003-08-23  graydon hoare  <graydon@pobox.com>
+2003-08-23  Graydon Hoare  <graydon@pobox.com>
 
 	* monotone.cc: Handle user-defined lua hooks as
 	overriding internal / .monotonerc hooks no matter
@@ -16728,7 +16749,7 @@
 
 	* database.cc: Include "sqlite/sqlite.h", not <sqlite.h>.
 
-2003-08-20  graydon hoare  <graydon@pobox.com>
+2003-08-20  Graydon Hoare  <graydon@pobox.com>
 
 	* boost/*:
 	incorporate boost sandbox bits, for now.
@@ -16739,7 +16760,7 @@
 
 	fix up networking layer to pass nntp tests again
 
-2003-08-19  graydon hoare  <graydon@pobox.com>
+2003-08-19  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am, Makefile.in, app_state.hh, cert.cc, commands.cc,
 	constants.hh, cryptopp/misc.h, database.cc, depot.cc,
@@ -16754,21 +16775,21 @@
 	- implement nicer failure modes for sanity.
 	- redo commands to print nicer, fail nicer.
 
-2003-08-18  graydon hoare  <graydon@pobox.com>
+2003-08-18  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am, Makefile.in, adler32.hh, database.cc, depot.cc,
 	mac.hh, xdelta.cc, Makefile.am, Makefile.in:
 
 	first pass at a depot (CGI-based packet service)
 
-2003-08-08  graydon hoare  <graydon@pobox.com>
+2003-08-08  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am, Makefile.in AUTHORS, ChangeLog, Makefile.am,
 	Makefile.in, NEWS, monotone.1, monotone.info, monotone.texi:
 
 	release point (v 0.2)
 
-2003-08-08  graydon hoare  <graydon@pobox.com>
+2003-08-08  Graydon Hoare  <graydon@pobox.com>
 
 	* cert.cc, cert.hh, interner.hh, rcs_import.cc:
 
@@ -16779,7 +16800,7 @@
 
 	improvements to cycle detection stuff
 
-2003-08-05  graydon hoare  <graydon@pobox.com>
+2003-08-05  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc:
 
@@ -16797,7 +16818,7 @@
 	cvs import seems to be working, but several linear algorithms need
 	replacement
 
-2003-07-28  graydon hoare  <graydon@pobox.com>
+2003-07-28  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am, Makefile.in, cert.cc, commands.cc, database.cc,
 	database.hh, manifest.cc, rcs_file.cc, rcs_import.cc,
@@ -16805,38 +16826,38 @@
 
 	cvs graph reconstruction hobbling along.
 
-2003-07-21  graydon hoare  <graydon@pobox.com>
+2003-07-21  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc, xdelta.cc, xdelta.hh:
 
 	piecewise xdelta; improves speed a fair bit.
 
-2003-07-11  graydon hoare  <graydon@pobox.com>
+2003-07-11  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am, Makefile.in, config.h.in, configure, configure.ac,
 	transforms.cc, xdelta.cc, xdelta.hh:
 
 	implement xdelta by hand, forget 3rd party delta libs.
 
-2003-07-02  graydon hoare  <graydon@pobox.com>
+2003-07-02  Graydon Hoare  <graydon@pobox.com>
 
 	* database.cc, rcs_import.cc, transforms.cc, transforms.hh:
 
 	speedups all around in the storage system
 
-2003-07-01  graydon hoare  <graydon@pobox.com>
+2003-07-01  Graydon Hoare  <graydon@pobox.com>
 
 	* database.hh, rcs_import.cc, transforms.cc, transforms.hh: speed
 
 	improvements to RCS import
 
-2003-06-30  graydon hoare  <graydon@pobox.com>
+2003-06-30  Graydon Hoare  <graydon@pobox.com>
 
 	* rcs_import.cc, transforms.cc:
 
 	some speed improvements to RCS import
 
-2003-06-29  graydon hoare  <graydon@pobox.com>
+2003-06-29  Graydon Hoare  <graydon@pobox.com>
 
 	* commands.cc, database.hh, rcs_import.cc, transforms.cc:
 
@@ -16848,12 +16869,12 @@
 
 	Makefile.am: preliminary support for reading and walking RCS files
 
-2003-04-09  graydon hoare  <graydon@pobox.com>
+2003-04-09  Graydon Hoare  <graydon@pobox.com>
 
 	* autogen.sh: oops
 	* */*: savannah import
 
-2003-04-06  graydon hoare  <graydon@pobox.com>
+2003-04-06  Graydon Hoare  <graydon@pobox.com>
 
 	* initial release.
 

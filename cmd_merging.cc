@@ -321,8 +321,8 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       packet_db_writer dbw(app);
       cert_revision_in_branch(merged, app.branch_name(), app, dbw);
 
-      string log = (boost::format("merge of %s\n"
-                                  "     and %s\n") % left % right).str();
+      string log = (FL("merge of %s\n"
+		       "     and %s\n") % left % right).str();
       cert_revision_changelog(merged, log, app, dbw);
           
       guard.commit();
@@ -481,8 +481,8 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
       string log_message;
       process_commit_message_args(log_message_given, log_message, app);
       if (!log_message_given)
-        log_message = (boost::format("propagate from branch '%s' (head %s)\n"
-                                     "            to branch '%s' (head %s)\n")
+        log_message = (FL("propagate from branch '%s' (head %s)\n"
+			  "            to branch '%s' (head %s)\n")
                        % idx(args, 0) % (*src_i)
                        % idx(args, 1) % (*dst_i)).str();
 
@@ -527,9 +527,9 @@ CMD(explicit_merge, N_("tree"),
   
   cert_revision_in_branch(merged, branch, app, dbw);
   
-  string log = (boost::format("explicit_merge of '%s'\n"
-                              "              and '%s'\n"
-                              "        to branch '%s'\n")
+  string log = (FL("explicit_merge of '%s'\n"
+		   "              and '%s'\n"
+		   "        to branch '%s'\n")
                 % left % right % branch).str();
   
   cert_revision_changelog(merged, log, app, dbw);

@@ -265,7 +265,7 @@ then
 	AC_MSG_CHECKING(for gcc with precompiled header support)
 	gxx_version=`${CXX} -dumpversion`
 	case $gxx_version in
-		4.0*)
+		4.*)
 			AC_MSG_RESULT(found)
 			AM_CONDITIONAL(BUILD_PCH, true)
 			;;

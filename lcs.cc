@@ -38,15 +38,15 @@
 
 */
 
-#include "lcs.hh"
-
-#include <vector>
 #include <algorithm>
 #include <iostream>
+#include <vector>
+
+#include "lcs.hh"
 #include "sanity.hh"
 
-using std::back_inserter;
 using std::back_insert_iterator;
+using std::back_inserter;
 using std::copy;
 using std::iterator_traits;
 using std::max;

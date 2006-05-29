@@ -390,7 +390,7 @@ write_data_impl(any_path const & p,
   // nb: no mucking around with multiple-writer conditions. we're a
   // single-user single-threaded program. you get what you paid for.
   assert_path_is_directory(bookkeeping_root);
-  bookkeeping_path tmp = bookkeeping_root / (boost::format("data.tmp.%d") %
+  bookkeeping_path tmp = bookkeeping_root / (FL("data.tmp.%d") %
                                              get_process_id()).str();
   write_data_impl(p, dat, tmp);
 }
@@ -412,7 +412,7 @@ write_data(system_path const & path,
            data const & data,
            system_path const & tmpdir)
 {
-  write_data_impl(path, data, tmpdir / (boost::format("data.tmp.%d") %
+  write_data_impl(path, data, tmpdir / (FL("data.tmp.%d") %
                                              get_process_id()).str());
 }
 

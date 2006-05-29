@@ -606,7 +606,7 @@ check_idna_encoding()
       ace a = string(idna_vec[i].out);
       ace tace;
       utf8_to_ace(utf, tace);
-      L(boost::format("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tace());
+      L(FL("ACE-encoded %s: '%s'\n") % idna_vec[i].name % tace());
       BOOST_CHECK(lowercase(a()) == lowercase(tace()));
       ace_to_utf8(a, tutf);
       BOOST_CHECK(lowercase(utf()) == lowercase(tutf()));

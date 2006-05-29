@@ -1,4 +1,3 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 #ifndef __SANITY_HH__
 #define __SANITY_HH__
 
@@ -9,20 +8,17 @@
 
 #include "config.h" // Required for ENABLE_NLS
 
+#include <iosfwd>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <iosfwd>
 
-#include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
 #include "boost/current_function.hpp"
 
 #include "i18n.h"
-
-#include "quick_alloc.hh" // to get the QA() macro
-
 #include "paths.hh"
+#include "quick_alloc.hh" // to get the QA() macro
 
 #ifdef __GNUC__
 #define NORETURN __attribute__((noreturn))
@@ -45,6 +41,8 @@ struct informative_failure {
 
 class MusingI;
 
+class format_base;
+struct plain_format;
 struct i18n_format;
 
 struct sanity {
@@ -69,7 +67,7 @@ struct sanity {
   bool clean_shutdown;
   std::vector<MusingI const *> musings;
 
-  void log(boost::format const & fmt, 
+  void log(plain_format const & fmt, 
            char const * file, int line);
   void progress(i18n_format const & fmt,
                 char const * file, int line);
@@ -89,9 +87,7 @@ struct sanity {
   void gasp();
 
 private:
-  std::string do_format(i18n_format const & fmt,
-                        char const * file, int line);
-  std::string do_format(boost::format const & fmt,
+  std::string do_format(format_base const & fmt,
                         char const * file, int line);
 };
 
@@ -99,26 +95,86 @@ typedef std::runtime_error oops;
 
 extern sanity global_sanity;
 
-struct i18n_format
+// This hides boost::format from infecting every source file. Instead, we
+// implement a single very small formatter. 
+
+class 
+format_base
 {
-  boost::format fmt;
+protected:
+  struct impl;
+  impl *pimpl;
+
+  format_base() : pimpl(NULL) {}
+  format_base(format_base const & other);
+  format_base & operator=(format_base const & other);
+  explicit format_base(char const * pattern);
+  explicit format_base(std::string const & pattern);
+  explicit format_base(char const * pattern, std::locale const & loc);
+  explicit format_base(std::string const & pattern, std::locale const & loc);
+  std::ostream & get_stream();
+  void flush();
+
+public:
+  std::string str() const;
+};
+
+
+struct
+plain_format 
+  : public format_base
+{
+  plain_format() 
+  {}
+
+  explicit plain_format(char const * pattern) 
+    : format_base(pattern) 
+  {}
+
+  explicit plain_format(std::string const & pattern) 
+    : format_base(pattern) 
+  {}
+
+  template<typename T> plain_format & operator %(T const & t) 
+  {
+    get_stream() << t; 
+    flush();
+    return *this;
+  }
+
+  template<typename T> plain_format & operator %(T & t) 
+  {
+    get_stream() << t;
+    flush();
+    return *this; 
+  }
+};
+
+
+struct
+i18n_format 
+  : public format_base
+{
   i18n_format() {}
   explicit i18n_format(const char * localized_pattern);
   explicit i18n_format(std::string const & localized_pattern);
-  std::string str() const;
+
   template <typename T> i18n_format & operator%(T const & t)
   {
-    fmt % t;
+    get_stream() << t;
+    flush();
     return *this;
   }
+
   template <typename T> i18n_format & operator%(T & t)
   {
-    fmt % t;
+    get_stream() << t;
+    flush();
     return *this;
   }
 };
 
-std::ostream & operator<<(std::ostream & os, i18n_format const & fmt);
+std::ostream & operator<<(std::ostream & os, format_base const & fmt);
 
 // F is for when you want to build a boost formatter for display
 i18n_format F(const char * str);
@@ -128,7 +184,7 @@ i18n_format FP(const char * str1, const char * strn, unsigned long count);
 
 // FL is for when you want to build a boost formatter for the developers -- it
 // is not gettextified.  Think of the L as "literal" or "log".
-boost::format FL(const char * str);
+plain_format FL(const char * str);
 
 // L is for logging, you can log all you want
 #define L(fmt) global_sanity.log(fmt, __FILE__, __LINE__)
@@ -330,5 +386,14 @@ Musing<T>::gasp(std::string & out) const
 #endif
 
 template <> void dump(std::string const & obj, std::string & out);
+
+//////////////////////////////////////////////////////////////////////////
+// Local Variables: 
+// mode: C++ 
+// c-file-style: "gnu" 
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+//////////////////////////////////////////////////////////////////////////
 
 #endif // __SANITY_HH__

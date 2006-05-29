@@ -1,13 +1,15 @@
 main files:
 -----------
 
-Graydon Hoare <graydon@pobox.com> originally wrote *.{lua,sql,cc,hh}
-in the top level directory. That's me.
+Graydon Hoare <graydon@pobox.com> originally wrote most of the files
+*.{lua,sql,cc,hh} in the top level directory. That's me.
 
-Two exceptions are the file main.cc, which is a slightly reworked copy
-of execution_monitor.cc from the boost project; and the file
-mkstemp.cc, which is a slightly reworked copy of mkstemp code from
-glib. In both cases I've noted the original copyrights in the files.
+Three exceptions are the file main.cc, which is a slightly reworked
+copy of execution_monitor.cc from the boost project; the file
+lru_cache.h, which is a slightly modified copy of a file from Patrick
+Audley, and the file mkstemp.cc, which is a slightly reworked copy of
+mkstemp code from glib. In both cases I've noted the original
+copyrights in the files.
 
 Another possible exception -- depending on how you interpret the word
 "wrote" -- is the file lcs.hh, which I did write, but the writing was

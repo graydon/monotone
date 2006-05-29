@@ -13,7 +13,7 @@ void get_system_flavour(std::string & ident)
      Linux only knows 0 - as >0 is not an
      error condition there, relax a bit */ 
   I(uname(&n) >= 0);
-  ident = (boost::format("%s %s %s %s")
+  ident = (FL("%s %s %s %s")
            % n.sysname
            % n.release
            % n.version

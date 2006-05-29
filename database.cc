@@ -358,7 +358,7 @@ dump_request
 static void
 dump_row(ostream &out, sqlite3_stmt *stmt, string const& table_name)
 {
-  out << boost::format("INSERT INTO %s VALUES(") % table_name;
+  out << FL("INSERT INTO %s VALUES(") % table_name;
   unsigned n = sqlite3_data_count(stmt);
   for (unsigned i = 0; i < n; ++i)
     {

@@ -1,16 +1,19 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2004 nathaniel smith <njs@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2004 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
-#include <string>
+#include <algorithm>
 #include <iostream>
 #include <iterator>
-#include <vector>
-#include <algorithm>
 #include <sstream>
+#include <string>
 #include <unistd.h>
+#include <vector>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -18,19 +21,19 @@
 
 #include "app_state.hh"
 #include "basic_io.hh"
+#include "cert.hh"
 #include "commands.hh"
 #include "constants.hh"
+#include "keys.hh"
+#include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
 #include "transforms.hh"
 #include "vocab.hh"
-#include "keys.hh"
-#include "packet.hh"
-#include "cert.hh"
 
 using std::allocator;
-using std::basic_stringbuf;
 using std::basic_ios;
+using std::basic_stringbuf;
 using std::char_traits;
 using std::endl;
 using std::inserter;
@@ -383,10 +386,11 @@ automate_leaves(vector<utf8> args,
   app.db.get_revision_ids(leaves);
   multimap<revision_id, revision_id> graph;
   app.db.get_revision_ancestry(graph);
-  for (multimap<revision_id, revision_id>::const_iterator i = graph.begin();
-       i != graph.end(); ++i)
+  for (multimap<revision_id, revision_id>::const_iterator 
+         i = graph.begin(); i != graph.end(); ++i)
     leaves.erase(i->first);
-  for (set<revision_id>::const_iterator i = leaves.begin(); i != leaves.end(); ++i)
+  for (set<revision_id>::const_iterator i = leaves.begin(); 
+       i != leaves.end(); ++i)
     output << (*i).inner()() << endl;
 }
 
@@ -493,7 +497,8 @@ automate_graph(vector<utf8> args,
       j->second.insert(i->first);
     }
 
-  for (map<revision_id, set<revision_id> >::const_iterator i = child_to_parents.begin();
+  for (map<revision_id, set<revision_id> >::const_iterator 
+         i = child_to_parents.begin();
        i != child_to_parents.end(); ++i)
     {
       output << (i->first).inner()();
@@ -555,7 +560,8 @@ struct inventory_item
     pre_state, post_state;
 
   enum nstate
-    { UNCHANGED_NODE, PATCHED_NODE, MISSING_NODE, UNKNOWN_NODE, IGNORED_NODE } 
+    { UNCHANGED_NODE, PATCHED_NODE, MISSING_NODE, 
+      UNKNOWN_NODE, IGNORED_NODE } 
     node_state;
 
   size_t pre_id, post_id;
@@ -597,7 +603,8 @@ inventory_post_state(inventory_map & inventory,
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(FL("%d %d %s\n") % inventory[*i].post_state % post_state % file_path(*i));
+      L(FL("%d %d %s\n") % inventory[*i].post_state 
+        % post_state % file_path(*i));
       I(inventory[*i].post_state == inventory_item::UNCHANGED_PATH);
       inventory[*i].post_state = post_state;
       if (rename_id != 0) 
@@ -615,7 +622,8 @@ inventory_node_state(inventory_map & inventory,
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(FL("%d %d %s\n") % inventory[*i].node_state % node_state % file_path(*i));
+      L(FL("%d %d %s\n") % inventory[*i].node_state 
+        % node_state % file_path(*i));
       I(inventory[*i].node_state == inventory_item::UNCHANGED_NODE);
       inventory[*i].node_state = node_state;
     }
@@ -639,8 +647,10 @@ inventory_renames(inventory_map & inventory,
       old_name.insert(i->first);
       new_name.insert(i->second);
 
-      inventory_pre_state(inventory, old_name, inventory_item::RENAMED_PATH, rename_id);
-      inventory_post_state(inventory, new_name, inventory_item::RENAMED_PATH, rename_id);
+      inventory_pre_state(inventory, old_name, 
+                          inventory_item::RENAMED_PATH, rename_id);
+      inventory_post_state(inventory, new_name, 
+                           inventory_item::RENAMED_PATH, rename_id);
 
       rename_id++;
     }
@@ -649,7 +659,8 @@ inventory_renames(inventory_map & inventory,
 static void
 extract_added_file_paths(addition_map const & additions, path_set & paths) 
 {
-  for (addition_map::const_iterator i = additions.begin(); i != additions.end(); ++i) 
+  for (addition_map::const_iterator i = additions.begin(); 
+       i != additions.end(); ++i) 
     {
       paths.insert(i->first);
     }
@@ -659,10 +670,12 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 // Name: inventory
 // Arguments: none
 // Added in: 1.0
+
 // Purpose: Prints a summary of every file found in the workspace or its
-//   associated base manifest. Each unique path is listed on a line prefixed by
-//   three status characters and two numeric values used for identifying
-//   renames. The three status characters are as follows.
+//   associated base manifest. Each unique path is listed on a line
+//   prefixed by three status characters and two numeric values used
+//   for identifying renames. The three status characters are as
+//   follows.
 //
 //   column 1 pre-state
 //         ' ' the path was unchanged in the pre-state
@@ -679,12 +692,13 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 //         'I' the node is ignored and not included in the roster
 //         'M' the node is missing but is included in the roster
 //
-// Output format: Each path is printed on its own line, prefixed by three status
-//   characters as described above. The status is followed by a single space and
-//   two numbers, each separated by a single space, used for identifying renames.
-//   The numbers are followed by a single space and then the pathname, which 
-//   includes the rest of the line. Directory paths are identified as ending with
-//   the "/" character, file paths do not end in this character.
+// Output format: Each path is printed on its own line, prefixed by three 
+//   status characters as described above. The status is followed by a
+//   single space and two numbers, each separated by a single space,
+//   used for identifying renames.  The numbers are followed by a
+//   single space and then the pathname, which includes the rest of
+//   the line. Directory paths are identified as ending with the "/"
+//   character, file paths do not end in this character.
 //
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
@@ -709,21 +723,24 @@ automate_inventory(vector<utf8> args,
   get_base_and_current_roster_shape(base, curr, nis, app);
   make_cset(base, curr, cs);
 
-  // the current roster (curr) has the complete set of registered nodes
-  // conveniently with unchanged sha1 hash values
+  // The current roster (curr) has the complete set of registered nodes
+  // conveniently with unchanged sha1 hash values.
 
-  // the cset (cs) has the list of drops/renames/adds that have occurred between
-  // the two rosters along with an empty list of deltas.  this list is empty
-  // only because the current roster used to generate the cset does not have
-  // current hash values as recorded on the filesystem (because get_..._shape
-  // was used to build it)
+  // The cset (cs) has the list of drops/renames/adds that have
+  // occurred between the two rosters along with an empty list of
+  // deltas.  this list is empty only because the current roster used
+  // to generate the cset does not have current hash values as
+  // recorded on the filesystem (because get_..._shape was used to
+  // build it).
 
   path_set nodes_added(cs.dirs_added);
   extract_added_file_paths(cs.files_added, nodes_added);
 
-  inventory_pre_state(inventory, cs.nodes_deleted, inventory_item::DROPPED_PATH, 0);
+  inventory_pre_state(inventory, cs.nodes_deleted, 
+                      inventory_item::DROPPED_PATH, 0);
   inventory_renames(inventory, cs.nodes_renamed);
-  inventory_post_state(inventory, nodes_added, inventory_item::ADDED_PATH, 0);
+  inventory_post_state(inventory, nodes_added, 
+                       inventory_item::ADDED_PATH, 0);
 
   classify_roster_paths(curr, unchanged, changed, missing, app);
   curr.extract_path_set(known);
@@ -732,23 +749,33 @@ automate_inventory(vector<utf8> args,
   file_itemizer u(app, known, unknown, ignored, mask);
   walk_tree(file_path(), u);
 
-  inventory_node_state(inventory, unchanged, inventory_item::UNCHANGED_NODE);
-  inventory_node_state(inventory, changed, inventory_item::PATCHED_NODE);
-  inventory_node_state(inventory, missing, inventory_item::MISSING_NODE);
-  inventory_node_state(inventory, unknown, inventory_item::UNKNOWN_NODE);
-  inventory_node_state(inventory, ignored, inventory_item::IGNORED_NODE);
+  inventory_node_state(inventory, unchanged, 
+                       inventory_item::UNCHANGED_NODE);
+
+  inventory_node_state(inventory, changed, 
+                       inventory_item::PATCHED_NODE);
+
+  inventory_node_state(inventory, missing, 
+                       inventory_item::MISSING_NODE);
+
+  inventory_node_state(inventory, unknown, 
+                       inventory_item::UNKNOWN_NODE);
+
+  inventory_node_state(inventory, ignored, 
+                       inventory_item::IGNORED_NODE);
 
   // FIXME: do we want to report on attribute changes here?!?
 
-  for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end(); ++i)
+  for (inventory_map::const_iterator i = inventory.begin(); 
+       i != inventory.end(); ++i)
     {
 
       string path_suffix;
 
       if (curr.has_node(i->first)) 
         {
-          // explicitly skip the root dir for now... 
-          // the trailing / dir format isn't going to work here
+          // Explicitly skip the root dir for now. The trailing / dir
+          // format isn't going to work here.
           node_t n = curr.get_node(i->first);
           if (is_root_dir_t(n)) continue;
           if (is_dir_t(n)) path_suffix = "/";
@@ -788,9 +815,10 @@ automate_inventory(vector<utf8> args,
              << " " << i->second.post_id 
              << " " << i->first;
 
-      // FIXME: it's possible that a directory was deleted and a file was added
-      // in it's place (or vice-versa) so we need something like pre/post node
-      // type indicators rather than a simple path suffix! ugh.
+      // FIXME: it's possible that a directory was deleted and a file
+      // was added in it's place (or vice-versa) so we need something
+      // like pre/post node type indicators rather than a simple path
+      // suffix! ugh.
       
       output << path_suffix;
 
@@ -819,13 +847,13 @@ namespace
 // Arguments:
 //   1: a revision id
 // Added in: 1.0
-// Purpose: Prints all certificates associated with the given revision ID.
-//   Each certificate is contained in a basic IO stanza. For each certificate, 
-//   the following values are provided:
+// Purpose: Prints all certificates associated with the given revision 
+//   ID. Each certificate is contained in a basic IO stanza. For each
+//   certificate, the following values are provided:
 //   
 //   'key' : a string indicating the key used to sign this certificate.
-//   'signature': a string indicating the status of the signature. Possible 
-//   values of this string are:
+//   'signature': a string indicating the status of the signature. 
+//   Possible values of this string are:
 //     'ok'        : the signature is correct
 //     'bad'       : the signature is invalid
 //     'unknown'   : signature was made with an unknown key
@@ -836,12 +864,14 @@ namespace
 //     'trusted'   : this certificate is trusted
 //     'untrusted' : this certificate is not trusted
 //
-// Output format: All stanzas are formatted by basic_io. Stanzas are seperated 
-// by a blank line. Values will be escaped, '\' -> '\\' and '"' -> '\"'.
+// Output format: All stanzas are formatted by basic_io. Stanzas are
+// seperated by a blank line. Values will be escaped, '\' -> '\\' and
+// '"' -> '\"'.
 //
-// Error conditions: If a certificate is signed with an unknown public key, a 
-// warning message is printed to stderr. If the revision specified is unknown 
-// or invalid prints an error message to stderr and exits with status 1.
+// Error conditions: If a certificate is signed with an unknown public
+// key, a warning message is printed to stderr. If the revision
+// specified is unknown or invalid prints an error message to stderr
+// and exits with status 1.
 static void
 automate_certs(vector<utf8> args,
                string const & help_name,
@@ -876,8 +906,8 @@ automate_certs(vector<utf8> args,
       }
   }
         
-  // Make the output deterministic; this is useful for the test suite, in
-  // particular.
+  // Make the output deterministic; this is useful for the test suite,
+  // in particular.
   sort(certs.begin(), certs.end());
 
   basic_io::printer pr;
@@ -895,8 +925,9 @@ automate_certs(vector<utf8> args,
       rsa_keypair_id keyid = idx(certs, i).key();
       signers.insert(keyid);
 
-      bool trusted = app.lua.hook_get_revision_cert_trust(signers, ident,
-                                                          name, tv);
+      bool trusted = 
+        app.lua.hook_get_revision_cert_trust(signers, ident,
+                                             name, tv);
 
       st.push_str_pair(syms::key, keyid());
 
@@ -928,12 +959,14 @@ automate_certs(vector<utf8> args,
 
 // Name: get_revision
 // Arguments:
-//   1: a revision id (optional, determined from the workspace if non-existant)
+//   1: a revision id (optional, determined from the workspace if 
+//      non-existant)
 // Added in: 1.0
+
 // Purpose: Prints change information for the specified revision id.
-//   There are several changes that are described; each of these is described by 
-//   a different basic_io stanza. The first string pair of each stanza indicates the 
-//   type of change represented. 
+//   There are several changes that are described; each of these is
+//   described by a different basic_io stanza. The first string pair
+//   of each stanza indicates the type of change represented.
 //
 //   All stanzas are formatted by basic_io. Stanzas are separated 
 //   by a blank line. Values will be escaped, '\' to '\\' and 
@@ -985,8 +1018,8 @@ automate_certs(vector<utf8> args,
 //
 //   These stanzas will always occur in the order listed here; stanzas of
 //   the same type will be sorted by the filename they refer to.
-// Error conditions: If the revision specified is unknown or invalid prints an 
-// error message to stderr and exits with status 1.
+// Error conditions: If the revision specified is unknown or invalid
+// prints an error message to stderr and exits with status 1.
 static void
 automate_get_revision(vector<utf8> args,
                       string const & help_name,
@@ -1031,8 +1064,8 @@ automate_get_revision(vector<utf8> args,
 // Name: get_base_revision_id
 // Arguments: none
 // Added in: 2.0
-// Purpose: Prints the revision id the current workspace is based on. This is 
-//   the value stored in _MTN/revision
+// Purpose: Prints the revision id the current workspace is based
+//   on. This is the value stored in _MTN/revision
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 static void
@@ -1055,8 +1088,9 @@ automate_get_base_revision_id(vector<utf8> args,
 // Arguments: none
 // Added in: 2.0
 // Purpose: Prints the revision id of the current workspace. This is the
-//   id of the revision that would be committed by an unrestricted commit calculated
-//   from _MTN/revision, _MTN/work and any edits to files in the workspace.
+//   id of the revision that would be committed by an unrestricted
+//   commit calculated from _MTN/revision, _MTN/work and any edits to
+//   files in the workspace.
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 static void
@@ -1091,7 +1125,8 @@ automate_get_current_revision_id(vector<utf8> args,
 // Arguments:
 //   1: a revision id (optional, determined from the workspace if not given)
 // Added in: 2.0
-// Purpose: Prints the contents of the manifest associated with the given revision ID.
+// Purpose: Prints the contents of the manifest associated with the
+//   given revision ID.
 //
 // Output format:
 //   There is one basic_io stanza for each file or directory in the
@@ -1119,14 +1154,14 @@ automate_get_current_revision_id(vector<utf8> args,
 //         occurs: zero or more times
 //
 //   In addition, 'dir' and 'file' stanzas may have attr information
-//   included.  These are appended to the stanza below the basic dir/file
-//   information, with one line describing each attr.  These lines take the
-//   form ('attr', attr name, attr value).
+//   included.  These are appended to the stanza below the basic
+//   dir/file information, with one line describing each attr.  These
+//   lines take the form ('attr', attr name, attr value).
 //
 //   Stanzas are sorted by the path string.
 //
-// Error conditions:  If the revision ID specified is unknown or invalid prints an 
-// error message to stderr and exits with status 1.
+// Error conditions: If the revision ID specified is unknown or
+// invalid prints an error message to stderr and exits with status 1.
 static void
 automate_get_manifest_of(vector<utf8> args,
                          string const & help_name,
@@ -1199,10 +1234,11 @@ automate_get_file(vector<utf8> args,
 // Added in: 2.0
 // Purpose: Prints the revision data in packet format
 //
-// Output format: revision data in "monotone read" compatible packet format
+// Output format: revision data in "monotone read" compatible packet
+//   format
 //
-// Error conditions: If the revision id specified is unknown or invalid prints 
-// an error message to stderr and exits with status 1.
+// Error conditions: If the revision id specified is unknown or
+// invalid prints an error message to stderr and exits with status 1.
 static void
 automate_packet_for_rdata(vector<utf8> args,
                           string const & help_name,
@@ -1231,8 +1267,8 @@ automate_packet_for_rdata(vector<utf8> args,
 //
 // Output format: certs in "monotone read" compatible packet format
 //
-// Error conditions: If the revision id specified is unknown or invalid prints 
-// an error message to stderr and exits with status 1.
+// Error conditions: If the revision id specified is unknown or
+// invalid prints an error message to stderr and exits with status 1.
 static void
 automate_packets_for_certs(vector<utf8> args,
                            string const & help_name,
@@ -1262,8 +1298,8 @@ automate_packets_for_certs(vector<utf8> args,
 //
 // Output format: file data in "monotone read" compatible packet format
 //
-// Error conditions: If the file id specified is unknown or invalid prints 
-// an error message to stderr and exits with status 1.
+// Error conditions: If the file id specified is unknown or invalid
+// prints an error message to stderr and exits with status 1.
 static void
 automate_packet_for_fdata(vector<utf8> args,
                           string const & help_name,
@@ -1360,13 +1396,14 @@ automate_command(utf8 cmd, vector<utf8> args,
 //     2c295fcf5fe20301557b9b3a5b4d437b5ab8ec8c
 //     1:0:l:41:7706a422ccad41621c958affa999b1a1dd644e79
 //
-// Error conditions: Errors encountered by the commands run only set the error
-//   code in the output for that command. Malformed input results in exit with
-//   a non-zero return value and an error message.
+// Error conditions: Errors encountered by the commands run only set
+//   the error code in the output for that command. Malformed input
+//   results in exit with a non-zero return value and an error message.
 
-//We use our own stringbuf class so we can put in a callback on write.
-//This lets us dump output at a set length, rather than waiting until
-//we have all of the output.
+// We use our own stringbuf class so we can put in a callback on write.
+// This lets us dump output at a set length, rather than waiting until
+// we have all of the output.
+
 typedef basic_stringbuf<char,
                         char_traits<char>,
                         allocator<char> > char_stringbuf;
@@ -1646,12 +1683,14 @@ automate_keys(vector<utf8> args, string const & help_name,
 // Arguments:
 //   1 or more revision ids
 // Added in: 2.1
-// Purpose: Prints all revisions which are ancestors of all of the revisions
-//   given as arguments.
-// Output format: A list of revision ids, in hexadecimal, each followed by a
-//   newline.  Revisions are printed in alphabetically sorted order.
-// Error conditions: If any of the revisions do not exist, prints nothing to
-//   stdout, prints an error message to stderr, and exits with status 1.
+// Purpose: Prints all revisions which are ancestors of all of the
+//   revisions given as arguments.
+// Output format: A list of revision ids, in hexadecimal, each
+//   followed by a newline.  Revisions are printed in alphabetically
+//   sorted order.
+// Error conditions: If any of the revisions do not exist, prints
+//   nothing to stdout, prints an error message to stderr, and exits
+//   with status 1.
 static void
 automate_common_ancestors(vector<utf8> args, string const & help_name,
                           app_state & app, ostream & output)
@@ -1769,3 +1808,12 @@ automate_command(utf8 cmd, vector<utf8> args,
   else
     throw usage(root_cmd_name);
 }
+
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

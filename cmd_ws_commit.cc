@@ -192,7 +192,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     cert_revision_in_branch(inv_id, branchname, app, dbw); 
     cert_revision_date_now(inv_id, app, dbw);
     cert_revision_author_default(inv_id, app, dbw);
-    cert_revision_changelog(inv_id, (boost::format("disapproval of revision '%s'") % r).str(), app, dbw);
+    cert_revision_changelog(inv_id, (FL("disapproval of revision '%s'") % r).str(), app, dbw);
     guard.commit();
   }
 }

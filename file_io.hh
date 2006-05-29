@@ -6,8 +6,6 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include "boost/format.hpp"
-
 #include "vocab.hh"
 #include "paths.hh"
 #include "sanity.hh"
