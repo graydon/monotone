@@ -24,8 +24,15 @@ end
 -- This is needed to work around some brokenness with some merge tools
 -- (e.g. on OS X)
 function execute_confirm(path, ...)   
-   execute(path, unpack(arg))
-   print(gettext("Press enter when the subprocess has completed"))
+   ret = execute(path, unpack(arg))
+
+   if (ret ~= 0)
+   then
+      io.write(string.format(gettext("Error running '%s'\n"), path))
+      print(gettext("Press enter"))
+   else
+      print(gettext("Press enter when the subprocess has completed"))
+   end
    io.read()
    return ret
 end
