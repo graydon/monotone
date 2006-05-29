@@ -1,3 +1,10 @@
+2006-05-29  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua (merge3): Check the exit code from the merging
+	program to detect failure.  We could do that by strictly checking
+	if the output file exists, but since some programs, like meld,
+	don't produce a specific output file, that method is unsafe.
+
 2006-05-28  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A few new and fuzzy strings to (re)translate.
