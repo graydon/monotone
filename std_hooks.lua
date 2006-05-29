@@ -24,8 +24,15 @@ end
 -- This is needed to work around some brokenness with some merge tools
 -- (e.g. on OS X)
 function execute_confirm(path, ...)   
-   execute(path, unpack(arg))
-   print(gettext("Press enter when the subprocess has completed"))
+   ret = execute(path, unpack(arg))
+
+   if (ret ~= 0)
+   then
+      io.write(string.format(gettext("Error running '%s'\n"), path))
+      print(gettext("Press enter"))
+   else
+      print(gettext("Press enter when the subprocess has completed"))
+   end
    io.read()
    return ret
 end
@@ -489,17 +496,21 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
       if cmd ~=nil 
       then 
          io.write (string.format(gettext("executing external 3-way merge command\n")))
-         cmd ()
-         if tbl.meld_exists 
-         then 
-            ret = read_contents_of_file (tbl.afile, "r")
-         else
-            ret = read_contents_of_file (tbl.outfile, "r") 
-         end 
-         if string.len (ret) == 0 
-         then 
-            ret = nil 
-         end
+	 ret = nil
+	 -- cmd() return 0 on success.
+         if cmd () == 0
+	 then
+	    if tbl.meld_exists 
+	    then 
+	       ret = read_contents_of_file (tbl.afile, "r")
+	    else
+	       ret = read_contents_of_file (tbl.outfile, "r") 
+	    end 
+	    if string.len (ret) == 0 
+	    then 
+	       ret = nil 
+	    end
+	 end
       else
          io.write (string.format("No external 3-way merge command found.\n"..
             "You may want to check that $EDITOR is set to an editor that supports 3-way merge,\n"..
@@ -654,16 +665,20 @@ function get_netsync_read_permitted(branch, ident)
       if item.name == "pattern" then
          if matches and not cont then return false end
          matches = false
+	 cont = false
          for j, val in pairs(item.values) do
             if globish_match(val, branch) then matches = true end
          end
       elseif item.name == "allow" then if matches then
          for j, val in pairs(item.values) do
             if val == "*" then return true end
+	    if val == "" and ident == nil then return true end
             if globish_match(val, ident) then return true end
          end
       end elseif item.name == "deny" then if matches then
          for j, val in pairs(item.values) do
+            if val == "*" then return false end
+	    if val == "" and ident == nil then return false end
             if globish_match(val, ident) then return false end
          end
       end elseif item.name == "continue" then if matches then
