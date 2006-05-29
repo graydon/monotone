@@ -1,5 +1,9 @@
 2006-05-29  Richard Levitte  <richard@levitte.org>
 
+	* po/sv.po: A new string to translate.
+
+2006-05-29  Richard Levitte  <richard@levitte.org>
+
 	* std_hooks.lua (merge3_*_cmd): Make all the merge3 merge helpers
 	check the returned exit code of the merge program and generate an
 	error message if it fails.
