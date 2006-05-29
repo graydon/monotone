@@ -19,6 +19,38 @@
 	* xdelta.cc: Purge boost::format uses.
 	* sanity.{cc,hh}: Hide boost::format in pimpl.
 
+2006-05-28  Derek Scherger  <derek@echologic.com>
+
+	* app_state.cc:
+	* charset.cc:
+	* cmd.hh:
+	* cmd_automate.cc:
+	* cmd_files.cc:
+	* cmd_key_cert.cc:
+	* cmd_list.cc:
+	* cmd_merging.cc:
+	* cmd_othervcs.cc:
+	* cmd_ws_commit.cc:
+	* commands.cc:
+	* database.cc:
+	* diff_patch.cc:
+	* keys.cc:
+	* restrictions.cc:
+	* restrictions.hh:
+	* revision.cc:
+	* schema_migration.cc:
+	* string_queue.cc:
+	* transforms.cc:
+	* txt2c.cc:
+	* update.cc:
+	* work.cc:
+	* xdelta.cc:
+	more namespace fixups
+
+2006-05-28  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few new and fuzzy strings to (re)translate.
+
 2006-05-28  Matt Johnston  <matt@ucc.asn.au>
 
 	* std_hooks.lua (get_netsync_connect_command): quote patterns

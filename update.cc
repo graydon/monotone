@@ -39,9 +39,12 @@
 // it may be somewhat inefficient to use erase_ancestors here, but deal with
 // that when and if the time comes...
 
-using boost::lexical_cast;
+using std::make_pair;
+using std::map;
+using std::set;
+using std::vector;
 
-using namespace std;
+using boost::lexical_cast;
 
 static void 
 get_test_results_for_revision(revision_id const & id,

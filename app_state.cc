@@ -33,6 +33,7 @@ using std::exception;
 using std::map;
 using std::string;
 using std::vector;
+using std::vector;
 
 static string const database_option("database");
 static string const branch_option("branch");

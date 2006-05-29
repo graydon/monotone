@@ -533,7 +533,7 @@ load_and_cache_roster(revision_id const & rid,
 
 void 
 content_merge_database_adaptor::get_ancestral_roster(node_id nid,
-                                                     boost::shared_ptr<roster_t> & anc)
+                                                     shared_ptr<roster_t> & anc)
 {
   // Given a file, if the lca is nonzero and its roster contains the file,
   // then we use its roster.  Otherwise we use the roster at the file's
@@ -581,7 +581,7 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
 
 void 
 content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
-                                                      boost::shared_ptr<roster_t> & anc)
+                                                      shared_ptr<roster_t> & anc)
 {
   // When doing an update, the base revision is always the ancestor to 
   // use for content merging.

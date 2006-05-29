@@ -15,6 +15,10 @@
 using std::cout;
 using std::map;
 using std::set;
+using std::string;
+using std::vector;
+
+using boost::shared_ptr;
 
 struct update_source 
   : public file_content_source
@@ -46,7 +50,7 @@ CMD(update, N_("workspace"), "",
 {
   revision_set r_working;
   roster_t working_roster, chosen_roster, target_roster;
-  boost::shared_ptr<roster_t> old_roster = boost::shared_ptr<roster_t>(new roster_t());
+  shared_ptr<roster_t> old_roster = shared_ptr<roster_t>(new roster_t());
   marking_map working_mm, chosen_mm, merged_mm, target_mm;
   revision_id r_old_id, r_working_id, r_chosen_id, r_target_id;
   temp_node_id_source nis;

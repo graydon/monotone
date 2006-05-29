@@ -24,8 +24,26 @@
 #include "cert.hh"
 #include "app_state.hh"
 
+using std::cout;
+using std::endl;
+using std::make_pair;
 using std::map;
 using std::string;
+
+using boost::shared_ptr;
+using boost::shared_dynamic_cast;
+
+using Botan::byte;
+using Botan::PKCS8_PrivateKey;
+using Botan::PK_Decryptor;
+using Botan::PK_Encryptor;
+using Botan::PK_Signer;
+using Botan::PK_Verifier;
+using Botan::Pipe;
+using Botan::RSA_PrivateKey;
+using Botan::RSA_PublicKey;
+using Botan::SecureVector;
+using Botan::X509_PublicKey;
 
 // copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
 // all rights reserved.
@@ -35,18 +53,12 @@ using std::string;
 // there will probably forever be bugs in this file. it's very
 // hard to get right, portably and securely. sorry about that.
 
-using namespace Botan;
-using namespace std;
-
-using boost::shared_ptr;
-using boost::shared_dynamic_cast;
-
 static void 
 do_arc4(SecureVector<Botan::byte> & sym_key,
         SecureVector<Botan::byte> & payload)
 {
   L(FL("running arc4 process on %d bytes of data\n") % payload.size());
-  Pipe enc(get_cipher("ARC4", sym_key, ENCRYPTION));
+  Pipe enc(get_cipher("ARC4", sym_key, Botan::ENCRYPTION));
   enc.process_msg(payload);
   payload = enc.read_all();
 }
@@ -168,14 +180,14 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
 
   Pipe p;
   p.start_msg();
-  PKCS8::encrypt_key(priv, p, phrase, 
-                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", RAW_BER);
+  Botan::PKCS8::encrypt_key(priv, p, phrase, 
+                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
   raw_priv_key = rsa_priv_key(p.read_all_as_string());
   
   // generate public key
   Pipe p2;
   p2.start_msg();
-  X509::encode(priv, p2, RAW_BER);
+  Botan::X509::encode(priv, p2, Botan::RAW_BER);
   raw_pub_key = rsa_pub_key(p2.read_all_as_string());
   
   // if all that worked, we can return our results to caller
@@ -210,7 +222,7 @@ get_private_key(lua_hooks & lua,
         {
           Pipe p;
           p.process_msg(decoded_key());
-          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p, phrase));
+          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase));
         }
       catch (...)
         {
@@ -266,7 +278,7 @@ migrate_private_key(app_state & app,
         {
           Pipe p;
           p.process_msg(decrypted_key);
-          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p, "", false));
+          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, "", false));
         }
       catch (...)
         {
@@ -288,15 +300,15 @@ migrate_private_key(app_state & app,
   // now we can write out the new key
   Pipe p;
   p.start_msg();
-  PKCS8::encrypt_key(*priv_key, p, phrase, 
-                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", RAW_BER);
+  Botan::PKCS8::encrypt_key(*priv_key, p, phrase, 
+                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
   rsa_priv_key raw_priv = rsa_priv_key(p.read_all_as_string());
   encode_base64(raw_priv, new_kp.priv);
 
   // also the public portion
   Pipe p2;
   p2.start_msg();
-  X509::encode(*priv_key, p2, RAW_BER);
+  Botan::X509::encode(*priv_key, p2, Botan::RAW_BER);
   rsa_pub_key raw_pub = rsa_pub_key(p2.read_all_as_string());
   encode_base64(raw_pub, new_kp.pub);
 }
@@ -313,8 +325,8 @@ change_key_passphrase(lua_hooks & lua,
 
   Pipe p;
   p.start_msg();
-  PKCS8::encrypt_key(*priv, p, new_phrase, 
-                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", RAW_BER);
+  Botan::PKCS8::encrypt_key(*priv, p, new_phrase, 
+                            "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
   rsa_priv_key decoded_key = rsa_priv_key(p.read_all_as_string());
 
   encode_base64(decoded_key, encoded_key);
@@ -388,7 +400,7 @@ check_signature(app_state &app,
 
       L(FL("building verifier for %d-byte pub key\n") % pub_block.size());
       shared_ptr<X509_PublicKey> x509_key =
-          shared_ptr<X509_PublicKey>(X509::load_key(pub_block));
+          shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
       pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
       if (!pub_key)
           throw informative_failure("Failed to get RSA verifying key");
@@ -429,7 +441,7 @@ void encrypt_rsa(lua_hooks & lua,
   SecureVector<Botan::byte> pub_block;
   pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()), pub().size());
 
-  shared_ptr<X509_PublicKey> x509_key = shared_ptr<X509_PublicKey>(X509::load_key(pub_block));
+  shared_ptr<X509_PublicKey> x509_key = shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
   shared_ptr<RSA_PublicKey> pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
   if (!pub_key)
     throw informative_failure("Failed to get RSA encrypting key");

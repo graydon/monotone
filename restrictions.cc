@@ -13,7 +13,9 @@
 #include "transforms.hh"
 
 using std::make_pair;
+using std::map;
 using std::set;
+using std::vector;
 
 // TODO: add check for relevant rosters to be used by log
 //

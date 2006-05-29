@@ -7,10 +7,13 @@
 #include "packet.hh"
 
 #include <sstream>
-using std::ostringstream;
-using std::ostream_iterator;
 #include <iostream>
+
 using std::cout;
+using std::ostream_iterator;
+using std::ostringstream;
+using std::set;
+using std::string;
 
 CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), OPT_NONE)
 {

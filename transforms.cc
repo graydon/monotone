@@ -28,7 +28,9 @@
 #include "vocab.hh"
 #include "xdelta.hh"
 
-using namespace std;
+using std::string;
+
+using boost::scoped_array;
 
 // this file contans various sorts of string transformations. each
 // transformation should be self-explanatory from its type signature. see
@@ -54,8 +56,6 @@ using namespace std;
 // the matter, but bring strong evidence along with you that the stream
 // paradigm "must" be used. this program is intended for source code
 // control and I make no bones about it.
-
-using namespace std;
 
 // the generic function
 template<typename XFM> string xform(string const & in)
@@ -101,7 +101,7 @@ string encode_hexenc(string const & in)
     }
   else
     {
-      boost::scoped_array<char> buf(new char[in.size() * 2]);
+      scoped_array<char> buf(new char[in.size() * 2]);
       encode_hexenc_inner(in.begin(), in.end(), buf.get());
       return string(buf.get(), in.size() *2);
     }
@@ -145,7 +145,7 @@ string decode_hexenc(string const & in)
     }
   else 
     {
-      boost::scoped_array<char> buf(new char[in.size() / 2]);
+      scoped_array<char> buf(new char[in.size() / 2]);
       decode_hexenc_inner(in.begin(), in.end(), buf.get());
       return string(buf.get(), in.size() / 2);
     }

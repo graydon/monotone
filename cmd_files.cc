@@ -8,8 +8,11 @@
 #include "localized_file_io.hh"
 
 #include <iostream>
+
 using std::cout;
 using std::ostream_iterator;
+using std::string;
+using std::vector;
 
 // fload and fmerge are simple commands for debugging the line
 // merger.

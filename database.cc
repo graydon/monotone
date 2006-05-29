@@ -1201,7 +1201,7 @@ database::get_version(hexenc<id> const & ident,
           get(curr, begin, data_table);
         }
 
-      boost::shared_ptr<delta_applicator> app = new_piecewise_applicator();
+      shared_ptr<delta_applicator> app = new_piecewise_applicator();
       app->begin(begin());
       
       for (version_path::reverse_iterator i = selected_path->rbegin();
@@ -2769,7 +2769,7 @@ database::get_roster(revision_id const & rev_id,
 }
 
 static LRUCache<revision_id, 
-                boost::shared_ptr<pair<roster_t, marking_map> > > 
+                shared_ptr<pair<roster_t, marking_map> > > 
 rcache(constants::db_roster_cache_sz);
 
 void 
@@ -2784,7 +2784,7 @@ database::get_roster(revision_id const & rev_id,
       return;
     }
 
-  boost::shared_ptr<pair<roster_t, marking_map> > sp;
+  shared_ptr<pair<roster_t, marking_map> > sp;
   if (rcache.fetch(rev_id, sp))
     {
       roster = sp->first;
@@ -2798,7 +2798,7 @@ database::get_roster(revision_id const & rev_id,
   get_roster_id_for_revision(rev_id, ident);
   get_roster_version(ident, dat);
   read_roster_and_marking(dat, roster, marks);
-  sp = boost::shared_ptr<pair<roster_t, marking_map> >
+  sp = shared_ptr<pair<roster_t, marking_map> >
     (new pair<roster_t, marking_map>(roster, marks));
   rcache.insert(rev_id, sp);
 }
@@ -2816,7 +2816,7 @@ database::put_roster(revision_id const & rev_id,
 
   if (!rcache.exists(rev_id))
     {
-      boost::shared_ptr<pair<roster_t, marking_map> > sp
+      shared_ptr<pair<roster_t, marking_map> > sp
         (new pair<roster_t, marking_map>(roster, marks));
       rcache.insert(rev_id, sp);
     }

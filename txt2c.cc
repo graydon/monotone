@@ -2,7 +2,12 @@
 #include <fstream>
 #include <string>
 
-using namespace std;
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::ifstream;
+using std::string;
+
 int main(int argc, char **argv)
 {
   if (argc <  3 || argc > 5)
