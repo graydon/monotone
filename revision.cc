@@ -56,6 +56,9 @@ using std::stack;
 using std::string;
 using std::vector;
 
+using boost::dynamic_bitset;
+using boost::shared_ptr;
+
 void revision_set::check_sane() const
 {
   // null id in current manifest only permitted if previous
@@ -149,8 +152,8 @@ revision_set::operator=(revision_set const & other)
 // even longer.
 
 typedef unsigned long ctx;
-typedef boost::dynamic_bitset<> bitmap;
-typedef boost::shared_ptr<bitmap> shared_bitmap;
+typedef dynamic_bitset<> bitmap;
+typedef shared_ptr<bitmap> shared_bitmap;
 
 static void 
 calculate_ancestors_from_graph(interner<ctx> & intern,
@@ -553,7 +556,7 @@ make_revision_set(revision_id const & old_rev_id,
                   roster_t const & new_roster,
                   revision_set & rev)
 {
-  boost::shared_ptr<cset> cs(new cset());
+  shared_ptr<cset> cs(new cset());
 
   rev.edges.clear();
   make_cset(old_roster, new_roster, *cs);
@@ -568,10 +571,7 @@ make_revision_set(revision_id const & old_rev_id,
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
 
-typedef map<u64, 
-                 pair<boost::shared_ptr<roster_t>, 
-                           boost::shared_ptr<marking_map>
-                 > > 
+typedef map<u64, pair<shared_ptr<roster_t>, shared_ptr<marking_map> > > 
 parent_roster_map;
 
 template <> void
@@ -902,7 +902,7 @@ not_dead_yet(node_id nid, u64 birth_rev,
   for (parent_roster_map::const_iterator r = parent_rosters.begin();
        r != parent_rosters.end(); ++r)
     {
-      boost::shared_ptr<roster_t> parent = r->second.first;
+      shared_ptr<roster_t> parent = r->second.first;
       // L(FL("node %d %s in parent roster %d\n") 
       //             % nid
       //             % (parent->has_node(n->first) ? "exists" : "does not exist" ) 
@@ -1049,8 +1049,8 @@ anc_graph::fixup_node_identities(parent_roster_map const & parent_rosters,
   for (parent_roster_map::const_iterator i = parent_rosters.begin(); 
        i != parent_rosters.end(); ++i)
     {
-      boost::shared_ptr<roster_t> parent_roster = i->second.first;
-      boost::shared_ptr<marking_map> parent_marking = i->second.second;
+      shared_ptr<roster_t> parent_roster = i->second.first;
+      shared_ptr<marking_map> parent_marking = i->second.second;
 
       node_map const & nodes = parent_roster->all_nodes();
       for (node_map::const_iterator j = nodes.begin(); j != nodes.end(); ++j)
@@ -1083,7 +1083,7 @@ anc_graph::fixup_node_identities(parent_roster_map const & parent_rosters,
           for (parent_roster_map::const_iterator j = parent_rosters.begin(); 
                j != parent_rosters.end(); ++j)
             {
-              boost::shared_ptr<roster_t> parent_roster = j->second.first;
+              shared_ptr<roster_t> parent_roster = j->second.first;
 
               if (!parent_roster->has_node(n))
                 continue;
@@ -1237,8 +1237,8 @@ anc_graph::construct_revisions_from_ancestry()
               u64 parent = i->second;           
               if (parent_rosters.find(parent) == parent_rosters.end())
                 {
-                  boost::shared_ptr<roster_t> ros = boost::shared_ptr<roster_t>(new roster_t());
-                  boost::shared_ptr<marking_map> mm = boost::shared_ptr<marking_map>(new marking_map());
+                  shared_ptr<roster_t> ros = shared_ptr<roster_t>(new roster_t());
+                  shared_ptr<marking_map> mm = shared_ptr<marking_map>(new marking_map());
                   app.db.get_roster(safe_get(node_to_new_rev, parent), *ros, *mm);
                   safe_insert(parent_rosters, make_pair(parent, make_pair(ros, mm)));
                 }
@@ -1333,8 +1333,8 @@ anc_graph::construct_revisions_from_ancestry()
             {
               u64 parent = i->first;
               revision_id parent_rid = safe_get(node_to_new_rev, parent);
-              boost::shared_ptr<roster_t> parent_roster = i->second.first;
-              boost::shared_ptr<cset> cs = boost::shared_ptr<cset>(new cset());
+              shared_ptr<roster_t> parent_roster = i->second.first;
+              shared_ptr<cset> cs = shared_ptr<cset>(new cset());
               MM(*cs);
               make_cset(*parent_roster, child_roster, *cs); 
               safe_insert(rev.edges, make_pair(parent_rid, cs));
@@ -1348,8 +1348,8 @@ anc_graph::construct_revisions_from_ancestry()
           if (rev.edges.empty())
             {
               revision_id parent_rid;
-              boost::shared_ptr<roster_t> parent_roster = boost::shared_ptr<roster_t>(new roster_t());
-              boost::shared_ptr<cset> cs = boost::shared_ptr<cset>(new cset());
+              shared_ptr<roster_t> parent_roster = shared_ptr<roster_t>(new roster_t());
+              shared_ptr<cset> cs = shared_ptr<cset>(new cset());
               MM(*cs);
               make_cset(*parent_roster, child_roster, *cs); 
               safe_insert(rev.edges, make_pair (parent_rid, cs));
@@ -1549,7 +1549,7 @@ void
 parse_edge(basic_io::parser & parser,
            edge_map & es)
 {
-  boost::shared_ptr<cset> cs(new cset());
+  shared_ptr<cset> cs(new cset());
   MM(*cs);
   manifest_id old_man;
   revision_id old_rev;

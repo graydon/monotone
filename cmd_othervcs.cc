@@ -2,6 +2,8 @@
 
 #include "rcs_import.hh"
 
+using std::vector;
+
 CMD(rcs_import, N_("debug"), N_("RCSFILE..."),
     N_("parse versions in RCS files\n"
        "this command doesn't reconstruct or import revisions."

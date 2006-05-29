@@ -20,13 +20,12 @@
 using std::exception;
 using std::map;
 using std::string;
+using std::vector;
 
 // copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
 // all rights reserved.
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
-
-using namespace std;
 
 static string const database_option("database");
 static string const branch_option("branch");

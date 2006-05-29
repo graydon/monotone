@@ -13,6 +13,8 @@
 using std::string;
 using std::vector;
 
+using boost::char_separator;
+
 // general character code conversion routines
 
 static string 
@@ -326,9 +328,9 @@ void
 internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
 {
   string tmp;
-  typedef boost::tokenizer<boost::char_separator<char> > 
+  typedef boost::tokenizer<char_separator<char> > 
     tokenizer;
-  boost::char_separator<char> sep("", ".@", boost::keep_empty_tokens);
+  char_separator<char> sep("", ".@", boost::keep_empty_tokens);
   tokenizer tokens(utf(), sep);
   bool in_domain = false;
   for(tokenizer::iterator i = tokens.begin(); i != tokens.end(); ++i)
@@ -359,9 +361,9 @@ void
 externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
 {
   string tmp;
-  typedef boost::tokenizer<boost::char_separator<char> > 
+  typedef boost::tokenizer<char_separator<char> > 
     tokenizer;
-  boost::char_separator<char> sep("", ".@", boost::keep_empty_tokens);
+  char_separator<char> sep("", ".@", boost::keep_empty_tokens);
   tokenizer tokens(key(), sep);
   bool in_domain = false;
   for(tokenizer::iterator i = tokens.begin(); i != tokens.end(); ++i)

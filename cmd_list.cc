@@ -24,6 +24,7 @@ using std::pair;
 using std::set;
 using std::sort;
 using std::string;
+using std::vector;
 
 static void 
 ls_certs(string const & name, app_state & app, vector<utf8> const & args)

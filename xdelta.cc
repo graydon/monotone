@@ -44,6 +44,8 @@ using std::set;
 using std::string;
 using std::vector;
 
+using boost::shared_ptr;
+
 struct identity {size_t operator()(u32 const & v) const { return static_cast<size_t>(v);}};
 typedef pair<string::size_type, string::size_type> extent;
 typedef hashmap::hash_map<u32, extent> match_table;
@@ -346,7 +348,7 @@ read_num(string::const_iterator &i,
 }
 
 void 
-apply_delta(boost::shared_ptr<delta_applicator> da,
+apply_delta(shared_ptr<delta_applicator> da,
             string const & delta)
 {  
   string::const_iterator i = delta.begin(); 
@@ -392,7 +394,7 @@ apply_delta(string const & a,
             string const & delta,
             string & b)
 {
-  boost::shared_ptr<delta_applicator> da(new simple_applicator());
+  shared_ptr<delta_applicator> da(new simple_applicator());
   da->begin(a);
   apply_delta(da, delta);
   da->next();
@@ -421,7 +423,7 @@ u64
 measure_delta_target_size(string const & delta)
 {
   u64 sz = 0;
-  boost::shared_ptr<delta_applicator> da(new size_accumulating_delta_applicator(sz));
+  shared_ptr<delta_applicator> da(new size_accumulating_delta_applicator(sz));
   apply_delta(da, delta);
   return sz;
 }
@@ -602,8 +604,8 @@ piecewise_applicator
   : public delta_applicator
 {
   piece_table pt;
-  boost::shared_ptr<version_spec> src;
-  boost::shared_ptr<version_spec> dst;
+  shared_ptr<version_spec> src;
+  shared_ptr<version_spec> dst;
 
   piecewise_applicator() :
     src(new version_spec()),
@@ -647,16 +649,16 @@ piecewise_applicator
 
 // these just hide our implementation types from outside 
 
-boost::shared_ptr<delta_applicator> 
+shared_ptr<delta_applicator> 
 new_simple_applicator()
 {
-  return boost::shared_ptr<delta_applicator>(new simple_applicator());
+  return shared_ptr<delta_applicator>(new simple_applicator());
 }
 
-boost::shared_ptr<delta_applicator> 
+shared_ptr<delta_applicator> 
 new_piecewise_applicator()
 {
-  return boost::shared_ptr<delta_applicator>(new piecewise_applicator());
+  return shared_ptr<delta_applicator>(new piecewise_applicator());
 }
 
 
@@ -765,7 +767,7 @@ invert_xdelta(string const & old_str,
 	      string const & delta,
 	      string & delta_inverse)
 {
-  boost::shared_ptr<delta_applicator> da(new inverse_delta_writing_applicator(old_str));
+  shared_ptr<delta_applicator> da(new inverse_delta_writing_applicator(old_str));
   apply_delta(da, delta);
   da->finish(delta_inverse);
 }

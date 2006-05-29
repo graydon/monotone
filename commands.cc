@@ -20,7 +20,7 @@ using std::cin;
 using std::pair;
 using std::set;
 using std::string;
-
+using std::vector;
 
 //
 // this file defines the task-oriented "top level" commands which can be

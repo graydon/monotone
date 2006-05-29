@@ -5,6 +5,7 @@
 #include <iostream>
 
 using std::cout;
+using std::vector;
 
 CMD(automate, N_("automation"),
     N_("interface_version\n"

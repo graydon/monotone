@@ -32,6 +32,8 @@ using std::set;
 using std::string;
 using std::vector;
 
+using boost::lexical_cast;
+
 // workspace / book-keeping file code
 
 static string const attr_file_name(".mt-attrs");
@@ -869,7 +871,7 @@ editable_working_tree::editable_working_tree(app_state & app,
 static inline bookkeeping_path
 path_for_nid(node_id nid)
 {
-  return bookkeeping_root / "tmp" / boost::lexical_cast<string>(nid);
+  return bookkeeping_root / "tmp" / lexical_cast<string>(nid);
 }
 
 // Attaching/detaching the root directory:
