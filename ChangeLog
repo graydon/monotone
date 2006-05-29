@@ -4,6 +4,8 @@
 	program to detect failure.  We could do that by strictly checking
 	if the output file exists, but since some programs, like meld,
 	don't produce a specific output file, that method is unsafe.
+	(execute_confirm): Check the exit code from the execute call,
+	and tell the user if something went wrong.
 
 2006-05-28  Richard Levitte  <richard@levitte.org>
 
