@@ -100,19 +100,50 @@ void clear_redirect(redirect::what what, HANDLE saved)
 }
 #else
 #include <unistd.h>
-int set_redirect(int what, string where, string mode)
+namespace redirect {typedef int savetype;}
+int set_redirect(redirect::what what, string where)
 {
-  int saved = dup(what);
-  FILE *f = fopen(where.c_str(), mode.c_str());
+  int from;
+  char const *mode;
+  switch(what)
+  {
+  case redirect::in:
+    from = 0;
+    mode = "r";
+    break;
+  case redirect::out:
+    from = 1;
+    mode = "w";
+    break;
+  case redirect::err:
+    from = 2;
+    mode = "w";
+    break;
+  };
+  int saved = dup(from);
+  FILE *f = fopen(where.c_str(), mode);
   if (!f)
     return -1;
-  dup2(fileno(f), what);
+  dup2(fileno(f), from);
   fclose(f);
   return saved;
 }
-void clear_redirect(int what, int saved)
+void clear_redirect(redirect::what what, int saved)
 {
-  dup2(saved, what);
+  int from;
+  switch(what)
+  {
+  case redirect::in:
+    from = 0;
+    break;
+  case redirect::out:
+    from = 1;
+    break;
+  case redirect::err:
+    from = 2;
+    break;
+  };
+  dup2(saved, from);
   close(saved);
 }
 #endif
