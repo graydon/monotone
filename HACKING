@@ -92,7 +92,7 @@ continued to adhere to the dialect we write in. in particular:
 
   - for importing symbols in other namespaces add a "using std::foo" 
     for each foo used in the file and then strip "std::" from the uses. 
-    do not use "using namespace foo" anywhere.
+    do not use "using namespace std" anywhere.
 
 
 Test suites, and writing test cases

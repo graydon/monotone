@@ -1,3 +1,7 @@
+2006-05-30  Richard Levitte  <richard@levitte.org>
+
+	* HACKING: A small correction about namespaces.
+
 2006-05-29  Derek Scherger  <derek@echologic.com>
 
 	* HACKING: add note on using namespaces
