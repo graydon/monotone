@@ -90,6 +90,10 @@ continued to adhere to the dialect we write in. in particular:
   - generally avoid anything which can generate a SEGV, as it's an
     uninformative error. prefer errors which say what went wrong.
 
+  - for importing symbols in other namespaces add a "using std::foo" 
+    for each foo used in the file and then strip "std::" from the uses. 
+    do not use "using namespace foo" anywhere.
+
 
 Test suites, and writing test cases
 ----------------------------------
