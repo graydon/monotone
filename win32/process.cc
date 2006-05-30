@@ -132,7 +132,7 @@ pid_t process_spawn(const char * const argv[])
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(STARTUPINFO);
   /* We don't need to set any of the STARTUPINFO members */
-  if (CreateProcess(realexe, (char*)cmd.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)==0)
+  if (CreateProcess(realexe, (char*)cmd.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)==0)
     {
       os_err_t errnum = GetLastError();
       L(FL("CreateProcess failed, err=%s (%d)\n") % os_strerror(errnum) % errnum);

@@ -15,12 +15,12 @@ root_r_sha=base_revision()
 root_f_sha=sha1("foo")
 
 -- produce 4-step path with move in the middle
-os.rename("foo2", "foo")
+rename_over("foo2", "foo")
 check(cmd(mtn("commit", "--message=edit-foo")), 0, false, false)
 check(cmd(mtn("rename", "foo", "bar")), 0, false, false)
-os.rename("bar1", "bar")
+rename_over("bar1", "bar")
 check(cmd(mtn("commit", "--message=rename-to-bar")), 0, false, false)
-os.rename("bar2", "bar")
+rename_over("bar2", "bar")
 check(cmd(mtn("commit", "--message=edit-bar")), 0, false, false)
 
 -- revert to root

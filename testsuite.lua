@@ -84,6 +84,7 @@ ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
 
 function canonicalize(filename)
   if ostype == "Windows" then
+    L("Canonicalizing ", filename, "\n")
     local f = io.open(filename, "rb")
     local indat = f:read("*a")
     f:close()
@@ -91,6 +92,8 @@ function canonicalize(filename)
     f = io.open(filename, "wb")
     f:write(outdat)
     f:close()
+  else
+    L("Canonicalization not needed (", filename, ")\n")
   end
 end
 

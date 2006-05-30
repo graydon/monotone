@@ -324,10 +324,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\inodeprint.cc"
-				>
-			</File>
-			<File
 				RelativePath="..\win32\inodeprint.cc"
 				>
 				<FileConfiguration
@@ -348,6 +344,10 @@
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\inodeprint.cc"
+				>
 			</File>
 			<File
 				RelativePath="..\key_store.cc"
@@ -415,6 +415,10 @@
 			</File>
 			<File
 				RelativePath="..\netxx_pipe.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\win32\os_strerror.cc"
 				>
 			</File>
 			<File
@@ -1006,7 +1010,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Generating $(ProjectDir)\..\views.h from $(ProjectDir)\..\views.sql"
-					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\views.sql views &gt;$(ProjectDir)\..\views.h"
+					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\views.sql views &gt;$(ProjectDir)\..\views.h&#x0D;&#x0A;"
 					AdditionalDependencies="$(TargetDir)\txt2c.exe"
 					Outputs="views.h"
 				/>

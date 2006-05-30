@@ -27,15 +27,104 @@ using std::map;
 using std::make_pair;
 using boost::lexical_cast;
 
+namespace redirect
+{
+  enum what {in, out, err};
+}
 
 #ifdef WIN32
-#include <io.h>
-inline int dup2(int x, int y) {return _dup2(x,y);}
-inline int dup(int x) {return _dup(x);}
-inline int close(int x) {return _close(x);}
+#include <windows.h>
+namespace redirect {typedef HANDLE savetype;}
+HANDLE set_redirect(redirect::what what, string where)
+{
+  HANDLE file;
+  SECURITY_ATTRIBUTES sa;
+  sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+  sa.lpSecurityDescriptor = 0;
+  sa.bInheritHandle = true;
+  if (what == redirect::in)
+    {
+      file = CreateFile(where.c_str(),
+                        GENERIC_READ,
+                        FILE_SHARE_READ,
+                        &sa,
+                        OPEN_EXISTING,
+                        FILE_ATTRIBUTE_NORMAL,
+                        NULL);
+    }
+  else
+    {
+      file = CreateFile(where.c_str(),
+                        GENERIC_WRITE,
+                        0,
+                        &sa,
+                        CREATE_ALWAYS,
+                        FILE_ATTRIBUTE_NORMAL,
+                        NULL);
+    }
+  HANDLE old;
+  switch(what)
+  {
+  case redirect::in:
+    old = GetStdHandle(STD_INPUT_HANDLE);
+    SetStdHandle(STD_INPUT_HANDLE, file);
+    break;
+  case redirect::out:
+    old = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetStdHandle(STD_OUTPUT_HANDLE, file);
+    break;
+  case redirect::err:
+    old = GetStdHandle(STD_ERROR_HANDLE);
+    SetStdHandle(STD_ERROR_HANDLE, file);
+    break;
+  }
+  return old;
+}
+void clear_redirect(redirect::what what, HANDLE saved)
+{
+  switch(what)
+  {
+  case redirect::in:
+    CloseHandle(GetStdHandle(STD_INPUT_HANDLE));
+    SetStdHandle(STD_INPUT_HANDLE, saved);
+    break;
+  case redirect::out:
+    CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
+    SetStdHandle(STD_OUTPUT_HANDLE, saved);
+    break;
+  case redirect::err:
+    CloseHandle(GetStdHandle(STD_ERROR_HANDLE));
+    SetStdHandle(STD_ERROR_HANDLE, saved);
+    break;
+  }
+}
 #else
 #include <unistd.h>
+int set_redirect(int what, string where, string mode)
+{
+  int saved = dup(what);
+  FILE *f = fopen(where.c_str(), mode.c_str());
+  if (!f)
+    return -1;
+  dup2(fileno(f), what);
+  fclose(f);
+  return saved;
+}
+void clear_redirect(int what, int saved)
+{
+  dup2(saved, what);
+  close(saved);
+}
 #endif
+namespace redirect
+{
+  struct saveblock
+  {
+    savetype in;
+    savetype out;
+    savetype err;
+  };
+}
 
 #include <cstdlib>
 map<string, string> orig_env_vars;
@@ -56,7 +145,7 @@ void set_env(string const &var, string const &val)
   if (old)
     orig_env_vars.insert(make_pair(var, string(old)));
   else
-    orig_env_vars.insert(make_pair(var, ""))
+    orig_env_vars.insert(make_pair(var, ""));
   _putenv_s(var.c_str(), val.c_str());
 }
 #else
@@ -87,22 +176,6 @@ void set_env(string const &var, string const &val)
   putenv2(var, val);
 }
 #endif
-
-int set_redirect(int what, string where, string mode)
-{
-  int saved = dup(what);
-  FILE *f = fopen(where.c_str(), mode.c_str());
-  if (!f)
-    return -1;
-  dup2(fileno(f), what);
-  fclose(f);
-  return saved;
-}
-void clear_redirect(int what, int saved)
-{
-  dup2(saved, what);
-  close(saved);
-}
 
 
 fs::path source_dir;
@@ -191,34 +264,35 @@ extern "C"
   }
 
   static int
+  clear_redirect(lua_State * L)
+  {
+    typedef redirect::saveblock rsb;
+    rsb const *sb = static_cast<rsb const*>(lua_topointer(L, 1));
+    clear_redirect(redirect::in, sb->in);
+    clear_redirect(redirect::out, sb->out);
+    clear_redirect(redirect::err, sb->err);
+    return 0;
+  }
+
+  static int
   set_redirect(lua_State * L)
   {
     char const * infile = luaL_checkstring(L, -3);
     char const * outfile = luaL_checkstring(L, -2);
     char const * errfile = luaL_checkstring(L, -1);
     
-    int infd = set_redirect(0, infile, "r");
-    int outfd = set_redirect(1, outfile, "w");
-    int errfd = set_redirect(2, errfile, "w");
+    typedef redirect::saveblock rsb;
+    rsb *sb = static_cast<rsb*> (lua_newuserdata(L, sizeof(rsb)));
+    sb->in = set_redirect(redirect::in, infile);
+    sb->out = set_redirect(redirect::out, outfile);
+    sb->err = set_redirect(redirect::err, errfile);
+    lua_newtable(L);
+    lua_pushstring(L, "restore");
+    lua_pushcfunction(L,clear_redirect);
+    lua_settable(L, -3);
+    lua_setmetatable(L, -2);
     
-    lua_pushnumber(L, infd);
-    lua_pushnumber(L, outfd);
-    lua_pushnumber(L, errfd);
-    return 3;
-  }
-
-  static int
-  clear_redirect(lua_State * L)
-  {
-    int infd = (int)luaL_checknumber(L, -3);
-    int outfd = (int)luaL_checknumber(L, -2);
-    int errfd = (int)luaL_checknumber(L, -1);
-    
-    clear_redirect(0, infd);
-    clear_redirect(1, outfd);
-    clear_redirect(2, errfd);
-    
-    return 0;
+    return 1;
   }
 
   static int
@@ -263,10 +337,10 @@ int main(int argc, char **argv)
       needhelp = true;
   if (argc > 1 && !needhelp)
     {
-      fs::path file(argv[1], fs::native);
-      testfile = fs::complete(file).native_file_string();
+      fs::path file = fs::complete(fs::path(argv[1], fs::native));
+      testfile = file.native_file_string();
       save_initial_path();
-      source_dir = fs::complete(file.branch_path());
+      source_dir = file.branch_path();
       run_dir = fs::initial_path() / "tester_dir";
       fs::create_directory(run_dir);
       go_to_workspace(run_dir.native_file_string());

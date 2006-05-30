@@ -54,6 +54,19 @@ mkdir = function(name)
   old_mkdir(name)
 end
 
+old_existsonpath = existsonpath
+existsonpath = function(name)
+  local r = (old_existsonpath(name) == 0)
+  local what
+  if r then
+    what = "exists"
+  else
+    what = "does not exist"
+  end
+  L(locheader(), name, " ", what, " on the path\n")
+  return r
+end
+
 function fsize(filename)
   local file = io.open(filename, "r")
   if file == nil then error("Cannot open file " .. filename, 2) end
@@ -62,8 +75,7 @@ function fsize(filename)
   return size
 end
 
-function readfile(filename)
-  L(locheader(), "readfile ", filename, "\n")
+function readfile_q(filename)
   local file = io.open(filename, "rb")
   if file == nil then
     error("Cannot open file " .. filename)
@@ -73,8 +85,12 @@ function readfile(filename)
   return dat
 end
 
-function writefile(filename, dat)
-  L(locheader(), "writefile ", filename, "\n")
+function readfile(filename)
+  L(locheader(), "readfile ", filename, "\n")
+  return readfile_q(filename)
+end
+
+function writefile_q(filename, dat)
   local file = io.open(filename, "wb")
   if file == nil then
     L("Cannot open file " .. filename)
@@ -83,6 +99,11 @@ function writefile(filename, dat)
   file:write(dat)
   file:close()
   return true
+end
+
+function writefile(filename, dat)
+  L(locheader(), "writefile ", filename, "\n")
+  return writefile_q(filename, dat)
 end
 
 function copyfile(from, to)
@@ -146,7 +167,7 @@ function getfile(name, as)
 end
 
 function trim(str)
-  return string.gsub(str, "^%s*(.-)%s$", "%1")
+  return string.gsub(str, "^%s*(.-)%s*$", "%1")
 end
 
 function execute(path, ...)   
@@ -220,7 +241,7 @@ function grep(...)
 end
 
 function log_file_contents(filename)
-  L(readfile(filename))
+  L(readfile_q(filename))
 end
 
 -- std{out,err} can be:
@@ -245,9 +266,12 @@ function check_func(func, ret, stdout, stderr, stdin)
   os.rename("stdin", "ts-stdin")
   L("stdin:\n")
   log_file_contents("ts-stdin")
-  local i, o, e = set_redirect("ts-stdin", "ts-stdout", "ts-stderr")
+  -- local i, o, e = set_redirect("ts-stdin", "ts-stdout", "ts-stderr")
+  local redir = set_redirect("ts-stdin", "ts-stdout", "ts-stderr")
   local ok, result = pcall(func)
-  clear_redirect(i, o, e)
+  -- redir:restore()
+  clear_redirect(redir)
+  -- clear_redirect(i, o, e)
   L("stdout:\n")
   log_file_contents("ts-stdout")
   L("stderr:\n")
@@ -310,7 +334,8 @@ function check(first, ...)
       error("Check failed: " .. first .. " ~= 0", 2)
       end
   else
-    error("Bad argument to check()", 2)
+    errfile,errline = getsrcline()
+    error("Bad argument to check() (" .. type(first) .. ")", 2)
   end
 end
 
@@ -399,7 +424,7 @@ function run_tests(args)
 
     local tlog = test_root .. "/tester.log"
     test_log = io.open(tlog, "w")
-    test_log:write("Test number ", i, ", ", shortname, "\n")
+    L("Test number ", i, ", ", shortname, "\n")
 
     local driverfile = srcdir .. "/" .. testname .. "/__driver__.lua"
     local driver, e = loadfile(driverfile)
@@ -487,6 +512,7 @@ function run_tests(args)
     if tlog ~= nil then
       local dat = tlog:read("*a")
       tlog:close()
+      logfile:write("\n", string.rep("*", 50), "\n")
       logfile:write(dat)
     end
   end
