@@ -175,7 +175,7 @@ end
 -- maybe this one should go in tester.lua?
 function check_same_stdout(cmd1, cmd2)
   check(cmd1, 0, true, false)
-  rename("stdout", "stdout-first")
+  rename_over("stdout", "stdout-first")
   check(cmd2, 0, true, false)
   check(samefile("stdout", "stdout-first"))
 end

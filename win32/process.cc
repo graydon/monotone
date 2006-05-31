@@ -147,7 +147,7 @@ pid_t process_spawn(const char * const argv[])
 int process_wait(pid_t pid, int *res, int timeout)
 {
   HANDLE hProcess = (HANDLE)pid;
-  DWORD time = INFINITE
+  DWORD time = INFINITE;
   if (timeout != -1)
     time = timeout * 1000;
   DWORD r = WaitForSingleObject(hProcess, time);

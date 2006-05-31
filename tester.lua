@@ -366,7 +366,7 @@ function bg(torun, ret, stdout, stderr, stdin)
   out.expret = ret
   out.expout = stdout
   out.experr = stderr
-  L(out.locstr, "starting background command: ", table.concat(out.cmd, " "))
+  L(out.locstr, "starting background command: ", table.concat(out.cmd, " "), "\n")
   local mt = {}
   mt.__index = mt
   mt.finish = function(obj, timeout)
@@ -382,7 +382,7 @@ function bg(torun, ret, stdout, stderr, stdin)
               obj.retval = obj.process:wait()
               table.remove(bglist, obj.id)
               L(locheader(), "checking background command from ", out.locstr,
-                table.concat(out.cmd, " "))
+                table.concat(out.cmd, " "), "\n")
               post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
             end
   return setmetatable(out, mt)

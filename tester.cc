@@ -57,7 +57,7 @@ HANDLE set_redirect(redirect::what what, string where)
     {
       file = CreateFile(where.c_str(),
                         GENERIC_WRITE,
-                        0,
+                        FILE_SHARE_READ,
                         &sa,
                         CREATE_ALWAYS,
                         FILE_ATTRIBUTE_NORMAL,
