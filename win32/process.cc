@@ -144,10 +144,16 @@ pid_t process_spawn(const char * const argv[])
   return (pid_t)pi.hProcess;
 }
 
-int process_wait(pid_t pid, int *res)
+int process_wait(pid_t pid, int *res, int timeout)
 {
   HANDLE hProcess = (HANDLE)pid;
-  if (WaitForSingleObject(hProcess, INFINITE)==WAIT_FAILED)
+  DWORD time = INFINITE
+  if (timeout != -1)
+    time = timeout * 1000;
+  DWORD r = WaitForSingleObject(hProcess, time);
+  if (r == WAIT_TIMEOUT)
+    return -1;
+  if (r == WAIT_FAILED)
     {
       CloseHandle(hProcess); /* May well not work, but won't harm */
       return -1;

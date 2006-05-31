@@ -23,6 +23,13 @@ function mtn(...)
          "--key=tester@test.net", unpack(arg))
 end
 
+function minhooks_mtn(...)
+  return raw_mtn("--db=" .. test_root .. "/test.db",
+                 "--keydir", test_root .. "/keys",
+                 "--rcfile", test_root .. "/min_hooks.lua",
+                 "--key=tester@test.net", unpack(arg))
+end
+
 function commit(branch)
   if branch == nil then branch = "testbranch" end
   check(cmd(mtn("commit", "--message=blah-blah", "--branch", branch)), 0, false, false)
@@ -47,13 +54,81 @@ function mtn_setup()
   getstdfile("tests/test_keys", "test_keys")
   getstdfile("tests/test_hooks.lua", "test_hooks.lua")
   getstdfile("tests/min_hooks.lua", "min_hooks.lua")
-  port = math.random(20000, 50000)
   
   check(cmd(mtn("db", "init")), 0, false, false)
   check(cmd(mtn("read", "test_keys")), 0, false, false)
   check(cmd(mtn("setup", "--branch=testbranch", ".")), 0, false, false)
   os.remove("test_keys")
 end
+
+
+-- netsync
+
+netsync_address = nil
+
+function netsync_setup()
+  copyfile("test.db", "test2.db")
+  copy_recursive("keys", "keys2")
+  copyfile("test.db", "test3.db")
+  copy_recursive("keys", "keys3")
+  getstdfile("tests/netsync.lua", "netsync.lua")
+  netsync_address = "localhost:" .. math.random(20000, 50000)
+end
+
+function netsync_setup_with_notes()
+  netsync_setup()
+  getstdfile("tests/netsync_with_notes.lua", "netsync.lua")
+end
+
+function mtn2(...)
+  return mtn("--db=test2.db", "--keydir=keys2", unpack(arg))
+end
+
+function mtn3(...)
+  return mtn("--db=test3.db", "--keydir=keys3", unpack(arg))
+end
+
+function netsync_serve_start(pat, n, min)
+  if pat == "" or pat == nil then pat = "*" end
+  local args = {}
+  local fn = mtn
+  table.insert(args, "--dump=_MTN/server_dump")
+  table.insert(args, "--bind="..netsync_address)
+  if min then
+    fn = minhooks_mtn
+  else
+    table.insert(args, "--rcfile=netsync.lua")
+  end
+  if n ~= nil then
+    table.insert(args, "--keydir=keys"..n)
+    table.insert(args, "--db=test"..n..".db")
+  end
+  table.insert(args, "serve")
+  table.insert(args, pat)
+  local out = bg({fn(unpack(args))}, false, false, false)
+  -- wait for "beginning service..."
+  while fsize(out.prefix .. "stderr") == 0 do
+    sleep(1)
+  end
+  return out
+end
+
+function netsync_client_run(oper, pat, res, n)
+  if pat == "" or pat == nil then pat = "*" end
+  if n == nil then n = 2 end
+  check(cmd(mtn("--rcfile=netsync.lua", "--keydir=keys"..n,
+                "--db=test"..n..".db", oper, netsync_address, pat)),
+        res, false, false)
+end
+
+function run_netsync(oper, pat)
+  local srv = netsync_serve_start(pat)
+  netsync_client_run(oper, pat, 0)
+  srv:finish()
+end
+
+
+
 
 function base_revision()
   return string.gsub(readfile("_MTN/revision"), "%s*$", "")
@@ -97,6 +172,14 @@ function canonicalize(filename)
   end
 end
 
+-- maybe this one should go in tester.lua?
+function check_same_stdout(cmd1, cmd2)
+  check(cmd1, 0, true, false)
+  rename("stdout", "stdout-first")
+  check(cmd2, 0, true, false)
+  check(samefile("stdout", "stdout-first"))
+end
+
 ------------------------------------------------------------------------
 --====================================================================--
 ------------------------------------------------------------------------
@@ -128,3 +211,9 @@ table.insert(tests, "tests/renaming_and_editing_a_file")
 table.insert(tests, "tests/importing_CVS_files")
 table.insert(tests, "tests/importing_files_with_non-english_names")
 table.insert(tests, "tests/external_unit_test_of_the_line_merger")
+table.insert(tests, "tests/exchanging_work_via_netsync")
+table.insert(tests, "tests/single_manifest_netsync")
+table.insert(tests, "tests/netsync_transfers_public_keys")
+table.insert(tests, "tests/repeatedly_exchanging_work_via_netsync")
+table.insert(tests, "tests/(normal)_netsync_on_partially_unrelated_revisions")
+table.insert(tests, "tests/disapproving_of_a_revision")

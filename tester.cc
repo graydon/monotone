@@ -9,6 +9,7 @@ extern "C" {
 #include "tester.h"
 #include "paths.hh"
 #include "platform.hh"
+#include "sanity.hh"
 
 #include <cstdio>
 
@@ -212,17 +213,25 @@ void set_env(string const &var, string const &val)
 fs::path source_dir;
 fs::path run_dir;
 
-struct oops : public std::exception
-{
-  oops(string const &s = "") throw() : err(s) {}
-  ~oops() throw() {}
-  string err;
-  char const * what() {return err.c_str();}
-};
-
 static int panic_thrower(lua_State * st)
 {
-  throw oops();
+  throw oops("lua error");
+}
+
+void copy_recursive(fs::path const &from, fs::path const &to)
+{
+  if (!fs::exists(from))
+    return;
+  if (fs::exists(to))
+    fs::remove_all(to);
+  if (fs::is_directory(from))
+    {
+      fs::create_directory(to);
+      for (fs::directory_iterator i(from); i != fs::directory_iterator(); ++i)
+        copy_recursive(*i, to / i->leaf());
+    }
+  else
+    fs::copy_file(from, to);
 }
 
 extern "C"
@@ -256,9 +265,17 @@ extern "C"
   static int
   remove_recursive(lua_State *L)
   {
-    char const * dirname = luaL_checkstring(L, -1);
-    fs::path dir(dirname, fs::native);
+    fs::path dir(luaL_checkstring(L, -1));
     fs::remove_all(dir);
+    return 0;
+  }
+
+  static int
+  copy_recursive(lua_State *L)
+  {
+    fs::path from(luaL_checkstring(L, -2));
+    fs::path to(luaL_checkstring(L, -1));
+    copy_recursive(from, to);
     return 0;
   }
 
@@ -318,6 +335,10 @@ extern "C"
     sb->out = set_redirect(redirect::out, outfile);
     sb->err = set_redirect(redirect::err, errfile);
     lua_newtable(L);
+    lua_pushstring(L, "__index");
+    lua_pushvalue(L, -2);
+    lua_settable(L, -3);
+
     lua_pushstring(L, "restore");
     lua_pushcfunction(L,clear_redirect);
     lua_settable(L, -3);
@@ -357,10 +378,24 @@ extern "C"
     set_env(var, val);
     return 0;
   }
+
+  static int
+  timed_wait(lua_State * L)
+  {
+    pid_t pid = luaL_checknumber(L, -2);
+    int time = luaL_checknumber(L, -1);
+    int res;
+    int ret;
+    ret = process_wait(pid, &res, time);
+    lua_pushnumber(L, res);
+    lua_pushnumber(L, ret);
+    return 2;
+  }
 }
 
 int main(int argc, char **argv)
 {
+//  global_sanity.set_debug();
   string testfile;
   bool needhelp = false;
   for (int i = 1; i < argc; ++i)
@@ -405,11 +440,13 @@ int main(int argc, char **argv)
   lua_register(st, "leave_test_dir", leave_test_dir);
   lua_register(st, "mkdir", make_dir);
   lua_register(st, "remove_recursive", remove_recursive);
+  lua_register(st, "copy_recursive", copy_recursive);
   lua_register(st, "exists", exists);
   lua_register(st, "get_ostype", get_ostype);
   lua_register(st, "save_env", do_save_env);
   lua_register(st, "restore_env", do_restore_env);
   lua_register(st, "set_env", do_set_env);
+  lua_register(st, "timed_wait", timed_wait);
 
   int ret = 2;
   try

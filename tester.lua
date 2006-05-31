@@ -11,6 +11,8 @@ errline = -1
 logfile = io.open("tester.log", "w") -- combined logfile
 test_log = nil -- logfile for this test
 failed_testlogs = {}
+bgid = 0
+bglist = {}
 
 function P(...)
   io.write(unpack(arg))
@@ -41,11 +43,17 @@ end
 
 function locheader()
   local _,line = getsrcline()
+  if line == nil then line = -1 end
   if testname == nil then
     return "\n<unknown>:" .. line .. ": "
   else
     return "\n" .. testname .. ":" .. line .. ": "
   end
+end
+
+function err(...)
+    errfile,errline = getsrcline()
+    error(unpack(arg))
 end
 
 old_mkdir = mkdir
@@ -132,9 +140,9 @@ end
 
 function rename(from, to)
   L(locheader(), "rename ", from, " ", to, "\n")
-  local res,err = os.rename(from, to)
-  if res == nil then
-    L(err, "\n")
+  local ok,res = os.rename(from, to)
+  if ok == nil then
+    L(res, "\n")
     return false
   else
     return true
@@ -143,9 +151,9 @@ end
 
 function remove(file)
   L(locheader(), "remove ", file, "\n")
-  local res,err = os.remove(file)
-  if res == nil then
-    L(err, "\n")
+  local ok,res = os.remove(file)
+  if ok == nil then
+    L(res, "\n")
     return false
   else
     return true
@@ -176,6 +184,33 @@ function execute(path, ...)
    pid = spawn(path, unpack(arg))
    if (pid ~= -1) then ret, pid = wait(pid) end
    return ret
+end
+
+function background(path, ...)
+  local ret = {}
+  local pid = spawn(path, unpack(arg))
+  if (pid == -1) then return false end
+  ret.pid = pid
+  local mt = {}
+  mt.__index = mt
+  mt.finish = function (obj, timeout)
+                if timeout == nil then timeout = 0 end
+                local ret, res = timed_wait(obj.pid, timeout)
+                if (res == -1) then
+                  kill(obj.pid, 15) -- TERM
+                  ret, res = timed_wait(obj.pid, 2)
+                  if (res == -1) then
+                    kill(obj.pid, 9) -- KILL
+                    ret, res = timed_wait(obj.pid, 2)
+                  end
+                end
+                return ret
+              end
+  mt.wait = function (obj)
+              local ret,_ = wait(obj.pid)
+              return ret
+            end
+  return setmetatable(ret, mt)
 end
 
 function cmd(first, ...)
@@ -244,6 +279,65 @@ function log_file_contents(filename)
   L(readfile_q(filename))
 end
 
+function pre_cmd(stdin, ident)
+  if ident == nil then ident = "ts-" end
+  if stdin ~= true then
+    local infile = io.open("stdin", "w")
+    if stdin ~= nil and stdin ~= false then
+      infile:write(stdin)
+    end
+    infile:close()
+  end
+  os.remove(ident .. "stdin")
+  os.rename("stdin", ident .. "stdin")
+  L("stdin:\n")
+  log_file_contents(ident .. "stdin")
+  return set_redirect(ident .. "stdin", ident .. "stdout", ident .. "stderr")
+end
+
+function post_cmd(result, ret, stdout, stderr, ident)
+  if ident == nil then ident = "ts-" end
+  L("stdout:\n")
+  log_file_contents(ident .. "stdout")
+  L("stderr:\n")
+  log_file_contents(ident .. "stderr")
+  if result ~= ret and ret ~= false then
+    err("Check failed (return value): wanted " .. ret .. " got " .. result, 3)
+  end
+
+  if stdout == nil then
+    if fsize(ident .. "stdout") ~= 0 then
+      err("Check failed (stdout): not empty", 3)
+    end
+  elseif type(stdout) == "string" then
+    local realout = io.open("stdout")
+    local contents = realout:read("*a")
+    realout:close()
+    if contents ~= stdout then
+      err("Check failed (stdout): doesn't match", 3)
+    end
+  elseif stdout == true then
+    os.remove("stdout")
+    os.rename(ident .. "stdout", "stdout")
+  end
+
+  if stderr == nil then
+    if fsize(ident .. "stderr") ~= 0 then
+      err("Check failed (stderr): not empty", 3)
+    end
+  elseif type(stderr) == "string" then
+    local realerr = io.open("stderr")
+    local contents = realerr:read("*a")
+    realerr:close()
+    if contents ~= stderr then
+      err("Check failed (stderr): doesn't match", 3)
+    end
+  elseif stderr == true then
+    os.remove("stderr")
+    os.rename(ident .. "stderr", "stderr")
+  end
+end
+
 -- std{out,err} can be:
 --   * false: ignore
 --   * true: ignore, copy to stdout
@@ -253,103 +347,82 @@ end
 --   * true: use existing "stdin" file
 --   * nil, false: empty input
 --   * string: contents of string
+
+function bg(torun, ret, stdout, stderr, stdin)
+  bgid = bgid + 1
+  local out = {}
+  out.prefix = "ts-" .. bgid .. "-"
+  local redir = pre_cmd(stdin, out.prefix)
+  out.process = background(unpack(torun))
+  redir:restore()
+  if out.process == false then
+    err("Failed to start background process\n", 2)
+  end
+  bglist[bgid] = out
+  out.id = bgid
+  out.retval = nil
+  out.locstr = locheader()
+  out.cmd = torun
+  out.expret = ret
+  out.expout = stdout
+  out.experr = stderr
+  L(out.locstr, "starting background command: ", table.concat(out.cmd, " "))
+  local mt = {}
+  mt.__index = mt
+  mt.finish = function(obj, timeout)
+                if obj.retval ~= nil then return end
+                obj.retval = obj.process:finish(timeout)
+                table.remove(bglist, obj.id)
+                L(locheader(), "checking background command from ", out.locstr,
+                  table.concat(out.cmd, " "))
+                post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
+              end
+  mt.wait = function(obj)
+              if obj.retval ~= nil then return end
+              obj.retval = obj.process:wait()
+              table.remove(bglist, obj.id)
+              L(locheader(), "checking background command from ", out.locstr,
+                table.concat(out.cmd, " "))
+              post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
+            end
+  return setmetatable(out, mt)
+end
+
 function check_func(func, ret, stdout, stderr, stdin)
   if ret == nil then ret = 0 end
-  if stdin ~= true then
-    local infile = io.open("stdin", "w")
-    if stdin ~= nil and stdin ~= false then
-      infile:write(stdin)
-    end
-    infile:close()
-  end
-  os.remove("ts-stdin")
-  os.rename("stdin", "ts-stdin")
-  L("stdin:\n")
-  log_file_contents("ts-stdin")
-  -- local i, o, e = set_redirect("ts-stdin", "ts-stdout", "ts-stderr")
-  local redir = set_redirect("ts-stdin", "ts-stdout", "ts-stderr")
+  local redir = pre_cmd(stdin)
   local ok, result = pcall(func)
-  -- redir:restore()
-  clear_redirect(redir)
-  -- clear_redirect(i, o, e)
-  L("stdout:\n")
-  log_file_contents("ts-stdout")
-  L("stderr:\n")
-  log_file_contents("ts-stderr")
+  redir:restore()
   if ok == false then
-    errfile,errline = getsrcline()
-    error(result, 2)
+    err(result, 2)
   end
-  if result ~= ret then
-    errfile,errline = getsrcline()
-    error("Check failed (return value): wanted " .. ret .. " got " .. result, 3)
-  end
-
-  if stdout == nil then
-    if fsize("ts-stdout") ~= 0 then
-      errfile,errline = getsrcline()
-      error("Check failed (stdout): not empty", 3)
-    end
-  elseif type(stdout) == "string" then
-    local realout = io.open("stdout")
-    local contents = realout:read("*a")
-    realout:close()
-    if contents ~= stdout then
-      errfile,errline = getsrcline()
-      error("Check failed (stdout): doesn't match", 3)
-    end
-  elseif stdout == true then
-    os.remove("stdout")
-    os.rename("ts-stdout", "stdout")
-  end
-
-  if stderr == nil then
-    if fsize("ts-stderr") ~= 0 then
-      errfile,errline = getsrcline()
-      error("Check failed (stderr): not empty", 3)
-    end
-  elseif type(stderr) == "string" then
-    local realerr = io.open("stderr")
-    local contents = realerr:read("*a")
-    realerr:close()
-    if contents ~= stderr then
-      errfile,errline = getsrcline()
-      error("Check failed (stderr): doesn't match", 3)
-    end
-  elseif stderr == true then
-    os.remove("stderr")
-    os.rename("ts-stderr", "stderr")
-  end
+  post_cmd(result, ret, stdout, stderr)
 end
 
 function check(first, ...)
   if type(first) == "function" then
     check_func(first, unpack(arg))
   elseif type(first) == "boolean" then
-    errfile,errline = getsrcline()
-    if not first then error("Check failed: false", 2) end
+    if not first then err("Check failed: false", 2) end
   elseif type(first) == "number" then
     if first ~= 0 then
-      errfile,errline = getsrcline()
-      error("Check failed: " .. first .. " ~= 0", 2)
+      err("Check failed: " .. first .. " ~= 0", 2)
       end
   else
-    errfile,errline = getsrcline()
-    error("Bad argument to check() (" .. type(first) .. ")", 2)
+    err("Bad argument to check() (" .. type(first) .. ")", 2)
   end
 end
 
 function skip_if(chk)
   if chk then
-    errfile,errline = getsrcline()
-    error(true, 2)
+    err(true, 2)
   end
 end
 
 function xfail_if(chk, ...)
-  local res,err = pcall(check, unpack(arg))
-  if res == false then
-    if chk then error(false, 2) else error(err, 2) end
+  local ok,res = pcall(check, unpack(arg))
+  if ok == false then
+    if chk then err(false, 2) else err(err, 2) end
   else
     if chk then
       wanted_fail = true
@@ -410,10 +483,13 @@ function run_tests(args)
   counts.total = 0
 
   local function runtest(i, tname)
+    bgid = 0
     testname = tname
     wanted_fail = false
     local shortname = nil
     test_root, shortname = go_to_test_dir(testname)
+    errfile = ""
+    errline = -1
     
     if i < 100 then P(" ") end
     if i < 10 then P(" ") end
@@ -433,7 +509,11 @@ function run_tests(args)
       r = false
       e = "Could not load driver file " .. driverfile .. " .\n" .. e
     else
+      bglist = {}
       r,e = xpcall(driver, debug.traceback)
+      for i,b in pairs(bglist) do
+        b:finish(0)
+      end
       restore_env()
     end
     if r then

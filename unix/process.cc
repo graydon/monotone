@@ -105,10 +105,23 @@ pid_t process_spawn(const char * const argv[])
         }
 }
 
-int process_wait(pid_t pid, int *res)
+int process_wait(pid_t pid, int *res, int timeout)
 {
         int status;
-        pid = waitpid(pid, &status, 0);
+        int flags = 0;
+        if (timeout == -1)
+          timeout = 0;
+        else
+          flags |= WNOHANG;
+        int r;
+        for (r = 0; r == 0 && timeout >= 0; --timeout)
+          {
+            r = waitpid(pid, &status, flags);
+            if (r == 0 && timeout > 0)
+              process_sleep(1);
+          }
+        if (r == 0)
+          return -1;
         if (WIFEXITED(status))    
                 *res = WEXITSTATUS(status);
         else
