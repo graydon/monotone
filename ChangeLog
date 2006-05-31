@@ -1,3 +1,13 @@
+2006-05-30  Richard Levitte  <richard@levitte.org>
+
+	* HACKING: A small correction about namespaces.
+
+2006-05-29  Derek Scherger  <derek@echologic.com>
+
+	* HACKING: add note on using namespaces
+	* ROADMAP: remove janitorial items pertaining to namespaces and
+	splitting commands.cc
+
 2006-05-29  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A new string to translate.
