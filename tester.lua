@@ -99,12 +99,19 @@ function readfile(filename)
 end
 
 function writefile_q(filename, dat)
-  local file = io.open(filename, "wb")
+  local file,e
+  if dat == nil then
+    file,e = io.open(filename, "a+b")
+  else
+    file,e = io.open(filename, "wb")
+  end
   if file == nil then
-    L("Cannot open file " .. filename)
+    L("Cannot open file ", filename, ": ", e, "\n")
     return false
   end
-  file:write(dat)
+  if dat ~= nil then
+    file:write(dat)
+  end
   file:close()
   return true
 end

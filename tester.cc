@@ -240,7 +240,7 @@ extern "C"
   go_to_test_dir(lua_State * L)
   {
     char const * testname = luaL_checkstring(L, -1);
-    fs::path tname(testname, fs::native);
+    fs::path tname(testname);
     fs::path testdir = run_dir / tname.leaf();
     if (fs::exists(testdir))
       fs::remove_all(testdir);
@@ -249,6 +249,22 @@ extern "C"
     lua_pushstring(L, testdir.native_file_string().c_str());
     lua_pushstring(L, tname.leaf().c_str());
     return 2;
+  }
+
+  static int
+  go_to_dir(lua_State * L)
+  {
+    fs::path dir(luaL_checkstring(L, -1), fs::native);
+    if (!dir.is_complete())
+      dir = fs::current_path() / dir;
+    if (!fs::exists(dir) || !fs::is_directory(dir))
+      {
+        lua_pushboolean(L, false);
+        return 1;
+      }
+    go_to_workspace(dir.native_file_string());
+    lua_pushboolean(L, true);
+    return 1;
   }
 
   static int
@@ -439,6 +455,7 @@ int main(int argc, char **argv)
   lua_register(st, "clean_test_dir", clean_test_dir);
   lua_register(st, "leave_test_dir", leave_test_dir);
   lua_register(st, "mkdir", make_dir);
+  lua_register(st, "chdir", go_to_dir);
   lua_register(st, "remove_recursive", remove_recursive);
   lua_register(st, "copy_recursive", copy_recursive);
   lua_register(st, "exists", exists);
