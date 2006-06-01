@@ -24,7 +24,7 @@ get_current_working_dir()
 {
   char buffer[4096];
   E(getcwd(buffer, 4096),
-    F("cannot get working directory: %s") % std::strerror(errno));
+    F("cannot get working directory: %s") % os_strerror(errno));
   return std::string(buffer);
 }
 
@@ -32,7 +32,7 @@ void
 change_current_working_dir(any_path const & to)
 {
   E(!chdir(to.as_external().c_str()),
-    F("cannot change to directory %s: %s") % to % std::strerror(errno));
+    F("cannot change to directory %s: %s") % to % os_strerror(errno));
 }
 
 system_path
@@ -102,7 +102,7 @@ get_path_status(any_path const & path)
       if (errno == ENOENT)
         return path::nonexistent;
       else
-        E(false, F("error accessing file %s: %s") % path % std::strerror(errno));
+        E(false, F("error accessing file %s: %s") % path % os_strerror(errno));
     }
   if (S_ISREG(buf.st_mode))
     return path::file;
@@ -119,5 +119,5 @@ void
 rename_clobberingly(any_path const & from, any_path const & to)
 {
   E(!rename(from.as_external().c_str(), to.as_external().c_str()),
-    F("renaming '%s' to '%s' failed: %s") % from % to % std::strerror(errno));
+    F("renaming '%s' to '%s' failed: %s") % from % to % os_strerror(errno));
 }

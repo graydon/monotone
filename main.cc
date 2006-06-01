@@ -59,6 +59,7 @@
 #error "no known OS signal handling interface"
 #endif
 
+using std::string;
 
 // A rough outline of what this file does:
 // 
@@ -379,9 +380,9 @@ main_with_many_flavours_of_exception(int argc, char **argv)
         report_error("C string: ", ex); 
       }
 
-    catch (std::string const & ex)
+    catch (string const & ex)
       { 
-        report_error("std::string: ", ex.c_str()); 
+        report_error("string: ", ex.c_str()); 
       }
     
     catch( std::bad_alloc const & ex )
@@ -495,7 +496,7 @@ main(int argc, char **argv)
     }
   catch (the_one_true_exception const & e)
     {
-      ui.fatal(std::string(e.buf) + "\n");
+      ui.fatal(string(e.buf) + "\n");
       // If we got here, it's because something went _really_ wrong, like an
       // invariant failure or a segfault.  So use a distinctive error code, in
       // particular so the testsuite can tell whether we detected an error

@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -15,7 +16,13 @@
 #include "platform.hh"
 #include "sanity.hh"
 #include "interner.hh"
-#include "transforms.hh"
+#include "charset.hh"
+#include "simplestring_xform.hh"
+
+using std::exception;
+using std::ostream;
+using std::ostringstream;
+using std::string;
 
 // some structure to ensure we aren't doing anything broken when resolving
 // filenames.  the idea is to make sure
@@ -111,23 +118,52 @@ save_initial_path()
 //  -- no trailing /
 //  -- no "." or ".." path components
 static inline bool
-bad_component(std::string const & component)
+bad_component(string const & component)
 {
-  if (component == "")
+  static const string dot(".");
+  static const string dotdot("..");
+  if (component.empty())
     return true;
-  if (component == ".")
+  if (component == dot)
     return true;
-  if (component == "..")
+  if (component == dotdot)
     return true;
   return false;
 }
 
 static inline bool
-fully_normalized_path(std::string const & path)
+has_bad_chars(string const & path)
 {
-  // FIXME: probably should make this a 256-byte static lookup table
-  const static std::string bad_chars = std::string("\\") + constants::illegal_path_bytes + std::string(1, '\0');
-  
+  static bool bad_chars_init(false);
+  static u8 bad_table[128] = {0};
+  if (UNLIKELY(!bad_chars_init))
+    {
+      string bad_chars = string("\\") + constants::illegal_path_bytes + string(1, '\0');
+      for (string::const_iterator b = bad_chars.begin(); b != bad_chars.end(); b++)
+        {
+          u8 x = (u8)*b;
+          I((x) < sizeof(bad_table));
+          bad_table[x] = 1;
+        }
+      bad_chars_init = true;
+    }
+
+  for (string::const_iterator c = path.begin(); c != path.end(); c++)
+    {
+      u8 x = (u8)*c;
+      if (x < sizeof(bad_table) && bad_table[x])
+          return true;
+    }
+  return false;
+}
+
+// fully_normalized_path performs very similar function to file_path.split().
+// if want_split is set, split_path will be filled with the '/' separated
+// components of the path.
+static inline bool
+fully_normalized_path_split(string const & path, bool want_split,
+                            split_path & sp)
+{
   // empty path is fine
   if (path.empty())
     return true;
@@ -136,25 +172,38 @@ fully_normalized_path(std::string const & path)
   if (path.size() > 1 && path[1] == ':')
     return false;
   // first scan for completely illegal bytes
-  if (path.find_first_of(bad_chars) != std::string::npos)
+  if (has_bad_chars(path))
     return false;
   // now check each component
-  std::string::size_type start, stop;
+  string::size_type start, stop;
   start = 0;
   while (1)
     {
       stop = path.find('/', start);
-      if (stop == std::string::npos)
+      if (stop == string::npos)
         {
-          if (bad_component(path.substr(start)))
+          string const & s(path.substr(start));
+          if (bad_component(s))
             return false;
+          if (want_split)
+            sp.push_back(s);
           break;
         }
-      if (bad_component(path.substr(start, stop - start)))
+      string const & s(path.substr(start, stop - start));
+      if (bad_component(s))
         return false;
+      if (want_split)
+        sp.push_back(s);
       start = stop + 1;
     }
   return true;
+}
+
+static inline bool
+fully_normalized_path(string const & path)
+{
+  split_path sp;
+  return fully_normalized_path_split(path, false, sp);
 }
 
 // This function considers _MTN, _MTn, _MtN, _mtn etc. to all be bookkeeping
@@ -164,7 +213,7 @@ fully_normalized_path(std::string const & path)
 // -- this prevents all-unix projects from naming things "mt", which is a bit
 // rude -- but as a temporary security kluge it works.
 static inline bool
-in_bookkeeping_dir(std::string const & path)
+in_bookkeeping_dir(string const & path)
 {
   if (path.size() == 0 || (path[0] != '_'))
     return false;
@@ -183,13 +232,26 @@ in_bookkeeping_dir(std::string const & path)
 }
 
 static inline bool
-is_valid_internal(std::string const & path)
+is_valid_internal(string const & path)
 {
   return (fully_normalized_path(path)
           && !in_bookkeeping_dir(path));
 }
 
-file_path::file_path(file_path::source_type type, std::string const & path)
+// equivalent to file_path_internal(path).split(sp), but
+// avoids splitting the string twice
+void
+internal_string_to_split_path(string const & path, split_path & sp)
+{
+  I(utf8_validate(path));
+  I(!in_bookkeeping_dir(path));
+  sp.clear();
+  sp.reserve(8);
+  sp.push_back(the_null_component);
+  I(fully_normalized_path_split(path, true, sp));
+}
+
+file_path::file_path(file_path::source_type type, string const & path)
 {
   MM(path);
   I(utf8_validate(path));
@@ -220,13 +282,13 @@ file_path::file_path(file_path::source_type type, std::string const & path)
           relative = fs::path(path, fs::native);
           out = (base / relative).normalize();
         }
-      catch (std::exception & e)
+      catch (exception &)
         {
           N(false, F("path '%s' is invalid") % path);
         }
       data = utf8(out.string());
       if (data() == ".")
-        data = std::string("");
+        data = string("");
       N(!relative.has_root_path(),
         F("absolute path '%s' is invalid") % relative.string());
       N(fully_normalized_path(data()), F("path '%s' is invalid") % data);
@@ -237,7 +299,7 @@ file_path::file_path(file_path::source_type type, std::string const & path)
   I(is_valid_internal(data()));
 }
 
-bookkeeping_path::bookkeeping_path(std::string const & path)
+bookkeeping_path::bookkeeping_path(string const & path)
 {
   I(fully_normalized_path(path));
   I(in_bookkeeping_dir(path));
@@ -245,7 +307,7 @@ bookkeeping_path::bookkeeping_path(std::string const & path)
 }
 
 bool
-bookkeeping_path::is_bookkeeping_path(std::string const & path)
+bookkeeping_path::is_bookkeeping_path(string const & path)
 {
   return in_bookkeeping_dir(path);
 }
@@ -272,7 +334,7 @@ file_path::file_path(split_path const & sp)
   split_path::const_iterator i = sp.begin();
   I(i != sp.end());
   I(null_name(*i));
-  std::string tmp;
+  string tmp;
   bool start = true;
   for (++i; i != sp.end(); ++i)
     {
@@ -306,13 +368,13 @@ file_path::split(split_path & sp) const
   sp.push_back(the_null_component);
   if (empty())
     return;
-  std::string::size_type start, stop;
+  string::size_type start, stop;
   start = 0;
-  std::string const & s = data();
+  string const & s = data();
   while (1)
     {
       stop = s.find('/', start);
-      if (stop == std::string::npos)
+      if (stop == string::npos)
         {
           sp.push_back(s.substr(start));
           break;
@@ -323,9 +385,9 @@ file_path::split(split_path & sp) const
 }
 
 template <>
-void dump(split_path const & sp, std::string & out)
+void dump(split_path const & sp, string & out)
 {
-  std::ostringstream oss;
+  ostringstream oss;
 
   for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
     {
@@ -346,7 +408,7 @@ void dump(split_path const & sp, std::string & out)
 // this code must be superfast when there is no conversion needed
 ///////////////////////////////////////////////////////////////////////////
 
-std::string
+string
 any_path::as_external() const
 {
 #ifdef __APPLE__
@@ -367,15 +429,15 @@ any_path::as_external() const
 // writing out paths
 ///////////////////////////////////////////////////////////////////////////
 
-std::ostream &
-operator <<(std::ostream & o, any_path const & a)
+ostream &
+operator <<(ostream & o, any_path const & a)
 {
   o << a.as_internal();
   return o;
 }
 
-std::ostream &
-operator <<(std::ostream & o, split_path const & sp)
+ostream &
+operator <<(ostream & o, split_path const & sp)
 {
   file_path tmp(sp);
   return o << tmp;
@@ -387,7 +449,7 @@ operator <<(std::ostream & o, split_path const & sp)
 ///////////////////////////////////////////////////////////////////////////
 
 static bool
-is_absolute_here(std::string const & path)
+is_absolute_here(string const & path)
 {
   if (path.empty())
     return false;
@@ -403,7 +465,7 @@ is_absolute_here(std::string const & path)
 }
 
 static inline bool
-is_absolute_somewhere(std::string const & path)
+is_absolute_somewhere(string const & path)
 {
   if (path.empty())
     return false;
@@ -417,7 +479,7 @@ is_absolute_somewhere(std::string const & path)
 }
 
 file_path
-file_path::operator /(std::string const & to_append) const
+file_path::operator /(string const & to_append) const
 {
   I(!is_absolute_somewhere(to_append));
   if (empty())
@@ -427,7 +489,7 @@ file_path::operator /(std::string const & to_append) const
 }
 
 bookkeeping_path
-bookkeeping_path::operator /(std::string const & to_append) const
+bookkeeping_path::operator /(string const & to_append) const
 {
   I(!is_absolute_somewhere(to_append));
   I(!empty());
@@ -435,7 +497,7 @@ bookkeeping_path::operator /(std::string const & to_append) const
 }
 
 system_path
-system_path::operator /(std::string const & to_append) const
+system_path::operator /(string const & to_append) const
 {
   I(!empty());
   I(!is_absolute_here(to_append));
@@ -446,8 +508,8 @@ system_path::operator /(std::string const & to_append) const
 // system_path
 ///////////////////////////////////////////////////////////////////////////
 
-static std::string
-normalize_out_dots(std::string const & path)
+static string
+normalize_out_dots(string const & path)
 {
 #ifdef WIN32
   return fs::path(path, fs::native).normalize().string();
@@ -473,17 +535,17 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
     }
 }
 
-static inline std::string const_system_path(utf8 const & path)
+static inline string const_system_path(utf8 const & path)
 {
   N(!path().empty(), F("invalid path ''"));
-  std::string expanded = tilde_expand(path)();
+  string expanded = tilde_expand(path)();
   if (is_absolute_here(expanded))
     return normalize_out_dots(expanded);
   else
     return normalize_out_dots((initial_abs_path.get() / expanded).as_internal());
 }
 
-system_path::system_path(std::string const & path)
+system_path::system_path(string const & path)
 {
   data = const_system_path(path);
 }
@@ -517,6 +579,13 @@ dirname_basename(split_path const & sp,
 // workspace (and path root) handling
 ///////////////////////////////////////////////////////////////////////////
 
+system_path 
+current_root_path()
+{
+  return system_path(fs::initial_path().root_path().string());
+}
+
+
 bool
 find_and_go_to_workspace(system_path const & search_root)
 {
@@ -525,6 +594,27 @@ find_and_go_to_workspace(system_path const & search_root)
   fs::path current(fs::initial_path());
   fs::path removed;
   fs::path check = current / bookdir;
+
+  // check that the current directory is below the specified search root
+
+  fs::path::iterator ri = root.begin();
+  fs::path::iterator ci = current.begin();
+
+  while (ri != root.end() && ci != current.end() && *ri == *ci) 
+    {
+      ++ri;
+      ++ci;
+    }
+
+  // if it's not then issue a warning and abort the search
+
+  if (ri != root.end())
+    {
+      W(F("current directory '%s' is not below root '%s'")
+        % current.string() 
+        % root.string());
+      return false;
+    }
 
   L(FL("searching for '%s' directory with root '%s'\n") 
     % bookdir.string()
@@ -590,6 +680,8 @@ go_to_workspace(system_path const & new_workspace)
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
+using std::logic_error;
+
 static void test_null_name()
 {
   BOOST_CHECK(null_name(the_null_component));
@@ -632,13 +724,13 @@ static void test_file_path_internal()
   initial_rel_path.set(fs::path(), true);
   for (char const ** c = baddies; *c; ++c)
     {
-      BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
+      BOOST_CHECK_THROW(file_path_internal(*c), logic_error);
     }
   initial_rel_path.unset();
   initial_rel_path.set(fs::path("blah/blah/blah", fs::native), true);
   for (char const ** c = baddies; *c; ++c)
     {
-      BOOST_CHECK_THROW(file_path_internal(*c), std::logic_error);
+      BOOST_CHECK_THROW(file_path_internal(*c), logic_error);
     }
 
   BOOST_CHECK(file_path().empty());
@@ -687,7 +779,7 @@ static void test_file_path_internal()
 static void check_fp_normalizes_to(char * before, char * after)
 {
   L(FL("check_fp_normalizes_to: '%s' -> '%s'") % before % after);
-  file_path fp = file_path_external(std::string(before));
+  file_path fp = file_path_external(string(before));
   L(FL("  (got: %s)") % fp);
   BOOST_CHECK(fp.as_internal() == after);
   BOOST_CHECK(file_path_internal(fp.as_internal()) == fp);
@@ -895,7 +987,7 @@ static void test_split_join()
   split_path split4;
   // this comparison tricks the compiler into not completely eliminating this
   // code as dead...
-  BOOST_CHECK_THROW(file_path(split4) == file_path(), std::logic_error);
+  BOOST_CHECK_THROW(file_path(split4) == file_path(), logic_error);
   split4.push_back(the_null_component);
   BOOST_CHECK(file_path(split4) == file_path());
 
@@ -904,7 +996,7 @@ static void test_split_join()
   split4.push_back(split1[1]);
   // this comparison tricks the compiler into not completely eliminating this
   // code as dead...
-  BOOST_CHECK_THROW(file_path(split4) == file_path(), std::logic_error);
+  BOOST_CHECK_THROW(file_path(split4) == file_path(), logic_error);
 
   // split_path with non-first item item null is invalid
   split4.clear();
@@ -913,7 +1005,7 @@ static void test_split_join()
   split4.push_back(the_null_component);
   // this comparison tricks the compiler into not completely eliminating this
   // code as dead...
-  BOOST_CHECK_THROW(file_path(split4) == file_path(), std::logic_error);
+  BOOST_CHECK_THROW(file_path(split4) == file_path(), logic_error);
 
   // Make sure that we can't use joining to create a path into the bookkeeping
   // dir
@@ -925,12 +1017,12 @@ static void test_split_join()
     split_mt2.push_back(the_null_component);
     split_mt2.push_back(split_mt1[2]);
     // split_mt2 now contains the component "_MTN"
-    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
     split_mt2.push_back(split_mt1[1]);
     // split_mt2 now contains the components "_MTN", "foo" in that order
     // this comparison tricks the compiler into not completely eliminating this
     // code as dead...
-    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
   }
   // and make sure it fails for the klugy security cases -- see comments on
   // in_bookkeeping_dir
@@ -941,12 +1033,12 @@ static void test_split_join()
     split_mt2.push_back(the_null_component);
     split_mt2.push_back(split_mt1[2]);
     // split_mt2 now contains the component "_mTn"
-    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
     split_mt2.push_back(split_mt1[1]);
     // split_mt2 now contains the components "_mTn", "foo" in that order
     // this comparison tricks the compiler into not completely eliminating this
     // code as dead...
-    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), std::logic_error);
+    BOOST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
   }
 }
 
@@ -975,16 +1067,16 @@ static void test_bookkeeping_path()
                             "",
                             "a:b",
                             0 };
-  std::string tmp_path_string;
+  string tmp_path_string;
 
   for (char const ** c = baddies; *c; ++c)
     {
       L(FL("test_bookkeeping_path baddie: trying '%s'") % *c);
-            BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign(*c)), std::logic_error);
-            BOOST_CHECK_THROW(bookkeeping_root / tmp_path_string.assign(*c), std::logic_error);
+            BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign(*c)), logic_error);
+            BOOST_CHECK_THROW(bookkeeping_root / tmp_path_string.assign(*c), logic_error);
     }
-  BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("foo/bar")), std::logic_error);
-  BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("a")), std::logic_error);
+  BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("foo/bar")), logic_error);
+  BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("a")), logic_error);
   
   check_bk_normalizes_to("a", "_MTN/a");
   check_bk_normalizes_to("foo", "_MTN/foo");
@@ -1038,18 +1130,18 @@ static void test_system_path()
   check_system_normalizes_to("/foo/..", "/");
   // can't do particularly interesting checking of tilde expansion, but at
   // least we can check that it's doing _something_...
-  std::string tilde_expanded = system_path("~/foo").as_external();
+  string tilde_expanded = system_path("~/foo").as_external();
 #ifdef WIN32
   BOOST_CHECK(tilde_expanded[1] == ':');
 #else
   BOOST_CHECK(tilde_expanded[0] == '/');
 #endif
-  BOOST_CHECK(tilde_expanded.find('~') == std::string::npos);
+  BOOST_CHECK(tilde_expanded.find('~') == string::npos);
   // and check for the weird WIN32 version
 #ifdef WIN32
-  std::string tilde_expanded2 = system_path("~this_user_does_not_exist_anywhere").as_external();
+  string tilde_expanded2 = system_path("~this_user_does_not_exist_anywhere").as_external();
   BOOST_CHECK(tilde_expanded2[0] = '/');
-  BOOST_CHECK(tilde_expanded2.find('~') == std::string::npos);
+  BOOST_CHECK(tilde_expanded2.find('~') == string::npos);
 #else
   BOOST_CHECK_THROW(system_path("~this_user_does_not_exist_anywhere"), informative_failure);
 #endif
@@ -1072,7 +1164,7 @@ static void test_system_path()
   BOOST_CHECK(system_path(file_path_internal("foo/bar")).as_internal()
               == "/working/root/foo/bar");
   BOOST_CHECK(working_root.used);
-  BOOST_CHECK(system_path(file_path_external(std::string("foo/bar"))).as_external()
+  BOOST_CHECK(system_path(file_path_external(string("foo/bar"))).as_external()
               == "/working/root/rel/initial/foo/bar");
   file_path a_file_path;
   BOOST_CHECK(system_path(a_file_path).as_external()
@@ -1089,23 +1181,23 @@ static void test_system_path()
 static void test_access_tracker()
 {
   access_tracker<int> a;
-  BOOST_CHECK_THROW(a.get(), std::logic_error);
+  BOOST_CHECK_THROW(a.get(), logic_error);
   a.set(1, false);
-  BOOST_CHECK_THROW(a.set(2, false), std::logic_error);
+  BOOST_CHECK_THROW(a.set(2, false), logic_error);
   a.set(2, true);
-  BOOST_CHECK_THROW(a.set(3, false), std::logic_error);
+  BOOST_CHECK_THROW(a.set(3, false), logic_error);
   BOOST_CHECK(a.get() == 2);
-  BOOST_CHECK_THROW(a.set(3, true), std::logic_error);
+  BOOST_CHECK_THROW(a.set(3, true), logic_error);
   a.unset();
   a.may_not_initialize();
-  BOOST_CHECK_THROW(a.set(1, false), std::logic_error);
-  BOOST_CHECK_THROW(a.set(2, true), std::logic_error);
+  BOOST_CHECK_THROW(a.set(1, false), logic_error);
+  BOOST_CHECK_THROW(a.set(2, true), logic_error);
   a.unset();
   a.set(1, false);
-  BOOST_CHECK_THROW(a.may_not_initialize(), std::logic_error);
+  BOOST_CHECK_THROW(a.may_not_initialize(), logic_error);
 }
 
-static void test_a_path_ordering(std::string const & left, std::string const & right)
+static void test_a_path_ordering(string const & left, string const & right)
 {
   MM(left);
   MM(right);

@@ -22,6 +22,16 @@
 #include "keys.hh"
 #include "transforms.hh"
 
+using std::ctype;
+using std::locale;
+using std::map;
+using std::pair;
+using std::string;
+using std::use_facet;
+using std::vector;
+
+using boost::char_separator;
+
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
 // required to get from one hash value to the next. when you do a
@@ -37,8 +47,6 @@
 // remains.  if it becomes a maintainence burden, however, consider
 // refactoring.
 
-using namespace std;
-
 static int logged_sqlite3_exec(sqlite3* db,
                                const char* sql,
                                sqlite3_callback cb,
@@ -53,7 +61,7 @@ static int logged_sqlite3_exec(sqlite3* db,
   return res;
 }
 
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<char_separator<char> > tokenizer;
 
 static string 
 lowercase_facet(string const & in)
@@ -71,7 +79,7 @@ static void
 massage_sql_tokens(string const & in,
                    string & out)
 {
-  boost::char_separator<char> sep(" \r\n\t", "(),;");
+  char_separator<char> sep(" \r\n\t", "(),;");
   tokenizer tokens(in, sep);
   out.clear();
   for (tokenizer::iterator i = tokens.begin();
@@ -181,7 +189,7 @@ calculate_schema_id(sqlite3 *sql, string & id)
       // assert_sqlite3_ok() in database.cc
       string errmsg(sqlite3_errmsg(sql));
       L(FL("calculate_schema_id sqlite error: %d: %s") % res % errmsg);
-      std::string auxiliary_message = "";
+      string auxiliary_message = "";
       if (res == SQLITE_ERROR)
         {
       auxiliary_message += _("make sure database and containing directory are writeable\n"

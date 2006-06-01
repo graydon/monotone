@@ -1,28 +1,39 @@
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
+
+#include <cstdlib>              // for strtoul()
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cstdlib>              // for strtoul()
 
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 #include <boost/filesystem/exception.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
-#include "ui.hh"
+#include "botan/pubkey.h"
+#include "botan/rsa.h"
+
 #include "app_state.hh"
+#include "charset.hh"
 #include "database.hh"
 #include "file_io.hh"
-#include "sanity.hh"
-#include "transforms.hh"
-#include "work.hh"
 #include "platform.hh"
+#include "sanity.hh"
+#include "ui.hh"
+#include "work.hh"
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
-
-using namespace std;
+using std::exception;
+using std::map;
+using std::string;
+using std::vector;
+using std::vector;
 
 static string const database_option("database");
 static string const branch_option("branch");
@@ -30,19 +41,24 @@ static string const key_option("key");
 static string const keydir_option("keydir");
 
 app_state::app_state() 
-  : branch_name(""), db(system_path()), keys(this), recursive(false),
+  : branch_name(""), db(system_path()), 
+    keys(this), recursive(false),
     stdhooks(true), rcfiles(true), diffs(false),
-    no_merges(false), set_default(false), verbose(false), date_set(false),
-    search_root("/"),
-    depth(-1), last(-1), next(-1), diff_format(unified_diff), diff_args_provided(false),
-    use_lca(false), execute(false), bind_address(""), bind_port(""), 
+    no_merges(false), set_default(false), 
+    verbose(false), date_set(false),
+    search_root(current_root_path()),
+    depth(-1), last(-1), next(-1), 
+    diff_format(unified_diff), diff_args_provided(false),
+    execute(false), bind_address(""), bind_port(""), 
+    bind_stdio(false), use_transport_auth(true), 
     missing(false), unknown(false),
-    confdir(get_default_confdir()), have_set_key_dir(false), no_files(false)
+    confdir(get_default_confdir()), 
+    have_set_key_dir(false), no_files(false)
 {
   db.set_app(this);
   lua.set_app(this);
   keys.set_key_dir(confdir / "keys");
-  set_prog_name(utf8(std::string("mtn")));
+  set_prog_name(utf8(string("mtn")));
 }
 
 app_state::~app_state()
@@ -58,7 +74,7 @@ app_state::set_is_explicit_option (int option_id)
 bool
 app_state::is_explicit_option(int option_id) const
 {
-  std::map<int, bool>::const_iterator i = explicit_option_map.find(option_id);
+  map<int, bool>::const_iterator i = explicit_option_map.find(option_id);
   if (i == explicit_option_map.end()) return false;
   return i->second;
 }
@@ -80,9 +96,9 @@ app_state::allow_workspace()
           bookkeeping_path dump_path;
           get_local_dump_path(dump_path);
           L(FL("setting dump path to %s\n") % dump_path);
-          // the 'true' means that, e.g., if we're running checkout, then it's
-          // okay for dumps to go into our starting working dir's _MTN rather
-          // than the new workspace dir's _MTN.
+          // The 'true' means that, e.g., if we're running checkout,
+          // then it's okay for dumps to go into our starting working
+          // dir's _MTN rather than the new workspace dir's _MTN.
           global_sanity.filename = system_path(dump_path, false);
         }
     }
@@ -105,15 +121,19 @@ app_state::process_options()
         set_key_dir(keydir);
       }
 
-    if (branch_name().empty())
+    if (branch_name().empty() && !options[branch_option]().empty())
       branch_name = options[branch_option];
+
     L(FL("branch name is '%s'\n") % branch_name());
-    internalize_rsa_keypair_id(options[key_option], signing_key);
+
+	  if (!options[key_option]().empty())
+		  internalize_rsa_keypair_id(options[key_option], 
+					     signing_key);
   }
 }
 
 void 
-app_state::require_workspace(std::string const & explanation)
+app_state::require_workspace(string const & explanation)
 {
   N(found_workspace,
     F("workspace required but not found%s%s")
@@ -184,10 +204,10 @@ app_state::make_branch_sticky()
   options[branch_option] = branch_name();
   if (found_workspace)
     {
-      // already have a workspace, can (must) write options directly,
-      // because no-one else will do so
-      // if we don't have a workspace yet, then require_workspace (for
-      // instance) will call write_options when it finds one.
+      // Already have a workspace, can (must) write options directly,
+      // because no-one else will do so. If we don't have a workspace
+      // yet, then require_workspace (for instance) will call
+      // write_options when it finds one.
       write_options();
     }
 }
@@ -211,9 +231,10 @@ app_state::add_key_to_push(utf8 const & key)
 void 
 app_state::set_root(system_path const & path)
 {
-  require_path_is_directory(path,
-                            F("search root '%s' does not exist") % path,
-                            F("search root '%s' is not a directory\n") % path);
+  require_path_is_directory
+    (path,
+     F("search root '%s' does not exist") % path,
+     F("search root '%s' is not a directory\n") % path);
   search_root = path;
   L(FL("set search root to %s\n") % search_root);
 }
@@ -235,20 +256,20 @@ app_state::set_date(utf8 const & d)
 {
   try
     {
-      // boost::posix_time is lame: it can parse "basic" ISO times, of the
-      // form 20000101T120000, but not "extended" ISO times, of the form
-      // 2000-01-01T12:00:00.  So do something stupid to convert one to the
-      // other.
-      std::string tmp = d();
-      std::string::size_type pos = 0;
+      // boost::posix_time can parse "basic" ISO times, of the form
+      // 20000101T120000, but not "extended" ISO times, of the form
+      // 2000-01-01T12:00:00. So convert one to the other.
+      string tmp = d();
+      string::size_type pos = 0;
       while ((pos = tmp.find_first_of("-:")) != string::npos)
         tmp.erase(pos, 1);
       date = boost::posix_time::from_iso_string(tmp);
       date_set = true;
     }
-  catch (std::exception &e)
+  catch (exception &e)
     {
-      N(false, F("failed to parse date string '%s': %s") % d % e.what());
+      N(false, F("failed to parse date string '%s': %s") 
+	% d % e.what());
     }
 }
 
@@ -366,18 +387,18 @@ app_state::get_confdir()
 
 // rc files are loaded after we've changed to the workspace so that
 // _MTN/monotonerc can be loaded between ~/.monotone/monotonerc and other
-// rcfiles
+// rcfiles.
 
 void
 app_state::load_rcfiles()
 {
-  // built-in rc settings are defaults
+  // Built-in rc settings are defaults.
 
   if (stdhooks)
     lua.add_std_hooks();
 
   // ~/.monotone/monotonerc overrides that, and
-  // _MTN/monotonerc overrides *that*
+  // _MTN/monotonerc overrides *that*.
 
   if (rcfiles)
     {
@@ -389,7 +410,7 @@ app_state::load_rcfiles()
       lua.load_rcfile(workspace_rcfile, false);
     }
 
-  // command-line rcfiles override even that
+  // Command-line rcfiles override even that.
 
   for (vector<utf8>::const_iterator i = extra_rcfiles.begin();
        i != extra_rcfiles.end(); ++i)
@@ -412,7 +433,7 @@ app_state::read_options()
           read_options_map(dat, options);
         }
     }
-  catch(std::exception & e)
+  catch(exception &)
     {
       W(F("Failed to read options file %s") % o_path);
     }
@@ -429,8 +450,16 @@ app_state::write_options()
       write_options_map(dat, options);
       write_data(o_path, dat);
     }
-  catch(std::exception & e)
+  catch(exception &)
     {
       W(F("Failed to write options file %s") % o_path);
     }
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

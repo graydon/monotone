@@ -28,9 +28,6 @@
 #include "roster.hh"
 #include "vocab.hh"
 
-using std::map;
-using std::vector;
-
 // between any two related revisions, A and B, there is a set of changes (a
 // cset) that describes the operations required to get from A to B. for example:
 //
@@ -57,8 +54,8 @@ class restriction
  public:
   restriction(app_state & a) : app(a) {}
 
-  restriction(vector<utf8> const & includes,
-              vector<utf8> const & excludes,
+  restriction(std::vector<utf8> const & includes,
+              std::vector<utf8> const & excludes,
               roster_t const & roster, 
               app_state & a) :
     app(a)
@@ -68,8 +65,8 @@ class restriction
     validate();
   }
   
-  restriction(vector<utf8> const & includes,
-              vector<utf8> const & excludes,
+  restriction(std::vector<utf8> const & includes,
+              std::vector<utf8> const & excludes,
               roster_t const & roster1,
               roster_t const & roster2,
               app_state & a) :
@@ -105,11 +102,11 @@ class restriction
   // we maintain maps by node_id and also by split_path, which is not
   // particularly nice, but paths are required for checking unknown and ignored
   // files
-  map<node_id, path_state> node_map;
-  map<split_path, path_state> path_map;
+  std::map<node_id, path_state> node_map;
+  std::map<split_path, path_state> path_map;
 
-  void map_paths(vector<utf8> const & includes,
-                 vector<utf8> const & excludes);
+  void map_paths(std::vector<utf8> const & includes,
+                 std::vector<utf8> const & excludes);
 
   void map_nodes(roster_t const & roster);
 

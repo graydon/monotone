@@ -16,14 +16,23 @@
 #include "revision.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "keys.hh"
+#include "cert.hh"
 
-using namespace std;
-using boost::shared_ptr;
+using std::endl;
+using std::istream;
+using std::make_pair;
+using std::map;
+using std::ostream;
+using std::pair;
+using std::string;
+
 using boost::lexical_cast;
 using boost::match_default;
 using boost::match_results;
 using boost::regex;
+using boost::shared_ptr;
 
 void
 packet_consumer::set_on_revision_written(boost::function1<void,
@@ -96,19 +105,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
       return;
     }
 
-  file_id confirm;
-  file_data old_dat;
-  data new_dat;
-  app.db.get_file_version(old_id, old_dat);
-  patch(old_dat.inner(), del.inner(), new_dat);
-  calculate_ident(file_data(new_dat), confirm);
-  if (confirm == new_id)
-    app.db.put_file_version(old_id, new_id, del);
-  else
-    {
-      W(F("reconstructed file from delta '%s' -> '%s' has wrong id '%s'\n") 
-        % old_id % new_id % confirm);
-    }
+  app.db.put_file_version(old_id, new_id, del);
 
   guard.commit();
 }
@@ -126,7 +123,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
     }
 
   revision_set rev;
-      MM(rev);
+  MM(rev);
   read_revision_set(dat, rev);
       
   for (edge_map::const_iterator i = rev.edges.begin(); 
@@ -140,7 +137,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
           return;
         }
       
-      for (std::map<split_path, file_id>::const_iterator a 
+      for (map<split_path, file_id>::const_iterator a 
              = edge_changes(i).files_added.begin(); 
            a != edge_changes(i).files_added.end(); ++a)          
         {
@@ -152,7 +149,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
             }      
         }
 
-      for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator d 
+      for (map<split_path, pair<file_id, file_id> >::const_iterator d 
              = edge_changes(i).deltas_applied.begin();
            d != edge_changes(i).deltas_applied.end(); ++d)
         {
@@ -331,11 +328,11 @@ feed_packet_consumer
   app_state & app;
   size_t & count;
   packet_consumer & cons;
-  std::string ident;
-  std::string key;
-  std::string certname;
-  std::string base;
-  std::string sp;
+  string ident;
+  string key;
+  string certname;
+  string base;
+  string sp;
   feed_packet_consumer(size_t & count, packet_consumer & c, app_state & app_)
    : app(app_), count(count), cons(c),
      ident(constants::regex_legal_id_bytes),
@@ -348,7 +345,7 @@ feed_packet_consumer
   {
     E(x, F("malformed packet"));
   }
-  bool operator()(match_results<std::string::const_iterator> const & res) const
+  bool operator()(match_results<string::const_iterator> const & res) const
   {
     if (res.size() != 4)
       throw oops("matched impossible packet with " 
@@ -357,9 +354,9 @@ feed_packet_consumer
     I(res[1].matched);
     I(res[2].matched);
     I(res[3].matched);
-    std::string type(res[1].first, res[1].second);
-    std::string args(res[2].first, res[2].second);
-    std::string body(res[3].first, res[3].second);
+    string type(res[1].first, res[1].second);
+    string args(res[2].first, res[2].second);
+    string body(res[3].first, res[3].second);
     if (regex_match(type, regex("[fr]data")))
       {
         L(FL("read data packet"));
@@ -380,7 +377,7 @@ feed_packet_consumer
     else if (type == "fdelta")
       {
         L(FL("read delta packet"));
-        match_results<std::string::const_iterator> matches;
+        match_results<string::const_iterator> matches;
         require(regex_match(args, matches, regex(ident + sp + ident)));
         string src_id(matches[1].first, matches[1].second);
         string dst_id(matches[2].first, matches[2].second);
@@ -395,7 +392,7 @@ feed_packet_consumer
     else if (type == "rcert")
       {
         L(FL("read cert packet"));
-        match_results<std::string::const_iterator> matches;
+        match_results<string::const_iterator> matches;
         require(regex_match(args, matches, regex(ident + sp + certname
                                                  + sp + key + sp + base)));
         string certid(matches[1].first, matches[1].second);
@@ -425,7 +422,7 @@ feed_packet_consumer
       {
         L(FL("read keypair data packet"));
         require(regex_match(args, regex(key)));
-        match_results<std::string::const_iterator> matches;
+        match_results<string::const_iterator> matches;
         require(regex_match(body, matches, regex(base + "#" + base)));
         string pub_dat(trim_ws(string(matches[1].first, matches[1].second)));
         string priv_dat(trim_ws(string(matches[2].first, matches[2].second)));
@@ -501,6 +498,9 @@ read_packets(istream & in, packet_consumer & cons, app_state & app)
 #include "unit_tests.hh"
 #include "transforms.hh"
 
+using std::istringstream;
+using std::ostringstream;
+
 static void 
 packet_roundabout_test()
 {
@@ -526,12 +526,12 @@ packet_roundabout_test()
 
     // a rdata packet
     revision_set rev;
-    rev.new_manifest = manifest_id(std::string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+    rev.new_manifest = manifest_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
     split_path sp;
     file_path_internal("").split(sp);
     shared_ptr<cset> cs(new cset);
     cs->dirs_added.insert(sp);
-    rev.edges.insert(std::make_pair(revision_id(std::string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
+    rev.edges.insert(make_pair(revision_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
                                     cs));
     revision_data rdat;
     write_revision_set(rev, rdat);

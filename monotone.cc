@@ -8,7 +8,9 @@
 
 #include "popt/popt.h"
 #include <cstdio>
+#ifndef _MSC_VER
 #include <strings.h>
+#endif
 #include <iterator>
 #include <iostream>
 #include <fstream>
@@ -29,15 +31,21 @@
 #include "sanity.hh"
 #include "cleanup.hh"
 #include "file_io.hh"
-#include "transforms.hh"
+#include "charset.hh"
 #include "ui.hh"
 #include "mt_version.hh"
 #include "options.hh"
 #include "paths.hh"
 
-// main option processing and exception handling code
+using std::cout;
+using std::endl;
+using std::ios_base;
+using std::ostringstream;
+using std::set;
+using std::string;
+using std::vector;
 
-using namespace std;
+// main option processing and exception handling code
 
 char * argstr = NULL;
 long arglong = 0;
@@ -70,12 +78,13 @@ struct poptOption coptions[] =
     {"context", 0, POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("use context diff format"), NULL},
     {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, gettext_noop("use external diff hook for generating diffs"), NULL},
     {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, gettext_noop("argument to pass external diff hook"), NULL},
-    {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("use least common ancestor as ancestor for merge"), NULL},
     {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
     {"bind", 0, POPT_ARG_STRING, &argstr, OPT_BIND, gettext_noop("address:port to listen on (default :4691)"), NULL},
     {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from workspace"), NULL},
     {"unknown", 0, POPT_ARG_NONE, NULL, OPT_UNKNOWN, gettext_noop("perform the operations for unknown files from workspace"), NULL},
     {"key-to-push", 0, POPT_ARG_STRING, &argstr, OPT_KEY_TO_PUSH, gettext_noop("push the specified key even if it hasn't signed anything"), NULL},
+    {"stdio", 0, POPT_ARG_NONE, NULL, OPT_STDIO, gettext_noop("serve netsync on stdio"), NULL},
+    {"no-transport-auth", 0, POPT_ARG_NONE, NULL, OPT_NO_TRANSPORT_AUTH, gettext_noop("disable transport authentication"), NULL},
     {"drop-attr", 0, POPT_ARG_STRING, &argstr, OPT_DROP_ATTR, gettext_noop("when rosterifying, drop attrs entries with the given key"), NULL},
     {"no-files", 0, POPT_ARG_NONE, NULL, OPT_NO_FILES, gettext_noop("exclude files when printing logs"), NULL},
     {"recursive", 'R', POPT_ARG_NONE, NULL, OPT_RECURSIVE, gettext_noop("also operate on the contents of any listed directories"), NULL},
@@ -90,7 +99,8 @@ struct poptOption options[] =
     {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, gettext_noop("print debug log to stderr while running"), NULL},
     {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, gettext_noop("file to dump debugging log to, on failure"), NULL},
     {"log", 0, POPT_ARG_STRING, &argstr, OPT_LOG, gettext_noop("file to write the log to"), NULL},
-    {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, gettext_noop("suppress log and progress messages"), NULL},
+    {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, gettext_noop("suppress verbose, informational and progress messages"), NULL},
+    {"reallyquiet", 0, POPT_ARG_NONE, NULL, OPT_REALLYQUIET, gettext_noop("suppress warning, verbose, informational and progress messages"), NULL},
     {"help", 'h', POPT_ARG_NONE, NULL, OPT_HELP, gettext_noop("display help message"), NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, gettext_noop("print version number, then exit"), NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, gettext_noop("print detailed version number, then exit"), NULL},
@@ -260,9 +270,9 @@ cpp_main(int argc, char ** argv)
 
   // set up some marked strings, so even if our logbuf overflows, we'll get
   // this data in a crash.
-  std::string cmdline_string;
+  string cmdline_string;
   {
-    std::ostringstream cmdline_ss;
+    ostringstream cmdline_ss;
     for (int i = 0; i < argc; ++i)
       {
         if (i)
@@ -274,11 +284,11 @@ cpp_main(int argc, char ** argv)
   MM(cmdline_string);
   L(FL("command line: %s\n") % cmdline_string);
 
-  std::string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
+  string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
   MM(locale_string);
   L(FL("set locale: LC_ALL=%s\n") % locale_string);
 
-  std::string full_version_string;
+  string full_version_string;
   get_full_version(full_version_string);
   MM(full_version_string);
 
@@ -294,7 +304,8 @@ cpp_main(int argc, char ** argv)
   // find base name of executable
 
   string prog_path = fs::path(uv.argv[0]).leaf();
-  prog_path = prog_path.substr(0, prog_path.find(".exe", 0));
+  if (prog_path.rfind(".exe") == prog_path.size() - 4)
+    prog_path = prog_path.substr(0, prog_path.size() - 4);
   utf8 prog_name(prog_path);
 
   // prepare for arg parsing
@@ -334,6 +345,11 @@ cpp_main(int argc, char ** argv)
 
             case OPT_QUIET:
               global_sanity.set_quiet();
+              ui.set_tick_writer(new tick_write_nothing);
+              break;
+
+            case OPT_REALLYQUIET:
+              global_sanity.set_reallyquiet();
               ui.set_tick_writer(new tick_write_nothing);
               break;
 
@@ -485,38 +501,42 @@ cpp_main(int argc, char ** argv)
               app.set_diff_args(utf8(string(argstr)));
               break;
 
-            case OPT_LCA:
-              app.use_lca = true;
-              break;
-
             case OPT_EXECUTE:
               app.execute = true;
               break;
 
+            case OPT_STDIO:
+              app.bind_stdio = true;
+              break;
+
+            case OPT_NO_TRANSPORT_AUTH:
+              app.use_transport_auth = false;
+              break;
+
             case OPT_BIND:
               {
-                std::string arg(argstr);
-                std::string addr_part, port_part;
+                string arg(argstr);
+                string addr_part, port_part;
                 size_t l_colon = arg.find(':');
                 size_t r_colon = arg.rfind(':');
                 
                 // not an ipv6 address, as that would have at least two colons
                 if (l_colon == r_colon)
                   {
-                    addr_part = (r_colon == std::string::npos ? arg : arg.substr(0, r_colon));
-                    port_part = (r_colon == std::string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+                    addr_part = (r_colon == string::npos ? arg : arg.substr(0, r_colon));
+                    port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
                   }
                 else
                   { 
                     // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
                     size_t squareb = arg.rfind(']');
-                    if ((arg.find('[') == 0) && (squareb != std::string::npos))
+                    if ((arg.find('[') == 0) && (squareb != string::npos))
                       {
                         if (squareb < r_colon)
-                          port_part = (r_colon == std::string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+                          port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
                         else
                           port_part = "";
-                        addr_part = (squareb == std::string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
+                        addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
                       }
                     else 
                       {
@@ -524,6 +544,7 @@ cpp_main(int argc, char ** argv)
                         port_part = "";
                       }
                   }
+                app.bind_stdio = false;
                 app.bind_address = utf8(addr_part);
                 app.bind_port = utf8(port_part);
               }
@@ -664,7 +685,7 @@ cpp_main(int argc, char ** argv)
     global_sanity.clean_shutdown = true;
     return 1;
   }
-  catch (std::ios_base::failure const & ex)
+  catch (ios_base::failure const & ex)
   {
     global_sanity.clean_shutdown = true;
     return 1;

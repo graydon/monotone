@@ -19,6 +19,8 @@
 #include "revision.hh"
 #include "vocab.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
+#include "localized_file_io.hh"
 #include "parallel_iter.hh"
 #include "restrictions.hh"
 #include "safe_map.hh"
@@ -28,6 +30,7 @@
 using std::inserter;
 using std::make_pair;
 using std::map;
+using std::ostringstream;
 using std::pair;
 using std::reverse;
 using std::set;
@@ -35,15 +38,16 @@ using std::set_union;
 using std::stack;
 using std::string;
 using std::vector;
+
 using boost::lexical_cast;
 
 
 ///////////////////////////////////////////////////////////////////
 
 template <> void
-dump(full_attr_map_t const & val, std::string & out)
+dump(full_attr_map_t const & val, string & out)
 {
-  std::ostringstream oss;
+  ostringstream oss;
   for (full_attr_map_t::const_iterator i = val.begin(); i != val.end(); ++i)
     oss << "attr key: '" << i->first << "'\n"
         << "  status: " << (i->second.first ? "live" : "dead") << "\n"
@@ -52,11 +56,11 @@ dump(full_attr_map_t const & val, std::string & out)
 }
 
 template <> void
-dump(std::set<revision_id> const & revids, std::string & out)
+dump(set<revision_id> const & revids, string & out)
 {
   out.clear();
   bool first = true;
-  for (std::set<revision_id>::const_iterator i = revids.begin();
+  for (set<revision_id>::const_iterator i = revids.begin();
        i != revids.end(); ++i)
     {
       if (!first)
@@ -67,17 +71,17 @@ dump(std::set<revision_id> const & revids, std::string & out)
 }
 
 template <> void
-dump(marking_t const & marking, std::string & out)
+dump(marking_t const & marking, string & out)
 {
-  std::ostringstream oss;
-  std::string tmp;
+  ostringstream oss;
+  string tmp;
   oss << "birth_revision: " << marking.birth_revision << "\n";
   dump(marking.parent_name, tmp);
   oss << "parent_name: " << tmp << "\n";
   dump(marking.file_content, tmp);
   oss << "file_content: " << tmp << "\n";
   oss << "attrs (number: " << marking.attrs.size() << "):\n";
-  for (std::map<attr_key, std::set<revision_id> >::const_iterator
+  for (map<attr_key, set<revision_id> >::const_iterator
          i = marking.attrs.begin(); i != marking.attrs.end(); ++i)
     {
       dump(i->second, tmp);
@@ -87,15 +91,15 @@ dump(marking_t const & marking, std::string & out)
 }
 
 template <> void
-dump(marking_map const & markings, std::string & out)
+dump(marking_map const & markings, string & out)
 {
-  std::ostringstream oss;
+  ostringstream oss;
   for (marking_map::const_iterator i = markings.begin();
        i != markings.end();
        ++i)
     {
       oss << "Marking for " << i->first << ":\n";
-      std::string marking_str, indented_marking_str;
+      string marking_str, indented_marking_str;
       dump(i->second, marking_str);
       prefix_lines_with("    ", marking_str, indented_marking_str);
       oss << indented_marking_str << "\n";
@@ -240,16 +244,16 @@ file_node::clone()
 }
 
 template <> void
-dump(node_t const & n, std::string & out)
+dump(node_t const & n, string & out)
 {
-  std::ostringstream oss;
-  std::string name;
+  ostringstream oss;
+  string name;
   dump(n->name, name);
   oss << "address: " << n << " (uses: " << n.use_count() << ")\n"
       << "self: " << n->self << "\n"
       << "parent: " << n->parent << "\n"
       << "name: " << name << "\n";
-  std::string attr_map_s;
+  string attr_map_s;
   dump(n->attrs, attr_map_s);
   oss << "attrs:\n" << attr_map_s;
   oss << "type: ";
@@ -280,7 +284,7 @@ roster_t::do_deep_copy_from(roster_t const & other)
   I(nodes.empty());
   for (node_map::const_iterator i = other.nodes.begin(); i != other.nodes.end();
        ++i)
-    safe_insert(nodes, std::make_pair(i->first, i->second->clone()));
+    safe_insert(nodes, make_pair(i->first, i->second->clone()));
   for (node_map::iterator i = nodes.begin(); i != nodes.end(); ++i)
     if (is_dir_t(i->second))
       {
@@ -712,7 +716,7 @@ roster_t::attach_node(node_id nid, node_id parent, path_component name)
 
   // this iterator might point to old_locations.end(), because old_locations
   // only includes entries for renames, not new nodes
-  std::map<node_id, std::pair<node_id, path_component> >::iterator
+  map<node_id, pair<node_id, path_component> >::iterator
     i = old_locations.find(nid);
 
   if (null_node(parent) || null_name(name))
@@ -783,9 +787,9 @@ roster_t::set_attr(split_path const & pth,
 }
 
 template <> void
-dump(roster_t const & val, std::string & out)
+dump(roster_t const & val, string & out)
 {
-  std::ostringstream oss;
+  ostringstream oss;
   if (val.root_dir)
     oss << "Root node: " << val.root_dir->self << "\n"
         << "   at " << val.root_dir << ", uses: " << val.root_dir.use_count() << "\n";
@@ -794,7 +798,7 @@ dump(roster_t const & val, std::string & out)
   for (node_map::const_iterator i = val.nodes.begin(); i != val.nodes.end(); ++i)
     {
       oss << "\nNode " << i->first << "\n";
-      std::string node_s;
+      string node_s;
       dump(i->second, node_s);
       oss << node_s;
     }
@@ -873,7 +877,7 @@ roster_t::check_sane_against(marking_map const & markings) const
         I(mi->second.file_content.empty());
 
       full_attr_map_t::const_iterator rai;
-      std::map<attr_key, std::set<revision_id> >::const_iterator mai;
+      map<attr_key, set<revision_id> >::const_iterator mai;
       for (rai = ri->second->attrs.begin(), mai = mi->second.attrs.begin();
            rai != ri->second->attrs.end() && mai != mi->second.attrs.end();
            ++rai, ++mai)
@@ -1288,9 +1292,9 @@ namespace
     new_marking.birth_revision = parent_marking.birth_revision;
 
     mark_unmerged_scalar(parent_marking.parent_name,
-                         std::make_pair(parent_n->parent, parent_n->name),
+                         make_pair(parent_n->parent, parent_n->name),
                          new_rid,
-                         std::make_pair(n->parent, n->name),
+                         make_pair(n->parent, n->name),
                          new_marking.parent_name);
 
     if (is_file_t(n))
@@ -1332,11 +1336,11 @@ namespace
 
     // name
     mark_merged_scalar(left_marking.parent_name, left_uncommon_ancestors,
-                       std::make_pair(ln->parent, ln->name),
+                       make_pair(ln->parent, ln->name),
                        right_marking.parent_name, right_uncommon_ancestors,
-                       std::make_pair(rn->parent, rn->name),
+                       make_pair(rn->parent, rn->name),
                        new_rid,
-                       std::make_pair(n->parent, n->name),
+                       make_pair(n->parent, n->name),
                        new_marking.parent_name);
     // content
     if (is_file_t(n))
@@ -1545,7 +1549,7 @@ namespace
     {
       node_id nid = r.get_node(pth)->self;
       marking_map::iterator marking = markings.find(nid);
-      std::map<attr_key, std::set<revision_id> >::iterator am = marking->second.attrs.find(name);
+      map<attr_key, set<revision_id> >::iterator am = marking->second.attrs.find(name);
       if (am == marking->second.attrs.end())
         {
           marking->second.attrs.insert(make_pair(name, set<revision_id>()));
@@ -1570,13 +1574,13 @@ namespace
                         roster_t const & left_roster,
                         marking_map const & left_markings,
                         cset const & left_cs,
-                        std::set<revision_id> left_uncommon_ancestors,
+                        set<revision_id> left_uncommon_ancestors,
 
                         revision_id const & right_rid,
                         roster_t const & right_roster,
                         marking_map const & right_markings,
                         cset const & right_cs,
-                        std::set<revision_id> right_uncommon_ancestors,
+                        set<revision_id> right_uncommon_ancestors,
 
                         revision_id const & new_rid,
                         roster_t & new_roster,
@@ -1994,7 +1998,7 @@ check_restricted_cset(roster_t const & roster, cset const & cs)
         }
     }
 
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+  for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     {
       split_path dir(i->first);
@@ -2017,7 +2021,7 @@ void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
                               roster_t const & new_roster,
-                              std::set<node_id> & nodes_modified)
+                              set<node_id> & nodes_modified)
 {
   nodes_modified.clear();
 
@@ -2029,7 +2033,7 @@ select_nodes_modified_by_cset(cset const & cs,
   copy(cs.nodes_deleted.begin(), cs.nodes_deleted.end(), 
        inserter(modified_prestate_nodes, modified_prestate_nodes.begin()));
   
-  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+  for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     modified_prestate_nodes.insert(i->first);
 
@@ -2038,23 +2042,23 @@ select_nodes_modified_by_cset(cset const & cs,
   copy(cs.dirs_added.begin(), cs.dirs_added.end(), 
        inserter(modified_poststate_nodes, modified_poststate_nodes.begin()));
 
-  for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+  for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     modified_poststate_nodes.insert(i->first);
 
-  for (std::map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+  for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     modified_poststate_nodes.insert(i->second);
 
-  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+  for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     modified_poststate_nodes.insert(i->first);
 
-  for (std::set<std::pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
+  for (set<pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
        i != cs.attrs_cleared.end(); ++i)
     modified_poststate_nodes.insert(i->first);
 
-  for (std::map<std::pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
+  for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
        i != cs.attrs_set.end(); ++i)
     modified_poststate_nodes.insert(i->first.first);
 
@@ -2266,20 +2270,20 @@ namespace
   namespace syms
   {
     // roster symbols
-    string const format_version("format_version");
-    string const dir("dir");
-    string const file("file");
-    string const content("content");
-    string const attr("attr");
+    symbol const format_version("format_version");
+    symbol const dir("dir");
+    symbol const file("file");
+    symbol const content("content");
+    symbol const attr("attr");
     
     // 'local' roster and marking symbols
-    string const ident("ident");
-    string const birth("birth");
-    string const dormant_attr("dormant_attr");
+    symbol const ident("ident");
+    symbol const birth("birth");
+    symbol const dormant_attr("dormant_attr");
 
-    string const path_mark("path_mark");
-    string const content_mark("content_mark");
-    string const attr_mark("attr_mark");
+    symbol const path_mark("path_mark");
+    symbol const content_mark("content_mark");
+    symbol const attr_mark("attr_mark");
   }
 }
 
@@ -2291,17 +2295,17 @@ push_marking(basic_io::stanza & st,
 {
 
   I(!null_id(mark.birth_revision));
-  st.push_hex_pair(syms::birth, mark.birth_revision.inner()());
+  st.push_hex_pair(syms::birth, mark.birth_revision.inner());
 
   for (set<revision_id>::const_iterator i = mark.parent_name.begin();
        i != mark.parent_name.end(); ++i)
-    st.push_hex_pair(syms::path_mark, i->inner()());
+    st.push_hex_pair(syms::path_mark, i->inner());
 
   if (is_file_t(curr))
     {
       for (set<revision_id>::const_iterator i = mark.file_content.begin();
            i != mark.file_content.end(); ++i)
-        st.push_hex_pair(syms::content_mark, i->inner()());
+        st.push_hex_pair(syms::content_mark, i->inner());
     }
   else
     I(mark.file_content.empty());
@@ -2309,11 +2313,11 @@ push_marking(basic_io::stanza & st,
   for (full_attr_map_t::const_iterator i = curr->attrs.begin();
        i != curr->attrs.end(); ++i)
     {
-      map<attr_key, std::set<revision_id> >::const_iterator am = mark.attrs.find(i->first);
+      map<attr_key, set<revision_id> >::const_iterator am = mark.attrs.find(i->first);
       I(am != mark.attrs.end());
       for (set<revision_id>::const_iterator j = am->second.begin();
            j != am->second.end(); ++j)
-        st.push_hex_triple(syms::attr_mark, i->first(), j->inner()());
+        st.push_hex_triple(syms::attr_mark, i->first(), j->inner());
     }
 }
 
@@ -2392,7 +2396,7 @@ roster_t::print_to(basic_io::printer & pr,
         {
           file_t ftmp = downcast_to_file_t(curr);
           st.push_file_pair(syms::file, fp);
-          st.push_hex_pair(syms::content, ftmp->content.inner()());
+          st.push_hex_pair(syms::content, ftmp->content.inner());
           // L(FL("printing file %s\n") % fp);
         }
 
@@ -2436,6 +2440,19 @@ roster_t::print_to(basic_io::printer & pr,
     }
 }
 
+inline size_t
+read_num(string const & s)
+{
+  size_t n = 0;
+
+  for (string::const_iterator i = s.begin(); i != s.end(); i++)
+    {
+      I(*i >= '0' && *i <= '9');
+      n *= 10;
+      n += static_cast<size_t>(*i - '0');
+    }
+  return n;
+}
 
 void 
 roster_t::parse_from(basic_io::parser & pa,
@@ -2459,7 +2476,7 @@ roster_t::parse_from(basic_io::parser & pa,
   
   {
     pa.esym(syms::format_version);
-    std::string vers;
+    string vers;
     pa.str(vers);
     I(vers == "1");
   }
@@ -2478,7 +2495,7 @@ roster_t::parse_from(basic_io::parser & pa,
           pa.hex(content);
           pa.esym(syms::ident);
           pa.str(ident);
-          n = file_t(new file_node(lexical_cast<node_id>(ident),
+          n = file_t(new file_node(read_num(ident),
                                    file_id(content)));
         }
       else if (pa.symp(syms::dir))
@@ -2487,7 +2504,7 @@ roster_t::parse_from(basic_io::parser & pa,
           pa.str(pth);
           pa.esym(syms::ident);
           pa.str(ident);
-          n = dir_t(new dir_node(lexical_cast<node_id>(ident)));
+          n = dir_t(new dir_node(read_num(ident)));
         }
       else 
         break;
@@ -2503,7 +2520,9 @@ roster_t::parse_from(basic_io::parser & pa,
       else
         {
           I(!pth.empty());
-          attach_node(n->self, internal_string_to_split_path(pth));
+          split_path sp;
+          internal_string_to_split_path(pth, sp);
+          attach_node(n->self, sp);
         }
 
       // Non-dormant attrs
@@ -2528,20 +2547,19 @@ roster_t::parse_from(basic_io::parser & pa,
         }
 
       {
-        marking_t marking;
-        parse_marking(pa, n, marking);
-        safe_insert(mm, make_pair(n->self, marking));
+        marking_t & m(safe_insert(mm, make_pair(n->self, marking_t()))->second);
+        parse_marking(pa, n, m);
       }
     }
 }
 
 
 void 
-read_roster_and_marking(data const & dat,
+read_roster_and_marking(roster_data const & dat,
                         roster_t & ros,
                         marking_map & mm)
 {
-  basic_io::input_source src(dat(), "roster");
+  basic_io::input_source src(dat.inner()(), "roster");
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   ros.parse_from(pars, mm);
@@ -2553,7 +2571,7 @@ read_roster_and_marking(data const & dat,
 static void
 write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
-                         data & dat,
+                         roster_data & dat,
                          bool print_local_parts)
 {
   if (print_local_parts)
@@ -2562,14 +2580,14 @@ write_roster_and_marking(roster_t const & ros,
     ros.check_sane(true);
   basic_io::printer pr;
   ros.print_to(pr, mm, print_local_parts);
-  dat = data(pr.buf);
+  dat = roster_data(pr.buf);
 }
 
 
 void
 write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
-                         data & dat)
+                         roster_data & dat)
 {
   write_roster_and_marking(ros, mm, dat, true);
 }
@@ -2577,12 +2595,24 @@ write_roster_and_marking(roster_t const & ros,
 
 void
 write_manifest_of_roster(roster_t const & ros,
-                         data & dat)
+                         roster_data & dat)
 {
   marking_map mm;
   write_roster_and_marking(ros, mm, dat, false);  
 }
 
+void calculate_ident(roster_t const & ros,
+                     manifest_id & ident)
+{
+  roster_data tmp;
+  roster_id tid;
+  if (!ros.all_nodes().empty())
+    {
+      write_manifest_of_roster(ros, tmp);
+      calculate_ident(tmp, tid);
+    }
+  ident = tid.inner();
+}
 
 ////////////////////////////////////////////////////////////////////
 //   testing
@@ -2594,22 +2624,27 @@ write_manifest_of_roster(roster_t const & ros,
 #include "constants.hh"
 
 #include <string>
+#include <cstdlib>
 #include <boost/lexical_cast.hpp>
 
-using std::string;
-using boost::lexical_cast;
+using std::logic_error;
+using std::rand;
+using std::search;
+using std::srand;
+
+using boost::shared_ptr;
 
 static void
 make_fake_marking_for(roster_t const & r, marking_map & mm)
 {
   mm.clear();
-  revision_id rid(std::string("0123456789abcdef0123456789abcdef01234567"));
+  revision_id rid(string("0123456789abcdef0123456789abcdef01234567"));
   for (node_map::const_iterator i = r.all_nodes().begin(); i != r.all_nodes().end();
        ++i)
     {
       marking_t fake_marks;
       mark_new_node(rid, i->second, fake_marks);
-      mm.insert(std::make_pair(i->first, fake_marks));
+      mm.insert(make_pair(i->first, fake_marks));
     }
 }
 
@@ -2637,7 +2672,7 @@ do_testing_on_one_roster(roster_t const & r)
   I(n == dfs_counted);
 
   // do a read/write spin
-  data r_dat; MM(r_dat);
+  roster_data r_dat; MM(r_dat);
   marking_map fm;
   make_fake_marking_for(r, fm);
   write_roster_and_marking(r, fm, r_dat);
@@ -2646,7 +2681,7 @@ do_testing_on_one_roster(roster_t const & r)
   read_roster_and_marking(r_dat, r2, fm2);
   I(r == r2);
   I(fm == fm2);
-  data r2_dat; MM(r2_dat);
+  roster_data r2_dat; MM(r2_dat);
   write_roster_and_marking(r2, fm2, r2_dat);
   I(r_dat == r2_dat);
 }
@@ -2744,10 +2779,10 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   // will have new ids assigned.
   // But they _will_ have the same manifests, assuming things are working
   // correctly.
-  data a_dat; MM(a_dat);
-  data a2_dat; MM(a2_dat);
-  data b_dat; MM(b_dat);
-  data b2_dat; MM(b2_dat);
+  roster_data a_dat; MM(a_dat);
+  roster_data a2_dat; MM(a2_dat);
+  roster_data b_dat; MM(b_dat);
+  roster_data b2_dat; MM(b2_dat);
   if (a.has_root())
     write_manifest_of_roster(a, a_dat);
   if (a2.has_root())
@@ -3005,9 +3040,9 @@ testing_node_id_source::next()
 }
 
 template <> void
-dump(int const & i, std::string & out)
+dump(int const & i, string & out)
 {
-  out = lexical_cast<std::string>(i) + "\n";
+  out = lexical_cast<string>(i) + "\n";
 }
 
 static void
@@ -3063,51 +3098,51 @@ check_sane_roster_do_tests(int to_run, int& total)
   MM(r);
   
   // roster must have a root dir
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), std::logic_error));
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), std::logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), logic_error));
 
   split_path sp_, sp_foo, sp_foo_bar, sp_foo_baz;
   file_path().split(sp_);
   file_path_internal("foo").split(sp_foo);
   file_path_internal("foo/bar").split(sp_foo_bar);
   file_path_internal("foo/baz").split(sp_foo_baz);
-  node_id nid_f = r.create_file_node(file_id(std::string("0000000000000000000000000000000000000000")),
+  node_id nid_f = r.create_file_node(file_id(string("0000000000000000000000000000000000000000")),
                                      nis);
   // root must be a directory, not a file
-  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_f, sp_), std::logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_f, sp_), logic_error));
 
   node_id root_dir = r.create_dir_node(nis);
   r.attach_node(root_dir, sp_);
   // has a root dir, but a detached file
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), std::logic_error));
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), std::logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), logic_error));
 
   r.attach_node(nid_f, sp_foo);
   // now should be sane
-  BOOST_CHECK_NOT_THROW(r.check_sane(false), std::logic_error);
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), std::logic_error);
+  BOOST_CHECK_NOT_THROW(r.check_sane(false), logic_error);
+  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
 
   node_id nid_d = r.create_dir_node(nis);
   // if "foo" exists, can't attach another node at "foo"
-  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_d, sp_foo), std::logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_d, sp_foo), logic_error));
   // if "foo" is a file, can't attach a node at "foo/bar"
-  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_d, sp_foo_bar), std::logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_d, sp_foo_bar), logic_error));
 
   BOOST_CHECK(r.detach_node(sp_foo) == nid_f);
   r.attach_node(nid_d, sp_foo);
   r.attach_node(nid_f, sp_foo_bar);
-  BOOST_CHECK_NOT_THROW(r.check_sane(false), std::logic_error);
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), std::logic_error);
+  BOOST_CHECK_NOT_THROW(r.check_sane(false), logic_error);
+  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
 
   temp_node_id_source nis_tmp;
   node_id nid_tmp = r.create_dir_node(nis_tmp);
   // has a detached node
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), std::logic_error));
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), std::logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), logic_error));
   r.attach_node(nid_tmp, sp_foo_baz);
   // now has no detached nodes, but one temp node
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), std::logic_error));
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), std::logic_error);
+  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
+  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
 }
 
 #undef MAYBE
@@ -3138,7 +3173,7 @@ check_sane_roster_loop_test()
   node_id nid_bar = r.create_dir_node(nis);
   r.attach_node(nid_foo, nid_bar, foo_bar[1]);
   r.attach_node(nid_bar, nid_foo, foo_bar[2]);
-  BOOST_CHECK_THROW(r.check_sane(true), std::logic_error);
+  BOOST_CHECK_THROW(r.check_sane(true), logic_error);
 }
 
 static void
@@ -3154,18 +3189,18 @@ check_sane_roster_screwy_dir_map()
   node_id other_nid = other.create_dir_node(nis);
   dir_t root_n = downcast_to_dir_t(r.get_node(root));
   root_n->children.insert(make_pair(*(foo.end()-1), other.get_node(other_nid)));
-  BOOST_CHECK_THROW(r.check_sane(), std::logic_error);
+  BOOST_CHECK_THROW(r.check_sane(), logic_error);
   // well, but that one was easy, actually, because a dir traversal will hit
   // more nodes than actually exist... so let's make it harder, by making sure
   // that a dir traversal will hit exactly as many nodes as actually exist.
   node_id distractor_nid = r.create_dir_node(nis);
-  BOOST_CHECK_THROW(r.check_sane(), std::logic_error);
+  BOOST_CHECK_THROW(r.check_sane(), logic_error);
   // and even harder, by making that node superficially valid too
   dir_t distractor_n = downcast_to_dir_t(r.get_node(distractor_nid));
   distractor_n->parent = distractor_nid;
   distractor_n->name = *(foo.end()-1);
   distractor_n->children.insert(make_pair(distractor_n->name, distractor_n));
-  BOOST_CHECK_THROW(r.check_sane(), std::logic_error);
+  BOOST_CHECK_THROW(r.check_sane(), logic_error);
 }
 
 static void
@@ -3177,13 +3212,13 @@ bad_attr_test()
   file_path().split(root);
   r.attach_node(r.create_dir_node(nis), root);
   BOOST_CHECK_THROW(r.set_attr(root, attr_key("test_key1"),
-                               std::make_pair(false, attr_value("invalid"))),
-                    std::logic_error);
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), std::logic_error);
+                               make_pair(false, attr_value("invalid"))),
+                    logic_error);
+  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
   safe_insert(r.get_node(root)->attrs,
               make_pair(attr_key("test_key2"),
                         make_pair(false, attr_value("invalid"))));
-  BOOST_CHECK_THROW(r.check_sane(true), std::logic_error);
+  BOOST_CHECK_THROW(r.check_sane(true), logic_error);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -3269,18 +3304,18 @@ bad_attr_test()
 
 namespace
 {
-  template <typename T> std::set<T>
+  template <typename T> set<T>
   singleton(T const & t)
   {
-    std::set<T> s;
+    set<T> s;
     s.insert(t);
     return s;
   }
 
-  template <typename T> std::set<T>
+  template <typename T> set<T>
   doubleton(T const & t1, T const & t2)
   {
-    std::set<T> s;
+    set<T> s;
     s.insert(t1);
     s.insert(t2);
     return s;
@@ -3292,7 +3327,7 @@ namespace
   revision_id new_rid(string("4444444444444444444444444444444444444444"));
 
   split_path
-  split(std::string const & s)
+  split(string const & s)
   {
     split_path sp;
     file_path_internal(s).split(sp);
@@ -3307,7 +3342,7 @@ namespace
                  scalar_none, scalar_none_2 } scalar_val;
 
   void
-  dump(scalar_val const & val, std::string & out)
+  dump(scalar_val const & val, string & out)
   {
     switch (val)
       {
@@ -3323,7 +3358,7 @@ namespace
   struct a_scalar
   {
     virtual void set(revision_id const & scalar_origin_rid,
-                     scalar_val val, std::set<revision_id> const & this_scalar_mark,
+                     scalar_val val, set<revision_id> const & this_scalar_mark,
                      roster_t & roster, marking_map & markings)
       = 0;
     virtual ~a_scalar() {};
@@ -3345,11 +3380,11 @@ namespace
       safe_insert(markings, make_pair(root_nid, marking));
     }
 
-    virtual std::string my_type() const = 0;
+    virtual string my_type() const = 0;
 
-    virtual void dump(std::string & out) const
+    virtual void dump(string & out) const
     {
-      std::ostringstream oss;
+      ostringstream oss;
       oss << "type: " << my_type() << "\n"
           << "root_nid: " << root_nid << "\n"
           << "obj_under_test_nid: " << obj_under_test_nid << "\n";
@@ -3358,7 +3393,7 @@ namespace
   };
 
   void
-  dump(a_scalar const & s, std::string & out)
+  dump(a_scalar const & s, string & out)
   {
     s.dump(out);
   }
@@ -3399,9 +3434,9 @@ namespace
   
   struct file_content_scalar : public a_scalar
   {
-    virtual std::string my_type() const { return "file_content_scalar"; }
+    virtual string my_type() const { return "file_content_scalar"; }
     
-    std::map<scalar_val, file_id> values;
+    map<scalar_val, file_id> values;
     file_content_scalar(node_id_source & nis)
       : a_scalar(nis)
     {
@@ -3436,9 +3471,9 @@ namespace
   template <typename T>
   struct X_basename_scalar : public a_scalar
   {
-    virtual std::string my_type() const { return "X_basename_scalar"; }
+    virtual string my_type() const { return "X_basename_scalar"; }
 
-    std::map<scalar_val, split_path> values;
+    map<scalar_val, split_path> values;
     X_basename_scalar(node_id_source & nis)
       : a_scalar(nis)
     {
@@ -3465,9 +3500,9 @@ namespace
   template <typename T>
   struct X_parent_scalar : public a_scalar
   {
-    virtual std::string my_type() const { return "X_parent_scalar"; }
+    virtual string my_type() const { return "X_parent_scalar"; }
 
-    std::map<scalar_val, split_path> values;
+    map<scalar_val, split_path> values;
     node_id const a_nid, b_nid, c_nid;
     X_parent_scalar(node_id_source & nis)
       : a_scalar(nis), a_nid(nis.next()), b_nid(nis.next()), c_nid(nis.next())
@@ -3514,9 +3549,9 @@ namespace
   template <typename T>
   struct X_attr_existing_node_scalar : public a_scalar
   {
-    virtual std::string my_type() const { return "X_attr_scalar"; }
+    virtual string my_type() const { return "X_attr_scalar"; }
 
-    std::map<scalar_val, pair<bool, attr_value> > values;
+    map<scalar_val, pair<bool, attr_value> > values;
     X_attr_existing_node_scalar(node_id_source & nis)
       : a_scalar(nis)
     {
@@ -3549,9 +3584,9 @@ namespace
   template <typename T>
   struct X_attr_new_node_scalar : public a_scalar
   {
-    virtual std::string my_type() const { return "X_attr_scalar"; }
+    virtual string my_type() const { return "X_attr_scalar"; }
 
-    std::map<scalar_val, pair<bool, attr_value> > values;
+    map<scalar_val, pair<bool, attr_value> > values;
     X_attr_new_node_scalar(node_id_source & nis)
       : a_scalar(nis)
     {
@@ -3577,20 +3612,20 @@ namespace
     }
   };
 
-  typedef std::vector<boost::shared_ptr<a_scalar> > scalars;
+  typedef vector<shared_ptr<a_scalar> > scalars;
   scalars
   all_scalars(node_id_source & nis)
   {
     scalars ss;
-    ss.push_back(boost::shared_ptr<a_scalar>(new file_content_scalar(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<file_maker>(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_basename_scalar<dir_maker>(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<file_maker>(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_parent_scalar<dir_maker>(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_existing_node_scalar<file_maker>(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_existing_node_scalar<dir_maker>(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_new_node_scalar<file_maker>(nis)));
-    ss.push_back(boost::shared_ptr<a_scalar>(new X_attr_new_node_scalar<dir_maker>(nis)));
+    ss.push_back(shared_ptr<a_scalar>(new file_content_scalar(nis)));
+    ss.push_back(shared_ptr<a_scalar>(new X_basename_scalar<file_maker>(nis)));
+    ss.push_back(shared_ptr<a_scalar>(new X_basename_scalar<dir_maker>(nis)));
+    ss.push_back(shared_ptr<a_scalar>(new X_parent_scalar<file_maker>(nis)));
+    ss.push_back(shared_ptr<a_scalar>(new X_parent_scalar<dir_maker>(nis)));
+    ss.push_back(shared_ptr<a_scalar>(new X_attr_existing_node_scalar<file_maker>(nis)));
+    ss.push_back(shared_ptr<a_scalar>(new X_attr_existing_node_scalar<dir_maker>(nis)));
+    ss.push_back(shared_ptr<a_scalar>(new X_attr_new_node_scalar<file_maker>(nis)));
+    ss.push_back(shared_ptr<a_scalar>(new X_attr_new_node_scalar<dir_maker>(nis)));
     return ss;
   }
 }
@@ -3602,7 +3637,7 @@ namespace
 static void
 run_with_0_roster_parents(a_scalar & s, revision_id scalar_origin_rid,
                           scalar_val new_val,
-                          std::set<revision_id> const & new_mark_set,
+                          set<revision_id> const & new_mark_set,
                           node_id_source & nis)
 {
   MM(s);
@@ -3633,9 +3668,9 @@ static void
 run_with_1_roster_parent(a_scalar & s,
                          revision_id scalar_origin_rid,
                          scalar_val parent_val,
-                         std::set<revision_id> const & parent_mark_set,
+                         set<revision_id> const & parent_mark_set,
                          scalar_val new_val,
-                         std::set<revision_id> const & new_mark_set,
+                         set<revision_id> const & new_mark_set,
                          node_id_source & nis)
 {
   MM(s);
@@ -3669,11 +3704,11 @@ static void
 run_with_2_roster_parents(a_scalar & s,
                           revision_id scalar_origin_rid,
                           scalar_val left_val,
-                          std::set<revision_id> const & left_mark_set,
+                          set<revision_id> const & left_mark_set,
                           scalar_val right_val,
-                          std::set<revision_id> const & right_mark_set,
+                          set<revision_id> const & right_mark_set,
                           scalar_val new_val,
-                          std::set<revision_id> const & new_mark_set,
+                          set<revision_id> const & new_mark_set,
                           node_id_source & nis)
 {
   MM(s);
@@ -3700,9 +3735,9 @@ run_with_2_roster_parents(a_scalar & s,
   make_cset(left_roster, expected_roster, left_cs);
   make_cset(right_roster, expected_roster, right_cs);
 
-  std::set<revision_id> left_uncommon_ancestors; MM(left_uncommon_ancestors);
+  set<revision_id> left_uncommon_ancestors; MM(left_uncommon_ancestors);
   left_uncommon_ancestors.insert(left_rid);
-  std::set<revision_id> right_uncommon_ancestors; MM(right_uncommon_ancestors);
+  set<revision_id> right_uncommon_ancestors; MM(right_uncommon_ancestors);
   right_uncommon_ancestors.insert(right_rid);
 
   roster_t new_roster; MM(new_roster);
@@ -3731,11 +3766,11 @@ run_with_2_roster_parents(a_scalar & s,
 static void
 run_a_2_scalar_parent_mark_scenario_exact(revision_id const & scalar_origin_rid,
                                           scalar_val left_val,
-                                          std::set<revision_id> const & left_mark_set,
+                                          set<revision_id> const & left_mark_set,
                                           scalar_val right_val,
-                                          std::set<revision_id> const & right_mark_set,
+                                          set<revision_id> const & right_mark_set,
                                           scalar_val new_val,
-                                          std::set<revision_id> const & new_mark_set)
+                                          set<revision_id> const & new_mark_set)
 {
   testing_node_id_source nis;
   scalars ss = all_scalars(nis);
@@ -3774,11 +3809,11 @@ flip_revision_set(set<revision_id> const & rids)
 static void
 run_a_2_scalar_parent_mark_scenario(revision_id const & scalar_origin_rid,
                                     scalar_val left_val,
-                                    std::set<revision_id> const & left_mark_set,
+                                    set<revision_id> const & left_mark_set,
                                     scalar_val right_val,
-                                    std::set<revision_id> const & right_mark_set,
+                                    set<revision_id> const & right_mark_set,
                                     scalar_val new_val,
-                                    std::set<revision_id> const & new_mark_set)
+                                    set<revision_id> const & new_mark_set)
 {
   // run both what we're given...
   run_a_2_scalar_parent_mark_scenario_exact(scalar_origin_rid,
@@ -3789,9 +3824,9 @@ run_a_2_scalar_parent_mark_scenario(revision_id const & scalar_origin_rid,
   // because the exact stuff has hard-coded the names of the various
   // revisions and their uncommon ancestor sets.
   {
-    std::set<revision_id> flipped_left_mark_set = flip_revision_set(left_mark_set);
-    std::set<revision_id> flipped_right_mark_set = flip_revision_set(right_mark_set);
-    std::set<revision_id> flipped_new_mark_set = flip_revision_set(new_mark_set);
+    set<revision_id> flipped_left_mark_set = flip_revision_set(left_mark_set);
+    set<revision_id> flipped_right_mark_set = flip_revision_set(right_mark_set);
+    set<revision_id> flipped_new_mark_set = flip_revision_set(new_mark_set);
 
     run_a_2_scalar_parent_mark_scenario_exact(flip_revision_id(scalar_origin_rid),
                                               right_val, flipped_right_mark_set,
@@ -3802,11 +3837,11 @@ run_a_2_scalar_parent_mark_scenario(revision_id const & scalar_origin_rid,
 
 static void
 run_a_2_scalar_parent_mark_scenario(scalar_val left_val,
-                                    std::set<revision_id> const & left_mark_set,
+                                    set<revision_id> const & left_mark_set,
                                     scalar_val right_val,
-                                    std::set<revision_id> const & right_mark_set,
+                                    set<revision_id> const & right_mark_set,
                                     scalar_val new_val,
-                                    std::set<revision_id> const & new_mark_set)
+                                    set<revision_id> const & new_mark_set)
 {
   run_a_2_scalar_parent_mark_scenario(old_rid,
                                       left_val, left_mark_set,
@@ -3816,9 +3851,9 @@ run_a_2_scalar_parent_mark_scenario(scalar_val left_val,
 
 static void
 run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
-                                    std::set<revision_id> const & parent_mark_set,
+                                    set<revision_id> const & parent_mark_set,
                                     scalar_val new_val,
-                                    std::set<revision_id> const & new_mark_set)
+                                    set<revision_id> const & new_mark_set)
 {
   {
     testing_node_id_source nis;
@@ -3833,7 +3868,7 @@ run_a_1_scalar_parent_mark_scenario(scalar_val parent_val,
   // both ways
   run_a_2_scalar_parent_mark_scenario(left_rid,
                                       parent_val, parent_mark_set,
-                                      scalar_none, std::set<revision_id>(),
+                                      scalar_none, set<revision_id>(),
                                       new_val, new_mark_set);
 }
 
@@ -3847,12 +3882,12 @@ run_a_0_scalar_parent_mark_scenario()
       {
         run_with_0_roster_parents(**i, old_rid, scalar_a, singleton(old_rid), nis);
         run_with_1_roster_parent(**i, new_rid,
-                                 scalar_none, std::set<revision_id>(),
+                                 scalar_none, set<revision_id>(),
                                  scalar_a, singleton(new_rid),
                                  nis);
         run_with_2_roster_parents(**i, new_rid,
-                                  scalar_none, std::set<revision_id>(),
-                                  scalar_none, std::set<revision_id>(),
+                                  scalar_none, set<revision_id>(),
+                                  scalar_none, set<revision_id>(),
                                   scalar_a, singleton(new_rid),
                                   nis);
       }
@@ -4054,9 +4089,9 @@ namespace
   template <typename T>
   struct X_attr_mixed_scalar : public a_scalar
   {
-    virtual std::string my_type() const { return "X_attr_scalar"; }
+    virtual string my_type() const { return "X_attr_scalar"; }
 
-    std::map<scalar_val, pair<bool, attr_value> > values;
+    map<scalar_val, pair<bool, attr_value> > values;
     X_attr_mixed_scalar(node_id_source & nis)
       : a_scalar(nis)
     {
@@ -4096,8 +4131,8 @@ test_residual_attr_mark_scenario()
     testing_node_id_source nis;
     X_attr_mixed_scalar<file_maker> s(nis);
     run_with_2_roster_parents(s, left_rid,
-                              scalar_none_2, std::set<revision_id>(),
-                              scalar_none, std::set<revision_id>(),
+                              scalar_none_2, set<revision_id>(),
+                              scalar_none, set<revision_id>(),
                               scalar_a, singleton(new_rid),
                               nis);
   }
@@ -4105,8 +4140,8 @@ test_residual_attr_mark_scenario()
     testing_node_id_source nis;
     X_attr_mixed_scalar<dir_maker> s(nis);
     run_with_2_roster_parents(s, left_rid,
-                              scalar_none_2, std::set<revision_id>(),
-                              scalar_none, std::set<revision_id>(),
+                              scalar_none_2, set<revision_id>(),
+                              scalar_none, set<revision_id>(),
                               scalar_a, singleton(new_rid),
                               nis);
   }
@@ -4114,8 +4149,8 @@ test_residual_attr_mark_scenario()
     testing_node_id_source nis;
     X_attr_mixed_scalar<file_maker> s(nis);
     run_with_2_roster_parents(s, right_rid,
-                              scalar_none, std::set<revision_id>(),
-                              scalar_none_2, std::set<revision_id>(),
+                              scalar_none, set<revision_id>(),
+                              scalar_none_2, set<revision_id>(),
                               scalar_a, singleton(new_rid),
                               nis);
   }
@@ -4123,8 +4158,8 @@ test_residual_attr_mark_scenario()
     testing_node_id_source nis;
     X_attr_mixed_scalar<dir_maker> s(nis);
     run_with_2_roster_parents(s, right_rid,
-                              scalar_none, std::set<revision_id>(),
-                              scalar_none_2, std::set<revision_id>(),
+                              scalar_none, set<revision_id>(),
+                              scalar_none_2, set<revision_id>(),
                               scalar_a, singleton(new_rid),
                               nis);
   }
@@ -4193,7 +4228,7 @@ test_die_die_die_merge()
                            singleton(right_rid),
                            new_rid, new_roster, new_markings,
                            nis),
-     std::logic_error);
+     logic_error);
   BOOST_CHECK_THROW(
      make_roster_for_merge(right_rid, right_roster, right_markings, right_cs,
                            singleton(right_rid),
@@ -4201,7 +4236,7 @@ test_die_die_die_merge()
                            singleton(left_rid),
                            new_rid, new_roster, new_markings,
                            nis),
-     std::logic_error);
+     logic_error);
 }
 // nodes can't change type file->dir or dir->file
 //    make_cset fails
@@ -4242,8 +4277,8 @@ test_same_nid_diff_type()
   file_roster.check_sane_against(file_markings);
 
   cset cs; MM(cs);
-  BOOST_CHECK_THROW(make_cset(dir_roster, file_roster, cs), std::logic_error);
-  BOOST_CHECK_THROW(make_cset(file_roster, dir_roster, cs), std::logic_error);
+  BOOST_CHECK_THROW(make_cset(dir_roster, file_roster, cs), logic_error);
+  BOOST_CHECK_THROW(make_cset(file_roster, dir_roster, cs), logic_error);
 
   cset left_cs; MM(left_cs);
   cset right_cs; MM(right_cs);
@@ -4256,7 +4291,7 @@ test_same_nid_diff_type()
                            singleton(right_rid),
                            new_rid, new_roster, new_markings,
                            nis),
-     std::logic_error);
+     logic_error);
   BOOST_CHECK_THROW(
      make_roster_for_merge(left_rid, file_roster, file_markings, left_cs,
                            singleton(left_rid),
@@ -4264,7 +4299,7 @@ test_same_nid_diff_type()
                            singleton(right_rid),
                            new_rid, new_roster, new_markings,
                            nis),
-     std::logic_error);
+     logic_error);
   
 }
 
@@ -4334,88 +4369,90 @@ write_roster_test()
 
   { 
     // manifest first
-    data mdat; MM(mdat);
+    roster_data mdat; MM(mdat);
     write_manifest_of_roster(r, mdat);
 
-    data expected("format_version \"1\"\n"
-                  "\n"
-                  "dir \"\"\n"
-                  "\n"
-                  "dir \"fo\"\n"
-                  "\n"
-                  "dir \"foo\"\n"
-                  "\n"
-                  "dir \"foo/ang\"\n"
-                  "\n"
-                  "   file \"foo/bar\"\n"
-                  "content [1111111111111111111111111111111111111111]\n"
-                  "   attr \"fascist\" \"tidiness\"\n"
-                  "\n"
-                  "dir \"foo/zoo\"\n"
-                  "\n"
-                  " dir \"xx\"\n"
-                  "attr \"say\" \"hello\"\n"
-                 );
+    roster_data 
+      expected(string("format_version \"1\"\n"
+                      "\n"
+                      "dir \"\"\n"
+                      "\n"
+                      "dir \"fo\"\n"
+                      "\n"
+                      "dir \"foo\"\n"
+                      "\n"
+                      "dir \"foo/ang\"\n"
+                      "\n"
+                      "   file \"foo/bar\"\n"
+                      "content [1111111111111111111111111111111111111111]\n"
+                      "   attr \"fascist\" \"tidiness\"\n"
+                      "\n"
+                      "dir \"foo/zoo\"\n"
+                      "\n"
+                      " dir \"xx\"\n"
+                      "attr \"say\" \"hello\"\n"
+                      ));
     MM(expected);
 
-    BOOST_CHECK_NOT_THROW( I(expected == mdat), std::logic_error);
+    BOOST_CHECK_NOT_THROW( I(expected == mdat), logic_error);
   }
 
   { 
     // full roster with local parts
-    data rdat; MM(rdat);
+    roster_data rdat; MM(rdat);
     write_roster_and_marking(r, mm, rdat);
 
     // node_id order is a hassle.
     // root 1, foo 2, xx 3, fo 4, foo_bar 5, foo_ang 6, foo_zoo 7
-    data expected("format_version \"1\"\n"
-                  "\n"
-                  "      dir \"\"\n"
-                  "    ident \"1\"\n"
-                  "    birth [1234123412341234123412341234123412341234]\n"
-                  "path_mark [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "      dir \"fo\"\n"
-                  "    ident \"4\"\n"
-                  "    birth [1234123412341234123412341234123412341234]\n"
-                  "path_mark [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "      dir \"foo\"\n"
-                  "    ident \"2\"\n"
-                  "    birth [1234123412341234123412341234123412341234]\n"
-                  "path_mark [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "      dir \"foo/ang\"\n"
-                  "    ident \"6\"\n"
-                  "    birth [1234123412341234123412341234123412341234]\n"
-                  "path_mark [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "        file \"foo/bar\"\n"
-                  "     content [1111111111111111111111111111111111111111]\n"
-                  "       ident \"5\"\n"
-                  "        attr \"fascist\" \"tidiness\"\n"
-                  "       birth [1234123412341234123412341234123412341234]\n"
-                  "   path_mark [1234123412341234123412341234123412341234]\n"
-                  "content_mark [1234123412341234123412341234123412341234]\n"
-                  "   attr_mark \"fascist\" [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "         dir \"foo/zoo\"\n"
-                  "       ident \"7\"\n"
-                  "dormant_attr \"regime\"\n"
-                  "       birth [1234123412341234123412341234123412341234]\n"
-                  "   path_mark [1234123412341234123412341234123412341234]\n"
-                  "   attr_mark \"regime\" [1234123412341234123412341234123412341234]\n"
-                  "\n"
-                  "      dir \"xx\"\n"
-                  "    ident \"3\"\n"
-                  "     attr \"say\" \"hello\"\n"
-                  "    birth [1234123412341234123412341234123412341234]\n"
-                  "path_mark [1234123412341234123412341234123412341234]\n"
-                  "attr_mark \"say\" [1234123412341234123412341234123412341234]\n"
-                 );
+    roster_data 
+      expected(string("format_version \"1\"\n"
+                      "\n"
+                      "      dir \"\"\n"
+                      "    ident \"1\"\n"
+                      "    birth [1234123412341234123412341234123412341234]\n"
+                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "      dir \"fo\"\n"
+                      "    ident \"4\"\n"
+                      "    birth [1234123412341234123412341234123412341234]\n"
+                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "      dir \"foo\"\n"
+                      "    ident \"2\"\n"
+                      "    birth [1234123412341234123412341234123412341234]\n"
+                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "      dir \"foo/ang\"\n"
+                      "    ident \"6\"\n"
+                      "    birth [1234123412341234123412341234123412341234]\n"
+                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "        file \"foo/bar\"\n"
+                      "     content [1111111111111111111111111111111111111111]\n"
+                      "       ident \"5\"\n"
+                      "        attr \"fascist\" \"tidiness\"\n"
+                      "       birth [1234123412341234123412341234123412341234]\n"
+                      "   path_mark [1234123412341234123412341234123412341234]\n"
+                      "content_mark [1234123412341234123412341234123412341234]\n"
+                      "   attr_mark \"fascist\" [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "         dir \"foo/zoo\"\n"
+                      "       ident \"7\"\n"
+                      "dormant_attr \"regime\"\n"
+                      "       birth [1234123412341234123412341234123412341234]\n"
+                      "   path_mark [1234123412341234123412341234123412341234]\n"
+                      "   attr_mark \"regime\" [1234123412341234123412341234123412341234]\n"
+                      "\n"
+                      "      dir \"xx\"\n"
+                      "    ident \"3\"\n"
+                      "     attr \"say\" \"hello\"\n"
+                      "    birth [1234123412341234123412341234123412341234]\n"
+                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "attr_mark \"say\" [1234123412341234123412341234123412341234]\n"
+                      ));
     MM(expected);
 
-    BOOST_CHECK_NOT_THROW( I(expected == rdat), std::logic_error);
+    BOOST_CHECK_NOT_THROW( I(expected == rdat), logic_error);
   }
 }
 
@@ -4452,7 +4489,7 @@ check_sane_against_test()
     r.attach_node(nid, bar);
     // missing the marking
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4476,7 +4513,7 @@ check_sane_against_test()
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     r.detach_node(bar);
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4495,7 +4532,7 @@ check_sane_against_test()
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].birth_revision = revision_id();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4514,7 +4551,7 @@ check_sane_against_test()
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].parent_name.clear();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4533,7 +4570,7 @@ check_sane_against_test()
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].file_content.clear();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4552,7 +4589,7 @@ check_sane_against_test()
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].file_content.insert(rid);
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4567,7 +4604,7 @@ check_sane_against_test()
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     r.set_attr(root, attr_key("my_key"), attr_value("my_value"));
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4582,7 +4619,7 @@ check_sane_against_test()
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].attrs[attr_key("my_key")].clear();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4597,7 +4634,7 @@ check_sane_against_test()
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].attrs[attr_key("my_second_key")].insert(rid);
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), std::logic_error);
+    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 }
 
@@ -4701,7 +4738,7 @@ test_unify_rosters_end_to_end_ids()
   L(FL("TEST: begin checking unification of rosters (end to end, ids)"));
   revision_id has_rid = left_rid;
   revision_id has_not_rid = right_rid;
-  file_id my_fid(std::string("9012901290129012901290129012901290129012"));
+  file_id my_fid(string("9012901290129012901290129012901290129012"));
 
   testing_node_id_source nis;
 
@@ -4780,7 +4817,7 @@ test_unify_rosters_end_to_end_attr_corpses()
   L(FL("TEST: begin checking unification of rosters (end to end, attr corpses)"));
   revision_id first_rid = left_rid;
   revision_id second_rid = right_rid;
-  file_id my_fid(std::string("9012901290129012901290129012901290129012"));
+  file_id my_fid(string("9012901290129012901290129012901290129012"));
 
   testing_node_id_source nis;
 

@@ -13,7 +13,8 @@
 #include "platform.hh"
 #include "sanity.hh"
 #include "ui.hh"
-#include "transforms.hh"
+#include "charset.hh"
+#include "simplestring_xform.hh"
 #include "constants.hh"
 
 #include <iostream>
@@ -22,15 +23,28 @@
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
 
-using namespace std;
+using std::clog;
+using std::cout;
+using std::endl;
+using std::ios_base;
+using std::locale;
+using std::make_pair;
+using std::map;
+using std::max;
+using std::ofstream;
+using std::string;
+using std::vector;
+
 using boost::lexical_cast;
+
 struct user_interface ui;
 
-ticker::ticker(string const & tickname, std::string const & s, size_t mod,
+ticker::ticker(string const & tickname, string const & s, size_t mod,
     bool kilocount) :
   ticks(0),
   mod(mod),
   total(0),
+  previous_total(0),
   kilocount(kilocount),
   use_total(false),
   keyname(tickname),
@@ -153,7 +167,9 @@ void tick_write_count::write_ticks()
     {
       ticker * tick = i->second;
 
-      if (tick->count_size == 0 && (tick->kilocount || tick->use_total))
+      if ((tick->count_size == 0 && tick->kilocount)
+          ||
+          (tick->use_total && tick->previous_total != tick->total))
         {
           if (!tick->kilocount && tick->use_total)
             {
@@ -164,6 +180,7 @@ void tick_write_count::write_ticks()
               // the goal.
               tick->set_count_size(display_width(utf8(compose_count(tick,
                                                                     tick->total))));
+              tick->previous_total = tick->total;
             }
           else
             {
@@ -187,7 +204,7 @@ void tick_write_count::write_ticks()
           tick->set_count_size(count_width);
         }
 
-      size_t max_width = std::max(title_width, tick->count_size);
+      size_t max_width = max(title_width, tick->count_size);
 
       string name;
       name.append(max_width - title_width, ' ');
@@ -399,7 +416,7 @@ user_interface::warn(string const & warning)
 {
   if (issued_warnings.find(warning) == issued_warnings.end())
     {
-      std::string message;
+      string message;
       prefix_lines_with(_("warning: "), warning, message);
       inform(message);
     }
@@ -417,13 +434,13 @@ user_interface::fatal(string const & fatal)
 }
 
 void
-user_interface::set_prog_name(std::string const & name)
+user_interface::set_prog_name(string const & name)
 {
   prog_name = name;
   I(!prog_name.empty());
 }
 
-std::string
+string
 user_interface::output_prefix()
 {
   if (prog_name.empty()) {

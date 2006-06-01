@@ -11,9 +11,9 @@
 #include "sanity.hh"
 #include "vocab.hh"
 
-// verifiers for various types of data
+using std::string;
 
-using namespace std;
+// verifiers for various types of data
 
 // the verify() stuff gets a little complicated; there doesn't seem to be a
 // really nice way to achieve what we want with c++'s type system.  the
@@ -48,20 +48,13 @@ verify(path_component & val)
   val.ok = true;
 }
 
-inline bool is_xdigit(char x) 
-{ 
-  return ((x >= '0' && x <= '9')
-	  || (x >= 'a' && x <= 'f')
-	  || (x >= 'A' && x <= 'F'));
-}
-
 inline void 
 verify(hexenc<id> & val)
 {
   if (val.ok)
     return;
 
-  if (val() == "")
+  if (val().empty())
     return;
 
   N(val().size() == constants::idlen,
@@ -87,6 +80,20 @@ verify(ace & val)
   val.ok = true;
 }
 
+inline void
+verify(symbol & val)
+{
+  if (val.ok)
+    return;
+
+  for (string::const_iterator i = val().begin(); i != val().end(); ++i)
+    {
+      N(is_alnum(*i) || *i == '_',
+	F("bad character '%c' in symbol '%s'") % *i % val);
+    }
+
+  val.ok = true;
+}
 
 inline void 
 verify(cert_name & val)
@@ -155,17 +162,17 @@ verify(netsync_hmac_value & val)
 // counter of activations, and when there is an activation, the
 // members of the ATOMIC type initialize their internal string using a
 // copy of the string found in the symtab. Since some (all?) C++
-// std::string implementations are copy-on-write, this has the affect
+// string implementations are copy-on-write, this has the affect
 // of making the ATOMIC(foo) values constructed within a symbol table
 // scope share string storage.
 struct 
 symtab_impl 
 {
-  typedef hashmap::hash_set<std::string> hset;
+  typedef hashmap::hash_set<string> hset;
   hset vals;
   symtab_impl() : vals() {}
   void clear() { vals.clear(); }
-  std::string const & unique(std::string const & in) 
+  string const & unique(string const & in) 
   {
     // This produces a pair <iter,bool> where iter points to an
     // element of the table; the bool indicates whether the element is
@@ -177,104 +184,13 @@ symtab_impl
 
 // instantiation of various vocab functions
 
-#define ATOMIC(ty)                           \
-                                             \
-static symtab_impl ty ## _tab;               \
-static size_t ty ## _tab_active = 0;         \
-                                             \
-ty::ty(string const & str) :                 \
-  s((ty ## _tab_active > 0)                  \
-    ? (ty ## _tab.unique(str))               \
-    : str),                                  \
-  ok(false)                                  \
-{ verify(*this); }                           \
-                                             \
-ty::ty(ty const & other) :                   \
-            s(other.s), ok(other.ok)         \
-{ verify(*this); }                           \
-                                             \
-ty const & ty::operator=(ty const & other)   \
-{ s = other.s; ok = other.ok;                \
-  verify(*this); return *this; }             \
-                                             \
-ostream & operator<<(ostream & o,            \
-                     ty const & a)           \
-{ return (o << a.s); }                       \
-                                             \
-template <>                                  \
-void dump(ty const & obj, std::string & out) \
-{ out = obj(); }                             \
-                                             \
-ty::symtab::symtab()                         \
-{ ty ## _tab_active++; }                     \
-                                             \
-ty::symtab::~symtab()                        \
-{                                            \
-  I(ty ## _tab_active > 0);                  \
-  ty ## _tab_active--;                       \
-  if (ty ## _tab_active == 0)                \
-    ty ## _tab.clear();                      \
-}
 
 
-#define ATOMIC_NOVERIFY(ty) ATOMIC(ty)
-
-
-
-#define ENCODING(enc)                                    \
-                                                         \
-template<typename INNER>                                 \
-enc<INNER>::enc(string const & s) : i(s), ok(false)      \
-  { verify(*this); }                                     \
-                                                         \
-template<typename INNER>                                 \
-enc<INNER>::enc(enc<INNER> const & other)                \
-  : i(other.i()), ok(other.ok) { verify(*this); }        \
-                                                         \
-template<typename INNER>                                 \
-enc<INNER>::enc(INNER const & inner) :                   \
-    i(inner), ok(false)                                  \
-  { verify(*this); }                                     \
-                                                         \
-template<typename INNER>                                 \
-enc<INNER> const &                                       \
-enc<INNER>::operator=(enc<INNER> const & other)          \
-  { i = other.i; ok = other.ok;                          \
-    verify(*this); return *this;}                        \
-                                                         \
-template <typename INNER>                                \
-ostream & operator<<(ostream & o, enc<INNER> const & e)  \
-{ return (o << e.i); }                                   \
-                                                         \
-template <typename INNER>                                \
-void dump(enc<INNER> const & obj, std::string & out)     \
-{ out = obj(); }
-
-
-#define DECORATE(dec)                                    \
-                                                         \
-template<typename INNER>                                 \
-dec<INNER>::dec(dec<INNER> const & other)                \
-  : i(other.i), ok(other.ok) { verify(*this); }          \
-                                                         \
-template<typename INNER>                                 \
-dec<INNER>::dec(INNER const & inner) :                   \
-    i(inner), ok(false)                                  \
-  { verify(*this); }                                     \
-                                                         \
-template<typename INNER>                                 \
-dec<INNER> const &                                       \
-dec<INNER>::operator=(dec<INNER> const & other)          \
-  { i = other.i; ok = other.ok;                          \
-    verify(*this); return *this;}                        \
-                                                         \
-template <typename INNER>                                \
-ostream & operator<<(ostream & o, dec<INNER> const & d)  \
-{ return (o << d.i); }                                   \
-                                                         \
-template <typename INNER>                                \
-void dump(dec<INNER> const & obj, std::string & out)     \
-{ dump(obj.inner(), out); }
+#include "vocab_macros.hh"
+#define ENCODING(enc) cc_ENCODING(enc)
+#define DECORATE(dec) cc_DECORATE(dec)
+#define ATOMIC(ty) cc_ATOMIC(ty)
+#define ATOMIC_NOVERIFY(ty) cc_ATOMIC_NOVERIFY(ty)
 
 #define EXTERN 
 
@@ -284,23 +200,27 @@ void dump(dec<INNER> const & obj, std::string & out)     \
 #undef ATOMIC
 #undef DECORATE
 
-template class revision<cert>;
-template class manifest<cert>;
 
 template
-void dump<rsa_pub_key>(base64<rsa_pub_key> const&, std::string &);
+void dump<rsa_pub_key>(base64<rsa_pub_key> const&, string &);
 
 template
-void dump(revision_id const & r, std::string &);
+void dump(revision_id const & r, string &);
 
 template
-void dump(manifest_id const & r, std::string &);
+void dump(roster_id const & r, string &);
 
 template
-void dump(file_id const & r, std::string &);
+void dump(manifest_id const & r, string &);
 
 template
-void dump(hexenc<id> const & r, std::string &);
+void dump(file_id const & r, string &);
+
+template
+void dump(hexenc<id> const & r, string &);
+
+template
+void dump(roster_data const & d, string &);
 
 // the rest is unit tests
 

@@ -17,6 +17,7 @@
 #include "ui.hh"
 #include "update.hh"
 #include "vocab.hh"
+#include "revision.hh"
 
 // these functions just encapsulate the (somewhat complex) logic behind
 // picking an update target. the actual updating takes place in
@@ -38,9 +39,12 @@
 // it may be somewhat inefficient to use erase_ancestors here, but deal with
 // that when and if the time comes...
 
-using boost::lexical_cast;
+using std::make_pair;
+using std::map;
+using std::set;
+using std::vector;
 
-using namespace std;
+using boost::lexical_cast;
 
 static void 
 get_test_results_for_revision(revision_id const & id,
@@ -60,7 +64,7 @@ get_test_results_for_revision(revision_id const & id,
           bool test_ok = lexical_cast<bool>(cv());
           results.insert(make_pair(i->inner().key, test_ok));
         }
-      catch(boost::bad_lexical_cast & e)
+      catch(boost::bad_lexical_cast &)
         {
           W(F("failed to decode boolean testresult cert value '%s'\n") % cv);
         }

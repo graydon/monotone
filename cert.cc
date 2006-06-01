@@ -13,8 +13,10 @@
 #include "netio.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "ui.hh"
 #include "options.hh"
+#include "revision.hh"
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -28,11 +30,28 @@
 #include <sstream>
 #include <vector>
 
-using namespace std;
+using std::make_pair;
+using std::map;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
 using boost::shared_ptr;
 using boost::get;
 using boost::tuple;
 using boost::lexical_cast;
+
+// The alternaive is to #include "cert.hh" in vocab.*, which is even uglier.
+#include "vocab_macros.hh"
+cc_DECORATE(revision)
+cc_DECORATE(manifest)
+template <typename T>
+static inline void
+verify(T & val)
+{}
+template class revision<cert>;
+template class manifest<cert>;
 
 // FIXME: the bogus-cert family of functions is ridiculous
 // and needs to be replaced, or at least factored.
@@ -91,7 +110,7 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
   vector< manifest<cert> > tmp_certs;
 
   // sorry, this is a crazy data structure
-  typedef boost::tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
+  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
   typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
   trust_map trust;
 
@@ -301,7 +320,7 @@ void
 cert_signable_text(cert const & t,
                        string & out)
 {
-  out = (boost::format("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
+  out = (FL("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
   L(FL("cert: signable text %s\n") % out);
 }
 
@@ -333,7 +352,7 @@ load_key_pair(app_state & app,
               keypair & kp)
 {
 
-  static std::map<rsa_keypair_id, keypair> keys;
+  static map<rsa_keypair_id, keypair> keys;
   bool persist_ok = (!keys.empty()) || app.lua.hook_persist_phrase_ok();
 
 
@@ -372,7 +391,7 @@ check_cert(app_state & app, cert const & t)
 
   base64< rsa_pub_key > pub;
 
-  static std::map<rsa_keypair_id, base64< rsa_pub_key > > pubkeys;
+  static map<rsa_keypair_id, base64< rsa_pub_key > > pubkeys;
   bool persist_ok = (!pubkeys.empty()) || app.lua.hook_persist_phrase_ok();
 
   if (persist_ok

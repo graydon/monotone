@@ -4,12 +4,12 @@
 
 #include "string_queue.hh"
 
-using namespace std;
-
 #ifdef BUILD_UNIT_TESTS
 
 #include <iostream>
 #include "unit_tests.hh"
+
+using std::logic_error;
 
 void
 test_string_queue()

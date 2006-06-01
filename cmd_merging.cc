@@ -11,21 +11,28 @@
 #include "update.hh"
 
 #include <iostream>
+
 using std::cout;
+using std::map;
+using std::set;
+using std::string;
+using std::vector;
+
+using boost::shared_ptr;
 
 struct update_source 
   : public file_content_source
 {
-  std::map<file_id, file_data> & temporary_store;
+  map<file_id, file_data> & temporary_store;
   app_state & app;
-  update_source (std::map<file_id, file_data> & tmp,
+  update_source (map<file_id, file_data> & tmp,
                  app_state & app)
     : temporary_store(tmp), app(app)
   {}
   void get_file_content(file_id const & fid,
                         file_data & dat) const
   {
-    std::map<file_id, file_data>::const_iterator i = temporary_store.find(fid);
+    map<file_id, file_data>::const_iterator i = temporary_store.find(fid);
     if (i != temporary_store.end())
       dat = i->second;
     else
@@ -43,7 +50,7 @@ CMD(update, N_("workspace"), "",
 {
   revision_set r_working;
   roster_t working_roster, chosen_roster, target_roster;
-  boost::shared_ptr<roster_t> old_roster = boost::shared_ptr<roster_t>(new roster_t());
+  shared_ptr<roster_t> old_roster = shared_ptr<roster_t>(new roster_t());
   marking_map working_mm, chosen_mm, merged_mm, target_mm;
   revision_id r_old_id, r_working_id, r_chosen_id, r_target_id;
   temp_node_id_source nis;
@@ -119,6 +126,7 @@ CMD(update, N_("workspace"), "",
   
   P(F("selected update target %s\n") % r_chosen_id);
 
+  bool switched_branch = false;
   {
     // figure out which branches the target is in
     vector< revision<cert> > certs;
@@ -155,7 +163,8 @@ CMD(update, N_("workspace"), "",
           {
             // one non-matching, inform and update
             app.branch_name = (*(branches.begin()))();
-            P(F("switching branches; next commit will use branch %s") % app.branch_name());
+	    switched_branch = true;
+	    P(F("switching to branch %s") % app.branch_name());
           }
         else
           {
@@ -169,7 +178,7 @@ CMD(update, N_("workspace"), "",
 
   app.db.get_roster(r_chosen_id, chosen_roster, chosen_mm);
 
-  std::set<revision_id> 
+  set<revision_id> 
     working_uncommon_ancestors, 
     chosen_uncommon_ancestors;
 
@@ -262,6 +271,8 @@ CMD(update, N_("workspace"), "",
     {
       app.make_branch_sticky();
     }
+  if (switched_branch)
+    P(F("switched branch; next commit will use branch %s") % app.branch_name());
   P(F("updated to base revision %s\n") % r_chosen_id);
 
   put_work_cset(remaining);
@@ -273,7 +284,7 @@ CMD(update, N_("workspace"), "",
 // should merge support --message, --message-file?  It seems somewhat weird,
 // since a single 'merge' command may perform arbitrarily many actual merges.
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
-    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR % OPT_LCA)
+    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
 {
   set<revision_id> heads;
 
@@ -314,8 +325,8 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       packet_db_writer dbw(app);
       cert_revision_in_branch(merged, app.branch_name(), app, dbw);
 
-      string log = (boost::format("merge of %s\n"
-                                  "     and %s\n") % left % right).str();
+      string log = (FL("merge of %s\n"
+		       "     and %s\n") % left % right).str();
       cert_revision_changelog(merged, log, app, dbw);
           
       guard.commit();
@@ -327,7 +338,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
 
 CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"), 
     N_("merge from one branch to another asymmetrically"),
-    OPT_DATE % OPT_AUTHOR % OPT_LCA % OPT_MESSAGE % OPT_MSGFILE)
+    OPT_DATE % OPT_AUTHOR % OPT_MESSAGE % OPT_MSGFILE)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -338,7 +349,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 
 CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"), 
     N_("merge one branch into a subdirectory in another branch"),
-    OPT_DATE % OPT_AUTHOR % OPT_LCA % OPT_MESSAGE % OPT_MSGFILE)
+    OPT_DATE % OPT_AUTHOR % OPT_MESSAGE % OPT_MSGFILE)
 {
   //   this is a special merge operator, but very useful for people maintaining
   //   "slightly disparate but related" trees. it does a one-way merge; less
@@ -414,7 +425,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
         MM(left_roster);
         MM(right_roster);
         marking_map left_marking_map, right_marking_map;
-        std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+        set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
 
         app.db.get_roster(left_rid, left_roster, left_marking_map);
         app.db.get_roster(right_rid, right_roster, right_marking_map);
@@ -456,7 +467,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
 
         {
           dir_t moved_root = left_roster.root();
-          moved_root->parent = 0;
+          moved_root->parent = the_null_node;
           moved_root->name = the_null_component;
         }
 
@@ -474,8 +485,8 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
       string log_message;
       process_commit_message_args(log_message_given, log_message, app);
       if (!log_message_given)
-        log_message = (boost::format("propagate from branch '%s' (head %s)\n"
-                                     "            to branch '%s' (head %s)\n")
+        log_message = (FL("propagate from branch '%s' (head %s)\n"
+			  "            to branch '%s' (head %s)\n")
                        % idx(args, 0) % (*src_i)
                        % idx(args, 1) % (*dst_i)).str();
 
@@ -520,9 +531,9 @@ CMD(explicit_merge, N_("tree"),
   
   cert_revision_in_branch(merged, branch, app, dbw);
   
-  string log = (boost::format("explicit_merge of '%s'\n"
-                              "              and '%s'\n"
-                              "        to branch '%s'\n")
+  string log = (FL("explicit_merge of '%s'\n"
+		   "              and '%s'\n"
+		   "        to branch '%s'\n")
                 % left % right % branch).str();
   
   cert_revision_changelog(merged, log, app, dbw);
@@ -547,7 +558,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"), N_("Show what conflicts wo
   marking_map l_marking, r_marking;
   app.db.get_roster(l_id, l_roster, l_marking);
   app.db.get_roster(r_id, r_roster, r_marking);
-  std::set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
+  set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
   app.db.get_uncommon_ancestors(l_id, r_id,
                                 l_uncommon_ancestors, 
                                 r_uncommon_ancestors);
@@ -602,7 +613,7 @@ CMD(get_roster, N_("debug"), N_("REVID"),
   marking_map mm;
   app.db.get_roster(rid, roster, mm);
   
-  data dat;
+  roster_data dat;
   write_roster_and_marking(roster, mm, dat);
   cout << dat;
 }

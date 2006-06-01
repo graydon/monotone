@@ -6,12 +6,20 @@
 #include "revision.hh"
 #include "transforms.hh"
 #include "work.hh"
+#include "localized_file_io.hh"
 
 #include <map>
-using std::map;
-using std::make_pair;
 #include <iostream>
+
 using std::cout;
+using std::make_pair;
+using std::pair;
+using std::map;
+using std::set;
+using std::string;
+using std::vector;
+
+using boost::shared_ptr;
 
 static void 
 get_log_message_interactively(revision_set const & cs, 
@@ -153,7 +161,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
 
   revision_id r;
   revision_set rev, rev_inverse;
-  boost::shared_ptr<cset> cs_inverse(new cset());
+  shared_ptr<cset> cs_inverse(new cset());
   complete(app, idx(args, 0)(), r);
   app.db.get_revision(r, rev);
 
@@ -189,7 +197,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     cert_revision_in_branch(inv_id, branchname, app, dbw); 
     cert_revision_date_now(inv_id, app, dbw);
     cert_revision_author_default(inv_id, app, dbw);
-    cert_revision_changelog(inv_id, (boost::format("disapproval of revision '%s'") % r).str(), app, dbw);
+    cert_revision_changelog(inv_id, (FL("disapproval of revision '%s'") % r).str(), app, dbw);
     guard.commit();
   }
 }
@@ -323,7 +331,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
            i != cs.nodes_deleted.end(); ++i) 
         cout << "dropped " << *i << "\n";
 
-      for (std::map<split_path, split_path>::const_iterator 
+      for (map<split_path, split_path>::const_iterator 
            i = cs.nodes_renamed.begin();
            i != cs.nodes_renamed.end(); ++i) 
         cout << "renamed " << i->first << "\n" 
@@ -333,11 +341,11 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
            i != cs.dirs_added.end(); ++i) 
         cout << "added   " << *i << "\n";
 
-      for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+      for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
            i != cs.files_added.end(); ++i) 
         cout << "added   " << i->first << "\n";
 
-      for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator 
+      for (map<split_path, pair<file_id, file_id> >::const_iterator 
              i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i) 
         cout << "patched " << i->first << "\n";
     }
@@ -677,7 +685,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
         // process file deltas or new files
         cset const & cs = edge_changes(edge);
 
-        for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+        for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
              i != cs.deltas_applied.end(); ++i)
           {
             file_path path(i->first);
@@ -715,7 +723,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                          % old_content % path);
           }
 
-        for (std::map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+        for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
              i != cs.files_added.end(); ++i)
           {
             file_path path(i->first);

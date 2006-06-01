@@ -14,6 +14,7 @@
 #include "ui.hh"
 #include "vocab.hh"
 #include "transforms.hh"
+#include "cert.hh"
 
 // the database has roughly the following structure
 //
@@ -28,8 +29,11 @@
 //          files
 //
 
-using std::set;
+using std::logic_error;
 using std::map;
+using std::multimap;
+using std::set;
+using std::string;
 using std::vector;
 
 struct checked_cert {
@@ -100,10 +104,10 @@ struct checked_revision {
   bool parseable;              // read_revision_set does not throw
   bool normalized;             // write_revision_set( read_revision_set(dat) ) == dat
 
-  std::string history_error;
+  string history_error;
 
-  std::set<revision_id> parents;
-  std::vector<checked_cert> checked_certs;
+  set<revision_id> parents;
+  vector<checked_cert> checked_certs;
 
   checked_revision(): 
     found(false),
@@ -126,16 +130,16 @@ check_db_integrity_check(app_state & app )
 }
 
 static void
-check_files(app_state & app, std::map<file_id, checked_file> & checked_files)
+check_files(app_state & app, map<file_id, checked_file> & checked_files)
 {
-  std::set<file_id> files;
+  set<file_id> files;
 
   app.db.get_file_ids(files);
   L(FL("checking %d files\n") % files.size());
 
   ticker ticks(_("files"), "f", files.size()/70+1);
 
-  for (std::set<file_id>::const_iterator i = files.begin();
+  for (set<file_id>::const_iterator i = files.begin();
        i != files.end(); ++i) 
     {
       L(FL("checking file %s\n") % *i);
@@ -152,25 +156,25 @@ check_files(app_state & app, std::map<file_id, checked_file> & checked_files)
 // roster, and general parsability/normalisation
 static void
 check_rosters_manifest(app_state & app,
-              std::map<hexenc<id>, checked_roster> & checked_rosters,
-              std::map<revision_id, checked_revision> & checked_revisions,
-              std::set<manifest_id> & found_manifests,
-              std::map<file_id, checked_file> & checked_files)
+              map<roster_id, checked_roster> & checked_rosters,
+              map<revision_id, checked_revision> & checked_revisions,
+              set<manifest_id> & found_manifests,
+              map<file_id, checked_file> & checked_files)
 {
-  set< hexenc<id> > rosters;
+  set<roster_id> rosters;
 
   app.db.get_roster_ids(rosters);
   L(FL("checking %d rosters, manifest pass\n") % rosters.size());
 
   ticker ticks(_("rosters"), "r", rosters.size()/70+1);
 
-  for (set<hexenc<id> >::const_iterator i = rosters.begin();
+  for (set<roster_id>::const_iterator i = rosters.begin();
        i != rosters.end(); ++i) 
     {
 
       L(FL("checking roster %s\n") % *i);
-      data dat;
-      app.db.get_roster(*i, dat);
+      roster_data dat;
+      app.db.get_roster_version(*i, dat);
       checked_rosters[*i].found = true;
 
       roster_t ros;
@@ -179,7 +183,7 @@ check_rosters_manifest(app_state & app,
         {
           read_roster_and_marking(dat, ros, mm);
         }
-      catch (std::logic_error & e)
+      catch (logic_error & e)
         {
           L(FL("error parsing roster %s: %s") % *i % e.what());
           checked_rosters[*i].parseable = false;
@@ -189,8 +193,8 @@ check_rosters_manifest(app_state & app,
       
       // normalisation check
       {
-        hexenc<id> norm_ident;
-        data norm_data;
+        roster_id norm_ident;
+        roster_data norm_data;
         write_roster_and_marking(ros, mm, norm_data);
         calculate_ident(norm_data, norm_ident);
         if (norm_ident == *i)
@@ -224,23 +228,23 @@ check_rosters_manifest(app_state & app,
 // that the referenced revisions exist.
 static void
 check_rosters_marking(app_state & app,
-              std::map<hexenc<id>, checked_roster> & checked_rosters,
-              std::map<revision_id, checked_revision> & checked_revisions)
+              map<roster_id, checked_roster> & checked_rosters,
+              map<revision_id, checked_revision> & checked_revisions)
 {
   L(FL("checking %d rosters, marking pass\n") % checked_rosters.size());
 
   ticker ticks(_("markings"), "m", checked_rosters.size()/70+1);
 
-  for (std::map<hexenc<id>, checked_roster>::const_iterator i 
+  for (map<roster_id, checked_roster>::const_iterator i 
        = checked_rosters.begin(); i != checked_rosters.end(); i++)
     {
-      hexenc<id> ros_id = i->first;
+      roster_id ros_id = i->first;
       L(FL("checking roster %s\n") % i->first);
       if (!i->second.parseable)
           continue;
 
-      data dat;
-      app.db.get_roster(ros_id, dat);
+      roster_data dat;
+      app.db.get_roster_version(ros_id, dat);
 
       roster_t ros;
       marking_map mm;
@@ -287,28 +291,28 @@ check_rosters_marking(app_state & app,
 
 static void 
 check_roster_links(app_state & app, 
-                   std::map<revision_id, checked_revision> & checked_revisions,
-                   std::map<hexenc<id>, checked_roster> & checked_rosters,
+                   map<revision_id, checked_revision> & checked_revisions,
+                   map<roster_id, checked_roster> & checked_rosters,
                    size_t & unreferenced_roster_links,
                    size_t & missing_rosters)
 {
   unreferenced_roster_links = 0;
 
-  std::map<revision_id, hexenc<id> > links;
+  map<revision_id, roster_id> links;
   app.db.get_roster_links(links);
 
-  for (std::map<revision_id, hexenc<id> >::const_iterator i = links.begin();
+  for (map<revision_id, roster_id>::const_iterator i = links.begin();
        i != links.end(); ++i)
     {
       revision_id rev(i->first);
-      hexenc<id> ros(i->second);
+      roster_id ros(i->second);
 
-      std::map<revision_id, checked_revision>::const_iterator j 
+      map<revision_id, checked_revision>::const_iterator j 
         = checked_revisions.find(rev);
       if (j == checked_revisions.end() || (!j->second.found))
         ++unreferenced_roster_links;
 
-      std::map<hexenc<id>, checked_roster>::const_iterator k 
+      map<roster_id, checked_roster>::const_iterator k 
         = checked_rosters.find(ros);
       if (k == checked_rosters.end() || (!k->second.found))
         ++missing_rosters;
@@ -318,18 +322,18 @@ check_roster_links(app_state & app,
 
 static void
 check_revisions(app_state & app, 
-                std::map<revision_id, checked_revision> & checked_revisions,
-                std::map<hexenc<id>, checked_roster> & checked_rosters,
-                std::set<manifest_id> const & found_manifests)
+                map<revision_id, checked_revision> & checked_revisions,
+                map<roster_id, checked_roster> & checked_rosters,
+                set<manifest_id> const & found_manifests)
 {
-  std::set<revision_id> revisions;
+  set<revision_id> revisions;
 
   app.db.get_revision_ids(revisions);
   L(FL("checking %d revisions\n") % revisions.size());
 
   ticker ticks(_("revisions"), "r", revisions.size()/70+1);
 
-  for (std::set<revision_id>::const_iterator i = revisions.begin();
+  for (set<revision_id>::const_iterator i = revisions.begin();
        i != revisions.end(); ++i) 
     {
       L(FL("checking revision %s\n") % *i);
@@ -342,7 +346,7 @@ check_revisions(app_state & app,
         {
           read_revision_set(data, rev);
         }
-      catch (std::logic_error & e)
+      catch (logic_error & e)
         {
           L(FL("error parsing revision %s: %s") % *i % e.what());
           checked_revisions[*i].parseable = false;
@@ -361,17 +365,17 @@ check_revisions(app_state & app,
       // roster checks
       if (app.db.roster_link_exists_for_revision(*i))
         {
-          hexenc<id> roster_id;
+          roster_id ros_id;
           checked_revisions[*i].found_roster_link = true;
-          app.db.get_roster_id_for_revision(*i, roster_id);
+          app.db.get_roster_id_for_revision(*i, ros_id);
           if (app.db.roster_exists_for_revision(*i))
             {
               checked_revisions[*i].found_roster = true;
-              I(checked_rosters[roster_id].found);
-              checked_rosters[roster_id].revision_refs++;
-              if (!(rev.new_manifest == checked_rosters[roster_id].man_id))
+              I(checked_rosters[ros_id].found);
+              checked_rosters[ros_id].revision_refs++;
+              if (!(rev.new_manifest == checked_rosters[ros_id].man_id))
                 checked_revisions[*i].manifest_mismatch = true;
-              if (checked_rosters[roster_id].missing_files > 0)
+              if (checked_rosters[ros_id].missing_files > 0)
                 checked_revisions[*i].incomplete_roster = true;
             }
         }
@@ -400,11 +404,11 @@ check_revisions(app_state & app,
 
   // now check for parent revision existence and problems
 
-  for (std::map<revision_id, checked_revision>::iterator
+  for (map<revision_id, checked_revision>::iterator
          revision = checked_revisions.begin(); 
        revision != checked_revisions.end(); ++revision)
     {
-      for (std::set<revision_id>::const_iterator p = revision->second.parents.begin();
+      for (set<revision_id>::const_iterator p = revision->second.parents.begin();
            p != revision->second.parents.end(); ++p)
         {
           if (!checked_revisions[*p].found)
@@ -419,9 +423,9 @@ check_revisions(app_state & app,
 
 static void
 check_ancestry(app_state & app, 
-               std::map<revision_id, checked_revision> & checked_revisions)
+               map<revision_id, checked_revision> & checked_revisions)
 {
-  std::multimap<revision_id, revision_id> graph;
+  multimap<revision_id, revision_id> graph;
 
   app.db.get_revision_ancestry(graph);
   L(FL("checking %d ancestry edges\n") % graph.size());
@@ -432,8 +436,8 @@ check_ancestry(app_state & app,
   // graph has revision and associated parents
   // these two representations of the graph should agree!
 
-  std::set<revision_id> seen;
-  for (std::multimap<revision_id, revision_id>::const_iterator i = graph.begin();
+  set<revision_id> seen;
+  for (multimap<revision_id, revision_id>::const_iterator i = graph.begin();
        i != graph.end(); ++i)
     {
       // ignore the [] -> [...] edges here too
@@ -451,9 +455,9 @@ check_ancestry(app_state & app,
 
 static void
 check_keys(app_state & app, 
-           std::map<rsa_keypair_id, checked_key> & checked_keys)
+           map<rsa_keypair_id, checked_key> & checked_keys)
 {
-  std::vector<rsa_keypair_id> pubkeys;
+  vector<rsa_keypair_id> pubkeys;
 
   app.db.get_public_keys(pubkeys);
 
@@ -461,7 +465,7 @@ check_keys(app_state & app,
 
   ticker ticks(_("keys"), "k", 1);
 
-  for (std::vector<rsa_keypair_id>::const_iterator i = pubkeys.begin();
+  for (vector<rsa_keypair_id>::const_iterator i = pubkeys.begin();
        i != pubkeys.end(); ++i)
     {
       app.db.get_key(*i, checked_keys[*i].pub_encoded);
@@ -473,12 +477,12 @@ check_keys(app_state & app,
 
 static void
 check_certs(app_state & app, 
-            std::map<revision_id, checked_revision> & checked_revisions,
-            std::map<rsa_keypair_id, checked_key> & checked_keys,
+            map<revision_id, checked_revision> & checked_revisions,
+            map<rsa_keypair_id, checked_key> & checked_keys,
             size_t & total_certs)
 {
 
-  std::vector< revision<cert> > certs;
+  vector< revision<cert> > certs;
   app.db.get_revision_certs(certs);
 
   total_certs = certs.size();
@@ -487,7 +491,7 @@ check_certs(app_state & app,
 
   ticker ticks(_("certs"), "c", certs.size()/70+1);
 
-  for (std::vector< revision<cert> >::const_iterator i = certs.begin();
+  for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
       checked_cert checked(*i);
@@ -495,7 +499,7 @@ check_certs(app_state & app,
 
       if (checked.found_key) 
         {
-          std::string signed_text;
+          string signed_text;
           cert_signable_text(i->inner(), signed_text);
           checked.good_sig = check_signature(app, i->inner().key, 
                                              checked_keys[i->inner().key].pub_encoded, 
@@ -510,11 +514,11 @@ check_certs(app_state & app,
 }
 
 static void
-report_files(std::map<file_id, checked_file> const & checked_files, 
+report_files(map<file_id, checked_file> const & checked_files, 
              size_t & missing_files, 
              size_t & unreferenced_files)
 {
-  for (std::map<file_id, checked_file>::const_iterator 
+  for (map<file_id, checked_file>::const_iterator 
          i = checked_files.begin(); i != checked_files.end(); ++i)
     {
       checked_file file = i->second;
@@ -536,13 +540,13 @@ report_files(std::map<file_id, checked_file> const & checked_files,
 }
 
 static void
-report_rosters(std::map<hexenc<id>, checked_roster> const & checked_rosters, 
+report_rosters(map<roster_id, checked_roster> const & checked_rosters, 
                  size_t & unreferenced_rosters,
                  size_t & incomplete_rosters,
                  size_t & non_parseable_rosters,
                  size_t & non_normalized_rosters)
 {
-  for (std::map<hexenc<id>, checked_roster>::const_iterator 
+  for (map<roster_id, checked_roster>::const_iterator 
          i = checked_rosters.begin(); i != checked_rosters.end(); ++i)
     {
       checked_roster roster = i->second;
@@ -584,7 +588,7 @@ report_rosters(std::map<hexenc<id>, checked_roster> const & checked_rosters,
 }
 
 static void
-report_revisions(std::map<revision_id, checked_revision> const & checked_revisions,
+report_revisions(map<revision_id, checked_revision> const & checked_revisions,
                  size_t & missing_revisions,
                  size_t & incomplete_revisions,
                  size_t & mismatched_parents,
@@ -594,7 +598,7 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
                  size_t & non_parseable_revisions,
                  size_t & non_normalized_revisions)
 {
-  for (std::map<revision_id, checked_revision>::const_iterator 
+  for (map<revision_id, checked_revision>::const_iterator 
          i = checked_revisions.begin(); i != checked_revisions.end(); ++i)
     {
       checked_revision revision = i->second;
@@ -666,7 +670,7 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
       if (!revision.history_error.empty())
         {
           bad_history++;
-          std::string tmp = revision.history_error;
+          string tmp = revision.history_error;
           if (tmp[tmp.length() - 1] == '\n')
             tmp.erase(tmp.length() - 1);
           P(F("revision %s has bad history (%s)\n")
@@ -690,10 +694,10 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
 }
 
 static void
-report_keys(std::map<rsa_keypair_id, checked_key> const & checked_keys,
+report_keys(map<rsa_keypair_id, checked_key> const & checked_keys,
             size_t & missing_keys)
 {
-  for (std::map<rsa_keypair_id, checked_key>::const_iterator 
+  for (map<rsa_keypair_id, checked_key>::const_iterator 
          i = checked_keys.begin(); i != checked_keys.end(); ++i)
     {
       checked_key key = i->second;
@@ -715,26 +719,26 @@ report_keys(std::map<rsa_keypair_id, checked_key> const & checked_keys,
 }
 
 static void
-report_certs(std::map<revision_id, checked_revision> const & checked_revisions,
+report_certs(map<revision_id, checked_revision> const & checked_revisions,
              size_t & missing_certs,
              size_t & mismatched_certs,
              size_t & unchecked_sigs,
              size_t & bad_sigs)
 {
-  std::set<cert_name> cnames;
+  set<cert_name> cnames;
 
   cnames.insert(cert_name(author_cert_name));
   cnames.insert(cert_name(branch_cert_name));
   cnames.insert(cert_name(changelog_cert_name));
   cnames.insert(cert_name(date_cert_name));
 
-  for (std::map<revision_id, checked_revision>::const_iterator
+  for (map<revision_id, checked_revision>::const_iterator
          i = checked_revisions.begin(); i != checked_revisions.end(); ++i)
     {
       checked_revision revision = i->second;
-      std::map<cert_name, size_t> cert_counts;
+      map<cert_name, size_t> cert_counts;
       
-      for (std::vector<checked_cert>::const_iterator checked = revision.checked_certs.begin();
+      for (vector<checked_cert>::const_iterator checked = revision.checked_certs.begin();
            checked != revision.checked_certs.end(); ++checked)
         {
           if (!checked->found_key)
@@ -757,7 +761,7 @@ report_certs(std::map<revision_id, checked_revision> const & checked_revisions,
           cert_counts[checked->rcert.inner().name]++;
         }
 
-      for (std::set<cert_name>::const_iterator n = cnames.begin(); 
+      for (set<cert_name>::const_iterator n = cnames.begin(); 
            n != cnames.end(); ++n)
         {
           if (revision.found && cert_counts[*n] == 0)
@@ -785,11 +789,11 @@ report_certs(std::map<revision_id, checked_revision> const & checked_revisions,
 void
 check_db(app_state & app)
 {
-  std::map<file_id, checked_file> checked_files;
-  std::set<manifest_id> found_manifests;
-  std::map<hexenc<id>, checked_roster> checked_rosters;
-  std::map<revision_id, checked_revision> checked_revisions;
-  std::map<rsa_keypair_id, checked_key> checked_keys;
+  map<file_id, checked_file> checked_files;
+  set<manifest_id> found_manifests;
+  map<roster_id, checked_roster> checked_rosters;
+  map<revision_id, checked_revision> checked_revisions;
+  map<rsa_keypair_id, checked_key> checked_keys;
 
   size_t missing_files = 0;
   size_t unreferenced_files = 0;

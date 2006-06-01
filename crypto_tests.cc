@@ -9,8 +9,11 @@
 #include <string>
 
 #include "transforms.hh"
+#include "sanity.hh"
 
-static std::string expected_SHA_MCT[] = {
+using std::string;
+
+static string expected_SHA_MCT[] = {
   "e216836819477c7f78e0d843fe4ff1b6d6c14cd4",
   "a2dbc7a5b1c6c0a8bcb7aaa41252a6a7d0690dbc",
   "db1f9050bb863dfef4ce37186044e2eeb17ee013",
@@ -1051,7 +1054,7 @@ calculate_ident_test()
 
   //SHA Short Message Test
   data input(decode_hexenc("5e"));
-  std::string ident("5e6f80a34a9798cafc6a5db96cc57ba4c4db59c2");
+  string ident("5e6f80a34a9798cafc6a5db96cc57ba4c4db59c2");
 
   calculate_ident(input, output);
 
@@ -1081,9 +1084,9 @@ calculate_ident_test()
   //
 
   //Seed = d0569cb3665a8a43eb6ea23d75a3c4d2054a0d7d
-  std::string Seed = ("d0569cb3665a8a43eb6ea23d75a3c4d2054a0d7d");
+  string Seed = ("d0569cb3665a8a43eb6ea23d75a3c4d2054a0d7d");
 
-  std::string MD[1003];
+  string MD[1003];
 
   for (int j = 0; j < 1000; j++) 
     {
@@ -1094,7 +1097,7 @@ calculate_ident_test()
 
       for (int i = 3; i < 1003; i++) 
         {
-          std::string messageString = MD[i - 3] + MD[i - 2] + MD[i - 1];
+          string messageString = MD[i - 3] + MD[i - 2] + MD[i - 1];
           // L(FL("messageString: %s\n") % messageString );
 
           data messageData(decode_hexenc(messageString));

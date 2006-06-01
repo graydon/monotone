@@ -12,6 +12,8 @@
 
 #include <boost/static_assert.hpp>
 
+using std::string;
+
 namespace constants
 {
 
@@ -58,14 +60,14 @@ namespace constants
   " \r\n\t" 
   ;
 
-  std::string const regex_legal_packet_bytes("([a-zA-Z0-9+/=[:space:]]+)");
+  string const regex_legal_packet_bytes("([a-zA-Z0-9+/=[:space:]]+)");
 
   // all the ASCII characters (bytes) which are legal in a SHA1 hex id
   char const * const legal_id_bytes =
   "0123456789abcdef"
   ;
 
-  std::string const regex_legal_id_bytes("([[:xdigit:]]{40})");
+  string const regex_legal_id_bytes("([[:xdigit:]]{40})");
 
   // all the ASCII characters (bytes) which are legal in an ACE string
   char const * const legal_ace_bytes =
@@ -87,7 +89,7 @@ namespace constants
   "-"
   ;
 
-  std::string const regex_legal_cert_name_bytes("([-a-zA-Z0-9]+)");
+  string const regex_legal_cert_name_bytes("([-a-zA-Z0-9]+)");
 
   // all the ASCII characters (bytes) which can occur in key names
   char const * const legal_key_name_bytes =
@@ -103,7 +105,7 @@ namespace constants
   ".@"
   ;
 
-  std::string const regex_legal_key_name_bytes("([-a-zA-Z0-9\\.@\\+_]+)");
+  string const regex_legal_key_name_bytes("([-a-zA-Z0-9\\.@\\+_]+)");
 
   // all the ASCII characters (bytes) which are illegal in a (file|local)_path
 
@@ -150,6 +152,11 @@ namespace constants
   size_t const netsync_session_key_length_in_bytes = 20;     // 160 bits
   size_t const netsync_hmac_value_length_in_bytes = 20;      // 160 bits
 
-  std::string const & netsync_key_initializer = std::string(netsync_session_key_length_in_bytes, 0);
+  string const & netsync_key_initializer = string(netsync_session_key_length_in_bytes, 0);
 
+  // attributes
+  string const encoding_attribute("mtn:encoding");
+  string const manual_merge_attribute("mtn:manual_merge");
+  string const binary_encoding("binary");
+  string const default_encoding("default");
 }

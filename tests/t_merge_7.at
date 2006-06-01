@@ -1,8 +1,9 @@
-AT_SETUP([merge --lca])
+AT_SETUP([test a merge 7])
 MTN_SETUP
 
-# --lca is a temporary workaround for 3-way merge suckiness.  So this
-# test should go away eventually.
+# this used to be a test for the --lca option to merge and propagate.
+# this option is no longer needed in 0.26, so has since been removed.
+# --lca was a temporary workaround for 3-way merge suckiness.
 
 # arguably the issue is now fixed with mark-merge. I've changed 
 # the test to do a successful merge of E and F, since, well,
@@ -48,7 +49,7 @@ AT_CHECK(MTN explicit_merge $D $C testbranch, [], [ignore], [ignore])
 AT_CHECK(MTN update, [], [ignore], [ignore])
 E=`BASE_REVISION`
 
-AT_CHECK(MTN merge --lca, [], [ignore], [stderr])
+AT_CHECK(MTN merge, [], [ignore], [stderr])
 AT_CHECK(QGREP($A stderr), [1])
 AT_CHECK(QGREP($E stderr), [])
 AT_CHECK(QGREP($F stderr), [])

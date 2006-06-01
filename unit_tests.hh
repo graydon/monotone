@@ -25,6 +25,8 @@ void add_diff_patch_tests(test_suite * suite);
 void add_file_io_tests(test_suite * suite);
 void add_key_tests(test_suite * suite);
 void add_transform_tests(test_suite * suite);
+void add_charset_tests(test_suite * suite);
+void add_simplestring_xform_tests(test_suite * suite);
 void add_vocab_tests(test_suite * suite);
 void add_cset_tests(test_suite * suite);
 void add_revision_tests(test_suite * suite);
@@ -34,9 +36,11 @@ void add_netcmd_tests(test_suite * suite);
 void add_globish_tests(test_suite * suite);
 void add_crypto_tests(test_suite * suite);
 void add_string_queue_tests(test_suite * suite);
+void add_pipe_tests(test_suite * suite);
 void add_paths_tests(test_suite * suite);
 void add_roster_tests(test_suite * suite);
 void add_roster_merge_tests(test_suite * suite);
 void add_restrictions_tests(test_suite * suite);
+void add_uri_tests(test_suite * suite);
 
 #endif

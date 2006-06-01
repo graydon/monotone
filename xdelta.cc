@@ -35,7 +35,16 @@
 #include "sanity.hh"
 #include "xdelta.hh"
 
-using namespace std;
+using std::make_pair;
+using std::min;
+using std::ostream;
+using std::ostringstream;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
+using boost::shared_ptr;
 
 struct identity {size_t operator()(u32 const & v) const { return static_cast<size_t>(v);}};
 typedef pair<string::size_type, string::size_type> extent;
@@ -320,45 +329,64 @@ simple_applicator
   }
 };
 
-void 
-apply_delta(boost::shared_ptr<delta_applicator> da,
-            std::string const & delta)
+inline string::size_type
+read_num(string::const_iterator &i,
+         string::const_iterator e)
 {
-  istringstream del(delta);
-  for (char c = del.get(); c == 'I' || c == 'C'; c = del.get())
+  string::size_type n = 0;
+
+  while (i != e && *i == ' ')
+    ++i;
+
+  while (i != e && *i >= '0' && *i <= '9')
     {
-      I(del.good());
-      if (c == 'I')
+      n *= 10;
+      n += static_cast<size_t>(*i - '0');
+      ++i;
+    }
+  return n;
+}
+
+void 
+apply_delta(shared_ptr<delta_applicator> da,
+            string const & delta)
+{  
+  string::const_iterator i = delta.begin(); 
+  while (i != delta.end() && (*i == 'I' || *i == 'C'))
+    {
+      if (*i == 'I')
         { 
-          string::size_type len = string::npos;
-          del >> len;
-          I(del.good());
-          I(len != string::npos);
-          string tmp;
-          tmp.reserve(len);
-          I(del.get(c).good());
-          I(c == '\n');
-          while(len--)
-            {
-              I(del.get(c).good());
-              tmp += c;
-            }
-          I(del.get(c).good());
-          I(c == '\n');
-          da->insert(tmp);
+          ++i;
+          I(i != delta.end());
+          string::size_type len = read_num(i, delta.end());
+          I(i != delta.end());
+          I(*i == '\n');
+          ++i;
+          I(i != delta.end());
+	  I((i - delta.begin()) + len <= delta.size());
+	  if (len > 0)
+	    {
+	      string tmp(i, i+len);
+	      da->insert(tmp);
+	    }
+	  i += len;
         }
       else
         {
-          string::size_type pos = string::npos, len = string::npos;
-          del >> pos >> len;          
-          I(del.good());
-          I(len != string::npos);
-          I(del.get(c).good());
-          I(c == '\n');
-          da->copy(pos, len);
+          I(*i == 'C');
+          ++i;
+          I(i != delta.end());
+          string::size_type pos = read_num(i, delta.end());
+          I(i != delta.end());
+          string::size_type len = read_num(i, delta.end());
+	  if (len != 0)
+	    da->copy(pos, len);
         }
+      I(i != delta.end());
+      I(*i == '\n');
+      ++i;
     }    
-  I(del.eof());
+  I(i == delta.end());
 }
 
 void
@@ -366,7 +394,7 @@ apply_delta(string const & a,
             string const & delta,
             string & b)
 {
-  boost::shared_ptr<delta_applicator> da(new simple_applicator());
+  shared_ptr<delta_applicator> da(new simple_applicator());
   da->begin(a);
   apply_delta(da, delta);
   da->next();
@@ -379,23 +407,23 @@ size_accumulating_delta_applicator :
 {
   u64 & sz;
   size_accumulating_delta_applicator(u64 & s) : sz(s) {}
-  virtual void begin(std::string const & base) {}
+  virtual void begin(string const & base) {}
   virtual void next() {}
-  virtual void finish(std::string & out) {}
+  virtual void finish(string & out) {}
 
-  virtual void copy(std::string::size_type pos, 
-                    std::string::size_type len) 
+  virtual void copy(string::size_type pos, 
+                    string::size_type len) 
   { sz += len; }
-  virtual void insert(std::string const & str) 
+  virtual void insert(string const & str) 
   { sz += str.size(); }
 };
 
 
 u64 
-measure_delta_target_size(std::string const & delta)
+measure_delta_target_size(string const & delta)
 {
   u64 sz = 0;
-  boost::shared_ptr<delta_applicator> da(new size_accumulating_delta_applicator(sz));
+  shared_ptr<delta_applicator> da(new size_accumulating_delta_applicator(sz));
   apply_delta(da, delta);
   return sz;
 }
@@ -483,12 +511,12 @@ apply_insert(piece_table & p, version_spec & out, string const & str)
 struct 
 chunk_less_than
 {
-  bool operator()(chunk const & ch, version_pos vp) const
+  bool operator()(chunk const & ch1, chunk const & ch2) const
   {
     // nb: ch.vpos + ch.len is the 0-based index of the first element *not*
     // included in ch; thus we measure against ch.len - 1.
-    I(ch.len > 0);
-    return (ch.vpos + ch.len - 1) < vp;
+//    I(ch1.len > 0);
+    return (ch1.vpos + ch1.len - 1) < ch2.vpos;
   }
 };
 
@@ -522,9 +550,10 @@ apply_copy(version_spec const & in, version_spec & out,
   if (!out.empty())
     dst_vpos = out.back().vpos + out.back().len;
   version_pos dst_final = dst_vpos + src_len;
+  chunk src_bounding_chunk(0,0,src_vpos,0);
   version_spec::const_iterator lo = lower_bound(in.begin(), 
                                                 in.end(), 
-                                                src_vpos, 
+                                                src_bounding_chunk, 
                                                 chunk_less_than());
   for ( ; src_len > 0; ++lo)
     {
@@ -575,8 +604,8 @@ piecewise_applicator
   : public delta_applicator
 {
   piece_table pt;
-  boost::shared_ptr<version_spec> src;
-  boost::shared_ptr<version_spec> dst;
+  shared_ptr<version_spec> src;
+  shared_ptr<version_spec> dst;
 
   piecewise_applicator() :
     src(new version_spec()),
@@ -620,16 +649,16 @@ piecewise_applicator
 
 // these just hide our implementation types from outside 
 
-boost::shared_ptr<delta_applicator> 
+shared_ptr<delta_applicator> 
 new_simple_applicator()
 {
-  return boost::shared_ptr<delta_applicator>(new simple_applicator());
+  return shared_ptr<delta_applicator>(new simple_applicator());
 }
 
-boost::shared_ptr<delta_applicator> 
+shared_ptr<delta_applicator> 
 new_piecewise_applicator()
 {
-  return boost::shared_ptr<delta_applicator>(new piecewise_applicator());
+  return shared_ptr<delta_applicator>(new piecewise_applicator());
 }
 
 
@@ -649,7 +678,8 @@ struct copied_extent
   string::size_type len;
   bool operator<(copied_extent const & other) const
   {
-    return old_pos < other.old_pos;
+    return (old_pos < other.old_pos) ||
+      (old_pos == other.old_pos && len > other.len);
   }
 };
 
@@ -666,9 +696,9 @@ inverse_delta_writing_applicator :
       new_pos(0)
   {}
 
-  virtual void begin(std::string const & base) {}
+  virtual void begin(string const & base) {}
   virtual void next() {}
-  virtual void finish(std::string & out) 
+  virtual void finish(string & out) 
   {
     // We are trying to write a delta instruction stream which
     // produces 'old' from 'new'. We don't care what was in 'new',
@@ -717,15 +747,15 @@ inverse_delta_writing_applicator :
     write_delta_insns(delta_insns, out);
   }
 
-  virtual void copy(std::string::size_type old_pos, 
-                    std::string::size_type len) 
+  virtual void copy(string::size_type old_pos, 
+                    string::size_type len) 
   { 
     I(old_pos < old.size());
     copied_extents.insert(copied_extent(old_pos, new_pos, len));
     new_pos += len;
   }
 
-  virtual void insert(std::string const & str) 
+  virtual void insert(string const & str) 
   { 
     new_pos += str.size();
   }
@@ -737,7 +767,7 @@ invert_xdelta(string const & old_str,
 	      string const & delta,
 	      string & delta_inverse)
 {
-  boost::shared_ptr<delta_applicator> da(new inverse_delta_writing_applicator(old_str));
+  shared_ptr<delta_applicator> da(new inverse_delta_writing_applicator(old_str));
   apply_delta(da, delta);
   da->finish(delta_inverse);
 }
@@ -842,11 +872,11 @@ xdelta_random_simple_delta_test()
       xdelta_randomly_delete(b);
       compute_delta(a, b, fdel);
       compute_delta(b, a, rdel);
-      L(boost::format("src %d, dst %d, fdel %d, rdel %d\n")
+      L(FL("src %d, dst %d, fdel %d, rdel %d\n")
         % a.size() % b.size()% fdel.size() % rdel.size()) ;
       if (fdel.size() == 0)
         {
-          L(boost::format("confirming src == dst and rdel == 0\n"));
+          L(FL("confirming src == dst and rdel == 0\n"));
           BOOST_CHECK(a == b);
           BOOST_CHECK(rdel.size() == 0);
         }      
@@ -854,7 +884,7 @@ xdelta_random_simple_delta_test()
         {
           apply_delta(a, fdel, c);
           apply_delta(b, rdel, d);
-          L(boost::format("confirming dst1 %d, dst2 %d\n") % c.size() % d.size());
+          L(FL("confirming dst1 %d, dst2 %d\n") % c.size() % d.size());
           BOOST_CHECK(b == c);
           BOOST_CHECK(a == d);
         }

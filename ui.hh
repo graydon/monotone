@@ -13,7 +13,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <boost/format.hpp>
 
 #include "sanity.hh"
 
@@ -24,6 +23,7 @@ struct ticker
   size_t ticks;
   size_t mod;
   size_t total;
+  size_t previous_total;
   bool kilocount;
   bool use_total;
   std::string keyname;
@@ -85,12 +85,11 @@ public:
   user_interface();
   ~user_interface();
   void warn(std::string const & warning);
-  void warn(boost::format const & fmt) { warn(fmt.str()); }
+  void warn(format_base const & fmt) { warn(fmt.str()); }
   void fatal(std::string const & warning);
-  void fatal(boost::format const & fmt) { warn(fmt.str()); }
+  void fatal(format_base const & fmt) { warn(fmt.str()); }
   void inform(std::string const & line);
-  void inform(boost::format const & fmt) { inform(fmt.str()); }
-  void inform(i18n_format const & fmt) { inform(fmt.str()); }
+  void inform(format_base const & fmt) { inform(fmt.str()); }
   void set_tick_trailer(std::string const & trailer);
   void set_tick_writer(tick_writer * t_writer);
   void ensure_clean_line();

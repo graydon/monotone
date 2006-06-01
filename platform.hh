@@ -31,6 +31,9 @@ int process_sleep(unsigned int seconds);
 // stop "\n"->"\r\n" from breaking automate on Windows
 void make_io_binary();
 
+#ifdef WIN32
+std::string munge_argv_into_cmdline(const char* const argv[]);
+#endif
 // for term selection
 bool have_smart_terminal();
 // this function cannot call W/P/L, because it is called by the tick printing
@@ -62,5 +65,8 @@ namespace path
 path::status get_path_status(any_path const & path);
 
 void rename_clobberingly(any_path const & from, any_path const & to);
+
+// strerror wrapper for OS-specific errors (e.g. use FormatMessage on Win32)
+std::string os_strerror(os_err_t errnum);
 
 #endif // __PLATFORM_HH__

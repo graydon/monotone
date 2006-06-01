@@ -13,22 +13,38 @@
 #include "app_state.hh"
 #include "basic_io.hh"
 #include "cset.hh"
-#include "file_io.hh"
+#include "localized_file_io.hh"
 #include "platform.hh"
 #include "restrictions.hh"
 #include "sanity.hh"
 #include "safe_map.hh"
-#include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "vocab.hh"
 #include "work.hh"
+#include "revision.hh"
+
+using std::deque;
+using std::exception;
+using std::make_pair;
+using std::map;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
+using boost::lexical_cast;
 
 // workspace / book-keeping file code
 
-using namespace std;
+static string const attr_file_name(".mt-attrs");
+static string const inodeprints_file_name("inodeprints");
+static string const local_dump_file_name("debug");
+static string const options_file_name("options");
+static string const work_file_name("work");
+static string const user_log_file_name("log");
+
 
 // attribute map file
-
-string const attr_file_name(".mt-attrs");
 
 void
 file_itemizer::visit_dir(file_path const & path)
@@ -256,7 +272,7 @@ perform_deletions(path_set const & paths, app_state & app)
   // where, when processing 'foo', we need to know whether or not it is empty
   // (and thus legal to remove)
 
-  std::deque<split_path> todo;
+  deque<split_path> todo;
   path_set::const_reverse_iterator i = paths.rbegin();
   todo.push_back(*i);
   ++i;
@@ -473,8 +489,8 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
   }
 
   cset cs;
-  safe_insert(cs.nodes_renamed, std::make_pair(root_sp, put_old_sp));
-  safe_insert(cs.nodes_renamed, std::make_pair(new_root_sp, root_sp));
+  safe_insert(cs.nodes_renamed, make_pair(root_sp, put_old_sp));
+  safe_insert(cs.nodes_renamed, make_pair(new_root_sp, root_sp));
   
   {
     editable_roster_base e(new_roster, nis);
@@ -496,8 +512,6 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
 
 
 // work file containing rearrangement from uncommitted adds/drops/renames
-
-std::string const work_file_name("work");
 
 static void get_work_path(bookkeeping_path & w_path)
 {
@@ -551,7 +565,7 @@ void put_work_cset(cset & w)
 
 // revision file name 
 
-std::string revision_file_name("revision");
+string revision_file_name("revision");
 
 static void get_revision_path(bookkeeping_path & m_path)
 {
@@ -575,7 +589,7 @@ void get_revision_id(revision_id & c)
     {
       read_data(c_path, c_data);
     }
-  catch(std::exception & e)
+  catch(exception &)
     {
       N(false, F("Problem with workspace: %s is unreadable") % c_path);
     }
@@ -655,8 +669,6 @@ get_base_and_current_roster_shape(roster_t & base_roster,
 
 // user log file
 
-string const user_log_file_name("log");
-
 void
 get_user_log_path(bookkeeping_path & ul_path)
 {
@@ -704,8 +716,6 @@ has_contents_user_log()
 
 // options map file
 
-string const options_file_name("options");
-
 void 
 get_options_path(bookkeeping_path & o_path)
 {
@@ -723,7 +733,7 @@ read_options_map(data const & dat, options_map & options)
   // don't clear the options which will have settings from the command line
   // options.clear(); 
 
-  std::string opt, val;
+  string opt, val;
   while (parser.symp())
     {
       parser.sym(opt);
@@ -750,8 +760,6 @@ write_options_map(data & dat, options_map const & options)
 
 // local dump file
 
-static string const local_dump_file_name("debug");
-
 void get_local_dump_path(bookkeeping_path & d_path)
 {
   d_path = bookkeeping_root / local_dump_file_name;
@@ -759,8 +767,6 @@ void get_local_dump_path(bookkeeping_path & d_path)
 }
 
 // inodeprint file
-
-static string const inodeprints_file_name("inodeprints");
 
 void
 get_inodeprints_path(bookkeeping_path & ip_path)
@@ -803,11 +809,6 @@ enable_inodeprints()
   write_data(ip_path, dat);
 }
 
-string const encoding_attribute("mtn:encoding");
-string const binary_encoding("binary");
-string const default_encoding("default");
-
-string const manual_merge_attribute("mtn:manual_merge");
 
 bool 
 get_attribute_from_roster(roster_t const & ros,                               
@@ -870,7 +871,7 @@ editable_working_tree::editable_working_tree(app_state & app,
 static inline bookkeeping_path
 path_for_nid(node_id nid)
 {
-  return bookkeeping_root / "tmp" / boost::lexical_cast<std::string>(nid);
+  return bookkeeping_root / "tmp" / lexical_cast<string>(nid);
 }
 
 // Attaching/detaching the root directory:
@@ -904,11 +905,11 @@ editable_working_tree::detach_node(split_path const & src)
     {
       // root dir detach, so we move contents, rather than the dir itself
       mkdir_p(dst_pth);
-      std::vector<utf8> files, dirs;
+      vector<utf8> files, dirs;
       read_directory(src_pth, files, dirs);
-      for (std::vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
+      for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
         move_file(src_pth / (*i)(), dst_pth / (*i)());
-      for (std::vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
+      for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         if (!bookkeeping_path::is_bookkeeping_path((*i)()))
           move_dir(src_pth / (*i)(), dst_pth / (*i)());
       root_dir_attached = false;
@@ -922,7 +923,7 @@ void
 editable_working_tree::drop_detached_node(node_id nid)
 {
   bookkeeping_path pth = path_for_nid(nid);
-  std::map<bookkeeping_path, file_path>::const_iterator i 
+  map<bookkeeping_path, file_path>::const_iterator i 
     = rename_add_drop_map.find(pth);
   I(i != rename_add_drop_map.end());
   P(F("dropping %s") % i->second);
@@ -965,7 +966,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   if (!path_exists(src_pth))
     {
       I(root_dir_attached);
-      std::map<bookkeeping_path, file_id>::const_iterator i 
+      map<bookkeeping_path, file_id>::const_iterator i 
         = written_content.find(src_pth);
       if (i != written_content.end())
         {
@@ -988,7 +989,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
                               F("path '%s' already exists, cannot create") % dst_pth);
 
   // If we get here, we're doing a file/dir rename, or a dir-create.
-  std::map<bookkeeping_path, file_path>::const_iterator i
+  map<bookkeeping_path, file_path>::const_iterator i
     = rename_add_drop_map.find(src_pth);
   if (i != rename_add_drop_map.end())
     {
@@ -1000,14 +1001,14 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   if (dst_pth == file_path())
     {
       // root dir attach, so we move contents, rather than the dir itself
-      std::vector<utf8> files, dirs;
+      vector<utf8> files, dirs;
       read_directory(src_pth, files, dirs);
-      for (std::vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
+      for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
         {
           I(!bookkeeping_path::is_bookkeeping_path((*i)()));
           move_file(src_pth / (*i)(), dst_pth / (*i)());
         }
-      for (std::vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
+      for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
           I(!bookkeeping_path::is_bookkeeping_path((*i)()));
           move_dir(src_pth / (*i)(), dst_pth / (*i)());

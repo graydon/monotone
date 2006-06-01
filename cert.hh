@@ -14,13 +14,15 @@
 #include <time.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+
+
 // certs associate an opaque name/value pair with a particular identifier in
 // the system (eg. a manifest or file id) and are accompanied by an RSA
 // public-key signature attesting to the association. users can write as
 // much extra meta-data as they like about files or manifests, using certs,
 // without needing anyone's special permission.
 
-struct app_state;
+class app_state;
 struct packet_consumer;
 
 struct cert
@@ -43,6 +45,9 @@ struct cert
   bool operator<(cert const & other) const;
   bool operator==(cert const & other) const;
 };
+
+EXTERN template class revision<cert>;
+EXTERN template class manifest<cert>;
 
 
 // these 3 are for netio support

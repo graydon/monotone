@@ -105,6 +105,9 @@ void
 write_revision_set(revision_set const & rev,
                    revision_data & dat);
 
+void calculate_ident(revision_set const & cs,
+                     revision_id & ident);
+
 // sanity checking
 
 void

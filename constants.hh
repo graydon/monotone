@@ -117,8 +117,7 @@ namespace constants
   // minimum size of any netcmd on the wire
   static size_t const netcmd_minsz = (1     // version
                                       + 1   // cmd code
-                                      + 1   // smallest uleb possible
-                                      + 4); // adler32
+                                      + 1); // smallest uleb possible
 
   
   // largest command *payload* allowed in a netcmd
@@ -151,6 +150,12 @@ namespace constants
 
   // netsync session key default initializer
   extern std::string const & netsync_key_initializer;
+
+  // attributes
+  extern std::string const encoding_attribute;
+  extern std::string const binary_encoding;
+  extern std::string const default_encoding;
+  extern std::string const manual_merge_attribute;
 }
 
 #endif // __CONSTANTS_HH__

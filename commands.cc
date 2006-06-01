@@ -8,11 +8,20 @@
 #include <map>
 #include <algorithm>
 
-#include "restrictions.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
+#include "charset.hh"
 #include "inodeprint.hh"
+#include "cert.hh"
 
 #include "cmd.hh"
+
+using std::cin;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
 //
 // this file defines the task-oriented "top level" commands which can be
 // issued as part of a monotone command line. the command line can only
@@ -66,14 +75,16 @@ namespace std
 
 namespace commands 
 {
-  using namespace std;
+  using std::endl;
+  using std::greater;
+  using std::ostream;
 
   bool operator<(command const & self, command const & other)
   {
     // *twitch*
-    return ((std::string(_(self.cmdgroup.c_str())) < std::string(_(other.cmdgroup.c_str())))
+    return ((string(_(self.cmdgroup.c_str())) < string(_(other.cmdgroup.c_str())))
             || ((self.cmdgroup == other.cmdgroup)
-                && (std::string(_(self.name.c_str())) < (std::string(_(other.name.c_str()))))));
+                && (string(_(self.name.c_str())) < (string(_(other.name.c_str()))))));
   }
 
 
@@ -155,7 +166,7 @@ namespace commands
         sorted.push_back(i->second);
       }
   
-    sort(sorted.begin(), sorted.end(), std::greater<command *>());
+    sort(sorted.begin(), sorted.end(), greater<command *>());
 
     string curr_group;
     size_t col = 0;
@@ -229,19 +240,15 @@ namespace commands
 
 CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help"), OPT_NONE)
 {
-        if (args.size() < 1)
-                throw usage("");
-
-        string full_cmd = complete_command(idx(args, 0)());
-        if ((*cmds).find(full_cmd) == (*cmds).end())
-                throw usage("");
-
-        throw usage(full_cmd);
+  if (args.size() < 1)
+    throw usage("");
+  
+  string full_cmd = complete_command(idx(args, 0)());
+  if ((*cmds).find(full_cmd) == (*cmds).end())
+    throw usage("");
+  
+  throw usage(full_cmd);
 }
-
-using std::set;
-using std::pair;
-using std::cin;
 
 void
 maybe_update_inodeprints(app_state & app)
@@ -341,7 +348,7 @@ describe_revision(app_state & app,
 void 
 complete(app_state & app, 
          string const & str,
-         std::set<revision_id> & completion,
+         set<revision_id> & completion,
          bool must_exist)
 {
   // This copies the start of selectors::parse_selector().to avoid
@@ -409,7 +416,7 @@ notify_if_multiple_heads(app_state & app)
   set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
   if (heads.size() > 1) {
-    std::string prefixedline;
+    string prefixedline;
     prefix_lines_with(_("note: "),
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider '%s merge'"),

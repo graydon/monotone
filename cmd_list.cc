@@ -4,20 +4,27 @@
 #include "restrictions.hh"
 #include "revision.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
+#include "charset.hh"
 #include "database.hh"
 #include "ui.hh"
 #include "keys.hh"
+#include "cert.hh"
 
+#include <algorithm>
 #include <iostream>
-using std::cout;
-using std::sort;
+#include <map>
 #include <utility>
+
+using std::cout;
+using std::make_pair;
+using std::map;
+using std::ostream_iterator;
 using std::pair;
 using std::set;
-#include <map>
-using std::map;
-#include <algorithm>
 using std::sort;
+using std::string;
+using std::vector;
 
 static void 
 ls_certs(string const & name, app_state & app, vector<utf8> const & args)
@@ -100,7 +107,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
       split_into_lines(washed, lines);
       I(lines.size() > 0);
 
-      cout << std::string(guess_terminal_width(), '-') << '\n'
+      cout << string(guess_terminal_width(), '-') << '\n'
            << (i18n_format(str)
                % idx(certs, i).key()
                % stat
@@ -122,7 +129,7 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
 {
   vector<rsa_keypair_id> pubs;
   vector<rsa_keypair_id> privkeys;
-  std::string pattern;
+  string pattern;
   if (args.size() == 1)
     pattern = idx(args, 0)();
   else if (args.size() > 1)
@@ -231,12 +238,12 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
 static void 
 ls_epochs(string name, app_state & app, vector<utf8> const & args)
 {
-  std::map<cert_value, epoch_data> epochs;
+  map<cert_value, epoch_data> epochs;
   app.db.get_epochs(epochs);
 
   if (args.size() == 0)
     {
-      for (std::map<cert_value, epoch_data>::const_iterator i = epochs.begin();
+      for (map<cert_value, epoch_data>::const_iterator i = epochs.begin();
            i != epochs.end(); ++i)
         {
           cout << i->second << " " << i->first << "\n";
@@ -247,7 +254,7 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
       for (vector<utf8>::const_iterator i = args.begin(); i != args.end();
            ++i)
         {
-          std::map<cert_value, epoch_data>::const_iterator j = epochs.find(cert_value((*i)()));
+          map<cert_value, epoch_data>::const_iterator j = epochs.find(cert_value((*i)()));
           N(j != epochs.end(), F("no epoch for branch %s\n") % *i);
           cout << j->second << " " << j->first << "\n";
         }
@@ -260,7 +267,7 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
 
-  std::set< pair<cert_value, pair<revision_id, rsa_keypair_id> > > sorted_vals;
+  set< pair<cert_value, pair<revision_id, rsa_keypair_id> > > sorted_vals;
 
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
@@ -268,9 +275,9 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
       cert_value name;
       cert c = i->inner();
       decode_base64(c.value, name);
-      sorted_vals.insert(std::make_pair(name, std::make_pair(c.ident, c.key)));
+      sorted_vals.insert(make_pair(name, make_pair(c.ident, c.key)));
     }
-  for (std::set<std::pair<cert_value, std::pair<revision_id, 
+  for (set<pair<cert_value, pair<revision_id, 
          rsa_keypair_id> > >::const_iterator i = sorted_vals.begin();
        i != sorted_vals.end(); ++i)
     {
@@ -299,7 +306,7 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
 
   map<var_key, var_value> vars;
   app.db.get_vars(vars);
-  for (std::map<var_key, var_value>::const_iterator i = vars.begin();
+  for (map<var_key, var_value>::const_iterator i = vars.begin();
        i != vars.end(); ++i)
     {
       if (filterp && !(i->first.first == filter))
@@ -369,7 +376,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
 {
   roster_t old_roster, new_roster;
   cset included, excluded;
-  std::set<file_path> files;
+  set<file_path> files;
   temp_node_id_source nis;
 
   app.require_workspace();
@@ -392,7 +399,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
       if (mask.includes(*i))
         files.insert(file_path(*i));
     }
-  for (std::map<split_path, split_path>::const_iterator 
+  for (map<split_path, split_path>::const_iterator 
          i = included.nodes_renamed.begin();
        i != included.nodes_renamed.end(); ++i)
     {
@@ -406,13 +413,13 @@ ls_changed(app_state & app, vector<utf8> const & args)
       if (mask.includes(*i))
         files.insert(file_path(*i));
     }
-  for (std::map<split_path, file_id>::const_iterator i = included.files_added.begin();
+  for (map<split_path, file_id>::const_iterator i = included.files_added.begin();
        i != included.files_added.end(); ++i)
     {
       if (mask.includes(i->first))
         files.insert(file_path(i->first));
     }
-  for (std::map<split_path, std::pair<file_id, file_id> >::const_iterator
+  for (map<split_path, pair<file_id, file_id> >::const_iterator
          i = included.deltas_applied.begin(); i != included.deltas_applied.end(); 
        ++i)
     {
@@ -422,7 +429,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
   // FIXME: should attr changes count?
 
   copy(files.begin(), files.end(),
-       std::ostream_iterator<const file_path>(cout, "\n"));
+       ostream_iterator<const file_path>(cout, "\n"));
 }
 
 

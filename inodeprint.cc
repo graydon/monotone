@@ -17,6 +17,10 @@
 #include "platform.hh"
 #include "constants.hh"
 
+using std::ostream;
+using std::ostringstream;
+using std::string;
+
 // this file defines the inodeprint_map structure, and some operations on it.
 // it is currently heavily based on the old manifest.cc.
 
@@ -26,18 +30,18 @@ void
 read_inodeprint_map(data const & dat,
                     inodeprint_map & ipm)
 {
-  std::string::size_type pos = 0;
+  string::size_type pos = 0;
   while (pos != dat().size())
     {
       // whenever we get here, pos points to the beginning of a inodeprint
       // line
       // inodeprint file has 40 characters hash, then 2 characters space, then
       // everything until next \n is filename.
-      std::string ident = dat().substr(pos, constants::idlen);
-      std::string::size_type file_name_begin = pos + constants::idlen + 2;
+      string ident = dat().substr(pos, constants::idlen);
+      string::size_type file_name_begin = pos + constants::idlen + 2;
       pos = dat().find('\n', file_name_begin);
-      std::string file_name;
-      if (pos == std::string::npos)
+      string file_name;
+      if (pos == string::npos)
         file_name = dat().substr(file_name_begin);
       else
         file_name = dat().substr(file_name_begin, pos - file_name_begin);
@@ -51,8 +55,8 @@ read_inodeprint_map(data const & dat,
 
 // writing inodeprint_maps
 
-std::ostream & 
-operator<<(std::ostream & out, inodeprint_entry const & e)
+ostream & 
+operator<<(ostream & out, inodeprint_entry const & e)
 {
   return (out << e.second << "  " << e.first << "\n");
 }
@@ -62,7 +66,7 @@ void
 write_inodeprint_map(inodeprint_map const & ipm,
                      data & dat)
 {
-  std::ostringstream sstr;
+  ostringstream sstr;
   for (inodeprint_map::const_iterator i = ipm.begin();
        i != ipm.end(); ++i)
     sstr << *i;

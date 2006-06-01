@@ -20,8 +20,22 @@
 #include "sanity.hh"
 #include "transforms.hh"
 
+using std::make_pair;
+using std::ostream_iterator;
+using std::ostringstream;
+using std::set;
+using std::string;
+
 using boost::dynamic_bitset;
-using namespace std;
+
+static void
+bitset_to_prefix(dynamic_bitset<unsigned char> const & pref,
+                 prefix & rawpref)
+{
+  string s(pref.num_blocks(), 0x00);
+  to_block_range(pref, s.begin());
+  rawpref = prefix(s);
+}
 
 void 
 netcmd_item_type_to_string(netcmd_item_type t, string & typestr)
@@ -97,9 +111,7 @@ void
 merkle_node::get_raw_prefix(prefix & pref) const
 {
   check_invariants();
-  ostringstream oss;
-  to_block_range(this->pref, ostream_iterator<char>(oss));
-  pref = prefix(oss.str());
+  bitset_to_prefix(this->pref, pref);
 }
 
 void 
@@ -159,9 +171,7 @@ merkle_node::extended_raw_prefix(size_t slot,
 {
   dynamic_bitset<unsigned char> ext;
   extended_prefix(slot, ext);
-  ostringstream oss;
-  to_block_range(ext, ostream_iterator<char>(oss));
-  extended = prefix(oss.str());
+  bitset_to_prefix(ext, extended);
 }
 
 void 
@@ -423,9 +433,8 @@ locate_item(merkle_table & table,
     {
       pick_slot_and_prefix_for_value(val, l, slotnum, pref);
 
-      ostringstream oss;
-      to_block_range(pref, ostream_iterator<char>(oss));
-      prefix rawpref(oss.str());
+      prefix rawpref;
+      bitset_to_prefix(pref, rawpref);
 
       merkle_table::const_iterator i = table.find(make_pair(rawpref, l));
       if (i == table.end() ||
@@ -462,9 +471,8 @@ insert_into_merkle_tree(merkle_table & tab,
   dynamic_bitset<unsigned char> pref;
   pick_slot_and_prefix_for_value(leaf, level, slotnum, pref);
 
-  ostringstream oss;
-  to_block_range(pref, ostream_iterator<char>(oss));
-  prefix rawpref(oss.str());
+  prefix rawpref;
+  bitset_to_prefix(pref, rawpref);
   
   merkle_table::const_iterator i = tab.find(make_pair(rawpref, level));
   merkle_ptr node;
@@ -521,6 +529,6 @@ insert_into_merkle_tree(merkle_table & tab,
       node->total_num_leaves = 1;
       node->set_slot_state(slotnum, leaf_state);
       node->set_raw_slot(slotnum, leaf);
-      tab.insert(std::make_pair(std::make_pair(rawpref, level), node));
+      tab.insert(make_pair(make_pair(rawpref, level), node));
     }
 }

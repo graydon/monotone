@@ -102,6 +102,7 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "vocab.hh"
 
@@ -242,6 +243,9 @@ dirname_basename(split_path const & sp,
 void
 save_initial_path();
 
+system_path 
+current_root_path();
+
 // returns true if workspace found, in which case cwd has been changed
 // returns false if workspace not found
 bool
@@ -253,5 +257,9 @@ void
 go_to_workspace(system_path const & new_workspace);
 
 typedef std::set<split_path> path_set;
+
+// equivalent to file_path_internal(path).split(sp) but more efficient.
+void 
+internal_string_to_split_path(std::string const & path, split_path & sp);
 
 #endif
