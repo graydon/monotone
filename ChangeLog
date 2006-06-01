@@ -1,3 +1,7 @@
+2006-06-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* visualc/monotone.vcproj: Add win32/os_strerror.cc to project.
+
 2006-05-30  Richard Levitte  <richard@levitte.org>
 
 	* HACKING: A small correction about namespaces.

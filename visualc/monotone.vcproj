@@ -418,6 +418,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\win32\os_strerror.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\package_full_revision.cc"
 				>
 				<FileConfiguration
