@@ -4,6 +4,7 @@ srcdir = get_source_dir()
 test_root = nil
 testname = nil
 wanted_fail = false
+partial_skip = false -- set this to true if you skip part of the test
 
 errfile = ""
 errline = -1
@@ -404,20 +405,22 @@ function check_func(func, ret, stdout, stderr, stdin)
     err(result, 2)
   end
   post_cmd(result, ret, stdout, stderr)
+  return result
 end
 
 function check(first, ...)
   if type(first) == "function" then
-    check_func(first, unpack(arg))
+    return check_func(first, unpack(arg))
   elseif type(first) == "boolean" then
     if not first then err("Check failed: false", 2) end
   elseif type(first) == "number" then
     if first ~= 0 then
       err("Check failed: " .. first .. " ~= 0", 2)
-      end
+    end
   else
     err("Bad argument to check() (" .. type(first) .. ")", 2)
   end
+  return first
 end
 
 function skip_if(chk)
@@ -493,6 +496,7 @@ function run_tests(args)
     bgid = 0
     testname = tname
     wanted_fail = false
+    partial_skip = false
     local shortname = nil
     test_root, shortname = go_to_test_dir(testname)
     errfile = ""
@@ -530,7 +534,11 @@ function run_tests(args)
         leave_test_dir()
         counts.noxfail = counts.noxfail + 1
       else
-        P("ok\n")
+        if partial_skip then
+          P("partial skip\n")
+        else
+          P("ok\n")
+        end
         test_log:close()
         if not debugging then clean_test_dir(testname) end
         counts.success = counts.success + 1

@@ -608,16 +608,6 @@ rm -f largish.tmp
 
 # include all the sub-tests we're going to use
 
-m4_include(tests/t_patch_vs_drop_add.at)
-m4_include(tests/t_explicit_merge.at)
-m4_include(tests/t_ambig_update.at)
-m4_include(tests/t_checkout_dir.at)
-m4_include(tests/t_checkout_options.at)
-m4_include(tests/t_trusted.at)
-m4_include(tests/t_attr.at)
-m4_include(tests/t_rcfile_required.at)
-m4_include(tests/t_persistent_server_revision.at)
-m4_include(tests/t_persistent_server_keys.at)
 m4_include(tests/t_fmerge_normalize.at)
 m4_include(tests/t_delete_dir.at)
 m4_include(tests/t_migrate_schema.at)

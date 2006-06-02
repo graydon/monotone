@@ -113,7 +113,7 @@ function netsync_serve_start(pat, n, min)
   return out
 end
 
-function netsync_client_run(oper, pat, res, n)
+function netsync_client_run(oper, pat, n, res)
   if pat == "" or pat == nil then pat = "*" end
   if n == nil then n = 2 end
   check(cmd(mtn("--rcfile=netsync.lua", "--keydir=keys"..n,
@@ -244,3 +244,13 @@ table.insert(tests, "tests/merge(<>,_<patch_a,_drop_a,_add_a>)")
 table.insert(tests, "tests/merge(<>,_<add_a,_drop_a,_add_a>)")
 table.insert(tests, "tests/merge(<add_a>,_<add_a,_drop_a,_add_a>)")
 table.insert(tests, "tests/merge(<>,_<add_a,_patch_a,_drop_a,_add_a>)")
+table.insert(tests, "tests/merge(<patch_a>,_<drop_a,_add_a>)")
+table.insert(tests, "tests/explicit_merge")
+table.insert(tests, "tests/update_with_multiple_candidates")
+table.insert(tests, "tests/checkout_validates_target_directory")
+table.insert(tests, "tests/checkout_creates_right__MTN_options")
+table.insert(tests, "tests/trust_hooks_and_'trusted'_command")
+table.insert(tests, "tests/attr_set_attr_get")
+table.insert(tests, "tests/--rcfile_requires_extant_file")
+table.insert(tests, "tests/persistent_netsync_server_-_revs_&_certs")
+table.insert(tests, "tests/persistent_netsync_server_-_keys")
