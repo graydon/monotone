@@ -578,13 +578,15 @@ function run_tests(args)
       end
     end
   else
-    for i,_ in pairs(torun) do
-      if list_only then
-        if i < 10 then P(" ") end
-        if i < 100 then P(" ") end
-        P(i .. " " .. tests[i] .. "\n")
-      else
-        runtest(i, tests[i])
+    for i,t in pairs(tests) do
+      if torun[i] == i then
+        if list_only then
+          if i < 10 then P(" ") end
+          if i < 100 then P(" ") end
+          P(i .. " " .. t .. "\n")
+        else
+          runtest(i, t)
+        end
       end
     end
   end

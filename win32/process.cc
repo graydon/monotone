@@ -73,7 +73,10 @@ static std::string munge_argument(const char* arg)
     return result;
   }
 
-  return munge_inner_argument(arg);
+  if (*arg == 0)
+    return "\"\"";
+  else
+    return munge_inner_argument(arg);
 }
 
 std::string munge_argv_into_cmdline(const char* const argv[])

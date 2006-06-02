@@ -35,7 +35,6 @@ check(qgrep("bar/bar", "stdout"))
 
 check(cmd(mtn("--norc", "status", ".")), 0, true)
 check(qgrep("foo/foo", "stdout"))
-check(cmd("pwd"), 0, false)
 check(not qgrep("bar/bar", "stdout"))
 
 check(cmd(mtn("--norc", "status", "..")), 0, true)
