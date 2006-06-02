@@ -17,13 +17,13 @@ mtn_setup()
 -- mentioned there; doing sideways deltas between heads, all sorts of
 -- possibilities for maybe-efficient algorithms.
 
-netsync_setup()
+netsync.setup()
 
 addfile("testfile1", "This is test file 1")
 commit("testbranch")
 base = base_revision()
 
-run_netsync("pull", "testbranch")
+netsync.pull("testbranch")
 
 for _,i in pairs{{"automate", "graph"}, {"ls", "certs", base}} do
   check_same_stdout(cmd(mtn(unpack(i))), cmd(mtn2(unpack(i))))
@@ -40,7 +40,7 @@ xfail_if(true, cmd(mtn("--branch=testbranch", "merge")), 0, false, false)
 check(cmd(mtn("update")), 0, false, false)
 merge = base_revision()
 
-run_netsync("pull", "testbranch")
+netsync.pull("testbranch")
 
 check_same_stdout(cmd(mtn("automate", "graph")), cmd(mtn2("automate", "graph")))
 for _,i in pairs{base, unrelated, merge} do

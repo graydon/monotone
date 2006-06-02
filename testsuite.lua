@@ -64,22 +64,6 @@ end
 
 -- netsync
 
-netsync_address = nil
-
-function netsync_setup()
-  copyfile("test.db", "test2.db")
-  copy_recursive("keys", "keys2")
-  copyfile("test.db", "test3.db")
-  copy_recursive("keys", "keys3")
-  getstdfile("tests/netsync.lua", "netsync.lua")
-  netsync_address = "localhost:" .. math.random(20000, 50000)
-end
-
-function netsync_setup_with_notes()
-  netsync_setup()
-  getstdfile("tests/netsync_with_notes.lua", "netsync.lua")
-end
-
 function mtn2(...)
   return mtn("--db=test2.db", "--keydir=keys2", unpack(arg))
 end
@@ -88,12 +72,40 @@ function mtn3(...)
   return mtn("--db=test3.db", "--keydir=keys3", unpack(arg))
 end
 
-function netsync_serve_start(pat, n, min)
+netsync = {}
+netsync.internal = {}
+
+function netsync.setup()
+  copyfile("test.db", "test2.db")
+  copy_recursive("keys", "keys2")
+  copyfile("test.db", "test3.db")
+  copy_recursive("keys", "keys3")
+  getstdfile("tests/netsync.lua", "netsync.lua")
+end
+
+function netsync.setup_with_notes()
+  netsync.setup()
+  getstdfile("tests/netsync_with_notes.lua", "netsync.lua")
+end
+
+function netsync.internal.client(srv, oper, pat, n, res)
+  if pat == "" or pat == nil then pat = "*" end
+  if n == nil then n = 2 end
+  check(cmd(mtn("--rcfile=netsync.lua", "--keydir=keys"..n,
+                "--db=test"..n..".db", oper, srv.address, pat)),
+        res, false, false)
+end
+function netsync.internal.pull(srv, pat, n, res) srv:client("pull", pat, n, res) end
+function netsync.internal.push(srv, pat, n, res) srv:client("push", pat, n, res) end
+function netsync.internal.sync(srv, pat, n, res) srv:client("sync", pat, n, res) end
+
+function netsync.start(pat, n, min)
   if pat == "" or pat == nil then pat = "*" end
   local args = {}
   local fn = mtn
+  local addr = "localhost:" .. math.random(20000, 50000)
   table.insert(args, "--dump=_MTN/server_dump")
-  table.insert(args, "--bind="..netsync_address)
+  table.insert(args, "--bind="..addr)
   if min then
     fn = minhooks_mtn
   else
@@ -110,22 +122,23 @@ function netsync_serve_start(pat, n, min)
   while fsize(out.prefix .. "stderr") == 0 do
     sleep(1)
   end
+  out.address = addr
+  local mt = getmetatable(out)
+  mt.client = netsync.internal.client
+  mt.pull = netsync.internal.pull
+  mt.push = netsync.internal.push
+  mt.sync = netsync.internal.sync
   return out
 end
 
-function netsync_client_run(oper, pat, n, res)
-  if pat == "" or pat == nil then pat = "*" end
-  if n == nil then n = 2 end
-  check(cmd(mtn("--rcfile=netsync.lua", "--keydir=keys"..n,
-                "--db=test"..n..".db", oper, netsync_address, pat)),
-        res, false, false)
-end
-
-function run_netsync(oper, pat)
-  local srv = netsync_serve_start(pat)
-  netsync_client_run(oper, pat, 0)
+function netsync.internal.run(oper, pat)
+  local srv = netsync.start(pat)
+  srv:client(oper, pat)
   srv:finish()
 end
+function netsync.pull(pat) netsync.internal.run("pull", pat) end
+function netsync.push(pat) netsync.internal.run("push", pat) end
+function netsync.sync(pat) netsync.internal.run("sync", pat) end
 
 
 

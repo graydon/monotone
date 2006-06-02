@@ -1,6 +1,6 @@
 
 mtn_setup()
-netsync_setup()
+netsync.setup()
 
 revs = {}
 
@@ -16,10 +16,10 @@ check(cmd(mtn3("add", "otherfile")), 0, false, false)
 check(cmd(mtn3("commit", "--branch=testbranch", "--message=foo")), 0, false, false)
 revs[2] = base_revision()
 
-srv = netsync_serve_start("testbranch")
+srv = netsync.start("testbranch")
 
-netsync_client_run("sync", "testbranch", 2)
-netsync_client_run("sync", "testbranch", 3)
+srv:sync("testbranch", 2)
+srv:sync("testbranch", 3)
 
 function chksy(n, co_mtn)
   check_same_stdout(cmd(mtn2("automate", "get_revision", revs[n])),
@@ -32,7 +32,7 @@ end
 
 chksy(1, mtn3)
 
-netsync_client_run("sync", "testbranch", 2)
+srv:sync("testbranch", 2)
 chksy(2, mtn2)
 
 -- And now make sure it works for children, where there are diffs and all
@@ -50,8 +50,8 @@ revs[4] = base_revision()
 -- And add a cert on an old revision
 check(cmd(mtn3("comment", revs[1], 'sorry dave')), 0, false, false)
 
-netsync_client_run("sync", "testbranch", 3)
-netsync_client_run("sync", "testbranch", 2)
+srv:sync("testbranch", 3)
+srv:sync("testbranch", 2)
 
 chksy(3, mtn2)
 
@@ -59,7 +59,7 @@ chksy(3, mtn2)
 check_same_stdout(cmd(mtn2("ls", "certs", revs[1])),
                   cmd(mtn3("ls", "certs", revs[1])))
 
-netsync_client_run("sync", "testbranch", 3)
+srv:sync("testbranch", 3)
 
 chksy(4, mtn3)
 

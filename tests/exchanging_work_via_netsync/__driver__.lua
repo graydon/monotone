@@ -1,6 +1,6 @@
 
 mtn_setup()
-netsync_setup()
+netsync.setup()
 
 writefile("testfile", "version 0 of test file")
 check(cmd(mtn("add", "testfile")), 0, false, false)
@@ -15,7 +15,7 @@ commit()
 f_ver[1] = sha1("testfile")
 ver[1] = base_revision()
 
-run_netsync("pull", "testbranch")
+netsync.pull("testbranch")
 
 check(cmd(mtn2("ls", "certs", ver[0])), 0, true)
 rename("stdout", "certs")
