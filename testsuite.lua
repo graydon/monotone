@@ -185,12 +185,72 @@ function canonicalize(filename)
   end
 end
 
+function check_same_db_contents(db1, db2)
+  check_same_stdout(cmd(mtn("--db", db1, "ls", "keys")),
+                    cmd(mtn("--db", db2, "ls", "keys")))
+  
+  check(cmd(mtn("--db", db1, "complete", "revision", "")), 0, true, false)
+  rename("stdout", "revs")
+  check(cmd(mtn("--db", db2, "complete", "revision", "")), 0, true, false)
+  check(samefile("stdout", "revs"))
+  for rev in io.lines("revs") do
+    rev = trim(rev)
+    check_same_stdout(cmd(mtn("--db", db1, "automate", "certs", rev)),
+                      cmd(mtn("--db", db2, "automate", "certs", rev)))
+    check_same_stdout(cmd(mtn("--db", db1, "automate", "get_revision", rev)),
+                      cmd(mtn("--db", db2, "automate", "get_revision", rev)))
+    check_same_stdout(cmd(mtn("--db", db1, "automate", "get_manifest_of", rev)),
+                      cmd(mtn("--db", db2, "automate", "get_manifest_of", rev)))
+  end
+  
+  check(cmd(mtn("--db", db1, "complete", "file", "")), 0, true, false)
+  rename("stdout", "files")
+  check(cmd(mtn("--db", db2, "complete", "file", "")), 0, true, false)
+  check(samefile("stdout", "files"))
+  for file in io.lines("files") do
+    file = trim(file)
+    check_same_stdout(cmd(mtn("--db", db1, "automate", "get_file", file)),
+                      cmd(mtn("--db", db2, "automate", "get_file", file)))
+  end
+end
+
 -- maybe this one should go in tester.lua?
 function check_same_stdout(cmd1, cmd2)
   check(cmd1, 0, true, false)
   rename_over("stdout", "stdout-first")
   check(cmd2, 0, true, false)
-  check(samefile("stdout", "stdout-first"))
+  rename_over("stdout", "stdout-second")
+  check(samefile("stdout-first", "stdout-second"))
+end
+
+function write_large_file(name, size)
+  local file = io.open(name, "wb")
+  for i = 1,size do
+    for j = 1,128 do -- write 1MB
+      local str8k = ""
+      for k = 1,256 do
+        -- 32
+        str8k = str8k .. string.char(math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255),
+                                     math.random(255), math.random(255))
+      end
+      file:write(str8k)
+    end
+  end
+  file:close()
 end
 
 ------------------------------------------------------------------------
@@ -267,3 +327,8 @@ table.insert(tests, "tests/attr_set_attr_get")
 table.insert(tests, "tests/--rcfile_requires_extant_file")
 table.insert(tests, "tests/persistent_netsync_server_-_revs_&_certs")
 table.insert(tests, "tests/persistent_netsync_server_-_keys")
+table.insert(tests, "tests/first_extent_normalization_pass")
+table.insert(tests, "tests/(imp)_deleting_directories")
+table.insert(tests, "tests/schema_migration")
+table.insert(tests, "tests/database_dump_load")
+table.insert(tests, "tests/no-change_deltas_disappear")

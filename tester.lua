@@ -1,5 +1,6 @@
 tests = {}
 srcdir = get_source_dir()
+debugging = false
 
 test_root = nil
 testname = nil
@@ -444,7 +445,6 @@ end
 function run_tests(args)
   local torun = {}
   local run_all = true
-  local debugging = false
   local list_only = false
   for i,a in pairs(args) do
     local _1,_2,l,r = string.find(a, "^(-?%d+)%.%.(-?%d+)$")

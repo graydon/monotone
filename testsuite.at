@@ -608,11 +608,6 @@ rm -f largish.tmp
 
 # include all the sub-tests we're going to use
 
-m4_include(tests/t_fmerge_normalize.at)
-m4_include(tests/t_delete_dir.at)
-m4_include(tests/t_migrate_schema.at)
-m4_include(tests/t_dump_load.at)
-m4_include(tests/t_no_change_deltas.at)
 m4_include(tests/t_drop_rename_patch.at)
 m4_include(tests/t_cmdline_options.at)
 m4_include(tests/t_log_nonexistent.at)
