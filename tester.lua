@@ -317,7 +317,7 @@ function post_cmd(result, ret, stdout, stderr, ident)
       err("Check failed (stdout): not empty", 3)
     end
   elseif type(stdout) == "string" then
-    local realout = io.open("stdout")
+    local realout = io.open(ident .. "stdout")
     local contents = realout:read("*a")
     realout:close()
     if contents ~= stdout then
@@ -333,7 +333,7 @@ function post_cmd(result, ret, stdout, stderr, ident)
       err("Check failed (stderr): not empty", 3)
     end
   elseif type(stderr) == "string" then
-    local realerr = io.open("stderr")
+    local realerr = io.open(ident .. "stderr")
     local contents = realerr:read("*a")
     realerr:close()
     if contents ~= stderr then
