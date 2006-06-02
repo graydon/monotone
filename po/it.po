@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-05-27 12:06+0200\n"
-"PO-Revision-Date: 2006-05-28 08:53+0100\n"
-"Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
+"PO-Revision-Date: 2006-06-02 14:39+0100\n"
+"Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -278,19 +278,17 @@ msgstr "variabili"
 msgid "DOMAIN NAME VALUE"
 msgstr "DOMINIO NOME VALORE"
 
-# TODO: poco scorrevole
 #: cmd_db.cc:106
 msgid "set the database variable NAME to VALUE, in domain DOMAIN"
-msgstr "imposta nel dominio DOMINIO del database la variabile NOME al valore VALORE"
+msgstr "imposta la variabile NOME del database come VALORE, nel dominio DOMINIO"
 
 #: cmd_db.cc:121
 msgid "DOMAIN NAME"
 msgstr "DOMINIO NOME"
 
-# TODO: poco scorrevole
 #: cmd_db.cc:122
 msgid "remove the database variable NAME in domain DOMAIN"
-msgstr "elimina dal dominio DOMINIO del database la variabile NOME"
+msgstr "elimina la variabile NOME del database dal dominio DOMINIO "
 
 #: cmd_db.cc:133
 #, c-format
@@ -311,7 +309,7 @@ msgstr "informativo"
 
 #: cmd_db.cc:137
 msgid "(revision|file|key) PARTIAL-ID"
-msgstr ""
+msgstr "(revisione|file|chiave) ID-PARZIALE"
 
 #: cmd_db.cc:138
 msgid "complete partial id"
@@ -366,7 +364,7 @@ msgid ""
 "revisions are given, use them as a starting point."
 msgstr ""
 "stampa lo storico in ordine contrario (filtrando con ‘FILE’). Se una o più\n"
-"revisioni sono date, usa quelle come punto di partenza."
+"revisioni sono specificate, usa quelle come punto di partenza."
 
 #: cmd_diff_log.cc:582
 #, c-format
@@ -408,7 +406,6 @@ msgstr "id del file di sinistra inesistente"
 msgid "right file id does not exist"
 msgstr "id del file di destra inesistente"
 
-# TODO: togliere le virgolette?
 #: cmd_files.cc:58
 #, c-format
 msgid "merge failed"
@@ -611,7 +608,7 @@ msgstr "poni un tag simbolico su una revisione"
 
 #: cmd_key_cert.cc:192
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
-msgstr ""
+msgstr "ID (accettare|fallire|vero|falso|sì|no|1|0)"
 
 #: cmd_key_cert.cc:193
 msgid "note the results of running a test on a revision"
@@ -742,7 +739,6 @@ msgstr ""
 msgid "workspace"
 msgstr "spazio di lavoro"
 
-# TODO per Lapo, controlla un po'
 #: cmd_merging.cc:37
 msgid ""
 "update workspace.\n"
@@ -754,7 +750,7 @@ msgstr ""
 "aggiorna spazio di lavoro.\n"
 "Questo comando modifica il tuo spazio di lavoro e lo posiziona ad off di\n"
 "una differente versione, preservando cambiamenti non committati come se lo fossero.\n"
-"Se una revisione è data, aggiorna lo spazio di lavoro a quella versione.\n"
+"Se una revisione è specificata, aggiorna lo spazio di lavoro a quella versione.\n"
 "Altrimenti aggiorna lo spazio di lavoro alla testa del ramo."
 
 #: cmd_merging.cc:79
@@ -816,11 +812,10 @@ msgstr ""
 "\n"
 "prova ancora con --ramo dichiarato"
 
-# TODO: "mi"?
 #: cmd_merging.cc:160
 #, c-format
 msgid "switching to branch %s"
-msgstr "mi sposto sul ramo ‘%s’"
+msgstr "passare al ramo ‘%s’"
 
 #: cmd_merging.cc:165
 #, c-format
@@ -852,7 +847,6 @@ msgstr "aggiorno alla revisione base ‘%s’\n"
 msgid "tree"
 msgstr "albero"
 
-# TODO: togliere le virgolette?
 #: cmd_merging.cc:279
 msgid "merge unmerged heads of branch"
 msgstr "fa il ‘merge’ delle teste di un ramo"
@@ -881,7 +875,6 @@ msgstr "il ramo ‘%s’ è già unito\n"
 msgid "starting with revision 1 / %d\n"
 msgstr "inizio con la revisione 1 / %d\n"
 
-# TODO: togliere le virgolette?
 #: cmd_merging.cc:307
 #, c-format
 msgid "merging with revision %d / %d\n"
@@ -912,7 +905,6 @@ msgstr "nota: lo spazio di lavoro non è stato aggiornato\n"
 msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr "RAMO-SORG RAMO-DEST"
 
-# TODO: togliere le virgolette?
 #: cmd_merging.cc:333
 msgid "merge from one branch to another asymmetrically"
 msgstr "‘merge’ asimmetrico da un ramo ad un altro"
@@ -921,7 +913,6 @@ msgstr "‘merge’ asimmetrico da un ramo ad un altro"
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
 msgstr "RAMO-SORG RAMO-DEST DIRECTORY"
 
-# TODO: togliere le virgolette?
 #: cmd_merging.cc:344
 msgid "merge one branch into a subdirectory in another branch"
 msgstr "‘merge’ di un ramo in una sottodirectory di un altro ramo"
@@ -952,7 +943,6 @@ msgstr "il ramo ‘%s’ è aggiornato rispetto al ramo ‘%s’\n"
 msgid "no action taken\n"
 msgstr "nessuna azione svolta\n"
 
-# TODO: togliere le virgolette?
 #: cmd_merging.cc:403
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'\n"
@@ -986,7 +976,6 @@ msgstr "%s è già antenato di %s"
 msgid "REV REV"
 msgstr "REV REV"
 
-# TODO: togliere le virgolette?
 #: cmd_merging.cc:538
 msgid "Show what conflicts would need to be resolved to merge the given revisions."
 msgstr "Mostra quali conflitti andrebbero risolto per fare il ‘merge’ di due revisioni specificate."
@@ -1057,7 +1046,7 @@ msgstr "imposto il server di default a ‘%s’\n"
 #: cmd_netsync.cc:43
 #, c-format
 msgid "no hostname given"
-msgstr "nessun nome di host dato"
+msgstr "nessun nome di host specificato"
 
 #: cmd_netsync.cc:45
 #, c-format
@@ -1106,7 +1095,6 @@ msgstr ""
 msgid "pull branches matching PATTERN from netsync server at ADDRESS"
 msgstr ""
 
-# TODO: togliere le virgolette?
 #: cmd_netsync.cc:117
 #, c-format
 msgid "doing anonymous pull; use -kKEYNAME if you need authentication\n"
@@ -1137,7 +1125,7 @@ msgstr ""
 #: cmd_netsync.cc:184
 #, c-format
 msgid "need permission to store persistent passphrase (see hook persist_phrase_ok())"
-msgstr ""
+msgstr "è necessario un permesso per immagazzinare ‘passphrase’ permanente (vedi ‘hook’ frase_permanente _ok())"
 
 #: cmd_othervcs.cc:5
 msgid "RCSFILE..."
@@ -1305,7 +1293,6 @@ msgstr "mostra stato dello spazio di lavoro"
 msgid "[DIRECTORY]\n"
 msgstr "[DIRECTORY]\n"
 
-# TODO non sono sicura se lasciare "check out" o mettere "verificare"
 #: cmd_ws_commit.cc:353
 msgid ""
 "check out a revision from database into directory.\n"
@@ -1313,10 +1300,10 @@ msgid ""
 "Otherwise, it will be the head of the branch (given or implicit).\n"
 "If no directory is given, the branch name will be used as directory"
 msgstr ""
-"check out una revisione dal database nella directory.\n"
-"Se viene data una revisione, sarò quella ad essere check out.\n"
-"Altrimenti sarà la testa del ramo (dato o implicito).\n"
-"Se nessuna directory è data, il nome del ramo sarà usato come directory"
+"verifica una revisione dal database nella directory.\n"
+"Se viene specificata una revisione, sarò quella ad essere verificata.\n"
+"Altrimenti sarà la testa del ramo (specificato o implicito).\n"
+"Se nessuna directory è specificata, il nome del ramo sarà usato come directory"
 
 #: cmd_ws_commit.cc:372
 #: cmd_ws_commit.cc:391
@@ -1390,7 +1377,6 @@ msgstr "Nessun attributo per ‘%s’"
 msgid "No attribute '%s' on path '%s'"
 msgstr "Nessun attributo ‘%s’ nel percorso ‘%s’"
 
-# TODO: togliere le virgolette?
 #: cmd_ws_commit.cc:574
 msgid "commit workspace to database"
 msgstr "‘commit’ dello spazio di lavoro nel database"
@@ -1442,7 +1428,6 @@ msgstr "file ‘%s’ modificato durante il commit, abbandono"
 msgid "Your database is missing version %s of file '%s'"
 msgstr "Nel tuo database manca la versione %s del file ‘%s’"
 
-# TODO: togliere le virgolette?
 #: cmd_ws_commit.cc:758
 #, c-format
 msgid "committed revision %s\n"
@@ -2008,7 +1993,6 @@ msgstr "nello spazio di lavoro ‘%s’ è una directory, non un file"
 msgid "file %s in workspace has id %s, wanted %s"
 msgstr "il file ‘%s’ hd id ‘%s’ nello spazio di lavoro, era atteso ‘%s’"
 
-# TODO: togliere le virgolette?
 #: diff_patch.cc:720
 #, c-format
 msgid ""
@@ -2202,7 +2186,7 @@ msgstr "le passphrase non corrispondono, riprova\n"
 #: keys.cc:122
 #, c-format
 msgid "no passphrase given"
-msgstr "non è stata data una passphrase"
+msgstr "non è stata specificata una passphrase"
 
 #: keys.cc:545
 #, c-format
@@ -2304,7 +2288,6 @@ msgstr "stampa una versione breve dell'output"
 msgid "print diffs along with logs"
 msgstr "stampa i diff assieme ai log"
 
-# TODO: togliere le virgolette?
 #: monotone.cc:66
 msgid "exclude merges when printing logs"
 msgstr "esclude i ‘merge’ dalla stampa dei log"
@@ -2966,11 +2949,10 @@ msgstr ""
 msgid "missing prerequisite file post-delta '%s'\n"
 msgstr ""
 
-# TODO: specificare "il certificato della"?
 #: packet.cc:190
 #, c-format
 msgid "cert revision '%s' does not exist in db\n"
-msgstr "la revisione ‘%s’ non è presente in database\n"
+msgstr "il certificato della revisione ‘%s’ non è presente in database\n"
 
 #: packet.cc:192
 #, c-format
@@ -3210,7 +3192,6 @@ msgstr "le chiavi pubblica e privata per ‘%s’ non corrispondono"
 msgid "moving key '%s' from database to %s"
 msgstr "sposto chiave ‘%s’ dal database a ‘%s’"
 
-# TODO: cambiare le virgolette con altro?
 #: std_hooks.lua:28
 msgid "Press enter when the subprocess has completed"
 msgstr "Premi ‘invio’ quando il sotto-processo è completato"
@@ -3278,7 +3259,7 @@ msgstr "dimensione dell'ID esadecimale ‘%s’ != %d"
 msgid "bad character '%c' in id name '%s'"
 msgstr "carattere non ammesso ‘%c’ nel nome dell'id ‘%s’"
 
-# TODO: cosa è una stringa ACE?
+# TODO: cosa è la stringa ACE?
 #: vocab.cc:78
 #, c-format
 msgid "bad character '%c' in ace string '%s'"

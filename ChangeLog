@@ -1,3 +1,7 @@
+﻿2006-06-02  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Translated a few more and fuzzy strings to Italian (90 to go).
+	
 2006-06-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* visualc/monotone.vcproj: Add win32/os_strerror.cc to project.
